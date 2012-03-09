@@ -195,7 +195,7 @@ void* idxlist_unpack(void* buffer, int buffer_size, int* position,
    if (data->list == NULL) {
       fprintf(stderr, "malloc failed for idxlist_data->data\n");
       exit(EXIT_FAILURE);
-   }      
+   }
 
    mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
                               data->list, data->num_indices, MPI_INTEGER, comm), comm);
