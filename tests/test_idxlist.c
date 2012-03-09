@@ -66,6 +66,12 @@ int main(void) {
    position = 0;
    idxset_copy = xt_idxset_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
+   // compute intersection between the two index sets
+
+   xt_idxset intersection;
+   
+   intersection = xt_idxset_get_intersection(idxset, idxset_copy);
+
    // clean up
 
    free(send_buffer);
@@ -73,6 +79,7 @@ int main(void) {
 
    xt_idxset_delete(idxset);
    xt_idxset_delete(idxset_copy);
+   xt_idxset_delete(intersection);
 
    MPI_Finalize();
 

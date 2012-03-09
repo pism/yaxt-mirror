@@ -67,4 +67,13 @@ void xt_idxset_pack(xt_idxset idxset, void* buffer, int buffer_size,
  */
 xt_idxset xt_idxset_unpack(void* buffer, int buffer_size, int* position, MPI_Comm comm);
 
+/**
+ * computes the intersection between two index sets
+ *
+ * @param[in] idxset_a index set a
+ * @param[in] idxset_b index set b
+ * @return             return the intersection of idxset_a and idxset_b
+ */
+xt_idxset xt_idxset_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b);
+
 #endif // XT_IDXSET_H

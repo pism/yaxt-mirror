@@ -20,6 +20,8 @@ typedef struct xt_xmap* xt_xmap;
  *                        that are available locally
  * @param[in] num_indices number of indices in idxlist
  * @return                returns a xt_idxset
+ *
+ * \remark idxlist is only allowed to contain unique indices.
  */
 xt_idxset xt_idxset_new(int* idxlist, unsigned num_indices);
 
