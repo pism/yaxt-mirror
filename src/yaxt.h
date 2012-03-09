@@ -41,7 +41,23 @@ void xt_idxset_delete(xt_idxset idxset);
  *                       that part in the exchange (xt_xmap_new will
  *                       make its of copy of comm)
  */
-xt_xmap xt_xmap_new(xt_idxset src_idxset, xt_idxset dst_idxset, MPI_Comm comm);
+xt_xmap xt_xmap_new_single(xt_idxset src_idxset, xt_idxset dst_idxset, MPI_Comm comm);
+
+/**
+ * constructor for an exchange map \n
+ * this operation is collective over all processes in comm
+ *
+ * @param[in] src_idxsets     array of source index sets
+ * @param[in] num_src_idxsets number of source index sets
+ * @param[in] dst_idxsets     array of destination index set
+ * @param[in] num_dst_idxsets number of destination index sets
+ * @param[in] comm            MPI communicator that contains all processes
+ *                            that part in the exchange (xt_xmap_new will
+ *                            make its of copy of comm)
+ */
+xt_xmap xt_xmap_new(xt_idxset * src_idxsets, unsigned num_src_idxsets,
+                    xt_idxset * dst_idxsets, unsigned num_dst_idxsets,
+                    MPI_Comm comm);
 
 /**
  * destructor for an exchange map
