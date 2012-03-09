@@ -20,25 +20,28 @@
  * @return           returns the size in bytes of the packed index set
  *
  * @remark You need to provide the same buffer for all related calls of
- *         xt_idxset_get_pack_size \ref xt_idxset_pack \ref xt_idxset_unpack
+ *         xt_idxset_get_pack_size , \ref xt_idxset_pack and \ref xt_idxset_unpack
+ *
+ * @see xt_idxset_pack
+ * @see xt_idxset_unpack
  */
 size_t xt_idxset_get_pack_size(xt_idxset idxset, MPI_Comm comm);
 
 /**
  * packs a index set into previously allocated buffer using MPI_Pack
  *
- * @param[in]    idxset      index set, which needs be packed into the buffer
- * @param[inout] buffer      previously allocated buffer into which the index
- *                           list will be packed
- * @param[in]    buffer_size size of buffer in bytes
- * @param[inout] position    position in buffer at which the data of idxset will be copied
- *                           (position is automatically updated to the first byte after
- *                           the packed data)
- * @param[in]    comm        MPI communicator that will be used to send the buffer
+ * @param[in]     idxset      index set, which needs be packed into the buffer
+ * @param[in,out] buffer      previously allocated buffer into which the index
+ *                            list will be packed
+ * @param[in]     buffer_size size of buffer in bytes
+ * @param[in,out] position    position in buffer at which the data of idxset will be copied
+ *                            (position is automatically updated to the first byte after
+ *                            the packed data)
+ * @param[in]     comm        MPI communicator that will be used to send the buffer
  *
  * @remark The provided buffer needs to have a size that is sufficient for the index set. You can determin the required size using \ref xt_idxset_get_pack_size .
  * @remark You need to provide the same buffer for all related calls of
- *         \ref xt_idxset_get_pack_size xt_idxset_pack \ref xt_idxset_unpack
+ *         \ref xt_idxset_get_pack_size , xt_idxset_pack and \ref xt_idxset_unpack
  *
  * @see xt_idxset_get_pack_size
  * @see xt_idxset_unpack
@@ -50,15 +53,15 @@ void xt_idxset_pack(xt_idxset idxset, void* buffer, int buffer_size,
 /**
  * unpacks a index set that received before
  *
- * @param[in]    buffer      buffer that contains the packed index set
- * @param[in]    buffer_size size of the buffer in bytes
- * @param[inout] position    position in the buffer at which the unpacking should start
- *                           (will automatically be set to the position after the unpacked
- *                           data)
- * @param[in]    comm        MPI communicator that was used to receive the buffer
+ * @param[in]     buffer      buffer that contains the packed index set
+ * @param[in]     buffer_size size of the buffer in bytes
+ * @param[in,out] position    position in the buffer at which the unpacking should start
+ *                            (will automatically be set to the position after the unpacked
+ *                            data)
+ * @param[in]     comm        MPI communicator that was used to receive the buffer
  *
  * @remark You need to provide the same buffer for all related calls of
- *         \ref xt_idxset_get_pack_size \ref xt_idxset_pack xt_idxset_unpack
+ *         \ref xt_idxset_get_pack_size , \ref xt_idxset_pack and xt_idxset_unpack
  *
  * @see xt_idxset_pack
  */
