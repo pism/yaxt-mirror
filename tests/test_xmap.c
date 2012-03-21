@@ -32,7 +32,7 @@ int main(void) {
       // test of exchange map
       xt_xmap xmap;
 
-      xmap = xt_xmap_new_single(src_idxset, dst_idxset, MPI_COMM_WORLD);
+      xmap = xt_xmap_new(src_idxset, dst_idxset, MPI_COMM_WORLD);
 
       // clean up
       xt_xmap_delete(xmap);
