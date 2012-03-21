@@ -11,6 +11,8 @@ struct xt_idxset_vtable {
    void (*pack)(xt_idxset, void*, int, int*, MPI_Comm);
    xt_idxset (*get_intersection)(xt_idxset,xt_idxset);
    xt_idxset (*copy)(xt_idxset);
+   int (*get_num_indices)(xt_idxset);
+   void (*get_indices)(xt_idxset, int*);
 };
 
 enum xt_idxset_type {
@@ -102,5 +104,21 @@ xt_idxset xt_idxset_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b);
  * @return           returns a copy of the given index set
  */
 xt_idxset xt_idxset_copy(xt_idxset idxset);
+
+/**
+ * returns the number of indices stored in the given index set
+ *
+ * @param[in] idxset index set for which that number of index sets is required
+ * @return           number of indices in the given index set
+ */
+int xt_idxset_get_num_indices(xt_idxset idxset);
+ 
+ /**
+  * gets the indices stored in an index sets
+  *
+  * @param[in]     idxset  index set for which the indices are to be returned
+  * @param[in,out] indices array into which the indices are written
+  */
+void xt_idxset_get_indices(xt_idxset idxset, int *indices);
 
 #endif // XT_IDXSET_H

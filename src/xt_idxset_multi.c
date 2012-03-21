@@ -14,12 +14,16 @@ void      idxset_multi_pack(xt_idxset data, void *buffer, int buffer_size,
                             int *position, MPI_Comm comm);
 xt_idxset idxset_multi_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b);
 xt_idxset idxset_multi_copy(xt_idxset idxset);
+int       idxset_multi_get_num_indices(xt_idxset idxset);
+void      idxset_multi_get_indices(xt_idxset idxset, int *indices);
 
 static struct xt_idxset_vtable idxset_multi_vtable = {idxset_multi_delete,
                                                       idxset_multi_get_pack_size,
                                                       idxset_multi_pack,
                                                       idxset_multi_get_intersection,
-                                                      idxset_multi_copy};
+                                                      idxset_multi_copy,
+                                                      idxset_multi_get_num_indices,
+                                                      idxset_multi_get_indices};
 
 struct xt_idxset_multi {
 
@@ -164,4 +168,31 @@ xt_idxset idxset_multi_copy(xt_idxset idxset) {
    struct xt_idxset_multi *multiset = (struct xt_idxset_multi*)idxset;
 
    return xt_idxset_multi_new(multiset->idxsets, multiset->num_idxsets);
+}
+
+int idxset_multi_get_num_indices(xt_idxset idxset) {
+
+   struct xt_idxset_multi *multiset = (struct xt_idxset_multi*)idxset;
+
+   unsigned i;
+   int num_indices = 0;
+
+   for (i = 0; i < multiset->num_idxsets; ++i)
+      num_indices += xt_idxset_get_num_indices(multiset->idxsets[i]);
+
+   return num_indices;
+}
+
+void idxset_multi_get_indices(xt_idxset idxset, int *indices) {
+
+   struct xt_idxset_multi *multiset = (struct xt_idxset_multi*)idxset;
+
+   unsigned i;
+   int offset = 0;
+
+   for (i = 0; i < multiset->num_idxsets; ++i) {
+
+      xt_idxset_get_indices(multiset->idxsets[i], indices+offset);
+      offset += xt_idxset_get_num_indices(multiset->idxsets[i]);
+   }
 }

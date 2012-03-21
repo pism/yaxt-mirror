@@ -58,3 +58,13 @@ xt_idxset xt_idxset_copy(xt_idxset idxset) {
 
    return idxset->vtable->copy(idxset);
 }
+
+int xt_idxset_get_num_indices(xt_idxset idxset) {
+
+   return idxset->vtable->get_num_indices(idxset);
+}
+
+void xt_idxset_get_indices(xt_idxset idxset, int *indices) {
+
+   return idxset->vtable->get_indices(idxset, indices);
+}

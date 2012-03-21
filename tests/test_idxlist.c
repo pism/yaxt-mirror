@@ -2,6 +2,8 @@
 
 #include "mpi.h"
 
+#define VERBOSE
+
 #include "tests.h"
 
 #include "yaxt.h"
@@ -103,6 +105,34 @@ int main(void) {
 
       xt_idxset_delete(idxset);
       xt_idxset_delete(idxset_copy);
+   }
+
+   { // test get_num_indices and get_indices
+
+      int index_list[] = {1,2,3,4,5,6,7};
+      unsigned num_indices = sizeof(index_list) / sizeof(index_list[0]);
+
+      xt_idxset idxset;
+
+      // create an index list
+
+      idxset = xt_idxlist_new(index_list, num_indices);
+
+      // testing
+
+      if (xt_idxset_get_num_indices(idxset) != num_indices)
+         PUT_ERR("error in xt_idxset_get_num_indices\n");
+
+      unsigned i;
+      int indices[num_indices];
+
+      xt_idxset_get_indices(idxset, indices);
+
+      for (i = 0; i < num_indices; ++i)
+         if (indices[i] != index_list[i]) {
+            PUT_ERR("error in xt_idxset_get_indices\n");
+            break;
+         }
    }
 
    MPI_Finalize();

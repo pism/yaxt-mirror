@@ -13,12 +13,16 @@ void      idxlist_pack(xt_idxset data, void *buffer, int buffer_size,
                        int *position, MPI_Comm comm);
 xt_idxset idxlist_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b);
 xt_idxset idxlist_copy(xt_idxset idxset);
+int       idxlist_get_num_indices(xt_idxset idxset);
+void      idxlist_get_indices(xt_idxset idxset, int *indices);
 
 static struct xt_idxset_vtable idxlist_vtable = {idxlist_delete,
                                                  idxlist_get_pack_size,
                                                  idxlist_pack,
                                                  idxlist_get_intersection,
-                                                 idxlist_copy};
+                                                 idxlist_copy,
+                                                 idxlist_get_num_indices,
+                                                 idxlist_get_indices};
 
 // index list data structure
 
@@ -200,4 +204,22 @@ xt_idxset idxlist_copy(xt_idxset idxset) {
    idxlist_data = (struct xt_idxlist *)idxset;
 
    return xt_idxlist_new(idxlist_data->list, idxlist_data->num_indices);
+}
+
+int idxlist_get_num_indices(xt_idxset idxset) {
+
+   struct xt_idxlist *idxlist_data;
+
+   idxlist_data = (struct xt_idxlist *)idxset;
+
+   return idxlist_data->num_indices;
+}
+
+void idxlist_get_indices(xt_idxset idxset, int *indices) {
+
+   struct xt_idxlist *idxlist_data;
+
+   idxlist_data = (struct xt_idxlist *)idxset;
+
+   memcpy(indices, idxlist_data->list, idxlist_data->num_indices * sizeof(*indices));
 }
