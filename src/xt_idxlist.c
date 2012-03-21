@@ -64,19 +64,6 @@ struct xt_idxset *xt_idxlist_new(int* idxlist, unsigned num_indices) {
    memcpy(idxlist_data->list, idxlist, list_size);
    idxlist_data->num_indices = num_indices;
 
-   // sort the list
-   qsort(idxlist_data->list, idxlist_data->num_indices, sizeof(int), compare_int);
-
-   // check for double entries
-   unsigned i;
-   for (i = 1; i < idxlist_data->num_indices; ++i) {
-      if (idxlist_data->list[i] == idxlist_data->list[i-1]) {
-
-         fprintf(stderr, "idxlist_new: found non-unique value in index list\n");
-         exit(EXIT_FAILURE);
-      }
-   };
-
    return (void*)idxlist_data;
 }
 
@@ -172,8 +159,10 @@ xt_idxset idxlist_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
 
       for (i = 0; i < idxlist_a->num_indices; ++i)
          for (j = 0; j < idxlist_b->num_indices; ++j)
-            if (idxlist_a->list[i] == idxlist_b->list[j])
+            if (idxlist_a->list[i] == idxlist_b->list[j]) {
                inter_list->list[inter_list->num_indices++] = idxlist_a->list[i];
+               break;
+            }
 
       if (inter_list->num_indices) {
 
@@ -187,6 +176,11 @@ xt_idxset idxlist_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
          inter_list->list = NULL;
 
       inter_list->vtable = &idxlist_vtable;
+
+      // sort the list
+      qsort(inter_list->list, inter_list->num_indices, sizeof(int), compare_int);
+
+      // \todo remove double entires
 
       return (xt_idxset)inter_list;
 
