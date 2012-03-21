@@ -38,7 +38,7 @@ xt_idxset xt_idxset_unpack(void *buffer, int buffer_size, int *position, MPI_Com
 
    for (i = 0; i < num_unpack_routines; ++i) {
 
-      if (type = xt_idxset_unpack_routines[i].type) {
+      if (type == xt_idxset_unpack_routines[i].type) {
          return xt_idxset_unpack_routines[i].xt_idxset_unpack(buffer, buffer_size,
                                                               position, comm);
          break;
