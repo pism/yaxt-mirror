@@ -15,7 +15,7 @@ xt_idxset xt_idxlist_new(int *idxlist, unsigned num_indices);
 /**
  * TODO: this routine should automatically be registered at idxset
  */
-xt_idxset xt_idxlist_unpack(xt_idxset *buffer, int buffer_size, int *position,
+xt_idxset xt_idxlist_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm);
 
 #endif // XT_IDXLIST_H

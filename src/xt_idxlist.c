@@ -107,7 +107,7 @@ void idxlist_pack(struct xt_idxset *data, void *buffer, int buffer_size,
                             buffer_size, position, comm), comm);
 }
 
-xt_idxset xt_idxlist_unpack(xt_idxset *buffer, int buffer_size, int *position,
+xt_idxset xt_idxlist_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
    struct xt_idxlist *idxlist;

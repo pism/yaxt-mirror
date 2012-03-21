@@ -5,6 +5,7 @@
 #include "yaxt.h"
 #include "xt_idxset.h"
 #include "xt_idxlist.h"
+#include "xt_idxset_unpack.h"
 #include "xt_mpi.h"
 
 void xt_idxset_delete(struct xt_idxset *idxset) {
@@ -31,15 +32,21 @@ xt_idxset xt_idxset_unpack(void *buffer, int buffer_size, int *position, MPI_Com
    mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
                    &type, 1, MPI_CHAR, comm), comm);
 
-   switch(type) {
+   unsigned i;
+   unsigned num_unpack_routines = sizeof(xt_idxset_unpack_routines) /
+                                  sizeof(xt_idxset_unpack_routines[0]);
 
-      case LIST:
-         return xt_idxlist_unpack(buffer, buffer_size, position, comm);
+   for (i = 0; i < num_unpack_routines; ++i) {
+
+      if (type = xt_idxset_unpack_routines[i].type) {
+         return xt_idxset_unpack_routines[i].xt_idxset_unpack(buffer, buffer_size,
+                                                              position, comm);
          break;
-      default:
-         fprintf(stderr, "xt_idxset_unpack: unknown index list type\n");
-         exit(EXIT_FAILURE);
-   };
+      }
+   }
+
+   fprintf(stderr, "xt_idxset_unpack: unknown index set type\n");
+   exit(EXIT_FAILURE);
 }
 
 xt_idxset xt_idxset_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
