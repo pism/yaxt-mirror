@@ -53,3 +53,8 @@ xt_idxset xt_idxset_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
 
    return idxset_a->vtable->get_intersection(idxset_a, idxset_b);
 }
+
+xt_idxset xt_idxset_copy(xt_idxset idxset) {
+
+   return idxset->vtable->copy(idxset);
+}

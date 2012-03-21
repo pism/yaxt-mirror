@@ -14,72 +14,96 @@ int main(void) {
 
    mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
-   int index_list[] = {1,2,3,4,5,6,7};
-   unsigned num_indices = sizeof(index_list) / sizeof(index_list[0]);
+   { // test packing and unpacking of index lists
 
-   xt_idxset idxset;
+      int index_list[] = {1,2,3,4,5,6,7};
+      unsigned num_indices = sizeof(index_list) / sizeof(index_list[0]);
 
-   // create an index list
+      xt_idxset idxset;
 
-   idxset = xt_idxlist_new(index_list, num_indices);
+      // create an index list
 
-   // get the size of the index list
+      idxset = xt_idxlist_new(index_list, num_indices);
 
-   size_t buffer_size;
+      // get the size of the index list
 
-   buffer_size = xt_idxset_get_pack_size(idxset, MPI_COMM_WORLD);
+      size_t buffer_size;
 
-   // allocate send buffers
+      buffer_size = xt_idxset_get_pack_size(idxset, MPI_COMM_WORLD);
 
-   void* send_buffer, * recv_buffer;
+      // allocate send buffers
 
-   send_buffer = malloc(buffer_size);
-   recv_buffer = malloc(buffer_size);
+      void* send_buffer, * recv_buffer;
 
-   // pack the index set
+      send_buffer = malloc(buffer_size);
+      recv_buffer = malloc(buffer_size);
 
-   int position = 0;
+      // pack the index set
 
-   xt_idxset_pack(idxset, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
+      int position = 0;
 
-   // send the buffer
+      xt_idxset_pack(idxset, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
-   int rank;
+      // send the buffer
 
-   mpi_err_handler(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
+      int rank;
 
-   MPI_Request request;
+      mpi_err_handler(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
 
-   mpi_err_handler(MPI_Isend(send_buffer, buffer_size, MPI_PACKED, rank, 0,
-                             MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
-   mpi_err_handler(MPI_Request_free(&request), MPI_COMM_WORLD);
+      MPI_Request request;
 
-   // receive the buffer
+      mpi_err_handler(MPI_Isend(send_buffer, buffer_size, MPI_PACKED, rank, 0,
+                                MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
+      mpi_err_handler(MPI_Request_free(&request), MPI_COMM_WORLD);
 
-   mpi_err_handler(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
-                            MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
+      // receive the buffer
 
-   // unpack the buffer
+      mpi_err_handler(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
+                               MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
 
-   xt_idxset idxset_copy;
+      // unpack the buffer
 
-   position = 0;
-   idxset_copy = xt_idxset_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
+      xt_idxset idxset_copy;
 
-   // compute intersection between the two index sets
+      position = 0;
+      idxset_copy = xt_idxset_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
-   xt_idxset intersection;
-   
-   intersection = xt_idxset_get_intersection(idxset, idxset_copy);
+      // compute intersection between the two index sets
 
-   // clean up
+      xt_idxset intersection;
+      
+      intersection = xt_idxset_get_intersection(idxset, idxset_copy);
 
-   free(send_buffer);
-   free(recv_buffer);
+      // clean up
 
-   xt_idxset_delete(idxset);
-   xt_idxset_delete(idxset_copy);
-   xt_idxset_delete(intersection);
+      free(send_buffer);
+      free(recv_buffer);
+
+      xt_idxset_delete(idxset);
+      xt_idxset_delete(idxset_copy);
+      xt_idxset_delete(intersection);
+   }
+
+   { // test copying of index list
+
+      int index_list[] = {1,2,3,4,5,6,7};
+      unsigned num_indices = sizeof(index_list) / sizeof(index_list[0]);
+
+      xt_idxset idxset, idxset_copy;
+
+      // create an index list
+
+      idxset = xt_idxlist_new(index_list, num_indices);
+
+      // copy the index list
+
+      idxset_copy = xt_idxset_copy(idxset);
+
+      // clean up
+
+      xt_idxset_delete(idxset);
+      xt_idxset_delete(idxset_copy);
+   }
 
    MPI_Finalize();
 

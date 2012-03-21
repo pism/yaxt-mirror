@@ -10,6 +10,7 @@ struct xt_idxset_vtable {
    size_t (*get_pack_size)(xt_idxset, MPI_Comm);
    void (*pack)(xt_idxset, void*, int, int*, MPI_Comm);
    xt_idxset (*get_intersection)(xt_idxset,xt_idxset);
+   xt_idxset (*copy)(xt_idxset);
 };
 
 enum xt_idxset_type {
@@ -92,5 +93,13 @@ xt_idxset xt_idxset_unpack(void* buffer, int buffer_size, int* position, MPI_Com
  * @return             return the intersection of idxset_a and idxset_b
  */
 xt_idxset xt_idxset_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b);
+
+/**
+ * generates a copy of a given index set
+ *
+ * @param[in] idxset index set that is to be copied
+ * @return           returns a copy of the given index set
+ */
+xt_idxset xt_idxset_copy(xt_idxset idxset);
 
 #endif // XT_IDXSET_H

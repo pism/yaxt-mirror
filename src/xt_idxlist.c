@@ -12,11 +12,13 @@ size_t    idxlist_get_pack_size(xt_idxset data, MPI_Comm comm);
 void      idxlist_pack(xt_idxset data, void *buffer, int buffer_size,
                        int *position, MPI_Comm comm);
 xt_idxset idxlist_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b);
+xt_idxset idxlist_copy(xt_idxset idxset);
 
 static struct xt_idxset_vtable idxlist_vtable = {idxlist_delete,
                                                  idxlist_get_pack_size,
                                                  idxlist_pack,
-                                                 idxlist_get_intersection};
+                                                 idxlist_get_intersection,
+                                                 idxlist_copy};
 
 // index list data structure
 
@@ -189,4 +191,13 @@ xt_idxset idxlist_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
       fprintf(stderr, "idxlist_get_intersection: incompatible index set\n");
       exit(EXIT_FAILURE);
    }
+}
+
+xt_idxset idxlist_copy(xt_idxset idxset) {
+
+   struct xt_idxlist *idxlist_data;
+
+   idxlist_data = (struct xt_idxlist *)idxset;
+
+   return xt_idxlist_new(idxlist_data->list, idxlist_data->num_indices);
 }
