@@ -5,7 +5,7 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_idxset.h"
+#include "xt_idxlist.h"
 #include "xt_mpi.h"
 
 int main(void) {
@@ -21,7 +21,7 @@ int main(void) {
 
    // create an index list
 
-   idxset = xt_idxset_new(index_list, num_indices);
+   idxset = xt_idxlist_new(index_list, num_indices);
 
    // get the size of the index list
 

@@ -4,6 +4,7 @@
 
 #include "yaxt.h"
 #include "xt_mpi.h"
+#include "xt_idxlist.h"
 
 int main(void) {
 
@@ -18,7 +19,7 @@ int main(void) {
 
       xt_idxset src_idxset;
 
-      src_idxset = xt_idxset_new(src_index_list, src_num_indices);
+      src_idxset = xt_idxlist_new(src_index_list, src_num_indices);
 
       // destination index set
       int dst_index_list[] = {7,6,5,4,3,2,1};
@@ -26,7 +27,7 @@ int main(void) {
 
       xt_idxset dst_idxset;
 
-      dst_idxset = xt_idxset_new(dst_index_list, dst_num_indices);
+      dst_idxset = xt_idxlist_new(dst_index_list, dst_num_indices);
 
       // test of exchange map
       xt_xmap xmap;

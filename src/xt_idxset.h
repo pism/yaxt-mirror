@@ -3,6 +3,23 @@
 
 #include "yaxt.h"
 
+struct xt_idxset_vtable {
+
+   void  (*delete)(xt_idxset);
+
+   size_t (*get_pack_size)(xt_idxset, MPI_Comm);
+   void (*pack)(xt_idxset, void*, int, int*, MPI_Comm);
+   xt_idxset (*get_intersection)(xt_idxset,xt_idxset);
+};
+
+enum xt_idxset_type {
+   LIST = 1,
+};
+
+struct xt_idxset {
+   struct xt_idxset_vtable *vtable;
+};
+
 /**
  * \file xt_idxset.h
  * \brief index set declaration
