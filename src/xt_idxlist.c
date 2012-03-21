@@ -190,11 +190,8 @@ xt_idxset idxlist_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
 
       return (xt_idxset)inter_list;
 
-   } else {
-
-      fprintf(stderr, "idxlist_get_intersection: incompatible index set\n");
-      exit(EXIT_FAILURE);
-   }
+   } else
+      return NULL;
 }
 
 xt_idxset idxlist_copy(xt_idxset idxset) {

@@ -51,7 +51,35 @@ xt_idxset xt_idxset_unpack(void *buffer, int buffer_size, int *position, MPI_Com
 
 xt_idxset xt_idxset_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
 
-   return idxset_a->vtable->get_intersection(idxset_a, idxset_b);
+   xt_idxset intersection;
+
+   intersection = idxset_a->vtable->get_intersection(idxset_a, idxset_b);
+
+   // if the get_intersection routine was not able to compute the intersection
+   if (intersection == NULL) {
+
+      int num_indices_a, num_indices_b;
+
+      num_indices_a = xt_idxset_get_num_indices(idxset_a);
+      num_indices_b = xt_idxset_get_num_indices(idxset_b);
+
+      int indices_a[num_indices_a], indices_b[num_indices_b];
+
+      xt_idxset_get_indices(idxset_a, indices_a);
+      xt_idxset_get_indices(idxset_b, indices_b);
+
+      xt_idxset idxlist_a, idxlist_b;
+
+      idxlist_a = xt_idxlist_new(indices_a, num_indices_a);
+      idxlist_b = xt_idxlist_new(indices_b, num_indices_b);
+
+      intersection = xt_idxset_get_intersection(idxlist_a, idxlist_b);
+
+      xt_idxset_delete(idxlist_a);
+      xt_idxset_delete(idxlist_b);
+
+      return intersection;
+   }
 }
 
 xt_idxset xt_idxset_copy(xt_idxset idxset) {
