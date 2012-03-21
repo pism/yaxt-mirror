@@ -99,7 +99,7 @@ void idxlist_pack(struct xt_idxset *data, void *buffer, int buffer_size,
                   int *position, MPI_Comm comm) {
 
    struct xt_idxlist *idxlist = (struct xt_idxlist*)data;
-   enum xt_idxset_type type = LIST;
+   char type = LIST;
 
    mpi_err_handler(MPI_Pack(&(type), 1, MPI_CHAR, buffer,
                             buffer_size, position, comm), comm);

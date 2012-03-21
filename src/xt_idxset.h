@@ -14,7 +14,8 @@ struct xt_idxset_vtable {
 };
 
 enum xt_idxset_type {
-   LIST = 1,
+   LIST  = 1,
+   MULTI = 2,
 };
 
 struct xt_idxset {

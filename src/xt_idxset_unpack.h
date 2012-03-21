@@ -3,10 +3,12 @@
 
 #include "xt_idxset.h"
 #include "xt_idxlist.h"
+#include "xt_idxset_multi.h"
 
 struct {
    enum xt_idxset_type type;
    xt_idxset (*xt_idxset_unpack)(void*,int,int*,MPI_Comm);
-} xt_idxset_unpack_routines[] = {{LIST, xt_idxlist_unpack}};
+} xt_idxset_unpack_routines[] = {{LIST, xt_idxlist_unpack},
+                                 {MULTI, xt_idxset_multi_unpack}};
 
 #endif // XT_IDX_UNPACK_H
