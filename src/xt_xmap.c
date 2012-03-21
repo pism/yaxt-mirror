@@ -60,8 +60,8 @@ static void exchange_idxsets(struct xt_xmap * xmap) {
       exit(EXIT_FAILURE);
    }
 
-   mpi_err_handler(MPI_Allgather(send_buffer_header, 3, MPI_INTEGER, recv_buffer_header,
-                                 3 * xmap->comm_size, MPI_INTEGER, xmap->comm),
+   mpi_err_handler(MPI_Allgather(send_buffer_header, 3, MPI_INT, recv_buffer_header,
+                                 3 * xmap->comm_size, MPI_INT, xmap->comm),
                    xmap->comm);
 
    xmap->num_src_idxsets_per_process = malloc(xmap->comm_size * sizeof(*(xmap->num_src_idxsets_per_process)));

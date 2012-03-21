@@ -87,7 +87,7 @@ size_t idxlist_get_pack_size(struct xt_idxset *data, MPI_Comm comm) {
    int size_unsigned, size_int, size_char;
 
    mpi_err_handler(MPI_Pack_size(1, MPI_CHAR, comm, &size_char), comm);
-   mpi_err_handler(MPI_Pack_size(idxlist->num_indices, MPI_INTEGER, comm, &size_int), comm);
+   mpi_err_handler(MPI_Pack_size(idxlist->num_indices, MPI_INT, comm, &size_int), comm);
    mpi_err_handler(MPI_Pack_size(1, MPI_UNSIGNED, comm, &size_unsigned), comm);
 
    return size_unsigned + size_int + size_char;
@@ -103,7 +103,7 @@ void idxlist_pack(struct xt_idxset *data, void *buffer, int buffer_size,
                             buffer_size, position, comm), comm);
    mpi_err_handler(MPI_Pack(&(idxlist->num_indices), 1, MPI_UNSIGNED, buffer,
                             buffer_size, position, comm), comm);
-   mpi_err_handler(MPI_Pack(idxlist->list, idxlist->num_indices, MPI_INTEGER, buffer,
+   mpi_err_handler(MPI_Pack(idxlist->list, idxlist->num_indices, MPI_INT, buffer,
                             buffer_size, position, comm), comm);
 }
 
@@ -130,7 +130,7 @@ xt_idxset xt_idxlist_unpack(void *buffer, int buffer_size, int *position,
    }
 
    mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
-                              idxlist->list, idxlist->num_indices, MPI_INTEGER, comm),comm);
+                              idxlist->list, idxlist->num_indices, MPI_INT, comm),comm);
 
    return (xt_idxset)idxlist;
 }
