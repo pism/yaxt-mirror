@@ -130,62 +130,62 @@ xt_idxset xt_idxlist_unpack(void *buffer, int buffer_size, int *position,
 
 xt_idxset idxlist_get_intersection(xt_idxset idxset_a, xt_idxset idxset_b) {
 
-   // if the index set is a index list
-   if (idxset_b->vtable == &idxlist_vtable) {
 
-      struct xt_idxlist *idxlist_a, *idxlist_b;
+  if (idxset_b->vtable != &idxlist_vtable) return NULL;
 
-      idxlist_a = (struct xt_idxlist*)idxset_a;
-      idxlist_b = (struct xt_idxlist*)idxset_b;
+  // both sets are index lists:
 
-      struct xt_idxlist *inter_list;
+  struct xt_idxlist *idxlist_a, *idxlist_b;
 
-      inter_list = malloc(1 * sizeof(*inter_list));
-      if (inter_list == NULL) {
-         fprintf(stderr, "malloc failed for intersection list\n");
-         exit(EXIT_FAILURE);
+  idxlist_a = (struct xt_idxlist*)idxset_a;
+  idxlist_b = (struct xt_idxlist*)idxset_b;
+
+  struct xt_idxlist *inter_list;
+
+  inter_list = malloc(1 * sizeof(*inter_list));
+  if (inter_list == NULL) {
+    fprintf(stderr, "malloc failed for intersection list\n");
+    exit(EXIT_FAILURE);
+  }
+
+  inter_list->num_indices = 0;
+  inter_list->list =
+    malloc(((idxlist_a->num_indices < idxlist_b->num_indices)?(idxlist_a->num_indices):(idxlist_b->num_indices))
+	   * sizeof(*(inter_list->list)));
+  if (inter_list->list == NULL) {
+    fprintf(stderr, "malloc failed for intersection list list\n");
+    exit(EXIT_FAILURE);
+  }
+
+  unsigned i, j;
+
+  for (i = 0; i < idxlist_a->num_indices; ++i)
+    for (j = 0; j < idxlist_b->num_indices; ++j)
+      if (idxlist_a->list[i] == idxlist_b->list[j]) {
+	inter_list->list[inter_list->num_indices++] = idxlist_a->list[i];
+	break;
       }
 
-      inter_list->num_indices = 0;
-      inter_list->list =
-         malloc(((idxlist_a->num_indices < idxlist_b->num_indices)?(idxlist_a->num_indices):(idxlist_b->num_indices))
-                * sizeof(*(inter_list->list)));
-      if (inter_list->list == NULL) {
-         fprintf(stderr, "malloc failed for intersection list list\n");
-         exit(EXIT_FAILURE);
-      }
+  if (inter_list->num_indices) {
 
-      unsigned i, j;
+    inter_list->list = realloc(inter_list->list,
+			       inter_list->num_indices * sizeof(*(inter_list->list)));
+    if (inter_list->list == NULL) {
+      fprintf(stderr, "malloc failed for intersection list list\n");
+      exit(EXIT_FAILURE);
+    }
+  } else
+    inter_list->list = NULL;
 
-      for (i = 0; i < idxlist_a->num_indices; ++i)
-         for (j = 0; j < idxlist_b->num_indices; ++j)
-            if (idxlist_a->list[i] == idxlist_b->list[j]) {
-               inter_list->list[inter_list->num_indices++] = idxlist_a->list[i];
-               break;
-            }
+  inter_list->vtable = &idxlist_vtable;
 
-      if (inter_list->num_indices) {
+  // sort the list
+  qsort(inter_list->list, inter_list->num_indices, sizeof(int), compare_int);
 
-         inter_list->list = realloc(inter_list->list,
-                                    inter_list->num_indices * sizeof(*(inter_list->list)));
-         if (inter_list->list == NULL) {
-            fprintf(stderr, "malloc failed for intersection list list\n");
-            exit(EXIT_FAILURE);
-         }
-      } else
-         inter_list->list = NULL;
+  // \todo remove double entires
 
-      inter_list->vtable = &idxlist_vtable;
+  return (xt_idxset)inter_list;
 
-      // sort the list
-      qsort(inter_list->list, inter_list->num_indices, sizeof(int), compare_int);
-
-      // \todo remove double entires
-
-      return (xt_idxset)inter_list;
-
-   } else
-      return NULL;
 }
 
 xt_idxset idxlist_copy(xt_idxset idxset) {
