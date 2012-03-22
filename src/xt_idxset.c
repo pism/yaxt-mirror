@@ -25,11 +25,11 @@ void xt_idxset_pack(struct xt_idxset *idxset, void *buffer, int buffer_size,
 
 xt_idxset xt_idxset_unpack(void *buffer, int buffer_size, int *position, MPI_Comm comm) {
 
-   char type;
+   int type;
 
    // unpack the type of the index list to be unpacked
    mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
-                   &type, 1, MPI_CHAR, comm), comm);
+                   &type, 1, MPI_INT, comm), comm);
 
    unsigned i;
    extern struct xt_idxset_unpack_routine_table xt_idxset_unpack_routines[];

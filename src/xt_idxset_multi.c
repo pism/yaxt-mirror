@@ -76,26 +76,26 @@ size_t idxset_multi_get_pack_size(xt_idxset data, MPI_Comm comm) {
 
    struct xt_idxset_multi *multiset = (struct xt_idxset_multi*)data;
 
-   int size_char, size_unsigned;
+   int size_int, size_unsigned;
    size_t size_idxsets = 0;
    unsigned i;
 
-   mpi_err_handler(MPI_Pack_size(1, MPI_CHAR, comm, &size_char), comm);
+   mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int), comm);
    mpi_err_handler(MPI_Pack_size(1, MPI_UNSIGNED, comm, &size_unsigned), comm);
 
    for (i = 0; i < multiset->num_idxsets; ++i)
       size_idxsets += xt_idxset_get_pack_size(multiset->idxsets[i], comm);
 
-   return size_char + size_unsigned + size_idxsets;
+   return size_int + size_unsigned + size_idxsets;
 }
 
 void idxset_multi_pack(xt_idxset data, void *buffer, int buffer_size, int *position,
                        MPI_Comm comm) {
 
    struct xt_idxset_multi *multiset = (struct xt_idxset_multi*)data;
-   char type = MULTI;
+   int type = MULTI;
 
-   mpi_err_handler(MPI_Pack(&(type), 1, MPI_CHAR, buffer,
+   mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
                             buffer_size, position, comm), comm);
    mpi_err_handler(MPI_Pack(&(multiset->num_idxsets), 1, MPI_UNSIGNED, buffer,
                             buffer_size, position, comm), comm);

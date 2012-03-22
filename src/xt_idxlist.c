@@ -77,22 +77,22 @@ size_t idxlist_get_pack_size(struct xt_idxset *data, MPI_Comm comm) {
 
    struct xt_idxlist *idxlist = (struct xt_idxlist*)data;
 
-   int size_unsigned, size_int, size_char;
+   int size_unsigned, size_int, size_int_type;
 
-   mpi_err_handler(MPI_Pack_size(1, MPI_CHAR, comm, &size_char), comm);
+   mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
    mpi_err_handler(MPI_Pack_size(idxlist->num_indices, MPI_INT, comm, &size_int), comm);
    mpi_err_handler(MPI_Pack_size(1, MPI_UNSIGNED, comm, &size_unsigned), comm);
 
-   return size_unsigned + size_int + size_char;
+   return size_unsigned + size_int + size_int_type;
 }
 
 void idxlist_pack(struct xt_idxset *data, void *buffer, int buffer_size,
                   int *position, MPI_Comm comm) {
 
    struct xt_idxlist *idxlist = (struct xt_idxlist*)data;
-   char type = LIST;
+   int type = LIST;
 
-   mpi_err_handler(MPI_Pack(&(type), 1, MPI_CHAR, buffer,
+   mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
                             buffer_size, position, comm), comm);
    mpi_err_handler(MPI_Pack(&(idxlist->num_indices), 1, MPI_UNSIGNED, buffer,
                             buffer_size, position, comm), comm);
