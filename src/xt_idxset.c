@@ -94,5 +94,5 @@ int xt_idxset_get_num_indices(xt_idxset idxset) {
 
 void xt_idxset_get_indices(xt_idxset idxset, int *indices) {
 
-   return idxset->vtable->get_indices(idxset, indices);
+   idxset->vtable->get_indices(idxset, indices);
 }
