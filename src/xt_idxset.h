@@ -24,6 +24,11 @@ struct xt_idxset {
    struct xt_idxset_vtable *vtable;
 };
 
+struct xt_idxset_unpack_routine_table {
+   enum xt_idxset_type type;
+   xt_idxset (*xt_idxset_unpack)(void*,int,int*,MPI_Comm);
+};
+
 /**
  * \file xt_idxset.h
  * \brief index set declaration

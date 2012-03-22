@@ -5,7 +5,6 @@
 #include "yaxt.h"
 #include "xt_idxset.h"
 #include "xt_idxlist.h"
-#include "xt_idxset_unpack.h"
 #include "xt_mpi.h"
 
 void xt_idxset_delete(struct xt_idxset *idxset) {
@@ -33,10 +32,10 @@ xt_idxset xt_idxset_unpack(void *buffer, int buffer_size, int *position, MPI_Com
                    &type, 1, MPI_CHAR, comm), comm);
 
    unsigned i;
-   unsigned num_unpack_routines = sizeof(xt_idxset_unpack_routines) /
-                                  sizeof(xt_idxset_unpack_routines[0]);
+   extern struct xt_idxset_unpack_routine_table xt_idxset_unpack_routines[];
+   extern unsigned xt_num_unpack_routines;
 
-   for (i = 0; i < num_unpack_routines; ++i) {
+   for (i = 0; i < xt_num_unpack_routines; ++i) {
 
       if (type == xt_idxset_unpack_routines[i].type) {
          return xt_idxset_unpack_routines[i].xt_idxset_unpack(buffer, buffer_size,
