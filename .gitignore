@@ -1,2 +1,11 @@
 doc/html/
 *.x
+Makefile.in
+/configure
+/config/config.guess
+/config/config.sub
+/config/depcomp
+/config/install-sh
+/config/missing
+/aclocal.m4
+/autom4te.cache
