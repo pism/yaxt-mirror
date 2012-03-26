@@ -1,6 +1,7 @@
 #ifndef XT_IDXSET_H
 #define XT_IDXSET_H
 
+#include <stdlib.h>
 #include "yaxt.h"
 
 struct xt_idxset_vtable {
