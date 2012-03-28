@@ -3,7 +3,7 @@
 
 #include "mpi.h"
 
-typedef struct xt_idxset* xt_idxset;
+typedef struct xt_idxvec* xt_idxvec;
 typedef struct xt_xmap* xt_xmap;
 
 /**
@@ -19,31 +19,31 @@ typedef struct xt_xmap* xt_xmap;
  * @param[in] idxlist     array containing the global indices of points
  *                        that are available locally
  * @param[in] num_indices number of indices in idxlist
- * @return                returns a xt_idxset
+ * @return                returns a xt_idxvec
  *
  * \remark idxlist is only allowed to contain unique indices.
  */
-xt_idxset xt_idxset_new(int* idxlist, unsigned num_indices);
+xt_idxvec xt_idxvec_new(int* idxlist, unsigned num_indices);
 
 /**
  * destructor for an index list
  *
- * @param[in] idxset index set that is to be destructed
+ * @param[in] idxvec index vector that is to be destroyed
  */
-void xt_idxset_delete(xt_idxset idxset);
+void xt_idxvec_delete(xt_idxvec idxvec);
 
 
 /**
  * constructor for an exchange map \n
  * this operation is collective over all processes in comm
  *
- * @param[in] src_idxset source index set
- * @param[in] dst_idxset destination index set
+ * @param[in] src_idxvec source index vector
+ * @param[in] dst_idxvec destination index vector
  * @param[in] comm       MPI communicator that contains all processes
  *                       that part in the exchange (xt_xmap_new will
  *                       make its of copy of comm)
  */
-xt_xmap xt_xmap_new(xt_idxset src_idxset, xt_idxset dst_idxset, MPI_Comm comm);
+xt_xmap xt_xmap_new(xt_idxvec src_idxvec, xt_idxvec dst_idxvec, MPI_Comm comm);
 
 /**
  * destructor for an exchange map

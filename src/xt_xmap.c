@@ -4,42 +4,42 @@
 
 #include "mpi.h"
 
-#include "xt_idxset.h"
+#include "xt_idxvec.h"
 #include "xt_xmap.h"
 #include "xt_mpi.h"
 
 struct xt_xmap {
 
-   xt_idxset src_idxset_local, dst_idxset_local;
+   xt_idxvec src_idxvec_local, dst_idxvec_local;
 
-   xt_idxset *src_idxsets_all, *dst_idxsets_all;
+   xt_idxvec *src_idxvecs_all, *dst_idxvecs_all;
 
    MPI_Comm comm;
    int comm_size;
 };
 
-static void exchange_idxsets(struct xt_xmap * xmap) {
+static void exchange_idxvecs(struct xt_xmap * xmap) {
 
    unsigned i, j;
 
-   // compute size of local index sets
+   // compute size of local index vectors
    size_t send_buffer_size;
-   send_buffer_size  = xt_idxset_get_pack_size(xmap->src_idxset_local, xmap->comm);
-   send_buffer_size += xt_idxset_get_pack_size(xmap->dst_idxset_local, xmap->comm);
+   send_buffer_size  = xt_idxvec_get_pack_size(xmap->src_idxvec_local, xmap->comm);
+   send_buffer_size += xt_idxvec_get_pack_size(xmap->dst_idxvec_local, xmap->comm);
 
    void * send_buffer;
 
    send_buffer = malloc(send_buffer_size);
    if (send_buffer == NULL) {
-      fprintf(stderr, "malloc failed for send buffer of index set exchange\n");
+      fprintf(stderr, "malloc failed for send buffer of index vector exchange\n");
       exit(EXIT_FAILURE);
    }
 
-   // pack local index sets
+   // pack local index vectors
    int position = 0;
-   xt_idxset_pack(xmap->src_idxset_local, send_buffer, send_buffer_size, &position,
+   xt_idxvec_pack(xmap->src_idxvec_local, send_buffer, send_buffer_size, &position,
                   xmap->comm);
-   xt_idxset_pack(xmap->dst_idxset_local, send_buffer, send_buffer_size, &position,
+   xt_idxvec_pack(xmap->dst_idxvec_local, send_buffer, send_buffer_size, &position,
                   xmap->comm);
 
    // exchange buffer sizes
@@ -48,7 +48,7 @@ static void exchange_idxsets(struct xt_xmap * xmap) {
 
    recv_buffer_header = malloc(xmap->comm_size * sizeof(*recv_buffer_header));
    if (recv_buffer_header == NULL) {
-      fprintf(stderr, "malloc failed for receive buffer header of index set exchange\n");
+      fprintf(stderr, "malloc failed for receive buffer header of index vector exchange\n");
       exit(EXIT_FAILURE);
    }
 
@@ -61,7 +61,7 @@ static void exchange_idxsets(struct xt_xmap * xmap) {
 
    displ = malloc(xmap->comm_size * sizeof(*displ));
    if (displ == NULL) {
-      fprintf(stderr, "malloc failed for displacment of index set exchange\n");
+      fprintf(stderr, "malloc failed for displacment of index vector exchange\n");
       exit(EXIT_FAILURE);
    }
 
@@ -73,7 +73,7 @@ static void exchange_idxsets(struct xt_xmap * xmap) {
 
    recv_buffer = malloc(recv_buffer_size);
    if (recv_buffer == NULL) {
-      fprintf(stderr, "malloc failed for receive buffer of index set exchange\n");
+      fprintf(stderr, "malloc failed for receive buffer of index vector exchange\n");
       exit(EXIT_FAILURE);
    }
 
@@ -82,24 +82,24 @@ static void exchange_idxsets(struct xt_xmap * xmap) {
                                   recv_buffer, recv_buffer_header, displ, MPI_PACKED,
                                   xmap->comm), xmap->comm);
 
-   xmap->src_idxsets_all = malloc(xmap->comm_size * sizeof(*(xmap->src_idxsets_all)));
-   if (xmap->src_idxsets_all == NULL) {
-      fprintf(stderr, "malloc failed for source index sets all of index set exchange\n");
+   xmap->src_idxvecs_all = malloc(xmap->comm_size * sizeof(*(xmap->src_idxvecs_all)));
+   if (xmap->src_idxvecs_all == NULL) {
+      fprintf(stderr, "malloc failed for source index vectors all of index vector exchange\n");
       exit(EXIT_FAILURE);
    }
 
-   xmap->dst_idxsets_all = malloc(xmap->comm_size * sizeof(*(xmap->dst_idxsets_all)));
-   if (xmap->dst_idxsets_all == NULL) {
-      fprintf(stderr, "malloc failed for destination index sets all of index set exchange\n");
+   xmap->dst_idxvecs_all = malloc(xmap->comm_size * sizeof(*(xmap->dst_idxvecs_all)));
+   if (xmap->dst_idxvecs_all == NULL) {
+      fprintf(stderr, "malloc failed for destination index vectors all of index vector exchange\n");
       exit(EXIT_FAILURE);
    }
 
    // unpack buffers
    for (i = 0, position = 0; i < xmap->comm_size; ++i) {
 
-      xmap->src_idxsets_all[i] = xt_idxset_unpack(recv_buffer, recv_buffer_size,
+      xmap->src_idxvecs_all[i] = xt_idxvec_unpack(recv_buffer, recv_buffer_size,
                                                   &position, xmap->comm);
-      xmap->dst_idxsets_all[i] = xt_idxset_unpack(recv_buffer, recv_buffer_size,
+      xmap->dst_idxvecs_all[i] = xt_idxvec_unpack(recv_buffer, recv_buffer_size,
                                                   &position, xmap->comm);
    }
 
@@ -111,7 +111,7 @@ static void exchange_idxsets(struct xt_xmap * xmap) {
 }
 
 struct xt_xmap*
-xt_xmap_new(xt_idxset src_idxset, xt_idxset dst_idxset, MPI_Comm comm) {
+xt_xmap_new(xt_idxvec src_idxvec, xt_idxvec dst_idxvec, MPI_Comm comm) {
 
    struct xt_xmap * xmap;
 
@@ -121,14 +121,14 @@ xt_xmap_new(xt_idxset src_idxset, xt_idxset dst_idxset, MPI_Comm comm) {
       exit(EXIT_FAILURE);
    }
 
-   xmap->src_idxset_local = xt_idxset_copy(src_idxset);
-   xmap->dst_idxset_local = xt_idxset_copy(dst_idxset);
+   xmap->src_idxvec_local = xt_idxvec_copy(src_idxvec);
+   xmap->dst_idxvec_local = xt_idxvec_copy(dst_idxvec);
 
    mpi_err_handler(MPI_Comm_dup(comm, &(xmap->comm)), comm);
    mpi_err_handler(MPI_Comm_size(xmap->comm, &(xmap->comm_size)), xmap->comm);
 
-   // exchange index sets between all processes in comm
-   exchange_idxsets(xmap);
+   // exchange index vectors between all processes in comm
+   exchange_idxvecs(xmap);
 
    return xmap;
 }
@@ -139,12 +139,12 @@ void xt_xmap_delete(xt_xmap xmap) {
 
    for (i = 0; i < xmap->comm_size; ++i) {
 
-      xt_idxset_delete(xmap->src_idxsets_all[i]);
-      xt_idxset_delete(xmap->dst_idxsets_all[i]);
+      xt_idxvec_delete(xmap->src_idxvecs_all[i]);
+      xt_idxvec_delete(xmap->dst_idxvecs_all[i]);
    }
 
-   free(xmap->src_idxsets_all);
-   free(xmap->dst_idxsets_all);
+   free(xmap->src_idxvecs_all);
+   free(xmap->dst_idxvecs_all);
 
    mpi_err_handler(MPI_Comm_free(&(xmap->comm)), MPI_COMM_WORLD);
    free(xmap);
