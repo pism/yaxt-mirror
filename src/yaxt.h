@@ -3,8 +3,10 @@
 
 #include "mpi.h"
 
-typedef struct xt_idxvec* xt_idxvec;
-typedef struct xt_xmap* xt_xmap;
+typedef int Xt_idx;
+
+typedef struct xt_idxvec *xt_idxvec;
+typedef struct xt_xmap *xt_xmap;
 
 /**
  * \file yaxt.h
