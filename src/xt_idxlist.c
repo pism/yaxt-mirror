@@ -239,5 +239,6 @@ idxlist_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
 
    idxlist_data = (struct xt_idxlist *)idxvec;
 
-   memcpy(indices, idxlist_data->list, idxlist_data->num_indices * sizeof(*indices));
+   memcpy(indices, idxlist_data->list,
+          idxlist_data->num_indices * sizeof(*indices));
 }
