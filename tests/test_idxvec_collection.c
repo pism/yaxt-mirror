@@ -19,8 +19,8 @@ int main(void) {
 
    { // test packing and unpacking of collection index vectors
 
-      int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-      unsigned num_indices = 7;
+      Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
+      size_t num_indices = 7;
 
       xt_idxvec idxvecs[2];
 
@@ -97,8 +97,8 @@ int main(void) {
 
    { // test copying of collection index vectors
 
-      int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-      unsigned num_indices = 7;
+      Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
+      size_t num_indices = 7;
 
       xt_idxvec idxvecs[2];
 
@@ -125,8 +125,8 @@ int main(void) {
 
    { // test get_num_indices and get_indices
 
-      int index_list[2][4] = {{1,2,3,4},{5,6,7,8}};
-      unsigned num_indices = 4;
+      Xt_idx index_list[2][4] = {{1,2,3,4},{5,6,7,8}};
+      size_t num_indices = 4;
 
       xt_idxvec idxvecs[2];
 
@@ -146,8 +146,8 @@ int main(void) {
       if (xt_idxvec_get_num_indices(collectionvector) != 2 * num_indices)
          PUT_ERR("error in xt_idxvec_get_num_indices\n");
 
-      unsigned i;
-      int indices[2*num_indices];
+      size_t i;
+      Xt_idx indices[2*num_indices];
 
       xt_idxvec_get_indices(collectionvector, indices);
 

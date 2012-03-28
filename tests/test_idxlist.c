@@ -18,8 +18,8 @@ int main(void) {
 
    { // test packing and unpacking of index lists
 
-      int index_list[] = {1,2,3,4,5,6,7};
-      unsigned num_indices = sizeof(index_list) / sizeof(index_list[0]);
+      Xt_idx index_list[] = {1,2,3,4,5,6,7};
+      size_t num_indices = sizeof(index_list) / sizeof(index_list[0]);
 
       xt_idxvec idxvec;
 
@@ -88,8 +88,8 @@ int main(void) {
 
    { // test copying of index list
 
-      int index_list[] = {1,2,3,4,5,6,7};
-      unsigned num_indices = sizeof(index_list) / sizeof(index_list[0]);
+      Xt_idx index_list[] = {1,2,3,4,5,6,7};
+      size_t num_indices = sizeof(index_list) / sizeof(index_list[0]);
 
       xt_idxvec idxvec, idxvec_copy;
 
@@ -109,8 +109,8 @@ int main(void) {
 
    { // test get_num_indices and get_indices
 
-      int index_list[] = {1,2,3,4,5,6,7};
-      unsigned num_indices = sizeof(index_list) / sizeof(index_list[0]);
+      Xt_idx index_list[] = {1,2,3,4,5,6,7};
+      size_t num_indices = sizeof(index_list) / sizeof(index_list[0]);
 
       xt_idxvec idxvec;
 
@@ -124,7 +124,7 @@ int main(void) {
          PUT_ERR("error in xt_idxvec_get_num_indices\n");
 
       unsigned i;
-      int indices[num_indices];
+      Xt_idx indices[num_indices];
 
       xt_idxvec_get_indices(idxvec, indices);
 

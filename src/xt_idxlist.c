@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,16 +9,29 @@
 #include "xt_idxlist.h"
 #include "xt_mpi.h"
 
-void      idxlist_delete(xt_idxvec data);
-size_t    idxlist_get_pack_size(xt_idxvec data, MPI_Comm comm);
-void      idxlist_pack(xt_idxvec data, void *buffer, int buffer_size,
-                       int *position, MPI_Comm comm);
-xt_idxvec idxlist_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b);
-xt_idxvec idxlist_copy(xt_idxvec idxvec);
-int       idxlist_get_num_indices(xt_idxvec idxvec);
-void      idxlist_get_indices(xt_idxvec idxvec, int *indices);
+static void
+idxlist_delete(xt_idxvec data);
 
-static struct xt_idxvec_vtable idxlist_vtable = {idxlist_delete,
+static size_t
+idxlist_get_pack_size(xt_idxvec data, MPI_Comm comm);
+
+static void
+idxlist_pack(xt_idxvec data, void *buffer, int buffer_size,
+             int *position, MPI_Comm comm);
+
+static xt_idxvec
+idxlist_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b);
+
+static xt_idxvec
+idxlist_copy(xt_idxvec idxvec);
+
+static size_t
+idxlist_get_num_indices(xt_idxvec idxvec);
+
+static void
+idxlist_get_indices(xt_idxvec idxvec, Xt_idx *indices);
+
+static const struct xt_idxvec_vtable idxlist_vtable = {idxlist_delete,
                                                  idxlist_get_pack_size,
                                                  idxlist_pack,
                                                  idxlist_get_intersection,
@@ -28,18 +43,18 @@ static struct xt_idxvec_vtable idxlist_vtable = {idxlist_delete,
 
 struct xt_idxlist {
 
-   struct xt_idxvec_vtable *vtable;
+   const struct xt_idxvec_vtable *vtable;
 
-   int *list;
-   unsigned num_indices;
+   Xt_idx *list;
+   size_t num_indices;
 };
 
-static int compare_int (const void * a, const void * b)
+static int compare_xtidx(const void * a, const void * b)
 {
-  return ( *(int*)a - *(int*)b );
+  return (*(Xt_idx*)a > *(Xt_idx*)b) - (*(Xt_idx*)a < *(Xt_idx*)b);
 }
 
-struct xt_idxvec *xt_idxlist_new(int* idxlist, unsigned num_indices) {
+struct xt_idxvec *xt_idxlist_new(Xt_idx *idxlist, size_t num_indices) {
 
    struct xt_idxlist *idxlist_data;
 
@@ -67,21 +82,22 @@ struct xt_idxvec *xt_idxlist_new(int* idxlist, unsigned num_indices) {
    return (void*)idxlist_data;
 }
 
-void idxlist_delete(struct xt_idxvec *data) {
+static void idxlist_delete(struct xt_idxvec *data) {
 
    free(((struct xt_idxlist*)data)->list);
    free(data);
 }
 
-size_t idxlist_get_pack_size(struct xt_idxvec *data, MPI_Comm comm) {
+static size_t idxlist_get_pack_size(struct xt_idxvec *data, MPI_Comm comm) {
 
    struct xt_idxlist *idxlist = (struct xt_idxlist*)data;
 
    int size_unsigned, size_int, size_int_type;
 
    mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-   mpi_err_handler(MPI_Pack_size(idxlist->num_indices, MPI_INT, comm, &size_int), comm);
-   mpi_err_handler(MPI_Pack_size(1, MPI_UNSIGNED, comm, &size_unsigned), comm);
+   mpi_err_handler(MPI_Pack_size(idxlist->num_indices, Xt_idx_dt, comm,
+                                 &size_int), comm);
+   mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_unsigned), comm);
 
    return size_unsigned + size_int + size_int_type;
 }
@@ -89,21 +105,27 @@ size_t idxlist_get_pack_size(struct xt_idxvec *data, MPI_Comm comm) {
 void idxlist_pack(struct xt_idxvec *data, void *buffer, int buffer_size,
                   int *position, MPI_Comm comm) {
 
-   struct xt_idxlist *idxlist = (struct xt_idxlist*)data;
-   int type = LIST;
+  assert(data);
+  struct xt_idxlist *idxlist = (struct xt_idxlist*)data;
+  int type = LIST;
+  int num_indices = (int)(idxlist->num_indices);
 
-   mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
-                            buffer_size, position, comm), comm);
-   mpi_err_handler(MPI_Pack(&(idxlist->num_indices), 1, MPI_UNSIGNED, buffer,
-                            buffer_size, position, comm), comm);
-   mpi_err_handler(MPI_Pack(idxlist->list, idxlist->num_indices, MPI_INT, buffer,
-                            buffer_size, position, comm), comm);
+  assert(idxlist->num_indices <= INT_MAX);
+
+  mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
+                           buffer_size, position, comm), comm);
+  mpi_err_handler(MPI_Pack(&num_indices, 1, MPI_INT, buffer,
+                           buffer_size, position, comm), comm);
+  mpi_err_handler(MPI_Pack(idxlist->list, (int)idxlist->num_indices,
+                           Xt_idx_dt, buffer,
+                           buffer_size, position, comm), comm);
 }
 
 xt_idxvec xt_idxlist_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
    struct xt_idxlist *idxlist;
+   int num_indices;
 
    idxlist = malloc(1 * sizeof(*idxlist));
    if (idxlist == NULL) {
@@ -114,7 +136,9 @@ xt_idxvec xt_idxlist_unpack(void *buffer, int buffer_size, int *position,
    idxlist->vtable = &idxlist_vtable;
 
    mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
-                              &(idxlist->num_indices), 1, MPI_UNSIGNED, comm), comm);
+                              &num_indices, 1, MPI_INT, comm), comm);
+   assert(num_indices >= 0);
+   idxlist->num_indices = (size_t)num_indices;
 
    idxlist->list = malloc(idxlist->num_indices * sizeof(*(idxlist->list)));
    if (idxlist->list == NULL) {
@@ -123,12 +147,14 @@ xt_idxvec xt_idxlist_unpack(void *buffer, int buffer_size, int *position,
    }
 
    mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
-                              idxlist->list, idxlist->num_indices, MPI_INT, comm),comm);
+                              idxlist->list, idxlist->num_indices,
+                              Xt_idx_dt, comm),comm);
 
    return (xt_idxvec)idxlist;
 }
 
-xt_idxvec idxlist_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b) {
+static xt_idxvec
+idxlist_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b) {
 
 
   if (idxvec_b->vtable != &idxlist_vtable) return NULL;
@@ -157,7 +183,7 @@ xt_idxvec idxlist_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b) {
     exit(EXIT_FAILURE);
   }
 
-  unsigned i, j;
+  size_t i, j;
 
   for (i = 0; i < idxlist_a->num_indices; ++i)
     for (j = 0; j < idxlist_b->num_indices; ++j)
@@ -180,7 +206,7 @@ xt_idxvec idxlist_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b) {
   inter_list->vtable = &idxlist_vtable;
 
   // sort the list
-  qsort(inter_list->list, inter_list->num_indices, sizeof(int), compare_int);
+  qsort(inter_list->list, inter_list->num_indices, sizeof(int), compare_xtidx);
 
   // \todo remove double entires
 
@@ -188,7 +214,8 @@ xt_idxvec idxlist_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b) {
 
 }
 
-xt_idxvec idxlist_copy(xt_idxvec idxvec) {
+static xt_idxvec
+idxlist_copy(xt_idxvec idxvec) {
 
    struct xt_idxlist *idxlist_data;
 
@@ -197,7 +224,8 @@ xt_idxvec idxlist_copy(xt_idxvec idxvec) {
    return xt_idxlist_new(idxlist_data->list, idxlist_data->num_indices);
 }
 
-int idxlist_get_num_indices(xt_idxvec idxvec) {
+static size_t
+idxlist_get_num_indices(xt_idxvec idxvec) {
 
    struct xt_idxlist *idxlist_data;
 
@@ -206,7 +234,8 @@ int idxlist_get_num_indices(xt_idxvec idxvec) {
    return idxlist_data->num_indices;
 }
 
-void idxlist_get_indices(xt_idxvec idxvec, int *indices) {
+static void
+idxlist_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
 
    struct xt_idxlist *idxlist_data;
 

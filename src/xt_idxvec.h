@@ -12,8 +12,8 @@ struct xt_idxvec_vtable {
    void (*pack)(xt_idxvec, void*, int, int*, MPI_Comm);
    xt_idxvec (*get_intersection)(xt_idxvec,xt_idxvec);
    xt_idxvec (*copy)(xt_idxvec);
-   int (*get_num_indices)(xt_idxvec);
-   void (*get_indices)(xt_idxvec, int*);
+   size_t (*get_num_indices)(xt_idxvec);
+   void (*get_indices)(xt_idxvec, Xt_idx *indices);
 };
 
 enum xt_idxvec_type {
@@ -36,7 +36,7 @@ struct xt_idxvec_unpack_routine_table {
  *
  * contains declaration for the index vector data type
  */
- 
+
 /**
  * computes the buffer size in byte that is required to pack the given
  * index list using MPI_Pack
@@ -125,6 +125,6 @@ int xt_idxvec_get_num_indices(xt_idxvec idxvec);
   * @param[in]     idxvec  index vector for which the indices are to be returned
   * @param[in,out] indices array into which the indices are written
   */
-void xt_idxvec_get_indices(xt_idxvec idxvec, int *indices);
+void xt_idxvec_get_indices(xt_idxvec idxvec, Xt_idx *indices);
 
 #endif // XT_IDXVEC_H

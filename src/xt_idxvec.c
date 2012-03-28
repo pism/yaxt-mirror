@@ -91,7 +91,7 @@ int xt_idxvec_get_num_indices(xt_idxvec idxvec) {
    return idxvec->vtable->get_num_indices(idxvec);
 }
 
-void xt_idxvec_get_indices(xt_idxvec idxvec, int *indices) {
+void xt_idxvec_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
 
    idxvec->vtable->get_indices(idxvec, indices);
 }

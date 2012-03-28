@@ -4,6 +4,7 @@
 #include "mpi.h"
 
 typedef int Xt_idx;
+#define Xt_idx_dt (MPI_INT)
 
 typedef struct xt_idxvec *xt_idxvec;
 typedef struct xt_xmap *xt_xmap;

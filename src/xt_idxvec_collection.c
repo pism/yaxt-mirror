@@ -8,16 +8,29 @@
 #include "xt_idxvec_collection.h"
 #include "xt_mpi.h"
 
-void      idxvec_collection_delete(xt_idxvec data);
-size_t    idxvec_collection_get_pack_size(xt_idxvec data, MPI_Comm comm);
-void      idxvec_collection_pack(xt_idxvec data, void *buffer, int buffer_size,
-                                 int *position, MPI_Comm comm);
-xt_idxvec idxvec_collection_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b);
-xt_idxvec idxvec_collection_copy(xt_idxvec idxvec);
-int       idxvec_collection_get_num_indices(xt_idxvec idxvec);
-void      idxvec_collection_get_indices(xt_idxvec idxvec, int *indices);
+static void
+idxvec_collection_delete(xt_idxvec data);
 
-static struct xt_idxvec_vtable idxvec_collection_vtable = 
+static size_t
+idxvec_collection_get_pack_size(xt_idxvec data, MPI_Comm comm);
+
+static void
+idxvec_collection_pack(xt_idxvec data, void *buffer, int buffer_size,
+                       int *position, MPI_Comm comm);
+
+static xt_idxvec
+idxvec_collection_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b);
+
+static xt_idxvec
+idxvec_collection_copy(xt_idxvec idxvec);
+
+static size_t
+idxvec_collection_get_num_indices(xt_idxvec idxvec);
+
+static void
+idxvec_collection_get_indices(xt_idxvec idxvec, Xt_idx *indices);
+
+static const struct xt_idxvec_vtable idxvec_collection_vtable =
       {idxvec_collection_delete,
        idxvec_collection_get_pack_size,
        idxvec_collection_pack,
@@ -28,7 +41,7 @@ static struct xt_idxvec_vtable idxvec_collection_vtable =
 
 struct xt_idxvec_collection {
 
-   struct xt_idxvec_vtable *vtable;
+   const struct xt_idxvec_vtable *vtable;
 
    xt_idxvec * idxvecs;
    unsigned num_idxvecs;
@@ -175,7 +188,8 @@ xt_idxvec idxvec_collection_copy(xt_idxvec idxvec) {
    return xt_idxvec_collection_new(collectionvector->idxvecs, collectionvector->num_idxvecs);
 }
 
-int idxvec_collection_get_num_indices(xt_idxvec idxvec) {
+static size_t
+idxvec_collection_get_num_indices(xt_idxvec idxvec) {
 
    struct xt_idxvec_collection *collectionvector = (struct xt_idxvec_collection*)idxvec;
 
@@ -188,7 +202,8 @@ int idxvec_collection_get_num_indices(xt_idxvec idxvec) {
    return num_indices;
 }
 
-void idxvec_collection_get_indices(xt_idxvec idxvec, int *indices) {
+static void
+idxvec_collection_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
 
    struct xt_idxvec_collection *collectionvector = (struct xt_idxvec_collection*)idxvec;
 
