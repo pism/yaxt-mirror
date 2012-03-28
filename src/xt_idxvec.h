@@ -97,11 +97,14 @@ xt_idxvec xt_idxvec_unpack(void* buffer, int buffer_size, int* position, MPI_Com
 /**
  * computes the intersection between two index vectors
  *
- * @param[in] idxvec_a index vector a
- * @param[in] idxvec_b index vector b
+ * @param[in] idxvec_src index vector for sender
+ * @param[in] idxvec_dst index vector for receiver
  * @return             return the intersection of idxvec_a and idxvec_b
+ * @remark duplicate elements i in the receiver vector will result in
+ * duplicate elements in the intersection if idxvec_src contains i
  */
-xt_idxvec xt_idxvec_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b);
+xt_idxvec
+xt_idxvec_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst);
 
 /**
  * generates a copy of a given index vector

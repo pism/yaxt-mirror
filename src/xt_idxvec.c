@@ -48,34 +48,38 @@ xt_idxvec xt_idxvec_unpack(void *buffer, int buffer_size, int *position, MPI_Com
    exit(EXIT_FAILURE);
 }
 
-xt_idxvec xt_idxvec_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b) {
+xt_idxvec xt_idxvec_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst) {
 
    xt_idxvec intersection;
 
-   intersection = idxvec_a->vtable->get_intersection(idxvec_a, idxvec_b);
+   intersection = idxvec_src->vtable->get_intersection(idxvec_src, idxvec_dst);
 
    // if the get_intersection routine was not able to compute the intersection
    if (intersection == NULL) {
 
-      int num_indices_a, num_indices_b;
+      size_t num_indices_src, num_indices_dst;
 
-      num_indices_a = xt_idxvec_get_num_indices(idxvec_a);
-      num_indices_b = xt_idxvec_get_num_indices(idxvec_b);
+      num_indices_src = xt_idxvec_get_num_indices(idxvec_src);
+      num_indices_dst = xt_idxvec_get_num_indices(idxvec_dst);
 
-      int indices_a[num_indices_a], indices_b[num_indices_b];
+      Xt_idx *indices_src, *indices_dst;
+      indices_src = malloc(num_indices_src * sizeof (indices_src[0]));
+      indices_dst = malloc(num_indices_dst * sizeof (indices_dst[0]));
 
-      xt_idxvec_get_indices(idxvec_a, indices_a);
-      xt_idxvec_get_indices(idxvec_b, indices_b);
+      xt_idxvec_get_indices(idxvec_src, indices_src);
+      xt_idxvec_get_indices(idxvec_dst, indices_dst);
 
-      xt_idxvec idxlist_a, idxlist_b;
+      xt_idxvec idxlist_src, idxlist_dst;
 
-      idxlist_a = xt_idxlist_new(indices_a, num_indices_a);
-      idxlist_b = xt_idxlist_new(indices_b, num_indices_b);
+      idxlist_src = xt_idxlist_new(indices_src, num_indices_src);
+      idxlist_dst = xt_idxlist_new(indices_dst, num_indices_dst);
 
-      intersection = xt_idxvec_get_intersection(idxlist_a, idxlist_b);
+      intersection = xt_idxvec_get_intersection(idxlist_src, idxlist_dst);
 
-      xt_idxvec_delete(idxlist_a);
-      xt_idxvec_delete(idxlist_b);
+      xt_idxvec_delete(idxlist_src);
+      xt_idxvec_delete(idxlist_dst);
+      free(indices_dst);
+      free(indices_src);
 
       return intersection;
    }
