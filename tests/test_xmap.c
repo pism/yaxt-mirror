@@ -14,7 +14,7 @@ int main(void) {
 
    {
       // source index vector
-      int src_index_list[] = {1,2,3,4,5,6,7};
+      Xt_idx src_index_list[] = {1,2,3,4,5,6,7};
       unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
       xt_idxvec src_idxvec;
@@ -22,7 +22,7 @@ int main(void) {
       src_idxvec = xt_idxlist_new(src_index_list, src_num_indices);
 
       // destination index vector
-      int dst_index_list[] = {7,6,5,4,3,2,1};
+      Xt_idx dst_index_list[] = {7,6,5,4,3,2,1};
       unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
       xt_idxvec dst_idxvec;
