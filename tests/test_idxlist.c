@@ -10,6 +10,8 @@
 #include "xt_idxlist.h"
 #include "xt_mpi.h"
 
+void check_idxlist(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices);
+
 int main(void) {
 
    // init mpi
@@ -26,6 +28,10 @@ int main(void) {
       // create an index list
 
       idxvec = xt_idxlist_new(index_list, num_indices);
+
+      // test the generated index vector
+
+      check_idxlist(idxvec, index_list, num_indices);
 
       // get the size of the index list
 
@@ -70,11 +76,21 @@ int main(void) {
       position = 0;
       idxvec_copy = xt_idxvec_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
+      // check the received index vector
+
+      check_idxlist(idxvec_copy, index_list, num_indices);
+
       // compute intersection between the two index vectors
 
       xt_idxvec intersection;
       
       intersection = xt_idxvec_get_intersection(idxvec, idxvec_copy);
+
+      // check the computed intersection (should be identically to the original
+
+      check_idxlist(intersection, index_list, num_indices);
+
+      // index vector)
 
       // clean up
 
@@ -97,9 +113,17 @@ int main(void) {
 
       idxvec = xt_idxlist_new(index_list, num_indices);
 
+      // test the generated index vector
+
+      check_idxlist(idxvec, index_list, num_indices);
+
       // copy the index list
 
       idxvec_copy = xt_idxvec_copy(idxvec);
+
+      // check the generated copy
+
+      check_idxlist(idxvec_copy, index_list, num_indices);
 
       // clean up
 
@@ -107,35 +131,23 @@ int main(void) {
       xt_idxvec_delete(idxvec_copy);
    }
 
-   { // test get_num_indices and get_indices
-
-      Xt_idx index_list[] = {1,2,3,4,5,6,7};
-      size_t num_indices = sizeof(index_list) / sizeof(index_list[0]);
-
-      xt_idxvec idxvec;
-
-      // create an index list
-
-      idxvec = xt_idxlist_new(index_list, num_indices);
-
-      // testing
-
-      if (xt_idxvec_get_num_indices(idxvec) != num_indices)
-         PUT_ERR("error in xt_idxvec_get_num_indices\n");
-
-      unsigned i;
-      Xt_idx indices[num_indices];
-
-      xt_idxvec_get_indices(idxvec, indices);
-
-      for (i = 0; i < num_indices; ++i)
-         if (indices[i] != index_list[i]) {
-            PUT_ERR("error in xt_idxvec_get_indices\n");
-            break;
-         }
-   }
-
    MPI_Finalize();
 
    return TEST_EXIT_CODE;
+}
+
+void check_idxlist(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices) {
+
+   unsigned i;
+
+   if (xt_idxvec_get_num_indices(idxvec) != ref_num_indices)
+      PUT_ERR("wrong number of indices in idxvec\n");
+
+   Xt_idx indices[ref_num_indices];
+
+   xt_idxvec_get_indices(idxvec, indices);
+
+   for (i = 0; i < ref_num_indices; ++i)
+      if (indices[i] != ref_indices[i])
+         PUT_ERR("index vector contains wrong indices\n");
 }
