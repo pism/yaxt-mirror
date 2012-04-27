@@ -9,6 +9,7 @@ typedef int Xt_idx;
 typedef struct xt_idxvec *xt_idxvec;
 typedef struct xt_idxvec *Xt_idxvec;
 typedef struct xt_xmap *xt_xmap;
+typedef struct xt_xmap *Xt_xmap;
 
 /**
  * \file yaxt.h
