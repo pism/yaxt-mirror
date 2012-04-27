@@ -19,7 +19,7 @@ idxvec_collection_pack(xt_idxvec data, void *buffer, int buffer_size,
                        int *position, MPI_Comm comm);
 
 static xt_idxvec
-idxvec_collection_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b);
+idxvec_collection_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst);
 
 static xt_idxvec
 idxvec_collection_copy(xt_idxvec idxvec);
@@ -152,33 +152,9 @@ xt_idxvec xt_idxvec_collection_unpack(void *buffer, int buffer_size, int *positi
    return (xt_idxvec)collectionvector;
 }
 
-xt_idxvec idxvec_collection_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b) {
+xt_idxvec idxvec_collection_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst) {
 
-   struct xt_idxvec_collection *intersection,
-                               *collectionvector = (struct xt_idxvec_collection*)idxvec_a;
-
-   intersection = malloc(1 * sizeof(*collectionvector));
-   if (intersection == NULL) {
-      fprintf(stderr, "malloc failed for intersection\n");
-      exit(EXIT_FAILURE);
-   }
-
-   intersection->vtable = &idxvec_collection_vtable;
-   intersection->num_idxvecs = collectionvector->num_idxvecs;
-   intersection->idxvecs = malloc(collectionvector->num_idxvecs *
-                                  sizeof(*(intersection->idxvecs)));
-   if (intersection->idxvecs == NULL) {
-      fprintf(stderr, "malloc failed for intersection->idxvecs\n");
-      exit(EXIT_FAILURE);
-   }
-
-   unsigned i;
-
-   for (i = 0; i < intersection->num_idxvecs; ++i)
-      intersection->idxvecs[i] = xt_idxvec_get_intersection(collectionvector->idxvecs[i],
-                                                            idxvec_b);
-
-   return (xt_idxvec)intersection;
+   return NULL;
 }
 
 xt_idxvec idxvec_collection_copy(xt_idxvec idxvec) {
