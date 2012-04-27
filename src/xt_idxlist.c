@@ -187,8 +187,8 @@ idxlist_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst) {
   for (j = 0; j < idxlist_dst->num_indices; ++j)
     for (i = 0; i < idxlist_src->num_indices; ++i)
       if (idxlist_src->list[i] == idxlist_dst->list[j]) {
-	inter_list->list[inter_list->num_indices++] = idxlist_src->list[i];
-	break;
+        inter_list->list[inter_list->num_indices++] = idxlist_src->list[i];
+         break;
       }
 
   if (inter_list->num_indices) {
@@ -197,7 +197,8 @@ idxlist_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst) {
     qsort(inter_list->list, inter_list->num_indices,
           sizeof (inter_list->list[0]), compare_xtidx);
     inter_list->list = realloc(inter_list->list,
-			       inter_list->num_indices * sizeof(*(inter_list->list)));
+                               inter_list->num_indices *
+                               sizeof(*(inter_list->list)));
     if (inter_list->list == NULL) {
       fprintf(stderr, "malloc failed for intersection list list\n");
       exit(EXIT_FAILURE);
