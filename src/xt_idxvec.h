@@ -101,7 +101,8 @@ xt_idxvec xt_idxvec_unpack(void* buffer, int buffer_size, int* position, MPI_Com
  * @param[in] idxvec_dst index vector for receiver
  * @return             return the intersection of idxvec_a and idxvec_b
  * @remark duplicate elements i in the receiver vector will result in
- * duplicate elements in the intersection if idxvec_src contains i
+ *         duplicate elements in the intersection if idxvec_src contains i
+ * @remark the elements in the resulting index vector are sorted
  */
 xt_idxvec
 xt_idxvec_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst);
