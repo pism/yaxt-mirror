@@ -99,3 +99,13 @@ void xt_idxvec_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
 
    idxvec->vtable->get_indices(idxvec, indices);
 }
+
+int xt_idxvec_get_index(Xt_idxvec idxvec, int position, Xt_idx * index) {
+
+  return idxvec->vtable->get_index(idxvec, position, index);
+}
+
+int xt_idxvec_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+
+  return idxvec->vtable->get_position_of_index(idxvec, index, position);
+}

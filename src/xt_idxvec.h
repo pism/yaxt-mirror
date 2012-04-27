@@ -14,6 +14,8 @@ struct xt_idxvec_vtable {
    xt_idxvec (*copy)(xt_idxvec);
    size_t (*get_num_indices)(xt_idxvec);
    void (*get_indices)(xt_idxvec, Xt_idx *indices);
+   int (*get_index)(Xt_idxvec, int, Xt_idx *);
+   int (*get_position_of_index)(Xt_idxvec, Xt_idx, int *);
 };
 
 enum xt_idxvec_type {
@@ -123,12 +125,36 @@ xt_idxvec xt_idxvec_copy(xt_idxvec idxvec);
  */
 int xt_idxvec_get_num_indices(xt_idxvec idxvec);
  
- /**
-  * gets the indices stored in an index vector
-  *
-  * @param[in]     idxvec  index vector for which the indices are to be returned
-  * @param[in,out] indices array into which the indices are written
-  */
+/**
+ * gets the indices stored in an index vector
+ *
+ * @param[in]     idxvec  index vector for which the indices are to be returned
+ * @param[in,out] indices array into which the indices are written
+ */
 void xt_idxvec_get_indices(xt_idxvec idxvec, Xt_idx *indices);
+
+/**
+ * gets the index stored at the specified position in an index vector
+ *
+ * @param[in]  idxvec   index vector
+ * @param[in]  position position of the index that is to be retrieved
+ * @param[out] index    index stored in the index vector at the given position
+ * @return              0 if everything was okay
+ *                      1 if the position is out of range
+ */
+
+int xt_idxvec_get_index(Xt_idxvec idxvec, int position, Xt_idx * index);
+
+/**
+ * gets the first position of the first occurrence of the given index
+ * in the stored index vector
+ *
+ * @param[in]  idxvec   index vector in which the given index is to be searched
+ * @param[in]  index    index that is to be searched
+ * @param[out] position position of the first occurrence of index in idxvec
+ * @return              0 if everything was okay
+ *                      1 if the index could not be found in idxvec
+ */
+int xt_idxvec_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position);
 
 #endif // XT_IDXVEC_H

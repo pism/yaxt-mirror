@@ -31,13 +31,21 @@ idxlist_get_num_indices(xt_idxvec idxvec);
 static void
 idxlist_get_indices(xt_idxvec idxvec, Xt_idx *indices);
 
+static int
+idxlist_get_index(Xt_idxvec idxvec, int position, Xt_idx * index);
+
+static int
+idxlist_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position);
+
 static const struct xt_idxvec_vtable idxlist_vtable = {idxlist_delete,
                                                  idxlist_get_pack_size,
                                                  idxlist_pack,
                                                  idxlist_get_intersection,
                                                  idxlist_copy,
                                                  idxlist_get_num_indices,
-                                                 idxlist_get_indices};
+                                                 idxlist_get_indices,
+                                                 idxlist_get_index,
+                                                 idxlist_get_position_of_index};
 
 // index list data structure
 
@@ -242,4 +250,37 @@ idxlist_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
 
    memcpy(indices, idxlist_data->list,
           idxlist_data->num_indices * sizeof(*indices));
+}
+
+static int
+idxlist_get_index(Xt_idxvec idxvec, int position, Xt_idx * index) {
+
+  struct xt_idxlist *idxlist_data;
+
+  idxlist_data = (struct xt_idxlist *)idxvec;
+
+  if (position < 0 || position >= idxlist_data->num_indices)
+    return 1;
+
+  *index = idxlist_data->list[position];
+
+  return 0;
+}
+
+static int
+idxlist_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+
+  struct xt_idxlist *idxlist_data;
+
+  idxlist_data = (struct xt_idxlist *)idxvec;
+
+  size_t i;
+
+  for (i = 0; i < idxlist_data->num_indices; ++i)
+    if (idxlist_data->list[i] == index) {
+      *position = i;
+      return 0;
+    }
+
+  return 1;
 }

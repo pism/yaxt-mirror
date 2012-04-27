@@ -30,6 +30,12 @@ idxvec_collection_get_num_indices(xt_idxvec idxvec);
 static void
 idxvec_collection_get_indices(xt_idxvec idxvec, Xt_idx *indices);
 
+static int
+idxvec_collection_get_index(Xt_idxvec idxvec, int position, Xt_idx * index);
+
+static int
+idxvec_collection_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position);
+
 static const struct xt_idxvec_vtable idxvec_collection_vtable =
       {idxvec_collection_delete,
        idxvec_collection_get_pack_size,
@@ -37,7 +43,9 @@ static const struct xt_idxvec_vtable idxvec_collection_vtable =
        idxvec_collection_get_intersection,
        idxvec_collection_copy,
        idxvec_collection_get_num_indices,
-       idxvec_collection_get_indices};
+       idxvec_collection_get_indices,
+       idxvec_collection_get_index,
+       idxvec_collection_get_position_of_index};
 
 struct xt_idxvec_collection {
 
@@ -191,4 +199,32 @@ idxvec_collection_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
       xt_idxvec_get_indices(collectionvector->idxvecs[i], indices+offvector);
       offvector += xt_idxvec_get_num_indices(collectionvector->idxvecs[i]);
    }
+}
+
+static int
+idxvec_collection_get_index(Xt_idxvec idxvec, int position, Xt_idx * index) {
+
+  struct xt_idxvec_collection *collectionvector = (struct xt_idxvec_collection*)idxvec;
+
+  unsigned i;
+
+  for (i = 0; i < collectionvector->num_idxvecs; ++i)
+    if (!xt_idxvec_get_index(collectionvector->idxvecs[i], position, index))
+      return 0;
+
+  return 1;
+}
+
+static int
+idxvec_collection_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+
+  struct xt_idxvec_collection *collectionvector = (struct xt_idxvec_collection*)idxvec;
+
+  unsigned i;
+
+  for (i = 0; i < collectionvector->num_idxvecs; ++i)
+    if (!xt_idxvec_get_position_of_index(collectionvector->idxvecs[i], index, position))
+      return 0;
+
+  return 1;
 }
