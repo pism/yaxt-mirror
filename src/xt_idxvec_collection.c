@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "mpi.h"
 
@@ -36,6 +37,10 @@ idxvec_collection_get_index(Xt_idxvec idxvec, int position, Xt_idx * index);
 static int
 idxvec_collection_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position);
 
+static int
+idxvec_collection_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+                                            int * position, int offset);
+
 static const struct xt_idxvec_vtable idxvec_collection_vtable =
       {idxvec_collection_delete,
        idxvec_collection_get_pack_size,
@@ -45,7 +50,8 @@ static const struct xt_idxvec_vtable idxvec_collection_vtable =
        idxvec_collection_get_num_indices,
        idxvec_collection_get_indices,
        idxvec_collection_get_index,
-       idxvec_collection_get_position_of_index};
+       idxvec_collection_get_position_of_index,
+       idxvec_collection_get_position_of_index_off};
 
 struct xt_idxvec_collection {
 
@@ -216,15 +222,32 @@ idxvec_collection_get_index(Xt_idxvec idxvec, int position, Xt_idx * index) {
 }
 
 static int
-idxvec_collection_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+idxvec_collection_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+                                            int * position, int offset) {
 
   struct xt_idxvec_collection *collectionvector = (struct xt_idxvec_collection*)idxvec;
 
   unsigned i;
 
-  for (i = 0; i < collectionvector->num_idxvecs; ++i)
-    if (!xt_idxvec_get_position_of_index(collectionvector->idxvecs[i], index, position))
+  assert(offset >= 0);
+
+  i = 0;
+
+  while (offset > xt_idxvec_get_num_indices(collectionvector->idxvecs[i]))
+    offset -= xt_idxvec_get_num_indices(collectionvector->idxvecs[i++]);
+  
+  for (;i < collectionvector->num_idxvecs; ++i)
+    if (!xt_idxvec_get_position_of_index_off(collectionvector->idxvecs[i], index,
+                                             position, offset))
       return 0;
+    else
+      offset = 0;
 
   return 1;
+}
+
+static int
+idxvec_collection_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+
+  return idxvec_collection_get_position_of_index_off(idxvec, index, position, 0);
 }

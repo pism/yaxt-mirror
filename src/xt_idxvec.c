@@ -109,3 +109,9 @@ int xt_idxvec_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * positi
 
   return idxvec->vtable->get_position_of_index(idxvec, index, position);
 }
+
+int xt_idxvec_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+                                        int * position, int offset) {
+
+  return idxvec->vtable->get_position_of_index_off(idxvec, index, position, offset);
+}

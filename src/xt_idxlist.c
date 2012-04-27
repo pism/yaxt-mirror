@@ -37,6 +37,10 @@ idxlist_get_index(Xt_idxvec idxvec, int position, Xt_idx * index);
 static int
 idxlist_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position);
 
+static int
+idxlist_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+                                  int * position, int offset);
+
 static const struct xt_idxvec_vtable idxlist_vtable = {idxlist_delete,
                                                  idxlist_get_pack_size,
                                                  idxlist_pack,
@@ -45,7 +49,8 @@ static const struct xt_idxvec_vtable idxlist_vtable = {idxlist_delete,
                                                  idxlist_get_num_indices,
                                                  idxlist_get_indices,
                                                  idxlist_get_index,
-                                                 idxlist_get_position_of_index};
+                                                 idxlist_get_position_of_index,
+                                                 idxlist_get_position_of_index_off};
 
 // index list data structure
 
@@ -268,7 +273,8 @@ idxlist_get_index(Xt_idxvec idxvec, int position, Xt_idx * index) {
 }
 
 static int
-idxlist_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+idxlist_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+                                  int * position, int offset) {
 
   struct xt_idxlist *idxlist_data;
 
@@ -276,11 +282,19 @@ idxlist_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
 
   size_t i;
 
-  for (i = 0; i < idxlist_data->num_indices; ++i)
+  assert(offset >= 0);
+
+  for (i = offset; i < idxlist_data->num_indices; ++i)
     if (idxlist_data->list[i] == index) {
       *position = i;
       return 0;
     }
 
   return 1;
+}
+
+static int
+idxlist_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+
+  return idxlist_get_position_of_index_off(idxvec, index, position, 0);
 }

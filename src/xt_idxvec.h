@@ -16,6 +16,7 @@ struct xt_idxvec_vtable {
    void (*get_indices)(xt_idxvec, Xt_idx *indices);
    int (*get_index)(Xt_idxvec, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxvec, Xt_idx, int *);
+   int (*get_position_of_index_off)(Xt_idxvec, Xt_idx, int *, int);
 };
 
 enum xt_idxvec_type {
@@ -156,5 +157,20 @@ int xt_idxvec_get_index(Xt_idxvec idxvec, int position, Xt_idx * index);
  *                      1 if the index could not be found in idxvec
  */
 int xt_idxvec_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position);
+
+/**
+ * gets the first position of the first occurrence of the given index
+ * from the given offset in the stored index vector
+ *
+ * @param[in]  idxvec   index vector in which the given index is to be searched
+ * @param[in]  index    index that is to be searched
+ * @param[out] position position of the first occurrence of index in idxvec
+ * @param[in]  offset   offset in the index vector from which on the search
+ *                      is to be conducted
+ * @return              0 if everything was okay
+ *                      1 if the index could not be found in idxvec
+ */
+int xt_idxvec_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+                                        int * position, int offset);
 
 #endif // XT_IDXVEC_H
