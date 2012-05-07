@@ -11,6 +11,8 @@ libyaxt_a_SOURCES = xt_idxlist.c 				\
 	xt_mpi.h						\
 	xt_redist.c						\
 	xt_redist.h						\
+	xt_redist_p2p.c						\
+	xt_redist_p2p.h						\
 	xt_xmap.c						\
 	xt_xmap.h						\
 	yaxt.h
