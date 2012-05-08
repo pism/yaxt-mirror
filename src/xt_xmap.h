@@ -13,12 +13,19 @@
 typedef struct Xt_xmap_iterator *Xt_xmap_iter;
 
 /**
+ * gets the MPI communicator of the exchange map
+ * @param[in] xmap exchange map
+ * @return         MPI communicator of the exchange map
+ */
+MPI_Comm xt_xmap_get_communicator(Xt_xmap xmap);
+
+/**
  * gets the number of processes that will require data from
  * the local process in an exchange operation
  *
  * @param[in] xmap exchange map
- * @return number of prosses that will require data from
- *         the local process in an exchange operation
+ * @return         number of prosses that will require data from
+ *                 the local process in an exchange operation
  */
 int xt_xmap_get_num_destinations(Xt_xmap xmap);
 

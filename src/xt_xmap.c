@@ -30,6 +30,11 @@ struct Xt_xmap_iterator {
   int msgs_left;
 };
 
+MPI_Comm xt_xmap_get_communicator(Xt_xmap xmap) {
+
+  return xmap->comm;
+}
+
 int xt_xmap_get_num_destinations(Xt_xmap xmap) {
 
   return xmap->ndst;
