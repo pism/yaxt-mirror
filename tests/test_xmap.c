@@ -39,6 +39,22 @@ int main(void) {
 
       // test results
 
+      if (xt_xmap_get_num_destinations(xmap) != 1)
+        PUT_ERR("error in xt_xmap_get_num_destinations\n");
+
+      if (xt_xmap_get_num_sources(xmap) != 1)
+        PUT_ERR("error in xt_xmap_get_num_destinations\n");
+
+      int rank;
+
+      xt_xmap_get_destination_ranks(xmap, &rank);
+      if (rank != 0)
+        PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+
+      xt_xmap_get_source_ranks(xmap, &rank);
+      if (rank != 0)
+        PUT_ERR("error in xt_xmap_get_source_ranks\n");
+
       Xt_idxvec src_xlist, dst_xlist;
 
       dst_xlist = xt_xmap_get_dst_xlist(xmap, 0);
@@ -83,6 +99,22 @@ int main(void) {
 
       // the global id intersection should look as follows:
       // 1,1,2,3,3,4,4,4,5,5,5,13,96
+
+      if (xt_xmap_get_num_destinations(xmap) != 1)
+        PUT_ERR("error in xt_xmap_get_num_destinations\n");
+
+      if (xt_xmap_get_num_sources(xmap) != 1)
+        PUT_ERR("error in xt_xmap_get_num_destinations\n");
+
+      int rank;
+
+      xt_xmap_get_destination_ranks(xmap, &rank);
+      if (rank != 0)
+        PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+
+      xt_xmap_get_source_ranks(xmap, &rank);
+      if (rank != 0)
+        PUT_ERR("error in xt_xmap_get_source_ranks\n");
 
       Xt_idxvec src_xlist, dst_xlist;
 

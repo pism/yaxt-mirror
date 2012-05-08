@@ -24,6 +24,38 @@ struct xt_xmap {
   MPI_Comm comm;
 };
 
+struct Xt_xmap_iterator {
+
+  struct exchange_data * msg;
+  int msgs_left;
+};
+
+int xt_xmap_get_num_destinations(Xt_xmap xmap) {
+
+  return xmap->ndst;
+}
+
+int xt_xmap_get_num_sources(Xt_xmap xmap) {
+
+  return xmap->nsrc;
+}
+
+void xt_xmap_get_destination_ranks(Xt_xmap xmap, int * ranks) {
+
+  int i;
+
+  for (i = 0; i < xmap->ndst; ++i)
+    ranks[i] = xmap->dst_msg[i].rank;
+}
+
+void xt_xmap_get_source_ranks(Xt_xmap xmap, int * ranks) {
+
+  int i;
+
+  for (i = 0; i < xmap->nsrc; ++i)
+    ranks[i] = xmap->src_msg[i].rank;
+}
+
 static void exchange_idxvecs(xt_xmap xmap,
                              Xt_idxvec src_idxvec_local,
                              Xt_idxvec dst_idxvec_local)
@@ -352,4 +384,66 @@ Xt_idxvec xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank) {
 Xt_idxvec xt_xmap_get_src_xlist(Xt_xmap xmap, int rank) {
 
   return get_xlist(xmap->src_msg, xmap->nsrc, rank);
+}
+
+Xt_xmap_iter xt_xmap_get_destination_iterator(Xt_xmap xmap) {
+
+  if (xmap->ndst == 0)
+    return NULL;
+
+  Xt_xmap_iter iter;
+
+  iter = malloc(1 * sizeof(*iter));
+  if (iter == NULL) {
+    fputs("malloc failed for exchange map destination iterator\n", stderr);
+     exit(EXIT_FAILURE);
+  }
+
+  iter->msg = xmap->dst_msg;
+  iter->msgs_left = xmap->ndst - 1;
+}
+
+Xt_xmap_iter xt_xmap_get_source_iterator(Xt_xmap xmap) {
+
+  if (xmap->nsrc == 0)
+    return NULL;
+
+  Xt_xmap_iter iter;
+
+  iter = malloc(1 * sizeof(*iter));
+  if (iter == NULL) {
+    fputs("malloc failed for exchange map source iterator\n", stderr);
+     exit(EXIT_FAILURE);
+  }
+
+  iter->msg = xmap->src_msg;
+  iter->msgs_left = xmap->nsrc - 1;
+}
+
+int xt_xmap_iterator_next(Xt_xmap_iter iter) {
+
+  if (iter == NULL || iter->msgs_left == 0)
+    return 0;
+
+  iter->msg++;
+  iter->msgs_left--;
+}
+
+int xt_xmap_iterator_get_rank(Xt_xmap_iter iter) {
+
+  assert(iter != NULL);
+
+  return iter->msg->rank;
+}
+
+Xt_idxvec xt_xmap_iterator_get_xlist(Xt_xmap_iter iter) {
+
+  assert(iter != NULL);
+
+  return  xt_idxvec_copy(iter->msg->xlist);
+}
+
+void xt_xmap_iterator_delete(Xt_xmap_iter iter) {
+
+  free(iter);
 }
