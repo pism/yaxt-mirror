@@ -51,6 +51,14 @@ int main(void) {
 
     xt_redist_s_exchange(redist, (void**)(&src_data_p), 1, (void**)(&dst_data_p), 1);
 
+    double ref_dst_data[] = {-1,0,2,-1,13,9,7,0,-1,-1,2,0,2,-1,13,4,-1,6,7};
+
+    unsigned i;
+
+    for (i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
+      if (ref_dst_data[i] != dst_data[i])
+        PUT_ERR("error in xt_redist_s_exchange\n");
+
     // clean up
 
     xt_redist_delete(redist);
