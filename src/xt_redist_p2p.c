@@ -90,6 +90,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, MPI_Datatype base_datatype,
     curr_msg->datatype = generate_datatype(curr_xlist, base_datatype, comm);
     curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
+    curr_msg++;
+
     xt_idxvec_delete(curr_xlist);
 
   } while (xt_xmap_iterator_next(iter));
@@ -180,4 +182,6 @@ redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays
 
   mpi_err_handler(MPI_Waitall(redist_p2p->nsrc, recv_request,
                               MPI_STATUSES_IGNORE), redist_p2p->comm);
+
+  free(recv_request);
 }
