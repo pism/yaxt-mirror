@@ -17,26 +17,13 @@ typedef struct xt_xmap *Xt_xmap;
  *
  * contains all external interfaces
  */
-
-/**
- * constructor for an index list
- * 
- * @param[in] idxlist     array containing the global indices of points
- *                        that are available locally
- * @param[in] num_indices number of indices in idxlist
- * @return                returns a xt_idxvec
- *
- * \remark idxlist is only allowed to contain unique indices.
- */
-xt_idxvec xt_idxvec_new(int* idxlist, unsigned num_indices);
-
+ 
 /**
  * destructor for an index list
  *
  * @param[in] idxvec index vector that is to be destroyed
  */
 void xt_idxvec_delete(xt_idxvec idxvec);
-
 
 /**
  * constructor for an exchange map \n
