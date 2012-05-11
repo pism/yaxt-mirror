@@ -108,8 +108,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, ssize_t *offsets,
   xt_xmap_iterator_delete(iter);
 }
 
-Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, ssize_t *offsets,
-                                MPI_Datatype datatype) {
+Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, ssize_t *src_offsets,
+                                ssize_t *dst_offsets, MPI_Datatype datatype) {
 
   struct Xt_redist_p2p *redist;
 
@@ -131,16 +131,16 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, ssize_t *offsets,
   redist->nsrc = xt_xmap_get_num_sources(xmap);
 
   generate_msg_infos(redist->ndst, xt_xmap_get_destination_iterator(xmap),
-                     offsets, datatype, &(redist->recv_msgs), redist->comm);
+                     dst_offsets, datatype, &(redist->recv_msgs), redist->comm);
   generate_msg_infos(redist->nsrc, xt_xmap_get_source_iterator(xmap),
-                     offsets, datatype, &(redist->send_msgs), redist->comm);
+                     src_offsets, datatype, &(redist->send_msgs), redist->comm);
 
   return (Xt_redist)redist;
 }
 
 Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
 
-  return xt_redist_p2p_off_new(xmap, NULL, datatype);
+  return xt_redist_p2p_off_new(xmap, NULL, NULL, datatype);
 }
 
 static void
