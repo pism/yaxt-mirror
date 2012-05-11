@@ -436,6 +436,8 @@ int xt_xmap_iterator_next(Xt_xmap_iter iter) {
 
   iter->msg++;
   iter->msgs_left--;
+
+  return 1;
 }
 
 int xt_xmap_iterator_get_rank(Xt_xmap_iter iter) {
