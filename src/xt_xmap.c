@@ -6,7 +6,7 @@
 #include "mpi.h"
 
 #include "xt_idxvec.h"
-#include "xt_idxlist.h"
+#include "xt_idxlist_t.h"
 #include "xt_xmap.h"
 #include "xt_mpi.h"
 
@@ -250,7 +250,7 @@ static void generate_src_xlist(xt_xmap xmap,
       assert(xt_idxvec_get_position_of_index(idxvec, global_index, index_list+j) != 1);
     }
 
-    xmap->src_msg[i].xlist = xt_idxlist_new(index_list, num_intersection_indices);
+    xmap->src_msg[i].xlist = xt_idxlist_t_new(index_list, num_intersection_indices);
   }
 
   free(index_list);
@@ -313,7 +313,7 @@ static void generate_dst_xlist(xt_xmap xmap,
       ++repetition_count;
     }
 
-    xmap->dst_msg[i].xlist = xt_idxlist_new(index_list, num_intersection_indices);
+    xmap->dst_msg[i].xlist = xt_idxlist_t_new(index_list, num_intersection_indices);
   }
 
   free(index_list);

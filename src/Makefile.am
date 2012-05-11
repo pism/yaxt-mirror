@@ -1,7 +1,7 @@
 lib_LIBRARIES = libyaxt.a
 
-libyaxt_a_SOURCES = xt_idxlist.c 				\
-	xt_idxlist.h 						\
+libyaxt_a_SOURCES = xt_idxlist_t.c 				\
+	xt_idxlist_t.h 						\
 	xt_idxvec.c						\
 	xt_idxvec.h						\
 	xt_idxvec_collection.c					\

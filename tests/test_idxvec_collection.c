@@ -7,7 +7,7 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_idxlist.h"
+#include "xt_idxlist_t.h"
 #include "xt_idxvec_collection.h"
 #include "xt_mpi.h"
 
@@ -28,8 +28,8 @@ int main(void) {
 
       // create two index lists
 
-      idxvecs[0] = xt_idxlist_new(index_list[0], num_indices);
-      idxvecs[1] = xt_idxlist_new(index_list[1], num_indices);
+      idxvecs[0] = xt_idxlist_t_new(index_list[0], num_indices);
+      idxvecs[1] = xt_idxlist_t_new(index_list[1], num_indices);
 
       // generate a collection index vector
 
@@ -118,8 +118,8 @@ int main(void) {
 
       // create two index lists
 
-      idxvecs[0] = xt_idxlist_new(index_list[0], num_indices);
-      idxvecs[1] = xt_idxlist_new(index_list[1], num_indices);
+      idxvecs[0] = xt_idxlist_t_new(index_list[0], num_indices);
+      idxvecs[1] = xt_idxlist_t_new(index_list[1], num_indices);
 
       // generate a collection index vector
 

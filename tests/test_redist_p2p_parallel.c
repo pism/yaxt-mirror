@@ -5,7 +5,7 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_idxlist.h"
+#include "xt_idxlist_t.h"
 #include "xt_redist_p2p.h"
 
 int main(void) {
@@ -27,7 +27,7 @@ int main(void) {
 
     xt_idxvec src_idxvec;
 
-    src_idxvec = xt_idxlist_new(src_index_list, src_num_indices);
+    src_idxvec = xt_idxlist_t_new(src_index_list, src_num_indices);
 
     // destination index vector
     Xt_idx dst_index_list[10];
@@ -37,7 +37,7 @@ int main(void) {
 
     xt_idxvec dst_idxvec;
 
-    dst_idxvec = xt_idxlist_new(dst_index_list, dst_num_indices);
+    dst_idxvec = xt_idxlist_t_new(dst_index_list, dst_num_indices);
 
     // xmap
     xt_xmap xmap;

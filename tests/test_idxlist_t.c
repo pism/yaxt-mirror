@@ -7,10 +7,10 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_idxlist.h"
+#include "xt_idxlist_t.h"
 #include "xt_mpi.h"
 
-void check_idxlist(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_idxlist_t(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices);
 
 int main(void) {
 
@@ -27,11 +27,11 @@ int main(void) {
 
       // create an index list
 
-      idxvec = xt_idxlist_new(index_list, num_indices);
+      idxvec = xt_idxlist_t_new(index_list, num_indices);
 
       // test the generated index vector
 
-      check_idxlist(idxvec, index_list, num_indices);
+      check_idxlist_t(idxvec, index_list, num_indices);
 
       // get the size of the index list
 
@@ -78,7 +78,7 @@ int main(void) {
 
       // check the received index vector
 
-      check_idxlist(idxvec_copy, index_list, num_indices);
+      check_idxlist_t(idxvec_copy, index_list, num_indices);
 
       // compute intersection between the two index vectors
 
@@ -88,7 +88,7 @@ int main(void) {
 
       // check the computed intersection (should be identically to the original
 
-      check_idxlist(intersection, index_list, num_indices);
+      check_idxlist_t(intersection, index_list, num_indices);
 
       // index vector)
 
@@ -111,11 +111,11 @@ int main(void) {
 
       // create an index list
 
-      idxvec = xt_idxlist_new(index_list, num_indices);
+      idxvec = xt_idxlist_t_new(index_list, num_indices);
 
       // test the generated index vector
 
-      check_idxlist(idxvec, index_list, num_indices);
+      check_idxlist_t(idxvec, index_list, num_indices);
 
       // copy the index list
 
@@ -123,7 +123,7 @@ int main(void) {
 
       // check the generated copy
 
-      check_idxlist(idxvec_copy, index_list, num_indices);
+      check_idxlist_t(idxvec_copy, index_list, num_indices);
 
       // clean up
 
@@ -136,7 +136,7 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxlist(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices) {
+void check_idxlist_t(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices) {
 
    unsigned i;
 

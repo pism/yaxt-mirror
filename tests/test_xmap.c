@@ -4,7 +4,7 @@
 
 #include "yaxt.h"
 #include "xt_mpi.h"
-#include "xt_idxlist.h"
+#include "xt_idxlist_t.h"
 #include "xt_xmap.h"
 
 void check_idxdata(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices);
@@ -22,7 +22,7 @@ int main(void) {
 
       xt_idxvec src_idxvec;
 
-      src_idxvec = xt_idxlist_new(src_index_list, src_num_indices);
+      src_idxvec = xt_idxlist_t_new(src_index_list, src_num_indices);
 
       // destination index vector
       Xt_idx dst_index_list[] = {7,6,5,4,3,2,1};
@@ -30,7 +30,7 @@ int main(void) {
 
       xt_idxvec dst_idxvec;
 
-      dst_idxvec = xt_idxlist_new(dst_index_list, dst_num_indices);
+      dst_idxvec = xt_idxlist_t_new(dst_index_list, dst_num_indices);
 
       // test of exchange map
       xt_xmap xmap;
@@ -81,7 +81,7 @@ int main(void) {
 
       xt_idxvec src_idxvec;
 
-      src_idxvec = xt_idxlist_new(src_index_list, src_num_indices);
+      src_idxvec = xt_idxlist_t_new(src_index_list, src_num_indices);
 
       // destination index vector
       Xt_idx dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
@@ -89,7 +89,7 @@ int main(void) {
 
       xt_idxvec dst_idxvec;
 
-      dst_idxvec = xt_idxlist_new(dst_index_list, dst_num_indices);
+      dst_idxvec = xt_idxlist_t_new(dst_index_list, dst_num_indices);
 
       xt_xmap xmap;
 

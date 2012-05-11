@@ -4,7 +4,7 @@
 
 #include "yaxt.h"
 #include "xt_idxvec.h"
-#include "xt_idxlist.h"
+#include "xt_idxlist_t.h"
 #include "xt_mpi.h"
 
 void xt_idxvec_delete(struct xt_idxvec *idxvec) {
@@ -69,15 +69,15 @@ xt_idxvec xt_idxvec_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst)
       xt_idxvec_get_indices(idxvec_src, indices_src);
       xt_idxvec_get_indices(idxvec_dst, indices_dst);
 
-      xt_idxvec idxlist_src, idxlist_dst;
+      xt_idxvec idxlist_t_src, idxlist_t_dst;
 
-      idxlist_src = xt_idxlist_new(indices_src, num_indices_src);
-      idxlist_dst = xt_idxlist_new(indices_dst, num_indices_dst);
+      idxlist_t_src = xt_idxlist_t_new(indices_src, num_indices_src);
+      idxlist_t_dst = xt_idxlist_t_new(indices_dst, num_indices_dst);
 
-      intersection = xt_idxvec_get_intersection(idxlist_src, idxlist_dst);
+      intersection = xt_idxvec_get_intersection(idxlist_t_src, idxlist_t_dst);
 
-      xt_idxvec_delete(idxlist_src);
-      xt_idxvec_delete(idxlist_dst);
+      xt_idxvec_delete(idxlist_t_src);
+      xt_idxvec_delete(idxlist_t_dst);
       free(indices_dst);
       free(indices_src);
 
