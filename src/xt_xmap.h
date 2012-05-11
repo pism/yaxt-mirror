@@ -74,7 +74,7 @@ void xt_xmap_get_source_ranks(Xt_xmap xmap, int * ranks);
  * @return         destination exchange list for given rank
  *                 NULL in case there is no exchange with the given rank
  */
-Xt_idxvec xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank);
+Xt_idxlist xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank);
 
 /**
  * gets the source exchange list for a given rank
@@ -84,7 +84,7 @@ Xt_idxvec xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank);
  * @return         source exchange list for given rank
  *                 NULL in case there is no exchange with the given rank
  */
-Xt_idxvec xt_xmap_get_src_xlist(Xt_xmap xmap, int rank);
+Xt_idxlist xt_xmap_get_src_xlist(Xt_xmap xmap, int rank);
 
 /**
  * gets an iterator for all processes that will require data from
@@ -128,7 +128,7 @@ int xt_xmap_iterator_get_rank(Xt_xmap_iter iter);
  * @param[in] iter exchange map iterator
  * @return         exchange list of the current item
  */
-Xt_idxvec xt_xmap_iterator_get_xlist(Xt_xmap_iter iter);
+Xt_idxlist xt_xmap_iterator_get_xlist(Xt_xmap_iter iter);
 
 /**
  * destructor for an exchange map iterator

@@ -5,16 +5,16 @@
 
 #include "mpi.h"
 
-#include "xt_idxvec.h"
+#include "xt_idxlist.h"
 #include "xt_idxlist_t.h"
 #include "xt_xmap.h"
 #include "xt_mpi.h"
 
 struct exchange_data {
   // list of global indices to send or receive from partner rank
-  Xt_idxvec intersect;
+  Xt_idxlist intersect;
   // list of relative positions in memory to send or receive
-  Xt_idxvec xlist;
+  Xt_idxlist xlist;
   int rank;
 };
 
@@ -61,12 +61,12 @@ void xt_xmap_get_source_ranks(Xt_xmap xmap, int * ranks) {
     ranks[i] = xmap->src_msg[i].rank;
 }
 
-static void exchange_idxvecs(xt_xmap xmap,
-                             Xt_idxvec src_idxvec_local,
-                             Xt_idxvec dst_idxvec_local)
+static void exchange_idxlists(xt_xmap xmap,
+                              Xt_idxlist src_idxlist_local,
+                              Xt_idxlist dst_idxlist_local)
 {
 
-  xt_idxvec *src_idxvecs_all, *dst_idxvecs_all;
+  xt_idxlist *src_idxlists_all, *dst_idxlists_all;
 
   unsigned i, j;
   int comm_size, comm_rank;
@@ -75,8 +75,8 @@ static void exchange_idxvecs(xt_xmap xmap,
 
   // compute size of local index vectors
   size_t send_buffer_size;
-  send_buffer_size  = xt_idxvec_get_pack_size(src_idxvec_local, xmap->comm);
-  send_buffer_size += xt_idxvec_get_pack_size(dst_idxvec_local, xmap->comm);
+  send_buffer_size  = xt_idxlist_get_pack_size(src_idxlist_local, xmap->comm);
+  send_buffer_size += xt_idxlist_get_pack_size(dst_idxlist_local, xmap->comm);
 
   void * send_buffer;
 
@@ -88,10 +88,10 @@ static void exchange_idxvecs(xt_xmap xmap,
 
   // pack local index vectors
   int position = 0;
-  xt_idxvec_pack(src_idxvec_local, send_buffer, send_buffer_size, &position,
-                 xmap->comm);
-  xt_idxvec_pack(dst_idxvec_local, send_buffer, send_buffer_size, &position,
-                 xmap->comm);
+  xt_idxlist_pack(src_idxlist_local, send_buffer, send_buffer_size, &position,
+                  xmap->comm);
+  xt_idxlist_pack(dst_idxlist_local, send_buffer, send_buffer_size, &position,
+                  xmap->comm);
 
   // exchange buffer sizes
   int send_buffer_header = send_buffer_size;
@@ -138,15 +138,15 @@ static void exchange_idxvecs(xt_xmap xmap,
                                  MPI_PACKED,
                                  xmap->comm), xmap->comm);
 
-  src_idxvecs_all = malloc(comm_size * sizeof(*src_idxvecs_all));
-  if (src_idxvecs_all == NULL) {
+  src_idxlists_all = malloc(comm_size * sizeof(*src_idxlists_all));
+  if (src_idxlists_all == NULL) {
     fputs("malloc failed for source index vectors"
           " all of index vector exchange\n", stderr);
     exit(EXIT_FAILURE);
   }
 
-  dst_idxvecs_all = malloc(comm_size * sizeof(*dst_idxvecs_all));
-  if (dst_idxvecs_all == NULL) {
+  dst_idxlists_all = malloc(comm_size * sizeof(*dst_idxlists_all));
+  if (dst_idxlists_all == NULL) {
     fputs("malloc failed for destination index vectors"
           " all of index vector exchange\n", stderr);
     exit(EXIT_FAILURE);
@@ -155,10 +155,10 @@ static void exchange_idxvecs(xt_xmap xmap,
   // unpack buffers
   for (i = 0, position = 0; i < comm_size; ++i) {
 
-    src_idxvecs_all[i] = xt_idxvec_unpack(recv_buffer, recv_buffer_size,
-                                          &position, xmap->comm);
-    dst_idxvecs_all[i] = xt_idxvec_unpack(recv_buffer, recv_buffer_size,
-                                          &position, xmap->comm);
+    src_idxlists_all[i] = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
+                                            &position, xmap->comm);
+    dst_idxlists_all[i] = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
+                                            &position, xmap->comm);
   }
 
   // allocate memory for intersections
@@ -172,36 +172,36 @@ static void exchange_idxvecs(xt_xmap xmap,
   // compute intersections
   for (i = 0; i < comm_size; ++i)
   {
-    Xt_idxvec intersect
-      = xt_idxvec_get_intersection(src_idxvecs_all[i], dst_idxvec_local);
-    if (xt_idxvec_get_num_indices(intersect) > 0)
+    Xt_idxlist intersect
+      = xt_idxlist_get_intersection(src_idxlists_all[i], dst_idxlist_local);
+    if (xt_idxlist_get_num_indices(intersect) > 0)
     {
       xmap->dst_msg[xmap->ndst].intersect = intersect;
       xmap->dst_msg[xmap->ndst].rank = i;
       xmap->ndst++;
     }
     else
-      xt_idxvec_delete(intersect);
-    intersect = xt_idxvec_get_intersection(src_idxvec_local,
-                                           dst_idxvecs_all[i]);
-    if (xt_idxvec_get_num_indices(intersect) > 0)
+      xt_idxlist_delete(intersect);
+    intersect = xt_idxlist_get_intersection(src_idxlist_local,
+                                            dst_idxlists_all[i]);
+    if (xt_idxlist_get_num_indices(intersect) > 0)
     {
       xmap->src_msg[xmap->nsrc].rank = i;
       xmap->src_msg[xmap->nsrc].intersect = intersect;
       xmap->nsrc++;
     }
     else
-      xt_idxvec_delete(intersect);
+      xt_idxlist_delete(intersect);
   }
 
   for (i = 0; i < comm_size; ++i) {
 
-    xt_idxvec_delete(src_idxvecs_all[i]);
-    xt_idxvec_delete(dst_idxvecs_all[i]);
+    xt_idxlist_delete(src_idxlists_all[i]);
+    xt_idxlist_delete(dst_idxlists_all[i]);
   }
 
-  free(src_idxvecs_all);
-  free(dst_idxvecs_all);
+  free(src_idxlists_all);
+  free(dst_idxlists_all);
 
   // clean up
   free(send_buffer);
@@ -211,7 +211,7 @@ static void exchange_idxvecs(xt_xmap xmap,
 }
 
 static void generate_src_xlist(xt_xmap xmap,
-                               Xt_idxvec idxvec) {
+                               Xt_idxlist idxlist) {
 
   unsigned i;
   int j;
@@ -225,7 +225,7 @@ static void generate_src_xlist(xt_xmap xmap,
     int num_intersection_indices;
 
     num_intersection_indices =
-      xt_idxvec_get_num_indices(xmap->src_msg[i].intersect);
+      xt_idxlist_get_num_indices(xmap->src_msg[i].intersect);
 
     if (num_intersection_indices > index_list_size) {
 
@@ -246,8 +246,8 @@ static void generate_src_xlist(xt_xmap xmap,
       int global_index;
       int local_index;
 
-      assert(xt_idxvec_get_index(xmap->src_msg[i].intersect, j, &global_index) != 1);
-      assert(xt_idxvec_get_position_of_index(idxvec, global_index, index_list+j) != 1);
+      assert(xt_idxlist_get_index(xmap->src_msg[i].intersect, j, &global_index) != 1);
+      assert(xt_idxlist_get_position_of_index(idxlist, global_index, index_list+j) != 1);
     }
 
     xmap->src_msg[i].xlist = xt_idxlist_t_new(index_list, num_intersection_indices);
@@ -257,7 +257,7 @@ static void generate_src_xlist(xt_xmap xmap,
 }
 
 static void generate_dst_xlist(xt_xmap xmap,
-                               Xt_idxvec idxvec) {
+                               Xt_idxlist idxlist) {
 
   unsigned i;
   int j;
@@ -271,7 +271,7 @@ static void generate_dst_xlist(xt_xmap xmap,
     int num_intersection_indices;
 
     num_intersection_indices =
-      xt_idxvec_get_num_indices(xmap->dst_msg[i].intersect);
+      xt_idxlist_get_num_indices(xmap->dst_msg[i].intersect);
 
     if (num_intersection_indices > index_list_size) {
 
@@ -286,7 +286,7 @@ static void generate_dst_xlist(xt_xmap xmap,
     }
 
     int prev_global_index;
-    assert(xt_idxvec_get_index(xmap->dst_msg[i].intersect, 0, &prev_global_index) != 1);
+    assert(xt_idxlist_get_index(xmap->dst_msg[i].intersect, 0, &prev_global_index) != 1);
     prev_global_index++;
 
     int repetition_count = 0;
@@ -298,15 +298,15 @@ static void generate_dst_xlist(xt_xmap xmap,
       // look up current intersection index in the destination index vector
       int global_index;
 
-      assert(xt_idxvec_get_index(xmap->dst_msg[i].intersect, j, &global_index) != 1);
+      assert(xt_idxlist_get_index(xmap->dst_msg[i].intersect, j, &global_index) != 1);
 
       if (global_index != prev_global_index) {
         repetition_offset = 0;
         repetition_count = 0;
       }
 
-      assert(xt_idxvec_get_position_of_index_off(idxvec, global_index,
-                                                 index_list+j, repetition_offset) != 1);
+      assert(xt_idxlist_get_position_of_index_off(idxlist, global_index,
+                                                  index_list+j, repetition_offset) != 1);
 
       prev_global_index = global_index;
       repetition_offset = index_list[j] + 1;
@@ -320,15 +320,15 @@ static void generate_dst_xlist(xt_xmap xmap,
 }
 
 static void generate_xlist(xt_xmap xmap,
-                           Xt_idxvec src_idxvec_local,
-                           Xt_idxvec dst_idxvec_local) {
+                           Xt_idxlist src_idxlist_local,
+                           Xt_idxlist dst_idxlist_local) {
 
-  generate_src_xlist(xmap, src_idxvec_local);
-  generate_dst_xlist(xmap, dst_idxvec_local);
+  generate_src_xlist(xmap, src_idxlist_local);
+  generate_dst_xlist(xmap, dst_idxlist_local);
 }
 
 struct xt_xmap*
-xt_xmap_new(xt_idxvec src_idxvec, xt_idxvec dst_idxvec, MPI_Comm comm) {
+xt_xmap_new(xt_idxlist src_idxlist, xt_idxlist dst_idxlist, MPI_Comm comm) {
 
   struct xt_xmap * xmap;
 
@@ -341,10 +341,10 @@ xt_xmap_new(xt_idxvec src_idxvec, xt_idxvec dst_idxvec, MPI_Comm comm) {
   mpi_err_handler(MPI_Comm_dup(comm, &(xmap->comm)), comm);
 
   // exchange index vectors between all processes in comm
-  exchange_idxvecs(xmap, src_idxvec, dst_idxvec);
+  exchange_idxlists(xmap, src_idxlist, dst_idxlist);
 
   // generate exchange lists
-  generate_xlist(xmap, src_idxvec, dst_idxvec);
+  generate_xlist(xmap, src_idxlist, dst_idxlist);
 
   return xmap;
 }
@@ -354,13 +354,13 @@ void xt_xmap_delete(xt_xmap xmap) {
   unsigned i;
 
   for (i = 0; i < xmap->ndst; ++i) {
-    xt_idxvec_delete(xmap->dst_msg[i].intersect);
-    xt_idxvec_delete(xmap->dst_msg[i].xlist);
+    xt_idxlist_delete(xmap->dst_msg[i].intersect);
+    xt_idxlist_delete(xmap->dst_msg[i].xlist);
   }
 
   for (i = 0; i < xmap->nsrc; ++i) {
-    xt_idxvec_delete(xmap->src_msg[i].intersect);
-    xt_idxvec_delete(xmap->src_msg[i].xlist);
+    xt_idxlist_delete(xmap->src_msg[i].intersect);
+    xt_idxlist_delete(xmap->src_msg[i].xlist);
   }
 
   free(xmap->dst_msg);
@@ -370,23 +370,23 @@ void xt_xmap_delete(xt_xmap xmap) {
   free(xmap);
 }
 
-static Xt_idxvec get_xlist(struct exchange_data * msgs, int num_msgs, int rank) {
+static Xt_idxlist get_xlist(struct exchange_data * msgs, int num_msgs, int rank) {
 
   int i;
 
   for (i = 0; i < num_msgs; ++i)
     if (rank == msgs[i].rank)
-      return xt_idxvec_copy(msgs[i].xlist);
+      return xt_idxlist_copy(msgs[i].xlist);
 
   return NULL;
 }
 
-Xt_idxvec xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank) {
+Xt_idxlist xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank) {
 
   return get_xlist(xmap->dst_msg, xmap->ndst, rank);
 }
 
-Xt_idxvec xt_xmap_get_src_xlist(Xt_xmap xmap, int rank) {
+Xt_idxlist xt_xmap_get_src_xlist(Xt_xmap xmap, int rank) {
 
   return get_xlist(xmap->src_msg, xmap->nsrc, rank);
 }
@@ -441,11 +441,11 @@ int xt_xmap_iterator_get_rank(Xt_xmap_iter iter) {
   return iter->msg->rank;
 }
 
-Xt_idxvec xt_xmap_iterator_get_xlist(Xt_xmap_iter iter) {
+Xt_idxlist xt_xmap_iterator_get_xlist(Xt_xmap_iter iter) {
 
   assert(iter != NULL);
 
-  return  xt_idxvec_copy(iter->msg->xlist);
+  return  xt_idxlist_copy(iter->msg->xlist);
 }
 
 void xt_xmap_iterator_delete(Xt_xmap_iter iter) {

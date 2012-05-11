@@ -5,43 +5,43 @@
 #include <string.h>
 
 #include "yaxt.h"
-#include "xt_idxvec.h"
+#include "xt_idxlist.h"
 #include "xt_idxlist_t.h"
 #include "xt_mpi.h"
 
 static void
-idxlist_t_delete(xt_idxvec data);
+idxlist_t_delete(xt_idxlist data);
 
 static size_t
-idxlist_t_get_pack_size(xt_idxvec data, MPI_Comm comm);
+idxlist_t_get_pack_size(xt_idxlist data, MPI_Comm comm);
 
 static void
-idxlist_t_pack(xt_idxvec data, void *buffer, int buffer_size,
+idxlist_t_pack(xt_idxlist data, void *buffer, int buffer_size,
                int *position, MPI_Comm comm);
 
-static xt_idxvec
-idxlist_t_get_intersection(xt_idxvec idxvec_a, xt_idxvec idxvec_b);
+static xt_idxlist
+idxlist_t_get_intersection(xt_idxlist idxlist_a, xt_idxlist idxlist_b);
 
-static xt_idxvec
-idxlist_t_copy(xt_idxvec idxvec);
+static xt_idxlist
+idxlist_t_copy(xt_idxlist idxlist);
 
 static size_t
-idxlist_t_get_num_indices(xt_idxvec idxvec);
+idxlist_t_get_num_indices(xt_idxlist idxlist);
 
 static void
-idxlist_t_get_indices(xt_idxvec idxvec, Xt_idx *indices);
+idxlist_t_get_indices(xt_idxlist idxlist, Xt_idx *indices);
 
 static int
-idxlist_t_get_index(Xt_idxvec idxvec, int position, Xt_idx * index);
+idxlist_t_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 static int
-idxlist_t_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position);
+idxlist_t_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
 
 static int
-idxlist_t_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+idxlist_t_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                     int * position, int offset);
 
-static const struct xt_idxvec_vtable idxlist_t_vtable = {
+static const struct xt_idxlist_vtable idxlist_t_vtable = {
               idxlist_t_delete,
               idxlist_t_get_pack_size,
               idxlist_t_pack,
@@ -57,7 +57,7 @@ static const struct xt_idxvec_vtable idxlist_t_vtable = {
 
 struct xt_idxlist_t {
 
-   const struct xt_idxvec_vtable *vtable;
+   const struct xt_idxlist_vtable *vtable;
 
    Xt_idx *list;
    size_t num_indices;
@@ -68,7 +68,7 @@ static int compare_xtidx(const void * a, const void * b)
   return (*(Xt_idx*)a > *(Xt_idx*)b) - (*(Xt_idx*)a < *(Xt_idx*)b);
 }
 
-struct xt_idxvec *xt_idxlist_t_new(Xt_idx *idxlist_t, size_t num_indices) {
+struct xt_idxlist *xt_idxlist_t_new(Xt_idx *idxlist_t, size_t num_indices) {
 
    struct xt_idxlist_t *idxlist_t_data;
 
@@ -96,13 +96,13 @@ struct xt_idxvec *xt_idxlist_t_new(Xt_idx *idxlist_t, size_t num_indices) {
    return (void*)idxlist_t_data;
 }
 
-static void idxlist_t_delete(struct xt_idxvec *data) {
+static void idxlist_t_delete(struct xt_idxlist *data) {
 
    free(((struct xt_idxlist_t*)data)->list);
    free(data);
 }
 
-static size_t idxlist_t_get_pack_size(struct xt_idxvec *data, MPI_Comm comm) {
+static size_t idxlist_t_get_pack_size(struct xt_idxlist *data, MPI_Comm comm) {
 
    struct xt_idxlist_t *idxlist_t = (struct xt_idxlist_t*)data;
 
@@ -116,8 +116,8 @@ static size_t idxlist_t_get_pack_size(struct xt_idxvec *data, MPI_Comm comm) {
    return size_unsigned + size_int + size_int_type;
 }
 
-void idxlist_t_pack(struct xt_idxvec *data, void *buffer, int buffer_size,
-                  int *position, MPI_Comm comm) {
+void idxlist_t_pack(struct xt_idxlist *data, void *buffer, int buffer_size,
+                    int *position, MPI_Comm comm) {
 
   assert(data);
   struct xt_idxlist_t *idxlist_t = (struct xt_idxlist_t*)data;
@@ -135,8 +135,8 @@ void idxlist_t_pack(struct xt_idxvec *data, void *buffer, int buffer_size,
                            buffer_size, position, comm), comm);
 }
 
-xt_idxvec xt_idxlist_t_unpack(void *buffer, int buffer_size, int *position,
-                            MPI_Comm comm) {
+xt_idxlist xt_idxlist_t_unpack(void *buffer, int buffer_size, int *position,
+                               MPI_Comm comm) {
 
    struct xt_idxlist_t *idxlist_t;
    int num_indices;
@@ -164,21 +164,21 @@ xt_idxvec xt_idxlist_t_unpack(void *buffer, int buffer_size, int *position,
                               idxlist_t->list, idxlist_t->num_indices,
                               Xt_idx_dt, comm),comm);
 
-   return (xt_idxvec)idxlist_t;
+   return (xt_idxlist)idxlist_t;
 }
 
-static xt_idxvec
-idxlist_t_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst) {
+static xt_idxlist
+idxlist_t_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
 
-  if (idxvec_dst->vtable != &idxlist_t_vtable) return NULL;
+  if (idxlist_dst->vtable != &idxlist_t_vtable) return NULL;
 
   // both vectors are index lists:
 
   struct xt_idxlist_t *idxlist_t_src, *idxlist_t_dst;
 
-  idxlist_t_src = (struct xt_idxlist_t*)idxvec_src;
-  idxlist_t_dst = (struct xt_idxlist_t*)idxvec_dst;
+  idxlist_t_src = (struct xt_idxlist_t*)idxlist_src;
+  idxlist_t_dst = (struct xt_idxlist_t*)idxlist_dst;
 
   struct xt_idxlist_t *inter_list;
 
@@ -224,46 +224,46 @@ idxlist_t_get_intersection(xt_idxvec idxvec_src, xt_idxvec idxvec_dst) {
 
   inter_list->vtable = &idxlist_t_vtable;
 
-  return (xt_idxvec)inter_list;
+  return (xt_idxlist)inter_list;
 }
 
-static xt_idxvec
-idxlist_t_copy(xt_idxvec idxvec) {
+static xt_idxlist
+idxlist_t_copy(xt_idxlist idxlist) {
 
    struct xt_idxlist_t *idxlist_t_data;
 
-   idxlist_t_data = (struct xt_idxlist_t *)idxvec;
+   idxlist_t_data = (struct xt_idxlist_t *)idxlist;
 
    return xt_idxlist_t_new(idxlist_t_data->list, idxlist_t_data->num_indices);
 }
 
 static size_t
-idxlist_t_get_num_indices(xt_idxvec idxvec) {
+idxlist_t_get_num_indices(xt_idxlist idxlist) {
 
    struct xt_idxlist_t *idxlist_t_data;
 
-   idxlist_t_data = (struct xt_idxlist_t *)idxvec;
+   idxlist_t_data = (struct xt_idxlist_t *)idxlist;
 
    return idxlist_t_data->num_indices;
 }
 
 static void
-idxlist_t_get_indices(xt_idxvec idxvec, Xt_idx *indices) {
+idxlist_t_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
    struct xt_idxlist_t *idxlist_t_data;
 
-   idxlist_t_data = (struct xt_idxlist_t *)idxvec;
+   idxlist_t_data = (struct xt_idxlist_t *)idxlist;
 
    memcpy(indices, idxlist_t_data->list,
           idxlist_t_data->num_indices * sizeof(*indices));
 }
 
 static int
-idxlist_t_get_index(Xt_idxvec idxvec, int position, Xt_idx * index) {
+idxlist_t_get_index(Xt_idxlist idxlist, int position, Xt_idx * index) {
 
   struct xt_idxlist_t *idxlist_t_data;
 
-  idxlist_t_data = (struct xt_idxlist_t *)idxvec;
+  idxlist_t_data = (struct xt_idxlist_t *)idxlist;
 
   if (position < 0 || position >= idxlist_t_data->num_indices)
     return 1;
@@ -274,12 +274,12 @@ idxlist_t_get_index(Xt_idxvec idxvec, int position, Xt_idx * index) {
 }
 
 static int
-idxlist_t_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
+idxlist_t_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                   int * position, int offset) {
 
   struct xt_idxlist_t *idxlist_t_data;
 
-  idxlist_t_data = (struct xt_idxlist_t *)idxvec;
+  idxlist_t_data = (struct xt_idxlist_t *)idxlist;
 
   size_t i;
 
@@ -295,7 +295,7 @@ idxlist_t_get_position_of_index_off(Xt_idxvec idxvec, Xt_idx index,
 }
 
 static int
-idxlist_t_get_position_of_index(Xt_idxvec idxvec, Xt_idx index, int * position) {
+idxlist_t_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position) {
 
-  return idxlist_t_get_position_of_index_off(idxvec, index, position, 0);
+  return idxlist_t_get_position_of_index_off(idxlist, index, position, 0);
 }

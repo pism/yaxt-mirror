@@ -8,10 +8,10 @@
 
 #include "yaxt.h"
 #include "xt_idxlist_t.h"
-#include "xt_idxvec_collection.h"
+#include "xt_idxlist_collection.h"
 #include "xt_mpi.h"
 
-void check_idxdata(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
 
 int main(void) {
 
@@ -24,18 +24,18 @@ int main(void) {
       Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
       size_t num_indices = 7;
 
-      xt_idxvec idxvecs[2];
+      xt_idxlist idxlists[2];
 
       // create two index lists
 
-      idxvecs[0] = xt_idxlist_t_new(index_list[0], num_indices);
-      idxvecs[1] = xt_idxlist_t_new(index_list[1], num_indices);
+      idxlists[0] = xt_idxlist_t_new(index_list[0], num_indices);
+      idxlists[1] = xt_idxlist_t_new(index_list[1], num_indices);
 
       // generate a collection index vector
 
-      xt_idxvec collectionvector;
+      xt_idxlist collectionvector;
 
-      collectionvector = xt_idxvec_collection_new(idxvecs, 2);
+      collectionvector = xt_idxlist_collection_new(idxlists, 2);
 
       // test generated collection vector
 
@@ -45,7 +45,7 @@ int main(void) {
 
       size_t buffer_size;
 
-      buffer_size = xt_idxvec_get_pack_size(collectionvector, MPI_COMM_WORLD);
+      buffer_size = xt_idxlist_get_pack_size(collectionvector, MPI_COMM_WORLD);
 
       // allocate send buffers
 
@@ -58,7 +58,7 @@ int main(void) {
 
       int position = 0;
 
-      xt_idxvec_pack(collectionvector, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
+      xt_idxlist_pack(collectionvector, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
       // send the buffer
 
@@ -79,10 +79,10 @@ int main(void) {
 
       // unpack the buffer
 
-      xt_idxvec collectionvector_copy;
+      xt_idxlist collectionvector_copy;
 
       position = 0;
-      collectionvector_copy = xt_idxvec_unpack(recv_buffer, buffer_size, &position,
+      collectionvector_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position,
                                             MPI_COMM_WORLD);
 
       // check received collection vector
@@ -91,9 +91,9 @@ int main(void) {
 
       // compute intersection between the two index vectors
 
-      xt_idxvec intersection;
+      xt_idxlist intersection;
       
-      intersection = xt_idxvec_get_intersection(collectionvector, collectionvector_copy);
+      intersection = xt_idxlist_get_intersection(collectionvector, collectionvector_copy);
 
       // check intersection data
       Xt_idx ref_index_data[14] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7};
@@ -104,9 +104,9 @@ int main(void) {
       free(send_buffer);
       free(recv_buffer);
 
-      xt_idxvec_delete(collectionvector);
-      xt_idxvec_delete(collectionvector_copy);
-      xt_idxvec_delete(intersection);
+      xt_idxlist_delete(collectionvector);
+      xt_idxlist_delete(collectionvector_copy);
+      xt_idxlist_delete(intersection);
    }
 
    { // test copying of collection index vectors
@@ -114,18 +114,18 @@ int main(void) {
       Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
       size_t num_indices = 7;
 
-      xt_idxvec idxvecs[2];
+      xt_idxlist idxlists[2];
 
       // create two index lists
 
-      idxvecs[0] = xt_idxlist_t_new(index_list[0], num_indices);
-      idxvecs[1] = xt_idxlist_t_new(index_list[1], num_indices);
+      idxlists[0] = xt_idxlist_t_new(index_list[0], num_indices);
+      idxlists[1] = xt_idxlist_t_new(index_list[1], num_indices);
 
       // generate a collection index vector
 
-      xt_idxvec collectionvector, collectionvector_copy;
+      xt_idxlist collectionvector, collectionvector_copy;
 
-      collectionvector = xt_idxvec_collection_new(idxvecs, 2);
+      collectionvector = xt_idxlist_collection_new(idxlists, 2);
 
       // test generated collection vector
 
@@ -133,7 +133,7 @@ int main(void) {
 
       // copy the index list
 
-      collectionvector_copy = xt_idxvec_copy(collectionvector);
+      collectionvector_copy = xt_idxlist_copy(collectionvector);
 
       // check copy of collection vector
 
@@ -141,8 +141,8 @@ int main(void) {
 
       // clean up
 
-      xt_idxvec_delete(collectionvector);
-      xt_idxvec_delete(collectionvector_copy);
+      xt_idxlist_delete(collectionvector);
+      xt_idxlist_delete(collectionvector_copy);
    }
 
    MPI_Finalize();
@@ -150,16 +150,16 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxdata(xt_idxvec idxvec, Xt_idx * ref_indices, unsigned ref_num_indices) {
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices) {
 
    unsigned i;
 
-   if (xt_idxvec_get_num_indices(idxvec) != ref_num_indices)
-      PUT_ERR("wrong number of indices in idxvec\n");
+   if (xt_idxlist_get_num_indices(idxlist) != ref_num_indices)
+      PUT_ERR("wrong number of indices in idxlist\n");
 
    Xt_idx indices[ref_num_indices];
 
-   xt_idxvec_get_indices(idxvec, indices);
+   xt_idxlist_get_indices(idxlist, indices);
 
    for (i = 0; i < ref_num_indices; ++i)
       if (indices[i] != ref_indices[i])

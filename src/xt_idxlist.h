@@ -1,0 +1,179 @@
+#ifndef XT_IDXLIST_H
+#define XT_IDXLIST_H
+
+#include <stdlib.h>
+#include "yaxt.h"
+
+struct xt_idxlist_vtable {
+
+   void  (*delete)(xt_idxlist);
+
+   size_t (*get_pack_size)(xt_idxlist, MPI_Comm);
+   void (*pack)(xt_idxlist, void*, int, int*, MPI_Comm);
+   xt_idxlist (*get_intersection)(xt_idxlist,xt_idxlist);
+   xt_idxlist (*copy)(xt_idxlist);
+   size_t (*get_num_indices)(xt_idxlist);
+   void (*get_indices)(xt_idxlist, Xt_idx *indices);
+   int (*get_index)(Xt_idxlist, int, Xt_idx *);
+   int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
+   int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
+};
+
+enum xt_idxlist_type {
+   LIST       = 1,
+   COLLECTION = 2,
+};
+
+struct xt_idxlist {
+   struct xt_idxlist_vtable *vtable;
+};
+
+struct xt_idxlist_unpack_routine_table {
+   enum xt_idxlist_type type;
+   xt_idxlist (*xt_idxlist_unpack)(void*,int,int*,MPI_Comm);
+};
+
+/**
+ * \file xt_idxlist.h
+ * \brief index vector declaration
+ *
+ * contains declaration for the index vector data type
+ */
+
+/**
+ * computes the buffer size in byte that is required to pack the given
+ * index list using MPI_Pack
+ *
+ * @param[in] idxlist index vector for which the packed size needs to be computed
+ * @param[in] comm    MPI communicator that will be used to send the buffer for
+ *                    which the size is computed
+ * @return            returns the size in bytes of the packed index vector
+ *
+ * @remark You need to provide the same buffer for all related calls of
+ *         xt_idxlist_get_pack_size , \ref xt_idxlist_pack and \ref xt_idxlist_unpack
+ *
+ * @see xt_idxlist_pack
+ * @see xt_idxlist_unpack
+ */
+size_t xt_idxlist_get_pack_size(xt_idxlist idxlist, MPI_Comm comm);
+
+/**
+ * packs a index vector into previously allocated buffer using MPI_Pack
+ *
+ * @param[in]     idxlist     index vector, which needs be packed into the buffer
+ * @param[in,out] buffer      previously allocated buffer into which the index
+ *                            list will be packed
+ * @param[in]     buffer_size size of buffer in bytes
+ * @param[in,out] position    position in buffer at which the data of idxlist will be copied
+ *                            (position is automatically updated to the first byte after
+ *                            the packed data)
+ * @param[in]     comm        MPI communicator that will be used to send the buffer
+ *
+ * @remark The provided buffer needs to have a size that is sufficient for the
+ *         index vector. You can determin the required size using
+ *         \ref xt_idxlist_get_pack_size .
+ * @remark You need to provide the same buffer for all related calls of
+ *         \ref xt_idxlist_get_pack_size , xt_idxlist_pack and \ref xt_idxlist_unpack
+ *
+ * @see xt_idxlist_get_pack_size
+ * @see xt_idxlist_unpack
+ *
+ */
+void xt_idxlist_pack(xt_idxlist idxlist, void* buffer, int buffer_size,
+                     int* position, MPI_Comm comm);
+
+/**
+ * unpacks a index vector that received before
+ *
+ * @param[in]     buffer      buffer that contains the packed index vector
+ * @param[in]     buffer_size size of the buffer in bytes
+ * @param[in,out] position    position in the buffer at which the unpacking should start
+ *                            (will automatically be set to the position after the unpacked
+ *                            data)
+ * @param[in]     comm        MPI communicator that was used to receive the buffer
+ *
+ * @remark You need to provide the same buffer for all related calls of
+ *         \ref xt_idxlist_get_pack_size , \ref xt_idxlist_pack and xt_idxlist_unpack
+ *
+ * @see xt_idxlist_pack
+ */
+xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
+                             int* position, MPI_Comm comm);
+
+/**
+ * computes the intersection between two index vectors
+ *
+ * @param[in] idxlist_src index vector for sender
+ * @param[in] idxlist_dst index vector for receiver
+ * @return                return the intersection of idxlist_a and idxlist_b
+ * @remark duplicate elements i in the receiver vector will result in
+ *         duplicate elements in the intersection if idxlist_src contains i
+ * @remark the elements in the resulting index vector are sorted
+ */
+xt_idxlist
+xt_idxlist_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst);
+
+/**
+ * generates a copy of a given index vector
+ *
+ * @param[in] idxlist index vector that is to be copied
+ * @return            returns a copy of the given index vector
+ */
+xt_idxlist xt_idxlist_copy(xt_idxlist idxlist);
+
+/**
+ * returns the number of indices stored in the given index vector
+ *
+ * @param[in] idxlist index vector for which the number of indices is required
+ * @return            number of indices in the given index vector
+ */
+int xt_idxlist_get_num_indices(xt_idxlist idxlist);
+ 
+/**
+ * gets the indices stored in an index vector
+ *
+ * @param[in]     idxlist index vector for which the indices are to be returned
+ * @param[in,out] indices array into which the indices are written
+ */
+void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices);
+
+/**
+ * gets the index stored at the specified position in an index vector
+ *
+ * @param[in]  idxlist  index vector
+ * @param[in]  position position of the index that is to be retrieved
+ * @param[out] index    index stored in the index vector at the given position
+ * @return              0 if everything was okay
+ *                      1 if the position is out of range
+ */
+
+int xt_idxlist_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
+
+/**
+ * gets the first position of the first occurrence of the given index
+ * in the stored index vector
+ *
+ * @param[in]  idxlist  index vector in which the given index is to be searched
+ * @param[in]  index    index that is to be searched
+ * @param[out] position position of the first occurrence of index in idxlist
+ * @return              0 if everything was okay
+ *                      1 if the index could not be found in idxlist
+ */
+int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
+
+/**
+ * gets the first position of the first occurrence of the given index
+ * from the given offset in the stored index vector
+ *
+ * @param[in]  idxlist  index vector in which the given index is to be searched
+ * @param[in]  index    index that is to be searched
+ * @param[out] position position of the first occurrence of index in idxlist
+ * @param[in]  offset   offset in the index vector from which on the search
+ *                      is to be conducted
+ * @return              0 if everything was okay
+ *                      1 if the index could not be found in idxlist
+ */
+int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
+                                         int * position, int offset);
+
+#endif // XT_IDXLIST_H

@@ -25,9 +25,9 @@ int main(void) {
     for (i = 0; i < src_num_indices; ++i)
       src_index_list[i] = rank * 10 + i;
 
-    xt_idxvec src_idxvec;
+    xt_idxlist src_idxlist;
 
-    src_idxvec = xt_idxlist_t_new(src_index_list, src_num_indices);
+    src_idxlist = xt_idxlist_t_new(src_index_list, src_num_indices);
 
     // destination index vector
     Xt_idx dst_index_list[10];
@@ -35,14 +35,14 @@ int main(void) {
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = (rank * 10 + i + 2) % (size * 10);
 
-    xt_idxvec dst_idxvec;
+    xt_idxlist dst_idxlist;
 
-    dst_idxvec = xt_idxlist_t_new(dst_index_list, dst_num_indices);
+    dst_idxlist = xt_idxlist_t_new(dst_index_list, dst_num_indices);
 
     // xmap
     xt_xmap xmap;
 
-    xmap = xt_xmap_new(src_idxvec, dst_idxvec, MPI_COMM_WORLD);
+    xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
     Xt_redist redist;
@@ -72,8 +72,8 @@ int main(void) {
 
     xt_redist_delete(redist);
     xt_xmap_delete(xmap);
-    xt_idxvec_delete(src_idxvec);
-    xt_idxvec_delete(dst_idxvec);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_idxlist);
   }
 
   MPI_Finalize();

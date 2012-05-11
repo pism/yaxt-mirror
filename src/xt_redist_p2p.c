@@ -37,7 +37,7 @@ struct Xt_redist_p2p {
 };
 
 static MPI_Datatype
-generate_datatype(Xt_idxvec xlist, ssize_t *offsets,
+generate_datatype(Xt_idxlist xlist, ssize_t *offsets,
                   MPI_Datatype base_datatype, MPI_Comm comm) {
 
   MPI_Datatype type;
@@ -45,7 +45,7 @@ generate_datatype(Xt_idxvec xlist, ssize_t *offsets,
   int num_indices;
   int * displ;
 
-  num_indices = xt_idxvec_get_num_indices(xlist);
+  num_indices = xt_idxlist_get_num_indices(xlist);
 
   displ = malloc(num_indices * sizeof(*displ));
   if (displ == NULL) {
@@ -55,7 +55,7 @@ generate_datatype(Xt_idxvec xlist, ssize_t *offsets,
 
   assert(sizeof(Xt_idx) == sizeof(int));
 
-  xt_idxvec_get_indices(xlist, displ);
+  xt_idxlist_get_indices(xlist, displ);
 
   if (offsets != NULL) {
     int i;
@@ -91,7 +91,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, ssize_t *offsets,
 
   do {
 
-    Xt_idxvec curr_xlist;
+    Xt_idxlist curr_xlist;
 
     curr_xlist = xt_xmap_iterator_get_xlist(iter);
 
@@ -100,7 +100,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, ssize_t *offsets,
 
     curr_msg++;
 
-    xt_idxvec_delete(curr_xlist);
+    xt_idxlist_delete(curr_xlist);
 
   } while (xt_xmap_iterator_next(iter));
 
