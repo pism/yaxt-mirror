@@ -37,7 +37,8 @@ struct Xt_redist_p2p {
 };
 
 static MPI_Datatype
-generate_datatype(Xt_idxvec xlist, MPI_Datatype base_datatype, MPI_Comm comm) {
+generate_datatype(Xt_idxvec xlist, ssize_t *offsets,
+                  MPI_Datatype base_datatype, MPI_Comm comm) {
 
   MPI_Datatype type;
 
@@ -56,6 +57,12 @@ generate_datatype(Xt_idxvec xlist, MPI_Datatype base_datatype, MPI_Comm comm) {
 
   xt_idxvec_get_indices(xlist, displ);
 
+  if (offsets != NULL) {
+    int i;
+    for (i = 0; i < num_indices; ++i)
+      displ[i] = offsets[displ[i]];
+  }
+
   mpi_err_handler(MPI_Type_create_indexed_block(num_indices, 1, displ,
                                                 base_datatype, &type), comm);
   mpi_err_handler(MPI_Type_commit(&type), comm);
@@ -66,8 +73,9 @@ generate_datatype(Xt_idxvec xlist, MPI_Datatype base_datatype, MPI_Comm comm) {
 }
 
 static void
-generate_msg_infos(int num_msgs, Xt_xmap_iter iter, MPI_Datatype base_datatype,
-                   struct Xt_redist_p2p_msg ** msgs, MPI_Comm comm) {
+generate_msg_infos(int num_msgs, Xt_xmap_iter iter, ssize_t *offsets,
+                   MPI_Datatype base_datatype, struct Xt_redist_p2p_msg ** msgs,
+                   MPI_Comm comm) {
 
   assert(num_msgs > 0);
 
@@ -87,7 +95,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, MPI_Datatype base_datatype,
 
     curr_xlist = xt_xmap_iterator_get_xlist(iter);
 
-    curr_msg->datatype = generate_datatype(curr_xlist, base_datatype, comm);
+    curr_msg->datatype = generate_datatype(curr_xlist, offsets, base_datatype, comm);
     curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
     curr_msg++;
@@ -99,7 +107,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, MPI_Datatype base_datatype,
   xt_xmap_iterator_delete(iter);
 }
 
-Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
+Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, ssize_t *offsets,
+                                MPI_Datatype datatype) {
 
   struct Xt_redist_p2p *redist;
 
@@ -120,12 +129,17 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
   redist->ndst = xt_xmap_get_num_destinations(xmap);
   redist->nsrc = xt_xmap_get_num_sources(xmap);
 
-  generate_msg_infos(redist->ndst, xt_xmap_get_destination_iterator(xmap), datatype,
-                     &(redist->recv_msgs), redist->comm);
-  generate_msg_infos(redist->nsrc, xt_xmap_get_source_iterator(xmap), datatype,
-                     &(redist->send_msgs), redist->comm);
+  generate_msg_infos(redist->ndst, xt_xmap_get_destination_iterator(xmap),
+                     offsets, datatype, &(redist->recv_msgs), redist->comm);
+  generate_msg_infos(redist->nsrc, xt_xmap_get_source_iterator(xmap),
+                     offsets, datatype, &(redist->send_msgs), redist->comm);
 
   return (Xt_redist)redist;
+}
+
+Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
+
+  return xt_redist_p2p_off_new(xmap, NULL, datatype);
 }
 
 static void
