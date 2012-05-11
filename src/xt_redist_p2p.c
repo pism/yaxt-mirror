@@ -7,6 +7,7 @@
 #include "xt_mpi.h"
 #include "xt_redist_p2p.h"
 #include "xt_xmap.h"
+#include "xt_idxlist.h"
 
 static void
 redist_p2p_delete(Xt_redist redist);
