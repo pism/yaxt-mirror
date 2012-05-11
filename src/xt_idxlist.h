@@ -22,6 +22,7 @@ struct xt_idxlist_vtable {
 enum xt_idxvecype {
    VECTOR     = 1,
    COLLECTION = 2,
+   SECTION    = 3,
 };
 
 struct xt_idxlist {

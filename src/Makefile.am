@@ -5,6 +5,8 @@ libyaxt_a_SOURCES = xt_idxlist.c				\
 	xt_idxlist_collection.c					\
 	xt_idxlist_collection.h					\
 	xt_idxlist_unpack.c 					\
+	xt_idxsection.c						\
+	xt_idxsection.h						\
 	xt_idxvec.c 						\
 	xt_idxvec.h 						\
 	xt_mpi.c						\

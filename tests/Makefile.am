@@ -1,5 +1,6 @@
 noinst_PROGRAMS = test_idxvec					\
 	test_idxlist_collection					\
+	test_idxsection						\
 	test_redist_p2p						\
 	test_redist_p2p_parallel				\
 	test_xmap
@@ -16,6 +17,7 @@ LDADD = ../src/libyaxt.a
 
 TESTS = test_idxvec 						\
 	test_idxlist_collection					\
+	test_idxsection						\
 	test_redist_p2p						\
 	test_redist_p2p_parallel_run				\
 	test_xmap 
