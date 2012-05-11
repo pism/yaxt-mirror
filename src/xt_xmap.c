@@ -406,6 +406,8 @@ Xt_xmap_iter xt_xmap_get_destination_iterator(Xt_xmap xmap) {
 
   iter->msg = xmap->dst_msg;
   iter->msgs_left = xmap->ndst - 1;
+
+  return iter;
 }
 
 Xt_xmap_iter xt_xmap_get_source_iterator(Xt_xmap xmap) {
@@ -423,6 +425,8 @@ Xt_xmap_iter xt_xmap_get_source_iterator(Xt_xmap xmap) {
 
   iter->msg = xmap->src_msg;
   iter->msgs_left = xmap->nsrc - 1;
+
+  return iter;
 }
 
 int xt_xmap_iterator_next(Xt_xmap_iter iter) {
