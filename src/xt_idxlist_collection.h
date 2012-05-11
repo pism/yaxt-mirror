@@ -4,10 +4,10 @@
 #include "xt_idxlist.h"
 
 /**
- * generates a new index vector based on a collection of index vectors
+ * generates a new index list based on a collection of index lists
  *
- * @param[in] idxlists     array containing a number of index vectors
- * @param[in] num_idxlists number of index vectors in idxlists
+ * @param[in] idxlists     array containing a number of index lists
+ * @param[in] num_idxlists number of index lists in idxlists
  * @return returns a xt_idxlist
  */
 xt_idxlist xt_idxlist_collection_new(xt_idxlist *idxlists, unsigned num_idxlists);

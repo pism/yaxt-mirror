@@ -7,10 +7,10 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_idxlist_t.h"
+#include "xt_idxvec.h"
 #include "xt_mpi.h"
 
-void check_idxlist_t(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_idxvec(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
 
 int main(void) {
 
@@ -18,26 +18,26 @@ int main(void) {
 
    mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
-   { // test packing and unpacking of index lists
+   { // test packing and unpacking of index vectors
 
-      Xt_idx index_list[] = {1,2,3,4,5,6,7};
-      size_t num_indices = sizeof(index_list) / sizeof(index_list[0]);
+      Xt_idx index_vector[] = {1,2,3,4,5,6,7};
+      size_t num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
-      xt_idxlist idxlist;
+      xt_idxlist idxvector;
 
-      // create an index list
+      // create an index vector
 
-      idxlist = xt_idxlist_t_new(index_list, num_indices);
+      idxvector = xt_idxvec_new(index_vector, num_indices);
 
       // test the generated index vector
 
-      check_idxlist_t(idxlist, index_list, num_indices);
+      check_idxvec(idxvector, index_vector, num_indices);
 
-      // get the size of the index list
+      // get the size of the index vector
 
       size_t buffer_size;
 
-      buffer_size = xt_idxlist_get_pack_size(idxlist, MPI_COMM_WORLD);
+      buffer_size = xt_idxlist_get_pack_size(idxvector, MPI_COMM_WORLD);
 
       // allocate send buffers
 
@@ -50,7 +50,7 @@ int main(void) {
 
       int position = 0;
 
-      xt_idxlist_pack(idxlist, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
+      xt_idxlist_pack(idxvector, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
       // send the buffer
 
@@ -71,64 +71,63 @@ int main(void) {
 
       // unpack the buffer
 
-      xt_idxlist idxlist_copy;
+      xt_idxlist idxvector_copy;
 
       position = 0;
-      idxlist_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
+      idxvector_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
       // check the received index vector
 
-      check_idxlist_t(idxlist_copy, index_list, num_indices);
+      check_idxvec(idxvector_copy, index_vector, num_indices);
 
       // compute intersection between the two index vectors
 
       xt_idxlist intersection;
       
-      intersection = xt_idxlist_get_intersection(idxlist, idxlist_copy);
+      intersection = xt_idxlist_get_intersection(idxvector, idxvector_copy);
 
       // check the computed intersection (should be identically to the original
-
-      check_idxlist_t(intersection, index_list, num_indices);
-
       // index vector)
+
+      check_idxvec(intersection, index_vector, num_indices);
 
       // clean up
 
       free(send_buffer);
       free(recv_buffer);
 
-      xt_idxlist_delete(idxlist);
-      xt_idxlist_delete(idxlist_copy);
+      xt_idxlist_delete(idxvector);
+      xt_idxlist_delete(idxvector_copy);
       xt_idxlist_delete(intersection);
    }
 
-   { // test copying of index list
+   { // test copying of index vector
 
-      Xt_idx index_list[] = {1,2,3,4,5,6,7};
-      size_t num_indices = sizeof(index_list) / sizeof(index_list[0]);
+      Xt_idx index_vector[] = {1,2,3,4,5,6,7};
+      size_t num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
-      xt_idxlist idxlist, idxlist_copy;
+      xt_idxlist idxvector, idxvector_copy;
 
-      // create an index list
+      // create an index vector
 
-      idxlist = xt_idxlist_t_new(index_list, num_indices);
+      idxvector = xt_idxvec_new(index_vector, num_indices);
 
       // test the generated index vector
 
-      check_idxlist_t(idxlist, index_list, num_indices);
+      check_idxvec(idxvector, index_vector, num_indices);
 
-      // copy the index list
+      // copy the index vector
 
-      idxlist_copy = xt_idxlist_copy(idxlist);
+      idxvector_copy = xt_idxlist_copy(idxvector);
 
       // check the generated copy
 
-      check_idxlist_t(idxlist_copy, index_list, num_indices);
+      check_idxvec(idxvector_copy, index_vector, num_indices);
 
       // clean up
 
-      xt_idxlist_delete(idxlist);
-      xt_idxlist_delete(idxlist_copy);
+      xt_idxlist_delete(idxvector);
+      xt_idxlist_delete(idxvector_copy);
    }
 
    MPI_Finalize();
@@ -136,8 +135,8 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxlist_t(xt_idxlist idxlist, Xt_idx * ref_indices,
-                     unsigned ref_num_indices) {
+void check_idxvec(xt_idxlist idxlist, Xt_idx * ref_indices,
+                  unsigned ref_num_indices) {
 
    unsigned i;
 
@@ -150,5 +149,5 @@ void check_idxlist_t(xt_idxlist idxlist, Xt_idx * ref_indices,
 
    for (i = 0; i < ref_num_indices; ++i)
       if (indices[i] != ref_indices[i])
-         PUT_ERR("index vector contains wrong indices\n");
+         PUT_ERR("index list contains wrong indices\n");
 }

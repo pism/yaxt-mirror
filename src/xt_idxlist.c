@@ -4,7 +4,7 @@
 
 #include "yaxt.h"
 #include "xt_idxlist.h"
-#include "xt_idxlist_t.h"
+#include "xt_idxvec.h"
 #include "xt_mpi.h"
 
 void xt_idxlist_delete(struct xt_idxlist *idxlist) {
@@ -48,7 +48,7 @@ xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
       }
    }
 
-   fprintf(stderr, "xt_idxlist_unpack: unknown index vector type\n");
+   fprintf(stderr, "xt_idxlist_unpack: unknown index list type\n");
    exit(EXIT_FAILURE);
 }
 
@@ -74,16 +74,16 @@ xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
       xt_idxlist_get_indices(idxlist_src, indices_src);
       xt_idxlist_get_indices(idxlist_dst, indices_dst);
 
-      xt_idxlist idxlist_t_src, idxlist_t_dst;
+      xt_idxlist idxvec_src, idxvec_dst;
 
-      idxlist_t_src = xt_idxlist_t_new(indices_src, num_indices_src);
-      idxlist_t_dst = xt_idxlist_t_new(indices_dst, num_indices_dst);
+      idxvec_src = xt_idxvec_new(indices_src, num_indices_src);
+      idxvec_dst = xt_idxvec_new(indices_dst, num_indices_dst);
 
-      intersection = xt_idxlist_get_intersection(idxlist_t_src,
-                                                 idxlist_t_dst);
+      intersection = xt_idxlist_get_intersection(idxvec_src,
+                                                 idxvec_dst);
 
-      xt_idxlist_delete(idxlist_t_src);
-      xt_idxlist_delete(idxlist_t_dst);
+      xt_idxlist_delete(idxvec_src);
+      xt_idxlist_delete(idxvec_dst);
       free(indices_dst);
       free(indices_src);
 

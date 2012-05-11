@@ -5,7 +5,7 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_idxlist_t.h"
+#include "xt_idxvec.h"
 #include "xt_redist_p2p.h"
 
 int main(void) {
@@ -19,7 +19,7 @@ int main(void) {
   mpi_err_handler(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
 
   {
-    // source index vector
+    // source index list
     Xt_idx src_index_list[10];
     unsigned src_num_indices = 10;
     for (i = 0; i < src_num_indices; ++i)
@@ -27,9 +27,9 @@ int main(void) {
 
     xt_idxlist src_idxlist;
 
-    src_idxlist = xt_idxlist_t_new(src_index_list, src_num_indices);
+    src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
-    // destination index vector
+    // destination index list
     Xt_idx dst_index_list[10];
     unsigned dst_num_indices = 10;
     for (i = 0; i < dst_num_indices; ++i)
@@ -37,7 +37,7 @@ int main(void) {
 
     xt_idxlist dst_idxlist;
 
-    dst_idxlist = xt_idxlist_t_new(dst_index_list, dst_num_indices);
+    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     // xmap
     xt_xmap xmap;

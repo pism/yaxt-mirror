@@ -6,7 +6,7 @@
 #include "mpi.h"
 
 #include "xt_idxlist.h"
-#include "xt_idxlist_t.h"
+#include "xt_idxvec.h"
 #include "xt_xmap.h"
 #include "xt_mpi.h"
 
@@ -73,7 +73,7 @@ static void exchange_idxlists(xt_xmap xmap,
 
   mpi_err_handler(MPI_Comm_size(xmap->comm, &comm_size), xmap->comm);
 
-  // compute size of local index vectors
+  // compute size of local index lists
   size_t send_buffer_size;
   send_buffer_size  = xt_idxlist_get_pack_size(src_idxlist_local, xmap->comm);
   send_buffer_size += xt_idxlist_get_pack_size(dst_idxlist_local, xmap->comm);
@@ -82,11 +82,11 @@ static void exchange_idxlists(xt_xmap xmap,
 
   send_buffer = malloc(send_buffer_size);
   if (send_buffer == NULL) {
-    fputs("malloc failed for send buffer of index vector exchange\n", stderr);
+    fputs("malloc failed for send buffer of index list exchange\n", stderr);
      exit(EXIT_FAILURE);
   }
 
-  // pack local index vectors
+  // pack local index lists
   int position = 0;
   xt_idxlist_pack(src_idxlist_local, send_buffer, send_buffer_size, &position,
                   xmap->comm);
@@ -100,7 +100,7 @@ static void exchange_idxlists(xt_xmap xmap,
   recv_buffer_header = malloc(comm_size * sizeof(*recv_buffer_header));
   if (recv_buffer_header == NULL) {
     fputs("malloc failed for receive buffer header"
-          " of index vector exchange\n", stderr);
+          " of index list exchange\n", stderr);
     exit(EXIT_FAILURE);
   }
 
@@ -113,7 +113,7 @@ static void exchange_idxlists(xt_xmap xmap,
 
   displ = malloc(comm_size * sizeof(*displ));
   if (displ == NULL) {
-    fputs("malloc failed for displacment of index vector exchange\n", stderr);
+    fputs("malloc failed for displacment of index list exchange\n", stderr);
     exit(EXIT_FAILURE);
   }
 
@@ -127,7 +127,7 @@ static void exchange_idxlists(xt_xmap xmap,
 
   recv_buffer = malloc(recv_buffer_size);
   if (recv_buffer == NULL) {
-    fputs("malloc failed for receive buffer of index vector exchange\n",
+    fputs("malloc failed for receive buffer of index list exchange\n",
           stderr);
     exit(EXIT_FAILURE);
   }
@@ -140,15 +140,15 @@ static void exchange_idxlists(xt_xmap xmap,
 
   src_idxlists_all = malloc(comm_size * sizeof(*src_idxlists_all));
   if (src_idxlists_all == NULL) {
-    fputs("malloc failed for source index vectors"
-          " all of index vector exchange\n", stderr);
+    fputs("malloc failed for source index lists"
+          " all of index list exchange\n", stderr);
     exit(EXIT_FAILURE);
   }
 
   dst_idxlists_all = malloc(comm_size * sizeof(*dst_idxlists_all));
   if (dst_idxlists_all == NULL) {
-    fputs("malloc failed for destination index vectors"
-          " all of index vector exchange\n", stderr);
+    fputs("malloc failed for destination index lists"
+          " all of index list exchange\n", stderr);
     exit(EXIT_FAILURE);
   }
 
@@ -242,7 +242,7 @@ static void generate_src_xlist(xt_xmap xmap,
     // for all indices in the intersection
     for (j = 0; j < num_intersection_indices; ++j) {
 
-      // look up current intersection index in the destination index vector
+      // look up current intersection index in the destination index list
       int global_index;
       int local_index;
 
@@ -250,7 +250,7 @@ static void generate_src_xlist(xt_xmap xmap,
       assert(xt_idxlist_get_position_of_index(idxlist, global_index, index_list+j) != 1);
     }
 
-    xmap->src_msg[i].xlist = xt_idxlist_t_new(index_list, num_intersection_indices);
+    xmap->src_msg[i].xlist = xt_idxvec_new(index_list, num_intersection_indices);
   }
 
   free(index_list);
@@ -295,7 +295,7 @@ static void generate_dst_xlist(xt_xmap xmap,
     // for all indices in the intersection
     for (j = 0; j < num_intersection_indices; ++j) {
 
-      // look up current intersection index in the destination index vector
+      // look up current intersection index in the destination index list
       int global_index;
 
       assert(xt_idxlist_get_index(xmap->dst_msg[i].intersect, j, &global_index) != 1);
@@ -313,7 +313,7 @@ static void generate_dst_xlist(xt_xmap xmap,
       ++repetition_count;
     }
 
-    xmap->dst_msg[i].xlist = xt_idxlist_t_new(index_list, num_intersection_indices);
+    xmap->dst_msg[i].xlist = xt_idxvec_new(index_list, num_intersection_indices);
   }
 
   free(index_list);
@@ -340,7 +340,7 @@ xt_xmap_new(xt_idxlist src_idxlist, xt_idxlist dst_idxlist, MPI_Comm comm) {
 
   mpi_err_handler(MPI_Comm_dup(comm, &(xmap->comm)), comm);
 
-  // exchange index vectors between all processes in comm
+  // exchange index lists between all processes in comm
   exchange_idxlists(xmap, src_idxlist, dst_idxlist);
 
   // generate exchange lists

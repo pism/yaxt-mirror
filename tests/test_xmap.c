@@ -4,7 +4,7 @@
 
 #include "yaxt.h"
 #include "xt_mpi.h"
-#include "xt_idxlist_t.h"
+#include "xt_idxvec.h"
 #include "xt_xmap.h"
 
 void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
@@ -16,21 +16,21 @@ int main(void) {
    mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
    {
-      // source index vector
+      // source index list
       Xt_idx src_index_list[] = {1,2,3,4,5,6,7};
       unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
       xt_idxlist src_idxlist;
 
-      src_idxlist = xt_idxlist_t_new(src_index_list, src_num_indices);
+      src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
-      // destination index vector
+      // destination index list
       Xt_idx dst_index_list[] = {7,6,5,4,3,2,1};
       unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
       xt_idxlist dst_idxlist;
 
-      dst_idxlist = xt_idxlist_t_new(dst_index_list, dst_num_indices);
+      dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
       // test of exchange map
       xt_xmap xmap;
@@ -75,21 +75,21 @@ int main(void) {
    }
 
    {
-      // source index vector
+      // source index list
       Xt_idx src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
       unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
       xt_idxlist src_idxlist;
 
-      src_idxlist = xt_idxlist_t_new(src_index_list, src_num_indices);
+      src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
-      // destination index vector
+      // destination index list
       Xt_idx dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
       unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
       xt_idxlist dst_idxlist;
 
-      dst_idxlist = xt_idxlist_t_new(dst_index_list, dst_num_indices);
+      dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
       xt_xmap xmap;
 
@@ -155,5 +155,5 @@ void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_in
 
    for (i = 0; i < ref_num_indices; ++i)
       if (indices[i] != ref_indices[i])
-         PUT_ERR("index vector contains wrong indices\n");
+         PUT_ERR("index list contains wrong indices\n");
 }
