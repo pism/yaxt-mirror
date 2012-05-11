@@ -86,9 +86,9 @@ xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
       xt_idxlist_delete(idxvec_dst);
       free(indices_dst);
       free(indices_src);
-
-      return intersection;
    }
+
+   return intersection;
 }
 
 xt_idxlist xt_idxlist_copy(xt_idxlist idxlist) {

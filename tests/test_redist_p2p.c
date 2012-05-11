@@ -7,6 +7,8 @@
 #include "yaxt.h"
 #include "xt_idxvec.h"
 #include "xt_redist_p2p.h"
+#include "xt_idxlist.h"
+#include "xt_mpi.h"
 
 int main(void) {
 

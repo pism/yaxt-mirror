@@ -68,8 +68,8 @@ static void exchange_idxlists(xt_xmap xmap,
 
   xt_idxlist *src_idxlists_all, *dst_idxlists_all;
 
-  unsigned i, j;
-  int comm_size, comm_rank;
+  unsigned i;
+  int comm_size;
 
   mpi_err_handler(MPI_Comm_size(xmap->comm, &comm_size), xmap->comm);
 
@@ -244,7 +244,6 @@ static void generate_src_xlist(xt_xmap xmap,
 
       // look up current intersection index in the destination index list
       int global_index;
-      int local_index;
 
       assert(xt_idxlist_get_index(xmap->src_msg[i].intersect, j, &global_index) != 1);
       assert(xt_idxlist_get_position_of_index(idxlist, global_index, index_list+j) != 1);
