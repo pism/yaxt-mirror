@@ -1,5 +1,7 @@
 #include "mpi.h"
 
+#define VERBOSE
+
 #include "tests.h"
 
 #include "yaxt.h"
@@ -9,16 +11,28 @@
 
 void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
 
+void shift_idx(Xt_idx idx[], int num, int offset)  {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  for (int i=0; i<num; i++) {
+    idx[i] = idx[i] + rank*offset;
+  }
+}
+
+
 int main(void) {
 
    // init mpi
-
    mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+
+   int my_rank;
+   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
    {
       // source index list
       Xt_idx src_index_list[] = {1,2,3,4,5,6,7};
       unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+      shift_idx(src_index_list, src_num_indices, 7);
 
       xt_idxlist src_idxlist;
 
@@ -27,6 +41,7 @@ int main(void) {
       // destination index list
       Xt_idx dst_index_list[] = {7,6,5,4,3,2,1};
       unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+      shift_idx(dst_index_list, dst_num_indices, 7);
 
       xt_idxlist dst_idxlist;
 
@@ -48,22 +63,24 @@ int main(void) {
       int rank;
 
       xt_xmap_get_destination_ranks(xmap, &rank);
-      if (rank != 0)
+      if (rank != my_rank)
         PUT_ERR("error in xt_xmap_get_destination_ranks\n");
 
       xt_xmap_get_source_ranks(xmap, &rank);
-      if (rank != 0)
+      if (rank != my_rank)
         PUT_ERR("error in xt_xmap_get_source_ranks\n");
 
       Xt_idxlist src_xlist, dst_xlist;
 
-      dst_xlist = xt_xmap_get_dst_xlist(xmap, 0);
-      src_xlist = xt_xmap_get_src_xlist(xmap, 0);
+      dst_xlist = xt_xmap_get_dst_xlist(xmap, rank);
+      src_xlist = xt_xmap_get_src_xlist(xmap, rank);
+
 
       Xt_idx ref_src_xlist[7] = {0,1,2,3,4,5,6};
       Xt_idx ref_dst_xlist[7] = {6,5,4,3,2,1,0};
 
       check_idxdata(src_xlist, ref_src_xlist, 7);
+
       check_idxdata(dst_xlist, ref_dst_xlist, 7);
 
       // clean up
@@ -78,6 +95,7 @@ int main(void) {
       // source index list
       Xt_idx src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
       unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+      shift_idx(src_index_list, src_num_indices, 100);
 
       xt_idxlist src_idxlist;
 
@@ -86,6 +104,7 @@ int main(void) {
       // destination index list
       Xt_idx dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
       unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+      shift_idx(dst_index_list, dst_num_indices, 100);
 
       xt_idxlist dst_idxlist;
 
@@ -109,20 +128,26 @@ int main(void) {
       int rank;
 
       xt_xmap_get_destination_ranks(xmap, &rank);
-      if (rank != 0)
+      if (rank != my_rank)
         PUT_ERR("error in xt_xmap_get_destination_ranks\n");
 
       xt_xmap_get_source_ranks(xmap, &rank);
-      if (rank != 0)
+      if (rank != my_rank)
         PUT_ERR("error in xt_xmap_get_source_ranks\n");
+
 
       Xt_idxlist src_xlist, dst_xlist;
 
-      dst_xlist = xt_xmap_get_dst_xlist(xmap, 0);
-      src_xlist = xt_xmap_get_src_xlist(xmap, 0);
+      dst_xlist = xt_xmap_get_dst_xlist(xmap, my_rank);
+      src_xlist = xt_xmap_get_src_xlist(xmap, my_rank);
 
       Xt_idx ref_src_xlist[] = {7,7,6,13,13,2,2,2,0,0,0,4,9};
+      unsigned ref_src_num = sizeof(ref_src_xlist) / sizeof(ref_src_xlist[0]);
+      //shift_idx(ref_src_xlist, ref_src_num, 100);
+
       Xt_idx ref_dst_xlist[] = {6,18,17,4,14,2,10,12,1,7,11,15,5};
+      unsigned ref_dst_num = sizeof(ref_dst_xlist) / sizeof(ref_dst_xlist[0]);
+      //shift_idx(ref_dst_xlist, ref_dst_num, 100);
 
       check_idxdata(src_xlist, ref_src_xlist,
                     sizeof(ref_src_xlist) / sizeof(ref_src_xlist[0]));
@@ -154,6 +179,6 @@ void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_in
    xt_idxlist_get_indices(idxlist, indices);
 
    for (i = 0; i < ref_num_indices; ++i)
-      if (indices[i] != ref_indices[i])
-         PUT_ERR("index list contains wrong indices\n");
+     if (indices[i] != ref_indices[i])
+       PUT_ERR("index list contains wrong indices\n");
 }
