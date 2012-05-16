@@ -1,0 +1,9 @@
+#! /usr/bin/ksh93
+if [ x"$1" = x-n ]; then
+   shift
+   MP_PROCS="$1"
+   export MP_PROCS
+   shift
+fi
+MP_HOSTFILE=/home/dkrz/k202069/hostfile-passat1 \
+  exec poe "$@"
