@@ -16,7 +16,7 @@ int main(void) {
 
   mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
-  // check offset-free test:
+  // offset-free test:
   {
     // source index list
     Xt_idx src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
@@ -70,7 +70,7 @@ int main(void) {
     xt_idxlist_delete(dst_idxlist);
   }
 
-  // check usage of offsets
+  // check offsets
 
   {
     // source index list
@@ -103,22 +103,17 @@ int main(void) {
 
     // offsets:
     int src_pos[src_num];
-    ssize_t src_off[src_num];
     for (int i=0; i<src_num; i++) {
       src_pos[i] = i;
-      src_off[i] = (ssize_t)src_pos[i];
     }
     int dst_pos[dst_num];
-    ssize_t dst_off[dst_num];
     for (int i=0; i<dst_num; i++) {
       dst_pos[i] = dst_num-1-i;
-      dst_off[i] = (ssize_t)dst_pos[i];
-      //fprintf(stderr,"i=%i, dst_pos[i]=%i\n",i, dst_pos[i]);      
     }
 
     // redist_p2p
     Xt_redist redist;
-    redist = xt_redist_p2p_off_new(xmap, src_off, dst_off, MPI_DOUBLE);
+    redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
 
 
     double * src_data_p = &src_data[0];
@@ -131,7 +126,6 @@ int main(void) {
     unsigned i;
 
     for (i = 0; i < dst_num; ++i) {
-      //fprintf(stderr, "i=%i, dst_data=%f, ref=%f\n",i,dst_data[i], ref_dst_data[dst_pos[i]]);
       if (ref_dst_data[dst_pos[i]] != dst_data[i]) 
         PUT_ERR("error in xt_redist_s_exchange\n");
     }

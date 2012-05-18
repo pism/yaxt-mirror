@@ -2,7 +2,6 @@
 #define XT_REDIST_P2P_H
 
 #include <mpi.h>
-#include <sys/types.h>
 
 #include "xt_redist.h"
 #include "xt_xmap.h"
@@ -33,7 +32,7 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype);
  * @param[in] datatype     MPI datatype of single element
  *                         in the data to be exchanged
  */
-Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, ssize_t *src_offsets,
-                                ssize_t *dst_offsets, MPI_Datatype datatype);
+Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
+                                int *dst_offsets, MPI_Datatype datatype);
 
 #endif // XT_REDIST_P2P_H

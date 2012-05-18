@@ -38,7 +38,7 @@ struct Xt_redist_p2p {
 };
 
 static MPI_Datatype
-generate_datatype(Xt_idxlist xlist, ssize_t *offsets,
+generate_datatype(Xt_idxlist xlist, int *offsets,
                   MPI_Datatype base_datatype, MPI_Comm comm) {
 
   MPI_Datatype type;
@@ -74,7 +74,7 @@ generate_datatype(Xt_idxlist xlist, ssize_t *offsets,
 }
 
 static void
-generate_msg_infos(int num_msgs, Xt_xmap_iter iter, ssize_t *offsets,
+generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
                    MPI_Datatype base_datatype, struct Xt_redist_p2p_msg ** msgs,
                    MPI_Comm comm) {
 
@@ -108,8 +108,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, ssize_t *offsets,
   xt_xmap_iterator_delete(iter);
 }
 
-Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, ssize_t *src_offsets,
-                                ssize_t *dst_offsets, MPI_Datatype datatype) {
+Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
+                                int *dst_offsets, MPI_Datatype datatype) {
 
   struct Xt_redist_p2p *redist;
 
