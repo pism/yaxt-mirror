@@ -71,7 +71,6 @@ int main(void) {
   }
 
   // check offsets
-
   {
     // source index list
     Xt_idx src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
@@ -94,27 +93,27 @@ int main(void) {
 
     xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
+    // redist_p2p with offsets
+
+    unsigned i;
+
+    int src_pos[src_num];
+    int dst_pos[dst_num];
+
+    for (i = 0; i < src_num; i++)
+      src_pos[i] = i;
+    for (i = 0; i < dst_num; i++)
+      dst_pos[i] = dst_num-1-i;
+
+    Xt_redist redist;
+    redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
+    
     // test exchange
 
     double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     assert(sizeof(dst_data)/sizeof(dst_data[0]) == dst_num);
-
-    // offsets:
-    int src_pos[src_num];
-    for (int i=0; i<src_num; i++) {
-      src_pos[i] = i;
-    }
-    int dst_pos[dst_num];
-    for (int i=0; i<dst_num; i++) {
-      dst_pos[i] = dst_num-1-i;
-    }
-
-    // redist_p2p
-    Xt_redist redist;
-    redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
-
 
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
@@ -123,12 +122,9 @@ int main(void) {
 
     double ref_dst_data[] = {-1,0,2,-1,13,9,7,0,-1,-1,2,0,2,-1,13,4,-1,6,7};
 
-    unsigned i;
-
-    for (i = 0; i < dst_num; ++i) {
+    for (i = 0; i < dst_num; ++i)
       if (ref_dst_data[dst_pos[i]] != dst_data[i]) 
         PUT_ERR("error in xt_redist_s_exchange\n");
-    }
 
     // clean up
 
