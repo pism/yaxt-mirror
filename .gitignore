@@ -9,3 +9,4 @@ Makefile.in
 /config/missing
 /aclocal.m4
 /autom4te.cache
+/include/config.h.in

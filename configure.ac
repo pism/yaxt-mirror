@@ -37,6 +37,8 @@ AS_IF([test x"$USE_MPI" = xyes],
 AM_CONDITIONAL([USE_MPI],[test x"$USE_MPI" = xyes])
 AC_SUBST([USE_MPI])
 
+AC_CONFIG_HEADER([include/config.h])
+
 AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run	\
 	tests/test_xmap_parallel_run			\
 	tests/test_idxvec_run				\
