@@ -18,10 +18,10 @@ test_xmap_parallel_SOURCES = test_xmap_parallel.c tests.h
 AM_CFLAGS = -I$(top_srcdir)/src
 LDADD = ../src/libyaxt.a
 
-TESTS = test_idxvec 						\
-	test_idxlist_collection					\
-	test_idxsection						\
-	test_redist_p2p						\
+TESTS = test_idxvec_run						\
+	test_idxlist_collection_run				\
+	test_idxsection_run					\
+	test_redist_p2p_run					\
 	test_redist_p2p_parallel_run				\
-	test_xmap						\
+	test_xmap_run						\
 	test_xmap_parallel_run
