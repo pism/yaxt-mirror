@@ -1,3 +1,4 @@
+AM_CPPFLAGS = -I../include -I$(srcdir)/../include
 lib_LIBRARIES = libyaxt.a
 
 libyaxt_a_SOURCES = xt_idxlist.c				\
@@ -17,5 +18,11 @@ libyaxt_a_SOURCES = xt_idxlist.c				\
 	xt_redist_p2p.h						\
 	xt_xmap.c						\
 	xt_xmap.h						\
+	core/core.c						\
+	core/core.h						\
+	core/ppm_xfuncs.h					\
+	core/symprefix.h					\
+	core/xmalloc.c						\
+	core/xstdio.c						\
 	yaxt.h
 
