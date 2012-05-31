@@ -12,13 +12,12 @@
 void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
 
 void shift_idx(Xt_idx idx[], int num, int offset)  {
-  int rank;
+  int rank, i;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  for (int i=0; i<num; i++) {
+  for (i=0; i<num; i++) {
     idx[i] = idx[i] + rank*offset;
   }
 }
-
 
 int main(void) {
 
@@ -142,12 +141,8 @@ int main(void) {
       src_xlist = xt_xmap_get_src_xlist(xmap, my_rank);
 
       Xt_idx ref_src_xlist[] = {7,7,6,13,13,2,2,2,0,0,0,4,9};
-      unsigned ref_src_num = sizeof(ref_src_xlist) / sizeof(ref_src_xlist[0]);
-      //shift_idx(ref_src_xlist, ref_src_num, 100);
 
       Xt_idx ref_dst_xlist[] = {6,18,17,4,14,2,10,12,1,7,11,15,5};
-      unsigned ref_dst_num = sizeof(ref_dst_xlist) / sizeof(ref_dst_xlist[0]);
-      //shift_idx(ref_dst_xlist, ref_dst_num, 100);
 
       check_idxdata(src_xlist, ref_src_xlist,
                     sizeof(ref_src_xlist) / sizeof(ref_src_xlist[0]));
