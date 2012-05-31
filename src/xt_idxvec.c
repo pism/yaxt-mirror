@@ -79,17 +79,25 @@ struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, size_t num_indices) {
 
    idxvec_data->vtable = &idxvec_vtable;
 
-   size_t vector_size;
+   if (num_indices != 0) {
 
-   vector_size = num_indices * sizeof(*(idxvec_data->vector));
+      size_t vector_size;
 
-   idxvec_data->vector = malloc(vector_size);
-   if (idxvec_data->vector == NULL) {
-      fprintf(stderr, "malloc failed for idxvec_data\n");
-      exit(EXIT_FAILURE);
+      vector_size = num_indices * sizeof(*(idxvec_data->vector));
+
+      idxvec_data->vector = malloc(vector_size);
+      if (idxvec_data->vector == NULL && vector_size != 0) {
+         fprintf(stderr, "malloc failed for idxvec_data\n");
+         exit(EXIT_FAILURE);
+      }
+
+      memcpy(idxvec_data->vector, idxvec, vector_size);
+
+   } else {
+
+      idxvec_data->vector = NULL;
    }
 
-   memcpy(idxvec_data->vector, idxvec, vector_size);
    idxvec_data->num_indices = num_indices;
 
    return (void*)idxvec_data;
