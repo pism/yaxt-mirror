@@ -9,6 +9,7 @@ noinst_PROGRAMS = test_idxvec					\
 
 test_idxvec_SOURCES = test_idxvec.c tests.h
 test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h
+test_idxsection_SOURCES = test_idxsection.c tests.h
 test_redist_p2p_SOURCES = test_redist_p2p.c test.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c test.h
 test_xmap_SOURCES = test_xmap.c tests.h
