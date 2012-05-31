@@ -137,9 +137,10 @@ void idxvec_pack(struct xt_idxlist *data, void *buffer, int buffer_size,
                            buffer_size, position, comm), comm);
   mpi_err_handler(MPI_Pack(&num_indices, 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(idxvec->vector, (int)idxvec->num_indices,
-                           Xt_idx_dt, buffer,
-                           buffer_size, position, comm), comm);
+  if (num_indices != 0)
+    mpi_err_handler(MPI_Pack(idxvec->vector, (int)idxvec->num_indices,
+                             Xt_idx_dt, buffer,
+                             buffer_size, position, comm), comm);
 }
 
 xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
@@ -161,15 +162,20 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
    assert(num_indices >= 0);
    idxvec->num_indices = (size_t)num_indices;
 
-   idxvec->vector = malloc(idxvec->num_indices * sizeof(*(idxvec->vector)));
-   if (idxvec->vector == NULL) {
-      fprintf(stderr, "malloc failed for idxvec\n");
-      exit(EXIT_FAILURE);
-   }
+   if (num_indices != 0) {
 
-   mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
-                              idxvec->vector, idxvec->num_indices,
-                              Xt_idx_dt, comm),comm);
+      idxvec->vector = malloc(idxvec->num_indices * sizeof(*(idxvec->vector)));
+      if (idxvec->vector == NULL) {
+         fprintf(stderr, "malloc failed for idxvec\n");
+         exit(EXIT_FAILURE);
+      }
+      mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+                                 idxvec->vector, idxvec->num_indices,
+                                 Xt_idx_dt, comm),comm);
+   } else {
+
+      idxvec->vector = NULL;
+   }
 
    return (xt_idxlist)idxvec;
 }
