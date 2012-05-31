@@ -18,6 +18,7 @@ libyaxt_a_SOURCES = xt_idxlist.c				\
 	xt_redist_p2p.h						\
 	xt_xmap.c						\
 	xt_xmap.h						\
+	xt_init.c						\
 	core/core.c						\
 	core/core.h						\
 	core/ppm_xfuncs.h					\

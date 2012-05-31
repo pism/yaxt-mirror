@@ -15,8 +15,11 @@ int main(void) {
   // init mpi
 
   int i, rank, size;
-  
+
   mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+
+  Xt_initialize(MPI_COMM_WORLD);
+
   mpi_err_handler(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
   mpi_err_handler(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
 

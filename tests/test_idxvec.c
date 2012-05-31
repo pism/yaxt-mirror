@@ -18,6 +18,8 @@ int main(void) {
 
    mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
+  Xt_initialize(MPI_COMM_WORLD);
+
    { // test packing and unpacking of index vectors
 
       Xt_idx index_vector[] = {1,2,3,4,5,6,7};

@@ -19,6 +19,8 @@ int main(void) {
 
    mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
+  Xt_initialize(MPI_COMM_WORLD);
+
    { // test packing and unpacking of collection index lists
 
       Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};

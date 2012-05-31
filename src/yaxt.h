@@ -18,7 +18,14 @@ typedef struct Xt_redist *Xt_redist;
  *
  * contains all external interfaces
  */
- 
+
+/**
+ * initialize library
+ * @param[in] default_comm communicator to use for collective aborts
+ */
+void
+Xt_initialize(MPI_Comm default_comm);
+
 /**
  * destructor for an index list
  *
