@@ -113,6 +113,9 @@ SymPrefix(abort_default)(MPI_Comm comm, const char *msg,
 extern void
 SymPrefix(set_default_comm)(MPI_Comm comm);
 
+#define die(msg) \
+  SymPrefix(abort)(MPI_COMM_WORLD, (msg), __FILE__, __LINE__)
+
 #endif
 /*
  * Local Variables:

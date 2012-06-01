@@ -46,7 +46,6 @@ struct xt_handle_set_type *xt_handle_set_new(int cap) {
 
 
 static void extend_handle_set(struct xt_handle_set_type *hset) {
-
   if (!hset) {
     hset = xt_handle_set_new(default_handle_set_cap);
     return;
@@ -60,9 +59,7 @@ static void extend_handle_set(struct xt_handle_set_type *hset) {
     new_cap = old_cap*2;
   }
 
-  //*hset = xrealloc(*hset, sizeof(struct xt_handle_set_type) + new_cap * sizeof(void*));
   hset->p = xrealloc(hset->p, new_cap * sizeof(void*));
-  //hset->p = malloc(new_cap * sizeof(void*));
 
   for (int i=old_cap; i<new_cap; i++) {
     hset->p[i] = NULL;    
@@ -93,16 +90,16 @@ int xt_handle_new(struct xt_handle_set_type *hset, void *p) {
     }
   }
 
-  Xt_abort(MPI_COMM_WORLD, "internal error", __FILE__, __LINE__);
+  die("internal error");
 
   return 0;
 }
 
 void xt_handle_delete(struct xt_handle_set_type *hset, int handle) {
-  if (!xt_handle_is_valid(hset, handle)) Xt_abort(MPI_COMM_WORLD, "delete_handle: invalid handle", __FILE__, __LINE__);
+  if (!xt_handle_is_valid(hset, handle)) die("delete_handle: invalid handle");
   hset->p[handle]=NULL;
   hset->num--;
-  if (hset->num < 0) Xt_abort(MPI_COMM_WORLD, "delete_handle: internal error - negative occupation count", __FILE__, __LINE__);
+  if (hset->num < 0) die("delete_handle: internal error - negative occupation count");
   if (hset->p[hset->hnf]) hset->hnf = handle;
 }
 
