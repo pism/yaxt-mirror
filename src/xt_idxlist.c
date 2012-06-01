@@ -6,6 +6,8 @@
 #include "xt_idxlist.h"
 #include "xt_idxvec.h"
 #include "xt_mpi.h"
+#include "core/core.h"
+#include "core/ppm_xfuncs.h"
 
 void xt_idxlist_delete(struct xt_idxlist *idxlist) {
 
@@ -48,8 +50,8 @@ xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
       }
    }
 
-   fprintf(stderr, "xt_idxlist_unpack: unknown index list type\n");
-   exit(EXIT_FAILURE);
+  Xt_abort(comm, "xt_idxlist_unpack: unknown index list type",
+           __FILE__, __LINE__);
 }
 
 xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
@@ -68,8 +70,8 @@ xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
       num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
 
       Xt_idx *indices_src, *indices_dst;
-      indices_src = malloc(num_indices_src * sizeof (indices_src[0]));
-      indices_dst = malloc(num_indices_dst * sizeof (indices_dst[0]));
+    indices_src = xmalloc(num_indices_src * sizeof (indices_src[0]));
+    indices_dst = xmalloc(num_indices_dst * sizeof (indices_dst[0]));
 
       xt_idxlist_get_indices(idxlist_src, indices_src);
       xt_idxlist_get_indices(idxlist_dst, indices_dst);

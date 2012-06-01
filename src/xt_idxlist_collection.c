@@ -8,6 +8,7 @@
 #include "xt_idxlist.h"
 #include "xt_idxlist_collection.h"
 #include "xt_mpi.h"
+#include "core/ppm_xfuncs.h"
 
 static void
 idxlist_collection_delete(xt_idxlist data);
@@ -66,19 +67,11 @@ xt_idxlist xt_idxlist_collection_new(xt_idxlist *idxlists, unsigned num_idxlists
 
    struct xt_idxlist_collection *collectionlist;
 
-   collectionlist = malloc(1 * sizeof(*collectionlist));
-   if (collectionlist == NULL) {
-      fprintf(stderr, "malloc failed for collectionlist\n");
-      exit(EXIT_FAILURE);
-   }
+   collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
    collectionlist->vtable = &idxlist_collection_vtable;
    collectionlist->num_idxlists = num_idxlists;
-   collectionlist->idxlists = malloc(num_idxlists * sizeof(*(collectionlist->idxlists)));
-   if (collectionlist->idxlists == NULL) {
-      fprintf(stderr, "malloc failed for collectionlist->idxlists\n");
-      exit(EXIT_FAILURE);
-   }
+   collectionlist->idxlists = xmalloc(num_idxlists * sizeof(*(collectionlist->idxlists)));
 
    unsigned i;
 
@@ -140,11 +133,7 @@ xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *posi
 
    struct xt_idxlist_collection *collectionlist;
 
-   collectionlist = malloc(1 * sizeof(*collectionlist));
-   if (collectionlist == NULL) {
-      fprintf(stderr, "malloc failed for collectionlist\n");
-      exit(EXIT_FAILURE);
-   }
+   collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
    collectionlist->vtable = &idxlist_collection_vtable;
 
@@ -152,12 +141,8 @@ xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *posi
                               &(collectionlist->num_idxlists), 1, MPI_UNSIGNED, comm),
                    comm);
    
-   collectionlist->idxlists = malloc(collectionlist->num_idxlists *
+   collectionlist->idxlists = xmalloc(collectionlist->num_idxlists *
                                      sizeof(*(collectionlist->idxlists)));
-   if (collectionlist->idxlists == NULL) {
-      fprintf(stderr, "malloc failed for collectionlist->idxlists\n");
-      exit(EXIT_FAILURE);
-   }
 
    unsigned i;
 

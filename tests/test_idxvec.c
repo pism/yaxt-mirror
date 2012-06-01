@@ -9,6 +9,7 @@
 #include "yaxt.h"
 #include "xt_idxvec.h"
 #include "xt_mpi.h"
+#include "core/ppm_xfuncs.h"
 
 void check_idxvec(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
 
@@ -45,8 +46,8 @@ int main(void) {
 
       void* send_buffer, * recv_buffer;
 
-      send_buffer = malloc(buffer_size);
-      recv_buffer = malloc(buffer_size);
+      send_buffer = xmalloc(buffer_size);
+      recv_buffer = xmalloc(buffer_size);
 
       // pack the index vector
 

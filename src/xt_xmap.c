@@ -9,6 +9,7 @@
 #include "xt_idxvec.h"
 #include "xt_xmap.h"
 #include "xt_mpi.h"
+#include "core/ppm_xfuncs.h"
 
 struct exchange_data {
   // list of global indices to send or receive from partner rank
@@ -80,11 +81,7 @@ static void exchange_idxlists(xt_xmap xmap,
 
   void * send_buffer;
 
-  send_buffer = malloc(send_buffer_size);
-  if (send_buffer == NULL) {
-    fputs("malloc failed for send buffer of index list exchange\n", stderr);
-     exit(EXIT_FAILURE);
-  }
+  send_buffer = xmalloc(send_buffer_size);
 
   // pack local index lists
   int position = 0;
@@ -97,12 +94,7 @@ static void exchange_idxlists(xt_xmap xmap,
   int send_buffer_header = send_buffer_size;
   int * recv_buffer_header;
 
-  recv_buffer_header = malloc(comm_size * sizeof(*recv_buffer_header));
-  if (recv_buffer_header == NULL) {
-    fputs("malloc failed for receive buffer header"
-          " of index list exchange\n", stderr);
-    exit(EXIT_FAILURE);
-  }
+  recv_buffer_header = xmalloc(comm_size * sizeof(*recv_buffer_header));
 
   mpi_err_handler(MPI_Allgather(&send_buffer_header, 1, MPI_INT,
                                 recv_buffer_header,
@@ -111,11 +103,7 @@ static void exchange_idxlists(xt_xmap xmap,
   void * recv_buffer;
   int * displ;
 
-  displ = malloc(comm_size * sizeof(*displ));
-  if (displ == NULL) {
-    fputs("malloc failed for displacment of index list exchange\n", stderr);
-    exit(EXIT_FAILURE);
-  }
+  displ = xmalloc(comm_size * sizeof(*displ));
 
   displ[0] = 0;
   size_t recv_buffer_size = recv_buffer_header[0];
@@ -125,12 +113,7 @@ static void exchange_idxlists(xt_xmap xmap,
      recv_buffer_size += recv_buffer_header[i];
   }
 
-  recv_buffer = malloc(recv_buffer_size);
-  if (recv_buffer == NULL) {
-    fputs("malloc failed for receive buffer of index list exchange\n",
-          stderr);
-    exit(EXIT_FAILURE);
-  }
+  recv_buffer = xmalloc(recv_buffer_size);
 
   // exchange buffers
   mpi_err_handler(MPI_Allgatherv(send_buffer, send_buffer_size, MPI_PACKED,
@@ -138,19 +121,9 @@ static void exchange_idxlists(xt_xmap xmap,
                                  MPI_PACKED,
                                  xmap->comm), xmap->comm);
 
-  src_idxlists_all = malloc(comm_size * sizeof(*src_idxlists_all));
-  if (src_idxlists_all == NULL) {
-    fputs("malloc failed for source index lists"
-          " all of index list exchange\n", stderr);
-    exit(EXIT_FAILURE);
-  }
+  src_idxlists_all = xmalloc(comm_size * sizeof(*src_idxlists_all));
 
-  dst_idxlists_all = malloc(comm_size * sizeof(*dst_idxlists_all));
-  if (dst_idxlists_all == NULL) {
-    fputs("malloc failed for destination index lists"
-          " all of index list exchange\n", stderr);
-    exit(EXIT_FAILURE);
-  }
+  dst_idxlists_all = xmalloc(comm_size * sizeof(*dst_idxlists_all));
 
   // unpack buffers
   for (i = 0, position = 0; i < comm_size; ++i) {
@@ -162,9 +135,9 @@ static void exchange_idxlists(xt_xmap xmap,
   }
 
   // allocate memory for intersections
-  xmap->dst_msg = malloc(comm_size * sizeof (*xmap->dst_msg));
+  xmap->dst_msg = xmalloc(comm_size * sizeof (*xmap->dst_msg));
   xmap->ndst = 0;
-  xmap->src_msg = malloc(comm_size * sizeof (*xmap->src_msg));
+  xmap->src_msg = xmalloc(comm_size * sizeof (*xmap->src_msg));
   xmap->nsrc = 0;
   if (!xmap->dst_msg || !xmap->src_msg)
     abort();
@@ -231,12 +204,7 @@ static void generate_src_xlist(xt_xmap xmap,
 
       index_list_size = num_intersection_indices;
 
-      index_list = realloc(index_list, index_list_size * sizeof(*index_list));
-      if (index_list == NULL) {
-        fputs("malloc failed for index list"
-              " of the exchange list\n", stderr);
-        exit(EXIT_FAILURE);
-      }
+      index_list = xrealloc(index_list, index_list_size * sizeof(*index_list));
     }
 
     // for all indices in the intersection
@@ -276,12 +244,7 @@ static void generate_dst_xlist(xt_xmap xmap,
 
       index_list_size = num_intersection_indices;
 
-      index_list = realloc(index_list, index_list_size * sizeof(*index_list));
-      if (index_list == NULL) {
-        fputs("malloc failed for index list"
-              " of the exchange list\n", stderr);
-        exit(EXIT_FAILURE);
-      }
+      index_list = xrealloc(index_list, index_list_size * sizeof(*index_list));
     }
 
     int prev_global_index;
@@ -331,11 +294,7 @@ xt_xmap_new(xt_idxlist src_idxlist, xt_idxlist dst_idxlist, MPI_Comm comm) {
 
   struct xt_xmap * xmap;
 
-  xmap = malloc(1 * sizeof(*xmap));
-  if (xmap == NULL) {
-    fprintf(stderr, "malloc failed for exchange map\n");
-    exit(EXIT_FAILURE);
-  }
+  xmap = xmalloc(1 * sizeof(*xmap));
 
   mpi_err_handler(MPI_Comm_dup(comm, &(xmap->comm)), comm);
 
@@ -397,11 +356,7 @@ Xt_xmap_iter xt_xmap_get_destination_iterator(Xt_xmap xmap) {
 
   Xt_xmap_iter iter;
 
-  iter = malloc(1 * sizeof(*iter));
-  if (iter == NULL) {
-    fputs("malloc failed for exchange map destination iterator\n", stderr);
-     exit(EXIT_FAILURE);
-  }
+  iter = xmalloc(1 * sizeof(*iter));
 
   iter->msg = xmap->dst_msg;
   iter->msgs_left = xmap->ndst - 1;
@@ -416,11 +371,7 @@ Xt_xmap_iter xt_xmap_get_source_iterator(Xt_xmap xmap) {
 
   Xt_xmap_iter iter;
 
-  iter = malloc(1 * sizeof(*iter));
-  if (iter == NULL) {
-    fputs("malloc failed for exchange map source iterator\n", stderr);
-     exit(EXIT_FAILURE);
-  }
+  iter = xmalloc(1 * sizeof(*iter));
 
   iter->msg = xmap->src_msg;
   iter->msgs_left = xmap->nsrc - 1;

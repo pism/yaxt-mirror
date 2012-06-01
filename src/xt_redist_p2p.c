@@ -8,6 +8,7 @@
 #include "xt_redist_p2p.h"
 #include "xt_xmap.h"
 #include "xt_idxlist.h"
+#include "core/ppm_xfuncs.h"
 
 static void
 redist_p2p_delete(Xt_redist redist);
@@ -48,11 +49,7 @@ generate_datatype(Xt_idxlist xlist, int *offsets,
 
   num_indices = xt_idxlist_get_num_indices(xlist);
 
-  displ = malloc(num_indices * sizeof(*displ));
-  if (displ == NULL) {
-    fprintf(stderr, "malloc failed on displacements for MPI_Type_create_indexed_block\n");
-    exit(EXIT_FAILURE);
-  }
+  displ = xmalloc(num_indices * sizeof(*displ));
 
   assert(sizeof(Xt_idx) == sizeof(int));
 
@@ -80,11 +77,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
 
   assert(num_msgs > 0);
 
-  *msgs = malloc(num_msgs * sizeof(**msgs));
-  if (*msgs == NULL) {
-    fprintf(stderr, "malloc failed msgs\n");
-    exit(EXIT_FAILURE);
-  }
+  *msgs = xmalloc(num_msgs * sizeof(**msgs));
 
   struct Xt_redist_p2p_msg * curr_msg;
 
@@ -113,11 +106,7 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
 
   struct Xt_redist_p2p *redist;
 
-  redist = malloc(1 * sizeof(*redist));
-  if (redist == NULL) {
-    fprintf(stderr, "malloc failed for redist point to point\n");
-    exit(EXIT_FAILURE);
-  }
+  redist = xmalloc(1 * sizeof(*redist));
 
   redist->vtable = &redist_p2p_vtable;
 
@@ -177,11 +166,7 @@ redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays
 
   MPI_Request * recv_request;
 
-  recv_request = malloc(redist_p2p->nsrc * sizeof(*recv_request));
-  if (recv_request == NULL) {
-    fprintf(stderr, "malloc failed on requests for redistribution data\n");
-    exit(EXIT_FAILURE);
-  }
+  recv_request = xmalloc(redist_p2p->nsrc * sizeof(*recv_request));
 
   int i;
 

@@ -6,6 +6,7 @@
 #include "xt_idxvec.h"
 #include "xt_idxsection.h"
 #include "xt_mpi.h"
+#include "core/ppm_xfuncs.h"
 
 static void
 idxsection_delete(xt_idxlist data);
@@ -71,27 +72,17 @@ Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
 
   struct xt_idxsection *idxsection;
 
-  idxsection = malloc(1 * sizeof(*idxsection));
-  if(idxsection == NULL) {
-    fprintf(stderr, "malloc failed for idxsection\n");
-    exit(EXIT_FAILURE);
-  }
+  idxsection = xmalloc(1 * sizeof(*idxsection));
 
   idxsection->vtable             = &idxsection_vtable;
   idxsection->global_start_index = start;
   idxsection->ndim               = num_dimensions;
-  idxsection->global_size        = malloc(num_dimensions * sizeof(*(idxsection->global_size)));
-  idxsection->local_size         = malloc(num_dimensions * sizeof(*(idxsection->local_size)));
-  idxsection->local_start        = malloc(num_dimensions * sizeof(*(idxsection->local_start)));
-  idxsection->global_strides     = malloc(num_dimensions * sizeof(*(idxsection->global_strides)));
-  idxsection->local_strides      = malloc(num_dimensions * sizeof(*(idxsection->local_strides)));
+  idxsection->global_size        = xmalloc(num_dimensions * sizeof(*(idxsection->global_size)));
+  idxsection->local_size         = xmalloc(num_dimensions * sizeof(*(idxsection->local_size)));
+  idxsection->local_start        = xmalloc(num_dimensions * sizeof(*(idxsection->local_start)));
+  idxsection->global_strides     = xmalloc(num_dimensions * sizeof(*(idxsection->global_strides)));
+  idxsection->local_strides      = xmalloc(num_dimensions * sizeof(*(idxsection->local_strides)));
 
-  if (idxsection->global_size == NULL || idxsection->local_size == NULL ||
-      idxsection->local_start == NULL || idxsection->global_strides == NULL ||
-      idxsection->local_strides == NULL) {
-    fprintf(stderr, "malloc failed for idxsection data fields\n");
-    exit(EXIT_FAILURE);
-  }
 
   unsigned i;
 
@@ -183,11 +174,7 @@ xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
 
   struct xt_idxsection *section;
 
-  section = malloc(1 * sizeof(*section));
-  if (section == NULL) {
-    fprintf(stderr, "malloc failed for section");
-    exit(EXIT_FAILURE);
-  }
+  section = xmalloc(1 * sizeof(*section));
 
   section->vtable = &idxsection_vtable;
 
@@ -202,17 +189,11 @@ xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                              comm), comm);
   assert(section->ndim > 0);
 
-  section->global_size = malloc(section->ndim * sizeof(*(section->global_size)));
-  section->local_size = malloc(section->ndim * sizeof(*(section->global_size)));
-  section->local_start = malloc(section->ndim * sizeof(*(section->global_size)));
-  section->global_strides = malloc(section->ndim * sizeof(*(section->global_strides)));
-  section->local_strides = malloc(section->ndim * sizeof(*(section->local_strides)));
-  if (section->global_size == NULL || section->local_size == NULL ||
-      section->local_start == NULL || section->global_strides == NULL ||
-      section->local_strides == NULL) {
-    fprintf(stderr, "malloc failed for idxsection data fields\n");
-    exit(EXIT_FAILURE);
-  }
+  section->global_size = xmalloc(section->ndim * sizeof(*(section->global_size)));
+  section->local_size = xmalloc(section->ndim * sizeof(*(section->global_size)));
+  section->local_start = xmalloc(section->ndim * sizeof(*(section->global_size)));
+  section->global_strides = xmalloc(section->ndim * sizeof(*(section->global_strides)));
+  section->local_strides = xmalloc(section->ndim * sizeof(*(section->local_strides)));
 
   mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
                           section->global_size, section->ndim,
@@ -259,12 +240,8 @@ idxsection_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
   unsigned *local_start, *local_size;
 
-  local_start = malloc(idxsection_src->ndim * sizeof(*local_start));
-  local_size = malloc(idxsection_src->ndim * sizeof(*local_size));
-  if(local_start == NULL || local_size == NULL) {
-    fprintf(stderr, "malloc failed for local_start or local_size\n");
-    exit(EXIT_FAILURE);
-  }
+  local_start = xmalloc(idxsection_src->ndim * sizeof(*local_start));
+  local_size = xmalloc(idxsection_src->ndim * sizeof(*local_size));
 
   for (i = 0; i < idxsection_src->ndim; ++i) {
   
@@ -337,11 +314,7 @@ idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
   unsigned * curr_local_position;
 
-  curr_local_position = calloc(section->ndim, sizeof(*curr_local_position));
-  if (curr_local_position == NULL) {
-    fprintf(stderr, "malloc failed for curr_local_position\n");
-    exit(EXIT_FAILURE);
-  }
+  curr_local_position = xcalloc(section->ndim, sizeof(*curr_local_position));
 
   unsigned i, j, num_indices;
 

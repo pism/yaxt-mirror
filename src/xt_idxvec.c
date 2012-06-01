@@ -8,6 +8,7 @@
 #include "xt_idxlist.h"
 #include "xt_idxvec.h"
 #include "xt_mpi.h"
+#include "core/ppm_xfuncs.h"
 
 static void
 idxvec_delete(xt_idxlist data);
@@ -71,11 +72,7 @@ struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, size_t num_indices) {
 
    struct xt_idxvec *idxvec_data;
 
-   idxvec_data = malloc(1 * sizeof(*idxvec_data));
-   if (idxvec_data == NULL) {
-      fprintf(stderr, "malloc failed for idxvec_data\n");
-      exit(EXIT_FAILURE);
-   }
+   idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
 
    idxvec_data->vtable = &idxvec_vtable;
 
@@ -85,11 +82,7 @@ struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, size_t num_indices) {
 
       vector_size = num_indices * sizeof(*(idxvec_data->vector));
 
-      idxvec_data->vector = malloc(vector_size);
-      if (idxvec_data->vector == NULL && vector_size != 0) {
-         fprintf(stderr, "malloc failed for idxvec_data\n");
-         exit(EXIT_FAILURE);
-      }
+      idxvec_data->vector = xmalloc(vector_size);
 
       memcpy(idxvec_data->vector, idxvec, vector_size);
 
@@ -149,11 +142,7 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
    struct xt_idxvec *idxvec;
    int num_indices;
 
-   idxvec = malloc(1 * sizeof(*idxvec));
-   if (idxvec == NULL) {
-      fprintf(stderr, "malloc failed for idxvec_data\n");
-      exit(EXIT_FAILURE);
-   }
+   idxvec = xmalloc(1 * sizeof(*idxvec));
 
    idxvec->vtable = &idxvec_vtable;
 
@@ -164,11 +153,7 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 
    if (num_indices != 0) {
 
-      idxvec->vector = malloc(idxvec->num_indices * sizeof(*(idxvec->vector)));
-      if (idxvec->vector == NULL) {
-         fprintf(stderr, "malloc failed for idxvec\n");
-         exit(EXIT_FAILURE);
-      }
+      idxvec->vector = xmalloc(idxvec->num_indices * sizeof(*(idxvec->vector)));
       mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
                                  idxvec->vector, idxvec->num_indices,
                                  Xt_idx_dt, comm),comm);
@@ -195,19 +180,11 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
   struct xt_idxvec *inter_vector;
 
-  inter_vector = malloc(1 * sizeof(*inter_vector));
-  if (inter_vector == NULL) {
-    fprintf(stderr, "malloc failed for intersection vector\n");
-    exit(EXIT_FAILURE);
-  }
+  inter_vector = xmalloc(1 * sizeof(*inter_vector));
 
   inter_vector->num_indices = 0;
   inter_vector->vector =
-    malloc(idxvec_dst->num_indices * sizeof(*(inter_vector->vector)));
-  if (inter_vector->vector == NULL) {
-    fprintf(stderr, "malloc failed for intersection vector\n");
-    exit(EXIT_FAILURE);
-  }
+    xmalloc(idxvec_dst->num_indices * sizeof(*(inter_vector->vector)));
 
   size_t i, j;
 
@@ -223,13 +200,9 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
     // sort the vector
     qsort(inter_vector->vector, inter_vector->num_indices,
           sizeof (inter_vector->vector[0]), compare_xtidx);
-    inter_vector->vector = realloc(inter_vector->vector,
-                                   inter_vector->num_indices *
-                                   sizeof(*(inter_vector->vector)));
-    if (inter_vector->vector == NULL) {
-      fprintf(stderr, "malloc failed for intersection vector\n");
-      exit(EXIT_FAILURE);
-    }
+    inter_vector->vector = xrealloc(inter_vector->vector,
+                                    inter_vector->num_indices *
+                                    sizeof(*(inter_vector->vector)));
   } else {
     free(inter_vector->vector);
     inter_vector->vector = NULL;
