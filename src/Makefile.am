@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I../include -I$(srcdir)/../include
-lib_LIBRARIES = libyaxt.a
+AM_FCFLAGS  = $(MPI_FC_INCLUDE)
+lib_LIBRARIES = libyaxt.a 
 
 libyaxt_a_SOURCES =						\
 	xt_handles.c						\
@@ -22,6 +23,9 @@ libyaxt_a_SOURCES =						\
 	xt_xmap.c						\
 	xt_xmap.h						\
 	xt_init.c						\
+	xt_ut.f90						\
+	xt_ut_c.c						\
+	xt_ut_c.h						\
 	core/core.c						\
 	core/core.h						\
 	core/ppm_xfuncs.h					\

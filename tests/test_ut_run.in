@@ -1,0 +1,6 @@
+#! @SHELL@
+set -e
+@MPI_LAUNCH@ -n 1 ./test_ut
+@MPI_LAUNCH@ -n 2 ./test_ut
+@MPI_LAUNCH@ -n 3 ./test_ut
+@MPI_LAUNCH@ -n 4 ./test_ut

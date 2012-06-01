@@ -6,7 +6,8 @@ noinst_PROGRAMS = 						\
 	test_redist_p2p						\
 	test_redist_p2p_parallel				\
 	test_xmap						\
-	test_xmap_parallel
+	test_xmap_parallel					\
+	test_ut
 
 
 test_idxvec_SOURCES = test_idxvec.c tests.h
@@ -17,8 +18,11 @@ test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c test.h
 test_xmap_SOURCES = test_xmap.c tests.h
 test_xmap_parallel_SOURCES = test_xmap_parallel.c tests.h
 test_handles_SOURCES = test_handles.c tests.h
+test_ut_SOURCES = test_ut.f90
+test_ut_LDADD = $(LDADD) $(MPI_FC_LIB)
 
 AM_CFLAGS = -I$(top_srcdir)/src
+AM_FCFLAGS = -I$(top_srcdir)/src $(MPI_FC_INCLUDE)
 LDADD = ../src/libyaxt.a
 
 TESTS = 							\
@@ -29,4 +33,6 @@ TESTS = 							\
 	test_redist_p2p_run					\
 	test_redist_p2p_parallel_run				\
 	test_xmap_run						\
-	test_xmap_parallel_run
+	test_xmap_parallel_run					\
+	test_ut_run
+
