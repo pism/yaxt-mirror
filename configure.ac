@@ -16,6 +16,9 @@ AC_PROG_CC_C99
 AC_PROG_FC
 AC_FC_SRCEXT([f90])
 AC_FC_FREEFORM
+AC_LANG_PUSH([Fortran])
+AC_PROG_FPP
+AC_LANG_POP([Fortran])
 AC_PROG_RANLIB
 dnl ######################################################################
 dnl Checks for header files.
@@ -25,18 +28,25 @@ AC_HEADER_STDC
 
 #  ----------------------------------------------------------------------
 # Compile with MPI support
-AC_ARG_ENABLE(mpi,AS_HELP_STRING([--enable-mpi],[Compile with MPI compiler [default=no]]),enable_mpi=${enableval}
-,enable_mpi=no)
-AS_IF([test x"${enable_mpi}" = x"yes"],
-      [USE_MPI=yes])
-AS_IF([test x"$USE_MPI" = xyes],
-  [AC_DEFINE([USE_MPI],[1],[parallel I/O requested and available])
-   AC_CHECK_PROGS([MPI_LAUNCH],[mpirun mpiexec],[])
-   AS_IF([test x$MPI_LAUNCH = x],[])],
-  [MPI_LAUNCH="`pwd`/util/serialrun"
-   AC_SUBST([MPI_LAUNCH])])
-AM_CONDITIONAL([USE_MPI],[test x"$USE_MPI" = xyes])
-AC_SUBST([USE_MPI])
+dnl
+dnl ######################################################################
+dnl Checks for MPI.
+dnl ######################################################################
+ACX_FORTRAN_PACKAGE([MPI],[mpif.h],,,
+  [AC_MSG_ERROR([Required include mpif.h not found or not compilable.])],
+  [mpi_waitall],[mpi mpi_f90 mpi_f77 mpich],[[-lmpi_f77 -lmpi],[-lmpi]],,
+  [AC_MSG_ERROR([Cannot link Fortran MPI programs.])],[])
+ACX_C_PACKAGE([MPI],[mpi.h],,,
+  [AC_MSG_ERROR([Required header mpi.h not found or not compilable.])],
+  [MPI_Waitall],[mpi mpich],,,
+  [AC_MSG_ERROR([Cannot link C MPI programs.])])
+
+# the following is needed for source parts from libraries with
+# optional MPI dependencies
+AC_DEFINE([USE_MPI],[1],[use MPI parallel process environment])
+AC_CHECK_PROGS([MPI_LAUNCH],[mpirun mpiexec],[true])
+AS_IF([test x$MPI_LAUNCH = xtrue],
+  [AC_MSG_WARN([MPI launch command unavailable])])
 
 AC_CONFIG_HEADER([include/config.h])
 
@@ -49,4 +59,3 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run	\
 	tests/test_xmap_run				\
 	util/serialrun],[chmod a+x "$ac_file"])
 AC_OUTPUT([Makefile src/Makefile tests/Makefile])
-
