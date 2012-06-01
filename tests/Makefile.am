@@ -1,4 +1,6 @@
-noinst_PROGRAMS = test_idxvec					\
+noinst_PROGRAMS = 						\
+	test_handles						\
+	test_idxvec						\
 	test_idxlist_collection					\
 	test_idxsection						\
 	test_redist_p2p						\
@@ -14,11 +16,14 @@ test_redist_p2p_SOURCES = test_redist_p2p.c test.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c test.h
 test_xmap_SOURCES = test_xmap.c tests.h
 test_xmap_parallel_SOURCES = test_xmap_parallel.c tests.h
+test_handles_SOURCES = test_handles.c tests.h
 
 AM_CFLAGS = -I$(top_srcdir)/src
 LDADD = ../src/libyaxt.a
 
-TESTS = test_idxvec_run						\
+TESTS = 							\
+	test_handles_run					\
+	test_idxvec_run						\
 	test_idxlist_collection_run				\
 	test_idxsection_run					\
 	test_redist_p2p_run					\

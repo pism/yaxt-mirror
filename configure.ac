@@ -57,5 +57,6 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run	\
 	tests/test_idxsection_run			\
 	tests/test_redist_p2p_run			\
 	tests/test_xmap_run				\
+	tests/test_handles_run				\
 	util/serialrun],[chmod a+x "$ac_file"])
 AC_OUTPUT([Makefile src/Makefile tests/Makefile])

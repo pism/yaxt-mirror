@@ -1,7 +1,10 @@
 AM_CPPFLAGS = -I../include -I$(srcdir)/../include
 lib_LIBRARIES = libyaxt.a
 
-libyaxt_a_SOURCES = xt_idxlist.c				\
+libyaxt_a_SOURCES =						\
+	xt_handles.c						\
+	xt_handles.h						\
+	xt_idxlist.c						\
 	xt_idxlist.h						\
 	xt_idxlist_collection.c					\
 	xt_idxlist_collection.h					\
