@@ -1,5 +1,6 @@
 doc/html/
 *.x
+*.o
 Makefile.in
 /configure
 /config/config.guess
