@@ -52,6 +52,8 @@ xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
 
   Xt_abort(comm, "xt_idxlist_unpack: unknown index list type",
            __FILE__, __LINE__);
+
+  return NULL;
 }
 
 xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
