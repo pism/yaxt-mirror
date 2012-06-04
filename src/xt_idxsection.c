@@ -412,7 +412,7 @@ idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
 
   int temp_position;
 
-  if (!idxsection_get_position_of_index(idxlist, index, &temp_position))
+  if (idxsection_get_position_of_index(idxlist, index, &temp_position))
     return 1;
 
   if (temp_position < offset)

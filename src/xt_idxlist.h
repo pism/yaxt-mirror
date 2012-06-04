@@ -23,6 +23,7 @@ enum xt_idxvecype {
    VECTOR     = 1,
    COLLECTION = 2,
    SECTION    = 3,
+   STRIPES    = 4,
 };
 
 struct xt_idxlist {
