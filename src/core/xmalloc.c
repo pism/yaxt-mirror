@@ -50,7 +50,7 @@ void *
 SymPrefix(xcalloc)(size_t nmemb, size_t size, const char *source, int line)
 {
   void *p = calloc(nmemb, size);
-  if (p)
+  if (p || !(nmemb * size))
     ;
   else
     SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
@@ -62,7 +62,7 @@ void *
 SymPrefix(xmalloc)(size_t size, const char *source, int line)
 {
   void *p = malloc(size);
-  if (p)
+  if (p || !size)
     ;
   else
     SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
@@ -74,7 +74,7 @@ void *
 SymPrefix(xrealloc)(void *ptr, size_t size, const char *source, int line)
 {
   void *p = realloc(ptr, size);
-  if (p)
+  if (p || !size)
     ;
   else
     SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
