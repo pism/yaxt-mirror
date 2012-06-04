@@ -25,14 +25,14 @@ int xt_handle_is_valid(struct xt_handle_set_type *hset, int handle);
  * @param[in] cap        start capacity (size of handle space)
  * @return returns an empty handle set of capacity cap
  */
-struct xt_handle_set_type* xt_handle_set_new(int cap);
+struct xt_handle_set_type *xt_handle_set_new(int cap);
 
 /**
  * destructor
  *
  * @param[in,out] hset handle set
  */
-void xt_handle_set_delete(struct xt_handle_set_type **hset);
+void xt_handle_set_delete(struct xt_handle_set_type *hset);
 
 /**
  * registers user pointer with a new handle
@@ -41,7 +41,7 @@ void xt_handle_set_delete(struct xt_handle_set_type **hset);
  * @param[in] p            pointer to user data
  * @return returns integer handle
  */
-int xt_handle_new(struct xt_handle_set_type **hset, void *p);
+int xt_handle_new(struct xt_handle_set_type *hset, void *p);
 
 /**
  * unregisters handle
