@@ -22,7 +22,7 @@ test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = $(LDADD) $(MPI_FC_LIB)
 
 AM_CFLAGS = -I$(top_srcdir)/src
-AM_FCFLAGS = -I$(top_srcdir)/src $(MPI_FC_INCLUDE)
+AM_FCFLAGS = -I$(top_srcdir)/src -I../src $(MPI_FC_INCLUDE)
 LDADD = ../src/libyaxt.a
 
 TESTS = 							\

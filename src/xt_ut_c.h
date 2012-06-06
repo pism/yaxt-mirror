@@ -4,12 +4,12 @@
 /**
  * \file xt_ut_c.h
  * \brief supportes the unitrans interfaces/wrappers in xt_ut.f90 with yaxt functionality.
- *        
+ *
  */
 
 /**
  * Initialization of support data for unitrans (start sizes of allocated data).
- * We use the unitrans names. Unlike unitrans, the allocated data can grow. 
+ * We use the unitrans names. Unlike unitrans, the allocated data can grow.
  *
  * @param[in] decomp_size       number of decompositions
  * @param[in] comm_tmpl_size    number of communication templates
@@ -40,7 +40,7 @@ int xt_ut_init_decomposition_1d(int *idx_vec, int idx_vec_n, int domain_size);
  * @return returns handle
  */
 int xt_ut_init_oneway_transposition_template(int decomp_handle_in, int decomp_handle_out,
-					     int mpi_world, int icheck_unique);
+                                             int mpi_world, int icheck_unique);
 /**
  * destroys transposition template
  *

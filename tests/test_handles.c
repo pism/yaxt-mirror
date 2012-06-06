@@ -33,10 +33,10 @@ int main(void) {
   for (int i = 1; i<hsize; i++) {
     if (state[i]) {
       if (i % 3 == 0) {
-	if (!xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected invalid handle\n");
-	xt_handle_delete(hset,handle[i]);
-	if (xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected valid handle\n");
-	state[i] = 0;
+        if (!xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected invalid handle\n");
+        xt_handle_delete(hset,handle[i]);
+        if (xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected valid handle\n");
+        state[i] = 0;
       }
     }
   }
@@ -55,11 +55,11 @@ int main(void) {
   for (int i = 0; i<hsize; i++) {
     if (state[i]) {
       if (i % 5 == 0) {
-	int h = handle[i];
-	if (!xt_handle_is_valid(hset,h)) PUT_ERR("unexpected invalid handle\n");
-	xt_handle_delete(hset,h);
-	if (xt_handle_is_valid(hset,h)) PUT_ERR("unexpected valid handle\n");
-	state[i] = 0;
+        int h = handle[i];
+        if (!xt_handle_is_valid(hset,h)) PUT_ERR("unexpected invalid handle\n");
+        xt_handle_delete(hset,h);
+        if (xt_handle_is_valid(hset,h)) PUT_ERR("unexpected valid handle\n");
+        state[i] = 0;
       }
     }
   }
@@ -78,5 +78,4 @@ int main(void) {
 
   MPI_Finalize();
   return TEST_EXIT_CODE;
-
 }

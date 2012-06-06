@@ -8,7 +8,6 @@
  * contains utility routines for handle sets
  */
 
-
 typedef struct xt_handle_set_type **xt_handle_set_type;
 
 /**
