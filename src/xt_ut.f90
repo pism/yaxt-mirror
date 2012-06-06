@@ -182,7 +182,6 @@ CONTAINS
     IF (PRESENT(check_unique)) THEN
       IF (check_unique) icheck_unique = 1
     ENDIF
-
     comm_tmpl_handle = xt_ut_init_oneway_transposition_template(decomp_handle_in, decomp_handle_out, mpi_world, icheck_unique)
 
   END SUBROUTINE ut_init_oneway_transposition_template
