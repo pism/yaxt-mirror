@@ -62,7 +62,7 @@ static void extend_handle_set(struct xt_handle_set_type *hset) {
   hset->p = xrealloc(hset->p, new_cap * sizeof(void*));
 
   for (int i=old_cap; i<new_cap; i++) {
-    hset->p[i] = NULL;    
+    hset->p[i] = NULL;
   }
   hset->hnf = old_cap;
   hset->cap = new_cap;

@@ -24,7 +24,7 @@ PROGRAM test_ut
   INTEGER :: g_tpex(g_ie, g_je) ! global "tripolar-like" toy bounds exchange
   INTEGER :: template_tpex, trans_tpex
 
-  INTEGER, ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:) 
+  INTEGER, ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
@@ -52,7 +52,7 @@ PROGRAM test_ut
   CALL gen_trans(template_tpex, MPI_INTEGER, MPI_INTEGER, trans_tpex)
 
   ! test 2d-to-2d transposition:
-  fval = loc_id  
+  fval = loc_id
   CALL exchange2d_2d(trans_tpex, fval, gval)
   CALL icmp('2d to 2d check', gval, loc_tpex)
 
@@ -61,7 +61,7 @@ PROGRAM test_ut
   CALL id_map(pos3d_surf)
   CALL gen_pos3d_surf(pos3d_surf)
 
-  ! generate surface transposition: 
+  ! generate surface transposition:
   CALL gen_off_trans(template_tpex, MPI_INTEGER, id_pos(:,:)-1, MPI_INTEGER, pos3d_surf(:,:)-1, surf_trans_tpex)
 
   ! 2d to surface boundsexchange:
@@ -78,7 +78,7 @@ PROGRAM test_ut
   CALL ut_destroy_transposition(surf_trans_tpex)
 
   CALL exit_all
-  
+
 CONTAINS
 
   SUBROUTINE gen_pos3d_surf(pos)
@@ -88,12 +88,12 @@ CONTAINS
     ! new pos = i + k*ie + j*ie*nlev
     INTEGER :: ii,jj, i,j,k, p,q
 
-    k = 0 ! surface 
+    k = 0 ! surface
     DO jj=1,je
       DO ii=1,ie
         p = pos(ii,jj) - 1 ! shift to 0-based index
         j = p/ie
-        i = MOD(p,ie)        
+        i = MOD(p,ie)
         q = i + k*ie + j*ie*nlev
         pos(ii,jj) = q + 1 ! shift to 1-based index
       ENDDO
@@ -163,7 +163,7 @@ CONTAINS
     id_pos = undef_int
     gval3d = undef_int
     pos3d_surf = undef_int
-    
+
   END SUBROUTINE init_all
 
   SUBROUTINE exit_all
@@ -175,7 +175,7 @@ CONTAINS
 
   END SUBROUTINE exit_all
 
-  SUBROUTINE id_map(map) 
+  SUBROUTINE id_map(map)
     INTEGER, INTENT(out) :: map(:,:)
 
     INTEGER :: i,j,p
@@ -218,7 +218,7 @@ CONTAINS
 
   END SUBROUTINE exchange2d_3d
 
-  SUBROUTINE gen_trans(itemp, send_dt, recv_dt, itrans) 
+  SUBROUTINE gen_trans(itemp, send_dt, recv_dt, itrans)
     INTEGER,INTENT(in) :: itemp, send_dt, recv_dt
     INTEGER,INTENT(out) :: itrans
 
@@ -230,7 +230,7 @@ CONTAINS
 
   END SUBROUTINE gen_trans
 
-  SUBROUTINE gen_off_trans(itemp, send_dt, send_off, recv_dt, recv_off, itrans) 
+  SUBROUTINE gen_off_trans(itemp, send_dt, send_off, recv_dt, recv_off, itrans)
     INTEGER,INTENT(in) :: itemp, send_dt, recv_dt
     INTEGER,INTENT(in) :: send_off(:,:), recv_off(:,:)
     INTEGER,INTENT(out) :: itrans
@@ -244,7 +244,7 @@ CONTAINS
 
   END SUBROUTINE gen_off_trans
 
-  SUBROUTINE get_window(gval, win) 
+  SUBROUTINE get_window(gval, win)
     INTEGER, INTENT(in) :: gval(:,:)
     INTEGER, INTENT(out) :: win(:,:)
 
@@ -292,7 +292,7 @@ CONTAINS
     INTEGER :: g_core_is, g_core_ie, g_core_js, g_core_je
     INTEGER :: north_halo
 
-    ! global core domain:    
+    ! global core domain:
     g_core_is = nhalo + 1
     g_core_ie = g_ie-nhalo
     g_core_js = nhalo + 1
@@ -399,7 +399,7 @@ CONTAINS
     DO it = 0, m-1
       cn(it) = d + 1
     ENDDO
-    DO it = m, tn-1 
+    DO it = m, tn-1
       cn(it) = d
     ENDDO
 
@@ -427,7 +427,7 @@ CONTAINS
     ! simple approach, we try to be near c = (2*x) * x
     x0 = INT(SQRT(0.5*c) + 0.5)
     a = 2*x0
-    f_loop: DO i = a, 1, -1 
+    f_loop: DO i = a, 1, -1
       IF (MOD(c,a) == 0) THEN
         b = c/a
         EXIT f_loop

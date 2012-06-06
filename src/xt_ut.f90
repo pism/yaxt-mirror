@@ -2,7 +2,7 @@ MODULE xt_ut
   !
   ! unitrans interface for accessing yaxt
   !
-  
+
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_CHAR, C_NULL_CHAR, C_INT,  c_ptr, c_loc
 
   IMPLICIT NONE
@@ -94,7 +94,7 @@ MODULE xt_ut
     INTEGER FUNCTION xt_ut_init_transposition_simple(itemplate, datatype)  BIND(C, name='xt_ut_init_transposition_simple')
       IMPLICIT NONE
       INTEGER, VALUE, INTENT(in) :: itemplate
-      INTEGER, VALUE, INTENT(in) :: datatype 
+      INTEGER, VALUE, INTENT(in) :: datatype
     END FUNCTION xt_ut_init_transposition_simple
   END INTERFACE
 
@@ -126,7 +126,7 @@ MODULE xt_ut
       INTEGER(C_INT), VALUE, INTENT(in) :: direction
     END SUBROUTINE xt_ut_transpose
   END INTERFACE
-  
+
 
   LOGICAL, PARAMETER :: debug = .TRUE.
 
@@ -164,9 +164,9 @@ CONTAINS
 
   SUBROUTINE ut_destroy_decomposition(handle)
     INTEGER, INTENT(in) :: handle
-     
+
     CALL xt_ut_destroy_decomposition(handle)
-    
+
   END SUBROUTINE ut_destroy_decomposition
 
   SUBROUTINE ut_init_oneway_transposition_template(decomp_handle_in,decomp_handle_out,mpi_world,comm_tmpl_handle,check_unique)
@@ -198,9 +198,9 @@ CONTAINS
     INTEGER, INTENT(in)  :: comm_template_handle
     INTEGER, INTENT(in)  :: datatype
     INTEGER, INTENT(out) :: comm_handle
-    
+
     comm_handle = INT(xt_ut_init_transposition_simple(comm_template_handle, datatype))
-    
+
   END SUBROUTINE ut_init_transposition_simple
 
   SUBROUTINE ut_init_transposition_with_offsets(comm_template_handle, offset_in, offset_out, datatype_in, datatype_out, comm_handle)
@@ -222,11 +222,11 @@ CONTAINS
     comm_handle = xt_ut_init_transposition(comm_template_handle, &
          & offset_in, SIZE(offset_in), &
          & offset_out, SIZE(offset_out), &
-         & datatype) 
+         & datatype)
 
   END SUBROUTINE ut_init_transposition_with_offsets
 
-  SUBROUTINE ut_destroy_transposition(handle)    
+  SUBROUTINE ut_destroy_transposition(handle)
     INTEGER, INTENT(in) :: handle
 
     CALL xt_ut_destroy_transposition(handle)
@@ -243,7 +243,7 @@ CONTAINS
     pt_in = C_LOC(field_in)
     pt_out = C_LOC(field_out)
     CALL xt_ut_transpose(pt_in, transposition_handle, direction, pt_out)
-    
+
   END SUBROUTINE ut_transpose_int
 
 End MODULE xt_ut

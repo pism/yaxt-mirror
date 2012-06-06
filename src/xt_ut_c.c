@@ -23,13 +23,13 @@ typedef struct {
   int comm_trans_size;
   int debug_lvl;
   int mode;
-  int debug_unit;      
+  int debug_unit;
 } xt_ut_init_type;
 
 static xt_ut_init_type init_val = {0,0,0,0,0,0};
 
 
-typedef struct {  
+typedef struct {
   xt_idxlist idxvec;
   int domain_size;
 } xt_ut_deco_type;
@@ -38,7 +38,7 @@ static const xt_ut_deco_type zero_deco = {.idxvec=NULL, .domain_size=0};
 
 static struct xt_handle_set_type *deco_set;
 
-typedef struct {  
+typedef struct {
   xt_xmap xmap;
 } xt_ut_template_type;
 
@@ -65,10 +65,10 @@ void xt_ut_init(int decomp_size, int comm_tmpl_size, int comm_trans_size, int de
   init_val.decomp_size     = decomp_size;
   init_val.comm_tmpl_size  = comm_tmpl_size;
   init_val.comm_trans_size = comm_trans_size;
-  init_val.debug_lvl       = debug_lvl;      
-  init_val.mode            = mode;	       
+  init_val.debug_lvl       = debug_lvl;
+  init_val.mode            = mode;
   init_val.debug_unit      = debug_unit;
-  
+
   deco_set = xt_handle_set_new(init_val.decomp_size);
 
   template_set = xt_handle_set_new(init_val.comm_tmpl_size);
@@ -133,7 +133,7 @@ MPI_Fint xt_ut_init_oneway_transposition_template(int id_in, int id_out, int mpi
   xt_ut_deco_type *deco_out = xt_handle2pointer(deco_set, id_out);
   if(!deco_out) die("xt_ut_init_oneway_transposition_template: invalid handle (second argument)");
 
-  int id = new_itemplate(); 
+  int id = new_itemplate();
   xt_ut_template_type *template = xt_handle2pointer(template_set, id);
   if (!template) die("xt_ut_init_oneway_transposition_template: internal error");
   template->xmap = xt_xmap_new(deco_in->idxvec, deco_out->idxvec, MPI_COMM_WORLD);
@@ -156,9 +156,9 @@ MPI_Fint xt_ut_init_transposition_simple(MPI_Fint itemplate, MPI_Fint f_datatype
 }
 
 MPI_Fint xt_ut_init_transposition(MPI_Fint itemplate,
-				  MPI_Fint offset_in[], MPI_Fint offset_in_size,
-				  MPI_Fint offset_out[], MPI_Fint offset_out_size,
-				  MPI_Fint f_datatype) {
+                                  MPI_Fint offset_in[], MPI_Fint offset_in_size,
+                                  MPI_Fint offset_out[], MPI_Fint offset_out_size,
+                                  MPI_Fint f_datatype) {
 
   xt_ut_template_type *template = xt_handle2pointer(template_set, itemplate);
   if (!template) die("xt_ut_init_transposition: invalid handle");
@@ -176,7 +176,7 @@ MPI_Fint xt_ut_init_transposition(MPI_Fint itemplate,
 void xt_create_id_positions(int positions[], int num) {
   for (int i=0; i<num; i++) {
     positions[i] = i;
-  } 
+  }
 }
 
 void xt_ut_transpose(void **pt_in, int itrans, int direction, void **pt_out) {
