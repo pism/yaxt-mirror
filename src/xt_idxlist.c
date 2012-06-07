@@ -5,6 +5,7 @@
 #include "yaxt.h"
 #include "xt_idxlist.h"
 #include "xt_idxvec.h"
+#include "xt_idxstripes.h"
 #include "xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
@@ -72,8 +73,8 @@ xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
       num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
 
       Xt_idx *indices_src, *indices_dst;
-    indices_src = xmalloc(num_indices_src * sizeof (indices_src[0]));
-    indices_dst = xmalloc(num_indices_dst * sizeof (indices_dst[0]));
+      indices_src = xmalloc(num_indices_src * sizeof (indices_src[0]));
+      indices_dst = xmalloc(num_indices_dst * sizeof (indices_dst[0]));
 
       xt_idxlist_get_indices(idxlist_src, indices_src);
       xt_idxlist_get_indices(idxlist_dst, indices_dst);
@@ -108,6 +109,33 @@ int xt_idxlist_get_num_indices(xt_idxlist idxlist) {
 void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
    idxlist->vtable->get_indices(idxlist, indices);
+}
+
+void xt_idxlist_get_index_stripes(xt_idxlist idxlist,
+                                  struct Xt_stripe ** stripes,
+                                  unsigned * num_stripes) {
+
+  if (idxlist->vtable->get_index_stripes != NULL) {
+
+    idxlist->vtable->get_index_stripes(idxlist, stripes,
+                                       num_stripes);
+
+  } else { // fall-back solution
+
+    size_t num_indices;
+
+    num_indices = xt_idxlist_get_num_indices(idxlist);
+
+    Xt_idx *indices;
+    indices = xmalloc(num_indices * sizeof (indices[0]));
+
+    xt_idxlist_get_indices(idxlist, indices);
+
+    xt_idxstripes_convert_to_stripes(indices, num_indices,
+                                     stripes, num_stripes);
+
+    free(indices);
+  }
 }
 
 int xt_idxlist_get_index(Xt_idxlist idxlist, int position,

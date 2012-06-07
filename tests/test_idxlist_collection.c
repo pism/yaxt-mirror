@@ -13,6 +13,8 @@
 #include "core/ppm_xfuncs.h"
 
 void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
+                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes);
 
 int main(void) {
 
@@ -39,6 +41,9 @@ int main(void) {
       xt_idxlist collectionlist;
 
       collectionlist = xt_idxlist_collection_new(idxlists, 2);
+
+      xt_idxlist_delete(idxlists[0]);
+      xt_idxlist_delete(idxlists[1]);
 
       // test generated collection list
 
@@ -102,7 +107,22 @@ int main(void) {
       Xt_idx ref_index_data[14] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7};
       check_idxdata(intersection, ref_index_data, 2*num_indices);
 
+      // check the conversion to stripes
+
+      struct Xt_stripe * stripes;
+      unsigned num_stripes;
+
+      xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
+
+      struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
+                                         {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
+      unsigned ref_num_stripes = 8;
+
+      check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
+
       // clean up
+      
+      free(stripes);
 
       free(send_buffer);
       free(recv_buffer);
@@ -130,6 +150,9 @@ int main(void) {
 
       collectionlist = xt_idxlist_collection_new(idxlists, 2);
 
+      xt_idxlist_delete(idxlists[0]);
+      xt_idxlist_delete(idxlists[1]);
+
       // test generated collection list
 
       check_idxdata(collectionlist, &(index_list[0][0]), 2*num_indices);
@@ -142,7 +165,22 @@ int main(void) {
 
       check_idxdata(collectionlist_copy, &(index_list[0][0]), 2*num_indices);
 
+      // check the conversion to stripes
+
+      struct Xt_stripe * stripes;
+      unsigned num_stripes;
+
+      xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
+
+      struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
+                                         {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
+      unsigned ref_num_stripes = 8;
+
+      check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
+
       // clean up
+      
+      free(stripes);
 
       xt_idxlist_delete(collectionlist);
       xt_idxlist_delete(collectionlist_copy);
@@ -167,4 +205,19 @@ void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_in
    for (i = 0; i < ref_num_indices; ++i)
       if (indices[i] != ref_indices[i])
          PUT_ERR("index list contains wrong indices\n");
+}
+
+void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
+                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes) {
+
+  unsigned i;
+
+  if (num_stripes != ref_num_stripes)
+    PUT_ERR("wrong number of stripes\n");
+
+  for (i = 0; i < ref_num_stripes; ++i)
+    if (stripes[i].start != ref_stripes[i].start ||
+        stripes[i].extent != ref_stripes[i].extent ||
+        stripes[i].stride != ref_stripes[i].stride)
+      PUT_ERR("error in stripe (start, extent and/or stride)\n");
 }

@@ -32,6 +32,10 @@ idxstripes_get_num_indices(xt_idxlist idxlist);
 static void
 idxstripes_get_indices(xt_idxlist idxlist, Xt_idx *indices);
 
+static void
+idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                             unsigned * num_stripes);
+
 static int
 idxstripes_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
 
@@ -50,6 +54,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
               idxstripes_copy,
               idxstripes_get_num_indices,
               idxstripes_get_indices,
+              idxsection_get_index_stripes,
               idxstripes_get_index,
               idxstripes_get_position_of_index,
               idxstripes_get_position_of_index_off};
@@ -93,7 +98,7 @@ struct xt_idxstripes {
   unsigned num_stripes;
 };
 
-Xt_idxlist xt_idxstripes_new(struct Xt_stripe * stripes, unsigned num_stripes) {
+Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, unsigned num_stripes) {
 
   struct xt_idxstripes *idxstripes;
 
@@ -188,6 +193,39 @@ static int compare_xtidx(const void * a, const void * b)
   return (*(Xt_idx*)a > *(Xt_idx*)b) - (*(Xt_idx*)a < *(Xt_idx*)b);
 }
 
+void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
+                                      unsigned num_indices,
+                                      struct Xt_stripe ** stripes,
+                                      unsigned * num_stripes) {
+
+  struct Xt_stripe * temp_stripes = NULL;
+  unsigned temp_stripes_array_size = 0;
+  unsigned num_temp_stripes = 0;
+
+  unsigned i, j;
+
+  i = 0;
+  while(i < num_indices) {
+
+    ++num_temp_stripes;
+
+    ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size, num_temp_stripes);
+
+    j = 1;
+
+    while ((i + j) < num_indices && indices[i] + j == indices[i + j]) ++j;
+
+    temp_stripes[num_temp_stripes-1].start  = indices[i];
+    temp_stripes[num_temp_stripes-1].extent = j;
+    temp_stripes[num_temp_stripes-1].stride = 1;
+
+    i += j;
+  }
+
+  *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
+  *num_stripes = num_temp_stripes;
+}
+
 static Xt_idxlist
 compute_intersection_brute_force(xt_idxlist idxlist_src,
                                  xt_idxlist idxlist_dst) {
@@ -228,26 +266,12 @@ compute_intersection_brute_force(xt_idxlist idxlist_src,
       inter_indices[inter_size++] = src_indices[j];
   }
 
-  struct Xt_stripe * inter_stripes = NULL;
-  unsigned inter_stripes_array_size = 0;
-  unsigned num_inter_stripes = 0;
-  
+  struct Xt_stripe * inter_stripes;
+  unsigned num_inter_stripes;
+
   // generate new idx stripes
-  i = 0;
-  while(i < inter_size) {
-
-    ENSURE_ARRAY_SIZE(inter_stripes, inter_stripes_array_size, ++num_inter_stripes);
-
-    j = 1;
-
-    while ((i + j) < inter_size && inter_indices[i] + j == inter_indices[j]) ++j;
-
-    inter_stripes[num_inter_stripes-1].start  = inter_indices[i];
-    inter_stripes[num_inter_stripes-1].extent = j;
-    inter_stripes[num_inter_stripes-1].stride = 1;
-
-    i += j;
-  }
+  xt_idxstripes_convert_to_stripes(inter_indices, inter_size,
+                                   &inter_stripes, &num_inter_stripes);
 
   Xt_idxlist intersection;
 
@@ -411,6 +435,51 @@ idxstripes_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
   for (i = 0; i < stripes->num_stripes; ++i)
     for (j = 0; j < stripes->stripes[i].extent; ++j)
       *(indices++) = stripes->stripes[i].start + j * stripes->stripes[i].stride;
+}
+
+static void
+idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                             unsigned * num_stripes) {
+
+  struct xt_idxstripes *idxstripes;
+
+  idxstripes = (struct xt_idxstripes*)idxlist;
+
+  struct Xt_stripe * temp_stripes = NULL;
+  unsigned temp_stripes_array_size = 0;
+  unsigned num_temp_stripes = 0;
+
+  unsigned i, j;
+
+  for (i = 0; i < idxstripes->num_stripes; ++i) {
+
+    if (idxstripes->stripes[i].stride == 1) {
+
+      ++num_temp_stripes;
+
+      ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size, num_temp_stripes);
+
+      temp_stripes[num_temp_stripes-1] = idxstripes->stripes[i];
+
+    } else {
+
+      ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
+                        num_temp_stripes + idxstripes->stripes[i].extent);
+
+      for (j = 0; j < idxstripes->stripes[i].extent; ++j)  {
+
+        temp_stripes[num_temp_stripes].start = idxstripes->stripes[i].start +
+                                               j * idxstripes->stripes[i].stride;
+        temp_stripes[num_temp_stripes].extent = 1;
+        temp_stripes[num_temp_stripes].stride = 1;
+
+        ++num_temp_stripes;
+      }
+    }
+  }
+
+  *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
+  *num_stripes = num_temp_stripes;
 }
 
 static int

@@ -4,6 +4,13 @@
 #include <stdlib.h>
 #include "yaxt.h"
 
+struct Xt_stripe {
+
+  Xt_idx start;
+  unsigned extent;
+  int stride;
+};
+
 struct xt_idxlist_vtable {
 
    void  (*delete)(xt_idxlist);
@@ -14,6 +21,7 @@ struct xt_idxlist_vtable {
    xt_idxlist (*copy)(xt_idxlist);
    size_t (*get_num_indices)(xt_idxlist);
    void (*get_indices)(xt_idxlist, Xt_idx *indices);
+   void (*get_index_stripes)(xt_idxlist, struct Xt_stripe **, unsigned *);
    int (*get_index)(Xt_idxlist, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
@@ -130,7 +138,7 @@ xt_idxlist xt_idxlist_copy(xt_idxlist idxlist);
  * @return            number of indices in the given index list
  */
 int xt_idxlist_get_num_indices(xt_idxlist idxlist);
- 
+
 /**
  * gets the indices stored in an index list
  *
@@ -138,6 +146,19 @@ int xt_idxlist_get_num_indices(xt_idxlist idxlist);
  * @param[in,out] indices array into which the indices are written
  */
 void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices);
+
+/**
+ * returns the indices stored in an index list
+ * the indices are returned in form of stripes (with stride 1)
+ *
+ * @param[in]  idxlist     index list for which the indices are to be returned
+ * @param[out] stripes     array containing the stripes (user is responsible
+ *                         for freeing the memory associated with the stripes)
+ * @param[out] num_stripes number of stripes in array "stripes"
+ */
+void xt_idxlist_get_index_stripes(xt_idxlist idxlist,
+                                  struct Xt_stripe ** stripes,
+                                  unsigned * num_stripes);
 
 /**
  * gets the index stored at the specified position in an index list

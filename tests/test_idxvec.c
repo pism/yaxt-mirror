@@ -12,6 +12,8 @@
 #include "core/ppm_xfuncs.h"
 
 void check_idxvec(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
+                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes);
 
 int main(void) {
 
@@ -94,7 +96,21 @@ int main(void) {
 
       check_idxvec(intersection, index_vector, num_indices);
 
+      // check the conversion to stripes
+
+      struct Xt_stripe * stripes;
+      unsigned num_stripes;
+
+      xt_idxlist_get_index_stripes(idxvector, &stripes, &num_stripes);
+
+      struct Xt_stripe ref_stripes[1] = {{1,7,1}};
+      unsigned ref_num_stripes = 1;
+
+      check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
+
       // clean up
+
+      free(stripes);
 
       free(send_buffer);
       free(recv_buffer);
@@ -153,4 +169,19 @@ void check_idxvec(xt_idxlist idxlist, Xt_idx * ref_indices,
    for (i = 0; i < ref_num_indices; ++i)
       if (indices[i] != ref_indices[i])
          PUT_ERR("index list contains wrong indices\n");
+}
+
+void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
+                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes) {
+
+  unsigned i;
+
+  if (num_stripes != ref_num_stripes)
+    PUT_ERR("wrong number of stripes\n");
+
+  for (i = 0; i < ref_num_stripes; ++i)
+    if (stripes[i].start != ref_stripes[i].start ||
+        stripes[i].extent != ref_stripes[i].extent ||
+        stripes[i].stride != ref_stripes[i].stride)
+      PUT_ERR("error in stripe (start, extent and/or stride)\n");
 }

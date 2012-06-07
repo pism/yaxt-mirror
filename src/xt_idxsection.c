@@ -30,6 +30,10 @@ idxsection_get_num_indices(xt_idxlist idxlist);
 static void
 idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices);
 
+static void
+idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                             unsigned * num_stripes);
+
 static int
 idxsection_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
 
@@ -48,6 +52,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               idxsection_copy,
               idxsection_get_num_indices,
               idxsection_get_indices,
+              idxsection_get_index_stripes,
               idxsection_get_index,
               idxsection_get_position_of_index,
               idxsection_get_position_of_index_off};
@@ -328,6 +333,57 @@ idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
     ++indices;
 
     for (j = section->ndim - 1; j < section->ndim; --j)
+      if (curr_local_position[j] < section->local_size[j] - 1) {
+        curr_local_position[j]++;
+        break;
+      } else
+        curr_local_position[j] = 0;
+  }
+
+  free(curr_local_position);
+}
+
+static void
+idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                             unsigned * num_stripes) {
+
+  struct xt_idxsection *section;
+
+  section = (struct xt_idxsection*)idxlist;
+
+  unsigned i, j;
+
+  if (section->local_size[section->ndim-1] == 0)
+    *num_stripes = 0;
+  else
+    *num_stripes = 1;
+
+  for (i = 0; i < section->ndim-1; ++i)
+    *num_stripes *= section->local_size[i];
+
+  if (num_stripes == 0) {
+
+    *stripes = NULL;
+    *num_stripes = 0;
+    return;
+  }
+
+  *stripes = xmalloc(*num_stripes * sizeof(**stripes));
+
+  unsigned * curr_local_position;
+
+  curr_local_position = xcalloc(section->ndim-1, sizeof(*curr_local_position));
+
+  for (i = 0; i < *num_stripes; ++i) {
+
+    (*stripes)[i].start  = section->local_start_index;
+    (*stripes)[i].extent = section->local_size[section->ndim-1];
+    (*stripes)[i].stride = 1;
+
+    for (j = 0; j < section->ndim - 1; ++j)
+      (*stripes)[i].start += curr_local_position[j] * section->global_strides[j];
+
+    for (j = section->ndim - 2; j < section->ndim; --j)
       if (curr_local_position[j] < section->local_size[j] - 1) {
         curr_local_position[j]++;
         break;

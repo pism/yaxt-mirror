@@ -7,6 +7,7 @@
 #include "yaxt.h"
 #include "xt_idxlist.h"
 #include "xt_idxvec.h"
+#include "xt_idxstripes.h"
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
@@ -32,6 +33,10 @@ idxvec_get_num_indices(xt_idxlist idxlist);
 static void
 idxvec_get_indices(xt_idxlist idxlist, Xt_idx *indices);
 
+static void
+idxvec_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                         unsigned * num_stripes);
+
 static int
 idxvec_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
 
@@ -50,6 +55,7 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
               idxvec_copy,
               idxvec_get_num_indices,
               idxvec_get_indices,
+              idxvec_get_index_stripes,
               idxvec_get_index,
               idxvec_get_position_of_index,
               idxvec_get_position_of_index_off};
@@ -242,6 +248,19 @@ idxvec_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
    memcpy(indices, idxvec_data->vector,
           idxvec_data->num_indices * sizeof(*indices));
+}
+
+static void
+idxvec_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                         unsigned * num_stripes) {
+
+  struct xt_idxvec *idxvec_data;
+
+  idxvec_data = (struct xt_idxvec *)idxlist;
+
+  xt_idxstripes_convert_to_stripes(idxvec_data->vector,
+                                   idxvec_data->num_indices,
+                                   stripes, num_stripes);
 }
 
 static int
