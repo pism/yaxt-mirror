@@ -40,7 +40,7 @@ PROGRAM test_perf
   INTEGER, ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
   INTEGER, ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
   INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
-  INTEGER, ALLOCATABLE :: sort_pos(:,:), id_pos(:,:), pos3d_surf(:,:)
+  INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
   INTEGER :: surf_trans_tpex_2d
   LOGICAL, PARAMETER :: debug =.FALSE.
   LOGICAL :: verbose
@@ -82,7 +82,7 @@ PROGRAM test_perf
   CALL get_window(g_id, loc_id_2d)
 
   ! define bounds exchange for full global index space
-  CALL def_exchange(g_id, g_tpex)
+  CALL def_exchange()
 
   ! local window of global bounds exchange:
   CALL get_window(g_tpex, loc_tpex_2d)
@@ -187,25 +187,25 @@ CONTAINS
   SUBROUTINE treset(t, label)
     TYPE(timer), INTENT(inout) :: t
     CHARACTER(len=*), INTENT(in) :: label
-    t.label   = label
-    t.istate  = 0
-    t.t0      = 0.0_dp
-    t.dt_work = 0.0_dp
+    t%label   = label
+    t%istate  = 0
+    t%t0      = 0.0_dp
+    t%dt_work = 0.0_dp
   END SUBROUTINE treset
 
   SUBROUTINE tstart(t)
     TYPE(timer), INTENT(inout) :: t
     CALL sync
-    t.istate = 1
-    t.t0 = work_time()
+    t%istate = 1
+    t%t0 = work_time()
   END SUBROUTINE tstart
 
   SUBROUTINE tstop(t)
     TYPE(timer), INTENT(inout) :: t
-    REAL(dp) :: t0, t1, t2, dt
+    REAL(dp) :: t1
     t1 = work_time()
-    t.dt_work = t.dt_work + (t1 - t.t0)
-    t.istate = 0
+    t%dt_work = t%dt_work + (t1 - t%t0)
+    t%istate = 0
     CALL sync
 
   END SUBROUTINE tstop
@@ -218,10 +218,10 @@ CONTAINS
     REAL(dp), VOLATILE :: sbuf, rbuf(0:nprocs-1)
     INTEGER :: ierror
 
-    sbuf = t.dt_work
+    sbuf = t%dt_work
     rbuf = -1.0_dp
-    CALL MPI_GATHER(sbuf, 1, MPI_DOUBLE, &
-         &  rbuf, 1, MPI_DOUBLE, &
+    CALL MPI_GATHER(sbuf, 1, MPI_DOUBLE_PRECISION, &
+         &  rbuf, 1, MPI_DOUBLE_PRECISION, &
          &  0, MPI_COMM_WORLD, ierror)
 
 
@@ -233,7 +233,7 @@ CONTAINS
       work_avg = work_sum / nprocs
       e = work_avg / work_max
 
-      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') 'nprocs, label, wmax, wavg, e =',nprocs, trim(grid_label)//':'//t.label, work_max, work_avg, e
+      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') 'nprocs, label, wmax, wavg, e =',nprocs, trim(grid_label)//':'//t%label, work_max, work_avg, e
     ENDIF
 
   END SUBROUTINE treport
@@ -554,7 +554,7 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx)), dst_n
+    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
 
     INTEGER :: src_handle, dst_handle
 
@@ -576,7 +576,7 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx)), dst_n
+    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
 
     INTEGER :: src_handle, dst_handle
 
@@ -594,9 +594,7 @@ CONTAINS
   END SUBROUTINE gen_template_3d
 
 
-  SUBROUTINE def_exchange(id_in, id_out)
-    INTEGER, INTENT(in) :: id_in(:,:)
-    INTEGER, INTENT(out) :: id_out(:,:)
+  SUBROUTINE def_exchange()
 
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
@@ -623,7 +621,8 @@ CONTAINS
         north_halo = nhalo
       ENDIF
 
-      IF (2*north_halo > g_core_je) CALL ut_abort('def_exchange: grid too small (or halo too large) for tripolar north exchange', __FILE__, __LINE__)
+      IF (2*north_halo > g_core_je) CALL ut_abort('def_exchange: grid too small (or halo too large) for tripolar north exchange', &
+                                                  __FILE__, __LINE__)
       DO j = 1, north_halo
         DO i = g_core_is, g_core_ie
           g_tpex(i,j) = g_tpex(g_core_ie + (g_core_is-i), 2*north_halo + (1-j))
