@@ -32,5 +32,7 @@ libyaxt_a_SOURCES =						\
 	core/symprefix.h					\
 	core/xmalloc.c						\
 	core/xstdio.c						\
+	ensure_array_size.c					\
+	ensure_array_size.h					\
 	yaxt.h
 
