@@ -36,5 +36,6 @@ libyaxt_a_SOURCES =						\
 	core/xstdio.c						\
 	ensure_array_size.c					\
 	ensure_array_size.h					\
+	quicksort.c						\
 	yaxt.h
 

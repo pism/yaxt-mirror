@@ -67,12 +67,12 @@ struct xt_idxvec {
 
    Xt_idx *vector;
    size_t num_indices;
-};
 
-static int compare_xtidx(const void * a, const void * b)
-{
-  return (*(Xt_idx*)a > *(Xt_idx*)b) - (*(Xt_idx*)a < *(Xt_idx*)b);
-}
+   // internal array used to optimise access to vector data
+   Xt_idx *sorted_vector;        // sorted version of vector
+   int    *sorted_vec_positions; // original positions of the
+                                 // indices in sorted_vector
+};
 
 struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, size_t num_indices) {
 
@@ -98,12 +98,18 @@ struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, size_t num_indices) {
    }
 
    idxvec_data->num_indices = num_indices;
+   idxvec_data->sorted_vector = NULL;
+   idxvec_data->sorted_vec_positions = NULL;
 
    return (void*)idxvec_data;
 }
 
 static void idxvec_delete(struct xt_idxlist *data) {
 
+   if (((struct xt_idxvec*)data)->sorted_vector !=
+       ((struct xt_idxvec*)data)->vector)
+      free(((struct xt_idxvec*)data)->sorted_vector);
+   free(((struct xt_idxvec*)data)->sorted_vec_positions);
    free(((struct xt_idxvec*)data)->vector);
    free(data);
 }
@@ -168,20 +174,49 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
       idxvec->vector = NULL;
    }
 
+   idxvec->sorted_vector = NULL;
+   idxvec->sorted_vec_positions = NULL;
+
    return (xt_idxlist)idxvec;
 }
+
+void insertion_sort(int *a, unsigned size) {
+
+  unsigned i, j;
+
+  for(i = 1; i < size; i++) {
+
+    int temp = a[i];
+
+    for(j = i;  j > 0 && a[j-1] > temp; j--)
+      a[j] = a[j-1];
+
+    a[j] = temp;
+   }
+}
+
+void quicksort_index (Xt_idx * a, int n, int * idx);
 
 static Xt_idx *
 get_sorted_vector(struct xt_idxvec * idxvec) {
 
+  if (idxvec->sorted_vector != NULL)
+    return idxvec->sorted_vector;
+
+  idxvec->sorted_vec_positions = xmalloc(idxvec->num_indices *
+                                         sizeof(*(idxvec->sorted_vec_positions)));
+
   unsigned i;
+
+  for (i = 0; i < idxvec->num_indices; ++i)
+    idxvec->sorted_vec_positions[i] = i;
 
   for (i = 1; i < idxvec->num_indices; ++i)
     if (idxvec->vector[i-1] > idxvec->vector[i])
       break;
 
   if (i == idxvec->num_indices)
-    return idxvec->vector;
+    return idxvec->sorted_vector = idxvec->vector;
 
   Xt_idx *sorted_vector;
 
@@ -190,8 +225,21 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   memcpy(sorted_vector, idxvec->vector,
          idxvec->num_indices * sizeof(*sorted_vector));
 
-  qsort(sorted_vector, idxvec->num_indices,
-        sizeof (*sorted_vector), compare_xtidx);
+  quicksort_index(sorted_vector, idxvec->num_indices,
+                  idxvec->sorted_vec_positions);
+
+  idxvec->sorted_vector = sorted_vector;
+
+  // sort the positions for indices that occure more than once
+
+  unsigned count;
+
+  for (i = 0; i < idxvec->num_indices-1; i += count) {
+    for (count = 1; count < idxvec->num_indices &&
+                    sorted_vector[i] == sorted_vector[i+count]; ++count);
+    if (count > 1)
+      insertion_sort(idxvec->sorted_vec_positions + i, count);
+  }
 
   return sorted_vector;
 }
@@ -248,11 +296,8 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
   }
 
   inter_vector->vtable = &idxvec_vtable;
-
-  if (sorted_src_vector != idxvec_src->vector)
-    free(sorted_src_vector);
-  if (sorted_dst_vector != idxvec_dst->vector)
-    free(sorted_dst_vector);
+  inter_vector->sorted_vector = NULL;
+  inter_vector->sorted_vec_positions = NULL;
 
   return (xt_idxlist)inter_vector;
 }
@@ -324,17 +369,44 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
 
   idxvec_data = (struct xt_idxvec *)idxlist;
 
-  size_t i;
+  if ((offset < 0) || (offset >= idxvec_data->num_indices))
+    return 1;
 
-  assert(offset >= 0);
+  Xt_idx * sorted_vector;
 
-  for (i = offset; i < idxvec_data->num_indices; ++i)
-    if (idxvec_data->vector[i] == index) {
-      *position = i;
-      return 0;
-    }
+  sorted_vector = get_sorted_vector(idxvec_data);
 
-  return 1;
+  if ((index < sorted_vector[0]) ||
+      (index > sorted_vector[idxvec_data->num_indices-1]))
+    return 1;
+
+  int lb, ub;
+
+  lb = 0;
+  ub = idxvec_data->num_indices - 1;
+
+  while (sorted_vector[lb] < index) {
+
+    int middle = (ub + lb + 1) / 2;
+
+    if (sorted_vector[middle] <= index)
+      lb = middle;
+    else
+      ub = middle;
+  }
+
+  while (lb > 0 && idxvec_data->sorted_vector[lb-1] == index) --lb;
+
+  while (lb < idxvec_data->num_indices - 1 &&
+         idxvec_data->sorted_vec_positions[lb] < offset &&
+         idxvec_data->sorted_vector[lb] == index) ++lb;
+
+  if (lb >= idxvec_data->num_indices ||
+      sorted_vector[lb] != index)
+    return 1;
+
+  *position = idxvec_data->sorted_vec_positions[lb];
+  return 0;
 }
 
 static int
