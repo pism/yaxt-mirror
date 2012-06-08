@@ -214,10 +214,8 @@ static void generate_src_xlist(xt_xmap xmap,
       int global_index;
 
       int retval;
-      //assert(xt_idxlist_get_index(xmap->src_msg[i].intersect, j, &global_index) != 1);
       retval=xt_idxlist_get_index(xmap->src_msg[i].intersect, j, &global_index);
       assert(retval != 1);
-      //assert(xt_idxlist_get_position_of_index(idxlist, global_index, index_list+j) != 1);
       retval=xt_idxlist_get_position_of_index(idxlist, global_index, index_list+j);
       assert(retval != 1);
     }
@@ -254,7 +252,6 @@ static void generate_dst_xlist(xt_xmap xmap,
     }
 
     int prev_global_index;
-    //assert(xt_idxlist_get_index(xmap->dst_msg[i].intersect, 0, &prev_global_index) != 1);
     retval=xt_idxlist_get_index(xmap->dst_msg[i].intersect, 0, &prev_global_index);
     assert(retval != 1);
     prev_global_index++;
@@ -268,7 +265,6 @@ static void generate_dst_xlist(xt_xmap xmap,
       // look up current intersection index in the destination index list
       int global_index;
 
-      //assert(xt_idxlist_get_index(xmap->dst_msg[i].intersect, j, &global_index) != 1);
       retval=xt_idxlist_get_index(xmap->dst_msg[i].intersect, j, &global_index);
       assert(retval != 1);
 
@@ -277,10 +273,6 @@ static void generate_dst_xlist(xt_xmap xmap,
         repetition_count = 0;
       }
 
-      /*
-	assert(xt_idxlist_get_position_of_index_off(idxlist, global_index,
-                                                  index_list+j, repetition_offset) != 1); 
-      */
       retval=xt_idxlist_get_position_of_index_off(idxlist, global_index,
                                                   index_list+j, repetition_offset);
       assert(retval != 1);

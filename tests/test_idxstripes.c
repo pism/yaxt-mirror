@@ -220,7 +220,6 @@ int main(void) {
 
     // check intersection
 
-    //Xt_idx ref_indices[0] = {};
     Xt_idx *ref_indices = NULL;
     unsigned ref_num_indices = 0;
     struct Xt_stripe ref_stripes[1] = {{0,1,1}};

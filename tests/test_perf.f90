@@ -215,7 +215,7 @@ CONTAINS
     TYPE(timer), INTENT(in) :: t
 
     REAL(dp) :: work_sum, work_max, work_avg, e
-    REAL(dp), VOLATILE :: sbuf, rbuf(0:nprocs-1)
+    REAL(dp) :: sbuf, rbuf(0:nprocs-1)
     INTEGER :: ierror
 
     sbuf = t%dt_work
@@ -322,8 +322,8 @@ CONTAINS
     DO j = 1, n2
       DO i = 1, n1
         IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,*) context,'test failed: i, j, f(i,j), g(i,j) =',i, j, f(i,j), g(i,j)
-          CALL ut_abort(context//'test failed', __FILE__, __LINE__)
+          WRITE(0,*) context,label,' test failed: i, j, f(i,j), g(i,j) =',i, j, f(i,j), g(i,j)
+          CALL ut_abort(context//label//' test failed', __FILE__, __LINE__)
         ENDIF
       ENDDO
     ENDDO
@@ -347,8 +347,8 @@ CONTAINS
       DO j = 1, n2
         DO i = 1, n1
           IF (f(i,j,k) /= g(i,j,k)) THEN
-            WRITE(0,*) context,'test failed: i, j, f(i,j,k), g(i,j,k) =',i, j, k, f(i,j,k), g(i,j,k)
-            CALL ut_abort(context//'test failed', __FILE__, __LINE__)
+             WRITE(0,*) context,label,' test failed: i, j, f(i,j,k), g(i,j,k) =',i, j, k, f(i,j,k), g(i,j,k)
+            CALL ut_abort(context//label//' test failed', __FILE__, __LINE__)
           ENDIF
         ENDDO
       ENDDO
