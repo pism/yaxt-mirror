@@ -171,6 +171,31 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
    return (xt_idxlist)idxvec;
 }
 
+static Xt_idx *
+get_sorted_vector(struct xt_idxvec * idxvec) {
+
+  unsigned i;
+
+  for (i = 1; i < idxvec->num_indices; ++i)
+    if (idxvec->vector[i-1] > idxvec->vector[i])
+      break;
+
+  if (i == idxvec->num_indices)
+    return idxvec->vector;
+
+  Xt_idx *sorted_vector;
+
+  sorted_vector = xmalloc(idxvec->num_indices * sizeof(*sorted_vector));
+
+  memcpy(sorted_vector, idxvec->vector,
+         idxvec->num_indices * sizeof(*sorted_vector));
+
+  qsort(sorted_vector, idxvec->num_indices,
+        sizeof (*sorted_vector), compare_xtidx);
+
+  return sorted_vector;
+}
+
 static xt_idxlist
 idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
@@ -192,20 +217,28 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
   inter_vector->vector =
     xmalloc(idxvec_dst->num_indices * sizeof(*(inter_vector->vector)));
 
+  Xt_idx *sorted_src_vector, *sorted_dst_vector;
+
+  // get sorted indices of source and destination
+
+  sorted_src_vector = get_sorted_vector(idxvec_src);
+  sorted_dst_vector = get_sorted_vector(idxvec_dst);
+
   size_t i, j;
 
-  for (j = 0; j < idxvec_dst->num_indices; ++j)
-    for (i = 0; i < idxvec_src->num_indices; ++i)
-      if (idxvec_src->vector[i] == idxvec_dst->vector[j]) {
-        inter_vector->vector[inter_vector->num_indices++] = idxvec_src->vector[i];
-         break;
-      }
+  // compute the intersection
+
+  for (i = 0, j = 0; i < idxvec_dst->num_indices; ++i) {
+
+    while (sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
+
+    if ((j < idxvec_src->num_indices) && 
+        (sorted_src_vector[j] == sorted_dst_vector[i]))
+      inter_vector->vector[inter_vector->num_indices++] = sorted_dst_vector[i];
+  }
 
   if (inter_vector->num_indices) {
 
-    // sort the vector
-    qsort(inter_vector->vector, inter_vector->num_indices,
-          sizeof (inter_vector->vector[0]), compare_xtidx);
     inter_vector->vector = xrealloc(inter_vector->vector,
                                     inter_vector->num_indices *
                                     sizeof(*(inter_vector->vector)));
@@ -215,6 +248,11 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
   }
 
   inter_vector->vtable = &idxvec_vtable;
+
+  if (sorted_src_vector != idxvec_src->vector)
+    free(sorted_src_vector);
+  if (sorted_dst_vector != idxvec_dst->vector)
+    free(sorted_dst_vector);
 
   return (xt_idxlist)inter_vector;
 }
