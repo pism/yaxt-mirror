@@ -1,5 +1,6 @@
 #! @SHELL@
 set -e
+export YAXT_TEST_PERF_GRID=TEST
 @MPI_LAUNCH@ -n 1 ./test_perf
 @MPI_LAUNCH@ -n 2 ./test_perf
 @MPI_LAUNCH@ -n 3 ./test_perf
