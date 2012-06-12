@@ -55,7 +55,9 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               idxsection_get_index_stripes,
               idxsection_get_index,
               idxsection_get_position_of_index,
-              idxsection_get_position_of_index_off};
+              NULL,
+              idxsection_get_position_of_index_off,
+              NULL};
 
 struct xt_idxsection {
 

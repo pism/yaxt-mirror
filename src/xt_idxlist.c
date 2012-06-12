@@ -150,9 +150,52 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
   return idxlist->vtable->get_position_of_index(idxlist, index, position);
 }
 
+int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+                                       unsigned num_indices, int * positions) {
+
+  if (idxlist->vtable->get_position_of_indices != NULL)
+    return idxlist->vtable->get_position_of_indices(idxlist, indices, num_indices,
+                                                    positions);
+  else
+    return xt_idxlist_get_position_of_indices_off(idxlist, indices, num_indices,
+                                                  positions, NULL);
+}
+
 int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                          int * position, int offset) {
 
   return idxlist->vtable->get_position_of_index_off(idxlist, index,
                                                     position, offset);
+}
+
+int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
+                                           unsigned num_indices, int * positions,
+                                           int * offsets) {
+
+  if (idxlist->vtable->get_position_of_indices_off != NULL)
+    return idxlist->vtable->get_position_of_indices_off(idxlist, indices,
+                                                        num_indices,
+                                                        positions, offsets);
+
+  unsigned i;
+
+  for (i = 0; i < num_indices; ++i) {
+
+    int ret_val, temp_position, offset;
+
+    if (offsets == NULL)
+      offset = 0;
+    else
+      offset = offsets[i];
+
+    ret_val = idxlist->vtable->get_position_of_index_off(idxlist, indices[i],
+                                                         &temp_position, offset);
+
+    if (ret_val)
+      return ret_val;
+
+    positions[i] = temp_position;
+  }
+
+  return 0;
 }

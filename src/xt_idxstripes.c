@@ -57,7 +57,9 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
               idxsection_get_index_stripes,
               idxstripes_get_index,
               idxstripes_get_position_of_index,
-              idxstripes_get_position_of_index_off};
+              NULL,
+              idxstripes_get_position_of_index_off,
+              NULL};
 
 static MPI_Datatype xt_get_stripes_datatype() {
 

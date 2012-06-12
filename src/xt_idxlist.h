@@ -24,7 +24,10 @@ struct xt_idxlist_vtable {
    void (*get_index_stripes)(xt_idxlist, struct Xt_stripe **, unsigned *);
    int (*get_index)(Xt_idxlist, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
+   int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, unsigned, int *);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
+   int (*get_position_of_indices_off)(Xt_idxlist, Xt_idx *, unsigned,
+                                      int *, int *);
 };
 
 enum xt_idxvecype {
@@ -173,7 +176,7 @@ void xt_idxlist_get_index_stripes(xt_idxlist idxlist,
 int xt_idxlist_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 /**
- * gets the first position of the first occurrence of the given index
+ * gets the position of the first occurrence of the given index
  * in the stored index list
  *
  * @param[in]  idxlist  index list in which the given index is to be searched
@@ -185,12 +188,28 @@ int xt_idxlist_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
 int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
 
 /**
- * gets the first position of the first occurrence of the given index
+ * gets the positions of the first occurrence of the given indices
+ * in the stored index list
+ *
+ * @param[in]  idxlist     index list in which the given index is to be searched
+ * @param[in]  indices     indices that are to be searched
+ * @param[in]  num_indices number of indices in that array "indices"
+ * @param[out] positions   positions of the first occurrence of the indices
+ *                         in idxlist
+ * @return                 0 if everything was okay
+ *                         1 if the index could not be found in idxlist
+ */
+int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+                                       unsigned num_indices, int * positions);
+
+/**
+ * gets the position of the first occurrence of the given index
  * from the given offset in the stored index list
  *
  * @param[in]  idxlist  index list in which the given index is to be searched
  * @param[in]  index    index that is to be searched
  * @param[out] position position of the first occurrence of index in idxlist
+ *                      with a position >= offset
  * @param[in]  offset   offset in the index list from which on the search
  *                      is to be conducted
  * @return              0 if everything was okay
@@ -198,5 +217,26 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * pos
  */
 int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                          int * position, int offset);
+
+/**
+ * gets the positions of the first occurrence of the given indices
+ * from the given offsets in the stored index list
+ *
+ * @param[in]  idxlist     index list in which the given index is to be searched
+ * @param[in]  indices     indices that are to be searched
+ * @param[in]  num_indices number of indices in that array "indices"
+ * @param[out] positions   positions of the first occurrence of the indices in idxlist
+ *                         with a positions[i] >= offsets[i]
+ * @param[in]  offsets     offsets in the index list from which on the search
+ *                         is to be conducted
+ * @return                 0 if everything was okay
+ *                         1 if the index could not be found in idxlist
+ *
+ * \remarks a call to xt_idxlist_get_position_of_index_off_a with offset = NULL
+ *          is the same as a call to xt_idxlist_get_position_of_indices
+ */
+int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
+                                           unsigned num_indices, int * positions,
+                                           int * offsets);
 
 #endif // XT_IDXLIST_H

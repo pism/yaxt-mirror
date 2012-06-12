@@ -58,7 +58,9 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
               idxvec_get_index_stripes,
               idxvec_get_index,
               idxvec_get_position_of_index,
-              idxvec_get_position_of_index_off};
+              NULL,
+              idxvec_get_position_of_index_off,
+              NULL};
 
 // index vector data structure
 struct xt_idxvec {

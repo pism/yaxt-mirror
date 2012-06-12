@@ -60,7 +60,9 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable =
        idxlist_collection_get_index_stripes,
        idxlist_collection_get_index,
        idxlist_collection_get_position_of_index,
-       idxlist_collection_get_position_of_index_off};
+       NULL,
+       idxlist_collection_get_position_of_index_off,
+       NULL};
 
 struct xt_idxlist_collection {
 
