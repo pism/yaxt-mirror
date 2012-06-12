@@ -5,13 +5,13 @@
 #define VERBOSE
 
 #include "tests.h"
+#include "test_idxlist_utils.h"
 
 #include "yaxt.h"
 #include "xt_idxvec.h"
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void check_idxvec(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
 void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
                    struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes);
 
@@ -36,7 +36,7 @@ int main(void) {
 
       // test the generated index vector
 
-      check_idxvec(idxvector, index_vector, num_indices);
+      check_idxlist(idxvector, index_vector, num_indices);
 
       // get the size of the index vector
 
@@ -83,7 +83,7 @@ int main(void) {
 
       // check the received index vector
 
-      check_idxvec(idxvector_copy, index_vector, num_indices);
+      check_idxlist(idxvector_copy, index_vector, num_indices);
 
       // compute intersection between the two index vectors
 
@@ -94,7 +94,7 @@ int main(void) {
       // check the computed intersection (should be identically to the original
       // index vector)
 
-      check_idxvec(intersection, index_vector, num_indices);
+      check_idxlist(intersection, index_vector, num_indices);
 
       // check the conversion to stripes
 
@@ -133,7 +133,7 @@ int main(void) {
 
       // test the generated index vector
 
-      check_idxvec(idxvector, index_vector, num_indices);
+      check_idxlist(idxvector, index_vector, num_indices);
 
       // copy the index vector
 
@@ -141,7 +141,7 @@ int main(void) {
 
       // check the generated copy
 
-      check_idxvec(idxvector_copy, index_vector, num_indices);
+      check_idxlist(idxvector_copy, index_vector, num_indices);
 
       // clean up
 
@@ -152,23 +152,6 @@ int main(void) {
    MPI_Finalize();
 
    return TEST_EXIT_CODE;
-}
-
-void check_idxvec(xt_idxlist idxlist, Xt_idx * ref_indices,
-                  unsigned ref_num_indices) {
-
-   unsigned i;
-
-   if (xt_idxlist_get_num_indices(idxlist) != ref_num_indices)
-      PUT_ERR("wrong number of indices in idxlist\n");
-
-   Xt_idx indices[ref_num_indices];
-
-   xt_idxlist_get_indices(idxlist, indices);
-
-   for (i = 0; i < ref_num_indices; ++i)
-      if (indices[i] != ref_indices[i])
-         PUT_ERR("index list contains wrong indices\n");
 }
 
 void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,

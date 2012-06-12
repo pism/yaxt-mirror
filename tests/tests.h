@@ -1,3 +1,6 @@
+#ifndef TESTS_H
+#define TESTS_H
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -17,3 +20,4 @@ unsigned err_count__ = 0;
 
 #define TEST_EXIT_CODE ((!err_count__)?EXIT_SUCCESS:EXIT_FAILURE)
 
+#endif // TESTS_H

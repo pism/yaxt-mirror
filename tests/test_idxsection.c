@@ -3,6 +3,7 @@
 #include "mpi.h"
 
 #include "tests.h"
+#include "test_idxlist_utils.h"
 
 #include "yaxt.h"
 #include "xt_idxsection.h"
@@ -11,7 +12,6 @@
 
 void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned num_indices,
               struct Xt_stripe * ref_stripes, unsigned ref_num_stripes);
-void check_idxlist(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
 void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
                    struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes);
 
@@ -307,45 +307,6 @@ void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned num_indices,
 
     xt_idxlist_delete(idxlist_copy);
   }
-}
-
-void check_idxlist(xt_idxlist idxlist, Xt_idx * ref_indices,
-                   unsigned ref_num_indices) {
-
-  unsigned i;
-
-  if (xt_idxlist_get_num_indices(idxlist) != ref_num_indices)
-    PUT_ERR("wrong number of indices in idxlist\n");
-
-  Xt_idx indices[ref_num_indices];
-
-  xt_idxlist_get_indices(idxlist, indices);
-
-  Xt_idx index;
-  int position;
-
-  for (i = 0; i < ref_num_indices; ++i) {
-
-    if (indices[i] != ref_indices[i])
-      PUT_ERR("index list contains wrong indices\n");
-
-    if (xt_idxlist_get_index(idxlist, i, &index) || index != ref_indices[i])
-      PUT_ERR("error in xt_idxlist_get_index\n");
-
-    if (xt_idxlist_get_position_of_index(idxlist, ref_indices[i], &position) ||
-        position != i)
-      PUT_ERR("error in xt_idxlist_get_position_of_index\n");
-
-    if (!xt_idxlist_get_position_of_index_off(idxlist, ref_indices[i], &position,
-                                              position+1))
-      PUT_ERR("error in xt_idxlist_get_position_of_index_off\n");
-  }
-
-  if (!xt_idxlist_get_index(idxlist, -1, &index))
-    PUT_ERR("error in xt_idxlist_get_index\n");
-
-  if (!xt_idxlist_get_index(idxlist, ref_num_indices, &index))
-    PUT_ERR("error in xt_idxlist_get_index\n");
 }
 
 void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
