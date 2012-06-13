@@ -9,6 +9,7 @@
 #include "xt_idxvec.h"
 #include "xt_xmap.h"
 #include "xt_mpi.h"
+#include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
 struct exchange_data {
@@ -75,12 +76,17 @@ static void exchange_idxlists(xt_xmap xmap,
   mpi_err_handler(MPI_Comm_size(xmap->comm, &comm_size), xmap->comm);
 
   // compute size of local index lists
-  size_t send_buffer_size;
-  send_buffer_size  = xt_idxlist_get_pack_size(src_idxlist_local, xmap->comm);
-  send_buffer_size += xt_idxlist_get_pack_size(dst_idxlist_local, xmap->comm);
+  long long src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, xmap->comm);
+  if (src_pack_size<0) die("src index list is too large");
+  long long dst_pack_size = xt_idxlist_get_pack_size(dst_idxlist_local, xmap->comm);
+  if (dst_pack_size<0) die("dst index list is too large");
+
+  if (src_pack_size + dst_pack_size >= INT_MAX) die("local src+dst index lists are too large");
+
+  int send_buffer_size;
+  send_buffer_size  = src_pack_size + dst_pack_size;
 
   void * send_buffer;
-
   send_buffer = xmalloc(send_buffer_size);
 
   // pack local index lists
@@ -106,11 +112,12 @@ static void exchange_idxlists(xt_xmap xmap,
   displ = xmalloc(comm_size * sizeof(*displ));
 
   displ[0] = 0;
-  size_t recv_buffer_size = recv_buffer_header[0];
+  int recv_buffer_size = recv_buffer_header[0];
   for (i = 1; i < comm_size; ++i) {
 
      displ[i] = displ[i-1] + recv_buffer_header[i-1];
      recv_buffer_size += recv_buffer_header[i];
+     if (recv_buffer_size<0) die("accumulated buffer sizes too big");
   }
 
   recv_buffer = xmalloc(recv_buffer_size);
@@ -127,7 +134,6 @@ static void exchange_idxlists(xt_xmap xmap,
 
   // unpack buffers
   for (i = 0, position = 0; i < comm_size; ++i) {
-
     src_idxlists_all[i] = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
                                             &position, xmap->comm);
     dst_idxlists_all[i] = xt_idxlist_unpack(recv_buffer, recv_buffer_size,

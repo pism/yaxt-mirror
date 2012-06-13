@@ -9,7 +9,7 @@ PROGRAM test_perf
   IMPLICIT NONE
   ! global extents including halos:
 
-  INTEGER, PARAMETER :: nlev = 3
+  INTEGER, PARAMETER :: nlev = 30
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
   INTEGER, PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
@@ -19,7 +19,7 @@ PROGRAM test_perf
   INTEGER, PARAMETER :: grid_kind_toy  = 2
   INTEGER, PARAMETER :: grid_kind_tp10 = 3
   INTEGER, PARAMETER :: grid_kind_tp04 = 4
-  INTEGER, PARAMETER :: grid_kind_tp6m = 5
+  INTEGER, PARAMETER :: grid_kind_tp6M = 5
   INTEGER :: grid_kind = grid_kind_test
 
   CHARACTER(len=10) :: grid_label
@@ -81,6 +81,7 @@ PROGRAM test_perf
   ! local window of global index space:
   CALL get_window(g_id, loc_id_2d)
 
+
   ! define bounds exchange for full global index space
   CALL def_exchange()
 
@@ -91,7 +92,7 @@ PROGRAM test_perf
   CALL tstart(t_template_2d)
   CALL gen_template_2d(loc_id_2d, loc_tpex_2d, template_tpex_2d)
   CALL tstop(t_template_2d)
-
+  !CALL ut_abort('test stop', __FILE__, __LINE__)
 
   ! transposition: loc_id_2d:data -> loc_tpex_2d:data
   CALL tstart(t_trans_2d)
@@ -195,6 +196,7 @@ CONTAINS
 
   SUBROUTINE tstart(t)
     TYPE(timer), INTENT(inout) :: t
+    IF (debug) WRITE(0,*) 'tstart: ',t%label
     CALL sync
     t%istate = 1
     t%t0 = work_time()
@@ -203,6 +205,7 @@ CONTAINS
   SUBROUTINE tstop(t)
     TYPE(timer), INTENT(inout) :: t
     REAL(dp) :: t1
+    IF (debug) WRITE(0,*) 'tstop: ',t%label
     t1 = work_time()
     t%dt_work = t%dt_work + (t1 - t%t0)
     t%istate = 0
@@ -388,7 +391,7 @@ CONTAINS
       grid_label = 'TP04'
       g_ie = 802
       g_je = 404
-    CASE('TP6m')
+    CASE('TP6M')
       grid_kind = grid_kind_tp6m
       grid_label = 'TP6M'
       g_ie = 3602
