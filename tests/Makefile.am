@@ -4,6 +4,8 @@ noinst_PROGRAMS = 						\
 	test_idxlist_collection					\
 	test_idxsection						\
 	test_idxstripes						\
+	test_redist_collection					\
+	test_redist_collection_parallel				\
 	test_redist_p2p						\
 	test_redist_p2p_parallel				\
 	test_xmap_all2all					\
@@ -21,6 +23,8 @@ test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist.h
 test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h
 test_idxsection_SOURCES = test_idxsection.c tests.h test_idxlist.h
 test_idxstripes_SOURCES = test_idxstripes.c tests.h test_idxlist.h
+test_redist_collection_SOURCES = test_redist_collection.c test.h
+test_redist_collection_parallel_SOURCES = test_redist_collection_parallel.c test.h
 test_redist_p2p_SOURCES = test_redist_p2p.c test.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c test.h
 test_xmap_all2all_SOURCES = test_xmap_all2all.c tests.h
@@ -46,6 +50,8 @@ TESTS = 							\
 	test_idxsection_run					\
 	test_idxstripes_run					\
 	test_redist_p2p_run					\
+	test_redist_collection_run				\
+	test_redist_collection_parallel_run			\
 	test_redist_p2p_parallel_run				\
 	test_xmap_all2all_run					\
 	test_xmap_all2all_parallel_run				\

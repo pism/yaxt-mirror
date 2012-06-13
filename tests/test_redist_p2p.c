@@ -139,5 +139,5 @@ int main(void) {
 
   MPI_Finalize();
 
- return TEST_EXIT_CODE;
+  return TEST_EXIT_CODE;
 }
