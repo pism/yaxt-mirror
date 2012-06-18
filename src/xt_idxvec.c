@@ -193,7 +193,7 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 }
 
 
-void quicksort_index (Xt_idx * a, int n, int * idx);
+void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index);
 
 static Xt_idx *
 get_sorted_vector(struct xt_idxvec * idxvec) {
@@ -205,9 +205,6 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
                                          sizeof(*(idxvec->sorted_vec_positions)));
 
   unsigned i;
-  // gen id-map:
-  for (i = 0; i < idxvec->num_indices; ++i)
-    idxvec->sorted_vec_positions[i] = i;
 
   // check if we are already sorted:
   for (i = 1; i < idxvec->num_indices; ++i)
@@ -215,9 +212,12 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
       break;
 
   // we are done if we are already sorted
-  if (i == idxvec->num_indices)
+  if (i == idxvec->num_indices) {
+    // gen id-map:
+    for (i = 0; i < idxvec->num_indices; ++i)
+      idxvec->sorted_vec_positions[i] = i;    
     return idxvec->sorted_vector = idxvec->vector;
-
+  }
   Xt_idx *sorted_vector;
 
   sorted_vector = xmalloc(idxvec->num_indices * sizeof(*sorted_vector));
@@ -226,7 +226,7 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
          idxvec->num_indices * sizeof(*sorted_vector));
 
   quicksort_index(sorted_vector, idxvec->num_indices,
-                  idxvec->sorted_vec_positions);
+                  idxvec->sorted_vec_positions, 1);
 
   idxvec->sorted_vector = sorted_vector;
 

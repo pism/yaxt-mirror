@@ -30,7 +30,7 @@ typedef struct sort_idxpos_struct {
   int pos; // second crit
 } sort_idxpos_type;
 
-void quicksort_index (Xt_idx * a, int n, int * idx) {
+void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index) {
 
   int pointer_inc = 64;
   int pointer_size;
@@ -45,7 +45,7 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
   sort_idxpos_type *v;
   v = malloc ( n  * sizeof(v[0]) );
  
-  if (idx) {
+  if (idx && !reset_index) {
     for(i=0; i<n; i++) {
       v[i].idx = a[i];
       v[i].pos = idx[i];
