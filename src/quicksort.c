@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+#include "quicksort.h"
+
 /** \file quicksort.c
   * \brief Non-recursive stack version of Quicksort
   *
@@ -24,11 +26,6 @@
  **/
 
 #define CONSERVATIVE_SORT 1
-
-typedef struct sort_idxpos_struct {
-  Xt_idx idx; // first crit
-  int pos; // second crit
-} sort_idxpos_type;
 
 void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index) {
 
