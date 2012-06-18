@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <assert.h>
 
 #include "mpi.h"
 
@@ -88,7 +89,7 @@ int main(void) {
       // compute intersection between the two index vectors
 
       xt_idxlist intersection;
-      
+
       intersection = xt_idxlist_get_intersection(idxvector, idxvector_copy);
 
       // check the computed intersection (should be identically to the original
@@ -148,6 +149,63 @@ int main(void) {
       xt_idxlist_delete(idxvector);
       xt_idxlist_delete(idxvector_copy);
    }
+
+   { // test repeated equal indices
+
+      Xt_idx index_vector[] = {1,2,3,7,5,6,7,7};
+      size_t num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
+
+      xt_idxlist idxvector;
+
+      // create an index vector
+
+      idxvector = xt_idxvec_new(index_vector, num_indices);
+
+      // test the generated index vector
+
+      check_idxlist(idxvector, index_vector, num_indices);
+
+      // clean up
+      xt_idxlist_delete(idxvector);
+   }
+
+   { // subtest from test_ut
+
+     const int single_match_only = 1;
+     Xt_idx index_vector[] = {10,15,14,13,12,15,10,11,12,13,23,18,19,20,21,31,26,27,28,29};
+     size_t index_num = sizeof(index_vector) / sizeof(index_vector[0]);
+
+     Xt_idx intersection_vector[] = {12,12,13,13,14,15,15,20,21,23,28,29,31};
+     size_t intersection_num = sizeof(intersection_vector) / sizeof(intersection_vector[0]);
+
+     xt_idxlist idxvector;
+
+     // create an index vector
+
+     idxvector = xt_idxvec_new(index_vector, index_num);
+
+     // get positions:
+     int retval;
+     int intersection_pos[intersection_num];
+     int ref_intersection_pos[] = {4,8,3,9,2,1,5,13,14,10,18,19,15};
+     size_t ref_intersection_num = sizeof(ref_intersection_pos) / sizeof(ref_intersection_pos[0]);
+
+     assert(intersection_num == ref_intersection_num);
+
+     retval = xt_idxlist_get_position_of_indices(idxvector, intersection_vector,
+                                                 intersection_num, intersection_pos, single_match_only);
+     assert(retval != 1);
+
+     // check positions:
+     for(int i=0; i<intersection_num; i++)
+       if (intersection_pos[i] != ref_intersection_pos[i])
+         PUT_ERR("unexpected results from xt_idxlist_get_position_of_indices\n");
+
+     // clean up
+     xt_idxlist_delete(idxvector);
+   }
+
+
 
    MPI_Finalize();
 
