@@ -19,6 +19,8 @@
   * @param[in]      n            length of data
   * @param[out]     idx          old index of sorted returned a
   *
+  * \todo consider changing comparision to include position in order
+  *       to get a conservative sorting
  **/
 
 void quicksort_index (Xt_idx * a, int n, int * idx) {
@@ -91,7 +93,7 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
         w      = a[i];
         a[i]   = a[j];        
         a[j]   = w;
-
+	//! \todo do not allow idx == NULL, remove cond here
         if (idx != NULL) {
            ww     = idx[i];
            idx[i] = idx[j];

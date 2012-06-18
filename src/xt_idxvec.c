@@ -233,7 +233,8 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   idxvec->sorted_vector = sorted_vector;
 
   // sort the positions for indices that occure more than once
-
+  //! \todo I think we can drop this if we improve the elemental comparision within quicksort_index
+  //!       by changing the equal case to a comparision of the input position
   unsigned count;
 
   for (i = 0; i < idxvec->num_indices-1; i += count) {
