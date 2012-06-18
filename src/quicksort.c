@@ -178,7 +178,7 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
   stackr[0] = n-1;
 
   /*  Start sorting
-            
+
   ... keep taking the top request from the stack until s = 0.
 
   */
@@ -222,9 +222,9 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
         if ( i <= j ) {
 
         w      = a[i];
-        a[i]   = a[j];        
+        a[i]   = a[j];
         a[j]   = w;
-	//! \todo do not allow idx == NULL, remove cond here
+        //! \todo do not allow idx == NULL, remove cond here
         if (idx != NULL) {
            ww     = idx[i];
            idx[i] = idx[j];
