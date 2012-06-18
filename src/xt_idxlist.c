@@ -151,11 +151,12 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
 }
 
 int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
-                                       unsigned num_indices, int * positions) {
+                                       unsigned num_indices, int * positions,
+                                       int single_match_only) {
 
   if (idxlist->vtable->get_position_of_indices != NULL)
     return idxlist->vtable->get_position_of_indices(idxlist, indices, num_indices,
-                                                    positions);
+                                                    positions, single_match_only);
   else
     return xt_idxlist_get_position_of_indices_off(idxlist, indices, num_indices,
                                                   positions, NULL);

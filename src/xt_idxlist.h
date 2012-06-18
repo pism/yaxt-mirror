@@ -24,7 +24,7 @@ struct xt_idxlist_vtable {
    void (*get_index_stripes)(xt_idxlist, struct Xt_stripe **, unsigned *);
    int (*get_index)(Xt_idxlist, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
-   int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, unsigned, int *);
+   int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, unsigned, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
    int (*get_position_of_indices_off)(Xt_idxlist, Xt_idx *, unsigned,
                                       int *, int *);
@@ -196,15 +196,19 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * pos
  * @param[in]  num_indices number of indices in that array "indices"
  * @param[out] positions   positions of the first occurrence of the indices
  *                         in idxlist
+ * @param[in]  single_match_only if true then do not consider a previous matching position again
+ *                         in the next index search - this is required on the target side in order
+ *                         to avoid multiple writes to the same memory position
  * @return                 0 if everything was okay
  *                         1 if the index could not be found in idxlist
  */
 int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
-                                       unsigned num_indices, int * positions);
+                                       unsigned num_indices, int * positions,
+                                       int single_match_only);
 
 /**
  * gets the position of the first occurrence of the given index
- * from the given offset in the stored index list
+ * from the given offset in the stored index list idxlist
  *
  * @param[in]  idxlist  index list in which the given index is to be searched
  * @param[in]  index    index that is to be searched

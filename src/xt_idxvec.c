@@ -47,20 +47,26 @@ static int
 idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                  int * position, int offset);
 
+static int
+idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+                               unsigned num_indices, int * positions,
+                               int single_match_only);
+
 static const struct xt_idxlist_vtable idxvec_vtable = {
-              idxvec_delete,
-              idxvec_get_pack_size,
-              idxvec_pack,
-              idxvec_get_intersection,
-              idxvec_copy,
-              idxvec_get_num_indices,
-              idxvec_get_indices,
-              idxvec_get_index_stripes,
-              idxvec_get_index,
-              idxvec_get_position_of_index,
-              NULL,
-              idxvec_get_position_of_index_off,
-              NULL};
+              .delete = idxvec_delete,
+	      .get_pack_size =  idxvec_get_pack_size,
+              .pack = idxvec_pack,
+	      .get_intersection = idxvec_get_intersection,
+	      .copy = idxvec_copy,
+	      .get_num_indices = idxvec_get_num_indices,
+	      .get_indices = idxvec_get_indices,
+              .get_index_stripes = idxvec_get_index_stripes,
+	      .get_index =  idxvec_get_index,
+	      .get_position_of_index = idxvec_get_position_of_index,
+	      //.get_position_of_indices = NULL,
+              .get_position_of_indices = idxvec_get_position_of_indices,
+              .get_position_of_index_off = idxvec_get_position_of_index_off,
+              .get_position_of_indices_off = NULL};
 
 // index vector data structure
 struct xt_idxvec {
@@ -74,6 +80,11 @@ struct xt_idxvec {
    Xt_idx *sorted_vector;        // sorted version of vector
    int    *sorted_vec_positions; // original positions of the
                                  // indices in sorted_vector
+  /*
+    we have the following relations:
+    sorted_vector[i-1] <= sorted_vector[i],
+    vector[sorted_vec_positions[i]] = sorted_vector[i]
+   */
 };
 
 struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, size_t num_indices) {
@@ -209,14 +220,16 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
                                          sizeof(*(idxvec->sorted_vec_positions)));
 
   unsigned i;
-
+  // gen id-map:
   for (i = 0; i < idxvec->num_indices; ++i)
     idxvec->sorted_vec_positions[i] = i;
 
+  // check if we are already sorted:
   for (i = 1; i < idxvec->num_indices; ++i)
     if (idxvec->vector[i-1] > idxvec->vector[i])
       break;
 
+  // we are done if we are already sorted
   if (i == idxvec->num_indices)
     return idxvec->sorted_vector = idxvec->vector;
 
@@ -385,6 +398,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
 
   int lb, ub;
 
+  // bisection to find one matching position:
   lb = 0;
   ub = idxvec_data->num_indices - 1;
 
@@ -398,16 +412,20 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
       ub = middle;
   }
 
+  // find left most match:
   while (lb > 0 && idxvec_data->sorted_vector[lb-1] == index) --lb;
 
-  while (lb < idxvec_data->num_indices - 1 &&
-         idxvec_data->sorted_vec_positions[lb] < offset &&
-         idxvec_data->sorted_vector[lb] == index) ++lb;
+  // go forward until offset condition is satisfied:
+  while (lb < idxvec_data->num_indices - 1 &&  // boundary condition
+         idxvec_data->sorted_vec_positions[lb] < offset && // ignore postions left of offset
+         idxvec_data->sorted_vector[lb] == index) ++lb;  // check if index is valid
 
+  // check if position is invalid:
   if (lb >= idxvec_data->num_indices ||
       sorted_vector[lb] != index)
-    return 1;
+    return 1; // failure
 
+  // result:
   *position = idxvec_data->sorted_vec_positions[lb];
   return 0;
 }
@@ -416,4 +434,73 @@ static int
 idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position) {
 
   return idxvec_get_position_of_index_off(idxlist, index, position, 0);
+}
+
+int idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * selection_idx,
+				   unsigned num_selection, int * positions,
+				   int single_match_only) {
+
+  if (num_selection == 0) return 0;
+
+  int selection_is_ordered = 0; // for now, we have no argument to assume order
+  int *sorted_selection;
+  struct xt_idxvec *selection_idxvec;
+  if (selection_is_ordered) {
+    sorted_selection = selection_idx;
+  } else {
+    selection_idxvec = (struct xt_idxvec *)xt_idxvec_new(selection_idx, num_selection);
+    sorted_selection = get_sorted_vector(selection_idxvec);
+  }
+
+  // on the target side we want single_match_only,
+  // on the source side we don't
+  struct xt_idxvec *idxvec_data;
+
+  idxvec_data = (struct xt_idxvec *)idxlist;
+
+  Xt_idx *sorted_vector = get_sorted_vector(idxvec_data);
+
+  Xt_idx index, last_index;
+  int lb_start, match, post_match_step, lb, ub;
+
+  if (single_match_only)
+    post_match_step = 1;
+  else
+    post_match_step = 0;
+
+  lb_start = 0;
+  last_index = sorted_selection[0];
+  for (int i=0; i<num_selection; i++) {
+    index = sorted_selection[i];
+    assert(index >= last_index);
+
+    // bisection to find one matching position:
+    lb = lb_start;
+    ub = idxvec_data->num_indices - 1;
+    while (sorted_vector[lb] < index) {
+      int middle = (ub + lb + 1) / 2;
+      if (sorted_vector[middle] <= index)
+	lb = middle;
+      else
+	ub = middle;
+    }
+    // find left most match >= lb_start
+    while (lb > lb_start && idxvec_data->sorted_vector[lb-1] == index) lb--;
+
+    // check if position is invalid:
+    if (sorted_vector[lb] != index) return 1; // failure
+
+    // result:
+    int j;
+    if (selection_is_ordered)
+      j = i;
+    else
+      j = selection_idxvec->sorted_vec_positions[i];
+    positions[j] = idxvec_data->sorted_vec_positions[lb];
+
+    // prepare next search:
+    lb_start = lb + post_match_step;
+  }
+
+  return 0;
 }

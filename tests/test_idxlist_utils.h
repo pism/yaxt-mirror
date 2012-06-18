@@ -27,11 +27,11 @@ void check_idxlist(xt_idxlist idxlist, Xt_idx * ref_indices,
     reverse_indices[i] = ref_indices[ref_num_indices - i - 1];
 
   if (xt_idxlist_get_position_of_indices(idxlist, ref_indices,
-                                         ref_num_indices, positions))
+                                         ref_num_indices, positions, 0))
     PUT_ERR("get_position_of_indices failed\n");
 
   if (xt_idxlist_get_position_of_indices(idxlist, reverse_indices,
-                                         ref_num_indices, reverse_positions))
+                                         ref_num_indices, reverse_positions, 0))
     PUT_ERR("get_position_of_indices failed for reverse indices\n");
 
   for (i = 0; i < ref_num_indices; ++i) {

@@ -189,108 +189,71 @@ static void exchange_idxlists(xt_xmap xmap,
   free(displ);
 }
 
+
 static void generate_src_xlist(xt_xmap xmap,
-                               Xt_idxlist idxlist) {
+                               Xt_idxlist mypart_idxlist) {
 
-  unsigned i;
-  int j;
+  int intersection_size[xmap->nsrc];
+  int max_intersection_size = 0;
+  const int single_match_only = 0;
 
-  Xt_idx * index_list = NULL;
-  int index_list_size = 0;
-
-  // for all destination messages
-  for (i = 0; i < xmap->nsrc; ++i) {
-
-    int num_intersection_indices;
-
-    num_intersection_indices =
-      xt_idxlist_get_num_indices(xmap->src_msg[i].intersect);
-
-    if (num_intersection_indices > index_list_size) {
-
-      index_list_size = num_intersection_indices;
-
-      index_list = xrealloc(index_list, index_list_size * sizeof(*index_list));
-    }
-
-    // for all indices in the intersection
-    for (j = 0; j < num_intersection_indices; ++j) {
-
-      // look up current intersection index in the destination index list
-      int global_index;
-
-      int retval;
-      retval=xt_idxlist_get_index(xmap->src_msg[i].intersect, j, &global_index);
-      assert(retval != 1);
-      retval=xt_idxlist_get_position_of_index(idxlist, global_index, index_list+j);
-      assert(retval != 1);
-    }
-
-    xmap->src_msg[i].xlist = xt_idxvec_new(index_list, num_intersection_indices);
+  // find max size of intersections:
+  for (int i = 0; i < xmap->nsrc; ++i) {
+    intersection_size[i]  =  xt_idxlist_get_num_indices(xmap->src_msg[i].intersect);
+    if (intersection_size[i] > max_intersection_size)  max_intersection_size = intersection_size[i];
   }
 
-  free(index_list);
+  Xt_idx *intersection_idxvec = xmalloc(max_intersection_size * sizeof(Xt_idx));
+  int *intersection_pos = xmalloc(max_intersection_size * sizeof(int));
+
+  int retval;
+  for (int i = 0; i < xmap->nsrc; ++i) {
+    xt_idxlist_get_indices(xmap->src_msg[i].intersect, intersection_idxvec);
+    retval = xt_idxlist_get_position_of_indices(mypart_idxlist, intersection_idxvec,
+                                                intersection_size[i], intersection_pos, single_match_only);
+    assert(retval != 1);
+
+    xmap->src_msg[i].xlist = xt_idxvec_new(intersection_pos, intersection_size[i]);
+
+  }
+
+  free(intersection_pos);
+  free(intersection_idxvec);
+
 }
 
+
 static void generate_dst_xlist(xt_xmap xmap,
-                               Xt_idxlist idxlist) {
+                               Xt_idxlist mypart_idxlist) {
 
-  unsigned i;
-  int j;
+  int intersection_size[xmap->ndst];
+  int max_intersection_size = 0;
+  const int single_match_only = 1;
 
-  Xt_idx * index_list = NULL;
-  int index_list_size = 0;
-  int retval;
 
-  // for all destination messages
-  for (i = 0; i < xmap->ndst; ++i) {
-
-    int num_intersection_indices;
-
-    num_intersection_indices =
-      xt_idxlist_get_num_indices(xmap->dst_msg[i].intersect);
-
-    if (num_intersection_indices > index_list_size) {
-
-      index_list_size = num_intersection_indices;
-
-      index_list = xrealloc(index_list, index_list_size * sizeof(*index_list));
-    }
-
-    int prev_global_index;
-    retval=xt_idxlist_get_index(xmap->dst_msg[i].intersect, 0, &prev_global_index);
-    assert(retval != 1);
-    prev_global_index++;
-
-    int repetition_count = 0;
-    int repetition_offset = 0;
-
-    // for all indices in the intersection
-    for (j = 0; j < num_intersection_indices; ++j) {
-
-      // look up current intersection index in the destination index list
-      int global_index;
-
-      retval=xt_idxlist_get_index(xmap->dst_msg[i].intersect, j, &global_index);
-      assert(retval != 1);
-
-      if (global_index != prev_global_index) {
-        repetition_offset = 0;
-        repetition_count = 0;
-      }
-
-      retval=xt_idxlist_get_position_of_index_off(idxlist, global_index,
-                                                  index_list+j, repetition_offset);
-      assert(retval != 1);
-      prev_global_index = global_index;
-      repetition_offset = index_list[j] + 1;
-      ++repetition_count;
-    }
-
-    xmap->dst_msg[i].xlist = xt_idxvec_new(index_list, num_intersection_indices);
+  // find max size of intersections:
+  for (int i = 0; i < xmap->ndst; ++i) {
+    intersection_size[i]  =  xt_idxlist_get_num_indices(xmap->dst_msg[i].intersect);
+    if (intersection_size[i] > max_intersection_size)  max_intersection_size = intersection_size[i];
   }
 
-  free(index_list);
+  Xt_idx *intersection_idxvec = xmalloc(max_intersection_size * sizeof(Xt_idx));
+  int *intersection_pos = xmalloc(max_intersection_size * sizeof(int));
+
+  int retval;
+  for (int i = 0; i < xmap->ndst; ++i) {
+    xt_idxlist_get_indices(xmap->dst_msg[i].intersect, intersection_idxvec);
+    retval = xt_idxlist_get_position_of_indices(mypart_idxlist, intersection_idxvec,
+                                                intersection_size[i], intersection_pos, single_match_only);
+    assert(retval != 1);
+
+    xmap->dst_msg[i].xlist = xt_idxvec_new(intersection_pos, intersection_size[i]);
+
+  }
+
+  free(intersection_pos);
+  free(intersection_idxvec);
+
 }
 
 static void generate_xlist(xt_xmap xmap,
