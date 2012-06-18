@@ -10,8 +10,7 @@
 #include "xt_idxstripes.h"
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
-
-void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index);
+#include "quicksort.h"
 
 static void
 idxvec_delete(xt_idxlist data);

@@ -27,7 +27,7 @@
 
 #define CONSERVATIVE_SORT 1
 
-void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index) {
+void quicksort_idxpos(sort_idxpos_type  *v, int n) {
 
   int pointer_inc = 64;
   int pointer_size;
@@ -37,24 +37,7 @@ void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index) {
 
   int i, j, k, l, r, s;
   sort_idxpos_type w, x;
-  //! \todo: consider using long long instead of sort_idxpos_type
-  //!        I believe we should check for available sorting libs within configure, too
-  sort_idxpos_type *v;
-  v = malloc ( n  * sizeof(v[0]) );
  
-  if (idx && !reset_index) {
-    for(i=0; i<n; i++) {
-      v[i].idx = a[i];
-      v[i].pos = idx[i];
-    }
-  } else {
-    for(i=0; i<n; i++) {
-      v[i].idx = a[i];
-      v[i].pos = i;
-    }
-  }
-
-
   /*  Initialization */
 
   pointer_size = pointer_inc;
@@ -179,6 +162,33 @@ void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index) {
 
   } /* ( s /= 0 ) */
 
+  free(stackl);
+  free(stackr);
+}
+
+void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index) {
+
+  //! \todo: consider using long long instead of sort_idxpos_type
+  //!        I believe we should check for available sorting libs within configure, too
+
+  int i;
+  sort_idxpos_type *v;
+  v = malloc ( n  * sizeof(v[0]) );
+ 
+  if (idx && !reset_index) {
+    for(i=0; i<n; i++) {
+      v[i].idx = a[i];
+      v[i].pos = idx[i];
+    }
+  } else {
+    for(i=0; i<n; i++) {
+      v[i].idx = a[i];
+      v[i].pos = i;
+    }
+  }
+
+  quicksort_idxpos(v,n);
+
   if (idx) {
     for(i=0; i<n; i++) {
       a[i] = v[i].idx;
@@ -190,7 +200,5 @@ void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index) {
     }
   }
 
-  free(stackl);
-  free(stackr);
   free(v);
 }

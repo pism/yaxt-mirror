@@ -6,4 +6,8 @@ typedef struct sort_idxpos_struct {
   int pos; // second crit
 } sort_idxpos_type;
 
+void quicksort_idxpos(sort_idxpos_type  *v, int n);
+
+void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index);
+
 #endif
