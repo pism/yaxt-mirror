@@ -11,6 +11,8 @@
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
+void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index);
+
 static void
 idxvec_delete(xt_idxlist data);
 
@@ -191,9 +193,6 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 
    return (xt_idxlist)idxvec;
 }
-
-
-void quicksort_index (Xt_idx * a, int n, int * idx, int reset_index);
 
 static Xt_idx *
 get_sorted_vector(struct xt_idxvec * idxvec) {
