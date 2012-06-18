@@ -23,6 +23,13 @@
   *       to get a conservative sorting
  **/
 
+#define CONSERVATIVE_SORT 1
+
+typedef struct sort_idxpos_struct {
+  Xt_idx idx; // first crit
+  int pos; // second crit
+} sort_idxpos_type;
+
 void quicksort_without_index (Xt_idx * a, int n) {
 
   int pointer_inc = 64;
@@ -158,13 +165,23 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
   int * stackr;
 
   int i, j, k, l, r, s;
-  int ww;
-  Xt_idx w, x;
-
-  if (!idx) {
-    quicksort_without_index(a, n);
-    return;
+  sort_idxpos_type w, x;
+  //! \todo: consider using long long instead of sort_idxpos_type
+  sort_idxpos_type *v;
+  v = malloc ( n  * sizeof(v[0]) );
+ 
+  if (idx) {
+    for(i=0; i<n; i++) {
+      v[i].idx = a[i];
+      v[i].pos = idx[i];
+    }
+  } else {
+    for(i=0; i<n; i++) {
+      v[i].idx = a[i];
+      v[i].pos = i;
+    }
   }
+
 
   /*  Initialization */
 
@@ -196,22 +213,35 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
       i = l;
       j = r;
       k = (l+r) / 2;
-      x = a[k];
+      x = v[k];
 
       /* Search from lower end */
 
       for (;;) {
         for (;;) {
-          if ( a[i] < x ) {
+          if (
+#if CONSERVATIVE_SORT
+              (v[i].idx < x.idx) || (v[i].idx == x.idx && v[i].pos < x.pos)
+#else
+              v[i].idx < x.idx
+#endif
+              ) {
             i = i + 1;
           }
+
           else break;
         }
 
         /* Search from upper end */
 
         for (;;) {
-          if ( x < a[j] ) {
+          if (
+#if CONSERVATIVE_SORT 
+              (x.idx < v[j].idx) || (x.idx == v[j].idx && x.pos < v[j].pos)
+#else
+              x.idx < v[j].idx
+#endif
+              ) {
             j = j - 1;
           }
           else break;
@@ -221,15 +251,9 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
 
         if ( i <= j ) {
 
-        w      = a[i];
-        a[i]   = a[j];
-        a[j]   = w;
-        //! \todo do not allow idx == NULL, remove cond here
-        if (idx != NULL) {
-           ww     = idx[i];
-           idx[i] = idx[j];
-           idx[j] = ww;
-        }
+        w      = v[i];
+        v[i]   = v[j];
+        v[j]   = w;
 
         i = i + 1;
         j = j - 1;
@@ -283,6 +307,18 @@ void quicksort_index (Xt_idx * a, int n, int * idx) {
 
   } /* ( s /= 0 ) */
 
+  if (idx) {
+    for(i=0; i<n; i++) {
+      a[i] = v[i].idx;
+      idx[i] = v[i].pos;
+    }
+  } else {
+    for(i=0; i<n; i++) {
+      a[i] = v[i].idx;
+    }
+  }
+
   free(stackl);
   free(stackr);
+  free(v);
 }
