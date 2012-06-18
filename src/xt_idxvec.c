@@ -192,20 +192,6 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
    return (xt_idxlist)idxvec;
 }
 
-void insertion_sort(int *a, unsigned size) {
-
-  unsigned i, j;
-
-  for(i = 1; i < size; i++) {
-
-    int temp = a[i];
-
-    for(j = i;  j > 0 && a[j-1] > temp; j--)
-      a[j] = a[j-1];
-
-    a[j] = temp;
-   }
-}
 
 void quicksort_index (Xt_idx * a, int n, int * idx);
 
@@ -243,18 +229,6 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
                   idxvec->sorted_vec_positions);
 
   idxvec->sorted_vector = sorted_vector;
-
-  // sort the positions for indices that occure more than once
-  //! \todo I think we can drop this if we improve the elemental comparision within quicksort_index
-  //!       by changing the equal case to a comparision of the input position
-  unsigned count;
-
-  for (i = 0; i < idxvec->num_indices-1; i += count) {
-    for (count = 1; count < idxvec->num_indices &&
-                    sorted_vector[i] == sorted_vector[i+count]; ++count);
-    if (count > 1)
-      insertion_sort(idxvec->sorted_vec_positions + i, count);
-  }
 
   return sorted_vector;
 }
