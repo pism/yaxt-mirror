@@ -157,9 +157,20 @@ int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
   if (idxlist->vtable->get_position_of_indices != NULL)
     return idxlist->vtable->get_position_of_indices(idxlist, indices, num_indices,
                                                     positions, single_match_only);
-  else
-    return xt_idxlist_get_position_of_indices_off(idxlist, indices, num_indices,
-                                                  positions, NULL);
+  else {
+    size_t num_tmp_indices;
+    num_tmp_indices = xt_idxlist_get_num_indices(idxlist);
+    Xt_idx *tmp_indices;
+    tmp_indices = xmalloc(num_tmp_indices * sizeof (tmp_indices[0]));
+    xt_idxlist_get_indices(idxlist, tmp_indices);
+    xt_idxlist tmp_idxvec;
+    tmp_idxvec = xt_idxvec_new(tmp_indices, num_tmp_indices);
+    int retval = tmp_idxvec->vtable->get_position_of_indices(tmp_idxvec, indices, num_indices,
+                                                         positions, single_match_only);
+    xt_idxlist_delete(tmp_idxvec);
+    free(tmp_indices);
+    return retval;
+  }
 }
 
 int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
