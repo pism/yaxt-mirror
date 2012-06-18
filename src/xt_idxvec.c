@@ -295,7 +295,7 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
     while (sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
 
-    if ((j < idxvec_src->num_indices) && 
+    if ((j < idxvec_src->num_indices) &&
         (sorted_src_vector[j] == sorted_dst_vector[i]))
       inter_vector->vector[inter_vector->num_indices++] = sorted_dst_vector[i];
   }
@@ -436,8 +436,8 @@ idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position) {
 }
 
 int idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * selection_idx,
-				   unsigned num_selection, int * positions,
-				   int single_match_only) {
+                                   unsigned num_selection, int * positions,
+                                   int single_match_only) {
 
   if (num_selection == 0) return 0;
 
@@ -479,9 +479,9 @@ int idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * selection_idx,
     while (sorted_vector[lb] < index) {
       int middle = (ub + lb + 1) / 2;
       if (sorted_vector[middle] <= index)
-	lb = middle;
+        lb = middle;
       else
-	ub = middle;
+        ub = middle;
     }
     // find left most match >= lb_start
     while (lb > lb_start && idxvec_data->sorted_vector[lb-1] == index) lb--;
