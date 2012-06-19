@@ -432,7 +432,7 @@ int idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * selection_idx,
   Xt_idx *sorted_vector = get_sorted_vector(idxvec_data);
 
   Xt_idx index, last_index;
-  int lb_start, match, post_match_step, lb, ub;
+  int lb_start, post_match_step, lb, ub;
 
   if (single_match_only)
     post_match_step = 1;
