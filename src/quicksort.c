@@ -7,25 +7,16 @@
 /** \file quicksort.c
   * \brief Non-recursive stack version of Quicksort
   *
-  *   ... from N. Wirth's Pascal Book, 'Algorithms + Data Structures = Programms'.
+  *       based on N. Wirth's Pascal Book, 'Algorithms + Data Structures = Programms'.
   *       by Alan Miller ( 19 Jul 1995 )
   *
-  *  taken from:
+  *  based on:
   * - http://www.nag.com/nagware/examples.asp
   * - http://www.nag.com/nagware/Examples/nur.f90
   *
   *  see also:
   * - http://en.wikipedia.org/wiki/Quicksort
-  *
-  * @param[in,out]  a            data to be sorted
-  * @param[in]      n            length of data
-  * @param[out]     idx          old index of sorted returned a
-  *
-  * \todo consider changing comparision to include position in order
-  *       to get a conservative sorting
- **/
-
-#define CONSERVATIVE_SORT 1
+  */
 
 void quicksort_idxpos(sort_idxpos_type  *v, int n) {
 
@@ -72,94 +63,69 @@ void quicksort_idxpos(sort_idxpos_type  *v, int n) {
 
       /* Search from lower end */
 
-      for (;;) {
-        for (;;) {
-          if (
-#if CONSERVATIVE_SORT
-              (v[i].idx < x.idx) || (v[i].idx == x.idx && v[i].pos < x.pos)
-#else
-              v[i].idx < x.idx
-#endif
-              ) {
+      while(1) {
+        while(1)
+          if ((v[i].idx < x.idx) || (v[i].idx == x.idx && v[i].pos < x.pos))
             i = i + 1;
-          }
-
-          else break;
-        }
+          else
+            break;
 
         /* Search from upper end */
 
-        for (;;) {
-          if (
-#if CONSERVATIVE_SORT 
-              (x.idx < v[j].idx) || (x.idx == v[j].idx && x.pos < v[j].pos)
-#else
-              x.idx < v[j].idx
-#endif
-              ) {
+        while(1)
+          if ((x.idx < v[j].idx) || (x.idx == v[j].idx && x.pos < v[j].pos))
             j = j - 1;
-          }
-          else break;
-        }
+          else
+            break;
 
         /* Swap positions i & j */
 
         if ( i <= j ) {
 
-        w      = v[i];
-        v[i]   = v[j];
-        v[j]   = w;
+          w      = v[i];
+          v[i]   = v[j];
+          v[j]   = w;
 
-        i = i + 1;
-        j = j - 1;
+          i = i + 1;
+          j = j - 1;
 
-        if ( i > j ) break;
-      }
-      else break;
+          if ( i > j ) break;
+        } else
+          break;
       }
 
       if ( j-l >= r-i ) {
 
-      if ( l < j ) {
+        if ( l < j ) {
 
-      if ( s > pointer_size ) {
-        pointer_size = pointer_size + pointer_inc;
-        stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
-        stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
+          if ( s > pointer_size ) {
+            pointer_size = pointer_size + pointer_inc;
+            stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
+            stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
+          }
+
+          s = s + 1;
+          stackl[s] = l;
+          stackr[s] = j;
+        }
+        l = i;
+      } else {
+
+        if ( i < r ) {
+
+          if ( s > pointer_size ) {
+            pointer_size = pointer_size + pointer_inc;
+            stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
+            stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
+          }
+
+          s = s + 1;
+          stackl[s] = i;
+          stackr[s] = r;
+        }
+        r = j;
       }
-
-      s = s + 1;
-      stackl[s] = l;
-      stackr[s] = j;
-
-      }
-
-      l = i;
-
-      }
-
-      else {
-
-      if ( i < r ) {
-
-      if ( s > pointer_size ) {
-        pointer_size = pointer_size + pointer_inc;
-        stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
-        stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
-      }
-
-      s = s + 1;
-      stackl[s] = i;
-      stackr[s] = r;
-
-      }
-
-      r = j;
-
-      }
-
     } /* ( l < r ) */
-
   } /* ( s /= 0 ) */
 
   free(stackl);
