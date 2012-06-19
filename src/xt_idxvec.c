@@ -407,31 +407,48 @@ idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position) {
   return idxvec_get_position_of_index_off(idxlist, index, position, 0);
 }
 
-int idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * selection_idx,
+static int idx_vec_is_sorted(Xt_idx *idx, int n) {
+  if (n<2) return 1;
+
+  for (int i=1; i<n; i++) {
+    if (idx[i]<idx[i-1]) return 0;
+  }
+  return 1;
+}
+
+int idxvec_get_position_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_idx,
                                    unsigned num_selection, int * positions,
                                    int single_match_only) {
 
   if (num_selection == 0) return 0;
 
-  int selection_is_ordered = 0; // for now, we have no argument to assume order
-  int *sorted_selection;
-  struct xt_idxvec *selection_idxvec;
+  int selection_is_ordered = idx_vec_is_sorted(selection_idx, num_selection);
+
+  Xt_idx *sorted_selection;
+  int *sorted_selection_pos;
+
   if (selection_is_ordered) {
     sorted_selection = selection_idx;
+    sorted_selection_pos = NULL; // not used
   } else {
-    selection_idxvec = (struct xt_idxvec *)xt_idxvec_new(selection_idx, num_selection);
-    sorted_selection = get_sorted_vector(selection_idxvec);
+    int memsize;
+    memsize = num_selection * sizeof(*sorted_selection);
+    sorted_selection = xmalloc(memsize);
+    memcpy(sorted_selection, selection_idx, memsize);
+
+    sorted_selection_pos = xmalloc(num_selection * sizeof(*sorted_selection_pos));
+    quicksort_index(sorted_selection, num_selection, sorted_selection_pos, 1);
   }
 
   // on the target side we want single_match_only,
   // on the source side we don't
-  struct xt_idxvec *idxvec_data;
+  struct xt_idxvec *body_idxvec;
+  body_idxvec = (struct xt_idxvec *)body_idxlist;
+  Xt_idx *sorted_body = get_sorted_vector(body_idxvec);
+  int *sorted_body_pos = body_idxvec->sorted_vec_positions;
+  int body_num = body_idxvec->num_indices;
 
-  idxvec_data = (struct xt_idxvec *)idxlist;
-
-  Xt_idx *sorted_vector = get_sorted_vector(idxvec_data);
-
-  Xt_idx index, last_index;
+  Xt_idx isel, last_isel;
   int lb_start, post_match_step, lb, ub;
 
   if (single_match_only)
@@ -440,38 +457,41 @@ int idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * selection_idx,
     post_match_step = 0;
 
   lb_start = 0;
-  last_index = sorted_selection[0];
+  last_isel = sorted_selection[0];
   for (int i=0; i<num_selection; i++) {
-    index = sorted_selection[i];
-    assert(index >= last_index);
+    isel = sorted_selection[i];
+    assert(isel >= last_isel);
 
     // bisection to find one matching position:
     lb = lb_start;
-    ub = idxvec_data->num_indices - 1;
-    while (sorted_vector[lb] < index) {
+    ub = body_num - 1;
+    while (sorted_body[lb] < isel) {
       int middle = (ub + lb + 1) / 2;
-      if (sorted_vector[middle] <= index)
+      if (sorted_body[middle] <= isel)
         lb = middle;
       else
         ub = middle;
     }
     // find left most match >= lb_start
-    while (lb > lb_start && idxvec_data->sorted_vector[lb-1] == index) lb--;
+    while (lb > lb_start && sorted_body[lb-1] == isel) lb--;
 
     // check if position is invalid:
-    if (sorted_vector[lb] != index) return 1; // failure
+    if (sorted_body[lb] != isel) return 1; // failure
 
     // result:
     int j;
     if (selection_is_ordered)
       j = i;
     else
-      j = selection_idxvec->sorted_vec_positions[i];
-    positions[j] = idxvec_data->sorted_vec_positions[lb];
+      j = sorted_selection_pos[i];
+    positions[j] = sorted_body_pos[lb];
 
     // prepare next search:
     lb_start = lb + post_match_step;
   }
+
+  if (sorted_selection != selection_idx) free(sorted_selection);
+  if (sorted_selection_pos) free(sorted_selection_pos);
 
   return 0;
 }
