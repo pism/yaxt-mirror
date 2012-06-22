@@ -223,7 +223,7 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   memcpy(sorted_vector, idxvec->vector,
          idxvec->num_indices * sizeof(*sorted_vector));
 
-  quicksort_index(sorted_vector, idxvec->num_indices,
+  xt_quicksort_index(sorted_vector, idxvec->num_indices,
                   idxvec->sorted_vec_positions, 1);
 
   idxvec->sorted_vector = sorted_vector;
@@ -437,7 +437,7 @@ int idxvec_get_position_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_i
     memcpy(sorted_selection, selection_idx, memsize);
 
     sorted_selection_pos = xmalloc(num_selection * sizeof(*sorted_selection_pos));
-    quicksort_index(sorted_selection, num_selection, sorted_selection_pos, 1);
+    xt_quicksort_index(sorted_selection, num_selection, sorted_selection_pos, 1);
   }
 
   // on the target side we want single_match_only,

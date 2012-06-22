@@ -1,5 +1,3 @@
-#include "yaxt.h"
-
 #include <stdlib.h>
 
 #include "quicksort.h"
@@ -18,7 +16,7 @@
   * - http://en.wikipedia.org/wiki/Quicksort
   */
 
-void quicksort_idxpos(sort_idxpos_type  *v, int n) {
+void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
   int pointer_inc = 64;
   int pointer_size;
@@ -27,7 +25,7 @@ void quicksort_idxpos(sort_idxpos_type  *v, int n) {
   int * stackr;
 
   int i, j, k, l, r, s;
-  sort_idxpos_type w, x;
+  idxpos_type w, x;
  
   /*  Initialization */
 
@@ -132,7 +130,7 @@ void quicksort_idxpos(sort_idxpos_type  *v, int n) {
   free(stackr);
 }
 
-void quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
+void xt_quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
 
   int pointer_inc = 64;
   int pointer_size;

@@ -37,5 +37,11 @@ libyaxt_a_SOURCES =						\
 	ensure_array_size.c					\
 	ensure_array_size.h					\
 	quicksort.c						\
+	quicksort.h						\
+	mergesort.c						\
+	mergesort.h						\
+	sort_common.h							\
+	xt_sort.c							\
+	xt_sort.h							\
 	yaxt.h
 
