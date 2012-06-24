@@ -10,7 +10,8 @@ noinst_PROGRAMS = 						\
 	test_xmap_parallel					\
 	test_ut							\
 	test_perf						\
-	test_sort
+	test_sort						\
+	test_yaxt
 
 
 test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist.h
@@ -26,6 +27,7 @@ test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = $(LDADD) $(MPI_FC_LIB)
 test_perf_SOURCES = test_perf.f90
 test_sort_SOURCES = test_sort.c tests.h
+test_yaxt_SOURCES = test_yaxt.f90
 
 AM_CFLAGS = -I$(top_srcdir)/src
 AM_FCFLAGS = -I$(top_srcdir)/src -I../src $(MPI_FC_INCLUDE)
@@ -43,6 +45,8 @@ TESTS = 							\
 	test_xmap_parallel_run					\
 	test_ut_run						\
 	test_perf_run						\
-	test_sort_run
+	test_sort_run						\
+	test_yaxt_run
+
 
 AUTOMAKE_OPTIONS = color-tests

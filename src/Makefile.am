@@ -45,5 +45,7 @@ libyaxt_a_SOURCES =						\
 	sort_common.h						\
 	xt_sort.c						\
 	xt_sort.h						\
+	yaxt_f2c.c						\
+	yaxt.f90						\
 	yaxt.h
 
