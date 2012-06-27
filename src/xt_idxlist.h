@@ -5,10 +5,9 @@
 #include "yaxt.h"
 
 struct Xt_stripe {
-
   Xt_idx start;
-  unsigned extent;
-  int stride;
+  int nstrides;
+  Xt_idx stride;
 };
 
 struct xt_idxlist_vtable {

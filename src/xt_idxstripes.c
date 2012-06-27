@@ -70,19 +70,19 @@ static MPI_Datatype xt_get_stripes_datatype() {
 
   struct Xt_stripe stripe;
 
-    MPI_Aint base_address, start_address, extent_address, stride_address;
+    MPI_Aint base_address, start_address, nstrides_address, stride_address;
 
     MPI_Get_address(&stripe, &base_address);
     MPI_Get_address(&stripe.start, &start_address);
-    MPI_Get_address(&stripe.extent, &extent_address);
+    MPI_Get_address(&stripe.nstrides, &nstrides_address);
     MPI_Get_address(&stripe.stride, &stride_address);
 
     int block_lengths[5] = {1,1,1,1,1};
     MPI_Aint displacements[5] = {0, start_address - base_address,
-                                 extent_address - base_address,
+                                 nstrides_address - base_address,
                                  stride_address - base_address,
                                  sizeof(stripe)};
-    MPI_Datatype types[5] = {MPI_LB, Xt_idx_dt, MPI_UNSIGNED, MPI_INT, MPI_UB};
+    MPI_Datatype types[5] = {MPI_LB, Xt_idx_dt, MPI_INT, Xt_idx_dt, MPI_UB};
 
     mpi_err_handler(MPI_Type_create_struct(5, block_lengths, displacements,
                                            types, &type), MPI_COMM_WORLD);
@@ -110,9 +110,16 @@ Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, unsigned num_stri
   idxstripes->num_stripes = num_stripes;
 
   if (num_stripes > 0) {
-
     idxstripes->stripes = xmalloc(num_stripes * sizeof(*(idxstripes->stripes)));
     memcpy(idxstripes->stripes, stripes, num_stripes * sizeof(*(idxstripes->stripes)));
+    int sign_err = 0;
+    for(int i=0; i<num_stripes; i++) {
+      if (idxstripes->stripes[i].nstrides<0) {
+        idxstripes->stripes[i].nstrides = 0;
+        sign_err++;
+      }
+    }
+    if (sign_err) fprintf(stderr, "WARNING: xt_idxstripes_new called with invalid stripes\n");
   } else
     idxstripes->stripes = NULL;
 
@@ -218,7 +225,7 @@ void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
     while ((i + j) < num_indices && indices[i] + j == indices[i + j]) ++j;
 
     temp_stripes[num_temp_stripes-1].start  = indices[i];
-    temp_stripes[num_temp_stripes-1].extent = j;
+    temp_stripes[num_temp_stripes-1].nstrides = j;
     temp_stripes[num_temp_stripes-1].stride = 1;
 
     i += j;
@@ -299,7 +306,7 @@ static int check_for_simple_strides(struct xt_idxstripes * stripe) {
 
   for (i = 1; i < stripe->num_stripes; ++i)
     if ((stripe->stripes[i].stride != 1) &&
-        ((stripe->stripes[i-1].start + stripe->stripes[i-1].extent) <=
+        ((stripe->stripes[i-1].start + stripe->stripes[i-1].nstrides) <=
          stripe->stripes[i].start))
       return 0;
 
@@ -324,14 +331,14 @@ compute_intersection_simple(struct xt_idxstripes *idxstripes_src,
 
     while (src_pos < idxstripes_src->num_stripes &&
            idxstripes_src->stripes[src_pos].start +
-           idxstripes_src->stripes[src_pos].extent <=
+           idxstripes_src->stripes[src_pos].nstrides <=
            idxstripes_dst->stripes[dst_pos].start) ++src_pos;
 
       if (src_pos >= idxstripes_src->num_stripes) break;
 
     while (dst_pos < idxstripes_dst->num_stripes &&
            idxstripes_dst->stripes[dst_pos].start +
-           idxstripes_dst->stripes[dst_pos].extent <=
+           idxstripes_dst->stripes[dst_pos].nstrides <=
            idxstripes_src->stripes[src_pos].start) ++dst_pos;
 
       if (dst_pos >= idxstripes_dst->num_stripes) break;
@@ -344,16 +351,16 @@ compute_intersection_simple(struct xt_idxstripes *idxstripes_src,
             (idxstripes_dst->stripes[dst_pos].start);
 
     if ((idxstripes_src->stripes[src_pos].start +
-         idxstripes_src->stripes[src_pos].extent) <
+         idxstripes_src->stripes[src_pos].nstrides) <
         (idxstripes_dst->stripes[dst_pos].start +
-         idxstripes_dst->stripes[dst_pos].extent)) {
+         idxstripes_dst->stripes[dst_pos].nstrides)) {
     
       end = idxstripes_src->stripes[src_pos].start +
-            idxstripes_src->stripes[src_pos].extent;
+            idxstripes_src->stripes[src_pos].nstrides;
       src_pos++;
     } else {
       end = idxstripes_dst->stripes[dst_pos].start +
-            idxstripes_dst->stripes[dst_pos].extent;
+            idxstripes_dst->stripes[dst_pos].nstrides;
       dst_pos++;
     }
 
@@ -364,7 +371,7 @@ compute_intersection_simple(struct xt_idxstripes *idxstripes_src,
       ENSURE_ARRAY_SIZE(inter_stripes, inter_stripes_array_size, num_inter_stripes);
 
       inter_stripes[num_inter_stripes-1].start  = start;
-      inter_stripes[num_inter_stripes-1].extent = end - start;
+      inter_stripes[num_inter_stripes-1].nstrides = end - start;
       inter_stripes[num_inter_stripes-1].stride = 1;
     }
   }
@@ -420,7 +427,7 @@ idxstripes_get_num_indices(xt_idxlist idxlist) {
   size_t size = 0;
   
   for (i = 0; i < stripes->num_stripes; ++i)
-    size += stripes->stripes[i].extent;
+    size += stripes->stripes[i].nstrides;
 
   return size;
 }
@@ -435,7 +442,7 @@ idxstripes_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
   unsigned i, j;
 
   for (i = 0; i < stripes->num_stripes; ++i)
-    for (j = 0; j < stripes->stripes[i].extent; ++j)
+    for (j = 0; j < stripes->stripes[i].nstrides; ++j)
       *(indices++) = stripes->stripes[i].start + j * stripes->stripes[i].stride;
 }
 
@@ -466,13 +473,13 @@ idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
     } else {
 
       ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
-                        num_temp_stripes + idxstripes->stripes[i].extent);
+                        num_temp_stripes + idxstripes->stripes[i].nstrides);
 
-      for (j = 0; j < idxstripes->stripes[i].extent; ++j)  {
+      for (j = 0; j < idxstripes->stripes[i].nstrides; ++j)  {
 
         temp_stripes[num_temp_stripes].start = idxstripes->stripes[i].start +
                                                j * idxstripes->stripes[i].stride;
-        temp_stripes[num_temp_stripes].extent = 1;
+        temp_stripes[num_temp_stripes].nstrides = 1;
         temp_stripes[num_temp_stripes].stride = 1;
 
         ++num_temp_stripes;
@@ -496,8 +503,8 @@ idxstripes_get_index(Xt_idxlist idxlist, int position, Xt_idx * index) {
   unsigned i;
 
   for (i = 0; i < stripes->num_stripes; ++i)
-    if (position >= stripes->stripes[i].extent)
-      position-= stripes->stripes[i].extent;
+    if (position >= stripes->stripes[i].nstrides)
+      position-= stripes->stripes[i].nstrides;
     else {
       *index = stripes->stripes[i].start + position * stripes->stripes[i].stride;
       return 0;
@@ -517,7 +524,7 @@ idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * positio
   int position_offset = 0;
 
   for (i = 0; i < stripes->num_stripes;
-       position_offset += stripes->stripes[i++].extent) {
+       position_offset += stripes->stripes[i++].nstrides) {
 
     if ((stripes->stripes[i].stride > 0 && index < stripes->stripes[i].start) ||
         (stripes->stripes[i].stride < 0 && index > stripes->stripes[i].start))continue;
@@ -528,7 +535,7 @@ idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * positio
 
     if (rel_start%stripes->stripes[i].stride) continue;
 
-    if (rel_start/stripes->stripes[i].stride > stripes->stripes[i].extent) continue;
+    if (rel_start/stripes->stripes[i].stride > stripes->stripes[i].nstrides) continue;
 
     *position = rel_start/stripes->stripes[i].stride + position_offset;
 

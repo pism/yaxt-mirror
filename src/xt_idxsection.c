@@ -379,7 +379,7 @@ idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
   for (i = 0; i < *num_stripes; ++i) {
 
     (*stripes)[i].start  = section->local_start_index;
-    (*stripes)[i].extent = section->local_size[section->ndim-1];
+    (*stripes)[i].nstrides = section->local_size[section->ndim-1];
     (*stripes)[i].stride = 1;
 
     for (j = 0; j < section->ndim - 1; ++j)
