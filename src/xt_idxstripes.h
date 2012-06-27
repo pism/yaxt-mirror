@@ -4,7 +4,7 @@
 #include "xt_idxlist.h"
 
 /**
- * Generates an index list that is build up of stripes of indices.
+ * Generates an index list that is built up of stripes of indices.
  *
  * @param[in] stripes     array defining the stripes
  * @param[in] num_stripes number of stripes
