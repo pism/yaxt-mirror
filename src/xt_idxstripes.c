@@ -47,19 +47,19 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                      int * position, int offset);
 
 static const struct xt_idxlist_vtable idxstripes_vtable = {
-              idxstripes_delete,
-              idxstripes_get_pack_size,
-              idxstripes_pack,
-              idxstripes_get_intersection,
-              idxstripes_copy,
-              idxstripes_get_num_indices,
-              idxstripes_get_indices,
-              idxsection_get_index_stripes,
-              idxstripes_get_index,
-              idxstripes_get_position_of_index,
-              NULL,
-              idxstripes_get_position_of_index_off,
-              NULL};
+  .delete                      = idxstripes_delete,
+  .get_pack_size               = idxstripes_get_pack_size,
+  .pack                        = idxstripes_pack,
+  .get_intersection            = idxstripes_get_intersection,
+  .copy                        = idxstripes_copy,
+  .get_num_indices             = idxstripes_get_num_indices,
+  .get_indices                 = idxstripes_get_indices,
+  .get_index_stripes           = idxsection_get_index_stripes,
+  .get_index                   = idxstripes_get_index,
+  .get_position_of_index       = idxstripes_get_position_of_index,
+  .get_position_of_indices     = NULL,
+  .get_position_of_index_off   = idxstripes_get_position_of_index_off,
+  .get_position_of_indices_off = NULL};
 
 static MPI_Datatype xt_get_stripes_datatype() {
 
