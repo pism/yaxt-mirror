@@ -45,19 +45,19 @@ idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                      int * position, int offset);
 
 static const struct xt_idxlist_vtable idxsection_vtable = {
-              idxsection_delete,
-              idxsection_get_pack_size,
-              idxsection_pack,
-              idxsection_get_intersection,
-              idxsection_copy,
-              idxsection_get_num_indices,
-              idxsection_get_indices,
-              idxsection_get_index_stripes,
-              idxsection_get_index,
-              idxsection_get_position_of_index,
-              NULL,
-              idxsection_get_position_of_index_off,
-              NULL};
+              .delete                      = idxsection_delete,
+              .get_pack_size               = idxsection_get_pack_size,
+              .pack                        = idxsection_pack,
+              .get_intersection            = idxsection_get_intersection,
+              .copy                        = idxsection_copy,
+              .get_num_indices             = idxsection_get_num_indices,
+              .get_indices                 = idxsection_get_indices,
+              .get_index_stripes           = idxsection_get_index_stripes,
+              .get_index                   = idxsection_get_index,
+              .get_position_of_index       = idxsection_get_position_of_index,
+              .get_position_of_indices     = NULL,
+              .get_position_of_index_off   = idxsection_get_position_of_index_off,
+              .get_position_of_indices_off = NULL};
 
 struct xt_idxsection {
 
