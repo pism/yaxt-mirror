@@ -64,7 +64,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
 static MPI_Datatype xt_get_stripes_datatype() {
 
   static MPI_Datatype type = MPI_DATATYPE_NULL;
-  
+
 
   if (type == MPI_DATATYPE_NULL) {
 
@@ -91,7 +91,7 @@ static MPI_Datatype xt_get_stripes_datatype() {
 
   return type;
 }
-              
+
 struct xt_idxstripes {
 
   const struct xt_idxlist_vtable *vtable;
@@ -354,7 +354,7 @@ compute_intersection_simple(struct xt_idxstripes *idxstripes_src,
          idxstripes_src->stripes[src_pos].nstrides) <
         (idxstripes_dst->stripes[dst_pos].start +
          idxstripes_dst->stripes[dst_pos].nstrides)) {
-    
+
       end = idxstripes_src->stripes[src_pos].start +
             idxstripes_src->stripes[src_pos].nstrides;
       src_pos++;
@@ -425,7 +425,7 @@ idxstripes_get_num_indices(xt_idxlist idxlist) {
 
   unsigned i;
   size_t size = 0;
-  
+
   for (i = 0; i < stripes->num_stripes; ++i)
     size += stripes->stripes[i].nstrides;
 
