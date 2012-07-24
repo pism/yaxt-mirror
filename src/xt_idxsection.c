@@ -24,7 +24,7 @@ idxsection_get_intersection(xt_idxlist idxlist_a, xt_idxlist idxlist_b);
 static xt_idxlist
 idxsection_copy(xt_idxlist idxlist);
 
-static size_t
+static Xt_count
 idxsection_get_num_indices(xt_idxlist idxlist);
 
 static void
@@ -296,7 +296,7 @@ idxsection_copy(xt_idxlist idxlist) {
                            section->local_start);
 }
 
-static size_t
+static Xt_count
 idxsection_get_num_indices(xt_idxlist idxlist) {
 
   struct xt_idxsection * section;
@@ -323,7 +323,8 @@ idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
   curr_local_position = xcalloc(section->ndim, sizeof(*curr_local_position));
 
-  unsigned i, j, num_indices;
+  Xt_count i, num_indices;
+  unsigned j;
 
   num_indices = idxsection_get_num_indices(idxlist);
   

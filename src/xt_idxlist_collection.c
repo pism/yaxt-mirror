@@ -29,7 +29,7 @@ idxlist_collection_get_intersection(xt_idxlist idxlist_src,
 static xt_idxlist
 idxlist_collection_copy(xt_idxlist idxlist);
 
-static size_t
+static Xt_count
 idxlist_collection_get_num_indices(xt_idxlist idxlist);
 
 static void
@@ -175,13 +175,13 @@ xt_idxlist idxlist_collection_copy(xt_idxlist idxlist) {
    return xt_idxlist_collection_new(collectionlist->idxlists, collectionlist->num_idxlists);
 }
 
-static size_t
+static Xt_count
 idxlist_collection_get_num_indices(xt_idxlist idxlist) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
    unsigned i;
-   int num_indices = 0;
+   Xt_count num_indices = 0;
 
    for (i = 0; i < collectionlist->num_idxlists; ++i)
       num_indices += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
@@ -195,7 +195,7 @@ idxlist_collection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
    unsigned i;
-   int offlist = 0;
+   Xt_count offlist = 0;
 
    for (i = 0; i < collectionlist->num_idxlists; ++i) {
 

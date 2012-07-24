@@ -194,7 +194,7 @@ static void exchange_idxlists(xt_xmap xmap,
 static void generate_src_xlist(xt_xmap xmap,
                                Xt_idxlist mypart_idxlist) {
 
-  int intersection_size[xmap->nsrc];
+  Xt_count intersection_size[xmap->nsrc];
   int max_intersection_size = 0;
   const int single_match_only = 0;
 
@@ -227,7 +227,7 @@ static void generate_src_xlist(xt_xmap xmap,
 static void generate_dst_xlist(xt_xmap xmap,
                                Xt_idxlist mypart_idxlist) {
 
-  int intersection_size[xmap->ndst];
+  Xt_count intersection_size[xmap->ndst];
   int max_intersection_size = 0;
   const int single_match_only = 1;
 

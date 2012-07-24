@@ -26,7 +26,7 @@ idxstripes_get_intersection(xt_idxlist idxlist_a, xt_idxlist idxlist_b);
 static xt_idxlist
 idxstripes_copy(xt_idxlist idxlist);
 
-static size_t
+static Xt_count
 idxstripes_get_num_indices(xt_idxlist idxlist);
 
 static void
@@ -203,7 +203,7 @@ static int compare_xtidx(const void * a, const void * b)
 }
 
 void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
-                                      unsigned num_indices,
+                                      Xt_count num_indices,
                                       struct Xt_stripe ** stripes,
                                       unsigned * num_stripes) {
 
@@ -211,7 +211,7 @@ void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
   unsigned temp_stripes_array_size = 0;
   unsigned num_temp_stripes = 0;
 
-  unsigned i, j;
+  Xt_count i, j;
 
   i = 0;
   while(i < num_indices) {
@@ -239,7 +239,7 @@ static Xt_idxlist
 compute_intersection_brute_force(xt_idxlist idxlist_src,
                                  xt_idxlist idxlist_dst) {
 
-  size_t src_size, dst_size;
+  Xt_count src_size, dst_size;
 
   src_size = idxstripes_get_num_indices(idxlist_src);
   dst_size = idxstripes_get_num_indices(idxlist_dst);
@@ -258,13 +258,13 @@ compute_intersection_brute_force(xt_idxlist idxlist_src,
   qsort(src_indices, src_size, sizeof (*src_indices), compare_xtidx);
   qsort(dst_indices, dst_size, sizeof (*dst_indices), compare_xtidx);
 
-  size_t inter_size = dst_size;
+  Xt_count inter_size = dst_size;
 
   Xt_idx * inter_indices;
 
   inter_indices = xmalloc(inter_size * sizeof(*inter_indices));
 
-  size_t i, j;
+  Xt_count i, j;
 
   // compute intersection
   for (i = 0, j = 0, inter_size = 0; i < dst_size && j < src_size; ++i) {
@@ -416,7 +416,7 @@ idxstripes_copy(xt_idxlist idxlist) {
   return xt_idxstripes_new(stripes->stripes, stripes->num_stripes);
 }
 
-static size_t
+static Xt_count
 idxstripes_get_num_indices(xt_idxlist idxlist) {
 
   struct xt_idxstripes * stripes;
@@ -424,7 +424,7 @@ idxstripes_get_num_indices(xt_idxlist idxlist) {
   stripes = (struct xt_idxstripes *)idxlist;
 
   unsigned i;
-  size_t size = 0;
+  Xt_count size = 0;
 
   for (i = 0; i < stripes->num_stripes; ++i)
     size += stripes->stripes[i].nstrides;

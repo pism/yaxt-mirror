@@ -6,7 +6,8 @@
 #include "yaxt.h"
 #include "xt_idxlist.h"
 
-void ref_get_position_of_indices(Xt_idx * indices, int num_indices, Xt_idx * selection, int selection_size,
+void ref_get_position_of_indices(Xt_idx * indices, Xt_count num_indices,
+                                 Xt_idx * selection, int selection_size,
                                  int * positions, int repeat_first_match) {
   int used[num_indices];
   int found;
@@ -18,7 +19,7 @@ void ref_get_position_of_indices(Xt_idx * indices, int num_indices, Xt_idx * sel
   for (int i = 0; i < selection_size; i++) {
 
     found = 0;
-    for (int j = 0; j < num_indices; j++) {
+    for (Xt_count j = 0; j < num_indices; j++) {
       if (selection[i] == indices[j] && !used[j]) {
         positions[i]=j;
         if (!repeat_first_match) used[j] = 1;
@@ -33,11 +34,11 @@ void ref_get_position_of_indices(Xt_idx * indices, int num_indices, Xt_idx * sel
 
 
 void check_idxlist(xt_idxlist idxlist, Xt_idx * ref_indices,
-                   unsigned ref_num_indices) {
+                   Xt_count ref_num_indices) {
 
-  unsigned i;
+  Xt_count i;
 
-  int num_indices;
+  Xt_count num_indices;
   num_indices = xt_idxlist_get_num_indices(idxlist);
 
   if (num_indices != ref_num_indices)

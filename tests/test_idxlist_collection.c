@@ -12,7 +12,7 @@
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
                    struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes);
 
@@ -27,7 +27,7 @@ int main(void) {
    { // test packing and unpacking of collection index lists
 
       Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-      size_t num_indices = 7;
+      Xt_count num_indices = 7;
 
       xt_idxlist idxlists[2];
 
@@ -135,7 +135,7 @@ int main(void) {
    { // test copying of collection index lists
 
       Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-      size_t num_indices = 7;
+      Xt_count num_indices = 7;
 
       xt_idxlist idxlists[2];
 
@@ -191,7 +191,7 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices) {
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
 
    unsigned i;
 

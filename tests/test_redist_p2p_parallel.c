@@ -14,7 +14,8 @@ int main(void) {
 
   // init mpi
 
-  int i, rank, size;
+  Xt_count i;
+  int rank, size;
 
   mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
@@ -26,7 +27,7 @@ int main(void) {
   {
     // source index list
     Xt_idx src_index_list[10];
-    unsigned src_num_indices = 10;
+    Xt_count src_num_indices = 10;
     for (i = 0; i < src_num_indices; ++i)
       src_index_list[i] = rank * 10 + i;
 
@@ -36,7 +37,7 @@ int main(void) {
 
     // destination index list
     Xt_idx dst_index_list[10];
-    unsigned dst_num_indices = 10;
+    Xt_count dst_num_indices = 10;
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = (rank * 10 + i + 2) % (size * 10);
 

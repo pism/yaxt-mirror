@@ -44,7 +44,7 @@ generate_datatype(Xt_idxlist xlist, int *offsets,
 
   MPI_Datatype type;
 
-  int num_indices;
+  Xt_count num_indices;
   int * displ;
 
   num_indices = xt_idxlist_get_num_indices(xlist);
@@ -56,7 +56,7 @@ generate_datatype(Xt_idxlist xlist, int *offsets,
   xt_idxlist_get_indices(xlist, displ);
 
   if (offsets != NULL) {
-    int i;
+    Xt_count i;
     for (i = 0; i < num_indices; ++i)
       displ[i] = offsets[displ[i]];
   }

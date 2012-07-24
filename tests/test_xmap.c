@@ -9,7 +9,7 @@
 #include "xt_idxvec.h"
 #include "xt_xmap.h"
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 
 void shift_idx(Xt_idx idx[], int num, int offset)  {
   int rank, i;
@@ -32,7 +32,7 @@ int main(void) {
    {
       // source index list
       Xt_idx src_index_list[] = {1,2,3,4,5,6,7};
-      unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+      Xt_count src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
       shift_idx(src_index_list, src_num_indices, 7);
 
       xt_idxlist src_idxlist;
@@ -41,7 +41,7 @@ int main(void) {
 
       // destination index list
       Xt_idx dst_index_list[] = {7,6,5,4,3,2,1};
-      unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+      Xt_count dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
       shift_idx(dst_index_list, dst_num_indices, 7);
 
       xt_idxlist dst_idxlist;
@@ -95,7 +95,7 @@ int main(void) {
    {
       // source index list
       Xt_idx src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-      unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+      Xt_count src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
       shift_idx(src_index_list, src_num_indices, 100);
 
       xt_idxlist src_idxlist;
@@ -104,7 +104,7 @@ int main(void) {
 
       // destination index list
       Xt_idx dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
-      unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+      Xt_count dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
       shift_idx(dst_index_list, dst_num_indices, 100);
 
       xt_idxlist dst_idxlist;
@@ -164,9 +164,9 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices) {
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
 
-   unsigned i;
+   Xt_count i;
 
    if (xt_idxlist_get_num_indices(idxlist) != ref_num_indices)
       PUT_ERR("wrong number of indices in idxlist\n");

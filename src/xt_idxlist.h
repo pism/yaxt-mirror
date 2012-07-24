@@ -18,14 +18,14 @@ struct xt_idxlist_vtable {
    void (*pack)(xt_idxlist, void*, int, int*, MPI_Comm);
    xt_idxlist (*get_intersection)(xt_idxlist,xt_idxlist);
    xt_idxlist (*copy)(xt_idxlist);
-   size_t (*get_num_indices)(xt_idxlist);
+   Xt_count (*get_num_indices)(xt_idxlist);
    void (*get_indices)(xt_idxlist, Xt_idx *indices);
    void (*get_index_stripes)(xt_idxlist, struct Xt_stripe **, unsigned *);
    int (*get_index)(Xt_idxlist, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
-   int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, unsigned, int *, int);
+   int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, Xt_count, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
-   int (*get_position_of_indices_off)(Xt_idxlist, Xt_idx *, unsigned,
+   int (*get_position_of_indices_off)(Xt_idxlist, Xt_idx *, Xt_count,
                                       int *, int *);
 };
 
@@ -139,7 +139,7 @@ xt_idxlist xt_idxlist_copy(xt_idxlist idxlist);
  * @param[in] idxlist index list for which the number of indices is required
  * @return            number of indices in the given index list
  */
-int xt_idxlist_get_num_indices(xt_idxlist idxlist);
+Xt_count xt_idxlist_get_num_indices(xt_idxlist idxlist);
 
 /**
  * gets the indices stored in an index list
@@ -192,7 +192,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * pos
  *
  * @param[in]  idxlist     index list in which the given index is to be searched
  * @param[in]  indices     indices that are to be searched
- * @param[in]  num_indices number of indices in that array "indices"
+ * @param[in]  num_indices number of indices in the array "indices"
  * @param[out] positions   positions of the first occurrence of the indices
  *                         in idxlist
  * @param[in]  single_match_only if true then do not consider a previous matching position again
@@ -202,7 +202,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * pos
  *                         1 if the index could not be found in idxlist
  */
 int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
-                                       unsigned num_indices, int * positions,
+                                       Xt_count num_indices, int * positions,
                                        int single_match_only);
 
 /**
@@ -239,7 +239,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
  *          is the same as a call to xt_idxlist_get_position_of_indices
  */
 int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
-                                           unsigned num_indices, int * positions,
+                                           Xt_count num_indices, int * positions,
                                            int * offsets);
 
 #endif // XT_IDXLIST_H

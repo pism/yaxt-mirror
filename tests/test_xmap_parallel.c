@@ -9,7 +9,7 @@
 #include "xt_idxvec.h"
 #include "xt_xmap.h"
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices);
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 
 int main(void) {
 
@@ -248,7 +248,7 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, unsigned ref_num_indices) {
+void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
 
   unsigned i;
 

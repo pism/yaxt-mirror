@@ -11,7 +11,7 @@
  * @param[in] num_indices number of indices in idxlist
  * @return returns a xt_idxlist
  */
-xt_idxlist xt_idxvec_new(Xt_idx *idxlist, size_t num_indices);
+xt_idxlist xt_idxvec_new(Xt_idx *idxlist, Xt_count num_indices);
 
 xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm);
