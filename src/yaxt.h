@@ -5,6 +5,8 @@
 
 typedef int Xt_idx;
 #define Xt_idx_dt (MPI_INT)
+typedef int Xt_count;
+#define Xt_count_dt (MPI_INT)
 
 typedef struct xt_idxlist *xt_idxlist;
 typedef struct xt_idxlist *Xt_idxlist;
