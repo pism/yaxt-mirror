@@ -10,7 +10,7 @@ typedef struct xt_idxlist *xt_idxlist;
 typedef struct xt_idxlist *Xt_idxlist;
 typedef struct xt_xmap *xt_xmap;
 typedef struct xt_xmap *Xt_xmap;
-typedef struct Xt_redist *Xt_redist;
+typedef struct xt_redist *Xt_redist;
 
 /**
  * \file yaxt.h

@@ -1,11 +1,6 @@
 #include "yaxt.h"
 #include "xt_redist.h"
 
-struct Xt_redist {
-
-  struct Xt_redist_vtable *vtable;
-};
-
 void xt_redist_delete(Xt_redist redist) {
 
   redist->vtable->delete(redist);

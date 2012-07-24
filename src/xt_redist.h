@@ -11,11 +11,15 @@
  * is generate from one or more xt_xmaps
  */
 
-struct Xt_redist_vtable {
+struct xt_redist_vtable {
 
   void (*delete)(Xt_redist);
 
   void (*s_exchange)(Xt_redist, void **, unsigned, void **, unsigned);
+};
+
+struct xt_redist {
+  struct xt_redist_vtable *vtable;
 };
 
 /**

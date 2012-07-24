@@ -17,7 +17,7 @@ static void
 redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays,
                                         void **dst_data, unsigned num_dst_arrays);
 
-static const struct Xt_redist_vtable redist_p2p_vtable = {redist_p2p_delete,
+static const struct xt_redist_vtable redist_p2p_vtable = {redist_p2p_delete,
                                                           redist_p2p_s_exchange};
 
 struct Xt_redist_p2p_msg {
