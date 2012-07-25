@@ -205,7 +205,175 @@ int main(void) {
      xt_idxlist_delete(idxvector);
    }
 
+   { // check intersection
+      Xt_idx index_vector[2][3] = {{1,2,3},{1,2,3}};
+      size_t num_indices[2] = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
+                               sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
 
+      Xt_idxlist idxvector[2];
+
+      // create index vectors
+
+      idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+      idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
+
+      // compute intersection between the two index vectors
+
+      Xt_idxlist intersection;
+
+      intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
+
+      // check the computed intersection
+
+      Xt_idx ref_intersection_indices[] = {1,2,3};
+      size_t ref_intersection_num_indices =
+         sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
+
+      check_idxlist(intersection, ref_intersection_indices,
+                    ref_intersection_num_indices);
+
+     // clean up
+
+     xt_idxlist_delete(idxvector[0]);
+     xt_idxlist_delete(idxvector[1]);
+     xt_idxlist_delete(intersection);
+   }
+
+   { // check intersection
+      Xt_idx index_vector[2][3] = {{1,2,3},{2,3,4}};
+      size_t num_indices[2] = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
+                               sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
+
+      Xt_idxlist idxvector[2];
+
+      // create index vectors
+
+      idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+      idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
+
+      // compute intersection between the two index vectors
+
+      Xt_idxlist intersection;
+
+      intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
+
+      // check the computed intersection
+
+      Xt_idx ref_intersection_indices[] = {2,3};
+      size_t ref_intersection_num_indices =
+         sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
+
+      check_idxlist(intersection, ref_intersection_indices,
+                    ref_intersection_num_indices);
+
+     // clean up
+
+     xt_idxlist_delete(idxvector[0]);
+     xt_idxlist_delete(idxvector[1]);
+     xt_idxlist_delete(intersection);
+   }
+
+   { // check intersection
+      Xt_idx index_vector[2][3] = {{2,3,4},{1,2,3}};
+      size_t num_indices[2] = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
+                               sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
+
+      Xt_idxlist idxvector[2];
+
+      // create index vectors
+
+      idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+      idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
+
+      // compute intersection between the two index vectors
+
+      Xt_idxlist intersection;
+
+      intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
+
+      // check the computed intersection
+
+      Xt_idx ref_intersection_indices[] = {2,3};
+      size_t ref_intersection_num_indices =
+         sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
+
+      check_idxlist(intersection, ref_intersection_indices,
+                    ref_intersection_num_indices);
+
+     // clean up
+
+     xt_idxlist_delete(idxvector[0]);
+     xt_idxlist_delete(idxvector[1]);
+     xt_idxlist_delete(intersection);
+   }
+
+   { // check intersection
+      Xt_idx index_vector[2][3] = {{4,2,3},{3,1,2}};
+      size_t num_indices[2] = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
+                               sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
+
+      Xt_idxlist idxvector[2];
+
+      // create index vectors
+
+      idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+      idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
+
+      // compute intersection between the two index vectors
+
+      Xt_idxlist intersection;
+
+      intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
+
+      // check the computed intersection
+
+      Xt_idx ref_intersection_indices[] = {2,3};
+      size_t ref_intersection_num_indices =
+         sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
+
+      check_idxlist(intersection, ref_intersection_indices,
+                    ref_intersection_num_indices);
+
+     // clean up
+
+     xt_idxlist_delete(idxvector[0]);
+     xt_idxlist_delete(idxvector[1]);
+     xt_idxlist_delete(intersection);
+   }
+
+   { // check intersection
+      Xt_idx index_vector[2][3] = {{3,1,2},{4,2,3}};
+      size_t num_indices[2] = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
+                               sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
+
+      Xt_idxlist idxvector[2];
+
+      // create index vectors
+
+      idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+      idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
+
+      // compute intersection between the two index vectors
+
+      Xt_idxlist intersection;
+
+      intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
+
+      // check the computed intersection
+
+      Xt_idx ref_intersection_indices[] = {2,3};
+      size_t ref_intersection_num_indices =
+         sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
+
+      check_idxlist(intersection, ref_intersection_indices,
+                    ref_intersection_num_indices);
+
+     // clean up
+
+     xt_idxlist_delete(idxvector[0]);
+     xt_idxlist_delete(idxvector[1]);
+     xt_idxlist_delete(intersection);
+   }
 
    MPI_Finalize();
 

@@ -265,10 +265,12 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
   for (i = 0, j = 0; i < idxvec_dst->num_indices; ++i) {
 
-    while (sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
+    while (j < idxvec_src->num_indices &&
+           sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
 
-    if ((j < idxvec_src->num_indices) &&
-        (sorted_src_vector[j] == sorted_dst_vector[i]))
+    if (j >= idxvec_src->num_indices) break;
+
+    if (sorted_src_vector[j] == sorted_dst_vector[i])
       inter_vector->vector[inter_vector->num_indices++] = sorted_dst_vector[i];
   }
 
