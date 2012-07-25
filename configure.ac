@@ -61,6 +61,7 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run	\
 	tests/test_handles_run				\
 	tests/test_ut_run				\
         tests/test_perf_run              		\
+        tests/test_perf_stripes_run              	\
         tests/test_sort_run              		\
         tests/test_yaxt_run              		\
 	util/serialrun],[chmod a+x "$ac_file"])

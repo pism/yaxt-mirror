@@ -92,7 +92,6 @@ PROGRAM test_perf
   CALL tstart(t_template_2d)
   CALL gen_template_2d(loc_id_2d, loc_tpex_2d, template_tpex_2d)
   CALL tstop(t_template_2d)
-  !CALL ut_abort('test stop', __FILE__, __LINE__)
 
   ! transposition: loc_id_2d:data -> loc_tpex_2d:data
   CALL tstart(t_trans_2d)
@@ -330,7 +329,7 @@ CONTAINS
         ENDIF
       ENDDO
     ENDDO
-    !IF (verbose) WRITE(0,*) mype,':',context//label//' passed'
+
   END SUBROUTINE icmp_2d
 
   SUBROUTINE icmp_3d(label, f,g)
@@ -356,7 +355,7 @@ CONTAINS
         ENDDO
       ENDDO
     ENDDO
-    !IF (verbose) WRITE(0,*) mype,':',context//label//' passed'
+
   END SUBROUTINE icmp_3d
 
   SUBROUTINE init_mpi
@@ -430,8 +429,6 @@ CONTAINS
     ALLOCATE(fval_2d(ie,je), gval_2d(ie,je))
     ALLOCATE(loc_id_2d(ie,je), loc_tpex_2d(ie,je))
     ALLOCATE(id_pos(ie,je), pos3d_surf(ie,je))
-
-    !ALLOCATE(loc_id_3d(ie,je,nlev), loc_tpex_3d(ie,je,nlev))
 
     fval_2d = undef_int
     gval_2d = undef_int
@@ -579,9 +576,10 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
-
+    INTEGER, ALLOCATABLE :: src(:), dst(:)
     INTEGER :: src_handle, dst_handle
+
+    ALLOCATE(src(SIZE(local_src_idx)), dst(SIZE(local_dst_idx)))
 
     src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
     dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
