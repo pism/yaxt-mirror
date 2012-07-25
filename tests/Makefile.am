@@ -44,3 +44,5 @@ TESTS = 							\
 	test_ut_run						\
 	test_perf_run						\
 	test_sort_run
+
+AUTOMAKE_OPTIONS = color-tests
