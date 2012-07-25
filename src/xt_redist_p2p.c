@@ -28,7 +28,7 @@ struct Xt_redist_p2p_msg {
 
 struct Xt_redist_p2p {
 
-  const struct Xt_redist_vtable *vtable;
+  const struct xt_redist_vtable *vtable;
 
   int ndst, nsrc;
 
