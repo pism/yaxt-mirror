@@ -113,7 +113,7 @@ void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
 void xt_idxlist_get_index_stripes(xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
-                                  unsigned * num_stripes) {
+                                  Xt_count * num_stripes) {
 
   if (idxlist->vtable->get_index_stripes != NULL) {
 

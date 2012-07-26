@@ -6,7 +6,7 @@
 
 struct Xt_stripe {
   Xt_idx start;
-  int nstrides;
+  Xt_count nstrides;
   Xt_idx stride;
 };
 
@@ -20,7 +20,7 @@ struct xt_idxlist_vtable {
    xt_idxlist (*copy)(xt_idxlist);
    Xt_count (*get_num_indices)(xt_idxlist);
    void (*get_indices)(xt_idxlist, Xt_idx *indices);
-   void (*get_index_stripes)(xt_idxlist, struct Xt_stripe **, unsigned *);
+   void (*get_index_stripes)(xt_idxlist, struct Xt_stripe **, Xt_count *);
    int (*get_index)(Xt_idxlist, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
    int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, Xt_count, int *, int);
@@ -160,7 +160,7 @@ void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices);
  */
 void xt_idxlist_get_index_stripes(xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
-                                  unsigned * num_stripes);
+                                  Xt_count * num_stripes);
 
 /**
  * gets the index stored at the specified position in an index list

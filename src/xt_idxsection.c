@@ -32,7 +32,7 @@ idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices);
 
 static void
 idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             unsigned * num_stripes);
+                             Xt_count * num_stripes);
 
 static int
 idxsection_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
@@ -348,7 +348,7 @@ idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
 static void
 idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             unsigned * num_stripes) {
+                             Xt_count * num_stripes) {
 
   struct xt_idxsection *section;
 

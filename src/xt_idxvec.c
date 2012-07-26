@@ -36,7 +36,7 @@ idxvec_get_indices(xt_idxlist idxlist, Xt_idx *indices);
 
 static void
 idxvec_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                         unsigned * num_stripes);
+                         Xt_count * num_stripes);
 
 static int
 idxvec_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
@@ -323,7 +323,7 @@ idxvec_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
 static void
 idxvec_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                         unsigned * num_stripes) {
+                         Xt_count * num_stripes) {
 
   struct xt_idxvec *idxvec_data;
 

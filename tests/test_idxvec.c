@@ -13,8 +13,8 @@
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
-                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes);
+void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
 
 int main(void) {
 
@@ -100,12 +100,12 @@ int main(void) {
       // check the conversion to stripes
 
       struct Xt_stripe * stripes;
-      unsigned num_stripes;
+      Xt_count num_stripes;
 
       xt_idxlist_get_index_stripes(idxvector, &stripes, &num_stripes);
 
       struct Xt_stripe ref_stripes[1] = {{1,7,1}};
-      unsigned ref_num_stripes = 1;
+      Xt_count ref_num_stripes = 1;
 
       check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 
@@ -380,10 +380,10 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
-                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes) {
+void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
 
-  unsigned i;
+  Xt_count i;
 
   if (num_stripes != ref_num_stripes)
     PUT_ERR("wrong number of stripes\n");

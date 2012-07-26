@@ -37,7 +37,7 @@ idxlist_collection_get_indices(xt_idxlist idxlist, Xt_idx *indices);
 
 static void
 idxlist_collection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                                     unsigned * num_stripes);
+                                     Xt_count * num_stripes);
 
 static int
 idxlist_collection_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
@@ -206,13 +206,13 @@ idxlist_collection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 
 static void
 idxlist_collection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                                     unsigned * num_stripes) {
+                                     Xt_count * num_stripes) {
 
   struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
   struct Xt_stripe * temp_stripes = NULL;
   unsigned temp_stripes_array_size = 0;
-  unsigned num_temp_stripes = 0;
+  Xt_count num_temp_stripes = 0;
 
   unsigned i;
 
@@ -225,7 +225,7 @@ idxlist_collection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** str
   for (i = 1; i < collectionlist->num_idxlists; ++i) {
 
     struct Xt_stripe * curr_stripes;
-    unsigned curr_num_stripes;
+    Xt_count curr_num_stripes;
 
     xt_idxlist_get_index_stripes(collectionlist->idxlists[i], &curr_stripes,
                                  &curr_num_stripes);

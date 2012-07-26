@@ -12,7 +12,7 @@
  * @remarks this routine does not check for overlaps between stripes
  *          and assumes that there are no
  */
-Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, unsigned num_stripes);
+Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stripes);
 
 xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm);
@@ -30,6 +30,6 @@ xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
                                       Xt_count num_indices,
                                       struct Xt_stripe ** stripes,
-                                      unsigned * num_stripes);
+                                      Xt_count * num_stripes);
 
 #endif // XT_IDXSTRIPES_H

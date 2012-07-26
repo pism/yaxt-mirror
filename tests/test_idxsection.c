@@ -11,9 +11,9 @@
 #include "core/ppm_xfuncs.h"
 
 void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
-              struct Xt_stripe * ref_stripes, unsigned ref_num_stripes);
-void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
-                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes);
+              struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes);
+void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
 
 int main(void) {
 
@@ -226,12 +226,12 @@ int main(void) {
 }
 
 void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
-              struct Xt_stripe * ref_stripes, unsigned ref_num_stripes) {
+              struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 
   struct Xt_stripe * stripes;
-  unsigned num_stripes;
+  Xt_count num_stripes;
 
   xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
 
@@ -309,10 +309,10 @@ void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
   }
 }
 
-void check_stripes(struct Xt_stripe const * stripes, unsigned num_stripes,
-                   struct Xt_stripe const * ref_stripes, unsigned ref_num_stripes) {
+void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
 
-  unsigned i;
+  Xt_count i;
 
   if (num_stripes != ref_num_stripes)
     PUT_ERR("wrong number of stripes\n");
