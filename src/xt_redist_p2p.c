@@ -75,7 +75,10 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
                    MPI_Datatype base_datatype, struct Xt_redist_p2p_msg ** msgs,
                    MPI_Comm comm) {
 
-  assert(num_msgs > 0);
+  if (num_msgs <= 0) {
+    *msgs = NULL;
+    return;
+  }
 
   *msgs = xmalloc(num_msgs * sizeof(**msgs));
 
@@ -121,6 +124,7 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
 
   generate_msg_infos(redist->ndst, xt_xmap_get_destination_iterator(xmap),
                      dst_offsets, datatype, &(redist->recv_msgs), redist->comm);
+
   generate_msg_infos(redist->nsrc, xt_xmap_get_source_iterator(xmap),
                      src_offsets, datatype, &(redist->send_msgs), redist->comm);
 
@@ -141,11 +145,11 @@ redist_p2p_delete(Xt_redist redist) {
 
   int i;
 
-  for (i = 0; i < redist_p2p->ndst; ++i)
+  for (i = 0; i < redist_p2p->nsrc; ++i)
     MPI_Type_free(&(redist_p2p->send_msgs[i].datatype));
   free(redist_p2p->send_msgs);
 
-  for (i = 0; i < redist_p2p->nsrc; ++i)
+  for (i = 0; i < redist_p2p->ndst; ++i)
     MPI_Type_free(&(redist_p2p->recv_msgs[i].datatype));
   free(redist_p2p->recv_msgs);
 
@@ -166,21 +170,21 @@ redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays
 
   MPI_Request * recv_request;
 
-  recv_request = xmalloc(redist_p2p->nsrc * sizeof(*recv_request));
+  recv_request = xmalloc(redist_p2p->ndst * sizeof(*recv_request));
 
   int i;
 
-  for (i = 0; i < redist_p2p->nsrc; ++i)
+  for (i = 0; i < redist_p2p->ndst; ++i)
     mpi_err_handler(MPI_Irecv(dst_data[0], 1, redist_p2p->recv_msgs[i].datatype,
                               redist_p2p->recv_msgs[i].rank, 0, redist_p2p->comm,
                               recv_request+i), redist_p2p->comm);
 
-  for (i = 0; i < redist_p2p->ndst; ++i)
+  for (i = 0; i < redist_p2p->nsrc; ++i)
     mpi_err_handler(MPI_Send(src_data[0], 1, redist_p2p->send_msgs[i].datatype,
                              redist_p2p->send_msgs[i].rank, 0, redist_p2p->comm),
                     redist_p2p->comm);
 
-  mpi_err_handler(MPI_Waitall(redist_p2p->nsrc, recv_request,
+  mpi_err_handler(MPI_Waitall(redist_p2p->ndst, recv_request,
                               MPI_STATUSES_IGNORE), redist_p2p->comm);
 
   free(recv_request);
