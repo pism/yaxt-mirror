@@ -124,6 +124,15 @@ static void exchange_idxlists(struct Xt_xmap_all2all * xmap,
                               Xt_idxlist dst_idxlist_local)
 {
 
+  /*
+    Note: The meaning of source (src) and destination (dst) points can already be understood by
+    looking at the serial case, where it is just a transformation of sequences of integers
+    (called indices). The starting state (source sequence) is transformed into an end state
+    (dst sequence). The transformation does not have to be bijective. For each position dpos of
+    the dst sequence we have at least one position spos in the src sequence with:
+    dst(dpos) = src(spos)
+   */
+
   xt_idxlist *src_idxlists_all, *dst_idxlists_all;
 
   unsigned i;
