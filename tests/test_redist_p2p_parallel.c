@@ -82,6 +82,72 @@ int main(void) {
     xt_idxlist_delete(dst_idxlist);
   }
 
+  // test nonuniform numbers of send and receive partners
+  {
+
+    // source index list
+    Xt_idx src_index_list[size];
+    Xt_count src_num_indices = 0;
+
+    if (rank == 0) src_num_indices = size;
+    for (i = 0; i < src_num_indices; ++i)
+      src_index_list[i] = i;
+
+    xt_idxlist src_idxlist;
+
+    src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
+
+    // destination index list
+    Xt_idx dst_index_list[size];
+    Xt_count dst_num_indices = size;
+    for (i = 0; i < dst_num_indices; ++i)
+      dst_index_list[i] = i;
+
+    xt_idxlist dst_idxlist;
+
+    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
+
+    // xmap
+    xt_xmap xmap;
+
+    xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+
+    // redist_p2p
+    Xt_redist redist;
+
+    redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+
+    // test exchange
+
+    double src_data[size];
+    double dst_data[size];
+    for (i = 0; i < size; ++i) {
+      if (rank == 0)
+        src_data[i] = i;
+      else
+        src_data[i] = -2;
+      dst_data[i] = -1;
+    }
+
+    double * src_data_p = &src_data[0];
+    double * dst_data_p = &dst_data[0];
+
+    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1, (void**)(&dst_data_p), 1);
+
+    unsigned i;
+
+    for (i = 0; i < size; ++i)
+      if (dst_data[i] != i)
+        PUT_ERR("error in xt_redist_s_exchange\n");
+
+    // clean up
+
+    xt_redist_delete(redist);
+    xt_xmap_delete(xmap);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_idxlist);
+  }
+
   MPI_Finalize();
 
  return TEST_EXIT_CODE;
