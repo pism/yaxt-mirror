@@ -305,8 +305,8 @@ static int check_for_simple_strides(struct xt_idxstripes * stripe) {
     return 0;
 
   for (i = 1; i < stripe->num_stripes; ++i)
-    if ((stripe->stripes[i].stride != 1) &&
-        ((stripe->stripes[i-1].start + stripe->stripes[i-1].nstrides) <=
+    if ((stripe->stripes[i].stride != 1) ||
+        ((stripe->stripes[i-1].start + stripe->stripes[i-1].nstrides) >=
          stripe->stripes[i].start))
       return 0;
 

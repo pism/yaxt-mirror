@@ -303,6 +303,40 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
+  { // intersection test
+
+    Xt_idxlist idxstripes_a, idxstripes_b;
+
+    struct Xt_stripe stripes_a[1] = {{0,10,1}};
+    struct Xt_stripe stripes_b[2] = {{5,5,1}, {4,5,-1}};
+
+    idxstripes_a = xt_idxstripes_new(stripes_a, 1);
+    idxstripes_b = xt_idxstripes_new(stripes_b, 2);
+
+    // compute intersection
+
+    Xt_idxlist intersection[2];
+
+    intersection[0] = xt_idxlist_get_intersection(idxstripes_a, idxstripes_b);
+    intersection[1] = xt_idxlist_get_intersection(idxstripes_b, idxstripes_a);
+
+    // check intersection
+
+    Xt_idx ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
+    Xt_count ref_num_indices = 10;
+    struct Xt_stripe ref_stripes[1] = {{0,10,1}};
+
+    do_tests(intersection[0], ref_indices, ref_num_indices, ref_stripes, 1);
+    do_tests(intersection[1], ref_indices, ref_num_indices, ref_stripes, 1);
+
+    // clean up
+
+    xt_idxlist_delete(idxstripes_a);
+    xt_idxlist_delete(idxstripes_b);
+    xt_idxlist_delete(intersection[0]);
+    xt_idxlist_delete(intersection[1]);
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
