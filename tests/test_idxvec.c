@@ -375,6 +375,26 @@ int main(void) {
      xt_idxlist_delete(intersection);
    }
 
+   { // test constructor xt_idxvec_from_stripes_new
+
+      struct Xt_stripe stripes[2] = {{5,5,1}, {4,5,-1}};
+
+      // construct
+
+      Xt_idxlist idxvec;
+
+      idxvec = xt_idxvec_from_stripes_new(stripes, 2);
+
+      // test results
+
+      Xt_idx ref_indices[] = {5,6,7,8,9,4,3,2,1,0};
+      check_idxlist(idxvec, ref_indices, 10);
+
+      // clean up
+
+      xt_idxlist_delete(idxvec);
+   }
+
    MPI_Finalize();
 
    return TEST_EXIT_CODE;

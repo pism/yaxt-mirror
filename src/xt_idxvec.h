@@ -13,6 +13,8 @@
  */
 xt_idxlist xt_idxvec_new(Xt_idx *idxlist, Xt_count num_indices);
 
+xt_idxlist xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes);
+
 xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm);
 

@@ -117,6 +117,37 @@ struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, Xt_count num_indices) {
    return (void*)idxvec_data;
 }
 
+xt_idxlist xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
+
+   struct xt_idxvec *idxvec_data;
+
+   idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
+
+   idxvec_data->vtable = &idxvec_vtable;
+
+   Xt_count i, j, k;
+   Xt_count num_indices = 0;
+
+   for (i = 0; i < num_stripes; ++i)
+      num_indices += stripes[i].nstrides;
+
+   Xt_idx * indices;
+
+   indices = xmalloc(num_indices * sizeof(*indices));
+
+   k = 0;
+   for (i = 0; i < num_stripes; ++i)
+      for (j = 0; j < stripes[i].nstrides; ++j)
+         indices[k++] = stripes[i].start + j * stripes[i].stride;
+
+   idxvec_data->vector = indices;
+   idxvec_data->num_indices = num_indices;
+   idxvec_data->sorted_vector = NULL;
+   idxvec_data->sorted_vec_positions = NULL;
+
+   return (void*)idxvec_data;
+}
+
 static void idxvec_delete(struct xt_idxlist *data) {
 
    if (((struct xt_idxvec*)data)->sorted_vector !=
