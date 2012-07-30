@@ -12,6 +12,9 @@
 #include "core/ppm_xfuncs.h"
 #include "quicksort.h"
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 static void
 idxvec_delete(xt_idxlist data);
 
@@ -117,7 +120,135 @@ struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, Xt_count num_indices) {
    return (void*)idxvec_data;
 }
 
-xt_idxlist xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
+static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
+
+  Xt_idx a_min, a_max, b_min, b_max;
+
+  if (a.stride >= 0)
+    a_min = a.start, a_max = a.start + (a.nstrides-1) * a.stride;
+  else
+    a_max = a.start, a_min = a.start + (a.nstrides-1) * a.stride;
+
+  if (b.stride >= 0)
+    b_min = b.start, b_max = b.start + (b.nstrides-1) * b.stride;
+  else
+    b_max = b.start, b_min = b.start + (b.nstrides-1) * b.stride;
+
+  return MIN(a_max, b_max) >= MAX(a_min, b_min);
+
+}
+
+static int
+decode_stripe(struct Xt_stripe stripe, Xt_idx * sorted_vector,
+              int * sorted_vec_pos, int pos_offset) {
+
+  Xt_count i;
+
+  if (stripe.stride >= 0) {
+    for (i = 0; i < stripe.nstrides; ++i) {
+      sorted_vector[i] = stripe.start + i * stripe.stride;
+      sorted_vec_pos[i] = pos_offset + i;
+    }
+  } else {
+    for (i = 0; i < stripe.nstrides; ++i) {
+        Xt_count j = stripe.nstrides-i-1;
+        sorted_vector[j] = stripe.start + i * stripe.stride;
+        sorted_vec_pos[j] = pos_offset + i;
+      }
+  }
+
+  return stripe.nstrides;
+}
+
+static void
+generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_stripes,
+                                    struct xt_idxvec * idxvec) {
+
+  Xt_idx * stripe_min;
+  int * sorted_stripe_min_pos;
+
+  stripe_min = xmalloc(num_stripes * sizeof(*stripe_min));
+  sorted_stripe_min_pos = xmalloc(num_stripes * sizeof(*sorted_stripe_min_pos));
+
+  Xt_count i, j;
+
+  for(i = 0; i < num_stripes; ++i)
+    if (stripes[i].stride >= 0)
+      stripe_min[i] = stripes[i].start;
+    else
+      stripe_min[i] = stripes[i].start + stripes[i].stride * (stripes[i].nstrides - 1);
+
+  xt_quicksort_index(stripe_min, num_stripes, sorted_stripe_min_pos, 1);
+
+  int * sorted_pos_prefix_sum, * orig_pos_prefix_sum;
+
+  sorted_pos_prefix_sum = xmalloc(num_stripes * sizeof(*sorted_pos_prefix_sum));
+  orig_pos_prefix_sum = xmalloc(num_stripes * sizeof(*orig_pos_prefix_sum));
+
+  orig_pos_prefix_sum[0] = 0;
+  for (i = 1; i < num_stripes; ++i)
+    orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + stripes[i-1].nstrides;
+
+  for (i = 0; i < num_stripes; ++i)
+    sorted_pos_prefix_sum[i] = orig_pos_prefix_sum[sorted_stripe_min_pos[i]];
+
+  free(orig_pos_prefix_sum);
+
+  int * overlap_flag; // does i'th stripe overlap with (i+1)'th stripe
+
+  overlap_flag = xmalloc(num_stripes * sizeof(*overlap_flag));
+
+  for (i = 0; i < num_stripes - 1; ++i)
+    overlap_flag[i] = stripes_overlap(stripes[sorted_stripe_min_pos[i]],
+                                      stripes[sorted_stripe_min_pos[i+1]]);
+  overlap_flag[num_stripes - 1] = 0;
+
+  idxvec->sorted_vector = xmalloc(idxvec->num_indices *
+                                  sizeof(*(idxvec->sorted_vector)));
+  idxvec->sorted_vec_positions = xmalloc(idxvec->num_indices *
+                                         sizeof(*(idxvec->sorted_vec_positions)));;
+
+  Xt_count offset = 0;
+
+  i = 0;
+  while (i < num_stripes) {
+
+    int do_overlap;
+
+    do_overlap = overlap_flag[i];
+
+    Xt_count num_selection = 1;
+
+    while(i + num_selection < num_stripes &&
+          overlap_flag[i + num_selection] == do_overlap) ++num_selection;
+
+    num_selection += do_overlap;
+
+    Xt_count curr_offset = 0;
+
+    for (j = 0; j < num_selection; ++j)
+      curr_offset += decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
+                                   idxvec->sorted_vector + offset + curr_offset,
+                                   idxvec->sorted_vec_positions + offset + curr_offset,
+                                   sorted_pos_prefix_sum[i+j]);
+
+    if (do_overlap)
+      xt_quicksort_index(idxvec->sorted_vector + offset, curr_offset,
+                         idxvec->sorted_vec_positions + offset, 0);
+      
+
+    offset += curr_offset;
+    i += num_selection;
+  }
+
+  free(sorted_pos_prefix_sum);
+  free(overlap_flag);
+  free(sorted_stripe_min_pos);
+  free(stripe_min);
+}
+
+struct xt_idxlist *
+xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
 
    struct xt_idxvec *idxvec_data;
 
@@ -142,8 +273,8 @@ xt_idxlist xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_s
 
    idxvec_data->vector = indices;
    idxvec_data->num_indices = num_indices;
-   idxvec_data->sorted_vector = NULL;
-   idxvec_data->sorted_vec_positions = NULL;
+
+   generate_sorted_vector_from_stripes(stripes, num_stripes, idxvec_data);
 
    return (void*)idxvec_data;
 }
@@ -263,7 +394,6 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
 
 static xt_idxlist
 idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
-
 
   if (idxlist_dst->vtable != &idxvec_vtable) return NULL;
 

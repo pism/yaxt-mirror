@@ -395,6 +395,126 @@ int main(void) {
       xt_idxlist_delete(idxvec);
    }
 
+   { // test constructor xt_idxvec_from_stripes_new
+
+      struct Xt_stripe stripes[3] = {{0,5,1}, {2,5,1},{4,5,1}};
+
+      // construct
+
+      Xt_idxlist idxvec;
+
+      idxvec = xt_idxvec_from_stripes_new(stripes, 3);
+
+      // test results
+
+      Xt_idx ref_indices[] = {0,1,2,3,4,2,3,4,5,6,4,5,6,7,8};
+      check_idxlist(idxvec, ref_indices, 15);
+
+      // clean up
+
+      xt_idxlist_delete(idxvec);
+   }
+
+   { // test constructor xt_idxvec_from_stripes_new
+
+      struct Xt_stripe stripes[3] = {{2,5,1},{0,5,1},{4,5,1}};
+
+      // construct
+
+      Xt_idxlist idxvec;
+
+      idxvec = xt_idxvec_from_stripes_new(stripes, 3);
+
+      // test results
+
+      Xt_idx ref_indices[] = {2,3,4,5,6,0,1,2,3,4,4,5,6,7,8};
+      check_idxlist(idxvec, ref_indices, 15);
+
+      // clean up
+
+      xt_idxlist_delete(idxvec);
+   }
+
+   { // test constructor xt_idxvec_from_stripes_new
+
+      struct Xt_stripe stripes[3] = {{2,5,1},{4,5,-1},{4,5,1}};
+
+      // construct
+
+      Xt_idxlist idxvec;
+
+      idxvec = xt_idxvec_from_stripes_new(stripes, 3);
+
+      // test results
+
+      Xt_idx ref_indices[] = {2,3,4,5,6,4,3,2,1,0,4,5,6,7,8};
+      check_idxlist(idxvec, ref_indices, 15);
+
+      // clean up
+
+      xt_idxlist_delete(idxvec);
+   }
+
+   { // test constructor xt_idxvec_from_stripes_new
+
+      struct Xt_stripe stripes[3] = {{0,5,3},{1,5,3},{14,5,-3}};
+
+      // construct
+
+      Xt_idxlist idxvec;
+
+      idxvec = xt_idxvec_from_stripes_new(stripes, 3);
+
+      // test results
+
+      Xt_idx ref_indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2};
+      check_idxlist(idxvec, ref_indices, 15);
+
+      // clean up
+
+      xt_idxlist_delete(idxvec);
+   }
+
+   { // test constructor xt_idxvec_from_stripes_new
+
+      struct Xt_stripe stripes[3] = {{0,5,3},{2,5,3},{14,5,-3}};
+
+      // construct
+
+      Xt_idxlist idxvec;
+
+      idxvec = xt_idxvec_from_stripes_new(stripes, 3);
+
+      // test results
+
+      Xt_idx ref_indices[] = {0,3,6,9,12,2,5,8,11,14,14,11,8,5,2};
+      check_idxlist(idxvec, ref_indices, 15);
+
+      // clean up
+
+      xt_idxlist_delete(idxvec);
+   }
+
+   { // test constructor xt_idxvec_from_stripes_new
+
+      struct Xt_stripe stripes[4] = {{0,5,-1},{1,5,1},{-5,5,-1},{6,5,1}};
+
+      // construct
+
+      Xt_idxlist idxvec;
+
+      idxvec = xt_idxvec_from_stripes_new(stripes, 4);
+
+      // test results
+
+      Xt_idx ref_indices[] = {0,-1,-2,-3,-4,1,2,3,4,5,-5,-6,-7,-8,-9,6,7,8,9,10};
+      check_idxlist(idxvec, ref_indices, 20);
+
+      // clean up
+
+      xt_idxlist_delete(idxvec);
+   }
+
    MPI_Finalize();
 
    return TEST_EXIT_CODE;
