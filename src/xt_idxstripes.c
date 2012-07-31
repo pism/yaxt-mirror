@@ -231,14 +231,8 @@ void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
 }
 
 static Xt_idxlist
-compute_intersection_fallback(xt_idxlist idxlist_src,
-                              xt_idxlist idxlist_dst) {
-
-  struct xt_idxstripes * idxstripes_src;
-  struct xt_idxstripes * idxstripes_dst;
-
-  idxstripes_src = (struct xt_idxstripes *)idxlist_src;
-  idxstripes_dst = (struct xt_idxstripes *)idxlist_dst;
+compute_intersection_fallback(struct xt_idxstripes * idxstripes_src,
+                              struct xt_idxstripes * idxstripes_dst) {
 
   struct xt_idxlist * idxvec_from_stripes_src;
   struct xt_idxlist * idxvec_from_stripes_dst;
@@ -368,7 +362,7 @@ idxstripes_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
     return compute_intersection_simple(idxstripes_src, idxstripes_dst);
   } else // compute the intersection using brute force
-    return compute_intersection_fallback(idxlist_src, idxlist_dst);
+    return compute_intersection_fallback(idxstripes_src, idxstripes_dst);
 }
 
 static xt_idxlist
