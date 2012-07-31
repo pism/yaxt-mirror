@@ -21,6 +21,21 @@ AC_PROG_FPP
 AC_LANG_POP([Fortran])
 AC_PROG_RANLIB
 dnl ######################################################################
+dnl Properties of the compiler
+dnl ######################################################################
+AM_PROG_CC_C_O
+AC_PROG_FC_C_O
+ACX_SL_FC_MOD_SUFFIX(,[AC_MSG_ERROR(dnl
+[Fortran module file extension must be known to install F90 modules.])])
+AM_CONDITIONAL([FC_MOD_UPPERCASE],
+  [test x$ac_fc_mod_uppercase = xyes])
+AC_LANG_PUSH([Fortran])
+ACX_SL_FC_CHECK_MOD_PATH_FLAG
+AC_LANG_POP([Fortran])
+ACX_FC_VOLATILE([FCFLAGS="${FCFLAGS} ${FPP_DEFOPT}HAVE_VOLATILE"])
+AC_FC_WRAPPERS
+
+dnl ######################################################################
 dnl Checks for header files.
 dnl ######################################################################
 dnl

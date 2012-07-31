@@ -49,3 +49,6 @@ libyaxt_a_SOURCES =						\
 	yaxt.f90						\
 	yaxt.h
 
+clean-local:
+	-rm -f *.$(FCMODEXT) i.*.L
+
