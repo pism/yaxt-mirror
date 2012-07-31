@@ -197,11 +197,6 @@ xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   return (xt_idxlist)stripes;
 }
 
-static int compare_xtidx(const void * a, const void * b)
-{
-  return (*(Xt_idx*)a > *(Xt_idx*)b) - (*(Xt_idx*)a < *(Xt_idx*)b);
-}
-
 void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
                                       Xt_count num_indices,
                                       struct Xt_stripe ** stripes,
@@ -236,60 +231,30 @@ void xt_idxstripes_convert_to_stripes(Xt_idx const * indices,
 }
 
 static Xt_idxlist
-compute_intersection_brute_force(xt_idxlist idxlist_src,
-                                 xt_idxlist idxlist_dst) {
+compute_intersection_fallback(xt_idxlist idxlist_src,
+                              xt_idxlist idxlist_dst) {
 
-  Xt_count src_size, dst_size;
+  struct xt_idxstripes * idxstripes_src;
+  struct xt_idxstripes * idxstripes_dst;
 
-  src_size = idxstripes_get_num_indices(idxlist_src);
-  dst_size = idxstripes_get_num_indices(idxlist_dst);
+  idxstripes_src = (struct xt_idxstripes *)idxlist_src;
+  idxstripes_dst = (struct xt_idxstripes *)idxlist_dst;
 
-  Xt_idx * src_indices, * dst_indices;
+  struct xt_idxlist * idxvec_from_stripes_src;
+  struct xt_idxlist * idxvec_from_stripes_dst;
 
-  src_indices = xmalloc(src_size * sizeof(*src_indices));
-  dst_indices = xmalloc(dst_size * sizeof(*dst_indices));
+  idxvec_from_stripes_src = xt_idxvec_from_stripes_new(idxstripes_src->stripes,
+                                                       idxstripes_src->num_stripes);
+  idxvec_from_stripes_dst = xt_idxvec_from_stripes_new(idxstripes_dst->stripes,
+                                                       idxstripes_dst->num_stripes);
 
-  // get array of indices of source and target
+  struct xt_idxlist * intersection;
 
-  idxstripes_get_indices(idxlist_src, src_indices);
-  idxstripes_get_indices(idxlist_dst, dst_indices);
+  intersection = xt_idxlist_get_intersection(idxvec_from_stripes_src,
+                                             idxvec_from_stripes_dst);
 
-  // sort indices
-  qsort(src_indices, src_size, sizeof (*src_indices), compare_xtidx);
-  qsort(dst_indices, dst_size, sizeof (*dst_indices), compare_xtidx);
-
-  Xt_count inter_size = dst_size;
-
-  Xt_idx * inter_indices;
-
-  inter_indices = xmalloc(inter_size * sizeof(*inter_indices));
-
-  Xt_count i, j;
-
-  // compute intersection
-  for (i = 0, j = 0, inter_size = 0; i < dst_size && j < src_size; ++i) {
-
-    while (j < src_size && src_indices[j] < dst_indices[i]) ++j;
-
-    if (j < src_size && src_indices[j] == dst_indices[i])
-      inter_indices[inter_size++] = src_indices[j];
-  }
-
-  struct Xt_stripe * inter_stripes;
-  Xt_count num_inter_stripes;
-
-  // generate new idx stripes
-  xt_idxstripes_convert_to_stripes(inter_indices, inter_size,
-                                   &inter_stripes, &num_inter_stripes);
-
-  Xt_idxlist intersection;
-
-  intersection = xt_idxstripes_new(inter_stripes, num_inter_stripes);
-
-  free(inter_stripes);
-  free(inter_indices);
-  free(src_indices);
-  free(dst_indices);
+  xt_idxlist_delete(idxvec_from_stripes_src);
+  xt_idxlist_delete(idxvec_from_stripes_dst);
 
   return intersection;
 }
@@ -403,7 +368,7 @@ idxstripes_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
 
     return compute_intersection_simple(idxstripes_src, idxstripes_dst);
   } else // compute the intersection using brute force
-    return compute_intersection_brute_force(idxlist_src, idxlist_dst);
+    return compute_intersection_fallback(idxlist_src, idxlist_dst);
 }
 
 static xt_idxlist
