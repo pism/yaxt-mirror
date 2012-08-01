@@ -10,6 +10,9 @@
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 static void
 idxstripes_delete(xt_idxlist data);
 
@@ -98,7 +101,56 @@ struct xt_idxstripes {
 
   struct Xt_stripe * stripes;
   Xt_count num_stripes;
+
+  struct Xt_stripe * stripes_sorted;
+  int stripes_overlap;
 };
+
+static int compare_xtstripes(const void * a, const void * b)
+{
+  return (((struct Xt_stripe*)a)->start > ((struct Xt_stripe*)b)->start) -
+         (((struct Xt_stripe*)a)->start < ((struct Xt_stripe*)b)->start);
+}
+
+static void generate_stripes_sorted(struct xt_idxstripes * stripes) {
+
+  stripes->stripes_sorted = malloc(stripes->num_stripes * sizeof(*(stripes->stripes_sorted)));
+
+  memcpy(stripes->stripes_sorted, stripes->stripes,
+         stripes->num_stripes * sizeof(*(stripes->stripes_sorted)));
+
+  Xt_count i;
+
+  for (i = 0; i < stripes->num_stripes; ++i)
+    if (stripes->stripes_sorted[i].stride < 0) {
+
+      stripes->stripes_sorted[i].start = stripes->stripes_sorted[i].start +
+                                         (stripes->stripes_sorted[i].nstrides-1) *
+                                         stripes->stripes_sorted[i].stride;
+      stripes->stripes_sorted[i].stride = -stripes->stripes_sorted[i].stride;
+    }
+
+  qsort(stripes->stripes_sorted, stripes->num_stripes,
+        sizeof(*(stripes->stripes_sorted)), compare_xtstripes);
+}
+
+static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
+
+  Xt_idx a_min, a_max, b_min, b_max;
+
+  if (a.stride >= 0)
+    a_min = a.start, a_max = a.start + (a.nstrides-1) * a.stride;
+  else
+    a_max = a.start, a_min = a.start + (a.nstrides-1) * a.stride;
+
+  if (b.stride >= 0)
+    b_min = b.start, b_max = b.start + (b.nstrides-1) * b.stride;
+  else
+    b_max = b.start, b_min = b.start + (b.nstrides-1) * b.stride;
+
+  return MIN(a_max, b_max) >= MAX(a_min, b_min);
+
+}
 
 Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stripes) {
 
@@ -120,8 +172,22 @@ Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stri
       }
     }
     if (sign_err) fprintf(stderr, "WARNING: xt_idxstripes_new called with invalid stripes\n");
-  } else
+
+    generate_stripes_sorted(idxstripes);
+
+    idxstripes->stripes_overlap = 0;
+    for (Xt_count i = 0; i < idxstripes->num_stripes - 1; ++i)
+      if (stripes_overlap(idxstripes->stripes_sorted[i],
+                          idxstripes->stripes_sorted[i+1])) {
+        idxstripes->stripes_overlap = 1;
+        break;
+      }
+
+  } else {
     idxstripes->stripes = NULL;
+    idxstripes->stripes_sorted = NULL;
+    idxstripes->stripes_overlap = 0;
+  }
 
   return (Xt_idxlist)idxstripes;
 }
@@ -135,6 +201,7 @@ idxstripes_delete(xt_idxlist data) {
 
   stripes = (struct xt_idxstripes*)data;
 
+  free(stripes->stripes_sorted);
   free(stripes->stripes);
   free(stripes);
 }
@@ -191,8 +258,21 @@ xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
     mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
                             stripes->stripes, stripes->num_stripes,
                             xt_get_stripes_datatype(), comm),comm);
-  } else
+
+    generate_stripes_sorted(stripes);
+
+    stripes->stripes_overlap = 0;
+    for (Xt_count i = 0; i < stripes->num_stripes - 1; ++i)
+      if (stripes_overlap(stripes->stripes_sorted[i],
+                          stripes->stripes_sorted[i+1])) {
+        stripes->stripes_overlap = 1;
+        break;
+      }
+  } else {
     stripes->stripes = NULL;
+    stripes->stripes_sorted = NULL;
+    stripes->stripes_overlap = 0;
+  }
 
   return (xt_idxlist)stripes;
 }
@@ -253,95 +333,120 @@ compute_intersection_fallback(struct xt_idxstripes * idxstripes_src,
   return intersection;
 }
 
-static int check_for_simple_strides(struct xt_idxstripes * stripe) {
+// least common multiple
+Xt_idx lcm(Xt_idx a, Xt_idx b) {
 
-  if (stripe->num_stripes == 0)
-    return 0;
+  Xt_idx temp;
+
+  temp = a * b;
+
+  while (a != b)
+    if (a > b) a -= b;
+    else       b -= a;
+
+  return temp / a;
+}
+
+static struct Xt_stripe
+get_stripe_intersection(struct Xt_stripe * stripe_a,
+                        struct Xt_stripe * stripe_b) {
 
   Xt_count i;
 
-  if (stripe->stripes[0].stride != 1)
-    return 0;
-
-  for (i = 1; i < stripe->num_stripes; ++i)
-    if ((stripe->stripes[i].stride != 1) ||
-        ((stripe->stripes[i-1].start + stripe->stripes[i-1].nstrides) >=
-         stripe->stripes[i].start))
-      return 0;
-
-  return 1;
-}
-
-static Xt_idxlist
-compute_intersection_simple(struct xt_idxstripes *idxstripes_src,
-                            struct xt_idxstripes *idxstripes_dst) {
-
-  Xt_count src_pos, dst_pos;
-
-  src_pos = 0;
-  dst_pos = 0;
-
-  struct Xt_stripe * inter_stripes = NULL;
-  unsigned inter_stripes_array_size = 0;
-  unsigned num_inter_stripes = 0;
-
-  while (src_pos < idxstripes_src->num_stripes &&
-         dst_pos < idxstripes_dst->num_stripes) {
-
-    while (src_pos < idxstripes_src->num_stripes &&
-           idxstripes_src->stripes[src_pos].start +
-           idxstripes_src->stripes[src_pos].nstrides <=
-           idxstripes_dst->stripes[dst_pos].start) ++src_pos;
-
-      if (src_pos >= idxstripes_src->num_stripes) break;
-
-    while (dst_pos < idxstripes_dst->num_stripes &&
-           idxstripes_dst->stripes[dst_pos].start +
-           idxstripes_dst->stripes[dst_pos].nstrides <=
-           idxstripes_src->stripes[src_pos].start) ++dst_pos;
-
-      if (dst_pos >= idxstripes_dst->num_stripes) break;
-
-    Xt_idx start, end;
-
-    start = (idxstripes_src->stripes[src_pos].start >
-             idxstripes_dst->stripes[dst_pos].start)?
-            (idxstripes_src->stripes[src_pos].start):
-            (idxstripes_dst->stripes[dst_pos].start);
-
-    if ((idxstripes_src->stripes[src_pos].start +
-         idxstripes_src->stripes[src_pos].nstrides) <
-        (idxstripes_dst->stripes[dst_pos].start +
-         idxstripes_dst->stripes[dst_pos].nstrides)) {
-
-      end = idxstripes_src->stripes[src_pos].start +
-            idxstripes_src->stripes[src_pos].nstrides;
-      src_pos++;
-    } else {
-      end = idxstripes_dst->stripes[dst_pos].start +
-            idxstripes_dst->stripes[dst_pos].nstrides;
-      dst_pos++;
-    }
-
-    if (end > start) {
-
-      num_inter_stripes++;
-
-      ENSURE_ARRAY_SIZE(inter_stripes, inter_stripes_array_size, num_inter_stripes);
-
-      inter_stripes[num_inter_stripes-1].start  = start;
-      inter_stripes[num_inter_stripes-1].nstrides = end - start;
-      inter_stripes[num_inter_stripes-1].stride = 1;
-    }
+  if (stripe_a->start > stripe_b->start) {
+    struct Xt_stripe * temp = stripe_a;
+    stripe_a = stripe_b;
+    stripe_b = temp;
   }
 
-  Xt_idxlist intersection;
+  Xt_idx stripe_lcm = lcm(stripe_a->stride, stripe_b->stride);
 
-  intersection = xt_idxstripes_new(inter_stripes, num_inter_stripes);
+  Xt_idx norm_start = stripe_b->start - stripe_a->start;
+
+  for (i = 0; i < stripe_lcm / stripe_a->stride; ++i, norm_start += stripe_b->stride)
+    if (!(norm_start % stripe_a->stride)) break;
+
+  struct Xt_stripe intersection;
+
+  if (i == stripe_lcm / stripe_a->stride) {
+
+    intersection.start = 0;
+    intersection.stride = 0;
+    intersection.nstrides = 0;
+
+  } else {
+
+    Xt_idx stripe_a_end, stripe_b_end;
+
+    intersection.start = norm_start + stripe_a->start;
+    intersection.stride = stripe_lcm;
+    stripe_a_end = stripe_a->start + stripe_a->stride * (stripe_a->nstrides-1);
+    stripe_b_end = stripe_b->start + stripe_b->stride * (stripe_b->nstrides-1);
+    intersection.nstrides = (MIN(stripe_a_end, stripe_b_end) - intersection.start + 1) /
+                            stripe_lcm;
+  }
+
+  return intersection;
+}
+
+// this routine only works for idxstripes that have stripes_overlap==0
+static Xt_idxlist
+idxstripes_compute_intersection(struct xt_idxstripes *idxstripes_src,
+                                struct xt_idxstripes *idxstripes_dst) {
+
+  struct Xt_stripe * inter_stripes = NULL;
+  Xt_count num_inter_stripes = 0;
+  Xt_count inter_stripes_array_size = 0;
+
+  Xt_count i_src, i_dst;
+
+  i_src = 0;
+  i_dst = 0;
+  while (i_src < idxstripes_src->num_stripes &&
+         i_dst < idxstripes_dst->num_stripes) {
+
+    while (i_src < idxstripes_src->num_stripes &&
+           idxstripes_src->stripes_sorted[i_src].start +
+           idxstripes_src->stripes_sorted[i_src].stride *
+           (idxstripes_src->stripes_sorted[i_src].nstrides-1) <
+           idxstripes_dst->stripes_sorted[i_dst].start) ++i_src;
+
+    while (i_dst < idxstripes_dst->num_stripes &&
+           idxstripes_dst->stripes_sorted[i_dst].start +
+           idxstripes_dst->stripes_sorted[i_dst].stride *
+           (idxstripes_dst->stripes_sorted[i_dst].nstrides-1) <
+           idxstripes_src->stripes_sorted[i_src].start) ++i_dst;
+
+    if (stripes_overlap(idxstripes_src->stripes_sorted[i_src],
+                        idxstripes_dst->stripes_sorted[i_dst])) {
+
+      ENSURE_ARRAY_SIZE(inter_stripes, inter_stripes_array_size, num_inter_stripes+1);
+
+      inter_stripes[num_inter_stripes] = 
+        get_stripe_intersection(idxstripes_src->stripes_sorted+i_src,
+                                idxstripes_dst->stripes_sorted+i_dst);
+
+      if (inter_stripes[num_inter_stripes].nstrides > 0) ++num_inter_stripes;
+    }
+
+    if (idxstripes_dst->stripes_sorted[i_dst].start +
+        idxstripes_dst->stripes_sorted[i_dst].stride *
+        (idxstripes_dst->stripes_sorted[i_dst].nstrides+1) <
+        idxstripes_src->stripes_sorted[i_src].start +
+        idxstripes_src->stripes_sorted[i_src].stride *
+        (idxstripes_src->stripes_sorted[i_src].nstrides+1))
+      i_dst++;
+    else
+      i_src++;
+  }
+
+  struct xt_idxlist * inter;
+
+  inter = xt_idxstripes_new(inter_stripes, num_inter_stripes);
 
   free(inter_stripes);
 
-  return intersection;
+  return inter;
 }
 
 static Xt_idxlist
@@ -356,13 +461,12 @@ idxstripes_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
   idxstripes_src = (struct xt_idxstripes*)idxlist_src;
   idxstripes_dst = (struct xt_idxstripes*)idxlist_dst;
 
-  // check for requirements of a simple intersection solution
-  if (check_for_simple_strides(idxstripes_src) &&
-      check_for_simple_strides(idxstripes_dst)) {
+  if (idxstripes_src->stripes_overlap ||
+      idxstripes_dst->stripes_overlap) {
 
-    return compute_intersection_simple(idxstripes_src, idxstripes_dst);
-  } else // compute the intersection using brute force
     return compute_intersection_fallback(idxstripes_src, idxstripes_dst);
+  } else
+    return idxstripes_compute_intersection(idxstripes_src, idxstripes_dst);
 }
 
 static xt_idxlist

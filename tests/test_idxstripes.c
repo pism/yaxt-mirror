@@ -7,13 +7,11 @@
 
 #include "yaxt.h"
 #include "xt_idxstripes.h"
+#include "xt_idxvec.h"
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
-              struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes);
-void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
+void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices);
 
 int main(void) {
 
@@ -34,7 +32,7 @@ int main(void) {
     Xt_idx ref_indices[15] = {0,1,2,3,4, 10,11,12,13,14, 20,21,22,23,24};
     Xt_count ref_num_indices = 15;
 
-    do_tests(idxstripes, ref_indices, ref_num_indices, stripes, num_stripes);
+    do_tests(idxstripes, ref_indices, ref_num_indices);
 
     xt_idxlist_delete(idxstripes);
   }
@@ -49,11 +47,8 @@ int main(void) {
 
     Xt_idx ref_indices[15] = {0,1,2,3,4, 10,12,14,16,18, 20,23,26,29,32};
     Xt_count ref_num_indices = 15;
-    struct Xt_stripe ref_stripes[11] = {{0,5,1}, {10,1,1}, {12,1,1}, {14,1,1},
-                                        {16,1,1}, {18,1,1}, {20,1,1}, {23,1,1},
-                                        {26,1,1}, {29,1,1}, {32,1,1}};
 
-    do_tests(idxstripes, ref_indices, ref_num_indices, ref_stripes, 11);
+    do_tests(idxstripes, ref_indices, ref_num_indices);
 
     xt_idxlist_delete(idxstripes);
   }
@@ -68,11 +63,8 @@ int main(void) {
 
     Xt_idx ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
     Xt_count ref_num_indices = 10;
-    struct Xt_stripe ref_stripes[10] = {{0,1,1}, {6,1,1}, {12,1,1}, {18,1,1},
-                                        {24,1,1}, {1,1,1}, {4,1,1}, {7,1,1},
-                                        {10,1,1}, {13,1,1}};
 
-    do_tests(idxstripes, ref_indices, ref_num_indices, ref_stripes, 10);
+    do_tests(idxstripes, ref_indices, ref_num_indices);
 
     xt_idxlist_delete(idxstripes);
   }
@@ -87,11 +79,8 @@ int main(void) {
 
     Xt_idx ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
     Xt_count ref_num_indices = 10;
-    struct Xt_stripe ref_stripes[10] = {{0,1,1}, {6,1,1}, {12,1,1}, {18,1,1},
-                                        {24,1,1}, {1,1,1}, {4,1,1}, {7,1,1},
-                                        {10,1,1}, {13,1,1}};
 
-    do_tests(idxstripes, ref_indices, ref_num_indices, ref_stripes, 10);
+    do_tests(idxstripes, ref_indices, ref_num_indices);
 
     xt_idxlist_delete(idxstripes);
   }
@@ -106,10 +95,8 @@ int main(void) {
 
     Xt_idx ref_indices[10] = {0,-1,-2,-3,-4, 1,2,3,4,5};
     Xt_count ref_num_indices = 10;
-    struct Xt_stripe ref_stripes[6] = {{0,1,1}, {-1,1,1}, {-2,1,1}, {-3,1,1},
-                                       {-4,1,1}, {1,5,1}};
 
-    do_tests(idxstripes, ref_indices, ref_num_indices, ref_stripes, 6);
+    do_tests(idxstripes, ref_indices, ref_num_indices);
 
     xt_idxlist_delete(idxstripes);
   }
@@ -124,11 +111,8 @@ int main(void) {
 
     Xt_idx ref_indices[10] = {9,7,5,3,1, 0,2,4,6,8};
     Xt_count ref_num_indices = 10;
-    struct Xt_stripe ref_stripes[10] = {{9,1,1}, {7,1,1}, {5,1,1}, {3,1,1},
-                                        {1,1,1}, {0,1,1}, {2,1,1}, {4,1,1},
-                                        {6,1,1}, {8,1,1}};
 
-    do_tests(idxstripes, ref_indices, ref_num_indices, ref_stripes, 10);
+    do_tests(idxstripes, ref_indices, ref_num_indices);
 
     xt_idxlist_delete(idxstripes);
   }
@@ -154,10 +138,9 @@ int main(void) {
 
     Xt_idx ref_indices[6] = {1,2,3, 6,7,8};
     Xt_count ref_num_indices = 6;
-    struct Xt_stripe ref_stripes[2] = {{1,3,1}, {6,3,1}};
 
-    do_tests(intersection[0], ref_indices, ref_num_indices, ref_stripes, 2);
-    do_tests(intersection[1], ref_indices, ref_num_indices, ref_stripes, 2);
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
 
     // clean up
 
@@ -188,10 +171,9 @@ int main(void) {
 
     Xt_idx ref_indices[9] = {1,2,3, 6,7, 9, 11,12,13};
     Xt_count ref_num_indices = 9;
-    struct Xt_stripe ref_stripes[4] = {{1,3,1}, {6,2,1}, {9,1,1}, {11,3,1}};
 
-    do_tests(intersection[0], ref_indices, ref_num_indices,ref_stripes, 4);
-    do_tests(intersection[1], ref_indices, ref_num_indices,ref_stripes, 4);
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
 
     // clean up
 
@@ -222,10 +204,9 @@ int main(void) {
 
     Xt_idx *ref_indices = NULL;
     Xt_count ref_num_indices = 0;
-    struct Xt_stripe ref_stripes[1] = {{0,1,1}};
 
-    do_tests(intersection[0], ref_indices, ref_num_indices, ref_stripes, 0);
-    do_tests(intersection[1], ref_indices, ref_num_indices, ref_stripes, 0);
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
 
     // clean up
 
@@ -256,10 +237,9 @@ int main(void) {
 
     Xt_idx ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
     Xt_count ref_num_indices = 10;
-    struct Xt_stripe ref_stripes[1] = {{0,10,1}};
 
-    do_tests(intersection[0], ref_indices, ref_num_indices, ref_stripes, 1);
-    do_tests(intersection[1], ref_indices, ref_num_indices, ref_stripes, 1);
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
 
     // clean up
 
@@ -290,10 +270,9 @@ int main(void) {
 
     Xt_idx ref_indices[6] = {0,6,8,12,15,22};
     Xt_count ref_num_indices = 6;
-    struct Xt_stripe ref_stripes[6] = {{0,1,1}, {6,1,1}, {8,1,1}, {12,1,1}, {15,1,1}, {22,1,1}};
 
-    do_tests(intersection[0], ref_indices, ref_num_indices, ref_stripes, 6);
-    do_tests(intersection[1], ref_indices, ref_num_indices, ref_stripes, 6);
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
 
     // clean up
 
@@ -324,10 +303,76 @@ int main(void) {
 
     Xt_idx ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
     Xt_count ref_num_indices = 10;
-    struct Xt_stripe ref_stripes[1] = {{0,10,1}};
 
-    do_tests(intersection[0], ref_indices, ref_num_indices, ref_stripes, 1);
-    do_tests(intersection[1], ref_indices, ref_num_indices, ref_stripes, 1);
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
+
+    // clean up
+
+    xt_idxlist_delete(idxstripes_a);
+    xt_idxlist_delete(idxstripes_b);
+    xt_idxlist_delete(intersection[0]);
+    xt_idxlist_delete(intersection[1]);
+  }
+
+{ // intersection test
+
+    Xt_idxlist idxstripes_a, idxstripes_b;
+
+    struct Xt_stripe stripes_a[2] = {{0,10,1}, {20,5,1}};
+    struct Xt_stripe stripes_b[2] = {{3,5,1},  {17,5,1}};
+
+    idxstripes_a = xt_idxstripes_new(stripes_a, 2);
+    idxstripes_b = xt_idxstripes_new(stripes_b, 2);
+
+    // compute intersection
+
+    Xt_idxlist intersection[2];
+
+    intersection[0] = xt_idxlist_get_intersection(idxstripes_a, idxstripes_b);
+    intersection[1] = xt_idxlist_get_intersection(idxstripes_b, idxstripes_a);
+
+    // check intersection
+
+    Xt_idx ref_indices[7] = {3,4,5,6,7,20,21};
+    Xt_count ref_num_indices = 7;
+
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
+
+    // clean up
+
+    xt_idxlist_delete(idxstripes_a);
+    xt_idxlist_delete(idxstripes_b);
+    xt_idxlist_delete(intersection[0]);
+    xt_idxlist_delete(intersection[1]);
+  }
+
+{ // intersection test
+
+    Xt_idxlist idxstripes_a, idxstripes_b;
+
+    struct Xt_stripe stripes_a[10] = {{0,2,1},{3,2,1},{5,2,1},{8,2,1},{10,2,1},
+                                      {14,2,1},{17,2,1},{20,2,1},{23,2,1},{25,2,1}};
+    struct Xt_stripe stripes_b[5] = {{5,3,1},{8,2,1},{19,1,1},{20,2,1},{30,2,1}};
+
+    idxstripes_a = xt_idxstripes_new(stripes_a, 10);
+    idxstripes_b = xt_idxstripes_new(stripes_b, 5);
+
+    // compute intersection
+
+    Xt_idxlist intersection[2];
+
+    intersection[0] = xt_idxlist_get_intersection(idxstripes_a, idxstripes_b);
+    intersection[1] = xt_idxlist_get_intersection(idxstripes_b, idxstripes_a);
+
+    // check intersection
+
+    Xt_idx ref_indices[6] = {5,6,8,9,20,21};
+    Xt_count ref_num_indices = 6;
+
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
 
     // clean up
 
@@ -342,17 +387,20 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
-void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
-              struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes) {
+void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 
   struct Xt_stripe * stripes;
   Xt_count num_stripes;
+  xt_idxlist temp_idxlist;
 
   xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
+  temp_idxlist = xt_idxvec_from_stripes_new(stripes, num_stripes);
 
-  check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
+  check_idxlist(temp_idxlist, ref_indices, num_indices);
+
+  xt_idxlist_delete(temp_idxlist);
 
   free(stripes);
 
@@ -424,19 +472,4 @@ void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
 
     xt_idxlist_delete(idxlist_copy);
   }
-}
-
-void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
-
-  Xt_count i;
-
-  if (num_stripes != ref_num_stripes)
-    PUT_ERR("wrong number of stripes\n");
-
-  for (i = 0; i < ref_num_stripes; ++i)
-    if (stripes[i].start != ref_stripes[i].start ||
-        stripes[i].nstrides != ref_stripes[i].nstrides ||
-        stripes[i].stride != ref_stripes[i].stride)
-      PUT_ERR("error in stripe (start, nstrides and/or stride)\n");
 }
