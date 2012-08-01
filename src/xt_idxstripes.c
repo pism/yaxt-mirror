@@ -382,7 +382,8 @@ get_stripe_intersection(struct Xt_stripe * stripe_a,
     intersection.stride = stripe_lcm;
     stripe_a_end = stripe_a->start + stripe_a->stride * (stripe_a->nstrides-1);
     stripe_b_end = stripe_b->start + stripe_b->stride * (stripe_b->nstrides-1);
-    intersection.nstrides = (MIN(stripe_a_end, stripe_b_end) - intersection.start + 1) /
+    intersection.nstrides = (MIN(stripe_a_end, stripe_b_end) - intersection.start + 1 +
+                             (stripe_lcm - 1)) /
                             stripe_lcm;
   }
 
