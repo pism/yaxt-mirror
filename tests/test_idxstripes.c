@@ -382,6 +382,105 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
+{ // intersection test
+
+    Xt_idxlist idxstripes_a, idxstripes_b;
+
+    struct Xt_stripe stripes_a[3] = {{0,5,1},{1,5,1},{2,5,1}};
+    struct Xt_stripe stripes_b[1] = {{-2,10,1}};
+
+    idxstripes_a = xt_idxstripes_new(stripes_a, 3);
+    idxstripes_b = xt_idxstripes_new(stripes_b, 1);
+
+    // compute intersection
+
+    Xt_idxlist intersection[2];
+
+    intersection[0] = xt_idxlist_get_intersection(idxstripes_a, idxstripes_b);
+    intersection[1] = xt_idxlist_get_intersection(idxstripes_b, idxstripes_a);
+
+    // check intersection
+
+    Xt_idx ref_indices[2][15] = {{0,1,2,3,4,5,6},{0,1,1,2,2,2,3,3,3,4,4,4,5,5,6}};
+    Xt_count ref_num_indices[2] = {7,15};
+
+    do_tests(intersection[0], ref_indices[0], ref_num_indices[0]);
+    do_tests(intersection[1], ref_indices[1], ref_num_indices[1]);
+
+    // clean up
+
+    xt_idxlist_delete(idxstripes_a);
+    xt_idxlist_delete(idxstripes_b);
+    xt_idxlist_delete(intersection[0]);
+    xt_idxlist_delete(intersection[1]);
+  }
+
+{ // intersection test
+
+    Xt_idxlist idxstripes_a, idxstripes_b;
+
+    struct Xt_stripe stripes_a[1] = {{0,5,2}};
+    struct Xt_stripe stripes_b[1] = {{1,5,2}};
+
+    idxstripes_a = xt_idxstripes_new(stripes_a, 1);
+    idxstripes_b = xt_idxstripes_new(stripes_b, 1);
+
+    // compute intersection
+
+    Xt_idxlist intersection[2];
+
+    intersection[0] = xt_idxlist_get_intersection(idxstripes_a, idxstripes_b);
+    intersection[1] = xt_idxlist_get_intersection(idxstripes_b, idxstripes_a);
+
+    // check intersection
+
+    Xt_idx ref_indices[1] = {};
+    Xt_count ref_num_indices = 0;
+
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
+
+    // clean up
+
+    xt_idxlist_delete(idxstripes_a);
+    xt_idxlist_delete(idxstripes_b);
+    xt_idxlist_delete(intersection[0]);
+    xt_idxlist_delete(intersection[1]);
+  }
+
+{ // intersection test
+
+    Xt_idxlist idxstripes_a, idxstripes_b;
+
+    struct Xt_stripe stripes_a[1] = {{0,20,5}};
+    struct Xt_stripe stripes_b[1] = {{1,15,7}};
+
+    idxstripes_a = xt_idxstripes_new(stripes_a, 1);
+    idxstripes_b = xt_idxstripes_new(stripes_b, 1);
+
+    // compute intersection
+
+    Xt_idxlist intersection[2];
+
+    intersection[0] = xt_idxlist_get_intersection(idxstripes_a, idxstripes_b);
+    intersection[1] = xt_idxlist_get_intersection(idxstripes_b, idxstripes_a);
+
+    // check intersection
+
+    Xt_idx ref_indices[3] = {15,50,85};
+    Xt_count ref_num_indices = 3;
+
+    do_tests(intersection[0], ref_indices, ref_num_indices);
+    do_tests(intersection[1], ref_indices, ref_num_indices);
+
+    // clean up
+
+    xt_idxlist_delete(idxstripes_a);
+    xt_idxlist_delete(idxstripes_b);
+    xt_idxlist_delete(intersection[0]);
+    xt_idxlist_delete(intersection[1]);
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;

@@ -8,9 +8,6 @@
  *
  * @param[in] stripes     array defining the stripes
  * @param[in] num_stripes number of stripes
- *
- * @remarks this routine does not check for overlaps between stripes
- *          and assumes that there are no
  */
 Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stripes);
 
