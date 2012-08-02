@@ -110,7 +110,7 @@ int main(void) {
 
     Xt_redist redist;
     redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
-    
+
     // test exchange
 
     double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
@@ -126,7 +126,7 @@ int main(void) {
     double ref_dst_data[] = {-1,0,2,-1,13,9,7,0,-1,-1,2,0,2,-1,13,4,-1,6,7};
 
     for (i = 0; i < dst_num; ++i)
-      if (ref_dst_data[dst_pos[i]] != dst_data[i]) 
+      if (ref_dst_data[dst_pos[i]] != dst_data[i])
         PUT_ERR("error in xt_redist_s_exchange\n");
 
     // clean up

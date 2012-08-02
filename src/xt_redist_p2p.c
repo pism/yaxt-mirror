@@ -39,6 +39,55 @@ struct Xt_redist_p2p {
 };
 
 static MPI_Datatype
+generate_block_datatype(Xt_idxlist xlist, int *block_offsets, int *block_sizes,
+                        MPI_Datatype base_datatype, MPI_Comm comm) {
+
+  MPI_Datatype type;
+
+  Xt_count num_indices;
+  Xt_idx *idx_vec;
+  int *bdispl_vec;
+  int *blen_vec;
+
+  num_indices = xt_idxlist_get_num_indices(xlist);
+
+  idx_vec = xmalloc(num_indices * sizeof(*idx_vec));
+
+  xt_idxlist_get_indices(xlist, idx_vec);
+
+  if (block_offsets) {
+    assert(block_sizes != NULL);
+    bdispl_vec = xmalloc(num_indices * sizeof(*bdispl_vec));
+    blen_vec = xmalloc(num_indices * sizeof(*blen_vec));
+    int j;
+    for (Xt_count i = 0; i < num_indices; ++i) {
+      j = idx_vec[i];
+      bdispl_vec[i] = block_offsets[j];
+      blen_vec[i] = block_sizes[j];
+    }
+    mpi_err_handler(MPI_Type_indexed(num_indices, blen_vec, bdispl_vec, base_datatype, &type), comm);
+    free(blen_vec);
+    free(bdispl_vec);
+  } else {
+    assert(sizeof(Xt_idx) == sizeof(int));
+    int *displ;
+    // here we interpret indices as displacements in the index space
+    // and we assume a simple transformation into data space using
+    // the base_datatype only
+    displ = (int*)idx_vec;
+    mpi_err_handler(MPI_Type_create_indexed_block(num_indices, 1, displ,
+                                                  base_datatype, &type), comm);
+  }
+
+
+  mpi_err_handler(MPI_Type_commit(&type), comm);
+
+  free(idx_vec);
+
+  return type;
+}
+
+static MPI_Datatype
 generate_datatype(Xt_idxlist xlist, int *offsets,
                   MPI_Datatype base_datatype, MPI_Comm comm) {
 
@@ -104,6 +153,40 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
   xt_xmap_iterator_delete(iter);
 }
 
+static void
+generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets, int *block_sizes,
+                         MPI_Datatype base_datatype, struct Xt_redist_p2p_msg ** msgs,
+                         MPI_Comm comm) {
+
+  if (num_msgs <= 0) {
+    *msgs = NULL;
+    return;
+  }
+
+  *msgs = xmalloc(num_msgs * sizeof(**msgs));
+
+  struct Xt_redist_p2p_msg * curr_msg;
+
+  curr_msg = *msgs;
+
+  do {
+
+    Xt_idxlist curr_xlist;
+
+    curr_xlist = xt_xmap_iterator_get_xlist(iter);
+
+    curr_msg->datatype = generate_block_datatype(curr_xlist, block_offsets, block_sizes, base_datatype, comm);
+    curr_msg->rank = xt_xmap_iterator_get_rank(iter);
+
+    curr_msg++;
+
+    xt_idxlist_delete(curr_xlist);
+
+  } while (xt_xmap_iterator_next(iter));
+
+  xt_xmap_iterator_delete(iter);
+}
+
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                                 int *dst_offsets, MPI_Datatype datatype) {
 
@@ -127,6 +210,35 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
 
   generate_msg_infos(redist->nsrc, xt_xmap_get_source_iterator(xmap),
                      src_offsets, datatype, &(redist->send_msgs), redist->comm);
+
+  return (Xt_redist)redist;
+}
+
+Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
+                                   int *src_block_offsets, int *src_block_sizes,
+                                   int *dst_block_offsets, int *dst_block_sizes,
+                                   MPI_Datatype datatype) {
+
+  struct Xt_redist_p2p *redist;
+
+  redist = xmalloc(1 * sizeof(*redist));
+
+  redist->vtable = &redist_p2p_vtable;
+
+  MPI_Comm xmap_comm;
+
+  xmap_comm = xt_xmap_get_communicator(xmap);
+
+  mpi_err_handler(MPI_Comm_dup(xmap_comm, &(redist->comm)), xmap_comm);
+
+  redist->ndst = xt_xmap_get_num_destinations(xmap);
+  redist->nsrc = xt_xmap_get_num_sources(xmap);
+
+  generate_block_msg_infos(redist->ndst, xt_xmap_get_destination_iterator(xmap),
+                           dst_block_offsets, dst_block_sizes, datatype, &(redist->recv_msgs), redist->comm);
+
+  generate_block_msg_infos(redist->nsrc, xt_xmap_get_source_iterator(xmap),
+                           src_block_offsets, src_block_sizes, datatype, &(redist->send_msgs), redist->comm);
 
   return (Xt_redist)redist;
 }
@@ -189,3 +301,4 @@ redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays
 
   free(recv_request);
 }
+

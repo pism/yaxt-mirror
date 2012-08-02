@@ -35,4 +35,22 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype);
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                                 int *dst_offsets, MPI_Datatype datatype);
 
+/**
+ * constructor for a redistribution using point to point
+ * communication for the exchange
+ * @param[in] xmap         exchange map
+ * @param[in] src_block_offsets  array containing for all source index space positions
+ *                               of xmap the offsets for blocks in data space
+ * @param[in] src_block_sizes  source block lengths in unit of elements
+ * @param[in] dst_offsets  array containing for all destination index space positions
+ *                         of xmap the offsets for blocks in data space
+ * @param[in] dst_block_sizes  destination block lengths in unit of elements
+ * @param[in] datatype     MPI datatype of a single element in data space,
+ *                         all elements have the same
+ */
+Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
+                                   int *src_block_offsets, int *src_block_sizes,
+                                   int *dst_block_offsets, int *dst_block_sizes,
+                                   MPI_Datatype datatype);
+
 #endif // XT_REDIST_P2P_H

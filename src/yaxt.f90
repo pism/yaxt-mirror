@@ -115,13 +115,29 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_redist_p2p_off_new(xmap, src_offsets, dst_offsets, comm) BIND(C, name='xt_redist_p2p_off_new_f') RESULT(res)
+    FUNCTION xt_redist_p2p_blocks_new(xmap, src_block_offsets, src_block_sizes, &
+         &                                  dst_block_offsets, dst_block_sizes, &
+         &                                  datatype) BIND(C, name='xt_redist_p2p_blocks_new_f') RESULT(res)
+      IMPORT :: xt_xmap, xt_redist, c_int
+      IMPLICIT NONE
+      TYPE(xt_xmap), INTENT(in) :: xmap
+      INTEGER(c_int), INTENT(in) :: src_block_offsets(*)
+      INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
+      INTEGER(c_int), INTENT(in) :: dst_block_offsets(*)
+      INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
+      INTEGER, INTENT(in) :: datatype
+      TYPE(xt_redist) :: res
+    END FUNCTION xt_redist_p2p_blocks_new
+  END INTERFACE
+
+  INTERFACE
+    FUNCTION xt_redist_p2p_off_new(xmap, src_offsets, dst_offsets, datatype) BIND(C, name='xt_redist_p2p_off_new_f') RESULT(res)
       IMPORT :: xt_xmap, xt_redist, c_int
       IMPLICIT NONE
       TYPE(xt_xmap), INTENT(in) :: xmap
       INTEGER(c_int), INTENT(in) :: src_offsets(*)
       INTEGER(c_int), INTENT(in) :: dst_offsets(*)
-      INTEGER, INTENT(in) :: comm
+      INTEGER, INTENT(in) :: datatype
       TYPE(xt_redist) :: res
     END FUNCTION xt_redist_p2p_off_new
   END INTERFACE

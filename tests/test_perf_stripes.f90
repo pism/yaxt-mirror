@@ -10,7 +10,7 @@ PROGRAM test_perf_stripes
   IMPLICIT NONE
   ! global extents including halos:
 
-  INTEGER, PARAMETER :: nlev = 3
+  INTEGER, PARAMETER :: nlev = 20
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
   INTEGER, PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
@@ -35,7 +35,7 @@ PROGRAM test_perf_stripes
   INTEGER, ALLOCATABLE :: g_id(:,:) ! global id
   INTEGER, ALLOCATABLE :: g_tpex(:, :) ! global "tripolar-like" toy bounds exchange
   TYPE(xt_xmap) :: xmap_tpex_2d, xmap_tpex_3d, xmap_tpex_3d_ws
-  TYPE(xt_redist) :: redist_tpex_2d, redist_surf_tpex_2d, redist_tpex_3d, redist_tpex_3d_ws
+  TYPE(xt_redist) :: redist_tpex_2d, redist_surf_tpex_2d, redist_tpex_3d, redist_tpex_3d_ws, redist_tpex_3d_wb
   TYPE(xt_idxlist) :: loc_id_3d_ws, loc_tpex_3d_ws
 
   INTEGER, ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
@@ -43,12 +43,12 @@ PROGRAM test_perf_stripes
   INTEGER, ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
   INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
-  LOGICAL, PARAMETER :: full_test = .FALSE.
+  LOGICAL, PARAMETER :: full_test = .TRUE.
   LOGICAL, PARAMETER :: debug =.FALSE.
   LOGICAL :: verbose
 
   TYPE timer
-    CHARACTER(len=20) :: label = 'undef'
+    CHARACTER(len=30) :: label = 'undef'
     INTEGER  :: istate  = -1
     REAL(dp) :: t0      = 0.0_dp
     REAL(dp) :: dt_work = 0.0_dp
@@ -59,9 +59,10 @@ PROGRAM test_perf_stripes
   TYPE(timer) :: t_all, t_surf_redist, t_exch_surf
   TYPE(timer) :: t_xmap_2d, t_redist_2d, t_exch_2d
   TYPE(timer) :: t_xmap_3d, t_redist_3d, t_exch_3d
-  TYPE(timer) :: t_xmap_3d_ws, t_redist_3d_ws, t_exch_3d_ws
+  TYPE(timer) :: t_xmap_3d_ws, t_redist_3d_ws, t_exch_3d_ws, t_exch_3d_wb
+  TYPE(timer) :: t_redist_3d_wb
 
-  WRITE(0,*) '(debug) test_perf_stripes: verbose=', verbose
+  !WRITE(0,*) '(debug) test_perf_stripes: verbose=', verbose
 
   CALL treset(t_all, 'all')
   CALL treset(t_surf_redist, 'surf_redist')
@@ -77,6 +78,8 @@ PROGRAM test_perf_stripes
   CALL treset(t_redist_3d_ws, 'redist_3d_ws')
   CALL treset(t_exch_3d_ws, 'exch_3d_ws')
 
+  CALL treset(t_redist_3d_wb, 'redist_3d_wb')
+  CALL treset(t_exch_3d_wb, 'exch_3d_wb')
 
   CALL init_mpi
 
@@ -141,11 +144,6 @@ PROGRAM test_perf_stripes
     ! check sub surface:
     CALL icmp_2d('sub surface check', gval_3d(2,:,:), loc_tpex_2d*0-1)
   ENDIF
-
-  ! cleanup 2d:
-  CALL xt_xmap_delete(xmap_tpex_2d)
-  CALL xt_redist_delete(redist_tpex_2d)
-  CALL xt_redist_delete(redist_surf_tpex_2d)
   endif
 
   ! inflate (i,j) -> (k,i,j)
@@ -203,6 +201,27 @@ PROGRAM test_perf_stripes
   CALL icmp_3d('3d to 3d check (using stripes)', gval_3d, loc_tpex_3d)
   endif
 
+  CALL tstart(t_redist_3d_wb)
+  CALL gen_redist_3d_wb(xmap_tpex_2d, MPI_INTEGER, redist_tpex_3d_wb)
+  CALL tstop(t_redist_3d_wb)
+
+  fval_3d = loc_id_3d
+  gval_3d = -1
+  CALL tstart(t_exch_3d_wb)
+  CALL exchange_int(redist_tpex_3d_wb, fval_3d, gval_3d)
+  CALL tstop(t_exch_3d_wb)
+
+  CALL xt_redist_delete(redist_tpex_3d_wb)
+
+  CALL icmp_3d('redist_tpex_3d_wb check', gval_3d, loc_tpex_3d)
+
+  ! cleanup:
+  IF (full_test) THEN
+    CALL xt_xmap_delete(xmap_tpex_2d)
+    CALL xt_redist_delete(redist_tpex_2d)
+    CALL xt_redist_delete(redist_surf_tpex_2d)
+  ENDIF
+
   CALL tstop(t_all)
 
   IF (verbose) WRITE(0,*) 'timer report for nprocs=',nprocs
@@ -221,9 +240,31 @@ PROGRAM test_perf_stripes
   CALL treport(t_redist_3d_ws)
   CALL treport(t_exch_3d_ws)
 
+  CALL treport(t_redist_3d_wb)
+  CALL treport(t_exch_3d_wb)
+
   CALL exit_mpi
 
 CONTAINS
+
+  SUBROUTINE gen_redist_3d_wb(xmap_2d, dt, redist_3d)
+    TYPE(xt_xmap), INTENT(in) :: xmap_2d
+    INTEGER, INTENT(in) :: dt
+    TYPE(xt_redist), INTENT(out) :: redist_3d
+
+    INTEGER :: block_disp(ie,je), block_size(ie,je)
+    INTEGER :: i, j
+    ! data(k,i,j)
+    DO j = 1, je
+      DO i = 1, ie
+        block_disp(i,j) = ( (j-1) * ie + i - 1 ) * nlev
+        block_size(i,j) =  nlev
+      ENDDO
+    ENDDO
+
+    redist_3d = xt_redist_p2p_blocks_new(xmap_2d, block_disp, block_size, block_disp, block_size, dt)
+
+  END SUBROUTINE gen_redist_3d_wb
 
   SUBROUTINE msg(s)
     CHARACTER(len=*), INTENT(in) :: s
