@@ -412,18 +412,22 @@ idxstripes_compute_intersection(struct xt_idxstripes *idxstripes_src,
            (idxstripes_src->stripes_sorted[i_src].nstrides-1) <
            idxstripes_dst->stripes_sorted[i_dst].start) ++i_src;
 
+    if ( i_src >= idxstripes_src->num_stripes ) break;
+
     while (i_dst < idxstripes_dst->num_stripes &&
            idxstripes_dst->stripes_sorted[i_dst].start +
            idxstripes_dst->stripes_sorted[i_dst].stride *
            (idxstripes_dst->stripes_sorted[i_dst].nstrides-1) <
            idxstripes_src->stripes_sorted[i_src].start) ++i_dst;
 
+    if ( i_dst >= idxstripes_dst->num_stripes ) break;
+
     if (stripes_overlap(idxstripes_src->stripes_sorted[i_src],
                         idxstripes_dst->stripes_sorted[i_dst])) {
 
       ENSURE_ARRAY_SIZE(inter_stripes, inter_stripes_array_size, num_inter_stripes+1);
 
-      inter_stripes[num_inter_stripes] = 
+      inter_stripes[num_inter_stripes] =
         get_stripe_intersection(idxstripes_src->stripes_sorted+i_src,
                                 idxstripes_dst->stripes_sorted+i_dst);
 
