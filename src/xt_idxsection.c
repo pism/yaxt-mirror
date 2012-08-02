@@ -44,6 +44,12 @@ static int
 idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                      int * position, int offset);
 
+static Xt_idx
+idxsection_get_min_index(Xt_idxlist idxlist);
+
+static Xt_idx
+idxsection_get_max_index(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxsection_vtable = {
               .delete                      = idxsection_delete,
               .get_pack_size               = idxsection_get_pack_size,
@@ -57,7 +63,9 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .get_position_of_index       = idxsection_get_position_of_index,
               .get_position_of_indices     = NULL,
               .get_position_of_index_off   = idxsection_get_position_of_index_off,
-              .get_position_of_indices_off = NULL};
+              .get_position_of_indices_off = NULL,
+              .get_min_index               = idxsection_get_min_index,
+              .get_max_index               = idxsection_get_max_index};
 
 struct xt_idxsection {
 
@@ -480,4 +488,24 @@ idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
   *position = temp_position;
 
   return 0;
+}
+
+static Xt_idx
+idxsection_get_min_index(Xt_idxlist idxlist) {
+
+  Xt_idx index;
+
+  idxsection_get_index(idxlist, 0, &index);
+
+  return index;
+}
+
+static Xt_idx
+idxsection_get_max_index(Xt_idxlist idxlist) {
+
+  Xt_idx index;
+
+  idxsection_get_index(idxlist, idxsection_get_num_indices(idxlist)-1, &index);
+
+  return index;
 }

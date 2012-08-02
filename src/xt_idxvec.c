@@ -56,6 +56,12 @@ idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
                                Xt_count num_indices, int * positions,
                                int single_match_only);
 
+static Xt_idx
+idxvec_get_min_index(Xt_idxlist idxlist);
+
+static Xt_idx
+idxvec_get_max_index(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxvec_vtable = {
               .delete = idxvec_delete,
               .get_pack_size =  idxvec_get_pack_size,
@@ -69,7 +75,9 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
               .get_position_of_index = idxvec_get_position_of_index,
               .get_position_of_indices = idxvec_get_position_of_indices,
               .get_position_of_index_off = idxvec_get_position_of_index_off,
-              .get_position_of_indices_off = NULL};
+              .get_position_of_indices_off = NULL,
+              .get_min_index = idxvec_get_min_index,
+              .get_max_index = idxvec_get_max_index};
 
 // index vector data structure
 struct xt_idxvec {
@@ -663,4 +671,24 @@ int idxvec_get_position_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_i
   if (sorted_selection_pos) free(sorted_selection_pos);
 
   return 0;
+}
+
+static Xt_idx
+idxvec_get_min_index(Xt_idxlist idxlist) {
+
+  struct xt_idxvec *idxvec_data;
+
+  idxvec_data = (struct xt_idxvec *)idxlist;
+
+  return get_sorted_vector(idxvec_data)[0];
+}
+
+static Xt_idx
+idxvec_get_max_index(Xt_idxlist idxlist) {
+
+  struct xt_idxvec *idxvec_data;
+
+  idxvec_data = (struct xt_idxvec *)idxlist;
+
+  return get_sorted_vector(idxvec_data)[idxvec_data->num_indices-1];
 }

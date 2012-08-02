@@ -32,6 +32,39 @@ void ref_get_position_of_indices(Xt_idx * indices, Xt_count num_indices,
   }
 }
 
+Xt_idx get_min_index(Xt_idx * indices, Xt_count num_indices) {
+
+  Xt_idx index;
+  Xt_count i;
+
+  if (num_indices > 0)
+    index = indices[0];
+  else
+    index = 0;
+
+  for (i = 1; i < num_indices; ++i)
+    if (index > indices[i])
+      index = indices[i];
+
+  return index;
+}
+
+Xt_idx get_max_index(Xt_idx * indices, Xt_count num_indices) {
+
+  Xt_idx index;
+  Xt_count i;
+
+  if (num_indices > 0)
+    index = indices[0];
+  else
+    index = 0;
+
+  for (i = 1; i < num_indices; ++i)
+    if (index < indices[i])
+      index = indices[i];
+
+  return index;
+}
 
 void check_idxlist(xt_idxlist idxlist, Xt_idx * ref_indices,
                    Xt_count ref_num_indices) {
@@ -148,6 +181,17 @@ void check_idxlist(xt_idxlist idxlist, Xt_idx * ref_indices,
         if (positions[i] != ref_positions[i])
           PUT_ERR("check_idxlist: get_position_of_indices failed (case 4)\n");
     }
+  }
+
+  if (ref_num_indices > 0) {
+
+    if (get_min_index(ref_indices, ref_num_indices) !=
+        xt_idxlist_get_min_index(idxlist))
+      PUT_ERR("check_idxlist: get_min_index failed")
+
+    if (get_max_index(ref_indices, ref_num_indices) !=
+        xt_idxlist_get_max_index(idxlist))
+      PUT_ERR("check_idxlist: get_max_index failed")
   }
 
   if (!xt_idxlist_get_index(idxlist, -1, &index))

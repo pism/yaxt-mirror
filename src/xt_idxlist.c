@@ -211,3 +211,13 @@ int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
 
   return 0;
 }
+
+Xt_idx xt_idxlist_get_min_index(Xt_idxlist idxlist) {
+
+  return idxlist->vtable->get_min_index(idxlist);
+}
+
+Xt_idx xt_idxlist_get_max_index(Xt_idxlist idxlist) {
+
+  return idxlist->vtable->get_max_index(idxlist);
+}

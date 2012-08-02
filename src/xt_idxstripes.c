@@ -49,6 +49,12 @@ static int
 idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                      int * position, int offset);
 
+static Xt_idx
+idxstripes_get_min_index(Xt_idxlist idxlist);
+
+static Xt_idx
+idxstripes_get_max_index(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxstripes_vtable = {
   .delete                      = idxstripes_delete,
   .get_pack_size               = idxstripes_get_pack_size,
@@ -62,7 +68,9 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .get_position_of_index       = idxstripes_get_position_of_index,
   .get_position_of_indices     = NULL,
   .get_position_of_index_off   = idxstripes_get_position_of_index_off,
-  .get_position_of_indices_off = NULL};
+  .get_position_of_indices_off = NULL,
+  .get_min_index               = idxstripes_get_min_index,
+  .get_max_index               = idxstripes_get_max_index};
 
 static MPI_Datatype xt_get_stripes_datatype() {
 
@@ -628,4 +636,35 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
   *position = temp_position;
 
   return 0;
+}
+
+static Xt_idx
+idxstripes_get_min_index(Xt_idxlist idxlist) {
+
+  struct xt_idxstripes * idxstripes;
+
+  idxstripes = (struct xt_idxstripes *)idxlist;
+
+  if (idxstripes->num_stripes > 0)
+    return idxstripes->stripes_sorted[0].start;
+  else
+    return 0;
+}
+
+static Xt_idx
+idxstripes_get_max_index(Xt_idxlist idxlist) {
+
+  struct xt_idxstripes * idxstripes;
+
+  idxstripes = (struct xt_idxstripes *)idxlist;
+
+  Xt_count i;
+  Xt_idx index = idxstripes_get_min_index(idxlist);
+
+  for (i = 0; i < idxstripes->num_stripes; ++i)
+    index = MAX(index, idxstripes->stripes_sorted[i].start +
+                       idxstripes->stripes_sorted[i].stride *
+                       (idxstripes->stripes_sorted[i].nstrides-1));
+
+  return index;
 }

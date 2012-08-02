@@ -27,6 +27,8 @@ struct xt_idxlist_vtable {
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
    int (*get_position_of_indices_off)(Xt_idxlist, Xt_idx *, Xt_count,
                                       int *, int *);
+   Xt_idx (*get_min_index)(Xt_idxlist);
+   Xt_idx (*get_max_index)(Xt_idxlist);
 };
 
 enum xt_idxvecype {
@@ -241,5 +243,21 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
 int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
                                            Xt_count num_indices, int * positions,
                                            int * offsets);
+
+/**
+ * gets the smallest index stored in the index list
+ *
+ * @param[in] idxlist index list
+ * @return            smallest index in idxlist
+ */
+Xt_idx xt_idxlist_get_min_index(Xt_idxlist idxlist);
+
+/**
+ * gets the biggest index stored in the index list
+ *
+ * @param[in] idxlist index list
+ * @return            biggest index in idxlist
+ */
+Xt_idx xt_idxlist_get_max_index(Xt_idxlist idxlist);
 
 #endif // XT_IDXLIST_H
