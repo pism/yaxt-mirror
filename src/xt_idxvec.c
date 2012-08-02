@@ -164,6 +164,12 @@ static void
 generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_stripes,
                                     struct xt_idxvec * idxvec) {
 
+  if (num_stripes == 0) {
+    idxvec->sorted_vector = NULL;
+    idxvec->sorted_vec_positions = NULL;
+    return;
+  }
+
   Xt_idx * stripe_min;
   int * sorted_stripe_min_pos;
 
