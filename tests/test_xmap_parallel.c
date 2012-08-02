@@ -69,23 +69,6 @@ int main(void) {
       if (ranks[i] != i)
         PUT_ERR("error in xt_xmap_get_destination_ranks\n");
 
-    for (i = 0; i < comm_size; ++i) {
-
-      Xt_idxlist src_xlist, dst_xlist;
-
-      dst_xlist = xt_xmap_get_dst_xlist(xmap, i);
-      src_xlist = xt_xmap_get_src_xlist(xmap, i);
-
-      Xt_idx ref_src_xlist[1] = {0};
-      Xt_idx ref_dst_xlist[1] = {i};
-
-      check_idxdata(src_xlist, ref_src_xlist, 1);
-      check_idxdata(dst_xlist, ref_dst_xlist, 1);
-
-      xt_idxlist_delete(dst_xlist);
-      xt_idxlist_delete(src_xlist);
-    }
-
     // clean up
     xt_xmap_delete(xmap);
     xt_idxlist_delete(src_idxlist);
@@ -141,23 +124,6 @@ int main(void) {
         ranks[1] != dst_index_list[1])
       PUT_ERR("error in xt_xmap_get_source_ranks\n");
 
-    for (i = 0; i < 2; ++i) {
-
-      Xt_idxlist src_xlist, dst_xlist;
-
-      dst_xlist = xt_xmap_get_dst_xlist(xmap, dst_index_list[i]);
-      src_xlist = xt_xmap_get_src_xlist(xmap, dst_index_list[i]);
-
-      Xt_idx ref_src_xlist[1] = {0};
-      Xt_idx ref_dst_xlist[1] = {i};
-
-      check_idxdata(src_xlist, ref_src_xlist, 1);
-      check_idxdata(dst_xlist, ref_dst_xlist, 1);
-
-      xt_idxlist_delete(dst_xlist);
-      xt_idxlist_delete(src_xlist);
-    }
-
     // clean up
     xt_xmap_delete(xmap);
     xt_idxlist_delete(src_idxlist);
@@ -206,37 +172,6 @@ int main(void) {
     if (ranks[0] != 0 || ranks[1] != 1)
       PUT_ERR("error in xt_xmap_get_source_ranks\n");
 
-    Xt_idx ref_src_xlist[2][2][15] = {
-      { {6,6,7,8,8,9,9,11,12,13,14,16,17,18,19},
-        {6,6,7,8,8,9,9,11,13,14,16,18,19} },
-      { {5,5,6,6,7,8,8,10,11,13,15,16,18},
-        {5,5,6,6,7,8,8,10,11,12,13,15,16,17,18} }
-    };
-
-    int ref_src_num[2][2] = { {15,13}, {13, 15} };
-
-    Xt_idx ref_dst_xlist[2][2][15] = {
-      { {0,6,7,4,8,3,9,11,12,13,14,16,17,18,19},
-        {4,8,3,9,2,1,5,13,14,10,18,19,15} },
-      { {3,9,2,1,5,0,6,14,10,11,19,15,16},
-        {1,5,0,6,7,4,8,10,11,12,13,15,16,17,18} }
-    };
-
-    int ref_dst_num[2][2] = { {15,13}, {13, 15} };
-
-    for (int irank = 0; irank < 2; irank++) {
-
-      Xt_idxlist src_xlist, dst_xlist;
-
-      dst_xlist = xt_xmap_get_dst_xlist(xmap, irank);
-      src_xlist = xt_xmap_get_src_xlist(xmap, irank);
-
-      check_idxdata(src_xlist, ref_src_xlist[comm_rank][irank], ref_src_num[comm_rank][irank]);
-      check_idxdata(dst_xlist, ref_dst_xlist[comm_rank][irank], ref_dst_num[comm_rank][irank]);
-
-      xt_idxlist_delete(dst_xlist);
-      xt_idxlist_delete(src_xlist);
-    }
     // clean up
     xt_xmap_delete(xmap);
     xt_idxlist_delete(src_idxlist);

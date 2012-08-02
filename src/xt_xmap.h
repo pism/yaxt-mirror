@@ -30,8 +30,6 @@ struct Xt_xmap_vtable {
   int (*get_num_sources)(Xt_xmap);
   void (*get_destination_ranks)(Xt_xmap, int*);
   void (*get_source_ranks)(Xt_xmap, int*);
-  Xt_idxlist (*get_dst_xlist)(Xt_xmap, int);
-  Xt_idxlist (*get_src_xlist)(Xt_xmap, int);
   Xt_xmap_iter (*get_destination_iterator)(Xt_xmap);
   Xt_xmap_iter (*get_source_iterator)(Xt_xmap);
   void (*delete)(Xt_xmap);
@@ -94,26 +92,6 @@ void xt_xmap_get_destination_ranks(Xt_xmap xmap, int * ranks);
  *          is sufficient in size to store all ranks
  */
 void xt_xmap_get_source_ranks(Xt_xmap xmap, int * ranks);
-
-/**
- * gets the destination exchange list for a given rank
- *
- * @param[in] xmap exchange map
- * @param[in] rank rank of process for which the exchange list is to be retrieved
- * @return         destination exchange list for given rank
- *                 NULL in case there is no exchange with the given rank
- */
-Xt_idxlist xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank);
-
-/**
- * gets the source exchange list for a given rank
- *
- * @param[in] xmap exchange map
- * @param[in] rank rank of process for which the exchange list is to be retrieved
- * @return         source exchange list for given rank
- *                 NULL in case there is no exchange with the given rank
- */
-Xt_idxlist xt_xmap_get_src_xlist(Xt_xmap xmap, int rank);
 
 /**
  * gets an iterator for all processes that will require data from

@@ -33,16 +33,6 @@ void xt_xmap_delete(Xt_xmap xmap) {
   xmap->vtable->delete(xmap);
 }
 
-Xt_idxlist xt_xmap_get_dst_xlist(Xt_xmap xmap, int rank) {
-
-  return xmap->vtable->get_dst_xlist(xmap, rank);
-}
-
-Xt_idxlist xt_xmap_get_src_xlist(Xt_xmap xmap, int rank) {
-
-  return xmap->vtable->get_src_xlist(xmap, rank);
-}
-
 Xt_xmap_iter xt_xmap_get_destination_iterator(Xt_xmap xmap) {
 
   return xmap->vtable->get_destination_iterator(xmap);

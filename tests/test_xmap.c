@@ -72,22 +72,7 @@ int main(void) {
       if (rank != my_rank)
         PUT_ERR("error in xt_xmap_get_source_ranks\n");
 
-      Xt_idxlist src_xlist, dst_xlist;
-
-      dst_xlist = xt_xmap_get_dst_xlist(xmap, rank);
-      src_xlist = xt_xmap_get_src_xlist(xmap, rank);
-
-
-      Xt_idx ref_src_xlist[7] = {0,1,2,3,4,5,6};
-      Xt_idx ref_dst_xlist[7] = {6,5,4,3,2,1,0};
-
-      check_idxdata(src_xlist, ref_src_xlist, 7);
-
-      check_idxdata(dst_xlist, ref_dst_xlist, 7);
-
       // clean up
-      xt_idxlist_delete(dst_xlist);
-      xt_idxlist_delete(src_xlist);
       xt_xmap_delete(xmap);
       xt_idxlist_delete(src_idxlist);
       xt_idxlist_delete(dst_idxlist);
@@ -137,24 +122,7 @@ int main(void) {
       if (rank != my_rank)
         PUT_ERR("error in xt_xmap_get_source_ranks\n");
 
-
-      Xt_idxlist src_xlist, dst_xlist;
-
-      dst_xlist = xt_xmap_get_dst_xlist(xmap, my_rank);
-      src_xlist = xt_xmap_get_src_xlist(xmap, my_rank);
-
-      Xt_idx ref_src_xlist[] = {7,7,6,13,13,2,2,2,0,0,0,4,9};
-
-      Xt_idx ref_dst_xlist[] = {6,18,17,4,14,2,10,12,1,7,11,15,5};
-
-      check_idxdata(src_xlist, ref_src_xlist,
-                    sizeof(ref_src_xlist) / sizeof(ref_src_xlist[0]));
-      check_idxdata(dst_xlist, ref_dst_xlist,
-                    sizeof(ref_dst_xlist) / sizeof(ref_dst_xlist[0]));
-
       // clean up
-      xt_idxlist_delete(dst_xlist);
-      xt_idxlist_delete(src_xlist);
       xt_xmap_delete(xmap);
       xt_idxlist_delete(src_idxlist);
       xt_idxlist_delete(dst_idxlist);

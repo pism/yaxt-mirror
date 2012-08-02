@@ -18,8 +18,6 @@ static int          xmap_all2all_get_num_destinations(Xt_xmap xmap);
 static int          xmap_all2all_get_num_sources(Xt_xmap xmap);
 static void         xmap_all2all_get_destination_ranks(Xt_xmap xmap, int * ranks);
 static void         xmap_all2all_get_source_ranks(Xt_xmap xmap, int * ranks);
-static Xt_idxlist   xmap_all2all_get_dst_xlist(Xt_xmap xmap, int rank);
-static Xt_idxlist   xmap_all2all_get_src_xlist(Xt_xmap xmap, int rank);
 static Xt_xmap_iter xmap_all2all_get_destination_iterator(Xt_xmap xmap);
 static Xt_xmap_iter xmap_all2all_get_source_iterator(Xt_xmap xmap);
 static void         xmap_all2all_delete(Xt_xmap xmap);
@@ -49,8 +47,6 @@ static const struct Xt_xmap_vtable xmap_all2all_vtable = {
         .get_num_sources          = xmap_all2all_get_num_sources,
         .get_destination_ranks    = xmap_all2all_get_destination_ranks,
         .get_source_ranks         = xmap_all2all_get_source_ranks,
-        .get_dst_xlist            = xmap_all2all_get_dst_xlist,
-        .get_src_xlist            = xmap_all2all_get_src_xlist,
         .get_destination_iterator = xmap_all2all_get_destination_iterator,
         .get_source_iterator      = xmap_all2all_get_source_iterator,
         .delete                   = xmap_all2all_delete};
@@ -364,35 +360,6 @@ static void xmap_all2all_delete(Xt_xmap xmap) {
 
   mpi_err_handler(MPI_Comm_free(&(xmap_all2all->comm)), MPI_COMM_WORLD);
   free(xmap_all2all);
-}
-
-static Xt_idxlist get_xlist(struct exchange_data * msgs, int num_msgs, int rank) {
-
-  int i;
-
-  for (i = 0; i < num_msgs; ++i)
-    if (rank == msgs[i].rank)
-      return xt_idxlist_copy(msgs[i].xlist);
-
-  return NULL;
-}
-
-static Xt_idxlist xmap_all2all_get_dst_xlist(Xt_xmap xmap, int rank) {
-
-  struct Xt_xmap_all2all * xmap_all2all;
-
-  xmap_all2all = (struct Xt_xmap_all2all*)xmap;
-
-  return get_xlist(xmap_all2all->dst_msg, xmap_all2all->ndst, rank);
-}
-
-static Xt_idxlist xmap_all2all_get_src_xlist(Xt_xmap xmap, int rank) {
-
-  struct Xt_xmap_all2all * xmap_all2all;
-
-  xmap_all2all = (struct Xt_xmap_all2all*)xmap;
-
-  return get_xlist(xmap_all2all->src_msg, xmap_all2all->nsrc, rank);
 }
 
 static Xt_xmap_iter xmap_all2all_get_destination_iterator(Xt_xmap xmap) {
