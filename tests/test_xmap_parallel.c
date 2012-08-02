@@ -8,6 +8,7 @@
 #include "xt_mpi.h"
 #include "xt_idxvec.h"
 #include "xt_xmap.h"
+#include "xt_xmap_all2all.h"
 
 void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 
@@ -44,9 +45,9 @@ int main(void) {
     dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
 
     // test of exchange map
-    xt_xmap xmap;
+    Xt_xmap xmap;
 
-    xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test results
 
@@ -116,9 +117,9 @@ int main(void) {
     dst_idxlist = xt_idxvec_new(dst_index_list, 2);
 
     // test of exchange map
-    xt_xmap xmap;
+    Xt_xmap xmap;
 
-    xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test results
 
@@ -183,9 +184,9 @@ int main(void) {
     dst_idxlist = xt_idxvec_new(dst_index_list[comm_rank], 20);
 
     // test of exchange map
-    xt_xmap xmap;
+    Xt_xmap xmap;
 
-    xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test results
 

@@ -9,6 +9,7 @@
 #include "xt_redist_p2p.h"
 #include "xt_idxlist.h"
 #include "xt_mpi.h"
+#include "xt_xmap_all2all.h"
 
 int main(void) {
 
@@ -37,9 +38,9 @@ int main(void) {
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     // xmap
-    xt_xmap xmap;
+    Xt_xmap xmap;
 
-    xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
     Xt_redist redist;
@@ -91,9 +92,9 @@ int main(void) {
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
 
     // xmap
-    xt_xmap xmap;
+    Xt_xmap xmap;
 
-    xmap = xt_xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p with offsets
 

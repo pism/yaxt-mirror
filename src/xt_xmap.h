@@ -12,6 +12,35 @@
 
 typedef struct Xt_xmap_iterator *Xt_xmap_iter;
 
+struct Xt_xmap_iterator_vtable {
+  int (*next)(Xt_xmap_iter iter);
+  int (*get_rank)(Xt_xmap_iter iter);
+  Xt_idxlist (*get_xlist)(Xt_xmap_iter iter);
+  void (*delete)(Xt_xmap_iter iter);
+};
+
+struct Xt_xmap_iterator {
+  struct Xt_xmap_iterator_vtable * vtable;
+};
+
+struct Xt_xmap_vtable {
+
+  MPI_Comm (*get_communicator)(Xt_xmap);
+  int (*get_num_destinations)(Xt_xmap);
+  int (*get_num_sources)(Xt_xmap);
+  void (*get_destination_ranks)(Xt_xmap, int*);
+  void (*get_source_ranks)(Xt_xmap, int*);
+  Xt_idxlist (*get_dst_xlist)(Xt_xmap, int);
+  Xt_idxlist (*get_src_xlist)(Xt_xmap, int);
+  Xt_xmap_iter (*get_destination_iterator)(Xt_xmap);
+  Xt_xmap_iter (*get_source_iterator)(Xt_xmap);
+  void (*delete)(Xt_xmap);
+};
+
+struct Xt_xmap {
+  const struct Xt_xmap_vtable * vtable;
+};
+
 /**
  * gets the MPI communicator of the exchange map
  * @param[in] xmap exchange map
@@ -136,5 +165,12 @@ Xt_idxlist xt_xmap_iterator_get_xlist(Xt_xmap_iter iter);
  * @param[in] iter exchange map iterator
  */
 void xt_xmap_iterator_delete(Xt_xmap_iter iter);
+
+/**
+ * destructor for an exchange map
+ *
+ * @param[in] xmap exchange map to be destructed
+ */
+void xt_xmap_delete(Xt_xmap xmap);
 
 #endif // XT_XMAP_H

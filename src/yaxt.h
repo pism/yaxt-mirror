@@ -10,8 +10,7 @@ typedef int Xt_count;
 
 typedef struct xt_idxlist *xt_idxlist;
 typedef struct xt_idxlist *Xt_idxlist;
-typedef struct xt_xmap *xt_xmap;
-typedef struct xt_xmap *Xt_xmap;
+typedef struct Xt_xmap *Xt_xmap;
 typedef struct xt_redist *Xt_redist;
 
 /**
@@ -36,25 +35,6 @@ Xt_initialize(MPI_Comm default_comm);
 void xt_idxlist_delete(xt_idxlist idxlist);
 
 /**
- * constructor for an exchange map \n
- * this operation is collective over all processes in comm
- *
- * @param[in] src_idxlist source index list
- * @param[in] dst_idxlist destination index list
- * @param[in] comm        MPI communicator that contains all processes
- *                        that part in the exchange (xt_xmap_new will
- *                        make its of copy of comm)
- */
-xt_xmap xt_xmap_new(xt_idxlist src_idxlist, xt_idxlist dst_idxlist, MPI_Comm comm);
-
-/**
- * destructor for an exchange map
- *
- * @param[in] xmap exchange map to be destructed
- */
-void xt_xmap_delete(xt_xmap xmap);
-
-/**
  * inquiry function to check if the inverse is defined \n
  * this call is collective among of processes that are
  * associated to the exchange map
@@ -62,6 +42,6 @@ void xt_xmap_delete(xt_xmap xmap);
  * @param[in] xmap exchange map the is to be checked
  * @return         returns != 0 if the exchange map is bijective
  */
-int xt_xmap_is_bijective(xt_xmap xmap);
+int xt_xmap_is_bijective(Xt_xmap xmap);
 
 #endif // YAXT_H

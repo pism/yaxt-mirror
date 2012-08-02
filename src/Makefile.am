@@ -24,6 +24,8 @@ libyaxt_a_SOURCES =						\
 	xt_redist_p2p.h						\
 	xt_xmap.c						\
 	xt_xmap.h						\
+	xt_xmap_all2all.c					\
+	xt_xmap_all2all.h					\
 	xt_init.c						\
 	xt_ut.f90						\
 	xt_ut_c.c						\
@@ -40,8 +42,8 @@ libyaxt_a_SOURCES =						\
 	quicksort.h						\
 	mergesort.c						\
 	mergesort.h						\
-	sort_common.h							\
-	xt_sort.c							\
-	xt_sort.h							\
+	sort_common.h						\
+	xt_sort.c						\
+	xt_sort.h						\
 	yaxt.h
 

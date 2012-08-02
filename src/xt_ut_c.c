@@ -13,6 +13,7 @@
 #include "xt_idxvec.h"
 #include "xt_ut_c.h"
 #include "xt_xmap.h"
+#include "xt_xmap_all2all.h"
 #include "xt_redist_p2p.h"
 
 #include "xt_handles.h"
@@ -39,7 +40,7 @@ static const xt_ut_deco_type zero_deco = {.idxvec=NULL, .domain_size=0};
 static struct xt_handle_set_type *deco_set;
 
 typedef struct {
-  xt_xmap xmap;
+  Xt_xmap xmap;
 } xt_ut_template_type;
 
 static const xt_ut_template_type zero_template = {.xmap=NULL};
@@ -136,7 +137,7 @@ MPI_Fint xt_ut_init_oneway_transposition_template(int id_in, int id_out, int mpi
   int id = new_itemplate();
   xt_ut_template_type *template = xt_handle2pointer(template_set, id);
   if (!template) die("xt_ut_init_oneway_transposition_template: internal error");
-  template->xmap = xt_xmap_new(deco_in->idxvec, deco_out->idxvec, MPI_COMM_WORLD);
+  template->xmap = xt_xmap_all2all_new(deco_in->idxvec, deco_out->idxvec, MPI_COMM_WORLD);
 
   return id;
 }
