@@ -5,7 +5,7 @@ PROGRAM test_perf_stripes
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, xt_redist_p2p_blocks_new, &
        &          xt_redist_s_exchange1, &
-       &          xt_stripe, xt_count_kind, xt_idxstripes_new, c_loc
+       &          xt_stripe, xt_idxstripes_new, c_loc
 
   IMPLICIT NONE
   ! global extents including halos:
@@ -322,17 +322,16 @@ CONTAINS
       work_avg = work_sum / nprocs
       e = work_avg / (work_max+1.e-20)
 
-      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') 'nprocs, label, wmax, wavg, e =',nprocs, trim(grid_label)//':'//t%label, work_max, work_avg, e
+      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') 'nprocs, label, wmax, wavg, e =',       &
+                                                   nprocs, trim(grid_label)//':'//t%label, &
+                                                   work_max, work_avg, e
     ENDIF
 
   END SUBROUTINE treport
 
 
   REAL(dp) FUNCTION work_time()
-    REAL(dp), SAVE :: last_work_time = 0.0_dp
     work_time = MPI_WTIME() - sync_dt_sum
-    !IF (work_time<last_work_time) work_time = last_work_time
-    last_work_time = work_time
     RETURN
   END FUNCTION work_time
 
@@ -442,7 +441,8 @@ CONTAINS
     n1 = SIZE(f,1)
     n2 = SIZE(f,2)
     n3 = SIZE(f,3)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) CALL xt_abort(context//label//'shape mismatch', __FILE__, __LINE__)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
+      CALL xt_abort(context//label//'shape mismatch', __FILE__, __LINE__)
 
     DO i3 = 1, n3
       DO i2 = 1, n2

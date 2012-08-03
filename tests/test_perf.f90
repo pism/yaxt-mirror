@@ -235,17 +235,16 @@ CONTAINS
       work_avg = work_sum / nprocs
       e = work_avg / work_max
 
-      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') 'nprocs, label, wmax, wavg, e =',nprocs, trim(grid_label)//':'//t%label, work_max, work_avg, e
+      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') 'nprocs, label, wmax, wavg, e =',nprocs, &
+                                                   trim(grid_label)//':'//t%label, work_max, &
+                                                   work_avg, e
     ENDIF
 
   END SUBROUTINE treport
 
 
   REAL(dp) FUNCTION work_time()
-    REAL(dp), SAVE :: last_work_time = 0.0_dp
     work_time = MPI_WTIME() - sync_dt_sum
-    !IF (work_time<last_work_time) work_time = last_work_time
-    last_work_time = work_time
     RETURN
   END FUNCTION work_time
 

@@ -64,14 +64,6 @@ MODULE yaxt
   END INTERFACE xt_abort
 
   INTERFACE
-    SUBROUTINE xt_ut_destroy_transposition(handle) BIND(C, name='xt_ut_destroy_transposition')
-      IMPORT:: C_INT
-      IMPLICIT NONE
-      INTEGER(C_INT), INTENT(in) :: handle
-    END SUBROUTINE xt_ut_destroy_transposition
-  END INTERFACE
-
-  INTERFACE
     SUBROUTINE xt_initialize(default_comm) BIND(C, name='xt_initialize_f')
       IMPORT:: C_INT
       IMPLICIT NONE
