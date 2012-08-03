@@ -14,12 +14,14 @@ MODULE yaxt
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, xt_redist_p2p_blocks_new, xt_redist_delete, &
        &    xt_redist_s_exchange1, xt_idxstripes_new, c_loc
 
-  INTEGER, PARAMETER, PUBLIC :: xt_count_kind = C_INT ! \todo this should come out of configure
+  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = C_INT ! \todo xt_idx_kind and xt_count_kind should come out of configure
+  INTEGER, PARAMETER, PUBLIC :: xt_count_kind = C_INT
+
 
   TYPE, BIND(C), PUBLIC :: xt_stripe
-    INTEGER(C_INT) :: start
+    INTEGER(xt_idx_kind) :: start
     INTEGER(xt_count_kind) :: nstrides
-    INTEGER(C_INT) :: stride
+    INTEGER(xt_idx_kind) :: stride
   END TYPE xt_stripe
 
   TYPE, BIND(C) :: xt_idxlist
@@ -79,10 +81,10 @@ MODULE yaxt
 
   INTERFACE
     FUNCTION xt_idxvec_new(idxvec, num_indices) BIND(C, name='xt_idxvec_new_f') RESULT(res)
-      IMPORT :: xt_idxlist
+      IMPORT :: xt_idxlist, xt_idx_kind, xt_count_kind
       IMPLICIT NONE
-      INTEGER, INTENT(in) :: idxvec(*)
-      INTEGER, VALUE, INTENT(in) :: num_indices
+      INTEGER(xt_idx_kind), INTENT(in) :: idxvec(*)
+      INTEGER(xt_count_kind), VALUE, INTENT(in) :: num_indices
       TYPE(xt_idxlist) :: res
     END FUNCTION xt_idxvec_new
   END INTERFACE
