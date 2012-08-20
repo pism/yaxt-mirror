@@ -17,8 +17,14 @@ static void
 redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays,
                                         void **dst_data, unsigned num_dst_arrays);
 
-static const struct xt_redist_vtable redist_p2p_vtable = {redist_p2p_delete,
-                                                          redist_p2p_s_exchange};
+static void
+redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
+
+static const struct xt_redist_vtable redist_p2p_vtable = {
+  .delete      = redist_p2p_delete,
+  .s_exchange  = redist_p2p_s_exchange,
+  .s_exchange1 = redist_p2p_s_exchange1
+};
 
 struct Xt_redist_p2p_msg {
 
@@ -274,11 +280,17 @@ static void
 redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays,
                                         void **dst_data, unsigned num_dst_arrays) {
 
+  assert(num_src_arrays == 1 && num_dst_arrays == 1);
+
+  redist_p2p_s_exchange1(redist, *src_data, *dst_data);
+}
+
+static void
+redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
+
   struct Xt_redist_p2p *redist_p2p;
 
   redist_p2p = (struct Xt_redist_p2p *)redist;
-
-  assert(num_src_arrays == 1 && num_dst_arrays == 1);
 
   MPI_Request * recv_request;
 
@@ -287,12 +299,12 @@ redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays
   int i;
 
   for (i = 0; i < redist_p2p->ndst; ++i)
-    mpi_err_handler(MPI_Irecv(dst_data[0], 1, redist_p2p->recv_msgs[i].datatype,
+    mpi_err_handler(MPI_Irecv(dst_data, 1, redist_p2p->recv_msgs[i].datatype,
                               redist_p2p->recv_msgs[i].rank, 0, redist_p2p->comm,
                               recv_request+i), redist_p2p->comm);
 
   for (i = 0; i < redist_p2p->nsrc; ++i)
-    mpi_err_handler(MPI_Send(src_data[0], 1, redist_p2p->send_msgs[i].datatype,
+    mpi_err_handler(MPI_Send(src_data, 1, redist_p2p->send_msgs[i].datatype,
                              redist_p2p->send_msgs[i].rank, 0, redist_p2p->comm),
                     redist_p2p->comm);
 

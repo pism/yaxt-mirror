@@ -11,3 +11,8 @@ void xt_redist_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_ar
 
   redist->vtable->s_exchange(redist, src_data, num_src_arrays, dst_data, num_dst_arrays);
 }
+
+void xt_redist_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
+
+  redist->vtable->s_exchange1(redist, src_data, dst_data);
+}
