@@ -25,6 +25,9 @@ static int          xmap_iterator_all2all_next(Xt_xmap_iter iter);
 static int          xmap_all2all_iterator_get_rank(Xt_xmap_iter iter);
 static Xt_idxlist   xmap_all2all_iterator_get_xlist(Xt_xmap_iter iter);
 static void         xmap_all2all_iterator_delete(Xt_xmap_iter iter);
+static int          xmap_all2all_get_max_src_pos(Xt_xmap xmap);
+static int          xmap_all2all_get_max_dst_pos(Xt_xmap xmap);
+
 
 static const struct Xt_xmap_iterator_vtable xmap_iterator_all2all_vtable = {
         .next      = xmap_iterator_all2all_next,
@@ -49,7 +52,9 @@ static const struct Xt_xmap_vtable xmap_all2all_vtable = {
         .get_source_ranks         = xmap_all2all_get_source_ranks,
         .get_destination_iterator = xmap_all2all_get_destination_iterator,
         .get_source_iterator      = xmap_all2all_get_source_iterator,
-        .delete                   = xmap_all2all_delete};
+        .delete                   = xmap_all2all_delete,
+        .get_max_src_pos          = xmap_all2all_get_max_src_pos,
+        .get_max_dst_pos          = xmap_all2all_get_max_dst_pos};
 
 struct exchange_data {
   // list of global indices to send or receive from partner rank
@@ -65,6 +70,12 @@ struct Xt_xmap_all2all {
 
   struct exchange_data *dst_msg, *src_msg;
   int ndst, nsrc;
+
+  // we need the max position in order to enable quick range-checks
+  // for xmap-users like redist
+  int max_src_pos; // max possible pos over all src xlists (always >= 0)
+  int max_dst_pos; // same for dst
+
   MPI_Comm comm;
 };
 
@@ -343,8 +354,24 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   // generate exchange lists
   generate_xlist(xmap, src_idxlist, dst_idxlist);
 
+  // we could also calculate the (more precise) max pos using only xmap data
+  // but using this simple estimate we are still okay for usage checks
+  xmap->max_src_pos = xt_idxlist_get_num_indices(src_idxlist);
+  xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
+
   return (Xt_xmap)xmap;
 }
+
+static int xmap_all2all_get_max_src_pos(Xt_xmap xmap) {
+  struct Xt_xmap_all2all *xmap_all2all = (struct Xt_xmap_all2all *)xmap;
+  return xmap_all2all->max_src_pos;
+}
+
+static int xmap_all2all_get_max_dst_pos(Xt_xmap xmap) {
+  struct Xt_xmap_all2all *xmap_all2all = (struct Xt_xmap_all2all *)xmap;
+  return xmap_all2all->max_dst_pos;
+}
+
 
 static void xmap_all2all_delete(Xt_xmap xmap) {
 

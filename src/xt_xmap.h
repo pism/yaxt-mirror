@@ -33,6 +33,8 @@ struct Xt_xmap_vtable {
   Xt_xmap_iter (*get_destination_iterator)(Xt_xmap);
   Xt_xmap_iter (*get_source_iterator)(Xt_xmap);
   void (*delete)(Xt_xmap);
+  int (*get_max_src_pos)(Xt_xmap);
+  int (*get_max_dst_pos)(Xt_xmap);
 };
 
 struct Xt_xmap {
@@ -150,5 +152,22 @@ void xt_xmap_iterator_delete(Xt_xmap_iter iter);
  * @param[in] xmap exchange map to be destructed
  */
 void xt_xmap_delete(Xt_xmap xmap);
+
+/**
+ * gives a upper limit to the range of positions in the src part of the xlist,
+ *
+ * @param[in] iter exchange map iterator
+ * @return         exchange list of the current item
+ */
+int xt_xmap_get_max_src_pos(Xt_xmap xmap);
+
+/**
+ * gives a upper limit to the range of positions in the dst part of the xlist,
+ *
+ * @param[in] iter exchange map iterator
+ * @return         exchange list of the current item
+ */
+int xt_xmap_get_max_dst_pos(Xt_xmap xmap);
+
 
 #endif // XT_XMAP_H

@@ -62,3 +62,11 @@ void xt_xmap_iterator_delete(Xt_xmap_iter iter) {
 
   iter->vtable->delete(iter);
 }
+
+int xt_xmap_get_max_src_pos(Xt_xmap xmap) {
+  return xmap->vtable->get_max_src_pos(xmap);
+}
+
+int xt_xmap_get_max_dst_pos(Xt_xmap xmap) {
+  return xmap->vtable->get_max_dst_pos(xmap);
+}
