@@ -57,16 +57,32 @@ void xt_xmap_delete_f(struct xt_xmap_f *xmap_f) {
   xt_xmap_delete(xmap_f->cptr);
 }
 
+struct xt_redist_f xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,
+                                              int *src_block_offsets, int *src_block_sizes, int src_block_num,
+                                              int *dst_block_offsets, int *dst_block_sizes, int dst_block_num,
+                                              MPI_Fint *datatype_f) {
+  MPI_Datatype datatype_c = MPI_Type_f2c(*datatype_f);
+  struct xt_redist_f redist_f;
+
+  redist_f.cptr =  xt_redist_p2p_blocks_off_new(xmap_f->cptr,
+                                                src_block_offsets, src_block_sizes, src_block_num,
+                                                dst_block_offsets, dst_block_sizes, dst_block_num,
+                                                datatype_c);
+
+  return redist_f;
+}
+
 struct xt_redist_f xt_redist_p2p_blocks_new_f(struct xt_xmap_f *xmap_f,
-                                              int *src_block_offsets, int *src_block_sizes,
-                                              int *dst_block_offsets, int *dst_block_sizes,
+                                              int *src_block_sizes, int src_block_num,
+                                              int *dst_block_sizes, int dst_block_num,
                                               MPI_Fint *datatype_f) {
   MPI_Datatype datatype_c = MPI_Type_f2c(*datatype_f);
   struct xt_redist_f redist_f;
 
   redist_f.cptr =  xt_redist_p2p_blocks_new(xmap_f->cptr,
-                                            src_block_offsets, src_block_sizes,
-                                            dst_block_offsets, dst_block_sizes, datatype_c);
+                                            src_block_sizes, src_block_num,
+                                            dst_block_sizes, dst_block_num,
+                                            datatype_c);
 
   return redist_f;
 }

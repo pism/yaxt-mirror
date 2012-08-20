@@ -9,6 +9,7 @@
 #include "xt_xmap.h"
 #include "xt_idxlist.h"
 #include "core/ppm_xfuncs.h"
+#include "core/core.h"
 
 static void
 redist_p2p_delete(Xt_redist redist);
@@ -61,33 +62,26 @@ generate_block_datatype(Xt_idxlist xlist, int *block_offsets, int *block_sizes,
 
   xt_idxlist_get_indices(xlist, idx_vec);
 
-  if (block_offsets) {
-    assert(block_sizes != NULL);
-    bdispl_vec = xmalloc(num_indices * sizeof(*bdispl_vec));
-    blen_vec = xmalloc(num_indices * sizeof(*blen_vec));
-    int j;
-    for (Xt_count i = 0; i < num_indices; ++i) {
-      j = idx_vec[i];
-      bdispl_vec[i] = block_offsets[j];
-      blen_vec[i] = block_sizes[j];
-    }
-    mpi_err_handler(MPI_Type_indexed(num_indices, blen_vec, bdispl_vec, base_datatype, &type), comm);
-    free(blen_vec);
-    free(bdispl_vec);
-  } else {
-    assert(sizeof(Xt_idx) == sizeof(int));
-    int *displ;
-    // here we interpret indices as displacements in the index space
-    // and we assume a simple transformation into data space using
-    // the base_datatype only
-    displ = (int*)idx_vec;
-    mpi_err_handler(MPI_Type_create_indexed_block(num_indices, 1, displ,
-                                                  base_datatype, &type), comm);
+  assert(block_sizes != NULL);
+
+  bdispl_vec = xmalloc(num_indices * sizeof(*bdispl_vec));
+  blen_vec = xmalloc(num_indices * sizeof(*blen_vec));
+
+  if (!block_offsets) die("generate_block_datatype: non-nil block_offsets expected");
+
+  int j;
+  for (Xt_count i = 0; i < num_indices; ++i) {
+    j = idx_vec[i];
+    bdispl_vec[i] = block_offsets[j];
+    blen_vec[i] = block_sizes[j];
   }
 
+  mpi_err_handler(MPI_Type_indexed(num_indices, blen_vec, bdispl_vec, base_datatype, &type), comm);
 
   mpi_err_handler(MPI_Type_commit(&type), comm);
 
+  free(blen_vec);
+  free(bdispl_vec);
   free(idx_vec);
 
   return type;
@@ -220,13 +214,23 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
   return (Xt_redist)redist;
 }
 
-Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
-                                   int *src_block_offsets, int *src_block_sizes,
-                                   int *dst_block_offsets, int *dst_block_sizes,
-                                   MPI_Datatype datatype) {
+static void aux_gen_simple_block_offsets(int *block_offsets, int *block_sizes, int block_num) {
+
+  if (block_num<1) return;
+  block_offsets[0] = 0;
+  for (int i = 1; i < block_num; ++i) {
+    block_offsets[i] = block_offsets[i-1] + block_sizes[i-1];
+  }
+}
+
+Xt_redist xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
+                                       int *src_block_offsets, int *src_block_sizes, int src_block_num,
+                                       int *dst_block_offsets, int *dst_block_sizes, int dst_block_num,
+                                       MPI_Datatype datatype) {
 
   struct Xt_redist_p2p *redist;
-
+  if (!src_block_sizes) die("xt_redist_p2p_blocks_off_new: undefined src_block_sizes");
+  if (!dst_block_sizes) die("xt_redist_p2p_blocks_off_new: undefined dst_block_sizes");
   redist = xmalloc(1 * sizeof(*redist));
 
   redist->vtable = &redist_p2p_vtable;
@@ -240,14 +244,55 @@ Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
   redist->ndst = xt_xmap_get_num_destinations(xmap);
   redist->nsrc = xt_xmap_get_num_sources(xmap);
 
+  int *aux_offsets = NULL;
+
+  // dst part:
+  int max_dst_pos = xt_xmap_get_max_dst_pos(xmap);
+  if (dst_block_num < max_dst_pos) die("xt_redist_p2p_blocks_off_new: dst_block_num too small");
+
+  if (dst_block_offsets)
+    aux_offsets = dst_block_offsets;
+  else {
+    aux_offsets = xmalloc(dst_block_num * sizeof(*aux_offsets));
+    aux_gen_simple_block_offsets(aux_offsets, dst_block_sizes, dst_block_num);
+  }
+
   generate_block_msg_infos(redist->ndst, xt_xmap_get_destination_iterator(xmap),
-                           dst_block_offsets, dst_block_sizes, datatype, &(redist->recv_msgs), redist->comm);
+                           aux_offsets, dst_block_sizes, datatype, &(redist->recv_msgs), redist->comm);
+
+  if (!dst_block_offsets) free(aux_offsets);
+
+  // src part:
+  int max_src_pos = xt_xmap_get_max_src_pos(xmap);
+  if (src_block_num < max_src_pos) die("xt_redist_p2p_blocks_off_new: src_block_num too small");
+
+  if (src_block_offsets)
+    aux_offsets = src_block_offsets;
+  else {
+    aux_offsets = xmalloc(src_block_num * sizeof(*aux_offsets));
+    aux_gen_simple_block_offsets(aux_offsets, src_block_sizes, src_block_num);
+  }
 
   generate_block_msg_infos(redist->nsrc, xt_xmap_get_source_iterator(xmap),
-                           src_block_offsets, src_block_sizes, datatype, &(redist->send_msgs), redist->comm);
+                           aux_offsets, src_block_sizes, datatype, &(redist->send_msgs), redist->comm);
+
+  if (!src_block_offsets) free(aux_offsets);
 
   return (Xt_redist)redist;
 }
+
+Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
+                                   int *src_block_sizes, int src_block_num,
+                                   int *dst_block_sizes, int dst_block_num,
+                                   MPI_Datatype datatype) {
+
+  return xt_redist_p2p_blocks_off_new(xmap,
+                                      NULL, src_block_sizes, src_block_num,
+                                      NULL, dst_block_sizes, dst_block_num,
+                                      datatype);
+
+}
+
 
 Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
 

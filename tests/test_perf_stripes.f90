@@ -3,8 +3,8 @@ PROGRAM test_perf_stripes
   USE mpi
   USE yaxt, ONLY: xt_abort, xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
-       &          xt_redist, xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, xt_redist_p2p_blocks_new, &
-       &          xt_redist_s_exchange1, &
+       &          xt_redist, xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new,&
+       &          xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
        &          xt_stripe, xt_idxstripes_new, c_loc
 
   IMPLICIT NONE
@@ -261,8 +261,10 @@ CONTAINS
         block_size(i,j) =  nlev
       ENDDO
     ENDDO
-
-    redist_3d = xt_redist_p2p_blocks_new(xmap_2d, block_disp, block_size, block_disp, block_size, dt)
+    !WRITE(0,*) '(gen_redist_3d_wb) call redist with field sizes =',ie*je
+    redist_3d = xt_redist_p2p_blocks_off_new(xmap_2d, block_disp, block_size, &
+                                             SIZE(block_size), block_disp, block_size, &
+                                             SIZE(block_size),dt)
 
   END SUBROUTINE gen_redist_3d_wb
 

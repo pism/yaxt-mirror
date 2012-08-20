@@ -11,7 +11,8 @@ MODULE yaxt
 
   PUBLIC :: xt_abort, xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
-       &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, xt_redist_p2p_blocks_new, xt_redist_delete, &
+       &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
+       &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, xt_redist_delete, &
        &    xt_redist_s_exchange1, xt_idxstripes_new, c_loc
 
   INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = C_INT ! \todo xt_idx_kind and xt_count_kind should come out of configure
@@ -109,16 +110,34 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_redist_p2p_blocks_new(xmap, src_block_offsets, src_block_sizes, &
-         &                                  dst_block_offsets, dst_block_sizes, &
-         &                                  datatype) BIND(C, name='xt_redist_p2p_blocks_new_f') RESULT(res)
+    FUNCTION xt_redist_p2p_blocks_off_new(xmap, src_block_offsets, src_block_sizes, src_block_num, &
+         &                                  dst_block_offsets, dst_block_sizes, dst_block_num, &
+         &                                  datatype) BIND(C, name='xt_redist_p2p_blocks_off_new_f') RESULT(res)
       IMPORT :: xt_xmap, xt_redist, c_int
       IMPLICIT NONE
       TYPE(xt_xmap), INTENT(in) :: xmap
       INTEGER(c_int), INTENT(in) :: src_block_offsets(*)
       INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
+      INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
       INTEGER(c_int), INTENT(in) :: dst_block_offsets(*)
       INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
+      INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
+      INTEGER, INTENT(in) :: datatype
+      TYPE(xt_redist) :: res
+    END FUNCTION xt_redist_p2p_blocks_off_new
+  END INTERFACE
+
+  INTERFACE
+    FUNCTION xt_redist_p2p_blocks_new(xmap, src_block_sizes, src_block_num, &
+         &                                  dst_block_sizes, dst_block_num, &
+         &                                  datatype) BIND(C, name='xt_redist_p2p_blocks_new_f') RESULT(res)
+      IMPORT :: xt_xmap, xt_redist, c_int
+      IMPLICIT NONE
+      TYPE(xt_xmap), INTENT(in) :: xmap
+      INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
+      INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
+      INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
+      INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
       INTEGER, INTENT(in) :: datatype
       TYPE(xt_redist) :: res
     END FUNCTION xt_redist_p2p_blocks_new
