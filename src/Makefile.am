@@ -26,6 +26,8 @@ libyaxt_a_SOURCES =						\
 	xt_xmap.h						\
 	xt_xmap_all2all.c					\
 	xt_xmap_all2all.h					\
+	xt_xmap_dist_dir.c					\
+	xt_xmap_dist_dir.h					\
 	xt_xmap_intersection.c					\
 	xt_xmap_intersection.h					\
 	xt_init.c						\

@@ -8,6 +8,8 @@ noinst_PROGRAMS = 						\
 	test_redist_p2p_parallel				\
 	test_xmap_all2all					\
 	test_xmap_all2all_parallel				\
+	test_xmap_dist_dir					\
+	test_xmap_dist_dir_parallel				\
 	test_ut							\
 	test_perf						\
 	test_perf_stripes					\
@@ -23,6 +25,8 @@ test_redist_p2p_SOURCES = test_redist_p2p.c test.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c test.h
 test_xmap_all2all_SOURCES = test_xmap_all2all.c tests.h
 test_xmap_all2all_parallel_SOURCES = test_xmap_all2all_parallel.c tests.h
+test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c tests.h
+test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
 test_handles_SOURCES = test_handles.c tests.h
 test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = $(LDADD) $(MPI_FC_LIB)
@@ -45,6 +49,8 @@ TESTS = 							\
 	test_redist_p2p_parallel_run				\
 	test_xmap_all2all_run					\
 	test_xmap_all2all_parallel_run				\
+	test_xmap_dist_dir_run					\
+	test_xmap_dist_dir_parallel_run				\
 	test_ut_run						\
 	test_perf_run						\
 	test_perf_stripes_run					\
