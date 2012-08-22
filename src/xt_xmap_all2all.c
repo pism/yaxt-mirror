@@ -23,17 +23,17 @@ static Xt_xmap_iter xmap_all2all_get_source_iterator(Xt_xmap xmap);
 static void         xmap_all2all_delete(Xt_xmap xmap);
 static int          xmap_iterator_all2all_next(Xt_xmap_iter iter);
 static int          xmap_all2all_iterator_get_rank(Xt_xmap_iter iter);
-static Xt_idxlist   xmap_all2all_iterator_get_xlist(Xt_xmap_iter iter);
+static Xt_idxlist   xmap_all2all_iterator_get_transfer_pos(Xt_xmap_iter iter);
 static void         xmap_all2all_iterator_delete(Xt_xmap_iter iter);
 static int          xmap_all2all_get_max_src_pos(Xt_xmap xmap);
 static int          xmap_all2all_get_max_dst_pos(Xt_xmap xmap);
 
 
 static const struct Xt_xmap_iterator_vtable xmap_iterator_all2all_vtable = {
-        .next      = xmap_iterator_all2all_next,
-        .get_rank  = xmap_all2all_iterator_get_rank,
-        .get_xlist = xmap_all2all_iterator_get_xlist,
-        .delete    = xmap_all2all_iterator_delete};
+        .next             = xmap_iterator_all2all_next,
+        .get_rank         = xmap_all2all_iterator_get_rank,
+        .get_transfer_pos = xmap_all2all_iterator_get_transfer_pos,
+        .delete           = xmap_all2all_iterator_delete};
 
 
 struct Xt_xmap_iterator_all2all {
@@ -58,7 +58,7 @@ static const struct Xt_xmap_vtable xmap_all2all_vtable = {
 
 struct exchange_data {
   // list of relative positions in memory to send or receive
-  Xt_idxlist xlist;
+  Xt_idxlist transfer_pos;
   int rank;
 };
 
@@ -71,7 +71,7 @@ struct Xt_xmap_all2all {
 
   // we need the max position in order to enable quick range-checks
   // for xmap-users like redist
-  int max_src_pos; // max possible pos over all src xlists (always >= 0)
+  int max_src_pos; // max possible pos over all src transfer_poss (always >= 0)
   int max_dst_pos; // same for dst
 
   MPI_Comm comm;
@@ -268,11 +268,11 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   free(displ);
 }
 
-static void generate_src_xlist(struct Xt_xmap_all2all * xmap,
-                               Xt_idxlist * intersections,
-                               int * ranks,
-                               Xt_count num_intersections,
-                               Xt_idxlist mypart_idxlist) {
+static void generate_src_transfer_pos(struct Xt_xmap_all2all * xmap,
+                                      Xt_idxlist * intersections,
+                                      int * ranks,
+                                      Xt_count num_intersections,
+                                      Xt_idxlist mypart_idxlist) {
 
   Xt_count intersection_size[num_intersections];
   int max_intersection_size = 0;
@@ -299,7 +299,7 @@ static void generate_src_xlist(struct Xt_xmap_all2all * xmap,
                                                 single_match_only);
     assert(retval != 1);
 
-    xmap->src_msg[i].xlist = xt_idxvec_new(intersection_pos, intersection_size[i]);
+    xmap->src_msg[i].transfer_pos = xt_idxvec_new(intersection_pos, intersection_size[i]);
     xmap->src_msg[i].rank = ranks[i];
   }
 
@@ -307,11 +307,11 @@ static void generate_src_xlist(struct Xt_xmap_all2all * xmap,
   free(intersection_idxvec);
 }
 
-static void generate_dst_xlist(struct Xt_xmap_all2all * xmap,
-                               Xt_idxlist * intersections,
-                               int * ranks,
-                               Xt_count num_intersections,
-                               Xt_idxlist mypart_idxlist) {
+static void generate_dst_transfer_pos(struct Xt_xmap_all2all * xmap,
+                                      Xt_idxlist * intersections,
+                                      int * ranks,
+                                      Xt_count num_intersections,
+                                      Xt_idxlist mypart_idxlist) {
 
   Xt_count intersection_size[num_intersections];
   int max_intersection_size = 0;
@@ -338,7 +338,7 @@ static void generate_dst_xlist(struct Xt_xmap_all2all * xmap,
                                                 single_match_only);
     assert(retval != 1);
 
-    xmap->dst_msg[i].xlist = xt_idxvec_new(intersection_pos, intersection_size[i]);
+    xmap->dst_msg[i].transfer_pos = xt_idxvec_new(intersection_pos, intersection_size[i]);
     xmap->dst_msg[i].rank = ranks[i];
   }
 
@@ -346,20 +346,20 @@ static void generate_dst_xlist(struct Xt_xmap_all2all * xmap,
   free(intersection_idxvec);
 }
 
-static void generate_xlist(struct Xt_xmap_all2all * xmap,
-                           Xt_idxlist * src_intersections,
-                           int * src_ranks,
-                           Xt_count num_src_intersections,
-                           Xt_idxlist * dst_intersections,
-                           int * dst_ranks,
-                           Xt_count num_dst_intersections,
-                           Xt_idxlist src_idxlist_local,
-                           Xt_idxlist dst_idxlist_local) {
+static void generate_transfer_pos(struct Xt_xmap_all2all * xmap,
+                                  Xt_idxlist * src_intersections,
+                                  int * src_ranks,
+                                  Xt_count num_src_intersections,
+                                  Xt_idxlist * dst_intersections,
+                                  int * dst_ranks,
+                                  Xt_count num_dst_intersections,
+                                  Xt_idxlist src_idxlist_local,
+                                  Xt_idxlist dst_idxlist_local) {
 
-  generate_src_xlist(xmap, src_intersections, src_ranks,
-                     num_src_intersections, src_idxlist_local);
-  generate_dst_xlist(xmap, dst_intersections, dst_ranks,
-                     num_dst_intersections, dst_idxlist_local);
+  generate_src_transfer_pos(xmap, src_intersections, src_ranks,
+                            num_src_intersections, src_idxlist_local);
+  generate_dst_transfer_pos(xmap, dst_intersections, dst_ranks,
+                            num_dst_intersections, dst_idxlist_local);
 }
 
 Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
@@ -382,9 +382,9 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
                     src_idxlist, dst_idxlist, xmap->comm);
 
   // generate exchange lists
-  generate_xlist(xmap, src_intersections, src_ranks, num_src_intersections,
-                 dst_intersections, dst_ranks, num_dst_intersections, src_idxlist,
-                 dst_idxlist);
+  generate_transfer_pos(xmap, src_intersections, src_ranks, num_src_intersections,
+                        dst_intersections, dst_ranks, num_dst_intersections, src_idxlist,
+                        dst_idxlist);
 
   for (Xt_count i = 0; i < num_src_intersections; ++i)
     xt_idxlist_delete(src_intersections[i]);
@@ -421,10 +421,10 @@ static void xmap_all2all_delete(Xt_xmap xmap) {
   unsigned i;
 
   for (i = 0; i < xmap_all2all->ndst; ++i)
-    xt_idxlist_delete(xmap_all2all->dst_msg[i].xlist);
+    xt_idxlist_delete(xmap_all2all->dst_msg[i].transfer_pos);
 
   for (i = 0; i < xmap_all2all->nsrc; ++i)
-    xt_idxlist_delete(xmap_all2all->src_msg[i].xlist);
+    xt_idxlist_delete(xmap_all2all->src_msg[i].transfer_pos);
 
   free(xmap_all2all->dst_msg);
   free(xmap_all2all->src_msg);
@@ -499,7 +499,7 @@ static int xmap_all2all_iterator_get_rank(Xt_xmap_iter iter) {
   return iter_all2all->msg->rank;
 }
 
-static Xt_idxlist xmap_all2all_iterator_get_xlist(Xt_xmap_iter iter) {
+static Xt_idxlist xmap_all2all_iterator_get_transfer_pos(Xt_xmap_iter iter) {
 
   struct Xt_xmap_iterator_all2all * iter_all2all;
 
@@ -507,7 +507,7 @@ static Xt_idxlist xmap_all2all_iterator_get_xlist(Xt_xmap_iter iter) {
 
   assert(iter_all2all != NULL);
 
-  return  xt_idxlist_copy(iter_all2all->msg->xlist);
+  return  xt_idxlist_copy(iter_all2all->msg->transfer_pos);
 }
 
 static void xmap_all2all_iterator_delete(Xt_xmap_iter iter) {

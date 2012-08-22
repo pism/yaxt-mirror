@@ -15,7 +15,7 @@ typedef struct Xt_xmap_iterator *Xt_xmap_iter;
 struct Xt_xmap_iterator_vtable {
   int (*next)(Xt_xmap_iter iter);
   int (*get_rank)(Xt_xmap_iter iter);
-  Xt_idxlist (*get_xlist)(Xt_xmap_iter iter);
+  Xt_idxlist (*get_transfer_pos)(Xt_xmap_iter iter);
   void (*delete)(Xt_xmap_iter iter);
 };
 
@@ -137,7 +137,7 @@ int xt_xmap_iterator_get_rank(Xt_xmap_iter iter);
  * @param[in] iter exchange map iterator
  * @return         exchange list of the current item
  */
-Xt_idxlist xt_xmap_iterator_get_xlist(Xt_xmap_iter iter);
+Xt_idxlist xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter);
 
 /**
  * destructor for an exchange map iterator
@@ -154,7 +154,7 @@ void xt_xmap_iterator_delete(Xt_xmap_iter iter);
 void xt_xmap_delete(Xt_xmap xmap);
 
 /**
- * gives a upper limit to the range of positions in the src part of the xlist,
+ * gives a upper limit to the range of positions in the src part of the transfer_pos,
  *
  * @param[in] iter exchange map iterator
  * @return         exchange list of the current item
@@ -162,7 +162,7 @@ void xt_xmap_delete(Xt_xmap xmap);
 int xt_xmap_get_max_src_pos(Xt_xmap xmap);
 
 /**
- * gives a upper limit to the range of positions in the dst part of the xlist,
+ * gives a upper limit to the range of positions in the dst part of the transfer_pos,
  *
  * @param[in] iter exchange map iterator
  * @return         exchange list of the current item
