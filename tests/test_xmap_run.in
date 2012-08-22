@@ -1,2 +1,0 @@
-#! @SHELL@
-@MPI_LAUNCH@ -n 1 ./test_xmap

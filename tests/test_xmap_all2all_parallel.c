@@ -1,7 +1,5 @@
 #include "mpi.h"
 
-#define VERBOSE
-
 #include "tests.h"
 
 #include "yaxt.h"

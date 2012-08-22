@@ -1,0 +1,7 @@
+#! @SHELL@
+set -e
+@MPI_LAUNCH@ -n 1 ./test_xmap_all2all_parallel
+@MPI_LAUNCH@ -n 2 ./test_xmap_all2all_parallel
+@MPI_LAUNCH@ -n 3 ./test_xmap_all2all_parallel
+@MPI_LAUNCH@ -n 4 ./test_xmap_all2all_parallel
+@MPI_LAUNCH@ -n 8 ./test_xmap_all2all_parallel

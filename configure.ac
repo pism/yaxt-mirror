@@ -66,13 +66,13 @@ AS_IF([test x$MPI_LAUNCH = xtrue],
 AC_CONFIG_HEADER([include/config.h])
 
 AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run	\
-	tests/test_xmap_parallel_run			\
+	tests/test_xmap_all2all_parallel_run		\
 	tests/test_idxvec_run				\
 	tests/test_idxlist_collection_run		\
 	tests/test_idxsection_run			\
 	tests/test_idxstripes_run			\
 	tests/test_redist_p2p_run			\
-	tests/test_xmap_run				\
+	tests/test_xmap_all2all_run			\
 	tests/test_handles_run				\
 	tests/test_ut_run				\
         tests/test_perf_run              		\
