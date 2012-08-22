@@ -362,7 +362,12 @@ static void generate_transfer_pos(struct Xt_xmap_all2all * xmap,
                             num_dst_intersections, dst_idxlist_local);
 }
 
-Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
+Xt_xmap xt_xmap_intersection_new(Xt_idxlist * src_intersections, int * src_ranks,
+                                 Xt_count num_src_intersections,
+                                 Xt_idxlist * dst_intersections, int * dst_ranks,
+                                 Xt_count num_dst_intersections,
+                                 Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                                 MPI_Comm comm) {
 
   struct Xt_xmap_all2all * xmap;
 
@@ -371,15 +376,6 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   xmap->vtable = &xmap_all2all_vtable;
 
   mpi_err_handler(MPI_Comm_dup(comm, &(xmap->comm)), comm);
-
-  Xt_idxlist * src_intersections = NULL, * dst_intersections = NULL;
-  int * src_ranks = NULL, * dst_ranks = NULL;
-  Xt_count num_src_intersections = 0, num_dst_intersections = 0;
-
-  // exchange index lists between all processes in comm
-  exchange_idxlists(&src_intersections, &src_ranks, &num_src_intersections,
-                    &dst_intersections, &dst_ranks, &num_dst_intersections,
-                    src_idxlist, dst_idxlist, xmap->comm);
 
   // generate exchange lists
   generate_transfer_pos(xmap, src_intersections, src_ranks, num_src_intersections,
@@ -399,6 +395,28 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
 
   return (Xt_xmap)xmap;
+}
+
+Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
+
+  MPI_Comm curr_comm;
+
+  mpi_err_handler(MPI_Comm_dup(comm, &curr_comm), comm);
+
+  Xt_idxlist * src_intersections = NULL, * dst_intersections = NULL;
+  int * src_ranks = NULL, * dst_ranks = NULL;
+  Xt_count num_src_intersections = 0, num_dst_intersections = 0;
+
+  // exchange index lists between all processes in comm
+  exchange_idxlists(&src_intersections, &src_ranks, &num_src_intersections,
+                    &dst_intersections, &dst_ranks, &num_dst_intersections,
+                    src_idxlist, dst_idxlist, curr_comm);
+
+  MPI_Comm_free(&curr_comm);
+
+  return xt_xmap_intersection_new(src_intersections, src_ranks, num_src_intersections,
+                                  dst_intersections, dst_ranks, num_dst_intersections,
+                                  src_idxlist, dst_idxlist, comm);
 }
 
 static int xmap_all2all_get_max_src_pos(Xt_xmap xmap) {
