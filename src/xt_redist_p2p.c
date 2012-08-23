@@ -21,10 +21,18 @@ redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays
 static void
 redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
 
+static MPI_Datatype
+redist_p2p_get_send_MPI_Datatype(Xt_redist redist, int rank);
+
+static MPI_Datatype
+redist_p2p_get_recv_MPI_Datatype(Xt_redist redist, int rank);
+
 static const struct xt_redist_vtable redist_p2p_vtable = {
-  .delete      = redist_p2p_delete,
-  .s_exchange  = redist_p2p_s_exchange,
-  .s_exchange1 = redist_p2p_s_exchange1
+  .delete                = redist_p2p_delete,
+  .s_exchange            = redist_p2p_s_exchange,
+  .s_exchange1           = redist_p2p_s_exchange1,
+  .get_send_MPI_Datatype = redist_p2p_get_send_MPI_Datatype,
+  .get_recv_MPI_Datatype = redist_p2p_get_recv_MPI_Datatype
 };
 
 struct Xt_redist_p2p_msg {
@@ -373,3 +381,44 @@ redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
   free(recv_request);
 }
 
+static MPI_Datatype
+redist_p2p_get_send_MPI_Datatype(Xt_redist redist, int rank) {
+
+  struct Xt_redist_p2p *redist_p2p;
+
+  redist_p2p = (struct Xt_redist_p2p *)redist;
+
+  MPI_Datatype datatype_copy;
+
+  datatype_copy = MPI_DATATYPE_NULL;
+
+  for (int i = 0; i < redist_p2p->nsrc; ++i)
+    if (redist_p2p->send_msgs[i].rank == rank) {
+      mpi_err_handler(MPI_Type_dup(redist_p2p->send_msgs[i].datatype, &datatype_copy),
+                      redist_p2p->comm);
+      break;
+    }
+
+  return datatype_copy;
+}
+
+static MPI_Datatype
+redist_p2p_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
+
+  struct Xt_redist_p2p *redist_p2p;
+
+  redist_p2p = (struct Xt_redist_p2p *)redist;
+
+  MPI_Datatype datatype_copy;
+
+  datatype_copy = MPI_DATATYPE_NULL;
+
+  for (int i = 0; i < redist_p2p->ndst; ++i)
+    if (redist_p2p->recv_msgs[i].rank == rank) {
+      mpi_err_handler(MPI_Type_dup(redist_p2p->recv_msgs[i].datatype, &datatype_copy),
+                      redist_p2p->comm);
+      break;
+    }
+
+  return datatype_copy;
+}

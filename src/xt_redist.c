@@ -16,3 +16,13 @@ void xt_redist_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
 
   redist->vtable->s_exchange1(redist, src_data, dst_data);
 }
+
+MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank) {
+
+  return redist->vtable->get_send_MPI_Datatype(redist, rank);
+}
+
+MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
+
+  return redist->vtable->get_recv_MPI_Datatype(redist, rank);
+}
