@@ -220,6 +220,50 @@ int main(void) {
     xt_idxlist_delete(idxsection_b);
   }
 
+  { // 2D test
+
+    Xt_idxlist idxsection;
+
+    Xt_idx start = 0;
+    unsigned num_dimensions = 2;
+    unsigned global_size[2] = {4,4};
+    unsigned local_size [2] = {2,2};
+    unsigned local_start[2] = {0,2};
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    Xt_idx indices[4], ref_indices[4] = {2,3,6,7};
+
+    xt_idxlist_get_indices(idxsection, indices);
+
+    for (int i = 0; i < 4; ++i)
+      if (indices[i] != ref_indices[i])
+        PUT_ERR("error in xt_idxlist_get_indices\n");
+  }
+
+  { // 2D test
+
+    Xt_idxlist idxsection;
+
+    Xt_idx start = 1;
+    unsigned num_dimensions = 2;
+    unsigned global_size[2] = {4,4};
+    unsigned local_size [2] = {2,2};
+    unsigned local_start[2] = {0,2};
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    Xt_idx indices[4], ref_indices[4] = {3,4,7,8};
+
+    xt_idxlist_get_indices(idxsection, indices);
+
+    for (int i = 0; i < 4; ++i)
+      if (indices[i] != ref_indices[i])
+        PUT_ERR("error in xt_idxlist_get_indices\n");
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
