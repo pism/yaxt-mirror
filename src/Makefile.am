@@ -22,6 +22,8 @@ libyaxt_a_SOURCES =						\
 	xt_redist.h						\
 	xt_redist_collection.c					\
 	xt_redist_collection.h					\
+	xt_redist_collection_static.c				\
+	xt_redist_collection_static.h				\
 	xt_redist_p2p.c						\
 	xt_redist_p2p.h						\
 	xt_xmap.c						\

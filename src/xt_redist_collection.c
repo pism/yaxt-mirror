@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <mpi.h>
 
@@ -70,28 +71,28 @@ static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
   int comm_size;
   mpi_err_handler(MPI_Comm_size(comm, &comm_size), comm);
 
+  MPI_Datatype datatypes[num_redists];
+
   for (int i = 0; i < comm_size; ++i) {
 
-    for (unsigned j = 0; j < num_redists; ++j) {
+    int flag = 0;
 
-      if (get_MPI_datatype(redists[j], i) != MPI_DATATYPE_NULL) {
+    for (unsigned j = 0; j < num_redists; ++j)
+      flag |= (datatypes[j] = get_MPI_datatype(redists[j], i)) != MPI_DATATYPE_NULL;
+
+    if (flag) {
 
         ENSURE_ARRAY_SIZE(*msgs, msgs_array_size, *nmsgs+1);
 
         (*msgs)[*nmsgs].rank = i;
         (*msgs)[*nmsgs].datatypes = xmalloc(num_redists *
           sizeof(*((*msgs)[*nmsgs].datatypes)));
+        memcpy((*msgs)[*nmsgs].datatypes, datatypes, num_redists * sizeof(*datatypes));
 
         for (unsigned k = 0; k < DATATYPE_CACHE_SIZE; ++k)
           (*msgs)[*nmsgs].datatype_cache[k] = MPI_DATATYPE_NULL;
 
-        for (unsigned j = 0; j < num_redists; ++j)
-          (*msgs)[*nmsgs].datatypes[j] = get_MPI_datatype(redists[j], i);
-
         ++*nmsgs;
-
-        break;
-      }
     }
   }
 
