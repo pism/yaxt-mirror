@@ -96,7 +96,7 @@ int main(void) {
       xt_xmap_delete(xmaps[0]), xt_xmap_delete(xmaps[1]);
       xt_xmap_delete(xmaps[2]), xt_xmap_delete(xmaps[3]);
 
-      Xt_redist redist = xt_redist_collection_new(redists, 4, MPI_COMM_WORLD);
+      Xt_redist redist = xt_redist_collection_new(redists, 4, -1, MPI_COMM_WORLD);
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
       xt_redist_delete(redists[2]), xt_redist_delete(redists[3]);
@@ -164,7 +164,7 @@ int main(void) {
 
       xt_xmap_delete(xmaps[0]), xt_xmap_delete(xmaps[1]);
 
-      Xt_redist redist = xt_redist_collection_new(redists, 2, MPI_COMM_WORLD);
+      Xt_redist redist = xt_redist_collection_new(redists, 2, -1, MPI_COMM_WORLD);
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
 

@@ -10,7 +10,8 @@
 #include "ensure_array_size.h"
 #include "xt_redist.h"
 
-#define DATATYPE_CACHE_SIZE (16)
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define DEFFAULT_DATATYPE_CACHE_SIZE (16)
 
 static void
 redist_collection_delete(Xt_redist redist);
@@ -41,7 +42,7 @@ struct redist_collection_msg {
 
   int rank;
   MPI_Datatype * datatypes; // datatypes of the redists (size == num_redists)
-  MPI_Datatype datatype_cache[DATATYPE_CACHE_SIZE];
+  MPI_Datatype * datatype_cache;
 };
 
 struct Xt_redist_collection {
@@ -50,8 +51,8 @@ struct Xt_redist_collection {
 
   unsigned num_redists;
 
-  MPI_Aint * cached_src_displacements[DATATYPE_CACHE_SIZE];
-  MPI_Aint * cached_dst_displacements[DATATYPE_CACHE_SIZE];
+  MPI_Aint ** cached_src_displacements;
+  MPI_Aint ** cached_dst_displacements;
   int cache_src_token;
   int cache_dst_token;
 
@@ -59,12 +60,15 @@ struct Xt_redist_collection {
   struct redist_collection_msg * send_msgs;
   struct redist_collection_msg * recv_msgs;
 
+  int cache_size;
+
   MPI_Comm comm;
 };
 
 static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
                               Xt_redist * redists, unsigned num_redists, MPI_Comm comm,
-                              MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
+                              MPI_Datatype (*get_MPI_datatype)(Xt_redist,int),
+                              int cache_size) {
 
   int msgs_array_size = 0;
 
@@ -88,8 +92,9 @@ static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
         (*msgs)[*nmsgs].datatypes = xmalloc(num_redists *
           sizeof(*((*msgs)[*nmsgs].datatypes)));
         memcpy((*msgs)[*nmsgs].datatypes, datatypes, num_redists * sizeof(*datatypes));
-
-        for (unsigned k = 0; k < DATATYPE_CACHE_SIZE; ++k)
+        (*msgs)[*nmsgs].datatype_cache = xmalloc(MAX(cache_size, 1) *
+          sizeof(*((*msgs)[*nmsgs].datatype_cache)));
+        for (unsigned k = 0; k < MAX(cache_size, 1); ++k)
           (*msgs)[*nmsgs].datatype_cache[k] = MPI_DATATYPE_NULL;
 
         ++*nmsgs;
@@ -101,7 +106,7 @@ static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
 }
 
 Xt_redist xt_redist_collection_new(Xt_redist * redists, unsigned num_redists,
-                                   MPI_Comm comm) {
+                                   int cache_size, MPI_Comm comm) {
 
   struct Xt_redist_collection * redist_coll;
 
@@ -113,19 +118,31 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, unsigned num_redists,
   redist_coll->nsrc = 0;
   redist_coll->send_msgs = NULL;
   redist_coll->recv_msgs = NULL;
-  for (int i = 0; i < DATATYPE_CACHE_SIZE; ++i) {
+  if (cache_size < -1)
+    Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new", __FILE__, __LINE__);
+  redist_coll->cache_size = (cache_size == -1)?(DEFFAULT_DATATYPE_CACHE_SIZE):cache_size;
+
+  redist_coll->cached_src_displacements = xmalloc(MAX(redist_coll->cache_size,1) *
+    sizeof(*(redist_coll->cached_src_displacements)));
+  redist_coll->cached_dst_displacements = xmalloc(MAX(redist_coll->cache_size,1) *
+    sizeof(*(redist_coll->cached_dst_displacements)));
+
+  for (int i = 0; i < MAX(redist_coll->cache_size,1); ++i) {
     redist_coll->cached_src_displacements[i] = NULL;
     redist_coll->cached_dst_displacements[i] = NULL;
   }
+
   redist_coll->cache_src_token = 0;
   redist_coll->cache_dst_token = 0;
   mpi_err_handler(MPI_Comm_dup(comm, &(redist_coll->comm)), comm);
 
   get_MPI_datatypes(&(redist_coll->send_msgs), &(redist_coll->nsrc), redists,
-                    num_redists, redist_coll->comm, xt_redist_get_send_MPI_Datatype);
+                    num_redists, redist_coll->comm, xt_redist_get_send_MPI_Datatype,
+                    redist_coll->cache_size);
 
   get_MPI_datatypes(&(redist_coll->recv_msgs), &(redist_coll->ndst), redists,
-                    num_redists, redist_coll->comm, xt_redist_get_recv_MPI_Datatype);
+                    num_redists, redist_coll->comm, xt_redist_get_recv_MPI_Datatype,
+                    redist_coll->cache_size);
 
   return (Xt_redist)redist_coll;
 }
@@ -184,7 +201,8 @@ static void generate_datatype(MPI_Aint * displacements, int * block_lengths,
 
 static int generate_datatypes(void ** data, struct redist_collection_msg * msgs, 
                               int num_messages, unsigned num_redists, int * cache_token,
-                              MPI_Aint ** cached_displacements, MPI_Comm comm) {
+                              MPI_Aint ** cached_displacements, int cache_size,
+                              MPI_Comm comm) {
 
   if (*cached_displacements == NULL)
     *cached_displacements = xmalloc(num_redists * sizeof(**cached_displacements));
@@ -207,13 +225,13 @@ static int generate_datatypes(void ** data, struct redist_collection_msg * msgs,
 
   int cache_index = *cache_token;
 
-  *cache_token = (*cache_token+1)%DATATYPE_CACHE_SIZE;
+  *cache_token = (*cache_token+1)%MAX(cache_size,1);
 
   return cache_index;
 }
 
 int lookup_cache_index(void ** data, MPI_Aint ** cached_displacements,
-                       unsigned num_redists, MPI_Comm comm) {
+                       unsigned num_redists, int cache_size, MPI_Comm comm) {
 
   MPI_Aint addresses[num_redists];
   MPI_Aint displacements[num_redists];
@@ -224,7 +242,7 @@ int lookup_cache_index(void ** data, MPI_Aint ** cached_displacements,
   for (unsigned i = 0; i < num_redists; ++i)
     displacements[i] = addresses[i] - addresses[0];
 
-  for (int i = 0; i < DATATYPE_CACHE_SIZE; ++i) {
+  for (int i = 0; i < cache_size; ++i) {
     if (cached_displacements[i] != NULL) {
       unsigned j;
       for (j = 0; j < num_redists; ++j)
@@ -239,15 +257,32 @@ int lookup_cache_index(void ** data, MPI_Aint ** cached_displacements,
 
 static int get_cache_index(void ** data, struct redist_collection_msg * msgs, 
                            int num_messages, unsigned num_redists, int * cache_token,
-                           MPI_Aint ** cached_displacements, MPI_Comm comm) {
+                           MPI_Aint ** cached_displacements, int cache_size,
+                           MPI_Comm comm) {
 
-  int cache_index = lookup_cache_index(data, cached_displacements, num_redists, comm);
+  int cache_index;
+  if (cache_size > 0)
+    cache_index = lookup_cache_index(data, cached_displacements, num_redists,
+                                     cache_size, comm);
+  else
+    cache_index = -1;
 
   if (cache_index == -1)
     cache_index = generate_datatypes(data, msgs, num_messages, num_redists, cache_token,
-                                     cached_displacements+*cache_token, comm);
+                                     cached_displacements+*cache_token, cache_size, comm);
 
   return cache_index;
+}
+
+static void clear_cache_entry(struct redist_collection_msg * msgs, int num_messages,
+                              int cache_index, MPI_Comm comm) {
+
+  for (int i = 0; i < num_messages; ++i)
+    if (msgs[i].datatype_cache[cache_index] != MPI_DATATYPE_NULL) {
+
+      mpi_err_handler(MPI_Type_free(msgs[i].datatype_cache+cache_index), comm);
+      msgs[i].datatype_cache[cache_index] = MPI_DATATYPE_NULL;
+    }
 }
 
 static void
@@ -272,7 +307,7 @@ redist_collection_s_exchange(Xt_redist redist, void **src_data,
                                         redist_coll->ndst, redist_coll->num_redists,
                                         &(redist_coll->cache_dst_token),
                                         redist_coll->cached_dst_displacements,
-                                        redist_coll->comm);
+                                        redist_coll->cache_size, redist_coll->comm);
 
   for (int i = 0; i < redist_coll->ndst; ++i)
     mpi_err_handler(MPI_Irecv(dst_data[0], 1,
@@ -284,7 +319,7 @@ redist_collection_s_exchange(Xt_redist redist, void **src_data,
                                         redist_coll->nsrc, redist_coll->num_redists,
                                         &(redist_coll->cache_src_token),
                                         redist_coll->cached_src_displacements,
-                                        redist_coll->comm);
+                                        redist_coll->cache_size, redist_coll->comm);
 
   for (int i = 0; i < redist_coll->nsrc; ++i)
     mpi_err_handler(MPI_Send(src_data[0], 1,
@@ -295,12 +330,20 @@ redist_collection_s_exchange(Xt_redist redist, void **src_data,
   mpi_err_handler(MPI_Waitall(redist_coll->ndst, recv_requests,
                               MPI_STATUSES_IGNORE), redist_coll->comm);
 
+  if (redist_coll->cache_size == 0) {
+    clear_cache_entry(redist_coll->recv_msgs, redist_coll->ndst, dst_cache_index,
+                      redist_coll->comm);
+    clear_cache_entry(redist_coll->send_msgs, redist_coll->nsrc, src_cache_index,
+                      redist_coll->comm);
+  }
+
   free(recv_requests);
 }
 
 static void
 free_redist_collection_msgs(struct redist_collection_msg * msgs,
-                            int nmsgs, unsigned num_redists, MPI_Comm comm) {
+                            int nmsgs, unsigned num_redists, int cache_size,
+                            MPI_Comm comm) {
 
   for (int i = 0; i < nmsgs; ++i) {
 
@@ -309,13 +352,15 @@ free_redist_collection_msgs(struct redist_collection_msg * msgs,
         mpi_err_handler(MPI_Type_free(msgs[i].datatypes+j), comm);
     free(msgs[i].datatypes);
 
-    for (unsigned j = 0; j < DATATYPE_CACHE_SIZE; ++j) {
+    for (unsigned j = 0; j < cache_size; ++j) {
 
       if (msgs[i].datatype_cache[j] != MPI_DATATYPE_NULL)
         mpi_err_handler(MPI_Type_free(msgs[i].datatype_cache+j), comm);
       else
         break;
     }
+
+    free(msgs[i].datatype_cache);
   }
 }
 
@@ -327,17 +372,21 @@ redist_collection_delete(Xt_redist redist) {
   redist_coll = (struct Xt_redist_collection *)redist;
 
   free_redist_collection_msgs(redist_coll->send_msgs, redist_coll->nsrc,
-                              redist_coll->num_redists, redist_coll->comm);
+                              redist_coll->num_redists, redist_coll->cache_size,
+                              redist_coll->comm);
   free(redist_coll->send_msgs);
 
   free_redist_collection_msgs(redist_coll->recv_msgs, redist_coll->ndst,
-                              redist_coll->num_redists, redist_coll->comm);
+                              redist_coll->num_redists,  redist_coll->cache_size,
+                              redist_coll->comm);
   free(redist_coll->recv_msgs);
 
-  for (int i = 0; i < DATATYPE_CACHE_SIZE; ++i) {
+  for (int i = 0; i < MAX(redist_coll->cache_size,1); ++i) {
     free(redist_coll->cached_src_displacements[i]);
     free(redist_coll->cached_dst_displacements[i]);
   }
+  free(redist_coll->cached_src_displacements);
+  free(redist_coll->cached_dst_displacements);
 
   mpi_err_handler(MPI_Comm_free(&(redist_coll->comm)), MPI_COMM_WORLD);
 
