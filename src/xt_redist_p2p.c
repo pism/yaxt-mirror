@@ -214,6 +214,9 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
   generate_msg_infos(redist->nsrc, src_iter, src_offsets, datatype,
                      &(redist->send_msgs), redist->comm);
 
+  if (dst_iter) xt_xmap_iterator_delete(dst_iter);
+  if (src_iter) xt_xmap_iterator_delete(src_iter);
+
   return (Xt_redist)redist;
 }
 
