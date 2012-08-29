@@ -1,4 +1,5 @@
 noinst_PROGRAMS = 						\
+	test_mpi_generate_datatype				\
 	test_handles						\
 	test_idxvec						\
 	test_idxlist_collection					\
@@ -42,12 +43,14 @@ test_perf_SOURCES = test_perf.f90
 test_perf_stripes_SOURCES = test_perf_stripes.f90
 test_sort_SOURCES = test_sort.c tests.h
 test_yaxt_SOURCES = test_yaxt.f90
+test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 
 AM_CFLAGS = -I$(top_srcdir)/src
 AM_FCFLAGS = -I$(top_srcdir)/src -I../src $(MPI_FC_INCLUDE)
 LDADD = ../src/libyaxt.a
 
 TESTS = 							\
+	test_mpi_generate_datatype_run				\
 	test_handles_run					\
 	test_idxvec_run						\
 	test_idxlist_collection_run				\

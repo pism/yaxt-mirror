@@ -85,5 +85,6 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\
         tests/test_perf_stripes_run              		\
         tests/test_sort_run              			\
         tests/test_yaxt_run              			\
+	tests/test_mpi_generate_datatype_run			\
 	util/serialrun],[chmod a+x "$ac_file"])
 AC_OUTPUT([Makefile src/Makefile tests/Makefile])
