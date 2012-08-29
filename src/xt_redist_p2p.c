@@ -84,9 +84,8 @@ generate_block_datatype(Xt_idxlist transfer_pos, int *block_offsets, int *block_
     blen_vec[i] = block_sizes[j];
   }
 
-  mpi_err_handler(MPI_Type_indexed(num_indices, blen_vec, bdispl_vec, base_datatype, &type), comm);
-
-  mpi_err_handler(MPI_Type_commit(&type), comm);
+  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec, num_indices, base_datatype,
+                                        comm);
 
   free(blen_vec);
   free(bdispl_vec);
@@ -118,9 +117,7 @@ generate_datatype(Xt_idxlist transfer_pos, int *offsets,
       displ[i] = offsets[displ[i]];
   }
 
-  mpi_err_handler(MPI_Type_create_indexed_block(num_indices, 1, displ,
-                                                base_datatype, &type), comm);
-  mpi_err_handler(MPI_Type_commit(&type), comm);
+  type = xt_mpi_generate_datatype(displ, num_indices, base_datatype, comm);
 
   free(displ);
 
