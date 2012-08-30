@@ -1,5 +1,5 @@
-#ifndef XT_XMAP_ALL2ALL_H
-#define XT_XMAP_ALL2ALL_H
+#ifndef XT_XMAP_DIST_DIR_H
+#define XT_XMAP_DIST_DIR_H
 
 #include "yaxt.h"
 
@@ -17,4 +17,4 @@
 Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                              MPI_Comm comm);
 
-#endif // XT_XMAP_ALL2ALL_H
+#endif // XT_XMAP_DIST_DIR_H

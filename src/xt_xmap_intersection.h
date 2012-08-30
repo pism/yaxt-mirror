@@ -1,5 +1,5 @@
-#ifndef XT_XMAP_ALL2ALL_H
-#define XT_XMAP_ALL2ALL_H
+#ifndef XT_XMAP_INTERSECTION_H
+#define XT_XMAP_INTERSECTION_H
 
 #include "yaxt.h"
 
@@ -30,4 +30,4 @@ Xt_xmap xt_xmap_intersection_new(Xt_idxlist * src_intersections, int * src_ranks
                                  Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                                  MPI_Comm comm);
 
-#endif // XT_XMAP_ALL2ALL_H
+#endif // XT_XMAP_INTERSECTION_H

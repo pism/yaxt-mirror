@@ -1,5 +1,5 @@
-#ifndef XT_REDIST_COLLECTION_H
-#define XT_REDIST_COLLECTION_H
+#ifndef XT_REDIST_COLLECTION_STATIC_H
+#define XT_REDIST_COLLECTION_STATIC_H
 
 #include "xt_redist.h"
 
@@ -21,4 +21,4 @@ Xt_redist xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redi
                                           MPI_Aint * src_displacements,
                                           MPI_Aint * dst_displacements, MPI_Comm comm);
 
-#endif // XT_REDIST_COLLECTION_H
+#endif // XT_REDIST_COLLECTION_STATIC_H
