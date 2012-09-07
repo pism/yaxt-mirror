@@ -1,0 +1,77 @@
+How to build yaxt
+
+This README is divided into the following topics of increasing specificity.
+
+1. After checkout
+2. General advice for running configure
+3. Requirements
+4. Specific machine setups
+4.1 Debian GNU/Linux Squeeze 6 x86_64 with OpenMPI 1.4.3
+4.2 IBM AIX 6.1, POWER archictecture
+4.3 CentOS 5.6 x86_64 with Intel MPI and compilers
+
+1. After checkout
+
+To initialize the autotools, execute
+
+$ autoreconf -i
+
+This is not required if you have obtained a regular, packaged source
+distribution of yaxt, but only in case you have directly accessed the
+repository.
+
+2. General advice for running configure
+
+To adapt yaxt to your MPI system, yaxt needs three pieces of information
+
+  a. how to invoke the C compiler and compile and link C programs
+  b. how to invoke the Fortran compiler and compile and link Fortran programs
+  c. how to produce C code for C<->Fortran interoperability, see 
+  c. how to run compiled MPI programs
+
+For a and b respectively you can either
+
+- set CC and FC to the corresponding MPI compiler wrapper, or
+- set CC and FC to the compiler driver (e.g. CC=gcc FC=gfortran) and use
+  some of the arguments MPIROOT MPI_C_INCLUDE MPI_FC_INCLUDE MPI_C_LIB
+  and MPI_FC_LIB to set the necessary compiler flags to build MPI programs.
+
+3. Requirements
+
+Yaxt requires the following software environment to function
+
+- a C compiler with C99 language level support
+- a Fortran compiler with F2003 C interoperability and
+  set (by flags, wrappers or whatever) to preprocess .f90 files.
+- an MPI library working with both of the above compilers
+
+
+
+4. Specific machine setups
+
+The following system setups are regularly being tested:
+
+4.1 Debian GNU/Linux Squeeze 6 x86_64 with OpenMPI 1.4.3
+
+The following packages need to be installed:
+
+ libopenmpi-dev
+
+The following commands should produce a working install:
+
+$ ./configure CC=mpicc FC=mpif90 CPPFLAGS=-DpgiFortran
+$ make
+$ make check
+$ make install
+
+equivalently one can use:
+
+$ ./configure CC=gcc FC=gfortran MPIROOT=/usr/lib/openmpi \
+  MPI_FC_LIB='-L/usr/lib/openmpi -lmpi_f90 -lmpi_f77' \
+  CPPFLAGS=-DpgiFortran FCFLAGS=-cpp
+
+for the configure run.
+
+4.2 IBM AIX 6.1, POWER archictecture
+
+4.3 CentOS 5.6 x86_64 with Intel MPI and compilers
