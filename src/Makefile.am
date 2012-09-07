@@ -1,6 +1,6 @@
-AM_CPPFLAGS = -I../include -I$(srcdir)/../include
+AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
 AM_FCFLAGS  = $(MPI_FC_INCLUDE)
-lib_LIBRARIES = libyaxt.a 
+lib_LIBRARIES = libyaxt.a
 
 libyaxt_a_SOURCES =						\
 	xt_handles.c						\
