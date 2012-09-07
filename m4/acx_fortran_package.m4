@@ -101,19 +101,19 @@ AC_DEFUN([ACX_F90_PACKAGE],
      [AS_VAR_SET_IF([AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB])],,
         [AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB])="-L$[]AS_TR_CPP([$1][root])/lib"])
       AS_VAR_SET_IF([AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])],,
-        [AS_TR_CPP([$1]_AC_LANG_ABBREV[_MOD])="$FC_MOD_FLAG$[]AS_TR_CPP([$1][root])/include"])])
+        [AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])="$FC_MOD_FLAG$[]AS_TR_CPP([$1][root])/include"])])
    m4_ifval([$2],dnl
-     [AC_ARG_WITH(ASX_TR_ARG([$1]_AC_LANG_ABBREV[-mod]),
-        [AS_HELP_STRING([--with-]ASX_TR_ARG([$1]_AC_LANG_ABBREV)[-mod],
+     [AC_ARG_WITH(ASX_TR_ARG([$1-]_AC_LANG_ABBREV[-mod]),
+        [AS_HELP_STRING([--with-]ASX_TR_ARG([$1-]_AC_LANG_ABBREV)[-mod],
            [specifically set directory to search for $1 module, ]dnl
 [@<:@default=$]AS_TR_SH(ASX_TR_ARG([with_$1_root]))[/include@:>@])],
-        AS_TR_CPP([$1]_AC_LANG_ABBREV[_MOD])[="$FC_MOD_FLAG$AS_TR_SH(ASX_TR_ARG([with_$1]_AC_LANG_ABBREV[_mod]))"],
+        AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[="$FC_MOD_FLAG$AS_TR_SH(ASX_TR_ARG([with_$1][_]_AC_LANG_ABBREV[_mod]))"],
         [])
-      AC_SUBST(AS_TR_CPP([$1]_AC_LANG_ABBREV[_MOD]))
-      ACX_FORTRAN_CHECK_MOD_PATHS_IFELSE([$2],[],
-        AS_TR_CPP([$1]_AC_LANG_ABBREV[_MOD])[=]AS_VAR_GET([acx_Mod]),dnl
+      AC_SUBST(AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]))
+      ACX_FORTRAN_CHECK_MOD_PATHS_IFELSE([$2],["$[]AS_TR_CPP([$1][root])/include" "$[]AS_TR_CPP([$1][root])/lib"],
+        AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[=]AS_VAR_GET([acx_Mod]),dnl
         [$5],dnl
-        [$3],m4_ifval([$4],[$4 ])[$[]AS_TR_CPP([$1]_AC_LANG_ABBREV[_MOD])])])
+        [$3],m4_ifval([$4],[$4 ])[$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])])])
    m4_ifval([$6],
      [AC_ARG_WITH(ASX_TR_ARG([$1]_AC_LANG_ABBREV[-lib]),
         [AS_HELP_STRING([--with-]ASX_TR_ARG([$1]_AC_LANG_ABBREV)[-lib],
@@ -125,7 +125,7 @@ AC_DEFUN([ACX_F90_PACKAGE],
         [AS_VAR_PUSHDEF([ac_Search], [acx_cv_option_search_$6_]_AC_LANG_ABBREV)dnl
          AC_SUBST(AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB]))
          acx_save_FCFLAGS="$FCFLAGS"
-         FCFLAGS="$[]AS_TR_CPP([$1]_AC_LANG_ABBREV[_MOD]) $FCFLAGS"
+         FCFLAGS="$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]) $FCFLAGS"
          ACX_OPTION_SEARCH_LIBS_MULTI([$6],[$7],,dnl
            [$10],[$8],m4_ifval([$9],[$9 ])$[]AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB]),dnl
            [use $2]m4_ifval([$12],[[
