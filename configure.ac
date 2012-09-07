@@ -47,14 +47,20 @@ dnl
 dnl ######################################################################
 dnl Checks for MPI.
 dnl ######################################################################
-ACX_FORTRAN_PACKAGE([MPI],[mpif.h],,,
-  [AC_MSG_ERROR([Required include mpif.h not found or not compilable.])],
-  [mpi_waitall],[mpi mpi_f90 mpi_f77 mpich],[[-lmpi_f77 -lmpi],[-lmpi]],,
-  [AC_MSG_ERROR([Cannot link Fortran MPI programs.])],[])
 ACX_C_PACKAGE([MPI],[mpi.h],,,
   [AC_MSG_ERROR([Required header mpi.h not found or not compilable.])],
   [MPI_Waitall],[mpi mpich],,,
   [AC_MSG_ERROR([Cannot link C MPI programs.])])
+ACX_FORTRAN_PACKAGE([MPI],[mpif.h],,,
+  [AC_MSG_ERROR([Required include mpif.h not found or not compilable.])],
+  [mpi_waitall],[mpi mpi_f90 mpi_f77 mpich],[[-lmpi_f77 -lmpi],[-lmpi]],,
+  [AC_MSG_ERROR([Cannot link Fortran MPI programs.])],[])
+ACX_F90_PACKAGE([MPI],[mpi],,,
+  [AC_MSG_ERROR([Required Fortran 90 module not found or incompatible.])],
+  [mpi_waitall],[mpi mpi_f90 mpi_f77 mpich],[[-lmpi_f77 -lmpi],[-lmpi]],,
+  [AC_MSG_ERROR([Cannot link Fortran 90 MPI programs.])],,
+[      INTEGER :: req(1), stat(mpi_status_size, 1), ierror
+],[(1, req, stat, ierror)])
 
 # the following is needed for source parts from libraries with
 # optional MPI dependencies
