@@ -113,7 +113,6 @@ static void generate_msg_infos(struct redist_collection_static_msg ** msgs, int 
 
   int block_lengths[num_redists];
   MPI_Datatype datatypes[num_redists];
-  int flag;
 
   for (unsigned i = 0; i < num_redists; ++i)
     block_lengths[i] = 1;
