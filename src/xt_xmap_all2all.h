@@ -3,6 +3,12 @@
 
 #include "yaxt.h"
 
+/** \example test_xmap_all2all.c
+ */
+
+/** \example test_xmap_all2all_parallel.c
+ */
+
 /**
  * constructor for an exchange map \n
  * this operation is collective over all processes in comm \n

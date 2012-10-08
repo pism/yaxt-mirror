@@ -3,6 +3,12 @@
 
 #include "xt_redist.h"
 
+/** \example test_redist_collection_static.c
+ */
+
+/** \example test_redist_collection_static_parallel.c
+ */
+
 /**
  * constructor for a redistribution collection that is comprised
  * of multiple other redistributions

@@ -3,6 +3,12 @@
 
 #include "yaxt.h"
 
+/** \example test_xmap_dist_dir.c
+ */
+
+ /** \example test_xmap_dist_dir_parallel.c
+ */
+
 /**
  * constructor for an exchange map \n
  * this operation is collective over all processes in comm \n

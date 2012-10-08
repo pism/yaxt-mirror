@@ -1,6 +1,9 @@
 #ifndef XT_UT_C_H
 #define XT_UT_C_H
 
+/** \example test_ut.f90
+ */
+
 /**
  * \file xt_ut_c.h
  * \brief supportes the unitrans interfaces/wrappers in xt_ut.f90 with yaxt functionality.

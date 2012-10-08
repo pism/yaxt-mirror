@@ -3,6 +3,9 @@
 
 #include "xt_idxlist.h"
 
+/** \example test_idxlist_collection.c
+ */
+
 /**
  * generates a new index list based on a collection of index lists
  *

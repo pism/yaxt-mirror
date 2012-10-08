@@ -1,6 +1,9 @@
 #ifndef XT_HANDLES_H
 #define XT_HANDLES_H
 
+/** \example test_handles.c
+ */
+
 /**
  * \file xt_handles.h
  * \brief maps integers to data pointers

@@ -3,6 +3,9 @@
 
 #include "xt_idxlist.h"
 
+/** \example test_idxsection.c
+ */
+
 /**
  * generates an index list that is comprised of a section of a set of
  * indices that are arranged in an n-dimensional....don't know how to

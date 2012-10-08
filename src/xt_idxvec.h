@@ -4,6 +4,9 @@
 #include "yaxt.h"
 #include "xt_idxlist.h"
 
+/** \example test_idxvec.c
+ */
+
 /**
  * generates a new index list based on an index vector
  *

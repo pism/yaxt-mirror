@@ -3,6 +3,9 @@
 
 #include "xt_idxlist.h"
 
+/** \example test_idxstripes.c
+ */
+
 /**
  * Generates an index list that is built up of stripes of indices.
  *
