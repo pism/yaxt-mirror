@@ -126,6 +126,7 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\
 	tests/test_xmap_dist_dir_parallel_run			\
 	tests/test_idxvec_run					\
 	tests/test_idxlist_collection_run			\
+	tests/test_idxmod_run                                  	\
 	tests/test_idxsection_run				\
 	tests/test_idxstripes_run				\
 	tests/test_redist_collection_run			\

@@ -3,6 +3,7 @@ noinst_PROGRAMS = 						\
 	test_handles						\
 	test_idxvec						\
 	test_idxlist_collection					\
+	test_idxmod						\
 	test_idxsection						\
 	test_idxstripes						\
 	test_redist_collection					\
@@ -24,6 +25,7 @@ noinst_PROGRAMS = 						\
 
 test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist.h
 test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h
+test_idxmod_SOURCES = test_idxmod.c tests.h
 test_idxsection_SOURCES = test_idxsection.c tests.h test_idxlist.h
 test_idxstripes_SOURCES = test_idxstripes.c tests.h test_idxlist.h
 test_redist_collection_SOURCES = test_redist_collection.c test.h
@@ -58,6 +60,7 @@ TESTS = 							\
 	test_handles_run					\
 	test_idxvec_run						\
 	test_idxlist_collection_run				\
+	test_idxmod_run						\
 	test_idxsection_run					\
 	test_idxstripes_run					\
 	test_redist_p2p_run					\
