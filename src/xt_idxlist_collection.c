@@ -40,7 +40,7 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** str
                                      Xt_count * num_stripes);
 
 static int
-idxlist_collection_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
+idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 static int
 idxlist_collection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
@@ -58,7 +58,7 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable =
        idxlist_collection_get_num_indices,
        idxlist_collection_get_indices,
        idxlist_collection_get_index_stripes,
-       idxlist_collection_get_index,
+       idxlist_collection_get_index_at_position,
        idxlist_collection_get_position_of_index,
        NULL,
        idxlist_collection_get_position_of_index_off,
@@ -246,14 +246,14 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** str
 }
 
 static int
-idxlist_collection_get_index(Xt_idxlist idxlist, int position, Xt_idx * index) {
+idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index) {
 
   struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
   unsigned i;
 
   for (i = 0; i < collectionlist->num_idxlists; ++i)
-    if (!xt_idxlist_get_index(collectionlist->idxlists[i], position, index))
+    if (!xt_idxlist_get_index_at_position(collectionlist->idxlists[i], position, index))
       return 0;
 
   return 1;

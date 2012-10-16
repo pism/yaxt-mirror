@@ -42,7 +42,7 @@ idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                          Xt_count * num_stripes);
 
 static int
-idxvec_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
+idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 static int
 idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
@@ -71,7 +71,7 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
               .get_num_indices = idxvec_get_num_indices,
               .get_indices = idxvec_get_indices,
               .get_index_stripes = idxvec_get_index_stripes,
-              .get_index =  idxvec_get_index,
+              .get_index_at_position =  idxvec_get_index_at_position,
               .get_position_of_index = idxvec_get_position_of_index,
               .get_position_of_indices = idxvec_get_position_of_indices,
               .get_position_of_index_off = idxvec_get_position_of_index_off,
@@ -510,7 +510,7 @@ idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
 }
 
 static int
-idxvec_get_index(Xt_idxlist idxlist, int position, Xt_idx * index) {
+idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index) {
 
   struct xt_idxvec *idxvec_data;
 

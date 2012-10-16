@@ -138,10 +138,10 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
   }
 }
 
-int xt_idxlist_get_index(Xt_idxlist idxlist, int position,
+int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
                          Xt_idx * index) {
 
-  return idxlist->vtable->get_index(idxlist, position, index);
+  return idxlist->vtable->get_index_at_position(idxlist, position, index);
 }
 
 int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,

@@ -95,8 +95,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
       if (indices[i] != ref_indices[i])
         PUT_ERR("index list contains wrong indices\n");
 
-      if (xt_idxlist_get_index(idxlist, i, &index) || index != ref_indices[i])
-        PUT_ERR("error in xt_idxlist_get_index\n");
+      if (xt_idxlist_get_index_at_position(idxlist, i, &index) || index != ref_indices[i])
+        PUT_ERR("error in xt_idxlist_get_index_at_position\n");
 
       if (xt_idxlist_get_position_of_index(idxlist, ref_indices[i], &position) ||
           position != ref_positions[i])
@@ -194,10 +194,10 @@ void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
       PUT_ERR("check_idxlist: get_max_index failed")
   }
 
-  if (!xt_idxlist_get_index(idxlist, -1, &index))
-    PUT_ERR("error in xt_idxlist_get_index\n");
+  if (!xt_idxlist_get_index_at_position(idxlist, -1, &index))
+    PUT_ERR("error in xt_idxlist_get_index_at_position\n");
 
-  if (!xt_idxlist_get_index(idxlist, ref_num_indices, &index))
-    PUT_ERR("error in xt_idxlist_get_index\n");
+  if (!xt_idxlist_get_index_at_position(idxlist, ref_num_indices, &index))
+    PUT_ERR("error in xt_idxlist_get_index_at_position\n");
 }
 #endif // TEST_IDXLIST_UTILS_H

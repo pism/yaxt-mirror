@@ -35,7 +35,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              Xt_count * num_stripes);
 
 static int
-idxsection_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
+idxsection_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 static int
 idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
@@ -59,7 +59,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .get_num_indices             = idxsection_get_num_indices,
               .get_indices                 = idxsection_get_indices,
               .get_index_stripes           = idxsection_get_index_stripes,
-              .get_index                   = idxsection_get_index,
+              .get_index_at_position       = idxsection_get_index_at_position,
               .get_position_of_index       = idxsection_get_position_of_index,
               .get_position_of_indices     = NULL,
               .get_position_of_index_off   = idxsection_get_position_of_index_off,
@@ -406,7 +406,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
 }
 
 static int
-idxsection_get_index(Xt_idxlist idxlist, int position, Xt_idx * index) {
+idxsection_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index) {
 
   struct xt_idxsection *section;
 
@@ -495,7 +495,7 @@ idxsection_get_min_index(Xt_idxlist idxlist) {
 
   Xt_idx index;
 
-  idxsection_get_index(idxlist, 0, &index);
+  idxsection_get_index_at_position(idxlist, 0, &index);
 
   return index;
 }
@@ -505,7 +505,7 @@ idxsection_get_max_index(Xt_idxlist idxlist) {
 
   Xt_idx index;
 
-  idxsection_get_index(idxlist, idxsection_get_num_indices(idxlist)-1, &index);
+  idxsection_get_index_at_position(idxlist, idxsection_get_num_indices(idxlist)-1, &index);
 
   return index;
 }

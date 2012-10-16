@@ -21,7 +21,7 @@ struct xt_idxlist_vtable {
    Xt_count (*get_num_indices)(Xt_idxlist);
    void (*get_indices)(Xt_idxlist, Xt_idx *indices);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_count *);
-   int (*get_index)(Xt_idxlist, int, Xt_idx *);
+   int (*get_index_at_position)(Xt_idxlist, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
    int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, Xt_count, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
@@ -174,7 +174,7 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
  *                      1 if the position is out of range
  */
 
-int xt_idxlist_get_index(Xt_idxlist idxlist, int position, Xt_idx * index);
+int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 /**
  * gets the position of the first occurrence of the given index
