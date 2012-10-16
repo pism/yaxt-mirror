@@ -258,7 +258,6 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_str
     if (do_overlap)
       xt_quicksort_index(idxvec->sorted_vector + offset, curr_offset,
                          idxvec->sorted_vec_positions + offset, 0);
-      
 
     offset += curr_offset;
     i += num_selection;
@@ -270,7 +269,7 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_str
   free(stripe_min);
 }
 
-Xt_idxlist 
+Xt_idxlist
 xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
 
    struct xt_idxvec *idxvec_data;
@@ -397,7 +396,7 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   if (i == idxvec->num_indices) {
     // gen id-map:
     for (i = 0; i < idxvec->num_indices; ++i)
-      idxvec->sorted_vec_positions[i] = i;    
+      idxvec->sorted_vec_positions[i] = i;
     return idxvec->sorted_vector = idxvec->vector;
   }
   Xt_idx *sorted_vector;
@@ -550,6 +549,7 @@ idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num
   int p;
   int max_p = idxvec->num_indices-1;
   Xt_idx *v = idxvec->vector;
+
   int undef_count = 0;
   for (int ip = 0; ip < num_pos; ip++) {
     p = positions[ip];

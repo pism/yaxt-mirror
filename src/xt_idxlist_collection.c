@@ -345,6 +345,7 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
     = (struct xt_idxlist_collection*)idxlist;
 
   unsigned i;
+
   Xt_count curr_num_indices = 0;
 
   int idxlist_offsets = 0;

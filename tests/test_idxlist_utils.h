@@ -111,7 +111,7 @@ static void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
     }
 
     ref_get_positions_of_indices(indices, num_indices, ref_indices, ref_num_indices,
-                                ref_positions, 0);
+                                 ref_positions, 0);
     position = -1;
     for (i = 0; i < ref_num_indices; ++i) {
       if (xt_idxlist_get_position_of_index_off(idxlist, ref_indices[i], &position,
