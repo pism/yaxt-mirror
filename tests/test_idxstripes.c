@@ -19,7 +19,7 @@ int main(void) {
 
   mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
-  Xt_initialize(MPI_COMM_WORLD);
+  xt_initialize(MPI_COMM_WORLD);
 
   { // general tests
     Xt_idxlist idxstripes;

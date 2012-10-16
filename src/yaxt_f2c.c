@@ -23,7 +23,7 @@ struct xt_redist_f {
 void xt_initialize_f(MPI_Fint *comm_f) {
   MPI_Comm comm_c;
   comm_c = MPI_Comm_f2c(*comm_f);
-  Xt_initialize(comm_c);
+  xt_initialize(comm_c);
 }
 
 void xt_abort_cmsl_f(MPI_Fint *comm_f, const char *msg, const char *source, int line) {
