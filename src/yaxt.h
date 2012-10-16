@@ -8,8 +8,7 @@ typedef int Xt_idx;
 typedef int Xt_count;
 #define Xt_count_dt (MPI_INT)
 
-typedef struct xt_idxlist *xt_idxlist;
-typedef struct xt_idxlist *Xt_idxlist;
+typedef struct Xt_idxlist *Xt_idxlist;
 typedef struct Xt_xmap *Xt_xmap;
 typedef struct xt_redist *Xt_redist;
 
@@ -32,7 +31,7 @@ xt_initialize(MPI_Comm default_comm);
  *
  * @param[in] idxlist index list that is to be destroyed
  */
-void xt_idxlist_delete(xt_idxlist idxlist);
+void xt_idxlist_delete(Xt_idxlist idxlist);
 
 /**
  * inquiry function to check if the inverse is defined \n

@@ -9,7 +9,7 @@ MODULE yaxt
 
   PRIVATE
 
-  PUBLIC :: xt_abort, xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
+  PUBLIC :: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, xt_redist_delete, &
@@ -25,10 +25,10 @@ MODULE yaxt
     INTEGER(xt_idx_kind) :: stride
   END TYPE xt_stripe
 
-  TYPE, BIND(C) :: xt_idxlist
+  TYPE, BIND(C) :: Xt_idxlist
     PRIVATE
     TYPE(c_ptr) :: cptr = c_null_ptr
-  END TYPE xt_idxlist
+  END TYPE Xt_idxlist
 
   TYPE, BIND(C) :: xt_xmap
     PRIVATE
@@ -74,28 +74,28 @@ MODULE yaxt
 
   INTERFACE
     FUNCTION xt_idxvec_new(idxvec, num_indices) BIND(C, name='xt_idxvec_new_f') RESULT(res)
-      IMPORT :: xt_idxlist, xt_idx_kind, xt_count_kind
+      IMPORT :: Xt_idxlist, xt_idx_kind, xt_count_kind
       IMPLICIT NONE
       INTEGER(xt_idx_kind), INTENT(in) :: idxvec(*)
       INTEGER(xt_count_kind), VALUE, INTENT(in) :: num_indices
-      TYPE(xt_idxlist) :: res
+      TYPE(Xt_idxlist) :: res
     END FUNCTION xt_idxvec_new
   END INTERFACE
 
   INTERFACE
     SUBROUTINE xt_idxlist_delete(idxlist) BIND(C, name='xt_idxlist_delete_f')
-      IMPORT :: xt_idxlist
+      IMPORT :: Xt_idxlist
       IMPLICIT NONE
-      TYPE(xt_idxlist), INTENT(inout) :: idxlist
+      TYPE(Xt_idxlist), INTENT(inout) :: idxlist
     END SUBROUTINE xt_idxlist_delete
   END INTERFACE
 
   INTERFACE
     FUNCTION xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm) BIND(C, name='xt_xmap_all2all_new_f') RESULT(res)
-      IMPORT :: xt_idxlist, xt_xmap
+      IMPORT :: Xt_idxlist, xt_xmap
       IMPLICIT NONE
-      TYPE(xt_idxlist), INTENT(in) :: src_idxlist
-      TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+      TYPE(Xt_idxlist), INTENT(in) :: src_idxlist
+      TYPE(Xt_idxlist), INTENT(in) :: dst_idxlist
       INTEGER, INTENT(in) :: comm
       TYPE(xt_xmap) :: res
     END FUNCTION xt_xmap_all2all_new
@@ -185,11 +185,11 @@ MODULE yaxt
 
   INTERFACE
     FUNCTION xt_idxstripes_new(stripes, num_stripes) BIND(C, name='xt_idxstripes_new_f') RESULT(res)
-      IMPORT:: xt_idxlist, xt_stripe, xt_count_kind
+      IMPORT:: Xt_idxlist, xt_stripe, xt_count_kind
       IMPLICIT NONE
       TYPE(xt_stripe), INTENT(in) :: stripes(*)
       INTEGER(xt_count_kind), VALUE, INTENT(in) :: num_stripes
-      TYPE(xt_idxlist) :: res
+      TYPE(Xt_idxlist) :: res
     END FUNCTION xt_idxstripes_new
   END INTERFACE
 

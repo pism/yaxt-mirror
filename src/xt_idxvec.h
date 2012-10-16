@@ -12,13 +12,13 @@
  *
  * @param[in] idxlist     array containing the global indices
  * @param[in] num_indices number of indices in idxlist
- * @return returns a xt_idxlist
+ * @return returns a Xt_idxlist$
  */
-xt_idxlist xt_idxvec_new(Xt_idx *idxlist, Xt_count num_indices);
+Xt_idxlist xt_idxvec_new(Xt_idx *idxlist, Xt_count num_indices);
 
-xt_idxlist xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes);
+Xt_idxlist xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes);
 
-xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
+Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm);
 
 #endif // XT_IDXVEC_H

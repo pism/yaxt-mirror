@@ -10,7 +10,7 @@
 #include "xt_xmap.h"
 #include "xt_xmap_dist_dir.h"
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
+void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 
 void shift_idx(Xt_idx idx[], int num, int offset)  {
   int rank, i;
@@ -36,7 +36,7 @@ int main(void) {
       Xt_count src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
       shift_idx(src_index_list, src_num_indices, 7);
 
-      xt_idxlist src_idxlist;
+      Xt_idxlist src_idxlist;
 
       src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
@@ -45,7 +45,7 @@ int main(void) {
       Xt_count dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
       shift_idx(dst_index_list, dst_num_indices, 7);
 
-      xt_idxlist dst_idxlist;
+      Xt_idxlist dst_idxlist;
 
       dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -84,7 +84,7 @@ int main(void) {
       Xt_count src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
       shift_idx(src_index_list, src_num_indices, 100);
 
-      xt_idxlist src_idxlist;
+      Xt_idxlist src_idxlist;
 
       src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
@@ -93,7 +93,7 @@ int main(void) {
       Xt_count dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
       shift_idx(dst_index_list, dst_num_indices, 100);
 
-      xt_idxlist dst_idxlist;
+      Xt_idxlist dst_idxlist;
 
       dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -133,7 +133,7 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
+void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
 
    Xt_count i;
 

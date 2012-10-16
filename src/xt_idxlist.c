@@ -29,7 +29,7 @@ void xt_idxlist_pack(Xt_idxlist idxlist, void *buffer,
                          position, comm);
 }
 
-xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
+Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
                              int *position, MPI_Comm comm) {
 
    int type;
@@ -57,10 +57,10 @@ xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
   return NULL;
 }
 
-xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
-                                       xt_idxlist idxlist_dst) {
+Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
+                                       Xt_idxlist idxlist_dst) {
 
-   xt_idxlist intersection;
+   Xt_idxlist intersection;
 
    intersection = idxlist_src->vtable->get_intersection(idxlist_src, idxlist_dst);
 
@@ -79,7 +79,7 @@ xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
       xt_idxlist_get_indices(idxlist_src, indices_src);
       xt_idxlist_get_indices(idxlist_dst, indices_dst);
 
-      xt_idxlist idxvec_src, idxvec_dst;
+      Xt_idxlist idxvec_src, idxvec_dst;
 
       idxvec_src = xt_idxvec_new(indices_src, num_indices_src);
       idxvec_dst = xt_idxvec_new(indices_dst, num_indices_dst);
@@ -96,22 +96,22 @@ xt_idxlist xt_idxlist_get_intersection(xt_idxlist idxlist_src,
    return intersection;
 }
 
-xt_idxlist xt_idxlist_copy(xt_idxlist idxlist) {
+Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist) {
 
    return idxlist->vtable->copy(idxlist);
 }
 
-Xt_count xt_idxlist_get_num_indices(xt_idxlist idxlist) {
+Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
 
    return idxlist->vtable->get_num_indices(idxlist);
 }
 
-void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
+void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
    idxlist->vtable->get_indices(idxlist, indices);
 }
 
-void xt_idxlist_get_index_stripes(xt_idxlist idxlist,
+void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   Xt_count * num_stripes) {
 
@@ -163,7 +163,7 @@ int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
     Xt_idx *tmp_indices;
     tmp_indices = xmalloc(num_tmp_indices * sizeof (tmp_indices[0]));
     xt_idxlist_get_indices(idxlist, tmp_indices);
-    xt_idxlist tmp_idxvec;
+    Xt_idxlist tmp_idxvec;
     tmp_idxvec = xt_idxvec_new(tmp_indices, num_tmp_indices);
     int retval = tmp_idxvec->vtable->get_position_of_indices(tmp_idxvec, indices, num_indices,
                                                          positions, single_match_only);

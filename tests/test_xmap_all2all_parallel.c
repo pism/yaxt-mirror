@@ -8,7 +8,7 @@
 #include "xt_xmap.h"
 #include "xt_xmap_all2all.h"
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
+void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 
 int main(void) {
 
@@ -28,7 +28,7 @@ int main(void) {
 
     Xt_idx src_index_list[1] = {comm_rank};
 
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
 
     src_idxlist = xt_idxvec_new(src_index_list, 1);
 
@@ -38,7 +38,7 @@ int main(void) {
     for (i = 0; i < comm_size; ++i)
       dst_index_list[i] = i;
 
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
 
     dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
 
@@ -79,7 +79,7 @@ int main(void) {
 
     Xt_idx src_index_list[1] = {comm_rank};
 
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
 
     src_idxlist = xt_idxvec_new(src_index_list, 1);
 
@@ -93,7 +93,7 @@ int main(void) {
       dst_index_list[0] ^= dst_index_list[1];
     }
 
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
 
     dst_idxlist = xt_idxvec_new(dst_index_list, 2);
 
@@ -134,7 +134,7 @@ int main(void) {
       {1,2,3,4,5,9,10,11,12,13,17,18,19,20,21,25,26,27,28,29},
       {4,5,6,7,8,12,13,14,15,16,20,21,22,23,24,28,29,30,31,32} };
 
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
 
     src_idxlist = xt_idxvec_new(src_index_list[comm_rank], 20);
 
@@ -143,7 +143,7 @@ int main(void) {
       {10,15,14,13,12,15,10,11,12,13,23,18,19,20,21,31,26,27,28,29},
       {13,12,11,10,15,12,13,14,15,10,20,21,22,23,18,28,29,30,31,26}};
 
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
 
     dst_idxlist = xt_idxvec_new(dst_index_list[comm_rank], 20);
 
@@ -182,7 +182,7 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
+void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
 
   unsigned i;
 

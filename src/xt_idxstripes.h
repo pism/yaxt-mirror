@@ -14,7 +14,7 @@
  */
 Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stripes);
 
-xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
+Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm);
 
 /**

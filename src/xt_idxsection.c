@@ -9,29 +9,29 @@
 #include "core/ppm_xfuncs.h"
 
 static void
-idxsection_delete(xt_idxlist data);
+idxsection_delete(Xt_idxlist data);
 
 static size_t
-idxsection_get_pack_size(xt_idxlist data, MPI_Comm comm);
+idxsection_get_pack_size(Xt_idxlist data, MPI_Comm comm);
 
 static void
-idxsection_pack(xt_idxlist data, void *buffer, int buffer_size,
+idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                 int *position, MPI_Comm comm);
 
-static xt_idxlist
-idxsection_get_intersection(xt_idxlist idxlist_a, xt_idxlist idxlist_b);
+static Xt_idxlist
+idxsection_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
 
-static xt_idxlist
-idxsection_copy(xt_idxlist idxlist);
+static Xt_idxlist
+idxsection_copy(Xt_idxlist idxlist);
 
 static Xt_count
-idxsection_get_num_indices(xt_idxlist idxlist);
+idxsection_get_num_indices(Xt_idxlist idxlist);
 
 static void
-idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices);
+idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
 static void
-idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              Xt_count * num_stripes);
 
 static int
@@ -123,7 +123,7 @@ Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
 }
 
 static void
-idxsection_delete(xt_idxlist data) {
+idxsection_delete(Xt_idxlist data) {
 
   struct xt_idxsection *section;
 
@@ -140,7 +140,7 @@ idxsection_delete(xt_idxlist data) {
 }
 
 static size_t
-idxsection_get_pack_size(xt_idxlist data, MPI_Comm comm) {
+idxsection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   struct xt_idxsection *section = (struct xt_idxsection*)data;
 
@@ -155,7 +155,7 @@ idxsection_get_pack_size(xt_idxlist data, MPI_Comm comm) {
 }
 
 static void
-idxsection_pack(xt_idxlist data, void *buffer, int buffer_size,
+idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                 int *position, MPI_Comm comm) {
 
   assert(data);
@@ -184,7 +184,7 @@ idxsection_pack(xt_idxlist data, void *buffer, int buffer_size,
                            buffer_size, position, comm), comm);
 }
 
-xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
+Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm) {
 
   struct xt_idxsection *section;
@@ -226,11 +226,11 @@ xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                           section->local_strides, section->ndim,
                           MPI_UNSIGNED, comm),comm);
 
-  return (xt_idxlist)section;
+  return (Xt_idxlist)section;
 }
 
 static Xt_idxlist
-idxsection_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
+idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   if (idxlist_dst->vtable != &idxsection_vtable) return NULL;
 
@@ -279,7 +279,7 @@ idxsection_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
     local_size[i] = local_end - local_start[i];
   }
 
-  struct xt_idxlist *intersection;
+  struct Xt_idxlist *intersection;
 
   intersection = xt_idxsection_new(idxsection_src->global_start_index,
                                    idxsection_src->ndim,
@@ -292,8 +292,8 @@ idxsection_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
   return intersection;
 }
 
-static xt_idxlist
-idxsection_copy(xt_idxlist idxlist) {
+static Xt_idxlist
+idxsection_copy(Xt_idxlist idxlist) {
 
   struct xt_idxsection *section;
 
@@ -305,7 +305,7 @@ idxsection_copy(xt_idxlist idxlist) {
 }
 
 static Xt_count
-idxsection_get_num_indices(xt_idxlist idxlist) {
+idxsection_get_num_indices(Xt_idxlist idxlist) {
 
   struct xt_idxsection * section;
 
@@ -321,7 +321,7 @@ idxsection_get_num_indices(xt_idxlist idxlist) {
 }
 
 static void
-idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
+idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
   struct xt_idxsection *section;
 
@@ -355,7 +355,7 @@ idxsection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 }
 
 static void
-idxsection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              Xt_count * num_stripes) {
 
   struct xt_idxsection *section;

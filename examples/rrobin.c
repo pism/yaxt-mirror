@@ -42,13 +42,13 @@ int main(void) {
     MPI_Barrier (MPI_COMM_WORLD);
 
     // source index list by stripes
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
 
     struct Xt_stripe src_stripes = {rank*leng, leng, 1};
     src_idxlist = xt_idxstripes_new(&src_stripes, 1);
 
     // destination index list by stripes
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
 
     struct Xt_stripe dst_stripes = {((rank+1)*leng)%(size*leng), leng, 1};
     dst_idxlist = xt_idxstripes_new(&dst_stripes, 1);

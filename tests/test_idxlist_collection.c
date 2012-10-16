@@ -12,7 +12,7 @@
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
+void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
                    struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
 
@@ -29,7 +29,7 @@ int main(void) {
       Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
       Xt_count num_indices = 7;
 
-      xt_idxlist idxlists[2];
+      Xt_idxlist idxlists[2];
 
       // create two index lists
 
@@ -38,7 +38,7 @@ int main(void) {
 
       // generate a collection index list
 
-      xt_idxlist collectionlist;
+      Xt_idxlist collectionlist;
 
       collectionlist = xt_idxlist_collection_new(idxlists, 2);
 
@@ -87,7 +87,7 @@ int main(void) {
 
       // unpack the buffer
 
-      xt_idxlist collectionlist_copy;
+      Xt_idxlist collectionlist_copy;
 
       position = 0;
       collectionlist_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position,
@@ -99,7 +99,7 @@ int main(void) {
 
       // compute intersection between the two index lists
 
-      xt_idxlist intersection;
+      Xt_idxlist intersection;
       
       intersection = xt_idxlist_get_intersection(collectionlist, collectionlist_copy);
 
@@ -137,7 +137,7 @@ int main(void) {
       Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
       Xt_count num_indices = 7;
 
-      xt_idxlist idxlists[2];
+      Xt_idxlist idxlists[2];
 
       // create two index lists
 
@@ -146,7 +146,7 @@ int main(void) {
 
       // generate a collection index list
 
-      xt_idxlist collectionlist, collectionlist_copy;
+      Xt_idxlist collectionlist, collectionlist_copy;
 
       collectionlist = xt_idxlist_collection_new(idxlists, 2);
 
@@ -191,7 +191,7 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxdata(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
+void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
 
    Xt_count i;
 

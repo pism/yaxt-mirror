@@ -16,29 +16,29 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 static void
-idxvec_delete(xt_idxlist data);
+idxvec_delete(Xt_idxlist data);
 
 static size_t
-idxvec_get_pack_size(xt_idxlist data, MPI_Comm comm);
+idxvec_get_pack_size(Xt_idxlist data, MPI_Comm comm);
 
 static void
-idxvec_pack(xt_idxlist data, void *buffer, int buffer_size,
+idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
             int *position, MPI_Comm comm);
 
-static xt_idxlist
-idxvec_get_intersection(xt_idxlist idxlist_a, xt_idxlist idxlist_b);
+static Xt_idxlist
+idxvec_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
 
-static xt_idxlist
-idxvec_copy(xt_idxlist idxlist);
+static Xt_idxlist
+idxvec_copy(Xt_idxlist idxlist);
 
 static Xt_count
-idxvec_get_num_indices(xt_idxlist idxlist);
+idxvec_get_num_indices(Xt_idxlist idxlist);
 
 static void
-idxvec_get_indices(xt_idxlist idxlist, Xt_idx *indices);
+idxvec_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
 static void
-idxvec_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                          Xt_count * num_stripes);
 
 static int
@@ -336,7 +336,7 @@ void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
                              buffer_size, position, comm), comm);
 }
 
-xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
+Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
    struct xt_idxvec *idxvec;
@@ -365,7 +365,7 @@ xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
    idxvec->sorted_vector = NULL;
    idxvec->sorted_vec_positions = NULL;
 
-   return (xt_idxlist)idxvec;
+   return (Xt_idxlist)idxvec;
 }
 
 static Xt_idx *
@@ -406,8 +406,8 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   return sorted_vector;
 }
 
-static xt_idxlist
-idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
+static Xt_idxlist
+idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   if (idxlist_dst->vtable != &idxvec_vtable) return NULL;
 
@@ -462,11 +462,11 @@ idxvec_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst) {
   inter_vector->sorted_vector = NULL;
   inter_vector->sorted_vec_positions = NULL;
 
-  return (xt_idxlist)inter_vector;
+  return (Xt_idxlist)inter_vector;
 }
 
-static xt_idxlist
-idxvec_copy(xt_idxlist idxlist) {
+static Xt_idxlist
+idxvec_copy(Xt_idxlist idxlist) {
 
    struct xt_idxvec *idxvec_data;
 
@@ -476,7 +476,7 @@ idxvec_copy(xt_idxlist idxlist) {
 }
 
 static Xt_count
-idxvec_get_num_indices(xt_idxlist idxlist) {
+idxvec_get_num_indices(Xt_idxlist idxlist) {
 
    struct xt_idxvec *idxvec_data;
 
@@ -486,7 +486,7 @@ idxvec_get_num_indices(xt_idxlist idxlist) {
 }
 
 static void
-idxvec_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
+idxvec_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
    struct xt_idxvec *idxvec_data;
 
@@ -497,7 +497,7 @@ idxvec_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 }
 
 static void
-idxvec_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                          Xt_count * num_stripes) {
 
   struct xt_idxvec *idxvec_data;

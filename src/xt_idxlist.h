@@ -12,15 +12,15 @@ struct Xt_stripe {
 
 struct xt_idxlist_vtable {
 
-   void  (*delete)(xt_idxlist);
+   void  (*delete)(Xt_idxlist);
 
-   size_t (*get_pack_size)(xt_idxlist, MPI_Comm);
-   void (*pack)(xt_idxlist, void*, int, int*, MPI_Comm);
-   xt_idxlist (*get_intersection)(xt_idxlist,xt_idxlist);
-   xt_idxlist (*copy)(xt_idxlist);
-   Xt_count (*get_num_indices)(xt_idxlist);
-   void (*get_indices)(xt_idxlist, Xt_idx *indices);
-   void (*get_index_stripes)(xt_idxlist, struct Xt_stripe **, Xt_count *);
+   size_t (*get_pack_size)(Xt_idxlist, MPI_Comm);
+   void (*pack)(Xt_idxlist, void*, int, int*, MPI_Comm);
+   Xt_idxlist (*get_intersection)(Xt_idxlist,Xt_idxlist);
+   Xt_idxlist (*copy)(Xt_idxlist);
+   Xt_count (*get_num_indices)(Xt_idxlist);
+   void (*get_indices)(Xt_idxlist, Xt_idx *indices);
+   void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_count *);
    int (*get_index)(Xt_idxlist, int, Xt_idx *);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
    int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, Xt_count, int *, int);
@@ -38,13 +38,13 @@ enum xt_idxvecype {
    STRIPES    = 4,
 };
 
-struct xt_idxlist {
+struct Xt_idxlist {
    struct xt_idxlist_vtable *vtable;
 };
 
 struct xt_idxlist_unpack_routine_table {
    enum xt_idxvecype type;
-   xt_idxlist (*xt_idxlist_unpack)(void*,int,int*,MPI_Comm);
+   Xt_idxlist (*xt_idxlist_unpack)(void*,int,int*,MPI_Comm);
 };
 
 /**
@@ -69,7 +69,7 @@ struct xt_idxlist_unpack_routine_table {
  * @see xt_idxlist_pack
  * @see xt_idxlist_unpack
  */
-size_t xt_idxlist_get_pack_size(xt_idxlist idxlist, MPI_Comm comm);
+size_t xt_idxlist_get_pack_size(Xt_idxlist idxlist, MPI_Comm comm);
 
 /**
  * packs an index list into previously allocated buffer using MPI_Pack
@@ -93,7 +93,7 @@ size_t xt_idxlist_get_pack_size(xt_idxlist idxlist, MPI_Comm comm);
  * @see xt_idxlist_unpack
  *
  */
-void xt_idxlist_pack(xt_idxlist idxlist, void* buffer, int buffer_size,
+void xt_idxlist_pack(Xt_idxlist idxlist, void* buffer, int buffer_size,
                      int* position, MPI_Comm comm);
 
 /**
@@ -111,7 +111,7 @@ void xt_idxlist_pack(xt_idxlist idxlist, void* buffer, int buffer_size,
  *
  * @see xt_idxlist_pack
  */
-xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
+Xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
                              int* position, MPI_Comm comm);
 
 /**
@@ -124,8 +124,8 @@ xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
  *         duplicate elements in the intersection if idxlist_src contains i
  * @remark the elements in the resulting index list are sorted
  */
-xt_idxlist
-xt_idxlist_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst);
+Xt_idxlist
+xt_idxlist_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
 
 /**
  * generates a copy of a given index list
@@ -133,7 +133,7 @@ xt_idxlist_get_intersection(xt_idxlist idxlist_src, xt_idxlist idxlist_dst);
  * @param[in] idxlist index list that is to be copied
  * @return            returns a copy of the given index list
  */
-xt_idxlist xt_idxlist_copy(xt_idxlist idxlist);
+Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist);
 
 /**
  * returns the number of indices stored in the given index list
@@ -141,7 +141,7 @@ xt_idxlist xt_idxlist_copy(xt_idxlist idxlist);
  * @param[in] idxlist index list for which the number of indices is required
  * @return            number of indices in the given index list
  */
-Xt_count xt_idxlist_get_num_indices(xt_idxlist idxlist);
+Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist);
 
 /**
  * gets the indices stored in an index list
@@ -149,7 +149,7 @@ Xt_count xt_idxlist_get_num_indices(xt_idxlist idxlist);
  * @param[in]     idxlist index list for which the indices are to be returned
  * @param[in,out] indices array into which the indices are written
  */
-void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices);
+void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
 /**
  * returns the indices stored in an index list
@@ -160,7 +160,7 @@ void xt_idxlist_get_indices(xt_idxlist idxlist, Xt_idx *indices);
  *                         for freeing the memory associated with the stripes)
  * @param[out] num_stripes number of stripes in array "stripes"
  */
-void xt_idxlist_get_index_stripes(xt_idxlist idxlist,
+void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   Xt_count * num_stripes);
 

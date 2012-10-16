@@ -29,7 +29,7 @@ int main(void) {
       Xt_idx index_vector[] = {1,2,3,4,5,6,7};
       Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
-      xt_idxlist idxvector;
+      Xt_idxlist idxvector;
 
       // create an index vector
 
@@ -77,7 +77,7 @@ int main(void) {
 
       // unpack the buffer
 
-      xt_idxlist idxvector_copy;
+      Xt_idxlist idxvector_copy;
 
       position = 0;
       idxvector_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
@@ -88,7 +88,7 @@ int main(void) {
 
       // compute intersection between the two index vectors
 
-      xt_idxlist intersection;
+      Xt_idxlist intersection;
 
       intersection = xt_idxlist_get_intersection(idxvector, idxvector_copy);
 
@@ -126,7 +126,7 @@ int main(void) {
       Xt_idx index_vector[] = {1,2,3,4,5,6,7};
       Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
-      xt_idxlist idxvector, idxvector_copy;
+      Xt_idxlist idxvector, idxvector_copy;
 
       // create an index vector
 
@@ -155,7 +155,7 @@ int main(void) {
       Xt_idx index_vector[] = {1,2,3,7,5,6,7,7};
       Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
-      xt_idxlist idxvector;
+      Xt_idxlist idxvector;
 
       // create an index vector
 
@@ -178,7 +178,7 @@ int main(void) {
      Xt_idx intersection_vector[] = {12,12,13,13,14,15,15,20,21,23,28,29,31};
      size_t intersection_num = sizeof(intersection_vector) / sizeof(intersection_vector[0]);
 
-     xt_idxlist idxvector;
+     Xt_idxlist idxvector;
 
      // create an index vector
 

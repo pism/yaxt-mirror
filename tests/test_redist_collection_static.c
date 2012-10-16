@@ -24,12 +24,12 @@ int main(void) {
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
     unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
     unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     Xt_xmap xmap;
@@ -78,12 +78,12 @@ int main(void) {
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
     unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
     unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     Xt_xmap xmap;

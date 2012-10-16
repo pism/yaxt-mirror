@@ -66,7 +66,7 @@ Xt_idx get_max_index(Xt_idx * indices, Xt_count num_indices) {
   return index;
 }
 
-void check_idxlist(xt_idxlist idxlist, Xt_idx * ref_indices,
+void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
                    Xt_count ref_num_indices) {
 
   Xt_count i;

@@ -31,7 +31,7 @@ static xt_ut_init_type init_val = {0,0,0,0,0,0};
 
 
 typedef struct {
-  xt_idxlist idxvec;
+  Xt_idxlist idxvec;
   int domain_size;
 } xt_ut_deco_type;
 

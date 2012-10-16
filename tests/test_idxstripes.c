@@ -11,7 +11,7 @@
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices);
+void do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices);
 
 int main(void) {
 
@@ -486,13 +486,13 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
-void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
+void do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 
   struct Xt_stripe * stripes;
   Xt_count num_stripes;
-  xt_idxlist temp_idxlist;
+  Xt_idxlist temp_idxlist;
 
   xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
   temp_idxlist = xt_idxvec_from_stripes_new(stripes, num_stripes);
@@ -541,7 +541,7 @@ void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
 
     // unpack the buffer
 
-    xt_idxlist idxlist_copy;
+    Xt_idxlist idxlist_copy;
 
     position = 0;
     idxlist_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
@@ -559,7 +559,7 @@ void do_tests(xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
 
   { // test copying
 
-    xt_idxlist idxlist_copy;
+    Xt_idxlist idxlist_copy;
 
     idxlist_copy = xt_idxlist_copy(idxlist);
 

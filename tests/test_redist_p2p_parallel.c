@@ -39,7 +39,7 @@ int main(void) {
     for (i = 0; i < src_num_indices; ++i)
       src_index_list[i] = rank * 10 + i;
 
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
 
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
@@ -49,7 +49,7 @@ int main(void) {
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = (rank * 10 + i + 2) % (size * 10);
 
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
 
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -102,7 +102,7 @@ int main(void) {
     for (i = 0; i < src_num_indices; ++i)
       src_index_list[i] = i;
 
-    xt_idxlist src_idxlist;
+    Xt_idxlist src_idxlist;
 
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
@@ -112,7 +112,7 @@ int main(void) {
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = i;
 
-    xt_idxlist dst_idxlist;
+    Xt_idxlist dst_idxlist;
 
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -190,8 +190,8 @@ int main(void) {
       ivecb[i]= gdomb[ig];
     }
 
-    xt_idxlist idxlist_a = xt_idxvec_new(iveca, nwin);
-    xt_idxlist idxlist_b = xt_idxvec_new(ivecb, nwin);
+    Xt_idxlist idxlist_a = xt_idxvec_new(iveca, nwin);
+    Xt_idxlist idxlist_b = xt_idxvec_new(ivecb, nwin);
 
     Xt_xmap xmap = xt_xmap_all2all_new(idxlist_a, idxlist_b, MPI_COMM_WORLD);
 

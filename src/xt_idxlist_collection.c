@@ -13,30 +13,30 @@
 #include "ensure_array_size.h"
 
 static void
-idxlist_collection_delete(xt_idxlist data);
+idxlist_collection_delete(Xt_idxlist data);
 
 static size_t
-idxlist_collection_get_pack_size(xt_idxlist data, MPI_Comm comm);
+idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm);
 
 static void
-idxlist_collection_pack(xt_idxlist data, void *buffer, int buffer_size,
+idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                         int *position, MPI_Comm comm);
 
-static xt_idxlist
-idxlist_collection_get_intersection(xt_idxlist idxlist_src,
-                                    xt_idxlist idxlist_dst);
+static Xt_idxlist
+idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
+                                    Xt_idxlist idxlist_dst);
 
-static xt_idxlist
-idxlist_collection_copy(xt_idxlist idxlist);
+static Xt_idxlist
+idxlist_collection_copy(Xt_idxlist idxlist);
 
 static Xt_count
-idxlist_collection_get_num_indices(xt_idxlist idxlist);
+idxlist_collection_get_num_indices(Xt_idxlist idxlist);
 
 static void
-idxlist_collection_get_indices(xt_idxlist idxlist, Xt_idx *indices);
+idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
 static void
-idxlist_collection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxlist_collection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                                      Xt_count * num_stripes);
 
 static int
@@ -68,11 +68,11 @@ struct xt_idxlist_collection {
 
    const struct xt_idxlist_vtable *vtable;
 
-   xt_idxlist * idxlists;
+   Xt_idxlist * idxlists;
    unsigned num_idxlists;
 };
 
-xt_idxlist xt_idxlist_collection_new(xt_idxlist *idxlists, unsigned num_idxlists) {
+Xt_idxlist xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
 
    struct xt_idxlist_collection *collectionlist;
 
@@ -87,10 +87,10 @@ xt_idxlist xt_idxlist_collection_new(xt_idxlist *idxlists, unsigned num_idxlists
    for (i = 0; i < num_idxlists; ++i)
       collectionlist->idxlists[i] = xt_idxlist_copy(idxlists[i]);
 
-   return (xt_idxlist)collectionlist;
+   return (Xt_idxlist)collectionlist;
 }
 
-void idxlist_collection_delete(xt_idxlist data) {
+void idxlist_collection_delete(Xt_idxlist data) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)data;
 
@@ -103,7 +103,7 @@ void idxlist_collection_delete(xt_idxlist data) {
    free(collectionlist);
 }
 
-size_t idxlist_collection_get_pack_size(xt_idxlist data, MPI_Comm comm) {
+size_t idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)data;
 
@@ -120,7 +120,7 @@ size_t idxlist_collection_get_pack_size(xt_idxlist data, MPI_Comm comm) {
    return size_int + size_unsigned + size_idxlists;
 }
 
-void idxlist_collection_pack(xt_idxlist data, void *buffer, int buffer_size, int *position,
+void idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size, int *position,
                              MPI_Comm comm) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)data;
@@ -137,7 +137,7 @@ void idxlist_collection_pack(xt_idxlist data, void *buffer, int buffer_size, int
       xt_idxlist_pack(collectionlist->idxlists[i], buffer, buffer_size, position, comm);
 }
 
-xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
+Xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
                                         MPI_Comm comm) {
 
    struct xt_idxlist_collection *collectionlist;
@@ -159,16 +159,16 @@ xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *posi
       collectionlist->idxlists[i] = xt_idxlist_unpack(buffer, buffer_size,
                                                       position, comm);
 
-   return (xt_idxlist)collectionlist;
+   return (Xt_idxlist)collectionlist;
 }
 
-xt_idxlist idxlist_collection_get_intersection(xt_idxlist idxlist_src,
-                                               xt_idxlist idxlist_dst) {
+Xt_idxlist idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
+                                               Xt_idxlist idxlist_dst) {
 
    return NULL;
 }
 
-xt_idxlist idxlist_collection_copy(xt_idxlist idxlist) {
+Xt_idxlist idxlist_collection_copy(Xt_idxlist idxlist) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
@@ -176,7 +176,7 @@ xt_idxlist idxlist_collection_copy(xt_idxlist idxlist) {
 }
 
 static Xt_count
-idxlist_collection_get_num_indices(xt_idxlist idxlist) {
+idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
@@ -190,7 +190,7 @@ idxlist_collection_get_num_indices(xt_idxlist idxlist) {
 }
 
 static void
-idxlist_collection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
+idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
@@ -205,7 +205,7 @@ idxlist_collection_get_indices(xt_idxlist idxlist, Xt_idx *indices) {
 }
 
 static void
-idxlist_collection_get_index_stripes(xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxlist_collection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                                      Xt_count * num_stripes) {
 
   struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;

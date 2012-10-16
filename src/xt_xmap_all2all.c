@@ -34,7 +34,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
     dst(dpos) = src(spos)
    */
 
-  xt_idxlist *src_idxlists_all, *dst_idxlists_all;
+  Xt_idxlist *src_idxlists_all, *dst_idxlists_all;
 
   unsigned i;
   int comm_size;

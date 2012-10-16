@@ -1,7 +1,7 @@
 
 PROGRAM test_perf_stripes
   USE mpi
-  USE yaxt, ONLY: xt_abort, xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
+  USE yaxt, ONLY: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, xt_redist, &
        xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
@@ -39,7 +39,7 @@ PROGRAM test_perf_stripes
   TYPE(xt_xmap) :: xmap_tpex_2d, xmap_tpex_3d, xmap_tpex_3d_ws
   TYPE(xt_redist) :: redist_tpex_2d, redist_surf_tpex_2d, redist_tpex_3d, &
        redist_tpex_3d_ws, redist_tpex_3d_wb
-  TYPE(xt_idxlist) :: loc_id_3d_ws, loc_tpex_3d_ws
+  TYPE(Xt_idxlist) :: loc_id_3d_ws, loc_tpex_3d_ws
 
   INTEGER, ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
   INTEGER, ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
@@ -652,7 +652,7 @@ CONTAINS
     CHARACTER(len=*), PARAMETER :: context = 'gen_stripes: '
 
     INTEGER, INTENT(in) :: local_idx(:,:,:)
-    TYPE(xt_idxlist), INTENT(out) :: local_stripes
+    TYPE(Xt_idxlist), INTENT(out) :: local_stripes
 
     TYPE(xt_stripe), ALLOCATABLE :: stripes(:,:)
     INTEGER :: i, j, k, ni, nj, nk
@@ -684,7 +684,7 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
     src_idxlist = xt_idxvec_new(local_src_idx, SIZE(local_src_idx))
     dst_idxlist = xt_idxvec_new(local_dst_idx, SIZE(local_dst_idx))
@@ -700,7 +700,7 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
     src_idxlist = xt_idxvec_new(local_src_idx, SIZE(local_src_idx))
     dst_idxlist = xt_idxvec_new(local_dst_idx, SIZE(local_dst_idx))
