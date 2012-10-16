@@ -3,18 +3,18 @@
 
 /**
  \page rrobin Round Robin example on how to use yaxt
- 
+
   This example(\ref rrobin.c) is the first step to understand working with yaxt.
   First of all include the basic header files:
 
-  \code 
+  \code
   #include "mpi.h"
- 
+
   #include "yaxt.h"
   #include "xt_mpi.h"
-  \endcode 
+  \endcode
 
-  Depending on what we need next, we will include some more yaxt headers. 
+  Depending on what we need next, we will include some more yaxt headers.
 
   \code
   #include "xt_xmap_all2all.h"
@@ -23,15 +23,15 @@
   #include "xt_idxstripes.h"
   \endcode
 
-  We need to initialize MPI and yaxt as follows: 
-  \code 
+  We need to initialize MPI and yaxt as follows:
+  \code
   mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   Xt_initialize (MPI_COMM_WORLD);
   \endcode
 
   Find out number of processes and the local rank like in common MPI programs.
-  \code 
+  \code
   int rank, size;
   MPI_Comm_rank (MPI_COMM_WORLD, &rank);
   MPI_Comm_size (MPI_COMM_WORLD, &size);
@@ -56,7 +56,7 @@
   arrays with the previously defined values, and fill the destination arrays with -1 to
   see the change.
 
-  \code 
+  \code
   int leng = 5;
   int src_array[leng];
   int dst_array[leng];
@@ -68,8 +68,8 @@
     //print source
     printf("SOURCEvalue: %d, element_index: %d, rank: %d \n", src_array[i], i, rank);
   }
-  \endcode 
-  
+  \endcode
+
   There are many ways to define, which elements are locally available (source) and which
   are required (destination). We could define them with an array of indices using an index
   vector (\ref xt_idxvec.h), or we could define a block of elements we want to have using
@@ -77,7 +77,7 @@
   how many elements we want to have, an the stride between the elements. Here we need for
   the source an index stripe containing 5 elements with a stride of 1, beginnig at 0 for
   rank 0, at 1*leng for rank 1 etc.
-  
+
   \code
     // source index list by stripes
     xt_idxlist src_idxlist;
@@ -96,7 +96,7 @@
   redistribution object for the actual data exchange. There multiple strategies for doing
   the mapping, in this example all2all is used. An alternative would be %dist_dir
   (\ref xt_xmap_dist_dir.h).
-  \code 
+  \code
   // xmap
   Xt_xmap xmap;
 
@@ -111,7 +111,7 @@
   To do the main step, we need pointers of source and destination arrays. Here it is
   "overdressed", but shows the main charachter if you have higher number of data arrays.
 
-  \code 
+  \code
   //array poiter, especially necessary for data array number > 1
   int* src_array_p = &src_array[0];
   int* dst_array_p = &dst_array[0];
@@ -122,7 +122,7 @@
 
   To see the result:
 
-  \code 
+  \code
   for (int p = 0; p < leng; p++)
     printf("DESTvalue: %d, element_index: %d, rank: %d \n", dst_array[p], p, rank);
   \endcode
@@ -141,24 +141,4 @@
   \code
   MPI_Finalize();
   \endcode
-  
-
-
-
-
-
-
-
-
-
-  
-   
-
-
-
-
-
-
-
-
 */
