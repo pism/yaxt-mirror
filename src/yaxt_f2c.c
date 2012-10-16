@@ -9,7 +9,7 @@
 #include "xt_redist_p2p.h"
 
 struct xt_idxlist_f {
-   struct xt_idxlist *cptr;
+   Xt_idxlist cptr;
 };
 
 struct xt_xmap_f {

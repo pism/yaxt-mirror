@@ -10,18 +10,18 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
-void xt_idxlist_delete(struct xt_idxlist *idxlist) {
+void xt_idxlist_delete(Xt_idxlist idxlist) {
 
    idxlist->vtable->delete(idxlist);
 }
 
-size_t xt_idxlist_get_pack_size(struct xt_idxlist *idxlist,
+size_t xt_idxlist_get_pack_size(Xt_idxlist idxlist,
                                 MPI_Comm comm) {
 
    return idxlist->vtable->get_pack_size(idxlist, comm);
 }
 
-void xt_idxlist_pack(struct xt_idxlist *idxlist, void *buffer,
+void xt_idxlist_pack(Xt_idxlist idxlist, void *buffer,
                      int buffer_size, int *position,
                      MPI_Comm comm) {
 

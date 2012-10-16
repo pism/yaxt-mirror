@@ -322,15 +322,15 @@ static Xt_idxlist
 compute_intersection_fallback(struct xt_idxstripes * idxstripes_src,
                               struct xt_idxstripes * idxstripes_dst) {
 
-  struct xt_idxlist * idxvec_from_stripes_src;
-  struct xt_idxlist * idxvec_from_stripes_dst;
+  Xt_idxlist idxvec_from_stripes_src;
+  Xt_idxlist idxvec_from_stripes_dst;
 
   idxvec_from_stripes_src = xt_idxvec_from_stripes_new(idxstripes_src->stripes,
                                                        idxstripes_src->num_stripes);
   idxvec_from_stripes_dst = xt_idxvec_from_stripes_new(idxstripes_dst->stripes,
                                                        idxstripes_dst->num_stripes);
 
-  struct xt_idxlist * intersection;
+  Xt_idxlist intersection;
 
   intersection = xt_idxlist_get_intersection(idxvec_from_stripes_src,
                                              idxvec_from_stripes_dst);
@@ -453,7 +453,7 @@ idxstripes_compute_intersection(struct xt_idxstripes *idxstripes_src,
       i_src++;
   }
 
-  struct xt_idxlist * inter;
+  Xt_idxlist inter;
 
   inter = xt_idxstripes_new(inter_stripes, num_inter_stripes);
 

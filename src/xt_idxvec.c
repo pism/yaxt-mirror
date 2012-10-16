@@ -98,7 +98,7 @@ struct xt_idxvec {
    */
 };
 
-struct xt_idxlist *xt_idxvec_new(Xt_idx *idxvec, Xt_count num_indices) {
+Xt_idxlist xt_idxvec_new(Xt_idx *idxvec, Xt_count num_indices) {
 
    struct xt_idxvec *idxvec_data;
 
@@ -261,7 +261,7 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_str
   free(stripe_min);
 }
 
-struct xt_idxlist *
+Xt_idxlist 
 xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
 
    struct xt_idxvec *idxvec_data;
@@ -293,7 +293,7 @@ xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
    return (void*)idxvec_data;
 }
 
-static void idxvec_delete(struct xt_idxlist *data) {
+static void idxvec_delete(Xt_idxlist data) {
 
    if (((struct xt_idxvec*)data)->sorted_vector !=
        ((struct xt_idxvec*)data)->vector)
@@ -303,7 +303,7 @@ static void idxvec_delete(struct xt_idxlist *data) {
    free(data);
 }
 
-static size_t idxvec_get_pack_size(struct xt_idxlist *data, MPI_Comm comm) {
+static size_t idxvec_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
    struct xt_idxvec *idxvec = (struct xt_idxvec*)data;
 
@@ -317,7 +317,7 @@ static size_t idxvec_get_pack_size(struct xt_idxlist *data, MPI_Comm comm) {
    return size_xt_count + size_xt_idx + size_int_type;
 }
 
-void idxvec_pack(struct xt_idxlist *data, void *buffer, int buffer_size,
+void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
                  int *position, MPI_Comm comm) {
 
   assert(data);
