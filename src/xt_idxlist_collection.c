@@ -49,20 +49,24 @@ static int
 idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                              int * position, int offset);
 
-static const struct xt_idxlist_vtable idxlist_collection_vtable =
-      {idxlist_collection_delete,
-       idxlist_collection_get_pack_size,
-       idxlist_collection_pack,
-       idxlist_collection_get_intersection,
-       idxlist_collection_copy,
-       idxlist_collection_get_num_indices,
-       idxlist_collection_get_indices,
-       idxlist_collection_get_index_stripes,
-       idxlist_collection_get_index_at_position,
-       idxlist_collection_get_position_of_index,
-       NULL,
-       idxlist_collection_get_position_of_index_off,
-       NULL};
+static const struct xt_idxlist_vtable idxlist_collection_vtable = {
+  .delete                      = idxlist_collection_delete,
+  .get_pack_size               = idxlist_collection_get_pack_size,
+  .pack                        = idxlist_collection_pack,
+  .get_intersection            = idxlist_collection_get_intersection,
+  .copy                        = idxlist_collection_copy,
+  .get_num_indices             = idxlist_collection_get_num_indices,
+  .get_indices                 = idxlist_collection_get_indices,
+  .get_index_stripes           = idxlist_collection_get_index_stripes,
+  .get_index_at_position       = idxlist_collection_get_index_at_position,
+  .get_indices_at_positions    = NULL,
+  .get_position_of_index       = idxlist_collection_get_position_of_index,
+  .get_position_of_indices     = NULL,
+  .get_position_of_index_off   = idxlist_collection_get_position_of_index_off,
+  .get_position_of_indices_off = NULL,
+  .get_min_index               = NULL,
+  .get_max_index               = NULL
+};
 
 struct xt_idxlist_collection {
 

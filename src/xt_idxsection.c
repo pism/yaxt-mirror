@@ -60,6 +60,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .get_indices                 = idxsection_get_indices,
               .get_index_stripes           = idxsection_get_index_stripes,
               .get_index_at_position       = idxsection_get_index_at_position,
+              .get_indices_at_positions    = NULL,
               .get_position_of_index       = idxsection_get_position_of_index,
               .get_position_of_indices     = NULL,
               .get_position_of_index_off   = idxsection_get_position_of_index_off,

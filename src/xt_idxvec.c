@@ -45,6 +45,9 @@ static int
 idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 static int
+idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_idx *index, Xt_idx undef_idx);
+
+static int
 idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
 
 static int
@@ -63,21 +66,23 @@ static Xt_idx
 idxvec_get_max_index(Xt_idxlist idxlist);
 
 static const struct xt_idxlist_vtable idxvec_vtable = {
-              .delete = idxvec_delete,
-              .get_pack_size =  idxvec_get_pack_size,
-              .pack = idxvec_pack,
-              .get_intersection = idxvec_get_intersection,
-              .copy = idxvec_copy,
-              .get_num_indices = idxvec_get_num_indices,
-              .get_indices = idxvec_get_indices,
-              .get_index_stripes = idxvec_get_index_stripes,
-              .get_index_at_position =  idxvec_get_index_at_position,
-              .get_position_of_index = idxvec_get_position_of_index,
-              .get_position_of_indices = idxvec_get_position_of_indices,
-              .get_position_of_index_off = idxvec_get_position_of_index_off,
-              .get_position_of_indices_off = NULL,
-              .get_min_index = idxvec_get_min_index,
-              .get_max_index = idxvec_get_max_index};
+  .delete                      = idxvec_delete,
+  .get_pack_size               = idxvec_get_pack_size,
+  .pack                        = idxvec_pack,
+  .get_intersection            = idxvec_get_intersection,
+  .copy                        = idxvec_copy,
+  .get_num_indices             = idxvec_get_num_indices,
+  .get_indices                 = idxvec_get_indices,
+  .get_index_stripes           = idxvec_get_index_stripes,
+  .get_index_at_position       = idxvec_get_index_at_position,
+  .get_indices_at_positions    = idxvec_get_indices_at_positions,
+  .get_position_of_index       = idxvec_get_position_of_index,
+  .get_position_of_indices     = idxvec_get_position_of_indices,
+  .get_position_of_index_off   = idxvec_get_position_of_index_off,
+  .get_position_of_indices_off = NULL,
+  .get_min_index               = idxvec_get_min_index,
+  .get_max_index               = idxvec_get_max_index
+};
 
 // index vector data structure
 struct xt_idxvec {
@@ -522,6 +527,29 @@ idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index) {
   *index = idxvec_data->vector[position];
 
   return 0;
+}
+
+static int
+idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_idx *index, Xt_idx undef_idx) {
+
+  struct xt_idxvec *idxvec;
+
+  idxvec = (struct xt_idxvec *)idxlist;
+  int p;
+  int max_p = idxvec->num_indices-1;
+  Xt_idx *v = idxvec->vector;
+  int undef_count = 0;
+  for (int ip = 0; ip < num_pos; ip++) {
+    p = positions[ip];
+    if (p < 0 || p > max_p) {
+      index[ip] = undef_idx;
+      undef_count++;
+      continue;
+    }
+    index[ip] = v[p];
+  }
+
+  return undef_count;
 }
 
 static int

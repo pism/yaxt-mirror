@@ -515,6 +515,87 @@ int main(void) {
       xt_idxlist_delete(idxvec);
    }
 
+   {
+     // check idxvec_get_indices_at_positions
+     // case: mixed valid and invalid positions
+     const Xt_idx undef_idx = -1234567;
+     Xt_idx indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
+     int num_indices = sizeof(indices) / sizeof(indices[0]);
+     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+     int pos[] = {0,2,7,9,11,100,11,200,9,300,7,400,5};
+     int num_pos = sizeof(pos) / sizeof(pos[0]);
+     Xt_idx ref_sel_idx[num_pos];
+     int ref_undef_count = 0;
+     for (int ip=0; ip<num_pos; ip++) {
+       int p = pos[ip];
+       if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
+         ref_sel_idx[ip] = undef_idx;
+         ref_undef_count++;
+       }
+     }
+     Xt_idx sel_idx[num_pos];
+     int undef_count = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx, undef_idx);
+     if (undef_count != ref_undef_count) PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+     for (int ip=0; ip<num_pos; ip++) {
+       if (sel_idx[ip] != ref_sel_idx[ip]) PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+     }
+     xt_idxlist_delete(idxvec);
+   }
+
+   {
+     // check idxvec_get_indices_at_positions
+     // case: only valid positions
+     const Xt_idx undef_idx = -1234567;
+     Xt_idx indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
+     int num_indices = sizeof(indices) / sizeof(indices[0]);
+     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+     int pos[] = {0,2,7,9,11,11,9,7,5};
+     int num_pos = sizeof(pos) / sizeof(pos[0]);
+     Xt_idx ref_sel_idx[num_pos];
+     int ref_undef_count = 0;
+     for (int ip=0; ip<num_pos; ip++) {
+       int p = pos[ip];
+       if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
+         ref_sel_idx[ip] = undef_idx;
+         ref_undef_count++;
+       }
+     }
+     Xt_idx sel_idx[num_pos];
+     int undef_count = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx, undef_idx);
+     if (undef_count != ref_undef_count) PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+     for (int ip=0; ip<num_pos; ip++) {
+       if (sel_idx[ip] != ref_sel_idx[ip]) PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+     }
+     xt_idxlist_delete(idxvec);
+   }
+
+   {
+     // check idxvec_get_indices_at_positions
+     // case: only invalid positions
+     const Xt_idx undef_idx = -1234567;
+     Xt_idx indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
+     int num_indices = sizeof(indices) / sizeof(indices[0]);
+     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+     int pos[] = {100,102,107,109,1011,1011,109,107,105};
+     int num_pos = sizeof(pos) / sizeof(pos[0]);
+     Xt_idx ref_sel_idx[num_pos];
+     int ref_undef_count = 0;
+     for (int ip=0; ip<num_pos; ip++) {
+       int p = pos[ip];
+       if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
+         ref_sel_idx[ip] = undef_idx;
+         ref_undef_count++;
+       }
+     }
+     Xt_idx sel_idx[num_pos];
+     int undef_count = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx, undef_idx);
+     if (undef_count != ref_undef_count) PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+     for (int ip=0; ip<num_pos; ip++) {
+       if (sel_idx[ip] != ref_sel_idx[ip]) PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+     }
+     xt_idxlist_delete(idxvec);
+   }
+
    MPI_Finalize();
 
    return TEST_EXIT_CODE;

@@ -144,6 +144,10 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
   return idxlist->vtable->get_index_at_position(idxlist, position, index);
 }
 
+int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_idx *indices, Xt_idx undef_idx) {
+  return idxlist->vtable->get_indices_at_positions(idxlist, positions, num_pos, indices, undef_idx);
+}
+
 int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
                                      int * position) {
 

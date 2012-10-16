@@ -22,6 +22,7 @@ struct xt_idxlist_vtable {
    void (*get_indices)(Xt_idxlist, Xt_idx *indices);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_count *);
    int (*get_index_at_position)(Xt_idxlist, int, Xt_idx *);
+   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_idx *index, Xt_idx undef_idx);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
    int (*get_position_of_indices)(Xt_idxlist, Xt_idx *, Xt_count, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
@@ -170,11 +171,23 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
  * @param[in]  idxlist  index list
  * @param[in]  position position of the index that is to be retrieved
  * @param[out] index    index stored in the index list at the given position
- * @return              0 if everything was okay
+ * @return              0 if everything was okay\n
  *                      1 if the position is out of range
  */
-
 int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
+
+/**
+ * get indices stored at the specified positions in an index list
+ *
+ * @param[in]  idxlist    index list
+ * @param[in]  positions  positions of the selected indices
+ * @param[in]  num_pos    number of positions
+ * @param[out] indices    selected indices
+ * @param[in]  undef_idx  fallback value that is used if a position is unvalid
+ * @return                zero if everything was okay or\n
+ *                        number of unresolved positions ( == number of undef values assigned to the result)
+ */
+int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_idx *indices, Xt_idx undef_idx);
 
 /**
  * gets the position of the first occurrence of the given index
