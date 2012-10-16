@@ -1,25 +1,24 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "mpi.h"
 
 #include "yaxt.h"
 #include "xt_mpi.h"
-#include "xt_idxvec.h"
 #include "xt_xmap_all2all.h"
 #include "xt_idxlist.h"
 #include "xt_redist_p2p.h"
 #include "xt_idxstripes.h"
-#include "core/ppm_xfuncs.h"
 
 int main(void) {
-  
+
   //init mpi
- 
+
   mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
- 
+
   Xt_initialize (MPI_COMM_WORLD);
-  
+
   int rank, size;
   MPI_Comm_rank (MPI_COMM_WORLD, &rank);
   MPI_Comm_size (MPI_COMM_WORLD, &size);
@@ -29,7 +28,7 @@ int main(void) {
     int leng = 5;
     int src_array[leng];
     int dst_array[leng];
-    
+
     for (int i = 0; i < leng; i++) {
       // first position = 1, second position = rank, third position element_index; for rank < 10, leng < 10
       src_array[i] = 100 + rank*10 + i;
@@ -38,21 +37,21 @@ int main(void) {
       //print source
       printf("SOURCEvalue: %d, element_index: %d, rank: %d \n", src_array[i], i, rank);
     }
- 
-    // output barrier   
+
+    // output barrier
     MPI_Barrier (MPI_COMM_WORLD);
 
     // source index list by stripes
     xt_idxlist src_idxlist;
- 
-    struct Xt_stripe src_stripes[1] = {rank*leng, leng, 1};
-    src_idxlist = xt_idxstripes_new(src_stripes, 1);
+
+    struct Xt_stripe src_stripes = {rank*leng, leng, 1};
+    src_idxlist = xt_idxstripes_new(&src_stripes, 1);
 
     // destination index list by stripes
     xt_idxlist dst_idxlist;
- 
-    struct Xt_stripe dst_stripes[1] = {((rank+1)*leng)%(size*leng), leng, 1};
-    dst_idxlist = xt_idxstripes_new(dst_stripes, 1);
+
+    struct Xt_stripe dst_stripes = {((rank+1)*leng)%(size*leng), leng, 1};
+    dst_idxlist = xt_idxstripes_new(&dst_stripes, 1);
 
     // xmap
     Xt_xmap xmap;
@@ -70,12 +69,18 @@ int main(void) {
 
     //Exchange
     xt_redist_s_exchange(redist, (void**)(&src_array_p), 1, (void**)(&dst_array_p), 1);
-        
+
     // print result
     // for emelent_index < 10, leng < 10:
     // first and last positions: should stay; second position: should be +1, except last rank should have 0
     for (int p = 0; p < leng; p++)
       printf("DESTvalue: %d, element_index: %d, rank: %d \n", dst_array[p], p, rank);
+
+
+    xt_redist_delete(redist);
+    xt_xmap_delete(xmap);
+    xt_idxlist_delete(dst_idxlist);
+    xt_idxlist_delete(src_idxlist);
   }
 
   MPI_Finalize();
