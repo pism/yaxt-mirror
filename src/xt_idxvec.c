@@ -55,7 +55,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                  int * position, int offset);
 
 static int
-idxvec_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+idxvec_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
                                Xt_count num_indices, int * positions,
                                int single_match_only);
 
@@ -77,7 +77,7 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .get_index_at_position       = idxvec_get_index_at_position,
   .get_indices_at_positions    = idxvec_get_indices_at_positions,
   .get_position_of_index       = idxvec_get_position_of_index,
-  .get_positions_of_indices    = idxvec_get_position_of_indices,
+  .get_positions_of_indices    = idxvec_get_positions_of_indices,
   .get_position_of_index_off   = idxvec_get_position_of_index_off,
   .get_positions_of_indices_off = NULL,
   .get_min_index               = idxvec_get_min_index,
@@ -624,7 +624,7 @@ static int idx_vec_is_sorted(Xt_idx *idx, unsigned n) {
   return 1;
 }
 
-int idxvec_get_position_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_idx,
+int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_idx,
                                    Xt_count num_selection, int * positions,
                                    int single_match_only) {
 

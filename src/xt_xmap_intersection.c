@@ -155,7 +155,7 @@ static void generate_src_transfer_pos(struct Xt_xmap_intersection * xmap,
   int retval;
   for (int i = 0; i < xmap->nsrc; ++i) {
     xt_idxlist_get_indices(intersections[i], intersection_idxvec);
-    retval = xt_idxlist_get_position_of_indices(mypart_idxlist, intersection_idxvec,
+    retval = xt_idxlist_get_positions_of_indices(mypart_idxlist, intersection_idxvec,
                                                 intersection_size[i], intersection_pos,
                                                 single_match_only);
     assert(retval != 1);
@@ -194,7 +194,7 @@ static void generate_dst_transfer_pos(struct Xt_xmap_intersection * xmap,
   int retval;
   for (int i = 0; i < xmap->ndst; ++i) {
     xt_idxlist_get_indices(intersections[i], intersection_idxvec);
-    retval = xt_idxlist_get_position_of_indices(mypart_idxlist, intersection_idxvec,
+    retval = xt_idxlist_get_positions_of_indices(mypart_idxlist, intersection_idxvec,
                                                 intersection_size[i], intersection_pos,
                                                 single_match_only);
     assert(retval != 1);

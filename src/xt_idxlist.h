@@ -216,7 +216,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * pos
  * @return                 0 if everything was okay
  *                         1 if the index could not be found in idxlist
  */
-int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
                                        Xt_count num_indices, int * positions,
                                        int single_match_only);
 
@@ -253,9 +253,9 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
  * \remarks a call to xt_idxlist_get_position_of_index_off with offset = NULL
  *          is the same as a call to xt_idxlist_get_positions_of_indices
  */
-int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
-                                           Xt_count num_indices, int * positions,
-                                           int * offsets);
+int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
+                                            Xt_count num_indices, int * positions,
+                                            int * offsets);
 
 /**
  * gets the smallest index stored in the index list

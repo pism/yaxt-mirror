@@ -172,7 +172,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
   return idxlist->vtable->get_position_of_index(idxlist, index, position);
 }
 
-int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
                                        Xt_count num_indices, int * positions,
                                        int single_match_only) {
 
@@ -202,7 +202,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                                     position, offset);
 }
 
-int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
+int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
                                            Xt_count num_indices, int * positions,
                                            int * offsets) {
 
