@@ -663,8 +663,10 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * sele
     sorted_selection = tmp_idx;
   }
 
-  // on the target side we want single_match_only,
-  // on the source side we don't
+  /* motivation for usage of single_match_only:
+   *  on the target side we want single_match_only,
+   *  on the source side we don't
+   */
   struct xt_idxvec *body_idxvec;
   body_idxvec = (struct xt_idxvec *)body_idxlist;
   Xt_idx *sorted_body = get_sorted_vector(body_idxvec);
