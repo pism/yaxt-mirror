@@ -250,8 +250,8 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
  * @return                 0 if everything was okay
  *                         1 if the index could not be found in idxlist
  *
- * \remarks a call to xt_idxlist_get_position_of_index_off_a with offset = NULL
- *          is the same as a call to xt_idxlist_get_position_of_indices
+ * \remarks a call to xt_idxlist_get_position_of_index_off with offset = NULL
+ *          is the same as a call to xt_idxlist_get_positions_of_indices
  */
 int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
                                            Xt_count num_indices, int * positions,
