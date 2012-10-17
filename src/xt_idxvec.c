@@ -77,9 +77,9 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .get_index_at_position       = idxvec_get_index_at_position,
   .get_indices_at_positions    = idxvec_get_indices_at_positions,
   .get_position_of_index       = idxvec_get_position_of_index,
-  .get_position_of_indices     = idxvec_get_position_of_indices,
+  .get_positions_of_indices    = idxvec_get_position_of_indices,
   .get_position_of_index_off   = idxvec_get_position_of_index_off,
-  .get_position_of_indices_off = NULL,
+  .get_positions_of_indices_off = NULL,
   .get_min_index               = idxvec_get_min_index,
   .get_max_index               = idxvec_get_max_index
 };

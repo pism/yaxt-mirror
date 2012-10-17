@@ -145,7 +145,25 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
 }
 
 int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_idx *indices, Xt_idx undef_idx) {
-  return idxlist->vtable->get_indices_at_positions(idxlist, positions, num_pos, indices, undef_idx);
+
+  if ( idxlist->vtable->get_indices_at_positions ) {
+
+    return idxlist->vtable->get_indices_at_positions(idxlist, positions, num_pos, indices, undef_idx);
+
+  } else {
+
+    // fallback solution using xt_idxlist_get_index_at_position:
+    int undef_count = 0;
+    for (int ip=0; ip<num_pos; ip++) {
+      int p = positions[ip];
+      if (xt_idxlist_get_index_at_position(idxlist, p, &indices[ip]) != 0) {
+        indices[ip] = undef_idx;
+        undef_count++;
+      }
+    }
+    return undef_count;
+
+  }
 }
 
 int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
@@ -158,8 +176,8 @@ int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
                                        Xt_count num_indices, int * positions,
                                        int single_match_only) {
 
-  if (idxlist->vtable->get_position_of_indices != NULL)
-    return idxlist->vtable->get_position_of_indices(idxlist, indices, num_indices,
+  if (idxlist->vtable->get_positions_of_indices != NULL)
+    return idxlist->vtable->get_positions_of_indices(idxlist, indices, num_indices,
                                                     positions, single_match_only);
   else {
     Xt_count num_tmp_indices;
@@ -169,7 +187,7 @@ int xt_idxlist_get_position_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
     xt_idxlist_get_indices(idxlist, tmp_indices);
     Xt_idxlist tmp_idxvec;
     tmp_idxvec = xt_idxvec_new(tmp_indices, num_tmp_indices);
-    int retval = tmp_idxvec->vtable->get_position_of_indices(tmp_idxvec, indices, num_indices,
+    int retval = tmp_idxvec->vtable->get_positions_of_indices(tmp_idxvec, indices, num_indices,
                                                          positions, single_match_only);
     xt_idxlist_delete(tmp_idxvec);
     free(tmp_indices);
@@ -188,8 +206,8 @@ int xt_idxlist_get_position_of_indices_off(Xt_idxlist idxlist, Xt_idx * indices,
                                            Xt_count num_indices, int * positions,
                                            int * offsets) {
 
-  if (idxlist->vtable->get_position_of_indices_off != NULL)
-    return idxlist->vtable->get_position_of_indices_off(idxlist, indices,
+  if (idxlist->vtable->get_positions_of_indices_off != NULL)
+    return idxlist->vtable->get_positions_of_indices_off(idxlist, indices,
                                                         num_indices,
                                                         positions, offsets);
 
