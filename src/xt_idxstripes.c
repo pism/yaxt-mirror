@@ -7,6 +7,7 @@
 #include "xt_idxvec.h"
 #include "xt_idxstripes.h"
 #include "xt_mpi.h"
+#include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
 
@@ -43,6 +44,10 @@ static int
 idxstripes_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
 
 static int
+idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+                                    Xt_count num, Xt_idx *index, Xt_idx undef_idx);
+
+static int
 idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
 
 static int
@@ -65,7 +70,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .get_indices                 = idxstripes_get_indices,
   .get_index_stripes           = idxsection_get_index_stripes,
   .get_index_at_position       = idxstripes_get_index_at_position,
-  .get_indices_at_positions    = NULL,
+  .get_indices_at_positions    = idxstripes_get_indices_at_positions,
   .get_position_of_index       = idxstripes_get_position_of_index,
   .get_positions_of_indices    = NULL,
   .get_position_of_index_off   = idxstripes_get_position_of_index_off,
@@ -76,7 +81,6 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
 static MPI_Datatype xt_get_stripes_datatype() {
 
   static MPI_Datatype type = MPI_DATATYPE_NULL;
-
 
   if (type == MPI_DATATYPE_NULL) {
 
@@ -494,7 +498,7 @@ idxstripes_copy(Xt_idxlist idxlist) {
 }
 
 static Xt_count
-idxstripes_get_num_indices(Xt_idxlist idxlist) {
+idxstripes_get_num_indices(Xt_idxlist idxlist) {   ///< \todo use cached value
 
   struct xt_idxstripes * stripes;
 
@@ -588,6 +592,53 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * inde
     }
 
   return 1;
+}
+
+
+static int
+idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+                                    Xt_count num_pos, Xt_idx *index, Xt_idx undef_idx) {
+
+  struct xt_idxstripes *idxstripes = (struct xt_idxstripes*)idxlist;
+  struct Xt_stripe *stripes = idxstripes->stripes;
+
+  int max_pos = idxstripes_get_num_indices(idxlist)-1;
+  int seek_pos;
+  int sub_pos = 0;
+  int stripe_start_pos = 0;
+  int istripe = 0;
+  int ipos;
+  int undef_count = 0;
+
+  for (int ipos = 0; ipos < num_pos; ipos++) {
+
+    seek_pos = positions[ipos];
+
+    if (seek_pos < 0 || seek_pos > max_pos) {
+      index[ipos] = undef_idx;
+      undef_count++;
+      continue;
+    }
+
+    while (seek_pos < stripe_start_pos) {
+      istripe--;
+      if (istripe < 0)
+        die("idxstripes_get_indices_at_positions: internal error: crossed 0-boundary");
+      stripe_start_pos -= stripes[istripe].nstrides;
+    }
+
+    while (seek_pos > stripe_start_pos + stripes[istripe].nstrides - 1) {
+      stripe_start_pos += stripes[istripe].nstrides;
+      istripe++;
+      if (istripe >= idxstripes->num_stripes)
+        die("idxstripes_get_indices_at_positions: internal error: crossed boundary");
+    }
+
+    sub_pos = seek_pos - stripe_start_pos;
+    index[ipos] = stripes[istripe].start + sub_pos * stripes[istripe].stride;
+  }
+
+  return undef_count;
 }
 
 static int
