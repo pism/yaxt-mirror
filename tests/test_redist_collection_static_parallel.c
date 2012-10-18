@@ -6,7 +6,6 @@
 
 #include "tests.h"
 
-
 int main(void) {
 
   // init mpi
