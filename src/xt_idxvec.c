@@ -614,7 +614,7 @@ idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position) {
   return idxvec_get_position_of_index_off(idxlist, index, position, 0);
 }
 
-static int idx_vec_is_sorted(Xt_idx *idx, unsigned n) {
+static int idx_vec_is_sorted(Xt_idx const *idx, unsigned n) {
 
   if (n<2) return 1;
 
