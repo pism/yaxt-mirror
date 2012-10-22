@@ -78,9 +78,16 @@ void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
     PUT_ERR("wrong number of indices in idxlist\n");
 
   Xt_idx indices[ref_num_indices];
+  Xt_idx const *indices_const;
   Xt_idx index;
 
   xt_idxlist_get_indices(idxlist, indices);
+  indices_const = xt_idxlist_get_indices_const(idxlist);
+  {
+    for(int i=0; i<ref_num_indices; i++)
+      if (ref_indices[i] != indices_const[i])
+        PUT_ERR("check_idxlist: ref_indices[i] != indices_const[i]\n");
+  }
 
   {
 

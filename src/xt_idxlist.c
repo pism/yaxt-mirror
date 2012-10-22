@@ -111,6 +111,15 @@ void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
    idxlist->vtable->get_indices(idxlist, indices);
 }
 
+
+Xt_idx const * xt_idxlist_get_indices_const(Xt_idxlist idxlist) {
+  if (idxlist->vtable->get_indices != NULL) return idxlist->vtable->get_indices_const (idxlist);
+
+  die("xt_idxlist_get_indices_const: fatal error: get_indices_const not implemented");
+  return NULL;
+}
+
+
 void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   Xt_count * num_stripes) {

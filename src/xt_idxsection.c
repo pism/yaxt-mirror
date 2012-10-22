@@ -30,6 +30,9 @@ idxsection_get_num_indices(Xt_idxlist idxlist);
 static void
 idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
+static Xt_idx const
+*idxsection_get_indices_const(Xt_idxlist idxlist);
+
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              Xt_count * num_stripes);
@@ -58,6 +61,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .copy                        = idxsection_copy,
               .get_num_indices             = idxsection_get_num_indices,
               .get_indices                 = idxsection_get_indices,
+              .get_indices_const           = idxsection_get_indices_const,
               .get_index_stripes           = idxsection_get_index_stripes,
               .get_index_at_position       = idxsection_get_index_at_position,
               .get_indices_at_positions    = NULL,
@@ -80,6 +84,10 @@ struct xt_idxsection {
   unsigned * local_start;
   unsigned * global_strides;
   unsigned * local_strides;
+
+  Xt_count index_num_cache;
+  Xt_idx *index_array_cache;
+
 };
 
 Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
@@ -99,13 +107,20 @@ Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
   idxsection->global_strides     = xmalloc(num_dimensions * sizeof(*(idxsection->global_strides)));
   idxsection->local_strides      = xmalloc(num_dimensions * sizeof(*(idxsection->local_strides)));
 
+  idxsection->index_array_cache  = NULL;
 
   unsigned i;
+
+  if (num_dimensions<=0)
+    idxsection->index_num_cache    = 0;
+  else
+    idxsection->index_num_cache    = 1;
 
   for (i = 0; i < num_dimensions; ++i) {
     idxsection->global_size[i] = global_size[i];
     idxsection->local_size[i]  = local_size[i];
     idxsection->local_start[i] = local_start[i];
+    idxsection->index_num_cache *= local_size[i];
   }
 
   idxsection->local_start_index = start;
@@ -137,6 +152,7 @@ idxsection_delete(Xt_idxlist data) {
   free(section->global_size);
   free(section->global_strides);
   free(section->local_strides);
+  free(section->index_array_cache);
   free(section);
 }
 
@@ -193,6 +209,8 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   section = xmalloc(1 * sizeof(*section));
 
   section->vtable = &idxsection_vtable;
+  section->index_array_cache = NULL;
+  section-> index_num_cache = -1; // == undef
 
   mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
                              &(section->global_start_index), 1, Xt_idx_dt,
@@ -311,6 +329,7 @@ idxsection_get_num_indices(Xt_idxlist idxlist) {
   struct xt_idxsection * section;
 
   section = (struct xt_idxsection *)idxlist;
+  if (section->index_num_cache >= 0) return section->index_num_cache;
 
   unsigned i;
   size_t size = 1;
@@ -318,6 +337,7 @@ idxsection_get_num_indices(Xt_idxlist idxlist) {
   for (i = 0; i < section->ndim; ++i)
     size *= section->local_size[i];
 
+  section->index_num_cache = size;
   return size;
 }
 
@@ -327,7 +347,7 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
   struct xt_idxsection *section;
 
   section = (struct xt_idxsection*)idxlist;
-
+  /// \todo use memcpy with index_array_cache if available
   unsigned * curr_local_position;
 
   curr_local_position = xcalloc(section->ndim, sizeof(*curr_local_position));
@@ -354,6 +374,26 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
   free(curr_local_position);
 }
+
+static Xt_idx const*
+idxsection_get_indices_const(Xt_idxlist idxlist) {
+
+  struct xt_idxsection *idxsection = (struct xt_idxsection *)idxlist;
+
+  if (idxsection->index_array_cache) return idxsection->index_array_cache;
+
+  Xt_count index_num = idxsection_get_num_indices(idxlist);
+
+  Xt_idx *tmp_index_array = xmalloc(index_num * sizeof( *(idxsection->index_array_cache) ) );
+
+  idxsection_get_indices(idxlist, tmp_index_array);
+
+  idxsection->index_array_cache = tmp_index_array;
+
+  return idxsection->index_array_cache;
+
+}
+
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,

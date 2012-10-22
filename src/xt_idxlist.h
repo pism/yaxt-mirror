@@ -20,6 +20,7 @@ struct xt_idxlist_vtable {
    Xt_idxlist (*copy)(Xt_idxlist);
    Xt_count (*get_num_indices)(Xt_idxlist);
    void (*get_indices)(Xt_idxlist, Xt_idx *indices);
+   Xt_idx const * (*get_indices_const)(Xt_idxlist idxlist);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_count *);
    int (*get_index_at_position)(Xt_idxlist, int, Xt_idx *);
    int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_idx *index, Xt_idx undef_idx);
@@ -151,6 +152,14 @@ Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist);
  * @param[in,out] indices array into which the indices are written
  */
 void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
+
+/**
+ * gets a pointer of the constant indices stored in an index list
+ *
+ * @param[in]     idxlist index list for which the indices are to be returned
+ * @return  const indices array
+ */
+Xt_idx const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
 
 /**
  * returns the indices stored in an index list

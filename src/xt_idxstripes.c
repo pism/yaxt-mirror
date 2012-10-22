@@ -36,6 +36,9 @@ idxstripes_get_num_indices(Xt_idxlist idxlist);
 static void
 idxstripes_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
+static Xt_idx const
+*idxstripes_get_indices_const(Xt_idxlist idxlist);
+
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              Xt_count * num_stripes);
@@ -68,6 +71,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .copy                        = idxstripes_copy,
   .get_num_indices             = idxstripes_get_num_indices,
   .get_indices                 = idxstripes_get_indices,
+  .get_indices_const           = idxstripes_get_indices_const,
   .get_index_stripes           = idxsection_get_index_stripes,
   .get_index_at_position       = idxstripes_get_index_at_position,
   .get_indices_at_positions    = idxstripes_get_indices_at_positions,
@@ -117,6 +121,9 @@ struct xt_idxstripes {
 
   struct Xt_stripe * stripes_sorted;
   int stripes_overlap;
+
+  Xt_count index_num_cache;
+  Xt_idx *index_array_cache;
 };
 
 static int compare_xtstripes(const void * a, const void * b)
@@ -173,6 +180,8 @@ Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stri
 
   idxstripes->vtable      = &idxstripes_vtable;
   idxstripes->num_stripes = num_stripes;
+  idxstripes->index_num_cache = 0;
+  idxstripes->index_array_cache = NULL;
 
   if (num_stripes > 0) {
     idxstripes->stripes = xmalloc(num_stripes * sizeof(*(idxstripes->stripes)));
@@ -183,6 +192,7 @@ Xt_idxlist xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stri
         idxstripes->stripes[i].nstrides = 0;
         sign_err++;
       }
+      idxstripes->index_num_cache += stripes[i].nstrides;
     }
     if (sign_err) fprintf(stderr, "WARNING: xt_idxstripes_new called with invalid stripes\n");
 
@@ -216,6 +226,7 @@ idxstripes_delete(Xt_idxlist data) {
 
   free(stripes->stripes_sorted);
   free(stripes->stripes);
+  free(stripes->index_array_cache);
   free(stripes);
 }
 
@@ -261,6 +272,8 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   stripes = xmalloc(1 * sizeof(*stripes));
 
   stripes->vtable = &idxstripes_vtable;
+  stripes->index_num_cache = -1; // negative num means: undef
+  stripes->index_array_cache = NULL;
 
   mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
                              &(stripes->num_stripes), 1, MPI_UNSIGNED,
@@ -504,12 +517,15 @@ idxstripes_get_num_indices(Xt_idxlist idxlist) {   ///< \todo use cached value
 
   stripes = (struct xt_idxstripes *)idxlist;
 
+  if (stripes->index_num_cache >= 0) return stripes->index_num_cache;
+
   Xt_count i;
   Xt_count size = 0;
 
   for (i = 0; i < stripes->num_stripes; ++i)
     size += stripes->stripes[i].nstrides;
 
+  stripes->index_num_cache = size;
   return size;
 }
 
@@ -517,7 +533,7 @@ static void
 idxstripes_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
   struct xt_idxstripes *stripes;
-
+  /// \todo use memcpy with index_array_cache if available
   stripes = (struct xt_idxstripes*)idxlist;
 
   Xt_count i, j;
@@ -525,6 +541,24 @@ idxstripes_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
   for (i = 0; i < stripes->num_stripes; ++i)
     for (j = 0; j < stripes->stripes[i].nstrides; ++j)
       *(indices++) = stripes->stripes[i].start + j * stripes->stripes[i].stride;
+}
+
+static Xt_idx const*
+idxstripes_get_indices_const(Xt_idxlist idxlist) {
+
+  struct xt_idxstripes *idxstripes = (struct xt_idxstripes *)idxlist;
+
+  if (idxstripes->index_array_cache) return idxstripes->index_array_cache;
+
+  Xt_count index_num = idxstripes_get_num_indices(idxlist);
+
+  Xt_idx *tmp_index_array = xmalloc(index_num * sizeof( *(idxstripes->index_array_cache) ) );
+
+  idxstripes_get_indices(idxlist, tmp_index_array);
+
+  idxstripes->index_array_cache = tmp_index_array;
+
+  return idxstripes->index_array_cache;
 }
 
 static void

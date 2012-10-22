@@ -37,6 +37,9 @@ idxvec_get_num_indices(Xt_idxlist idxlist);
 static void
 idxvec_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
+static Xt_idx const*
+idxvec_get_indices_const(Xt_idxlist idxlist);
+
 static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                          Xt_count * num_stripes);
@@ -73,6 +76,7 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .copy                        = idxvec_copy,
   .get_num_indices             = idxvec_get_num_indices,
   .get_indices                 = idxvec_get_indices,
+  .get_indices_const           = idxvec_get_indices_const,
   .get_index_stripes           = idxvec_get_index_stripes,
   .get_index_at_position       = idxvec_get_index_at_position,
   .get_indices_at_positions    = idxvec_get_indices_at_positions,
@@ -500,6 +504,14 @@ idxvec_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
    memcpy(indices, idxvec_data->vector,
           idxvec_data->num_indices * sizeof(*indices));
 }
+
+static Xt_idx const*
+idxvec_get_indices_const(Xt_idxlist idxlist) {
+  struct xt_idxvec *idxvec = (struct xt_idxvec *)idxlist;
+
+  return idxvec->vector;
+}
+
 
 static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
