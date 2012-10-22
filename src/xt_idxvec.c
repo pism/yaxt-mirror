@@ -55,7 +55,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                  int * position, int offset);
 
 static int
-idxvec_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+idxvec_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx const * indices,
                                Xt_count num_indices, int * positions,
                                int single_match_only);
 
@@ -624,7 +624,7 @@ static int idx_vec_is_sorted(Xt_idx *idx, unsigned n) {
   return 1;
 }
 
-int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_idx,
+int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * selection_idx,
                                    Xt_count num_selection, int * positions,
                                    int single_match_only) {
 
@@ -633,8 +633,9 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_
   int selection_is_ordered = idx_vec_is_sorted(selection_idx, num_selection);
   /// \todo try linear scan of sorted data instead (requires performance test first)
 
-  Xt_idx *sorted_selection;
-  int *sorted_selection_pos;
+  Xt_idx const *sorted_selection;
+  int *sorted_selection_pos = NULL;
+  Xt_idx *tmp_idx = NULL;
 
   if (selection_is_ordered) {
     sorted_selection = selection_idx;
@@ -642,11 +643,12 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_
   } else {
     size_t memsize;
     memsize = num_selection * sizeof(*sorted_selection);
-    sorted_selection = xmalloc(memsize);
-    memcpy(sorted_selection, selection_idx, memsize);
+    tmp_idx = xmalloc(memsize);
+    memcpy(tmp_idx, selection_idx, memsize);
 
     sorted_selection_pos = xmalloc(num_selection * sizeof(*sorted_selection_pos));
-    xt_quicksort_index(sorted_selection, num_selection, sorted_selection_pos, 1);
+    xt_quicksort_index(tmp_idx, num_selection, sorted_selection_pos, 1);
+    sorted_selection = tmp_idx;
   }
 
   // on the target side we want single_match_only,
@@ -707,7 +709,7 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_
     lb_start = lb + post_match_step;
   }
 
-  if (sorted_selection != selection_idx) free(sorted_selection);
+  if (tmp_idx) free(tmp_idx);
   if (sorted_selection_pos) free(sorted_selection_pos);
 
   return 0;

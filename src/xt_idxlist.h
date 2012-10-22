@@ -24,7 +24,7 @@ struct xt_idxlist_vtable {
    int (*get_index_at_position)(Xt_idxlist, int, Xt_idx *);
    int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_idx *index, Xt_idx undef_idx);
    int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
-   int (*get_positions_of_indices)(Xt_idxlist, Xt_idx *, Xt_count, int *, int);
+   int (*get_positions_of_indices)(Xt_idxlist, Xt_idx const *, Xt_count, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
    int (*get_positions_of_indices_off)(Xt_idxlist, Xt_idx *, Xt_count,
                                       int *, int *);
@@ -216,7 +216,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * pos
  * @return                 0 if everything was okay
  *                         1 if the index could not be found in idxlist
  */
-int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx * indices,
+int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx const * indices,
                                        Xt_count num_indices, int * positions,
                                        int single_match_only);
 
