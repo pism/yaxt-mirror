@@ -156,16 +156,16 @@ void xt_xmap_delete(Xt_xmap xmap);
 /**
  * gives a upper limit to the range of positions in the src part of the transfer_pos,
  *
- * @param[in] iter exchange map iterator
- * @return         exchange list of the current item
+ * @param[in] xmap exchange map
+ * @return         upper limit of range of positions in the source list
  */
 int xt_xmap_get_max_src_pos(Xt_xmap xmap);
 
 /**
  * gives a upper limit to the range of positions in the dst part of the transfer_pos,
  *
- * @param[in] iter exchange map iterator
- * @return         exchange list of the current item
+ * @param[in] xmap exchange map
+ * @return         upper limit of range of positions in the destination list
  */
 int xt_xmap_get_max_dst_pos(Xt_xmap xmap);
 
