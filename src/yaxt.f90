@@ -3,7 +3,8 @@ MODULE yaxt
   ! Fortran interface to yaxt implementation
   !
 
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int,  c_ptr, c_null_ptr, c_loc
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
+       c_ptr, c_null_ptr, c_loc
 
   IMPLICIT NONE
 
@@ -12,10 +13,12 @@ MODULE yaxt
   PUBLIC :: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
-       &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, xt_redist_delete, &
+       &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
+       xt_redist_delete, &
        &    xt_redist_s_exchange1, xt_idxstripes_new, c_loc, xt_initialize
 
-  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = C_INT ! \todo xt_idx_kind and xt_count_kind should come out of configure
+  ! \todo xt_idx_kind and xt_count_kind should come out of configure
+  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = C_INT
   INTEGER, PARAMETER, PUBLIC :: xt_count_kind = C_INT
 
 
@@ -41,7 +44,8 @@ MODULE yaxt
   END TYPE xt_redist
 
   INTERFACE
-    SUBROUTINE xt_abort_cmsl_f(comm_f, msg, source, line)  BIND(C, name='xt_abort_cmsl_f')
+    SUBROUTINE xt_abort_cmsl_f(comm_f, msg, source, line) &
+         BIND(C, name='xt_abort_cmsl_f')
       IMPORT:: c_char, c_int
       INTEGER, INTENT(in):: comm_f
       CHARACTER(C_CHAR), DIMENSION(*), INTENT(in) :: msg
@@ -51,7 +55,8 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    SUBROUTINE xt_abort_msl_f(msg, source, line)  BIND(C, name='xt_abort_msl_f')
+    SUBROUTINE xt_abort_msl_f(msg, source, line) &
+         BIND(C, name='xt_abort_msl_f')
       IMPORT:: c_char, c_int
       CHARACTER(C_CHAR), DIMENSION(*), INTENT(in) :: msg
       CHARACTER(C_CHAR), DIMENSION(*), INTENT(in) :: source
@@ -73,7 +78,8 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_idxvec_new(idxvec, num_indices) BIND(C, name='xt_idxvec_new_f') RESULT(res)
+    FUNCTION xt_idxvec_new(idxvec, num_indices) &
+         BIND(C, name='xt_idxvec_new_f') RESULT(res)
       IMPORT :: Xt_idxlist, xt_idx_kind, xt_count_kind
       IMPLICIT NONE
       INTEGER(xt_idx_kind), INTENT(in) :: idxvec(*)
@@ -91,7 +97,8 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm) BIND(C, name='xt_xmap_all2all_new_f') RESULT(res)
+    FUNCTION xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm) &
+         BIND(C, name='xt_xmap_all2all_new_f') RESULT(res)
       IMPORT :: Xt_idxlist, xt_xmap
       IMPLICIT NONE
       TYPE(Xt_idxlist), INTENT(in) :: src_idxlist
@@ -110,9 +117,10 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_redist_p2p_blocks_off_new(xmap, src_block_offsets, src_block_sizes, src_block_num, &
-         &                                  dst_block_offsets, dst_block_sizes, dst_block_num, &
-         &                                  datatype) BIND(C, name='xt_redist_p2p_blocks_off_new_f') RESULT(res)
+    FUNCTION xt_redist_p2p_blocks_off_new(xmap, src_block_offsets, &
+         src_block_sizes, src_block_num, &
+         dst_block_offsets, dst_block_sizes, dst_block_num, &
+         datatype) BIND(C, name='xt_redist_p2p_blocks_off_new_f') RESULT(res)
       IMPORT :: xt_xmap, xt_redist, c_int
       IMPLICIT NONE
       TYPE(xt_xmap), INTENT(in) :: xmap
@@ -130,7 +138,8 @@ MODULE yaxt
   INTERFACE
     FUNCTION xt_redist_p2p_blocks_new(xmap, src_block_sizes, src_block_num, &
          &                                  dst_block_sizes, dst_block_num, &
-         &                                  datatype) BIND(C, name='xt_redist_p2p_blocks_new_f') RESULT(res)
+         &                                  datatype) &
+         BIND(C, name='xt_redist_p2p_blocks_new_f') RESULT(res)
       IMPORT :: xt_xmap, xt_redist, c_int
       IMPLICIT NONE
       TYPE(xt_xmap), INTENT(in) :: xmap
@@ -144,7 +153,8 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_redist_p2p_off_new(xmap, src_offsets, dst_offsets, datatype) BIND(C, name='xt_redist_p2p_off_new_f') RESULT(res)
+    FUNCTION xt_redist_p2p_off_new(xmap, src_offsets, dst_offsets, datatype) &
+         BIND(C, name='xt_redist_p2p_off_new_f') RESULT(res)
       IMPORT :: xt_xmap, xt_redist, c_int
       IMPLICIT NONE
       TYPE(xt_xmap), INTENT(in) :: xmap
@@ -156,7 +166,8 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_redist_p2p_new(xmap, comm) BIND(C, name='xt_redist_p2p_new_f') RESULT(res)
+    FUNCTION xt_redist_p2p_new(xmap, comm) BIND(C, name='xt_redist_p2p_new_f') &
+         RESULT(res)
       IMPORT:: xt_xmap, xt_redist, c_int
       IMPLICIT NONE
       TYPE(xt_xmap), INTENT(in) :: xmap
@@ -175,7 +186,8 @@ MODULE yaxt
 
 
   INTERFACE
-    SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr) BIND(C, name='xt_redist_s_exchange1_f')
+    SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr) &
+         BIND(C, name='xt_redist_s_exchange1_f')
       IMPORT:: xt_redist, c_ptr
       TYPE(xt_redist), INTENT(in) :: redist
       TYPE(c_ptr), INTENT(in) :: src_data_cptr
@@ -184,7 +196,8 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    FUNCTION xt_idxstripes_new(stripes, num_stripes) BIND(C, name='xt_idxstripes_new_f') RESULT(res)
+    FUNCTION xt_idxstripes_new(stripes, num_stripes) &
+         BIND(C, name='xt_idxstripes_new_f') RESULT(res)
       IMPORT:: Xt_idxlist, xt_stripe, xt_count_kind
       IMPLICIT NONE
       TYPE(xt_stripe), INTENT(in) :: stripes(*)

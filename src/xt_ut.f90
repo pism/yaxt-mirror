@@ -3,14 +3,17 @@ MODULE xt_ut
   ! unitrans interface for accessing yaxt
   !
 
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_CHAR, C_NULL_CHAR, C_INT,  c_ptr, c_loc
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_CHAR, C_NULL_CHAR, C_INT, &
+       c_ptr, c_loc
 
   IMPLICIT NONE
   PRIVATE
 
-  PUBLIC :: ut_init, ut_init_decomposition, ut_init_oneway_transposition_template, &
-       & ut_init_transposition, ut_transpose, ut_destroy_transposition_template, &
-       & ut_abort, ut_destroy_decomposition, ut_destroy_transposition
+  PUBLIC :: ut_init, ut_init_decomposition, &
+       ut_init_oneway_transposition_template, &
+       ut_init_transposition, ut_transpose, &
+       ut_destroy_transposition_template, &
+       ut_abort, ut_destroy_decomposition, ut_destroy_transposition
 
   INTEGER, PARAMETER :: inflate_inner = 1
   INTEGER, PARAMETER :: inflate_outer = 2
@@ -48,15 +51,18 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    SUBROUTINE xt_ut_init(decomp_size, comm_tmpl_size, comm_size, debug_lvl, mode, idebug_unit) BIND(C, name='xt_ut_init')
+    SUBROUTINE xt_ut_init(decomp_size, comm_tmpl_size, comm_size, debug_lvl, &
+         mode, idebug_unit) BIND(C, name='xt_ut_init')
       IMPORT:: C_INT
       IMPLICIT NONE
-      INTEGER(C_INT), VALUE, INTENT(in) :: decomp_size, comm_tmpl_size, comm_size, debug_lvl, mode, idebug_unit
+      INTEGER(C_INT), VALUE, INTENT(in) :: decomp_size, comm_tmpl_size, &
+           comm_size, debug_lvl, mode, idebug_unit
     END SUBROUTINE xt_ut_init
   END INTERFACE
 
   INTERFACE
-    INTEGER(C_INT) FUNCTION xt_ut_init_decomposition_1d(idx_vec, idx_vec_n, domain_size) BIND(C, name='xt_ut_init_decomposition_1d')
+    INTEGER(C_INT) FUNCTION xt_ut_init_decomposition_1d(idx_vec, idx_vec_n, &
+         domain_size) BIND(C, name='xt_ut_init_decomposition_1d')
       IMPORT:: C_INT
       IMPLICIT NONE
       INTEGER(C_INT), DIMENSION(*), INTENT(in) :: idx_vec
@@ -66,7 +72,8 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    SUBROUTINE xt_ut_destroy_decomposition(handle) BIND(C, name='xt_ut_destroy_decomposition')
+    SUBROUTINE xt_ut_destroy_decomposition(handle) &
+         BIND(C, name='xt_ut_destroy_decomposition')
       IMPORT:: C_INT
       IMPLICIT NONE
       INTEGER(C_INT), VALUE, INTENT(in) :: handle
@@ -74,16 +81,19 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    INTEGER(C_INT) FUNCTION xt_ut_init_oneway_transposition_template(decomp_handle_in, decomp_handle_out, mpi_world, check_unique) &
+    INTEGER(C_INT) FUNCTION xt_ut_init_oneway_transposition_template(&
+         decomp_handle_in, decomp_handle_out, mpi_world, check_unique) &
          & BIND(C, name='xt_ut_init_oneway_transposition_template')
       IMPORT:: C_INT
       IMPLICIT NONE
-      INTEGER(C_INT), VALUE, INTENT(in) :: decomp_handle_in, decomp_handle_out, mpi_world, check_unique
+      INTEGER(C_INT), VALUE, INTENT(in) :: decomp_handle_in, &
+           decomp_handle_out, mpi_world, check_unique
     END FUNCTION xt_ut_init_oneway_transposition_template
   END INTERFACE
 
   INTERFACE
-    SUBROUTINE xt_ut_destroy_transposition_template(handle) BIND(C, name='xt_ut_destroy_transposition_template')
+    SUBROUTINE xt_ut_destroy_transposition_template(handle) &
+         BIND(C, name='xt_ut_destroy_transposition_template')
       IMPORT:: C_INT
       IMPLICIT NONE
       INTEGER(C_INT), VALUE, INTENT(in) :: handle
@@ -91,7 +101,8 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    INTEGER FUNCTION xt_ut_init_transposition_simple(itemplate, datatype)  BIND(C, name='xt_ut_init_transposition_simple')
+    INTEGER FUNCTION xt_ut_init_transposition_simple(itemplate, datatype) &
+         BIND(C, name='xt_ut_init_transposition_simple')
       IMPLICIT NONE
       INTEGER, VALUE, INTENT(in) :: itemplate
       INTEGER, VALUE, INTENT(in) :: datatype
@@ -99,7 +110,8 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    INTEGER FUNCTION xt_ut_init_transposition(itemplate, offset_in, offset_in_size, offset_out, offset_out_size, &
+    INTEGER FUNCTION xt_ut_init_transposition(itemplate, offset_in, &
+         offset_in_size, offset_out, offset_out_size, &
          & datatype)  BIND(C, name='xt_ut_init_transposition')
       IMPLICIT NONE
       INTEGER, VALUE, INTENT(in) :: itemplate, offset_in_size, offset_out_size
@@ -109,7 +121,8 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    SUBROUTINE xt_ut_destroy_transposition(handle) BIND(C, name='xt_ut_destroy_transposition')
+    SUBROUTINE xt_ut_destroy_transposition(handle) &
+         BIND(C, name='xt_ut_destroy_transposition')
       IMPORT:: C_INT
       IMPLICIT NONE
       INTEGER(C_INT), VALUE, INTENT(in) :: handle
@@ -117,7 +130,8 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    SUBROUTINE xt_ut_transpose(pt_in, transposition_handle, direction, pt_out) BIND(C, name='xt_ut_transpose')
+    SUBROUTINE xt_ut_transpose(pt_in, transposition_handle, &
+         direction, pt_out) BIND(C, name='xt_ut_transpose')
       IMPORT:: C_INT, c_ptr
       IMPLICIT NONE
       TYPE(c_ptr) :: pt_in
@@ -141,7 +155,8 @@ CONTAINS
 
   END SUBROUTINE ut_abort
 
-  SUBROUTINE ut_init(decomp_size,comm_tmpl_size,comm_size,debug_lvl,mode,debug_unit)
+  SUBROUTINE ut_init(decomp_size, comm_tmpl_size, comm_size, debug_lvl, &
+       mode, debug_unit)
     INTEGER, INTENT(in) :: decomp_size
     INTEGER, INTENT(in) :: comm_tmpl_size
     INTEGER, INTENT(in) :: comm_size
@@ -149,16 +164,18 @@ CONTAINS
     INTEGER, INTENT(in) :: mode
     INTEGER, INTENT(in) :: debug_unit
 
-    CALL xt_ut_init(decomp_size,comm_tmpl_size,comm_size,debug_lvl,mode,debug_unit)
+    CALL xt_ut_init(decomp_size, comm_tmpl_size, comm_size, debug_lvl, &
+         mode, debug_unit)
 
   END SUBROUTINE ut_init
 
-  SUBROUTINE ut_init_decomposition_1d(myindex,global_size,handle)
+  SUBROUTINE ut_init_decomposition_1d(myindex, global_size, handle)
     INTEGER, INTENT(in)  :: myindex(:)
     INTEGER, INTENT(in)  :: global_size
     INTEGER, INTENT(out) :: handle
 
-    handle = xt_ut_init_decomposition_1d(idx_vec=myindex, idx_vec_n=SIZE(myindex), domain_size=global_size)
+    handle = xt_ut_init_decomposition_1d(idx_vec=myindex, &
+         idx_vec_n=SIZE(myindex), domain_size=global_size)
 
   END SUBROUTINE ut_init_decomposition_1d
 
@@ -169,7 +186,8 @@ CONTAINS
 
   END SUBROUTINE ut_destroy_decomposition
 
-  SUBROUTINE ut_init_oneway_transposition_template(decomp_handle_in,decomp_handle_out,mpi_world,comm_tmpl_handle,check_unique)
+  SUBROUTINE ut_init_oneway_transposition_template(decomp_handle_in, &
+       decomp_handle_out, mpi_world, comm_tmpl_handle, check_unique)
     INTEGER, INTENT(in)  :: decomp_handle_in
     INTEGER, INTENT(in)  :: decomp_handle_out
     INTEGER, INTENT(in)  :: mpi_world
@@ -182,7 +200,8 @@ CONTAINS
     IF (PRESENT(check_unique)) THEN
       IF (check_unique) icheck_unique = 1
     ENDIF
-    comm_tmpl_handle = xt_ut_init_oneway_transposition_template(decomp_handle_in, decomp_handle_out, mpi_world, icheck_unique)
+    comm_tmpl_handle = xt_ut_init_oneway_transposition_template(&
+         decomp_handle_in, decomp_handle_out, mpi_world, icheck_unique)
 
   END SUBROUTINE ut_init_oneway_transposition_template
 
@@ -193,16 +212,19 @@ CONTAINS
 
   END SUBROUTINE ut_destroy_transposition_template
 
-  SUBROUTINE ut_init_transposition_simple(comm_template_handle, datatype, comm_handle)
+  SUBROUTINE ut_init_transposition_simple(comm_template_handle, &
+       datatype, comm_handle)
     INTEGER, INTENT(in)  :: comm_template_handle
     INTEGER, INTENT(in)  :: datatype
     INTEGER, INTENT(out) :: comm_handle
 
-    comm_handle = INT(xt_ut_init_transposition_simple(comm_template_handle, datatype))
+    comm_handle = xt_ut_init_transposition_simple(comm_template_handle, &
+         datatype)
 
   END SUBROUTINE ut_init_transposition_simple
 
-  SUBROUTINE ut_init_transposition_with_offsets(comm_template_handle, offset_in, offset_out, datatype_in, datatype_out, comm_handle)
+  SUBROUTINE ut_init_transposition_with_offsets(comm_template_handle, &
+       offset_in, offset_out, datatype_in, datatype_out, comm_handle)
     INTEGER, INTENT(in)  :: comm_template_handle
     INTEGER, INTENT(in)  :: offset_in(:)
     INTEGER, INTENT(in)  :: offset_out(:)
@@ -213,7 +235,10 @@ CONTAINS
     INTEGER :: datatype
 
     IF (datatype_in /= datatype_out) THEN
-      CALL ut_abort('ut_init_transposition: (datatype_in /= datatype_out) not supported', __FILE__, __LINE__)
+      CALL ut_abort('ut_init_transposition: &
+           &(datatype_in /= datatype_out) not supported', &
+           __FILE__, &
+           __LINE__)
     ENDIF
 
     datatype = datatype_in
@@ -232,7 +257,8 @@ CONTAINS
 
   END SUBROUTINE ut_destroy_transposition
 
-  SUBROUTINE ut_transpose_int(field_in, transposition_handle, direction, field_out)
+  SUBROUTINE ut_transpose_int(field_in, transposition_handle, direction, &
+       field_out)
     INTEGER, POINTER     :: field_in, field_out
     INTEGER, INTENT(in) :: transposition_handle
     INTEGER, INTENT(in) :: direction
