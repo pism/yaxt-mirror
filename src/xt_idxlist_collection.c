@@ -273,20 +273,31 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
   struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
   unsigned i;
+  Xt_count curr_num_indices = 0;
+
+  int idxlist_offsets = 0;
 
   assert(offset >= 0);
 
   i = 0;
 
-  while (offset > xt_idxlist_get_num_indices(collectionlist->idxlists[i]))
-    offset -= xt_idxlist_get_num_indices(collectionlist->idxlists[i++]);
-  
+  do {
+      idxlist_offsets += curr_num_indices;
+      curr_num_indices = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+  } while (idxlist_offsets + curr_num_indices <= offset &&
+           ++i < collectionlist->num_idxlists);
+
+  offset -= idxlist_offsets;
+
   for (;i < collectionlist->num_idxlists; ++i)
     if (!xt_idxlist_get_position_of_index_off(collectionlist->idxlists[i], index,
-                                              position, offset))
+                                              position, offset)) {
+      *position += idxlist_offsets;
       return 0;
-    else
+    } else {
+      idxlist_offsets += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
       offset = 0;
+    }
 
   return 1;
 }
