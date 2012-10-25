@@ -240,6 +240,8 @@ int main(void) {
     for (int i = 0; i < 4; ++i)
       if (indices[i] != ref_indices[i])
         PUT_ERR("error in xt_idxlist_get_indices\n");
+
+    xt_idxlist_delete(idxsection);
   }
 
   { // 2D test
@@ -262,6 +264,8 @@ int main(void) {
     for (int i = 0; i < 4; ++i)
       if (indices[i] != ref_indices[i])
         PUT_ERR("error in xt_idxlist_get_indices\n");
+
+    xt_idxlist_delete(idxsection);
   }
 
   MPI_Finalize();
