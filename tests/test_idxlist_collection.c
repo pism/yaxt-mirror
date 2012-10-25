@@ -9,10 +9,10 @@
 #include "yaxt.h"
 #include "xt_idxvec.h"
 #include "xt_idxlist_collection.h"
+#include "test_idxlist_utils.h"
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
 void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
                    struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
 
@@ -47,7 +47,7 @@ int main(void) {
 
       // test generated collection list
 
-      check_idxdata(collectionlist, &(index_list[0][0]), 2*num_indices);
+      check_idxlist(collectionlist, &(index_list[0][0]), 2*num_indices);
 
       // get the size of the index list
 
@@ -95,17 +95,17 @@ int main(void) {
 
       // check received collection list
 
-      check_idxdata(collectionlist_copy, &(index_list[0][0]), 2*num_indices);
+      check_idxlist(collectionlist_copy, &(index_list[0][0]), 2*num_indices);
 
       // compute intersection between the two index lists
 
       Xt_idxlist intersection;
-      
+
       intersection = xt_idxlist_get_intersection(collectionlist, collectionlist_copy);
 
       // check intersection data
       Xt_idx ref_index_data[14] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7};
-      check_idxdata(intersection, ref_index_data, 2*num_indices);
+      check_idxlist(intersection, ref_index_data, 2*num_indices);
 
       // check the conversion to stripes
 
@@ -121,7 +121,7 @@ int main(void) {
       check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 
       // clean up
-      
+
       free(stripes);
 
       free(send_buffer);
@@ -155,7 +155,7 @@ int main(void) {
 
       // test generated collection list
 
-      check_idxdata(collectionlist, &(index_list[0][0]), 2*num_indices);
+      check_idxlist(collectionlist, &(index_list[0][0]), 2*num_indices);
 
       // copy the index list
 
@@ -163,7 +163,7 @@ int main(void) {
 
       // check copy of collection list
 
-      check_idxdata(collectionlist_copy, &(index_list[0][0]), 2*num_indices);
+      check_idxlist(collectionlist_copy, &(index_list[0][0]), 2*num_indices);
 
       // check the conversion to stripes
 
@@ -179,7 +179,7 @@ int main(void) {
       check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 
       // clean up
-      
+
       free(stripes);
 
       xt_idxlist_delete(collectionlist);
@@ -189,22 +189,6 @@ int main(void) {
    MPI_Finalize();
 
    return TEST_EXIT_CODE;
-}
-
-void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
-
-   Xt_count i;
-
-   if (xt_idxlist_get_num_indices(idxlist) != ref_num_indices)
-      PUT_ERR("wrong number of indices in idxlist\n");
-
-   Xt_idx indices[ref_num_indices];
-
-   xt_idxlist_get_indices(idxlist, indices);
-
-   for (i = 0; i < ref_num_indices; ++i)
-      if (indices[i] != ref_indices[i])
-         PUT_ERR("index list contains wrong indices\n");
 }
 
 void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
