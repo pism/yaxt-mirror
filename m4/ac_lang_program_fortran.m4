@@ -51,9 +51,9 @@ dnl the original Copyright notice is as follows:
 # Yes, override AC_LANG_PROGRAM(Fortran)([PROLOGUE], [BODY]) with a version
 # that uses prologue
 m4_define([AC_LANG_PROGRAM(Fortran)],dnl
-[     program conftest
+[      program conftest
 m4_ifval([$1],dnl
 [$1
 ])dnl
 $2
-     end])
+      end])
