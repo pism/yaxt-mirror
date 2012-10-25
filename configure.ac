@@ -5,6 +5,7 @@ AC_PREREQ([2.64])
 AC_INIT([yaxt],[0.0.1],[hanke@dkrz.de])
 AC_CONFIG_SRCDIR([src/yaxt.h])
 AC_CONFIG_AUX_DIR([config])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([1.10 foreign])
 AM_MAINTAINER_MODE
@@ -19,7 +20,7 @@ AC_FC_FREEFORM
 AC_LANG_PUSH([Fortran])
 AC_PROG_FPP
 AC_LANG_POP([Fortran])
-AC_PROG_RANLIB
+LT_INIT
 dnl ######################################################################
 dnl Properties of the compiler
 dnl ######################################################################
@@ -33,8 +34,8 @@ AC_LANG_PUSH([Fortran])
 ACX_SL_FC_CHECK_MOD_PATH_FLAG
 AC_LANG_POP([Fortran])
 ACX_FC_VOLATILE([FCFLAGS="${FCFLAGS} ${FPP_DEFOPT}HAVE_VOLATILE"])
+AC_FC_DUMMY_MAIN(,[:])
 AC_FC_WRAPPERS
-
 dnl ######################################################################
 dnl Checks for header files.
 dnl ######################################################################

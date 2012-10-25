@@ -1,8 +1,8 @@
 AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
 AM_FCFLAGS  = $(MPI_FC_INCLUDE)
-lib_LIBRARIES = libyaxt.a
+lib_LTLIBRARIES = libyaxt.la
 
-libyaxt_a_SOURCES =						\
+libyaxt_la_SOURCES =						\
 	xt_handles.c						\
 	xt_handles.h						\
 	xt_idxlist.c						\

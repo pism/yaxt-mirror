@@ -92,7 +92,7 @@ while test $[@%:@] != 1; do
   ac_arg=$[1]
   case $ac_arg in
         [[\\/]]*.[[ao]] | ?:[[\\/]]*.[[ao]] | [[\\/]]*.so | ?:[[\\/]]*.so)
-          AS_IF([expr "$ac_arg" : '.*crt[[^/]]*\.o' >/dev/null || expr "$ac_arg" : '/tmp/.*' >/dev/null || expr "$ac_arg" : "${TMPDIR:-/tmp}/.*" >/dev/null || expr "$ac_arg" : '.*/f90main.o'>/dev/null || expr "$ac_arg" : '.*/for_main.o'>/dev/null],,
+          AS_IF([expr "$ac_arg" : '.*crt[[^/]]*\.o' >/dev/null || expr "$ac_arg" : '/tmp/.*' >/dev/null || expr "$ac_arg" : "${TMPDIR:-/tmp}/.*" >/dev/null|| expr "$ac_arg" : '.*/\(nonuma.o\|preinit_allbnd.o\)$'>/dev/null ],,
             [_AC_LIST_MEMBER_IF($ac_arg, $ac_cv_[]_AC_LANG_ABBREV[]_libs, ,
               ac_cv_[]_AC_LANG_ABBREV[]_libs="$ac_cv_[]_AC_LANG_ABBREV[]_libs $ac_arg")])
           ;;
