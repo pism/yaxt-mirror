@@ -254,13 +254,16 @@ idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position, Xt_id
 
   struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
-  unsigned i;
-
-  for (i = 0; i < collectionlist->num_idxlists; ++i)
-    if (!xt_idxlist_get_index_at_position(collectionlist->idxlists[i], position, index))
-      return 0;
-
+  for (Xt_count i = 0; i < collectionlist->num_idxlists; ++i) {
+    Xt_count n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+    if (position >= n)
+      position -= n;
+    else {
+      return xt_idxlist_get_index_at_position(collectionlist->idxlists[i], position, index);
+    }
+  }
   return 1;
+
 }
 
 static int
