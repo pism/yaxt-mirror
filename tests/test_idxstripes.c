@@ -434,7 +434,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[1] = {};
+    Xt_idx ref_indices[1] = {0};
     Xt_count ref_num_indices = 0;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
