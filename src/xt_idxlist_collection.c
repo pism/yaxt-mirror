@@ -9,6 +9,7 @@
 #include "xt_idxlist.h"
 #include "xt_idxlist_collection.h"
 #include "xt_mpi.h"
+#include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
 
@@ -49,6 +50,12 @@ static int
 idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                              int * position, int offset);
 
+static Xt_idx
+idxlist_collection_get_min_index(Xt_idxlist idxlist);
+
+static Xt_idx
+idxlist_collection_get_max_index(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .delete                      = idxlist_collection_delete,
   .get_pack_size               = idxlist_collection_get_pack_size,
@@ -64,8 +71,8 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .get_positions_of_indices    = NULL,
   .get_position_of_index_off   = idxlist_collection_get_position_of_index_off,
   .get_positions_of_indices_off = NULL,
-  .get_min_index               = NULL,
-  .get_max_index               = NULL
+  .get_min_index               = idxlist_collection_get_min_index,
+  .get_max_index               = idxlist_collection_get_max_index
 };
 
 struct xt_idxlist_collection {
@@ -307,4 +314,40 @@ idxlist_collection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
                                          int * position) {
 
   return idxlist_collection_get_position_of_index_off(idxlist, index, position, 0);
+}
+
+static Xt_idx
+idxlist_collection_get_min_index(Xt_idxlist idxlist) {
+
+  struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
+
+  Xt_idx tmp_min, min = 0;
+
+  if (collectionlist->num_idxlists == 0) die("idxlist_collection_get_min_index empty collection");
+
+  min = xt_idxlist_get_min_index(collectionlist->idxlists[0]);
+
+  for (unsigned i = 1; i < collectionlist->num_idxlists; ++i)
+    if ((tmp_min = xt_idxlist_get_min_index(collectionlist->idxlists[i])) > min)
+      min = tmp_min;
+
+  return min;
+}
+
+static Xt_idx
+idxlist_collection_get_max_index(Xt_idxlist idxlist) {
+
+  struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
+
+  Xt_idx tmp_max, max = 0;
+
+  if (collectionlist->num_idxlists == 0) die("idxlist_collection_get_max_index empty collection");
+
+  max = xt_idxlist_get_max_index(collectionlist->idxlists[0]);
+
+  for (unsigned i = 1; i < collectionlist->num_idxlists; ++i)
+    if ((tmp_max = xt_idxlist_get_max_index(collectionlist->idxlists[i])) > max)
+      max = tmp_max;
+
+  return max;
 }
