@@ -122,8 +122,8 @@ Xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
  * @param[in] idxlist_src index list for sender
  * @param[in] idxlist_dst index list for receiver
  * @return                return the intersection of idxlist_a and idxlist_b
- * @remark duplicate elements i in the receiver list will result in
- *         duplicate elements in the intersection if idxlist_src contains i
+ * @remark multiple occurrences of an element in idxlist_dst will result in
+ *         multiple occurrences of the element in the intersection if idxlist_src contains it
  * @remark the elements in the resulting index list are sorted
  */
 Xt_idxlist

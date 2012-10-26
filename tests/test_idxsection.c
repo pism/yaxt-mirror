@@ -367,6 +367,35 @@ int main(void) {
     xt_idxlist_delete(idxsection);
   }
 
+  {
+    // check idxsection_get_intersection_with_other_idxlist
+
+    Xt_idx start = 0;
+    unsigned num_dimensions = 2;
+    unsigned global_size[2] = {4,4};
+    unsigned local_size [2] = {2,2};
+    unsigned local_start[2] = {0,2};
+
+    Xt_idxlist idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // we have indices = {2,3,6,7}
+    Xt_idx sel_idx[] = {2,1,5,7,6,7,7,6,8};
+    int num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx);
+
+    Xt_idxlist sel_idxlist = xt_idxvec_new(sel_idx, num_sel_idx);
+
+    Xt_idxlist inter_idxlist = xt_idxlist_get_intersection(idxsection, sel_idxlist);
+
+    Xt_idx ref_inter_idx[] = {2,6,6,7,7,7};
+    int num_ref_inter_idx =  sizeof(ref_inter_idx) / sizeof(*ref_inter_idx);
+
+    check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
+
+    xt_idxlist_delete(inter_idxlist);
+    xt_idxlist_delete(sel_idxlist);
+    xt_idxlist_delete(idxsection);
+  }
 
   MPI_Finalize();
 

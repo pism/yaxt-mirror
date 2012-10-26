@@ -283,9 +283,47 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
 }
 
 static Xt_idxlist
+idxsection_get_intersection_with_other_idxlist(struct xt_idxsection *src_idxsection,
+                                               Xt_idxlist dst_idxlist) {
+
+  // intersection between an idxsection and a general idxlist:
+  //
+  // performance picture:
+  //  - src_idxsection is treated as too big for elemental transforms/access
+  //  - dst_idxlist is considered to be small enough (subdomain like) for elemental usage
+
+  int num_dst_idx = xt_idxlist_get_num_indices(dst_idxlist);
+
+  Xt_idx const* dst_idx = xt_idxlist_get_indices_const(dst_idxlist);
+  int pos[num_dst_idx];
+  int single_match_only = 0;
+  int num_unmatched = idxsection_get_positions_of_indices((Xt_idxlist)src_idxsection, dst_idx,
+                                                          num_dst_idx, pos, single_match_only);
+  int num_intersection = num_dst_idx - num_unmatched;
+  Xt_idx *intersection = xmalloc(num_intersection * sizeof(*intersection));
+
+  int j=0;
+  for(int i=0; i<num_dst_idx; i++) {
+    if (pos[i]>=0) {
+      intersection[j] = dst_idx[i]; // unsorted intersection indices
+      j++;
+    }
+  }
+
+  xt_mergesort_index(intersection, num_intersection, NULL, 0);
+
+  Xt_idxlist result = xt_idxvec_new(intersection, num_intersection);
+
+  free(intersection);
+  return result;
+}
+
+static Xt_idxlist
 idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
-  if (idxlist_dst->vtable != &idxsection_vtable) return NULL;
+  if (idxlist_dst->vtable != &idxsection_vtable)
+    return idxsection_get_intersection_with_other_idxlist((struct xt_idxsection *)idxlist_src,
+                                                          idxlist_dst);
 
   // both lists are index section:
 
@@ -304,7 +342,8 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
   // the others have to be identically
   for (i = 1; i < idxsection_src->ndim; ++i)
     if (idxsection_src->global_size[i] != idxsection_dst->global_size[i])
-      return NULL;
+      return idxsection_get_intersection_with_other_idxlist((struct xt_idxsection *)idxlist_src,
+                                                            idxlist_dst);
 
   unsigned *local_start, *local_size;
 
