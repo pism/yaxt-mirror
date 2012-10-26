@@ -596,6 +596,33 @@ int main(void) {
      xt_idxlist_delete(idxvec);
    }
 
+   {
+     Xt_idx indices[2] = {0,2};
+     int num_indices = 2;
+
+     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+
+     int position;
+
+     if (!xt_idxlist_get_position_of_index(idxvec, 1, &position))
+        PUT_ERR("xt_idxlist_get_position_of_index did not return an error\n");
+
+     if (!xt_idxlist_get_position_of_index_off(idxvec, 1, &position, 0))
+        PUT_ERR("xt_idxlist_get_position_of_index_off did not return an error\n");
+
+     if (!xt_idxlist_get_position_of_index_off(idxvec, 0, &position, 1))
+        PUT_ERR("xt_idxlist_get_position_of_index_off did not return an error\n");
+
+     Xt_idx invalid_indices[2] = {1, 3};
+
+     int positions[2];
+
+     if (xt_idxlist_get_position_of_indices(idxvec, invalid_indices, 2, positions, 0))
+        PUT_ERR("xt_idxlist_get_position_of_indices did not return an error\n");
+
+     xt_idxlist_delete(idxvec);
+   }
+
    MPI_Finalize();
 
    return TEST_EXIT_CODE;
