@@ -5,28 +5,41 @@
   \section intro Introduction
   \section concept Concept
 
-  The usage of yaxt can be divided into five steps:
-    - defining the source and target decomposition
-    - generating a data type independent mapping between the source and target decompositions
+  The usage of yaxt can be divided into six steps:
+    - defining global index
+    - defining decomposition
+    - generating a data type independent mapping between the two decompositions
     - generating a data type dependent redistribution object
     - doing the data exchange(s)
     - cleaning up the generated yaxt objects
 
+  \subsection gindex Defining global index
+
+  Global indices are used in yaxt as an abstraction for the actual data points. The user
+  has to assign a unique global index to each unique data point. If a data point occurs
+  more than once (e.g. in halo) it is possible to assign the same global index to each
+  of these data points.\n
+  For example, if the data is a 1D array one could assign the indices 0 to n-1 to the
+  elements of the array.\n
+  The definion the global index is a theoretically process and has no representation in
+  yaxt.
+
   \subsection decomp Definie decomposition
 
-  At first one has to assign a unique index value to each unique data value of a
-  decomposition. For example in a 1D array one could assign the index values 0 to n-1 to the
-  elements of the array. Once this is done, the user has to generate one each process an
-  index list (\ref Xt_idxlist) containing all indices of the data values that are available on
-  the process. The order of the indices has to match the order of the respective values in the
+  If the user is able to assign a global index to each data point, he has to describe for
+  each of his data arrays the data that is available on each process. This is done by using
+  an index list (\ref Xt_idxlist). The index list contains for each data point that is
+  available on a process the respective global index. The order of global indices within
+  the index list needs to match the order of data points, which they represent, in the
   actual data array.\n
-  The yaxt library has a varity of methods to generate index list (see \ref idxlists).
+  The yaxt library has a varity of methods to generate an index list (see \ref idxlists).
 
   \subsection xmap Generate mapping
 
-  With the definition of the decomposition of a source and target domain you can generate an
-  exchange map (\ref Xt_xmap). The exchange map matches the source and target decompositions
-  of all processes and generates a mapping between the decomposition and respective processes.\n
+  With two different decompositions (source and target) that are defined on all process
+  the user can generate an exchange map (\ref Xt_xmap) between them. The exchange map
+  matches the source and target decompositions of all processes and generates a mapping
+  between source and target points with identical global indices. \n
   There are multiple algorithms available to generate an exchange map (see \ref xmaps).
 
   \subsection redist Generate redistribution object
