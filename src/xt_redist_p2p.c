@@ -11,6 +11,8 @@
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 static void
 redist_p2p_delete(Xt_redist redist);
 
@@ -101,21 +103,21 @@ generate_datatype(Xt_idxlist transfer_pos, int *offsets,
   MPI_Datatype type;
 
   Xt_count num_indices;
+  Xt_idx const * indices;
   int * displ;
 
   num_indices = xt_idxlist_get_num_indices(transfer_pos);
 
-  displ = xmalloc(num_indices * sizeof(*displ));
+  displ = xmalloc(num_indices * sizeof(int));
 
-  assert(sizeof(Xt_idx) == sizeof(int));
+  indices = xt_idxlist_get_indices_const(transfer_pos);
 
-  xt_idxlist_get_indices(transfer_pos, displ);
-
-  if (offsets != NULL) {
-    Xt_count i;
-    for (i = 0; i < num_indices; ++i)
-      displ[i] = offsets[displ[i]];
-  }
+  if (offsets != NULL)
+    for (Xt_count i = 0; i < num_indices; ++i)
+      displ[i] = offsets[indices[i]];
+  else if (sizeof(*indices) != sizeof(*displ))
+    for (Xt_count i = 0; i < num_indices; ++i)
+      displ[i] = indices[i];
 
   type = xt_mpi_generate_datatype(displ, num_indices, base_datatype, comm);
 
