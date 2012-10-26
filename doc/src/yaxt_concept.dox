@@ -1,0 +1,51 @@
+/** \page concept The concept of yaxt
+
+  \tableofcontents
+
+  \section intro Introduction
+  \section concept Concept
+
+  The usage of yaxt can be divided into five steps:
+    - defining the source and target decomposition
+    - generating a data type independent mapping between the source and target decompositions
+    - generating a data type dependent redistribution object
+    - doing the data exchange(s)
+    - cleaning up the generated yaxt objects
+
+  \subsection decomp Definie decomposition
+
+  At first one has to assign a unique index value to each unique data value of a
+  decomposition. For example in a 1D array one could assign the index values 0 to n-1 to the
+  elements of the array. Once this is done, the user has to generate one each process an
+  index list (\ref Xt_idxlist) containing all indices of the data values that are available on
+  the process. The order of the indices has to match the order of the respective values in the
+  actual data array.\n
+  The yaxt library has a varity of methods to generate index list (see \ref idxlists).
+
+  \subsection xmap Generate mapping
+
+  With the definition of the decomposition of a source and target domain you can generate an
+  exchange map (\ref Xt_xmap). The exchange map matches the source and target decompositions
+  of all processes and generates a mapping between the decomposition and respective processes.\n
+  There are multiple algorithms available to generate an exchange map (see \ref xmaps).
+
+  \subsection redist Generate redistribution object
+
+  An exchange map can be used to generate a redistribution object (\ref Xt_redist). Based on the
+  MPI data type passed to the constructure of the redistribution object, an object will be created
+  that is able to redistribute data of the given type, which is distributed according to the
+  source decomposition into the target decomposition. The provided MPI data type allows the
+  redistribution of data with an arbitrary data layout.\n
+  It is possible to merge multiple redistribution object into a single one (see \ref redist_colls).
+
+  \subsection exchange Do exchange
+
+  The exchange can be executed by a blocking call to \ref xt_redist_s_exchange or
+  \ref xt_redist_s_exchange1 (only possible for non-merged redistributions). It can be called
+  repeatedly for as many times as necessary.
+
+  \subsection cleanup Clean up
+
+  Once any yaxt object is not directly needed anymore it can be deleted by the respective delete
+  calls (e.g. \ref xt_idxlist_delete).
+ */

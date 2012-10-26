@@ -1,0 +1,6 @@
+/** \page xmaps Algorithms to generate exchange maps
+  \section xmap_intro Introduction
+  \section xmap_algo Algorithms
+  \subsection xmap_p2p All-to-all
+  \subsection xmap_dist_dir Distributed directory
+ */
