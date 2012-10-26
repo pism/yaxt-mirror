@@ -15,7 +15,7 @@ MODULE yaxt
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        xt_redist_delete, &
-       &    xt_redist_s_exchange1, xt_idxstripes_new, c_loc, xt_initialize
+       &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize
 
   ! \todo xt_idx_kind and xt_count_kind should come out of configure
   INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = C_INT

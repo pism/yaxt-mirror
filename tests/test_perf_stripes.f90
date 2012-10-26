@@ -5,7 +5,9 @@ PROGRAM test_perf_stripes
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, xt_redist, &
        xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
-       xt_stripe, xt_idxstripes_new, c_loc
+       xt_stripe, xt_idxstripes_new, xt_idx_kind, xt_count_kind
+
+  USE ISO_C_BINDING, ONLY: c_int, c_loc
 
   IMPLICIT NONE
   ! global extents including halos:
@@ -592,8 +594,8 @@ CONTAINS
 
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: f(*)
-    INTEGER, TARGET, VOLATILE, INTENT(out) :: g(*)
+    INTEGER(c_int), TARGET, INTENT(in) :: f(*)
+    INTEGER(c_int), TARGET, VOLATILE, INTENT(out) :: g(*)
 
     CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
 
@@ -680,8 +682,8 @@ CONTAINS
   END SUBROUTINE gen_stripes
 
   SUBROUTINE gen_xmap_2d(local_src_idx, local_dst_idx, xmap)
-    INTEGER, INTENT(in) :: local_src_idx(:,:)
-    INTEGER, INTENT(in) :: local_dst_idx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
@@ -696,8 +698,8 @@ CONTAINS
   END SUBROUTINE gen_xmap_2d
 
   SUBROUTINE gen_xmap_3d(local_src_idx, local_dst_idx, xmap)
-    INTEGER, INTENT(in) :: local_src_idx(:,:,:)
-    INTEGER, INTENT(in) :: local_dst_idx(:,:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
