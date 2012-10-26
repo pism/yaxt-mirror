@@ -187,11 +187,11 @@ void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
 
     if (get_min_index(ref_indices, ref_num_indices) !=
         xt_idxlist_get_min_index(idxlist))
-      PUT_ERR("check_idxlist: get_min_index failed")
+      PUT_ERR("check_idxlist: get_min_index failed\n")
 
     if (get_max_index(ref_indices, ref_num_indices) !=
         xt_idxlist_get_max_index(idxlist))
-      PUT_ERR("check_idxlist: get_max_index failed")
+      PUT_ERR("check_idxlist: get_max_index failed\n")
   }
 
   if (!xt_idxlist_get_index_at_position(idxlist, -1, &index))
