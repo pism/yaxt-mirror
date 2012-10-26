@@ -631,6 +631,7 @@ int idxvec_get_position_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_i
   if (num_selection == 0) return 0;
 
   int selection_is_ordered = idx_vec_is_sorted(selection_idx, num_selection);
+  /// \todo try linear scan of sorted data instead (requires performance test first)
 
   Xt_idx *sorted_selection;
   int *sorted_selection_pos;
@@ -673,13 +674,21 @@ int idxvec_get_position_of_indices(Xt_idxlist body_idxlist, Xt_idx * selection_i
     // bisection to find one matching position:
     lb = lb_start;
     ub = body_num - 1;
-    while (sorted_body[lb] < isel) {
+    while (ub-lb>1) {
       int middle = (ub + lb + 1) / 2;
       if (sorted_body[middle] <= isel)
         lb = middle;
       else
         ub = middle;
     }
+
+    // search is now narrowed to two positions, select one of them:
+    if (isel == sorted_body[ub]) {
+      lb = ub;
+    } else {
+      if (isel != sorted_body[lb]) return 1; // no match
+    }
+
     // find left most match >= lb_start
     while (lb > lb_start && sorted_body[lb-1] == isel) lb--;
 

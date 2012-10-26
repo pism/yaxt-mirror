@@ -617,7 +617,7 @@ int main(void) {
 
      int positions[2];
 
-     if (xt_idxlist_get_position_of_indices(idxvec, invalid_indices, 2, positions, 0))
+     if (!xt_idxlist_get_position_of_indices(idxvec, invalid_indices, 2, positions, 0))
         PUT_ERR("xt_idxlist_get_position_of_indices did not return an error\n");
 
      xt_idxlist_delete(idxvec);
