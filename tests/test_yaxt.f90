@@ -12,7 +12,7 @@ PROGRAM test_yaxt
   LOGICAL, PARAMETER :: verbose = .FALSE.
   INTEGER, PARAMETER :: nlev = 3
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER, PARAMETER :: undef_index = -1
+  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
   INTEGER :: ie, je ! local extents, including halos
@@ -31,9 +31,9 @@ PROGRAM test_yaxt
   TYPE(xt_redist) :: redist_surf_tpex
 
   INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
-  INTEGER(xt_idx_kind), ALLOCATABLE :: fval(:,:), gval(:,:)
-  INTEGER(xt_idx_kind), ALLOCATABLE :: gval3d(:,:,:)
-  INTEGER(xt_idx_kind), ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
+  INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
+  INTEGER, ALLOCATABLE :: gval3d(:,:,:)
+  INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
 
   ! mpi & decomposition & allocate mem:
   CALL init_all
@@ -60,11 +60,11 @@ PROGRAM test_yaxt
   fval = loc_id
   CALL exchange_int(redist_tpex, fval, gval)
 
-  CALL icmp('2d to 2d check', gval, loc_tpex)
+  CALL icmp('2d to 2d check', gval, INT(loc_tpex))
 
   ! define positions of surface elements within (i,k,j) array
-  CALL id_map(id_pos)
-  CALL id_map(pos3d_surf)
+  CALL gen_id_pos(id_pos)
+  CALL gen_id_pos(pos3d_surf)
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! generate surface transposition:
@@ -75,9 +75,9 @@ PROGRAM test_yaxt
   gval3d = -1
   CALL exchange_int(redist_surf_tpex, fval, gval3d)
 
-  CALL icmp('surface check', gval3d(:,1,:), loc_tpex)
+  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex))
   ! check sub surface:
-  CALL icmp('sub surface check', gval3d(:,2,:), loc_tpex*0-1)
+  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1)
 
   ! cleanup:
   CALL xt_xmap_delete(xmap_tpex)
@@ -91,7 +91,7 @@ PROGRAM test_yaxt
 CONTAINS
 
   SUBROUTINE gen_pos3d_surf(pos)
-    INTEGER(xt_idx_kind), INTENT(inout) :: pos(:,:)
+    INTEGER, INTENT(inout) :: pos(:,:)
     ! positions for zero based arrays (ECHAM grid point dim order)
     ! old pos = i + j*ie
     ! new pos = i + k*ie + j*ie*nlev
@@ -113,8 +113,8 @@ CONTAINS
   SUBROUTINE icmp(label, f,g)
     CHARACTER(len=*), PARAMETER :: context = 'test_ut::icmp: '
     CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER(xt_idx_kind), INTENT(in)  :: f(:,:)
-    INTEGER(xt_idx_kind), INTENT(in)  :: g(:,:)
+    INTEGER, INTENT(in)  :: f(:,:)
+    INTEGER, INTENT(in)  :: g(:,:)
 
     INTEGER :: i, j, n1, n2
 
@@ -218,10 +218,25 @@ CONTAINS
 
   END SUBROUTINE id_map
 
+  SUBROUTINE gen_id_pos(pos)
+    INTEGER, INTENT(out) :: pos(:,:)
+
+    INTEGER :: i,j,p
+
+    p = 0
+    DO j = 1, SIZE(pos,2)
+      DO i = 1, SIZE(pos,1)
+        p = p + 1
+        pos(i,j) = p
+      ENDDO
+    ENDDO
+
+  END SUBROUTINE gen_id_pos
+
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER(xt_idx_kind), TARGET, INTENT(in) :: f(*)
-    INTEGER(xt_idx_kind), TARGET, VOLATILE, INTENT(out) :: g(*)
+    INTEGER, TARGET, INTENT(in) :: f(*)
+    INTEGER, TARGET, VOLATILE, INTENT(out) :: g(*)
 
     CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
 

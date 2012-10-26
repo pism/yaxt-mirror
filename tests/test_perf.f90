@@ -3,17 +3,17 @@
 PROGRAM test_perf
   USE mpi
   USE xt_ut, ONLY: ut_init, ut_mode_dt_p2p, comm_forward, ut_abort, &
-       ut_transpose, ut_init_decomposition, &
-       ut_init_oneway_transposition_template, ut_destroy_decomposition, &
-       ut_destroy_transposition_template, ut_destroy_transposition, &
-       ut_init_transposition
+       & ut_transpose, ut_init_decomposition, &
+       & ut_init_oneway_transposition_template, ut_destroy_decomposition, &
+       & ut_destroy_transposition_template, ut_destroy_transposition, &
+       & ut_init_transposition, xt_idx_kind, xt_count_kind
 
   IMPLICIT NONE
   ! global extents including halos:
 
   INTEGER, PARAMETER :: nlev = 30
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER, PARAMETER :: undef_index = -1
+  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
   INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
 
@@ -596,7 +596,7 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
+    INTEGER(xt_idx_kind) :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
 
     INTEGER :: src_handle, dst_handle
 
@@ -619,7 +619,7 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER, ALLOCATABLE :: src(:), dst(:)
+    INTEGER(xt_idx_kind), ALLOCATABLE :: src(:), dst(:)
     INTEGER :: src_handle, dst_handle
 
     ALLOCATE(src(SIZE(local_src_idx)), dst(SIZE(local_dst_idx)))

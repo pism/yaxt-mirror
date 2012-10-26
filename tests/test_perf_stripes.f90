@@ -14,7 +14,7 @@ PROGRAM test_perf_stripes
 
   INTEGER, PARAMETER :: nlev = 20
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER, PARAMETER :: undef_index = -1
+  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
   INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
 
@@ -45,8 +45,8 @@ PROGRAM test_perf_stripes
 
   INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
   INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
-  INTEGER(xt_idx_kind), ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
-  INTEGER(xt_idx_kind), ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
+  INTEGER, ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
+  INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
   LOGICAL, PARAMETER :: full_test = .TRUE.
   LOGICAL, PARAMETER :: debug =.FALSE.
@@ -124,7 +124,7 @@ PROGRAM test_perf_stripes
   CALL tstart(t_exch_2d)
   CALL exchange_int(redist_tpex_2d, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
-  CALL icmp_2d('2d to 2d check', gval_2d, loc_tpex_2d)
+  CALL icmp_2d('2d to 2d check', gval_2d, INT(loc_tpex_2d))
 
   ! define positions of surface elements within (k,i,j) array
   CALL id_map(id_pos)
@@ -144,11 +144,11 @@ PROGRAM test_perf_stripes
   CALL tstop(t_exch_surf)
 
   ! check surface:
-  CALL icmp_2d('surface check', gval_3d(1,:,:), loc_tpex_2d)
+  CALL icmp_2d('surface check', gval_3d(1,:,:), INT(loc_tpex_2d))
 
   IF (nlev>1) THEN
     ! check sub surface:
-    CALL icmp_2d('sub surface check', gval_3d(2,:,:), loc_tpex_2d*0-1)
+    CALL icmp_2d('sub surface check', gval_3d(2,:,:), INT(loc_tpex_2d)*0-1)
   ENDIF
   endif
 
@@ -181,7 +181,7 @@ PROGRAM test_perf_stripes
   CALL xt_redist_delete(redist_tpex_3d)
 
   ! check 3d exchange:
-  CALL icmp_3d('3d to 3d check', gval_3d, loc_tpex_3d)
+  CALL icmp_3d('3d to 3d check', gval_3d, INT(loc_tpex_3d))
   endif
 
 
@@ -205,7 +205,7 @@ PROGRAM test_perf_stripes
   CALL tstop(t_exch_3d_ws)
   if (full_test) then
   ! check 3d exchange:
-  CALL icmp_3d('3d to 3d check (using stripes)', gval_3d, loc_tpex_3d)
+    CALL icmp_3d('3d to 3d check (using stripes)', gval_3d, INT(loc_tpex_3d))
   endif
 
   CALL tstart(t_redist_3d_wb)
@@ -220,7 +220,7 @@ PROGRAM test_perf_stripes
 
   CALL xt_redist_delete(redist_tpex_3d_wb)
 
-  CALL icmp_3d('redist_tpex_3d_wb check', gval_3d, loc_tpex_3d)
+  CALL icmp_3d('redist_tpex_3d_wb check', gval_3d, INT(loc_tpex_3d))
 
   ! cleanup:
   IF (full_test) THEN
@@ -427,8 +427,8 @@ CONTAINS
   SUBROUTINE icmp_2d(label, f,g)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_2d: '
     CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER(xt_idx_kind), INTENT(in)  :: f(:,:)
-    INTEGER(xt_idx_kind), INTENT(in)  :: g(:,:)
+    INTEGER, INTENT(in)  :: f(:,:)
+    INTEGER, INTENT(in)  :: g(:,:)
 
     INTEGER :: i, j, n1, n2
 
@@ -456,8 +456,8 @@ CONTAINS
   SUBROUTINE icmp_3d(label, f,g)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_3d: '
     CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER(xt_idx_kind), INTENT(in)  :: f(:,:,:)
-    INTEGER(xt_idx_kind), INTENT(in)  :: g(:,:,:)
+    INTEGER, INTENT(in)  :: f(:,:,:)
+    INTEGER, INTENT(in)  :: g(:,:,:)
 
     INTEGER :: i1, i2, i3, n1, n2, n3
 
@@ -594,8 +594,8 @@ CONTAINS
 
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER(xt_idx_kind), TARGET, INTENT(in) :: f(*)
-    INTEGER(xt_idx_kind), TARGET, VOLATILE, INTENT(out) :: g(*)
+    INTEGER, TARGET, INTENT(in) :: f(*)
+    INTEGER, TARGET, VOLATILE, INTENT(out) :: g(*)
 
     CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
 

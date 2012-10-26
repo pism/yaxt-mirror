@@ -14,13 +14,11 @@ MODULE yaxt
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
-       xt_redist_delete, &
+       &    xt_redist_delete, &
        &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize
 
-  ! \todo xt_idx_kind and xt_count_kind should come out of configure
   INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_IDX_FC_KIND
   INTEGER, PARAMETER, PUBLIC :: xt_count_kind = XT_COUNT_FC_KIND
-
 
   TYPE, BIND(C), PUBLIC :: xt_stripe
     INTEGER(xt_idx_kind) :: start

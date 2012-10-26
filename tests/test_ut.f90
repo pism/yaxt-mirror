@@ -2,14 +2,15 @@ PROGRAM test_ut
   USE mpi
   USE xt_ut, ONLY: ut_abort, ut_init, ut_init_decomposition, ut_init_oneway_transposition_template, &
        & ut_destroy_transposition_template, ut_mode_dt_p2p, ut_init_transposition, &
-       & comm_forward, ut_transpose, ut_destroy_decomposition, ut_destroy_transposition
+       & comm_forward, ut_transpose, ut_destroy_decomposition, ut_destroy_transposition, &
+       & xt_idx_kind, xt_count_kind
   IMPLICIT NONE
 
   INTEGER, PARAMETER :: g_ie = 8, g_je = 4! global extents including halos
   LOGICAL, PARAMETER :: verbose = .FALSE.
   INTEGER, PARAMETER :: nlev = 3
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER, PARAMETER :: undef_index = -1
+  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
   INTEGER :: ie, je ! local extents, including halos
@@ -19,12 +20,12 @@ PROGRAM test_ut
   INTEGER :: mype, mypx, mypy ! process rank, process coords within (0:, 0:) process space
   LOGICAL :: lroot ! true only for proc 0
 
-  INTEGER :: g_id(g_ie, g_je) ! global id
+  INTEGER(xt_idx_kind) :: g_id(g_ie, g_je) ! global id
 
-  INTEGER :: g_tpex(g_ie, g_je) ! global "tripolar-like" toy bounds exchange
+  INTEGER(xt_idx_kind) :: g_tpex(g_ie, g_je) ! global "tripolar-like" toy bounds exchange
   INTEGER :: template_tpex, trans_tpex
 
-  INTEGER, ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
@@ -54,11 +55,11 @@ PROGRAM test_ut
   ! test 2d-to-2d transposition:
   fval = loc_id
   CALL exchange2d_2d(trans_tpex, fval, gval)
-  CALL icmp('2d to 2d check', gval, loc_tpex)
+  CALL icmp('2d to 2d check', gval, INT(loc_tpex))
 
   ! define positions of surface elements within (i,k,j) array
-  CALL id_map(id_pos)
-  CALL id_map(pos3d_surf)
+  CALL gen_id_pos(id_pos)
+  CALL gen_id_pos(pos3d_surf)
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! generate surface transposition:
@@ -67,10 +68,10 @@ PROGRAM test_ut
   ! 2d to surface boundsexchange:
   gval3d = -1
   CALL exchange2d_3d(surf_trans_tpex, fval, gval3d)
-  CALL icmp('surface check', gval3d(:,1,:), loc_tpex)
+  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex))
 
   ! check sub surface:
-  CALL icmp('sub surface check', gval3d(:,2,:), loc_tpex*0-1)
+  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1)
 
   ! cleanup:
   CALL ut_destroy_transposition_template(template_tpex)
@@ -176,9 +177,10 @@ CONTAINS
   END SUBROUTINE exit_all
 
   SUBROUTINE id_map(map)
-    INTEGER, INTENT(out) :: map(:,:)
+    INTEGER(xt_idx_kind), INTENT(out) :: map(:,:)
 
-    INTEGER :: i,j,p
+    INTEGER :: i,j
+    INTEGER(xt_idx_kind) :: p
 
     p = 0
     DO j = 1, SIZE(map,2)
@@ -189,6 +191,23 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE id_map
+
+  SUBROUTINE gen_id_pos(pos)
+    INTEGER, INTENT(out) :: pos(:,:)
+
+    INTEGER :: i,j
+    INTEGER :: p
+
+    p = 0
+    DO j = 1, SIZE(pos,2)
+      DO i = 1, SIZE(pos,1)
+        p = p + 1
+        pos(i,j) = p
+      ENDDO
+    ENDDO
+
+  END SUBROUTINE gen_id_pos
+
 
   SUBROUTINE exchange2d_2d(itrans, f, g)
     INTEGER, INTENT(in) :: itrans
@@ -245,8 +264,8 @@ CONTAINS
   END SUBROUTINE gen_off_trans
 
   SUBROUTINE get_window(gval, win)
-    INTEGER, INTENT(in) :: gval(:,:)
-    INTEGER, INTENT(out) :: win(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: gval(:,:)
+    INTEGER(xt_idx_kind), INTENT(out) :: win(:,:)
 
     INTEGER :: i, j, ig, jg
 
@@ -261,11 +280,11 @@ CONTAINS
   END SUBROUTINE get_window
 
   SUBROUTINE gen_template(local_src_idx, local_dst_idx, ihandle)
-    INTEGER, INTENT(in) :: local_src_idx(:,:)
-    INTEGER, INTENT(in) :: local_dst_idx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
+    INTEGER(xt_idx_kind) :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
 
     INTEGER :: src_handle, dst_handle
 
@@ -283,8 +302,8 @@ CONTAINS
   END SUBROUTINE gen_template
 
   SUBROUTINE def_exchange(id_in, id_out)
-    INTEGER, INTENT(in) :: id_in(:,:)
-    INTEGER, INTENT(out) :: id_out(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: id_in(:,:)
+    INTEGER(xt_idx_kind), INTENT(out) :: id_out(:,:)
 
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
@@ -351,7 +370,7 @@ CONTAINS
   END SUBROUTINE def_exchange
 
   SUBROUTINE check_g_idx(gidx)
-    INTEGER,INTENT(in) :: gidx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: gidx(:,:)
     INTEGER :: i,j
 
     DO j=1,g_je

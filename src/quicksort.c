@@ -140,7 +140,7 @@ void xt_quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
 
   int i, j, k, l, r, s;
   int *pos;
-  int w_idx, x_idx;
+  Xt_idx w_idx, x_idx;
   int w_pos, x_pos;
 
   /*  Initialization */

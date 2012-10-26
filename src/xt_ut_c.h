@@ -31,7 +31,7 @@ void xt_ut_init(int decomp_size, int comm_tmpl_size, int comm_size, int debug_lv
  * @param[in] domain_size       number of transpositions
  * @return returns handle
  */
-int xt_ut_init_decomposition_1d(int *idx_vec, int idx_vec_n, int domain_size);
+int xt_ut_init_decomposition_1d(Xt_idx *idx_vec, Xt_count idx_vec_n, Xt_count domain_size);
 
 /**
  * creates new unitrans compatible oneway transposition decomposition and returns access handle
