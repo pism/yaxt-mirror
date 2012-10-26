@@ -584,7 +584,10 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
     if (sorted_vector[middle] <= index)
       lb = middle;
     else
-      ub = middle;
+      if (ub == middle)
+        return 1;
+      else
+        ub = middle;
   }
 
   // find left most match:
