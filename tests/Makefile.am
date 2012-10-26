@@ -42,7 +42,7 @@ test_ut_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_perf_SOURCES = test_perf.f90
 test_perf_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_perf_stripes_SOURCES = test_perf_stripes.f90
-test_perf_stripes.$(OBJEXT) = ../src/yaxt.$(OBJEXT)
+test_perf_stripes.$(OBJEXT): ../src/yaxt.$(OBJEXT)
 test_perf_stripes_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_sort_SOURCES = test_sort.c tests.h
 test_yaxt_SOURCES = test_yaxt.f90
