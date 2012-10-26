@@ -328,7 +328,7 @@ idxlist_collection_get_min_index(Xt_idxlist idxlist) {
   min = xt_idxlist_get_min_index(collectionlist->idxlists[0]);
 
   for (unsigned i = 1; i < collectionlist->num_idxlists; ++i)
-    if ((tmp_min = xt_idxlist_get_min_index(collectionlist->idxlists[i])) > min)
+    if ((tmp_min = xt_idxlist_get_min_index(collectionlist->idxlists[i])) < min)
       min = tmp_min;
 
   return min;
