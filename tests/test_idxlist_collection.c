@@ -7,7 +7,10 @@
 #include "tests.h"
 
 #include "yaxt.h"
+#include "xt_idxlist.h"
 #include "xt_idxvec.h"
+#include "xt_idxstripes.h"
+#include "xt_idxsection.h"
 #include "xt_idxlist_collection.h"
 #include "test_idxlist_utils.h"
 #include "xt_mpi.h"
@@ -184,6 +187,92 @@ int main(void) {
 
     xt_idxlist_delete(collectionlist);
     xt_idxlist_delete(collectionlist_copy);
+  }
+
+  { // test computing intersection of index list collections
+
+    Xt_idx index_list[3][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1},{2,6,1,4,7,3,0}};
+    Xt_idx sorted_index_list[21] = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
+    Xt_count num_indices = 7;
+
+    Xt_idxlist idxlists[3];
+
+    // create two index lists
+
+    idxlists[0] = xt_idxvec_new(index_list[0], num_indices);
+    idxlists[1] = xt_idxvec_new(index_list[1], num_indices);
+    idxlists[2] = xt_idxvec_new(index_list[2], num_indices);
+
+    // generate a collection index list
+
+    Xt_idxlist collectionlist;
+
+    collectionlist = xt_idxlist_collection_new(idxlists, 3);
+
+    xt_idxlist_delete(idxlists[0]);
+    xt_idxlist_delete(idxlists[1]);
+    xt_idxlist_delete(idxlists[2]);
+
+    // test generated collection list
+
+    check_idxlist(collectionlist, &(index_list[0][0]), 3*num_indices);
+
+    // test computing of intersection
+
+    Xt_idxlist intersection, ref_idxvec;
+
+    ref_idxvec = xt_idxvec_new(&(index_list[0][0]), 3 * num_indices);
+
+    intersection = xt_idxlist_get_intersection(ref_idxvec, collectionlist);
+
+    check_idxlist(intersection, sorted_index_list, 3 * num_indices);
+
+    xt_idxlist_delete(intersection);
+
+    intersection = xt_idxlist_get_intersection(collectionlist, ref_idxvec);
+
+    check_idxlist(intersection, sorted_index_list, 3 * num_indices);
+
+    xt_idxlist_delete(intersection);
+    xt_idxlist_delete(collectionlist);
+  }
+
+  { // test using various tpyes of index lists
+
+    Xt_idx index_list[] = {1,3,5,7,9,11};
+    struct Xt_stripe stripes[] = {{0,5,2},{1,5,2}};
+    unsigned global_size[2] = {10,10};
+    unsigned local_size[2] = {5,5};
+    unsigned local_start[2] = {2,2};
+
+    Xt_idx ref_index_list[] = {1,3,5,7,9,11,
+                               0,2,4,6,8,1,3,5,7,9,
+                               22,23,24,25,26,
+                               32,33,34,35,36,
+                               42,43,44,45,46,
+                               52,53,54,55,56,
+                               62,63,64,65,66};
+
+    Xt_idxlist idxlists[3] = {xt_idxvec_new(index_list, sizeof(index_list)/sizeof(index_list[0])),
+                              xt_idxstripes_new(stripes, sizeof(stripes)/sizeof(stripes[0])),
+                              xt_idxsection_new(0, 2, global_size, local_size, local_start)};
+
+    // generate a collection index list
+
+    Xt_idxlist collectionlist;
+
+    collectionlist = xt_idxlist_collection_new(idxlists, 3);
+
+    xt_idxlist_delete(idxlists[0]);
+    xt_idxlist_delete(idxlists[1]);
+    xt_idxlist_delete(idxlists[2]);
+
+    // test generated collection list
+
+    check_idxlist(collectionlist, ref_index_list,
+                  sizeof(ref_index_list)/sizeof(ref_index_list[0]));
+
+    xt_idxlist_delete(collectionlist);
   }
 
   MPI_Finalize();
