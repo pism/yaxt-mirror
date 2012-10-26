@@ -1,12 +1,24 @@
 #ifndef YAXT_H
 #define YAXT_H
 
-#include "mpi.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-typedef int Xt_idx;
-#define Xt_idx_dt (MPI_INT)
-typedef int Xt_count;
-#define Xt_count_dt (MPI_INT)
+#include <mpi.h>
+
+/**
+ * Distributed elements are enumerated with numbers of this signed
+ * integral type.
+ */
+typedef XT_IDX Xt_idx;
+#define Xt_idx_dt (XT_IDX_MPIDT)
+/**
+ * Local elements are addressed with numbers of this signed
+ * integral type.
+ */
+typedef XT_COUNT Xt_count;
+#define Xt_count_dt (XT_COUNT_MPIDT)
 
 typedef struct Xt_idxlist *Xt_idxlist;
 typedef struct Xt_xmap *Xt_xmap;

@@ -70,6 +70,53 @@ AC_CHECK_PROGS([MPI_LAUNCH],[mpirun mpiexec],[true])
 AS_IF([test x$MPI_LAUNCH = xtrue],
   [AC_MSG_WARN([MPI launch command unavailable])])
 
+# enable user to select an alternative enumeration type in case
+# 2^31 elements isn't enough or too much
+AC_ARG_WITH([idxtype],
+  AS_HELP_STRING([--with-idxtype],[select type to use for global index values @<:@default=int@:>@]),
+  [XT_IDX=$withval
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,[[char a[((($XT_IDX)-1)<0)];
+char b[($XT_IDX)((($XT_IDX)-1.5)+0.5)]]])],,
+     [AC_MSG_ERROR([Selected index type not compilable or unsigned])])],
+  [XT_IDX=int])
+AC_ARG_WITH([counttype],
+  AS_HELP_STRING([--with-counttype],[select type to use for local index values @<:@default=int@:>@]),
+  [XT_COUNT=$withval
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,[[char a[((($XT_COUNT)-1)<0)];
+char b[($XT_COUNT)((($XT_COUNT)-1.5)+0.5)]]])],,
+     [AC_MSG_ERROR([Selected index type not compilable or unsigned])])],
+  [XT_COUNT=int])
+m4_foreach([substtype],[[XT_IDX],[XT_COUNT]],
+  [AS_CASE(["$substtype"],
+     [int],
+     substtype[_MPIDT=MPI_INT
+     ACX_FORTRAN_TYPE_KIND([integer],[c_int],[int],
+       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+     ],
+     [long],
+     substtype[_MPIDT=MPI_LONG
+     ACX_FORTRAN_TYPE_KIND([integer],[c_long],[long],
+       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+     ],
+     [short],
+     substtype[_MPIDT=MPI_SHORT
+     ACX_FORTRAN_TYPE_KIND([integer],[c_short],[short],
+       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+     ],
+     ["long long"],
+     substtype[_MPIDT=MPI_LONG_LONG
+     ACX_FORTRAN_TYPE_KIND([integer],[c_long_long],[long long],
+       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+     ],
+     [AC_MSG_ERROR([Invalid type selected for substtype])])
+   FCFLAGS="$FCFLAGS ${FPP_DEFOPT}substtype[]_FC_KIND=$substtype[]_FC_KIND"
+  ])
+
+AC_DEFINE_UNQUOTED([XT_IDX],[$XT_IDX],[Type to use for enumeration of distributed elements.])
+AC_DEFINE_UNQUOTED([XT_IDX_MPIDT],[$XT_IDX_MPIDT],[Type to use for enumeration of distributed elements.])
+AC_DEFINE_UNQUOTED([XT_COUNT],[$XT_COUNT],[Type to use for enumeration of distributed elements.])
+AC_DEFINE_UNQUOTED([XT_COUNT_MPIDT],[$XT_COUNT_MPIDT],[Type to use for enumeration of distributed elements.])
+
 AC_CONFIG_HEADER([include/config.h])
 
 AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\

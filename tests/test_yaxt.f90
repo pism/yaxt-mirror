@@ -3,8 +3,8 @@ PROGRAM test_yaxt
   USE yaxt, ONLY: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
-       xt_redist_p2p_off_new, xt_redist_s_exchange1
-  USE iso_c_binding, ONLY: c_loc
+       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_idx_kind
+  USE iso_c_binding, ONLY: c_loc, c_int
 
   IMPLICIT NONE
 
@@ -22,17 +22,18 @@ PROGRAM test_yaxt
   INTEGER :: mype, mypx, mypy ! process rank, process coords within (0:, 0:) process space
   LOGICAL :: lroot ! true only for proc 0
 
-  INTEGER :: g_id(g_ie, g_je) ! global id
+  INTEGER(xt_idx_kind) :: g_id(g_ie, g_je) ! global id
 
-  INTEGER :: g_tpex(g_ie, g_je) ! global "tripolar-like" toy bounds exchange
+  ! global "tripolar-like" toy bounds exchange
+  INTEGER(xt_idx_kind) :: g_tpex(g_ie, g_je)
   TYPE(xt_xmap) :: xmap_tpex
   TYPE(xt_redist) :: redist_tpex
   TYPE(xt_redist) :: redist_surf_tpex
 
-  INTEGER, ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
-  INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
-  INTEGER, ALLOCATABLE :: gval3d(:,:,:)
-  INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: fval(:,:), gval(:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: gval3d(:,:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
 
   ! mpi & decomposition & allocate mem:
   CALL init_all
@@ -67,7 +68,8 @@ PROGRAM test_yaxt
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! generate surface transposition:
-  CALL gen_off_trans(xmap_tpex, MPI_INTEGER, id_pos(:,:)-1, MPI_INTEGER, pos3d_surf(:,:)-1, redist_surf_tpex)
+  CALL gen_off_trans(xmap_tpex, MPI_INTEGER, INT(id_pos(:,:)) - 1, &
+       MPI_INTEGER, INT(pos3d_surf(:,:)) - 1, redist_surf_tpex)
 
   ! 2d to surface boundsexchange:
   gval3d = -1
@@ -89,7 +91,7 @@ PROGRAM test_yaxt
 CONTAINS
 
   SUBROUTINE gen_pos3d_surf(pos)
-    INTEGER, INTENT(inout) :: pos(:,:)
+    INTEGER(xt_idx_kind), INTENT(inout) :: pos(:,:)
     ! positions for zero based arrays (ECHAM grid point dim order)
     ! old pos = i + j*ie
     ! new pos = i + k*ie + j*ie*nlev
@@ -111,8 +113,8 @@ CONTAINS
   SUBROUTINE icmp(label, f,g)
     CHARACTER(len=*), PARAMETER :: context = 'test_ut::icmp: '
     CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:)
-    INTEGER, INTENT(in)  :: g(:,:)
+    INTEGER(xt_idx_kind), INTENT(in)  :: f(:,:)
+    INTEGER(xt_idx_kind), INTENT(in)  :: g(:,:)
 
     INTEGER :: i, j, n1, n2
 
@@ -202,7 +204,7 @@ CONTAINS
   END SUBROUTINE exit_all
 
   SUBROUTINE id_map(map)
-    INTEGER, INTENT(out) :: map(:,:)
+    INTEGER(xt_idx_kind), INTENT(out) :: map(:,:)
 
     INTEGER :: i,j,p
 
@@ -218,8 +220,8 @@ CONTAINS
 
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: f(*)
-    INTEGER, TARGET, VOLATILE, INTENT(out) :: g(*)
+    INTEGER(xt_idx_kind), TARGET, INTENT(in) :: f(*)
+    INTEGER(xt_idx_kind), TARGET, VOLATILE, INTENT(out) :: g(*)
 
     CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
 
@@ -245,7 +247,7 @@ CONTAINS
   SUBROUTINE gen_off_trans(xmap, send_dt, send_off, recv_dt, recv_off, redist)
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER,INTENT(in) :: send_dt, recv_dt
-    INTEGER,INTENT(in) :: send_off(:,:), recv_off(:,:)
+    INTEGER(c_int),INTENT(in) :: send_off(:,:), recv_off(:,:)
     TYPE(xt_redist),INTENT(out) :: redist
 
     !INTEGER :: send_offsets(SIZE(send_off)), recv_offsets(SIZE(recv_off))
@@ -263,8 +265,8 @@ CONTAINS
   END SUBROUTINE gen_off_trans
 
   SUBROUTINE get_window(gval, win)
-    INTEGER, INTENT(in) :: gval(:,:)
-    INTEGER, INTENT(out) :: win(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: gval(:,:)
+    INTEGER(xt_idx_kind), INTENT(out) :: win(:,:)
 
     INTEGER :: i, j, ig, jg
 
@@ -279,8 +281,8 @@ CONTAINS
   END SUBROUTINE get_window
 
   SUBROUTINE gen_template(local_src_idx, local_dst_idx, xmap)
-    INTEGER, INTENT(in) :: local_src_idx(:,:)
-    INTEGER, INTENT(in) :: local_dst_idx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
@@ -294,8 +296,8 @@ CONTAINS
   END SUBROUTINE gen_template
 
   SUBROUTINE def_exchange(id_in, id_out)
-    INTEGER, INTENT(in) :: id_in(:,:)
-    INTEGER, INTENT(out) :: id_out(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: id_in(:,:)
+    INTEGER(xt_idx_kind), INTENT(out) :: id_out(:,:)
 
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
@@ -366,7 +368,7 @@ CONTAINS
   END SUBROUTINE def_exchange
 
   SUBROUTINE check_g_idx(gidx)
-    INTEGER,INTENT(in) :: gidx(:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: gidx(:,:)
     INTEGER :: i,j
 
     DO j=1,g_je

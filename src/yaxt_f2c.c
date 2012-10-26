@@ -1,3 +1,8 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <assert.h>
 
 #include "core/core.h"
 
@@ -87,9 +92,14 @@ struct xt_redist_f xt_redist_p2p_blocks_new_f(struct xt_xmap_f *xmap_f,
   return redist_f;
 }
 
-struct xt_redist_f xt_redist_p2p_off_new_f(struct xt_xmap_f *xmap_f, int *src_offsets,  int *dst_offsets, MPI_Fint *datatype_f) {
+struct xt_redist_f
+xt_redist_p2p_off_new_f(struct xt_xmap_f *xmap_f,
+                        MPI_Fint *src_offsets, MPI_Fint *dst_offsets,
+                        MPI_Fint *datatype_f) {
   MPI_Datatype datatype_c = MPI_Type_f2c(*datatype_f);
   struct xt_redist_f redist_f;
+  int *src_off_arg, *dst_off_arg;
+  assert(sizeof (MPI_Fint) == sizeof (int));
 
   redist_f.cptr =  xt_redist_p2p_off_new(xmap_f->cptr, src_offsets, dst_offsets, datatype_c);
 

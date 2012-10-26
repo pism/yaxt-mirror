@@ -43,10 +43,10 @@ PROGRAM test_perf_stripes
        redist_tpex_3d_ws, redist_tpex_3d_wb
   TYPE(Xt_idxlist) :: loc_id_3d_ws, loc_tpex_3d_ws
 
-  INTEGER, ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
-  INTEGER, ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
-  INTEGER, ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
-  INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
+  INTEGER(xt_idx_kind), ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
   LOGICAL, PARAMETER :: full_test = .TRUE.
   LOGICAL, PARAMETER :: debug =.FALSE.
@@ -368,8 +368,8 @@ CONTAINS
   SUBROUTINE inflate_idx(inflate_pos, idx_2d, idx_3d)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::inflate_idx: '
     INTEGER, INTENT(in) :: inflate_pos
-    INTEGER, INTENT(in) :: idx_2d(:,:)
-    INTEGER, ALLOCATABLE, INTENT(out) :: idx_3d(:,:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: idx_2d(:,:)
+    INTEGER(xt_idx_kind), ALLOCATABLE, INTENT(out) :: idx_3d(:,:,:)
 
     INTEGER :: i, j, k
 
@@ -427,8 +427,8 @@ CONTAINS
   SUBROUTINE icmp_2d(label, f,g)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_2d: '
     CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:)
-    INTEGER, INTENT(in)  :: g(:,:)
+    INTEGER(xt_idx_kind), INTENT(in)  :: f(:,:)
+    INTEGER(xt_idx_kind), INTENT(in)  :: g(:,:)
 
     INTEGER :: i, j, n1, n2
 
@@ -456,8 +456,8 @@ CONTAINS
   SUBROUTINE icmp_3d(label, f,g)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_3d: '
     CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:,:)
-    INTEGER, INTENT(in)  :: g(:,:,:)
+    INTEGER(xt_idx_kind), INTENT(in)  :: f(:,:,:)
+    INTEGER(xt_idx_kind), INTENT(in)  :: g(:,:,:)
 
     INTEGER :: i1, i2, i3, n1, n2, n3
 
@@ -594,8 +594,8 @@ CONTAINS
 
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER(c_int), TARGET, INTENT(in) :: f(*)
-    INTEGER(c_int), TARGET, VOLATILE, INTENT(out) :: g(*)
+    INTEGER(xt_idx_kind), TARGET, INTENT(in) :: f(*)
+    INTEGER(xt_idx_kind), TARGET, VOLATILE, INTENT(out) :: g(*)
 
     CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
 
@@ -636,7 +636,7 @@ CONTAINS
 
   SUBROUTINE get_window(gval, win)
     INTEGER, INTENT(in) :: gval(:,:)
-    INTEGER, INTENT(out) :: win(:,:)
+    INTEGER(xt_idx_kind), INTENT(out) :: win(:,:)
 
     INTEGER :: i, j, ig, jg
 
@@ -653,7 +653,7 @@ CONTAINS
   SUBROUTINE gen_stripes(local_idx, local_stripes)
     CHARACTER(len=*), PARAMETER :: context = 'gen_stripes: '
 
-    INTEGER, INTENT(in) :: local_idx(:,:,:)
+    INTEGER(xt_idx_kind), INTENT(in) :: local_idx(:,:,:)
     TYPE(Xt_idxlist), INTENT(out) :: local_stripes
 
     TYPE(xt_stripe), ALLOCATABLE :: stripes(:,:)

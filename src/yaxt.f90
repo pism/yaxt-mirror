@@ -4,7 +4,7 @@ MODULE yaxt
   !
 
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
-       c_ptr, c_null_ptr, c_loc
+       c_ptr, c_null_ptr, c_loc, c_long, c_long_long, c_short
 
   IMPLICIT NONE
 
@@ -18,8 +18,8 @@ MODULE yaxt
        &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize
 
   ! \todo xt_idx_kind and xt_count_kind should come out of configure
-  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = C_INT
-  INTEGER, PARAMETER, PUBLIC :: xt_count_kind = C_INT
+  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_IDX_FC_KIND
+  INTEGER, PARAMETER, PUBLIC :: xt_count_kind = XT_COUNT_FC_KIND
 
 
   TYPE, BIND(C), PUBLIC :: xt_stripe
@@ -158,8 +158,8 @@ MODULE yaxt
       IMPORT :: xt_xmap, xt_redist, c_int
       IMPLICIT NONE
       TYPE(xt_xmap), INTENT(in) :: xmap
-      INTEGER(c_int), INTENT(in) :: src_offsets(*)
-      INTEGER(c_int), INTENT(in) :: dst_offsets(*)
+      INTEGER, INTENT(in) :: src_offsets(*)
+      INTEGER, INTENT(in) :: dst_offsets(*)
       INTEGER, INTENT(in) :: datatype
       TYPE(xt_redist) :: res
     END FUNCTION xt_redist_p2p_off_new
