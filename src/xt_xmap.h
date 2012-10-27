@@ -15,7 +15,8 @@ typedef struct Xt_xmap_iterator *Xt_xmap_iter;
 struct Xt_xmap_iterator_vtable {
   int (*next)(Xt_xmap_iter iter);
   int (*get_rank)(Xt_xmap_iter iter);
-  Xt_idxlist (*get_transfer_pos)(Xt_xmap_iter iter);
+  int const * (*get_transfer_pos)(Xt_xmap_iter iter);
+  Xt_count (*get_num_transfer_pos)(Xt_xmap_iter iter);
   void (*delete)(Xt_xmap_iter iter);
 };
 
@@ -132,12 +133,23 @@ int xt_xmap_iterator_next(Xt_xmap_iter iter);
 int xt_xmap_iterator_get_rank(Xt_xmap_iter iter);
 
 /**
- * get the exchange list of the current item of an exchange map iterator
+ * get the positions of all element of the current item of an exchange
+ * map iterator
  *
  * @param[in] iter exchange map iterator
  * @return         exchange list of the current item
  */
-Xt_idxlist xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter);
+int const * xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter);
+
+/**
+ * get the number of positions returned by
+ * \ref xt_xmap_iterator_get_transfer_pos of the current item of an exchange
+ * map iterator
+ * @param[in] iter exchange map iterator
+ * @return         number of positions returned by
+ *                 \ref xt_xmap_iterator_get_transfer_pos for the current item
+ */
+Xt_count xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
 
 /**
  * destructor for an exchange map iterator

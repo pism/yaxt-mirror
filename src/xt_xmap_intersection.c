@@ -14,8 +14,6 @@
 #include "core/ppm_xfuncs.h"
 #include "xt_xmap_intersection.h"
 
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
 static MPI_Comm     xmap_intersection_get_communicator(Xt_xmap xmap);
 static int          xmap_intersection_get_num_destinations(Xt_xmap xmap);
 static int          xmap_intersection_get_num_sources(Xt_xmap xmap);
@@ -26,17 +24,19 @@ static Xt_xmap_iter xmap_intersection_get_source_iterator(Xt_xmap xmap);
 static void         xmap_intersection_delete(Xt_xmap xmap);
 static int          xmap_iterator_intersection_next(Xt_xmap_iter iter);
 static int          xmap_intersection_iterator_get_rank(Xt_xmap_iter iter);
-static Xt_idxlist   xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter);
+int const *         xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter);
+Xt_count            xmap_intersection_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
 static void         xmap_intersection_iterator_delete(Xt_xmap_iter iter);
 static int          xmap_intersection_get_max_src_pos(Xt_xmap xmap);
 static int          xmap_intersection_get_max_dst_pos(Xt_xmap xmap);
 
 
 static const struct Xt_xmap_iterator_vtable xmap_iterator_intersection_vtable = {
-        .next             = xmap_iterator_intersection_next,
-        .get_rank         = xmap_intersection_iterator_get_rank,
-        .get_transfer_pos = xmap_intersection_iterator_get_transfer_pos,
-        .delete           = xmap_intersection_iterator_delete};
+        .next                 = xmap_iterator_intersection_next,
+        .get_rank             = xmap_intersection_iterator_get_rank,
+        .get_transfer_pos     = xmap_intersection_iterator_get_transfer_pos,
+        .get_num_transfer_pos = xmap_intersection_iterator_get_num_transfer_pos,
+        .delete               = xmap_intersection_iterator_delete};
 
 
 struct Xt_xmap_iterator_intersection {
@@ -61,7 +61,8 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
 
 struct exchange_data {
   // list of relative positions in memory to send or receive
-  Xt_idxlist transfer_pos;
+  int * transfer_pos;
+  Xt_count num_transfer_pos;
   int rank;
 };
 
@@ -74,7 +75,7 @@ struct Xt_xmap_intersection {
 
   // we need the max position in order to enable quick range-checks
   // for xmap-users like redist
-  int max_src_pos; // max possible pos over all src transfer_poss (always >= 0)
+  int max_src_pos; // max possible pos over all src transfer_pos (always >= 0)
   int max_dst_pos; // same for dst
 
   MPI_Comm comm;
@@ -137,46 +138,27 @@ static void generate_src_transfer_pos(struct Xt_xmap_intersection * xmap,
                                       Xt_count num_intersections,
                                       Xt_idxlist mypart_idxlist) {
 
-  Xt_count intersection_size[num_intersections];
-  Xt_count max_intersection_size = 0;
   const int single_match_only = 0;
 
   xmap->nsrc = num_intersections;
   xmap->src_msg = xmalloc(num_intersections * sizeof(*(xmap->src_msg)));
 
-  // find max size of intersections:
   for (int i = 0; i < xmap->nsrc; ++i) {
-    intersection_size[i]  =  xt_idxlist_get_num_indices(intersections[i]);
-    if (intersection_size[i] > max_intersection_size)
-      max_intersection_size = intersection_size[i];
-  }
 
-  Xt_idx *intersection_idxvec = xmalloc(max_intersection_size * sizeof(Xt_idx));
-  int *intersection_pos = xmalloc(max_intersection_size * MAX(sizeof(int), sizeof(Xt_idx)));
+    Xt_idx const * intersection_idxvec = xt_idxlist_get_indices_const(intersections[i]);
+    Xt_count intersection_size = xt_idxlist_get_num_indices(intersections[i]);
+    int *intersection_pos = xmalloc(intersection_size * sizeof(*intersection_pos));
 
-  int retval;
-  for (int i = 0; i < xmap->nsrc; ++i) {
-    xt_idxlist_get_indices(intersections[i], intersection_idxvec);
+    int retval;
     retval = xt_idxlist_get_positions_of_indices(mypart_idxlist, intersection_idxvec,
-                                                intersection_size[i], intersection_pos,
+                                                intersection_size, intersection_pos,
                                                 single_match_only);
     assert(retval != 1);
 
-    if (sizeof(int) < sizeof(Xt_idx))
-      for (Xt_count j = intersection_size[i]-1;
-           j < intersection_size[i] && j >= 0;  --j)
-        ((Xt_idx*)intersection_pos)[j] = (Xt_idx)(intersection_pos[j]);
-    else if (sizeof(int) > sizeof(Xt_idx))
-      for (Xt_count j = 0; j < intersection_size[i];  ++j)
-        ((Xt_idx*)intersection_pos)[j] = (Xt_idx)(intersection_pos[j]);
-
-    xmap->src_msg[i].transfer_pos = xt_idxvec_new((Xt_idx*)intersection_pos,
-                                                  intersection_size[i]);
+    xmap->src_msg[i].transfer_pos = intersection_pos;
+    xmap->src_msg[i].num_transfer_pos = intersection_size;
     xmap->src_msg[i].rank = ranks[i];
   }
-
-  free(intersection_pos);
-  free(intersection_idxvec);
 }
 
 static void generate_dst_transfer_pos(struct Xt_xmap_intersection * xmap,
@@ -185,46 +167,27 @@ static void generate_dst_transfer_pos(struct Xt_xmap_intersection * xmap,
                                       Xt_count num_intersections,
                                       Xt_idxlist mypart_idxlist) {
 
-  Xt_count intersection_size[num_intersections];
-  int max_intersection_size = 0;
   const int single_match_only = 1;
 
   xmap->ndst = num_intersections;
   xmap->dst_msg = xmalloc(num_intersections * sizeof(*(xmap->dst_msg)));
 
-  // find max size of intersections:
   for (int i = 0; i < xmap->ndst; ++i) {
-    intersection_size[i]  =  xt_idxlist_get_num_indices(intersections[i]);
-    if (intersection_size[i] > max_intersection_size)
-      max_intersection_size = intersection_size[i];
-  }
 
-  Xt_idx *intersection_idxvec = xmalloc(max_intersection_size * sizeof(Xt_idx));
-  int *intersection_pos = xmalloc(max_intersection_size * MAX(sizeof(int), sizeof(Xt_idx)));
+    Xt_idx const * intersection_idxvec = xt_idxlist_get_indices_const(intersections[i]);
+    Xt_count intersection_size = xt_idxlist_get_num_indices(intersections[i]);
+    int *intersection_pos = xmalloc(intersection_size * sizeof(int));
 
-  int retval;
-  for (int i = 0; i < xmap->ndst; ++i) {
-    xt_idxlist_get_indices(intersections[i], intersection_idxvec);
+    int retval;
     retval = xt_idxlist_get_positions_of_indices(mypart_idxlist, intersection_idxvec,
-                                                intersection_size[i], intersection_pos,
+                                                intersection_size, intersection_pos,
                                                 single_match_only);
     assert(retval != 1);
 
-    if (sizeof(int) < sizeof(Xt_idx))
-      for (Xt_count j = intersection_size[i]-1;
-           j < intersection_size[i] && j >= 0;  --j)
-        ((Xt_idx*)intersection_pos)[j] = (Xt_idx)(intersection_pos[j]);
-    else if (sizeof(int) > sizeof(Xt_idx))
-      for (Xt_count j = 0; j < intersection_size[i];  ++j)
-        ((Xt_idx*)intersection_pos)[j] = (Xt_idx)(intersection_pos[j]);
-
-    xmap->dst_msg[i].transfer_pos = xt_idxvec_new((Xt_idx*)intersection_pos,
-                                                  intersection_size[i]);
+    xmap->dst_msg[i].transfer_pos = intersection_pos;
+    xmap->dst_msg[i].num_transfer_pos = intersection_size;
     xmap->dst_msg[i].rank = ranks[i];
   }
-
-  free(intersection_pos);
-  free(intersection_idxvec);
 }
 
 static void generate_transfer_pos(struct Xt_xmap_intersection * xmap,
@@ -291,10 +254,10 @@ static void xmap_intersection_delete(Xt_xmap xmap) {
   unsigned i;
 
   for (i = 0; i < xmap_intersection->ndst; ++i)
-    xt_idxlist_delete(xmap_intersection->dst_msg[i].transfer_pos);
+    free(xmap_intersection->dst_msg[i].transfer_pos);
 
   for (i = 0; i < xmap_intersection->nsrc; ++i)
-    xt_idxlist_delete(xmap_intersection->src_msg[i].transfer_pos);
+    free(xmap_intersection->src_msg[i].transfer_pos);
 
   free(xmap_intersection->dst_msg);
   free(xmap_intersection->src_msg);
@@ -369,7 +332,7 @@ static int xmap_intersection_iterator_get_rank(Xt_xmap_iter iter) {
   return iter_intersection->msg->rank;
 }
 
-static Xt_idxlist xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter) {
+int const * xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter) {
 
   struct Xt_xmap_iterator_intersection * iter_intersection;
 
@@ -377,7 +340,18 @@ static Xt_idxlist xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter)
 
   assert(iter_intersection != NULL);
 
-  return  xt_idxlist_copy(iter_intersection->msg->transfer_pos);
+  return  iter_intersection->msg->transfer_pos;
+}
+
+Xt_count xmap_intersection_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
+
+  struct Xt_xmap_iterator_intersection * iter_intersection;
+
+  iter_intersection = (struct Xt_xmap_iterator_intersection *)iter;
+
+  assert(iter_intersection != NULL);
+
+  return iter_intersection->msg->num_transfer_pos;
 }
 
 static void xmap_intersection_iterator_delete(Xt_xmap_iter iter) {

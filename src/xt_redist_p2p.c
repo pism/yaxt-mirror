@@ -56,72 +56,62 @@ struct Xt_redist_p2p {
 };
 
 static MPI_Datatype
-generate_block_datatype(Xt_idxlist transfer_pos, int *block_offsets, int *block_sizes,
+generate_block_datatype(int const * transfer_pos, Xt_count num_transfer_pos,
+                        int *block_offsets, int *block_sizes,
                         MPI_Datatype base_datatype, MPI_Comm comm) {
 
   MPI_Datatype type;
 
-  Xt_count num_indices;
-  Xt_idx *idx_vec;
   int *bdispl_vec;
   int *blen_vec;
 
-  num_indices = xt_idxlist_get_num_indices(transfer_pos);
-
-  idx_vec = xmalloc(num_indices * sizeof(*idx_vec));
-
-  xt_idxlist_get_indices(transfer_pos, idx_vec);
-
   assert(block_sizes != NULL);
 
-  bdispl_vec = xmalloc(num_indices * sizeof(*bdispl_vec));
-  blen_vec = xmalloc(num_indices * sizeof(*blen_vec));
+  bdispl_vec = xmalloc(num_transfer_pos * sizeof(*bdispl_vec));
+  blen_vec = xmalloc(num_transfer_pos * sizeof(*blen_vec));
 
   if (!block_offsets) die("generate_block_datatype: non-nil block_offsets expected");
 
   int j;
-  for (Xt_count i = 0; i < num_indices; ++i) {
-    j = idx_vec[i];
+  for (Xt_count i = 0; i < num_transfer_pos; ++i) {
+    j = transfer_pos[i];
     bdispl_vec[i] = block_offsets[j];
     blen_vec[i] = block_sizes[j];
   }
 
-  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec, num_indices, base_datatype,
-                                        comm);
+  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec, num_transfer_pos,
+                                        base_datatype, comm);
 
   free(blen_vec);
   free(bdispl_vec);
-  free(idx_vec);
 
   return type;
 }
 
 static MPI_Datatype
-generate_datatype(Xt_idxlist transfer_pos, int *offsets,
+generate_datatype(int const * transfer_pos, Xt_count num_transfer_pos, int *offsets,
                   MPI_Datatype base_datatype, MPI_Comm comm) {
 
   MPI_Datatype type;
 
-  Xt_count num_indices;
-  Xt_idx const * indices;
-  int * displ;
+  int const * displ;
+  int * tmp_displ = NULL;
 
-  num_indices = xt_idxlist_get_num_indices(transfer_pos);
+  if (offsets != NULL) {
 
-  displ = xmalloc(num_indices * sizeof(int));
+    tmp_displ = xmalloc(num_transfer_pos * sizeof(int));
 
-  indices = xt_idxlist_get_indices_const(transfer_pos);
+    for (Xt_count i = 0; i < num_transfer_pos; ++i)
+      tmp_displ[i] = offsets[transfer_pos[i]];
 
-  if (offsets != NULL)
-    for (Xt_count i = 0; i < num_indices; ++i)
-      displ[i] = offsets[indices[i]];
-  else if (sizeof(*indices) != sizeof(*displ))
-    for (Xt_count i = 0; i < num_indices; ++i)
-      displ[i] = indices[i];
+      displ = tmp_displ;
 
-  type = xt_mpi_generate_datatype(displ, num_indices, base_datatype, comm);
+  } else
+    displ = transfer_pos;
 
-  free(displ);
+  type = xt_mpi_generate_datatype(displ, num_transfer_pos, base_datatype, comm);
+
+  free(tmp_displ);
 
   return type;
 }
@@ -144,17 +134,17 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
 
   do {
 
-    Xt_idxlist curr_transfer_pos;
+    int const * curr_transfer_pos;
+    Xt_count curr_num_transfer_pos;
 
     curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
+    curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
 
-    curr_msg->datatype = generate_datatype(curr_transfer_pos, offsets,
-                                           base_datatype, comm);
+    curr_msg->datatype = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
+                                           offsets, base_datatype, comm);
     curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
     curr_msg++;
-
-    xt_idxlist_delete(curr_transfer_pos);
 
   } while (xt_xmap_iterator_next(iter));
 }
@@ -177,17 +167,18 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets, in
 
   do {
 
-    Xt_idxlist curr_transfer_pos;
+    int const * curr_transfer_pos;
+    Xt_count curr_num_transfer_pos;
 
     curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
+    curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
 
-    curr_msg->datatype = generate_block_datatype(curr_transfer_pos, block_offsets,
-                                                 block_sizes, base_datatype, comm);
+    curr_msg->datatype = generate_block_datatype(curr_transfer_pos, curr_num_transfer_pos,
+                                                 block_offsets, block_sizes, base_datatype,
+                                                 comm);
     curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
     curr_msg++;
-
-    xt_idxlist_delete(curr_transfer_pos);
 
   } while (xt_xmap_iterator_next(iter));
 }

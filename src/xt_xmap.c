@@ -53,9 +53,14 @@ int xt_xmap_iterator_get_rank(Xt_xmap_iter iter) {
   return iter->vtable->get_rank(iter);
 }
 
-Xt_idxlist xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter) {
+int const * xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter) {
 
-  return  iter->vtable->get_transfer_pos(iter);
+  return iter->vtable->get_transfer_pos(iter);
+}
+
+Xt_count xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
+
+  return iter->vtable->get_num_transfer_pos(iter);
 }
 
 void xt_xmap_iterator_delete(Xt_xmap_iter iter) {
