@@ -75,7 +75,6 @@ void xt_ut_init(int decomp_size, int comm_tmpl_size, int comm_trans_size, int de
   template_set = xt_handle_set_new(init_val.comm_tmpl_size);
 
   trans_set = xt_handle_set_new(init_val.comm_trans_size);
-
 }
 
 static int new_ideco() {
@@ -83,38 +82,53 @@ static int new_ideco() {
   return xt_handle_new(deco_set, data);
 }
 
+static void delete_ideco(int id) {
+  xt_ut_deco_type *deco = xt_handle2pointer(deco_set, id);
+  free(deco);
+  xt_handle_delete(deco_set, id);
+}
+
 void xt_ut_destroy_decomposition(int id) {
   xt_ut_deco_type *deco = xt_handle2pointer(deco_set, id);
   if (!deco) die("xt_ut_destroy_decomposition: invalid handle");
   xt_idxlist_delete(deco->idxvec);
-  xt_handle_delete(deco_set, id);
+  delete_ideco(id);
 }
-
 
 static int new_itemplate() {
   xt_ut_template_type *data = xmalloc(sizeof(*data));
   return xt_handle_new(template_set, data);
 }
 
+static void delete_itemplate(int id) {
+  xt_ut_template_type *template = xt_handle2pointer(template_set, id);
+  free(template);
+  xt_handle_delete(template_set, id);
+}
+
 void xt_ut_destroy_transposition_template(int id) {
   xt_ut_template_type *template = xt_handle2pointer(template_set, id);
   if (!template) die("xt_ut_destroy_transposition_template: invalid handle");
   xt_xmap_delete(template->xmap);
-  xt_handle_delete(template_set, id);
+  delete_itemplate(id);
 }
-
 
 static int new_itrans() {
   xt_ut_trans_type *data = xmalloc(sizeof(*data));
-  //if (!data) xt_die("malloc_faild", __FILE__, __LINE__);
   return xt_handle_new(trans_set, data);
+}
+
+static void delete_itrans(int id) {
+  xt_ut_trans_type *trans = xt_handle2pointer(trans_set, id);
+  free(trans);
+  xt_handle_delete(trans_set, id);
 }
 
 void xt_ut_destroy_transposition(int id) {
   xt_ut_trans_type *trans = xt_handle2pointer(trans_set, id);
   if (!trans) die("xt_ut_destroy_transposition: invalid handle");
   xt_redist_delete(trans->redist);
-  xt_handle_delete(trans_set, id);
+  delete_itrans(id);
 }
 
 
