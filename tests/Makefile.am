@@ -23,17 +23,20 @@ noinst_PROGRAMS = 						\
 	test_yaxt
 
 
-test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist.h
-test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h
+test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist_utils.h
+test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h \
+	test_idxlist_utils.h
 test_idxmod_SOURCES = test_idxmod.c tests.h
-test_idxsection_SOURCES = test_idxsection.c tests.h test_idxlist.h
-test_idxstripes_SOURCES = test_idxstripes.c tests.h test_idxlist.h
-test_redist_collection_SOURCES = test_redist_collection.c test.h
-test_redist_collection_parallel_SOURCES = test_redist_collection_parallel.c test.h
-test_redist_collection_static_SOURCES = test_redist_collection_static.c test.h
-test_redist_collection_static_parallel_SOURCES = test_redist_collection_static_parallel.c test.h
-test_redist_p2p_SOURCES = test_redist_p2p.c test.h
-test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c test.h
+test_idxsection_SOURCES = test_idxsection.c tests.h test_idxlist_utils.h
+test_idxstripes_SOURCES = test_idxstripes.c tests.h test_idxlist_utils.h
+test_redist_collection_SOURCES = test_redist_collection.c tests.h
+test_redist_collection_parallel_SOURCES = test_redist_collection_parallel.c \
+	tests.h
+test_redist_collection_static_SOURCES = test_redist_collection_static.c tests.h
+test_redist_collection_static_parallel_SOURCES = \
+	test_redist_collection_static_parallel.c tests.h
+test_redist_p2p_SOURCES = test_redist_p2p.c tests.h
+test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c tests.h
 test_xmap_all2all_SOURCES = test_xmap_all2all.c tests.h
 test_xmap_all2all_parallel_SOURCES = test_xmap_all2all_parallel.c tests.h
 test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c tests.h
