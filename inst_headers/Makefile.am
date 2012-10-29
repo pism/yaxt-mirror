@@ -10,9 +10,14 @@ yaxt.h: Makefile
 all-local:
 	$(MKDIR_P) xt
 	for header in $(xtinclude_HEADERS) ; \
-	  do ln -sf \
-	  ../`test -f '../src/$$header' || echo '$(srcdir)/'`../src/$$header \
-	  $$header ; done
+	  do \
+	  headerbasedir=`test -f '../src/$$header' || echo '$(srcdir)/'` ; \
+          $(PERL) -I$(top_builddir)/scripts \
+	  $(top_builddir)/scripts/header2installheader.pl \
+	  --config-header=../include/config.h \
+	  --srcdir=$$headerbasedir../src \
+	  --dstdir=. \
+	  $$headerbasedir../src/$$header ; done
 
 install-data-local:
 	@echo " $(MKDIR_P) '$(DESTDIR)$(xtincludedir)'"; \

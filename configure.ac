@@ -21,6 +21,9 @@ AC_LANG_PUSH([Fortran])
 AC_PROG_FPP
 AC_LANG_POP([Fortran])
 AC_PROG_MKDIR_P
+AX_WITH_PERL([/bin/false], $PATH:$prefix/bin:/usr/bin:/usr/local/bin)
+AX_PROG_PERL_VERSION([5.0005],[],
+        AC_MSG_ERROR([Perl (version>=5.0005) is required]))
 LT_INIT
 dnl ######################################################################
 dnl Properties of the compiler
@@ -37,6 +40,16 @@ AC_LANG_POP([Fortran])
 ACX_FC_VOLATILE([FCFLAGS="${FCFLAGS} ${FPP_DEFOPT}HAVE_VOLATILE"])
 AC_FC_DUMMY_MAIN(,[:])
 AC_FC_WRAPPERS
+dnl
+dnl Check wether char is unsigned by default
+AC_C_CHAR_UNSIGNED
+AS_IF([test x$ac_cv_c_char_unsigned = xyes],
+  [C_CHAR_IS_UNSIGNED=1],
+  [C_CHAR_IS_UNSIGNED=0])
+AC_SUBST([C_CHAR_IS_UNSIGNED])
+ACX_CHECK_SIZEOF_RELATION([long], [int])
+ACX_CHECK_SIZEOF_RELATION([long long], [long])
+
 dnl ######################################################################
 dnl Checks for header files.
 dnl ######################################################################
@@ -143,6 +156,9 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\
         tests/test_yaxt_run              			\
 	tests/test_mpi_generate_datatype_run			\
 	examples/rrobin_run					\
+        scripts/header2installheader.pl                         \
 	util/serialrun],[chmod a+x "$ac_file"])
-AC_OUTPUT([Makefile src/Makefile tests/Makefile examples/Makefile \
-  inst_headers/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
+  inst_headers/Makefile scripts/cpp.pm])
+
+AC_OUTPUT
