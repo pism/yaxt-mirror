@@ -70,7 +70,8 @@ generate_block_datatype(int const * transfer_pos, Xt_count num_transfer_pos,
   bdispl_vec = xmalloc(num_transfer_pos * sizeof(*bdispl_vec));
   blen_vec = xmalloc(num_transfer_pos * sizeof(*blen_vec));
 
-  if (!block_offsets) die("generate_block_datatype: non-nil block_offsets expected");
+  if (!block_offsets) die("generate_block_datatype: "
+                          "non-nil block_offsets expected");
 
   int j;
   for (Xt_count i = 0; i < num_transfer_pos; ++i) {
