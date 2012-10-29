@@ -20,6 +20,7 @@ AC_FC_FREEFORM
 AC_LANG_PUSH([Fortran])
 AC_PROG_FPP
 AC_LANG_POP([Fortran])
+AC_PROG_MKDIR_P
 LT_INIT
 dnl ######################################################################
 dnl Properties of the compiler
@@ -143,4 +144,5 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\
 	tests/test_mpi_generate_datatype_run			\
 	examples/rrobin_run					\
 	util/serialrun],[chmod a+x "$ac_file"])
-AC_OUTPUT([Makefile src/Makefile tests/Makefile examples/Makefile])
+AC_OUTPUT([Makefile src/Makefile tests/Makefile examples/Makefile \
+  inst_headers/Makefile])

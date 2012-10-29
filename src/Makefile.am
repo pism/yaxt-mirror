@@ -2,7 +2,10 @@ AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
 AM_FCFLAGS  = $(MPI_FC_INCLUDE)
 lib_LTLIBRARIES = libyaxt.la
 
+include_HEADERS = yaxt.h
+
 libyaxt_la_SOURCES =						\
+	xt/xt_core.h						\
 	xt_handles.c						\
 	xt_handles.h						\
 	xt_idxlist.c						\
@@ -56,8 +59,15 @@ libyaxt_la_SOURCES =						\
 	xt_sort.c						\
 	xt_sort.h						\
 	yaxt_f2c.c						\
-	yaxt.f90						\
-	xt/xt_core.h
+	yaxt.f90
+
+xtinclude_Makefile.inc: Makefile
+	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/\n/g' | grep 'xt/xt_.*\.h'` ; \
+	  echo "xtinclude_HEADERS = \\" >$@ ; \
+	  for header in $$headers ; do echo "	$$header \\" ; done \
+	    | sed '$$s/\\$$//' >>$@
+
+all-local: yaxt.h xtinclude_Makefile.inc
 
 clean-local:
 	-rm -f *.$(FCMODEXT) i.*.L
