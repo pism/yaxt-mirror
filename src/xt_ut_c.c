@@ -16,7 +16,7 @@
 #include "xt_xmap_all2all.h"
 #include "xt_redist_p2p.h"
 
-#include "xt_handles.h"
+#include "xt/xt_handles.h"
 
 typedef struct {
   int decomp_size;

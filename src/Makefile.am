@@ -6,8 +6,8 @@ include_HEADERS = yaxt.h
 
 libyaxt_la_SOURCES =						\
 	xt/xt_core.h						\
+	xt/xt_handles.h						\
 	xt_handles.c						\
-	xt_handles.h						\
 	xt_idxlist.c						\
 	xt_idxlist.h						\
 	xt_idxlist_collection.c					\

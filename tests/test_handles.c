@@ -2,7 +2,7 @@
 
 #include "xt_mpi.h"
 #include "yaxt.h"
-#include "xt_handles.h"
+#include "xt/xt_handles.h"
 
 int main(void) {
   const int hsize = 32;

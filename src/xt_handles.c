@@ -3,7 +3,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt_mpi.h"
-#include "xt_handles.h"
+#include "xt/xt_handles.h"
 
 
 struct xt_handle_set_type {
