@@ -28,8 +28,8 @@
 
   This exchange map type uses a rendezvous algorithm described in:\n
   <em>A. Pinar and B. Hendrickson,
-  \link http://www.sandia.gov/~apinar/papers/siampp00.pdf Communication Support
-  for Adaptive Computation \endlink in Proc. SIAM Conf. on Parallel Processing
+  <a href="http://www.sandia.gov/~apinar/papers/siampp00.pdf">Communication Support
+  for Adaptive Computation</a> in Proc. SIAM Conf. on Parallel Processing
   for Scientific Computing, 2001.</em>
 
   \dontinclude xt_xmap_dist_dir.h
