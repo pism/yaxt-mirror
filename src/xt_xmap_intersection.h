@@ -1,7 +1,7 @@
 #ifndef XT_XMAP_INTERSECTION_H
 #define XT_XMAP_INTERSECTION_H
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 
 /**
  * constructor for an exchange map \n

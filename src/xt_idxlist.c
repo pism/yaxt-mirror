@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 #include "xt_idxlist.h"
 #include "xt_idxvec.h"
 #include "xt_idxstripes.h"

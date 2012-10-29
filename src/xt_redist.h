@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 
 /**
  * \file xt_redist.h

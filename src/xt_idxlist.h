@@ -2,7 +2,7 @@
 #define XT_IDXLIST_H
 
 #include <stdlib.h>
-#include "yaxt.h"
+#include "xt/xt_core.h"
 
 struct Xt_stripe {
   Xt_idx start;

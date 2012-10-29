@@ -1,7 +1,7 @@
 #ifndef XT_IDXMOD_H
 #define XT_IDXMOD_H
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 #include "xt_idxlist.h"
 
 /** \example test_idxmod.c

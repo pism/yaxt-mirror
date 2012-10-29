@@ -57,7 +57,7 @@ libyaxt_la_SOURCES =						\
 	xt_sort.h						\
 	yaxt_f2c.c						\
 	yaxt.f90						\
-	yaxt.h
+	xt/xt_core.h
 
 clean-local:
 	-rm -f *.$(FCMODEXT) i.*.L

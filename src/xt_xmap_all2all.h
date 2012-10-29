@@ -1,7 +1,7 @@
 #ifndef XT_XMAP_ALL2ALL_H
 #define XT_XMAP_ALL2ALL_H
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 
 /** \example test_xmap_all2all.c
  */

@@ -1,7 +1,7 @@
 #ifndef XT_XMAP_DIST_DIR_H
 #define XT_XMAP_DIST_DIR_H
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 
 /** \example test_xmap_dist_dir.c
  */

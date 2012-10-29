@@ -1,7 +1,7 @@
 #ifndef XT_XMAP_H
 #define XT_XMAP_H
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 
 /**
  * \file xt_xmap.h

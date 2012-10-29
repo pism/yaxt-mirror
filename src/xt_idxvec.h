@@ -1,7 +1,7 @@
 #ifndef XT_IDXVEC_H
 #define XT_IDXVEC_H
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 #include "xt_idxlist.h"
 
 /** \example test_idxvec.c

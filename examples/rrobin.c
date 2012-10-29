@@ -4,7 +4,7 @@
 
 #include <mpi.h>
 
-#include "yaxt.h"
+#include "xt/xt_core.h"
 #include "xt_mpi.h"
 #include "xt_xmap_all2all.h"
 #include "xt_idxlist.h"
