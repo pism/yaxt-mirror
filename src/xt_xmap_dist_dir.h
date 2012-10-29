@@ -18,7 +18,7 @@
  * @param[in] dst_idxlist destination index list
  * @param[in] comm        MPI communicator that contains all processes
  *                        that part in the exchange (xt_xmap_all2all_new
- *                        will make its of copy of comm)
+ *                        will make its own copy of comm)
  */
 Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                              MPI_Comm comm);
