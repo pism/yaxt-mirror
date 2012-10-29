@@ -27,7 +27,7 @@
   input array within the index list, it is not recommand to be used for index list that
   can be described more compact with other index list types.
 
-  \image html decomp_idxvec.svg "index vector decomposition example"
+  \image html decomp_idxvec.png "index vector decomposition example"
 
   \snippet idxlist_examples.c index list example
 
@@ -40,7 +40,7 @@
   If you have a number of indices that have identical strides, then it might be
   more efficient to use the index stripes to describe your decomposition.
 
-  \image html decomp_idxstripes.svg "index stripes decomposition example"
+  \image html decomp_idxstripes.png "index stripes decomposition example"
 
   \snippet idxlist_examples.c index stripes example
 
@@ -53,7 +53,7 @@
   A very common decomposition is the partioning into n-dimensional blocks. For this
   decomposition type the index section is recommanded.
 
-  \image html decomp_idxsection.svg "index section decomposition example"
+  \image html decomp_idxsection.png "index section decomposition example"
 
   \snippet idxlist_examples.c index section example
 
@@ -66,7 +66,7 @@
   Index list collections can be used to combine a number of index list of any
   type into a new index list.
 
-  \image html decomp_idxlist_collection.svg "index list collection decomposition example"
+  \image html decomp_idxlist_collection.png "index list collection decomposition example"
 
   \snippet idxlist_examples.c index list collection example
 
