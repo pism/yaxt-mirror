@@ -153,6 +153,8 @@ Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist);
  */
 void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
+Xt_idx const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
+
 /**
  * gets a pointer of the constant indices stored in an index list
  *
