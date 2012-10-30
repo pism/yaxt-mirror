@@ -2,7 +2,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_idxlist.h"
-#include "xt_idxvec.h"
+#include "xt/xt_idxvec.h"
 
 #include "xt_idxmod.h"
 

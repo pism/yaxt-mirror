@@ -12,6 +12,7 @@ libyaxt_la_SOURCES =						\
 	xt/xt_idxlist_collection.h				\
 	xt/xt_idxsection.h					\
 	xt/xt_idxstripes.h					\
+	xt/xt_idxvec.h 						\
 	xt_handles.c						\
 	xt_idxlist.c						\
 	xt_idxlist_collection.c					\
@@ -21,7 +22,6 @@ libyaxt_la_SOURCES =						\
 	xt_idxsection.c						\
 	xt_idxstripes.c						\
 	xt_idxvec.c 						\
-	xt_idxvec.h 						\
 	xt_mpi.c						\
 	xt_mpi.h						\
 	xt_redist.c						\

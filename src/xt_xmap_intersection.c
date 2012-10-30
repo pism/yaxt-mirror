@@ -7,7 +7,7 @@
 #include <mpi.h>
 
 #include "xt/xt_idxlist.h"
-#include "xt_idxvec.h"
+#include "xt/xt_idxvec.h"
 #include "xt_xmap.h"
 #include "xt_mpi.h"
 #include "core/core.h"

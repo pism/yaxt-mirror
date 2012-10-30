@@ -9,7 +9,7 @@
 #include "test_idxlist_utils.h"
 
 #include "yaxt.h"
-#include "xt_idxvec.h"
+#include "xt/xt_idxvec.h"
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
