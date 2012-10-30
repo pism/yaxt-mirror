@@ -91,6 +91,9 @@ struct xt_idxsection {
   Xt_count index_num_cache;
   Xt_idx *index_array_cache;
 
+  Xt_idx min_index_cache;
+  Xt_idx max_index_cache;
+
 };
 
 Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
@@ -145,6 +148,10 @@ Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
   for (i = num_dimensions - 1; i < num_dimensions; --i)
     idxsection->local_start_index
       += idxsection->global_strides[i] * local_start[i];
+
+  idxsection_get_index_at_position((Xt_idxlist)idxsection, 0, &(idxsection->min_index_cache));
+  idxsection_get_index_at_position((Xt_idxlist)idxsection, idxsection_get_num_indices((Xt_idxlist)idxsection)-1,
+                                   &(idxsection->max_index_cache));
 
   return (Xt_idxlist)idxsection;
 }
@@ -260,6 +267,11 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                          section->local_strides, section->ndim,
                          MPI_UNSIGNED, comm),comm);
+
+  // fill other cache values:
+  idxsection_get_index_at_position((Xt_idxlist)section, 0, &(section->min_index_cache));
+  idxsection_get_index_at_position((Xt_idxlist)section, idxsection_get_num_indices((Xt_idxlist)section)-1,
+                                   &(section->max_index_cache));
 
   return (Xt_idxlist)section;
 }
@@ -504,7 +516,8 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
   struct xt_idxsection *section = (struct xt_idxsection*)idxlist;
   *position = -1;
 
-  section = (struct xt_idxsection*)idxlist;
+  if (index < section->min_index_cache || index > section->max_index_cache)
+    return 1;
 
   index -= section->global_start_index;
 
@@ -555,21 +568,13 @@ idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
 static Xt_idx
 idxsection_get_min_index(Xt_idxlist idxlist) {
 
-  Xt_idx index;
-
-  idxsection_get_index_at_position(idxlist, 0, &index);
-
-  return index;
+  struct xt_idxsection *section = (struct xt_idxsection*)idxlist;
+  return section->min_index_cache;
 }
 
 static Xt_idx
 idxsection_get_max_index(Xt_idxlist idxlist) {
 
-  Xt_idx index;
-
-  idxsection_get_index_at_position(idxlist,
-                                   idxsection_get_num_indices(idxlist) - 1,
-                                   &index);
-
-  return index;
+  struct xt_idxsection *section = (struct xt_idxsection*)idxlist;
+  return section->max_index_cache;
 }
