@@ -641,7 +641,6 @@ idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
   int sub_pos = 0;
   int stripe_start_pos = 0;
   int istripe = 0;
-  int ipos;
   int undef_count = 0;
 
   for (int ipos = 0; ipos < num_pos; ipos++) {
