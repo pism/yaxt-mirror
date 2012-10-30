@@ -9,7 +9,7 @@
 #include "yaxt.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxvec.h"
-#include "xt_idxstripes.h"
+#include "xt/xt_idxstripes.h"
 #include "xt/xt_idxsection.h"
 #include "xt/xt_idxlist_collection.h"
 #include "test_idxlist_utils.h"

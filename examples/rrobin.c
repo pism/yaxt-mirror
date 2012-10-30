@@ -9,7 +9,7 @@
 #include "xt_xmap_all2all.h"
 #include "xt/xt_idxlist.h"
 #include "xt_redist_p2p.h"
-#include "xt_idxstripes.h"
+#include "xt/xt_idxstripes.h"
 
 int main(void) {
 

@@ -8,7 +8,7 @@
 #include "xt/xt_idxsection.h"
 #include "xt_redist_p2p.h"
 #include "xt_redist_collection.h"
-#include "xt_idxstripes.h"
+#include "xt/xt_idxstripes.h"
 #include "xt/xt_idxlist_collection.h"
 #include "xt/xt_idxlist.h"
 #include "xt_mpi.h"

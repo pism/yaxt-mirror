@@ -5,7 +5,7 @@
 
 #include "xt/xt_idxlist.h"
 #include "xt_idxvec.h"
-#include "xt_idxstripes.h"
+#include "xt/xt_idxstripes.h"
 #include "xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
