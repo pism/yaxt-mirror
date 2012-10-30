@@ -12,7 +12,7 @@
 #include "xt/xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "xt_xmap_intersection.h"
+#include "xt/xt_xmap_intersection.h"
 
 static void exchange_idxlists(Xt_idxlist ** src_intersections,
                               int ** src_ranks,

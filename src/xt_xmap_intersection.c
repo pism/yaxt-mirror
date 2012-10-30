@@ -12,7 +12,7 @@
 #include "xt/xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "xt_xmap_intersection.h"
+#include "xt/xt_xmap_intersection.h"
 
 static MPI_Comm     xmap_intersection_get_communicator(Xt_xmap xmap);
 static int          xmap_intersection_get_num_destinations(Xt_xmap xmap);
