@@ -9,7 +9,7 @@ libyaxt_la_SOURCES =						\
 	xt/xt_handles.h						\
 	xt_handles.c						\
 	xt_idxlist.c						\
-	xt_idxlist.h						\
+	xt/xt_idxlist.h						\
 	xt_idxlist_collection.c					\
 	xt_idxlist_collection.h					\
 	xt_idxlist_unpack.c 					\

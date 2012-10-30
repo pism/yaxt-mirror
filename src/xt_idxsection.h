@@ -1,7 +1,7 @@
 #ifndef XT_IDXSECTION_H
 #define XT_IDXSECTION_H
 
-#include "xt_idxlist.h"
+#include "xt/xt_idxlist.h"
 
 /** \example test_idxsection.c
  */

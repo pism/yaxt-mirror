@@ -4,7 +4,7 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_idxlist.h"
+#include "xt/xt_idxlist.h"
 
 static void
 ref_get_positions_of_indices(Xt_idx * indices, Xt_count num_indices,

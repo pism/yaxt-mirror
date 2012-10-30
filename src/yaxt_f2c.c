@@ -7,7 +7,7 @@
 
 #include "core/core.h"
 
-#include "xt_idxlist.h"
+#include "xt/xt_idxlist.h"
 #include "xt_idxvec.h"
 #include "xt_xmap.h"
 #include "xt_xmap_all2all.h"

@@ -10,7 +10,7 @@
 #include "xt_redist_collection_static.h"
 #include "xt_idxstripes.h"
 #include "xt_idxlist_collection.h"
-#include "xt_idxlist.h"
+#include "xt/xt_idxlist.h"
 #include "xt_mpi.h"
 #include "xt_xmap_all2all.h"
 

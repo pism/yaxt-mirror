@@ -2,7 +2,7 @@
 #define XT_IDXVEC_H
 
 #include "xt/xt_core.h"
-#include "xt_idxlist.h"
+#include "xt/xt_idxlist.h"
 
 /** \example test_idxvec.c
  */

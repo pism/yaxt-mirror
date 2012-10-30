@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "xt_idxlist.h"
+#include "xt/xt_idxlist.h"
 #include "xt_idxvec.h"
 #include "xt_idxstripes.h"
 #include "xt_mpi.h"

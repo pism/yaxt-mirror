@@ -1,7 +1,7 @@
 #ifndef XT_IDXSTRIPES_H
 #define XT_IDXSTRIPES_H
 
-#include "xt_idxlist.h"
+#include "xt/xt_idxlist.h"
 
 /** \example test_idxstripes.c
  */
