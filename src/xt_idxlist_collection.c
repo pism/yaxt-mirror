@@ -7,7 +7,7 @@
 
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
-#include "xt_idxlist_collection.h"
+#include "xt/xt_idxlist_collection.h"
 #include "xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
