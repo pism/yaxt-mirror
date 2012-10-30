@@ -4,7 +4,7 @@ MODULE yaxt
   !
 
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
-       c_ptr, c_null_ptr
+       c_long, c_short, c_long_long, c_ptr, c_null_ptr
 
   IMPLICIT NONE
 
