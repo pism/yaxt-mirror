@@ -10,7 +10,7 @@
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_xmap.h"
-#include "xt_xmap_all2all.h"
+#include "xt/xt_xmap_all2all.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_redist_p2p.h"
 

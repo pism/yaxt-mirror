@@ -6,7 +6,7 @@
 
 #include "xt/xt_core.h"
 #include "xt/xt_mpi.h"
-#include "xt_xmap_all2all.h"
+#include "xt/xt_xmap_all2all.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_redist_p2p.h"
 #include "xt/xt_idxstripes.h"

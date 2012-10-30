@@ -19,6 +19,7 @@ libyaxt_la_SOURCES =						\
 	xt/xt_redist_collection_static.h			\
 	xt/xt_redist_p2p.h					\
 	xt/xt_xmap.h						\
+	xt/xt_xmap_all2all.h					\
 	xt_handles.c						\
 	xt_idxlist.c						\
 	xt_idxlist_collection.c					\
@@ -35,7 +36,6 @@ libyaxt_la_SOURCES =						\
 	xt_redist_p2p.c						\
 	xt_xmap.c						\
 	xt_xmap_all2all.c					\
-	xt_xmap_all2all.h					\
 	xt_xmap_dist_dir.c					\
 	xt_xmap_dist_dir.h					\
 	xt_xmap_intersection.c					\

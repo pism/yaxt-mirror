@@ -12,7 +12,7 @@
 #include "xt/xt_idxlist_collection.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_mpi.h"
-#include "xt_xmap_all2all.h"
+#include "xt/xt_xmap_all2all.h"
 
 static inline int imin(int a, int b) {
   return  (((a)<(b))?(a):(b));

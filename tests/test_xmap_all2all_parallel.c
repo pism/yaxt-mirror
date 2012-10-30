@@ -6,7 +6,7 @@
 #include "xt/xt_mpi.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_xmap.h"
-#include "xt_xmap_all2all.h"
+#include "xt/xt_xmap_all2all.h"
 
 static void
 check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices,
