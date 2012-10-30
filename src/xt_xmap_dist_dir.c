@@ -11,6 +11,7 @@
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_xmap.h"
+#include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
