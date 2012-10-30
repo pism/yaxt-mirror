@@ -72,7 +72,7 @@
 
   \section idxmod Index modifier
 
-  The index modifier can be to generate an index list based on an existing one. In
+  The index modifier can be used to generate an index list based on an existing one. In
   the new index list all occurences of indices listed in the first index list of
   the modifier are replaces by the respective indices in the second list.
 
