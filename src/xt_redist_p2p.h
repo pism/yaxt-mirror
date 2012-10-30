@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 
-#include "xt_redist.h"
+#include "xt/xt_redist.h"
 #include "xt_xmap.h"
 
 /** \example test_redist_p2p.c

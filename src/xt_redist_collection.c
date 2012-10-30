@@ -8,7 +8,7 @@
 #include "xt/xt_mpi.h"
 #include "xt_redist_collection.h"
 #include "ensure_array_size.h"
-#include "xt_redist.h"
+#include "xt/xt_redist.h"
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define DEFFAULT_DATATYPE_CACHE_SIZE (16)

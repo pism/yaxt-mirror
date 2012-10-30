@@ -1,7 +1,7 @@
 #ifndef XT_REDIST_COLLECTION_H
 #define XT_REDIST_COLLECTION_H
 
-#include "xt_redist.h"
+#include "xt/xt_redist.h"
 
 /** \example test_redist_collection.c
  */
