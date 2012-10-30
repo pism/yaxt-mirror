@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <limits.h>
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include "xt_idxlist.h"
 #include "xt_idxvec.h"

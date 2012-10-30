@@ -1,4 +1,4 @@
-#include "mpi.h"
+#include <mpi.h>
 
 #define VERBOSE
 

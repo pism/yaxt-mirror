@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include "yaxt.h"
 #include "xt_mpi.h"

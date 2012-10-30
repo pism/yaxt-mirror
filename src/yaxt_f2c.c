@@ -3,6 +3,7 @@
 #endif
 
 #include <assert.h>
+#include <mpi.h>
 
 #include "core/core.h"
 
