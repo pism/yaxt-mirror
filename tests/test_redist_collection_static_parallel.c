@@ -6,7 +6,7 @@
 #include "yaxt.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxsection.h"
-#include "xt_redist_p2p.h"
+#include "xt/xt_redist_p2p.h"
 #include "xt/xt_redist_collection_static.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_idxlist_collection.h"

@@ -14,7 +14,7 @@
 #include "xt_ut_c.h"
 #include "xt_xmap.h"
 #include "xt_xmap_all2all.h"
-#include "xt_redist_p2p.h"
+#include "xt/xt_redist_p2p.h"
 
 #include "xt/xt_handles.h"
 

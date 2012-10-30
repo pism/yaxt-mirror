@@ -12,7 +12,7 @@
 #include "xt_xmap.h"
 #include "xt_xmap_all2all.h"
 #include "xt/xt_idxstripes.h"
-#include "xt_redist_p2p.h"
+#include "xt/xt_redist_p2p.h"
 
 struct xt_idxlist_f {
    Xt_idxlist cptr;
