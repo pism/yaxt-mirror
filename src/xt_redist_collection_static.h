@@ -23,8 +23,9 @@
  * \remarks all redistributions need to be based on the same
  *          MPI communicator
  */
-Xt_redist xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redists,
-                                          MPI_Aint * src_displacements,
-                                          MPI_Aint * dst_displacements, MPI_Comm comm);
+Xt_redist
+xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redists,
+                                MPI_Aint * src_displacements,
+                                MPI_Aint * dst_displacements, MPI_Comm comm);
 
 #endif // XT_REDIST_COLLECTION_STATIC_H
