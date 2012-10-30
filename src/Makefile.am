@@ -7,6 +7,7 @@ include_HEADERS = yaxt.h
 libyaxt_la_SOURCES =						\
 	xt/xt_core.h						\
 	xt/xt_handles.h						\
+	xt/xt_sort.h						\
 	xt_handles.c						\
 	xt_idxlist.c						\
 	xt/xt_idxlist.h						\
@@ -57,7 +58,6 @@ libyaxt_la_SOURCES =						\
 	mergesort.h						\
 	sort_common.h						\
 	xt_sort.c						\
-	xt_sort.h						\
 	yaxt_f2c.c						\
 	yaxt.f90
 

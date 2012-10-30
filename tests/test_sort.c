@@ -3,7 +3,7 @@
 //#define VERBOSE
 
 #include "tests.h"
-#include "xt_sort.h"
+#include "xt/xt_sort.h"
 
 static void
 test1(void (*anysort_index)(Xt_idx * a, int n, int * idx, int reset_index)) {

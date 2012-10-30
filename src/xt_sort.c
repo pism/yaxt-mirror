@@ -1,4 +1,4 @@
-#include "xt_sort.h"
+#include "xt/xt_sort.h"
 
 void (*xt_sort_index)(Xt_idx * a, int n, int * idx, int reset_index)
 = xt_quicksort_index;
