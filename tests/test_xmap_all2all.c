@@ -10,9 +10,12 @@
 #include "xt_xmap.h"
 #include "xt_xmap_all2all.h"
 
-void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices);
+static void
+check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices,
+              Xt_count ref_num_indices);
 
-void shift_idx(Xt_idx idx[], int num, int offset)  {
+static void
+shift_idx(Xt_idx idx[], int num, int offset)  {
   int rank, i;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   for (i=0; i<num; i++) {
@@ -133,7 +136,9 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count ref_num_indices) {
+static void
+check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices,
+              Xt_count ref_num_indices) {
 
    Xt_count i;
 

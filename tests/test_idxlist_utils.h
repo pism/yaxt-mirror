@@ -6,9 +6,10 @@
 #include "yaxt.h"
 #include "xt_idxlist.h"
 
-void ref_get_positions_of_indices(Xt_idx * indices, Xt_count num_indices,
-                                 Xt_idx * selection, int selection_size,
-                                 int * positions, int repeat_first_match) {
+static void
+ref_get_positions_of_indices(Xt_idx * indices, Xt_count num_indices,
+                             Xt_idx * selection, int selection_size,
+                             int * positions, int repeat_first_match) {
   int used[num_indices];
   int found;
 
@@ -32,7 +33,7 @@ void ref_get_positions_of_indices(Xt_idx * indices, Xt_count num_indices,
   }
 }
 
-Xt_idx get_min_index(Xt_idx * indices, Xt_count num_indices) {
+static Xt_idx get_min_index(Xt_idx * indices, Xt_count num_indices) {
 
   Xt_idx index;
   Xt_count i;
@@ -49,7 +50,7 @@ Xt_idx get_min_index(Xt_idx * indices, Xt_count num_indices) {
   return index;
 }
 
-Xt_idx get_max_index(Xt_idx * indices, Xt_count num_indices) {
+static Xt_idx get_max_index(Xt_idx * indices, Xt_count num_indices) {
 
   Xt_idx index;
   Xt_count i;
@@ -66,8 +67,8 @@ Xt_idx get_max_index(Xt_idx * indices, Xt_count num_indices) {
   return index;
 }
 
-void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
-                   Xt_count ref_num_indices) {
+static void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
+                          Xt_count ref_num_indices) {
 
   Xt_count i;
 

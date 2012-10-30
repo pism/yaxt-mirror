@@ -8,8 +8,9 @@
 
 #ifdef FIXED_MPI_ON_BLIZZARD
 
-int test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
-                      int * ref_recv_data) {
+static int
+test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
+                  int * ref_recv_data) {
 
   int recv_data[recv_count];
   MPI_Status    status;
@@ -29,8 +30,9 @@ int test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
 
 #else
 
-int test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
-                      int * ref_recv_data) {
+static int
+test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
+                  int * ref_recv_data) {
 
   int recv_data[recv_count];
   MPI_Status    status;

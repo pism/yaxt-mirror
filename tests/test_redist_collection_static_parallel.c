@@ -14,11 +14,11 @@
 #include "xt_mpi.h"
 #include "xt_xmap_all2all.h"
 
-inline int imin(int a, int b) {
+static inline int imin(int a, int b) {
   return  (((a)<(b))?(a):(b));
 }
 
-inline int imax(int a, int b) {
+static inline int imax(int a, int b) {
   return  (((a)>(b))?(a):(b));
 }
 

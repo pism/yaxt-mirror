@@ -8,7 +8,7 @@
 #include "xt_idxsection.h"
 #include "xt_idxlist_collection.h"
 
-void print_index_list(Xt_idxlist idxlist);
+static void print_index_list(Xt_idxlist idxlist);
 
 int main(void) {
 
@@ -86,7 +86,7 @@ int main(void) {
   return 0;
 }
 
-void print_index_list(Xt_idxlist idxlist) {
+static void print_index_list(Xt_idxlist idxlist) {
 
   for (Xt_count i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
 

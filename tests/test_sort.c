@@ -5,7 +5,8 @@
 #include "tests.h"
 #include "xt_sort.h"
 
-void test1(void (*anysort_index)(Xt_idx * a, int n, int * idx, int reset_index)) {
+static void
+test1(void (*anysort_index)(Xt_idx * a, int n, int * idx, int reset_index)) {
   int tsize = 8;
   Xt_idx ivec[]        = {7,5,3,1,2,2,3,3};
   Xt_idx sorted_ivec[] = {1,2,2,3,3,3,5,7};

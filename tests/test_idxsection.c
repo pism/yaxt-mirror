@@ -10,10 +10,12 @@
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
-              struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes);
-void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
+static void
+do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
+         struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes);
+static void
+check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
 
 int main(void) {
 
@@ -273,8 +275,9 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
-void do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
-              struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes) {
+static void
+do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
+         struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 
@@ -357,8 +360,9 @@ void do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
   }
 }
 
-void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
+static void
+check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
 
   Xt_count i;
 

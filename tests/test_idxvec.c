@@ -13,8 +13,9 @@
 #include "xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
-void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
+static void
+check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
 
 int main(void) {
 
@@ -628,8 +629,9 @@ int main(void) {
    return TEST_EXIT_CODE;
 }
 
-void check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-                   struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
+static void
+check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
 
   Xt_count i;
 
