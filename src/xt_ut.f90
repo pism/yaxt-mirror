@@ -4,7 +4,7 @@ MODULE xt_ut
   !
 
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
-       c_long, c_ptr, c_loc
+       c_ptr, c_loc
 
   ! \todo to be resolved later(dependency problem): USE yaxt, ONLY : xt_idx_kind, xt_count_kind
 

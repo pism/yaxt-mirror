@@ -6,7 +6,7 @@ PROGRAM test_perf
        & ut_transpose, ut_init_decomposition, &
        & ut_init_oneway_transposition_template, ut_destroy_decomposition, &
        & ut_destroy_transposition_template, ut_destroy_transposition, &
-       & ut_init_transposition, xt_idx_kind, xt_count_kind
+       & ut_init_transposition, xt_idx_kind
 
   IMPLICIT NONE
   ! global extents including halos:

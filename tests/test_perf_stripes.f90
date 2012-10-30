@@ -5,9 +5,9 @@ PROGRAM test_perf_stripes
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, xt_redist, &
        xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
-       xt_stripe, xt_idxstripes_new, xt_idx_kind, xt_count_kind
+       xt_stripe, xt_idxstripes_new, xt_idx_kind
 
-  USE ISO_C_BINDING, ONLY: c_int, c_loc
+  USE ISO_C_BINDING, ONLY: c_loc
 
   IMPLICIT NONE
   ! global extents including halos:

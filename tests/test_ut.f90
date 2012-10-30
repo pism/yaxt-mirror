@@ -3,7 +3,7 @@ PROGRAM test_ut
   USE xt_ut, ONLY: ut_abort, ut_init, ut_init_decomposition, ut_init_oneway_transposition_template, &
        & ut_destroy_transposition_template, ut_mode_dt_p2p, ut_init_transposition, &
        & comm_forward, ut_transpose, ut_destroy_decomposition, ut_destroy_transposition, &
-       & xt_idx_kind, xt_count_kind
+       & xt_idx_kind
   IMPLICIT NONE
 
   INTEGER, PARAMETER :: g_ie = 8, g_je = 4! global extents including halos
