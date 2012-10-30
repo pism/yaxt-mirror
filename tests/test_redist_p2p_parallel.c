@@ -74,7 +74,8 @@ int main(void) {
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1, (void**)(&dst_data_p), 1);
+    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
+                         (void**)(&dst_data_p), 1);
 
     //unsigned i;
 
@@ -141,7 +142,8 @@ int main(void) {
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1, (void**)(&dst_data_p), 1);
+    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
+                         (void**)(&dst_data_p), 1);
 
     //unsigned i;
 
@@ -179,7 +181,8 @@ int main(void) {
     }
 
     int nwin = ngdom/size; // my local window size of the global surface domain
-    int ig0 = rank*nwin;  // start of my window within global index domain (== global offset)
+    // start of my window within global index domain (== global offset)
+    int ig0 = rank*nwin;
     if (nwin*size != ngdom) PUT_ERR("internal error\n");
 
     // local index
@@ -231,7 +234,8 @@ int main(void) {
     int dst_block_sizes[nwin];
     int a_vol_size = 0; // state a volume of my proc
     int b_vol_size = 0; // state b volume of my proc
-    int a_voldata[gvol_size]; // we only need local size but simply oversize here
+    // we only need local size but simply oversize here
+    int a_voldata[gvol_size];
     int b_voldata[gvol_size]; // ..
     int b_voldata_ref[gvol_size]; // ..
 
@@ -279,10 +283,11 @@ int main(void) {
 
     // redist with blocks:
     Xt_redist block_redist;
-    block_redist = xt_redist_p2p_blocks_off_new(xmap,
-                                                src_block_offsets, src_block_sizes, nwin,
-                                                dst_block_offsets, dst_block_sizes, nwin,
-                                                MPI_INT);
+    block_redist
+      = xt_redist_p2p_blocks_off_new(xmap,
+                                     src_block_offsets, src_block_sizes, nwin,
+                                     dst_block_offsets, dst_block_sizes, nwin,
+                                     MPI_INT);
 
     xt_redist_s_exchange1(block_redist, a_voldata, b_voldata);
 

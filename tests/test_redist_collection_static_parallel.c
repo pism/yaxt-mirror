@@ -47,7 +47,8 @@ int main(void) {
         Xt_idx start = 0;
         unsigned global_size[2] = {2*size, size*size};
         unsigned local_size[2] = {size,size};
-        unsigned local_start[2][2] = {{0,rank*size},{size,size*size-(rank+1)*size}};
+        unsigned local_start[2][2]
+          = {{0,rank*size},{size,size*size-(rank+1)*size}};
 
         indices_a_[0] = xt_idxsection_new(start, 2, global_size, local_size,
                                             local_start[0]);
@@ -79,10 +80,14 @@ int main(void) {
       xt_idxlist_get_indices(indices_b, index_vector_b);
       xt_idxlist_get_indices(indices_all, index_vector_all);
 
-      Xt_xmap xmaps[4] = {xt_xmap_all2all_new(indices_a, indices_b, MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(indices_b, indices_a, MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(indices_a, indices_all, MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(indices_b, indices_all, MPI_COMM_WORLD)};
+      Xt_xmap xmaps[4] = {xt_xmap_all2all_new(indices_a, indices_b,
+                                              MPI_COMM_WORLD),
+                          xt_xmap_all2all_new(indices_b, indices_a,
+                                              MPI_COMM_WORLD),
+                          xt_xmap_all2all_new(indices_a, indices_all,
+                                              MPI_COMM_WORLD),
+                          xt_xmap_all2all_new(indices_b, indices_all,
+                                              MPI_COMM_WORLD)};
 
       xt_idxlist_delete(indices_a);
       xt_idxlist_delete(indices_b);
@@ -99,14 +104,17 @@ int main(void) {
       Xt_idx results_1[2*size*size], results_2[2*size*size];
       Xt_idx results_3[2*size*size*size], results_4[2*size*size*size];
 
-      MPI_Aint src_displacements[4] = {0, (index_vector_b-index_vector_a)*sizeof(Xt_idx),
-                                       0, (index_vector_b-index_vector_a)*sizeof(Xt_idx)};
+      MPI_Aint src_displacements[4] = {0, (index_vector_b-index_vector_a)
+                                       * sizeof(Xt_idx),
+                                       0, (index_vector_b-index_vector_a)
+                                       * sizeof(Xt_idx)};
       MPI_Aint dst_displacements[4] = {0,(results_2-results_1)*sizeof(Xt_idx),
                                        (results_3-results_1)*sizeof(Xt_idx),
                                        (results_4-results_1)*sizeof(Xt_idx)};
 
-      Xt_redist redist = xt_redist_collection_static_new(redists, 4, src_displacements,
-                                                         dst_displacements, MPI_COMM_WORLD);
+      Xt_redist redist
+        = xt_redist_collection_static_new(redists, 4, src_displacements,
+                                          dst_displacements, MPI_COMM_WORLD);
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
       xt_redist_delete(redists[2]), xt_redist_delete(redists[3]);
@@ -154,8 +162,10 @@ int main(void) {
       dst_indices[0] = xt_idxvec_new(dst_indices_[0], 5);
       dst_indices[1] = xt_idxvec_new(dst_indices_[1], 5);
 
-      Xt_xmap xmaps[2] = {xt_xmap_all2all_new(src_indices, dst_indices[0], MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(src_indices, dst_indices[1], MPI_COMM_WORLD)};
+      Xt_xmap xmaps[2] = {xt_xmap_all2all_new(src_indices, dst_indices[0],
+                                              MPI_COMM_WORLD),
+                          xt_xmap_all2all_new(src_indices, dst_indices[1],
+                                              MPI_COMM_WORLD)};
 
       xt_idxlist_delete(src_indices);
       xt_idxlist_delete(dst_indices[0]);
@@ -171,8 +181,9 @@ int main(void) {
       MPI_Aint src_displacements[2] = {0, 0};
       MPI_Aint dst_displacements[2] = {0,(results_2-results_1)*sizeof(Xt_idx)};
 
-      Xt_redist redist = xt_redist_collection_static_new(redists, 2, src_displacements,
-                                                         dst_displacements, MPI_COMM_WORLD);
+      Xt_redist redist
+        = xt_redist_collection_static_new(redists, 2, src_displacements,
+                                          dst_displacements, MPI_COMM_WORLD);
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
 

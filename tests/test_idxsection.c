@@ -136,7 +136,7 @@ int main(void) {
 
     Xt_idx ref_indices[2] = {7,8};
     struct Xt_stripe ref_stripes[1] = {{7,2,1}};
-    
+
     do_tests(intersection, ref_indices, 2, ref_stripes, 1);
 
     xt_idxlist_delete(intersection);
@@ -175,7 +175,7 @@ int main(void) {
 
     Xt_idx ref_indices[1] = {0};
     struct Xt_stripe ref_stripes[1] = {{0,1,1}};
-    
+
     do_tests(intersection, ref_indices, 0, ref_stripes, 0);
 
     xt_idxlist_delete(intersection);
@@ -214,7 +214,7 @@ int main(void) {
 
     Xt_idx ref_indices[2] = {20,26};
     struct Xt_stripe ref_stripes[2] = {{20,1,1}, {26,1,1}};
-    
+
     do_tests(intersection, ref_indices, 2, ref_stripes, 2);
 
     xt_idxlist_delete(intersection);

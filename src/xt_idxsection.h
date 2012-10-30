@@ -16,7 +16,7 @@
  * @param[in] local_size     size of the local section in each dimension
  * @param[in] local_start    index of the first index of the local part
  *                           within the global array for each dimension (C-style)
- * 
+ *
  */
 Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
                              unsigned * global_size, unsigned * local_size,

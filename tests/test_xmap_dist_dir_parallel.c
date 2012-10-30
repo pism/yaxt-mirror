@@ -74,7 +74,7 @@ int main(void) {
     xt_idxlist_delete(src_idxlist);
     xt_idxlist_delete(dst_idxlist);
   }
-  
+
   if (comm_size > 2) // skip test if there are not enough processes
   { // test in which each process talks with two other
     // processes

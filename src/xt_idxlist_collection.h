@@ -13,9 +13,11 @@
  * @param[in] num_idxlists number of index lists in idxlists
  * @return returns a Xt_idxlist$
  */
-Xt_idxlist xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists);
+Xt_idxlist
+xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists);
 
-Xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
-                                        MPI_Comm comm);
+Xt_idxlist
+xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
+                             MPI_Comm comm);
 
 #endif // XT_IDXLIST_COLLECTION_H

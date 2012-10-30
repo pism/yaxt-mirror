@@ -23,12 +23,14 @@ int main(void) {
   { // general test with one redist
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
-    unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    unsigned src_num_indices
+      = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
-    unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    unsigned dst_num_indices
+      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -50,7 +52,8 @@ int main(void) {
     MPI_Aint dst_displacements[1] = {0};
 
     redist_coll = xt_redist_collection_static_new(&redist, 1, src_displacements,
-                                                  dst_displacements, MPI_COMM_WORLD);
+                                                  dst_displacements,
+                                                  MPI_COMM_WORLD);
 
     xt_redist_delete(redist);
 
@@ -77,12 +80,14 @@ int main(void) {
   { // test with one redist used three times (two exchanges)
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
-    unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    unsigned src_num_indices
+      = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
-    unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    unsigned dst_num_indices
+      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -109,7 +114,8 @@ int main(void) {
                                      (dst_data[2]-dst_data[0])*sizeof(double)};
 
     redist_coll = xt_redist_collection_static_new(redists, 3, src_displacements,
-                                                  dst_displacements, MPI_COMM_WORLD);
+                                                  dst_displacements,
+                                                  MPI_COMM_WORLD);
 
     xt_redist_delete(redist);
 

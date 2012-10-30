@@ -48,8 +48,9 @@ int main(void) {
     unsigned local_size[2] = {3,4};
     unsigned local_start[2] = {2,3};
 
-    Xt_idxlist idxsection = xt_idxsection_new(start, num_dimensions, global_size,
-                                              local_size, local_start);
+    Xt_idxlist idxsection
+      = xt_idxsection_new(start, num_dimensions, global_size,
+                          local_size, local_start);
     //! [index section example]
 
     puts("index section example:");
@@ -66,13 +67,15 @@ int main(void) {
     unsigned local_size[2][2] = {{2,2},{3,4}};
     unsigned local_start[2][2] = {{0,0},{2,6}};
 
-    Xt_idxlist idxlists[] = {xt_idxsection_new(start, num_dimensions, global_size,
-                                               local_size[0], local_start[0]),
-                             xt_idxsection_new(start, num_dimensions, global_size,
-                                               local_size[1], local_start[1])};
+    Xt_idxlist idxlists[]
+      = {xt_idxsection_new(start, num_dimensions, global_size,
+                           local_size[0], local_start[0]),
+         xt_idxsection_new(start, num_dimensions, global_size,
+                           local_size[1], local_start[1])};
     Xt_count num_idxlists = sizeof(idxlists) / sizeof(idxlists[0]);
 
-    Xt_idxlist idxcollection = xt_idxlist_collection_new(idxlists, num_idxlists);
+    Xt_idxlist idxcollection
+      = xt_idxlist_collection_new(idxlists, num_idxlists);
     //! [index list collection example]
 
     puts("index list collection example:");

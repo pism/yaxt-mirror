@@ -23,12 +23,14 @@ int main(void) {
   { // general test with one redist
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
-    unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    unsigned src_num_indices
+      = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
-    unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    unsigned dst_num_indices
+      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -59,7 +61,8 @@ int main(void) {
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist_coll, (void**)(&src_data_p), 1, (void**)(&dst_data_p), 1);
+    xt_redist_s_exchange(redist_coll, (void**)(&src_data_p), 1,
+                         (void**)(&dst_data_p), 1);
 
     double ref_dst_data[] = {1,3,5};
 
@@ -78,12 +81,14 @@ int main(void) {
     // displacements -> test of cache) (with default cache size)
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
-    unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    unsigned src_num_indices
+      = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
-    unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    unsigned dst_num_indices
+      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -115,7 +120,8 @@ int main(void) {
       double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
       double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3, (void**)dst_data_p, 3);
+      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3,
+                           (void**)dst_data_p, 3);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -135,7 +141,8 @@ int main(void) {
       double *src_data_p[3] = {src_data[1],src_data[0],src_data[2]};
       double *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
 
-      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3, (void**)dst_data_p, 3);
+      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3,
+                           (void**)dst_data_p, 3);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -155,7 +162,8 @@ int main(void) {
       double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
       double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3, (void**)dst_data_p, 3);
+      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3,
+                           (void**)dst_data_p, 3);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -176,12 +184,14 @@ int main(void) {
     // displacements -> test of cache) (with cache size == 0)
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
-    unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    unsigned src_num_indices
+      = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
-    unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    unsigned dst_num_indices
+      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -213,7 +223,8 @@ int main(void) {
       double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
       double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3, (void**)dst_data_p, 3);
+      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3,
+                           (void**)dst_data_p, 3);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -233,7 +244,8 @@ int main(void) {
       double *src_data_p[3] = {src_data[1],src_data[0],src_data[2]};
       double *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
 
-      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3, (void**)dst_data_p, 3);
+      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3,
+                           (void**)dst_data_p, 3);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -253,7 +265,8 @@ int main(void) {
       double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
       double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3, (void**)dst_data_p, 3);
+      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3,
+                           (void**)dst_data_p, 3);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -270,16 +283,18 @@ int main(void) {
     xt_redist_delete(redist_coll);
   }
 
-  { // test with one redist used three times (with different input data displacements
-    // until the cache is full)
+  { // test with one redist used three times (with different input
+    // data displacements until the cache is full)
     // set up data
     Xt_idx src_index_list[] = {1,2,3,4,5};
-    unsigned src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    unsigned src_num_indices
+      = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_idx dst_index_list[] = {1,3,5};
-    unsigned dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    unsigned dst_num_indices
+      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -325,7 +340,8 @@ int main(void) {
       src_data_p[2] = src_data_+k;
       dst_data_p[2] = dst_data_+k;
 
-      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3, (void**)dst_data_p, 3);
+      xt_redist_s_exchange(redist_coll, (void**)src_data_p, 3,
+                           (void**)dst_data_p, 3);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 

@@ -354,8 +354,10 @@ int main(void) {
     Xt_idxlist idxstripes_a, idxstripes_b;
 
     struct Xt_stripe stripes_a[10] = {{0,2,1},{3,2,1},{5,2,1},{8,2,1},{10,2,1},
-                                      {14,2,1},{17,2,1},{20,2,1},{23,2,1},{25,2,1}};
-    struct Xt_stripe stripes_b[5] = {{5,3,1},{8,2,1},{19,1,1},{20,2,1},{30,2,1}};
+                                      {14,2,1},{17,2,1},{20,2,1},{23,2,1},
+                                      {25,2,1}};
+    struct Xt_stripe stripes_b[5] = {{5,3,1},{8,2,1},{19,1,1},{20,2,1},
+                                     {30,2,1}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 10);
     idxstripes_b = xt_idxstripes_new(stripes_b, 5);
@@ -402,7 +404,8 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[2][15] = {{0,1,2,3,4,5,6},{0,1,1,2,2,2,3,3,3,4,4,4,5,5,6}};
+    Xt_idx ref_indices[2][15] = {{0,1,2,3,4,5,6},
+                                 {0,1,1,2,2,2,3,3,3,4,4,4,5,5,6}};
     Xt_count ref_num_indices[2] = {7,15};
 
     do_tests(intersection[0], ref_indices[0], ref_num_indices[0]);
@@ -504,10 +507,13 @@ int main(void) {
      }
    }
    Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos, sel_idx, undef_idx);
-   if (undef_count != ref_undef_count) PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                         sel_idx, undef_idx);
+   if (undef_count != ref_undef_count)
+     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
    for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip]) PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+     if (sel_idx[ip] != ref_sel_idx[ip])
+       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
    }
    xt_idxlist_delete(idxlist);
  };
@@ -535,10 +541,13 @@ int main(void) {
      }
    }
    Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos, sel_idx, undef_idx);
-   if (undef_count != ref_undef_count) PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                         sel_idx, undef_idx);
+   if (undef_count != ref_undef_count)
+     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
    for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip]) PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+     if (sel_idx[ip] != ref_sel_idx[ip])
+       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
    }
    xt_idxlist_delete(idxlist);
 
@@ -567,10 +576,13 @@ int main(void) {
      }
    }
    Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos, sel_idx, undef_idx);
-   if (undef_count != ref_undef_count) PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                         sel_idx, undef_idx);
+   if (undef_count != ref_undef_count)
+     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
    for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip]) PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+     if (sel_idx[ip] != ref_sel_idx[ip])
+       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
    }
    xt_idxlist_delete(idxlist);
 
@@ -599,10 +611,13 @@ int main(void) {
    }
 
    Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos, sel_idx, undef_idx);
-   if (undef_count != ref_undef_count) PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                         sel_idx, undef_idx);
+   if (undef_count != ref_undef_count)
+     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
    for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip]) PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+     if (sel_idx[ip] != ref_sel_idx[ip])
+       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
    }
    xt_idxlist_delete(idxlist);
  };
@@ -647,7 +662,8 @@ do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
 
     int position = 0;
 
-    xt_idxlist_pack(idxlist, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
+    xt_idxlist_pack(idxlist, send_buffer, buffer_size, &position,
+                    MPI_COMM_WORLD);
 
     // send the buffer
 
@@ -664,14 +680,16 @@ do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
     // receive the buffer
 
     mpi_err_handler(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
-                             MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
+                             MPI_COMM_WORLD, MPI_STATUS_IGNORE),
+                    MPI_COMM_WORLD);
 
     // unpack the buffer
 
     Xt_idxlist idxlist_copy;
 
     position = 0;
-    idxlist_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
+    idxlist_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position,
+                                     MPI_COMM_WORLD);
 
     // check copy
 
