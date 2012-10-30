@@ -298,7 +298,7 @@ foreach my $headerFn (@ARGV)
           for(my $tok = 0; $tok < @{$tokenMapping[0]}; ++$tok)
           {
             my $token = $tokenMapping[0][$tok];
-            if (exists($configHDefs{$token}))
+            if (defined($token) && exists($configHDefs{$token}))
             {
               print STDERR 'Substituting ', $configHDefs{$token}, ' for ',
                   $token, "\n" if $debug > 1;
