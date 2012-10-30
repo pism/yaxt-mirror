@@ -1,7 +1,7 @@
 #include "xt/xt_idxlist.h"
 #include "xt_idxvec.h"
 #include "xt/xt_idxlist_collection.h"
-#include "xt_idxsection.h"
+#include "xt/xt_idxsection.h"
 #include "xt_idxstripes.h"
 
 struct xt_idxlist_unpack_routine_table xt_idxlist_unpack_routines[]

@@ -5,7 +5,7 @@
 #include "xt/xt_idxlist.h"
 #include "xt_idxvec.h"
 #include "xt_idxstripes.h"
-#include "xt_idxsection.h"
+#include "xt/xt_idxsection.h"
 #include "xt/xt_idxlist_collection.h"
 
 static void print_index_list(Xt_idxlist idxlist);

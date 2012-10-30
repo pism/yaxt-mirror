@@ -8,16 +8,16 @@ libyaxt_la_SOURCES =						\
 	xt/xt_core.h						\
 	xt/xt_handles.h						\
 	xt/xt_sort.h						\
+	xt/xt_idxlist.h						\
+	xt/xt_idxlist_collection.h				\
+	xt/xt_idxsection.h					\
 	xt_handles.c						\
 	xt_idxlist.c						\
-	xt/xt_idxlist.h						\
 	xt_idxlist_collection.c					\
-	xt_idxlist_collection.h					\
 	xt_idxlist_unpack.c 					\
 	xt_idxmod.c						\
 	xt_idxmod.h						\
 	xt_idxsection.c						\
-	xt_idxsection.h						\
 	xt_idxstripes.c						\
 	xt_idxstripes.h						\
 	xt_idxvec.c 						\
