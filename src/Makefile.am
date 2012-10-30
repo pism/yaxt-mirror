@@ -25,12 +25,12 @@ libyaxt_la_SOURCES =						\
 	xt/xt_xmap_all2all.h					\
 	xt/xt_xmap_dist_dir.h					\
 	xt/xt_xmap_intersection.h				\
+	xt/xt_idxmod.h						\
 	xt_handles.c						\
 	xt_idxlist.c						\
 	xt_idxlist_collection.c					\
 	xt_idxlist_unpack.c 					\
 	xt_idxmod.c						\
-	xt_idxmod.h						\
 	xt_idxsection.c						\
 	xt_idxstripes.c						\
 	xt_idxvec.c 						\

@@ -1,18 +1,19 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "mpi.h"
+#include <mpi.h>
+
+#include <yaxt.h>
 
 #include "tests.h"
 #include "test_idxlist_utils.h"
 
-#include "yaxt.h"
 #include "xt/xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
-#include "xt_idxmod.h"
+#include "xt/xt_idxmod.h"
 
 int main(void) {
 

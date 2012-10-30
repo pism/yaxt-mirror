@@ -4,7 +4,7 @@
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
 
-#include "xt_idxmod.h"
+#include "xt/xt_idxmod.h"
 
 
 struct Xt_idxlist *xt_idxmod_new(struct Xt_idxlist* patch_idxlist,  struct Xt_modifier *modifier, int modifier_num, int *mstate) {
