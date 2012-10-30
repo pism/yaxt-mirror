@@ -10,7 +10,7 @@
 #include "xt/xt_idxlist_collection.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
-#include "xt_xmap.h"
+#include "xt/xt_xmap.h"
 #include "xt/xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"

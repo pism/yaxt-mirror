@@ -1,4 +1,4 @@
-#include "xt_xmap.h"
+#include "xt/xt_xmap.h"
 
 #include "mpi.h"
 

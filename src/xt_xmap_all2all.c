@@ -8,7 +8,7 @@
 
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
-#include "xt_xmap.h"
+#include "xt/xt_xmap.h"
 #include "xt/xt_mpi.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
