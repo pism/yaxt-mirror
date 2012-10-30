@@ -2,7 +2,7 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 
 #undef FIXED_MPI_ON_BLIZZARD
 

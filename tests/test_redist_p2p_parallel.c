@@ -7,7 +7,7 @@
 #include "xt/xt_idxvec.h"
 #include "xt_redist_p2p.h"
 #include "xt/xt_idxlist.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 #include "xt_xmap_all2all.h"
 
 static inline int imin(int a, int b) {

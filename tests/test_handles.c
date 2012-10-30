@@ -1,6 +1,6 @@
 #include "tests.h"
 
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 #include "yaxt.h"
 #include "xt/xt_handles.h"
 

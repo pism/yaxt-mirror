@@ -4,7 +4,7 @@
 #include <mpi.h>
 
 #include "core/ppm_xfuncs.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 
 //taken from http://beige.ucs.indiana.edu/I590/node85.html
 void mpi_err_handler(int error_code, MPI_Comm comm) {

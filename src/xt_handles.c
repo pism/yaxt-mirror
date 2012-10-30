@@ -2,7 +2,7 @@
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 #include "xt/xt_handles.h"
 
 

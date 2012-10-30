@@ -5,7 +5,7 @@
 #include "tests.h"
 
 #include "yaxt.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 #include "xt/xt_idxvec.h"
 #include "xt_xmap.h"
 #include "xt_xmap_dist_dir.h"

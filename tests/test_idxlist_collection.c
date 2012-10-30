@@ -13,7 +13,7 @@
 #include "xt/xt_idxsection.h"
 #include "xt/xt_idxlist_collection.h"
 #include "test_idxlist_utils.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
 static void

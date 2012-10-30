@@ -5,7 +5,7 @@
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 #include "xt_redist_collection.h"
 #include "ensure_array_size.h"
 #include "xt_redist.h"

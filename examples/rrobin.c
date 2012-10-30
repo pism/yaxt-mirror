@@ -5,7 +5,7 @@
 #include <mpi.h>
 
 #include "xt/xt_core.h"
-#include "xt_mpi.h"
+#include "xt/xt_mpi.h"
 #include "xt_xmap_all2all.h"
 #include "xt/xt_idxlist.h"
 #include "xt_redist_p2p.h"
