@@ -1,6 +1,7 @@
 doc/html/
 *.x
 *.o
+*~
 Makefile.in
 /configure
 /config/compile
