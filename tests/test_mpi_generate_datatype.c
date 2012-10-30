@@ -1,8 +1,8 @@
 #include <mpi.h>
-#include "tests.h"
 
-#include "yaxt.h"
-#include "xt/xt_mpi.h"
+#include <yaxt.h>
+
+#include "tests.h"
 
 #undef FIXED_MPI_ON_BLIZZARD
 

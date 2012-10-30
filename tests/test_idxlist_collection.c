@@ -1,19 +1,12 @@
 #include <stdlib.h>
 
 #include <mpi.h>
+#include <yaxt.h>
 
 #define VERBOSE
 
 #include "tests.h"
-
-#include "yaxt.h"
-#include "xt/xt_idxlist.h"
-#include "xt/xt_idxvec.h"
-#include "xt/xt_idxstripes.h"
-#include "xt/xt_idxsection.h"
-#include "xt/xt_idxlist_collection.h"
 #include "test_idxlist_utils.h"
-#include "xt/xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 
 static void

@@ -1,10 +1,9 @@
 #ifndef TEST_IDXLIST_UTILS_H
 #define TEST_IDXLIST_UTILS_H
 
-#include "tests.h"
+#include <yaxt.h>
 
-#include "yaxt.h"
-#include "xt/xt_idxlist.h"
+#include "tests.h"
 
 static void
 ref_get_positions_of_indices(Xt_idx * indices, Xt_count num_indices,

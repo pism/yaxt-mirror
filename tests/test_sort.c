@@ -2,8 +2,9 @@
 
 //#define VERBOSE
 
+#include <yaxt.h>
+
 #include "tests.h"
-#include "xt/xt_sort.h"
 
 static void
 test1(void (*anysort_index)(Xt_idx * a, int n, int * idx, int reset_index)) {

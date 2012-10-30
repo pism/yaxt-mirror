@@ -1,12 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "yaxt.h"
-#include "xt/xt_idxlist.h"
-#include "xt/xt_idxvec.h"
-#include "xt/xt_idxstripes.h"
-#include "xt/xt_idxsection.h"
-#include "xt/xt_idxlist_collection.h"
+#include <yaxt.h>
 
 static void print_index_list(Xt_idxlist idxlist);
 

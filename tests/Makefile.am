@@ -54,7 +54,7 @@ test_yaxt_SOURCES = test_yaxt.f90
 test_yaxt_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 
-AM_CFLAGS = -I$(top_srcdir)/src $(MPI_C_INCLUDE)
+AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = -I$(top_srcdir)/src -I../src $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
 LDADD = ../src/libyaxt.la $(MPI_C_LIB)
 

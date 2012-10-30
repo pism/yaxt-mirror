@@ -1,5 +1,5 @@
-#ifndef YAXT_H
-#define YAXT_H
+#ifndef XT_CORE_H
+#define XT_CORE_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -55,4 +55,4 @@ void xt_idxlist_delete(Xt_idxlist idxlist);
  */
 int xt_xmap_is_bijective(Xt_xmap xmap);
 
-#endif // YAXT_H
+#endif

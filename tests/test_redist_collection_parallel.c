@@ -1,18 +1,9 @@
 #include <stdlib.h>
 
 #include <mpi.h>
-#include "tests.h"
+#include <yaxt.h>
 
-#include "yaxt.h"
-#include "xt/xt_idxvec.h"
-#include "xt/xt_idxsection.h"
-#include "xt/xt_redist_p2p.h"
-#include "xt/xt_redist_collection.h"
-#include "xt/xt_idxstripes.h"
-#include "xt/xt_idxlist_collection.h"
-#include "xt/xt_idxlist.h"
-#include "xt/xt_mpi.h"
-#include "xt/xt_xmap_all2all.h"
+#include "tests.h"
 
 static inline int imin(int a, int b) {
   return  (((a)<(b))?(a):(b));

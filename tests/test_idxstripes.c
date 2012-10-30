@@ -1,15 +1,12 @@
 #include <stdlib.h>
 
-#include "mpi.h"
+#include <mpi.h>
 
+#include <yaxt.h>
+
+#include "core/ppm_xfuncs.h"
 #include "tests.h"
 #include "test_idxlist_utils.h"
-
-#include "yaxt.h"
-#include "xt/xt_idxstripes.h"
-#include "xt/xt_idxvec.h"
-#include "xt/xt_mpi.h"
-#include "core/ppm_xfuncs.h"
 
 static void
 do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices);

@@ -1,8 +1,7 @@
-#include "tests.h"
+#include <mpi.h>
+#include <yaxt.h>
 
-#include "xt/xt_mpi.h"
-#include "yaxt.h"
-#include "xt/xt_handles.h"
+#include "tests.h"
 
 int main(void) {
   const int hsize = 32;

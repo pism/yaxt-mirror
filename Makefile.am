@@ -1,3 +1,3 @@
-SUBDIRS = src tests examples inst_headers
+SUBDIRS = src inst_headers tests examples
 
 ACLOCAL_AMFLAGS=-I m4

@@ -2,8 +2,9 @@ AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
 AM_FCFLAGS  = $(MPI_FC_INCLUDE)
 lib_LTLIBRARIES = libyaxt.la
 
-include_HEADERS = yaxt.h
-
+# headers from subdir xt will be installed (after substituting
+# definitions from config.h). These must be listed in a sequence in
+# which they can be combined in yaxt.h.
 libyaxt_la_SOURCES =						\
 	xt/xt_core.h						\
 	xt/xt_handles.h						\
@@ -67,7 +68,7 @@ xtinclude_Makefile.inc: Makefile
 	  for header in $$headers ; do echo "	$$header \\" ; done \
 	    | sed '$$s/\\$$//' >>$@
 
-all-local: yaxt.h xtinclude_Makefile.inc
+all-local: xtinclude_Makefile.inc
 
 clean-local:
 	-rm -f *.$(FCMODEXT) i.*.L

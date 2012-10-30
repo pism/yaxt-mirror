@@ -7,13 +7,7 @@
 
 #include "tests.h"
 #include "test_idxlist_utils.h"
-
-#include "xt/xt_mpi.h"
 #include "core/ppm_xfuncs.h"
-
-#include "xt/xt_idxvec.h"
-#include "xt/xt_idxstripes.h"
-#include "xt/xt_idxmod.h"
 
 int main(void) {
 

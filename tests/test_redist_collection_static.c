@@ -2,15 +2,9 @@
 
 #include <mpi.h>
 
-#include "tests.h"
+#include <yaxt.h>
 
-#include "yaxt.h"
-#include "xt/xt_idxlist.h"
-#include "xt/xt_idxvec.h"
-#include "xt/xt_redist_p2p.h"
-#include "xt/xt_redist_collection_static.h"
-#include "xt/xt_mpi.h"
-#include "xt/xt_xmap_all2all.h"
+#include "tests.h"
 
 int main(void) {
 
