@@ -12,7 +12,7 @@
  *
  * @param[in] idxlist     array containing the global indices
  * @param[in] num_indices number of indices in idxlist
- * @return returns a Xt_idxlist$
+ * @return returns a Xt_idxlist
  */
 Xt_idxlist xt_idxvec_new(Xt_idx *idxlist, Xt_count num_indices);
 
