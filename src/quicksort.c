@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "quicksort.h"
+#include "xt/quicksort.h"
 
 /** \file quicksort.c
   * \brief Non-recursive stack version of Quicksort

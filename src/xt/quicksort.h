@@ -1,7 +1,7 @@
 #ifndef QUICKSORT_H
 #define QUICKSORT_H
 
-#include "sort_common.h"
+#include "xt/sort_common.h"
 
 /** quicksort changing structured values
   *

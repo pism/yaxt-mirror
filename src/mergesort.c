@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "quicksort.h"
-#include "mergesort.h"
+#include "xt/quicksort.h"
+#include "xt/mergesort.h"
 
 static void insertionsort_idxpos(idxpos_type *w, int n);
 static void insertionsort_index(Xt_idx *val, int n, int *pos, int reset_pos);

@@ -1,8 +1,8 @@
 #ifndef XT_SORT_H
 #define XT_SORT_H
 
-#include "quicksort.h"
-#include "mergesort.h"
+#include "xt/quicksort.h"
+#include "xt/mergesort.h"
 
 /** \example test_sort.c
  */

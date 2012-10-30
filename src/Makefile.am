@@ -7,6 +7,9 @@ include_HEADERS = yaxt.h
 libyaxt_la_SOURCES =						\
 	xt/xt_core.h						\
 	xt/xt_handles.h						\
+	xt/sort_common.h					\
+	xt/mergesort.h						\
+	xt/quicksort.h						\
 	xt/xt_sort.h						\
 	xt/xt_idxlist.h						\
 	xt/xt_idxlist_collection.h				\
@@ -53,16 +56,13 @@ libyaxt_la_SOURCES =						\
 	ensure_array_size.c					\
 	ensure_array_size.h					\
 	quicksort.c						\
-	quicksort.h						\
 	mergesort.c						\
-	mergesort.h						\
-	sort_common.h						\
 	xt_sort.c						\
 	yaxt_f2c.c						\
 	yaxt.f90
 
 xtinclude_Makefile.inc: Makefile
-	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/\n/g' | grep 'xt/xt_.*\.h'` ; \
+	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/\n/g' | grep 'xt/.*\.h$$'` ; \
 	  echo "xtinclude_HEADERS = \\" >$@ ; \
 	  for header in $$headers ; do echo "	$$header \\" ; done \
 	    | sed '$$s/\\$$//' >>$@

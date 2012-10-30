@@ -10,7 +10,7 @@
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_mpi.h"
 #include "core/ppm_xfuncs.h"
-#include "quicksort.h"
+#include "xt/quicksort.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
