@@ -558,7 +558,7 @@ generate_intersection_from_dist_dir_results(struct dist_dir dist_dir_results,
   free(intersections);
 }
 
-void free_dist_dir(struct dist_dir * dist_dir) {
+static void free_dist_dir(struct dist_dir * dist_dir) {
 
   unsigned i;
 
