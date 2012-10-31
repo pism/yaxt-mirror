@@ -313,7 +313,7 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
-{ // intersection test
+  { // intersection test
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
@@ -346,7 +346,7 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
-{ // intersection test
+  { // intersection test
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
@@ -382,7 +382,7 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
-{ // intersection test
+  { // intersection test
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
@@ -416,7 +416,7 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
-{ // intersection test
+  { // intersection test
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
@@ -449,7 +449,7 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
-{ // intersection test
+  { // intersection test
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
@@ -482,142 +482,142 @@ int main(void) {
     xt_idxlist_delete(intersection[1]);
   }
 
- {
-   // check idxvec_get_indices_at_positions
-   // case: mixed valid and invalid positions
-   const Xt_idx undef_idx = -1234567;
-   struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
-                                 {.start=10, .nstrides=5, .stride=1},
-                                 {.start=20, .nstrides=5, .stride=-1}};
-   int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
-   Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
+  {
+    // check idxvec_get_indices_at_positions
+    // case: mixed valid and invalid positions
+    const Xt_idx undef_idx = -1234567;
+    struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
+                                  {.start=10, .nstrides=5, .stride=1},
+                                  {.start=20, .nstrides=5, .stride=-1}};
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
-   int pos[] = {0,2,7,9,11,100,11,200,9,300,18,400,5};
-   int num_pos = sizeof(pos) / sizeof(pos[0]);
-   Xt_idx ref_sel_idx[num_pos];
-   int ref_undef_count = 0;
-   for (int ip=0; ip<num_pos; ip++) {
-     int p = pos[ip];
-     if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
-       ref_sel_idx[ip] = undef_idx;
-       ref_undef_count++;
-     }
-   }
-   Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
-                                                         sel_idx, undef_idx);
-   if (undef_count != ref_undef_count)
-     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-   for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip])
-       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-   }
-   xt_idxlist_delete(idxlist);
- };
+    int pos[] = {0,2,7,9,11,100,11,200,9,300,18,400,5};
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_idx ref_sel_idx[num_pos];
+    int ref_undef_count = 0;
+    for (int ip=0; ip<num_pos; ip++) {
+      int p = pos[ip];
+      if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
+        ref_sel_idx[ip] = undef_idx;
+        ref_undef_count++;
+      }
+    }
+    Xt_idx sel_idx[num_pos];
+    int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                          sel_idx, undef_idx);
+    if (undef_count != ref_undef_count)
+      PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+    for (int ip=0; ip<num_pos; ip++) {
+      if (sel_idx[ip] != ref_sel_idx[ip])
+        PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+    }
+    xt_idxlist_delete(idxlist);
+  }
 
- {
-   // check idxvec_get_indices_at_positions
-   // case: only valid positions
-   const Xt_idx undef_idx = -1234567;
-   struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
-                                 {.start=10, .nstrides=2, .stride= 1},
-                                 {.start=20, .nstrides=6, .stride=-1},
-                                 {.start=30, .nstrides=7, .stride=-1}};
-   int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
-   Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
+  {
+    // check idxvec_get_indices_at_positions
+    // case: only valid positions
+    const Xt_idx undef_idx = -1234567;
+    struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
+                                  {.start=10, .nstrides=2, .stride= 1},
+                                  {.start=20, .nstrides=6, .stride=-1},
+                                  {.start=30, .nstrides=7, .stride=-1}};
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
-   int pos[] = {-1,0,1,2,3,4,23,5,6,7,8,9,10,11,12, 0,2,100,2000};
-   int num_pos = sizeof(pos) / sizeof(pos[0]);
-   Xt_idx ref_sel_idx[num_pos];
-   int ref_undef_count = 0;
-   for (int ip=0; ip<num_pos; ip++) {
-     int p = pos[ip];
-     if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
-       ref_sel_idx[ip] = undef_idx;
-       ref_undef_count++;
-     }
-   }
-   Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
-                                                         sel_idx, undef_idx);
-   if (undef_count != ref_undef_count)
-     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-   for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip])
-       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-   }
-   xt_idxlist_delete(idxlist);
+    int pos[] = {-1,0,1,2,3,4,23,5,6,7,8,9,10,11,12, 0,2,100,2000};
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_idx ref_sel_idx[num_pos];
+    int ref_undef_count = 0;
+    for (int ip=0; ip<num_pos; ip++) {
+      int p = pos[ip];
+      if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
+        ref_sel_idx[ip] = undef_idx;
+        ref_undef_count++;
+      }
+    }
+    Xt_idx sel_idx[num_pos];
+    int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                          sel_idx, undef_idx);
+    if (undef_count != ref_undef_count)
+      PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+    for (int ip=0; ip<num_pos; ip++) {
+      if (sel_idx[ip] != ref_sel_idx[ip])
+        PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+    }
+    xt_idxlist_delete(idxlist);
 
- };
+  }
 
- {
-   // check idxvec_get_indices_at_positions
-   // case: complete permutation
-   const Xt_idx undef_idx = -1234567;
-   struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
-                                 {.start=10, .nstrides=2, .stride= 1},
-                                 {.start=20, .nstrides=6, .stride=-1},
-                                 {.start=30, .nstrides=7, .stride=-1}};
-   int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
-   Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
+  {
+    // check idxvec_get_indices_at_positions
+    // case: complete permutation
+    const Xt_idx undef_idx = -1234567;
+    struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
+                                  {.start=10, .nstrides=2, .stride= 1},
+                                  {.start=20, .nstrides=6, .stride=-1},
+                                  {.start=30, .nstrides=7, .stride=-1}};
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
-   int pos[] = {4,7,2,5,9,0,10,6,11,8,12,1,3};
-   int num_pos = sizeof(pos) / sizeof(pos[0]);
-   Xt_idx ref_sel_idx[num_pos];
-   int ref_undef_count = 0;
-   for (int ip=0; ip<num_pos; ip++) {
-     int p = pos[ip];
-     if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
-       ref_sel_idx[ip] = undef_idx;
-       ref_undef_count++;
-     }
-   }
-   Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
-                                                         sel_idx, undef_idx);
-   if (undef_count != ref_undef_count)
-     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-   for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip])
-       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-   }
-   xt_idxlist_delete(idxlist);
+    int pos[] = {4,7,2,5,9,0,10,6,11,8,12,1,3};
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_idx ref_sel_idx[num_pos];
+    int ref_undef_count = 0;
+    for (int ip=0; ip<num_pos; ip++) {
+      int p = pos[ip];
+      if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
+        ref_sel_idx[ip] = undef_idx;
+        ref_undef_count++;
+      }
+    }
+    Xt_idx sel_idx[num_pos];
+    int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                          sel_idx, undef_idx);
+    if (undef_count != ref_undef_count)
+      PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+    for (int ip=0; ip<num_pos; ip++) {
+      if (sel_idx[ip] != ref_sel_idx[ip])
+        PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+    }
+    xt_idxlist_delete(idxlist);
 
- };
+  }
 
- {
-   // check idxvec_get_indices_at_positions
-   // case: only invalid positions
-   const Xt_idx undef_idx = -1234567;
-   struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
-                                 {.start=10, .nstrides=5, .stride=1},
-                                 {.start=20, .nstrides=5, .stride=-1}};
-   int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
-   Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
+  {
+    // check idxvec_get_indices_at_positions
+    // case: only invalid positions
+    const Xt_idx undef_idx = -1234567;
+    struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
+                                  {.start=10, .nstrides=5, .stride=1},
+                                  {.start=20, .nstrides=5, .stride=-1}};
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
-   int pos[] = {-10,200,700,90,90,18,141};
-   int num_pos = sizeof(pos) / sizeof(pos[0]);
-   Xt_idx ref_sel_idx[num_pos];
-   int ref_undef_count = 0;
-   for (int ip=0; ip<num_pos; ip++) {
-     int p = pos[ip];
-     if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
-       ref_sel_idx[ip] = undef_idx;
-       ref_undef_count++;
-     }
-   }
+    int pos[] = {-10,200,700,90,90,18,141};
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_idx ref_sel_idx[num_pos];
+    int ref_undef_count = 0;
+    for (int ip=0; ip<num_pos; ip++) {
+      int p = pos[ip];
+      if (xt_idxlist_get_index_at_position(idxlist, p, &ref_sel_idx[ip]) != 0) {
+        ref_sel_idx[ip] = undef_idx;
+        ref_undef_count++;
+      }
+    }
 
-   Xt_idx sel_idx[num_pos];
-   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
-                                                         sel_idx, undef_idx);
-   if (undef_count != ref_undef_count)
-     PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-   for (int ip=0; ip<num_pos; ip++) {
-     if (sel_idx[ip] != ref_sel_idx[ip])
-       PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-   }
-   xt_idxlist_delete(idxlist);
- };
+    Xt_idx sel_idx[num_pos];
+    int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+                                                          sel_idx, undef_idx);
+    if (undef_count != ref_undef_count)
+      PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+    for (int ip=0; ip<num_pos; ip++) {
+      if (sel_idx[ip] != ref_sel_idx[ip])
+        PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+    }
+    xt_idxlist_delete(idxlist);
+  }
 
   { // test with overlapping stripes
     Xt_idxlist idxstripes;
