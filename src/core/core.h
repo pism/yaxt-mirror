@@ -114,7 +114,7 @@ extern void
 SymPrefix(set_default_comm)(MPI_Comm comm);
 
 #define die(msg) \
-  SymPrefix(abort)(MPI_COMM_WORLD, (msg), __FILE__, __LINE__)
+  SymPrefix(abort)(SymPrefix(default_comm), (msg), __FILE__, __LINE__)
 
 #endif
 /*
