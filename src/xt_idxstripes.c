@@ -356,7 +356,7 @@ compute_intersection_fallback(struct xt_idxstripes * idxstripes_src,
 }
 
 // least common multiple
-Xt_idx lcm(Xt_idx a, Xt_idx b) {
+static Xt_idx lcm(Xt_idx a, Xt_idx b) {
 
   Xt_idx temp;
 
