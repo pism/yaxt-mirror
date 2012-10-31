@@ -307,7 +307,8 @@ do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
 
     int position = 0;
 
-    xt_idxlist_pack(idxlist, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
+    xt_idxlist_pack(idxlist, send_buffer, buffer_size, &position,
+                    MPI_COMM_WORLD);
 
     // send the buffer
 
@@ -324,14 +325,15 @@ do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
     // receive the buffer
 
     xt_mpi_call(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
-                             MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
+                         MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
 
     // unpack the buffer
 
     Xt_idxlist idxlist_copy;
 
     position = 0;
-    idxlist_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
+    idxlist_copy
+      = xt_idxlist_unpack(recv_buffer, buffer_size, &position, MPI_COMM_WORLD);
 
     // check copy
 

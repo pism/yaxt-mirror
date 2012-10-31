@@ -25,12 +25,14 @@ int main(void) {
     int dst_array[leng];
 
     for (int i = 0; i < leng; i++) {
-      // first position = 1, second position = rank, third position element_index; for rank < 10, leng < 10
+      // first position = 1, second position = rank,
+      // third position element_index; for rank < 10, leng < 10
       src_array[i] = 100 + rank*10 + i;
       dst_array[i] = -1;
 
       //print source
-      printf("SOURCEvalue: %d, element_index: %d, rank: %d \n", src_array[i], i, rank);
+      printf("SOURCEvalue: %d, element_index: %d, rank: %d \n", src_array[i],
+             i, rank);
     }
 
     // output barrier
@@ -63,13 +65,16 @@ int main(void) {
     int* dst_array_p = &dst_array[0];
 
     //Exchange
-    xt_redist_s_exchange(redist, (void**)(&src_array_p), 1, (void**)(&dst_array_p), 1);
+    xt_redist_s_exchange(redist, (void**)(&src_array_p), 1,
+                         (void**)(&dst_array_p), 1);
 
     // print result
     // for emelent_index < 10, leng < 10:
-    // first and last positions: should stay; second position: should be +1, except last rank should have 0
+    // first and last positions: should stay;
+    // second position: should be +1, except last rank should have 0
     for (int p = 0; p < leng; p++)
-      printf("DESTvalue: %d, element_index: %d, rank: %d \n", dst_array[p], p, rank);
+      printf("DESTvalue: %d, element_index: %d, rank: %d \n",
+             dst_array[p], p, rank);
 
 
     xt_redist_delete(redist);
