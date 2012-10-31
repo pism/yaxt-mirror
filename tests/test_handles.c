@@ -23,7 +23,8 @@ int main(void) {
     if (i % 2 == 0) {
       data[i]=i;
       handle[i] = xt_handle_new(hset, &data[i]);
-      if (!xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected invalid handle\n");
+      if (!xt_handle_is_valid(hset,handle[i]))
+        PUT_ERR("unexpected invalid handle\n");
       state[i] = 1;
     }
   }
@@ -32,9 +33,11 @@ int main(void) {
   for (int i = 1; i<hsize; i++) {
     if (state[i]) {
       if (i % 3 == 0) {
-        if (!xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected invalid handle\n");
+        if (!xt_handle_is_valid(hset,handle[i]))
+          PUT_ERR("unexpected invalid handle\n");
         xt_handle_delete(hset,handle[i]);
-        if (xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected valid handle\n");
+        if (xt_handle_is_valid(hset,handle[i]))
+          PUT_ERR("unexpected valid handle\n");
         state[i] = 0;
       }
     }
@@ -45,7 +48,8 @@ int main(void) {
     if (!state[i]) {
       data[i]=i;
       handle[i] = xt_handle_new(hset, &data[i]);
-      if (!xt_handle_is_valid(hset,handle[i])) PUT_ERR("unexpected invalid handle\n");
+      if (!xt_handle_is_valid(hset,handle[i]))
+        PUT_ERR("unexpected invalid handle\n");
       state[i] = 1;
     }
   }

@@ -63,7 +63,8 @@ int main(void) {
 
     int position = 0;
 
-    xt_idxlist_pack(collectionlist, send_buffer, buffer_size, &position, MPI_COMM_WORLD);
+    xt_idxlist_pack(collectionlist, send_buffer, buffer_size, &position,
+                    MPI_COMM_WORLD);
 
     // send the buffer
 
@@ -80,7 +81,7 @@ int main(void) {
     // receive the buffer
 
     xt_mpi_call(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
-                             MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
+                         MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
 
     // unpack the buffer
 
@@ -96,9 +97,8 @@ int main(void) {
 
     // compute intersection between the two index lists
 
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(collectionlist, collectionlist_copy);
+    Xt_idxlist intersection
+      = xt_idxlist_get_intersection(collectionlist, collectionlist_copy);
 
     // check intersection data
     Xt_idx ref_index_data[14] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7};
@@ -247,9 +247,10 @@ int main(void) {
                                52,53,54,55,56,
                                62,63,64,65,66};
 
-    Xt_idxlist idxlists[3] = {xt_idxvec_new(index_list, sizeof(index_list)/sizeof(index_list[0])),
-                              xt_idxstripes_new(stripes, sizeof(stripes)/sizeof(stripes[0])),
-                              xt_idxsection_new(0, 2, global_size, local_size, local_start)};
+    Xt_idxlist idxlists[3]
+      = {xt_idxvec_new(index_list, sizeof(index_list)/sizeof(index_list[0])),
+         xt_idxstripes_new(stripes, sizeof(stripes)/sizeof(stripes[0])),
+         xt_idxsection_new(0, 2, global_size, local_size, local_start)};
 
     // generate a collection index list
 
