@@ -36,18 +36,21 @@ idxlist_collection_get_num_indices(Xt_idxlist idxlist);
 static void
 idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
 
-static Xt_idx const
-* idxlist_collection_get_indices_const(Xt_idxlist idxlist);
+static const Xt_idx *
+idxlist_collection_get_indices_const(Xt_idxlist idxlist);
 
 static void
-idxlist_collection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
+                                     struct Xt_stripe ** stripes,
                                      Xt_count * num_stripes);
 
 static int
-idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
+idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
+                                         Xt_idx * index);
 
 static int
-idxlist_collection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
+idxlist_collection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
+                                         int * position);
 
 static int
 idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
@@ -90,7 +93,8 @@ struct xt_idxlist_collection {
   Xt_idx *index_array_cache;
 };
 
-Xt_idxlist xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
+Xt_idxlist
+xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
 
    struct xt_idxlist_collection *collectionlist;
 
@@ -98,7 +102,8 @@ Xt_idxlist xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists
 
    collectionlist->vtable = &idxlist_collection_vtable;
    collectionlist->num_idxlists = num_idxlists;
-   collectionlist->idxlists = xmalloc(num_idxlists * sizeof(*(collectionlist->idxlists)));
+   collectionlist->idxlists
+     = xmalloc(num_idxlists * sizeof(*(collectionlist->idxlists)));
    collectionlist->index_num_cache = -1;
    collectionlist->index_array_cache = NULL;
 
@@ -248,7 +253,7 @@ idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
    }
 }
 
-static Xt_idx const*
+static const Xt_idx *
 idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
 
   struct xt_idxlist_collection *collection
