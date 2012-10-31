@@ -134,12 +134,9 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
   } else { // fall-back solution
 
-    Xt_count num_indices;
+    Xt_count num_indices = xt_idxlist_get_num_indices(idxlist);
 
-    num_indices = xt_idxlist_get_num_indices(idxlist);
-
-    Xt_idx *indices;
-    indices = xmalloc(num_indices * sizeof (indices[0]));
+    Xt_idx *indices = xmalloc(num_indices * sizeof (indices[0]));
 
     xt_idxlist_get_indices(idxlist, indices);
 
