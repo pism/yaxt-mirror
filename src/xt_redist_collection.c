@@ -230,8 +230,9 @@ static int generate_datatypes(void ** data, struct redist_collection_msg * msgs,
   return cache_index;
 }
 
-int lookup_cache_index(void ** data, MPI_Aint ** cached_displacements,
-                       unsigned num_redists, int cache_size, MPI_Comm comm) {
+static int
+lookup_cache_index(void ** data, MPI_Aint ** cached_displacements,
+                   unsigned num_redists, int cache_size, MPI_Comm comm) {
 
   MPI_Aint addresses[num_redists];
   MPI_Aint displacements[num_redists];
