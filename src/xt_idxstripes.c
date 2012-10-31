@@ -134,7 +134,8 @@ static int compare_xtstripes(const void * a, const void * b)
 
 static void generate_stripes_sorted(struct xt_idxstripes * stripes) {
 
-  stripes->stripes_sorted = malloc(stripes->num_stripes * sizeof(*(stripes->stripes_sorted)));
+  stripes->stripes_sorted
+    = xmalloc(stripes->num_stripes * sizeof(*(stripes->stripes_sorted)));
 
   memcpy(stripes->stripes_sorted, stripes->stripes,
          stripes->num_stripes * sizeof(*(stripes->stripes_sorted)));
