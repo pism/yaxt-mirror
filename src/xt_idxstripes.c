@@ -733,6 +733,7 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
     return 0;
   }
 
+  *position = -1;
   return 1;
 }
 

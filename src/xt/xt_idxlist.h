@@ -206,7 +206,8 @@ int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_c
  *
  * @param[in]  idxlist  index list in which the given index is to be searched
  * @param[in]  index    index that is to be searched
- * @param[out] position position of the first occurrence of index in idxlist
+ * @param[out] position position of the first occurrence of index in idxlist,\n
+ *                      or -1 if there is no match
  * @return              0 if everything was okay
  *                      1 if the index could not be found in idxlist
  */

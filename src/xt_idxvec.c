@@ -572,6 +572,8 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
 
   idxvec_data = (struct xt_idxvec *)idxlist;
 
+  *position = -1;
+
   if ((offset < 0) || (offset >= idxvec_data->num_indices))
     return 1;
 

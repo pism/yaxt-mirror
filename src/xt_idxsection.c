@@ -501,7 +501,8 @@ static int
 idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
                                  int * position) {
 
-  struct xt_idxsection *section;
+  struct xt_idxsection *section = (struct xt_idxsection*)idxlist;
+  *position = -1;
 
   section = (struct xt_idxsection*)idxlist;
 
