@@ -88,10 +88,10 @@ generate_datatype(MPI_Aint * displacements, int * block_lengths,
     displacements_ = displacements;
   }
 
-  mpi_err_handler(MPI_Type_create_struct(num_datatypes, block_lengths, displacements_,
+  xt_mpi_call(MPI_Type_create_struct(num_datatypes, block_lengths, displacements_,
                                          datatypes_, &datatype), comm);
 
-  mpi_err_handler(MPI_Type_commit(&datatype), comm);
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   if (num_datatypes != num_redists) {
     free(datatypes_);
@@ -109,7 +109,7 @@ static void generate_msg_infos(struct redist_collection_static_msg ** msgs, int 
   int msgs_array_size = 0;
 
   int comm_size;
-  mpi_err_handler(MPI_Comm_size(comm, &comm_size), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   int block_lengths[num_redists];
   MPI_Datatype datatypes[num_redists];
@@ -139,7 +139,7 @@ static void generate_msg_infos(struct redist_collection_static_msg ** msgs, int 
 
     for (unsigned j = 0; j < num_redists; ++j)
       if (datatypes[j] != MPI_DATATYPE_NULL)
-        mpi_err_handler(MPI_Type_free(datatypes+j), comm);
+        xt_mpi_call(MPI_Type_free(datatypes+j), comm);
   }
 
   if (*nmsgs > 0)
@@ -159,7 +159,7 @@ Xt_redist xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redi
   redist_coll->nsrc = 0;
   redist_coll->send_msgs = NULL;
   redist_coll->recv_msgs = NULL;
-  mpi_err_handler(MPI_Comm_dup(comm, &(redist_coll->comm)), comm);
+  xt_mpi_call(MPI_Comm_dup(comm, &(redist_coll->comm)), comm);
 
   generate_msg_infos(&(redist_coll->send_msgs), &(redist_coll->nsrc), 
                      src_displacements, redists, num_redists, redist_coll->comm,
@@ -202,7 +202,7 @@ redist_collection_static_delete(Xt_redist redist) {
     MPI_Type_free(&(redist_coll->recv_msgs[i].datatype));
   free(redist_coll->recv_msgs);
 
-  mpi_err_handler(MPI_Comm_free(&(redist_coll->comm)), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Comm_free(&(redist_coll->comm)), MPI_COMM_WORLD);
 
   free(redist_coll);
 }
@@ -220,7 +220,7 @@ redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 
   for (int i = 0; i < redist_coll->nsrc; ++i)
     if (redist_coll->send_msgs[i].rank == rank) {
-      mpi_err_handler(MPI_Type_dup(redist_coll->send_msgs[i].datatype, &datatype_copy),
+      xt_mpi_call(MPI_Type_dup(redist_coll->send_msgs[i].datatype, &datatype_copy),
                       redist_coll->comm);
       break;
     }
@@ -241,7 +241,7 @@ redist_collection_static_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
   for (int i = 0; i < redist_coll->ndst; ++i)
     if (redist_coll->recv_msgs[i].rank == rank) {
-      mpi_err_handler(MPI_Type_dup(redist_coll->recv_msgs[i].datatype, &datatype_copy),
+      xt_mpi_call(MPI_Type_dup(redist_coll->recv_msgs[i].datatype, &datatype_copy),
                       redist_coll->comm);
       break;
     }
@@ -261,16 +261,16 @@ redist_collection_static_s_exchange1(Xt_redist redist, void *src_data, void *dst
   recv_requests = xmalloc(redist_coll->ndst * sizeof(*recv_requests));
 
   for (int i = 0; i < redist_coll->ndst; ++i)
-    mpi_err_handler(MPI_Irecv(dst_data, 1, redist_coll->recv_msgs[i].datatype,
+    xt_mpi_call(MPI_Irecv(dst_data, 1, redist_coll->recv_msgs[i].datatype,
                               redist_coll->recv_msgs[i].rank, 0, redist_coll->comm,
                               recv_requests+i), redist_coll->comm);
 
   for (int i = 0; i < redist_coll->nsrc; ++i)
-    mpi_err_handler(MPI_Send(src_data, 1, redist_coll->send_msgs[i].datatype,
+    xt_mpi_call(MPI_Send(src_data, 1, redist_coll->send_msgs[i].datatype,
                              redist_coll->send_msgs[i].rank, 0, redist_coll->comm),
                     redist_coll->comm);
 
-  mpi_err_handler(MPI_Waitall(redist_coll->ndst, recv_requests,
+  xt_mpi_call(MPI_Waitall(redist_coll->ndst, recv_requests,
                               MPI_STATUSES_IGNORE), redist_coll->comm);
 
   free(recv_requests);

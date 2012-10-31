@@ -107,9 +107,9 @@ static MPI_Datatype xt_get_stripes_datatype() {
                                  sizeof(stripe)};
     MPI_Datatype types[5] = {MPI_LB, Xt_idx_dt, Xt_count_dt, Xt_idx_dt, MPI_UB};
 
-    mpi_err_handler(MPI_Type_create_struct(5, block_lengths, displacements,
+    xt_mpi_call(MPI_Type_create_struct(5, block_lengths, displacements,
                                            types, &type), MPI_COMM_WORLD);
-    mpi_err_handler(MPI_Type_commit(&type), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Type_commit(&type), MPI_COMM_WORLD);
   }
 
   return type;
@@ -239,10 +239,10 @@ idxstripes_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   int size_int_type, size_unsigned, size_stripes =  0;
 
-  mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-  mpi_err_handler(MPI_Pack_size(1, Xt_count_dt, comm, &size_unsigned), comm);
+  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
+  xt_mpi_call(MPI_Pack_size(1, Xt_count_dt, comm, &size_unsigned), comm);
   if (stripes->num_stripes)
-    mpi_err_handler(MPI_Pack_size(stripes->num_stripes,
+    xt_mpi_call(MPI_Pack_size(stripes->num_stripes,
                                   xt_get_stripes_datatype(),
                                   comm, &size_stripes), comm);
 
@@ -257,12 +257,12 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
   struct xt_idxstripes *stripes = (struct xt_idxstripes*)data;
   int type = STRIPES;
 
-  mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
+  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(&(stripes->num_stripes), 1, MPI_UNSIGNED, buffer,
+  xt_mpi_call(MPI_Pack(&(stripes->num_stripes), 1, MPI_UNSIGNED, buffer,
                            buffer_size, position, comm), comm);
   if (stripes->num_stripes)
-    mpi_err_handler(MPI_Pack(stripes->stripes, (int)stripes->num_stripes,
+    xt_mpi_call(MPI_Pack(stripes->stripes, (int)stripes->num_stripes,
                              xt_get_stripes_datatype(), buffer,
                              buffer_size, position, comm), comm);
 }
@@ -278,14 +278,14 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   stripes->index_num_cache = -1; // negative num means: undef
   stripes->index_array_cache = NULL;
 
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                              &(stripes->num_stripes), 1, MPI_UNSIGNED,
                              comm), comm);
 
   if (stripes->num_stripes) {
     stripes->stripes
       = xmalloc(stripes->num_stripes * sizeof(*(stripes->stripes)));
-    mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                             stripes->stripes, stripes->num_stripes,
                             xt_get_stripes_datatype(), comm),comm);
 

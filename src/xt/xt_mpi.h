@@ -11,12 +11,22 @@
  */
 
 /**
- * checks the return value of an MPI call
+ * check return code of MPI call and call abort function if needed
+ */
+#define xt_mpi_call(call, comm)                 \
+  do {                                          \
+  int error_code = call;                        \
+  if (error_code != MPI_SUCCESS)                \
+    xt_mpi_error(error_code, comm);             \
+  } while(0)
+
+/**
+ * report error return of MPI call
  *
  * @param[in] error_code return code of an MPI call
  * @param[in] comm       communicator which was used for the respective MPI call
  */
-void mpi_err_handler(int error_code, MPI_Comm comm);
+void xt_mpi_error(int error_code, MPI_Comm comm);
 
 /**
  * generates an MPI datatype

@@ -20,7 +20,7 @@ static void shift_idx(Xt_idx idx[], int num, int offset)  {
 int main(void) {
 
    // init mpi
-   mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
    xt_initialize(MPI_COMM_WORLD);
 

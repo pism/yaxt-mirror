@@ -15,7 +15,7 @@ int main(void) {
 
   // init mpi
 
-  mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
 
@@ -682,17 +682,17 @@ do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
 
     int rank;
 
-    mpi_err_handler(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
 
     MPI_Request request;
 
-    mpi_err_handler(MPI_Isend(send_buffer, buffer_size, MPI_PACKED, rank, 0,
+    xt_mpi_call(MPI_Isend(send_buffer, buffer_size, MPI_PACKED, rank, 0,
                               MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
-    mpi_err_handler(MPI_Request_free(&request), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
 
     // receive the buffer
 
-    mpi_err_handler(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
+    xt_mpi_call(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
                              MPI_COMM_WORLD, MPI_STATUS_IGNORE),
                     MPI_COMM_WORLD);
 

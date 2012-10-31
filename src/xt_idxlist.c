@@ -35,7 +35,7 @@ Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
    int type;
 
    // unpack the type of the index list to be unpacked
-   mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                    &type, 1, MPI_INT, comm), comm);
 
    unsigned i;

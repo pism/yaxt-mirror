@@ -163,9 +163,9 @@ idxsection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   int size_int_type, size_unsigned, size_int;
 
-  mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-  mpi_err_handler(MPI_Pack_size(2, Xt_idx_dt, comm, &size_int), comm);
-  mpi_err_handler(MPI_Pack_size(1 + section->ndim * 5, MPI_UNSIGNED,
+  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
+  xt_mpi_call(MPI_Pack_size(2, Xt_idx_dt, comm, &size_int), comm);
+  xt_mpi_call(MPI_Pack_size(1 + section->ndim * 5, MPI_UNSIGNED,
                                 comm, &size_unsigned), comm);
 
   return size_int_type + size_unsigned + size_int;
@@ -179,25 +179,25 @@ idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
   struct xt_idxsection *section = (struct xt_idxsection*)data;
   int type = SECTION;
 
-  mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
+  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(&(section->global_start_index), 1,
+  xt_mpi_call(MPI_Pack(&(section->global_start_index), 1,
                            Xt_idx_dt, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(&(section->local_start_index), 1,
+  xt_mpi_call(MPI_Pack(&(section->local_start_index), 1,
                            Xt_idx_dt, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(&(section->ndim), 1, MPI_UNSIGNED, buffer,
+  xt_mpi_call(MPI_Pack(&(section->ndim), 1, MPI_UNSIGNED, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(section->global_size, section->ndim, MPI_UNSIGNED, buffer,
+  xt_mpi_call(MPI_Pack(section->global_size, section->ndim, MPI_UNSIGNED, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(section->local_size, section->ndim, MPI_UNSIGNED, buffer,
+  xt_mpi_call(MPI_Pack(section->local_size, section->ndim, MPI_UNSIGNED, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(section->local_start, section->ndim, MPI_UNSIGNED, buffer,
+  xt_mpi_call(MPI_Pack(section->local_start, section->ndim, MPI_UNSIGNED, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(section->global_strides, section->ndim, MPI_UNSIGNED, buffer,
+  xt_mpi_call(MPI_Pack(section->global_strides, section->ndim, MPI_UNSIGNED, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(section->local_strides, section->ndim, MPI_UNSIGNED, buffer,
+  xt_mpi_call(MPI_Pack(section->local_strides, section->ndim, MPI_UNSIGNED, buffer,
                            buffer_size, position, comm), comm);
 }
 
@@ -212,13 +212,13 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   section->index_array_cache = NULL;
   section-> index_num_cache = -1; // == undef
 
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                              &(section->global_start_index), 1, Xt_idx_dt,
                              comm), comm);
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                              &(section->local_start_index), 1, Xt_idx_dt,
                              comm), comm);
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                              &(section->ndim), 1, MPI_UNSIGNED,
                              comm), comm);
   assert(section->ndim > 0);
@@ -229,19 +229,19 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   section->global_strides = xmalloc(section->ndim * sizeof(*(section->global_strides)));
   section->local_strides = xmalloc(section->ndim * sizeof(*(section->local_strides)));
 
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                           section->global_size, section->ndim,
                           MPI_UNSIGNED, comm),comm);
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                           section->local_size, section->ndim,
                           MPI_UNSIGNED, comm),comm);
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                           section->local_start, section->ndim,
                           MPI_UNSIGNED, comm),comm);
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                           section->global_strides, section->ndim,
                           MPI_UNSIGNED, comm),comm);
-  mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                           section->local_strides, section->ndim,
                           MPI_UNSIGNED, comm),comm);
 

@@ -12,7 +12,7 @@
 int main(void) {
 
   // init:
-  mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
   xt_initialize(MPI_COMM_WORLD);
 
   { // idxvec modifier

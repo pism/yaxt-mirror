@@ -318,9 +318,9 @@ static size_t idxvec_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
    int size_xt_idx, size_xt_count, size_int_type;
 
-   mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-   mpi_err_handler(MPI_Pack_size(1, Xt_count_dt, comm, &size_xt_count), comm);
-   mpi_err_handler(MPI_Pack_size(idxvec->num_indices, Xt_idx_dt, comm,
+   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
+   xt_mpi_call(MPI_Pack_size(1, Xt_count_dt, comm, &size_xt_count), comm);
+   xt_mpi_call(MPI_Pack_size(idxvec->num_indices, Xt_idx_dt, comm,
                                  &size_xt_idx), comm);
 
    return size_xt_count + size_xt_idx + size_int_type;
@@ -335,12 +335,12 @@ void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
 
   assert(idxvec->num_indices <= INT_MAX);
 
-  mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
+  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
-  mpi_err_handler(MPI_Pack(&(idxvec->num_indices), 1, Xt_count_dt, buffer,
+  xt_mpi_call(MPI_Pack(&(idxvec->num_indices), 1, Xt_count_dt, buffer,
                            buffer_size, position, comm), comm);
   if (idxvec->num_indices != 0)
-    mpi_err_handler(MPI_Pack(idxvec->vector, idxvec->num_indices,
+    xt_mpi_call(MPI_Pack(idxvec->vector, idxvec->num_indices,
                              Xt_idx_dt, buffer,
                              buffer_size, position, comm), comm);
 }
@@ -355,7 +355,7 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 
    idxvec->vtable = &idxvec_vtable;
 
-   mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                               &num_indices, 1, Xt_count_dt, comm), comm);
    assert(num_indices >= 0);
    idxvec->num_indices = num_indices;
@@ -363,7 +363,7 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
    if (num_indices != 0) {
 
       idxvec->vector = xmalloc(idxvec->num_indices * sizeof(*(idxvec->vector)));
-      mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+      xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                                  idxvec->vector, num_indices,
                                  Xt_idx_dt, comm),comm);
    } else {

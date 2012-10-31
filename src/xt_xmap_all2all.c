@@ -39,7 +39,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   unsigned i;
   int comm_size;
 
-  mpi_err_handler(MPI_Comm_size(comm, &comm_size), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   // compute size of local index lists
   long long src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, comm);
@@ -66,7 +66,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
   recv_buffer_header = xmalloc(comm_size * sizeof(*recv_buffer_header));
 
-  mpi_err_handler(MPI_Allgather(&send_buffer_header, 1, MPI_INT,
+  xt_mpi_call(MPI_Allgather(&send_buffer_header, 1, MPI_INT,
                                 recv_buffer_header, 1, MPI_INT, comm), comm);
 
   void * recv_buffer;
@@ -86,7 +86,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   recv_buffer = xmalloc(recv_buffer_size);
 
   // exchange buffers
-  mpi_err_handler(MPI_Allgatherv(send_buffer, send_buffer_size, MPI_PACKED,
+  xt_mpi_call(MPI_Allgatherv(send_buffer, send_buffer_size, MPI_PACKED,
                                  recv_buffer, recv_buffer_header, displ,
                                  MPI_PACKED, comm), comm);
 
@@ -158,7 +158,7 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
 
   MPI_Comm curr_comm;
 
-  mpi_err_handler(MPI_Comm_dup(comm, &curr_comm), comm);
+  xt_mpi_call(MPI_Comm_dup(comm, &curr_comm), comm);
 
   Xt_idxlist * src_intersections = NULL, * dst_intersections = NULL;
   int * src_ranks = NULL, * dst_ranks = NULL;

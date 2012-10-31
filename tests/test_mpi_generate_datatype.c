@@ -17,7 +17,7 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
 
 
   //datatype
-  mpi_err_handler( MPI_Sendrecv(send_data, 1, datatype, 0, 0, recv_data, recv_count, MPI_INT,
+  xt_mpi_call( MPI_Sendrecv(send_data, 1, datatype, 0, 0, recv_data, recv_count, MPI_INT,
                                 0, 0, MPI_COMM_WORLD, &status),
                    MPI_COMM_WORLD);
 
@@ -38,13 +38,13 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
   MPI_Status    status;
   MPI_Request request;
 
-  mpi_err_handler( MPI_Irecv(recv_data, recv_count, MPI_INT, 0, 0, MPI_COMM_WORLD, &request),
+  xt_mpi_call( MPI_Irecv(recv_data, recv_count, MPI_INT, 0, 0, MPI_COMM_WORLD, &request),
                    MPI_COMM_WORLD);
 
-  mpi_err_handler( MPI_Send(send_data, 1, datatype, 0, 0, MPI_COMM_WORLD),
+  xt_mpi_call( MPI_Send(send_data, 1, datatype, 0, 0, MPI_COMM_WORLD),
                    MPI_COMM_WORLD);
 
-  mpi_err_handler( MPI_Wait(&request, &status),
+  xt_mpi_call( MPI_Wait(&request, &status),
                    MPI_COMM_WORLD);
 
   for (int i = 0; i < recv_count; ++i)
@@ -60,7 +60,7 @@ int main(void) {
 
   // init mpi
 
-  mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
 

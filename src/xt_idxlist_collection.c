@@ -132,8 +132,8 @@ size_t idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
    size_t size_idxlists = 0;
    unsigned i;
 
-   mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int), comm);
-   mpi_err_handler(MPI_Pack_size(1, MPI_UNSIGNED, comm, &size_unsigned), comm);
+   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int), comm);
+   xt_mpi_call(MPI_Pack_size(1, MPI_UNSIGNED, comm, &size_unsigned), comm);
 
    for (i = 0; i < collectionlist->num_idxlists; ++i)
       size_idxlists += xt_idxlist_get_pack_size(collectionlist->idxlists[i], comm);
@@ -147,9 +147,9 @@ void idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size, int
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)data;
    int type = COLLECTION;
 
-   mpi_err_handler(MPI_Pack(&(type), 1, MPI_INT, buffer,
+   xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
                             buffer_size, position, comm), comm);
-   mpi_err_handler(MPI_Pack(&(collectionlist->num_idxlists), 1, MPI_UNSIGNED, buffer,
+   xt_mpi_call(MPI_Pack(&(collectionlist->num_idxlists), 1, MPI_UNSIGNED, buffer,
                             buffer_size, position, comm), comm);
 
    unsigned i;
@@ -169,7 +169,7 @@ Xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *posi
    collectionlist->index_num_cache = -1;
    collectionlist->index_array_cache = NULL;
 
-   mpi_err_handler(MPI_Unpack(buffer, buffer_size, position,
+   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                               &(collectionlist->num_idxlists), 1, MPI_UNSIGNED, comm),
                    comm);
 

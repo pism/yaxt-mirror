@@ -7,32 +7,26 @@
 #include "xt/xt_mpi.h"
 
 //taken from http://beige.ucs.indiana.edu/I590/node85.html
-void mpi_err_handler(int error_code, MPI_Comm comm) {
+void xt_mpi_error(int error_code, MPI_Comm comm) {
+  int rank;
+  MPI_Comm_rank(comm, &rank);
 
+  char error_string[1024];
+  int length_of_error_string, error_class;
 
-   if (error_code != MPI_SUCCESS) {
-
-      int rank;
-
-      MPI_Comm_rank(comm, &rank);
-
-      char error_string[1024];
-      int length_of_error_string, error_class;
-
-      MPI_Error_class(error_code, &error_class);
-      MPI_Error_string(error_class, error_string, &length_of_error_string);
-      fprintf(stderr, "%3d: %s\n", rank, error_string);
-      MPI_Error_string(error_code, error_string, &length_of_error_string);
-      fprintf(stderr, "%3d: %s\n", rank, error_string);
-      MPI_Abort(comm, error_code);
-   }
+  MPI_Error_class(error_code, &error_class);
+  MPI_Error_string(error_class, error_string, &length_of_error_string);
+  fprintf(stderr, "%3d: %s\n", rank, error_string);
+  MPI_Error_string(error_code, error_string, &length_of_error_string);
+  fprintf(stderr, "%3d: %s\n", rank, error_string);
+  MPI_Abort(comm, error_code);
 }
 
 static MPI_Datatype copy_mpi_datatype(MPI_Datatype old_type, MPI_Comm comm) {
 
   MPI_Datatype datatype;
 
-  mpi_err_handler(MPI_Type_dup(old_type, &datatype), comm);
+  xt_mpi_call(MPI_Type_dup(old_type, &datatype), comm);
 
   return datatype;
 }
@@ -42,9 +36,9 @@ gen_mpi_datatype_simple(int displacement, MPI_Datatype old_type, MPI_Comm comm)
 {
   MPI_Datatype datatype;
 
-  mpi_err_handler(MPI_Type_create_indexed_block(1, 1, &displacement, old_type,
+  xt_mpi_call(MPI_Type_create_indexed_block(1, 1, &displacement, old_type,
                                                 &datatype), comm);
-  mpi_err_handler(MPI_Type_commit(&datatype), comm);
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   return datatype;
 }
@@ -56,14 +50,14 @@ gen_mpi_datatype_contiguous(int displacement, int blocklength,
   MPI_Datatype datatype;
 
   if (displacement == 0)
-    mpi_err_handler(MPI_Type_contiguous(blocklength, old_type, &datatype),
+    xt_mpi_call(MPI_Type_contiguous(blocklength, old_type, &datatype),
                     comm);
   else
-    mpi_err_handler(MPI_Type_create_indexed_block(1, blocklength,
+    xt_mpi_call(MPI_Type_create_indexed_block(1, blocklength,
                                                   &displacement, old_type,
                                                   &datatype), comm);
 
-  mpi_err_handler(MPI_Type_commit(&datatype), comm);
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   return datatype;
 
@@ -75,7 +69,7 @@ gen_mpi_datatype_vector(int stride, int blocklength, int count,
 
   MPI_Datatype datatype;
 
-  mpi_err_handler(MPI_Type_vector(count, blocklength, stride, old_type,
+  xt_mpi_call(MPI_Type_vector(count, blocklength, stride, old_type,
                                   &datatype), comm);
   if (offset != 0) {
 
@@ -83,18 +77,18 @@ gen_mpi_datatype_vector(int stride, int blocklength, int count,
     int blocklength = 1;
     MPI_Aint old_type_size, old_type_lb;
 
-    mpi_err_handler(MPI_Type_get_extent(old_type, &old_type_lb,
+    xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
                                         &old_type_size), comm);
 
     MPI_Aint displacement = offset * old_type_size;
 
-    mpi_err_handler(MPI_Type_create_hindexed(1, &blocklength, &displacement,
+    xt_mpi_call(MPI_Type_create_hindexed(1, &blocklength, &displacement,
                                              datatype, &datatype_),
                     comm);
-    mpi_err_handler(MPI_Type_free(&datatype), comm);
+    xt_mpi_call(MPI_Type_free(&datatype), comm);
     datatype = datatype_;
   }
-  mpi_err_handler(MPI_Type_commit(&datatype), comm);
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   return datatype;
 }
@@ -105,10 +99,10 @@ gen_mpi_datatype_indexed_block(int const * displacements, int blocklength,
 {
   MPI_Datatype datatype;
 
-  mpi_err_handler(MPI_Type_create_indexed_block(count, blocklength,
+  xt_mpi_call(MPI_Type_create_indexed_block(count, blocklength,
                                                 (void *)displacements,
                                                 old_type, &datatype), comm);
-  mpi_err_handler(MPI_Type_commit(&datatype), comm);
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   return datatype;
 }
@@ -119,9 +113,9 @@ gen_mpi_datatype_indexed(int const * displacements, int * blocklengths,
 
   MPI_Datatype datatype;
 
-  mpi_err_handler(MPI_Type_indexed(count, blocklengths, (void*)displacements,
+  xt_mpi_call(MPI_Type_indexed(count, blocklengths, (void*)displacements,
                                    old_type, &datatype), comm);
-  mpi_err_handler(MPI_Type_commit(&datatype), comm);
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   return datatype;
 }

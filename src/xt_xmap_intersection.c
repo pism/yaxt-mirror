@@ -197,7 +197,7 @@ Xt_xmap xt_xmap_intersection_new(Xt_idxlist * src_intersections, int * src_ranks
 
   xmap->vtable = &xmap_intersection_vtable;
 
-  mpi_err_handler(MPI_Comm_dup(comm, &(xmap->comm)), comm);
+  xt_mpi_call(MPI_Comm_dup(comm, &(xmap->comm)), comm);
 
   // generate exchange lists
   generate_transfer_pos(xmap, src_intersections, src_ranks, num_src_intersections,
@@ -240,7 +240,7 @@ static void xmap_intersection_delete(Xt_xmap xmap) {
   free(xmap_intersection->dst_msg);
   free(xmap_intersection->src_msg);
 
-  mpi_err_handler(MPI_Comm_free(&(xmap_intersection->comm)), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Comm_free(&(xmap_intersection->comm)), MPI_COMM_WORLD);
   free(xmap_intersection);
 }
 

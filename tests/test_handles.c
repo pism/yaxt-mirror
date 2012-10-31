@@ -9,7 +9,7 @@ int main(void) {
   int handle[hsize];
   int state[hsize];
 
-  mpi_err_handler(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
   xt_initialize(MPI_COMM_WORLD);
 
   for (int i = 0; i<hsize; i++) {
