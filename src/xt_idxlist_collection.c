@@ -110,7 +110,8 @@ Xt_idxlist xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists
    return (Xt_idxlist)collectionlist;
 }
 
-void idxlist_collection_delete(Xt_idxlist data) {
+static void
+idxlist_collection_delete(Xt_idxlist data) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)data;
 
@@ -124,7 +125,8 @@ void idxlist_collection_delete(Xt_idxlist data) {
    free(collectionlist);
 }
 
-size_t idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
+static size_t
+idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)data;
 
@@ -141,8 +143,9 @@ size_t idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
    return size_int + size_unsigned + size_idxlists;
 }
 
-void idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size, int *position,
-                             MPI_Comm comm) {
+static void
+idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size,
+                        int *position, MPI_Comm comm) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)data;
    int type = COLLECTION;
@@ -185,13 +188,15 @@ Xt_idxlist xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *posi
    return (Xt_idxlist)collectionlist;
 }
 
-Xt_idxlist idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
-                                               Xt_idxlist idxlist_dst) {
+static Xt_idxlist
+idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
+                                    Xt_idxlist idxlist_dst) {
 
    return NULL;
 }
 
-Xt_idxlist idxlist_collection_copy(Xt_idxlist idxlist) {
+static Xt_idxlist
+idxlist_collection_copy(Xt_idxlist idxlist) {
 
    struct xt_idxlist_collection *collectionlist = (struct xt_idxlist_collection*)idxlist;
 
