@@ -235,7 +235,7 @@ idxstripes_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   struct xt_idxstripes *stripes = (struct xt_idxstripes*)data;
 
-  int size_int_type, size_unsigned, size_stripes;
+  int size_int_type, size_unsigned, size_stripes =  0;
 
   mpi_err_handler(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
   mpi_err_handler(MPI_Pack_size(1, Xt_count_dt, comm, &size_unsigned), comm);
