@@ -134,25 +134,20 @@ static int compare_xtstripes(const void * a, const void * b)
 
 static void generate_stripes_sorted(struct xt_idxstripes * stripes) {
 
-  stripes->stripes_sorted
-    = xmalloc(stripes->num_stripes * sizeof(*(stripes->stripes_sorted)));
+  struct Xt_stripe *sp = stripes->stripes_sorted
+    = xmalloc(stripes->num_stripes * sizeof (*sp));
 
-  memcpy(stripes->stripes_sorted, stripes->stripes,
-         stripes->num_stripes * sizeof(*(stripes->stripes_sorted)));
+  memcpy(sp, stripes->stripes, stripes->num_stripes * sizeof (*sp));
 
   Xt_count i;
 
   for (i = 0; i < stripes->num_stripes; ++i)
-    if (stripes->stripes_sorted[i].stride < 0) {
-
-      stripes->stripes_sorted[i].start = stripes->stripes_sorted[i].start +
-                                         (stripes->stripes_sorted[i].nstrides-1) *
-                                         stripes->stripes_sorted[i].stride;
-      stripes->stripes_sorted[i].stride = -stripes->stripes_sorted[i].stride;
+    if (sp[i].stride < 0) {
+      sp[i].start = sp[i].start + (sp[i].nstrides-1) * sp[i].stride;
+      sp[i].stride = -sp[i].stride;
     }
 
-  qsort(stripes->stripes_sorted, stripes->num_stripes,
-        sizeof(*(stripes->stripes_sorted)), compare_xtstripes);
+  qsort(sp, stripes->num_stripes, sizeof (*sp), compare_xtstripes);
 }
 
 static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
