@@ -73,3 +73,11 @@ all-local: xtinclude_Makefile.inc
 clean-local:
 	-rm -f *.$(FCMODEXT) i.*.L
 
+install-exec-local:
+	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"
+	$(install_sh_DATA) pkgconfig/yaxt.pc \
+		"$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
+
+uninstall-local:
+	rm -f "$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
+	-rmdir "$(DESTDIR)$(libdir)/pkgconfig"

@@ -159,6 +159,6 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\
         scripts/header2installheader.pl                         \
 	util/serialrun],[chmod a+x "$ac_file"])
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
-  inst_headers/Makefile scripts/cpp.pm])
+  inst_headers/Makefile scripts/cpp.pm src/pkgconfig/yaxt.pc])
 
 AC_OUTPUT
