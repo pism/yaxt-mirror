@@ -714,7 +714,7 @@ idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
 
     if (rel_start%stripes->stripes[i].stride) continue;
 
-    if (rel_start/stripes->stripes[i].stride > stripes->stripes[i].nstrides)
+    if (rel_start/stripes->stripes[i].stride >= stripes->stripes[i].nstrides)
       continue;
 
     *position = rel_start/stripes->stripes[i].stride + position_offset;
