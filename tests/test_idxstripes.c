@@ -619,6 +619,22 @@ int main(void) {
    xt_idxlist_delete(idxlist);
  };
 
+  { // test with overlapping stripes
+    Xt_idxlist idxstripes;
+
+    struct Xt_stripe stripes[2] = {{0,5,1},{1,5,1}};
+    Xt_count num_stripes = 2;
+
+    idxstripes = xt_idxstripes_new(stripes, num_stripes);
+
+    Xt_idx ref_indices[10] = {0,1,2,3,4, 1,2,3,4,5};
+    Xt_count ref_num_indices = 10;
+
+    do_tests(idxstripes, ref_indices, ref_num_indices);
+
+    xt_idxlist_delete(idxstripes);
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
@@ -713,5 +729,4 @@ do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
 
     xt_idxlist_delete(idxlist_copy);
   }
-
 }

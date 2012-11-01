@@ -694,14 +694,25 @@ static int
 idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
                                  int * position) {
 
+  return idxstripes_get_position_of_index_off(idxlist, index, position, 0);
+}
+
+static int
+idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
+                                     int * position, int offset) {
+
   struct xt_idxstripes *stripes;
 
   stripes = (struct xt_idxstripes*)idxlist;
 
-  Xt_count i;
+  Xt_count i = 0;
   Xt_count position_offset = 0;
 
-  for (i = 0; i < stripes->num_stripes;
+  while(i < stripes->num_stripes &&
+        position_offset + stripes->stripes[i].nstrides <= offset)
+    position_offset += stripes->stripes[i++].nstrides;
+
+  for (; i < stripes->num_stripes;
        position_offset += stripes->stripes[i++].nstrides) {
 
     if ((stripes->stripes[i].stride > 0 && index < stripes->stripes[i].start) ||
@@ -723,23 +734,6 @@ idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
   }
 
   return 1;
-}
-
-static int
-idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
-                                     int * position, int offset) {
-
-  int temp_position;
-
-  if (idxstripes_get_position_of_index(idxlist, index, &temp_position))
-    return 1;
-
-  if (temp_position < offset)
-    return 1;
-
-  *position = temp_position;
-
-  return 0;
 }
 
 static Xt_idx
