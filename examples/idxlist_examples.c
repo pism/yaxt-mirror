@@ -81,6 +81,42 @@ int main(void) {
     xt_idxlist_delete(idxcollection);
   }
 
+  {
+    //![index list modifier example]
+    Xt_idx start = 0;
+    unsigned num_dimensions = 2;
+    unsigned global_size[2] = {5,10};
+    unsigned local_size[2] = {3,3};
+    unsigned local_start[2] = {2,0};
+
+    Xt_idxlist source_list = xt_idxsection_new(start, num_dimensions, global_size,
+                                               local_size, local_start);
+    
+    struct Xt_stripe extract_stripes[2] = {{.start = 0, .nstrides = 5, .stride = 10},
+                                           {.start = 9, .nstrides = 5, .stride = 10}};
+    struct Xt_stripe substitute_stripes[2] = {{.start = 8, .nstrides = 5, .stride = 10},
+                                              {.start = 1, .nstrides = 5, .stride = 10}};
+    struct Xt_modifier modifier[] = {{.extract = xt_idxstripes_new(extract_stripes, 2),
+                                      .subst   = xt_idxstripes_new(substitute_stripes, 2)}};
+    int num_modifier = sizeof(modifier) / sizeof(modifier[0]);
+
+    Xt_idxlist target_list = xt_idxmod_new(source_list, modifier, num_modifier, NULL);
+    //![index list modifier example]
+
+    puts("index modifier example:");
+    puts("    source_list:");
+    print_index_list(source_list);
+    puts("    target_list:");
+    print_index_list(target_list);
+
+    for (int i = 0; i < num_modifier; ++i) {
+      xt_idxlist_delete(modifier[i].extract);
+      xt_idxlist_delete(modifier[i].subst);
+    }
+    xt_idxlist_delete(source_list);
+    xt_idxlist_delete(target_list);
+  }
+
   return 0;
 }
 
