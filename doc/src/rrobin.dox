@@ -9,12 +9,7 @@
   First of all include the basic header files:
 
   \skip mpi.h
-  \until xt_mpi.h
-  
-  Depending on what we need next, we will include some more yaxt headers.
-
-  \skip xt_xmap_all2all.h
-  \until xt_idxstripes.h
+  \until yaxt.h
 
   We need to initialize MPI and yaxt as follows:
 
