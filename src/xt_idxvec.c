@@ -688,42 +688,48 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * sele
   search_start = 0;
   last_isel = sorted_selection[0];
   for (int i=0; i<num_selection; i++) {
-    isel = sorted_selection[i];
-    assert(isel >= last_isel);
+    if (search_start<=search_end) {
 
-    // bisection to find one matching position:
-    lb = search_start;
-    ub = search_end;
-    while (ub-lb>1) {
-      int middle = (ub + lb + 1) / 2;
-      if (sorted_body[middle] <= isel)
-        lb = middle;
-      else
-        ub = middle;
-    }
+      isel = sorted_selection[i];
+      assert(isel >= last_isel);
+      // bisection to find one matching position:
+      lb = search_start;
+      ub = search_end;
+      while (ub-lb>1) {
+        int middle = (ub + lb + 1) / 2;
+        if (sorted_body[middle] <= isel)
+          lb = middle;
+        else
+          ub = middle;
+      }
 
-    // search is now narrowed to two positions, select one of them:
-    if (isel == sorted_body[lb]) {
-      match_pos = lb;
-    } else if (isel == sorted_body[ub]){
-      match_pos = ub;
-    } else {
-      match_pos = -1;
-      num_unmatched++;
-    }
-
-    if (match_pos>0) {
-      // find left most match >= search_start (bisection can lead to any match >= search_start)
-      while (match_pos > search_start && sorted_body[match_pos-1] == isel) match_pos--;
-    }
-
-    if (match_pos>=0) {
-      /// \todo Do we really need this check?
-      // check (again?) if position is invalid:
-      if (sorted_body[match_pos] != isel) {
+      // search is now narrowed to two positions, select one of them:
+      if (isel == sorted_body[lb]) {
+        match_pos = lb;
+      } else if (isel == sorted_body[ub]){
+        match_pos = ub;
+      } else {
         match_pos = -1;
         num_unmatched++;
       }
+
+      if (match_pos>0) {
+        // find left most match >= search_start (bisection can lead to any match >= search_start)
+        while (match_pos > search_start && sorted_body[match_pos-1] == isel) match_pos--;
+      }
+
+      if (match_pos>=0) {
+        /// \todo Do we really need this check?
+        // check (again?) if position is invalid:
+        if (sorted_body[match_pos] != isel) {
+          match_pos = -1;
+          num_unmatched++;
+        }
+      }
+
+    } else {
+      match_pos = -1;
+      num_unmatched++;
     }
 
     // result:
