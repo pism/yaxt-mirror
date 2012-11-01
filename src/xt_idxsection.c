@@ -6,7 +6,10 @@
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxsection.h"
 #include "xt/xt_mpi.h"
+#include "xt/mergesort.h"
 #include "core/ppm_xfuncs.h"
+#include "core/core.h"
+
 
 static void
 idxsection_delete(Xt_idxlist data);
@@ -48,6 +51,10 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
 static int
 idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
                                      int * position, int offset);
+static int
+idxsection_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * selection_idx,
+                                    Xt_count num_selection, int * positions,
+                                    int single_match_only);
 
 static Xt_idx
 idxsection_get_min_index(Xt_idxlist idxlist);
@@ -68,9 +75,8 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .get_index_at_position       = idxsection_get_index_at_position,
               .get_indices_at_positions    = NULL,
               .get_position_of_index       = idxsection_get_position_of_index,
-              .get_positions_of_indices    = NULL,
-              .get_position_of_index_off
-              = idxsection_get_position_of_index_off,
+              .get_positions_of_indices    = idxsection_get_positions_of_indices,
+              .get_position_of_index_off   = idxsection_get_position_of_index_off,
               .get_positions_of_indices_off = NULL,
               .get_min_index               = idxsection_get_min_index,
               .get_max_index               = idxsection_get_max_index};
@@ -542,6 +548,49 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
   *position = temp_position;
 
   return 0;
+}
+
+int idxsection_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * selection_idx,
+                                        Xt_count num_selection, int * positions,
+                                        int single_match_only) {
+
+  if (num_selection<1) return 0; //nothing to do
+
+  int num_unmatched = 0;
+
+  if (!single_match_only) {
+    // this is the easy case, we don't care about multiple uses of the same position
+    for (Xt_count i = 0; i < num_selection; ++i)
+      num_unmatched += idxsection_get_position_of_index(body_idxlist, selection_idx[i],
+                                                        &positions[i]);
+    return num_unmatched;
+  }
+
+  // the remaining (single_match_only) case follows:
+  idxpos_type *v;
+  v = xmalloc(num_selection * sizeof(*v) );
+  for (int i=0; i<num_selection; i++) {
+    v[i].idx = selection_idx[i];
+    v[i].pos = i;
+  }
+  xt_mergesort_idxpos(v, num_selection);
+  int last_jx = v[0].idx - 1; // any index that is not equal v[0].idx will do
+  for (int i=0; i<num_selection; i++) {
+    int j = v[i].pos;
+    int jx = v[i].idx;
+    if (jx != last_jx) {
+      num_unmatched += idxsection_get_position_of_index(body_idxlist, jx, &positions[j]);
+      last_jx = jx;
+    } else {
+      // for an idxsection there is a unique map from indices to positions,
+      // we got the same index again, so there is no match left:
+      positions[j] = -1;
+      num_unmatched++;
+    }
+  }
+  free(v);
+  return num_unmatched;
+
 }
 
 static int
