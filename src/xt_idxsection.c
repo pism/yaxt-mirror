@@ -553,7 +553,7 @@ idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
   section = (struct xt_idxsection*)idxlist;
 
   int temp_position;
-
+  // we make use of the uniqueness of the index-to-position relation:
   if (idxsection_get_position_of_index(idxlist, index, &temp_position))
     return 1;
 

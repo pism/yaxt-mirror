@@ -673,25 +673,27 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * sele
   body_idxvec = (struct xt_idxvec *)body_idxlist;
   Xt_idx *sorted_body = get_sorted_vector(body_idxvec);
   int *sorted_body_pos = body_idxvec->sorted_vec_positions;
-  int body_num = body_idxvec->num_indices;
-
+  int search_end = body_idxvec->num_indices -1;
+  int num_unmatched = 0;
+  int match_pos;
   Xt_idx isel, last_isel;
-  int lb_start, post_match_step, lb, ub;
+  int search_start, post_match_step, lb, ub;
 
   if (single_match_only)
+    // after the match we will move on one step in order to avoid matching the same position again
     post_match_step = 1;
   else
     post_match_step = 0;
 
-  lb_start = 0;
+  search_start = 0;
   last_isel = sorted_selection[0];
   for (int i=0; i<num_selection; i++) {
     isel = sorted_selection[i];
     assert(isel >= last_isel);
 
     // bisection to find one matching position:
-    lb = lb_start;
-    ub = body_num - 1;
+    lb = search_start;
+    ub = search_end;
     while (ub-lb>1) {
       int middle = (ub + lb + 1) / 2;
       if (sorted_body[middle] <= isel)
@@ -701,17 +703,28 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * sele
     }
 
     // search is now narrowed to two positions, select one of them:
-    if (isel == sorted_body[ub]) {
-      lb = ub;
+    if (isel == sorted_body[lb]) {
+      match_pos = lb;
+    } else if (isel == sorted_body[ub]){
+      match_pos = ub;
     } else {
-      if (isel != sorted_body[lb]) return 1; // no match
+      match_pos = -1;
+      num_unmatched++;
     }
 
-    // find left most match >= lb_start
-    while (lb > lb_start && sorted_body[lb-1] == isel) lb--;
+    if (match_pos>0) {
+      // find left most match >= search_start (bisection can lead to any match >= search_start)
+      while (match_pos > search_start && sorted_body[match_pos-1] == isel) match_pos--;
+    }
 
-    // check if position is invalid:
-    if (sorted_body[lb] != isel) return 1; // failure
+    if (match_pos>=0) {
+      /// \todo Do we really need this check?
+      // check (again?) if position is invalid:
+      if (sorted_body[match_pos] != isel) {
+        match_pos = -1;
+        num_unmatched++;
+      }
+    }
 
     // result:
     int j;
@@ -719,16 +732,21 @@ int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * sele
       j = i;
     else
       j = sorted_selection_pos[i];
-    positions[j] = sorted_body_pos[lb];
 
-    // prepare next search:
-    lb_start = lb + post_match_step;
+    // update positions and prepare next search:
+    if (match_pos >= 0) {
+      positions[j] = sorted_body_pos[match_pos];
+      search_start = match_pos + post_match_step;
+    } else {
+      positions[j] = -1;
+    }
+
   }
 
   if (tmp_idx) free(tmp_idx);
   if (sorted_selection_pos) free(sorted_selection_pos);
 
-  return 0;
+  return num_unmatched;
 }
 
 static Xt_idx

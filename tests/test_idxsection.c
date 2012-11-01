@@ -6,6 +6,7 @@
 
 #include "core/ppm_xfuncs.h"
 
+#define VERBOSE
 #include "tests.h"
 #include "test_idxlist_utils.h"
 
@@ -270,6 +271,103 @@ int main(void) {
     xt_idxlist_delete(idxsection);
   }
 
+  {
+    // check get_positions_of_indices
+
+    Xt_idx start = 0;
+    unsigned num_dimensions = 2;
+    unsigned global_size[2] = {4,4};
+    unsigned local_size [2] = {2,2};
+    unsigned local_start[2] = {0,2};
+
+    Xt_idxlist idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // we have indices = {2,3,6,7}
+    Xt_idx selection[] = {1,2,5,6,7,8};
+    int num_selection = sizeof(selection) / sizeof(*selection);
+
+    int positions[num_selection];
+    int ref_positions[] = {1*0-1, 2*0+0, 5*0-1, 6*0+2, 7*0+3, 8*0-1};
+
+    if (xt_idxlist_get_positions_of_indices(idxsection, selection, num_selection, positions, 0) != 3)
+      PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
+
+    for (int i=0; i<num_selection; i++) {
+      if (positions[i] != ref_positions[i])
+        PUT_ERR("xt_idxlist_get_position_of_indices did not return correct position\n");
+    }
+
+    xt_idxlist_delete(idxsection);
+  }
+
+  {
+    // check get_positions_of_indices with single_match_only = 0
+
+    Xt_idx start = 0;
+    unsigned num_dimensions = 2;
+    unsigned global_size[2] = {4,4};
+    unsigned local_size [2] = {2,2};
+    unsigned local_start[2] = {0,2};
+
+    Xt_idxlist idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // we have indices = {2,3,6,7}
+    Xt_idx selection[] = {2,1,5,7,6,7,7,6,8};
+    int num_selection = sizeof(selection) / sizeof(*selection);
+
+    int positions[num_selection];
+    int ref_positions[] = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0+3, 7*0+3, 6*0+2, 8*0-1};
+    int single_match_only = 0;
+
+    if (xt_idxlist_get_positions_of_indices(idxsection, selection, num_selection, positions, single_match_only) != 3)
+      PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
+
+    for (int i=0; i<num_selection; i++) {
+      int p;
+      int unmatch = xt_idxlist_get_position_of_index(idxsection, selection[i], &p);
+      if (p != ref_positions[i])
+        PUT_ERR("xt_idxlist_get_position_of_index did not return correct position\n");
+      if (positions[i] != ref_positions[i])
+        PUT_ERR("xt_idxlist_get_positions_of_indices did not return correct position\n");
+    }
+
+    xt_idxlist_delete(idxsection);
+  }
+
+  {
+    // check get_positions_of_indices with single_match_only = 1
+
+    Xt_idx start = 0;
+    unsigned num_dimensions = 2;
+    unsigned global_size[2] = {4,4};
+    unsigned local_size [2] = {2,2};
+    unsigned local_start[2] = {0,2};
+
+    Xt_idxlist idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // we have indices = {2,3,6,7}
+    Xt_idx selection[] = {2,1,5,7,6,7,7,6,8};
+    int num_selection = sizeof(selection) / sizeof(*selection);
+
+    int positions[num_selection];
+    int ref_positions[] = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
+    int single_match_only = 1;
+
+    if (xt_idxlist_get_positions_of_indices(idxsection, selection, num_selection, positions, single_match_only) != 6)
+      PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
+
+    for (int i=0; i<num_selection; i++) {
+      if (positions[i] != ref_positions[i])
+        PUT_ERR("xt_idxlist_get_positions_of_indices did not return correct position\n");
+    }
+
+    xt_idxlist_delete(idxsection);
+  }
+
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
@@ -360,6 +458,7 @@ do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
 
     xt_idxlist_delete(idxlist_copy);
   }
+
 }
 
 static void
