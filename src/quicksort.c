@@ -144,9 +144,9 @@ void xt_quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
 
   /*  Initialization */
   int *v_pos_orig =  v_pos;
-  if (!v_pos) {
-    v_pos = malloc ( n  * sizeof(v_pos[0]) );
-  }
+
+  if (!v_pos) v_pos = malloc ( n  * sizeof(v_pos[0]) );
+
   if (v_pos != v_pos_orig || reset_pos) {
     for(i=0; i<n; i++) {
       v_pos[i] = i;
