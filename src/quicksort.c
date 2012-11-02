@@ -26,7 +26,7 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
   int i, j, k, l, r, s;
   idxpos_type w, x;
- 
+
   /*  Initialization */
 
   pointer_size = pointer_inc;
@@ -139,19 +139,17 @@ void xt_quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
   int * stackr;
 
   int i, j, k, l, r, s;
-  int *pos;
   Xt_idx w_idx, x_idx;
   int w_pos, x_pos;
 
   /*  Initialization */
-  if (v_pos) {
-    pos = v_pos;
-  } else {
-    pos = malloc ( n  * sizeof(pos[0]) );
+  int *v_pos_orig =  v_pos;
+  if (!v_pos) {
+    v_pos = malloc ( n  * sizeof(v_pos[0]) );
   }
-  if (pos != v_pos || reset_pos) {
+  if (v_pos != v_pos_orig || reset_pos) {
     for(i=0; i<n; i++) {
-      pos[i] = i;
+      v_pos[i] = i;
     }
   }
 
@@ -259,6 +257,6 @@ void xt_quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
 
   free(stackl);
   free(stackr);
-  if (pos != v_pos) free(pos);
+  if (v_pos != v_pos_orig) free(v_pos);
 }
 
