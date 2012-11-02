@@ -11,7 +11,6 @@ static void insertionsort_index(Xt_idx *val, int n, int *pos, int reset_pos);
 static void insertionsort_idxpos(idxpos_type *w, int n) {
 
   int i, j;
-  //fprintf(stderr,"mergesort_idxpos: n=%d\n",n);
   for(i = 1; i < n; i++) {
 
     idxpos_type tw = w[i];
@@ -26,26 +25,44 @@ static void insertionsort_idxpos(idxpos_type *w, int n) {
 static void insertionsort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
 
   int i, j;
-  //fprintf(stderr,"insertionsort_index: n=%d, reset_pos=%d\n",n, reset_pos);
-  if (reset_pos) {
-    for(i = 0; i < n; i++) {
-      pos[i]=i;
-    }
-  }
 
-  for(i = 1; i < n; i++) {
+  if (pos != NULL) {
 
-    Xt_idx tv = val[i];
-    int tp = pos[i];
-
-    for(j = i;  j > 0 && val[j-1] > tv; j--) {
-      val[j] = val[j-1];
-      pos[j] = pos[j-1];
+    if (reset_pos) {
+      for(i = 0; i < n; i++) {
+        pos[i]=i;
+      }
     }
 
-    val[j] = tv;
-    pos[j] = tp;
+    for(i = 1; i < n; i++) {
+
+      Xt_idx tv = val[i];
+      int tp = pos[i];
+
+      for(j = i;  j > 0 && val[j-1] > tv; j--) {
+        val[j] = val[j-1];
+        pos[j] = pos[j-1];
+      }
+
+      val[j] = tv;
+      pos[j] = tp;
+    }
+
+  } else {
+
+    for(i = 1; i < n; i++) {
+
+      Xt_idx tv = val[i];
+
+      for(j = i;  j > 0 && val[j-1] > tv; j--) {
+        val[j] = val[j-1];
+      }
+
+      val[j] = tv;
+    }
+
   }
+
 }
 
 static inline void
@@ -82,7 +99,7 @@ void my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int
 
   int n = ub - lb + 1;
   if (n<2) return;
-  //fprintf(stderr,"mergesort_idxpos: lb=%d, ub=%d\n",lb, ub);
+
   if (n<9) {
     insertionsort_idxpos(&v[lb],n);
     return;
@@ -127,7 +144,6 @@ void xt_mergesort_idxpos(idxpos_type * restrict v, int n)
 
 }
 
-
 void xt_mergesort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
 
   // insertion sort for few elements:
@@ -142,7 +158,7 @@ void xt_mergesort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
   v = malloc ( n * sizeof(v[0]));
   w = malloc ( n * sizeof(w[0]));
 
-  if (reset_pos) {
+  if (reset_pos || pos == NULL) {
     for(int i=0; i<n; i++) {
       v[i].idx = val[i];
       v[i].pos = i;
@@ -155,10 +171,15 @@ void xt_mergesort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
   }
 
   my_mergesort_idxpos(v,w, 0, n-1);
-
-  for(int i=0; i<n; i++) {
-    val[i] = v[i].idx;
-    pos[i] = v[i].pos;
+  if (pos) {
+    for(int i=0; i<n; i++) {
+      val[i] = v[i].idx;
+      pos[i] = v[i].pos;
+    }
+  } else {
+    for(int i=0; i<n; i++) {
+      val[i] = v[i].idx;
+    }
   }
 
   free(w);
