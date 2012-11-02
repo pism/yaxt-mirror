@@ -10,6 +10,7 @@
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_mpi.h"
 #include "core/ppm_xfuncs.h"
+#include "core/core.h"
 #include "xt/quicksort.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -762,6 +763,8 @@ idxvec_get_min_index(Xt_idxlist idxlist) {
 
   idxvec_data = (struct xt_idxvec *)idxlist;
 
+  if (!idxvec_data->num_indices) die("idxvec_get_min_index: empty index vector");
+
   return get_sorted_vector(idxvec_data)[0];
 }
 
@@ -771,6 +774,8 @@ idxvec_get_max_index(Xt_idxlist idxlist) {
   struct xt_idxvec *idxvec_data;
 
   idxvec_data = (struct xt_idxvec *)idxlist;
+
+  if (!idxvec_data->num_indices) die("idxvec_get_max_index: empty index vector");
 
   return get_sorted_vector(idxvec_data)[idxvec_data->num_indices-1];
 }
