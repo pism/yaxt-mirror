@@ -326,7 +326,9 @@ int main(void) {
 
     for (int i=0; i<num_selection; i++) {
       int p;
-      int unmatch = xt_idxlist_get_position_of_index(idxsection, selection[i], &p);
+
+      xt_idxlist_get_position_of_index(idxsection, selection[i], &p);
+
       if (p != ref_positions[i])
         PUT_ERR("xt_idxlist_get_position_of_index did not return correct position\n");
       if (positions[i] != ref_positions[i])
