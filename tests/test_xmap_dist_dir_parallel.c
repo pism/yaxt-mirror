@@ -4,10 +4,6 @@
 
 #include "tests.h"
 
-static void
-check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices,
-              Xt_count ref_num_indices);
-
 int main(void) {
 
   // init mpi
@@ -178,22 +174,4 @@ int main(void) {
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
-}
-
-static void
-check_idxdata(Xt_idxlist idxlist, Xt_idx * ref_indices,
-              Xt_count ref_num_indices) {
-
-  unsigned i;
-
-  if (xt_idxlist_get_num_indices(idxlist) != ref_num_indices)
-    PUT_ERR("wrong number of indices in idxlist\n");
-
-  Xt_idx indices[ref_num_indices];
-
-  xt_idxlist_get_indices(idxlist, indices);
-
-  for (i = 0; i < ref_num_indices; ++i)
-    if (indices[i] != ref_indices[i])
-      PUT_ERR("index list contains wrong indices\n");
 }
