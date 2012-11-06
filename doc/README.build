@@ -74,4 +74,40 @@ for the configure run.
 
 4.2 IBM AIX 6.1, POWER archictecture
 
+The following is used to build the library and test programs for blizzard,
+a POWER6 system running with AIX and Parallel Environment (PE).
+
+* Shared library compiler wrappers (smartmpcc_r and smartmpxlf_r) are used
+  (instead of mpcc_r and mpxlf_r), this requires users to
+  extend the PATH variable by /sw/aix61/smartmpxlf/bin
+  otherwise one has to use the --disable-shared option.
+  IBM PE compiler frontends would otherwise insert start-up code into the
+  shared libraries that make a program using the libraries fail.
+* The options --host=powerpc-ibm-aix6.1.0.0 and
+  host_alias=powerpc-ibm-aix6.1.0.0 put configure in cross-compilation
+  mode since PE executables cannot easily be directly executed.
+* The common optimization options (-O3 -q64 -qarch=pwr6 -qtune=pwr6
+  -qipa -qinline -qhot -qxflag=nvecvter -qxflag=nsmine -qstrict) are typically
+  used to achieve a good optimization level but not strictly required and
+  should be changed to disable optimization when debugging
+  (Recommendation: -O0 -g -qfullpath -q64 -qarch=pwr6 -qtune=pwr6).
+* The archive must be given the -X32_64 option such that static library
+  archives can be created regardless of the setting of the OBJECT_MODE
+  environment variable.
+* A wrapper to make mpirun-style arguments compatible with the PE program
+  starter (poe) must be used to enable 'make check'.
+* It's recommended to use /bin/bash instead of /bin/sh for running configure
+  because of speed reasons.
+
+$ /bin/bash ./configure CC=smartmpcc_r \
+  CFLAGS='-O3 -q64 -qarch=pwr6 -qtune=pwr6 -qipa -qinline -qhot -qxflag=nvecvter -qxflag=nsmine -qstrict -qlanglvl=extc99' \
+  FC=smartmpxlf_r \
+  FCFLAGS='-O3 -q64 -qarch=pwr6 -qtune=pwr6 -qipa -qinline -qhot -qxflag=nvecvter -qxflag=nsmine -qstrict -qessl -qextname -qsuffix=cpp=f90 -qzerosize -qfloat=fltint -qhalt=w -Q' \
+  CPPFLAGS=-Dextname \
+  LDFLAGS="-O3 -q64 -qarch=pwr6 -qtune=pwr6 -qipa -qinline -qhot -qxflag=nvecvter -qxflag=nsmine -qstrict -Wl,-brtl" \
+  --host=powerpc-ibm-aix6.1.0.0 host_alias=powerpc-ibm-aix6.1.0.0 \
+  AR='ar -X32_64' \
+  MPI_LAUNCH="$(pwd)/util/mpi_launch_poe" \
+  CONFIG_SHELL=/bin/bash
+
 4.3 CentOS 5.6 x86_64 with Intel MPI and compilers
