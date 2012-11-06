@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
@@ -414,38 +415,131 @@ idxsection_get_num_indices(Xt_idxlist idxlist) {
   return size;
 }
 
+static inline void
+idxsection_get_indices_1D(Xt_idx start_index, Xt_idx *indices, Xt_count num_indices) {
+
+  for (Xt_count i = 0; i < num_indices; ++i)
+    indices[i] = start_index + i;
+}
+
+static inline void
+idxsection_get_indices_2D(Xt_idx start_index, Xt_idx *indices, unsigned * local_size,
+                          unsigned * global_strides) {
+
+  for (unsigned i = 0; i < local_size[0]; ++i) {
+
+    for (unsigned j = 0; j < local_size[1]; ++j)
+      indices[j] = start_index + j;
+
+    start_index += global_strides[0];
+    indices += local_size[1];
+  }
+}
+
+static inline void
+idxsection_get_indices_3D(Xt_idx start_index, Xt_idx *indices, unsigned * local_size,
+                          unsigned * global_strides) {
+
+  for (unsigned i = 0; i < local_size[0]; ++i) {
+
+    for (unsigned j = 0; j < local_size[1]; ++j) {
+
+      for (unsigned k = 0; k < local_size[2]; ++k)
+        indices[k] = start_index + k;
+
+      start_index += global_strides[1];
+      indices += local_size[2];
+    }
+
+    start_index -= global_strides[1] * local_size[1];
+    start_index += global_strides[0];
+  }
+}
+
+// greater than 3D
+static void
+idxsection_get_indices_g3D(Xt_idx start_index, Xt_idx *indices, unsigned * local_size,
+                           unsigned * global_strides, unsigned ndim,
+                           Xt_count num_indices) {
+
+  unsigned * curr_local_position;
+
+  curr_local_position = xcalloc(ndim - 3, sizeof(*curr_local_position));
+
+  Xt_count num_indices_per_iteration = local_size[ndim - 3] *
+                                       local_size[ndim - 2] *
+                                       local_size[ndim - 1];
+  Xt_count num_iterations = num_indices / num_indices_per_iteration;
+
+  Xt_idx curr_local_start_index = start_index;
+                                               
+  for (Xt_count i = 0; i < num_iterations; ++i) {
+
+    idxsection_get_indices_3D(curr_local_start_index, indices,
+                              local_size + ndim - 3,
+                              global_strides + ndim - 3);
+
+    indices += num_indices_per_iteration;
+
+    for (unsigned j = ndim - 4; j < ndim; --j)
+      if (curr_local_position[j] < local_size[j] - 1) {
+        curr_local_position[j]++;
+        break;
+      } else
+        curr_local_position[j] = 0;
+
+    curr_local_start_index = start_index;
+    for (unsigned j = 0; j < ndim - 3; ++j)
+      curr_local_start_index += curr_local_position[j] * global_strides[j];
+  }
+
+  free(curr_local_position);
+}
+
 static void
 idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
   struct xt_idxsection *section;
 
   section = (struct xt_idxsection*)idxlist;
-  /// \todo use memcpy with index_array_cache if available
-  unsigned * curr_local_position;
 
-  curr_local_position = xcalloc(section->ndim, sizeof(*curr_local_position));
+  Xt_count num_indices = idxsection_get_num_indices(idxlist);
 
-  Xt_count i, num_indices;
-  unsigned j;
+  if (num_indices == 0) return;
 
-  num_indices = idxsection_get_num_indices(idxlist);
+  if (section->index_array_cache != NULL) {
 
-  for (i = 0; i < num_indices; ++i) {
-
-    for (j = 0, *indices = section->local_start_index; j < section->ndim; ++j)
-      *indices += curr_local_position[j] * section->global_strides[j];
-
-    ++indices;
-
-    for (j = section->ndim - 1; j < section->ndim; --j)
-      if (curr_local_position[j] < section->local_size[j] - 1) {
-        curr_local_position[j]++;
-        break;
-      } else
-        curr_local_position[j] = 0;
+    memcpy(indices, section->index_array_cache, num_indices * sizeof(*indices));
+    return;
   }
 
-  free(curr_local_position);
+  switch(section->ndim) {
+
+    case (1):
+
+      idxsection_get_indices_1D(section->local_start_index, indices, num_indices);
+      break;
+
+    case (2):
+
+      idxsection_get_indices_2D(section->local_start_index, indices,
+                                section->local_size, section->global_strides);
+      break;
+
+    case (3):
+      idxsection_get_indices_3D(section->local_start_index, indices,
+                                section->local_size, section->global_strides);
+      break;
+
+    default:
+      idxsection_get_indices_g3D(section->local_start_index, indices,
+                                 section->local_size, section->global_strides,
+                                 section->ndim, num_indices);
+      break;
+  };
+
+  section->index_array_cache = xmalloc(num_indices * sizeof(*(section->index_array_cache)));
+  memcpy(section->index_array_cache, indices, num_indices * sizeof(*indices));
 }
 
 static Xt_idx const*

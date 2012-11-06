@@ -105,6 +105,58 @@ int main(void) {
 
     xt_idxlist_delete(idxsection);
   }
+  
+  { // test 3D section
+    Xt_idxlist idxsection;
+
+    Xt_idx start = 0;
+    unsigned num_dimensions = 3;
+    unsigned global_size[3] = {3,4,5};
+    unsigned local_size[3] = {2,2,3};
+    unsigned local_start[3] = {1,1,1};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // testing
+
+    Xt_idx ref_indices[12] = {26,27,28,31,32,33,46,47,48,51,52,53};
+    struct Xt_stripe ref_stripes[4] = {{26,3,1}, {31,3,1}, {46,3,1}, {51,3,1}};
+    do_tests(idxsection, ref_indices, 12, ref_stripes, 4);
+
+    // clean up
+
+    xt_idxlist_delete(idxsection);
+  }
+
+  { // test 4D section
+    Xt_idxlist idxsection;
+
+    Xt_idx start = 0;
+    unsigned num_dimensions = 4;
+    unsigned global_size[4] = {3,4,4,3};
+    unsigned local_size[4] = {2,3,3,2};
+    unsigned local_start[4] = {0,1,1,1};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // testing
+
+    Xt_idx ref_indices[36] = {16,17,19,20,22,23, 28,29,31,32,34,35, 40,41,43,44,46,47,
+                              64,65,67,68,70,71, 76,77,79,80,82,83, 88,89,91,92,94,95};
+    struct Xt_stripe ref_stripes[18] = {{16,2,1},{19,2,1},{22,2,1}, {28,2,1},{31,2,1},{34,2,1}, {40,2,1},{43,2,1},{46,2,1},
+                                        {64,2,1},{67,2,1},{70,2,1}, {76,2,1},{79,2,1},{82,2,1}, {88,2,1},{91,2,1},{94,2,1}};
+    do_tests(idxsection, ref_indices, 36, ref_stripes, 18);
+
+    // clean up
+
+    xt_idxlist_delete(idxsection);
+  }
 
   { // 1D intersection test
 
