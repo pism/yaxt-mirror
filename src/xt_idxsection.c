@@ -512,7 +512,12 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
 
     memcpy(indices, section->index_array_cache, num_indices * sizeof(*indices));
     return;
-  }
+  } else
+    section->index_array_cache = xmalloc(num_indices * sizeof(*(section->index_array_cache)));
+
+  // if this routine was called by idxsection_get_indices_const
+  if (indices == NULL)
+    indices = section->index_array_cache;
 
   switch(section->ndim) {
 
@@ -539,28 +544,21 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
       break;
   };
 
-  section->index_array_cache = xmalloc(num_indices * sizeof(*(section->index_array_cache)));
-  memcpy(section->index_array_cache, indices, num_indices * sizeof(*indices));
+  if (section->index_array_cache != indices)
+    memcpy(section->index_array_cache, indices, num_indices * sizeof(*indices));
 }
 
 static Xt_idx const*
 idxsection_get_indices_const(Xt_idxlist idxlist) {
 
-  struct xt_idxsection *idxsection = (struct xt_idxsection *)idxlist;
+  struct xt_idxsection *idxsection;
 
-  if (idxsection->index_array_cache) return idxsection->index_array_cache;
+  idxsection = (struct xt_idxsection*)idxlist;
 
-  Xt_count index_num = idxsection_get_num_indices(idxlist);
-
-  Xt_idx *tmp_index_array
-    = xmalloc(index_num * sizeof( *(idxsection->index_array_cache) ) );
-
-  idxsection_get_indices(idxlist, tmp_index_array);
-
-  idxsection->index_array_cache = tmp_index_array;
+  if (idxsection->index_array_cache == NULL)
+    idxsection_get_indices(idxlist, NULL);
 
   return idxsection->index_array_cache;
-
 }
 
 
