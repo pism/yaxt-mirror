@@ -26,7 +26,7 @@ void print_index(Xt_idxlist idxsection, int rank, int i){
   #ifdef DEBUG
   for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
       Xt_idx value;
-      xt_idxlist_get_index (idxsection, p, &value);
+      xt_idxlist_get_index_at_position (idxsection, p, &value);
 
       if (i == 0)
         printf ("rank: %d , INDEX_SRC: %d \n", rank, value);
@@ -88,6 +88,47 @@ void init_data(int *data_array, int array_leng, int j){
     for (int i = 0; i < array_leng; i++) {
       data_array[i] = -1;
     }
+}
+
+void init_data_with_index_list(int *data_array, int array_leng,
+                            Xt_idxlist idxlist) {
+
+  if (xt_idxlist_get_num_indices(idxlist) != array_leng) {
+
+    fputs("error in init_data_with_indices: array lenght and index"
+          " list length does not match\n", stderr);
+    exit(EXIT_FAILURE);
+  }
+
+  for (int i = 0; i < array_leng; ++i) {
+
+    Xt_idx index;
+    xt_idxlist_get_index_at_position(idxlist, i, &index);
+    data_array[i] = index;
+  }
+}
+
+int check_data_against_index_list(int *data_array, int array_leng,
+                                  Xt_idxlist idxlist) {
+
+  if (xt_idxlist_get_num_indices(idxlist) != array_leng) {
+
+    fputs("error in check_data_against_index_list: array lenght and"
+          " index list length does not match\n", stderr);
+    exit(EXIT_FAILURE);
+  }
+
+  for (int i = 0; i < array_leng; ++i) {
+
+    Xt_idx index;
+    xt_idxlist_get_index_at_position(idxlist, i, &index);
+    if (data_array[i] != index) {
+
+      fputs("error in check_data_against_index_list: data does not match\n", stderr);
+      return 1;
+    }
+  }
+  return 0;
 }
 
 void calc_config (struct config *conf, int nprocs){
@@ -208,24 +249,10 @@ int main(int argc, char** argv) {
   MPI_Comm_rank (MPI_COMM_WORLD, &rank);
 
   struct config conf;
+  int ret_val;
 
   {
     get_config(&conf, argc, argv, nprocs);
-
-    // --- local data array
-    int *src_array, *dst_array;
-
-    //allocate memory for source
-    int src_leng = conf.src.z_leng * conf.src.y_leng * conf.src.x_leng;
-    src_array = (int*)malloc(sizeof(*src_array)* src_leng);
-
-    // allocate memory of actuall local data size
-    int dst_leng = conf.dst.z_leng * conf.dst.y_leng * conf.dst.x_leng;
-    dst_array = (int*)malloc(sizeof(dst_array) * dst_leng);
-
-    // init arrays with fake data
-    init_data(src_array, src_leng, 0);
-    init_data(dst_array, dst_leng, 1);
 
     // global param
     unsigned num_dims = 3;
@@ -254,7 +281,7 @@ int main(int argc, char** argv) {
                                        conf.dst.local_start);
 
     // 1 = dest
-     print_index(dst_idxsection, rank, 1);
+    print_index(dst_idxsection, rank, 1);
 
     // xmap
     Xt_xmap xmap;
@@ -266,6 +293,22 @@ int main(int argc, char** argv) {
 
     redist = xt_redist_p2p_new(xmap, MPI_INTEGER);
 
+    // --- local data array
+    int *src_array, *dst_array;
+
+    //allocate memory for source
+    int src_leng = conf.src.z_leng * conf.src.y_leng * conf.src.x_leng;
+    src_array = (int*)malloc(sizeof(*src_array)* src_leng);
+
+    // allocate memory of actuall local data size
+    int dst_leng = conf.dst.z_leng * conf.dst.y_leng * conf.dst.x_leng;
+    dst_array = (int*)calloc(dst_leng, sizeof(dst_array));
+
+    // init arrays with fake data
+    // init_data(src_array, src_leng, 0);
+    // init_data(dst_array, dst_leng, 1);
+    init_data_with_index_list(src_array, src_leng, src_idxsection);
+
     //array poiter, especially necessary for data array number > 1
     int* src_array_p = src_array;
     int* dst_array_p = dst_array;
@@ -273,6 +316,8 @@ int main(int argc, char** argv) {
     //Exchange
     xt_redist_s_exchange(redist, (void**)(&src_array_p), 1,
                                  (void**)(&dst_array_p), 1);
+
+    ret_val = check_data_against_index_list(dst_array, dst_leng, dst_idxsection);
 
     //clean up
     free (src_array);
@@ -286,5 +331,5 @@ int main(int argc, char** argv) {
 
   MPI_Finalize();
 
-  return 0;
+  return ret_val;
 }
