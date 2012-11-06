@@ -593,7 +593,10 @@ int idxsection_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * 
                                         Xt_count num_selection, int * positions,
                                         int single_match_only) {
 
-  if (num_selection<1) return 0; //nothing to do
+  if (num_selection < 1) return 0; //nothing to do
+
+  if (num_selection == 1)
+    return idxsection_get_position_of_index(body_idxlist, *selection_idx, positions);
 
   int num_unmatched = 0;
 
@@ -605,31 +608,64 @@ int idxsection_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_idx const * 
     return num_unmatched;
   }
 
-  // the remaining (single_match_only) case follows:
-  idxpos_type *v;
-  v = xmalloc(num_selection * sizeof(*v) );
-  for (int i=0; i<num_selection; i++) {
-    v[i].idx = selection_idx[i];
-    v[i].pos = i;
-  }
-  xt_mergesort_idxpos(v, num_selection);
-  int last_jx = v[0].idx - 1; // any index that is not equal v[0].idx will do
-  for (int i=0; i<num_selection; i++) {
-    int j = v[i].pos;
-    int jx = v[i].idx;
-    if (jx != last_jx) {
-      num_unmatched += idxsection_get_position_of_index(body_idxlist, jx, &positions[j]);
-      last_jx = jx;
-    } else {
-      // for an idxsection there is a unique map from indices to positions,
-      // we got the same index again, so there is no match left:
-      positions[j] = -1;
-      num_unmatched++;
-    }
-  }
-  free(v);
-  return num_unmatched;
+  Xt_count i;
 
+  for (i = 1; i < num_selection; ++i)
+    if (selection_idx[i] < selection_idx[i-1])
+      break;
+
+  // indices are sorted
+  if (i == num_selection) {
+
+    Xt_idx prev_index = selection_idx[0] - 1; // we need an index that is
+                                              // different from the current one
+  
+    for (i = 0; i < num_selection; i++) {
+
+      Xt_idx curr_index = selection_idx[i];
+
+      if (prev_index != curr_index) {
+
+        num_unmatched += idxsection_get_position_of_index(body_idxlist, curr_index,
+                                                          positions + i);
+        prev_index = curr_index;
+
+      } else {
+        // for an idxsection there is a unique map from indices to positions,
+        // we got the same index again, so there is no match left:
+        positions[i] = -1;
+        num_unmatched++;
+      }
+    }
+  // indices are not sorted
+  } else {
+    // the remaining (single_match_only) case follows:
+    idxpos_type *v;
+
+    v = xmalloc(num_selection * sizeof(*v) );
+    for (int i=0; i<num_selection; i++) {
+      v[i].idx = selection_idx[i];
+      v[i].pos = i;
+    }
+    xt_mergesort_idxpos(v, num_selection);
+    Xt_idx last_jx = v[0].idx - 1; // any index that is not equal v[0].idx will do
+    for (i=0; i<num_selection; i++) {
+      int j = v[i].pos;
+      Xt_idx jx = v[i].idx;
+      if (jx != last_jx) {
+        num_unmatched += idxsection_get_position_of_index(body_idxlist, jx, &positions[j]);
+        last_jx = jx;
+      } else {
+        // for an idxsection there is a unique map from indices to positions,
+        // we got the same index again, so there is no match left:
+        positions[j] = -1;
+        num_unmatched++;
+      }
+    }
+    free(v);
+  }
+
+  return num_unmatched;
 }
 
 static int
