@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "mpi.h"
 
@@ -10,6 +11,7 @@
 
 #define MIN(X, Y)  ((X) < (Y) ? (X) : (Y))
 //#define DEBUG
+//#define CHECK_RESULTS
 
 struct config {
 
@@ -100,17 +102,22 @@ void init_data_with_index_list(int *data_array, int array_leng,
     exit(EXIT_FAILURE);
   }
 
+#ifdef CHECK_RESULTS
   for (int i = 0; i < array_leng; ++i) {
 
     Xt_idx index;
     xt_idxlist_get_index_at_position(idxlist, i, &index);
     data_array[i] = index;
   }
+#else
+  memset(data_array, 0, sizeof(*data_array) * array_leng);
+#endif
 }
 
 int check_data_against_index_list(int *data_array, int array_leng,
                                   Xt_idxlist idxlist) {
 
+#ifdef CHECK_RESULTS
   if (xt_idxlist_get_num_indices(idxlist) != array_leng) {
 
     fputs("error in check_data_against_index_list: array lenght and"
@@ -128,6 +135,7 @@ int check_data_against_index_list(int *data_array, int array_leng,
       return 1;
     }
   }
+#endif
   return 0;
 }
 
