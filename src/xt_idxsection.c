@@ -294,30 +294,53 @@ idxsection_get_intersection_with_other_idxlist(struct xt_idxsection *src_idxsect
   //  - src_idxsection is treated as too big for elemental transforms/access
   //  - dst_idxlist is considered to be small enough (subdomain like) for elemental usage
 
-  int num_dst_idx = xt_idxlist_get_num_indices(dst_idxlist);
+  Xt_count num_dst_idx = xt_idxlist_get_num_indices(dst_idxlist);
 
   Xt_idx const* dst_idx = xt_idxlist_get_indices_const(dst_idxlist);
-  int pos[num_dst_idx];
+  int * pos;
   int single_match_only = 0;
-  int num_unmatched = idxsection_get_positions_of_indices((Xt_idxlist)src_idxsection, dst_idx,
-                                                          num_dst_idx, pos, single_match_only);
-  int num_intersection = num_dst_idx - num_unmatched;
-  Xt_idx *intersection = xmalloc(num_intersection * sizeof(*intersection));
+  Xt_count i, j;
 
-  int j=0;
-  for(int i=0; i<num_dst_idx; i++) {
-    if (pos[i]>=0) {
-      intersection[j] = dst_idx[i]; // unsorted intersection indices
-      j++;
-    }
-  }
+  for (i = 1; i < num_dst_idx; ++i)
+    if (dst_idx[i] < dst_idx[i-1])
+      break;
 
-  xt_mergesort_index(intersection, num_intersection, NULL, 0);
+  Xt_idx const * sorted_dst_idx;
+  Xt_idx * temp_dst_idx = NULL;
+      
+  // if the destination indices are not sorted
+  if (num_dst_idx > 1 && i != num_dst_idx) {
 
-  Xt_idxlist result = xt_idxvec_new(intersection, num_intersection);
+    temp_dst_idx = xmalloc(num_dst_idx * sizeof(*temp_dst_idx));
+    memcpy(temp_dst_idx, dst_idx, num_dst_idx * sizeof(*temp_dst_idx));
+
+    xt_mergesort_index(temp_dst_idx, num_dst_idx, NULL, 0);
+
+    sorted_dst_idx = temp_dst_idx;
+  } else
+    sorted_dst_idx = dst_idx;
+
+  pos = xmalloc(num_dst_idx * sizeof(*pos));
+  int num_unmatched = idxsection_get_positions_of_indices((Xt_idxlist)src_idxsection,
+                                                          sorted_dst_idx,
+                                                          num_dst_idx, pos,
+                                                          single_match_only);
+  Xt_count num_inter_idx = num_dst_idx - num_unmatched;
+  Xt_idx *intersection = xmalloc(num_inter_idx * sizeof(*intersection));
+
+  for(i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++)
+    if (pos[i] >= 0)
+      intersection[j++] = sorted_dst_idx[i];
+
+  free(temp_dst_idx);
+  free(pos);
+
+  //! \todo use xt_idxvec_pinned_new here to avoid copy
+  Xt_idxlist result = xt_idxvec_new(intersection, num_inter_idx);
 
   free(intersection);
   return result;
+  // return xt_idxvec_pinned_new(intersection, num_inter_idx);
 }
 
 static Xt_idxlist
