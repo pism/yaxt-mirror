@@ -135,7 +135,8 @@ foreach my $headerFn (@ARGV)
                                         ['predicatelevels']))
             if $debug > 1;
         print(STDERR '-' x 70, "\n",
-              @headerContents[$line..($line+5>=@headerContents?@headerContents-1:$line+5)],
+              @headerContents[$line..($line+5>=@headerContents
+                                      ?@headerContents-1:$line+5)],
               '-' x 70, "\n") if ($debug > 2);
         $thisLineIgnored = $predicateLevels[-1]{'expand'};
         pop(@predicateLevels);
@@ -278,13 +279,17 @@ foreach my $headerFn (@ARGV)
         {
           for(my $i =0; $i < @symPrefixMacros; ++$i)
           {
-            $headerLine =~ s{$symPrefixMacros[$i]\((\w+)\)}{$symPrefixes[$i]$1}g;
+            $headerLine
+                =~ s{$symPrefixMacros[$i]\((\w+)\)}{$symPrefixes[$i]$1}g;
           }
         }
         # tokenize and replace tokens from config.h definitions
         # FIXME: this simple approach will fail for funtion-like macros
+        my @tokenMapping = eval { cpp::tokenize($headerLine); };
+        # FIXME: when tokenizing doesn't work that usually means a multi-line
+        # construct needs to be accounted for
+        if (!$@)
         {
-          my @tokenMapping = cpp::tokenize($headerLine);
           print(STDERR Data::Dumper->Dump([\@tokenMapping],
                                           ['tokenMapping']))
               if $debug > 3;
@@ -298,7 +303,8 @@ foreach my $headerFn (@ARGV)
           for(my $tok = 0; $tok < @{$tokenMapping[0]}; ++$tok)
           {
             my $token = $tokenMapping[0][$tok];
-            if (defined($token) && exists($configHDefs{$token}))
+            if (defined($token) && exists($configHDefs{$token})
+                && defined($configHDefs{$token}))
             {
               print STDERR 'Substituting ', $configHDefs{$token}, ' for ',
                   $token, "\n" if $debug > 1;
