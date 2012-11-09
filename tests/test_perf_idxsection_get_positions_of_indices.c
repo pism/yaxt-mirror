@@ -1,0 +1,117 @@
+/**
+ * @file test_perf_idxsection_get_positions_of_indices.c
+ *
+ * @copyright Copyright  (C)  2012 Moritz Hanke <hanke@dkrz.de>
+ *
+ * @version 1.0
+ * @author Moritz Hanke <hanke@dkrz.de>
+ */
+/*
+ * Keywords:
+ * Maintainer: Moritz Hanke <hanke@dkrz.de>
+ * URL: https://redmine.dkrz.de/doc/yaxt/html/index.html
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are  permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * Neither the name of the DKRZ GmbH nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <yaxt.h>
+
+#define DEACTIVATE_TESTS
+
+int main(void) {
+
+#ifndef DEACTIVATE_TESTS
+
+  Xt_count nstrides = 512 * 256 * 32;
+  struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
+  Xt_idxlist selection_indices = xt_idxstripes_new(stripe, 1);
+
+  int * positions = malloc(nstrides * sizeof(*positions));
+  Xt_count i, j;
+  Xt_count step = nstrides / 128;
+  int single_match_only;
+  unsigned const num_samples = 1;
+
+  unsigned global_size[3][3] = {{64, 256, 512}, {32, 128, 256}, {16, 64, 128}};
+  unsigned local_size [3][3] = {{64, 256, 512}, {32, 128, 256}, {16, 64, 128}};
+
+  for (int test_id = 0; test_id < 3; ++test_id) {
+
+    { // test with cached indices
+
+      Xt_int start = 0;
+      unsigned num_dimension = 3;
+      unsigned local_start[] = {0,0,0};
+      Xt_idxlist idxsection = xt_idxsection_new(start, num_dimension, global_size[test_id],
+                                                local_size[test_id], local_start);
+
+      // generate index cache in idxsection
+      xt_idxlist_get_indices_const(idxsection);
+
+      
+      for (single_match_only = 0; single_match_only < 2;  ++single_match_only)
+        for (i = step; i < nstrides; i += step)
+          for (j = 0; j < num_samples; ++j)
+            xt_idxlist_get_positions_of_indices(idxsection,
+                                                xt_idxlist_get_indices_const(selection_indices),
+                                                i, positions, single_match_only);
+      xt_idxlist_delete(idxsection);
+    }
+
+    { // test without cached indices
+
+      Xt_int start = 0;
+      unsigned num_dimension = 3;
+      unsigned local_start[] = {0,0,0};
+
+      for (single_match_only = 0; single_match_only < 2;  ++single_match_only) {
+        for (i = step; i < nstrides; i += step) {
+
+          Xt_idxlist idxsection[num_samples];
+
+          for (j = 0; j < num_samples; ++j)
+            idxsection[j] = xt_idxsection_new(start, num_dimension, global_size[test_id],
+                                              local_size[test_id], local_start);
+          for (j = 0; j < num_samples; ++j)
+            xt_idxlist_get_positions_of_indices(idxsection[j],
+                                                xt_idxlist_get_indices_const(selection_indices),
+                                                i, positions, single_match_only);
+          for (j = 0; j < num_samples; ++j)
+            xt_idxlist_delete(idxsection[j]);
+        }
+      }
+    }
+  }
+
+  xt_idxlist_delete(selection_indices);
+  free(positions);
+
+#endif
+
+  return 0;
+}
