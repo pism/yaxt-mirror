@@ -1,12 +1,13 @@
 /**
  * @file core.h --- interface to user-adjustable core routines of scales ppm
+ *
+ * @copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
+ *
+ * @version 1.0
+ * Keywords: ScalES PPM error handling
+ * @author Thomas Jahns <jahns@dkrz.de>
  */
 /*
- * Copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
- *
- * Version: 1.0
- * Keywords: ScalES PPM error handling
- * Author: Thomas Jahns <jahns@dkrz.de>
  * Maintainer: Thomas Jahns <jahns@dkrz.de>
  * URL: https://www.dkrz.de/redmine/projects/show/scales-ppm
  *

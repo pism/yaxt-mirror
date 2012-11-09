@@ -2,7 +2,7 @@
  * @file ppm_xfuncs.h
  * @brief add versions of standard API functions not returning on error
  *
- * Copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
+ * @copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
  *
  * @version 1.0
  * @author Thomas Jahns <jahns@dkrz.de>

@@ -1,11 +1,13 @@
-/*
+/**
  * @file xmalloc.c
  * @brief fail-safe [cm]alloc wrappers
  *
- * Copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
+ * @copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
  *
  * @version 1.0
  * @author Thomas Jahns <jahns@dkrz.de>
+ */
+/*
  * Maintainer: Thomas Jahns <jahns@dkrz.de>
  * URL: https://www.dkrz.de/redmine/projects/show/scales-ppm
  *
