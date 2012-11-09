@@ -56,7 +56,7 @@
 #include "test_idxlist_utils.h"
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices);
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices);
 
 int main(void) {
 
@@ -74,7 +74,7 @@ int main(void) {
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
-    Xt_idx ref_indices[15] = {0,1,2,3,4, 10,11,12,13,14, 20,21,22,23,24};
+    Xt_int ref_indices[15] = {0,1,2,3,4, 10,11,12,13,14, 20,21,22,23,24};
     Xt_count ref_num_indices = 15;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
@@ -90,7 +90,7 @@ int main(void) {
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
-    Xt_idx ref_indices[15] = {0,1,2,3,4, 10,12,14,16,18, 20,23,26,29,32};
+    Xt_int ref_indices[15] = {0,1,2,3,4, 10,12,14,16,18, 20,23,26,29,32};
     Xt_count ref_num_indices = 15;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
@@ -106,7 +106,7 @@ int main(void) {
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
-    Xt_idx ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
+    Xt_int ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
     Xt_count ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
@@ -122,7 +122,7 @@ int main(void) {
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
-    Xt_idx ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
+    Xt_int ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
     Xt_count ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
@@ -138,7 +138,7 @@ int main(void) {
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
-    Xt_idx ref_indices[10] = {0,-1,-2,-3,-4, 1,2,3,4,5};
+    Xt_int ref_indices[10] = {0,-1,-2,-3,-4, 1,2,3,4,5};
     Xt_count ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
@@ -154,7 +154,7 @@ int main(void) {
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
-    Xt_idx ref_indices[10] = {9,7,5,3,1, 0,2,4,6,8};
+    Xt_int ref_indices[10] = {9,7,5,3,1, 0,2,4,6,8};
     Xt_count ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
@@ -181,7 +181,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[6] = {1,2,3, 6,7,8};
+    Xt_int ref_indices[6] = {1,2,3, 6,7,8};
     Xt_count ref_num_indices = 6;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -214,7 +214,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[9] = {1,2,3, 6,7, 9, 11,12,13};
+    Xt_int ref_indices[9] = {1,2,3, 6,7, 9, 11,12,13};
     Xt_count ref_num_indices = 9;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -247,7 +247,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx *ref_indices = NULL;
+    Xt_int *ref_indices = NULL;
     Xt_count ref_num_indices = 0;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -280,7 +280,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
+    Xt_int ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
     Xt_count ref_num_indices = 10;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -313,7 +313,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[6] = {0,6,8,12,15,22};
+    Xt_int ref_indices[6] = {0,6,8,12,15,22};
     Xt_count ref_num_indices = 6;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -346,7 +346,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
+    Xt_int ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
     Xt_count ref_num_indices = 10;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -379,7 +379,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[7] = {3,4,5,6,7,20,21};
+    Xt_int ref_indices[7] = {3,4,5,6,7,20,21};
     Xt_count ref_num_indices = 7;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -415,7 +415,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[6] = {5,6,8,9,20,21};
+    Xt_int ref_indices[6] = {5,6,8,9,20,21};
     Xt_count ref_num_indices = 6;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -448,7 +448,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[2][15] = {{0,1,2,3,4,5,6},
+    Xt_int ref_indices[2][15] = {{0,1,2,3,4,5,6},
                                  {0,1,1,2,2,2,3,3,3,4,4,4,5,5,6}};
     Xt_count ref_num_indices[2] = {7,15};
 
@@ -482,7 +482,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[1] = {0};
+    Xt_int ref_indices[1] = {0};
     Xt_count ref_num_indices = 0;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -515,7 +515,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[3] = {15,50,85};
+    Xt_int ref_indices[3] = {15,50,85};
     Xt_count ref_num_indices = 3;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
@@ -532,7 +532,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
-    const Xt_idx undef_idx = -1234567;
+    const Xt_int undef_idx = -1234567;
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};
@@ -541,7 +541,7 @@ int main(void) {
 
     int pos[] = {0,2,7,9,11,100,11,200,9,300,18,400,5};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_idx ref_sel_idx[num_pos];
+    Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
@@ -550,7 +550,7 @@ int main(void) {
         ref_undef_count++;
       }
     }
-    Xt_idx sel_idx[num_pos];
+    Xt_int sel_idx[num_pos];
     int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
                                                           sel_idx, undef_idx);
     if (undef_count != ref_undef_count)
@@ -565,7 +565,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only valid positions
-    const Xt_idx undef_idx = -1234567;
+    const Xt_int undef_idx = -1234567;
     struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
@@ -575,7 +575,7 @@ int main(void) {
 
     int pos[] = {-1,0,1,2,3,4,23,5,6,7,8,9,10,11,12, 0,2,100,2000};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_idx ref_sel_idx[num_pos];
+    Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
@@ -584,7 +584,7 @@ int main(void) {
         ref_undef_count++;
       }
     }
-    Xt_idx sel_idx[num_pos];
+    Xt_int sel_idx[num_pos];
     int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
                                                           sel_idx, undef_idx);
     if (undef_count != ref_undef_count)
@@ -600,7 +600,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: complete permutation
-    const Xt_idx undef_idx = -1234567;
+    const Xt_int undef_idx = -1234567;
     struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
@@ -610,7 +610,7 @@ int main(void) {
 
     int pos[] = {4,7,2,5,9,0,10,6,11,8,12,1,3};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_idx ref_sel_idx[num_pos];
+    Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
@@ -619,7 +619,7 @@ int main(void) {
         ref_undef_count++;
       }
     }
-    Xt_idx sel_idx[num_pos];
+    Xt_int sel_idx[num_pos];
     int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
                                                           sel_idx, undef_idx);
     if (undef_count != ref_undef_count)
@@ -635,7 +635,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only invalid positions
-    const Xt_idx undef_idx = -1234567;
+    const Xt_int undef_idx = -1234567;
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};
@@ -644,7 +644,7 @@ int main(void) {
 
     int pos[] = {-10,200,700,90,90,18,141};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_idx ref_sel_idx[num_pos];
+    Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
@@ -654,7 +654,7 @@ int main(void) {
       }
     }
 
-    Xt_idx sel_idx[num_pos];
+    Xt_int sel_idx[num_pos];
     int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
                                                           sel_idx, undef_idx);
     if (undef_count != ref_undef_count)
@@ -674,7 +674,7 @@ int main(void) {
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
-    Xt_idx ref_indices[10] = {0,1,2,3,4, 1,2,3,4,5};
+    Xt_int ref_indices[10] = {0,1,2,3,4, 1,2,3,4,5};
     Xt_count ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
@@ -688,7 +688,7 @@ int main(void) {
 }
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices) {
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 

@@ -72,7 +72,7 @@ int main(void) {
 
   { // test packing and unpacking of index vectors
 
-    Xt_idx index_vector[] = {1,2,3,4,5,6,7};
+    Xt_int index_vector[] = {1,2,3,4,5,6,7};
     Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector;
@@ -172,7 +172,7 @@ int main(void) {
 
   { // test copying of index vector
 
-    Xt_idx index_vector[] = {1,2,3,4,5,6,7};
+    Xt_int index_vector[] = {1,2,3,4,5,6,7};
     Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector, idxvector_copy;
@@ -201,7 +201,7 @@ int main(void) {
 
   { // test repeated equal indices
 
-    Xt_idx index_vector[] = {1,2,3,7,5,6,7,7};
+    Xt_int index_vector[] = {1,2,3,7,5,6,7,7};
     Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector;
@@ -221,11 +221,11 @@ int main(void) {
   { // subtest from test_ut
 
     const int single_match_only = 1;
-    Xt_idx index_vector[] = {10,15,14,13,12,15,10,11,12,13,23,18,19,
+    Xt_int index_vector[] = {10,15,14,13,12,15,10,11,12,13,23,18,19,
                              20,21,31,26,27,28,29};
     size_t index_num = sizeof(index_vector) / sizeof(index_vector[0]);
 
-    Xt_idx intersection_vector[] = {12,12,13,13,14,15,15,20,21,23,28,29,31};
+    Xt_int intersection_vector[] = {12,12,13,13,14,15,15,20,21,23,28,29,31};
     size_t intersection_num
       = sizeof(intersection_vector) / sizeof(intersection_vector[0]);
 
@@ -262,7 +262,7 @@ int main(void) {
   }
 
   { // check intersection
-    Xt_idx index_vector[2][3] = {{1,2,3},{1,2,3}};
+    Xt_int index_vector[2][3] = {{1,2,3},{1,2,3}};
     Xt_count num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
@@ -282,7 +282,7 @@ int main(void) {
 
     // check the computed intersection
 
-    Xt_idx ref_intersection_indices[] = {1,2,3};
+    Xt_int ref_intersection_indices[] = {1,2,3};
     Xt_count ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
@@ -297,7 +297,7 @@ int main(void) {
   }
 
   { // check intersection
-    Xt_idx index_vector[2][3] = {{1,2,3},{2,3,4}};
+    Xt_int index_vector[2][3] = {{1,2,3},{2,3,4}};
     Xt_count num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
@@ -317,7 +317,7 @@ int main(void) {
 
     // check the computed intersection
 
-    Xt_idx ref_intersection_indices[] = {2,3};
+    Xt_int ref_intersection_indices[] = {2,3};
     Xt_count ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
@@ -332,7 +332,7 @@ int main(void) {
   }
 
   { // check intersection
-    Xt_idx index_vector[2][3] = {{2,3,4},{1,2,3}};
+    Xt_int index_vector[2][3] = {{2,3,4},{1,2,3}};
     Xt_count num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
@@ -352,7 +352,7 @@ int main(void) {
 
     // check the computed intersection
 
-    Xt_idx ref_intersection_indices[] = {2,3};
+    Xt_int ref_intersection_indices[] = {2,3};
     Xt_count ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
@@ -367,7 +367,7 @@ int main(void) {
   }
 
   { // check intersection
-    Xt_idx index_vector[2][3] = {{4,2,3},{3,1,2}};
+    Xt_int index_vector[2][3] = {{4,2,3},{3,1,2}};
     Xt_count num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
@@ -387,7 +387,7 @@ int main(void) {
 
     // check the computed intersection
 
-    Xt_idx ref_intersection_indices[] = {2,3};
+    Xt_int ref_intersection_indices[] = {2,3};
     Xt_count ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
@@ -402,7 +402,7 @@ int main(void) {
   }
 
   { // check intersection
-    Xt_idx index_vector[2][3] = {{3,1,2},{4,2,3}};
+    Xt_int index_vector[2][3] = {{3,1,2},{4,2,3}};
     Xt_count num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
@@ -422,7 +422,7 @@ int main(void) {
 
     // check the computed intersection
 
-    Xt_idx ref_intersection_indices[] = {2,3};
+    Xt_int ref_intersection_indices[] = {2,3};
     Xt_count ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
@@ -448,7 +448,7 @@ int main(void) {
 
     // test results
 
-    Xt_idx ref_indices[] = {5,6,7,8,9,4,3,2,1,0};
+    Xt_int ref_indices[] = {5,6,7,8,9,4,3,2,1,0};
     check_idxlist(idxvec, ref_indices, 10);
 
     // clean up
@@ -468,7 +468,7 @@ int main(void) {
 
     // test results
 
-    Xt_idx ref_indices[] = {0,1,2,3,4,2,3,4,5,6,4,5,6,7,8};
+    Xt_int ref_indices[] = {0,1,2,3,4,2,3,4,5,6,4,5,6,7,8};
     check_idxlist(idxvec, ref_indices, 15);
 
     // clean up
@@ -488,7 +488,7 @@ int main(void) {
 
     // test results
 
-    Xt_idx ref_indices[] = {2,3,4,5,6,0,1,2,3,4,4,5,6,7,8};
+    Xt_int ref_indices[] = {2,3,4,5,6,0,1,2,3,4,4,5,6,7,8};
     check_idxlist(idxvec, ref_indices, 15);
 
     // clean up
@@ -508,7 +508,7 @@ int main(void) {
 
     // test results
 
-    Xt_idx ref_indices[] = {2,3,4,5,6,4,3,2,1,0,4,5,6,7,8};
+    Xt_int ref_indices[] = {2,3,4,5,6,4,3,2,1,0,4,5,6,7,8};
     check_idxlist(idxvec, ref_indices, 15);
 
     // clean up
@@ -528,7 +528,7 @@ int main(void) {
 
     // test results
 
-    Xt_idx ref_indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2};
+    Xt_int ref_indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2};
     check_idxlist(idxvec, ref_indices, 15);
 
     // clean up
@@ -548,7 +548,7 @@ int main(void) {
 
     // test results
 
-    Xt_idx ref_indices[] = {0,3,6,9,12,2,5,8,11,14,14,11,8,5,2};
+    Xt_int ref_indices[] = {0,3,6,9,12,2,5,8,11,14,14,11,8,5,2};
     check_idxlist(idxvec, ref_indices, 15);
 
     // clean up
@@ -568,7 +568,7 @@ int main(void) {
 
     // test results
 
-    Xt_idx ref_indices[] = {0,-1,-2,-3,-4,1,2,3,4,5,-5,-6,-7,-8,-9,
+    Xt_int ref_indices[] = {0,-1,-2,-3,-4,1,2,3,4,5,-5,-6,-7,-8,-9,
                             6,7,8,9,10};
     check_idxlist(idxvec, ref_indices, 20);
 
@@ -580,13 +580,13 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
-    const Xt_idx undef_idx = -1234567;
-    Xt_idx indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
+    const Xt_int undef_idx = -1234567;
+    Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     int pos[] = {0,2,7,9,11,100,11,200,9,300,7,400,5};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_idx ref_sel_idx[num_pos];
+    Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
@@ -595,7 +595,7 @@ int main(void) {
         ref_undef_count++;
       }
     }
-    Xt_idx sel_idx[num_pos];
+    Xt_int sel_idx[num_pos];
     int undef_count
       = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
                                             undef_idx);
@@ -611,13 +611,13 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only valid positions
-    const Xt_idx undef_idx = -1234567;
-    Xt_idx indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
+    const Xt_int undef_idx = -1234567;
+    Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     int pos[] = {0,2,7,9,11,11,9,7,5};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_idx ref_sel_idx[num_pos];
+    Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
@@ -626,7 +626,7 @@ int main(void) {
         ref_undef_count++;
       }
     }
-    Xt_idx sel_idx[num_pos];
+    Xt_int sel_idx[num_pos];
     int undef_count
       = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
                                             undef_idx);
@@ -642,13 +642,13 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only invalid positions
-    const Xt_idx undef_idx = -1234567;
-    Xt_idx indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
+    const Xt_int undef_idx = -1234567;
+    Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     int pos[] = {100,102,107,109,1011,1011,109,107,105};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_idx ref_sel_idx[num_pos];
+    Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
@@ -657,7 +657,7 @@ int main(void) {
         ref_undef_count++;
       }
     }
-    Xt_idx sel_idx[num_pos];
+    Xt_int sel_idx[num_pos];
     int undef_count
       = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
                                             undef_idx);
@@ -673,7 +673,7 @@ int main(void) {
   {
     // check get_positions_of_indices
     // case: some unmatched indices
-    Xt_idx indices[2] = {0,2};
+    Xt_int indices[2] = {0,2};
     int num_indices = 2;
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
@@ -691,7 +691,7 @@ int main(void) {
       PUT_ERR("xt_idxlist_get_position_of_index_off"
               " did not return an error\n");
 
-    Xt_idx selection[] = {1, 2, 3};
+    Xt_int selection[] = {1, 2, 3};
     int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];

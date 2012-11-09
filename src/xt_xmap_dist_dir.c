@@ -93,9 +93,9 @@ get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
   return ((global_num_indices + comm_size - 1) / comm_size) * comm_size;
 }
 
-static inline Xt_idx get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
+static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  Xt_idx a_min_index, b_min_index;
+  Xt_int a_min_index, b_min_index;
 
   a_min_index = xt_idxlist_get_min_index(a);
   b_min_index = xt_idxlist_get_min_index(b);
@@ -103,9 +103,9 @@ static inline Xt_idx get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
   return MIN(a_min_index, b_min_index);
 }
 
-static inline Xt_idx get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
+static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  Xt_idx a_max_index, b_max_index;
+  Xt_int a_max_index, b_max_index;
 
   a_max_index = xt_idxlist_get_max_index(a);
   b_max_index = xt_idxlist_get_max_index(b);
@@ -123,7 +123,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
   global_interval = get_dist_dir_global_interval_size(src_idxlist, comm);
   local_interval  = global_interval / comm_size;
 
-  Xt_idx local_index_range[2];
+  Xt_int local_index_range[2];
   local_index_range[0] = get_min_idxlist_index(src_idxlist, dst_idxlist);
   local_index_range[1] = get_max_idxlist_index(src_idxlist, dst_idxlist);
 
@@ -133,7 +133,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
   // generate buckets for each process
   for (int i = 0; i < comm_size; ++i) {
 
-    Xt_idx start = 0 + i * local_interval;
+    Xt_int start = 0 + i * local_interval;
     Xt_count num_stripes = 0;
 
     while (start > local_index_range[0])

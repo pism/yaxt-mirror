@@ -71,7 +71,7 @@ struct config {
 void print_index(Xt_idxlist idxsection, int rank, int i){
   #ifdef DEBUG
   for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
-      Xt_idx value;
+      Xt_int value;
       xt_idxlist_get_index_at_position (idxsection, p, &value);
 
       if (i == 0)
@@ -149,7 +149,7 @@ void init_data_with_index_list(int *data_array, int array_leng,
 #ifdef CHECK_RESULTS
   for (int i = 0; i < array_leng; ++i) {
 
-    Xt_idx index;
+    Xt_int index;
     xt_idxlist_get_index_at_position(idxlist, i, &index);
     data_array[i] = index;
   }
@@ -171,7 +171,7 @@ int check_data_against_index_list(int *data_array, int array_leng,
 
   for (int i = 0; i < array_leng; ++i) {
 
-    Xt_idx index;
+    Xt_int index;
     xt_idxlist_get_index_at_position(idxlist, i, &index);
     if (data_array[i] != index) {
 
@@ -312,7 +312,7 @@ int main(int argc, char** argv) {
 
     // -- SOURCE index list by section
     Xt_idxlist src_idxsection;
-    Xt_idx start = 0;
+    Xt_int start = 0;
 
     //create source index section
     src_idxsection = xt_idxsection_new(start, num_dims, global_size,

@@ -58,11 +58,11 @@ struct Xt_idxlist *xt_idxmod_new(struct Xt_idxlist* patch_idxlist,  struct Xt_mo
   // if there is no modifier then we just give back a copy of the original:
   if (modifier_num<1) return xt_idxlist_copy(patch_idxlist);
 
-  Xt_idx *workpatch_idx = xmalloc(patch_size * sizeof(Xt_idx));
-  Xt_idx const* inter_idx;
+  Xt_int *workpatch_idx = xmalloc(patch_size * sizeof(Xt_int));
+  Xt_int const* inter_idx;
   int *workpatch_pos = xmalloc(patch_size * sizeof(int));
   int *extract_pos = xmalloc(patch_size * sizeof(int));
-  Xt_idx *subst_idx = xmalloc(patch_size * sizeof(Xt_idx));
+  Xt_int *subst_idx = xmalloc(patch_size * sizeof(Xt_int));
 
   struct Xt_idxlist* workpatch_idxlist = patch_idxlist;
 

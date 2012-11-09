@@ -53,8 +53,8 @@
 #include "tests.h"
 
 static void
-ref_get_positions_of_indices(Xt_idx * indices, Xt_count num_indices,
-                             Xt_idx * selection, int selection_size,
+ref_get_positions_of_indices(Xt_int * indices, Xt_count num_indices,
+                             Xt_int * selection, int selection_size,
                              int * positions, int repeat_first_match) {
   int used[num_indices];
   int found;
@@ -79,9 +79,9 @@ ref_get_positions_of_indices(Xt_idx * indices, Xt_count num_indices,
   }
 }
 
-static Xt_idx get_min_index(Xt_idx * indices, Xt_count num_indices) {
+static Xt_int get_min_index(Xt_int * indices, Xt_count num_indices) {
 
-  Xt_idx index;
+  Xt_int index;
   Xt_count i;
 
   if (num_indices > 0)
@@ -96,9 +96,9 @@ static Xt_idx get_min_index(Xt_idx * indices, Xt_count num_indices) {
   return index;
 }
 
-static Xt_idx get_max_index(Xt_idx * indices, Xt_count num_indices) {
+static Xt_int get_max_index(Xt_int * indices, Xt_count num_indices) {
 
-  Xt_idx index;
+  Xt_int index;
   Xt_count i;
 
   if (num_indices > 0)
@@ -113,7 +113,7 @@ static Xt_idx get_max_index(Xt_idx * indices, Xt_count num_indices) {
   return index;
 }
 
-static void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
+static void check_idxlist(Xt_idxlist idxlist, Xt_int * ref_indices,
                           Xt_count ref_num_indices) {
 
   Xt_count i;
@@ -124,9 +124,9 @@ static void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
   if (num_indices != ref_num_indices)
     PUT_ERR("wrong number of indices in idxlist\n");
 
-  Xt_idx indices[ref_num_indices];
-  Xt_idx const *indices_const;
-  Xt_idx index;
+  Xt_int indices[ref_num_indices];
+  Xt_int const *indices_const;
+  Xt_int index;
 
   xt_idxlist_get_indices(idxlist, indices);
   indices_const = xt_idxlist_get_indices_const(idxlist);
@@ -201,7 +201,7 @@ static void check_idxlist(Xt_idxlist idxlist, Xt_idx * ref_indices,
   }
 
   {
-    Xt_idx reverse_ref_indices[ref_num_indices];
+    Xt_int reverse_ref_indices[ref_num_indices];
 
     for (i = 0; i < ref_num_indices; ++i)
       reverse_ref_indices[i] = ref_indices[ref_num_indices - i - 1];

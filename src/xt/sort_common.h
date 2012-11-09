@@ -48,7 +48,7 @@
 #include "xt/xt_core.h"
 
 typedef struct idxpos_struct {
-  Xt_idx idx;
+  Xt_int idx;
   int pos;
 } idxpos_type;
 

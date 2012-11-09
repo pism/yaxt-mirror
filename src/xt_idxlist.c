@@ -121,7 +121,7 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
       num_indices_src = xt_idxlist_get_num_indices(idxlist_src);
       num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
 
-      Xt_idx *indices_src, *indices_dst;
+      Xt_int *indices_src, *indices_dst;
       indices_src = xmalloc(num_indices_src * sizeof (indices_src[0]));
       indices_dst = xmalloc(num_indices_dst * sizeof (indices_dst[0]));
 
@@ -154,13 +154,13 @@ Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
    return idxlist->vtable->get_num_indices(idxlist);
 }
 
-void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_idx *indices) {
+void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
    idxlist->vtable->get_indices(idxlist, indices);
 }
 
 
-const Xt_idx *xt_idxlist_get_indices_const(Xt_idxlist idxlist) {
+const Xt_int *xt_idxlist_get_indices_const(Xt_idxlist idxlist) {
   if (idxlist->vtable->get_indices != NULL)
     return idxlist->vtable->get_indices_const (idxlist);
 
@@ -183,7 +183,7 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
     Xt_count num_indices = xt_idxlist_get_num_indices(idxlist);
 
-    Xt_idx *indices = xmalloc(num_indices * sizeof (indices[0]));
+    Xt_int *indices = xmalloc(num_indices * sizeof (indices[0]));
 
     xt_idxlist_get_indices(idxlist, indices);
 
@@ -195,15 +195,15 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 }
 
 int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
-                                     Xt_idx * index) {
+                                     Xt_int * index) {
 
   return idxlist->vtable->get_index_at_position(idxlist, position, index);
 }
 
 int
 xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                    Xt_count num_pos, Xt_idx *indices,
-                                    Xt_idx undef_idx) {
+                                    Xt_count num_pos, Xt_int *indices,
+                                    Xt_int undef_idx) {
 
   if ( idxlist->vtable->get_indices_at_positions ) {
 
@@ -227,14 +227,14 @@ xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
   }
 }
 
-int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index,
+int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
                                      int * position) {
 
   return idxlist->vtable->get_position_of_index(idxlist, index, position);
 }
 
 int
-xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx const * indices,
+xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
                                     Xt_count num_indices, int * positions,
                                     int single_match_only) {
 
@@ -246,7 +246,7 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx const * indices,
   else {
     Xt_count num_tmp_indices;
     num_tmp_indices = xt_idxlist_get_num_indices(idxlist);
-    Xt_idx *tmp_indices;
+    Xt_int *tmp_indices;
     tmp_indices = xmalloc(num_tmp_indices * sizeof (tmp_indices[0]));
     xt_idxlist_get_indices(idxlist, tmp_indices);
     Xt_idxlist tmp_idxvec;
@@ -261,7 +261,7 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx const * indices,
   }
 }
 
-int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
+int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                          int * position, int offset) {
 
   return idxlist->vtable->get_position_of_index_off(idxlist, index,
@@ -270,7 +270,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
 
 int
 xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
-                                        const Xt_idx *indices,
+                                        const Xt_int *indices,
                                         Xt_count num_indices, int * positions,
                                         int * offsets) {
 
@@ -303,12 +303,12 @@ xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
   return 0;
 }
 
-Xt_idx xt_idxlist_get_min_index(Xt_idxlist idxlist) {
+Xt_int xt_idxlist_get_min_index(Xt_idxlist idxlist) {
 
   return idxlist->vtable->get_min_index(idxlist);
 }
 
-Xt_idx xt_idxlist_get_max_index(Xt_idxlist idxlist) {
+Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist) {
 
   return idxlist->vtable->get_max_index(idxlist);
 }

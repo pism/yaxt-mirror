@@ -71,7 +71,7 @@ int main(void) {
       {
         Xt_idxlist indices_a_[2];
 
-        Xt_idx start = 0;
+        Xt_int start = 0;
         unsigned global_size[2] = {2*size, size*size};
         unsigned local_size[2] = {size,size};
         unsigned local_start[2][2]
@@ -100,7 +100,7 @@ int main(void) {
         indices_all = xt_idxstripes_new(&stripe, 1);
       }
 
-      Xt_idx index_vector_a[2*size*size], index_vector_b[2*size*size],
+      Xt_int index_vector_a[2*size*size], index_vector_b[2*size*size],
              index_vector_all[2*size*size*size];
 
       xt_idxlist_get_indices(indices_a, index_vector_a);
@@ -120,10 +120,10 @@ int main(void) {
       xt_idxlist_delete(indices_b);
       xt_idxlist_delete(indices_all);
 
-      Xt_redist redists[4] = {xt_redist_p2p_new(xmaps[0], Xt_idx_dt),
-                              xt_redist_p2p_new(xmaps[1], Xt_idx_dt),
-                              xt_redist_p2p_new(xmaps[2], Xt_idx_dt),
-                              xt_redist_p2p_new(xmaps[3], Xt_idx_dt)};
+      Xt_redist redists[4] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
+                              xt_redist_p2p_new(xmaps[1], Xt_int_dt),
+                              xt_redist_p2p_new(xmaps[2], Xt_int_dt),
+                              xt_redist_p2p_new(xmaps[3], Xt_int_dt)};
 
       xt_xmap_delete(xmaps[0]), xt_xmap_delete(xmaps[1]);
       xt_xmap_delete(xmaps[2]), xt_xmap_delete(xmaps[3]);
@@ -134,12 +134,12 @@ int main(void) {
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
       xt_redist_delete(redists[2]), xt_redist_delete(redists[3]);
 
-      Xt_idx results_1[2*size*size], results_2[2*size*size];
-      Xt_idx results_3[2*size*size*size], results_4[2*size*size*size];
+      Xt_int results_1[2*size*size], results_2[2*size*size];
+      Xt_int results_3[2*size*size*size], results_4[2*size*size*size];
 
-      Xt_idx * results[4] = {results_1, results_2, results_3, results_4};
+      Xt_int * results[4] = {results_1, results_2, results_3, results_4};
 
-      Xt_idx * input[4] = {index_vector_a, index_vector_b,
+      Xt_int * input[4] = {index_vector_a, index_vector_b,
                            index_vector_a, index_vector_b};
 
       xt_redist_s_exchange(redist, (void**)input, 4, (void**)results, 4);
@@ -172,7 +172,7 @@ int main(void) {
 
       Xt_idxlist src_indices, dst_indices[2];
 
-      Xt_idx src_indices_[5], dst_indices_[2][5];
+      Xt_int src_indices_[5], dst_indices_[2][5];
 
       for (int i = 0; i < 5; ++i) {
         src_indices_[i] = rank * 5 + i;
@@ -194,8 +194,8 @@ int main(void) {
       xt_idxlist_delete(dst_indices[0]);
       xt_idxlist_delete(dst_indices[1]);
 
-      Xt_redist redists[2] = {xt_redist_p2p_new(xmaps[0], Xt_idx_dt),
-                              xt_redist_p2p_new(xmaps[1], Xt_idx_dt)};
+      Xt_redist redists[2] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
+                              xt_redist_p2p_new(xmaps[1], Xt_int_dt)};
 
       xt_xmap_delete(xmaps[0]), xt_xmap_delete(xmaps[1]);
 
@@ -204,11 +204,11 @@ int main(void) {
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
 
-      Xt_idx results_1[5] = {-1,-1,-1,-1,-1}, results_2[5] = {-1,-1,-1,-1,-1};
+      Xt_int results_1[5] = {-1,-1,-1,-1,-1}, results_2[5] = {-1,-1,-1,-1,-1};
 
-      Xt_idx * results[2] = {results_1, results_2};
+      Xt_int * results[2] = {results_1, results_2};
 
-      Xt_idx * input[2] = {src_indices_, src_indices_};
+      Xt_int * input[2] = {src_indices_, src_indices_};
 
       xt_redist_s_exchange(redist, (void**)input, 2, (void**)results, 2);
 

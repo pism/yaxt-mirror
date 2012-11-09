@@ -63,7 +63,7 @@ MODULE xt_ut
        ut_abort, ut_destroy_decomposition, ut_destroy_transposition
 
   ! \todo to be replaced by use yaxt....:
-  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_IDX_FC_KIND
+  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_INT_FC_KIND
   INTEGER, PARAMETER, PUBLIC :: xt_count_kind = XT_COUNT_FC_KIND
 
   !PUBLIC :: xt_idx_kind, xt_count_kind

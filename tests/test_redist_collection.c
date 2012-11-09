@@ -60,13 +60,13 @@ int main(void) {
 
   { // general test with one redist
     // set up data
-    Xt_idx src_index_list[] = {1,2,3,4,5};
+    Xt_int src_index_list[] = {1,2,3,4,5};
     unsigned src_num_indices
       = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
-    Xt_idx dst_index_list[] = {1,3,5};
+    Xt_int dst_index_list[] = {1,3,5};
     unsigned dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
@@ -118,13 +118,13 @@ int main(void) {
   { // test with one redist used three times (with two different input data
     // displacements -> test of cache) (with default cache size)
     // set up data
-    Xt_idx src_index_list[] = {1,2,3,4,5};
+    Xt_int src_index_list[] = {1,2,3,4,5};
     unsigned src_num_indices
       = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
-    Xt_idx dst_index_list[] = {1,3,5};
+    Xt_int dst_index_list[] = {1,3,5};
     unsigned dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
@@ -221,13 +221,13 @@ int main(void) {
   { // test with one redist used three times (with two different input data
     // displacements -> test of cache) (with cache size == 0)
     // set up data
-    Xt_idx src_index_list[] = {1,2,3,4,5};
+    Xt_int src_index_list[] = {1,2,3,4,5};
     unsigned src_num_indices
       = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
-    Xt_idx dst_index_list[] = {1,3,5};
+    Xt_int dst_index_list[] = {1,3,5};
     unsigned dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;
@@ -324,13 +324,13 @@ int main(void) {
   { // test with one redist used three times (with different input
     // data displacements until the cache is full)
     // set up data
-    Xt_idx src_index_list[] = {1,2,3,4,5};
+    Xt_int src_index_list[] = {1,2,3,4,5};
     unsigned src_num_indices
       = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
-    Xt_idx dst_index_list[] = {1,3,5};
+    Xt_int dst_index_list[] = {1,3,5};
     unsigned dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist;

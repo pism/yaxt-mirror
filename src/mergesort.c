@@ -49,7 +49,7 @@
 #include "xt/mergesort.h"
 
 static void insertionsort_idxpos(idxpos_type *w, int n);
-static void insertionsort_index(Xt_idx *val, int n, int *pos, int reset_pos);
+static void insertionsort_index(Xt_int *val, int n, int *pos, int reset_pos);
 
 
 static void insertionsort_idxpos(idxpos_type *w, int n) {
@@ -66,7 +66,7 @@ static void insertionsort_idxpos(idxpos_type *w, int n) {
   }
 }
 
-static void insertionsort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
+static void insertionsort_index(Xt_int *val, int n, int *pos, int reset_pos) {
 
   int i, j;
 
@@ -80,7 +80,7 @@ static void insertionsort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
 
     for(i = 1; i < n; i++) {
 
-      Xt_idx tv = val[i];
+      Xt_int tv = val[i];
       int tp = pos[i];
 
       for(j = i;  j > 0 && val[j-1] > tv; j--) {
@@ -96,7 +96,7 @@ static void insertionsort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
 
     for(i = 1; i < n; i++) {
 
-      Xt_idx tv = val[i];
+      Xt_int tv = val[i];
 
       for(j = i;  j > 0 && val[j-1] > tv; j--) {
         val[j] = val[j-1];
@@ -188,7 +188,7 @@ void xt_mergesort_idxpos(idxpos_type * restrict v, int n)
 
 }
 
-void xt_mergesort_index(Xt_idx *val, int n, int *pos, int reset_pos) {
+void xt_mergesort_index(Xt_int *val, int n, int *pos, int reset_pos) {
 
   // insertion sort for few elements:
   if (n<9) {

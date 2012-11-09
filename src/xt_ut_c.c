@@ -175,7 +175,7 @@ void xt_ut_destroy_transposition(int id) {
 }
 
 
-MPI_Fint xt_ut_init_decomposition_1d(Xt_idx *iv, Xt_count iv_n, Xt_count domain_size) {
+MPI_Fint xt_ut_init_decomposition_1d(Xt_int *iv, Xt_count iv_n, Xt_count domain_size) {
   MPI_Fint id = new_ideco();
   xt_ut_deco_type *deco = xt_handle2pointer(deco_set, id);
   if (!deco) die("xt_ut_init_decomposition_1d: internal error");

@@ -89,7 +89,7 @@ void xt_abort_msl_f(const char *msg, const char *source, int line) {
   Xt_abort(comm_c, msg, source, line);
 }
 
-struct xt_idxlist_f xt_idxvec_new_f(Xt_idx *idxvec, Xt_count num_indices) {
+struct xt_idxlist_f xt_idxvec_new_f(Xt_int *idxvec, Xt_count num_indices) {
   struct xt_idxlist_f idxlist_f;
   idxlist_f.cptr = xt_idxvec_new(idxvec, num_indices);
   return idxlist_f;

@@ -77,7 +77,7 @@ int main(void) {
   {
     Xt_count i;
     // source index list
-    Xt_idx src_index_list[10];
+    Xt_int src_index_list[10];
     Xt_count src_num_indices = 10;
     for (i = 0; i < src_num_indices; ++i)
       src_index_list[i] = rank * 10 + i;
@@ -87,7 +87,7 @@ int main(void) {
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     // destination index list
-    Xt_idx dst_index_list[10];
+    Xt_int dst_index_list[10];
     Xt_count dst_num_indices = 10;
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = (rank * 10 + i + 2) % (size * 10);
@@ -139,7 +139,7 @@ int main(void) {
   {
     Xt_count i;
     // source index list
-    Xt_idx src_index_list[size];
+    Xt_int src_index_list[size];
     Xt_count src_num_indices = 0;
 
     if (rank == 0) src_num_indices = size;
@@ -151,7 +151,7 @@ int main(void) {
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     // destination index list
-    Xt_idx dst_index_list[size];
+    Xt_int dst_index_list[size];
     Xt_count dst_num_indices = size;
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = i;
@@ -229,7 +229,7 @@ int main(void) {
     if (nwin*size != ngdom) PUT_ERR("internal error\n");
 
     // local index
-    Xt_idx iveca[nwin], ivecb[nwin];
+    Xt_int iveca[nwin], ivecb[nwin];
     for (int i = 0; i < nwin; i++) {
       int ig = ig0+i;
       iveca[i]= gdoma[ig];

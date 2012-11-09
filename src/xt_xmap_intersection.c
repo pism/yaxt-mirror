@@ -195,7 +195,7 @@ static void generate_dir_transfer_pos(Xt_idxlist * intersections,
 
   for (int i = 0; i < num_intersections; ++i) {
 
-    const Xt_idx *intersection_idxvec
+    const Xt_int *intersection_idxvec
       = xt_idxlist_get_indices_const(intersections[i]);
     Xt_count intersection_size = xt_idxlist_get_num_indices(intersections[i]);
     int *intersection_pos = xmalloc(intersection_size

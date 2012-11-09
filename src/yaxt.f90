@@ -1,7 +1,7 @@
 !>
 !> @file yaxt.f90
 !> @brief Fortran interface to yaxt implementation
-!> 
+!>
 !> @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
 !>                                 Moritz Hanke <hanke@dkrz.de>
 !>                                 Thomas Jahns <jahns@dkrz.de>
@@ -66,7 +66,7 @@ MODULE yaxt
        &    xt_redist_delete, &
        &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize
 
-  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_IDX_FC_KIND
+  INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_INT_FC_KIND
   INTEGER, PARAMETER, PUBLIC :: xt_count_kind = XT_COUNT_FC_KIND
 
   TYPE, BIND(C), PUBLIC :: xt_stripe

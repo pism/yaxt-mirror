@@ -59,7 +59,7 @@
 
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices,
          struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes);
 static void
 check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
@@ -77,7 +77,7 @@ int main(void) {
 
     Xt_idxlist idxsection;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 1;
     unsigned global_size[1] = {10};
     unsigned local_size [1] = {5};
@@ -90,7 +90,7 @@ int main(void) {
 
     // testing
 
-    Xt_idx ref_indices[5] = {3,4,5,6,7};
+    Xt_int ref_indices[5] = {3,4,5,6,7};
     struct Xt_stripe ref_stripes[1] = {{3,5,1}};
     do_tests(idxsection, ref_indices, 5, ref_stripes, 1);
 
@@ -103,7 +103,7 @@ int main(void) {
 
     Xt_idxlist idxsection;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {5,6};
     unsigned local_size [2] = {3,2};
@@ -116,7 +116,7 @@ int main(void) {
 
     // testing
 
-    Xt_idx ref_indices[6] = {8,9,14,15,20,21};
+    Xt_int ref_indices[6] = {8,9,14,15,20,21};
     struct Xt_stripe ref_stripes[3] = {{8,2,1}, {14,2,1}, {20,2,1}};
     do_tests(idxsection, ref_indices, 6, ref_stripes, 3);
 
@@ -129,7 +129,7 @@ int main(void) {
 
     Xt_idxlist idxsection;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 3;
     unsigned global_size[3] = {4,4,4};
     unsigned local_size[3] = {4,2,2};
@@ -142,7 +142,7 @@ int main(void) {
 
     // testing
 
-    Xt_idx ref_indices[16] = {5,6,9,10, 21,22,25,26, 37,38,41,42, 53,54,57,58};
+    Xt_int ref_indices[16] = {5,6,9,10, 21,22,25,26, 37,38,41,42, 53,54,57,58};
     struct Xt_stripe ref_stripes[8] = {{5,2,1}, {9,2,1}, {21,2,1},
                                        {25,2,1}, {37,2,1}, {41,2,1},
                                        {53,2,1}, {57,2,1}};
@@ -156,7 +156,7 @@ int main(void) {
   { // test 3D section
     Xt_idxlist idxsection;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 3;
     unsigned global_size[3] = {3,4,5};
     unsigned local_size[3] = {2,2,3};
@@ -169,7 +169,7 @@ int main(void) {
 
     // testing
 
-    Xt_idx ref_indices[12] = {26,27,28,31,32,33,46,47,48,51,52,53};
+    Xt_int ref_indices[12] = {26,27,28,31,32,33,46,47,48,51,52,53};
     struct Xt_stripe ref_stripes[4] = {{26,3,1}, {31,3,1}, {46,3,1}, {51,3,1}};
     do_tests(idxsection, ref_indices, 12, ref_stripes, 4);
 
@@ -181,7 +181,7 @@ int main(void) {
   { // test 4D section
     Xt_idxlist idxsection;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 4;
     unsigned global_size[4] = {3,4,4,3};
     unsigned local_size[4] = {2,3,3,2};
@@ -194,7 +194,7 @@ int main(void) {
 
     // testing
 
-    Xt_idx ref_indices[36] = {16,17,19,20,22,23, 28,29,31,32,34,35, 40,41,43,44,46,47,
+    Xt_int ref_indices[36] = {16,17,19,20,22,23, 28,29,31,32,34,35, 40,41,43,44,46,47,
                               64,65,67,68,70,71, 76,77,79,80,82,83, 88,89,91,92,94,95};
     struct Xt_stripe ref_stripes[18] = {{16,2,1},{19,2,1},{22,2,1}, {28,2,1},{31,2,1},{34,2,1}, {40,2,1},{43,2,1},{46,2,1},
                                         {64,2,1},{67,2,1},{70,2,1}, {76,2,1},{79,2,1},{82,2,1}, {88,2,1},{91,2,1},{94,2,1}};
@@ -209,7 +209,7 @@ int main(void) {
 
     Xt_idxlist idxsection_a, idxsection_b;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 1;
     unsigned global_size_a[1] = {10};
     unsigned local_size_a [1] = {5};
@@ -234,7 +234,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[2] = {7,8};
+    Xt_int ref_indices[2] = {7,8};
     struct Xt_stripe ref_stripes[1] = {{7,2,1}};
 
     do_tests(intersection, ref_indices, 2, ref_stripes, 1);
@@ -248,7 +248,7 @@ int main(void) {
 
     Xt_idxlist idxsection_a, idxsection_b;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 1;
     unsigned global_size_a[1] = {10};
     unsigned local_size_a [1] = {1};
@@ -273,7 +273,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[1] = {0};
+    Xt_int ref_indices[1] = {0};
     struct Xt_stripe ref_stripes[1] = {{0,1,1}};
 
     do_tests(intersection, ref_indices, 0, ref_stripes, 0);
@@ -287,7 +287,7 @@ int main(void) {
 
     Xt_idxlist idxsection_a, idxsection_b;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size_a[2] = {6,6};
     unsigned local_size_a [2] = {4,2};
@@ -312,7 +312,7 @@ int main(void) {
 
     // check intersection
 
-    Xt_idx ref_indices[2] = {20,26};
+    Xt_int ref_indices[2] = {20,26};
     struct Xt_stripe ref_stripes[2] = {{20,1,1}, {26,1,1}};
 
     do_tests(intersection, ref_indices, 2, ref_stripes, 2);
@@ -326,7 +326,7 @@ int main(void) {
 
     Xt_idxlist idxsection;
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {4,4};
     unsigned local_size [2] = {2,2};
@@ -335,7 +335,7 @@ int main(void) {
     idxsection = xt_idxsection_new(start, num_dimensions, global_size,
                                    local_size, local_start);
 
-    Xt_idx indices[4], ref_indices[4] = {2,3,6,7};
+    Xt_int indices[4], ref_indices[4] = {2,3,6,7};
 
     xt_idxlist_get_indices(idxsection, indices);
 
@@ -350,7 +350,7 @@ int main(void) {
 
     Xt_idxlist idxsection;
 
-    Xt_idx start = 1;
+    Xt_int start = 1;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {4,4};
     unsigned local_size [2] = {2,2};
@@ -359,7 +359,7 @@ int main(void) {
     idxsection = xt_idxsection_new(start, num_dimensions, global_size,
                                    local_size, local_start);
 
-    Xt_idx indices[4], ref_indices[4] = {3,4,7,8};
+    Xt_int indices[4], ref_indices[4] = {3,4,7,8};
 
     xt_idxlist_get_indices(idxsection, indices);
 
@@ -373,7 +373,7 @@ int main(void) {
   {
     // check get_positions_of_indices
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {4,4};
     unsigned local_size [2] = {2,2};
@@ -383,7 +383,7 @@ int main(void) {
                                    local_size, local_start);
 
     // we have indices = {2,3,6,7}
-    Xt_idx selection[] = {1,2,5,6,7,8};
+    Xt_int selection[] = {1,2,5,6,7,8};
     int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];
@@ -403,7 +403,7 @@ int main(void) {
   {
     // check get_positions_of_indices with single_match_only = 0
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {4,4};
     unsigned local_size [2] = {2,2};
@@ -413,7 +413,7 @@ int main(void) {
                                    local_size, local_start);
 
     // we have indices = {2,3,6,7}
-    Xt_idx selection[] = {2,1,5,7,6,7,7,6,8};
+    Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
     int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];
@@ -440,7 +440,7 @@ int main(void) {
   {
     // check get_positions_of_indices with single_match_only = 1
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {4,4};
     unsigned local_size [2] = {2,2};
@@ -450,7 +450,7 @@ int main(void) {
                                    local_size, local_start);
 
     // we have indices = {2,3,6,7}
-    Xt_idx selection[] = {2,1,5,7,6,7,7,6,8};
+    Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
     int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];
@@ -471,7 +471,7 @@ int main(void) {
   {
     // check idxsection_get_intersection_with_other_idxlist
 
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {4,4};
     unsigned local_size [2] = {2,2};
@@ -481,14 +481,14 @@ int main(void) {
                                    local_size, local_start);
 
     // we have indices = {2,3,6,7}
-    Xt_idx sel_idx[] = {2,1,5,7,6,7,7,6,8};
+    Xt_int sel_idx[] = {2,1,5,7,6,7,7,6,8};
     int num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx);
 
     Xt_idxlist sel_idxlist = xt_idxvec_new(sel_idx, num_sel_idx);
 
     Xt_idxlist inter_idxlist = xt_idxlist_get_intersection(idxsection, sel_idxlist);
 
-    Xt_idx ref_inter_idx[] = {2,6,6,7,7,7};
+    Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
     int num_ref_inter_idx =  sizeof(ref_inter_idx) / sizeof(*ref_inter_idx);
 
     check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
@@ -504,7 +504,7 @@ int main(void) {
 }
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_idx * ref_indices, Xt_count num_indices,
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices,
          struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes) {
 
   check_idxlist(idxlist, ref_indices, num_indices);

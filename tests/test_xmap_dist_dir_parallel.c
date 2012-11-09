@@ -64,14 +64,14 @@ int main(void) {
   { // test in which every process requests data from all processes
     // source index list
 
-    Xt_idx src_index_list[1] = {comm_rank};
+    Xt_int src_index_list[1] = {comm_rank};
 
     Xt_idxlist src_idxlist;
 
     src_idxlist = xt_idxvec_new(src_index_list, 1);
 
     // destination index list
-    Xt_idx dst_index_list[comm_size];
+    Xt_int dst_index_list[comm_size];
 
     for (i = 0; i < comm_size; ++i)
       dst_index_list[i] = i;
@@ -115,14 +115,14 @@ int main(void) {
   { // test in which each process talks with two other
     // processes
 
-    Xt_idx src_index_list[1] = {comm_rank};
+    Xt_int src_index_list[1] = {comm_rank};
 
     Xt_idxlist src_idxlist;
 
     src_idxlist = xt_idxvec_new(src_index_list, 1);
 
     // destination index list
-    Xt_idx dst_index_list[2] = {(comm_rank + comm_size - 1)%comm_size,
+    Xt_int dst_index_list[2] = {(comm_rank + comm_size - 1)%comm_size,
                                 (comm_rank             + 1)%comm_size};
 
     if (dst_index_list[0] > dst_index_list[1]) {
@@ -168,7 +168,7 @@ int main(void) {
 
   if (comm_size == 2) {
 
-    Xt_idx src_index_list[2][20] = { //src_index_list[rank][index];
+    Xt_int src_index_list[2][20] = { //src_index_list[rank][index];
       {1,2,3,4,5,9,10,11,12,13,17,18,19,20,21,25,26,27,28,29},
       {4,5,6,7,8,12,13,14,15,16,20,21,22,23,24,28,29,30,31,32} };
 
@@ -177,7 +177,7 @@ int main(void) {
     src_idxlist = xt_idxvec_new(src_index_list[comm_rank], 20);
 
     // destination index list
-    Xt_idx dst_index_list[2][20] = { //dst_index_list[rank][index];
+    Xt_int dst_index_list[2][20] = { //dst_index_list[rank][index];
       {10,15,14,13,12,15,10,11,12,13,23,18,19,20,21,31,26,27,28,29},
       {13,12,11,10,15,12,13,14,15,10,20,21,22,23,18,28,29,30,31,26}};
 

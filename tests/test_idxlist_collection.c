@@ -70,7 +70,7 @@ int main(void) {
 
   { // test packing and unpacking of collection index lists
 
-    Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
+    Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
     Xt_count num_indices = 7;
 
     Xt_idxlist idxlists[2];
@@ -148,7 +148,7 @@ int main(void) {
       = xt_idxlist_get_intersection(collectionlist, collectionlist_copy);
 
     // check intersection data
-    Xt_idx ref_index_data[14] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7};
+    Xt_int ref_index_data[14] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7};
     check_idxlist(intersection, ref_index_data, 2*num_indices);
 
     // check the conversion to stripes
@@ -178,7 +178,7 @@ int main(void) {
 
   { // test copying of collection index lists
 
-    Xt_idx index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
+    Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
     Xt_count num_indices = 7;
 
     Xt_idxlist idxlists[2];
@@ -232,8 +232,8 @@ int main(void) {
 
   { // test computing intersection of index list collections
 
-    Xt_idx index_list[3][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1},{2,6,1,4,7,3,0}};
-    Xt_idx sorted_index_list[21] = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
+    Xt_int index_list[3][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1},{2,6,1,4,7,3,0}};
+    Xt_int sorted_index_list[21] = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
     Xt_count num_indices = 7;
 
     Xt_idxlist idxlists[3];
@@ -280,13 +280,13 @@ int main(void) {
 
   { // test using various tpyes of index lists
 
-    Xt_idx index_list[] = {1,3,5,7,9,11};
+    Xt_int index_list[] = {1,3,5,7,9,11};
     struct Xt_stripe stripes[] = {{0,5,2},{1,5,2}};
     unsigned global_size[2] = {10,10};
     unsigned local_size[2] = {5,5};
     unsigned local_start[2] = {2,2};
 
-    Xt_idx ref_index_list[] = {1,3,5,7,9,11,
+    Xt_int ref_index_list[] = {1,3,5,7,9,11,
                                0,2,4,6,8,1,3,5,7,9,
                                22,23,24,25,26,
                                32,33,34,35,36,

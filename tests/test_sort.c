@@ -51,10 +51,10 @@
 #include "tests.h"
 
 static void
-test1(void (*anysort_index)(Xt_idx * a, int n, int * idx, int reset_index)) {
+test1(void (*anysort_index)(Xt_int * a, int n, int * idx, int reset_index)) {
   int tsize = 8;
-  Xt_idx ivec[]        = {7,5,3,1,2,2,3,3};
-  Xt_idx sorted_ivec[] = {1,2,2,3,3,3,5,7};
+  Xt_int ivec[]        = {7,5,3,1,2,2,3,3};
+  Xt_int sorted_ivec[] = {1,2,2,3,3,3,5,7};
   int pvec[]           = {1,2,3,4,5,6,7,8};
   int sorted_pvec[]    = {3,4,5,2,6,7,1,0};
 

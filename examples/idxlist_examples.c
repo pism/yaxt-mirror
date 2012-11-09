@@ -53,7 +53,7 @@ int main(void) {
 
   {
     //! [index list example]
-    Xt_idx indices[] = {0,3,32,26,44,14,48};
+    Xt_int indices[] = {0,3,32,26,44,14,48};
     Xt_count num_indices = sizeof(indices)/sizeof(indices[0]);
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
@@ -81,7 +81,7 @@ int main(void) {
 
   {
     //! [index section example]
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {5,10};
     unsigned local_size[2] = {3,4};
@@ -100,7 +100,7 @@ int main(void) {
 
   {
     //! [index list collection example]
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {5,10};
     unsigned local_size[2][2] = {{2,2},{3,4}};
@@ -127,7 +127,7 @@ int main(void) {
 
   {
     //![index list modifier example]
-    Xt_idx start = 0;
+    Xt_int start = 0;
     unsigned num_dimensions = 2;
     unsigned global_size[2] = {5,10};
     unsigned local_size[2] = {3,3};
@@ -168,7 +168,7 @@ static void print_index_list(Xt_idxlist idxlist) {
 
   for (Xt_count i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
 
-    Xt_idx index;
+    Xt_int index;
 
     xt_idxlist_get_index_at_position(idxlist, i, &index);
     printf("%d ", index);

@@ -62,9 +62,10 @@
  *                           within the global array for each dimension (C-style)
  *
  */
-Xt_idxlist xt_idxsection_new(Xt_idx start, unsigned num_dimensions,
-                             unsigned * global_size, unsigned * local_size,
-                             unsigned * local_start);
+Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
+                             unsigned global_size[num_dimensions],
+                             unsigned local_size[num_dimensions],
+                             unsigned local_start[num_dimensions]);
 
 Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm);

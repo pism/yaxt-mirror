@@ -52,8 +52,8 @@
  * Distributed elements are enumerated with numbers of this signed
  * integral type.
  */
-typedef XT_IDX Xt_idx;
-#define Xt_idx_dt (XT_IDX_MPIDT)
+typedef XT_INT Xt_int;
+#define Xt_int_dt (XT_INT_MPIDT)
 /**
  * Local elements are addressed with numbers of this signed
  * integral type.

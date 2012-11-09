@@ -52,9 +52,9 @@
 #include "xt/xt_core.h"
 
 struct Xt_stripe {
-  Xt_idx start;
+  Xt_int start;
   Xt_count nstrides;
-  Xt_idx stride;
+  Xt_int stride;
 };
 
 struct xt_idxlist_vtable {
@@ -66,18 +66,18 @@ struct xt_idxlist_vtable {
    Xt_idxlist (*get_intersection)(Xt_idxlist,Xt_idxlist);
    Xt_idxlist (*copy)(Xt_idxlist);
    Xt_count (*get_num_indices)(Xt_idxlist);
-   void (*get_indices)(Xt_idxlist, Xt_idx *indices);
-   Xt_idx const * (*get_indices_const)(Xt_idxlist idxlist);
+   void (*get_indices)(Xt_idxlist, Xt_int *indices);
+   Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_count *);
-   int (*get_index_at_position)(Xt_idxlist, int, Xt_idx *);
-   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_idx *index, Xt_idx undef_idx);
-   int (*get_position_of_index)(Xt_idxlist, Xt_idx, int *);
-   int (*get_positions_of_indices)(Xt_idxlist, Xt_idx const *, Xt_count, int *, int);
-   int (*get_position_of_index_off)(Xt_idxlist, Xt_idx, int *, int);
-   int (*get_positions_of_indices_off)(Xt_idxlist, Xt_idx const *, Xt_count,
+   int (*get_index_at_position)(Xt_idxlist, int, Xt_int *);
+   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_int *index, Xt_int undef_idx);
+   int (*get_position_of_index)(Xt_idxlist, Xt_int, int *);
+   int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, Xt_count, int *, int);
+   int (*get_position_of_index_off)(Xt_idxlist, Xt_int, int *, int);
+   int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, Xt_count,
                                       int *, int *);
-   Xt_idx (*get_min_index)(Xt_idxlist);
-   Xt_idx (*get_max_index)(Xt_idxlist);
+   Xt_int (*get_min_index)(Xt_idxlist);
+   Xt_int (*get_max_index)(Xt_idxlist);
 };
 
 enum xt_idxvecype {
@@ -198,9 +198,9 @@ Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist);
  * @param[in]     idxlist index list for which the indices are to be returned
  * @param[in,out] indices array into which the indices are written
  */
-void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_idx *indices);
+void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 
-Xt_idx const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
+Xt_int const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
 
 /**
  * gets a pointer of the constant indices stored in an index list
@@ -208,7 +208,7 @@ Xt_idx const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
  * @param[in]     idxlist index list for which the indices are to be returned
  * @return  const indices array
  */
-Xt_idx const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
+Xt_int const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
 
 /**
  * returns the indices stored in an index list
@@ -232,7 +232,7 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
  * @return              0 if everything was okay\n
  *                      1 if the position is out of range
  */
-int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * index);
+int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
 
 /**
  * get indices stored at the specified positions in an index list
@@ -245,7 +245,7 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_idx * 
  * @return                zero if everything was okay or\n
  *                        number of unresolved positions ( == number of undef values assigned to the result)
  */
-int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_idx *indices, Xt_idx undef_idx);
+int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_int *indices, Xt_int undef_idx);
 
 /**
  * gets the position of the first occurrence of the given index
@@ -258,7 +258,7 @@ int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_c
  * @return              0 if everything was okay
  *                      1 if the index could not be found in idxlist
  */
-int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * position);
+int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position);
 
 /**
  * gets the positions of the first occurrence of the given indices
@@ -275,7 +275,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_idx index, int * pos
  * @return                 0 if everything was okay
  *                         1 if the index could not be found in idxlist
  */
-int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx const * indices,
+int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
                                        Xt_count num_indices, int * positions,
                                        int single_match_only);
 
@@ -292,7 +292,7 @@ int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_idx const * indic
  * @return              0 if everything was okay
  *                      1 if the index could not be found in idxlist
  */
-int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
+int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                          int * position, int offset);
 
 /**
@@ -312,7 +312,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_idx index,
  * \remarks a call to xt_idxlist_get_position_of_index_off with offset = NULL
  *          is the same as a call to xt_idxlist_get_positions_of_indices
  */
-int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_idx const * indices,
+int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
                                             Xt_count num_indices, int * positions,
                                             int * offsets);
 
@@ -322,7 +322,7 @@ int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_idx const * i
  * @param[in] idxlist index list
  * @return            smallest index in idxlist
  */
-Xt_idx xt_idxlist_get_min_index(Xt_idxlist idxlist);
+Xt_int xt_idxlist_get_min_index(Xt_idxlist idxlist);
 
 /**
  * gets the biggest index stored in the index list
@@ -330,6 +330,6 @@ Xt_idx xt_idxlist_get_min_index(Xt_idxlist idxlist);
  * @param[in] idxlist index list
  * @return            biggest index in idxlist
  */
-Xt_idx xt_idxlist_get_max_index(Xt_idxlist idxlist);
+Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist);
 
 #endif // XT_IDXLIST_H

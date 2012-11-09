@@ -173,7 +173,7 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
   free(stackr);
 }
 
-void xt_quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
+void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
 
   int pointer_inc = 64;
   int pointer_size;
@@ -182,7 +182,7 @@ void xt_quicksort_index(Xt_idx * v_idx, int n, int * v_pos, int reset_pos) {
   int * stackr;
 
   int i, j, k, l, r, s;
-  Xt_idx w_idx, x_idx;
+  Xt_int w_idx, x_idx;
   int w_pos, x_pos;
 
   /*  Initialization */
