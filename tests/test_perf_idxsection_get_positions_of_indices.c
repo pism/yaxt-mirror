@@ -40,6 +40,7 @@
  */
 
 #include <yaxt.h>
+#include <core/ppm_xfuncs.h>
 
 #define DEACTIVATE_TESTS
 
@@ -51,14 +52,18 @@ int main(void) {
   struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
   Xt_idxlist selection_indices = xt_idxstripes_new(stripe, 1);
 
-  int * positions = malloc(nstrides * sizeof(*positions));
+  int * positions = xmalloc(nstrides * sizeof(*positions));
   Xt_count i, j;
   Xt_count step = nstrides / 128;
   int single_match_only;
-  unsigned const num_samples = 1;
+  unsigned num_samples = 1;
 
-  unsigned global_size[3][3] = {{64, 256, 512}, {32, 128, 256}, {16, 64, 128}};
-  unsigned local_size [3][3] = {{64, 256, 512}, {32, 128, 256}, {16, 64, 128}};
+  unsigned global_size[3][5] = {{4, 64, 16, 256, 512},
+                                {4, 16, 32, 128, 256},
+                                {4, 8, 16, 64, 128}};
+  unsigned local_size [3][5] = {{4, 1, 16, 128, 512},
+                                {4, 1, 32, 64, 256},
+                                {4, 1, 16, 32, 128}};
 
   for (int test_id = 0; test_id < 3; ++test_id) {
 
@@ -67,8 +72,10 @@ int main(void) {
       Xt_int start = 0;
       unsigned num_dimension = 3;
       unsigned local_start[] = {0,0,0};
-      Xt_idxlist idxsection = xt_idxsection_new(start, num_dimension, global_size[test_id],
-                                                local_size[test_id], local_start);
+      Xt_idxlist idxsection = xt_idxsection_new(start, num_dimension,
+                                                global_size[test_id] + 2,
+                                                local_size[test_id] + 2,
+                                                local_start);
 
       // generate index cache in idxsection
       xt_idxlist_get_indices_const(idxsection);
@@ -95,8 +102,10 @@ int main(void) {
           Xt_idxlist idxsection[num_samples];
 
           for (j = 0; j < num_samples; ++j)
-            idxsection[j] = xt_idxsection_new(start, num_dimension, global_size[test_id],
-                                              local_size[test_id], local_start);
+            idxsection[j] = xt_idxsection_new(start, num_dimension,
+                                              global_size[test_id] + 2,
+                                              local_size[test_id] + 2,
+                                              local_start);
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_get_positions_of_indices(idxsection[j],
                                                 xt_idxlist_get_indices_const(selection_indices),
@@ -105,6 +114,36 @@ int main(void) {
             xt_idxlist_delete(idxsection[j]);
         }
       }
+    }
+    for (unsigned num_dimension = 3; num_dimension < 6; num_dimension += 2)
+    { // test index enumeration without cached indices
+
+      unsigned local_start[] = {0,0,0,0,0};
+      Xt_int *idxDump = NULL;
+      size_t idxDumpSize = 0;
+      num_samples = 52;
+      Xt_idxlist idxsection[num_samples];
+
+      for (single_match_only = 0; single_match_only < 2;  ++single_match_only) {
+
+        for (j = 0; j < num_samples; ++j)
+          idxsection[j] = xt_idxsection_new(0, num_dimension,
+                                            global_size[test_id],
+                                            local_size[test_id],
+                                            local_start);
+        for (j = 0; j < num_samples; ++j)
+        {
+          Xt_count numIdx = xt_idxlist_get_num_indices(idxsection[j]);
+          if (numIdx > idxDumpSize)
+            idxDump = xrealloc(idxDump,
+                               sizeof (idxDump[0]) * (idxDumpSize = numIdx));
+          xt_idxlist_get_indices(idxsection[j], idxDump);
+        }
+        for (j = 0; j < num_samples; ++j)
+          xt_idxlist_delete(idxsection[j]);
+      }
+      num_samples = 1;
+      free(idxDump);
     }
   }
 
