@@ -36,6 +36,7 @@
 noinst_PROGRAMS = 						\
 	test_mpi_generate_datatype				\
 	test_handles						\
+	test_idxempty						\
 	test_idxvec						\
 	test_idxlist_collection					\
 	test_idxmod						\
@@ -59,6 +60,7 @@ noinst_PROGRAMS = 						\
 	test_yaxt
 
 
+test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist_utils.h
 test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h \
 	test_idxlist_utils.h
@@ -99,6 +101,7 @@ LDADD = ../src/libyaxt.la $(MPI_C_LIB)
 TESTS = 							\
 	test_mpi_generate_datatype_run				\
 	test_handles_run					\
+	test_idxempty_run					\
 	test_idxvec_run						\
 	test_idxlist_collection_run				\
 	test_idxmod_run						\

@@ -1,0 +1,280 @@
+/**
+ * @file xt_idxempty.c
+ *
+ * @copyright Copyright  (C)  2012 Moritz Hanke <hanke@dkrz.de>
+ *
+ * @version 1.0
+ * @author Moritz Hanke <hanke@dkrz.de>
+ */
+/*
+ * Keywords:
+ * Maintainer: Moritz Hanke <hanke@dkrz.de>
+ * URL: https://redmine.dkrz.de/doc/yaxt/html/index.html
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are  permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * Neither the name of the DKRZ GmbH nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <assert.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "xt/xt_core.h"
+#include "xt/xt_idxlist.h"
+#include "xt/xt_mpi.h"
+#include "core/ppm_xfuncs.h"
+#include "core/core.h"
+
+static void
+idxempty_delete(Xt_idxlist data);
+
+static size_t
+idxempty_get_pack_size(Xt_idxlist data, MPI_Comm comm);
+
+static void
+idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
+              int *position, MPI_Comm comm);
+
+static Xt_idxlist
+idxempty_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
+
+static Xt_idxlist
+idxempty_copy(Xt_idxlist idxlist);
+
+static Xt_count
+idxempty_get_num_indices(Xt_idxlist idxlist);
+
+static void
+idxempty_get_indices(Xt_idxlist idxlist, Xt_int *indices);
+
+static Xt_int const*
+idxempty_get_indices_const(Xt_idxlist idxlist);
+
+static void
+idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                           Xt_count * num_stripes);
+
+static int
+idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
+
+static int
+idxempty_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+                                  Xt_count num, Xt_int *index,
+                                  Xt_int undef_idx);
+
+static int
+idxempty_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position);
+
+static int
+idxempty_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
+                                   int * position, int offset);
+
+static int
+idxempty_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
+                                  Xt_count num_indices, int * positions,
+                                  int single_match_only);
+
+static int
+idxempty_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
+                                      Xt_count num_indices, int * positions,
+                                      int * offsets);
+
+static Xt_int
+idxempty_get_min_index(Xt_idxlist idxlist);
+
+static Xt_int
+idxempty_get_max_index(Xt_idxlist idxlist);
+
+static const struct xt_idxlist_vtable idxempty_vtable = {
+  .delete                       = idxempty_delete,
+  .get_pack_size                = idxempty_get_pack_size,
+  .pack                         = idxempty_pack,
+  .get_intersection             = idxempty_get_intersection,
+  .copy                         = idxempty_copy,
+  .get_num_indices              = idxempty_get_num_indices,
+  .get_indices                  = idxempty_get_indices,
+  .get_indices_const            = idxempty_get_indices_const,
+  .get_index_stripes            = idxempty_get_index_stripes,
+  .get_index_at_position        = idxempty_get_index_at_position,
+  .get_indices_at_positions     = idxempty_get_indices_at_positions,
+  .get_position_of_index        = idxempty_get_position_of_index,
+  .get_positions_of_indices     = idxempty_get_positions_of_indices,
+  .get_position_of_index_off    = idxempty_get_position_of_index_off,
+  .get_positions_of_indices_off = idxempty_get_positions_of_indices_off,
+  .get_min_index                = idxempty_get_min_index,
+  .get_max_index                = idxempty_get_max_index
+};
+
+// index vector data structure
+struct xt_idxempty {
+
+   const struct xt_idxlist_vtable *vtable;
+};
+
+Xt_idxlist xt_idxempty_new() {
+
+   struct xt_idxempty *idxempty;
+
+   idxempty = xmalloc(1 * sizeof(*idxempty));
+   idxempty->vtable = &idxempty_vtable;
+
+   return (void*)idxempty;
+}
+
+static void idxempty_delete(Xt_idxlist data) {
+
+   free(data);
+}
+
+static size_t idxempty_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
+
+   int size_int_type;
+
+   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
+
+   return size_int_type;
+}
+
+void idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
+                 int *position, MPI_Comm comm) {
+
+  assert(data);
+  int type = EMPTY;
+
+  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
+                           buffer_size, position, comm), comm);
+}
+
+Xt_idxlist xt_idxempty_unpack(void *buffer, int buffer_size, int *position,
+                            MPI_Comm comm) {
+
+   return xt_idxempty_new();
+}
+
+
+static Xt_idxlist
+idxempty_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
+
+  return xt_idxempty_new();
+}
+
+static Xt_idxlist
+idxempty_copy(Xt_idxlist idxlist) {
+
+   return xt_idxempty_new();
+}
+
+static Xt_count
+idxempty_get_num_indices(Xt_idxlist idxlist) {
+
+   return 0;
+}
+
+static void
+idxempty_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
+
+  return;
+}
+
+static Xt_int const*
+idxempty_get_indices_const(Xt_idxlist idxlist) {
+
+  return NULL;
+}
+
+
+static void
+idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
+                         Xt_count * num_stripes) {
+
+  *stripes = NULL;
+  *num_stripes = 0;
+}
+
+static int
+idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index) {
+
+  return 1;
+}
+
+static int
+idxempty_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos,
+                                  Xt_int *index, Xt_int undef_idx) {
+
+  assert(num_pos >= 0);
+
+  for (Xt_count i = 0; i < num_pos; ++i)
+    index[i] = undef_idx;
+
+  return num_pos;
+}
+
+static int
+idxempty_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
+                                   int * position, int offset) {
+
+  return 1;
+}
+
+static int
+idxempty_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position) {
+
+  return 1;
+}
+
+int idxempty_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_int const * selection_idx,
+                                      Xt_count num_selection, int * positions,
+                                      int single_match_only) {
+
+  return num_selection;
+}
+
+static int
+idxempty_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
+                                      Xt_count num_indices, int * positions,
+                                      int * offsets) {
+
+  return 1;
+}
+
+static Xt_int
+idxempty_get_min_index(Xt_idxlist idxlist) {
+
+  die("idxempty_get_min_index: empty index list");
+
+  return -1;
+}
+
+static Xt_int
+idxempty_get_max_index(Xt_idxlist idxlist) {
+
+  die("idxempty_get_min_index: empty index list");
+
+  return -1;
+}

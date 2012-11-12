@@ -48,6 +48,7 @@ libyaxt_la_SOURCES =						\
 	xt/quicksort.h						\
 	xt/xt_sort.h						\
 	xt/xt_idxlist.h						\
+	xt/xt_idxempty.h					\
 	xt/xt_idxlist_collection.h				\
 	xt/xt_idxsection.h					\
 	xt/xt_idxstripes.h					\
@@ -63,6 +64,7 @@ libyaxt_la_SOURCES =						\
 	xt/xt_xmap_intersection.h				\
 	xt/xt_idxmod.h						\
 	xt_handles.c						\
+	xt_idxempty.c						\
 	xt_idxlist.c						\
 	xt_idxlist_collection.c					\
 	xt_idxlist_unpack.c 					\

@@ -85,6 +85,7 @@ enum xt_idxvecype {
    COLLECTION = 2,
    SECTION    = 3,
    STRIPES    = 4,
+   EMPTY      = 5,
 };
 
 struct Xt_idxlist {
