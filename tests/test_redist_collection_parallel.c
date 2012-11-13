@@ -72,9 +72,9 @@ int main(void) {
         Xt_idxlist indices_a_[2];
 
         Xt_int start = 0;
-        unsigned global_size[2] = {2*size, size*size};
-        unsigned local_size[2] = {size,size};
-        unsigned local_start[2][2]
+        Xt_int global_size[2] = {2*size, size*size};
+        Xt_int local_size[2] = {size,size};
+        Xt_int local_start[2][2]
           = {{0,rank*size},{size,size*size-(rank+1)*size}};
 
         indices_a_[0] = xt_idxsection_new(start, 2, global_size, local_size,

@@ -63,9 +63,9 @@
  *
  */
 Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
-                             unsigned global_size[num_dimensions],
-                             unsigned local_size[num_dimensions],
-                             unsigned local_start[num_dimensions]);
+                             Xt_int global_size[num_dimensions],
+                             Xt_int local_size[num_dimensions],
+                             Xt_int local_start[num_dimensions]);
 
 Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm);
