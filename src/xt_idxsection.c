@@ -208,12 +208,6 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
   return (Xt_idxlist)idxsection;
 }
 
-Xt_idxlist
-xt_idxsection_new2(Xt_int start, unsigned num_dimensions,
-                   const struct dim_desc dims[num_dimensions])
-{
-}
-
 static void
 idxsection_delete(Xt_idxlist data) {
 
