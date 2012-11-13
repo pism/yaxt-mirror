@@ -49,9 +49,9 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "mpi.h"
+#include <mpi.h>
 
-#include "yaxt.h"
+#include <yaxt.h>
 
 #define MIN(X, Y)  ((X) < (Y) ? (X) : (Y))
 //#define DEBUG
