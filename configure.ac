@@ -131,6 +131,16 @@ AC_DEFINE_UNQUOTED([XT_INT_MPIDT],[$XT_INT_MPIDT],[Type to use for enumeration o
 AC_DEFINE_UNQUOTED([XT_COUNT],[$XT_COUNT],[Type to use for enumeration of distributed elements.])
 AC_DEFINE_UNQUOTED([XT_COUNT_MPIDT],[$XT_COUNT_MPIDT],[Type to use for enumeration of distributed elements.])
 
+AC_ARG_VAR([BUILD_CFLAGS],
+  [append to CFLAGS during build but not in configure phase])
+AC_CONFIG_COMMANDS_PRE([CFLAGS="$CFLAGS${BUILD_CFLAGS+ $BUILD_CFLAGS}"])
+AC_ARG_VAR([BUILD_FCFLAGS],
+  [append to FCFLAGS during build but not in configure phase])
+AC_CONFIG_COMMANDS_PRE([FCFLAGS="$FCFLAGS${BUILD_FCFLAGS+ $BUILD_FCFLAGS}"])
+AC_ARG_VAR([BUILD_LDFLAGS],
+  [append to LDFLAGS during build but not in configure phase])
+AC_CONFIG_COMMANDS_PRE([LDFLAGS="$LDFLAGS${BUILD_LDFLAGS+ $BUILD_LDFLAGS}"])
+
 AC_CONFIG_HEADER([include/config.h])
 
 AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\
