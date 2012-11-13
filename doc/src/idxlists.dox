@@ -83,4 +83,16 @@
   \image html decomp_idxmod.png "index modifier decomposition example"
 
   \snippet idxlist_examples.c index list modifier example
+
+  \section idxempty Empty index list
+
+  \dontinclude xt_idxempty.h
+  \skip _new
+  \until ;
+
+  The empty index contains no indices. It handles the non-existing indices with
+  good performance.
+
+  \snippet idxlist_examples.c empty index list example
+
  */

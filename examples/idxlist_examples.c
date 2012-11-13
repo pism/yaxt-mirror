@@ -126,6 +126,16 @@ int main(void) {
   }
 
   {
+    //![empty index list example]
+    Xt_idxlist empty_list;
+
+    empty_list = xt_idxempty_new();
+    //![empty index list example]
+
+    xt_idxlist_delete(empty_list);
+  }
+
+  {
     //![index list modifier example]
     Xt_int start = 0;
     unsigned num_dimensions = 2;
