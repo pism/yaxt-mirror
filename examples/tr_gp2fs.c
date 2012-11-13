@@ -63,8 +63,8 @@ struct config {
 
    struct {
       int x_leng, y_leng, z_leng;        //local data size
-      unsigned local_size[3];
-      unsigned local_start[3];
+      Xt_int local_size[3];
+      Xt_int local_start[3];
    } src, dst; //!< source and target decomposion
 };
 
@@ -308,7 +308,7 @@ int main(int argc, char** argv) {
 
     // global param
     unsigned num_dims = 3;
-    unsigned global_size[3] = {conf.z, conf.y, conf.x};
+    Xt_int global_size[3] = {conf.z, conf.y, conf.x};
 
     // -- SOURCE index list by section
     Xt_idxlist src_idxsection;
