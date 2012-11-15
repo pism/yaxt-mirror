@@ -205,6 +205,32 @@ int main(void) {
     xt_idxlist_delete(idxsection);
   }
 
+  { // test 2D section
+
+    Xt_idxlist idxsection;
+
+    Xt_int start = 0;
+    unsigned num_dimensions = 2;
+    Xt_int global_size[2] = {5,10};
+    Xt_int local_size [2] = {3,4};
+    Xt_int local_start[2] = {1,2};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // testing
+
+    Xt_int ref_indices[12] = {12,13,14,15,22,23,24,25,32,33,34,35};
+
+    check_idxlist(idxsection, ref_indices, 12);
+
+    // clean up
+
+    xt_idxlist_delete(idxsection);
+  }
+
   { // 1D intersection test
 
     Xt_idxlist idxsection_a, idxsection_b;
@@ -498,6 +524,190 @@ int main(void) {
     xt_idxlist_delete(idxsection);
   }
 
+  { // test 2D section with negative global size
+
+    for (int i = 0; i < 16; ++i) {
+
+      Xt_idxlist idxsection;
+
+      Xt_int start = 0;
+      unsigned num_dimensions = 2;
+      Xt_int global_size[4][2] = {{5,10},{5,-10},{-5,10},{-5,-10}};
+      Xt_int local_size [4][2] = {{3,4},{3,-4},{-3,4},{-3,-4}};
+      Xt_int local_start[2] = {1,2};
+
+      // create index section
+
+      idxsection = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
+                                     local_size[i & 3], local_start);
+
+      // testing
+
+      Xt_int ref_indices[16][12] =
+        {{12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
+         {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
+         {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
+         {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
+         {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
+         {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37},
+         {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
+         {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
+         {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
+         {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
+         {12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
+         {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
+         {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
+         {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
+         {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
+         {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37}};
+
+      check_idxlist(idxsection, ref_indices[i], 12);
+
+      // clean up
+
+      xt_idxlist_delete(idxsection);
+    }
+  }
+
+  { // test 2D section with negative global size
+
+    for (int i = 0; i < 16; ++i) {
+
+      Xt_idxlist idxsection;
+
+      Xt_int start = 0;
+      unsigned num_dimensions = 2;
+      Xt_int global_size[4][2] = {{5,6},{5,-6},{-5,6},{-5,-6}};
+      Xt_int local_size [4][2] = {{2,3},{2,-3},{-2,3},{-2,-3}};
+      Xt_int local_start[2] = {1,2};
+
+      // create index section
+
+      idxsection = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
+                                     local_size[i & 3], local_start);
+
+      // testing
+
+      Xt_int ref_indices[16][6] =
+        {{8,9,10,14,15,16},
+         {10,9,8,16,15,14},
+         {14,15,16,8,9,10},
+         {16,15,14,10,9,8},
+         {9,8,7,15,14,13},
+         {7,8,9,13,14,15},
+         {15,14,13,9,8,7},
+         {13,14,15,7,8,9},
+         {20,21,22,14,15,16},
+         {22,21,20,16,15,14},
+         {14,15,16,20,21,22},
+         {16,15,14,22,21,20},
+         {21,20,19,15,14,13},
+         {19,20,21,13,14,15},
+         {15,14,13,21,20,19},
+         {13,14,15,19,20,21}};
+
+      check_idxlist(idxsection, ref_indices[i], 6);
+
+      // clean up
+
+      xt_idxlist_delete(idxsection);
+    }
+  }
+
+  { // test 2D section with negative global size
+
+    Xt_idxlist idxsection;
+
+    Xt_int start = 0;
+    unsigned num_dimensions = 2;
+    Xt_int global_size[2] = {-5,6};
+    Xt_int local_size [2] = {-2,-3};
+    Xt_int local_start[2] = {1,2};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // testing
+
+    Xt_int ref_indices[6] = {16,15,14,22,21,20};
+
+    check_idxlist(idxsection, ref_indices, 6);
+
+    // check get_positions_of_indices
+
+    int indice[34] = {-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,16,17,18,19,
+                      20,20,21,22,23,24,25,26,27,28,29,30};
+    int ref_positions[34] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,2,1,-1,0,-1,-1,-1,
+                             5,-1,4,3,-1,-1,-1,-1,-1,-1,-1,-1};
+    int positions[34];
+
+    if (xt_idxlist_get_positions_of_indices(idxsection, indice, 34, positions, 1) != 28)
+      PUT_ERR("error in xt_idxlist_get_positions_of_indices"
+              " (wrong number of unmatched indices)\n");
+
+    for (int i = 0; i < 34; ++i)
+      if (ref_positions[i] != positions[i])
+        PUT_ERR("error in xt_idxlist_get_positions_of_indices (wrong position)\n");
+
+    // clean up
+
+    xt_idxlist_delete(idxsection);
+  }
+
+  { // test 2D section with stride in x
+
+    Xt_idxlist idxsection;
+
+    Xt_int start = 0;
+    unsigned num_dimensions = 3;
+    Xt_int global_size[3] = {5,5,2};
+    Xt_int local_size [3] = {3,4,1};
+    Xt_int local_start[3] = {2,0,1};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // testing
+
+    Xt_int ref_indices[12] = {21, 23, 25, 27, 31, 33, 35, 37, 41, 43, 45, 47};
+
+    check_idxlist(idxsection, ref_indices, 12);
+
+    // clean up
+
+    xt_idxlist_delete(idxsection);
+  }
+
+  { // test 2D section with stride in x and y
+
+    Xt_idxlist idxsection;
+
+    Xt_int start = 0;
+    unsigned num_dimensions = 4;
+    Xt_int global_size[4] = {3,2,5,2};
+    Xt_int local_size [4] = {3,1,4,1};
+    Xt_int local_start[4] = {0,1,1,0};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    // testing
+
+    Xt_int ref_indices[12] = {12, 14, 16, 18, 32, 34, 36, 38, 52, 54, 56, 58};
+
+    check_idxlist(idxsection, ref_indices, 12);
+
+    // clean up
+
+    xt_idxlist_delete(idxsection);
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
@@ -588,7 +798,6 @@ do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices,
 
     xt_idxlist_delete(idxlist_copy);
   }
-
 }
 
 static void

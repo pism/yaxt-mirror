@@ -61,6 +61,8 @@
  * @param[in] local_start    index of the first index of the local part
  *                           within the global array for each dimension (C-style)
  *
+ * \remarks Negative values for global_size and local_size are allowed.
+ *          (see \ref negative_idxsections)
  */
 Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
                              Xt_int global_size[num_dimensions],
