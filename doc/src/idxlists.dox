@@ -51,7 +51,8 @@
   \until ;
 
   A very common decomposition is the partioning into n-dimensional blocks. For this
-  decomposition type the index section is recommanded.
+  decomposition type the index section is recommanded. Some advanced features of index
+  sections are described in \ref idxsection_docu.
 
   \image html decomp_idxsection.png "index section decomposition example"
 

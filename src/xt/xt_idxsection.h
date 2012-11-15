@@ -62,7 +62,7 @@
  *                           within the global array for each dimension (C-style)
  *
  * \remarks Negative values for global_size and local_size are allowed.
- *          (see \ref negative_idxsections)
+ *          (see \ref idxsection_docu_neg_size)
  */
 Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
                              Xt_int global_size[num_dimensions],

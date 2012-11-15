@@ -211,12 +211,6 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
            INT_SIGN (global_size[i]);
   }
 
-  // idxsection_get_index_at_position((Xt_idxlist)idxsection, 0,
-                                   // &(idxsection->min_index_cache));
-  // idxsection_get_index_at_position(
-    // (Xt_idxlist)idxsection,
-    // idxsection_get_num_indices((Xt_idxlist)idxsection) - 1,
-    // &(idxsection->max_index_cache));
   idxsection->min_index_cache = idxsection->local_start_index;
   idxsection->max_index_cache = idxsection->local_start_index;
   for (i = 0; i < num_dimensions; ++i) {

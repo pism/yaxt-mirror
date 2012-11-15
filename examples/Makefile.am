@@ -36,10 +36,12 @@
 noinst_PROGRAMS = 						\
 	rrobin							\
 	idxlist_examples					\
+	idxsection_examples					\
 	tr_gp2fs
 
 rrobin_SOURCES = rrobin.c
 idxlist_examples_SOURCES = idxlist_examples.c
+idxsection_examples_SOURCES = idxsection_examples.c
 tr_gp2fs_SOURCES = tr_gp2fs.c 
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
