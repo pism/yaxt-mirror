@@ -53,8 +53,8 @@
 #include "tests.h"
 
 static void
-ref_get_positions_of_indices(Xt_int * indices, Xt_count num_indices,
-                             Xt_int * selection, int selection_size,
+ref_get_positions_of_indices(Xt_int const * indices, Xt_count num_indices,
+                             Xt_int const * selection, int selection_size,
                              int * positions, int repeat_first_match) {
   int used[num_indices];
   int found;
@@ -79,7 +79,7 @@ ref_get_positions_of_indices(Xt_int * indices, Xt_count num_indices,
   }
 }
 
-static Xt_int get_min_index(Xt_int * indices, Xt_count num_indices) {
+static Xt_int get_min_index(Xt_int const * indices, Xt_count num_indices) {
 
   Xt_int index;
   Xt_count i;
@@ -96,7 +96,7 @@ static Xt_int get_min_index(Xt_int * indices, Xt_count num_indices) {
   return index;
 }
 
-static Xt_int get_max_index(Xt_int * indices, Xt_count num_indices) {
+static Xt_int get_max_index(Xt_int const * indices, Xt_count num_indices) {
 
   Xt_int index;
   Xt_count i;
@@ -113,7 +113,7 @@ static Xt_int get_max_index(Xt_int * indices, Xt_count num_indices) {
   return index;
 }
 
-static void check_idxlist(Xt_idxlist idxlist, Xt_int * ref_indices,
+static void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
                           Xt_count ref_num_indices) {
 
   Xt_count i;
