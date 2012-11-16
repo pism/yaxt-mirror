@@ -45,6 +45,8 @@
 #include "config.h"
 #endif
 
+#include <limits.h>
+
 #include <mpi.h>
 
 /**
@@ -53,6 +55,8 @@
  */
 typedef XT_INT Xt_int;
 #define Xt_int_dt (XT_INT_MPIDT)
+typedef unsigned XT_INT Xt_uint;
+
 /**
  * Local elements are addressed with numbers of this signed
  * integral type.
