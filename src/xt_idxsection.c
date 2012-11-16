@@ -51,6 +51,7 @@
 #include <string.h>
 
 #include "xt/xt_idxlist.h"
+#include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxsection.h"
 #include "xt/xt_mpi.h"
@@ -419,12 +420,20 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
     Xt_int src_start, src_end, dst_start, dst_end, local_end;
 
-    src_start = idxsection_src->dims[i].local_start;
-    dst_start = idxsection_dst->dims[i].local_start;
-    src_end = idxsection_src->dims[i].local_start
-      + abs(idxsection_src->dims[i].local_size);
-    dst_end = idxsection_dst->dims[i].local_start
-      + abs(idxsection_dst->dims[i].local_size);
+    if (idxsection_src->dims[i].global_size >= 0)
+      src_start = idxsection_src->dims[i].local_start;
+    else
+      src_start = -idxsection_src->dims[i].global_size -
+                  abs(idxsection_src->dims[i].local_size) -
+                  idxsection_src->dims[i].local_start;
+    if (idxsection_dst->dims[i].global_size >= 0)
+      dst_start = idxsection_dst->dims[i].local_start;
+    else
+      dst_start = -idxsection_dst->dims[i].global_size -
+                  abs(idxsection_dst->dims[i].local_size) -
+                  idxsection_dst->dims[i].local_start;
+    src_end = src_start + abs(idxsection_src->dims[i].local_size);
+    dst_end = dst_start + abs(idxsection_dst->dims[i].local_size);
 
     local_start[i] = (src_start > dst_start)?src_start:dst_start;
     local_end = (src_end > dst_end)?dst_end:src_end;
@@ -433,11 +442,11 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
       free(global_size);
       free(local_size);
       free(local_start);
-      return xt_idxvec_new(NULL, 0);
+      return xt_idxempty_new();
     }
 
     local_size[i] = local_end - local_start[i];
-    global_size[i] = idxsection_src->dims[i].global_size;
+    global_size[i] = abs(idxsection_src->dims[i].global_size);
   }
 
   struct Xt_idxlist *intersection;

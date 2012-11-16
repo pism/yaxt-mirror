@@ -614,6 +614,80 @@ int main(void) {
     }
   }
 
+  { // test intersection of 2D section with negative global size
+
+    for (int i = 0; i < 16; ++i) {
+      for (int j = 0; j < 16; ++j) {
+
+        Xt_idxlist idxsection_a, idxsection_b;
+        Xt_idxlist idxvec_a, idxvec_b;
+        Xt_idxlist idxsection_intersection;
+        Xt_idxlist idxsection_intersection_other;
+        Xt_idxlist idxvec_intersection;
+
+        Xt_int start = 0;
+        unsigned num_dimensions = 2;
+        Xt_int global_size[4][2] = {{5,10},{5,-10},{-5,10},{-5,-10}};
+        Xt_int local_size [4][2] = {{3,4},{3,-4},{-3,4},{-3,-4}};
+        Xt_int local_start[2] = {1,2};
+
+        Xt_int indices[16][12] =
+          {{12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
+           {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
+           {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
+           {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
+           {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
+           {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37},
+           {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
+           {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
+           {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
+           {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
+           {12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
+           {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
+           {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
+           {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
+           {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
+           {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37}};
+
+        // create index section
+
+        idxsection_a = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
+                                         local_size[i & 3], local_start);
+        idxsection_b = xt_idxsection_new(start, num_dimensions, global_size[j >> 2],
+                                         local_size[j & 3], local_start);
+
+        // create reference index vectors
+
+        idxvec_a = xt_idxvec_new(indices[i], 12);
+        idxvec_b = xt_idxvec_new(indices[j], 12);
+
+        // testing
+
+        idxsection_intersection = xt_idxlist_get_intersection(idxsection_a, idxsection_b);
+        idxsection_intersection_other = xt_idxlist_get_intersection(idxsection_a,
+                                                                    idxvec_b);
+        idxvec_intersection = xt_idxlist_get_intersection(idxvec_a, idxvec_b);
+
+        check_idxlist(idxsection_intersection,
+                      xt_idxlist_get_indices_const(idxvec_intersection),
+                      xt_idxlist_get_num_indices(idxvec_intersection));
+        check_idxlist(idxsection_intersection_other,
+                      xt_idxlist_get_indices_const(idxvec_intersection),
+                      xt_idxlist_get_num_indices(idxvec_intersection));
+
+        // clean up
+
+        xt_idxlist_delete(idxsection_a);
+        xt_idxlist_delete(idxsection_b);
+        xt_idxlist_delete(idxvec_a);
+        xt_idxlist_delete(idxvec_b);
+        xt_idxlist_delete(idxsection_intersection);
+        xt_idxlist_delete(idxsection_intersection_other);
+        xt_idxlist_delete(idxvec_intersection);
+      }
+    }
+  }
+
   { // test 2D section with negative global size
 
     Xt_idxlist idxsection;
