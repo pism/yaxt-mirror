@@ -56,6 +56,7 @@
 #include "xt/xt_mpi.h"
 #include "xt/mergesort.h"
 #include "xt/quicksort.h"
+#include "xt_idxlist_unpack.h"
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 

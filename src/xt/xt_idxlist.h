@@ -79,21 +79,8 @@ struct xt_idxlist_vtable {
    Xt_int (*get_max_index)(Xt_idxlist);
 };
 
-enum xt_idxvecype {
-   VECTOR     = 1,
-   COLLECTION = 2,
-   SECTION    = 3,
-   STRIPES    = 4,
-   EMPTY      = 5,
-};
-
 struct Xt_idxlist {
    struct xt_idxlist_vtable *vtable;
-};
-
-struct xt_idxlist_unpack_routine_table {
-   enum xt_idxvecype type;
-   Xt_idxlist (*xt_idxlist_unpack)(void*,int,int*,MPI_Comm);
 };
 
 /**
