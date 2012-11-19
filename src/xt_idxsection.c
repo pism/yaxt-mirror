@@ -614,10 +614,9 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
     *num_stripes *= Xt_isign(section->dims[i].local_size) *
                     section->dims[i].local_size;
 
-  if (num_stripes == 0) {
+  if (*num_stripes == 0) {
 
     *stripes = NULL;
-    *num_stripes = 0;
     return;
   }
 
