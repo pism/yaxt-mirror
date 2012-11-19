@@ -6,7 +6,6 @@
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @version 1.0
  * @author Jörg Behrens <behrens@dkrz.de>
  *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>

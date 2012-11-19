@@ -4,7 +4,6 @@
  * @copyright Copyright  (C)  2012 Anna Fuchs   <anna.fuchsmakaeva@googlemail.com>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *
- * @version 1.0
  * @author Anna Fuchs   <anna.fuchsmakaeva@googlemail.com>
  *         Moritz Hanke <hanke@dkrz.de>
  */

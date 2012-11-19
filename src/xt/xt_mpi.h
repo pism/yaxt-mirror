@@ -7,7 +7,6 @@
  * @copyright Copyright  (C)  2012 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @version 1.0
  * @author Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */

@@ -5,7 +5,6 @@
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @version 1.0
  * @author Anna Fuchs   <anna.fuchsmakaeva@googlemail.com>
  *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>

@@ -3,7 +3,6 @@
  *
  * @copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
  *
- * @version 1.0
  * Keywords: ScalES PPM error handling
  * @author Thomas Jahns <jahns@dkrz.de>
  */

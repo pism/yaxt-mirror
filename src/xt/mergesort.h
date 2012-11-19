@@ -7,7 +7,6 @@
  *
  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
  *
- * @version 1.0
  * @author Jörg Behrens <behrens@dkrz.de>
  */
 /*
