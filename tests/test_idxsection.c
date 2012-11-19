@@ -711,13 +711,13 @@ int main(void) {
 
     // check get_positions_of_indices
 
-    int indice[34] = {-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,16,17,18,19,
-                      20,20,21,22,23,24,25,26,27,28,29,30};
+    Xt_int indices[34] = {-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,16,17,18,19,
+                          20,20,21,22,23,24,25,26,27,28,29,30};
     int ref_positions[34] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,2,1,-1,0,-1,-1,-1,
                              5,-1,4,3,-1,-1,-1,-1,-1,-1,-1,-1};
     int positions[34];
 
-    if (xt_idxlist_get_positions_of_indices(idxsection, indice, 34, positions, 1) != 28)
+    if (xt_idxlist_get_positions_of_indices(idxsection, indices, 34, positions, 1) != 28)
       PUT_ERR("error in xt_idxlist_get_positions_of_indices"
               " (wrong number of unmatched indices)\n");
 

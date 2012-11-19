@@ -70,8 +70,8 @@ int main(void) {
       // testing
 
       printf("global size (x=%3d y=%2d) local size (x=%2d y=%2d): ",
-             global_size[i >> 2][1], global_size[i >> 2][0],
-             local_size[i & 3][1], local_size[i & 3][0]);
+             (int)global_size[i >> 2][1], (int)global_size[i >> 2][0],
+             (int)local_size[i & 3][1], (int)local_size[i & 3][0]);
       print_index_list(idxsection);
 
       // clean up
@@ -137,12 +137,16 @@ int main(void) {
 
 static void print_index_list(Xt_idxlist idxlist) {
 
+  char format_strings[2][5] = {{"%d "},{"%ld "}};
+
+  char * format_string = format_strings[sizeof(Xt_int) == sizeof(long)];
+
   for (Xt_count i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
 
     Xt_int index;
 
     xt_idxlist_get_index_at_position(idxlist, i, &index);
-    printf("%d ", index);
+    printf(format_string, index);
   }
   puts("");
 }

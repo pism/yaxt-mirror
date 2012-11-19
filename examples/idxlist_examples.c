@@ -180,8 +180,12 @@ static void print_index_list(Xt_idxlist idxlist) {
 
     Xt_int index;
 
+    char format_strings[2][5] = {{"%d "},{"%ld "}};
+
+    char * format_string = format_strings[sizeof(Xt_int) == sizeof(long)];
+
     xt_idxlist_get_index_at_position(idxlist, i, &index);
-    printf("%d ", index);
+      printf(format_string, index);
   }
   puts("");
 }
