@@ -281,7 +281,7 @@ int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indic
 
 /**
  * gets the position of the first occurrence of the given index
- * from the given offset in the stored index list idxlist
+ * following the given offset in the stored index list idxlist
  *
  * @param[in]  idxlist  index list in which the given index is to be searched
  * @param[in]  index    index that is to be searched
@@ -289,7 +289,7 @@ int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indic
  *                      with a position >= offset
  * @param[in]  offset   offset in the index list from which on the search
  *                      is to be conducted
- * @return              0 if everything was okay
+ * @return              0 if index was found\n
  *                      1 if the index could not be found in idxlist
  */
 int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
@@ -297,7 +297,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
 /**
  * gets the positions of the first occurrence of the given indices
- * from the given offsets in the stored index list
+ * following the given offsets in the stored index list
  *
  * @param[in]  idxlist     index list in which the given index is to be searched
  * @param[in]  indices     indices that are to be searched
@@ -306,7 +306,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
  *                         with a positions[i] >= offsets[i]
  * @param[in]  offsets     offsets in the index list from which on the search
  *                         is to be conducted
- * @return                 0 if everything was okay
+ * @return                 0 if index was found\n
  *                         1 if the index could not be found in idxlist
  *
  * \remarks a call to xt_idxlist_get_position_of_index_off with offset = NULL
