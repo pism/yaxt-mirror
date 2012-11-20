@@ -197,6 +197,8 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
     Xt_isign(local_size[num_dimensions - 1]);
   idxsection->dims[num_dimensions - 1].local_stride = 1;
 
+  // compute local and global stride
+  // (local stride is always positive, global stride can be negative)
   for (i = num_dimensions - 2; i < num_dimensions; --i) {
     idxsection->dims[i].global_stride
       = idxsection->dims[i+1].global_stride * global_size[i + 1] *
@@ -207,6 +209,8 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
         Xt_isign(idxsection->dims[i + 1].local_stride * local_size[i + 1]);
   }
 
+  // compute the local start index
+  // depends on global size and sign of local and global size
   for (i = num_dimensions - 1; i < num_dimensions; --i) {
     if (global_size[i] > 0)
       idxsection->local_start_index
@@ -224,14 +228,17 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
            Xt_isign(idxsection->dims[i].global_stride);
   }
 
+  // due the possibility of negative local and global sizes, the minimum and
+  // maximum can be in any corner of the n-dimensional section
   idxsection->min_index_cache = idxsection->local_start_index;
   idxsection->max_index_cache = idxsection->local_start_index;
   for (i = 0; i < num_dimensions; ++i) {
 
+    // if either local and global size are negative
     if ((global_size[i] < 0) ^ (local_size[i] < 0))
       idxsection->min_index_cache += idxsection->dims[i].global_stride *
                                      (Xt_isign(local_size[i]) * local_size[i] - 1);
-    else
+    else // if local and global size are both positive or negative
       idxsection->max_index_cache += idxsection->dims[i].global_stride *
                                      (Xt_isign(local_size[i]) * local_size[i] - 1);
   }
@@ -319,20 +326,21 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                          section->dims, section->ndim * 5,
                          Xt_int_dt, comm),comm);
 
-  // fill other cache values:
+  // due the possibility of negative local and global sizes, the minimum and
+  // maximum can be in any corner of the n-dimensional section
   section->min_index_cache = section->local_start_index;
   section->max_index_cache = section->local_start_index;
   for (unsigned i = 0; i < section->ndim; ++i) {
 
-    // if either local and global size are negative
+    // if either local and global size is negative
     if ((section->dims[i].global_size < 0) ^ (section->dims[i].local_size < 0))
       section->min_index_cache += section->dims[i].global_stride *
                                   (Xt_isign(section->dims[i].local_size) *
-                                  section->dims[i].local_size - 1);
+                                   section->dims[i].local_size - 1);
     else // if local and global size are both positive or negative
       section->max_index_cache += section->dims[i].global_stride *
                                   (Xt_isign(section->dims[i].local_size) *
-                                  section->dims[i].local_size - 1);
+                                   section->dims[i].local_size - 1);
   }
 
   return (Xt_idxlist)section;
@@ -361,7 +369,7 @@ idxsection_get_intersection_with_other_idxlist(struct xt_idxsection *src_idxsect
 
   Xt_int const * sorted_dst_idx;
   Xt_int * temp_dst_idx = NULL;
-      
+
   // if the destination indices are not sorted
   if (num_dst_idx > 1 && i != num_dst_idx) {
 
@@ -429,13 +437,22 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   Xt_int *local_start, *local_size, *global_size;
 
+  // dimension information for the intersection
   local_start = xmalloc(idxsection_src->ndim * sizeof(*local_start));
   local_size = xmalloc(idxsection_src->ndim * sizeof(*local_size));
   global_size = xmalloc(idxsection_src->ndim * sizeof(*global_size));
 
+  // indices in an intersection have to be sorted in ascending order. therefore,
+  // local and global sizes of the intersection have to be positive
+
   for (i = 0; i < idxsection_src->ndim; ++i) {
 
     Xt_int src_start, src_end, dst_start, dst_end, local_end;
+
+    // the start value is the minmum position in the current dimension (with positive
+    // size)
+    // in case the global size of src or dst is negative the start value has be be
+    // adjusted accordingly
 
     if (idxsection_src->dims[i].global_size >= 0)
       src_start = idxsection_src->dims[i].local_start;
@@ -444,6 +461,7 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
                   Xt_isign(idxsection_src->dims[i].local_size) *
                   idxsection_src->dims[i].local_size -
                   idxsection_src->dims[i].local_start;
+
     if (idxsection_dst->dims[i].global_size >= 0)
       dst_start = idxsection_dst->dims[i].local_start;
     else
@@ -451,6 +469,7 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
                   Xt_isign(idxsection_dst->dims[i].local_size) *
                   idxsection_dst->dims[i].local_size -
                   idxsection_dst->dims[i].local_start;
+
     src_end = src_start + Xt_isign(idxsection_src->dims[i].local_size) *
               idxsection_src->dims[i].local_size;
     dst_end = dst_start + Xt_isign(idxsection_dst->dims[i].local_size) *
@@ -526,23 +545,23 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
                            unsigned ndim, struct dim_desc dims[ndim])
 {
 
-  Xt_int local_size = dims[0].local_size * Xt_isign(dims[0].local_size);
+  Xt_int abs_local_size = dims[0].local_size * Xt_isign(dims[0].local_size);
 
   if (ndim == 1)
   {
     if (dims[0].global_stride > 0)
-      for (Xt_count i = 0; i < local_size; ++i)
+      for (Xt_count i = 0; i < abs_local_size; ++i)
         indices[i] = start_index + i;
     else
-      for (Xt_count i = 0; i < local_size; ++i)
+      for (Xt_count i = 0; i < abs_local_size; ++i)
         indices[i] = start_index - i;
-    return local_size;
+    return abs_local_size;
   }
   else
   {
     Xt_count indices_written = 0;
     assert(ndim > 1);
-    for (Xt_int dim_ofs = 0; dim_ofs < local_size; ++dim_ofs)
+    for (Xt_int dim_ofs = 0; dim_ofs < abs_local_size; ++dim_ofs)
     {
       indices_written
         += idxsection_get_indices_any(start_index
@@ -565,6 +584,7 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
   if (num_indices == 0) return;
 
+  // if the indices are already computed
   if (section->index_array_cache != NULL) {
 
     memcpy(indices, section->index_array_cache, num_indices * sizeof(*indices));
@@ -695,6 +715,7 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   if (index < section->min_index_cache || index > section->max_index_cache)
     return 1;
 
+  // normalise index (global start of indices at 0)
   index -= section->global_start_index;
 
   unsigned i;
@@ -707,15 +728,20 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
                                Xt_isign(section->dims[i].global_stride);
 
     curr_global_position = index / abs_global_stride;
-    if (section->dims[i].global_size < 0) 
+
+    // in case the global size is negative, we have to adjust the global position,
+    // because the ordering of indices in this dimension is inverted
+    if (section->dims[i].global_size < 0)
       curr_global_position = - section->dims[i].global_size -
                              curr_global_position - 1;
+
     index %= abs_global_stride;
 
     if (curr_global_position < section->dims[i].local_start) return 1;
 
     curr_local_position = curr_global_position - section->dims[i].local_start;
 
+    // same adjustment for local position as for the global one before
     if (section->dims[i].local_size < 0)
       curr_local_position = - section->dims[i].local_size - curr_local_position - 1;
 
@@ -760,7 +786,7 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist, Xt_int const
 
     Xt_int prev_index = selection_idx[0] - 1; // we need an index that is
                                               // different from the current one
-  
+
     for (i = 0; i < num_selection; i++) {
 
       Xt_int curr_index = selection_idx[i];
@@ -829,6 +855,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
     if (selection_idx[i] < selection_idx[i-1])
       break;
 
+  // if the indices are not sorted
   if (i != num_selection) {
 
     temp_selection_idx = xmalloc(num_selection * sizeof(*temp_selection_idx));
@@ -845,6 +872,25 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
 
   Xt_int const * body_indices = idxsection_get_indices_const(body_idxlist);
   Xt_count num_body_indices = idxsection_get_num_indices(body_idxlist);
+
+  // Xt_int last_idx = sorted_selection_idx[0] - 1;
+  // 
+  // for (i = 0, j = 0; i < num_selection && j < num_body_indices; ++i) {
+  // 
+  //   while(j < num_body_indices && body_indices[j] < sorted_selection_idx[i]) ++j;
+  // 
+  //   if (j >= num_body_indices) break;
+  // 
+  //   if (!single_match_only)
+  //     positions[(selection_pos == NULL)?i:selection_pos[i]] =
+  //       (body_indices[j] == sorted_selection_idx[i])?j:-1;
+  //   else
+  //     positions[selection_pos[i]] =
+  //       ((last_idx == sorted_selection_idx[i]) ||
+  //       (body_indices[j] != sorted_selection_idx[i]))?-1:j;
+  // }
+
+  // the following loops are an unrolled version of the one above
 
   if (!single_match_only) {
 
@@ -898,6 +944,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
     }
   }
 
+  // process indices that were not handled by the loop above
   if (selection_pos == NULL)
     for (; i < num_selection; ++i)
       positions[i] = -1;
@@ -910,6 +957,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
 
   int num_unmatched = 0;
 
+  // count the number of unmachted indices
   for (Xt_count i = 0; i < num_selection; ++i)
     if (positions[i] == -1)
       ++num_unmatched;
@@ -935,22 +983,28 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
 
   if (ndim == 1)
   {
-    
+
     int curr_position;
 
     Xt_int tmp_local_start = dims[0].local_start;
 
+    // we want to work on ascending indices in the lowest dimension -> have to
+    // adjust in case of negative global size
     if (dims[0].global_size < 0)
       tmp_local_start = -dims[0].global_size - tmp_local_start -
                         abs_local_size;
 
     Xt_int min_index = index_offset + tmp_local_start * abs_global_stride;
 
+    // set all indices that are smaller than the minimum to "not found"
     while ((num_processed < num_indices) && (indices[num_processed] < min_index))
       positions[num_processed++] = -1;
 
+    // if either the local or the global dimension is negative
     if ((dims[0].global_stride < 0) ^ (dims[0].local_stride < 0)) {
 
+      // for as long as we are in the range local section of the current
+      // global dimension
       while ((num_processed < num_indices) &&
              ((curr_position = indices[num_processed] - min_index) <
              abs_local_size)) {
@@ -958,8 +1012,10 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
         positions[num_processed++] = position_offset + abs_local_size
                                    - curr_position - 1;
       }
-    } else {
+    } else { // if the local and global dimension are both negative or positive
 
+      // for as long as we are in the range local section of the current
+      // global dimension
       while ((num_processed < num_indices) &&
              ((curr_position = indices[num_processed] - min_index) <
              abs_local_size)) {
@@ -968,6 +1024,8 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       }
     }
 
+    // for all remaining indices that are in the current global dimension but not
+    // within the local section
     while ((num_processed < num_indices) &&
            (indices[num_processed] < index_offset + abs_global_size))
       positions[num_processed++] = -1;
@@ -978,30 +1036,37 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
 
     Xt_int tmp_local_start = dims[0].local_start;
 
+    // we want to work on ascending indices in the lowest dimension -> have to
+    // adjust in case of negative global size
     if (dims[0].global_size < 0)
       tmp_local_start = -dims[0].global_size - tmp_local_start -
                         abs_local_size;
 
     Xt_int min_index = index_offset + tmp_local_start * abs_global_stride;
 
+    // set all indices that are smaller than the minimum to "not found"
     while ((num_processed < num_indices) && (indices[num_processed] < min_index))
       positions[num_processed++] = -1;
 
+    // while there are indices that have not yet been processed
     while (num_processed < num_indices) {
 
       Xt_int curr_global_position, curr_local_position;
 
+      // compute global position of the smalles index that has not yet been processed
       curr_global_position = (indices[num_processed] - index_offset) /
                              abs_global_stride;
 
+      // if the position is outside of the range of the current dimension
       if (curr_global_position >= tmp_local_start + abs_local_size)
         break;
 
+      // if either the local or the global dimension is negative
       if ((dims[0].global_size < 0) ^ (dims[0].local_size < 0))
 
         curr_local_position = abs_local_size - curr_global_position
                               + tmp_local_start - 1;
-      else
+      else // if the local and global dimension are both negative or positive
         curr_local_position = curr_global_position - tmp_local_start;
 
       Xt_int curr_index_offset = index_offset + curr_global_position *
@@ -1043,6 +1108,7 @@ int idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
     if (selection_idx[i] < selection_idx[i-1])
       break;
 
+  // if the selection is not sorted
   if (i != num_selection) {
 
     temp_selection_idx = xmalloc(num_selection * sizeof(*temp_selection_idx));
@@ -1071,6 +1137,7 @@ int idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
   for (int i =  num_processed; i < num_selection; ++i)
     sorted_positions[i] = -1;
 
+  // apply single match only rule
   if (single_match_only)
     for (int i = 1; i < num_processed; ++i)
       if (sorted_selection_idx[i] == sorted_selection_idx[i-1])
@@ -1106,6 +1173,8 @@ int idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
   struct xt_idxsection *section;
   section = (struct xt_idxsection*)body_idxlist;
 
+  // if any dimension of the body index list is negative we have to use the
+  // v3 version, because the other version cannot handle negative sizes
   for (unsigned i = 0; i < section->ndim; ++i)
     if ((section->dims[i].local_size < 0) || (section->dims[i].global_size < 0))
       return idxsection_get_positions_of_indices_v3(body_idxlist, selection_idx,
@@ -1114,6 +1183,9 @@ int idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
 
   Xt_count num_section_indices = idxsection_get_num_indices(body_idxlist);
 
+  // if the indices are already cached or (if the caching would not consume to much
+  // memory and the number of selectioni indices are sufficient to justify the use
+  // of cached indices)
   if ((section->index_array_cache != NULL) ||
       ((num_section_indices * sizeof(Xt_int) <= 128 * 1024 * 1024) &&
        (num_section_indices <= 1000 * num_selection)))
