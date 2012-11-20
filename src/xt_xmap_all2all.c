@@ -85,6 +85,12 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
 
+  // allocate memory for intersections
+  (*dst_intersections) = xmalloc(comm_size * sizeof (**dst_intersections));
+  (*dst_ranks) = xmalloc(comm_size * sizeof(**dst_ranks));
+  (*src_intersections) = xmalloc(comm_size * sizeof (**src_intersections));
+  (*src_ranks) = xmalloc(comm_size * sizeof(**src_ranks));
+
   // compute size of local index lists
   size_t src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, comm);
   size_t dst_pack_size = xt_idxlist_get_pack_size(dst_idxlist_local, comm);
@@ -133,15 +139,8 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
                              recv_buffer, pack_sizes, displ,
                              MPI_PACKED, comm), comm);
 
-  // allocate memory for intersections
-  (*dst_intersections) = xmalloc(comm_size * sizeof (**dst_intersections));
-  (*dst_ranks) = xmalloc(comm_size * sizeof(**dst_ranks));
-  (*num_dst_intersections) = 0;
-  (*src_intersections) = xmalloc(comm_size * sizeof (**src_intersections));
-  (*src_ranks) = xmalloc(comm_size * sizeof(**src_ranks));
-  (*num_src_intersections) = 0;
-
   position = 0;
+  Xt_int dst_isect_count = 0, src_isect_count = 0;
   // compute intersections
   for (int i = 0; i < comm_size; ++i) {
 
@@ -154,9 +153,9 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
                                                        dst_idxlist_local);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
-      (*dst_intersections)[(*num_dst_intersections)] = intersect;
-      (*dst_ranks)[(*num_dst_intersections)] = i;
-      (*num_dst_intersections)++;
+      (*dst_intersections)[dst_isect_count] = intersect;
+      (*dst_ranks)[dst_isect_count] = i;
+      ++dst_isect_count;
     }
     else
       xt_idxlist_delete(intersect);
@@ -165,9 +164,9 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
                                             dst);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
-      (*src_intersections)[(*num_src_intersections)] = intersect;
-      (*src_ranks)[(*num_src_intersections)] = i;
-      (*num_src_intersections)++;
+      (*src_intersections)[src_isect_count] = intersect;
+      (*src_ranks)[src_isect_count] = i;
+      ++src_isect_count;
     }
     else
       xt_idxlist_delete(intersect);
@@ -175,9 +174,19 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
     xt_idxlist_delete(dst);
   }
 
+  /* minimize memory use of tables */
+  *src_ranks = xrealloc(*src_ranks, src_isect_count * sizeof (**src_ranks));
+  *src_intersections = xrealloc(*src_intersections, src_isect_count
+                                * sizeof (**src_intersections));
+  *num_src_intersections = src_isect_count;
+  *dst_ranks = xrealloc(*dst_ranks, dst_isect_count * sizeof (**dst_ranks));
+  *dst_intersections = xrealloc(*dst_intersections, dst_isect_count
+                                * sizeof (**dst_intersections));
+  *num_dst_intersections = dst_isect_count;
+
   // clean up
-  free(pack_sizes);
   free(recv_buffer);
+  free(pack_sizes);
 }
 
 Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
