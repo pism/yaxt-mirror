@@ -110,14 +110,14 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   xt_idxlist_pack(dst_idxlist_local, send_buffer, send_buffer_size, &position, comm);
 
   // exchange buffer sizes
-  int *pack_sizes = xmalloc(comm_size * sizeof(*pack_sizes));
+  int *pack_sizes = xmalloc(comm_size * sizeof(*pack_sizes) * 2);
   pack_sizes[rank] = send_buffer_size;
 
   xt_mpi_call(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
                             pack_sizes, 1, MPI_INT, comm), comm);
 
   void * recv_buffer;
-  int * displ = xmalloc(comm_size * sizeof(*displ));
+  int * displ = pack_sizes + comm_size;
 
   displ[0] = 0;
   int recv_buffer_size = pack_sizes[0];
@@ -195,7 +195,6 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   free(send_buffer);
   free(pack_sizes);
   free(recv_buffer);
-  free(displ);
 }
 
 Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
