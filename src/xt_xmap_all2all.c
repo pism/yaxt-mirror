@@ -80,7 +80,10 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
     dst(dpos) = src(spos)
    */
 
-  Xt_idxlist *src_idxlists_all, *dst_idxlists_all;
+  struct
+  {
+    Xt_idxlist src, dst;
+  } *idxlists_all;
 
   unsigned i;
   int comm_size;
@@ -133,15 +136,13 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
                                  recv_buffer, recv_buffer_header, displ,
                                  MPI_PACKED, comm), comm);
 
-  src_idxlists_all = xmalloc(comm_size * sizeof(*src_idxlists_all));
-
-  dst_idxlists_all = xmalloc(comm_size * sizeof(*dst_idxlists_all));
+  idxlists_all = xmalloc(comm_size * sizeof(*idxlists_all));
 
   // unpack buffers
   for (i = 0, position = 0; i < comm_size; ++i) {
-    src_idxlists_all[i] = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
+    idxlists_all[i].src = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
                                             &position, comm);
-    dst_idxlists_all[i] = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
+    idxlists_all[i].dst = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
                                             &position, comm);
   }
 
@@ -158,7 +159,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
     Xt_idxlist intersect;
 
-    intersect = xt_idxlist_get_intersection(src_idxlists_all[i],
+    intersect = xt_idxlist_get_intersection(idxlists_all[i].src,
                                             dst_idxlist_local);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
@@ -170,7 +171,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
       xt_idxlist_delete(intersect);
 
     intersect = xt_idxlist_get_intersection(src_idxlist_local,
-                                            dst_idxlists_all[i]);
+                                            idxlists_all[i].dst);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
       (*src_intersections)[(*num_src_intersections)] = intersect;
@@ -183,12 +184,11 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
   for (i = 0; i < comm_size; ++i) {
 
-    xt_idxlist_delete(src_idxlists_all[i]);
-    xt_idxlist_delete(dst_idxlists_all[i]);
+    xt_idxlist_delete(idxlists_all[i].src);
+    xt_idxlist_delete(idxlists_all[i].dst);
   }
 
-  free(src_idxlists_all);
-  free(dst_idxlists_all);
+  free(idxlists_all);
 
   // clean up
   free(send_buffer);
