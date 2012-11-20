@@ -88,7 +88,7 @@ void xt_abort_msl_f(const char *msg, const char *source, int line) {
   Xt_abort(comm_c, msg, source, line);
 }
 
-struct xt_idxlist_f xt_idxvec_new_f(Xt_int *idxvec, Xt_count num_indices) {
+struct xt_idxlist_f xt_idxvec_new_f(Xt_int *idxvec, Xt_int num_indices) {
   struct xt_idxlist_f idxlist_f;
   idxlist_f.cptr = xt_idxvec_new(idxvec, num_indices);
   return idxlist_f;
@@ -169,7 +169,7 @@ void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void **src_data, void
   xt_redist_s_exchange(redist_f->cptr, src_data, 1, dst_data, 1);
 }
 
-struct xt_idxlist_f xt_idxstripes_new_f(struct Xt_stripe const *stripes,  Xt_count num_stripes) {
+struct xt_idxlist_f xt_idxstripes_new_f(struct Xt_stripe const *stripes,  Xt_int num_stripes) {
   struct xt_idxlist_f idxlist_f;
   idxlist_f.cptr = xt_idxstripes_new(stripes, num_stripes);
   return idxlist_f;

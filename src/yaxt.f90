@@ -66,11 +66,10 @@ MODULE yaxt
        &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize
 
   INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_INT_FC_KIND
-  INTEGER, PARAMETER, PUBLIC :: xt_count_kind = XT_COUNT_FC_KIND
 
   TYPE, BIND(C), PUBLIC :: xt_stripe
     INTEGER(xt_idx_kind) :: start
-    INTEGER(xt_count_kind) :: nstrides
+    INTEGER(xt_idx_kind) :: nstrides
     INTEGER(xt_idx_kind) :: stride
   END TYPE xt_stripe
 
@@ -126,10 +125,10 @@ MODULE yaxt
   INTERFACE
     FUNCTION xt_idxvec_new(idxvec, num_indices) &
          BIND(C, name='xt_idxvec_new_f') RESULT(res)
-      IMPORT :: Xt_idxlist, xt_idx_kind, xt_count_kind
+      IMPORT :: Xt_idxlist, xt_idx_kind, xt_idx_kind
       IMPLICIT NONE
       INTEGER(xt_idx_kind), INTENT(in) :: idxvec(*)
-      INTEGER(xt_count_kind), VALUE, INTENT(in) :: num_indices
+      INTEGER(xt_idx_kind), VALUE, INTENT(in) :: num_indices
       TYPE(Xt_idxlist) :: res
     END FUNCTION xt_idxvec_new
   END INTERFACE
@@ -244,10 +243,10 @@ MODULE yaxt
   INTERFACE
     FUNCTION xt_idxstripes_new(stripes, num_stripes) &
          BIND(C, name='xt_idxstripes_new_f') RESULT(res)
-      IMPORT:: Xt_idxlist, xt_stripe, xt_count_kind
+      IMPORT:: Xt_idxlist, xt_stripe, xt_idx_kind
       IMPLICIT NONE
       TYPE(xt_stripe), INTENT(in) :: stripes(*)
-      INTEGER(xt_count_kind), VALUE, INTENT(in) :: num_stripes
+      INTEGER(xt_idx_kind), VALUE, INTENT(in) :: num_stripes
       TYPE(Xt_idxlist) :: res
     END FUNCTION xt_idxstripes_new
   END INTERFACE

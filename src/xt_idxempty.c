@@ -67,7 +67,7 @@ idxempty_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
 static Xt_idxlist
 idxempty_copy(Xt_idxlist idxlist);
 
-static Xt_count
+static Xt_int
 idxempty_get_num_indices(Xt_idxlist idxlist);
 
 static void
@@ -78,14 +78,14 @@ idxempty_get_indices_const(Xt_idxlist idxlist);
 
 static void
 idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                           Xt_count * num_stripes);
+                           Xt_int * num_stripes);
 
 static int
 idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
 
 static int
 idxempty_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                  Xt_count num, Xt_int *index,
+                                  Xt_int num, Xt_int *index,
                                   Xt_int undef_idx);
 
 static int
@@ -97,12 +97,12 @@ idxempty_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
 static int
 idxempty_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                  Xt_count num_indices, int * positions,
+                                  Xt_int num_indices, int * positions,
                                   int single_match_only);
 
 static int
 idxempty_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
-                                      Xt_count num_indices, int * positions,
+                                      Xt_int num_indices, int * positions,
                                       int * offsets);
 
 static Xt_int
@@ -190,7 +190,7 @@ idxempty_copy(Xt_idxlist idxlist) {
    return xt_idxempty_new();
 }
 
-static Xt_count
+static Xt_int
 idxempty_get_num_indices(Xt_idxlist idxlist) {
 
    return 0;
@@ -211,7 +211,7 @@ idxempty_get_indices_const(Xt_idxlist idxlist) {
 
 static void
 idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                         Xt_count * num_stripes) {
+                         Xt_int * num_stripes) {
 
   *stripes = NULL;
   *num_stripes = 0;
@@ -224,12 +224,12 @@ idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index)
 }
 
 static int
-idxempty_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos,
+idxempty_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_int num_pos,
                                   Xt_int *index, Xt_int undef_idx) {
 
   assert(num_pos >= 0);
 
-  for (Xt_count i = 0; i < num_pos; ++i)
+  for (Xt_int i = 0; i < num_pos; ++i)
     index[i] = undef_idx;
 
   return num_pos;
@@ -249,7 +249,7 @@ idxempty_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position)
 }
 
 int idxempty_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_int const * selection_idx,
-                                      Xt_count num_selection, int * positions,
+                                      Xt_int num_selection, int * positions,
                                       int single_match_only) {
 
   return num_selection;
@@ -257,7 +257,7 @@ int idxempty_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_int const * se
 
 static int
 idxempty_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
-                                      Xt_count num_indices, int * positions,
+                                      Xt_int num_indices, int * positions,
                                       int * offsets) {
 
   return 1;

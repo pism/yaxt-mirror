@@ -59,4 +59,7 @@ struct xt_idxlist_unpack_routine_table {
    Xt_idxlist (*xt_idxlist_unpack)(void*,int,int*,MPI_Comm);
 };
 
+extern struct xt_idxlist_unpack_routine_table xt_idxlist_unpack_routines[];
+extern unsigned xt_num_unpack_routines;
+
 #endif

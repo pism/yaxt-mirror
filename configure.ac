@@ -93,14 +93,7 @@ AC_ARG_WITH([idxtype],
 char b[($XT_INT)((($XT_INT)-1.5)+0.5)]]])],,
      [AC_MSG_ERROR([Selected index type not compilable or unsigned])])],
   [XT_INT=int])
-AC_ARG_WITH([counttype],
-  AS_HELP_STRING([--with-counttype],[select type to use for local index values @<:@default=int@:>@]),
-  [XT_COUNT=$withval
-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,[[char a[((($XT_COUNT)-1)<0)];
-char b[($XT_COUNT)((($XT_COUNT)-1.5)+0.5)]]])],,
-     [AC_MSG_ERROR([Selected index type not compilable or unsigned])])],
-  [XT_COUNT=int])
-m4_foreach([substtype],[[XT_INT],[XT_COUNT]],
+m4_foreach([substtype],[[XT_INT]],
   [AS_CASE(["$substtype"],
      [int],
      substtype[_MPIDT=MPI_INT
@@ -128,8 +121,6 @@ m4_foreach([substtype],[[XT_INT],[XT_COUNT]],
 
 AC_DEFINE_UNQUOTED([XT_INT],[$XT_INT],[Type to use for enumeration of distributed elements.])
 AC_DEFINE_UNQUOTED([XT_INT_MPIDT],[$XT_INT_MPIDT],[Type to use for enumeration of distributed elements.])
-AC_DEFINE_UNQUOTED([XT_COUNT],[$XT_COUNT],[Type to use for enumeration of distributed elements.])
-AC_DEFINE_UNQUOTED([XT_COUNT_MPIDT],[$XT_COUNT_MPIDT],[Type to use for enumeration of distributed elements.])
 
 AC_ARG_VAR([BUILD_CFLAGS],
   [append to CFLAGS during build but not in configure phase])

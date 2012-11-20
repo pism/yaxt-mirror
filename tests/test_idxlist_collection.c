@@ -56,8 +56,8 @@
 #include "core/ppm_xfuncs.h"
 
 static void
-check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes);
 
 int main(void) {
 
@@ -70,7 +70,7 @@ int main(void) {
   { // test packing and unpacking of collection index lists
 
     Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-    Xt_count num_indices = 7;
+    Xt_int num_indices = 7;
 
     Xt_idxlist idxlists[2];
 
@@ -153,13 +153,13 @@ int main(void) {
     // check the conversion to stripes
 
     struct Xt_stripe * stripes;
-    Xt_count num_stripes;
+    Xt_int num_stripes;
 
     xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
 
     struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
                                        {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
-    Xt_count ref_num_stripes = 8;
+    Xt_int ref_num_stripes = 8;
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 
@@ -178,7 +178,7 @@ int main(void) {
   { // test copying of collection index lists
 
     Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-    Xt_count num_indices = 7;
+    Xt_int num_indices = 7;
 
     Xt_idxlist idxlists[2];
 
@@ -211,13 +211,13 @@ int main(void) {
     // check the conversion to stripes
 
     struct Xt_stripe * stripes;
-    Xt_count num_stripes;
+    Xt_int num_stripes;
 
     xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
 
     struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
                                        {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
-    Xt_count ref_num_stripes = 8;
+    Xt_int ref_num_stripes = 8;
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 
@@ -233,7 +233,7 @@ int main(void) {
 
     Xt_int index_list[3][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1},{2,6,1,4,7,3,0}};
     Xt_int sorted_index_list[21] = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
-    Xt_count num_indices = 7;
+    Xt_int num_indices = 7;
 
     Xt_idxlist idxlists[3];
 
@@ -322,10 +322,10 @@ int main(void) {
 }
 
 static void
-check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes) {
 
-  Xt_count i;
+  Xt_int i;
 
   if (num_stripes != ref_num_stripes)
     PUT_ERR("wrong number of stripes\n");

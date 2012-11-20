@@ -74,10 +74,10 @@ int main(void) {
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
 
   {
-    Xt_count i;
+    Xt_int i;
     // source index list
     Xt_int src_index_list[10];
-    Xt_count src_num_indices = 10;
+    Xt_int src_num_indices = 10;
     for (i = 0; i < src_num_indices; ++i)
       src_index_list[i] = rank * 10 + i;
 
@@ -87,7 +87,7 @@ int main(void) {
 
     // destination index list
     Xt_int dst_index_list[10];
-    Xt_count dst_num_indices = 10;
+    Xt_int dst_num_indices = 10;
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = (rank * 10 + i + 2) % (size * 10);
 
@@ -136,10 +136,10 @@ int main(void) {
   // test nonuniform numbers of send and receive partners
 
   {
-    Xt_count i;
+    Xt_int i;
     // source index list
     Xt_int src_index_list[size];
-    Xt_count src_num_indices = 0;
+    Xt_int src_num_indices = 0;
 
     if (rank == 0) src_num_indices = size;
     for (i = 0; i < src_num_indices; ++i)
@@ -151,7 +151,7 @@ int main(void) {
 
     // destination index list
     Xt_int dst_index_list[size];
-    Xt_count dst_num_indices = size;
+    Xt_int dst_num_indices = size;
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = i;
 

@@ -52,7 +52,7 @@
 
 struct Xt_idxlist *xt_idxmod_new(struct Xt_idxlist* patch_idxlist,  struct Xt_modifier *modifier, int modifier_num, int *mstate) {
 
-  Xt_count patch_size = xt_idxlist_get_num_indices(patch_idxlist);
+  Xt_int patch_size = xt_idxlist_get_num_indices(patch_idxlist);
 
   // if there is no modifier then we just give back a copy of the original:
   if (modifier_num<1) return xt_idxlist_copy(patch_idxlist);
@@ -79,7 +79,7 @@ struct Xt_idxlist *xt_idxmod_new(struct Xt_idxlist* patch_idxlist,  struct Xt_mo
     intersection_idxlist = xt_idxlist_get_intersection(m->extract,workpatch_idxlist);
 
     // get intersection index array => inter_idx:
-    Xt_count intersection_size = xt_idxlist_get_num_indices(intersection_idxlist);
+    Xt_int intersection_size = xt_idxlist_get_num_indices(intersection_idxlist);
     if (intersection_size > patch_size) die("xt_idxmod_new: internal error: (intersection_size > patch_size)");
     inter_idx = xt_idxlist_get_indices_const(intersection_idxlist);
 

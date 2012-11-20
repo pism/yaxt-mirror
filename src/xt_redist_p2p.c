@@ -102,7 +102,7 @@ struct Xt_redist_p2p {
 };
 
 static MPI_Datatype
-generate_block_datatype(int const * transfer_pos, Xt_count num_transfer_pos,
+generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
                         int *block_offsets, int *block_sizes,
                         MPI_Datatype base_datatype, MPI_Comm comm) {
 
@@ -120,7 +120,7 @@ generate_block_datatype(int const * transfer_pos, Xt_count num_transfer_pos,
                           "non-nil block_offsets expected");
 
   int j;
-  for (Xt_count i = 0; i < num_transfer_pos; ++i) {
+  for (Xt_int i = 0; i < num_transfer_pos; ++i) {
     j = transfer_pos[i];
     bdispl_vec[i] = block_offsets[j];
     blen_vec[i] = block_sizes[j];
@@ -136,7 +136,7 @@ generate_block_datatype(int const * transfer_pos, Xt_count num_transfer_pos,
 }
 
 static MPI_Datatype
-generate_datatype(int const * transfer_pos, Xt_count num_transfer_pos,
+generate_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
                   int *offsets, MPI_Datatype base_datatype, MPI_Comm comm) {
 
   MPI_Datatype type;
@@ -148,7 +148,7 @@ generate_datatype(int const * transfer_pos, Xt_count num_transfer_pos,
 
     tmp_displ = xmalloc(num_transfer_pos * sizeof(int));
 
-    for (Xt_count i = 0; i < num_transfer_pos; ++i)
+    for (Xt_int i = 0; i < num_transfer_pos; ++i)
       tmp_displ[i] = offsets[transfer_pos[i]];
 
       displ = tmp_displ;
@@ -182,7 +182,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
   do {
 
     int const * curr_transfer_pos;
-    Xt_count curr_num_transfer_pos;
+    Xt_int curr_num_transfer_pos;
 
     curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
     curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
@@ -216,7 +216,7 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
   do {
 
     int const * curr_transfer_pos;
-    Xt_count curr_num_transfer_pos;
+    Xt_int curr_num_transfer_pos;
 
     curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
     curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);

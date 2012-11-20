@@ -77,7 +77,7 @@ idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
 static Xt_idxlist
 idxlist_collection_copy(Xt_idxlist idxlist);
 
-static Xt_count
+static Xt_int
 idxlist_collection_get_num_indices(Xt_idxlist idxlist);
 
 static void
@@ -89,7 +89,7 @@ idxlist_collection_get_indices_const(Xt_idxlist idxlist);
 static void
 idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
                                      struct Xt_stripe ** stripes,
-                                     Xt_count * num_stripes);
+                                     Xt_int * num_stripes);
 
 static int
 idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
@@ -136,7 +136,7 @@ struct xt_idxlist_collection {
   Xt_idxlist * idxlists;
   unsigned num_idxlists;
 
-  Xt_count index_num_cache;
+  Xt_int index_num_cache;
   Xt_int *index_array_cache;
 };
 
@@ -264,7 +264,7 @@ idxlist_collection_copy(Xt_idxlist idxlist) {
                                     collectionlist->num_idxlists);
 }
 
-static Xt_count
+static Xt_int
 idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
 
    struct xt_idxlist_collection *collectionlist
@@ -274,7 +274,7 @@ idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
      return collectionlist->index_num_cache;
 
    unsigned i;
-   Xt_count num_indices = 0;
+   Xt_int num_indices = 0;
 
    for (i = 0; i < collectionlist->num_idxlists; ++i)
       num_indices += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
@@ -291,7 +291,7 @@ idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
      = (struct xt_idxlist_collection*)idxlist;
    /// \todo use memcpy with index_array_cache if available
    unsigned i;
-   Xt_count offlist = 0;
+   Xt_int offlist = 0;
 
    for (i = 0; i < collectionlist->num_idxlists; ++i) {
 
@@ -308,7 +308,7 @@ idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
 
   if (collection->index_array_cache) return collection->index_array_cache;
 
-  Xt_count index_num = idxlist_collection_get_num_indices(idxlist);
+  Xt_int index_num = idxlist_collection_get_num_indices(idxlist);
 
   Xt_int *tmp_index_array
     = xmalloc(index_num * sizeof( *(collection->index_array_cache) ) );
@@ -324,14 +324,14 @@ idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
 static void
 idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
                                      struct Xt_stripe ** stripes,
-                                     Xt_count * num_stripes) {
+                                     Xt_int * num_stripes) {
 
   struct xt_idxlist_collection *collectionlist
     = (struct xt_idxlist_collection*)idxlist;
 
   struct Xt_stripe * temp_stripes = NULL;
   unsigned temp_stripes_array_size = 0;
-  Xt_count num_temp_stripes = 0;
+  Xt_int num_temp_stripes = 0;
 
   unsigned i;
 
@@ -344,7 +344,7 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
   for (i = 1; i < collectionlist->num_idxlists; ++i) {
 
     struct Xt_stripe * curr_stripes;
-    Xt_count curr_num_stripes;
+    Xt_int curr_num_stripes;
 
     xt_idxlist_get_index_stripes(collectionlist->idxlists[i], &curr_stripes,
                                  &curr_num_stripes);
@@ -371,8 +371,8 @@ idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
   struct xt_idxlist_collection *collectionlist
     = (struct xt_idxlist_collection*)idxlist;
 
-  for (Xt_count i = 0; i < collectionlist->num_idxlists; ++i) {
-    Xt_count n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+  for (Xt_int i = 0; i < collectionlist->num_idxlists; ++i) {
+    Xt_int n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
     if (position >= n)
       position -= n;
     else {
@@ -393,7 +393,7 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
   unsigned i;
 
-  Xt_count curr_num_indices = 0;
+  Xt_int curr_num_indices = 0;
 
   int idxlist_offsets = 0;
 

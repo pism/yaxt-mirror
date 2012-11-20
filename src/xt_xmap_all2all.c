@@ -62,10 +62,10 @@
 
 static void exchange_idxlists(Xt_idxlist ** src_intersections,
                               int ** src_ranks,
-                              Xt_count * num_src_intersections,
+                              Xt_int * num_src_intersections,
                               Xt_idxlist ** dst_intersections,
                               int ** dst_ranks,
-                              Xt_count * num_dst_intersections,
+                              Xt_int * num_dst_intersections,
                               Xt_idxlist src_idxlist_local,
                               Xt_idxlist dst_idxlist_local,
                               MPI_Comm comm)
@@ -208,7 +208,7 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
 
   Xt_idxlist * src_intersections = NULL, * dst_intersections = NULL;
   int * src_ranks = NULL, * dst_ranks = NULL;
-  Xt_count num_src_intersections = 0, num_dst_intersections = 0;
+  Xt_int num_src_intersections = 0, num_dst_intersections = 0;
 
   // exchange index lists between all processes in comm
   exchange_idxlists(&src_intersections, &src_ranks, &num_src_intersections,
@@ -223,10 +223,10 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
                                   dst_intersections, dst_ranks, num_dst_intersections,
                                   src_idxlist, dst_idxlist, comm);
 
-  for (Xt_count i = 0; i < num_src_intersections; ++i)
+  for (Xt_int i = 0; i < num_src_intersections; ++i)
     if (src_intersections[i] != NULL)
       xt_idxlist_delete(src_intersections[i]);
-  for (Xt_count i = 0; i < num_dst_intersections; ++i)
+  for (Xt_int i = 0; i < num_dst_intersections; ++i)
     if (dst_intersections[i] != NULL)
       xt_idxlist_delete(dst_intersections[i]);
   free(src_intersections), free(dst_intersections);

@@ -724,7 +724,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    local_stripes = xt_idxstripes_new(stripes, SIZE(stripes))
+    local_stripes = xt_idxstripes_new(stripes, INT(SIZE(stripes), xt_idx_kind))
 
   END SUBROUTINE gen_stripes
 
@@ -735,8 +735,10 @@ CONTAINS
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
-    src_idxlist = xt_idxvec_new(local_src_idx, SIZE(local_src_idx))
-    dst_idxlist = xt_idxvec_new(local_dst_idx, SIZE(local_dst_idx))
+    src_idxlist = xt_idxvec_new(local_src_idx, &
+         INT(SIZE(local_src_idx), xt_idx_kind))
+    dst_idxlist = xt_idxvec_new(local_dst_idx, &
+         INT(SIZE(local_dst_idx), xt_idx_kind))
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
 
     CALL xt_idxlist_delete(src_idxlist)
@@ -751,8 +753,10 @@ CONTAINS
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
-    src_idxlist = xt_idxvec_new(local_src_idx, SIZE(local_src_idx))
-    dst_idxlist = xt_idxvec_new(local_dst_idx, SIZE(local_dst_idx))
+    src_idxlist = xt_idxvec_new(local_src_idx, &
+         INT(SIZE(local_src_idx), xt_idx_kind))
+    dst_idxlist = xt_idxvec_new(local_dst_idx, &
+         INT(SIZE(local_dst_idx), xt_idx_kind))
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)

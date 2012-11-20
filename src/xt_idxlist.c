@@ -86,8 +86,6 @@ Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
                    &type, 1, MPI_INT, comm), comm);
 
    unsigned i;
-   extern struct xt_idxlist_unpack_routine_table xt_idxlist_unpack_routines[];
-   extern unsigned xt_num_unpack_routines;
 
    for (i = 0; i < xt_num_unpack_routines; ++i) {
 
@@ -116,7 +114,7 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
    // if the get_intersection routine was not able to compute the intersection
    if (intersection == NULL) {
 
-      Xt_count num_indices_src, num_indices_dst;
+      Xt_int num_indices_src, num_indices_dst;
 
       num_indices_src = xt_idxlist_get_num_indices(idxlist_src);
       num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
@@ -149,7 +147,7 @@ Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist) {
    return idxlist->vtable->copy(idxlist);
 }
 
-Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
+Xt_int xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
 
    return idxlist->vtable->get_num_indices(idxlist);
 }
@@ -172,7 +170,7 @@ const Xt_int *xt_idxlist_get_indices_const(Xt_idxlist idxlist) {
 
 void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
-                                  Xt_count * num_stripes) {
+                                  Xt_int * num_stripes) {
 
   if (idxlist->vtable->get_index_stripes != NULL) {
 
@@ -181,7 +179,7 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
   } else { // fall-back solution
 
-    Xt_count num_indices = xt_idxlist_get_num_indices(idxlist);
+    Xt_int num_indices = xt_idxlist_get_num_indices(idxlist);
 
     Xt_int *indices = xmalloc(num_indices * sizeof (indices[0]));
 
@@ -202,7 +200,7 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
 
 int
 xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                    Xt_count num_pos, Xt_int *indices,
+                                    Xt_int num_pos, Xt_int *indices,
                                     Xt_int undef_idx) {
 
   if ( idxlist->vtable->get_indices_at_positions ) {
@@ -235,7 +233,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
 
 int
 xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                    Xt_count num_indices, int * positions,
+                                    Xt_int num_indices, int * positions,
                                     int single_match_only) {
 
   if (idxlist->vtable->get_positions_of_indices != NULL)
@@ -244,7 +242,7 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
                                                      positions,
                                                      single_match_only);
   else {
-    Xt_count num_tmp_indices;
+    Xt_int num_tmp_indices;
     num_tmp_indices = xt_idxlist_get_num_indices(idxlist);
     Xt_int *tmp_indices;
     tmp_indices = xmalloc(num_tmp_indices * sizeof (tmp_indices[0]));
@@ -271,7 +269,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 int
 xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                         const Xt_int *indices,
-                                        Xt_count num_indices, int * positions,
+                                        Xt_int num_indices, int * positions,
                                         int * offsets) {
 
   if (idxlist->vtable->get_positions_of_indices_off != NULL)
@@ -279,7 +277,7 @@ xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                                          num_indices,
                                                          positions, offsets);
 
-  Xt_count i;
+  Xt_int i;
 
   for (i = 0; i < num_indices; ++i) {
 

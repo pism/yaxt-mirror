@@ -52,7 +52,7 @@
 #include "tests.h"
 
 static void
-ref_get_positions_of_indices(Xt_int const * indices, Xt_count num_indices,
+ref_get_positions_of_indices(Xt_int const * indices, Xt_int num_indices,
                              Xt_int const * selection, int selection_size,
                              int * positions, int repeat_first_match) {
   int used[num_indices];
@@ -65,7 +65,7 @@ ref_get_positions_of_indices(Xt_int const * indices, Xt_count num_indices,
   for (int i = 0; i < selection_size; i++) {
 
     found = 0;
-    for (Xt_count j = 0; j < num_indices; j++) {
+    for (Xt_int j = 0; j < num_indices; j++) {
       if (selection[i] == indices[j] && !used[j]) {
         positions[i]=j;
         if (!repeat_first_match) used[j] = 1;
@@ -78,10 +78,10 @@ ref_get_positions_of_indices(Xt_int const * indices, Xt_count num_indices,
   }
 }
 
-static Xt_int get_min_index(Xt_int const * indices, Xt_count num_indices) {
+static Xt_int get_min_index(Xt_int const * indices, Xt_int num_indices) {
 
   Xt_int index;
-  Xt_count i;
+  Xt_int i;
 
   if (num_indices > 0)
     index = indices[0];
@@ -95,10 +95,10 @@ static Xt_int get_min_index(Xt_int const * indices, Xt_count num_indices) {
   return index;
 }
 
-static Xt_int get_max_index(Xt_int const * indices, Xt_count num_indices) {
+static Xt_int get_max_index(Xt_int const * indices, Xt_int num_indices) {
 
   Xt_int index;
-  Xt_count i;
+  Xt_int i;
 
   if (num_indices > 0)
     index = indices[0];
@@ -113,11 +113,11 @@ static Xt_int get_max_index(Xt_int const * indices, Xt_count num_indices) {
 }
 
 static void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
-                          Xt_count ref_num_indices) {
+                          Xt_int ref_num_indices) {
 
-  Xt_count i;
+  Xt_int i;
 
-  Xt_count num_indices;
+  Xt_int num_indices;
   num_indices = xt_idxlist_get_num_indices(idxlist);
 
   if (num_indices != ref_num_indices)

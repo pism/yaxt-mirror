@@ -57,13 +57,6 @@ typedef XT_INT Xt_int;
 #define Xt_int_dt (XT_INT_MPIDT)
 typedef unsigned XT_INT Xt_uint;
 
-/**
- * Local elements are addressed with numbers of this signed
- * integral type.
- */
-typedef XT_COUNT Xt_count;
-#define Xt_count_dt (XT_COUNT_MPIDT)
-
 typedef struct Xt_idxlist *Xt_idxlist;
 typedef struct Xt_xmap *Xt_xmap;
 typedef struct xt_redist *Xt_redist;

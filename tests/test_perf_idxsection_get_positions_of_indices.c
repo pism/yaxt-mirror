@@ -47,13 +47,13 @@ int main(void) {
 
 #ifndef DEACTIVATE_TESTS
 
-  Xt_count nstrides = 512 * 256 * 32;
+  Xt_int nstrides = 512 * 256 * 32;
   struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
   Xt_idxlist selection_indices = xt_idxstripes_new(stripe, 1);
 
   int * positions = xmalloc(nstrides * sizeof(*positions));
-  Xt_count i, j;
-  Xt_count step = nstrides / 128;
+  Xt_int i, j;
+  Xt_int step = nstrides / 128;
   int single_match_only;
   unsigned num_samples = 1;
 
@@ -132,7 +132,7 @@ int main(void) {
                                             local_start);
         for (j = 0; j < num_samples; ++j)
         {
-          Xt_count numIdx = xt_idxlist_get_num_indices(idxsection[j]);
+          Xt_int numIdx = xt_idxlist_get_num_indices(idxsection[j]);
           if (numIdx > idxDumpSize)
             idxDump = xrealloc(idxDump,
                                sizeof (idxDump[0]) * (idxDumpSize = numIdx));

@@ -58,8 +58,8 @@
 #include "core/ppm_xfuncs.h"
 
 static void
-check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes);
 
 int main(void) {
 
@@ -72,7 +72,7 @@ int main(void) {
   { // test packing and unpacking of index vectors
 
     Xt_int index_vector[] = {1,2,3,4,5,6,7};
-    Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
+    Xt_int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector;
 
@@ -148,12 +148,12 @@ int main(void) {
     // check the conversion to stripes
 
     struct Xt_stripe * stripes;
-    Xt_count num_stripes;
+    Xt_int num_stripes;
 
     xt_idxlist_get_index_stripes(idxvector, &stripes, &num_stripes);
 
     struct Xt_stripe ref_stripes[1] = {{1,7,1}};
-    Xt_count ref_num_stripes = 1;
+    Xt_int ref_num_stripes = 1;
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 
@@ -172,7 +172,7 @@ int main(void) {
   { // test copying of index vector
 
     Xt_int index_vector[] = {1,2,3,4,5,6,7};
-    Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
+    Xt_int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector, idxvector_copy;
 
@@ -201,7 +201,7 @@ int main(void) {
   { // test repeated equal indices
 
     Xt_int index_vector[] = {1,2,3,7,5,6,7,7};
-    Xt_count num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
+    Xt_int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector;
 
@@ -262,7 +262,7 @@ int main(void) {
 
   { // check intersection
     Xt_int index_vector[2][3] = {{1,2,3},{1,2,3}};
-    Xt_count num_indices[2]
+    Xt_int num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
 
@@ -282,7 +282,7 @@ int main(void) {
     // check the computed intersection
 
     Xt_int ref_intersection_indices[] = {1,2,3};
-    Xt_count ref_intersection_num_indices =
+    Xt_int ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
@@ -297,7 +297,7 @@ int main(void) {
 
   { // check intersection
     Xt_int index_vector[2][3] = {{1,2,3},{2,3,4}};
-    Xt_count num_indices[2]
+    Xt_int num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
 
@@ -317,7 +317,7 @@ int main(void) {
     // check the computed intersection
 
     Xt_int ref_intersection_indices[] = {2,3};
-    Xt_count ref_intersection_num_indices =
+    Xt_int ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
@@ -332,7 +332,7 @@ int main(void) {
 
   { // check intersection
     Xt_int index_vector[2][3] = {{2,3,4},{1,2,3}};
-    Xt_count num_indices[2]
+    Xt_int num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
 
@@ -352,7 +352,7 @@ int main(void) {
     // check the computed intersection
 
     Xt_int ref_intersection_indices[] = {2,3};
-    Xt_count ref_intersection_num_indices =
+    Xt_int ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
@@ -367,7 +367,7 @@ int main(void) {
 
   { // check intersection
     Xt_int index_vector[2][3] = {{4,2,3},{3,1,2}};
-    Xt_count num_indices[2]
+    Xt_int num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
 
@@ -387,7 +387,7 @@ int main(void) {
     // check the computed intersection
 
     Xt_int ref_intersection_indices[] = {2,3};
-    Xt_count ref_intersection_num_indices =
+    Xt_int ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
@@ -402,7 +402,7 @@ int main(void) {
 
   { // check intersection
     Xt_int index_vector[2][3] = {{3,1,2},{4,2,3}};
-    Xt_count num_indices[2]
+    Xt_int num_indices[2]
       = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
          sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
 
@@ -422,7 +422,7 @@ int main(void) {
     // check the computed intersection
 
     Xt_int ref_intersection_indices[] = {2,3};
-    Xt_count ref_intersection_num_indices =
+    Xt_int ref_intersection_num_indices =
       sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
@@ -714,10 +714,10 @@ int main(void) {
 }
 
 static void
-check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes) {
 
-  Xt_count i;
+  Xt_int i;
 
   if (num_stripes != ref_num_stripes)
     PUT_ERR("wrong number of stripes\n");

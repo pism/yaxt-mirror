@@ -53,7 +53,7 @@ int main(void) {
   {
     //! [index list example]
     Xt_int indices[] = {0,3,32,26,44,14,48};
-    Xt_count num_indices = sizeof(indices)/sizeof(indices[0]);
+    Xt_int num_indices = sizeof(indices)/sizeof(indices[0]);
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     //! [index list example]
@@ -67,7 +67,7 @@ int main(void) {
   {
     //! [index stripes example]
     struct Xt_stripe stripes[] = {{.start = 0, .nstrides = 17, .stride = 3}};
-    Xt_count num_stripes = sizeof(stripes)/sizeof(stripes[0]);
+    Xt_int num_stripes = sizeof(stripes)/sizeof(stripes[0]);
 
     Xt_idxlist idxstripes = xt_idxstripes_new(stripes, num_stripes);
     //! [index stripes example]
@@ -110,7 +110,7 @@ int main(void) {
                            local_size[0], local_start[0]),
          xt_idxsection_new(start, num_dimensions, global_size,
                            local_size[1], local_start[1])};
-    Xt_count num_idxlists = sizeof(idxlists) / sizeof(idxlists[0]);
+    Xt_int num_idxlists = sizeof(idxlists) / sizeof(idxlists[0]);
 
     Xt_idxlist idxcollection
       = xt_idxlist_collection_new(idxlists, num_idxlists);
@@ -119,7 +119,7 @@ int main(void) {
     puts("index list collection example:");
     print_index_list(idxcollection);
 
-    for (Xt_count i = 0; i < num_idxlists; ++i)
+    for (Xt_int i = 0; i < num_idxlists; ++i)
       xt_idxlist_delete(idxlists[i]);
     xt_idxlist_delete(idxcollection);
   }
@@ -175,7 +175,7 @@ int main(void) {
 
 static void print_index_list(Xt_idxlist idxlist) {
 
-  for (Xt_count i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
+  for (Xt_int i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
 
     Xt_int index;
 

@@ -50,7 +50,7 @@ MODULE xt_ut
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
        c_long, c_short, c_long_long, c_ptr, c_loc
 
-  ! \todo to be resolved later(dependency problem): USE yaxt, ONLY : xt_idx_kind, xt_count_kind
+  ! \todo to be resolved later(dependency problem): USE yaxt, ONLY : xt_idx_kind
 
   IMPLICIT NONE
   PRIVATE
@@ -63,9 +63,8 @@ MODULE xt_ut
 
   ! \todo to be replaced by use yaxt....:
   INTEGER, PARAMETER, PUBLIC :: xt_idx_kind   = XT_INT_FC_KIND
-  INTEGER, PARAMETER, PUBLIC :: xt_count_kind = XT_COUNT_FC_KIND
 
-  !PUBLIC :: xt_idx_kind, xt_count_kind
+  !PUBLIC :: xt_idx_kind
 
   INTEGER, PARAMETER :: inflate_inner = 1
   INTEGER, PARAMETER :: inflate_outer = 2
@@ -116,11 +115,11 @@ MODULE xt_ut
     INTEGER(C_INT) FUNCTION xt_ut_init_decomposition_1d(idx_vec, idx_vec_n, &
          domain_size) BIND(C, name='xt_ut_init_decomposition_1d')
       IMPORT:: C_INT
-      IMPORT:: xt_idx_kind, xt_count_kind
+      IMPORT:: xt_idx_kind
       IMPLICIT NONE
       INTEGER(xt_idx_kind), DIMENSION(*), INTENT(in) :: idx_vec
-      INTEGER(xt_count_kind), VALUE, INTENT(in) :: idx_vec_n
-      INTEGER(xt_count_kind), VALUE, INTENT(in) :: domain_size
+      INTEGER(xt_idx_kind), VALUE, INTENT(in) :: idx_vec_n
+      INTEGER(xt_idx_kind), VALUE, INTENT(in) :: domain_size
     END FUNCTION xt_ut_init_decomposition_1d
   END INTERFACE
 
@@ -224,11 +223,11 @@ CONTAINS
 
   SUBROUTINE ut_init_decomposition_1d(myindex, global_size, handle)
     INTEGER(xt_idx_kind), INTENT(in)  :: myindex(:)
-    INTEGER(xt_count_kind), INTENT(in)  :: global_size
+    INTEGER(xt_idx_kind), INTENT(in)  :: global_size
     INTEGER, INTENT(out) :: handle
 
     handle = xt_ut_init_decomposition_1d(idx_vec=myindex, &
-         idx_vec_n=SIZE(myindex), domain_size=global_size)
+         idx_vec_n=INT(SIZE(myindex), xt_idx_kind), domain_size=global_size)
 
   END SUBROUTINE ut_init_decomposition_1d
 

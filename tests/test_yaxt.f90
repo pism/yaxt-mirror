@@ -349,8 +349,10 @@ CONTAINS
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
-    src_idxlist = xt_idxvec_new(local_src_idx, g_ie*g_je)
-    dst_idxlist = xt_idxvec_new(local_dst_idx, g_ie*g_je)
+    src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_idx_kind) &
+         * INT(g_je, xt_idx_kind))
+    dst_idxlist = xt_idxvec_new(local_dst_idx, INT(g_ie, xt_idx_kind) &
+         * INT(g_je, xt_idx_kind))
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)

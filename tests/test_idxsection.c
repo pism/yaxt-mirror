@@ -58,11 +58,11 @@
 
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices,
-         struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes);
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_int num_indices,
+         struct Xt_stripe * ref_stripes, Xt_int ref_num_stripes);
 static void
-check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes);
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes);
 
 int main(void) {
 
@@ -787,13 +787,13 @@ int main(void) {
 }
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices,
-         struct Xt_stripe * ref_stripes, Xt_count ref_num_stripes) {
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_int num_indices,
+         struct Xt_stripe * ref_stripes, Xt_int ref_num_stripes) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 
   struct Xt_stripe * stripes;
-  Xt_count num_stripes;
+  Xt_int num_stripes;
 
   xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
 
@@ -874,10 +874,10 @@ do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_count num_indices,
 }
 
 static void
-check_stripes(struct Xt_stripe const * stripes, Xt_count num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_count ref_num_stripes) {
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes) {
 
-  Xt_count i;
+  Xt_int i;
 
   if (num_stripes != ref_num_stripes)
     PUT_ERR("wrong number of stripes\n");

@@ -60,10 +60,10 @@
  * @param[in] num_indices number of indices in idxlist
  * @return returns a Xt_idxlist
  */
-Xt_idxlist xt_idxvec_new(Xt_int *idxlist, Xt_count num_indices);
+Xt_idxlist xt_idxvec_new(Xt_int *idxlist, Xt_int num_indices);
 
 Xt_idxlist
-xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes);
+xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_int num_stripes);
 
 Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm);

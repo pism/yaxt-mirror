@@ -79,7 +79,7 @@ idxvec_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
 static Xt_idxlist
 idxvec_copy(Xt_idxlist idxlist);
 
-static Xt_count
+static Xt_int
 idxvec_get_num_indices(Xt_idxlist idxlist);
 
 static void
@@ -90,13 +90,13 @@ idxvec_get_indices_const(Xt_idxlist idxlist);
 
 static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                         Xt_count * num_stripes);
+                         Xt_int * num_stripes);
 
 static int
 idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
 
 static int
-idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_int *index, Xt_int undef_idx);
+idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_int num, Xt_int *index, Xt_int undef_idx);
 
 static int
 idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position);
@@ -107,7 +107,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
 static int
 idxvec_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                               Xt_count num_indices, int * positions,
+                               Xt_int num_indices, int * positions,
                                int single_match_only);
 
 static Xt_int
@@ -142,7 +142,7 @@ struct xt_idxvec {
    const struct xt_idxlist_vtable *vtable;
 
    Xt_int *vector;
-   Xt_count num_indices;
+   Xt_int num_indices;
 
    // internal array used to optimise access to vector data
    Xt_int *sorted_vector;        // sorted version of vector
@@ -155,7 +155,7 @@ struct xt_idxvec {
    */
 };
 
-Xt_idxlist xt_idxvec_new(Xt_int *idxvec, Xt_count num_indices) {
+Xt_idxlist xt_idxvec_new(Xt_int *idxvec, Xt_int num_indices) {
 
    struct xt_idxvec *idxvec_data;
 
@@ -165,7 +165,7 @@ Xt_idxlist xt_idxvec_new(Xt_int *idxvec, Xt_count num_indices) {
 
    if (num_indices != 0) {
 
-      Xt_count vector_size;
+      Xt_int vector_size;
 
       vector_size = num_indices * sizeof(*(idxvec_data->vector));
 
@@ -207,7 +207,7 @@ static int
 decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
               int * sorted_vec_pos, int pos_offset) {
 
-  Xt_count i;
+  Xt_int i;
 
   if (stripe.stride >= 0) {
     for (i = 0; i < stripe.nstrides; ++i) {
@@ -216,7 +216,7 @@ decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
     }
   } else {
     for (i = 0; i < stripe.nstrides; ++i) {
-        Xt_count j = stripe.nstrides-i-1;
+        Xt_int j = stripe.nstrides-i-1;
         sorted_vector[j] = stripe.start + i * stripe.stride;
         sorted_vec_pos[j] = pos_offset + i;
       }
@@ -226,7 +226,7 @@ decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
 }
 
 static void
-generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_stripes,
+generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_int num_stripes,
                                     struct xt_idxvec * idxvec) {
 
   if (num_stripes == 0) {
@@ -241,7 +241,7 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_str
   stripe_min = xmalloc(num_stripes * sizeof(*stripe_min));
   sorted_stripe_min_pos = xmalloc(num_stripes * sizeof(*sorted_stripe_min_pos));
 
-  Xt_count i, j;
+  Xt_int i, j;
 
   for(i = 0; i < num_stripes; ++i)
     if (stripes[i].stride >= 0)
@@ -279,7 +279,7 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_str
   idxvec->sorted_vec_positions = xmalloc(idxvec->num_indices *
                                          sizeof(*(idxvec->sorted_vec_positions)));;
 
-  Xt_count offset = 0;
+  Xt_int offset = 0;
 
   i = 0;
   while (i < num_stripes) {
@@ -288,14 +288,14 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_str
 
     do_overlap = overlap_flag[i];
 
-    Xt_count num_selection = 1;
+    Xt_int num_selection = 1;
 
     while(i + num_selection < num_stripes &&
           overlap_flag[i + num_selection] == do_overlap) ++num_selection;
 
     num_selection += do_overlap;
 
-    Xt_count curr_offset = 0;
+    Xt_int curr_offset = 0;
 
     for (j = 0; j < num_selection; ++j)
       curr_offset += decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
@@ -318,7 +318,7 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_count num_str
 }
 
 Xt_idxlist
-xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
+xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_int num_stripes) {
 
    struct xt_idxvec *idxvec_data;
 
@@ -326,8 +326,8 @@ xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_count num_stripes) {
 
    idxvec_data->vtable = &idxvec_vtable;
 
-   Xt_count i, j, k;
-   Xt_count num_indices = 0;
+   Xt_int i, j, k;
+   Xt_int num_indices = 0;
 
    for (i = 0; i < num_stripes; ++i)
       num_indices += stripes[i].nstrides;
@@ -366,7 +366,7 @@ static size_t idxvec_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
    int size_xt_idx, size_xt_count, size_int_type;
 
    xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-   xt_mpi_call(MPI_Pack_size(1, Xt_count_dt, comm, &size_xt_count), comm);
+   xt_mpi_call(MPI_Pack_size(1, Xt_int_dt, comm, &size_xt_count), comm);
    xt_mpi_call(MPI_Pack_size(idxvec->num_indices, Xt_int_dt, comm,
                                  &size_xt_idx), comm);
 
@@ -384,7 +384,7 @@ void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
 
   xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
-  xt_mpi_call(MPI_Pack(&(idxvec->num_indices), 1, Xt_count_dt, buffer,
+  xt_mpi_call(MPI_Pack(&(idxvec->num_indices), 1, Xt_int_dt, buffer,
                            buffer_size, position, comm), comm);
   if (idxvec->num_indices != 0)
     xt_mpi_call(MPI_Pack(idxvec->vector, idxvec->num_indices,
@@ -396,14 +396,14 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
    struct xt_idxvec *idxvec;
-   Xt_count num_indices;
+   Xt_int num_indices;
 
    idxvec = xmalloc(1 * sizeof(*idxvec));
 
    idxvec->vtable = &idxvec_vtable;
 
    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                              &num_indices, 1, Xt_count_dt, comm), comm);
+                              &num_indices, 1, Xt_int_dt, comm), comm);
    assert(num_indices >= 0);
    idxvec->num_indices = num_indices;
 
@@ -433,7 +433,7 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   idxvec->sorted_vec_positions = xmalloc(idxvec->num_indices *
                                          sizeof(*(idxvec->sorted_vec_positions)));
 
-  Xt_count i;
+  Xt_int i;
 
   // check if we are already sorted:
   for (i = 1; i < idxvec->num_indices; ++i)
@@ -489,7 +489,7 @@ idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
   sorted_src_vector = get_sorted_vector(idxvec_src);
   sorted_dst_vector = get_sorted_vector(idxvec_dst);
 
-  Xt_count i, j;
+  Xt_int i, j;
 
   // compute the intersection
 
@@ -531,7 +531,7 @@ idxvec_copy(Xt_idxlist idxlist) {
    return xt_idxvec_new(idxvec_data->vector, idxvec_data->num_indices);
 }
 
-static Xt_count
+static Xt_int
 idxvec_get_num_indices(Xt_idxlist idxlist) {
 
    struct xt_idxvec *idxvec_data;
@@ -562,7 +562,7 @@ idxvec_get_indices_const(Xt_idxlist idxlist) {
 
 static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                         Xt_count * num_stripes) {
+                         Xt_int * num_stripes) {
 
   struct xt_idxvec *idxvec_data;
 
@@ -589,7 +589,7 @@ idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index) {
 }
 
 static int
-idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_int *index, Xt_int undef_idx) {
+idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_int num_pos, Xt_int *index, Xt_int undef_idx) {
 
   struct xt_idxvec *idxvec;
 
@@ -633,7 +633,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
       (index > sorted_vector[idxvec_data->num_indices-1]))
     return 1;
 
-  Xt_count lb, ub;
+  Xt_int lb, ub;
 
   // bisection to find one matching position:
   lb = 0;
@@ -641,7 +641,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
   while (sorted_vector[lb] < index) {
 
-    Xt_count middle = (ub + lb + 1) / 2;
+    Xt_int middle = (ub + lb + 1) / 2;
 
     if (sorted_vector[middle] <= index)
       lb = middle;
@@ -687,7 +687,7 @@ static int idx_vec_is_sorted(Xt_int const *idx, unsigned n) {
 }
 
 int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_int const * selection_idx,
-                                   Xt_count num_selection, int * positions,
+                                   Xt_int num_selection, int * positions,
                                    int single_match_only) {
 
   if (num_selection == 0) return 0;

@@ -50,7 +50,8 @@ PROGRAM test_ut
        & xt_idx_kind
   IMPLICIT NONE
 
-  INTEGER, PARAMETER :: g_ie = 8, g_je = 4! global extents including halos
+  ! global extents including halos
+  INTEGER, PARAMETER :: g_ie = 8, g_je = 4
   LOGICAL, PARAMETER :: verbose = .FALSE.
   INTEGER, PARAMETER :: nlev = 3
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
@@ -335,8 +336,10 @@ CONTAINS
     src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
     dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
 
-    CALL ut_init_decomposition(src, g_ie*g_je, src_handle)
-    CALL ut_init_decomposition(dst, g_ie*g_je, dst_handle)
+    CALL ut_init_decomposition(src, INT(g_ie, xt_idx_kind) &
+         * INT(g_je, xt_idx_kind), src_handle)
+    CALL ut_init_decomposition(dst, INT(g_ie, xt_idx_kind) &
+         * INT(g_je, xt_idx_kind), dst_handle)
 
     CALL ut_init_oneway_transposition_template(src_handle, dst_handle, MPI_COMM_WORLD, ihandle)
 

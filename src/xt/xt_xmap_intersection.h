@@ -70,9 +70,9 @@
  *                                  that part in the exchange
  */
 Xt_xmap xt_xmap_intersection_new(Xt_idxlist * src_intersections, int * src_ranks,
-                                 Xt_count num_src_intersections,
+                                 Xt_int num_src_intersections,
                                  Xt_idxlist * dst_intersections, int * dst_ranks,
-                                 Xt_count num_dst_intersections,
+                                 Xt_int num_dst_intersections,
                                  Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                                  MPI_Comm comm);
 

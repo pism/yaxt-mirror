@@ -76,14 +76,14 @@ struct dist_dir {
   unsigned num_entries;
 };
 
-static inline Xt_count
+static inline Xt_int
 get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
 
-  Xt_count num_indices, global_num_indices;
+  Xt_int num_indices, global_num_indices;
 
   num_indices = xt_idxlist_get_num_indices(idxlist);
 
-  xt_mpi_call(MPI_Allreduce(&num_indices, &global_num_indices, 1, Xt_count_dt,
+  xt_mpi_call(MPI_Allreduce(&num_indices, &global_num_indices, 1, Xt_int_dt,
                                 MPI_SUM, comm), comm);
 
   int comm_size;
@@ -118,7 +118,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  Xt_count global_interval, local_interval;
+  Xt_int global_interval, local_interval;
   global_interval = get_dist_dir_global_interval_size(src_idxlist, comm);
   local_interval  = global_interval / comm_size;
 
@@ -127,13 +127,13 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
   local_index_range[1] = get_max_idxlist_index(src_idxlist, dst_idxlist);
 
   struct Xt_stripe * stripes = NULL;
-  Xt_count stripes_array_size = 0;
+  Xt_int stripes_array_size = 0;
 
   // generate buckets for each process
   for (int i = 0; i < comm_size; ++i) {
 
     Xt_int start = 0 + i * local_interval;
-    Xt_count num_stripes = 0;
+    Xt_int num_stripes = 0;
 
     while (start > local_index_range[0])
       start -= global_interval, num_stripes++;
@@ -146,7 +146,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
 
     ENSURE_ARRAY_SIZE(stripes, stripes_array_size, num_stripes);
 
-    for (Xt_count j = 0; j < num_stripes; ++j) {
+    for (Xt_int j = 0; j < num_stripes; ++j) {
 
       stripes[j].start = start + j * global_interval;
       stripes[j].stride = 1;
@@ -560,7 +560,7 @@ static void
 generate_intersection_from_dist_dir_results(struct dist_dir dist_dir_results,
                                             Xt_idxlist ** src_intersections,
                                             int ** src_ranks,
-                                            Xt_count * num_src_intersections,
+                                            Xt_int * num_src_intersections,
                                             MPI_Comm comm) {
 
   int comm_size, comm_rank;
@@ -630,10 +630,10 @@ static void free_dist_dir(struct dist_dir * dist_dir) {
 static void recv_and_unpack_dist_dir_results(int * recv_size,
                                              Xt_idxlist ** src_intersections,
                                              int ** src_ranks,
-                                             Xt_count * num_src_intersections,
+                                             Xt_int * num_src_intersections,
                                              Xt_idxlist ** dst_intersections,
                                              int ** dst_ranks,
-                                             Xt_count * num_dst_intersections,
+                                             Xt_int * num_dst_intersections,
                                              MPI_Comm comm) {
 
   int const src_recv_tag = 0;
@@ -667,10 +667,10 @@ static void recv_and_unpack_dist_dir_results(int * recv_size,
 
 static void exchange_idxlists(Xt_idxlist ** src_intersections,
                               int ** src_ranks,
-                              Xt_count * num_src_intersections,
+                              Xt_int * num_src_intersections,
                               Xt_idxlist ** dst_intersections,
                               int ** dst_ranks,
-                              Xt_count * num_dst_intersections,
+                              Xt_int * num_dst_intersections,
                               Xt_idxlist src_idxlist,
                               Xt_idxlist dst_idxlist,
                               MPI_Comm comm) {
@@ -726,7 +726,7 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
 
   Xt_idxlist * src_intersections, * dst_intersections;
   int * src_ranks, * dst_ranks;
-  Xt_count num_src_intersections, num_dst_intersections;
+  Xt_int num_src_intersections, num_dst_intersections;
 
   exchange_idxlists(&src_intersections, &src_ranks, &num_src_intersections,
                     &dst_intersections, &dst_ranks, &num_dst_intersections,
@@ -741,10 +741,10 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                                num_dst_intersections,
                                src_idxlist, dst_idxlist, comm);
 
-  for (Xt_count i = 0; i < num_src_intersections; ++i)
+  for (Xt_int i = 0; i < num_src_intersections; ++i)
     if (src_intersections[i] != NULL)
       xt_idxlist_delete(src_intersections[i]);
-  for (Xt_count i = 0; i < num_dst_intersections; ++i)
+  for (Xt_int i = 0; i < num_dst_intersections; ++i)
     if (dst_intersections[i] != NULL)
       xt_idxlist_delete(dst_intersections[i]);
   free(src_intersections), free(dst_intersections);

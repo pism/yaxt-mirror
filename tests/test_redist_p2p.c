@@ -64,7 +64,7 @@ int main(void) {
   {
     // source index list
     Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    Xt_count src_num_indices
+    Xt_int src_num_indices
       = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
     Xt_idxlist src_idxlist;
@@ -73,7 +73,7 @@ int main(void) {
 
     // destination index list
     Xt_int dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
-    Xt_count dst_num_indices
+    Xt_int dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
     Xt_idxlist dst_idxlist;

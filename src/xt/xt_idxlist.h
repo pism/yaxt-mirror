@@ -52,7 +52,7 @@
 
 struct Xt_stripe {
   Xt_int start;
-  Xt_count nstrides;
+  Xt_int nstrides;
   Xt_int stride;
 };
 
@@ -64,16 +64,16 @@ struct xt_idxlist_vtable {
    void (*pack)(Xt_idxlist, void*, int, int*, MPI_Comm);
    Xt_idxlist (*get_intersection)(Xt_idxlist,Xt_idxlist);
    Xt_idxlist (*copy)(Xt_idxlist);
-   Xt_count (*get_num_indices)(Xt_idxlist);
+   Xt_int (*get_num_indices)(Xt_idxlist);
    void (*get_indices)(Xt_idxlist, Xt_int *indices);
    Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
-   void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_count *);
+   void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_int *);
    int (*get_index_at_position)(Xt_idxlist, int, Xt_int *);
-   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_count num, Xt_int *index, Xt_int undef_idx);
+   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_int num, Xt_int *index, Xt_int undef_idx);
    int (*get_position_of_index)(Xt_idxlist, Xt_int, int *);
-   int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, Xt_count, int *, int);
+   int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, Xt_int, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_int, int *, int);
-   int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, Xt_count,
+   int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, Xt_int,
                                       int *, int *);
    Xt_int (*get_min_index)(Xt_idxlist);
    Xt_int (*get_max_index)(Xt_idxlist);
@@ -177,7 +177,7 @@ Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist);
  * @param[in] idxlist index list for which the number of indices is required
  * @return            number of indices in the given index list
  */
-Xt_count xt_idxlist_get_num_indices(Xt_idxlist idxlist);
+Xt_int xt_idxlist_get_num_indices(Xt_idxlist idxlist);
 
 /**
  * gets the indices stored in an index list
@@ -208,7 +208,7 @@ Xt_int const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
  */
 void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
-                                  Xt_count * num_stripes);
+                                  Xt_int * num_stripes);
 
 /**
  * gets the index stored at the specified position in an index list
@@ -232,7 +232,7 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * 
  * @return                zero if everything was okay or\n
  *                        number of unresolved positions ( == number of undef values assigned to the result)
  */
-int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_count num_pos, Xt_int *indices, Xt_int undef_idx);
+int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_int num_pos, Xt_int *indices, Xt_int undef_idx);
 
 /**
  * gets the position of the first occurrence of the given index
@@ -263,7 +263,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * pos
  *                         1 if the index could not be found in idxlist
  */
 int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                       Xt_count num_indices, int * positions,
+                                       Xt_int num_indices, int * positions,
                                        int single_match_only);
 
 /**
@@ -300,7 +300,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
  *          is the same as a call to xt_idxlist_get_positions_of_indices
  */
 int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
-                                            Xt_count num_indices, int * positions,
+                                            Xt_int num_indices, int * positions,
                                             int * offsets);
 
 /**

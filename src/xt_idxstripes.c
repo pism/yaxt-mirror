@@ -45,6 +45,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -77,7 +78,7 @@ idxstripes_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
 static Xt_idxlist
 idxstripes_copy(Xt_idxlist idxlist);
 
-static Xt_count
+static Xt_int
 idxstripes_get_num_indices(Xt_idxlist idxlist);
 
 static void
@@ -88,7 +89,7 @@ idxstripes_get_indices_const(Xt_idxlist idxlist);
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             Xt_count * num_stripes);
+                             Xt_int * num_stripes);
 
 static int
 idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
@@ -96,7 +97,7 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
 
 static int
 idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                    Xt_count num, Xt_int *index,
+                                    Xt_int num, Xt_int *index,
                                     Xt_int undef_idx);
 
 static int
@@ -152,7 +153,7 @@ static MPI_Datatype xt_get_stripes_datatype() {
                                  nstrides_address - base_address,
                                  stride_address - base_address,
                                  sizeof(stripe)};
-    MPI_Datatype types[5] = {MPI_LB, Xt_int_dt, Xt_count_dt, Xt_int_dt, MPI_UB};
+    MPI_Datatype types[5] = {MPI_LB, Xt_int_dt, Xt_int_dt, Xt_int_dt, MPI_UB};
 
     xt_mpi_call(MPI_Type_create_struct(5, block_lengths, displacements,
                                            types, &type), MPI_COMM_WORLD);
@@ -167,12 +168,12 @@ struct xt_idxstripes {
   const struct xt_idxlist_vtable *vtable;
 
   struct Xt_stripe * stripes;
-  Xt_count num_stripes;
+  Xt_int num_stripes;
 
   struct Xt_stripe * stripes_sorted;
   int stripes_overlap;
 
-  Xt_count index_num_cache;
+  Xt_int index_num_cache;
   Xt_int *index_array_cache;
 };
 
@@ -189,7 +190,7 @@ static void generate_stripes_sorted(struct xt_idxstripes * stripes) {
 
   memcpy(sp, stripes->stripes, stripes->num_stripes * sizeof (*sp));
 
-  Xt_count i;
+  Xt_int i;
 
   for (i = 0; i < stripes->num_stripes; ++i)
     if (sp[i].stride < 0) {
@@ -219,7 +220,7 @@ static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
 }
 
 Xt_idxlist
-xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stripes) {
+xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_int num_stripes) {
 
   struct xt_idxstripes *idxstripes;
 
@@ -235,7 +236,7 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stripes) {
     memcpy(idxstripes->stripes, stripes,
            num_stripes * sizeof(*(idxstripes->stripes)));
     int sign_err = 0;
-    for(Xt_count i=0; i<num_stripes; i++) {
+    for(Xt_int i=0; i<num_stripes; i++) {
       if (idxstripes->stripes[i].nstrides<0) {
         idxstripes->stripes[i].nstrides = 0;
         sign_err++;
@@ -248,7 +249,7 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_count num_stripes) {
     generate_stripes_sorted(idxstripes);
 
     idxstripes->stripes_overlap = 0;
-    for (Xt_count i = 0; i < idxstripes->num_stripes - 1; ++i)
+    for (Xt_int i = 0; i < idxstripes->num_stripes - 1; ++i)
       if (stripes_overlap(idxstripes->stripes_sorted[i],
                           idxstripes->stripes_sorted[i+1])) {
         idxstripes->stripes_overlap = 1;
@@ -284,16 +285,16 @@ idxstripes_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   struct xt_idxstripes *stripes = (struct xt_idxstripes*)data;
 
-  int size_int_type, size_unsigned, size_stripes =  0;
+  int size_int_type, size_num_stripes, size_stripes =  0;
 
   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-  xt_mpi_call(MPI_Pack_size(1, Xt_count_dt, comm, &size_unsigned), comm);
+  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_num_stripes), comm);
   if (stripes->num_stripes)
     xt_mpi_call(MPI_Pack_size(stripes->num_stripes,
                                   xt_get_stripes_datatype(),
                                   comm, &size_stripes), comm);
 
-  return size_int_type + size_unsigned + size_stripes;
+  return size_int_type + size_num_stripes + size_stripes;
 }
 
 static void
@@ -302,16 +303,18 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
 
   assert(data);
   struct xt_idxstripes *stripes = (struct xt_idxstripes*)data;
-  int type = STRIPES;
+  int type = STRIPES, num_stripes = stripes->num_stripes;
+
+  assert(stripes->num_stripes <= INT_MAX);
 
   xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
-                           buffer_size, position, comm), comm);
-  xt_mpi_call(MPI_Pack(&(stripes->num_stripes), 1, MPI_UNSIGNED, buffer,
-                           buffer_size, position, comm), comm);
+                       buffer_size, position, comm), comm);
+  xt_mpi_call(MPI_Pack(&num_stripes, 1, MPI_INT, buffer,
+                       buffer_size, position, comm), comm);
   if (stripes->num_stripes)
-    xt_mpi_call(MPI_Pack(stripes->stripes, (int)stripes->num_stripes,
-                             xt_get_stripes_datatype(), buffer,
-                             buffer_size, position, comm), comm);
+    xt_mpi_call(MPI_Pack(stripes->stripes, num_stripes,
+                         xt_get_stripes_datatype(), buffer,
+                         buffer_size, position, comm), comm);
 }
 
 Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
@@ -325,21 +328,22 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   stripes->index_num_cache = -1; // negative num means: undef
   stripes->index_array_cache = NULL;
 
+  int num_stripes;
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                             &(stripes->num_stripes), 1, MPI_UNSIGNED,
-                             comm), comm);
+                         &num_stripes, 1, MPI_INT,
+                         comm), comm);
+  stripes->num_stripes = num_stripes;
 
-  if (stripes->num_stripes) {
-    stripes->stripes
-      = xmalloc(stripes->num_stripes * sizeof(*(stripes->stripes)));
+  if (num_stripes) {
+    stripes->stripes = xmalloc(num_stripes * sizeof(*(stripes->stripes)));
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                            stripes->stripes, stripes->num_stripes,
-                            xt_get_stripes_datatype(), comm),comm);
+                           stripes->stripes, num_stripes,
+                           xt_get_stripes_datatype(), comm),comm);
 
     generate_stripes_sorted(stripes);
 
     stripes->stripes_overlap = 0;
-    for (Xt_count i = 0; i < stripes->num_stripes - 1; ++i)
+    for (Xt_int i = 0; i < num_stripes - 1; ++i)
       if (stripes_overlap(stripes->stripes_sorted[i],
                           stripes->stripes_sorted[i+1])) {
         stripes->stripes_overlap = 1;
@@ -355,15 +359,15 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 }
 
 void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
-                                      Xt_count num_indices,
+                                      Xt_int num_indices,
                                       struct Xt_stripe ** stripes,
-                                      Xt_count * num_stripes) {
+                                      Xt_int * num_stripes) {
 
   struct Xt_stripe * temp_stripes = NULL;
   unsigned temp_stripes_array_size = 0;
-  Xt_count num_temp_stripes = 0;
+  Xt_int num_temp_stripes = 0;
 
-  Xt_count i, j;
+  Xt_int i, j;
 
   i = 0;
   while(i < num_indices) {
@@ -430,7 +434,7 @@ static struct Xt_stripe
 get_stripe_intersection(struct Xt_stripe * stripe_a,
                         struct Xt_stripe * stripe_b) {
 
-  Xt_count i;
+  Xt_int i;
 
   if (stripe_a->start > stripe_b->start) {
     struct Xt_stripe * temp = stripe_a;
@@ -477,10 +481,10 @@ idxstripes_compute_intersection(struct xt_idxstripes *idxstripes_src,
                                 struct xt_idxstripes *idxstripes_dst) {
 
   struct Xt_stripe * inter_stripes = NULL;
-  Xt_count num_inter_stripes = 0;
-  Xt_count inter_stripes_array_size = 0;
+  Xt_int num_inter_stripes = 0;
+  Xt_int inter_stripes_array_size = 0;
 
-  Xt_count i_src, i_dst;
+  Xt_int i_src, i_dst;
 
   i_src = 0;
   i_dst = 0;
@@ -566,7 +570,7 @@ idxstripes_copy(Xt_idxlist idxlist) {
   return xt_idxstripes_new(stripes->stripes, stripes->num_stripes);
 }
 
-static Xt_count
+static Xt_int
 idxstripes_get_num_indices(Xt_idxlist idxlist) {   ///< \todo use cached value
 
   struct xt_idxstripes * stripes;
@@ -575,8 +579,8 @@ idxstripes_get_num_indices(Xt_idxlist idxlist) {   ///< \todo use cached value
 
   if (stripes->index_num_cache >= 0) return stripes->index_num_cache;
 
-  Xt_count i;
-  Xt_count size = 0;
+  Xt_int i;
+  Xt_int size = 0;
 
   for (i = 0; i < stripes->num_stripes; ++i)
     size += stripes->stripes[i].nstrides;
@@ -592,7 +596,7 @@ idxstripes_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
   /// \todo use memcpy with index_array_cache if available
   stripes = (struct xt_idxstripes*)idxlist;
 
-  Xt_count i, j;
+  Xt_int i, j;
 
   for (i = 0; i < stripes->num_stripes; ++i)
     for (j = 0; j < stripes->stripes[i].nstrides; ++j)
@@ -606,7 +610,7 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
 
   if (idxstripes->index_array_cache) return idxstripes->index_array_cache;
 
-  Xt_count index_num = idxstripes_get_num_indices(idxlist);
+  Xt_int index_num = idxstripes_get_num_indices(idxlist);
 
   Xt_int *tmp_index_array
     = xmalloc(index_num * sizeof( *(idxstripes->index_array_cache) ) );
@@ -620,7 +624,7 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             Xt_count * num_stripes) {
+                             Xt_int * num_stripes) {
 
   struct xt_idxstripes *idxstripes;
 
@@ -628,9 +632,9 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
 
   struct Xt_stripe * temp_stripes = NULL;
   unsigned temp_stripes_array_size = 0;
-  Xt_count num_temp_stripes = 0;
+  Xt_int num_temp_stripes = 0;
 
-  Xt_count i, j;
+  Xt_int i, j;
 
   for (i = 0; i < idxstripes->num_stripes; ++i) {
 
@@ -674,7 +678,7 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
 
   if (position < 0) return 1;
 
-  Xt_count i;
+  Xt_int i;
 
   for (i = 0; i < stripes->num_stripes; ++i)
     if (position >= stripes->stripes[i].nstrides)
@@ -691,7 +695,7 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
 
 static int
 idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                    Xt_count num_pos, Xt_int *index,
+                                    Xt_int num_pos, Xt_int *index,
                                     Xt_int undef_idx) {
 
   struct xt_idxstripes *idxstripes = (struct xt_idxstripes*)idxlist;
@@ -752,8 +756,8 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
   stripes = (struct xt_idxstripes*)idxlist;
 
-  Xt_count i = 0;
-  Xt_count position_offset = 0;
+  Xt_int i = 0;
+  Xt_int position_offset = 0;
 
   while(i < stripes->num_stripes &&
         position_offset + stripes->stripes[i].nstrides <= offset)
@@ -804,7 +808,7 @@ idxstripes_get_max_index(Xt_idxlist idxlist) {
 
   idxstripes = (struct xt_idxstripes *)idxlist;
 
-  Xt_count i;
+  Xt_int i;
   Xt_int index = idxstripes_get_min_index(idxlist);
 
   for (i = 0; i < idxstripes->num_stripes; ++i)
