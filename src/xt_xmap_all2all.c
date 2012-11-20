@@ -88,18 +88,17 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   // compute size of local index lists
-  long long src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, comm);
-  if (src_pack_size<0) die("src index list is too large");
-  long long dst_pack_size = xt_idxlist_get_pack_size(dst_idxlist_local, comm);
-  if (dst_pack_size<0) die("dst index list is too large");
+  size_t src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, comm);
+  size_t dst_pack_size = xt_idxlist_get_pack_size(dst_idxlist_local, comm);
+  size_t size_sum = src_pack_size + dst_pack_size;
 
-  if (src_pack_size + dst_pack_size >= INT_MAX) die("local src+dst index lists are too large");
+  if (size_sum >= INT_MAX || size_sum < src_pack_size
+      || size_sum < dst_pack_size)
+    die("local src+dst index lists are too large");
 
-  int send_buffer_size;
-  send_buffer_size  = src_pack_size + dst_pack_size;
+  int send_buffer_size = size_sum;
 
-  void * send_buffer;
-  send_buffer = xmalloc(send_buffer_size);
+  void * send_buffer = xmalloc(send_buffer_size);
 
   // pack local index lists
   int position = 0;
@@ -108,17 +107,13 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
   // exchange buffer sizes
   int send_buffer_header = send_buffer_size;
-  int * recv_buffer_header;
-
-  recv_buffer_header = xmalloc(comm_size * sizeof(*recv_buffer_header));
+  int *recv_buffer_header = xmalloc(comm_size * sizeof(*recv_buffer_header));
 
   xt_mpi_call(MPI_Allgather(&send_buffer_header, 1, MPI_INT,
                                 recv_buffer_header, 1, MPI_INT, comm), comm);
 
   void * recv_buffer;
-  int * displ;
-
-  displ = xmalloc(comm_size * sizeof(*displ));
+  int * displ = xmalloc(comm_size * sizeof(*displ));
 
   displ[0] = 0;
   int recv_buffer_size = recv_buffer_header[0];
