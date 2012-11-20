@@ -322,16 +322,17 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   // fill other cache values:
   section->min_index_cache = section->local_start_index;
   section->max_index_cache = section->local_start_index;
-  for (int i = 0; i < section->ndim; ++i) {
+  for (unsigned i = 0; i < section->ndim; ++i) {
 
-    if (section->dims[i].global_stride < 0)
+    // if either local and global size are negative
+    if ((section->dims[i].global_size < 0) ^ (section->dims[i].local_size < 0))
       section->min_index_cache += section->dims[i].global_stride *
                                   (Xt_isign(section->dims[i].local_size) *
-                                   section->dims[i].local_size - 1);
-    else
+                                  section->dims[i].local_size - 1);
+    else // if local and global size are both positive or negative
       section->max_index_cache += section->dims[i].global_stride *
                                   (Xt_isign(section->dims[i].local_size) *
-                                   section->dims[i].local_size - 1);
+                                  section->dims[i].local_size - 1);
   }
 
   return (Xt_idxlist)section;
