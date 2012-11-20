@@ -86,9 +86,10 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   } *idxlists_all;
 
   unsigned i;
-  int comm_size;
+  int comm_size, rank;
 
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
 
   // compute size of local index lists
   size_t src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, comm);
@@ -109,22 +110,22 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   xt_idxlist_pack(dst_idxlist_local, send_buffer, send_buffer_size, &position, comm);
 
   // exchange buffer sizes
-  int send_buffer_header = send_buffer_size;
-  int *recv_buffer_header = xmalloc(comm_size * sizeof(*recv_buffer_header));
+  int *pack_sizes = xmalloc(comm_size * sizeof(*pack_sizes));
+  pack_sizes[rank] = send_buffer_size;
 
-  xt_mpi_call(MPI_Allgather(&send_buffer_header, 1, MPI_INT,
-                                recv_buffer_header, 1, MPI_INT, comm), comm);
+  xt_mpi_call(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+                            pack_sizes, 1, MPI_INT, comm), comm);
 
   void * recv_buffer;
   int * displ = xmalloc(comm_size * sizeof(*displ));
 
   displ[0] = 0;
-  int recv_buffer_size = recv_buffer_header[0];
+  int recv_buffer_size = pack_sizes[0];
   int size_overflow = 0;
   for (i = 1; i < comm_size; ++i) {
 
-     displ[i] = displ[i-1] + recv_buffer_header[i-1];
-     recv_buffer_size += recv_buffer_header[i];
+     displ[i] = displ[i-1] + pack_sizes[i-1];
+     recv_buffer_size += pack_sizes[i];
      size_overflow = recv_buffer_size & (1 << (sizeof(int) * CHAR_BIT - 1));
   }
   if (size_overflow)
@@ -133,8 +134,8 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
   // exchange buffers
   xt_mpi_call(MPI_Allgatherv(send_buffer, send_buffer_size, MPI_PACKED,
-                                 recv_buffer, recv_buffer_header, displ,
-                                 MPI_PACKED, comm), comm);
+                             recv_buffer, pack_sizes, displ,
+                             MPI_PACKED, comm), comm);
 
   idxlists_all = xmalloc(comm_size * sizeof(*idxlists_all));
 
@@ -192,7 +193,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
   // clean up
   free(send_buffer);
-  free(recv_buffer_header);
+  free(pack_sizes);
   free(recv_buffer);
   free(displ);
 }
