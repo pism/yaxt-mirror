@@ -117,13 +117,15 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
   displ[0] = 0;
   int recv_buffer_size = recv_buffer_header[0];
+  int size_overflow = 0;
   for (i = 1; i < comm_size; ++i) {
 
      displ[i] = displ[i-1] + recv_buffer_header[i-1];
      recv_buffer_size += recv_buffer_header[i];
-     if (recv_buffer_size<0) die("accumulated buffer sizes too big");
+     size_overflow = recv_buffer_size & (1 << (sizeof(int) * CHAR_BIT - 1));
   }
-
+  if (size_overflow)
+    die("accumulated buffer sizes too big");
   recv_buffer = xmalloc(recv_buffer_size);
 
   // exchange buffers
