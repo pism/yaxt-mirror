@@ -149,8 +149,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
                                        &position, comm);
     Xt_idxlist dst = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
                                        &position, comm);
-    Xt_idxlist intersect = xt_idxlist_get_intersection(src,
-                                                       dst_idxlist_local);
+    Xt_idxlist intersect = xt_idxlist_get_intersection(src, dst_idxlist_local);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
       (*dst_intersections)[dst_isect_count] = intersect;
@@ -160,8 +159,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
     else
       xt_idxlist_delete(intersect);
 
-    intersect = xt_idxlist_get_intersection(src_idxlist_local,
-                                            dst);
+    intersect = xt_idxlist_get_intersection(src_idxlist_local, dst);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
       (*src_intersections)[src_isect_count] = intersect;
