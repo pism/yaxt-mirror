@@ -59,7 +59,7 @@ The following packages need to be installed:
 
 The following commands should produce a working install:
 
-$ ./configure CC=mpicc FC=mpif90 CPPFLAGS=-DpgiFortran
+$ ./configure CC=mpicc FC=mpif90 FCFLAGS=-cpp CPPFLAGS=-DpgiFortran
 $ make
 $ make check
 $ make install
