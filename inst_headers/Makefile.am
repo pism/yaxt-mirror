@@ -4,6 +4,8 @@ include_HEADERS = yaxt.h
 
 BUILT_SOURCES = yaxt.h
 
+SUBDIRS = f90
+
 yaxt.h: Makefile
 	( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
 	for header in $(xtinclude_HEADERS) ; \

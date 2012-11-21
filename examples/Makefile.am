@@ -49,5 +49,5 @@ tr_gp2fs_SOURCES = tr_gp2fs.c
 tr_gp2fs_LDADD = $(LDADD) -lm
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
-AM_FCFLAGS = -I$(top_srcdir)/src -I../src $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
+AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
 LDADD = ../src/libyaxt.la $(MPI_C_LIB)

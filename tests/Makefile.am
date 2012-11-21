@@ -4,22 +4,22 @@
 #             Moritz Hanke <hanke@dkrz.de>
 #             Thomas Jahns <jahns@dkrz.de>
 # URL: https://redmine.dkrz.de/doc/yaxt/html/index.html
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are  permitted provided that the following conditions are
 # met:
-# 
+#
 # Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
-# 
+#
 # Redistributions in binary form must reproduce the above copyright
 # notice, this list of conditions and the following disclaimer in the
 # documentation and/or other materials provided with the distribution.
-# 
+#
 # Neither the name of the DKRZ GmbH nor the names of its contributors
 # may be used to endorse or promote products derived from this software
 # without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -95,7 +95,7 @@ test_yaxt_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
-AM_FCFLAGS = -I$(top_srcdir)/src -I../src $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
+AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
 LDADD = ../src/libyaxt.la $(MPI_C_LIB)
 
 TESTS = 							\
