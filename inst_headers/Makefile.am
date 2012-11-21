@@ -39,7 +39,7 @@ install-data-local:
         done
 
 dist-hook:
-	rm $(distdir)/xt/*.h
-	rmdir $(distdir)/xt
+	-rm $(distdir)/xt/*.h
+	-rmdir $(distdir)/xt
 
 @AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@
