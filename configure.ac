@@ -2,7 +2,8 @@ dnl ######################################################################
 dnl Basic autotools settings.
 dnl ######################################################################
 AC_PREREQ([2.64])
-AC_INIT([yaxt],[0.0.1],[hanke@dkrz.de])
+dnl Update the corresponding entry in doc/Doxyfile when changing this
+AC_INIT([yaxt],[0.1.0],[hanke@dkrz.de])
 AC_CONFIG_SRCDIR([src/xt_idxlist.c])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
