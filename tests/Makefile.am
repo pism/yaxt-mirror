@@ -126,3 +126,5 @@ TESTS = 							\
 
 
 AUTOMAKE_OPTIONS = color-tests
+
+EXTRA_DIST = core

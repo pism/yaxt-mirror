@@ -2,6 +2,8 @@ xtincludedir = $(includedir)/xt
 
 include_HEADERS = yaxt.h
 
+BUILT_SOURCES = yaxt.h
+
 yaxt.h: Makefile
 	( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
 	for header in $(xtinclude_HEADERS) ; \
@@ -28,7 +30,7 @@ all-local:
 	  done
 
 clean-local:
-	rm -rf xt
+	rm -rf xt yaxt.h
 
 install-data-local:
 	@echo " $(MKDIR_P) '$(DESTDIR)$(xtincludedir)'"; \
@@ -37,6 +39,9 @@ install-data-local:
           echo " $(INSTALL_HEADER) $$p '$(DESTDIR)$(xtincludedir)'"; \
           $(INSTALL_HEADER) $$p "$(DESTDIR)$(xtincludedir)" || exit $$?; \
         done
+
+uninstall-local:
+	rm -rf "$(DESTDIR)$(xtincludedir)"
 
 dist-hook:
 	-rm $(distdir)/xt/*.h
