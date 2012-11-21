@@ -49,7 +49,7 @@ PROGRAM test_ut
        ut_destroy_transposition_template, ut_mode_dt_p2p, &
        ut_init_transposition, &
        comm_forward, ut_transpose, ut_destroy_decomposition, &
-       ut_destroy_transposition, xt_idx_kind
+       ut_destroy_transposition, xt_int_kind
   IMPLICIT NONE
 
   ! global extents including halos
@@ -57,7 +57,7 @@ PROGRAM test_ut
   LOGICAL, PARAMETER :: verbose = .FALSE.
   INTEGER, PARAMETER :: nlev = 3
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
+  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
   INTEGER :: ie, je ! local extents, including halos
@@ -68,13 +68,13 @@ PROGRAM test_ut
   INTEGER :: mype, mypx, mypy
   LOGICAL :: lroot ! true only for proc 0
 
-  INTEGER(xt_idx_kind) :: g_id(g_ie, g_je) ! global id
+  INTEGER(xt_int_kind) :: g_id(g_ie, g_je) ! global id
 
   ! global "tripolar-like" toy bounds exchange
-  INTEGER(xt_idx_kind) :: g_tpex(g_ie, g_je)
+  INTEGER(xt_int_kind) :: g_tpex(g_ie, g_je)
   INTEGER :: template_tpex, trans_tpex
 
-  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
@@ -241,10 +241,10 @@ CONTAINS
   END SUBROUTINE exit_all
 
   SUBROUTINE id_map(map)
-    INTEGER(xt_idx_kind), INTENT(out) :: map(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: map(:,:)
 
     INTEGER :: i,j
-    INTEGER(xt_idx_kind) :: p
+    INTEGER(xt_int_kind) :: p
 
     p = 0
     DO j = 1, SIZE(map,2)
@@ -332,8 +332,8 @@ CONTAINS
   END SUBROUTINE gen_off_trans
 
   SUBROUTINE get_window(gval, win)
-    INTEGER(xt_idx_kind), INTENT(in) :: gval(:,:)
-    INTEGER(xt_idx_kind), INTENT(out) :: win(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: gval(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: win(:,:)
 
     INTEGER :: i, j, ig, jg
 
@@ -348,21 +348,21 @@ CONTAINS
   END SUBROUTINE get_window
 
   SUBROUTINE gen_template(local_src_idx, local_dst_idx, ihandle)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_src_idx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_dst_idx(:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER(xt_idx_kind) :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
+    INTEGER(xt_int_kind) :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
 
     INTEGER :: src_handle, dst_handle
 
     src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
     dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
 
-    CALL ut_init_decomposition(src, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind), src_handle)
-    CALL ut_init_decomposition(dst, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind), dst_handle)
+    CALL ut_init_decomposition(src, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind), src_handle)
+    CALL ut_init_decomposition(dst, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind), dst_handle)
 
     CALL ut_init_oneway_transposition_template(src_handle, dst_handle, &
          MPI_COMM_WORLD, ihandle)
@@ -373,8 +373,8 @@ CONTAINS
   END SUBROUTINE gen_template
 
   SUBROUTINE def_exchange(id_in, id_out)
-    INTEGER(xt_idx_kind), INTENT(in) :: id_in(:,:)
-    INTEGER(xt_idx_kind), INTENT(out) :: id_out(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: id_in(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: id_out(:,:)
 
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
@@ -445,7 +445,7 @@ CONTAINS
   END SUBROUTINE def_exchange
 
   SUBROUTINE check_g_idx(gidx)
-    INTEGER(xt_idx_kind), INTENT(in) :: gidx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: gidx(:,:)
     INTEGER :: i,j
 
     DO j=1,g_je

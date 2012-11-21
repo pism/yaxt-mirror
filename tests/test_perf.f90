@@ -51,14 +51,14 @@ PROGRAM test_perf
        & ut_transpose, ut_init_decomposition, &
        & ut_init_oneway_transposition_template, ut_destroy_decomposition, &
        & ut_destroy_transposition_template, ut_destroy_transposition, &
-       & ut_init_transposition, xt_idx_kind
+       & ut_init_transposition, xt_int_kind
 
   IMPLICIT NONE
   ! global extents including halos:
 
   INTEGER, PARAMETER :: nlev = 30
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
+  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
   INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
 
@@ -641,17 +641,17 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER(xt_idx_kind) :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
+    INTEGER(xt_int_kind) :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
 
     INTEGER :: src_handle, dst_handle
 
     src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
     dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
 
-    CALL ut_init_decomposition(src, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind), src_handle)
-    CALL ut_init_decomposition(dst, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind), dst_handle)
+    CALL ut_init_decomposition(src, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind), src_handle)
+    CALL ut_init_decomposition(dst, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind), dst_handle)
 
     CALL ut_init_oneway_transposition_template(src_handle, dst_handle, &
          MPI_COMM_WORLD, ihandle)
@@ -666,7 +666,7 @@ CONTAINS
     INTEGER, INTENT(in) :: local_dst_idx(:,:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER(xt_idx_kind), ALLOCATABLE :: src(:), dst(:)
+    INTEGER(xt_int_kind), ALLOCATABLE :: src(:), dst(:)
     INTEGER :: src_handle, dst_handle
 
     ALLOCATE(src(SIZE(local_src_idx)), dst(SIZE(local_dst_idx)))
@@ -674,10 +674,10 @@ CONTAINS
     src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
     dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
 
-    CALL ut_init_decomposition(src, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind), src_handle)
-    CALL ut_init_decomposition(dst, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind), dst_handle)
+    CALL ut_init_decomposition(src, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind), src_handle)
+    CALL ut_init_decomposition(dst, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind), dst_handle)
 
     CALL ut_init_oneway_transposition_template(src_handle, dst_handle, &
          MPI_COMM_WORLD, ihandle)

@@ -50,7 +50,7 @@ PROGRAM test_yaxt
   USE yaxt, ONLY: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
-       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_idx_kind
+       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
   USE iso_c_binding, ONLY: c_loc, c_int
 
   IMPLICIT NONE
@@ -59,7 +59,7 @@ PROGRAM test_yaxt
   LOGICAL, PARAMETER :: verbose = .FALSE.
   INTEGER, PARAMETER :: nlev = 3
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
+  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
   INTEGER :: ie, je ! local extents, including halos
@@ -69,15 +69,15 @@ PROGRAM test_yaxt
   INTEGER :: mype, mypx, mypy ! process rank, process coords within (0:, 0:) process space
   LOGICAL :: lroot ! true only for proc 0
 
-  INTEGER(xt_idx_kind) :: g_id(g_ie, g_je) ! global id
+  INTEGER(xt_int_kind) :: g_id(g_ie, g_je) ! global id
 
   ! global "tripolar-like" toy bounds exchange
-  INTEGER(xt_idx_kind) :: g_tpex(g_ie, g_je)
+  INTEGER(xt_int_kind) :: g_tpex(g_ie, g_je)
   TYPE(xt_xmap) :: xmap_tpex
   TYPE(xt_redist) :: redist_tpex
   TYPE(xt_redist) :: redist_surf_tpex
 
-  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
@@ -251,7 +251,7 @@ CONTAINS
   END SUBROUTINE exit_all
 
   SUBROUTINE id_map(map)
-    INTEGER(xt_idx_kind), INTENT(out) :: map(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: map(:,:)
 
     INTEGER :: i,j,p
 
@@ -327,8 +327,8 @@ CONTAINS
   END SUBROUTINE gen_off_trans
 
   SUBROUTINE get_window(gval, win)
-    INTEGER(xt_idx_kind), INTENT(in) :: gval(:,:)
-    INTEGER(xt_idx_kind), INTENT(out) :: win(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: gval(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: win(:,:)
 
     INTEGER :: i, j, ig, jg
 
@@ -343,16 +343,16 @@ CONTAINS
   END SUBROUTINE get_window
 
   SUBROUTINE gen_template(local_src_idx, local_dst_idx, xmap)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_src_idx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_dst_idx(:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
-    src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind))
-    dst_idxlist = xt_idxvec_new(local_dst_idx, INT(g_ie, xt_idx_kind) &
-         * INT(g_je, xt_idx_kind))
+    src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind))
+    dst_idxlist = xt_idxvec_new(local_dst_idx, INT(g_ie, xt_int_kind) &
+         * INT(g_je, xt_int_kind))
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
@@ -360,8 +360,8 @@ CONTAINS
   END SUBROUTINE gen_template
 
   SUBROUTINE def_exchange(id_in, id_out)
-    INTEGER(xt_idx_kind), INTENT(in) :: id_in(:,:)
-    INTEGER(xt_idx_kind), INTENT(out) :: id_out(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: id_in(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: id_out(:,:)
 
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
@@ -432,7 +432,7 @@ CONTAINS
   END SUBROUTINE def_exchange
 
   SUBROUTINE check_g_idx(gidx)
-    INTEGER(xt_idx_kind), INTENT(in) :: gidx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: gidx(:,:)
     INTEGER :: i,j
 
     DO j=1,g_je

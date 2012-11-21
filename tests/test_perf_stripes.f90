@@ -51,7 +51,7 @@ PROGRAM test_perf_stripes
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, xt_redist, &
        xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
-       xt_stripe, xt_idxstripes_new, xt_idx_kind
+       xt_stripe, xt_idxstripes_new, xt_int_kind
 
   USE ISO_C_BINDING, ONLY: c_loc
 
@@ -60,7 +60,7 @@ PROGRAM test_perf_stripes
 
   INTEGER, PARAMETER :: nlev = 20
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
-  INTEGER(xt_idx_kind), PARAMETER :: undef_index = -1
+  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
   INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
 
@@ -89,8 +89,8 @@ PROGRAM test_perf_stripes
        redist_tpex_3d_ws, redist_tpex_3d_wb
   TYPE(Xt_idxlist) :: loc_id_3d_ws, loc_tpex_3d_ws
 
-  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
-  INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
   INTEGER, ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
   INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
@@ -414,8 +414,8 @@ CONTAINS
   SUBROUTINE inflate_idx(inflate_pos, idx_2d, idx_3d)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::inflate_idx: '
     INTEGER, INTENT(in) :: inflate_pos
-    INTEGER(xt_idx_kind), INTENT(in) :: idx_2d(:,:)
-    INTEGER(xt_idx_kind), ALLOCATABLE, INTENT(out) :: idx_3d(:,:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: idx_2d(:,:)
+    INTEGER(xt_int_kind), ALLOCATABLE, INTENT(out) :: idx_3d(:,:,:)
 
     INTEGER :: i, j, k
 
@@ -684,7 +684,7 @@ CONTAINS
 
   SUBROUTINE get_window(gval, win)
     INTEGER, INTENT(in) :: gval(:,:)
-    INTEGER(xt_idx_kind), INTENT(out) :: win(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: win(:,:)
 
     INTEGER :: i, j, ig, jg
 
@@ -701,7 +701,7 @@ CONTAINS
   SUBROUTINE gen_stripes(local_idx, local_stripes)
     CHARACTER(len=*), PARAMETER :: context = 'gen_stripes: '
 
-    INTEGER(xt_idx_kind), INTENT(in) :: local_idx(:,:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_idx(:,:,:)
     TYPE(Xt_idxlist), INTENT(out) :: local_stripes
 
     TYPE(xt_stripe), ALLOCATABLE :: stripes(:,:)
@@ -726,21 +726,21 @@ CONTAINS
       ENDDO
     ENDDO
 
-    local_stripes = xt_idxstripes_new(stripes, INT(SIZE(stripes), xt_idx_kind))
+    local_stripes = xt_idxstripes_new(stripes, INT(SIZE(stripes), xt_int_kind))
 
   END SUBROUTINE gen_stripes
 
   SUBROUTINE gen_xmap_2d(local_src_idx, local_dst_idx, xmap)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_src_idx(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_dst_idx(:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
     src_idxlist = xt_idxvec_new(local_src_idx, &
-         INT(SIZE(local_src_idx), xt_idx_kind))
+         INT(SIZE(local_src_idx), xt_int_kind))
     dst_idxlist = xt_idxvec_new(local_dst_idx, &
-         INT(SIZE(local_dst_idx), xt_idx_kind))
+         INT(SIZE(local_dst_idx), xt_int_kind))
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
 
     CALL xt_idxlist_delete(src_idxlist)
@@ -749,16 +749,16 @@ CONTAINS
   END SUBROUTINE gen_xmap_2d
 
   SUBROUTINE gen_xmap_3d(local_src_idx, local_dst_idx, xmap)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_src_idx(:,:,:)
-    INTEGER(xt_idx_kind), INTENT(in) :: local_dst_idx(:,:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_src_idx(:,:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: local_dst_idx(:,:,:)
     TYPE(xt_xmap), INTENT(out) :: xmap
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
 
     src_idxlist = xt_idxvec_new(local_src_idx, &
-         INT(SIZE(local_src_idx), xt_idx_kind))
+         INT(SIZE(local_src_idx), xt_int_kind))
     dst_idxlist = xt_idxvec_new(local_dst_idx, &
-         INT(SIZE(local_dst_idx), xt_idx_kind))
+         INT(SIZE(local_dst_idx), xt_int_kind))
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
