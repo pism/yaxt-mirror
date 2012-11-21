@@ -520,7 +520,9 @@ CONTAINS
             WRITE(0,*) context,label,&
                  ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
                  i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
-            CALL xt_abort(context//label//' test failed', __FILE__, __LINE__)
+            CALL xt_abort(context//label//' test failed', &
+                 __FILE__, &
+                 __LINE__)
           ENDIF
         ENDDO
       ENDDO

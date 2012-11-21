@@ -44,10 +44,12 @@
 
 PROGRAM test_ut
   USE mpi
-  USE xt_ut, ONLY: ut_abort, ut_init, ut_init_decomposition, ut_init_oneway_transposition_template, &
-       & ut_destroy_transposition_template, ut_mode_dt_p2p, ut_init_transposition, &
-       & comm_forward, ut_transpose, ut_destroy_decomposition, ut_destroy_transposition, &
-       & xt_idx_kind
+  USE xt_ut, ONLY: ut_abort, ut_init, ut_init_decomposition, &
+       ut_init_oneway_transposition_template, &
+       ut_destroy_transposition_template, ut_mode_dt_p2p, &
+       ut_init_transposition, &
+       comm_forward, ut_transpose, ut_destroy_decomposition, &
+       ut_destroy_transposition, xt_idx_kind
   IMPLICIT NONE
 
   ! global extents including halos
@@ -62,12 +64,14 @@ PROGRAM test_ut
   INTEGER :: p_ioff, p_joff ! offsets within global domain
   INTEGER :: nprocx, nprocy ! process space extents
   INTEGER :: nprocs ! == nprocx*nprocy
-  INTEGER :: mype, mypx, mypy ! process rank, process coords within (0:, 0:) process space
+  ! process rank, process coords within (0:, 0:) process space
+  INTEGER :: mype, mypx, mypy
   LOGICAL :: lroot ! true only for proc 0
 
   INTEGER(xt_idx_kind) :: g_id(g_ie, g_je) ! global id
 
-  INTEGER(xt_idx_kind) :: g_tpex(g_ie, g_je) ! global "tripolar-like" toy bounds exchange
+  ! global "tripolar-like" toy bounds exchange
+  INTEGER(xt_idx_kind) :: g_tpex(g_ie, g_je)
   INTEGER :: template_tpex, trans_tpex
 
   INTEGER(xt_idx_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
@@ -108,7 +112,8 @@ PROGRAM test_ut
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! generate surface transposition:
-  CALL gen_off_trans(template_tpex, MPI_INTEGER, id_pos(:,:)-1, MPI_INTEGER, pos3d_surf(:,:)-1, surf_trans_tpex)
+  CALL gen_off_trans(template_tpex, MPI_INTEGER, id_pos(:,:)-1, &
+       MPI_INTEGER, pos3d_surf(:,:)-1, surf_trans_tpex)
 
   ! 2d to surface boundsexchange:
   gval3d = -1
@@ -157,13 +162,19 @@ CONTAINS
 
     n1 = SIZE(f,1)
     n2 = SIZE(f,2)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) CALL ut_abort(context//'internal error', __FILE__, __LINE__)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
+         CALL ut_abort(context//'internal error', &
+         __FILE__, &
+         __LINE__)
 
     DO j = 1, n2
       DO i = 1, n1
         IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,*) context,'test failed: i, j, f(i,j), g(i,j) =',i, j, f(i,j), g(i,j)
-          CALL ut_abort(context//'test failed', __FILE__, __LINE__)
+          WRITE(0,*) context, 'test failed: i, j, f(i,j), g(i,j) =', &
+               i, j, f(i,j), g(i,j)
+          CALL ut_abort(context//'test failed', &
+               __FILE__, &
+               __LINE__)
         ENDIF
       ENDDO
     ENDDO
@@ -175,13 +186,19 @@ CONTAINS
     INTEGER :: ierror
 
     CALL MPI_INIT(ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_INIT failed', __FILE__, __LINE__)
+    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_INIT failed', &
+         __FILE__, &
+         __LINE__)
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_SIZE failed', __FILE__, __LINE__)
+    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_SIZE failed', &
+         __FILE__, &
+         __LINE__)
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, mype, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_RANK failed', __FILE__, __LINE__)
+    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_RANK failed', &
+         __FILE__, &
+         __LINE__)
     IF (mype==0) THEN
       lroot = .true.
     ELSE
@@ -217,7 +234,9 @@ CONTAINS
     INTEGER :: ierror
 
     CALL MPI_FINALIZE(ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_FINALIZE failed', __FILE__, __LINE__)
+    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_FINALIZE failed', &
+         __FILE__, &
+         __LINE__)
 
   END SUBROUTINE exit_all
 
@@ -288,7 +307,10 @@ CONTAINS
 
     INTEGER :: dt
 
-    IF (send_dt /= recv_dt) CALL ut_abort('gen_trans: (send_dt /= recv_dt) unsupported', __FILE__, __LINE__)
+    IF (send_dt /= recv_dt) &
+         CALL ut_abort('gen_trans: (send_dt /= recv_dt) unsupported', &
+         __FILE__, &
+         __LINE__)
     dt = send_dt
     CALL ut_init_transposition(itemp, dt, itrans)
 
@@ -304,7 +326,8 @@ CONTAINS
     send_offsets = RESHAPE(send_off, (/SIZE(send_off)/) )
     recv_offsets = RESHAPE(recv_off, (/SIZE(recv_off)/) )
 
-    CALL ut_init_transposition(itemp, send_offsets, recv_offsets, send_dt, recv_dt, itrans)
+    CALL ut_init_transposition(itemp, send_offsets, recv_offsets, &
+         send_dt, recv_dt, itrans)
 
   END SUBROUTINE gen_off_trans
 
@@ -341,7 +364,8 @@ CONTAINS
     CALL ut_init_decomposition(dst, INT(g_ie, xt_idx_kind) &
          * INT(g_je, xt_idx_kind), dst_handle)
 
-    CALL ut_init_oneway_transposition_template(src_handle, dst_handle, MPI_COMM_WORLD, ihandle)
+    CALL ut_init_oneway_transposition_template(src_handle, dst_handle, &
+         MPI_COMM_WORLD, ihandle)
 
     CALL ut_destroy_decomposition(dst_handle)
     CALL ut_destroy_decomposition(src_handle)
@@ -366,7 +390,8 @@ CONTAINS
 
     ! global tripolar boundsexchange:
     id_out = undef_index
-    id_out(g_core_is:g_core_ie, g_core_js:g_core_je) = id_in(g_core_is:g_core_ie, g_core_js:g_core_je)
+    id_out(g_core_is:g_core_ie, g_core_js:g_core_je) &
+         = id_in(g_core_is:g_core_ie, g_core_js:g_core_je)
 
     IF (with_north_halo) THEN
 
@@ -377,8 +402,11 @@ CONTAINS
         north_halo = nhalo
       ENDIF
 
-      IF (2*north_halo > g_core_je) CALL ut_abort('def_exchange: grid too small (or halo too large) for tripolar north exchange', &
-           &  __FILE__, __LINE__)
+      IF (2*north_halo > g_core_je) &
+           CALL ut_abort('def_exchange: grid too small (or halo too large)&
+           & for tripolar north exchange', &
+           __FILE__, &
+           __LINE__)
       DO j = 1, north_halo
         DO i = g_core_is, g_core_ie
           id_out(i,j) = id_out(g_core_ie + (g_core_is-i), 2*north_halo + (1-j))
@@ -457,7 +485,10 @@ CONTAINS
 
     tn = SIZE(c0)
     IF (tn<0) CALL ut_abort('(tn<0)', __FILE__, __LINE__)
-    IF (tn>g_cn) CALL ut_abort('regular_deco: too many task for such a core region', __FILE__, __LINE__)
+    IF (tn>g_cn) &
+         CALL ut_abort('regular_deco: too many task for such a core region', &
+         __FILE__, &
+         __LINE__)
 
     d = g_cn/tn
     m = MOD(g_cn, tn)
@@ -473,7 +504,10 @@ CONTAINS
     DO it = 1, tn-1
       c0(it) = c0(it-1) + cn(it-1)
     ENDDO
-    IF (c0(tn-1)+cn(tn-1) /= g_cn) CALL ut_abort('regular_deco: internal error 1', __FILE__, __LINE__)
+    IF (c0(tn-1)+cn(tn-1) /= g_cn) &
+         CALL ut_abort('regular_deco: internal error 1', &
+         __FILE__, &
+         __LINE__)
 
   END SUBROUTINE regular_deco
 
@@ -483,7 +517,9 @@ CONTAINS
 
     INTEGER :: x0, i
 
-    IF (c<1) CALL ut_abort('factorize: invalid process space', __FILE__, __LINE__)
+    IF (c<1) CALL ut_abort('factorize: invalid process space', &
+         __FILE__, &
+         __LINE__)
     IF (c <= 3 .OR. c == 5 .OR. c == 7) THEN
       a = c
       b = 1
