@@ -60,11 +60,9 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
 
-static void exchange_idxlists(Xt_idxlist ** src_intersections,
-                              int ** src_ranks,
-                              Xt_int * num_src_intersections,
-                              Xt_idxlist ** dst_intersections,
-                              int ** dst_ranks,
+static void exchange_idxlists(struct Xt_com_list **src_intersections,
+                              Xt_int *num_src_intersections,
+                              struct Xt_com_list **dst_intersections,
                               Xt_int * num_dst_intersections,
                               Xt_idxlist src_idxlist_local,
                               Xt_idxlist dst_idxlist_local,
@@ -87,9 +85,7 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
 
   // allocate memory for intersections
   (*dst_intersections) = xmalloc(comm_size * sizeof (**dst_intersections));
-  (*dst_ranks) = xmalloc(comm_size * sizeof(**dst_ranks));
   (*src_intersections) = xmalloc(comm_size * sizeof (**src_intersections));
-  (*src_ranks) = xmalloc(comm_size * sizeof(**src_ranks));
 
   // compute size of local index lists
   size_t src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, comm);
@@ -152,8 +148,8 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
     Xt_idxlist intersect = xt_idxlist_get_intersection(src, dst_idxlist_local);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
-      (*dst_intersections)[dst_isect_count] = intersect;
-      (*dst_ranks)[dst_isect_count] = i;
+      (*dst_intersections)[dst_isect_count].list = intersect;
+      (*dst_intersections)[dst_isect_count].rank = i;
       ++dst_isect_count;
     }
     else
@@ -162,8 +158,8 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
     intersect = xt_idxlist_get_intersection(src_idxlist_local, dst);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
-      (*src_intersections)[src_isect_count] = intersect;
-      (*src_ranks)[src_isect_count] = i;
+      (*src_intersections)[src_isect_count].list = intersect;
+      (*src_intersections)[src_isect_count].rank = i;
       ++src_isect_count;
     }
     else
@@ -173,11 +169,9 @@ static void exchange_idxlists(Xt_idxlist ** src_intersections,
   }
 
   /* minimize memory use of tables */
-  *src_ranks = xrealloc(*src_ranks, src_isect_count * sizeof (**src_ranks));
   *src_intersections = xrealloc(*src_intersections, src_isect_count
                                 * sizeof (**src_intersections));
   *num_src_intersections = src_isect_count;
-  *dst_ranks = xrealloc(*dst_ranks, dst_isect_count * sizeof (**dst_ranks));
   *dst_intersections = xrealloc(*dst_intersections, dst_isect_count
                                 * sizeof (**dst_intersections));
   *num_dst_intersections = dst_isect_count;
@@ -193,31 +187,29 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
 
   xt_mpi_call(MPI_Comm_dup(comm, &curr_comm), comm);
 
-  Xt_idxlist * src_intersections = NULL, * dst_intersections = NULL;
-  int * src_ranks = NULL, * dst_ranks = NULL;
+  struct Xt_com_list * src_intersections = NULL, * dst_intersections = NULL;
   Xt_int num_src_intersections = 0, num_dst_intersections = 0;
 
   // exchange index lists between all processes in comm
-  exchange_idxlists(&src_intersections, &src_ranks, &num_src_intersections,
-                    &dst_intersections, &dst_ranks, &num_dst_intersections,
+  exchange_idxlists(&src_intersections, &num_src_intersections,
+                    &dst_intersections, &num_dst_intersections,
                     src_idxlist, dst_idxlist, curr_comm);
 
   MPI_Comm_free(&curr_comm);
 
   Xt_xmap xmap;
 
-  xmap = xt_xmap_intersection_new(src_intersections, src_ranks, num_src_intersections,
-                                  dst_intersections, dst_ranks, num_dst_intersections,
+  xmap = xt_xmap_intersection_new(num_src_intersections, src_intersections,
+                                  num_dst_intersections, dst_intersections,
                                   src_idxlist, dst_idxlist, comm);
 
   for (Xt_int i = 0; i < num_src_intersections; ++i)
-    if (src_intersections[i] != NULL)
-      xt_idxlist_delete(src_intersections[i]);
+    if (src_intersections[i].list != NULL)
+      xt_idxlist_delete(src_intersections[i].list);
   for (Xt_int i = 0; i < num_dst_intersections; ++i)
-    if (dst_intersections[i] != NULL)
-      xt_idxlist_delete(dst_intersections[i]);
+    if (dst_intersections[i].list != NULL)
+      xt_idxlist_delete(dst_intersections[i].list);
   free(src_intersections), free(dst_intersections);
-  free(src_ranks), free(dst_ranks);
 
   return xmap;
 }
