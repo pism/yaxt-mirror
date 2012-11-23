@@ -1202,10 +1202,6 @@ static int
 idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                  int * position, int offset) {
 
-  struct xt_idxsection *section;
-
-  section = (struct xt_idxsection*)idxlist;
-
   int temp_position;
   // we make use of the uniqueness of the index-to-position relation:
   if (idxsection_get_position_of_index(idxlist, index, &temp_position))
