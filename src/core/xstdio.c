@@ -4,6 +4,7 @@
  *
  * @copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
  *
+ * @version 1.0
  * @author Thomas Jahns <jahns@dkrz.de>
  */
 /*
@@ -44,6 +45,23 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "core/symprefix.h"
+
+FILE *
+SymPrefix(xfopen)(const char *path, const char *mode,
+                  const char *source, int line)
+{
+  FILE *fp;
+  if ((fp = fopen(path, mode)) == NULL)
+    SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
+  return fp;
+}
+
+void
+SymPrefix(xfclose)(FILE *fp, const char *source, int line)
+{
+  if (fclose(fp) != 0)
+    SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
+}
 
 
 int

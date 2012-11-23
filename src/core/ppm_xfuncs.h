@@ -4,6 +4,7 @@
  *
  * @copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
  *
+ * @version 1.0
  * @author Thomas Jahns <jahns@dkrz.de>
  */
 /*
@@ -56,11 +57,22 @@ SymPrefix(xmalloc)(size_t size, const char *source, int line);
 void *
 SymPrefix(xrealloc)(void *ptr, size_t size, const char *source, int line);
 
-#define xcalloc(nmemb,size)                             \
+#define xcalloc(nmemb,size)                                     \
   SymPrefix(xcalloc)((nmemb), (size), __FILE__, __LINE__)
 #define xmalloc(size) SymPrefix(xmalloc)((size), __FILE__, __LINE__)
-#define xrealloc(ptr,size)                              \
+#define xrealloc(ptr,size)                                      \
   SymPrefix(xrealloc)((ptr), (size), __FILE__, __LINE__)
+
+FILE *
+SymPrefix(xfopen)(const char *path, const char *mode,
+                  const char *source, int line);
+
+#define xfopen(path, mode) SymPrefix(xfopen)(path, mode, __FILE__, __LINE__)
+
+void
+SymPrefix(xfclose)(FILE *fp, const char *source, int line);
+
+#define xfclose(fp) SymPrefix(xfclose)(fp, __FILE__, __LINE__)
 
 int
 SymPrefix(xfputc)(int c, FILE *stream, const char *source, int line);

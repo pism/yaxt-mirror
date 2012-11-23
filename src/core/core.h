@@ -3,7 +3,6 @@
  *
  * @copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
  *
- * Keywords: ScalES PPM error handling
  * @author Thomas Jahns <jahns@dkrz.de>
  */
 /*
@@ -72,16 +71,24 @@ typedef int MPI_Fint;
  */
 enum {
   MPI_COMM_WORLD = 4711,
+  MPI_COMM_NULL = 0,
 };
 #endif
 
 #include "core/symprefix.h"
 
+/* If we're not using GNU C, elide __attribute__ */
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
+
 /**
  * functions used as error handler must conform to this interface
  */
 typedef void (*SymPrefix(abort_func))(MPI_Comm comm, const char *msg,
-                                      const char *source, int line);
+                                      const char *source, int line)
+  __attribute__((noreturn));
 /**
  * Unless modified, this function pointer will reference PPM_abort_default.
  */
@@ -105,7 +112,8 @@ extern MPI_Comm SymPrefix(default_comm);
  */
 extern void
 SymPrefix(abort_default)(MPI_Comm comm, const char *msg,
-                         const char *source, int line);
+                         const char *source, int line)
+  __attribute__((noreturn));
 
 /**
  * change default communicator object

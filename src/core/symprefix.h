@@ -4,6 +4,7 @@
  *
  * @copyright Copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
  *
+ * @version 1.0
  * @author Thomas Jahns <jahns@dkrz.de>
  */
 /*

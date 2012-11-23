@@ -1,8 +1,8 @@
 /**
- * @file core.c 
+ * @file core.c
  * @brief interface to user-adjustable core routines of scales ppm
  *
- * @copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
+ * @copyright  (C)  2010,2011,2012  Thomas Jahns <jahns@dkrz.de>
  *
  * @author Thomas Jahns <jahns@dkrz.de>
  */
@@ -63,40 +63,29 @@
 
 MPI_Comm SymPrefix(default_comm) = MPI_COMM_WORLD;
 
-static void
-SymPrefix(set_default_comm_f)(MPI_Fint *comm_f)
+#define XTF2C_Data COMMON_BLOCK(XTF2C_DATA,xtf2c_data)
+
+typedef struct
 {
-#if defined(USE_MPI)
-  int flag = 0;
-  MPI_Comm comm_c = (MPI_Initialized(&flag) == MPI_SUCCESS && flag)?
-    MPI_Comm_f2c(*comm_f):SymPrefix(default_comm);
-#else
-  MPI_Comm comm_c = *comm_f;
-#endif
-  SymPrefix(default_comm) = comm_c;
-}
+  MPI_Fint xt_default_comm;
+} XTF2C_Def;
 
-FCALLSCSUB1(SymPrefix(set_default_comm_f), SYMPREFIX(SET_DEFAULT_COMM),
-            symprefix(set_default_comm), PVOID)
+COMMON_BLOCK_DEF(XTF2C_Def,XTF2C_Data);
 
+XTF2C_Def XTF2C_Data;
 
-static void
-SymPrefix(abort_f)(MPI_Fint *comm_f, const char *msg,
-                   const char *source, int line)
+void
+SymPrefix(set_default_comm)(MPI_Comm comm)
 {
-  MPI_Comm comm_c;
+  MPI_Fint comm_f;
 #if defined(USE_MPI)
-  int flag = 0;
-  if (MPI_Initialized(&flag) == MPI_SUCCESS && flag)
-    comm_c = MPI_Comm_f2c(*comm_f);
+  comm_f = MPI_Comm_c2f(comm);
 #else
-  comm_c = *comm_f;
+  comm_f = comm;
 #endif
-  SymPrefix(abort)(comm_c, msg, source, line);
+  SymPrefix(default_comm) = comm;
+  XTF2C_Data.xt_default_comm = comm_f;
 }
-
-FCALLSCSUB4(SymPrefix(abort_f), SYMPREFIX(ABORT), symprefix(abort),
-            PVOID, STRING, STRING, INT)
 
 void
 SymPrefix(abort_default)(MPI_Comm comm, const char *msg, const char *source, int line)
@@ -104,13 +93,15 @@ SymPrefix(abort_default)(MPI_Comm comm, const char *msg, const char *source, int
   int flag = 0;
   fprintf(stderr, "Fatal error in %s, line %d: %s\n", source, line, msg);
 #ifdef USE_MPI
+#if defined (__xlC__) && defined (_AIX)
+#pragma omp critical
+#endif
   if (MPI_Initialized(&flag) == MPI_SUCCESS && flag)
     MPI_Abort(comm, 1);
   else
     abort();
-#else
-  abort();
 #endif
+  abort();
 }
 
 SymPrefix(abort_func) SymPrefix(abort) = SymPrefix(abort_default);
