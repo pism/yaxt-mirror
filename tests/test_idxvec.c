@@ -708,6 +708,84 @@ int main(void) {
     xt_idxlist_delete(idxvec);
   }
 
+  {
+    // check get_bounding_box
+    Xt_int indices[2] = {21,42};
+    int num_indices = 2;
+
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+
+    int ndim = 3;
+    Xt_int global_size[ndim];
+    Xt_int global_start_index = 0;
+    struct Xt_bounds bounds[ndim];
+
+    for (int i = 0; i < ndim; ++i)
+      global_size[i] = 4;
+
+    xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
+                                global_start_index, bounds);
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 2 || bounds[i].start != 1)
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxvec);
+  }
+
+  {
+    // check get_bounding_box
+    Xt_int indices[5] = {45,35,32,48,33};
+    int num_indices = 5;
+
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+
+    int ndim = 3;
+    Xt_int global_size[ndim];
+    Xt_int global_start_index = 1;
+    struct Xt_bounds bounds[ndim];
+
+    global_size[0] = 5;
+    global_size[1] = 4;
+    global_size[2] = 3;
+
+    xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
+                                global_start_index, bounds);
+
+    Xt_int ref_start[3] = {2,2,1};
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxvec);
+  }
+
+  {
+    // check get_bounding_box
+    Xt_int indices[1] = {-1};
+    int num_indices = 0;
+
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+
+    int ndim = 3;
+    Xt_int global_size[ndim];
+    Xt_int global_start_index = 0;
+    struct Xt_bounds bounds[ndim];
+
+    for (int i = 0; i < ndim; ++i)
+      global_size[i] = 4;
+
+    xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
+                                global_start_index, bounds);
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 0)
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxvec);
+  }
+
    MPI_Finalize();
 
    return TEST_EXIT_CODE;

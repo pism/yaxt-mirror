@@ -310,3 +310,81 @@ Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist) {
 
   return idxlist->vtable->get_max_index(idxlist);
 }
+
+static void
+get_position_in_ndim_space(Xt_int index, int ndim, Xt_int global_stride[ndim],
+                           Xt_int global_start_index, Xt_int position[ndim]) {
+
+   index -= global_start_index;
+
+   for (int i = 0; i < ndim - 1; ++i) {
+
+      position[i] = index / global_stride[i];
+      index %= global_stride[i];
+   }
+
+   position[ndim - 1] = index;
+}
+
+void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
+                                 Xt_int global_size[ndim],
+                                 Xt_int global_start_index,
+                                 struct Xt_bounds bounds[ndim]) {
+
+   Xt_int num_indices = xt_idxlist_get_num_indices(idxlist);
+
+   if (num_indices == 0) {
+
+      for (int i = 0; i < ndim; ++i) {
+         bounds[i].start = 0;
+         bounds[i].size = 0;
+      }
+
+      return;
+
+   } else if (idxlist->vtable->get_bounding_box != NULL) {
+
+      idxlist->vtable->get_bounding_box(idxlist, ndim, global_size,
+                                        global_start_index, bounds);
+      return;
+   }
+
+   Xt_int global_stride[ndim];
+
+   global_stride[ndim - 1] = 1;
+
+   for (unsigned i = ndim - 2; i < ndim; --i)
+      global_stride[i] = global_stride[i+1] * global_size[i+1];
+
+   Xt_int curr_index;
+   Xt_int curr_position[ndim];
+
+   xt_idxlist_get_index_at_position(idxlist, 0, &curr_index);
+   get_position_in_ndim_space(curr_index, ndim, global_stride, 
+                              global_start_index, curr_position);
+
+   for (int i = 0; i < ndim; ++i) {
+      bounds[i].start = curr_position[i];
+      bounds[i].size = 1;
+   }
+
+   for (Xt_int i = 1; i < num_indices; ++i) {
+
+      xt_idxlist_get_index_at_position(idxlist, i, &curr_index);
+      get_position_in_ndim_space(curr_index, ndim, global_stride, 
+                                 global_start_index, curr_position);
+
+      for (int i = 0; i < ndim; ++i) {
+
+         if (curr_position[i] < bounds[i].start) {
+
+            bounds[i].size += curr_position[i] - bounds[i].start;
+            bounds[i].start = curr_position[i];
+
+         } else if (curr_position[i] >= bounds[i].start + bounds[i].size) {
+
+            bounds[i].size = curr_position[i] - bounds[i].start + 1;
+         }
+      }
+   }
+}

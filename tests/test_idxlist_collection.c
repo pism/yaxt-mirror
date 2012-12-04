@@ -316,6 +316,76 @@ int main(void) {
     xt_idxlist_delete(collectionlist);
   }
 
+  { // check get_bounding_box
+
+    Xt_idxlist idxlists[2] = {xt_idxempty_new(),
+                              xt_idxempty_new()};
+
+    // generate a collection index list
+
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
+
+    xt_idxlist_delete(idxlists[0]);
+    xt_idxlist_delete(idxlists[1]);
+
+    int ndim = 3;
+    Xt_int global_size_bb[ndim];
+    Xt_int global_start_index = 0;
+    struct Xt_bounds bounds[ndim];
+
+    for (int i = 0; i < ndim; ++i)
+      global_size_bb[i] = 4;
+
+    xt_idxlist_get_bounding_box(collectionlist, ndim, global_size_bb,
+                                global_start_index, bounds);
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 0)
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(collectionlist);
+  }
+
+  {
+    // check get_bounding_box
+    Xt_int indices[2][3] = {{45,35,32},{32,48,33}};
+    Xt_int num_indices = 3;
+
+    Xt_idxlist idxlists[2];
+
+    // create two index lists
+
+    idxlists[0] = xt_idxvec_new(indices[0], num_indices);
+    idxlists[1] = xt_idxvec_new(indices[1], num_indices);
+
+    // generate a collection index list
+
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
+
+    xt_idxlist_delete(idxlists[0]);
+    xt_idxlist_delete(idxlists[1]);
+
+    int ndim = 3;
+    Xt_int global_size[ndim];
+    Xt_int global_start_index = 1;
+    struct Xt_bounds bounds[ndim];
+
+    global_size[0] = 5;
+    global_size[1] = 4;
+    global_size[2] = 3;
+
+    xt_idxlist_get_bounding_box(collectionlist, ndim, global_size,
+                                global_start_index, bounds);
+
+    Xt_int ref_start[3] = {2,2,1};
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(collectionlist);
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;

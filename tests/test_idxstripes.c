@@ -681,6 +681,63 @@ int main(void) {
     xt_idxlist_delete(idxstripes);
   }
 
+  { // check get_bounding_box
+
+    Xt_idxlist idxstripes;
+
+    struct Xt_stripe stripes[1] = {{-1,-1,-1}};
+    Xt_int num_stripes = 0;
+
+    idxstripes = xt_idxstripes_new(stripes, num_stripes);
+
+    int ndim = 3;
+    Xt_int global_size[ndim];
+    Xt_int global_start_index = 0;
+    struct Xt_bounds bounds[ndim];
+
+    for (int i = 0; i < ndim; ++i)
+      global_size[i] = 4;
+
+    xt_idxlist_get_bounding_box(idxstripes, ndim, global_size,
+                                global_start_index, bounds);
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 0)
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxstripes);
+  }
+
+  { // check get_bounding_box
+
+    Xt_idxlist idxstripes;
+
+    struct Xt_stripe stripes[3] = {{47,2,-12}, {32,2,12}, {36,2,12}};
+    Xt_int num_stripes = 3;
+
+    idxstripes = xt_idxstripes_new(stripes, num_stripes);
+
+    int ndim = 3;
+    Xt_int global_size[ndim];
+    Xt_int global_start_index = 1;
+    struct Xt_bounds bounds[ndim];
+
+    global_size[0] = 5;
+    global_size[1] = 4;
+    global_size[2] = 3;
+
+    xt_idxlist_get_bounding_box(idxstripes, ndim, global_size,
+                                global_start_index, bounds);
+
+    Xt_int ref_start[3] = {2,2,1};
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxstripes);
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;

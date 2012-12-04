@@ -126,7 +126,8 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .get_position_of_index_off   = idxlist_collection_get_position_of_index_off,
   .get_positions_of_indices_off = NULL,
   .get_min_index               = idxlist_collection_get_min_index,
-  .get_max_index               = idxlist_collection_get_max_index
+  .get_max_index               = idxlist_collection_get_max_index,
+  .get_bounding_box             = NULL
 };
 
 struct xt_idxlist_collection {

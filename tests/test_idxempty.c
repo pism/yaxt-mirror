@@ -130,6 +130,23 @@ int main(void) {
     if (stripes != NULL || num_stripes != 0)
       PUT_ERR("ERROR: xt_idxlist_get_index_stripes\n");
 
+    // check the computation of a bounding box
+
+    int ndim = 3;
+    Xt_int global_size[ndim];
+    Xt_int global_start_index = 0;
+    struct Xt_bounds bounds[ndim];
+
+    for (int i = 0; i < ndim; ++i)
+      global_size[i] = 10;
+
+    xt_idxlist_get_bounding_box(idxempty, ndim, global_size,
+                                global_start_index, bounds);
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 0)
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
     // clean up
 
     free(stripes);

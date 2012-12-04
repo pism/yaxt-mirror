@@ -128,7 +128,8 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
   .get_position_of_index_off    = idxempty_get_position_of_index_off,
   .get_positions_of_indices_off = idxempty_get_positions_of_indices_off,
   .get_min_index                = idxempty_get_min_index,
-  .get_max_index                = idxempty_get_max_index
+  .get_max_index                = idxempty_get_max_index,
+  .get_bounding_box             = NULL
 };
 
 // index vector data structure

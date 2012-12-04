@@ -56,6 +56,10 @@ struct Xt_stripe {
   Xt_int stride;
 };
 
+struct Xt_bounds {
+   Xt_int start, size;
+};
+
 struct xt_idxlist_vtable {
 
    void  (*delete)(Xt_idxlist);
@@ -69,7 +73,8 @@ struct xt_idxlist_vtable {
    Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_int *);
    int (*get_index_at_position)(Xt_idxlist, int, Xt_int *);
-   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_int num, Xt_int *index, Xt_int undef_idx);
+   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_int num,
+                                   Xt_int *index, Xt_int undef_idx);
    int (*get_position_of_index)(Xt_idxlist, Xt_int, int *);
    int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, Xt_int, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_int, int *, int);
@@ -77,6 +82,8 @@ struct xt_idxlist_vtable {
                                       int *, int *);
    Xt_int (*get_min_index)(Xt_idxlist);
    Xt_int (*get_max_index)(Xt_idxlist);
+   void (*get_bounding_box)(Xt_idxlist idxlist, int ndim, Xt_int global_size[ndim],
+                            Xt_int global_start_index, struct Xt_bounds bounds[ndim]);
 };
 
 struct Xt_idxlist {
@@ -318,5 +325,23 @@ Xt_int xt_idxlist_get_min_index(Xt_idxlist idxlist);
  * @return            biggest index in idxlist
  */
 Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist);
+
+/**
+ * computes an n-dimensional bounding box around the given index list
+ * @param[in]  idxlist            index list
+ * @param[in]  ndim               number of dimension of the bounding box
+ * @param[in]  global_size        global size of the n-dimensional index space
+ *                                for which the bounding box is to be computed
+ * @param[in]  global_start_index lowest index of the index space
+ *                                (typically 0 or 1)
+ * @param[out] bounds             bounds of the bounding box
+ * @remarks the behaviour of the routine is undefined in case the indices to no
+ *          fit into the given index space
+ * @remarks global_size has to be positive
+ */
+void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
+                                 Xt_int global_size[ndim],
+                                 Xt_int global_start_index,
+                                 struct Xt_bounds bounds[ndim]);
 
 #endif // XT_IDXLIST_H

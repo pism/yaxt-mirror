@@ -121,23 +121,25 @@ static Xt_int
 idxsection_get_max_index(Xt_idxlist idxlist);
 
 static const struct xt_idxlist_vtable idxsection_vtable = {
-              .delete                      = idxsection_delete,
-              .get_pack_size               = idxsection_get_pack_size,
-              .pack                        = idxsection_pack,
-              .get_intersection            = idxsection_get_intersection,
-              .copy                        = idxsection_copy,
-              .get_num_indices             = idxsection_get_num_indices,
-              .get_indices                 = idxsection_get_indices,
-              .get_indices_const           = idxsection_get_indices_const,
-              .get_index_stripes           = idxsection_get_index_stripes,
-              .get_index_at_position       = idxsection_get_index_at_position,
-              .get_indices_at_positions    = NULL,
-              .get_position_of_index       = idxsection_get_position_of_index,
-              .get_positions_of_indices    = idxsection_get_positions_of_indices,
-              .get_position_of_index_off   = idxsection_get_position_of_index_off,
+              .delete                       = idxsection_delete,
+              .get_pack_size                = idxsection_get_pack_size,
+              .pack                         = idxsection_pack,
+              .get_intersection             = idxsection_get_intersection,
+              .copy                         = idxsection_copy,
+              .get_num_indices              = idxsection_get_num_indices,
+              .get_indices                  = idxsection_get_indices,
+              .get_indices_const            = idxsection_get_indices_const,
+              .get_index_stripes            = idxsection_get_index_stripes,
+              .get_index_at_position        = idxsection_get_index_at_position,
+              .get_indices_at_positions     = NULL,
+              .get_position_of_index        = idxsection_get_position_of_index,
+              .get_positions_of_indices     = idxsection_get_positions_of_indices,
+              .get_position_of_index_off    = idxsection_get_position_of_index_off,
               .get_positions_of_indices_off = NULL,
-              .get_min_index               = idxsection_get_min_index,
-              .get_max_index               = idxsection_get_max_index};
+              .get_min_index                = idxsection_get_min_index,
+              .get_max_index                = idxsection_get_max_index,
+              .get_bounding_box             = NULL
+};
 
 /* descriptor for per-dimension extent and stride */
 struct dim_desc

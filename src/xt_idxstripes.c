@@ -115,23 +115,25 @@ static Xt_int
 idxstripes_get_max_index(Xt_idxlist idxlist);
 
 static const struct xt_idxlist_vtable idxstripes_vtable = {
-  .delete                      = idxstripes_delete,
-  .get_pack_size               = idxstripes_get_pack_size,
-  .pack                        = idxstripes_pack,
-  .get_intersection            = idxstripes_get_intersection,
-  .copy                        = idxstripes_copy,
-  .get_num_indices             = idxstripes_get_num_indices,
-  .get_indices                 = idxstripes_get_indices,
-  .get_indices_const           = idxstripes_get_indices_const,
-  .get_index_stripes           = idxsection_get_index_stripes,
-  .get_index_at_position       = idxstripes_get_index_at_position,
-  .get_indices_at_positions    = idxstripes_get_indices_at_positions,
-  .get_position_of_index       = idxstripes_get_position_of_index,
-  .get_positions_of_indices    = NULL,
-  .get_position_of_index_off   = idxstripes_get_position_of_index_off,
+  .delete                       = idxstripes_delete,
+  .get_pack_size                = idxstripes_get_pack_size,
+  .pack                         = idxstripes_pack,
+  .get_intersection             = idxstripes_get_intersection,
+  .copy                         = idxstripes_copy,
+  .get_num_indices              = idxstripes_get_num_indices,
+  .get_indices                  = idxstripes_get_indices,
+  .get_indices_const            = idxstripes_get_indices_const,
+  .get_index_stripes            = idxsection_get_index_stripes,
+  .get_index_at_position        = idxstripes_get_index_at_position,
+  .get_indices_at_positions     = idxstripes_get_indices_at_positions,
+  .get_position_of_index        = idxstripes_get_position_of_index,
+  .get_positions_of_indices     = NULL,
+  .get_position_of_index_off    = idxstripes_get_position_of_index_off,
   .get_positions_of_indices_off = NULL,
-  .get_min_index               = idxstripes_get_min_index,
-  .get_max_index               = idxstripes_get_max_index};
+  .get_min_index                = idxstripes_get_min_index,
+  .get_max_index                = idxstripes_get_max_index,
+  .get_bounding_box             = NULL
+};
 
 static MPI_Datatype xt_get_stripes_datatype() {
 

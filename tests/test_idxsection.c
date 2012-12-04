@@ -781,6 +781,112 @@ int main(void) {
     xt_idxlist_delete(idxsection);
   }
 
+  { // check get_bounding_box
+
+    Xt_idxlist idxsection;
+
+    Xt_int start = 0;
+    unsigned num_dimensions = 3;
+    Xt_int global_size[3] = {4,4,4};
+    Xt_int local_size [3] = {0,0,0};
+    Xt_int local_start[3] = {2,0,1};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    int ndim = 3;
+    Xt_int global_size_bb[ndim];
+    Xt_int global_start_index = 0;
+    struct Xt_bounds bounds[ndim];
+
+    for (int i = 0; i < ndim; ++i)
+      global_size_bb[i] = 4;
+
+    xt_idxlist_get_bounding_box(idxsection, ndim, global_size_bb,
+                                global_start_index, bounds);
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 0)
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxsection);
+  }
+
+  { // check get_bounding_box
+
+    Xt_idxlist idxsection;
+
+    Xt_int start = 1;
+    unsigned num_dimensions = 3;
+    Xt_int global_size[3] = {5,4,3};
+    Xt_int local_size [3] = {2,2,2};
+    Xt_int local_start[3] = {2,2,1};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    int ndim = 3;
+    Xt_int global_size_bb[ndim];
+    Xt_int global_start_index = 1;
+    struct Xt_bounds bounds[ndim];
+
+    global_size_bb[0] = 5;
+    global_size_bb[1] = 4;
+    global_size_bb[2] = 3;
+
+    xt_idxlist_get_bounding_box(idxsection, ndim, global_size_bb,
+                                global_start_index, bounds);
+
+    Xt_int ref_start[3] = {2,2,1};
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxsection);
+  }
+
+  { // check get_bounding_box
+
+    Xt_idxlist idxsection;
+
+    Xt_int start = 1;
+    unsigned num_dimensions = 4;
+    Xt_int global_size[4] = {5,2,2,3};
+    Xt_int local_size [4] = {2,2,1,2};
+    Xt_int local_start[4] = {2,0,1,1};
+
+    // create index section
+
+    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
+                                   local_size, local_start);
+
+    int ndim = 3;
+    Xt_int global_size_bb[ndim];
+    Xt_int global_start_index = 1;
+    struct Xt_bounds bounds[ndim];
+
+    global_size_bb[0] = 5;
+    global_size_bb[1] = 4;
+    global_size_bb[2] = 3;
+
+    xt_idxlist_get_bounding_box(idxsection, ndim, global_size_bb,
+                                global_start_index, bounds);
+
+    Xt_int ref_start[3] = {2,1,1};
+    Xt_int ref_size[3] = {2,3,2};
+
+    for (int i = 0; i < ndim; ++i)
+      if (bounds[i].size != ref_size[i] || bounds[i].start != ref_start[i])
+        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+
+    xt_idxlist_delete(idxsection);
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
