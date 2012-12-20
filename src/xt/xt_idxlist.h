@@ -324,7 +324,7 @@ Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist);
  *          fit into the given index space
  * @remarks global_size has to be positive
  */
-void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
+void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
                                  Xt_int global_size[ndim],
                                  Xt_int global_start_index,
                                  struct Xt_bounds bounds[ndim]);

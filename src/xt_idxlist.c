@@ -320,12 +320,13 @@ Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist) {
 }
 
 static void
-get_position_in_ndim_space(Xt_int index, int ndim, Xt_int global_stride[ndim],
+get_position_in_ndim_space(Xt_int index, unsigned ndim,
+                           Xt_int global_stride[ndim],
                            Xt_int global_start_index, Xt_int position[ndim]) {
 
    index -= global_start_index;
 
-   for (int i = 0; i < ndim - 1; ++i) {
+   for (unsigned i = 0; i < ndim - 1; ++i) {
 
       position[i] = index / global_stride[i];
       index %= global_stride[i];
@@ -334,7 +335,7 @@ get_position_in_ndim_space(Xt_int index, int ndim, Xt_int global_stride[ndim],
    position[ndim - 1] = index;
 }
 
-void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
+void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
                                  Xt_int global_size[ndim],
                                  Xt_int global_start_index,
                                  struct Xt_bounds bounds[ndim]) {
@@ -343,7 +344,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
 
    if (num_indices == 0) {
 
-      for (int i = 0; i < ndim; ++i) {
+      for (unsigned i = 0; i < ndim; ++i) {
          bounds[i].start = 0;
          bounds[i].size = 0;
       }
@@ -371,7 +372,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
    get_position_in_ndim_space(curr_index, ndim, global_stride, 
                               global_start_index, curr_position);
 
-   for (int i = 0; i < ndim; ++i) {
+   for (unsigned i = 0; i < ndim; ++i) {
       bounds[i].start = curr_position[i];
       bounds[i].size = 1;
    }
@@ -382,7 +383,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
       get_position_in_ndim_space(curr_index, ndim, global_stride, 
                                  global_start_index, curr_position);
 
-      for (int i = 0; i < ndim; ++i) {
+      for (unsigned i = 0; i < ndim; ++i) {
 
          if (curr_position[i] < bounds[i].start) {
 
