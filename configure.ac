@@ -81,7 +81,44 @@ ACX_F90_PACKAGE([MPI],[mpi],,,
 # the following is needed for source parts from libraries with
 # optional MPI dependencies
 AC_DEFINE([USE_MPI],[1],[use MPI parallel process environment])
-AC_CHECK_PROGS([MPI_LAUNCH],[mpirun mpiexec],[true])
+AC_PATH_PROGS([MPI_LAUNCH],[mpirun mpiexec],[true])
+AS_IF([test x"$cross_compiling" = xno],
+  [AC_MSG_CHECKING([if $MPI_LAUNCH works])
+   saved_CFLAGS=$CFLAGS
+   saved_LIBS=$LIBS
+   CFLAGS="$CFLAGS $MPI_C_INCLUDE"
+   LIBS="$LIBS $MPI_C_LIB"
+   AC_LINK_IFELSE([AC_LANG_SOURCE([
+@%:@include <stdio.h>
+@%:@include <stdlib.h>
+
+@%:@include <mpi.h>
+
+@%:@define xmpi(ret)           \\
+  do {                      \\
+    if (ret != MPI_SUCCESS) \\
+      exit(EXIT_FAILURE);   \\
+  } while (0)
+
+int
+main(int argc, char **argv)
+{
+  xmpi(MPI_Init(&argc, &argv));
+  char *numarg = argv@<:@1@:>@;
+  int cmdnum = atoi(numarg);
+  int procnum = 1;
+  xmpi(MPI_Allreduce(MPI_IN_PLACE, &procnum, 1, MPI_INT, MPI_SUM,
+                     MPI_COMM_WORLD));
+  xmpi(MPI_Finalize());
+  return (procnum == cmdnum)?EXIT_SUCCESS:EXIT_FAILURE;
+}
+])],
+     [AS_IF([$MPI_LAUNCH -n 4 ./conftest$EXEEXT 4],,
+        [AC_MSG_FAILURE([mpirun doesn't work])])],
+     [AC_MSG_FAILURE([Cannot compile simple MPI program])])
+   CFLAGS=$saved_CFLAGS
+   LIBS=$saved_LIBS
+  ])
 AS_IF([test x$MPI_LAUNCH = xtrue],
   [AC_MSG_WARN([MPI launch command unavailable])])
 
