@@ -107,9 +107,9 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                  int * position, int offset);
 
 static int
-idxvec_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                               Xt_int num_indices, int * positions,
-                               int single_match_only);
+idxvec_get_positions_of_indices(Xt_idxlist idxlist, const Xt_int *indices,
+                                Xt_int num_indices, int *positions,
+                                int single_match_only);
 
 static Xt_int
 idxvec_get_min_index(Xt_idxlist idxlist);
@@ -688,9 +688,11 @@ static int idx_vec_is_sorted(Xt_int const *idx, unsigned n) {
   return 1;
 }
 
-int idxvec_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_int const * selection_idx,
-                                   Xt_int num_selection, int * positions,
-                                   int single_match_only) {
+static int
+idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
+                                const Xt_int *selection_idx,
+                                Xt_int num_selection, int *positions,
+                                int single_match_only) {
 
   if (num_selection == 0) return 0;
 
