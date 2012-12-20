@@ -250,8 +250,8 @@ xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
 }
 
 static Xt_idxlist
-idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
-                                    Xt_idxlist idxlist_dst) {
+idxlist_collection_get_intersection(Xt_idxlist XT_UNUSED(idxlist_src),
+                                    Xt_idxlist XT_UNUSED(idxlist_dst)) {
 
    return NULL;
 }
