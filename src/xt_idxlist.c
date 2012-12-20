@@ -97,7 +97,7 @@ Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
 
    for (i = 0; i < xt_num_unpack_routines; ++i) {
 
-      if (type == xt_idxlist_unpack_routines[i].type) {
+     if ((enum xt_idxvecype)type == xt_idxlist_unpack_routines[i].type) {
          return xt_idxlist_unpack_routines[i].xt_idxlist_unpack(buffer,
                                                                 buffer_size,
                                                                 position, comm);
@@ -128,8 +128,8 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
       num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
 
       Xt_int *indices_src, *indices_dst;
-      indices_src = xmalloc(num_indices_src * sizeof (indices_src[0]));
-      indices_dst = xmalloc(num_indices_dst * sizeof (indices_dst[0]));
+      indices_src = xmalloc((Xt_uint)num_indices_src * sizeof (indices_src[0]));
+      indices_dst = xmalloc((Xt_uint)num_indices_dst * sizeof (indices_dst[0]));
 
       xt_idxlist_get_indices(idxlist_src, indices_src);
       xt_idxlist_get_indices(idxlist_dst, indices_dst);
@@ -189,7 +189,7 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
     Xt_int num_indices = xt_idxlist_get_num_indices(idxlist);
 
-    Xt_int *indices = xmalloc(num_indices * sizeof (indices[0]));
+    Xt_int *indices = xmalloc((Xt_uint)num_indices * sizeof (indices[0]));
 
     xt_idxlist_get_indices(idxlist, indices);
 
@@ -253,7 +253,7 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
     Xt_int num_tmp_indices;
     num_tmp_indices = xt_idxlist_get_num_indices(idxlist);
     Xt_int *tmp_indices;
-    tmp_indices = xmalloc(num_tmp_indices * sizeof (tmp_indices[0]));
+    tmp_indices = xmalloc((Xt_uint)num_tmp_indices * sizeof (tmp_indices[0]));
     xt_idxlist_get_indices(idxlist, tmp_indices);
     Xt_idxlist tmp_idxvec;
     tmp_idxvec = xt_idxvec_new(tmp_indices, num_tmp_indices);
