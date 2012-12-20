@@ -15,6 +15,10 @@ dnl Checks for programs.
 dnl ######################################################################
 AC_PROG_CC
 AC_PROG_CC_C99
+AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads libraries and header files.])
+   LIBS="$PTHREAD_LIBS $LIBS"
+   CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+   CC="$PTHREAD_CC"])
 AC_PROG_FC
 AC_FC_SRCEXT([f90])
 AC_FC_FREEFORM
