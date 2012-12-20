@@ -81,6 +81,7 @@ enum {
 #ifndef __GNUC__
 #  define  __attribute__(x)  /*NOTHING*/
 #endif
+#define XT_UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
 
 
 /**
