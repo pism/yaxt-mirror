@@ -77,7 +77,8 @@ struct Xt_bounds {
  * @return            returns the size in bytes of the packed index list
  *
  * @remark You need to provide the same buffer for all related calls of
- *         xt_idxlist_get_pack_size , \ref xt_idxlist_pack and \ref xt_idxlist_unpack
+ *         xt_idxlist_get_pack_size , \ref xt_idxlist_pack and
+ *         \ref xt_idxlist_unpack
  *
  * @see xt_idxlist_pack
  * @see xt_idxlist_unpack
@@ -91,13 +92,15 @@ size_t xt_idxlist_get_pack_size(Xt_idxlist idxlist, MPI_Comm comm);
  * @param[in,out] buffer      previously allocated buffer into which the index
  *                            list will be packed
  * @param[in]     buffer_size size of buffer in bytes
- * @param[in,out] position    position in buffer at which the data of idxlist will be copied
- *                            (position is automatically updated to the first byte after
- *                            the packed data)
- * @param[in]     comm        MPI communicator that will be used to send the buffer
+ * @param[in,out] position    position in buffer at which the data of idxlist
+ *                            will be copied
+ *                            (position is automatically updated to the first
+ *                            byte after the packed data)
+ * @param[in]     comm        MPI communicator that will be used to send the
+ *                            buffer
  *
  * @remark The provided buffer needs to have a size that is sufficient for the
- *         index list. You can determin the required size using
+ *         index list. You can determine the required size using
  *         \ref xt_idxlist_get_pack_size .
  * @remark You need to provide the same buffer for all related calls of
  *         \ref xt_idxlist_get_pack_size , xt_idxlist_pack and \ref xt_idxlist_unpack
@@ -114,13 +117,15 @@ void xt_idxlist_pack(Xt_idxlist idxlist, void* buffer, int buffer_size,
  *
  * @param[in]     buffer      buffer that contains the packed index list
  * @param[in]     buffer_size size of the buffer in bytes
- * @param[in,out] position    position in the buffer at which the unpacking should start
- *                            (will automatically be set to the position after the unpacked
- *                            data)
- * @param[in]     comm        MPI communicator that was used to receive the buffer
+ * @param[in,out] position    position in the buffer at which the unpacking
+ *                            should start (will automatically be set to the
+ *                            position after the unpacked data)
+ * @param[in]     comm        MPI communicator that was used to receive the
+ *                            buffer
  *
  * @remark You need to provide the same buffer for all related calls of
- *         \ref xt_idxlist_get_pack_size , \ref xt_idxlist_pack and xt_idxlist_unpack
+ *         \ref xt_idxlist_get_pack_size , \ref xt_idxlist_pack and
+ *         \ref xt_idxlist_unpack
  *
  * @see xt_idxlist_pack
  */
@@ -134,7 +139,8 @@ Xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
  * @param[in] idxlist_dst index list for receiver
  * @return                return the intersection of idxlist_a and idxlist_b
  * @remark multiple occurrences of an element in idxlist_dst will result in
- *         multiple occurrences of the element in the intersection if idxlist_src contains it
+ *         multiple occurrences of the element in the intersection if
+ *         idxlist_src contains it
  * @remark the elements in the resulting index list are sorted
  */
 Xt_idxlist
@@ -184,8 +190,8 @@ Xt_int const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
  * @param[out] num_stripes number of stripes in array "stripes"
  */
 void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
-                                  struct Xt_stripe ** stripes,
-                                  Xt_int * num_stripes);
+                                  struct Xt_stripe **stripes,
+                                  Xt_int *num_stripes);
 
 /**
  * gets the index stored at the specified position in an index list
@@ -193,10 +199,11 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
  * @param[in]  idxlist  index list
  * @param[in]  position position of the index that is to be retrieved
  * @param[out] index    index stored in the index list at the given position
- * @return              0 if everything was okay\n
- *                      1 if the position is out of range
+ * @return              0 if index could be retrieved\n
+ *                      1 if position is out of range
  */
-int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
+int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
+                                     Xt_int * index);
 
 /**
  * get indices stored at the specified positions in an index list
@@ -205,11 +212,14 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * 
  * @param[in]  positions  positions of the selected indices
  * @param[in]  num_pos    number of positions
  * @param[out] indices    selected indices
- * @param[in]  undef_idx  fallback value that is used if a position is unvalid
- * @return                zero if everything was okay or\n
- *                        number of unresolved positions ( == number of undef values assigned to the result)
+ * @param[in]  undef_idx  fallback value that is used if a position is invalid
+ * @return                zero if no substitutions were necessary or\n
+ *                        number of unresolved positions ( == number of undef
+ *                        values assigned to the result)
  */
-int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_int num_pos, Xt_int *indices, Xt_int undef_idx);
+int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+                                        Xt_int num_pos, Xt_int *indices,
+                                        Xt_int undef_idx);
 
 /**
  * gets the position of the first occurrence of the given index
@@ -219,10 +229,11 @@ int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_i
  * @param[in]  index    index that is to be searched
  * @param[out] position position of the first occurrence of index in idxlist,\n
  *                      or -1 if there is no match
- * @return              0 if everything was okay
+ * @return              0 if index was found
  *                      1 if the index could not be found in idxlist
  */
-int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position);
+int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
+                                     int *position);
 
 /**
  * gets the positions of the first occurrence of the given indices
@@ -233,15 +244,18 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * pos
  * @param[in]  num_indices number of indices in the array "indices"
  * @param[out] positions   positions of the first occurrence of the indices
  *                         in idxlist
- * @param[in]  single_match_only if true then do not consider a previous matching position again
- *                         in the next index search - this is required on the target side in order
+ * @param[in]  single_match_only if true then do not consider a previous
+ *                         matching position again
+ *                         in the next index search - this is required on the
+ *                         target side in order
  *                         to avoid multiple writes to the same memory position
  * @return                 0 if everything was okay
  *                         1 if the index could not be found in idxlist
  */
-int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                       Xt_int num_indices, int * positions,
-                                       int single_match_only);
+int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist,
+                                        const Xt_int *indices,
+                                        Xt_int num_indices, int *positions,
+                                        int single_match_only);
 
 /**
  * gets the position of the first occurrence of the given index
@@ -266,8 +280,8 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
  * @param[in]  idxlist     index list in which the given index is to be searched
  * @param[in]  indices     indices that are to be searched
  * @param[in]  num_indices number of indices in that array "indices"
- * @param[out] positions   positions of the first occurrence of the indices in idxlist
- *                         with a positions[i] >= offsets[i]
+ * @param[out] positions   positions of the first occurrence of the indices[i]
+ *                         in idxlist with positions[i] >= offsets[i]
  * @param[in]  offsets     offsets in the index list from which on the search
  *                         is to be conducted
  * @return                 0 if index was found\n
@@ -276,7 +290,8 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
  * \remarks a call to xt_idxlist_get_position_of_index_off with offset = NULL
  *          is the same as a call to xt_idxlist_get_positions_of_indices
  */
-int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
+int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
+                                            const Xt_int *indices,
                                             Xt_int num_indices, int * positions,
                                             int * offsets);
 
