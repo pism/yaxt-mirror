@@ -41,6 +41,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "core/core.h"
@@ -50,19 +51,19 @@
 
 
 struct xt_handle_set_type {
-  int num; // number of used handles
-  int cap; // capacity
-  int hnf; // hint for next free entry
+  unsigned num; // number of used handles
+  unsigned cap; // capacity
+  unsigned hnf; // hint for next free entry
   void **p; // vector of pointers to user data, p[handle] == pointer to user data
 };
 
-static const int default_handle_set_cap = 16;
+static const unsigned default_handle_set_cap = 16;
 
 static void extend_handle_set(struct xt_handle_set_type *hset);
 
 int xt_handle_is_valid(struct xt_handle_set_type *hset, int ih) {
   if(!hset) return 0;
-  if (ih < 0 || ih >= hset->cap) return 0;
+  if (ih < 0 || (unsigned)ih >= hset->cap) return 0;
   if (hset->p[ih]) return 1;
   return 0;
 }
@@ -75,12 +76,13 @@ void *xt_handle2pointer(struct xt_handle_set_type *hset, int ih) {
 struct xt_handle_set_type *xt_handle_set_new(int cap) {
   struct xt_handle_set_type *hset;
   hset = malloc( sizeof(struct xt_handle_set_type) );
-  hset->p = malloc(cap * sizeof(void*));
+  assert(cap >= 0);
+  hset->p = malloc((unsigned)cap * sizeof(void*));
   hset->num = 0;
-  hset->cap = cap;
+  hset->cap = (unsigned)cap;
   if (hset->cap < 1) hset->cap = default_handle_set_cap;
   hset->hnf = 0;
-  for (int i=0; i<cap; i++) {
+  for (unsigned i=0; i<(unsigned)cap; i++) {
     hset->p[i] = NULL;
   }
 
@@ -94,7 +96,7 @@ static void extend_handle_set(struct xt_handle_set_type *hset) {
     return;
   }
 
-  int old_cap, new_cap;
+  unsigned old_cap, new_cap;
   old_cap = hset->cap;
   if (old_cap < 2) {
     new_cap = default_handle_set_cap;
@@ -102,9 +104,9 @@ static void extend_handle_set(struct xt_handle_set_type *hset) {
     new_cap = old_cap*2;
   }
 
-  hset->p = xrealloc(hset->p, new_cap * sizeof(void*));
+  hset->p = xrealloc(hset->p, (unsigned)new_cap * sizeof(void*));
 
-  for (int i=old_cap; i<new_cap; i++) {
+  for (unsigned i=old_cap; i<new_cap; i++) {
     hset->p[i] = NULL;
   }
   hset->hnf = old_cap;
@@ -123,13 +125,13 @@ int xt_handle_new(struct xt_handle_set_type *hset, void *p) {
   if (p == NULL) return -1;
 
   if (hset->num >= hset->cap) extend_handle_set(hset);
-  for (int j=0; j<hset->cap; j++) {
-    int i = (hset->hnf + j) % hset->cap;
+  for (unsigned j=0; j<hset->cap; j++) {
+    unsigned i = (hset->hnf + j) % hset->cap;
     if (!hset->p[i]) {
       hset->p[i] = p;
       hset->hnf = (i+1) % hset->cap;
       hset->num++;
-      return i;
+      return (int)i;
     }
   }
 
@@ -141,8 +143,8 @@ int xt_handle_new(struct xt_handle_set_type *hset, void *p) {
 void xt_handle_delete(struct xt_handle_set_type *hset, int handle) {
   if (!xt_handle_is_valid(hset, handle)) die("delete_handle: invalid handle");
   hset->p[handle]=NULL;
+  if (hset->num == 0) die("delete_handle: internal error - negative occupation count");
   hset->num--;
-  if (hset->num < 0) die("delete_handle: internal error - negative occupation count");
-  if (hset->p[hset->hnf]) hset->hnf = handle;
+  if (hset->p[hset->hnf]) hset->hnf = (unsigned)handle;
 }
 
