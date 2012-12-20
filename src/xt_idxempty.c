@@ -144,7 +144,7 @@ Xt_idxlist xt_idxempty_new() {
    struct xt_idxempty *idxempty;
 
    idxempty = xmalloc(1 * sizeof(*idxempty));
-   idxempty->parent.vtable = &idxempty_vtable;
+   Xt_idxlist_init(&idxempty->parent, &idxempty_vtable);
 
    return (void*)idxempty;
 }

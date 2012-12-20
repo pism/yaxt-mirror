@@ -79,4 +79,10 @@ struct Xt_idxlist {
   const struct xt_idxlist_vtable *vtable;
 };
 
+static inline void Xt_idxlist_init(struct Xt_idxlist *idxlist,
+                                   const struct xt_idxlist_vtable *vtable)
+{
+  idxlist->vtable = vtable;
+}
+
 #endif

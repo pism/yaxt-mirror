@@ -149,7 +149,7 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
 
    collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
-   collectionlist->parent.vtable = &idxlist_collection_vtable;
+   Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
    collectionlist->num_idxlists = num_idxlists;
    collectionlist->idxlists
      = xmalloc(num_idxlists * sizeof(*(collectionlist->idxlists)));
@@ -228,7 +228,7 @@ xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
 
    collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
-   collectionlist->parent.vtable = &idxlist_collection_vtable;
+   Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
    collectionlist->index_num_cache = -1;
    collectionlist->index_array_cache = NULL;
 

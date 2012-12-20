@@ -173,7 +173,7 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
 
   idxsection = xmalloc(1 * sizeof(*idxsection));
 
-  idxsection->parent.vtable             = &idxsection_vtable;
+  Xt_idxlist_init(&idxsection->parent, &idxsection_vtable);
   idxsection->global_start_index = start;
   idxsection->ndim               = num_dimensions;
   idxsection->dims = xmalloc(num_dimensions * sizeof (idxsection->dims[0]));
@@ -308,7 +308,7 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
 
   section = xmalloc(1 * sizeof(*section));
 
-  section->parent.vtable = &idxsection_vtable;
+  Xt_idxlist_init(&section->parent, &idxsection_vtable);
   section->index_array_cache = NULL;
   section-> index_num_cache = -1; // == undef
 

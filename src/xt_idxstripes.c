@@ -229,7 +229,7 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_int num_stripes) {
 
   idxstripes = xmalloc(1 * sizeof(*idxstripes));
 
-  idxstripes->parent.vtable      = &idxstripes_vtable;
+  Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable);
   idxstripes->num_stripes = num_stripes;
   idxstripes->index_num_cache = 0;
   idxstripes->index_array_cache = NULL;
@@ -327,7 +327,7 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 
   stripes = xmalloc(1 * sizeof(*stripes));
 
-  stripes->parent.vtable = &idxstripes_vtable;
+  Xt_idxlist_init(&stripes->parent, &idxstripes_vtable);
   stripes->index_num_cache = -1; // negative num means: undef
   stripes->index_array_cache = NULL;
 
