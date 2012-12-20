@@ -165,9 +165,9 @@ struct xt_idxsection {
 };
 
 Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
-                             Xt_int global_size[num_dimensions],
-                             Xt_int local_size[num_dimensions],
-                             Xt_int local_start[num_dimensions]) {
+                             const Xt_int global_size[num_dimensions],
+                             const Xt_int local_size[num_dimensions],
+                             const Xt_int local_start[num_dimensions]) {
 
   struct xt_idxsection *idxsection;
 
