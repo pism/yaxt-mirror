@@ -47,12 +47,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-unsigned err_count__ = 0;
+static unsigned err_count__ = 0;
 
 #ifdef VERBOSE
-#define PUT_ERR(string) err_count__++, fputs((string), stderr);
+#define PUT_ERR(string) do { err_count__++; fputs((string), stderr); } while (0)
 #else
-#define PUT_ERR(string) err_count__++;
+#define PUT_ERR(string) do { err_count__++; } while (0)
 #endif
 
 #define INC_ERR (err_count__++)
