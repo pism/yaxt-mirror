@@ -45,6 +45,7 @@
 #include "config.h"
 #endif
 
+#include <inttypes.h>
 #include <limits.h>
 
 #include <mpi.h>
@@ -56,6 +57,7 @@
 typedef XT_INT Xt_int;
 #define Xt_int_dt (XT_INT_MPIDT)
 typedef unsigned XT_INT Xt_uint;
+typedef uint64_t Xt_uid;
 
 typedef struct Xt_idxlist *Xt_idxlist;
 typedef struct Xt_xmap *Xt_xmap;

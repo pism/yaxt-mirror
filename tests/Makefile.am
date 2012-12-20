@@ -57,6 +57,7 @@ noinst_PROGRAMS = 						\
 	test_perf						\
 	test_perf_stripes					\
 	test_sort						\
+	test_uid						\
 	test_yaxt
 
 
@@ -90,6 +91,7 @@ test_perf_stripes_SOURCES = test_perf_stripes.f90
 test_perf_stripes.$(OBJEXT): ../src/yaxt.$(OBJEXT)
 test_perf_stripes_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_sort_SOURCES = test_sort.c tests.h
+test_uid_SOURCES = test_uid.c
 test_yaxt_SOURCES = test_yaxt.f90
 test_yaxt_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
@@ -122,6 +124,7 @@ TESTS = 							\
 	test_perf_run						\
 	test_perf_stripes_run					\
 	test_sort_run						\
+	test_uid_run						\
 	test_yaxt_run
 
 

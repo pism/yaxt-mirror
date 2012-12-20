@@ -198,6 +198,7 @@ AC_CONFIG_FILES([tests/test_redist_p2p_parallel_run		\
         tests/test_perf_run              			\
         tests/test_perf_stripes_run              		\
         tests/test_sort_run              			\
+        tests/test_uid_run              			\
         tests/test_yaxt_run              			\
 	tests/test_mpi_generate_datatype_run			\
 	examples/rrobin_run					\

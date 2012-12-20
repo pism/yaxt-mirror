@@ -43,10 +43,17 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
 
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
@@ -388,4 +395,34 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
          }
       }
    }
+}
+
+static Xt_uid nextId = UINT64_C(1);
+#ifdef HAVE_PTHREAD
+static pthread_mutex_t nextIdMutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+Xt_uid
+xt_idxlist_new_uid()
+{
+  Xt_uid thisId;
+#ifdef HAVE_PTHREAD
+  if (pthread_mutex_lock(&nextIdMutex))
+    die("unexpected pthread locking error");
+#endif
+  thisId = nextId;
+  if (!++nextId)
+    die("unique ID counter overflow");
+#ifdef HAVE_PTHREAD
+  if (pthread_mutex_unlock(&nextIdMutex))
+    die("unexpected pthread locking error");
+#endif
+  return thisId;
+}
+
+Xt_uid
+xt_idxlist_get_uid(Xt_idxlist idxlist)
+{
+  assert(idxlist->uid);
+  return idxlist->uid;
 }

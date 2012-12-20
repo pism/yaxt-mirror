@@ -314,4 +314,12 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, int ndim,
                                  Xt_int global_start_index,
                                  struct Xt_bounds bounds[ndim]);
 
+/**
+ * return unique list id, where unique means no other index list will
+ * return the same id within the same task
+ * @param[in] idxlist index list of which to query unique id
+ * @return unique id
+ */
+Xt_uid xt_idxlist_get_uid(Xt_idxlist idxlist);
+
 #endif // XT_IDXLIST_H

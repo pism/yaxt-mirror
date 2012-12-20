@@ -47,6 +47,7 @@
 #ifndef XT_IDXLIST_INTERNAL_H
 #define XT_IDXLIST_INTERNAL_H
 
+#include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 
 struct xt_idxlist_vtable {
@@ -77,12 +78,16 @@ struct xt_idxlist_vtable {
 
 struct Xt_idxlist {
   const struct xt_idxlist_vtable *vtable;
+  Xt_uid uid;
 };
+
+Xt_uid xt_idxlist_new_uid();
 
 static inline void Xt_idxlist_init(struct Xt_idxlist *idxlist,
                                    const struct xt_idxlist_vtable *vtable)
 {
   idxlist->vtable = vtable;
+  idxlist->uid = xt_idxlist_new_uid();
 }
 
 #endif
