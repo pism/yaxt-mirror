@@ -133,7 +133,7 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
 
 struct xt_idxlist_collection {
 
-  const struct xt_idxlist_vtable *vtable;
+  struct Xt_idxlist parent;
 
   Xt_idxlist * idxlists;
   unsigned num_idxlists;
@@ -149,7 +149,7 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
 
    collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
-   collectionlist->vtable = &idxlist_collection_vtable;
+   collectionlist->parent.vtable = &idxlist_collection_vtable;
    collectionlist->num_idxlists = num_idxlists;
    collectionlist->idxlists
      = xmalloc(num_idxlists * sizeof(*(collectionlist->idxlists)));
@@ -228,7 +228,7 @@ xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
 
    collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
-   collectionlist->vtable = &idxlist_collection_vtable;
+   collectionlist->parent.vtable = &idxlist_collection_vtable;
    collectionlist->index_num_cache = -1;
    collectionlist->index_array_cache = NULL;
 

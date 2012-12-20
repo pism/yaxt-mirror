@@ -136,7 +136,7 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
 // index vector data structure
 struct xt_idxempty {
 
-   const struct xt_idxlist_vtable *vtable;
+  struct Xt_idxlist parent;
 };
 
 Xt_idxlist xt_idxempty_new() {
@@ -144,7 +144,7 @@ Xt_idxlist xt_idxempty_new() {
    struct xt_idxempty *idxempty;
 
    idxempty = xmalloc(1 * sizeof(*idxempty));
-   idxempty->vtable = &idxempty_vtable;
+   idxempty->parent.vtable = &idxempty_vtable;
 
    return (void*)idxempty;
 }

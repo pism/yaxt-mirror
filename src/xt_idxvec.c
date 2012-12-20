@@ -141,7 +141,7 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
 // index vector data structure
 struct xt_idxvec {
 
-   const struct xt_idxlist_vtable *vtable;
+  struct Xt_idxlist parent;
 
    Xt_int *vector;
    Xt_int num_indices;
@@ -163,7 +163,7 @@ Xt_idxlist xt_idxvec_new(Xt_int *idxvec, Xt_int num_indices) {
 
    idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
 
-   idxvec_data->vtable = &idxvec_vtable;
+   idxvec_data->parent.vtable = &idxvec_vtable;
 
    if (num_indices != 0) {
 
@@ -326,7 +326,7 @@ xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_int num_stripes) {
 
    idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
 
-   idxvec_data->vtable = &idxvec_vtable;
+   idxvec_data->parent.vtable = &idxvec_vtable;
 
    Xt_int i, j, k;
    Xt_int num_indices = 0;
@@ -402,7 +402,7 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 
    idxvec = xmalloc(1 * sizeof(*idxvec));
 
-   idxvec->vtable = &idxvec_vtable;
+   idxvec->parent.vtable = &idxvec_vtable;
 
    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                               &num_indices, 1, Xt_int_dt, comm), comm);
@@ -516,7 +516,7 @@ idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
     inter_vector->vector = NULL;
   }
 
-  inter_vector->vtable = &idxvec_vtable;
+  inter_vector->parent.vtable = &idxvec_vtable;
   inter_vector->sorted_vector = NULL;
   inter_vector->sorted_vec_positions = NULL;
 

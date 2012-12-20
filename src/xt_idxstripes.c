@@ -168,7 +168,7 @@ static MPI_Datatype xt_get_stripes_datatype() {
 
 struct xt_idxstripes {
 
-  const struct xt_idxlist_vtable *vtable;
+  struct Xt_idxlist parent;
 
   struct Xt_stripe * stripes;
   Xt_int num_stripes;
@@ -229,7 +229,7 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_int num_stripes) {
 
   idxstripes = xmalloc(1 * sizeof(*idxstripes));
 
-  idxstripes->vtable      = &idxstripes_vtable;
+  idxstripes->parent.vtable      = &idxstripes_vtable;
   idxstripes->num_stripes = num_stripes;
   idxstripes->index_num_cache = 0;
   idxstripes->index_array_cache = NULL;
@@ -327,7 +327,7 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 
   stripes = xmalloc(1 * sizeof(*stripes));
 
-  stripes->vtable = &idxstripes_vtable;
+  stripes->parent.vtable = &idxstripes_vtable;
   stripes->index_num_cache = -1; // negative num means: undef
   stripes->index_array_cache = NULL;
 

@@ -76,7 +76,7 @@ struct xt_idxlist_vtable {
 };
 
 struct Xt_idxlist {
-   struct xt_idxlist_vtable *vtable;
+  const struct xt_idxlist_vtable *vtable;
 };
 
 #endif
