@@ -197,7 +197,7 @@ idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
       size_idxlists
         += xt_idxlist_get_pack_size(collectionlist->idxlists[i], comm);
 
-   return size_int + size_unsigned + size_idxlists;
+   return (size_t)size_int + (size_t)size_unsigned + (size_t)size_idxlists;
 }
 
 static void
@@ -313,7 +313,7 @@ idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
   Xt_int index_num = idxlist_collection_get_num_indices(idxlist);
 
   Xt_int *tmp_index_array
-    = xmalloc(index_num * sizeof( *(collection->index_array_cache) ) );
+    = xmalloc((Xt_uint)index_num * sizeof( *(collection->index_array_cache) ) );
 
   idxlist_collection_get_indices(idxlist, tmp_index_array);
 
@@ -332,7 +332,7 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
     = (struct xt_idxlist_collection*)idxlist;
 
   struct Xt_stripe * temp_stripes = NULL;
-  unsigned temp_stripes_array_size = 0;
+  size_t temp_stripes_array_size = 0;
   Xt_int num_temp_stripes = 0;
 
   unsigned i;
@@ -340,7 +340,7 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
   if (collectionlist->num_idxlists > 0) {
     xt_idxlist_get_index_stripes(collectionlist->idxlists[0], &temp_stripes,
                                  &num_temp_stripes);
-    temp_stripes_array_size = num_temp_stripes;
+    temp_stripes_array_size = (size_t)num_temp_stripes;
   }
 
   for (i = 1; i < collectionlist->num_idxlists; ++i) {
@@ -355,14 +355,15 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
                       num_temp_stripes + curr_num_stripes);
 
     memcpy(temp_stripes + num_temp_stripes, curr_stripes,
-           curr_num_stripes * sizeof(*curr_stripes));
+           (size_t)curr_num_stripes * sizeof(*curr_stripes));
 
     free(curr_stripes);
 
     num_temp_stripes += curr_num_stripes;
   }
 
-  *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
+  *stripes = xrealloc(temp_stripes,
+                      (size_t)num_temp_stripes * sizeof(*temp_stripes));
   *num_stripes = num_temp_stripes;
 }
 
@@ -373,7 +374,7 @@ idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
   struct xt_idxlist_collection *collectionlist
     = (struct xt_idxlist_collection*)idxlist;
 
-  for (Xt_int i = 0; i < collectionlist->num_idxlists; ++i) {
+  for (unsigned i = 0; i < collectionlist->num_idxlists; ++i) {
     Xt_int n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
     if (position >= n)
       position -= n;
