@@ -60,36 +60,6 @@ struct Xt_bounds {
    Xt_int start, size;
 };
 
-struct xt_idxlist_vtable {
-
-   void  (*delete)(Xt_idxlist);
-
-   size_t (*get_pack_size)(Xt_idxlist, MPI_Comm);
-   void (*pack)(Xt_idxlist, void*, int, int*, MPI_Comm);
-   Xt_idxlist (*get_intersection)(Xt_idxlist,Xt_idxlist);
-   Xt_idxlist (*copy)(Xt_idxlist);
-   Xt_int (*get_num_indices)(Xt_idxlist);
-   void (*get_indices)(Xt_idxlist, Xt_int *indices);
-   Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
-   void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, Xt_int *);
-   int (*get_index_at_position)(Xt_idxlist, int, Xt_int *);
-   int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, Xt_int num,
-                                   Xt_int *index, Xt_int undef_idx);
-   int (*get_position_of_index)(Xt_idxlist, Xt_int, int *);
-   int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, Xt_int, int *, int);
-   int (*get_position_of_index_off)(Xt_idxlist, Xt_int, int *, int);
-   int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, Xt_int,
-                                      int *, int *);
-   Xt_int (*get_min_index)(Xt_idxlist);
-   Xt_int (*get_max_index)(Xt_idxlist);
-   void (*get_bounding_box)(Xt_idxlist idxlist, int ndim, Xt_int global_size[ndim],
-                            Xt_int global_start_index, struct Xt_bounds bounds[ndim]);
-};
-
-struct Xt_idxlist {
-   struct xt_idxlist_vtable *vtable;
-};
-
 /**
  * \file xt_idxlist.h
  * \brief index list declaration

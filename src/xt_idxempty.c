@@ -47,6 +47,7 @@
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_unpack.h"
+#include "xt_idxlist_internal.h"
 #include "xt/xt_mpi.h"
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
