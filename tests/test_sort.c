@@ -60,7 +60,7 @@ test1(void (*anysort_index)(Xt_int * a, int n, int * idx, int reset_index)) {
   tsize = sizeof(ivec) /sizeof(ivec[0]);
   assert(tsize == sizeof(pvec) /sizeof(pvec[0]));
 
-  xt_sort_index(ivec, tsize, pvec, 1);
+  anysort_index(ivec, tsize, pvec, 1);
   for(int i=0; i<tsize; i++) {
     if ( ivec[i] != sorted_ivec[i] )
       PUT_ERR("wrong sorting values\n");
