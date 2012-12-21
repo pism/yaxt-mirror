@@ -73,9 +73,9 @@ void print_index(Xt_idxlist idxsection, int rank, int i){
       xt_idxlist_get_index_at_position (idxsection, p, &value);
 
       if (i == 0)
-        printf ("rank: %d , INDEX_SRC: %d \n", rank, value);
+        printf ("rank: %d , INDEX_SRC: %ld \n", rank, (long)value);
       else
-        printf ("rank: %d , INDEX_DST: %d \n", rank, value);
+        printf ("rank: %d , INDEX_DST: %ld \n", rank, (long)value);
     }
 }
 
