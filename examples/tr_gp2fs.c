@@ -67,16 +67,15 @@ struct config {
    } src, dst; //!< source and target decomposion
 };
 
-void print_index(Xt_idxlist idxsection, int rank, int i){
-  for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
-      Xt_int value;
-      xt_idxlist_get_index_at_position (idxsection, p, &value);
+enum direction { SOURCE = 0, DESTINATION = 1};
 
-      if (i == 0)
-        printf ("rank: %d , INDEX_SRC: %ld \n", rank, (long)value);
-      else
-        printf ("rank: %d , INDEX_DST: %ld \n", rank, (long)value);
-    }
+void print_index(Xt_idxlist idxsection, int rank, enum direction dir){
+  static const char dirMsg[2][4] = { "SRC", "DST" };
+  for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
+    Xt_int value;
+    xt_idxlist_get_index_at_position (idxsection, p, &value);
+    printf ("rank: %d , INDEX_%s: %ld \n", rank, dirMsg[dir], (long)value);
+  }
 }
 
 void calc_blocks (int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_block){
@@ -322,7 +321,7 @@ int main(int argc, char** argv) {
 
 #ifdef DEBUG
     // 0 = soruce
-    print_index(src_idxsection, rank, 0);
+    print_index(src_idxsection, rank, SOURCE);
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
@@ -335,7 +334,7 @@ int main(int argc, char** argv) {
 
     // 1 = dest
 #ifdef DEBUG
-    print_index(dst_idxsection, rank, 1);
+    print_index(dst_idxsection, rank, DESTINATION);
 #endif
     // xmap
     Xt_xmap xmap;
