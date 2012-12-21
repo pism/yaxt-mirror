@@ -122,15 +122,13 @@ int main(void) {
   {
     // source index list
     Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    unsigned src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    Xt_int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
-    Xt_idxlist src_idxlist;
-
-    src_idxlist = xt_idxvec_new(src_index_list, src_num);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
 
     // destination index list
     Xt_int dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
-    unsigned dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    Xt_int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
     Xt_idxlist dst_idxlist;
 
@@ -143,14 +141,12 @@ int main(void) {
 
     // redist_p2p with offsets
 
-    unsigned i;
-
     int src_pos[src_num];
     int dst_pos[dst_num];
 
-    for (i = 0; i < src_num; i++)
+    for (Xt_int i = 0; i < src_num; i++)
       src_pos[i] = i;
-    for (i = 0; i < dst_num; i++)
+    for (Xt_int i = 0; i < dst_num; i++)
       dst_pos[i] = dst_num-1-i;
 
     Xt_redist redist;
@@ -173,7 +169,7 @@ int main(void) {
     double ref_dst_data[] = {-1,0,2,-1,13,9,7,0,-1,-1,
                              2,0,2,-1,13,4,-1,6,7};
 
-    for (i = 0; i < dst_num; ++i)
+    for (Xt_int i = 0; i < dst_num; ++i)
       if (ref_dst_data[dst_pos[i]] != dst_data[i])
         PUT_ERR("error in xt_redist_s_exchange\n");
 

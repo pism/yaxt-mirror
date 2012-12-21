@@ -58,8 +58,6 @@ int main(void) {
   MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
 
-  unsigned i;
-
   { // test in which every process requests data from all processes
     // source index list
 
@@ -72,7 +70,7 @@ int main(void) {
     // destination index list
     Xt_int dst_index_list[comm_size];
 
-    for (i = 0; i < comm_size; ++i)
+    for (int i = 0; i < comm_size; ++i)
       dst_index_list[i] = i;
 
     Xt_idxlist dst_idxlist;
@@ -95,12 +93,12 @@ int main(void) {
     int ranks[comm_size];
 
     xt_xmap_get_destination_ranks(xmap, ranks);
-    for (i = 0; i < comm_size; ++i)
+    for (int i = 0; i < comm_size; ++i)
       if (ranks[i] != i)
         PUT_ERR("error in xt_xmap_get_destination_ranks\n");
 
     xt_xmap_get_source_ranks(xmap, ranks);
-    for (i = 0; i < comm_size; ++i)
+    for (int i = 0; i < comm_size; ++i)
       if (ranks[i] != i)
         PUT_ERR("error in xt_xmap_get_destination_ranks\n");
 

@@ -74,26 +74,22 @@ int main(void) {
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
 
   {
-    Xt_int i;
+    enum { dataSize = 10 };
     // source index list
-    Xt_int src_index_list[10];
-    Xt_int src_num_indices = 10;
-    for (i = 0; i < src_num_indices; ++i)
-      src_index_list[i] = rank * 10 + i;
+    Xt_int src_index_list[dataSize];
+    Xt_int src_num_indices = dataSize;
+    for (Xt_int i = 0; i < src_num_indices; ++i)
+      src_index_list[i] = rank * dataSize + i;
 
-    Xt_idxlist src_idxlist;
-
-    src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     // destination index list
-    Xt_int dst_index_list[10];
-    Xt_int dst_num_indices = 10;
-    for (i = 0; i < dst_num_indices; ++i)
-      dst_index_list[i] = (rank * 10 + i + 2) % (size * 10);
+    Xt_int dst_index_list[dataSize];
+    Xt_int dst_num_indices = dataSize;
+    for (Xt_int i = 0; i < dst_num_indices; ++i)
+      dst_index_list[i] = (rank * dataSize + i + 2) % (size * dataSize);
 
-    Xt_idxlist dst_idxlist;
-
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     // xmap
     Xt_xmap xmap;
@@ -101,17 +97,15 @@ int main(void) {
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist;
-
-    redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
     // test exchange
 
-    double src_data[10];
-    double dst_data[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+    double src_data[dataSize];
+    double dst_data[dataSize] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
-    for (i = 0; i < src_num_indices; ++i)
-      src_data[i] = rank * 10 + i;
+    for (Xt_int i = 0; i < src_num_indices; ++i)
+      src_data[i] = rank * dataSize + i;
 
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
@@ -121,7 +115,7 @@ int main(void) {
 
     //unsigned i;
 
-    for (i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
+    for (Xt_int i = 0; i < (Xt_int)dataSize; ++i)
       if (dst_index_list[i] != dst_data[i])
         PUT_ERR("error in xt_redist_s_exchange\n");
 
