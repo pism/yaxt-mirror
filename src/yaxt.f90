@@ -125,7 +125,7 @@ MODULE yaxt
   INTERFACE
     FUNCTION xt_idxvec_new(idxvec, num_indices) &
          BIND(C, name='xt_idxvec_new_f') RESULT(res)
-      IMPORT :: Xt_idxlist, xt_int_kind, xt_int_kind
+      IMPORT :: Xt_idxlist, xt_int_kind
       IMPLICIT NONE
       INTEGER(xt_int_kind), INTENT(in) :: idxvec(*)
       INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_indices
