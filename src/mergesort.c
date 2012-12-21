@@ -181,7 +181,7 @@ void xt_mergesort_idxpos(idxpos_type * restrict v, int n)
 
   idxpos_type *w;
 
-  w = malloc ( n * sizeof(w[0]));
+  w = malloc((size_t)n * sizeof(w[0]));
   my_mergesort_idxpos(v, w, 0, n-1);
   free(w);
 
@@ -198,8 +198,8 @@ void xt_mergesort_index(Xt_int *val, int n, int *pos, int reset_pos) {
   idxpos_type *v;
   idxpos_type *w;
 
-  v = malloc ( n * sizeof(v[0]));
-  w = malloc ( n * sizeof(w[0]));
+  v = malloc((size_t)n * sizeof(v[0]));
+  w = malloc((size_t)n * sizeof(w[0]));
 
   if (reset_pos || pos == NULL) {
     for(int i=0; i<n; i++) {

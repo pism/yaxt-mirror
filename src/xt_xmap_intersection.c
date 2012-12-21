@@ -190,7 +190,7 @@ generate_dir_transfer_pos(Xt_int num_intersections,
 {
 
   *resCount = num_intersections;
-  *resSets = xmalloc(num_intersections * sizeof(**resSets));
+  *resSets = xmalloc((size_t)num_intersections * sizeof(**resSets));
 
   for (int i = 0; i < num_intersections; ++i) {
 
@@ -198,7 +198,7 @@ generate_dir_transfer_pos(Xt_int num_intersections,
       = xt_idxlist_get_indices_const(intersections[i].list);
     Xt_int intersection_size
       = xt_idxlist_get_num_indices(intersections[i].list);
-    int *intersection_pos = xmalloc(intersection_size
+    int *intersection_pos = xmalloc((size_t)intersection_size
                                     * sizeof(*intersection_pos));
 
     int retval;
@@ -278,12 +278,10 @@ static void xmap_intersection_delete(Xt_xmap xmap) {
 
   xmap_intersection = (struct Xt_xmap_intersection*)xmap;
 
-  unsigned i;
-
-  for (i = 0; i < xmap_intersection->ndst; ++i)
+  for (unsigned i = 0; i < (unsigned)xmap_intersection->ndst; ++i)
     free(xmap_intersection->dst_msg[i].transfer_pos);
 
-  for (i = 0; i < xmap_intersection->nsrc; ++i)
+  for (unsigned i = 0; i < (unsigned)xmap_intersection->nsrc; ++i)
     free(xmap_intersection->src_msg[i].transfer_pos);
 
   free(xmap_intersection->dst_msg);

@@ -174,7 +174,8 @@ void xt_ut_destroy_transposition(int id) {
 }
 
 
-MPI_Fint xt_ut_init_decomposition_1d(Xt_int *iv, Xt_int iv_n, Xt_int domain_size) {
+MPI_Fint xt_ut_init_decomposition_1d(Xt_int *iv, Xt_int iv_n,
+                                     Xt_int XT_UNUSED(domain_size)) {
   MPI_Fint id = new_ideco();
   xt_ut_deco_type *deco = xt_handle2pointer(deco_set, id);
   if (!deco) die("xt_ut_init_decomposition_1d: internal error");
@@ -183,7 +184,10 @@ MPI_Fint xt_ut_init_decomposition_1d(Xt_int *iv, Xt_int iv_n, Xt_int domain_size
 }
 
 
-MPI_Fint xt_ut_init_oneway_transposition_template(int id_in, int id_out, int mpi_world, int icheck_unique) {
+MPI_Fint
+xt_ut_init_oneway_transposition_template(int id_in, int id_out,
+                                         int XT_UNUSED(mpi_world),
+                                         int XT_UNUSED(icheck_unique)) {
   xt_ut_deco_type *deco_in = xt_handle2pointer(deco_set, id_in);
   if(!deco_in) die("xt_ut_init_oneway_transposition_template: invalid handle (first argument)");
 
@@ -213,8 +217,10 @@ MPI_Fint xt_ut_init_transposition_simple(MPI_Fint itemplate, MPI_Fint f_datatype
 }
 
 MPI_Fint xt_ut_init_transposition(MPI_Fint itemplate,
-                                  MPI_Fint offset_in[], MPI_Fint offset_in_size,
-                                  MPI_Fint offset_out[], MPI_Fint offset_out_size,
+                                  MPI_Fint offset_in[],
+                                  MPI_Fint XT_UNUSED(offset_in_size),
+                                  MPI_Fint offset_out[],
+                                  MPI_Fint XT_UNUSED(offset_out_size),
                                   MPI_Fint f_datatype) {
 
   xt_ut_template_type *template = xt_handle2pointer(template_set, itemplate);
@@ -236,7 +242,8 @@ void xt_create_id_positions(int positions[], int num) {
   }
 }
 
-void xt_ut_transpose(void **pt_in, int itrans, int direction, void **pt_out) {
+void xt_ut_transpose(void **pt_in, int itrans, int XT_UNUSED(direction),
+                     void **pt_out) {
   xt_ut_trans_type *trans = xt_handle2pointer(trans_set, itrans);
   if (!trans) die("xt_ut_transpose1: invalid handle");
   xt_redist_s_exchange(trans->redist, pt_in, 1, pt_out, 1);

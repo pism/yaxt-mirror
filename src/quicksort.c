@@ -73,8 +73,8 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
   pointer_size = pointer_inc;
 
-  stackl = malloc ( pointer_size * sizeof(stackl[0]) );
-  stackr = malloc ( pointer_size * sizeof(stackr[0]) );
+  stackl = malloc((size_t)pointer_size * sizeof(stackl[0]));
+  stackr = malloc((size_t)pointer_size * sizeof(stackr[0]));
 
   s = 0;
   stackl[0] = 0;
@@ -140,8 +140,8 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
           if ( s > pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
-            stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
-            stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
+            stackl = realloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
+            stackr = realloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
           s = s + 1;
@@ -155,8 +155,8 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
           if ( s > pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
-            stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
-            stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
+            stackl = realloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
+            stackr = realloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
           s = s + 1;
@@ -187,7 +187,7 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
   /*  Initialization */
   int *v_pos_orig =  v_pos;
 
-  if (!v_pos) v_pos = malloc ( n  * sizeof(v_pos[0]) );
+  if (!v_pos) v_pos = malloc((size_t)n  * sizeof(v_pos[0]));
 
   if (v_pos != v_pos_orig || reset_pos) {
     for(i=0; i<n; i++) {
@@ -197,8 +197,8 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
 
   pointer_size = pointer_inc;
 
-  stackl = malloc ( pointer_size * sizeof(stackl[0]) );
-  stackr = malloc ( pointer_size * sizeof(stackr[0]) );
+  stackl = malloc((size_t)pointer_size * sizeof(stackl[0]));
+  stackr = malloc((size_t)pointer_size * sizeof(stackr[0]));
 
   s = 0;
   stackl[0] = 0;
@@ -269,8 +269,8 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
 
           if ( s > pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
-            stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
-            stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
+            stackl = realloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
+            stackr = realloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
           s = s + 1;
@@ -284,8 +284,8 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
 
           if ( s > pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
-            stackl = realloc (stackl, pointer_size * sizeof(stackl[0]) );
-            stackr = realloc (stackr, pointer_size * sizeof(stackr[0]) );
+            stackl = realloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
+            stackr = realloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
           s = s + 1;

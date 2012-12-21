@@ -113,11 +113,11 @@ generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
 
   assert(block_sizes != NULL);
 
-  bdispl_vec = xmalloc(num_transfer_pos * sizeof(*bdispl_vec));
-  blen_vec = xmalloc(num_transfer_pos * sizeof(*blen_vec));
+  bdispl_vec = xmalloc((size_t)num_transfer_pos * sizeof(*bdispl_vec));
+  blen_vec = xmalloc((size_t)num_transfer_pos * sizeof(*blen_vec));
 
   if (!block_offsets) die("generate_block_datatype: "
-                          "non-nil block_offsets expected");
+                          "non-NULL block_offsets expected");
 
   int j;
   for (Xt_int i = 0; i < num_transfer_pos; ++i) {
@@ -146,7 +146,7 @@ generate_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
 
   if (offsets != NULL) {
 
-    tmp_displ = xmalloc(num_transfer_pos * sizeof(int));
+    tmp_displ = xmalloc((size_t)num_transfer_pos * sizeof(int));
 
     for (Xt_int i = 0; i < num_transfer_pos; ++i)
       tmp_displ[i] = offsets[transfer_pos[i]];
@@ -173,7 +173,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
     return;
   }
 
-  *msgs = xmalloc(num_msgs * sizeof(**msgs));
+  *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
 
   struct Xt_redist_p2p_msg * curr_msg;
 
@@ -207,7 +207,7 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
     return;
   }
 
-  *msgs = xmalloc(num_msgs * sizeof(**msgs));
+  *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
 
   struct Xt_redist_p2p_msg * curr_msg;
 
@@ -319,7 +319,7 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
   if (dst_block_offsets)
     aux_offsets = dst_block_offsets;
   else {
-    aux_offsets = xmalloc(dst_block_num * sizeof(*aux_offsets));
+    aux_offsets = xmalloc((size_t)dst_block_num * sizeof(*aux_offsets));
     aux_gen_simple_block_offsets(aux_offsets, dst_block_sizes, dst_block_num);
   }
 
@@ -336,7 +336,7 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
   if (src_block_offsets)
     aux_offsets = src_block_offsets;
   else {
-    aux_offsets = xmalloc(src_block_num * sizeof(*aux_offsets));
+    aux_offsets = xmalloc((size_t)src_block_num * sizeof(*aux_offsets));
     aux_gen_simple_block_offsets(aux_offsets, src_block_sizes, src_block_num);
   }
 
@@ -410,7 +410,7 @@ redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
 
   MPI_Request * recv_request;
 
-  recv_request = xmalloc(redist_p2p->ndst * sizeof(*recv_request));
+  recv_request = xmalloc((size_t)redist_p2p->ndst * sizeof(*recv_request));
 
   int i;
 

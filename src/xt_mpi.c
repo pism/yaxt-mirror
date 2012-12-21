@@ -226,35 +226,32 @@ xt_mpi_generate_datatype_block(int const * displacements, int * blocklengths,
 MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
                                       MPI_Datatype old_type, MPI_Comm comm) {
 
-  if (count == 0)
+  if (count <= 0)
     return MPI_DATATYPE_NULL;
 
-  int * blocklengths = xmalloc(count * sizeof(*blocklengths));
+  int * blocklengths = xmalloc((size_t)count * sizeof(*blocklengths));
 
   int new_count = 0;
-  int i = 0;
-
-  do {
-
-    int j = 1;
-
-    while (i + j < count && displacements[i] + j == displacements[i + j]) ++j;
-
-    blocklengths[new_count++] = j;
-
-    i += j;
-  } while (i < count);
-
+  {
+    int i = 0;
+    do {
+      int j = 1;
+      while (i + j < count && displacements[i] + j == displacements[i + j])
+        ++j;
+      blocklengths[new_count++] = j;
+      i += j;
+    } while (i < count);
+  }
   int * tmp_displ = NULL;
-  int const * displ;
+  const int *displ;
 
   if (new_count != count) {
 
-    tmp_displ = xmalloc(new_count * sizeof(*tmp_displ));
+    tmp_displ = xmalloc((size_t)new_count * sizeof(*tmp_displ));
 
     int offset = 0;
 
-    for (i = 0; i < new_count; ++i) {
+    for (unsigned i = 0; i < (unsigned)new_count; ++i) {
 
       tmp_displ[i] = displacements[offset];
       offset += blocklengths[i];

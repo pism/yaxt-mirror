@@ -159,32 +159,28 @@ struct xt_idxvec {
 
 Xt_idxlist xt_idxvec_new(Xt_int *idxvec, Xt_int num_indices) {
 
-   struct xt_idxvec *idxvec_data;
+  struct xt_idxvec *idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
 
-   idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
+  Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
 
-   Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
+  if (num_indices != 0) {
 
-   if (num_indices != 0) {
+    size_t vector_size = (size_t)num_indices * sizeof(*(idxvec_data->vector));
 
-      Xt_int vector_size;
+    idxvec_data->vector = xmalloc(vector_size);
 
-      vector_size = num_indices * sizeof(*(idxvec_data->vector));
+    memcpy(idxvec_data->vector, idxvec, vector_size);
 
-      idxvec_data->vector = xmalloc(vector_size);
+  } else {
 
-      memcpy(idxvec_data->vector, idxvec, vector_size);
+    idxvec_data->vector = NULL;
+  }
 
-   } else {
+  idxvec_data->num_indices = num_indices;
+  idxvec_data->sorted_vector = NULL;
+  idxvec_data->sorted_vec_positions = NULL;
 
-      idxvec_data->vector = NULL;
-   }
-
-   idxvec_data->num_indices = num_indices;
-   idxvec_data->sorted_vector = NULL;
-   idxvec_data->sorted_vec_positions = NULL;
-
-   return (void*)idxvec_data;
+  return (void*)idxvec_data;
 }
 
 static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
@@ -240,8 +236,8 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_int num_strip
   Xt_int * stripe_min;
   int * sorted_stripe_min_pos;
 
-  stripe_min = xmalloc(num_stripes * sizeof(*stripe_min));
-  sorted_stripe_min_pos = xmalloc(num_stripes * sizeof(*sorted_stripe_min_pos));
+  stripe_min = xmalloc((size_t)num_stripes * sizeof(*stripe_min));
+  sorted_stripe_min_pos = xmalloc((size_t)num_stripes * sizeof(*sorted_stripe_min_pos));
 
   Xt_int i, j;
 
@@ -255,8 +251,10 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_int num_strip
 
   int * sorted_pos_prefix_sum, * orig_pos_prefix_sum;
 
-  sorted_pos_prefix_sum = xmalloc(num_stripes * sizeof(*sorted_pos_prefix_sum));
-  orig_pos_prefix_sum = xmalloc(num_stripes * sizeof(*orig_pos_prefix_sum));
+  sorted_pos_prefix_sum
+    = xmalloc((size_t)num_stripes * sizeof(*sorted_pos_prefix_sum));
+  orig_pos_prefix_sum
+    = xmalloc((size_t)num_stripes * sizeof(*orig_pos_prefix_sum));
 
   orig_pos_prefix_sum[0] = 0;
   for (i = 1; i < num_stripes; ++i)
@@ -269,16 +267,16 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_int num_strip
 
   int * overlap_flag; // does i'th stripe overlap with (i+1)'th stripe
 
-  overlap_flag = xmalloc(num_stripes * sizeof(*overlap_flag));
+  overlap_flag = xmalloc((size_t)num_stripes * sizeof(*overlap_flag));
 
   for (i = 0; i < num_stripes - 1; ++i)
     overlap_flag[i] = stripes_overlap(stripes[sorted_stripe_min_pos[i]],
                                       stripes[sorted_stripe_min_pos[i+1]]);
   overlap_flag[num_stripes - 1] = 0;
 
-  idxvec->sorted_vector = xmalloc(idxvec->num_indices *
+  idxvec->sorted_vector = xmalloc((size_t)idxvec->num_indices *
                                   sizeof(*(idxvec->sorted_vector)));
-  idxvec->sorted_vec_positions = xmalloc(idxvec->num_indices *
+  idxvec->sorted_vec_positions = xmalloc((size_t)idxvec->num_indices *
                                          sizeof(*(idxvec->sorted_vec_positions)));;
 
   Xt_int offset = 0;
@@ -328,20 +326,19 @@ xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_int num_stripes) {
 
    Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
 
-   Xt_int i, j, k;
    Xt_int num_indices = 0;
 
-   for (i = 0; i < num_stripes; ++i)
+   for (Xt_int i = 0; i < num_stripes; ++i)
       num_indices += stripes[i].nstrides;
 
    Xt_int * indices;
 
-   indices = xmalloc(num_indices * sizeof(*indices));
+   indices = xmalloc((size_t)num_indices * sizeof(*indices));
 
-   k = 0;
-   for (i = 0; i < num_stripes; ++i)
-      for (j = 0; j < stripes[i].nstrides; ++j)
-         indices[k++] = stripes[i].start + j * stripes[i].stride;
+   Xt_int k = -1;
+   for (Xt_int i = 0; i < num_stripes; ++i)
+      for (Xt_int j = 0; j < stripes[i].nstrides; ++j)
+         indices[++k] = stripes[i].start + j * stripes[i].stride;
 
    idxvec_data->vector = indices;
    idxvec_data->num_indices = num_indices;
@@ -372,7 +369,7 @@ static size_t idxvec_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
    xt_mpi_call(MPI_Pack_size(idxvec->num_indices, Xt_int_dt, comm,
                                  &size_xt_idx), comm);
 
-   return size_xt_count + size_xt_idx + size_int_type;
+   return (size_t)size_xt_count + (size_t)size_xt_idx + (size_t)size_int_type;
 }
 
 void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
@@ -397,33 +394,34 @@ void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
 Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
-   struct xt_idxvec *idxvec;
-   Xt_int num_indices;
+  struct xt_idxvec *idxvec;
+  Xt_int num_indices;
 
-   idxvec = xmalloc(1 * sizeof(*idxvec));
+  idxvec = xmalloc(1 * sizeof(*idxvec));
 
-   Xt_idxlist_init(&idxvec->parent, &idxvec_vtable);
+  Xt_idxlist_init(&idxvec->parent, &idxvec_vtable);
 
-   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                              &num_indices, 1, Xt_int_dt, comm), comm);
-   assert(num_indices >= 0);
-   idxvec->num_indices = num_indices;
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         &num_indices, 1, Xt_int_dt, comm), comm);
+  assert(num_indices >= 0);
+  idxvec->num_indices = num_indices;
 
-   if (num_indices != 0) {
+  if (num_indices != 0) {
 
-      idxvec->vector = xmalloc(idxvec->num_indices * sizeof(*(idxvec->vector)));
-      xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                                 idxvec->vector, num_indices,
-                                 Xt_int_dt, comm),comm);
-   } else {
+    idxvec->vector
+      = xmalloc((size_t)idxvec->num_indices * sizeof(*(idxvec->vector)));
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                           idxvec->vector, num_indices,
+                           Xt_int_dt, comm),comm);
+  } else {
 
-      idxvec->vector = NULL;
-   }
+    idxvec->vector = NULL;
+  }
 
-   idxvec->sorted_vector = NULL;
-   idxvec->sorted_vec_positions = NULL;
+  idxvec->sorted_vector = NULL;
+  idxvec->sorted_vec_positions = NULL;
 
-   return (Xt_idxlist)idxvec;
+  return (Xt_idxlist)idxvec;
 }
 
 static Xt_int *
@@ -432,7 +430,7 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   if (idxvec->sorted_vector != NULL)
     return idxvec->sorted_vector;
 
-  idxvec->sorted_vec_positions = xmalloc(idxvec->num_indices *
+  idxvec->sorted_vec_positions = xmalloc((size_t)idxvec->num_indices *
                                          sizeof(*(idxvec->sorted_vec_positions)));
 
   Xt_int i;
@@ -451,10 +449,10 @@ get_sorted_vector(struct xt_idxvec * idxvec) {
   }
   Xt_int *sorted_vector;
 
-  sorted_vector = xmalloc(idxvec->num_indices * sizeof(*sorted_vector));
+  sorted_vector = xmalloc((size_t)idxvec->num_indices * sizeof(*sorted_vector));
 
   memcpy(sorted_vector, idxvec->vector,
-         idxvec->num_indices * sizeof(*sorted_vector));
+         (size_t)idxvec->num_indices * sizeof(*sorted_vector));
 
   xt_quicksort_index(sorted_vector, idxvec->num_indices,
                   idxvec->sorted_vec_positions, 1);
@@ -482,7 +480,7 @@ idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   inter_vector->num_indices = 0;
   inter_vector->vector =
-    xmalloc(idxvec_dst->num_indices * sizeof(*(inter_vector->vector)));
+    xmalloc((size_t)idxvec_dst->num_indices * sizeof(*(inter_vector->vector)));
 
   Xt_int *sorted_src_vector, *sorted_dst_vector;
 
@@ -491,11 +489,9 @@ idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
   sorted_src_vector = get_sorted_vector(idxvec_src);
   sorted_dst_vector = get_sorted_vector(idxvec_dst);
 
-  Xt_int i, j;
-
   // compute the intersection
 
-  for (i = 0, j = 0; i < idxvec_dst->num_indices; ++i) {
+  for (Xt_int i = 0, j = 0; i < idxvec_dst->num_indices; ++i) {
 
     while (j < idxvec_src->num_indices &&
            sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
@@ -509,7 +505,7 @@ idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
   if (inter_vector->num_indices) {
 
     inter_vector->vector = xrealloc(inter_vector->vector,
-                                    inter_vector->num_indices *
+                                    (size_t)inter_vector->num_indices *
                                     sizeof(*(inter_vector->vector)));
   } else {
     free(inter_vector->vector);
@@ -551,7 +547,7 @@ idxvec_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
    idxvec_data = (struct xt_idxvec *)idxlist;
 
    memcpy(indices, idxvec_data->vector,
-          idxvec_data->num_indices * sizeof(*indices));
+          (size_t)idxvec_data->num_indices * sizeof(*indices));
 }
 
 static Xt_int const*
@@ -678,11 +674,11 @@ idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position) {
   return idxvec_get_position_of_index_off(idxlist, index, position, 0);
 }
 
-static int idx_vec_is_sorted(Xt_int const *idx, unsigned n) {
+static int idx_vec_is_sorted(Xt_int const *idx, Xt_int n) {
 
   if (n<2) return 1;
 
-  for (unsigned i = 1; i < n; i++)
+  for (Xt_int i = 1; i < n; i++)
     if (idx[i] < idx[i-1]) return 0;
 
   return 1;
@@ -707,12 +703,12 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     sorted_selection = selection_idx;
     sorted_selection_pos = NULL; // not used
   } else {
-    size_t memsize;
-    memsize = num_selection * sizeof(*sorted_selection);
+    size_t memsize = (size_t)num_selection * sizeof(*sorted_selection);
     tmp_idx = xmalloc(memsize);
     memcpy(tmp_idx, selection_idx, memsize);
 
-    sorted_selection_pos = xmalloc(num_selection * sizeof(*sorted_selection_pos));
+    sorted_selection_pos
+      = xmalloc((size_t)num_selection * sizeof(*sorted_selection_pos));
     xt_quicksort_index(tmp_idx, num_selection, sorted_selection_pos, 1);
     sorted_selection = tmp_idx;
   }

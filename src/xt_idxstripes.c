@@ -189,19 +189,17 @@ static int compare_xtstripes(const void * a, const void * b)
 static void generate_stripes_sorted(struct xt_idxstripes * stripes) {
 
   struct Xt_stripe *sp = stripes->stripes_sorted
-    = xmalloc(stripes->num_stripes * sizeof (*sp));
+    = xmalloc((size_t)stripes->num_stripes * sizeof (*sp));
 
-  memcpy(sp, stripes->stripes, stripes->num_stripes * sizeof (*sp));
+  memcpy(sp, stripes->stripes, (size_t)stripes->num_stripes * sizeof (*sp));
 
-  Xt_int i;
-
-  for (i = 0; i < stripes->num_stripes; ++i)
+  for (Xt_int i = 0; i < stripes->num_stripes; ++i)
     if (sp[i].stride < 0) {
       sp[i].start = sp[i].start + (sp[i].nstrides-1) * sp[i].stride;
       sp[i].stride = -sp[i].stride;
     }
 
-  qsort(sp, stripes->num_stripes, sizeof (*sp), compare_xtstripes);
+  qsort(sp, (size_t)stripes->num_stripes, sizeof (*sp), compare_xtstripes);
 }
 
 static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
@@ -235,9 +233,10 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_int num_stripes) {
   idxstripes->index_array_cache = NULL;
 
   if (num_stripes > 0) {
-    idxstripes->stripes = xmalloc(num_stripes * sizeof(*(idxstripes->stripes)));
+    idxstripes->stripes
+      = xmalloc((size_t)num_stripes * sizeof(*(idxstripes->stripes)));
     memcpy(idxstripes->stripes, stripes,
-           num_stripes * sizeof(*(idxstripes->stripes)));
+           (size_t)num_stripes * sizeof(*(idxstripes->stripes)));
     int sign_err = 0;
     for(Xt_int i=0; i<num_stripes; i++) {
       if (idxstripes->stripes[i].nstrides<0) {
@@ -297,7 +296,8 @@ idxstripes_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
                                   xt_get_stripes_datatype(),
                                   comm, &size_stripes), comm);
 
-  return size_int_type + size_num_stripes + size_stripes;
+  return (size_t)size_int_type + (size_t)size_num_stripes
+    + (size_t)size_stripes;
 }
 
 static void
@@ -338,7 +338,8 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   stripes->num_stripes = num_stripes;
 
   if (num_stripes) {
-    stripes->stripes = xmalloc(num_stripes * sizeof(*(stripes->stripes)));
+    stripes->stripes
+      = xmalloc((size_t)num_stripes * sizeof(*(stripes->stripes)));
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                            stripes->stripes, num_stripes,
                            xt_get_stripes_datatype(), comm),comm);
@@ -367,8 +368,8 @@ void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
                                       Xt_int * num_stripes) {
 
   struct Xt_stripe * temp_stripes = NULL;
-  unsigned temp_stripes_array_size = 0;
-  Xt_int num_temp_stripes = 0;
+  size_t temp_stripes_array_size = 0;
+  size_t num_temp_stripes = 0;
 
   Xt_int i, j;
 
@@ -391,7 +392,7 @@ void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
   }
 
   *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
-  *num_stripes = num_temp_stripes;
+  *num_stripes = (Xt_int)num_temp_stripes;
 }
 
 static Xt_idxlist
@@ -484,8 +485,8 @@ idxstripes_compute_intersection(struct xt_idxstripes *idxstripes_src,
                                 struct xt_idxstripes *idxstripes_dst) {
 
   struct Xt_stripe * inter_stripes = NULL;
-  Xt_int num_inter_stripes = 0;
-  Xt_int inter_stripes_array_size = 0;
+  size_t num_inter_stripes = 0;
+  size_t inter_stripes_array_size = 0;
 
   Xt_int i_src, i_dst;
 
@@ -536,7 +537,7 @@ idxstripes_compute_intersection(struct xt_idxstripes *idxstripes_src,
 
   Xt_idxlist inter;
 
-  inter = xt_idxstripes_new(inter_stripes, num_inter_stripes);
+  inter = xt_idxstripes_new(inter_stripes, (Xt_int)num_inter_stripes);
 
   free(inter_stripes);
 
@@ -616,7 +617,7 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
   Xt_int index_num = idxstripes_get_num_indices(idxlist);
 
   Xt_int *tmp_index_array
-    = xmalloc(index_num * sizeof( *(idxstripes->index_array_cache) ) );
+    = xmalloc((size_t)index_num * sizeof( *(idxstripes->index_array_cache) ) );
 
   idxstripes_get_indices(idxlist, tmp_index_array);
 
@@ -634,8 +635,8 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
   idxstripes = (struct xt_idxstripes*)idxlist;
 
   struct Xt_stripe * temp_stripes = NULL;
-  unsigned temp_stripes_array_size = 0;
-  Xt_int num_temp_stripes = 0;
+  size_t temp_stripes_array_size = 0;
+  size_t num_temp_stripes = 0;
 
   Xt_int i, j;
 
@@ -653,7 +654,8 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
     } else {
 
       ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
-                        num_temp_stripes + idxstripes->stripes[i].nstrides);
+                        num_temp_stripes
+                        + (size_t)idxstripes->stripes[i].nstrides);
 
       for (j = 0; j < idxstripes->stripes[i].nstrides; ++j)  {
 
@@ -668,7 +670,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
   }
 
   *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
-  *num_stripes = num_temp_stripes;
+  *num_stripes = (Xt_int)num_temp_stripes;
 }
 
 static int

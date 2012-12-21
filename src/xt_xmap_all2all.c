@@ -84,8 +84,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
 
   // allocate memory for intersections
-  (*dst_intersections) = xmalloc(comm_size * sizeof (**dst_intersections));
-  (*src_intersections) = xmalloc(comm_size * sizeof (**src_intersections));
+  struct Xt_com_list *dsti = xmalloc((size_t)comm_size * sizeof (*dsti));
+  struct Xt_com_list *srci = xmalloc((size_t)comm_size * sizeof (*srci));
 
   // compute size of local index lists
   size_t src_pack_size = xt_idxlist_get_pack_size(src_idxlist_local, comm);
@@ -96,10 +96,10 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
       || size_sum < dst_pack_size)
     die("local src+dst index lists are too large");
 
-  int send_buffer_size = size_sum;
+  int send_buffer_size = (int)size_sum;
 
   // exchange buffer sizes
-  int *pack_sizes = xmalloc(comm_size * sizeof(*pack_sizes) * 2);
+  int *pack_sizes = xmalloc((size_t)comm_size * sizeof(*pack_sizes) * 2);
   pack_sizes[rank] = send_buffer_size;
 
   xt_mpi_call(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
@@ -118,7 +118,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   }
   if (size_overflow)
     die("accumulated buffer sizes too big");
-  void *recv_buffer = xmalloc(recv_buffer_size);
+  void *recv_buffer = xmalloc((size_t)recv_buffer_size);
 
   void *send_buffer;
   {
@@ -136,9 +136,9 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
                              MPI_PACKED, comm), comm);
 
   position = 0;
-  Xt_int dst_isect_count = 0, src_isect_count = 0;
+  size_t dst_isect_count = 0, src_isect_count = 0;
   // compute intersections
-  for (int i = 0; i < comm_size; ++i) {
+  for (unsigned i = 0; i < (unsigned)comm_size; ++i) {
 
     // unpack buffers
     Xt_idxlist src = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
@@ -148,8 +148,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     Xt_idxlist intersect = xt_idxlist_get_intersection(src, dst_idxlist_local);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
-      (*dst_intersections)[dst_isect_count].list = intersect;
-      (*dst_intersections)[dst_isect_count].rank = i;
+      dsti[dst_isect_count].list = intersect;
+      dsti[dst_isect_count].rank = (int)i;
       ++dst_isect_count;
     }
     else
@@ -158,8 +158,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     intersect = xt_idxlist_get_intersection(src_idxlist_local, dst);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
-      (*src_intersections)[src_isect_count].list = intersect;
-      (*src_intersections)[src_isect_count].rank = i;
+      srci[src_isect_count].list = intersect;
+      srci[src_isect_count].rank = (int)i;
       ++src_isect_count;
     }
     else
@@ -169,13 +169,13 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   }
 
   /* minimize memory use of tables */
-  *src_intersections = xrealloc(*src_intersections, src_isect_count
-                                * sizeof (**src_intersections));
-  *num_src_intersections = src_isect_count;
-  *dst_intersections = xrealloc(*dst_intersections, dst_isect_count
-                                * sizeof (**dst_intersections));
-  *num_dst_intersections = dst_isect_count;
+  srci = xrealloc(srci, src_isect_count * sizeof (**src_intersections));
+  *num_src_intersections = (Xt_int)src_isect_count;
+  dsti = xrealloc(dsti, dst_isect_count * sizeof (**dst_intersections));
+  *num_dst_intersections = (Xt_int)dst_isect_count;
 
+  *dst_intersections = dsti;
+  *src_intersections = srci;
   // clean up
   free(recv_buffer);
   free(pack_sizes);

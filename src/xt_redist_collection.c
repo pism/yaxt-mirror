@@ -41,6 +41,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -114,12 +116,15 @@ static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
                               MPI_Datatype (*get_MPI_datatype)(Xt_redist,int),
                               int cache_size) {
 
-  int msgs_array_size = 0;
+  size_t msgs_array_size = 0;
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   MPI_Datatype datatypes[num_redists];
+  assert(*nmsgs >= 0);
+  size_t num_messages = (size_t)*nmsgs;
+  struct redist_collection_msg *p = *msgs;
 
   for (int i = 0; i < comm_size; ++i) {
 
@@ -131,24 +136,26 @@ static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
 
     if (flag) {
 
-        ENSURE_ARRAY_SIZE(*msgs, msgs_array_size, *nmsgs+1);
+        ENSURE_ARRAY_SIZE(p, msgs_array_size, num_messages+1);
 
-        (*msgs)[*nmsgs].rank = i;
-        (*msgs)[*nmsgs].datatypes = xmalloc(num_redists *
-          sizeof(*((*msgs)[*nmsgs].datatypes)));
-        memcpy((*msgs)[*nmsgs].datatypes, datatypes,
+        p[num_messages].rank = i;
+        p[num_messages].datatypes = xmalloc(num_redists *
+          sizeof(*(p[num_messages].datatypes)));
+        memcpy(p[num_messages].datatypes, datatypes,
                num_redists * sizeof(*datatypes));
-        (*msgs)[*nmsgs].datatype_cache = xmalloc(MAX(cache_size, 1) *
-          sizeof(*((*msgs)[*nmsgs].datatype_cache)));
+        p[num_messages].datatype_cache = xmalloc((size_t)MAX(cache_size, 1) *
+          sizeof(*(p[num_messages].datatype_cache)));
         for (unsigned k = 0; k < MAX(cache_size, 1); ++k)
-          (*msgs)[*nmsgs].datatype_cache[k] = MPI_DATATYPE_NULL;
+          p[num_messages].datatype_cache[k] = MPI_DATATYPE_NULL;
 
-        ++*nmsgs;
+        ++num_messages;
     }
   }
 
-  if (*nmsgs > 0)
-    *msgs = xrealloc(*msgs, *nmsgs * sizeof(**msgs));
+  if (num_messages > 0)
+    p = xrealloc(p, num_messages * sizeof(**msgs));
+  *msgs = p;
+  *nmsgs = (int)num_messages;
 }
 
 Xt_redist xt_redist_collection_new(Xt_redist * redists, unsigned num_redists,
@@ -171,10 +178,10 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, unsigned num_redists,
     = (cache_size == -1)?(DEFFAULT_DATATYPE_CACHE_SIZE):cache_size;
 
   redist_coll->cached_src_displacements
-    = xmalloc(MAX(redist_coll->cache_size,1) *
+    = xmalloc((size_t)MAX(redist_coll->cache_size,1) *
               sizeof(*(redist_coll->cached_src_displacements)));
   redist_coll->cached_dst_displacements
-    = xmalloc(MAX(redist_coll->cache_size,1) *
+    = xmalloc((size_t)MAX(redist_coll->cache_size,1) *
     sizeof(*(redist_coll->cached_dst_displacements)));
 
   for (int i = 0; i < MAX(redist_coll->cache_size,1); ++i) {
@@ -209,9 +216,9 @@ static void generate_datatype(MPI_Aint * displacements, int * block_lengths,
   if (*datatype != MPI_DATATYPE_NULL)
     xt_mpi_call(MPI_Type_free(datatype), comm);
 
-  int num_datatypes = 0;
+  unsigned num_datatypes = 0;
 
-  for (int i = 0; i < num_redists; ++i)
+  for (unsigned i = 0; i < num_redists; ++i)
     if (msg->datatypes[i] != MPI_DATATYPE_NULL)
       ++num_datatypes;
 
@@ -225,7 +232,7 @@ static void generate_datatype(MPI_Aint * displacements, int * block_lengths,
 
     num_datatypes = 0;
 
-    for (int i = 0; i < num_redists; ++i) {
+    for (unsigned i = 0; i < num_redists; ++i) {
       if (msg->datatypes[i] != MPI_DATATYPE_NULL) {
 
         datatypes[num_datatypes] = msg->datatypes[i];
@@ -239,7 +246,8 @@ static void generate_datatype(MPI_Aint * displacements, int * block_lengths,
     displacements_ = displacements;
   }
 
-  xt_mpi_call(MPI_Type_create_struct(num_datatypes, block_lengths,
+  assert(num_datatypes <= INT_MAX);
+  xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, block_lengths,
                                      displacements_, datatypes, datatype),
               comm);
 
@@ -360,7 +368,7 @@ redist_collection_s_exchange(Xt_redist redist, void **src_data,
 
   MPI_Request * recv_requests;
 
-  recv_requests = xmalloc(redist_coll->ndst * sizeof(*recv_requests));
+  recv_requests = xmalloc((size_t)redist_coll->ndst * sizeof(*recv_requests));
 
   int dst_cache_index = get_cache_index(dst_data, redist_coll->recv_msgs,
                                         redist_coll->ndst,
@@ -416,7 +424,7 @@ free_redist_collection_msgs(struct redist_collection_msg * msgs,
         xt_mpi_call(MPI_Type_free(msgs[i].datatypes+j), comm);
     free(msgs[i].datatypes);
 
-    for (unsigned j = 0; j < cache_size; ++j) {
+    for (unsigned j = 0; j < (unsigned)cache_size; ++j) {
 
       if (msgs[i].datatype_cache[j] != MPI_DATATYPE_NULL)
         xt_mpi_call(MPI_Type_free(msgs[i].datatype_cache+j), comm);
@@ -458,11 +466,10 @@ redist_collection_delete(Xt_redist redist) {
 }
 
 static MPI_Datatype
-redist_collection_get_send_MPI_Datatype(Xt_redist redist, int rank) {
-
-  struct Xt_redist_collection * redist_coll;
-
-  redist_coll = (struct Xt_redist_collection *)redist;
+redist_collection_get_send_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank))
+{
+  struct Xt_redist_collection *redist_coll
+    = (struct Xt_redist_collection *)redist;
 
   Xt_abort(redist_coll->comm, "ERROR: get_send_MPI_Datatype is not"
            " supported for this xt_redist type (xt_redist_collection)",
@@ -472,11 +479,10 @@ redist_collection_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 }
 
 static MPI_Datatype
-redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
+redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank)) {
 
-  struct Xt_redist_collection * redist_coll;
-
-  redist_coll = (struct Xt_redist_collection *)redist;
+  struct Xt_redist_collection *redist_coll
+    = (struct Xt_redist_collection *)redist;
 
   Xt_abort(redist_coll->comm, "ERROR: get_recv_MPI_Datatype is not"
            " supported for this xt_redist type (xt_redist_collection)",
@@ -486,12 +492,12 @@ redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 }
 
 static void
-redist_collection_s_exchange1(Xt_redist redist, void *src_data, void *dst_data)
+redist_collection_s_exchange1(Xt_redist redist, void *XT_UNUSED(src_data),
+                              void *XT_UNUSED(dst_data))
 {
 
-  struct Xt_redist_collection * redist_coll;
-
-  redist_coll = (struct Xt_redist_collection *)redist;
+  struct Xt_redist_collection *redist_coll
+    = (struct Xt_redist_collection *)redist;
 
   Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
            " this xt_redist type (xt_redist_collection)", __FILE__, __LINE__);
