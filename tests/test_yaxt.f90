@@ -514,14 +514,14 @@ CONTAINS
     ENDIF
 
     ! simple approach, we try to be near c = (2*x) * x
-    x0 = INT(SQRT(0.5*c) + 0.5)
+    x0 = INT(SQRT(0.5 * REAL(c)) + 0.5)
     a = 2*x0
     f_loop: DO i = a, 1, -1
-      IF (MOD(c,a) == 0) THEN
-        b = c/a
+      IF (MOD(c,i) == 0) THEN
+        a = i
+        b = c/i
         EXIT f_loop
       ENDIF
-      a = a - 1
     ENDDO f_loop
 
   END SUBROUTINE factorize

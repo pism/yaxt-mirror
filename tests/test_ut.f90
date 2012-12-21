@@ -493,12 +493,8 @@ CONTAINS
     d = g_cn/tn
     m = MOD(g_cn, tn) - 1
 
-    DO it = 0, m
-      cn(it) = d + 1
-    ENDDO
-    DO it = m + 1, tn-1
-      cn(it) = d
-    ENDDO
+    cn(0:m) = d + 1
+    cn(m+1:tn-1) = d
 
     c0(0)=0
     DO it = 1, tn-1

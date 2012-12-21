@@ -41,12 +41,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
 #include <math.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <mpi.h>
 
@@ -68,7 +68,6 @@ struct config {
 };
 
 void print_index(Xt_idxlist idxsection, int rank, int i){
-  #ifdef DEBUG
   for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
       Xt_int value;
       xt_idxlist_get_index_at_position (idxsection, p, &value);
@@ -78,7 +77,6 @@ void print_index(Xt_idxlist idxsection, int rank, int i){
       else
         printf ("rank: %d , INDEX_DST: %d \n", rank, value);
     }
-  #endif
 }
 
 void calc_blocks (int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_block){
@@ -89,7 +87,7 @@ void calc_blocks (int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_blo
   // temp prop to compare last and actual iteration
   double tmp_prop = -1.0;
 
-  int snprocs = sqrt(nprocs);
+  int snprocs = (int)sqrt(nprocs);
 
   // calculate global data proportion by division of bigger number by smaller number, so prop <= 1
   prop = (dim2 < dim1) ? (double)dim2/(double)dim1 : (double)dim1/(double)dim2;
@@ -140,7 +138,7 @@ void init_data_with_index_list(int *data_array, int array_leng,
 
   if (xt_idxlist_get_num_indices(idxlist) != array_leng) {
 
-    fputs("error in init_data_with_indices: array lenght and index"
+    fputs("error in init_data_with_indices: array length and index"
           " list length does not match\n", stderr);
     exit(EXIT_FAILURE);
   }
@@ -153,11 +151,12 @@ void init_data_with_index_list(int *data_array, int array_leng,
     data_array[i] = index;
   }
 #else
-  memset(data_array, 0, sizeof(*data_array) * array_leng);
+  memset(data_array, 0, sizeof(*data_array) * (size_t)array_leng);
 #endif
 }
 
-int check_data_against_index_list(int *data_array, int array_leng,
+int check_data_against_index_list(int *data_array,
+                                  int array_leng,
                                   Xt_idxlist idxlist) {
 
 #ifdef CHECK_RESULTS
@@ -178,6 +177,9 @@ int check_data_against_index_list(int *data_array, int array_leng,
       return 1;
     }
   }
+#else
+  if (array_leng < 0 || !data_array || !idxlist)
+    return 1;
 #endif
   return 0;
 }
@@ -318,11 +320,11 @@ int main(int argc, char** argv) {
                                        conf.src.local_size,
                                        conf.src.local_start);
 
-    #ifdef DEBUG
+#ifdef DEBUG
     // 0 = soruce
     print_index(src_idxsection, rank, 0);
     MPI_Barrier(MPI_COMM_WORLD);
-    #endif
+#endif
 
     // --- DEST-ination index list by section
     Xt_idxlist dst_idxsection;
@@ -332,8 +334,9 @@ int main(int argc, char** argv) {
                                        conf.dst.local_start);
 
     // 1 = dest
+#ifdef DEBUG
     print_index(dst_idxsection, rank, 1);
-
+#endif
     // xmap
     Xt_xmap xmap;
 
@@ -349,11 +352,13 @@ int main(int argc, char** argv) {
 
     //allocate memory for source
     int src_leng = conf.src.z_leng * conf.src.y_leng * conf.src.x_leng;
-    src_array = (int*)malloc(sizeof(*src_array)* src_leng);
+    assert(src_leng > 0);
+    src_array = malloc(sizeof(*src_array)* (size_t)src_leng);
 
     // allocate memory of actuall local data size
     int dst_leng = conf.dst.z_leng * conf.dst.y_leng * conf.dst.x_leng;
-    dst_array = (int*)calloc(dst_leng, sizeof(dst_array));
+    assert(dst_leng > 0);
+    dst_array = calloc((size_t)dst_leng, sizeof(dst_array));
 
     // init arrays with fake data
     // init_data(src_array, src_leng, 0);
