@@ -131,13 +131,15 @@ int main(void) {
       Xt_int results_1[2*size*size], results_2[2*size*size];
       Xt_int results_3[2*size*size*size], results_4[2*size*size*size];
 
-      MPI_Aint src_displacements[4] = {0, (index_vector_b-index_vector_a)
-                                       * sizeof(Xt_int),
-                                       0, (index_vector_b-index_vector_a)
-                                       * sizeof(Xt_int)};
-      MPI_Aint dst_displacements[4] = {0,(results_2-results_1)*sizeof(Xt_int),
-                                       (results_3-results_1)*sizeof(Xt_int),
-                                       (results_4-results_1)*sizeof(Xt_int)};
+      MPI_Aint src_displacements[4]
+        = {0, (MPI_Aint)((size_t)(index_vector_b-index_vector_a)
+                         * sizeof(Xt_int)),
+           0, (MPI_Aint)((size_t)(index_vector_b-index_vector_a)
+                         * sizeof(Xt_int))};
+      MPI_Aint dst_displacements[4]
+        = {0, (MPI_Aint)((size_t)(results_2-results_1)*sizeof(Xt_int)),
+           (MPI_Aint)((size_t)(results_3-results_1)*sizeof(Xt_int)),
+           (MPI_Aint)((size_t)(results_4-results_1)*sizeof(Xt_int))};
 
       Xt_redist redist
         = xt_redist_collection_static_new(redists, 4, src_displacements,
@@ -206,7 +208,8 @@ int main(void) {
       Xt_int results_1[5] = {-1,-1,-1,-1,-1}, results_2[5] = {-1,-1,-1,-1,-1};
 
       MPI_Aint src_displacements[2] = {0, 0};
-      MPI_Aint dst_displacements[2] = {0,(results_2-results_1)*sizeof(Xt_int)};
+      MPI_Aint dst_displacements[2]
+        = {0, (MPI_Aint)((size_t)(results_2-results_1)*sizeof(Xt_int))};
 
       Xt_redist redist
         = xt_redist_collection_static_new(redists, 2, src_displacements,

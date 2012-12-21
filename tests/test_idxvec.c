@@ -44,8 +44,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
 #include <assert.h>
+#include <limits.h>
+#include <stdlib.h>
 
 #include <mpi.h>
 
@@ -101,7 +102,8 @@ int main(void) {
 
     int position = 0;
 
-    xt_idxlist_pack(idxvector, send_buffer, buffer_size, &position,
+    assert(buffer_size <= INT_MAX);
+    xt_idxlist_pack(idxvector, send_buffer, (int)buffer_size, &position,
                     MPI_COMM_WORLD);
 
     // send the buffer
@@ -112,13 +114,13 @@ int main(void) {
 
     MPI_Request request;
 
-    xt_mpi_call(MPI_Isend(send_buffer, buffer_size, MPI_PACKED, rank, 0,
+    xt_mpi_call(MPI_Isend(send_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
                           MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
     xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
 
     // receive the buffer
 
-    xt_mpi_call(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
+    xt_mpi_call(MPI_Recv(recv_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE),
                 MPI_COMM_WORLD);
 
@@ -127,7 +129,7 @@ int main(void) {
     Xt_idxlist idxvector_copy;
 
     position = 0;
-    idxvector_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position,
+    idxvector_copy = xt_idxlist_unpack(recv_buffer, (int)buffer_size, &position,
                                        MPI_COMM_WORLD);
 
     // check the received index vector
@@ -232,7 +234,7 @@ int main(void) {
 
     // create an index vector
 
-    idxvector = xt_idxvec_new(index_vector, index_num);
+    idxvector = xt_idxvec_new(index_vector, (Xt_int)index_num);
 
     // get positions:
     int retval;
@@ -245,13 +247,13 @@ int main(void) {
 
     retval = xt_idxlist_get_positions_of_indices(idxvector,
                                                  intersection_vector,
-                                                 intersection_num,
+                                                 (Xt_int)intersection_num,
                                                  intersection_pos,
                                                  single_match_only);
     assert(retval == 0);
 
     // check positions:
-    for(int i=0; i<intersection_num; i++)
+    for(size_t i=0; i<intersection_num; i++)
       if (intersection_pos[i] != ref_intersection_pos[i])
         PUT_ERR("unexpected results from"
                 " xt_idxlist_get_positions_of_indices\n");
@@ -715,18 +717,18 @@ int main(void) {
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
-    int ndim = 3;
+    unsigned ndim = 3;
     Xt_int global_size[ndim];
     Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       global_size[i] = 4;
 
     xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
                                 global_start_index, bounds);
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       if (bounds[i].size != 2 || bounds[i].start != 1)
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
@@ -740,7 +742,7 @@ int main(void) {
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
-    int ndim = 3;
+    unsigned ndim = 3;
     Xt_int global_size[ndim];
     Xt_int global_start_index = 1;
     struct Xt_bounds bounds[ndim];
@@ -754,7 +756,7 @@ int main(void) {
 
     Xt_int ref_start[3] = {2,2,1};
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
@@ -768,18 +770,18 @@ int main(void) {
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
-    int ndim = 3;
+    unsigned ndim = 3;
     Xt_int global_size[ndim];
     Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       global_size[i] = 4;
 
     xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
                                 global_start_index, bounds);
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       if (bounds[i].size != 0)
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 

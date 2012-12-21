@@ -44,6 +44,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -94,9 +96,8 @@ int main(void) {
 
     // get the size of the index list
 
-    size_t buffer_size;
-
-    buffer_size = xt_idxlist_get_pack_size(collectionlist, MPI_COMM_WORLD);
+    size_t buffer_size
+      = xt_idxlist_get_pack_size(collectionlist, MPI_COMM_WORLD);
 
     // allocate send buffers
 
@@ -109,7 +110,8 @@ int main(void) {
 
     int position = 0;
 
-    xt_idxlist_pack(collectionlist, send_buffer, buffer_size, &position,
+    assert(buffer_size <= INT_MAX);
+    xt_idxlist_pack(collectionlist, send_buffer, (int)buffer_size, &position,
                     MPI_COMM_WORLD);
 
     // send the buffer
@@ -120,13 +122,13 @@ int main(void) {
 
     MPI_Request request;
 
-    xt_mpi_call(MPI_Isend(send_buffer, buffer_size, MPI_PACKED, rank, 0,
-                              MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Isend(send_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
+                          MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
     xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
 
     // receive the buffer
 
-    xt_mpi_call(MPI_Recv(recv_buffer, buffer_size, MPI_PACKED, rank, 0,
+    xt_mpi_call(MPI_Recv(recv_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
 
     // unpack the buffer
@@ -134,8 +136,8 @@ int main(void) {
     Xt_idxlist collectionlist_copy;
 
     position = 0;
-    collectionlist_copy = xt_idxlist_unpack(recv_buffer, buffer_size, &position,
-                                            MPI_COMM_WORLD);
+    collectionlist_copy = xt_idxlist_unpack(recv_buffer, (int)buffer_size,
+                                            &position, MPI_COMM_WORLD);
 
     // check received collection list
 
@@ -328,18 +330,18 @@ int main(void) {
     xt_idxlist_delete(idxlists[0]);
     xt_idxlist_delete(idxlists[1]);
 
-    int ndim = 3;
+    unsigned ndim = 3;
     Xt_int global_size_bb[ndim];
     Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       global_size_bb[i] = 4;
 
     xt_idxlist_get_bounding_box(collectionlist, ndim, global_size_bb,
                                 global_start_index, bounds);
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       if (bounds[i].size != 0)
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
@@ -365,7 +367,7 @@ int main(void) {
     xt_idxlist_delete(idxlists[0]);
     xt_idxlist_delete(idxlists[1]);
 
-    int ndim = 3;
+    unsigned ndim = 3;
     Xt_int global_size[ndim];
     Xt_int global_start_index = 1;
     struct Xt_bounds bounds[ndim];
@@ -379,7 +381,7 @@ int main(void) {
 
     Xt_int ref_start[3] = {2,2,1};
 
-    for (int i = 0; i < ndim; ++i)
+    for (unsigned i = 0; i < ndim; ++i)
       if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
