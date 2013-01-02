@@ -77,14 +77,4 @@ typedef struct xt_redist *Xt_redist;
 void
 xt_initialize(MPI_Comm default_comm);
 
-/**
- * inquiry function to check if the inverse is defined \n
- * this call is collective among of processes that are
- * associated to the exchange map
- *
- * @param[in] xmap exchange map the is to be checked
- * @return         returns != 0 if the exchange map is bijective
- */
-int xt_xmap_is_bijective(Xt_xmap xmap);
-
 #endif

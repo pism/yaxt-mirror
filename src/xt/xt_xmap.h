@@ -197,5 +197,14 @@ int xt_xmap_get_max_src_pos(Xt_xmap xmap);
  */
 int xt_xmap_get_max_dst_pos(Xt_xmap xmap);
 
+/**
+ * inquiry function to check if the inverse is defined \n
+ * this call is collective among of processes that are
+ * associated to the exchange map
+ *
+ * @param[in] xmap exchange map the is to be checked
+ * @return         returns != 0 if the exchange map is bijective
+ */
+int xt_xmap_is_bijective(Xt_xmap xmap);
 
 #endif // XT_XMAP_H
