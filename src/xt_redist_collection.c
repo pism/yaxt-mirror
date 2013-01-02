@@ -99,7 +99,7 @@ static const struct xt_redist_vtable redist_collection_vtable = {
 struct redist_collection_msg {
 
   int rank;
-  MPI_Datatype * datatypes; // datatypes of the redists (size == num_redists)
+  MPI_Datatype *component_dt; // datatypes of the redists (size == num_redists)
 };
 
 struct dt_cache
@@ -154,9 +154,9 @@ static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
         ENSURE_ARRAY_SIZE(p, msgs_array_size, num_messages+1);
 
         p[num_messages].rank = i;
-        p[num_messages].datatypes = xmalloc(num_redists *
-          sizeof(*(p[num_messages].datatypes)));
-        memcpy(p[num_messages].datatypes, datatypes,
+        p[num_messages].component_dt = xmalloc(num_redists *
+          sizeof(*(p[num_messages].component_dt)));
+        memcpy(p[num_messages].component_dt, datatypes,
                num_redists * sizeof(*datatypes));
 
         ++num_messages;
@@ -246,7 +246,7 @@ generate_datatype(MPI_Aint * displacements, int * block_lengths,
   unsigned num_datatypes = 0;
 
   for (unsigned i = 0; i < num_redists; ++i)
-    num_datatypes += (msg->datatypes[i] != MPI_DATATYPE_NULL);
+    num_datatypes += (msg->component_dt[i] != MPI_DATATYPE_NULL);
 
   MPI_Datatype * datatypes;
   MPI_Aint * displacements_;
@@ -259,14 +259,14 @@ generate_datatype(MPI_Aint * displacements, int * block_lengths,
     num_datatypes = 0;
 
     for (unsigned i = 0; i < num_redists; ++i) {
-      if (msg->datatypes[i] != MPI_DATATYPE_NULL) {
-        datatypes[num_datatypes] = msg->datatypes[i];
+      if (msg->component_dt[i] != MPI_DATATYPE_NULL) {
+        datatypes[num_datatypes] = msg->component_dt[i];
         displacements_[num_datatypes] = displacements[i];
         ++num_datatypes;
       }
     }
   } else {
-    datatypes = msg->datatypes;
+    datatypes = msg->component_dt;
     displacements_ = displacements;
   }
 
@@ -462,9 +462,9 @@ free_redist_collection_msgs(struct redist_collection_msg * msgs,
   for (int i = 0; i < nmsgs; ++i) {
 
     for (unsigned j = 0; j < num_redists; ++j)
-      if (msgs[i].datatypes[j] != MPI_DATATYPE_NULL)
-        xt_mpi_call(MPI_Type_free(msgs[i].datatypes+j), comm);
-    free(msgs[i].datatypes);
+      if (msgs[i].component_dt[j] != MPI_DATATYPE_NULL)
+        xt_mpi_call(MPI_Type_free(msgs[i].component_dt+j), comm);
+    free(msgs[i].component_dt);
   }
   free(msgs);
 }
