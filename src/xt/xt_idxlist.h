@@ -304,7 +304,7 @@ int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
 Xt_int xt_idxlist_get_min_index(Xt_idxlist idxlist);
 
 /**
- * gets the biggest index stored in the index list
+ * gets the largest index stored in the index list
  *
  * @param[in] idxlist index list
  * @return            biggest index in idxlist
@@ -320,12 +320,12 @@ Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist);
  * @param[in]  global_start_index lowest index of the index space
  *                                (typically 0 or 1)
  * @param[out] bounds             bounds of the bounding box
- * @remarks the behaviour of the routine is undefined in case the indices to no
- *          fit into the given index space
+ * @remarks the behaviour of the routine is undefined in case the given index
+ *   space does not fit the indices
  * @remarks global_size has to be positive
  */
 void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
-                                 Xt_int global_size[ndim],
+                                 const Xt_int global_size[ndim],
                                  Xt_int global_start_index,
                                  struct Xt_bounds bounds[ndim]);
 

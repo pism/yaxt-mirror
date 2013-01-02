@@ -336,7 +336,7 @@ get_position_in_ndim_space(Xt_int index, unsigned ndim,
 }
 
 void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
-                                 Xt_int global_size[ndim],
+                                 const Xt_int global_size[ndim],
                                  Xt_int global_start_index,
                                  struct Xt_bounds bounds[ndim]) {
 
