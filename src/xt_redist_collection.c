@@ -126,7 +126,7 @@ struct Xt_redist_collection {
   MPI_Comm comm;
 };
 
-static void get_MPI_datatypes(struct redist_collection_msg ** msgs, int * nmsgs,
+static void copy_component_dt(struct redist_collection_msg ** msgs, int * nmsgs,
                               Xt_redist * redists, unsigned num_redists,
                               MPI_Comm comm,
                               MPI_Datatype (*get_MPI_datatype)(Xt_redist,int))
@@ -220,13 +220,13 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, unsigned num_redists,
 
   xt_mpi_call(MPI_Comm_dup(comm, &(redist_coll->comm)), comm);
 
-  get_MPI_datatypes(&(redist_coll->send_msgs), &(redist_coll->nsrc), redists,
+  copy_component_dt(&(redist_coll->send_msgs), &(redist_coll->nsrc), redists,
                     num_redists, redist_coll->comm,
                     xt_redist_get_send_MPI_Datatype);
   init_cache(&redist_coll->src_cache,
              redist_coll->cache_size, (size_t)redist_coll->nsrc, num_redists);
 
-  get_MPI_datatypes(&(redist_coll->recv_msgs), &(redist_coll->ndst), redists,
+  copy_component_dt(&(redist_coll->recv_msgs), &(redist_coll->ndst), redists,
                     num_redists, redist_coll->comm,
                     xt_redist_get_recv_MPI_Datatype);
   init_cache(&redist_coll->dst_cache,
