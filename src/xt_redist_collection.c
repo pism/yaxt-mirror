@@ -237,9 +237,9 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, unsigned num_redists,
 }
 
 static MPI_Datatype
-generate_datatype(MPI_Aint * displacements, int * block_lengths,
-                  struct redist_collection_msg * msg,
-                  unsigned num_redists, MPI_Comm comm)
+create_compound_dt(MPI_Aint *displacements, int *block_lengths,
+                   struct redist_collection_msg *msg,
+                   unsigned num_redists, MPI_Comm comm)
 {
   MPI_Datatype datatype;
 
@@ -285,10 +285,10 @@ generate_datatype(MPI_Aint * displacements, int * block_lengths,
 }
 
 static void
-generate_datatypes(struct redist_collection_msg * msgs,
-                   int num_messages, unsigned num_redists,
-                   MPI_Aint displacements[num_redists],
-                   MPI_Datatype dt[num_messages], MPI_Comm comm)
+create_all_dt_for_dir(struct redist_collection_msg *msgs,
+                      int num_messages, unsigned num_redists,
+                      MPI_Aint displacements[num_redists],
+                      MPI_Datatype dt[num_messages], MPI_Comm comm)
 {
   int block_lengths[num_redists];
 
@@ -298,8 +298,8 @@ generate_datatypes(struct redist_collection_msg * msgs,
   {
     if (dt[i] != MPI_DATATYPE_NULL)
       xt_mpi_call(MPI_Type_free(dt + i), comm);
-    dt[i] = generate_datatype(displacements, block_lengths,
-                              msgs+i, num_redists, comm);
+    dt[i] = create_compound_dt(displacements, block_lengths,
+                               msgs+i, num_redists, comm);
   }
 }
 
@@ -360,8 +360,8 @@ get_compound_datatype(void ** data, struct redist_collection_msg * msgs,
     {
       cache_index = cache->token;
       dt = cache->dt + (size_t)num_messages * cache_index;
-      generate_datatypes(msgs, num_messages, num_redists,
-                         displacements, dt, comm);
+      create_all_dt_for_dir(msgs, num_messages, num_redists,
+                            displacements, dt, comm);
       memcpy(cache->displacements + cache_index * num_redists, displacements,
              sizeof (displacements));
       cache->token = (cache->token + 1) % cache_size;
@@ -372,8 +372,8 @@ get_compound_datatype(void ** data, struct redist_collection_msg * msgs,
   }
   else
   {
-    generate_datatypes(msgs, num_messages, num_redists,
-                       displacements, temp_dt, comm);
+    create_all_dt_for_dir(msgs, num_messages, num_redists,
+                          displacements, temp_dt, comm);
     return temp_dt;
   }
 }
