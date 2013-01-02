@@ -113,7 +113,7 @@ void xt_idxlist_pack(Xt_idxlist idxlist, void* buffer, int buffer_size,
                      int* position, MPI_Comm comm);
 
 /**
- * unpacks an index list that was received before
+ * unpacks an index list from buffer
  *
  * @param[in]     buffer      buffer that contains the packed index list
  * @param[in]     buffer_size size of the buffer in bytes
