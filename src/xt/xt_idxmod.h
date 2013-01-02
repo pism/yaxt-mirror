@@ -57,8 +57,8 @@
  */
 
 struct Xt_modifier {
-  struct Xt_idxlist* extract; ///<  idx values
-  struct Xt_idxlist* subst; ///<  idx values, must describe at least as many indices as the extract idxlist
+  Xt_idxlist extract; ///<  idx values
+  Xt_idxlist subst; ///<  idx values, must describe at least as many indices as the extract idxlist
   int mask; ///< modifier mask, can be used to identify modifier usage in the result
 };
 
@@ -82,6 +82,8 @@ struct Xt_modifier {
  * @remark if mstate != NULL then it is required to be at least as big as the input index list (patch_idxlist)
  */
 
-struct Xt_idxlist *xt_idxmod_new(struct Xt_idxlist* patch_idxlist,  struct Xt_modifier *modifier, int modifier_num, int *mstate);
+Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
+                         struct Xt_modifier *modifier,
+                         int modifier_num, int *mstate);
 
 #endif
