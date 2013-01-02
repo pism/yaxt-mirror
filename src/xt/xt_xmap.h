@@ -77,7 +77,7 @@ int xt_xmap_get_num_destinations(Xt_xmap xmap);
 
 /**
  * gets the number of processes from which the local process will
- * required data in an exchange operation
+ * require data in an exchange operation
  *
  * @param[in] xmap exchange map
  * @return number of prosses from which the local process will
@@ -101,7 +101,7 @@ void xt_xmap_get_destination_ranks(Xt_xmap xmap, int * ranks);
 
 /**
  * gets the ranks of processes from which the local process will
- * required data in an exchange operation
+ * require data in an exchange operation
  *
  * @param[in]  xmap  exchange map
  * @param[out] ranks ranks of processes from which the local process
