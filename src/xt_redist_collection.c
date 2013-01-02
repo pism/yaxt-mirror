@@ -55,6 +55,7 @@
 #include "xt/xt_redist_collection.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
+#include "xt_redist_internal.h"
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 

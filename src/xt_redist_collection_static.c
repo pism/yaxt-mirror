@@ -52,6 +52,7 @@
 #include "xt/xt_redist_collection_static.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
+#include "xt_redist_internal.h"
 
 static void
 redist_collection_static_delete(Xt_redist redist);

@@ -3,7 +3,7 @@
  * @brief redistribution of data
  *
  * contains declaration the redistribution data structure, which
- * is generate from one or more xt_xmaps
+ * is derived from one or more xt_xmaps
  *
  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
@@ -54,19 +54,6 @@
 #include <mpi.h>
 
 #include "xt/xt_core.h"
-
-struct xt_redist_vtable {
-
-  void (*delete)(Xt_redist);
-  void (*s_exchange)(Xt_redist, void **, unsigned, void **, unsigned);
-  void (*s_exchange1)(Xt_redist, void *, void *);
-  MPI_Datatype (*get_send_MPI_Datatype)(Xt_redist, int);
-  MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);
-};
-
-struct xt_redist {
-  struct xt_redist_vtable *vtable;
-};
 
 /**
  * destructor
