@@ -133,7 +133,7 @@ Xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
                              int* position, MPI_Comm comm);
 
 /**
- * computes the intersection between two index list
+ * computes the intersection between two index lists
  *
  * @param[in] idxlist_src index list for sender
  * @param[in] idxlist_dst index list for receiver
