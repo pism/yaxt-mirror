@@ -78,13 +78,6 @@ void
 xt_initialize(MPI_Comm default_comm);
 
 /**
- * destructor for an index list
- *
- * @param[in] idxlist index list that is to be destroyed
- */
-void xt_idxlist_delete(Xt_idxlist idxlist);
-
-/**
  * inquiry function to check if the inverse is defined \n
  * this call is collective among of processes that are
  * associated to the exchange map

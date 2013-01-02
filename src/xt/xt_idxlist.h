@@ -68,6 +68,13 @@ struct Xt_bounds {
  */
 
 /**
+ * destructor for an index list
+ *
+ * @param[in] idxlist index list that is to be destroyed
+ */
+void xt_idxlist_delete(Xt_idxlist idxlist);
+
+/**
  * computes the buffer size in byte that is required to pack the given
  * index list using MPI_Pack
  *
