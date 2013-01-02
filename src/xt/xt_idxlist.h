@@ -150,7 +150,7 @@ xt_idxlist_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
  * generates a copy of a given index list
  *
  * @param[in] idxlist index list that is to be copied
- * @return            returns a copy of the given index list
+ * @return            copy of the given index list
  */
 Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist);
 
