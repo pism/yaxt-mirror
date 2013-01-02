@@ -170,15 +170,13 @@ Xt_int xt_idxlist_get_num_indices(Xt_idxlist idxlist);
  */
 void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 
-Xt_int const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
-
 /**
  * gets a pointer of the constant indices stored in an index list
  *
  * @param[in]     idxlist index list for which the indices are to be returned
  * @return  const indices array
  */
-Xt_int const * xt_idxlist_get_indices_const(Xt_idxlist idxlist);
+const Xt_int *xt_idxlist_get_indices_const(Xt_idxlist idxlist);
 
 /**
  * returns the indices stored in an index list
