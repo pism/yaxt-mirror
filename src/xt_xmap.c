@@ -44,10 +44,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <mpi.h>
+
 #include "xt/xt_xmap.h"
-
-#include "mpi.h"
-
+#include "xt_xmap_internal.h"
 
 MPI_Comm xt_xmap_get_communicator(Xt_xmap xmap) {
 
