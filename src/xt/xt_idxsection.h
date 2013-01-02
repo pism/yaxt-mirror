@@ -51,8 +51,11 @@
 
 /**
  * generates an index list that is comprised of a section of a set of
- * indices that are arranged in an n-dimensional....don't know how to
- * describe it...
+ * indices that are arranged in an n-dimensional cartesian coordinate
+ * system. The linear index correspondence is computed such that the right-most
+ * dimension is the one where indices increase fastest (i.e. according
+ * to C convention).
+
  * @param[in] start          lowest index of the global array (typically 0 or 1)
  * @param[in] num_dimensions number of dimensions
  * @param[in] global_size    global size of each dimension
