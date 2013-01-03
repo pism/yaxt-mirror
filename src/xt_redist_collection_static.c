@@ -264,45 +264,37 @@ redist_collection_static_delete(Xt_redist redist) {
 }
 
 static MPI_Datatype
-redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank) {
+copy_msg_dt(int nmsg, const struct redist_collection_static_msg msg[nmsg],
+            MPI_Comm comm, int rank)
+{
+  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
 
-  struct Xt_redist_collection_static * redist_coll;
-
-  redist_coll = (struct Xt_redist_collection_static *)redist;
-
-  MPI_Datatype datatype_copy;
-
-  datatype_copy = MPI_DATATYPE_NULL;
-
-  for (int i = 0; i < redist_coll->nsrc; ++i)
-    if (redist_coll->send_msgs[i].rank == rank) {
-      xt_mpi_call(MPI_Type_dup(redist_coll->send_msgs[i].datatype, &datatype_copy),
-                      redist_coll->comm);
+  for (int i = 0; i < nmsg; ++i)
+    if (msg[i].rank == rank) {
+      xt_mpi_call(MPI_Type_dup(msg[i].datatype, &datatype_copy), comm);
       break;
     }
 
   return datatype_copy;
 }
 
+
+static MPI_Datatype
+redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank) {
+
+  struct Xt_redist_collection_static *redist_coll
+    = (struct Xt_redist_collection_static *)redist;
+  return copy_msg_dt(redist_coll->nsrc, redist_coll->send_msgs,
+                     redist_coll->comm, rank);
+}
+
 static MPI_Datatype
 redist_collection_static_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
-  struct Xt_redist_collection_static * redist_coll;
-
-  redist_coll = (struct Xt_redist_collection_static *)redist;
-
-  MPI_Datatype datatype_copy;
-
-  datatype_copy = MPI_DATATYPE_NULL;
-
-  for (int i = 0; i < redist_coll->ndst; ++i)
-    if (redist_coll->recv_msgs[i].rank == rank) {
-      xt_mpi_call(MPI_Type_dup(redist_coll->recv_msgs[i].datatype, &datatype_copy),
-                      redist_coll->comm);
-      break;
-    }
-
-  return datatype_copy;
+  struct Xt_redist_collection_static *redist_coll
+    = (struct Xt_redist_collection_static *)redist;
+  return copy_msg_dt(redist_coll->ndst, redist_coll->recv_msgs,
+                     redist_coll->comm, rank);
 }
 
 static void
@@ -326,7 +318,7 @@ redist_collection_static_s_exchange1(Xt_redist redist, void *src_data, void *dst
                     redist_coll->comm);
 
   xt_mpi_call(MPI_Waitall(redist_coll->ndst, recv_requests,
-                              MPI_STATUSES_IGNORE), redist_coll->comm);
+                          MPI_STATUSES_IGNORE), redist_coll->comm);
 
   free(recv_requests);
 }
