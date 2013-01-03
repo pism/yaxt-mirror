@@ -172,23 +172,20 @@ generate_msg_infos(struct redist_collection_static_msg ** msgs, int * nmsgs,
   struct redist_collection_static_msg *p = *msgs;
   for (int i = 0; i < comm_size; ++i) {
 
+    int non_empty_xfer = 0;
     for (unsigned j = 0; j < num_redists; ++j)
-      datatypes[j] = get_MPI_datatype(redists[j], i);
+      non_empty_xfer |= (datatypes[j] = get_MPI_datatype(redists[j], i))
+        != MPI_DATATYPE_NULL;
 
-    for (unsigned j = 0; j < num_redists; ++j) {
+    if (non_empty_xfer)
+    {
+      ENSURE_ARRAY_SIZE(p, msgs_array_size, num_messages+1);
 
-      if (datatypes[j] != MPI_DATATYPE_NULL) {
-
-        ENSURE_ARRAY_SIZE(p, msgs_array_size, num_messages+1);
-
-        p[num_messages].rank = i;
-        p[num_messages].datatype
-          = generate_datatype(num_redists, displacements, datatypes,
-                              block_lengths, comm);
-        ++num_messages;
-
-        break;
-      }
+      p[num_messages].rank = i;
+      p[num_messages].datatype
+        = generate_datatype(num_redists, displacements, datatypes,
+                            block_lengths, comm);
+      ++num_messages;
     }
 
     for (unsigned j = 0; j < num_redists; ++j)
