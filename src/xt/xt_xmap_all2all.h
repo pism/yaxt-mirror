@@ -55,7 +55,7 @@
 /**
  * constructor for an exchange map \n
  * this operation is collective over all processes in comm \n
- * it uses a all to all communication for the initialisation
+ * it uses all-to-all communication for the initialisation
  *
  * @param[in] src_idxlist source index list
  * @param[in] dst_idxlist destination index list
