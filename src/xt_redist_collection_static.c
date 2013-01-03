@@ -205,8 +205,9 @@ generate_msg_infos(struct redist_collection_static_msg ** msgs, int * nmsgs,
 
 Xt_redist
 xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redists,
-                                MPI_Aint * src_displacements,
-                                MPI_Aint * dst_displacements, MPI_Comm comm) {
+                                MPI_Aint src_displacements[num_redists],
+                                MPI_Aint dst_displacements[num_redists],
+                                MPI_Comm comm) {
 
   struct Xt_redist_collection_static * redist_coll;
 
