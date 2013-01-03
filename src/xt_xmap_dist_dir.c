@@ -299,7 +299,7 @@ static void
 recv_and_unpack_intersection(struct dist_dir * dist_dir, int recv_size,
                              void * recv_buffer, int tag, MPI_Comm comm) {
 
-  // initiate distributed directories
+  // initialize distributed directories
   dist_dir->num_entries = 0;
   dist_dir->entries = NULL;
 
