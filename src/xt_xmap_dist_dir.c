@@ -172,23 +172,22 @@ compute_and_pack_bucket_intersections(Xt_idxlist * buckets,
 
   int send_buffer_size = 0;
 
-  Xt_idxlist * src_send_list, * dst_send_list;
-
-  src_send_list = xmalloc((size_t)comm_size * sizeof(*src_send_list));
-  dst_send_list = xmalloc((size_t)comm_size * sizeof(*dst_send_list));
+  struct {
+    Xt_idxlist src, dst;
+  } *send_list = xmalloc((size_t)comm_size * sizeof(*send_list));
 
   for (int i = 0; i < comm_size; ++i) {
 
-    src_send_list[i] = xt_idxlist_get_intersection(src_idxlist, buckets[i]);
-    dst_send_list[i] = xt_idxlist_get_intersection(buckets[i], dst_idxlist);
+    send_list[i].src = xt_idxlist_get_intersection(src_idxlist, buckets[i]);
+    send_list[i].dst = xt_idxlist_get_intersection(buckets[i], dst_idxlist);
 
-    if (xt_idxlist_get_num_indices(src_send_list[i]) > 0)
-      send_size[i][0] = (int)xt_idxlist_get_pack_size(src_send_list[i], comm);
+    if (xt_idxlist_get_num_indices(send_list[i].src) > 0)
+      send_size[i][0] = (int)xt_idxlist_get_pack_size(send_list[i].src, comm);
     else
       send_size[i][0] = 0;
 
-    if (xt_idxlist_get_num_indices(dst_send_list[i]) > 0)
-      send_size[i][1] = (int)xt_idxlist_get_pack_size(dst_send_list[i], comm);
+    if (xt_idxlist_get_num_indices(send_list[i].dst) > 0)
+      send_size[i][1] = (int)xt_idxlist_get_pack_size(send_list[i].dst, comm);
     else
       send_size[i][1] = 0;
 
@@ -202,24 +201,23 @@ compute_and_pack_bucket_intersections(Xt_idxlist * buckets,
 
   for (int i = 0; i < comm_size; ++i) {
 
-    if (xt_idxlist_get_num_indices(src_send_list[i]) > 0)
-      xt_idxlist_pack(src_send_list[i], *send_buffer, send_buffer_size,
+    if (send_size[i][0] > 0)
+      xt_idxlist_pack(send_list[i].src, *send_buffer, send_buffer_size,
                       &position, comm);
 
-    xt_idxlist_delete(src_send_list[i]);
+    xt_idxlist_delete(send_list[i].src);
   }
 
   for (int i = 0; i < comm_size; ++i) {
 
-    if (xt_idxlist_get_num_indices(dst_send_list[i]) > 0)
-      xt_idxlist_pack(dst_send_list[i], *send_buffer, send_buffer_size,
+    if (send_size[i][1] > 0)
+      xt_idxlist_pack(send_list[i].dst, *send_buffer, send_buffer_size,
                       &position, comm);
 
-    xt_idxlist_delete(dst_send_list[i]);
+    xt_idxlist_delete(send_list[i].dst);
   }
 
-  free(src_send_list);
-  free(dst_send_list);
+  free(send_list);
 }
 
 static inline void free_buckets(Xt_idxlist * buckets, int num_buckets) {
