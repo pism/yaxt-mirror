@@ -283,12 +283,16 @@ if test "x$ax_pthread_ok" = xyes; then
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
 
-        # More AIX lossage: must compile with xlc_r or cc_r
-        if test x"$GCC" != xyes; then
-          AC_CHECK_PROGS(PTHREAD_CC, xlc_r cc_r, ${CC})
-        else
-          PTHREAD_CC=$CC
-        fi
+        # More AIX lossage: compile with *_r variant
+        AS_CASE([x"/$CC"],
+          [x*/xlc|x*/xlc_v6|x*/cc|x*/c89|x*c99|x*/xlc128|x*/xlc128_v6|x*cc128|x*/c89_128|x*/c99_128],
+          [#handle absolute path differently from PATH based program lookup
+           AS_CASE(["x$CC"],
+             [x/*],
+             [AS_IF([test -x "${CC}_r"],
+                [PTHREAD_CC="${CC}_r"],[PTHREAD_CC=$CC])],
+             [AC_CHECK_PROGS([PTHREAD_CC],[${CC}_r],[${CC}])])],
+          [PTHREAD_CC=$CC])
 else
         PTHREAD_CC="$CC"
 fi
