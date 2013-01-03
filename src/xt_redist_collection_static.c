@@ -186,11 +186,11 @@ generate_msg_infos(struct redist_collection_static_msg ** msgs, int * nmsgs,
         = generate_datatype(num_redists, displacements, datatypes,
                             block_lengths, comm);
       ++num_messages;
-    }
 
-    for (unsigned j = 0; j < num_redists; ++j)
-      if (datatypes[j] != MPI_DATATYPE_NULL)
-        xt_mpi_call(MPI_Type_free(datatypes+j), comm);
+      for (unsigned j = 0; j < num_redists; ++j)
+        if (datatypes[j] != MPI_DATATYPE_NULL)
+          xt_mpi_call(MPI_Type_free(datatypes+j), comm);
+    }
   }
 
   if (num_messages > 0)
