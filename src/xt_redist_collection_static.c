@@ -97,8 +97,10 @@ struct Xt_redist_collection_static {
 };
 
 static MPI_Datatype
-generate_datatype(MPI_Aint * displacements, int * block_lengths,
-                  unsigned num_redists, MPI_Datatype * datatypes,
+generate_datatype(unsigned num_redists,
+                  MPI_Aint displacements[num_redists],
+                  MPI_Datatype datatypes[num_redists],
+                  int block_lengths[num_redists],
                   MPI_Comm comm) {
 
   MPI_Datatype datatype;
@@ -181,8 +183,8 @@ generate_msg_infos(struct redist_collection_static_msg ** msgs, int * nmsgs,
 
         p[num_messages].rank = i;
         p[num_messages].datatype
-          = generate_datatype(displacements, block_lengths,
-                              num_redists, datatypes, comm);
+          = generate_datatype(num_redists, displacements, datatypes,
+                              block_lengths, comm);
         ++num_messages;
 
         break;
