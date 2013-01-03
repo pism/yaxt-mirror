@@ -570,9 +570,9 @@ generate_intersection_from_dist_dir_results(struct dist_dir dist_dir_results,
   Xt_idxlist * intersections = NULL;
   size_t intersections_array_size = 0;
 
-  (*src_com)
-    = xmalloc(dist_dir_results.num_entries * sizeof(**src_com));
-  (*num_src_intersections) = 0;
+  struct Xt_com_list *p
+    = xmalloc(dist_dir_results.num_entries * sizeof(*p));
+  size_t num_src_ix = 0;
 
   for (int i = 0; i < comm_size; ++i) {
 
@@ -597,15 +597,16 @@ generate_intersection_from_dist_dir_results(struct dist_dir dist_dir_results,
         ++j;
       }
 
-      (*src_com)[(*num_src_intersections)].list =
+      p[num_src_ix].list =
         xt_idxlist_collection_new(intersections, num_intersections_per_rank);
-      (*src_com)[(*num_src_intersections)].rank = i;
-      (*num_src_intersections)++;
+      p[num_src_ix].rank = i;
+      ++num_src_ix;
     }
   }
 
-  (*src_com)
-    = xrealloc((*src_com), (size_t)(*num_src_intersections) * sizeof(**src_com));
+  p = xrealloc(p, num_src_ix * sizeof(*p));
+  *src_com = p;
+  *num_src_intersections = (Xt_int)num_src_ix;
   free(intersections);
 }
 
