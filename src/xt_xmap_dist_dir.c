@@ -578,7 +578,7 @@ generate_intersection_from_dist_dir_results(struct dist_dir dist_dir_results,
 
     unsigned num_intersections_per_rank = 0;
     for (unsigned j = 0; j < dist_dir_results.num_entries; ++j)
-      if (dist_dir_results.entries[j].rank == i) num_intersections_per_rank++;
+      num_intersections_per_rank += (dist_dir_results.entries[j].rank == i);
 
     if (num_intersections_per_rank > 0) {
 
