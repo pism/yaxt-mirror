@@ -24,15 +24,17 @@
   The definion the global index is a theoretically process and has no representation in
   yaxt.
 
-  \subsection decomp Definie decomposition
+  \subsection decomp Define decomposition
 
-  If the user is able to assign a global index to each data point, he has to describe for
-  each of his data arrays the data that is available on each process. This is done by using
-  an index list (\ref Xt_idxlist). The index list contains for each data point that is
-  available on a process the respective global index. The order of global indices within
-  the index list needs to match the order of data points, which they represent, in the
-  actual data array.\n
-  The yaxt library has a varity of methods to generate an index list (see \ref idxlists).
+  Once the user is able to assign a global index to each data point,
+  each of the data arrays need to be described with respect to the
+  data that is available at each process. This is done by using an
+  index list (\ref Xt_idxlist). The index list contains for each data
+  point that is available on a process the respective global
+  index. The order of global indices within the index list needs to
+  match the order of data points, which they represent, in the actual
+  data array.\n The yaxt library has a varity of methods to generate
+  an index list (see \ref idxlists).
 
   \subsection xmap Generate mapping
 
