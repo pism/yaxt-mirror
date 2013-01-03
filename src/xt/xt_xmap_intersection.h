@@ -73,9 +73,11 @@ struct Xt_com_list {
  */
 Xt_xmap
 xt_xmap_intersection_new(Xt_int num_src_intersections,
-                         struct Xt_com_list src_com[num_src_intersections],
+                         const struct Xt_com_list
+                         src_com[num_src_intersections],
                          Xt_int num_dst_intersections,
-                         struct Xt_com_list dst_com[num_dst_intersections],
+                         const struct Xt_com_list
+                         dst_com[num_dst_intersections],
                          Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                          MPI_Comm comm);
 

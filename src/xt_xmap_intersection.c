@@ -183,7 +183,8 @@ static void xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks) {
 /* compute list positions for one direction */
 static void
 generate_dir_transfer_pos(Xt_int num_intersections,
-                          struct Xt_com_list intersections[num_intersections],
+                          const struct Xt_com_list
+                          intersections[num_intersections],
                           Xt_idxlist mypart_idxlist,
                           const int single_match_only,
                           int *resCount,
@@ -218,9 +219,9 @@ generate_dir_transfer_pos(Xt_int num_intersections,
 static void
 generate_transfer_pos(struct Xt_xmap_intersection * xmap,
                       Xt_int num_src_intersections,
-                      struct Xt_com_list src_com[num_src_intersections],
+                      const struct Xt_com_list src_com[num_src_intersections],
                       Xt_int num_dst_intersections,
-                      struct Xt_com_list dst_com[num_dst_intersections],
+                      const struct Xt_com_list dst_com[num_dst_intersections],
                       Xt_idxlist src_idxlist_local,
                       Xt_idxlist dst_idxlist_local) {
 
@@ -232,9 +233,11 @@ generate_transfer_pos(struct Xt_xmap_intersection * xmap,
 
 Xt_xmap
 xt_xmap_intersection_new(Xt_int num_src_intersections,
-                         struct Xt_com_list src_com[num_src_intersections],
+                         const struct Xt_com_list
+                         src_com[num_src_intersections],
                          Xt_int num_dst_intersections,
-                         struct Xt_com_list dst_com[num_dst_intersections],
+                         const struct Xt_com_list
+                         dst_com[num_dst_intersections],
                          Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                          MPI_Comm comm) {
 
