@@ -196,7 +196,6 @@ generate_msg_infos(struct redist_collection_static_msg ** msgs, int * nmsgs,
   if (num_messages > 0)
     p = xrealloc(p, num_messages * sizeof(*p));
   *msgs = p;
-  assert(num_messages <= INT_MAX);
   *nmsgs = (int)num_messages;
 }
 
@@ -248,13 +247,11 @@ redist_collection_static_delete(Xt_redist redist) {
   struct Xt_redist_collection_static *redist_coll
     = (struct Xt_redist_collection_static *)redist;
 
-  int i;
-
-  for (i = 0; i < redist_coll->nsrc; ++i)
+  for (int i = 0; i < redist_coll->nsrc; ++i)
     MPI_Type_free(&(redist_coll->send_msgs[i].datatype));
   free(redist_coll->send_msgs);
 
-  for (i = 0; i < redist_coll->ndst; ++i)
+  for (int i = 0; i < redist_coll->ndst; ++i)
     MPI_Type_free(&(redist_coll->recv_msgs[i].datatype));
   free(redist_coll->recv_msgs);
 
