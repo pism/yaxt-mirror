@@ -241,11 +241,13 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
 
     // if either local and global size are negative
     if ((global_size[i] < 0) ^ (local_size[i] < 0))
-      idxsection->min_index_cache += idxsection->dims[i].global_stride *
-                                     (Xt_isign(local_size[i]) * local_size[i] - 1);
+      idxsection->min_index_cache
+        += idxsection->dims[i].global_stride *
+        (Xt_isign(local_size[i]) * local_size[i] - 1);
     else // if local and global size are both positive or negative
-      idxsection->max_index_cache += idxsection->dims[i].global_stride *
-                                     (Xt_isign(local_size[i]) * local_size[i] - 1);
+      idxsection->max_index_cache
+        += idxsection->dims[i].global_stride *
+        (Xt_isign(local_size[i]) * local_size[i] - 1);
   }
 
   return (Xt_idxlist)idxsection;
@@ -389,10 +391,9 @@ idxsection_get_intersection_with_other_idxlist(struct xt_idxsection *src_idxsect
     sorted_dst_idx = dst_idx;
 
   pos = xmalloc((size_t)num_dst_idx * sizeof(*pos));
-  int num_unmatched = idxsection_get_positions_of_indices((Xt_idxlist)src_idxsection,
-                                                          sorted_dst_idx,
-                                                          num_dst_idx, pos,
-                                                          single_match_only);
+  int num_unmatched = idxsection_get_positions_of_indices(
+    (Xt_idxlist)src_idxsection, sorted_dst_idx, num_dst_idx, pos,
+    single_match_only);
   Xt_int num_inter_idx = num_dst_idx - num_unmatched;
   Xt_int *intersection = xmalloc((size_t)num_inter_idx * sizeof(*intersection));
 
@@ -415,8 +416,9 @@ static Xt_idxlist
 idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   if (idxlist_dst->vtable != &idxsection_vtable)
-    return idxsection_get_intersection_with_other_idxlist((struct xt_idxsection *)idxlist_src,
-                                                          idxlist_dst);
+    return idxsection_get_intersection_with_other_idxlist(
+      (struct xt_idxsection *)idxlist_src,
+      idxlist_dst);
 
   // both lists are index section:
 
@@ -753,7 +755,8 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
 
     // same adjustment for local position as for the global one before
     if (section->dims[i].local_size < 0)
-      curr_local_position = - section->dims[i].local_size - curr_local_position - 1;
+      curr_local_position
+        = - section->dims[i].local_size - curr_local_position - 1;
 
     if (curr_local_position >= Xt_isign(section->dims[i].local_size) *
                                section->dims[i].local_size) return 1;
@@ -775,15 +778,17 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
   if (num_selection < 1) return 0; //nothing to do
 
   if (num_selection == 1)
-    return idxsection_get_position_of_index(body_idxlist, *selection_idx, positions);
+    return idxsection_get_position_of_index(body_idxlist, *selection_idx,
+                                            positions);
 
   int num_unmatched = 0;
 
   if (!single_match_only) {
     // this is the easy case, we don't care about multiple uses of the same position
     for (Xt_int i = 0; i < num_selection; ++i)
-      num_unmatched += idxsection_get_position_of_index(body_idxlist, selection_idx[i],
-                                                        &positions[i]);
+      num_unmatched
+        += idxsection_get_position_of_index(body_idxlist, selection_idx[i],
+                                            &positions[i]);
     return num_unmatched;
   }
 
@@ -805,8 +810,9 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
 
       if (prev_index != curr_index) {
 
-        num_unmatched += idxsection_get_position_of_index(body_idxlist, curr_index,
-                                                          positions + i);
+        num_unmatched
+          += idxsection_get_position_of_index(body_idxlist, curr_index,
+                                              positions + i);
         prev_index = curr_index;
 
       } else {
@@ -832,7 +838,8 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
       int j = v[i].pos;
       Xt_int jx = v[i].idx;
       if (jx != last_jx) {
-        num_unmatched += idxsection_get_position_of_index(body_idxlist, jx, &positions[j]);
+        num_unmatched
+          += idxsection_get_position_of_index(body_idxlist, jx, &positions[j]);
         last_jx = jx;
       } else {
         // for an idxsection there is a unique map from indices to positions,
