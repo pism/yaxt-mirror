@@ -576,12 +576,10 @@ recv_and_unpack_dist_dir_result(struct dist_dir * dist_dir, int recv_size,
 
     while (received_count > position) {
 
-      int rank;
-
       xt_mpi_call(MPI_Unpack(recv_buffer, received_count, &position,
-                                 &rank, 1, MPI_INT, comm), comm);
+                             &dist_dir->entries[num_entries].rank,
+                             1, MPI_INT, comm), comm);
 
-      dist_dir->entries[num_entries].rank = rank;
       dist_dir->entries[num_entries].idxlist =
         xt_idxlist_unpack(recv_buffer, received_count, &position, comm);
 
