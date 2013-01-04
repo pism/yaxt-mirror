@@ -599,10 +599,9 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
                                             Xt_int *num_src_intersections,
                                             MPI_Comm comm) {
 
-  int comm_size, comm_rank;
+  int comm_size;
 
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
 
   Xt_idxlist * intersections = NULL;
   size_t intersections_array_size = 0;
