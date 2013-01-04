@@ -354,18 +354,11 @@ recv_and_unpack_intersections(int * recv_size, struct dist_dir * src_dist_dir,
 static void
 match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
                         struct dist_dir * dst_dist_dir,
-                        Xt_idxlist *** src_dst_intersections) {
-
-  Xt_idxlist * src_dst_intersections_;
-
-  src_dst_intersections_
-    = xmalloc(src_dist_dir->num_entries * dst_dist_dir->num_entries *
-              sizeof(*src_dst_intersections_));
+                        Xt_idxlist
+                        (**src_dst_intersections)[dst_dist_dir->num_entries])
+{
   (*src_dst_intersections)
     = xmalloc(src_dist_dir->num_entries * sizeof(**src_dst_intersections));
-  for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
-    (*src_dst_intersections)[i]
-      = src_dst_intersections_ + i * dst_dist_dir->num_entries;
 
   for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
     for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
@@ -379,7 +372,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
                                  int (*send_size)[2], void ** send_buffer,
                                  MPI_Comm comm) {
 
-  Xt_idxlist ** src_dst_intersections;
+  Xt_idxlist (*src_dst_intersections)[dst_dist_dir->num_entries];
 
   match_src_dst_dist_dirs(src_dist_dir, dst_dist_dir, &src_dst_intersections);
 
@@ -474,7 +467,6 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
       if (src_dst_intersections[i][j] != NULL)
         xt_idxlist_delete(src_dst_intersections[i][j]);
-  if (*src_dst_intersections != NULL) free(*src_dst_intersections);
   free(src_dst_intersections);
 }
 
