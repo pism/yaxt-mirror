@@ -357,13 +357,21 @@ match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
                         Xt_idxlist
                         (**src_dst_intersections)[dst_dist_dir->num_entries])
 {
-  (*src_dst_intersections)
+  Xt_idxlist (*src_dst_intersections_)[dst_dist_dir->num_entries]
+    = (*src_dst_intersections)
     = xmalloc(src_dist_dir->num_entries * sizeof(**src_dst_intersections));
 
   for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
     for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
-      (*src_dst_intersections)[i][j] = xt_idxlist_get_intersection(
+    {
+      src_dst_intersections_[i][j] = xt_idxlist_get_intersection(
         src_dist_dir->entries[i].idxlist, dst_dist_dir->entries[j].idxlist);
+      if (!(xt_idxlist_get_num_indices(src_dst_intersections_[i][j]) > 0))
+      {
+        xt_idxlist_delete(src_dst_intersections_[i][j]);
+        src_dst_intersections_[i][j] = NULL;
+      }
+    }
 }
 
 static void
@@ -390,7 +398,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 
   for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
     for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
-      if (xt_idxlist_get_num_indices(src_dst_intersections[i][j]) > 0) {
+      if (src_dst_intersections[i][j] != NULL) {
 
         int msg_size;
 
@@ -419,7 +427,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 
         for (unsigned k = 0; k < dst_dist_dir->num_entries; ++k) {
 
-          if (xt_idxlist_get_num_indices(src_dst_intersections[j][k]) > 0) {
+          if (src_dst_intersections[j][k] != NULL) {
 
             // pack rank
             xt_mpi_call(MPI_Pack(&(dst_dist_dir->entries[k].rank), 1, MPI_INT,
@@ -447,7 +455,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 
         for (unsigned k = 0; k < src_dist_dir->num_entries; ++k) {
 
-          if (xt_idxlist_get_num_indices(src_dst_intersections[k][j]) > 0) {
+          if (src_dst_intersections[k][j] != NULL) {
 
             // pack rank
             xt_mpi_call(MPI_Pack(&(src_dist_dir->entries[k].rank), 1, MPI_INT,
