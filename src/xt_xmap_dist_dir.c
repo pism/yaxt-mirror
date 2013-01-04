@@ -703,7 +703,7 @@ static void exchange_idxlists(struct Xt_com_list **src_com,
 
   MPI_Request * send_indices_requests;
   send_indices_requests
-    = xmalloc(2 * (size_t)comm_size * sizeof(send_indices_requests));
+    = xmalloc(2 * (size_t)comm_size * sizeof(*send_indices_requests));
 
   send_intersections(send_buffer, send_size, send_indices_requests, comm);
 
