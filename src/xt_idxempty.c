@@ -154,13 +154,13 @@ static void idxempty_delete(Xt_idxlist data) {
    free(data);
 }
 
-static size_t idxempty_get_pack_size(Xt_idxlist XT_UNUSED(data), MPI_Comm comm) {
+static size_t idxempty_get_pack_size(Xt_idxlist XT_UNUSED(data), MPI_Comm comm)
+{
+  int size_int_type;
 
-   int size_int_type;
+  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
 
-   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-
-   return (size_t)size_int_type;
+  return (size_t)size_int_type;
 }
 
 void idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
@@ -173,8 +173,10 @@ void idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
                            buffer_size, position, comm), comm);
 }
 
-Xt_idxlist xt_idxempty_unpack(void *XT_UNUSED(buffer), int XT_UNUSED(buffer_size),
-                              int *XT_UNUSED(position), MPI_Comm XT_UNUSED(comm)) {
+Xt_idxlist xt_idxempty_unpack(void *XT_UNUSED(buffer),
+                              int XT_UNUSED(buffer_size),
+                              int *XT_UNUSED(position),
+                              MPI_Comm XT_UNUSED(comm)) {
 
    return xt_idxempty_new();
 }
