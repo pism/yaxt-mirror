@@ -445,7 +445,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 
   int position = 0;
 
-  for (unsigned i = 0; i < (unsigned)comm_size; ++i) {
+  for (int i = 0; i < comm_size; ++i) {
 
     if (send_size[i][SEND_SIZE_SRC] > 0) {
 
@@ -453,7 +453,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 
       for (unsigned j = 0; j < src_dist_dir->num_entries; ++j) {
 
-        if ((unsigned)src_dist_dir->entries[j].rank != i) continue;
+        if (src_dist_dir->entries[j].rank != i) continue;
 
         for (unsigned k = 0; k < dst_dist_dir->num_entries; ++k) {
 
