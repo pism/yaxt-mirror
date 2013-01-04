@@ -733,6 +733,8 @@ static void exchange_idxlists(struct Xt_com_list **src_com,
   // directories and pack the results into a sendable format
   match_and_pack_src_dst_dist_dirs(src_dist_dir, dst_dist_dir, send_size,
                                    &send_buffer, comm);
+  free_dist_dir(src_dist_dir);
+  free_dist_dir(dst_dist_dir);
 
   // get the data size the local process will receive from other processes
   get_remote_packed_intersection_size(recv_size, send_size, comm);
@@ -750,8 +752,6 @@ static void exchange_idxlists(struct Xt_com_list **src_com,
                               MPI_STATUSES_IGNORE), comm);
 
   free(send_buffer);
-  free_dist_dir(src_dist_dir);
-  free_dist_dir(dst_dist_dir);
   free(send_size);
   free(send_indices_requests);
 }
