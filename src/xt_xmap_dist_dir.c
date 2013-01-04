@@ -428,9 +428,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
       if (src_dst_intersections[i][j] != NULL) {
 
-        int msg_size;
-
-        msg_size = rank_pack_size
+        int msg_size = rank_pack_size
           + (int)xt_idxlist_get_pack_size(src_dst_intersections[i][j], comm);
 
         send_size[src_dist_dir->entries[i].rank][SEND_SIZE_SRC] += msg_size;
