@@ -554,11 +554,12 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
 
 static void
 recv_and_unpack_dist_dir_result(struct dist_dir * dist_dir, int recv_size,
-                                void * recv_buffer, int tag, MPI_Comm comm) {
+                                void * recv_buffer, int tag,
+                                MPI_Comm comm)
+{
 
   // initiate distributed directories
-  dist_dir->num_entries = 0;
-
+  unsigned num_entries = 0;
   while (recv_size > 0) {
 
     MPI_Status status;
@@ -580,17 +581,20 @@ recv_and_unpack_dist_dir_result(struct dist_dir * dist_dir, int recv_size,
       xt_mpi_call(MPI_Unpack(recv_buffer, received_count, &position,
                                  &rank, 1, MPI_INT, comm), comm);
 
-      dist_dir->entries[dist_dir->num_entries].rank = rank;
-      dist_dir->entries[dist_dir->num_entries].idxlist =
+      dist_dir->entries[num_entries].rank = rank;
+      dist_dir->entries[num_entries].idxlist =
         xt_idxlist_unpack(recv_buffer, received_count, &position, comm);
 
-      dist_dir->num_entries++;
+      ++num_entries;
     }
   }
 
   if (0 != recv_size)
     Xt_abort(comm, "ERROR: recv_and_unpack_dist_dir_result"
              " received wrong number of bytes", __FILE__, __LINE__);
+
+  dist_dir->num_entries = num_entries;
+
 }
 
 static void
