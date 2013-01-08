@@ -377,27 +377,53 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
   free(recv_buffer);
 }
 
-static void
+
+struct isect
+{
+  int rank;
+  unsigned dst_list, src_list;
+  Xt_idxlist idxlist;
+};
+
+static size_t
 match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
                         struct dist_dir * dst_dist_dir,
-                        Xt_idxlist
-                        (**src_dst_intersections)[dst_dist_dir->num_entries])
+                        struct isect **src_dst_intersections)
 {
-  Xt_idxlist (*src_dst_intersections_)[dst_dist_dir->num_entries]
+  struct isect (*src_dst_intersections_)
     = (*src_dst_intersections)
-    = xmalloc(src_dist_dir->num_entries * sizeof(**src_dst_intersections));
+    = xmalloc(src_dist_dir->num_entries * dst_dist_dir->num_entries
+              * sizeof(**src_dst_intersections));
+  size_t isect_fill = 0;
 
   for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
     for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
     {
-      src_dst_intersections_[i][j] = xt_idxlist_get_intersection(
+      Xt_idxlist intersection = xt_idxlist_get_intersection(
         src_dist_dir->entries[i].idxlist, dst_dist_dir->entries[j].idxlist);
-      if (!(xt_idxlist_get_num_indices(src_dst_intersections_[i][j]) > 0))
+      if (xt_idxlist_get_num_indices(intersection) > 0)
       {
-        xt_idxlist_delete(src_dst_intersections_[i][j]);
-        src_dst_intersections_[i][j] = NULL;
+        src_dst_intersections_[isect_fill]
+          = (struct isect){ .dst_list = j, .src_list = i,
+                            .idxlist = intersection };
+        ++isect_fill;
+      }
+      else
+      {
+        xt_idxlist_delete(intersection);
       }
     }
+  *src_dst_intersections
+    = xrealloc(src_dst_intersections_,
+               isect_fill * sizeof (src_dst_intersections_[0]));
+  return isect_fill;
+}
+
+static int
+cmp_isect_rank(const void *a_, const void *b_)
+{
+  const struct isect *a = a_, *b = b_;
+  return a->rank - b->rank;
 }
 
 static void
@@ -407,9 +433,11 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
                                  void ** send_buffer,
                                  MPI_Comm comm) {
 
-  Xt_idxlist (*src_dst_intersections)[dst_dist_dir->num_entries];
+  struct isect *src_dst_intersections;
 
-  match_src_dst_dist_dirs(src_dist_dir, dst_dist_dir, &src_dst_intersections);
+  size_t num_intersections
+    = match_src_dst_dist_dirs(src_dist_dir, dst_dist_dir,
+                              &src_dst_intersections);
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
@@ -424,85 +452,65 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     send_size[i][SEND_SIZE_SRC] = 0, send_size[i][SEND_SIZE_DST] = 0,
       send_size[i][SEND_NUM_SRC] = 0, send_size[i][SEND_NUM_DST] = 0;
 
-  for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
-    for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
-      if (src_dst_intersections[i][j] != NULL) {
+  for (size_t i = 0; i < num_intersections; ++i)
+  {
+    int msg_size = rank_pack_size
+      + (int)xt_idxlist_get_pack_size(src_dst_intersections[i].idxlist,
+                                      comm);
+    unsigned src = src_dst_intersections[i].src_list,
+      dst = src_dst_intersections[i].dst_list;
+    send_size[src_dist_dir->entries[src].rank][SEND_SIZE_SRC] += msg_size;
+    ++(send_size[src_dist_dir->entries[src].rank][SEND_NUM_SRC]);
+    send_size[dst_dist_dir->entries[dst].rank][SEND_SIZE_DST] += msg_size;
+    ++(send_size[dst_dist_dir->entries[dst].rank][SEND_NUM_DST]);
+    total_send_size += 2*msg_size;
+    src_dst_intersections[i].rank = src_dist_dir->entries[src].rank;
+  }
 
-        int msg_size = rank_pack_size
-          + (int)xt_idxlist_get_pack_size(src_dst_intersections[i][j], comm);
-
-        send_size[src_dist_dir->entries[i].rank][SEND_SIZE_SRC] += msg_size;
-        ++(send_size[src_dist_dir->entries[i].rank][SEND_NUM_SRC]);
-        send_size[dst_dist_dir->entries[j].rank][SEND_SIZE_DST] += msg_size;
-        ++(send_size[dst_dist_dir->entries[j].rank][SEND_NUM_DST]);
-
-        total_send_size += 2*msg_size;
-      }
+  /* sort intersections by src rank */
+  qsort(src_dst_intersections, num_intersections,
+        sizeof (src_dst_intersections[0]), cmp_isect_rank);
 
   (*send_buffer) = xmalloc((size_t)total_send_size);
 
   int position = 0;
 
-  for (int i = 0; i < comm_size; ++i) {
+  for (size_t i = 0; i < num_intersections; ++i)
+  {
+    unsigned dst = src_dst_intersections[i].dst_list;
+    int dst_rank = dst_dist_dir->entries[dst].rank;
+    // pack rank
+    xt_mpi_call(MPI_Pack(&dst_rank, 1, MPI_INT,
+                         (*send_buffer), total_send_size, &position,
+                         comm), comm);
+    // pack intersection
+    xt_idxlist_pack(src_dst_intersections[i].idxlist, (*send_buffer),
+                    total_send_size, &position, comm);
 
-    if (send_size[i][SEND_SIZE_SRC] > 0) {
-
-      // collect all src->dst data for the current rank
-
-      for (unsigned j = 0; j < src_dist_dir->num_entries; ++j) {
-
-        if (src_dist_dir->entries[j].rank != i) continue;
-
-        for (unsigned k = 0; k < dst_dist_dir->num_entries; ++k) {
-
-          if (src_dst_intersections[j][k] != NULL) {
-
-            // pack rank
-            xt_mpi_call(MPI_Pack(&(dst_dist_dir->entries[k].rank), 1, MPI_INT,
-                                 (*send_buffer), total_send_size, &position,
-                                 comm), comm);
-
-            // pack intersection
-            xt_idxlist_pack(src_dst_intersections[j][k], (*send_buffer),
-                            total_send_size, &position, comm);
-          }
-        }
-      }
-    }
+    src_dst_intersections[i].rank = dst_rank;
   }
 
-  for (int i = 0; i < comm_size; ++i) {
+  /* sort intersections by dst rank */
+  qsort(src_dst_intersections, num_intersections,
+         sizeof (src_dst_intersections[0]), cmp_isect_rank);
 
-    if (send_size[i][SEND_SIZE_DST] > 0) {
 
-      // collect all dst->src data for the current rank
+  for (size_t i = 0; i < num_intersections; ++i)
+  {
+    unsigned src = src_dst_intersections[i].src_list;
+    int src_rank = src_dist_dir->entries[src].rank;
 
-      for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j) {
-
-        if (dst_dist_dir->entries[j].rank != i) continue;
-
-        for (unsigned k = 0; k < src_dist_dir->num_entries; ++k) {
-
-          if (src_dst_intersections[k][j] != NULL) {
-
-            // pack rank
-            xt_mpi_call(MPI_Pack(&(src_dist_dir->entries[k].rank), 1, MPI_INT,
-                                 (*send_buffer), total_send_size, &position,
-                                 comm), comm);
-
-            // pack intersection
-            xt_idxlist_pack(src_dst_intersections[k][j], (*send_buffer),
-                            total_send_size, &position, comm);
-          }
-        }
-      }
-    }
+    // pack rank
+    xt_mpi_call(MPI_Pack(&src_rank, 1, MPI_INT,
+                         (*send_buffer), total_send_size, &position,
+                         comm), comm);
+    // pack intersection
+    xt_idxlist_pack(src_dst_intersections[i].idxlist, (*send_buffer),
+                    total_send_size, &position, comm);
   }
 
-  for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
-    for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
-      if (src_dst_intersections[i][j] != NULL)
-        xt_idxlist_delete(src_dst_intersections[i][j]);
+  for (size_t i = 0; i < num_intersections; ++i)
+    xt_idxlist_delete(src_dst_intersections[i].idxlist);
   free(src_dst_intersections);
 }
 
