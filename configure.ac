@@ -117,13 +117,15 @@ main(int argc, char **argv)
   return (procnum == cmdnum)?EXIT_SUCCESS:EXIT_FAILURE;
 }
 ])],
-     [AS_IF([$MPI_LAUNCH -n 4 ./conftest$EXEEXT 4],,
-        [AC_MSG_FAILURE([mpirun doesn't work])])],
+     [AS_IF([$MPI_LAUNCH -n 4 ./conftest$EXEEXT 4],
+        [AC_MSG_RESULT([yes])],
+        [AC_MSG_RESULT([no])
+         AC_MSG_FAILURE([mpirun doesn't work])])],
      [AC_MSG_FAILURE([Cannot compile simple MPI program])])
    CFLAGS=$saved_CFLAGS
    LIBS=$saved_LIBS
   ])
-AS_IF([test x$MPI_LAUNCH = xtrue],
+AS_IF([test "x$MPI_LAUNCH" = xtrue],
   [AC_MSG_WARN([MPI launch command unavailable])])
 
 # enable user to select an alternative enumeration type in case
