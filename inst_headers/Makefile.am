@@ -49,4 +49,7 @@ dist-hook:
 	-rm $(distdir)/xt/*.h
 	-rmdir $(distdir)/xt
 
+../src/xtinclude_Makefile.inc:
+	(cd ../src ; $(MAKE) xtinclude_Makefile.inc)
+
 @AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@
