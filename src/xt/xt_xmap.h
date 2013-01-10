@@ -182,7 +182,7 @@ void xt_xmap_iterator_delete(Xt_xmap_iter iter);
 void xt_xmap_delete(Xt_xmap xmap);
 
 /**
- * gives a upper limit to the range of positions in the src part of the transfer_pos,
+ * gives an upper limit to the range of positions in the src part of the transfer_pos,
  *
  * @param[in] xmap exchange map
  * @return         upper limit of range of positions in the source list
@@ -190,7 +190,7 @@ void xt_xmap_delete(Xt_xmap xmap);
 int xt_xmap_get_max_src_pos(Xt_xmap xmap);
 
 /**
- * gives a upper limit to the range of positions in the dst part of the transfer_pos,
+ * gives an upper limit to the range of positions in the dst part of the transfer_pos,
  *
  * @param[in] xmap exchange map
  * @return         upper limit of range of positions in the destination list
