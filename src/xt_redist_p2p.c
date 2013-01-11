@@ -117,12 +117,10 @@ generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
   bdispl_vec = xmalloc((size_t)num_transfer_pos * sizeof(*bdispl_vec));
   blen_vec = xmalloc((size_t)num_transfer_pos * sizeof(*blen_vec));
 
-  if (!block_offsets) die("generate_block_datatype: "
-                          "non-NULL block_offsets expected");
+  assert(block_offsets);
 
-  int j;
   for (Xt_int i = 0; i < num_transfer_pos; ++i) {
-    j = transfer_pos[i];
+    int j = transfer_pos[i];
     bdispl_vec[i] = block_offsets[j];
     blen_vec[i] = block_sizes[j];
   }
