@@ -107,7 +107,7 @@ gen_mpi_datatype_contiguous(int displacement, int blocklength,
 }
 
 static MPI_Datatype
-gen_mpi_datatype_vector(int stride, int blocklength, int count,
+gen_mpi_datatype_vector(int count, int blocklength, int stride,
                         int offset, MPI_Datatype old_type, MPI_Comm comm) {
 
   MPI_Datatype datatype;
@@ -210,9 +210,9 @@ xt_mpi_generate_datatype_block(int const * displacements, int * blocklengths,
     datatype = gen_mpi_datatype_contiguous(displacements[0], blocklengths[0],
                                            old_type, comm);
   else if (check_for_vector_type(displacements, blocklengths, count))
-    datatype = gen_mpi_datatype_vector(displacements[1]-displacements[0],
-                                       blocklengths[0],
-                                       count, displacements[0], old_type, comm);
+    datatype = gen_mpi_datatype_vector(count, blocklengths[0],
+                                       displacements[1] - displacements[0],
+                                       displacements[0], old_type, comm);
   else if (check_for_indexed_block_type(blocklengths, count))
     datatype = gen_mpi_datatype_indexed_block(displacements, blocklengths[0],
                                               count, old_type, comm);
