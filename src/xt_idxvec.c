@@ -138,10 +138,12 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .get_bounding_box             = NULL
 };
 
-// index vector data structure
-struct xt_idxvec {
+typedef struct Xt_idxvec_ *Xt_idxvec;
 
-  struct Xt_idxlist parent;
+// index vector data structure
+struct Xt_idxvec_ {
+
+  struct Xt_idxlist_ parent;
 
    Xt_int *vector;
    Xt_int num_indices;
@@ -159,7 +161,7 @@ struct xt_idxvec {
 
 Xt_idxlist xt_idxvec_new(Xt_int *idxvec, Xt_int num_indices) {
 
-  struct xt_idxvec *idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
+  Xt_idxvec idxvec_data = xmalloc(sizeof (*idxvec_data));
 
   Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
 
@@ -224,8 +226,9 @@ decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
 }
 
 static void
-generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_int num_stripes,
-                                    struct xt_idxvec * idxvec) {
+generate_sorted_vector_from_stripes(struct Xt_stripe stripes[],
+                                    Xt_int num_stripes,
+                                    Xt_idxvec idxvec) {
 
   if (num_stripes == 0) {
     idxvec->sorted_vector = NULL;
@@ -318,11 +321,9 @@ generate_sorted_vector_from_stripes(struct Xt_stripe * stripes, Xt_int num_strip
 }
 
 Xt_idxlist
-xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_int num_stripes) {
+xt_idxvec_from_stripes_new(struct Xt_stripe stripes[], Xt_int num_stripes) {
 
-   struct xt_idxvec *idxvec_data;
-
-   idxvec_data = xmalloc(1 * sizeof(*idxvec_data));
+   Xt_idxvec idxvec_data = xmalloc(sizeof (*idxvec_data));
 
    Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
 
@@ -350,17 +351,17 @@ xt_idxvec_from_stripes_new(struct Xt_stripe * stripes, Xt_int num_stripes) {
 
 static void idxvec_delete(Xt_idxlist data) {
 
-   if (((struct xt_idxvec*)data)->sorted_vector !=
-       ((struct xt_idxvec*)data)->vector)
-      free(((struct xt_idxvec*)data)->sorted_vector);
-   free(((struct xt_idxvec*)data)->sorted_vec_positions);
-   free(((struct xt_idxvec*)data)->vector);
+   if (((Xt_idxvec)data)->sorted_vector !=
+       ((Xt_idxvec)data)->vector)
+      free(((Xt_idxvec)data)->sorted_vector);
+   free(((Xt_idxvec)data)->sorted_vec_positions);
+   free(((Xt_idxvec)data)->vector);
    free(data);
 }
 
 static size_t idxvec_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
-   struct xt_idxvec *idxvec = (struct xt_idxvec*)data;
+   Xt_idxvec idxvec = (Xt_idxvec)data;
 
    int size_xt_idx, size_xt_count, size_int_type;
 
@@ -376,7 +377,7 @@ void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
                  int *position, MPI_Comm comm) {
 
   assert(data);
-  struct xt_idxvec *idxvec = (struct xt_idxvec*)data;
+  Xt_idxvec idxvec = (Xt_idxvec)data;
   int type = VECTOR;
 
   assert(idxvec->num_indices <= INT_MAX);
@@ -394,10 +395,9 @@ void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
 Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
-  struct xt_idxvec *idxvec;
+  Xt_idxvec idxvec = xmalloc(sizeof (*idxvec));
   Xt_int num_indices;
 
-  idxvec = xmalloc(1 * sizeof(*idxvec));
 
   Xt_idxlist_init(&idxvec->parent, &idxvec_vtable);
 
@@ -425,7 +425,7 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 }
 
 static Xt_int *
-get_sorted_vector(struct xt_idxvec * idxvec) {
+get_sorted_vector(Xt_idxvec idxvec) {
 
   if (idxvec->sorted_vector != NULL)
     return idxvec->sorted_vector;
@@ -469,14 +469,10 @@ idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   // both lists are index vectors:
 
-  struct xt_idxvec *idxvec_src, *idxvec_dst;
+  Xt_idxvec idxvec_src = (Xt_idxvec)idxlist_src,
+    idxvec_dst = (Xt_idxvec)idxlist_dst;
 
-  idxvec_src = (struct xt_idxvec*)idxlist_src;
-  idxvec_dst = (struct xt_idxvec*)idxlist_dst;
-
-  struct xt_idxvec *inter_vector;
-
-  inter_vector = xmalloc(1 * sizeof(*inter_vector));
+  Xt_idxvec inter_vector = xmalloc(sizeof (*inter_vector));
 
   inter_vector->num_indices = 0;
   inter_vector->vector =
@@ -522,9 +518,7 @@ idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 static Xt_idxlist
 idxvec_copy(Xt_idxlist idxlist) {
 
-   struct xt_idxvec *idxvec_data;
-
-   idxvec_data = (struct xt_idxvec *)idxlist;
+   Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
    return xt_idxvec_new(idxvec_data->vector, idxvec_data->num_indices);
 }
@@ -532,9 +526,7 @@ idxvec_copy(Xt_idxlist idxlist) {
 static Xt_int
 idxvec_get_num_indices(Xt_idxlist idxlist) {
 
-   struct xt_idxvec *idxvec_data;
-
-   idxvec_data = (struct xt_idxvec *)idxlist;
+   Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
    return idxvec_data->num_indices;
 }
@@ -542,9 +534,7 @@ idxvec_get_num_indices(Xt_idxlist idxlist) {
 static void
 idxvec_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
-   struct xt_idxvec *idxvec_data;
-
-   idxvec_data = (struct xt_idxvec *)idxlist;
+   Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
    memcpy(indices, idxvec_data->vector,
           (size_t)idxvec_data->num_indices * sizeof(*indices));
@@ -552,7 +542,7 @@ idxvec_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
 static Xt_int const*
 idxvec_get_indices_const(Xt_idxlist idxlist) {
-  struct xt_idxvec *idxvec = (struct xt_idxvec *)idxlist;
+  Xt_idxvec idxvec = (Xt_idxvec)idxlist;
 
   return idxvec->vector;
 }
@@ -562,9 +552,7 @@ static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                          Xt_int * num_stripes) {
 
-  struct xt_idxvec *idxvec_data;
-
-  idxvec_data = (struct xt_idxvec *)idxlist;
+  Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
   xt_idxstripes_convert_to_stripes(idxvec_data->vector,
                                    idxvec_data->num_indices,
@@ -574,9 +562,7 @@ idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
 static int
 idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index) {
 
-  struct xt_idxvec *idxvec_data;
-
-  idxvec_data = (struct xt_idxvec *)idxlist;
+  Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
   if (position < 0 || position >= idxvec_data->num_indices)
     return 1;
@@ -587,18 +573,17 @@ idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index) {
 }
 
 static int
-idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_int num_pos, Xt_int *index, Xt_int undef_idx) {
+idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+                                Xt_int num_pos, Xt_int *index,
+                                Xt_int undef_idx) {
 
-  struct xt_idxvec *idxvec;
-
-  idxvec = (struct xt_idxvec *)idxlist;
-  int p;
+  Xt_idxvec idxvec = (Xt_idxvec)idxlist;
   int max_p = idxvec->num_indices-1;
   Xt_int *v = idxvec->vector;
 
   int undef_count = 0;
   for (int ip = 0; ip < num_pos; ip++) {
-    p = positions[ip];
+    int p = positions[ip];
     if (p < 0 || p > max_p) {
       index[ip] = undef_idx;
       undef_count++;
@@ -614,9 +599,7 @@ static int
 idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                  int * position, int offset) {
 
-  struct xt_idxvec *idxvec_data;
-
-  idxvec_data = (struct xt_idxvec *)idxlist;
+  Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
   *position = -1;
 
@@ -717,8 +700,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
    *  on the target side we want single_match_only,
    *  on the source side we don't
    */
-  struct xt_idxvec *body_idxvec;
-  body_idxvec = (struct xt_idxvec *)body_idxlist;
+  Xt_idxvec body_idxvec = (Xt_idxvec)body_idxlist;
   Xt_int *sorted_body = get_sorted_vector(body_idxvec);
   int *sorted_body_pos = body_idxvec->sorted_vec_positions;
   int search_end = body_idxvec->num_indices -1;
@@ -806,11 +788,10 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 static Xt_int
 idxvec_get_min_index(Xt_idxlist idxlist) {
 
-  struct xt_idxvec *idxvec_data;
+  Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
-  idxvec_data = (struct xt_idxvec *)idxlist;
-
-  if (!idxvec_data->num_indices) die("idxvec_get_min_index: empty index vector");
+  if (!idxvec_data->num_indices)
+    die("idxvec_get_min_index: empty index vector");
 
   return get_sorted_vector(idxvec_data)[0];
 }
@@ -818,11 +799,10 @@ idxvec_get_min_index(Xt_idxlist idxlist) {
 static Xt_int
 idxvec_get_max_index(Xt_idxlist idxlist) {
 
-  struct xt_idxvec *idxvec_data;
+  Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
-  idxvec_data = (struct xt_idxvec *)idxlist;
-
-  if (!idxvec_data->num_indices) die("idxvec_get_max_index: empty index vector");
+  if (!idxvec_data->num_indices)
+    die("idxvec_get_max_index: empty index vector");
 
   return get_sorted_vector(idxvec_data)[idxvec_data->num_indices-1];
 }

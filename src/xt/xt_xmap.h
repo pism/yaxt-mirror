@@ -56,7 +56,7 @@
  * methods to be used with Xt_xmap
  */
 
-typedef struct Xt_xmap_iterator *Xt_xmap_iter;
+typedef struct Xt_xmap_iter_ *Xt_xmap_iter;
 
 /**
  * gets the MPI communicator of the exchange map

@@ -62,7 +62,7 @@ int main(void) {
     state[i] = 0;
   }
 
-  struct xt_handle_set_type *hset = xt_handle_set_new(4);
+  Xt_handle_set_type hset = xt_handle_set_new(4);
 
   // new handles
   for (int i = 0; i<hsize; i++) {

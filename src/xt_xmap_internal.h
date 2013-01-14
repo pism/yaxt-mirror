@@ -58,7 +58,7 @@
  * contains declaration for the exchange map data structure
  */
 
-struct Xt_xmap_iterator_vtable {
+struct Xt_xmap_iter_vtable {
   int (*next)(Xt_xmap_iter iter);
   int (*get_rank)(Xt_xmap_iter iter);
   int const * (*get_transfer_pos)(Xt_xmap_iter iter);
@@ -66,9 +66,10 @@ struct Xt_xmap_iterator_vtable {
   void (*delete)(Xt_xmap_iter iter);
 };
 
-struct Xt_xmap_iterator {
-  struct Xt_xmap_iterator_vtable * vtable;
+struct Xt_xmap_iter_ {
+  struct Xt_xmap_iter_vtable * vtable;
 };
+
 
 struct Xt_xmap_vtable {
 
@@ -84,7 +85,7 @@ struct Xt_xmap_vtable {
   int (*get_max_dst_pos)(Xt_xmap);
 };
 
-struct Xt_xmap {
+struct Xt_xmap_ {
   const struct Xt_xmap_vtable * vtable;
 };
 

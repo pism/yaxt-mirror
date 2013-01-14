@@ -59,9 +59,9 @@ typedef XT_INT Xt_int;
 typedef unsigned XT_INT Xt_uint;
 typedef uint64_t Xt_uid;
 
-typedef struct Xt_idxlist *Xt_idxlist;
-typedef struct Xt_xmap *Xt_xmap;
-typedef struct xt_redist *Xt_redist;
+typedef struct Xt_idxlist_ *Xt_idxlist;
+typedef struct Xt_xmap_ *Xt_xmap;
+typedef struct Xt_redist_ *Xt_redist;
 
 /**
  * \file xt_core.h

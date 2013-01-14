@@ -50,7 +50,7 @@
 #include "xt/xt_handles.h"
 
 
-struct xt_handle_set_type {
+struct Xt_handle_set_type_ {
   unsigned num; // number of used handles
   unsigned cap; // capacity
   unsigned hnf; // hint for next free entry
@@ -59,23 +59,23 @@ struct xt_handle_set_type {
 
 static const unsigned default_handle_set_cap = 16;
 
-static void extend_handle_set(struct xt_handle_set_type *hset);
+static void extend_handle_set(Xt_handle_set_type hset);
 
-int xt_handle_is_valid(struct xt_handle_set_type *hset, int ih) {
+int xt_handle_is_valid(Xt_handle_set_type hset, int ih) {
   if(!hset) return 0;
   if (ih < 0 || (unsigned)ih >= hset->cap) return 0;
   if (hset->p[ih]) return 1;
   return 0;
 }
 
-void *xt_handle2pointer(struct xt_handle_set_type *hset, int ih) {
+void *xt_handle2pointer(Xt_handle_set_type hset, int ih) {
   if (!xt_handle_is_valid(hset, ih)) return NULL;
   return hset->p[ih];
 }
 
-struct xt_handle_set_type *xt_handle_set_new(int cap) {
-  struct xt_handle_set_type *hset;
-  hset = malloc( sizeof(struct xt_handle_set_type) );
+Xt_handle_set_type xt_handle_set_new(int cap) {
+  Xt_handle_set_type hset;
+  hset = malloc(sizeof (*hset));
   assert(cap >= 0);
   hset->p = malloc((unsigned)cap * sizeof(void*));
   hset->num = 0;
@@ -90,7 +90,7 @@ struct xt_handle_set_type *xt_handle_set_new(int cap) {
 }
 
 
-static void extend_handle_set(struct xt_handle_set_type *hset) {
+static void extend_handle_set(Xt_handle_set_type hset) {
   if (!hset) {
     hset = xt_handle_set_new(default_handle_set_cap);
     return;
@@ -114,14 +114,14 @@ static void extend_handle_set(struct xt_handle_set_type *hset) {
 }
 
 
-void xt_handle_set_delete(struct xt_handle_set_type *hset) {
+void xt_handle_set_delete(Xt_handle_set_type hset) {
   free(hset->p);
   free(hset);
   hset=NULL;
 }
 
 
-int xt_handle_new(struct xt_handle_set_type *hset, void *p) {
+int xt_handle_new(Xt_handle_set_type hset, void *p) {
   if (p == NULL) return -1;
 
   if (hset->num >= hset->cap) extend_handle_set(hset);
@@ -140,7 +140,7 @@ int xt_handle_new(struct xt_handle_set_type *hset, void *p) {
   return 0;
 }
 
-void xt_handle_delete(struct xt_handle_set_type *hset, int handle) {
+void xt_handle_delete(Xt_handle_set_type hset, int handle) {
   if (!xt_handle_is_valid(hset, handle)) die("delete_handle: invalid handle");
   hset->p[handle]=NULL;
   if (hset->num == 0) die("delete_handle: internal error - negative occupation count");

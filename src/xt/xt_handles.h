@@ -50,7 +50,7 @@
 /** \example test_handles.c
  */
 
-typedef struct xt_handle_set_type **xt_handle_set_type;
+typedef struct Xt_handle_set_type_ *Xt_handle_set_type;
 
 /**
  * checks if a given handle is valid within a handle set
@@ -58,7 +58,7 @@ typedef struct xt_handle_set_type **xt_handle_set_type;
  * @param[in] hset       handle set
  * @param[in] handle     handle within handle set
  */
-int xt_handle_is_valid(struct xt_handle_set_type *hset, int handle);
+int xt_handle_is_valid(Xt_handle_set_type hset, int handle);
 
 /**
  * constructor for handle sets
@@ -66,14 +66,14 @@ int xt_handle_is_valid(struct xt_handle_set_type *hset, int handle);
  * @param[in] cap        start capacity (size of handle space)
  * @return returns an empty handle set of capacity cap
  */
-struct xt_handle_set_type *xt_handle_set_new(int cap);
+Xt_handle_set_type xt_handle_set_new(int cap);
 
 /**
  * destructor
  *
  * @param[in,out] hset handle set
  */
-void xt_handle_set_delete(struct xt_handle_set_type *hset);
+void xt_handle_set_delete(Xt_handle_set_type hset);
 
 /**
  * registers user pointer with a new handle
@@ -82,7 +82,7 @@ void xt_handle_set_delete(struct xt_handle_set_type *hset);
  * @param[in] p            pointer to user data
  * @return returns integer handle
  */
-int xt_handle_new(struct xt_handle_set_type *hset, void *p);
+int xt_handle_new(Xt_handle_set_type hset, void *p);
 
 /**
  * unregisters handle
@@ -90,7 +90,7 @@ int xt_handle_new(struct xt_handle_set_type *hset, void *p);
  * @param[in,out] hset     handle set
  * @param[in] handle       handle
  */
-void xt_handle_delete(struct xt_handle_set_type *hset, int handle);
+void xt_handle_delete(Xt_handle_set_type hset, int handle);
 
 /**
  * inquires about user pointer connected with handle
@@ -98,6 +98,6 @@ void xt_handle_delete(struct xt_handle_set_type *hset, int handle);
  * @param[in] hset     handle set
  * @param[in] handle       handle
  */
-void *xt_handle2pointer(struct xt_handle_set_type *hset, int handle);
+void *xt_handle2pointer(Xt_handle_set_type hset, int handle);
 
 #endif

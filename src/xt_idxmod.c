@@ -50,7 +50,9 @@
 #include "xt/xt_idxmod.h"
 
 
-struct Xt_idxlist *xt_idxmod_new(struct Xt_idxlist* patch_idxlist,  struct Xt_modifier *modifier, int modifier_num, int *mstate) {
+Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
+                         struct Xt_modifier *modifier,
+                         int modifier_num, int *mstate) {
 
   Xt_int patch_size = xt_idxlist_get_num_indices(patch_idxlist);
 
@@ -63,7 +65,7 @@ struct Xt_idxlist *xt_idxmod_new(struct Xt_idxlist* patch_idxlist,  struct Xt_mo
   int *extract_pos = xmalloc((size_t)patch_size * sizeof(int));
   Xt_int *subst_idx = xmalloc((size_t)patch_size * sizeof(Xt_int));
 
-  struct Xt_idxlist* workpatch_idxlist = patch_idxlist;
+  Xt_idxlist workpatch_idxlist = patch_idxlist;
 
   xt_idxlist_get_indices(workpatch_idxlist, workpatch_idx);
 

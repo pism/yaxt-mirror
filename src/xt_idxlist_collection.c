@@ -133,7 +133,7 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
 
 struct xt_idxlist_collection {
 
-  struct Xt_idxlist parent;
+  struct Xt_idxlist_ parent;
 
   Xt_idxlist * idxlists;
   unsigned num_idxlists;

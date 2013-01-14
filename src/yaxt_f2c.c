@@ -65,11 +65,11 @@ struct xt_idxlist_f {
 };
 
 struct xt_xmap_f {
-   struct Xt_xmap *cptr;
+   Xt_xmap cptr;
 };
 
 struct xt_redist_f {
-  struct xt_redist *cptr;
+  Xt_redist cptr;
 };
 
 void xt_initialize_f(MPI_Fint *comm_f) {

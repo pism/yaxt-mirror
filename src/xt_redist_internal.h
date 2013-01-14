@@ -63,7 +63,7 @@ struct xt_redist_vtable {
   MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);
 };
 
-struct xt_redist {
+struct Xt_redist_ {
   struct xt_redist_vtable *vtable;
 };
 

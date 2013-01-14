@@ -79,7 +79,7 @@ typedef struct {
 
 static const xt_ut_deco_type zero_deco = {.idxvec=NULL, .domain_size=0};
 
-static struct xt_handle_set_type *deco_set;
+static Xt_handle_set_type deco_set;
 
 typedef struct {
   Xt_xmap xmap;
@@ -87,7 +87,7 @@ typedef struct {
 
 static const xt_ut_template_type zero_template = {.xmap=NULL};
 
-static struct xt_handle_set_type *template_set;
+static Xt_handle_set_type template_set;
 
 
 typedef struct {
@@ -97,7 +97,7 @@ typedef struct {
 static const xt_ut_trans_type zero_trans = {.redist = NULL};
 
 
-static struct xt_handle_set_type *trans_set;
+static Xt_handle_set_type trans_set;
 
 void xt_ut_abort(char *msg, char *source, int *line) {
   Xt_abort(MPI_COMM_WORLD, msg, source, *line);

@@ -78,14 +78,14 @@ struct xt_idxlist_vtable {
                             struct Xt_bounds bounds[ndim]);
 };
 
-struct Xt_idxlist {
+struct Xt_idxlist_ {
   const struct xt_idxlist_vtable *vtable;
   Xt_uid uid;
 };
 
 Xt_uid xt_idxlist_new_uid();
 
-static inline void Xt_idxlist_init(struct Xt_idxlist *idxlist,
+static inline void Xt_idxlist_init(Xt_idxlist idxlist,
                                    const struct xt_idxlist_vtable *vtable)
 {
   idxlist->vtable = vtable;

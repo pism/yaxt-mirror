@@ -85,7 +85,9 @@ struct redist_collection_static_msg {
   MPI_Datatype datatype;
 };
 
-struct Xt_redist_collection_static {
+typedef struct Xt_redist_collection_static_ *Xt_redist_collection_static;
+
+struct Xt_redist_collection_static_ {
 
   const struct xt_redist_vtable *vtable;
 
@@ -205,9 +207,7 @@ xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redists,
                                 MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm) {
 
-  struct Xt_redist_collection_static * redist_coll;
-
-  redist_coll = xmalloc(1 * sizeof(*redist_coll));
+  Xt_redist_collection_static redist_coll = xmalloc(1 * sizeof(*redist_coll));
 
   redist_coll->vtable = &redist_collection_static_vtable;
   redist_coll->ndst = 0;
@@ -234,18 +234,16 @@ redist_collection_static_s_exchange(Xt_redist redist,
                                     void **XT_UNUSED(dst_data),
                                     unsigned XT_UNUSED(num_dst_arrays)) {
 
-  struct Xt_redist_collection_static *redist_coll
-    = (struct Xt_redist_collection_static *)redist;
+  Xt_redist_collection_static redist_coll = (Xt_redist_collection_static)redist;
 
   Xt_abort(redist_coll->comm, "ERROR: s_exchange is not implemented for"
-           " this xt_redist type (xt_redist_collection_static)", __FILE__, __LINE__);
+           " this xt_redist type (Xt_redist_collection_static)", __FILE__, __LINE__);
 }
 
 static void
 redist_collection_static_delete(Xt_redist redist) {
 
-  struct Xt_redist_collection_static *redist_coll
-    = (struct Xt_redist_collection_static *)redist;
+  Xt_redist_collection_static redist_coll = (Xt_redist_collection_static)redist;
 
   for (int i = 0; i < redist_coll->nsrc; ++i)
     MPI_Type_free(&(redist_coll->send_msgs[i].datatype));
@@ -279,8 +277,7 @@ copy_msg_dt(int nmsg, const struct redist_collection_static_msg msg[nmsg],
 static MPI_Datatype
 redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 
-  struct Xt_redist_collection_static *redist_coll
-    = (struct Xt_redist_collection_static *)redist;
+  Xt_redist_collection_static redist_coll = (Xt_redist_collection_static)redist;
   return copy_msg_dt(redist_coll->nsrc, redist_coll->send_msgs,
                      redist_coll->comm, rank);
 }
@@ -288,8 +285,7 @@ redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 static MPI_Datatype
 redist_collection_static_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
-  struct Xt_redist_collection_static *redist_coll
-    = (struct Xt_redist_collection_static *)redist;
+  Xt_redist_collection_static redist_coll = (Xt_redist_collection_static)redist;
   return copy_msg_dt(redist_coll->ndst, redist_coll->recv_msgs,
                      redist_coll->comm, rank);
 }
@@ -297,8 +293,7 @@ redist_collection_static_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 static void
 redist_collection_static_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
 
-  struct Xt_redist_collection_static *redist_coll
-    = (struct Xt_redist_collection_static *) redist;
+  Xt_redist_collection_static redist_coll = (Xt_redist_collection_static)redist;
 
   MPI_Request * recv_requests;
 
