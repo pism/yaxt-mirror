@@ -137,22 +137,22 @@ struct Xt_idxlist_collection_ {
 
   struct Xt_idxlist_ parent;
 
-  Xt_idxlist * idxlists;
   unsigned num_idxlists;
 
   Xt_int index_num_cache;
   Xt_int *index_array_cache;
+  Xt_idxlist idxlists[];
 };
 
 Xt_idxlist
 xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
 
-   Xt_idxlist_collection collectionlist = xmalloc(1 * sizeof(*collectionlist));
+   Xt_idxlist_collection collectionlist
+     = xmalloc(sizeof (*collectionlist)
+               + num_idxlists * sizeof (collectionlist->idxlists[0]));
 
    Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
    collectionlist->num_idxlists = num_idxlists;
-   collectionlist->idxlists
-     = xmalloc(num_idxlists * sizeof(*(collectionlist->idxlists)));
    collectionlist->index_num_cache = -1;
    collectionlist->index_array_cache = NULL;
 
@@ -170,7 +170,6 @@ idxlist_collection_delete(Xt_idxlist data) {
    for (unsigned i = 0; i < collectionlist->num_idxlists; ++i)
       xt_idxlist_delete(collectionlist->idxlists[i]);
 
-   free(collectionlist->idxlists);
    free(collectionlist->index_array_cache);
    free(collectionlist);
 }
@@ -214,25 +213,24 @@ Xt_idxlist
 xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
                              MPI_Comm comm) {
 
-   Xt_idxlist_collection collectionlist = xmalloc(1 * sizeof(*collectionlist));
+  unsigned num_lists;
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         &num_lists, 1, MPI_UNSIGNED, comm), comm);
 
-   Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
-   collectionlist->index_num_cache = -1;
-   collectionlist->index_array_cache = NULL;
+  Xt_idxlist_collection collectionlist
+    = xmalloc(sizeof (*collectionlist)
+              + num_lists * sizeof (collectionlist->idxlists[0]));
 
-   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                          &(collectionlist->num_idxlists), 1, MPI_UNSIGNED,
-                          comm),
-               comm);
+  Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
+  collectionlist->index_num_cache = -1;
+  collectionlist->index_array_cache = NULL;
+  collectionlist->num_idxlists = num_lists;
 
-   collectionlist->idxlists = xmalloc(collectionlist->num_idxlists *
-                                      sizeof(*(collectionlist->idxlists)));
-
-   for (unsigned i = 0; i < collectionlist->num_idxlists; ++i)
-      collectionlist->idxlists[i] = xt_idxlist_unpack(buffer, buffer_size,
+  for (unsigned i = 0; i < collectionlist->num_idxlists; ++i)
+    collectionlist->idxlists[i] = xt_idxlist_unpack(buffer, buffer_size,
                                                       position, comm);
 
-   return (Xt_idxlist)collectionlist;
+  return (Xt_idxlist)collectionlist;
 }
 
 static Xt_idxlist
