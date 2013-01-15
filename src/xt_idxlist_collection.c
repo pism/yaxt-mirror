@@ -131,7 +131,9 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .get_bounding_box             = NULL
 };
 
-struct xt_idxlist_collection {
+typedef struct Xt_idxlist_collection_ *Xt_idxlist_collection;
+
+struct Xt_idxlist_collection_ {
 
   struct Xt_idxlist_ parent;
 
@@ -145,9 +147,7 @@ struct xt_idxlist_collection {
 Xt_idxlist
 xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
 
-   struct xt_idxlist_collection *collectionlist;
-
-   collectionlist = xmalloc(1 * sizeof(*collectionlist));
+   Xt_idxlist_collection collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
    Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
    collectionlist->num_idxlists = num_idxlists;
@@ -167,8 +167,7 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists) {
 static void
 idxlist_collection_delete(Xt_idxlist data) {
 
-   struct xt_idxlist_collection *collectionlist
-     = (struct xt_idxlist_collection*)data;
+   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)data;
 
    unsigned i;
 
@@ -183,8 +182,7 @@ idxlist_collection_delete(Xt_idxlist data) {
 static size_t
 idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
-   struct xt_idxlist_collection *collectionlist
-     = (struct xt_idxlist_collection*)data;
+   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)data;
 
    int size_int, size_unsigned;
    size_t size_idxlists = 0;
@@ -204,8 +202,7 @@ static void
 idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                         int *position, MPI_Comm comm) {
 
-   struct xt_idxlist_collection *collectionlist
-     = (struct xt_idxlist_collection*)data;
+   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)data;
    int type = COLLECTION;
 
    xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
@@ -224,9 +221,7 @@ Xt_idxlist
 xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
                              MPI_Comm comm) {
 
-   struct xt_idxlist_collection *collectionlist;
-
-   collectionlist = xmalloc(1 * sizeof(*collectionlist));
+   Xt_idxlist_collection collectionlist = xmalloc(1 * sizeof(*collectionlist));
 
    Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
    collectionlist->index_num_cache = -1;
@@ -259,8 +254,7 @@ idxlist_collection_get_intersection(Xt_idxlist XT_UNUSED(idxlist_src),
 static Xt_idxlist
 idxlist_collection_copy(Xt_idxlist idxlist) {
 
-   struct xt_idxlist_collection *collectionlist
-     = (struct xt_idxlist_collection*)idxlist;
+   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
    return xt_idxlist_collection_new(collectionlist->idxlists,
                                     collectionlist->num_idxlists);
@@ -269,8 +263,7 @@ idxlist_collection_copy(Xt_idxlist idxlist) {
 static Xt_int
 idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
 
-   struct xt_idxlist_collection *collectionlist
-     = (struct xt_idxlist_collection*)idxlist;
+   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
    if (collectionlist->index_num_cache >= 0)
      return collectionlist->index_num_cache;
@@ -289,8 +282,7 @@ idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
 static void
 idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
-   struct xt_idxlist_collection *collectionlist
-     = (struct xt_idxlist_collection*)idxlist;
+   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
    /// \todo use memcpy with index_array_cache if available
    unsigned i;
    Xt_int offlist = 0;
@@ -305,8 +297,7 @@ idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 static const Xt_int *
 idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
 
-  struct xt_idxlist_collection *collection
-    = (struct xt_idxlist_collection *)idxlist;
+  Xt_idxlist_collection collection = (Xt_idxlist_collection)idxlist;
 
   if (collection->index_array_cache) return collection->index_array_cache;
 
@@ -328,8 +319,7 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
                                      struct Xt_stripe ** stripes,
                                      Xt_int * num_stripes) {
 
-  struct xt_idxlist_collection *collectionlist
-    = (struct xt_idxlist_collection*)idxlist;
+  Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
   struct Xt_stripe * temp_stripes = NULL;
   size_t temp_stripes_array_size = 0;
@@ -371,8 +361,7 @@ static int
 idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
                                          Xt_int * index) {
 
-  struct xt_idxlist_collection *collectionlist
-    = (struct xt_idxlist_collection*)idxlist;
+  Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
   for (unsigned i = 0; i < collectionlist->num_idxlists; ++i) {
     Xt_int n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
@@ -391,10 +380,7 @@ static int
 idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                              int * position, int offset) {
 
-  struct xt_idxlist_collection *collectionlist
-    = (struct xt_idxlist_collection*)idxlist;
-
-  unsigned i;
+  Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
   Xt_int curr_num_indices = 0;
 
@@ -402,7 +388,7 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
   assert(offset >= 0);
 
-  i = 0;
+  unsigned i = 0;
 
   do {
     idxlist_offsets += curr_num_indices;
@@ -437,8 +423,7 @@ idxlist_collection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
 static Xt_int
 idxlist_collection_get_min_index(Xt_idxlist idxlist) {
 
-  struct xt_idxlist_collection *collectionlist
-    = (struct xt_idxlist_collection*)idxlist;
+  Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
   Xt_int tmp_min, min = 0;
 
@@ -457,8 +442,7 @@ idxlist_collection_get_min_index(Xt_idxlist idxlist) {
 static Xt_int
 idxlist_collection_get_max_index(Xt_idxlist idxlist) {
 
-  struct xt_idxlist_collection *collectionlist
-    = (struct xt_idxlist_collection*)idxlist;
+  Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
   Xt_int tmp_max, max = 0;
 
