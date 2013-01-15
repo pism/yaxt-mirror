@@ -285,9 +285,7 @@ xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                                          num_indices,
                                                          positions, offsets);
 
-  Xt_int i;
-
-  for (i = 0; i < num_indices; ++i) {
+  for (Xt_int i = 0; i < num_indices; ++i) {
 
     int ret_val, temp_position, offset;
 
