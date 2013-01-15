@@ -222,8 +222,8 @@ xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
     // fallback solution using xt_idxlist_get_index_at_position:
     int undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
-      int p = positions[ip];
-      if (xt_idxlist_get_index_at_position(idxlist, p, &indices[ip]) != 0) {
+      if (xt_idxlist_get_index_at_position(idxlist, positions[ip],
+                                           &indices[ip]) != 0) {
         indices[ip] = undef_idx;
         undef_count++;
       }
