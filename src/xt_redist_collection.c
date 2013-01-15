@@ -328,15 +328,13 @@ lookup_cache_index(unsigned num_redists,
                    MPI_Aint (*cached_displacements)[num_redists],
                    size_t cache_size)
 {
-  for (size_t i = 0; i < cache_size; ++i) {
-    if (cached_displacements[i][0] == (MPI_Aint)0) {
-      unsigned j;
-      for (j = 0; j < num_redists; ++j)
-        if (displacements[j] != cached_displacements[i][j]) break;
-      if (j == num_redists) return i;
-    } else {
-      break;
-    }
+  for (size_t i = 0;
+       i < cache_size && cached_displacements[i][0] == (MPI_Aint)0;
+       ++i) {
+    int mismatch = 0;
+    for (unsigned j = 0; j < num_redists; ++j)
+      mismatch |= (displacements[j] != cached_displacements[i][j]);
+    if (!mismatch) return i;
   }
   return cache_size;
 }
