@@ -190,7 +190,7 @@ idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
       size_idxlists
         += xt_idxlist_get_pack_size(collectionlist->idxlists[i], comm);
 
-   return (size_t)size_int + (size_t)size_unsigned + (size_t)size_idxlists;
+   return (size_t)size_int + (size_t)size_unsigned + size_idxlists;
 }
 
 static void
