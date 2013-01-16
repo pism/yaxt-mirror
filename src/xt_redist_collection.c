@@ -172,6 +172,8 @@ static void copy_component_dt(struct redist_collection_msg ** msgs, int * nmsgs,
   *nmsgs = (int)num_messages;
 }
 
+/* not yet used cache entries are marked with -1 as first displacement,
+ * which becomes 0 later on through use */
 static inline void
 init_cache(struct dt_cache *cache,
            size_t cache_size, size_t ntx, unsigned num_redists)
