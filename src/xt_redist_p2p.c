@@ -171,11 +171,10 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
 
   redist->vtable = &redist_p2p_vtable;
 
-  MPI_Comm xmap_comm;
-
-  xmap_comm = xt_xmap_get_communicator(xmap);
-
-  xt_mpi_call(MPI_Comm_dup(xmap_comm, &(redist->comm)), xmap_comm);
+  {
+    MPI_Comm xmap_comm = xt_xmap_get_communicator(xmap);
+    xt_mpi_call(MPI_Comm_dup(xmap_comm, &(redist->comm)), xmap_comm);
+  }
 
   redist->ndst = xt_xmap_get_num_destinations(xmap);
   Xt_xmap_iter dst_iter = xt_xmap_get_destination_iterator(xmap);
