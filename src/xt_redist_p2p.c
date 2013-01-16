@@ -234,9 +234,7 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                                 int *dst_offsets, MPI_Datatype datatype) {
 
-  struct Xt_redist_p2p *redist;
-
-  redist = xmalloc(1 * sizeof(*redist));
+  struct Xt_redist_p2p *redist = xmalloc(sizeof (*redist));
 
   redist->vtable = &redist_p2p_vtable;
 
@@ -285,12 +283,11 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
                              int dst_block_num,
                              MPI_Datatype datatype) {
 
-  struct Xt_redist_p2p *redist;
   if (!src_block_sizes)
     die("xt_redist_p2p_blocks_off_new: undefined src_block_sizes");
   if (!dst_block_sizes)
     die("xt_redist_p2p_blocks_off_new: undefined dst_block_sizes");
-  redist = xmalloc(1 * sizeof(*redist));
+  struct Xt_redist_p2p *redist = xmalloc(sizeof (*redist));
 
   redist->vtable = &redist_p2p_vtable;
 
@@ -407,9 +404,8 @@ redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
 
   redist_p2p = (struct Xt_redist_p2p *)redist;
 
-  MPI_Request * recv_request;
-
-  recv_request = xmalloc((size_t)redist_p2p->ndst * sizeof(*recv_request));
+  MPI_Request *recv_request
+    = xmalloc((size_t)redist_p2p->ndst * sizeof (*recv_request));
 
   int i;
 
