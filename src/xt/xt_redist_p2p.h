@@ -87,6 +87,32 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype);
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                                 int *dst_offsets, MPI_Datatype datatype);
 
+struct Xt_offset_ext
+{
+  int start, size, stride;
+};
+
+/**
+ * constructor for a redistribution using point to point
+ * communication for the exchange
+ * @param[in] xmap         exchange map
+ * @param[in] num_src_ext  number of source extents
+ * @param[in] src_extents  array of extents describing offsets for every
+ *                         element of the index lists composing the xmap,
+ *                         i.e. { 10, 5 } denotes 5 offsets,
+ *                         namely 10, 11, 12, 13, 14
+ * @param[in] num_dst_ext  number of destination extents
+ * @param[in] dst_extents  array of extents analogous to src_extents
+ * @param[in] datatype     MPI datatype of single element
+ *                         in the data to be exchanged
+ */
+Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
+                                Xt_int num_src_ext,
+                                struct Xt_offset_ext src_extents[],
+                                Xt_int num_dst_ext,
+                                struct Xt_offset_ext dst_extents[],
+                                MPI_Datatype datatype);
+
 /**
  * constructor for a redistribution using point to point
  * communication for the exchange, special case: blocks with offsets

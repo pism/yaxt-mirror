@@ -154,22 +154,81 @@ int main(void) {
 
     // test exchange
 
-    double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+    const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
                          -1,-1,-1};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     assert(sizeof(dst_data)/sizeof(dst_data[0]) == dst_num);
 
-    double * src_data_p = &src_data[0];
+    const double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
     xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
                          (void**)(&dst_data_p), 1);
 
-    double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
+    const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
     for (Xt_int i = 0; i < dst_num; ++i)
       if (ref_dst_data[dst_pos[i]] != dst_data[i])
+        PUT_ERR("error in xt_redist_s_exchange\n");
+
+    // clean up
+
+    xt_redist_delete(redist);
+    xt_xmap_delete(xmap);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_idxlist);
+  }
+
+  // check offset extents
+  {
+    // source index list
+    const Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
+    Xt_int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
+
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
+
+    // destination index list
+    const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
+    Xt_int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+
+    Xt_idxlist dst_idxlist;
+
+    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
+
+    // xmap
+    Xt_xmap xmap;
+
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+
+    // redist_p2p with extents of offsets
+    struct Xt_offset_ext
+      src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
+      dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
+
+    Xt_redist redist
+      = xt_redist_p2p_ext_new(xmap,
+                              sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
+                              sizeof (dst_pos)/sizeof (dst_pos[0]), dst_pos,
+                              MPI_LONG);
+
+    // test exchange
+
+    const long src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+    long dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+    assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
+    assert(sizeof(dst_data)/sizeof(dst_data[0]) == dst_num);
+
+    const long *src_data_p = &src_data[0];
+    long *dst_data_p = &dst_data[0];
+
+    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
+                         (void**)(&dst_data_p), 1);
+
+    const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
+
+    for (Xt_int i = 0; i < dst_num; ++i)
+      if (ref_dst_data[i] != dst_data[i])
         PUT_ERR("error in xt_redist_s_exchange\n");
 
     // clean up

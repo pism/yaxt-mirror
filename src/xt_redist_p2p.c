@@ -191,6 +191,107 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
   return (Xt_redist)redist;
 }
 
+/* ====================================================================== */
+
+static MPI_Datatype
+generate_ext_datatype(Xt_int num_transfer_pos, const int transfer_pos[],
+                      Xt_int num_ext, struct Xt_offset_ext extents[],
+                      int psum_ext_size[],
+                      MPI_Datatype base_datatype, MPI_Comm comm)
+{
+  int *displ = xmalloc((size_t)num_transfer_pos * sizeof(int));
+
+  /* FIXME: use bsearch if linear search is too slow, i.e. num_ext >> 1000 */
+  for (Xt_int i = 0; i < num_transfer_pos; ++i)
+  {
+    int pos = transfer_pos[i];
+    Xt_int j = 0;
+    /* what extent covers the pos'th position? */
+    while (j < num_ext && pos >= psum_ext_size[j + 1])
+      ++j;
+    displ[i] = extents[j].start + pos * extents[j].stride - psum_ext_size[j];
+  }
+
+  MPI_Datatype type = xt_mpi_generate_datatype(displ, num_transfer_pos,
+                                               base_datatype, comm);
+
+  free(displ);
+  return type;
+}
+
+static void
+generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
+                       Xt_int num_ext,
+                       struct Xt_offset_ext extents[],
+                       MPI_Datatype base_datatype,
+                       struct Xt_redist_p2p_msg **msgs,
+                       MPI_Comm comm)
+{
+  if (num_msgs <= 0) {
+    *msgs = NULL;
+    return;
+  }
+
+  struct Xt_redist_p2p_msg *curr_msg =
+    *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
+
+  /* partial sums of ext sizes */
+  int *psum_ext_size
+    = xmalloc(((size_t)num_ext + 1) * sizeof (psum_ext_size[0]));
+  psum_ext_size[0] = 0;
+  for (size_t i = 0; i < (size_t)num_ext; ++i)
+    psum_ext_size[i + 1] = psum_ext_size[i] + extents[i].size;
+
+  do {
+
+    const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
+    Xt_int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
+
+    curr_msg->datatype
+      = generate_ext_datatype(curr_num_transfer_pos, curr_transfer_pos,
+                              num_ext, extents, psum_ext_size,
+                              base_datatype, comm);
+    curr_msg->rank = xt_xmap_iterator_get_rank(iter);
+
+    curr_msg++;
+
+  } while (xt_xmap_iterator_next(iter));
+  free(psum_ext_size);
+}
+
+Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
+                                Xt_int num_src_ext,
+                                struct Xt_offset_ext src_extents[],
+                                Xt_int num_dst_ext,
+                                struct Xt_offset_ext dst_extents[],
+                                MPI_Datatype datatype)
+{
+  struct Xt_redist_p2p *redist = xmalloc(sizeof (*redist));
+
+  redist->vtable = &redist_p2p_vtable;
+
+  {
+    MPI_Comm xmap_comm = xt_xmap_get_communicator(xmap);
+    xt_mpi_call(MPI_Comm_dup(xmap_comm, &(redist->comm)), xmap_comm);
+  }
+
+  redist->ndst = xt_xmap_get_num_destinations(xmap);
+  Xt_xmap_iter dst_iter = xt_xmap_get_destination_iterator(xmap);
+  generate_ext_msg_infos(redist->ndst, dst_iter, num_dst_ext, dst_extents,
+                         datatype, &(redist->recv_msgs), redist->comm);
+  if (dst_iter) xt_xmap_iterator_delete(dst_iter);
+
+  redist->nsrc = xt_xmap_get_num_sources(xmap);
+  Xt_xmap_iter src_iter = xt_xmap_get_source_iterator(xmap);
+  generate_ext_msg_infos(redist->nsrc, src_iter, num_src_ext, src_extents,
+                         datatype, &(redist->send_msgs), redist->comm);
+  if (src_iter) xt_xmap_iterator_delete(src_iter);
+
+  return (Xt_redist)redist;
+}
+
+/* ====================================================================== */
+
 static void
 aux_gen_simple_block_offsets(int *block_offsets, int *block_sizes,
                              int block_num) {
