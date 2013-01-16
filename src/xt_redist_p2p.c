@@ -114,9 +114,8 @@ generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
 
   assert(block_sizes != NULL);
 
-  bdispl_vec = xmalloc((size_t)num_transfer_pos * sizeof(*bdispl_vec));
-  blen_vec = xmalloc((size_t)num_transfer_pos * sizeof(*blen_vec));
-
+  bdispl_vec = xmalloc(2 * (size_t)num_transfer_pos * sizeof(*bdispl_vec));
+  blen_vec = bdispl_vec + num_transfer_pos;
   assert(block_offsets);
 
   for (Xt_int i = 0; i < num_transfer_pos; ++i) {
@@ -128,7 +127,6 @@ generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
   type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec, num_transfer_pos,
                                         base_datatype, comm);
 
-  free(blen_vec);
   free(bdispl_vec);
 
   return type;
