@@ -103,36 +103,6 @@ struct Xt_redist_p2p {
 };
 
 static MPI_Datatype
-generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
-                        int *block_offsets, int *block_sizes,
-                        MPI_Datatype base_datatype, MPI_Comm comm) {
-
-  MPI_Datatype type;
-
-  int *bdispl_vec;
-  int *blen_vec;
-
-  assert(block_sizes != NULL);
-
-  bdispl_vec = xmalloc(2 * (size_t)num_transfer_pos * sizeof(*bdispl_vec));
-  blen_vec = bdispl_vec + num_transfer_pos;
-  assert(block_offsets);
-
-  for (Xt_int i = 0; i < num_transfer_pos; ++i) {
-    int j = transfer_pos[i];
-    bdispl_vec[i] = block_offsets[j];
-    blen_vec[i] = block_sizes[j];
-  }
-
-  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec, num_transfer_pos,
-                                        base_datatype, comm);
-
-  free(bdispl_vec);
-
-  return type;
-}
-
-static MPI_Datatype
 generate_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
                   int *offsets, MPI_Datatype base_datatype, MPI_Comm comm) {
 
@@ -236,6 +206,36 @@ aux_gen_simple_block_offsets(int *block_offsets, int *block_sizes,
   for (int i = 1; i < block_num; ++i) {
     block_offsets[i] = block_offsets[i-1] + block_sizes[i-1];
   }
+}
+
+static MPI_Datatype
+generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
+                        int *block_offsets, int *block_sizes,
+                        MPI_Datatype base_datatype, MPI_Comm comm) {
+
+  MPI_Datatype type;
+
+  int *bdispl_vec;
+  int *blen_vec;
+
+  assert(block_sizes != NULL);
+
+  bdispl_vec = xmalloc(2 * (size_t)num_transfer_pos * sizeof(*bdispl_vec));
+  blen_vec = bdispl_vec + num_transfer_pos;
+  assert(block_offsets);
+
+  for (Xt_int i = 0; i < num_transfer_pos; ++i) {
+    int j = transfer_pos[i];
+    bdispl_vec[i] = block_offsets[j];
+    blen_vec[i] = block_sizes[j];
+  }
+
+  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec, num_transfer_pos,
+                                        base_datatype, comm);
+
+  free(bdispl_vec);
+
+  return type;
 }
 
 static void
