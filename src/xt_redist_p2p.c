@@ -196,41 +196,6 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
   } while (xt_xmap_iterator_next(iter));
 }
 
-static void
-generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
-                         int *block_sizes, MPI_Datatype base_datatype,
-                         struct Xt_redist_p2p_msg ** msgs, MPI_Comm comm) {
-
-  if (num_msgs <= 0) {
-    *msgs = NULL;
-    return;
-  }
-
-  *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
-
-  struct Xt_redist_p2p_msg * curr_msg;
-
-  curr_msg = *msgs;
-
-  do {
-
-    int const * curr_transfer_pos;
-    Xt_int curr_num_transfer_pos;
-
-    curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
-    curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
-
-    curr_msg->datatype
-      = generate_block_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                                block_offsets, block_sizes, base_datatype,
-                                comm);
-    curr_msg->rank = xt_xmap_iterator_get_rank(iter);
-
-    curr_msg++;
-
-  } while (xt_xmap_iterator_next(iter));
-}
-
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                                 int *dst_offsets, MPI_Datatype datatype) {
 
@@ -273,6 +238,41 @@ aux_gen_simple_block_offsets(int *block_offsets, int *block_sizes,
   for (int i = 1; i < block_num; ++i) {
     block_offsets[i] = block_offsets[i-1] + block_sizes[i-1];
   }
+}
+
+static void
+generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
+                         int *block_sizes, MPI_Datatype base_datatype,
+                         struct Xt_redist_p2p_msg ** msgs, MPI_Comm comm) {
+
+  if (num_msgs <= 0) {
+    *msgs = NULL;
+    return;
+  }
+
+  *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
+
+  struct Xt_redist_p2p_msg * curr_msg;
+
+  curr_msg = *msgs;
+
+  do {
+
+    int const * curr_transfer_pos;
+    Xt_int curr_num_transfer_pos;
+
+    curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
+    curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
+
+    curr_msg->datatype
+      = generate_block_datatype(curr_transfer_pos, curr_num_transfer_pos,
+                                block_offsets, block_sizes, base_datatype,
+                                comm);
+    curr_msg->rank = xt_xmap_iterator_get_rank(iter);
+
+    curr_msg++;
+
+  } while (xt_xmap_iterator_next(iter));
 }
 
 Xt_redist
