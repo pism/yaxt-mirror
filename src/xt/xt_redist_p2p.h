@@ -111,7 +111,8 @@ Xt_redist xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
 
 /**
  * constructor for a redistribution using point to point
- * communication for the exchange, special case: blocks without explicitoffsets
+ * communication for the exchange, special case: blocks without
+ * explicit offsets
  * @param[in] xmap         exchange map
  * @param[in] src_block_sizes  source block lengths in unit of elements
  * @param[in] src_block_num  number of src blocks
