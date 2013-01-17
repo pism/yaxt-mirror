@@ -72,7 +72,7 @@ int main(void) {
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     // destination index list
-    Xt_int dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
+    Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
     Xt_int dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
@@ -94,7 +94,7 @@ int main(void) {
 
     double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                         -1,-1,-1,-1,-1,-1,-1,-1,-1};
+                         -1,-1,-1};
 
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
@@ -102,7 +102,7 @@ int main(void) {
     xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
                          (void**)(&dst_data_p), 1);
 
-    double ref_dst_data[] = {-1,0,2,-1,13,9,7,0,-1,-1,2,0,2,-1,13,4,-1,6,7};
+    double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
     unsigned i;
 
@@ -127,7 +127,7 @@ int main(void) {
     Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
 
     // destination index list
-    Xt_int dst_index_list[] = {41,5,4,7,3,96,1,5,48,54,4,5,4,6,3,13,7,2,1};
+    Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
     Xt_int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
     Xt_idxlist dst_idxlist;
@@ -156,7 +156,7 @@ int main(void) {
 
     double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                         -1,-1,-1,-1,-1,-1,-1,-1,-1};
+                         -1,-1,-1};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     assert(sizeof(dst_data)/sizeof(dst_data[0]) == dst_num);
 
@@ -166,8 +166,7 @@ int main(void) {
     xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
                          (void**)(&dst_data_p), 1);
 
-    double ref_dst_data[] = {-1,0,2,-1,13,9,7,0,-1,-1,
-                             2,0,2,-1,13,4,-1,6,7};
+    double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
     for (Xt_int i = 0; i < dst_num; ++i)
       if (ref_dst_data[dst_pos[i]] != dst_data[i])

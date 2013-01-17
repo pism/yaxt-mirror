@@ -206,7 +206,6 @@ generate_dir_transfer_pos(Xt_int num_intersections,
   }
 }
 
-
 static void
 generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
                       Xt_int num_src_intersections,
@@ -220,6 +219,47 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
                             0, &(xmap->nsrc), &(xmap->src_msg));
   generate_dir_transfer_pos(num_dst_intersections, dst_com, dst_idxlist_local,
                             1, &(xmap->ndst), &(xmap->dst_msg));
+}
+
+static int check_destination_coverage(struct exchange_data * dst_msgs,
+                                      int num_msgs, Xt_int num_indices,
+                                      MPI_Comm comm) {
+
+  size_t num_bits = sizeof(int) * 8;
+  int * bit_map;
+  int num_ints = (num_indices + num_bits - 1) / num_bits;
+
+  // create bitmap for destination indices
+  bit_map = xcalloc(num_ints, sizeof(int));
+
+  // for all destination messages
+  for (int i = 0; i < num_msgs; ++i) {
+
+    // check all transfer positions
+    for (int j = 0; j < dst_msgs[i].num_transfer_pos; ++j) {
+
+      Xt_int curr_pos = dst_msgs[i].transfer_pos[j];
+
+      if (curr_pos >= num_indices)
+        Xt_abort(comm, "ERROR: invalid transer position (pos >= num_indices)",
+                 __FILE__, __LINE__);
+
+      bit_map[curr_pos/num_bits] |= 1 << (curr_pos%num_bits);
+    }
+  }
+
+  // check resulting bit map
+  for (int i = 0; i < num_indices / num_bits; ++i)
+    if (bit_map[i] != -1)
+      return 1;
+
+  if (num_indices%num_bits && (bit_map[num_ints-1] != ((1 << num_indices%num_bits) - 1)))
+    return 1;
+
+  
+  free(bit_map);
+
+  return 0;
 }
 
 Xt_xmap
@@ -248,6 +288,13 @@ xt_xmap_intersection_new(Xt_int num_src_intersections,
   // but using this simple estimate we are still okay for usage checks
   xmap->max_src_pos = xt_idxlist_get_num_indices(src_idxlist);
   xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
+
+  // check if all indices in the destination index list have been found on
+  // the source processes
+  if (check_destination_coverage(xmap->dst_msg, xmap->ndst,
+                                 xt_idxlist_get_num_indices(dst_idxlist), comm))
+    Xt_abort(comm, "ERROR: destination intersections do not match with"
+             "destination index list", __FILE__, __LINE__);
 
   return (Xt_xmap)xmap;
 }
