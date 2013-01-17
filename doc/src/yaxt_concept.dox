@@ -42,6 +42,8 @@
   the user can generate an exchange map (\ref Xt_xmap) between them. The exchange map
   matches the source and target decompositions of all processes and generates a mapping
   between source and target points with identical global indices. \n
+  It is an error if not all data points of the target decomposition can be matched with
+  data points of the source decomposition.\n
   There are multiple algorithms available to generate an exchange map (see \ref xmaps).
 
   \subsection redist Generate redistribution object
