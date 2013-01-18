@@ -53,7 +53,6 @@ noinst_PROGRAMS = 						\
 	test_xmap_dist_dir					\
 	test_xmap_dist_dir_parallel				\
 	test_ut							\
-	test_perf_idxsection_get_positions_of_indices		\
 	test_perf						\
 	test_perf_stripes					\
 	test_sort						\
@@ -83,8 +82,6 @@ test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
 test_handles_SOURCES = test_handles.c tests.h
 test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
-test_perf_idxsection_get_positions_of_indices_SOURCES = \
-	test_perf_idxsection_get_positions_of_indices.c
 test_perf_SOURCES = test_perf.f90
 test_perf_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_perf_stripes_SOURCES = test_perf_stripes.f90
@@ -120,7 +117,6 @@ TESTS = 							\
 	test_xmap_dist_dir_run					\
 	test_xmap_dist_dir_parallel_run				\
 	test_ut_run						\
-	test_perf_idxsection_get_positions_of_indices_run	\
 	test_perf_run						\
 	test_perf_stripes_run					\
 	test_sort_run						\

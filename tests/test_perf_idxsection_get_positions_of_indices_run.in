@@ -1,3 +1,0 @@
-#! @SHELL@
-set -e
-@MPI_LAUNCH@ -n 1 ./test_perf_idxsection_get_positions_of_indices

@@ -39,13 +39,9 @@
  */
 
 #include <yaxt.h>
-#include <core/ppm_xfuncs.h>
-
-#define DEACTIVATE_TESTS
+#include "core/ppm_xfuncs.h"
 
 int main(void) {
-
-#ifndef DEACTIVATE_TESTS
 
   Xt_int nstrides = 512 * 256 * 32;
   struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
@@ -57,12 +53,12 @@ int main(void) {
   int single_match_only;
   unsigned num_samples = 1;
 
-  unsigned global_size[3][5] = {{4, 64, 16, 256, 512},
-                                {4, 16, 32, 128, 256},
-                                {4, 8, 16, 64, 128}};
-  unsigned local_size [3][5] = {{4, 1, 16, 128, 512},
-                                {4, 1, 32, 64, 256},
-                                {4, 1, 16, 32, 128}};
+  Xt_int global_size[3][5] = {{4, 64, 16, 256, 512},
+                              {4, 16, 32, 128, 256},
+                              {4, 8, 16, 64, 128}};
+  Xt_int local_size [3][5] = {{4, 1, 16, 128, 512},
+                              {4, 1, 32, 64, 256},
+                              {4, 1, 16, 32, 128}};
 
   for (int test_id = 0; test_id < 3; ++test_id) {
 
@@ -70,7 +66,7 @@ int main(void) {
 
       Xt_int start = 0;
       unsigned num_dimension = 3;
-      unsigned local_start[] = {0,0,0};
+      Xt_int local_start[] = {0,0,0};
       Xt_idxlist idxsection = xt_idxsection_new(start, num_dimension,
                                                 global_size[test_id] + 2,
                                                 local_size[test_id] + 2,
@@ -93,7 +89,7 @@ int main(void) {
 
       Xt_int start = 0;
       unsigned num_dimension = 3;
-      unsigned local_start[] = {0,0,0};
+      Xt_int local_start[] = {0,0,0};
 
       for (single_match_only = 0; single_match_only < 2;  ++single_match_only) {
         for (i = step; i < nstrides; i += step) {
@@ -117,7 +113,7 @@ int main(void) {
     for (unsigned num_dimension = 3; num_dimension < 6; num_dimension += 2)
     { // test index enumeration without cached indices
 
-      unsigned local_start[] = {0,0,0,0,0};
+      Xt_int local_start[] = {0,0,0,0,0};
       Xt_int *idxDump = NULL;
       size_t idxDumpSize = 0;
       num_samples = 52;
@@ -148,8 +144,6 @@ int main(void) {
 
   xt_idxlist_delete(selection_indices);
   free(positions);
-
-#endif
 
   return 0;
 }
