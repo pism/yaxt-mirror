@@ -226,7 +226,7 @@ decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
 }
 
 static void
-generate_sorted_vector_from_stripes(struct Xt_stripe stripes[],
+generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                     Xt_int num_stripes,
                                     Xt_idxvec idxvec) {
 
@@ -321,7 +321,8 @@ generate_sorted_vector_from_stripes(struct Xt_stripe stripes[],
 }
 
 Xt_idxlist
-xt_idxvec_from_stripes_new(struct Xt_stripe stripes[], Xt_int num_stripes) {
+xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
+                           Xt_int num_stripes) {
 
    Xt_idxvec idxvec_data = xmalloc(sizeof (*idxvec_data));
 
