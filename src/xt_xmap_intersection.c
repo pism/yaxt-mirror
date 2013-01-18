@@ -256,10 +256,7 @@ static int check_destination_coverage(struct exchange_data * dst_msgs,
 
   free(bit_map);
 
-  if (!all_bits_set)
-    return 1;
-
-  return 0;
+  return !all_bits_set;
 }
 
 Xt_xmap
