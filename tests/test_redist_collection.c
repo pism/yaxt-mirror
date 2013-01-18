@@ -353,7 +353,7 @@ int main(void) {
     double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-    const int cache_size = 16;
+    const size_t cache_size = 16;
 
     double * src_data_, * dst_data_;
 
@@ -364,7 +364,7 @@ int main(void) {
     double *dst_data_p[3] = {dst_data[0],dst_data[1],NULL};
 
     // test exchange
-    for (int k = 0; k < cache_size + 2; ++k) {
+    for (size_t k = 0; k < cache_size + 2; ++k) {
 
       memcpy(src_data_+k, src_data[2], 5 * sizeof(*src_data_));
       memcpy(dst_data_+k, dst_data[2], 3 * sizeof(*dst_data_));
