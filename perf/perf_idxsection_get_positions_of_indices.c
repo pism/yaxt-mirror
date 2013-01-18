@@ -38,12 +38,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <inttypes.h>
+
 #include <yaxt.h>
 #include "core/ppm_xfuncs.h"
 
 int main(void) {
 
-  Xt_int nstrides = 512 * 256 * 32;
+  // use 32bit constant so that product won't overflow
+  Xt_int nstrides = INT32_C(512) * 256 * 32;
   struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
   Xt_idxlist selection_indices = xt_idxstripes_new(stripe, 1);
 
