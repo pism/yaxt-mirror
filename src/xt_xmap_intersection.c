@@ -225,12 +225,13 @@ static int check_destination_coverage(struct exchange_data * dst_msgs,
                                       int num_msgs, Xt_int num_indices,
                                       MPI_Comm comm) {
 
-  int *bit_map;
+  size_t *bit_map;
   Xt_int num_bits = (Xt_int)sizeof (*bit_map) * (Xt_int)CHAR_BIT;
   size_t num_ints = (size_t)((num_indices + num_bits - 1) / num_bits);
 
   // create bitmap for destination indices
   bit_map = xcalloc(num_ints, sizeof (*bit_map));
+  bit_map[num_ints-1] = ~(((size_t)1 << (num_indices%num_bits)) - 1);
 
   // for all destination messages
   for (int i = 0; i < num_msgs; ++i) {
@@ -244,20 +245,19 @@ static int check_destination_coverage(struct exchange_data * dst_msgs,
         Xt_abort(comm, "ERROR: invalid transer position (pos >= num_indices)",
                  __FILE__, __LINE__);
 
-      bit_map[curr_pos/num_bits] |= 1 << (curr_pos%num_bits);
+      bit_map[curr_pos/num_bits] |= (size_t)1 << (curr_pos%num_bits);
     }
   }
 
   // check resulting bit map
-  for (int i = 0; i < num_indices / num_bits; ++i)
-    if (bit_map[i] != -1)
-      return 1;
+  size_t all_bits_set = 1;
+  for (size_t i = 0; i < num_ints; ++i)
+    all_bits_set &= bit_map[i] == SIZE_MAX;
 
-  if (num_indices%num_bits && (bit_map[num_ints-1] != ((1 << num_indices%num_bits) - 1)))
-    return 1;
-
-  
   free(bit_map);
+
+  if (!all_bits_set)
+    return 1;
 
   return 0;
 }
