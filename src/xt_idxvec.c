@@ -159,9 +159,9 @@ struct Xt_idxvec_ {
    */
 };
 
-Xt_idxlist xt_idxvec_new(Xt_int *idxvec, Xt_int num_indices) {
+Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, Xt_int num_indices) {
 
-  Xt_idxvec idxvec_data = xmalloc(sizeof (*idxvec_data));
+  Xt_idxvec restrict idxvec_data = xmalloc(sizeof (*idxvec_data));
 
   Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
 
