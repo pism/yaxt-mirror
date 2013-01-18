@@ -92,7 +92,7 @@ Xt_handle_set_type xt_handle_set_new(int cap) {
 
 static void extend_handle_set(Xt_handle_set_type hset) {
   if (!hset) {
-    hset = xt_handle_set_new(default_handle_set_cap);
+    hset = xt_handle_set_new((int)default_handle_set_cap);
     return;
   }
 
