@@ -47,11 +47,11 @@ int main(void) {
   struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
   Xt_idxlist selection_indices = xt_idxstripes_new(stripe, 1);
 
-  int * positions = xmalloc(nstrides * sizeof(*positions));
+  int * positions = xmalloc((size_t)nstrides * sizeof(*positions));
   Xt_int i, j;
   Xt_int step = nstrides / 128;
   int single_match_only;
-  unsigned num_samples = 1;
+  Xt_int num_samples = 1;
 
   Xt_int global_size[3][5] = {{4, 64, 16, 256, 512},
                               {4, 16, 32, 128, 256},
@@ -129,9 +129,10 @@ int main(void) {
         for (j = 0; j < num_samples; ++j)
         {
           Xt_int numIdx = xt_idxlist_get_num_indices(idxsection[j]);
-          if (numIdx > idxDumpSize)
+          if ((size_t)numIdx > idxDumpSize)
             idxDump = xrealloc(idxDump,
-                               sizeof (idxDump[0]) * (idxDumpSize = numIdx));
+                               sizeof (idxDump[0])
+                               * (idxDumpSize = (size_t)numIdx));
           xt_idxlist_get_indices(idxsection[j], idxDump);
         }
         for (j = 0; j < num_samples; ++j)
