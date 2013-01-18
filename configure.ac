@@ -196,6 +196,7 @@ AC_CONFIG_FILES([						\
 	tests/test_redist_p2p_run				\
 	tests/test_xmap_dist_dir_run				\
 	tests/test_xmap_all2all_run				\
+	tests/test_xmap_all2all_fail_run			\
 	tests/test_handles_run					\
 	tests/test_ut_run					\
         tests/test_perf_run              			\

@@ -49,6 +49,7 @@ noinst_PROGRAMS = 						\
 	test_redist_p2p						\
 	test_redist_p2p_parallel				\
 	test_xmap_all2all					\
+	test_xmap_all2all_fail					\
 	test_xmap_all2all_parallel				\
 	test_xmap_dist_dir					\
 	test_xmap_dist_dir_parallel				\
@@ -76,6 +77,7 @@ test_redist_collection_static_parallel_SOURCES = \
 test_redist_p2p_SOURCES = test_redist_p2p.c tests.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c tests.h
 test_xmap_all2all_SOURCES = test_xmap_all2all.c tests.h
+test_xmap_all2all_fail_SOURCES = test_xmap_all2all_fail.c tests.h
 test_xmap_all2all_parallel_SOURCES = test_xmap_all2all_parallel.c tests.h
 test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c tests.h
 test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
@@ -113,6 +115,7 @@ TESTS = 							\
 	test_redist_collection_static_parallel_run		\
 	test_redist_p2p_parallel_run				\
 	test_xmap_all2all_run					\
+	test_xmap_all2all_fail_run				\
 	test_xmap_all2all_parallel_run				\
 	test_xmap_dist_dir_run					\
 	test_xmap_dist_dir_parallel_run				\
@@ -122,6 +125,9 @@ TESTS = 							\
 	test_sort_run						\
 	test_uid_run						\
 	test_yaxt_run
+
+XFAIL_TESTS =                                                   \
+	test_xmap_all2all_fail_run
 
 
 AUTOMAKE_OPTIONS = color-tests
