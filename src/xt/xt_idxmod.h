@@ -51,7 +51,7 @@
  */
 
 /**
- * A modifier is a pair of compact idxlists that describes a index-to-index stream.
+ * A modifier is a pair of compact idxlists that describes an index-to-index stream.
  * Additionally there is a mask value that can be used to track a sequence of modifications (see \ref xt_idxmod_new).
  *
  */
@@ -75,8 +75,8 @@ struct Xt_modifier {
  * @param[in]     modifier_num   number of modifiers
  * @param[in,out] mstate         modification state
  * @return returns a Xt_idxlist
- * @remark For performance considerations imagine patch_idxlist as a (small) task-local index list whose transform into an vector scales ideally
- * and the modifier idxlist-components as compact idxlists of global extent which should never downgrade to a elementwise index description.
+ * @remark For performance considerations imagine patch_idxlist as a (small) task-local index list whose transform into a vector scales ideally
+ * and the modifier idxlist-components as compact idxlists of global extent which should never downgrade to an elementwise index description.
  * @remark mstate is not initilaized
  * @remark mstate == NULL is valid (disables the modification state handling)
  * @remark if mstate != NULL then it is required to be at least as big as the input index list (patch_idxlist)
