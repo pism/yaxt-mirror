@@ -159,6 +159,7 @@ int main(void) {
     xt_idxlist_delete(intersection);
   }
 
+  xt_finalize();
   MPI_Finalize();
 
   return TEST_EXIT_CODE;

@@ -125,6 +125,7 @@ int main(void) {
 
   xt_handle_set_delete(hset);
 
+  xt_finalize();
   MPI_Finalize();
   return TEST_EXIT_CODE;
 }

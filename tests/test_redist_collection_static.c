@@ -191,6 +191,7 @@ int main(void) {
     xt_redist_delete(redist_coll);
   }
 
+  xt_finalize();
   MPI_Finalize();
 
   return TEST_EXIT_CODE;

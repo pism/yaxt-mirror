@@ -305,6 +305,7 @@ int main(void) {
     xt_idxlist_delete(collectionlist);
   }
 
+  xt_finalize();
   MPI_Finalize();
 
   return TEST_EXIT_CODE;

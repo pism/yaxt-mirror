@@ -186,6 +186,7 @@ int main(void) {
   }
 
   // finalize:
+  xt_finalize();
   MPI_Finalize();
   return TEST_EXIT_CODE;
 }

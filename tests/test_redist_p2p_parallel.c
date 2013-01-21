@@ -361,6 +361,7 @@ int main(void) {
     // end of test
   }
 
+  xt_finalize();
   MPI_Finalize();
 
  return TEST_EXIT_CODE;
