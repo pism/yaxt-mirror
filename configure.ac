@@ -211,5 +211,8 @@ AC_CONFIG_FILES([						\
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
   inst_headers/Makefile inst_headers/f90/Makefile \
   src/pkgconfig/yaxt.pc perf/Makefile])
+# force make to regenerate FC.deps file (because it depends on Makefile)
+AC_CONFIG_COMMANDS([force_dep_regeneration],[sleep 1
+touch tests/Makefile])
 
 AC_OUTPUT

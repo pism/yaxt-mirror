@@ -87,7 +87,6 @@ test_ut_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_perf_SOURCES = test_perf.f90
 test_perf_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_perf_stripes_SOURCES = test_perf_stripes.f90
-test_perf_stripes.$(OBJEXT): ../src/yaxt.$(OBJEXT)
 test_perf_stripes_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_sort_SOURCES = test_sort.c tests.h
 test_uid_SOURCES = test_uid.c
@@ -133,3 +132,27 @@ XFAIL_TESTS =                                                   \
 AUTOMAKE_OPTIONS = color-tests
 
 EXTRA_DIST = core
+
+./$(DEPDIR)/FC.deps: $(SOURCES) Makefile
+	@unique=`for i in $(SOURCES); do \
+	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | grep '\.f90$$' ` ; \
+	  FC="$(FC)" FPP="$(FPP)" \
+	  $(PERL) -I$(top_srcdir)/scripts \
+	  $(top_srcdir)/scripts/makef90depends --ignore-module iso_c_binding \
+	  --fc-mod-flag=$(FC_MOD_FLAG) --fc-def-opt=$(FPP_DEFOPT) \
+	  --fc-inc-flag=$(FPP_INCOPT) --fc-mod-suf='.$(FCMODEXT)' \
+	  --fc-mod-case=$(FCMODCASE) --prog-fpp='$(FPP)' \
+	  --`test $(C_LONG_IS_LARGER_THAN_INT) = 1 || echo \
+	  no`fpp-long-is-larger-than-int \
+	  --`test $(C_LONG_LONG_IS_LARGER_THAN_LONG) = 1 || echo \
+	  no`fpp-long-long-is-larger-than-long \
+	  --fpp-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
+	  --strip-obj-dirname --parse-cache=./$(DEPDIR)/FC.depdb \
+	  --obj-suf='.$(OBJEXT)' -- \
+	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
+	  >./$(DEPDIR)/FC.deps.temp
+	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
+	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
+
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@
