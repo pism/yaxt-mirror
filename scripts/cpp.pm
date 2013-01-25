@@ -37,6 +37,9 @@
 #
 package cpp;
 
+use strict;
+use warnings;
+
 require Exporter;
 our @ISA=('Exporter');
 our @EXPORT_OK = qw(transliterateTrigraphs tokenize);
@@ -45,6 +48,10 @@ use Data::Dumper ();
 use File::Temp ();
 
 our ($debug, $operator_match);
+
+# defaults for LP64
+my ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int,
+    $c_char_is_unsigned) = (0, 1, 0);
 
 BEGIN {
   $debug = 0;
@@ -92,11 +99,15 @@ BEGIN {
       {
          my ($prefix, $quotemark) = ($1, $2);
          my $prefixPos = pos($expression) + 1;
-         $expression =~ m{\G($quotemark.*[^\\]$quotemark)(?=.*)}g;
+         $expression =~ m{\G($quotemark.*?[^\\]$quotemark)}g;
          my ($stringOrCharConst, $stringOrCharConstEnd)
-             = ($2, pos($expression));
+             = ($1, pos($expression));
          $expression =~ m{\G(.*)}g;
-         my ($suffix, $suffixEnd) = ($3, pos($expression));
+         my ($suffix, $suffixEnd) = ($1, pos($expression));
+         print(STDERR
+               Data::Dumper->Dump([\$prefix, \$stringOrCharConst, \$suffix],
+                                  ['prefix', 'stringOrCharConst', 'suffix']),
+               "\n") if ($debug > 1);
          my ($prefixTokenList, $prefixTokenPosMap) = tokenize($prefix);
          my ($suffixTokenList, $suffixTokenPosMap) = tokenize($suffix);
          @tokens = ([@$prefixTokenList, $stringOrCharConst, @$suffixTokenList],
@@ -106,7 +117,7 @@ BEGIN {
                      @$suffixTokenPosMap]);
          print(STDERR Data::Dumper->Dump([\@tokens], ['tokens']), "\n")
              if ($debug > 1);
-      } elsif ($expression =~ m{"}) {
+      } elsif ($expression =~ m{["']}) {
          die('Unbalanced quote " in expression: ', $expression);
       } elsif ($expression ne '') {
          my (@tokenList, @tokenMappings);
@@ -348,22 +359,7 @@ sub expandMacro
 
 BEGIN {
 
-   our @preprocCmd
-       = split /\s+/,
-           (defined($ENV{'FPP'})?
-            $ENV{'FPP'}
-            :'@FPP@');
-
-   sub set_preproc_cmd_flags
-   {
-      @preprocCmd =  ((split /\s+/,
-                      (defined($ENV{'FPP'})?
-                       $ENV{'FPP'}
-                       :'@FPP@')),
-          @_);
-      print STDERR Data::Dumper->Dump([\@preprocCmd],['preprocCmd'])
-          if ($debug);
-   }
+  our @preprocCmd;
 
    sub preprocResult
    {
@@ -420,12 +416,12 @@ BEGIN {
          my $definition = preprocResult($token);
          if (defined($definition))
          {
-            $defines{$token} = $defines->{$token}
-                    = parseDefinition(undef, $definition, '', '');
+           $defines->{$token} = $defines->{$token}
+               = parseDefinition(undef, $definition, '', '');
          }
          else
          {
-            $defines{$token} = $defines->{$token} = undef;
+           $defines->{$token} = $defines->{$token} = undef;
          }
       }
    }
@@ -1809,7 +1805,7 @@ BEGIN {
          {
             return 'unsigned-long_long-int';
          }
-         if (@C_LONG_LONG_IS_LARGER_THAN_LONG@)
+         if ($c_long_long_is_larger_than_long)
          {
             if ($val[0][1] eq 'long_long-int'
                 or $val[1][1] eq 'long_long-int')
@@ -1833,7 +1829,7 @@ BEGIN {
          {
             return 'unsigned-long_long-int';
          }
-         if (@C_LONG_IS_LARGER_THAN_INT@)
+         if ($c_long_is_larger_than_int)
          {
             if ($val[0][1] eq 'long-int'
                 or $val[1][1] eq 'long-int')
@@ -1874,13 +1870,35 @@ BEGIN {
       my @val = @_;
       if ($val[1] eq 'char')
       {
-         return ($val[0], 'int', unpack(@C_CHAR_IS_UNSIGNED@?'C':'c', $val[2]));
+         return ($val[0], 'int', unpack($c_char_is_unsigned?'C':'c', $val[2]));
       }
       else
       {
          return @val;
       }
    }
+
+  sub init(%)
+  {
+    my (%conf) = %{$_[0]};
+    if (exists($conf{'FPP'}))
+    {
+      @preprocCmd = split /\s+/, $conf{'FPP'};
+    }
+    if (exists($conf{'FPPFLAGS'}))
+    {
+      push(@preprocCmd, @{$conf{'FPPFLAGS'}});
+    }
+    $c_long_is_larger_than_int = $conf{'c_long_is_larger_than_int'}
+        if (exists($conf{'c_long_is_larger_than_int'}));
+    $c_long_long_is_larger_than_long = $conf{'c_long_long_is_larger_than_long'}
+        if (exists($conf{'c_long_long_is_larger_than_long'}));
+    $c_char_is_unsigned = $conf{'c_char_is_unsigned'}
+        if (exists($conf{'c_char_is_unsigned'}));
+    print STDERR Data::Dumper->Dump([\%conf],['cond']),
+        Data::Dumper->Dump([\@preprocCmd],['preprocCmd'])
+            if ($debug);
+  }
 
 }
 

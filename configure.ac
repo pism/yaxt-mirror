@@ -207,10 +207,9 @@ AC_CONFIG_FILES([						\
 	tests/test_mpi_generate_datatype_run			\
 	examples/rrobin_run					\
 	examples/tr_gp2fs_run					\
-        scripts/header2installheader.pl                         \
 	util/serialrun],[chmod a+x "$ac_file"])
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
   inst_headers/Makefile inst_headers/f90/Makefile \
-  scripts/cpp.pm src/pkgconfig/yaxt.pc perf/Makefile])
+  src/pkgconfig/yaxt.pc perf/Makefile])
 
 AC_OUTPUT

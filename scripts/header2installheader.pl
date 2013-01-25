@@ -1,4 +1,4 @@
-#! @PERL@
+#! /usr/bin/perl
 #
 # header2installheader.pl.in --- apply config.h definitions on-disk
 #
@@ -47,6 +47,7 @@ use cpp qw(transliterateTrigraphs);
 use Storable qw(dclone);
 
 sub checkPredicate(\%$$$);
+sub setup();
 
 my ($debug, $verbose,
     $srcBaseDir, $dstBaseDir,
@@ -59,7 +60,7 @@ our $headerLine;
 
 @symPrefixMacros = qw(SymPrefix SYMPREFIX symprefix);
 @symPrefixes = qw(PPM_ PPM_ ppm_);
-parseOptions();
+setup();
 internConfigH();
 
 print(STDERR Data::Dumper->Dump([\%configHDefs], [qw(configHDefs)]))
@@ -208,7 +209,8 @@ foreach my $headerFn (@ARGV)
         else
         {
           die('Unhandled conditional in ', $headerFn, ', line ', $lineno,
-              ', this is a bug, please report to @PACKAGE_BUGREPORT@', "\n");
+              ', this is a bug, please report to Thomas Jahns <jahns@dkrz.de>',
+              "\n");
         }
       }
       else
@@ -272,6 +274,10 @@ foreach my $headerFn (@ARGV)
       {
         $thisLineIgnored = 1;
         $symprefixsubst = 1;
+      }
+      elsif ($headerLine =~ m{\#\s*include\s*([<"]).*?(?<=[^\\])\1}x)
+      {
+        # keep other include directives unchanged
       }
       else
       {
@@ -434,50 +440,116 @@ sub checkPredicate(\%$$$)
 }
 
 
-sub parseOptions
 {
-  local $_;
-  my ($help, $usage)=(0, 0);
-  my $optionParser = new Getopt::Long::Parser;
-  # This program should accept the full set of preprocessor flags,
-  # but might not implement all of them. Therefore abbreviation and
-  # ignoring of case are not allowed because either might promote
-  # unhandled options to options of this program. Also unhandled
-  # options are passed through.
-  configureOptionParser($optionParser, 'no_auto_abbrev', 'no_ignore_case');
-  # duplicate -- option terminator for brain-dead versions of
-  # Getopt::Long (which unfortunately includes the one distributed
-  # with Perl 5.6.1)
-  if (grep /^--$/, @ARGV)
+
+  # choose default appropriate for LP64
+  my ($c_long_long_is_larger_than_long,
+      $c_long_is_larger_than_int, $c_char_is_unsigned) = (0, 1, 0);
+
+  sub setup()
   {
-    my @seen = (0, 0);
-    @ARGV = ((grep { ($seen[0] or /^--$/)?
-                         ($seen[0]?0:!($seen[0]=1)):1 } @ARGV),
-             '--', '--',
-             (grep { ($seen[1] or /^--$/)?$seen[1]++:0 } @ARGV));
+    parseOptions();
+    cpp::init({ 'c_long_long_is_larger_than_long'
+                => $c_long_long_is_larger_than_long,
+                'c_long_is_larger_than_int'
+                => $c_long_is_larger_than_int,
+                'c_char_is_unsigned'
+                => $c_char_is_unsigned,
+              });
   }
-  my $result
-      = $optionParser->getoptions('debug+' => \$debug,
-                                  'help|?!' => \$help,
-                                  'usage!' => \$usage,
-                                  'verbose+' => \$verbose,
-                                  'parse-cache=s' => \$parseCacheDB,
-                                  'config-header=s' => \$configHFn,
-                                  'srcdir=s' => \$srcBaseDir,
-                                  'dstdir=s' => \$dstBaseDir,
-                                  'symbol-prefix-c=s' => \$symPrefixes[0],
-                                  'symbol-prefix-F=s' => \$symPrefixes[1],
-                                  'symbol-prefix-f=s' => \$symPrefixes[2],
-                                 );
-  if($help or $usage)
+
+  sub parseOptions
   {
-    pod2usage( {
-                '-msg' => "",
-                '-exitval' => 0,
-                '-verbose' => 1
-               });
+    local $_;
+    my ($help, $usage)=(0, 0);
+    my $optionParser = new Getopt::Long::Parser;
+    # This program should accept the full set of preprocessor flags,
+    # but might not implement all of them. Therefore abbreviation and
+    # ignoring of case are not allowed because either might promote
+    # unhandled options to options of this program. Also unhandled
+    # options are passed through.
+    configureOptionParser($optionParser, 'no_auto_abbrev', 'no_ignore_case');
+    # duplicate -- option terminator for brain-dead versions of
+    # Getopt::Long (which unfortunately includes the one distributed
+    # with Perl 5.6.1)
+    if (grep /^--$/, @ARGV)
+    {
+      my @seen = (0, 0);
+      @ARGV = ((grep { ($seen[0] or /^--$/)?
+                           ($seen[0]?0:!($seen[0]=1)):1 } @ARGV),
+               '--', '--',
+               (grep { ($seen[1] or /^--$/)?$seen[1]++:0 } @ARGV));
+    }
+    my $result
+        = $optionParser->getoptions('debug+' => \$debug,
+                                    'help|?!' => \$help,
+                                    'usage!' => \$usage,
+                                    'verbose+' => \$verbose,
+                                    'parse-cache=s' => \$parseCacheDB,
+                                    'config-header=s' => \$configHFn,
+                                    'srcdir=s' => \$srcBaseDir,
+                                    'dstdir=s' => \$dstBaseDir,
+                                    'symbol-prefix-c=s' => \$symPrefixes[0],
+                                    'symbol-prefix-F=s' => \$symPrefixes[1],
+                                    'symbol-prefix-f=s' => \$symPrefixes[2],
+                                    'c-cast-mode=s' => \&set_cast_mode,
+                                    'c-long-long-is-larger-than-long!'
+                                    => \$c_long_long_is_larger_than_long,
+                                    'c-long-is-larger-than-int!'
+                                    => \$c_long_is_larger_than_int,
+                                    'c-char-is-signed'
+                                    => \&set_c_char_sign,
+                                    'c-char-is-unsigned'
+                                    => \&set_c_char_sign,
+                                   );
+    if($help or $usage)
+    {
+      pod2usage( {
+                  '-msg' => "",
+                  '-exitval' => 0,
+                  '-verbose' => 1
+                 });
+    }
+    $cpp::debug = $debug;
   }
-  $cpp::debug = $debug;
+
+   sub set_cast_mode($)
+   {
+      my $mode = $_[1];
+      if ($mode =~ m{^lp64$}ix)
+      {
+         ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int)
+             = (0, 1);
+      }
+      elsif ($mode =~ m{^ilp32$}ix)
+      {
+         ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int)
+             = (1, 0);
+      }
+      else
+      {
+         print STDERR 'Unexpected arithmetic conversion mode: ', $mode, "\n";
+         exit(1);
+      }
+   }
+
+   sub set_c_char_sign($$)
+   {
+      my $mode = $_[0];
+      if ($mode =~ m{c-char-is-unsigned})
+      {
+         $c_char_is_unsigned = 1;
+      }
+      elsif ($mode =~ m{c-char-is-signed})
+      {
+         $c_char_is_unsigned = 0;
+      }
+      else
+      {
+         die('Unexpected error');
+      }
+   }
+
 }
 
 # evil hack to work with older versions of Getopt::Long
