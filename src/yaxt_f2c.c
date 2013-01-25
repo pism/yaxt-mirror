@@ -78,14 +78,15 @@ void xt_initialize_f(MPI_Fint *comm_f) {
   xt_initialize(comm_c);
 }
 
-void xt_abort_cmsl_f(MPI_Fint *comm_f, const char *msg, const char *source, int line) {
-  MPI_Comm comm_c = MPI_Comm_f2c(*comm_f);
-  Xt_abort(comm_c, msg, source, line);
+MPI_Fint xt_get_default_comm()
+{
+  return MPI_Comm_c2f(Xt_default_comm);
 }
 
-void xt_abort_msl_f(const char *msg, const char *source, int line) {
-  MPI_Comm comm_c = SymPrefix(default_comm);
-  Xt_abort(comm_c, msg, source, line);
+void xt_abort_f(MPI_Fint *comm_f, const char *msg, const char *source,
+                     MPI_Fint line) {
+  MPI_Comm comm_c = MPI_Comm_f2c(*comm_f);
+  Xt_abort(comm_c, msg, source, (int)line);
 }
 
 void xt_idxlist_delete_f(struct xt_idxlist_f *idxlist_f) {

@@ -58,12 +58,13 @@ MODULE yaxt
 
   PRIVATE
 
-  PUBLIC :: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
+  PUBLIC :: xt_abort, xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        &    xt_redist_delete, &
-       &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize
+       &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize, &
+       xt_get_default_comm
 
   INTEGER, PARAMETER, PUBLIC :: xt_int_kind   = XT_INT_FC_KIND
 
@@ -89,37 +90,18 @@ MODULE yaxt
   END TYPE xt_redist
 
   INTERFACE
-    SUBROUTINE xt_abort_cmsl_f(comm_f, msg, source, line) &
-         BIND(C, name='xt_abort_cmsl_f')
-      IMPORT:: c_char, c_int
-      INTEGER, INTENT(in):: comm_f
-      CHARACTER(C_CHAR), DIMENSION(*), INTENT(in) :: msg
-      CHARACTER(C_CHAR), DIMENSION(*), INTENT(in) :: source
-      INTEGER(C_INT), VALUE, INTENT(in) :: line
-    END SUBROUTINE xt_abort_cmsl_f
-  END INTERFACE
 
-  INTERFACE
-    SUBROUTINE xt_abort_msl_f(msg, source, line) &
-         BIND(C, name='xt_abort_msl_f')
-      IMPORT:: c_char, c_int
-      CHARACTER(C_CHAR), DIMENSION(*), INTENT(in) :: msg
-      CHARACTER(C_CHAR), DIMENSION(*), INTENT(in) :: source
-      INTEGER(C_INT), VALUE, INTENT(in) :: line
-    END SUBROUTINE xt_abort_msl_f
-  END INTERFACE
-
-  INTERFACE xt_abort
-    MODULE PROCEDURE xt_abort_cmsl
-    MODULE PROCEDURE xt_abort_msl
-  END INTERFACE xt_abort
-
-  INTERFACE
     SUBROUTINE xt_initialize(default_comm) BIND(C, name='xt_initialize_f')
       IMPORT:: C_INT
       IMPLICIT NONE
       INTEGER, INTENT(in) :: default_comm
     END SUBROUTINE xt_initialize
+
+    FUNCTION xt_get_default_comm() RESULT(comm) &
+         BIND(c, name='xt_get_default_comm_f')
+      INTEGER :: comm
+    END FUNCTION xt_get_default_comm
+
   END INTERFACE
 
   INTERFACE
@@ -159,20 +141,23 @@ MODULE yaxt
 
 CONTAINS
 
-  SUBROUTINE  xt_abort_cmsl(comm_f, msg, source, line)
-    INTEGER, INTENT(in):: comm_f
+  SUBROUTINE  xt_abort(comm, msg, source, line)
+    INTEGER, INTENT(in):: comm
     CHARACTER(len=*), INTENT(in) :: msg
     CHARACTER(len=*), INTENT(in) :: source
     INTEGER, INTENT(in) :: line
-    CALL xt_abort_cmsl_f(comm_f, TRIM(msg)//c_null_char, source, line)
-  END SUBROUTINE Xt_abort_cmsl
-
-  SUBROUTINE  xt_abort_msl(msg, source, line)
-    CHARACTER(len=*), INTENT(in) :: msg
-    CHARACTER(len=*), INTENT(in) :: source
-    INTEGER, INTENT(in) :: line
-    CALL xt_abort_msl_f(TRIM(msg)//c_null_char, source, line)
-  END SUBROUTINE Xt_abort_msl
+    INTERFACE
+      SUBROUTINE xt_abort_f(comm, msg, source, line) BIND(c, name='xt_abort_f')
+        IMPORT :: c_char
+        INTEGER, VALUE, INTENT(in):: comm
+        CHARACTER(kind=c_char), DIMENSION(*), INTENT(in) :: msg
+        CHARACTER(kind=c_char), DIMENSION(*), INTENT(in) :: source
+        INTEGER, VALUE, INTENT(in) :: line
+      END SUBROUTINE xt_abort_f
+    END INTERFACE
+    CALL xt_abort_f(comm, TRIM(msg)//c_null_char, &
+         TRIM(source)//c_null_char, line)
+  END SUBROUTINE xt_abort
 
   FUNCTION xt_idxvec_new(idxvec, num_indices) RESULT(res)
     IMPLICIT NONE

@@ -53,6 +53,9 @@ PROGRAM test_perf_stripes
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
        xt_stripe, xt_idxstripes_new, xt_int_kind
 
+  USE ftest_common, ONLY: init_mpi, dp, timer, treset, tstart, tstop, &
+       treport, sync, id_map, test_abort
+
   USE ISO_C_BINDING, ONLY: c_loc
 
   IMPLICIT NONE
@@ -62,7 +65,6 @@ PROGRAM test_perf_stripes
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
   INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
-  INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
 
   INTEGER, PARAMETER :: grid_kind_test = 1
   INTEGER, PARAMETER :: grid_kind_toy  = 2
@@ -95,17 +97,7 @@ PROGRAM test_perf_stripes
   INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
   LOGICAL, PARAMETER :: full_test = .TRUE.
-  LOGICAL, PARAMETER :: debug =.FALSE.
   LOGICAL :: verbose
-
-  TYPE timer
-    CHARACTER(len=30) :: label = 'undef'
-    INTEGER  :: istate  = -1
-    REAL(dp) :: t0      = 0.0_dp
-    REAL(dp) :: dt_work = 0.0_dp
-  END TYPE timer
-
-  REAL(dp) :: sync_dt_sum = 0.0_dp
 
   TYPE(timer) :: t_all, t_surf_redist, t_exch_surf
   TYPE(timer) :: t_xmap_2d, t_redist_2d, t_exch_2d
@@ -279,22 +271,22 @@ PROGRAM test_perf_stripes
 
   IF (verbose) WRITE(0,*) 'timer report for nprocs=',nprocs
 
-  CALL treport(t_all)
-  CALL treport(t_surf_redist)
-  CALL treport(t_exch_surf)
-  CALL treport(t_xmap_2d)
-  CALL treport(t_redist_2d)
-  CALL treport(t_exch_2d)
-  CALL treport(t_xmap_3d)
-  CALL treport(t_redist_3d)
-  CALL treport(t_exch_3d)
+  CALL treport(t_all, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_surf_redist, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_surf, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_xmap_2d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_redist_2d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_2d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_xmap_3d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_redist_3d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_3d, TRIM(grid_label), mpi_comm_world)
 
-  CALL treport(t_xmap_3d_ws)
-  CALL treport(t_redist_3d_ws)
-  CALL treport(t_exch_3d_ws)
+  CALL treport(t_xmap_3d_ws, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_redist_3d_ws, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_3d_ws, TRIM(grid_label), mpi_comm_world)
 
-  CALL treport(t_redist_3d_wb)
-  CALL treport(t_exch_3d_wb)
+  CALL treport(t_redist_3d_wb, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_3d_wb, TRIM(grid_label), mpi_comm_world)
 
   CALL exit_mpi
 
@@ -324,92 +316,6 @@ CONTAINS
     CHARACTER(len=*), INTENT(in) :: s
     IF (verbose) WRITE(0,*) s
   END SUBROUTINE msg
-
-  SUBROUTINE treset(t, label)
-    TYPE(timer), INTENT(inout) :: t
-    CHARACTER(len=*), INTENT(in) :: label
-    t%label   = label
-    t%istate  = 0
-    t%t0      = 0.0_dp
-    t%dt_work = 0.0_dp
-  END SUBROUTINE treset
-
-  SUBROUTINE tstart(t)
-    TYPE(timer), INTENT(inout) :: t
-    IF (debug) WRITE(0,*) 'tstart: ',t%label
-    CALL sync
-    t%istate = 1
-    t%t0 = work_time()
-  END SUBROUTINE tstart
-
-  SUBROUTINE tstop(t)
-    TYPE(timer), INTENT(inout) :: t
-    REAL(dp) :: t1
-    IF (debug) WRITE(0,*) 'tstop: ',t%label
-    t1 = work_time()
-    t%dt_work = t%dt_work + (t1 - t%t0)
-    t%istate = 0
-    CALL sync
-
-  END SUBROUTINE tstop
-
-  SUBROUTINE treport(t)
-    CHARACTER(len=*), PARAMETER :: context = 'treport: '
-    TYPE(timer), INTENT(in) :: t
-
-    REAL(dp) :: work_sum, work_max, work_avg, e
-    REAL(dp) :: sbuf, rbuf(0:nprocs-1)
-    INTEGER :: ierror
-
-    sbuf = t%dt_work
-    rbuf = -1.0_dp
-    CALL MPI_GATHER(sbuf, 1, MPI_DOUBLE_PRECISION, &
-         &  rbuf, 1, MPI_DOUBLE_PRECISION, &
-         &  0, MPI_COMM_WORLD, ierror)
-
-
-    IF (lroot) THEN
-      IF (rbuf(0) /= sbuf) CALL xt_abort(context//'internal error (1)', &
-           __FILE__, &
-           __LINE__)
-      IF (ANY(rbuf < 0.0_dp)) CALL xt_abort(context//'internal error (2)', &
-           __FILE__, &
-           __LINE__)
-      work_sum = SUM(rbuf)
-      work_max = MAXVAL(rbuf)
-      work_avg = work_sum / REAL(nprocs, dp)
-      e = work_avg / (work_max + 1.e-20_dp)
-
-      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') &
-           'nprocs, label, wmax, wavg, e =', &
-           nprocs, TRIM(grid_label)//':'//t%label, &
-           work_max, work_avg, e
-    ENDIF
-
-  END SUBROUTINE treport
-
-
-  REAL(dp) FUNCTION work_time()
-    work_time = MPI_WTIME() - sync_dt_sum
-    RETURN
-  END FUNCTION work_time
-
-  SUBROUTINE sync
-    CHARACTER(len=*), PARAMETER :: context = 'sync: '
-    INTEGER :: ierror
-    REAL(dp) :: t0, dt
-
-    t0 = MPI_WTIME()
-
-    CALL MPI_BARRIER(MPI_COMM_WORLD, IERROR)
-    IF (ierror /= MPI_SUCCESS) CALL xt_abort(context//'MPI_BARRIER failed', &
-         __FILE__, &
-         __LINE__)
-
-    dt = (MPI_WTIME() - t0)
-    sync_dt_sum = sync_dt_sum + dt
-
-  END SUBROUTINE sync
 
   SUBROUTINE inflate_idx(inflate_pos, idx_2d, idx_3d)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::inflate_idx: '
@@ -441,7 +347,7 @@ CONTAINS
         ENDDO
       ENDDO
     CASE DEFAULT
-      CALL xt_abort(context//' unsupported inflate position', &
+      CALL test_abort(context//' unsupported inflate position', &
            __FILE__, &
            __LINE__)
     END SELECT
@@ -481,7 +387,7 @@ CONTAINS
     n1 = SIZE(f,1)
     n2 = SIZE(f,2)
     IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
-         CALL xt_abort(context//'shape mismatch error', &
+         CALL test_abort(context//'shape mismatch error', &
          __FILE__, &
          __LINE__)
 
@@ -490,7 +396,7 @@ CONTAINS
         IF (f(i,j) /= g(i,j)) THEN
           WRITE(0,*) context,label,' test failed: i, j, f(i,j), g(i,j) =', &
                i, j, f(i,j), g(i,j)
-          CALL xt_abort(context//label//' test failed', &
+          CALL test_abort(context//label//' test failed', &
                __FILE__, &
                __LINE__)
         ENDIF
@@ -511,7 +417,7 @@ CONTAINS
     n2 = SIZE(f,2)
     n3 = SIZE(f,3)
     IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
-      CALL xt_abort(context//label//'shape mismatch', __FILE__, __LINE__)
+      CALL test_abort(context//label//'shape mismatch', __FILE__, __LINE__)
 
     DO i3 = 1, n3
       DO i2 = 1, n2
@@ -520,7 +426,7 @@ CONTAINS
             WRITE(0,*) context,label,&
                  ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
                  i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
-            CALL xt_abort(context//label//' test failed', &
+            CALL test_abort(context//label//' test failed', &
                  __FILE__, &
                  __LINE__)
           ENDIF
@@ -529,14 +435,6 @@ CONTAINS
     ENDDO
     IF (verbose) WRITE(0,*) mype,':',context//label//' passed'
   END SUBROUTINE icmp_3d
-
-  SUBROUTINE init_mpi
-    CHARACTER(len=*), PARAMETER :: context = 'init_mpi: '
-    INTEGER :: ierror
-    CALL MPI_INIT(ierror)
-    IF (ierror /= MPI_SUCCESS) CALL xt_abort(context//'MPI_INIT failed', &
-         __FILE__, __LINE__)
-  END SUBROUTINE init_mpi
 
   SUBROUTINE init_all
     CHARACTER(len=*), PARAMETER :: context = 'init_all: '
@@ -577,12 +475,14 @@ CONTAINS
     END SELECT
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL xt_abort(context//'MPI_COMM_SIZE failed', &
+    IF (ierror /= MPI_SUCCESS) &
+         CALL test_abort(context//'MPI_COMM_SIZE failed', &
          __FILE__, &
          __LINE__)
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, mype, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL xt_abort(context//'MPI_COMM_RANK failed', &
+    IF (ierror /= MPI_SUCCESS) &
+         CALL test_abort(context//'MPI_COMM_RANK failed', &
          __FILE__, &
          __LINE__)
     IF (mype==0) THEN
@@ -620,25 +520,10 @@ CONTAINS
     CHARACTER(len=*), PARAMETER :: context = 'exit_mpi: '
     INTEGER :: ierror
     CALL MPI_FINALIZE(ierror)
-    IF (ierror /= MPI_SUCCESS) CALL xt_abort(context//'MPI_FINALIZE failed', &
+    IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_FINALIZE failed', &
          __FILE__, &
          __LINE__)
   END SUBROUTINE exit_mpi
-
-  SUBROUTINE id_map(map)
-    INTEGER, INTENT(out) :: map(:,:)
-
-    INTEGER :: i,j,p
-
-    p = 0
-    DO j = 1, SIZE(map,2)
-      DO i = 1, SIZE(map,1)
-        p = p + 1
-        map(i,j) = p
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE id_map
 
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist
@@ -657,7 +542,7 @@ CONTAINS
     INTEGER :: dt
 
     IF (send_dt /= recv_dt) &
-         CALL xt_abort('gen_redist: (send_dt /= recv_dt) unsupported', &
+         CALL test_abort('gen_redist: (send_dt /= recv_dt) unsupported', &
          __FILE__, &
          __LINE__)
     dt = send_dt
@@ -674,7 +559,7 @@ CONTAINS
     INTEGER :: dt
 
     IF (send_dt /= recv_dt) &
-         CALL xt_abort('gen_off_redist: (send_dt /= recv_dt) unsupported', &
+         CALL test_abort('gen_off_redist: (send_dt /= recv_dt) unsupported', &
          __FILE__, &
          __LINE__)
     dt = send_dt
@@ -719,7 +604,7 @@ CONTAINS
         stripes(i,j) = xt_stripe(local_idx(1,i,j), nk, 1)
         DO k = 1, nk
           IF (local_idx(1,i,j)-1+k /= local_idx(k,i,j)) &
-               CALL xt_abort(context//'stripe condition violated', &
+               CALL test_abort(context//'stripe condition violated', &
                __FILE__, &
                __LINE__)
         ENDDO
@@ -795,7 +680,7 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL xt_abort('def_exchange: grid too small (or halo too large&
+           CALL test_abort('def_exchange: grid too small (or halo too large&
            &) for tripolar north exchange', &
            __FILE__, &
            __LINE__)
@@ -843,7 +728,7 @@ CONTAINS
     DO j=1,g_je
       DO i=1,g_ie
         IF (gidx(i,j) == undef_index) THEN
-          CALL xt_abort('check_g_idx: check failed', __FILE__, __LINE__)
+          CALL test_abort('check_g_idx: check failed', __FILE__, __LINE__)
         ENDIF
       ENDDO
     ENDDO
@@ -881,9 +766,9 @@ CONTAINS
     INTEGER :: it
 
     tn = SIZE(c0)
-    IF (tn<0) CALL xt_abort('(tn<0)', __FILE__, __LINE__)
+    IF (tn<0) CALL test_abort('(tn<0)', __FILE__, __LINE__)
     IF (tn>g_cn) &
-         CALL xt_abort('regular_deco: too many task for such a core region', &
+         CALL test_abort('regular_deco: too many task for such a core region', &
          __FILE__, &
          __LINE__)
 
@@ -898,7 +783,7 @@ CONTAINS
       c0(it) = c0(it-1) + cn(it-1)
     ENDDO
     IF (c0(tn-1)+cn(tn-1) /= g_cn) &
-         CALL xt_abort('regular_deco: internal error 1', &
+         CALL test_abort('regular_deco: internal error 1', &
          __FILE__, &
          __LINE__)
 
@@ -910,7 +795,7 @@ CONTAINS
 
     INTEGER :: x0, i
 
-    IF (c<1) CALL xt_abort('factorize: invalid process space', &
+    IF (c<1) CALL test_abort('factorize: invalid process space', &
          __FILE__, &
          __LINE__)
     IF (c <= 3 .OR. c == 5 .OR. c == 7) THEN

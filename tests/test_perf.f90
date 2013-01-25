@@ -52,6 +52,8 @@ PROGRAM test_perf
        & ut_init_oneway_transposition_template, ut_destroy_decomposition, &
        & ut_destroy_transposition_template, ut_destroy_transposition, &
        & ut_init_transposition, xt_int_kind
+  USE ftest_common, ONLY: init_mpi, dp, treset, tstart, tstop, treport, &
+       sync, timer, id_map
 
   IMPLICIT NONE
   ! global extents including halos:
@@ -60,7 +62,6 @@ PROGRAM test_perf
   INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
   INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
-  INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
 
   INTEGER, PARAMETER :: grid_kind_test = 1
   INTEGER, PARAMETER :: grid_kind_toy  = 2
@@ -91,17 +92,7 @@ PROGRAM test_perf
   INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
   INTEGER :: surf_trans_tpex_2d
-  LOGICAL, PARAMETER :: debug =.FALSE.
   LOGICAL :: verbose
-
-  TYPE timer
-    CHARACTER(len=20) :: label = 'undef'
-    INTEGER  :: istate  = -1
-    REAL(dp) :: t0      = 0.0_dp
-    REAL(dp) :: dt_work = 0.0_dp
-  END TYPE timer
-
-  REAL(dp) :: sync_dt_sum = 0.0_dp
 
   TYPE(timer) :: t_all, t_surf_trans, t_exch_surf
   TYPE(timer) :: t_template_2d, t_trans_2d, t_exch_2d
@@ -215,15 +206,15 @@ PROGRAM test_perf
 
   IF (verbose) WRITE(0,*) 'timer report for nprocs=',nprocs
 
-  CALL treport(t_all)
-  CALL treport(t_surf_trans)
-  CALL treport(t_exch_surf)
-  CALL treport(t_template_2d)
-  CALL treport(t_trans_2d)
-  CALL treport(t_exch_2d)
-  CALL treport(t_template_3d)
-  CALL treport(t_trans_3d)
-  CALL treport(t_exch_3d)
+  CALL treport(t_all, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_surf_trans, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_surf, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_template_2d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_trans_2d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_2d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_template_3d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_trans_3d, TRIM(grid_label), mpi_comm_world)
+  CALL treport(t_exch_3d, TRIM(grid_label), mpi_comm_world)
 
   CALL exit_mpi
 
@@ -233,95 +224,6 @@ CONTAINS
     CHARACTER(len=*), INTENT(in) :: s
     IF (verbose) WRITE(0,*) s
   END SUBROUTINE msg
-
-  SUBROUTINE treset(t, label)
-    TYPE(timer), INTENT(inout) :: t
-    CHARACTER(len=*), INTENT(in) :: label
-    t%label   = label
-    t%istate  = 0
-    t%t0      = 0.0_dp
-    t%dt_work = 0.0_dp
-  END SUBROUTINE treset
-
-  SUBROUTINE tstart(t)
-    TYPE(timer), INTENT(inout) :: t
-    IF (debug) WRITE(0,*) 'tstart: ',t%label
-    CALL sync
-    t%istate = 1
-    t%t0 = work_time()
-  END SUBROUTINE tstart
-
-  SUBROUTINE tstop(t)
-    TYPE(timer), INTENT(inout) :: t
-    REAL(dp) :: t1
-    IF (debug) WRITE(0,*) 'tstop: ',t%label
-    t1 = work_time()
-    t%dt_work = t%dt_work + (t1 - t%t0)
-    t%istate = 0
-    CALL sync
-
-  END SUBROUTINE tstop
-
-  SUBROUTINE treport(t)
-    CHARACTER(len=*), PARAMETER :: context = 'treport: '
-    TYPE(timer), INTENT(in) :: t
-
-    REAL(dp) :: work_sum, work_max, work_avg, e
-    REAL(dp) :: sbuf, rbuf(0:nprocs-1)
-    INTEGER :: ierror
-
-    sbuf = t%dt_work
-    rbuf = -1.0_dp
-    CALL MPI_GATHER(sbuf, 1, MPI_DOUBLE_PRECISION, &
-         &  rbuf, 1, MPI_DOUBLE_PRECISION, &
-         &  0, MPI_COMM_WORLD, ierror)
-
-
-    IF (lroot) THEN
-      IF (rbuf(0) /= sbuf) &
-           CALL ut_abort(context//'internal error (1)', &
-           __FILE__, &
-           __LINE__)
-      IF (ANY(rbuf < 0.0_dp)) &
-           CALL ut_abort(context//'internal error (2)', &
-           __FILE__, &
-           __LINE__)
-      work_sum = SUM(rbuf)
-      work_max = MAXVAL(rbuf)
-      work_avg = work_sum / REAL(nprocs, dp)
-      e = work_avg / work_max
-
-      IF (verbose) WRITE(0,'(A,I4,2X,A16,3F18.8)') &
-           'nprocs, label, wmax, wavg, e =', nprocs, &
-           TRIM(grid_label)//':'//t%label, work_max, &
-           work_avg, e
-    ENDIF
-
-  END SUBROUTINE treport
-
-
-  REAL(dp) FUNCTION work_time()
-    work_time = MPI_WTIME() - sync_dt_sum
-    RETURN
-  END FUNCTION work_time
-
-  SUBROUTINE sync
-    CHARACTER(len=*), PARAMETER :: context = 'sync: '
-    INTEGER :: ierror
-    REAL(dp) :: t0, dt
-
-    t0 = MPI_WTIME()
-
-    CALL MPI_BARRIER(MPI_COMM_WORLD, IERROR)
-    IF (ierror /= MPI_SUCCESS) &
-         CALL ut_abort(context//'MPI_BARRIER failed', &
-         __FILE__, &
-         __LINE__)
-
-    dt = (MPI_WTIME() - t0)
-    sync_dt_sum = sync_dt_sum + dt
-
-  END SUBROUTINE sync
 
   SUBROUTINE inflate_idx(inflate_pos, idx_2d, idx_3d)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::inflate_idx: '
@@ -432,16 +334,6 @@ CONTAINS
 
   END SUBROUTINE icmp_3d
 
-  SUBROUTINE init_mpi
-    CHARACTER(len=*), PARAMETER :: context = 'init_mpi: '
-    INTEGER :: ierror
-    CALL MPI_INIT(ierror)
-    IF (ierror /= MPI_SUCCESS) &
-         CALL ut_abort(context//'MPI_INIT failed', &
-         __FILE__, &
-         __LINE__)
-  END SUBROUTINE init_mpi
-
   SUBROUTINE init_all
     CHARACTER(len=*), PARAMETER :: context = 'init_all: '
     INTEGER :: ierror
@@ -531,21 +423,6 @@ CONTAINS
          __FILE__, &
          __LINE__)
   END SUBROUTINE exit_mpi
-
-  SUBROUTINE id_map(map)
-    INTEGER, INTENT(out) :: map(:,:)
-
-    INTEGER :: i,j,p
-
-    p = 0
-    DO j = 1, SIZE(map,2)
-      DO i = 1, SIZE(map,1)
-        p = p + 1
-        map(i,j) = p
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE id_map
 
   SUBROUTINE exchange2d_2d(itrans, f, g)
     INTEGER, INTENT(in) :: itrans

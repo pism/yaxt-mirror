@@ -84,13 +84,13 @@ test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
 test_handles_SOURCES = test_handles.c tests.h
 test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
-test_perf_SOURCES = test_perf.f90
+test_perf_SOURCES = test_perf.f90 ftest_common.f90
 test_perf_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
-test_perf_stripes_SOURCES = test_perf_stripes.f90
+test_perf_stripes_SOURCES = test_perf_stripes.f90 ftest_common.f90
 test_perf_stripes_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_sort_SOURCES = test_sort.c tests.h
 test_uid_SOURCES = test_uid.c
-test_yaxt_SOURCES = test_yaxt.f90
+test_yaxt_SOURCES = test_yaxt.f90 ftest_common.f90
 test_yaxt_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 

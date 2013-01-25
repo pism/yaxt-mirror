@@ -98,8 +98,6 @@ SymPrefix(abort_default)(MPI_Comm comm, const char *msg, const char *source, int
 #endif
   if (MPI_Initialized(&flag) == MPI_SUCCESS && flag)
     MPI_Abort(comm, 1);
-  else
-    abort();
 #endif
   abort();
 }

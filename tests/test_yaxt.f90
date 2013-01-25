@@ -51,6 +51,7 @@ PROGRAM test_yaxt
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
+  USE ftest_common, ONLY: test_abort
   USE iso_c_binding, ONLY: c_loc, c_int
 
   IMPLICIT NONE
@@ -168,7 +169,7 @@ CONTAINS
     n1 = SIZE(f,1)
     n2 = SIZE(f,2)
     IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
-         CALL xt_abort(context//'internal error', &
+         CALL test_abort(context//'internal error', &
          __FILE__, &
          __LINE__)
 
@@ -177,7 +178,7 @@ CONTAINS
         IF (f(i,j) /= g(i,j)) THEN
           WRITE(0,*) context,'test failed: i, j, f(i,j), g(i,j) =', &
                i, j, f(i,j), g(i,j)
-          CALL xt_abort(context//'test failed', &
+          CALL test_abort(context//'test failed', &
                __FILE__, &
                __LINE__)
         ENDIF
@@ -194,17 +195,19 @@ CONTAINS
     CALL MPI_INIT(ierror)
 
     IF (ierror /= MPI_SUCCESS) &
-         CALL xt_abort(context//'MPI_INIT failed', &
+         CALL test_abort(context//'MPI_INIT failed', &
          __FILE__, &
          __LINE__)
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL xt_abort(context//'MPI_COMM_SIZE failed', &
+    IF (ierror /= MPI_SUCCESS) &
+         CALL test_abort(context//'MPI_COMM_SIZE failed', &
          __FILE__, &
          __LINE__)
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, mype, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL xt_abort(context//'MPI_COMM_RANK failed', &
+    IF (ierror /= MPI_SUCCESS) &
+         CALL test_abort(context//'MPI_COMM_RANK failed', &
          __FILE__, &
          __LINE__)
     IF (mype==0) THEN
@@ -244,7 +247,7 @@ CONTAINS
 
     CALL MPI_FINALIZE(ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL xt_abort(context//'MPI_FINALIZE failed', &
+         CALL test_abort(context//'MPI_FINALIZE failed', &
          __FILE__, &
          __LINE__)
 
@@ -297,7 +300,7 @@ CONTAINS
     INTEGER :: dt
 
     IF (send_dt /= recv_dt) &
-         CALL xt_abort('gen_trans: (send_dt /= recv_dt) unsupported', &
+         CALL test_abort('gen_trans: (send_dt /= recv_dt) unsupported', &
          __FILE__, &
          __LINE__)
     dt = send_dt
@@ -317,7 +320,7 @@ CONTAINS
     !send_offsets = RESHAPE(send_off, (/SIZE(send_off)/) )
     !recv_offsets = RESHAPE(recv_off, (/SIZE(recv_off)/) )
     IF (recv_dt /= send_dt) &
-         CALL xt_abort('(datatype_in /= datatype_out) not supported', &
+         CALL test_abort('(datatype_in /= datatype_out) not supported', &
          __FILE__, &
          __LINE__)
 
@@ -390,7 +393,7 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL xt_abort('def_exchange: grid too small (or halo too large)&
+           CALL test_abort('def_exchange: grid too small (or halo too large)&
            & for tripolar north exchange', &
            __FILE__, &
            __LINE__)
@@ -438,7 +441,7 @@ CONTAINS
     DO j=1,g_je
       DO i=1,g_ie
         IF (gidx(i,j) == undef_index) THEN
-          CALL xt_abort('check_g_idx: check failed', __FILE__, __LINE__)
+          CALL test_abort('check_g_idx: check failed', __FILE__, __LINE__)
         ENDIF
       ENDDO
     ENDDO
@@ -471,8 +474,8 @@ CONTAINS
     INTEGER :: it
 
     tn = SIZE(c0)
-    IF (tn<0) CALL xt_abort('(tn<0)', __FILE__, __LINE__)
-    IF (tn>g_cn) CALL xt_abort('regular_deco: too many task for such a core&
+    IF (tn<0) CALL test_abort('(tn<0)', __FILE__, __LINE__)
+    IF (tn>g_cn) CALL test_abort('regular_deco: too many task for such a core&
          & region', &
          __FILE__, &
          __LINE__)
@@ -492,7 +495,7 @@ CONTAINS
       c0(it) = c0(it-1) + cn(it-1)
     ENDDO
     IF (c0(tn-1)+cn(tn-1) /= g_cn) &
-         CALL xt_abort('regular_deco: internal error 1', &
+         CALL test_abort('regular_deco: internal error 1', &
          __FILE__, &
          __LINE__)
 
@@ -504,7 +507,7 @@ CONTAINS
 
     INTEGER :: x0, i
 
-    IF (c<1) CALL xt_abort('factorize: invalid process space', &
+    IF (c<1) CALL test_abort('factorize: invalid process space', &
          __FILE__, &
          __LINE__)
     IF (c <= 3 .OR. c == 5 .OR. c == 7) THEN
