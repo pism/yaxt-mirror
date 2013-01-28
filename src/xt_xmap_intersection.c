@@ -145,30 +145,32 @@ static int xmap_intersection_get_num_destinations(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  return xmap_intersection->ndst;
+  // the number of destination equals the number of source messages
+  return xmap_intersection->nsrc;
 }
 
 static int xmap_intersection_get_num_sources(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  return xmap_intersection->nsrc;
+  // the number of source equals the number of destination messages
+  return xmap_intersection->ndst;
 }
 
 static void xmap_intersection_get_destination_ranks(Xt_xmap xmap, int * ranks) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  for (int i = 0; i < xmap_intersection->ndst; ++i)
-    ranks[i] = xmap_intersection->dst_msg[i].rank;
+  for (int i = 0; i < xmap_intersection->nsrc; ++i)
+    ranks[i] = xmap_intersection->src_msg[i].rank;
 }
 
 static void xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  for (int i = 0; i < xmap_intersection->nsrc; ++i)
-    ranks[i] = xmap_intersection->src_msg[i].rank;
+  for (int i = 0; i < xmap_intersection->ndst; ++i)
+    ranks[i] = xmap_intersection->dst_msg[i].rank;
 }
 
 /* compute list positions for one direction */
