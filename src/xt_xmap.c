@@ -79,14 +79,14 @@ void xt_xmap_delete(Xt_xmap xmap) {
   xmap->vtable->delete(xmap);
 }
 
-Xt_xmap_iter xt_xmap_get_destination_iterator(Xt_xmap xmap) {
+Xt_xmap_iter xt_xmap_get_in_iterator(Xt_xmap xmap) {
 
-  return xmap->vtable->get_destination_iterator(xmap);
+  return xmap->vtable->get_in_iterator(xmap);
 }
 
-Xt_xmap_iter xt_xmap_get_source_iterator(Xt_xmap xmap) {
+Xt_xmap_iter xt_xmap_get_out_iterator(Xt_xmap xmap) {
 
-  return xmap->vtable->get_source_iterator(xmap);
+  return xmap->vtable->get_out_iterator(xmap);
 }
 
 int xt_xmap_iterator_next(Xt_xmap_iter iter) {

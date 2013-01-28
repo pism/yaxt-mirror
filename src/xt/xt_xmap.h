@@ -113,24 +113,24 @@ void xt_xmap_get_destination_ranks(Xt_xmap xmap, int * ranks);
 void xt_xmap_get_source_ranks(Xt_xmap xmap, int * ranks);
 
 /**
- * gets an iterator for all processes that will require data from
- * the local process in an exchange operation
+ * gets an iterator for all local outgoing messages of an
+ * exchange operation
  *
  * @param[in] xmap exchange map
- * @return         iterator for all destination processes
- *                 is NULL if there are no destination processes
+ * @return         iterator for all local outgoing messages\n
+ *                 is NULL if there are no local outgoing messages
  */
-Xt_xmap_iter xt_xmap_get_destination_iterator(Xt_xmap xmap);
+Xt_xmap_iter xt_xmap_get_out_iterator(Xt_xmap xmap);
 
 /**
- * gets an iterator for all processes from which the local process will
- * required data in an exchange operation
+ * gets an iterator for all local incoming messages of an
+ * exchange operation
  *
  * @param[in] xmap exchange map
- * @return         iterator for all source processes
- *                 is NULL if there are no source processes
+ * @return         iterator for all local incoming messages\n
+ *                 is NULL if there are no local incoming messages
  */
-Xt_xmap_iter xt_xmap_get_source_iterator(Xt_xmap xmap);
+Xt_xmap_iter xt_xmap_get_in_iterator(Xt_xmap xmap);
 
 /**
  * sets an exchange map iterator to the next item

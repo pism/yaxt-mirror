@@ -65,8 +65,8 @@ static void
 xmap_intersection_get_destination_ranks(Xt_xmap xmap, int * ranks);
 static void
 xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks);
-static Xt_xmap_iter xmap_intersection_get_destination_iterator(Xt_xmap xmap);
-static Xt_xmap_iter xmap_intersection_get_source_iterator(Xt_xmap xmap);
+static Xt_xmap_iter xmap_intersection_get_in_iterator(Xt_xmap xmap);
+static Xt_xmap_iter xmap_intersection_get_out_iterator(Xt_xmap xmap);
 static void         xmap_intersection_delete(Xt_xmap xmap);
 static int          xmap_iterator_intersection_next(Xt_xmap_iter iter);
 static int          xmap_intersection_iterator_get_rank(Xt_xmap_iter iter);
@@ -99,16 +99,16 @@ struct Xt_xmap_iter_intersection_ {
 
 
 static const struct Xt_xmap_vtable xmap_intersection_vtable = {
-        .get_communicator         = xmap_intersection_get_communicator,
-        .get_num_destinations     = xmap_intersection_get_num_destinations,
-        .get_num_sources          = xmap_intersection_get_num_sources,
-        .get_destination_ranks    = xmap_intersection_get_destination_ranks,
-        .get_source_ranks         = xmap_intersection_get_source_ranks,
-        .get_destination_iterator = xmap_intersection_get_destination_iterator,
-        .get_source_iterator      = xmap_intersection_get_source_iterator,
-        .delete                   = xmap_intersection_delete,
-        .get_max_src_pos          = xmap_intersection_get_max_src_pos,
-        .get_max_dst_pos          = xmap_intersection_get_max_dst_pos};
+        .get_communicator      = xmap_intersection_get_communicator,
+        .get_num_destinations  = xmap_intersection_get_num_destinations,
+        .get_num_sources       = xmap_intersection_get_num_sources,
+        .get_destination_ranks = xmap_intersection_get_destination_ranks,
+        .get_source_ranks      = xmap_intersection_get_source_ranks,
+        .get_out_iterator      = xmap_intersection_get_out_iterator,
+        .get_in_iterator       = xmap_intersection_get_in_iterator,
+        .delete                = xmap_intersection_delete,
+        .get_max_src_pos       = xmap_intersection_get_max_src_pos,
+        .get_max_dst_pos       = xmap_intersection_get_max_dst_pos};
 
 struct exchange_data {
   // list of relative positions in memory to send or receive
@@ -121,8 +121,8 @@ struct Xt_xmap_intersection_ {
 
   const struct Xt_xmap_vtable * vtable;
 
-  struct exchange_data *dst_msg, *src_msg;
-  int ndst, nsrc;
+  struct exchange_data *in_msg, *out_msg;
+  int n_in, n_out;
 
   // we need the max position in order to enable quick range-checks
   // for xmap-users like redist
@@ -146,7 +146,7 @@ static int xmap_intersection_get_num_destinations(Xt_xmap xmap) {
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
   // the number of destination equals the number of source messages
-  return xmap_intersection->nsrc;
+  return xmap_intersection->n_out;
 }
 
 static int xmap_intersection_get_num_sources(Xt_xmap xmap) {
@@ -154,23 +154,23 @@ static int xmap_intersection_get_num_sources(Xt_xmap xmap) {
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
   // the number of source equals the number of destination messages
-  return xmap_intersection->ndst;
+  return xmap_intersection->n_in;
 }
 
 static void xmap_intersection_get_destination_ranks(Xt_xmap xmap, int * ranks) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  for (int i = 0; i < xmap_intersection->nsrc; ++i)
-    ranks[i] = xmap_intersection->src_msg[i].rank;
+  for (int i = 0; i < xmap_intersection->n_out; ++i)
+    ranks[i] = xmap_intersection->out_msg[i].rank;
 }
 
 static void xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  for (int i = 0; i < xmap_intersection->ndst; ++i)
-    ranks[i] = xmap_intersection->dst_msg[i].rank;
+  for (int i = 0; i < xmap_intersection->n_in; ++i)
+    ranks[i] = xmap_intersection->in_msg[i].rank;
 }
 
 /* compute list positions for one direction */
@@ -218,12 +218,12 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
                       Xt_idxlist dst_idxlist_local) {
 
   generate_dir_transfer_pos(num_src_intersections, src_com, src_idxlist_local,
-                            0, &(xmap->nsrc), &(xmap->src_msg));
+                            0, &(xmap->n_out), &(xmap->out_msg));
   generate_dir_transfer_pos(num_dst_intersections, dst_com, dst_idxlist_local,
-                            1, &(xmap->ndst), &(xmap->dst_msg));
+                            1, &(xmap->n_in), &(xmap->in_msg));
 }
 
-static int check_destination_coverage(struct exchange_data * dst_msgs,
+static int check_destination_coverage(struct exchange_data * in_msgs,
                                       int num_msgs, Xt_int num_indices,
                                       MPI_Comm comm) {
 
@@ -242,9 +242,9 @@ static int check_destination_coverage(struct exchange_data * dst_msgs,
   for (int i = 0; i < num_msgs; ++i) {
 
     // check all transfer positions
-    for (int j = 0; j < dst_msgs[i].num_transfer_pos; ++j) {
+    for (int j = 0; j < in_msgs[i].num_transfer_pos; ++j) {
 
-      Xt_int curr_pos = dst_msgs[i].transfer_pos[j];
+      Xt_int curr_pos = in_msgs[i].transfer_pos[j];
 
       if (curr_pos >= num_indices)
         Xt_abort(comm, "ERROR: invalid transer position (pos >= num_indices)",
@@ -293,7 +293,7 @@ xt_xmap_intersection_new(Xt_int num_src_intersections,
 
   // check if all indices in the destination index list have been found on
   // the source processes
-  if (check_destination_coverage(xmap->dst_msg, xmap->ndst,
+  if (check_destination_coverage(xmap->in_msg, xmap->n_in,
                                  xt_idxlist_get_num_indices(dst_idxlist), comm))
     Xt_abort(comm, "ERROR: destination intersections do not match with"
              "destination index list", __FILE__, __LINE__);
@@ -316,47 +316,47 @@ static void xmap_intersection_delete(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  for (unsigned i = 0; i < (unsigned)xmap_intersection->ndst; ++i)
-    free(xmap_intersection->dst_msg[i].transfer_pos);
+  for (unsigned i = 0; i < (unsigned)xmap_intersection->n_in; ++i)
+    free(xmap_intersection->in_msg[i].transfer_pos);
 
-  for (unsigned i = 0; i < (unsigned)xmap_intersection->nsrc; ++i)
-    free(xmap_intersection->src_msg[i].transfer_pos);
+  for (unsigned i = 0; i < (unsigned)xmap_intersection->n_out; ++i)
+    free(xmap_intersection->out_msg[i].transfer_pos);
 
-  free(xmap_intersection->dst_msg);
-  free(xmap_intersection->src_msg);
+  free(xmap_intersection->in_msg);
+  free(xmap_intersection->out_msg);
 
   xt_mpi_call(MPI_Comm_free(&(xmap_intersection->comm)), MPI_COMM_WORLD);
   free(xmap_intersection);
 }
 
-static Xt_xmap_iter xmap_intersection_get_destination_iterator(Xt_xmap xmap) {
+static Xt_xmap_iter xmap_intersection_get_in_iterator(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  if (xmap_intersection->ndst == 0)
+  if (xmap_intersection->n_in == 0)
     return NULL;
 
   Xt_xmap_iter_intersection iter = xmalloc(sizeof (*iter));
 
   iter->vtable = &xmap_iterator_intersection_vtable;
-  iter->msg = xmap_intersection->dst_msg;
-  iter->msgs_left = xmap_intersection->ndst - 1;
+  iter->msg = xmap_intersection->in_msg;
+  iter->msgs_left = xmap_intersection->n_in - 1;
 
   return (Xt_xmap_iter)iter;
 }
 
-static Xt_xmap_iter xmap_intersection_get_source_iterator(Xt_xmap xmap) {
+static Xt_xmap_iter xmap_intersection_get_out_iterator(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = (Xt_xmap_intersection)xmap;
 
-  if (xmap_intersection->nsrc == 0)
+  if (xmap_intersection->n_out == 0)
     return NULL;
 
   Xt_xmap_iter_intersection iter = xmalloc(sizeof (*iter));
 
   iter->vtable = &xmap_iterator_intersection_vtable;
-  iter->msg = xmap_intersection->src_msg;
-  iter->msgs_left = xmap_intersection->nsrc - 1;
+  iter->msg = xmap_intersection->out_msg;
+  iter->msgs_left = xmap_intersection->n_out - 1;
 
   return (Xt_xmap_iter)iter;
 }

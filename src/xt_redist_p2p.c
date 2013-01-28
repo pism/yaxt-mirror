@@ -177,13 +177,13 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
   }
 
   redist->nrecv = xt_xmap_get_num_sources(xmap);
-  Xt_xmap_iter dst_iter = xt_xmap_get_destination_iterator(xmap);
+  Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
   generate_msg_infos(redist->nrecv, dst_iter, dst_offsets, datatype,
                      &(redist->recv_msgs), redist->comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   redist->nsend = xt_xmap_get_num_destinations(xmap);
-  Xt_xmap_iter src_iter = xt_xmap_get_source_iterator(xmap);
+  Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
   generate_msg_infos(redist->nsend, src_iter, src_offsets, datatype,
                      &(redist->send_msgs), redist->comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
@@ -276,13 +276,13 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
   }
 
   redist->nrecv = xt_xmap_get_num_sources(xmap);
-  Xt_xmap_iter dst_iter = xt_xmap_get_destination_iterator(xmap);
+  Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
   generate_ext_msg_infos(redist->nrecv, dst_iter, num_dst_ext, dst_extents,
                          datatype, &(redist->recv_msgs), redist->comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   redist->nsend = xt_xmap_get_num_destinations(xmap);
-  Xt_xmap_iter src_iter = xt_xmap_get_source_iterator(xmap);
+  Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
   generate_ext_msg_infos(redist->nsend, src_iter, num_src_ext, src_extents,
                          datatype, &(redist->send_msgs), redist->comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
@@ -397,8 +397,8 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
 
   Xt_xmap_iter dst_iter, src_iter;
 
-  dst_iter = xt_xmap_get_destination_iterator(xmap);
-  src_iter = xt_xmap_get_source_iterator(xmap);
+  dst_iter = xt_xmap_get_in_iterator(xmap);
+  src_iter = xt_xmap_get_out_iterator(xmap);
 
   // dst part:
   int max_dst_pos = xt_xmap_get_max_dst_pos(xmap);
