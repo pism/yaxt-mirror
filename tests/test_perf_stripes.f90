@@ -54,7 +54,7 @@ PROGRAM test_perf_stripes
        xt_stripe, xt_idxstripes_new, xt_int_kind
 
   USE ftest_common, ONLY: init_mpi, dp, timer, treset, tstart, tstop, &
-       treport, sync, id_map, test_abort
+       treport, sync, id_map, test_abort, icmp
 
   USE ISO_C_BINDING, ONLY: c_loc
 
@@ -162,7 +162,7 @@ PROGRAM test_perf_stripes
   CALL tstart(t_exch_2d)
   CALL exchange_int(redist_tpex_2d, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
-  CALL icmp_2d('2d to 2d check', gval_2d, INT(loc_tpex_2d))
+  CALL icmp('2d to 2d check', gval_2d, INT(loc_tpex_2d), mype)
 
   ! define positions of surface elements within (k,i,j) array
   CALL id_map(id_pos)
@@ -182,11 +182,11 @@ PROGRAM test_perf_stripes
   CALL tstop(t_exch_surf)
 
   ! check surface:
-  CALL icmp_2d('surface check', gval_3d(1,:,:), INT(loc_tpex_2d))
+  CALL icmp('surface check', gval_3d(1,:,:), INT(loc_tpex_2d), mype)
 
   IF (nlev>1) THEN
     ! check sub surface:
-    CALL icmp_2d('sub surface check', gval_3d(2,:,:), INT(loc_tpex_2d)*0-1)
+    CALL icmp('sub surface check', gval_3d(2,:,:), INT(loc_tpex_2d)*0-1, mype)
   ENDIF
   endif
 
@@ -219,7 +219,7 @@ PROGRAM test_perf_stripes
   CALL xt_redist_delete(redist_tpex_3d)
 
   ! check 3d exchange:
-  CALL icmp_3d('3d to 3d check', gval_3d, INT(loc_tpex_3d))
+  CALL icmp('3d to 3d check', gval_3d, INT(loc_tpex_3d), mype)
   endif
 
 
@@ -243,7 +243,7 @@ PROGRAM test_perf_stripes
   CALL tstop(t_exch_3d_ws)
   if (full_test) then
   ! check 3d exchange:
-    CALL icmp_3d('3d to 3d check (using stripes)', gval_3d, INT(loc_tpex_3d))
+    CALL icmp('3d to 3d check (using stripes)', gval_3d, INT(loc_tpex_3d), mype)
   endif
 
   CALL tstart(t_redist_3d_wb)
@@ -258,7 +258,7 @@ PROGRAM test_perf_stripes
 
   CALL xt_redist_delete(redist_tpex_3d_wb)
 
-  CALL icmp_3d('redist_tpex_3d_wb check', gval_3d, INT(loc_tpex_3d))
+  CALL icmp('redist_tpex_3d_wb check', gval_3d, INT(loc_tpex_3d), mype)
 
   ! cleanup:
   IF (full_test) THEN
@@ -375,66 +375,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE gen_pos3d_surf
-
-  SUBROUTINE icmp_2d(label, f,g)
-    CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_2d: '
-    CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:)
-    INTEGER, INTENT(in)  :: g(:,:)
-
-    INTEGER :: i, j, n1, n2
-
-    n1 = SIZE(f,1)
-    n2 = SIZE(f,2)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
-         CALL test_abort(context//'shape mismatch error', &
-         __FILE__, &
-         __LINE__)
-
-    DO j = 1, n2
-      DO i = 1, n1
-        IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,*) context,label,' test failed: i, j, f(i,j), g(i,j) =', &
-               i, j, f(i,j), g(i,j)
-          CALL test_abort(context//label//' test failed', &
-               __FILE__, &
-               __LINE__)
-        ENDIF
-      ENDDO
-    ENDDO
-    IF (verbose) WRITE(0,*) mype,':',context//label//' passed'
-  END SUBROUTINE icmp_2d
-
-  SUBROUTINE icmp_3d(label, f,g)
-    CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_3d: '
-    CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:,:)
-    INTEGER, INTENT(in)  :: g(:,:,:)
-
-    INTEGER :: i1, i2, i3, n1, n2, n3
-
-    n1 = SIZE(f,1)
-    n2 = SIZE(f,2)
-    n3 = SIZE(f,3)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
-      CALL test_abort(context//label//'shape mismatch', __FILE__, __LINE__)
-
-    DO i3 = 1, n3
-      DO i2 = 1, n2
-        DO i1 = 1, n1
-          IF (f(i1,i2,i3) /= g(i1,i2,i3)) THEN
-            WRITE(0,*) context,label,&
-                 ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
-                 i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
-            CALL test_abort(context//label//' test failed', &
-                 __FILE__, &
-                 __LINE__)
-          ENDIF
-        ENDDO
-      ENDDO
-    ENDDO
-    IF (verbose) WRITE(0,*) mype,':',context//label//' passed'
-  END SUBROUTINE icmp_3d
 
   SUBROUTINE init_all
     CHARACTER(len=*), PARAMETER :: context = 'init_all: '

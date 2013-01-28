@@ -51,7 +51,7 @@ PROGRAM test_yaxt
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
-  USE ftest_common, ONLY: test_abort
+  USE ftest_common, ONLY: test_abort, icmp
   USE iso_c_binding, ONLY: c_loc, c_int
 
   IMPLICIT NONE
@@ -108,7 +108,7 @@ PROGRAM test_yaxt
   fval = loc_id
   CALL exchange_int(redist_tpex, fval, gval)
 
-  CALL icmp('2d to 2d check', gval, INT(loc_tpex))
+  CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
 
   ! define positions of surface elements within (i,k,j) array
   CALL gen_id_pos(id_pos)
@@ -123,9 +123,9 @@ PROGRAM test_yaxt
   gval3d = -1
   CALL exchange_int(redist_surf_tpex, fval, gval3d)
 
-  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex))
+  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex), mype)
   ! check sub surface:
-  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1)
+  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1, mype)
 
   ! cleanup:
   CALL xt_xmap_delete(xmap_tpex)
@@ -157,36 +157,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE gen_pos3d_surf
-
-  SUBROUTINE icmp(label, f,g)
-    CHARACTER(len=*), PARAMETER :: context = 'test_ut::icmp: '
-    CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:)
-    INTEGER, INTENT(in)  :: g(:,:)
-
-    INTEGER :: i, j, n1, n2
-
-    n1 = SIZE(f,1)
-    n2 = SIZE(f,2)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
-         CALL test_abort(context//'internal error', &
-         __FILE__, &
-         __LINE__)
-
-    DO j = 1, n2
-      DO i = 1, n1
-        IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,*) context,'test failed: i, j, f(i,j), g(i,j) =', &
-               i, j, f(i,j), g(i,j)
-          CALL test_abort(context//'test failed', &
-               __FILE__, &
-               __LINE__)
-        ENDIF
-      ENDDO
-    ENDDO
-    IF (verbose) WRITE(0,*) mype,':',context//label//' passed'
-  END SUBROUTINE icmp
-
 
   SUBROUTINE init_all
     CHARACTER(len=*), PARAMETER :: context = 'init_all: '

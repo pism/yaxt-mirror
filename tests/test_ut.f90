@@ -50,6 +50,7 @@ PROGRAM test_ut
        ut_init_transposition, &
        comm_forward, ut_transpose, ut_destroy_decomposition, &
        ut_destroy_transposition, xt_int_kind
+  USE ftest_common, ONLY: icmp
   IMPLICIT NONE
 
   ! global extents including halos
@@ -104,7 +105,7 @@ PROGRAM test_ut
   ! test 2d-to-2d transposition:
   fval = loc_id
   CALL exchange2d_2d(trans_tpex, fval, gval)
-  CALL icmp('2d to 2d check', gval, INT(loc_tpex))
+  CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
 
   ! define positions of surface elements within (i,k,j) array
   CALL gen_id_pos(id_pos)
@@ -118,10 +119,10 @@ PROGRAM test_ut
   ! 2d to surface boundsexchange:
   gval3d = -1
   CALL exchange2d_3d(surf_trans_tpex, fval, gval3d)
-  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex))
+  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex), mype)
 
   ! check sub surface:
-  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1)
+  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1, mype)
 
   ! cleanup:
   CALL ut_destroy_transposition_template(template_tpex)
@@ -151,35 +152,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE gen_pos3d_surf
-
-  SUBROUTINE icmp(label, f,g)
-    CHARACTER(len=*), PARAMETER :: context = 'test_ut::icmp: '
-    CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:)
-    INTEGER, INTENT(in)  :: g(:,:)
-
-    INTEGER :: i, j, n1, n2
-
-    n1 = SIZE(f,1)
-    n2 = SIZE(f,2)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
-         CALL ut_abort(context//'internal error', &
-         __FILE__, &
-         __LINE__)
-
-    DO j = 1, n2
-      DO i = 1, n1
-        IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,*) context, 'test failed: i, j, f(i,j), g(i,j) =', &
-               i, j, f(i,j), g(i,j)
-          CALL ut_abort(context//'test failed', &
-               __FILE__, &
-               __LINE__)
-        ENDIF
-      ENDDO
-    ENDDO
-    IF (verbose) WRITE(0,*) mype,':',context//label//' passed'
-  END SUBROUTINE icmp
 
   SUBROUTINE init_all
     CHARACTER(len=*), PARAMETER :: context = 'init_all: '

@@ -61,13 +61,18 @@ MODULE ftest_common
     MODULE PROCEDURE test_abort_msl_f
   END INTERFACE test_abort
 
+  INTERFACE icmp
+    MODULE PROCEDURE icmp_2d
+    MODULE PROCEDURE icmp_3d
+  END INTERFACE icmp
+
   REAL(dp) :: sync_dt_sum = 0.0_dp
   LOGICAL, PARAMETER :: debug = .FALSE.
   LOGICAL :: verbose = .FALSE.
 
   PUBLIC :: init_mpi
   PUBLIC :: timer, treset, tstart, tstop, treport, sync
-  PUBLIC :: id_map
+  PUBLIC :: id_map, icmp
   PUBLIC :: test_abort
 CONTAINS
   SUBROUTINE init_mpi
@@ -208,8 +213,8 @@ CONTAINS
     INTEGER, VALUE, INTENT(in) :: line
 
     INTERFACE
-      SUBROUTINE abort() BIND(c, name='abort')
-      END SUBROUTINE abort
+      SUBROUTINE c_abort() BIND(c, name='abort')
+      END SUBROUTINE c_abort
     END INTERFACE
 
     INTEGER :: ierror
@@ -221,7 +226,69 @@ CONTAINS
     CALL mpi_initialized(flag, ierror)
     IF (ierror == mpi_success .AND. flag) &
          CALL mpi_abort(comm, 1, ierror)
-    CALL abort
+    CALL c_abort
   END SUBROUTINE test_abort_cmsl_f
+
+  SUBROUTINE icmp_2d(label, f,g, rank)
+    CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_2d: '
+    CHARACTER(len=*), INTENT(in) :: label
+    INTEGER, INTENT(in) :: f(:,:)
+    INTEGER, INTENT(in) :: g(:,:)
+    INTEGER, INTENT(in) :: rank
+
+    INTEGER :: i, j, n1, n2
+
+    n1 = SIZE(f,1)
+    n2 = SIZE(f,2)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
+         CALL test_abort(context//'shape mismatch error', &
+         __FILE__, &
+         __LINE__)
+
+    DO j = 1, n2
+      DO i = 1, n1
+        IF (f(i,j) /= g(i,j)) THEN
+          WRITE(0,*) context,label,' test failed: i, j, f(i,j), g(i,j) =', &
+               i, j, f(i,j), g(i,j)
+          CALL test_abort(context//label//' test failed', &
+               __FILE__, &
+               __LINE__)
+        ENDIF
+      ENDDO
+    ENDDO
+    IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
+  END SUBROUTINE icmp_2d
+
+  SUBROUTINE icmp_3d(label, f,g, rank)
+    CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_3d: '
+    CHARACTER(len=*), INTENT(in)  :: label
+    INTEGER, INTENT(in)  :: f(:,:,:)
+    INTEGER, INTENT(in)  :: g(:,:,:)
+    INTEGER, INTENT(in) :: rank
+
+    INTEGER :: i1, i2, i3, n1, n2, n3
+
+    n1 = SIZE(f,1)
+    n2 = SIZE(f,2)
+    n3 = SIZE(f,3)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
+      CALL test_abort(context//label//'shape mismatch', __FILE__, __LINE__)
+
+    DO i3 = 1, n3
+      DO i2 = 1, n2
+        DO i1 = 1, n1
+          IF (f(i1,i2,i3) /= g(i1,i2,i3)) THEN
+            WRITE(0,*) context,label,&
+                 ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
+                 i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
+            CALL test_abort(context//label//' test failed', &
+                 __FILE__, &
+                 __LINE__)
+          ENDIF
+        ENDDO
+      ENDDO
+    ENDDO
+    IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
+  END SUBROUTINE icmp_3d
 
 END MODULE ftest_common
