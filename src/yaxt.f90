@@ -65,7 +65,7 @@ MODULE yaxt
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        &    xt_redist_delete, &
        &    xt_redist_s_exchange1, xt_idxstripes_new, xt_initialize, &
-       xt_get_default_comm
+       xt_get_default_comm, xt_idxempty_new
 
   INTEGER, PARAMETER, PUBLIC :: xt_int_kind   = XT_INT_FC_KIND
 
@@ -186,6 +186,23 @@ CONTAINS
     res%cptr = xt_idxvec_new_f(idxvec, num_indices)
 
   END FUNCTION xt_idxvec_new
+
+  FUNCTION xt_idxempty_new() RESULT(res)
+    IMPLICIT NONE
+    TYPE(Xt_idxlist) :: res
+
+    INTERFACE
+      FUNCTION xt_idxempty_new_f() &
+           BIND(C, name='xt_idxempty_new') RESULT(res_ptr)
+        IMPORT :: c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr) :: res_ptr
+      END FUNCTION xt_idxempty_new_f
+    END INTERFACE
+
+    res%cptr = xt_idxempty_new_f()
+
+  END FUNCTION xt_idxempty_new
 
   FUNCTION xt_idxstripes_new(stripes, num_stripes) RESULT(res)
     IMPLICIT NONE
@@ -354,5 +371,50 @@ CONTAINS
 
   END FUNCTION xt_redist_p2p_new
 
+  FUNCTION xt_idxlist_get_index_at_position(idxlist, position, idx) RESULT(res)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER, VALUE, INTENT(in) :: position
+    INTEGER(xt_int_kind), INTENT(out) :: idx
+    LOGICAL :: res
+
+    INTERFACE
+      FUNCTION xt_idxlist_get_index_at_position_c(idxlist, position, idx) &
+           BIND(c, name='xt_idxlist_get_index_at_position') RESULT(res)
+        IMPORT :: c_ptr, c_int, xt_int_kind
+        TYPE(c_ptr), INTENT(in) :: idxlist
+        INTEGER(c_int), INTENT(in) :: position
+        INTEGER(xt_int_kind), INTENT(out) :: idx
+        INTEGER(c_int) :: res
+      END FUNCTION xt_idxlist_get_index_at_position_c
+    END INTERFACE
+
+    res = xt_idxlist_get_index_at_position_c(idxlist%cptr, &
+         INT(position, c_int), idx) /= 0
+  END FUNCTION xt_idxlist_get_index_at_position
+
+  FUNCTION xt_idxlist_get_position_of_index(idxlist, idx, position) &
+       RESULT(notfound)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), VALUE, INTENT(in) :: idx
+    INTEGER, INTENT(out) :: position
+    LOGICAL :: notfound
+
+    INTERFACE
+      FUNCTION xt_idxlist_get_position_of_index_c(idxlist, idx, &
+           position) BIND(c, name='xt_idxlist_get_position_of_index') &
+           RESULT(res)
+        IMPORT :: Xt_idxlist, xt_int_kind, c_int, c_ptr
+        TYPE(c_ptr) :: idxlist
+        INTEGER(xt_int_kind), VALUE, INTENT(in) :: idx
+        INTEGER(c_int), INTENT(out) :: position
+        INTEGER(c_int) :: res
+      END FUNCTION xt_idxlist_get_position_of_index_c
+    END INTERFACE
+
+    notfound = xt_idxlist_get_position_of_index_c(idxlist%cptr, idx, position) &
+         /= 0
+  END FUNCTION xt_idxlist_get_position_of_index
 
 END MODULE yaxt

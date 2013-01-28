@@ -37,6 +37,7 @@ noinst_PROGRAMS = 						\
 	test_mpi_generate_datatype				\
 	test_handles						\
 	test_idxempty						\
+	test_idxempty_f						\
 	test_idxvec						\
 	test_idxlist_collection					\
 	test_idxmod						\
@@ -67,6 +68,8 @@ libtestutil_a_SOURCES = tests.c ftest_common.f90 \
 	test_idxlist_utils.c test_idxlist_utils_f.f90
 
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
+test_idxempty_f_SOURCES = test_idxempty_f.f90
+test_idxempty_f_LDADD = $(XT_FC_LDADD)
 test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist_utils.h
 test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h \
 	test_idxlist_utils.h

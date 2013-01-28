@@ -365,5 +365,4 @@ CONTAINS
          __LINE__)
   END SUBROUTINE regular_deco
 
-
 END MODULE ftest_common
