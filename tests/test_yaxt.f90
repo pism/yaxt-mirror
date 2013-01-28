@@ -51,7 +51,7 @@ PROGRAM test_yaxt
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
-  USE ftest_common, ONLY: test_abort, icmp, factorize
+  USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco
   USE iso_c_binding, ONLY: c_loc, c_int
 
   IMPLICIT NONE
@@ -432,43 +432,5 @@ CONTAINS
     p_joff = cy0(mypy)
 
   END SUBROUTINE deco
-
-  SUBROUTINE regular_deco(g_cn, c0, cn)
-    INTEGER, INTENT(in) :: g_cn
-    INTEGER, INTENT(out) :: c0(0:), cn(0:)
-
-    ! convention: process space coords start at 0, grid point coords start at 1
-
-    integer :: tn
-    INTEGER :: d, m
-    INTEGER :: it
-
-    tn = SIZE(c0)
-    IF (tn<0) CALL test_abort('(tn<0)', __FILE__, __LINE__)
-    IF (tn>g_cn) CALL test_abort('regular_deco: too many task for such a core&
-         & region', &
-         __FILE__, &
-         __LINE__)
-
-    d = g_cn/tn
-    m = MOD(g_cn, tn)
-
-    DO it = 0, m-1
-      cn(it) = d + 1
-    ENDDO
-    DO it = m, tn-1
-      cn(it) = d
-    ENDDO
-
-    c0(0)=0
-    DO it = 1, tn-1
-      c0(it) = c0(it-1) + cn(it-1)
-    ENDDO
-    IF (c0(tn-1)+cn(tn-1) /= g_cn) &
-         CALL test_abort('regular_deco: internal error 1', &
-         __FILE__, &
-         __LINE__)
-
-  END SUBROUTINE regular_deco
 
 END PROGRAM test_yaxt
