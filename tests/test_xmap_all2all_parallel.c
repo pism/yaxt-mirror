@@ -215,6 +215,68 @@ int main(void) {
 
   }
 
+  if (comm_size > 1) {
+
+    Xt_int index_list[5] = {0,1,2,3,4};
+
+    Xt_idxlist src_idxlist;
+
+    if (comm_rank == 0)
+      src_idxlist = xt_idxvec_new(index_list, 5);
+    else
+      src_idxlist = xt_idxempty_new();
+
+    Xt_idxlist dst_idxlist;
+
+    if (comm_rank == comm_size-1)
+      dst_idxlist = xt_idxvec_new(index_list, 5);
+    else
+      dst_idxlist = xt_idxempty_new();
+
+    // test of exchange map
+    Xt_xmap xmap;
+
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+
+    // test results
+
+    if (comm_rank == 0) {
+      if (xt_xmap_get_num_destinations(xmap) != 1)
+        PUT_ERR("error in xt_xmap_get_num_destinations (rank == 0)\n");
+    } else {
+      if (xt_xmap_get_num_destinations(xmap) != 0)
+        PUT_ERR("error in xt_xmap_get_num_destinations (rank != 0)\n");
+    }
+
+    if (comm_rank == comm_size-1) {
+      if (xt_xmap_get_num_sources(xmap) != 1)
+        PUT_ERR("error in xt_xmap_get_num_sources (rank == 0)\n");
+    } else {
+      if (xt_xmap_get_num_sources(xmap) != 0)
+        PUT_ERR("error in xt_xmap_get_num_sources (rank != 0)\n");
+    }
+
+    if (comm_rank == 0) {
+      int dst_rank;
+      xt_xmap_get_destination_ranks(xmap, &dst_rank);
+      if (dst_rank != comm_size-1)
+        PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+    }
+
+    if (comm_rank == comm_size) {
+      int src_rank;
+      xt_xmap_get_source_ranks(xmap, &src_rank);
+      if (src_rank != 0)
+        PUT_ERR("error in xt_xmap_get_source_ranks\n");
+    }
+
+    // clean up
+    xt_xmap_delete(xmap);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_idxlist);
+
+  }
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
