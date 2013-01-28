@@ -225,6 +225,9 @@ static int check_destination_coverage(struct exchange_data * dst_msgs,
                                       int num_msgs, Xt_int num_indices,
                                       MPI_Comm comm) {
 
+  if (num_indices == 0)
+    return 0;
+
   size_t *bit_map;
   Xt_int num_bits = (Xt_int)sizeof (*bit_map) * (Xt_int)CHAR_BIT;
   size_t num_ints = (size_t)((num_indices + num_bits - 1) / num_bits);
