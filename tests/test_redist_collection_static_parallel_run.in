@@ -1,4 +1,5 @@
 #! @SHELL@
+set -e
 @MPI_LAUNCH@ -n 2 ./test_redist_collection_static_parallel
 @MPI_LAUNCH@ -n 3 ./test_redist_collection_static_parallel
 @MPI_LAUNCH@ -n 4 ./test_redist_collection_static_parallel
