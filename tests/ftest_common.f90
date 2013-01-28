@@ -72,7 +72,7 @@ MODULE ftest_common
 
   PUBLIC :: init_mpi
   PUBLIC :: timer, treset, tstart, tstop, treport, sync
-  PUBLIC :: id_map, icmp
+  PUBLIC :: id_map, icmp, factorize
   PUBLIC :: test_abort
 CONTAINS
   SUBROUTINE init_mpi
@@ -290,5 +290,33 @@ CONTAINS
     ENDDO
     IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
   END SUBROUTINE icmp_3d
+
+  SUBROUTINE factorize(c, a, b)
+    INTEGER, INTENT(in) :: c
+    INTEGER, INTENT(out) :: a, b ! c = a*b
+
+    INTEGER :: x0, i
+
+    IF (c<1) CALL test_abort('factorize: invalid process space', &
+         __FILE__, &
+         __LINE__)
+    IF (c <= 3 .OR. c == 5 .OR. c == 7) THEN
+      a = c
+      b = 1
+      RETURN
+    ENDIF
+
+    ! simple approach, we try to be near c = (2*x) * x
+    x0 = INT(SQRT(0.5 * REAL(c)) + 0.5)
+    a = 2*x0
+    f_loop: DO i = a, 1, -1
+      IF (MOD(c,i) == 0) THEN
+        a = i
+        b = c/i
+        EXIT f_loop
+      ENDIF
+    ENDDO f_loop
+
+  END SUBROUTINE factorize
 
 END MODULE ftest_common

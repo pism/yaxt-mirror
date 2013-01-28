@@ -50,7 +50,7 @@ PROGRAM test_ut
        ut_init_transposition, &
        comm_forward, ut_transpose, ut_destroy_decomposition, &
        ut_destroy_transposition, xt_int_kind
-  USE ftest_common, ONLY: icmp
+  USE ftest_common, ONLY: icmp, factorize
   IMPLICIT NONE
 
   ! global extents including halos
@@ -478,33 +478,5 @@ CONTAINS
          __LINE__)
 
   END SUBROUTINE regular_deco
-
-  SUBROUTINE factorize(c, a, b)
-    INTEGER, INTENT(in) :: c
-    INTEGER, INTENT(out) :: a, b ! c = a*b
-
-    INTEGER :: x0, i
-
-    IF (c<1) CALL ut_abort('factorize: invalid process space', &
-         __FILE__, &
-         __LINE__)
-    IF (c <= 3 .OR. c == 5 .OR. c == 7) THEN
-      a = c
-      b = 1
-      RETURN
-    ENDIF
-
-    ! simple approach, we try to be near c = (2*x) * x
-    x0 = INT(SQRT(0.5*REAL(c)) + 0.5)
-    a = 2*x0
-    f_loop: DO i = a, 1, -1
-      IF (MOD(c,i) == 0) THEN
-        a = i
-        b = c/i
-        EXIT f_loop
-      ENDIF
-    ENDDO f_loop
-
-  END SUBROUTINE factorize
 
 END PROGRAM test_ut
