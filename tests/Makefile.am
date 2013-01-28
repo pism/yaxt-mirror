@@ -83,20 +83,21 @@ test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c tests.h
 test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
 test_handles_SOURCES = test_handles.c tests.h
 test_ut_SOURCES = test_ut.f90 ftest_common.f90
-test_ut_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
+test_ut_LDADD = $(XT_FC_LDADD)
 test_perf_SOURCES = test_perf.f90 ftest_common.f90
-test_perf_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
+test_perf_LDADD = $(XT_FC_LDADD)
 test_perf_stripes_SOURCES = test_perf_stripes.f90 ftest_common.f90
-test_perf_stripes_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
+test_perf_stripes_LDADD = $(XT_FC_LDADD)
 test_sort_SOURCES = test_sort.c tests.h
 test_uid_SOURCES = test_uid.c
 test_yaxt_SOURCES = test_yaxt.f90 ftest_common.f90
-test_yaxt_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
+test_yaxt_LDADD = $(XT_FC_LDADD)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
 LDADD = ../src/libyaxt.la $(MPI_C_LIB)
+XT_FC_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 
 TESTS = 							\
 	test_mpi_generate_datatype_run				\
