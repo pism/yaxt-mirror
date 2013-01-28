@@ -59,6 +59,7 @@ MODULE yaxt
   PRIVATE
 
   PUBLIC :: xt_abort, xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
+       xt_idxlist_f2c, &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
@@ -140,6 +141,12 @@ MODULE yaxt
   END INTERFACE
 
 CONTAINS
+
+  FUNCTION xt_idxlist_f2c(idxlist) RESULT(p)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    TYPE(c_ptr) :: p
+    p = idxlist%cptr
+  END FUNCTION xt_idxlist_f2c
 
   SUBROUTINE  xt_abort(comm, msg, source, line)
     INTEGER, INTENT(in):: comm
