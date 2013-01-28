@@ -105,7 +105,7 @@ AC_DEFUN([TJ_FIND_TYPE],
           done],
         [AC_MSG_ERROR([Cannot find matching typedef for $1.])])
        AC_LANG_POP([C]) ])
-  m4_ifset([$2],[$2=AS_VAR_GET([tj_type_equiv])])
+  m4_ifval([$2],[$2=AS_VAR_GET([tj_type_equiv])])
   AS_VAR_POPDEF([tj_type_equiv])])
 dnl
 dnl
