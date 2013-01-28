@@ -663,16 +663,10 @@ CONTAINS
 
   SUBROUTINE check_g_idx(gidx)
     INTEGER,INTENT(in) :: gidx(:,:)
-    INTEGER :: i,j
 
-    DO j=1,g_je
-      DO i=1,g_ie
-        IF (gidx(i,j) == undef_index) THEN
-          CALL test_abort('check_g_idx: check failed', __FILE__, __LINE__)
-        ENDIF
-      ENDDO
-    ENDDO
-
+    IF (ANY(gidx == undef_index)) THEN
+      CALL test_abort('check_g_idx: check failed', __FILE__, __LINE__)
+    ENDIF
   END SUBROUTINE check_g_idx
 
   SUBROUTINE deco
