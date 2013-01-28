@@ -52,8 +52,8 @@ PROGRAM test_perf
        & ut_init_oneway_transposition_template, ut_destroy_decomposition, &
        & ut_destroy_transposition_template, ut_destroy_transposition, &
        & ut_init_transposition, xt_int_kind
-  USE ftest_common, ONLY: init_mpi, dp, treset, tstart, tstop, treport, &
-       sync, timer, id_map, factorize, regular_deco
+  USE ftest_common, ONLY: finish_mpi, init_mpi, dp, treset, tstart, tstop, &
+       treport, sync, timer, id_map, factorize, regular_deco
 
   IMPLICIT NONE
   ! global extents including halos:
@@ -216,7 +216,7 @@ PROGRAM test_perf
   CALL treport(t_trans_3d, TRIM(grid_label), mpi_comm_world)
   CALL treport(t_exch_3d, TRIM(grid_label), mpi_comm_world)
 
-  CALL exit_mpi
+  CALL finish_mpi
 
 CONTAINS
 
@@ -414,15 +414,6 @@ CONTAINS
          &       debug_lvl=0, mode=ut_mode_dt_p2p, debug_unit=0)
 
   END SUBROUTINE init_all
-
-  SUBROUTINE exit_mpi
-    CHARACTER(len=*), PARAMETER :: context = 'exit_mpi: '
-    INTEGER :: ierror
-    CALL MPI_FINALIZE(ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_FINALIZE failed', &
-         __FILE__, &
-         __LINE__)
-  END SUBROUTINE exit_mpi
 
   SUBROUTINE exchange2d_2d(itrans, f, g)
     INTEGER, INTENT(in) :: itrans

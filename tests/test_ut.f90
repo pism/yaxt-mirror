@@ -50,7 +50,7 @@ PROGRAM test_ut
        ut_init_transposition, &
        comm_forward, ut_transpose, ut_destroy_decomposition, &
        ut_destroy_transposition, xt_int_kind
-  USE ftest_common, ONLY: icmp, factorize, regular_deco
+  USE ftest_common, ONLY: finish_mpi, icmp, factorize, regular_deco
   IMPLICIT NONE
 
   ! global extents including halos
@@ -129,7 +129,7 @@ PROGRAM test_ut
   CALL ut_destroy_transposition(trans_tpex)
   CALL ut_destroy_transposition(surf_trans_tpex)
 
-  CALL exit_all
+  CALL finish_mpi
 
 CONTAINS
 
@@ -200,17 +200,6 @@ CONTAINS
     pos3d_surf = undef_int
 
   END SUBROUTINE init_all
-
-  SUBROUTINE exit_all
-    CHARACTER(len=*), PARAMETER :: context = 'exit_all: '
-    INTEGER :: ierror
-
-    CALL MPI_FINALIZE(ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_FINALIZE failed', &
-         __FILE__, &
-         __LINE__)
-
-  END SUBROUTINE exit_all
 
   SUBROUTINE id_map(map)
     INTEGER(xt_int_kind), INTENT(out) :: map(:,:)

@@ -70,7 +70,7 @@ MODULE ftest_common
   LOGICAL, PARAMETER :: debug = .FALSE.
   LOGICAL :: verbose = .FALSE.
 
-  PUBLIC :: init_mpi
+  PUBLIC :: init_mpi, finish_mpi
   PUBLIC :: timer, treset, tstart, tstop, treport, sync
   PUBLIC :: id_map, icmp, factorize, regular_deco
   PUBLIC :: test_abort
@@ -82,6 +82,15 @@ CONTAINS
     IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_INIT failed', &
          __FILE__, __LINE__)
   END SUBROUTINE init_mpi
+
+  SUBROUTINE finish_mpi
+    CHARACTER(len=*), PARAMETER :: context = 'finish_mpi: '
+    INTEGER :: ierror
+    CALL MPI_FINALIZE(ierror)
+    IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_FINALIZE failed', &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE finish_mpi
 
   PURE SUBROUTINE treset(t, label)
     TYPE(timer), INTENT(inout) :: t

@@ -53,8 +53,8 @@ PROGRAM test_perf_stripes
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
        xt_stripe, xt_idxstripes_new, xt_int_kind
 
-  USE ftest_common, ONLY: init_mpi, dp, timer, treset, tstart, tstop, &
-       treport, sync, id_map, test_abort, icmp, factorize, regular_deco
+  USE ftest_common, ONLY: finish_mpi, init_mpi, dp, timer, treset, tstart, &
+       tstop, treport, sync, id_map, test_abort, icmp, factorize, regular_deco
 
   USE ISO_C_BINDING, ONLY: c_loc
 
@@ -288,7 +288,7 @@ PROGRAM test_perf_stripes
   CALL treport(t_redist_3d_wb, TRIM(grid_label), mpi_comm_world)
   CALL treport(t_exch_3d_wb, TRIM(grid_label), mpi_comm_world)
 
-  CALL exit_mpi
+  CALL finish_mpi
 
 CONTAINS
 
@@ -455,15 +455,6 @@ CONTAINS
     pos3d_surf = undef_int
 
   END SUBROUTINE init_all
-
-  SUBROUTINE exit_mpi
-    CHARACTER(len=*), PARAMETER :: context = 'exit_mpi: '
-    INTEGER :: ierror
-    CALL MPI_FINALIZE(ierror)
-    IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_FINALIZE failed', &
-         __FILE__, &
-         __LINE__)
-  END SUBROUTINE exit_mpi
 
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist

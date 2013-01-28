@@ -51,7 +51,8 @@ PROGRAM test_yaxt
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
-  USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco
+  USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco, &
+       finish_mpi
   USE iso_c_binding, ONLY: c_loc, c_int
 
   IMPLICIT NONE
@@ -134,7 +135,7 @@ PROGRAM test_yaxt
 
   CALL xt_redist_delete(redist_surf_tpex)
 
-  CALL exit_all
+  CALL finish_mpi
 
 CONTAINS
 
@@ -209,19 +210,6 @@ CONTAINS
     pos3d_surf = undef_int
 
   END SUBROUTINE init_all
-
-
-  SUBROUTINE exit_all
-    CHARACTER(len=*), PARAMETER :: context = 'exit_all: '
-    INTEGER :: ierror
-
-    CALL MPI_FINALIZE(ierror)
-    IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'MPI_FINALIZE failed', &
-         __FILE__, &
-         __LINE__)
-
-  END SUBROUTINE exit_all
 
   SUBROUTINE id_map(map)
     INTEGER(xt_int_kind), INTENT(out) :: map(:,:)
