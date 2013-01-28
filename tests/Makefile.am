@@ -63,7 +63,7 @@ noinst_PROGRAMS = 						\
 
 noinst_LIBRARIES = libtestutil.a
 
-libtestutil_a_SOURCES = ftest_common.f90
+libtestutil_a_SOURCES = tests.c ftest_common.f90
 
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist_utils.h

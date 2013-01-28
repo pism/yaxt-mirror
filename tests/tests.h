@@ -47,7 +47,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static unsigned err_count__ = 0;
+extern unsigned err_count__;
 
 #ifdef VERBOSE
 #define PUT_ERR(string) do { err_count__++; fputs((string), stderr); } while (0)
