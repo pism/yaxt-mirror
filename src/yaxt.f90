@@ -52,7 +52,7 @@ MODULE yaxt
   !
 
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
-       c_long, c_short, c_long_long, c_ptr, c_null_ptr
+       c_long, c_short, c_long_long, c_ptr, c_null_ptr, c_f_pointer
 
   IMPLICIT NONE
 
@@ -60,6 +60,9 @@ MODULE yaxt
 
   PUBLIC :: xt_abort, xt_idxlist, xt_idxlist_delete, xt_idxvec_new,  &
        xt_idxlist_f2c, &
+       xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &
+       xt_idxlist_get_intersection, &
+       xt_idxlist_get_index_stripes, xt_idxlist_get_bounding_box, &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
@@ -90,6 +93,10 @@ MODULE yaxt
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_redist
 
+  TYPE, BIND(C), PUBLIC :: xt_bounds
+    INTEGER(xt_int_kind) :: start, size
+  END TYPE xt_bounds
+
   INTERFACE
 
     SUBROUTINE xt_initialize(default_comm) BIND(C, name='xt_initialize_f')
@@ -106,12 +113,43 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
+    FUNCTION xt_idxlist_f2c(idxlist) BIND(c, name='xt_idxlist_f2c') RESULT(p)
+      IMPORT :: c_ptr, xt_idxlist
+      IMPLICIT NONE
+      TYPE(xt_idxlist), INTENT(in) :: idxlist
+      TYPE(c_ptr) :: p
+    END FUNCTION xt_idxlist_f2c
+
     SUBROUTINE xt_idxlist_delete(idxlist) BIND(C, name='xt_idxlist_delete_f')
       IMPORT :: Xt_idxlist
       IMPLICIT NONE
       TYPE(Xt_idxlist), INTENT(inout) :: idxlist
     END SUBROUTINE xt_idxlist_delete
+
+    FUNCTION xt_idxlist_get_pack_size(idxlist, comm) &
+         BIND(c, name='xt_idxlist_get_pack_size_f2c') RESULT(pack_size)
+      IMPORT :: xt_idxlist
+      IMPLICIT NONE
+      TYPE(xt_idxlist), INTENT(in) :: idxlist
+      INTEGER, VALUE, INTENT(in) :: comm
+      INTEGER :: pack_size
+    END FUNCTION xt_idxlist_get_pack_size
+
   END INTERFACE
+
+  ! xt_idxlist_pack(type(xt_idxlist), intent(out) :: idxlist,
+  !                 type<*>, intent(inout) :: buffer, integer,
+  !                 intent(in) :: buffer_size,
+  !                 integer, intent(inout) :: position, integer,
+  !                 intent(in) :: comm)
+  EXTERNAL :: xt_idxlist_pack
+
+  ! xt_idxlist_unpack(type(xt_idxlist), intent(out) :: idxlist,
+  !                   type<*>, intent(in) :: buffer,
+  !                   integer, intent(in) :: buffer_size,
+  !                   integer, intent(inout) :: position, integer,
+  !                   intent(in) :: comm)
+  EXTERNAL :: xt_idxlist_unpack
 
   INTERFACE
     SUBROUTINE xt_xmap_delete(xmap) BIND(C, name='xt_xmap_delete_f')
@@ -141,12 +179,6 @@ MODULE yaxt
   END INTERFACE
 
 CONTAINS
-
-  FUNCTION xt_idxlist_f2c(idxlist) RESULT(p)
-    TYPE(xt_idxlist), INTENT(in) :: idxlist
-    TYPE(c_ptr) :: p
-    p = idxlist%cptr
-  END FUNCTION xt_idxlist_f2c
 
   SUBROUTINE  xt_abort(comm, msg, source, line)
     INTEGER, INTENT(in):: comm
@@ -192,15 +224,15 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
 
     INTERFACE
-      FUNCTION xt_idxempty_new_f() &
+      FUNCTION xt_idxempty_new_c() &
            BIND(C, name='xt_idxempty_new') RESULT(res_ptr)
         IMPORT :: c_ptr
         IMPLICIT NONE
         TYPE(c_ptr) :: res_ptr
-      END FUNCTION xt_idxempty_new_f
+      END FUNCTION xt_idxempty_new_c
     END INTERFACE
 
-    res%cptr = xt_idxempty_new_f()
+    res%cptr = xt_idxempty_new_c()
 
   END FUNCTION xt_idxempty_new
 
@@ -416,5 +448,80 @@ CONTAINS
     notfound = xt_idxlist_get_position_of_index_c(idxlist%cptr, idx, position) &
          /= 0
   END FUNCTION xt_idxlist_get_position_of_index
+
+  SUBROUTINE xt_idxlist_get_index_stripes(idxlist, stripes)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    TYPE(xt_stripe), ALLOCATABLE, INTENT(out) :: stripes(:)
+
+    INTERFACE
+      SUBROUTINE xt_idxlist_get_index_stripes_c(idxlist, stripes,&
+           num_stripes) BIND(c, name='xt_idxlist_get_index_stripes')
+        IMPORT :: c_ptr, xt_int_kind
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+        TYPE(c_ptr), INTENT(out) :: stripes
+        INTEGER(xt_int_kind) :: num_stripes
+      END SUBROUTINE xt_idxlist_get_index_stripes_c
+
+      SUBROUTINE free_c(p) BIND(c, name='free')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE :: p
+      END SUBROUTINE free_c
+    END INTERFACE
+    TYPE(c_ptr) :: stripes_c_ptr
+    INTEGER(xt_int_kind) :: num_stripes
+    TYPE(xt_stripe), POINTER :: stripes_f_ptr(:)
+    INTEGER :: stripes_shape(1)
+    CALL xt_idxlist_get_index_stripes_c(idxlist%cptr, stripes_c_ptr,&
+         num_stripes)
+    stripes_shape(1) = INT(num_stripes)
+    IF (num_stripes > 0) THEN
+      ALLOCATE(stripes(INT(num_stripes)))
+      CALL C_F_POINTER(stripes_c_ptr, stripes_f_ptr, stripes_shape)
+      stripes = stripes_f_ptr
+    END IF
+    CALL free_c(stripes_c_ptr)
+  END SUBROUTINE xt_idxlist_get_index_stripes
+
+  FUNCTION xt_idxlist_get_bounding_box(idxlist, global_size, &
+       global_start_index) RESULT(bounds)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(in) :: global_size(:)
+    INTEGER(xt_int_kind), INTENT(in) :: global_start_index
+    TYPE(xt_bounds) :: bounds(SIZE(global_size))
+
+    INTERFACE
+      SUBROUTINE xt_idxlist_get_bounding_box_c(idxlist, ndim, global_size, &
+           global_start_index, bounds) &
+           BIND(c, name='xt_idxlist_get_bounding_box')
+        IMPORT :: c_int, c_ptr, xt_int_kind, xt_bounds
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+        INTEGER(c_int), VALUE, INTENT(in) :: ndim
+        INTEGER(xt_int_kind), INTENT(in) :: global_size(ndim)
+        INTEGER(xt_int_kind), VALUE, INTENT(in) :: global_start_index
+        TYPE(xt_bounds), INTENT(out) :: bounds(ndim)
+      END SUBROUTINE xt_idxlist_get_bounding_box_c
+    END INTERFACE
+
+    CALL xt_idxlist_get_bounding_box_c(xt_idxlist_f2c(idxlist), &
+         INT(SIZE(global_size), c_int), global_size, global_start_index, bounds)
+  END FUNCTION xt_idxlist_get_bounding_box
+
+  FUNCTION xt_idxlist_get_intersection(idxlist_src, idxlist_dst) &
+       RESULT(intersection)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist_src, idxlist_dst
+    TYPE(xt_idxlist) :: intersection
+
+    INTERFACE
+      FUNCTION xt_idxlist_get_intersection_c(idxlist_src, idxlist_dst) &
+           BIND(c, name='xt_idxlist_get_intersection') RESULT(intersection)
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist_src, idxlist_dst
+        TYPE(c_ptr) :: intersection
+      END FUNCTION xt_idxlist_get_intersection_c
+    END INTERFACE
+
+    intersection%cptr = xt_idxlist_get_intersection_c(&
+         xt_idxlist_f2c(idxlist_src), xt_idxlist_f2c(idxlist_dst))
+  END FUNCTION xt_idxlist_get_intersection
 
 END MODULE yaxt

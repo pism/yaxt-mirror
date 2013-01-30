@@ -52,6 +52,7 @@
 #include <mpi.h>
 
 #include "core/core.h"
+#include "cfortran.h"
 
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
@@ -83,15 +84,54 @@ MPI_Fint xt_get_default_comm()
   return MPI_Comm_c2f(Xt_default_comm);
 }
 
-void xt_abort_f(MPI_Fint *comm_f, const char *msg, const char *source,
+void xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
                      MPI_Fint line) {
-  MPI_Comm comm_c = MPI_Comm_f2c(*comm_f);
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   Xt_abort(comm_c, msg, source, (int)line);
+}
+
+Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
+{
+  return p->cptr;
 }
 
 void xt_idxlist_delete_f(struct xt_idxlist_f *idxlist_f) {
   xt_idxlist_delete(idxlist_f->cptr);
 }
+
+MPI_Fint xt_idxlist_get_pack_size_f2c(struct xt_idxlist_f *idxlist,
+                                      MPI_Fint comm_f)
+{
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  size_t size = xt_idxlist_get_pack_size(idxlist->cptr, comm_c);
+  if (size > XT_MPI_FINT_MAX)
+    Xt_abort(comm_c, "pack size too large", __FILE__, __LINE__);
+  return (MPI_Fint)size;
+}
+
+static void
+xt_idxlist_pack_f2c(struct xt_idxlist_f *idxlist, void *buffer,
+                    MPI_Fint buffer_size, MPI_Fint *position, MPI_Fint comm_f)
+{
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  xt_idxlist_pack(idxlist->cptr, buffer, (int)buffer_size, position,
+                  comm_c);
+}
+
+FCALLSCSUB5(xt_idxlist_pack_f2c, XT_IDXLIST_PACK, xt_idxlist_pack,
+            PVOID, PVOID, INT, PINT, INT)
+
+static void
+xt_idxlist_unpack_f2c(struct xt_idxlist_f *idxlist, void *buffer,
+                      MPI_Fint buffer_size, MPI_Fint *position,
+                      MPI_Fint comm_f)
+{
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  idxlist->cptr = xt_idxlist_unpack(buffer, (int)buffer_size, position, comm_c);
+}
+
+FCALLSCSUB5(xt_idxlist_unpack_f2c, XT_IDXLIST_UNPACK, xt_idxlist_unpack,
+            PVOID, PVOID, INT, PINT, INT)
 
 Xt_xmap xt_xmap_all2all_new_f(struct xt_idxlist_f *src_idxlist_f,
                               struct xt_idxlist_f *dst_idxlist_f,
