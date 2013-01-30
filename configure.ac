@@ -82,6 +82,17 @@ ACX_F90_PACKAGE([MPI],[mpi],,,
 [      INTEGER :: req(1), stat(mpi_status_size, 1), ierror
 ],[(1, req, stat, ierror)])
 
+save_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS $MPI_C_INCLUDE"
+TJ_FIND_INTEGRAL_TYPE([MPI_Fint],[MPI_FINT],[@%:@include <mpi.h>])
+CFLAGS=$save_CFLAGS
+AS_CASE(["$MPI_FINT"],
+  [int],[XT_MPI_FINT_MAX=INT_MAX],
+  [long],[XT_MPI_FINT_MAX=LONG_MAX],
+  ["long long"],[XT_MPI_FINT_MAX=LLONG_MAX],
+  [short],[XT_MPI_FINT_MAX=SHRT_MAX])
+AC_DEFINE_UNQUOTED([XT_MPI_FINT_MAX],[$XT_MPI_FINT_MAX],
+  [Maximum value of MPI_Fint.])
 # the following is needed for source parts from libraries with
 # optional MPI dependencies
 AC_DEFINE([USE_MPI],[1],[use MPI parallel process environment])
