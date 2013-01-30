@@ -145,7 +145,7 @@ AC_ARG_WITH([idxtype],
   AS_HELP_STRING([--with-idxtype],[select type to use for global index values @<:@default=int@:>@]),
   [XT_INT=$withval
    AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,[[char a[((($XT_INT)-1)<0)];
-char b[($XT_INT)((($XT_INT)-1.5)+0.5)]]])],,
+char b[($XT_INT)((-($XT_INT)-0.5)+1.5)]]])],,
      [AC_MSG_ERROR([Selected index type not compilable or unsigned])])],
   [XT_INT=int])
 m4_foreach([substtype],[[XT_INT]],
