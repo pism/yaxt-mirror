@@ -257,8 +257,8 @@ CONTAINS
     DO j = 1, n2
       DO i = 1, n1
         IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,*) context,label,' test failed: i, j, f(i,j), g(i,j) =', &
-               i, j, f(i,j), g(i,j)
+          WRITE(0,'(2a,4(a,i0))') context, label, ' test failed: i=', &
+               i, ', j=', j, ', f(i,j)=', f(i,j), ', g(i,j)=', g(i,j)
           CALL test_abort(context//label//' test failed', &
                __FILE__, &
                __LINE__)
