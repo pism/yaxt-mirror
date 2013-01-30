@@ -106,7 +106,7 @@ PROGRAM test_yaxt
   CALL gen_trans(xmap_tpex, MPI_INTEGER, MPI_INTEGER, redist_tpex)
 
   ! test 2d-to-2d transposition:
-  fval = loc_id
+  fval = INT(loc_id)
   CALL exchange_int(redist_tpex, fval, gval)
 
   CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)

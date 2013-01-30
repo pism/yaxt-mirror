@@ -158,7 +158,7 @@ PROGRAM test_perf_stripes
   CALL tstop(t_redist_2d)
 
   ! test 2d-to-2d transposition:
-  fval_2d = loc_id_2d
+  fval_2d = INT(loc_id_2d)
   CALL tstart(t_exch_2d)
   CALL exchange_int(redist_tpex_2d, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
@@ -210,7 +210,7 @@ PROGRAM test_perf_stripes
 
   ! test 3d-to-3d transposition:
   !DEALLOCATE(gval_3d)
-  fval_3d = loc_id_3d
+  fval_3d = INT(loc_id_3d)
   gval_3d = -1
   CALL tstart(t_exch_3d)
   CALL exchange_int(redist_tpex_3d, fval_3d, gval_3d)
@@ -235,7 +235,7 @@ PROGRAM test_perf_stripes
   CALL tstop(t_redist_3d_ws)
 
   ! test redist_tpex_3d_ws:
-  fval_3d = loc_id_3d
+  fval_3d = INT(loc_id_3d)
   gval_3d = -1
 
   CALL tstart(t_exch_3d_ws)
@@ -250,7 +250,7 @@ PROGRAM test_perf_stripes
   CALL gen_redist_3d_wb(xmap_tpex_2d, MPI_INTEGER, redist_tpex_3d_wb)
   CALL tstop(t_redist_3d_wb)
 
-  fval_3d = loc_id_3d
+  fval_3d = INT(loc_id_3d)
   gval_3d = -1
   CALL tstart(t_exch_3d_wb)
   CALL exchange_int(redist_tpex_3d_wb, fval_3d, gval_3d)

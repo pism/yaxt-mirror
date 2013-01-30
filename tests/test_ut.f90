@@ -103,7 +103,7 @@ PROGRAM test_ut
   CALL gen_trans(template_tpex, MPI_INTEGER, MPI_INTEGER, trans_tpex)
 
   ! test 2d-to-2d transposition:
-  fval = loc_id
+  fval = INT(loc_id)
   CALL exchange2d_2d(trans_tpex, fval, gval)
   CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
 
