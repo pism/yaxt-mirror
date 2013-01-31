@@ -154,24 +154,32 @@ m4_foreach([substtype],[[XT_INT]],
      substtype[_MPIDT=MPI_INT
      ACX_FORTRAN_TYPE_KIND([integer],[c_int],[int],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ],
+     ]substtype[_MAX=INT_MAX
+     ]substtype[_MIN="(-INT_MAX)"],
      [long],
      substtype[_MPIDT=MPI_LONG
      ACX_FORTRAN_TYPE_KIND([integer],[c_long],[long],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ],
+     ]substtype[_MAX=LONG_MAX
+     ]substtype[_MIN="(-LONG_MAX)"],
      [short],
      substtype[_MPIDT=MPI_SHORT
      ACX_FORTRAN_TYPE_KIND([integer],[c_short],[short],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ],
+     ]substtype[_MAX=SHRT_MAX
+     ]substtype[_MIN="(-SHRT_MAX)"],
      ["long long"],
      substtype[_MPIDT=MPI_LONG_LONG
      ACX_FORTRAN_TYPE_KIND([integer],[c_long_long],[long long],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ],
+     ]substtype[_MAX=LLONG_MAX
+     ]substtype[_MIN="(-LLONG_MAX)"],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    FCFLAGS="$FCFLAGS ${FPP_DEFOPT}substtype[]_FC_KIND=$substtype[]_FC_KIND"
+   AC_DEFINE_UNQUOTED([CONF_]substtype[_MAX],[$]substtype[_MAX],
+     [Maximal value for ]substtype)
+   AC_DEFINE_UNQUOTED([CONF_]substtype[_MIN],[$]substtype[_MIN],
+     [Minimal value for ]substtype)
   ])
 
 AC_DEFINE_UNQUOTED([XT_INT],[$XT_INT],[Type to use for enumeration of distributed elements.])

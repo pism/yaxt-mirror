@@ -58,6 +58,8 @@ typedef XT_INT Xt_int;
 #define Xt_int_dt (XT_INT_MPIDT)
 typedef unsigned XT_INT Xt_uint;
 typedef uint64_t Xt_uid;
+#define XT_INT_MAX CONF_XT_INT_MAX
+#define XT_INT_MIN CONF_XT_INT_MIN
 
 typedef struct Xt_idxlist_ *Xt_idxlist;
 typedef struct Xt_xmap_ *Xt_xmap;
