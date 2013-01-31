@@ -58,10 +58,6 @@
 #include "test_idxlist_utils.h"
 #include "core/ppm_xfuncs.h"
 
-static void
-check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes);
-
 int main(void) {
 
   // init mpi
@@ -791,20 +787,4 @@ int main(void) {
    MPI_Finalize();
 
    return TEST_EXIT_CODE;
-}
-
-static void
-check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes) {
-
-  Xt_int i;
-
-  if (num_stripes != ref_num_stripes)
-    PUT_ERR("wrong number of stripes\n");
-
-  for (i = 0; i < ref_num_stripes; ++i)
-    if (stripes[i].start != ref_stripes[i].start ||
-        stripes[i].nstrides != ref_stripes[i].nstrides ||
-        stripes[i].stride != ref_stripes[i].stride)
-      PUT_ERR("error in stripe (start, nstrides and/or stride)\n");
 }

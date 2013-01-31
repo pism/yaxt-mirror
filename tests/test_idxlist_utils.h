@@ -52,4 +52,9 @@
 void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
                    Xt_int ref_num_indices);
 
+void
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes);
+
+
 #endif // TEST_IDXLIST_UTILS_H

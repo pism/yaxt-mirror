@@ -248,3 +248,19 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   if (!xt_idxlist_get_index_at_position(idxlist, ref_num_indices, &index))
     PUT_ERR("error in xt_idxlist_get_index_at_position\n");
 }
+
+void
+check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
+                struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes) {
+
+  Xt_int i;
+
+  if (num_stripes != ref_num_stripes)
+    PUT_ERR("wrong number of stripes\n");
+
+  for (i = 0; i < ref_num_stripes; ++i)
+    if (stripes[i].start != ref_stripes[i].start ||
+        stripes[i].nstrides != ref_stripes[i].nstrides ||
+        stripes[i].stride != ref_stripes[i].stride)
+      PUT_ERR("error in stripe (start, nstrides and/or stride)\n");
+}
