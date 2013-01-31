@@ -52,6 +52,9 @@
 /** \example test_xmap_all2all_parallel.c
  */
 
+/** @example test_xmap_all2all_fail.c
+ */
+
 /**
  * constructor for an exchange map \n
  * this operation is collective over all processes in comm \n
