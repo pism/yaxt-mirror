@@ -47,9 +47,16 @@
 MODULE test_idxlist_utils
   USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_f2c
   USE ftest_common, ONLY: test_abort
-  USE iso_c_binding, ONLY: c_ptr
+  USE iso_c_binding, ONLY: c_ptr, c_int
   IMPLICIT NONE
   PRIVATE
+  INTERFACE
+    FUNCTION test_err_count() BIND(c, name='test_err_count') RESULT(code)
+      IMPORT :: c_int
+      INTEGER(c_int) :: code
+    END FUNCTION test_err_count
+  END INTERFACE
+  PUBLIC :: test_err_count
   PUBLIC :: check_idxlist
 CONTAINS
   SUBROUTINE check_idxlist(idxlist, ref_indices)

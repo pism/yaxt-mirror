@@ -52,7 +52,7 @@ PROGRAM test_idxempty
        xt_idxlist_get_index_stripes, xt_idxlist_delete, &
        xt_bounds, xt_idxlist_get_bounding_box
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE test_idxlist_utils, ONLY: check_idxlist
+  USE test_idxlist_utils, ONLY: check_idxlist, test_err_count
   IMPLICIT NONE
 
   TYPE(xt_idxlist) :: idxempty, idxempty_copy
@@ -127,6 +127,8 @@ PROGRAM test_idxempty
   CALL xt_idxlist_delete(idxempty_copy)
 
   CALL finish_mpi
+
+  IF (test_err_count() /= 0) STOP 1
 
 CONTAINS
 

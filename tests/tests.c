@@ -39,3 +39,8 @@
  */
 
 unsigned err_count__ = 0;
+
+int test_err_count()
+{
+  return (err_count__ > 0);
+}
