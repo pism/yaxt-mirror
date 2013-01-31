@@ -581,7 +581,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
-    const Xt_int undef_idx = -1234567;
+    const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
@@ -612,7 +612,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only valid positions
-    const Xt_int undef_idx = -1234567;
+    const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
@@ -643,7 +643,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only invalid positions
-    const Xt_int undef_idx = -1234567;
+    const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);

@@ -533,7 +533,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
-    const Xt_int undef_idx = -1234567;
+    const Xt_int undef_idx = XT_INT_MIN;
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};
@@ -566,7 +566,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only valid positions
-    const Xt_int undef_idx = -1234567;
+    const Xt_int undef_idx = XT_INT_MIN;
     struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
@@ -601,7 +601,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: complete permutation
-    const Xt_int undef_idx = -1234567;
+    const Xt_int undef_idx = XT_INT_MIN;
     struct Xt_stripe stripes[] = {{.start= 0, .nstrides=3, .stride= 1},
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
@@ -636,7 +636,7 @@ int main(void) {
   {
     // check idxvec_get_indices_at_positions
     // case: only invalid positions
-    const Xt_int undef_idx = -1234567;
+    const Xt_int undef_idx = XT_INT_MIN;
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};

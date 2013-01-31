@@ -44,7 +44,7 @@
 #include "core/ppm_xfuncs.h"
 
 int main(void) {
-
+#if XT_INT_MAX >= INT32_C(512) * 256 * 32
   // use 32bit constant so that product won't overflow
   Xt_int nstrides = INT32_C(512) * 256 * 32;
   struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
@@ -148,6 +148,6 @@ int main(void) {
 
   xt_idxlist_delete(selection_indices);
   free(positions);
-
+#endif
   return 0;
 }

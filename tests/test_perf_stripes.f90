@@ -62,7 +62,7 @@ PROGRAM test_perf_stripes
   ! global extents including halos:
 
   INTEGER, PARAMETER :: nlev = 20
-  INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
+  INTEGER, PARAMETER :: undef_int = - 1
   INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
@@ -449,8 +449,8 @@ CONTAINS
 
     fval_2d = undef_int
     gval_2d = undef_int
-    loc_id_2d = undef_int
-    loc_tpex_2d = undef_int
+    loc_id_2d = INT(undef_int, xt_int_kind)
+    loc_tpex_2d = INT(undef_int, xt_int_kind)
     id_pos = undef_int
     pos3d_surf = undef_int
 

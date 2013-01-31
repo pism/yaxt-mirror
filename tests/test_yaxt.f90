@@ -60,7 +60,7 @@ PROGRAM test_yaxt
   INTEGER, PARAMETER :: g_ie = 8, g_je = 4! global extents including halos
   LOGICAL, PARAMETER :: verbose = .FALSE.
   INTEGER, PARAMETER :: nlev = 3
-  INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
+  INTEGER, PARAMETER :: undef_int = -1
   INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
@@ -203,8 +203,8 @@ CONTAINS
 
     fval = undef_int
     gval = undef_int
-    loc_id = undef_int
-    loc_tpex = undef_int
+    loc_id = INT(undef_int, xt_int_kind)
+    loc_tpex = INT(undef_int, xt_int_kind)
     id_pos = undef_int
     gval3d = undef_int
     pos3d_surf = undef_int
