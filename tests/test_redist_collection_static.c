@@ -140,10 +140,12 @@ int main(void) {
     Xt_redist redists[3] = {redist, redist, redist};
     double src_data[3][5];
     double dst_data[3][3];
-    MPI_Aint src_displacements[3] = {0,(src_data[1]-src_data[0])*sizeof(double),
-                                     (src_data[2]-src_data[0])*sizeof(double)};
-    MPI_Aint dst_displacements[3] = {0,(dst_data[1]-dst_data[0])*sizeof(double),
-                                     (dst_data[2]-dst_data[0])*sizeof(double)};
+    MPI_Aint src_displacements[3]
+      = {0, (MPI_Aint)((size_t)(src_data[1] - src_data[0]) * sizeof (double)),
+         (MPI_Aint)((size_t)(src_data[2] - src_data[0]) * sizeof(double)) };
+    MPI_Aint dst_displacements[3]
+      = {0, (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof(double)),
+         (MPI_Aint)((size_t)(dst_data[2] - dst_data[0]) * sizeof(double)) };
 
     redist_coll = xt_redist_collection_static_new(redists, 3, src_displacements,
                                                   dst_displacements,
