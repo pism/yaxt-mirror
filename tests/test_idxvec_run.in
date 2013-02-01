@@ -1,2 +1,4 @@
 #! @SHELL@
+set -e
 @MPI_LAUNCH@ -n 1 ./test_idxvec
+@MPI_LAUNCH@ -n 1 ./test_idxvec_f

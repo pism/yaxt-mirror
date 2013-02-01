@@ -39,6 +39,7 @@ noinst_PROGRAMS = 						\
 	test_idxempty						\
 	test_idxempty_f						\
 	test_idxvec						\
+	test_idxvec_f						\
 	test_idxlist_collection					\
 	test_idxmod						\
 	test_idxsection						\
@@ -71,6 +72,8 @@ test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxempty_f_SOURCES = test_idxempty_f.f90
 test_idxempty_f_LDADD = $(XT_FC_LDADD)
 test_idxvec_SOURCES = test_idxvec.c tests.h test_idxlist_utils.h
+test_idxvec_f_SOURCES = test_idxvec_f.f90
+test_idxvec_f_LDADD = $(XT_FC_LDADD)
 test_idxlist_collection_SOURCES = test_idxlist_collection.c tests.h \
 	test_idxlist_utils.h
 test_idxmod_SOURCES = test_idxmod.c tests.h

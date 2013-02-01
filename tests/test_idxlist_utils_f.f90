@@ -45,9 +45,9 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE test_idxlist_utils
-  USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_f2c
+  USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_f2c, xt_stripe
   USE ftest_common, ONLY: test_abort
-  USE iso_c_binding, ONLY: c_ptr, c_int
+  USE iso_c_binding, ONLY: c_ptr, c_int, c_size_t
   IMPLICIT NONE
   PRIVATE
   INTERFACE
