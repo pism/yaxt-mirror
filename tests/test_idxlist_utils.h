@@ -56,5 +56,8 @@ void
 check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
               struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes);
 
+void
+check_offsets(size_t num_offsets, int offsets_a[num_offsets],
+              int offsets_b[num_offsets]);
 
 #endif // TEST_IDXLIST_UTILS_H

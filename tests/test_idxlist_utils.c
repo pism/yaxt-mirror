@@ -264,3 +264,11 @@ check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
         stripes[i].stride != ref_stripes[i].stride)
       PUT_ERR("error in stripe (start, nstrides and/or stride)\n");
 }
+
+void
+check_offsets(size_t num_offsets, int *offsets_a, int *offsets_b)
+{
+  for(size_t i=0; i<num_offsets; i++)
+    if (offsets_a[i] != offsets_b[i])
+      PUT_ERR("unexpected results for offsets or index positions\n");
+}

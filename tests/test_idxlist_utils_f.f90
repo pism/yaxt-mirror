@@ -57,7 +57,7 @@ MODULE test_idxlist_utils
     END FUNCTION test_err_count
   END INTERFACE
   PUBLIC :: test_err_count
-  PUBLIC :: check_idxlist
+  PUBLIC :: check_idxlist, check_stripes, check_offsets
 CONTAINS
   SUBROUTINE check_idxlist(idxlist, ref_indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
@@ -70,6 +70,7 @@ CONTAINS
       SUBROUTINE check_idxlist_c(idxlist, ref_indices, ref_num_indices) &
            BIND(c, name='check_idxlist')
         IMPORT :: xt_int_kind, c_ptr
+        IMPLICIT NONE
         TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
         INTEGER(xt_int_kind), INTENT(in) :: ref_indices(*)
         INTEGER(xt_int_kind), VALUE, INTENT(in) :: ref_num_indices
@@ -85,6 +86,47 @@ CONTAINS
            0_xt_int_kind)
     END IF
   END SUBROUTINE check_idxlist
+
+  SUBROUTINE check_stripes(stripes, ref_stripes)
+    TYPE(xt_stripe), INTENT(in) :: stripes(:), ref_stripes(:)
+
+    INTERFACE
+      SUBROUTINE check_stripes_c(stripes, num_stripes, ref_stripes, &
+           ref_num_stripes) BIND(c, name='check_stripes')
+        IMPORT :: xt_stripe, xt_int_kind
+        IMPLICIT NONE
+        TYPE(xt_stripe), INTENT(in) :: stripes(*), ref_stripes(*)
+        INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_stripes, ref_num_stripes
+      END SUBROUTINE check_stripes_c
+    END INTERFACE
+
+    CALL check_stripes_c(stripes, INT(SIZE(stripes), xt_int_kind), &
+         ref_stripes, INT(SIZE(ref_stripes), xt_int_kind))
+
+  END SUBROUTINE check_stripes
+
+  SUBROUTINE check_offsets(offsets_a, offsets_b)
+    INTEGER(c_int), INTENT(in) :: offsets_a(:), offsets_b(:)
+
+    INTERFACE
+      SUBROUTINE check_offsets_c(num_offsets, offsets_a, offsets_b) &
+           BIND(c, name='check_offsets')
+        IMPORT :: c_size_t, c_int
+        IMPLICIT NONE
+        INTEGER(c_size_t), VALUE, INTENT(in) :: num_offsets
+        INTEGER(c_int), INTENT(IN) :: offsets_a(num_offsets), &
+             offsets_b(num_offsets)
+      END SUBROUTINE check_offsets_c
+    END INTERFACE
+
+    IF (SIZE(offsets_a) /= size(offsets_b)) &
+         CALL test_abort("inequal number of array elements in eq test", &
+         __FILE__, &
+         __LINE__)
+
+    CALL check_offsets_c(INT(SIZE(offsets_a), c_size_t), offsets_a, offsets_b)
+
+  END SUBROUTINE check_offsets
 
 END MODULE test_idxlist_utils
 

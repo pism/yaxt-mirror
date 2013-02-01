@@ -249,10 +249,7 @@ int main(void) {
     assert(retval == 0);
 
     // check positions:
-    for(size_t i=0; i<intersection_num; i++)
-      if (intersection_pos[i] != ref_intersection_pos[i])
-        PUT_ERR("unexpected results from"
-                " xt_idxlist_get_positions_of_indices\n");
+    check_offsets(intersection_num, intersection_pos, ref_intersection_pos);
 
     // clean up
     xt_idxlist_delete(idxvector);
