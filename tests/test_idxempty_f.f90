@@ -1,7 +1,7 @@
 !>
-!> @file test_idxempty.f90
+!> @file test_idxempty_f.f90
 !>
-!> @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+!> @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
 !>                                 Moritz Hanke <hanke@dkrz.de>
 !>                                 Thomas Jahns <jahns@dkrz.de>
 !>
