@@ -97,6 +97,7 @@ Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
 
 void xt_idxlist_delete_f(struct xt_idxlist_f *idxlist_f) {
   xt_idxlist_delete(idxlist_f->cptr);
+  idxlist_f->cptr = NULL;
 }
 
 MPI_Fint xt_idxlist_get_pack_size_f2c(struct xt_idxlist_f *idxlist,
@@ -142,6 +143,7 @@ Xt_xmap xt_xmap_all2all_new_f(struct xt_idxlist_f *src_idxlist_f,
 
 void xt_xmap_delete_f(struct xt_xmap_f *xmap_f) {
   xt_xmap_delete(xmap_f->cptr);
+  xmap_f->cptr = NULL;
 }
 
 Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,
@@ -194,6 +196,7 @@ xt_redist_p2p_new_f(struct xt_xmap_f *xmap_f, MPI_Fint datatype_f) {
 
 void xt_redist_delete_f(struct xt_redist_f *redist_f) {
   xt_redist_delete(redist_f->cptr);
+  redist_f->cptr = NULL;
 }
 
 void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void **src_data, void **dst_data) {
