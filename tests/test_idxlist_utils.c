@@ -44,7 +44,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
+#include <string.h>
 #include <yaxt.h>
+#include "core/ppm_xfuncs.h"
 #include "tests.h"
 
 static void
@@ -271,4 +274,82 @@ check_offsets(size_t num_offsets, int *offsets_a, int *offsets_b)
   for(size_t i=0; i<num_offsets; i++)
     if (offsets_a[i] != offsets_b[i])
       PUT_ERR("unexpected results for offsets or index positions\n");
+}
+
+Xt_idxlist
+idxlist_pack_unpack_copy(Xt_idxlist idxlist)
+{
+  size_t buffer_size
+    = xt_idxlist_get_pack_size(idxlist, MPI_COMM_WORLD);
+
+  // allocate send buffers
+  void* send_buffer, * recv_buffer;
+  send_buffer = xmalloc(buffer_size);
+  recv_buffer = xmalloc(buffer_size);
+
+  // pack the index list
+  int position = 0;
+
+  assert(buffer_size <= INT_MAX);
+  xt_idxlist_pack(idxlist, send_buffer, (int)buffer_size, &position,
+                  MPI_COMM_WORLD);
+
+  // send the buffer
+  int rank;
+  xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
+  MPI_Request request;
+  xt_mpi_call(MPI_Isend(send_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
+                        MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
+  // receive the buffer
+  xt_mpi_call(MPI_Recv(recv_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
+                       MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
+  free(send_buffer);
+  // unpack the buffer
+  position = 0;
+  Xt_idxlist idxlist_copy
+    = xt_idxlist_unpack(recv_buffer, (int)buffer_size, &position,
+                        MPI_COMM_WORLD);
+  free(recv_buffer);
+  return idxlist_copy;
+}
+
+
+static int
+xt_int_compare(const void *a, const void *b)
+{
+  return (*(Xt_int *)a > *(Xt_int *)b) - (*(Xt_int *)a < *(Xt_int *)b);
+}
+
+void
+check_idxlist_copy(Xt_idxlist idxlist, Xt_idxlist idxlist_copy,
+                   size_t num_ref_indices, const Xt_int *ref_indices,
+                   size_t num_ref_stripes, const struct Xt_stripe *ref_stripes)
+{
+  // check received collection list
+  check_idxlist(idxlist_copy, ref_indices, (Xt_int)num_ref_indices);
+
+  // compute intersection between the two index lists
+  Xt_idxlist intersection
+    = xt_idxlist_get_intersection(idxlist, idxlist_copy);
+
+  // check intersection data
+  Xt_int *sorted_ref_indices = xmalloc(num_ref_indices
+                                       * sizeof (ref_indices[0]));
+  memcpy(sorted_ref_indices, ref_indices,
+         num_ref_indices * sizeof (ref_indices[0]));
+  qsort(sorted_ref_indices, num_ref_indices, sizeof (ref_indices[0]),
+        xt_int_compare);
+  check_idxlist(intersection, sorted_ref_indices, (Xt_int)num_ref_indices);
+  free(sorted_ref_indices);
+  xt_idxlist_delete(intersection);
+
+  // check the conversion to stripes
+  struct Xt_stripe * stripes;
+  Xt_int num_stripes;
+  xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
+
+  check_stripes(stripes, num_stripes, ref_stripes, (Xt_int)num_ref_stripes);
+  // clean up
+  free(stripes);
 }

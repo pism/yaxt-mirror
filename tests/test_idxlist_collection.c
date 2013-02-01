@@ -70,107 +70,27 @@ int main(void) {
     Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
     Xt_int num_indices = 7;
 
-    Xt_idxlist idxlists[2];
-
     // create two index lists
-
-    idxlists[0] = xt_idxvec_new(index_list[0], num_indices);
-    idxlists[1] = xt_idxvec_new(index_list[1], num_indices);
-
+    Xt_idxlist idxlists[2] = { xt_idxvec_new(index_list[0], num_indices),
+                               xt_idxvec_new(index_list[1], num_indices) };
     // generate a collection index list
-
-    Xt_idxlist collectionlist;
-
-    collectionlist = xt_idxlist_collection_new(idxlists, 2);
-
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
     xt_idxlist_delete(idxlists[0]);
     xt_idxlist_delete(idxlists[1]);
 
     // test generated collection list
+    check_idxlist(collectionlist, index_list[0], 2*num_indices);
 
-    check_idxlist(collectionlist, &(index_list[0][0]), 2*num_indices);
-
-    // get the size of the index list
-
-    size_t buffer_size
-      = xt_idxlist_get_pack_size(collectionlist, MPI_COMM_WORLD);
-
-    // allocate send buffers
-
-    void* send_buffer, * recv_buffer;
-
-    send_buffer = xmalloc(buffer_size);
-    recv_buffer = xmalloc(buffer_size);
-
-    // pack the index list
-
-    int position = 0;
-
-    assert(buffer_size <= INT_MAX);
-    xt_idxlist_pack(collectionlist, send_buffer, (int)buffer_size, &position,
-                    MPI_COMM_WORLD);
-
-    // send the buffer
-
-    int rank;
-
-    xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
-
-    MPI_Request request;
-
-    xt_mpi_call(MPI_Isend(send_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                          MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
-    xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
-
-    // receive the buffer
-
-    xt_mpi_call(MPI_Recv(recv_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                         MPI_COMM_WORLD, MPI_STATUS_IGNORE), MPI_COMM_WORLD);
-
-    // unpack the buffer
-
-    Xt_idxlist collectionlist_copy;
-
-    position = 0;
-    collectionlist_copy = xt_idxlist_unpack(recv_buffer, (int)buffer_size,
-                                            &position, MPI_COMM_WORLD);
-
-    // check received collection list
-
-    check_idxlist(collectionlist_copy, &(index_list[0][0]), 2*num_indices);
-
-    // compute intersection between the two index lists
-
-    Xt_idxlist intersection
-      = xt_idxlist_get_intersection(collectionlist, collectionlist_copy);
-
-    // check intersection data
-    Xt_int ref_index_data[14] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7};
-    check_idxlist(intersection, ref_index_data, 2*num_indices);
-
-    // check the conversion to stripes
-
-    struct Xt_stripe * stripes;
-    Xt_int num_stripes;
-
-    xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
-
+    size_t ref_num_stripes = 8;
     struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
                                        {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
-    Xt_int ref_num_stripes = 8;
-
-    check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
-
-    // clean up
-
-    free(stripes);
-
-    free(send_buffer);
-    free(recv_buffer);
-
-    xt_idxlist_delete(collectionlist);
+    Xt_idxlist collectionlist_copy
+      = idxlist_pack_unpack_copy(collectionlist);
+    check_idxlist_copy(collectionlist, collectionlist_copy,
+                       2 * (size_t)num_indices, index_list[0],
+                       (size_t)ref_num_stripes, ref_stripes);
     xt_idxlist_delete(collectionlist_copy);
-    xt_idxlist_delete(intersection);
+    xt_idxlist_delete(collectionlist);
   }
 
   { // test copying of collection index lists

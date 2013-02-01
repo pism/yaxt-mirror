@@ -60,4 +60,12 @@ void
 check_offsets(size_t num_offsets, int offsets_a[num_offsets],
               int offsets_b[num_offsets]);
 
+Xt_idxlist
+idxlist_pack_unpack_copy(Xt_idxlist idxlist);
+
+void
+check_idxlist_copy(Xt_idxlist idxlist, Xt_idxlist idxlist_copy,
+                   size_t num_ref_indices, const Xt_int *ref_indices,
+                   size_t num_ref_stripes, const struct Xt_stripe *ref_stripes);
+
 #endif // TEST_IDXLIST_UTILS_H
