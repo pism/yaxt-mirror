@@ -254,8 +254,9 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
  *                         in the next index search - this is required on the
  *                         target side in order
  *                         to avoid multiple writes to the same memory position
- * @return                 0 if everything was okay
- *                         1 if the index could not be found in idxlist
+ * @return                 0 if every index could be found
+ *                         >0 number of indices which could not be found in
+ *                         idxlist
  */
 int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist,
                                         const Xt_int *indices,
