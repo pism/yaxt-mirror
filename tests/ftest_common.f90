@@ -71,7 +71,7 @@ MODULE ftest_common
   LOGICAL :: verbose = .FALSE.
 
   PUBLIC :: init_mpi, finish_mpi
-  PUBLIC :: timer, treset, tstart, tstop, treport, sync
+  PUBLIC :: timer, treset, tstart, tstop, treport, mysync
   PUBLIC :: id_map, icmp, factorize, regular_deco
   PUBLIC :: test_abort
 CONTAINS
@@ -104,7 +104,7 @@ CONTAINS
   SUBROUTINE tstart(t)
     TYPE(timer), INTENT(inout) :: t
     IF (debug) WRITE(0,*) 'tstart: ',t%label
-    CALL sync
+    CALL mysync
     t%istate = 1
     t%t0 = work_time()
   END SUBROUTINE tstart
@@ -116,7 +116,7 @@ CONTAINS
     t1 = work_time()
     t%dt_work = t%dt_work + (t1 - t%t0)
     t%istate = 0
-    CALL sync
+    CALL mysync
 
   END SUBROUTINE tstop
 
@@ -171,8 +171,8 @@ CONTAINS
 
   END SUBROUTINE treport
 
-  SUBROUTINE sync
-    CHARACTER(len=*), PARAMETER :: context = 'sync: '
+  SUBROUTINE mysync
+    CHARACTER(len=*), PARAMETER :: context = 'mysync: '
     INTEGER :: ierror
     REAL(dp) :: t0, dt
 
@@ -186,7 +186,7 @@ CONTAINS
     dt = (MPI_WTIME() - t0)
     sync_dt_sum = sync_dt_sum + dt
 
-  END SUBROUTINE sync
+  END SUBROUTINE mysync
 
   REAL(dp) FUNCTION work_time()
     work_time = MPI_WTIME() - sync_dt_sum

@@ -47,14 +47,14 @@
 
 PROGRAM test_perf_stripes
   USE mpi
-  USE yaxt, ONLY: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
+  USE yaxt, ONLY: xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, xt_redist, &
        xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
        xt_stripe, xt_idxstripes_new, xt_int_kind
 
-  USE ftest_common, ONLY: finish_mpi, init_mpi, dp, timer, treset, tstart, &
-       tstop, treport, sync, id_map, test_abort, icmp, factorize, regular_deco
+  USE ftest_common, ONLY: finish_mpi, init_mpi, timer, treset, tstart, &
+       tstop, treport, id_map, test_abort, icmp, factorize, regular_deco
 
   USE ISO_C_BINDING, ONLY: c_loc
 

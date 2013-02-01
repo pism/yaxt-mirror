@@ -47,7 +47,7 @@
 
 PROGRAM test_yaxt
   USE mpi
-  USE yaxt, ONLY: xt_abort, Xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
+  USE yaxt, ONLY: xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind

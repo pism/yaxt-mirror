@@ -52,8 +52,8 @@ PROGRAM test_perf
        & ut_init_oneway_transposition_template, ut_destroy_decomposition, &
        & ut_destroy_transposition_template, ut_destroy_transposition, &
        & ut_init_transposition, xt_int_kind
-  USE ftest_common, ONLY: finish_mpi, init_mpi, dp, treset, tstart, tstop, &
-       treport, sync, timer, id_map, factorize, regular_deco
+  USE ftest_common, ONLY: finish_mpi, init_mpi, treset, tstart, tstop, &
+       treport, timer, id_map, factorize, regular_deco
 
   IMPLICIT NONE
   ! global extents including halos:
