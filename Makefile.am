@@ -1,4 +1,4 @@
-SUBDIRS = src inst_headers tests examples perf
+SUBDIRS = . src inst_headers tests examples perf
 
 ACLOCAL_AMFLAGS=-I m4
 
@@ -42,3 +42,8 @@ EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	doc/src/yaxt_concept.dox \
 	include/cfortran.h \
 	m4/tj_find_type.m4
+
+all-local:
+	for subdir in $(SUBDIRS) ; do \
+          test "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
+	    || ./config.status $$subdir/Makefile ; done
