@@ -192,6 +192,7 @@ int main(void) {
     check_idxlist(intersection, sorted_index_list, 3 * num_indices);
 
     xt_idxlist_delete(intersection);
+    xt_idxlist_delete(ref_idxvec);
     xt_idxlist_delete(collectionlist);
   }
 
