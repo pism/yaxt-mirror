@@ -1,2 +1,4 @@
 #! @SHELL@
+set -e
 @MPI_LAUNCH@ -n 1 ./test_idxlist_collection
+@MPI_LAUNCH@ -n 1 ./test_idxlist_collection_f

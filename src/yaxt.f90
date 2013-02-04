@@ -68,12 +68,14 @@ MODULE yaxt
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_index_stripes, xt_idxlist_get_bounding_box, &
        xt_idxvec_new, xt_idxvec_from_stripes_new, xt_idxstripes_new, &
+       xt_idxlist_collection_new, xt_idxsection_new, &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        &    xt_redist_delete, &
        &    xt_redist_s_exchange1, &
-       xt_get_default_comm, xt_idxempty_new
+       xt_get_default_comm, xt_idxempty_new, &
+       OPERATOR(==), OPERATOR(/=)
 
   INTEGER, PARAMETER, PUBLIC :: xt_int_kind   = XT_INT_FC_KIND
 
@@ -101,6 +103,14 @@ MODULE yaxt
   TYPE, BIND(C), PUBLIC :: xt_bounds
     INTEGER(xt_int_kind) :: start, size
   END TYPE xt_bounds
+
+  INTERFACE OPERATOR(==)
+    MODULE PROCEDURE xt_bounds_eq
+  END INTERFACE OPERATOR(==)
+
+  INTERFACE OPERATOR(/=)
+    MODULE PROCEDURE xt_bounds_ne
+  END INTERFACE OPERATOR(/=)
 
   INTERFACE
 
@@ -186,7 +196,7 @@ MODULE yaxt
 
 CONTAINS
 
-  SUBROUTINE  xt_abort(comm, msg, source, line)
+  SUBROUTINE xt_abort(comm, msg, source, line)
     INTEGER, INTENT(in):: comm
     CHARACTER(len=*), INTENT(in) :: msg
     CHARACTER(len=*), INTENT(in) :: source
@@ -262,6 +272,35 @@ CONTAINS
 
   END FUNCTION xt_idxempty_new
 
+  FUNCTION xt_idxsection_new(start, global_size, local_size, local_start) &
+       RESULT(idxsection)
+    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_size(:), &
+         local_start(:)
+    TYPE(xt_idxlist) :: idxsection
+    INTEGER :: num_dimensions
+    INTERFACE
+      FUNCTION xt_idxsection_new_c(start, num_dimensions, global_size, &
+           local_size, local_start) BIND(c, name='xt_idxsection_new') &
+           RESULT(idxsection)
+        IMPORT :: c_int, c_ptr, xt_idxlist, xt_int_kind
+        INTEGER(xt_int_kind), VALUE, INTENT(in) :: start
+        INTEGER(c_int), VALUE, INTENT(in) :: num_dimensions
+        INTEGER(xt_int_kind), INTENT(in) :: global_size(*), local_size(*), &
+             local_start(*)
+        TYPE(c_ptr) :: idxsection
+      END FUNCTION xt_idxsection_new_c
+    END INTERFACE
+
+    num_dimensions = SIZE(global_size)
+    IF (SIZE(local_size) /= num_dimensions &
+         .OR. SIZE(local_start) /= num_dimensions) &
+         CALL xt_abort(xt_get_default_comm(), "non-matching array sizes", &
+         __FILE__, &
+         __LINE__)
+    idxsection%cptr = xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
+         global_size, local_size, local_start)
+  END FUNCTION xt_idxsection_new
+
   FUNCTION xt_idxstripes_new(stripes, num_stripes) RESULT(res)
     IMPLICIT NONE
     TYPE(xt_stripe), INTENT(in) :: stripes(*)
@@ -282,6 +321,30 @@ CONTAINS
     res%cptr = xt_idxstripes_new_f(stripes, num_stripes)
 
   END FUNCTION xt_idxstripes_new
+
+  FUNCTION xt_idxlist_collection_new(idxlists) RESULT(res)
+    TYPE(xt_idxlist), INTENT(in) :: idxlists(:)
+    TYPE(xt_idxlist) :: res
+
+    INTERFACE
+      FUNCTION xt_idxlist_collection_new_c(idxlists, num_lists) &
+           BIND(C, name='xt_idxlist_collection_new') RESULT(res_ptr)
+        IMPORT:: c_ptr, c_int
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: idxlists(*)
+        INTEGER(c_int), VALUE, INTENT(in) :: num_lists
+        TYPE(c_ptr) :: res_ptr
+      END FUNCTION xt_idxlist_collection_new_c
+    END INTERFACE
+
+    IF (SIZE(idxlists) > INT(HUGE(1_c_int))) &
+         CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
+         __FILE__, &
+         __LINE__)
+    res%cptr = xt_idxlist_collection_new_c(idxlists%cptr, &
+         INT(SIZE(idxlists), c_int))
+
+  END FUNCTION xt_idxlist_collection_new
 
   FUNCTION xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm) RESULT(res)
     IMPLICIT NONE
@@ -661,4 +724,17 @@ CONTAINS
     copy%cptr = xt_idxlist_copy_c(idxlist%cptr)
 
   END FUNCTION xt_idxlist_copy
+
+  ELEMENTAL FUNCTION xt_bounds_eq(a, b) RESULT(a_equals_b)
+    TYPE(xt_bounds), INTENT(in) :: a, b
+    LOGICAL :: a_equals_b
+    a_equals_b = a%size == b%size .AND. a%start == b%start
+  END FUNCTION xt_bounds_eq
+
+  ELEMENTAL FUNCTION xt_bounds_ne(a, b) RESULT(a_equals_b)
+    TYPE(xt_bounds), INTENT(in) :: a, b
+    LOGICAL :: a_equals_b
+    a_equals_b = a%size /= b%size .OR. a%start /= b%start
+  END FUNCTION xt_bounds_ne
+
 END MODULE yaxt
