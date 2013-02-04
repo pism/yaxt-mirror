@@ -60,7 +60,7 @@ MODULE yaxt
 
   PUBLIC :: xt_initialize, xt_abort, &
        xt_idxlist, xt_idxlist_delete,  &
-       xt_idxlist_f2c, xt_idxlist_copy, &
+       xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &
        xt_idxlist_get_intersection, &
        xt_idxlist_get_positions_of_indices, &
@@ -428,6 +428,12 @@ CONTAINS
     res%cptr = xt_redist_p2p_new_f(xmap, datatype)
 
   END FUNCTION xt_redist_p2p_new
+
+  FUNCTION xt_idxlist_c2f(idxlist) RESULT(p)
+    TYPE(c_ptr), INTENT(in) :: idxlist
+    TYPE(xt_idxlist) :: p
+    p%cptr = idxlist
+  END FUNCTION xt_idxlist_c2f
 
   FUNCTION xt_idxlist_get_index_at_position(idxlist, position, idx) RESULT(res)
     IMPLICIT NONE

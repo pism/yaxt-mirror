@@ -45,7 +45,8 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE test_idxlist_utils
-  USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_f2c, xt_stripe
+  USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_c2f, xt_idxlist_f2c, &
+       xt_stripe
   USE ftest_common, ONLY: test_abort
   USE iso_c_binding, ONLY: c_ptr, c_int, c_size_t
   IMPLICIT NONE
@@ -57,7 +58,8 @@ MODULE test_idxlist_utils
     END FUNCTION test_err_count
   END INTERFACE
   PUBLIC :: test_err_count
-  PUBLIC :: check_idxlist, check_stripes, check_offsets
+  PUBLIC :: check_idxlist, check_stripes, check_offsets, &
+       idxlist_pack_unpack_copy, check_idxlist_copy
 CONTAINS
   SUBROUTINE check_idxlist(idxlist, ref_indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
@@ -127,6 +129,46 @@ CONTAINS
     CALL check_offsets_c(INT(SIZE(offsets_a), c_size_t), offsets_a, offsets_b)
 
   END SUBROUTINE check_offsets
+
+  FUNCTION idxlist_pack_unpack_copy(idxlist) RESULT(idxlist_copy)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    TYPE(xt_idxlist) :: idxlist_copy
+
+    INTERFACE
+      FUNCTION idxlist_pack_unpack_copy_c(idxlist) RESULT(idxlist_copy) &
+           BIND(c, name='idxlist_pack_unpack_copy')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+        TYPE(c_ptr) :: idxlist_copy
+      END FUNCTION idxlist_pack_unpack_copy_c
+    END INTERFACE
+
+    idxlist_copy &
+         = xt_idxlist_c2f(idxlist_pack_unpack_copy_c(xt_idxlist_f2c(idxlist)))
+
+  END FUNCTION idxlist_pack_unpack_copy
+
+  SUBROUTINE check_idxlist_copy(idxlist, idxlist_copy, ref_indices, ref_stripes)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist, idxlist_copy
+    INTEGER(xt_int_kind), INTENT(in) :: ref_indices(:)
+    TYPE(xt_stripe), INTENT(in) :: ref_stripes(:)
+
+    INTERFACE
+      SUBROUTINE check_idxlist_copy_c(idxlist, idxlist_copy, &
+           num_ref_indices, ref_indices, &
+           num_ref_stripes, ref_stripes) BIND(c, name='check_idxlist_copy')
+        IMPORT :: c_size_t, c_ptr, xt_int_kind, xt_stripe
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist, idxlist_copy
+        INTEGER(c_size_t), VALUE, INTENT(in) :: num_ref_indices, num_ref_stripes
+        INTEGER(xt_int_kind), INTENT(in) :: ref_indices(*)
+        TYPE(xt_stripe), INTENT(in) :: ref_stripes(*)
+      END SUBROUTINE check_idxlist_copy_c
+    END INTERFACE
+    CALL check_idxlist_copy_c(xt_idxlist_f2c(idxlist), &
+         xt_idxlist_f2c(idxlist_copy), &
+         INT(SIZE(ref_indices), c_size_t), ref_indices, &
+         INT(SIZE(ref_stripes), c_size_t), ref_stripes)
+  END SUBROUTINE check_idxlist_copy
 
 END MODULE test_idxlist_utils
 
