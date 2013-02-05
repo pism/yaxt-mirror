@@ -46,8 +46,9 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_idxvec
-  USE xt_core, ONLY: i2, i4, i8, xt_int_kind, xt_abort, xt_idxlist, &
-       xt_stripe, xt_idxlist_c2f, xt_get_default_comm
+  USE xt_core, ONLY: i2, i4, i8, xt_int_kind, xt_abort, xt_stripe, &
+       xt_get_default_comm
+  USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr
   IMPLICIT NONE
   PRIVATE

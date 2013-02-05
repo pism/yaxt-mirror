@@ -58,7 +58,6 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: i4 = SELECTED_INT_KIND(pi4)
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
   PUBLIC :: xt_initialize, xt_abort,  xt_get_default_comm, &
-       xt_idxlist_f2c, xt_idxlist_c2f, &
        xt_redist_c2f, xt_redist_f2c, &
        xt_xmap_c2f, xt_xmap_f2c
 
@@ -69,14 +68,6 @@ MODULE xt_core
     INTEGER(xt_int_kind) :: nstrides
     INTEGER(xt_int_kind) :: stride
   END TYPE xt_stripe
-
-  ! note: this type must not be extended to contain any other
-  ! components, its memory pattern has to match void * exactly, which
-  ! it does because of C constraints
-  TYPE, BIND(C), PUBLIC :: xt_idxlist
-    PRIVATE
-    TYPE(c_ptr) :: cptr = c_null_ptr
-  END TYPE xt_idxlist
 
   ! note: this type must not be extended to contain any other
   ! components, its memory pattern has to match void * exactly, which
@@ -112,15 +103,6 @@ MODULE xt_core
       IMPLICIT NONE
       INTEGER(xt_mpi_fint_kind), INTENT(in) :: default_comm
     END SUBROUTINE xt_initialize
-
-    ! this function must not be implemented in Fortran because
-    ! PGI 11.x chokes on that
-    FUNCTION xt_idxlist_f2c(idxlist) BIND(c, name='xt_idxlist_f2c') RESULT(p)
-      IMPORT :: c_ptr, xt_idxlist
-      IMPLICIT NONE
-      TYPE(xt_idxlist), INTENT(in) :: idxlist
-      TYPE(c_ptr) :: p
-    END FUNCTION xt_idxlist_f2c
 
     ! this function must not be implemented in Fortran because
     ! PGI 11.x chokes on that
@@ -162,12 +144,6 @@ CONTAINS
     CALL xt_abort_c(comm, TRIM(msg)//c_null_char, &
          TRIM(source)//c_null_char, INT(line, c_int))
   END SUBROUTINE xt_abort
-
-  FUNCTION xt_idxlist_c2f(idxlist) RESULT(p)
-    TYPE(c_ptr), INTENT(in) :: idxlist
-    TYPE(xt_idxlist) :: p
-    p%cptr = idxlist
-  END FUNCTION xt_idxlist_c2f
 
   FUNCTION xt_redist_c2f(redist) RESULT(p)
     TYPE(c_ptr), INTENT(in) :: redist
