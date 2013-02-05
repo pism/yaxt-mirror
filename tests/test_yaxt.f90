@@ -52,6 +52,7 @@ PROGRAM test_yaxt
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        &          xt_initialize, xt_finalize, xt_idxlist_get_num_indices, &
+       &          xt_idxlist_get_indices, xt_modifier, xt_idxmod_new, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
   USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco, &
        finish_mpi
@@ -81,11 +82,15 @@ PROGRAM test_yaxt
   TYPE(xt_redist) :: redist_tpex
   TYPE(xt_redist) :: redist_surf_tpex
 
-  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:), mstate(:,:)
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
-
+  TYPE(xt_modifier) :: m_tpex(3)
+  INTEGER :: m_tpex_num
+  TYPE(xt_idxlist) :: loc_id_idxlist
+  TYPE(xt_idxlist) :: loc_tpex_idxlist
+  INTEGER, ALLOCATABLE :: loc_tpex2(:,:)
   ! mpi & decomposition & allocate mem:
   CALL init_all
 
@@ -98,8 +103,21 @@ PROGRAM test_yaxt
   ! define bounds exchange for full global index space
   CALL def_exchange(g_id, g_tpex)
 
+  ! use modifier to define index transfer
+  CALL def_tpex_mod_via_idxvec(m_tpex, m_tpex_num)
+  loc_id_idxlist = xt_idxvec_new(loc_id, SIZE(loc_id))
+  loc_tpex_idxlist = xt_idxmod_new(loc_id_idxlist, m_tpex, m_tpex_num, mstate)
+
   ! local window of global bounds exchange:
   CALL get_window(g_tpex, loc_tpex)
+
+  ! compare with modifier result
+  ALLOCATE(loc_tpex2(ie,je))
+  loc_tpex2 = 0
+  CALL xt_idxlist_get_indices(loc_tpex_idxlist, loc_tpex2)
+  IF (ANY(loc_tpex2 /= loc_tpex)) CALL test_abort('idx copy does not match', &
+       __FILE__, &
+       __LINE__)
 
   ! template: loc_id -> loc_tpex
   CALL gen_template(loc_id, loc_tpex, xmap_tpex) ! todo rename template to xmap
@@ -202,7 +220,7 @@ CONTAINS
     CALL deco
 
     ALLOCATE(fval(ie,je), gval(ie,je))
-    ALLOCATE(loc_id(ie,je), loc_tpex(ie,je))
+    ALLOCATE(loc_id(ie,je), loc_tpex(ie,je), mstate(ie,je))
     ALLOCATE(id_pos(ie,je), gval3d(ie,nlev,je), pos3d_surf(ie,je))
 
     fval = undef_int
@@ -314,11 +332,17 @@ CONTAINS
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
     INTEGER :: src_num, dst_num
+    INTEGER(xt_int_kind) :: cp_src_idx(g_ie, g_je)
+    INTEGER(xt_int_kind) :: cp_dst_idx(g_ie, g_je)
 
     src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind))
     src_num = xt_idxlist_get_num_indices(src_idxlist)
     IF (src_num /= g_ie*g_je) CALL test_abort('unexpected src_num', &
+         __FILE__, &
+         __LINE__)
+    CALL xt_idxlist_get_indices(src_idxlist, cp_src_idx)
+    IF (ANY(cp_src_idx /= local_src_idx)) CALL test_abort('idx copy does not match', &
          __FILE__, &
          __LINE__)
 
@@ -328,11 +352,42 @@ CONTAINS
     IF (dst_num /= g_ie*g_je) CALL test_abort('unexpected dst_num', &
          __FILE__, &
          __LINE__)
+    CALL xt_idxlist_get_indices(dst_idxlist, cp_dst_idx)
+    IF (ANY(cp_dst_idx /= local_dst_idx)) CALL test_abort('idx copy does not match', &
+         __FILE__, &
+         __LINE__)
+
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
   END SUBROUTINE gen_template
+
+  SUBROUTINE def_tpex_mod_via_idxvec(mvec, mvec_num)
+    TYPE(xt_modifier), INTENT(out) :: mvec(:)
+    INTEGER, INTENT(out) :: mvec_num
+
+    INTEGER :: g_start_indices(g_ie, g_je)
+    INTEGER :: g_end_indices(g_ie, g_je)
+    TYPE(xt_idxlist) :: g_start_idxlist
+    TYPE(xt_idxlist) :: g_end_idxlist
+
+    IF (SIZE(mvec)<1) CALL test_abort('def_tpex_mod_via_idxvec mvec too small', &
+         __FILE__, &
+         __LINE__)
+
+    CALL id_map(g_start_indices)
+    g_start_idxlist = xt_idxvec_new(g_start_indices, SIZE(g_start_indices))
+
+    CALL def_exchange(g_start_indices, g_end_indices)
+    g_end_idxlist = xt_idxvec_new(g_end_indices, SIZE(g_end_indices))
+
+    mvec(1)%extract = g_start_idxlist
+    mvec(1)%subst = g_end_idxlist
+    mvec(1)%mask = 1
+    mvec_num = 1
+
+  END SUBROUTINE def_tpex_mod_via_idxvec
 
   SUBROUTINE def_exchange(id_in, id_out)
     INTEGER(xt_int_kind), INTENT(in) :: id_in(:,:)
@@ -410,7 +465,9 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: gidx(:,:)
 
     IF (ANY(gidx == undef_index)) THEN
-      CALL test_abort('check_g_idx: check failed', __FILE__, __LINE__)
+      CALL test_abort('check_g_idx: check failed', &
+           __FILE__, &
+           __LINE__)
     ENDIF
   END SUBROUTINE check_g_idx
 

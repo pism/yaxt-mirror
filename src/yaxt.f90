@@ -69,6 +69,7 @@ MODULE yaxt
        xt_idxlist_get_index_stripes, xt_idxlist_get_bounding_box, &
        xt_idxvec_new, xt_idxvec_from_stripes_new, xt_idxstripes_new, &
        xt_idxlist_collection_new, xt_idxsection_new, &
+       &    xt_idxlist_get_indices, xt_modifier, xt_idxmod_new, &
        &    xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &    xt_redist, xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
@@ -103,6 +104,12 @@ MODULE yaxt
   TYPE, BIND(C), PUBLIC :: xt_bounds
     INTEGER(xt_int_kind) :: start, size
   END TYPE xt_bounds
+
+  TYPE, BIND(C) :: xt_modifier
+    TYPE(Xt_idxlist) :: extract
+    TYPE(Xt_idxlist) :: subst
+    INTEGER(c_int) :: mask
+  END TYPE xt_modifier
 
   INTERFACE OPERATOR(==)
     MODULE PROCEDURE xt_bounds_eq
@@ -183,7 +190,6 @@ MODULE yaxt
     END SUBROUTINE xt_redist_delete
   END INTERFACE
 
-
   INTERFACE
     SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr) &
          BIND(C, name='xt_redist_s_exchange1_f')
@@ -205,6 +211,15 @@ MODULE yaxt
       IMPORT :: xt_int_kind, xt_idxlist
       TYPE(xt_idxlist), INTENT(in) :: idxlist
     END FUNCTION xt_idxlist_get_num_indices
+  END INTERFACE
+
+  INTERFACE
+    SUBROUTINE xt_idxlist_get_indices(idxlist, indices) &
+         &          BIND(C, name='xt_idxlist_get_indices_f')
+      IMPORT :: xt_int_kind, xt_idxlist
+      TYPE(xt_idxlist), INTENT(in) :: idxlist
+      INTEGER(xt_int_kind), INTENT(out) :: indices(*)
+    END SUBROUTINE xt_idxlist_get_indices
   END INTERFACE
 
 CONTAINS
@@ -753,5 +768,30 @@ CONTAINS
     LOGICAL :: a_equals_b
     a_equals_b = a%size /= b%size .OR. a%start /= b%start
   END FUNCTION xt_bounds_ne
+
+  FUNCTION xt_idxmod_new(patch, modifier, modifier_num, mstate) RESULT(res)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: patch
+    TYPE(xt_modifier), INTENT(in) :: modifier(*)
+    INTEGER(xt_int_kind), INTENT(in) :: modifier_num
+    INTEGER(xt_int_kind), INTENT(inout) :: mstate(*)
+    TYPE(Xt_idxlist) :: res
+
+    INTERFACE
+      FUNCTION xt_idxmod_new_f(patch, modifier, modifier_num, mstate) &
+           BIND(C, name='xt_idxmod_new_f') RESULT(res)
+        IMPORT :: xt_idxlist, xt_int_kind, xt_modifier, c_ptr, c_int
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: patch
+        TYPE(xt_modifier), INTENT(in) :: modifier(*)
+        INTEGER(c_int), VALUE, INTENT(in) :: modifier_num
+        INTEGER(c_int), INTENT(in) :: mstate(*)
+        TYPE(c_ptr) :: res
+      END FUNCTION xt_idxmod_new_f
+    END INTERFACE
+
+    res%cptr = xt_idxmod_new_f(patch, modifier, modifier_num, mstate)
+
+  END FUNCTION xt_idxmod_new
 
 END MODULE yaxt

@@ -60,6 +60,7 @@
 #include "xt/xt_xmap_all2all.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_redist_p2p.h"
+#include "xt/xt_idxmod.h"
 
 struct xt_idxlist_f {
    Xt_idxlist cptr;
@@ -71,6 +72,12 @@ struct xt_xmap_f {
 
 struct xt_redist_f {
   Xt_redist cptr;
+};
+
+struct xt_modifier_f {
+  struct xt_idxlist_f extract;
+  struct xt_idxlist_f subst;
+  int mask;
 };
 
 void xt_initialize_f(MPI_Fint *comm_f) {
@@ -208,3 +215,27 @@ Xt_int xt_idxlist_get_num_indices_f(struct xt_idxlist_f *idxlist_f) {
   return xt_idxlist_get_num_indices(idxlist);
 }
 
+void xt_idxlist_get_indices_f(struct xt_idxlist_f *idxlist_f, Xt_int *indices) {
+  struct Xt_idxlist_ *idxlist = idxlist_f->cptr;
+  xt_idxlist_get_indices(idxlist, indices);
+}
+
+Xt_idxlist xt_idxmod_new_f(struct xt_idxlist_f *patch_idxlist_f,
+                           struct xt_modifier_f *modifier_f,
+                           int modifier_num, int *mstate) {
+
+  if (modifier_num<0) die("unexpected case: modifier_num<0");
+
+  struct Xt_modifier modifier[modifier_num];
+
+  for (int m=0; m < modifier_num; m++) {
+    modifier[m].extract = modifier_f[m].extract.cptr;
+    modifier[m].subst   = modifier_f[m].subst.cptr;
+    modifier[m].mask    = modifier_f[m].mask;
+  }
+
+  Xt_idxlist patch_idxlist = patch_idxlist_f->cptr;
+
+  return xt_idxmod_new(patch_idxlist, modifier,
+                       modifier_num, mstate);
+}
