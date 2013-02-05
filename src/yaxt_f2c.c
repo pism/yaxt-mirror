@@ -92,15 +92,26 @@ MPI_Fint xt_get_default_comm_f()
 }
 
 void xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
-                     MPI_Fint line) {
+                int line) {
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
-  Xt_abort(comm_c, msg, source, (int)line);
+  Xt_abort(comm_c, msg, source, line);
 }
 
 Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
 {
   return p->cptr;
 }
+
+Xt_redist xt_redist_f2c(struct xt_redist_f *p)
+{
+  return p->cptr;
+}
+
+Xt_xmap xt_xmap_f2c(struct xt_xmap_f *p)
+{
+  return p->cptr;
+}
+
 
 void xt_idxlist_delete_f(struct xt_idxlist_f *idxlist_f) {
   xt_idxlist_delete(idxlist_f->cptr);

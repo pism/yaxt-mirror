@@ -4,22 +4,22 @@
 #             Moritz Hanke <hanke@dkrz.de>
 #             Thomas Jahns <jahns@dkrz.de>
 # URL: https://redmine.dkrz.de/doc/yaxt/html/index.html
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are  permitted provided that the following conditions are
 # met:
-# 
+#
 # Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
-# 
+#
 # Redistributions in binary form must reproduce the above copyright
 # notice, this list of conditions and the following disclaimer in the
 # documentation and/or other materials provided with the distribution.
-# 
+#
 # Neither the name of the DKRZ GmbH nor the names of its contributors
 # may be used to endorse or promote products derived from this software
 # without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -101,6 +101,8 @@ libyaxt_la_SOURCES =						\
 	mergesort.c						\
 	xt_sort.c						\
 	yaxt_f2c.c						\
+	xt_core_f.f90						\
+	xt_idxvec_f.f90						\
 	yaxt.f90
 
 xtinclude_Makefile.inc: Makefile
@@ -122,3 +124,27 @@ install-exec-local:
 uninstall-local:
 	rm -f "$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
 	-rmdir "$(DESTDIR)$(libdir)/pkgconfig"
+
+./$(DEPDIR)/FC.deps: $(SOURCES) Makefile
+	@unique=`for i in $(SOURCES); do \
+	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | grep '\.f90$$' ` ; \
+	  FC="$(FC)" FPP="$(FPP)" \
+	  $(PERL) -I$(top_srcdir)/scripts \
+	  $(top_srcdir)/scripts/makef90depends --ignore-module iso_c_binding \
+	  --fc-mod-flag=$(FC_MOD_FLAG) --fc-def-opt=$(FPP_DEFOPT) \
+	  --fc-inc-flag=$(FPP_INCOPT) --fc-mod-suf='.$(FCMODEXT)' \
+	  --fc-mod-case=$(FCMODCASE) --prog-fpp='$(FPP)' \
+	  --`test $(C_LONG_IS_LARGER_THAN_INT) = 1 || echo \
+	  no`fpp-long-is-larger-than-int \
+	  --`test $(C_LONG_LONG_IS_LARGER_THAN_LONG) = 1 || echo \
+	  no`fpp-long-long-is-larger-than-long \
+	  --fpp-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
+	  --strip-obj-dirname --parse-cache=./$(DEPDIR)/FC.depdb \
+	  --obj-suf='.lo' -- \
+	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
+	  >./$(DEPDIR)/FC.deps.temp
+	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
+	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
+
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@

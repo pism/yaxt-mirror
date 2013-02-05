@@ -87,12 +87,14 @@ CFLAGS="$CFLAGS $MPI_C_INCLUDE"
 TJ_FIND_INTEGRAL_TYPE([MPI_Fint],[MPI_FINT],[@%:@include <mpi.h>])
 CFLAGS=$save_CFLAGS
 AS_CASE(["$MPI_FINT"],
-  [int],[XT_MPI_FINT_MAX=INT_MAX],
-  [long],[XT_MPI_FINT_MAX=LONG_MAX],
-  ["long long"],[XT_MPI_FINT_MAX=LLONG_MAX],
-  [short],[XT_MPI_FINT_MAX=SHRT_MAX])
+  [int],[XT_MPI_FINT_MAX=INT_MAX XT_MPI_FINT_FC_KIND=c_int],
+  [long],[XT_MPI_FINT_MAX=LONG_MAX XT_MPI_FINT_FC_KIND=c_long],
+  ["long long"],[XT_MPI_FINT_MAX=LLONG_MAX XT_MPI_FINT_FC_KIND=c_long_long],
+  [short],[XT_MPI_FINT_MAX=SHRT_MAX XT_MPI_FINT_FC_KIND=c_short])
 AC_DEFINE_UNQUOTED([XT_MPI_FINT_MAX],[$XT_MPI_FINT_MAX],
   [Maximum value of MPI_Fint.])
+# Match MPI_Fint in reverse to make sure Fortran/C-APIs match
+FCFLAGS="$FCFLAGS ${FPP_DEFOPT}XT_MPI_FINT_FC_KIND=$XT_MPI_FINT_FC_KIND"
 # the following is needed for source parts from libraries with
 # optional MPI dependencies
 AC_DEFINE([USE_MPI],[1],[use MPI parallel process environment])
@@ -232,6 +234,6 @@ AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
   src/pkgconfig/yaxt.pc perf/Makefile])
 # force make to regenerate FC.deps file (because it depends on Makefile)
 AC_CONFIG_COMMANDS([force_dep_regeneration],[sleep 1
-touch tests/Makefile])
+touch tests/Makefile src/Makefile])
 
 AC_OUTPUT
