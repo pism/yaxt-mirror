@@ -203,3 +203,8 @@ void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void **src_data, void
   xt_redist_s_exchange(redist_f->cptr, src_data, 1, dst_data, 1);
 }
 
+Xt_int xt_idxlist_get_num_indices_f(struct xt_idxlist_f *idxlist_f) {
+  struct Xt_idxlist_ *idxlist = idxlist_f->cptr;
+  return xt_idxlist_get_num_indices(idxlist);
+}
+

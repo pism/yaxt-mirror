@@ -62,7 +62,7 @@ MODULE yaxt
        xt_idxlist, xt_idxlist_delete,  &
        xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &
-       xt_idxlist_get_intersection, &
+       xt_idxlist_get_intersection, xt_idxlist_get_num_indices, &
        xt_idxlist_get_positions_of_indices, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
@@ -197,6 +197,14 @@ MODULE yaxt
   INTERFACE
     SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
     END SUBROUTINE xt_finalize
+  END INTERFACE
+
+  INTERFACE
+    INTEGER(xt_int_kind) FUNCTION xt_idxlist_get_num_indices(idxlist) &
+         &          BIND(C, name='xt_idxlist_get_num_indices_f') RESULT(res)
+      IMPORT :: xt_int_kind, xt_idxlist
+      TYPE(xt_idxlist), INTENT(in) :: idxlist
+    END FUNCTION xt_idxlist_get_num_indices
   END INTERFACE
 
 CONTAINS

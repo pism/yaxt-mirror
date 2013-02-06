@@ -46,11 +46,12 @@
 !
 
 PROGRAM test_yaxt
+  USE iso_c_binding, ONLY: c_loc, c_int
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
-       &          xt_initialize, xt_finalize, &
+       &          xt_initialize, xt_finalize, xt_idxlist_get_num_indices, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
   USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco, &
        finish_mpi
@@ -312,11 +313,21 @@ CONTAINS
     TYPE(xt_xmap), INTENT(out) :: xmap
 
     TYPE(Xt_idxlist) :: src_idxlist, dst_idxlist
+    INTEGER :: src_num, dst_num
 
     src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind))
+    src_num = xt_idxlist_get_num_indices(src_idxlist)
+    IF (src_num /= g_ie*g_je) CALL test_abort('unexpected src_num', &
+         __FILE__, &
+         __LINE__)
+
     dst_idxlist = xt_idxvec_new(local_dst_idx, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind))
+    dst_num = xt_idxlist_get_num_indices(dst_idxlist)
+    IF (dst_num /= g_ie*g_je) CALL test_abort('unexpected dst_num', &
+         __FILE__, &
+         __LINE__)
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
