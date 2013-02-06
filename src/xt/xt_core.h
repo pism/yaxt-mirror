@@ -79,4 +79,10 @@ typedef struct Xt_redist_ *Xt_redist;
 void
 xt_initialize(MPI_Comm default_comm);
 
+/**
+ * finalize library
+ */
+void
+xt_finalize();
+
 #endif

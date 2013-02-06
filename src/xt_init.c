@@ -41,11 +41,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include "core/core.h"
+#include "instr.h"
 
 void
 xt_initialize(MPI_Comm default_comm)
 {
   Xt_default_comm = default_comm;
+#ifdef INSTR_WITH_SCT
+  sct_init(32, SCT_GETENV, "YAXT", Xt_default_comm);
+  setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
+  setenv("SCT_CALLSTATS", "0", 0);
+#endif
+}
+
+void
+xt_finalize()
+{
+#ifdef INSTR_WITH_SCT
+  INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
+  INSTR_FINALIZE();
+#endif
 }
 
