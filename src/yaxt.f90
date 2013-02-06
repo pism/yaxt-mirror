@@ -52,7 +52,7 @@ MODULE yaxt
   !
 
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
-       c_long, c_short, c_long_long, c_ptr, c_null_ptr, c_f_pointer
+       c_long, c_short, c_long_long, c_ptr, c_null_ptr, c_f_pointer, c_intptr_t
 
   IMPLICIT NONE
 
@@ -326,6 +326,8 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: idxlists(:)
     TYPE(xt_idxlist) :: res
 
+    TYPE(c_ptr) :: p(SIZE(idxlists))
+    INTEGER(c_intptr_t) :: i
     INTERFACE
       FUNCTION xt_idxlist_collection_new_c(idxlists, num_lists) &
            BIND(C, name='xt_idxlist_collection_new') RESULT(res_ptr)
@@ -341,7 +343,9 @@ CONTAINS
          CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
          __FILE__, &
          __LINE__)
-    res%cptr = xt_idxlist_collection_new_c(idxlists%cptr, &
+    p = idxlists(:)%cptr
+    IF (SIZE(idxlists) > 5000) WRITE (0, *) "p=", TRANSFER(p, i, SIZE(p))
+    res%cptr = xt_idxlist_collection_new_c(p, &
          INT(SIZE(idxlists), c_int))
 
   END FUNCTION xt_idxlist_collection_new
