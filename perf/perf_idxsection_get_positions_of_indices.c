@@ -84,13 +84,14 @@ int main(void) {
       // generate index cache in idxsection
       xt_idxlist_get_indices_const(idxsection);
 
-      
       for (single_match_only = 0; single_match_only < 2;  ++single_match_only)
-        for (i = step; i < nstrides; i += step)
+        for (i = step; i < nstrides; i += step) {
+          if (i>1000000) break; //reduce workload
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_get_positions_of_indices(idxsection,
                                                 xt_idxlist_get_indices_const(selection_indices),
                                                 i, positions, single_match_only);
+        }
       xt_idxlist_delete(idxsection);
     }
 
@@ -102,7 +103,7 @@ int main(void) {
 
       for (single_match_only = 0; single_match_only < 2;  ++single_match_only) {
         for (i = step; i < nstrides; i += step) {
-
+          if (i>1000000) break; //reduce workload
           Xt_idxlist idxsection[num_samples];
 
           for (j = 0; j < num_samples; ++j)
@@ -120,7 +121,7 @@ int main(void) {
       }
     }
     for (unsigned num_dimension = 3; num_dimension < 6; num_dimension += 2)
-    { // test index enumeration without cached indices
+      { // test index enumeration without cached indices
 
       Xt_int local_start[] = {0,0,0,0,0};
       Xt_int *idxDump = NULL;
@@ -130,11 +131,12 @@ int main(void) {
 
       for (single_match_only = 0; single_match_only < 2;  ++single_match_only) {
 
-        for (j = 0; j < num_samples; ++j)
+        for (j = 0; j < num_samples; ++j) {
           idxsection[j] = xt_idxsection_new(0, num_dimension,
                                             global_size[test_id],
                                             local_size[test_id],
                                             local_start);
+        }
         for (j = 0; j < num_samples; ++j)
         {
           Xt_int numIdx = xt_idxlist_get_num_indices(idxsection[j]);
