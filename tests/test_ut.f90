@@ -49,7 +49,7 @@ PROGRAM test_ut
        ut_destroy_transposition_template, ut_mode_dt_p2p, &
        ut_init_transposition, &
        comm_forward, ut_transpose, ut_destroy_decomposition, &
-       ut_destroy_transposition, xt_int_kind
+       ut_destroy_transposition, xt_int_kind, ut_finalize
   USE ftest_common, ONLY: finish_mpi, icmp, factorize, regular_deco
   IMPLICIT NONE
 
@@ -129,6 +129,7 @@ PROGRAM test_ut
   CALL ut_destroy_transposition(trans_tpex)
   CALL ut_destroy_transposition(surf_trans_tpex)
 
+  CALL ut_finalize()
   CALL finish_mpi
 
 CONTAINS

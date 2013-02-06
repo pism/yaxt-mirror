@@ -38,13 +38,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <inttypes.h>
 
+#include <inttypes.h>
+#include <mpi.h>
 #include <yaxt.h>
 #include "core/ppm_xfuncs.h"
 
 int main(void) {
+
 #if XT_INT_MAX >= INT32_C(512) * 256 * 32
+
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  xt_initialize(MPI_COMM_WORLD);
+
   // use 32bit constant so that product won't overflow
   Xt_int nstrides = INT32_C(512) * 256 * 32;
   struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
@@ -148,6 +154,9 @@ int main(void) {
 
   xt_idxlist_delete(selection_indices);
   free(positions);
+
+  xt_finalize();
+  xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 #endif
   return 0;
 }

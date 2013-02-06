@@ -54,6 +54,7 @@ PROGRAM test_perf
        & ut_init_transposition, xt_int_kind
   USE ftest_common, ONLY: finish_mpi, init_mpi, treset, tstart, tstop, &
        treport, timer, id_map, factorize, regular_deco
+  USE yaxt, ONLY: xt_finalize
 
   IMPLICIT NONE
   ! global extents including halos:
@@ -216,6 +217,7 @@ PROGRAM test_perf
   CALL treport(t_trans_3d, TRIM(grid_label), mpi_comm_world)
   CALL treport(t_exch_3d, TRIM(grid_label), mpi_comm_world)
 
+  CALL xt_finalize
   CALL finish_mpi
 
 CONTAINS

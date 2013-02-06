@@ -105,6 +105,8 @@ void xt_ut_abort(char *msg, char *source, int *line) {
 
 void xt_ut_init(int decomp_size, int comm_tmpl_size, int comm_trans_size, int debug_lvl, int mode, int debug_unit) {
 
+  xt_initialize(MPI_COMM_WORLD);
+
   init_val.decomp_size     = decomp_size;
   init_val.comm_tmpl_size  = comm_tmpl_size;
   init_val.comm_trans_size = comm_trans_size;
@@ -117,6 +119,10 @@ void xt_ut_init(int decomp_size, int comm_tmpl_size, int comm_trans_size, int de
   template_set = xt_handle_set_new(init_val.comm_tmpl_size);
 
   trans_set = xt_handle_set_new(init_val.comm_trans_size);
+}
+
+void xt_ut_finalize() {
+  xt_finalize();
 }
 
 static int new_ideco() {

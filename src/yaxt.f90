@@ -58,7 +58,7 @@ MODULE yaxt
 
   PRIVATE
 
-  PUBLIC :: xt_initialize, xt_abort, &
+  PUBLIC :: xt_initialize, xt_finalize, xt_abort, &
        xt_idxlist, xt_idxlist_delete,  &
        xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &
@@ -192,6 +192,11 @@ MODULE yaxt
       TYPE(c_ptr), INTENT(in) :: src_data_cptr
       TYPE(c_ptr), INTENT(in) :: dst_data_cptr
     END SUBROUTINE xt_redist_s_exchange1
+  END INTERFACE
+
+  INTERFACE
+    SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
+    END SUBROUTINE xt_finalize
   END INTERFACE
 
 CONTAINS

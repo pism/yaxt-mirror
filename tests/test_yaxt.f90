@@ -50,6 +50,7 @@ PROGRAM test_yaxt
   USE yaxt, ONLY: xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
+       &          xt_initialize, xt_finalize, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
   USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco, &
        finish_mpi
@@ -135,6 +136,7 @@ PROGRAM test_yaxt
 
   CALL xt_redist_delete(redist_surf_tpex)
 
+  CALL xt_finalize()
   CALL finish_mpi
 
 CONTAINS
@@ -164,11 +166,12 @@ CONTAINS
     INTEGER :: ierror
 
     CALL MPI_INIT(ierror)
-
     IF (ierror /= MPI_SUCCESS) &
          CALL test_abort(context//'MPI_INIT failed', &
          __FILE__, &
          __LINE__)
+
+    CALL xt_initialize(MPI_COMM_WORLD)
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
     IF (ierror /= MPI_SUCCESS) &

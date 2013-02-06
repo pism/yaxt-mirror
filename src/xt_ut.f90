@@ -59,7 +59,8 @@ MODULE xt_ut
        ut_init_oneway_transposition_template, &
        ut_init_transposition, ut_transpose, &
        ut_destroy_transposition_template, &
-       ut_abort, ut_destroy_decomposition, ut_destroy_transposition
+       ut_abort, ut_destroy_decomposition, ut_destroy_transposition, &
+       ut_finalize
 
   ! \todo to be replaced by use yaxt....:
   INTEGER, PARAMETER, PUBLIC :: xt_int_kind   = XT_INT_FC_KIND
@@ -109,6 +110,11 @@ MODULE xt_ut
       INTEGER(C_INT), VALUE, INTENT(in) :: decomp_size, comm_tmpl_size, &
            comm_size, debug_lvl, mode, idebug_unit
     END SUBROUTINE xt_ut_init
+  END INTERFACE
+
+  INTERFACE
+    SUBROUTINE xt_ut_finalize() BIND(C, name='xt_ut_finalize')
+    END SUBROUTINE xt_ut_finalize
   END INTERFACE
 
   INTERFACE
@@ -206,6 +212,10 @@ CONTAINS
     CALL xt_ut_abort(TRIM(msg)//c_null_char, source, line)
 
   END SUBROUTINE ut_abort
+
+  SUBROUTINE ut_finalize()
+    CALL xt_ut_finalize()
+  END SUBROUTINE ut_finalize
 
   SUBROUTINE ut_init(decomp_size, comm_tmpl_size, comm_size, debug_lvl, &
        mode, debug_unit)

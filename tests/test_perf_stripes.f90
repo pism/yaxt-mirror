@@ -51,7 +51,7 @@ PROGRAM test_perf_stripes
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, xt_redist, &
        xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
-       xt_stripe, xt_idxstripes_new, xt_int_kind
+       xt_stripe, xt_idxstripes_new, xt_int_kind, xt_initialize, xt_finalize
 
   USE ftest_common, ONLY: finish_mpi, init_mpi, timer, treset, tstart, &
        tstop, treport, id_map, test_abort, icmp, factorize, regular_deco
@@ -288,6 +288,7 @@ PROGRAM test_perf_stripes
   CALL treport(t_redist_3d_wb, TRIM(grid_label), mpi_comm_world)
   CALL treport(t_exch_3d_wb, TRIM(grid_label), mpi_comm_world)
 
+  CALL xt_finalize()
   CALL finish_mpi
 
 CONTAINS
@@ -380,6 +381,8 @@ CONTAINS
     CHARACTER(len=*), PARAMETER :: context = 'init_all: '
     INTEGER :: ierror
     CHARACTER(len=20) :: grid_str
+
+    CALL xt_initialize(MPI_COMM_WORLD)
 
     CALL get_environment_variable('YAXT_TEST_PERF_GRID', grid_str)
 
