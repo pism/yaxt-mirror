@@ -773,7 +773,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(xt_idxlist), INTENT(in) :: patch
     TYPE(xt_modifier), INTENT(in) :: modifier(*)
-    INTEGER(xt_int_kind), INTENT(in) :: modifier_num
+    INTEGER, INTENT(in) :: modifier_num
     INTEGER(xt_int_kind), INTENT(inout) :: mstate(*)
     TYPE(Xt_idxlist) :: res
 
@@ -785,7 +785,7 @@ CONTAINS
         TYPE(xt_idxlist), INTENT(in) :: patch
         TYPE(xt_modifier), INTENT(in) :: modifier(*)
         INTEGER(c_int), VALUE, INTENT(in) :: modifier_num
-        INTEGER(c_int), INTENT(in) :: mstate(*)
+        INTEGER(c_int), INTENT(inout) :: mstate(*)
         TYPE(c_ptr) :: res
       END FUNCTION xt_idxmod_new_f
     END INTERFACE
