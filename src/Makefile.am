@@ -105,6 +105,7 @@ libyaxt_la_SOURCES =						\
 	xt_idxlist_f.f90					\
 	xt_idxvec_f.f90						\
 	xt_idxstripes_f.f90					\
+	xt_idxsection_f.f90					\
 	yaxt.f90
 
 xtinclude_Makefile.inc: Makefile

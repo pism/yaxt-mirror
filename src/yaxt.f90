@@ -65,6 +65,7 @@ MODULE yaxt
        xt_idxlist_get_bounding_box, xt_idxlist_get_intersection
   USE xt_idxvec, ONLY: xt_idxvec_from_stripes_new, xt_idxvec_new
   USE xt_idxstripes, ONLY: xt_idxstripes_new
+  USE xt_idxsection, ONLY: xt_idxsection_new
   USE iso_c_binding, ONLY: c_int, c_ptr
 
   IMPLICIT NONE
@@ -175,36 +176,6 @@ CONTAINS
     res = xt_idxlist_c2f(xt_idxempty_new_c())
 
   END FUNCTION xt_idxempty_new
-
-  FUNCTION xt_idxsection_new(start, global_size, local_size, local_start) &
-       RESULT(idxsection)
-    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_size(:), &
-         local_start(:)
-    TYPE(xt_idxlist) :: idxsection
-    INTEGER :: num_dimensions
-    INTERFACE
-      FUNCTION xt_idxsection_new_c(start, num_dimensions, global_size, &
-           local_size, local_start) BIND(c, name='xt_idxsection_new') &
-           RESULT(idxsection)
-        IMPORT :: c_int, c_ptr, xt_idxlist, xt_int_kind
-        INTEGER(xt_int_kind), VALUE, INTENT(in) :: start
-        INTEGER(c_int), VALUE, INTENT(in) :: num_dimensions
-        INTEGER(xt_int_kind), INTENT(in) :: global_size(*), local_size(*), &
-             local_start(*)
-        TYPE(c_ptr) :: idxsection
-      END FUNCTION xt_idxsection_new_c
-    END INTERFACE
-
-    num_dimensions = SIZE(global_size)
-    IF (SIZE(local_size) /= num_dimensions &
-         .OR. SIZE(local_start) /= num_dimensions) &
-         CALL xt_abort(xt_get_default_comm(), "non-matching array sizes", &
-         __FILE__, &
-         __LINE__)
-    idxsection = xt_idxlist_c2f(&
-         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, local_size, local_start))
-  END FUNCTION xt_idxsection_new
 
   FUNCTION xt_idxlist_collection_new(idxlists) RESULT(res)
     TYPE(xt_idxlist), INTENT(in) :: idxlists(:)
