@@ -774,7 +774,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: patch
     TYPE(xt_modifier), INTENT(in) :: modifier(*)
     INTEGER, INTENT(in) :: modifier_num
-    INTEGER(xt_int_kind), INTENT(inout) :: mstate(*)
+    INTEGER(c_int), INTENT(inout) :: mstate(*)
     TYPE(Xt_idxlist) :: res
 
     INTERFACE
@@ -790,7 +790,8 @@ CONTAINS
       END FUNCTION xt_idxmod_new_f
     END INTERFACE
 
-    res%cptr = xt_idxmod_new_f(patch, modifier, modifier_num, mstate)
+    res%cptr = xt_idxmod_new_f(patch, modifier, INT(modifier_num, c_int), &
+         mstate)
 
   END FUNCTION xt_idxmod_new
 

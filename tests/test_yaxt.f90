@@ -82,7 +82,8 @@ PROGRAM test_yaxt
   TYPE(xt_redist) :: redist_tpex
   TYPE(xt_redist) :: redist_surf_tpex
 
-  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:), mstate(:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
+  INTEGER(c_int), ALLOCATABLE :: mstate(:,:)
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
@@ -90,7 +91,7 @@ PROGRAM test_yaxt
   INTEGER :: m_tpex_num
   TYPE(xt_idxlist) :: loc_id_idxlist
   TYPE(xt_idxlist) :: loc_tpex_idxlist
-  INTEGER, ALLOCATABLE :: loc_tpex2(:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_tpex2(:,:)
   ! mpi & decomposition & allocate mem:
   CALL init_all
 
@@ -105,7 +106,7 @@ PROGRAM test_yaxt
 
   ! use modifier to define index transfer
   CALL def_tpex_mod_via_idxvec(m_tpex, m_tpex_num)
-  loc_id_idxlist = xt_idxvec_new(loc_id, SIZE(loc_id))
+  loc_id_idxlist = xt_idxvec_new(loc_id, INT(SIZE(loc_id), xt_int_kind))
   loc_tpex_idxlist = xt_idxmod_new(loc_id_idxlist, m_tpex, m_tpex_num, mstate)
 
   ! local window of global bounds exchange:
@@ -367,8 +368,8 @@ CONTAINS
     TYPE(xt_modifier), INTENT(out) :: mvec(:)
     INTEGER, INTENT(out) :: mvec_num
 
-    INTEGER :: g_start_indices(g_ie, g_je)
-    INTEGER :: g_end_indices(g_ie, g_je)
+    INTEGER(xt_int_kind) :: g_start_indices(g_ie, g_je)
+    INTEGER(xt_int_kind) :: g_end_indices(g_ie, g_je)
     TYPE(xt_idxlist) :: g_start_idxlist
     TYPE(xt_idxlist) :: g_end_idxlist
 
@@ -377,10 +378,12 @@ CONTAINS
          __LINE__)
 
     CALL id_map(g_start_indices)
-    g_start_idxlist = xt_idxvec_new(g_start_indices, SIZE(g_start_indices))
+    g_start_idxlist = xt_idxvec_new(g_start_indices, &
+         INT(SIZE(g_start_indices), xt_int_kind))
 
     CALL def_exchange(g_start_indices, g_end_indices)
-    g_end_idxlist = xt_idxvec_new(g_end_indices, SIZE(g_end_indices))
+    g_end_idxlist = xt_idxvec_new(g_end_indices, &
+         INT(SIZE(g_end_indices), xt_int_kind))
 
     mvec(1)%extract = g_start_idxlist
     mvec(1)%subst = g_end_idxlist
