@@ -47,31 +47,40 @@
 !
 MODULE xt_idxsection
   USE iso_c_binding, ONLY: c_int, c_ptr
-  USE xt_core, ONLY: xt_int_kind, xt_abort, xt_get_default_comm
+  USE xt_core, ONLY: xt_int_kind, xt_abort, xt_get_default_comm, i2, i4, i8
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: xt_idxsection_new
+
+  INTERFACE xt_idxsection_new
+    MODULE PROCEDURE xt_idxsection_new_a
+    MODULE PROCEDURE xt_idxsection_new_i2
+    MODULE PROCEDURE xt_idxsection_new_i4
+    MODULE PROCEDURE xt_idxsection_new_i8
+  END INTERFACE xt_idxsection_new
+
+  INTERFACE
+    FUNCTION xt_idxsection_new_c(start, num_dimensions, global_size, &
+         local_size, local_start) BIND(c, name='xt_idxsection_new') &
+         RESULT(idxsection)
+      IMPORT :: c_int, c_ptr, xt_idxlist, xt_int_kind
+      INTEGER(xt_int_kind), VALUE, INTENT(in) :: start
+      INTEGER(c_int), VALUE, INTENT(in) :: num_dimensions
+      INTEGER(xt_int_kind), INTENT(in) :: global_size(num_dimensions), &
+           local_size(num_dimensions), local_start(num_dimensions)
+      TYPE(c_ptr) :: idxsection
+    END FUNCTION xt_idxsection_new_c
+  END INTERFACE
+
 CONTAINS
 
-  FUNCTION xt_idxsection_new(start, global_size, local_size, local_start) &
+  FUNCTION xt_idxsection_new_a(start, global_size, local_size, local_start) &
        RESULT(idxsection)
     INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_size(:), &
          local_start(:)
     TYPE(xt_idxlist) :: idxsection
     INTEGER :: num_dimensions
-    INTERFACE
-      FUNCTION xt_idxsection_new_c(start, num_dimensions, global_size, &
-           local_size, local_start) BIND(c, name='xt_idxsection_new') &
-           RESULT(idxsection)
-        IMPORT :: c_int, c_ptr, xt_idxlist, xt_int_kind
-        INTEGER(xt_int_kind), VALUE, INTENT(in) :: start
-        INTEGER(c_int), VALUE, INTENT(in) :: num_dimensions
-        INTEGER(xt_int_kind), INTENT(in) :: global_size(*), local_size(*), &
-             local_start(*)
-        TYPE(c_ptr) :: idxsection
-      END FUNCTION xt_idxsection_new_c
-    END INTERFACE
 
     num_dimensions = SIZE(global_size)
     IF (SIZE(local_size) /= num_dimensions &
@@ -82,6 +91,53 @@ CONTAINS
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
          &                   global_size, local_size, local_start))
-  END FUNCTION xt_idxsection_new
+  END FUNCTION xt_idxsection_new_a
+
+  FUNCTION xt_idxsection_new_i2(start, num_dimensions, global_size, &
+       local_size, local_start) RESULT(idxsection)
+    INTEGER(i2), INTENT(in) :: num_dimensions
+    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(num_dimensions), &
+         local_size(num_dimensions), local_start(num_dimensions)
+    TYPE(xt_idxlist) :: idxsection
+    INTEGER(c_int), PARAMETER :: dummy = 1
+
+    idxsection = xt_idxlist_c2f(&
+         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
+         &                   global_size, local_size, local_start))
+  END FUNCTION xt_idxsection_new_i2
+
+  FUNCTION xt_idxsection_new_i4(start, num_dimensions, global_size, &
+       local_size, local_start) RESULT(idxsection)
+    INTEGER(i4), INTENT(in) :: num_dimensions
+    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(num_dimensions), &
+         local_size(num_dimensions), local_start(num_dimensions)
+    TYPE(xt_idxlist) :: idxsection
+    INTEGER(c_int), PARAMETER :: dummy = 1
+
+    IF (num_dimensions > HUGE(dummy)) &
+         CALL xt_abort(xt_get_default_comm(), "num_dimensions too large", &
+         __FILE__, &
+         __LINE__)
+    idxsection = xt_idxlist_c2f(&
+         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
+         &                   global_size, local_size, local_start))
+  END FUNCTION xt_idxsection_new_i4
+
+  FUNCTION xt_idxsection_new_i8(start, num_dimensions, global_size, &
+       local_size, local_start) RESULT(idxsection)
+    INTEGER(i8), INTENT(in) :: num_dimensions
+    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(num_dimensions), &
+         local_size(num_dimensions), local_start(num_dimensions)
+    TYPE(xt_idxlist) :: idxsection
+    INTEGER(c_int), PARAMETER :: dummy = 1
+
+    IF (num_dimensions > HUGE(dummy)) &
+         CALL xt_abort(xt_get_default_comm(), "num_dimensions too large", &
+         __FILE__, &
+         __LINE__)
+    idxsection = xt_idxlist_c2f(&
+         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
+         &                   global_size, local_size, local_start))
+  END FUNCTION xt_idxsection_new_i8
 
 END MODULE xt_idxsection
