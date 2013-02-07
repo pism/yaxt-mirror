@@ -60,6 +60,7 @@
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 #include "xt/quicksort.h"
+#include "instr.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -159,8 +160,10 @@ struct Xt_idxvec_ {
    */
 };
 
-Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, Xt_int num_indices) {
 
+Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, Xt_int num_indices) {
+  INSTR_DEF(t_idxvec_new,"xt_idxvec_new");
+  INSTR_START(t_idxvec_new);
   Xt_idxvec restrict idxvec_data = xmalloc(sizeof (*idxvec_data));
 
   Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
@@ -182,6 +185,7 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, Xt_int num_indices) {
   idxvec_data->sorted_vector = NULL;
   idxvec_data->sorted_vec_positions = NULL;
 
+  INSTR_STOP(t_idxvec_new);
   return (void*)idxvec_data;
 }
 

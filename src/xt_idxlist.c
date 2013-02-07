@@ -64,6 +64,7 @@
 #include "xt_idxlist_unpack.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+#include "instr.h"
 
 void xt_idxlist_delete(Xt_idxlist idxlist) {
 
@@ -114,6 +115,8 @@ Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
 Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
                                        Xt_idxlist idxlist_dst) {
 
+   INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
+
    Xt_idxlist intersection;
 
    intersection
@@ -121,6 +124,8 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
 
    // if the get_intersection routine was not able to compute the intersection
    if (intersection == NULL) {
+
+      INSTR_START(instr_fallback);
 
       Xt_int num_indices_src, num_indices_dst;
 
@@ -145,6 +150,8 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
       xt_idxlist_delete(idxvec_dst);
       free(indices_dst);
       free(indices_src);
+
+      INSTR_STOP(instr_fallback);
    }
 
    return intersection;
@@ -180,12 +187,16 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   Xt_int * num_stripes) {
 
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_index_stripes.fallback");
+
   if (idxlist->vtable->get_index_stripes != NULL) {
 
     idxlist->vtable->get_index_stripes(idxlist, stripes,
                                        num_stripes);
 
   } else { // fall-back solution
+
+    INSTR_START(instr_fallback);
 
     Xt_int num_indices = xt_idxlist_get_num_indices(idxlist);
 
@@ -197,6 +208,8 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                      stripes, num_stripes);
 
     free(indices);
+
+    INSTR_STOP(instr_fallback);
   }
 }
 
@@ -211,6 +224,8 @@ xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
                                     Xt_int num_pos, Xt_int *indices,
                                     Xt_int undef_idx) {
 
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
+
   if ( idxlist->vtable->get_indices_at_positions ) {
 
     return idxlist->vtable->get_indices_at_positions(idxlist, positions,
@@ -218,6 +233,8 @@ xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
                                                      undef_idx);
 
   } else {
+
+    INSTR_START(instr_fallback);
 
     // fallback solution using xt_idxlist_get_index_at_position:
     int undef_count = 0;
@@ -228,8 +245,9 @@ xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
         undef_count++;
       }
     }
-    return undef_count;
 
+    INSTR_STOP(instr_fallback);
+    return undef_count;
   }
 }
 
@@ -244,12 +262,16 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
                                     Xt_int num_indices, int * positions,
                                     int single_match_only) {
 
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_positions_of_indices.fallback");
+
   if (idxlist->vtable->get_positions_of_indices != NULL)
     return idxlist->vtable->get_positions_of_indices(idxlist, indices,
                                                      num_indices,
                                                      positions,
                                                      single_match_only);
   else {
+    INSTR_START(instr_fallback);
+
     Xt_int num_tmp_indices;
     num_tmp_indices = xt_idxlist_get_num_indices(idxlist);
     Xt_int *tmp_indices;
@@ -263,6 +285,8 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
                                                      single_match_only);
     xt_idxlist_delete(tmp_idxvec);
     free(tmp_indices);
+
+    INSTR_STOP(instr_fallback);
     return retval;
   }
 }
@@ -280,14 +304,18 @@ xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                         Xt_int num_indices, int * positions,
                                         int * offsets) {
 
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
+
   if (idxlist->vtable->get_positions_of_indices_off != NULL)
     return idxlist->vtable->get_positions_of_indices_off(idxlist, indices,
                                                          num_indices,
                                                          positions, offsets);
+  INSTR_START(instr_fallback);
 
+  int ret_val = 0;
   for (Xt_int i = 0; i < num_indices; ++i) {
 
-    int ret_val, temp_position, offset;
+    int temp_position, offset;
 
     if (offsets == NULL)
       offset = 0;
@@ -298,13 +326,12 @@ xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
       = idxlist->vtable->get_position_of_index_off(idxlist, indices[i],
                                                    &temp_position, offset);
 
-    if (ret_val)
-      return ret_val;
-
+    if (ret_val) break;
     positions[i] = temp_position;
   }
 
-  return 0;
+  INSTR_STOP(instr_fallback);
+  return ret_val;
 }
 
 Xt_int xt_idxlist_get_min_index(Xt_idxlist idxlist) {
@@ -338,6 +365,8 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
                                  Xt_int global_start_index,
                                  struct Xt_bounds bounds[ndim]) {
 
+   INSTR_DEF(instr_fallback,"xt_idxlist_get_bounding_box.fallback");
+
    Xt_int num_indices = xt_idxlist_get_num_indices(idxlist);
 
    if (num_indices == 0) {
@@ -356,6 +385,8 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
       return;
    }
 
+   INSTR_START(instr_fallback);
+
    Xt_int global_stride[ndim];
 
    global_stride[ndim - 1] = 1;
@@ -367,7 +398,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
    Xt_int curr_position[ndim];
 
    xt_idxlist_get_index_at_position(idxlist, 0, &curr_index);
-   get_position_in_ndim_space(curr_index, ndim, global_stride, 
+   get_position_in_ndim_space(curr_index, ndim, global_stride,
                               global_start_index, curr_position);
 
    for (unsigned i = 0; i < ndim; ++i) {
@@ -378,7 +409,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
    for (Xt_int i = 1; i < num_indices; ++i) {
 
       xt_idxlist_get_index_at_position(idxlist, i, &curr_index);
-      get_position_in_ndim_space(curr_index, ndim, global_stride, 
+      get_position_in_ndim_space(curr_index, ndim, global_stride,
                                  global_start_index, curr_position);
 
       for (unsigned i = 0; i < ndim; ++i) {
@@ -394,6 +425,8 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
          }
       }
    }
+
+   INSTR_STOP(instr_fallback);
 }
 
 static Xt_uid nextId = UINT64_C(1);

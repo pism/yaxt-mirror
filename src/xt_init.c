@@ -45,6 +45,8 @@
 #include "core/core.h"
 #include "instr.h"
 
+INSTR_DEF(instr,"YAXT_lifetime");
+
 void
 xt_initialize(MPI_Comm default_comm)
 {
@@ -53,6 +55,7 @@ xt_initialize(MPI_Comm default_comm)
   sct_init(32, SCT_GETENV, "YAXT", Xt_default_comm);
   setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
   setenv("SCT_CALLSTATS", "0", 0);
+  INSTR_START(instr);
 #endif
 }
 
@@ -60,6 +63,7 @@ void
 xt_finalize()
 {
 #ifdef INSTR_WITH_SCT
+  INSTR_STOP(instr);
   INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
   INSTR_FINALIZE();
 #endif

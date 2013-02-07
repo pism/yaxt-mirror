@@ -60,6 +60,7 @@
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
 #include "xt/xt_xmap_intersection.h"
+#include "instr.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -766,6 +767,9 @@ static void exchange_idxlists(struct Xt_com_list **src_com,
 Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                              MPI_Comm comm) {
 
+  INSTR_DEF(this_instr,"xt_xmap_all2all_new");
+  INSTR_START(this_instr);
+
   MPI_Comm exchange_comm;
   xt_mpi_call(MPI_Comm_dup(comm, &exchange_comm), comm);
 
@@ -791,5 +795,6 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
       xt_idxlist_delete(dst_intersections[i].list);
   free(src_intersections), free(dst_intersections);
 
+  INSTR_STOP(this_instr);
   return xmap;
 }
