@@ -602,6 +602,15 @@ recv_and_unpack_dist_dir_result(struct dist_dir * dist_dir, int recv_size,
 
 }
 
+static int
+stripe_cmp(const void *a, const void *b)
+{
+  typedef const struct Xt_stripe *csx;
+  return (((csx)a)->start > ((csx)b)->start)
+    - (((csx)b)->start > ((csx)a)->start);
+}
+
+
 static void
 generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
                                             struct Xt_com_list **src_com,
@@ -642,8 +651,14 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
         ++j;
       }
 
-      p[num_src_ix].list =
-        xt_idxlist_collection_new(intersections, num_intersections_per_rank);
+      Xt_idxlist temp = xt_idxlist_collection_new(intersections,
+                                                  num_intersections_per_rank);
+      struct Xt_stripe *stripes;
+      Xt_int num_stripes;
+      xt_idxlist_get_index_stripes(temp, &stripes, &num_stripes);
+      qsort(stripes, num_stripes, sizeof (*stripes), stripe_cmp);
+      p[num_src_ix].list = xt_idxstripes_new(stripes, num_stripes);
+      free(stripes);
       p[num_src_ix].rank = i;
       ++num_src_ix;
     }
