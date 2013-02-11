@@ -656,7 +656,8 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
       struct Xt_stripe *stripes;
       Xt_int num_stripes;
       xt_idxlist_get_index_stripes(temp, &stripes, &num_stripes);
-      qsort(stripes, num_stripes, sizeof (*stripes), stripe_cmp);
+      xt_idxlist_delete(temp);
+      qsort(stripes, (size_t)num_stripes, sizeof (*stripes), stripe_cmp);
       p[num_src_ix].list = xt_idxstripes_new(stripes, num_stripes);
       free(stripes);
       p[num_src_ix].rank = i;
