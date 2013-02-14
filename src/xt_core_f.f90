@@ -124,26 +124,40 @@ MODULE xt_core
 
   END INTERFACE
 
+  INTERFACE xt_abort
+    MODULE PROCEDURE xt_abort4
+    MODULE PROCEDURE xt_abort3
+  END INTERFACE xt_abort
+
+  INTERFACE
+    SUBROUTINE xt_abort_c(comm, msg, source, line) BIND(c, name='xt_abort_f')
+      IMPORT :: c_char, c_int, xt_mpi_fint_kind
+      IMPLICIT NONE
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in):: comm
+      CHARACTER(kind=c_char), DIMENSION(*), INTENT(in) :: msg
+      CHARACTER(kind=c_char), DIMENSION(*), INTENT(in) :: source
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: line
+    END SUBROUTINE xt_abort_c
+  END INTERFACE
+
 CONTAINS
 
-  SUBROUTINE xt_abort(comm, msg, source, line)
+  SUBROUTINE xt_abort4(comm, msg, source, line)
     INTEGER, INTENT(in):: comm
     CHARACTER(len=*), INTENT(in) :: msg
     CHARACTER(len=*), INTENT(in) :: source
     INTEGER, INTENT(in) :: line
-    INTERFACE
-      SUBROUTINE xt_abort_c(comm, msg, source, line) BIND(c, name='xt_abort_f')
-        IMPORT :: c_char, c_int, xt_mpi_fint_kind
-        IMPLICIT NONE
-        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in):: comm
-        CHARACTER(kind=c_char), DIMENSION(*), INTENT(in) :: msg
-        CHARACTER(kind=c_char), DIMENSION(*), INTENT(in) :: source
-        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: line
-      END SUBROUTINE xt_abort_c
-    END INTERFACE
     CALL xt_abort_c(comm, TRIM(msg)//c_null_char, &
          TRIM(source)//c_null_char, INT(line, c_int))
-  END SUBROUTINE xt_abort
+  END SUBROUTINE xt_abort4
+
+  SUBROUTINE xt_abort3(msg, source, line)
+    CHARACTER(len=*), INTENT(in) :: msg
+    CHARACTER(len=*), INTENT(in) :: source
+    INTEGER, INTENT(in) :: line
+    CALL xt_abort_c(xt_get_default_comm(), TRIM(msg)//c_null_char, &
+         TRIM(source)//c_null_char, INT(line, c_int))
+  END SUBROUTINE xt_abort3
 
   FUNCTION xt_redist_c2f(redist) RESULT(p)
     TYPE(c_ptr), INTENT(in) :: redist
