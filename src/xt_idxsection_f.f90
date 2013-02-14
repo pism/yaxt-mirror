@@ -1,15 +1,14 @@
-!>
-!> @file yaxt.f90
-!> @brief Fortran interface to yaxt implementation
-!>
-!> @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
-!>                                 Moritz Hanke <hanke@dkrz.de>
-!>                                 Thomas Jahns <jahns@dkrz.de>
-!>
-!> @author Jörg Behrens <behrens@dkrz.de>
-!>         Moritz Hanke <hanke@dkrz.de>
-!>         Thomas Jahns <jahns@dkrz.de>
-!>
+!> @file xt_idxsection_f.f90
+!! @brief Fortran interface to yaxt implementation
+!!
+!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!!                                 Moritz Hanke <hanke@dkrz.de>
+!!                                 Thomas Jahns <jahns@dkrz.de>
+!!
+!! @author Jörg Behrens <behrens@dkrz.de>
+!!         Moritz Hanke <hanke@dkrz.de>
+!!         Thomas Jahns <jahns@dkrz.de>
+!!
 
 !
 ! Keywords:

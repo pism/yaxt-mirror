@@ -60,11 +60,12 @@
  * @param[in] num_dimensions number of dimensions
  * @param[in] global_size    global size of each dimension
  * @param[in] local_size     size of the local section in each dimension
- * @param[in] local_start    index of the first index of the local part
- *                           within the global array for each dimension (C-style)
+ * @param[in] local_start    vector with the lowest position in each dimension
+ *                           of the local window within the global index space
  *
- * \remarks Negative values for global_size and local_size are allowed.
- *          (see \ref idxsection_docu_neg_size)
+ * \remarks Negative values for global_size and local_size are allowed. Negative
+ *          signs do not change the set of selected indices, only their ordering
+ *          (see \ref idxsection_docu_neg_size).
  */
 Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
                              const Xt_int global_size[num_dimensions],
