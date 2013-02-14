@@ -67,6 +67,8 @@ PROGRAM test_yaxt
   INTEGER, PARAMETER :: undef_int = -1
   INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
+  LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
+  LOGICAL, PARAMETER :: with_north_halo = .TRUE.
 
   INTEGER :: ie, je ! local extents, including halos
   INTEGER :: p_ioff, p_joff ! offsets within global domain
@@ -88,14 +90,9 @@ PROGRAM test_yaxt
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
-  TYPE(xt_modifier) :: m_tpex(3)
-  INTEGER :: m_tpex_num
-  TYPE(xt_idxlist) :: loc_id_idxlist
-  TYPE(xt_idxlist) :: loc_tpex_idxlist
-  INTEGER(xt_int_kind), ALLOCATABLE :: loc_tpex2(:,:)
+
   ! mpi & decomposition & allocate mem:
   CALL init_all
-
 
   ! full global index space:
   CALL id_map(g_id)
@@ -106,22 +103,14 @@ PROGRAM test_yaxt
   ! define bounds exchange for full global index space
   CALL def_exchange(g_id, g_tpex)
 
-  ! use modifier to define index transfer
-  CALL def_tpex_mod_via_idxvec(m_tpex, m_tpex_num)
-  loc_id_idxlist = xt_idxvec_new(loc_id, INT(SIZE(loc_id), xt_int_kind))
-  loc_tpex_idxlist = xt_idxmod_new(loc_id_idxlist, m_tpex, m_tpex_num, mstate)
-
   ! local window of global bounds exchange:
   CALL get_window(g_tpex, loc_tpex)
 
-  ! compare with modifier result
-  ALLOCATE(loc_tpex2(ie,je))
-  loc_tpex2 = 0
-  CALL xt_idxlist_get_indices(loc_tpex_idxlist, loc_tpex2)
-  IF (ANY(loc_tpex2 /= loc_tpex)) CALL my_abort('idx copy does not match', &
-       __LINE__)
-
+  ! check interface to idxsection:
   CALL general_fsection_test
+
+  ! compare current index construction with modifier results
+  CALL check_modifiers
 
   ! template: loc_id -> loc_tpex
   CALL gen_template(loc_id, loc_tpex, xmap_tpex) ! todo rename template to xmap
@@ -163,6 +152,53 @@ PROGRAM test_yaxt
   CALL finish_mpi
 
 CONTAINS
+
+  SUBROUTINE check_modifiers()
+    TYPE(xt_modifier) :: m_tpex(5)
+    INTEGER :: m_tpex_num
+    TYPE(xt_idxlist) :: loc_id_idxlist
+    INTEGER(xt_int_kind) :: loc_tpex2(ie,je)
+    TYPE(xt_idxlist) :: loc_tpex2_idxlist
+
+    loc_id_idxlist = xt_idxvec_new(loc_id, INT(SIZE(loc_id), xt_int_kind))
+
+    ! use one simple modifier to define index transfer:
+    CALL def_tpex_mod_via_idxvec(m_tpex, m_tpex_num)
+
+    loc_tpex2_idxlist = xt_idxmod_new(loc_id_idxlist, m_tpex, m_tpex_num, mstate)
+    loc_tpex2 = -1
+    CALL xt_idxlist_get_indices(loc_tpex2_idxlist, loc_tpex2)
+    IF (ANY(loc_tpex2 /= loc_tpex)) &
+         CALL my_abort('idx copy does not match', __LINE__)
+    CALL xt_idxlist_delete(loc_tpex2_idxlist)
+    CALL delete_modifiers(m_tpex(1:m_tpex_num))
+
+    ! use compact modifiers to define index transfer:
+    CALL def_tpex_mod_via_sections(m_tpex, m_tpex_num)
+    loc_tpex2_idxlist = xt_idxmod_new(loc_id_idxlist, m_tpex, m_tpex_num, mstate)
+    loc_tpex2 = -1
+    CALL xt_idxlist_get_indices(loc_tpex2_idxlist, loc_tpex2)
+
+    IF (ANY(loc_tpex2 /= loc_tpex)) &
+         CALL my_abort('idx copy does not match', __LINE__)
+    CALL xt_idxlist_delete(loc_tpex2_idxlist)
+    CALL delete_modifiers(m_tpex(1:m_tpex_num))
+
+    ! cleanup:
+    CALL xt_idxlist_delete(loc_id_idxlist)
+  END SUBROUTINE check_modifiers
+
+  SUBROUTINE delete_modifiers(m)
+    TYPE(xt_modifier), INTENT(inout) :: m(:)
+
+    INTEGER :: i
+
+    DO i = 1, SIZE(m)
+      CALL xt_idxlist_delete(m(i)%extract)
+      CALL xt_idxlist_delete(m(i)%subst)
+    ENDDO
+
+  END SUBROUTINE delete_modifiers
 
   SUBROUTINE my_abort(msg, line)
     CHARACTER(*), INTENT(in) :: msg
@@ -474,12 +510,94 @@ CONTAINS
 
   END SUBROUTINE def_tpex_mod_via_idxvec
 
+  SUBROUTINE def_tpex_mod_via_sections(mvec, mvec_num)
+    TYPE(xt_modifier), INTENT(out) :: mvec(:)
+    INTEGER, INTENT(out) :: mvec_num
+
+    INTEGER(xt_int_kind), PARAMETER :: gstart_idx = 1
+    INTEGER(xt_int_kind), PARAMETER :: gsize(2) = (/ g_ie, g_je /)
+    INTEGER(xt_int_kind) :: ldx, ldy
+
+    INTEGER(xt_int_kind) :: g_core_is, g_core_ie, g_core_js, g_core_je
+    INTEGER(xt_int_kind) :: north_halo, im
+
+    ! global core domain:
+    g_core_is = nhalo + 1
+    g_core_ie = g_ie-nhalo
+    g_core_js = nhalo + 1
+    g_core_je = g_je-nhalo
+
+    im = 0
+
+    ! global tripolar boundsexchange:
+    IF (with_north_halo) THEN
+
+      ! north inversion, (maybe with increased north halo)
+      IF (increased_north_halo) THEN
+        north_halo = nhalo+1
+      ELSE
+        north_halo = nhalo
+      ENDIF
+
+      IF (2*north_halo > g_core_je) &
+           CALL my_abort('def_tpex_mod_via_sections: grid too small (or halo too large)' // &
+           'for tripolar north exchange', __LINE__)
+
+      im = im + 1
+      IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+      ! north border exchange without ew-halos
+      ldx = g_core_ie-g_core_is+1
+      ldy = north_halo
+      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /),   (/g_core_is, 1/))
+      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ -ldx, -ldy /), (/g_core_is, north_halo+1/))
+      mvec(im)%mask    = 1
+
+      ! 1. north edge:
+      im = im + 1
+      IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+      ldx = 1
+      ldy = north_halo
+      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /),   (/1, 1/))
+      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ -ldx, -ldy /), (/2, north_halo+1/))
+      mvec(im)%mask    = 1
+      ! 2. north edge:
+      im = im + 1
+      IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+      ldx = 1
+      ldy = north_halo
+      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /),   (/g_ie, 1/))
+      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ -ldx, -ldy /), (/g_ie-1, north_halo+1/))
+      mvec(im)%mask    = 1
+
+    ELSE
+
+      ! nothing to do at the north border
+
+    ENDIF
+
+    ! PBC below north border
+    ldx = nhalo
+    ldy = g_je - north_halo
+    im = im + 1
+    IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+    mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/1, north_halo+1/))
+    mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/g_core_ie-ldx+1, north_halo+1/))
+    mvec(im)%mask    = 1
+
+    im = im + 1
+    IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+    mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/g_core_ie+1, north_halo+1/))
+    mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/ldx+1, north_halo+1/))
+    mvec(im)%mask    = 1
+
+    mvec_num = im
+
+  END SUBROUTINE def_tpex_mod_via_sections
+
   SUBROUTINE def_exchange(id_in, id_out)
     INTEGER(xt_int_kind), INTENT(in) :: id_in(:,:)
     INTEGER(xt_int_kind), INTENT(out) :: id_out(:,:)
 
-    LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
-    LOGICAL, PARAMETER :: with_north_halo = .true.
     INTEGER :: i, j
     INTEGER :: g_core_is, g_core_ie, g_core_js, g_core_je
     INTEGER :: north_halo
