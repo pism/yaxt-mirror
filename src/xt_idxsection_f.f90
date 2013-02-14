@@ -46,7 +46,7 @@
 !
 MODULE xt_idxsection
   USE iso_c_binding, ONLY: c_int, c_ptr
-  USE xt_core, ONLY: xt_int_kind, xt_abort, xt_get_default_comm, i2, i4, i8
+  USE xt_core, ONLY: xt_int_kind, xt_abort, i2, i4, i8
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f
   IMPLICIT NONE
   PRIVATE
@@ -83,7 +83,7 @@ CONTAINS
     num_dimensions = SIZE(global_size)
     IF (SIZE(local_size) /= num_dimensions &
          .OR. SIZE(local_start) /= num_dimensions) &
-         CALL xt_abort(xt_get_default_comm(), "non-matching array sizes", &
+         CALL xt_abort("non-matching array sizes", &
          __FILE__, &
          __LINE__)
     idxsection = xt_idxlist_c2f(&
@@ -113,7 +113,7 @@ CONTAINS
     INTEGER(c_int), PARAMETER :: dummy = 1
 
     IF (num_dimensions > HUGE(dummy)) &
-         CALL xt_abort(xt_get_default_comm(), "num_dimensions too large", &
+         CALL xt_abort("num_dimensions too large", &
          __FILE__, &
          __LINE__)
     idxsection = xt_idxlist_c2f(&
@@ -130,7 +130,7 @@ CONTAINS
     INTEGER(c_int), PARAMETER :: dummy = 1
 
     IF (num_dimensions > HUGE(dummy)) &
-         CALL xt_abort(xt_get_default_comm(), "num_dimensions too large", &
+         CALL xt_abort("num_dimensions too large", &
          __FILE__, &
          __LINE__)
     idxsection = xt_idxlist_c2f(&
@@ -168,8 +168,7 @@ CONTAINS
       err_state = err_state .OR. (local_start(idim) < 1) .OR. &
            (local_start(idim) + local_size(idim) - 1 >  global_size(idim))
     ENDDO
-    IF (err_state) CALL xt_abort(xt_get_default_comm(), &
-         "local indices out of global index space", &
+    IF (err_state) CALL xt_abort("local indices out of global index space", &
          __FILE__, &
          __LINE__)
 
