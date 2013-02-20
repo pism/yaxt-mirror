@@ -116,8 +116,7 @@ PROGRAM test_yaxt
   ALLOCATE(loc_tpex2(ie,je))
   loc_tpex2 = 0
   CALL xt_idxlist_get_indices(loc_tpex_idxlist, loc_tpex2)
-  IF (ANY(loc_tpex2 /= loc_tpex)) CALL test_abort('idx copy does not match', &
-       __FILE__, &
+  IF (ANY(loc_tpex2 /= loc_tpex)) CALL my_abort('idx copy does not match', &
        __LINE__)
 
   ! template: loc_id -> loc_tpex
@@ -161,6 +160,14 @@ PROGRAM test_yaxt
 
 CONTAINS
 
+  SUBROUTINE my_abort(msg, line)
+    CHARACTER(*), INTENT(in) :: msg
+    INTEGER, VALUE, INTENT(in) :: line
+    CALL test_abort(msg, &
+         __FILE__, &
+         line)
+  END SUBROUTINE my_abort
+
   SUBROUTINE gen_pos3d_surf(pos)
     INTEGER, INTENT(inout) :: pos(:,:)
     ! positions for zero based arrays (ECHAM grid point dim order)
@@ -187,23 +194,17 @@ CONTAINS
 
     CALL MPI_INIT(ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'MPI_INIT failed', &
-         __FILE__, &
-         __LINE__)
+         CALL my_abort(context//'MPI_INIT failed', __LINE__)
 
     CALL xt_initialize(MPI_COMM_WORLD)
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'MPI_COMM_SIZE failed', &
-         __FILE__, &
-         __LINE__)
+         CALL my_abort(context//'MPI_COMM_SIZE failed', __LINE__)
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, mype, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'MPI_COMM_RANK failed', &
-         __FILE__, &
-         __LINE__)
+         CALL my_abort(context//'MPI_COMM_RANK failed', __LINE__)
     IF (mype==0) THEN
       lroot = .true.
     ELSE
@@ -281,9 +282,7 @@ CONTAINS
     INTEGER :: dt
 
     IF (send_dt /= recv_dt) &
-         CALL test_abort('gen_trans: (send_dt /= recv_dt) unsupported', &
-         __FILE__, &
-         __LINE__)
+         CALL my_abort('gen_trans: (send_dt /= recv_dt) unsupported', __LINE__)
     dt = send_dt
     redist = xt_redist_p2p_new(xmap, dt)
     !CALL ut_init_transposition(itemp, dt, itrans)
@@ -301,8 +300,7 @@ CONTAINS
     !send_offsets = RESHAPE(send_off, (/SIZE(send_off)/) )
     !recv_offsets = RESHAPE(recv_off, (/SIZE(recv_off)/) )
     IF (recv_dt /= send_dt) &
-         CALL test_abort('(datatype_in /= datatype_out) not supported', &
-         __FILE__, &
+         CALL my_abort('(datatype_in /= datatype_out) not supported', &
          __LINE__)
 
     redist = xt_redist_p2p_off_new(xmap, send_off, recv_off, send_dt);
@@ -339,23 +337,17 @@ CONTAINS
     src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind))
     src_num = xt_idxlist_get_num_indices(src_idxlist)
-    IF (src_num /= g_ie*g_je) CALL test_abort('unexpected src_num', &
-         __FILE__, &
-         __LINE__)
+    IF (src_num /= g_ie*g_je) CALL my_abort('unexpected src_num', __LINE__)
     CALL xt_idxlist_get_indices(src_idxlist, cp_src_idx)
-    IF (ANY(cp_src_idx /= local_src_idx)) CALL test_abort('idx copy does not match', &
-         __FILE__, &
+    IF (ANY(cp_src_idx /= local_src_idx)) CALL my_abort('idx copy does not match', &
          __LINE__)
 
     dst_idxlist = xt_idxvec_new(local_dst_idx, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind))
     dst_num = xt_idxlist_get_num_indices(dst_idxlist)
-    IF (dst_num /= g_ie*g_je) CALL test_abort('unexpected dst_num', &
-         __FILE__, &
-         __LINE__)
+    IF (dst_num /= g_ie*g_je) CALL my_abort('unexpected dst_num', __LINE__)
     CALL xt_idxlist_get_indices(dst_idxlist, cp_dst_idx)
-    IF (ANY(cp_dst_idx /= local_dst_idx)) CALL test_abort('idx copy does not match', &
-         __FILE__, &
+    IF (ANY(cp_dst_idx /= local_dst_idx)) CALL my_abort('idx copy does not match', &
          __LINE__)
 
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
@@ -373,8 +365,7 @@ CONTAINS
     TYPE(xt_idxlist) :: g_start_idxlist
     TYPE(xt_idxlist) :: g_end_idxlist
 
-    IF (SIZE(mvec)<1) CALL test_abort('def_tpex_mod_via_idxvec mvec too small', &
-         __FILE__, &
+    IF (SIZE(mvec)<1) CALL my_abort('def_tpex_mod_via_idxvec mvec too small', &
          __LINE__)
 
     CALL id_map(g_start_indices)
@@ -423,10 +414,8 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL test_abort('def_exchange: grid too small (or halo too large)&
-           & for tripolar north exchange', &
-           __FILE__, &
-           __LINE__)
+           CALL my_abort('def_exchange: grid too small (or halo too large)' // &
+           'for tripolar north exchange', __LINE__)
       DO j = 1, north_halo
         DO i = g_core_is, g_core_ie
           id_out(i,j) = id_out(g_core_ie + (g_core_is-i), 2*north_halo + (1-j))
@@ -468,9 +457,7 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: gidx(:,:)
 
     IF (ANY(gidx == undef_index)) THEN
-      CALL test_abort('check_g_idx: check failed', &
-           __FILE__, &
-           __LINE__)
+      CALL my_abort('check_g_idx: check failed', __LINE__)
     ENDIF
   END SUBROUTINE check_g_idx
 
