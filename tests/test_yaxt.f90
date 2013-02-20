@@ -53,7 +53,8 @@ PROGRAM test_yaxt
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        &          xt_initialize, xt_finalize, xt_idxlist_get_num_indices, &
        &          xt_idxlist_get_indices, xt_modifier, xt_idxmod_new, &
-       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind
+       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind, &
+       xt_idxfsection_new
   USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco, &
        finish_mpi
   USE iso_c_binding, ONLY: c_loc, c_int
@@ -95,6 +96,7 @@ PROGRAM test_yaxt
   ! mpi & decomposition & allocate mem:
   CALL init_all
 
+
   ! full global index space:
   CALL id_map(g_id)
 
@@ -118,6 +120,8 @@ PROGRAM test_yaxt
   CALL xt_idxlist_get_indices(loc_tpex_idxlist, loc_tpex2)
   IF (ANY(loc_tpex2 /= loc_tpex)) CALL my_abort('idx copy does not match', &
        __LINE__)
+
+  CALL general_fsection_test
 
   ! template: loc_id -> loc_tpex
   CALL gen_template(loc_id, loc_tpex, xmap_tpex) ! todo rename template to xmap
@@ -167,6 +171,93 @@ CONTAINS
          __FILE__, &
          line)
   END SUBROUTINE my_abort
+
+  SUBROUTINE general_fsection_test
+    INTEGER(xt_int_kind), PARAMETER :: gdx = 10, gdy=5
+    INTEGER(xt_int_kind), PARAMETER :: ldx = 4,  ldy=2
+    INTEGER(xt_int_kind), PARAMETER :: gstart = 1
+    INTEGER(xt_int_kind), PARAMETER :: gsize(2) = (/ gdx, gdy /)
+    TYPE(xt_idxlist) :: global_section, local_section
+    INTEGER(xt_int_kind) :: indices(gdx*gdy), lstart(2)
+    INTEGER :: egis(gdx, gdy)
+    INTEGER :: i, j, idx, p
+
+    ! prepare explicit global index space
+    idx = gstart - 1
+    DO j = 1, gdy
+      DO i = 1, gdx
+        idx = idx + 1
+        egis(i,j) = idx
+      ENDDO
+    ENDDO
+
+    lstart = (/ 1, 1/)
+
+    ! check case: local section == global section
+    global_section = xt_idxfsection_new(gstart, gsize, gsize, lstart)
+    indices = -1
+    CALL xt_idxlist_get_indices(global_section, indices)
+    p = 0
+    DO j = 1, gdy
+      DO i = 1, gdx
+        p = p + 1
+        IF (egis(i,j) /= indices(p)) CALL my_abort('(1) bad indices', __LINE__)
+      ENDDO
+    ENDDO
+    CALL xt_idxlist_delete(global_section)
+
+    ! check case: simple subsection
+    local_section = xt_idxfsection_new(gstart, gsize, (/ ldx, ldy /), lstart)
+    indices = -1
+    CALL xt_idxlist_get_indices(local_section, indices)
+    p = 0
+    DO j = 1, ldy
+      DO i = 1, ldx
+        p = p + 1
+        IF (egis(i,j) /= indices(p)) CALL my_abort('(2) bad indices', __LINE__)
+      ENDDO
+    ENDDO
+    CALL xt_idxlist_delete(local_section)
+
+    ! check case: i-reverse subsection
+    local_section = xt_idxfsection_new(gstart, gsize, (/ -ldx, ldy /), lstart)
+    indices = -1
+    CALL xt_idxlist_get_indices(local_section, indices)
+    p = 0
+    DO j = 1, ldy
+      DO i = ldx, 1, -1
+        p = p + 1
+        IF (egis(i,j) /= indices(p)) CALL my_abort('(3) bad indices', __LINE__)
+      ENDDO
+    ENDDO
+    CALL xt_idxlist_delete(local_section)
+
+    ! check case: j-reverse subsection
+    local_section = xt_idxfsection_new(gstart, gsize, (/ ldx, -ldy /), lstart)
+    indices = -1
+    CALL xt_idxlist_get_indices(local_section, indices)
+    p = 0
+    DO j = ldy, 1, -1
+      DO i = 1, ldx
+        p = p + 1
+        IF (egis(i,j) /= indices(p)) CALL my_abort('(4) bad indices', __LINE__)
+      ENDDO
+    ENDDO
+    CALL xt_idxlist_delete(local_section)
+
+    ! check case: ij-reverse subsection
+    local_section = xt_idxfsection_new(gstart, gsize, (/ -ldx, -ldy /), lstart)
+    indices = -1
+    CALL xt_idxlist_get_indices(local_section, indices)
+    p = 0
+    DO j = ldy, 1, -1
+      DO i = ldx, 1, -1
+        p = p + 1
+        IF (egis(i,j) /= indices(p)) CALL my_abort('(5) bad indices', __LINE__)
+      ENDDO
+    ENDDO
+    CALL xt_idxlist_delete(local_section)
+  END SUBROUTINE general_fsection_test
 
   SUBROUTINE gen_pos3d_surf(pos)
     INTEGER, INTENT(inout) :: pos(:,:)
