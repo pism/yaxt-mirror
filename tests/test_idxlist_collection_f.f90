@@ -77,7 +77,7 @@ CONTAINS
     INTEGER, PARAMETER :: num_indices = 7
     INTEGER(xt_int_kind) :: i, j
     INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, 2) = &
-         RESHAPE((/ ((i, i = 1, num_indices), j = 1, 2) /), &
+         RESHAPE((/ ((INT(i, xt_int_kind), i = 1, num_indices), j = 1, 2) /), &
          &       shape = (/ num_indices, 2 /))
     TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
     TYPE(xt_stripe), PARAMETER :: ref_stripes(2) = xt_stripe(1, 7, 1)
@@ -100,7 +100,8 @@ CONTAINS
     INTEGER, PARAMETER :: num_indices = 7
     INTEGER(xt_int_kind) :: i, j
     INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, 2) = &
-         RESHAPE((/ ((num_indices - (j * num_indices + 1 - j - i) * (2*j - 1), &
+         RESHAPE((/ ((INT(num_indices - (j * num_indices + 1 - j - i) &
+         &                * (2*j - 1), xt_int_kind), &
          &           i=1, num_indices), j=1,0,-1) /), (/ num_indices, 2 /))
     TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
     TYPE(xt_stripe), PARAMETER :: ref_stripes(8) &
@@ -123,13 +124,16 @@ CONTAINS
 
   SUBROUTINE test_idxlist_collection_intersection
     INTEGER, PARAMETER :: num_indices = 7, num_lists = 3
+    INTEGER, PARAMETER :: xi = xt_int_kind
     INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, num_lists) &
-         = RESHAPE((/ 1, 2, 3, 4, 5, 6, 7, &
-         &            7, 6, 5, 4, 3, 2, 1, &
-         &            2, 6, 1, 4, 7, 3, 0 /),  &
+         = RESHAPE((/ 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, &
+         &            7_xi, 6_xi, 5_xi, 4_xi, 3_xi, 2_xi, 1_xi, &
+         &            2_xi, 6_xi, 1_xi, 4_xi, 7_xi, 3_xi, 0_xi /),  &
          &         (/ num_indices,  num_lists /)), &
          sorted_index_list(SIZE(index_list)) &
-         = (/ 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 6, 7, 7, 7 /)
+         = (/ 0_xi, 1_xi, 1_xi, 1_xi, 2_xi, 2_xi, 2_xi, &
+         &    3_xi, 3_xi, 3_xi, 4_xi, 4_xi, 4_xi, 5_xi, &
+         &    5_xi, 6_xi, 6_xi, 6_xi, 7_xi, 7_xi, 7_xi /)
     TYPE(xt_idxlist) :: idxlists(num_lists), collectionlist, intersection, &
          ref_idxvec
     INTEGER :: i
@@ -159,22 +163,23 @@ CONTAINS
 
   SUBROUTINE test_idxlist_collection_heterogeneous
     INTEGER, PARAMETER :: num_indices = 6
+    INTEGER, PARAMETER :: xi = xt_int_kind
     INTEGER(xt_int_kind), PARAMETER :: &
-         index_list(num_indices) = (/ 1, 3, 5, 7, 9, 11 /)
+         index_list(num_indices) = (/ 1_xi, 3_xi, 5_xi, 7_xi, 9_xi, 11_xi /)
     TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 5, 2), &
          xt_stripe(1, 5, 2) /)
-    INTEGER(xt_int_kind), PARAMETER :: global_size(2) = (/ 10, 10 /), &
+    INTEGER(xt_int_kind), PARAMETER :: global_size(2) = (/ 10_xi, 10_xi /), &
          local_size(2) = 5, local_start(2) = 2
     INTEGER, PARAMETER :: ref_size = num_indices + stripes(1)%nstrides &
          + stripes(2)%nstrides + local_size(1) * local_size(2)
     INTEGER(xt_int_kind), PARAMETER :: ref_index_list(ref_size) &
-         = (/ 1, 3, 5, 7, 9, 11, &
-         &    0, 2, 4, 6, 8, 1, 3, 5, 7, 9, &
-         &    22, 23, 24, 25, 26, &
-         &    32, 33, 34, 35, 36, &
-         &    42, 43, 44, 45, 46, &
-         &    52, 53, 54, 55, 56, &
-         &    62, 63, 64, 65, 66 /)
+         = (/ 1_xi, 3_xi, 5_xi, 7_xi, 9_xi, 11_xi, &
+         &    0_xi, 2_xi, 4_xi, 6_xi, 8_xi, 1_xi, 3_xi, 5_xi, 7_xi, 9_xi, &
+         &    22_xi, 23_xi, 24_xi, 25_xi, 26_xi, &
+         &    32_xi, 33_xi, 34_xi, 35_xi, 36_xi, &
+         &    42_xi, 43_xi, 44_xi, 45_xi, 46_xi, &
+         &    52_xi, 53_xi, 54_xi, 55_xi, 56_xi, &
+         &    62_xi, 63_xi, 64_xi, 65_xi, 66_xi /)
 
     TYPE(xt_idxlist) :: idxlists(3), collectionlist
 
@@ -219,9 +224,10 @@ CONTAINS
 
   SUBROUTINE test_bounding_box2
     INTEGER, PARAMETER :: ndim = 3
+    INTEGER, PARAMETER :: xi = xt_int_kind
     INTEGER(xt_int_kind), PARAMETER :: indices(3, 2) = RESHAPE( &
-         (/ 45, 35, 32, 32, 48, 33 /), (/ 3, 2 /)), &
-         global_size(ndim) = (/ 5, 4, 3 /), &
+         (/ 45_xi, 35_xi, 32_xi, 32_xi, 48_xi, 33_xi /), (/ 3, 2 /)), &
+         global_size(ndim) = (/ 5_xi, 4_xi, 3_xi /), &
          global_start_index = 1
     TYPE(xt_idxlist) :: idxlists(2), collectionlist
     TYPE(xt_bounds) :: bounds(ndim)
