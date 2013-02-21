@@ -256,7 +256,8 @@ CONTAINS
     CALL xt_idxlist_delete(local_section)
 
     ! check case: i-reverse subsection
-    local_section = xt_idxfsection_new(gstart, gsize, (/ -ldx, ldy /), lstart)
+    local_section = xt_idxfsection_new(gstart, gsize, &
+         (/ INT(-ldx, xt_int_kind), ldy /), lstart)
     indices = -1
     CALL xt_idxlist_get_indices(local_section, indices)
     p = 0
@@ -282,7 +283,8 @@ CONTAINS
     CALL xt_idxlist_delete(local_section)
 
     ! check case: ij-reverse subsection
-    local_section = xt_idxfsection_new(gstart, gsize, (/ -ldx, -ldy /), lstart)
+    local_section = xt_idxfsection_new(gstart, gsize, &
+         (/ INT(-ldx, xt_int_kind), -ldy /), lstart)
     indices = -1
     CALL xt_idxlist_get_indices(local_section, indices)
     p = 0
@@ -547,8 +549,10 @@ CONTAINS
       ! north border exchange without ew-halos
       ldx = g_core_ie-g_core_is+1
       ldy = north_halo
-      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /),   (/g_core_is, 1/))
-      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ -ldx, -ldy /), (/g_core_is, north_halo+1/))
+      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
+           (/ ldx, ldy /),   (/g_core_is, 1_xt_int_kind/))
+      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
+           (/ -ldx, -ldy /), (/g_core_is, north_halo+1_xt_int_kind/))
       mvec(im)%mask    = 1
 
       ! 1. north edge:
@@ -556,16 +560,21 @@ CONTAINS
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
       ldy = north_halo
-      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /),   (/1, 1/))
-      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ -ldx, -ldy /), (/2, north_halo+1/))
+      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
+           (/ ldx, ldy /),   (/1_xt_int_kind, 1_xt_int_kind/))
+      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
+           (/ -ldx, -ldy /), (/2_xt_int_kind, north_halo+1_xt_int_kind/))
       mvec(im)%mask    = 1
       ! 2. north edge:
       im = im + 1
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
       ldy = north_halo
-      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /),   (/g_ie, 1/))
-      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ -ldx, -ldy /), (/g_ie-1, north_halo+1/))
+      mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
+           (/ ldx, ldy /),   (/INT(g_ie, xt_int_kind), 1_xt_int_kind/))
+      mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
+           (/ -ldx, -ldy /), &
+           (/INT(g_ie - 1, xt_int_kind), north_halo+1_xt_int_kind/))
       mvec(im)%mask    = 1
 
     ELSE
@@ -579,14 +588,19 @@ CONTAINS
     ldy = g_je - north_halo
     im = im + 1
     IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
-    mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/1, north_halo+1/))
-    mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/g_core_ie-ldx+1, north_halo+1/))
+    mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
+         (/ ldx, ldy /), (/1_xt_int_kind, north_halo+1_xt_int_kind/))
+    mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
+         (/ ldx, ldy /), &
+         (/g_core_ie-ldx+1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%mask    = 1
 
     im = im + 1
     IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
-    mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/g_core_ie+1, north_halo+1/))
-    mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, (/ ldx, ldy /), (/ldx+1, north_halo+1/))
+    mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
+         (/ ldx, ldy /), (/g_core_ie+1_xt_int_kind, north_halo+1_xt_int_kind/))
+    mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
+         (/ ldx, ldy /), (/ldx+1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%mask    = 1
 
     mvec_num = im

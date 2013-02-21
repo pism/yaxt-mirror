@@ -177,7 +177,7 @@ CONTAINS
     idxfsection = xt_idxsection_new(start, &
          global_size(ndim:1:-1), &
          local_size(ndim:1:-1), &
-         local_start(ndim:1:-1) - 1 )
+         local_start(ndim:1:-1) - 1_xt_int_kind )
 
   END FUNCTION xt_idxfsection_new
 
