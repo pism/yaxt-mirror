@@ -334,7 +334,7 @@ CONTAINS
         DO j=1,je
           DO i=1,ie
             DO k=1,ke
-            idx_3d(k,i,j) = k + (idx_2d(i,j)-1) * ke
+              idx_3d(k,i,j) = INT(k + (idx_2d(i,j)-1) * ke, xt_int_kind)
           ENDDO
         ENDDO
       ENDDO
@@ -343,7 +343,7 @@ CONTAINS
       DO k=1,ke
         DO j=1,je
           DO i=1,ie
-            idx_3d(i,j,k) = idx_2d(i,j) + (k-1) * g_ie * g_je
+            idx_3d(i,j,k) = INT(idx_2d(i,j) + (k-1) * g_ie * g_je, xt_int_kind)
           ENDDO
         ENDDO
       ENDDO
@@ -511,7 +511,7 @@ CONTAINS
       jg = p_joff + j
       DO i = 1, ie
         ig = p_ioff + i
-        win(i,j) =  gval(ig,jg)
+        win(i,j) = INT(gval(ig,jg), xt_int_kind)
       ENDDO
     ENDDO
 
@@ -526,6 +526,7 @@ CONTAINS
     TYPE(xt_stripe), ALLOCATABLE :: stripes(:,:)
     INTEGER :: i, j, k, ni, nj, nk
 
+    ! FIXME: assert nk matches xt_int_kind representable values
     nk = SIZE(local_idx,1)
     ni = SIZE(local_idx,2)
     nj = SIZE(local_idx,3)
@@ -535,7 +536,7 @@ CONTAINS
     DO j = 1, nj
       DO i = 1, ni
         ! start, nstrides, stride
-        stripes(i,j) = xt_stripe(local_idx(1,i,j), nk, 1)
+        stripes(i,j) = xt_stripe(local_idx(1,i,j), INT(nk, xt_int_kind), 1)
         DO k = 1, nk
           IF (local_idx(1,i,j)-1+k /= local_idx(k,i,j)) &
                CALL test_abort(context//'stripe condition violated', &

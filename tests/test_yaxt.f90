@@ -227,7 +227,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    lstart = (/ 1, 1/)
+    lstart = (/ 1_xt_int_kind, 1_xt_int_kind /)
 
     ! check case: local section == global section
     global_section = xt_idxfsection_new(gstart, gsize, gsize, lstart)
@@ -367,12 +367,14 @@ CONTAINS
   SUBROUTINE id_map(map)
     INTEGER(xt_int_kind), INTENT(out) :: map(:,:)
 
-    INTEGER :: i,j,p
+    INTEGER :: i,j
+    INTEGER(xt_int_kind) :: p
 
-    p = 0
+    ! FIXME: assert size(map) is in representable value range of xt_int_kind
+    p = 0_xt_int_kind
     DO j = 1, SIZE(map,2)
       DO i = 1, SIZE(map,1)
-        p = p + 1
+        p = p + 1_xt_int_kind
         map(i,j) = p
       ENDDO
     ENDDO
@@ -517,7 +519,8 @@ CONTAINS
     INTEGER, INTENT(out) :: mvec_num
 
     INTEGER(xt_int_kind), PARAMETER :: gstart_idx = 1
-    INTEGER(xt_int_kind), PARAMETER :: gsize(2) = (/ g_ie, g_je /)
+    INTEGER(xt_int_kind), PARAMETER :: gsize(2) &
+         = (/ INT(g_ie, xt_int_kind), INT(g_je, xt_int_kind) /)
     INTEGER(xt_int_kind) :: ldx, ldy
 
     INTEGER(xt_int_kind) :: g_core_is, g_core_ie, g_core_je
@@ -544,10 +547,10 @@ CONTAINS
            CALL my_abort('def_tpex_mod_via_sections: grid too small (or halo too large)' // &
            'for tripolar north exchange', __LINE__)
 
-      im = im + 1
+      im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ! north border exchange without ew-halos
-      ldx = g_core_ie-g_core_is+1
+      ldx = g_core_ie - g_core_is + 1_xt_int_kind
       ldy = north_halo
       mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
            (/ ldx, ldy /),   (/g_core_is, 1_xt_int_kind/))
@@ -556,7 +559,7 @@ CONTAINS
       mvec(im)%mask    = 1
 
       ! 1. north edge:
-      im = im + 1
+      im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
       ldy = north_halo
@@ -566,7 +569,7 @@ CONTAINS
            (/ -ldx, -ldy /), (/2_xt_int_kind, north_halo+1_xt_int_kind/))
       mvec(im)%mask    = 1
       ! 2. north edge:
-      im = im + 1
+      im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
       ldy = north_halo
@@ -585,8 +588,8 @@ CONTAINS
 
     ! PBC below north border
     ldx = nhalo
-    ldy = g_je - north_halo
-    im = im + 1
+    ldy = INT(g_je, xt_int_kind) - north_halo
+    im = im + 1_xt_int_kind
     IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
     mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
          (/ ldx, ldy /), (/1_xt_int_kind, north_halo+1_xt_int_kind/))
@@ -595,7 +598,7 @@ CONTAINS
          (/g_core_ie-ldx+1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%mask    = 1
 
-    im = im + 1
+    im = im + 1_xt_int_kind
     IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
     mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
          (/ ldx, ldy /), (/g_core_ie+1_xt_int_kind, north_halo+1_xt_int_kind/))

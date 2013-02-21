@@ -515,8 +515,8 @@ CONTAINS
 
     INTEGER :: src_handle, dst_handle
 
-    src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
-    dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
+    src = INT(RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) ), xt_int_kind)
+    dst = INT(RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) ), xt_int_kind)
 
     CALL ut_init_decomposition(src, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind), src_handle)
@@ -541,8 +541,8 @@ CONTAINS
 
     ALLOCATE(src(SIZE(local_src_idx)), dst(SIZE(local_dst_idx)))
 
-    src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
-    dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
+    src = INT(RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) ), xt_int_kind)
+    dst = INT(RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) ), xt_int_kind)
 
     CALL ut_init_decomposition(src, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind), src_handle)

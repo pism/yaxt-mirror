@@ -211,7 +211,7 @@ CONTAINS
     p = 0
     DO j = 1, SIZE(map,2)
       DO i = 1, SIZE(map,1)
-        p = p + 1
+        p = p + 1_xt_int_kind
         map(i,j) = p
       ENDDO
     ENDDO
