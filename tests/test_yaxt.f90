@@ -55,7 +55,7 @@ PROGRAM test_yaxt
        &          xt_idxlist_get_indices, xt_modifier, xt_idxmod_new, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind, &
        xt_idxfsection_new
-  USE ftest_common, ONLY: test_abort, icmp, factorize, regular_deco, &
+  USE ftest_common, ONLY: test_abort, icmp, id_map, factorize, regular_deco, &
        finish_mpi
   USE iso_c_binding, ONLY: c_loc, c_int
 
@@ -363,23 +363,6 @@ CONTAINS
     pos3d_surf = undef_int
 
   END SUBROUTINE init_all
-
-  SUBROUTINE id_map(map)
-    INTEGER(xt_int_kind), INTENT(out) :: map(:,:)
-
-    INTEGER :: i,j
-    INTEGER(xt_int_kind) :: p
-
-    ! FIXME: assert size(map) is in representable value range of xt_int_kind
-    p = 0_xt_int_kind
-    DO j = 1, SIZE(map,2)
-      DO i = 1, SIZE(map,1)
-        p = p + 1_xt_int_kind
-        map(i,j) = p
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE id_map
 
   SUBROUTINE gen_id_pos(pos)
     INTEGER, INTENT(out) :: pos(:,:)

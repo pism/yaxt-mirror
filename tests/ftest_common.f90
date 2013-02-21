@@ -45,6 +45,7 @@
 !
 MODULE ftest_common
   USE mpi
+  USE xt_core, ONLY: i2, i4, i8
   IMPLICIT NONE
   PRIVATE
   INTEGER, PUBLIC, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
@@ -65,6 +66,10 @@ MODULE ftest_common
     MODULE PROCEDURE icmp_2d
     MODULE PROCEDURE icmp_3d
   END INTERFACE icmp
+
+  INTERFACE id_map
+    MODULE PROCEDURE id_map_i2, id_map_i4, id_map_i8
+  END INTERFACE id_map
 
   REAL(dp) :: sync_dt_sum = 0.0_dp
   LOGICAL, PARAMETER :: debug = .FALSE.
@@ -193,20 +198,50 @@ CONTAINS
     RETURN
   END FUNCTION work_time
 
-  PURE SUBROUTINE id_map(map)
-    INTEGER, INTENT(out) :: map(:,:)
+  PURE SUBROUTINE id_map_i2(map)
+    INTEGER(i2), INTENT(out) :: map(:,:)
 
-    INTEGER :: i,j,p
+    INTEGER :: i, j, m, n
 
-    p = 0
-    DO j = 1, SIZE(map,2)
-      DO i = 1, SIZE(map,1)
-        p = p + 1
-        map(i,j) = p
+    m = SIZE(map, 1)
+    n = SIZE(map, 2)
+    DO j = 1, n
+      DO i = 1, m
+        map(i,j) = INT((j - 1) * m + i, i2)
       ENDDO
     ENDDO
 
-  END SUBROUTINE id_map
+  END SUBROUTINE id_map_i2
+
+  PURE SUBROUTINE id_map_i4(map)
+    INTEGER(i4), INTENT(out) :: map(:,:)
+
+    INTEGER :: i, j, m, n
+
+    m = SIZE(map, 1)
+    n = SIZE(map, 2)
+    DO j = 1, n
+      DO i = 1, m
+        map(i,j) = INT((j - 1) * m + i, i4)
+      ENDDO
+    ENDDO
+
+  END SUBROUTINE id_map_i4
+
+  PURE SUBROUTINE id_map_i8(map)
+    INTEGER(i8), INTENT(out) :: map(:,:)
+
+    INTEGER :: i, j, m, n
+
+    m = SIZE(map, 1)
+    n = SIZE(map, 2)
+    DO j = 1, n
+      DO i = 1, m
+        map(i,j) = INT((j - 1) * m + i, i8)
+      ENDDO
+    ENDDO
+
+  END SUBROUTINE id_map_i8
 
   SUBROUTINE test_abort_msl_f(msg, source, line)
     CHARACTER(*), INTENT(in) :: msg

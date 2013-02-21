@@ -50,7 +50,7 @@ PROGRAM test_ut
        ut_init_transposition, &
        comm_forward, ut_transpose, ut_destroy_decomposition, &
        ut_destroy_transposition, xt_int_kind, ut_finalize
-  USE ftest_common, ONLY: finish_mpi, icmp, factorize, regular_deco
+  USE ftest_common, ONLY: finish_mpi, icmp, id_map, factorize, regular_deco
   IMPLICIT NONE
 
   ! global extents including halos
@@ -201,22 +201,6 @@ CONTAINS
     pos3d_surf = undef_int
 
   END SUBROUTINE init_all
-
-  SUBROUTINE id_map(map)
-    INTEGER(xt_int_kind), INTENT(out) :: map(:,:)
-
-    INTEGER :: i,j
-    INTEGER(xt_int_kind) :: p
-
-    p = 0
-    DO j = 1, SIZE(map,2)
-      DO i = 1, SIZE(map,1)
-        p = p + 1_xt_int_kind
-        map(i,j) = p
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE id_map
 
   SUBROUTINE gen_id_pos(pos)
     INTEGER, INTENT(out) :: pos(:,:)
