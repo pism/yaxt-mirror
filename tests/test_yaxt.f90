@@ -518,13 +518,12 @@ CONTAINS
     INTEGER(xt_int_kind), PARAMETER :: gsize(2) = (/ g_ie, g_je /)
     INTEGER(xt_int_kind) :: ldx, ldy
 
-    INTEGER(xt_int_kind) :: g_core_is, g_core_ie, g_core_js, g_core_je
+    INTEGER(xt_int_kind) :: g_core_is, g_core_ie, g_core_je
     INTEGER(xt_int_kind) :: north_halo, im
 
     ! global core domain:
     g_core_is = nhalo + 1
     g_core_ie = g_ie-nhalo
-    g_core_js = nhalo + 1
     g_core_je = g_je-nhalo
 
     im = 0
