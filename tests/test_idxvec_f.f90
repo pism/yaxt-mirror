@@ -59,8 +59,9 @@ PROGRAM test_idxvec
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, check_stripes, &
        check_offsets
   IMPLICIT NONE
+  INTEGER, PARAMETER :: xi = xt_int_kind
   INTEGER(xt_int_kind), PARAMETER :: index_vector(7) &
-       = (/ 1, 2, 3, 4, 5, 6, 7 /)
+       = (/ 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi /)
 
 
   CALL init_mpi
@@ -163,7 +164,7 @@ CONTAINS
 
   SUBROUTINE test_repeated_equal_indices
     INTEGER(xt_int_kind), PARAMETER :: index_vector(8) &
-         = (/ 1, 2, 3, 7, 5, 6, 7, 7 /)
+         = (/ 1_xi, 2_xi, 3_xi, 7_xi, 5_xi, 6_xi, 7_xi, 7_xi /)
     TYPE(xt_idxlist) :: idxvector
     CALL setup_idxvec(idxvector, index_vector)
     CALL xt_idxlist_delete(idxvector)
@@ -172,10 +173,14 @@ CONTAINS
   SUBROUTINE test_positions
     LOGICAL, PARAMETER :: single_match_only = .TRUE.
     INTEGER(xt_int_kind), PARAMETER :: index_vector(20) &
-         = (/ 10, 15, 14, 13, 12, 15, 10, 11, 12, 13, &
-         &    23, 18, 19, 20, 21, 31, 26, 27, 28, 29 /), &
+         = (/ 10_xi, 15_xi, 14_xi, 13_xi, 12_xi, &
+         &    15_xi, 10_xi, 11_xi, 12_xi, 13_xi, &
+         &    23_xi, 18_xi, 19_xi, 20_xi, 21_xi, &
+         &    31_xi, 26_xi, 27_xi, 28_xi, 29_xi /), &
          intersection_vector(13) &
-         = (/ 12, 12, 13, 13, 14, 15, 15, 20, 21, 23, 28, 29, 31 /)
+         = (/ 12_xi, 12_xi, 13_xi, 13_xi, 14_xi, &
+         &    15_xi, 15_xi, 20_xi, 21_xi, 23_xi, &
+         &    28_xi, 29_xi, 31_xi /)
     INTEGER :: intersection_pos(SIZE(intersection_vector))
     INTEGER, PARAMETER :: ref_intersection_pos(SIZE(intersection_vector)) &
          = (/ 4, 8, 3, 9, 2, 1, 5, 13, 14, 10, 18, 19, 15 /)
@@ -210,40 +215,45 @@ CONTAINS
 
   SUBROUTINE test_intersection_surjective
     INTEGER(xt_int_kind), PARAMETER :: index_vector(3, 2) &
-         = RESHAPE((/ 1, 2, 3, 1, 2, 3 /), SHAPE(index_vector)), &
-         ref_intersection_indices(3) = (/ 1, 2, 3 /)
+         = RESHAPE((/ 1_xi, 2_xi, 3_xi, 1_xi, 2_xi, 3_xi /), &
+         &         SHAPE(index_vector)), &
+         ref_intersection_indices(3) = (/ 1_xi, 2_xi, 3_xi /)
     CALL test_intersection(index_vector(:, 1), index_vector(:, 2), &
          ref_intersection_indices)
   END SUBROUTINE test_intersection_surjective
 
   SUBROUTINE test_intersection_partial
     INTEGER(xt_int_kind), PARAMETER :: index_vector(3, 2) &
-         = RESHAPE((/ 1, 2, 3, 2, 3, 4 /), SHAPE(index_vector)), &
-         ref_intersection_indices(2) = (/ 2, 3 /)
+         = RESHAPE((/ 1_xi, 2_xi, 3_xi, 2_xi, 3_xi, 4_xi /), &
+         &         SHAPE(index_vector)), &
+         ref_intersection_indices(2) = (/ 2_xi, 3_xi /)
     CALL test_intersection(index_vector(:, 1), index_vector(:, 2), &
          ref_intersection_indices)
   END SUBROUTINE test_intersection_partial
 
   SUBROUTINE test_intersection_inverse_partial
     INTEGER(xt_int_kind), PARAMETER :: index_vector(3, 2) &
-         = RESHAPE((/ 2, 3, 4, 1, 2, 3 /), SHAPE(index_vector)), &
-         ref_intersection_indices(2) = (/ 2, 3 /)
+         = RESHAPE((/ 2_xi, 3_xi, 4_xi, 1_xi, 2_xi, 3_xi /), &
+         &         SHAPE(index_vector)), &
+         ref_intersection_indices(2) = (/ 2_xi, 3_xi /)
     CALL test_intersection(index_vector(:, 1), index_vector(:, 2), &
          ref_intersection_indices)
   END SUBROUTINE test_intersection_inverse_partial
 
   SUBROUTINE test_intersection_unsort_partial
     INTEGER(xt_int_kind), PARAMETER :: index_vector(3, 2) &
-         = RESHAPE((/ 4, 2, 3, 3, 1, 2 /), SHAPE(index_vector)), &
-         ref_intersection_indices(2) = (/ 2, 3 /)
+         = RESHAPE((/ 4_xi, 2_xi, 3_xi, 3_xi, 1_xi, 2_xi /), &
+         &         SHAPE(index_vector)), &
+         ref_intersection_indices(2) = (/ 2_xi, 3_xi /)
     CALL test_intersection(index_vector(:, 1), index_vector(:, 2), &
          ref_intersection_indices)
   END SUBROUTINE test_intersection_unsort_partial
 
   SUBROUTINE test_intersection_unsort_inverse_partial
     INTEGER(xt_int_kind), PARAMETER :: index_vector(3, 2) &
-         = RESHAPE((/ 3, 1, 2, 4, 2, 3 /), SHAPE(index_vector)), &
-         ref_intersection_indices(2) = (/ 2, 3 /)
+         = RESHAPE((/ 3_xi, 1_xi, 2_xi, 4_xi, 2_xi, 3_xi /), &
+         &         SHAPE(index_vector)), &
+         ref_intersection_indices(2) = (/ 2_xi, 3_xi /)
     CALL test_intersection(index_vector(:, 1), index_vector(:, 2), &
          ref_intersection_indices)
   END SUBROUTINE test_intersection_unsort_inverse_partial
@@ -262,7 +272,7 @@ CONTAINS
     TYPE(xt_stripe), PARAMETER :: stripes(2) &
          = (/ xt_stripe(5, 5, 1), xt_stripe(4, 5, -1) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
-         = (/ 5, 6, 7, 8, 9, 4, 3, 2, 1, 0 /)
+         = (/ 5_xi, 6_xi, 7_xi, 8_xi, 9_xi, 4_xi, 3_xi, 2_xi, 1_xi, 0_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
   END SUBROUTINE test_stripes1
 
@@ -270,7 +280,9 @@ CONTAINS
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
          = (/ xt_stripe(0, 5, 1), xt_stripe(2, 5, 1), xt_stripe(4, 5, 1) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
-         = (/ 0, 1, 2, 3, 4, 2, 3, 4, 5, 6, 4, 5, 6, 7, 8 /)
+         = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, &
+         &    2_xi, 3_xi, 4_xi, 5_xi, 6_xi, &
+         &    4_xi, 5_xi, 6_xi, 7_xi, 8_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
   END SUBROUTINE test_stripes2
 
@@ -278,7 +290,9 @@ CONTAINS
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
          = (/ xt_stripe(2, 5, 1), xt_stripe(0, 5, 1), xt_stripe(4, 5, 1) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
-         = (/ 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 4, 5, 6, 7, 8 /)
+         = (/ 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, &
+         &    0_xi, 1_xi, 2_xi, 3_xi, 4_xi, &
+         &    4_xi, 5_xi, 6_xi, 7_xi, 8_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
   END SUBROUTINE test_stripes3
 
@@ -286,7 +300,9 @@ CONTAINS
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
          = (/ xt_stripe(2, 5, 1), xt_stripe(4, 5, -1), xt_stripe(4, 5, 1) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
-         = (/ 2, 3, 4, 5, 6, 4, 3, 2, 1, 0, 4, 5, 6, 7, 8 /)
+         = (/ 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, &
+         &    4_xi, 3_xi, 2_xi, 1_xi, 0_xi, &
+         &    4_xi, 5_xi, 6_xi, 7_xi, 8_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
   END SUBROUTINE test_stripes4
 
@@ -294,7 +310,9 @@ CONTAINS
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
          = (/ xt_stripe(0, 5, 3), xt_stripe(1, 5, 3), xt_stripe(14, 5, -3) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
-         = (/ 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2 /)
+         = (/ 0_xi,  3_xi, 6_xi,  9_xi, 12_xi, &
+         &    1_xi,  4_xi, 7_xi, 10_xi, 13_xi, &
+         &   14_xi, 11_xi, 8_xi,  5_xi,  2_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
   END SUBROUTINE test_stripes5
 
@@ -302,7 +320,9 @@ CONTAINS
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
          = (/ xt_stripe(0, 5, 3), xt_stripe(2, 5, 3), xt_stripe(14, 5, -3) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
-         = (/ 0, 3, 6, 9, 12, 2, 5, 8, 11, 14, 14, 11, 8, 5, 2 /)
+         = (/ 0_xi,  3_xi, 6_xi,  9_xi, 12_xi, &
+         &    2_xi,  5_xi, 8_xi, 11_xi, 14_xi, &
+         &   14_xi, 11_xi, 8_xi,  5_xi,  2_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
   END SUBROUTINE test_stripes6
 
@@ -311,8 +331,10 @@ CONTAINS
          = (/ xt_stripe(0, 5, -1), xt_stripe(1, 5, 1), xt_stripe(-5, 5, -1), &
          &    xt_stripe(6, 5, 1) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(20) &
-         = (/ 0, -1, -2, -3, -4, 1, 2, 3, 4, 5, -5, -6, -7, -8, -9, &
-         &    6, 7, 8, 9, 10 /)
+         = (/ 0_xi, -1_xi, -2_xi, -3_xi, -4_xi, &
+         &    1_xi,  2_xi,  3_xi,  4_xi,  5_xi, &
+         &   -5_xi, -6_xi, -7_xi, -8_xi, -9_xi, &
+         &    6_xi,  7_xi,  8_xi,  9_xi, 10_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
   END SUBROUTINE test_stripes7
 
@@ -354,7 +376,8 @@ CONTAINS
 
   SUBROUTINE test_get_indices_at_positions1
     INTEGER(xt_int_kind), PARAMETER :: indices(16) &
-         = (/ 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2, 1 /)
+         = (/ 0_xi,  3_xi,  6_xi,  9_xi, 12_xi, 1_xi,  4_xi, 7_xi, &
+         &   10_xi, 13_xi, 14_xi, 11_xi,  8_xi, 5_xi,  2_xi, 1_xi /)
     INTEGER(xt_int_kind), PARAMETER :: undef_idx = -HUGE(undef_idx)
     INTEGER, PARAMETER :: pos(13) &
          = (/ 0, 2, 7, 9, 11, 100, 11, 200, 9, 300, 7, 400, 5 /)
@@ -363,7 +386,8 @@ CONTAINS
 
   SUBROUTINE test_get_indices_at_positions2
     INTEGER(xt_int_kind), PARAMETER :: indices(16) &
-         = (/ 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2, 1 /)
+         = (/ 0_xi,  3_xi,  6_xi,  9_xi, 12_xi, 1_xi, 4_xi, 7_xi, &
+         &   10_xi, 13_xi, 14_xi, 11_xi,  8_xi, 5_xi, 2_xi, 1_xi /)
     INTEGER(xt_int_kind), PARAMETER :: undef_idx = -HUGE(undef_idx)
     INTEGER, PARAMETER :: pos(9) &
          = (/ 0, 2, 7, 9, 11, 11, 9, 7, 5 /)
@@ -372,16 +396,17 @@ CONTAINS
 
   SUBROUTINE test_get_indices_at_positions3
     INTEGER(xt_int_kind), PARAMETER :: indices(16) &
-         = (/ 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2, 1 /)
-    INTEGER(xt_int_kind), PARAMETER :: undef_idx = -HUGE(undef_idx)
+         = (/ 0_xi,  3_xi,  6_xi,  9_xi, 12_xi, 1_xi, 4_xi, 7_xi, &
+         &   10_xi, 13_xi, 14_xi, 11_xi,  8_xi, 5_xi, 2_xi, 1_xi /)
+    INTEGER(xt_int_kind), PARAMETER :: undef_idx = -HUGE(indices(1))
     INTEGER, PARAMETER :: pos(9) &
          = (/ 100, 102, 107, 109, 1011, 1011, 109, 107, 105 /)
     CALL test_get_indices_at_positions(indices, undef_idx, pos)
   END SUBROUTINE test_get_indices_at_positions3
 
   SUBROUTINE test_get_positions_of_indices
-    INTEGER(xt_int_kind), PARAMETER :: indices(2) = (/ 0, 2 /), &
-         selection(3) = (/ 1, 2, 3 /)
+    INTEGER(xt_int_kind), PARAMETER :: indices(2) = (/ 0_xi, 2_xi /), &
+         selection(3) = (/ 1_xi, 2_xi, 3_xi /)
     INTEGER :: i, position, positions(SIZE(selection))
     INTEGER, PARAMETER :: ref_positions(3) = (/ -1, 1, -1 /)
     TYPE(xt_idxlist) :: idxvec
@@ -467,23 +492,24 @@ CONTAINS
   END SUBROUTINE test_bounding_box
 
   SUBROUTINE test_bounding_box1
-    INTEGER(xt_int_kind), PARAMETER :: indices(2) = (/ 21, 42 /), &
-         global_size(3) = 4, global_start_index = 0
-    TYPE(xt_bounds), PARAMETER :: ref_bounds(3) = xt_bounds(1, 2)
+    INTEGER(xt_int_kind), PARAMETER :: indices(2) = (/ 21_xi, 42_xi /), &
+         global_size(3) = 4_xi, global_start_index = 0_xi
+    TYPE(xt_bounds), PARAMETER :: ref_bounds(3) = xt_bounds(1_xi, 2_xi)
     CALL test_bounding_box(indices, global_size, global_start_index, ref_bounds)
   END SUBROUTINE test_bounding_box1
 
   SUBROUTINE test_bounding_box2
-    INTEGER(xt_int_kind), PARAMETER :: indices(5) = (/ 45, 35, 32, 48, 33 /), &
-         global_size(3) = (/ 5, 4, 3 /), global_start_index = 1
+    INTEGER(xt_int_kind), PARAMETER :: indices(5) &
+         = (/ 45_xi, 35_xi, 32_xi, 48_xi, 33_xi /), &
+         global_size(3) = (/ 5_xi, 4_xi, 3_xi /), global_start_index = 1_xi
     TYPE(xt_bounds), PARAMETER :: ref_bounds(3) &
          = (/ xt_bounds(2, 2), xt_bounds(2, 2), xt_bounds(1, 2) /)
     CALL test_bounding_box(indices, global_size, global_start_index, ref_bounds)
   END SUBROUTINE test_bounding_box2
 
   SUBROUTINE test_bounding_box3
-    INTEGER(xt_int_kind), PARAMETER :: indices(1) = (/ -1 /), &
-         global_size(3) = 4, global_start_index = 0
+    INTEGER(xt_int_kind), PARAMETER :: indices(1) = (/ -1_xi /), &
+         global_size(3) = 4_xi, global_start_index = 0_xi
     TYPE(xt_bounds), PARAMETER :: ref_bounds(3) = xt_bounds(0, 0)
     CALL test_bounding_box(indices(1:0), global_size, global_start_index, &
          ref_bounds)
