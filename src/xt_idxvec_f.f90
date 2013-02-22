@@ -94,12 +94,20 @@ MODULE xt_idxvec
       INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_indices
       TYPE(c_ptr) :: res_ptr
     END FUNCTION xt_idxvec_new_c
+
+    FUNCTION xt_idxvec_from_stripes_new_c(stripes, num_stripes) &
+         BIND(C, name='xt_idxvec_from_stripes_new') RESULT(res_ptr)
+      IMPORT :: xt_stripe, xt_int_kind, c_ptr
+      IMPLICIT NONE
+      TYPE(xt_stripe), INTENT(in) :: stripes(*)
+      INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_stripes
+      TYPE(c_ptr) :: res_ptr
+    END FUNCTION xt_idxvec_from_stripes_new_c
   END INTERFACE
 
 CONTAINS
 
   FUNCTION xt_idxvec_new_a1d(idxvec) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:)
     TYPE(Xt_idxlist) :: res
 
@@ -114,7 +122,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a1d
 
   FUNCTION xt_idxvec_new_a1d_i2(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -124,7 +131,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a1d_i2
 
   FUNCTION xt_idxvec_new_a1d_i4(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -139,7 +145,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a1d_i4
 
   FUNCTION xt_idxvec_new_a1d_i8(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -154,7 +159,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a1d_i8
 
   FUNCTION xt_idxvec_new_a2d(idxvec) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:,:)
     TYPE(Xt_idxlist) :: res
 
@@ -169,7 +173,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a2d
 
   FUNCTION xt_idxvec_new_a2d_i2(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -179,7 +182,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a2d_i2
 
   FUNCTION xt_idxvec_new_a2d_i4(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -194,7 +196,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a2d_i4
 
   FUNCTION xt_idxvec_new_a2d_i8(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -209,7 +210,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a2d_i8
 
   FUNCTION xt_idxvec_new_a3d(idxvec) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:,:,:)
     TYPE(Xt_idxlist) :: res
 
@@ -224,7 +224,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a3d
 
   FUNCTION xt_idxvec_new_a3d_i2(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -234,7 +233,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a3d_i2
 
   FUNCTION xt_idxvec_new_a3d_i4(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -249,7 +247,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a3d_i4
 
   FUNCTION xt_idxvec_new_a3d_i8(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -264,7 +261,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a3d_i8
 
   FUNCTION xt_idxvec_new_a4d(idxvec) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:,:,:,:)
     TYPE(Xt_idxlist) :: res
 
@@ -279,7 +275,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a4d
 
   FUNCTION xt_idxvec_new_a4d_i2(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -289,7 +284,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a4d_i2
 
   FUNCTION xt_idxvec_new_a4d_i4(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -304,7 +298,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a4d_i4
 
   FUNCTION xt_idxvec_new_a4d_i8(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -319,7 +312,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a4d_i8
 
   FUNCTION xt_idxvec_new_a5d(idxvec) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:,:,:,:,:)
     TYPE(Xt_idxlist) :: res
 
@@ -334,7 +326,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a5d
 
   FUNCTION xt_idxvec_new_a5d_i2(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -344,7 +335,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a5d_i2
 
   FUNCTION xt_idxvec_new_a5d_i4(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -359,7 +349,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a5d_i4
 
   FUNCTION xt_idxvec_new_a5d_i8(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -374,7 +363,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a5d_i8
 
   FUNCTION xt_idxvec_new_a6d(idxvec) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:,:,:,:,:,:)
     TYPE(Xt_idxlist) :: res
 
@@ -389,7 +377,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a6d
 
   FUNCTION xt_idxvec_new_a6d_i2(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -399,7 +386,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a6d_i2
 
   FUNCTION xt_idxvec_new_a6d_i4(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -414,7 +400,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a6d_i4
 
   FUNCTION xt_idxvec_new_a6d_i8(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -429,7 +414,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a6d_i8
 
   FUNCTION xt_idxvec_new_a7d(idxvec) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:,:,:,:,:,:,:)
     TYPE(Xt_idxlist) :: res
 
@@ -444,7 +428,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a7d
 
   FUNCTION xt_idxvec_new_a7d_i2(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -454,7 +437,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a7d_i2
 
   FUNCTION xt_idxvec_new_a7d_i4(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
@@ -469,7 +451,6 @@ CONTAINS
   END FUNCTION xt_idxvec_new_a7d_i4
 
   FUNCTION xt_idxvec_new_a7d_i8(idxvec, num_indices) RESULT(res)
-    IMPLICIT NONE
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
