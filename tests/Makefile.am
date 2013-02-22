@@ -45,6 +45,7 @@ noinst_PROGRAMS = 						\
 	test_idxmod						\
 	test_idxsection						\
 	test_idxstripes						\
+	test_idxstripes_f					\
 	test_redist_collection					\
 	test_redist_collection_parallel				\
 	test_redist_collection_static				\
@@ -82,6 +83,8 @@ test_idxlist_collection_f_LDADD = $(XT_FC_LDADD)
 test_idxmod_SOURCES = test_idxmod.c tests.h
 test_idxsection_SOURCES = test_idxsection.c tests.h test_idxlist_utils.h
 test_idxstripes_SOURCES = test_idxstripes.c tests.h test_idxlist_utils.h
+test_idxstripes_f_SOURCES = test_idxstripes_f.f90
+test_idxstripes_f_LDADD = $(XT_FC_LDADD)
 test_redist_collection_SOURCES = test_redist_collection.c tests.h
 test_redist_collection_parallel_SOURCES = test_redist_collection_parallel.c \
 	tests.h
