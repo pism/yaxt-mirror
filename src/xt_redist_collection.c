@@ -386,12 +386,18 @@ static void clear_temp_dt(int num_messages,
     xt_mpi_call(MPI_Type_free(dt + i), comm);
 }
 
+static inline Xt_redist_collection
+xrc(void *redist)
+{
+  return (Xt_redist_collection)redist;
+}
+
 static void
 redist_collection_s_exchange(Xt_redist redist, void **src_data,
                              unsigned num_src_arrays, void **dst_data,
                              unsigned num_dst_arrays) {
 
-  Xt_redist_collection redist_coll = (Xt_redist_collection)redist;
+  Xt_redist_collection redist_coll = xrc(redist);
 
   if (num_src_arrays != redist_coll->num_redists ||
       num_dst_arrays != redist_coll->num_redists)
@@ -472,7 +478,7 @@ free_redist_collection_msgs(struct redist_collection_msg * msgs,
 static void
 redist_collection_delete(Xt_redist redist) {
 
-  Xt_redist_collection redist_coll = (Xt_redist_collection)redist;
+  Xt_redist_collection redist_coll = xrc(redist);
 
   free_redist_collection_msgs(redist_coll->send_msgs, redist_coll->nsrc,
                               redist_coll->num_redists,
@@ -495,7 +501,7 @@ redist_collection_delete(Xt_redist redist) {
 static MPI_Datatype
 redist_collection_get_send_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank))
 {
-  Xt_redist_collection redist_coll = (Xt_redist_collection)redist;
+  Xt_redist_collection redist_coll = xrc(redist);
 
   Xt_abort(redist_coll->comm, "ERROR: get_send_MPI_Datatype is not"
            " supported for this xt_redist type (Xt_redist_collection)",
@@ -507,7 +513,7 @@ redist_collection_get_send_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank))
 static MPI_Datatype
 redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank)) {
 
-  Xt_redist_collection redist_coll = (Xt_redist_collection)redist;
+  Xt_redist_collection redist_coll = xrc(redist);
 
   Xt_abort(redist_coll->comm, "ERROR: get_recv_MPI_Datatype is not"
            " supported for this xt_redist type (Xt_redist_collection)",
@@ -521,7 +527,7 @@ redist_collection_s_exchange1(Xt_redist redist, void *XT_UNUSED(src_data),
                               void *XT_UNUSED(dst_data))
 {
 
-  Xt_redist_collection redist_coll = (Xt_redist_collection)redist;
+  Xt_redist_collection redist_coll = xrc(redist);
 
   Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
            " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);

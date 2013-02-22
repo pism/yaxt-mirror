@@ -90,7 +90,9 @@ struct Xt_redist_p2p_msg {
   MPI_Datatype datatype;
 };
 
-struct Xt_redist_p2p {
+typedef struct Xt_redist_p2p_ *Xt_redist_p2p;
+
+struct Xt_redist_p2p_ {
 
   const struct xt_redist_vtable *vtable;
 
@@ -167,7 +169,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                                 int *dst_offsets, MPI_Datatype datatype) {
 
-  struct Xt_redist_p2p *redist = xmalloc(sizeof (*redist));
+  Xt_redist_p2p redist = xmalloc(sizeof (*redist));
 
   redist->vtable = &redist_p2p_vtable;
 
@@ -294,7 +296,7 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
                                 struct Xt_offset_ext dst_extents[],
                                 MPI_Datatype datatype)
 {
-  struct Xt_redist_p2p *redist = xmalloc(sizeof (*redist));
+  Xt_redist_p2p redist = xmalloc(sizeof (*redist));
 
   redist->vtable = &redist_p2p_vtable;
 
@@ -408,7 +410,7 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
     die("xt_redist_p2p_blocks_off_new: undefined src_block_sizes");
   if (!dst_block_sizes)
     die("xt_redist_p2p_blocks_off_new: undefined dst_block_sizes");
-  struct Xt_redist_p2p *redist = xmalloc(sizeof (*redist));
+  Xt_redist_p2p redist = xmalloc(sizeof (*redist));
 
   redist->vtable = &redist_p2p_vtable;
 
@@ -486,12 +488,16 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
   return xt_redist_p2p_off_new(xmap, NULL, NULL, datatype);
 }
 
+static inline Xt_redist_p2p
+xrp2p(void *redist)
+{
+  return (Xt_redist_p2p)redist;
+}
+
 static void
 redist_p2p_delete(Xt_redist redist) {
 
-  struct Xt_redist_p2p *redist_p2p;
-
-  redist_p2p = (struct Xt_redist_p2p *)redist;
+  Xt_redist_p2p redist_p2p = xrp2p(redist);
 
   int i;
 
@@ -521,9 +527,7 @@ redist_p2p_s_exchange(Xt_redist redist, void **src_data,
 static void
 redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
 
-  struct Xt_redist_p2p *redist_p2p;
-
-  redist_p2p = (struct Xt_redist_p2p *)redist;
+  Xt_redist_p2p redist_p2p = xrp2p(redist);
 
   MPI_Request *recv_request
     = xmalloc((size_t)redist_p2p->nrecv * sizeof (*recv_request));
@@ -549,13 +553,9 @@ redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
 static MPI_Datatype
 redist_p2p_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 
-  struct Xt_redist_p2p *redist_p2p;
+  Xt_redist_p2p redist_p2p = xrp2p(redist);
 
-  redist_p2p = (struct Xt_redist_p2p *)redist;
-
-  MPI_Datatype datatype_copy;
-
-  datatype_copy = MPI_DATATYPE_NULL;
+  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
 
   for (int i = 0; i < redist_p2p->nsend; ++i)
     if (redist_p2p->send_msgs[i].rank == rank) {
@@ -570,13 +570,9 @@ redist_p2p_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 static MPI_Datatype
 redist_p2p_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
-  struct Xt_redist_p2p *redist_p2p;
+  Xt_redist_p2p redist_p2p = xrp2p(redist);
 
-  redist_p2p = (struct Xt_redist_p2p *)redist;
-
-  MPI_Datatype datatype_copy;
-
-  datatype_copy = MPI_DATATYPE_NULL;
+  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
 
   for (int i = 0; i < redist_p2p->nrecv; ++i)
     if (redist_p2p->recv_msgs[i].rank == rank) {
