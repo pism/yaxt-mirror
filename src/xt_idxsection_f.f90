@@ -97,7 +97,6 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: start, global_size(num_dimensions), &
          local_size(num_dimensions), local_start(num_dimensions)
     TYPE(xt_idxlist) :: idxsection
-    INTEGER(c_int), PARAMETER :: dummy = 1
 
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
