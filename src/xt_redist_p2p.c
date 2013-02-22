@@ -193,30 +193,58 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
 
 /* ====================================================================== */
 
+static inline int
+pos2disp(int pos, Xt_int num_ext, struct Xt_offset_ext extents[],
+         int psum_ext_size[])
+{
+  Xt_int j = 0;
+  /* FIXME: use bsearch if linear search is too slow, i.e. num_ext >> 1000 */
+  /* what extent covers the pos'th position? */
+  while (j < num_ext && pos >= psum_ext_size[j + 1])
+    ++j;
+  int disp = extents[j].start + pos * extents[j].stride - psum_ext_size[j];
+  return disp;
+}
+
 static MPI_Datatype
 generate_ext_datatype(Xt_int num_transfer_pos, const int transfer_pos[],
                       Xt_int num_ext, struct Xt_offset_ext extents[],
                       int psum_ext_size[],
                       MPI_Datatype base_datatype, MPI_Comm comm)
 {
-  int *displ = xmalloc((size_t)num_transfer_pos * sizeof(int));
-
-  /* FIXME: use bsearch if linear search is too slow, i.e. num_ext >> 1000 */
-  for (Xt_int i = 0; i < num_transfer_pos; ++i)
+  if (num_transfer_pos > 0)
   {
-    int pos = transfer_pos[i];
-    Xt_int j = 0;
-    /* what extent covers the pos'th position? */
-    while (j < num_ext && pos >= psum_ext_size[j + 1])
-      ++j;
-    displ[i] = extents[j].start + pos * extents[j].stride - psum_ext_size[j];
+    size_t blocks_size = 8, block_ofs = 0;
+    int *displ = NULL, *blocklen = NULL;
+    Xt_int i = 0;
+    do
+    {
+      blocks_size *= 2;
+      displ = xrealloc(displ, blocks_size * sizeof (*displ));
+      blocklen = xrealloc(blocklen, blocks_size * sizeof (*blocklen));
+      do
+      {
+        int j = 1;
+        int block_disp = pos2disp(transfer_pos[i],
+                                  num_ext, extents, psum_ext_size);
+        while (i + j < num_transfer_pos
+               && block_disp + j == pos2disp(transfer_pos[i + j],
+                                             num_ext, extents, psum_ext_size))
+          ++j;
+        displ[block_ofs] = block_disp;
+        blocklen[block_ofs] = j;
+        i += j;
+      } while (++block_ofs < blocks_size && i < num_transfer_pos);
+    } while (i < num_transfer_pos);
+    MPI_Datatype type
+      = xt_mpi_generate_datatype_block(displ, blocklen, (int)block_ofs,
+                                       base_datatype, comm);
+    free(displ);
+    free(blocklen);
+    return type;
   }
-
-  MPI_Datatype type = xt_mpi_generate_datatype(displ, num_transfer_pos,
-                                               base_datatype, comm);
-
-  free(displ);
-  return type;
+  else
+    return MPI_DATATYPE_NULL;
 }
 
 static void
