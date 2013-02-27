@@ -118,22 +118,6 @@ int main(void) {
   { // general tests
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[2] = {{0,5,6},{1,5,3}};
-    Xt_int num_stripes = 2;
-
-    idxstripes = xt_idxstripes_new(stripes, num_stripes);
-
-    Xt_int ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
-    Xt_int ref_num_indices = 10;
-
-    do_tests(idxstripes, ref_indices, ref_num_indices);
-
-    xt_idxlist_delete(idxstripes);
-  }
-
-  { // general tests
-    Xt_idxlist idxstripes;
-
     struct Xt_stripe stripes[2] = {{0,5,-1},{1,5,1}};
     Xt_int num_stripes = 2;
 
