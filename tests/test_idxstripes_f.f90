@@ -411,11 +411,9 @@ CONTAINS
     IF (ALLOCATED(stripes)) DEALLOCATE(stripes)
 
     ! test packing and unpacking
-
     idxlist_copy = idxlist_pack_unpack_copy(idxlist)
 
     ! check copy
-
     CALL check_idxlist(idxlist_copy, ref_indices)
 
     CALL xt_idxlist_delete(idxlist_copy)
