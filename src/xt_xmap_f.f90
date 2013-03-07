@@ -53,7 +53,8 @@ MODULE xt_xmap_abstract
   PRIVATE
   PUBLIC :: xt_xmap_c2f, xt_xmap_f2c
   PUBLIC :: xt_xmap_delete, xt_xmap_get_num_destinations, &
-       xt_xmap_get_num_sources
+       xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
+       xt_xmap_get_source_ranks
   PUBLIC :: xt_xmap_all2all_new
 
   ! note: this type must not be extended to contain any other
@@ -139,5 +140,35 @@ CONTAINS
     END INTERFACE
     num = INT(xt_xmap_get_num_sources_c(xmap%cptr))
   END FUNCTION xt_xmap_get_num_sources
+
+  SUBROUTINE xt_xmap_get_destination_ranks(xmap, ranks)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER(c_int), INTENT(out) :: ranks(*)
+    INTERFACE
+      SUBROUTINE xt_xmap_get_destination_ranks_c(xmap, ranks) &
+           BIND(c, name='xt_xmap_get_destination_ranks')
+        IMPORT :: c_ptr, c_int
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        INTEGER(c_int), INTENT(out) :: ranks(*)
+      END SUBROUTINE xt_xmap_get_destination_ranks_c
+    END INTERFACE
+    CALL xt_xmap_get_destination_ranks_c(xmap%cptr, ranks)
+  END SUBROUTINE xt_xmap_get_destination_ranks
+
+  SUBROUTINE xt_xmap_get_source_ranks(xmap, ranks)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER(c_int), INTENT(out) :: ranks(*)
+    INTERFACE
+      SUBROUTINE xt_xmap_get_source_ranks_c(xmap, ranks) &
+           BIND(c, name='xt_xmap_get_source_ranks')
+        IMPORT :: c_ptr, c_int
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        INTEGER(c_int), INTENT(out) :: ranks(*)
+      END SUBROUTINE xt_xmap_get_source_ranks_c
+    END INTERFACE
+    CALL xt_xmap_get_source_ranks_c(xmap%cptr, ranks)
+  END SUBROUTINE xt_xmap_get_source_ranks
 
 END MODULE xt_xmap_abstract
