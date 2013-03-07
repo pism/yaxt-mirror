@@ -70,7 +70,7 @@ MPI_Comm xt_xmap_get_communicator(Xt_xmap xmap);
  * the local process in an exchange operation
  *
  * @param[in] xmap exchange map
- * @return         number of prosses that will require data from
+ * @return         number of processes that will require data from
  *                 the local process in an exchange operation
  */
 int xt_xmap_get_num_destinations(Xt_xmap xmap);
