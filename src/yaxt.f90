@@ -54,7 +54,7 @@ MODULE yaxt
        xt_abort, xt_initialize, xt_get_default_comm,&
        xt_xmap, xt_xmap_c2f, xt_xmap_f2c, xt_stripe, xt_bounds, &
        xt_redist, xt_redist_c2f, xt_redist_f2c, &
-       xt_mpi_fint_kind
+       xt_mpi_fint_kind, char
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
@@ -93,7 +93,7 @@ MODULE yaxt
        &    xt_redist_delete, &
        &    xt_redist_s_exchange1, &
        xt_idxempty_new, &
-       OPERATOR(==), OPERATOR(/=)
+       OPERATOR(==), OPERATOR(/=), char
 
   INTERFACE OPERATOR(==)
     MODULE PROCEDURE xt_bounds_eq

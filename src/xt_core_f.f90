@@ -59,9 +59,18 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
   PUBLIC :: xt_initialize, xt_abort,  xt_get_default_comm, &
        xt_redist_c2f, xt_redist_f2c, &
-       xt_xmap_c2f, xt_xmap_f2c
+       xt_xmap_c2f, xt_xmap_f2c, char
 
   INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
+  INTEGER(xt_int_kind), PARAMETER :: dummy = 0_xt_int_kind
+  !> number of decimal places needed to print any variable of type
+  !! INTEGER(xt_int_kind)
+  INTEGER, PUBLIC, PARAMETER :: xt_int_dec_len &
+       = CEILING(1.0 + REAL(DIGITS(dummy)) * LOG10(REAL(RADIX(dummy))))
+  CHARACTER(9), PARAMETER :: xt_stripe_tag = 'xt_stripe'
+  !> maximal length of string xt_stripe(a, b, c)
+  INTEGER, PUBLIC, PARAMETER :: xt_stripe2s_len &
+       = LEN(xt_stripe_tag) + 2 + 4 + 3 * xt_int_dec_len
 
   TYPE, BIND(C), PUBLIC :: xt_stripe
     INTEGER(xt_int_kind) :: start
@@ -140,6 +149,10 @@ MODULE xt_core
     END SUBROUTINE xt_abort_c
   END INTERFACE
 
+  INTERFACE char
+    MODULE PROCEDURE xt_stripe2char
+  END INTERFACE char
+
 CONTAINS
 
   SUBROUTINE xt_abort4(comm, msg, source, line)
@@ -170,5 +183,12 @@ CONTAINS
     TYPE(xt_xmap) :: p
     p%cptr = xmap
   END FUNCTION xt_xmap_c2f
+
+  ELEMENTAL FUNCTION xt_stripe2char(stripe) RESULT(str)
+    CHARACTER(len=xt_stripe2s_len) :: str
+    TYPE(xt_stripe), INTENT(in) :: stripe
+    WRITE (str, '(2a,3(i0,a))') xt_stripe_tag, '(', stripe%start, ', ', &
+         stripe%nstrides, ', ', stripe%stride, ')'
+  END FUNCTION xt_stripe2char
 
 END MODULE xt_core
