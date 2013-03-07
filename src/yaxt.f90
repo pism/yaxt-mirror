@@ -66,7 +66,7 @@ MODULE yaxt
   USE xt_idxvec, ONLY: xt_idxvec_from_stripes_new, xt_idxvec_new
   USE xt_idxstripes, ONLY: xt_idxstripes_new
   USE xt_idxsection, ONLY: xt_idxsection_new, xt_idxfsection_new
-  USE iso_c_binding, ONLY: c_int, c_ptr
+  USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
 
   IMPLICIT NONE
 
@@ -366,24 +366,30 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: patch
     TYPE(xt_modifier), INTENT(in) :: modifier(*)
     INTEGER, INTENT(in) :: modifier_num
-    INTEGER(c_int), INTENT(inout) :: mstate(*)
+    INTEGER(c_int), OPTIONAL, TARGET, INTENT(inout) :: mstate(*)
     TYPE(Xt_idxlist) :: res
 
     INTERFACE
-      FUNCTION xt_idxmod_new_f(patch, modifier, modifier_num, mstate) &
+      FUNCTION xt_idxmod_new_f(patch, modifier, modifier_num, mstate_ptr) &
            BIND(C, name='xt_idxmod_new_f') RESULT(res)
         IMPORT :: xt_idxlist, xt_int_kind, xt_modifier, c_ptr, c_int
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: patch
         TYPE(xt_modifier), INTENT(in) :: modifier(*)
         INTEGER(c_int), VALUE, INTENT(in) :: modifier_num
-        INTEGER(c_int), INTENT(inout) :: mstate(*)
+        TYPE(c_ptr), VALUE :: mstate_ptr
         TYPE(c_ptr) :: res
       END FUNCTION xt_idxmod_new_f
     END INTERFACE
 
-    res = xt_idxlist_c2f(xt_idxmod_new_f(patch, modifier, &
-         INT(modifier_num, c_int), mstate))
+    IF (PRESENT(mstate)) THEN
+      res = xt_idxlist_c2f(xt_idxmod_new_f(patch, modifier, &
+           INT(modifier_num, c_int), C_LOC(mstate)))
+    ELSE
+      res = xt_idxlist_c2f(xt_idxmod_new_f(patch, modifier, &
+           INT(modifier_num, c_int), c_null_ptr))
+    ENDIF
+
   END FUNCTION xt_idxmod_new
 
 END MODULE yaxt

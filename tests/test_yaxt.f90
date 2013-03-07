@@ -171,6 +171,14 @@ CONTAINS
     IF (ANY(loc_tpex2 /= loc_tpex)) &
          CALL my_abort('idx copy does not match', __LINE__)
     CALL xt_idxlist_delete(loc_tpex2_idxlist)
+
+    ! test call without mstate
+    loc_tpex2_idxlist = xt_idxmod_new(loc_id_idxlist, m_tpex, m_tpex_num)
+    loc_tpex2 = -1
+    CALL xt_idxlist_get_indices(loc_tpex2_idxlist, loc_tpex2)
+    IF (ANY(loc_tpex2 /= loc_tpex)) &
+         CALL my_abort('idx copy does not match', __LINE__)
+    CALL xt_idxlist_delete(loc_tpex2_idxlist)
     CALL delete_modifiers(m_tpex(1:m_tpex_num))
 
     ! use compact modifiers to define index transfer:
