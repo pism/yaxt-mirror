@@ -62,7 +62,9 @@ MODULE yaxt
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &
-       xt_idxlist_get_bounding_box, xt_idxlist_get_intersection
+       xt_idxlist_get_bounding_box, xt_idxlist_get_intersection, &
+       xt_idxlist_get_num_indices, &
+       xt_idxlist_get_indices, xt_idxlist_get_indices_const
   USE xt_idxvec, ONLY: xt_idxvec_from_stripes_new, xt_idxvec_new
   USE xt_idxstripes, ONLY: xt_idxstripes_new
   USE xt_idxsection, ONLY: xt_idxsection_new, xt_idxfsection_new
@@ -77,15 +79,15 @@ MODULE yaxt
        xt_idxlist, xt_idxlist_delete,  &
        xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &
-       xt_idxlist_get_intersection, xt_idxlist_get_num_indices, &
-       xt_idxlist_get_positions_of_indices, &
+       xt_idxlist_get_intersection, xt_idxlist_get_positions_of_indices, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
+       xt_idxlist_get_num_indices, &
+       xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
        xt_idxlist_get_index_stripes, xt_idxlist_get_bounding_box, &
        xt_idxvec_new, xt_idxvec_from_stripes_new, xt_idxstripes_new, &
        xt_idxlist_collection_new, xt_idxsection_new, xt_idxfsection_new, &
-       xt_idxlist_get_indices, xt_idxmod_new, &
-       xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
+       xt_idxmod_new, xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        &    xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_f2c, xt_redist_c2f, &
        xt_redist_p2p_off_new, xt_redist_p2p_new, &
@@ -139,23 +141,6 @@ MODULE yaxt
   INTERFACE
     SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
     END SUBROUTINE xt_finalize
-  END INTERFACE
-
-  INTERFACE
-    INTEGER(xt_int_kind) FUNCTION xt_idxlist_get_num_indices(idxlist) &
-         &          BIND(C, name='xt_idxlist_get_num_indices_f') RESULT(res)
-      IMPORT :: xt_int_kind, xt_idxlist
-      TYPE(xt_idxlist), INTENT(in) :: idxlist
-    END FUNCTION xt_idxlist_get_num_indices
-  END INTERFACE
-
-  INTERFACE
-    SUBROUTINE xt_idxlist_get_indices(idxlist, indices) &
-         &          BIND(C, name='xt_idxlist_get_indices_f')
-      IMPORT :: xt_int_kind, xt_idxlist
-      TYPE(xt_idxlist), INTENT(in) :: idxlist
-      INTEGER(xt_int_kind), INTENT(out) :: indices(*)
-    END SUBROUTINE xt_idxlist_get_indices
   END INTERFACE
 
 CONTAINS

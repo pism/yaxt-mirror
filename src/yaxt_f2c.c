@@ -221,16 +221,6 @@ void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void **src_data, void
   xt_redist_s_exchange(redist_f->cptr, src_data, 1, dst_data, 1);
 }
 
-Xt_int xt_idxlist_get_num_indices_f(struct xt_idxlist_f *idxlist_f) {
-  struct Xt_idxlist_ *idxlist = idxlist_f->cptr;
-  return xt_idxlist_get_num_indices(idxlist);
-}
-
-void xt_idxlist_get_indices_f(struct xt_idxlist_f *idxlist_f, Xt_int *indices) {
-  struct Xt_idxlist_ *idxlist = idxlist_f->cptr;
-  xt_idxlist_get_indices(idxlist, indices);
-}
-
 Xt_idxlist xt_idxmod_new_f(struct xt_idxlist_f *patch_idxlist_f,
                            struct xt_modifier_f *modifier_f,
                            int modifier_num, int *mstate) {

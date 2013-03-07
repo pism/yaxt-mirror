@@ -107,7 +107,39 @@ MODULE xt_idxlist_abstract
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &
+       xt_idxlist_get_num_indices, &
+       xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
        xt_idxlist_get_bounding_box, xt_idxlist_get_intersection
+
+  INTERFACE
+
+    FUNCTION xt_idxlist_get_num_indices_c(idxlist) RESULT(num_indices) &
+         BIND(c, name='xt_idxlist_get_num_indices')
+      IMPORT :: c_ptr, xt_int_kind
+      IMPLICIT NONE
+      TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+      INTEGER(xt_int_kind) :: num_indices
+    END FUNCTION xt_idxlist_get_num_indices_c
+
+    SUBROUTINE xt_idxlist_get_indices_c(idxlist, indices) &
+         BIND(c, name='xt_idxlist_get_indices')
+      IMPORT :: c_ptr, xt_int_kind
+      IMPLICIT NONE
+      TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+      INTEGER(xt_int_kind), INTENT(out) :: indices(*)
+    END SUBROUTINE xt_idxlist_get_indices_c
+
+  END INTERFACE
+
+  INTERFACE xt_idxlist_get_indices
+    MODULE PROCEDURE xt_idxlist_get_indices_1d
+    MODULE PROCEDURE xt_idxlist_get_indices_2d
+    MODULE PROCEDURE xt_idxlist_get_indices_3d
+    MODULE PROCEDURE xt_idxlist_get_indices_4d
+    MODULE PROCEDURE xt_idxlist_get_indices_5d
+    MODULE PROCEDURE xt_idxlist_get_indices_6d
+    MODULE PROCEDURE xt_idxlist_get_indices_7d
+  END INTERFACE xt_idxlist_get_indices
 
 CONTAINS
 
@@ -344,5 +376,133 @@ CONTAINS
     TYPE(xt_idxlist) :: p
     p%cptr = idxlist
   END FUNCTION xt_idxlist_c2f
+
+  FUNCTION xt_idxlist_get_num_indices(idxlist) RESULT(num_indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+  END FUNCTION xt_idxlist_get_num_indices
+
+  SUBROUTINE xt_idxlist_get_indices_1d(idxlist, indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(out) :: indices(:)
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > SIZE(indices)) THEN
+      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
+           __FILE__, &
+           __LINE__)
+    END IF
+    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+  END SUBROUTINE xt_idxlist_get_indices_1d
+
+  SUBROUTINE xt_idxlist_get_indices_2d(idxlist, indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(out) :: indices(:,:)
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > SIZE(indices)) THEN
+      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
+           __FILE__, &
+           __LINE__)
+    END IF
+    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+  END SUBROUTINE xt_idxlist_get_indices_2d
+
+  SUBROUTINE xt_idxlist_get_indices_3d(idxlist, indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:)
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > SIZE(indices)) THEN
+      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
+           __FILE__, &
+           __LINE__)
+    END IF
+    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+  END SUBROUTINE xt_idxlist_get_indices_3d
+
+  SUBROUTINE xt_idxlist_get_indices_4d(idxlist, indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:)
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > SIZE(indices)) THEN
+      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
+           __FILE__, &
+           __LINE__)
+    END IF
+    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+  END SUBROUTINE xt_idxlist_get_indices_4d
+
+  SUBROUTINE xt_idxlist_get_indices_5d(idxlist, indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:,:)
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > SIZE(indices)) THEN
+      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
+           __FILE__, &
+           __LINE__)
+    END IF
+    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+  END SUBROUTINE xt_idxlist_get_indices_5d
+
+  SUBROUTINE xt_idxlist_get_indices_6d(idxlist, indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:,:,:)
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > SIZE(indices)) THEN
+      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
+           __FILE__, &
+           __LINE__)
+    END IF
+    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+  END SUBROUTINE xt_idxlist_get_indices_6d
+
+  SUBROUTINE xt_idxlist_get_indices_7d(idxlist, indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:,:,:,:)
+    INTEGER(xt_int_kind) :: num_indices
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > SIZE(indices)) THEN
+      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
+           __FILE__, &
+           __LINE__)
+    END IF
+    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+  END SUBROUTINE xt_idxlist_get_indices_7d
+
+  FUNCTION xt_idxlist_get_indices_const(idxlist) RESULT(indices)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind), POINTER :: indices(:)
+    INTEGER(xt_int_kind) :: num_indices
+    TYPE(c_ptr) :: c_indices
+    INTEGER(xt_int_kind), SAVE, TARGET :: dummy(1) = -HUGE(num_indices)
+    INTEGER :: indices_shape(1)
+    INTERFACE
+      FUNCTION xt_idxlist_get_indices_const_c(idxlist) &
+           BIND(c, name='xt_idxlist_get_indices_const') RESULT(indices)
+        IMPORT :: c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+        TYPE(c_ptr) :: indices
+      END FUNCTION xt_idxlist_get_indices_const_c
+    END INTERFACE
+    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    IF (num_indices > 0_xt_int_kind) THEN
+      IF (num_indices > HUGE(indices_shape)) &
+           CALL xt_abort(xt_get_default_comm(), &
+           "too many indices for default integer kind", &
+           __FILE__, &
+           __LINE__)
+      indices_shape(1) = num_indices
+      c_indices = xt_idxlist_get_indices_const_c(xt_idxlist_f2c(idxlist))
+      CALL C_F_POINTER(c_indices, indices, indices_shape)
+    ELSE
+      indices => dummy(1:0)
+    END IF
+  END FUNCTION xt_idxlist_get_indices_const
 
 END MODULE xt_idxlist_abstract
