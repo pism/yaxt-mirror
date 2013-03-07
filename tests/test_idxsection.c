@@ -150,7 +150,7 @@ int main(void) {
 
     xt_idxlist_delete(idxsection);
   }
-  
+
   { // test 3D section
     Xt_idxlist idxsection;
 
@@ -194,8 +194,12 @@ int main(void) {
 
     Xt_int ref_indices[36] = {16,17,19,20,22,23, 28,29,31,32,34,35, 40,41,43,44,46,47,
                               64,65,67,68,70,71, 76,77,79,80,82,83, 88,89,91,92,94,95};
-    struct Xt_stripe ref_stripes[18] = {{16,2,1},{19,2,1},{22,2,1}, {28,2,1},{31,2,1},{34,2,1}, {40,2,1},{43,2,1},{46,2,1},
-                                        {64,2,1},{67,2,1},{70,2,1}, {76,2,1},{79,2,1},{82,2,1}, {88,2,1},{91,2,1},{94,2,1}};
+    struct Xt_stripe ref_stripes[18] = {{16,2,1},{19,2,1},{22,2,1},
+                                        {28,2,1},{31,2,1},{34,2,1},
+                                        {40,2,1},{43,2,1},{46,2,1},
+                                        {64,2,1},{67,2,1},{70,2,1},
+                                        {76,2,1},{79,2,1},{82,2,1},
+                                        {88,2,1},{91,2,1},{94,2,1}};
     do_tests(idxsection, ref_indices, 36, ref_stripes, 18);
 
     // clean up
@@ -359,13 +363,9 @@ int main(void) {
     idxsection = xt_idxsection_new(start, num_dimensions, global_size,
                                    local_size, local_start);
 
-    Xt_int indices[4], ref_indices[4] = {2,3,6,7};
+    Xt_int ref_indices[4] = {2,3,6,7};
 
-    xt_idxlist_get_indices(idxsection, indices);
-
-    for (int i = 0; i < 4; ++i)
-      if (indices[i] != ref_indices[i])
-        PUT_ERR("error in xt_idxlist_get_indices\n");
+    check_idxlist(idxsection, ref_indices, 4);
 
     xt_idxlist_delete(idxsection);
   }
@@ -383,13 +383,9 @@ int main(void) {
     idxsection = xt_idxsection_new(start, num_dimensions, global_size,
                                    local_size, local_start);
 
-    Xt_int indices[4], ref_indices[4] = {3,4,7,8};
+    Xt_int ref_indices[4] = {3,4,7,8};
 
-    xt_idxlist_get_indices(idxsection, indices);
-
-    for (int i = 0; i < 4; ++i)
-      if (indices[i] != ref_indices[i])
-        PUT_ERR("error in xt_idxlist_get_indices\n");
+    check_idxlist(idxsection, ref_indices, 4);
 
     xt_idxlist_delete(idxsection);
   }
@@ -414,11 +410,13 @@ int main(void) {
     int ref_positions[] = {1*0-1, 2*0+0, 5*0-1, 6*0+2, 7*0+3, 8*0-1};
 
     if (xt_idxlist_get_positions_of_indices(idxsection, selection, num_selection, positions, 0) != 3)
-      PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
+      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
+              " num_unmatched\n");
 
     for (int i=0; i<num_selection; i++) {
       if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_position_of_indices did not return correct position\n");
+        PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
+                " position\n");
     }
 
     xt_idxlist_delete(idxsection);
@@ -523,7 +521,8 @@ int main(void) {
   }
 
   { // test 2D section with negative global size
-
+    // iterate through all sign combinations of -/+ for local and global
+    // and for x and y, giving 2^2^2 combinations
     for (int i = 0; i < 16; ++i) {
 
       Xt_idxlist idxsection;
