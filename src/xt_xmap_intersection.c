@@ -307,7 +307,7 @@ xt_xmap_intersection_new(Xt_int num_src_intersections,
   // the source processes
   if (check_destination_coverage(xmap->in_msg, xmap->n_in,
                                  xt_idxlist_get_num_indices(dst_idxlist), comm))
-    Xt_abort(comm, "ERROR: destination intersections do not match with"
+    Xt_abort(comm, "ERROR: destination intersections do not match with "
              "destination index list", __FILE__, __LINE__);
 
   return (Xt_xmap)xmap;
