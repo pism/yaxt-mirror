@@ -217,8 +217,8 @@ void xt_redist_delete_f(struct xt_redist_f *redist_f) {
   redist_f->cptr = NULL;
 }
 
-void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void **src_data, void **dst_data) {
-  xt_redist_s_exchange(redist_f->cptr, src_data, 1, dst_data, 1);
+void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void *src_data, void *dst_data) {
+  xt_redist_s_exchange1(redist_f->cptr, src_data, dst_data);
 }
 
 Xt_idxlist xt_idxmod_new_f(struct xt_idxlist_f *patch_idxlist_f,

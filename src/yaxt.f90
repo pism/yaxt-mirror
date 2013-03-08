@@ -130,8 +130,8 @@ MODULE yaxt
          BIND(C, name='xt_redist_s_exchange1_f')
       IMPORT:: xt_redist, c_ptr
       TYPE(xt_redist), INTENT(in) :: redist
-      TYPE(c_ptr), INTENT(in) :: src_data_cptr
-      TYPE(c_ptr), INTENT(in) :: dst_data_cptr
+      TYPE(c_ptr), VALUE :: src_data_cptr
+      TYPE(c_ptr), VALUE :: dst_data_cptr
     END SUBROUTINE xt_redist_s_exchange1
   END INTERFACE
 
