@@ -1,2 +1,3 @@
 #! @SHELL@
-@MPI_LAUNCH@ -n 1 ./test_xmap_all2all_fail >/dev/null 2>&1
+@MPI_LAUNCH@ -n 1 ./test_xmap_all2all_fail >/dev/null 2>&1 \
+  || @MPI_LAUNCH@ -n 1 ./test_xmap_all2all_fail_f >/dev/null 2>&1

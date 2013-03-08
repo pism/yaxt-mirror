@@ -56,6 +56,7 @@ noinst_PROGRAMS = 						\
 	test_xmap_all2all					\
 	test_xmap_all2all_f					\
 	test_xmap_all2all_fail					\
+	test_xmap_all2all_fail_f				\
 	test_xmap_all2all_parallel				\
 	test_xmap_dist_dir					\
 	test_xmap_dist_dir_parallel				\
@@ -101,6 +102,8 @@ test_xmap_all2all_SOURCES = test_xmap_all2all.c tests.h
 test_xmap_all2all_f_SOURCES = test_xmap_all2all_f.f90
 test_xmap_all2all_f_LDADD = $(XT_FC_LDADD)
 test_xmap_all2all_fail_SOURCES = test_xmap_all2all_fail.c tests.h
+test_xmap_all2all_fail_f_SOURCES = test_xmap_all2all_fail_f.f90
+test_xmap_all2all_fail_f_LDADD = $(XT_FC_LDADD)
 test_xmap_all2all_parallel_SOURCES = test_xmap_all2all_parallel.c tests.h
 test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c tests.h
 test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
