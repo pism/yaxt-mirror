@@ -3,13 +3,13 @@
 # sunf95preproc-wrapper --- wrapper to produce Sun F95 style front-end
 #                           preprocessor output on stdout
 #
-# Copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
+# Copyright  (C)  2010, 2012  Thomas Jahns <jahns@dkrz.de>
 #
 # Version: 1.0
 # Keywords:
 # Author: Thomas Jahns <jahns@dkrz.de>
 # Maintainer: Thomas Jahns <jahns@dkrz.de>
-# URL: https://www.dkrz.de/redmine/projects/show/scales-ppm
+# URL: https://www.dkrz.de/redmine/projects/scales-ppm
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are  permitted provided that the following conditions are
@@ -51,14 +51,13 @@ else
   outputRedir=">/dev/null 2>&1"
 fi
 while echo "$1" | grep '^-' >/dev/null 2>&1; do
-  FPPFLAGS="${FPPFLAGS+${FPPFLAGS} }$1"
+  FPPFLAGS="${FPPFLAGS+${FPPFLAGS} }\"$1\""
   shift
 done
 TRAPCMD=':'
 trap 'eval $TRAPCMD' 0
 set -e
 test "${DEBUG+set}" = set && echo "$FPPFLAGS" >&2
-FCFLAGS=${FCFLAGS--EP}
 if [ "${FC+set}" != set ]; then
   for F90C in sunf95 '' ; do
     test -n "$F90C" || exit 1
@@ -69,6 +68,9 @@ if [ "${FC+set}" != set ]; then
   done
 fi
 FC=${FC-$F90C}
+# nagfor 5.3 up chokes on -EP flag
+nag=`$FC -V 2>&1 | sed -n '/^NAG/s/NAG Fortran Compiler.*/NAG/;t print;b;: print; p'`
+[ x"$nag" = xNAG ] || FCFLAGS=${FCFLAGS--EP}
 # append -fpp if necessary
 IFStr=`echo "$IFS" | sed -n '$!s/$/\\\\n/
 H
@@ -107,7 +109,7 @@ s:\.F90:.f90:'`
     fi
   done
   set +e
-  eval \$FC \$FCFLAGS -F \$FPPFLAGS \"\$tmp/\$fppInput\" $outputRedir
+  eval \$FC \$FCFLAGS -F $FPPFLAGS \"\$tmp/\$fppInput\" $outputRedir
   set -e
   grep -v '^#' "$fppOutput"
   test "${DEBUG+set}" = set && cat "$fppOutput" >&2
@@ -121,6 +123,6 @@ s:\.F90:.f90:'`
 done
 #
 # Local Variables:
-# license-project-url: "https://www.dkrz.de/redmine/projects/show/scales-ppm"
+# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"
 # End:
