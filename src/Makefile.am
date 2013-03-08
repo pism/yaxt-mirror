@@ -34,7 +34,7 @@
 #
 
 AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
-AM_FCFLAGS  = $(MPI_FC_INCLUDE)
+AM_FCFLAGS  = $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
 lib_LTLIBRARIES = libyaxt.la
 
 # headers from subdir xt will be installed (after substituting
