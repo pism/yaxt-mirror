@@ -61,6 +61,7 @@
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_redist_p2p.h"
 #include "xt/xt_idxmod.h"
+#include "xt/xt_redist_collection_static.h"
 
 struct xt_idxlist_f {
    Xt_idxlist cptr;
@@ -219,6 +220,27 @@ void xt_redist_delete_f(struct xt_redist_f *redist_f) {
 
 void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void *src_data, void *dst_data) {
   xt_redist_s_exchange1(redist_f->cptr, src_data, dst_data);
+}
+
+Xt_redist
+xt_redist_collection_static_new_f(struct xt_redist_f *redists_f, MPI_Fint num_redists,
+                                  MPI_Aint *src_displacements,
+                                  MPI_Aint *dst_displacements,
+                                  MPI_Fint comm_f) {
+  assert(sizeof (MPI_Fint) <= sizeof (unsigned));
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  if (num_redists < 1)
+    Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
+
+  Xt_redist redists_c[num_redists];
+  for (int i=0; i < num_redists; i++) {
+    redists_c[i] = redists_f[i].cptr;
+  }
+
+  return xt_redist_collection_static_new(redists_c, (unsigned) num_redists,
+                                         src_displacements,
+                                         dst_displacements,
+                                         comm_c);
 }
 
 Xt_idxlist xt_idxmod_new_f(struct xt_idxlist_f *patch_idxlist_f,

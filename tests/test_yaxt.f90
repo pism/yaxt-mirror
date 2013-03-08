@@ -54,7 +54,7 @@ PROGRAM test_yaxt
        &          xt_initialize, xt_finalize, xt_idxlist_get_num_indices, &
        &          xt_idxlist_get_indices, xt_modifier, xt_idxmod_new, &
        xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind, &
-       xt_idxfsection_new
+       xt_idxfsection_new, xt_redist_collection_static_new
   USE ftest_common, ONLY: test_abort, icmp, id_map, factorize, regular_deco, &
        finish_mpi
   USE iso_c_binding, ONLY: c_loc, c_int
@@ -124,6 +124,8 @@ PROGRAM test_yaxt
 
   CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
 
+  CALL check_redist_collection_static
+
   ! define positions of surface elements within (i,k,j) array
   CALL gen_id_pos(id_pos)
   CALL gen_id_pos(pos3d_surf)
@@ -152,6 +154,40 @@ PROGRAM test_yaxt
   CALL finish_mpi
 
 CONTAINS
+
+  SUBROUTINE check_redist_collection_static
+    INTEGER, PARAMETER :: nr = 2
+    TYPE(xt_redist) :: rvec(nr), rcol
+    INTEGER, TARGET :: f(ie,je,nr), g(ie,je,nr), ref_g(ie,je,nr)
+    INTEGER(mpi_address_kind) :: f_addr(nr), g_addr(nr)
+    INTEGER(mpi_address_kind) :: f_disp(nr), g_disp(nr)
+
+    INTEGER :: ir, ierror
+    rvec(:) = redist_tpex
+    DO ir = 1, nr
+      CALL MPI_GET_ADDRESS(f(1,1,ir), f_addr(ir), ierror)
+      IF (ierror /= MPI_SUCCESS) CALL my_abort('MPI_GET_ADDRESS failed', __LINE__)
+      CALL MPI_GET_ADDRESS(g(1,1,ir), g_addr(ir), ierror)
+      IF (ierror /= MPI_SUCCESS) CALL my_abort('MPI_GET_ADDRESS failed', __LINE__)
+      f_disp(ir) = f_addr(ir) - f_addr(1)
+      g_disp(ir) = g_addr(ir) - g_addr(1)
+    ENDDO
+
+    rcol = xt_redist_collection_static_new(rvec, nr, f_disp, g_disp, MPI_COMM_WORLD)
+    DO ir = 1, nr
+      f(:,:,ir) = INT(loc_id) + (ir-1) * ie*je
+    ENDDO
+
+    ref_g = 0
+    DO ir = 1, nr
+      CALL xt_redist_s_exchange1(rvec(ir), C_LOC(f(1,1,ir)), C_LOC(ref_g(1,1,ir)));
+    ENDDO
+
+    g = 0
+    CALL xt_redist_s_exchange1(rcol, C_LOC(f), C_LOC(g))
+    IF (ANY(g /= ref_g)) CALL my_abort('(g /= ref_g)', __LINE__)
+
+  END SUBROUTINE check_redist_collection_static
 
   SUBROUTINE check_modifiers()
     TYPE(xt_modifier) :: m_tpex(5)

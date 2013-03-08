@@ -72,6 +72,7 @@ MODULE yaxt
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_xmap_all2all_new
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
+  USE mpi, ONLY: mpi_address_kind
 
   IMPLICIT NONE
 
@@ -99,7 +100,7 @@ MODULE yaxt
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        &    xt_redist_delete, &
        &    xt_redist_s_exchange1, &
-       xt_idxempty_new, &
+       xt_idxempty_new, xt_redist_collection_static_new, &
        OPERATOR(==), OPERATOR(/=), char
 
   INTERFACE OPERATOR(==)
@@ -351,5 +352,34 @@ CONTAINS
     ENDIF
 
   END FUNCTION xt_idxmod_new
+
+  FUNCTION xt_redist_collection_static_new(redists, num_redists, &
+       src_displacements, dst_displacements, comm) RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redists(*)
+    INTEGER, INTENT(in) :: num_redists, comm
+    INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*)
+    INTEGER(mpi_address_kind), INTENT(in) :: dst_displacements(*)
+    TYPE(xt_redist) :: res
+
+    INTERFACE
+      FUNCTION xt_redist_collection_static_new_f(redists_f, num_redists, &
+           src_displacements, dst_displacements, comm_f) &
+           BIND(C, name='xt_redist_collection_static_new_f') RESULT(res)
+        IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
+
+        IMPLICIT NONE
+        TYPE(xt_redist), INTENT(in) :: redists_f(*)
+        INTEGER(xt_mpi_fint_kind), VALUE :: num_redists
+        INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*)
+        INTEGER(mpi_address_kind), INTENT(in) :: dst_displacements(*)
+        INTEGER(xt_mpi_fint_kind), VALUE :: comm_f
+        TYPE(c_ptr) :: res
+      END FUNCTION xt_redist_collection_static_new_f
+    END INTERFACE
+
+    res = xt_redist_c2f( xt_redist_collection_static_new_f(redists, num_redists, &
+         src_displacements, dst_displacements, comm) )
+
+  END FUNCTION xt_redist_collection_static_new
 
 END MODULE yaxt
