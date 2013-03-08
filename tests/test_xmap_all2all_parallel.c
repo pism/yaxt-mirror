@@ -91,7 +91,7 @@ int main(void) {
       PUT_ERR("error in xt_xmap_get_num_destinations\n");
 
     if (xt_xmap_get_num_sources(xmap) != comm_size)
-      PUT_ERR("error in xt_xmap_get_num_destinations\n");
+      PUT_ERR("error in xt_xmap_get_num_sources\n");
 
     int ranks[comm_size];
 
@@ -103,7 +103,7 @@ int main(void) {
     xt_xmap_get_source_ranks(xmap, ranks);
     for (int i = 0; i < comm_size; ++i)
       if (ranks[i] != i)
-        PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+        PUT_ERR("error in xt_xmap_get_source_ranks\n");
 
     // clean up
     xt_xmap_delete(xmap);
@@ -146,7 +146,7 @@ int main(void) {
       PUT_ERR("error in xt_xmap_get_num_destinations\n");
 
     if (xt_xmap_get_num_sources(xmap) != 2)
-      PUT_ERR("error in xt_xmap_get_num_destinations\n");
+      PUT_ERR("error in xt_xmap_get_num_sources\n");
 
     int ranks[2];
 
