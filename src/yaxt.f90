@@ -70,7 +70,7 @@ MODULE yaxt
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
-       xt_xmap_all2all_new
+       xt_xmap_all2all_new, xt_xmap_dist_dir_new
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
   USE xt_mpi, ONLY: mpi_address_kind
 
@@ -94,7 +94,7 @@ MODULE yaxt
        xt_idxmod_new, xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        xt_xmap_all2all_new, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
-       xt_xmap_get_source_ranks, &
+       xt_xmap_get_source_ranks, xt_xmap_dist_dir_new, &
        xt_redist, xt_redist_f2c, xt_redist_c2f, &
        xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &

@@ -58,6 +58,7 @@
 #include "xt/xt_idxvec.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_xmap_all2all.h"
+#include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_redist_p2p.h"
 #include "xt/xt_idxmod.h"
@@ -158,6 +159,13 @@ Xt_xmap xt_xmap_all2all_new_f(struct xt_idxlist_f *src_idxlist_f,
                               MPI_Fint comm_f) {
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   return xt_xmap_all2all_new(src_idxlist_f->cptr, dst_idxlist_f->cptr, comm_c);
+}
+
+Xt_xmap xt_xmap_dist_dir_new_f(struct xt_idxlist_f *src_idxlist_f,
+                               struct xt_idxlist_f *dst_idxlist_f,
+                               MPI_Fint comm_f) {
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  return xt_xmap_dist_dir_new(src_idxlist_f->cptr, dst_idxlist_f->cptr, comm_c);
 }
 
 void xt_xmap_delete_f(struct xt_xmap_f *xmap_f) {

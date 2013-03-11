@@ -55,7 +55,7 @@ MODULE xt_xmap_abstract
   PUBLIC :: xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks
-  PUBLIC :: xt_xmap_all2all_new
+  PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new
 
   ! note: this type must not be extended to contain any other
   ! components, its memory pattern has to match void * exactly, which
@@ -110,6 +110,28 @@ CONTAINS
 
     res = xt_xmap_c2f(xt_xmap_all2all_new_f(src_idxlist, dst_idxlist, comm))
   END FUNCTION xt_xmap_all2all_new
+
+  FUNCTION xt_xmap_dist_dir_new(src_idxlist, dst_idxlist, comm) RESULT(res)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+    TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+    INTEGER, VALUE, INTENT(in) :: comm
+    TYPE(xt_xmap) :: res
+
+    INTERFACE
+      FUNCTION xt_xmap_dist_dir_new_f(src_idxlist, dst_idxlist, comm) &
+           BIND(C, name='xt_xmap_dist_dir_new_f') RESULT(res_ptr)
+        IMPORT :: xt_idxlist, xt_xmap, xt_mpi_fint_kind, c_ptr
+        IMPLICIT NONE
+        TYPE(Xt_idxlist), INTENT(in) :: src_idxlist
+        TYPE(Xt_idxlist), INTENT(in) :: dst_idxlist
+        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm
+        TYPE(c_ptr) :: res_ptr
+      END FUNCTION xt_xmap_dist_dir_new_f
+    END INTERFACE
+
+    res = xt_xmap_c2f(xt_xmap_dist_dir_new_f(src_idxlist, dst_idxlist, comm))
+  END FUNCTION xt_xmap_dist_dir_new
 
   FUNCTION xt_xmap_get_num_destinations(xmap) RESULT(num)
     TYPE(xt_xmap), INTENT(in) :: xmap

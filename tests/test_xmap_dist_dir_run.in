@@ -1,2 +1,3 @@
 #! @SHELL@
 @MPI_LAUNCH@ -n 1 ./test_xmap_dist_dir
+@MPI_LAUNCH@ -n 1 ./test_xmap_dist_dir_f
