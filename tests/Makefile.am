@@ -73,7 +73,8 @@ noinst_PROGRAMS = 						\
 noinst_LIBRARIES = libtestutil.a
 
 libtestutil_a_SOURCES = tests.c ftest_common.f90 \
-	test_idxlist_utils.c test_idxlist_utils_f.f90
+	test_idxlist_utils.c test_idxlist_utils_f.f90 \
+	test_xmap_common.c test_xmap_common.h test_xmap_common_f.f90
 
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxempty_f_SOURCES = test_idxempty_f.f90
@@ -100,7 +101,7 @@ test_redist_collection_static_parallel_SOURCES = \
 	test_redist_collection_static_parallel.c tests.h
 test_redist_p2p_SOURCES = test_redist_p2p.c tests.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c tests.h
-test_xmap_all2all_SOURCES = test_xmap_all2all.c tests.h
+test_xmap_all2all_SOURCES = test_xmap_all2all.c test_xmap_common.h
 test_xmap_all2all_f_SOURCES = test_xmap_all2all_f.f90
 test_xmap_all2all_f_LDADD = $(XT_FC_LDADD)
 test_xmap_all2all_fail_SOURCES = test_xmap_all2all_fail.c tests.h
@@ -109,7 +110,7 @@ test_xmap_all2all_fail_f_LDADD = $(XT_FC_LDADD)
 test_xmap_all2all_parallel_SOURCES = test_xmap_all2all_parallel.c tests.h
 test_xmap_all2all_parallel_f_SOURCES = test_xmap_all2all_parallel_f.f90
 test_xmap_all2all_parallel_f_LDADD = $(XT_FC_LDADD)
-test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c tests.h
+test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c test_xmap_common.h
 test_xmap_dist_dir_f_SOURCES = test_xmap_dist_dir_f.f90
 test_xmap_dist_dir_f_LDADD = $(XT_FC_LDADD)
 test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
