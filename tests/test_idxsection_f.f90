@@ -51,10 +51,10 @@ PROGRAM test_idxsection
        xt_idxlist_get_intersection, xt_idxlist_get_positions_of_indices, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_indices_const, &
        xt_idxlist_get_bounding_box, &
-       xt_idxsection_new, xt_idxvec_new, char, OPERATOR(/=), OPERATOR(==)
+       xt_idxsection_new, xt_idxvec_new, OPERATOR(/=), OPERATOR(==)
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, check_stripes, &
-       check_offsets, idxlist_pack_unpack_copy
+       idxlist_pack_unpack_copy
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
 
@@ -339,7 +339,7 @@ CONTAINS
          = (/ 2*0 + 0, 1*0 - 1, 5*0 - 1, 7*0 + 3, 6*0 + 2, 7*0 + 3, 7*0 + 3, &
          &    6*0 + 2, 8*0 - 1 /)
     INTEGER :: positions(num_selection), num_found, i, p
-    LOGICAL :: found
+    LOGICAL :: notfound
     TYPE(xt_idxlist) :: idxsection
     idxsection = xt_idxsection_new(start, n, global_size, local_size, &
          local_start)
@@ -356,8 +356,9 @@ CONTAINS
          __FILE__, &
          __LINE__)
     DO i = 1, num_selection
-      found = xt_idxlist_get_position_of_index(idxsection, selection(i), p)
-      IF (p /= ref_positions(i)) &
+      notfound = xt_idxlist_get_position_of_index(idxsection, selection(i), p)
+      IF (p /= ref_positions(i) &
+           .OR. (notfound .AND. ref_positions(i) /= -1)) &
            CALL test_abort("xt_idxlist_get_position_of_index &
            &returned incorrect position", &
            __FILE__, &
