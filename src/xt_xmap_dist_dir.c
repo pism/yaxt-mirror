@@ -53,6 +53,7 @@
 #include "xt/xt_idxlist_collection.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
+#include "xt/xt_idxempty.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_mpi.h"
@@ -101,22 +102,26 @@ get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
 
 static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  Xt_int a_min_index, b_min_index;
-
-  a_min_index = xt_idxlist_get_min_index(a);
-  b_min_index = xt_idxlist_get_min_index(b);
-
-  return MIN(a_min_index, b_min_index);
+  Xt_int num_a, num_b = xt_idxlist_get_num_indices(b), min_index;
+  if ((num_a = xt_idxlist_get_num_indices(a)) && num_b)
+    min_index = MIN(xt_idxlist_get_min_index(a), xt_idxlist_get_min_index(b));
+  else if (num_a)
+    min_index = xt_idxlist_get_min_index(a);
+  else
+    min_index = xt_idxlist_get_min_index(b);
+  return min_index;
 }
 
 static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  Xt_int a_max_index, b_max_index;
-
-  a_max_index = xt_idxlist_get_max_index(a);
-  b_max_index = xt_idxlist_get_max_index(b);
-
-  return MAX(a_max_index, b_max_index);
+  Xt_int num_a, num_b = xt_idxlist_get_num_indices(b), max_index;
+  if ((num_a = xt_idxlist_get_num_indices(a)) && num_b)
+    max_index = MAX(xt_idxlist_get_max_index(a), xt_idxlist_get_max_index(b));
+  else if (num_a)
+    max_index = xt_idxlist_get_max_index(a);
+  else
+    max_index = xt_idxlist_get_max_index(b);
+  return max_index;
 }
 
 static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
@@ -127,44 +132,56 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
 
   Xt_int global_interval, local_interval;
   global_interval = get_dist_dir_global_interval_size(src_idxlist, comm);
+
   local_interval  = global_interval / comm_size;
 
-  Xt_int local_index_range_lbound
-    = get_min_idxlist_index(src_idxlist, dst_idxlist);
-  Xt_int local_index_range_ubound
-    = get_max_idxlist_index(src_idxlist, dst_idxlist);
+  Xt_int num_src = xt_idxlist_get_num_indices(src_idxlist),
+    num_dst = xt_idxlist_get_num_indices(dst_idxlist);
 
-  struct Xt_stripe * stripes = NULL;
-  size_t stripes_array_size = 0;
+  if (num_src || num_dst)
+  {
+    Xt_int local_index_range_lbound
+      = get_min_idxlist_index(src_idxlist, dst_idxlist);
+    Xt_int local_index_range_ubound
+      = get_max_idxlist_index(src_idxlist, dst_idxlist);
 
-  // generate buckets for each process
-  for (int i = 0; i < comm_size; ++i) {
+    struct Xt_stripe * stripes = NULL;
+    size_t stripes_array_size = 0;
 
-    Xt_int start = 0 + i * local_interval;
-    Xt_int num_stripes = 0;
+    // generate buckets for each process
+    for (int i = 0; i < comm_size; ++i) {
 
-    while (start > local_index_range_lbound)
-      start -= global_interval, num_stripes++;
+      Xt_int start = 0 + i * local_interval;
+      Xt_int num_stripes = 0;
 
-    if (local_index_range_ubound > 0)
-      num_stripes += ((local_index_range_ubound - start + global_interval)
-                      / global_interval);
-    else
-      num_stripes++;
+      while (start > local_index_range_lbound)
+        start -= global_interval, num_stripes++;
 
-    ENSURE_ARRAY_SIZE(stripes, stripes_array_size, (size_t)num_stripes);
+      if (local_index_range_ubound > 0)
+        num_stripes += ((local_index_range_ubound - start + global_interval)
+                        / global_interval);
+      else
+        num_stripes++;
 
-    for (Xt_int j = 0; j < num_stripes; ++j) {
+      ENSURE_ARRAY_SIZE(stripes, stripes_array_size, (size_t)num_stripes);
 
-      stripes[j].start = start + j * global_interval;
-      stripes[j].stride = 1;
-      stripes[j].nstrides = local_interval;
+      for (Xt_int j = 0; j < num_stripes; ++j) {
+
+        stripes[j].start = start + j * global_interval;
+        stripes[j].stride = 1;
+        stripes[j].nstrides = local_interval;
+      }
+
+      buckets[i] = xt_idxstripes_new(stripes, num_stripes);
     }
 
-    buckets[i] = xt_idxstripes_new(stripes, num_stripes);
+    free(stripes);
   }
-
-  free(stripes);
+  else
+  {
+    for (int i = 0; i < comm_size; ++i)
+      buckets[i] = xt_idxempty_new();
+  }
 }
 
 static void
