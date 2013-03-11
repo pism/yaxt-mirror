@@ -75,7 +75,7 @@ noinst_LIBRARIES = libtestutil.a
 libtestutil_a_SOURCES = tests.c ftest_common.f90 \
 	test_idxlist_utils.c test_idxlist_utils_f.f90 \
 	test_xmap_common.c test_xmap_common.h test_xmap_common_f.f90 \
-	test_xmap_common_parallel.c
+	test_xmap_common_parallel.c test_xmap_common_parallel_f.f90
 
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxempty_f_SOURCES = test_idxempty_f.f90
