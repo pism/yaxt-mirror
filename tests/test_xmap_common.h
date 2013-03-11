@@ -56,4 +56,7 @@ typedef Xt_xmap (*xmap_constructor)(Xt_idxlist src_idxlist,
 int
 xt_xmap_self_test_main(xmap_constructor xmap_constructor);
 
+int
+xt_xmap_parallel_test_main(xmap_constructor xmap_constructor);
+
 #endif
