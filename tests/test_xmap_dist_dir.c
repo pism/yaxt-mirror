@@ -98,7 +98,7 @@ int main(void) {
         PUT_ERR("error in xt_xmap_get_num_destinations\n");
 
       if (xt_xmap_get_num_sources(xmap) != 1)
-        PUT_ERR("error in xt_xmap_get_num_destinations\n");
+        PUT_ERR("error in xt_xmap_get_num_sources\n");
 
       int rank;
 
