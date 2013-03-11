@@ -101,6 +101,7 @@ libyaxt_la_SOURCES =						\
 	mergesort.c						\
 	xt_sort.c						\
 	yaxt_f2c.c						\
+	xt_mpi_f.f90						\
 	xt_core_f.f90						\
 	xt_idxlist_f.f90					\
 	xt_idxvec_f.f90						\

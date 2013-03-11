@@ -72,7 +72,7 @@ MODULE yaxt
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_xmap_all2all_new
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
-  USE mpi, ONLY: mpi_address_kind
+  USE xt_mpi, ONLY: mpi_address_kind
 
   IMPLICIT NONE
 
