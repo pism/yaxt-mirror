@@ -101,6 +101,7 @@ MODULE yaxt
        &    xt_redist_delete, &
        &    xt_redist_s_exchange1, &
        xt_idxempty_new, xt_redist_collection_static_new, &
+       xt_redist_collection_new, &
        OPERATOR(==), OPERATOR(/=), char
 
   INTERFACE OPERATOR(==)
@@ -377,9 +378,31 @@ CONTAINS
       END FUNCTION xt_redist_collection_static_new_f
     END INTERFACE
 
-    res = xt_redist_c2f( xt_redist_collection_static_new_f(redists, num_redists, &
-         src_displacements, dst_displacements, comm) )
+    res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
+         num_redists, src_displacements, dst_displacements, comm))
 
   END FUNCTION xt_redist_collection_static_new
+
+  FUNCTION xt_redist_collection_new(redists, num_redists, cache_size, comm) &
+       RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redists(*)
+    INTEGER, INTENT(in) :: num_redists, cache_size, comm
+    TYPE(xt_redist) :: res
+
+    INTERFACE
+      FUNCTION xt_redist_collection_new_f(redists_f, num_redists, cache_size, &
+           comm_f) BIND(C, name='xt_redist_collection_new_f') RESULT(res)
+        IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
+        IMPLICIT NONE
+        TYPE(xt_redist), INTENT(in) :: redists_f(*)
+        INTEGER(xt_mpi_fint_kind), VALUE :: num_redists, cache_size, comm_f
+        TYPE(c_ptr) :: res
+      END FUNCTION xt_redist_collection_new_f
+    END INTERFACE
+
+    res = xt_redist_c2f(xt_redist_collection_new_f(redists, num_redists, &
+         cache_size, comm))
+
+  END FUNCTION xt_redist_collection_new
 
 END MODULE yaxt
