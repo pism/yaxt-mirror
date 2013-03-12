@@ -523,12 +523,13 @@ redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank)) {
 }
 
 static void
-redist_collection_s_exchange1(Xt_redist redist, void *XT_UNUSED(src_data),
-                              void *XT_UNUSED(dst_data))
+redist_collection_s_exchange1(Xt_redist redist, void *src_data, void *dst_data)
 {
 
   Xt_redist_collection redist_coll = xrc(redist);
-
-  Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
-           " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
+  if (redist_coll->num_redists == 1U)
+    redist_collection_s_exchange(redist, &src_data, 1U, &dst_data, 1U);
+  else
+    Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
+             " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
 }
