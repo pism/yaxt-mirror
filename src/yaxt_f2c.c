@@ -227,10 +227,6 @@ void xt_redist_delete_f(struct xt_redist_f *redist_f) {
   redist_f->cptr = NULL;
 }
 
-void xt_redist_s_exchange1_f(struct xt_redist_f *redist_f, void *src_data, void *dst_data) {
-  xt_redist_s_exchange1(redist_f->cptr, src_data, dst_data);
-}
-
 Xt_redist
 xt_redist_collection_static_new_f(Xt_redist *redists, MPI_Fint num_redists,
                                   MPI_Aint *src_displacements,
@@ -279,3 +275,11 @@ Xt_idxlist xt_idxmod_new_f(struct xt_idxlist_f *patch_idxlist_f,
   return xt_idxmod_new(patch_idxlist, modifier,
                        modifier_num, mstate);
 }
+
+static void
+xt_slice_c_loc_f2c(void *a, void *p)
+{
+  *(void **)p = a;
+}
+
+FCALLSCSUB2(xt_slice_c_loc_f2c,XT_SLICE_C_LOC,xt_slice_c_loc,PVOID,PVOID)

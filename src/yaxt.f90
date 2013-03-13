@@ -99,9 +99,9 @@ MODULE yaxt
        xt_redist_p2p_off_new, xt_redist_p2p_new, &
        &    xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        &    xt_redist_delete, &
-       &    xt_redist_s_exchange1, &
+       &    xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_idxempty_new, xt_redist_collection_static_new, &
-       xt_redist_collection_new, &
+       xt_redist_collection_new, xt_slice_c_loc, &
        OPERATOR(==), OPERATOR(/=), char
 
   INTERFACE OPERATOR(==)
@@ -128,19 +128,11 @@ MODULE yaxt
   END INTERFACE
 
   INTERFACE
-    SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr) &
-         BIND(C, name='xt_redist_s_exchange1_f')
-      IMPORT:: xt_redist, c_ptr
-      TYPE(xt_redist), INTENT(in) :: redist
-      TYPE(c_ptr), VALUE :: src_data_cptr
-      TYPE(c_ptr), VALUE :: dst_data_cptr
-    END SUBROUTINE xt_redist_s_exchange1
-  END INTERFACE
-
-  INTERFACE
     SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
     END SUBROUTINE xt_finalize
   END INTERFACE
+
+  EXTERNAL :: xt_slice_c_loc
 
 CONTAINS
 
@@ -405,4 +397,41 @@ CONTAINS
 
   END FUNCTION xt_redist_collection_new
 
+  SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr)
+    TYPE(xt_redist), INTENT(in) :: redist
+    TYPE(c_ptr) :: src_data_cptr, dst_data_cptr
+    INTERFACE
+      SUBROUTINE xt_redist_s_exchange1_c(redist, src_data_cptr, dst_data_cptr) &
+           BIND(C, name='xt_redist_s_exchange1')
+        IMPORT:: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: redist
+        TYPE(c_ptr), VALUE :: src_data_cptr, dst_data_cptr
+      END SUBROUTINE xt_redist_s_exchange1_c
+    END INTERFACE
+    CALL xt_redist_s_exchange1_c(xt_redist_f2c(redist), src_data_cptr, &
+         dst_data_cptr)
+  END SUBROUTINE xt_redist_s_exchange1
+
+  SUBROUTINE xt_redist_s_exchange(redist, src_data_cptr, num_src_ptr, &
+       dst_data_cptr, num_dst_ptr)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, INTENT(in) :: num_src_ptr, num_dst_ptr
+    TYPE(c_ptr) :: src_data_cptr(num_src_ptr), dst_data_cptr(num_dst_ptr)
+    INTERFACE
+      SUBROUTINE xt_redist_s_exchange_c(redist, src_data_cptr, num_src_ptr, &
+           dst_data_cptr, num_dst_ptr) &
+           BIND(C, name='xt_redist_s_exchange')
+        IMPORT:: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(in) :: redist
+        INTEGER(c_int), VALUE, INTENT(in) :: num_src_ptr, num_dst_ptr
+        TYPE(c_ptr) :: src_data_cptr(num_src_ptr), dst_data_cptr(num_dst_ptr)
+      END SUBROUTINE xt_redist_s_exchange_c
+    END INTERFACE
+    IF (num_src_ptr < 0 .OR. num_dst_ptr < 0) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), src_data_cptr, &
+         INT(num_src_ptr, c_int), dst_data_cptr, INT(num_dst_ptr, c_int))
+  END SUBROUTINE xt_redist_s_exchange
 END MODULE yaxt

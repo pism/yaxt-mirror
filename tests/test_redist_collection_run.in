@@ -1,2 +1,4 @@
 #! @SHELL@
+set -e
 @MPI_LAUNCH@ -n 1 ./test_redist_collection
+@MPI_LAUNCH@ -n 1 ./test_redist_collection_f
