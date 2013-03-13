@@ -112,7 +112,7 @@ CONTAINS
     src_index_list(1) = INT(comm_rank, xi)
     src_idxlist = xt_idxvec_new(src_index_list)
 
-    comm_rank_stripe(1) = xt_stripe(0, comm_size, 1)
+    comm_rank_stripe(1) = xt_stripe(0, INT(comm_size, xi), 1)
     dst_idxlist = xt_idxstripes_new(comm_rank_stripe)
 
     xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)
@@ -132,13 +132,13 @@ CONTAINS
     ALLOCATE(ranks(comm_size))
 
     CALL xt_xmap_get_destination_ranks(xmap, ranks)
-    IF (ANY(ranks /= (/ (i, i=0,comm_size-1) /))) &
+    IF (ANY(ranks /= (/ (i, i=0,INT(comm_size-1, xi)) /))) &
          CALL test_abort("error in xt_xmap_get_destination_ranks", &
          __FILE__, &
          __LINE__)
 
     CALL xt_xmap_get_source_ranks(xmap, ranks)
-    IF (ANY(ranks /= (/ (i, i=0,comm_size-1) /))) &
+    IF (ANY(ranks /= (/ (i, i=0,INT(comm_size-1, xi)) /))) &
          CALL test_abort("error in xt_xmap_get_source_ranks", &
          __FILE__, &
          __LINE__)
