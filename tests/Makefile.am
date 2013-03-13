@@ -194,3 +194,6 @@ EXTRA_DIST = core
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@
+
+clean-local:
+	-rm -f *.$(FCMODEXT)
