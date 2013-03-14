@@ -107,4 +107,11 @@ MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank);
  */
 MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 
+/**
+ * returns a MPI communicator, which the redistribution is based on
+ * @param[in] redist redistribution structure
+ * \return MPI communicator, which the redistribution is based on
+ */
+MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist);
+
 #endif // XT_REDIST_H

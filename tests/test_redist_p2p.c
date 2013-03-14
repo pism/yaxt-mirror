@@ -52,6 +52,8 @@
 
 #include "tests.h"
 
+static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+
 int main(void) {
 
   // init mpi
@@ -89,6 +91,11 @@ int main(void) {
     Xt_redist redist;
 
     redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
 
@@ -152,6 +159,11 @@ int main(void) {
     Xt_redist redist;
     redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
 
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
     // test exchange
 
     const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
@@ -212,6 +224,11 @@ int main(void) {
                               sizeof (dst_pos)/sizeof (dst_pos[0]), dst_pos,
                               MPI_LONG);
 
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
     // test exchange
 
     const long src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
@@ -243,4 +260,13 @@ int main(void) {
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
+}
+
+static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
+
+  int result;
+
+  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
+
+  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }

@@ -52,6 +52,8 @@
 
 #include "tests.h"
 
+static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+
 static inline int imin(int a, int b) {
   return  (((a)<(b))?(a):(b));
 }
@@ -98,6 +100,11 @@ int main(void) {
 
     // redist_p2p
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
 
@@ -162,6 +169,11 @@ int main(void) {
     Xt_redist redist;
 
     redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
 
@@ -236,6 +248,12 @@ int main(void) {
 
     // simple redist:
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_INT);
+
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
     int a_surfdata[nwin];
     int b_surfdata[nwin];
     int b_surfdata_ref[nwin];
@@ -324,6 +342,10 @@ int main(void) {
                                      src_block_offsets, src_block_sizes, nwin,
                                      dst_block_offsets, dst_block_sizes, nwin,
                                      MPI_INT);
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(block_redist), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     xt_redist_s_exchange1(block_redist, a_voldata, b_voldata);
 
@@ -339,6 +361,10 @@ int main(void) {
                                              src_block_sizes, nwin,
                                              dst_block_sizes, nwin,
                                              MPI_INT);
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(block_redist2), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     for (int i = 0; i < gvol_size; i++) {
       b_voldata[i] = -1;
@@ -365,4 +391,13 @@ int main(void) {
   MPI_Finalize();
 
  return TEST_EXIT_CODE;
+}
+
+static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
+
+  int result;
+
+  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
+
+  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }

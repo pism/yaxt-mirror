@@ -76,12 +76,16 @@ redist_p2p_get_send_MPI_Datatype(Xt_redist redist, int rank);
 static MPI_Datatype
 redist_p2p_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 
+static MPI_Comm
+redist_p2p_get_MPI_Comm(Xt_redist redist);
+
 static const struct xt_redist_vtable redist_p2p_vtable = {
   .delete                = redist_p2p_delete,
   .s_exchange            = redist_p2p_s_exchange,
   .s_exchange1           = redist_p2p_s_exchange1,
   .get_send_MPI_Datatype = redist_p2p_get_send_MPI_Datatype,
-  .get_recv_MPI_Datatype = redist_p2p_get_recv_MPI_Datatype
+  .get_recv_MPI_Datatype = redist_p2p_get_recv_MPI_Datatype,
+  .get_MPI_Comm          = redist_p2p_get_MPI_Comm
 };
 
 struct Xt_redist_p2p_msg {
@@ -582,4 +586,12 @@ redist_p2p_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
     }
 
   return datatype_copy;
+}
+
+static MPI_Comm
+redist_p2p_get_MPI_Comm(Xt_redist redist) {
+
+  Xt_redist_p2p redist_p2p = xrp2p(redist);
+
+  return redist_p2p->comm;
 }

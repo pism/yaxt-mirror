@@ -61,6 +61,7 @@ struct xt_redist_vtable {
   void (*s_exchange1)(Xt_redist, void *, void *);
   MPI_Datatype (*get_send_MPI_Datatype)(Xt_redist, int);
   MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);
+  MPI_Comm (*get_MPI_Comm)(Xt_redist);
 };
 
 struct Xt_redist_ {

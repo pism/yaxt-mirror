@@ -49,6 +49,8 @@
 
 #include "tests.h"
 
+static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+
 int main(void) {
 
   // init mpi
@@ -89,6 +91,11 @@ int main(void) {
     redist_coll = xt_redist_collection_static_new(&redist, 1, src_displacements,
                                                   dst_displacements,
                                                   MPI_COMM_WORLD);
+
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist_coll), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     xt_redist_delete(redist);
 
@@ -151,6 +158,11 @@ int main(void) {
                                                   dst_displacements,
                                                   MPI_COMM_WORLD);
 
+    // test communicator of redist
+
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist_coll), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
     xt_redist_delete(redist);
 
     // test exchange
@@ -195,4 +207,13 @@ int main(void) {
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
+}
+
+static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
+
+  int result;
+
+  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
+
+  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }

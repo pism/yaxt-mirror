@@ -73,3 +73,8 @@ MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
   return redist->vtable->get_recv_MPI_Datatype(redist, rank);
 }
+
+MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
+
+  return redist->vtable->get_MPI_Comm(redist);
+}
