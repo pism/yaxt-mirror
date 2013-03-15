@@ -73,7 +73,7 @@ PROGRAM test_redist_collection
   CALL finish_mpi
 CONTAINS
   SUBROUTINE simple_test
-    ! general test WITH one redist
+    ! general test with one redist
     ! set up data
     INTEGER(xt_int_kind), PARAMETER :: src_index_list(5) &
          = (/ 1_xi, 2_xi, 3_xi, 4_xi, 5_xi /), &

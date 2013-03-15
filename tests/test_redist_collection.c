@@ -109,8 +109,7 @@ int main(void) {
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist_coll, 1U, (void**)(&src_data_p),
-                         (void**)(&dst_data_p));
+    xt_redist_s_exchange1(redist_coll, src_data_p, dst_data_p);
 
     double ref_dst_data[] = {1,3,5};
 
