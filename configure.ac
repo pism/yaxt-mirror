@@ -206,6 +206,7 @@ AC_CONFIG_FILES([						\
 	tests/test_redist_collection_static_parallel_run	\
 	tests/test_xmap_all2all_parallel_run			\
 	tests/test_xmap_dist_dir_parallel_run			\
+	tests/test_xmap_intersection_parallel_run		\
 	tests/test_idxempty_run					\
 	tests/test_idxvec_run					\
 	tests/test_idxlist_collection_run			\

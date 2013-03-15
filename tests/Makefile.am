@@ -64,6 +64,7 @@ noinst_PROGRAMS = 						\
 	test_xmap_dist_dir_f					\
 	test_xmap_dist_dir_parallel				\
 	test_xmap_dist_dir_parallel_f				\
+	test_xmap_intersection_parallel				\
 	test_ut							\
 	test_perf						\
 	test_perf_stripes					\
@@ -121,6 +122,7 @@ test_xmap_dist_dir_f_LDADD = $(XT_FC_LDADD)
 test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
 test_xmap_dist_dir_parallel_f_SOURCES = test_xmap_dist_dir_parallel_f.f90
 test_xmap_dist_dir_parallel_f_LDADD = $(XT_FC_LDADD)
+test_xmap_intersection_parallel_SOURCES = test_xmap_intersection_parallel.c tests.h
 test_handles_SOURCES = test_handles.c tests.h
 test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = $(XT_FC_LDADD)
@@ -159,6 +161,7 @@ TESTS = 							\
 	test_xmap_all2all_parallel_run				\
 	test_xmap_dist_dir_run					\
 	test_xmap_dist_dir_parallel_run				\
+	test_xmap_intersection_parallel_run			\
 	test_ut_run						\
 	test_perf_run						\
 	test_perf_stripes_run					\
