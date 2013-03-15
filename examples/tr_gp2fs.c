@@ -369,8 +369,7 @@ int main(int argc, char** argv) {
     int* dst_array_p = dst_array;
 
     //Exchange
-    xt_redist_s_exchange(redist, (void**)(&src_array_p), 1,
-                                 (void**)(&dst_array_p), 1);
+    xt_redist_s_exchange1(redist, src_array_p, dst_array_p);
 
     ret_val = check_data_against_index_list(dst_array, dst_leng, dst_idxsection);
 

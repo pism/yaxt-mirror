@@ -58,12 +58,12 @@ static void
 redist_collection_static_delete(Xt_redist redist);
 
 static void
-redist_collection_static_s_exchange(Xt_redist redist, void **src_data,
-                                    unsigned num_src_arrays, void **dst_data,
-                                    unsigned num_dst_arrays);
+redist_collection_static_s_exchange(Xt_redist redist, unsigned num_arrays,
+                                    void **src_data, void **dst_data);
 
 static void
-redist_collection_static_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
+redist_collection_static_s_exchange1(Xt_redist redist,
+                                     void *src_data, void *dst_data);
 
 static MPI_Datatype
 redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank);
@@ -257,15 +257,17 @@ xrcs(void *redist)
 
 static void
 redist_collection_static_s_exchange(Xt_redist redist,
-                                    void **XT_UNUSED(src_data),
-                                    unsigned XT_UNUSED(num_src_arrays),
-                                    void **XT_UNUSED(dst_data),
-                                    unsigned XT_UNUSED(num_dst_arrays)) {
-
+                                    unsigned num_arrays,
+                                    void **src_data,
+                                    void **dst_data)
+{
   Xt_redist_collection_static redist_coll = xrcs(redist);
-
-  Xt_abort(redist_coll->comm, "ERROR: s_exchange is not implemented for"
-           " this xt_redist type (Xt_redist_collection_static)", __FILE__, __LINE__);
+  if (num_arrays == 1U)
+    redist_collection_static_s_exchange1(redist, src_data[0], dst_data[0]);
+  else
+    Xt_abort(redist_coll->comm, "ERROR: multi-array s_exchange is not"
+             " implemented for this xt_redist type "
+             "(Xt_redist_collection_static)", __FILE__, __LINE__);
 }
 
 static void
@@ -319,7 +321,8 @@ redist_collection_static_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 }
 
 static void
-redist_collection_static_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
+redist_collection_static_s_exchange1(Xt_redist redist,
+                                     void *src_data, void *dst_data) {
 
   Xt_redist_collection_static redist_coll = xrcs(redist);
 
@@ -334,7 +337,7 @@ redist_collection_static_s_exchange1(Xt_redist redist, void *src_data, void *dst
 
   for (int i = 0; i < redist_coll->nsrc; ++i)
     xt_mpi_call(MPI_Send(src_data, 1, redist_coll->send_msgs[i].datatype,
-                             redist_coll->send_msgs[i].rank, 0, redist_coll->comm),
+                         redist_coll->send_msgs[i].rank, 0, redist_coll->comm),
                     redist_coll->comm);
 
   xt_mpi_call(MPI_Waitall(redist_coll->ndst, recv_requests,

@@ -412,26 +412,24 @@ CONTAINS
          dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange1
 
-  SUBROUTINE xt_redist_s_exchange(redist, src_data_cptr, num_src_ptr, &
-       dst_data_cptr, num_dst_ptr)
+  SUBROUTINE xt_redist_s_exchange(redist, num_ptr, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, INTENT(in) :: num_src_ptr, num_dst_ptr
-    TYPE(c_ptr) :: src_data_cptr(num_src_ptr), dst_data_cptr(num_dst_ptr)
+    INTEGER, INTENT(in) :: num_ptr
+    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     INTERFACE
-      SUBROUTINE xt_redist_s_exchange_c(redist, src_data_cptr, num_src_ptr, &
-           dst_data_cptr, num_dst_ptr) &
-           BIND(C, name='xt_redist_s_exchange')
+      SUBROUTINE xt_redist_s_exchange_c(redist, num_ptr, src_data_cptr, &
+           dst_data_cptr) BIND(C, name='xt_redist_s_exchange')
         IMPORT:: c_ptr, c_int
         TYPE(c_ptr), VALUE, INTENT(in) :: redist
-        INTEGER(c_int), VALUE, INTENT(in) :: num_src_ptr, num_dst_ptr
-        TYPE(c_ptr) :: src_data_cptr(num_src_ptr), dst_data_cptr(num_dst_ptr)
+        INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
+        TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
       END SUBROUTINE xt_redist_s_exchange_c
     END INTERFACE
-    IF (num_src_ptr < 0 .OR. num_dst_ptr < 0) &
+    IF (num_ptr < 0) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), src_data_cptr, &
-         INT(num_src_ptr, c_int), dst_data_cptr, INT(num_dst_ptr, c_int))
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+         src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange
 END MODULE yaxt

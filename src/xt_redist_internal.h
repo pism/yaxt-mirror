@@ -57,7 +57,7 @@
 struct xt_redist_vtable {
 
   void (*delete)(Xt_redist);
-  void (*s_exchange)(Xt_redist, void **, unsigned, void **, unsigned);
+  void (*s_exchange)(Xt_redist, unsigned, void **, void **);
   void (*s_exchange1)(Xt_redist, void *, void *);
   MPI_Datatype (*get_send_MPI_Datatype)(Xt_redist, int);
   MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);

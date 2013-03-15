@@ -111,8 +111,7 @@ int main(void) {
     int* dst_array_p = &dst_array[0];
 
     //Exchange
-    xt_redist_s_exchange(redist, (void**)(&src_array_p), 1,
-                         (void**)(&dst_array_p), 1);
+    xt_redist_s_exchange1(redist, src_array_p, dst_array_p);
 
     // print result
     // for emelent_index < 10, leng < 10:

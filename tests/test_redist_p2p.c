@@ -106,8 +106,8 @@ int main(void) {
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
-                         (void**)(&dst_data_p), 1);
+    xt_redist_s_exchange(redist, 1U, (void**)(&src_data_p),
+                         (void**)(&dst_data_p));
 
     double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
@@ -175,8 +175,8 @@ int main(void) {
     const double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
-                         (void**)(&dst_data_p), 1);
+    xt_redist_s_exchange(redist, 1U, (void**)(&src_data_p),
+                         (void**)(&dst_data_p));
 
     const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
@@ -239,8 +239,8 @@ int main(void) {
     const long *src_data_p = &src_data[0];
     long *dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, (void**)(&src_data_p), 1,
-                         (void**)(&dst_data_p), 1);
+    xt_redist_s_exchange(redist, 1U, (void**)(&src_data_p),
+                         (void**)(&dst_data_p));
 
     const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
 

@@ -76,9 +76,8 @@ static void
 redist_collection_delete(Xt_redist redist);
 
 static void
-redist_collection_s_exchange(Xt_redist redist, void **src_data,
-                             unsigned num_src_arrays, void **dst_data,
-                             unsigned num_dst_arrays);
+redist_collection_s_exchange(Xt_redist redist, unsigned num_src_arrays,
+                             void **src_data, void **dst_data);
 
 static void
 redist_collection_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
@@ -414,15 +413,13 @@ xrc(void *redist)
 }
 
 static void
-redist_collection_s_exchange(Xt_redist redist, void **src_data,
-                             unsigned num_src_arrays, void **dst_data,
-                             unsigned num_dst_arrays) {
+redist_collection_s_exchange(Xt_redist redist, unsigned num_arrays,
+                             void **src_data, void **dst_data) {
 
   Xt_redist_collection redist_coll = xrc(redist);
 
-  if (num_src_arrays != redist_coll->num_redists ||
-      num_dst_arrays != redist_coll->num_redists)
-    Xt_abort(redist_coll->comm, "ERROR: wrong number of array in "
+  if (num_arrays != redist_coll->num_redists)
+    Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
              "redist_collection_s_exchange", __FILE__, __LINE__);
 
   MPI_Request * recv_requests;
@@ -446,7 +443,7 @@ redist_collection_s_exchange(Xt_redist redist, void **src_data,
 
   MPI_Datatype *dst_dt
     = get_compound_datatype(dst_data, redist_coll->recv_msgs,
-                            redist_coll->ndst, redist_coll->num_redists,
+                            redist_coll->ndst, num_arrays,
                             &redist_coll->dst_cache, cache_size,
                             temp_dt_dst, redist_coll->comm);
 
@@ -459,7 +456,7 @@ redist_collection_s_exchange(Xt_redist redist, void **src_data,
 
   MPI_Datatype *src_dt
     = get_compound_datatype(src_data, redist_coll->send_msgs,
-                            redist_coll->nsrc, redist_coll->num_redists,
+                            redist_coll->nsrc, num_arrays,
                             &redist_coll->src_cache, cache_size,
                             temp_dt_src, redist_coll->comm);
 
@@ -549,7 +546,7 @@ redist_collection_s_exchange1(Xt_redist redist, void *src_data, void *dst_data)
 
   Xt_redist_collection redist_coll = xrc(redist);
   if (redist_coll->num_redists == 1U)
-    redist_collection_s_exchange(redist, &src_data, 1U, &dst_data, 1U);
+    redist_collection_s_exchange(redist, 1U, &src_data, &dst_data);
   else
     Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
              " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);

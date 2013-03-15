@@ -131,7 +131,7 @@ CONTAINS
       CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
       CALL xt_slice_c_loc(dst_data(:, i), dst_data_p(i))
     END DO
-    CALL xt_redist_s_exchange(redist_coll, src_data_p, 3, dst_data_p, 3)
+    CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
 
     IF (ANY(ref_dst_data /= dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange", &
@@ -155,7 +155,7 @@ CONTAINS
     CALL xt_slice_c_loc(dst_data(:, 2), dst_data_p(1))
     CALL xt_slice_c_loc(dst_data(:, 1), dst_data_p(2))
     CALL xt_slice_c_loc(dst_data(:, 3), dst_data_p(3))
-    CALL xt_redist_s_exchange(redist_coll, src_data_p, 3, dst_data_p, 3)
+    CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
 
     IF (ANY(ref_dst_data /= dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange", &
@@ -274,8 +274,8 @@ CONTAINS
       CALL xt_slice_c_loc(src_data_(k:k+src_slice_len-1), src_data_p(3))
       CALL xt_slice_c_loc(dst_data_(k:k+dst_slice_len-1), dst_data_p(3))
 
-      CALL xt_redist_s_exchange(redist_coll, src_data_p, INT(num_slice), &
-           dst_data_p, INT(num_slice))
+      CALL xt_redist_s_exchange(redist_coll, INT(num_slice), src_data_p, &
+           dst_data_p)
 
       IF (ANY(ref_dst_data(:, 1:num_slice-1) /= dst_data(:, 1:2)) &
            .OR. ANY(ref_dst_data(:,3) /= dst_data_(k:k+dst_slice_len-1))) &

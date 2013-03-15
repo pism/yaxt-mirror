@@ -64,8 +64,8 @@ static void
 redist_p2p_delete(Xt_redist redist);
 
 static void
-redist_p2p_s_exchange(Xt_redist redist, void **src_data, unsigned num_src_arrays,
-                                        void **dst_data, unsigned num_dst_arrays);
+redist_p2p_s_exchange(Xt_redist redist, unsigned num_arrays,
+                      void **src_data, void **dst_data);
 
 static void
 redist_p2p_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
@@ -519,12 +519,10 @@ redist_p2p_delete(Xt_redist redist) {
 }
 
 static void
-redist_p2p_s_exchange(Xt_redist redist, void **src_data,
-                      unsigned num_src_arrays,
-                      void **dst_data, unsigned num_dst_arrays) {
-
-  assert(num_src_arrays == 1 && num_dst_arrays == 1);
-
+redist_p2p_s_exchange(Xt_redist redist, unsigned num_arrays,
+                      void **src_data, void **dst_data)
+{
+  assert(num_arrays == 1);
   redist_p2p_s_exchange1(redist, *src_data, *dst_data);
 }
 
