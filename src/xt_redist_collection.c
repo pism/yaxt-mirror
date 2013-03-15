@@ -211,7 +211,7 @@ static void check_comms(Xt_redist * redists, unsigned num_redists,
 
   int result;
 
-  for (int i = 0; i < num_redists; ++i) {
+  for (unsigned i = 0; i < num_redists; ++i) {
 
     xt_mpi_call(MPI_Comm_compare(xt_redist_get_MPI_Comm(redists[i]),
                                  comm, &result), comm);
