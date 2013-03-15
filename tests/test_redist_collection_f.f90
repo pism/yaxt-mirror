@@ -75,25 +75,19 @@ CONTAINS
   SUBROUTINE simple_test
     ! general test with one redist
     ! set up data
-    INTEGER(xt_int_kind), PARAMETER :: src_index_list(5) &
-         = (/ 1_xi, 2_xi, 3_xi, 4_xi, 5_xi /), &
-         dst_index_list(3) = (/ 1_xi, 3_xi, 5_xi /)
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_coll
-    DOUBLE PRECISION, PARAMETER :: ref_dst_data(3) = (/ 1.0d0, 3.0d0, 5.0d0 /)
+    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi, &
+         dst_slice_len = 3_xi
+    DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len) &
+         = (/ 1.0d0, 3.0d0, 5.0d0 /)
     DOUBLE PRECISION, TARGET :: &
-         src_data(5) = (/ 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0 /), &
-         dst_data(3)
+         src_data(src_slice_len) = (/ 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0 /), &
+         dst_data(dst_slice_len)
 
     dst_data = -1.0d0
-    src_idxlist = xt_idxvec_new(src_index_list)
-    dst_idxlist = xt_idxvec_new(dst_index_list)
 
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
-
-    CALL xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
+    xmap = build_odd_selection_xmap(src_slice_len)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
@@ -163,26 +157,48 @@ CONTAINS
          __LINE__)
   END SUBROUTINE test_repeated_redist_ds2
 
+  ! build xmap for destination list containing all odd elements of
+  ! source list dimensioned 1 to src_slice_len
+  FUNCTION build_odd_selection_xmap(src_slice_len) RESULT(xmap)
+    INTEGER(xt_int_kind), INTENT(in) :: src_slice_len
+    TYPE(xt_xmap) :: xmap
+    INTEGER(xt_int_kind) :: i, j, dst_slice_len
+    INTEGER(xt_int_kind), PARAMETER :: dst_step = 2_xi
+    INTEGER(xt_int_kind), ALLOCATABLE :: src_index_list(:), dst_index_list(:)
+    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+
+    dst_slice_len = (src_slice_len + dst_step - 1)/dst_step
+    ALLOCATE(src_index_list(src_slice_len))
+    DO i = 1_xi, src_slice_len
+      src_index_list(i) = i
+    END DO
+    src_idxlist = xt_idxvec_new(src_index_list)
+    DEALLOCATE(src_index_list)
+    ALLOCATE(dst_index_list(dst_slice_len))
+    j = 1_xi
+    DO i = 1_xi, src_slice_len, dst_step
+      dst_index_list(j) = i
+      j = j + 1_xi
+    END DO
+    dst_idxlist = xt_idxvec_new(dst_index_list, dst_slice_len)
+    DEALLOCATE(dst_index_list)
+
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    CALL xt_idxlist_delete(src_idxlist)
+    CALL xt_idxlist_delete(dst_idxlist)
+  END FUNCTION build_odd_selection_xmap
+
   SUBROUTINE test_repeated_redist(cache_size)
     INTEGER, INTENT(in) :: cache_size
     ! test with one redist used three times (with two different input data
     ! displacements -> test of cache) (with default cache size)
     ! set up data
-    INTEGER(xt_int_kind) :: i
-    INTEGER(xt_int_kind), PARAMETER :: &
-         src_index_list(5) = (/ (i, i = 1_xi, 5_xi) /), &
-         dst_index_list(3) = (/ (i, i = 1_xi, 5_xi, 2_xi) /)
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    INTEGER, PARAMETER :: num_slice = 3
+    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redists(3), redist_coll
+    TYPE(xt_redist) :: redist, redists(num_slice), redist_coll
 
-    src_idxlist = xt_idxvec_new(src_index_list)
-    dst_idxlist = xt_idxvec_new(dst_index_list)
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
-
-    call xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
+    xmap = build_odd_selection_xmap(src_slice_len)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
@@ -212,16 +228,12 @@ CONTAINS
   SUBROUTINE test_displacement_variations
     INTEGER(xt_int_kind) :: i, j
     INTEGER, PARAMETER :: cache_size = 16
-    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi, dst_step = 2_xi
+    INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
+    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi
     INTEGER(xt_int_kind), PARAMETER :: dst_slice_len &
-         = (src_slice_len + dst_step - 1)/dst_step, num_slice = 3_xi
-    INTEGER(xt_int_kind), PARAMETER :: src_index_list(src_slice_len) &
-         = (/ (i, i = 1_xi, src_slice_len) /), &
-         dst_index_list(dst_slice_len) = &
-         (/ (i, i = 1_xi, src_slice_len, dst_step) /)
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+         = (src_slice_len + dst_step - 1)/dst_step
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redists(3), redist_coll
+    TYPE(xt_redist) :: redist, redists(num_slice), redist_coll
     DOUBLE PRECISION, TARGET, SAVE :: src_data(src_slice_len, num_slice) &
          = RESHAPE((/ (DBLE(i), i = 1_xi, src_slice_len*num_slice) /), &
          (/ src_slice_len, num_slice /))
@@ -235,14 +247,7 @@ CONTAINS
          &       (/ dst_slice_len, num_slice /))
     INTEGER :: k
 
-    src_idxlist = xt_idxvec_new(src_index_list)
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_slice_len)
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-
-    CALL xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
-
+    xmap = build_odd_selection_xmap(src_slice_len)
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
     CALL xt_xmap_delete(xmap)
