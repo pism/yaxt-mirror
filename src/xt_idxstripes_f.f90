@@ -54,6 +54,7 @@ MODULE xt_idxstripes
   PRIVATE
   PUBLIC :: xt_idxstripes_new
   INTERFACE xt_idxstripes_new
+    MODULE PROCEDURE xt_idxstripes_new_s
     MODULE PROCEDURE xt_idxstripes_new_a1d
     MODULE PROCEDURE xt_idxstripes_new_a1d_i2
     MODULE PROCEDURE xt_idxstripes_new_a1d_i4
@@ -96,6 +97,13 @@ MODULE xt_idxstripes
   END INTERFACE
 
 CONTAINS
+
+  FUNCTION xt_idxstripes_new_s(stripe) RESULT(res)
+    TYPE(xt_stripe), INTENT(in) :: stripe
+    TYPE(xt_idxlist) :: res
+
+    res = xt_idxlist_c2f(xt_idxstripes_new_c((/ stripe /), 1_xt_int_kind))
+  END FUNCTION xt_idxstripes_new_s
 
   FUNCTION xt_idxstripes_new_a1d(stripes) RESULT(res)
     TYPE(xt_stripe), INTENT(in) :: stripes(:)
