@@ -202,12 +202,12 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
 
   int * position_mask = NULL;
 
-  position_mask = xcalloc(xt_idxlist_get_num_indices(mypart_idxlist),
+  position_mask = xcalloc((size_t)xt_idxlist_get_num_indices(mypart_idxlist),
                           sizeof(*position_mask));
 
   Xt_int new_num_intersections = 0;
-  Xt_int total_num_indices_to_remove = 0;
-  Xt_int curr_indices_to_remove_size = 0;
+  size_t total_num_indices_to_remove = 0;
+  size_t curr_indices_to_remove_size = 0;
 
   for (Xt_int i = 0; i < num_intersections; ++i) {
 
@@ -220,11 +220,12 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
 
     int retval;
     retval = xt_idxlist_get_positions_of_indices(
-      mypart_idxlist, intersection_idxvec, intersection_size, intersection_pos, 1);
+      mypart_idxlist, intersection_idxvec, intersection_size,
+      intersection_pos, 1);
     assert(retval != 1);
 
-    // we have to enforce single_match_only not only within a single intersection,
-    // but also between all intersections
+    // we have to enforce single_match_only not only within a single
+    // intersection, but also between all intersections
 
     Xt_int tmp_intersection_size = 0;
     num_indices_to_remove_per_intersection[i] = 0;
@@ -246,12 +247,13 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
         ENSURE_ARRAY_SIZE(*indices_to_remove, curr_indices_to_remove_size,
                           total_num_indices_to_remove + 1);
 
-        (*indices_to_remove)[total_num_indices_to_remove++] = intersection_idxvec[j];
+        (*indices_to_remove)[total_num_indices_to_remove++]
+          = intersection_idxvec[j];
         num_indices_to_remove_per_intersection[i]++;
       }
     }
 
-    intersection_size = tmp_intersection_size; 
+    intersection_size = tmp_intersection_size;
 
     if (intersection_size > 0) {
 
@@ -268,7 +270,8 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
 
   *resCount = new_num_intersections;
   if (num_intersections != new_num_intersections)
-    *resSets = xrealloc(*resSets, (size_t)new_num_intersections * sizeof(**resSets));
+    *resSets = xrealloc(*resSets,
+                        (size_t)new_num_intersections * sizeof(**resSets));
 
   free(position_mask);
 }
@@ -291,7 +294,7 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
   Xt_int offset = 0;
 
   Xt_int * new_intersection_idxvec = NULL;
-  Xt_int curr_new_intersection_idxvec_size = 0;
+  size_t curr_new_intersection_idxvec_size = 0;
 
   for (Xt_int i = 0; i < num_intersections; ++i) {
 
@@ -304,8 +307,9 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
 
     if (num_indices_to_remove_per_intersection[i] > 0) {
 
-      ENSURE_ARRAY_SIZE(new_intersection_idxvec, curr_new_intersection_idxvec_size,
-                        intersection_size - num_indices_to_remove_per_intersection[i]);
+      ENSURE_ARRAY_SIZE(
+        new_intersection_idxvec, curr_new_intersection_idxvec_size,
+        intersection_size - num_indices_to_remove_per_intersection[i]);
       Xt_int new_intersection_size = 0;
 
       for (Xt_int j = 0; j < intersection_size; ++j) {
@@ -324,7 +328,8 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
         if (!flag) {
 
           if (new_intersection_size != j)
-            new_intersection_idxvec[new_intersection_size] = intersection_idxvec[j];
+            new_intersection_idxvec[new_intersection_size]
+              = intersection_idxvec[j];
 
           new_intersection_size++;
         }
@@ -337,7 +342,8 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
 
     int retval;
     retval = xt_idxlist_get_positions_of_indices(
-      mypart_idxlist, intersection_idxvec, intersection_size, intersection_pos, 0);
+      mypart_idxlist, intersection_idxvec, intersection_size,
+      intersection_pos, 0);
     assert(retval != 1);
 
     if (intersection_size > 0) {
@@ -357,14 +363,17 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
 
   *resCount = new_num_intersections;
   if (num_intersections != new_num_intersections)
-    *resSets = xrealloc(*resSets, (size_t)new_num_intersections * sizeof(**resSets));
+    *resSets = xrealloc(*resSets,
+                        (size_t)new_num_intersections * sizeof(**resSets));
 }
 
 static void
 exchange_points_to_remove(Xt_int num_src_intersections,
-                          const struct Xt_com_list src_com[num_src_intersections],
+                          const struct Xt_com_list
+                          src_com[num_src_intersections],
                           Xt_int num_dst_intersections,
-                          const struct Xt_com_list dst_com[num_dst_intersections],
+                          const struct Xt_com_list
+                          dst_com[num_dst_intersections],
                           Xt_int ** src_indices_to_remove,
                           Xt_int * num_src_indices_to_remove_per_intersection,
                           Xt_int * dst_indices_to_remove,
@@ -374,8 +383,9 @@ exchange_points_to_remove(Xt_int num_src_intersections,
   int const HEADER_EXCHANGE_TAG = 0;
   int const DATA_EXCHANGE_TAG = 1;
 
-  MPI_Request * requests = xmalloc((num_src_intersections + 2 * num_dst_intersections) *
-                                   sizeof(*requests));
+  MPI_Request * requests
+    = xmalloc((size_t)(num_src_intersections + 2 * num_dst_intersections) *
+              sizeof(*requests));
   MPI_Request * recv_requests = requests;
   MPI_Request * send_requests = requests + num_src_intersections;
 
@@ -410,14 +420,16 @@ exchange_points_to_remove(Xt_int num_src_intersections,
   xt_mpi_call(MPI_Waitall(num_src_intersections, recv_requests,
                           MPI_STATUSES_IGNORE), comm);
 
-  Xt_int total_num_src_indices_to_recv = 0;
+  size_t total_num_src_indices_to_recv = 0;
 
   for (Xt_int i = 0; i < num_src_intersections; ++i)
-    total_num_src_indices_to_recv += num_src_indices_to_remove_per_intersection[i];
+    total_num_src_indices_to_recv
+      += (size_t)num_src_indices_to_remove_per_intersection[i];
 
   if (total_num_src_indices_to_recv > 0) {
 
-    *src_indices_to_remove = xmalloc(total_num_src_indices_to_recv * sizeof(**src_indices_to_remove));
+    *src_indices_to_remove = xmalloc(total_num_src_indices_to_recv
+                                     * sizeof(**src_indices_to_remove));
 
     // set up receive for indices that need to be removed
     offset = 0;
@@ -443,8 +455,8 @@ exchange_points_to_remove(Xt_int num_src_intersections,
   }
 
   // wait until all communication is completed
-  xt_mpi_call(MPI_Waitall(num_src_intersections + 2 * num_dst_intersections, requests,
-                          MPI_STATUSES_IGNORE), comm);
+  xt_mpi_call(MPI_Waitall(num_src_intersections + 2 * num_dst_intersections,
+                          requests, MPI_STATUSES_IGNORE), comm);
 
   free(requests);
 }
@@ -460,30 +472,31 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
                       MPI_Comm comm) {
 
   Xt_int * num_src_indices_to_remove_per_intersection =
-    xmalloc(num_src_intersections * sizeof(*num_src_indices_to_remove_per_intersection));
+    xmalloc((size_t)num_src_intersections
+            * sizeof(*num_src_indices_to_remove_per_intersection));
   Xt_int * num_dst_indices_to_remove_per_intersection =
-    xmalloc(num_dst_intersections * sizeof(*num_dst_indices_to_remove_per_intersection));
+    xmalloc((size_t)num_dst_intersections
+            * sizeof(*num_dst_indices_to_remove_per_intersection));
   Xt_int * src_indices_to_remove = NULL, * dst_indices_to_remove = NULL;
 
-  generate_dir_transfer_pos_dst(num_dst_intersections, dst_com, dst_idxlist_local,
-                                &(xmap->n_in), &(xmap->in_msg), &dst_indices_to_remove,
-                                num_dst_indices_to_remove_per_intersection);
+  generate_dir_transfer_pos_dst(
+    num_dst_intersections, dst_com, dst_idxlist_local,
+    &(xmap->n_in), &(xmap->in_msg), &dst_indices_to_remove,
+    num_dst_indices_to_remove_per_intersection);
 
   // exchange the points that neet to be removed
-  exchange_points_to_remove(num_src_intersections, src_com,
-                            num_dst_intersections, dst_com,
-                            &src_indices_to_remove,
-                            num_src_indices_to_remove_per_intersection,
-                            dst_indices_to_remove,
-                            num_dst_indices_to_remove_per_intersection,
-                            comm);
+  exchange_points_to_remove(
+    num_src_intersections, src_com, num_dst_intersections, dst_com,
+    &src_indices_to_remove, num_src_indices_to_remove_per_intersection,
+    dst_indices_to_remove, num_dst_indices_to_remove_per_intersection, comm);
 
   free(dst_indices_to_remove);
   free(num_dst_indices_to_remove_per_intersection);
 
-  generate_dir_transfer_pos_src(num_src_intersections, src_com, src_idxlist_local,
-                                &(xmap->n_out), &(xmap->out_msg), src_indices_to_remove,
-                                num_src_indices_to_remove_per_intersection);
+  generate_dir_transfer_pos_src(
+    num_src_intersections, src_com, src_idxlist_local,
+    &(xmap->n_out), &(xmap->out_msg),
+    src_indices_to_remove, num_src_indices_to_remove_per_intersection);
 
   free(src_indices_to_remove);
   free(num_src_indices_to_remove_per_intersection);
