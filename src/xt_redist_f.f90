@@ -46,7 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_redist_base
-  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind
+  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, i2, i4, i8
   USE xt_xmap_abstract, ONLY: xt_xmap
   USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr
   USE xt_mpi, ONLY: mpi_address_kind
@@ -83,6 +83,23 @@ MODULE xt_redist_base
       IMPLICIT NONE
       TYPE(c_ptr), VALUE :: redist
     END SUBROUTINE xt_redist_delete_c
+  END INTERFACE
+
+  INTERFACE xt_redist_s_exchange
+    MODULE PROCEDURE xt_redist_s_exchange_a1d
+    MODULE PROCEDURE xt_redist_s_exchange_i2_a1d
+    MODULE PROCEDURE xt_redist_s_exchange_i4_a1d
+    MODULE PROCEDURE xt_redist_s_exchange_i8_a1d
+  END INTERFACE xt_redist_s_exchange
+
+  INTERFACE
+    SUBROUTINE xt_redist_s_exchange_c(redist, num_ptr, src_data_cptr, &
+         dst_data_cptr) BIND(C, name='xt_redist_s_exchange')
+      IMPORT:: c_ptr, c_int
+      TYPE(c_ptr), VALUE, INTENT(in) :: redist
+      INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
+      TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    END SUBROUTINE xt_redist_s_exchange_c
   END INTERFACE
 
   PUBLIC :: xt_redist_c2f, xt_redist_f2c, &
@@ -129,26 +146,60 @@ CONTAINS
          dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange1
 
-  SUBROUTINE xt_redist_s_exchange(redist, num_ptr, src_data_cptr, dst_data_cptr)
+  SUBROUTINE xt_redist_s_exchange_a1d(redist, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, INTENT(in) :: num_ptr
+    TYPE(c_ptr) :: src_data_cptr(:), dst_data_cptr(:)
+    INTEGER(c_int) :: dummy
+    INTEGER :: n
+    n = SIZE(src_data_cptr)
+    IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(dummy)) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(n, c_int), &
+         src_data_cptr, dst_data_cptr)
+  END SUBROUTINE xt_redist_s_exchange_a1d
+
+  SUBROUTINE xt_redist_s_exchange_i2_a1d(redist, num_ptr, &
+       src_data_cptr, dst_data_cptr)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i2), INTENT(in) :: num_ptr
     TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
-    INTERFACE
-      SUBROUTINE xt_redist_s_exchange_c(redist, num_ptr, src_data_cptr, &
-           dst_data_cptr) BIND(C, name='xt_redist_s_exchange')
-        IMPORT:: c_ptr, c_int
-        TYPE(c_ptr), VALUE, INTENT(in) :: redist
-        INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
-        TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
-      END SUBROUTINE xt_redist_s_exchange_c
-    END INTERFACE
-    IF (num_ptr < 0) &
+    IF (num_ptr < 0_i2) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
          src_data_cptr, dst_data_cptr)
-  END SUBROUTINE xt_redist_s_exchange
+  END SUBROUTINE xt_redist_s_exchange_i2_a1d
+
+  SUBROUTINE xt_redist_s_exchange_i4_a1d(redist, num_ptr, &
+       src_data_cptr, dst_data_cptr)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i4), INTENT(in) :: num_ptr
+    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    INTEGER(c_int) :: dummy
+    IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(dummy)) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+         src_data_cptr, dst_data_cptr)
+  END SUBROUTINE xt_redist_s_exchange_i4_a1d
+
+  SUBROUTINE xt_redist_s_exchange_i8_a1d(redist, num_ptr, &
+       src_data_cptr, dst_data_cptr)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i8), INTENT(in) :: num_ptr
+    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    INTEGER(c_int) :: dummy
+    IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(dummy)) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+         src_data_cptr, dst_data_cptr)
+  END SUBROUTINE xt_redist_s_exchange_i8_a1d
 
   FUNCTION xt_redist_p2p_new(xmap, datatype) RESULT(res)
     IMPLICIT NONE
