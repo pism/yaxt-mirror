@@ -52,8 +52,7 @@ MODULE yaxt
   !
   USE xt_core, ONLY: xt_int_kind, &
        xt_abort, xt_initialize, xt_get_default_comm, xt_stripe, xt_bounds, &
-       xt_redist, xt_redist_c2f, xt_redist_f2c, &
-       xt_mpi_fint_kind, char
+       char
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
@@ -71,6 +70,12 @@ MODULE yaxt
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_xmap_all2all_new, xt_xmap_dist_dir_new
+  USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f, xt_redist_f2c, &
+       xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
+       xt_redist_p2p_new, xt_redist_p2p_off_new, &
+       xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
+       xt_redist_collection_static_new, xt_redist_collection_new
+
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
   IMPLICIT NONE
 
@@ -115,15 +120,6 @@ MODULE yaxt
     TYPE(xt_idxlist) :: subst
     INTEGER(c_int) :: mask
   END TYPE xt_modifier
-
-  INTERFACE
-    SUBROUTINE xt_redist_delete(redist) &
-         BIND(C, name='xt_redist_delete_f')
-      IMPORT :: xt_redist
-      IMPLICIT NONE
-      TYPE(xt_redist), INTENT(inout) :: redist
-    END SUBROUTINE xt_redist_delete
-  END INTERFACE
 
   INTERFACE
     SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
@@ -174,133 +170,6 @@ CONTAINS
          INT(SIZE(idxlists), c_int)))
   END FUNCTION xt_idxlist_collection_new
 
-  FUNCTION xt_redist_p2p_blocks_off_new(xmap, src_block_offsets, &
-       src_block_sizes, src_block_num, &
-       dst_block_offsets, dst_block_sizes, dst_block_num, &
-       datatype) RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER(c_int), INTENT(in) :: src_block_offsets(*)
-    INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
-    INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
-    INTEGER(c_int), INTENT(in) :: dst_block_offsets(*)
-    INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
-    INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
-    INTEGER, VALUE, INTENT(in) :: datatype
-    TYPE(xt_redist) :: res
-    INTERFACE
-      FUNCTION xt_redist_p2p_blocks_off_new_f(xmap, src_block_offsets, &
-           src_block_sizes, src_block_num, &
-           dst_block_offsets, dst_block_sizes, dst_block_num, &
-           datatype) BIND(C, name='xt_redist_p2p_blocks_off_new_f') &
-           RESULT(res_ptr)
-        IMPORT :: xt_xmap, xt_redist, xt_mpi_fint_kind, c_int, c_ptr
-        IMPLICIT NONE
-        TYPE(xt_xmap), INTENT(in) :: xmap
-        INTEGER(c_int), INTENT(in) :: src_block_offsets(*)
-        INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
-        INTEGER(c_int), INTENT(in) :: dst_block_offsets(*)
-        INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
-        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
-        TYPE(c_ptr) :: res_ptr
-      END FUNCTION xt_redist_p2p_blocks_off_new_f
-    END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_blocks_off_new_f(xmap, src_block_offsets, &
-           src_block_sizes, src_block_num, &
-           dst_block_offsets, dst_block_sizes, dst_block_num, &
-           datatype))
-
-  END FUNCTION xt_redist_p2p_blocks_off_new
-
-  FUNCTION xt_redist_p2p_blocks_new(xmap, src_block_sizes, src_block_num, &
-       &                                  dst_block_sizes, dst_block_num, &
-       &                                  datatype) &
-       RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
-    INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
-    INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
-    INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
-    INTEGER, VALUE, INTENT(in) :: datatype
-    TYPE(xt_redist) :: res
-    INTERFACE
-      FUNCTION xt_redist_p2p_blocks_new_f(xmap, &
-           &                              src_block_sizes, src_block_num, &
-           &                              dst_block_sizes, dst_block_num, &
-           &                              datatype) &
-           BIND(C, name='xt_redist_p2p_blocks_new_f') RESULT(res_ptr)
-        IMPORT :: xt_xmap, xt_mpi_fint_kind, xt_redist, c_int, c_ptr
-        IMPLICIT NONE
-        TYPE(xt_xmap), INTENT(in) :: xmap
-        INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
-        INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
-        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
-        TYPE(c_ptr) :: res_ptr
-      END FUNCTION xt_redist_p2p_blocks_new_f
-    END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_blocks_new_f(xmap, &
-         &                          src_block_sizes, src_block_num, &
-         &                          dst_block_sizes, dst_block_num, &
-         &                          datatype))
-  END FUNCTION xt_redist_p2p_blocks_new
-
-  FUNCTION xt_redist_p2p_off_new(xmap, src_offsets, dst_offsets, datatype) &
-       RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER, INTENT(in) :: src_offsets(*)
-    INTEGER, INTENT(in) :: dst_offsets(*)
-    INTEGER, VALUE, INTENT(in) :: datatype
-    TYPE(xt_redist) :: res
-
-    INTERFACE
-      FUNCTION xt_redist_p2p_off_new_f(xmap, src_offsets, dst_offsets, &
-           datatype) BIND(C, name='xt_redist_p2p_off_new_f') RESULT(res_ptr)
-        IMPORT :: xt_xmap, xt_redist, c_int, c_ptr, xt_mpi_fint_kind
-        IMPLICIT NONE
-        TYPE(xt_xmap), INTENT(in) :: xmap
-        INTEGER(xt_mpi_fint_kind), INTENT(in) :: src_offsets(*)
-        INTEGER(xt_mpi_fint_kind), INTENT(in) :: dst_offsets(*)
-        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
-        TYPE(c_ptr) :: res_ptr
-      END FUNCTION xt_redist_p2p_off_new_f
-    END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_off_new_f(xmap, src_offsets, dst_offsets, datatype))
-
-  END FUNCTION xt_redist_p2p_off_new
-
-  FUNCTION xt_redist_p2p_new(xmap, datatype) RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER, VALUE, INTENT(in) :: datatype
-    TYPE(xt_redist) :: res
-
-    INTERFACE
-      FUNCTION xt_redist_p2p_new_f(xmap, datatype) &
-           BIND(C, name='xt_redist_p2p_new_f') RESULT(res_ptr)
-        IMPORT:: xt_xmap, xt_redist, c_int, c_ptr, xt_mpi_fint_kind
-        IMPLICIT NONE
-        TYPE(xt_xmap), INTENT(in) :: xmap
-        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
-        TYPE(c_ptr) :: res_ptr
-      END FUNCTION xt_redist_p2p_new_f
-    END INTERFACE
-
-    res = xt_redist_c2f(xt_redist_p2p_new_f(xmap, datatype))
-
-  END FUNCTION xt_redist_p2p_new
-
   ELEMENTAL FUNCTION xt_bounds_eq(a, b) RESULT(a_equals_b)
     TYPE(xt_bounds), INTENT(in) :: a, b
     LOGICAL :: a_equals_b
@@ -344,90 +213,4 @@ CONTAINS
 
   END FUNCTION xt_idxmod_new
 
-  FUNCTION xt_redist_collection_static_new(redists, num_redists, &
-       src_displacements, dst_displacements, comm) RESULT(res)
-    TYPE(xt_redist), INTENT(in) :: redists(*)
-    INTEGER, INTENT(in) :: num_redists, comm
-    INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*)
-    INTEGER(mpi_address_kind), INTENT(in) :: dst_displacements(*)
-    TYPE(xt_redist) :: res
-
-    INTERFACE
-      FUNCTION xt_redist_collection_static_new_f(redists_f, num_redists, &
-           src_displacements, dst_displacements, comm_f) &
-           BIND(C, name='xt_redist_collection_static_new_f') RESULT(res)
-        IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
-
-        IMPLICIT NONE
-        TYPE(xt_redist), INTENT(in) :: redists_f(*)
-        INTEGER(xt_mpi_fint_kind), VALUE :: num_redists
-        INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*)
-        INTEGER(mpi_address_kind), INTENT(in) :: dst_displacements(*)
-        INTEGER(xt_mpi_fint_kind), VALUE :: comm_f
-        TYPE(c_ptr) :: res
-      END FUNCTION xt_redist_collection_static_new_f
-    END INTERFACE
-
-    res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
-         num_redists, src_displacements, dst_displacements, comm))
-
-  END FUNCTION xt_redist_collection_static_new
-
-  FUNCTION xt_redist_collection_new(redists, num_redists, cache_size, comm) &
-       RESULT(res)
-    TYPE(xt_redist), INTENT(in) :: redists(*)
-    INTEGER, INTENT(in) :: num_redists, cache_size, comm
-    TYPE(xt_redist) :: res
-
-    INTERFACE
-      FUNCTION xt_redist_collection_new_f(redists_f, num_redists, cache_size, &
-           comm_f) BIND(C, name='xt_redist_collection_new_f') RESULT(res)
-        IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
-        IMPLICIT NONE
-        TYPE(xt_redist), INTENT(in) :: redists_f(*)
-        INTEGER(xt_mpi_fint_kind), VALUE :: num_redists, cache_size, comm_f
-        TYPE(c_ptr) :: res
-      END FUNCTION xt_redist_collection_new_f
-    END INTERFACE
-
-    res = xt_redist_c2f(xt_redist_collection_new_f(redists, num_redists, &
-         cache_size, comm))
-
-  END FUNCTION xt_redist_collection_new
-
-  SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr)
-    TYPE(xt_redist), INTENT(in) :: redist
-    TYPE(c_ptr) :: src_data_cptr, dst_data_cptr
-    INTERFACE
-      SUBROUTINE xt_redist_s_exchange1_c(redist, src_data_cptr, dst_data_cptr) &
-           BIND(C, name='xt_redist_s_exchange1')
-        IMPORT:: c_ptr
-        TYPE(c_ptr), VALUE, INTENT(in) :: redist
-        TYPE(c_ptr), VALUE :: src_data_cptr, dst_data_cptr
-      END SUBROUTINE xt_redist_s_exchange1_c
-    END INTERFACE
-    CALL xt_redist_s_exchange1_c(xt_redist_f2c(redist), src_data_cptr, &
-         dst_data_cptr)
-  END SUBROUTINE xt_redist_s_exchange1
-
-  SUBROUTINE xt_redist_s_exchange(redist, num_ptr, src_data_cptr, dst_data_cptr)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, INTENT(in) :: num_ptr
-    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
-    INTERFACE
-      SUBROUTINE xt_redist_s_exchange_c(redist, num_ptr, src_data_cptr, &
-           dst_data_cptr) BIND(C, name='xt_redist_s_exchange')
-        IMPORT:: c_ptr, c_int
-        TYPE(c_ptr), VALUE, INTENT(in) :: redist
-        INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
-        TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
-      END SUBROUTINE xt_redist_s_exchange_c
-    END INTERFACE
-    IF (num_ptr < 0) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
-         src_data_cptr, dst_data_cptr)
-  END SUBROUTINE xt_redist_s_exchange
 END MODULE yaxt

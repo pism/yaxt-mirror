@@ -222,11 +222,6 @@ xt_redist_p2p_new_f(struct xt_xmap_f *xmap_f, MPI_Fint datatype_f) {
   return xt_redist_p2p_new(xmap_f->cptr, datatype_c);
 }
 
-void xt_redist_delete_f(struct xt_redist_f *redist_f) {
-  xt_redist_delete(redist_f->cptr);
-  redist_f->cptr = NULL;
-}
-
 Xt_redist
 xt_redist_collection_static_new_f(Xt_redist *redists, MPI_Fint num_redists,
                                   MPI_Aint *src_displacements,

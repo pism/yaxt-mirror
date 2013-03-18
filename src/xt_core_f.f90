@@ -57,8 +57,7 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: i2 = SELECTED_INT_KIND(pi2)
   INTEGER, PUBLIC, PARAMETER :: i4 = SELECTED_INT_KIND(pi4)
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
-  PUBLIC :: xt_initialize, xt_abort,  xt_get_default_comm, &
-       xt_redist_c2f, xt_redist_f2c, char
+  PUBLIC :: xt_initialize, xt_abort,  xt_get_default_comm, char
 
   INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
   INTEGER(xt_int_kind), PARAMETER :: dummy = 0_xt_int_kind
@@ -76,14 +75,6 @@ MODULE xt_core
     INTEGER(xt_int_kind) :: nstrides
     INTEGER(xt_int_kind) :: stride
   END TYPE xt_stripe
-
-  ! note: this type must not be extended to contain any other
-  ! components, its memory pattern has to match void * exactly, which
-  ! it does because of C constraints
-  TYPE, BIND(C), PUBLIC :: xt_redist
-    PRIVATE
-    TYPE(c_ptr) :: cptr = c_null_ptr
-  END TYPE xt_redist
 
   TYPE, BIND(C), PUBLIC :: xt_bounds
     INTEGER(xt_int_kind) :: start, size
@@ -103,15 +94,6 @@ MODULE xt_core
       IMPLICIT NONE
       INTEGER(xt_mpi_fint_kind), INTENT(in) :: default_comm
     END SUBROUTINE xt_initialize
-
-    ! this function must not be implemented in Fortran because
-    ! PGI 11.x chokes on that
-    FUNCTION xt_redist_f2c(redist) BIND(c, name='xt_redist_f2c') RESULT(p)
-      IMPORT :: c_ptr, xt_redist
-      IMPLICIT NONE
-      TYPE(xt_redist), INTENT(in) :: redist
-      TYPE(c_ptr) :: p
-    END FUNCTION xt_redist_f2c
 
   END INTERFACE
 
@@ -153,12 +135,6 @@ CONTAINS
     CALL xt_abort_c(xt_get_default_comm(), TRIM(msg)//c_null_char, &
          TRIM(source)//c_null_char, INT(line, c_int))
   END SUBROUTINE xt_abort3
-
-  FUNCTION xt_redist_c2f(redist) RESULT(p)
-    TYPE(c_ptr), INTENT(in) :: redist
-    TYPE(xt_redist) :: p
-    p%cptr = redist
-  END FUNCTION xt_redist_c2f
 
   ELEMENTAL FUNCTION xt_stripe2char(stripe) RESULT(str)
     CHARACTER(len=xt_stripe2s_len) :: str
