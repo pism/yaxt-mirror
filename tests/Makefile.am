@@ -50,6 +50,7 @@ noinst_PROGRAMS = 						\
 	test_redist_collection					\
 	test_redist_collection_f				\
 	test_redist_collection_parallel				\
+	test_redist_collection_parallel_f			\
 	test_redist_collection_static				\
 	test_redist_collection_static_f				\
 	test_redist_collection_static_parallel			\
@@ -104,6 +105,9 @@ test_redist_collection_f_SOURCES = test_redist_collection_f.f90
 test_redist_collection_f_LDADD = $(XT_FC_LDADD)
 test_redist_collection_parallel_SOURCES = test_redist_collection_parallel.c \
 	tests.h
+test_redist_collection_parallel_f_SOURCES = \
+	test_redist_collection_parallel_f.f90
+test_redist_collection_parallel_f_LDADD = $(XT_FC_LDADD)
 test_redist_collection_static_SOURCES = test_redist_collection_static.c tests.h
 test_redist_collection_static_f_SOURCES = test_redist_collection_static_f.f90
 test_redist_collection_static_f_LDADD = $(XT_FC_LDADD)

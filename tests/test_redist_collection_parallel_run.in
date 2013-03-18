@@ -1,6 +1,6 @@
 #! @SHELL@
 set -e
-@MPI_LAUNCH@ -n 2 ./test_redist_collection_parallel
-@MPI_LAUNCH@ -n 3 ./test_redist_collection_parallel
-@MPI_LAUNCH@ -n 4 ./test_redist_collection_parallel
-@MPI_LAUNCH@ -n 8 ./test_redist_collection_parallel
+for nprocs in 2 3 4 8 ; do
+  @MPI_LAUNCH@ -n $nprocs ./test_redist_collection_parallel
+  @MPI_LAUNCH@ -n $nprocs ./test_redist_collection_parallel_f
+done
