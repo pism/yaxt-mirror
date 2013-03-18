@@ -60,24 +60,24 @@ MODULE test_xmap_common
   INTEGER, PARAMETER :: xi = xt_int_kind
   PUBLIC :: xmap_self_test_main
 CONTAINS
-  SUBROUTINE xmap_self_test_main(new_xmap)
+  SUBROUTINE xmap_self_test_main(xmap_new)
     INTERFACE
-      FUNCTION new_xmap(src_idxlist, dst_idxlist, comm) RESULT(res)
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
         INTEGER, VALUE, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
-      END FUNCTION new_xmap
+      END FUNCTION xmap_new
     END INTERFACE
     INTEGER :: ierror
     CALL init_mpi
     CALL xt_initialize(mpi_comm_world)
     CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
 
-    CALL test_xmap1(new_xmap)
-    CALL test_xmap2(new_xmap)
+    CALL test_xmap1(xmap_new)
+    CALL test_xmap2(xmap_new)
 
     IF (test_err_count() /= 0) &
          CALL test_abort("non-zero error count!", &
@@ -96,25 +96,25 @@ CONTAINS
     END DO
   END SUBROUTINE shift_idx
 
-  SUBROUTINE test_xmap(src_index_list, dst_index_list, new_xmap)
+  SUBROUTINE test_xmap(src_index_list, dst_index_list, xmap_new)
     INTEGER(xt_int_kind), INTENT(in) :: src_index_list(:), dst_index_list(:)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     INTERFACE
-      FUNCTION new_xmap(src_idxlist, dst_idxlist, comm) RESULT(res)
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
         INTEGER, VALUE, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
-      END FUNCTION new_xmap
+      END FUNCTION xmap_new
     END INTERFACE
     TYPE(xt_xmap) :: xmap
     INTEGER :: rank(1)
     src_idxlist = xt_idxvec_new(src_index_list)
     dst_idxlist = xt_idxvec_new(dst_index_list)
 
-    xmap = new_xmap(src_idxlist, dst_idxlist, mpi_comm_world)
+    xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
@@ -141,16 +141,16 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_xmap
 
-  SUBROUTINE test_xmap1(new_xmap)
+  SUBROUTINE test_xmap1(xmap_new)
     INTERFACE
-      FUNCTION new_xmap(src_idxlist, dst_idxlist, comm) RESULT(res)
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
         INTEGER, VALUE, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
-      END FUNCTION new_xmap
+      END FUNCTION xmap_new
     END INTERFACE
     INTEGER(xt_int_kind) :: i
     INTEGER(xt_int_kind), PARAMETER :: num_src_idx = 7, num_dst_idx = 7
@@ -164,19 +164,19 @@ CONTAINS
       dst_index_list(i) = num_dst_idx - i + 1_xi
     END DO
     CALL shift_idx(dst_index_list, num_src_idx)
-    CALL test_xmap(src_index_list, dst_index_list, new_xmap)
+    CALL test_xmap(src_index_list, dst_index_list, xmap_new)
   END SUBROUTINE test_xmap1
 
-  SUBROUTINE test_xmap2(new_xmap)
+  SUBROUTINE test_xmap2(xmap_new)
     INTERFACE
-      FUNCTION new_xmap(src_idxlist, dst_idxlist, comm) RESULT(res)
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
         INTEGER, VALUE, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
-      END FUNCTION new_xmap
+      END FUNCTION xmap_new
     END INTERFACE
     INTEGER(xt_int_kind) :: src_index_list(14), dst_index_list(13)
     src_index_list = &
@@ -187,7 +187,7 @@ CONTAINS
          (/ 5_xi, 4_xi, 3_xi, 96_xi, 1_xi, &
          &  5_xi, 4_xi, 5_xi,  4_xi, 3_xi, &
          & 13_xi, 2_xi, 1_xi /)
-    CALL test_xmap(src_index_list, dst_index_list, new_xmap)
+    CALL test_xmap(src_index_list, dst_index_list, xmap_new)
   END SUBROUTINE test_xmap2
 
 END MODULE test_xmap_common
