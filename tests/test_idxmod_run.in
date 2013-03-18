@@ -1,2 +1,2 @@
 #! @SHELL@
-@MPI_LAUNCH@ -n 1 ./test_idxmod
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_idxmod

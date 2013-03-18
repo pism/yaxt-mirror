@@ -1,4 +1,4 @@
 #! @SHELL@
 
-@MPI_LAUNCH@ -n 1 ./test_sort
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_sort
 

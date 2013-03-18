@@ -1,3 +1,3 @@
 #! @SHELL@
-@MPI_LAUNCH@ -n 1 ./test_idxsection
-@MPI_LAUNCH@ -n 1 ./test_idxsection_f
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_idxsection
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_idxsection_f

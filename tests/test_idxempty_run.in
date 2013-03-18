@@ -1,4 +1,4 @@
 #! @SHELL@
 set -e
-@MPI_LAUNCH@ -n 1 ./test_idxempty
-@MPI_LAUNCH@ -n 1 ./test_idxempty_f
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_idxempty
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_idxempty_f

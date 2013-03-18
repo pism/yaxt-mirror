@@ -1,4 +1,4 @@
 #! @SHELL@
 set -e
-@MPI_LAUNCH@ -n 1 ./test_xmap_all2all
-@MPI_LAUNCH@ -n 1 ./test_xmap_all2all_f
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_xmap_all2all
+@MPI_LAUNCH@ -n 1 @abs_builddir@/test_xmap_all2all_f

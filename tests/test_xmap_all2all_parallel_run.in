@@ -1,6 +1,6 @@
 #! @SHELL@
 set -e
 for nproc in 1 2 3 4 8 ; do
-  @MPI_LAUNCH@ -n $nproc ./test_xmap_all2all_parallel
-  @MPI_LAUNCH@ -n $nproc ./test_xmap_all2all_parallel_f
+  @MPI_LAUNCH@ -n $nproc @abs_builddir@/test_xmap_all2all_parallel
+  @MPI_LAUNCH@ -n $nproc @abs_builddir@/test_xmap_all2all_parallel_f
 done
