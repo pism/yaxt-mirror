@@ -50,11 +50,10 @@ PROGRAM test_redist_collection
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
-       xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
-       xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
+       xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_static_new, &
-       xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
-       xt_slice_c_loc
+       xt_redist_delete, xt_redist_s_exchange1
+  USE test_redist_common, ONLY: build_odd_selection_xmap
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
   CALL init_mpi
@@ -154,35 +153,6 @@ CONTAINS
          __FILE__, &
          __LINE__)
   END SUBROUTINE test_repeated_redist_ds2
-
-  ! build xmap for destination list containing all odd elements of
-  ! source list dimensioned 1 to src_slice_len
-  FUNCTION build_odd_selection_xmap(src_slice_len) RESULT(xmap)
-    INTEGER(xt_int_kind), INTENT(in) :: src_slice_len
-    TYPE(xt_xmap) :: xmap
-    INTEGER(xt_int_kind) :: i, j, dst_slice_len
-    INTEGER(xt_int_kind), PARAMETER :: dst_step = 2_xi
-    INTEGER(xt_int_kind), ALLOCATABLE :: index_list(:)
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
-
-    dst_slice_len = (src_slice_len + dst_step - 1)/dst_step
-    ALLOCATE(index_list(src_slice_len))
-    DO i = 1_xi, src_slice_len
-      index_list(i) = i
-    END DO
-    src_idxlist = xt_idxvec_new(index_list)
-    j = 1_xi
-    DO i = 1_xi, src_slice_len, dst_step
-      index_list(j) = i
-      j = j + 1_xi
-    END DO
-    dst_idxlist = xt_idxvec_new(index_list, dst_slice_len)
-    DEALLOCATE(index_list)
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-    CALL xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
-  END FUNCTION build_odd_selection_xmap
 
   SUBROUTINE test_repeated_redist
     ! test with one redist used three times (with two different input data
