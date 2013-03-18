@@ -47,3 +47,8 @@ all-local:
 	for subdir in $(SUBDIRS) ; do \
           test "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
 	    || ./config.status $$subdir/Makefile ; done
+
+clean-local:
+	for subdir in $(SUBDIRS) ; do \
+          test "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
+	    || ./config.status $$subdir/Makefile ; done
