@@ -50,7 +50,7 @@ MODULE yaxt
   !
   ! Fortran interface to yaxt implementation
   !
-  USE xt_core, ONLY: xt_int_kind, &
+  USE xt_core, ONLY: xt_int_kind, xt_int_mpidt, &
        xt_abort, xt_initialize, xt_get_default_comm, xt_stripe, xt_bounds, &
        char
   USE xt_idxlist_abstract, ONLY: &
@@ -82,7 +82,7 @@ MODULE yaxt
   PRIVATE
 
   PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, &
-       xt_int_kind, xt_stripe, xt_bounds, &
+       xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, &
        xt_idxlist, xt_idxlist_delete,  &
        xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &

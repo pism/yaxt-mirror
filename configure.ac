@@ -154,30 +154,54 @@ m4_foreach([substtype],[[XT_INT]],
   [AS_CASE(["$substtype"],
      [int],
      substtype[_MPIDT=MPI_INT
+     AC_CHECK_SIZEOF([int])
      ACX_FORTRAN_TYPE_KIND([integer],[c_int],[int],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=INT_MAX
      ]substtype[_MIN="(-INT_MAX)"],
      [long],
      substtype[_MPIDT=MPI_LONG
+     AC_CHECK_SIZEOF([long])
      ACX_FORTRAN_TYPE_KIND([integer],[c_long],[long],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LONG_MAX
      ]substtype[_MIN="(-LONG_MAX)"],
      [short],
      substtype[_MPIDT=MPI_SHORT
+     AC_CHECK_SIZEOF([short])
      ACX_FORTRAN_TYPE_KIND([integer],[c_short],[short],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=SHRT_MAX
      ]substtype[_MIN="(-SHRT_MAX)"],
      ["long long"],
      substtype[_MPIDT=MPI_LONG_LONG
+     AC_CHECK_SIZEOF([long long])
      ACX_FORTRAN_TYPE_KIND([integer],[c_long_long],[long long],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LLONG_MAX
      ]substtype[_MIN="(-LLONG_MAX)"],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
-   FCFLAGS="$FCFLAGS ${FPP_DEFOPT}substtype[]_FC_KIND=$substtype[]_FC_KIND"
+   save_FCFLAGS=$FCFLAGS
+   AC_LANG_PUSH([Fortran])
+   FCFLAGS="$MPI_FC_INCLUDE $FCFLAGS"
+   for mpi_int2test in MPI_INTEGER2 MPI_INTEGER4 MPI_INTEGER8; do
+     AC_MSG_CHECKING([if Fortran MPI bindings define $mpi_int2test])
+     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([
+        IMPLICIT NONE
+        INCLUDE 'mpif.h'
+        INTEGER :: i
+        i = $mpi_int2test
+]),[AC_MSG_RESULT([yes])
+    eval HAVE_FC_$mpi_int2test=1],
+   [AC_MSG_RESULT([no])
+    ASX_VAR_UNSET([HAVE_FC_$mpi_int2test])])
+   done
+   FCFLAGS=$save_FCFLAGS
+   AC_LANG_POP([Fortran])
+   AS_IF([eval eval test x\\\"\\\${HAVE_FC_MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[+set}\\\" = xset],
+     [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],
+     substtype[_FC_MPIDT=MPI_DATATYPE_NULL])
+   FCFLAGS="$FCFLAGS ${FPP_DEFOPT}substtype[]_FC_KIND=$substtype[]_FC_KIND ${FPP_DEFOPT}substtype[]_FC_MPIDT=$substtype[]_FC_MPIDT"
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MAX],[$]substtype[_MAX],
      [Maximal value for ]substtype)
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MIN],[$]substtype[_MIN],

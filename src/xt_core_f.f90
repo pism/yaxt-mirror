@@ -48,6 +48,7 @@
 MODULE xt_core
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
        c_long, c_short, c_long_long, c_ptr, c_null_ptr
+  USE xt_mpi, ONLY: XT_INT_FC_MPIDT
   IMPLICIT NONE
   PRIVATE
   INTEGER, PUBLIC, PARAMETER :: xt_int_kind   = XT_INT_FC_KIND
@@ -60,6 +61,7 @@ MODULE xt_core
   PUBLIC :: xt_initialize, xt_abort,  xt_get_default_comm, char
 
   INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
+  INTEGER, PUBLIC, PARAMETER :: xt_int_mpidt = XT_INT_FC_MPIDT
   INTEGER(xt_int_kind), PARAMETER :: dummy = 0_xt_int_kind
   !> number of decimal places needed to print any variable of type
   !! INTEGER(xt_int_kind)
