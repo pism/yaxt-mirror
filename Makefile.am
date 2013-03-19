@@ -45,10 +45,10 @@ EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 
 all-local:
 	for subdir in $(SUBDIRS) ; do \
-          test "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
+          test "$$subdir/Makefile" = . -o "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
 	    || ./config.status $$subdir/Makefile ; done
 
 clean-local:
 	for subdir in $(SUBDIRS) ; do \
-          test "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
+          test "$$subdir/Makefile" = . -o "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
 	    || ./config.status $$subdir/Makefile ; done
