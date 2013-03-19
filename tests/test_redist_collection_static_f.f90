@@ -45,7 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
-PROGRAM test_redist_collection
+PROGRAM test_redist_collection_static
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
@@ -200,4 +200,4 @@ CONTAINS
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE test_repeated_redist
 
-END PROGRAM test_redist_collection
+END PROGRAM test_redist_collection_static
