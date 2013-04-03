@@ -50,7 +50,7 @@ PROGRAM test_redist_collection_parallel
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
-       xt_idxlist, xt_idxlist_delete, xt_stripe, &
+       xt_idxlist, xt_idxlist_delete, xt_stripe, xt_idxvec_new, &
        xt_idxsection_new, xt_idxlist_collection_new, xt_idxstripes_new, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
@@ -83,7 +83,10 @@ PROGRAM test_redist_collection_parallel
     dt_xt_int = xt_int_mpidt
   END IF
 
-  IF (size > 1) CALL test_4redist
+  IF (size > 1) THEN
+    CALL test_4redist
+    CALL test_rr_exchange
+  END IF
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
@@ -139,7 +142,6 @@ CONTAINS
     INTEGER :: i
 
     CALL build_idxlists(indices_a, indices_b, indices_all)
-
 
     CALL xt_idxlist_get_indices(indices_a, index_vector_a)
     CALL xt_idxlist_get_indices(indices_b, index_vector_b)
@@ -205,5 +207,71 @@ CONTAINS
 
     CALL xt_redist_delete(redist)
   END SUBROUTINE test_4redist
+
+  ! redist test with two redists that do a round robin exchange in
+  ! different directions
+  SUBROUTINE test_rr_exchange
+    TYPE(xt_idxlist) :: src_indices, dst_indices(2)
+    INTEGER(xt_int_kind), TARGET :: src_indices_(5)
+    INTEGER(xt_int_kind) :: i, temp, dst_indices_(5, 2)
+    TYPE(xt_xmap) :: xmaps(2)
+    TYPE(xt_redist) :: redists(2), redist
+    INTEGER(xt_int_kind), TARGET :: results_1(5), results_2(5)
+    TYPE(c_ptr) :: results(2), input(2)
+
+    DO i = 1_xi, 5_xi
+      src_indices_(i) = INT(rank, xi) * 5_xi + (i - 1_xi)
+      dst_indices_(i, 1) = MOD(src_indices_(i) + 1_xi, INT(size, xi) * 5_xi)
+      temp = src_indices_(i) - 1_xi
+      dst_indices_(i, 2) = MERGE(INT(size, xi) * 5_xi - 1_xi, temp, temp < 0_xi)
+    END DO
+
+    src_indices = xt_idxvec_new(src_indices_, 5)
+    dst_indices(1) = xt_idxvec_new(dst_indices_(:, 1))
+    dst_indices(2) = xt_idxvec_new(dst_indices_(:, 2))
+
+    xmaps(1) = xt_xmap_all2all_new(src_indices, dst_indices(1), mpi_comm_world)
+    xmaps(2) = xt_xmap_all2all_new(src_indices, dst_indices(2), mpi_comm_world)
+
+    CALL xt_idxlist_delete(src_indices)
+    CALL xt_idxlist_delete(dst_indices)
+
+    redists(1) = xt_redist_p2p_new(xmaps(1), dt_xt_int)
+    redists(2) = xt_redist_p2p_new(xmaps(2), dt_xt_int)
+
+    CALL xt_xmap_delete(xmaps)
+
+    redist = xt_redist_collection_new(redists, 2, -1, mpi_comm_world)
+
+    ! test communicator of redist
+    ! IF (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+    !     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+    CALL xt_redist_delete(redists)
+
+    results_1 = -1
+    results_2 = -1
+
+    results(1) = C_LOC(results_1)
+    results(2) = C_LOC(results_2)
+
+    input(1) = C_LOC(src_indices_)
+    input(2) = C_LOC(src_indices_)
+
+    CALL xt_redist_s_exchange(redist, input, results)
+
+    ! check results
+    IF (ANY(results_1(:) /= dst_indices_(:, 1))) &
+         CALL test_abort("error on xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+    IF (ANY(results_2(:) /= dst_indices_(:, 2))) &
+         CALL test_abort("error on xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+
+    ! clean up
+    CALL xt_redist_delete(redist)
+  END SUBROUTINE test_rr_exchange
 
 END PROGRAM test_redist_collection_parallel
