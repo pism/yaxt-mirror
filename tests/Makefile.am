@@ -54,6 +54,7 @@ noinst_PROGRAMS = 						\
 	test_redist_collection_static				\
 	test_redist_collection_static_f				\
 	test_redist_collection_static_parallel			\
+	test_redist_collection_static_parallel_f		\
 	test_redist_p2p						\
 	test_redist_p2p_parallel				\
 	test_xmap_all2all					\
@@ -113,6 +114,9 @@ test_redist_collection_static_f_SOURCES = test_redist_collection_static_f.f90
 test_redist_collection_static_f_LDADD = $(XT_FC_LDADD)
 test_redist_collection_static_parallel_SOURCES = \
 	test_redist_collection_static_parallel.c tests.h
+test_redist_collection_static_parallel_f_SOURCES = \
+	test_redist_collection_static_parallel_f.f90
+test_redist_collection_static_parallel_f_LDADD = $(XT_FC_LDADD)
 test_redist_p2p_SOURCES = test_redist_p2p.c tests.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c tests.h
 test_xmap_all2all_SOURCES = test_xmap_all2all.c test_xmap_common.h
