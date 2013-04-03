@@ -116,11 +116,6 @@ Xt_xmap xt_xmap_f2c(struct xt_xmap_f *p)
 }
 
 
-void xt_idxlist_delete_f(struct xt_idxlist_f *idxlist_f) {
-  xt_idxlist_delete(idxlist_f->cptr);
-  idxlist_f->cptr = NULL;
-}
-
 MPI_Fint xt_idxlist_get_pack_size_f2c(struct xt_idxlist_f *idxlist,
                                       MPI_Fint comm_f)
 {

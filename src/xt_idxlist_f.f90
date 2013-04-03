@@ -71,12 +71,6 @@ MODULE xt_idxlist_abstract
       TYPE(c_ptr) :: p
     END FUNCTION xt_idxlist_f2c
 
-    SUBROUTINE xt_idxlist_delete(idxlist) BIND(C, name='xt_idxlist_delete_f')
-      IMPORT :: xt_idxlist
-      IMPLICIT NONE
-      TYPE(xt_idxlist), INTENT(inout) :: idxlist
-    END SUBROUTINE xt_idxlist_delete
-
     FUNCTION xt_idxlist_get_pack_size(idxlist, comm) &
          BIND(c, name='xt_idxlist_get_pack_size_f2c') RESULT(pack_size)
       IMPORT :: xt_idxlist, xt_mpi_fint_kind
@@ -129,7 +123,18 @@ MODULE xt_idxlist_abstract
       INTEGER(xt_int_kind), INTENT(out) :: indices(*)
     END SUBROUTINE xt_idxlist_get_indices_c
 
+    SUBROUTINE xt_idxlist_delete_c(idxlist) BIND(C, name='xt_idxlist_delete')
+      IMPORT :: c_ptr
+      IMPLICIT NONE
+      TYPE(c_ptr), VALUE :: idxlist
+    END SUBROUTINE xt_idxlist_delete_c
+
   END INTERFACE
+
+  INTERFACE xt_idxlist_delete
+    MODULE PROCEDURE xt_idxlist_delete_1
+    MODULE PROCEDURE xt_idxlist_delete_a1d
+  END INTERFACE xt_idxlist_delete
 
   INTERFACE xt_idxlist_get_indices
     MODULE PROCEDURE xt_idxlist_get_indices_1d
@@ -142,6 +147,22 @@ MODULE xt_idxlist_abstract
   END INTERFACE xt_idxlist_get_indices
 
 CONTAINS
+
+  SUBROUTINE xt_idxlist_delete_1(idxlist)
+    TYPE(xt_idxlist), INTENT(inout) :: idxlist
+    CALL xt_idxlist_delete_c(xt_idxlist_f2c(idxlist))
+    idxlist%cptr = c_null_ptr
+  END SUBROUTINE xt_idxlist_delete_1
+
+  SUBROUTINE xt_idxlist_delete_a1d(idxlists)
+    TYPE(xt_idxlist), INTENT(inout) :: idxlists(:)
+    INTEGER :: i, n
+    n = SIZE(idxlists)
+    DO i = 1, n
+      CALL xt_idxlist_delete_c(xt_idxlist_f2c(idxlists(i)))
+      idxlists(i)%cptr = c_null_ptr
+    END DO
+  END SUBROUTINE xt_idxlist_delete_a1d
 
   FUNCTION xt_idxlist_get_index_at_position(idxlist, position, idx) RESULT(res)
     IMPLICIT NONE
