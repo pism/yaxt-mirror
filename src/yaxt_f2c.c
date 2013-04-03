@@ -164,11 +164,6 @@ Xt_xmap xt_xmap_dist_dir_new_f(struct xt_idxlist_f *src_idxlist_f,
   return xt_xmap_dist_dir_new(src_idxlist_f->cptr, dst_idxlist_f->cptr, comm_c);
 }
 
-void xt_xmap_delete_f(struct xt_xmap_f *xmap_f) {
-  xt_xmap_delete(xmap_f->cptr);
-  xmap_f->cptr = NULL;
-}
-
 Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,
                                          int *src_block_offsets,
                                          int *src_block_sizes,

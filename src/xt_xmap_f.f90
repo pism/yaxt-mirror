@@ -75,19 +75,41 @@ MODULE xt_xmap_abstract
       TYPE(c_ptr) :: p
     END FUNCTION xt_xmap_f2c
 
-    SUBROUTINE xt_xmap_delete(xmap) BIND(C, name='xt_xmap_delete_f')
-      IMPORT :: xt_xmap
+    SUBROUTINE xt_xmap_delete_c(xmap) BIND(C, name='xt_xmap_delete')
+      IMPORT :: c_ptr
       IMPLICIT NONE
-      TYPE(xt_xmap), INTENT(inout) :: xmap
-    END SUBROUTINE xt_xmap_delete
+      TYPE(c_ptr), VALUE :: xmap
+    END SUBROUTINE xt_xmap_delete_c
 
   END INTERFACE
+
+  INTERFACE xt_xmap_delete
+    MODULE PROCEDURE xt_xmap_delete_1
+    MODULE PROCEDURE xt_xmap_delete_a1d
+  END INTERFACE xt_xmap_delete
+
 CONTAINS
   FUNCTION xt_xmap_c2f(xmap) RESULT(p)
     TYPE(c_ptr), INTENT(in) :: xmap
     TYPE(xt_xmap) :: p
     p%cptr = xmap
   END FUNCTION xt_xmap_c2f
+
+  SUBROUTINE xt_xmap_delete_1(xmap)
+    TYPE(xt_xmap), INTENT(inout) :: xmap
+    CALL xt_xmap_delete_c(xt_xmap_f2c(xmap))
+    xmap%cptr = c_null_ptr
+  END SUBROUTINE xt_xmap_delete_1
+
+  SUBROUTINE xt_xmap_delete_a1d(xmaps)
+    TYPE(xt_xmap), INTENT(inout) :: xmaps(:)
+    INTEGER :: i, n
+    n = SIZE(xmaps)
+    DO i = 1, n
+      CALL xt_xmap_delete_c(xt_xmap_f2c(xmaps(i)))
+      xmaps(i)%cptr = c_null_ptr
+    END DO
+  END SUBROUTINE xt_xmap_delete_a1d
 
   FUNCTION xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm) RESULT(res)
     IMPLICIT NONE
