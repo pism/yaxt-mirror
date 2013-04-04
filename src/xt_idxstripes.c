@@ -54,6 +54,7 @@
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
+#include "xt_idxstripes_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
 #include "core/core.h"
@@ -137,34 +138,36 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .get_bounding_box             = NULL
 };
 
-static MPI_Datatype xt_get_stripes_datatype() {
+static MPI_Datatype stripe_dt;
 
-  static MPI_Datatype type = MPI_DATATYPE_NULL;
-
-  if (type == MPI_DATATYPE_NULL) {
-
+void
+xt_idxstripes_initialize()
+{
   struct Xt_stripe stripe;
 
-    MPI_Aint base_address, start_address, nstrides_address, stride_address;
+  MPI_Aint base_address, start_address, nstrides_address, stride_address;
 
-    MPI_Get_address(&stripe, &base_address);
-    MPI_Get_address(&stripe.start, &start_address);
-    MPI_Get_address(&stripe.nstrides, &nstrides_address);
-    MPI_Get_address(&stripe.stride, &stride_address);
+  MPI_Get_address(&stripe, &base_address);
+  MPI_Get_address(&stripe.start, &start_address);
+  MPI_Get_address(&stripe.nstrides, &nstrides_address);
+  MPI_Get_address(&stripe.stride, &stride_address);
 
-    int block_lengths[5] = {1,1,1,1,1};
-    MPI_Aint displacements[5] = {0, start_address - base_address,
-                                 nstrides_address - base_address,
-                                 stride_address - base_address,
-                                 sizeof(stripe)};
-    MPI_Datatype types[5] = {MPI_LB, Xt_int_dt, Xt_int_dt, Xt_int_dt, MPI_UB};
+  int block_lengths[5] = {1,1,1,1,1};
+  MPI_Aint displacements[5] = {0, start_address - base_address,
+                               nstrides_address - base_address,
+                               stride_address - base_address,
+                               sizeof(stripe)};
+  MPI_Datatype types[5] = {MPI_LB, Xt_int_dt, Xt_int_dt, Xt_int_dt, MPI_UB};
 
-    xt_mpi_call(MPI_Type_create_struct(5, block_lengths, displacements,
-                                           types, &type), MPI_COMM_WORLD);
-    xt_mpi_call(MPI_Type_commit(&type), MPI_COMM_WORLD);
-  }
+  xt_mpi_call(MPI_Type_create_struct(5, block_lengths, displacements,
+                                     types, &stripe_dt), Xt_default_comm);
+  xt_mpi_call(MPI_Type_commit(&stripe_dt), Xt_default_comm);
+}
 
-  return type;
+void
+xt_idxstripes_finalize()
+{
+  xt_mpi_call(MPI_Type_free(&stripe_dt), Xt_default_comm);
 }
 
 typedef struct Xt_idxstripes_ *Xt_idxstripes;
@@ -296,9 +299,8 @@ idxstripes_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_num_stripes), comm);
   if (stripes->num_stripes)
-    xt_mpi_call(MPI_Pack_size(stripes->num_stripes,
-                                  xt_get_stripes_datatype(),
-                                  comm, &size_stripes), comm);
+    xt_mpi_call(MPI_Pack_size(stripes->num_stripes, stripe_dt, comm,
+                              &size_stripes), comm);
 
   return (size_t)size_int_type + (size_t)size_num_stripes
     + (size_t)size_stripes;
@@ -321,8 +323,7 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
   xt_mpi_call(MPI_Pack(&num_stripes, 1, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
   if (stripes->num_stripes)
-    xt_mpi_call(MPI_Pack(stripes->stripes, num_stripes,
-                         xt_get_stripes_datatype(), buffer,
+    xt_mpi_call(MPI_Pack(stripes->stripes, num_stripes, stripe_dt, buffer,
                          buffer_size, position, comm), comm);
   INSTR_STOP(instr);
 }
@@ -347,9 +348,8 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   if (num_stripes) {
     stripes->stripes
       = xmalloc((size_t)num_stripes * sizeof(*(stripes->stripes)));
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           stripes->stripes, num_stripes,
-                           xt_get_stripes_datatype(), comm),comm);
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, stripes->stripes,
+                           num_stripes, stripe_dt, comm),comm);
 
     generate_stripes_sorted(stripes);
 
