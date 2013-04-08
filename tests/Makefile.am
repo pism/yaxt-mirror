@@ -57,6 +57,10 @@ noinst_PROGRAMS = 						\
 	test_redist_collection_static_parallel_f		\
 	test_redist_p2p						\
 	test_redist_p2p_parallel				\
+	test_redist_repeat					\
+	test_redist_repeat_f					\
+	test_redist_repeat_parallel				\
+	test_redist_repeat_parallel_f				\
 	test_xmap_all2all					\
 	test_xmap_all2all_f					\
 	test_xmap_all2all_fail					\
@@ -119,6 +123,12 @@ test_redist_collection_static_parallel_f_SOURCES = \
 test_redist_collection_static_parallel_f_LDADD = $(XT_FC_LDADD)
 test_redist_p2p_SOURCES = test_redist_p2p.c tests.h
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c tests.h
+test_redist_repeat_SOURCES = test_redist_repeat.c tests.h
+test_redist_repeat_f_SOURCES = test_redist_repeat_f.f90
+test_redist_repeat_f_LDADD = $(XT_FC_LDADD)
+test_redist_repeat_parallel_SOURCES = test_redist_repeat_parallel.c tests.h
+test_redist_repeat_parallel_f_SOURCES = test_redist_repeat_parallel_f.f90
+test_redist_repeat_parallel_f_LDADD = $(XT_FC_LDADD)
 test_xmap_all2all_SOURCES = test_xmap_all2all.c test_xmap_common.h
 test_xmap_all2all_f_SOURCES = test_xmap_all2all_f.f90
 test_xmap_all2all_f_LDADD = $(XT_FC_LDADD)
@@ -168,6 +178,8 @@ TESTS = 							\
 	test_redist_collection_static_run			\
 	test_redist_collection_static_parallel_run		\
 	test_redist_p2p_parallel_run				\
+	test_redist_repeat_run					\
+	test_redist_repeat_parallel_run				\
 	test_xmap_all2all_run					\
 	test_xmap_all2all_fail_run				\
 	test_xmap_all2all_parallel_run				\

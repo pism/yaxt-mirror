@@ -106,7 +106,8 @@ MODULE xt_redist_base
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
-       xt_redist_collection_static_new, xt_redist_collection_new
+       xt_redist_collection_static_new, xt_redist_collection_new, &
+       xt_redist_repeat_new
 CONTAINS
 
   FUNCTION xt_redist_c2f(redist) RESULT(p)
@@ -378,5 +379,33 @@ CONTAINS
          cache_size, comm))
 
   END FUNCTION xt_redist_collection_new
+
+  FUNCTION xt_redist_repeat_new(redist, src_extent, dst_extent, &
+                                num_repetitions, displacements) &
+       RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(mpi_address_kind), INTENT(in) :: src_extent, dst_extent
+    INTEGER, INTENT(in) :: num_repetitions
+    INTEGER(c_int), INTENT(in) :: displacements(*)
+    TYPE(xt_redist) :: res
+
+    INTERFACE
+      FUNCTION xt_redist_repeat_new_c(redist_f, src_extent, dst_extent, &
+           num_repetitions, displacements) &
+           BIND(C, name='xt_redist_repeat_new') RESULT(res)
+        IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind, c_int
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in)  :: redist_f
+        INTEGER(mpi_address_kind), VALUE :: src_extent, dst_extent
+        INTEGER(xt_mpi_fint_kind), VALUE :: num_repetitions
+        INTEGER(c_int), INTENT(in) :: displacements(*)
+        TYPE(c_ptr) :: res
+      END FUNCTION xt_redist_repeat_new_c
+    END INTERFACE
+
+    res = xt_redist_c2f(xt_redist_repeat_new_c(xt_redist_f2c(redist), &
+         src_extent, dst_extent, num_repetitions, displacements))
+
+  END FUNCTION xt_redist_repeat_new
 
 END MODULE xt_redist_base

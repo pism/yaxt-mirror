@@ -263,28 +263,30 @@ AC_CONFIG_FILES([						\
 	tests/test_redist_p2p_parallel_run			\
 	tests/test_redist_collection_parallel_run		\
 	tests/test_redist_collection_static_parallel_run	\
+	tests/test_redist_repeat_parallel_run			\
 	tests/test_xmap_all2all_parallel_run			\
 	tests/test_xmap_dist_dir_parallel_run			\
 	tests/test_xmap_intersection_parallel_run		\
 	tests/test_idxempty_run					\
 	tests/test_idxvec_run					\
 	tests/test_idxlist_collection_run			\
-	tests/test_idxmod_run                                  	\
+	tests/test_idxmod_run					\
 	tests/test_idxsection_run				\
 	tests/test_idxstripes_run				\
 	tests/test_redist_collection_run			\
 	tests/test_redist_collection_static_run			\
+	tests/test_redist_repeat_run				\
 	tests/test_redist_p2p_run				\
 	tests/test_xmap_dist_dir_run				\
 	tests/test_xmap_all2all_run				\
 	tests/test_xmap_all2all_fail_run			\
 	tests/test_handles_run					\
 	tests/test_ut_run					\
-        tests/test_perf_run              			\
-        tests/test_perf_stripes_run              		\
-        tests/test_sort_run              			\
-        tests/test_uid_run              			\
-        tests/test_yaxt_run              			\
+        tests/test_perf_run					\
+        tests/test_perf_stripes_run				\
+        tests/test_sort_run					\
+        tests/test_uid_run					\
+        tests/test_yaxt_run					\
 	tests/test_mpi_generate_datatype_run			\
 	examples/rrobin_run					\
 	examples/tr_gp2fs_run					\
