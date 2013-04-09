@@ -135,6 +135,41 @@ main(int argc, char **argv)
         [AC_MSG_RESULT([no])
          AC_MSG_FAILURE([mpirun doesn't work])])],
      [AC_MSG_FAILURE([Cannot compile simple MPI program])])
+   # check MPI defects
+   AC_ARG_WITH([regard-for-quality],
+     [AS_HELP_STRING([--without-regard-for-quality],
+        [ignore results of checks for known defects @<:@default: abort on error@:>@])],
+     [],[with_regard_for_quality=yes])
+   # TODO: add text for fixing of each check
+   for mpi_check_src in "$srcdir/config/checksrc/"* ; do
+     AC_MSG_CHECKING([MPI for known defects])
+     AC_MSG_RESULT([])
+     suffix=`echo "$mpi_check_src" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
+     subtestname=`echo "$mpi_check_src" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
+     AS_CASE([$suffix],
+       [c],
+       [cat confdefs.h "$mpi_check_src" >conftest."$suffix"
+        AC_LANG_PUSH([C])],
+       [f90|F90],[cat "$mpi_check_src" >conftest."$suffix"
+        AC_LANG_PUSH([Fortran])])
+     AC_MSG_CHECKING([$subtestname])
+     AC_LINK_IFELSE(,
+       [AC_RUN_LOG([$MPI_LAUNCH -n 1 ./conftest$EXEEXT])
+        AS_IF([test $ac_status -eq 0],
+          [AC_MSG_RESULT([okay])],
+          [AC_MSG_RESULT([error])
+           AS_IF([test "$with_regard_for_quality" != no],
+             [AC_MSG_FAILURE([test $subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation])])])],
+       [AC_MSG_RESULT([chosen MPI has known error $subtestname])
+        AS_IF([test "$with_regard_for_quality" != no],
+          [AC_MSG_FAILURE([aborting, re-configure with --without-regard-for-quality in case you must use the given MPI implementation])])])
+     AS_CASE([$suffix],
+       [f90|F90],[AC_LANG_POP([Fortran])],
+       [c],[AC_LANG_POP([C])],
+       [AC_MSG_FAILURE([Unexpected language in MPI check: ${subtestname}.${suffix}])]
+       )
+   done
+   ASX_VAR_UNSET([mpi_check_src])
    CFLAGS=$saved_CFLAGS
    LIBS=$saved_LIBS
   ])
