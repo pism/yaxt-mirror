@@ -154,6 +154,7 @@ int main(void) {
 
       // clean up
 
+      xt_redist_delete(redist_repeat_2);
       xt_redist_delete(redist_repeat);
     }
   }
