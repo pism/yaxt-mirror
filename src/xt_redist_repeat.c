@@ -145,6 +145,7 @@ generate_msg_infos(struct redist_repeat_msg ** msgs, int * nmsgs,
                                  datatype_with_extent, comm);
       ++num_messages;
 
+      MPI_Type_free(&datatype_with_extent);
       MPI_Type_free(&datatype);
     }
   }
