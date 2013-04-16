@@ -1,3 +1,8 @@
+/** \example test_yaxt.f90
+ */
+/** \example ftest_common.f90
+ */
+
 /** \page concept The concept of yaxt
 
   \tableofcontents

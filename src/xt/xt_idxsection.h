@@ -48,6 +48,8 @@
 
 /** \example test_idxsection.c
  */
+/** \example test_idxsection_f.f90
+ */
 
 /**
  * generates an index list that is comprised of a section of a set of

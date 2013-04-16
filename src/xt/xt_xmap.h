@@ -49,6 +49,15 @@
 
 #include "xt/xt_core.h"
 
+/** \example test_xmap_common.c
+ */
+/** \example test_xmap_common_f.f90
+ */
+/** \example test_xmap_common_parallel.c
+ */
+/** \example test_xmap_common_parallel_f.f90
+ */
+
 /**
  * \file xt_xmap.h
  * \brief exchange map declarations

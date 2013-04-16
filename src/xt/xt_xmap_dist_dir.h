@@ -48,8 +48,11 @@
 
 /** \example test_xmap_dist_dir.c
  */
-
+/** \example test_xmap_dist_dir_f.f90
+ */
  /** \example test_xmap_dist_dir_parallel.c
+ */
+ /** \example test_xmap_dist_dir_parallel_f.f90
  */
 
 /**

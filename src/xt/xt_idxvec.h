@@ -52,6 +52,8 @@
 
 /** \example test_idxvec.c
  */
+/** \example test_idxvec_f.f90
+ */
 
 /**
  * generates a new index list based on an index vector

@@ -48,8 +48,11 @@
 
 /** \example test_redist_collection.c
  */
-
+/** \example test_redist_collection_f.f90
+ */
 /** \example test_redist_collection_parallel.c
+ */
+/** \example test_redist_collection_parallel_f.f90
  */
 
 /**

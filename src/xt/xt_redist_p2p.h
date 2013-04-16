@@ -54,7 +54,6 @@
 
 /** \example test_redist_p2p.c
  */
-
 /** \example test_redist_p2p_parallel.c
  */
 

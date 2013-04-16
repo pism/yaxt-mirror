@@ -51,6 +51,8 @@
 
 /** \example test_idxstripes.c
  */
+/** \example test_idxstripes_f.f90
+ */
 
 /**
  * Generates an index list that is built up of stripes of indices.

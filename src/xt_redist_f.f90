@@ -1,5 +1,5 @@
 !>
-!! @file xt_redist_base_f.f90
+!! @file xt_redist_f.f90
 !! @brief xt_redist-related procedures of Fortran interface
 !!
 !! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>

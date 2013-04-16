@@ -48,6 +48,8 @@
 
 /** \example test_idxlist_collection.c
  */
+/** \example test_idxlist_collection_f.f90
+ */
 
 /**
  * generates a new index list based on a collection of index lists

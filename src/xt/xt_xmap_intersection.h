@@ -49,6 +49,9 @@
 
 #include "xt/xt_core.h"
 
+/** \example test_xmap_intersection_parallel.c
+ */
+
 struct Xt_com_list {
   Xt_idxlist list;
   int rank;

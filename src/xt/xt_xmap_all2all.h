@@ -48,11 +48,15 @@
 
 /** \example test_xmap_all2all.c
  */
-
+/** \example test_xmap_all2all_f.f90
+ */
 /** \example test_xmap_all2all_parallel.c
  */
-
+/** \example test_xmap_all2all_parallel_f.f90
+ */
 /** @example test_xmap_all2all_fail.c
+ */
+/** @example test_xmap_all2all_fail_f.f90
  */
 
 /**

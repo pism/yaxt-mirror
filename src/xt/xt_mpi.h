@@ -49,6 +49,9 @@
 
 #include <mpi.h>
 
+/** \example test_mpi_generate_datatype.c
+ */
+
 /**
  * check return code of MPI call and call abort function if needed
  */

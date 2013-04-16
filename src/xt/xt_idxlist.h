@@ -50,6 +50,13 @@
 #include <stdlib.h>
 #include "xt/xt_core.h"
 
+/** \example test_idxlist_utils.c
+ */
+/** \example test_idxlist_utils_f.f90
+ */
+/** \example test_uid.c
+ */
+
 struct Xt_stripe {
   Xt_int start;
   Xt_int nstrides;

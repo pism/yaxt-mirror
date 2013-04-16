@@ -46,6 +46,8 @@
 
 /** \example test_idxempty.c
  */
+/** \example test_idxempty_f.f90
+ */
 
 /**
  * generates a new index list that does not contain any indices
