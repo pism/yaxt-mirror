@@ -50,60 +50,13 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_redist_repeat.h"
+#include "xt_redist_single_array_base.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
 
 static void
-redist_repeat_delete(Xt_redist redist);
-
-static void
-redist_repeat_s_exchange(Xt_redist redist, unsigned num_arrays,
-                         void **src_data, void **dst_data);
-
-static void
-redist_repeat_s_exchange1(Xt_redist redist,
-                          void *src_data, void *dst_data);
-
-static MPI_Datatype
-redist_repeat_get_send_MPI_Datatype(Xt_redist redist, int rank);
-
-static MPI_Datatype
-redist_repeat_get_recv_MPI_Datatype(Xt_redist redist, int rank);
-
-static MPI_Comm
-redist_repeat_get_MPI_Comm(Xt_redist redist);
-
-static const struct xt_redist_vtable redist_repeat_vtable = {
-  .delete                = redist_repeat_delete,
-  .s_exchange            = redist_repeat_s_exchange,
-  .s_exchange1           = redist_repeat_s_exchange1,
-  .get_send_MPI_Datatype = redist_repeat_get_send_MPI_Datatype,
-  .get_recv_MPI_Datatype = redist_repeat_get_recv_MPI_Datatype,
-  .get_MPI_Comm          = redist_repeat_get_MPI_Comm
-};
-
-struct redist_repeat_msg {
-
-  int rank;
-  MPI_Datatype datatype;
-};
-
-typedef struct Xt_redist_repeat_ *Xt_redist_repeat;
-
-struct Xt_redist_repeat_ {
-
-  const struct xt_redist_vtable *vtable;
-
-  int ndst, nsrc;
-  struct redist_repeat_msg * send_msgs;
-  struct redist_repeat_msg * recv_msgs;
-
-  MPI_Comm comm;
-};
-
-static void
-generate_msg_infos(struct redist_repeat_msg ** msgs, int * nmsgs,
+generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
                    MPI_Aint extent, int * displacements, Xt_redist redist,
                    unsigned num_repetitions, MPI_Comm comm,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
@@ -117,7 +70,7 @@ generate_msg_infos(struct redist_repeat_msg ** msgs, int * nmsgs,
 
   assert(*nmsgs >= 0);
   size_t num_messages = (size_t)*nmsgs;
-  struct redist_repeat_msg *p = *msgs;
+  struct Xt_redist_msg *p = *msgs;
   for (int i = 0; i < comm_size; ++i) {
 
     datatype = get_MPI_datatype(redist, i);
@@ -160,134 +113,33 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                                MPI_Aint dst_extent, unsigned num_repetitions,
                                int displacements[num_repetitions]) {
 
-  Xt_redist_repeat redist_rep = xmalloc(1 * sizeof(*redist_rep));
+  int nsend, nrecv;
+  struct Xt_redist_msg * send_msgs, * recv_msgs;
+  MPI_Comm comm;
 
-  redist_rep->vtable = &redist_repeat_vtable;
-  redist_rep->ndst = 0;
-  redist_rep->nsrc = 0;
-  redist_rep->send_msgs = NULL;
-  redist_rep->recv_msgs = NULL;
+  nsend = 0;
+  nrecv = 0;
+  send_msgs = NULL;
+  recv_msgs = NULL;
 
-  MPI_Comm comm = xt_redist_get_MPI_Comm(redist);
-  xt_mpi_call(MPI_Comm_dup(comm, &(redist_rep->comm)), comm);
+  {
+    MPI_Comm redist_comm = xt_redist_get_MPI_Comm(redist);
+    xt_mpi_call(MPI_Comm_dup(redist_comm, &comm), redist_comm);
+  }
 
   if (num_repetitions < 1)
     Xt_abort(comm, "ERROR: invalid number of repetitions (Xt_redist_repeat)\n",
              __FILE__, __LINE__);
 
 
-  generate_msg_infos(&(redist_rep->send_msgs), &(redist_rep->nsrc), src_extent,
-                     displacements, redist, num_repetitions, redist_rep->comm,
+  generate_msg_infos(&send_msgs, &nsend, src_extent,
+                     displacements, redist, num_repetitions, comm,
                      xt_redist_get_send_MPI_Datatype);
 
-  generate_msg_infos(&(redist_rep->recv_msgs), &(redist_rep->ndst), dst_extent, 
-                     displacements, redist, num_repetitions, redist_rep->comm,
+  generate_msg_infos(&recv_msgs, &nrecv, dst_extent, 
+                     displacements, redist, num_repetitions, comm,
                      xt_redist_get_recv_MPI_Datatype);
 
-  return (Xt_redist)redist_rep;
-}
-
-static inline Xt_redist_repeat
-xrcs(void *redist)
-{
-  return (Xt_redist_repeat)redist;
-}
-
-static void
-redist_repeat_s_exchange(Xt_redist redist,
-                         unsigned num_arrays,
-                         void **src_data,
-                         void **dst_data)
-{
-  Xt_redist_repeat redist_rep = xrcs(redist);
-  if (num_arrays == 1U)
-    redist_repeat_s_exchange1(redist, src_data[0], dst_data[0]);
-  else
-    Xt_abort(redist_rep->comm, "ERROR: multi-array s_exchange is not"
-             " implemented for this xt_redist type "
-             "(Xt_redist_repeat)", __FILE__, __LINE__);
-}
-
-static void
-redist_repeat_delete(Xt_redist redist) {
-
-  Xt_redist_repeat redist_rep = xrcs(redist);
-
-  for (int i = 0; i < redist_rep->nsrc; ++i)
-    MPI_Type_free(&(redist_rep->send_msgs[i].datatype));
-  free(redist_rep->send_msgs);
-
-  for (int i = 0; i < redist_rep->ndst; ++i)
-    MPI_Type_free(&(redist_rep->recv_msgs[i].datatype));
-  free(redist_rep->recv_msgs);
-
-  xt_mpi_call(MPI_Comm_free(&(redist_rep->comm)), MPI_COMM_WORLD);
-
-  free(redist_rep);
-}
-
-static MPI_Datatype
-copy_msg_dt(int nmsg, const struct redist_repeat_msg msg[nmsg],
-            MPI_Comm comm, int rank)
-{
-  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
-
-  for (int i = 0; i < nmsg; ++i)
-    if (msg[i].rank == rank) {
-      xt_mpi_call(MPI_Type_dup(msg[i].datatype, &datatype_copy), comm);
-      break;
-    }
-
-  return datatype_copy;
-}
-
-
-static MPI_Datatype
-redist_repeat_get_send_MPI_Datatype(Xt_redist redist, int rank) {
-
-  Xt_redist_repeat redist_rep = xrcs(redist);
-  return copy_msg_dt(redist_rep->nsrc, redist_rep->send_msgs,
-                     redist_rep->comm, rank);
-}
-
-static MPI_Datatype
-redist_repeat_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
-
-  Xt_redist_repeat redist_rep = xrcs(redist);
-  return copy_msg_dt(redist_rep->ndst, redist_rep->recv_msgs,
-                     redist_rep->comm, rank);
-}
-
-static void
-redist_repeat_s_exchange1(Xt_redist redist,
-                                     void *src_data, void *dst_data) {
-
-  Xt_redist_repeat redist_rep = xrcs(redist);
-
-  MPI_Request * recv_requests;
-
-  recv_requests = xmalloc((size_t)redist_rep->ndst * sizeof(*recv_requests));
-
-  for (int i = 0; i < redist_rep->ndst; ++i)
-    xt_mpi_call(MPI_Irecv(dst_data, 1, redist_rep->recv_msgs[i].datatype,
-                          redist_rep->recv_msgs[i].rank, 0, redist_rep->comm,
-                          recv_requests+i), redist_rep->comm);
-
-  for (int i = 0; i < redist_rep->nsrc; ++i)
-    xt_mpi_call(MPI_Send(src_data, 1, redist_rep->send_msgs[i].datatype,
-                         redist_rep->send_msgs[i].rank, 0, redist_rep->comm),
-                    redist_rep->comm);
-
-  xt_mpi_call(MPI_Waitall(redist_rep->ndst, recv_requests,
-                          MPI_STATUSES_IGNORE), redist_rep->comm);
-
-  free(recv_requests);
-}
-
-static MPI_Comm
-redist_repeat_get_MPI_Comm(Xt_redist redist) {
-
-  Xt_redist_repeat redist_rep = xrcs(redist);
-
-  return redist_rep->comm;
+  return xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
+                                         comm);
 }
