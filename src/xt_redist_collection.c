@@ -403,7 +403,8 @@ static void clear_temp_dt(int num_messages,
                           MPI_Datatype dt[num_messages], MPI_Comm comm) {
 
   for (int i = 0; i < num_messages; ++i)
-    xt_mpi_call(MPI_Type_free(dt + i), comm);
+    if (dt[i] != MPI_DATATYPE_NULL)
+      xt_mpi_call(MPI_Type_free(dt + i), comm);
 }
 
 static inline Xt_redist_collection
