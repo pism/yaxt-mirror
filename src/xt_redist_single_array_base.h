@@ -51,12 +51,7 @@
 
 #include "xt/xt_xmap.h"
 #include "xt/xt_redist.h"
-
-struct Xt_redist_msg {
-
-  int rank;
-  MPI_Datatype datatype;
-};
+#include "xt_redist_internal.h"
 
 /**
  * constructor for a redistribution using point to point

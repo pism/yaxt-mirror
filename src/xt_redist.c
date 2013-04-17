@@ -44,9 +44,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include "xt/xt_core.h"
 #include "xt/xt_redist.h"
+#include "xt/xt_mpi.h"
+#include "core/ppm_xfuncs.h"
 #include "xt_redist_internal.h"
+
+static void
+redist_s_exchange_internal_irecv_send(void *src_data, void *dst_data,
+                                      int nsend, int nrecv,
+                                      struct Xt_redist_msg * send_msgs,
+                                      struct Xt_redist_msg * recv_msgs,
+                                      MPI_Comm comm);
+static void
+redist_s_exchange_internal_irecv_isend(void *src_data, void *dst_data,
+                                       int nsend, int nrecv,
+                                       struct Xt_redist_msg * send_msgs,
+                                       struct Xt_redist_msg * recv_msgs,
+                                       MPI_Comm comm);
+
+void (*xt_redist_s_exchange_internal)(
+  void *src_data, void *dst_data, int nsend, int nrecv,
+  struct Xt_redist_msg * send_msgs, struct Xt_redist_msg * recv_msgs,
+  MPI_Comm comm) =
+    // redist_s_exchange_internal_irecv_send;
+    redist_s_exchange_internal_irecv_isend;
 
 void xt_redist_delete(Xt_redist redist) {
 
@@ -77,4 +100,53 @@ MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
 
   return redist->vtable->get_MPI_Comm(redist);
+}
+
+static void
+redist_s_exchange_internal_irecv_send(void *src_data, void *dst_data,
+                                      int nsend, int nrecv,
+                                      struct Xt_redist_msg * send_msgs,
+                                      struct Xt_redist_msg * recv_msgs,
+                                      MPI_Comm comm) {
+
+  MPI_Request *recv_request
+    = xmalloc((size_t)nrecv * sizeof (*recv_request));
+
+  for (int i = 0; i < nrecv; ++i)
+    xt_mpi_call(MPI_Irecv(dst_data, 1, recv_msgs[i].datatype,
+                          recv_msgs[i].rank, 0, comm,
+                          recv_request+i), comm);
+
+  for (int i = 0; i < nsend; ++i)
+    xt_mpi_call(MPI_Send(src_data, 1, send_msgs[i].datatype,
+                         send_msgs[i].rank, 0, comm), comm);
+
+  xt_mpi_call(MPI_Waitall(nrecv, recv_request, MPI_STATUSES_IGNORE), comm);
+
+  free(recv_request);
+}
+
+static void
+redist_s_exchange_internal_irecv_isend(void *src_data, void *dst_data,
+                                       int nsend, int nrecv,
+                                       struct Xt_redist_msg * send_msgs,
+                                       struct Xt_redist_msg * recv_msgs,
+                                       MPI_Comm comm) {
+
+  MPI_Request *requests
+    = xmalloc((size_t)(nrecv + nsend) * sizeof (*requests));
+
+  for (int i = 0; i < nrecv; ++i)
+    xt_mpi_call(MPI_Irecv(dst_data, 1, recv_msgs[i].datatype,
+                          recv_msgs[i].rank, 0, comm,
+                          requests+i), comm);
+
+  for (int i = 0; i < nsend; ++i)
+    xt_mpi_call(MPI_Isend(src_data, 1, send_msgs[i].datatype,
+                          send_msgs[i].rank, 0, comm, requests+nrecv+i),
+                          comm);
+
+  xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
+
+  free(requests);
 }

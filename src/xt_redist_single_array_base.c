@@ -167,25 +167,10 @@ redist_sab_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
 
   Xt_redist_sab redist_sab = xrsab(redist);
 
-  MPI_Request *recv_request
-    = xmalloc((size_t)redist_sab->nrecv * sizeof (*recv_request));
-
-  int i;
-
-  for (i = 0; i < redist_sab->nrecv; ++i)
-    xt_mpi_call(MPI_Irecv(dst_data, 1, redist_sab->recv_msgs[i].datatype,
-                          redist_sab->recv_msgs[i].rank, 0, redist_sab->comm,
-                          recv_request+i), redist_sab->comm);
-
-  for (i = 0; i < redist_sab->nsend; ++i)
-    xt_mpi_call(MPI_Send(src_data, 1, redist_sab->send_msgs[i].datatype,
-                         redist_sab->send_msgs[i].rank, 0, redist_sab->comm),
-                redist_sab->comm);
-
-  xt_mpi_call(MPI_Waitall(redist_sab->nrecv, recv_request,
-                              MPI_STATUSES_IGNORE), redist_sab->comm);
-
-  free(recv_request);
+  xt_redist_s_exchange_internal(src_data, dst_data, redist_sab->nsend,
+                                redist_sab->nrecv, redist_sab->send_msgs,
+                                redist_sab->recv_msgs,
+                                redist_sab->comm);
 }
 
 static MPI_Datatype

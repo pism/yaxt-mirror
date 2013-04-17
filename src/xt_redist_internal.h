@@ -54,6 +54,12 @@
 
 #include "xt/xt_redist.h"
 
+struct Xt_redist_msg {
+
+  int rank;
+  MPI_Datatype datatype;
+};
+
 struct xt_redist_vtable {
 
   void (*delete)(Xt_redist);
@@ -67,5 +73,11 @@ struct xt_redist_vtable {
 struct Xt_redist_ {
   struct xt_redist_vtable *vtable;
 };
+
+extern void
+(*xt_redist_s_exchange_internal)(void *src_data, void *dst_data, int nsend,
+                                 int nrecv, struct Xt_redist_msg * send_msgs,
+                                 struct Xt_redist_msg * recv_msgs,
+                                 MPI_Comm comm);
 
 #endif
