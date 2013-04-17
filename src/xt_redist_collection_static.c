@@ -50,57 +50,11 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_redist_collection_static.h"
+#include "xt_redist_single_array_base.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
 
-static void
-redist_collection_static_delete(Xt_redist redist);
-
-static void
-redist_collection_static_s_exchange(Xt_redist redist, unsigned num_arrays,
-                                    void **src_data, void **dst_data);
-
-static void
-redist_collection_static_s_exchange1(Xt_redist redist,
-                                     void *src_data, void *dst_data);
-
-static MPI_Datatype
-redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank);
-
-static MPI_Datatype
-redist_collection_static_get_recv_MPI_Datatype(Xt_redist redist, int rank);
-
-static MPI_Comm
-redist_collection_static_get_MPI_Comm(Xt_redist redist);
-
-static const struct xt_redist_vtable redist_collection_static_vtable = {
-  .delete                = redist_collection_static_delete,
-  .s_exchange            = redist_collection_static_s_exchange,
-  .s_exchange1           = redist_collection_static_s_exchange1,
-  .get_send_MPI_Datatype = redist_collection_static_get_send_MPI_Datatype,
-  .get_recv_MPI_Datatype = redist_collection_static_get_recv_MPI_Datatype,
-  .get_MPI_Comm          = redist_collection_static_get_MPI_Comm
-};
-
-struct redist_collection_static_msg {
-
-  int rank;
-  MPI_Datatype datatype;
-};
-
-typedef struct Xt_redist_collection_static_ *Xt_redist_collection_static;
-
-struct Xt_redist_collection_static_ {
-
-  const struct xt_redist_vtable *vtable;
-
-  int ndst, nsrc;
-  struct redist_collection_static_msg * send_msgs;
-  struct redist_collection_static_msg * recv_msgs;
-
-  MPI_Comm comm;
-};
 
 static MPI_Datatype
 generate_datatype(unsigned num_redists,
@@ -157,7 +111,7 @@ generate_datatype(unsigned num_redists,
 }
 
 static void
-generate_msg_infos(struct redist_collection_static_msg ** msgs, int * nmsgs,
+generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
                    MPI_Aint * displacements, Xt_redist * redists,
                    unsigned num_redists, MPI_Comm comm,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
@@ -175,7 +129,7 @@ generate_msg_infos(struct redist_collection_static_msg ** msgs, int * nmsgs,
 
   assert(*nmsgs >= 0);
   size_t num_messages = (size_t)*nmsgs;
-  struct redist_collection_static_msg *p = *msgs;
+  struct Xt_redist_msg *p = *msgs;
   for (int i = 0; i < comm_size; ++i) {
 
     int non_empty_xfer = 0;
@@ -227,129 +181,25 @@ xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redists,
                                 MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm) {
 
-  Xt_redist_collection_static redist_coll = xmalloc(1 * sizeof(*redist_coll));
+  int nsend, nrecv;
+  struct Xt_redist_msg * send_msgs = NULL;
+  struct Xt_redist_msg * recv_msgs = NULL;
+  MPI_Comm new_comm;
 
-  redist_coll->vtable = &redist_collection_static_vtable;
-  redist_coll->ndst = 0;
-  redist_coll->nsrc = 0;
-  redist_coll->send_msgs = NULL;
-  redist_coll->recv_msgs = NULL;
-  xt_mpi_call(MPI_Comm_dup(comm, &(redist_coll->comm)), comm);
+  nsend = 0;
+  nrecv = 0;
+  send_msgs = NULL;
+  recv_msgs = NULL;
+  xt_mpi_call(MPI_Comm_dup(comm, &new_comm), comm);
 
   check_comms(redists, num_redists, comm);
 
-  generate_msg_infos(&(redist_coll->send_msgs), &(redist_coll->nsrc),
-                     src_displacements, redists, num_redists, redist_coll->comm,
-                     xt_redist_get_send_MPI_Datatype);
+  generate_msg_infos(&send_msgs, &nsend, src_displacements, redists,
+                     num_redists, new_comm, xt_redist_get_send_MPI_Datatype);
 
-  generate_msg_infos(&(redist_coll->recv_msgs), &(redist_coll->ndst),
-                     dst_displacements, redists, num_redists, redist_coll->comm,
-                     xt_redist_get_recv_MPI_Datatype);
+  generate_msg_infos(&recv_msgs, &nrecv, dst_displacements, redists,
+                     num_redists, new_comm, xt_redist_get_recv_MPI_Datatype);
 
-  return (Xt_redist)redist_coll;
-}
-
-static inline Xt_redist_collection_static
-xrcs(void *redist)
-{
-  return (Xt_redist_collection_static)redist;
-}
-
-static void
-redist_collection_static_s_exchange(Xt_redist redist,
-                                    unsigned num_arrays,
-                                    void **src_data,
-                                    void **dst_data)
-{
-  Xt_redist_collection_static redist_coll = xrcs(redist);
-  if (num_arrays == 1U)
-    redist_collection_static_s_exchange1(redist, src_data[0], dst_data[0]);
-  else
-    Xt_abort(redist_coll->comm, "ERROR: multi-array s_exchange is not"
-             " implemented for this xt_redist type "
-             "(Xt_redist_collection_static)", __FILE__, __LINE__);
-}
-
-static void
-redist_collection_static_delete(Xt_redist redist) {
-
-  Xt_redist_collection_static redist_coll = xrcs(redist);
-
-  for (int i = 0; i < redist_coll->nsrc; ++i)
-    MPI_Type_free(&(redist_coll->send_msgs[i].datatype));
-  free(redist_coll->send_msgs);
-
-  for (int i = 0; i < redist_coll->ndst; ++i)
-    MPI_Type_free(&(redist_coll->recv_msgs[i].datatype));
-  free(redist_coll->recv_msgs);
-
-  xt_mpi_call(MPI_Comm_free(&(redist_coll->comm)), MPI_COMM_WORLD);
-
-  free(redist_coll);
-}
-
-static MPI_Datatype
-copy_msg_dt(int nmsg, const struct redist_collection_static_msg msg[nmsg],
-            MPI_Comm comm, int rank)
-{
-  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
-
-  for (int i = 0; i < nmsg; ++i)
-    if (msg[i].rank == rank) {
-      xt_mpi_call(MPI_Type_dup(msg[i].datatype, &datatype_copy), comm);
-      break;
-    }
-
-  return datatype_copy;
-}
-
-
-static MPI_Datatype
-redist_collection_static_get_send_MPI_Datatype(Xt_redist redist, int rank) {
-
-  Xt_redist_collection_static redist_coll = xrcs(redist);
-  return copy_msg_dt(redist_coll->nsrc, redist_coll->send_msgs,
-                     redist_coll->comm, rank);
-}
-
-static MPI_Datatype
-redist_collection_static_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
-
-  Xt_redist_collection_static redist_coll = xrcs(redist);
-  return copy_msg_dt(redist_coll->ndst, redist_coll->recv_msgs,
-                     redist_coll->comm, rank);
-}
-
-static void
-redist_collection_static_s_exchange1(Xt_redist redist,
-                                     void *src_data, void *dst_data) {
-
-  Xt_redist_collection_static redist_coll = xrcs(redist);
-
-  MPI_Request * recv_requests;
-
-  recv_requests = xmalloc((size_t)redist_coll->ndst * sizeof(*recv_requests));
-
-  for (int i = 0; i < redist_coll->ndst; ++i)
-    xt_mpi_call(MPI_Irecv(dst_data, 1, redist_coll->recv_msgs[i].datatype,
-                          redist_coll->recv_msgs[i].rank, 0, redist_coll->comm,
-                          recv_requests+i), redist_coll->comm);
-
-  for (int i = 0; i < redist_coll->nsrc; ++i)
-    xt_mpi_call(MPI_Send(src_data, 1, redist_coll->send_msgs[i].datatype,
-                         redist_coll->send_msgs[i].rank, 0, redist_coll->comm),
-                    redist_coll->comm);
-
-  xt_mpi_call(MPI_Waitall(redist_coll->ndst, recv_requests,
-                          MPI_STATUSES_IGNORE), redist_coll->comm);
-
-  free(recv_requests);
-}
-
-static MPI_Comm
-redist_collection_static_get_MPI_Comm(Xt_redist redist) {
-
-  Xt_redist_collection_static redist_coll = xrcs(redist);
-
-  return redist_coll->comm;
+  return xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
+                                         new_comm);
 }
