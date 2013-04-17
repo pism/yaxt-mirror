@@ -422,6 +422,8 @@ redist_collection_s_exchange(Xt_redist redist, unsigned num_arrays,
     Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
              "redist_collection_s_exchange", __FILE__, __LINE__);
 
+  void * mem_buffer;
+
   MPI_Request * recv_requests;
   MPI_Datatype *temp_dt_src, *temp_dt_dst;
   size_t num_dt = (size_t)redist_coll->ndst + (size_t)redist_coll->nsrc;
@@ -430,11 +432,11 @@ redist_collection_s_exchange(Xt_redist redist, unsigned num_arrays,
     size_t temp_dt_size = num_dt * sizeof (MPI_Datatype);
     size_t block_ofs = sizeRoundUp(rq_size, sizeof (MPI_Datatype));
     size_t allocSize = block_ofs + temp_dt_size;
-    recv_requests = xmalloc(allocSize);
-    temp_dt_dst = (void *)((unsigned char *)recv_requests + block_ofs);
+    mem_buffer = xmalloc(allocSize);
+    recv_requests = mem_buffer;
+    temp_dt_dst = (void *)((unsigned char *)mem_buffer + block_ofs);
     temp_dt_src = temp_dt_dst + (size_t)redist_coll->ndst;
   }
-
 
   size_t cache_size = redist_coll->cache_size;
   if (cache_size == 0)
@@ -475,7 +477,7 @@ redist_collection_s_exchange(Xt_redist redist, unsigned num_arrays,
                   temp_dt_dst, redist_coll->comm);
   }
 
-  free(recv_requests);
+  free(mem_buffer);
 }
 
 static void
