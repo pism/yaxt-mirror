@@ -44,11 +44,26 @@ EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	m4/tj_find_type.m4
 
 all-local:
-	for subdir in $(SUBDIRS) ; do \
-          test "$$subdir/Makefile" = . -o "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
-	    || ./config.status $$subdir/Makefile ; done
+	@for d in $(SUBDIRS) ; do \
+          test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile \
+	    || ./config.status $$d/Makefile ; done
 
 clean-local:
-	for subdir in $(SUBDIRS) ; do \
-          test "$$subdir/Makefile" = . -o "$$subdir/Makefile"  -nt "$(top_srcdir)/$$subdir/Makefile.in" \
-	    || ./config.status $$subdir/Makefile ; done
+	@for d in $(SUBDIRS) ; do \
+          test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile \
+	    || ./config.status $$d/Makefile ; done
+
+install-exec-local:
+	@for d in $(SUBDIRS); do \
+	  test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile || \
+	  ./config.status $$d/Makefile ; done
+
+install-data-local:
+	@for d in $(SUBDIRS); do \
+	  test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile || \
+	  ./config.status $$d/Makefile ; done
+
+check-local:
+	@for d in $(SUBDIRS); do \
+	  test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile || \
+	  ./config.status $$d/Makefile ; done
