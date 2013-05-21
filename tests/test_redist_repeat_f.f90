@@ -197,7 +197,7 @@ CONTAINS
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int) :: displacements(3)
     DOUBLE PRECISION, TARGET :: src_template(5, 3), dst_template(3, 3)
-    INTEGER :: i, ierror
+    INTEGER :: ierror
 
     xmap = build_odd_selection_xmap(src_slice_len)
 
@@ -238,7 +238,7 @@ CONTAINS
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int) :: displacements(3)
     DOUBLE PRECISION, TARGET :: src_template(5, 3), dst_template(3, 3)
-    INTEGER :: i, ierror
+    INTEGER :: ierror
 
     xmap = build_odd_selection_xmap(src_slice_len)
 
