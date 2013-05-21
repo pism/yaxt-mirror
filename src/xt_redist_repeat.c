@@ -42,6 +42,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -94,7 +95,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
 
       p[num_messages].rank = i;
       p[num_messages].datatype =
-        xt_mpi_generate_datatype(displacements, num_repetitions,
+        xt_mpi_generate_datatype(displacements, (int)num_repetitions,
                                  datatype_with_extent, comm);
       ++num_messages;
 
@@ -127,7 +128,7 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
     xt_mpi_call(MPI_Comm_dup(redist_comm, &comm), redist_comm);
   }
 
-  if (num_repetitions < 1)
+  if (num_repetitions < 1 || num_repetitions > (unsigned)INT_MAX)
     Xt_abort(comm, "ERROR: invalid number of repetitions (Xt_redist_repeat)\n",
              __FILE__, __LINE__);
 
