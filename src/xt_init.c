@@ -71,13 +71,16 @@ xt_initialize(MPI_Comm default_comm)
 void
 xt_finalize()
 {
-  xt_idxstripes_finalize();
+  if (xt_lib_state == xt_lib_initialized)
+  {
+    xt_idxstripes_finalize();
 #ifdef INSTR_WITH_SCT
-  INSTR_STOP(instr);
-  INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
-  INSTR_FINALIZE();
+    INSTR_STOP(instr);
+    INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
+    INSTR_FINALIZE();
 #endif
-  xt_lib_state = xt_lib_finalized;
+    xt_lib_state = xt_lib_finalized;
+  }
 }
 
 int
