@@ -46,7 +46,7 @@
 !
 PROGRAM test_idxempty
   USE mpi
-  USE yaxt, ONLY: xt_initialize, xt_idxlist, xt_idxempty_new, &
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, xt_idxempty_new, &
        xt_int_kind, xt_idxlist_get_pack_size, xt_stripe, &
        xt_idxlist_pack, xt_idxlist_unpack, xt_idxlist_get_intersection, &
        xt_idxlist_get_index_stripes, xt_idxlist_delete, &
@@ -126,6 +126,7 @@ PROGRAM test_idxempty
   CALL xt_idxlist_delete(idxempty)
   CALL xt_idxlist_delete(idxempty_copy)
 
+  CALL xt_finalize
   CALL finish_mpi
 
   IF (test_err_count() /= 0) STOP 1

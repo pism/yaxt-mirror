@@ -46,7 +46,7 @@
 !
 PROGRAM test_idxvec
   USE mpi
-  USE yaxt, ONLY: xt_initialize, xt_idxlist, xt_idxvec_new, &
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, xt_idxvec_new, &
        xt_idxvec_from_stripes_new, &
        xt_int_kind, xt_idxlist_get_pack_size, xt_stripe, &
        xt_idxlist_pack, xt_idxlist_unpack, xt_idxlist_get_intersection, &
@@ -95,6 +95,7 @@ PROGRAM test_idxvec
        CALL test_abort("non-zero error count!", &
        __FILE__, &
        __LINE__)
+  CALL xt_finalize
   CALL finish_mpi
 CONTAINS
   SUBROUTINE test_idxvec_pack_unpack

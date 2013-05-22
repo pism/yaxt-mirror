@@ -120,7 +120,8 @@ int main(void) {
       xt_idxlist_delete(dst_idxlist);
    }
 
-   MPI_Finalize();
+   xt_finalize();
+   xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 
    return TEST_EXIT_CODE;
 }

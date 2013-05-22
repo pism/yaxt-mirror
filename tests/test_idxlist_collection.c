@@ -306,7 +306,7 @@ int main(void) {
   }
 
   xt_finalize();
-  MPI_Finalize();
+  xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 
   return TEST_EXIT_CODE;
 }

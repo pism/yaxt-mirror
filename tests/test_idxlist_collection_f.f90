@@ -50,7 +50,8 @@ PROGRAM test_idxlist_collection_f
   USE mpi
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, &
        idxlist_pack_unpack_copy, check_idxlist_copy
-  USE yaxt, ONLY: xt_initialize, xt_int_kind, xt_idxlist, xt_idxvec_new, &
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
+       xt_idxlist, xt_idxvec_new, &
        xt_idxlist_collection_new, xt_idxlist_delete, xt_stripe, &
        xt_idxlist_get_intersection, xt_idxsection_new, xt_idxstripes_new, &
        xt_bounds, xt_idxempty_new, xt_idxlist_get_bounding_box, OPERATOR(/=)
@@ -66,6 +67,7 @@ PROGRAM test_idxlist_collection_f
   CALL test_bounding_box1
   CALL test_bounding_box2
 
+  CALL xt_finalize
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
        __FILE__, &
