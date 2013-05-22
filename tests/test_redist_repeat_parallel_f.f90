@@ -140,7 +140,8 @@ CONTAINS
     INTEGER(mpi_address_kind) :: extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int) :: displacements(4), displacements_2(4)
-    INTEGER :: i, j, ierror
+    INTEGER :: i, ierror
+    INTEGER(xt_int_kind) :: j
 
     CALL build_idxlists(indices_a, indices_b)
 
@@ -169,8 +170,8 @@ CONTAINS
 
     CALL xt_redist_delete(redist_p2p)
 
-    input_data = RESHAPE((/((index_vector_a(i) + j * 4*size**2, i = 1, 2*size**2), j = 0,8) /), &
-                         (/2*size**2,9/))
+    input_data = RESHAPE((/((index_vector_a(i) + j * INT(4*size**2, xi), &
+         i = 1, 2*size**2), j = 0,8) /), (/2*size**2, 9/))
     results_1 = -1
     results_2 = -1
 
@@ -181,10 +182,10 @@ CONTAINS
     results(1) = C_LOC(results_2)
     CALL xt_redist_s_exchange(redist_repeat_2, 1, input, results)
 
-    ref_results_1 = RESHAPE((/((index_vector_b(i) + j * 4*size**2, i = 1, 2*size**2), j = 0,3) /), &
-                            (/2*size**2,4/))
-    ref_results_2 = RESHAPE((/((index_vector_b(i) + j * 4*size**2, i = 1, 2*size**2), j = 0,8) /), &
-                            (/2*size**2,9/))
+    ref_results_1 = RESHAPE((/((index_vector_b(i) + j * INT(4*size**2, xi), &
+         i = 1, 2*size**2), j = 0, 3) /), (/2*size**2, 4/))
+    ref_results_2 = RESHAPE((/((index_vector_b(i) + j * INT(4*size**2, xi), &
+         i = 1, 2*size**2), j = 0, 8) /), (/2*size**2, 9/))
 
     ref_results_2(:,1:4:3) = -1
     ref_results_2(:,6:8:1) = -1
