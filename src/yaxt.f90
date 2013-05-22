@@ -52,7 +52,7 @@ MODULE yaxt
   !
   USE xt_core, ONLY: xt_int_kind, xt_int_mpidt, &
        xt_abort, xt_initialize, xt_get_default_comm, xt_stripe, xt_bounds, &
-       char
+       char, xt_finalize
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
@@ -121,11 +121,6 @@ MODULE yaxt
     TYPE(xt_idxlist) :: subst
     INTEGER(c_int) :: mask
   END TYPE xt_modifier
-
-  INTERFACE
-    SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
-    END SUBROUTINE xt_finalize
-  END INTERFACE
 
   EXTERNAL :: xt_slice_c_loc
 

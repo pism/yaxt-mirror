@@ -58,7 +58,7 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: i2 = SELECTED_INT_KIND(pi2)
   INTEGER, PUBLIC, PARAMETER :: i4 = SELECTED_INT_KIND(pi4)
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
-  PUBLIC :: xt_initialize, xt_abort,  xt_get_default_comm, char
+  PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, char
 
   INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
   INTEGER, PUBLIC, PARAMETER :: xt_int_mpidt = XT_INT_FC_MPIDT
@@ -96,6 +96,9 @@ MODULE xt_core
       IMPLICIT NONE
       INTEGER(xt_mpi_fint_kind), INTENT(in) :: default_comm
     END SUBROUTINE xt_initialize
+
+    SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
+    END SUBROUTINE xt_finalize
 
   END INTERFACE
 
