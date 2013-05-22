@@ -48,6 +48,12 @@
 
 INSTR_DEF(instr,"YAXT_lifetime");
 
+static enum {
+  xt_lib_pre_init,
+  xt_lib_initialized,
+  xt_lib_finalized,
+} xt_lib_state = xt_lib_pre_init;
+
 void
 xt_initialize(MPI_Comm default_comm)
 {
@@ -59,6 +65,7 @@ xt_initialize(MPI_Comm default_comm)
   setenv("SCT_CALLSTATS", "0", 0);
   INSTR_START(instr);
 #endif
+  xt_lib_state = xt_lib_initialized;
 }
 
 void
@@ -70,5 +77,17 @@ xt_finalize()
   INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
   INSTR_FINALIZE();
 #endif
+  xt_lib_state = xt_lib_finalized;
 }
 
+int
+xt_initialized()
+{
+  return xt_lib_state > xt_lib_pre_init;
+}
+
+int
+xt_finalized()
+{
+  return xt_lib_state == xt_lib_finalized;
+}

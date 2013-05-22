@@ -85,4 +85,17 @@ xt_initialize(MPI_Comm default_comm);
 void
 xt_finalize();
 
+/**
+ * @return 1 if xt_initialize has been called, zero otherwise
+ */
+int
+xt_initialized();
+
+/**
+ * @return 1 if xt_finalized has been called, zero otherwise
+ */
+int
+xt_finalized();
+
+
 #endif

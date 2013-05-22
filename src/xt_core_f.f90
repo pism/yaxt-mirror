@@ -59,6 +59,7 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: i4 = SELECTED_INT_KIND(pi4)
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
   PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, char
+  PUBLIC :: xt_initialized, xt_finalized
 
   INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
   INTEGER, PUBLIC, PARAMETER :: xt_int_mpidt = XT_INT_FC_MPIDT
@@ -147,5 +148,29 @@ CONTAINS
     WRITE (str, '(2a,3(i0,a))') xt_stripe_tag, '(', stripe%start, ', ', &
          stripe%nstrides, ', ', stripe%stride, ')'
   END FUNCTION xt_stripe2char
+
+  FUNCTION xt_initialized() RESULT(is_initialized)
+    LOGICAL :: is_initialized
+    INTERFACE
+      FUNCTION xt_initialized_c() BIND(c, name='xt_initialized') &
+           RESULT(is_initialized)
+        IMPORT :: c_int
+        INTEGER(c_int) :: is_initialized
+      END FUNCTION xt_initialized_c
+    END INTERFACE
+    is_initialized = xt_initialized_c() /= 0
+  END FUNCTION xt_initialized
+
+  FUNCTION xt_finalized() RESULT(is_finalized)
+    LOGICAL :: is_finalized
+    INTERFACE
+      FUNCTION xt_finalized_c() BIND(c, name='xt_finalized') &
+           RESULT(is_finalized)
+        IMPORT :: c_int
+        INTEGER(c_int) :: is_finalized
+      END FUNCTION xt_finalized_c
+    END INTERFACE
+    is_finalized = xt_finalized_c() /= 0
+  END FUNCTION xt_finalized
 
 END MODULE xt_core
