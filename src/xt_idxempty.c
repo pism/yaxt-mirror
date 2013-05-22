@@ -138,21 +138,24 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
 struct xt_idxempty {
 
   struct Xt_idxlist_ parent;
-};
+} idxempty;
 
-Xt_idxlist xt_idxempty_new() {
-
-   struct xt_idxempty *idxempty;
-
-   idxempty = xmalloc(1 * sizeof(*idxempty));
-   Xt_idxlist_init(&idxempty->parent, &idxempty_vtable);
-
-   return (void*)idxempty;
+void
+xt_idxempty_init()
+{
+  Xt_idxlist_init(&idxempty.parent, &idxempty_vtable);
 }
 
-static void idxempty_delete(Xt_idxlist data) {
+void
+xt_idxempty_finalize()
+{
+}
 
-   free(data);
+Xt_idxlist xt_idxempty_new() {
+  return (void*)&idxempty;
+}
+
+static void idxempty_delete(Xt_idxlist XT_UNUSED(data)) {
 }
 
 static size_t idxempty_get_pack_size(Xt_idxlist XT_UNUSED(data), MPI_Comm comm)

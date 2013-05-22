@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include "core/core.h"
 #include "xt_idxstripes_internal.h"
+#include "xt_idxempty_internal.h"
 #include "instr.h"
 
 INSTR_DEF(instr,"YAXT_lifetime");
@@ -58,6 +59,7 @@ void
 xt_initialize(MPI_Comm default_comm)
 {
   Xt_default_comm = default_comm;
+  xt_idxempty_init();
   xt_idxstripes_initialize();
 #ifdef INSTR_WITH_SCT
   sct_init(32, SCT_GETENV, "YAXT", Xt_default_comm);
@@ -74,6 +76,7 @@ xt_finalize()
   if (xt_lib_state == xt_lib_initialized)
   {
     xt_idxstripes_finalize();
+    xt_idxempty_finalize();
 #ifdef INSTR_WITH_SCT
     INSTR_STOP(instr);
     INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
