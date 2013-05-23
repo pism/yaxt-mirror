@@ -11,17 +11,14 @@ yaxt.h: Makefile $(xtinclude_HEADERS)
 	for header in $(xtinclude_HEADERS) ; \
 	  do echo "#include <$$header>" ; done ; \
 	echo '#endif' \
-	) >yaxt.h.tmp
-	if test ! -f $@ || ! cmp $@ $@.tmp >/dev/null ; then \
-	mv $@.tmp $@ ; else rm $@.tmp ; fi
+	) >$@.$$$$.tmp ; \
+	if test ! -f $@ || ! cmp $@ $@.$$$$.tmp >/dev/null ; then \
+	mv $@.$$$$.tmp $@ ; else rm $@.$$$$.tmp ; fi
 
-all-local:
+$(xtinclude_HEADERS): ../src/$@ ../include/config.h \
+	$(top_srcdir)/scripts/header2installheader.pl
 	$(MKDIR_P) xt
-	for header in $(xtinclude_HEADERS) ; \
-	  do \
-	  headerbasedir=`test -f '../src/$$header' || echo '$(srcdir)/'` ; \
-          if test "$$headerbasedir../src/$$header" -ot "$$header" \
-	    -a ../include/config.h -ot "$$header" ; then : ; else \
+	headerbasedir=`test -f '../src/$@' || echo '$(srcdir)/'` ; \
 	  $(PERL) -I$(top_srcdir)/scripts \
 	  $(top_srcdir)/scripts/header2installheader.pl \
 	  --config-header=../include/config.h \
@@ -32,14 +29,12 @@ all-local:
 	  no`c-long-long-is-larger-than-long \
 	  --c-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
 	  --dstdir=. \
-	  $$headerbasedir../src/$$header ; \
-	  fi ; \
-	  done
+	  $$headerbasedir../src/$@
 
 clean-local:
 	rm -rf xt yaxt.h
 
-install-data-local:
+install-data-local: yaxt.h $(xtinclude_HEADERS)
 	@echo " $(MKDIR_P) '$(DESTDIR)$(xtincludedir)'"; \
           $(MKDIR_P) "$(DESTDIR)$(xtincludedir)" || exit 1; \
 	for p in $(xtinclude_HEADERS); do \
