@@ -78,7 +78,7 @@
   the modifier are replaces by the respective indices in the second list.
 
   \dontinclude xt_idxmod.h
-  \skip struct Xt_idxlist *xt_idxmod_new
+  \skip _new
   \until ;
 
   \image html decomp_idxmod.png "index modifier decomposition example"
