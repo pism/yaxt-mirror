@@ -4,6 +4,7 @@ ACLOCAL_AMFLAGS=-I m4
 
 EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	util/sxpreproc-wrapper util/xlfpreproc-wrapper \
+	config/checksrc/openmpi_struct_dt.c \
 	doc/Doxyfile doc/README.build doc/cfortran.doc \
 	doc/cfortran.html doc/cfortran.txt doc/styleguide.txt \
 	doc/images/decomp_idxlist_collection.png \
@@ -41,7 +42,11 @@ EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	doc/src/xmaps.dox \
 	doc/src/yaxt_concept.dox \
 	include/cfortran.h \
-	m4/tj_find_type.m4
+	m4/tj_find_type.m4 \
+	scripts/cpp.pm \
+	scripts/header2installheader.pl \
+	scripts/makef90depends
+
 
 all-local:
 	@for d in $(SUBDIRS) ; do \
@@ -52,6 +57,10 @@ clean-local:
 	@for d in $(SUBDIRS) ; do \
           test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile \
 	    || ./config.status $$d/Makefile ; done
+
+distclean-local:
+	@for d in $(SUBDIRS) ; do \
+          rm -f $$d/Makefile ; done
 
 install-exec-local:
 	@for d in $(SUBDIRS); do \

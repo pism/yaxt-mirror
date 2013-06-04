@@ -65,6 +65,7 @@ libyaxt_la_SOURCES =						\
 	xt/xt_xmap_intersection.h				\
 	xt/xt_idxmod.h						\
 	xt_handles.c						\
+	xt_idxempty_internal.h					\
 	xt_idxempty.c						\
 	xt_idxlist_internal.h					\
 	xt_idxlist.c						\
@@ -73,6 +74,7 @@ libyaxt_la_SOURCES =						\
 	xt_idxlist_unpack.c 					\
 	xt_idxmod.c						\
 	xt_idxsection.c						\
+	xt_idxstripes_internal.h				\
 	xt_idxstripes.c						\
 	xt_idxvec.c 						\
 	xt_mpi.c						\
@@ -103,6 +105,7 @@ libyaxt_la_SOURCES =						\
 	ensure_array_size.h					\
 	quicksort.c						\
 	mergesort.c						\
+	instr.h							\
 	xt_sort.c						\
 	yaxt_f2c.c						\
 	xt_mpi_f.f90						\

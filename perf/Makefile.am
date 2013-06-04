@@ -41,3 +41,5 @@ perf_idxsection_get_positions_of_indices_SOURCES = perf_idxsection_get_positions
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
 LDADD = ../src/libyaxt.la $(MPI_C_LIB)
+
+EXTRA_DIST = core
