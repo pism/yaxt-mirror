@@ -6,6 +6,11 @@ BUILT_SOURCES = yaxt.h
 
 SUBDIRS = f90
 
+../src/xtinclude_Makefile.inc:
+	(cd ../src ; $(MAKE) xtinclude_Makefile.inc)
+
+@AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@
+
 yaxt.h: Makefile $(xtinclude_HEADERS)
 	( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
 	for header in $(xtinclude_HEADERS) ; \
@@ -48,8 +53,3 @@ uninstall-local:
 dist-hook:
 	-rm $(distdir)/xt/*.h
 	-rmdir $(distdir)/xt
-
-../src/xtinclude_Makefile.inc:
-	(cd ../src ; $(MAKE) xtinclude_Makefile.inc)
-
-@AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@
