@@ -37,6 +37,8 @@ noinst_PROGRAMS = 						\
 	rrobin							\
 	idxlist_examples					\
 	idxsection_examples					\
+	row2col							\
+	row2col_f						\
 	tr_gp2fs
 
 rrobin_SOURCES = rrobin.c
@@ -44,6 +46,11 @@ rrobin_SOURCES = rrobin.c
 idxlist_examples_SOURCES = idxlist_examples.c
 
 idxsection_examples_SOURCES = idxsection_examples.c
+
+row2col_SOURCES = row2col.c
+
+row2col_f_SOURCES = row2col_f.f90
+row2col_f_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 
 tr_gp2fs_SOURCES = tr_gp2fs.c
 tr_gp2fs_LDADD = $(LDADD) -lm
