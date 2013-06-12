@@ -24,17 +24,28 @@ repository.
 
 To adapt yaxt to your MPI system, yaxt needs three pieces of information
 
-  a. how to invoke the C compiler and compile and link C programs
-  b. how to invoke the Fortran compiler and compile and link Fortran programs
-  c. how to produce C code for C<->Fortran interoperability, see 
-  c. how to run compiled MPI programs
+  a) how to invoke the C compiler and compile and link C programs
+  b) how to invoke the Fortran compiler and compile and link Fortran programs
+  c) how to produce C code for C<->Fortran interoperability, see cfortran.doc
+  d) how to run compiled MPI programs
 
-For a and b respectively you can either
+For a) and b) respectively you can either
 
 - set CC and FC to the corresponding MPI compiler wrapper, or
 - set CC and FC to the compiler driver (e.g. CC=gcc FC=gfortran) and use
   some of the arguments MPIROOT MPI_C_INCLUDE MPI_FC_INCLUDE MPI_C_LIB
   and MPI_FC_LIB to set the necessary compiler flags to build MPI programs.
+
+For c) the following is used as an option in CPPFLAGS for different compilers:  
+
+* GCC gfortran, PGI pgfortran, Cray and Intel compilers: -DpgiFortran
+* NAG Fortran compiler: -DNAGf90Fortran
+* IBM xlc needs -Dextname if -qextname is used on for the Fortran part.
+
+For d) the configure-argument MPI_LAUNCH needs to be set according to
+your MPI installation. For mpich/openmpi style environments, mpirun is
+fine and usually detected automatically. For IBM PE an adapter that's
+provided as util/mpi_launch_poe in the yaxt source must be used.
 
 3. Requirements
 
