@@ -58,6 +58,7 @@
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
+#include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_mpi.h"
@@ -131,6 +132,9 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
 
       num_indices_src = xt_idxlist_get_num_indices(idxlist_src);
       num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
+
+      if (num_indices_src == 0 || num_indices_dst == 0)
+        return xt_idxempty_new();
 
       Xt_int *indices_src, *indices_dst;
       indices_src = xmalloc((Xt_uint)num_indices_src * sizeof (indices_src[0]));

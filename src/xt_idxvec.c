@@ -53,6 +53,7 @@
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
+#include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_mpi.h"
@@ -164,21 +165,21 @@ struct Xt_idxvec_ {
 Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, Xt_int num_indices) {
   INSTR_DEF(t_idxvec_new,"xt_idxvec_new");
   INSTR_START(t_idxvec_new);
+  if (num_indices == 0)
+    return xt_idxempty_new();
   Xt_idxvec restrict idxvec_data = xmalloc(sizeof (*idxvec_data));
 
   Xt_idxlist_init(&idxvec_data->parent, &idxvec_vtable);
 
-  if (num_indices != 0) {
+  if (num_indices > 0) {
 
     size_t vector_size = (size_t)num_indices * sizeof(*(idxvec_data->vector));
 
     idxvec_data->vector = xmalloc(vector_size);
 
     memcpy(idxvec_data->vector, idxvec, vector_size);
-
   } else {
-
-    idxvec_data->vector = NULL;
+    die("number of indices passed to xt_idxvec_new must not be negative!");
   }
 
   idxvec_data->num_indices = num_indices;
