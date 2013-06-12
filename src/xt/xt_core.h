@@ -57,6 +57,7 @@
 typedef XT_INT Xt_int;
 #define Xt_int_dt (XT_INT_MPIDT)
 typedef unsigned XT_INT Xt_uint;
+#define Xt_uint_dt (XT_UINT_MPIDT)
 typedef uint64_t Xt_uid;
 #define XT_INT_MAX CONF_XT_INT_MAX
 #define XT_INT_MIN CONF_XT_INT_MIN

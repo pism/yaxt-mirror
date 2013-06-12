@@ -243,8 +243,16 @@ m4_foreach([substtype],[[XT_INT]],
      [Minimal value for ]substtype)
   ])
 
+AS_CASE([$XT_INT],
+  [int],[XT_UINT_MPIDT=MPI_UNSIGNED],
+  [short],[XT_UINT_MPIDT=MPI_UNSIGNED_SHORT],
+  [long],[XT_UINT_MPIDT=MPI_UNSIGNED_LONG],
+  ["long long"],[XT_UINT_MPIDT=MPI_UNSIGNED_LONG_LONG])
+
 AC_DEFINE_UNQUOTED([XT_INT],[$XT_INT],[Type to use for enumeration of distributed elements.])
-AC_DEFINE_UNQUOTED([XT_INT_MPIDT],[$XT_INT_MPIDT],[Type to use for enumeration of distributed elements.])
+AC_DEFINE_UNQUOTED([XT_INT_MPIDT],[$XT_INT_MPIDT],[MPI Datatype for type for enumeration of distributed elements.])
+AC_DEFINE_UNQUOTED([XT_UINT_MPIDT],[$XT_UINT_MPIDT],[MPI Datatype for type for counts of distributed elements.])
+
 
 AC_ARG_VAR([BUILD_CFLAGS],
   [append to CFLAGS during build but not in configure phase])

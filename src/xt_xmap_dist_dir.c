@@ -297,7 +297,7 @@ get_remote_packed_intersection_size(int recv_size[SEND_SIZE_ASIZE],
 
 static void send_intersections(void * send_buffer,
                                int (*send_size)[SEND_SIZE_ASIZE],
-                               MPI_Request * dir_init_send_requests,
+                               MPI_Request *dir_init_send_requests,
                                MPI_Comm comm) {
 
   int const src_send_tag = 0;
@@ -306,7 +306,7 @@ static void send_intersections(void * send_buffer,
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  for (int i = 0; i < 2 * comm_size; ++i)
+  for (unsigned i = 0; i < 2 * (unsigned)comm_size; ++i)
     dir_init_send_requests[i] = MPI_REQUEST_NULL;
 
   int offset = 0;
