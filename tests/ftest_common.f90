@@ -78,8 +78,9 @@ MODULE ftest_common
   PUBLIC :: init_mpi, finish_mpi
   PUBLIC :: timer, treset, tstart, tstop, treport, mysync
   PUBLIC :: id_map, icmp, factorize, regular_deco
-  PUBLIC :: test_abort
+  PUBLIC :: test_abort, set_verbose, get_verbose
 CONTAINS
+
   SUBROUTINE init_mpi
     CHARACTER(len=*), PARAMETER :: context = 'init_mpi: '
     INTEGER :: ierror
@@ -96,6 +97,16 @@ CONTAINS
          __FILE__, &
          __LINE__)
   END SUBROUTINE finish_mpi
+
+  SUBROUTINE set_verbose(verb)
+    LOGICAL, INTENT(in) :: verb
+    verbose = verb
+  END SUBROUTINE set_verbose
+
+  SUBROUTINE get_verbose(verb)
+    LOGICAL, INTENT(out) :: verb
+    verb = verbose
+  END SUBROUTINE get_verbose
 
   PURE SUBROUTINE treset(t, label)
     TYPE(timer), INTENT(inout) :: t

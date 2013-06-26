@@ -53,7 +53,7 @@ PROGRAM test_perf
        & ut_destroy_transposition_template, ut_destroy_transposition, &
        & ut_init_transposition, xt_int_kind
   USE ftest_common, ONLY: finish_mpi, init_mpi, treset, tstart, tstop, &
-       treport, timer, id_map, factorize, regular_deco
+       treport, timer, id_map, factorize, regular_deco, set_verbose
   USE yaxt, ONLY: xt_finalize
 
   IMPLICIT NONE
@@ -389,7 +389,7 @@ CONTAINS
       lroot = .FALSE.
       verbose = .FALSE.
     ENDIF
-
+    CALL set_verbose(verbose)
     CALL factorize(nprocs, nprocx, nprocy)
     IF (lroot .AND. verbose) WRITE(0,*) 'nprocx, nprocy=',nprocx, nprocy
     IF (lroot .AND. verbose) WRITE(0,*) 'g_ie, g_je=',g_ie, g_je
