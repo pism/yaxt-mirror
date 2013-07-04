@@ -70,11 +70,10 @@ static const Stripe zero_stripe = { .start=0, .stride=0, .nstrides=0 };
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(int const *disp, int *blocklengths,
-                                       int count, MPI_Datatype old_type,
-                                       MPI_Comm comm);
+                                       int count, MPI_Datatype old_type);
 static MPI_Datatype
 xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
-                                 MPI_Datatype old_type, MPI_Comm comm);
+                                 MPI_Datatype old_type);
 
 
 //taken from http://beige.ucs.indiana.edu/I590/node85.html
@@ -226,7 +225,7 @@ xt_mpi_generate_datatype_block(int const * displacements, int * blocklengths,
                                int count, MPI_Datatype old_type,
                                MPI_Comm comm) {
 #ifdef COMPACT_DT
-  return xt_mpi_generate_compact_datatype_block(displacements, blocklengths, count, old_type, comm);
+  return xt_mpi_generate_compact_datatype_block(displacements, blocklengths, count, old_type);
 #endif
 
   MPI_Datatype datatype;
@@ -261,7 +260,7 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
     return MPI_DATATYPE_NULL;
 
 #ifdef COMPACT_DT
-  return xt_mpi_generate_compact_datatype(displacements, count, old_type, comm);
+  return xt_mpi_generate_compact_datatype(displacements, count, old_type);
 #endif
 
   int * blocklengths = xmalloc((size_t)count * sizeof(*blocklengths));
@@ -310,7 +309,7 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
 
 
 static int
-scan_stripe(int const *disp, int disp_len, MPI_Datatype old_type, Stripe *v, int vsize) {
+scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
 
   if (disp_len<1) return 0;
 
@@ -615,7 +614,7 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
 
   int d[n];
   int p=0;
-  int tnum = 1;
+
   for (int i=ia; i<=ib; i++) {
     for (int k=0; k<v[i].nstrides; k++) {
       d[p] = v[i].start + k * v[i].stride - start;
@@ -705,8 +704,7 @@ parse_stripe(Stripe const *v, int vlen, MPI_Datatype old_type) {
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(int const *disp, int *blocklengths,
-                                       int count, MPI_Datatype old_type,
-                                       MPI_Comm comm) {
+                                       int count, MPI_Datatype old_type) {
 
   if (count < 1) return MPI_DATATYPE_NULL;
   Stripe v[count];
@@ -722,12 +720,12 @@ xt_mpi_generate_compact_datatype_block(int const *disp, int *blocklengths,
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
-                                 MPI_Datatype old_type, MPI_Comm comm) {
+                                 MPI_Datatype old_type) {
 
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
   Stripe v[disp_len];
-  int vlen = scan_stripe(disp, disp_len, old_type, v, disp_len);
+  int vlen = scan_stripe(disp, disp_len, v, disp_len);
   return parse_stripe(v, vlen, old_type);
 }
 
