@@ -423,7 +423,7 @@ match_simple_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, 
   int bl = 1;
   MPI_Datatype dt1;
   xt_mpi_call(MPI_Type_vector(nstrides, bl, stride, old_type, &dt1),
-              MPI_COMM_WORLD);
+              Xt_default_comm);
 
   int start = v[p].start - *disp;
   if (!start) {
@@ -434,15 +434,15 @@ match_simple_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, 
   // (start != 0) => add offset:
   MPI_Aint old_type_size, old_type_lb;
   xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                  &old_type_size), MPI_COMM_WORLD);
+                                  &old_type_size), Xt_default_comm);
 
   MPI_Aint displacement = start * old_type_size;
   int bl2 = 1;
   MPI_Datatype dt2;
   xt_mpi_call(MPI_Type_create_hindexed(1, &bl2, &displacement, dt1, &dt2),
-              MPI_COMM_WORLD);
+              Xt_default_comm);
 
-  xt_mpi_call(MPI_Type_free(&dt1), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Type_free(&dt1), Xt_default_comm);
 
   *dt = dt2;
   return nstrides;
@@ -475,7 +475,7 @@ match_block_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, i
 
   MPI_Datatype dt1;
   xt_mpi_call(MPI_Type_vector(n, bl, vstride, old_type, &dt1),
-              MPI_COMM_WORLD);
+              Xt_default_comm);
 
   int start = v[*pstart].start - *disp;
 
@@ -488,15 +488,15 @@ match_block_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, i
   // (start != 0) => add offset:
   MPI_Aint old_type_size, old_type_lb;
   xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                  &old_type_size), MPI_COMM_WORLD);
+                                  &old_type_size), Xt_default_comm);
 
   MPI_Aint displacement = start * old_type_size;
   int bl2 = 1;
   MPI_Datatype dt2;
   xt_mpi_call(MPI_Type_create_hindexed(1, &bl2, &displacement, dt1, &dt2),
-              MPI_COMM_WORLD);
+              Xt_default_comm);
 
-  xt_mpi_call(MPI_Type_free(&dt1), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Type_free(&dt1), Xt_default_comm);
 
   *dt = dt2;
   return n;
@@ -518,10 +518,10 @@ match_contiguous(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, 
   int d = v[p].start - *disp;
 
   if (!d) {
-    xt_mpi_call(MPI_Type_contiguous(v[p].nstrides, old_type, dt), MPI_COMM_WORLD) ;
+    xt_mpi_call(MPI_Type_contiguous(v[p].nstrides, old_type, dt), Xt_default_comm) ;
   } else {
     xt_mpi_call(MPI_Type_create_indexed_block(1, v[p].nstrides, &d, old_type, dt),
-                MPI_COMM_WORLD);
+                Xt_default_comm);
   }
 
   (*pstart)++;
@@ -562,10 +562,10 @@ match_indexed(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int
   }
 
   if (hom_bl) {
-    xt_mpi_call(MPI_Type_create_indexed_block(n, bl[0], d, old_type, dt), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Type_create_indexed_block(n, bl[0], d, old_type, dt), Xt_default_comm);
   } else {
     xt_mpi_call(MPI_Type_indexed(n, bl, d, old_type, dt),
-                MPI_COMM_WORLD);
+                Xt_default_comm);
   }
 
   *pstart = p;
@@ -614,9 +614,9 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
     //if (embed)
     //  *dt = old_type;
     //else
-    xt_mpi_call(MPI_Type_dup(old_type, dt), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Type_dup(old_type, dt), Xt_default_comm);
   } else {
-    xt_mpi_call(MPI_Type_create_indexed_block(n, 1, d, old_type, dt), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Type_create_indexed_block(n, 1, d, old_type, dt), Xt_default_comm);
   }
 
   *istart = *iend + 1;
@@ -663,7 +663,7 @@ parse_stripe(Stripe const *v, int vlen, MPI_Datatype old_type) {
   MPI_Datatype result_dt;
   if (wlen == 1 ) {
     if (wdisp[0] == 0) {
-      xt_mpi_call(MPI_Type_dup(wdt[0], &result_dt), MPI_COMM_WORLD);
+      xt_mpi_call(MPI_Type_dup(wdt[0], &result_dt), Xt_default_comm);
     } else {
       die("parse_stripe: internal error; wlen == 1 && match_disp != 0\n");
     }
@@ -672,17 +672,17 @@ parse_stripe(Stripe const *v, int vlen, MPI_Datatype old_type) {
     MPI_Aint wbdisp[wlen];
     int wblocklength[wlen];
     xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                  &old_type_extent), MPI_COMM_WORLD);
+                                  &old_type_extent), Xt_default_comm);
     for(int i=0; i<wlen; i++) {
       wbdisp[i] = wdisp[i] * old_type_extent;
       wblocklength[i] = 1;
     }
     xt_mpi_call(MPI_Type_create_struct(wlen, wblocklength, wbdisp,
-                                       wdt, &result_dt), MPI_COMM_WORLD);
+                                       wdt, &result_dt), Xt_default_comm);
   }
-  xt_mpi_call(MPI_Type_commit(&result_dt), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Type_commit(&result_dt), Xt_default_comm);
   for(m = 0; m<wlen; m++) {
-    xt_mpi_call(MPI_Type_free(&wdt[m]), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Type_free(&wdt[m]), Xt_default_comm);
   }
   return result_dt;
 }
