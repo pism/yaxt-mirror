@@ -414,12 +414,9 @@ match_simple_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, 
 
   (*pstart)++;
 
-  int embed;
   if (vlen > 1) {
-    embed = 1;
     *disp = v[p].start;
   } else {
-    embed = 0;
     *disp = 0;
   }
 
@@ -470,12 +467,9 @@ match_block_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, i
   int n = p - *pstart;
   if (n<3) return 0;
 
-  int embed;
   if (n == vlen) {
-    embed = 0;
     *disp = 0;
   } else {
-    embed = 1;
     *disp = v[*pstart].start;
   }
 
@@ -515,12 +509,9 @@ match_contiguous(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, 
   if (v[p].stride != 1) return 0;
   if (v[p].nstrides < 2) return 0;
 
-  int embed;
   if (vlen > 1) {
-    embed = 1;
     *disp = v[*pstart].start;
   } else {
-    embed = 0;
     *disp = 0;
   }
 
@@ -553,12 +544,9 @@ match_indexed(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int
   if (n < 2) return 0;
 
   int start;
-  int embed;
   if (n == vlen) {
-    embed = 0;
     start = 0;
   } else {
-    embed = 1;
     start = v[*pstart].start;
   }
 
@@ -598,15 +586,12 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
   }
   if (n<1) return 0;
 
-  int embed;
   int start;
   if (ia == 0 && ib == vlen-1) {
     // generate absolute datatype
-    embed = 0;
     start = 0;
   } else {
     // generate relative datatype that gets embedded by the caller
-    embed = 1;
     start = v[ia].start;
   }
 
