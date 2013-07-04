@@ -385,11 +385,11 @@ scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
     i++;
   }
 
-  int vn = i;
+  unsigned vn = (unsigned)i;
 
   // check:
   p = 0;
-  for (i = 0; i < vn; i++) {
+  for (unsigned i = 0; i < vn; i++) {
     for (int k = 0; k < v[i].nstrides; k++) {
       int d = v[i].start + k*v[i].stride;
       if (p > disp_len) die("scan_stripe: internal error (1)");
@@ -399,7 +399,7 @@ scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
   }
   if (p != disp_len) die("scan_stripe: internal error (3)");
 
-  return vn;
+  return (int)vn;
 }
 
 static int
