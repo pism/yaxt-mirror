@@ -48,7 +48,7 @@
 MODULE xt_redist_base
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, i2, i4, i8
   USE xt_xmap_abstract, ONLY: xt_xmap
-  USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr
+  USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_associated
   USE xt_mpi, ONLY: mpi_address_kind
   IMPLICIT NONE
   PRIVATE
@@ -85,6 +85,10 @@ MODULE xt_redist_base
     END SUBROUTINE xt_redist_delete_c
   END INTERFACE
 
+  INTERFACE xt_is_null
+    MODULE PROCEDURE xt_redist_is_null
+  END INTERFACE xt_is_null
+
   INTERFACE xt_redist_s_exchange
     MODULE PROCEDURE xt_redist_s_exchange_a1d
     MODULE PROCEDURE xt_redist_s_exchange_i2_a1d
@@ -102,13 +106,19 @@ MODULE xt_redist_base
     END SUBROUTINE xt_redist_s_exchange_c
   END INTERFACE
 
-  PUBLIC :: xt_redist_c2f, xt_redist_f2c, &
+  PUBLIC :: xt_redist_c2f, xt_redist_f2c, xt_is_null, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
        xt_redist_collection_static_new, xt_redist_collection_new, &
        xt_redist_repeat_new
 CONTAINS
+
+  FUNCTION xt_redist_is_null(redist) RESULT(p)
+    TYPE(xt_redist), INTENT(in) :: redist
+    LOGICAL :: p
+    p = .NOT. C_ASSOCIATED(redist%cptr)
+  END FUNCTION xt_redist_is_null
 
   FUNCTION xt_redist_c2f(redist) RESULT(p)
     TYPE(c_ptr), INTENT(in) :: redist

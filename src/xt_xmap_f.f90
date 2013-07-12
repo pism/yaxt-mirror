@@ -46,12 +46,13 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_xmap_abstract
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_ptr, c_null_ptr
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_ptr, c_null_ptr, &
+       c_associated
   USE xt_core, ONLY: xt_mpi_fint_kind
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: xt_xmap_c2f, xt_xmap_f2c
+  PUBLIC :: xt_xmap_c2f, xt_xmap_f2c, xt_is_null
   PUBLIC :: xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks
@@ -88,7 +89,19 @@ MODULE xt_xmap_abstract
     MODULE PROCEDURE xt_xmap_delete_a1d
   END INTERFACE xt_xmap_delete
 
+  INTERFACE xt_is_null
+    MODULE PROCEDURE xt_xmap_is_null
+  END INTERFACE xt_is_null
+
 CONTAINS
+
+  FUNCTION xt_xmap_is_null(xmap) RESULT(p)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    LOGICAL :: p
+    p = .NOT. C_ASSOCIATED(xmap%cptr)
+  END FUNCTION xt_xmap_is_null
+
+
   FUNCTION xt_xmap_c2f(xmap) RESULT(p)
     TYPE(c_ptr), INTENT(in) :: xmap
     TYPE(xt_xmap) :: p

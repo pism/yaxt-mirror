@@ -61,7 +61,7 @@ MODULE yaxt
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &
        xt_idxlist_get_bounding_box, xt_idxlist_get_intersection, &
-       xt_idxlist_get_num_indices, &
+       xt_idxlist_get_num_indices, xt_is_null, &
        xt_idxlist_get_indices, xt_idxlist_get_indices_const
   USE xt_idxvec, ONLY: xt_idxvec_from_stripes_new, xt_idxvec_new
   USE xt_idxstripes, ONLY: xt_idxstripes_new
@@ -69,13 +69,13 @@ MODULE yaxt
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
-       xt_xmap_all2all_new, xt_xmap_dist_dir_new
+       xt_xmap_all2all_new, xt_xmap_dist_dir_new, xt_is_null
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f, xt_redist_f2c, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
        xt_redist_collection_static_new, xt_redist_collection_new, &
-       xt_redist_repeat_new
+       xt_redist_repeat_new, xt_is_null
 
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
   IMPLICIT NONE
@@ -107,6 +107,7 @@ MODULE yaxt
        xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_idxempty_new, xt_redist_collection_static_new, &
        xt_redist_collection_new, xt_slice_c_loc, &
+       xt_is_null, &
        OPERATOR(==), OPERATOR(/=), char
 
   INTERFACE OPERATOR(==)

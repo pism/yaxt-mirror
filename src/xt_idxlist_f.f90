@@ -48,7 +48,8 @@
 MODULE xt_idxlist_abstract
   USE xt_core, ONLY: xt_int_kind, xt_mpi_fint_kind, xt_stripe, &
        xt_bounds, xt_get_default_comm, xt_abort
-  USE iso_c_binding, ONLY: c_ptr, c_int, c_f_pointer, c_null_ptr
+  USE iso_c_binding, ONLY: c_ptr, c_int, c_f_pointer, c_null_ptr, &
+       c_associated
   IMPLICIT NONE
   PRIVATE
 
@@ -96,7 +97,7 @@ MODULE xt_idxlist_abstract
   EXTERNAL :: xt_idxlist_unpack
 
   PUBLIC :: xt_idxlist_delete, xt_idxlist_get_pack_size, &
-       xt_idxlist_f2c, xt_idxlist_c2f, &
+       xt_idxlist_f2c, xt_idxlist_c2f, xt_is_null, &
        xt_idxlist_pack, xt_idxlist_unpack, xt_idxlist_copy, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
@@ -146,7 +147,17 @@ MODULE xt_idxlist_abstract
     MODULE PROCEDURE xt_idxlist_get_indices_7d
   END INTERFACE xt_idxlist_get_indices
 
+  INTERFACE xt_is_null
+    MODULE PROCEDURE xt_idxlist_is_null
+  END INTERFACE xt_is_null
+
 CONTAINS
+
+  FUNCTION xt_idxlist_is_null(idxlist) RESULT(p)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    LOGICAL :: p
+    p = .NOT. C_ASSOCIATED(idxlist%cptr)
+  END FUNCTION xt_idxlist_is_null
 
   SUBROUTINE xt_idxlist_delete_1(idxlist)
     TYPE(xt_idxlist), INTENT(inout) :: idxlist
