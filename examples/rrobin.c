@@ -87,13 +87,14 @@ int main(void) {
     // source index list by stripes
     Xt_idxlist src_idxlist;
 
-    struct Xt_stripe src_stripes = {rank*leng, leng, 1};
+    struct Xt_stripe src_stripes = {(Xt_int)(rank*leng), (Xt_int)leng, 1};
     src_idxlist = xt_idxstripes_new(&src_stripes, 1);
 
     // destination index list by stripes
     Xt_idxlist dst_idxlist;
 
-    struct Xt_stripe dst_stripes = {((rank+1)*leng)%(size*leng), leng, 1};
+    struct Xt_stripe dst_stripes = {(Xt_int)(((rank+1)*leng)%(size*leng)),
+                                    (Xt_int)leng, 1};
     dst_idxlist = xt_idxstripes_new(&dst_stripes, 1);
 
     // xmap

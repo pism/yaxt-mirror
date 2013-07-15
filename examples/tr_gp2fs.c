@@ -215,9 +215,9 @@ void calc_config (struct config *conf, int nprocs){
   conf->dst.x_leng = conf->x;
 
   // calculate parameters for source section
-  conf->src.local_size[0] = conf->z;
-  conf->src.local_size[1] = conf->src.y_leng;
-  conf->src.local_size[2] = conf->src.x_leng;
+  conf->src.local_size[0] = (Xt_int)conf->z;
+  conf->src.local_size[1] = (Xt_int)conf->src.y_leng;
+  conf->src.local_size[2] = (Xt_int)conf->src.x_leng;
   int src_block_pos_y = rank / src_x_block;
   int src_block_pos_x = rank % src_x_block;
 
@@ -226,13 +226,15 @@ void calc_config (struct config *conf, int nprocs){
   int src_x_bb = conf->x % src_x_block;
 
   conf->src.local_start[0] = 0;
-  conf->src.local_start[1] = (conf->y/ src_y_block) * src_block_pos_y + MIN(src_block_pos_y, src_y_bb);
-  conf->src.local_start[2] = (conf->x/ src_x_block) * src_block_pos_x + MIN(src_block_pos_x, src_x_bb);
+  conf->src.local_start[1] = (Xt_int)((conf->y/ src_y_block) * src_block_pos_y
+                                      + MIN(src_block_pos_y, src_y_bb));
+  conf->src.local_start[2] = (Xt_int)((conf->x/ src_x_block) * src_block_pos_x
+                                      + MIN(src_block_pos_x, src_x_bb));
 
   //dst
-  conf->dst.local_size[0] = conf->dst.z_leng;
-  conf->dst.local_size[1] = conf->dst.y_leng;
-  conf->dst.local_size[2] = conf->x;
+  conf->dst.local_size[0] = (Xt_int)conf->dst.z_leng;
+  conf->dst.local_size[1] = (Xt_int)conf->dst.y_leng;
+  conf->dst.local_size[2] = (Xt_int)conf->x;
 
   int dst_block_pos_z = rank / dst_y_block;
   int dst_block_pos_y = rank % dst_y_block;
@@ -241,8 +243,10 @@ void calc_config (struct config *conf, int nprocs){
   int dst_z_bb = conf->z % dst_z_block;
   int dst_y_bb = conf->y % dst_y_block;
 
-  conf->dst.local_start[0] = (conf->z/ dst_z_block) * dst_block_pos_z + MIN(dst_block_pos_z, dst_z_bb);
-  conf->dst.local_start[1] = (conf->y/ dst_y_block) * dst_block_pos_y + MIN(dst_block_pos_y, dst_y_bb);
+  conf->dst.local_start[0] = (Xt_int)((conf->z/ dst_z_block) * dst_block_pos_z
+                                      + MIN(dst_block_pos_z, dst_z_bb));
+  conf->dst.local_start[1] = (Xt_int)((conf->y/ dst_y_block) * dst_block_pos_y
+                                      + MIN(dst_block_pos_y, dst_y_bb));
   conf->dst.local_start[2] = 0;
 }
 
@@ -308,7 +312,7 @@ int main(int argc, char** argv) {
 
     // global param
     unsigned num_dims = 3;
-    Xt_int global_size[3] = {conf.z, conf.y, conf.x};
+    Xt_int global_size[3] = {(Xt_int)conf.z, (Xt_int)conf.y, (Xt_int)conf.x};
 
     // -- SOURCE index list by section
     Xt_idxlist src_idxsection;

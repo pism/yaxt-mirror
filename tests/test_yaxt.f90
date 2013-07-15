@@ -494,7 +494,7 @@ CONTAINS
 
     src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind))
-    src_num = xt_idxlist_get_num_indices(src_idxlist)
+    src_num = INT(xt_idxlist_get_num_indices(src_idxlist))
     IF (src_num /= g_ie*g_je) CALL my_abort('unexpected src_num', __LINE__)
     CALL xt_idxlist_get_indices(src_idxlist, cp_src_idx)
     IF (ANY(cp_src_idx /= local_src_idx)) CALL my_abort('idx copy does not match', &
@@ -502,7 +502,7 @@ CONTAINS
 
     dst_idxlist = xt_idxvec_new(local_dst_idx, INT(g_ie, xt_int_kind) &
          * INT(g_je, xt_int_kind))
-    dst_num = xt_idxlist_get_num_indices(dst_idxlist)
+    dst_num = INT(xt_idxlist_get_num_indices(dst_idxlist))
     IF (dst_num /= g_ie*g_je) CALL my_abort('unexpected dst_num', __LINE__)
     CALL xt_idxlist_get_indices(dst_idxlist, cp_dst_idx)
     IF (ANY(cp_dst_idx /= local_dst_idx)) CALL my_abort('idx copy does not match', &
@@ -633,7 +633,7 @@ CONTAINS
          (/ ldx, ldy /), (/ldx+1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%mask    = 1
 
-    mvec_num = im
+    mvec_num = INT(im)
 
   END SUBROUTINE def_tpex_mod_via_sections
 

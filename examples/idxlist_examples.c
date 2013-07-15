@@ -142,9 +142,10 @@ int main(void) {
     Xt_int local_size[2] = {3,3};
     Xt_int local_start[2] = {2,0};
 
-    Xt_idxlist source_list = xt_idxsection_new(start, num_dimensions, global_size,
-                                               local_size, local_start);
-   
+    Xt_idxlist source_list = xt_idxsection_new(start, num_dimensions,
+                                               global_size, local_size,
+                                               local_start);
+
     struct Xt_stripe extract_stripes[2] = {{.start = 0, .nstrides = 5, .stride = 10},
                                            {.start = 9, .nstrides = 5, .stride = 10}};
     struct Xt_stripe substitute_stripes[2] = {{.start = 8, .nstrides = 5, .stride = 10},
@@ -183,7 +184,7 @@ static void print_index_list(Xt_idxlist idxlist) {
 
     char * format_string = format_strings[sizeof(Xt_int) == sizeof(long)];
 
-    xt_idxlist_get_index_at_position(idxlist, i, &index);
+    xt_idxlist_get_index_at_position(idxlist, (int)i, &index);
       printf(format_string, index);
   }
   puts("");

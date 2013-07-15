@@ -144,7 +144,7 @@ static void print_index_list(Xt_idxlist idxlist) {
 
     Xt_int index;
 
-    xt_idxlist_get_index_at_position(idxlist, i, &index);
+    xt_idxlist_get_index_at_position(idxlist, (int)i, &index);
     printf(format_string, index);
   }
   puts("");

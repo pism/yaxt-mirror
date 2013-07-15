@@ -129,17 +129,17 @@ int main(void) {
   {
     // source index list
     Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    Xt_int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
-    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, (Xt_int)src_num);
 
     // destination index list
     Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-    Xt_int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
     Xt_idxlist dst_idxlist;
 
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
+    dst_idxlist = xt_idxvec_new(dst_index_list, (Xt_int)dst_num);
 
     // xmap
     Xt_xmap xmap;
@@ -151,9 +151,9 @@ int main(void) {
     int src_pos[src_num];
     int dst_pos[dst_num];
 
-    for (Xt_int i = 0; i < src_num; i++)
+    for (int i = 0; i < src_num; i++)
       src_pos[i] = i;
-    for (Xt_int i = 0; i < dst_num; i++)
+    for (int i = 0; i < dst_num; i++)
       dst_pos[i] = dst_num-1-i;
 
     Xt_redist redist;
@@ -196,17 +196,17 @@ int main(void) {
   {
     // source index list
     const Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    Xt_int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
-    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, (Xt_int)src_num);
 
     // destination index list
     const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-    Xt_int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
     Xt_idxlist dst_idxlist;
 
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
+    dst_idxlist = xt_idxvec_new(dst_index_list, (Xt_int)dst_num);
 
     // xmap
     Xt_xmap xmap;
@@ -215,8 +215,9 @@ int main(void) {
 
     // redist_p2p with extents of offsets
     struct Xt_offset_ext
-      src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
-      dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
+      src_pos[1] = { { .start = 0, .size = (Xt_int)src_num, .stride =  1 } },
+      dst_pos[1] = { { .start = dst_num - 1,
+                       .size = (Xt_int)dst_num, .stride = -1 } };
 
     Xt_redist redist
       = xt_redist_p2p_ext_new(xmap,

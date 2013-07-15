@@ -260,7 +260,9 @@ idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
    Xt_int num_indices = 0;
 
    for (unsigned i = 0; i < collectionlist->num_idxlists; ++i)
-      num_indices += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+     num_indices
+       = (Xt_int)(num_indices
+                  + xt_idxlist_get_num_indices(collectionlist->idxlists[i]));
 
    collectionlist->index_num_cache = num_indices;
 
@@ -277,7 +279,9 @@ idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
    for (unsigned i = 0; i < collectionlist->num_idxlists; ++i) {
 
       xt_idxlist_get_indices(collectionlist->idxlists[i], indices+offlist);
-      offlist += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+      offlist
+        = (Xt_int)(offlist
+                   + xt_idxlist_get_num_indices(collectionlist->idxlists[i]));
    }
 }
 
@@ -334,7 +338,7 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
 
     free(curr_stripes);
 
-    num_temp_stripes += curr_num_stripes;
+    num_temp_stripes = (Xt_int)(num_temp_stripes + curr_num_stripes);
   }
 
   *stripes = xrealloc(temp_stripes,
@@ -351,7 +355,7 @@ idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
   for (unsigned i = 0; i < collectionlist->num_idxlists; ++i) {
     Xt_int n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
     if (position >= n)
-      position -= n;
+      position -= (int)n;
     else {
       return xt_idxlist_get_index_at_position(collectionlist->idxlists[i],
                                               position, index);
@@ -376,7 +380,7 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   unsigned i = 0;
 
   do {
-    idxlist_offsets += curr_num_indices;
+    idxlist_offsets += (int)curr_num_indices;
     curr_num_indices = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
   } while (idxlist_offsets + curr_num_indices <= offset &&
            ++i < collectionlist->num_idxlists);
@@ -389,8 +393,10 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
       *position += idxlist_offsets;
       return 0;
     } else {
+      /* FIXME: xt_idxlist_get_num_indices result not guaranteed
+       * smaller INT_MAX */
       idxlist_offsets
-        += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+        += (int)xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
       offset = 0;
     }
 

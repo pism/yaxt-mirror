@@ -208,12 +208,12 @@ build_odd_selection_xmap(Xt_int src_num_indices)
   Xt_int *index_list = xmalloc((size_t)src_num_indices
                                * sizeof (index_list[0]));
   for (Xt_int i = 0; i < src_num_indices; ++i)
-    index_list[i] = i + 1;
+    index_list[i] = (Xt_int)(i + 1);
   Xt_idxlist src_idxlist = xt_idxvec_new(index_list, src_num_indices);
   Xt_int dst_num_indices
-    = (src_num_indices + selection_stride - 1) / selection_stride;
+    = (Xt_int)((src_num_indices + selection_stride - 1) / selection_stride);
   for (Xt_int i = 0; i < dst_num_indices; ++i)
-    index_list[i] = i * selection_stride + 1;
+    index_list[i] = (Xt_int)(i * selection_stride + 1);
   Xt_idxlist dst_idxlist = xt_idxvec_new(index_list, dst_num_indices);
   free(index_list);
   Xt_xmap xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);

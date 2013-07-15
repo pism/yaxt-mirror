@@ -529,7 +529,7 @@ CONTAINS
            "too many indices for default integer kind", &
            __FILE__, &
            __LINE__)
-      indices_shape(1) = num_indices
+      indices_shape(1) = INT(num_indices)
       c_indices = xt_idxlist_get_indices_const_c(xt_idxlist_f2c(idxlist))
       CALL C_F_POINTER(c_indices, indices, indices_shape)
     ELSE

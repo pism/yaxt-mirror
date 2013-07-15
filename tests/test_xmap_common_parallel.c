@@ -48,7 +48,7 @@ test_xmap_allgather_analog(xmap_constructor xmap_new)
 {
   // test in which every process requests data from all processes
   // source index list
-  Xt_int src_index_list[1] = {comm_rank};
+  Xt_int src_index_list[1] = {(Xt_int)(comm_rank)};
 
   Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, 1);
 
@@ -56,11 +56,11 @@ test_xmap_allgather_analog(xmap_constructor xmap_new)
   Xt_int dst_index_list[comm_size];
 
   for (int i = 0; i < comm_size; ++i)
-    dst_index_list[i] = i;
+    dst_index_list[i] = (Xt_int)(i);
 
   Xt_idxlist dst_idxlist;
 
-  dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
+  dst_idxlist = xt_idxvec_new(dst_index_list, (Xt_int)(comm_size));
 
   // test of exchange map
   Xt_xmap xmap;
@@ -99,15 +99,15 @@ test_ring_1d(xmap_constructor xmap_new)
   // test in which each process talks with two other
   // processes
 
-  Xt_int src_index_list[1] = {comm_rank};
+  Xt_int src_index_list[1] = {(Xt_int)(comm_rank)};
 
   Xt_idxlist src_idxlist;
 
   src_idxlist = xt_idxvec_new(src_index_list, 1);
 
   // destination index list
-  Xt_int dst_index_list[2] = {(comm_rank + comm_size - 1)%comm_size,
-                              (comm_rank             + 1)%comm_size};
+  Xt_int dst_index_list[2] = {(Xt_int)((comm_rank + comm_size - 1)%comm_size),
+                              (Xt_int)((comm_rank             + 1)%comm_size)};
 
   if (dst_index_list[0] > dst_index_list[1]) {
     dst_index_list[0] ^= dst_index_list[1];

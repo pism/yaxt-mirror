@@ -404,7 +404,7 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int selection[] = {1,2,5,6,7,8};
-    int num_selection = sizeof(selection) / sizeof(*selection);
+    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];
     int ref_positions[] = {1*0-1, 2*0+0, 5*0-1, 6*0+2, 7*0+3, 8*0-1};
@@ -413,7 +413,7 @@ int main(void) {
       PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
               " num_unmatched\n");
 
-    for (int i=0; i<num_selection; i++) {
+    for (Xt_int i=0; i<num_selection; i++) {
       if (positions[i] != ref_positions[i])
         PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
                 " position\n");
@@ -436,7 +436,7 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    int num_selection = sizeof(selection) / sizeof(*selection);
+    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];
     int ref_positions[] = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0+3, 7*0+3, 6*0+2, 8*0-1};
@@ -473,7 +473,7 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    int num_selection = sizeof(selection) / sizeof(*selection);
+    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];
     int ref_positions[] = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
@@ -504,14 +504,14 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int sel_idx[] = {2,1,5,7,6,7,7,6,8};
-    int num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx);
+    Xt_int num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx);
 
     Xt_idxlist sel_idxlist = xt_idxvec_new(sel_idx, num_sel_idx);
 
     Xt_idxlist inter_idxlist = xt_idxlist_get_intersection(idxsection, sel_idxlist);
 
     Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
-    int num_ref_inter_idx =  sizeof(ref_inter_idx) / sizeof(*ref_inter_idx);
+    Xt_int num_ref_inter_idx =  sizeof(ref_inter_idx) / sizeof(*ref_inter_idx);
 
     check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
 

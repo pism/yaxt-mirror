@@ -43,6 +43,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <assert.h>
 
 #include <mpi.h>
 
@@ -86,8 +87,8 @@ int main(void)
 
     // setup
 
-    Xt_int src_index = my_rank;
-    Xt_int dst_index = (my_rank + 1)%comm_size;
+    Xt_int src_index = (Xt_int)my_rank;
+    Xt_int dst_index = (Xt_int)((my_rank + 1)%comm_size);
     Xt_idxlist src_idxlist = xt_idxvec_new(&src_index, 1);
     Xt_idxlist dst_idxlist = xt_idxvec_new(&dst_index, 1);
     Xt_int num_src_intersections = 1;
@@ -167,8 +168,10 @@ int main(void)
 
     // setup
 
-    Xt_int src_indices[2] = {(my_rank+1)%comm_size, (my_rank+2)%comm_size};
-    Xt_int dst_index = my_rank;
+    assert(comm_size <= XT_INT_MAX);
+    Xt_int src_indices[2] = { (Xt_int)((my_rank+1)%comm_size),
+                              (Xt_int)((my_rank+2)%comm_size) };
+    Xt_int dst_index = (Xt_int)my_rank;
     Xt_idxlist src_idxlist = xt_idxvec_new(src_indices, 2);
     Xt_idxlist dst_idxlist = xt_idxvec_new(&dst_index, 1);
     Xt_int num_src_intersections[3] = {2, 1, 0};

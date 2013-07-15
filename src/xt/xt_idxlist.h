@@ -304,6 +304,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
  * \remarks a call to xt_idxlist_get_position_of_index_off with offset = NULL
  *          is the same as a call to xt_idxlist_get_positions_of_indices
  */
+/* FIXME: this should probably return the number of failed lookups */
 int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                             const Xt_int *indices,
                                             Xt_int num_indices, int * positions,

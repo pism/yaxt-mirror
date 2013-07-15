@@ -44,6 +44,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -81,7 +82,7 @@ int main(void) {
     Xt_int src_index_list[dataSize];
     Xt_int src_num_indices = dataSize;
     for (Xt_int i = 0; i < src_num_indices; ++i)
-      src_index_list[i] = rank * dataSize + i;
+      src_index_list[i] = (Xt_int)(rank * dataSize + i);
 
     Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
@@ -89,7 +90,8 @@ int main(void) {
     Xt_int dst_index_list[dataSize];
     Xt_int dst_num_indices = dataSize;
     for (Xt_int i = 0; i < dst_num_indices; ++i)
-      dst_index_list[i] = (rank * dataSize + i + 2) % (size * dataSize);
+      dst_index_list[i] = (Xt_int)((rank * dataSize + i + 2)
+                                   % (size * dataSize));
 
     Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -112,7 +114,7 @@ int main(void) {
     double dst_data[dataSize] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
     for (Xt_int i = 0; i < src_num_indices; ++i)
-      src_data[i] = rank * dataSize + i;
+      src_data[i] = (double)(rank * dataSize + i);
 
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
@@ -142,7 +144,8 @@ int main(void) {
     Xt_int src_index_list[size];
     Xt_int src_num_indices = 0;
 
-    if (rank == 0) src_num_indices = size;
+    assert(size <= XT_INT_MAX);
+    if (rank == 0) src_num_indices = (Xt_int)(size);
     for (i = 0; i < src_num_indices; ++i)
       src_index_list[i] = i;
 
@@ -152,7 +155,7 @@ int main(void) {
 
     // destination index list
     Xt_int dst_index_list[size];
-    Xt_int dst_num_indices = size;
+    Xt_int dst_num_indices = (Xt_int)size;
     for (i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = i;
 
@@ -181,9 +184,9 @@ int main(void) {
     double dst_data[size];
     for (i = 0; i < size; ++i) {
       if (rank == 0)
-        src_data[i] = i;
+        src_data[i] = (double)i;
       else
-        src_data[i] = -2;
+        src_data[i] = -2.0;
       dst_data[i] = -1;
     }
 
@@ -209,6 +212,7 @@ int main(void) {
 
   // test redist with blocks:
   {
+    assert(2 * size <= XT_INT_MAX);
     // the global index domain (1dim problem):
     int ngdom = 2*size;
     int gdoma[ngdom]; // start state (index distribution) of global domain
@@ -237,12 +241,12 @@ int main(void) {
     Xt_int iveca[nwin], ivecb[nwin];
     for (int i = 0; i < nwin; i++) {
       int ig = ig0+i;
-      iveca[i]= gdoma[ig];
-      ivecb[i]= gdomb[ig];
+      iveca[i]= (Xt_int)(gdoma[ig]);
+      ivecb[i]= (Xt_int)(gdomb[ig]);
     }
 
-    Xt_idxlist idxlist_a = xt_idxvec_new(iveca, nwin);
-    Xt_idxlist idxlist_b = xt_idxvec_new(ivecb, nwin);
+    Xt_idxlist idxlist_a = xt_idxvec_new(iveca, (Xt_int)nwin);
+    Xt_idxlist idxlist_b = xt_idxvec_new(ivecb, (Xt_int)nwin);
 
     Xt_xmap xmap = xt_xmap_all2all_new(idxlist_a, idxlist_b, MPI_COMM_WORLD);
 
@@ -302,7 +306,7 @@ int main(void) {
     {
       int qa=0;
       for (int i = 0; i < nwin; i++) {
-        int ia = iveca[i];
+        Xt_int ia = iveca[i];
         if (i==0)
           src_block_offsets[i] = 0;
         else
@@ -320,7 +324,7 @@ int main(void) {
     {
       int qb=0;
       for (int i = 0; i < nwin; i++) {
-        int ib = ivecb[i];
+        Xt_int ib = ivecb[i];
         if (i==0)
           dst_block_offsets[i] = 0;
         else

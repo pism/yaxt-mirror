@@ -197,25 +197,29 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
     idxsection->dims[i].global_size = global_size[i];
     idxsection->dims[i].local_size  = local_size[i];
     idxsection->dims[i].local_start = local_start[i];
-    idxsection->index_num_cache *= local_size[i];
+    idxsection->index_num_cache
+      = (Xt_int)(idxsection->index_num_cache * local_size[i]);
   }
 
   idxsection->local_start_index = start;
   idxsection->dims[num_dimensions - 1].global_stride =
-    Xt_isign(global_size[num_dimensions - 1]) *
-    Xt_isign(local_size[num_dimensions - 1]);
+    (Xt_int)(Xt_isign(global_size[num_dimensions - 1]) *
+             Xt_isign(local_size[num_dimensions - 1]));
   idxsection->dims[num_dimensions - 1].local_stride = 1;
 
   // compute local and global stride
   // (local stride is always positive, global stride can be negative)
   for (i = num_dimensions - 2; i < num_dimensions; --i) {
     idxsection->dims[i].global_stride
-      = idxsection->dims[i+1].global_stride * global_size[i + 1] *
-        Xt_isign(idxsection->dims[i+1].global_stride * global_size[i + 1]) *
-        Xt_isign(global_size[i]) * Xt_isign(local_size[i]);
+      = (Xt_int)(idxsection->dims[i+1].global_stride * global_size[i + 1]
+                 * Xt_isign((Xt_int)(idxsection->dims[i+1].global_stride
+                                     * global_size[i + 1]))
+                 * Xt_isign((Xt_int)(global_size[i]
+                                     * Xt_isign(local_size[i]))));
     idxsection->dims[i].local_stride
-      = idxsection->dims[i + 1].local_stride * local_size[i + 1] *
-        Xt_isign(idxsection->dims[i + 1].local_stride * local_size[i + 1]);
+      = (Xt_int)(idxsection->dims[i + 1].local_stride * local_size[i + 1]
+                 * Xt_isign((Xt_int)(idxsection->dims[i + 1].local_stride
+                                     * local_size[i + 1])));
   }
 
   // compute the local start index
@@ -223,18 +227,21 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
   for (i = num_dimensions - 1; i < num_dimensions; --i) {
     if (global_size[i] > 0)
       idxsection->local_start_index
-        += idxsection->dims[i].global_stride * local_start[i] *
-           Xt_isign(idxsection->dims[i].global_stride);
+        = (Xt_int)(idxsection->local_start_index
+                   + (idxsection->dims[i].global_stride * local_start[i]
+                      * Xt_isign(idxsection->dims[i].global_stride)));
     else
       idxsection->local_start_index
-        -= idxsection->dims[i].global_stride *
-           (global_size[i] + local_start[i] + 1) *
-           Xt_isign(idxsection->dims[i].global_stride);
+        = (Xt_int)(idxsection->local_start_index
+                   - (idxsection->dims[i].global_stride
+                      * (global_size[i] + local_start[i] + 1) *
+                      Xt_isign(idxsection->dims[i].global_stride)));
     if (local_size[i] < 0)
       idxsection->local_start_index
-        -= idxsection->dims[i].global_stride * (local_size[i] + 1) *
-           Xt_isign (global_size[i]) *
-           Xt_isign(idxsection->dims[i].global_stride);
+        = (Xt_int)(idxsection->local_start_index
+                   - (idxsection->dims[i].global_stride * (local_size[i] + 1)
+                      * Xt_isign(global_size[i])
+                      * Xt_isign(idxsection->dims[i].global_stride)));
   }
 
   // due the possibility of negative local and global sizes, the minimum and
@@ -246,12 +253,14 @@ Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
     // if either local and global size are negative
     if ((global_size[i] < 0) ^ (local_size[i] < 0))
       idxsection->min_index_cache
-        += idxsection->dims[i].global_stride *
-        (Xt_isign(local_size[i]) * local_size[i] - 1);
+        = (Xt_int)(idxsection->min_index_cache
+                   + (idxsection->dims[i].global_stride *
+                      (Xt_isign(local_size[i]) * local_size[i] - 1)));
     else // if local and global size are both positive or negative
       idxsection->max_index_cache
-        += idxsection->dims[i].global_stride *
-        (Xt_isign(local_size[i]) * local_size[i] - 1);
+        = (Xt_int)(idxsection->max_index_cache
+                   + (idxsection->dims[i].global_stride *
+                      (Xt_isign(local_size[i]) * local_size[i] - 1)));
   }
 
   INSTR_STOP(instr);
@@ -343,21 +352,24 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                          section->dims, (int)section->ndim * 5,
                          Xt_int_dt, comm),comm);
 
-  // due the possibility of negative local and global sizes, the minimum and
+  // due to the possibility of negative local and global sizes, the minimum and
   // maximum can be in any corner of the n-dimensional section
   section->min_index_cache = section->local_start_index;
   section->max_index_cache = section->local_start_index;
   for (unsigned i = 0; i < section->ndim; ++i) {
 
-    // if either local and global size is negative
+    // if either local or global size is negative
     if ((section->dims[i].global_size < 0) ^ (section->dims[i].local_size < 0))
-      section->min_index_cache += section->dims[i].global_stride *
-                                  (Xt_isign(section->dims[i].local_size) *
-                                   section->dims[i].local_size - 1);
+      section->min_index_cache = (Xt_int)(section->min_index_cache
+                                          + section->dims[i].global_stride *
+                                          (Xt_isign(section->dims[i].local_size) *
+                                           section->dims[i].local_size - 1));
     else // if local and global size are both positive or negative
-      section->max_index_cache += section->dims[i].global_stride *
-                                  (Xt_isign(section->dims[i].local_size) *
-                                   section->dims[i].local_size - 1);
+      section->max_index_cache
+        = (Xt_int)(section->max_index_cache
+                   + (section->dims[i].global_stride
+                      * (Xt_isign(section->dims[i].local_size)
+                         * section->dims[i].local_size - 1)));
   }
 
   INSTR_STOP(instr);
@@ -397,7 +409,7 @@ idxsection_get_intersection_with_other_idxlist(Xt_idxsection src_idxsection,
     temp_dst_idx = xmalloc((size_t)num_dst_idx * sizeof(*temp_dst_idx));
     memcpy(temp_dst_idx, dst_idx, (size_t)num_dst_idx * sizeof(*temp_dst_idx));
 
-    xt_mergesort_index(temp_dst_idx, num_dst_idx, NULL, 0);
+    xt_mergesort_index(temp_dst_idx, (int)num_dst_idx, NULL, 0);
 
     sorted_dst_idx = temp_dst_idx;
   } else
@@ -407,7 +419,7 @@ idxsection_get_intersection_with_other_idxlist(Xt_idxsection src_idxsection,
   int num_unmatched = idxsection_get_positions_of_indices(
     (Xt_idxlist)src_idxsection, sorted_dst_idx, num_dst_idx, pos,
     single_match_only);
-  Xt_int num_inter_idx = num_dst_idx - num_unmatched;
+  Xt_int num_inter_idx = (Xt_int)(num_dst_idx - num_unmatched);
   Xt_int *intersection = xmalloc((size_t)num_inter_idx * sizeof(*intersection));
 
   for(i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++)
@@ -482,23 +494,23 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
     if (idxsection_src->dims[i].global_size >= 0)
       src_start = idxsection_src->dims[i].local_start;
     else
-      src_start = -idxsection_src->dims[i].global_size -
-                  Xt_isign(idxsection_src->dims[i].local_size) *
-                  idxsection_src->dims[i].local_size -
-                  idxsection_src->dims[i].local_start;
+      src_start = (Xt_int)(-idxsection_src->dims[i].global_size
+                           - Xt_isign(idxsection_src->dims[i].local_size)
+                           * idxsection_src->dims[i].local_size
+                           - idxsection_src->dims[i].local_start);
 
     if (idxsection_dst->dims[i].global_size >= 0)
       dst_start = idxsection_dst->dims[i].local_start;
     else
-      dst_start = -idxsection_dst->dims[i].global_size -
-                  Xt_isign(idxsection_dst->dims[i].local_size) *
-                  idxsection_dst->dims[i].local_size -
-                  idxsection_dst->dims[i].local_start;
+      dst_start = (Xt_int)(-idxsection_dst->dims[i].global_size
+                           - Xt_isign(idxsection_dst->dims[i].local_size)
+                           * idxsection_dst->dims[i].local_size
+                           - idxsection_dst->dims[i].local_start);
 
-    src_end = src_start + Xt_isign(idxsection_src->dims[i].local_size) *
-              idxsection_src->dims[i].local_size;
-    dst_end = dst_start + Xt_isign(idxsection_dst->dims[i].local_size) *
-              idxsection_dst->dims[i].local_size;
+    src_end = (Xt_int)(src_start + Xt_isign(idxsection_src->dims[i].local_size)
+                       * idxsection_src->dims[i].local_size);
+    dst_end = (Xt_int)(dst_start + Xt_isign(idxsection_dst->dims[i].local_size)
+                       * idxsection_dst->dims[i].local_size);
 
     local_start[i] = (src_start > dst_start)?src_start:dst_start;
     local_end = (src_end > dst_end)?dst_end:src_end;
@@ -511,9 +523,9 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
       return xt_idxempty_new();
     }
 
-    local_size[i] = local_end - local_start[i];
-    global_size[i] = Xt_isign(idxsection_src->dims[i].global_size) *
-                     idxsection_src->dims[i].global_size;
+    local_size[i] = (Xt_int)(local_end - local_start[i]);
+    global_size[i] = (Xt_int)(Xt_isign(idxsection_src->dims[i].global_size)
+                              * idxsection_src->dims[i].global_size);
   }
 
   Xt_idxlist intersection
@@ -557,7 +569,8 @@ idxsection_get_num_indices(Xt_idxlist idxlist) {
   Xt_int size = 1;
 
   for (i = 0; i < section->ndim; ++i)
-    size *= Xt_isign(section->dims[i].local_size) * section->dims[i].local_size;
+    size = (Xt_int)(size * Xt_isign(section->dims[i].local_size)
+                    * section->dims[i].local_size);
 
   section->index_num_cache = size;
   return size;
@@ -569,16 +582,16 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
                            unsigned ndim, struct dim_desc dims[ndim])
 {
 
-  Xt_int abs_local_size = dims[0].local_size * Xt_isign(dims[0].local_size);
+  Xt_int abs_local_size = (Xt_int)(dims[0].local_size * Xt_isign(dims[0].local_size));
 
   if (ndim == 1)
   {
     if (dims[0].global_stride > 0)
       for (Xt_int i = 0; i < abs_local_size; ++i)
-        indices[i] = start_index + i;
+        indices[i] = (Xt_int)(start_index + i);
     else
       for (Xt_int i = 0; i < abs_local_size; ++i)
-        indices[i] = start_index - i;
+        indices[i] = (Xt_int)(start_index - i);
     return abs_local_size;
   }
   else
@@ -588,10 +601,12 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
     for (Xt_int dim_ofs = 0; dim_ofs < abs_local_size; ++dim_ofs)
     {
       indices_written
-        += idxsection_get_indices_any(start_index
-                                      + dim_ofs * dims[0].global_stride,
-                                      indices + indices_written,
-                                      ndim - 1, dims + 1);
+        = (Xt_int)(indices_written
+                   + idxsection_get_indices_any(
+                     (Xt_int)(start_index
+                              + dim_ofs * dims[0].global_stride),
+                     indices + indices_written,
+                     ndim - 1, dims + 1));
     }
     return indices_written;
   }
@@ -682,13 +697,14 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
   for (size_t i = 0; i < nstripes; ++i) {
 
     p[i].start  = section->local_start_index;
-    p[i].nstrides = Xt_isign(section->dims[section->ndim-1].local_size) *
-      section->dims[section->ndim-1].local_size;
+    p[i].nstrides = (Xt_int)(Xt_isign(section->dims[section->ndim-1].local_size)
+                             * section->dims[section->ndim-1].local_size);
     p[i].stride = 1;
 
     for (unsigned j = 0; j < section->ndim - 1; ++j)
-      p[i].start
-        += curr_local_position[j] * section->dims[j].global_stride;
+      p[i].start = (Xt_int)(p[i].start
+                            + curr_local_position[j]
+                            * section->dims[j].global_stride);
 
     for (unsigned j = section->ndim - 2; j < section->ndim; --j)
       if (curr_local_position[j] < Xt_isign(section->dims[j].local_size) *
@@ -719,17 +735,20 @@ idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
 
   unsigned dim;
   Xt_int curr_local_position;
+  long long pos = (long long)position;
 
   for (dim = 0; dim < section->ndim; ++dim) {
 
-    curr_local_position = (Xt_int)position / section->dims[dim].local_stride;
+    curr_local_position = (Xt_int)(pos / (long long)section->dims[dim].local_stride);
 
     if (curr_local_position >= Xt_isign(section->dims[dim].local_size) *
                                section->dims[dim].local_size) return 1;
 
-    temp_index += curr_local_position * section->dims[dim].global_stride;
-
-    position %= section->dims[dim].local_stride;
+    temp_index = (Xt_int)(temp_index
+                          + curr_local_position
+                          * section->dims[dim].global_stride);
+    /* FIXME: assert(section->dims[dim].local_stride is in [-INT_MAX,INT_MAX]) */
+    pos %= (long long)section->dims[dim].local_stride;
   }
 
   *index = temp_index;
@@ -754,40 +773,42 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   INSTR_START(instr);
 
   // normalise index (global start of indices at 0)
-  index -= section->global_start_index;
+  index = (Xt_int)(index - section->global_start_index);
 
   unsigned i;
   int temp_position = 0;
 
   for (i = 0; i < section->ndim; ++i) {
 
-    Xt_int abs_global_stride = section->dims[i].global_stride *
-                               Xt_isign(section->dims[i].global_stride);
+    Xt_int abs_global_stride
+      = (Xt_int)(section->dims[i].global_stride
+                 * Xt_isign(section->dims[i].global_stride));
 
-    Xt_int curr_global_position = index / abs_global_stride;
+    Xt_int curr_global_position
+      = (Xt_int)(index / abs_global_stride);
 
     // in case the global size is negative, we have to adjust the global position,
     // because the ordering of indices in this dimension is inverted
     if (section->dims[i].global_size < 0)
-      curr_global_position = - section->dims[i].global_size -
-                             curr_global_position - 1;
+      curr_global_position
+        = (Xt_int)(-section->dims[i].global_size - curr_global_position - 1);
 
-    index %= abs_global_stride;
+    index = (Xt_int)(index % abs_global_stride);
 
     if (curr_global_position < section->dims[i].local_start) goto fun_exit;
 
     Xt_int curr_local_position
-      = curr_global_position - section->dims[i].local_start;
+      = (Xt_int)(curr_global_position - section->dims[i].local_start);
 
     // same adjustment for local position as for the global one before
     if (section->dims[i].local_size < 0)
       curr_local_position
-        = - section->dims[i].local_size - curr_local_position - 1;
+        = (Xt_int)(-section->dims[i].local_size - curr_local_position - 1);
 
     if (curr_local_position >= Xt_isign(section->dims[i].local_size) *
         section->dims[i].local_size) goto fun_exit;
 
-    temp_position += curr_local_position * section->dims[i].local_stride;
+    temp_position += (int)(curr_local_position * section->dims[i].local_stride);
   }
 
   *position = temp_position;
@@ -799,6 +820,7 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   return retval;
 }
 
+/* FIXME: num_selection should probably be of type int */
 int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
                                            const Xt_int *selection_idx,
                                            Xt_int num_selection,
@@ -834,9 +856,8 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
 
   // indices are sorted
   if (i == num_selection) {
-
-    Xt_int prev_index = selection_idx[0] - 1; // we need an index that is
-                                              // different from the current one
+    // we need an index that is different from the current one
+    Xt_int prev_index = (Xt_int)(selection_idx[0] - 1);
 
     for (i = 0; i < num_selection; i++) {
 
@@ -864,10 +885,11 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
     v = xmalloc((size_t)num_selection * sizeof(*v) );
     for (Xt_int i=0; i<num_selection; i++) {
       v[i].idx = selection_idx[i];
-      v[i].pos = i;
+      /* FIXME: i is not guaranteed to be <= INT_MAX */
+      v[i].pos = (int)i;
     }
-    xt_mergesort_idxpos(v, num_selection);
-    Xt_int last_jx = v[0].idx - 1; // any index that is not equal v[0].idx will do
+    xt_mergesort_idxpos(v, (int)num_selection);
+    Xt_int last_jx = (Xt_int)(v[0].idx - 1); // any index that does not equal v[0].idx will do
     for (i=0; i<num_selection; i++) {
       int j = v[i].pos;
       Xt_int jx = v[i].idx;
@@ -922,7 +944,8 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
            (size_t)num_selection * sizeof(*temp_selection_idx));
     selection_pos = xmalloc((size_t)num_selection * sizeof(*selection_pos));
 
-    xt_quicksort_index(temp_selection_idx, num_selection, selection_pos, 1);
+    xt_quicksort_index(temp_selection_idx, (int)num_selection,
+                       selection_pos, 1);
 
     sorted_selection_idx = temp_selection_idx;
 
@@ -930,6 +953,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
     sorted_selection_idx = selection_idx;
 
   Xt_int const * body_indices = idxsection_get_indices_const(body_idxlist);
+  /* FIXME: problem: not guaranteed to be less than INT_MAX */
   Xt_int num_body_indices = idxsection_get_num_indices(body_idxlist);
 
   // Xt_int last_idx = sorted_selection_idx[0] - 1;
@@ -960,7 +984,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
 
         if (j >= num_body_indices) break;
 
-        positions[i] = (body_indices[j] == sorted_selection_idx[i])?j:-1;
+        positions[i] = (body_indices[j] == sorted_selection_idx[i])?(int)j:-1;
       }
     } else {
       for (i = 0, j = 0; i < num_selection && j < num_body_indices; ++i) {
@@ -969,12 +993,12 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
 
         if (j >= num_body_indices) break;
 
-        positions[selection_pos[i]] = (body_indices[j] == sorted_selection_idx[i])?j:-1;
+        positions[selection_pos[i]] = (body_indices[j] == sorted_selection_idx[i])?(int)j:-1;
       }
     }
   } else {
 
-    Xt_int last_idx = sorted_selection_idx[0] - 1;
+    Xt_int last_idx = (Xt_int)(sorted_selection_idx[0] - 1);
 
     if (selection_pos == NULL) {
       for (i = 0, j = 0; i < num_selection && j < num_body_indices; ++i) {
@@ -984,7 +1008,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
         if (j >= num_body_indices) break;
 
         positions[i] = ((last_idx == sorted_selection_idx[i]) ||
-                        (body_indices[j] != sorted_selection_idx[i]))?-1:j;
+                        (body_indices[j] != sorted_selection_idx[i]))?-1:(int)j;
 
         last_idx = sorted_selection_idx[i];
       }
@@ -996,7 +1020,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
         if (j >= num_body_indices) break;
 
         positions[selection_pos[i]] = ((last_idx == sorted_selection_idx[i]) ||
-                                       (body_indices[j] != sorted_selection_idx[i]))?-1:j;
+                                       (body_indices[j] != sorted_selection_idx[i]))?-1:(int)j;
 
         last_idx = sorted_selection_idx[i];
       }
@@ -1035,25 +1059,25 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
                                                   struct dim_desc dims[ndim]) {
   int num_processed = 0;
 
-  Xt_int abs_global_size = dims[0].global_size * Xt_isign(dims[0].global_size);
-  Xt_int abs_local_size = dims[0].local_size * Xt_isign(dims[0].local_size);
-  Xt_int abs_global_stride = dims[0].global_stride * Xt_isign(dims[0].global_stride);
-  Xt_int abs_local_stride = dims[0].local_stride * Xt_isign(dims[0].local_stride);
+  Xt_int abs_global_size = (Xt_int)(dims[0].global_size * Xt_isign(dims[0].global_size));
+  Xt_int abs_local_size = (Xt_int)(dims[0].local_size * Xt_isign(dims[0].local_size));
+  Xt_int abs_global_stride = (Xt_int)(dims[0].global_stride * Xt_isign(dims[0].global_stride));
+  Xt_int abs_local_stride = (Xt_int)(dims[0].local_stride * Xt_isign(dims[0].local_stride));
 
   if (ndim == 1)
   {
 
-    int curr_position;
+    Xt_int curr_position;
 
     Xt_int tmp_local_start = dims[0].local_start;
 
     // we want to work on ascending indices in the lowest dimension -> have to
     // adjust in case of negative global size
     if (dims[0].global_size < 0)
-      tmp_local_start = -dims[0].global_size - tmp_local_start -
-                        abs_local_size;
+      tmp_local_start = (Xt_int)(-dims[0].global_size - tmp_local_start -
+                                 abs_local_size);
 
-    Xt_int min_index = index_offset + tmp_local_start * abs_global_stride;
+    Xt_int min_index = (Xt_int)(index_offset + tmp_local_start * abs_global_stride);
 
     // set all indices that are smaller than the minimum to "not found"
     while ((num_processed < num_indices) && (indices[num_processed] < min_index))
@@ -1065,21 +1089,21 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       // for as long as we are in the range local section of the current
       // global dimension
       while ((num_processed < num_indices) &&
-             ((curr_position = indices[num_processed] - min_index) <
+             ((curr_position = (Xt_int)(indices[num_processed] - min_index)) <
              abs_local_size)) {
 
-        positions[num_processed++] = position_offset + abs_local_size
-                                   - curr_position - 1;
+        positions[num_processed++] = position_offset
+          + (int)(abs_local_size - curr_position - 1);
       }
     } else { // if the local and global dimension are both negative or positive
 
       // for as long as we are in the range local section of the current
       // global dimension
       while ((num_processed < num_indices) &&
-             ((curr_position = indices[num_processed] - min_index) <
+             ((curr_position = (Xt_int)(indices[num_processed] - min_index)) <
              abs_local_size)) {
 
-        positions[num_processed++] = position_offset + curr_position;
+        positions[num_processed++] = position_offset + (int)curr_position;
       }
     }
 
@@ -1098,10 +1122,11 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
     // we want to work on ascending indices in the lowest dimension -> have to
     // adjust in case of negative global size
     if (dims[0].global_size < 0)
-      tmp_local_start = -dims[0].global_size - tmp_local_start -
-                        abs_local_size;
+      tmp_local_start = (Xt_int)(-dims[0].global_size - tmp_local_start -
+                                 abs_local_size);
 
-    Xt_int min_index = index_offset + tmp_local_start * abs_global_stride;
+    Xt_int min_index
+      = (Xt_int)(index_offset + tmp_local_start * abs_global_stride);
 
     // set all indices that are smaller than the minimum to "not found"
     while ((num_processed < num_indices) && (indices[num_processed] < min_index))
@@ -1113,8 +1138,8 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       Xt_int curr_global_position, curr_local_position;
 
       // compute global position of the smalles index that has not yet been processed
-      curr_global_position = (indices[num_processed] - index_offset) /
-                             abs_global_stride;
+      curr_global_position = (Xt_int)((indices[num_processed] - index_offset) /
+                                      abs_global_stride);
 
       // if the position is outside of the range of the current dimension
       if (curr_global_position >= tmp_local_start + abs_local_size)
@@ -1123,14 +1148,16 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       // if either the local or the global dimension is negative
       if ((dims[0].global_size < 0) ^ (dims[0].local_size < 0))
 
-        curr_local_position = abs_local_size - curr_global_position
-                              + tmp_local_start - 1;
+        curr_local_position = (Xt_int)(abs_local_size - curr_global_position
+                                       + tmp_local_start - 1);
       else // if the local and global dimension are both negative or positive
-        curr_local_position = curr_global_position - tmp_local_start;
+        curr_local_position = (Xt_int)(curr_global_position - tmp_local_start);
 
-      Xt_int curr_index_offset = index_offset + curr_global_position *
-                                 abs_global_stride;
-      int position_offset = curr_local_position * abs_local_stride;
+      Xt_int curr_index_offset
+        = (Xt_int)(index_offset + curr_global_position * abs_global_stride);
+      /* FIXME: no guarantee curr_local_position * abs_local_stride
+       * <= INT_MAX */
+      int position_offset = (int)(curr_local_position * abs_local_stride);
 
       num_processed += idxsection_get_positions_of_indices_recursive(
         curr_index_offset, position_offset, indices + num_processed,
@@ -1182,7 +1209,7 @@ int idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
            (size_t)num_selection * sizeof(*temp_selection_idx));
     selection_pos = xmalloc((size_t)num_selection * sizeof(*selection_pos));
 
-    xt_quicksort_index(temp_selection_idx, num_selection, selection_pos, 1);
+    xt_quicksort_index(temp_selection_idx, (int)num_selection, selection_pos, 1);
 
     sorted_selection_idx = temp_selection_idx;
     sorted_positions = temp_positions;
@@ -1197,7 +1224,7 @@ int idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
   int num_processed =
     idxsection_get_positions_of_indices_recursive(
       section->global_start_index,
-      0, sorted_selection_idx, num_selection,
+      0, sorted_selection_idx, (int)num_selection,
       sorted_positions, section->ndim,
       section->dims);
 
@@ -1225,7 +1252,7 @@ int idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
   }
 
   // count the number of unmached indices
-  int num_unmatched = num_selection - num_processed;
+  int num_unmatched = (int)num_selection - num_processed;
 
   for (Xt_int i = 0; i < num_processed; ++i)
     if (positions[i] == -1)

@@ -268,7 +268,7 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
     }
   }
 
-  *resCount = new_num_intersections;
+  *resCount = (int)new_num_intersections;
   if (num_intersections != new_num_intersections)
     *resSets = xrealloc(*resSets,
                         (size_t)new_num_intersections * sizeof(**resSets));
@@ -337,7 +337,7 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
 
       intersection_idxvec = new_intersection_idxvec;
       intersection_size = new_intersection_size;
-      offset += num_indices_to_remove_per_intersection[i];
+      offset = (Xt_int)(offset + num_indices_to_remove_per_intersection[i]);
     }
 
     int retval;
@@ -361,7 +361,7 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
 
   free(new_intersection_idxvec);
 
-  *resCount = new_num_intersections;
+  *resCount = (int)new_num_intersections;
   if (num_intersections != new_num_intersections)
     *resSets = xrealloc(*resSets,
                         (size_t)new_num_intersections * sizeof(**resSets));
@@ -406,10 +406,11 @@ exchange_points_to_remove(Xt_int num_src_intersections,
     if (num_dst_indices_to_remove_per_intersection[i] > 0) {
 
       xt_mpi_call(MPI_Isend(dst_indices_to_remove + offset,
-                            num_dst_indices_to_remove_per_intersection[i],
+                            (int)num_dst_indices_to_remove_per_intersection[i],
                             Xt_int_dt, dst_com[i].rank, DATA_EXCHANGE_TAG,
                             comm, send_requests+2*i+1), comm);
-      offset += num_dst_indices_to_remove_per_intersection[i];
+      offset = (Xt_int)(offset
+                        + num_dst_indices_to_remove_per_intersection[i]);
     } else {
 
       send_requests[2*i+1] = MPI_REQUEST_NULL;
@@ -417,7 +418,7 @@ exchange_points_to_remove(Xt_int num_src_intersections,
   }
 
   // wait for the receiving of headers to complete
-  xt_mpi_call(MPI_Waitall(num_src_intersections, recv_requests,
+  xt_mpi_call(MPI_Waitall((int)num_src_intersections, recv_requests,
                           MPI_STATUSES_IGNORE), comm);
 
   size_t total_num_src_indices_to_recv = 0;
@@ -438,11 +439,12 @@ exchange_points_to_remove(Xt_int num_src_intersections,
       if (num_src_indices_to_remove_per_intersection[i] > 0) {
 
         xt_mpi_call(MPI_Irecv((*src_indices_to_remove) + offset,
-                              num_src_indices_to_remove_per_intersection[i],
+                              (int)num_src_indices_to_remove_per_intersection[i],
                               Xt_int_dt, src_com[i].rank, DATA_EXCHANGE_TAG,
                               comm, recv_requests+i), comm);
 
-        offset += num_src_indices_to_remove_per_intersection[i];
+        offset = (Xt_int)(offset
+                          + num_src_indices_to_remove_per_intersection[i]);
       } else
         recv_requests[i] = MPI_REQUEST_NULL;
     }
@@ -455,7 +457,7 @@ exchange_points_to_remove(Xt_int num_src_intersections,
   }
 
   // wait until all communication is completed
-  xt_mpi_call(MPI_Waitall(num_src_intersections + 2 * num_dst_intersections,
+  xt_mpi_call(MPI_Waitall((int)(num_src_intersections + 2 * num_dst_intersections),
                           requests, MPI_STATUSES_IGNORE), comm);
 
   free(requests);
@@ -523,7 +525,7 @@ static int check_destination_coverage(struct exchange_data * in_msgs,
     // check all transfer positions
     for (int j = 0; j < in_msgs[i].num_transfer_pos; ++j) {
 
-      Xt_int curr_pos = in_msgs[i].transfer_pos[j];
+      Xt_int curr_pos = (Xt_int)(in_msgs[i].transfer_pos[j]);
 
       if (curr_pos >= num_indices)
         Xt_abort(comm, "ERROR: invalid transer position (pos >= num_indices)",
@@ -567,8 +569,8 @@ xt_xmap_intersection_new(Xt_int num_src_intersections,
 
   // we could also calculate the (more precise) max pos using only xmap data
   // but using this simple estimate we are still okay for usage checks
-  xmap->max_src_pos = xt_idxlist_get_num_indices(src_idxlist);
-  xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
+  xmap->max_src_pos = (int)xt_idxlist_get_num_indices(src_idxlist);
+  xmap->max_dst_pos = (int)xt_idxlist_get_num_indices(dst_idxlist);
 
   // check if all indices in the destination index list have been found on
   // the source processes

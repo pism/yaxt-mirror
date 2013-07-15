@@ -353,13 +353,12 @@ get_position_in_ndim_space(Xt_int index, unsigned ndim,
                            Xt_int global_stride[ndim],
                            Xt_int global_start_index, Xt_int position[ndim]) {
 
-   index -= global_start_index;
+  index = (Xt_int)(index - global_start_index);
 
-   for (unsigned i = 0; i < ndim - 1; ++i) {
-
-      position[i] = index / global_stride[i];
-      index %= global_stride[i];
-   }
+  for (unsigned i = 0; i < ndim - 1; ++i) {
+    position[i] = (Xt_int)(index / global_stride[i]);
+    index = (Xt_int)(index % global_stride[i]);
+  }
 
    position[ndim - 1] = index;
 }
@@ -396,7 +395,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
    global_stride[ndim - 1] = 1;
 
    for (unsigned i = ndim - 2; i < ndim; --i)
-      global_stride[i] = global_stride[i+1] * global_size[i+1];
+     global_stride[i] = (Xt_int)(global_stride[i+1] * global_size[i+1]);
 
    Xt_int curr_index;
    Xt_int curr_position[ndim];
@@ -412,7 +411,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
 
    for (Xt_int i = 1; i < num_indices; ++i) {
 
-      xt_idxlist_get_index_at_position(idxlist, i, &curr_index);
+     xt_idxlist_get_index_at_position(idxlist, (int)i, &curr_index);
       get_position_in_ndim_space(curr_index, ndim, global_stride,
                                  global_start_index, curr_position);
 
@@ -420,12 +419,12 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
 
          if (curr_position[i] < bounds[i].start) {
 
-            bounds[i].size += curr_position[i] - bounds[i].start;
+           bounds[i].size = (Xt_int)(bounds[i].size + curr_position[i] - bounds[i].start);
             bounds[i].start = curr_position[i];
 
          } else if (curr_position[i] >= bounds[i].start + bounds[i].size) {
 
-            bounds[i].size = curr_position[i] - bounds[i].start + 1;
+           bounds[i].size = (Xt_int)(curr_position[i] - bounds[i].start + 1);
          }
       }
    }

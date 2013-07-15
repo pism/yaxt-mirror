@@ -82,7 +82,7 @@ generate_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
   } else
     displ = transfer_pos;
 
-  type = xt_mpi_generate_datatype(displ, num_transfer_pos, base_datatype, comm);
+  type = xt_mpi_generate_datatype(displ, (int)num_transfer_pos, base_datatype, comm);
 
   free(tmp_displ);
 
@@ -194,7 +194,7 @@ generate_ext_datatype(Xt_int num_transfer_pos, const int transfer_pos[],
           ++j;
         displ[block_ofs] = block_disp;
         blocklen[block_ofs] = j;
-        i += j;
+        i = (Xt_int)(i + j);
       } while (++block_ofs < blocks_size && i < num_transfer_pos);
     } while (i < num_transfer_pos);
     MPI_Datatype type
@@ -316,7 +316,8 @@ generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
     blen_vec[i] = block_sizes[j];
   }
 
-  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec, num_transfer_pos,
+  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec,
+                                        (int)num_transfer_pos,
                                         base_datatype, comm);
 
   free(bdispl_vec);

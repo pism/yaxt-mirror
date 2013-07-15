@@ -194,14 +194,14 @@ static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
   Xt_int a_min, a_max, b_min, b_max;
 
   if (a.stride >= 0)
-    a_min = a.start, a_max = a.start + (a.nstrides-1) * a.stride;
+    a_min = a.start, a_max = (Xt_int)(a.start + (a.nstrides-1) * a.stride);
   else
-    a_max = a.start, a_min = a.start + (a.nstrides-1) * a.stride;
+    a_max = a.start, a_min = (Xt_int)(a.start + (a.nstrides-1) * a.stride);
 
   if (b.stride >= 0)
-    b_min = b.start, b_max = b.start + (b.nstrides-1) * b.stride;
+    b_min = b.start, b_max = (Xt_int)(b.start + (b.nstrides-1) * b.stride);
   else
-    b_max = b.start, b_min = b.start + (b.nstrides-1) * b.stride;
+    b_max = b.start, b_min = (Xt_int)(b.start + (b.nstrides-1) * b.stride);
 
   return MIN(a_max, b_max) >= MAX(a_min, b_min);
 
@@ -215,18 +215,18 @@ decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
 
   if (stripe.stride >= 0) {
     for (i = 0; i < stripe.nstrides; ++i) {
-      sorted_vector[i] = stripe.start + i * stripe.stride;
-      sorted_vec_pos[i] = pos_offset + i;
+      sorted_vector[i] = (Xt_int)(stripe.start + i * stripe.stride);
+      sorted_vec_pos[i] = pos_offset + (int)i;
     }
   } else {
     for (i = 0; i < stripe.nstrides; ++i) {
-        Xt_int j = stripe.nstrides-i-1;
-        sorted_vector[j] = stripe.start + i * stripe.stride;
-        sorted_vec_pos[j] = pos_offset + i;
-      }
+      Xt_int j = (Xt_int)(stripe.nstrides - i - 1);
+      sorted_vector[j] = (Xt_int)(stripe.start + i * stripe.stride);
+      sorted_vec_pos[j] = pos_offset + (int)i;
+    }
   }
 
-  return stripe.nstrides;
+  return (int)stripe.nstrides;
 }
 
 static void
@@ -252,9 +252,11 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     if (stripes[i].stride >= 0)
       stripe_min[i] = stripes[i].start;
     else
-      stripe_min[i] = stripes[i].start + stripes[i].stride * (stripes[i].nstrides - 1);
+      stripe_min[i] = (Xt_int)(stripes[i].start
+                               + stripes[i].stride
+                               * (stripes[i].nstrides - 1));
 
-  xt_quicksort_index(stripe_min, num_stripes, sorted_stripe_min_pos, 1);
+  xt_quicksort_index(stripe_min, (int)num_stripes, sorted_stripe_min_pos, 1);
 
   int * sorted_pos_prefix_sum, * orig_pos_prefix_sum;
 
@@ -265,7 +267,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
 
   orig_pos_prefix_sum[0] = 0;
   for (i = 1; i < num_stripes; ++i)
-    orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + stripes[i-1].nstrides;
+    orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + (int)stripes[i-1].nstrides;
 
   for (i = 0; i < num_stripes; ++i)
     sorted_pos_prefix_sum[i] = orig_pos_prefix_sum[sorted_stripe_min_pos[i]];
@@ -300,22 +302,26 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     while(i + num_selection < num_stripes &&
           overlap_flag[i + num_selection] == do_overlap) ++num_selection;
 
-    num_selection += do_overlap;
+    num_selection = (Xt_int)(num_selection + do_overlap);
 
     Xt_int curr_offset = 0;
 
     for (j = 0; j < num_selection; ++j)
-      curr_offset += decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
-                                   idxvec->sorted_vector + offset + curr_offset,
-                                   idxvec->sorted_vec_positions + offset + curr_offset,
-                                   sorted_pos_prefix_sum[i+j]);
+      curr_offset
+        = (Xt_int)(curr_offset
+                   + decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
+                                   idxvec->sorted_vector + offset
+                                   + curr_offset,
+                                   idxvec->sorted_vec_positions + offset
+                                   + curr_offset,
+                                   sorted_pos_prefix_sum[i+j]));
 
     if (do_overlap)
-      xt_quicksort_index(idxvec->sorted_vector + offset, curr_offset,
+      xt_quicksort_index(idxvec->sorted_vector + offset, (int)curr_offset,
                          idxvec->sorted_vec_positions + offset, 0);
 
-    offset += curr_offset;
-    i += num_selection;
+    offset = (Xt_int)(offset + curr_offset);
+    i = (Xt_int)(i + num_selection);
   }
 
   free(sorted_pos_prefix_sum);
@@ -336,16 +342,14 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
 
    /* FIXME: guard against overflow here */
    for (Xt_int i = 0; i < num_stripes; ++i)
-     num_indices += (Xt_uint)stripes[i].nstrides;
+     num_indices = (Xt_uint)(num_indices + (Xt_uint)stripes[i].nstrides);
 
-   Xt_int * indices;
-
-   indices = xmalloc((size_t)num_indices * sizeof(*indices));
+   Xt_int *indices = xmalloc((size_t)num_indices * sizeof(*indices));
 
    Xt_int k = -1;
    for (Xt_int i = 0; i < num_stripes; ++i)
       for (Xt_int j = 0; j < stripes[i].nstrides; ++j)
-         indices[++k] = stripes[i].start + j * stripes[i].stride;
+        indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
 
    idxvec_data->vector = indices;
    idxvec_data->num_indices = num_indices;
@@ -624,11 +628,11 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
   // bisection to find one matching position:
   lb = 0;
-  ub = idxvec_data->num_indices - 1;
+  ub = (Xt_uint)(idxvec_data->num_indices - 1);
 
   while (sorted_vector[lb] < index) {
 
-    Xt_uint middle = (ub + lb + 1) / 2;
+    Xt_uint middle = (Xt_uint)((Xt_uint)((Xt_uint)(ub + lb) + 1U) / 2U);
 
     if (sorted_vector[middle] <= index)
       lb = middle;
@@ -698,7 +702,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 
     sorted_selection_pos
       = xmalloc((size_t)num_selection * sizeof(*sorted_selection_pos));
-    xt_quicksort_index(tmp_idx, num_selection, sorted_selection_pos, 1);
+    xt_quicksort_index(tmp_idx, (int)num_selection, sorted_selection_pos, 1);
     sorted_selection = tmp_idx;
   }
 

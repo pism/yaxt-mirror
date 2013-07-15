@@ -71,11 +71,11 @@ int main(void) {
   int local_part_size_x = MIN(part_size_x, global_size_x - part_size_x);
   int local_part_size_y = MIN(part_size_y, global_size_y - part_size_y);
 
-  Xt_int src_array_size[2] = {local_part_size_y, global_size_x};
-  Xt_int tgt_array_size[2] = {global_size_y, local_part_size_x};
-  Xt_int global_size[2] = {global_size_y, global_size_x};
-  Xt_int src_local_start[2] = {rank * part_size_y, 0};
-  Xt_int tgt_local_start[2] = {0, rank * part_size_x};
+  Xt_int src_array_size[2] = {(Xt_int)local_part_size_y, (Xt_int)global_size_x};
+  Xt_int tgt_array_size[2] = {(Xt_int)global_size_y, (Xt_int)local_part_size_x};
+  Xt_int global_size[2] = {(Xt_int)global_size_y, (Xt_int)global_size_x};
+  Xt_int src_local_start[2] = {(Xt_int)(rank * part_size_y), 0};
+  Xt_int tgt_local_start[2] = {0, (Xt_int)(rank * part_size_x)};
 
   // define decomposition
 

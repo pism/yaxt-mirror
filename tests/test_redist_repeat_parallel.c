@@ -41,6 +41,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -74,10 +75,12 @@ int main(void) {
         Xt_idxlist indices_a_[2];
 
         Xt_int start = 0;
-        Xt_int global_size[2] = {2*size, size*size};
-        Xt_int local_size[2] = {size,size};
+        assert(size * size <= XT_INT_MAX);
+        Xt_int global_size[2] = {(Xt_int)(2*size), (Xt_int)(size*size)};
+        Xt_int local_size[2] = {(Xt_int)size,(Xt_int)size};
         Xt_int local_start[2][2]
-          = {{0,rank*size},{size,size*size-(rank+1)*size}};
+          = {{ 0, (Xt_int)(rank*size)},
+             { (Xt_int)size, (Xt_int)(size*size-(rank+1)*size) }};
 
         indices_a_[0] = xt_idxsection_new(start, 2, global_size, local_size,
                                             local_start[0]);
@@ -91,7 +94,9 @@ int main(void) {
       }
 
       {
-        struct Xt_stripe stripe = {rank*2*size*size, 2*size*size, 1};
+        assert(rank*2*size*size <= XT_INT_MAX);
+        struct Xt_stripe stripe = {(Xt_int)(rank*2*size*size),
+                                   (Xt_int)(2*size*size), 1};
 
         indices_b = xt_idxstripes_new(&stripe, 1);
       }
@@ -116,7 +121,7 @@ int main(void) {
 
       for (int i = 0; i < 9; ++i)
         for (int j = 0; j < 2*size*size; ++j)
-          input[i][j] = index_vector_a[j] + i * 4*size*size;
+          input[i][j] = (Xt_int)(index_vector_a[j] + i * 4*size*size);
 
       MPI_Aint extent;
       int displacements[4] = {0, 1, 2, 3};

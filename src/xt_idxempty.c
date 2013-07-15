@@ -240,12 +240,13 @@ idxempty_get_indices_at_positions(Xt_idxlist XT_UNUSED(idxlist),
                                   Xt_int num_pos,
                                   Xt_int *index, Xt_int undef_idx) {
 
-  assert(num_pos >= 0);
+  /* FIXME: num_pos should probably be of type int */
+  assert(num_pos >= 0 && num_pos <= INT_MAX);
 
   for (Xt_int i = 0; i < num_pos; ++i)
     index[i] = undef_idx;
 
-  return num_pos;
+  return (int)num_pos;
 }
 
 static int
@@ -269,8 +270,8 @@ int idxempty_get_positions_of_indices(Xt_idxlist XT_UNUSED(body_idxlist),
                                       Xt_int num_selection,
                                       int *XT_UNUSED(positions),
                                       int XT_UNUSED(single_match_only)) {
-
-  return num_selection;
+  /* FIXME: num_selection should probably be of type int */
+  return (int)num_selection;
 }
 
 static int
@@ -280,6 +281,7 @@ idxempty_get_positions_of_indices_off(Xt_idxlist XT_UNUSED(idxlist),
                                       int *XT_UNUSED(positions),
                                       int *XT_UNUSED(offsets)) {
 
+  /* FIXME: num_indices should probably be of type int */
   return 1;
 }
 

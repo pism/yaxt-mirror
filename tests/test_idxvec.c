@@ -577,7 +577,7 @@ int main(void) {
     const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)(num_indices));
     int pos[] = {0,2,7,9,11,100,11,200,9,300,7,400,5};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
@@ -591,8 +591,8 @@ int main(void) {
     }
     Xt_int sel_idx[num_pos];
     int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
-                                            undef_idx);
+      = xt_idxlist_get_indices_at_positions(idxvec, pos, (Xt_int)(num_pos),
+                                            sel_idx, (Xt_int)(undef_idx));
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
     for (int ip=0; ip<num_pos; ip++) {
@@ -608,12 +608,12 @@ int main(void) {
     const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)(num_indices));
     int pos[] = {0,2,7,9,11,11,9,7,5};
-    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
-    for (int ip=0; ip<num_pos; ip++) {
+    for (Xt_int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
       if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
         ref_sel_idx[ip] = undef_idx;
@@ -622,8 +622,8 @@ int main(void) {
     }
     Xt_int sel_idx[num_pos];
     int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
-                                            undef_idx);
+      = xt_idxlist_get_indices_at_positions(idxvec, pos, (Xt_int)num_pos,
+                                            sel_idx, (Xt_int)(undef_idx));
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
     for (int ip=0; ip<num_pos; ip++) {
@@ -639,12 +639,12 @@ int main(void) {
     const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)(num_indices));
     int pos[] = {100,102,107,109,1011,1011,109,107,105};
-    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
-    for (int ip=0; ip<num_pos; ip++) {
+    for (Xt_int ip=0; ip<num_pos; ip++) {
       int p = pos[ip];
       if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
         ref_sel_idx[ip] = undef_idx;
@@ -653,11 +653,11 @@ int main(void) {
     }
     Xt_int sel_idx[num_pos];
     int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
-                                            undef_idx);
+      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos,
+                                            sel_idx, (Xt_int)undef_idx);
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-    for (int ip=0; ip<num_pos; ip++) {
+    for (Xt_int ip=0; ip<num_pos; ip++) {
       if (sel_idx[ip] != ref_sel_idx[ip])
         PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
     }
@@ -668,7 +668,7 @@ int main(void) {
     // check get_positions_of_indices
     // case: some unmatched indices
     Xt_int indices[2] = {0,2};
-    int num_indices = 2;
+    Xt_int num_indices = 2;
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
@@ -686,7 +686,7 @@ int main(void) {
               " did not return an error\n");
 
     Xt_int selection[] = {1, 2, 3};
-    int num_selection = sizeof(selection) / sizeof(*selection);
+    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
 
     int positions[num_selection];
     int ref_positions[] = { -1, 1, -1 };
@@ -706,7 +706,7 @@ int main(void) {
   {
     // check get_bounding_box
     Xt_int indices[2] = {21,42};
-    int num_indices = 2;
+    Xt_int num_indices = 2;
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
@@ -731,7 +731,7 @@ int main(void) {
   {
     // check get_bounding_box
     Xt_int indices[5] = {45,35,32,48,33};
-    int num_indices = 5;
+    Xt_int num_indices = 5;
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
@@ -759,7 +759,7 @@ int main(void) {
   {
     // check get_bounding_box
     Xt_int indices[1] = {-1};
-    int num_indices = 0;
+    Xt_int num_indices = 0;
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 

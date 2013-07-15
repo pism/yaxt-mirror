@@ -65,7 +65,7 @@ ref_get_positions_of_indices(Xt_int const * indices, Xt_int num_indices,
     found = 0;
     for (Xt_int j = 0; j < num_indices; j++) {
       if (selection[i] == indices[j] && (repeat_first_match || !used[j])) {
-        positions[i]=j;
+        positions[i]= (int)j;
         used[j] = 1;
         found = 1;
         break;
@@ -110,6 +110,7 @@ static Xt_int get_max_index(Xt_int const * indices, Xt_int num_indices) {
   return index;
 }
 
+/* FIXME: ref_num_indices should be of type int */
 void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
                    Xt_int ref_num_indices) {
 
@@ -138,15 +139,15 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     int position;
     int ref_positions[ref_num_indices];
 
-    ref_get_positions_of_indices(indices, num_indices, ref_indices, ref_num_indices,
-                                ref_positions, 1);
+    ref_get_positions_of_indices(indices, num_indices, ref_indices,
+                                 (int)ref_num_indices, ref_positions, 1);
 
     for (i = 0; i < ref_num_indices; ++i) {
 
       if (indices[i] != ref_indices[i])
         PUT_ERR("index list contains wrong indices\n");
 
-      if (xt_idxlist_get_index_at_position(idxlist, i, &index) || index != ref_indices[i])
+      if (xt_idxlist_get_index_at_position(idxlist, (int)i, &index) || index != ref_indices[i])
         PUT_ERR("error in xt_idxlist_get_index_at_position\n");
 
       if (xt_idxlist_get_position_of_index(idxlist, ref_indices[i], &position) ||
@@ -154,8 +155,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
         PUT_ERR("error in xt_idxlist_get_position_of_index\n");
     }
 
-    ref_get_positions_of_indices(indices, num_indices, ref_indices, ref_num_indices,
-                                 ref_positions, 0);
+    ref_get_positions_of_indices(indices, num_indices, ref_indices,
+                                 (int)ref_num_indices, ref_positions, 0);
     position = -1;
     for (i = 0; i < ref_num_indices; ++i) {
       if (xt_idxlist_get_position_of_index_off(idxlist, ref_indices[i], &position,
@@ -170,8 +171,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   {
     int ref_positions[ref_num_indices], positions[ref_num_indices];
 
-    ref_get_positions_of_indices(indices, num_indices, ref_indices, ref_num_indices,
-                                ref_positions, 0);
+    ref_get_positions_of_indices(indices, num_indices, ref_indices,
+                                 (int)ref_num_indices, ref_positions, 0);
 
     if (xt_idxlist_get_positions_of_indices(idxlist, ref_indices,
                                            ref_num_indices, positions, 1))
@@ -185,8 +186,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   {
     int ref_positions[ref_num_indices], positions[ref_num_indices];
 
-    ref_get_positions_of_indices(indices, num_indices, ref_indices, ref_num_indices,
-                                ref_positions, 1);
+    ref_get_positions_of_indices(indices, num_indices, ref_indices,
+                                 (int)ref_num_indices, ref_positions, 1);
 
     if (xt_idxlist_get_positions_of_indices(idxlist, ref_indices,
                                            ref_num_indices, positions, 0))
@@ -206,11 +207,12 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     {
       int ref_positions[ref_num_indices], positions[ref_num_indices];
 
-      ref_get_positions_of_indices(indices, num_indices, reverse_ref_indices, ref_num_indices,
-                                  ref_positions, 0);
+      ref_get_positions_of_indices(indices, num_indices, reverse_ref_indices,
+                                   (int)ref_num_indices, ref_positions, 0);
 
       if (xt_idxlist_get_positions_of_indices(idxlist, reverse_ref_indices,
-                                             ref_num_indices, positions, 1))
+                                              (int)ref_num_indices, positions,
+                                              1))
         PUT_ERR("get_positions_of_indices failed\n");
 
       for (i = 0; i < ref_num_indices; ++i)
@@ -221,11 +223,12 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     {
       int ref_positions[ref_num_indices], positions[ref_num_indices];
 
-      ref_get_positions_of_indices(indices, num_indices, reverse_ref_indices, ref_num_indices,
-                                  ref_positions, 1);
+      ref_get_positions_of_indices(indices, num_indices, reverse_ref_indices,
+                                   (int)ref_num_indices, ref_positions, 1);
 
       if (xt_idxlist_get_positions_of_indices(idxlist, reverse_ref_indices,
-                                             ref_num_indices, positions, 0))
+                                              (int)ref_num_indices, positions,
+                                              0))
         PUT_ERR("get_positions_of_indices failed\n");
 
       for (i = 0; i < ref_num_indices; ++i)
@@ -248,7 +251,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   if (!xt_idxlist_get_index_at_position(idxlist, -1, &index))
     PUT_ERR("error in xt_idxlist_get_index_at_position\n");
 
-  if (!xt_idxlist_get_index_at_position(idxlist, ref_num_indices, &index))
+  if (!xt_idxlist_get_index_at_position(idxlist, (int)ref_num_indices, &index))
     PUT_ERR("error in xt_idxlist_get_index_at_position\n");
 }
 

@@ -521,11 +521,11 @@ int main(void) {
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};
-    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {0,2,7,9,11,100,11,200,9,300,18,400,5};
-    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
@@ -555,11 +555,11 @@ int main(void) {
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
                                   {.start=30, .nstrides=7, .stride=-1}};
-    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {-1,0,1,2,3,4,23,5,6,7,8,9,10,11,12, 0,2,100,2000};
-    int num_pos = sizeof(pos) / sizeof(pos[0]);
+    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
@@ -590,7 +590,7 @@ int main(void) {
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
                                   {.start=30, .nstrides=7, .stride=-1}};
-    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {4,7,2,5,9,0,10,6,11,8,12,1,3};
@@ -605,7 +605,8 @@ int main(void) {
       }
     }
     Xt_int sel_idx[num_pos];
-    int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
+    int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos,
+                                                          (Xt_int)num_pos,
                                                           sel_idx, undef_idx);
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
@@ -624,7 +625,7 @@ int main(void) {
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};
-    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {-10,200,700,90,90,18,141};
@@ -640,8 +641,9 @@ int main(void) {
     }
 
     Xt_int sel_idx[num_pos];
-    int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
-                                                          sel_idx, undef_idx);
+    int undef_count
+      = xt_idxlist_get_indices_at_positions(idxlist, pos, (Xt_int)num_pos,
+                                            sel_idx, undef_idx);
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
     for (int ip=0; ip<num_pos; ip++) {
