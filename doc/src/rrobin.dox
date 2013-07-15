@@ -49,7 +49,7 @@
   index stripes (\ref xt_idxstripes.h). Using stripes we have to name the local start index,
   how many elements we want to have, an the stride between the elements. Here we need for
   the source an index stripe containing 5 elements with a stride of 1, beginnig at 0 for
-  rank 0, at 1*leng for rank 1 etc.
+  rank 0, at 1*len for rank 1 etc.
 
   \skip source
   \until dst_idxlist = xt_idxstripes_new

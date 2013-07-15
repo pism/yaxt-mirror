@@ -66,13 +66,13 @@ int main(void) {
 
   {
     // init source and destination data array, local data 5 elements length
-    int leng = 5;
-    int src_array[leng];
-    int dst_array[leng];
+    int len = 5;
+    int src_array[len];
+    int dst_array[len];
 
-    for (int i = 0; i < leng; i++) {
+    for (int i = 0; i < len; i++) {
       // first position = 1, second position = rank,
-      // third position element_index; for rank < 10, leng < 10
+      // third position element_index; for rank < 10, len < 10
       src_array[i] = 100 + rank*10 + i;
       dst_array[i] = -1;
 
@@ -87,14 +87,14 @@ int main(void) {
     // source index list by stripes
     Xt_idxlist src_idxlist;
 
-    struct Xt_stripe src_stripes = {(Xt_int)(rank*leng), (Xt_int)leng, 1};
+    struct Xt_stripe src_stripes = {(Xt_int)(rank*len), (Xt_int)len, 1};
     src_idxlist = xt_idxstripes_new(&src_stripes, 1);
 
     // destination index list by stripes
     Xt_idxlist dst_idxlist;
 
-    struct Xt_stripe dst_stripes = {(Xt_int)(((rank+1)*leng)%(size*leng)),
-                                    (Xt_int)leng, 1};
+    struct Xt_stripe dst_stripes = {(Xt_int)(((rank+1)*len)%(size*len)),
+                                    (Xt_int)len, 1};
     dst_idxlist = xt_idxstripes_new(&dst_stripes, 1);
 
     // xmap
@@ -115,10 +115,10 @@ int main(void) {
     xt_redist_s_exchange1(redist, src_array_p, dst_array_p);
 
     // print result
-    // for emelent_index < 10, leng < 10:
+    // for emelent_index < 10, len < 10:
     // first and last positions: should stay;
     // second position: should be +1, except last rank should have 0
-    for (int p = 0; p < leng; p++)
+    for (int p = 0; p < len; p++)
       printf("DESTvalue: %d, element_index: %d, rank: %d \n",
              dst_array[p], p, rank);
 

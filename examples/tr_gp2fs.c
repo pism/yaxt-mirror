@@ -61,7 +61,7 @@ struct config {
    int x, y, z; // global data size (default 1024 * 512 * 1)
 
    struct {
-      int x_leng, y_leng, z_leng;        //local data size
+      int x_len, y_len, z_len;        //local data size
       Xt_int local_size[3];
       Xt_int local_start[3];
    } src, dst; //!< source and target decomposion
@@ -119,23 +119,23 @@ void calc_blocks (int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_blo
   }
 }
 
-void init_data(int *data_array, int array_leng, int j){
+void init_data(int *data_array, int array_len, int j){
   // 0 = source
   if (j == 0)
-    for (int i = 0; i < array_leng; i++) {
+    for (int i = 0; i < array_len; i++) {
       data_array[i] = 100 + i;
     }
   // 1 = dest
   else
-    for (int i = 0; i < array_leng; i++) {
+    for (int i = 0; i < array_len; i++) {
       data_array[i] = -1;
     }
 }
 
-void init_data_with_index_list(int *data_array, int array_leng,
+void init_data_with_index_list(int *data_array, int array_len,
                             Xt_idxlist idxlist) {
 
-  if (xt_idxlist_get_num_indices(idxlist) != array_leng) {
+  if (xt_idxlist_get_num_indices(idxlist) != array_len) {
 
     fputs("error in init_data_with_indices: array length and index"
           " list length does not match\n", stderr);
@@ -143,30 +143,30 @@ void init_data_with_index_list(int *data_array, int array_leng,
   }
 
 #ifdef CHECK_RESULTS
-  for (int i = 0; i < array_leng; ++i) {
+  for (int i = 0; i < array_len; ++i) {
 
     Xt_int index;
     xt_idxlist_get_index_at_position(idxlist, i, &index);
     data_array[i] = index;
   }
 #else
-  memset(data_array, 0, sizeof(*data_array) * (size_t)array_leng);
+  memset(data_array, 0, sizeof(*data_array) * (size_t)array_len);
 #endif
 }
 
 int check_data_against_index_list(int *data_array,
-                                  int array_leng,
+                                  int array_len,
                                   Xt_idxlist idxlist) {
 
 #ifdef CHECK_RESULTS
-  if (xt_idxlist_get_num_indices(idxlist) != array_leng) {
+  if (xt_idxlist_get_num_indices(idxlist) != array_len) {
 
     fputs("error in check_data_against_index_list: array lenght and"
           " index list length does not match\n", stderr);
     exit(EXIT_FAILURE);
   }
 
-  for (int i = 0; i < array_leng; ++i) {
+  for (int i = 0; i < array_len; ++i) {
 
     Xt_int index;
     xt_idxlist_get_index_at_position(idxlist, i, &index);
@@ -177,7 +177,7 @@ int check_data_against_index_list(int *data_array,
     }
   }
 #else
-  if (array_leng < 0 || !data_array || !idxlist)
+  if (array_len < 0 || !data_array || !idxlist)
     return 1;
 #endif
   return 0;
@@ -197,9 +197,9 @@ void calc_config (struct config *conf, int nprocs){
 
   // source local data size in x, y and z direction - num of elements
 
-  conf->src.z_leng = conf->z;
-  conf->src.y_leng = conf->y / src_y_block + ((rank / src_x_block) < (conf->y % src_y_block));
-  conf->src.x_leng = conf->x / src_x_block + ((rank % src_x_block) < (conf->x % src_x_block));
+  conf->src.z_len = conf->z;
+  conf->src.y_len = conf->y / src_y_block + ((rank / src_x_block) < (conf->y % src_y_block));
+  conf->src.x_len = conf->x / src_x_block + ((rank % src_x_block) < (conf->x % src_x_block));
 
   // --- DEST
   //destination num blocks in global structure
@@ -210,14 +210,14 @@ void calc_config (struct config *conf, int nprocs){
   calc_blocks (nprocs, conf->z, conf->y, &dst_z_block, &dst_y_block);
 
   //calculate actually length of local destination data array
-  conf->dst.z_leng = conf->z / dst_z_block + ((rank / dst_y_block) < (conf->z % dst_z_block));
-  conf->dst.y_leng = conf->y / dst_y_block + ((rank % dst_y_block) < (conf->y % dst_y_block));
-  conf->dst.x_leng = conf->x;
+  conf->dst.z_len = conf->z / dst_z_block + ((rank / dst_y_block) < (conf->z % dst_z_block));
+  conf->dst.y_len = conf->y / dst_y_block + ((rank % dst_y_block) < (conf->y % dst_y_block));
+  conf->dst.x_len = conf->x;
 
   // calculate parameters for source section
   conf->src.local_size[0] = (Xt_int)conf->z;
-  conf->src.local_size[1] = (Xt_int)conf->src.y_leng;
-  conf->src.local_size[2] = (Xt_int)conf->src.x_leng;
+  conf->src.local_size[1] = (Xt_int)conf->src.y_len;
+  conf->src.local_size[2] = (Xt_int)conf->src.x_len;
   int src_block_pos_y = rank / src_x_block;
   int src_block_pos_x = rank % src_x_block;
 
@@ -232,8 +232,8 @@ void calc_config (struct config *conf, int nprocs){
                                       + MIN(src_block_pos_x, src_x_bb));
 
   //dst
-  conf->dst.local_size[0] = (Xt_int)conf->dst.z_leng;
-  conf->dst.local_size[1] = (Xt_int)conf->dst.y_leng;
+  conf->dst.local_size[0] = (Xt_int)conf->dst.z_len;
+  conf->dst.local_size[1] = (Xt_int)conf->dst.y_len;
   conf->dst.local_size[2] = (Xt_int)conf->x;
 
   int dst_block_pos_z = rank / dst_y_block;
@@ -354,19 +354,19 @@ int main(int argc, char** argv) {
     int *src_array, *dst_array;
 
     //allocate memory for source
-    int src_leng = conf.src.z_leng * conf.src.y_leng * conf.src.x_leng;
-    assert(src_leng > 0);
-    src_array = malloc(sizeof(*src_array)* (size_t)src_leng);
+    int src_len = conf.src.z_len * conf.src.y_len * conf.src.x_len;
+    assert(src_len > 0);
+    src_array = malloc(sizeof(*src_array)* (size_t)src_len);
 
     // allocate memory of actuall local data size
-    int dst_leng = conf.dst.z_leng * conf.dst.y_leng * conf.dst.x_leng;
-    assert(dst_leng > 0);
-    dst_array = calloc((size_t)dst_leng, sizeof(dst_array));
+    int dst_len = conf.dst.z_len * conf.dst.y_len * conf.dst.x_len;
+    assert(dst_len > 0);
+    dst_array = calloc((size_t)dst_len, sizeof(dst_array));
 
     // init arrays with fake data
-    // init_data(src_array, src_leng, 0);
-    // init_data(dst_array, dst_leng, 1);
-    init_data_with_index_list(src_array, src_leng, src_idxsection);
+    // init_data(src_array, src_len, 0);
+    // init_data(dst_array, dst_len, 1);
+    init_data_with_index_list(src_array, src_len, src_idxsection);
 
     //array poiter, especially necessary for data array number > 1
     int* src_array_p = src_array;
@@ -375,7 +375,7 @@ int main(int argc, char** argv) {
     //Exchange
     xt_redist_s_exchange1(redist, src_array_p, dst_array_p);
 
-    ret_val = check_data_against_index_list(dst_array, dst_leng, dst_idxsection);
+    ret_val = check_data_against_index_list(dst_array, dst_len, dst_idxsection);
 
     //clean up
     free (src_array);
