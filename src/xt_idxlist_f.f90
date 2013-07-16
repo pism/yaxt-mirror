@@ -204,7 +204,7 @@ CONTAINS
     INTEGER, INTENT(in) :: positions(:)
     INTEGER(xt_int_kind), INTENT(out) :: indices(:)
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
-    INTEGER :: num_subst
+    INTEGER :: num_subst, n
 
     INTERFACE
       FUNCTION xt_idxlist_get_indices_at_positions_c(idxlist, positions, &
@@ -213,14 +213,18 @@ CONTAINS
         IMPORT :: c_ptr, c_int, xt_int_kind
         TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
         INTEGER(c_int), INTENT(in) :: positions(*)
-        INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_pos, undef_idx
+        INTEGER(c_int), VALUE, INTENT(in) :: num_pos
+        INTEGER(xt_int_kind), VALUE, INTENT(in) :: undef_idx
         INTEGER(xt_int_kind), INTENT(out) :: indices(*)
         INTEGER(c_int) :: num_subst
       END FUNCTION xt_idxlist_get_indices_at_positions_c
     END INTERFACE
 
+    n = SIZE(positions)
+    IF (n > HUGE(1_c_int)) n = HUGE(1_c_int)
+
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
-         INT(positions, c_int), INT(SIZE(positions), xt_int_kind), &
+         INT(positions, c_int), INT(n, c_int), &
          indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions
 

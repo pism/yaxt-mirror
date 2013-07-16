@@ -225,7 +225,7 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
 
 int
 xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                    Xt_int num_pos, Xt_int *indices,
+                                    int num_pos, Xt_int *indices,
                                     Xt_int undef_idx) {
 
   INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");

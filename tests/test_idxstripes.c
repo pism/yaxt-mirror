@@ -525,7 +525,7 @@ int main(void) {
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {0,2,7,9,11,100,11,200,9,300,18,400,5};
-    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
@@ -559,7 +559,7 @@ int main(void) {
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {-1,0,1,2,3,4,23,5,6,7,8,9,10,11,12, 0,2,100,2000};
-    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (int ip=0; ip<num_pos; ip++) {
@@ -606,8 +606,8 @@ int main(void) {
     }
     Xt_int sel_idx[num_pos];
     int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos,
-                                                          (Xt_int)num_pos,
-                                                          sel_idx, undef_idx);
+                                                          num_pos, sel_idx,
+                                                          undef_idx);
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
     for (int ip=0; ip<num_pos; ip++) {
@@ -642,7 +642,7 @@ int main(void) {
 
     Xt_int sel_idx[num_pos];
     int undef_count
-      = xt_idxlist_get_indices_at_positions(idxlist, pos, (Xt_int)num_pos,
+      = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
                                             sel_idx, undef_idx);
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");

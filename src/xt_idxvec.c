@@ -99,7 +99,7 @@ static int
 idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
 
 static int
-idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, Xt_int num, Xt_int *index, Xt_int undef_idx);
+idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions, int num, Xt_int *index, Xt_int undef_idx);
 
 static int
 idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position);
@@ -579,7 +579,7 @@ idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index) {
 
 static int
 idxvec_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                Xt_int num_pos, Xt_int *index,
+                                int num_pos, Xt_int *index,
                                 Xt_int undef_idx) {
 
   Xt_idxvec idxvec = (Xt_idxvec)idxlist;

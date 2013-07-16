@@ -69,7 +69,7 @@ int main(void) {
   { // test packing and unpacking of index vectors
 
     Xt_int index_vector[] = {1,2,3,4,5,6,7};
-    int num_indices = (int)(sizeof(index_vector) / sizeof(index_vector[0]));
+    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector;
 
@@ -170,7 +170,7 @@ int main(void) {
   { // test copying of index vector
 
     Xt_int index_vector[] = {1,2,3,4,5,6,7};
-    int num_indices = (int)(sizeof(index_vector) / sizeof(index_vector[0]));
+    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector, idxvector_copy;
 
@@ -199,7 +199,7 @@ int main(void) {
   { // test repeated equal indices
 
     Xt_int index_vector[] = {1,2,3,7,5,6,7,7};
-    int num_indices = (int)(sizeof(index_vector) / sizeof(index_vector[0]));
+    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
 
     Xt_idxlist idxvector;
 
@@ -278,7 +278,7 @@ int main(void) {
 
     Xt_int ref_intersection_indices[] = {1,2,3};
     int ref_intersection_num_indices =
-      (int)(sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]));
+      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
                   ref_intersection_num_indices);
@@ -313,7 +313,7 @@ int main(void) {
 
     Xt_int ref_intersection_indices[] = {2,3};
     int ref_intersection_num_indices =
-      (int)(sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]));
+      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
                   ref_intersection_num_indices);
@@ -348,7 +348,7 @@ int main(void) {
 
     Xt_int ref_intersection_indices[] = {2,3};
     int ref_intersection_num_indices =
-      (int)(sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]));
+      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
                   ref_intersection_num_indices);
@@ -383,7 +383,7 @@ int main(void) {
 
     Xt_int ref_intersection_indices[] = {2,3};
     int ref_intersection_num_indices =
-      (int)(sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]));
+      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
                   ref_intersection_num_indices);
@@ -418,7 +418,7 @@ int main(void) {
 
     Xt_int ref_intersection_indices[] = {2,3};
     int ref_intersection_num_indices =
-      (int)(sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]));
+      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
 
     check_idxlist(intersection, ref_intersection_indices,
                   ref_intersection_num_indices);
@@ -591,8 +591,8 @@ int main(void) {
     }
     Xt_int sel_idx[num_pos];
     int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, (Xt_int)(num_pos),
-                                            sel_idx, (Xt_int)(undef_idx));
+      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
+                                            (Xt_int)(undef_idx));
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
     for (int ip=0; ip<num_pos; ip++) {
@@ -610,7 +610,7 @@ int main(void) {
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
     int pos[] = {0,2,7,9,11,11,9,7,5};
-    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (Xt_int ip=0; ip<num_pos; ip++) {
@@ -622,8 +622,8 @@ int main(void) {
     }
     Xt_int sel_idx[num_pos];
     int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, (Xt_int)num_pos,
-                                            sel_idx, (Xt_int)(undef_idx));
+      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
+                                            (Xt_int)(undef_idx));
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
     for (int ip=0; ip<num_pos; ip++) {
@@ -641,7 +641,7 @@ int main(void) {
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
     int pos[] = {100,102,107,109,1011,1011,109,107,105};
-    Xt_int num_pos = sizeof(pos) / sizeof(pos[0]);
+    int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
     int ref_undef_count = 0;
     for (Xt_int ip=0; ip<num_pos; ip++) {
@@ -653,8 +653,8 @@ int main(void) {
     }
     Xt_int sel_idx[num_pos];
     int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos,
-                                            sel_idx, (Xt_int)undef_idx);
+      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
+                                            (Xt_int)undef_idx);
     if (undef_count != ref_undef_count)
       PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
     for (Xt_int ip=0; ip<num_pos; ip++) {

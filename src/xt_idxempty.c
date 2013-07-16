@@ -87,7 +87,7 @@ idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index)
 
 static int
 idxempty_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                  Xt_int num, Xt_int *index,
+                                  int num, Xt_int *index,
                                   Xt_int undef_idx);
 
 static int
@@ -237,16 +237,15 @@ idxempty_get_index_at_position(Xt_idxlist XT_UNUSED(idxlist),
 static int
 idxempty_get_indices_at_positions(Xt_idxlist XT_UNUSED(idxlist),
                                   int *XT_UNUSED(positions),
-                                  Xt_int num_pos,
+                                  int num_pos,
                                   Xt_int *index, Xt_int undef_idx) {
 
-  /* FIXME: num_pos should probably be of type int */
-  assert(num_pos >= 0 && num_pos <= INT_MAX);
+  assert(num_pos >= 0);
 
-  for (Xt_int i = 0; i < num_pos; ++i)
+  for (int i = 0; i < num_pos; ++i)
     index[i] = undef_idx;
 
-  return (int)num_pos;
+  return num_pos;
 }
 
 static int

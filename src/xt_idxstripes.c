@@ -100,7 +100,7 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
 
 static int
 idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                    Xt_int num, Xt_int *index,
+                                    int num, Xt_int *index,
                                     Xt_int undef_idx);
 
 static int
@@ -733,7 +733,7 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
 
 static int
 idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
-                                    Xt_int num_pos, Xt_int *index,
+                                    int num_pos, Xt_int *index,
                                     Xt_int undef_idx) {
 
   INSTR_DEF(instr,"idxstripes_get_indices_at_positions");
