@@ -372,14 +372,13 @@ static void idxvec_delete(Xt_idxlist data) {
 static size_t idxvec_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   Xt_idxvec idxvec = (Xt_idxvec)data;
-  int size_xt_idx, size_xt_count, size_int_type;
+  int size_xt_idx, size_int_type;
 
-  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
-  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_xt_count), comm);
+  xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_int_type), comm);
   xt_mpi_call(MPI_Pack_size(idxvec->num_indices, Xt_int_dt, comm,
                             &size_xt_idx), comm);
 
-  return (size_t)size_xt_count + (size_t)size_xt_idx + (size_t)size_int_type;
+  return (size_t)size_xt_idx + (size_t)size_int_type;
 }
 
 void idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
