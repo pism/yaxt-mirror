@@ -263,7 +263,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
 
 int
 xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                    Xt_int num_indices, int * positions,
+                                    int num_indices, int * positions,
                                     int single_match_only) {
 
   INSTR_DEF(instr_fallback,"xt_idxlist_get_positions_of_indices.fallback");
@@ -305,7 +305,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 int
 xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                         const Xt_int *indices,
-                                        Xt_int num_indices, int * positions,
+                                        int num_indices, int * positions,
                                         int * offsets) {
 
   INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
@@ -317,7 +317,7 @@ xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
   INSTR_START(instr_fallback);
 
   int ret_val = 0;
-  for (Xt_int i = 0; i < num_indices; ++i) {
+  for (int i = 0; i < num_indices; ++i) {
 
     int temp_position, offset;
 

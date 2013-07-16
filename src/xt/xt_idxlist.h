@@ -268,7 +268,7 @@ int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
  */
 int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist,
                                         const Xt_int *indices,
-                                        Xt_int num_indices, int *positions,
+                                        int num_indices, int *positions,
                                         int single_match_only);
 
 /**
@@ -307,7 +307,7 @@ int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 /* FIXME: this should probably return the number of failed lookups */
 int xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                             const Xt_int *indices,
-                                            Xt_int num_indices, int * positions,
+                                            int num_indices, int * positions,
                                             int * offsets);
 
 /**

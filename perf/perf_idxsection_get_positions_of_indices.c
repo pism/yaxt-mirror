@@ -90,7 +90,7 @@ int main(void) {
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_get_positions_of_indices(idxsection,
                                                 xt_idxlist_get_indices_const(selection_indices),
-                                                i, positions, single_match_only);
+                                                (int)i, positions, single_match_only);
         }
       xt_idxlist_delete(idxsection);
     }
@@ -114,7 +114,7 @@ int main(void) {
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_get_positions_of_indices(idxsection[j],
                                                 xt_idxlist_get_indices_const(selection_indices),
-                                                i, positions, single_match_only);
+                                                (int)i, positions, single_match_only);
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_delete(idxsection[j]);
         }

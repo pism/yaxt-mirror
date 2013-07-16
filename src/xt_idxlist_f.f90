@@ -288,7 +288,8 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: indices(:)
     INTEGER, INTENT(out) :: positions(:)
     LOGICAL, INTENT(in) :: single_match_only
-    INTEGER :: num_missing
+    INTEGER :: num_missing, n, ofs
+    INTEGER(c_int) :: single_match_only_
 
     INTERFACE
       FUNCTION xt_idxlist_get_positions_of_indices_c(idxlist, indices, &
@@ -298,21 +299,38 @@ CONTAINS
         IMPORT :: Xt_idxlist, xt_int_kind, c_int, c_ptr
         TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
         INTEGER(xt_int_kind), INTENT(in) :: indices(*)
-        INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_indices
+        INTEGER(c_int), VALUE, INTENT(in) :: num_indices
         INTEGER(c_int), INTENT(out) :: positions(*)
         INTEGER(c_int), VALUE, INTENT(in) :: single_match_only
         INTEGER(c_int) :: num_missing
       END FUNCTION xt_idxlist_get_positions_of_indices_c
     END INTERFACE
-    IF (SIZE(positions) < SIZE(indices)) THEN
+
+    n = SIZE(indices)
+    IF (SIZE(positions) < n) THEN
       CALL xt_abort(xt_get_default_comm(), "positions array too small", &
            __FILE__, &
            __LINE__)
     END IF
-    num_missing &
-         = xt_idxlist_get_positions_of_indices_c(xt_idxlist_f2c(idxlist), &
-         indices, INT(SIZE(indices), xt_int_kind), &
-         positions, MERGE(1_c_int, 0_c_int, single_match_only))
+    num_missing = 0
+    ofs = 1
+    single_match_only_ = MERGE(1_c_int, 0_c_int, single_match_only)
+    DO WHILE (n > 0)
+      IF (n > HUGE(1_c_int)) THEN
+        num_missing = num_missing &
+             + INT(xt_idxlist_get_positions_of_indices_c(&
+             xt_idxlist_f2c(idxlist), indices(ofs:), HUGE(1_c_int), &
+             positions(ofs:), single_match_only_))
+        ofs = ofs + HUGE(1_c_int)
+        n = n - HUGE(1_c_int)
+      ELSE
+        num_missing = num_missing &
+             + INT(xt_idxlist_get_positions_of_indices_c(&
+             xt_idxlist_f2c(idxlist), indices(ofs:), &
+             INT(n, c_int), positions(ofs:), single_match_only_))
+        n = 0
+      END IF
+    END DO
   END FUNCTION xt_idxlist_get_positions_of_indices
 
   SUBROUTINE xt_idxlist_get_index_stripes(idxlist, stripes)

@@ -243,7 +243,7 @@ int main(void) {
 
     retval = xt_idxlist_get_positions_of_indices(idxvector,
                                                  intersection_vector,
-                                                 (Xt_int)intersection_num,
+                                                 (int)intersection_num,
                                                  intersection_pos,
                                                  single_match_only);
     assert(retval == 0);
@@ -686,7 +686,7 @@ int main(void) {
               " did not return an error\n");
 
     Xt_int selection[] = {1, 2, 3};
-    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
+    int num_selection = (int)(sizeof(selection) / sizeof(*selection));
 
     int positions[num_selection];
     int ref_positions[] = { -1, 1, -1 };

@@ -110,7 +110,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
 static int
 idxvec_get_positions_of_indices(Xt_idxlist idxlist, const Xt_int *indices,
-                                Xt_int num_indices, int *positions,
+                                int num_indices, int *positions,
                                 int single_match_only);
 
 static Xt_int
@@ -665,11 +665,11 @@ idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position) {
   return idxvec_get_position_of_index_off(idxlist, index, position, 0);
 }
 
-static int idx_vec_is_sorted(Xt_int const *idx, Xt_int n) {
+static int idx_vec_is_sorted(Xt_int const *idx, int n) {
 
   if (n<2) return 1;
 
-  for (Xt_int i = 1; i < n; i++)
+  for (int i = 1; i < n; i++)
     if (idx[i] < idx[i-1]) return 0;
 
   return 1;
@@ -678,7 +678,7 @@ static int idx_vec_is_sorted(Xt_int const *idx, Xt_int n) {
 static int
 idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
                                 const Xt_int *selection_idx,
-                                Xt_int num_selection, int *positions,
+                                int num_selection, int *positions,
                                 int single_match_only) {
 
   if (num_selection == 0) return 0;
@@ -700,7 +700,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 
     sorted_selection_pos
       = xmalloc((size_t)num_selection * sizeof(*sorted_selection_pos));
-    xt_quicksort_index(tmp_idx, (int)num_selection, sorted_selection_pos, 1);
+    xt_quicksort_index(tmp_idx, num_selection, sorted_selection_pos, 1);
     sorted_selection = tmp_idx;
   }
 

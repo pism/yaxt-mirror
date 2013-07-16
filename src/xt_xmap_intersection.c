@@ -120,7 +120,7 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
 struct exchange_data {
   // list of relative positions in memory to send or receive
   int * transfer_pos;
-  Xt_int num_transfer_pos;
+  int num_transfer_pos;
   int rank;
 };
 
@@ -258,7 +258,7 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
     if (intersection_size > 0) {
 
       (*resSets)[new_num_intersections].transfer_pos = intersection_pos;
-      (*resSets)[new_num_intersections].num_transfer_pos = (Xt_int)intersection_size;
+      (*resSets)[new_num_intersections].num_transfer_pos = intersection_size;
       (*resSets)[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
 
@@ -300,8 +300,8 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
 
     const Xt_int *intersection_idxvec
       = xt_idxlist_get_indices_const(intersections[i].list);
-    Xt_int intersection_size
-      = (Xt_int)xt_idxlist_get_num_indices(intersections[i].list);
+    int intersection_size
+      = xt_idxlist_get_num_indices(intersections[i].list);
     int *intersection_pos = xmalloc((size_t)intersection_size
                                     * sizeof(*intersection_pos));
 
@@ -310,9 +310,9 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
       ENSURE_ARRAY_SIZE(
         new_intersection_idxvec, curr_new_intersection_idxvec_size,
         intersection_size - num_indices_to_remove_per_intersection[i]);
-      Xt_int new_intersection_size = 0;
+      int new_intersection_size = 0;
 
-      for (Xt_int j = 0; j < intersection_size; ++j) {
+      for (int j = 0; j < intersection_size; ++j) {
 
         int flag = 0;
 
@@ -670,7 +670,7 @@ static Xt_int
 xmap_intersection_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
 
   assert(iter != NULL);
-  return xmii(iter)->msg->num_transfer_pos;
+  return (Xt_int)(xmii(iter)->msg->num_transfer_pos);
 }
 
 static void xmap_intersection_iterator_delete(Xt_xmap_iter iter) {

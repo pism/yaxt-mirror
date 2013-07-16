@@ -173,6 +173,7 @@ int const * xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter);
  * @param[in] iter exchange map iterator
  * @return         number of positions returned by
  *                 \ref xt_xmap_iterator_get_transfer_pos for the current item
+ * @todo change return type to int
  */
 Xt_int xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
 

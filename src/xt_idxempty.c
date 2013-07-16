@@ -99,12 +99,12 @@ idxempty_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
 static int
 idxempty_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                  Xt_int num_indices, int * positions,
+                                  int num_indices, int * positions,
                                   int single_match_only);
 
 static int
 idxempty_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
-                                      Xt_int num_indices, int * positions,
+                                      int num_indices, int * positions,
                                       int * offsets);
 
 static Xt_int
@@ -266,21 +266,20 @@ idxempty_get_position_of_index(Xt_idxlist XT_UNUSED(idxlist),
 
 int idxempty_get_positions_of_indices(Xt_idxlist XT_UNUSED(body_idxlist),
                                       const Xt_int *XT_UNUSED(selection_idx),
-                                      Xt_int num_selection,
+                                      int num_selection,
                                       int *XT_UNUSED(positions),
                                       int XT_UNUSED(single_match_only)) {
-  /* FIXME: num_selection should probably be of type int */
-  return (int)num_selection;
+
+  return num_selection;
 }
 
 static int
 idxempty_get_positions_of_indices_off(Xt_idxlist XT_UNUSED(idxlist),
                                       const Xt_int *XT_UNUSED(indices),
-                                      Xt_int XT_UNUSED(num_indices),
+                                      int XT_UNUSED(num_indices),
                                       int *XT_UNUSED(positions),
                                       int *XT_UNUSED(offsets)) {
 
-  /* FIXME: num_indices should probably be of type int */
   return 1;
 }
 

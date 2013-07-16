@@ -66,9 +66,9 @@ struct xt_idxlist_vtable {
    int (*get_indices_at_positions)(Xt_idxlist idxlist, int *positions, int num,
                                    Xt_int *index, Xt_int undef_idx);
    int (*get_position_of_index)(Xt_idxlist, Xt_int, int *);
-   int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, Xt_int, int *, int);
+   int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, int, int *, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_int, int *, int);
-   int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, Xt_int,
+   int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, int,
                                       int *, int *);
    Xt_int (*get_min_index)(Xt_idxlist);
    Xt_int (*get_max_index)(Xt_idxlist);

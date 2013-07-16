@@ -404,7 +404,7 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int selection[] = {1,2,5,6,7,8};
-    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
+    int num_selection = (int)(sizeof(selection) / sizeof(*selection));
 
     int positions[num_selection];
     int ref_positions[] = {1*0-1, 2*0+0, 5*0-1, 6*0+2, 7*0+3, 8*0-1};
@@ -436,7 +436,7 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
+    int num_selection = (int)(sizeof(selection) / sizeof(*selection));
 
     int positions[num_selection];
     int ref_positions[] = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0+3, 7*0+3, 6*0+2, 8*0-1};
@@ -473,7 +473,7 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    Xt_int num_selection = sizeof(selection) / sizeof(*selection);
+    int num_selection = (int)(sizeof(selection) / sizeof(*selection));
 
     int positions[num_selection];
     int ref_positions[] = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
