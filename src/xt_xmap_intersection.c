@@ -213,24 +213,24 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
 
     const Xt_int *intersection_idxvec
       = xt_idxlist_get_indices_const(intersections[i].list);
-    Xt_int intersection_size
+    int intersection_size
       = xt_idxlist_get_num_indices(intersections[i].list);
     int *intersection_pos = xmalloc((size_t)intersection_size
                                     * sizeof(*intersection_pos));
 
     int retval;
     retval = xt_idxlist_get_positions_of_indices(
-      mypart_idxlist, intersection_idxvec, intersection_size,
+      mypart_idxlist, intersection_idxvec, (Xt_int)intersection_size,
       intersection_pos, 1);
     assert(retval != 1);
 
     // we have to enforce single_match_only not only within a single
     // intersection, but also between all intersections
 
-    Xt_int tmp_intersection_size = 0;
+    int tmp_intersection_size = 0;
     num_indices_to_remove_per_intersection[i] = 0;
 
-    for (Xt_int j = 0; j < intersection_size; ++j) {
+    for (int j = 0; j < intersection_size; ++j) {
 
       // if the current value was not already in another intersection
       if (!position_mask[intersection_pos[j]]) {
@@ -258,7 +258,7 @@ generate_dir_transfer_pos_dst(Xt_int num_intersections,
     if (intersection_size > 0) {
 
       (*resSets)[new_num_intersections].transfer_pos = intersection_pos;
-      (*resSets)[new_num_intersections].num_transfer_pos = intersection_size;
+      (*resSets)[new_num_intersections].num_transfer_pos = (Xt_int)intersection_size;
       (*resSets)[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
 
@@ -301,7 +301,7 @@ generate_dir_transfer_pos_src(Xt_int num_intersections,
     const Xt_int *intersection_idxvec
       = xt_idxlist_get_indices_const(intersections[i].list);
     Xt_int intersection_size
-      = xt_idxlist_get_num_indices(intersections[i].list);
+      = (Xt_int)xt_idxlist_get_num_indices(intersections[i].list);
     int *intersection_pos = xmalloc((size_t)intersection_size
                                     * sizeof(*intersection_pos));
 
@@ -505,7 +505,7 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
 }
 
 static int check_destination_coverage(struct exchange_data * in_msgs,
-                                      int num_msgs, Xt_int num_indices,
+                                      int num_msgs, int num_indices,
                                       MPI_Comm comm) {
 
   if (num_indices == 0)
@@ -569,8 +569,8 @@ xt_xmap_intersection_new(Xt_int num_src_intersections,
 
   // we could also calculate the (more precise) max pos using only xmap data
   // but using this simple estimate we are still okay for usage checks
-  xmap->max_src_pos = (int)xt_idxlist_get_num_indices(src_idxlist);
-  xmap->max_dst_pos = (int)xt_idxlist_get_num_indices(dst_idxlist);
+  xmap->max_src_pos = xt_idxlist_get_num_indices(src_idxlist);
+  xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
 
   // check if all indices in the destination index list have been found on
   // the source processes

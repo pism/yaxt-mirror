@@ -87,11 +87,11 @@ struct dist_dir {
 static inline Xt_int
 get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
 
-  Xt_int num_indices, global_num_indices;
+  int num_indices, global_num_indices;
 
   num_indices = xt_idxlist_get_num_indices(idxlist);
 
-  xt_mpi_call(MPI_Allreduce(&num_indices, &global_num_indices, 1, Xt_int_dt,
+  xt_mpi_call(MPI_Allreduce(&num_indices, &global_num_indices, 1, MPI_INT,
                                 MPI_SUM, comm), comm);
 
   int comm_size;
@@ -103,7 +103,8 @@ get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
 
 static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  Xt_int num_a, num_b = xt_idxlist_get_num_indices(b), min_index;
+  int num_a, num_b = xt_idxlist_get_num_indices(b);
+  Xt_int min_index;
   if ((num_a = xt_idxlist_get_num_indices(a)) && num_b)
     min_index = (Xt_int)(MIN(xt_idxlist_get_min_index(a),
                              xt_idxlist_get_min_index(b)));
@@ -116,7 +117,8 @@ static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
 static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  Xt_int num_a, num_b = xt_idxlist_get_num_indices(b), max_index;
+  int num_a, num_b = xt_idxlist_get_num_indices(b);
+  Xt_int max_index;
   if ((num_a = xt_idxlist_get_num_indices(a)) && num_b)
     max_index = (Xt_int)(MAX(xt_idxlist_get_max_index(a),
                              xt_idxlist_get_max_index(b)));
@@ -138,7 +140,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
 
   local_interval = (Xt_int)(global_interval / comm_size);
 
-  Xt_int num_src = xt_idxlist_get_num_indices(src_idxlist),
+  int num_src = xt_idxlist_get_num_indices(src_idxlist),
     num_dst = xt_idxlist_get_num_indices(dst_idxlist);
 
   if (num_src || num_dst)

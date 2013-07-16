@@ -78,7 +78,7 @@ idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
 static Xt_idxlist
 idxlist_collection_copy(Xt_idxlist idxlist);
 
-static Xt_int
+static int
 idxlist_collection_get_num_indices(Xt_idxlist idxlist);
 
 static void
@@ -139,7 +139,7 @@ struct Xt_idxlist_collection_ {
 
   unsigned num_idxlists;
 
-  Xt_int index_num_cache;
+  int index_num_cache;
   Xt_int *index_array_cache;
   Xt_idxlist idxlists[];
 };
@@ -249,7 +249,7 @@ idxlist_collection_copy(Xt_idxlist idxlist) {
                                     collectionlist->num_idxlists);
 }
 
-static Xt_int
+static int
 idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
 
    Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
@@ -257,12 +257,10 @@ idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
    if (collectionlist->index_num_cache >= 0)
      return collectionlist->index_num_cache;
 
-   Xt_int num_indices = 0;
+   int num_indices = 0;
 
    for (unsigned i = 0; i < collectionlist->num_idxlists; ++i)
-     num_indices
-       = (Xt_int)(num_indices
-                  + xt_idxlist_get_num_indices(collectionlist->idxlists[i]));
+     num_indices += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
 
    collectionlist->index_num_cache = num_indices;
 
@@ -274,14 +272,12 @@ idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
    Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
    /// \todo use memcpy with index_array_cache if available
-   Xt_int offlist = 0;
+   int offlist = 0;
 
    for (unsigned i = 0; i < collectionlist->num_idxlists; ++i) {
 
       xt_idxlist_get_indices(collectionlist->idxlists[i], indices+offlist);
-      offlist
-        = (Xt_int)(offlist
-                   + xt_idxlist_get_num_indices(collectionlist->idxlists[i]));
+      offlist += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
    }
 }
 
@@ -292,7 +288,7 @@ idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
 
   if (collection->index_array_cache) return collection->index_array_cache;
 
-  Xt_int index_num = idxlist_collection_get_num_indices(idxlist);
+  int index_num = idxlist_collection_get_num_indices(idxlist);
 
   Xt_int *tmp_index_array
     = xmalloc((Xt_uint)index_num * sizeof( *(collection->index_array_cache) ) );
@@ -353,9 +349,9 @@ idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
   for (unsigned i = 0; i < collectionlist->num_idxlists; ++i) {
-    Xt_int n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+    int n = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
     if (position >= n)
-      position -= (int)n;
+      position -= n;
     else {
       return xt_idxlist_get_index_at_position(collectionlist->idxlists[i],
                                               position, index);
@@ -371,7 +367,7 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
-  Xt_int curr_num_indices = 0;
+  int curr_num_indices = 0;
 
   int idxlist_offsets = 0;
 
@@ -380,7 +376,7 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   unsigned i = 0;
 
   do {
-    idxlist_offsets += (int)curr_num_indices;
+    idxlist_offsets += curr_num_indices;
     curr_num_indices = xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
   } while (idxlist_offsets + curr_num_indices <= offset &&
            ++i < collectionlist->num_idxlists);
@@ -396,7 +392,7 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
       /* FIXME: xt_idxlist_get_num_indices result not guaranteed
        * smaller INT_MAX */
       idxlist_offsets
-        += (int)xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
+        += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
       offset = 0;
     }
 

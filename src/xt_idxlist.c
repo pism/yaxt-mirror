@@ -128,7 +128,7 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
 
       INSTR_START(instr_fallback);
 
-      Xt_int num_indices_src, num_indices_dst;
+      int num_indices_src, num_indices_dst;
 
       num_indices_src = xt_idxlist_get_num_indices(idxlist_src);
       num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
@@ -137,16 +137,16 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
         return xt_idxempty_new();
 
       Xt_int *indices_src, *indices_dst;
-      indices_src = xmalloc((Xt_uint)num_indices_src * sizeof (indices_src[0]));
-      indices_dst = xmalloc((Xt_uint)num_indices_dst * sizeof (indices_dst[0]));
+      indices_src = xmalloc((size_t)num_indices_src * sizeof (indices_src[0]));
+      indices_dst = xmalloc((size_t)num_indices_dst * sizeof (indices_dst[0]));
 
       xt_idxlist_get_indices(idxlist_src, indices_src);
       xt_idxlist_get_indices(idxlist_dst, indices_dst);
 
       Xt_idxlist idxvec_src, idxvec_dst;
 
-      idxvec_src = xt_idxvec_new(indices_src, num_indices_src);
-      idxvec_dst = xt_idxvec_new(indices_dst, num_indices_dst);
+      idxvec_src = xt_idxvec_new(indices_src, (Xt_int)num_indices_src);
+      idxvec_dst = xt_idxvec_new(indices_dst, (Xt_int)num_indices_dst);
 
       intersection = xt_idxlist_get_intersection(idxvec_src, idxvec_dst);
 
@@ -166,7 +166,7 @@ Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist) {
    return idxlist->vtable->copy(idxlist);
 }
 
-Xt_int xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
+int xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
 
    return idxlist->vtable->get_num_indices(idxlist);
 }
@@ -202,13 +202,13 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
     INSTR_START(instr_fallback);
 
-    Xt_int num_indices = xt_idxlist_get_num_indices(idxlist);
+    int num_indices = xt_idxlist_get_num_indices(idxlist);
 
-    Xt_int *indices = xmalloc((Xt_uint)num_indices * sizeof (indices[0]));
+    Xt_int *indices = xmalloc((size_t)num_indices * sizeof (indices[0]));
 
     xt_idxlist_get_indices(idxlist, indices);
 
-    xt_idxstripes_convert_to_stripes(indices, num_indices,
+    xt_idxstripes_convert_to_stripes(indices, (Xt_int)num_indices,
                                      stripes, num_stripes);
 
     free(indices);
@@ -276,13 +276,13 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
   else {
     INSTR_START(instr_fallback);
 
-    Xt_int num_tmp_indices;
+    int num_tmp_indices;
     num_tmp_indices = xt_idxlist_get_num_indices(idxlist);
     Xt_int *tmp_indices;
-    tmp_indices = xmalloc((Xt_uint)num_tmp_indices * sizeof (tmp_indices[0]));
+    tmp_indices = xmalloc((size_t)num_tmp_indices * sizeof (tmp_indices[0]));
     xt_idxlist_get_indices(idxlist, tmp_indices);
     Xt_idxlist tmp_idxvec;
-    tmp_idxvec = xt_idxvec_new(tmp_indices, num_tmp_indices);
+    tmp_idxvec = xt_idxvec_new(tmp_indices, (Xt_int)num_tmp_indices);
     int retval
       = tmp_idxvec->vtable->get_positions_of_indices(tmp_idxvec, indices,
                                                      num_indices, positions,
@@ -370,7 +370,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
 
    INSTR_DEF(instr_fallback,"xt_idxlist_get_bounding_box.fallback");
 
-   Xt_int num_indices = xt_idxlist_get_num_indices(idxlist);
+   int num_indices = xt_idxlist_get_num_indices(idxlist);
 
    if (num_indices == 0) {
 
@@ -409,9 +409,9 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
       bounds[i].size = 1;
    }
 
-   for (Xt_int i = 1; i < num_indices; ++i) {
+   for (int i = 1; i < num_indices; ++i) {
 
-     xt_idxlist_get_index_at_position(idxlist, (int)i, &curr_index);
+     xt_idxlist_get_index_at_position(idxlist, i, &curr_index);
       get_position_in_ndim_space(curr_index, ndim, global_stride,
                                  global_start_index, curr_position);
 

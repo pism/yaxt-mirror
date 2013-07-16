@@ -54,7 +54,7 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
                          struct Xt_modifier *modifier,
                          int modifier_num, int *mstate) {
 
-  Xt_int patch_size = xt_idxlist_get_num_indices(patch_idxlist);
+  int patch_size = xt_idxlist_get_num_indices(patch_idxlist);
 
   // if there is no modifier then we just give back a copy of the original:
   if (modifier_num<1) return xt_idxlist_copy(patch_idxlist);
@@ -81,7 +81,7 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
     intersection_idxlist = xt_idxlist_get_intersection(m->extract,workpatch_idxlist);
 
     // get intersection index array => inter_idx:
-    Xt_int intersection_size = xt_idxlist_get_num_indices(intersection_idxlist);
+    int intersection_size = xt_idxlist_get_num_indices(intersection_idxlist);
     if (intersection_size > patch_size) die("xt_idxmod_new: internal error: (intersection_size > patch_size)");
     inter_idx = xt_idxlist_get_indices_const(intersection_idxlist);
 
@@ -89,21 +89,24 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
     // m->extract has source role, therefore single_match_only = 0
     // => extract_pos
     missing = xt_idxlist_get_positions_of_indices(m->extract, inter_idx,
-                                                  intersection_size, extract_pos,
-                                                  0);
+                                                  (Xt_int)intersection_size,
+                                                  extract_pos, 0);
     if (missing) die("xt_idxmod_new: internal error: cannot locate all intersection positions (1)");
 
     // get the intersection positions within workpatch
     // we must find each fitting index, so single_match_only = 1
     // => workpatch_pos
     missing = xt_idxlist_get_positions_of_indices(workpatch_idxlist, inter_idx,
-                                                  intersection_size, workpatch_pos, 1);
+                                                  (Xt_int)intersection_size,
+                                                  workpatch_pos, 1);
 
     if (missing) die("xt_idxmod_new: internal error: cannot locate all intersection positions (2)");
 
     // using the positions above, select indices within m->subst:
     // it is an error if we cannot access all positions, so the value of undef_idx does not matter (set to 0)
-    int undef_num = xt_idxlist_get_indices_at_positions(m->subst, extract_pos, intersection_size, subst_idx, 0);
+    int undef_num = xt_idxlist_get_indices_at_positions(m->subst, extract_pos,
+                                                       (Xt_int)intersection_size,
+                                                       subst_idx, 0);
     if (undef_num) die("xt_idxmod_new: internal error: failed access: m->subst is too small");
 
     // delete workpatch_idxlist
@@ -127,7 +130,7 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
         workpatch_idx[p] = subst_idx[i];
       }
     }
-    workpatch_idxlist = xt_idxvec_new(workpatch_idx, patch_size);
+    workpatch_idxlist = xt_idxvec_new(workpatch_idx, (Xt_int)patch_size);
 
     xt_idxlist_delete(intersection_idxlist);
   }

@@ -140,11 +140,11 @@ static void print_index_list(Xt_idxlist idxlist) {
 
   char * format_string = format_strings[sizeof(Xt_int) == sizeof(long)];
 
-  for (Xt_int i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
+  for (int i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
 
     Xt_int index;
 
-    xt_idxlist_get_index_at_position(idxlist, (int)i, &index);
+    xt_idxlist_get_index_at_position(idxlist, i, &index);
     printf(format_string, index);
   }
   puts("");

@@ -174,7 +174,7 @@ Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist);
  * @param[in] idxlist index list for which the number of indices is required
  * @return            number of indices in the given index list
  */
-Xt_int xt_idxlist_get_num_indices(Xt_idxlist idxlist);
+int xt_idxlist_get_num_indices(Xt_idxlist idxlist);
 
 /**
  * gets the indices stored in an index list

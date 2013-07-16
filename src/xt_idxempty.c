@@ -69,7 +69,7 @@ idxempty_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
 static Xt_idxlist
 idxempty_copy(Xt_idxlist idxlist);
 
-static Xt_int
+static int
 idxempty_get_num_indices(Xt_idxlist idxlist);
 
 static void
@@ -199,7 +199,7 @@ idxempty_copy(Xt_idxlist XT_UNUSED(idxlist)) {
    return xt_idxempty_new();
 }
 
-static Xt_int
+static int
 idxempty_get_num_indices(Xt_idxlist XT_UNUSED(idxlist)) {
 
    return 0;

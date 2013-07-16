@@ -79,7 +79,7 @@ int main(void) {
     xt_idxlist_delete(idxlists[1]);
 
     // test generated collection list
-    check_idxlist(collectionlist, index_list[0], (Xt_int)(2*num_indices));
+    check_idxlist(collectionlist, index_list[0], (int)(2*num_indices));
 
     size_t ref_num_stripes = 8;
     struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
@@ -116,7 +116,7 @@ int main(void) {
 
     // test generated collection list
 
-    check_idxlist(collectionlist, &(index_list[0][0]), (Xt_int)(2*num_indices));
+    check_idxlist(collectionlist, &(index_list[0][0]), (int)(2*num_indices));
 
     // copy the index list
 
@@ -125,7 +125,7 @@ int main(void) {
     // check copy of collection list
 
     check_idxlist(collectionlist_copy, &(index_list[0][0]),
-                  (Xt_int)(2*num_indices));
+                  (int)(2*num_indices));
 
     // check the conversion to stripes
 
@@ -174,7 +174,7 @@ int main(void) {
 
     // test generated collection list
 
-    check_idxlist(collectionlist, &(index_list[0][0]), (Xt_int)(3*num_indices));
+    check_idxlist(collectionlist, &(index_list[0][0]), (int)(3*num_indices));
 
     // test computing of intersection
 
@@ -184,13 +184,13 @@ int main(void) {
 
     intersection = xt_idxlist_get_intersection(ref_idxvec, collectionlist);
 
-    check_idxlist(intersection, sorted_index_list, (Xt_int)(3*num_indices));
+    check_idxlist(intersection, sorted_index_list, (int)(3*num_indices));
 
     xt_idxlist_delete(intersection);
 
     intersection = xt_idxlist_get_intersection(collectionlist, ref_idxvec);
 
-    check_idxlist(intersection, sorted_index_list, (Xt_int)(3*num_indices));
+    check_idxlist(intersection, sorted_index_list, (int)(3*num_indices));
 
     xt_idxlist_delete(intersection);
     xt_idxlist_delete(ref_idxvec);
@@ -231,7 +231,7 @@ int main(void) {
     // test generated collection list
 
     check_idxlist(collectionlist, ref_index_list,
-                  sizeof(ref_index_list)/sizeof(ref_index_list[0]));
+                  (int)(sizeof(ref_index_list)/sizeof(ref_index_list[0])));
 
     xt_idxlist_delete(collectionlist);
   }

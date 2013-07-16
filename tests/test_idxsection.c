@@ -60,7 +60,7 @@
 
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_int num_indices,
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices,
          struct Xt_stripe * ref_stripes, Xt_int ref_num_stripes);
 
 int main(void) {
@@ -511,7 +511,7 @@ int main(void) {
     Xt_idxlist inter_idxlist = xt_idxlist_get_intersection(idxsection, sel_idxlist);
 
     Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
-    Xt_int num_ref_inter_idx =  sizeof(ref_inter_idx) / sizeof(*ref_inter_idx);
+    int num_ref_inter_idx =  (int)(sizeof(ref_inter_idx) / sizeof(*ref_inter_idx));
 
     check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
 
@@ -892,7 +892,7 @@ int main(void) {
 }
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_int num_indices,
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices,
          struct Xt_stripe * ref_stripes, Xt_int ref_num_stripes) {
 
   check_idxlist(idxlist, ref_indices, num_indices);

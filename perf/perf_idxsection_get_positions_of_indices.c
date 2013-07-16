@@ -139,7 +139,7 @@ int main(void) {
         }
         for (j = 0; j < num_samples; ++j)
         {
-          Xt_int numIdx = xt_idxlist_get_num_indices(idxsection[j]);
+          int numIdx = xt_idxlist_get_num_indices(idxsection[j]);
           if ((size_t)numIdx > idxDumpSize)
             idxDump = xrealloc(idxDump,
                                sizeof (idxDump[0])

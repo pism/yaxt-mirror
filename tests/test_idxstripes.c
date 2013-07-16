@@ -57,7 +57,7 @@
 #include "test_idxlist_utils.h"
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_int num_indices);
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices);
 
 int main(void) {
 
@@ -76,7 +76,7 @@ int main(void) {
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
     Xt_int ref_indices[15] = {0,1,2,3,4, 10,11,12,13,14, 20,21,22,23,24};
-    Xt_int ref_num_indices = 15;
+    int ref_num_indices = 15;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
 
@@ -92,7 +92,7 @@ int main(void) {
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
     Xt_int ref_indices[15] = {0,1,2,3,4, 10,12,14,16,18, 20,23,26,29,32};
-    Xt_int ref_num_indices = 15;
+    int ref_num_indices = 15;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
 
@@ -108,7 +108,7 @@ int main(void) {
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
     Xt_int ref_indices[10] = {0,6,12,18,24, 1,4,7,10,13};
-    Xt_int ref_num_indices = 10;
+    int ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
 
@@ -124,7 +124,7 @@ int main(void) {
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
     Xt_int ref_indices[10] = {0,-1,-2,-3,-4, 1,2,3,4,5};
-    Xt_int ref_num_indices = 10;
+    int ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
 
@@ -140,7 +140,7 @@ int main(void) {
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
     Xt_int ref_indices[10] = {9,7,5,3,1, 0,2,4,6,8};
-    Xt_int ref_num_indices = 10;
+    int ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
 
@@ -167,7 +167,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[6] = {1,2,3, 6,7,8};
-    Xt_int ref_num_indices = 6;
+    int ref_num_indices = 6;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -200,7 +200,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[9] = {1,2,3, 6,7, 9, 11,12,13};
-    Xt_int ref_num_indices = 9;
+    int ref_num_indices = 9;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -233,7 +233,7 @@ int main(void) {
     // check intersection
 
     Xt_int *ref_indices = NULL;
-    Xt_int ref_num_indices = 0;
+    int ref_num_indices = 0;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -266,7 +266,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
-    Xt_int ref_num_indices = 10;
+    int ref_num_indices = 10;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -299,7 +299,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[6] = {0,6,8,12,15,22};
-    Xt_int ref_num_indices = 6;
+    int ref_num_indices = 6;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -332,7 +332,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[10] = {0,1,2,3,4,5,6,7,8,9};
-    Xt_int ref_num_indices = 10;
+    int ref_num_indices = 10;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -365,7 +365,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[7] = {3,4,5,6,7,20,21};
-    Xt_int ref_num_indices = 7;
+    int ref_num_indices = 7;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -401,7 +401,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[6] = {5,6,8,9,20,21};
-    Xt_int ref_num_indices = 6;
+    int ref_num_indices = 6;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -435,7 +435,7 @@ int main(void) {
 
     Xt_int ref_indices[2][15] = {{0,1,2,3,4,5,6},
                                  {0,1,1,2,2,2,3,3,3,4,4,4,5,5,6}};
-    Xt_int ref_num_indices[2] = {7,15};
+    int ref_num_indices[2] = {7,15};
 
     do_tests(intersection[0], ref_indices[0], ref_num_indices[0]);
     do_tests(intersection[1], ref_indices[1], ref_num_indices[1]);
@@ -468,7 +468,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[1] = {0};
-    Xt_int ref_num_indices = 0;
+    int ref_num_indices = 0;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -501,7 +501,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[3] = {15,50,85};
-    Xt_int ref_num_indices = 3;
+    int ref_num_indices = 3;
 
     do_tests(intersection[0], ref_indices, ref_num_indices);
     do_tests(intersection[1], ref_indices, ref_num_indices);
@@ -662,7 +662,7 @@ int main(void) {
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
     Xt_int ref_indices[10] = {0,1,2,3,4, 1,2,3,4,5};
-    Xt_int ref_num_indices = 10;
+    int ref_num_indices = 10;
 
     do_tests(idxstripes, ref_indices, ref_num_indices);
 
@@ -733,7 +733,7 @@ int main(void) {
 }
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, Xt_int num_indices) {
+do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 

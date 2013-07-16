@@ -81,7 +81,7 @@ idxstripes_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
 static Xt_idxlist
 idxstripes_copy(Xt_idxlist idxlist);
 
-static Xt_int
+static int
 idxstripes_get_num_indices(Xt_idxlist idxlist);
 
 static void
@@ -182,7 +182,7 @@ struct Xt_idxstripes_ {
   struct Xt_stripe * stripes_sorted;
   int stripes_overlap;
 
-  Xt_int index_num_cache;
+  int index_num_cache;
   Xt_int *index_array_cache;
 };
 
@@ -253,7 +253,7 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_int num_stripes) {
         sign_err++;
       }
       idxstripes->index_num_cache
-        = (Xt_int)(idxstripes->index_num_cache + stripes[i].nstrides);
+        = idxstripes->index_num_cache + (int)stripes[i].nstrides;
     }
     if (sign_err)
       fputs("WARNING: xt_idxstripes_new called with invalid stripes\n", stderr);
@@ -454,7 +454,7 @@ get_stripe_intersection(struct Xt_stripe * stripe_a,
   INSTR_DEF(instr,"get_stripe_intersection");
   INSTR_START(instr);
 
-  Xt_int i;
+  unsigned i;
 
   if (stripe_a->start > stripe_b->start) {
     struct Xt_stripe * temp = stripe_a;
@@ -467,13 +467,13 @@ get_stripe_intersection(struct Xt_stripe * stripe_a,
   Xt_int norm_start = (Xt_int)(stripe_b->start - stripe_a->start);
 
   for (i = 0;
-       i < stripe_lcm / stripe_a->stride;
+       i < (unsigned)(stripe_lcm / stripe_a->stride);
        ++i, norm_start = (Xt_int)(norm_start + stripe_b->stride))
     if (!(norm_start % stripe_a->stride)) break;
 
   struct Xt_stripe intersection;
 
-  if (i == stripe_lcm / stripe_a->stride) {
+  if (i == (unsigned)(stripe_lcm / stripe_a->stride)) {
 
     intersection.start = 0;
     intersection.stride = 0;
@@ -594,7 +594,7 @@ idxstripes_copy(Xt_idxlist idxlist) {
   return xt_idxstripes_new(stripes->stripes, stripes->num_stripes);
 }
 
-static Xt_int
+static int
 idxstripes_get_num_indices(Xt_idxlist idxlist) {   ///< \todo use cached value
 
   Xt_idxstripes stripes;
@@ -604,10 +604,10 @@ idxstripes_get_num_indices(Xt_idxlist idxlist) {   ///< \todo use cached value
   if (stripes->index_num_cache >= 0) return stripes->index_num_cache;
 
   Xt_int i;
-  Xt_int size = 0;
+  int size = 0;
 
   for (i = 0; i < stripes->num_stripes; ++i)
-    size = (Xt_int)(size + stripes->stripes[i].nstrides);
+    size = (int)(size + stripes->stripes[i].nstrides);
 
   stripes->index_num_cache = size;
   return size;
@@ -637,7 +637,7 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
 
   if (idxstripes->index_array_cache) return idxstripes->index_array_cache;
 
-  Xt_int index_num = idxstripes_get_num_indices(idxlist);
+  int index_num = idxstripes_get_num_indices(idxlist);
 
   Xt_int *tmp_index_array
     = xmalloc((size_t)index_num * sizeof( *(idxstripes->index_array_cache) ) );
@@ -743,7 +743,7 @@ idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
   struct Xt_stripe *stripes = idxstripes->stripes;
 
-  int max_pos = (int)idxstripes_get_num_indices(idxlist)-1;
+  int max_pos = idxstripes_get_num_indices(idxlist)-1;
   int seek_pos;
   int sub_pos = 0;
   int stripe_start_pos = 0;

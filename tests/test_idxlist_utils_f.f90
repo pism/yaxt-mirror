@@ -71,21 +71,21 @@ CONTAINS
     INTERFACE
       SUBROUTINE check_idxlist_c(idxlist, ref_indices, ref_num_indices) &
            BIND(c, name='check_idxlist')
-        IMPORT :: xt_int_kind, c_ptr
+        IMPORT :: xt_int_kind, c_ptr, c_int
         IMPLICIT NONE
         TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
         INTEGER(xt_int_kind), INTENT(in) :: ref_indices(*)
-        INTEGER(xt_int_kind), VALUE, INTENT(in) :: ref_num_indices
+        INTEGER(c_int), VALUE, INTENT(in) :: ref_num_indices
       END SUBROUTINE check_idxlist_c
     END INTERFACE
 
     num_ref_indices = SIZE(ref_indices)
     IF (num_ref_indices > 0) THEN
       CALL check_idxlist_c(xt_idxlist_f2c(idxlist), ref_indices, &
-           INT(num_ref_indices, xt_int_kind))
+           INT(num_ref_indices, c_int))
     ELSE
       CALL check_idxlist_c(xt_idxlist_f2c(idxlist), dummy, &
-           0_xt_int_kind)
+           0_c_int)
     END IF
   END SUBROUTINE check_idxlist
 

@@ -72,8 +72,8 @@ int main(void) {
       = {.extract=g_src_idxlist, .subst=g_dst_idxlist, .mask=0};
 
     Xt_int patch_idx[] = {3,4,4,4,7,7,8};
-    Xt_int patch_num = sizeof(patch_idx) / sizeof(patch_idx[0]);
-    Xt_idxlist patch_idxlist = xt_idxvec_new(patch_idx, patch_num);
+    int patch_num = sizeof(patch_idx) / sizeof(patch_idx[0]);
+    Xt_idxlist patch_idxlist = xt_idxvec_new(patch_idx, (Xt_int)patch_num);
 
     // idx:{3,4,4,4,7,7,8} -> pos:{2,3,3,3,6,6,7} => idx:{7,6,6,6,3,3,2}
     Xt_int ref_mpatch_idx[] = {7,6,6,6,3,3,2};
@@ -103,8 +103,8 @@ int main(void) {
       = {.extract=g_src_idxlist, .subst=g_dst_idxlist, .mask=32};
 
     Xt_int patch_idx[] = {0,1,3,3,5,50,100,150};
-    Xt_int patch_num = sizeof(patch_idx) / sizeof(patch_idx[0]);
-    Xt_idxlist patch_idxlist = xt_idxvec_new(patch_idx, patch_num);
+    int patch_num = sizeof(patch_idx) / sizeof(patch_idx[0]);
+    Xt_idxlist patch_idxlist = xt_idxvec_new(patch_idx, (Xt_int)patch_num);
 
     // inter:{1,3,3,5} => extract_pos:{0,2,2,4} => subst_idx:{100,98,98,96},
     // patch_pos:{1,2,3,4} = > mpatch:{0,100,98,98,96,50,100,150}
@@ -153,8 +153,8 @@ int main(void) {
           {.extract=g2_src_idxlist, .subst=g2_dst_idxlist, .mask=2} };
 
     Xt_int patch_idx[] = {6,7,25,8,9,10};
-    Xt_int patch_num = sizeof(patch_idx) / sizeof(patch_idx[0]);
-    Xt_idxlist patch_idxlist = xt_idxvec_new(patch_idx, patch_num);
+    int patch_num = sizeof(patch_idx) / sizeof(patch_idx[0]);
+    Xt_idxlist patch_idxlist = xt_idxvec_new(patch_idx, (Xt_int)patch_num);
     int ref_mstate[] = {1|0, 1|0, 0|0, 1|2, 1|2, 0|2};
     int mstate[patch_num];
     // reset mstate:
