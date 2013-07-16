@@ -110,7 +110,7 @@ int main(void) {
                            local_size[0], local_start[0]),
          xt_idxsection_new(start, num_dimensions, global_size,
                            local_size[1], local_start[1])};
-    unsigned num_idxlists = sizeof(idxlists) / sizeof(idxlists[0]);
+    int num_idxlists = sizeof(idxlists) / sizeof(idxlists[0]);
 
     Xt_idxlist idxcollection
       = xt_idxlist_collection_new(idxlists, num_idxlists);
@@ -119,7 +119,7 @@ int main(void) {
     puts("index list collection example:");
     print_index_list(idxcollection);
 
-    for (unsigned i = 0; i < num_idxlists; ++i)
+    for (int i = 0; i < num_idxlists; ++i)
       xt_idxlist_delete(idxlists[i]);
     xt_idxlist_delete(idxcollection);
   }

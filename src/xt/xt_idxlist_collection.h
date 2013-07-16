@@ -59,7 +59,7 @@
  * @return returns a Xt_idxlist$
  */
 Xt_idxlist
-xt_idxlist_collection_new(Xt_idxlist *idxlists, unsigned num_idxlists);
+xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists);
 
 Xt_idxlist
 xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,

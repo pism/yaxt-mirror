@@ -654,7 +654,7 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
 
   for (int i = 0; i < comm_size; ++i) {
 
-    unsigned num_intersections_per_rank = 0;
+    int num_intersections_per_rank = 0;
     for (unsigned j = 0; j < dist_dir_results->num_entries; ++j)
       num_intersections_per_rank += (dist_dir_results->entries[j].rank == i);
 
@@ -663,7 +663,7 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
       ENSURE_ARRAY_SIZE(intersections, intersections_array_size,
                         num_intersections_per_rank);
 
-      unsigned offset = 0;
+      int offset = 0;
       int j = 0;
 
       while (num_intersections_per_rank != offset) {
