@@ -123,7 +123,7 @@ int main(void) {
     // check the conversion to stripes
 
     struct Xt_stripe * stripes;
-    Xt_int num_stripes;
+    int num_stripes;
 
     xt_idxlist_get_index_stripes(idxempty, &stripes, &num_stripes);
 

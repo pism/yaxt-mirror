@@ -95,15 +95,15 @@ CONTAINS
     INTERFACE
       SUBROUTINE check_stripes_c(stripes, num_stripes, ref_stripes, &
            ref_num_stripes) BIND(c, name='check_stripes')
-        IMPORT :: xt_stripe, xt_int_kind
+        IMPORT :: xt_stripe, c_int
         IMPLICIT NONE
         TYPE(xt_stripe), INTENT(in) :: stripes(*), ref_stripes(*)
-        INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_stripes, ref_num_stripes
+        INTEGER(c_int), VALUE, INTENT(in) :: num_stripes, ref_num_stripes
       END SUBROUTINE check_stripes_c
     END INTERFACE
 
-    CALL check_stripes_c(stripes, INT(SIZE(stripes), xt_int_kind), &
-         ref_stripes, INT(SIZE(ref_stripes), xt_int_kind))
+    CALL check_stripes_c(stripes, INT(SIZE(stripes), c_int), &
+         ref_stripes, INT(SIZE(ref_stripes), c_int))
 
   END SUBROUTINE check_stripes
 

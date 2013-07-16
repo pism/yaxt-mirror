@@ -340,10 +340,10 @@ CONTAINS
     INTERFACE
       SUBROUTINE xt_idxlist_get_index_stripes_c(idxlist, stripes,&
            num_stripes) BIND(c, name='xt_idxlist_get_index_stripes')
-        IMPORT :: c_ptr, xt_int_kind
+        IMPORT :: c_ptr, c_int
         TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
         TYPE(c_ptr), INTENT(out) :: stripes
-        INTEGER(xt_int_kind) :: num_stripes
+        INTEGER(c_int) :: num_stripes
       END SUBROUTINE xt_idxlist_get_index_stripes_c
 
       SUBROUTINE free_c(p) BIND(c, name='free')
@@ -352,11 +352,15 @@ CONTAINS
       END SUBROUTINE free_c
     END INTERFACE
     TYPE(c_ptr) :: stripes_c_ptr
-    INTEGER(xt_int_kind) :: num_stripes
+    INTEGER(c_int) :: num_stripes
     TYPE(xt_stripe), POINTER :: stripes_f_ptr(:)
     INTEGER :: stripes_shape(1)
     CALL xt_idxlist_get_index_stripes_c(xt_idxlist_f2c(idxlist), &
          stripes_c_ptr, num_stripes)
+    IF (num_stripes > HUGE(stripes_shape)) &
+         CALL xt_abort(xt_get_default_comm(), "number of stripes too large", &
+         __FILE__, &
+         __LINE__)
     stripes_shape(1) = INT(num_stripes)
     IF (num_stripes > 0) THEN
       ALLOCATE(stripes(INT(num_stripes)))

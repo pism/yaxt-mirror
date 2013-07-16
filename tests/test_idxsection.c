@@ -61,7 +61,7 @@
 
 static void
 do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices,
-         struct Xt_stripe * ref_stripes, Xt_int ref_num_stripes);
+         struct Xt_stripe * ref_stripes, int ref_num_stripes);
 
 int main(void) {
 
@@ -893,12 +893,12 @@ int main(void) {
 
 static void
 do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices,
-         struct Xt_stripe * ref_stripes, Xt_int ref_num_stripes) {
+         struct Xt_stripe * ref_stripes, int ref_num_stripes) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 
   struct Xt_stripe * stripes;
-  Xt_int num_stripes;
+  int num_stripes;
 
   xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
 

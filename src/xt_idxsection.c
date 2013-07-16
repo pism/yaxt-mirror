@@ -99,7 +99,7 @@ idxsection_get_indices_const(Xt_idxlist idxlist);
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             Xt_int * num_stripes);
+                             int * num_stripes);
 
 static int
 idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
@@ -663,7 +663,7 @@ idxsection_get_indices_const(Xt_idxlist idxlist) {
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
-                             Xt_int * num_stripes) {
+                             int * num_stripes) {
 
   INSTR_DEF(instr,"idxsection_get_index_stripes.part");
 
@@ -681,7 +681,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
                          section->dims[i].local_size);
 
   if (nstripes == 0) {
-    *num_stripes = (Xt_int)nstripes;
+    *num_stripes = (int)nstripes;
     *stripes = NULL;
     return;
   }
@@ -715,7 +715,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
         curr_local_position[j] = 0;
   }
   *stripes = p;
-  *num_stripes = (Xt_int)nstripes;
+  *num_stripes = (int)nstripes;
   free(curr_local_position);
 
   INSTR_STOP(instr);

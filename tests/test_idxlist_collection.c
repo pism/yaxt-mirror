@@ -130,13 +130,13 @@ int main(void) {
     // check the conversion to stripes
 
     struct Xt_stripe * stripes;
-    Xt_int num_stripes;
+    int num_stripes;
 
     xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
 
     struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
                                        {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
-    Xt_int ref_num_stripes = 8;
+    int ref_num_stripes = 8;
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 

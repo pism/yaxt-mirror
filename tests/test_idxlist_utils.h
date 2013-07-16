@@ -53,8 +53,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
                    int ref_num_indices);
 
 void
-check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
-              struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes);
+check_stripes(struct Xt_stripe const * stripes, int num_stripes,
+              struct Xt_stripe const * ref_stripes, int ref_num_stripes);
 
 void
 check_offsets(size_t num_offsets, int offsets_a[num_offsets],

@@ -204,7 +204,7 @@ const Xt_int *xt_idxlist_get_indices_const(Xt_idxlist idxlist);
  */
 void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe **stripes,
-                                  Xt_int *num_stripes);
+                                  int *num_stripes);
 
 /**
  * gets the index stored at the specified position in an index list

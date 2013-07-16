@@ -738,11 +738,11 @@ do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices) {
   check_idxlist(idxlist, ref_indices, num_indices);
 
   struct Xt_stripe * stripes;
-  Xt_int num_stripes;
+  int num_stripes;
   Xt_idxlist temp_idxlist;
 
   xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
-  temp_idxlist = xt_idxvec_from_stripes_new(stripes, num_stripes);
+  temp_idxlist = xt_idxvec_from_stripes_new(stripes, (Xt_int)num_stripes);
 
   check_idxlist(temp_idxlist, ref_indices, num_indices);
 

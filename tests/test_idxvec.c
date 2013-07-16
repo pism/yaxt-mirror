@@ -146,12 +146,12 @@ int main(void) {
     // check the conversion to stripes
 
     struct Xt_stripe * stripes;
-    Xt_int num_stripes;
+    int num_stripes;
 
     xt_idxlist_get_index_stripes(idxvector, &stripes, &num_stripes);
 
     struct Xt_stripe ref_stripes[1] = {{1,7,1}};
-    Xt_int ref_num_stripes = 1;
+    int ref_num_stripes = 1;
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 

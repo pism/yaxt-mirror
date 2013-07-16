@@ -189,7 +189,7 @@ const Xt_int *xt_idxlist_get_indices_const(Xt_idxlist idxlist) {
 
 void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
-                                  Xt_int * num_stripes) {
+                                  int * num_stripes) {
 
   INSTR_DEF(instr_fallback,"xt_idxlist_get_index_stripes.fallback");
 

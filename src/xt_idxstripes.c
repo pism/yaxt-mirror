@@ -92,7 +92,7 @@ idxstripes_get_indices_const(Xt_idxlist idxlist);
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             Xt_int * num_stripes);
+                             int * num_stripes);
 
 static int
 idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
@@ -372,9 +372,9 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 }
 
 void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
-                                      Xt_int num_indices,
+                                      int num_indices,
                                       struct Xt_stripe ** stripes,
-                                      Xt_int * num_stripes) {
+                                      int * num_stripes) {
 
   INSTR_DEF(instr,"xt_idxstripes_convert_to_stripes");
   INSTR_START(instr);
@@ -383,7 +383,7 @@ void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
   size_t temp_stripes_array_size = 0;
   size_t num_temp_stripes = 0;
 
-  Xt_int i, j;
+  int i, j;
 
   i = 0;
   while(i < num_indices) {
@@ -394,17 +394,17 @@ void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
 
     j = 1;
 
-    while ((i + j) < num_indices && indices[i] + j == indices[i + j]) ++j;
+    while ((i + j) < num_indices && indices[i] + (Xt_int)j == indices[i + j]) ++j;
 
     temp_stripes[num_temp_stripes-1].start  = indices[i];
-    temp_stripes[num_temp_stripes-1].nstrides = j;
+    temp_stripes[num_temp_stripes-1].nstrides = (Xt_int)j;
     temp_stripes[num_temp_stripes-1].stride = 1;
 
-    i = (Xt_int)(i + j);
+    i = i + j;
   }
 
   *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
-  *num_stripes = (Xt_int)num_temp_stripes;
+  *num_stripes = (int)num_temp_stripes;
   INSTR_STOP(instr);
 }
 
@@ -651,7 +651,7 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             Xt_int * num_stripes) {
+                             int * num_stripes) {
 
   INSTR_DEF(instr,"idxsection_get_index_stripes");
   INSTR_START(instr);
@@ -695,7 +695,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
   }
 
   *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
-  *num_stripes = (Xt_int)num_temp_stripes;
+  *num_stripes = (int)num_temp_stripes;
 
   INSTR_STOP(instr);
 }
@@ -738,7 +738,6 @@ idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
 
   INSTR_DEF(instr,"idxstripes_get_indices_at_positions");
   INSTR_START(instr);
-
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
   struct Xt_stripe *stripes = idxstripes->stripes;

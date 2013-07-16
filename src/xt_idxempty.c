@@ -80,7 +80,7 @@ idxempty_get_indices_const(Xt_idxlist idxlist);
 
 static void
 idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                           Xt_int * num_stripes);
+                           int * num_stripes);
 
 static int
 idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
@@ -220,7 +220,7 @@ idxempty_get_indices_const(Xt_idxlist XT_UNUSED(idxlist)) {
 static void
 idxempty_get_index_stripes(Xt_idxlist XT_UNUSED(idxlist),
                            struct Xt_stripe **stripes,
-                           Xt_int * num_stripes) {
+                           int * num_stripes) {
 
   *stripes = NULL;
   *num_stripes = 0;

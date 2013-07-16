@@ -77,8 +77,8 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
  * @param[out] num_stripes number of stripes in array "stripes"
  */
 void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
-                                      Xt_int num_indices,
+                                      int num_indices,
                                       struct Xt_stripe ** stripes,
-                                      Xt_int * num_stripes);
+                                      int * num_stripes);
 
 #endif // XT_IDXSTRIPES_H

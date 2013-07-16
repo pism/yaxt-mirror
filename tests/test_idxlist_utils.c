@@ -255,8 +255,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
 }
 
 void
-check_stripes(struct Xt_stripe const * stripes, Xt_int num_stripes,
-                struct Xt_stripe const * ref_stripes, Xt_int ref_num_stripes) {
+check_stripes(struct Xt_stripe const * stripes, int num_stripes,
+              struct Xt_stripe const * ref_stripes, int ref_num_stripes) {
 
   Xt_int i;
 
@@ -348,10 +348,10 @@ check_idxlist_copy(Xt_idxlist idxlist, Xt_idxlist idxlist_copy,
 
   // check the conversion to stripes
   struct Xt_stripe * stripes;
-  Xt_int num_stripes;
+  int num_stripes;
   xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
 
-  check_stripes(stripes, num_stripes, ref_stripes, (Xt_int)num_ref_stripes);
+  check_stripes(stripes, num_stripes, ref_stripes, (int)num_ref_stripes);
   // clean up
   free(stripes);
 }
