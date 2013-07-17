@@ -62,7 +62,7 @@ struct config {
 
    struct {
       int x_len, y_len, z_len;        //local data size
-      Xt_int local_size[3];
+      int local_size[3];
       Xt_int local_start[3];
    } src, dst; //!< source and target decomposion
 };
@@ -215,9 +215,9 @@ void calc_config (struct config *conf, int nprocs){
   conf->dst.x_len = conf->x;
 
   // calculate parameters for source section
-  conf->src.local_size[0] = (Xt_int)conf->z;
-  conf->src.local_size[1] = (Xt_int)conf->src.y_len;
-  conf->src.local_size[2] = (Xt_int)conf->src.x_len;
+  conf->src.local_size[0] = conf->z;
+  conf->src.local_size[1] = conf->src.y_len;
+  conf->src.local_size[2] = conf->src.x_len;
   int src_block_pos_y = rank / src_x_block;
   int src_block_pos_x = rank % src_x_block;
 
@@ -232,9 +232,9 @@ void calc_config (struct config *conf, int nprocs){
                                       + MIN(src_block_pos_x, src_x_bb));
 
   //dst
-  conf->dst.local_size[0] = (Xt_int)conf->dst.z_len;
-  conf->dst.local_size[1] = (Xt_int)conf->dst.y_len;
-  conf->dst.local_size[2] = (Xt_int)conf->x;
+  conf->dst.local_size[0] = conf->dst.z_len;
+  conf->dst.local_size[1] = conf->dst.y_len;
+  conf->dst.local_size[2] = conf->x;
 
   int dst_block_pos_z = rank / dst_y_block;
   int dst_block_pos_y = rank % dst_y_block;
@@ -311,7 +311,7 @@ int main(int argc, char** argv) {
     get_config(&conf, argc, argv, nprocs);
 
     // global param
-    unsigned num_dims = 3;
+    int num_dims = 3;
     Xt_int global_size[3] = {(Xt_int)conf.z, (Xt_int)conf.y, (Xt_int)conf.x};
 
     // -- SOURCE index list by section

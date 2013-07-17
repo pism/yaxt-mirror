@@ -60,7 +60,8 @@ int main()
   Xt_uid a_id;
   if ((a_id = xt_idxlist_get_uid(a)) == xt_idxlist_get_uid(b))
     PUT_ERR("unexpected duplicate ids");
-  Xt_int g_size[3] = { 5, 5, 5 }, l_size[3] = { 2, 2, 2 };
+  Xt_int g_size[3] = { 5, 5, 5 };
+  int l_size[3] = { 2, 2, 2 };
   Xt_int l_start[3] = { 1, 2, 0 };
   Xt_idxlist c = xt_idxsection_new(0, 3, g_size, l_size, l_start);
   if (xt_idxlist_get_uid(a) == xt_idxlist_get_uid(c)

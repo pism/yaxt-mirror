@@ -253,8 +253,8 @@ CONTAINS
   END SUBROUTINE my_abort
 
   SUBROUTINE general_fsection_test
-    INTEGER(xt_int_kind), PARAMETER :: gdx = 10, gdy=5
-    INTEGER(xt_int_kind), PARAMETER :: ldx = 4,  ldy=2
+    INTEGER(xt_int_kind), PARAMETER :: gdx = 10_xt_int_kind, gdy=5_xt_int_kind
+    INTEGER, PARAMETER :: ldx = 4,  ldy=2
     INTEGER(xt_int_kind), PARAMETER :: gstart = 1
     INTEGER(xt_int_kind), PARAMETER :: gsize(2) = (/ gdx, gdy /)
     TYPE(xt_idxlist) :: global_section, local_section
@@ -274,7 +274,7 @@ CONTAINS
     lstart = (/ 1_xt_int_kind, 1_xt_int_kind /)
 
     ! check case: local section == global section
-    global_section = xt_idxfsection_new(gstart, gsize, gsize, lstart)
+    global_section = xt_idxfsection_new(gstart, gsize, INT(gsize), lstart)
     indices = -1
     CALL xt_idxlist_get_indices(global_section, indices)
     p = 0
@@ -301,7 +301,7 @@ CONTAINS
 
     ! check case: i-reverse subsection
     local_section = xt_idxfsection_new(gstart, gsize, &
-         (/ INT(-ldx, xt_int_kind), ldy /), lstart)
+         (/ -ldx, ldy /), lstart)
     indices = -1
     CALL xt_idxlist_get_indices(local_section, indices)
     p = 0
@@ -328,7 +328,7 @@ CONTAINS
 
     ! check case: ij-reverse subsection
     local_section = xt_idxfsection_new(gstart, gsize, &
-         (/ INT(-ldx, xt_int_kind), -ldy /), lstart)
+         (/ -ldx, -ldy /), lstart)
     indices = -1
     CALL xt_idxlist_get_indices(local_section, indices)
     p = 0
@@ -545,10 +545,10 @@ CONTAINS
     TYPE(xt_modifier), INTENT(out) :: mvec(:)
     INTEGER, INTENT(out) :: mvec_num
 
-    INTEGER(xt_int_kind), PARAMETER :: gstart_idx = 1
+    INTEGER(xt_int_kind), PARAMETER :: gstart_idx = 1_xt_int_kind
     INTEGER(xt_int_kind), PARAMETER :: gsize(2) &
          = (/ INT(g_ie, xt_int_kind), INT(g_je, xt_int_kind) /)
-    INTEGER(xt_int_kind) :: ldx, ldy
+    INTEGER :: ldx, ldy
 
     INTEGER(xt_int_kind) :: g_core_is, g_core_ie, g_core_je
     INTEGER(xt_int_kind) :: north_halo, im
@@ -622,7 +622,8 @@ CONTAINS
          (/ ldx, ldy /), (/1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
          (/ ldx, ldy /), &
-         (/g_core_ie-ldx+1_xt_int_kind, north_halo+1_xt_int_kind/))
+         (/ g_core_ie - INT(ldx, xt_int_kind) + 1_xt_int_kind, &
+           north_halo + 1_xt_int_kind/))
     mvec(im)%mask    = 1
 
     im = im + 1_xt_int_kind
@@ -630,7 +631,8 @@ CONTAINS
     mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
          (/ ldx, ldy /), (/g_core_ie+1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
-         (/ ldx, ldy /), (/ldx+1_xt_int_kind, north_halo+1_xt_int_kind/))
+         (/ ldx, ldy /), (/ INT(ldx, xt_int_kind) + 1_xt_int_kind, &
+         &                  north_halo+1_xt_int_kind/))
     mvec(im)%mask    = 1
 
     mvec_num = INT(im)

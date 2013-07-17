@@ -69,9 +69,9 @@
  *          signs do not change the set of selected indices, only their ordering
  *          (see \ref idxsection_docu_neg_size).
  */
-Xt_idxlist xt_idxsection_new(Xt_int start, unsigned num_dimensions,
+Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
                              const Xt_int global_size[num_dimensions],
-                             const Xt_int local_size[num_dimensions],
+                             const int local_size[num_dimensions],
                              const Xt_int local_start[num_dimensions]);
 
 Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,

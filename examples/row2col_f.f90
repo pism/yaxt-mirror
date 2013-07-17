@@ -51,7 +51,7 @@ PROGRAM test_redist_collection
        xt_idxlist, xt_idxfsection_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_delete, xt_redist_s_exchange1
-  USE iso_c_binding, ONLY: c_loc
+  USE iso_c_binding, ONLY: c_loc, c_int
   IMPLICIT NONE
   INTEGER, PARAMETER :: i4 = SELECTED_INT_KIND(9)
   INTEGER, PARAMETER :: i8 = SELECTED_INT_KIND(14)
@@ -95,10 +95,10 @@ PROGRAM test_redist_collection
 
   ! create decomposition descriptors
   src_idxlist = xt_idxfsection_new(0_xt_int_kind, &
-       INT(global_shape, xt_int_kind), INT(row_part_shape, xt_int_kind), &
+       INT(global_shape, xt_int_kind), INT(row_part_shape, c_int), &
        INT(row_part_range(1, :), xt_int_kind))
   tgt_idxlist = xt_idxfsection_new(0_xt_int_kind, &
-       INT(global_shape, xt_int_kind), INT(col_part_shape, xt_int_kind), &
+       INT(global_shape, xt_int_kind), INT(col_part_shape, c_int), &
        INT(col_part_range(1, :), xt_int_kind))
 
   ! generate exchange map

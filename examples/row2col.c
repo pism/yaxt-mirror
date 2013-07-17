@@ -51,10 +51,12 @@
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
-int main(void) {
+enum {
+  global_size_x = 1024,
+  global_size_y = 512,
+};
 
-  int global_size_x = 1024;
-  int global_size_y = 512;
+int main(void) {
 
   // init
 
@@ -71,8 +73,8 @@ int main(void) {
   int local_part_size_x = MIN(part_size_x, global_size_x - part_size_x);
   int local_part_size_y = MIN(part_size_y, global_size_y - part_size_y);
 
-  Xt_int src_array_size[2] = {(Xt_int)local_part_size_y, (Xt_int)global_size_x};
-  Xt_int tgt_array_size[2] = {(Xt_int)global_size_y, (Xt_int)local_part_size_x};
+  int src_array_size[2] = {local_part_size_y, global_size_x};
+  int tgt_array_size[2] = {global_size_y, local_part_size_x};
   Xt_int global_size[2] = {(Xt_int)global_size_y, (Xt_int)global_size_x};
   Xt_int src_local_start[2] = {(Xt_int)(rank * part_size_y), 0};
   Xt_int tgt_local_start[2] = {0, (Xt_int)(rank * part_size_x)};
@@ -80,9 +82,9 @@ int main(void) {
   // define decomposition
 
   Xt_idxlist src_idxlist = xt_idxsection_new(0, 2, global_size, src_array_size,
-src_local_start);
+                                             src_local_start);
   Xt_idxlist tgt_idxlist = xt_idxsection_new(0, 2, global_size, tgt_array_size,
-tgt_local_start);
+                                             tgt_local_start);
 
   // generate exchange map
 

@@ -46,7 +46,7 @@
 !
 PROGRAM test_idxlist_collection_f
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-!  USE iso_c_binding, ONLY: c_int
+  USE iso_c_binding, ONLY: c_int
   USE mpi
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, &
        idxlist_pack_unpack_copy, check_idxlist_copy
@@ -170,8 +170,9 @@ CONTAINS
          index_list(num_indices) = (/ 1_xi, 3_xi, 5_xi, 7_xi, 9_xi, 11_xi /)
     TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 5, 2), &
          xt_stripe(1, 5, 2) /)
-    INTEGER(xt_int_kind), PARAMETER :: global_size(2) = (/ 10_xi, 10_xi /), &
-         local_size(2) = 5, local_start(2) = 2
+    INTEGER(xt_int_kind), PARAMETER :: local_start(2) = 2
+    INTEGER(xt_int_kind), PARAMETER :: global_size(2) = (/ 10_xi, 10_xi /)
+    INTEGER, PARAMETER :: local_size(2) = 5
     INTEGER, PARAMETER :: ref_size = num_indices + stripes(1)%nstrides &
          + stripes(2)%nstrides + local_size(1) * local_size(2)
     INTEGER(xt_int_kind), PARAMETER :: ref_index_list(ref_size) &

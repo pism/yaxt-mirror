@@ -202,7 +202,7 @@ int main(void) {
     Xt_int index_list[] = {1,3,5,7,9,11};
     struct Xt_stripe stripes[] = {{0,5,2},{1,5,2}};
     Xt_int global_size[2] = {10,10};
-    Xt_int local_size[2] = {5,5};
+    int local_size[2] = {5,5};
     Xt_int local_start[2] = {2,2};
 
     Xt_int ref_index_list[] = {1,3,5,7,9,11,

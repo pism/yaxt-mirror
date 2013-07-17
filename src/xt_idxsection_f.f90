@@ -67,7 +67,8 @@ MODULE xt_idxsection
       INTEGER(xt_int_kind), VALUE, INTENT(in) :: start
       INTEGER(c_int), VALUE, INTENT(in) :: num_dimensions
       INTEGER(xt_int_kind), INTENT(in) :: global_size(num_dimensions), &
-           local_size(num_dimensions), local_start(num_dimensions)
+           local_start(num_dimensions)
+      INTEGER(c_int), INTENT(in) :: local_size(num_dimensions)
       TYPE(c_ptr) :: idxsection
     END FUNCTION xt_idxsection_new_c
   END INTERFACE
@@ -76,8 +77,8 @@ CONTAINS
 
   FUNCTION xt_idxsection_new_a(start, global_size, local_size, local_start) &
        RESULT(idxsection)
-    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_size(:), &
-         local_start(:)
+    INTEGER(xt_int_kind), INTENT(in) :: start, local_start(:), global_size(:)
+    INTEGER, INTENT(in) :: local_size(:)
     TYPE(xt_idxlist) :: idxsection
     INTEGER :: num_dimensions
     num_dimensions = SIZE(global_size)
@@ -88,26 +89,28 @@ CONTAINS
          __LINE__)
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, local_size, local_start))
+         &                   global_size, INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_a
 
   FUNCTION xt_idxsection_new_i2(start, num_dimensions, global_size, &
        local_size, local_start) RESULT(idxsection)
     INTEGER(i2), INTENT(in) :: num_dimensions
     INTEGER(xt_int_kind), INTENT(in) :: start, global_size(num_dimensions), &
-         local_size(num_dimensions), local_start(num_dimensions)
+         local_start(num_dimensions)
+    INTEGER, INTENT(in) :: local_size(num_dimensions)
     TYPE(xt_idxlist) :: idxsection
 
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, local_size, local_start))
+         &                   global_size, INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_i2
 
   FUNCTION xt_idxsection_new_i4(start, num_dimensions, global_size, &
        local_size, local_start) RESULT(idxsection)
     INTEGER(i4), INTENT(in) :: num_dimensions
     INTEGER(xt_int_kind), INTENT(in) :: start, global_size(num_dimensions), &
-         local_size(num_dimensions), local_start(num_dimensions)
+         local_start(num_dimensions)
+    INTEGER, INTENT(in) :: local_size(num_dimensions)
     TYPE(xt_idxlist) :: idxsection
     INTEGER(c_int), PARAMETER :: dummy = 1
 
@@ -117,14 +120,15 @@ CONTAINS
          __LINE__)
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, local_size, local_start))
+         &                   global_size, INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_i4
 
   FUNCTION xt_idxsection_new_i8(start, num_dimensions, global_size, &
        local_size, local_start) RESULT(idxsection)
     INTEGER(i8), INTENT(in) :: num_dimensions
     INTEGER(xt_int_kind), INTENT(in) :: start, global_size(num_dimensions), &
-         local_size(num_dimensions), local_start(num_dimensions)
+         local_start(num_dimensions)
+    INTEGER, INTENT(in) :: local_size(num_dimensions)
     TYPE(xt_idxlist) :: idxsection
     INTEGER(c_int), PARAMETER :: dummy = 1
 
@@ -134,7 +138,7 @@ CONTAINS
          __LINE__)
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, local_size, local_start))
+         &                   global_size, INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_i8
 
   !> Fortran style version of \ref xt_idxsection_new. Compared to xt_idxsection_new, here
@@ -148,8 +152,8 @@ CONTAINS
   !! @param[in] local_start vector holding the coordinates of the section start; lowest coodinate is ONE for each dimension
   FUNCTION xt_idxfsection_new(start, global_size, local_size, local_start) &
        RESULT(idxfsection)
-    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_size(:), &
-         local_start(:)
+    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_start(:)
+    INTEGER, INTENT(in) :: local_size(:)
     TYPE(xt_idxlist) :: idxfsection
 
     INTEGER :: idim, ndim

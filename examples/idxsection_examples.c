@@ -56,9 +56,9 @@ int main(void) {
       Xt_idxlist idxsection;
 
       Xt_int start = 0;
-      unsigned num_dimensions = 2;
+      int num_dimensions = 2;
       Xt_int global_size[4][2] = {{5,10},{5,-10},{-5,10},{-5,-10}};
-      Xt_int local_size [4][2] = {{3,4},{3,-4},{-3,4},{-3,-4}};
+      int local_size [4][2] = {{3,4},{3,-4},{-3,4},{-3,-4}};
       Xt_int local_start[2] = {1,2};
 
       // create index section
@@ -85,9 +85,9 @@ int main(void) {
     Xt_idxlist idxsection;
 
     Xt_int start = 0;
-    unsigned num_dimensions = 3;
+    int num_dimensions = 3;
     Xt_int global_size[3] = {5,5,2};
-    Xt_int local_size [3] = {3,4,1};
+    int local_size [3] = {3,4,1};
     Xt_int local_start[3] = {2,0,1};
 
     // create index section
@@ -112,9 +112,9 @@ int main(void) {
     Xt_idxlist idxsection;
 
     Xt_int start = 0;
-    unsigned num_dimensions = 4;
+    int num_dimensions = 4;
     Xt_int global_size[4] = {3,2,5,2};
-    Xt_int local_size [4] = {3,1,4,1};
+    int local_size [4] = {3,1,4,1};
     Xt_int local_start[4] = {0,1,1,0};
 
     // create index section

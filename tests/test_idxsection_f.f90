@@ -94,9 +94,9 @@ CONTAINS
     INTEGER(xt_int_kind), PARAMETER :: start = 0_xi
     INTEGER, PARAMETER :: num_dimensions = 1
     INTEGER(xt_int_kind), PARAMETER :: global_size(num_dimensions) = 10_xi, &
-         local_size(num_dimensions) = 5_xi, &
          local_start(num_dimensions) = 3_xi, &
          ref_indices(5) = (/ 3_xi, 4_xi, 5_xi, 6_xi, 7_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = 5
     TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = xt_stripe(3, 5, 1)
     TYPE(xt_idxlist) :: idxsection
 
@@ -115,9 +115,9 @@ CONTAINS
     INTEGER, PARAMETER :: num_dimensions = 2
     INTEGER(xt_int_kind), PARAMETER :: global_size(num_dimensions) &
          = (/ 5_xi, 6_xi /), &
-         local_size(num_dimensions) = (/ 3_xi, 2_xi /), &
          local_start(num_dimensions) = (/ 1_xi, 2_xi /), &
          ref_indices(6) = (/ 8_xi, 9_xi, 14_xi, 15_xi, 20_xi, 21_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 3, 2 /)
     TYPE(xt_stripe), PARAMETER :: ref_stripes(3) = (/ xt_stripe(8, 2, 1), &
          xt_stripe(14, 2, 1), xt_stripe(20, 2, 1) /)
     TYPE(xt_idxlist) :: idxsection
@@ -136,10 +136,10 @@ CONTAINS
     INTEGER(xt_int_kind), PARAMETER :: start = 0_xi
     INTEGER, PARAMETER :: num_dimensions = 3
     INTEGER(xt_int_kind), PARAMETER :: global_size(num_dimensions) = 4_xi, &
-         local_size(num_dimensions) = (/ 4_xi, 2_xi, 2_xi /), &
          local_start(num_dimensions) = (/ 0_xi, 1_xi, 1_xi /), &
          ref_indices(16) = (/ 5_xi, 6_xi, 9_xi, 10_xi, 21_xi, 22_xi, 25_xi, &
          26_xi, 37_xi, 38_xi, 41_xi, 42_xi, 53_xi, 54_xi, 57_xi, 58_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 4, 2, 2 /)
     TYPE(xt_stripe), PARAMETER :: ref_stripes(8) = (/ xt_stripe(5, 2, 1), &
          xt_stripe(9, 2, 1), xt_stripe(21, 2, 1), xt_stripe(25, 2, 1), &
          xt_stripe(37, 2, 1), xt_stripe(41, 2, 1), xt_stripe(53, 2, 1), &
@@ -162,8 +162,8 @@ CONTAINS
     INTEGER(xt_int_kind) :: i, j, k, l
     INTEGER(xt_int_kind), PARAMETER :: global_size(num_dimensions) &
          = (/ 3_xi, 4_xi, 4_xi, 3_xi /), &
-         local_size(num_dimensions) = (/ 2_xi, 3_xi, 3_xi, 2_xi /), &
-         local_start(num_dimensions) = (/ 0_xi, 1_xi, 1_xi, 1_xi /), &
+         local_start(num_dimensions) &
+         = (/ 0_xi, 1_xi, 1_xi, 1_xi /), &
 #ifdef __xlC__
          ref_indices(36) = &
               (/ 16_xi,17_xi,19_xi,20_xi,22_xi,23_xi, &
@@ -177,6 +177,7 @@ CONTAINS
          = (/ ((((16_xi + i + j*3_xi + k*12_xi + l*48_xi, &
          &        i=0_xi,1_xi), j=0_xi,2_xi), k=0_xi,2_xi), l=0_xi,1_xi) /)
 #endif
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 2, 3, 3, 2 /)
     TYPE(xt_stripe), PARAMETER :: ref_stripes(18) &
          = (/ (((xt_stripe(16_xi + j*3_xi + k*12_xi + l*48_xi, 2, 1), &
          &       j = 0_xi,2_xi), k=0_xi,2_xi), l=0_xi,1_xi) /)
@@ -198,10 +199,10 @@ CONTAINS
     INTEGER(xt_int_kind) :: i, j
     INTEGER(xt_int_kind), PARAMETER :: global_size(num_dimensions) &
          = (/ 5_xi, 10_xi /), &
-         local_size(num_dimensions) = (/ 3_xi, 4_xi /), &
          local_start(num_dimensions) = (/ 1_xi, 2_xi /), &
          ref_indices(12) &
          = (/ ((12_xi + i + j*10_xi, i=0_xi,3_xi), j=0_xi,2_xi) /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 3, 4 /)
     TYPE(xt_idxlist) :: idxsection
 
     ! create index section
@@ -218,8 +219,8 @@ CONTAINS
        start_b, global_size_b, local_size_b, local_start_b, &
        ref_indices, ref_stripes)
     INTEGER(xt_int_kind), INTENT(in) :: start_a, start_b, global_size_a(:), &
-         global_size_b(:), local_size_a(:), local_size_b(:), local_start_a(:), &
-         local_start_b(:), ref_indices(:)
+         global_size_b(:), local_start_a(:), local_start_b(:), ref_indices(:)
+    INTEGER, INTENT(in) :: local_size_a(:), local_size_b(:)
     TYPE(xt_stripe), INTENT(in) :: ref_stripes(:)
     TYPE(xt_idxlist) :: idxsection(2), intersection
     idxsection(1) = xt_idxsection_new(start_a, global_size_a, local_size_a, &
@@ -236,9 +237,9 @@ CONTAINS
   SUBROUTINE test_1d_intersection1
     INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
          global_size_a(1) = 10_xi, global_size_b(1) = 15_xi, &
-         local_size_a(1) = 5_xi, local_size_b(1) = 6_xi, &
          local_start_a(1) = 4_xi, local_start_b(1) = 7_xi, &
          ref_indices(2) = (/ 7_xi, 8_xi /)
+    INTEGER, PARAMETER :: local_size_a(1) = 5, local_size_b(1) = 6
     TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(7, 2, 1) /)
     CALL test_intersection(&
          start, global_size_a, local_size_a, local_start_a, &
@@ -247,11 +248,10 @@ CONTAINS
   END SUBROUTINE test_1d_intersection1
 
   SUBROUTINE test_1d_intersection2
-    INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
-         global_size_a(1) = 10_xi, global_size_b(1) = 10_xi, &
-         local_size_a(1) = 1_xi, local_size_b(1) = 5_xi, &
-         local_start_a(1) = 3_xi, local_start_b(1) = 4_xi, &
-         ref_indices(1) = (/ -1_xi /)
+    INTEGER(xt_int_kind), PARAMETER :: start=0_xi, global_size_a(1) = 10_xi, &
+         global_size_b(1) = 10_xi, local_start_a(1) = 3_xi, &
+         local_start_b(1) = 4_xi, ref_indices(1) = (/ -1_xi /)
+    INTEGER, PARAMETER :: local_size_a(1) = 1, local_size_b(1) = 5
     TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(-1, -1, -1) /)
     CALL test_intersection(&
          start, global_size_a, local_size_a, local_start_a, &
@@ -263,9 +263,9 @@ CONTAINS
     INTEGER, PARAMETER :: n = 2
     INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
          global_size_a(n) = 6_xi, global_size_b(n) = 6_xi, &
-         local_size_a(n) = (/ 4_xi, 2_xi /), local_size_b(n) = 3_xi, &
          local_start_a(n) = 1_xi, local_start_b(n) = (/ 3_xi, 2_xi /), &
          ref_indices(2) = (/ 20_xi, 26_xi /)
+    INTEGER, PARAMETER :: local_size_a(n) = (/ 4, 2 /), local_size_b(n) = 3
     TYPE(xt_stripe), PARAMETER :: ref_stripes(2) = (/ xt_stripe(20, 1, 1), &
          xt_stripe(26, 1, 1) /)
     CALL test_intersection(&
@@ -277,9 +277,9 @@ CONTAINS
   SUBROUTINE test_2d_1
     INTEGER, PARAMETER :: n = 2
     INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
-         global_size(n) = 4_xi, local_size(n) = 2_xi, &
-         local_start(n) = (/ 0_xi, 2_xi /), &
+         global_size(n) = 4, local_start(n) = (/ 0_xi, 2_xi /), &
          ref_indices(4) = (/ 2_xi, 3_xi, 6_xi, 7_xi /)
+    INTEGER, PARAMETER :: local_size(n) = 2
     TYPE(xt_idxlist) :: idxsection
     idxsection = xt_idxsection_new(start, n, global_size, local_size, &
          local_start)
@@ -290,9 +290,9 @@ CONTAINS
   SUBROUTINE test_2d_2
     INTEGER, PARAMETER :: n = 2
     INTEGER(xt_int_kind), PARAMETER :: start=1_xi, &
-         global_size(n) = 4_xi, local_size(n) = 2_xi, &
-         local_start(n) = (/ 0_xi, 2_xi /), &
+         global_size(n) = 4_xi, local_start(n) = (/ 0_xi, 2_xi /), &
          ref_indices(4) = (/ 3_xi, 4_xi, 7_xi, 8_xi /)
+    INTEGER, PARAMETER :: local_size(n) = 2
     TYPE(xt_idxlist) :: idxsection
     idxsection = xt_idxsection_new(start, n, global_size, local_size, &
          local_start)
@@ -303,8 +303,8 @@ CONTAINS
   SUBROUTINE test_get_positions1
     INTEGER, PARAMETER :: n = 2, num_selection = 6
     INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
-         global_size(n) = 4_xi, local_size(n) = 2_xi, &
-         local_start(n) = (/ 0_xi, 2_xi /)
+         global_size(n) = 4_xi, local_start(n) = (/ 0_xi, 2_xi /)
+    INTEGER, PARAMETER :: local_size(n) = 2
     INTEGER(xt_int_kind), PARAMETER :: selection(num_selection) &
          = (/ 1_xi, 2_xi, 5_xi, 6_xi, 7_xi, 8_xi /)
     INTEGER, PARAMETER :: ref_positions(num_selection) &
@@ -331,8 +331,8 @@ CONTAINS
   SUBROUTINE test_get_positions2
     INTEGER, PARAMETER :: n = 2, num_selection = 9
     INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
-         global_size(n) = 4_xi, local_size(n) = 2_xi, &
-         local_start(n) = (/ 0_xi, 2_xi /)
+         global_size(n) = 4_xi, local_start(n) = (/ 0_xi, 2_xi /)
+    INTEGER, PARAMETER :: local_size(n) = 2
     INTEGER(xt_int_kind), PARAMETER :: selection(num_selection) &
          = (/ 2_xi, 1_xi, 5_xi, 7_xi, 6_xi, 7_xi, 7_xi, 6_xi, 8_xi /)
     INTEGER, PARAMETER :: ref_positions(num_selection) &
@@ -370,11 +370,11 @@ CONTAINS
   SUBROUTINE test_other_intersection
     INTEGER, PARAMETER :: n = 2, num_sel_idx = 9
     INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
-         global_size(n) = 4_xi, local_size(n) = 2_xi, &
-         local_start(n) = (/ 0_xi, 2_xi /), &
+         global_size(n) = 4_xi, local_start(n) = (/ 0_xi, 2_xi /), &
          sel_idx(num_sel_idx) &
          = (/ 2_xi, 1_xi, 5_xi, 7_xi, 6_xi, 7_xi, 7_xi, 6_xi, 8_xi /), &
          ref_inter_idx(6) = (/ 2_xi, 6_xi, 6_xi, 7_xi, 7_xi, 7_xi /)
+    INTEGER, PARAMETER :: local_size(n) = 2
     TYPE(xt_idxlist) :: idxsection, sel_idxlist, inter_idxlist
 
     idxsection = xt_idxsection_new(start, n, global_size, local_size, &
@@ -395,9 +395,6 @@ CONTAINS
     INTEGER(xt_int_kind), PARAMETER :: start = 0, &
          global_size(n, 4) = RESHAPE( &
          (/ 5_xi, 10_xi, 5_xi,-10_xi, -5_xi, 10_xi, -5_xi, -10_xi /), &
-         (/ n, 4 /) ), &
-         local_size(n, 4) = RESHAPE( &
-         (/ 3_xi, 4_xi, 3_xi, -4_xi, -3_xi, 4_xi, -3_xi, -4_xi /), &
          (/ n, 4 /) ), &
          local_start(2) = (/ 1_xi, 2_xi /), &
          ref_indices(12, 16) = RESHAPE( &
@@ -433,6 +430,8 @@ CONTAINS
          &  36_xi, 35_xi, 34_xi, &
          &  14_xi, 15_xi, 16_xi, 17_xi, 24_xi, 25_xi, 26_xi, 27_xi, 34_xi, &
          &  35_xi, 36_xi, 37_xi /), (/ 12, 16 /) )
+    INTEGER, PARAMETER :: local_size(n, 4) = RESHAPE( &
+         (/ 3, 4, 3, -4, -3, 4, -3, -4 /), (/ n, 4 /) )
     ! iterate through all sign combinations of -/+ for local and global
     ! and for x and y, giving 2^2^2 combinations
     DO i = 0, 15
@@ -458,9 +457,6 @@ CONTAINS
          global_size(n, 4) = RESHAPE( &
          (/ 5_xi, 6_xi, 5_xi,-6_xi, -5_xi, 6_xi, -5_xi, -6_xi /), &
          (/ n, 4 /) ), &
-         local_size(n, 4) = RESHAPE( &
-         (/ 2_xi, 3_xi, 2_xi, -3_xi, -2_xi, 3_xi, -2_xi, -3_xi /), &
-         (/ n, 4 /) ), &
          local_start(2) = (/ 1_xi, 2_xi /), &
          ref_indices(6, 16) = RESHAPE( &
          (/  8_xi,  9_xi, 10_xi, 14_xi, 15_xi, 16_xi, &
@@ -479,6 +475,9 @@ CONTAINS
          &  19_xi, 20_xi, 21_xi, 13_xi, 14_xi, 15_xi, &
          &  15_xi, 14_xi, 13_xi, 21_xi, 20_xi, 19_xi, &
          &  13_xi, 14_xi, 15_xi, 19_xi, 20_xi, 21_xi /), (/ 6, 16 /) )
+    ! iterate through all sign combinations of -/+ for local and global
+    INTEGER, PARAMETER :: local_size(n, 4) = RESHAPE( &
+         (/ 2, 3, 2, -3, -2, 3, -2, -3 /), (/ n, 4 /) )
     ! iterate through all sign combinations of -/+ for local and global
     ! and for x and y, giving 2^2^2 combinations
     DO i = 0, 15
@@ -500,9 +499,6 @@ CONTAINS
     INTEGER(xt_int_kind), PARAMETER :: start = 0, &
          global_size(n, 4) = RESHAPE( &
          (/ 5_xi, 10_xi, 5_xi,-10_xi, -5_xi, 10_xi, -5_xi, -10_xi /), &
-         (/ n, 4 /) ), &
-         local_size(n, 4) = RESHAPE( &
-         (/ 3_xi, 4_xi, 3_xi, -4_xi, -3_xi, 4_xi, -3_xi, -4_xi /), &
          (/ n, 4 /) ), &
          local_start(2) = (/ 1_xi, 2_xi /), &
          indices(12, 16) = RESHAPE( &
@@ -538,6 +534,8 @@ CONTAINS
          &  36_xi, 35_xi, 34_xi, &
          &  14_xi, 15_xi, 16_xi, 17_xi, 24_xi, 25_xi, 26_xi, 27_xi, 34_xi, &
          &  35_xi, 36_xi, 37_xi /), (/ 12, 16 /) )
+    INTEGER, PARAMETER :: local_size(n, 4) = RESHAPE( &
+         (/ 3, 4, 3, -4, -3, 4, -3, -4 /), (/ n, 4 /) )
     INTEGER :: i, j
     TYPE(xt_idxlist) :: idxsection_a, idxsection_b, &
          idxvec_a, idxvec_b, idxsection_intersection, &
@@ -586,7 +584,6 @@ CONTAINS
 
     INTEGER(xt_int_kind), PARAMETER :: start = 0, &
          global_size(n) = (/ -5_xi, 6_xi /), &
-         local_size(n) = (/ -2_xi, -3_xi /), &
          local_start(n) = (/ 1_xi, 2_xi /), &
          ref_indices(6) = (/ 16_xi, 15_xi, 14_xi, 22_xi, 21_xi, 20_xi /), &
          indices(num_pos) = &
@@ -597,6 +594,7 @@ CONTAINS
          &  18_xi, 19_xi, 20_xi, 20_xi, 21_xi, &
          &  22_xi, 23_xi, 24_xi, 25_xi, 26_xi, &
          &  27_xi, 28_xi, 29_xi, 30_xi /)
+    INTEGER, PARAMETER :: local_size(n) = (/ -2, -3 /)
     INTEGER, PARAMETER :: ref_positions(num_pos) = &
          (/ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          &  -1, -1, -1, -1, -1,  2,  1, -1,  0, -1, &
@@ -630,8 +628,9 @@ CONTAINS
 
   SUBROUTINE test_section_with_stride(start, global_size, local_size, &
        local_start, ref_indices)
-    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_size(:), &
+    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), &
          local_start(:), ref_indices(:)
+    INTEGER, INTENT(in) :: local_size(:)
     TYPE(xt_idxlist) :: idxsection
     idxsection = xt_idxsection_new(start, SIZE(global_size), global_size, &
          local_size, local_start)
@@ -643,12 +642,12 @@ CONTAINS
     INTEGER, PARAMETER :: num_dimensions = 3
     INTEGER(xt_int_kind), PARAMETER :: start = 0_xi, &
          global_size(num_dimensions) = (/ 5_xi, 5_xi, 2_xi /), &
-         local_size(num_dimensions) = (/ 3_xi, 4_xi, 1_xi /), &
          local_start(num_dimensions) = (/ 2_xi, 0_xi, 1_xi /), &
          ref_indices(12) = &
          (/ 21_xi, 23_xi, 25_xi, 27_xi, &
          &  31_xi, 33_xi, 35_xi, 37_xi, &
          &  41_xi, 43_xi, 45_xi, 47_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 3, 4, 1 /)
     CALL test_section_with_stride(start, global_size, local_size, local_start, &
          ref_indices)
   END SUBROUTINE test_section_with_stride1
@@ -657,20 +656,21 @@ CONTAINS
     INTEGER, PARAMETER :: num_dimensions = 4
     INTEGER(xt_int_kind), PARAMETER :: start = 0_xi, &
          global_size(num_dimensions) = (/ 3_xi, 2_xi, 5_xi, 2_xi /), &
-         local_size(num_dimensions) = (/ 3_xi, 1_xi, 4_xi, 1_xi /), &
          local_start(num_dimensions) = (/ 0_xi, 1_xi, 1_xi, 0_xi /), &
          ref_indices(12) = &
          (/ 12_xi, 14_xi, 16_xi, 18_xi, &
          &  32_xi, 34_xi, 36_xi, 38_xi, &
          &  52_xi, 54_xi, 56_xi, 58_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 3, 1, 4, 1 /)
     CALL test_section_with_stride(start, global_size, local_size, local_start, &
          ref_indices)
   END SUBROUTINE test_section_with_stride2
 
   SUBROUTINE check_bb(start, global_size, local_size, &
        local_start, bb_start, global_bb_size, ref_bb)
-    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_size(:), &
-         local_start(:), bb_start, global_bb_size(:)
+    INTEGER(xt_int_kind), INTENT(in) :: start, global_size(:), local_start(:), &
+         bb_start, global_bb_size(:)
+    INTEGER, INTENT(in) :: local_size(:)
     TYPE(xt_bounds), INTENT(in) :: ref_bb(:)
     TYPE(xt_idxlist) :: idxsection
     TYPE(xt_bounds) :: bounds(SIZE(global_bb_size))
@@ -688,32 +688,32 @@ CONTAINS
     INTEGER, PARAMETER :: num_dimensions = 3
     INTEGER(xt_int_kind), PARAMETER :: start = 0_xi, &
          global_size(num_dimensions) = 4_xi, &
-         local_size(num_dimensions) = 0_xi, &
          local_start(num_dimensions) = (/ 2_xi, 0_xi, 1_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = 0
     TYPE(xt_bounds), PARAMETER :: ref_bb(num_dimensions) = xt_bounds(0, 0)
     CALL check_bb(start, global_size, local_size, local_start, start, &
-         global_size, ref_bb)
+         INT(global_size, xt_int_kind), ref_bb)
   END SUBROUTINE test_bb1
 
   SUBROUTINE test_bb2
     INTEGER, PARAMETER :: num_dimensions = 3
     INTEGER(xt_int_kind), PARAMETER :: start = 1_xi, &
          global_size(num_dimensions) = (/ 5_xi, 4_xi, 3_xi /), &
-         local_size(num_dimensions) = 2_xi, &
          local_start(num_dimensions) = (/ 2_xi, 2_xi, 1_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = 2
     TYPE(xt_bounds), PARAMETER :: ref_bb(num_dimensions) = &
          (/ xt_bounds(2, 2), xt_bounds(2, 2), xt_bounds(1, 2) /)
     CALL check_bb(start, global_size, local_size, local_start, start, &
-         global_size, ref_bb)
+         INT(global_size, xt_int_kind), ref_bb)
   END SUBROUTINE test_bb2
 
   SUBROUTINE test_bb3
     INTEGER, PARAMETER :: num_dimensions = 4, bb_ndim = 3
     INTEGER(xt_int_kind), PARAMETER :: start = 1_xi, &
          global_size(num_dimensions) = (/ 5_xi, 2_xi, 2_xi, 3_xi /), &
-         local_size(num_dimensions) = (/ 2_xi, 2_xi, 1_xi, 2_xi /), &
          local_start(num_dimensions) = (/ 2_xi, 0_xi, 1_xi, 1_xi /), &
          global_bb_size(bb_ndim) = (/ 5_xi, 4_xi, 3_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 2, 2, 1, 2 /)
     TYPE(xt_bounds), PARAMETER :: ref_bb(bb_ndim) = &
          (/ xt_bounds(2, 2), xt_bounds(1, 3), xt_bounds(1, 2) /)
     CALL check_bb(start, global_size, local_size, local_start, start, &

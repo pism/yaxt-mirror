@@ -81,9 +81,9 @@ int main(void) {
   {
     //! [index section example]
     Xt_int start = 0;
-    unsigned num_dimensions = 2;
+    int num_dimensions = 2;
     Xt_int global_size[2] = {5,10};
-    Xt_int local_size[2] = {3,4};
+    int local_size[2] = {3,4};
     Xt_int local_start[2] = {2,3};
 
     Xt_idxlist idxsection
@@ -100,9 +100,9 @@ int main(void) {
   {
     //! [index list collection example]
     Xt_int start = 0;
-    unsigned num_dimensions = 2;
+    int num_dimensions = 2;
     Xt_int global_size[2] = {5,10};
-    Xt_int local_size[2][2] = {{2,2},{3,4}};
+    int local_size[2][2] = {{2,2},{3,4}};
     Xt_int local_start[2][2] = {{0,0},{2,6}};
 
     Xt_idxlist idxlists[]
@@ -137,9 +137,9 @@ int main(void) {
   {
     //![index list modifier example]
     Xt_int start = 0;
-    unsigned num_dimensions = 2;
+    int num_dimensions = 2;
     Xt_int global_size[2] = {5,10};
-    Xt_int local_size[2] = {3,3};
+    int local_size[2] = {3,3};
     Xt_int local_start[2] = {2,0};
 
     Xt_idxlist source_list = xt_idxsection_new(start, num_dimensions,

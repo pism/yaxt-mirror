@@ -75,7 +75,7 @@ int main(void) {
         Xt_int start = 0;
         assert(size * size < XT_INT_MAX);
         Xt_int global_size[2] = {(Xt_int)(2*size), (Xt_int)(size*size)};
-        Xt_int local_size[2] = {(Xt_int)size,(Xt_int)size};
+        int local_size[2] = {size,size};
         Xt_int local_start[2][2]
           = {{0,(Xt_int)(rank*size)},
              {(Xt_int)size, (Xt_int)(size*size-(rank+1)*size)}};

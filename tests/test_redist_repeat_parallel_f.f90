@@ -101,14 +101,14 @@ CONTAINS
     TYPE(xt_idxlist) :: indices_a_(2)
     INTEGER :: i
     INTEGER(xt_int_kind), PARAMETER :: start = 0
-    INTEGER(xt_int_kind) :: global_size(2), local_size(2), &
-         local_start(2, 2)
+    INTEGER(xt_int_kind) :: global_size(2), local_start(2, 2)
+    INTEGER :: local_size(2)
 
     TYPE(xt_stripe) :: stripe
 
     global_size(1) = INT(2 * size, xi)
     global_size(2) = INT(size**2, xi)
-    local_size = INT(size, xi)
+    local_size = size
     local_start = RESHAPE((/ 0_xi, INT(rank*size, xi), INT(size, xi), &
          INT(size*size-(rank+1)*size, xi) /), (/ 2, 2 /))
 

@@ -65,16 +65,16 @@ int main(void) {
   Xt_int global_size[3][5] = {{4, 64, 16, 256, 512},
                               {4, 16, 32, 128, 256},
                               {4, 8, 16, 64, 128}};
-  Xt_int local_size [3][5] = {{4, 1, 16, 128, 512},
-                              {4, 1, 32, 64, 256},
-                              {4, 1, 16, 32, 128}};
+  int local_size [3][5] = {{4, 1, 16, 128, 512},
+                           {4, 1, 32, 64, 256},
+                           {4, 1, 16, 32, 128}};
 
   for (int test_id = 0; test_id < 3; ++test_id) {
 
     { // test with cached indices
 
       Xt_int start = 0;
-      unsigned num_dimension = 3;
+      int num_dimension = 3;
       Xt_int local_start[] = {0,0,0};
       Xt_idxlist idxsection = xt_idxsection_new(start, num_dimension,
                                                 global_size[test_id] + 2,
@@ -98,7 +98,7 @@ int main(void) {
     { // test without cached indices
 
       Xt_int start = 0;
-      unsigned num_dimension = 3;
+      int num_dimension = 3;
       Xt_int local_start[] = {0,0,0};
 
       for (single_match_only = 0; single_match_only < 2;  ++single_match_only) {
@@ -120,7 +120,7 @@ int main(void) {
         }
       }
     }
-    for (unsigned num_dimension = 3; num_dimension < 6; num_dimension += 2)
+    for (int num_dimension = 3; num_dimension < 6; num_dimension += 2)
       { // test index enumeration without cached indices
 
       Xt_int local_start[] = {0,0,0,0,0};
