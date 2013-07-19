@@ -419,10 +419,10 @@ compute_intersection_fallback(Xt_idxstripes idxstripes_src,
 
   idxvec_from_stripes_src
     = xt_idxvec_from_stripes_new(idxstripes_src->stripes,
-                                 idxstripes_src->num_stripes);
+                                 (int)idxstripes_src->num_stripes);
   idxvec_from_stripes_dst
     = xt_idxvec_from_stripes_new(idxstripes_dst->stripes,
-                                 idxstripes_dst->num_stripes);
+                                 (int)idxstripes_dst->num_stripes);
 
   Xt_idxlist intersection;
 

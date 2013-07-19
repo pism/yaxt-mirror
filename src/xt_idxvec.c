@@ -231,7 +231,7 @@ decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
 
 static void
 generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
-                                    Xt_int num_stripes,
+                                    int num_stripes,
                                     Xt_idxvec idxvec) {
 
   if (num_stripes == 0) {
@@ -246,7 +246,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   stripe_min = xmalloc((size_t)num_stripes * sizeof(*stripe_min));
   sorted_stripe_min_pos = xmalloc((size_t)num_stripes * sizeof(*sorted_stripe_min_pos));
 
-  Xt_int i, j;
+  int i, j;
 
   for(i = 0; i < num_stripes; ++i)
     if (stripes[i].stride >= 0)
@@ -293,16 +293,13 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   i = 0;
   while (i < num_stripes) {
 
-    int do_overlap;
-
-    do_overlap = overlap_flag[i];
-
-    Xt_int num_selection = 1;
+    int do_overlap = overlap_flag[i];
+    int num_selection = 1;
 
     while(i + num_selection < num_stripes &&
           overlap_flag[i + num_selection] == do_overlap) ++num_selection;
 
-    num_selection = (Xt_int)(num_selection + do_overlap);
+    num_selection += do_overlap;
 
     Xt_int curr_offset = 0;
 
@@ -321,7 +318,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                          idxvec->sorted_vec_positions + offset, 0);
 
     offset = (Xt_int)(offset + curr_offset);
-    i = (Xt_int)(i + num_selection);
+    i = i + num_selection;
   }
 
   free(sorted_pos_prefix_sum);
@@ -332,7 +329,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
 
 Xt_idxlist
 xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
-                           Xt_int num_stripes) {
+                           int num_stripes) {
 
    Xt_idxvec idxvec_data = xmalloc(sizeof (*idxvec_data));
 
@@ -341,13 +338,13 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
    int num_indices = 0;
 
    /* FIXME: guard against overflow here */
-   for (Xt_int i = 0; i < num_stripes; ++i)
+   for (int i = 0; i < num_stripes; ++i)
      num_indices = num_indices + (int)stripes[i].nstrides;
 
    Xt_int *indices = xmalloc((size_t)num_indices * sizeof(*indices));
 
    Xt_int k = -1;
-   for (Xt_int i = 0; i < num_stripes; ++i)
+   for (int i = 0; i < num_stripes; ++i)
       for (Xt_int j = 0; j < stripes[i].nstrides; ++j)
         indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
 

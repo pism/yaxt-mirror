@@ -49,7 +49,7 @@ MODULE xt_idxvec
   USE xt_core, ONLY: i2, i4, i8, xt_int_kind, xt_abort, xt_stripe, &
        xt_get_default_comm
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_int
   IMPLICIT NONE
   PRIVATE
   INTERFACE xt_idxvec_new
@@ -104,10 +104,10 @@ MODULE xt_idxvec
 
     FUNCTION xt_idxvec_from_stripes_new_c(stripes, num_stripes) &
          BIND(C, name='xt_idxvec_from_stripes_new') RESULT(res_ptr)
-      IMPORT :: xt_stripe, xt_int_kind, c_ptr
+      IMPORT :: xt_stripe, c_int, c_ptr
       IMPLICIT NONE
       TYPE(xt_stripe), INTENT(in) :: stripes(*)
-      INTEGER(xt_int_kind), VALUE, INTENT(in) :: num_stripes
+      INTEGER(c_int), VALUE, INTENT(in) :: num_stripes
       TYPE(c_ptr) :: res_ptr
     END FUNCTION xt_idxvec_from_stripes_new_c
   END INTERFACE
@@ -476,7 +476,7 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
 
     res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(SIZE(stripes), xt_int_kind)))
+         INT(SIZE(stripes), c_int)))
   END FUNCTION xt_idxvec_from_stripes_new_a
 
   FUNCTION xt_idxvec_from_stripes_new_a_i2(stripes, num_stripes) RESULT(res)
@@ -484,33 +484,33 @@ CONTAINS
     INTEGER(i2), INTENT(in) :: num_stripes
     TYPE(Xt_idxlist) :: res
     res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(num_stripes, xt_int_kind)))
+         INT(num_stripes, c_int)))
   END FUNCTION xt_idxvec_from_stripes_new_a_i2
 
   FUNCTION xt_idxvec_from_stripes_new_a_i4(stripes, num_stripes) RESULT(res)
     TYPE(xt_stripe), INTENT(in) :: stripes(*)
     INTEGER(i4), INTENT(in) :: num_stripes
     TYPE(Xt_idxlist) :: res
-    INTEGER(xt_int_kind), PARAMETER :: dummy = 1_xt_int_kind
-    IF (i4 /= xt_int_kind .AND. num_stripes > HUGE(dummy)) &
+    INTEGER(c_int), PARAMETER :: dummy = 1_c_int
+    IF (i4 /= c_int .AND. num_stripes > HUGE(dummy)) &
          CALL xt_abort(xt_get_default_comm(), "too many stripes", &
          __FILE__, &
          __LINE__)
     res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(num_stripes, xt_int_kind)))
+         INT(num_stripes, c_int)))
   END FUNCTION xt_idxvec_from_stripes_new_a_i4
 
   FUNCTION xt_idxvec_from_stripes_new_a_i8(stripes, num_stripes) RESULT(res)
     TYPE(xt_stripe), INTENT(in) :: stripes(*)
     INTEGER(i8), INTENT(in) :: num_stripes
     TYPE(Xt_idxlist) :: res
-    INTEGER(xt_int_kind), PARAMETER :: dummy = 1_xt_int_kind
-    IF (i8 /= xt_int_kind .AND. num_stripes > HUGE(dummy)) &
+    INTEGER(c_int), PARAMETER :: dummy = 1_c_int
+    IF (i8 /= c_int .AND. num_stripes > HUGE(dummy)) &
          CALL xt_abort(xt_get_default_comm(), "too many stripes", &
          __FILE__, &
          __LINE__)
     res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(num_stripes, xt_int_kind)))
+         INT(num_stripes, c_int)))
   END FUNCTION xt_idxvec_from_stripes_new_a_i8
 
 END MODULE xt_idxvec
