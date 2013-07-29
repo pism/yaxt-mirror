@@ -130,7 +130,7 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
         workpatch_idx[p] = subst_idx[i];
       }
     }
-    workpatch_idxlist = xt_idxvec_new(workpatch_idx, (Xt_int)patch_size);
+    workpatch_idxlist = xt_idxvec_new(workpatch_idx, patch_size);
 
     xt_idxlist_delete(intersection_idxlist);
   }

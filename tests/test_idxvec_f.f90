@@ -347,7 +347,7 @@ CONTAINS
     TYPE(xt_idxlist) :: idxvec
     CHARACTER(80) :: msg
     num_pos = SIZE(pos)
-    idxvec = xt_idxvec_new(indices, INT(SIZE(indices), xt_int_kind))
+    idxvec = xt_idxvec_new(indices, SIZE(indices))
     ref_undef_count = 0
     DO i = 1, num_pos
       IF (xt_idxlist_get_index_at_position(idxvec, pos(i), ref_sel_idx(i))) &
@@ -412,7 +412,7 @@ CONTAINS
     INTEGER, PARAMETER :: ref_positions(3) = (/ -1, 1, -1 /)
     TYPE(xt_idxlist) :: idxvec
 
-    idxvec = xt_idxvec_new(indices, INT(SIZE(indices), xt_int_kind))
+    idxvec = xt_idxvec_new(indices, SIZE(indices))
     IF (.NOT. xt_idxlist_get_position_of_index(idxvec, 1_xt_int_kind, &
          position)) &
          CALL test_abort('xt_idxlist_get_position_of_index did not return &
@@ -465,7 +465,7 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    idxvec = xt_idxvec_new(indices, INT(SIZE(indices), xt_int_kind))
+    idxvec = xt_idxvec_new(indices, SIZE(indices))
 
     bounds = xt_idxlist_get_bounding_box(idxvec, global_size, &
          global_start_index)
@@ -520,7 +520,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(out) :: idxlist
     INTEGER(xt_int_kind), INTENT(in) :: index_vector(:)
 
-    idxlist = xt_idxvec_new(index_vector, INT(SIZE(index_vector), xt_int_kind))
+    idxlist = xt_idxvec_new(index_vector, SIZE(index_vector))
     CALL check_idxlist(idxlist, index_vector)
   END SUBROUTINE setup_idxvec
 

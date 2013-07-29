@@ -48,7 +48,7 @@
 MODULE test_redist_common
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
-       xt_xmap, xt_xmap_all2all_new, xi => xt_int_kind
+       xt_xmap, xt_xmap_all2all_new
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: build_odd_selection_xmap
@@ -56,23 +56,23 @@ CONTAINS
   ! build xmap for destination list containing all odd elements of
   ! source list dimensioned 1 to src_slice_len
   FUNCTION build_odd_selection_xmap(src_slice_len) RESULT(xmap)
-    INTEGER(xt_int_kind), INTENT(in) :: src_slice_len
+    INTEGER, INTENT(in) :: src_slice_len
     TYPE(xt_xmap) :: xmap
-    INTEGER(xt_int_kind) :: i, j, dst_slice_len
-    INTEGER(xt_int_kind), PARAMETER :: dst_step = 2_xi
+    INTEGER :: i, j, dst_slice_len
+    INTEGER, PARAMETER :: dst_step = 2
     INTEGER(xt_int_kind), ALLOCATABLE :: index_list(:)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
 
-    dst_slice_len = (src_slice_len + dst_step - 1_xi)/dst_step
+    dst_slice_len = (src_slice_len + dst_step - 1)/dst_step
     ALLOCATE(index_list(src_slice_len))
-    DO i = 1_xi, src_slice_len
-      index_list(i) = i
+    DO i = 1, src_slice_len
+      index_list(i) = INT(i, xt_int_kind)
     END DO
     src_idxlist = xt_idxvec_new(index_list)
-    j = 1_xi
-    DO i = 1_xi, src_slice_len, dst_step
-      index_list(j) = i
-      j = j + 1_xi
+    j = 1
+    DO i = 1, src_slice_len, dst_step
+      index_list(j) = INT(i, xt_int_kind)
+      j = j + 1
     END DO
     dst_idxlist = xt_idxvec_new(index_list, dst_slice_len)
     DEALLOCATE(index_list)

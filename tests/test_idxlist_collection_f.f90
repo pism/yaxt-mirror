@@ -46,7 +46,6 @@
 !
 PROGRAM test_idxlist_collection_f
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE iso_c_binding, ONLY: c_int
   USE mpi
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, &
        idxlist_pack_unpack_copy, check_idxlist_copy
@@ -84,8 +83,8 @@ CONTAINS
     TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
     TYPE(xt_stripe), PARAMETER :: ref_stripes(2) = xt_stripe(1, 7, 1)
 
-    idxlists(1) = xt_idxvec_new(index_list(:, 1), INT(num_indices, xt_int_kind))
-    idxlists(2) = xt_idxvec_new(index_list(:, 2), INT(num_indices, xt_int_kind))
+    idxlists(1) = xt_idxvec_new(index_list(:, 1), num_indices)
+    idxlists(2) = xt_idxvec_new(index_list(:, 2), num_indices)
     collectionlist = xt_idxlist_collection_new(idxlists)
     CALL xt_idxlist_delete(idxlists(2))
     CALL xt_idxlist_delete(idxlists(1))
@@ -110,8 +109,8 @@ CONTAINS
          = (/ xt_stripe(1, 7, 1), xt_stripe(7, 1, 1), xt_stripe(6, 1, 1), &
          &    xt_stripe(5, 1, 1), xt_stripe(4, 1, 1), xt_stripe(3, 1, 1), &
          &    xt_stripe(2, 1, 1), xt_stripe(1, 1, 1) /)
-    idxlists(1) = xt_idxvec_new(index_list(:, 1), INT(num_indices, xt_int_kind))
-    idxlists(2) = xt_idxvec_new(index_list(:, 2), INT(num_indices, xt_int_kind))
+    idxlists(1) = xt_idxvec_new(index_list(:, 1), num_indices)
+    idxlists(2) = xt_idxvec_new(index_list(:, 2), num_indices)
     collectionlist = xt_idxlist_collection_new(idxlists)
     CALL xt_idxlist_delete(idxlists(2))
     CALL xt_idxlist_delete(idxlists(1))
@@ -141,8 +140,7 @@ CONTAINS
     INTEGER :: i
 
     DO i = 1, 3
-      idxlists(i) = xt_idxvec_new(index_list(:, i), &
-           INT(num_indices, xt_int_kind))
+      idxlists(i) = xt_idxvec_new(index_list(:, i), num_indices)
     END DO
     collectionlist = xt_idxlist_collection_new(idxlists)
     DO i = 1, 3
@@ -151,7 +149,7 @@ CONTAINS
     CALL check_idxlist(collectionlist, &
          RESHAPE(index_list, (/ SIZE(index_list) /)))
     ref_idxvec = xt_idxvec_new(RESHAPE(index_list, (/ SIZE(index_list) /)), &
-         INT(SIZE(index_list), xt_int_kind))
+         SIZE(index_list))
     intersection = xt_idxlist_get_intersection(ref_idxvec, collectionlist)
     CALL check_idxlist(intersection, sorted_index_list)
     CALL xt_idxlist_delete(intersection)
@@ -186,8 +184,8 @@ CONTAINS
 
     TYPE(xt_idxlist) :: idxlists(3), collectionlist
 
-    idxlists(1) = xt_idxvec_new(index_list, INT(SIZE(index_list), xt_int_kind))
-    idxlists(2) = xt_idxstripes_new(stripes, INT(SIZE(stripes), xt_int_kind))
+    idxlists(1) = xt_idxvec_new(index_list, SIZE(index_list))
+    idxlists(2) = xt_idxstripes_new(stripes, SIZE(stripes))
     idxlists(3) = xt_idxsection_new(0_xt_int_kind, global_size, local_size, &
          local_start)
 
@@ -237,10 +235,8 @@ CONTAINS
     TYPE(xt_bounds) :: bounds_ref(ndim) = (/ xt_bounds(2, 2), &
          xt_bounds(2, 2), xt_bounds(1, 2) /)
 
-    idxlists(1) = xt_idxvec_new(indices(:, 1), &
-         INT(SIZE(indices, 1), xt_int_kind))
-    idxlists(2) = xt_idxvec_new(indices(:, 2), &
-         INT(SIZE(indices, 1), xt_int_kind))
+    idxlists(1) = xt_idxvec_new(indices(:, 1), SIZE(indices, 1))
+    idxlists(2) = xt_idxvec_new(indices(:, 2), SIZE(indices, 1))
     collectionlist = xt_idxlist_collection_new(idxlists)
     CALL xt_idxlist_delete(idxlists(2))
     CALL xt_idxlist_delete(idxlists(1))

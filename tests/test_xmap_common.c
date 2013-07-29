@@ -33,8 +33,8 @@ xt_xmap_self_test_main(xmap_constructor new_xmap)
 }
 
 static void
-test_xmap(const Xt_int *src_index_list, Xt_int num_src_indices,
-          const Xt_int *dst_index_list, Xt_int num_dst_indices,
+test_xmap(const Xt_int *src_index_list, int num_src_indices,
+          const Xt_int *dst_index_list, int num_dst_indices,
           xmap_constructor new_xmap)
 {
   Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, num_src_indices);
@@ -86,8 +86,8 @@ test_xmap1(xmap_constructor new_xmap)
     = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
   shift_idx(dst_index_list, num_dst_indices, 7);
 
-  test_xmap(src_index_list, (Xt_int)num_src_indices, dst_index_list,
-            (Xt_int)num_dst_indices, new_xmap);
+  test_xmap(src_index_list, num_src_indices, dst_index_list,
+            num_dst_indices, new_xmap);
 }
 
 static void
@@ -105,7 +105,7 @@ test_xmap2(xmap_constructor new_xmap)
     = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
   shift_idx(dst_index_list, num_dst_indices, 100);
 
-  test_xmap(src_index_list, (Xt_int)num_src_indices,
-            dst_index_list, (Xt_int)num_dst_indices,
+  test_xmap(src_index_list, num_src_indices,
+            dst_index_list, num_dst_indices,
             new_xmap);
 }

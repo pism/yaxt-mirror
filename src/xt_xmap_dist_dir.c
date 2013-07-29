@@ -157,14 +157,14 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
     for (int i = 0; i < comm_size; ++i) {
 
       Xt_int start = (Xt_int)(0 + i * local_interval);
-      Xt_int num_stripes = 0;
+      int num_stripes = 0;
 
       while (start > local_index_range_lbound)
         start = (Xt_int)(start - global_interval), num_stripes++;
 
       if (local_index_range_ubound > 0)
         num_stripes
-          = (Xt_int)(num_stripes
+          = (int)(num_stripes
                      + ((local_index_range_ubound - start + global_interval)
                         / global_interval));
       else
@@ -172,7 +172,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
 
       ENSURE_ARRAY_SIZE(stripes, stripes_array_size, (size_t)num_stripes);
 
-      for (Xt_int j = 0; j < num_stripes; ++j) {
+      for (int j = 0; j < num_stripes; ++j) {
 
         stripes[j].start = (Xt_int)(start + j * global_interval);
         stripes[j].stride = 1;
@@ -682,7 +682,7 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
       xt_idxlist_get_index_stripes(temp, &stripes, &num_stripes);
       xt_idxlist_delete(temp);
       qsort(stripes, (size_t)num_stripes, sizeof (*stripes), stripe_cmp);
-      p[num_src_ix].list = xt_idxstripes_new(stripes, (Xt_int)num_stripes);
+      p[num_src_ix].list = xt_idxstripes_new(stripes, num_stripes);
       free(stripes);
       p[num_src_ix].rank = i;
       ++num_src_ix;

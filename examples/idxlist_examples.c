@@ -53,7 +53,7 @@ int main(void) {
   {
     //! [index list example]
     Xt_int indices[] = {0,3,32,26,44,14,48};
-    Xt_int num_indices = sizeof(indices)/sizeof(indices[0]);
+    int num_indices = sizeof(indices)/sizeof(indices[0]);
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     //! [index list example]
@@ -67,7 +67,7 @@ int main(void) {
   {
     //! [index stripes example]
     struct Xt_stripe stripes[] = {{.start = 0, .nstrides = 17, .stride = 3}};
-    Xt_int num_stripes = sizeof(stripes)/sizeof(stripes[0]);
+    int num_stripes = sizeof(stripes)/sizeof(stripes[0]);
 
     Xt_idxlist idxstripes = xt_idxstripes_new(stripes, num_stripes);
     //! [index stripes example]

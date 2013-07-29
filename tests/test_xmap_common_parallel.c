@@ -60,7 +60,7 @@ test_xmap_allgather_analog(xmap_constructor xmap_new)
 
   Xt_idxlist dst_idxlist;
 
-  dst_idxlist = xt_idxvec_new(dst_index_list, (Xt_int)(comm_size));
+  dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
 
   // test of exchange map
   Xt_xmap xmap;

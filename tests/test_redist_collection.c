@@ -57,7 +57,7 @@ static int
 test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 
 static Xt_xmap
-build_odd_selection_xmap(Xt_int src_num_indices);
+build_odd_selection_xmap(int src_num_indices);
 
 
 int main(void) {
@@ -201,7 +201,7 @@ enum {
  * source list dimensioned 1 to src_slice_len
  */
 static Xt_xmap
-build_odd_selection_xmap(Xt_int src_num_indices)
+build_odd_selection_xmap(int src_num_indices)
 {
   if (src_num_indices < 0)
     PUT_ERR("error: src_num_indices < 0");
@@ -210,9 +210,9 @@ build_odd_selection_xmap(Xt_int src_num_indices)
   for (Xt_int i = 0; i < src_num_indices; ++i)
     index_list[i] = (Xt_int)(i + 1);
   Xt_idxlist src_idxlist = xt_idxvec_new(index_list, src_num_indices);
-  Xt_int dst_num_indices
-    = (Xt_int)((src_num_indices + selection_stride - 1) / selection_stride);
-  for (Xt_int i = 0; i < dst_num_indices; ++i)
+  int dst_num_indices
+    = (int)((src_num_indices + selection_stride - 1) / selection_stride);
+  for (int i = 0; i < dst_num_indices; ++i)
     index_list[i] = (Xt_int)(i * selection_stride + 1);
   Xt_idxlist dst_idxlist = xt_idxvec_new(index_list, dst_num_indices);
   free(index_list);

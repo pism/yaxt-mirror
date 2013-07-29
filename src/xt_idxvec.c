@@ -162,7 +162,7 @@ struct Xt_idxvec_ {
 };
 
 
-Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, Xt_int num_indices) {
+Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   INSTR_DEF(t_idxvec_new,"xt_idxvec_new");
   INSTR_START(t_idxvec_new);
   if (num_indices == 0)
@@ -181,7 +181,7 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, Xt_int num_indices) {
   } else {
     die("number of indices passed to xt_idxvec_new must not be negative!");
   }
-  idxvec_data->num_indices = (int)num_indices;
+  idxvec_data->num_indices = num_indices;
   idxvec_data->sorted_vector = NULL;
   idxvec_data->sorted_vec_positions = NULL;
 
@@ -521,7 +521,7 @@ idxvec_copy(Xt_idxlist idxlist) {
 
    Xt_idxvec idxvec_data = (Xt_idxvec)idxlist;
 
-   return xt_idxvec_new(idxvec_data->vector, (Xt_int)idxvec_data->num_indices);
+   return xt_idxvec_new(idxvec_data->vector, idxvec_data->num_indices);
 }
 
 static int

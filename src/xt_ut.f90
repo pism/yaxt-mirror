@@ -118,14 +118,13 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    INTEGER(C_INT) FUNCTION xt_ut_init_decomposition_1d(idx_vec, idx_vec_n, &
-         domain_size) BIND(C, name='xt_ut_init_decomposition_1d')
+    INTEGER(C_INT) FUNCTION xt_ut_init_decomposition_1d(idx_vec, idx_vec_n) &
+         BIND(C, name='xt_ut_init_decomposition_1d')
       IMPORT:: C_INT
       IMPORT:: xt_int_kind
       IMPLICIT NONE
       INTEGER(xt_int_kind), DIMENSION(*), INTENT(in) :: idx_vec
-      INTEGER(xt_int_kind), VALUE, INTENT(in) :: idx_vec_n
-      INTEGER(xt_int_kind), VALUE, INTENT(in) :: domain_size
+      INTEGER(c_int), VALUE, INTENT(in) :: idx_vec_n
     END FUNCTION xt_ut_init_decomposition_1d
   END INTERFACE
 
@@ -232,12 +231,27 @@ CONTAINS
   END SUBROUTINE ut_init
 
   SUBROUTINE ut_init_decomposition_1d(myindex, global_size, handle)
-    INTEGER(xt_int_kind), INTENT(in)  :: myindex(:)
-    INTEGER(xt_int_kind), INTENT(in)  :: global_size
+    INTEGER, INTENT(in)  :: myindex(:)
+    INTEGER, INTENT(in)  :: global_size
     INTEGER, INTENT(out) :: handle
 
-    handle = xt_ut_init_decomposition_1d(idx_vec=myindex, &
-         idx_vec_n=INT(SIZE(myindex), xt_int_kind), domain_size=global_size)
+    IF (HUGE(1_xt_int_kind) < HUGE(myindex)) THEN
+      IF (ANY(myindex > HUGE(1_xt_int_kind)) &
+           .OR. ANY(myindex < -HUGE(1_xt_int_kind))) &
+           CALL ut_abort('ut_init_decomposition_1d: &
+           &index value not supported', &
+           __FILE__, &
+           __LINE__)
+    END IF
+    IF (HUGE(SIZE(myindex)) > HUGE(1_c_int)) THEN
+      IF (SIZE(myindex) > HUGE(1_c_int)) &
+           CALL ut_abort('ut_init_decomposition_1: &
+           &array size unsupported', &
+           __FILE__, &
+           __LINE__)
+    END IF
+    handle = xt_ut_init_decomposition_1d(idx_vec=INT(myindex, xt_int_kind), &
+         idx_vec_n=INT(SIZE(myindex), c_int))
 
   END SUBROUTINE ut_init_decomposition_1d
 

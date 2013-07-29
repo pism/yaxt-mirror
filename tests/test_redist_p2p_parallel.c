@@ -80,16 +80,16 @@ int main(void) {
     enum { dataSize = 10 };
     // source index list
     Xt_int src_index_list[dataSize];
-    Xt_int src_num_indices = dataSize;
-    for (Xt_int i = 0; i < src_num_indices; ++i)
+    int src_num_indices = dataSize;
+    for (int i = 0; i < src_num_indices; ++i)
       src_index_list[i] = (Xt_int)(rank * dataSize + i);
 
     Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     // destination index list
     Xt_int dst_index_list[dataSize];
-    Xt_int dst_num_indices = dataSize;
-    for (Xt_int i = 0; i < dst_num_indices; ++i)
+    int dst_num_indices = dataSize;
+    for (int i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = (Xt_int)((rank * dataSize + i + 2)
                                    % (size * dataSize));
 
@@ -139,15 +139,14 @@ int main(void) {
   // test nonuniform numbers of send and receive partners
 
   {
-    Xt_int i;
+    int i;
     // source index list
     Xt_int src_index_list[size];
-    Xt_int src_num_indices = 0;
+    int src_num_indices = 0;
 
-    assert(size <= XT_INT_MAX);
-    if (rank == 0) src_num_indices = (Xt_int)(size);
+    if (rank == 0) src_num_indices = size;
     for (i = 0; i < src_num_indices; ++i)
-      src_index_list[i] = i;
+      src_index_list[i] = (Xt_int)i;
 
     Xt_idxlist src_idxlist;
 
@@ -155,9 +154,9 @@ int main(void) {
 
     // destination index list
     Xt_int dst_index_list[size];
-    Xt_int dst_num_indices = (Xt_int)size;
+    int dst_num_indices = size;
     for (i = 0; i < dst_num_indices; ++i)
-      dst_index_list[i] = i;
+      dst_index_list[i] = (Xt_int)i;
 
     Xt_idxlist dst_idxlist;
 
@@ -245,8 +244,8 @@ int main(void) {
       ivecb[i]= (Xt_int)(gdomb[ig]);
     }
 
-    Xt_idxlist idxlist_a = xt_idxvec_new(iveca, (Xt_int)nwin);
-    Xt_idxlist idxlist_b = xt_idxvec_new(ivecb, (Xt_int)nwin);
+    Xt_idxlist idxlist_a = xt_idxvec_new(iveca, nwin);
+    Xt_idxlist idxlist_b = xt_idxvec_new(ivecb, nwin);
 
     Xt_xmap xmap = xt_xmap_all2all_new(idxlist_a, idxlist_b, MPI_COMM_WORLD);
 

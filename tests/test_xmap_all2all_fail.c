@@ -79,7 +79,7 @@ int main(void) {
 
       Xt_idxlist src_idxlist;
 
-      src_idxlist = xt_idxvec_new(src_index_list, (Xt_int)src_num_indices);
+      src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
       // destination index list
       Xt_int dst_index_list[] = {8,7,6,5,4,3,2};
@@ -89,7 +89,7 @@ int main(void) {
 
       Xt_idxlist dst_idxlist;
 
-      dst_idxlist = xt_idxvec_new(dst_index_list, (Xt_int)dst_num_indices);
+      dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
       // test of exchange map
       // NOTE: this should fail

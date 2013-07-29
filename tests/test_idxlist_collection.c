@@ -68,7 +68,7 @@ int main(void) {
   { // test packing and unpacking of collection index lists
 
     Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-    Xt_int num_indices = 7;
+    int num_indices = 7;
 
     // create two index lists
     Xt_idxlist idxlists[2] = { xt_idxvec_new(index_list[0], num_indices),
@@ -96,7 +96,7 @@ int main(void) {
   { // test copying of collection index lists
 
     Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-    Xt_int num_indices = 7;
+    int num_indices = 7;
 
     Xt_idxlist idxlists[2];
 
@@ -152,7 +152,7 @@ int main(void) {
 
     Xt_int index_list[3][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1},{2,6,1,4,7,3,0}};
     Xt_int sorted_index_list[21] = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
-    Xt_int num_indices = 7;
+    int num_indices = 7;
 
     Xt_idxlist idxlists[3];
 
@@ -180,7 +180,7 @@ int main(void) {
 
     Xt_idxlist intersection, ref_idxvec;
 
-    ref_idxvec = xt_idxvec_new(&(index_list[0][0]), (Xt_int)(3*num_indices));
+    ref_idxvec = xt_idxvec_new(&(index_list[0][0]), 3*num_indices);
 
     intersection = xt_idxlist_get_intersection(ref_idxvec, collectionlist);
 
@@ -269,7 +269,7 @@ int main(void) {
   {
     // check get_bounding_box
     Xt_int indices[2][3] = {{45,35,32},{32,48,33}};
-    Xt_int num_indices = 3;
+    int num_indices = 3;
 
     Xt_idxlist idxlists[2];
 

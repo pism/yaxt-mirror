@@ -504,7 +504,7 @@ int main(void) {
 
     // we have indices = {2,3,6,7}
     Xt_int sel_idx[] = {2,1,5,7,6,7,7,6,8};
-    Xt_int num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx);
+    int num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx);
 
     Xt_idxlist sel_idxlist = xt_idxvec_new(sel_idx, num_sel_idx);
 

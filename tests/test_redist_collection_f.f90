@@ -77,8 +77,7 @@ CONTAINS
     ! set up data
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_coll
-    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi, &
-         dst_slice_len = 3_xi
+    INTEGER, PARAMETER :: src_slice_len = 5, dst_slice_len = 3
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len) &
          = (/ 1.0d0, 3.0d0, 5.0d0 /)
     DOUBLE PRECISION, TARGET :: &
@@ -163,7 +162,7 @@ CONTAINS
     ! displacements -> test of cache) (with default cache size)
     ! set up data
     INTEGER, PARAMETER :: num_slice = 3
-    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi
+    INTEGER, PARAMETER :: src_slice_len = 5
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redists(num_slice), redist_coll
 
@@ -198,14 +197,14 @@ CONTAINS
     INTEGER(xt_int_kind) :: i, j
     INTEGER, PARAMETER :: cache_size = 16
     INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
-    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi
-    INTEGER(xt_int_kind), PARAMETER :: dst_slice_len &
+    INTEGER, PARAMETER :: src_slice_len = 5
+    INTEGER, PARAMETER :: dst_slice_len &
          = (src_slice_len + dst_step - 1)/dst_step
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redists(num_slice), redist_coll
     DOUBLE PRECISION, TARGET, SAVE :: src_data(src_slice_len, num_slice) &
          = RESHAPE((/ (DBLE(i), i = 1_xi, src_slice_len*num_slice) /), &
-         (/ src_slice_len, num_slice /))
+         (/ INT(src_slice_len, xt_int_kind), num_slice /))
     DOUBLE PRECISION, TARGET :: dst_data(dst_slice_len, num_slice)
     DOUBLE PRECISION, TARGET, ALLOCATABLE :: src_data_(:), dst_data_(:)
     TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
@@ -213,7 +212,7 @@ CONTAINS
          RESHAPE((/ ((DBLE(i + j * src_slice_len), &
          &            i = 1_xi, src_slice_len, dst_step), &
          &           j = 0_xi, num_slice - 1_xi) /), &
-         &       (/ dst_slice_len, num_slice /))
+         &       (/ INT(dst_slice_len, xt_int_kind), num_slice /))
     INTEGER :: k
 
     xmap = build_odd_selection_xmap(src_slice_len)

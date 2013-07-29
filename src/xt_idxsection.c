@@ -459,7 +459,7 @@ idxsection_get_intersection_with_other_idxlist(Xt_idxsection src_idxsection,
   free(pos);
 
   //! \todo use xt_idxvec_pinned_new here to avoid copy
-  Xt_idxlist result = xt_idxvec_new(intersection, (Xt_int)num_inter_idx);
+  Xt_idxlist result = xt_idxvec_new(intersection, num_inter_idx);
 
   free(intersection);
 

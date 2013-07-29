@@ -62,12 +62,12 @@ int main(void) {
   { // general test with one redist
     // set up data
     Xt_int src_index_list[] = {1,2,3,4,5};
-    Xt_int src_num_indices
+    int src_num_indices
       = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_int dst_index_list[] = {1,3,5};
-    Xt_int dst_num_indices
+    int dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
@@ -122,12 +122,12 @@ int main(void) {
   { // test with one redist used three times (two exchanges)
     // set up data
     Xt_int src_index_list[] = {1,2,3,4,5};
-    Xt_int src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    int src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
     Xt_idxlist src_idxlist;
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     Xt_int dst_index_list[] = {1,3,5};
-    Xt_int dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    int dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
     Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     Xt_xmap xmap;

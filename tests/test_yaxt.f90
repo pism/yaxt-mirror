@@ -196,7 +196,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: loc_tpex2(ie,je)
     TYPE(xt_idxlist) :: loc_tpex2_idxlist
 
-    loc_id_idxlist = xt_idxvec_new(loc_id, INT(SIZE(loc_id), xt_int_kind))
+    loc_id_idxlist = xt_idxvec_new(loc_id, SIZE(loc_id))
 
     ! use one simple modifier to define index transfer:
     CALL def_tpex_mod_via_idxvec(m_tpex, m_tpex_num)
@@ -492,16 +492,14 @@ CONTAINS
     INTEGER(xt_int_kind) :: cp_src_idx(g_ie, g_je)
     INTEGER(xt_int_kind) :: cp_dst_idx(g_ie, g_je)
 
-    src_idxlist = xt_idxvec_new(local_src_idx, INT(g_ie, xt_int_kind) &
-         * INT(g_je, xt_int_kind))
+    src_idxlist = xt_idxvec_new(local_src_idx, g_ie * g_je)
     src_num = INT(xt_idxlist_get_num_indices(src_idxlist))
     IF (src_num /= g_ie*g_je) CALL my_abort('unexpected src_num', __LINE__)
     CALL xt_idxlist_get_indices(src_idxlist, cp_src_idx)
     IF (ANY(cp_src_idx /= local_src_idx)) CALL my_abort('idx copy does not match', &
          __LINE__)
 
-    dst_idxlist = xt_idxvec_new(local_dst_idx, INT(g_ie, xt_int_kind) &
-         * INT(g_je, xt_int_kind))
+    dst_idxlist = xt_idxvec_new(local_dst_idx, g_ie * g_je)
     dst_num = INT(xt_idxlist_get_num_indices(dst_idxlist))
     IF (dst_num /= g_ie*g_je) CALL my_abort('unexpected dst_num', __LINE__)
     CALL xt_idxlist_get_indices(dst_idxlist, cp_dst_idx)
@@ -527,12 +525,10 @@ CONTAINS
          __LINE__)
 
     CALL id_map(g_start_indices)
-    g_start_idxlist = xt_idxvec_new(g_start_indices, &
-         INT(SIZE(g_start_indices), xt_int_kind))
+    g_start_idxlist = xt_idxvec_new(g_start_indices, SIZE(g_start_indices))
 
     CALL def_exchange(g_start_indices, g_end_indices)
-    g_end_idxlist = xt_idxvec_new(g_end_indices, &
-         INT(SIZE(g_end_indices), xt_int_kind))
+    g_end_idxlist = xt_idxvec_new(g_end_indices, SIZE(g_end_indices))
 
     mvec(1)%extract = g_start_idxlist
     mvec(1)%subst = g_end_idxlist

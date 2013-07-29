@@ -49,8 +49,7 @@ PROGRAM test_redist_repeatection_static
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
-  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
-       xt_xmap, xt_xmap_delete, &
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange1
   USE test_redist_common, ONLY: build_odd_selection_xmap
@@ -75,8 +74,7 @@ CONTAINS
     ! set up data
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_repeat
-    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi, &
-         dst_slice_len = 3_xi
+    INTEGER, PARAMETER :: src_slice_len = 5, dst_slice_len = 3
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len) &
          = (/ 1.0d0, 3.0d0, 5.0d0 /)
     DOUBLE PRECISION, TARGET :: &
@@ -190,7 +188,7 @@ CONTAINS
     ! displacements -> test of cache) (with default cache size)
     ! set up data
     INTEGER, PARAMETER :: num_slice = 3
-    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi
+    INTEGER, PARAMETER :: src_slice_len = 5
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_repeat
     INTEGER(mpi_address_kind) :: src_extent, dst_extent
@@ -231,7 +229,7 @@ CONTAINS
     ! displacements -> test of cache) (with default cache size)
     ! set up data
     INTEGER, PARAMETER :: num_slice = 3
-    INTEGER(xt_int_kind), PARAMETER :: src_slice_len = 5_xi
+    INTEGER, PARAMETER :: src_slice_len = 5
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_repeat
     INTEGER(mpi_address_kind) :: src_extent, dst_extent

@@ -66,7 +66,7 @@ int main(void) {
   {
     // source index list
     Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    Xt_int src_num_indices
+    int src_num_indices
       = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
     Xt_idxlist src_idxlist;
@@ -75,7 +75,7 @@ int main(void) {
 
     // destination index list
     Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-    Xt_int dst_num_indices
+    int dst_num_indices
       = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
     Xt_idxlist dst_idxlist;
@@ -131,7 +131,7 @@ int main(void) {
     Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
     int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
-    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, (Xt_int)src_num);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
 
     // destination index list
     Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
@@ -139,7 +139,7 @@ int main(void) {
 
     Xt_idxlist dst_idxlist;
 
-    dst_idxlist = xt_idxvec_new(dst_index_list, (Xt_int)dst_num);
+    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
 
     // xmap
     Xt_xmap xmap;
@@ -198,7 +198,7 @@ int main(void) {
     const Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
     int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
 
-    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, (Xt_int)src_num);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
 
     // destination index list
     const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
@@ -206,7 +206,7 @@ int main(void) {
 
     Xt_idxlist dst_idxlist;
 
-    dst_idxlist = xt_idxvec_new(dst_index_list, (Xt_int)dst_num);
+    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
 
     // xmap
     Xt_xmap xmap;

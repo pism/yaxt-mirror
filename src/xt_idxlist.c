@@ -145,8 +145,8 @@ Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
 
       Xt_idxlist idxvec_src, idxvec_dst;
 
-      idxvec_src = xt_idxvec_new(indices_src, (Xt_int)num_indices_src);
-      idxvec_dst = xt_idxvec_new(indices_dst, (Xt_int)num_indices_dst);
+      idxvec_src = xt_idxvec_new(indices_src, num_indices_src);
+      idxvec_dst = xt_idxvec_new(indices_dst, num_indices_dst);
 
       intersection = xt_idxlist_get_intersection(idxvec_src, idxvec_dst);
 
@@ -282,7 +282,7 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
     tmp_indices = xmalloc((size_t)num_tmp_indices * sizeof (tmp_indices[0]));
     xt_idxlist_get_indices(idxlist, tmp_indices);
     Xt_idxlist tmp_idxvec;
-    tmp_idxvec = xt_idxvec_new(tmp_indices, (Xt_int)num_tmp_indices);
+    tmp_idxvec = xt_idxvec_new(tmp_indices, num_tmp_indices);
     int retval
       = tmp_idxvec->vtable->get_positions_of_indices(tmp_idxvec, indices,
                                                      num_indices, positions,

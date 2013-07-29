@@ -61,7 +61,7 @@
  * @param[in] num_stripes number of stripes
  */
 Xt_idxlist
-xt_idxstripes_new(struct Xt_stripe const * stripes, Xt_int num_stripes);
+xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes);
 
 Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm);

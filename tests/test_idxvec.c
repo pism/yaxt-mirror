@@ -75,7 +75,7 @@ int main(void) {
 
     // create an index vector
 
-    idxvector = xt_idxvec_new(index_vector, (Xt_int)num_indices);
+    idxvector = xt_idxvec_new(index_vector, num_indices);
 
     // test the generated index vector
 
@@ -176,7 +176,7 @@ int main(void) {
 
     // create an index vector
 
-    idxvector = xt_idxvec_new(index_vector, (Xt_int)num_indices);
+    idxvector = xt_idxvec_new(index_vector, num_indices);
 
     // test the generated index vector
 
@@ -205,7 +205,7 @@ int main(void) {
 
     // create an index vector
 
-    idxvector = xt_idxvec_new(index_vector, (Xt_int)num_indices);
+    idxvector = xt_idxvec_new(index_vector, num_indices);
 
     // test the generated index vector
 
@@ -230,7 +230,7 @@ int main(void) {
 
     // create an index vector
 
-    idxvector = xt_idxvec_new(index_vector, (Xt_int)index_num);
+    idxvector = xt_idxvec_new(index_vector, (int)index_num);
 
     // get positions:
     int retval;
@@ -265,8 +265,8 @@ int main(void) {
 
     // create index vectors
 
-    idxvector[0] = xt_idxvec_new(index_vector[0], (Xt_int)num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], (Xt_int)num_indices[1]);
+    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
 
     // compute intersection between the two index vectors
 
@@ -300,8 +300,8 @@ int main(void) {
 
     // create index vectors
 
-    idxvector[0] = xt_idxvec_new(index_vector[0], (Xt_int)num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], (Xt_int)num_indices[1]);
+    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
 
     // compute intersection between the two index vectors
 
@@ -335,8 +335,8 @@ int main(void) {
 
     // create index vectors
 
-    idxvector[0] = xt_idxvec_new(index_vector[0], (Xt_int)num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], (Xt_int)num_indices[1]);
+    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
 
     // compute intersection between the two index vectors
 
@@ -370,8 +370,8 @@ int main(void) {
 
     // create index vectors
 
-    idxvector[0] = xt_idxvec_new(index_vector[0], (Xt_int)num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], (Xt_int)num_indices[1]);
+    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
 
     // compute intersection between the two index vectors
 
@@ -405,8 +405,8 @@ int main(void) {
 
     // create index vectors
 
-    idxvector[0] = xt_idxvec_new(index_vector[0], (Xt_int)num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], (Xt_int)num_indices[1]);
+    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
+    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
 
     // compute intersection between the two index vectors
 
@@ -577,7 +577,7 @@ int main(void) {
     const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     int pos[] = {0,2,7,9,11,100,11,200,9,300,7,400,5};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
@@ -608,7 +608,7 @@ int main(void) {
     const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     int pos[] = {0,2,7,9,11,11,9,7,5};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
@@ -639,7 +639,7 @@ int main(void) {
     const Xt_int undef_idx = XT_INT_MIN;
     Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
     int pos[] = {100,102,107,109,1011,1011,109,107,105};
     int num_pos = sizeof(pos) / sizeof(pos[0]);
     Xt_int ref_sel_idx[num_pos];
@@ -670,7 +670,7 @@ int main(void) {
     Xt_int indices[2] = {0,2};
     int num_indices = 2;
 
-    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
     int position;
 
@@ -708,7 +708,7 @@ int main(void) {
     Xt_int indices[2] = {21,42};
     int num_indices = 2;
 
-    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
     unsigned ndim = 3;
     Xt_int global_size[ndim];
@@ -733,7 +733,7 @@ int main(void) {
     Xt_int indices[5] = {45,35,32,48,33};
     int num_indices = 5;
 
-    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
     unsigned ndim = 3;
     Xt_int global_size[ndim];
@@ -761,7 +761,7 @@ int main(void) {
     Xt_int indices[1] = {-1};
     int num_indices = 0;
 
-    Xt_idxlist idxvec = xt_idxvec_new(indices, (Xt_int)num_indices);
+    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
     unsigned ndim = 3;
     Xt_int global_size[ndim];

@@ -71,7 +71,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[3] = {{0,5,1},{10,5,1},{20,5,1}};
-    Xt_int num_stripes = 3;
+    int num_stripes = 3;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
@@ -87,7 +87,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[3] = {{0,5,1},{10,5,2},{20,5,3}};
-    Xt_int num_stripes = 3;
+    int num_stripes = 3;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
@@ -103,7 +103,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[2] = {{0,5,6},{1,5,3}};
-    Xt_int num_stripes = 2;
+    int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
@@ -119,7 +119,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[2] = {{0,5,-1},{1,5,1}};
-    Xt_int num_stripes = 2;
+    int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
@@ -135,7 +135,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[2] = {{9,5,-2},{0,5,2}};
-    Xt_int num_stripes = 2;
+    int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
@@ -521,7 +521,7 @@ int main(void) {
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};
-    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {0,2,7,9,11,100,11,200,9,300,18,400,5};
@@ -555,7 +555,7 @@ int main(void) {
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
                                   {.start=30, .nstrides=7, .stride=-1}};
-    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {-1,0,1,2,3,4,23,5,6,7,8,9,10,11,12, 0,2,100,2000};
@@ -590,7 +590,7 @@ int main(void) {
                                   {.start=10, .nstrides=2, .stride= 1},
                                   {.start=20, .nstrides=6, .stride=-1},
                                   {.start=30, .nstrides=7, .stride=-1}};
-    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {4,7,2,5,9,0,10,6,11,8,12,1,3};
@@ -625,7 +625,7 @@ int main(void) {
     struct Xt_stripe stripes[] = {{.start=0, .nstrides=5, .stride=1},
                                   {.start=10, .nstrides=5, .stride=1},
                                   {.start=20, .nstrides=5, .stride=-1}};
-    Xt_int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
     Xt_idxlist idxlist = xt_idxstripes_new(stripes, num_stripes);
 
     int pos[] = {-10,200,700,90,90,18,141};
@@ -657,7 +657,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[2] = {{0,5,1},{1,5,1}};
-    Xt_int num_stripes = 2;
+    int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
@@ -674,7 +674,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[1] = {{-1,-1,-1}};
-    Xt_int num_stripes = 0;
+    int num_stripes = 0;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 
@@ -701,7 +701,7 @@ int main(void) {
     Xt_idxlist idxstripes;
 
     struct Xt_stripe stripes[3] = {{47,2,-12}, {32,2,12}, {36,2,12}};
-    Xt_int num_stripes = 3;
+    int num_stripes = 3;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
 

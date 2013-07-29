@@ -54,7 +54,7 @@ int main()
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
   xt_initialize(MPI_COMM_WORLD);
   Xt_int a_list[] = { 2, 3, 7, 10 };
-  Xt_int a_list_size = sizeof (a_list) / sizeof (a_list[0]);
+  int a_list_size = sizeof (a_list) / sizeof (a_list[0]);
   Xt_idxlist a = xt_idxvec_new(a_list, a_list_size);
   Xt_idxlist b = xt_idxlist_copy(a);
   Xt_uid a_id;
