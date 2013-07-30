@@ -91,10 +91,10 @@ int main(void)
     Xt_int dst_index = (Xt_int)((my_rank + 1)%comm_size);
     Xt_idxlist src_idxlist = xt_idxvec_new(&src_index, 1);
     Xt_idxlist dst_idxlist = xt_idxvec_new(&dst_index, 1);
-    Xt_int num_src_intersections = 1;
+    int num_src_intersections = 1;
     struct Xt_com_list src_com = {.list = src_idxlist,
                                   .rank = (my_rank+1)%comm_size};
-    Xt_int num_dst_intersections = 1;
+    int num_dst_intersections = 1;
     struct Xt_com_list dst_com = {.list = dst_idxlist,
                                   .rank = (my_rank+comm_size-1)%comm_size};
 
@@ -130,10 +130,10 @@ int main(void)
     Xt_int dst_index = 0;
     Xt_idxlist src_idxlist = (my_rank == 0)?xt_idxempty_new():xt_idxvec_new(&src_index, 1);
     Xt_idxlist dst_idxlist = (my_rank == 0)?xt_idxvec_new(&dst_index, 1):xt_idxempty_new();
-    Xt_int num_src_intersections = (my_rank == 0)?0:1;
+    int num_src_intersections = (my_rank == 0)?0:1;
     struct Xt_com_list src_com = {.list = src_idxlist,
                                   .rank = 0};
-    Xt_int num_dst_intersections = (my_rank == 0)?2:0;
+    int num_dst_intersections = (my_rank == 0)?2:0;
     struct Xt_com_list dst_com[2] = {{.list = dst_idxlist, .rank = 1},
                                      {.list = dst_idxlist, .rank = 2}};
 
@@ -174,14 +174,14 @@ int main(void)
     Xt_int dst_index = (Xt_int)my_rank;
     Xt_idxlist src_idxlist = xt_idxvec_new(src_indices, 2);
     Xt_idxlist dst_idxlist = xt_idxvec_new(&dst_index, 1);
-    Xt_int num_src_intersections[3] = {2, 1, 0};
+    int num_src_intersections[3] = {2, 1, 0};
     Xt_idxlist src_intersection_idxlist[2] = {xt_idxvec_new(src_indices, 1),
                                               xt_idxvec_new(src_indices+1, 1)};
     struct Xt_com_list src_com[2] = {{.list = src_intersection_idxlist[0],
                                       .rank = 1},
                                      {.list = src_intersection_idxlist[1],
                                       .rank = (my_rank == 0)?2:0}};
-    Xt_int num_dst_intersections = 1;
+    int num_dst_intersections = 1;
     struct Xt_com_list dst_com = {.list = dst_idxlist, .rank = (my_rank == 0)?1:0};
 
     Xt_xmap xmap = xt_xmap_intersection_new(num_src_intersections[my_rank],

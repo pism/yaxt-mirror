@@ -62,9 +62,9 @@
 #include "instr.h"
 
 static void exchange_idxlists(struct Xt_com_list **src_intersections,
-                              Xt_int *num_src_intersections,
+                              int *num_src_intersections,
                               struct Xt_com_list **dst_intersections,
-                              Xt_int * num_dst_intersections,
+                              int * num_dst_intersections,
                               Xt_idxlist src_idxlist_local,
                               Xt_idxlist dst_idxlist_local,
                               MPI_Comm comm)
@@ -171,9 +171,9 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
 
   /* minimize memory use of tables */
   srci = xrealloc(srci, src_isect_count * sizeof (**src_intersections));
-  *num_src_intersections = (Xt_int)src_isect_count;
+  *num_src_intersections = (int)src_isect_count;
   dsti = xrealloc(dsti, dst_isect_count * sizeof (**dst_intersections));
-  *num_dst_intersections = (Xt_int)dst_isect_count;
+  *num_dst_intersections = (int)dst_isect_count;
 
   *dst_intersections = dsti;
   *src_intersections = srci;
@@ -191,7 +191,7 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   xt_mpi_call(MPI_Comm_dup(comm, &curr_comm), comm);
 
   struct Xt_com_list * src_intersections = NULL, * dst_intersections = NULL;
-  Xt_int num_src_intersections = 0, num_dst_intersections = 0;
+  int num_src_intersections = 0, num_dst_intersections = 0;
 
   // exchange index lists between all processes in comm
   exchange_idxlists(&src_intersections, &num_src_intersections,
@@ -206,10 +206,10 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
                                   num_dst_intersections, dst_intersections,
                                   src_idxlist, dst_idxlist, comm);
 
-  for (Xt_int i = 0; i < num_src_intersections; ++i)
+  for (int i = 0; i < num_src_intersections; ++i)
     if (src_intersections[i].list != NULL)
       xt_idxlist_delete(src_intersections[i].list);
-  for (Xt_int i = 0; i < num_dst_intersections; ++i)
+  for (int i = 0; i < num_dst_intersections; ++i)
     if (dst_intersections[i].list != NULL)
       xt_idxlist_delete(dst_intersections[i].list);
   free(src_intersections), free(dst_intersections);
