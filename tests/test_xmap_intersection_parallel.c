@@ -56,12 +56,12 @@ struct test_message {
 
   int rank;       // rank of communication partner
   int * pos;   // positions to be sent/received
-  Xt_int num_pos; // number of positions
+  int num_pos; // number of positions
 };
 
 static void test_xmap(Xt_xmap xmap,
-                      Xt_int num_sends, struct test_message send_messages[num_sends],
-                      Xt_int num_recvs, struct test_message recv_messages[num_recvs]);
+                      int num_sends, struct test_message send_messages[num_sends],
+                      int num_recvs, struct test_message recv_messages[num_recvs]);
 
 int main(void)
 {
@@ -105,11 +105,11 @@ int main(void)
     // test
 
     int send_pos = 0;
-    Xt_int num_sends = 1;
+    int num_sends = 1;
     struct test_message send_messages[1] = {{.rank = (my_rank+1)%comm_size,
                                              .pos = &send_pos, .num_pos = 1}};
     int recv_pos = 0;
-    Xt_int num_recvs = 1;
+    int num_recvs = 1;
     struct test_message recv_messages[1] = {{.rank = (my_rank+comm_size-1)%comm_size,
                                              .pos = &recv_pos, .num_pos = 1}};
 
@@ -144,11 +144,11 @@ int main(void)
     // test
 
     int send_pos = 0;
-    Xt_int num_sends = (my_rank == 1)?1:0;
+    int num_sends = (my_rank == 1)?1:0;
     struct test_message send_messages[1] = {{.rank = 0, .pos = &send_pos,
                                              .num_pos = 1}};
     int recv_pos = 0;
-    Xt_int num_recvs = (my_rank == 0)?1:0;
+    int num_recvs = (my_rank == 0)?1:0;
     struct test_message recv_messages[1] = {{.rank = 1, .pos = &recv_pos,
                                              .num_pos = 1}};
 
@@ -168,7 +168,6 @@ int main(void)
 
     // setup
 
-    assert(comm_size <= XT_INT_MAX);
     Xt_int src_indices[2] = { (Xt_int)((my_rank+1)%comm_size),
                               (Xt_int)((my_rank+2)%comm_size) };
     Xt_int dst_index = (Xt_int)my_rank;
@@ -194,13 +193,13 @@ int main(void)
     if (my_rank == 0) {
 
       int send_pos[2] = {0,1};
-      Xt_int num_sends = 2;
+      int num_sends = 2;
       struct test_message send_messages[2] = {{.rank = 1, .pos = send_pos+0,
                                                .num_pos = 1},
                                               {.rank = 2, .pos = send_pos+1,
                                                .num_pos = 1}};
       int recv_pos = 0;
-      Xt_int num_recvs = 1;
+      int num_recvs = 1;
       struct test_message recv_messages[1] = {{.rank = 1, .pos = &recv_pos,
                                                .num_pos = 1}};
 
@@ -209,11 +208,11 @@ int main(void)
     } else if (my_rank == 1) {
 
       int send_pos = 1;
-      Xt_int num_sends = 1;
+      int num_sends = 1;
       struct test_message send_messages[1] = {{.rank = 0, .pos = &send_pos,
                                                .num_pos = 1}};
       int recv_pos = 0;
-      Xt_int num_recvs = 1;
+      int num_recvs = 1;
       struct test_message recv_messages[1] = {{.rank = 0, .pos = &recv_pos,
                                                .num_pos = 1}};
 
@@ -221,10 +220,10 @@ int main(void)
 
     } else {
 
-      Xt_int num_sends = 0;
+      int num_sends = 0;
 
       int recv_pos = 0;
-      Xt_int num_recvs = 1;
+      int num_recvs = 1;
       struct test_message recv_messages[1] = {{.rank = 0, .pos = &recv_pos,
                                                .num_pos = 1}};
 
@@ -267,7 +266,7 @@ int main(void)
     // test
 
       int send_pos[3][5] = {{0,1,2,3,4}, {2,3,4}, {2}};
-      Xt_int num_send_pos[3] = {5, 3, 1};
+      int num_send_pos[3] = {5, 3, 1};
       struct test_message send_messages[3] = {{.rank = 0,
                                                .pos = send_pos[my_rank],
                                                .num_pos = num_send_pos[my_rank]},
@@ -278,7 +277,7 @@ int main(void)
                                                .pos = send_pos[my_rank],
                                                .num_pos = num_send_pos[my_rank]}};
       int recv_pos[3][5] = {{0,1,2,3,4}, {5,6,7}, {8}};
-      Xt_int num_recv_pos[3] = {5, 3, 1};
+      int num_recv_pos[3] = {5, 3, 1};
       struct test_message recv_messages[3] = {{.rank = 0, .pos = recv_pos[0],
                                                .num_pos = num_recv_pos[0]},
                                               {.rank = 1, .pos = recv_pos[1],
@@ -304,7 +303,7 @@ int main(void)
   return TEST_EXIT_CODE;
 }
 
-static void test_xmap_iter(Xt_xmap_iter iter, Xt_int num_msgs,
+static void test_xmap_iter(Xt_xmap_iter iter, int num_msgs,
                            struct test_message msgs[num_msgs]) {
 
   if (num_msgs == 0) {
@@ -318,7 +317,7 @@ static void test_xmap_iter(Xt_xmap_iter iter, Xt_int num_msgs,
 
   } else {
 
-    Xt_int i = 0;
+    int i = 0;
 
     do {
 
@@ -330,7 +329,7 @@ static void test_xmap_iter(Xt_xmap_iter iter, Xt_int num_msgs,
 
       int const * pos = xt_xmap_iterator_get_transfer_pos(iter);
 
-      for (Xt_int j = 0; j < msgs[i].num_pos; ++j)
+      for (int j = 0; j < msgs[i].num_pos; ++j)
         if (pos[j] != msgs[i].pos[j])
           PUT_ERR("ERROR: xt_xmap_iterator_get_transfer_pos\n");
 
@@ -344,8 +343,8 @@ static void test_xmap_iter(Xt_xmap_iter iter, Xt_int num_msgs,
 }
 
 static void test_xmap(Xt_xmap xmap,
-                      Xt_int num_sends, struct test_message send_messages[num_sends],
-                      Xt_int num_recvs, struct test_message recv_messages[num_recvs]) {
+                      int num_sends, struct test_message send_messages[num_sends],
+                      int num_recvs, struct test_message recv_messages[num_recvs]) {
 
   if (xt_xmap_get_num_destinations(xmap) != num_sends)
     PUT_ERR("ERROR: xt_xmap_get_num_destinations\n");

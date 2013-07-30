@@ -62,7 +62,7 @@ struct Xt_xmap_iter_vtable {
   int (*next)(Xt_xmap_iter iter);
   int (*get_rank)(Xt_xmap_iter iter);
   int const * (*get_transfer_pos)(Xt_xmap_iter iter);
-  Xt_int (*get_num_transfer_pos)(Xt_xmap_iter iter);
+  int (*get_num_transfer_pos)(Xt_xmap_iter iter);
   void (*delete)(Xt_xmap_iter iter);
 };
 

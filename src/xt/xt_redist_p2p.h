@@ -106,9 +106,9 @@ struct Xt_offset_ext
  *                         in the data to be exchanged
  */
 Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
-                                Xt_int num_src_ext,
+                                int num_src_ext,
                                 struct Xt_offset_ext src_extents[],
-                                Xt_int num_dst_ext,
+                                int num_dst_ext,
                                 struct Xt_offset_ext dst_extents[],
                                 MPI_Datatype datatype);
 

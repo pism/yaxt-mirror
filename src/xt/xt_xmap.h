@@ -175,7 +175,7 @@ int const * xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter);
  *                 \ref xt_xmap_iterator_get_transfer_pos for the current item
  * @todo change return type to int
  */
-Xt_int xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
+int xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
 
 /**
  * destructor for an exchange map iterator

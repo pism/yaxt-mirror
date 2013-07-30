@@ -104,7 +104,7 @@ int const * xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter) {
   return iter->vtable->get_transfer_pos(iter);
 }
 
-Xt_int xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
+int xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
 
   return iter->vtable->get_num_transfer_pos(iter);
 }

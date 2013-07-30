@@ -62,7 +62,7 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 static MPI_Datatype
-generate_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
+generate_datatype(int const * transfer_pos, int num_transfer_pos,
                   int *offsets, MPI_Datatype base_datatype, MPI_Comm comm) {
 
   MPI_Datatype type;
@@ -74,7 +74,7 @@ generate_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
 
     tmp_displ = xmalloc((size_t)num_transfer_pos * sizeof(int));
 
-    for (Xt_int i = 0; i < num_transfer_pos; ++i)
+    for (int i = 0; i < num_transfer_pos; ++i)
       tmp_displ[i] = offsets[transfer_pos[i]];
 
       displ = tmp_displ;
@@ -82,7 +82,7 @@ generate_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
   } else
     displ = transfer_pos;
 
-  type = xt_mpi_generate_datatype(displ, (int)num_transfer_pos, base_datatype, comm);
+  type = xt_mpi_generate_datatype(displ, num_transfer_pos, base_datatype, comm);
 
   free(tmp_displ);
 
@@ -108,7 +108,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
   do {
 
     int const * curr_transfer_pos;
-    Xt_int curr_num_transfer_pos;
+    int curr_num_transfer_pos;
 
     curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
     curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
@@ -155,10 +155,10 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
 /* ====================================================================== */
 
 static inline int
-pos2disp(int pos, Xt_int num_ext, struct Xt_offset_ext extents[],
+pos2disp(int pos, int num_ext, struct Xt_offset_ext extents[],
          int psum_ext_size[])
 {
-  Xt_int j = 0;
+  int j = 0;
   /* FIXME: use bsearch if linear search is too slow, i.e. num_ext >> 1000 */
   /* what extent covers the pos'th position? */
   while (j < num_ext && pos >= psum_ext_size[j + 1])
@@ -168,8 +168,8 @@ pos2disp(int pos, Xt_int num_ext, struct Xt_offset_ext extents[],
 }
 
 static MPI_Datatype
-generate_ext_datatype(Xt_int num_transfer_pos, const int transfer_pos[],
-                      Xt_int num_ext, struct Xt_offset_ext extents[],
+generate_ext_datatype(int num_transfer_pos, const int transfer_pos[],
+                      int num_ext, struct Xt_offset_ext extents[],
                       int psum_ext_size[],
                       MPI_Datatype base_datatype, MPI_Comm comm)
 {
@@ -177,7 +177,7 @@ generate_ext_datatype(Xt_int num_transfer_pos, const int transfer_pos[],
   {
     size_t blocks_size = 8, block_ofs = 0;
     int *displ = NULL, *blocklen = NULL;
-    Xt_int i = 0;
+    int i = 0;
     do
     {
       blocks_size *= 2;
@@ -194,7 +194,7 @@ generate_ext_datatype(Xt_int num_transfer_pos, const int transfer_pos[],
           ++j;
         displ[block_ofs] = block_disp;
         blocklen[block_ofs] = j;
-        i = (Xt_int)(i + j);
+        i = i + j;
       } while (++block_ofs < blocks_size && i < num_transfer_pos);
     } while (i < num_transfer_pos);
     MPI_Datatype type
@@ -210,7 +210,7 @@ generate_ext_datatype(Xt_int num_transfer_pos, const int transfer_pos[],
 
 static void
 generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
-                       Xt_int num_ext,
+                       int num_ext,
                        struct Xt_offset_ext extents[],
                        MPI_Datatype base_datatype,
                        struct Xt_redist_msg **msgs,
@@ -234,7 +234,7 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
   do {
 
     const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
-    Xt_int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
+    int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
 
     curr_msg->datatype
       = generate_ext_datatype(curr_num_transfer_pos, curr_transfer_pos,
@@ -249,9 +249,9 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
 }
 
 Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
-                                Xt_int num_src_ext,
+                                int num_src_ext,
                                 struct Xt_offset_ext src_extents[],
-                                Xt_int num_dst_ext,
+                                int num_dst_ext,
                                 struct Xt_offset_ext dst_extents[],
                                 MPI_Datatype datatype)
 {
@@ -295,7 +295,7 @@ aux_gen_simple_block_offsets(int *block_offsets, int *block_sizes,
 }
 
 static MPI_Datatype
-generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
+generate_block_datatype(int const * transfer_pos, int num_transfer_pos,
                         int *block_offsets, int *block_sizes,
                         MPI_Datatype base_datatype, MPI_Comm comm) {
 
@@ -310,14 +310,14 @@ generate_block_datatype(int const * transfer_pos, Xt_int num_transfer_pos,
   blen_vec = bdispl_vec + num_transfer_pos;
   assert(block_offsets);
 
-  for (Xt_int i = 0; i < num_transfer_pos; ++i) {
+  for (int i = 0; i < num_transfer_pos; ++i) {
     int j = transfer_pos[i];
     bdispl_vec[i] = block_offsets[j];
     blen_vec[i] = block_sizes[j];
   }
 
   type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec,
-                                        (int)num_transfer_pos,
+                                        num_transfer_pos,
                                         base_datatype, comm);
 
   free(bdispl_vec);
@@ -344,7 +344,7 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
   do {
 
     int const * curr_transfer_pos;
-    Xt_int curr_num_transfer_pos;
+    int curr_num_transfer_pos;
 
     curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
     curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
