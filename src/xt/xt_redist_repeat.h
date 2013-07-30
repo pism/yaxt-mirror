@@ -71,7 +71,7 @@
  *          MPI communicator
  */
 Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
-                               MPI_Aint dst_extent, unsigned num_repetitions,
+                               MPI_Aint dst_extent, int num_repetitions,
                                int displacements[num_repetitions]);
 
 #endif // XT_REDIST_REPEAT_H

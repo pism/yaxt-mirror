@@ -407,7 +407,7 @@ CONTAINS
         IMPLICIT NONE
         TYPE(c_ptr), VALUE, INTENT(in)  :: redist_f
         INTEGER(mpi_address_kind), VALUE :: src_extent, dst_extent
-        INTEGER(xt_mpi_fint_kind), VALUE :: num_repetitions
+        INTEGER(c_int), VALUE :: num_repetitions
         INTEGER(c_int), INTENT(in) :: displacements(*)
         TYPE(c_ptr) :: res
       END FUNCTION xt_redist_repeat_new_c

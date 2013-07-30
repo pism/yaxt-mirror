@@ -59,7 +59,7 @@
 static void
 generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
                    MPI_Aint extent, int * displacements, Xt_redist redist,
-                   unsigned num_repetitions, MPI_Comm comm,
+                   int num_repetitions, MPI_Comm comm,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
 
   size_t msgs_array_size = 0;
@@ -95,7 +95,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
 
       p[num_messages].rank = i;
       p[num_messages].datatype =
-        xt_mpi_generate_datatype(displacements, (int)num_repetitions,
+        xt_mpi_generate_datatype(displacements, num_repetitions,
                                  datatype_with_extent, comm);
       ++num_messages;
 
@@ -111,7 +111,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
 }
 
 Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
-                               MPI_Aint dst_extent, unsigned num_repetitions,
+                               MPI_Aint dst_extent, int num_repetitions,
                                int displacements[num_repetitions]) {
 
   int nsend, nrecv;
@@ -128,7 +128,7 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
     xt_mpi_call(MPI_Comm_dup(redist_comm, &comm), redist_comm);
   }
 
-  if (num_repetitions < 1 || num_repetitions > (unsigned)INT_MAX)
+  if (num_repetitions < 1)
     Xt_abort(comm, "ERROR: invalid number of repetitions (Xt_redist_repeat)\n",
              __FILE__, __LINE__);
 
