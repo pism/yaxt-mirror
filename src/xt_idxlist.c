@@ -208,7 +208,7 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
     xt_idxlist_get_indices(idxlist, indices);
 
-    xt_idxstripes_convert_to_stripes(indices, (Xt_int)num_indices,
+    xt_idxstripes_convert_to_stripes(indices, num_indices,
                                      stripes, num_stripes);
 
     free(indices);

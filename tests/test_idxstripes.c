@@ -70,7 +70,9 @@ int main(void) {
   { // general tests
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[3] = {{0,5,1},{10,5,1},{20,5,1}};
+    struct Xt_stripe stripes[3] = {{.start =  0, .stride = 1, .nstrides = 5},
+                                   {.start = 10, .stride = 1, .nstrides = 5},
+                                   {.start = 20, .stride = 1, .nstrides = 5}};
     int num_stripes = 3;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
@@ -86,7 +88,9 @@ int main(void) {
   { // general tests
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[3] = {{0,5,1},{10,5,2},{20,5,3}};
+    struct Xt_stripe stripes[3] = {{.start =  0, .stride = 1, .nstrides = 5},
+                                   {.start = 10, .stride = 2, .nstrides = 5},
+                                   {.start = 20, .stride = 3, .nstrides = 5}};
     int num_stripes = 3;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
@@ -102,7 +106,8 @@ int main(void) {
   { // general tests
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[2] = {{0,5,6},{1,5,3}};
+    struct Xt_stripe stripes[2] = {{.start = 0, .stride = 6, .nstrides = 5},
+                                   {.start = 1, .stride = 3, .nstrides = 5}};
     int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
@@ -118,7 +123,8 @@ int main(void) {
   { // general tests
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[2] = {{0,5,-1},{1,5,1}};
+    struct Xt_stripe stripes[2] = {{.start = 0, .stride = -1, .nstrides = 5},
+                                   {.start = 1, .stride =  1, .nstrides = 5}};
     int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
@@ -134,7 +140,8 @@ int main(void) {
   { // general tests
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[2] = {{9,5,-2},{0,5,2}};
+    struct Xt_stripe stripes[2] = {{.start = 9, .stride = -2, .nstrides = 5},
+                                   {.start = 0, .stride =  2, .nstrides = 5}};
     int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
@@ -151,8 +158,9 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[2] = {{0,4,1},{6,4,1}};
-    struct Xt_stripe stripes_b[1] = {{1,8,1}};
+    struct Xt_stripe stripes_a[2] = {{.start = 0, .stride = 1, .nstrides = 4},
+                                     {.start = 6, .stride = 1, .nstrides = 4}};
+    struct Xt_stripe stripes_b[1] = {{.start = 1, .stride = 1, .nstrides = 8}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 2);
     idxstripes_b = xt_idxstripes_new(stripes_b, 1);
@@ -184,8 +192,11 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[3] = {{0,4,1},{6,4,1}, {11,4,1}};
-    struct Xt_stripe stripes_b[2] = {{1,7,1}, {9,5,1}};
+    struct Xt_stripe stripes_a[3] = {{.start =  0, .stride = 1, .nstrides = 4},
+                                     {.start =  6, .stride = 1, .nstrides = 4},
+                                     {.start = 11, .stride = 1, .nstrides = 4}};
+    struct Xt_stripe stripes_b[2] = {{.start =  1, .stride = 1, .nstrides = 7},
+                                     {.start =  9, .stride = 1, .nstrides = 5}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 3);
     idxstripes_b = xt_idxstripes_new(stripes_b, 2);
@@ -217,8 +228,10 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[2] = {{0,3,1},{8,3,1}};
-    struct Xt_stripe stripes_b[2] = {{3,5,1}, {11,3,1}};
+    struct Xt_stripe stripes_a[2] = {{.start =  0, .stride = 1, .nstrides = 3},
+                                     {.start =  8, .stride = 1, .nstrides = 3}};
+    struct Xt_stripe stripes_b[2] = {{.start =  3, .stride = 1, .nstrides = 5},
+                                     {.start = 11, .stride = 1, .nstrides = 3}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 2);
     idxstripes_b = xt_idxstripes_new(stripes_b, 2);
@@ -250,8 +263,9 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[1] = {{0,10,1}};
-    struct Xt_stripe stripes_b[2] = {{0,5,2}, {9,5,-2}};
+    struct Xt_stripe stripes_a[1] = {{.start = 0, .nstrides = 10, .stride =  1}};
+    struct Xt_stripe stripes_b[2] = {{.start = 0, .nstrides =  5, .stride =  2},
+                                     {.start = 9, .nstrides =  5, .stride = -2}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 1);
     idxstripes_b = xt_idxstripes_new(stripes_b, 2);
@@ -283,8 +297,10 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[2] = {{0,5,3},{1,5,7}};
-    struct Xt_stripe stripes_b[2] = {{0,7,2}, {24,10,-1}};
+    struct Xt_stripe stripes_a[2] = {{.start =  0, .stride =  3, .nstrides =  5},
+                                     {.start =  1, .stride =  7, .nstrides =  5}};
+    struct Xt_stripe stripes_b[2] = {{.start =  0, .stride =  2, .nstrides =  7},
+                                     {.start = 24, .stride = -1, .nstrides = 10}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 2);
     idxstripes_b = xt_idxstripes_new(stripes_b, 2);
@@ -316,8 +332,9 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[1] = {{0,10,1}};
-    struct Xt_stripe stripes_b[2] = {{5,5,1}, {4,5,-1}};
+    struct Xt_stripe stripes_a[1] = {{.start = 0, .stride =  1, .nstrides = 10}};
+    struct Xt_stripe stripes_b[2] = {{.start = 5, .stride =  1, .nstrides =  5},
+                                     {.start = 4, .stride = -1, .nstrides =  5}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 1);
     idxstripes_b = xt_idxstripes_new(stripes_b, 2);
@@ -349,8 +366,10 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[2] = {{0,10,1}, {20,5,1}};
-    struct Xt_stripe stripes_b[2] = {{3,5,1},  {17,5,1}};
+    struct Xt_stripe stripes_a[2] = {{.start =  0, .stride = 1, .nstrides = 10},
+                                     {.start = 20, .stride = 1, .nstrides =  5}};
+    struct Xt_stripe stripes_b[2] = {{.start =  3, .stride = 1, .nstrides =  5},
+                                     {.start = 17, .stride = 1, .nstrides =  5}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 2);
     idxstripes_b = xt_idxstripes_new(stripes_b, 2);
@@ -382,11 +401,21 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[10] = {{0,2,1},{3,2,1},{5,2,1},{8,2,1},{10,2,1},
-                                      {14,2,1},{17,2,1},{20,2,1},{23,2,1},
-                                      {25,2,1}};
-    struct Xt_stripe stripes_b[5] = {{5,3,1},{8,2,1},{19,1,1},{20,2,1},
-                                     {30,2,1}};
+    struct Xt_stripe stripes_a[10] = {{.start =  0, .stride = 1, .nstrides = 2},
+                                      {.start =  3, .stride = 1, .nstrides = 2},
+                                      {.start =  5, .stride = 1, .nstrides = 2},
+                                      {.start =  8, .stride = 1, .nstrides = 2},
+                                      {.start = 10, .stride = 1, .nstrides = 2},
+                                      {.start = 14, .stride = 1, .nstrides = 2},
+                                      {.start = 17, .stride = 1, .nstrides = 2},
+                                      {.start = 20, .stride = 1, .nstrides = 2},
+                                      {.start = 23, .stride = 1, .nstrides = 2},
+                                      {.start = 25, .stride = 1, .nstrides = 2}};
+    struct Xt_stripe stripes_b[5] =  {{.start =  5, .stride = 1, .nstrides = 3},
+                                      {.start =  8, .stride = 1, .nstrides = 2},
+                                      {.start = 19, .stride = 1, .nstrides = 1},
+                                      {.start = 20, .stride = 1, .nstrides = 2},
+                                      {.start = 30, .stride = 1, .nstrides = 2}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 10);
     idxstripes_b = xt_idxstripes_new(stripes_b, 5);
@@ -418,8 +447,10 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[3] = {{0,5,1},{1,5,1},{2,5,1}};
-    struct Xt_stripe stripes_b[1] = {{-2,10,1}};
+    struct Xt_stripe stripes_a[3] = {{.start =  0, .stride = 1, .nstrides =  5},
+                                     {.start =  1, .stride = 1, .nstrides =  5},
+                                     {.start =  2, .stride = 1, .nstrides =  5}};
+    struct Xt_stripe stripes_b[1] = {{.start = -2, .stride = 1, .nstrides = 10}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 3);
     idxstripes_b = xt_idxstripes_new(stripes_b, 1);
@@ -452,8 +483,8 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[1] = {{0,5,2}};
-    struct Xt_stripe stripes_b[1] = {{1,5,2}};
+    struct Xt_stripe stripes_a[1] = {{.start = 0, .stride = 2, .nstrides = 5}};
+    struct Xt_stripe stripes_b[1] = {{.start = 1, .stride = 2, .nstrides = 5}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 1);
     idxstripes_b = xt_idxstripes_new(stripes_b, 1);
@@ -485,8 +516,8 @@ int main(void) {
 
     Xt_idxlist idxstripes_a, idxstripes_b;
 
-    struct Xt_stripe stripes_a[1] = {{0,20,5}};
-    struct Xt_stripe stripes_b[1] = {{1,15,7}};
+    struct Xt_stripe stripes_a[1] = {{.start = 0, .stride = 5, .nstrides = 20}};
+    struct Xt_stripe stripes_b[1] = {{.start = 1, .stride = 7, .nstrides = 15}};
 
     idxstripes_a = xt_idxstripes_new(stripes_a, 1);
     idxstripes_b = xt_idxstripes_new(stripes_b, 1);
@@ -656,7 +687,8 @@ int main(void) {
   { // test with overlapping stripes
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[2] = {{0,5,1},{1,5,1}};
+    struct Xt_stripe stripes[2] = {{.start = 0, .stride = 1, .nstrides = 5},
+                                   {.start = 1, .stride = 1, .nstrides = 5}};
     int num_stripes = 2;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
@@ -673,7 +705,7 @@ int main(void) {
 
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[1] = {{-1,-1,-1}};
+    struct Xt_stripe stripes[1] = {{.start = -1, .stride = -1, .nstrides = -1}};
     int num_stripes = 0;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);
@@ -700,7 +732,9 @@ int main(void) {
 
     Xt_idxlist idxstripes;
 
-    struct Xt_stripe stripes[3] = {{47,2,-12}, {32,2,12}, {36,2,12}};
+    struct Xt_stripe stripes[3] = {{.start = 47, .stride = -12, .nstrides = 2},
+                                   {.start = 32, .stride =  12, .nstrides = 2},
+                                   {.start = 36, .stride =  12, .nstrides = 2}};
     int num_stripes = 3;
 
     idxstripes = xt_idxstripes_new(stripes, num_stripes);

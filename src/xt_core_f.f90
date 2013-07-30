@@ -75,8 +75,8 @@ MODULE xt_core
 
   TYPE, BIND(C), PUBLIC :: xt_stripe
     INTEGER(xt_int_kind) :: start
-    INTEGER(xt_int_kind) :: nstrides
     INTEGER(xt_int_kind) :: stride
+    INTEGER(c_int) :: nstrides
   END TYPE xt_stripe
 
   TYPE, BIND(C), PUBLIC :: xt_bounds
@@ -146,7 +146,7 @@ CONTAINS
     CHARACTER(len=xt_stripe2s_len) :: str
     TYPE(xt_stripe), INTENT(in) :: stripe
     WRITE (str, '(2a,3(i0,a))') xt_stripe_tag, '(', stripe%start, ', ', &
-         stripe%nstrides, ', ', stripe%stride, ')'
+         stripe%stride, ', ', stripe%nstrides, ')'
   END FUNCTION xt_stripe2char
 
   FUNCTION xt_initialized() RESULT(is_initialized)

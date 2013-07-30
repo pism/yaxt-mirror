@@ -138,6 +138,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
   Xt_int global_interval, local_interval;
   global_interval = get_dist_dir_global_interval_size(src_idxlist, comm);
 
+  assert(global_interval / comm_size <= INT_MAX);
   local_interval = (Xt_int)(global_interval / comm_size);
 
   int num_src = xt_idxlist_get_num_indices(src_idxlist),
@@ -176,7 +177,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
 
         stripes[j].start = (Xt_int)(start + j * global_interval);
         stripes[j].stride = 1;
-        stripes[j].nstrides = local_interval;
+        stripes[j].nstrides = (int)local_interval;
       }
 
       buckets[i] = xt_idxstripes_new(stripes, num_stripes);

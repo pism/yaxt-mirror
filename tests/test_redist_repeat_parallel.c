@@ -95,8 +95,8 @@ int main(void) {
 
       {
         assert(rank*2*size*size <= XT_INT_MAX);
-        struct Xt_stripe stripe = {(Xt_int)(rank*2*size*size),
-                                   (Xt_int)(2*size*size), 1};
+        struct Xt_stripe stripe = {.start = (Xt_int)(rank*2*size*size),
+                                   .stride = 1, .nstrides = 2*size*size};
 
         indices_b = xt_idxstripes_new(&stripe, 1);
       }

@@ -103,8 +103,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general
 
   SUBROUTINE stripe_test_general1
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 5, 1), &
-         xt_stripe(10, 5, 1), xt_stripe(20, 5, 1) /);
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
+         xt_stripe(10, 1, 5), xt_stripe(20, 1, 5) /);
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 0_xi,  1_xi,  2_xi,  3_xi,  4_xi, &
          &   10_xi, 11_xi, 12_xi, 13_xi, 14_xi, &
@@ -113,8 +113,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general1
 
   SUBROUTINE stripe_test_general2
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 5, 1), &
-         xt_stripe(10, 5, 2), xt_stripe(20, 5, 3) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
+         xt_stripe(10, 2, 5), xt_stripe(20, 3, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 0_xi,  1_xi,  2_xi,  3_xi,  4_xi, &
          &   10_xi, 12_xi, 14_xi, 16_xi, 18_xi, &
@@ -123,8 +123,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general2
 
   SUBROUTINE stripe_test_general3
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 5, 6), &
-         xt_stripe(1, 5, 3) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 6, 5), &
+         xt_stripe(1, 3, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, 6_xi, 12_xi, 18_xi, 24_xi, &
          &    1_xi, 4_xi,  7_xi, 10_xi, 13_xi /)
@@ -132,8 +132,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general3
 
   SUBROUTINE stripe_test_general4
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 5, -1), &
-         xt_stripe(1, 5, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, -1, 5), &
+         xt_stripe(1, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, -1_xi, -2_xi, -3_xi, -4_xi, &
          &    1_xi,  2_xi,  3_xi,  4_xi,  5_xi /)
@@ -141,8 +141,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general4
 
   SUBROUTINE stripe_test_general5
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(9, 5, -2), &
-         xt_stripe(0, 5, 2) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(9, -2, 5), &
+         xt_stripe(0, 2, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 9_xi,  7_xi,  5_xi,  3_xi,  1_xi, &
          &    0_xi,  2_xi,  4_xi,  6_xi,  8_xi /)
@@ -172,81 +172,81 @@ CONTAINS
   END SUBROUTINE test_intersection
 
   SUBROUTINE test_intersection1
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 4, 1), &
-         xt_stripe(6, 4, 1) /), &
-         stripes_b(1) = (/ xt_stripe(1, 8, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 1, 4), &
+         xt_stripe(6, 1, 4) /), &
+         stripes_b(1) = (/ xt_stripe(1, 1, 8) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 1_xi, 2_xi, 3_xi, 6_xi, 7_xi, 8_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection1
 
   SUBROUTINE test_intersection2
-    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 4, 1), &
-         xt_stripe(6, 4, 1), xt_stripe(11, 4, 1) /), &
-         stripes_b(2) = (/ xt_stripe(1, 7, 1), xt_stripe(9, 5, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 1, 4), &
+         xt_stripe(6, 1, 4), xt_stripe(11, 1, 4) /), &
+         stripes_b(2) = (/ xt_stripe(1, 1, 7), xt_stripe(9, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(9) &
          = (/ 1_xi, 2_xi, 3_xi, 6_xi, 7_xi, 9_xi, 11_xi, 12_xi, 13_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection2
 
   SUBROUTINE test_intersection3
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 3, 1), &
-         xt_stripe(8, 3, 1) /), &
-         stripes_b(2) = (/ xt_stripe(3, 5, 1), xt_stripe(11, 3, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 1, 3), &
+         xt_stripe(8, 1, 3) /), &
+         stripes_b(2) = (/ xt_stripe(3, 1, 5), xt_stripe(11, 1, 3) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ -1_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices(1:0))
   END SUBROUTINE test_intersection3
 
   SUBROUTINE test_intersection4
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 10, 1) /), &
-         stripes_b(2) = (/ xt_stripe(0, 5, 2), xt_stripe(9, 5, -2) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 1, 10) /), &
+         stripes_b(2) = (/ xt_stripe(0, 2, 5), xt_stripe(9, -2, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 8_xi, 9_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection4
 
   SUBROUTINE test_intersection5
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 5, 3), &
-         xt_stripe(1, 5, 7) /), &
-         stripes_b(2) = (/ xt_stripe(0, 7, 2), xt_stripe(24, 10, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 3, 5), &
+         xt_stripe(1, 7, 5) /), &
+         stripes_b(2) = (/ xt_stripe(0, 2, 7), xt_stripe(24, -1, 10) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 0_xi, 6_xi, 8_xi, 12_xi, 15_xi, 22_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection5
 
   SUBROUTINE test_intersection6
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 10, 1) /), &
-         stripes_b(2) = (/ xt_stripe(5, 5, 1), xt_stripe(4, 5, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 1, 10) /), &
+         stripes_b(2) = (/ xt_stripe(5, 1, 5), xt_stripe(4, -1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 8_xi, 9_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection6
 
   SUBROUTINE test_intersection7
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 10, 1) , &
-         xt_stripe(20, 5, 1) /), &
-         stripes_b(2) = (/ xt_stripe(3, 5, 1), xt_stripe(17, 5, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 1, 10) , &
+            xt_stripe(20, 1, 5) /), &
+         stripes_b(2) = (/ xt_stripe(3, 1, 5), xt_stripe(17, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(7) &
          = (/ 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 20_xi, 21_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection7
 
   SUBROUTINE test_intersection8
-    TYPE(xt_stripe), PARAMETER :: stripes_a(10) = (/ xt_stripe(0, 2, 1) , &
-         xt_stripe(3, 2, 1), xt_stripe(5, 2, 1), xt_stripe(8, 2, 1), &
-         xt_stripe(10, 2, 1), xt_stripe(14, 2, 1), xt_stripe(17, 2, 1), &
-         xt_stripe(20, 2, 1), xt_stripe(23, 2, 1), xt_stripe(25, 2, 1) /), &
-         stripes_b(5) = (/ xt_stripe(5, 3, 1), xt_stripe(8, 2, 1), &
-         xt_stripe(19, 1, 1), xt_stripe(20, 2, 1), xt_stripe(30, 2, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(10) = (/ xt_stripe(0, 1, 2), &
+         xt_stripe(3, 1, 2), xt_stripe(5, 1, 2), xt_stripe(8, 1, 2), &
+         xt_stripe(10, 1, 2), xt_stripe(14, 1, 2), xt_stripe(17, 1, 2), &
+         xt_stripe(20, 1, 2), xt_stripe(23, 1, 2), xt_stripe(25, 1, 2) /), &
+         stripes_b(5) = (/ xt_stripe(5, 1, 3), xt_stripe(8, 1, 2), &
+         xt_stripe(19, 1, 1), xt_stripe(20, 1, 2), xt_stripe(30, 1, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 5_xi, 6_xi, 8_xi, 9_xi, 20_xi, 21_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection8
 
   SUBROUTINE test_intersection9
-    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 5, 1), &
-         xt_stripe(1, 5, 1), xt_stripe(2, 5, 1) /), &
-         stripes_b(1) = (/ xt_stripe(-2, 10, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 1, 5), &
+         xt_stripe(1, 1, 5), xt_stripe(2, 1, 5) /), &
+         stripes_b(1) = (/ xt_stripe(start = -2, nstrides = 10, stride = 1) /)
     INTEGER(xt_int_kind) :: i
     INTEGER(xt_int_kind), PARAMETER :: ref_indices_a(7) &
          = (/ (i, i=0_xi,6_xi) /), &
@@ -256,15 +256,15 @@ CONTAINS
   END SUBROUTINE test_intersection9
 
   SUBROUTINE test_intersection10
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 5, 2) /), &
-         stripes_b(1) = (/ xt_stripe(1, 5, 2) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 2, 5) /), &
+         stripes_b(1) = (/ xt_stripe(1, 2, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: dummy(1) = (/ -1_xi /)
     CALL test_intersection(stripes_a, stripes_b, dummy(1:0))
   END SUBROUTINE test_intersection10
 
   SUBROUTINE test_intersection11
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 20, 5) /), &
-         stripes_b(1) = (/ xt_stripe(1, 15, 7) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 5, 20) /), &
+         stripes_b(1) = (/ xt_stripe(start = 1, nstrides = 15, stride = 7) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(3) = (/ 15_xi, 50_xi, 85_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection11
@@ -301,8 +301,8 @@ CONTAINS
   END SUBROUTINE test_get_pos
 
   SUBROUTINE test_get_pos1
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 5, 1), &
-         xt_stripe(10, 5, 1), xt_stripe(20, 5, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
+         xt_stripe(10, 1, 5), xt_stripe(20, -1, 5) /)
     INTEGER, PARAMETER :: pos(13) = &
          (/   0,   2,   7,   9,  11, &
          &  100,  11, 200,   9, 300, &
@@ -311,8 +311,8 @@ CONTAINS
   END SUBROUTINE test_get_pos1
 
   SUBROUTINE test_get_pos2
-    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0, 3, 1), &
-         xt_stripe(10, 2, 1), xt_stripe(20, 6, -1), xt_stripe(30, 7, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0, 1, 3), &
+         xt_stripe(10, 1, 2), xt_stripe(20, -1, 6), xt_stripe(30, -1, 7) /)
     INTEGER, PARAMETER :: pos(19) = &
          (/   -1,    0,    1,    2,    3,    4,   23,    5,    6,    7, &
          &     8,    9,   10,   11,   12,    0,    2,  100, 2000 /)
@@ -320,8 +320,8 @@ CONTAINS
   END SUBROUTINE test_get_pos2
 
   SUBROUTINE test_get_pos3
-    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0, 3, 1), &
-         xt_stripe(10, 2, 1), xt_stripe(20, 6, -1), xt_stripe(30, 7, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0, 1, 3), &
+         xt_stripe(10, 1, 2), xt_stripe(20, -1, 6), xt_stripe(30, -1, 7) /)
     INTEGER, PARAMETER :: pos(13) = &
          (/    4,    7,    2,    5,    9,    0,   10,    6,   11,    8, &
          &    12,    1,    3 /)
@@ -329,16 +329,16 @@ CONTAINS
   END SUBROUTINE test_get_pos3
 
   SUBROUTINE test_get_pos4
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 5, 1), &
-         xt_stripe(10, 5, 1), xt_stripe(20, 5, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
+         xt_stripe(10, 1, 5), xt_stripe(20, -1, 5) /)
     INTEGER, PARAMETER :: pos(7) = &
          (/  -10,  200,  700,   90,   90,   18,  141 /)
     CALL test_get_pos(stripes, pos)
   END SUBROUTINE test_get_pos4
 
   SUBROUTINE test_stripe_overlap
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 5, 1), &
-         xt_stripe(1, 5, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 1, 5), &
+         xt_stripe(1, 1, 5) /)
     INTEGER(xt_int_kind) :: i, j
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ ((i + j, i=0,4), j = 0, 1) /)
@@ -377,8 +377,8 @@ CONTAINS
   END SUBROUTINE test_stripe_bb1
 
   SUBROUTINE test_stripe_bb2
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(47, 2, -12), &
-         xt_stripe(32, 2, 12), xt_stripe(36, 2, 12) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(47, -12, 2), &
+         xt_stripe(32, 12, 2), xt_stripe(36, 12, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: global_size(3) = (/ 5_xi, 4_xi, 3_xi /), &
          global_start_index = 1
     TYPE(xt_bounds), PARAMETER :: bounds_ref(3) = (/ xt_bounds(2, 2), &

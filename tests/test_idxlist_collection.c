@@ -82,8 +82,14 @@ int main(void) {
     check_idxlist(collectionlist, index_list[0], (int)(2*num_indices));
 
     size_t ref_num_stripes = 8;
-    struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
-                                       {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
+    struct Xt_stripe ref_stripes[8] = {{.start = 1, .stride = 1, .nstrides = 7},
+                                       {.start = 7, .stride = 1, .nstrides = 1},
+                                       {.start = 6, .stride = 1, .nstrides = 1},
+                                       {.start = 5, .stride = 1, .nstrides = 1},
+                                       {.start = 4, .stride = 1, .nstrides = 1},
+                                       {.start = 3, .stride = 1, .nstrides = 1},
+                                       {.start = 2, .stride = 1, .nstrides = 1},
+                                       {.start = 1, .stride = 1, .nstrides = 1}};
     Xt_idxlist collectionlist_copy
       = idxlist_pack_unpack_copy(collectionlist);
     check_idxlist_copy(collectionlist, collectionlist_copy,
@@ -134,8 +140,14 @@ int main(void) {
 
     xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
 
-    struct Xt_stripe ref_stripes[8] = {{1,7,1}, {7,1,1}, {6,1,1}, {5,1,1},
-                                       {4,1,1}, {3,1,1}, {2,1,1}, {1,1,1}};
+    struct Xt_stripe ref_stripes[8] = {{.start = 1, .stride = 1, .nstrides = 7},
+                                       {.start = 7, .stride = 1, .nstrides = 1},
+                                       {.start = 6, .stride = 1, .nstrides = 1},
+                                       {.start = 5, .stride = 1, .nstrides = 1},
+                                       {.start = 4, .stride = 1, .nstrides = 1},
+                                       {.start = 3, .stride = 1, .nstrides = 1},
+                                       {.start = 2, .stride = 1, .nstrides = 1},
+                                       {.start = 1, .stride = 1, .nstrides = 1}};
     int ref_num_stripes = 8;
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
@@ -200,7 +212,8 @@ int main(void) {
   { // test using various tpyes of index lists
 
     Xt_int index_list[] = {1,3,5,7,9,11};
-    struct Xt_stripe stripes[] = {{0,5,2},{1,5,2}};
+    struct Xt_stripe stripes[] = {{.start = 0, .stride = 2, .nstrides = 5},
+                                  {.start = 1, .stride = 2, .nstrides = 5}};
     Xt_int global_size[2] = {10,10};
     int local_size[2] = {5,5};
     Xt_int local_start[2] = {2,2};

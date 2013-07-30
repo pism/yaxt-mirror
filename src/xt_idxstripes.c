@@ -149,15 +149,15 @@ xt_idxstripes_initialize()
 
   MPI_Get_address(&stripe, &base_address);
   MPI_Get_address(&stripe.start, &start_address);
-  MPI_Get_address(&stripe.nstrides, &nstrides_address);
   MPI_Get_address(&stripe.stride, &stride_address);
+  MPI_Get_address(&stripe.nstrides, &nstrides_address);
 
   int block_lengths[5] = {1,1,1,1,1};
   MPI_Aint displacements[5] = {0, start_address - base_address,
-                               nstrides_address - base_address,
                                stride_address - base_address,
+                               nstrides_address - base_address,
                                sizeof(stripe)};
-  MPI_Datatype types[5] = {MPI_LB, Xt_int_dt, Xt_int_dt, Xt_int_dt, MPI_UB};
+  MPI_Datatype types[5] = {MPI_LB, Xt_int_dt, Xt_int_dt, MPI_INT, MPI_UB};
 
   xt_mpi_call(MPI_Type_create_struct(5, block_lengths, displacements,
                                      types, &stripe_dt), Xt_default_comm);
@@ -486,8 +486,8 @@ get_stripe_intersection(struct Xt_stripe * stripe_a,
     stripe_b_end = (Xt_int)(stripe_b->start
                             + stripe_b->stride * (stripe_b->nstrides-1));
     intersection.nstrides
-      = (Xt_int)((MIN(stripe_a_end, stripe_b_end) - intersection.start + 1 +
-                  (stripe_lcm - 1)) / stripe_lcm);
+      = (int)((MIN(stripe_a_end, stripe_b_end) - intersection.start + 1 +
+              (stripe_lcm - 1)) / stripe_lcm);
   }
   INSTR_STOP(instr);
   return intersection;

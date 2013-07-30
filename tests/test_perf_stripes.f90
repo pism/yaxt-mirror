@@ -536,7 +536,7 @@ CONTAINS
     DO j = 1, nj
       DO i = 1, ni
         ! start, nstrides, stride
-        stripes(i,j) = xt_stripe(local_idx(1,i,j), INT(nk, xt_int_kind), 1)
+        stripes(i,j) = xt_stripe(local_idx(1,i,j), 1_xt_int_kind, nk)
         DO k = 1, nk
           IF (local_idx(1,i,j)-1+k /= local_idx(k,i,j)) &
                CALL test_abort(context//'stripe condition violated', &

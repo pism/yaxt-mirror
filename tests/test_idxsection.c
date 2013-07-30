@@ -89,7 +89,7 @@ int main(void) {
     // testing
 
     Xt_int ref_indices[5] = {3,4,5,6,7};
-    struct Xt_stripe ref_stripes[1] = {{3,5,1}};
+    struct Xt_stripe ref_stripes[1] = {{.start = 3, .stride = 1, .nstrides = 5}};
     do_tests(idxsection, ref_indices, 5, ref_stripes, 1);
 
     // clean up
@@ -115,7 +115,9 @@ int main(void) {
     // testing
 
     Xt_int ref_indices[6] = {8,9,14,15,20,21};
-    struct Xt_stripe ref_stripes[3] = {{8,2,1}, {14,2,1}, {20,2,1}};
+    struct Xt_stripe ref_stripes[3] = {{.start = 8,  .stride = 1, .nstrides = 2},
+                                       {.start = 14, .stride = 1, .nstrides = 2},
+                                       {.start = 20, .stride = 1, .nstrides = 2}};
     do_tests(idxsection, ref_indices, 6, ref_stripes, 3);
 
     // clean up
@@ -141,9 +143,14 @@ int main(void) {
     // testing
 
     Xt_int ref_indices[16] = {5,6,9,10, 21,22,25,26, 37,38,41,42, 53,54,57,58};
-    struct Xt_stripe ref_stripes[8] = {{5,2,1}, {9,2,1}, {21,2,1},
-                                       {25,2,1}, {37,2,1}, {41,2,1},
-                                       {53,2,1}, {57,2,1}};
+    struct Xt_stripe ref_stripes[8] = {{.start =  5, .stride = 1, .nstrides = 2},
+                                       {.start =  9, .stride = 1, .nstrides = 2},
+                                       {.start = 21, .stride = 1, .nstrides = 2},
+                                       {.start = 25, .stride = 1, .nstrides = 2},
+                                       {.start = 37, .stride = 1, .nstrides = 2},
+                                       {.start = 41, .stride = 1, .nstrides = 2},
+                                       {.start = 53, .stride = 1, .nstrides = 2},
+                                       {.start = 57, .stride = 1, .nstrides = 2}};
     do_tests(idxsection, ref_indices, 16, ref_stripes, 8);
 
     // clean up
@@ -168,7 +175,10 @@ int main(void) {
     // testing
 
     Xt_int ref_indices[12] = {26,27,28,31,32,33,46,47,48,51,52,53};
-    struct Xt_stripe ref_stripes[4] = {{26,3,1}, {31,3,1}, {46,3,1}, {51,3,1}};
+    struct Xt_stripe ref_stripes[4] = {{.start = 26, .stride = 1, .nstrides = 3},
+                                       {.start = 31, .stride = 1, .nstrides = 3},
+                                       {.start = 46, .stride = 1, .nstrides = 3},
+                                       {.start = 51, .stride = 1, .nstrides = 3}};
     do_tests(idxsection, ref_indices, 12, ref_stripes, 4);
 
     // clean up
@@ -194,12 +204,24 @@ int main(void) {
 
     Xt_int ref_indices[36] = {16,17,19,20,22,23, 28,29,31,32,34,35, 40,41,43,44,46,47,
                               64,65,67,68,70,71, 76,77,79,80,82,83, 88,89,91,92,94,95};
-    struct Xt_stripe ref_stripes[18] = {{16,2,1},{19,2,1},{22,2,1},
-                                        {28,2,1},{31,2,1},{34,2,1},
-                                        {40,2,1},{43,2,1},{46,2,1},
-                                        {64,2,1},{67,2,1},{70,2,1},
-                                        {76,2,1},{79,2,1},{82,2,1},
-                                        {88,2,1},{91,2,1},{94,2,1}};
+    struct Xt_stripe ref_stripes[18] = {{.start = 16, .stride = 1, .nstrides = 2},
+                                        {.start = 19, .stride = 1, .nstrides = 2},
+                                        {.start = 22, .stride = 1, .nstrides = 2},
+                                        {.start = 28, .stride = 1, .nstrides = 2},
+                                        {.start = 31, .stride = 1, .nstrides = 2},
+                                        {.start = 34, .stride = 1, .nstrides = 2},
+                                        {.start = 40, .stride = 1, .nstrides = 2},
+                                        {.start = 43, .stride = 1, .nstrides = 2},
+                                        {.start = 46, .stride = 1, .nstrides = 2},
+                                        {.start = 64, .stride = 1, .nstrides = 2},
+                                        {.start = 67, .stride = 1, .nstrides = 2},
+                                        {.start = 70, .stride = 1, .nstrides = 2},
+                                        {.start = 76, .stride = 1, .nstrides = 2},
+                                        {.start = 79, .stride = 1, .nstrides = 2},
+                                        {.start = 82, .stride = 1, .nstrides = 2},
+                                        {.start = 88, .stride = 1, .nstrides = 2},
+                                        {.start = 91, .stride = 1, .nstrides = 2},
+                                        {.start = 94, .stride = 1, .nstrides = 2}};
     do_tests(idxsection, ref_indices, 36, ref_stripes, 18);
 
     // clean up
@@ -263,7 +285,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[2] = {7,8};
-    struct Xt_stripe ref_stripes[1] = {{7,2,1}};
+    struct Xt_stripe ref_stripes[1] = {{.start = 7, .stride = 1, .nstrides = 2}};
 
     do_tests(intersection, ref_indices, 2, ref_stripes, 1);
 
@@ -302,7 +324,7 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[1] = {0};
-    struct Xt_stripe ref_stripes[1] = {{0,1,1}};
+    struct Xt_stripe ref_stripes[1] = {{.start = 0, .stride = 1, .nstrides = 1}};
 
     do_tests(intersection, ref_indices, 0, ref_stripes, 0);
 
@@ -341,7 +363,8 @@ int main(void) {
     // check intersection
 
     Xt_int ref_indices[2] = {20,26};
-    struct Xt_stripe ref_stripes[2] = {{20,1,1}, {26,1,1}};
+    struct Xt_stripe ref_stripes[2] = {{.start = 20, .stride = 1, .nstrides = 1},
+                                       {.start = 26, .stride = 1, .nstrides = 1}};
 
     do_tests(intersection, ref_indices, 2, ref_stripes, 2);
 

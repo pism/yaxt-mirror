@@ -102,7 +102,7 @@ CONTAINS
     TYPE(xt_idxlist) :: idxvector, idxvector_copy, intersection
     INTEGER :: buffer_size, position, rank, ierror, request
     CHARACTER(1), ALLOCATABLE :: send_buffer(:), recv_buffer(:)
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(1, 7, 1) /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(1, 1, 7) /)
     CALL setup_idxvec(idxvector, index_vector)
     buffer_size = xt_idxlist_get_pack_size(idxvector, mpi_comm_world)
     ALLOCATE(send_buffer(buffer_size), recv_buffer(buffer_size))
@@ -270,8 +270,8 @@ CONTAINS
   END SUBROUTINE test_idxvec_from_stripes
 
   SUBROUTINE test_stripes1
-    TYPE(xt_stripe), PARAMETER :: stripes(2) &
-         = (/ xt_stripe(5, 5, 1), xt_stripe(4, 5, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = &
+         (/ xt_stripe(5, 1, 5), xt_stripe(4, -1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 5_xi, 6_xi, 7_xi, 8_xi, 9_xi, 4_xi, 3_xi, 2_xi, 1_xi, 0_xi /)
     CALL test_idxvec_from_stripes(stripes, ref_indices)
@@ -279,7 +279,7 @@ CONTAINS
 
   SUBROUTINE test_stripes2
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
-         = (/ xt_stripe(0, 5, 1), xt_stripe(2, 5, 1), xt_stripe(4, 5, 1) /)
+         = (/ xt_stripe(0, 1, 5), xt_stripe(2, 1, 5), xt_stripe(4, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, &
          &    2_xi, 3_xi, 4_xi, 5_xi, 6_xi, &
@@ -289,7 +289,7 @@ CONTAINS
 
   SUBROUTINE test_stripes3
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
-         = (/ xt_stripe(2, 5, 1), xt_stripe(0, 5, 1), xt_stripe(4, 5, 1) /)
+         = (/ xt_stripe(2, 1, 5), xt_stripe(0, 1, 5), xt_stripe(4, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, &
          &    0_xi, 1_xi, 2_xi, 3_xi, 4_xi, &
@@ -299,7 +299,7 @@ CONTAINS
 
   SUBROUTINE test_stripes4
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
-         = (/ xt_stripe(2, 5, 1), xt_stripe(4, 5, -1), xt_stripe(4, 5, 1) /)
+         = (/ xt_stripe(2, 1, 5), xt_stripe(4, -1, 5), xt_stripe(4, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, &
          &    4_xi, 3_xi, 2_xi, 1_xi, 0_xi, &
@@ -309,7 +309,7 @@ CONTAINS
 
   SUBROUTINE test_stripes5
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
-         = (/ xt_stripe(0, 5, 3), xt_stripe(1, 5, 3), xt_stripe(14, 5, -3) /)
+         = (/ xt_stripe(0, 3, 5), xt_stripe(1, 3, 5), xt_stripe(14, -3, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 0_xi,  3_xi, 6_xi,  9_xi, 12_xi, &
          &    1_xi,  4_xi, 7_xi, 10_xi, 13_xi, &
@@ -319,7 +319,7 @@ CONTAINS
 
   SUBROUTINE test_stripes6
     TYPE(xt_stripe), PARAMETER :: stripes(3) &
-         = (/ xt_stripe(0, 5, 3), xt_stripe(2, 5, 3), xt_stripe(14, 5, -3) /)
+         = (/ xt_stripe(0, 3, 5), xt_stripe(2, 3, 5), xt_stripe(14, -3, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 0_xi,  3_xi, 6_xi,  9_xi, 12_xi, &
          &    2_xi,  5_xi, 8_xi, 11_xi, 14_xi, &
@@ -328,9 +328,8 @@ CONTAINS
   END SUBROUTINE test_stripes6
 
   SUBROUTINE test_stripes7
-    TYPE(xt_stripe), PARAMETER :: stripes(4) &
-         = (/ xt_stripe(0, 5, -1), xt_stripe(1, 5, 1), xt_stripe(-5, 5, -1), &
-         &    xt_stripe(6, 5, 1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0, -1, 5), &
+         xt_stripe(1, 1, 5), xt_stripe(-5, -1, 5), xt_stripe(6, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(20) &
          = (/ 0_xi, -1_xi, -2_xi, -3_xi, -4_xi, &
          &    1_xi,  2_xi,  3_xi,  4_xi,  5_xi, &

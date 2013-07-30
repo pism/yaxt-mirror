@@ -97,7 +97,7 @@ CONTAINS
          local_start(num_dimensions) = 3_xi, &
          ref_indices(5) = (/ 3_xi, 4_xi, 5_xi, 6_xi, 7_xi /)
     INTEGER, PARAMETER :: local_size(num_dimensions) = 5
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = xt_stripe(3, 5, 1)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = xt_stripe(3, 1, 5)
     TYPE(xt_idxlist) :: idxsection
 
     ! create index section
@@ -118,8 +118,8 @@ CONTAINS
          local_start(num_dimensions) = (/ 1_xi, 2_xi /), &
          ref_indices(6) = (/ 8_xi, 9_xi, 14_xi, 15_xi, 20_xi, 21_xi /)
     INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 3, 2 /)
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(3) = (/ xt_stripe(8, 2, 1), &
-         xt_stripe(14, 2, 1), xt_stripe(20, 2, 1) /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(3) = (/ xt_stripe(8, 1, 2), &
+         xt_stripe(14, 1, 2), xt_stripe(20, 1, 2) /)
     TYPE(xt_idxlist) :: idxsection
 
     ! create index section
@@ -140,10 +140,10 @@ CONTAINS
          ref_indices(16) = (/ 5_xi, 6_xi, 9_xi, 10_xi, 21_xi, 22_xi, 25_xi, &
          26_xi, 37_xi, 38_xi, 41_xi, 42_xi, 53_xi, 54_xi, 57_xi, 58_xi /)
     INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 4, 2, 2 /)
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(8) = (/ xt_stripe(5, 2, 1), &
-         xt_stripe(9, 2, 1), xt_stripe(21, 2, 1), xt_stripe(25, 2, 1), &
-         xt_stripe(37, 2, 1), xt_stripe(41, 2, 1), xt_stripe(53, 2, 1), &
-         xt_stripe(57, 2, 1) /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(8) = (/ xt_stripe(5, 1, 2), &
+         xt_stripe(9, 1, 2), xt_stripe(21, 1, 2), xt_stripe(25, 1, 2), &
+         xt_stripe(37, 1, 2), xt_stripe(41, 1, 2), xt_stripe(53, 1, 2), &
+         xt_stripe(57, 1, 2) /)
     TYPE(xt_idxlist) :: idxsection
 
     ! create index section
@@ -179,7 +179,7 @@ CONTAINS
 #endif
     INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 2, 3, 3, 2 /)
     TYPE(xt_stripe), PARAMETER :: ref_stripes(18) &
-         = (/ (((xt_stripe(16_xi + j*3_xi + k*12_xi + l*48_xi, 2, 1), &
+         = (/ (((xt_stripe(16_xi + j*3_xi + k*12_xi + l*48_xi, 1_xi, 2), &
          &       j = 0_xi,2_xi), k=0_xi,2_xi), l=0_xi,1_xi) /)
     TYPE(xt_idxlist) :: idxsection
 
@@ -240,7 +240,7 @@ CONTAINS
          local_start_a(1) = 4_xi, local_start_b(1) = 7_xi, &
          ref_indices(2) = (/ 7_xi, 8_xi /)
     INTEGER, PARAMETER :: local_size_a(1) = 5, local_size_b(1) = 6
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(7, 2, 1) /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(7, 1, 2) /)
     CALL test_intersection(&
          start, global_size_a, local_size_a, local_start_a, &
          start, global_size_b, local_size_b, local_start_b, &

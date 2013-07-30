@@ -121,7 +121,8 @@ CONTAINS
     CALL xt_idxlist_delete(indices_a_(1))
     CALL xt_idxlist_delete(indices_a_(2))
 
-    stripe = xt_stripe(INT(rank * 2 * size**2, xi), INT(2*size**2, xi), 1_xi)
+    stripe = xt_stripe(start = INT(rank * 2 * size**2, xi), stride = 1_xi, &
+                       nstrides = INT(2*size**2, c_int))
     indices_b = xt_idxstripes_new(stripe)
   END SUBROUTINE build_idxlists
 

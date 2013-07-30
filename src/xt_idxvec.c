@@ -211,22 +211,22 @@ static int
 decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
               int * sorted_vec_pos, int pos_offset) {
 
-  Xt_int i;
+  int i;
 
   if (stripe.stride >= 0) {
     for (i = 0; i < stripe.nstrides; ++i) {
       sorted_vector[i] = (Xt_int)(stripe.start + i * stripe.stride);
-      sorted_vec_pos[i] = pos_offset + (int)i;
+      sorted_vec_pos[i] = pos_offset + i;
     }
   } else {
     for (i = 0; i < stripe.nstrides; ++i) {
-      Xt_int j = (Xt_int)(stripe.nstrides - i - 1);
+      int j = stripe.nstrides - i - 1;
       sorted_vector[j] = (Xt_int)(stripe.start + i * stripe.stride);
-      sorted_vec_pos[j] = pos_offset + (int)i;
+      sorted_vec_pos[j] = pos_offset + i;
     }
   }
 
-  return (int)stripe.nstrides;
+  return stripe.nstrides;
 }
 
 static void
@@ -267,7 +267,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
 
   orig_pos_prefix_sum[0] = 0;
   for (i = 1; i < num_stripes; ++i)
-    orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + (int)stripes[i-1].nstrides;
+    orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + stripes[i-1].nstrides;
 
   for (i = 0; i < num_stripes; ++i)
     sorted_pos_prefix_sum[i] = orig_pos_prefix_sum[sorted_stripe_min_pos[i]];
@@ -339,13 +339,13 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
 
    /* FIXME: guard against overflow here */
    for (int i = 0; i < num_stripes; ++i)
-     num_indices = num_indices + (int)stripes[i].nstrides;
+     num_indices = num_indices + stripes[i].nstrides;
 
    Xt_int *indices = xmalloc((size_t)num_indices * sizeof(*indices));
 
    Xt_int k = -1;
    for (int i = 0; i < num_stripes; ++i)
-      for (Xt_int j = 0; j < stripes[i].nstrides; ++j)
+      for (int j = 0; j < stripes[i].nstrides; ++j)
         indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
 
    idxvec_data->vector = indices;

@@ -40,27 +40,27 @@
 
 
 #include <inttypes.h>
+#include <limits.h>
 #include <mpi.h>
 #include <yaxt.h>
 #include "core/ppm_xfuncs.h"
 
 int main(void) {
 
-#if XT_INT_MAX >= INT32_C(512) * 256 * 32
+#if INT_MAX >= INT32_C(512) * 256 * 32
 
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
   xt_initialize(MPI_COMM_WORLD);
 
-  // use 32bit constant so that product won't overflow
-  Xt_int nstrides = INT32_C(512) * 256 * 32;
-  struct Xt_stripe stripe[1] = {{.start = 0, .nstrides = nstrides, .stride = 1}};
+  int nstrides = 512 * 256 * 32;
+  struct Xt_stripe stripe[1] = {{.start = 0, .stride = 1, .nstrides = nstrides}};
   Xt_idxlist selection_indices = xt_idxstripes_new(stripe, 1);
 
   int * positions = xmalloc((size_t)nstrides * sizeof(*positions));
-  Xt_int i, j;
-  Xt_int step = nstrides / 128;
+  int i, j;
+  int step = nstrides / 128;
   int single_match_only;
-  Xt_int num_samples = 1;
+  int num_samples = 1;
 
   Xt_int global_size[3][5] = {{4, 64, 16, 256, 512},
                               {4, 16, 32, 128, 256},
@@ -90,7 +90,7 @@ int main(void) {
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_get_positions_of_indices(idxsection,
                                                 xt_idxlist_get_indices_const(selection_indices),
-                                                (int)i, positions, single_match_only);
+                                                i, positions, single_match_only);
         }
       xt_idxlist_delete(idxsection);
     }
@@ -114,7 +114,7 @@ int main(void) {
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_get_positions_of_indices(idxsection[j],
                                                 xt_idxlist_get_indices_const(selection_indices),
-                                                (int)i, positions, single_match_only);
+                                                i, positions, single_match_only);
           for (j = 0; j < num_samples; ++j)
             xt_idxlist_delete(idxsection[j]);
         }

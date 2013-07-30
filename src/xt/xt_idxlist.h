@@ -59,8 +59,8 @@
 
 struct Xt_stripe {
   Xt_int start;
-  Xt_int nstrides;
   Xt_int stride;
+  int nstrides;
 };
 
 struct Xt_bounds {

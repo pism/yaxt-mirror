@@ -112,7 +112,7 @@ CONTAINS
     src_index_list(1) = INT(comm_rank, xi)
     src_idxlist = xt_idxvec_new(src_index_list)
 
-    comm_rank_stripe(1) = xt_stripe(0, INT(comm_size, xi), 1)
+    comm_rank_stripe(1) = xt_stripe(0, 1, comm_size)
     dst_idxlist = xt_idxstripes_new(comm_rank_stripe)
 
     xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)

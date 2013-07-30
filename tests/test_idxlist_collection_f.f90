@@ -81,7 +81,7 @@ CONTAINS
          RESHAPE((/ ((INT(i, xt_int_kind), i = 1, num_indices), j = 1, 2) /), &
          &       shape = (/ num_indices, 2 /))
     TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(2) = xt_stripe(1, 7, 1)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(2) = xt_stripe(1, 1, 7)
 
     idxlists(1) = xt_idxvec_new(index_list(:, 1), num_indices)
     idxlists(2) = xt_idxvec_new(index_list(:, 2), num_indices)
@@ -106,7 +106,7 @@ CONTAINS
          &           i=1, num_indices), j=1,0,-1) /), (/ num_indices, 2 /))
     TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
     TYPE(xt_stripe), PARAMETER :: ref_stripes(8) &
-         = (/ xt_stripe(1, 7, 1), xt_stripe(7, 1, 1), xt_stripe(6, 1, 1), &
+         = (/ xt_stripe(1, 1, 7), xt_stripe(7, 1, 1), xt_stripe(6, 1, 1), &
          &    xt_stripe(5, 1, 1), xt_stripe(4, 1, 1), xt_stripe(3, 1, 1), &
          &    xt_stripe(2, 1, 1), xt_stripe(1, 1, 1) /)
     idxlists(1) = xt_idxvec_new(index_list(:, 1), num_indices)
@@ -166,8 +166,8 @@ CONTAINS
     INTEGER, PARAMETER :: xi = xt_int_kind
     INTEGER(xt_int_kind), PARAMETER :: &
          index_list(num_indices) = (/ 1_xi, 3_xi, 5_xi, 7_xi, 9_xi, 11_xi /)
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 5, 2), &
-         xt_stripe(1, 5, 2) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 2, 5), &
+         xt_stripe(1, 2, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: local_start(2) = 2
     INTEGER(xt_int_kind), PARAMETER :: global_size(2) = (/ 10_xi, 10_xi /)
     INTEGER, PARAMETER :: local_size(2) = 5

@@ -92,15 +92,16 @@ int main(void) {
       }
 
       {
-        struct Xt_stripe stripe = {(Xt_int)(rank*2*size*size),
-                                   (Xt_int)(2*size*size), 1};
+        struct Xt_stripe stripe = {.start = (Xt_int)(rank*2*size*size),
+                                   .stride = 1, .nstrides = 2*size*size};
 
         indices_b = xt_idxstripes_new(&stripe, 1);
       }
 
       {
         assert(size * size * size <= XT_INT_MAX);
-        struct Xt_stripe stripe = {0, (Xt_int)(2*size*size*size), 1};
+        struct Xt_stripe stripe = {.start = 0, .stride = 1,
+                                   .nstrides = 2*size*size*size};
 
         indices_all = xt_idxstripes_new(&stripe, 1);
       }

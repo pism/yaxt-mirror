@@ -150,7 +150,7 @@ int main(void) {
 
     xt_idxlist_get_index_stripes(idxvector, &stripes, &num_stripes);
 
-    struct Xt_stripe ref_stripes[1] = {{1,7,1}};
+    struct Xt_stripe ref_stripes[1] = {{.start = 1, .stride = 1, .nstrides = 7}};
     int ref_num_stripes = 1;
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
@@ -432,7 +432,8 @@ int main(void) {
 
   { // test constructor xt_idxvec_from_stripes_new
 
-    struct Xt_stripe stripes[2] = {{5,5,1}, {4,5,-1}};
+    struct Xt_stripe stripes[2] = {{.start = 5, .stride =  1, .nstrides = 5},
+                                   {.start = 4, .stride = -1, .nstrides = 5}};
 
     // construct
 
@@ -452,7 +453,9 @@ int main(void) {
 
   { // test constructor xt_idxvec_from_stripes_new
 
-    struct Xt_stripe stripes[3] = {{0,5,1}, {2,5,1},{4,5,1}};
+    struct Xt_stripe stripes[3] = {{.start = 0, .stride = 1, .nstrides = 5},
+                                   {.start = 2, .stride = 1, .nstrides = 5},
+                                   {.start = 4, .stride = 1, .nstrides = 5}};
 
     // construct
 
@@ -472,7 +475,9 @@ int main(void) {
 
   { // test constructor xt_idxvec_from_stripes_new
 
-    struct Xt_stripe stripes[3] = {{2,5,1},{0,5,1},{4,5,1}};
+    struct Xt_stripe stripes[3] = {{.start = 2, .stride = 1, .nstrides = 5},
+                                   {.start = 0, .stride = 1, .nstrides = 5},
+                                   {.start = 4, .stride = 1, .nstrides = 5}};
 
     // construct
 
@@ -492,7 +497,9 @@ int main(void) {
 
   { // test constructor xt_idxvec_from_stripes_new
 
-    struct Xt_stripe stripes[3] = {{2,5,1},{4,5,-1},{4,5,1}};
+    struct Xt_stripe stripes[3] = {{.start = 2, .stride =  1, .nstrides = 5},
+                                   {.start = 4, .stride = -1, .nstrides = 5},
+                                   {.start = 4, .stride =  1, .nstrides = 5}};
 
     // construct
 
@@ -512,7 +519,9 @@ int main(void) {
 
   { // test constructor xt_idxvec_from_stripes_new
 
-    struct Xt_stripe stripes[3] = {{0,5,3},{1,5,3},{14,5,-3}};
+    struct Xt_stripe stripes[3] = {{.start =  0, .stride =  3, .nstrides = 5},
+                                   {.start =  1, .stride =  3, .nstrides = 5},
+                                   {.start = 14, .stride = -3, .nstrides = 5}};
 
     // construct
 
@@ -532,7 +541,9 @@ int main(void) {
 
   { // test constructor xt_idxvec_from_stripes_new
 
-    struct Xt_stripe stripes[3] = {{0,5,3},{2,5,3},{14,5,-3}};
+    struct Xt_stripe stripes[3] = {{.start =  0, .stride =  3, .nstrides = 5},
+                                   {.start =  2, .stride =  3, .nstrides = 5},
+                                   {.start = 14, .stride = -3, .nstrides = 5}};
 
     // construct
 
@@ -552,7 +563,10 @@ int main(void) {
 
   { // test constructor xt_idxvec_from_stripes_new
 
-    struct Xt_stripe stripes[4] = {{0,5,-1},{1,5,1},{-5,5,-1},{6,5,1}};
+    struct Xt_stripe stripes[4] = {{.start =  0, .stride = -1, .nstrides = 5},
+                                   {.start =  1, .stride =  1, .nstrides = 5},
+                                   {.start = -5, .stride = -1, .nstrides = 5},
+                                   {.start =  6, .stride =  1, .nstrides = 5}};
 
     // construct
 
