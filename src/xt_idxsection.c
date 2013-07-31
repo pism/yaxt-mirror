@@ -852,7 +852,6 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   return retval;
 }
 
-/* FIXME: num_selection should probably be of type int */
 int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
                                            const Xt_int *selection_idx,
                                            int num_selection,
@@ -871,7 +870,7 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
 
   if (!single_match_only) {
     // this is the easy case, we don't care about multiple uses of the same position
-    for (Xt_int i = 0; i < num_selection; ++i)
+    for (int i = 0; i < num_selection; ++i)
       num_unmatched
         += idxsection_get_position_of_index(body_idxlist, selection_idx[i],
                                             &positions[i]);
@@ -915,14 +914,13 @@ int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
     idxpos_type *v;
 
     v = xmalloc((size_t)num_selection * sizeof(*v) );
-    for (Xt_int i=0; i<num_selection; i++) {
+    for (int i = 0; i < num_selection; i++) {
       v[i].idx = selection_idx[i];
-      /* FIXME: i is not guaranteed to be <= INT_MAX */
-      v[i].pos = (int)i;
+      v[i].pos = i;
     }
     xt_mergesort_idxpos(v, (int)num_selection);
     Xt_int last_jx = (Xt_int)(v[0].idx - 1); // any index that does not equal v[0].idx will do
-    for (i=0; i<num_selection; i++) {
+    for (i = 0; i < num_selection; i++) {
       int j = v[i].pos;
       Xt_int jx = v[i].idx;
       if (jx != last_jx) {
@@ -985,7 +983,6 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
     sorted_selection_idx = selection_idx;
 
   Xt_int const * body_indices = idxsection_get_indices_const(body_idxlist);
-  /* FIXME: problem: not guaranteed to be less than INT_MAX */
   int num_body_indices = idxsection_get_num_indices(body_idxlist);
 
   // Xt_int last_idx = sorted_selection_idx[0] - 1;
