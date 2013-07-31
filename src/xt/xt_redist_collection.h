@@ -70,7 +70,7 @@
  * \remarks all redistributions need to be based on the same
  *          MPI communicator
  */
-Xt_redist xt_redist_collection_new(Xt_redist * redists, unsigned num_redists,
+Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
                                    int cache_size, MPI_Comm comm);
 
 #endif // XT_REDIST_COLLECTION_H
