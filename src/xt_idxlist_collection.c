@@ -159,6 +159,8 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
    for (int i = 0; i < num_idxlists; ++i)
      collectionlist->idxlists[i] = xt_idxlist_copy(idxlists[i]);
 
+  /* FIXME: ensure that the total number of indices is not bigger than INT_MAX */
+
    return (Xt_idxlist)collectionlist;
 }
 
@@ -388,8 +390,6 @@ idxlist_collection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
       *position += idxlist_offsets;
       return 0;
     } else {
-      /* FIXME: xt_idxlist_get_num_indices result not guaranteed
-       * smaller INT_MAX */
       idxlist_offsets
         += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
       offset = 0;
