@@ -285,7 +285,7 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
 
     int offset = 0;
 
-    for (unsigned i = 0; i < (unsigned)new_count; ++i) {
+    for (int i = 0; i < new_count; ++i) {
 
       tmp_displ[i] = displacements[offset];
       offset += blocklengths[i];

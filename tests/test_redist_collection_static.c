@@ -108,7 +108,7 @@ int main(void) {
 
     double ref_dst_data[] = {1,3,5};
 
-    unsigned i;
+    size_t i;
 
     for (i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
       if (ref_dst_data[i] != dst_data[i])
@@ -174,7 +174,7 @@ int main(void) {
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
-      unsigned i, j;
+      int i, j;
 
       for (i = 0; i < 3; ++i)
         for (j = 0; j < 3; ++j)
@@ -190,7 +190,7 @@ int main(void) {
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
-      unsigned i, j;
+      int i, j;
 
       for (i = 0; i < 3; ++i)
         for (j = 0; j < 3; ++j)

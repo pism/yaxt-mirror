@@ -122,7 +122,7 @@ int main(void) {
     xt_redist_s_exchange(redist, 1, (void**)(&src_data_p),
                          (void**)(&dst_data_p));
 
-    //unsigned i;
+    //int i;
 
     for (Xt_int i = 0; i < (Xt_int)dataSize; ++i)
       if (dst_index_list[i] != dst_data[i])
@@ -195,7 +195,7 @@ int main(void) {
     xt_redist_s_exchange(redist, 1, (void**)(&src_data_p),
                          (void**)(&dst_data_p));
 
-    //unsigned i;
+    //int i;
 
     for (i = 0; i < size; ++i)
       if (dst_data[i] != i)

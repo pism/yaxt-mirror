@@ -139,7 +139,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   position = 0;
   size_t dst_isect_count = 0, src_isect_count = 0;
   // compute intersections
-  for (unsigned i = 0; i < (unsigned)comm_size; ++i) {
+  for (int i = 0; i < comm_size; ++i) {
 
     // unpack buffers
     Xt_idxlist src = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
@@ -150,7 +150,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
       dsti[dst_isect_count].list = intersect;
-      dsti[dst_isect_count].rank = (int)i;
+      dsti[dst_isect_count].rank = i;
       ++dst_isect_count;
     }
     else
@@ -160,7 +160,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
       srci[src_isect_count].list = intersect;
-      srci[src_isect_count].rank = (int)i;
+      srci[src_isect_count].rank = i;
       ++src_isect_count;
     }
     else

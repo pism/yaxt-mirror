@@ -733,18 +733,18 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
                              * section->dims[section->ndim-1].local_size);
     p[i].stride = 1;
 
-    for (unsigned j = 0; j < (unsigned)section->ndim - 1; ++j)
+    for (int j = 0; j < section->ndim - 1; ++j)
       p[i].start = (Xt_int)(p[i].start
                             + curr_local_position[j]
                             * section->dims[j].global_stride);
 
-    for (unsigned j = (unsigned)section->ndim - 2; j < (unsigned)section->ndim; --j)
-      if (curr_local_position[j] < isign(section->dims[j].local_size) *
-                                   section->dims[j].local_size - 1) {
-        curr_local_position[j]++;
-        break;
-      } else
-        curr_local_position[j] = 0;
+      for (int j = section->ndim - 2; j >= 0; --j)
+        if (curr_local_position[j] < isign(section->dims[j].local_size) *
+                                     section->dims[j].local_size - 1) {
+          curr_local_position[j]++;
+          break;
+        } else
+          curr_local_position[j] = 0;
   }
   *stripes = p;
   *num_stripes = (int)nstripes;

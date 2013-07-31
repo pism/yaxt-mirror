@@ -595,10 +595,10 @@ static void xmap_intersection_delete(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = xmi(xmap);
 
-  for (unsigned i = 0; i < (unsigned)xmap_intersection->n_in; ++i)
+  for (int i = 0; i < xmap_intersection->n_in; ++i)
     free(xmap_intersection->in_msg[i].transfer_pos);
 
-  for (unsigned i = 0; i < (unsigned)xmap_intersection->n_out; ++i)
+  for (int i = 0; i < xmap_intersection->n_out; ++i)
     free(xmap_intersection->out_msg[i].transfer_pos);
 
   free(xmap_intersection->in_msg);

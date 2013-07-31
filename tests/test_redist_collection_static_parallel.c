@@ -94,7 +94,7 @@ int main(void) {
       }
 
       {
-        assert(size * size * 2 * (size - 1) <= XT_INT_MAX);
+        assert(size * size * 2 * (size - 1) <= INT_MAX);
         struct Xt_stripe stripe = {.start = (Xt_int)(rank*2*size*size),
                                    .stride = 1, .nstrides = 2*size*size};
 
@@ -102,7 +102,7 @@ int main(void) {
       }
 
       {
-        assert(2 * size * size * size <= XT_INT_MAX);
+        assert(2 * size * size * size <= INT_MAX);
         struct Xt_stripe stripe = {.start = 0, .stride = 1,
                                    .nstrides = 2*size*size*size};
 

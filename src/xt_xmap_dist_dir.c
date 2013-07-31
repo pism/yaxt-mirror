@@ -80,7 +80,7 @@ struct dist_dir_entry {
 };
 
 struct dist_dir {
-  unsigned num_entries;
+  int num_entries;
   struct dist_dir_entry entries[];
 };
 
@@ -371,7 +371,7 @@ recv_and_unpack_intersection(struct dist_dir *dist_dir, int recv_size,
   if (total_recv_size != recv_size)
     Xt_abort(comm, "ERROR: recv_intersections received wrong number of bytes",
              __FILE__, __LINE__);
-  dist_dir->num_entries = (unsigned)recv_count;
+  dist_dir->num_entries = recv_count;
 }
 
 static void
@@ -407,7 +407,7 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
 struct isect
 {
   int rank;
-  unsigned dst_list, src_list;
+  int dst_list, src_list;
   Xt_idxlist idxlist;
 };
 
@@ -418,12 +418,13 @@ match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 {
   struct isect (*src_dst_intersections_)
     = (*src_dst_intersections)
-    = xmalloc(src_dist_dir->num_entries * dst_dist_dir->num_entries
+    = xmalloc((size_t)src_dist_dir->num_entries
+              * (size_t)dst_dist_dir->num_entries
               * sizeof(**src_dst_intersections));
   size_t isect_fill = 0;
 
-  for (unsigned i = 0; i < src_dist_dir->num_entries; ++i)
-    for (unsigned j = 0; j < dst_dist_dir->num_entries; ++j)
+  for (int i = 0; i < src_dist_dir->num_entries; ++i)
+    for (int j = 0; j < dst_dist_dir->num_entries; ++j)
     {
       Xt_idxlist intersection = xt_idxlist_get_intersection(
         src_dist_dir->entries[i].idxlist, dst_dist_dir->entries[j].idxlist);
@@ -483,8 +484,8 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     int msg_size = rank_pack_size
       + (int)xt_idxlist_get_pack_size(src_dst_intersections[i].idxlist,
                                       comm);
-    unsigned src = src_dst_intersections[i].src_list,
-      dst = src_dst_intersections[i].dst_list;
+    int src = src_dst_intersections[i].src_list,
+        dst = src_dst_intersections[i].dst_list;
     send_size[src_dist_dir->entries[src].rank][SEND_SIZE_SRC] += msg_size;
     ++(send_size[src_dist_dir->entries[src].rank][SEND_NUM_SRC]);
     send_size[dst_dist_dir->entries[dst].rank][SEND_SIZE_DST] += msg_size;
@@ -503,7 +504,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 
   for (size_t i = 0; i < num_intersections; ++i)
   {
-    unsigned dst = src_dst_intersections[i].dst_list;
+    int dst = src_dst_intersections[i].dst_list;
     int dst_rank = dst_dist_dir->entries[dst].rank;
     // pack rank
     xt_mpi_call(MPI_Pack(&dst_rank, 1, MPI_INT,
@@ -523,7 +524,7 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
 
   for (size_t i = 0; i < num_intersections; ++i)
   {
-    unsigned src = src_dst_intersections[i].src_list;
+    int src = src_dst_intersections[i].src_list;
     int src_rank = src_dist_dir->entries[src].rank;
 
     // pack rank
@@ -591,7 +592,7 @@ recv_and_unpack_dist_dir_result(struct dist_dir * dist_dir, int recv_size,
 {
 
   // initiate distributed directories
-  unsigned num_entries = 0;
+  int num_entries = 0;
   while (recv_size > 0) {
 
     MPI_Status status;
@@ -650,13 +651,13 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
   size_t intersections_array_size = 0;
 
   struct Xt_com_list *p
-    = xmalloc(dist_dir_results->num_entries * sizeof(*p));
+    = xmalloc((size_t)dist_dir_results->num_entries * sizeof(*p));
   size_t num_src_ix = 0;
 
   for (int i = 0; i < comm_size; ++i) {
 
     int num_intersections_per_rank = 0;
-    for (unsigned j = 0; j < dist_dir_results->num_entries; ++j)
+    for (int j = 0; j < dist_dir_results->num_entries; ++j)
       num_intersections_per_rank += (dist_dir_results->entries[j].rank == i);
 
     if (num_intersections_per_rank > 0) {
@@ -698,9 +699,7 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
 
 static void free_dist_dir(struct dist_dir * dist_dir) {
 
-  unsigned i;
-
-  for (i = 0; i < dist_dir->num_entries; ++i)
+  for (int i = 0; i < dist_dir->num_entries; ++i)
     xt_idxlist_delete(dist_dir->entries[i].idxlist);
   free(dist_dir);
 }
@@ -733,13 +732,13 @@ static void recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
                                   recv_size[SEND_SIZE_SRC],
                                   recv_buffer, src_recv_tag, comm);
   assert(src_dist_dir_results->num_entries
-         == (unsigned)recv_size[SEND_NUM_SRC]);
+         == recv_size[SEND_NUM_SRC]);
 
   recv_and_unpack_dist_dir_result(dst_dist_dir_results,
                                   recv_size[SEND_SIZE_DST],
                                   recv_buffer, dst_recv_tag, comm);
   assert(dst_dist_dir_results->num_entries
-         == (unsigned)recv_size[SEND_NUM_DST]);
+         == recv_size[SEND_NUM_DST]);
 
   free(recv_buffer);
 

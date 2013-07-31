@@ -111,7 +111,7 @@ int main(void) {
 
     double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
-    unsigned i;
+    size_t i;
 
     for (i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
       if (ref_dst_data[i] != dst_data[i])
