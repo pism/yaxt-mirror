@@ -160,10 +160,9 @@ CONTAINS
   SUBROUTINE xt_redist_s_exchange_a1d(redist, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
     TYPE(c_ptr) :: src_data_cptr(:), dst_data_cptr(:)
-    INTEGER(c_int) :: dummy
     INTEGER :: n
     n = SIZE(src_data_cptr)
-    IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(dummy)) &
+    IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
@@ -189,8 +188,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i4), INTENT(in) :: num_ptr
     TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
-    INTEGER(c_int) :: dummy
-    IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(dummy)) &
+    IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
@@ -203,8 +201,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i8), INTENT(in) :: num_ptr
     TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
-    INTEGER(c_int) :: dummy
-    IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(dummy)) &
+    IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)

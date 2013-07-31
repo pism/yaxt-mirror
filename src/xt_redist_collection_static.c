@@ -57,7 +57,7 @@
 
 
 static MPI_Datatype
-generate_datatype(unsigned num_redists,
+generate_datatype(int num_redists,
                   MPI_Aint displacements[num_redists],
                   MPI_Datatype datatypes[num_redists],
                   int block_lengths[num_redists],
@@ -65,9 +65,9 @@ generate_datatype(unsigned num_redists,
 
   MPI_Datatype datatype;
 
-  unsigned num_datatypes = 0;
+  int num_datatypes = 0;
 
-  for (unsigned i = 0; i < num_redists; ++i)
+  for (int i = 0; i < num_redists; ++i)
     if (datatypes[i] != MPI_DATATYPE_NULL)
       ++num_datatypes;
 
@@ -76,12 +76,12 @@ generate_datatype(unsigned num_redists,
 
   if (num_datatypes != num_redists) {
 
-    datatypes_ = xmalloc(num_datatypes * sizeof(*datatypes_));
-    displacements_ = xmalloc(num_datatypes * sizeof(*displacements));
+    datatypes_ = xmalloc((size_t)num_datatypes * sizeof(*datatypes_));
+    displacements_ = xmalloc((size_t)num_datatypes * sizeof(*displacements));
 
     num_datatypes = 0;
 
-    for (unsigned i = 0; i < num_redists; ++i) {
+    for (int i = 0; i < num_redists; ++i) {
       if (datatypes[i] != MPI_DATATYPE_NULL) {
 
         datatypes_[num_datatypes] = datatypes[i];
@@ -95,8 +95,7 @@ generate_datatype(unsigned num_redists,
     displacements_ = displacements;
   }
 
-  assert(num_datatypes <= INT_MAX);
-  xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, block_lengths,
+  xt_mpi_call(MPI_Type_create_struct(num_datatypes, block_lengths,
                                      displacements_, datatypes_, &datatype),
               comm);
 
@@ -113,7 +112,7 @@ generate_datatype(unsigned num_redists,
 static void
 generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
                    MPI_Aint * displacements, Xt_redist * redists,
-                   unsigned num_redists, MPI_Comm comm,
+                   int num_redists, MPI_Comm comm,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
 
   size_t msgs_array_size = 0;
@@ -124,7 +123,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
   int block_lengths[num_redists];
   MPI_Datatype datatypes[num_redists];
 
-  for (unsigned i = 0; i < num_redists; ++i)
+  for (int i = 0; i < num_redists; ++i)
     block_lengths[i] = 1;
 
   assert(*nmsgs >= 0);
@@ -133,7 +132,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
   for (int i = 0; i < comm_size; ++i) {
 
     int non_empty_xfer = 0;
-    for (unsigned j = 0; j < num_redists; ++j)
+    for (int j = 0; j < num_redists; ++j)
       non_empty_xfer |= (datatypes[j] = get_MPI_datatype(redists[j], i))
         != MPI_DATATYPE_NULL;
 
@@ -147,7 +146,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
                             block_lengths, comm);
       ++num_messages;
 
-      for (unsigned j = 0; j < num_redists; ++j)
+      for (int j = 0; j < num_redists; ++j)
         if (datatypes[j] != MPI_DATATYPE_NULL)
           xt_mpi_call(MPI_Type_free(datatypes+j), comm);
     }
@@ -159,12 +158,12 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
   *nmsgs = (int)num_messages;
 }
 
-static void check_comms(Xt_redist * redists, unsigned num_redists,
+static void check_comms(Xt_redist * redists, int num_redists,
                         MPI_Comm comm) {
 
   int result;
 
-  for (unsigned i = 0; i < num_redists; ++i) {
+  for (int i = 0; i < num_redists; ++i) {
 
     xt_mpi_call(MPI_Comm_compare(xt_redist_get_MPI_Comm(redists[i]),
                                  comm, &result), comm);
@@ -176,7 +175,7 @@ static void check_comms(Xt_redist * redists, unsigned num_redists,
 }
 
 Xt_redist
-xt_redist_collection_static_new(Xt_redist * redists, unsigned num_redists,
+xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
                                 MPI_Aint src_displacements[num_redists],
                                 MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm) {
