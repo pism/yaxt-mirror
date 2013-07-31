@@ -119,7 +119,7 @@ int main(void) {
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, 1U, (void**)(&src_data_p),
+    xt_redist_s_exchange(redist, 1, (void**)(&src_data_p),
                          (void**)(&dst_data_p));
 
     //unsigned i;
@@ -192,7 +192,7 @@ int main(void) {
     double * src_data_p = &src_data[0];
     double * dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, 1U, (void**)(&src_data_p),
+    xt_redist_s_exchange(redist, 1, (void**)(&src_data_p),
                          (void**)(&dst_data_p));
 
     //unsigned i;

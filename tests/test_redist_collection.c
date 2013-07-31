@@ -166,7 +166,7 @@ int main(void) {
       src_data_p[2] = src_data_+k;
       dst_data_p[2] = dst_data_+k;
 
-      xt_redist_s_exchange(redist_coll, 3U, (void**)src_data_p,
+      xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
                            (void**)dst_data_p);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
@@ -254,7 +254,7 @@ test_repeated_redist(int cache_size)
     double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
     double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3U, (void**)src_data_p,
+    xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
                          (void**)dst_data_p);
 
     double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
@@ -275,7 +275,7 @@ test_repeated_redist(int cache_size)
     double *src_data_p[3] = {src_data[1],src_data[0],src_data[2]};
     double *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3U, (void**)src_data_p,
+    xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
                          (void**)dst_data_p);
 
     double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
@@ -296,7 +296,7 @@ test_repeated_redist(int cache_size)
     double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
     double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3U, (void**)src_data_p,
+    xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
                          (void**)dst_data_p);
 
     double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};

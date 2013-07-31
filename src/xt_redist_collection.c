@@ -76,7 +76,7 @@ static void
 redist_collection_delete(Xt_redist redist);
 
 static void
-redist_collection_s_exchange(Xt_redist redist, unsigned num_src_arrays,
+redist_collection_s_exchange(Xt_redist redist, int num_src_arrays,
                              void **src_data, void **dst_data);
 
 static void
@@ -416,12 +416,12 @@ xrc(void *redist)
 }
 
 static void
-redist_collection_s_exchange(Xt_redist redist, unsigned num_arrays,
+redist_collection_s_exchange(Xt_redist redist, int num_arrays,
                              void **src_data, void **dst_data) {
 
   Xt_redist_collection redist_coll = xrc(redist);
 
-  if (num_arrays != (unsigned)(redist_coll->num_redists))
+  if (num_arrays != redist_coll->num_redists)
     Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
              "redist_collection_s_exchange", __FILE__, __LINE__);
 
@@ -529,8 +529,8 @@ redist_collection_s_exchange1(Xt_redist redist, void *src_data, void *dst_data)
 {
 
   Xt_redist_collection redist_coll = xrc(redist);
-  if (redist_coll->num_redists == 1U)
-    redist_collection_s_exchange(redist, 1U, &src_data, &dst_data);
+  if (redist_coll->num_redists == 1)
+    redist_collection_s_exchange(redist, 1, &src_data, &dst_data);
   else
     Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
              " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);

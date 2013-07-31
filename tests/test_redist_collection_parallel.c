@@ -153,7 +153,7 @@ int main(void) {
       Xt_int * input[4] = {index_vector_a, index_vector_b,
                            index_vector_a, index_vector_b};
 
-      xt_redist_s_exchange(redist, 4U, (void**)input, (void**)results);
+      xt_redist_s_exchange(redist, 4, (void**)input, (void**)results);
 
       // check results
 
@@ -226,7 +226,7 @@ int main(void) {
 
       Xt_int * input[2] = {src_indices_, src_indices_};
 
-      xt_redist_s_exchange(redist, 2U, (void**)input, (void**)results);
+      xt_redist_s_exchange(redist, 2, (void**)input, (void**)results);
 
       // check results
 

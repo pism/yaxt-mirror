@@ -64,7 +64,7 @@ static void
 redist_sab_delete(Xt_redist redist);
 
 static void
-redist_sab_s_exchange(Xt_redist redist, unsigned num_arrays,
+redist_sab_s_exchange(Xt_redist redist, int num_arrays,
                       void **src_data, void **dst_data);
 
 static void
@@ -150,11 +150,11 @@ redist_sab_delete(Xt_redist redist) {
 }
 
 static void
-redist_sab_s_exchange(Xt_redist redist, unsigned num_arrays,
+redist_sab_s_exchange(Xt_redist redist, int num_arrays,
                       void **src_data, void **dst_data)
 {
   Xt_redist_sab redist_rep = xrsab(redist);
-  if (num_arrays == 1U)
+  if (num_arrays == 1)
     redist_sab_s_exchange1(redist, src_data[0], dst_data[0]);
   else
     Xt_abort(redist_rep->comm, "ERROR: multi-array s_exchange is not"

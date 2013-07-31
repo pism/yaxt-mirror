@@ -71,7 +71,7 @@ void xt_redist_delete(Xt_redist redist);
  * @param[in]     src_data       array containing the base addresses of the input arrays
  * @param[in,out] dst_data       array containing the base addresses of the output arrays
  */
-void xt_redist_s_exchange(Xt_redist redist, unsigned num_arrays,
+void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
                           void **src_data, void **dst_data);
 
 /**

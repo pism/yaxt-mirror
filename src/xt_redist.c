@@ -76,7 +76,7 @@ void xt_redist_delete(Xt_redist redist) {
   redist->vtable->delete(redist);
 }
 
-void xt_redist_s_exchange(Xt_redist redist, unsigned num_arrays,
+void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
                           void **src_data, void **dst_data) {
 
   redist->vtable->s_exchange(redist, num_arrays, src_data, dst_data);

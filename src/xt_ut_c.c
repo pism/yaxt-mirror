@@ -252,5 +252,5 @@ void xt_ut_transpose(void **pt_in, int itrans, int XT_UNUSED(direction),
                      void **pt_out) {
   xt_ut_trans_type *trans = xt_handle2pointer(trans_set, itrans);
   if (!trans) die("xt_ut_transpose1: invalid handle");
-  xt_redist_s_exchange(trans->redist, 1U, pt_in, pt_out);
+  xt_redist_s_exchange(trans->redist, 1, pt_in, pt_out);
 }
