@@ -44,7 +44,7 @@ AC_DEFUN([ACX_FC_VOLATILE],
      REAL, INTENT(IN) :: p
      REAL :: x
      VOLATILE :: x
-     x = x + 1
+     x = x + 1.0
 END SUBROUTINE f
 ],dnl
      [AC_MSG_RESULT([yes])

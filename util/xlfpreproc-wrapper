@@ -47,6 +47,7 @@ for srcfile in "$@" ; do
   eval \$FC \$FCFLAGS \$FPPFLAGS -d -qnoobject \"\$srcfile\" $outputRedir
   set -e
   FPPOUTNAME=`echo $srcfile | sed -e 's:\(.*/\)*\([^/]*\)\.[^./]*$:F\2.f:'`
+  test -r "$FPPOUTNAME" || FPPOUTNAME="${FPPOUTNAME}90"
   cat "$FPPOUTNAME" 2>/dev/null
   test "${DEBUG+set}" = set && cat "$FPPOUTNAME" >&2
   rm "$FPPOUTNAME"

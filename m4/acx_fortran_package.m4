@@ -77,7 +77,7 @@ dnl      [ACTION-IF-LIB-NOT-FOUND],
 dnl    [DEFAULT-ROOT],[EXTRA-DECLARATION],[SUBROUTINE-ARGUMENTS])
 dnl -------------------------------------------------------------------
 
-dnl Check wether INCLUDE can be compiled and FUNCTION is found in
+dnl Check wether USE MODULE can be compiled and FUNCTION is found in
 dnl LIB-CANDIDATES. Sets PACKAGE_LIB and PACKAGE_MOD variables to
 dnl necessary Fortran compiler switches and arguments such that
 dnl compilation and linking succeed for programs using MODULE and
@@ -99,7 +99,7 @@ AC_DEFUN([ACX_F90_PACKAGE],
         m4_ifval([$11], [AS_TR_CPP([$1][root])=$11]))
    AS_VAR_SET_IF(AS_TR_CPP([$1][root]),
      [AS_VAR_SET_IF([AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB])],,
-        [AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB])="-L$[]AS_TR_CPP([$1][root])/lib"])
+        [AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB])="-L$[]AS_TR_CPP([$1][root])/lib"])
       AS_VAR_SET_IF([AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])],,
         [AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])="$FC_MOD_FLAG$[]AS_TR_CPP([$1][root])/include"])])
    m4_ifval([$2],dnl
@@ -107,7 +107,7 @@ AC_DEFUN([ACX_F90_PACKAGE],
         [AS_HELP_STRING([--with-]ASX_TR_ARG([$1-]_AC_LANG_ABBREV)[-mod],
            [specifically set directory to search for $1 module, ]dnl
 [@<:@default=$]AS_TR_SH(ASX_TR_ARG([with_$1_root]))[/include@:>@])],
-        AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[="$FC_MOD_FLAG$AS_TR_SH(ASX_TR_ARG([with_$1][_]_AC_LANG_ABBREV[_mod]))"],
+        AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[="$FC_MOD_FLAG$AS_TR_SH(ASX_TR_ARG([with_$1_]_AC_LANG_ABBREV[_mod]))"],
         [])
       AC_SUBST(AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]))
       ACX_FORTRAN_CHECK_MOD_PATHS_IFELSE([$2],["$[]AS_TR_CPP([$1][root])/include" "$[]AS_TR_CPP([$1][root])/lib"],
@@ -116,26 +116,25 @@ AC_DEFUN([ACX_F90_PACKAGE],
         [$3],m4_ifval([$4],[$4 ])[$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])])])
    m4_ifval([$6],
      [AC_ARG_WITH(ASX_TR_ARG([$1]_AC_LANG_ABBREV[-lib]),
-        [AS_HELP_STRING([--with-]ASX_TR_ARG([$1]_AC_LANG_ABBREV)[-lib],
+        [AS_HELP_STRING([--with-]ASX_TR_ARG([$1-]_AC_LANG_ABBREV)[-lib],
         [specifically set directory to search for $1 library, ]dnl
 [@<:@default=$]AS_TR_SH(ASX_TR_ARG([with_$1_root]))[/lib@:>@])],
-        AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB])[="-L$AS_TR_SH(ASX_TR_ARG([with_$1]_AC_LANG_ABBREV[_lib]))"],
+        AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB])[="-L$AS_TR_SH(ASX_TR_ARG([with_$1_]_AC_LANG_ABBREV[_lib]))"],
         [])
       AS_IF([test x$]AS_TR_SH([have_][$1_]_AC_LANG_ABBREV[_bindings])[ = xyes],
         [AS_VAR_PUSHDEF([ac_Search], [acx_cv_option_search_$6_]_AC_LANG_ABBREV)dnl
-         AC_SUBST(AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB]))
+         AC_SUBST(AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB]))
          acx_save_FCFLAGS="$FCFLAGS"
          FCFLAGS="$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]) $FCFLAGS"
          ACX_OPTION_SEARCH_LIBS_MULTI([$6],[$7],,dnl
-           [$10],[$8],m4_ifval([$9],[$9 ])$[]AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB]),dnl
+           [$10],[$8],m4_ifval([$9],[$9 ])$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB]),dnl
            [use $2]m4_ifval([$12],[[
 $12]]),[         call $6$13])
          FCFLAGS="$acx_save_FCFLAGS"
-         AS_TR_CPP([$1]_AC_LANG_ABBREV[_LIB])="AS_VAR_GET([ac_Search])"
+         AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB])="AS_VAR_GET([ac_Search])"
          AS_VAR_POPDEF([ac_Search])])])
    AC_LANG_POP([Fortran])dnl
   ])
-
 dnl
 dnl Local Variables:
 dnl mode: autoconf

@@ -325,7 +325,9 @@ AC_DEFUN([_ACX_SL_PROG_FPP],dnl
            _ACX_SL_TEST_FPP([$ac_fpp -P],[$acx_sl_fpp_srcext],dnl
              [FPP="$ac_fpp -P"
               break])
-         done])
+         done
+         dnl the above tests might generate an executable
+         \rm a.out 2>/dev/null])
       AS_IF([test -z "$FPP"], [$3],
         [AS_VAR_SET([acx_sl_prog_fpp], [$FPP])
          $2])])
@@ -382,7 +384,7 @@ m4_define([_ACX_FPP_COMPILE_IFELSE],dnl
      [_AC_RUN_LOG([$FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext \
         >conftest.${ac_ext}.tmp],
         [echo Running preprocessor $FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext])])
-   m4_if([$2],[direct], [FCFLAGS="$FPPFLAGS $1 $ac_save_FCFLAGS"])
+   m4_if([$2],[direct],[FCFLAGS="$FPPFLAGS $1 $ac_save_FCFLAGS"])
    mv conftest.${ac_ext}.tmp conftest.${ac_ext}
    AC_COMPILE_IFELSE(,[$3],[$4])])
 
@@ -453,7 +455,7 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
       AS_IF([test $ac_fpp_need_i = yes],
         [acx_sl_prog_fc_cpp_i=no
          _AS_ECHO_LOG([Trying flag to add directories to preprocessor search path.])
-         mkdir conftst
+         AS_MKDIR_P([conftst])
          cd conftst
          ACX_LANG_OTHER_SUFFIX_CONFTEST([inc],dnl
            [AC_LANG_SOURCE([!     This statement overrides the IMPLICIT statement in the program

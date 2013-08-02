@@ -70,7 +70,7 @@ AC_DEFUN([ACX_GENERIC_PACKAGE],
      [AS_TR_SH([acx_cv_]_AC_LANG_ABBREV[_include_]$2)])
    AS_VAR_PUSHDEF([acx_pkg_bindings],
      [AS_TR_SH([have_][$1_]_AC_LANG_ABBREV[_bindings])])
-   AS_VAR_SET([acx_pkg_bindings],[yes]) 
+   AS_VAR_SET([acx_pkg_bindings],[yes])
    AC_SUBST(acx_pkg_root)
    AC_ARG_WITH(ASX_TR_ARG([$1-root]),
      [AS_HELP_STRING([--with-]ASX_TR_ARG([$1])[-root],
