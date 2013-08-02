@@ -56,6 +56,13 @@ ACX_CHECK_SIZEOF_RELATION([long], [int])
 ACX_CHECK_SIZEOF_RELATION([long long], [long])
 
 dnl ######################################################################
+dnl Test whether cfortran.h works correctly
+dnl ######################################################################
+ACX_FIND_CFORTRAN_DEF
+ACX_XLF_QEXTNAME_ADD_APPENDUS
+ACX_CHECK_CFORTRAN
+
+dnl ######################################################################
 dnl Checks for header files.
 dnl ######################################################################
 dnl
