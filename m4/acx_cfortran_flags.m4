@@ -78,7 +78,7 @@ AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
      [x86_64-*-linux-*|i*86-*-linux-*|*-apple-darwin*|ia64-*-linux-*],
      [acx_temp=`$acx_FC -V 2>&1`
       AS_IF([echo "$acx_temp" | grep '^Copyright.*The Portland Group' >/dev/null],
-        [AS_VAR_SET([acx_cf_flag],[-DpgiFortran])],
+        [AS_VAR_SET([acx_cf_flag],[-DgFortran])],
         [echo "$acx_temp" | grep '^NAG Fortran Compiler Release' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DNAGf90Fortran])],
         [echo "$acx_temp" | grep '^Intel(R) Fortran.*Compiler' >/dev/null],
