@@ -22,12 +22,15 @@ repository.
 
 2. General advice for running configure
 
-To adapt yaxt to your MPI system, yaxt needs three pieces of information
+To adapt yaxt to your MPI system, yaxt needs to be given two to four pieces of
+information
 
   a) how to invoke the C compiler and compile and link C programs
   b) how to invoke the Fortran compiler and compile and link Fortran programs
-  c) how to produce C code for C<->Fortran interoperability, see cfortran.doc
-  d) how to run compiled MPI programs
+  c) how to run compiled MPI programs (mpirun and mpiexec will be
+     tried automatically)
+  d) how to produce C code for C<->Fortran interoperability, see cfortran.doc
+     for a number of compilers this will be found automatically
 
 For a) and b) respectively you can either
 
@@ -36,16 +39,17 @@ For a) and b) respectively you can either
   some of the arguments MPIROOT MPI_C_INCLUDE MPI_FC_INCLUDE MPI_C_LIB
   and MPI_FC_LIB to set the necessary compiler flags to build MPI programs.
 
-For c) the following is used as an option in CPPFLAGS for different compilers:  
-
-* GCC gfortran, PGI pgfortran, Cray and Intel compilers: -DpgiFortran
-* NAG Fortran compiler: -DNAGf90Fortran
-* IBM xlc needs -Dextname if -qextname is used on for the Fortran part.
-
-For d) the configure-argument MPI_LAUNCH needs to be set according to
+For c) the configure-argument MPI_LAUNCH needs to be set according to
 your MPI installation. For mpich/openmpi style environments, mpirun is
 fine and usually detected automatically. For IBM PE an adapter that's
 provided as util/mpi_launch_poe in the yaxt source must be used.
+
+For d) the following is used as an option in CPPFLAGS for different
+compilers automatically:
+
+* GCC gfortran, PGI pgfortran, Cray and Intel compilers: -DgFortran
+* NAG Fortran compiler: -DNAGf90Fortran
+* IBM xlc needs -Dappendus if -qextname is used on for the Fortran part.
 
 3. Requirements
 
@@ -70,7 +74,7 @@ The following packages need to be installed:
 
 The following commands should produce a working install:
 
-$ ./configure CC=mpicc FC=mpif90 FCFLAGS=-cpp CPPFLAGS=-DpgiFortran
+$ ./configure CC=mpicc FC=mpif90 FCFLAGS=-cpp
 $ make
 $ make check
 $ make install
@@ -79,7 +83,7 @@ equivalently one can use:
 
 $ ./configure CC=gcc FC=gfortran MPIROOT=/usr/lib/openmpi \
   MPI_FC_LIB='-L/usr/lib/openmpi -lmpi_f90 -lmpi_f77' \
-  CPPFLAGS=-DpgiFortran FCFLAGS=-cpp
+  FCFLAGS=-cpp
 
 for the configure run.
 
