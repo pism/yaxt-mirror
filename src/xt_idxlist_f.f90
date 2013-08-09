@@ -47,7 +47,7 @@
 !
 MODULE xt_idxlist_abstract
   USE xt_core, ONLY: xt_int_kind, xt_mpi_fint_kind, xt_stripe, &
-       xt_bounds, xt_get_default_comm, xt_abort
+       xt_bounds, xt_get_default_comm, xt_abort, i2, i4, i8
   USE iso_c_binding, ONLY: c_ptr, c_int, c_f_pointer, c_null_ptr, &
        c_associated
   IMPLICIT NONE
@@ -130,6 +130,18 @@ MODULE xt_idxlist_abstract
       TYPE(c_ptr), VALUE :: idxlist
     END SUBROUTINE xt_idxlist_delete_c
 
+    FUNCTION xt_idxlist_get_indices_at_positions_c(idxlist, positions, &
+         num_pos, indices, undef_idx) &
+         BIND(c, name='xt_idxlist_get_indices_at_positions') RESULT(num_subst)
+      IMPORT :: c_ptr, c_int, xt_int_kind
+      TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+      INTEGER(c_int), INTENT(in) :: positions(*)
+      INTEGER(c_int), VALUE, INTENT(in) :: num_pos
+      INTEGER(xt_int_kind), VALUE, INTENT(in) :: undef_idx
+      INTEGER(xt_int_kind), INTENT(out) :: indices(*)
+      INTEGER(c_int) :: num_subst
+    END FUNCTION xt_idxlist_get_indices_at_positions_c
+
   END INTERFACE
 
   INTERFACE xt_idxlist_delete
@@ -150,6 +162,13 @@ MODULE xt_idxlist_abstract
   INTERFACE xt_is_null
     MODULE PROCEDURE xt_idxlist_is_null
   END INTERFACE xt_is_null
+
+  INTERFACE xt_idxlist_get_indices_at_positions
+    MODULE PROCEDURE xt_idxlist_get_indices_at_positions_a1d
+    MODULE PROCEDURE xt_idxlist_get_indices_at_positions_a1d_i2
+    MODULE PROCEDURE xt_idxlist_get_indices_at_positions_a1d_i4
+    MODULE PROCEDURE xt_idxlist_get_indices_at_positions_a1d_i8
+  END INTERFACE xt_idxlist_get_indices_at_positions
 
 CONTAINS
 
@@ -197,8 +216,8 @@ CONTAINS
          INT(position, c_int), idx) /= 0
   END FUNCTION xt_idxlist_get_index_at_position
 
-  FUNCTION xt_idxlist_get_indices_at_positions(idxlist, positions, indices, &
-       undef_idx) RESULT(num_subst)
+  FUNCTION xt_idxlist_get_indices_at_positions_a1d(idxlist, positions, &
+    indices, undef_idx) RESULT(num_subst)
     IMPLICIT NONE
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER, INTENT(in) :: positions(:)
@@ -206,27 +225,68 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
     INTEGER :: num_subst, n
 
-    INTERFACE
-      FUNCTION xt_idxlist_get_indices_at_positions_c(idxlist, positions, &
-           num_pos, indices, undef_idx) &
-           BIND(c, name='xt_idxlist_get_indices_at_positions') RESULT(num_subst)
-        IMPORT :: c_ptr, c_int, xt_int_kind
-        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
-        INTEGER(c_int), INTENT(in) :: positions(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: num_pos
-        INTEGER(xt_int_kind), VALUE, INTENT(in) :: undef_idx
-        INTEGER(xt_int_kind), INTENT(out) :: indices(*)
-        INTEGER(c_int) :: num_subst
-      END FUNCTION xt_idxlist_get_indices_at_positions_c
-    END INTERFACE
-
     n = SIZE(positions)
     IF (n > HUGE(1_c_int)) n = HUGE(1_c_int)
 
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
          INT(positions, c_int), INT(n, c_int), &
          indices, undef_idx)
-  END FUNCTION xt_idxlist_get_indices_at_positions
+  END FUNCTION xt_idxlist_get_indices_at_positions_a1d
+
+  FUNCTION xt_idxlist_get_indices_at_positions_a1d_i2(idxlist, positions, &
+       num_pos, indices, undef_idx) RESULT(num_subst)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER, INTENT(in) :: positions(*)
+    INTEGER(xt_int_kind), INTENT(out) :: indices(*)
+    INTEGER(xt_int_kind), INTENT(in) :: undef_idx
+    INTEGER(i2) :: num_pos
+    INTEGER :: num_subst
+
+    num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
+         INT(positions(1:num_pos), c_int), INT(num_pos, c_int), &
+         indices, undef_idx)
+  END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i2
+
+  FUNCTION xt_idxlist_get_indices_at_positions_a1d_i4(idxlist, positions, &
+       num_pos, indices, undef_idx) RESULT(num_subst)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER, INTENT(in) :: positions(*)
+    INTEGER(xt_int_kind), INTENT(out) :: indices(*)
+    INTEGER(xt_int_kind), INTENT(in) :: undef_idx
+    INTEGER(i4) :: num_pos
+    INTEGER :: num_subst
+
+    IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
+         CALL xt_abort(xt_get_default_comm(), "invalid number of positions", &
+         __FILE__, &
+         __LINE__)
+
+    num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
+         INT(positions(1:num_pos), c_int), INT(num_pos, c_int), &
+         indices, undef_idx)
+  END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i4
+
+  FUNCTION xt_idxlist_get_indices_at_positions_a1d_i8(idxlist, positions, &
+       num_pos, indices, undef_idx) RESULT(num_subst)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER, INTENT(in) :: positions(*)
+    INTEGER(xt_int_kind), INTENT(out) :: indices(*)
+    INTEGER(xt_int_kind), INTENT(in) :: undef_idx
+    INTEGER(i8) :: num_pos
+    INTEGER :: num_subst
+
+    IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
+         CALL xt_abort(xt_get_default_comm(), "invalid number of positions", &
+         __FILE__, &
+         __LINE__)
+
+    num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
+         INT(positions(1:num_pos), c_int), INT(num_pos, c_int), &
+         indices, undef_idx)
+  END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i8
 
   FUNCTION xt_idxlist_get_position_of_index(idxlist, idx, position) &
        RESULT(notfound)
