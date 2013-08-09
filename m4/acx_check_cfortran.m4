@@ -1,7 +1,8 @@
-dnl acx_fc_c_link.m4 --- transform library c flags into version
-dnl                      that suits the fortran compiler
+dnl acx_check_cfortran.m4 --- test if a program compiled from
+dnl                           a main Fortran program and
+dnl                           C functions gives expected results
 dnl
-dnl Copyright  (C)  2011  Thomas Jahns <jahns@dkrz.de>
+dnl Copyright  (C)  2013  Thomas Jahns <jahns@dkrz.de>
 dnl
 dnl Version: 1.0
 dnl Keywords:
@@ -51,19 +52,32 @@ dnl build C function
       AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include "cfortran.h"
 @%:@include <math.h>
 @%:@include <stdio.h>
+@%:@include <stdlib.h>
 
 PROTOCCALLSFFUN1(FLOAT,CONFTEST_F,conftest_f,FLOAT)
 #define conftest_F(v) \
   CCALLSFFUN1(CONFTEST_F,conftest_f,FLOAT,(v));
 
-static void
+static float
 conftest_C(int i, float v, int *p, float *q)
 {
+  float f;
   *p = (int)roundf(v * i);
-  *q = conftest_F(v * i);
+  *q = f = conftest_F(v * i);
+  return f;
 }
 
-FCALLSCSUB4(conftest_C,CONFTEST_C,conftest_c,INT,FLOAT,PINT,PFLOAT)
+FCALLSCFUN4(FLOAT,conftest_C,CONFTEST_C,conftest_c,INT,FLOAT,PINT,PFLOAT)
+
+/* This function is required simply because some Fortran compilers
+ * won't stop with exit code n when encountering STOP n */
+static void
+errExit()
+{
+  exit(1);
+}
+
+FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
 
 ])],
         [_AC_RUN_LOG([mv "conftest.$ac_objext" "conftest_c.$ac_objext"],
@@ -93,37 +107,45 @@ FCALLSCSUB4(conftest_C,CONFTEST_C,conftest_c,INT,FLOAT,PINT,PFLOAT)
       USE conftest_data, ONLY: ri
       IMPLICIT NONE
       INTERFACE
-       SUBROUTINE conftest_c(i, v, p, q)
+       FUNCTION conftest_c(i, v, p, q) RESULT(f)
          INTEGER, INTENT(in) :: i
          REAL, INTENT(in) :: v
          INTEGER, INTENT(out) :: p
          REAL, INTENT(out) :: q
-       END SUBROUTINE conftest_c
+         REAL :: f
+       END FUNCTION conftest_c
       END INTERFACE
       REAL, PARAMETER :: eps = 10e-6
-      REAL :: foo, boo
+      REAL :: foo, boo, too
       INTEGER :: bar, baz
       bar = 5
       foo = 0.3
-      CALL conftest_c(bar, foo, baz, boo)
+      too = conftest_c(bar, foo, baz, boo)
       IF (ABS(baz - NINT(bar * foo)) /= 0) THEN
         WRITE (0, *) "error checking, when baz, baz=", baz, &
              ", NINT(bar * foo) =", NINT(bar * foo)
         FLUSH(0)
-        STOP 1
+        CALL err_exit
       END IF
       IF (ABS(ri - 1.0 / (bar * foo)) > eps)  THEN
         WRITE (0, *) "error checking ri, ri=", ri, ", 1.0 / (bar * foo) = ", &
              1.0 / (bar * foo)
         FLUSH(0)
-        STOP 1
+        CALL err_exit
       END IF
       IF (ABS(boo - (bar * foo * 100.0)) > eps)  THEN
         WRITE (0, *) "error checking boo, boo=", boo, &
              ", bar * foo * 100.0 = ", bar * foo * 100.0
         FLUSH(0)
-        STOP 1
+        CALL err_exit
       END IF
+      IF (too /= boo)  THEN
+        WRITE (0, *) "error checking too vs. boo, too=", too, &
+             ", boo = ", boo
+        FLUSH(0)
+        CALL err_exit
+      END IF
+
 ])],
            [acx_cv_cfortran_works=yes],
            [acx_cv_cfortran_works="error"],
