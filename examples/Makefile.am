@@ -43,9 +43,9 @@ noinst_PROGRAMS = 						\
 
 rrobin_SOURCES = rrobin.c
 
-idxlist_examples_SOURCES = idxlist_examples.c
+idxlist_examples_SOURCES = idxlist_examples.c print_index_list.h
 
-idxsection_examples_SOURCES = idxsection_examples.c
+idxsection_examples_SOURCES = idxsection_examples.c print_index_list.h
 
 row2col_SOURCES = row2col.c
 

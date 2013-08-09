@@ -43,9 +43,7 @@
 
 #include <yaxt.h>
 
-static void print_index_list(Xt_idxlist idxlist);
-
-
+#include "print_index_list.h"
 
 int main(void) {
 
@@ -134,18 +132,3 @@ int main(void) {
   }
 }
 
-static void print_index_list(Xt_idxlist idxlist) {
-
-  char format_strings[2][5] = {{"%d "},{"%ld "}};
-
-  char * format_string = format_strings[sizeof(Xt_int) == sizeof(long)];
-
-  for (int i = 0; i < xt_idxlist_get_num_indices(idxlist); ++i) {
-
-    Xt_int index;
-
-    xt_idxlist_get_index_at_position(idxlist, i, &index);
-    printf(format_string, index);
-  }
-  puts("");
-}
