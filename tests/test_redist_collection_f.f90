@@ -204,7 +204,7 @@ CONTAINS
     TYPE(xt_redist) :: redist, redists(num_slice), redist_coll
     DOUBLE PRECISION, TARGET, SAVE :: src_data(src_slice_len, num_slice) &
          = RESHAPE((/ (DBLE(i), i = 1_xi, src_slice_len*num_slice) /), &
-         (/ INT(src_slice_len, xt_int_kind), num_slice /))
+         (/ INT(src_slice_len), INT(num_slice) /))
     DOUBLE PRECISION, TARGET :: dst_data(dst_slice_len, num_slice)
     DOUBLE PRECISION, TARGET, ALLOCATABLE :: src_data_(:), dst_data_(:)
     TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
@@ -212,7 +212,7 @@ CONTAINS
          RESHAPE((/ ((DBLE(i + j * src_slice_len), &
          &            i = 1_xi, src_slice_len, dst_step), &
          &           j = 0_xi, num_slice - 1_xi) /), &
-         &       (/ INT(dst_slice_len, xt_int_kind), num_slice /))
+         &       (/ INT(dst_slice_len), INT(num_slice) /))
     INTEGER :: k
 
     xmap = build_odd_selection_xmap(src_slice_len)
