@@ -573,7 +573,7 @@ CONTAINS
       im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ! north border exchange without ew-halos
-      ldx = g_core_ie - g_core_is + 1_xt_int_kind
+      ldx = g_core_ie - g_core_is + 1
       ldy = north_halo
       mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
            (/ ldx, ldy /),   (/g_core_is, 1_xt_int_kind/))
