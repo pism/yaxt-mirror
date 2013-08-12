@@ -170,13 +170,13 @@ struct Xt_idxsection_ {
   Xt_int global_start_index;
   Xt_int local_start_index;
   int ndim;
-  struct dim_desc *dims;
 
   int index_num_cache;
   Xt_int *index_array_cache;
 
   Xt_int min_index_cache;
   Xt_int max_index_cache;
+  struct dim_desc dims[];
 };
 
 void
@@ -216,13 +216,13 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
 
   if (num_dimensions <= 0)
     return xt_idxempty_new();
-  Xt_idxsection idxsection = xmalloc(sizeof (*idxsection));
+  Xt_idxsection idxsection = xmalloc(sizeof (*idxsection)
+                                     + (size_t)num_dimensions *
+                                     sizeof (idxsection->dims[0]));
 
   Xt_idxlist_init(&idxsection->parent, &idxsection_vtable);
   idxsection->global_start_index = start;
   idxsection->ndim               = num_dimensions;
-  idxsection->dims = xmalloc((size_t)num_dimensions *
-                             sizeof (idxsection->dims[0]));
 
   idxsection->index_array_cache  = NULL;
 
@@ -313,7 +313,6 @@ idxsection_delete(Xt_idxlist data) {
 
   Xt_idxsection section = (Xt_idxsection)data;
 
-  free(section->dims);
   free(section->index_array_cache);
   free(section);
 }
@@ -367,34 +366,37 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   INSTR_DEF(instr,"xt_idxsection_unpack");
   INSTR_START(instr);
 
-  Xt_idxsection section = xmalloc(sizeof (*section));
+  Xt_idxsection section;
+  int ndim;
+  {
+    Xt_int global_start_index, local_start_index;
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                           &global_start_index, 1, Xt_int_dt, comm), comm);
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                           &local_start_index, 1, Xt_int_dt, comm), comm);
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, &ndim, 1, MPI_INT,
+                           comm), comm);
+    assert(ndim > 0);
 
-  Xt_idxlist_init(&section->parent, &idxsection_vtable);
-  section->index_array_cache = NULL;
-  section-> index_num_cache = -1; // == undef
+    section = xmalloc(sizeof (*section)
+                      + (size_t)ndim * sizeof(section->dims[0]));
+    Xt_idxlist_init(&section->parent, &idxsection_vtable);
+    section->index_array_cache = NULL;
+    section->index_num_cache = -1; // == undef
+    section->global_start_index = global_start_index;
+    section->local_start_index = local_start_index;
+    section->ndim = ndim;
+  }
 
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         &(section->global_start_index), 1, Xt_int_dt,
-                         comm), comm);
-  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         &(section->local_start_index), 1, Xt_int_dt,
-                         comm), comm);
-  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         &(section->ndim), 1, MPI_INT,
-                         comm), comm);
-  assert(section->ndim > 0);
-
-  section->dims = xmalloc((size_t)section->ndim * sizeof(section->dims[0]));
-
-  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         section->dims, section->ndim, dim_desc_dt,
+                         section->dims, ndim, dim_desc_dt,
                          comm),comm);
 
   // due to the possibility of negative local and global sizes, the minimum and
   // maximum can be in any corner of the n-dimensional section
   section->min_index_cache = section->local_start_index;
   section->max_index_cache = section->local_start_index;
-  for (int i = 0; i < section->ndim; ++i) {
+  for (int i = 0; i < ndim; ++i) {
 
     // if either local or global size is negative
     if ((section->dims[i].global_size < 0) ^ (section->dims[i].local_size < 0))
@@ -586,14 +588,13 @@ static Xt_idxlist
 idxsection_copy(Xt_idxlist idxlist) {
 
   Xt_idxsection src = (Xt_idxsection)idxlist;
-  Xt_idxsection idxsection = xmalloc(sizeof (*idxsection));
-
-  *idxsection = *src;
 
   int num_dimensions = src->ndim;
 
-  idxsection->dims = xmalloc((size_t)num_dimensions *
-                             sizeof (idxsection->dims[0]));
+  Xt_idxsection idxsection = xmalloc(sizeof (*idxsection)
+                                     + (size_t)num_dimensions
+                                     * sizeof (idxsection->dims[0]));
+  *idxsection = *src;
   idxsection->index_array_cache  = NULL;
 
   memcpy(idxsection->dims, src->dims, (size_t)num_dimensions *
