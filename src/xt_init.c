@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include "core/core.h"
 #include "xt_idxstripes_internal.h"
+#include "xt_idxsection_internal.h"
 #include "xt_idxempty_internal.h"
 #include "instr.h"
 
@@ -61,6 +62,7 @@ xt_initialize(MPI_Comm default_comm)
   Xt_default_comm = default_comm;
   xt_idxempty_init();
   xt_idxstripes_initialize();
+  xt_idxsection_initialize();
 #ifdef INSTR_WITH_SCT
   sct_init(32, SCT_GETENV, "YAXT", Xt_default_comm);
   setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
@@ -75,6 +77,7 @@ xt_finalize()
 {
   if (xt_lib_state == xt_lib_initialized)
   {
+    xt_idxsection_finalize();
     xt_idxstripes_finalize();
     xt_idxempty_finalize();
 #ifdef INSTR_WITH_SCT

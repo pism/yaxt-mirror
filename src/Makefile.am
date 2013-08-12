@@ -73,6 +73,7 @@ libyaxt_la_SOURCES =						\
 	xt_idxlist_unpack.h					\
 	xt_idxlist_unpack.c 					\
 	xt_idxmod.c						\
+	xt_idxsection_internal.h				\
 	xt_idxsection.c						\
 	xt_idxstripes_internal.h				\
 	xt_idxstripes.c						\

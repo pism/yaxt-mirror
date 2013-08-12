@@ -158,6 +158,9 @@ struct dim_desc
   int local_size;
 };
 
+static MPI_Datatype dim_desc_dt;
+
+
 typedef struct Xt_idxsection_ *Xt_idxsection;
 
 struct Xt_idxsection_ {
@@ -175,6 +178,33 @@ struct Xt_idxsection_ {
   Xt_int min_index_cache;
   Xt_int max_index_cache;
 };
+
+void
+xt_idxsection_initialize()
+{
+  struct dim_desc dim_desc;
+
+  MPI_Aint base_address, local_size_address;
+
+  MPI_Get_address(&dim_desc, &base_address);
+  MPI_Get_address(&dim_desc.local_size, &local_size_address);
+
+  int block_lengths[3] = { 4, 1, 1 };
+  MPI_Aint displacements[3] = {0,
+                               local_size_address - base_address,
+                               sizeof(dim_desc)};
+  MPI_Datatype types[3] = { Xt_int_dt, MPI_INT, MPI_UB };
+
+  xt_mpi_call(MPI_Type_create_struct(3, block_lengths, displacements,
+                                     types, &dim_desc_dt), Xt_default_comm);
+  xt_mpi_call(MPI_Type_commit(&dim_desc_dt), Xt_default_comm);
+}
+
+void
+xt_idxsection_finalize()
+{
+  xt_mpi_call(MPI_Type_free(&dim_desc_dt), Xt_default_comm);
+}
 
 Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
                              const Xt_int global_size[num_dimensions],
@@ -293,18 +323,16 @@ idxsection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   Xt_idxsection section = (Xt_idxsection)data;
 
-  int size_int_type, size_ndim, size_dims_int, size_dims_xt_int, size_xt_int;
+  int size_int_type, size_ndim, size_dim_descs, size_xt_int;
 
   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
   xt_mpi_call(MPI_Pack_size(2, Xt_int_dt, comm, &size_xt_int), comm);
   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_ndim), comm);
-  xt_mpi_call(MPI_Pack_size(section->ndim * 1, MPI_INT,
-                            comm, &size_dims_int), comm);
-  xt_mpi_call(MPI_Pack_size(section->ndim * 4, Xt_int_dt,
-                            comm, &size_dims_xt_int), comm);
+  xt_mpi_call(MPI_Pack_size(section->ndim, dim_desc_dt,
+                            comm, &size_dim_descs), comm);
 
-  return (size_t)size_int_type + (size_t)size_ndim + (size_t)size_dims_int
-    + (size_t)size_dims_xt_int + (size_t)size_xt_int;
+  return (size_t)size_int_type + (size_t)size_ndim + (size_t)size_dim_descs
+    + (size_t)size_xt_int;
 }
 
 static void
@@ -328,18 +356,8 @@ idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                            buffer_size, position, comm), comm);
   xt_mpi_call(MPI_Pack(&(section->ndim), 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
-  for (int i = 0; i < section->ndim; ++i) {
-    xt_mpi_call(MPI_Pack(&section->dims[i].global_size, 1, Xt_int_dt,
-                         buffer, buffer_size, position, comm), comm);
-    xt_mpi_call(MPI_Pack(&section->dims[i].global_stride, 1, Xt_int_dt,
-                         buffer, buffer_size, position, comm), comm);
-    xt_mpi_call(MPI_Pack(&section->dims[i].local_start, 1, Xt_int_dt,
-                         buffer, buffer_size, position, comm), comm);
-    xt_mpi_call(MPI_Pack(&section->dims[i].local_stride, 1, Xt_int_dt,
-                         buffer, buffer_size, position, comm), comm);
-    xt_mpi_call(MPI_Pack(&section->dims[i].local_size, 1, MPI_INT,
-                         buffer, buffer_size, position, comm), comm);
-  }
+  xt_mpi_call(MPI_Pack(section->dims, section->ndim, dim_desc_dt,
+                       buffer, buffer_size, position, comm), comm);
   INSTR_STOP(instr);
 }
 
@@ -368,18 +386,9 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
 
   section->dims = xmalloc((size_t)section->ndim * sizeof(section->dims[0]));
 
-  for (int i = 0; i < section->ndim; ++i) {
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &section->dims[i].global_size, 1, Xt_int_dt, comm),comm);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &section->dims[i].global_stride, 1, Xt_int_dt, comm),comm);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &section->dims[i].local_start, 1, Xt_int_dt, comm),comm);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &section->dims[i].local_stride, 1, Xt_int_dt, comm),comm);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &section->dims[i].local_size, 1, MPI_INT, comm),comm);
-  }
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         section->dims, section->ndim, dim_desc_dt,
+                         comm),comm);
 
   // due to the possibility of negative local and global sizes, the minimum and
   // maximum can be in any corner of the n-dimensional section
