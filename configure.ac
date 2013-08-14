@@ -11,6 +11,11 @@ AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([1.10 foreign])
 AM_MAINTAINER_MODE
 dnl ######################################################################
+dnl Diagnose incompatible tool versions
+dnl ######################################################################
+m4_if(m4_version_compare(AC_AUTOCONF_VERSION,[2.67]),1,
+  [m4_if(m4_version_compare(LT_PACKAGE_VERSION,[2.4.2]),[-1],[m4_fatal([autoconf versions 2.68 and newer require using libtool 2.4.2 or newer])])])
+dnl ######################################################################
 dnl Checks for programs.
 dnl ######################################################################
 AC_PROG_CC
