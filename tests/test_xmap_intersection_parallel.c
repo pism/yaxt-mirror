@@ -297,6 +297,93 @@ int main(void)
     xt_idxlist_delete(src_idxlist);
   }
 
+  { // one rank receives data from the other two, that have duplicated indices
+    // (this provokes a bug found by Joerg Behrens)
+    // rank               |  0  |  1  |   2   |
+    // source indices     | 0,2 | 1,2 |       |
+    // destination indice |     |     | 0,1,2 |
+
+    // setup
+
+    Xt_int src_indices[2][2] = {{0,2}, {1,2}};
+
+    struct Xt_com_list * src_com, * dst_com;
+    int num_src_intersections, num_dst_intersections;
+    Xt_idxlist src_idxlist, dst_idxlist;
+
+    if (my_rank == 2) {
+
+      src_com = NULL;
+      num_src_intersections = 0;
+
+      dst_com = malloc(2 * sizeof(*dst_com));
+      num_dst_intersections = 2;
+      dst_com[0].list = xt_idxvec_new(src_indices[0], 2);
+      dst_com[0].rank = 0;
+      dst_com[1].list = xt_idxvec_new(src_indices[1], 2);
+      dst_com[1].rank = 1;
+
+      Xt_int dst_indices[3] = {0,1,2};
+
+      src_idxlist = xt_idxempty_new();
+      dst_idxlist = xt_idxvec_new(dst_indices, 3);
+
+    } else {
+
+      src_com = malloc(1 * sizeof(*src_com));
+      src_com->list = xt_idxvec_new(src_indices[my_rank], 2);
+      src_com->rank = 2;
+      num_src_intersections = 1;
+
+      dst_com = NULL;
+      num_dst_intersections = 0;
+
+      src_idxlist = xt_idxvec_new(src_indices[my_rank], 2);
+      dst_idxlist = xt_idxempty_new();
+    }
+
+    Xt_xmap xmap = xt_xmap_intersection_new(num_src_intersections, src_com, 
+                                            num_dst_intersections, dst_com,
+                                            src_idxlist, dst_idxlist,
+                                            MPI_COMM_WORLD);
+
+    // test
+
+      if (my_rank == 2) {
+
+        int recv_pos[2][2] = {{0,2}, {1}};
+        int num_recv_pos[2] = {2, 1};
+        struct test_message recv_messages[2] = {{.rank = 0, .pos = recv_pos[0],
+                                                 .num_pos = num_recv_pos[0]},
+                                                {.rank = 1, .pos = recv_pos[1],
+                                                 .num_pos = num_recv_pos[1]}};
+
+        test_xmap(xmap, 0, NULL, 2, recv_messages);
+
+      } else {
+
+        int send_pos[2][2] = {{0,1}, {0}};
+        int num_send_pos[2] = {2, 1};
+        struct test_message send_messages = {.rank = 2,
+                                             .pos = send_pos[my_rank],
+                                             .num_pos = num_send_pos[my_rank]};
+
+        test_xmap(xmap, 1, &send_messages, 0, NULL);
+      }
+
+    // cleanup
+
+    xt_xmap_delete(xmap);
+    xt_idxlist_delete(dst_idxlist);
+    xt_idxlist_delete(src_idxlist);
+    for (int i = 0; i < num_dst_intersections; ++i)
+      xt_idxlist_delete(dst_com[i].list);
+    free(dst_com);
+    for (int i = 0; i < num_src_intersections; ++i)
+      xt_idxlist_delete(src_com[i].list);
+    free(src_com);
+  }
+
   xt_finalize();
   MPI_Finalize();
 

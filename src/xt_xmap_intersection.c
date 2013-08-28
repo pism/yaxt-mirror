@@ -325,14 +325,9 @@ generate_dir_transfer_pos_src(int num_intersections,
           }
         }
 
-        if (!flag) {
-
-          if (new_intersection_size != j)
-            new_intersection_idxvec[new_intersection_size]
-              = intersection_idxvec[j];
-
-          new_intersection_size++;
-        }
+        if (!flag)
+          new_intersection_idxvec[new_intersection_size++]
+            = intersection_idxvec[j];
       }
 
       intersection_idxvec = new_intersection_idxvec;
@@ -486,7 +481,7 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
     &(xmap->n_in), &(xmap->in_msg), &dst_indices_to_remove,
     num_dst_indices_to_remove_per_intersection);
 
-  // exchange the points that neet to be removed
+  // exchange the points that need to be removed
   exchange_points_to_remove(
     num_src_intersections, src_com, num_dst_intersections, dst_com,
     &src_indices_to_remove, num_src_indices_to_remove_per_intersection,
