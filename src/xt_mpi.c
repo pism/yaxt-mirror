@@ -597,7 +597,7 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
 
   *offset = start;
 
-  int d[n];
+  int *d = xmalloc(sizeof (*d) * (size_t)n);
   int p=0;
 
   for (int i=ia; i<=ib; i++) {
@@ -618,6 +618,7 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
   } else {
     xt_mpi_call(MPI_Type_create_indexed_block(n, 1, d, old_type, dt), Xt_default_comm);
   }
+  free(d);
 
   *istart = *iend + 1;
 
@@ -629,8 +630,8 @@ parse_stripe(Stripe const *v, int vlen, MPI_Datatype old_type) {
 
   int set_start = -1;
   int set_end = -2;
-  MPI_Datatype wdt[vlen];
-  int wdisp[vlen];
+  MPI_Datatype *wdt = xmalloc(sizeof(*wdt) * (size_t)vlen);
+  int *wdisp = xmalloc(sizeof (*wdisp) * (size_t)vlen);
   int wlen = 0;
   MPI_Datatype match_dt;
   int match_disp;
@@ -684,6 +685,8 @@ parse_stripe(Stripe const *v, int vlen, MPI_Datatype old_type) {
   for(m = 0; m<wlen; m++) {
     xt_mpi_call(MPI_Type_free(&wdt[m]), Xt_default_comm);
   }
+  free(wdt);
+  free(wdisp);
   return result_dt;
 }
 
@@ -692,15 +695,15 @@ xt_mpi_generate_compact_datatype_block(int const *disp, int *blocklengths,
                                        int count, MPI_Datatype old_type) {
 
   if (count < 1) return MPI_DATATYPE_NULL;
-  Stripe v[count];
+  Stripe *v = xmalloc(sizeof(*v) * (size_t)count);
   for (int i=0; i<count; i++) {
     v[i].start = disp[i];
     v[i].stride = 1;
     v[i].nstrides = blocklengths[i];
   }
-
-  return parse_stripe(v, count, old_type);
-
+  MPI_Datatype dt = parse_stripe(v, count, old_type);
+  free(v);
+  return dt;
 }
 
 static MPI_Datatype
@@ -709,8 +712,10 @@ xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
 
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
-  Stripe v[disp_len];
+  Stripe *v = xmalloc(sizeof(*v) * (size_t)disp_len);
   int vlen = scan_stripe(disp, disp_len, v, disp_len);
-  return parse_stripe(v, vlen, old_type);
+  MPI_Datatype dt = parse_stripe(v, vlen, old_type);
+  free(v);
+  return dt;
 }
 
