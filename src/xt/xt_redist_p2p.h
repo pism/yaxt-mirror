@@ -98,7 +98,7 @@ struct Xt_offset_ext
  * @param[in] num_src_ext  number of source extents
  * @param[in] src_extents  array of extents describing offsets for every
  *                         element of the index lists composing the xmap,
- *                         i.e. { 10, 5 } denotes 5 offsets,
+ *                         i.e. { 10, 5, 1 } denotes 5 offsets,
  *                         namely 10, 11, 12, 13, 14
  * @param[in] num_dst_ext  number of destination extents
  * @param[in] dst_extents  array of extents analogous to src_extents
