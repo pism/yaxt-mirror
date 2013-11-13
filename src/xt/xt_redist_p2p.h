@@ -114,7 +114,12 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
 
 /**
  * constructor for a redistribution using point to point
- * communication for the exchange, special case: blocks with offsets
+ * communication for the exchange, special case: elements (which
+ * correspond to each idxlist element) are blocks of variable length
+ * with corresponding offsets, therefore src_block_num and
+ * dst_block_num must match the lengths of the src/dst index lists
+ * used for the construction of xmap
+ *
  * @param[in] xmap              exchange map
  * @param[in] src_block_offsets array containing for all source index space positions
  *                              of xmap the offsets for blocks in data space
