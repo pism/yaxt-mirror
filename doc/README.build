@@ -36,8 +36,9 @@ For a) and b) respectively you can either
 
 - set CC and FC to the corresponding MPI compiler wrapper, or
 - set CC and FC to the compiler driver (e.g. CC=gcc FC=gfortran) and use
-  some of the arguments MPIROOT MPI_C_INCLUDE MPI_FC_INCLUDE MPI_C_LIB
-  and MPI_FC_LIB to set the necessary compiler flags to build MPI programs.
+  some of the arguments MPIROOT MPI_C_INCLUDE MPI_FC_INCLUDE MPI_FC_MOD,
+  MPI_C_LIB and MPI_FC_LIB to set the necessary compiler flags to build
+  MPI programs.
 
 For c) the configure-argument MPI_LAUNCH needs to be set according to
 your MPI installation. For mpich/openmpi style environments, mpirun is
