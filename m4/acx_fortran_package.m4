@@ -109,7 +109,8 @@ AC_DEFUN([ACX_F90_PACKAGE],
 [@<:@default=$]AS_TR_SH(ASX_TR_ARG([with_$1_root]))[/include@:>@])],
         AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[="$FC_MOD_FLAG$AS_TR_SH(ASX_TR_ARG([with_$1_]_AC_LANG_ABBREV[_mod]))"],
         [])
-      AC_SUBST(AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]))
+      AC_ARG_VAR(AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]),
+        [flags to enable 'USE $1' in Fortran program.])
       ACX_FORTRAN_CHECK_MOD_PATHS_IFELSE([$2],["$[]AS_TR_CPP([$1][root])/include" "$[]AS_TR_CPP([$1][root])/lib"],
         AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[=]AS_VAR_GET([acx_Mod]),dnl
         [$5],dnl
