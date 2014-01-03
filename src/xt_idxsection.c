@@ -862,11 +862,12 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   return retval;
 }
 
-int idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
-                                           const Xt_int *selection_idx,
-                                           int num_selection,
-                                           int *positions,
-                                           int single_match_only) {
+static int
+idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
+                                       const Xt_int *selection_idx,
+                                       int num_selection,
+                                       int *positions,
+                                       int single_match_only) {
 
   INSTR_DEF(instr,"idxsection_get_positions_of_indices_v1.part");
 

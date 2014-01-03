@@ -137,7 +137,8 @@ my_merge_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb1, int
   }
 }
 
-void my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb, int ub)
+static void
+my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb, int ub)
 {
 
   int n = ub - lb + 1;
