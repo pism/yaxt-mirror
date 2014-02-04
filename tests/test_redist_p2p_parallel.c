@@ -211,7 +211,14 @@ int main(void) {
 
   // test redist with blocks:
   {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
     assert(2 * size <= XT_INT_MAX);
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
+#pragma GCC diagnostic pop
+#endif
     // the global index domain (1dim problem):
     int ngdom = 2*size;
     int gdoma[ngdom]; // start state (index distribution) of global domain

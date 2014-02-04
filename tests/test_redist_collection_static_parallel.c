@@ -75,7 +75,14 @@ int main(void) {
         Xt_idxlist indices_a_[2];
 
         Xt_int start = 0;
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
         assert(size * size <= XT_INT_MAX);
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
+#pragma GCC diagnostic pop
+#endif
         Xt_int global_size[2] = {(Xt_int)(2*size), (Xt_int)(size*size)};
         int local_size[2] = {size,size};
         Xt_int local_start[2][2]
