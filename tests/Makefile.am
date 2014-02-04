@@ -192,6 +192,7 @@ TESTS = 							\
 	test_xmap_dist_dir_parallel_run				\
 	test_xmap_intersection_parallel_run			\
 	test_initialized_finalized_run				\
+	test_exported_symbols					\
 	test_ut_run						\
 	test_perf_run						\
 	test_perf_stripes_run					\

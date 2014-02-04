@@ -35,6 +35,7 @@ AX_WITH_PERL([/bin/false], $PATH:$prefix/bin:/usr/bin:/usr/local/bin)
 AX_PROG_PERL_VERSION([5.0005],[],
         AC_MSG_ERROR([Perl (version>=5.0005) is required]))
 LT_INIT
+AC_SUBST([lt_cv_nm_interface])
 dnl ######################################################################
 dnl Properties of the compiler
 dnl ######################################################################
@@ -304,6 +305,7 @@ AC_CONFIG_FILES([						\
 	tests/test_redist_collection_static_run			\
 	tests/test_redist_repeat_run				\
 	tests/test_redist_p2p_run				\
+	tests/test_exported_symbols				\
 	tests/test_xmap_dist_dir_run				\
 	tests/test_xmap_all2all_run				\
 	tests/test_xmap_all2all_fail_run			\
