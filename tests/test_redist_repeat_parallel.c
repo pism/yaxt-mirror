@@ -142,10 +142,10 @@ int main(void) {
       MPI_Aint extent
         = (MPI_Aint)(2*(size_t)size*(size_t)size * sizeof(Xt_int));
 
-      Xt_redist redist_repeat = xt_redist_repeat_new(redist_p2p, extent, extent,
-                                                     4, displacements);
-      Xt_redist redist_repeat_2 = xt_redist_repeat_new(redist_p2p, extent, extent,
-                                                       4, displacements_2);
+      Xt_redist redist_repeat
+        = xt_redist_repeat_new(redist_p2p, extent, extent, 4, displacements);
+      Xt_redist redist_repeat_2
+        = xt_redist_repeat_new(redist_p2p, extent, extent, 4, displacements_2);
 
       // test communicator of redist_repeat
 
