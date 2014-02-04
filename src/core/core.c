@@ -63,16 +63,16 @@
 
 MPI_Comm SymPrefix(default_comm) = MPI_COMM_WORLD;
 
-#define XTF2C_Data COMMON_BLOCK(XTF2C_DATA,xtf2c_data)
+#define XT_F2C_Data COMMON_BLOCK(XT_F2C_DATA,xt_f2c_data)
 
 typedef struct
 {
   MPI_Fint xt_default_comm;
-} XTF2C_Def;
+} XT_F2C_Def;
 
-COMMON_BLOCK_DEF(XTF2C_Def,XTF2C_Data);
+COMMON_BLOCK_DEF(XT_F2C_Def,XT_F2C_Data);
 
-XTF2C_Def XTF2C_Data;
+XT_F2C_Def XT_F2C_Data;
 
 void
 SymPrefix(set_default_comm)(MPI_Comm comm)
@@ -84,7 +84,7 @@ SymPrefix(set_default_comm)(MPI_Comm comm)
   comm_f = comm;
 #endif
   SymPrefix(default_comm) = comm;
-  XTF2C_Data.xt_default_comm = comm_f;
+  XT_F2C_Data.xt_default_comm = comm_f;
 }
 
 void
