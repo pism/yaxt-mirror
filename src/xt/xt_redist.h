@@ -72,7 +72,7 @@ void xt_redist_delete(Xt_redist redist);
  * @param[in,out] dst_data       array containing the base addresses of the output arrays
  */
 void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
-                          void **src_data, void **dst_data);
+                          const void **src_data, void **dst_data);
 
 /**
  * synchronous redistribution of data - single array case
@@ -81,7 +81,7 @@ void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
  * @param[in]     src_data       input array
  * @param[in,out] dst_data       output array
  */
-void xt_redist_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
+void xt_redist_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data);
 
 /**
  * gets a copy of the MPI_Datatype used for the data of the send operation with

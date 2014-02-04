@@ -248,7 +248,7 @@ void xt_create_id_positions(int positions[], int num) {
   }
 }
 
-void xt_ut_transpose(void **pt_in, int itrans, int XT_UNUSED(direction),
+void xt_ut_transpose(const void **pt_in, int itrans, int XT_UNUSED(direction),
                      void **pt_out) {
   xt_ut_trans_type *trans = xt_handle2pointer(trans_set, itrans);
   if (!trans) die("xt_ut_transpose1: invalid handle");

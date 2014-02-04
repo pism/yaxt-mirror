@@ -162,29 +162,29 @@ int main(void) {
       Xt_int results_1[2*size*size], results_2[2*size*size];
       Xt_int results_3[2*size*size*size], results_4[2*size*size*size];
 
-      Xt_int * results[4] = {results_1, results_2, results_3, results_4};
+      void *results[4] = {results_1, results_2, results_3, results_4};
 
-      Xt_int * input[4] = {index_vector_a, index_vector_b,
-                           index_vector_a, index_vector_b};
+      const void *input[4] = {index_vector_a, index_vector_b,
+                              index_vector_a, index_vector_b};
 
-      xt_redist_s_exchange(redist, 4, (void**)input, (void**)results);
+      xt_redist_s_exchange(redist, 4, input, results);
 
       // check results
 
       for (int i = 0; i < 2*size*size; ++i)
-        if (results[0][i] != index_vector_b[i])
+        if (((Xt_int *)results[0])[i] != index_vector_b[i])
           PUT_ERR("error on xt_redist_s_exchange\n");
 
       for (int i = 0; i < 2*size*size; ++i)
-        if (results[1][i] != index_vector_a[i])
+        if (((Xt_int *)results[1])[i] != index_vector_a[i])
           PUT_ERR("error on xt_redist_s_exchange\n");
 
       for (int i = 0; i < 2*size*size*size; ++i)
-        if (results[2][i] != i)
+        if (((Xt_int *)results[2])[i] != i)
           PUT_ERR("error on xt_redist_s_exchange\n");
 
       for (int i = 0; i < 2*size*size*size; ++i)
-        if (results[3][i] != i)
+        if (((Xt_int *)results[3])[i] != i)
           PUT_ERR("error on xt_redist_s_exchange\n");
 
       // clean up
@@ -236,18 +236,18 @@ int main(void) {
 
       Xt_int results_1[5] = {-1,-1,-1,-1,-1}, results_2[5] = {-1,-1,-1,-1,-1};
 
-      Xt_int * results[2] = {results_1, results_2};
+      void *results[2] = {results_1, results_2};
 
-      Xt_int * input[2] = {src_indices_, src_indices_};
+      const void *input[2] = {src_indices_, src_indices_};
 
-      xt_redist_s_exchange(redist, 2, (void**)input, (void**)results);
+      xt_redist_s_exchange(redist, 2, input, results);
 
       // check results
 
       for (int i = 0; i < 5; ++i) {
-        if (results[0][i] != dst_indices_[0][i])
+        if (((Xt_int *)results[0])[i] != dst_indices_[0][i])
           PUT_ERR("error on xt_redist_s_exchange\n");
-        if (results[1][i] != dst_indices_[1][i])
+        if (((Xt_int *)results[1])[i] != dst_indices_[1][i])
           PUT_ERR("error on xt_redist_s_exchange\n");
       }
 

@@ -63,8 +63,8 @@ struct Xt_redist_msg {
 struct xt_redist_vtable {
 
   void (*delete)(Xt_redist);
-  void (*s_exchange)(Xt_redist, int, void **, void **);
-  void (*s_exchange1)(Xt_redist, void *, void *);
+  void (*s_exchange)(Xt_redist, int, const void **, void **);
+  void (*s_exchange1)(Xt_redist, const void *, void *);
   MPI_Datatype (*get_send_MPI_Datatype)(Xt_redist, int);
   MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);
   MPI_Comm (*get_MPI_Comm)(Xt_redist);
@@ -75,8 +75,9 @@ struct Xt_redist_ {
 };
 
 extern void
-(*xt_redist_s_exchange_internal)(void *src_data, void *dst_data, int nsend,
-                                 int nrecv, struct Xt_redist_msg * send_msgs,
+(*xt_redist_s_exchange_internal)(const void *src_data, void *dst_data,
+                                 int nsend, int nrecv,
+                                 struct Xt_redist_msg * send_msgs,
                                  struct Xt_redist_msg * recv_msgs,
                                  MPI_Comm comm);
 

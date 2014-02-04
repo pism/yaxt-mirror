@@ -154,8 +154,8 @@ int main(void) {
     src_data_ = malloc((5 + cache_size + 2) * sizeof(*src_data_));
     dst_data_ = malloc((3 + cache_size + 2) * sizeof(*dst_data_));
 
-    double *src_data_p[3] = {src_data[0],src_data[1],NULL};
-    double *dst_data_p[3] = {dst_data[0],dst_data[1],NULL};
+    const void *src_data_p[3] = {src_data[0],src_data[1],NULL};
+    void *dst_data_p[3] = {dst_data[0],dst_data[1],NULL};
 
     // test exchange
     for (size_t k = 0; k < cache_size + 2; ++k) {
@@ -166,8 +166,7 @@ int main(void) {
       src_data_p[2] = src_data_+k;
       dst_data_p[2] = dst_data_+k;
 
-      xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
-                           (void**)dst_data_p);
+      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
 
       double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -175,7 +174,7 @@ int main(void) {
 
       for (i = 0; i < 3; ++i)
         for (j = 0; j < 3; ++j)
-          if (ref_dst_data[i][j] != dst_data_p[i][j])
+          if (ref_dst_data[i][j] != ((double *)dst_data_p[i])[j])
             PUT_ERR("error in xt_redist_s_exchange\n");
     }
 
@@ -251,11 +250,10 @@ test_repeated_redist(int cache_size)
     double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-    double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
-    double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
+    const void *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
+    void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
-                         (void**)dst_data_p);
+    xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
 
     double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -269,14 +267,14 @@ test_repeated_redist(int cache_size)
 
   // test exchange with changed displacements
   {
-    double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+    static const double src_data[3][5]
+      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-    double *src_data_p[3] = {src_data[1],src_data[0],src_data[2]};
-    double *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
+    const void *src_data_p[3] = {src_data[1],src_data[0],src_data[2]};
+    void *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
-                         (void**)dst_data_p);
+    xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
 
     double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -290,14 +288,14 @@ test_repeated_redist(int cache_size)
 
   // test exchange with original displacements
   {
-    double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+    static const double src_data[3][5]
+      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-    double *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
-    double *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
+    const void *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
+    void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3, (void**)src_data_p,
-                         (void**)dst_data_p);
+    xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
 
     double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 

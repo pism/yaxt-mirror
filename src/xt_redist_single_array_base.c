@@ -65,10 +65,10 @@ redist_sab_delete(Xt_redist redist);
 
 static void
 redist_sab_s_exchange(Xt_redist redist, int num_arrays,
-                      void **src_data, void **dst_data);
+                      const void **src_data, void **dst_data);
 
 static void
-redist_sab_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
+redist_sab_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data);
 
 static MPI_Datatype
 redist_sab_get_send_MPI_Datatype(Xt_redist redist, int rank);
@@ -151,7 +151,7 @@ redist_sab_delete(Xt_redist redist) {
 
 static void
 redist_sab_s_exchange(Xt_redist redist, int num_arrays,
-                      void **src_data, void **dst_data)
+                      const void **src_data, void **dst_data)
 {
   Xt_redist_sab redist_rep = xrsab(redist);
   if (num_arrays == 1)
@@ -163,7 +163,7 @@ redist_sab_s_exchange(Xt_redist redist, int num_arrays,
 }
 
 static void
-redist_sab_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
+redist_sab_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
 
   Xt_redist_sab redist_sab = xrsab(redist);
 

@@ -52,20 +52,20 @@
 #include "xt_redist_internal.h"
 
 static void
-redist_s_exchange_internal_irecv_send(void *src_data, void *dst_data,
+redist_s_exchange_internal_irecv_send(const void *src_data, void *dst_data,
                                       int nsend, int nrecv,
                                       struct Xt_redist_msg * send_msgs,
                                       struct Xt_redist_msg * recv_msgs,
                                       MPI_Comm comm);
 static void
-redist_s_exchange_internal_irecv_isend(void *src_data, void *dst_data,
+redist_s_exchange_internal_irecv_isend(const void *src_data, void *dst_data,
                                        int nsend, int nrecv,
                                        struct Xt_redist_msg * send_msgs,
                                        struct Xt_redist_msg * recv_msgs,
                                        MPI_Comm comm);
 
 void (*xt_redist_s_exchange_internal)(
-  void *src_data, void *dst_data, int nsend, int nrecv,
+  const void *src_data, void *dst_data, int nsend, int nrecv,
   struct Xt_redist_msg * send_msgs, struct Xt_redist_msg * recv_msgs,
   MPI_Comm comm) =
     // redist_s_exchange_internal_irecv_send;
@@ -77,12 +77,12 @@ void xt_redist_delete(Xt_redist redist) {
 }
 
 void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
-                          void **src_data, void **dst_data) {
+                          const void **src_data, void **dst_data) {
 
   redist->vtable->s_exchange(redist, num_arrays, src_data, dst_data);
 }
 
-void xt_redist_s_exchange1(Xt_redist redist, void *src_data, void *dst_data) {
+void xt_redist_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
 
   redist->vtable->s_exchange1(redist, src_data, dst_data);
 }
@@ -103,7 +103,7 @@ MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
 }
 
 static void
-redist_s_exchange_internal_irecv_send(void *src_data, void *dst_data,
+redist_s_exchange_internal_irecv_send(const void *src_data, void *dst_data,
                                       int nsend, int nrecv,
                                       struct Xt_redist_msg * send_msgs,
                                       struct Xt_redist_msg * recv_msgs,
@@ -118,7 +118,7 @@ redist_s_exchange_internal_irecv_send(void *src_data, void *dst_data,
                           recv_request+i), comm);
 
   for (int i = 0; i < nsend; ++i)
-    xt_mpi_call(MPI_Send(src_data, 1, send_msgs[i].datatype,
+    xt_mpi_call(MPI_Send((void *)src_data, 1, send_msgs[i].datatype,
                          send_msgs[i].rank, 0, comm), comm);
 
   xt_mpi_call(MPI_Waitall(nrecv, recv_request, MPI_STATUSES_IGNORE), comm);
@@ -127,7 +127,7 @@ redist_s_exchange_internal_irecv_send(void *src_data, void *dst_data,
 }
 
 static void
-redist_s_exchange_internal_irecv_isend(void *src_data, void *dst_data,
+redist_s_exchange_internal_irecv_isend(const void *src_data, void *dst_data,
                                        int nsend, int nrecv,
                                        struct Xt_redist_msg * send_msgs,
                                        struct Xt_redist_msg * recv_msgs,
@@ -144,7 +144,7 @@ redist_s_exchange_internal_irecv_isend(void *src_data, void *dst_data,
                           requests+i), comm);
 
   for (int i = 0; i < nsend; ++i)
-    xt_mpi_call(MPI_Isend(src_data, 1, send_msgs[i].datatype,
+    xt_mpi_call(MPI_Isend((void *)src_data, 1, send_msgs[i].datatype,
                           send_msgs[i].rank, 0, comm, requests+nrecv+i),
                           comm);
 

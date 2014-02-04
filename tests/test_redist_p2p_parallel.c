@@ -116,11 +116,10 @@ int main(void) {
     for (Xt_int i = 0; i < src_num_indices; ++i)
       src_data[i] = (double)(rank * dataSize + i);
 
-    double * src_data_p = &src_data[0];
-    double * dst_data_p = &dst_data[0];
+    const void *src_data_p = &src_data[0];
+    void *dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, 1, (void**)(&src_data_p),
-                         (void**)(&dst_data_p));
+    xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
 
     //int i;
 
@@ -189,11 +188,10 @@ int main(void) {
       dst_data[i] = -1;
     }
 
-    double * src_data_p = &src_data[0];
-    double * dst_data_p = &dst_data[0];
+    const void *src_data_p = &src_data[0];
+    void *dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, 1, (void**)(&src_data_p),
-                         (void**)(&dst_data_p));
+    xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
 
     //int i;
 

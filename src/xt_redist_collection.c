@@ -77,10 +77,11 @@ redist_collection_delete(Xt_redist redist);
 
 static void
 redist_collection_s_exchange(Xt_redist redist, int num_src_arrays,
-                             void **src_data, void **dst_data);
+                             const void **src_data, void **dst_data);
 
 static void
-redist_collection_s_exchange1(Xt_redist redist, void *src_data, void *dst_data);
+redist_collection_s_exchange1(Xt_redist redist,
+                              const void *src_data, void *dst_data);
 
 static MPI_Datatype
 redist_collection_get_send_MPI_Datatype(Xt_redist redist, int rank);
@@ -328,18 +329,18 @@ create_all_dt_for_dir(struct redist_collection_msg *msgs,
 }
 
 static void
-compute_displ(void **data, int num_redists,
+compute_displ(const void **data, int num_redists,
               MPI_Aint displacements[num_redists],
               MPI_Comm comm)
 {
   if (num_redists)
   {
     MPI_Aint base_addr, offset;
-    xt_mpi_call(MPI_Get_address(data[0], &base_addr), comm);
+    xt_mpi_call(MPI_Get_address((void *)data[0], &base_addr), comm);
     displacements[0] = 0;
     for (int i = 1; i < num_redists; ++i)
     {
-      xt_mpi_call(MPI_Get_address(data[i], &offset), comm);
+      xt_mpi_call(MPI_Get_address((void *)data[i], &offset), comm);
       displacements[i] = offset - base_addr;
     }
   }
@@ -363,7 +364,7 @@ lookup_cache_index(int num_redists,
 }
 
 static struct Xt_redist_msg *
-get_compound_datatype(void ** data, struct redist_collection_msg * msgs,
+get_compound_datatype(const void ** data, struct redist_collection_msg * msgs,
                       int num_messages, int num_redists,
                       struct redist_msg_cache *cache, size_t cache_size,
                       struct Xt_redist_msg temp_redist_msgs[num_messages],
@@ -417,7 +418,7 @@ xrc(void *redist)
 
 static void
 redist_collection_s_exchange(Xt_redist redist, int num_arrays,
-                             void **src_data, void **dst_data) {
+                             const void **src_data, void **dst_data) {
 
   Xt_redist_collection redist_coll = xrc(redist);
 
@@ -439,7 +440,7 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
       temp_redist_msgs_dst[i].datatype = MPI_DATATYPE_NULL;
 
   struct Xt_redist_msg *dst_redist_msgs
-    = get_compound_datatype(dst_data, redist_coll->recv_msgs,
+    = get_compound_datatype((const void **)dst_data, redist_coll->recv_msgs,
                             redist_coll->ndst, redist_coll->num_redists,
                             &redist_coll->dst_cache, cache_size,
                             temp_redist_msgs_dst, redist_coll->comm);
@@ -525,7 +526,8 @@ redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank)) {
 }
 
 static void
-redist_collection_s_exchange1(Xt_redist redist, void *src_data, void *dst_data)
+redist_collection_s_exchange1(Xt_redist redist,
+                              const void *src_data, void *dst_data)
 {
 
   Xt_redist_collection redist_coll = xrc(redist);
