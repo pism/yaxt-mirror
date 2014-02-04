@@ -133,6 +133,8 @@ redist_s_exchange_internal_irecv_isend(void *src_data, void *dst_data,
                                        struct Xt_redist_msg * recv_msgs,
                                        MPI_Comm comm) {
 
+  /* prevent warning about unused static function */
+  (void)redist_s_exchange_internal_irecv_send;
   MPI_Request *requests
     = xmalloc((size_t)(nrecv + nsend) * sizeof (*requests));
 
