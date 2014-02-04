@@ -135,8 +135,7 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
 };
 
 // index vector data structure
-struct xt_idxempty {
-
+static struct xt_idxempty {
   struct Xt_idxlist_ parent;
 } idxempty;
 
