@@ -94,6 +94,7 @@ MODULE xt_redist_base
   END INTERFACE xt_is_null
 
   INTERFACE xt_redist_s_exchange
+    MODULE PROCEDURE xt_redist_s_exchange1
     MODULE PROCEDURE xt_redist_s_exchange_a1d
     MODULE PROCEDURE xt_redist_s_exchange_i2_a1d
     MODULE PROCEDURE xt_redist_s_exchange_i4_a1d
