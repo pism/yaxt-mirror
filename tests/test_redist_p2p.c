@@ -202,20 +202,15 @@ int main(void) {
     const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
     int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
 
-    Xt_idxlist dst_idxlist;
-
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
 
     // xmap
-    Xt_xmap xmap;
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p with extents of offsets
     struct Xt_offset_ext
-      src_pos[1] = { { .start = 0, .size = (Xt_int)src_num, .stride =  1 } },
-      dst_pos[1] = { { .start = dst_num - 1,
-                       .size = (Xt_int)dst_num, .stride = -1 } };
+      src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
+      dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
 
     Xt_redist redist
       = xt_redist_p2p_ext_new(xmap,
