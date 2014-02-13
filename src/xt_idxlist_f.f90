@@ -147,6 +147,7 @@ MODULE xt_idxlist_abstract
   INTERFACE xt_idxlist_delete
     MODULE PROCEDURE xt_idxlist_delete_1
     MODULE PROCEDURE xt_idxlist_delete_a1d
+    MODULE PROCEDURE xt_idxlist_delete_a2d
   END INTERFACE xt_idxlist_delete
 
   INTERFACE xt_idxlist_get_indices
@@ -193,6 +194,19 @@ CONTAINS
       idxlists(i)%cptr = c_null_ptr
     END DO
   END SUBROUTINE xt_idxlist_delete_a1d
+
+  SUBROUTINE xt_idxlist_delete_a2d(idxlists)
+    TYPE(xt_idxlist), INTENT(inout) :: idxlists(:, :)
+    INTEGER :: i, j, m, n
+    m = SIZE(idxlists, 1)
+    n = SIZE(idxlists, 2)
+    DO j = 1, n
+      DO i = 1, m
+        CALL xt_idxlist_delete_c(xt_idxlist_f2c(idxlists(i, j)))
+        idxlists(i, j)%cptr = c_null_ptr
+      END DO
+    END DO
+  END SUBROUTINE xt_idxlist_delete_a2d
 
   FUNCTION xt_idxlist_get_index_at_position(idxlist, position, idx) RESULT(res)
     IMPLICIT NONE
