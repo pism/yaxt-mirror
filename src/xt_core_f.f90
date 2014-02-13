@@ -126,7 +126,7 @@ MODULE xt_core
 CONTAINS
 
   SUBROUTINE xt_abort4(comm, msg, source, line)
-    INTEGER, INTENT(in):: comm
+    INTEGER, INTENT(in) :: comm
     CHARACTER(len=*), INTENT(in) :: msg
     CHARACTER(len=*), INTENT(in) :: source
     INTEGER, INTENT(in) :: line
