@@ -75,7 +75,7 @@ MODULE yaxt
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
        xt_redist_collection_static_new, xt_redist_collection_new, &
-       xt_redist_repeat_new, xt_is_null
+       xt_redist_repeat_new, xt_is_null, xt_redist_get_mpi_comm
 
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
   IMPLICIT NONE
@@ -105,6 +105,7 @@ MODULE yaxt
        xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        xt_redist_repeat_new, xt_redist_delete, &
        xt_redist_s_exchange1, xt_redist_s_exchange, &
+       xt_redist_get_mpi_comm, &
        xt_idxempty_new, xt_redist_collection_static_new, &
        xt_redist_collection_new, xt_slice_c_loc, &
        xt_is_null, &

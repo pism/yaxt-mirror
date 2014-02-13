@@ -60,6 +60,7 @@
 #include "xt/xt_xmap_all2all.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_idxstripes.h"
+#include "xt/xt_redist.h"
 #include "xt/xt_redist_p2p.h"
 #include "xt/xt_idxmod.h"
 #include "xt/xt_redist_collection_static.h"
@@ -283,3 +284,10 @@ xt_slice_c_loc_f2c(void *a, void *p)
 }
 
 FCALLSCSUB2(xt_slice_c_loc_f2c,XT_SLICE_C_LOC,xt_slice_c_loc,PVOID,PVOID)
+
+MPI_Fint
+xt_redist_get_mpi_comm_c2f(Xt_redist *redist)
+{
+  MPI_Comm comm = xt_redist_get_MPI_Comm(*redist);
+  return MPI_Comm_c2f(comm);
+}

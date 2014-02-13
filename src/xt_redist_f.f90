@@ -104,6 +104,13 @@ MODULE xt_redist_base
       INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
       TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     END SUBROUTINE xt_redist_s_exchange_c
+
+    FUNCTION xt_redist_get_mpi_comm(redist) &
+         BIND(c, name='xt_redist_get_mpi_comm_c2f') RESULT(comm)
+      IMPORT :: xt_redist, xt_mpi_fint_kind
+      TYPE(xt_redist), INTENT(in) :: redist
+      INTEGER(xt_mpi_fint_kind) :: comm
+    END FUNCTION xt_redist_get_mpi_comm
   END INTERFACE
 
   PUBLIC :: xt_redist_c2f, xt_redist_f2c, xt_is_null, &
@@ -111,7 +118,7 @@ MODULE xt_redist_base
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
        xt_redist_collection_static_new, xt_redist_collection_new, &
-       xt_redist_repeat_new
+       xt_redist_repeat_new, xt_redist_get_mpi_comm
 CONTAINS
 
   FUNCTION xt_redist_is_null(redist) RESULT(p)
