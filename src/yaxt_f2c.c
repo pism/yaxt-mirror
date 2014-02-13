@@ -291,3 +291,14 @@ xt_redist_get_mpi_comm_c2f(Xt_redist *redist)
   MPI_Comm comm = xt_redist_get_MPI_Comm(*redist);
   return MPI_Comm_c2f(comm);
 }
+
+void *
+xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
+                          int num_src_ext, struct Xt_offset_ext src_extents[],
+                          int num_dst_ext, struct Xt_offset_ext dst_extents[],
+                          MPI_Fint datatype_f)
+{
+  return xt_redist_p2p_ext_new(*xmap, num_src_ext, src_extents,
+                               num_dst_ext, dst_extents,
+                               MPI_Type_f2c(datatype_f));
+}
