@@ -66,6 +66,7 @@ MODULE yaxt
   USE xt_idxvec, ONLY: xt_idxvec_from_stripes_new, xt_idxvec_new
   USE xt_idxstripes, ONLY: xt_idxstripes_new
   USE xt_idxsection, ONLY: xt_idxsection_new, xt_idxfsection_new
+  USE xt_idxlist_collection, ONLY: xt_idxlist_collection_new
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
@@ -147,29 +148,6 @@ CONTAINS
     res = xt_idxlist_c2f(xt_idxempty_new_c())
 
   END FUNCTION xt_idxempty_new
-
-  FUNCTION xt_idxlist_collection_new(idxlists) RESULT(res)
-    TYPE(xt_idxlist), INTENT(in) :: idxlists(:)
-    TYPE(xt_idxlist) :: res
-
-    INTERFACE
-      FUNCTION xt_idxlist_collection_new_c(idxlists, num_lists) &
-           BIND(C, name='xt_idxlist_collection_new') RESULT(res_ptr)
-        IMPORT:: c_ptr, c_int, xt_idxlist
-        IMPLICIT NONE
-        TYPE(xt_idxlist), INTENT(in) :: idxlists(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: num_lists
-        TYPE(c_ptr) :: res_ptr
-      END FUNCTION xt_idxlist_collection_new_c
-    END INTERFACE
-
-    IF (SIZE(idxlists) > INT(HUGE(1_c_int))) &
-         CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
-         __FILE__, &
-         __LINE__)
-    res = xt_idxlist_c2f(xt_idxlist_collection_new_c(idxlists, &
-         INT(SIZE(idxlists), c_int)))
-  END FUNCTION xt_idxlist_collection_new
 
   ELEMENTAL FUNCTION xt_bounds_eq(a, b) RESULT(a_equals_b)
     TYPE(xt_bounds), INTENT(in) :: a, b
