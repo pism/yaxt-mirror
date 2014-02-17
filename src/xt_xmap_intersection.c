@@ -298,7 +298,7 @@ generate_dir_transfer_pos_src(int num_intersections,
 
   for (int i = 0; i < num_intersections; ++i) {
 
-    const Xt_int *intersection_idxvec
+    const Xt_int *restrict intersection_idxvec
       = xt_idxlist_get_indices_const(intersections[i].list);
     int intersection_size
       = xt_idxlist_get_num_indices(intersections[i].list);
@@ -309,25 +309,18 @@ generate_dir_transfer_pos_src(int num_intersections,
 
       ENSURE_ARRAY_SIZE(
         new_intersection_idxvec, curr_new_intersection_idxvec_size,
-        intersection_size - num_indices_to_remove_per_intersection[i]);
+        intersection_size - num_indices_to_remove_per_intersection[i] + 1);
       int new_intersection_size = 0;
 
       for (int j = 0; j < intersection_size; ++j) {
 
         int flag = 0;
 
-        for (int k = 0; k < num_indices_to_remove_per_intersection[i]; ++k) {
+        for (int k = 0; k < num_indices_to_remove_per_intersection[i]; ++k)
+          flag |= (intersection_idxvec[j] == indices_to_remove[offset + k]);
 
-          if (intersection_idxvec[j] == indices_to_remove[offset + k]) {
-
-            flag = 1;
-            break;
-          }
-        }
-
-        if (!flag)
-          new_intersection_idxvec[new_intersection_size++]
-            = intersection_idxvec[j];
+        new_intersection_idxvec[new_intersection_size] = intersection_idxvec[j];
+        new_intersection_size += !flag;
       }
 
       intersection_idxvec = new_intersection_idxvec;
