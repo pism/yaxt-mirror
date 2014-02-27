@@ -190,6 +190,23 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   return (void *)idxvec_obj;
 }
 
+Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
+{
+  if (num_indices > 0)
+    ;
+  else if (num_indices == 0)
+    return xt_idxempty_new();
+  else
+    die("number of indices passed to xt_idxvec_new must not be negative!");
+  Xt_idxvec restrict idxvec_obj = xmalloc(sizeof (*idxvec_obj));
+  Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable);
+  idxvec_obj->vector = (Xt_int *)idxvec;
+  idxvec_obj->num_indices = num_indices;
+  idxvec_obj->sorted_vector = NULL;
+  idxvec_obj->sorted_vec_positions = NULL;
+  return (void *)idxvec_obj;
+}
+
 static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
 
   Xt_int a_min, a_max, b_min, b_max;
