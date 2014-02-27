@@ -460,19 +460,24 @@ idxsection_get_intersection_with_other_idxlist(Xt_idxsection src_idxsection,
     (Xt_idxlist)src_idxsection, sorted_dst_idx, (Xt_int)num_dst_idx, pos,
     single_match_only);
   int num_inter_idx = num_dst_idx - num_unmatched;
-  Xt_int *intersection = xmalloc((size_t)num_inter_idx * sizeof(*intersection));
+  Xt_idxlist result;
+  if (num_inter_idx != 0) {
+    Xt_int *intersection = xmalloc((size_t)num_inter_idx
+                                   * sizeof(*intersection));
 
-  for(i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++)
-    if (pos[i] >= 0)
-      intersection[j++] = sorted_dst_idx[i];
+    for(i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++) {
+      intersection[j] = sorted_dst_idx[i];
+      j += (pos[i] >= 0);
+    }
+
+    result = xt_idxvec_new(intersection, num_inter_idx);
+    free(intersection);
+  } else {
+    result = xt_idxempty_new();
+  }
 
   free(temp_dst_idx);
   free(pos);
-
-  //! \todo use xt_idxvec_pinned_new here to avoid copy
-  Xt_idxlist result = xt_idxvec_new(intersection, num_inter_idx);
-
-  free(intersection);
 
   INSTR_STOP(instr);
   return result;
