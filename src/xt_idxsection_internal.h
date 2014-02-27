@@ -52,4 +52,11 @@ xt_idxsection_initialize();
 void
 xt_idxsection_finalize();
 
+Xt_idxlist
+xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
+
+Xt_idxlist
+xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
+                                                  Xt_idxlist dst_idxlist);
+
 #endif

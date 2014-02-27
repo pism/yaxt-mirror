@@ -87,54 +87,6 @@ void xt_idxlist_pack(Xt_idxlist idxlist, void *buffer,
                          position, comm);
 }
 
-Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
-                                       Xt_idxlist idxlist_dst) {
-
-   INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
-
-   Xt_idxlist intersection;
-
-   intersection
-     = idxlist_src->vtable->get_intersection(idxlist_src, idxlist_dst);
-
-   // if the get_intersection routine was not able to compute the intersection
-   if (intersection == NULL) {
-
-      INSTR_START(instr_fallback);
-
-      int num_indices_src, num_indices_dst;
-
-      num_indices_src = xt_idxlist_get_num_indices(idxlist_src);
-      num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
-
-      if (num_indices_src == 0 || num_indices_dst == 0)
-        return xt_idxempty_new();
-
-      Xt_int *indices_src, *indices_dst;
-      indices_src = xmalloc((size_t)num_indices_src * sizeof (indices_src[0]));
-      indices_dst = xmalloc((size_t)num_indices_dst * sizeof (indices_dst[0]));
-
-      xt_idxlist_get_indices(idxlist_src, indices_src);
-      xt_idxlist_get_indices(idxlist_dst, indices_dst);
-
-      Xt_idxlist idxvec_src, idxvec_dst;
-
-      idxvec_src = xt_idxvec_new(indices_src, num_indices_src);
-      idxvec_dst = xt_idxvec_new(indices_dst, num_indices_dst);
-
-      intersection = xt_idxlist_get_intersection(idxvec_src, idxvec_dst);
-
-      xt_idxlist_delete(idxvec_src);
-      xt_idxlist_delete(idxvec_dst);
-      free(indices_dst);
-      free(indices_src);
-
-      INSTR_STOP(instr_fallback);
-   }
-
-   return intersection;
-}
-
 Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist) {
 
    return idxlist->vtable->copy(idxlist);

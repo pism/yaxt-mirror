@@ -76,9 +76,6 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
                 int *position, MPI_Comm comm);
 
 static Xt_idxlist
-idxstripes_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
-
-static Xt_idxlist
 idxstripes_copy(Xt_idxlist idxlist);
 
 static int
@@ -121,7 +118,6 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .delete                       = idxstripes_delete,
   .get_pack_size                = idxstripes_get_pack_size,
   .pack                         = idxstripes_pack,
-  .get_intersection             = idxstripes_get_intersection,
   .copy                         = idxstripes_copy,
   .get_num_indices              = idxstripes_get_num_indices,
   .get_indices                  = idxstripes_get_indices,
@@ -135,7 +131,8 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .get_positions_of_indices_off = NULL,
   .get_min_index                = idxstripes_get_min_index,
   .get_max_index                = idxstripes_get_max_index,
-  .get_bounding_box             = NULL
+  .get_bounding_box             = NULL,
+  .idxlist_pack_code            = STRIPES,
 };
 
 static MPI_Datatype stripe_dt;
@@ -562,8 +559,9 @@ idxstripes_compute_intersection(Xt_idxstripes idxstripes_src,
   return inter;
 }
 
-static Xt_idxlist
-idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
+Xt_idxlist
+xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst)
+{
 
   if (idxlist_dst->vtable != &idxstripes_vtable) return NULL;
 

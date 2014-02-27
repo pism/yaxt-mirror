@@ -47,6 +47,9 @@
 #define XT_IDXVEC_INTERNAL_H
 
 Xt_idxlist
+xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
+
+Xt_idxlist
 xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices);
 
 #endif

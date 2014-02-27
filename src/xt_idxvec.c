@@ -77,9 +77,6 @@ idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
             int *position, MPI_Comm comm);
 
 static Xt_idxlist
-idxvec_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
-
-static Xt_idxlist
 idxvec_copy(Xt_idxlist idxlist);
 
 static int
@@ -123,7 +120,6 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .delete                      = idxvec_delete,
   .get_pack_size               = idxvec_get_pack_size,
   .pack                        = idxvec_pack,
-  .get_intersection            = idxvec_get_intersection,
   .copy                        = idxvec_copy,
   .get_num_indices             = idxvec_get_num_indices,
   .get_indices                 = idxvec_get_indices,
@@ -137,7 +133,8 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .get_positions_of_indices_off = NULL,
   .get_min_index               = idxvec_get_min_index,
   .get_max_index               = idxvec_get_max_index,
-  .get_bounding_box             = NULL
+  .get_bounding_box            = NULL,
+  .idxlist_pack_code           = VECTOR,
 };
 
 typedef struct Xt_idxvec_ *Xt_idxvec;
@@ -484,8 +481,8 @@ get_sorted_vector(Xt_idxvec idxvec) {
   return sorted_vector;
 }
 
-static Xt_idxlist
-idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
+Xt_idxlist
+xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   if (idxlist_dst->vtable != &idxvec_vtable) return NULL;
 

@@ -49,5 +49,4 @@ xt_idxempty_init();
 void
 xt_idxempty_finalize();
 
-
 #endif // XT_IDXEMPTY_INTERNAL_H

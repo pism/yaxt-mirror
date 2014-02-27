@@ -52,4 +52,7 @@ xt_idxstripes_initialize();
 void
 xt_idxstripes_finalize();
 
+Xt_idxlist
+xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
+
 #endif

@@ -90,9 +90,6 @@ idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                 int *position, MPI_Comm comm);
 
 static Xt_idxlist
-idxsection_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
-
-static Xt_idxlist
 idxsection_copy(Xt_idxlist idxlist);
 
 static int
@@ -134,7 +131,6 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .delete                       = idxsection_delete,
               .get_pack_size                = idxsection_get_pack_size,
               .pack                         = idxsection_pack,
-              .get_intersection             = idxsection_get_intersection,
               .copy                         = idxsection_copy,
               .get_num_indices              = idxsection_get_num_indices,
               .get_indices                  = idxsection_get_indices,
@@ -148,7 +144,8 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .get_positions_of_indices_off = NULL,
               .get_min_index                = idxsection_get_min_index,
               .get_max_index                = idxsection_get_max_index,
-              .get_bounding_box             = NULL
+              .get_bounding_box             = NULL,
+              .idxlist_pack_code            = SECTION,
 };
 
 /* descriptor for per-dimension extent and stride */
@@ -416,9 +413,9 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   return (Xt_idxlist)section;
 }
 
-static Xt_idxlist
-idxsection_get_intersection_with_other_idxlist(Xt_idxsection src_idxsection,
-                                               Xt_idxlist dst_idxlist) {
+Xt_idxlist
+xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
+                                                  Xt_idxlist dst_idxlist) {
 
   // intersection between an idxsection and a general idxlist:
   //
@@ -457,7 +454,7 @@ idxsection_get_intersection_with_other_idxlist(Xt_idxsection src_idxsection,
 
   pos = xmalloc((size_t)num_dst_idx * sizeof(*pos));
   int num_unmatched = idxsection_get_positions_of_indices(
-    (Xt_idxlist)src_idxsection, sorted_dst_idx, (Xt_int)num_dst_idx, pos,
+    src_idxsection, sorted_dst_idx, (Xt_int)num_dst_idx, pos,
     single_match_only);
   int num_inter_idx = num_dst_idx - num_unmatched;
   Xt_idxlist result;
@@ -484,13 +481,9 @@ idxsection_get_intersection_with_other_idxlist(Xt_idxsection src_idxsection,
   // return xt_idxvec_pinned_new(intersection, num_inter_idx);
 }
 
-static Xt_idxlist
-idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
+Xt_idxlist
+xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
   INSTR_DEF(instr,"idxsection_get_intersection.part");
-
-  if (idxlist_dst->vtable != &idxsection_vtable)
-    return idxsection_get_intersection_with_other_idxlist(
-      (Xt_idxsection)idxlist_src, idxlist_dst);
 
   // both lists are index section:
 
@@ -501,7 +494,7 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   if (idxsection_src->ndim != idxsection_dst->ndim ||
       idxsection_src->global_start_index != idxsection_dst->global_start_index)
-    return NULL;
+    return xt_default_isect(idxlist_src, idxlist_dst);
 
   int i;
 
@@ -512,8 +505,8 @@ idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
         idxsection_src->dims[i].global_size
         != Xt_isign(idxsection_dst->dims[i].global_size) *
         idxsection_dst->dims[i].global_size)
-      return idxsection_get_intersection_with_other_idxlist(
-        (Xt_idxsection)idxlist_src, idxlist_dst);
+      return xt_idxsection_get_intersection_with_other_idxlist(
+        idxlist_src, idxlist_dst);
 
   Xt_int *local_start, *global_size;
   int *local_size;

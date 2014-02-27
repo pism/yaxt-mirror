@@ -43,6 +43,7 @@
 
 #include <stdlib.h>
 #include "core/core.h"
+#include "xt_idxlist_internal.h"
 #include "xt_idxstripes_internal.h"
 #include "xt_idxsection_internal.h"
 #include "xt_idxempty_internal.h"
@@ -63,6 +64,7 @@ xt_initialize(MPI_Comm default_comm)
   xt_idxempty_init();
   xt_idxstripes_initialize();
   xt_idxsection_initialize();
+  xt_idxlist_intersection_init();
 #ifdef INSTR_WITH_SCT
   sct_init(32, SCT_GETENV, "YAXT", Xt_default_comm);
   setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);

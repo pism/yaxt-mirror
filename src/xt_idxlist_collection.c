@@ -72,10 +72,6 @@ idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                         int *position, MPI_Comm comm);
 
 static Xt_idxlist
-idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
-                                    Xt_idxlist idxlist_dst);
-
-static Xt_idxlist
 idxlist_collection_copy(Xt_idxlist idxlist);
 
 static int
@@ -114,7 +110,6 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .delete                      = idxlist_collection_delete,
   .get_pack_size               = idxlist_collection_get_pack_size,
   .pack                        = idxlist_collection_pack,
-  .get_intersection            = idxlist_collection_get_intersection,
   .copy                        = idxlist_collection_copy,
   .get_num_indices             = idxlist_collection_get_num_indices,
   .get_indices                 = idxlist_collection_get_indices,
@@ -128,7 +123,8 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .get_positions_of_indices_off = NULL,
   .get_min_index               = idxlist_collection_get_min_index,
   .get_max_index               = idxlist_collection_get_max_index,
-  .get_bounding_box             = NULL
+  .get_bounding_box            = NULL,
+  .idxlist_pack_code           = COLLECTION,
 };
 
 typedef struct Xt_idxlist_collection_ *Xt_idxlist_collection;
@@ -234,11 +230,11 @@ xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
   return (Xt_idxlist)collectionlist;
 }
 
-static Xt_idxlist
-idxlist_collection_get_intersection(Xt_idxlist XT_UNUSED(idxlist_src),
-                                    Xt_idxlist XT_UNUSED(idxlist_dst)) {
+Xt_idxlist
+xt_idxlist_collection_get_intersection(Xt_idxlist XT_UNUSED(idxlist_src),
+                                       Xt_idxlist XT_UNUSED(idxlist_dst)) {
 
-   return NULL;
+  return NULL;
 }
 
 static Xt_idxlist

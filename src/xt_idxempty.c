@@ -64,9 +64,6 @@ idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
               int *position, MPI_Comm comm);
 
 static Xt_idxlist
-idxempty_get_intersection(Xt_idxlist idxlist_a, Xt_idxlist idxlist_b);
-
-static Xt_idxlist
 idxempty_copy(Xt_idxlist idxlist);
 
 static int
@@ -117,7 +114,6 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
   .delete                       = idxempty_delete,
   .get_pack_size                = idxempty_get_pack_size,
   .pack                         = idxempty_pack,
-  .get_intersection             = idxempty_get_intersection,
   .copy                         = idxempty_copy,
   .get_num_indices              = idxempty_get_num_indices,
   .get_indices                  = idxempty_get_indices,
@@ -131,7 +127,8 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
   .get_positions_of_indices_off = idxempty_get_positions_of_indices_off,
   .get_min_index                = idxempty_get_min_index,
   .get_max_index                = idxempty_get_max_index,
-  .get_bounding_box             = NULL
+  .get_bounding_box             = NULL,
+  .idxlist_pack_code            = EMPTY,
 };
 
 // index vector data structure
@@ -184,13 +181,6 @@ Xt_idxlist xt_idxempty_unpack(void *XT_UNUSED(buffer),
    return xt_idxempty_new();
 }
 
-
-static Xt_idxlist
-idxempty_get_intersection(Xt_idxlist XT_UNUSED(idxlist_src),
-                          Xt_idxlist XT_UNUSED(idxlist_dst)) {
-
-  return xt_idxempty_new();
-}
 
 static Xt_idxlist
 idxempty_copy(Xt_idxlist XT_UNUSED(idxlist)) {
