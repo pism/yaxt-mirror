@@ -1,0 +1,5 @@
+#! @SHELL@
+set -e
+export SCT_PROC_CHOICE=SCT_SELECT_ALL
+export SCT_CALLSTATS=1
+@MPI_LAUNCH@ -n 1 ./perf_sparse_array_gather

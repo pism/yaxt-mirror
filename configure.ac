@@ -290,6 +290,7 @@ AC_CONFIG_HEADER([include/config.h])
 
 AC_CONFIG_FILES([						\
 	perf/perf_idxsection_get_positions_of_indices_run	\
+	perf/perf_sparse_array_gather_run			\
 	tests/test_redist_p2p_parallel_run			\
 	tests/test_redist_collection_parallel_run		\
 	tests/test_redist_collection_static_parallel_run	\

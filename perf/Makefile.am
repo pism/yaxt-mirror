@@ -34,9 +34,13 @@
 #
 
 noinst_PROGRAMS = 						\
-	perf_idxsection_get_positions_of_indices
+	perf_idxsection_get_positions_of_indices		\
+	perf_sparse_array_gather
 
 perf_idxsection_get_positions_of_indices_SOURCES = perf_idxsection_get_positions_of_indices.c
+
+perf_sparse_array_gather_SOURCES = perf_sparse_array_gather.f90
+perf_sparse_array_gather_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
