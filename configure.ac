@@ -276,6 +276,9 @@ AC_CONFIG_COMMANDS_PRE([FCFLAGS="$FCFLAGS${BUILD_FCFLAGS+ $BUILD_FCFLAGS}"])
 AC_ARG_VAR([BUILD_LDFLAGS],
   [append to LDFLAGS during build but not in configure phase])
 AC_CONFIG_COMMANDS_PRE([LDFLAGS="$LDFLAGS${BUILD_LDFLAGS+ $BUILD_LDFLAGS}"])
+AC_ARG_VAR([BUILD_LIBS],
+  [prepend to LIBS during build but not in configure phase])
+AC_CONFIG_COMMANDS_PRE([LIBS="${BUILD_LIBS+$BUILD_LIBS }$LIBS"])
 AC_ARG_VAR([BUILD_CC],
   [replace CC with expansion of $BUILD_CC during build but not in configure phase])
 AC_CONFIG_COMMANDS_PRE([CC="${BUILD_CC-$CC}"])
