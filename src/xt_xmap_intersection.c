@@ -292,13 +292,15 @@ generate_dir_transfer_pos_src(int num_intersections,
                               int * num_indices_to_remove_per_intersection)
 {
 
-  *resSets = xmalloc((size_t)num_intersections * sizeof(**resSets));
+  struct exchange_data *restrict resSets_ = *resSets
+    = xmalloc((size_t)num_intersections * sizeof(**resSets));
 
   int new_num_intersections = 0;
   int offset = 0;
 
   Xt_int * new_intersection_idxvec = NULL;
   size_t curr_new_intersection_idxvec_size = 0;
+  int *restrict intersection_pos = NULL;
 
   for (int i = 0; i < num_intersections; ++i) {
 
@@ -306,30 +308,33 @@ generate_dir_transfer_pos_src(int num_intersections,
       = xt_idxlist_get_indices_const(intersections[i].list);
     int intersection_size
       = xt_idxlist_get_num_indices(intersections[i].list);
-    int *intersection_pos = xmalloc((size_t)intersection_size
-                                    * sizeof(*intersection_pos));
+    intersection_pos = xrealloc(intersection_pos,
+                                (size_t)intersection_size
+                                * sizeof(*intersection_pos));
 
-    if (num_indices_to_remove_per_intersection[i] > 0) {
+    int num_indices_to_remove = num_indices_to_remove_per_intersection[i];
+    if (num_indices_to_remove > 0) {
 
       ENSURE_ARRAY_SIZE(
         new_intersection_idxvec, curr_new_intersection_idxvec_size,
-        intersection_size - num_indices_to_remove_per_intersection[i] + 1);
+        intersection_size - num_indices_to_remove + 1);
       int new_intersection_size = 0;
 
       for (int j = 0; j < intersection_size; ++j) {
 
         int flag = 0;
 
-        for (int k = 0; k < num_indices_to_remove_per_intersection[i]; ++k)
-          flag |= (intersection_idxvec[j] == indices_to_remove[offset + k]);
+        Xt_int idx = intersection_idxvec[j];
+        for (int k = 0; k < num_indices_to_remove; ++k)
+          flag |= (idx == indices_to_remove[offset + k]);
 
-        new_intersection_idxvec[new_intersection_size] = intersection_idxvec[j];
+        new_intersection_idxvec[new_intersection_size] = idx;
         new_intersection_size += !flag;
       }
 
       intersection_idxvec = new_intersection_idxvec;
       intersection_size = new_intersection_size;
-      offset = offset + num_indices_to_remove_per_intersection[i];
+      offset = offset + num_indices_to_remove;
     }
 
     int retval;
@@ -339,15 +344,11 @@ generate_dir_transfer_pos_src(int num_intersections,
     assert(retval != 1);
 
     if (intersection_size > 0) {
-
-      (*resSets)[new_num_intersections].transfer_pos = intersection_pos;
-      (*resSets)[new_num_intersections].num_transfer_pos = intersection_size;
-      (*resSets)[new_num_intersections].rank = intersections[i].rank;
+      resSets_[new_num_intersections].transfer_pos = intersection_pos;
+      resSets_[new_num_intersections].num_transfer_pos = intersection_size;
+      resSets_[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
-
-    } else {
-
-      free(intersection_pos);
+      intersection_pos = NULL;
     }
   }
 
@@ -355,7 +356,7 @@ generate_dir_transfer_pos_src(int num_intersections,
 
   *resCount = new_num_intersections;
   if (num_intersections != new_num_intersections)
-    *resSets = xrealloc(*resSets,
+    *resSets = xrealloc(resSets_,
                         (size_t)new_num_intersections * sizeof(**resSets));
 }
 
