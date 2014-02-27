@@ -41,6 +41,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "core/core.h"
+#include "xt/xt_mpi.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
@@ -49,13 +51,31 @@
 #include "xt/xt_idxstripes.h"
 #include "xt_idxlist_unpack.h"
 
+typedef Xt_idxlist (*idxlist_unpack)(void*,int,int*,MPI_Comm);
 
-struct xt_idxlist_unpack_routine_table xt_idxlist_unpack_routines[]
-= {{VECTOR, xt_idxvec_unpack},
-   {COLLECTION, xt_idxlist_collection_unpack},
-   {SECTION, xt_idxsection_unpack},
-   {STRIPES, xt_idxstripes_unpack},
-   {EMPTY, xt_idxempty_unpack}};
+static const idxlist_unpack unpack[] = {
+  xt_idxempty_unpack,
+  xt_idxvec_unpack,
+  xt_idxlist_collection_unpack,
+  xt_idxsection_unpack,
+  xt_idxstripes_unpack,
+};
 
-unsigned xt_num_unpack_routines = sizeof(xt_idxlist_unpack_routines) /
-                                  sizeof(xt_idxlist_unpack_routines[0]);
+static const unsigned xt_num_unpack_routines
+= sizeof(unpack) / sizeof(unpack[0]);
+
+Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
+                             int *position, MPI_Comm comm) {
+
+  int type;
+  // unpack the type of the index list to be unpacked
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         &type, 1, MPI_INT, comm), comm);
+  if (type >= 0 && (unsigned)type < xt_num_unpack_routines)
+    return unpack[type](buffer, buffer_size, position, comm);
+  Xt_abort(comm, "xt_idxlist_unpack: unknown index list type",
+           __FILE__, __LINE__);
+
+  return NULL;
+}
+

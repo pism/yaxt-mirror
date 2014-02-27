@@ -86,33 +86,6 @@ void xt_idxlist_pack(Xt_idxlist idxlist, void *buffer,
                          position, comm);
 }
 
-Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
-                             int *position, MPI_Comm comm) {
-
-   int type;
-
-   // unpack the type of the index list to be unpacked
-   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                   &type, 1, MPI_INT, comm), comm);
-
-   unsigned i;
-
-   for (i = 0; i < xt_num_unpack_routines; ++i) {
-
-     if ((enum xt_idxvecype)type == xt_idxlist_unpack_routines[i].type) {
-         return xt_idxlist_unpack_routines[i].xt_idxlist_unpack(buffer,
-                                                                buffer_size,
-                                                                position, comm);
-         break;
-      }
-   }
-
-  Xt_abort(comm, "xt_idxlist_unpack: unknown index list type",
-           __FILE__, __LINE__);
-
-  return NULL;
-}
-
 Xt_idxlist xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
                                        Xt_idxlist idxlist_dst) {
 

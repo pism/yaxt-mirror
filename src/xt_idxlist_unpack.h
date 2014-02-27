@@ -46,20 +46,13 @@
 #ifndef XT_IDXLIST_UNPACK_H
 #define XT_IDXLIST_UNPACK_H
 
-enum xt_idxvecype {
-   VECTOR     = 1,
-   COLLECTION = 2,
-   SECTION    = 3,
-   STRIPES    = 4,
-   EMPTY      = 5,
+enum xt_idxlist_pack_code {
+   EMPTY,
+   VECTOR,
+   COLLECTION,
+   SECTION,
+   STRIPES,
+   num_idxlist_classes,
 };
-
-struct xt_idxlist_unpack_routine_table {
-   enum xt_idxvecype type;
-   Xt_idxlist (*xt_idxlist_unpack)(void*,int,int*,MPI_Comm);
-};
-
-extern struct xt_idxlist_unpack_routine_table xt_idxlist_unpack_routines[];
-extern unsigned xt_num_unpack_routines;
 
 #endif
