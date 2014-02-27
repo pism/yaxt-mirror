@@ -154,7 +154,12 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
 
 /* ====================================================================== */
 
-static inline int
+struct ext_disp
+{
+  int disp, ext_idx;
+};
+
+static inline struct ext_disp
 pos2disp(int pos, int num_ext, struct Xt_offset_ext extents[],
          int psum_ext_size[])
 {
@@ -164,7 +169,27 @@ pos2disp(int pos, int num_ext, struct Xt_offset_ext extents[],
   while (j < num_ext && pos >= psum_ext_size[j + 1])
     ++j;
   int disp = extents[j].start + pos * extents[j].stride - psum_ext_size[j];
-  return disp;
+  return (struct ext_disp){ .disp = disp, .ext_idx = j };
+}
+
+static inline struct ext_disp
+pos2disp2(int pos, int num_ext, struct Xt_offset_ext extents[],
+          int psum_ext_size[], int start_ext)
+{
+  int j = start_ext;
+  if (pos < psum_ext_size[j + 1] && pos >= psum_ext_size[j])
+    ;
+  else if (pos < psum_ext_size[j + 1])
+  {
+    j = 0;
+    while (j < start_ext && pos >= psum_ext_size[j + 1])
+      ++j;
+  }
+  else
+    while (j < num_ext && pos >= psum_ext_size[j + 1])
+      ++j;
+  int disp = extents[j].start + pos * extents[j].stride - psum_ext_size[j];
+  return (struct ext_disp){ .disp = disp, .ext_idx = j };
 }
 
 static MPI_Datatype
@@ -186,11 +211,14 @@ generate_ext_datatype(int num_transfer_pos, const int transfer_pos[],
       do
       {
         int j = 1;
-        int block_disp = pos2disp(transfer_pos[i],
-                                  num_ext, extents, psum_ext_size);
+        struct ext_disp pos = pos2disp(transfer_pos[i],
+                                       num_ext, extents, psum_ext_size);
+        int block_disp = pos.disp;
         while (i + j < num_transfer_pos
-               && block_disp + j == pos2disp(transfer_pos[i + j],
-                                             num_ext, extents, psum_ext_size))
+               && block_disp + j
+               == (pos = pos2disp2(transfer_pos[i + j],
+                                   num_ext, extents, psum_ext_size,
+                                   pos.ext_idx)).disp)
           ++j;
         displ[block_ofs] = block_disp;
         blocklen[block_ofs] = j;
