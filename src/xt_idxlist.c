@@ -60,6 +60,7 @@
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
+#include "xt_idxvec_internal.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
@@ -255,7 +256,7 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
     tmp_indices = xmalloc((size_t)num_tmp_indices * sizeof (tmp_indices[0]));
     xt_idxlist_get_indices(idxlist, tmp_indices);
     Xt_idxlist tmp_idxvec;
-    tmp_idxvec = xt_idxvec_new(tmp_indices, num_tmp_indices);
+    tmp_idxvec = xt_idxvec_prealloc_new(tmp_indices, num_tmp_indices);
     int retval
       = tmp_idxvec->vtable->get_positions_of_indices(tmp_idxvec, indices,
                                                      num_indices, positions,
