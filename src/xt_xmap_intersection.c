@@ -368,9 +368,9 @@ exchange_points_to_remove(int num_src_intersections,
                           const struct Xt_com_list
                           dst_com[num_dst_intersections],
                           Xt_int ** src_indices_to_remove,
-                          int * num_src_indices_to_remove_per_intersection,
+                          int *restrict num_src_indices_to_remove_per_intersection,
                           Xt_int * dst_indices_to_remove,
-                          int * num_dst_indices_to_remove_per_intersection,
+                          int *restrict num_dst_indices_to_remove_per_intersection,
                           MPI_Comm comm) {
 
   int const HEADER_EXCHANGE_TAG = 0;
@@ -379,8 +379,9 @@ exchange_points_to_remove(int num_src_intersections,
   MPI_Request * requests
     = xmalloc((size_t)(num_src_intersections + 2 * num_dst_intersections) *
               sizeof(*requests));
-  MPI_Request * recv_requests = requests;
-  MPI_Request * send_requests = requests + num_src_intersections;
+  MPI_Request *restrict recv_requests = requests,
+    *restrict send_header_requests = requests + num_src_intersections,
+    *restrict send_data_requests = send_header_requests + num_dst_intersections;
 
   // set up receives for indices that need to be removed from the send messages
   for (int i = 0; i < num_src_intersections; ++i)
@@ -391,28 +392,29 @@ exchange_points_to_remove(int num_src_intersections,
   // send indices that need to be removed on the target side due to duplicated
   // receives
   int offset = 0;
+  unsigned num_nonempty_dst_intersections = 0;
   for (int i = 0; i < num_dst_intersections; ++i) {
     xt_mpi_call(MPI_Isend(num_dst_indices_to_remove_per_intersection + i,
                           1, MPI_INT, dst_com[i].rank, HEADER_EXCHANGE_TAG,
-                          comm, send_requests+2*i), comm);
+                          comm, send_header_requests + i), comm);
 
     if (num_dst_indices_to_remove_per_intersection[i] > 0) {
 
       xt_mpi_call(MPI_Isend(dst_indices_to_remove + offset,
                             num_dst_indices_to_remove_per_intersection[i],
                             Xt_int_dt, dst_com[i].rank, DATA_EXCHANGE_TAG,
-                            comm, send_requests+2*i+1), comm);
+                            comm,
+                            send_data_requests + num_nonempty_dst_intersections),
+                  comm);
       offset = offset
-               + num_dst_indices_to_remove_per_intersection[i];
-    } else {
-
-      send_requests[2*i+1] = MPI_REQUEST_NULL;
+        + num_dst_indices_to_remove_per_intersection[i];
+      ++num_nonempty_dst_intersections;
     }
   }
 
   // wait for the receiving of headers to complete
-  xt_mpi_call(MPI_Waitall(num_src_intersections, recv_requests,
-                          MPI_STATUSES_IGNORE), comm);
+  xt_mpi_call(MPI_Waitall(num_src_intersections + num_dst_intersections,
+                          recv_requests, MPI_STATUSES_IGNORE), comm);
 
   size_t total_num_src_indices_to_recv = 0;
 
@@ -420,6 +422,7 @@ exchange_points_to_remove(int num_src_intersections,
     total_num_src_indices_to_recv
       += (size_t)num_src_indices_to_remove_per_intersection[i];
 
+  unsigned num_nonempty_src_intersections = 0;
   if (total_num_src_indices_to_recv > 0) {
 
     *src_indices_to_remove = xmalloc(total_num_src_indices_to_recv
@@ -427,30 +430,31 @@ exchange_points_to_remove(int num_src_intersections,
 
     // set up receive for indices that need to be removed
     offset = 0;
-    for (int i = 0; i < num_src_intersections; ++i) {
-
+    for (int i = 0; i < num_src_intersections; ++i)
       if (num_src_indices_to_remove_per_intersection[i] > 0) {
-
         xt_mpi_call(MPI_Irecv((*src_indices_to_remove) + offset,
                               num_src_indices_to_remove_per_intersection[i],
                               Xt_int_dt, src_com[i].rank, DATA_EXCHANGE_TAG,
-                              comm, recv_requests+i), comm);
+                              comm,
+                              recv_requests + num_nonempty_src_intersections),
+                    comm);
 
         offset = offset
-                 + num_src_indices_to_remove_per_intersection[i];
-      } else
-        recv_requests[i] = MPI_REQUEST_NULL;
-    }
+          + num_src_indices_to_remove_per_intersection[i];
+        ++num_nonempty_src_intersections;
+      }
 
   } else {
-
     *src_indices_to_remove = NULL;
-    for (int i = 0; i < num_src_intersections; ++i)
-      recv_requests[i] = MPI_REQUEST_NULL;
   }
 
+  /* move data request handles for compact wait */
+  memcpy(recv_requests + num_nonempty_src_intersections, send_data_requests,
+         num_nonempty_dst_intersections * sizeof (recv_requests[0]));
+
   // wait until all communication is completed
-  xt_mpi_call(MPI_Waitall(num_src_intersections + 2 * num_dst_intersections,
+  xt_mpi_call(MPI_Waitall((int)num_nonempty_src_intersections
+                          + (int)num_nonempty_dst_intersections,
                           requests, MPI_STATUSES_IGNORE), comm);
 
   free(requests);
