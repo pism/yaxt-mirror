@@ -195,82 +195,86 @@ generate_dir_transfer_pos_dst(int num_intersections,
                               int *resCount,
                               struct exchange_data **resSets,
                               Xt_int ** indices_to_remove,
-                              int * num_indices_to_remove_per_intersection)
+                              int *num_indices_to_remove_per_intersection)
 {
+  struct exchange_data *restrict resSets_
+    = *resSets = xmalloc((size_t)num_intersections * sizeof(**resSets));
 
-  *resSets = xmalloc((size_t)num_intersections * sizeof(**resSets));
-
-  int * position_mask = NULL;
-
-  position_mask = xcalloc((size_t)xt_idxlist_get_num_indices(mypart_idxlist),
-                          sizeof(*position_mask));
+  int *restrict position_mask
+    = xcalloc((size_t)xt_idxlist_get_num_indices(mypart_idxlist),
+              sizeof(*position_mask));
 
   int new_num_intersections = 0;
   size_t total_num_indices_to_remove = 0;
   size_t curr_indices_to_remove_size = 0;
+  Xt_int *restrict indices_to_remove_ = *indices_to_remove;
+  int *restrict intersection_pos = NULL;
 
   for (int i = 0; i < num_intersections; ++i) {
 
-    const Xt_int *intersection_idxvec
+    const Xt_int *restrict intersection_idxvec
       = xt_idxlist_get_indices_const(intersections[i].list);
-    int intersection_size
+    int max_intersection_size
       = xt_idxlist_get_num_indices(intersections[i].list);
-    int *intersection_pos = xmalloc((size_t)intersection_size
-                                    * sizeof(*intersection_pos));
+    intersection_pos
+      = xrealloc(intersection_pos,
+                 (size_t)max_intersection_size * sizeof(*intersection_pos));
 
-    int retval;
-    retval = xt_idxlist_get_positions_of_indices(
-      mypart_idxlist, intersection_idxvec, intersection_size,
+    int retval = xt_idxlist_get_positions_of_indices(
+      mypart_idxlist, intersection_idxvec, max_intersection_size,
       intersection_pos, 1);
     assert(retval != 1);
 
     // we have to enforce single_match_only not only within a single
     // intersection, but also between all intersections
 
-    int tmp_intersection_size = 0;
-    num_indices_to_remove_per_intersection[i] = 0;
+    int intersection_size = 0;
+    int num_indices_to_remove_isect = 0;
 
-    for (int j = 0; j < intersection_size; ++j) {
+    /* at most intersection_size many indices need to be removed */
+    ENSURE_ARRAY_SIZE(indices_to_remove_, curr_indices_to_remove_size,
+                      total_num_indices_to_remove
+                      + (size_t)max_intersection_size);
 
-      // if the current value was not already in another intersection
-      if (!position_mask[intersection_pos[j]]) {
+    for (int j = 0; j < max_intersection_size; ++j) {
 
-        position_mask[intersection_pos[j]] = 1;
-
-        if (tmp_intersection_size != j)
-          intersection_pos[tmp_intersection_size] = intersection_pos[j];
-
-        ++tmp_intersection_size;
-
-      } else {
-
-        ENSURE_ARRAY_SIZE(*indices_to_remove, curr_indices_to_remove_size,
-                          total_num_indices_to_remove + 1);
-
-        (*indices_to_remove)[total_num_indices_to_remove++]
-          = intersection_idxvec[j];
-        num_indices_to_remove_per_intersection[i]++;
-      }
+      int pos = intersection_pos[j];
+      /* the predicate effectively conditionalizes adding of either
+       * the position to intersection_pos
+       *   if the current value was NOT already in another intersection
+       * or
+       * the index to indices_to_remove_
+       *   if the current value was already in another intersection
+       */
+      int predicate = position_mask[pos];
+      intersection_pos[intersection_size] = pos;
+      indices_to_remove_[total_num_indices_to_remove
+                         + (size_t)num_indices_to_remove_isect]
+        = intersection_idxvec[j];
+      intersection_size += predicate ^ 1;
+      num_indices_to_remove_isect += predicate;
+      position_mask[pos] = 1;
     }
 
-    intersection_size = tmp_intersection_size;
+    total_num_indices_to_remove += (size_t)num_indices_to_remove_isect;
+    num_indices_to_remove_per_intersection[i] = num_indices_to_remove_isect;
 
     if (intersection_size > 0) {
-
-      (*resSets)[new_num_intersections].transfer_pos = intersection_pos;
-      (*resSets)[new_num_intersections].num_transfer_pos = intersection_size;
-      (*resSets)[new_num_intersections].rank = intersections[i].rank;
+      resSets_[new_num_intersections].transfer_pos = intersection_pos;
+      resSets_[new_num_intersections].num_transfer_pos = intersection_size;
+      resSets_[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
-
-    } else {
-
-      free(intersection_pos);
+      intersection_pos = NULL;
     }
   }
+  free(intersection_pos);
 
+  *indices_to_remove = xrealloc(indices_to_remove_,
+                                (size_t)total_num_indices_to_remove
+                                * sizeof (**indices_to_remove));
   *resCount = new_num_intersections;
   if (num_intersections != new_num_intersections)
-    *resSets = xrealloc(*resSets,
+    *resSets = xrealloc(resSets_,
                         (size_t)new_num_intersections * sizeof(**resSets));
 
   free(position_mask);
