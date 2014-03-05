@@ -89,7 +89,7 @@ static const Xt_int *
 idxstripes_get_indices_const(Xt_idxlist idxlist);
 
 static void
-idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              int * num_stripes);
 
 static int
@@ -123,7 +123,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .get_num_indices              = idxstripes_get_num_indices,
   .get_indices                  = idxstripes_get_indices,
   .get_indices_const            = idxstripes_get_indices_const,
-  .get_index_stripes            = idxsection_get_index_stripes,
+  .get_index_stripes            = idxstripes_get_index_stripes,
   .get_index_at_position        = idxstripes_get_index_at_position,
   .get_indices_at_positions     = idxstripes_get_indices_at_positions,
   .get_position_of_index        = idxstripes_get_position_of_index,
@@ -651,10 +651,10 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
 }
 
 static void
-idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
+idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              int * num_stripes) {
 
-  INSTR_DEF(instr,"idxsection_get_index_stripes");
+  INSTR_DEF(instr,"idxstripes_get_index_stripes");
   INSTR_START(instr);
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
