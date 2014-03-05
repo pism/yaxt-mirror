@@ -52,6 +52,7 @@
 
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
+#include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
 #include "xt_idxstripes_internal.h"
@@ -231,20 +232,22 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
   INSTR_DEF(instr,"xt_idxstripes_new");
   INSTR_START(instr);
 
-  Xt_idxstripes idxstripes = xmalloc(sizeof (*idxstripes));
-
-  Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable);
-  idxstripes->num_stripes = num_stripes;
-  idxstripes->index_num_cache = 0;
-  idxstripes->index_array_cache = NULL;
+  Xt_idxlist result;
 
   if (num_stripes > 0) {
+    Xt_idxstripes idxstripes = xmalloc(sizeof (*idxstripes));
+
+    Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable);
+    idxstripes->num_stripes = num_stripes;
+    idxstripes->index_num_cache = 0;
+    idxstripes->index_array_cache = NULL;
+
     idxstripes->stripes
       = xmalloc((size_t)num_stripes * sizeof(*(idxstripes->stripes)));
     memcpy(idxstripes->stripes, stripes,
            (size_t)num_stripes * sizeof(*(idxstripes->stripes)));
     int sign_err = 0;
-    for(int i=0; i<num_stripes; i++) {
+    for(int i = 0; i < num_stripes; i++) {
       if (idxstripes->stripes[i].nstrides<0) {
         idxstripes->stripes[i].nstrides = 0;
         sign_err++;
@@ -258,20 +261,17 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
     generate_stripes_sorted(idxstripes);
 
     idxstripes->stripes_overlap = 0;
-    for (int i = 0; i < idxstripes->num_stripes - 1; ++i)
+    for (int i = 0; i < num_stripes - 1; ++i)
       if (stripes_overlap(idxstripes->stripes_sorted[i],
                           idxstripes->stripes_sorted[i+1])) {
         idxstripes->stripes_overlap = 1;
         break;
       }
-
-  } else {
-    idxstripes->stripes = NULL;
-    idxstripes->stripes_sorted = NULL;
-    idxstripes->stripes_overlap = 0;
-  }
+    result = (Xt_idxlist)idxstripes;
+  } else
+    result = xt_idxempty_new();
   INSTR_STOP(instr);
-  return (Xt_idxlist)idxstripes;
+  return result;
 }
 
 static void
@@ -329,17 +329,20 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 
   INSTR_DEF(instr,"xt_idxstripes_unpack");
   INSTR_START(instr);
-  Xt_idxstripes stripes = xmalloc(sizeof (*stripes));
 
-  Xt_idxlist_init(&stripes->parent, &idxstripes_vtable);
-  stripes->index_num_cache = -1; // negative num means: undef
-  stripes->index_array_cache = NULL;
-
+  int num_stripes;
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         &stripes->num_stripes, 1, MPI_INT,
-                         comm), comm);
+                         &num_stripes, 1, MPI_INT, comm), comm);
 
-  if (stripes->num_stripes) {
+  Xt_idxlist result;
+  if (num_stripes) {
+    Xt_idxstripes stripes = xmalloc(sizeof (*stripes));
+
+    Xt_idxlist_init(&stripes->parent, &idxstripes_vtable);
+    stripes->index_num_cache = -1; // negative num means: undef
+    stripes->index_array_cache = NULL;
+    stripes->num_stripes = num_stripes;
+
     stripes->stripes
       = xmalloc((size_t)stripes->num_stripes * sizeof(*(stripes->stripes)));
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, stripes->stripes,
@@ -348,20 +351,18 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
     generate_stripes_sorted(stripes);
 
     stripes->stripes_overlap = 0;
-    for (int i = 0; i < stripes->num_stripes - 1; ++i)
+    for (int i = 0; i < num_stripes - 1; ++i)
       if (stripes_overlap(stripes->stripes_sorted[i],
                           stripes->stripes_sorted[i+1])) {
         stripes->stripes_overlap = 1;
         break;
       }
-  } else {
-    stripes->stripes = NULL;
-    stripes->stripes_sorted = NULL;
-    stripes->stripes_overlap = 0;
-  }
+    result = (Xt_idxlist)stripes;
+  } else
+    result = xt_idxempty_new();
 
   INSTR_STOP(instr);
-  return (Xt_idxlist)stripes;
+  return result;
 }
 
 void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
