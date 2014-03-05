@@ -87,6 +87,9 @@ xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
     [idxlist_dst->vtable->idxlist_pack_code](idxlist_src, idxlist_dst);
 }
 
+enum {
+  CHEAP_VECTOR_SIZE = 128,
+};
 
 
 Xt_idxlist
@@ -107,23 +110,42 @@ xt_default_isect(Xt_idxlist idxlist_src,
    if (num_indices_src == 0 || num_indices_dst == 0)
      return xt_idxempty_new();
 
-   Xt_int *indices_src
-     = xmalloc(((size_t)num_indices_src + (size_t)num_indices_dst)
-               * sizeof (indices_src[0])),
-     *indices_dst = indices_src + num_indices_src;
+   Xt_idxlist intersection;
+   if (num_indices_src < CHEAP_VECTOR_SIZE
+       && num_indices_dst < CHEAP_VECTOR_SIZE) {
+     Xt_int *indices_src
+       = xmalloc(((size_t)num_indices_src + (size_t)num_indices_dst)
+                 * sizeof (indices_src[0])),
+       *indices_dst = indices_src + num_indices_src;
 
-   xt_idxlist_get_indices(idxlist_src, indices_src);
-   xt_idxlist_get_indices(idxlist_dst, indices_dst);
+     xt_idxlist_get_indices(idxlist_src, indices_src);
+     xt_idxlist_get_indices(idxlist_dst, indices_dst);
 
-   Xt_idxlist idxvec_src = xt_idxvec_prealloc_new(indices_src, num_indices_src),
-     idxvec_dst = xt_idxvec_prealloc_new(indices_dst, num_indices_dst);
+     Xt_idxlist idxvec_src = xt_idxvec_prealloc_new(indices_src, num_indices_src),
+       idxvec_dst = xt_idxvec_prealloc_new(indices_dst, num_indices_dst);
 
-   Xt_idxlist intersection
-     = xt_idxvec_get_intersection(idxvec_src, idxvec_dst);
+     intersection
+       = xt_idxvec_get_intersection(idxvec_src, idxvec_dst);
 
-   xt_idxlist_delete(idxvec_src);
-   xt_idxlist_delete(idxvec_dst);
-   free(indices_src);
+     xt_idxlist_delete(idxvec_src);
+     xt_idxlist_delete(idxvec_dst);
+     free(indices_src);
+   } else {
+     int num_stripes_src, num_stripes_dst;
+     struct Xt_stripe *stripes_src, *stripes_dst;
+     xt_idxlist_get_index_stripes(idxlist_src, &stripes_src, &num_stripes_src);
+     xt_idxlist_get_index_stripes(idxlist_dst, &stripes_dst, &num_stripes_dst);
+     Xt_idxlist idxstripes_src = xt_idxstripes_prealloc_new(stripes_src,
+                                                         num_stripes_src),
+       idxstripes_dst = xt_idxstripes_prealloc_new(stripes_dst,
+                                                   num_stripes_dst);
+     intersection
+       = xt_idxstripes_get_intersection(idxstripes_src, idxstripes_dst);
+     xt_idxlist_delete(idxstripes_dst);
+     xt_idxlist_delete(idxstripes_src);
+     free(stripes_dst);
+     free(stripes_src);
+   }
 
    INSTR_STOP(instr_fallback);
    return intersection;
