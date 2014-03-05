@@ -55,6 +55,7 @@
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxlist_collection.h"
+#include "xt/xt_idxempty.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
 #include "core/core.h"
@@ -143,21 +144,30 @@ struct Xt_idxlist_collection_ {
 Xt_idxlist
 xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
 
-   Xt_idxlist_collection collectionlist
-     = xmalloc(sizeof (*collectionlist)
-               + (size_t)num_idxlists * sizeof (collectionlist->idxlists[0]));
+  Xt_idxlist result;
+  if (num_idxlists > 1)
+  {
+    Xt_idxlist_collection collectionlist
+      = xmalloc(sizeof (*collectionlist)
+                + (size_t)num_idxlists * sizeof (collectionlist->idxlists[0]));
 
-   Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
-   collectionlist->num_idxlists = num_idxlists;
-   collectionlist->index_num_cache = -1;
-   collectionlist->index_array_cache = NULL;
+    Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
+    collectionlist->num_idxlists = num_idxlists;
+    collectionlist->index_num_cache = -1;
+    collectionlist->index_array_cache = NULL;
 
-   for (int i = 0; i < num_idxlists; ++i)
-     collectionlist->idxlists[i] = xt_idxlist_copy(idxlists[i]);
+    for (int i = 0; i < num_idxlists; ++i)
+      collectionlist->idxlists[i] = xt_idxlist_copy(idxlists[i]);
 
-  /* FIXME: ensure that the total number of indices is not bigger than INT_MAX */
+    /* FIXME: ensure that the total number of indices is not bigger than INT_MAX */
 
-   return (Xt_idxlist)collectionlist;
+    result = (Xt_idxlist)collectionlist;
+  }
+  else if (num_idxlists == 1)
+    result = xt_idxlist_copy(idxlists[0]);
+  else /* num_idxlists == 0 */
+    result = xt_idxempty_new();
+  return result;
 }
 
 static void
