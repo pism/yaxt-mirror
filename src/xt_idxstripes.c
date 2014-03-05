@@ -235,15 +235,19 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
   Xt_idxlist result;
 
   if (num_stripes > 0) {
-    Xt_idxstripes idxstripes = xmalloc(sizeof (*idxstripes));
-
+    size_t header_size = ((sizeof (struct Xt_idxstripes_)
+                           + sizeof (struct Xt_stripe) - 1)
+                          / sizeof (struct Xt_stripe))
+      * sizeof (struct Xt_stripe),
+      body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
+    Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
     Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable);
     idxstripes->num_stripes = num_stripes;
     idxstripes->index_num_cache = 0;
     idxstripes->index_array_cache = NULL;
 
     idxstripes->stripes
-      = xmalloc((size_t)num_stripes * sizeof(*(idxstripes->stripes)));
+      = (struct Xt_stripe *)((unsigned char *)idxstripes + header_size);
     memcpy(idxstripes->stripes, stripes,
            (size_t)num_stripes * sizeof(*(idxstripes->stripes)));
     int sign_err = 0;
@@ -282,7 +286,6 @@ idxstripes_delete(Xt_idxlist data) {
   Xt_idxstripes stripes = (Xt_idxstripes)data;
 
   free(stripes->stripes_sorted);
-  free(stripes->stripes);
   free(stripes->index_array_cache);
   free(stripes);
 }
@@ -336,28 +339,32 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 
   Xt_idxlist result;
   if (num_stripes) {
-    Xt_idxstripes stripes = xmalloc(sizeof (*stripes));
+    size_t header_size = ((sizeof (struct Xt_idxstripes_)
+                           + sizeof (struct Xt_stripe) - 1)
+                          / sizeof (struct Xt_stripe))
+      * sizeof (struct Xt_stripe),
+      body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
+    Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
+    Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable);
+    idxstripes->index_num_cache = -1; // negative num means: undef
+    idxstripes->index_array_cache = NULL;
+    idxstripes->num_stripes = num_stripes;
 
-    Xt_idxlist_init(&stripes->parent, &idxstripes_vtable);
-    stripes->index_num_cache = -1; // negative num means: undef
-    stripes->index_array_cache = NULL;
-    stripes->num_stripes = num_stripes;
+    idxstripes->stripes
+      = (struct Xt_stripe *)((unsigned char *)idxstripes + header_size);
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, idxstripes->stripes,
+                           idxstripes->num_stripes, stripe_dt, comm),comm);
 
-    stripes->stripes
-      = xmalloc((size_t)stripes->num_stripes * sizeof(*(stripes->stripes)));
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, stripes->stripes,
-                           stripes->num_stripes, stripe_dt, comm),comm);
+    generate_stripes_sorted(idxstripes);
 
-    generate_stripes_sorted(stripes);
-
-    stripes->stripes_overlap = 0;
+    idxstripes->stripes_overlap = 0;
     for (int i = 0; i < num_stripes - 1; ++i)
-      if (stripes_overlap(stripes->stripes_sorted[i],
-                          stripes->stripes_sorted[i+1])) {
-        stripes->stripes_overlap = 1;
+      if (stripes_overlap(idxstripes->stripes_sorted[i],
+                          idxstripes->stripes_sorted[i+1])) {
+        idxstripes->stripes_overlap = 1;
         break;
       }
-    result = (Xt_idxlist)stripes;
+    result = (Xt_idxlist)idxstripes;
   } else
     result = xt_idxempty_new();
 
