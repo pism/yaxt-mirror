@@ -55,4 +55,14 @@ xt_idxstripes_finalize();
 Xt_idxlist
 xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
 
+/**
+ * Generates an index list that is built up of stripes of indices.
+ * Does not copy the stripes.
+ *
+ * @param[in] stripes     array defining the stripes
+ * @param[in] num_stripes number of stripes
+ */
+Xt_idxlist
+xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes);
+
 #endif

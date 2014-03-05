@@ -278,6 +278,50 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
   return result;
 }
 
+Xt_idxlist
+xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes)
+{
+  Xt_idxlist result;
+
+  if (num_stripes > 0) {
+    size_t header_size = ((sizeof (struct Xt_idxstripes_)
+                           + sizeof (struct Xt_stripe) - 1)
+                          / sizeof (struct Xt_stripe))
+      * sizeof (struct Xt_stripe),
+      body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
+    Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
+    Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable);
+    idxstripes->num_stripes = num_stripes;
+    idxstripes->index_array_cache = NULL;
+
+    idxstripes->stripes = (struct Xt_stripe *)stripes;
+    int sign_err = 0;
+    long long index_num_cache = 0;
+    for(int i = 0; i < num_stripes; i++) {
+      sign_err += (idxstripes->stripes[i].nstrides < 0);
+      index_num_cache += (long long)stripes[i].nstrides;
+    }
+    if (sign_err)
+      die("ERROR: xt_idxstripes_prealloc_new called with invalid stripes");
+
+    idxstripes->index_num_cache = (int)index_num_cache;
+
+    generate_stripes_sorted(idxstripes);
+
+    idxstripes->stripes_overlap = 0;
+    for (int i = 0; i < num_stripes - 1; ++i)
+      if (stripes_overlap(idxstripes->stripes_sorted[i],
+                          idxstripes->stripes_sorted[i+1])) {
+        idxstripes->stripes_overlap = 1;
+        break;
+      }
+    result = (Xt_idxlist)idxstripes;
+  } else
+    result = xt_idxempty_new();
+  return result;
+}
+
+
 static void
 idxstripes_delete(Xt_idxlist data) {
 
