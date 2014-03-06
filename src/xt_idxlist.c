@@ -93,8 +93,7 @@ Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist) {
 }
 
 int xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
-
-   return idxlist->vtable->get_num_indices(idxlist);
+   return idxlist->num_indices;
 }
 
 void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_int *indices) {

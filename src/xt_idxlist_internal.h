@@ -57,7 +57,6 @@ struct xt_idxlist_vtable {
    size_t (*get_pack_size)(Xt_idxlist, MPI_Comm);
    void (*pack)(Xt_idxlist, void*, int, int*, MPI_Comm);
    Xt_idxlist (*copy)(Xt_idxlist);
-   int (*get_num_indices)(Xt_idxlist);
    void (*get_indices)(Xt_idxlist, Xt_int *indices);
    Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, int *);
@@ -80,6 +79,7 @@ struct xt_idxlist_vtable {
 
 struct Xt_idxlist_ {
   const struct xt_idxlist_vtable *vtable;
+  int num_indices;
   Xt_uid uid;
 };
 
@@ -88,10 +88,12 @@ void xt_idxlist_intersection_init(void);
 Xt_uid xt_idxlist_new_uid();
 
 static inline void Xt_idxlist_init(Xt_idxlist idxlist,
-                                   const struct xt_idxlist_vtable *vtable)
+                                   const struct xt_idxlist_vtable *vtable,
+                                   int num_indices)
 {
   idxlist->vtable = vtable;
   idxlist->uid = xt_idxlist_new_uid();
+  idxlist->num_indices = num_indices;
 }
 
 Xt_idxlist

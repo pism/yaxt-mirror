@@ -66,9 +66,6 @@ idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
 static Xt_idxlist
 idxempty_copy(Xt_idxlist idxlist);
 
-static int
-idxempty_get_num_indices(Xt_idxlist idxlist);
-
 static void
 idxempty_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 
@@ -115,7 +112,6 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
   .get_pack_size                = idxempty_get_pack_size,
   .pack                         = idxempty_pack,
   .copy                         = idxempty_copy,
-  .get_num_indices              = idxempty_get_num_indices,
   .get_indices                  = idxempty_get_indices,
   .get_indices_const            = idxempty_get_indices_const,
   .get_index_stripes            = idxempty_get_index_stripes,
@@ -139,7 +135,7 @@ static struct xt_idxempty {
 void
 xt_idxempty_init()
 {
-  Xt_idxlist_init(&idxempty.parent, &idxempty_vtable);
+  Xt_idxlist_init(&idxempty.parent, &idxempty_vtable, 0);
 }
 
 void
@@ -186,12 +182,6 @@ static Xt_idxlist
 idxempty_copy(Xt_idxlist XT_UNUSED(idxlist)) {
 
    return xt_idxempty_new();
-}
-
-static int
-idxempty_get_num_indices(Xt_idxlist XT_UNUSED(idxlist)) {
-
-   return 0;
 }
 
 static void

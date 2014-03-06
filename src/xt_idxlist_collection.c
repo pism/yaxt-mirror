@@ -75,9 +75,6 @@ idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size,
 static Xt_idxlist
 idxlist_collection_copy(Xt_idxlist idxlist);
 
-static int
-idxlist_collection_get_num_indices(Xt_idxlist idxlist);
-
 static void
 idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 
@@ -112,7 +109,6 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .get_pack_size               = idxlist_collection_get_pack_size,
   .pack                        = idxlist_collection_pack,
   .copy                        = idxlist_collection_copy,
-  .get_num_indices             = idxlist_collection_get_num_indices,
   .get_indices                 = idxlist_collection_get_indices,
   .get_indices_const           = idxlist_collection_get_indices_const,
   .get_index_stripes           = idxlist_collection_get_index_stripes,
@@ -136,7 +132,6 @@ struct Xt_idxlist_collection_ {
 
   int num_idxlists;
 
-  int index_num_cache;
   Xt_int *index_array_cache;
   Xt_idxlist idxlists[];
 };
@@ -151,15 +146,19 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
       = xmalloc(sizeof (*collectionlist)
                 + (size_t)num_idxlists * sizeof (collectionlist->idxlists[0]));
 
-    Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
     collectionlist->num_idxlists = num_idxlists;
-    collectionlist->index_num_cache = -1;
     collectionlist->index_array_cache = NULL;
 
+    long long num_indices = 0;
     for (int i = 0; i < num_idxlists; ++i)
+    {
       collectionlist->idxlists[i] = xt_idxlist_copy(idxlists[i]);
+      num_indices += idxlists[i]->num_indices;
+    }
 
-    /* FIXME: ensure that the total number of indices is not bigger than INT_MAX */
+    assert(num_indices <= INT_MAX);
+    Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable,
+                    (int)num_indices);
 
     result = (Xt_idxlist)collectionlist;
   }
@@ -228,15 +227,19 @@ xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
     = xmalloc(sizeof (*collectionlist)
               + (size_t)num_lists * sizeof (collectionlist->idxlists[0]));
 
-  Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable);
-  collectionlist->index_num_cache = -1;
   collectionlist->index_array_cache = NULL;
   collectionlist->num_idxlists = num_lists;
 
-  for (int i = 0; i < collectionlist->num_idxlists; ++i)
+  long long num_indices = 0;
+  for (int i = 0; i < collectionlist->num_idxlists; ++i) {
     collectionlist->idxlists[i] = xt_idxlist_unpack(buffer, buffer_size,
                                                     position, comm);
+    num_indices += collectionlist->idxlists[i]->num_indices;
+  }
 
+  assert(num_indices <= INT_MAX);
+  Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable,
+                  (int)num_indices);
   return (Xt_idxlist)collectionlist;
 }
 
@@ -254,24 +257,6 @@ idxlist_collection_copy(Xt_idxlist idxlist) {
 
    return xt_idxlist_collection_new(collectionlist->idxlists,
                                     collectionlist->num_idxlists);
-}
-
-static int
-idxlist_collection_get_num_indices(Xt_idxlist idxlist) {
-
-   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
-
-   if (collectionlist->index_num_cache >= 0)
-     return collectionlist->index_num_cache;
-
-   int num_indices = 0;
-
-   for (int i = 0; i < collectionlist->num_idxlists; ++i)
-     num_indices += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
-
-   collectionlist->index_num_cache = num_indices;
-
-   return num_indices;
 }
 
 static void
@@ -295,10 +280,10 @@ idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
 
   if (collection->index_array_cache) return collection->index_array_cache;
 
-  int index_num = idxlist_collection_get_num_indices(idxlist);
+  unsigned num_indices = (unsigned)idxlist->num_indices;
 
   Xt_int *tmp_index_array
-    = xmalloc((Xt_uint)index_num * sizeof( *(collection->index_array_cache) ) );
+    = xmalloc(num_indices * sizeof (collection->index_array_cache[0]));
 
   idxlist_collection_get_indices(idxlist, tmp_index_array);
 
