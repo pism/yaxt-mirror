@@ -78,12 +78,6 @@ struct xt_redist_f {
   Xt_redist cptr;
 };
 
-struct xt_modifier_f {
-  struct xt_idxlist_f extract;
-  struct xt_idxlist_f subst;
-  int mask;
-};
-
 void xt_initialize_f(MPI_Fint *comm_f) {
   MPI_Comm comm_c;
   comm_c = MPI_Comm_f2c(*comm_f);
@@ -255,26 +249,6 @@ xt_redist_collection_new_f(Xt_redist *redists, MPI_Fint num_redists,
     Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
   return xt_redist_collection_new(redists, (int)num_redists,
                                   (int)cache_size, comm_c);
-}
-
-Xt_idxlist xt_idxmod_new_f(struct xt_idxlist_f *patch_idxlist_f,
-                           struct xt_modifier_f *modifier_f,
-                           int modifier_num, int *mstate) {
-
-  if (modifier_num<0) die("unexpected case: modifier_num<0");
-
-  struct Xt_modifier modifier[modifier_num];
-
-  for (int m=0; m < modifier_num; m++) {
-    modifier[m].extract = modifier_f[m].extract.cptr;
-    modifier[m].subst   = modifier_f[m].subst.cptr;
-    modifier[m].mask    = modifier_f[m].mask;
-  }
-
-  Xt_idxlist patch_idxlist = patch_idxlist_f->cptr;
-
-  return xt_idxmod_new(patch_idxlist, modifier,
-                       modifier_num, mstate);
 }
 
 static void
