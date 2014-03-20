@@ -129,7 +129,9 @@ PROGRAM test_idxempty
   CALL xt_finalize
   CALL finish_mpi
 
-  IF (test_err_count() /= 0) STOP 1
+  IF (test_err_count() /= 0) CALL test_abort("non-zero error count", &
+       __FILE__, &
+       __LINE__)
 
 CONTAINS
 
