@@ -73,7 +73,6 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
     struct Xt_modifier *m = &modifier[im];
 
     Xt_idxlist intersection_idxlist;
-    int missing;
 
     // intersection between extract values and workpatch:
     // any multiplicity of workpatch must be repeated in the intersection therefore
@@ -88,16 +87,16 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
     // get the intersection positions within the extract list
     // m->extract has source role, therefore single_match_only = 0
     // => extract_pos
-    missing = xt_idxlist_get_positions_of_indices(m->extract, inter_idx,
-                                                  (Xt_int)intersection_size,
-                                                  extract_pos, 0);
+    int missing = xt_idxlist_get_positions_of_indices(m->extract, inter_idx,
+                                                      intersection_size,
+                                                      extract_pos, 0);
     if (missing) die("xt_idxmod_new: internal error: cannot locate all intersection positions (1)");
 
     // get the intersection positions within workpatch
     // we must find each fitting index, so single_match_only = 1
     // => workpatch_pos
     missing = xt_idxlist_get_positions_of_indices(workpatch_idxlist, inter_idx,
-                                                  (Xt_int)intersection_size,
+                                                  intersection_size,
                                                   workpatch_pos, 1);
 
     if (missing) die("xt_idxmod_new: internal error: cannot locate all intersection positions (2)");
@@ -105,8 +104,8 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
     // using the positions above, select indices within m->subst:
     // it is an error if we cannot access all positions, so the value of undef_idx does not matter (set to 0)
     int undef_num = xt_idxlist_get_indices_at_positions(m->subst, extract_pos,
-                                                       (Xt_int)intersection_size,
-                                                       subst_idx, 0);
+                                                        intersection_size,
+                                                        subst_idx, 0);
     if (undef_num) die("xt_idxmod_new: internal error: failed access: m->subst is too small");
 
     // delete workpatch_idxlist
