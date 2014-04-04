@@ -8,6 +8,8 @@ AC_INIT([yaxt],[0.2.2],[hanke@dkrz.de],,
 AC_CONFIG_SRCDIR([src/xt_idxlist.c])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
+dnl forbid acx macro names from remaining unexpanded
+m4_pattern_forbid([^ACX_])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([1.10 foreign])
 AM_MAINTAINER_MODE
