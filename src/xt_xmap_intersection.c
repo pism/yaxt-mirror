@@ -322,14 +322,16 @@ generate_dir_transfer_pos_src(int num_intersections,
 
       for (int j = 0; j < intersection_size; ++j) {
 
-        int flag = 0;
+        int discard = 0;
 
         Xt_int idx = intersection_idxvec[j];
+        /* could be improved with BLOOM-filter if
+         * num_indices_to_remove was sufficiently large */
         for (int k = 0; k < num_indices_to_remove; ++k)
-          flag |= (idx == indices_to_remove[offset + k]);
+          discard |= (idx == indices_to_remove[offset + k]);
 
         new_intersection_idxvec[new_intersection_size] = idx;
-        new_intersection_size += !flag;
+        new_intersection_size += !discard;
       }
 
       intersection_idxvec = new_intersection_idxvec;
