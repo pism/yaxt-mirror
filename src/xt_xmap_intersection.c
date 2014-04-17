@@ -375,8 +375,10 @@ exchange_points_to_remove(int num_src_intersections,
                           int *restrict num_dst_indices_to_remove_per_intersection,
                           MPI_Comm comm) {
 
-  int const HEADER_EXCHANGE_TAG = 0;
-  int const DATA_EXCHANGE_TAG = 1;
+  enum {
+    HEADER_EXCHANGE_TAG = 0,
+    DATA_EXCHANGE_TAG = 1,
+  };
 
   MPI_Request * requests
     = xmalloc((size_t)(num_src_intersections + 2 * num_dst_intersections) *
