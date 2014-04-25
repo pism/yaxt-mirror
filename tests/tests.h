@@ -50,9 +50,9 @@
 extern unsigned err_count__;
 
 #ifdef VERBOSE
-#define PUT_ERR(string) do { err_count__++; fputs((string), stderr); } while (0)
+#define PUT_ERR(...) do { err_count__++; fprintf(stderr, __VA_ARGS__); } while (0)
 #else
-#define PUT_ERR(string) do { err_count__++; } while (0)
+#define PUT_ERR(...) do { err_count__++; } while (0)
 #endif
 
 #define INC_ERR (err_count__++)
