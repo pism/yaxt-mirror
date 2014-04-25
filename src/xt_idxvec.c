@@ -710,7 +710,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
   int num_unmatched = 0;
   int match_pos;
   Xt_int isel, last_isel;
-  int search_start, post_match_step, lb, ub;
+  int search_start, post_match_step;
 
   if (single_match_only)
     // after the match we will move on one step in order to avoid matching the same position again
@@ -726,8 +726,8 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
       isel = sorted_selection[i];
       assert(isel >= last_isel);
       // bisection to find one matching position:
-      lb = search_start;
-      ub = search_end;
+      int lb = search_start;
+      int ub = search_end;
       while (ub-lb>1) {
         int middle = (ub + lb + 1) / 2;
         if (sorted_body[middle] <= isel)
