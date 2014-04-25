@@ -115,7 +115,7 @@ idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                      int * position, int offset);
 static int
 idxsection_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_int const * selection_idx,
-                                    int num_selection, int * positions,
+                                    int num_selection, int *positions,
                                     int single_match_only);
 
 static Xt_int

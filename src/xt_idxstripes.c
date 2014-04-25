@@ -94,7 +94,7 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
                                  Xt_int * index);
 
 static int
-idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+idxstripes_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
                                     int num, Xt_int *index,
                                     Xt_int undef_idx);
 
@@ -798,7 +798,7 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
 
 
 static int
-idxstripes_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+idxstripes_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
                                     int num_pos, Xt_int *index,
                                     Xt_int undef_idx) {
 

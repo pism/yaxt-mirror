@@ -230,7 +230,8 @@ int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
  *                        number of unresolved positions ( == number of undef
  *                        values assigned to the result)
  */
-int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+int xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist,
+                                        const int *positions,
                                         int num_pos, Xt_int *indices,
                                         Xt_int undef_idx);
 

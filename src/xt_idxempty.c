@@ -80,7 +80,7 @@ static int
 idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
 
 static int
-idxempty_get_indices_at_positions(Xt_idxlist idxlist, int *positions,
+idxempty_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
                                   int num, Xt_int *index,
                                   Xt_int undef_idx);
 
@@ -93,7 +93,7 @@ idxempty_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
 static int
 idxempty_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                  int num_indices, int * positions,
+                                  int num_indices, int *positions,
                                   int single_match_only);
 
 static int
@@ -215,7 +215,7 @@ idxempty_get_index_at_position(Xt_idxlist XT_UNUSED(idxlist),
 
 static int
 idxempty_get_indices_at_positions(Xt_idxlist XT_UNUSED(idxlist),
-                                  int *XT_UNUSED(positions),
+                                  const int *XT_UNUSED(positions),
                                   int num_pos,
                                   Xt_int *index, Xt_int undef_idx) {
 
