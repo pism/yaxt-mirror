@@ -46,6 +46,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -174,7 +175,7 @@ struct Xt_idxstripes_ {
   int num_stripes;
 
   struct Xt_stripe * stripes_sorted;
-  int stripes_overlap;
+  bool stripes_do_overlap;
 
   Xt_int *index_array_cache;
 };
@@ -274,11 +275,11 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
       generate_stripes_sorted(idxstripes);
     }
 
-    idxstripes->stripes_overlap = 0;
+    idxstripes->stripes_do_overlap = false;
     for (int i = 0; i < num_stripes - 1; ++i)
       if (stripes_overlap(idxstripes->stripes_sorted[i],
                           idxstripes->stripes_sorted[i+1])) {
-        idxstripes->stripes_overlap = 1;
+        idxstripes->stripes_do_overlap = true;
         break;
       }
     result = (Xt_idxlist)idxstripes;
@@ -330,11 +331,11 @@ xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes)
         = (struct Xt_stripe *)((unsigned char *)idxstripes + header_size);
       generate_stripes_sorted(idxstripes);
     }
-    idxstripes->stripes_overlap = 0;
+    idxstripes->stripes_do_overlap = false;
     for (int i = 0; i < num_stripes - 1; ++i)
       if (stripes_overlap(idxstripes->stripes_sorted[i],
                           idxstripes->stripes_sorted[i+1])) {
-        idxstripes->stripes_overlap = 1;
+        idxstripes->stripes_do_overlap = true;
         break;
       }
     result = (Xt_idxlist)idxstripes;
@@ -435,12 +436,12 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
     }
 
     long long num_indices = idxstripes->stripes[0].nstrides;
-    idxstripes->stripes_overlap = 0;
+    idxstripes->stripes_do_overlap = false;
     int i;
     for (i = 1; i < num_stripes; ++i) {
       if (stripes_overlap(idxstripes->stripes_sorted[i - 1],
                           idxstripes->stripes_sorted[i])) {
-        idxstripes->stripes_overlap = 1;
+        idxstripes->stripes_do_overlap = true;
         break;
       }
       num_indices += idxstripes->stripes[i].nstrides;
@@ -583,7 +584,7 @@ get_stripe_intersection(struct Xt_stripe * stripe_a,
   return intersection;
 }
 
-// this routine only works for idxstripes that have stripes_overlap==0
+// this routine only works for idxstripes where !stripes_do_overlap
 static Xt_idxlist
 idxstripes_compute_intersection(Xt_idxstripes idxstripes_src,
                                 Xt_idxstripes idxstripes_dst) {
@@ -665,8 +666,8 @@ xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst)
   idxstripes_src = (Xt_idxstripes)idxlist_src;
   idxstripes_dst = (Xt_idxstripes)idxlist_dst;
 
-  if (idxstripes_src->stripes_overlap ||
-      idxstripes_dst->stripes_overlap) {
+  if (idxstripes_src->stripes_do_overlap ||
+      idxstripes_dst->stripes_do_overlap) {
 
     return compute_intersection_fallback(idxstripes_src, idxstripes_dst);
   } else
