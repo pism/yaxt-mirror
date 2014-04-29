@@ -209,28 +209,32 @@ m4_foreach([substtype],[[XT_INT]],
      ACX_FORTRAN_TYPE_KIND([integer],[c_int],[int],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=INT_MAX
-     ]substtype[_MIN="(-INT_MAX)"],
+     ]substtype[_MIN="(-INT_MAX)"
+     ]substtype[_abs='(abs((v)))'],
      [long],
      substtype[_MPIDT=MPI_LONG
      AC_CHECK_SIZEOF([long])
      ACX_FORTRAN_TYPE_KIND([integer],[c_long],[long],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LONG_MAX
-     ]substtype[_MIN="(-LONG_MAX)"],
+     ]substtype[_MIN="(-LONG_MAX)"
+     ]substtype[_abs='(labs((v)))'],
      [short],
      substtype[_MPIDT=MPI_SHORT
      AC_CHECK_SIZEOF([short])
      ACX_FORTRAN_TYPE_KIND([integer],[c_short],[short],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=SHRT_MAX
-     ]substtype[_MIN="(-SHRT_MAX)"],
+     ]substtype[_MIN="(-SHRT_MAX)"
+     ]substtype[_abs='((short)abs((v)))'],
      ["long long"],
      substtype[_MPIDT=MPI_LONG_LONG
      AC_CHECK_SIZEOF([long long])
      ACX_FORTRAN_TYPE_KIND([integer],[c_long_long],[long long],
        [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LLONG_MAX
-     ]substtype[_MIN="(-LLONG_MAX)"],
+     ]substtype[_MIN="(-LLONG_MAX)"
+     ]substtype[_abs='(llabs((v)))'],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    save_FCFLAGS=$FCFLAGS
    AC_LANG_PUSH([Fortran])
@@ -257,6 +261,8 @@ m4_foreach([substtype],[[XT_INT]],
      [Maximal value for ]substtype)
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MIN],[$]substtype[_MIN],
      [Minimal value for ]substtype)
+   AC_DEFINE_UNQUOTED(substtype[_ABS(v)],[$]substtype[_abs],
+     [return absolute value of v])
   ])
 
 AS_CASE([$XT_INT],

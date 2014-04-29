@@ -255,20 +255,19 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
     if (global_size[i] > 0)
       idxsection->local_start_index
         = (Xt_int)(idxsection->local_start_index
-                   + (idxsection->dims[i].global_stride * local_start[i]
-                      * Xt_isign(idxsection->dims[i].global_stride)));
+                   + (XT_INT_ABS(idxsection->dims[i].global_stride)
+                      * local_start[i]));
     else
       idxsection->local_start_index
         = (Xt_int)(idxsection->local_start_index
-                   - (idxsection->dims[i].global_stride
-                      * (global_size[i] + local_start[i] + 1) *
-                      Xt_isign(idxsection->dims[i].global_stride)));
+                   - (XT_INT_ABS(idxsection->dims[i].global_stride)
+                      * (global_size[i] + local_start[i] + 1)));
     if (local_size[i] < 0)
       idxsection->local_start_index
         = (Xt_int)(idxsection->local_start_index
-                   - (idxsection->dims[i].global_stride * (local_size[i] + 1)
-                      * Xt_isign(global_size[i])
-                      * Xt_isign(idxsection->dims[i].global_stride)));
+                   - (XT_INT_ABS(idxsection->dims[i].global_stride)
+                      * (local_size[i] + 1)
+                      * Xt_isign(global_size[i])));
   }
 
   // due the possibility of negative local and global sizes, the minimum and
@@ -282,13 +281,12 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
       idxsection->min_index_cache
         = (Xt_int)(idxsection->min_index_cache
                    + (Xt_int)(idxsection->dims[i].global_stride *
-                              (Xt_int)(isign(local_size[i])
-                                       * local_size[i] - 1)));
+                              (Xt_int)(abs(local_size[i]) - 1)));
     else // if local and global size are both positive or negative
       idxsection->max_index_cache
         = (Xt_int)(idxsection->max_index_cache
                    + (Xt_int)(idxsection->dims[i].global_stride *
-                              (Xt_int)(isign(local_size[i]) * local_size[i] - 1)));
+                              (Xt_int)(abs(local_size[i]) - 1)));
   }
 
   INSTR_STOP(instr);
@@ -388,16 +386,15 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
 
     // if either local or global size is negative
     if ((section->dims[i].global_size < 0) ^ (section->dims[i].local_size < 0))
-      section->min_index_cache = (Xt_int)(section->min_index_cache
-                                          + section->dims[i].global_stride *
-                                          (isign(section->dims[i].local_size) *
-                                           section->dims[i].local_size - 1));
+      section->min_index_cache =
+        (Xt_int)(section->min_index_cache + section->dims[i].global_stride
+                 * (abs(section->dims[i].local_size) - 1));
     else // if local and global size are both positive or negative
       section->max_index_cache
         = (Xt_int)(section->max_index_cache
                    + (Xt_int)(section->dims[i].global_stride
-                              * (Xt_int)(isign(section->dims[i].local_size)
-                                         * section->dims[i].local_size - 1)));
+                              * (Xt_int)(abs(section->dims[i].local_size)
+                                         - 1)));
   }
   int num_indices = idxsection_get_num_indices(section);
   Xt_idxlist_init(&section->parent, &idxsection_vtable, num_indices);
@@ -493,10 +490,8 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
   // the size of first global dimension is irrelevant,
   // the others have to be identically
   for (i = 1; i < idxsection_src->ndim; ++i)
-    if (Xt_isign(idxsection_src->dims[i].global_size) *
-        idxsection_src->dims[i].global_size
-        != Xt_isign(idxsection_dst->dims[i].global_size) *
-        idxsection_dst->dims[i].global_size)
+    if (XT_INT_ABS(idxsection_src->dims[i].global_size)
+        != XT_INT_ABS(idxsection_dst->dims[i].global_size))
       return xt_idxsection_get_intersection_with_other_idxlist(
         idxlist_src, idxlist_dst);
 
@@ -526,24 +521,20 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
       src_start = idxsection_src->dims[i].local_start;
     else
       src_start = (Xt_int)(-idxsection_src->dims[i].global_size
-                           - isign(idxsection_src->dims[i].local_size)
-                           * idxsection_src->dims[i].local_size
+                           - abs(idxsection_src->dims[i].local_size)
                            - idxsection_src->dims[i].local_start);
 
     if (idxsection_dst->dims[i].global_size >= 0)
       dst_start = idxsection_dst->dims[i].local_start;
     else
       dst_start = (Xt_int)(-idxsection_dst->dims[i].global_size
-                           - isign(idxsection_dst->dims[i].local_size)
-                           * idxsection_dst->dims[i].local_size
+                           - abs(idxsection_dst->dims[i].local_size)
                            - idxsection_dst->dims[i].local_start);
 
     src_end = (Xt_int)(src_start
-                       + (Xt_int)(isign(idxsection_src->dims[i].local_size)
-                                  * idxsection_src->dims[i].local_size));
+                       + (Xt_int)abs(idxsection_src->dims[i].local_size));
     dst_end = (Xt_int)(dst_start
-                       + (Xt_int)(isign(idxsection_dst->dims[i].local_size)
-                                  * idxsection_dst->dims[i].local_size));
+                       + (Xt_int)abs(idxsection_dst->dims[i].local_size));
 
     local_start[i] = (src_start > dst_start)?src_start:dst_start;
     local_end = (src_end > dst_end)?dst_end:src_end;
@@ -557,8 +548,7 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
     }
 
     local_size[i] = (int)(local_end - local_start[i]);
-    global_size[i] = (Xt_int)(Xt_isign(idxsection_src->dims[i].global_size)
-                              * idxsection_src->dims[i].global_size);
+    global_size[i] = XT_INT_ABS(idxsection_src->dims[i].global_size);
   }
 
   Xt_idxlist intersection
@@ -600,7 +590,7 @@ idxsection_get_num_indices(Xt_idxsection section) {
   long long size = 1;
 
   for (i = 0; i < section->ndim; ++i)
-    size *= isign(section->dims[i].local_size) * section->dims[i].local_size;
+    size *= abs(section->dims[i].local_size);
   assert(size <= INT_MAX);
 
   return (int)size;
@@ -612,7 +602,7 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
                            int ndim, struct dim_desc dims[ndim])
 {
 
-  int abs_local_size = dims[0].local_size * isign(dims[0].local_size);
+  int abs_local_size = abs(dims[0].local_size);
 
   if (ndim == 1)
   {
@@ -704,8 +694,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
     nstripes = 1;
 
   for (int i = 0; i < section->ndim-1; ++i)
-    nstripes *= (size_t)(isign(section->dims[i].local_size) *
-                         section->dims[i].local_size);
+    nstripes *= (size_t)abs(section->dims[i].local_size);
 
   if (nstripes == 0) {
     *num_stripes = (int)nstripes;
@@ -725,8 +714,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
   for (size_t i = 0; i < nstripes; ++i) {
 
     p[i].start  = section->local_start_index;
-    p[i].nstrides = (Xt_int)(isign(section->dims[section->ndim-1].local_size)
-                             * section->dims[section->ndim-1].local_size);
+    p[i].nstrides = (Xt_int)abs(section->dims[section->ndim-1].local_size);
     p[i].stride = 1;
 
     for (int j = 0; j < section->ndim - 1; ++j)
@@ -735,8 +723,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
                             * section->dims[j].global_stride);
 
       for (int j = section->ndim - 2; j >= 0; --j)
-        if (curr_local_position[j] < isign(section->dims[j].local_size) *
-                                     section->dims[j].local_size - 1) {
+        if (curr_local_position[j] < abs(section->dims[j].local_size) - 1) {
           curr_local_position[j]++;
           break;
         } else
@@ -769,8 +756,8 @@ idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
 
     curr_local_position = (Xt_int)(pos / (long long)section->dims[dim].local_stride);
 
-    if (curr_local_position >= isign(section->dims[dim].local_size) *
-                               section->dims[dim].local_size) return 1;
+    if (curr_local_position >= abs(section->dims[dim].local_size))
+      return 1;
 
     temp_index = (Xt_int)(temp_index
                           + curr_local_position
@@ -809,8 +796,7 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   for (i = 0; i < section->ndim; ++i) {
 
     Xt_int abs_global_stride
-      = (Xt_int)(section->dims[i].global_stride
-                 * Xt_isign((int)section->dims[i].global_stride));
+      = XT_INT_ABS(section->dims[i].global_stride);
 
     Xt_int curr_global_position
       = (Xt_int)(index / abs_global_stride);
@@ -823,7 +809,8 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
 
     index = (Xt_int)(index % abs_global_stride);
 
-    if (curr_global_position < section->dims[i].local_start) goto fun_exit;
+    if (curr_global_position < section->dims[i].local_start)
+      goto fun_exit;
 
     Xt_int curr_local_position
       = (Xt_int)(curr_global_position - section->dims[i].local_start);
@@ -833,8 +820,8 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
       curr_local_position
         = (Xt_int)(-section->dims[i].local_size - curr_local_position - 1);
 
-    if (curr_local_position >= isign(section->dims[i].local_size) *
-        section->dims[i].local_size) goto fun_exit;
+    if (curr_local_position >= abs(section->dims[i].local_size))
+      goto fun_exit;
 
     temp_position += (int)(curr_local_position * section->dims[i].local_stride);
   }
@@ -1085,10 +1072,10 @@ int idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
                                                   struct dim_desc dims[ndim]) {
   int num_processed = 0;
 
-  Xt_int abs_global_size = (Xt_int)(dims[0].global_size * Xt_isign(dims[0].global_size));
-  int abs_local_size = dims[0].local_size * isign(dims[0].local_size);
-  Xt_int abs_global_stride = (Xt_int)(dims[0].global_stride * Xt_isign(dims[0].global_stride));
-  Xt_int abs_local_stride = (Xt_int)(dims[0].local_stride * Xt_isign(dims[0].local_stride));
+  Xt_int abs_global_size = XT_INT_ABS(dims[0].global_size);
+  int abs_local_size = abs(dims[0].local_size);
+  Xt_int abs_global_stride = XT_INT_ABS(dims[0].global_stride);
+  Xt_int abs_local_stride = XT_INT_ABS(dims[0].local_stride);
 
   if (ndim == 1)
   {
