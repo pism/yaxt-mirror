@@ -64,6 +64,7 @@ libyaxt_la_SOURCES =						\
 	xt/xt_xmap_dist_dir.h					\
 	xt/xt_xmap_intersection.h				\
 	xt/xt_idxmod.h						\
+	xt_arithmetic_util.h					\
 	xt_handles.c						\
 	xt_idxempty_internal.h					\
 	xt_idxempty.c						\

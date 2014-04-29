@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "xt_arithmetic_util.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
@@ -62,22 +63,6 @@
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 #include "instr.h"
-
-#define INT_SIGN(x) (((x)<0)?(-1):(1))
-
-static inline Xt_int
-Xt_isign(Xt_int x)
-{
-  return ((x >> (sizeof (Xt_int) * CHAR_BIT - 1)) |
-          (Xt_int)((Xt_uint)(-x) >> (sizeof (Xt_int) * CHAR_BIT - 1)));
-}
-
-static inline int
-isign(int x)
-{
-  return ((x >> (sizeof (int) * CHAR_BIT - 1)) |
-          (int)((unsigned int)(-x) >> (sizeof (int) * CHAR_BIT - 1)));
-}
 
 static void
 idxsection_delete(Xt_idxlist data);
