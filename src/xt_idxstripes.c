@@ -51,6 +51,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "xt/xt_core.h"
+#include "xt_arithmetic_util.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
@@ -522,64 +524,104 @@ compute_intersection_fallback(Xt_idxstripes idxstripes_src,
   return intersection;
 }
 
-// least common multiple
-static Xt_int lcm(Xt_int a, Xt_int b) {
 
-  Xt_int temp = (Xt_int)(a * b);
+struct extended_gcd {
+  Xt_int gcd, u, v;
+};
 
-  while (a != b)
-    if (a > b) a = (Xt_int)(a - b);
-    else       b = (Xt_int)(b - a);
-
-  return (Xt_int)(temp / a);
+static inline struct extended_gcd extended_gcd(Xt_int a, Xt_int b) {
+  Xt_int t = 1, u = 1, v = 0, s = 0;
+  while (b>0)
+  {
+    Xt_int q = (Xt_int)(a / b);
+    Xt_int prev_a = a;
+    a = b;
+    b = (Xt_int)(prev_a - q * b);
+    Xt_int prev_u = u;
+    u = s;
+    s = (Xt_int)(prev_u - q * s);
+    Xt_int prev_v = v;
+    v = t;
+    t = (Xt_int)(prev_v - q * t);
+  }
+  return (struct extended_gcd){ .gcd = a, .u = u, .v = v };
 }
 
+/* This implementation uses the method outlined in
+ * James M. Stichnoth,
+ * Efficient Compilation of Array Statements for Private Memory Multicomputers
+ * February, 1993  CMU-CS-93-109
+ */
 static struct Xt_stripe
-get_stripe_intersection(struct Xt_stripe * stripe_a,
-                        struct Xt_stripe * stripe_b) {
+get_stripe_intersection(struct Xt_stripe stripe_a,
+                        struct Xt_stripe stripe_b) {
 
   INSTR_DEF(instr,"get_stripe_intersection");
   INSTR_START(instr);
 
-  unsigned i;
+  struct Xt_bounded_stripe {
+    Xt_int min, max, stride, representative;
+  };
 
-  if (stripe_a->start > stripe_b->start) {
-    struct Xt_stripe * temp = stripe_a;
-    stripe_a = stripe_b;
-    stripe_b = temp;
-  }
+  struct Xt_bounded_stripe bsa, bsb, bsi;
 
-  Xt_int stripe_lcm = lcm(stripe_a->stride, stripe_b->stride);
+  bsa.stride = stripe_a.stride;
+  if (stripe_a.stride >= 0)
+    bsa.min = stripe_a.start,
+      bsa.max = (Xt_int)(stripe_a.start
+                         + stripe_a.stride * (stripe_a.nstrides - 1));
+  else
+    bsa.min = (Xt_int)(stripe_a.start
+                       + stripe_a.stride * (stripe_a.nstrides - 1)),
+      bsa.max = stripe_a.start;
+  bsa.representative = stripe_a.start;
 
-  Xt_int norm_start = (Xt_int)(stripe_b->start - stripe_a->start);
+  bsb.stride = stripe_b.stride;
+  if (stripe_b.stride >= 0)
+    bsb.min = stripe_b.start,
+      bsb.max = (Xt_int)(stripe_b.start
+                         + stripe_b.stride * (stripe_b.nstrides - 1));
+  else
+    bsb.min = (Xt_int)(stripe_b.start
+                       + stripe_b.stride * (stripe_b.nstrides - 1)),
+      bsb.max = stripe_b.start;
+  bsb.representative = stripe_b.start;
 
-  for (i = 0;
-       i < (unsigned)(stripe_lcm / stripe_a->stride);
-       ++i, norm_start = (Xt_int)(norm_start + stripe_b->stride))
-    if (!(norm_start % stripe_a->stride)) break;
+  struct extended_gcd eg = extended_gcd(XT_INT_ABS(bsa.stride),
+                                        XT_INT_ABS(bsb.stride));
+  bsi.min = MAX(bsa.min, bsb.min);
+  bsi.max = MIN(bsa.max, bsb.max);
+  bsi.stride = (Xt_int)((XT_INT_ABS(stripe_a.stride) * stripe_b.stride)/eg.gcd);
+  Xt_int even_divide_mask
+    = (Xt_int)((bsb.representative - bsa.representative) % eg.gcd);
+  bsi.representative
+    = (Xt_int)(bsa.representative
+               + ((bsb.representative - bsa.representative) * eg.u * bsa.stride
+                  / eg.gcd));
 
   struct Xt_stripe intersection;
-
-  if (i == (unsigned)(stripe_lcm / stripe_a->stride)) {
-
+  /* compute minimal bsi representative >= bsi.min */
+  Xt_int min_rep
+    = (Xt_int)(bsi.representative
+               - (bsi.representative - bsi.min) / bsi.stride * bsi.stride);
+  if ((even_divide_mask == 0) & (bsi.min <= bsi.max)
+      & (min_rep <= bsi.max))
+  {
+    int nstrides = (int)((bsi.max - min_rep)/bsi.stride + Xt_isign(bsi.stride));
+    Xt_int max_rep
+      = (Xt_int)(min_rep + (nstrides - Xt_isign(bsi.stride)) * bsi.stride);
+    intersection.start = (Xt_int)((bsi.stride >= 0) ? min_rep : max_rep);
+    intersection.stride
+      = (Xt_int)(Xt_isign(bsa.stride) * XT_INT_ABS(bsi.stride));
+    intersection.nstrides = abs(nstrides);
+  }
+  else
+  {
     intersection.start = 0;
     intersection.stride = 0;
     intersection.nstrides = 0;
-
-  } else {
-
-    Xt_int stripe_a_end, stripe_b_end;
-
-    intersection.start = (Xt_int)(norm_start + stripe_a->start);
-    intersection.stride = stripe_lcm;
-    stripe_a_end = (Xt_int)(stripe_a->start
-                            + stripe_a->stride * (stripe_a->nstrides-1));
-    stripe_b_end = (Xt_int)(stripe_b->start
-                            + stripe_b->stride * (stripe_b->nstrides-1));
-    intersection.nstrides
-      = (int)((MIN(stripe_a_end, stripe_b_end) - intersection.start + 1 +
-              (stripe_lcm - 1)) / stripe_lcm);
   }
+
   INSTR_STOP(instr);
   return intersection;
 }
