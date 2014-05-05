@@ -44,7 +44,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <assert.h>
-
+#include <string.h>
+#include <unistd.h>
 #include <mpi.h>
 
 #include <yaxt.h>
@@ -64,11 +65,19 @@ static void test_xmap(
   int num_sends, const struct test_message send_messages[num_sends],
   int num_recvs, const struct test_message recv_messages[num_recvs]);
 
-int main(void)
+static Xt_xmap (*xmi_new)(
+  int nsrc_com, const struct Xt_com_list src_com[nsrc_com],
+  int ndst_com, const struct Xt_com_list dst_com[ndst_com],
+  Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm);
+
+static void
+parse_options(int *argc, char ***argv);
+
+int main(int argc, char **argv)
 {
 
   // init mpi
-  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Init(&argc, &argv), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
 
@@ -83,6 +92,8 @@ int main(void)
     MPI_Finalize();
     return 77;
   }
+
+  parse_options(&argc, &argv);
 
   { // simple test (round robin)
 
@@ -99,9 +110,9 @@ int main(void)
     struct Xt_com_list dst_com = {.list = dst_idxlist,
                                   .rank = (my_rank+comm_size-1)%comm_size};
 
-    Xt_xmap xmap = xt_xmap_intersection_new(num_src_intersections, &src_com,
-                                            num_dst_intersections, &dst_com,
-                                            src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap = xmi_new(num_src_intersections, &src_com,
+                           num_dst_intersections, &dst_com,
+                           src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test
 
@@ -138,9 +149,9 @@ int main(void)
     struct Xt_com_list dst_com[2] = {{.list = dst_idxlist, .rank = 1},
                                      {.list = dst_idxlist, .rank = 2}};
 
-    Xt_xmap xmap = xt_xmap_intersection_new(num_src_intersections, &src_com,
-                                            num_dst_intersections, dst_com,
-                                            src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap = xmi_new(num_src_intersections, &src_com,
+                           num_dst_intersections, dst_com,
+                           src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test
 
@@ -184,10 +195,9 @@ int main(void)
     int num_dst_intersections = 1;
     struct Xt_com_list dst_com = {.list = dst_idxlist, .rank = (my_rank == 0)?1:0};
 
-    Xt_xmap xmap = xt_xmap_intersection_new(num_src_intersections[my_rank],
-                                            src_com + my_rank,
-                                            num_dst_intersections, &dst_com,
-                                            src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap = xmi_new(num_src_intersections[my_rank], src_com + my_rank,
+                           num_dst_intersections, &dst_com,
+                           src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test
 
@@ -261,9 +271,8 @@ int main(void)
        {.list = xt_idxvec_new(src_indices[1], 5), .rank = 1},
        {.list = xt_idxvec_new(src_indices[2], 5), .rank = 2}};
 
-    Xt_xmap xmap = xt_xmap_intersection_new(3, src_com, 3, dst_com,
-                                            src_idxlist, dst_idxlist,
-                                            MPI_COMM_WORLD);
+    Xt_xmap xmap = xmi_new(3, src_com, 3, dst_com,
+                           src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test
 
@@ -344,10 +353,9 @@ int main(void)
       dst_idxlist = xt_idxempty_new();
     }
 
-    Xt_xmap xmap = xt_xmap_intersection_new(num_src_intersections, src_com, 
-                                            num_dst_intersections, dst_com,
-                                            src_idxlist, dst_idxlist,
-                                            MPI_COMM_WORLD);
+    Xt_xmap xmap = xmi_new(num_src_intersections, src_com,
+                           num_dst_intersections, dst_com,
+                           src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // test
 
@@ -449,4 +457,26 @@ static void test_xmap(
 
   if (recv_iter != NULL) xt_xmap_iterator_delete(recv_iter);
   if (send_iter != NULL) xt_xmap_iterator_delete(send_iter);
+}
+
+static void
+parse_options(int *argc, char ***argv)
+{
+  xmi_new = xt_xmap_intersection_new;
+  int opt;
+  while ((opt = getopt(*argc, *argv, "m:")) != -1) {
+    switch (opt) {
+    case 'm':
+      if (!strcmp(optarg, "xt_xmap_intersection_new"))
+        xmi_new = xt_xmap_intersection_new;
+      else if (!strcmp(optarg, "xt_xmap_intersection_ext_new"))
+        xmi_new = xt_xmap_intersection_ext_new;
+      else
+      {
+        fprintf(stderr, "Unknown xmap intersection constructor requested %s\n",
+                optarg);
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
 }

@@ -158,7 +158,7 @@ static int xmap_intersection_get_num_destinations(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = xmi(xmap);
 
-  // the number of destination equals the number of source messages
+  // the number of destinations equals the number of source messages
   return xmap_intersection->n_out;
 }
 
@@ -166,7 +166,7 @@ static int xmap_intersection_get_num_sources(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = xmi(xmap);
 
-  // the number of source equals the number of destination messages
+  // the number of sources equals the number of destination messages
   return xmap_intersection->n_in;
 }
 
@@ -650,3 +650,4 @@ static void xmap_intersection_iterator_delete(Xt_xmap_iter iter) {
 
   free(iter);
 }
+
