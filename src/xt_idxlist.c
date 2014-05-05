@@ -62,6 +62,7 @@
 #include "xt/xt_idxvec.h"
 #include "xt_idxvec_internal.h"
 #include "xt/xt_idxstripes.h"
+#include "xt_idxstripes_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
 #include "core/core.h"
@@ -216,6 +217,34 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
     free(tmp_indices);
 
     INSTR_STOP(instr_fallback);
+    return retval;
+  }
+}
+
+int
+xt_idxlist_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
+                                         int num_stripes,
+                                         const struct Xt_stripe stripes[num_stripes],
+                                         int *num_ext,
+                                         struct Xt_pos_ext **pos_ext,
+                                         int single_match_only)
+{
+  if (idxlist->vtable->get_pos_exts_of_index_stripes)
+    return idxlist->vtable->get_pos_exts_of_index_stripes(
+      idxlist,
+      num_stripes, stripes, num_ext, pos_ext, single_match_only);
+  else {
+    int num_tmp_stripes;
+    struct Xt_stripe *tmp_stripes;
+    xt_idxlist_get_index_stripes(idxlist, &tmp_stripes, &num_tmp_stripes);
+    Xt_idxlist idxlist_stripes
+      = xt_idxstripes_prealloc_new(tmp_stripes, num_tmp_stripes);
+    int retval =
+      idxlist_stripes->vtable->get_pos_exts_of_index_stripes(
+        idxlist_stripes,
+        num_stripes, stripes, num_ext, pos_ext, single_match_only);
+    xt_idxlist_delete(idxlist_stripes);
+    free(tmp_stripes);
     return retval;
   }
 }

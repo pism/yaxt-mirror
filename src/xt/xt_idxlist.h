@@ -273,6 +273,34 @@ int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist,
                                         int single_match_only);
 
 /**
+ * maps the positions of the first occurrence of the given index stripes
+ * in the stored index list
+ *
+ * @param[in]  idxlist     index list in which the given index is to be searched
+ * @param[in]  stripes     stripes of indices that are to be searched
+ * @param[in]  num_stripes number of stripes in the array \a stripes
+ * @param[out] num_exts    number of extents allocated in \a pos_exts
+ * @param[out] pos_exts    ranges of positions for the first
+ *                         occurrence of the indices from stripes in idxlist
+ * @param[in]  single_match_only if true then do not consider a previous
+ *                         matching position again
+ *                         in the next index search - this is required on the
+ *                         target side in order
+ *                         to avoid multiple writes to the same memory position
+ * @return                 0 if every index could be found
+ *                         >0 number of indices which could not be found in
+ *                         idxlist
+ */
+int xt_idxlist_get_pos_exts_of_index_stripes(
+  Xt_idxlist idxlist,
+  int num_stripes,
+  const struct Xt_stripe stripes[num_stripes],
+  int *num_ext,
+  struct Xt_pos_ext **pos_ext,
+  int single_match_only);
+
+
+/**
  * gets the position of the first occurrence of the given index
  * following the given offset in the stored index list idxlist
  *

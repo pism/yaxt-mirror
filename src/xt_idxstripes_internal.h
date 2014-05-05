@@ -46,6 +46,8 @@
 #ifndef XT_IDXSTRIPES_INTERNAL_H
 #define XT_IDXSTRIPES_INTERNAL_H
 
+#include "xt_arithmetic_util.h"
+
 void
 xt_idxstripes_initialize();
 
@@ -64,5 +66,15 @@ xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
  */
 Xt_idxlist
 xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes);
+
+static inline int
+xt_pos_ext_is_appendable(struct Xt_pos_ext db_last, struct Xt_pos_ext to_append)
+{
+  return (((to_append.start != db_last.start + db_last.size)
+           & ((abs(db_last.size) != 1)
+              | (to_append.start != db_last.start - db_last.size)))
+          | ((abs(to_append.size) != 1)
+             & (isign(db_last.size) != isign(to_append.size))));
+}
 
 #endif

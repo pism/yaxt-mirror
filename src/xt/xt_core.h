@@ -67,6 +67,15 @@ typedef struct Xt_xmap_ *Xt_xmap;
 typedef struct Xt_redist_ *Xt_redist;
 
 /**
+ * represents \a size number of positions starting at \a start, where
+ * the positions are assumed to decrease if \a size < 0 and increase otherwise.
+ */
+struct Xt_pos_ext
+{
+  int start, size;
+};
+
+/**
  * \file xt_core.h
  * \brief base definitions header file
  *

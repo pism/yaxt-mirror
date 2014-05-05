@@ -46,9 +46,18 @@
 #ifndef XT_ARITHMETIC_UTIL_H
 #define XT_ARITHMETIC_UTIL_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <limits.h>
+
 #include "xt/xt_core.h"
 
 /* simple operations on Xt_int */
+/**
+ * @return -1 if x < 0, 1 otherwise
+ */
 static inline Xt_int
 Xt_isign(Xt_int x)
 {
@@ -56,11 +65,29 @@ Xt_isign(Xt_int x)
           (Xt_int)((Xt_uint)(-x) >> (sizeof (Xt_int) * CHAR_BIT - 1)));
 }
 
+/**
+ * @return -1 if x < 0, 1 otherwise
+ */
 static inline int
 isign(int x)
 {
   return ((x >> (sizeof (int) * CHAR_BIT - 1)) |
           (int)((unsigned int)(-x) >> (sizeof (int) * CHAR_BIT - 1)));
 }
+
+/**
+ * @return ~0 if x < 0, 0 otherwise
+ */
+static inline int
+isign_mask(int x)
+{
+#if (-1 >> 1) == -1
+  return x >> (sizeof (int) * CHAR_BIT - 1);
+#else
+#warning Unusual behaviour of shift operator detected.
+  return (x < 0) * ~0;
+#endif
+}
+
 
 #endif

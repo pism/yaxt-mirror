@@ -97,6 +97,14 @@ idxempty_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
                                   int single_match_only);
 
 static int
+idxempty_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
+                                       int num_stripes,
+                                       const struct Xt_stripe *stripes,
+                                       int *num_ext,
+                                       struct Xt_pos_ext **pos_ext,
+                                       int single_match_only);
+
+static int
 idxempty_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
                                       int num_indices, int * positions,
                                       int * offsets);
@@ -119,6 +127,7 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
   .get_indices_at_positions     = idxempty_get_indices_at_positions,
   .get_position_of_index        = idxempty_get_position_of_index,
   .get_positions_of_indices     = idxempty_get_positions_of_indices,
+  .get_pos_exts_of_index_stripes = idxempty_get_pos_exts_of_index_stripes,
   .get_position_of_index_off    = idxempty_get_position_of_index_off,
   .get_positions_of_indices_off = idxempty_get_positions_of_indices_off,
   .get_min_index                = idxempty_get_min_index,
@@ -250,6 +259,23 @@ int idxempty_get_positions_of_indices(Xt_idxlist XT_UNUSED(body_idxlist),
                                       int XT_UNUSED(single_match_only)) {
 
   return num_selection;
+}
+
+static int
+idxempty_get_pos_exts_of_index_stripes(Xt_idxlist XT_UNUSED(idxlist),
+                                       int num_stripes,
+                                       const struct Xt_stripe *stripes,
+                                       int *num_ext,
+                                       struct Xt_pos_ext **pos_ext,
+                                       int XT_UNUSED(single_match_only))
+{
+  *num_ext = 0;
+  *pos_ext = NULL;
+  unsigned num_idx = 0;
+  if (num_stripes > 0)
+    for (size_t i = 0; i < (size_t)num_stripes; ++i)
+      num_idx += (unsigned)stripes[i].nstrides;
+  return (int)num_idx;
 }
 
 static int

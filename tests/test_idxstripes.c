@@ -86,6 +86,15 @@ check_bb(int num_stripes, const struct Xt_stripe *stripes,
          const struct Xt_bounds ref_bounds[ndim],
          Xt_int global_start_index);
 
+static void
+check_pos_ext(size_t num_stripes, const struct Xt_stripe stripes[num_stripes],
+              size_t num_search_stripes,
+              const struct Xt_stripe search_stripes[num_search_stripes],
+              size_t ref_num_ext,
+              const struct Xt_pos_ext ref_pos_ext[ref_num_ext],
+              int single_match_only, int ref_unmatched,
+              const char *test_desc);
+
 int main(void) {
 
   // init mpi
@@ -493,6 +502,177 @@ int main(void) {
              ndim, global_size, ref_bounds, global_start_index);
   }
 
+  {
+    enum {
+      num_stripes = 1,
+      num_ref_pos_ext = 1,
+      num_ref_unmatched = 0,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 1, .stride = 1, .nstrides = 10}},
+      search_stripe = {.start = 10, .stride = -1, .nstrides = 5 };
+
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+      = {{.start = 9, .size = -5}};
+
+    check_pos_ext(num_stripes, stripes,
+                  1, &search_stripe, num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "simple inverted stripe");
+  }
+
+  {
+    enum {
+      num_stripes = 1,
+      num_search_stripes = 2,
+      num_ref_pos_ext = 1,
+      num_ref_unmatched = 5,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 1, .stride = 1, .nstrides = 10}},
+      search_stripes[num_search_stripes]
+        = {{.start = 10, .stride = -1, .nstrides = 5 },
+           {.start = 10, .stride = -1, .nstrides = 5 }};
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+                     = {{.start = 9, .size = -5}};
+
+    check_pos_ext(num_stripes, stripes,
+                  num_search_stripes, search_stripes,
+                  num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "simple inverted stripe");
+  }
+
+  {
+    enum {
+      num_stripes = 2,
+      num_search_stripes = 1,
+      num_ref_pos_ext = 1,
+      num_ref_unmatched = 4,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 1, .stride = 1, .nstrides = 10},
+         {.start = 15, .stride = 1, .nstrides = 10}},
+      search_stripes[num_search_stripes]
+        = {{.start = 10, .stride = 1, .nstrides = 6 }};
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+                     = {{.start = 9, .size = 2}};
+
+    check_pos_ext(num_stripes, stripes,
+                  num_search_stripes, search_stripes,
+                  num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "search inc stripe over inc gap");
+  }
+
+  {
+    enum {
+      num_stripes = 2,
+      num_search_stripes = 1,
+      num_ref_pos_ext = 1,
+      num_ref_unmatched = 4,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 25, .stride = -1, .nstrides = 11},
+         {.start = 10, .stride = -1, .nstrides = 10}},
+      search_stripes[num_search_stripes]
+        = {{.start = 10, .stride = 1, .nstrides = 6 }};
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+                     = {{.start = 11, .size = -2}};
+
+    check_pos_ext(num_stripes, stripes,
+                  num_search_stripes, search_stripes,
+                  num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "search inc stripe over dec gap");
+  }
+
+  {
+    enum {
+      num_stripes = 2,
+      num_search_stripes = 1,
+      num_ref_pos_ext = 1,
+      num_ref_unmatched = 4,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 25, .stride = -1, .nstrides = 11},
+         {.start = 10, .stride = -1, .nstrides = 10}},
+      search_stripes[num_search_stripes]
+        = {{.start = 15, .stride = -1, .nstrides = 6 }};
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+                     = {{.start = 10, .size = 2}};
+
+    check_pos_ext(num_stripes, stripes,
+                  num_search_stripes, search_stripes,
+                  num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "search dec stripe over dec gap");
+  }
+
+  {
+    enum {
+      num_stripes = 2,
+      num_search_stripes = 1,
+      num_ref_pos_ext = 1,
+      num_ref_unmatched = 4,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 1, .stride = 1, .nstrides = 10},
+         {.start = 15, .stride = 1, .nstrides = 10}},
+      search_stripes[num_search_stripes]
+        = {{.start = 15, .stride = -1, .nstrides = 6 }};
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+                     = {{.start = 10, .size = -2}};
+
+    check_pos_ext(num_stripes, stripes,
+                  num_search_stripes, search_stripes,
+                  num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "search dec stripe over inc gap");
+  }
+
+  {
+    enum {
+      num_stripes = 3,
+      num_search_stripes = 1,
+      num_ref_pos_ext = 1,
+      num_ref_unmatched = 8,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 1, .stride = 1, .nstrides = 10},
+         {.start = 15, .stride = 1, .nstrides = 10},
+         {.start = 29, .stride = 1, .nstrides = 10}},
+      search_stripes[num_search_stripes]
+        = {{.start = 32, .stride = -1, .nstrides = 30 }};
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+                     = {{.start = 23, .size = -22}};
+
+    check_pos_ext(num_stripes, stripes,
+                  num_search_stripes, search_stripes,
+                  num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "search dec stripe over 2 inc gap");
+  }
+
+  {
+    enum {
+      num_stripes = 5,
+      num_search_stripes = 1,
+      num_ref_pos_ext = 5,
+      num_ref_unmatched = 0,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 1, .stride = 1, .nstrides = 10},
+         {.start = 15, .stride = 1, .nstrides = 10},
+         {.start = 29, .stride = 1, .nstrides = 10},
+         {.start = 14, .stride = -1, .nstrides = 4},
+         {.start = 28, .stride = -1, .nstrides = 4}},
+      search_stripes[num_search_stripes]
+        = {{.start = 32, .stride = -1, .nstrides = 30 }};
+    static const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext]
+      = {{.start = 23, .size = -4},{.start = 34, .size = 4},
+         {.start = 19, .size = -10},{.start = 30, .size = 4},
+         {.start = 9, .size = -8}};
+
+    check_pos_ext(num_stripes, stripes,
+                  num_search_stripes, search_stripes,
+                  num_ref_pos_ext, ref_pos_ext, 1,
+                  num_ref_unmatched, "search dec stripe over jumbled stripes");
+  }
+
   xt_finalize();
   MPI_Finalize();
 
@@ -597,6 +777,22 @@ stripe_test_general(int num_stripes, const struct Xt_stripe *stripes,
 {
   Xt_idxlist idxstripes = xt_idxstripes_new(stripes, num_stripes);
   do_tests(idxstripes, ref_indices, num_ref_indices);
+  int num_ext;
+  struct Xt_pos_ext *pos_ext;
+  xt_idxlist_get_pos_exts_of_index_stripes(idxstripes, num_stripes, stripes,
+                                           &num_ext, &pos_ext, 1);
+  size_t num_pos = 0;
+  for (int i = 0; i < num_ext; ++i)
+  {
+    size_t ext_size = (size_t)pos_ext[i].size;
+    if (num_pos != (size_t)pos_ext[i].start)
+      PUT_ERR("position/start mismatch at extent %d\n", i);
+    num_pos += ext_size;
+  }
+  if (num_pos != (size_t)xt_idxlist_get_num_indices(idxstripes))
+    PUT_ERR("index list length/positions overlap mismatch\n");
+
+  free(pos_ext);
   xt_idxlist_delete(idxstripes);
 }
 
@@ -700,5 +896,38 @@ check_bb(int num_stripes, const struct Xt_stripe *stripes,
         ((ref_bounds[i].size != 0) & (bounds[i].start != ref_bounds[i].start)))
       PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
+  xt_idxlist_delete(idxstripes);
+}
+
+static void
+check_pos_ext(size_t num_stripes, const struct Xt_stripe stripes[num_stripes],
+              size_t num_search_stripes,
+              const struct Xt_stripe search_stripes[num_search_stripes],
+              size_t num_ref_pos_ext,
+              const struct Xt_pos_ext ref_pos_ext[num_ref_pos_ext],
+              int single_match_only, int ref_unmatched,
+              const char *test_desc)
+{
+  Xt_idxlist idxstripes = xt_idxstripes_new(stripes, (int)num_stripes);
+  int num_ext;
+  struct Xt_pos_ext *pos_ext;
+  int unmatched
+    = xt_idxlist_get_pos_exts_of_index_stripes(idxstripes,
+                                               (int)num_search_stripes,
+                                               search_stripes,
+                                               &num_ext, &pos_ext,
+                                               single_match_only);
+  (void)test_desc;
+  if (unmatched != ref_unmatched)
+    PUT_ERR("error in number of unmatched indices for %s", test_desc);
+  if (num_ext < 0 || (size_t)num_ext != num_ref_pos_ext)
+    PUT_ERR("error finding %s\n", test_desc);
+  for (size_t i = 0; i < num_ref_pos_ext; ++i) {
+    if (pos_ext[i].start != ref_pos_ext[i].start)
+      PUT_ERR("incorrect starting position found in %s\n", test_desc);
+    if (pos_ext[i].size != ref_pos_ext[i].size)
+      PUT_ERR("incorrect position extent length found in %s\n", test_desc);
+  }
+  free(pos_ext);
   xt_idxlist_delete(idxstripes);
 }
