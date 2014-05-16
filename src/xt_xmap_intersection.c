@@ -223,7 +223,7 @@ generate_dir_transfer_pos_dst(int num_intersections,
     int retval = xt_idxlist_get_positions_of_indices(
       mypart_idxlist, intersection_idxvec, max_intersection_size,
       intersection_pos, 1);
-    assert(retval != 1);
+    assert(retval == 0);
 
     // we have to enforce single_match_only not only within a single
     // intersection, but also between all intersections
@@ -343,7 +343,7 @@ generate_dir_transfer_pos_src(int num_intersections,
     retval = xt_idxlist_get_positions_of_indices(
       mypart_idxlist, intersection_idxvec, intersection_size,
       intersection_pos, 0);
-    assert(retval != 1);
+    assert(retval == 0);
 
     if (intersection_size > 0) {
       resSets_[new_num_intersections].transfer_pos = intersection_pos;
