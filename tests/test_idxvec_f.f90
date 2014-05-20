@@ -489,6 +489,7 @@ CONTAINS
              __LINE__)
       END IF
     END DO
+    CALL xt_idxlist_delete(idxvec)
   END SUBROUTINE test_bounding_box
 
   SUBROUTINE test_bounding_box1
