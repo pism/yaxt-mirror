@@ -186,6 +186,7 @@ CONTAINS
     g = 0
     CALL xt_redist_s_exchange1(rcol, C_LOC(f), C_LOC(g))
     IF (ANY(g /= ref_g)) CALL my_abort('(g /= ref_g)', __LINE__)
+    CALL xt_redist_delete(rcol)
 
   END SUBROUTINE check_redist_collection_static
 

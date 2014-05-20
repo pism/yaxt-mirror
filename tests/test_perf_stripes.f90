@@ -262,6 +262,8 @@ PROGRAM test_perf_stripes
 
   ! cleanup:
   IF (full_test) THEN
+    CALL xt_redist_delete(redist_tpex_3d_ws)
+    CALL xt_xmap_delete(xmap_tpex_3d_ws)
     CALL xt_xmap_delete(xmap_tpex_2d)
     CALL xt_redist_delete(redist_tpex_2d)
     CALL xt_redist_delete(redist_surf_tpex_2d)
