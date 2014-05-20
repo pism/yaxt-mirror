@@ -186,8 +186,12 @@ static void xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks) {
     ranks[i] = xmap_intersection->in_msg[i].rank;
 }
 
+enum {
+  bitsPerCoverageElement = sizeof (unsigned long) * CHAR_BIT,
+};
+
 /* compute list positions for recv direction */
-static void
+static int
 generate_dir_transfer_pos_dst(int num_intersections,
                               const struct Xt_com_list
                               intersections[num_intersections],
@@ -200,9 +204,15 @@ generate_dir_transfer_pos_dst(int num_intersections,
   struct exchange_data *restrict resSets_
     = *resSets = xmalloc((size_t)num_intersections * sizeof(**resSets));
 
-  int *restrict position_mask
-    = xcalloc((size_t)xt_idxlist_get_num_indices(mypart_idxlist),
-              sizeof(*position_mask));
+  int mypart_num_indices = xt_idxlist_get_num_indices(mypart_idxlist);
+  size_t coverage_size = (size_t)mypart_num_indices;
+  coverage_size = (coverage_size + bitsPerCoverageElement - 1)
+    /bitsPerCoverageElement;
+  unsigned long *restrict coverage = xcalloc(coverage_size, sizeof(*coverage));
+  /* set uncovered top-most bits to ease later comparison */
+  if (mypart_num_indices%bitsPerCoverageElement)
+    coverage[coverage_size-1]
+      = ~((1UL << (mypart_num_indices%bitsPerCoverageElement)) - 1UL);
 
   int new_num_intersections = 0;
   size_t total_num_indices_to_remove = 0;
@@ -246,14 +256,15 @@ generate_dir_transfer_pos_dst(int num_intersections,
        * the index to indices_to_remove_
        *   if the current value was already in another intersection
        */
-      int predicate = position_mask[pos];
+      unsigned long mask = 1UL << (pos % bitsPerCoverageElement);
+      int predicate = (coverage[pos/bitsPerCoverageElement] & mask) != 0UL;
       intersection_pos[intersection_size] = pos;
       indices_to_remove_[total_num_indices_to_remove
                          + (size_t)num_indices_to_remove_isect]
         = intersection_idxvec[j];
       intersection_size += predicate ^ 1;
       num_indices_to_remove_isect += predicate;
-      position_mask[pos] = 1;
+      coverage[pos/bitsPerCoverageElement] |= mask;
     }
 
     total_num_indices_to_remove += (size_t)num_indices_to_remove_isect;
@@ -277,7 +288,13 @@ generate_dir_transfer_pos_dst(int num_intersections,
     *resSets = xrealloc(resSets_,
                         (size_t)new_num_intersections * sizeof(**resSets));
 
-  free(position_mask);
+  // check resulting bit map
+  unsigned long all_bits_set = ~0UL;
+  for (size_t i = 0; i < coverage_size; ++i)
+    all_bits_set &= coverage[i];
+
+  free(coverage);
+  return all_bits_set == ~0UL;
 }
 
 /* compute list positions for send direction */
@@ -464,7 +481,7 @@ exchange_points_to_remove(int num_src_intersections,
   free(requests);
 }
 
-static void
+static int
 generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
                       int num_src_intersections,
                       const struct Xt_com_list src_com[num_src_intersections],
@@ -482,7 +499,7 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
             * sizeof(*num_dst_indices_to_remove_per_intersection));
   Xt_int * src_indices_to_remove = NULL, * dst_indices_to_remove = NULL;
 
-  generate_dir_transfer_pos_dst(
+  int all_dst_covered = generate_dir_transfer_pos_dst(
     num_dst_intersections, dst_com, dst_idxlist_local,
     &(xmap->n_in), &(xmap->in_msg), &dst_indices_to_remove,
     num_dst_indices_to_remove_per_intersection);
@@ -503,47 +520,7 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
 
   free(src_indices_to_remove);
   free(num_src_indices_to_remove_per_intersection);
-}
-
-static int check_destination_coverage(struct exchange_data * in_msgs,
-                                      int num_msgs, int num_indices,
-                                      MPI_Comm comm) {
-
-  if (num_indices == 0)
-    return 0;
-
-  size_t *bit_map;
-  int num_bits = (int)(sizeof (*bit_map) * CHAR_BIT);
-  size_t num_ints = (size_t)((num_indices + num_bits - 1) / num_bits);
-
-  // create bitmap for destination indices
-  bit_map = xcalloc(num_ints, sizeof (*bit_map));
-  bit_map[num_ints-1] = ~(((size_t)1 << (num_indices%num_bits)) - 1);
-
-  // for all destination messages
-  for (int i = 0; i < num_msgs; ++i) {
-
-    // check all transfer positions
-    for (int j = 0; j < in_msgs[i].num_transfer_pos; ++j) {
-
-      int curr_pos = (int)(in_msgs[i].transfer_pos[j]);
-
-      if (curr_pos >= num_indices)
-        Xt_abort(comm, "ERROR: invalid transer position (pos >= num_indices)",
-                 __FILE__, __LINE__);
-
-      bit_map[curr_pos/num_bits] |= (size_t)1 << (curr_pos%num_bits);
-    }
-  }
-
-  // check resulting bit map
-  size_t all_bits_set = 1;
-  for (size_t i = 0; i < num_ints; ++i)
-    all_bits_set &= bit_map[i] == SIZE_MAX;
-
-  free(bit_map);
-
-  return !all_bits_set;
+  return all_dst_covered;
 }
 
 Xt_xmap
@@ -563,22 +540,17 @@ xt_xmap_intersection_new(int num_src_intersections,
   xt_mpi_call(MPI_Comm_dup(comm, &(xmap->comm)), comm);
 
   // generate exchange lists
-  generate_transfer_pos(xmap,
-                        num_src_intersections, src_com,
-                        num_dst_intersections, dst_com,
-                        src_idxlist, dst_idxlist, comm);
+  if (!generate_transfer_pos(xmap,
+                             num_src_intersections, src_com,
+                             num_dst_intersections, dst_com,
+                             src_idxlist, dst_idxlist, comm))
+    Xt_abort(comm, "ERROR: destination intersections do not match with "
+             "destination index list", __FILE__, __LINE__);
 
   // we could also calculate the (more precise) max pos using only xmap data
   // but using this simple estimate we are still okay for usage checks
   xmap->max_src_pos = xt_idxlist_get_num_indices(src_idxlist);
   xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
-
-  // check if all indices in the destination index list have been found on
-  // the source processes
-  if (check_destination_coverage(xmap->in_msg, xmap->n_in,
-                                 xt_idxlist_get_num_indices(dst_idxlist), comm))
-    Xt_abort(comm, "ERROR: destination intersections do not match with "
-             "destination index list", __FILE__, __LINE__);
 
   return (Xt_xmap)xmap;
 }
