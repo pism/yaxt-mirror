@@ -428,8 +428,7 @@ exchange_points_to_remove(int num_src_intersections,
                             comm,
                             send_data_requests + num_nonempty_dst_intersections),
                   comm);
-      offset = offset
-        + num_dst_indices_to_remove_per_intersection[i];
+      offset += num_dst_indices_to_remove_per_intersection[i];
       ++num_nonempty_dst_intersections;
     }
   }
