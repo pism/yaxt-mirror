@@ -372,6 +372,7 @@ generate_dir_transfer_pos_src(int num_intersections,
   }
 
   free(new_intersection_idxvec);
+  free(intersection_pos);
 
   *resCount = new_num_intersections;
   if (num_intersections != new_num_intersections)
