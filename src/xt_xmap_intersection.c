@@ -69,7 +69,7 @@ xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks);
 static Xt_xmap_iter xmap_intersection_get_in_iterator(Xt_xmap xmap);
 static Xt_xmap_iter xmap_intersection_get_out_iterator(Xt_xmap xmap);
 static void         xmap_intersection_delete(Xt_xmap xmap);
-static int          xmap_iterator_intersection_next(Xt_xmap_iter iter);
+static int          xmap_intersection_iterator_next(Xt_xmap_iter iter);
 static int          xmap_intersection_iterator_get_rank(Xt_xmap_iter iter);
 static int const *
 xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter);
@@ -82,7 +82,7 @@ static int          xmap_intersection_get_max_dst_pos(Xt_xmap xmap);
 
 static const struct Xt_xmap_iter_vtable
 xmap_iterator_intersection_vtable = {
-  .next                 = xmap_iterator_intersection_next,
+  .next                 = xmap_intersection_iterator_next,
   .get_rank             = xmap_intersection_iterator_get_rank,
   .get_transfer_pos     = xmap_intersection_iterator_get_transfer_pos,
   .get_num_transfer_pos = xmap_intersection_iterator_get_num_transfer_pos,
@@ -641,7 +641,7 @@ static Xt_xmap_iter xmap_intersection_get_out_iterator(Xt_xmap xmap) {
   return (Xt_xmap_iter)iter;
 }
 
-static int xmap_iterator_intersection_next(Xt_xmap_iter iter) {
+static int xmap_intersection_iterator_next(Xt_xmap_iter iter) {
 
   Xt_xmap_iter_intersection iter_intersection = xmii(iter);
 
