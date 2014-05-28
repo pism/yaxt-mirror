@@ -61,8 +61,12 @@
 static inline Xt_int
 Xt_isign(Xt_int x)
 {
+#if (-1 >> 1) == -1
   return ((x >> (sizeof (Xt_int) * CHAR_BIT - 1)) |
           (Xt_int)((Xt_uint)(~x) >> (sizeof (Xt_int) * CHAR_BIT - 1)));
+#else
+  return (Xt_int)((x >= 0) - (x < 0));
+#endif
 }
 
 /**
@@ -71,8 +75,12 @@ Xt_isign(Xt_int x)
 static inline int
 isign(int x)
 {
+#if (-1 >> 1) == -1
   return ((x >> (sizeof (int) * CHAR_BIT - 1)) |
           (int)((unsigned int)(~x) >> (sizeof (int) * CHAR_BIT - 1)));
+#else
+  return (x >= 0) - (x < 0);
+#endif
 }
 
 /**
