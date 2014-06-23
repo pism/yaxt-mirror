@@ -60,6 +60,7 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
   PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, char
   PUBLIC :: xt_initialized, xt_finalized
+  PUBLIC :: xt_slice_c_loc
 
   INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
   INTEGER, PUBLIC, PARAMETER :: xt_int_mpidt = XT_INT_FC_MPIDT
@@ -122,6 +123,8 @@ MODULE xt_core
   INTERFACE char
     MODULE PROCEDURE xt_stripe2char
   END INTERFACE char
+
+  EXTERNAL :: xt_slice_c_loc
 
 CONTAINS
 
