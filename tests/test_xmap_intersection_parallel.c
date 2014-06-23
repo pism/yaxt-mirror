@@ -361,19 +361,17 @@ int main(int argc, char **argv)
 
       if (my_rank == 2) {
 
-        int recv_pos[2][2] = {{0,2}, {1}};
-        int num_recv_pos[2] = {2, 1};
-        struct test_message recv_messages[2] = {{.rank = 0, .pos = recv_pos[0],
-                                                 .num_pos = num_recv_pos[0]},
-                                                {.rank = 1, .pos = recv_pos[1],
-                                                 .num_pos = num_recv_pos[1]}};
+        static const int recv_pos[2][2] = {{0,2}, {1}};
+        static const struct test_message recv_messages[2]
+          = {{.rank = 0, .pos = recv_pos[0], .num_pos = 2},
+             {.rank = 1, .pos = recv_pos[1], .num_pos = 1}};
 
         test_xmap(xmap, 0, NULL, 2, recv_messages);
 
       } else {
 
-        int send_pos[2][2] = {{0,1}, {0}};
-        int num_send_pos[2] = {2, 1};
+        static const int send_pos[2][2] = {{0,1}, {0}};
+        static const int num_send_pos[2] = {2, 1};
         struct test_message send_messages = {.rank = 2,
                                              .pos = send_pos[my_rank],
                                              .num_pos = num_send_pos[my_rank]};
