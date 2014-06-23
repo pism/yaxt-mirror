@@ -98,6 +98,7 @@ libyaxt_la_SOURCES =						\
 	xt_xmap_dist_dir.c					\
 	xt_xmap_intersection.c					\
 	xt_xmap_intersection_ext.c				\
+	xt_xmap_intersection_f.f90				\
 	xt_init.c						\
 	xt_ut.f90						\
 	xt_ut_c.c						\

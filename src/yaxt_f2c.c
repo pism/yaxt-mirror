@@ -57,6 +57,7 @@
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_xmap.h"
+#include "xt/xt_xmap_intersection.h"
 #include "xt/xt_xmap_all2all.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_idxstripes.h"
@@ -275,4 +276,28 @@ xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
   return xt_redist_p2p_ext_new(*xmap, num_src_ext, src_extents,
                                num_dst_ext, dst_extents,
                                MPI_Type_f2c(datatype_f));
+}
+
+void *
+xt_xmap_intersection_new_f2c(
+  int num_src_intersections,
+  const struct Xt_com_list src_com[num_src_intersections],
+  int num_dst_intersections,
+  const struct Xt_com_list dst_com[num_dst_intersections],
+  void *src_idxlist, void *dst_idxlist, MPI_Fint comm)
+{
+  return xt_xmap_intersection_new(num_src_intersections, src_com,
+                                  num_dst_intersections, dst_com,
+                                  src_idxlist, dst_idxlist, MPI_Comm_f2c(comm));
+}
+
+void *
+xt_xmap_intersection_ext_new_f2c(
+  int num_src_intersections, const void *src_com,
+  int num_dst_intersections, const void *dst_com,
+  void *src_idxlist, void *dst_idxlist, MPI_Fint comm)
+{
+  return xt_xmap_intersection_ext_new(
+    num_src_intersections, src_com, num_dst_intersections, dst_com,
+    src_idxlist, dst_idxlist, MPI_Comm_f2c(comm));
 }

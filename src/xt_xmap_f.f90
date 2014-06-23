@@ -46,8 +46,8 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_xmap_abstract
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_ptr, c_null_ptr, &
-       c_associated
+  USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
+       c_associated, c_f_pointer
   USE xt_core, ONLY: xt_mpi_fint_kind
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
@@ -57,6 +57,12 @@ MODULE xt_xmap_abstract
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new
+  PUBLIC :: xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
+       xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
+       xt_xmap_iterator_get_transfer_pos, &
+       xt_xmap_iterator_get_num_transfer_pos, &
+       xt_xmap_iterator_delete
+
 
   ! note: this type must not be extended to contain any other
   ! components, its memory pattern has to match void * exactly, which
@@ -65,6 +71,11 @@ MODULE xt_xmap_abstract
     PRIVATE
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_xmap
+
+  TYPE, BIND(c), PUBLIC :: xt_xmap_iter
+    PRIVATE
+    TYPE(c_ptr) :: cptr = c_null_ptr
+  END TYPE xt_xmap_iter
 
   INTERFACE
     ! this function must not be implemented in Fortran because
@@ -91,8 +102,17 @@ MODULE xt_xmap_abstract
 
   INTERFACE xt_is_null
     MODULE PROCEDURE xt_xmap_is_null
+    MODULE PROCEDURE xt_xmap_iterator_is_null
   END INTERFACE xt_is_null
 
+  INTERFACE
+    FUNCTION xt_xmap_iterator_get_num_transfer_pos_c(iter) RESULT(num) &
+         BIND(c, name='xt_xmap_iterator_get_num_transfer_pos')
+      IMPORT :: c_int, c_ptr
+      TYPE(c_ptr), VALUE, INTENT(in) :: iter
+      INTEGER(c_int) :: num
+    END FUNCTION xt_xmap_iterator_get_num_transfer_pos_c
+  END INTERFACE
 CONTAINS
 
   FUNCTION xt_xmap_is_null(xmap) RESULT(p)
@@ -228,4 +248,104 @@ CONTAINS
     CALL xt_xmap_get_source_ranks_c(xmap%cptr, ranks)
   END SUBROUTINE xt_xmap_get_source_ranks
 
+  FUNCTION xt_xmap_get_out_iterator(xmap) RESULT(iter)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    TYPE(xt_xmap_iter) :: iter
+    INTERFACE
+      FUNCTION xt_xmap_get_out_iterator_c(xmap) RESULT(cptr) &
+           BIND(c, name='xt_xmap_get_out_iterator')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        TYPE(c_ptr) :: cptr
+      END FUNCTION xt_xmap_get_out_iterator_c
+    END INTERFACE
+    iter%cptr = xt_xmap_get_out_iterator_c(xmap%cptr)
+  END FUNCTION xt_xmap_get_out_iterator
+
+  FUNCTION xt_xmap_get_in_iterator(xmap) RESULT(iter)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    TYPE(xt_xmap_iter) :: iter
+    INTERFACE
+      FUNCTION xt_xmap_get_in_iterator_c(xmap) RESULT(cptr) &
+           BIND(c, name='xt_xmap_get_in_iterator')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        TYPE(c_ptr) :: cptr
+      END FUNCTION xt_xmap_get_in_iterator_c
+    END INTERFACE
+    iter%cptr = xt_xmap_get_in_iterator_c(xmap%cptr)
+  END FUNCTION xt_xmap_get_in_iterator
+
+  FUNCTION xt_xmap_iterator_is_null(iter) RESULT(p)
+    TYPE(xt_xmap_iter), INTENT(in) :: iter
+    LOGICAL :: p
+    p = .NOT. C_ASSOCIATED(iter%cptr)
+  END FUNCTION xt_xmap_iterator_is_null
+
+  FUNCTION xt_xmap_iterator_next(iter) RESULT(avail)
+    TYPE(xt_xmap_iter), INTENT(inout) :: iter
+    LOGICAL :: avail
+    INTERFACE
+      FUNCTION xt_xmap_iterator_next_c(iter) RESULT(avail) &
+           BIND(c, name='xt_xmap_iterator_next')
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(in) :: iter
+        INTEGER(c_int) :: avail
+      END FUNCTION xt_xmap_iterator_next_c
+    END INTERFACE
+    avail = xt_xmap_iterator_next_c(iter%cptr) /= 0
+  END FUNCTION xt_xmap_iterator_next
+
+  FUNCTION xt_xmap_iterator_get_rank(iter) RESULT(rank)
+    TYPE(xt_xmap_iter), INTENT(in) :: iter
+    INTEGER :: rank
+    INTERFACE
+      FUNCTION xt_xmap_iterator_get_rank_c(iter) RESULT(rank) &
+           BIND(c, name='xt_xmap_iterator_get_rank')
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(in) :: iter
+        INTEGER(c_int) :: rank
+      END FUNCTION xt_xmap_iterator_get_rank_c
+    END INTERFACE
+    rank = INT(xt_xmap_iterator_get_rank_c(iter%cptr))
+  END FUNCTION xt_xmap_iterator_get_rank
+
+  FUNCTION xt_xmap_iterator_get_transfer_pos(iter) RESULT(transfer_pos)
+    TYPE(xt_xmap_iter), INTENT(in) :: iter
+    INTEGER(c_int), POINTER :: transfer_pos(:)
+
+    INTERFACE
+      FUNCTION xt_xmap_iterator_get_transfer_pos_c(iter) RESULT(transfer_pos) &
+           BIND(c, name='xt_xmap_iterator_get_transfer_pos')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: iter
+        TYPE(c_ptr) :: transfer_pos
+      END FUNCTION xt_xmap_iterator_get_transfer_pos_c
+    END INTERFACE
+    INTEGER :: n(1)
+    TYPE(c_ptr) :: transfer_pos_cptr
+    NULLIFY(transfer_pos)
+    n(1) = INT(xt_xmap_iterator_get_num_transfer_pos_c(iter%cptr))
+    transfer_pos_cptr = xt_xmap_iterator_get_transfer_pos_c(iter%cptr)
+    CALL C_F_POINTER(transfer_pos_cptr, transfer_pos, n)
+  END FUNCTION xt_xmap_iterator_get_transfer_pos
+
+  FUNCTION xt_xmap_iterator_get_num_transfer_pos(iter) RESULT(num)
+    TYPE(xt_xmap_iter), INTENT(in) :: iter
+    INTEGER :: num
+    num = INT(xt_xmap_iterator_get_num_transfer_pos_c(iter%cptr))
+  END FUNCTION xt_xmap_iterator_get_num_transfer_pos
+
+  SUBROUTINE xt_xmap_iterator_delete(iter)
+    TYPE(xt_xmap_iter), INTENT(inout) :: iter
+    INTERFACE
+      SUBROUTINE xt_xmap_iterator_delete_c(iter) &
+           BIND(c, name='xt_xmap_iterator_delete')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: iter
+      END SUBROUTINE xt_xmap_iterator_delete_c
+    END INTERFACE
+    CALL xt_xmap_iterator_delete_c(iter%cptr)
+    iter%cptr = c_null_ptr
+  END SUBROUTINE xt_xmap_iterator_delete
 END MODULE xt_xmap_abstract

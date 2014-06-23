@@ -3,3 +3,6 @@ set -e
 @MPI_LAUNCH@ -n 3 @abs_builddir@/test_xmap_intersection_parallel
 @MPI_LAUNCH@ -n 3 @abs_builddir@/test_xmap_intersection_parallel \
   -m xt_xmap_intersection_ext_new
+@MPI_LAUNCH@ -n 3 @abs_builddir@/test_xmap_intersection_parallel_f
+@MPI_LAUNCH@ -n 3 @abs_builddir@/test_xmap_intersection_parallel_f \
+  -m xt_xmap_intersection_ext_new

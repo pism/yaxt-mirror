@@ -75,6 +75,10 @@ CONTAINS
     CALL init_mpi
     CALL xt_initialize(mpi_comm_world)
     CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("MPI error!", &
+         __FILE__, &
+         __LINE__)
 
     CALL test_xmap1(xmap_new)
     CALL test_xmap2(xmap_new)
