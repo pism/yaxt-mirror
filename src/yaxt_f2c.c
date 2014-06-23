@@ -301,3 +301,10 @@ xt_xmap_intersection_ext_new_f2c(
     num_src_intersections, src_com, num_dst_intersections, dst_com,
     src_idxlist, dst_idxlist, MPI_Comm_f2c(comm));
 }
+
+int
+xt_com_list_contiguous(const struct Xt_com_list *p_com_a,
+                       const struct Xt_com_list *p_com_b)
+{
+  return (p_com_a + 1 == p_com_b);
+}

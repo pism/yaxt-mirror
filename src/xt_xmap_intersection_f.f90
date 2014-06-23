@@ -47,7 +47,7 @@
 !
 MODULE xt_xmap_intersection
   USE iso_c_binding, ONLY: c_int, c_loc, c_null_ptr, c_ptr
-  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind
+  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_slice_c_loc
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_f2c
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f
   IMPLICIT NONE
@@ -121,38 +121,16 @@ CONTAINS
 
   FUNCTION xmi_new_a_a(src_com, dst_com, src_idxlist, dst_idxlist, comm) &
        RESULT(xmap)
-    TYPE(xt_com_list), INTENT(in) :: src_com(:), dst_com(:)
+    TYPE(xt_com_list), TARGET, INTENT(in) :: src_com(:), dst_com(:)
     TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
     INTEGER, INTENT(in) :: comm
     TYPE(xt_xmap) :: xmap
 
     TYPE(xt_com_list), ALLOCATABLE, TARGET :: src_com_a(:), dst_com_a(:)
     TYPE(c_ptr) :: src_com_p, dst_com_p
-    INTEGER :: src_com_size, dst_com_size
-    src_com_size = SIZE(src_com)
-    IF (src_com_size > HUGE(1_c_int)) &
-         CALL xt_abort('invalid size', &
-         __FILE__, &
-         __LINE__)
-    dst_com_size = SIZE(dst_com)
-    IF (dst_com_size > HUGE(1_c_int)) &
-         CALL xt_abort('invalid size', &
-         __FILE__, &
-         __LINE__)
-    IF (src_com_size > 0) THEN
-      ALLOCATE(src_com_a(src_com_size))
-      src_com_a(:) = src_com(:)
-      src_com_p = C_LOC(src_com_a)
-    ELSE
-      src_com_p = c_null_ptr
-    END IF
-    IF (dst_com_size > 0) THEN
-      ALLOCATE(dst_com_a(dst_com_size))
-      dst_com_a(:) = dst_com(:)
-      dst_com_p = C_LOC(dst_com_a)
-    ELSE
-      dst_com_p = c_null_ptr
-    END IF
+
+    CALL com_p_arg(src_com, src_com_a, src_com_p)
+    CALL com_p_arg(dst_com, dst_com_a, dst_com_p)
 
     xmap = xt_xmap_c2f(xmi_new_f2c(&
          INT(SIZE(src_com), c_int), src_com_p, &
@@ -186,36 +164,51 @@ CONTAINS
 
     TYPE(xt_com_list), ALLOCATABLE, TARGET :: src_com_a(:), dst_com_a(:)
     TYPE(c_ptr) :: src_com_p, dst_com_p
-    INTEGER :: src_com_size, dst_com_size
-    src_com_size = SIZE(src_com)
-    IF (src_com_size > HUGE(1_c_int)) &
-         CALL xt_abort('invalid size', &
-         __FILE__, &
-         __LINE__)
-    dst_com_size = SIZE(dst_com)
-    IF (dst_com_size > HUGE(1_c_int)) &
-         CALL xt_abort('invalid size', &
-         __FILE__, &
-         __LINE__)
-    IF (src_com_size > 0) THEN
-      ALLOCATE(src_com_a(src_com_size))
-      src_com_a(:) = src_com(:)
-      src_com_p = C_LOC(src_com_a)
-    ELSE
-      src_com_p = c_null_ptr
-    END IF
-    IF (dst_com_size > 0) THEN
-      ALLOCATE(dst_com_a(dst_com_size))
-      dst_com_a(:) = dst_com(:)
-      dst_com_p = C_LOC(dst_com_a)
-    ELSE
-      dst_com_p = c_null_ptr
-    END IF
+
+    CALL com_p_arg(src_com, src_com_a, src_com_p)
+    CALL com_p_arg(dst_com, dst_com_a, dst_com_p)
 
     xmap = xt_xmap_c2f(xmi_ext_new_f2c(&
          INT(SIZE(src_com), c_int), src_com_p, &
          INT(SIZE(dst_com), c_int), dst_com_p, &
          xt_idxlist_f2c(src_idxlist), xt_idxlist_f2c(dst_idxlist), comm))
   END FUNCTION xmi_ext_new_a_a
+
+  SUBROUTINE com_p_arg(com, com_a, com_p)
+    TYPE(xt_com_list), TARGET, INTENT(in) :: com(:)
+    TYPE(xt_com_list), TARGET, ALLOCATABLE :: com_a(:)
+    TYPE(c_ptr), INTENT(out) :: com_p
+
+    INTEGER :: com_size
+    INTERFACE
+      FUNCTION xt_com_list_contiguous(com_a, com_b) RESULT(p) &
+            BIND(c, name='xt_com_list_contiguous')
+        IMPORT :: c_int, xt_com_list
+        TYPE(xt_com_list), INTENT(in) :: com_a, com_b
+        INTEGER(c_int) :: p
+      END FUNCTION xt_com_list_contiguous
+    END INTERFACE
+
+    com_size = SIZE(com)
+    IF (com_size > HUGE(1_c_int)) &
+         CALL xt_abort('invalid size', &
+         __FILE__, &
+         __LINE__)
+    IF (com_size > 0) THEN
+      IF (com_size > 1) THEN
+        IF (xt_com_list_contiguous(com(1), com(2)) /= 0) THEN
+          CALL xt_slice_c_loc(com(1), com_p)
+        ELSE
+          ALLOCATE(com_a(com_size))
+          com_a(:) = com(:)
+          com_p = C_LOC(com_a)
+        END IF
+      ELSE
+        CALL xt_slice_c_loc(com(1), com_p)
+      END IF
+    ELSE
+      com_p = c_null_ptr
+    END IF
+  END SUBROUTINE com_p_arg
 
 END MODULE xt_xmap_intersection
