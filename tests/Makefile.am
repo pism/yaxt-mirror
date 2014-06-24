@@ -59,6 +59,7 @@ noinst_PROGRAMS = 						\
 	test_redist_p2p						\
 	test_redist_p2p_f					\
 	test_redist_p2p_parallel				\
+	test_redist_p2p_parallel_f				\
 	test_redist_repeat					\
 	test_redist_repeat_f					\
 	test_redist_repeat_parallel				\
@@ -132,6 +133,8 @@ test_redist_p2p_SOURCES = test_redist_p2p.c tests.h
 test_redist_p2p_f_SOURCES = test_redist_p2p_f.f90
 test_redist_p2p_f_LDADD = $(XT_FC_LDADD)
 test_redist_p2p_parallel_SOURCES = test_redist_p2p_parallel.c tests.h
+test_redist_p2p_parallel_f_SOURCES = test_redist_p2p_parallel_f.f90
+test_redist_p2p_parallel_f_LDADD = $(XT_FC_LDADD)
 test_redist_repeat_SOURCES = test_redist_repeat.c tests.h
 test_redist_repeat_f_SOURCES = test_redist_repeat_f.f90
 test_redist_repeat_f_LDADD = $(XT_FC_LDADD)
