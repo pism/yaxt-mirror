@@ -521,10 +521,21 @@ generate_dir_transfer_ext_dst(
         }
       }
       /* isect_pos_ext was not found -> append */
-      ENSURE_ARRAY_SIZE(mypart_covered_pos_ext, size_mypart_covered_pos_ext,
-                        num_mypart_covered_pos_ext + 1);
-      mypart_covered_pos_ext[num_mypart_covered_pos_ext] = isect_pos_ext;
-      ++num_mypart_covered_pos_ext;
+      if (num_mypart_covered_pos_ext > 0
+          && (mypart_covered_pos_ext[num_mypart_covered_pos_ext - 1].start
+              + mypart_covered_pos_ext[num_mypart_covered_pos_ext - 1].size
+              == isect_pos_ext.start))
+      {
+        mypart_covered_pos_ext[num_mypart_covered_pos_ext - 1].size
+          += isect_pos_ext.size;
+      }
+      else
+      {
+        ENSURE_ARRAY_SIZE(mypart_covered_pos_ext, size_mypart_covered_pos_ext,
+                          num_mypart_covered_pos_ext + 1);
+        mypart_covered_pos_ext[num_mypart_covered_pos_ext] = isect_pos_ext;
+        ++num_mypart_covered_pos_ext;
+      }
     next_isect_pos_ext:
       isect_pos_exts_size_psum += psum_add;
     }
