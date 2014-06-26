@@ -537,7 +537,10 @@ xt_xmap_intersection_new(int num_src_intersections,
 
   xmap->vtable = &xmap_intersection_vtable;
 
+  /* this dup could be saved if we knew comm was already internal to
+   * the library somehow */
   xt_mpi_call(MPI_Comm_dup(comm, &(xmap->comm)), comm);
+  comm = xmap->comm;
 
   // generate exchange lists
   if (!generate_transfer_pos(xmap,
