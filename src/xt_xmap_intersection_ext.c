@@ -582,9 +582,9 @@ cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
 {
   struct Xt_pos_ext *restrict pos_exts_ = *pos_exts;
   size_t num_pos_exts_ = *num_pos_exts;
-  size_t i = 0;
-  while (pos_exts_[i].start > pos_ext.start)
-    ++i;
+  size_t i = num_pos_exts_;
+  while (pos_exts_[--i].start > pos_ext.start)
+    ;
   int db_skip = pos_ext.start - pos_exts_[i].start;
   if ((!db_skip) & (pos_ext.size == pos_exts_[i].size))
   {
