@@ -101,4 +101,12 @@ static inline void Xt_idxlist_init(Xt_idxlist idxlist,
 Xt_idxlist
 xt_default_isect(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
 
+/*
+ * for index lists this large, stripe representation generally gives
+ * better performance for internal computations
+ */
+enum {
+  CHEAP_VECTOR_SIZE = 128,
+};
+
 #endif

@@ -87,11 +87,6 @@ xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
     [idxlist_dst->vtable->idxlist_pack_code](idxlist_src, idxlist_dst);
 }
 
-enum {
-  CHEAP_VECTOR_SIZE = 128,
-};
-
-
 Xt_idxlist
 xt_default_isect(Xt_idxlist idxlist_src,
                  Xt_idxlist idxlist_dst)
