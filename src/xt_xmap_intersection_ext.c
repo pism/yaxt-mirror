@@ -614,7 +614,7 @@ cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
     pos_exts_[i] = (struct Xt_pos_ext){.start = orig.start,
                                        .size = db_skip };
     pos_exts_[i + 1] = (struct Xt_pos_ext){
-      .start = pos_ext.start + pos_ext.size - 1,
+      .start = pos_ext.start + pos_ext.size,
       .size = orig.size - db_skip - pos_ext.size };
     *num_pos_exts = ++num_pos_exts_;
   }
