@@ -484,14 +484,21 @@ generate_dir_transfer_ext_dst(
             < mypart_covered_pos_ext[k].start)
         {
           /* isect precedes mypart_covered_pos_ext[k] with a hole */
-          /* todo: check for merge with preceding range */
-          ENSURE_ARRAY_SIZE(mypart_covered_pos_ext, size_mypart_covered_pos_ext,
-                            num_mypart_covered_pos_ext + 1);
-          memmove(mypart_covered_pos_ext + k + 1, mypart_covered_pos_ext + k,
-                  sizeof (*mypart_covered_pos_ext)
-                  * (num_mypart_covered_pos_ext - k));
-          mypart_covered_pos_ext[k] = isect_pos_ext;
-          ++num_mypart_covered_pos_ext;
+          if (k > 0
+              && (mypart_covered_pos_ext[k - 1].start
+                  + mypart_covered_pos_ext[k - 1].size == isect_pos_ext.start))
+            mypart_covered_pos_ext[k - 1].size += isect_pos_ext.size;
+          else
+          {
+            ENSURE_ARRAY_SIZE(mypart_covered_pos_ext,
+                              size_mypart_covered_pos_ext,
+                              num_mypart_covered_pos_ext + 1);
+            memmove(mypart_covered_pos_ext + k + 1, mypart_covered_pos_ext + k,
+                    sizeof (*mypart_covered_pos_ext)
+                    * (num_mypart_covered_pos_ext - k));
+            mypart_covered_pos_ext[k] = isect_pos_ext;
+            ++num_mypart_covered_pos_ext;
+          }
           goto next_isect_pos_ext;
         }
         else if (isect_pos_ext.start + isect_pos_ext.size
