@@ -506,7 +506,17 @@ generate_dir_transfer_ext_dst(
         {
           mypart_covered_pos_ext[k].start = isect_pos_ext.start;
           mypart_covered_pos_ext[k].size += isect_pos_ext.size;
-          /* todo: check for merge with preceding range */
+          if (k > 0
+              && (mypart_covered_pos_ext[k].start
+                  == (mypart_covered_pos_ext[k - 1].start
+                      + mypart_covered_pos_ext[k - 1].size)))
+          {
+            mypart_covered_pos_ext[k - 1].size
+              += mypart_covered_pos_ext[k].size;
+            memmove(mypart_covered_pos_ext + k, mypart_covered_pos_ext + k + 1,
+                    (--num_mypart_covered_pos_ext - k)
+                    * sizeof (*mypart_covered_pos_ext));
+          }
           goto next_isect_pos_ext;
         }
       }
