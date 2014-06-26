@@ -444,7 +444,7 @@ generate_dir_transfer_ext_dst(
       struct Xt_pos_ext isect_pos_ext = isect_pos_exts[j];
       /* ensure isect_pos_ext is oriented with ascending positions */
       isect_pos_ext.start
-        -= isign_mask(isect_pos_ext.size) & (isect_pos_ext.size + 1);
+        += isign_mask(isect_pos_ext.size) & (isect_pos_ext.size + 1);
       int psum_add = isect_pos_ext.size = abs(isect_pos_ext.size);
       for (size_t k = 0; k < num_mypart_covered_pos_ext; ++k) {
         struct Xt_pos_ext_overlap overlap_desc
