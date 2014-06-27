@@ -443,9 +443,15 @@ generate_dir_transfer_ext_dst(
     for (size_t j = 0; j < (size_t)num_isect_pos_exts; ++j) {
       struct Xt_pos_ext isect_pos_ext = isect_pos_exts[j];
       /* ensure isect_pos_ext is oriented with ascending positions */
+      int isign_mask_isect_pos_ext_size = isign_mask(isect_pos_ext.size);
       isect_pos_ext.start
-        += isign_mask(isect_pos_ext.size) & (isect_pos_ext.size + 1);
-      int psum_add = isect_pos_ext.size = abs(isect_pos_ext.size);
+        += isign_mask_isect_pos_ext_size & (isect_pos_ext.size + 1);
+      int isect_pos_ext_orig_size = isect_pos_ext.size;
+      isect_pos_ext.size = abs(isect_pos_ext.size);
+      /* if isect_pos_ext is of negative orientation, add nothing at
+       * the end but subtract from already incremented psum */
+      isect_pos_exts_size_psum += isect_pos_ext.size;
+      int progress = -isect_pos_ext.size;
       for (size_t k = 0; k < num_mypart_covered_pos_ext; ++k) {
         struct Xt_pos_ext_overlap overlap_desc
           = Xt_get_pos_ext_overlap(isect_pos_ext, mypart_covered_pos_ext[k]);
@@ -459,16 +465,20 @@ generate_dir_transfer_ext_dst(
            */
           mypart_covered_pos_ext[k].start -= overlap_desc.skip;
           mypart_covered_pos_ext[k].size += overlap_desc.skip;
+          progress = (~isign_mask_isect_pos_ext_size
+                      & (progress + overlap_desc.skip))
+            | (isign_mask_isect_pos_ext_size
+               & (isect_pos_ext_orig_size + overlap_desc.tail));
           /* ... then splitting isect_transfer_pos accordingly, ... */
           num_indices_to_remove += overlap_desc.overlap;
           cut_pos_ext_from_pos_exts((struct Xt_pos_ext){
-              .start = isect_pos_exts_size_psum
-                + abs(overlap_desc.skip),
+              .start = isect_pos_exts_size_psum + progress,
                 .size = overlap_desc.overlap },
             &num_isect_transfer_pos_ext, &size_isect_transfer_pos_ext,
             (struct Xt_pos_ext **)&isect_transfer_pos_ext);
+          progress += overlap_desc.overlap;
           /* ... lastly the search can continue with the tail ... */
-          isect_pos_ext.start += isect_pos_ext.size - overlap_desc.tail;
+          isect_pos_ext.start += overlap_desc.skip + overlap_desc.overlap;
           /* ... if there is any */
           if ((isect_pos_ext.size = overlap_desc.tail))
             continue;
@@ -537,7 +547,7 @@ generate_dir_transfer_ext_dst(
         ++num_mypart_covered_pos_ext;
       }
     next_isect_pos_ext:
-      isect_pos_exts_size_psum += psum_add;
+      ;
     }
 
     if (intersection_size > num_indices_to_remove) {
