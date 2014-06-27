@@ -1028,9 +1028,13 @@ xmap_intersection_ext_iterator_get_transfer_pos(Xt_xmap_iter iter) {
     size_t num_transfer_pos_ext = (size_t)msg->num_transfer_pos_ext;
     struct Xt_pos_ext *restrict transfer_pos_ext = msg->transfer_pos_ext;
     size_t ofs = 0;
-    for (size_t i = 0; i < num_transfer_pos_ext; ++i)
-      for (int j = 0; j < transfer_pos_ext[i].size; ++j)
-        transfer_pos[ofs++] = transfer_pos_ext[i].start + j;
+    for (size_t i = 0; i < num_transfer_pos_ext; ++i) {
+      int abssize = abs(transfer_pos_ext[i].size);
+      int step = isign(transfer_pos_ext[i].size);
+      for (int j = 0; j < abssize; ++j)
+        transfer_pos[ofs + (size_t)j] = transfer_pos_ext[i].start + j * step;
+      ofs += (size_t)abssize;
+    }
     assert(ofs == num_transfer_pos);
   }
   return msg->transfer_pos;
