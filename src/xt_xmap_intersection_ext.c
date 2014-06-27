@@ -461,10 +461,24 @@ generate_dir_transfer_ext_dst(
           /* ...first inserting the skipped part into
            * mypart_covered_pos_ext, since that is sorted
            * and obviously precedes mypart_covered_pos_ext[k],
-           * mypart_covered_pos_ext[k] can be seemlessly extended
+           * mypart_covered_pos_ext[k] can be seemlessly extended...
            */
           mypart_covered_pos_ext[k].start -= overlap_desc.skip;
           mypart_covered_pos_ext[k].size += overlap_desc.skip;
+          /* ...and optionally merged with its predecessor, if the
+           * intervening range becomes zero, ... */
+          if (k > 0
+              && (mypart_covered_pos_ext[k].start
+                  == (mypart_covered_pos_ext[k - 1].start
+                      + mypart_covered_pos_ext[k - 1].size)))
+          {
+            mypart_covered_pos_ext[k - 1].size
+              += mypart_covered_pos_ext[k].size;
+            memmove(mypart_covered_pos_ext + k, mypart_covered_pos_ext + k + 1,
+                    (--num_mypart_covered_pos_ext - k)
+                    * sizeof (*mypart_covered_pos_ext));
+            --k;
+          }
           progress = (~isign_mask_isect_pos_ext_size
                       & (progress + overlap_desc.skip))
             | (isign_mask_isect_pos_ext_size
