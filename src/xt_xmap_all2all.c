@@ -59,12 +59,14 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
+#include "xt_idxlist_internal.h"
 #include "instr.h"
 
 static void exchange_idxlists(struct Xt_com_list **src_intersections,
                               int *num_src_intersections,
                               struct Xt_com_list **dst_intersections,
                               int * num_dst_intersections,
+                              int * stripify,
                               Xt_idxlist src_idxlist_local,
                               Xt_idxlist dst_idxlist_local,
                               MPI_Comm comm)
@@ -138,6 +140,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
 
   position = 0;
   size_t dst_isect_count = 0, src_isect_count = 0;
+  int large_list_seen = 0;
   // compute intersections
   for (int i = 0; i < comm_size; ++i) {
 
@@ -146,6 +149,9 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
                                        &position, comm);
     Xt_idxlist dst = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
                                        &position, comm);
+    large_list_seen
+      |= (xt_idxlist_get_num_indices(src) >= CHEAP_VECTOR_SIZE)
+      | (xt_idxlist_get_num_indices(dst) >= CHEAP_VECTOR_SIZE);
     Xt_idxlist intersect = xt_idxlist_get_intersection(src, dst_idxlist_local);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
@@ -177,6 +183,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
 
   *dst_intersections = dsti;
   *src_intersections = srci;
+  *stripify = large_list_seen;
   // clean up
   free(recv_buffer);
   free(pack_sizes);
@@ -193,18 +200,27 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   struct Xt_com_list * src_intersections = NULL, * dst_intersections = NULL;
   int num_src_intersections = 0, num_dst_intersections = 0;
 
+  int stripify;
   // exchange index lists between all processes in comm
   exchange_idxlists(&src_intersections, &num_src_intersections,
                     &dst_intersections, &num_dst_intersections,
-                    src_idxlist, dst_idxlist, curr_comm);
+                    &stripify, src_idxlist, dst_idxlist, curr_comm);
 
   MPI_Comm_free(&curr_comm);
 
-  Xt_xmap xmap;
+  Xt_xmap (*xmap_new)(int num_src_intersections,
+                      const struct Xt_com_list
+                      src_com[num_src_intersections],
+                      int num_dst_intersections,
+                      const struct Xt_com_list
+                      dst_com[num_dst_intersections],
+                      Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                      MPI_Comm comm)
+    = stripify ? xt_xmap_intersection_ext_new : xt_xmap_intersection_new;
 
-  xmap = xt_xmap_intersection_new(num_src_intersections, src_intersections,
-                                  num_dst_intersections, dst_intersections,
-                                  src_idxlist, dst_idxlist, comm);
+  Xt_xmap xmap = xmap_new(num_src_intersections, src_intersections,
+                          num_dst_intersections, dst_intersections,
+                          src_idxlist, dst_idxlist, comm);
 
   for (int i = 0; i < num_src_intersections; ++i)
     if (src_intersections[i].list != NULL)
