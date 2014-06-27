@@ -899,7 +899,8 @@ remap_intersection(Xt_idxlist mypart_idxlist,
                           size_refined_intersection_idxstripes,
                           num_refined_intersection_idxstripes + 1);
         struct Xt_stripe cur_stripe = intersection_idxstripes[i_stripe];
-        int overlap = imin(cur_stripe.nstrides - instripe_pos, size);
+        int cur_stripe_nstrides = cur_stripe.nstrides;
+        int overlap = imin(cur_stripe_nstrides - instripe_pos, size);
         cur_stripe.start
           = (Xt_int)(cur_stripe.start
                      + (Xt_int)instripe_pos * cur_stripe.stride);
@@ -907,7 +908,9 @@ remap_intersection(Xt_idxlist mypart_idxlist,
         refined_intersection_idxstripes[num_refined_intersection_idxstripes]
           = cur_stripe;
         ++num_refined_intersection_idxstripes;
-        ++i_stripe;
+        i_stripe += (instripe_pos + overlap == cur_stripe_nstrides);
+        nstrides_psum += (instripe_pos + overlap == cur_stripe_nstrides)
+          ? cur_stripe_nstrides : 0;
         pos += overlap;
         size -= overlap;
       } while (size);
