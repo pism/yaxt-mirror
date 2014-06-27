@@ -501,13 +501,16 @@ generate_dir_transfer_ext_dst(
             goto next_isect_pos_ext;
         }
         /* isect_pos_ext does not overlap current part,
-           can there be future overlaps, i.e. is already
-           isect_pos_ext.start + isect_pos_ext.size < mypart_covered_pos_ext[k].start?
-        */
+         * can there be future overlaps, i.e. is already
+         * isect_pos_ext.start + isect_pos_ext.size
+         *        < mypart_covered_pos_ext[k].start ?
+         */
         if (isect_pos_ext.start + isect_pos_ext.size
             < mypart_covered_pos_ext[k].start)
         {
-          /* isect precedes mypart_covered_pos_ext[k] with a hole */
+          /* isect precedes mypart_covered_pos_ext[k] with a hole
+           * but might be a seemless extension of
+           * mypart_covered_pos_ext[k-1] */
           if (k > 0
               && (mypart_covered_pos_ext[k - 1].start
                   + mypart_covered_pos_ext[k - 1].size == isect_pos_ext.start))
