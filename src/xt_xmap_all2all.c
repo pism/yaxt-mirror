@@ -209,11 +209,9 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   MPI_Comm_free(&curr_comm);
 
   Xt_xmap (*xmap_new)(int num_src_intersections,
-                      const struct Xt_com_list
-                      src_com[num_src_intersections],
+                      const struct Xt_com_list *src_com,
                       int num_dst_intersections,
-                      const struct Xt_com_list
-                      dst_com[num_dst_intersections],
+                      const struct Xt_com_list *dst_com,
                       Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                       MPI_Comm comm)
     = stripify ? xt_xmap_intersection_ext_new : xt_xmap_intersection_new;
