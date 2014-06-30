@@ -168,7 +168,7 @@ pos2disp(int pos, int num_ext, struct Xt_offset_ext extents[],
   /* what extent covers the pos'th position? */
   while (j < num_ext && pos >= psum_ext_size[j + 1])
     ++j;
-  int disp = extents[j].start + pos * extents[j].stride - psum_ext_size[j];
+  int disp = extents[j].start + (pos - psum_ext_size[j]) * extents[j].stride;
   return (struct ext_disp){ .disp = disp, .ext_idx = j };
 }
 
@@ -188,7 +188,7 @@ pos2disp2(int pos, int num_ext, struct Xt_offset_ext extents[],
   else
     while (j < num_ext && pos >= psum_ext_size[j + 1])
       ++j;
-  int disp = extents[j].start + pos * extents[j].stride - psum_ext_size[j];
+  int disp = extents[j].start + (pos - psum_ext_size[j]) * extents[j].stride;
   return (struct ext_disp){ .disp = disp, .ext_idx = j };
 }
 
