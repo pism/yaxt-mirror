@@ -69,6 +69,9 @@ typedef struct Xt_redist_ *Xt_redist;
 /**
  * represents \a size number of positions starting at \a start, where
  * the positions are assumed to decrease if \a size < 0 and increase otherwise.
+ * Meaning the range of positions starting with
+ * start up to start + size - 1 i.e. [start,start+size) if size is positive and
+ * start down to start + size + 1 i.e. (start+size,start] if size is negative
  */
 struct Xt_pos_ext
 {
