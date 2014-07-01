@@ -51,6 +51,7 @@
 #include <mpi.h>
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+#include "xt/xt_core.h"
 #include "xt/xt_mpi.h"
 
 //! COMPACT_DT enables the anlysis of displacements in order to give a
@@ -60,16 +61,7 @@
 //! performance.
 #define COMPACT_DT
 
-//! Stripe describes a stripe of displacements (like xt_idxstripes for indices)
-typedef struct stripe_struct {
-  // disp[i] = start + i*stride
-  // for 0 <= i < nstrides;
-  int start;
-  int stride;
-  int nstrides;
-} Stripe;
-
-static const Stripe zero_stripe = { .start=0, .stride=0, .nstrides=0 };
+#define zero_stripe ((struct Xt_offset_ext){ .start=0, .stride=0, .size=0 })
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
@@ -314,35 +306,35 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
 
 
 static int
-scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
+scan_stripe(const int *disp, int disp_len, struct Xt_offset_ext *v, int vsize) {
 
   if (disp_len<1) return 0;
 
-  Stripe x = zero_stripe;
+  struct Xt_offset_ext x = zero_stripe;
   int i = 0;
   int p = 0;
   while (p < disp_len) {
 
-    if (!x.nstrides) {
+    if (!x.size) {
       x.start   = disp[p];
       x.stride = 1;
-      x.nstrides = 1;
+      x.size = 1;
       p++; continue;
     }
 
-    if (x.nstrides == 1) {
+    if (x.size == 1) {
       x.stride = disp[p] - disp[p-1];
-      x.nstrides = 2;
+      x.size = 2;
       p++; continue;
     }
 
-    // x.nstrides >= 2:
+    // x.size >= 2:
     if (disp[p] - disp[p-1] == x.stride) {
-      x.nstrides++;
+      x.size++;
       p++; continue;
     }
 
-    if (x.nstrides > 2 || (x.nstrides == 2 && x.stride == 1) ) {
+    if (x.size > 2 || (x.size == 2 && x.stride == 1) ) {
       // we accept small contiguous vectors (nstrides==2, stride==1)
       if (i >= vsize) die("scan_stripe: vsize too small\n");
       v[i]= x;
@@ -351,15 +343,15 @@ scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
       continue;
     }
 
-    if (x.nstrides == 2) {
+    if (x.size == 2) {
       // break up trivial vec:
       if (i >= vsize) die("scan_stripe: vsize too small\n");
       v[i] = x;
-      v[i].nstrides = 1;
+      v[i].size = 1;
       v[i].stride = 1;
       i++;
       x.start += x.stride;
-      x.nstrides = 1;
+      x.size = 1;
       x.stride = 1;
       continue;
     }
@@ -367,25 +359,25 @@ scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
   }
 
   // tail cases:
-  if (x.nstrides > 2 || (x.nstrides == 2 && x.stride == 1) ) {
+  if (x.size > 2 || (x.size == 2 && x.stride == 1) ) {
     if (i >= vsize) die("scan_stripe: vsize too small\n");
       v[i]= x;
       i++;
-  } else if (x.nstrides == 2) {
+  } else if (x.size == 2) {
     if (i+1 >= vsize) die("scan_stripe: vsize too small\n");
       v[i] = x;
-      v[i].nstrides = 1;
+      v[i].size = 1;
       v[i].stride = 1;
       i++;
       v[i] = x;
       v[i].start += x.stride;
-      v[i].nstrides = 1;
+      v[i].size = 1;
       v[i].stride = 1;
       i++;
-  } else if (x.nstrides == 1) {
+  } else if (x.size == 1) {
     if (i >= vsize) die("scan_stripe: vsize too small\n");
     v[i] = x;
-    v[i].nstrides = 1;
+    v[i].size = 1;
     v[i].stride = 1;
     i++;
   }
@@ -395,7 +387,7 @@ scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
   // check:
   p = 0;
   for (unsigned i = 0; i < vn; i++) {
-    for (int k = 0; k < v[i].nstrides; k++) {
+    for (int k = 0; k < v[i].size; k++) {
       int d = v[i].start + k*v[i].stride;
       if (p > disp_len) die("scan_stripe: internal error (1)");
       if (disp[p] != d) die("scan_stripe: internal error (2)");
@@ -408,12 +400,13 @@ scan_stripe(int const *disp, int disp_len, Stripe *v, int vsize) {
 }
 
 static int
-match_simple_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
+match_simple_vec(int *pstart, const struct Xt_offset_ext *v, int vlen,
+                 MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
   // we only accept non-trivial matches (nsteps>2) with stride /= 1
   // using only one vector from v
   int p = *pstart;
   if (p >= vlen) return 0;
-  int nstrides = v[p].nstrides;
+  int nstrides = v[p].size;
   int stride = v[p].stride;
   if (nstrides < 2 || stride == 1 ) return 0;
 
@@ -454,18 +447,19 @@ match_simple_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, 
 }
 
 static int
-match_block_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
+match_block_vec(int *pstart, const struct Xt_offset_ext *v, int vlen,
+                MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
   // using at least 3 vectors
   int p = *pstart;
   if (p+2 >= vlen) return 0;
   if (v[p].stride != 1 || v[p+1].stride != 1 ) return 0;
-  int bl = v[p].nstrides;
-  if (bl < 1 || v[p+1].nstrides != bl) return 0;
+  int bl = v[p].size;
+  if (bl < 1 || v[p+1].size != bl) return 0;
 
   int vstride = v[p+1].start - v[p].start;
 
   p += 2;
-  while( p < vlen && v[p].stride == 1 && v[p].nstrides == bl &&
+  while( p < vlen && v[p].stride == 1 && v[p].size == bl &&
          v[p].start - v[p-1].start == vstride ) {
     p++;
   }
@@ -508,11 +502,12 @@ match_block_vec(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, i
 }
 
 static int
-match_contiguous(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
+match_contiguous(int *pstart, const struct Xt_offset_ext *v, int vlen,
+                 MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
   int p = *pstart;
   if (p >= vlen) return 0;
   if (v[p].stride != 1) return 0;
-  if (v[p].nstrides < 2) return 0;
+  if (v[p].size < 2) return 0;
 
   if (vlen > 1) {
     *disp = v[*pstart].start;
@@ -523,23 +518,23 @@ match_contiguous(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, 
   int d = v[p].start - *disp;
 
   if (!d) {
-    xt_mpi_call(MPI_Type_contiguous(v[p].nstrides, old_type, dt), Xt_default_comm) ;
+    xt_mpi_call(MPI_Type_contiguous(v[p].size, old_type, dt), Xt_default_comm) ;
   } else {
-    xt_mpi_call(MPI_Type_create_indexed_block(1, v[p].nstrides, &d, old_type, dt),
+    xt_mpi_call(MPI_Type_create_indexed_block(1, v[p].size, &d, old_type, dt),
                 Xt_default_comm);
   }
 
   (*pstart)++;
-  return v[p].nstrides;
+  return v[p].size;
 }
 
 static int
-match_indexed(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
+match_indexed(int *pstart, const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
   // we only accept non-trivial matches
   int p = *pstart;
   if (p >= vlen) return 0;
   if (v[p].stride != 1) return 0;
-  if (v[p].nstrides < 2) return 0;
+  if (v[p].size < 2) return 0;
 
   while( p < vlen && v[p].stride == 1 ) {
     p++;
@@ -562,7 +557,7 @@ match_indexed(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int
   for (int i = 0; i < n; i++) {
     int iv = *pstart+i;
     d[i] = v[iv].start - start;
-    bl[i] = v[iv].nstrides;
+    bl[i] = v[iv].size;
     if (bl[i] != bl[0]) hom_bl = 0;
   }
 
@@ -579,7 +574,9 @@ match_indexed(int *pstart, Stripe const *v, int vlen, MPI_Datatype old_type, int
 }
 
 static int
-gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatype old_type, int *offset, MPI_Datatype *dt) {
+gen_fallback_type(int *istart, int *iend, const struct Xt_offset_ext *v,
+                  int vlen, MPI_Datatype old_type, int *offset,
+                  MPI_Datatype *dt) {
   if (*istart<0 || *iend < *istart || *iend >= vlen) return 0;
 
   int ia = *istart;
@@ -587,7 +584,7 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
 
   int n = 0;
   for (int i=ia; i<=ib; i++) {
-    n += v[i].nstrides;
+    n += v[i].size;
   }
   if (n<1) return 0;
 
@@ -606,7 +603,7 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
   int p=0;
 
   for (int i=ia; i<=ib; i++) {
-    for (int k=0; k<v[i].nstrides; k++) {
+    for (int k=0; k<v[i].size; k++) {
       d[p] = v[i].start + k * v[i].stride - start;
       p++;
     }
@@ -631,7 +628,7 @@ gen_fallback_type(int *istart, int *iend, Stripe const *v, int vlen, MPI_Datatyp
 }
 
 static MPI_Datatype
-parse_stripe(Stripe const *v, int vlen, MPI_Datatype old_type) {
+parse_stripe(const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type) {
 
   int set_start = -1;
   int set_end = -2;
@@ -700,11 +697,11 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type) {
 
   if (count < 1) return MPI_DATATYPE_NULL;
-  Stripe *v = xmalloc(sizeof(*v) * (size_t)count);
+  struct Xt_offset_ext *restrict v = xmalloc(sizeof(*v) * (size_t)count);
   for (int i=0; i<count; i++) {
     v[i].start = disp[i];
     v[i].stride = 1;
-    v[i].nstrides = blocklengths[i];
+    v[i].size = blocklengths[i];
   }
   MPI_Datatype dt = parse_stripe(v, count, old_type);
   free(v);
@@ -717,7 +714,7 @@ xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
 
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
-  Stripe *v = xmalloc(sizeof(*v) * (size_t)disp_len);
+  struct Xt_offset_ext *v = xmalloc(sizeof(*v) * (size_t)disp_len);
   int vlen = scan_stripe(disp, disp_len, v, disp_len);
   MPI_Datatype dt = parse_stripe(v, vlen, old_type);
   free(v);
