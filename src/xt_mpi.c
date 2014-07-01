@@ -412,11 +412,7 @@ match_simple_vec(int *pstart, const struct Xt_offset_ext *v, int vlen,
 
   (*pstart)++;
 
-  if (vlen > 1) {
-    *disp = v[p].start;
-  } else {
-    *disp = 0;
-  }
+  *disp = vlen > 1 ? v[p].start : 0;
 
   int bl = 1;
   MPI_Datatype dt1;
