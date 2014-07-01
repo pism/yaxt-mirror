@@ -49,6 +49,7 @@
 
 #include <mpi.h>
 
+#include "xt/xt_core.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_redist.h"
 
@@ -85,11 +86,6 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype);
  */
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                                 int *dst_offsets, MPI_Datatype datatype);
-
-struct Xt_offset_ext
-{
-  int start, size, stride;
-};
 
 /**
  * constructor for a redistribution using point to point

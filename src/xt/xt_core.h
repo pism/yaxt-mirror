@@ -79,6 +79,15 @@ struct Xt_pos_ext
 };
 
 /**
+ * represents \a size number of positions beginning with \a start, where
+ * the positions are (start + i * stride) for i in [0,size)
+ */
+struct Xt_offset_ext
+{
+  int start, size, stride;
+};
+
+/**
  * \file xt_core.h
  * \brief base definitions header file
  *
