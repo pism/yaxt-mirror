@@ -132,6 +132,15 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
 
   MPI_Comm_rank(comm, &comm_rank);
   MPI_Comm_size(comm, &comm_size);
+  /* In order to avoid congestion of messages, the order of send and receive
+   * messages is changed. This is done by sorting the messages according to the
+   * rank of the respective message partner. Before the sorting to ranks that
+   * are smaller or equal to the local rank the size of the communicator is
+   * added.
+   * example: process 5 is supposed to communicate with processes: 9, 5, 2, 6, 1
+   * 1. add comm_size(10): 9, 15, 12, 6, 11
+   * 2. sort: 6, 9, 11, 12, 15 -> final order: 6, 9, 1, 2, 5
+   */
   qsort(send_msgs, nsend, sizeof(*send_msgs), compare_exchange_messages);
   qsort(recv_msgs, nrecv, sizeof(*recv_msgs), compare_exchange_messages);
 
