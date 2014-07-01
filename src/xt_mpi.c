@@ -414,9 +414,8 @@ match_simple_vec(int *pstart, const struct Xt_offset_ext *v, int vlen,
 
   *disp = vlen > 1 ? v[p].start : 0;
 
-  int bl = 1;
   MPI_Datatype dt1;
-  xt_mpi_call(MPI_Type_vector(nstrides, bl, stride, old_type, &dt1),
+  xt_mpi_call(MPI_Type_vector(nstrides, 1, stride, old_type, &dt1),
               Xt_default_comm);
 
   int start = v[p].start - *disp;
