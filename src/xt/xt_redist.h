@@ -65,11 +65,12 @@ void xt_redist_delete(Xt_redist redist);
 /**
  * synchronous redistribution of data
  *
- * @param[in]     redist         redistribution structure
- * @param[in]     num_arrays     number of base addresses in src_data
- *                               and dst_data
- * @param[in]     src_data       array containing the base addresses of the input arrays
- * @param[in,out] dst_data       array containing the base addresses of the output arrays
+ * @param[in]     redist     redistribution structure
+ * @param[in]     num_arrays number of base addresses in src_data and dst_data
+ * @param[in]     src_data   array containing the addresses of the first
+ *                           elements of the input data
+ * @param[in,out] dst_data   array containing the addresses of the first
+ *                           elements of the output data
  */
 void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
                           const void **src_data, void **dst_data);
@@ -77,9 +78,9 @@ void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
 /**
  * synchronous redistribution of data - single array case
  *
- * @param[in]     redist         redistribution structure
- * @param[in]     src_data       input array
- * @param[in,out] dst_data       output array
+ * @param[in]     redist   redistribution structure
+ * @param[in]     src_data address of the first element of the input data
+ * @param[in,out] dst_data address of the first element of the output data
  */
 void xt_redist_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data);
 
