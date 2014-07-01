@@ -110,8 +110,8 @@ static int compare_exchange_messages (const void * msg_a, const void * msg_b)
   int a = ((struct Xt_redist_msg*)msg_a)->rank;
   int b = ((struct Xt_redist_msg*)msg_b)->rank;
 
-  if (a < comm_rank) a += comm_size;
-  if (b < comm_rank) b += comm_size;
+  if (a <= comm_rank) a += comm_size;
+  if (b <= comm_rank) b += comm_size;
 
   return ( a - b );
 }
