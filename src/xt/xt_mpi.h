@@ -49,6 +49,8 @@
 
 #include <mpi.h>
 
+#include "xt/xt_core.h"
+
 /** \example test_mpi_generate_datatype.c
  */
 
@@ -100,5 +102,21 @@ MPI_Datatype xt_mpi_generate_datatype_block(const int *displacements,
                                             const int *blocklengths,
                                             int count, MPI_Datatype old_type,
                                             MPI_Comm comm);
+
+/**
+ * generates an MPI datatype
+ *
+ * @param[in] v             array of displacement, stride and length
+ *                          of sub-vectors
+ * @param[in] count         number of sub-vectors
+ * @param[in] old_type      base MPI datatype of all elements
+ * @param[in] comm          MPI communicator
+ * @return                  MPI datatype for the given data layout
+ *
+ * \remarks the returned datatype needs to be freed by the user (MPI_Type_free)
+ */
+MPI_Datatype xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
+                                             int count, MPI_Datatype old_type,
+                                             MPI_Comm comm);
 
 #endif // XT_MPI_H

@@ -687,6 +687,16 @@ parse_stripe(const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type) {
   return result_dt;
 }
 
+MPI_Datatype
+xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
+                                int count, MPI_Datatype old_type,
+                                MPI_Comm XT_UNUSED(comm))
+{
+  if (count < 1) return MPI_DATATYPE_NULL;
+  return parse_stripe(v, count, old_type);
+}
+
+
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type) {
