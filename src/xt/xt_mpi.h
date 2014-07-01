@@ -96,7 +96,8 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
  *
  * \remarks the returned datatype needs to be freed by the user (MPI_Type_free)
  */
-MPI_Datatype xt_mpi_generate_datatype_block(int const * displacements, int * blocklengths,
+MPI_Datatype xt_mpi_generate_datatype_block(const int *displacements,
+                                            const int *blocklengths,
                                             int count, MPI_Datatype old_type,
                                             MPI_Comm comm);
 

@@ -69,7 +69,7 @@ typedef struct stripe_struct {
 static const Stripe zero_stripe = { .start=0, .stride=0, .nstrides=0 };
 
 static MPI_Datatype
-xt_mpi_generate_compact_datatype_block(int const *disp, int *blocklengths,
+xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type);
 static MPI_Datatype
 xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
@@ -178,12 +178,12 @@ gen_mpi_datatype_indexed_block(int const * displacements, int blocklength,
 }
 
 static MPI_Datatype
-gen_mpi_datatype_indexed(int const * displacements, int * blocklengths,
+gen_mpi_datatype_indexed(const int *displacements, const int *blocklengths,
                          int count, MPI_Datatype old_type, MPI_Comm comm) {
 
   MPI_Datatype datatype;
 
-  xt_mpi_call(MPI_Type_indexed(count, blocklengths, (void*)displacements,
+  xt_mpi_call(MPI_Type_indexed(count, (int*)blocklengths, (void*)displacements,
                                    old_type, &datatype), comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
@@ -191,7 +191,7 @@ gen_mpi_datatype_indexed(int const * displacements, int * blocklengths,
 }
 
 static inline int
-check_for_vector_type(int const * displacements, int * blocklengths,
+check_for_vector_type(const int *displacements, const int *blocklengths,
                       int count) {
 
   int blocklength = blocklengths[0];
@@ -209,7 +209,8 @@ check_for_vector_type(int const * displacements, int * blocklengths,
   return 1;
 }
 
-static inline int check_for_indexed_block_type(int * blocklengths, int count) {
+static inline int check_for_indexed_block_type(const int *blocklengths,
+                                               int count) {
 
   int blocklength = blocklengths[0];
 
@@ -221,7 +222,8 @@ static inline int check_for_indexed_block_type(int * blocklengths, int count) {
 }
 
 MPI_Datatype
-xt_mpi_generate_datatype_block(int const * displacements, int * blocklengths,
+xt_mpi_generate_datatype_block(const int *displacements,
+                               const int *blocklengths,
                                int count, MPI_Datatype old_type,
                                MPI_Comm comm) {
 #ifdef COMPACT_DT
@@ -691,7 +693,7 @@ parse_stripe(Stripe const *v, int vlen, MPI_Datatype old_type) {
 }
 
 static MPI_Datatype
-xt_mpi_generate_compact_datatype_block(int const *disp, int *blocklengths,
+xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type) {
 
   if (count < 1) return MPI_DATATYPE_NULL;
