@@ -102,6 +102,20 @@ struct Xt_redist_sab_ {
   MPI_Comm comm;
 };
 
+static int comm_rank;
+static int comm_size;
+
+static int compare_exchange_messages (const void * msg_a, const void * msg_b)
+{
+  int a = ((struct Xt_redist_msg*)msg_a)->rank;
+  int b = ((struct Xt_redist_msg*)msg_b)->rank;
+
+  if (a < comm_rank) a += comm_rank;
+  if (b < comm_rank) b += comm_rank;
+
+  return ( a - b );
+}
+
 Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                           struct Xt_redist_msg * send_msgs,
                                           struct Xt_redist_msg * recv_msgs,
@@ -115,6 +129,11 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
   redist->send_msgs = send_msgs;
   redist->recv_msgs = recv_msgs;
   redist->comm = comm;
+
+  MPI_Comm_rank(comm, &comm_rank);
+  MPI_Comm_size(comm, &comm_size);
+  qsort(send_msgs, nsend, sizeof(*send_msgs), compare_exchange_messages);
+  qsort(recv_msgs, nrecv, sizeof(*recv_msgs), compare_exchange_messages);
 
   return (Xt_redist)redist;
 }
