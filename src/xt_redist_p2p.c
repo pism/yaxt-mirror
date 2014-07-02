@@ -62,6 +62,8 @@
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 
+#include "xt_arithmetic_util.h"
+
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 static MPI_Datatype
@@ -163,8 +165,8 @@ struct ext_disp
 };
 
 static inline struct ext_disp
-pos2disp(int pos, int num_ext, struct Xt_offset_ext extents[],
-         int psum_ext_size[])
+pos2disp(int pos, int num_ext, const struct Xt_offset_ext extents[],
+         const int psum_ext_size[])
 {
   int j = 0;
   /* FIXME: use bsearch if linear search is too slow, i.e. num_ext >> 1000 */
@@ -176,8 +178,8 @@ pos2disp(int pos, int num_ext, struct Xt_offset_ext extents[],
 }
 
 static inline struct ext_disp
-pos2disp2(int pos, int num_ext, struct Xt_offset_ext extents[],
-          int psum_ext_size[], int start_ext)
+pos2disp2(int pos, int num_ext, const struct Xt_offset_ext extents[],
+          const int psum_ext_size[], int start_ext)
 {
   int j = start_ext;
   if (pos < psum_ext_size[j + 1] && pos >= psum_ext_size[j])
@@ -196,43 +198,75 @@ pos2disp2(int pos, int num_ext, struct Xt_offset_ext extents[],
 }
 
 static MPI_Datatype
-generate_ext_datatype(int num_transfer_pos, const int transfer_pos[],
+generate_ext_datatype(int num_transfer_pos_ext,
+                      const struct Xt_pos_ext transfer_pos_ext[],
                       int num_ext, struct Xt_offset_ext extents[],
-                      int psum_ext_size[],
+                      const int psum_ext_size[],
                       MPI_Datatype base_datatype, MPI_Comm comm)
 {
-  if (num_transfer_pos > 0)
+  if (num_transfer_pos_ext > 0)
   {
-    size_t blocks_size = 8, block_ofs = 0;
-    int *displ = NULL, *blocklen = NULL;
-    int i = 0;
+    size_t size_dt_stripes = 8, num_dt_stripes = 0;
+    struct Xt_offset_ext *dt_stripes
+      = xmalloc(size_dt_stripes * sizeof (*dt_stripes));
+    int i = 0,
+      search_start_ext
+      = pos2disp(transfer_pos_ext[0].start,
+                 num_ext, extents, psum_ext_size).ext_idx;
     do
     {
-      blocks_size *= 2;
-      displ = xrealloc(displ, blocks_size * sizeof (*displ));
-      blocklen = xrealloc(blocklen, blocks_size * sizeof (*blocklen));
-      do
+      struct Xt_pos_ext current_pos_ext = transfer_pos_ext[i];
+      if (num_dt_stripes >= size_dt_stripes)
       {
-        int j = 1;
-        struct ext_disp pos = pos2disp(transfer_pos[i],
-                                       num_ext, extents, psum_ext_size);
-        int block_disp = pos.disp;
-        while (i + j < num_transfer_pos
-               && block_disp + j
-               == (pos = pos2disp2(transfer_pos[i + j],
-                                   num_ext, extents, psum_ext_size,
-                                   pos.ext_idx)).disp)
-          ++j;
-        displ[block_ofs] = block_disp;
-        blocklen[block_ofs] = j;
-        i = i + j;
-      } while (++block_ofs < blocks_size && i < num_transfer_pos);
-    } while (i < num_transfer_pos);
+      more_stripes:
+        size_dt_stripes *= 2;
+        dt_stripes = xrealloc(dt_stripes,
+                              size_dt_stripes * sizeof (*dt_stripes));
+      }
+      do {
+        /* find extent containing start position of current range */
+        struct ext_disp pos = pos2disp2(current_pos_ext.start,
+                                        num_ext, extents, psum_ext_size,
+                                        search_start_ext);
+        search_start_ext = pos.ext_idx;
+        struct Xt_offset_ext base_ext = extents[pos.ext_idx],
+          derived_ext;
+        int preceding = psum_ext_size[pos.ext_idx];
+        derived_ext.start
+          = base_ext.start + ((current_pos_ext.start - preceding)
+                              * base_ext.stride);
+        int isign_mask_current_pos_ext_size = isign_mask(current_pos_ext.size);
+        /* find number of positions in containing extent,
+         * which precede current_pos_ext.start
+         * if (current_pos_ext.size < 0)
+         * or follow current_pos_ext.start
+         * if (current_pos_ext.size > 0) */
+        derived_ext.size = imin(abs(current_pos_ext.size),
+                                (~isign_mask_current_pos_ext_size
+                                 & (base_ext.size
+                                    - (current_pos_ext.start - preceding)))
+                                | (isign_mask_current_pos_ext_size
+                                   & (current_pos_ext.start - preceding + 1)));
+        derived_ext.stride
+          = (~isign_mask_current_pos_ext_size & base_ext.stride)
+          | (isign_mask_current_pos_ext_size & -base_ext.stride);
+        dt_stripes[num_dt_stripes++] = derived_ext;
+        current_pos_ext.size
+          += (~isign_mask_current_pos_ext_size & -derived_ext.size)
+          | (isign_mask_current_pos_ext_size & derived_ext.size);
+        current_pos_ext.start += derived_ext.size;
+      } while ((abs(current_pos_ext.size) > 0)
+               & (num_dt_stripes < size_dt_stripes));
+      /* current_pos_ext hasn't been mapped completely, get more
+       * stripe memory */
+      if (abs(current_pos_ext.size) > 0)
+        goto more_stripes;
+      /* only advance current_pos_ext after it has been mapped completely */
+    } while (++i < num_transfer_pos_ext);
     MPI_Datatype type
-      = xt_mpi_generate_datatype_block(displ, blocklen, (int)block_ofs,
-                                       base_datatype, comm);
-    free(displ);
-    free(blocklen);
+      = xt_mpi_generate_datatype_stripe(dt_stripes, (int)num_dt_stripes,
+                                        base_datatype, comm);
+    free(dt_stripes);
     return type;
   }
   else
@@ -264,11 +298,13 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
 
   do {
 
-    const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
-    int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
+    const struct Xt_pos_ext *curr_transfer_pos_ext
+      = xt_xmap_iterator_get_transfer_pos_ext(iter);
+    int curr_num_transfer_pos_ext
+      = xt_xmap_iterator_get_num_transfer_pos_ext(iter);
 
     curr_msg->datatype
-      = generate_ext_datatype(curr_num_transfer_pos, curr_transfer_pos,
+      = generate_ext_datatype(curr_num_transfer_pos_ext, curr_transfer_pos_ext,
                               num_ext, extents, psum_ext_size,
                               base_datatype, comm);
     curr_msg->rank = xt_xmap_iterator_get_rank(iter);

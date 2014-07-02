@@ -52,7 +52,8 @@ MODULE yaxt
   !
   USE xt_core, ONLY: i4, xt_int_kind, xt_int_mpidt, &
        xt_abort, xt_initialize, xt_get_default_comm, xt_stripe, xt_bounds, &
-       char, xt_finalize, xt_initialized, xt_finalized, xt_slice_c_loc
+       char, xt_finalize, xt_initialized, xt_finalized, xt_slice_c_loc, &
+       xt_pos_ext
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
@@ -92,7 +93,7 @@ MODULE yaxt
 
   PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, &
        xt_initialized, xt_finalized, &
-       xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, &
+       xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, xt_pos_ext, &
        xt_idxlist, xt_idxlist_delete,  &
        xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &

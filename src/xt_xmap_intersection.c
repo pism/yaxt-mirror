@@ -61,6 +61,7 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
 #include "ensure_array_size.h"
+#include "xt_arithmetic_util.h"
 
 static MPI_Comm     xmap_intersection_get_communicator(Xt_xmap xmap);
 static int          xmap_intersection_get_num_destinations(Xt_xmap xmap);
@@ -78,6 +79,10 @@ static int const *
 xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter);
 static int
 xmap_intersection_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
+static const struct Xt_pos_ext *
+xmap_intersection_iterator_get_transfer_pos_ext(Xt_xmap_iter iter);
+static int
+xmap_intersection_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter);
 static void         xmap_intersection_iterator_delete(Xt_xmap_iter iter);
 static int          xmap_intersection_get_max_src_pos(Xt_xmap xmap);
 static int          xmap_intersection_get_max_dst_pos(Xt_xmap xmap);
@@ -89,6 +94,9 @@ xmap_iterator_intersection_vtable = {
   .get_rank             = xmap_intersection_iterator_get_rank,
   .get_transfer_pos     = xmap_intersection_iterator_get_transfer_pos,
   .get_num_transfer_pos = xmap_intersection_iterator_get_num_transfer_pos,
+  .get_transfer_pos_ext = xmap_intersection_iterator_get_transfer_pos_ext,
+  .get_num_transfer_pos_ext
+  = xmap_intersection_iterator_get_num_transfer_pos_ext,
   .delete               = xmap_intersection_iterator_delete};
 
 typedef struct Xt_xmap_iter_intersection_ *Xt_xmap_iter_intersection;
@@ -123,7 +131,8 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
 struct exchange_data {
   // list of relative positions in memory to send or receive
   int * transfer_pos;
-  int num_transfer_pos;
+  struct Xt_pos_ext *transfer_pos_ext_cache;
+  int num_transfer_pos, num_transfer_pos_ext;
   int rank;
 };
 
@@ -192,6 +201,44 @@ static void xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks) {
 enum {
   bitsPerCoverageElement = sizeof (unsigned long) * CHAR_BIT,
 };
+
+struct pos_run {
+  size_t len;
+  int start, direction;
+};
+
+/* how many pos values have monotonically either positively or
+ * negatively consecutive values */
+static inline struct pos_run
+get_pos_run_len(size_t num_pos, const int *restrict pos)
+{
+  size_t i = 0, j = 1;
+  int direction = 0;
+  int start = pos[0];
+  if (j < num_pos) {
+    direction = isign_mask(pos[1] - pos[0]);
+    while (j < num_pos
+           && pos[j] == start + (~direction & (int)(j - i)) + (direction & -(int)(j - i)))
+      ++j;
+    direction = direction & ((j == 1) - 1);
+  }
+  return (struct pos_run){ .start = start, .len = j, .direction = direction };
+}
+
+
+/* compute number of position extents that would be required
+   to represent transfer positions array */
+static size_t
+count_transfer_pos_ext(size_t intersection_size,
+                       const int *restrict intersection_pos)
+{
+  size_t i = 0, num_transfer_pos_ext = 0;
+  while (i < intersection_size) {
+    i += get_pos_run_len(intersection_size - i, intersection_pos + i).len;
+    ++num_transfer_pos_ext;
+  }
+  return num_transfer_pos_ext;
+}
 
 /* compute list positions for recv direction */
 static int
@@ -276,6 +323,10 @@ generate_dir_transfer_pos_dst(int num_intersections,
     if (intersection_size > 0) {
       resSets_[new_num_intersections].transfer_pos = intersection_pos;
       resSets_[new_num_intersections].num_transfer_pos = intersection_size;
+      resSets_[new_num_intersections].transfer_pos_ext_cache = NULL;
+      resSets_[new_num_intersections].num_transfer_pos_ext
+        = (int)count_transfer_pos_ext((size_t)intersection_size,
+                                      intersection_pos);
       resSets_[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
       intersection_pos = NULL;
@@ -368,6 +419,10 @@ generate_dir_transfer_pos_src(int num_intersections,
     if (intersection_size > 0) {
       resSets_[new_num_intersections].transfer_pos = intersection_pos;
       resSets_[new_num_intersections].num_transfer_pos = intersection_size;
+      resSets_[new_num_intersections].transfer_pos_ext_cache = NULL;
+      resSets_[new_num_intersections].num_transfer_pos_ext
+        = (int)count_transfer_pos_ext((size_t)intersection_size,
+                                      intersection_pos);
       resSets_[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
       intersection_pos = NULL;
@@ -570,18 +625,24 @@ static int xmap_intersection_get_max_dst_pos(Xt_xmap xmap) {
 }
 
 
+static void
+xmap_intersection_msg_delete(int nmsg, struct exchange_data *msg) {
+  for (int i = 0; i < nmsg; ++i)
+  {
+    free(msg[i].transfer_pos_ext_cache);
+    free(msg[i].transfer_pos);
+  }
+  free(msg);
+}
+
 static void xmap_intersection_delete(Xt_xmap xmap) {
 
   Xt_xmap_intersection xmap_intersection = xmi(xmap);
 
-  for (int i = 0; i < xmap_intersection->n_in; ++i)
-    free(xmap_intersection->in_msg[i].transfer_pos);
-
-  for (int i = 0; i < xmap_intersection->n_out; ++i)
-    free(xmap_intersection->out_msg[i].transfer_pos);
-
-  free(xmap_intersection->in_msg);
-  free(xmap_intersection->out_msg);
+  xmap_intersection_msg_delete(xmap_intersection->n_in,
+                               xmap_intersection->in_msg);
+  xmap_intersection_msg_delete(xmap_intersection->n_out,
+                               xmap_intersection->out_msg);
 
   xt_mpi_call(MPI_Comm_free(&(xmap_intersection->comm)), MPI_COMM_WORLD);
   free(xmap_intersection);
@@ -643,6 +704,39 @@ xmap_intersection_iterator_get_transfer_pos(Xt_xmap_iter iter) {
 
   assert(iter != NULL);
   return xmii(iter)->msg->transfer_pos;
+}
+
+static const struct Xt_pos_ext *
+xmap_intersection_iterator_get_transfer_pos_ext(Xt_xmap_iter iter) {
+
+  assert(iter != NULL);
+  if (!xmii(iter)->msg->transfer_pos_ext_cache)
+  {
+    size_t i = 0, n = (size_t)xmii(iter)->msg->num_transfer_pos,
+      num_transfer_pos_ext = 0;
+    const int *restrict transfer_pos = xmii(iter)->msg->transfer_pos;
+    struct Xt_pos_ext *restrict transfer_pos_ext
+      = xmalloc((size_t)xmii(iter)->msg->num_transfer_pos_ext
+                * sizeof (transfer_pos_ext[0]));
+    while (i < n)
+    {
+      struct pos_run rn = get_pos_run_len(n - i, transfer_pos + i);
+      transfer_pos_ext[num_transfer_pos_ext]
+        = (struct Xt_pos_ext){ .start = rn.start,
+                               .size = (rn.direction*2 + 1) * (int)rn.len };
+      ++num_transfer_pos_ext;
+      i += rn.len;
+    }
+    assert(xmii(iter)->msg->num_transfer_pos_ext == (int)num_transfer_pos_ext);
+    xmii(iter)->msg->transfer_pos_ext_cache = transfer_pos_ext;
+  }
+  return xmii(iter)->msg->transfer_pos_ext_cache;
+}
+
+static int
+xmap_intersection_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter) {
+  assert(iter != NULL);
+  return xmii(iter)->msg->num_transfer_pos_ext;
 }
 
 static int

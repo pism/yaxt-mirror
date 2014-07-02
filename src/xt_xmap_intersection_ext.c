@@ -938,6 +938,10 @@ static int const *
 xmap_intersection_ext_iterator_get_transfer_pos(Xt_xmap_iter iter);
 static int
 xmap_intersection_ext_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
+static const struct Xt_pos_ext *
+xmap_intersection_ext_iterator_get_transfer_pos_ext(Xt_xmap_iter iter);
+static int
+xmap_intersection_ext_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter);
 static void xmap_intersection_ext_iterator_delete(Xt_xmap_iter iter);
 
 static const struct Xt_xmap_iter_vtable
@@ -946,6 +950,9 @@ xmap_iterator_intersection_ext_vtable = {
   .get_rank             = xmap_intersection_ext_iterator_get_rank,
   .get_transfer_pos     = xmap_intersection_ext_iterator_get_transfer_pos,
   .get_num_transfer_pos = xmap_intersection_ext_iterator_get_num_transfer_pos,
+  .get_transfer_pos_ext = xmap_intersection_ext_iterator_get_transfer_pos_ext,
+  .get_num_transfer_pos_ext
+  = xmap_intersection_ext_iterator_get_num_transfer_pos_ext,
   .delete               = xmap_intersection_ext_iterator_delete};
 
 typedef struct Xt_xmap_iter_intersection_ext_ *Xt_xmap_iter_intersection_ext;
@@ -1043,6 +1050,18 @@ static int
 xmap_intersection_ext_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
   assert(iter != NULL);
   return xmiei(iter)->msg->num_transfer_pos;
+}
+
+static const struct Xt_pos_ext *
+xmap_intersection_ext_iterator_get_transfer_pos_ext(Xt_xmap_iter iter) {
+  assert(iter != NULL);
+  return xmiei(iter)->msg->transfer_pos_ext;
+}
+
+static int
+xmap_intersection_ext_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter) {
+  assert(iter != NULL);
+  return xmiei(iter)->msg->num_transfer_pos_ext;
 }
 
 static void xmap_intersection_ext_iterator_delete(Xt_xmap_iter iter) {

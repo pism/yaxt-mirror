@@ -112,6 +112,15 @@ int xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
   return iter->vtable->get_num_transfer_pos(iter);
 }
 
+const struct Xt_pos_ext *
+xt_xmap_iterator_get_transfer_pos_ext(Xt_xmap_iter iter) {
+  return iter->vtable->get_transfer_pos_ext(iter);
+}
+
+int xt_xmap_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter) {
+  return iter->vtable->get_num_transfer_pos_ext(iter);
+}
+
 void xt_xmap_iterator_delete(Xt_xmap_iter iter) {
 
   iter->vtable->delete(iter);

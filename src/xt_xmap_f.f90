@@ -48,7 +48,7 @@
 MODULE xt_xmap_abstract
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
        c_associated, c_f_pointer
-  USE xt_core, ONLY: xt_mpi_fint_kind
+  USE xt_core, ONLY: xt_mpi_fint_kind, xt_pos_ext
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
   PRIVATE
@@ -112,6 +112,13 @@ MODULE xt_xmap_abstract
       TYPE(c_ptr), VALUE, INTENT(in) :: iter
       INTEGER(c_int) :: num
     END FUNCTION xt_xmap_iterator_get_num_transfer_pos_c
+
+    FUNCTION xt_xmap_iterator_get_num_transfer_pos_ext_c(iter) RESULT(num) &
+         BIND(c, name='xt_xmap_iterator_get_num_transfer_pos_ext')
+      IMPORT :: c_int, c_ptr
+      TYPE(c_ptr), VALUE, INTENT(in) :: iter
+      INTEGER(c_int) :: num
+    END FUNCTION xt_xmap_iterator_get_num_transfer_pos_ext_c
   END INTERFACE
 CONTAINS
 
@@ -310,6 +317,7 @@ CONTAINS
     rank = INT(xt_xmap_iterator_get_rank_c(iter%cptr))
   END FUNCTION xt_xmap_iterator_get_rank
 
+  !> note: result is read-only
   FUNCTION xt_xmap_iterator_get_transfer_pos(iter) RESULT(transfer_pos)
     TYPE(xt_xmap_iter), INTENT(in) :: iter
     INTEGER(c_int), POINTER :: transfer_pos(:)
@@ -335,6 +343,34 @@ CONTAINS
     INTEGER :: num
     num = INT(xt_xmap_iterator_get_num_transfer_pos_c(iter%cptr))
   END FUNCTION xt_xmap_iterator_get_num_transfer_pos
+
+  !> note: result is read-only
+  FUNCTION xt_xmap_iterator_get_transfer_pos_ext(iter) RESULT(transfer_pos_ext)
+    TYPE(xt_xmap_iter), INTENT(in) :: iter
+    TYPE(xt_pos_ext), POINTER :: transfer_pos_ext(:)
+
+    INTERFACE
+      FUNCTION xt_xmap_iterator_get_transfer_pos_ext_c(iter) &
+           RESULT(transfer_pos_ext) &
+           BIND(c, name='xt_xmap_iterator_get_transfer_pos_ext')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: iter
+        TYPE(c_ptr) :: transfer_pos_ext
+      END FUNCTION xt_xmap_iterator_get_transfer_pos_ext_c
+    END INTERFACE
+    INTEGER :: n(1)
+    TYPE(c_ptr) :: transfer_pos_ext_cptr
+    NULLIFY(transfer_pos_ext)
+    n(1) = INT(xt_xmap_iterator_get_num_transfer_pos_ext_c(iter%cptr))
+    transfer_pos_ext_cptr = xt_xmap_iterator_get_transfer_pos_ext_c(iter%cptr)
+    CALL C_F_POINTER(transfer_pos_ext_cptr, transfer_pos_ext, n)
+  END FUNCTION xt_xmap_iterator_get_transfer_pos_ext
+
+  FUNCTION xt_xmap_iterator_get_num_transfer_pos_ext(iter) RESULT(num)
+    TYPE(xt_xmap_iter), INTENT(in) :: iter
+    INTEGER :: num
+    num = INT(xt_xmap_iterator_get_num_transfer_pos_ext_c(iter%cptr))
+  END FUNCTION xt_xmap_iterator_get_num_transfer_pos_ext
 
   SUBROUTINE xt_xmap_iterator_delete(iter)
     TYPE(xt_xmap_iter), INTENT(inout) :: iter

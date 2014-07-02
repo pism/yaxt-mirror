@@ -84,6 +84,13 @@ MODULE xt_core
     INTEGER(xt_int_kind) :: start, size
   END TYPE xt_bounds
 
+  !> describes range of positions starting with start up to start + size - 1
+  !! i.e. [start,start+size) if size is positive and down to start + size + 1
+  !! i.e. (start+size,start] if size is negative
+  TYPE, BIND(c), PUBLIC :: xt_pos_ext
+    INTEGER(c_int) :: start, size
+  END TYPE xt_pos_ext
+
   INTERFACE
 
     FUNCTION xt_get_default_comm() RESULT(comm) &

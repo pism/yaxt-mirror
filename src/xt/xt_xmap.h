@@ -181,6 +181,25 @@ int const * xt_xmap_iterator_get_transfer_pos(Xt_xmap_iter iter);
 int xt_xmap_iterator_get_num_transfer_pos(Xt_xmap_iter iter);
 
 /**
+ * get the position ranges of all element of the current item of an exchange
+ * map iterator as position extents
+ *
+ * @param[in] iter exchange map iterator
+ * @return         exchange list of the current item
+ */
+const struct Xt_pos_ext* xt_xmap_iterator_get_transfer_pos_ext(Xt_xmap_iter iter);
+
+/**
+ * get the number of position extents returned by
+ * \ref xt_xmap_iterator_get_transfer_pos_ext of the current item of an exchange
+ * map iterator
+ * @param[in] iter exchange map iterator
+ * @return         number of positions returned by
+ *                 \ref xt_xmap_iterator_get_transfer_pos_ext for the current item
+ */
+int xt_xmap_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter);
+
+/**
  * destructor for an exchange map iterator
  *
  * @param[in] iter exchange map iterator
