@@ -345,13 +345,6 @@ struct Xt_pos_ext_overlap {
   int skip, overlap, tail;
 };
 
-static inline int
-imin(int a, int b)
-{
-  return a <= b ? a : b;
-}
-
-
 struct Xt_pos_ext_overlap
 Xt_get_pos_ext_overlap(struct Xt_pos_ext a, struct Xt_pos_ext b)
 {
@@ -1048,7 +1041,6 @@ xmap_intersection_ext_iterator_get_transfer_pos(Xt_xmap_iter iter) {
 
 static int
 xmap_intersection_ext_iterator_get_num_transfer_pos(Xt_xmap_iter iter) {
-
   assert(iter != NULL);
   return xmiei(iter)->msg->num_transfer_pos;
 }

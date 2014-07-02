@@ -97,5 +97,13 @@ isign_mask(int x)
 #endif
 }
 
+/**
+ * @return MIN(a, b)
+ */
+static inline int
+imin(int a, int b)
+{
+  return a <= b ? a : b;
+}
 
 #endif
