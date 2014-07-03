@@ -546,8 +546,8 @@ match_indexed(int *pstart, const struct Xt_offset_ext *v, int vlen, MPI_Datatype
   }
 
   *disp = start;
-  int bl[n];
-  int d[n];
+  int *restrict bl = xmalloc(2 * (size_t)n * sizeof (*bl)),
+    *restrict d = bl + n;
   int hom_bl = 1;
   for (int i = 0; i < n; i++) {
     int iv = *pstart+i;
@@ -565,6 +565,7 @@ match_indexed(int *pstart, const struct Xt_offset_ext *v, int vlen, MPI_Datatype
 
   *pstart = p;
 
+  free(bl);
   return n;
 }
 
@@ -627,9 +628,8 @@ parse_stripe(const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type) {
 
   int set_start = -1;
   int set_end = -2;
-  MPI_Datatype *wdt = xmalloc(sizeof(*wdt) * (size_t)vlen);
-  int *wdisp = xmalloc(sizeof (*wdisp) * (size_t)vlen);
-  int wlen = 0;
+  MPI_Datatype *restrict wdt = xmalloc(sizeof(*wdt) * (size_t)vlen);
+  int *restrict wdisp = xmalloc(sizeof (*wdisp) * (size_t)vlen);
   MPI_Datatype match_dt;
   int match_disp;
   int p = 0;
@@ -657,7 +657,7 @@ parse_stripe(const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type) {
     gen_fallback_type(&set_start, &set_end, v, vlen, old_type, &wdisp[m], &wdt[m]);
     m++;
   }
-  wlen = m;
+  int wlen = m;
   MPI_Datatype result_dt;
   if (wlen == 1 ) {
     if (wdisp[0] == 0) {
@@ -667,16 +667,19 @@ parse_stripe(const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type) {
     }
   } else {
     MPI_Aint old_type_lb, old_type_extent;
-    MPI_Aint wbdisp[wlen];
-    int wblocklength[wlen];
+    MPI_Aint *restrict wbdisp = xmalloc((size_t)wlen * sizeof (*wbdisp));
+    int *restrict wblocklength
+      = xmalloc((size_t)wlen * sizeof (*wblocklength));;
     xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                  &old_type_extent), Xt_default_comm);
+                                    &old_type_extent), Xt_default_comm);
     for(int i=0; i<wlen; i++) {
       wbdisp[i] = wdisp[i] * old_type_extent;
       wblocklength[i] = 1;
     }
     xt_mpi_call(MPI_Type_create_struct(wlen, wblocklength, wbdisp,
                                        wdt, &result_dt), Xt_default_comm);
+    free(wblocklength);
+    free(wbdisp);
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), Xt_default_comm);
   for(m = 0; m<wlen; m++) {
