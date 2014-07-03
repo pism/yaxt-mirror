@@ -46,6 +46,10 @@
 #ifndef TEST_XMAP_COMMON_H
 #define TEST_XMAP_COMMON_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <mpi.h>
 #include <yaxt.h>
 

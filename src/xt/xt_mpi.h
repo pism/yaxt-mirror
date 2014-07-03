@@ -47,6 +47,10 @@
 #ifndef XT_MPI_H
 #define XT_MPI_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <mpi.h>
 
 #include "xt/xt_core.h"

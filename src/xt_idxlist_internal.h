@@ -1,6 +1,6 @@
 /**
  * @brief Provide non-public declarations common to all index lists.
- * @file xt_idxlist.h
+ * @file xt_idxlist_internal.h
  *
  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
@@ -46,6 +46,10 @@
  */
 #ifndef XT_IDXLIST_INTERNAL_H
 #define XT_IDXLIST_INTERNAL_H
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"

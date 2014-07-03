@@ -44,6 +44,10 @@
 #ifndef XT_REDIST_REPEAT_H
 #define XT_REDIST_REPEAT_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xt/xt_redist.h"
 
 /** \example test_redist_repeat.c

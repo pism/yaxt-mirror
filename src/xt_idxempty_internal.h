@@ -41,6 +41,10 @@
 #ifndef XT_IDXEMPTY_INTERNAL_H
 #define XT_IDXEMPTY_INTERNAL_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xt/xt_core.h"
 
 void

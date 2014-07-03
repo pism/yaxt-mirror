@@ -46,6 +46,13 @@
 #ifndef XT_IDXVEC_INTERNAL_H
 #define XT_IDXVEC_INTERNAL_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "xt/xt_core.h"
+#include "xt/xt_idxlist.h"
+
 Xt_idxlist
 xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
 

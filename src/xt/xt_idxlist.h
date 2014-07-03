@@ -47,6 +47,10 @@
 #ifndef XT_IDXLIST_H
 #define XT_IDXLIST_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include "xt/xt_core.h"
 

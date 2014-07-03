@@ -46,6 +46,12 @@
 #ifndef XT_IDXSECTION_INTERNAL_H
 #define XT_IDXSECTION_INTERNAL_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "xt/xt_idxlist.h"
+
 void
 xt_idxsection_initialize();
 

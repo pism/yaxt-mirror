@@ -1,5 +1,5 @@
 /**
- * @file print_index_list.c
+ * @file print_index_list.h
  *
  * @copyright Copyright  (C)  2013 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
@@ -38,6 +38,12 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef PRINT_INDEX_LIST_H
+#define PRINT_INDEX_LIST_H
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 static void print_index_list(Xt_idxlist idxlist) {
 
@@ -54,3 +60,4 @@ static void print_index_list(Xt_idxlist idxlist) {
   puts("");
 }
 
+#endif

@@ -47,6 +47,10 @@
 #ifndef XT_XMAP_INTERSECTION_H
 #define XT_XMAP_INTERSECTION_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xt/xt_core.h"
 
 /** \example test_xmap_intersection_parallel.c

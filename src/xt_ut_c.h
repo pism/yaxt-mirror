@@ -45,7 +45,12 @@
 #ifndef XT_UT_C_H
 #define XT_UT_C_H
 
-/** \example test_ut.f90
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+/**
+ * @example test_ut.f90
  */
 
 /**

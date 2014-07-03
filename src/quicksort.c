@@ -1,28 +1,25 @@
-#include <stdlib.h>
-
-#include "xt/quicksort.h"
-
-/** \file quicksort.c
-  * \brief Non-recursive stack version of Quicksort
-  *
-  *  based on N. Wirth's Pascal Book, 'Algorithms + Data Structures = Programms'.
-  *  by Alan Miller ( 19 Jul 1995 )
-  *
-  *  based on:
-  * - http://www.nag.com/nagware/examples.asp
-  * - http://www.nag.com/nagware/Examples/nur.f90
-  *
-  *  see also:
-  * - http://en.wikipedia.org/wiki/Quicksort
-  *
-  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
-  *                                 Moritz Hanke <hanke@dkrz.de>
-  *                                 Thomas Jahns <jahns@dkrz.de>
-  *
-  * @author Jörg Behrens <behrens@dkrz.de>
-  *         Moritz Hanke <hanke@dkrz.de>
-  *         Thomas Jahns <jahns@dkrz.de>
-  */
+/**
+ * @file quicksort.c
+ * @brief Non-recursive stack version of Quicksort
+ *
+ *  based on N. Wirth's Pascal Book, 'Algorithms + Data Structures = Programms'.
+ *  by Alan Miller ( 19 Jul 1995 )
+ *
+ *  based on:
+ * - http://www.nag.com/nagware/examples.asp
+ * - http://www.nag.com/nagware/Examples/nur.f90
+ *
+ *  see also:
+ * - http://en.wikipedia.org/wiki/Quicksort
+ *
+ * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
+ *                                 Thomas Jahns <jahns@dkrz.de>
+ *
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
+ *         Thomas Jahns <jahns@dkrz.de>
+ */
 /*
  * Keywords:
  * Maintainer: Jörg Behrens <behrens@dkrz.de>
@@ -57,6 +54,14 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <stdlib.h>
+
+#include "xt/quicksort.h"
+
 
 void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 

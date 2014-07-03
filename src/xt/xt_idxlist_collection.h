@@ -44,6 +44,10 @@
 #ifndef XT_IDXLIST_COLLECTION_H
 #define XT_IDXLIST_COLLECTION_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xt/xt_idxlist.h"
 
 /** \example test_idxlist_collection.c

@@ -46,6 +46,10 @@
 #ifndef XT_IDXLIST_UNPACK_H
 #define XT_IDXLIST_UNPACK_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 enum xt_idxlist_pack_code {
    EMPTY,
    VECTOR,

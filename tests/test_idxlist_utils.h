@@ -47,6 +47,10 @@
 #ifndef TEST_IDXLIST_UTILS_H
 #define TEST_IDXLIST_UTILS_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <yaxt.h>
 
 void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,

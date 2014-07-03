@@ -47,6 +47,10 @@
 #ifndef XT_IDXSTRIPES_H
 #define XT_IDXSTRIPES_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xt/xt_idxlist.h"
 
 /** \example test_idxstripes.c

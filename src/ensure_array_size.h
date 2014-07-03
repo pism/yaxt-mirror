@@ -44,6 +44,10 @@
 #ifndef ENSURE_ARRAY_SIZE_H
 #define ENSURE_ARRAY_SIZE_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 void
 xt_realloc_array(void **array, size_t elem_size, size_t *curr_array_size,
                  size_t requested_size);

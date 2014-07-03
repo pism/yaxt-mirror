@@ -1,5 +1,5 @@
-#ifndef QUICKSORT_H
-#define QUICKSORT_H
+#ifndef XT_QUICKSORT_H
+#define XT_QUICKSORT_H
 
 /**
  * @file quicksort.h
@@ -47,6 +47,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include "xt/sort_common.h"
 
@@ -66,4 +69,4 @@ void xt_quicksort_idxpos(idxpos_type *v, int n);
   */
 void xt_quicksort_index (Xt_int * a, int n, int * idx, int reset_index);
 
-#endif
+#endif  /* XT_QUICKSORT_H */

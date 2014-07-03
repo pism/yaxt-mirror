@@ -47,6 +47,10 @@
 #ifndef XT_REDIST_P2P_H
 #define XT_REDIST_P2P_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <mpi.h>
 
 #include "xt/xt_core.h"

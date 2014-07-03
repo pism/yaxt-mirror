@@ -43,6 +43,10 @@
 #ifndef SYMPREFIX_H
 #define SYMPREFIX_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 /* All upper case fortran names */
 #define SYMPREFIX(symbol) XT_##symbol
 /* Mixed case C names */

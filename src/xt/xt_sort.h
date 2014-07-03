@@ -47,6 +47,10 @@
 #ifndef XT_SORT_H
 #define XT_SORT_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xt/quicksort.h"
 #include "xt/mergesort.h"
 

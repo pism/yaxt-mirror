@@ -1,5 +1,5 @@
-#ifndef MERGESORT_H
-#define MERGESORT_H
+#ifndef XT_MERGESORT_H
+#define XT_MERGESORT_H
 
 /**
  * @file mergesort.h
@@ -41,6 +41,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include "sort_common.h"
 
@@ -60,4 +63,4 @@ void xt_mergesort_idxpos(idxpos_type *v, int n);
   */
 void xt_mergesort_index (Xt_int * a, int n, int * idx, int reset_index);
 
-#endif
+#endif  /* XT_MERGESORT_H */

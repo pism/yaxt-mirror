@@ -44,6 +44,10 @@
 #ifndef XT_XMAP_ALL2ALL_H
 #define XT_XMAP_ALL2ALL_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "xt/xt_core.h"
 
 /** \example test_xmap_all2all.c

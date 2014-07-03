@@ -47,6 +47,10 @@
 #ifndef XT_HANDLES_H
 #define XT_HANDLES_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 /** \example test_handles.c
  */
 

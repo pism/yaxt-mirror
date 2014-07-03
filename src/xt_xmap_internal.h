@@ -1,6 +1,6 @@
 /**
  * @file xt_xmap_internal.h
- * @brief 
+ * @brief contains declaration for the exchange map data structure
  *
  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
@@ -47,16 +47,13 @@
 #ifndef XT_XMAP_INTERNAL_H
 #define XT_XMAP_INTERNAL_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <mpi.h>
 
 #include "xt/xt_xmap.h"
-
-/**
- * \file xt_xmap.h
- * \brief exchange map declaration
- *
- * contains declaration for the exchange map data structure
- */
 
 struct Xt_xmap_iter_vtable {
   int (*next)(Xt_xmap_iter iter);
