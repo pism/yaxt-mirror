@@ -5,7 +5,7 @@ PROGRAM perf_sparse_array_gather
        xt_idxlist, xt_idxfsection_new, xt_idxstripes_new, xt_idxlist_delete, &
        xt_redist, xt_redist_p2p_ext_new, xt_offset_ext, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
-       xt_redist_delete, xt_redist_s_exchange
+       xt_redist_delete, xt_redist_s_exchange1
   USE iso_c_binding, ONLY: c_int, c_loc, c_ptr
   USE mpi
   IMPLICIT NONE
@@ -77,7 +77,9 @@ PROGRAM perf_sparse_array_gather
         section_shape(1) = (gshape(1) * i)/nparts(1) - section_start(1) + 1
         section_size = PRODUCT(section_shape(:))
         ofs = INT(r * REAL(sshape(1) - 1 - section_size))
-        scatter_exts(i, j) = xt_offset_ext(ofs, section_size, 1)
+        scatter_exts(i, j) &
+             = xt_offset_ext(ofs + ((i-1) + (j-1) * sshape(2)) * sshape(1), &
+             section_size, 1)
         scatter_lists(i, j) = xt_idxfsection_new(0_xt_int_kind, &
              INT(gshape, xt_int_kind), &
              section_shape, INT(section_start, xt_int_kind))
@@ -96,7 +98,7 @@ PROGRAM perf_sparse_array_gather
          RESHAPE(scatter_exts, (/ num_parts /)), gather_ext, &
          mpi_double_precision)
     CALL xt_xmap_delete(gather_xmap)
-    CALL xt_redist_s_exchange(gather_redist, scattered_data_p, gathered_data_p)
+    CALL xt_redist_s_exchange1(gather_redist, scattered_data_p, gathered_data_p)
     ! DO k = 1, gshape(3)
     !   DO j = 1, gshape(2)
     !     DO i = 1, gshape(1)
@@ -118,6 +120,6 @@ PROGRAM perf_sparse_array_gather
   CALL mpi_finalize(ierror)
   IF (ierror /= mpi_success) THEN
     WRITE (0, *) "MPI finalization failed"
-    CALL POSIX_EXIT(1)
+    CALL posix_exit(1)
   END IF
 END PROGRAM perf_sparse_array_gather
