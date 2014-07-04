@@ -345,7 +345,7 @@ struct Xt_pos_ext_overlap {
   int skip, overlap, tail;
 };
 
-struct Xt_pos_ext_overlap
+static struct Xt_pos_ext_overlap
 Xt_get_pos_ext_overlap(struct Xt_pos_ext a, struct Xt_pos_ext b)
 {
   /* == 0 if a.size >= 0 ; == ~0 if a.size < 0 */
