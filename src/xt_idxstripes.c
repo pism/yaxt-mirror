@@ -1192,7 +1192,7 @@ idxstripes_get_pos_exts_of_index_stripe(
             += idxstripes_get_pos_exts_of_index_stripe(
               query_head,
               num_db_stripes, db_stripes, db_minmax, db_stripes_nstrides_psum,
-              usedMask, num_ext_, size_ext, pos_exts, single_match_only, 0);
+              usedMask, num_ext_, size_ext, pos_exts, single_match_only, j + 1);
           query.start = (Xt_int)(query.start + stride * (Xt_int)skipLen);
           query.nstrides -= skipLen;
         }
