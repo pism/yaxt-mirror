@@ -231,7 +231,7 @@ static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
   else
     b_max = b.start, b_min = (Xt_int)(b.start + (b.nstrides-1) * b.stride);
 
-  return MIN(a_max, b_max) >= MAX(a_min, b_min);
+  return (a_max >= b_min) & (a_min <= b_max);
 }
 
 Xt_idxlist
