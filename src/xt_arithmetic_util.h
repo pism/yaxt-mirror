@@ -97,6 +97,21 @@ isign_mask(int x)
 #endif
 }
 
+
+/**
+ * @return ~(Xt_int)0 if x < 0, 0 otherwise
+ */
+static inline Xt_int
+Xt_isign_mask(Xt_int x)
+{
+#if (-1 >> 1) == -1
+  return x >> (sizeof (Xt_int) * CHAR_BIT - 1);
+#else
+#warning Unusual behaviour of shift operator detected.
+  return (x < 0) * ~0;
+#endif
+}
+
 /**
  * @return MIN(a, b)
  */
