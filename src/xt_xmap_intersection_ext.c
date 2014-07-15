@@ -439,13 +439,15 @@ generate_dir_transfer_ext_dst(
        * the end but subtract from already incremented psum */
       isect_pos_exts_size_psum += isect_pos_ext.size;
       int progress = -isect_pos_ext.size;
-      struct Xt_pos_range query
-        = { .start = isect_pos_ext.start,
-            .end = isect_pos_ext.start + isect_pos_ext.size - 1 };
-      size_t insert_pos = xt_cover_search(&cover, query, true);
+      struct Xt_pos_range query;
+      size_t search_start_pos = 0, insert_pos;
+    search_query:
+      query = (struct Xt_pos_range){
+        .start = isect_pos_ext.start,
+        .end = isect_pos_ext.start + isect_pos_ext.size - 1 };
+      insert_pos
+        = xt_cover_insert_or_overlap(&cover, query, true, search_start_pos);
       if (insert_pos != SIZE_MAX) {
-      search_query:
-        ;
         struct Xt_pos_ext_overlap overlap_desc
           = Xt_get_pos_ext_overlap(isect_pos_ext, cover.pos_ext[insert_pos]);
         if (overlap_desc.overlap) {
@@ -488,75 +490,15 @@ generate_dir_transfer_ext_dst(
           isect_pos_ext.start += overlap_desc.skip + overlap_desc.overlap;
           /* ... if there is any */
           if ((isect_pos_ext.size = overlap_desc.tail)) {
-            if (++insert_pos != cover.num_pos_ext)
+            if ((search_start_pos = ++insert_pos) != cover.num_pos_ext)
               goto search_query;
           }
           /* ... or start the next intersection range */
           else
             continue;
         }
-        /* isect_pos_ext does not overlap current part,
-         * can there be future overlaps, i.e. is already
-         * isect_pos_ext.start + isect_pos_ext.size
-         *        < cover.pos_ext[insert_pos].start ?
-         */
-        else if (isect_pos_ext.start + isect_pos_ext.size
-            < cover.pos_ext[insert_pos].start)
-        {
-          /* isect precedes cover.pos_ext[insert_pos] with a hole
-           * but might be a seemless extension of
-           * cover.pos_ext[insert_pos-1] */
-          if (insert_pos > 0
-              && (cover.pos_ext[insert_pos - 1].start
-                  + cover.pos_ext[insert_pos - 1].size == isect_pos_ext.start))
-            cover.pos_ext[insert_pos - 1].size += isect_pos_ext.size;
-          else
-          {
-            ENSURE_ARRAY_SIZE(cover.pos_ext,
-                              cover.size_pos_ext,
-                              cover.num_pos_ext + 1);
-            memmove(cover.pos_ext + insert_pos + 1, cover.pos_ext + insert_pos,
-                    sizeof (*cover.pos_ext)
-                    * (cover.num_pos_ext - insert_pos));
-            cover.pos_ext[insert_pos] = isect_pos_ext;
-            ++cover.num_pos_ext;
-          }
-          continue;
-        }
-        else if (isect_pos_ext.start + isect_pos_ext.size
-                 == cover.pos_ext[insert_pos].start)
-        {
-          cover.pos_ext[insert_pos].start = isect_pos_ext.start;
-          cover.pos_ext[insert_pos].size += isect_pos_ext.size;
-          if (insert_pos > 0
-              && (cover.pos_ext[insert_pos].start
-                  == (cover.pos_ext[insert_pos - 1].start
-                      + cover.pos_ext[insert_pos - 1].size)))
-          {
-            cover.pos_ext[insert_pos - 1].size
-              += cover.pos_ext[insert_pos].size;
-            memmove(cover.pos_ext + insert_pos, cover.pos_ext + insert_pos + 1,
-                    (--cover.num_pos_ext - insert_pos)
-                    * sizeof (*cover.pos_ext));
-          }
-          continue;
-        }
-      }
-      /* isect_pos_ext was not found -> append */
-      if (cover.num_pos_ext > 0
-          && (cover.pos_ext[cover.num_pos_ext - 1].start
-              + cover.pos_ext[cover.num_pos_ext - 1].size
-              == isect_pos_ext.start))
-      {
-        cover.pos_ext[cover.num_pos_ext - 1].size
-          += isect_pos_ext.size;
-      }
-      else
-      {
-        ENSURE_ARRAY_SIZE(cover.pos_ext, cover.size_pos_ext,
-                          cover.num_pos_ext + 1);
-        cover.pos_ext[cover.num_pos_ext] = isect_pos_ext;
-        ++cover.num_pos_ext;
+        /* isect_pos_ext was not found -> append */
+        xt_cover_range_append(&cover, isect_pos_ext);
       }
     }
 

@@ -68,13 +68,44 @@ void
 xt_cover_start(struct Xt_pos_ext_vec *restrict cover,
                size_t initial_size);
 
+void
+xt_cover_finish(struct Xt_pos_ext_vec *restrict cover);
+
 /**
+ * @param search_start_pos should be 0, if \a forward == true
+ * or cover->num_pos_ext, if \a forward == false to search all of
+ * cover, choose value to start search at if part of cover is known to
+ * be non-matching
  * @return index of first position extent in cover that overlaps or is
  * adjacent to \a query
  */
 size_t
 xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
-                struct Xt_pos_range query, bool forward);
+                struct Xt_pos_range query, bool forward,
+                size_t search_start_pos);
+
+/**
+ * append \range to cover
+ *
+ * @note user must ensure range actually is appendable, i.e. does not
+ * overlap or precede an existing range in \a cover
+ */
+void
+xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
+                      struct Xt_pos_ext range);
+
+/**
+ * @param search_start_pos should be 0, if \a forward == true
+ * or cover->num_pos_ext, if \a forward == false to search all of
+ * cover, choose value to start search at if part of cover is known to
+ * be non-matching
+ * @return SIZE_MAX if \a range could be fully integrated with \a
+ * cover, position \a i of overlapping \a cover.pos_ext[i] otherwise
+ */
+size_t
+xt_cover_insert_or_overlap(struct Xt_pos_ext_vec *restrict cover,
+                           struct Xt_pos_range range, bool forward,
+                           size_t search_start_pos);
 
 /**
  * tests if sorted pos_ext in \a coverage do indeed fully cover \a idxlist

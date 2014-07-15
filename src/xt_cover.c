@@ -49,10 +49,12 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 
+#include "core/ppm_xfuncs.h"
+#include "ensure_array_size.h"
 #include "xt/xt_idxlist.h"
 #include "xt_cover.h"
-#include "core/ppm_xfuncs.h"
 
 void
 xt_cover_start(struct Xt_pos_ext_vec *restrict cover,
@@ -91,20 +93,20 @@ xt_idxlist_pos_ext_is_full_cover(Xt_idxlist idxlist,
 
 size_t
 xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
-                struct Xt_pos_range query, bool forward)
+                struct Xt_pos_range query, bool forward,
+                size_t search_start_pos)
 {
   size_t i, num_pos_ext = cover->num_pos_ext;
   struct Xt_pos_ext *restrict covered_pos_ext = cover->pos_ext;
   if (num_pos_ext)
   {
+    i = search_start_pos;
     if (forward) {
-      i = 0;
       while ((query.start >= (covered_pos_ext[i].start
                               + covered_pos_ext[i].size))
              & (i < num_pos_ext - 1))
         ++i;
     } else {
-      i = num_pos_ext;
       while ((i > 0)
              & (query.end < covered_pos_ext[i - 1].start - 1))
         --i;
@@ -122,3 +124,88 @@ xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
   return i;
 }
 
+void
+xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
+                      struct Xt_pos_ext range)
+{
+  size_t num_pos_ext = cover->num_pos_ext;
+  struct Xt_pos_ext *restrict cover_pos_ext = cover->pos_ext;
+  if (num_pos_ext > 0
+      && (cover_pos_ext[num_pos_ext - 1].start
+          + cover_pos_ext[num_pos_ext - 1].size
+          == range.start)) {
+    cover_pos_ext[num_pos_ext - 1].size += range.size;
+  } else {
+    ENSURE_ARRAY_SIZE(cover_pos_ext, cover->size_pos_ext, num_pos_ext + 1);
+    cover->pos_ext = cover_pos_ext;
+    cover_pos_ext[num_pos_ext] = range;
+    ++cover->num_pos_ext;
+  }
+}
+
+
+size_t
+xt_cover_insert_or_overlap(struct Xt_pos_ext_vec *restrict cover,
+                           struct Xt_pos_range range, bool forward,
+                           size_t search_start_pos)
+{
+  size_t insert_pos = xt_cover_search(cover, range, forward, search_start_pos);
+  struct Xt_pos_ext *restrict cover_pos_ext = cover->pos_ext;
+  if (insert_pos != SIZE_MAX) {
+    if ((range.start < (cover_pos_ext[insert_pos].start
+                        + cover_pos_ext[insert_pos].size))
+        & (range.end >= cover_pos_ext[insert_pos].start))
+    {
+      /* let caller handle overlap cases */
+      return insert_pos;
+    }
+    else if (range.end + 1 < cover_pos_ext[insert_pos].start)
+    {
+      /* range precedes cover->pos_ext[insert_pos] with a hole
+       * but might be a seemless extension of
+       * cover->pos_ext[insert_pos-1] */
+      if (insert_pos > 0
+          && (cover_pos_ext[insert_pos - 1].start
+              + cover_pos_ext[insert_pos - 1].size == range.start))
+        cover_pos_ext[insert_pos - 1].size += range.end - range.start + 1;
+      else
+      {
+        size_t num_pos_ext = cover->num_pos_ext;
+        ENSURE_ARRAY_SIZE(cover_pos_ext,
+                          cover->size_pos_ext,
+                          num_pos_ext + 1);
+        cover->pos_ext = cover_pos_ext;
+        memmove(cover_pos_ext + insert_pos + 1, cover_pos_ext + insert_pos,
+                sizeof (*cover_pos_ext)
+                * (num_pos_ext - insert_pos));
+        cover_pos_ext[insert_pos]
+          = (struct Xt_pos_ext){ .start = range.start,
+                                 .size = range.end - range.start + 1};
+        cover->num_pos_ext = ++num_pos_ext;
+      }
+      insert_pos = SIZE_MAX;
+    }
+    else if (range.end + 1 == cover_pos_ext[insert_pos].start)
+    {
+      cover_pos_ext[insert_pos].start = range.start;
+      cover_pos_ext[insert_pos].size += range.end - range.start + 1;
+      if (insert_pos > 0
+          && (cover_pos_ext[insert_pos].start
+              == (cover_pos_ext[insert_pos - 1].start
+                  + cover_pos_ext[insert_pos - 1].size)))
+      {
+        cover_pos_ext[insert_pos - 1].size
+          += cover_pos_ext[insert_pos].size;
+        memmove(cover_pos_ext + insert_pos, cover_pos_ext + insert_pos + 1,
+                (--cover->num_pos_ext - insert_pos)
+                * sizeof (*cover_pos_ext));
+      }
+      insert_pos = SIZE_MAX;
+    }
+  } else {
+    /* range was not found -> append */
+    xt_cover_range_append(cover, (struct Xt_pos_ext){ .start = range.start,
+          .size = range.end - range.start + 1});
+  }
+  return insert_pos;
+}
