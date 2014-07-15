@@ -61,6 +61,7 @@
 #include "xt/xt_xmap_intersection.h"
 #include "xt_arithmetic_util.h"
 #include "ensure_array_size.h"
+#include "xt_cover.h"
 
 static MPI_Comm     xmap_intersection_ext_get_communicator(Xt_xmap xmap);
 static int          xmap_intersection_ext_get_num_destinations(Xt_xmap xmap);
@@ -235,11 +236,6 @@ xt_xmap_intersection_ext_new(int num_src_intersections,
   return (Xt_xmap)xmap;
 }
 
-struct Xt_pos_ext_vec {
-  size_t num_pos_ext;
-  struct Xt_pos_ext *pos_ext;
-};
-
 static struct Xt_pos_ext_vec
 generate_dir_transfer_ext_dst(
   int num_intersections,
@@ -249,9 +245,6 @@ generate_dir_transfer_ext_dst(
   struct exchange_ext **resSets,
   int (*restrict dst_removals_per_intersection)[2]);
 
-static bool
-xt_idxlist_pos_ext_cover_full(Xt_idxlist idxlist,
-                              struct Xt_pos_ext_vec coverage);
 
 static struct Xt_pos_ext *
 exchange_pos_ext_modifications(
@@ -305,15 +298,15 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
     = src_removals_per_intersection + num_src_intersections;
 
   {
-    struct Xt_pos_ext_vec coverage
+    struct Xt_pos_ext_vec cover
       = generate_dir_transfer_ext_dst(
         num_dst_intersections, dst_com, dst_idxlist_local,
         &(xmap->n_in), &(xmap->in_msg), dst_removals_per_intersection);
 
-    if (!xt_idxlist_pos_ext_cover_full(dst_idxlist_local, coverage))
+    if (!xt_idxlist_pos_ext_is_full_cover(dst_idxlist_local, cover))
       Xt_abort(comm, "ERROR: destination intersections do not match with "
                "destination index list", __FILE__, __LINE__);
-    free(coverage.pos_ext);
+    xt_cover_finish(&cover);
   }
 
   // exchange pos_ext of lists where additional indices need to be removed
@@ -403,10 +396,8 @@ generate_dir_transfer_ext_dst(
   // intersection, but also between all intersections
   /* ranges already covered from previous intersections, i.e. which
    * must not be transmitted twice */
-  size_t num_mypart_covered_pos_ext = 0, size_mypart_covered_pos_ext = 8;
-  struct Xt_pos_ext *restrict mypart_covered_pos_ext
-    = xmalloc(sizeof (*mypart_covered_pos_ext) * size_mypart_covered_pos_ext);
-
+  struct Xt_pos_ext_vec cover;
+  xt_cover_start(&cover, 8);
 
   struct Xt_pos_ext *restrict isect_transfer_pos_ext = NULL;
 
@@ -448,32 +439,38 @@ generate_dir_transfer_ext_dst(
        * the end but subtract from already incremented psum */
       isect_pos_exts_size_psum += isect_pos_ext.size;
       int progress = -isect_pos_ext.size;
-      for (size_t k = 0; k < num_mypart_covered_pos_ext; ++k) {
+      struct Xt_pos_range query
+        = { .start = isect_pos_ext.start,
+            .end = isect_pos_ext.start + isect_pos_ext.size - 1 };
+      size_t insert_pos = xt_cover_search(&cover, query, true);
+      if (insert_pos != SIZE_MAX) {
+      search_query:
+        ;
         struct Xt_pos_ext_overlap overlap_desc
-          = Xt_get_pos_ext_overlap(isect_pos_ext, mypart_covered_pos_ext[k]);
+          = Xt_get_pos_ext_overlap(isect_pos_ext, cover.pos_ext[insert_pos]);
         if (overlap_desc.overlap) {
           /* insert overlap into updates
            * by ...*/
           /* ...first inserting the skipped part into
-           * mypart_covered_pos_ext, since that is sorted
-           * and obviously precedes mypart_covered_pos_ext[k],
-           * mypart_covered_pos_ext[k] can be seemlessly extended...
+           * cover.pos_ext, since that is sorted
+           * and obviously precedes cover.pos_ext[insert_pos],
+           * cover.pos_ext[insert_pos] can be seemlessly extended...
            */
-          mypart_covered_pos_ext[k].start -= overlap_desc.skip;
-          mypart_covered_pos_ext[k].size += overlap_desc.skip;
+          cover.pos_ext[insert_pos].start -= overlap_desc.skip;
+          cover.pos_ext[insert_pos].size += overlap_desc.skip;
           /* ...and optionally merged with its predecessor, if the
            * intervening range becomes zero, ... */
-          if (k > 0
-              && (mypart_covered_pos_ext[k].start
-                  == (mypart_covered_pos_ext[k - 1].start
-                      + mypart_covered_pos_ext[k - 1].size)))
+          if (insert_pos > 0
+              && (cover.pos_ext[insert_pos].start
+                  == (cover.pos_ext[insert_pos - 1].start
+                      + cover.pos_ext[insert_pos - 1].size)))
           {
-            mypart_covered_pos_ext[k - 1].size
-              += mypart_covered_pos_ext[k].size;
-            memmove(mypart_covered_pos_ext + k, mypart_covered_pos_ext + k + 1,
-                    (--num_mypart_covered_pos_ext - k)
-                    * sizeof (*mypart_covered_pos_ext));
-            --k;
+            cover.pos_ext[insert_pos - 1].size
+              += cover.pos_ext[insert_pos].size;
+            memmove(cover.pos_ext + insert_pos, cover.pos_ext + insert_pos + 1,
+                    (--cover.num_pos_ext - insert_pos)
+                    * sizeof (*cover.pos_ext));
+            --insert_pos;
           }
           progress = (~isign_mask_isect_pos_ext_size
                       & (progress + overlap_desc.skip))
@@ -490,77 +487,77 @@ generate_dir_transfer_ext_dst(
           /* ... lastly the search can continue with the tail ... */
           isect_pos_ext.start += overlap_desc.skip + overlap_desc.overlap;
           /* ... if there is any */
-          if ((isect_pos_ext.size = overlap_desc.tail))
-            continue;
+          if ((isect_pos_ext.size = overlap_desc.tail)) {
+            if (++insert_pos != cover.num_pos_ext)
+              goto search_query;
+          }
           /* ... or start the next intersection range */
           else
-            goto next_isect_pos_ext;
+            continue;
         }
         /* isect_pos_ext does not overlap current part,
          * can there be future overlaps, i.e. is already
          * isect_pos_ext.start + isect_pos_ext.size
-         *        < mypart_covered_pos_ext[k].start ?
+         *        < cover.pos_ext[insert_pos].start ?
          */
-        if (isect_pos_ext.start + isect_pos_ext.size
-            < mypart_covered_pos_ext[k].start)
+        else if (isect_pos_ext.start + isect_pos_ext.size
+            < cover.pos_ext[insert_pos].start)
         {
-          /* isect precedes mypart_covered_pos_ext[k] with a hole
+          /* isect precedes cover.pos_ext[insert_pos] with a hole
            * but might be a seemless extension of
-           * mypart_covered_pos_ext[k-1] */
-          if (k > 0
-              && (mypart_covered_pos_ext[k - 1].start
-                  + mypart_covered_pos_ext[k - 1].size == isect_pos_ext.start))
-            mypart_covered_pos_ext[k - 1].size += isect_pos_ext.size;
+           * cover.pos_ext[insert_pos-1] */
+          if (insert_pos > 0
+              && (cover.pos_ext[insert_pos - 1].start
+                  + cover.pos_ext[insert_pos - 1].size == isect_pos_ext.start))
+            cover.pos_ext[insert_pos - 1].size += isect_pos_ext.size;
           else
           {
-            ENSURE_ARRAY_SIZE(mypart_covered_pos_ext,
-                              size_mypart_covered_pos_ext,
-                              num_mypart_covered_pos_ext + 1);
-            memmove(mypart_covered_pos_ext + k + 1, mypart_covered_pos_ext + k,
-                    sizeof (*mypart_covered_pos_ext)
-                    * (num_mypart_covered_pos_ext - k));
-            mypart_covered_pos_ext[k] = isect_pos_ext;
-            ++num_mypart_covered_pos_ext;
+            ENSURE_ARRAY_SIZE(cover.pos_ext,
+                              cover.size_pos_ext,
+                              cover.num_pos_ext + 1);
+            memmove(cover.pos_ext + insert_pos + 1, cover.pos_ext + insert_pos,
+                    sizeof (*cover.pos_ext)
+                    * (cover.num_pos_ext - insert_pos));
+            cover.pos_ext[insert_pos] = isect_pos_ext;
+            ++cover.num_pos_ext;
           }
-          goto next_isect_pos_ext;
+          continue;
         }
         else if (isect_pos_ext.start + isect_pos_ext.size
-                 == mypart_covered_pos_ext[k].start)
+                 == cover.pos_ext[insert_pos].start)
         {
-          mypart_covered_pos_ext[k].start = isect_pos_ext.start;
-          mypart_covered_pos_ext[k].size += isect_pos_ext.size;
-          if (k > 0
-              && (mypart_covered_pos_ext[k].start
-                  == (mypart_covered_pos_ext[k - 1].start
-                      + mypart_covered_pos_ext[k - 1].size)))
+          cover.pos_ext[insert_pos].start = isect_pos_ext.start;
+          cover.pos_ext[insert_pos].size += isect_pos_ext.size;
+          if (insert_pos > 0
+              && (cover.pos_ext[insert_pos].start
+                  == (cover.pos_ext[insert_pos - 1].start
+                      + cover.pos_ext[insert_pos - 1].size)))
           {
-            mypart_covered_pos_ext[k - 1].size
-              += mypart_covered_pos_ext[k].size;
-            memmove(mypart_covered_pos_ext + k, mypart_covered_pos_ext + k + 1,
-                    (--num_mypart_covered_pos_ext - k)
-                    * sizeof (*mypart_covered_pos_ext));
+            cover.pos_ext[insert_pos - 1].size
+              += cover.pos_ext[insert_pos].size;
+            memmove(cover.pos_ext + insert_pos, cover.pos_ext + insert_pos + 1,
+                    (--cover.num_pos_ext - insert_pos)
+                    * sizeof (*cover.pos_ext));
           }
-          goto next_isect_pos_ext;
+          continue;
         }
       }
       /* isect_pos_ext was not found -> append */
-      if (num_mypart_covered_pos_ext > 0
-          && (mypart_covered_pos_ext[num_mypart_covered_pos_ext - 1].start
-              + mypart_covered_pos_ext[num_mypart_covered_pos_ext - 1].size
+      if (cover.num_pos_ext > 0
+          && (cover.pos_ext[cover.num_pos_ext - 1].start
+              + cover.pos_ext[cover.num_pos_ext - 1].size
               == isect_pos_ext.start))
       {
-        mypart_covered_pos_ext[num_mypart_covered_pos_ext - 1].size
+        cover.pos_ext[cover.num_pos_ext - 1].size
           += isect_pos_ext.size;
       }
       else
       {
-        ENSURE_ARRAY_SIZE(mypart_covered_pos_ext, size_mypart_covered_pos_ext,
-                          num_mypart_covered_pos_ext + 1);
-        mypart_covered_pos_ext[num_mypart_covered_pos_ext] = isect_pos_ext;
-        ++num_mypart_covered_pos_ext;
+        ENSURE_ARRAY_SIZE(cover.pos_ext, cover.size_pos_ext,
+                          cover.num_pos_ext + 1);
+        cover.pos_ext[cover.num_pos_ext] = isect_pos_ext;
+        ++cover.num_pos_ext;
       }
-    next_isect_pos_ext:
-      ;
     }
 
     if (intersection_size > num_indices_to_remove) {
@@ -584,17 +581,16 @@ generate_dir_transfer_ext_dst(
     free(isect_transfer_pos_ext);
     free(isect_pos_exts);
   }
-  mypart_covered_pos_ext
-    = xrealloc(mypart_covered_pos_ext,
-               sizeof (*mypart_covered_pos_ext) * num_mypart_covered_pos_ext);
+  cover.pos_ext
+    = xrealloc(cover.pos_ext,
+               sizeof (*cover.pos_ext) * cover.num_pos_ext);
+  cover.size_pos_ext = cover.num_pos_ext;
 
   *resCount = new_num_intersections;
   if (num_intersections != new_num_intersections)
     *resSets = xrealloc(resSets_,
                         (size_t)new_num_intersections * sizeof(**resSets));
-  return (struct Xt_pos_ext_vec){
-    .num_pos_ext = num_mypart_covered_pos_ext,
-      .pos_ext = mypart_covered_pos_ext};
+  return cover;
 }
 
 static void
@@ -740,29 +736,6 @@ exchange_pos_ext_modifications(
 
   free(requests);
   return src_updated_pos_ext;
-}
-
-/* tests if sorted pos_ext in \a coverage do indeed fully cover \a idxlist
- */
-static bool
-xt_idxlist_pos_ext_cover_full(Xt_idxlist idxlist,
-                              struct Xt_pos_ext_vec coverage)
-{
-  int idxlist_size = xt_idxlist_get_num_indices(idxlist);
-  if ((idxlist_size == 0) & (coverage.num_pos_ext == 0))
-    return true;
-  if ((idxlist_size == 0) ^ (coverage.num_pos_ext == 0))
-    return false;
-  /* at this point both idxlist and coverage are non-empty */
-  int after_last_end_pos = 0;
-  int continuations_hold = 1;
-  for (size_t i = 0; i < coverage.num_pos_ext; ++i)
-  {
-    continuations_hold &= (coverage.pos_ext[i].start == after_last_end_pos);
-    after_last_end_pos += coverage.pos_ext[i].size;
-  }
-  continuations_hold &= (after_last_end_pos == idxlist_size);
-  return continuations_hold;
 }
 
 static void
