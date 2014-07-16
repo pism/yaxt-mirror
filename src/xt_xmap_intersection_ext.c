@@ -439,67 +439,65 @@ generate_dir_transfer_ext_dst(
        * the end but subtract from already incremented psum */
       isect_pos_exts_size_psum += isect_pos_ext.size;
       int progress = -isect_pos_ext.size;
-      struct Xt_pos_range query;
       size_t search_start_pos = 0, insert_pos;
-    search_query:
-      query = (struct Xt_pos_range){
-        .start = isect_pos_ext.start,
-        .end = isect_pos_ext.start + isect_pos_ext.size - 1 };
-      insert_pos
-        = xt_cover_insert_or_overlap(&cover, query, true, search_start_pos);
-      if (insert_pos != SIZE_MAX) {
+      do {
+        struct Xt_pos_range query = (struct Xt_pos_range){
+          .start = isect_pos_ext.start,
+          .end = isect_pos_ext.start + isect_pos_ext.size - 1 };
+        insert_pos
+          = xt_cover_insert_or_overlap(&cover, query, true, search_start_pos);
+        if (insert_pos == SIZE_MAX)
+          goto next_isect_pos_ext;
         struct Xt_pos_ext_overlap overlap_desc
           = Xt_get_pos_ext_overlap(isect_pos_ext, cover.pos_ext[insert_pos]);
-        if (overlap_desc.overlap) {
-          /* insert overlap into updates
-           * by ...*/
-          /* ...first inserting the skipped part into
-           * cover.pos_ext, since that is sorted
-           * and obviously precedes cover.pos_ext[insert_pos],
-           * cover.pos_ext[insert_pos] can be seemlessly extended...
-           */
-          cover.pos_ext[insert_pos].start -= overlap_desc.skip;
-          cover.pos_ext[insert_pos].size += overlap_desc.skip;
-          /* ...and optionally merged with its predecessor, if the
-           * intervening range becomes zero, ... */
-          if (insert_pos > 0
-              && (cover.pos_ext[insert_pos].start
-                  == (cover.pos_ext[insert_pos - 1].start
-                      + cover.pos_ext[insert_pos - 1].size)))
-          {
-            cover.pos_ext[insert_pos - 1].size
-              += cover.pos_ext[insert_pos].size;
-            memmove(cover.pos_ext + insert_pos, cover.pos_ext + insert_pos + 1,
-                    (--cover.num_pos_ext - insert_pos)
-                    * sizeof (*cover.pos_ext));
-            --insert_pos;
-          }
-          progress = (~isign_mask_isect_pos_ext_size
-                      & (progress + overlap_desc.skip))
-            | (isign_mask_isect_pos_ext_size
-               & (isect_pos_ext_orig_size + overlap_desc.tail));
-          /* ... then splitting isect_transfer_pos accordingly, ... */
-          num_indices_to_remove += overlap_desc.overlap;
-          cut_pos_ext_from_pos_exts((struct Xt_pos_ext){
-              .start = isect_pos_exts_size_psum + progress,
-                .size = overlap_desc.overlap },
-            &num_isect_transfer_pos_ext, &size_isect_transfer_pos_ext,
-            (struct Xt_pos_ext **)&isect_transfer_pos_ext);
-          progress += overlap_desc.overlap;
-          /* ... lastly the search can continue with the tail ... */
-          isect_pos_ext.start += overlap_desc.skip + overlap_desc.overlap;
-          /* ... if there is any */
-          if ((isect_pos_ext.size = overlap_desc.tail)) {
-            if ((search_start_pos = ++insert_pos) != cover.num_pos_ext)
-              goto search_query;
-          }
-          /* ... or start the next intersection range */
-          else
-            continue;
+        /* insert overlap into updates
+         * by ...*/
+        /* ...first inserting the skipped part into
+         * cover.pos_ext, since that is sorted
+         * and obviously precedes cover.pos_ext[insert_pos],
+         * cover.pos_ext[insert_pos] can be seemlessly extended...
+         */
+        cover.pos_ext[insert_pos].start -= overlap_desc.skip;
+        cover.pos_ext[insert_pos].size += overlap_desc.skip;
+        /* ...and optionally merged with its predecessor, if the
+         * intervening range becomes zero, ... */
+        if (insert_pos > 0
+            && (cover.pos_ext[insert_pos].start
+                == (cover.pos_ext[insert_pos - 1].start
+                    + cover.pos_ext[insert_pos - 1].size)))
+        {
+          cover.pos_ext[insert_pos - 1].size
+            += cover.pos_ext[insert_pos].size;
+          memmove(cover.pos_ext + insert_pos, cover.pos_ext + insert_pos + 1,
+                  (--cover.num_pos_ext - insert_pos)
+                  * sizeof (*cover.pos_ext));
+          --insert_pos;
         }
-        /* isect_pos_ext was not found -> append */
+        progress = (~isign_mask_isect_pos_ext_size
+                    & (progress + overlap_desc.skip))
+          | (isign_mask_isect_pos_ext_size
+             & (isect_pos_ext_orig_size + overlap_desc.tail));
+        /* ... then splitting isect_transfer_pos accordingly, ... */
+        num_indices_to_remove += overlap_desc.overlap;
+        cut_pos_ext_from_pos_exts((struct Xt_pos_ext){
+            .start = isect_pos_exts_size_psum + progress,
+              .size = overlap_desc.overlap },
+          &num_isect_transfer_pos_ext, &size_isect_transfer_pos_ext,
+          (struct Xt_pos_ext **)&isect_transfer_pos_ext);
+        progress += overlap_desc.overlap;
+        /* ... lastly the search can continue with the tail ... */
+        isect_pos_ext.start += overlap_desc.skip + overlap_desc.overlap;
+        /* ... if there is any */
+        isect_pos_ext.size = overlap_desc.tail;
+        search_start_pos = ++insert_pos;
+      } while ((isect_pos_ext.size != 0)
+               & (search_start_pos != cover.num_pos_ext));
+      if (isect_pos_ext.size)
+        /* already at end of list -> append ... */
         xt_cover_range_append(&cover, isect_pos_ext);
-      }
+      /* ... and start the next intersection range */
+    next_isect_pos_ext:
+      ;
     }
 
     if (intersection_size > num_indices_to_remove) {
