@@ -521,11 +521,6 @@ generate_dir_transfer_ext_dst(
     free(isect_transfer_pos_ext);
     free(isect_pos_exts);
   }
-  cover.pos_ext
-    = xrealloc(cover.pos_ext,
-               sizeof (*cover.pos_ext) * cover.num_pos_ext);
-  cover.size_pos_ext = cover.num_pos_ext;
-
   *resCount = new_num_intersections;
   if (num_intersections != new_num_intersections)
     *resSets = xrealloc(resSets_,
