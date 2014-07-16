@@ -952,24 +952,23 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 }
 
 static inline void
-append_ext(struct Xt_pos_ext pos_ext, size_t *num_pos_exts,
-           size_t *size_pos_exts,
-           struct Xt_pos_ext **pos_exts)
+append_ext(struct Xt_pos_ext pos_ext, struct Xt_pos_ext_vec *restrict result)
 {
-  size_t num_pos_exts_ = *num_pos_exts, size_pos_exts_ = *size_pos_exts;
-  struct Xt_pos_ext *restrict pos_exts_ = *pos_exts;
+  size_t num_pos_exts_ = result->num_pos_ext,
+    size_pos_exts_ = result->size_pos_ext;
+  struct Xt_pos_ext *restrict pos_exts_ = result->pos_ext;
   if (xt_pos_ext_is_appendable(pos_exts_[num_pos_exts_ - 1], pos_ext))
   {
     if (num_pos_exts_ + 1 == size_pos_exts_)
     {
       size_pos_exts_ += 16;
       /* offsetting by 1 necessary to keep the terminator in place */
-      *pos_exts = pos_exts_ = (struct Xt_pos_ext *)
+      result->pos_ext = pos_exts_ = (struct Xt_pos_ext *)
         xrealloc(pos_exts_ - 1, (size_pos_exts_ + 1) * sizeof (*pos_exts_)) + 1;
-      *size_pos_exts = size_pos_exts_;
+      result->size_pos_ext = size_pos_exts_;
     }
     pos_exts_[num_pos_exts_] = pos_ext;
-    *num_pos_exts = num_pos_exts_ + 1;
+    result->num_pos_ext = num_pos_exts_ + 1;
   }
   else {
     /* merge new ext with previous */
@@ -983,13 +982,6 @@ static inline intptr_t
 roundAddrUpToMultiple(intptr_t addr, intptr_t factor)
 {
   return (addr + factor - 1)/factor * factor;
-}
-
-static inline int
-ext_overlap(struct Xt_pos_ext a, struct Xt_pos_ext b)
-{
-  return ((b.start >= a.start) & (b.start < a.start + a.size))
-    | ((a.start >= b.start) & (a.start < b.start + b.size));
 }
 
 struct Xt_stripe_minmax {
@@ -1071,7 +1063,6 @@ idxstripes_get_pos_exts_of_index_stripes(
   struct Xt_idxstripes_ *idxstripes = (struct Xt_idxstripes_ *)idxlist;
   if (num_stripes > 0)
   {
-    struct Xt_stripes_lookup stripes_db;
     result.size_pos_ext = (size_t)MAX(MIN(idxstripes->num_stripes,
                                           num_stripes), 8);
     result.pos_ext = xmalloc((result.size_pos_ext + 1)
@@ -1079,6 +1070,7 @@ idxstripes_get_pos_exts_of_index_stripes(
     /* put non-concatenable *terminator* at offset -1 */
     result.pos_ext[0] = (struct Xt_pos_ext){.start = INT_MIN, .size = -1 };
     ++result.pos_ext;
+    struct Xt_stripes_lookup stripes_db;
     create_stripes_lookup(&stripes_db,
                           (size_t)idxstripes->num_stripes, idxstripes->stripes);
     for (size_t i = 0; i < (size_t)num_stripes; ++i) {
@@ -1131,7 +1123,7 @@ pos_ext_insert(struct Xt_stripe query,
     unmatched += conditional_pos_ext_insert(
       query, pos_ext2add, stripes_lookup, result, db_pos);
   else
-    append_ext(pos_ext2add, &result->num_pos_ext, &result->size_pos_ext, &result->pos_ext);
+    append_ext(pos_ext2add, result);
   return unmatched;
 }
 
@@ -1208,9 +1200,7 @@ idxstripes_get_pos_exts_of_index_stripe(
         /* Handle complex overlap */
         struct unmatched_tail search_result =
           idxstripes_complex_get_pos_exts_of_index_stripe(
-            query, db,
-            result,
-            single_match_only, j);
+            query, db, result, single_match_only, j);
         unmatched += search_result.unmatched;
         if (search_result.query_tail.nstrides)
         {
@@ -1319,7 +1309,7 @@ conditional_pos_ext_insert(struct Xt_stripe query,
     }
   }
   /* remaining extent does not overlap any existing one */
-  append_ext(pos_ext2add, &result->num_pos_ext, &result->size_pos_ext, &result->pos_ext);
+  append_ext(pos_ext2add, result);
   return unmatched;
 }
 
