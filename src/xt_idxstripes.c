@@ -64,6 +64,7 @@
 #include "xt_idxstripes_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
+#include "xt_cover.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
@@ -1045,6 +1046,8 @@ destroy_stripes_lookup(struct Xt_stripes_lookup *restrict db) {
   free((void *)db->minmax);
 }
 
+
+
 static size_t
 idxstripes_get_pos_exts_of_index_stripe(
   struct Xt_stripe query,
@@ -1064,30 +1067,36 @@ idxstripes_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
                                          int single_match_only)
 {
   size_t unmatched = 0;
-  size_t num_ext_ = 0;
+  struct Xt_pos_ext_vec result;
+  result.num_pos_ext = 0;
   struct Xt_idxstripes_ *idxstripes = (struct Xt_idxstripes_ *)idxlist;
   if (num_stripes > 0)
   {
     struct Xt_stripes_lookup stripes_db;
-    size_t size_ext = (size_t)MAX(MIN(idxstripes->num_stripes, num_stripes), 8);
-    *pos_exts = xmalloc((size_ext + 1) * sizeof (**pos_exts));
+    result.size_pos_ext = (size_t)MAX(MIN(idxstripes->num_stripes,
+                                          num_stripes), 8);
+    result.pos_ext = xmalloc((result.size_pos_ext + 1)
+                             * sizeof (*result.pos_ext));
     /* put non-concatenable *terminator* at offset -1 */
-    **pos_exts = (struct Xt_pos_ext){.start = INT_MIN, .size = -1 };
-    ++(*pos_exts);
+    result.pos_ext[0] = (struct Xt_pos_ext){.start = INT_MIN, .size = -1 };
+    ++result.pos_ext;
     create_stripes_lookup(&stripes_db,
                           (size_t)idxstripes->num_stripes, idxstripes->stripes);
     for (size_t i = 0; i < (size_t)num_stripes; ++i) {
       struct Xt_stripe query = stripes[i];
       unmatched += idxstripes_get_pos_exts_of_index_stripe(
-        query, &stripes_db, &num_ext_, &size_ext, pos_exts,
+        query, &stripes_db,
+        &result.num_pos_ext, &result.size_pos_ext, &result.pos_ext,
         single_match_only != 0, 0);
     }
-    --(*pos_exts);
-    memmove(*pos_exts, *pos_exts + 1, sizeof (**pos_exts) * num_ext_);
-    *pos_exts = xrealloc(*pos_exts, num_ext_ * sizeof (**pos_exts));
+    --(result.pos_ext);
+    memmove(result.pos_ext, result.pos_ext + 1,
+            sizeof (*result.pos_ext) * result.num_pos_ext);
+    *pos_exts = xrealloc(result.pos_ext,
+                         sizeof (*result.pos_ext) * result.num_pos_ext);
     destroy_stripes_lookup(&stripes_db);
   }
-  *num_ext = (int)num_ext_;
+  *num_ext = (int)result.num_pos_ext;
   return (int)unmatched;
 }
 
