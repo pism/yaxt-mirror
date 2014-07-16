@@ -763,6 +763,57 @@ generate_dir_transfer_pos_ext_src(
                         (size_t)new_num_intersections * sizeof(**resSets));
 }
 
+static struct Xt_stripe *
+refine_stripes(int *num_stripes_,
+               struct Xt_stripe *restrict intersection_idxstripes,
+               size_t num_pos_updates,
+               struct Xt_pos_ext *restrict pos_updates)
+{
+  /* trim intersection_idxstripes to those actually used */
+  size_t num_refined_intersection_idxstripes = 0,
+    size_refined_intersection_idxstripes = num_pos_updates;
+  struct Xt_stripe *restrict refined_intersection_idxstripes
+    = xmalloc(size_refined_intersection_idxstripes
+              * sizeof (*refined_intersection_idxstripes));
+  size_t i_stripe = 0;
+  int nstrides_psum = 0;
+  for (size_t i_pos_ext = 0; i_pos_ext < num_pos_updates; ++i_pos_ext)
+  {
+    int pos = pos_updates[i_pos_ext].start;
+    int size = pos_updates[i_pos_ext].size;
+    while (nstrides_psum + intersection_idxstripes[i_stripe].nstrides <= pos)
+    {
+      nstrides_psum += intersection_idxstripes[i_stripe].nstrides;
+      ++i_stripe;
+    }
+    do {
+      int instripe_pos = pos - nstrides_psum;
+      ENSURE_ARRAY_SIZE(refined_intersection_idxstripes,
+                        size_refined_intersection_idxstripes,
+                        num_refined_intersection_idxstripes + 1);
+      struct Xt_stripe cur_stripe = intersection_idxstripes[i_stripe];
+      int cur_stripe_nstrides = cur_stripe.nstrides;
+      int overlap = imin(cur_stripe_nstrides - instripe_pos, size);
+      cur_stripe.start
+        = (Xt_int)(cur_stripe.start
+                   + (Xt_int)instripe_pos * cur_stripe.stride);
+      cur_stripe.nstrides = overlap;
+      refined_intersection_idxstripes[num_refined_intersection_idxstripes]
+        = cur_stripe;
+      ++num_refined_intersection_idxstripes;
+      i_stripe += (instripe_pos + overlap == cur_stripe_nstrides);
+      nstrides_psum += (instripe_pos + overlap == cur_stripe_nstrides)
+        ? cur_stripe_nstrides : 0;
+      pos += overlap;
+      size -= overlap;
+    } while (size);
+  }
+  free(intersection_idxstripes);
+  *num_stripes_ = (int)num_refined_intersection_idxstripes;
+  return refined_intersection_idxstripes;
+}
+
+
 /* match index stripes of intersection to corresponding positions in
  * partition list, optionally updating the stripes
  * @param num_pos_updates number of position extents describing the
@@ -782,50 +833,10 @@ remap_intersection(Xt_idxlist mypart_idxlist,
   xt_idxlist_get_index_stripes(intersection,
                                (struct Xt_stripe **)&intersection_idxstripes,
                                &num_stripes);
-  if (num_pos_updates) {
-    /* trim intersection_idxstripes to those actually used */
-    size_t num_refined_intersection_idxstripes = 0,
-      size_refined_intersection_idxstripes = num_pos_updates;
-    struct Xt_stripe *restrict refined_intersection_idxstripes
-      = xmalloc(size_refined_intersection_idxstripes
-                * sizeof (*refined_intersection_idxstripes));
-    size_t i_stripe = 0;
-    int nstrides_psum = 0;
-    for (size_t i_pos_ext = 0; i_pos_ext < num_pos_updates; ++i_pos_ext)
-    {
-      int pos = pos_updates[i_pos_ext].start;
-      int size = pos_updates[i_pos_ext].size;
-      while (nstrides_psum + intersection_idxstripes[i_stripe].nstrides <= pos)
-      {
-        nstrides_psum += intersection_idxstripes[i_stripe].nstrides;
-        ++i_stripe;
-      }
-      do {
-        int instripe_pos = pos - nstrides_psum;
-        ENSURE_ARRAY_SIZE(refined_intersection_idxstripes,
-                          size_refined_intersection_idxstripes,
-                          num_refined_intersection_idxstripes + 1);
-        struct Xt_stripe cur_stripe = intersection_idxstripes[i_stripe];
-        int cur_stripe_nstrides = cur_stripe.nstrides;
-        int overlap = imin(cur_stripe_nstrides - instripe_pos, size);
-        cur_stripe.start
-          = (Xt_int)(cur_stripe.start
-                     + (Xt_int)instripe_pos * cur_stripe.stride);
-        cur_stripe.nstrides = overlap;
-        refined_intersection_idxstripes[num_refined_intersection_idxstripes]
-          = cur_stripe;
-        ++num_refined_intersection_idxstripes;
-        i_stripe += (instripe_pos + overlap == cur_stripe_nstrides);
-        nstrides_psum += (instripe_pos + overlap == cur_stripe_nstrides)
-          ? cur_stripe_nstrides : 0;
-        pos += overlap;
-        size -= overlap;
-      } while (size);
-    }
-    free(intersection_idxstripes);
-    intersection_idxstripes = refined_intersection_idxstripes;
-    num_stripes = (int)num_refined_intersection_idxstripes;
-  }
+  if (num_pos_updates)
+    intersection_idxstripes
+      = refine_stripes(&num_stripes, intersection_idxstripes,
+                       num_pos_updates, pos_updates);
 
   /* match back intersection_idxstripes to positions in mypart */
   resSet->transfer_pos_ext = NULL;
