@@ -1191,18 +1191,13 @@ idxstripes_get_pos_exts_of_index_stripe(
                 .size = overlap_nstrides
                 }, db, result, cover, single_match_only, j);
 
-        int query_leftover = query.nstrides - overlap_nstrides;
-        if (query_leftover)
-        {
-          query = (struct Xt_stripe){
-            .start = (Xt_int)(overlap_start + stride * overlap_nstrides),
-            .stride = stride,
-            .nstrides = query_leftover };
+        if (!(query.nstrides -= overlap_nstrides))
+          goto search_finished;
+        else {
+          query.start = (Xt_int)(overlap_start + stride * overlap_nstrides);
           query_minmax = stripe2minmax(query);
           continue;
         }
-        else
-          goto search_finished;
       }
       else
       {
@@ -1211,13 +1206,12 @@ idxstripes_get_pos_exts_of_index_stripe(
           idxstripes_complex_get_pos_exts_of_index_stripe(
             query, db, result, cover, single_match_only, j);
         unmatched += search_result.unmatched;
-        if (search_result.query_tail.nstrides)
-        {
+        if (!search_result.query_tail.nstrides)
+          goto search_finished;
+        else {
           query = search_result.query_tail;
           continue;
         }
-        else
-          goto search_finished;
       }
     }
   }
