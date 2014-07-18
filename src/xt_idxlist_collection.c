@@ -189,16 +189,16 @@ idxlist_collection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
    Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)data;
 
-   int size_int;
+   int size_header;
    size_t size_idxlists = 0;
 
-   xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_int), comm);
+   xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_header), comm);
 
    for (int i = 0; i < collectionlist->num_idxlists; ++i)
       size_idxlists
         += xt_idxlist_get_pack_size(collectionlist->idxlists[i], comm);
 
-   return (size_t)size_int + size_idxlists;
+   return (size_t)size_header + size_idxlists;
 }
 
 static void
@@ -206,12 +206,10 @@ idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                         int *position, MPI_Comm comm) {
 
    Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)data;
-   int type = COLLECTION;
+   int header[2] = { COLLECTION, collectionlist->num_idxlists };
 
-   xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
-                            buffer_size, position, comm), comm);
-   xt_mpi_call(MPI_Pack(&(collectionlist->num_idxlists), 1, MPI_INT,
-                        buffer, buffer_size, position, comm), comm);
+   xt_mpi_call(MPI_Pack(header, 2, MPI_INT, buffer,
+                        buffer_size, position, comm), comm);
 
    for (int i = 0; i < collectionlist->num_idxlists; ++i)
       xt_idxlist_pack(collectionlist->idxlists[i], buffer, buffer_size,
