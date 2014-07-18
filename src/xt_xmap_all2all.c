@@ -133,24 +133,30 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     send_buffer = (char *)recv_buffer + displ[rank] * extent;
   }
   // pack local index lists
-  int position = 0;
-  xt_idxlist_pack(src_idxlist_local, send_buffer, send_buffer_size, &position, comm);
-  xt_idxlist_pack(dst_idxlist_local, send_buffer, send_buffer_size, &position, comm);
+  {
+    int position = 0;
+    xt_idxlist_pack(src_idxlist_local, send_buffer, send_buffer_size,
+                    &position, comm);
+    xt_idxlist_pack(dst_idxlist_local, send_buffer, send_buffer_size,
+                    &position, comm);
+  }
   // exchange buffers
   xt_mpi_call(MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
                              recv_buffer, pack_sizes, displ,
                              MPI_PACKED, comm), comm);
 
-  position = 0;
   size_t dst_isect_count = 0, src_isect_count = 0;
   int large_list_seen = 0;
   // compute intersections
   for (int i = 0; i < comm_size; ++i) {
 
+    int position = 0;
     // unpack buffers
-    Xt_idxlist src = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
+    Xt_idxlist src = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
+                                       pack_sizes[i],
                                        &position, comm);
-    Xt_idxlist dst = xt_idxlist_unpack(recv_buffer, recv_buffer_size,
+    Xt_idxlist dst = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
+                                       pack_sizes[i],
                                        &position, comm);
     large_list_seen
       |= (xt_idxlist_get_num_indices(src) >= CHEAP_VECTOR_SIZE)
