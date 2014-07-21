@@ -203,6 +203,8 @@ struct Xt_stripes_sort {
   int position;                  /* position of stripe this range
                                   * corresponds to (permutation
                                   * obtained from sorting) */
+  int inv_position;              /* position in stripes_sort when
+                                  * indexed with unsorted index */
 };
 
 struct Xt_idxstripes_ {
@@ -263,10 +265,13 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   assert(num_indices <= INT_MAX);
   qsort(stripes_sort, num_stripes, sizeof (*stripes_sort), compare_xtstripes);
 
+  stripes_sort[stripes_sort[0].position].inv_position = 0;
   bool stripes_do_overlap = false;
-  for (size_t i = 1; i < num_stripes; ++i)
+  for (size_t i = 1; i < num_stripes; ++i) {
     stripes_do_overlap
       |= stripes_sort[i - 1].range.max >= stripes_sort[i].range.min;
+    stripes_sort[stripes_sort[i].position].inv_position = (int)i;
+  }
 
   idxstripes->stripes_do_overlap = stripes_do_overlap;
   idxstripes->min_index = min;
