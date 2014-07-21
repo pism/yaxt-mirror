@@ -962,38 +962,143 @@ roundAddrUpToMultiple(intptr_t addr, intptr_t factor)
 struct Xt_stripes_lookup {
   size_t num_stripes;
   const struct Xt_stripe *stripes;
-  const struct Xt_stripe_minmax *minmax;
+  const struct Xt_stripes_sort *stripes_sort;
   const int *stripes_nstrides_psum;
+  bool stripes_do_overlap;
 };
 
 static inline void
 create_stripes_lookup(struct Xt_stripes_lookup *restrict db,
-                      size_t num_db_stripes,
-                      const struct Xt_stripe *restrict stripes) {
-  db->stripes = stripes;
+                      Xt_idxstripes idxstripes) {
+  const struct Xt_stripe *restrict stripes;
+  db->stripes = stripes = idxstripes->stripes;
+  size_t num_db_stripes = (size_t)idxstripes->num_stripes;
   /* using num_db_stripes + 1 ensures re-aligning is always possible */
-  struct Xt_stripe_minmax *restrict db_minmax
-    = xmalloc((num_db_stripes + 1)
-              * (sizeof (db->minmax[0])
-                 + sizeof (db->stripes_nstrides_psum[0])));
   int *restrict db_stripes_nstrides_psum
-    = (int *)roundAddrUpToMultiple(
-      (intptr_t)(db_minmax + num_db_stripes),
-      (intptr_t)sizeof (*db_stripes_nstrides_psum));
+    = xmalloc((num_db_stripes + 1)
+              * sizeof (db->stripes_nstrides_psum[0]));
   db_stripes_nstrides_psum[0] = 0;
   for (size_t j = 0; j < num_db_stripes; ++j) {
-    db_minmax[j] = stripe2minmax(stripes[j]);
     db_stripes_nstrides_psum[j + 1]
       = db_stripes_nstrides_psum[j] + stripes[j].nstrides;
   }
-  db->minmax = db_minmax;
+  db->stripes_sort = idxstripes->stripes_sort;
   db->num_stripes = num_db_stripes;
   db->stripes_nstrides_psum = db_stripes_nstrides_psum;
+  db->stripes_do_overlap = idxstripes->stripes_do_overlap;
 }
 
 static inline void
 destroy_stripes_lookup(struct Xt_stripes_lookup *restrict db) {
-  free((void *)db->minmax);
+  free((void *)db->stripes_nstrides_psum);
+}
+
+struct int_vec
+{
+  size_t size, num;
+  int *vec;
+};
+
+static inline size_t
+bsearch_stripes_sort(size_t n,
+                     const struct Xt_stripes_sort a[n],
+                     Xt_int min_key)
+{
+  size_t left = 0, right = n - 1; /* avoid overflow in `(left + right)/2' */
+  if ((a && n > 0)) ; else return n; /* invalid input or empty array */
+  while (left < right)
+  {
+    /* invariant: a[left].range.min <= min_key <= a[right].range.min
+     * or not in a */
+    /*NOTE: *intentionally* truncate for odd sum */
+    size_t m = (left + right + 1) / 2;
+    if (a[m].range.min > min_key)
+      right = m - 1;   /* a[m].range.min <= min_key < a[right].range.min
+                    * or min_key not in a */
+    else
+      left = m;/* a[left].range.min <= min_key <= a[m].range.min
+                    * or min_key not in a */
+  }
+  /* assert(left == right) */
+  return a[right].range.min <= min_key ? right : n;
+}
+
+static int
+icmp(const void *a, const void *b)
+{
+  return *(const int *)a - *(const int *)b;
+}
+
+static void
+find_candidates(struct Xt_stripe query,
+                const struct Xt_stripes_lookup *restrict db,
+                struct int_vec *candidates)
+{
+  struct Xt_stripe_minmax query_minmax = stripe2minmax(query);
+  size_t num_db_stripes = db->num_stripes;
+  const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;
+  size_t start_pos
+    = bsearch_stripes_sort(num_db_stripes, db_stripes_sort, query_minmax.max);
+  if (start_pos != num_db_stripes) {
+    assert(db_stripes_sort[start_pos].range.min <= query_minmax.max);
+    size_t end_pos = start_pos;
+    while (end_pos < num_db_stripes
+           && db_stripes_sort[end_pos].range.min <= query_minmax.max)
+      ++end_pos;
+    /* find all overlaps (which is more complicated if
+     * non-overlapping isn't guaranteed  */
+    size_t num_candidates;
+    if (!db->stripes_do_overlap)
+    {
+      while (start_pos > 0
+             && (db_stripes_sort[start_pos - 1].range.max >= query_minmax.min))
+        --start_pos;
+      num_candidates = end_pos - start_pos;
+      if (candidates->size < num_candidates) {
+        candidates->vec = xrealloc(candidates->vec,
+                                   num_candidates
+                                   * sizeof (candidates->vec[0]));
+        candidates->size = num_candidates;
+      }
+      candidates->num = num_candidates;
+      int *restrict candidates_vec = candidates->vec;
+      for (size_t i = 0; i < num_candidates; ++i)
+        candidates_vec[i] = db_stripes_sort[start_pos + i].position;
+    }
+    else
+    {
+      num_candidates = 0;
+      size_t min_candidate = start_pos;
+      for (size_t i = end_pos - 1; i != SIZE_MAX; --i)
+      {
+        size_t predicate
+          = ((db_stripes_sort[i].range.min <= query_minmax.max)
+             & (db_stripes_sort[i].range.max >= query_minmax.min));
+        num_candidates += predicate;
+        size_t predicate_mask = predicate - 1;
+        min_candidate = (min_candidate & predicate_mask)
+          | (i & ~predicate_mask);
+      }
+      if (candidates->size < num_candidates + 1)
+      {
+        candidates->vec = xrealloc(candidates->vec,
+                                   (num_candidates + 1)
+                                   * sizeof (candidates[0]));
+        candidates->size = num_candidates + 1;
+      }
+      candidates->num = num_candidates;
+      int *restrict candidates_vec = candidates->vec;
+      size_t j = 0;
+      for (size_t i = min_candidate; i < end_pos; ++i) {
+        candidates_vec[j] = db_stripes_sort[i].position;
+        j += ((size_t)(db_stripes_sort[i].range.min <= query_minmax.max)
+              & (size_t)(db_stripes_sort[i].range.max >= query_minmax.min));
+      }
+      assert(j == num_candidates);
+    }
+    qsort(candidates->vec, num_candidates, sizeof (int), icmp);
+  } else
+    candidates->num = 0;
 }
 
 
@@ -1005,7 +1110,8 @@ idxstripes_get_pos_exts_of_index_stripe(
   struct Xt_pos_ext_vec *restrict result,
   struct Xt_pos_ext_vec *restrict cover,
   bool single_match_only,
-  size_t db_start);
+  size_t num_candidates,
+  int *restrict candidates);
 
 int
 idxstripes_get_pos_exts_of_index_stripes(
@@ -1032,13 +1138,16 @@ idxstripes_get_pos_exts_of_index_stripes(
     struct Xt_pos_ext_vec cover;
     xt_cover_start(&cover, result.size_pos_ext);
     struct Xt_stripes_lookup stripes_db;
-    create_stripes_lookup(&stripes_db,
-                          (size_t)idxstripes->num_stripes, idxstripes->stripes);
+    create_stripes_lookup(&stripes_db, idxstripes);
+    struct int_vec candidates = { .size = 0, .vec = NULL };
     for (size_t i = 0; i < (size_t)num_stripes; ++i) {
       struct Xt_stripe query = stripes[i];
+      find_candidates(query, &stripes_db, &candidates);
       unmatched += idxstripes_get_pos_exts_of_index_stripe(
-        query, &stripes_db, &result, &cover, single_match_only != 0, 0);
+        query, &stripes_db, &result, &cover, single_match_only != 0,
+        candidates.num, candidates.vec);
     }
+    free(candidates.vec);
     --(result.pos_ext);
     memmove(result.pos_ext, result.pos_ext + 1,
             sizeof (*result.pos_ext) * result.num_pos_ext);
@@ -1055,10 +1164,11 @@ static size_t
 conditional_pos_ext_insert(struct Xt_stripe query,
                            struct Xt_pos_ext pos_ext2add,
                            const struct Xt_stripes_lookup *restrict db,
-                           size_t db_start,
                            struct Xt_pos_ext_vec *restrict result,
                            struct Xt_pos_ext_vec *restrict cover,
-                           size_t cover_start);
+                           size_t cover_start,
+                           size_t num_candidates,
+                           int *restrict candidates);
 
 struct unmatched_tail
 {
@@ -1073,7 +1183,8 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
   struct Xt_pos_ext_vec *restrict result,
   struct Xt_pos_ext_vec *restrict cover,
   bool single_match_only,
-  size_t db_start);
+  size_t num_candidates,
+  int *restrict candidates);
 
 static size_t
 pos_ext_insert(struct Xt_stripe query,
@@ -1082,16 +1193,19 @@ pos_ext_insert(struct Xt_stripe query,
                struct Xt_pos_ext_vec *restrict result,
                struct Xt_pos_ext_vec *restrict cover,
                bool single_match_only,
-               size_t db_pos)
+               size_t num_candidates,
+               int *restrict candidates)
 {
   size_t unmatched = 0;
   if (single_match_only)
     unmatched += conditional_pos_ext_insert(
-      query, pos_ext2add, stripes_lookup, db_pos, result, cover, 0);
+      query, pos_ext2add, stripes_lookup, result, cover, 0,
+      num_candidates, candidates);
   else
     append_ext(pos_ext2add, result);
   return unmatched;
 }
+
 
 
 size_t
@@ -1101,80 +1215,87 @@ idxstripes_get_pos_exts_of_index_stripe(
   struct Xt_pos_ext_vec *restrict result,
   struct Xt_pos_ext_vec *restrict cover,
   bool single_match_only,
-  size_t db_start)
+  size_t num_candidates,
+  int *restrict candidates)
 {
   size_t unmatched = 0;
   struct Xt_stripe_minmax query_minmax = stripe2minmax(query);
-  size_t num_db_stripes = db->num_stripes;
   const struct Xt_stripe *restrict db_stripes = db->stripes;
-  const struct Xt_stripe_minmax *restrict db_minmax = db->minmax;
   const int *restrict db_stripes_nstrides_psum = db->stripes_nstrides_psum;
-  for (size_t j = db_start; j < num_db_stripes; ++j) {
-    if ((query_minmax.max >= db_minmax[j].min)
-        & (query_minmax.min <= db_minmax[j].max)) {
-      struct Xt_stripe db_stripe = db_stripes[j];
-      Xt_int stride = query.stride;
-      /* determine if db_stripe and query can be easily aligned */
-      if ((stride > 0)
-          & (stride == db_stripe.stride)
-          & ((query.start - db_stripe.start) % stride == 0)) {
-        /* divide query into skipped, matching and left-over parts,
-         * where skipped and left-over are non-matching */
-        Xt_int overlap_start = MAX(query.start, db_stripe.start);
-        /* handle skipped query part */
-        int skipLen = (int)((overlap_start - query.start) / stride);
-        if (skipLen)
-        {
-          struct Xt_stripe query_head = {
-            .start = query.start,
-            .stride = stride,
-            .nstrides = skipLen };
-          unmatched
-            += idxstripes_get_pos_exts_of_index_stripe(
-              query_head, db, result, cover, single_match_only, j + 1);
-          query.start = (Xt_int)(query.start + stride * (Xt_int)skipLen);
-          query.nstrides -= skipLen;
-        }
-        int db_stripe_skip
-          = (int)((overlap_start - db_stripe.start) / stride);
-        int overlap_nstrides
-          = imin(query.nstrides, db_stripe.nstrides - db_stripe_skip);
-
-        unmatched +=
-          pos_ext_insert(
-            (struct Xt_stripe){ .start = query.start, .stride = query.stride,
-                .nstrides = overlap_nstrides},
-            (struct Xt_pos_ext){ .start
-                = db_stripes_nstrides_psum[j] + db_stripe_skip,
-                .size = overlap_nstrides
-                }, db, result, cover, single_match_only, j);
-
-        if (!(query.nstrides -= overlap_nstrides))
-          goto search_finished;
-        else {
-          query.start = (Xt_int)(overlap_start + stride * overlap_nstrides);
-          query_minmax = stripe2minmax(query);
-          continue;
-        }
-      }
-      else
+  const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;
+  for (size_t j = 0; j < num_candidates; ++j) {
+    size_t unsort_pos = (size_t)candidates[j];
+    size_t sort_pos = (size_t)db_stripes_sort[unsort_pos].inv_position;
+    if ((query_minmax.min <= db_stripes_sort[sort_pos].range.max)
+        & (query_minmax.max >= db_stripes_sort[sort_pos].range. min))
+      ;
+    else
+      continue;
+    struct Xt_stripe db_stripe = db_stripes[candidates[j]];
+    Xt_int stride = query.stride;
+    /* determine if db_stripe and query can be easily aligned */
+    if ((stride > 0)
+        & (stride == db_stripe.stride)
+        & ((query.start - db_stripe.start) % stride == 0)) {
+      /* divide query into skipped, matching and left-over parts,
+       * where skipped and left-over are non-matching */
+      Xt_int overlap_start = MAX(query.start, db_stripe.start);
+      /* handle skipped query part */
+      int skipLen = (int)((overlap_start - query.start) / stride);
+      if (skipLen)
       {
-        /* Handle complex overlap */
-        struct unmatched_tail search_result =
-          idxstripes_complex_get_pos_exts_of_index_stripe(
-            query, db, result, cover, single_match_only, j);
-        unmatched += search_result.unmatched;
-        if (!search_result.query_tail.nstrides)
-          goto search_finished;
-        else {
-          query = search_result.query_tail;
-          continue;
-        }
+        struct Xt_stripe query_head = {
+          .start = query.start,
+          .stride = stride,
+          .nstrides = skipLen };
+        unmatched
+          += idxstripes_get_pos_exts_of_index_stripe(
+            query_head, db, result, cover, single_match_only,
+            num_candidates - j - 1, candidates + j + 1);
+        query.start = (Xt_int)(query.start + stride * (Xt_int)skipLen);
+        query.nstrides -= skipLen;
+      }
+      int db_stripe_skip
+        = (int)((overlap_start - db_stripe.start) / stride);
+      int overlap_nstrides
+        = imin(query.nstrides, db_stripe.nstrides - db_stripe_skip);
+
+      unmatched +=
+        pos_ext_insert(
+          (struct Xt_stripe){ .start = query.start, .stride = query.stride,
+              .nstrides = overlap_nstrides},
+          (struct Xt_pos_ext){ .start
+              = db_stripes_nstrides_psum[candidates[j]] + db_stripe_skip,
+              .size = overlap_nstrides
+              }, db, result, cover, single_match_only, num_candidates - j - 1,
+          candidates + j + 1);
+
+      if (!(query.nstrides -= overlap_nstrides))
+        goto search_finished;
+      else {
+        query.start = (Xt_int)(overlap_start + stride * overlap_nstrides);
+        query_minmax = stripe2minmax(query);
+        continue;
+      }
+    }
+    else
+    {
+      /* Handle complex overlap */
+      struct unmatched_tail search_result =
+        idxstripes_complex_get_pos_exts_of_index_stripe(
+          query, db, result, cover, single_match_only,
+          num_candidates - j, candidates + j);
+      unmatched += search_result.unmatched;
+      if (!search_result.query_tail.nstrides)
+        goto search_finished;
+      else {
+        query = search_result.query_tail;
+        query_minmax = stripe2minmax(query);
       }
     }
   }
-  /* query wasn't found, add all indices to unmatched */
   unmatched += (size_t)query.nstrides;
+  /* query wasn't found, add all indices to unmatched */
 search_finished:
   return unmatched;
 }
@@ -1184,10 +1305,11 @@ static size_t
 conditional_pos_ext_insert(struct Xt_stripe query,
                            struct Xt_pos_ext pos_ext2add,
                            const struct Xt_stripes_lookup *restrict db,
-                           size_t db_start,
                            struct Xt_pos_ext_vec *restrict result,
                            struct Xt_pos_ext_vec *restrict cover,
-                           size_t cover_start)
+                           size_t cover_start,
+                           size_t num_candidates,
+                           int *restrict candidates)
 {
   /* single_match_only is true => never re-match positions */
   size_t unmatched = 0;
@@ -1243,8 +1365,8 @@ tail_search:
       };
       unmatched
         += conditional_pos_ext_insert(
-          query_skip, pos_ext2add_skip, db, db_start + 1,
-          result, cover, overlap_pos + 1);
+          query_skip, pos_ext2add_skip, db,
+          result, cover, overlap_pos + 1, num_candidates, candidates);
       pos_exts_ = result->pos_ext;
       query.start = (Xt_int)(query.start
                              + stride * (Xt_int)abs(querySkipLen));
@@ -1261,7 +1383,8 @@ tail_search:
     /* restart search for overlapping part within following ranges */
     unmatched
       += idxstripes_get_pos_exts_of_index_stripe(
-        query_head, db, result, cover, true, db_start + 1);
+        query_head, db, result, cover, true,
+        num_candidates, candidates);
     pos_exts_ = result->pos_ext;
     if (queryTailLen) {
       /* shorten query accordingly */
@@ -1284,10 +1407,12 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
   struct Xt_pos_ext_vec *restrict result,
   struct Xt_pos_ext_vec *restrict cover,
   bool single_match_only,
-  size_t db_stripe_pos)
+  size_t num_candidates,
+  int *restrict candidates)
 {
   size_t unmatched = 0;
   const struct Xt_stripe *restrict db_stripes = db->stripes;
+  size_t db_stripe_pos = (size_t)candidates[0];
   struct Xt_stripe overlap = get_stripe_intersection(query,
                                                      db_stripes[db_stripe_pos]);
   if (overlap.nstrides == 0)
@@ -1299,7 +1424,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
     unmatched += idxstripes_get_pos_exts_of_index_stripe(
       (struct Xt_stripe){ .start = query.start, .stride = query.stride,
           .nstrides = skipped}, db, result, cover,
-      single_match_only, db_stripe_pos + 1);
+      single_match_only, num_candidates - 1, candidates + 1);
     query.start = (Xt_int)(query.start + skipped * query.stride);
     query.nstrides -= skipped;
   }
@@ -1320,7 +1445,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
     unmatched += pos_ext_insert(overlap, (struct Xt_pos_ext){
         .start = db_pos,
           .size = overlap.nstrides },
-      db, result, cover, single_match_only, db_stripe_pos);
+      db, result, cover, single_match_only, num_candidates - 1, candidates + 1);
     query.nstrides -= overlap.nstrides;
     query.start = (Xt_int)(query.start + overlap.nstrides * query.stride);
   }
@@ -1331,7 +1456,8 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
        but are inversely sorted in db_stripe */
     unmatched += pos_ext_insert(overlap, (struct Xt_pos_ext){
         .start = db_pos, .size = -overlap.nstrides },
-      db, result, cover, single_match_only, db_stripe_pos);
+      db, result, cover, single_match_only,
+      num_candidates - 1, candidates + 1);
     query.nstrides -= overlap.nstrides;
     query.start = (Xt_int)(query.start + overlap.nstrides * query.stride);
   }
@@ -1343,7 +1469,8 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
     for (int i = 0; i < overlap.nstrides; ++i, db_pos += db_step)
       unmatched += pos_ext_insert(overlap, (struct Xt_pos_ext){
           .start = db_pos, .size = 1 },
-        db, result, cover, single_match_only, db_stripe_pos);
+        db, result, cover, single_match_only,
+        num_candidates - 1, candidates + 1);
     query.nstrides -= overlap.nstrides;
     query.start = (Xt_int)(query.start + overlap.nstrides * query.stride);
   }
@@ -1367,11 +1494,12 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
         pos_ext_insert(consecutive_overlap, (struct Xt_pos_ext){
             .start = db_pos, .size = 1 },
           db, result, cover, single_match_only,
-          db_stripe_pos + 1);
+          num_candidates - 1, candidates + 1);
       db_pos += db_step;
       unmatched +=
         idxstripes_get_pos_exts_of_index_stripe(
-          intervening, db, result, cover, single_match_only, db_stripe_pos + 1);
+          intervening, db, result, cover, single_match_only,
+          num_candidates - 1, candidates + 1);
       query.nstrides -= stride_step;
       query.start = (Xt_int)(query.start + query.stride * stride_step);
       overlap.start = (Xt_int)(overlap.start + overlap.stride);

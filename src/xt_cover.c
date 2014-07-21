@@ -114,7 +114,7 @@ xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
           & (query.start > covered_pos_ext[0].start + covered_pos_ext[0].size))
         i = 1;
     }
-    if ((i == num_pos_ext - 1)
+    if ((i >= num_pos_ext - 1)
         & (query.start >= (covered_pos_ext[num_pos_ext - 1].start
                            + covered_pos_ext[num_pos_ext - 1].size)))
       i = SIZE_MAX;
