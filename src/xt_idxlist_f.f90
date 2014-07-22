@@ -417,7 +417,7 @@ CONTAINS
         IMPORT :: c_ptr, c_int
         TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
         TYPE(c_ptr), INTENT(out) :: stripes
-        INTEGER(c_int) :: num_stripes
+        INTEGER(c_int), INTENT(out) :: num_stripes
       END SUBROUTINE xt_idxlist_get_index_stripes_c
 
       SUBROUTINE free_c(p) BIND(c, name='free')
