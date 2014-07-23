@@ -207,6 +207,12 @@ struct Xt_stripes_sort {
                                   * indexed with unsorted index */
 };
 
+enum stripes_flags {
+  stripes_do_overlap_bit = 0,
+
+  stripes_do_overlap_mask = 1 << stripes_do_overlap_bit,
+};
+
 struct Xt_idxstripes_ {
 
   struct Xt_idxlist_ parent;
@@ -214,7 +220,7 @@ struct Xt_idxstripes_ {
   struct Xt_stripe * stripes;
   Xt_int min_index, max_index;
   int num_stripes;
-  bool stripes_do_overlap;
+  int flags;
 
   Xt_int *index_array_cache;
   struct Xt_stripes_sort stripes_sort[];
@@ -266,14 +272,14 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   qsort(stripes_sort, num_stripes, sizeof (*stripes_sort), compare_xtstripes);
 
   stripes_sort[stripes_sort[0].position].inv_position = 0;
-  bool stripes_do_overlap = false;
+  int stripes_do_overlap = 0;
   for (size_t i = 1; i < num_stripes; ++i) {
     stripes_do_overlap
       |= stripes_sort[i - 1].range.max >= stripes_sort[i].range.min;
     stripes_sort[stripes_sort[i].position].inv_position = (int)i;
   }
 
-  idxstripes->stripes_do_overlap = stripes_do_overlap;
+  idxstripes->flags = stripes_do_overlap << stripes_do_overlap_bit;
   idxstripes->min_index = min;
   idxstripes->max_index = max;
   idxstripes->index_array_cache = NULL;
@@ -688,9 +694,8 @@ xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst)
   Xt_idxstripes idxstripes_src = (Xt_idxstripes)idxlist_src,
     idxstripes_dst = (Xt_idxstripes)idxlist_dst;
 
-  if (idxstripes_src->stripes_do_overlap ||
-      idxstripes_dst->stripes_do_overlap) {
-
+  if ((idxstripes_src->flags | idxstripes_dst->flags)
+      & stripes_do_overlap_mask) {
     return compute_intersection_fallback(idxstripes_src, idxstripes_dst);
   } else
     return idxstripes_compute_intersection(idxstripes_src, idxstripes_dst);
@@ -989,7 +994,7 @@ create_stripes_lookup(struct Xt_stripes_lookup *restrict db,
   db->stripes_sort = idxstripes->stripes_sort;
   db->num_stripes = num_db_stripes;
   db->stripes_nstrides_psum = db_stripes_nstrides_psum;
-  db->stripes_do_overlap = idxstripes->stripes_do_overlap;
+  db->stripes_do_overlap = idxstripes->flags & stripes_do_overlap_mask;
 }
 
 static inline void
