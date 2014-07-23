@@ -182,8 +182,8 @@ static TLS int comm_rank, comm_size;
 
 static int compare_exchange_messages (const void * msg_a, const void * msg_b)
 {
-  int a = ((struct Xt_redist_msg*)msg_a)->rank;
-  int b = ((struct Xt_redist_msg*)msg_b)->rank;
+  int rank_a = *(int*)msg_a;
+  int rank_b = *(int*)msg_b;
 #if ! defined TLS && defined HAVE_PTHREAD
   int comm_rank, comm_size;
   {
@@ -192,15 +192,16 @@ static int compare_exchange_messages (const void * msg_a, const void * msg_b)
     comm_rank = qsort_data[1];
   }
 #endif
-  if (a <= comm_rank) a += comm_size;
-  if (b <= comm_rank) b += comm_size;
+  if (rank_a <= comm_rank) rank_a += comm_size;
+  if (rank_b <= comm_rank) rank_b += comm_size;
 
-  return ( a - b );
+  return ( rank_a - rank_b );
 }
 
 void xt_redist_internal_optimize(int nsend, int nrecv,
-                                 struct Xt_redist_msg * send_msgs,
-                                 struct Xt_redist_msg * recv_msgs,
+                                 void * send_msgs,
+                                 void * recv_msgs,
+                                 size_t msg_type_size,
                                  MPI_Comm comm) {
 
 #if ! defined TLS && defined HAVE_PTHREAD
@@ -221,9 +222,6 @@ void xt_redist_internal_optimize(int nsend, int nrecv,
    * 1. add comm_size(10): 9, 15, 12, 6, 11
    * 2. sort: 6, 9, 11, 12, 15 -> final order: 6, 9, 1, 2, 5
    */
-  qsort(send_msgs, (size_t)nsend, sizeof(*send_msgs),
-        compare_exchange_messages);
-  qsort(recv_msgs, (size_t)nrecv, sizeof(*recv_msgs),
-        compare_exchange_messages);
+  qsort(send_msgs, (size_t)nsend, msg_type_size, compare_exchange_messages);
+  qsort(recv_msgs, (size_t)nrecv, msg_type_size, compare_exchange_messages);
 }
-

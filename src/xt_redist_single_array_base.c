@@ -114,6 +114,7 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
   xt_redist_internal_optimize(nsend, nrecv,
                               send_msgs,
                               recv_msgs,
+                              sizeof(*send_msgs),
                               comm);
 
   redist->vtable = &redist_sab_vtable;
