@@ -70,8 +70,11 @@ int main(void) {
 
   { // test packing and unpacking of collection index lists
 
-    Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-    int num_indices = 7;
+    static const Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
+    enum {
+      num_indices = 7,
+      num_ref_stripes = 2,
+    };
 
     // create two index lists
     Xt_idxlist idxlists[2] = { xt_idxvec_new(index_list[0], num_indices),
@@ -84,28 +87,26 @@ int main(void) {
     // test generated collection list
     check_idxlist(collectionlist, index_list[0], (int)(2*num_indices));
 
-    size_t ref_num_stripes = 8;
-    struct Xt_stripe ref_stripes[8] = {{.start = 1, .stride = 1, .nstrides = 7},
-                                       {.start = 7, .stride = 1, .nstrides = 1},
-                                       {.start = 6, .stride = 1, .nstrides = 1},
-                                       {.start = 5, .stride = 1, .nstrides = 1},
-                                       {.start = 4, .stride = 1, .nstrides = 1},
-                                       {.start = 3, .stride = 1, .nstrides = 1},
-                                       {.start = 2, .stride = 1, .nstrides = 1},
-                                       {.start = 1, .stride = 1, .nstrides = 1}};
+    static const struct Xt_stripe ref_stripes[num_ref_stripes]
+      = {{.start = 1, .stride = 1, .nstrides = 7},
+         {.start = 7, .stride = -1, .nstrides = 7}};
     Xt_idxlist collectionlist_copy
       = idxlist_pack_unpack_copy(collectionlist);
     check_idxlist_copy(collectionlist, collectionlist_copy,
                        2 * (size_t)num_indices, index_list[0],
-                       (size_t)ref_num_stripes, ref_stripes);
+                       (size_t)num_ref_stripes, ref_stripes);
     xt_idxlist_delete(collectionlist_copy);
     xt_idxlist_delete(collectionlist);
   }
 
   { // test copying of collection index lists
 
-    Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
-    int num_indices = 7;
+    enum {
+      num_indices = 7,
+      num_ref_stripes = 2,
+    };
+
+    static const Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
 
     Xt_idxlist idxlists[2];
 
@@ -125,7 +126,7 @@ int main(void) {
 
     // test generated collection list
 
-    check_idxlist(collectionlist, &(index_list[0][0]), (int)(2*num_indices));
+    check_idxlist(collectionlist, &index_list[0][0], 2 * num_indices);
 
     // copy the index list
 
@@ -134,7 +135,7 @@ int main(void) {
     // check copy of collection list
 
     check_idxlist(collectionlist_copy, &(index_list[0][0]),
-                  (int)(2*num_indices));
+                  2 * num_indices);
 
     // check the conversion to stripes
 
@@ -165,9 +166,14 @@ int main(void) {
 
   { // test computing intersection of index list collections
 
-    Xt_int index_list[3][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1},{2,6,1,4,7,3,0}};
-    Xt_int sorted_index_list[21] = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
-    int num_indices = 7;
+    enum {
+      num_indices = 7,
+      num_vecs = 3
+    };
+    static const Xt_int index_list[num_vecs][num_indices]
+      = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1},{2,6,1,4,7,3,0}},
+      sorted_index_list[num_vecs * num_indices]
+        = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
 
     Xt_idxlist idxlists[3];
 
