@@ -522,33 +522,35 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
 
   struct Xt_bounded_stripe bsa, bsb, bsi;
 
-  bsa.stride = stripe_a.stride;
-  if (stripe_a.stride >= 0)
-    bsa.min = stripe_a.start,
-      bsa.max = (Xt_int)(stripe_a.start
-                         + stripe_a.stride * (stripe_a.nstrides - 1));
-  else
+  Xt_int stride_zero_mask_a = (stripe_a.stride != 0) - 1,
+    stride_zero_mask_b = (stripe_b.stride != 0) - 1;
+  {
+    Xt_int mask = Xt_isign_mask(stripe_a.stride);
     bsa.min = (Xt_int)(stripe_a.start
-                       + stripe_a.stride * (stripe_a.nstrides - 1)),
-      bsa.max = stripe_a.start;
+                       + (mask & (stripe_a.stride * (stripe_a.nstrides - 1))));
+    bsa.max = (Xt_int)(stripe_a.start
+                       + (~mask & (stripe_a.stride * (stripe_a.nstrides - 1))));
+  }
   bsa.representative = stripe_a.start;
-
-  bsb.stride = stripe_b.stride;
-  if (stripe_b.stride >= 0)
-    bsb.min = stripe_b.start,
-      bsb.max = (Xt_int)(stripe_b.start
-                         + stripe_b.stride * (stripe_b.nstrides - 1));
-  else
+  {
+    Xt_int mask = Xt_isign_mask(stripe_b.stride);
     bsb.min = (Xt_int)(stripe_b.start
-                       + stripe_b.stride * (stripe_b.nstrides - 1)),
-      bsb.max = stripe_b.start;
+                       + (mask & (stripe_b.stride * (stripe_b.nstrides - 1))));
+    bsb.max = (Xt_int)(stripe_b.start
+                       + (~mask & (stripe_b.stride * (stripe_b.nstrides - 1))));
+  }
   bsb.representative = stripe_b.start;
+
+  bsa.stride = (Xt_int)((stripe_a.stride & ~stride_zero_mask_a)
+                        | (stride_zero_mask_a & 1));
+  bsb.stride = (Xt_int)((stripe_b.stride & ~stride_zero_mask_b)
+                        | (stride_zero_mask_b & 1));
 
   struct extended_gcd eg = extended_gcd(XT_INT_ABS(bsa.stride),
                                         XT_INT_ABS(bsb.stride));
   bsi.min = MAX(bsa.min, bsb.min);
   bsi.max = MIN(bsa.max, bsb.max);
-  bsi.stride = (Xt_int)((XT_INT_ABS(stripe_a.stride) * stripe_b.stride)/eg.gcd);
+  bsi.stride = (Xt_int)((XT_INT_ABS(bsa.stride) * bsb.stride)/eg.gcd);
   int even_divide
     = ((bsb.representative - bsa.representative) % eg.gcd) == 0;
   bsi.representative
@@ -570,8 +572,10 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   intersection.start = (Xt_int)((bsa.stride >= 0) ? min_rep : max_rep);
   intersection.stride
     = (Xt_int)(Xt_isign(bsa.stride) * XT_INT_ABS(bsi.stride));
-  intersection.nstrides = abs(nstrides) & strides_mask;
-
+  intersection.nstrides
+    = (abs(nstrides) & strides_mask
+       & ~((int)stride_zero_mask_a & (int)stride_zero_mask_b))
+    | (stripe_b.nstrides & (int)stride_zero_mask_a & (int)stride_zero_mask_b);
   INSTR_STOP(instr);
   return intersection;
 }
