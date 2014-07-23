@@ -259,6 +259,12 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   init_cache(&redist_coll->dst_cache,
              redist_coll->cache_size, (size_t)redist_coll->ndst, num_redists);
 
+  xt_redist_internal_optimize(redist_coll->nsrc, redist_coll->ndst,
+                              redist_coll->send_msgs,
+                              redist_coll->recv_msgs,
+                              sizeof(*(redist_coll->send_msgs)),
+                              comm);
+
   return (Xt_redist)redist_coll;
 }
 
