@@ -269,6 +269,26 @@ CONTAINS
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection11
 
+  ! both ranges overlap in range but have no
+  ! indices in common because of stride
+  SUBROUTINE test_intersection12
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(34, 29, 12) /), &
+         stripes_b(1) = (/ xt_stripe(36, 7, 2) /)
+    INTEGER(xt_int_kind), PARAMETER :: dummy(1) = (/ -1_xi /)
+
+    CALL test_intersection(stripes_a, stripes_b, dummy(1:0))
+  END SUBROUTINE test_intersection12
+
+  ! same as test_intersection12 but with negative stride
+  SUBROUTINE test_intersection13
+    TYPE(xt_stripe), PARAMETER :: &
+         stripes_a(1) = (/ xt_stripe(353, -29, 12) /), &
+         stripes_b(1) = (/ xt_stripe(36, 7, 2) /)
+    INTEGER(xt_int_kind), PARAMETER :: dummy(1) = (/ -1_xi /)
+
+    CALL test_intersection(stripes_a, stripes_b, dummy(1:0))
+  END SUBROUTINE test_intersection13
+
   SUBROUTINE test_get_pos(stripes, pos)
     TYPE(xt_stripe), INTENT(in) :: stripes(:)
     INTEGER, INTENT(in) :: pos(:)

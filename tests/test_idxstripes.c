@@ -391,6 +391,37 @@ int main(void) {
                              num_ref_indices, ref_indices);
   }
 
+  { // intersection test, both ranges overlap in range but have no
+    // indices in common because of stride
+    enum {
+      num_stripes_a = 1,
+      num_stripes_b = 1,
+      num_ref_indices = 0,
+    };
+    static const struct Xt_stripe stripes_a[num_stripes_a]
+      = {{.start = 34, .stride = 29, .nstrides = 12}},
+      stripes_b[num_stripes_b] = {{.start = 36, .stride = 7, .nstrides = 2}};
+
+    stripe_test_intersection(num_stripes_a, stripes_a,
+                             num_stripes_b, stripes_b,
+                             num_ref_indices, NULL);
+  }
+
+  { // intersection test, same as before but with negative stride
+    enum {
+      num_stripes_a = 1,
+      num_stripes_b = 1,
+      num_ref_indices = 0,
+    };
+    static const struct Xt_stripe stripes_a[num_stripes_a]
+      = {{.start = 353, .stride = -29, .nstrides = 12}},
+      stripes_b[num_stripes_b] = {{.start = 36, .stride = 7, .nstrides = 2}};
+
+    stripe_test_intersection(num_stripes_a, stripes_a,
+                             num_stripes_b, stripes_b,
+                             num_ref_indices, NULL);
+  }
+
   {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions

@@ -576,7 +576,7 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
                - (bsi.representative - bsi.min) / bsi.stride * bsi.stride);
   /* requires two's complement integers */
   int strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
-                        & (min_rep <= bsi.max)) - 1);
+                        & (min_rep <= bsi.max) & (min_rep >= bsi.min)) - 1);
   int nstrides = (int)((bsi.max - min_rep)/bsi.stride + Xt_isign(bsi.stride));
   Xt_int max_rep
     = (Xt_int)(min_rep + (nstrides - Xt_isign(bsi.stride)) * bsi.stride);
