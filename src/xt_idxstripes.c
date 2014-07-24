@@ -209,8 +209,10 @@ struct Xt_stripes_sort {
 
 enum stripes_flags {
   stripes_do_overlap_bit = 0,
+  stripes_some_have_zero_stride_bit,
 
   stripes_do_overlap_mask = 1 << stripes_do_overlap_bit,
+  stripes_some_have_zero_stride_mask = 1 << stripes_some_have_zero_stride_bit,
 };
 
 struct Xt_idxstripes_ {
@@ -250,6 +252,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   size_t num_stripes = (size_t)idxstripes->num_stripes;
   long long num_indices = (long long)stripes[0].nstrides;
   int sign_err = stripes[0].nstrides;
+  int have_zero_stride = stripes[0].stride == 0;
   for (size_t i = 1; i < num_stripes; ++i) {
     struct Xt_stripe_minmax stripe_range = stripe2minmax(stripes[i]);
     stripes_sort[i].range = stripe_range;
@@ -258,6 +261,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
     max = MAX(stripe_range.max, max);
     num_indices += (long long)stripes[i].nstrides;
     sign_err |= stripes[i].nstrides;
+    have_zero_stride |= stripes[i].stride == 0;
   }
   /* shift sign bit into position 0 */
   sign_err >>= (sizeof (sign_err) * CHAR_BIT - 1);
@@ -279,7 +283,8 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
     stripes_sort[stripes_sort[i].position].inv_position = (int)i;
   }
 
-  idxstripes->flags = stripes_do_overlap << stripes_do_overlap_bit;
+  idxstripes->flags = stripes_do_overlap << stripes_do_overlap_bit
+    | have_zero_stride << stripes_some_have_zero_stride_bit;
   idxstripes->min_index = min;
   idxstripes->max_index = max;
   idxstripes->index_array_cache = NULL;
