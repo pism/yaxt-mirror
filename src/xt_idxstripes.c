@@ -571,9 +571,14 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
 
   struct Xt_stripe intersection;
   /* compute minimal bsi representative >= bsi.min */
-  Xt_int min_rep
-    = (Xt_int)(bsi.representative
-               - (bsi.representative - bsi.min) / bsi.stride * bsi.stride);
+  Xt_int min_rep;
+  {
+    Xt_int abs_bsi_stride = XT_INT_ABS(bsi.stride),
+      r_diff = (Xt_int)(bsi.min - bsi.representative),
+      steps = (Xt_int)(r_diff / abs_bsi_stride);
+    steps = (Xt_int)(steps + (steps * abs_bsi_stride < r_diff));
+    min_rep = (Xt_int)(bsi.representative + steps * abs_bsi_stride);
+  }
   /* requires two's complement integers */
   int strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
                         & (min_rep <= bsi.max) & (min_rep >= bsi.min)) - 1);

@@ -289,6 +289,15 @@ CONTAINS
     CALL test_intersection(stripes_a, stripes_b, dummy(1:0))
   END SUBROUTINE test_intersection13
 
+  SUBROUTINE test_intersection14
+    TYPE(xt_stripe), PARAMETER :: &
+         stripes_a(1) = (/ xt_stripe(95, -29, 2) /), &
+         stripes_b(1) = (/ xt_stripe(81, 14, 2) /)
+    INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ 95_xi /)
+
+    CALL test_intersection(stripes_a, stripes_b, ref_indices)
+  END SUBROUTINE test_intersection14
+
   SUBROUTINE test_get_pos(stripes, pos)
     TYPE(xt_stripe), INTENT(in) :: stripes(:)
     INTEGER, INTENT(in) :: pos(:)
