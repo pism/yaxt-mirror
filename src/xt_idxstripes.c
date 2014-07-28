@@ -1234,7 +1234,6 @@ conditional_pos_ext_insert(struct Xt_stripe query,
                            const struct Xt_stripes_lookup *restrict db,
                            struct Xt_pos_ext_vec *restrict result,
                            struct Xt_pos_ext_vec *restrict cover,
-                           size_t cover_start,
                            size_t num_candidates,
                            int *restrict candidates);
 
@@ -1267,7 +1266,7 @@ pos_ext_insert(struct Xt_stripe query,
   size_t unmatched = 0;
   if (single_match_only)
     unmatched += conditional_pos_ext_insert(
-      query, pos_ext2add, stripes_lookup, result, cover, 0,
+      query, pos_ext2add, stripes_lookup, result, cover,
       num_candidates, candidates);
   else
     append_ext(pos_ext2add, result);
@@ -1375,7 +1374,6 @@ conditional_pos_ext_insert(struct Xt_stripe query,
                            const struct Xt_stripes_lookup *restrict db,
                            struct Xt_pos_ext_vec *restrict result,
                            struct Xt_pos_ext_vec *restrict cover,
-                           size_t cover_start,
                            size_t num_candidates,
                            int *restrict candidates)
 {
@@ -1395,7 +1393,7 @@ tail_search:
     = { .start = pos_ext2add_s, .end = pos_ext2add_e };
   /* does overlap exist? */
   size_t overlap_pos =
-    xt_cover_insert_or_overlap(cover, query_range, true, cover_start);
+    xt_cover_insert_or_overlap(cover, query_range, true, 0);
   if (overlap_pos == SIZE_MAX) {
     /* remaining extent does not overlap any existing one */
     append_ext(pos_ext2add, result);
@@ -1434,7 +1432,7 @@ tail_search:
       unmatched
         += conditional_pos_ext_insert(
           query_skip, pos_ext2add_skip, db,
-          result, cover, overlap_pos + 1, num_candidates, candidates);
+          result, cover, num_candidates, candidates);
       pos_exts_ = result->pos_ext;
       query.start = (Xt_int)(query.start
                              + stride * (Xt_int)abs(querySkipLen));
