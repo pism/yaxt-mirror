@@ -342,11 +342,12 @@ Xt_idxlist
 xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
                            int num_stripes) {
 
-  int num_indices = 0;
+  long long num_indices = 0;
 
-  /* FIXME: guard against overflow here */
   for (int i = 0; i < num_stripes; ++i)
     num_indices += stripes[i].nstrides;
+  assert((sizeof (long long) > sizeof (int)) & (num_indices <= INT_MAX)
+         & (num_indices >= 0));
 
   size_t vector_size = (size_t)num_indices * sizeof (Xt_int),
     header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
@@ -361,7 +362,7 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
     for (int j = 0; j < stripes[i].nstrides; ++j)
       indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
 
-  Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
+  Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, (int)num_indices);
 
   generate_sorted_vector_from_stripes(stripes, num_stripes, idxvec_obj);
 
