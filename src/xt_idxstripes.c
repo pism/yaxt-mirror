@@ -1298,7 +1298,7 @@ idxstripes_get_pos_exts_of_index_stripe(
       ;
     else
       continue;
-    struct Xt_stripe db_stripe = db_stripes[candidates[j]];
+    struct Xt_stripe db_stripe = db_stripes[unsort_pos];
     Xt_int stride = query.stride;
     /* determine if db_stripe and query can be easily aligned */
     if ((stride > 0)
@@ -1332,7 +1332,7 @@ idxstripes_get_pos_exts_of_index_stripe(
           (struct Xt_stripe){ .start = query.start, .stride = query.stride,
               .nstrides = overlap_nstrides},
           (struct Xt_pos_ext){ .start
-              = db_stripes_nstrides_psum[candidates[j]] + db_stripe_skip,
+              = db_stripes_nstrides_psum[unsort_pos] + db_stripe_skip,
               .size = overlap_nstrides
               }, db, result, cover, single_match_only, num_candidates - j - 1,
           candidates + j + 1);
