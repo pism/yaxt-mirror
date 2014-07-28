@@ -527,6 +527,7 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   bsi.stride = (Xt_int)((XT_INT_ABS(bsa.stride) * bsb.stride)/eg.gcd);
   int even_divide
     = ((bsb.representative - bsa.representative) % eg.gcd) == 0;
+  Xt_int min_rep;
   {
     /* computation might generate huge intermediary values */
     /* FIXME: figure out portably larger type than Xt_int, e.g. int
@@ -535,19 +536,13 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
       = (long long)bsa.representative
       + ((long long)(bsb.representative - bsa.representative) * eg.u * bsa.stride
          / eg.gcd);
-    bsi.representative
-      = (Xt_int)(temp - (temp / bsi.stride) * bsi.stride);
-  }
-
-  struct Xt_stripe intersection;
-  /* compute minimal bsi representative >= bsi.min */
-  Xt_int min_rep;
-  {
-    Xt_int abs_bsi_stride = XT_INT_ABS(bsi.stride),
-      r_diff = (Xt_int)(bsi.min - bsi.representative),
-      steps = (Xt_int)(r_diff / abs_bsi_stride);
-    steps = (Xt_int)(steps + (steps * abs_bsi_stride < r_diff));
-    min_rep = (Xt_int)(bsi.representative + steps * abs_bsi_stride);
+    /* compute minimal bsi representative >= bsi.min */
+    long long abs_bsi_stride = XT_INT_ABS(bsi.stride),
+      r_diff = bsi.min - temp,
+      steps = r_diff / abs_bsi_stride;
+    steps = steps + (steps * abs_bsi_stride < r_diff);
+    bsi.representative =
+      min_rep = (Xt_int)(temp + steps * abs_bsi_stride);
   }
   /* requires two's complement integers */
   int strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
@@ -555,6 +550,7 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   int nstrides = (int)((bsi.max - min_rep)/bsi.stride + Xt_isign(bsi.stride));
   Xt_int max_rep
     = (Xt_int)(min_rep + (nstrides - Xt_isign(bsi.stride)) * bsi.stride);
+  struct Xt_stripe intersection;
   intersection.start = (Xt_int)((bsa.stride >= 0) ? min_rep : max_rep);
   intersection.stride
     = (Xt_int)(Xt_isign(bsa.stride) * XT_INT_ABS(bsi.stride));
