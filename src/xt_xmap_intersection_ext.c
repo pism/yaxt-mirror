@@ -833,7 +833,7 @@ remap_intersection(Xt_idxlist mypart_idxlist,
     {
       int pos = pos_updates[i_pos_ext].start;
       int size = pos_updates[i_pos_ext].size;
-      while (nstrides_psum + intersection_idxstripes[i_stripe].nstrides < pos)
+      while (nstrides_psum + intersection_idxstripes[i_stripe].nstrides <= pos)
       {
         nstrides_psum += intersection_idxstripes[i_stripe].nstrides;
         ++i_stripe;
