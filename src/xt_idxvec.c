@@ -171,7 +171,7 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   size_t vector_size = (size_t)num_indices * sizeof (idxvec[0]),
     header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
                    /sizeof (Xt_int)) * sizeof (Xt_int);
-  Xt_idxvec restrict idxvec_obj = xmalloc(header_size + vector_size);
+  struct Xt_idxvec_ *restrict idxvec_obj = xmalloc(header_size + vector_size);
   Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
 
   idxvec_obj->vector = (Xt_int *)((unsigned char *)idxvec_obj + header_size);
@@ -192,7 +192,7 @@ Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
     return xt_idxempty_new();
   else
     die("number of indices passed to xt_idxvec_new must not be negative!");
-  Xt_idxvec restrict idxvec_obj = xmalloc(sizeof (*idxvec_obj));
+  struct Xt_idxvec_ *restrict idxvec_obj = xmalloc(sizeof (*idxvec_obj));
   Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
   idxvec_obj->vector = (Xt_int *)idxvec;
   idxvec_obj->sorted_vector = NULL;
