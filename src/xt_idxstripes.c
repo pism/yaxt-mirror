@@ -1127,6 +1127,34 @@ find_candidates(struct Xt_stripe query,
     candidates->num = 0;
 }
 
+static struct Xt_idxstripes_ *
+expand_zero_stripes(size_t num_stripes,
+                    struct Xt_stripe *restrict stripes)
+{
+  size_t expansion = 0;
+  for (size_t i = 0; i < num_stripes; ++i) {
+    expansion += stripes[i].stride == 0 ? (size_t)(stripes[i].nstrides - 1) : 0;
+  }
+  struct Xt_stripe *restrict expanded_stripes
+    = xmalloc((num_stripes + expansion) * sizeof (expanded_stripes[0]));
+  size_t j = 0;
+  for (size_t i = 0; i < num_stripes; ++i) {
+    struct Xt_stripe stripe = stripes[i];
+    if (stripe.stride == 0) {
+      for (size_t k = 0; k < (size_t)stripe.nstrides; ++k)
+        expanded_stripes[j + k] = (struct Xt_stripe){ .start = stripe.start,
+                                                      .stride = 1,
+                                                      .nstrides = 1 };
+      j += (size_t)stripe.nstrides;
+    } else {
+      expanded_stripes[j] = stripe;
+      ++j;
+    }
+  }
+  return (struct Xt_idxstripes_ *)
+    xt_idxstripes_prealloc_new(expanded_stripes,
+                               (int)(num_stripes + expansion));
+}
 
 
 static size_t
@@ -1151,9 +1179,12 @@ idxstripes_get_pos_exts_of_index_stripes(
   size_t unmatched = 0;
   struct Xt_pos_ext_vec result;
   result.num_pos_ext = 0;
-  struct Xt_idxstripes_ *idxstripes = (struct Xt_idxstripes_ *)idxlist;
+  struct Xt_idxstripes_ *restrict idxstripes = (struct Xt_idxstripes_ *)idxlist;
   if (num_stripes > 0)
   {
+    if (idxstripes->flags & stripes_some_have_zero_stride_mask)
+      idxstripes = expand_zero_stripes((size_t)idxstripes->num_stripes,
+                                       idxstripes->stripes);
     result.size_pos_ext = (size_t)MAX(MIN(idxstripes->num_stripes,
                                           num_stripes), 8);
     result.pos_ext = xmalloc((result.size_pos_ext + 1)
@@ -1168,10 +1199,16 @@ idxstripes_get_pos_exts_of_index_stripes(
     struct int_vec candidates = { .size = 0, .vec = NULL };
     for (size_t i = 0; i < (size_t)num_stripes; ++i) {
       struct Xt_stripe query = stripes[i];
+      int j = query.nstrides;
+      query.nstrides = ((query.stride != 0) | (query.nstrides == 0))
+        ? query.nstrides : 1;
+      query.stride = (Xt_int)(query.stride != 0 ? query.stride : 1);
       find_candidates(query, &stripes_db, &candidates);
-      unmatched += idxstripes_get_pos_exts_of_index_stripe(
-        query, &stripes_db, &result, &cover, single_match_only != 0,
-        candidates.num, candidates.vec);
+      do {
+        unmatched += idxstripes_get_pos_exts_of_index_stripe(
+          query, &stripes_db, &result, &cover, single_match_only != 0,
+          candidates.num, candidates.vec);
+      } while ((stripes[i].stride == 0) & (--j > 0));
     }
     free(candidates.vec);
     --(result.pos_ext);
@@ -1181,6 +1218,11 @@ idxstripes_get_pos_exts_of_index_stripes(
                          sizeof (*result.pos_ext) * result.num_pos_ext);
     destroy_stripes_lookup(&stripes_db);
     xt_cover_finish(&cover);
+    if (((struct Xt_idxstripes_ *)idxlist)->flags
+        & stripes_some_have_zero_stride_mask) {
+      free(idxstripes->stripes);
+      xt_idxlist_delete((Xt_idxlist)idxstripes);
+    }
   }
   *num_ext = (int)result.num_pos_ext;
   return (int)unmatched;
