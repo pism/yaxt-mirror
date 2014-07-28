@@ -564,10 +564,17 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   bsi.stride = (Xt_int)((XT_INT_ABS(bsa.stride) * bsb.stride)/eg.gcd);
   int even_divide
     = ((bsb.representative - bsa.representative) % eg.gcd) == 0;
-  bsi.representative
-    = (Xt_int)(bsa.representative
-               + ((bsb.representative - bsa.representative) * eg.u * bsa.stride
-                  / eg.gcd));
+  {
+    /* computation might generate huge intermediary values */
+    /* FIXME: figure out portably larger type than Xt_int, e.g. int
+     * would suffice for Xt_int == short here */
+    long long temp
+      = (long long)bsa.representative
+      + ((long long)(bsb.representative - bsa.representative) * eg.u * bsa.stride
+         / eg.gcd);
+    bsi.representative
+      = (Xt_int)(temp - (temp / bsi.stride) * bsi.stride);
+  }
 
   struct Xt_stripe intersection;
   /* compute minimal bsi representative >= bsi.min */

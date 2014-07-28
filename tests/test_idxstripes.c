@@ -440,6 +440,23 @@ int main(void) {
   }
 
   {
+    /* test case where overlap equals end of both stripes */
+    enum {
+      num_stripes_a = 1,
+      num_stripes_b = 1,
+      num_ref_indices = 1,
+    };
+    static const struct Xt_stripe stripes_a[num_stripes_a]
+      = {{.start = 546, .stride = 14, .nstrides = 2}},
+      stripes_b[num_stripes_b] = {{.start = 354, .stride = 206, .nstrides = 2}};
+    static const Xt_int ref_indices[num_ref_indices] = {560};
+
+    stripe_test_intersection(num_stripes_a, stripes_a,
+                             num_stripes_b, stripes_b,
+                             num_ref_indices, ref_indices);
+  }
+
+  {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
     static const struct Xt_stripe stripes[]
