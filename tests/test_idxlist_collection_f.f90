@@ -105,10 +105,8 @@ CONTAINS
          &                * (2*j - 1), xt_int_kind), &
          &           i=1, num_indices), j=1,0,-1) /), (/ num_indices, 2 /))
     TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(8) &
-         = (/ xt_stripe(1, 1, 7), xt_stripe(7, 1, 1), xt_stripe(6, 1, 1), &
-         &    xt_stripe(5, 1, 1), xt_stripe(4, 1, 1), xt_stripe(3, 1, 1), &
-         &    xt_stripe(2, 1, 1), xt_stripe(1, 1, 1) /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(2) &
+         = (/ xt_stripe(1, 1, 7), xt_stripe(7, -1, 7) /)
     idxlists(1) = xt_idxvec_new(index_list(:, 1), num_indices)
     idxlists(2) = xt_idxvec_new(index_list(:, 2), num_indices)
     collectionlist = xt_idxlist_collection_new(idxlists)

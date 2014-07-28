@@ -144,17 +144,11 @@ int main(void) {
 
     xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
 
-    struct Xt_stripe ref_stripes[8] = {{.start = 1, .stride = 1, .nstrides = 7},
-                                       {.start = 7, .stride = 1, .nstrides = 1},
-                                       {.start = 6, .stride = 1, .nstrides = 1},
-                                       {.start = 5, .stride = 1, .nstrides = 1},
-                                       {.start = 4, .stride = 1, .nstrides = 1},
-                                       {.start = 3, .stride = 1, .nstrides = 1},
-                                       {.start = 2, .stride = 1, .nstrides = 1},
-                                       {.start = 1, .stride = 1, .nstrides = 1}};
-    int ref_num_stripes = 8;
+    static const struct Xt_stripe ref_stripes[2]
+      = {{.start = 1, .stride = 1, .nstrides = 7},
+         {.start = 7, .stride = -1, .nstrides = 7}};
 
-    check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
+    check_stripes(stripes, num_stripes, ref_stripes, num_ref_stripes);
 
     // clean up
 

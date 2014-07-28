@@ -56,6 +56,7 @@
 #endif
 
 #include "xt/xt_core.h"
+#include "xt/xt_stripe.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
@@ -134,8 +135,8 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
     xt_idxlist_get_indices(idxlist, indices);
 
-    xt_idxstripes_convert_to_stripes(indices, num_indices,
-                                     stripes, num_stripes);
+    xt_convert_indices_to_stripes(indices, num_indices,
+                                  stripes, num_stripes);
 
     free(indices);
 

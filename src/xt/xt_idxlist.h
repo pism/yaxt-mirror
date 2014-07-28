@@ -53,6 +53,7 @@
 
 #include <stdlib.h>
 #include "xt/xt_core.h"
+#include "xt/xt_stripe.h"
 
 /** \example test_idxlist_utils.c
  */
@@ -60,12 +61,6 @@
  */
 /** \example test_uid.c
  */
-
-struct Xt_stripe {
-  Xt_int start;
-  Xt_int stride;
-  int nstrides;
-};
 
 struct Xt_bounds {
    Xt_int start, size;

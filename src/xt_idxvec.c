@@ -561,9 +561,9 @@ idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
 
   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
 
-  xt_idxstripes_convert_to_stripes(idxvec_obj->vector,
-                                   idxvec_obj->parent.num_indices,
-                                   stripes, num_stripes);
+  xt_convert_indices_to_stripes(idxvec_obj->vector,
+                                idxvec_obj->parent.num_indices,
+                                stripes, num_stripes);
 }
 
 static int

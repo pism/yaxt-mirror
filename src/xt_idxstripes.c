@@ -426,43 +426,6 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   return result;
 }
 
-void xt_idxstripes_convert_to_stripes(Xt_int const * indices,
-                                      int num_indices,
-                                      struct Xt_stripe ** stripes,
-                                      int * num_stripes) {
-
-  INSTR_DEF(instr,"xt_idxstripes_convert_to_stripes");
-  INSTR_START(instr);
-
-  struct Xt_stripe * temp_stripes = NULL;
-  size_t temp_stripes_array_size = 0;
-  size_t num_temp_stripes = 0;
-
-  int i, j;
-
-  i = 0;
-  while(i < num_indices) {
-
-    ++num_temp_stripes;
-
-    ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size, num_temp_stripes);
-
-    j = 1;
-
-    while ((i + j) < num_indices && indices[i] + (Xt_int)j == indices[i + j]) ++j;
-
-    temp_stripes[num_temp_stripes-1].start  = indices[i];
-    temp_stripes[num_temp_stripes-1].nstrides = (Xt_int)j;
-    temp_stripes[num_temp_stripes-1].stride = 1;
-
-    i = i + j;
-  }
-
-  *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
-  *num_stripes = (int)num_temp_stripes;
-  INSTR_STOP(instr);
-}
-
 static Xt_idxlist
 compute_intersection_fallback(Xt_idxstripes idxstripes_src,
                               Xt_idxstripes idxstripes_dst) {
