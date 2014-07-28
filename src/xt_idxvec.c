@@ -356,7 +356,7 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
   Xt_int *restrict indices = idxvec_obj->vector
     = (Xt_int *)((unsigned char *)idxvec_obj + header_size);
 
-  Xt_int k = -1;
+  size_t k = (size_t)-1;
   for (int i = 0; i < num_stripes; ++i)
     for (int j = 0; j < stripes[i].nstrides; ++j)
       indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
