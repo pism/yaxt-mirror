@@ -246,7 +246,7 @@ CONTAINS
   SUBROUTINE test_intersection9
     TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 1, 5), &
          xt_stripe(1, 1, 5), xt_stripe(2, 1, 5) /), &
-         stripes_b(1) = (/ xt_stripe(start = -2, nstrides = 10, stride = 1) /)
+         stripes_b(1) = (/ xt_stripe(-2, 1, 10) /)
     INTEGER(xt_int_kind) :: i
     INTEGER(xt_int_kind), PARAMETER :: ref_indices_a(7) &
          = (/ (i, i=0_xi,6_xi) /), &
@@ -264,7 +264,7 @@ CONTAINS
 
   SUBROUTINE test_intersection11
     TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 5, 20) /), &
-         stripes_b(1) = (/ xt_stripe(start = 1, nstrides = 15, stride = 7) /)
+         stripes_b(1) = (/ xt_stripe(1, 7, 15) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(3) = (/ 15_xi, 50_xi, 85_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection11
