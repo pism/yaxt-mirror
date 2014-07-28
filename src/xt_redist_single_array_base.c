@@ -141,8 +141,10 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
    * 1. add comm_size(10): 9, 15, 12, 6, 11
    * 2. sort: 6, 9, 11, 12, 15 -> final order: 6, 9, 1, 2, 5
    */
-  qsort(send_msgs, nsend, sizeof(*send_msgs), compare_exchange_messages);
-  qsort(recv_msgs, nrecv, sizeof(*recv_msgs), compare_exchange_messages);
+  qsort(send_msgs, (size_t)nsend, sizeof(*send_msgs),
+        compare_exchange_messages);
+  qsort(recv_msgs, (size_t)nrecv, sizeof(*recv_msgs),
+        compare_exchange_messages);
 
   return (Xt_redist)redist;
 }
