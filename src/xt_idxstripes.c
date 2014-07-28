@@ -1456,9 +1456,10 @@ tail_search:
       /* shorten query accordingly */
       query.nstrides -= abs(overlapLen);
       query.start = (Xt_int)(query.start + stride * (Xt_int)abs(overlapLen));
-      pos_ext2add.start += overlapLen;
-      pos_ext2add.size -= overlapLen;
-      cover_start = overlap_pos + 1;
+      int directedOverlapLen = (~querySizeMaskNeg & overlapLen)
+        | (querySizeMaskNeg & -overlapLen);
+      pos_ext2add.start += directedOverlapLen;
+      pos_ext2add.size -= directedOverlapLen;
       goto tail_search;
     }
     /* whole range handled, return */
