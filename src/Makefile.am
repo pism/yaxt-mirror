@@ -96,6 +96,7 @@ libyaxt_la_SOURCES =						\
 	xt_redist_single_array_base.c				\
 	xt_redist_single_array_base.h				\
 	xt_stripe.c						\
+	xt_stripe_util.h					\
 	xt_xmap_internal.h					\
 	xt_xmap.c						\
 	xt_xmap_all2all.c					\

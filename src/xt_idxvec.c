@@ -63,6 +63,7 @@
 #include "xt_idxlist_unpack.h"
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
+#include "xt_stripe_util.h"
 #include "xt/quicksort.h"
 #include "instr.h"
 
@@ -200,24 +201,6 @@ Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
   return (void *)idxvec_obj;
 }
 
-static int stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
-
-  Xt_int a_min, a_max, b_min, b_max;
-
-  if (a.stride >= 0)
-    a_min = a.start, a_max = (Xt_int)(a.start + (a.nstrides-1) * a.stride);
-  else
-    a_max = a.start, a_min = (Xt_int)(a.start + (a.nstrides-1) * a.stride);
-
-  if (b.stride >= 0)
-    b_min = b.start, b_max = (Xt_int)(b.start + (b.nstrides-1) * b.stride);
-  else
-    b_max = b.start, b_min = (Xt_int)(b.start + (b.nstrides-1) * b.stride);
-
-  return MIN(a_max, b_max) >= MAX(a_min, b_min);
-
-}
-
 static int
 decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
               int * sorted_vec_pos, int pos_offset) {
@@ -290,8 +273,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   overlap_flag = xmalloc((size_t)num_stripes * sizeof(*overlap_flag));
 
   for (i = 0; i < num_stripes - 1; ++i)
-    overlap_flag[i] = stripes_overlap(stripes[sorted_stripe_min_pos[i]],
-                                      stripes[sorted_stripe_min_pos[i+1]]);
+    overlap_flag[i] = xt_stripes_overlap(stripes[sorted_stripe_min_pos[i]],
+                                         stripes[sorted_stripe_min_pos[i+1]]);
   overlap_flag[num_stripes - 1] = 0;
 
   idxvec->sorted_vector = xmalloc((size_t)idxvec->parent.num_indices *

@@ -62,6 +62,7 @@
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"
 #include "xt_idxstripes_internal.h"
+#include "xt_stripe_util.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
 #include "xt_cover.h"
@@ -179,23 +180,6 @@ xt_idxstripes_finalize()
   xt_mpi_call(MPI_Type_free(&stripe_dt), Xt_default_comm);
 }
 
-struct Xt_stripe_minmax {
-  Xt_int min, max;
-};
-
-static inline struct Xt_stripe_minmax
-stripe2minmax(struct Xt_stripe stripe)
-{
-  Xt_int min = stripe.start, max = min;
-  Xt_int stride = stripe.stride;
-  int nstrides = stripe.nstrides;
-  Xt_int mask = Xt_isign_mask(stride);
-  stride = (Xt_int)((Xt_int)(nstrides - 1) * stride);
-  min = (Xt_int)(min + (Xt_int)(mask & stride));
-  max = (Xt_int)(max + (Xt_int)((Xt_int)~mask & stride));
-  return (struct Xt_stripe_minmax){ .min = min, .max = max};
-}
-
 typedef struct Xt_idxstripes_ *Xt_idxstripes;
 
 struct Xt_stripes_sort {
@@ -243,7 +227,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   struct Xt_stripes_sort *restrict stripes_sort = idxstripes->stripes_sort;
   Xt_int min, max;
   {
-    struct Xt_stripe_minmax stripe_range = stripe2minmax(stripes[0]);
+    struct Xt_stripe_minmax stripe_range = xt_stripe2minmax(stripes[0]);
     stripes_sort[0].range = stripe_range;
     stripes_sort[0].position = 0;
     min = stripe_range.min;
@@ -254,7 +238,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   int sign_err = stripes[0].nstrides;
   int have_zero_stride = stripes[0].stride == 0;
   for (size_t i = 1; i < num_stripes; ++i) {
-    struct Xt_stripe_minmax stripe_range = stripe2minmax(stripes[i]);
+    struct Xt_stripe_minmax stripe_range = xt_stripe2minmax(stripes[i]);
     stripes_sort[i].range = stripe_range;
     stripes_sort[i].position = (int)i;
     min = MIN(stripe_range.min, min);
@@ -1019,7 +1003,7 @@ find_candidates(struct Xt_stripe query,
                 const struct Xt_stripes_lookup *restrict db,
                 struct int_vec *candidates)
 {
-  struct Xt_stripe_minmax query_minmax = stripe2minmax(query);
+  struct Xt_stripe_minmax query_minmax = xt_stripe2minmax(query);
   size_t num_db_stripes = db->num_stripes;
   const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;
   size_t start_pos
@@ -1245,7 +1229,7 @@ idxstripes_get_pos_exts_of_index_stripe(
   int *restrict candidates)
 {
   size_t unmatched = 0;
-  struct Xt_stripe_minmax query_minmax = stripe2minmax(query);
+  struct Xt_stripe_minmax query_minmax = xt_stripe2minmax(query);
   const struct Xt_stripe *restrict db_stripes = db->stripes;
   const int *restrict db_stripes_nstrides_psum = db->stripes_nstrides_psum;
   const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;
@@ -1300,7 +1284,7 @@ idxstripes_get_pos_exts_of_index_stripe(
         goto search_finished;
       else {
         query.start = (Xt_int)(overlap_start + stride * overlap_nstrides);
-        query_minmax = stripe2minmax(query);
+        query_minmax = xt_stripe2minmax(query);
         continue;
       }
     }
@@ -1316,7 +1300,7 @@ idxstripes_get_pos_exts_of_index_stripe(
         goto search_finished;
       else {
         query = search_result.query_tail;
-        query_minmax = stripe2minmax(query);
+        query_minmax = xt_stripe2minmax(query);
       }
     }
   }
