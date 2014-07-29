@@ -110,13 +110,16 @@ a POWER6 system running with AIX and Parallel Environment (PE).
 * The archive must be given the -X32_64 option such that static library
   archives can be created regardless of the setting of the OBJECT_MODE
   environment variable.
+* TLS storage should be enabled for the C compiler via the
+  -qtls=initial-exec option (or -qtls=global-dynamic if plugins with TLS data
+  are needed).
 * A wrapper to make mpirun-style arguments compatible with the PE program
   starter (poe) must be used to enable 'make check'.
 * It's recommended to use /bin/bash instead of /bin/sh for running configure
   because of speed reasons.
 
 $ /bin/bash ./configure CC=smartmpcc_r \
-  CFLAGS='-O3 -q64 -qarch=pwr6 -qtune=pwr6 -qipa -qinline -qhot -qxflag=nvectver -qxflag=nsmine -qstrict -qlanglvl=extc99' \
+  CFLAGS='-O3 -q64 -qarch=pwr6 -qtune=pwr6 -qipa -qinline -qhot -qxflag=nvectver -qxflag=nsmine -qstrict -qlanglvl=extc99 -qtls=initial-exec' \
   FC=smartmpxlf_r \
   FCFLAGS='-O3 -q64 -qarch=pwr6 -qtune=pwr6 -qipa -qinline -qhot -qxflag=nvecvter -qxflag=nsmine -qstrict -qessl -qextname -qsuffix=cpp=f90 -qzerosize -qfloat=fltint -qhalt=w -Q' \
   CPPFLAGS=-Dextname \

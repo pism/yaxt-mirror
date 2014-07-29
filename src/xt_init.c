@@ -50,6 +50,7 @@
 #include "xt_idxstripes_internal.h"
 #include "xt_idxsection_internal.h"
 #include "xt_idxempty_internal.h"
+#include "xt_redist_single_array_base.h"
 #include "instr.h"
 
 INSTR_DEF(instr,"YAXT_lifetime");
@@ -68,6 +69,9 @@ xt_initialize(MPI_Comm default_comm)
   xt_idxstripes_initialize();
   xt_idxsection_initialize();
   xt_idxlist_intersection_init();
+#if ! defined TLS && defined HAVE_PTHREAD
+  xt_redist_single_array_base_init();
+#endif
 #ifdef INSTR_WITH_SCT
   sct_init(32, SCT_GETENV, "YAXT", Xt_default_comm);
   setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
