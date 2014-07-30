@@ -307,6 +307,37 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
 }
 
 Xt_idxlist
+xt_idxstripes_from_idxlist_new(Xt_idxlist idxlist_src) {
+  int num_stripes;
+  struct Xt_stripe *stripes;
+  xt_idxlist_get_index_stripes(idxlist_src, &stripes, &num_stripes);
+  Xt_idxlist result;
+  if (num_stripes > 0) {
+    /* make room for header and ... */
+    size_t header_size = ((sizeof (struct Xt_idxstripes_)
+                           + (sizeof (struct Xt_stripes_sort)
+                              * (size_t)num_stripes)
+                           + sizeof (struct Xt_stripe) - 1)
+                          / sizeof (struct Xt_stripe))
+      * sizeof (struct Xt_stripe),
+      body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
+    Xt_idxstripes idxstripes = xrealloc(stripes, header_size + body_size);
+    struct Xt_stripe *stripes_moved
+      = (struct Xt_stripe *)((unsigned char *)idxstripes + header_size);
+    /* ... move stripes to their final position */
+    memmove(stripes_moved, idxstripes, sizeof (*stripes) * (size_t)num_stripes);
+    idxstripes->stripes = stripes_moved;
+    idxstripes->num_stripes = num_stripes;
+    idxstripes_aggregate(idxstripes, __func__);
+    result = (Xt_idxlist)idxstripes;
+  } else
+    result = xt_idxempty_new();
+  return result;
+}
+
+
+
+Xt_idxlist
 xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes)
 {
   Xt_idxlist result;

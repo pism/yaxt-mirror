@@ -862,6 +862,11 @@ stripe_test_general(int num_stripes, const struct Xt_stripe *stripes,
 
   free(pos_ext);
   xt_idxlist_delete(idxstripes);
+  Xt_idxlist idxvec = xt_idxvec_new(ref_indices, num_ref_indices);
+  idxstripes = xt_idxstripes_from_idxlist_new(idxvec);
+  check_idxlist(idxstripes, ref_indices, num_ref_indices);
+  xt_idxlist_delete(idxvec);
+  xt_idxlist_delete(idxstripes);
 }
 
 static void

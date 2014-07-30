@@ -56,7 +56,8 @@ PROGRAM test_idxstripes_f
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_bounding_box, OPERATOR(/=), &
        xt_idxlist_get_pos_exts_of_index_stripes, &
-       xt_idxlist_get_num_indices
+       xt_idxlist_get_num_indices, xt_idxvec_new, &
+       xt_idxstripes_from_idxlist_new
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
@@ -106,7 +107,7 @@ CONTAINS
     TYPE(xt_stripe), INTENT(in) :: stripes(:)
     INTEGER(xt_int_kind), INTENT(in) :: ref_indices(:)
 
-    TYPE(xt_idxlist) :: idxstripes
+    TYPE(xt_idxlist) :: idxstripes, idxvec
     INTEGER :: num_ext, num_unmatched, num_pos, i
     INTEGER(c_int) :: ext_size
     TYPE(xt_pos_ext), ALLOCATABLE :: pos_ext(:)
@@ -136,6 +137,13 @@ CONTAINS
          __LINE__)
 
     DEALLOCATE(pos_ext)
+    CALL xt_idxlist_delete(idxstripes)
+
+    ! test recreation of stripes from reference vector
+    idxvec = xt_idxvec_new(ref_indices)
+    idxstripes = xt_idxstripes_from_idxlist_new(idxvec)
+    CALL check_idxlist(idxstripes, ref_indices)
+    CALL xt_idxlist_delete(idxvec)
     CALL xt_idxlist_delete(idxstripes)
   END SUBROUTINE stripe_test_general
 

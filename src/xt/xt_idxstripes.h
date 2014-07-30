@@ -70,4 +70,15 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes);
 Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm);
 
+/**
+ * Creates an index list that is built up of stripes of indices by
+ * converting another index list into stripes.
+ *
+ * @param[in] idxlist_src list to convert into stripes
+ */
+Xt_idxlist
+xt_idxstripes_from_idxlist_new(Xt_idxlist idxlist_src);
+
+
+
 #endif // XT_IDXSTRIPES_H

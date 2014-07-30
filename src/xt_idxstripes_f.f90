@@ -48,7 +48,7 @@
 MODULE xt_idxstripes
   USE xt_core, ONLY: xt_stripe, i2, i4, i8, xt_get_default_comm, &
        xt_abort
-  USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f
+  USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f, xt_idxlist_f2c
   USE iso_c_binding, ONLY: c_ptr, c_int
   IMPLICIT NONE
   PRIVATE
@@ -95,6 +95,8 @@ MODULE xt_idxstripes
       TYPE(c_ptr) :: res_ptr
     END FUNCTION xt_idxstripes_new_c
   END INTERFACE
+
+  PUBLIC :: xt_idxstripes_from_idxlist_new
 
 CONTAINS
 
@@ -474,5 +476,20 @@ CONTAINS
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a7d_i8
+
+  FUNCTION xt_idxstripes_from_idxlist_new(idxlist_src) RESULT(idxstripes)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist_src
+    TYPE(xt_idxlist) :: idxstripes
+    INTERFACE
+      FUNCTION xt_idxstripes_from_idxlist_new_c(idxlist_src) &
+           BIND(c, name='xt_idxstripes_from_idxlist_new') RESULT(idxstripes)
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist_src
+        TYPE(c_ptr) :: idxstripes
+      END FUNCTION xt_idxstripes_from_idxlist_new_c
+    END INTERFACE
+    idxstripes = xt_idxlist_c2f(&
+         xt_idxstripes_from_idxlist_new_c(xt_idxlist_f2c(idxlist_src)))
+  END FUNCTION xt_idxstripes_from_idxlist_new
 
 END MODULE xt_idxstripes
