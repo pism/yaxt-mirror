@@ -26,6 +26,7 @@ PROGRAM perf_sparse_array_gather
   REAL :: r
   INTEGER :: i, j, k, t
   CHARACTER(len=132) :: msg
+  LOGICAL :: check_correctness_of_exchange
   INTERFACE
     SUBROUTINE POSIX_EXIT(code) BIND(c, name="exit")
       IMPORT :: c_int
@@ -39,6 +40,8 @@ PROGRAM perf_sparse_array_gather
     CALL POSIX_EXIT(1)
   END IF
   CALL xt_initialize(mpi_comm_world)
+
+  check_correctness_of_exchange = .FALSE.
 
   gstart(:) = 1
   gshape(1) = 192
@@ -102,21 +105,23 @@ PROGRAM perf_sparse_array_gather
          mpi_double_precision)
     CALL xt_xmap_delete(gather_xmap)
     CALL xt_redist_s_exchange1(gather_redist, scattered_data_p, gathered_data_p)
-    ! DO k = 1, gshape(3)
-    !   DO j = 1, gshape(2)
-    !     DO i = 1, gshape(1)
-    !       IF (gathered_data(i, j, k) < 1.0d0 &
-    !            .OR. gathered_data(i, j, k) > DBLE(num_parts)) THEN
-    !         WRITE (0, "(a,3(i0,a),g28.16)") "gathered_data(", i, ", ", j, ", ", k, &
-    !              ") = ", gathered_data(i, j, k)
-    !         WRITE (msg, "(a,3(', ',i0))") "error in data", i, j, k
-    !         CALL xt_abort(TRIM(msg), &
-    !              __FILE__, &
-    !              __LINE__)
-    !       END IF
-    !     END DO
-    !   END DO
-    ! END DO
+    IF (check_correctness_of_exchange) THEN
+      DO k = 1, gshape(3)
+        DO j = 1, gshape(2)
+          DO i = 1, gshape(1)
+            IF (gathered_data(i, j, k) < 1.0d0 &
+                 .OR. gathered_data(i, j, k) > DBLE(num_parts)) THEN
+              WRITE (0, "(a,3(i0,a),g28.16)") "gathered_data(", i, ", ", j, ", ", k, &
+                   ") = ", gathered_data(i, j, k)
+              WRITE (msg, "(a,3(', ',i0))") "error in data", i, j, k
+              CALL xt_abort(TRIM(msg), &
+                   __FILE__, &
+                   __LINE__)
+            END IF
+          END DO
+        END DO
+      END DO
+    END IF
     CALL xt_redist_delete(gather_redist)
   END DO
   CALL xt_finalize
