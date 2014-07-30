@@ -61,6 +61,7 @@ MODULE xt_core
   PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, char
   PUBLIC :: xt_initialized, xt_finalized
   PUBLIC :: xt_slice_c_loc
+  PUBLIC :: OPERATOR(==), OPERATOR(/=)
 
   INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
   INTEGER, PUBLIC, PARAMETER :: xt_int_mpidt = XT_INT_FC_MPIDT
@@ -131,6 +132,14 @@ MODULE xt_core
     MODULE PROCEDURE xt_stripe2char
   END INTERFACE char
 
+  INTERFACE OPERATOR(==)
+    MODULE PROCEDURE xt_pos_ext_eq
+  END INTERFACE OPERATOR(==)
+
+  INTERFACE OPERATOR(/=)
+    MODULE PROCEDURE xt_pos_ext_ne
+  END INTERFACE OPERATOR(/=)
+
   EXTERNAL :: xt_slice_c_loc
 
 CONTAINS
@@ -182,5 +191,19 @@ CONTAINS
     END INTERFACE
     is_finalized = xt_finalized_c() /= 0
   END FUNCTION xt_finalized
+
+  ELEMENTAL FUNCTION xt_pos_ext_eq(a, b) RESULT(p)
+    TYPE(xt_pos_ext), INTENT(in) :: a, b
+    LOGICAL :: p
+    p = a%start == b%start .AND. (a%size == b%size &
+         .OR. (ABS(a%size) == 1 .AND. ABS(a%size) == ABS(b%size)))
+  END FUNCTION xt_pos_ext_eq
+
+  ELEMENTAL FUNCTION xt_pos_ext_ne(a, b) RESULT(p)
+    TYPE(xt_pos_ext), INTENT(in) :: a, b
+    LOGICAL :: p
+    p = a%start /= b%start .OR. (a%size /= b%size &
+         .AND. .NOT. (ABS(a%size) == 1 .AND. ABS(a%size) == ABS(b%size)))
+  END FUNCTION xt_pos_ext_ne
 
 END MODULE xt_core
