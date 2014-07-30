@@ -42,6 +42,7 @@ PROGRAM perf_sparse_array_gather
   CALL xt_initialize(mpi_comm_world)
 
   check_correctness_of_exchange = .FALSE.
+  CALL parse_options
 
   gstart(:) = 1
   gshape(1) = 192
@@ -130,4 +131,32 @@ PROGRAM perf_sparse_array_gather
     WRITE (0, *) "MPI finalization failed"
     CALL posix_exit(1)
   END IF
+
+CONTAINS
+  SUBROUTINE parse_options
+    INTEGER :: i, num_cmd_args, arg_len
+    INTEGER, PARAMETER :: max_opt_arg_len = 80
+    CHARACTER(max_opt_arg_len) :: optarg
+    CHARACTER(len=18), PARAMETER :: &
+         check_correctness_argstr = '-check-correctness'
+    num_cmd_args = COMMAND_ARGUMENT_COUNT()
+    i = 1
+    DO WHILE (i < num_cmd_args)
+      CALL GET_COMMAND_ARGUMENT(i, optarg, arg_len)
+      IF (optarg(1:arg_len) == check_correctness_argstr &
+           .AND. arg_len == LEN(check_correctness_argstr)) THEN
+        check_correctness_of_exchange = .TRUE.
+      ELSE
+        WRITE (0, *) 'unexpected command-line argument parsing error: ', &
+             TRIM(optarg)
+        FLUSH(0)
+        CALL xt_abort(mpi_comm_world, 'unexpected command-line argument "' &
+             // optarg(1:arg_len) // '"', &
+             __FILE__, &
+             __LINE__)
+      END IF
+    END DO
+
+  END SUBROUTINE parse_options
+
 END PROGRAM perf_sparse_array_gather
