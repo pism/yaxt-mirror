@@ -112,8 +112,8 @@ PROGRAM perf_sparse_array_gather
           DO i = 1, gshape(1)
             IF (gathered_data(i, j, k) < 1.0d0 &
                  .OR. gathered_data(i, j, k) > DBLE(num_parts)) THEN
-              WRITE (0, "(a,3(i0,a),g28.16)") "gathered_data(", i, ", ", j, ", ", k, &
-                   ") = ", gathered_data(i, j, k)
+              WRITE (0, "(a,3(i0,a),g28.16)") "gathered_data(", &
+                   i, ", ", j, ", ", k, ") = ", gathered_data(i, j, k)
               WRITE (msg, "(a,3(', ',i0))") "error in data", i, j, k
               CALL xt_abort(TRIM(msg), &
                    __FILE__, &
