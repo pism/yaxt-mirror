@@ -5,7 +5,8 @@ PROGRAM perf_sparse_array_gather
        xt_idxlist, xt_idxfsection_new, xt_idxstripes_new, xt_idxlist_delete, &
        xt_redist, xt_redist_p2p_ext_new, xt_offset_ext, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
-       xt_redist_delete, xt_redist_s_exchange1
+       xt_redist_delete, xt_redist_s_exchange1, &
+       xt_idxstripes_from_idxlist_new
   USE iso_c_binding, ONLY: c_int, c_loc, c_ptr
   USE mpi
   IMPLICIT NONE
@@ -19,7 +20,7 @@ PROGRAM perf_sparse_array_gather
   TYPE(xt_offset_ext), ALLOCATABLE :: scatter_exts(:,:)
   TYPE(xt_idxlist) :: gather_list
   TYPE(xt_idxlist), ALLOCATABLE :: scatter_lists(:,:)
-  TYPE(xt_idxlist) :: scatter_list
+  TYPE(xt_idxlist) :: scatter_list, scatter_list_stripes
   TYPE(xt_xmap) :: gather_xmap
   TYPE(xt_redist) :: gather_redist
   REAL :: r
@@ -91,8 +92,10 @@ PROGRAM perf_sparse_array_gather
     END DO
     scatter_list = xt_idxlist_collection_new(scatter_lists)
     CALL xt_idxlist_delete(scatter_lists)
-    gather_xmap = xt_xmap_all2all_new(scatter_list, gather_list, mpi_comm_self)
+    scatter_list_stripes = xt_idxstripes_from_idxlist_new(scatter_list)
     CALL xt_idxlist_delete(scatter_list)
+    gather_xmap = xt_xmap_all2all_new(scatter_list_stripes, gather_list, &
+         mpi_comm_self)
     CALL xt_idxlist_delete(gather_list)
     gather_redist = xt_redist_p2p_ext_new(gather_xmap, &
          RESHAPE(scatter_exts, (/ num_parts /)), gather_ext, &
