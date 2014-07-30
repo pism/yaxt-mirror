@@ -49,12 +49,15 @@ PROGRAM test_idxstripes_f
   USE mpi
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, &
        idxlist_pack_unpack_copy
-  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_bounds, &
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_bounds, xt_pos_ext, &
        xt_stripe, xt_idxlist, xt_idxlist_delete, xt_idxstripes_new, &
        xt_idxvec_from_stripes_new, xt_int_kind, xt_idxlist_copy, &
        xt_idxlist_get_index_stripes, xt_idxlist_get_intersection, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
-       xt_idxlist_get_bounding_box, OPERATOR(/=)
+       xt_idxlist_get_bounding_box, OPERATOR(/=), &
+       xt_idxlist_get_pos_exts_of_index_stripes, &
+       xt_idxlist_get_num_indices
+  USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
 
@@ -83,6 +86,14 @@ PROGRAM test_idxstripes_f
   CALL test_stripe_overlap
   CALL test_stripe_bb1
   CALL test_stripe_bb2
+  CALL check_pos_ext1
+  CALL check_pos_ext2
+  CALL check_pos_ext3
+  CALL check_pos_ext4
+  CALL check_pos_ext5
+  CALL check_pos_ext6
+  CALL check_pos_ext7
+  CALL check_pos_ext8
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
        __FILE__, &
@@ -96,9 +107,35 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: ref_indices(:)
 
     TYPE(xt_idxlist) :: idxstripes
+    INTEGER :: num_ext, num_unmatched, num_pos, i
+    INTEGER(c_int) :: ext_size
+    TYPE(xt_pos_ext), ALLOCATABLE :: pos_ext(:)
 
     idxstripes = xt_idxstripes_new(stripes, SIZE(stripes))
     CALL do_tests(idxstripes, ref_indices)
+
+    num_unmatched = xt_idxlist_get_pos_exts_of_index_stripes(idxstripes, &
+         SIZE(stripes), stripes, num_ext, pos_ext, .TRUE.)
+    IF (num_unmatched /= 0) &
+         CALL test_abort("stripes not found", &
+         __FILE__, &
+         __LINE__)
+
+    num_pos = 0
+    DO i = 1, num_ext
+      ext_size = pos_ext(i)%size
+      IF (num_pos /= pos_ext(i)%start) &
+           CALL test_abort("position/start mismatch", &
+           __FILE__, &
+           __LINE__)
+      num_pos = num_pos + ext_size
+    END DO
+    IF (num_pos /= xt_idxlist_get_num_indices(idxstripes)) &
+         CALL test_abort("index list length/positions overlap mismatch", &
+         __FILE__, &
+         __LINE__)
+
+    DEALLOCATE(pos_ext)
     CALL xt_idxlist_delete(idxstripes)
   END SUBROUTINE stripe_test_general
 
@@ -456,5 +493,168 @@ CONTAINS
     ! clean up
     CALL xt_idxlist_delete(idxlist_copy)
   END SUBROUTINE do_tests
+
+  SUBROUTINE check_pos_ext(stripes, search_stripes, ref_pos_ext, &
+       single_match_only, ref_unmatched, test_desc)
+    TYPE(xt_stripe), INTENT(in) :: stripes(:), search_stripes(:)
+    TYPE(xt_pos_ext), intent(in) :: ref_pos_ext(:)
+    LOGICAL, INTENT(in) :: single_match_only
+    INTEGER, INTENT(in) :: ref_unmatched
+    CHARACTER(len=*) :: test_desc
+
+    INTEGER :: num_stripes, num_search_stripes, num_ref_pos_ext, num_ext, &
+         unmatched
+    TYPE(xt_idxlist) :: idxstripes
+    TYPE(xt_pos_ext), ALLOCATABLE :: pos_ext(:)
+
+    num_stripes = SIZE(stripes)
+    num_search_stripes = SIZE(search_stripes)
+    num_ref_pos_ext = SIZE(ref_pos_ext)
+
+    idxstripes = xt_idxstripes_new(stripes)
+    unmatched = xt_idxlist_get_pos_exts_of_index_stripes(idxstripes, &
+         num_search_stripes, search_stripes, &
+         num_ext, pos_ext, single_match_only)
+    IF (unmatched /= ref_unmatched) &
+         CALL test_abort("error in number of unmatched indices for " &
+         // test_desc, &
+         __FILE__, &
+         __LINE__)
+    IF (num_ext < 0 .OR. num_ext /= num_ref_pos_ext) &
+         CALL test_abort("error finding " // test_desc, &
+         __FILE__, &
+         __LINE__)
+    IF (ANY(pos_ext /= ref_pos_ext)) &
+         CALL test_abort("incorrect position extent length found in "&
+         // test_desc, &
+         __FILE__, &
+         __LINE__)
+    DEALLOCATE(pos_ext)
+    CALL xt_idxlist_delete(idxstripes)
+  END SUBROUTINE check_pos_ext
+
+  SUBROUTINE check_pos_ext1
+    INTEGER, PARAMETER :: num_stripes = 1, num_ref_pos_ext = 1, &
+         num_ref_unmatched = 0
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(1_xi, 1_xi, 10) /), &
+         search_stripes(1) = (/ xt_stripe(10_xi, -1_xi, 5) /)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(9, -5) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "simple inverted stripe")
+  END SUBROUTINE check_pos_ext1
+
+  SUBROUTINE check_pos_ext2
+    INTEGER, PARAMETER :: num_stripes = 1, num_ref_pos_ext = 1, &
+         num_ref_unmatched = 5
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(1_xi, 1_xi, 10) /), &
+         search_stripes(2) = xt_stripe(10_xi, -1_xi, 5)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(9, -5) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "simple inverted stripe")
+  END SUBROUTINE check_pos_ext2
+
+  SUBROUTINE check_pos_ext3
+    INTEGER, PARAMETER :: num_stripes = 2, num_ref_pos_ext = 1, &
+         num_ref_unmatched = 4
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(1_xi, 1_xi, 10), xt_stripe(15_xi, 1_xi, 10) /), &
+         search_stripes(1) = xt_stripe(10_xi, 1_xi, 6)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(9, 2) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "search inc stripe over inc gap")
+  END SUBROUTINE check_pos_ext3
+
+  SUBROUTINE check_pos_ext4
+    INTEGER, PARAMETER :: num_stripes = 2, num_ref_pos_ext = 1, &
+         num_ref_unmatched = 4
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(25_xi, -1_xi, 11), xt_stripe(10_xi, -1_xi, 10) /), &
+         search_stripes(1) = xt_stripe(10_xi, 1_xi, 6)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(11, -2) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "search inc stripe over dec gap")
+  END SUBROUTINE check_pos_ext4
+
+  SUBROUTINE check_pos_ext5
+    INTEGER, PARAMETER :: num_stripes = 2, num_ref_pos_ext = 1, &
+         num_ref_unmatched = 4
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(25_xi, -1_xi, 11), xt_stripe(10_xi, -1_xi, 10) /), &
+         search_stripes(1) = xt_stripe(15_xi, -1_xi, 6)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(10, 2) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "search dec stripe over dec gap")
+  END SUBROUTINE check_pos_ext5
+
+  SUBROUTINE check_pos_ext6
+    INTEGER, PARAMETER :: num_stripes = 2, num_ref_pos_ext = 1, &
+         num_ref_unmatched = 4
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(1_xi, 1_xi, 10), xt_stripe(15_xi, 1_xi, 10) /), &
+         search_stripes(1) = xt_stripe(15_xi, -1_xi, 6)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(10, -2) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "search dec stripe over inc gap")
+  END SUBROUTINE check_pos_ext6
+
+  SUBROUTINE check_pos_ext7
+    INTEGER, PARAMETER :: num_stripes = 3, num_ref_pos_ext = 1, &
+         num_ref_unmatched = 8
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(1_xi, 1_xi, 10), xt_stripe(15_xi, 1_xi, 10), &
+         &    xt_stripe(29_xi, 1_xi, 10) /), &
+         search_stripes(1) = xt_stripe(32_xi, -1_xi, 30)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(23, -22) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "search dec stripe over 2 inc gap")
+  END SUBROUTINE check_pos_ext7
+
+  SUBROUTINE check_pos_ext8
+    INTEGER, PARAMETER :: num_stripes = 5, num_ref_pos_ext = 5, &
+         num_ref_unmatched = 0
+
+    TYPE(Xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(1_xi, 1_xi, 10), xt_stripe(15_xi, 1_xi, 10), &
+         &    xt_stripe(29_xi, 1_xi, 10), xt_stripe(14_xi, -1_xi, 4), &
+         &    xt_stripe(28_xi, -1_xi, 4) /), &
+         search_stripes(1) = xt_stripe(32_xi, -1_xi, 30)
+
+    TYPE(xt_pos_ext), PARAMETER :: ref_pos_ext(num_ref_pos_ext) &
+         = (/ xt_pos_ext(23, -4), xt_pos_ext(34, 4), xt_pos_ext(19, -10), &
+         &    xt_pos_ext(30, 4), xt_pos_ext(9, -8) /)
+
+    CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
+         num_ref_unmatched, "search dec stripe over jumbled stripes")
+  END SUBROUTINE check_pos_ext8
 
 END PROGRAM test_idxstripes_f

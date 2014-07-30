@@ -47,9 +47,10 @@
 !
 MODULE xt_idxlist_abstract
   USE xt_core, ONLY: xt_int_kind, xt_mpi_fint_kind, xt_stripe, &
-       xt_bounds, xt_get_default_comm, xt_abort, i2, i4, i8
+       xt_bounds, xt_get_default_comm, xt_abort, i2, i4, i8, &
+       xt_pos_ext, OPERATOR(==)
   USE iso_c_binding, ONLY: c_ptr, c_int, c_f_pointer, c_null_ptr, &
-       c_associated
+       c_associated, c_loc
   IMPLICIT NONE
   PRIVATE
 
@@ -104,8 +105,8 @@ MODULE xt_idxlist_abstract
        xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &
        xt_idxlist_get_num_indices, &
        xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
-       xt_idxlist_get_bounding_box, xt_idxlist_get_intersection
-
+       xt_idxlist_get_bounding_box, xt_idxlist_get_intersection, &
+       xt_idxlist_get_pos_exts_of_index_stripes
   INTERFACE
 
     FUNCTION xt_idxlist_get_num_indices_c(idxlist) RESULT(num_indices) &
@@ -170,6 +171,31 @@ MODULE xt_idxlist_abstract
     MODULE PROCEDURE xt_idxlist_get_indices_at_positions_a1d_i4
     MODULE PROCEDURE xt_idxlist_get_indices_at_positions_a1d_i8
   END INTERFACE xt_idxlist_get_indices_at_positions
+
+  INTERFACE
+    FUNCTION xt_idxlist_get_pos_exts_of_index_stripes_c(idxlist, &
+       num_stripes, stripes, num_ext, pos_ext, single_match_only) &
+       BIND(c, name='xt_idxlist_get_pos_exts_of_index_stripes') &
+       RESULT(num_unmatched)
+      IMPORT :: c_ptr, c_int
+      TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+      INTEGER(c_int), VALUE, INTENT(in) ::  num_stripes
+      TYPE(c_ptr), VALUE, INTENT(in) :: stripes
+      INTEGER(c_int), INTENT(out) :: num_ext
+      TYPE(c_ptr), INTENT(out) :: pos_ext
+      INTEGER(c_int), VALUE, INTENT(in) :: single_match_only
+      INTEGER(c_int) :: num_unmatched
+    END FUNCTION xt_idxlist_get_pos_exts_of_index_stripes_c
+
+    SUBROUTINE free_c(p) BIND(c, name='free')
+      IMPORT :: c_ptr
+      TYPE(c_ptr), VALUE :: p
+    END SUBROUTINE free_c
+  END INTERFACE
+
+  INTERFACE xt_idxlist_get_pos_exts_of_index_stripes
+    MODULE PROCEDURE gpe_is_i4_a_i4_p1d_l
+  END INTERFACE xt_idxlist_get_pos_exts_of_index_stripes
 
 CONTAINS
 
@@ -419,11 +445,6 @@ CONTAINS
         TYPE(c_ptr), INTENT(out) :: stripes
         INTEGER(c_int), INTENT(out) :: num_stripes
       END SUBROUTINE xt_idxlist_get_index_stripes_c
-
-      SUBROUTINE free_c(p) BIND(c, name='free')
-        IMPORT :: c_ptr
-        TYPE(c_ptr), VALUE :: p
-      END SUBROUTINE free_c
     END INTERFACE
     TYPE(c_ptr) :: stripes_c_ptr
     INTEGER(c_int) :: num_stripes
@@ -642,5 +663,50 @@ CONTAINS
       indices => dummy(1:0)
     END IF
   END FUNCTION xt_idxlist_get_indices_const
+
+  FUNCTION gpe_is_i4_a_i4_p1d_l(idxlist, &
+       num_stripes, stripes, num_ext, pos_ext, single_match_only) &
+       RESULT(num_unmatched)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(i4), INTENT(in) ::  num_stripes
+    TYPE(xt_stripe), TARGET :: stripes(*)
+    INTEGER, INTENT(out) :: num_ext
+    TYPE(Xt_pos_ext), ALLOCATABLE, INTENT(out) :: pos_ext(:)
+    LOGICAL, INTENT(in) :: single_match_only
+    INTEGER :: num_unmatched
+
+    INTEGER(c_int) :: num_unmatched_c, num_ext_c
+    TYPE(c_ptr) :: pos_ext_c, stripes_c
+    TYPE(xt_pos_ext), POINTER :: pos_ext_fptr(:)
+    INTEGER :: pos_ext_shape(1)
+
+    IF (num_stripes > HUGE(1_c_int) .OR. num_stripes < 0) &
+         CALL xt_abort(xt_get_default_comm(), &
+         "interface violation detected", &
+         __FILE__, &
+         __LINE__)
+
+    stripes_c = C_LOC(stripes)
+
+    num_unmatched_c = xt_idxlist_get_pos_exts_of_index_stripes_c(&
+         xt_idxlist_f2c(idxlist), INT(num_stripes, c_int), stripes_c, &
+         num_ext_c, pos_ext_c, MERGE(1_c_int, 0_c_int, single_match_only))
+
+    IF (num_ext_c > HUGE(1) .OR. num_ext_c < 0 &
+         .OR. num_unmatched_c > HUGE(1) .OR. num_unmatched_c < 0) &
+         CALL xt_abort(xt_get_default_comm(), &
+         "data representation problem", &
+         __FILE__, &
+         __LINE__)
+    num_unmatched = INT(num_unmatched_c)
+    num_ext = INT(num_ext_c)
+    IF (num_ext > 0) THEN
+      ALLOCATE(pos_ext(num_ext))
+      pos_ext_shape(1) = num_ext
+      CALL C_F_POINTER(pos_ext_c, pos_ext_fptr, pos_ext_shape)
+      pos_ext = pos_ext_fptr
+      CALL free_c(pos_ext_c)
+    END IF
+  END FUNCTION gpe_is_i4_a_i4_p1d_l
 
 END MODULE xt_idxlist_abstract
