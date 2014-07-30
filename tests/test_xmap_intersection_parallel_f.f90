@@ -525,25 +525,3 @@ CONTAINS
   END FUNCTION xmi_new
 
 END PROGRAM test_xmap_intersection_parallel
-
-! static void
-! parse_options(int *argc, char ***argv)
-! {
-!   xmi_new = xt_xmap_intersection_new;
-!   int opt;
-!   while ((opt = getopt(*argc, *argv, "m:")) != -1) {
-!     switch (opt) {
-!     case 'm':
-!       if (!strcmp(optarg, "xt_xmap_intersection_new"))
-!         xmi_new = xt_xmap_intersection_new;
-!       else if (!strcmp(optarg, "xt_xmap_intersection_ext_new"))
-!         xmi_new = xt_xmap_intersection_ext_new;
-!       else
-!       {
-!         fprintf(stderr, "Unknown xmap intersection constructor requested %s\n",
-!                 optarg);
-!         exit(EXIT_FAILURE);
-!       }
-!     }
-!   }
-! }
