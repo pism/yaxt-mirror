@@ -85,4 +85,14 @@ extern void
                                  struct Xt_redist_msg * recv_msgs,
                                  MPI_Comm comm);
 
+void xt_redist_internal_optimize(int nsend, int nrecv,
+                                  struct Xt_redist_msg * send_msgs,
+                                  struct Xt_redist_msg * recv_msgs,
+                                  MPI_Comm comm);
+
+#if ! defined TLS && defined HAVE_PTHREAD
+/* internal function to setup pthread key if TLS is unavailable */
+void xt_redist_init(void);
+#endif
+
 #endif

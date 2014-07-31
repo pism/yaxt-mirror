@@ -50,11 +50,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include <string.h>
-#if ! defined TLS && defined HAVE_PTHREAD
-#include <pthread.h>
-#endif
-
 #include <mpi.h>
 
 #include "xt/xt_mpi.h"
@@ -109,46 +104,6 @@ struct Xt_redist_sab_ {
   MPI_Comm comm;
 };
 
-
-#if ! defined TLS && defined HAVE_PTHREAD
-
-static pthread_key_t tls_qsort_data_key;
-
-void xt_redist_single_array_base_init(void) {
-  int ierror = pthread_key_create(&tls_qsort_data_key, NULL);
-  if (ierror) {
-    fprintf(stderr, "%s: error creating pthread key: %s\n",
-            __func__, strerror(ierror));
-    die("Failed pthread_key_create in initialization!");
-  }
-}
-
-#else
-
-static TLS int comm_rank, comm_size;
-
-#endif
-
-static int compare_exchange_messages (const void * msg_a, const void * msg_b)
-{
-  int a = ((struct Xt_redist_msg*)msg_a)->rank;
-  int b = ((struct Xt_redist_msg*)msg_b)->rank;
-#if ! defined TLS && defined HAVE_PTHREAD
-  int comm_rank, comm_size;
-  {
-    int *qsort_data = pthread_getspecific(tls_qsort_data_key);
-    comm_size = qsort_data[0];
-    comm_rank = qsort_data[1];
-  }
-#endif
-  if (a <= comm_rank) a += comm_size;
-  if (b <= comm_rank) b += comm_size;
-
-  return ( a - b );
-}
-
-
-
 Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                           struct Xt_redist_msg * send_msgs,
                                           struct Xt_redist_msg * recv_msgs,
@@ -156,35 +111,17 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
 
   Xt_redist_sab redist = xmalloc(sizeof (*redist));
 
+  xt_redist_internal_optimize(nsend, nrecv,
+                              send_msgs,
+                              recv_msgs,
+                              comm);
+
   redist->vtable = &redist_sab_vtable;
   redist->nsend = nsend;
   redist->nrecv = nrecv;
   redist->send_msgs = send_msgs;
   redist->recv_msgs = recv_msgs;
   redist->comm = comm;
-
-#if ! defined TLS && defined HAVE_PTHREAD
-  int qsort_data[2];
-  MPI_Comm_rank(comm, qsort_data + 1);
-  MPI_Comm_size(comm, qsort_data + 0);
-  pthread_setspecific(tls_qsort_data_key, qsort_data);
-#else
-  MPI_Comm_rank(comm, &comm_rank);
-  MPI_Comm_size(comm, &comm_size);
-#endif
-  /* In order to avoid congestion of messages, the order of send and receive
-   * messages is changed. This is done by sorting the messages according to the
-   * rank of the respective message partner. Before the sorting to ranks that
-   * are smaller or equal to the local rank the size of the communicator is
-   * added.
-   * example: process 5 is supposed to communicate with processes: 9, 5, 2, 6, 1
-   * 1. add comm_size(10): 9, 15, 12, 6, 11
-   * 2. sort: 6, 9, 11, 12, 15 -> final order: 6, 9, 1, 2, 5
-   */
-  qsort(send_msgs, (size_t)nsend, sizeof(*send_msgs),
-        compare_exchange_messages);
-  qsort(recv_msgs, (size_t)nrecv, sizeof(*recv_msgs),
-        compare_exchange_messages);
 
   return (Xt_redist)redist;
 }

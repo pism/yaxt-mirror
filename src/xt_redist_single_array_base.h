@@ -77,9 +77,4 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                           struct Xt_redist_msg * recv_msgs,
                                           MPI_Comm comm);
 
-#if ! defined TLS && defined HAVE_PTHREAD
-/* internal function to setup pthread key if TLS is unavailable */
-void xt_redist_single_array_base_init(void);
-#endif
-
 #endif // XT_REDIST_SINGLE_ARRAY_BASE_H
