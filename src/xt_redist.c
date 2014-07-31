@@ -53,6 +53,8 @@
 #endif
 
 #include <stdlib.h>
+
+#include "core/core.h"
 #include "xt/xt_core.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_mpi.h"
