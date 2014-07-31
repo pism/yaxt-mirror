@@ -155,6 +155,7 @@ CONTAINS
              __FILE__, &
              __LINE__)
       END IF
+      i = i + 1
     END DO
 
   END SUBROUTINE parse_options
