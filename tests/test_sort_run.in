@@ -1,4 +1,8 @@
 #! @SHELL@
-
 @MPI_LAUNCH@ -n 1 @abs_builddir@/test_sort
+#
+# Local Variables:
+# mode: sh
+# End:
+#
 

@@ -2,3 +2,8 @@
 set -e
 @MPI_LAUNCH@ -n 1 @abs_builddir@/test_initialized_finalized
 @MPI_LAUNCH@ -n 1 @abs_builddir@/test_initialized_finalized_f
+#
+# Local Variables:
+# mode: sh
+# End:
+#

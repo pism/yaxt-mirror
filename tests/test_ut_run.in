@@ -1,6 +1,10 @@
 #! @SHELL@
 set -e
-@MPI_LAUNCH@ -n 1 @abs_builddir@/test_ut
-@MPI_LAUNCH@ -n 2 @abs_builddir@/test_ut
-@MPI_LAUNCH@ -n 3 @abs_builddir@/test_ut
-@MPI_LAUNCH@ -n 4 @abs_builddir@/test_ut
+for ntasks in 1 2 3 4 ; do
+    @MPI_LAUNCH@ -n $ntasks @abs_builddir@/test_ut
+done
+#
+# Local Variables:
+# mode: sh
+# End:
+#
