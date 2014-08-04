@@ -151,13 +151,17 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   for (int i = 0; i < comm_size; ++i) {
 
     int position = 0;
-    // unpack buffers
-    Xt_idxlist src = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
-                                       pack_sizes[i],
-                                       &position, comm);
-    Xt_idxlist dst = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
-                                       pack_sizes[i],
-                                       &position, comm);
+    // unpack buffers unless local
+    Xt_idxlist src, dst;
+    if (i != rank) {
+      src = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
+                              pack_sizes[i], &position, comm);
+      dst = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
+                              pack_sizes[i], &position, comm);
+    } else {
+      src = src_idxlist_local;
+      dst = dst_idxlist_local;
+    }
     large_list_seen
       |= (xt_idxlist_get_num_indices(src) >= CHEAP_VECTOR_SIZE)
       | (xt_idxlist_get_num_indices(dst) >= CHEAP_VECTOR_SIZE);
@@ -180,8 +184,10 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     }
     else
       xt_idxlist_delete(intersect);
-    xt_idxlist_delete(src);
-    xt_idxlist_delete(dst);
+    if (i != rank) {
+      xt_idxlist_delete(src);
+      xt_idxlist_delete(dst);
+    }
   }
 
   /* minimize memory use of tables */
