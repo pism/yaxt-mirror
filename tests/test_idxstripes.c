@@ -765,76 +765,26 @@ do_tests(Xt_idxlist idxlist, const Xt_int *ref_indices, int num_indices) {
 
   free(stripes);
 
-  { // test packing and unpacking
-
-    size_t buffer_size;
-
-    buffer_size = xt_idxlist_get_pack_size(idxlist, MPI_COMM_WORLD);
-
-    // allocate send buffers
-
-    void* send_buffer, * recv_buffer;
-
-    send_buffer = xmalloc(buffer_size);
-    recv_buffer = xmalloc(buffer_size);
-
-    // pack the index vector
-
-    int position = 0;
-
-    assert(buffer_size <= INT_MAX);
-    xt_idxlist_pack(idxlist, send_buffer, (int)buffer_size, &position,
-                    MPI_COMM_WORLD);
-
-    // send the buffer
-
-    int rank;
-
-    xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
-
-    MPI_Request request;
-
-    xt_mpi_call(MPI_Isend(send_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                              MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
-    xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
-
-    // receive the buffer
-
-    xt_mpi_call(MPI_Recv(recv_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                             MPI_COMM_WORLD, MPI_STATUS_IGNORE),
-                    MPI_COMM_WORLD);
-
-    // unpack the buffer
-
-    Xt_idxlist idxlist_copy;
-
-    position = 0;
-    idxlist_copy = xt_idxlist_unpack(recv_buffer, (int)buffer_size, &position,
-                                     MPI_COMM_WORLD);
+  {
+    // test packing and unpacking
+    Xt_idxlist idxlist_copy
+      = idxlist_pack_unpack_copy(idxlist);
 
     // check copy
-
     check_idxlist(idxlist_copy, ref_indices, num_indices);
 
     // clean up
-
-    free(send_buffer);
-    free(recv_buffer);
     xt_idxlist_delete(idxlist_copy);
   }
 
-  { // test copying
-
-    Xt_idxlist idxlist_copy;
-
-    idxlist_copy = xt_idxlist_copy(idxlist);
+  {
+    // test copying
+    Xt_idxlist idxlist_copy = xt_idxlist_copy(idxlist);
 
     // check copy
-
     check_idxlist(idxlist_copy, ref_indices, num_indices);
 
     // clean up
-
     xt_idxlist_delete(idxlist_copy);
   }
 }

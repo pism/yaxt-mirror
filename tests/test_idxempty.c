@@ -69,44 +69,8 @@ int main(void) {
 
     check_idxlist(idxempty, NULL, 0);
 
-    size_t buffer_size = xt_idxlist_get_pack_size(idxempty, MPI_COMM_WORLD);
-
-    void* send_buffer, * recv_buffer;
-
-    send_buffer = xmalloc(buffer_size);
-    recv_buffer = xmalloc(buffer_size);
-
-    int position = 0;
-
-    assert(buffer_size <= INT_MAX);
-    xt_idxlist_pack(idxempty, send_buffer, (int)buffer_size, &position,
-                    MPI_COMM_WORLD);
-
-    // send the buffer
-
-    int rank;
-
-    xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
-
-    MPI_Request request;
-
-    xt_mpi_call(MPI_Isend(send_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                          MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
-    xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
-
-    // receive the buffer
-
-    xt_mpi_call(MPI_Recv(recv_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                         MPI_COMM_WORLD, MPI_STATUS_IGNORE),
-                MPI_COMM_WORLD);
-
-    // unpack the buffer
-
-    Xt_idxlist idxempty_copy;
-
-    position = 0;
-    idxempty_copy = xt_idxlist_unpack(recv_buffer, (int)buffer_size, &position,
-                                      MPI_COMM_WORLD);
+    Xt_idxlist idxempty_copy
+      = idxlist_pack_unpack_copy(idxempty);
 
     // check the received index vector
 
@@ -153,9 +117,6 @@ int main(void) {
     // clean up
 
     free(stripes);
-
-    free(send_buffer);
-    free(recv_buffer);
 
     xt_idxlist_delete(idxempty);
     xt_idxlist_delete(idxempty_copy);

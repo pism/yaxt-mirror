@@ -84,55 +84,10 @@ int main(void) {
 
     check_idxlist(idxvector, index_vector, num_indices);
 
-    // get the size of the index vector
-
-    size_t buffer_size;
-
-    buffer_size = xt_idxlist_get_pack_size(idxvector, MPI_COMM_WORLD);
-
-    // allocate send buffers
-
-    void* send_buffer, * recv_buffer;
-
-    send_buffer = xmalloc(buffer_size);
-    recv_buffer = xmalloc(buffer_size);
-
-    // pack the index vector
-
-    int position = 0;
-
-    assert(buffer_size <= INT_MAX);
-    xt_idxlist_pack(idxvector, send_buffer, (int)buffer_size, &position,
-                    MPI_COMM_WORLD);
-
-    // send the buffer
-
-    int rank;
-
-    xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
-
-    MPI_Request request;
-
-    xt_mpi_call(MPI_Isend(send_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                          MPI_COMM_WORLD, &request), MPI_COMM_WORLD);
-    xt_mpi_call(MPI_Request_free(&request), MPI_COMM_WORLD);
-
-    // receive the buffer
-
-    xt_mpi_call(MPI_Recv(recv_buffer, (int)buffer_size, MPI_PACKED, rank, 0,
-                         MPI_COMM_WORLD, MPI_STATUS_IGNORE),
-                MPI_COMM_WORLD);
-
-    // unpack the buffer
-
-    Xt_idxlist idxvector_copy;
-
-    position = 0;
-    idxvector_copy = xt_idxlist_unpack(recv_buffer, (int)buffer_size, &position,
-                                       MPI_COMM_WORLD);
+    Xt_idxlist idxvector_copy
+      = idxlist_pack_unpack_copy(idxvector);
 
     // check the received index vector
-
     check_idxlist(idxvector_copy, index_vector, num_indices);
 
     // compute intersection between the two index vectors
@@ -148,7 +103,7 @@ int main(void) {
 
     // check the conversion to stripes
 
-    struct Xt_stripe * stripes;
+    struct Xt_stripe *stripes;
     int num_stripes;
 
     xt_idxlist_get_index_stripes(idxvector, &stripes, &num_stripes);
@@ -161,9 +116,6 @@ int main(void) {
     // clean up
 
     free(stripes);
-
-    free(send_buffer);
-    free(recv_buffer);
 
     xt_idxlist_delete(idxvector);
     xt_idxlist_delete(idxvector_copy);

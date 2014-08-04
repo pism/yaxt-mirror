@@ -48,8 +48,7 @@ PROGRAM test_idxvec
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, xt_idxvec_new, &
        xt_idxvec_from_stripes_new, &
-       xt_int_kind, xt_idxlist_get_pack_size, xt_stripe, &
-       xt_idxlist_pack, xt_idxlist_unpack, xt_idxlist_get_intersection, &
+       xt_int_kind, xt_stripe, xt_idxlist_get_intersection, &
        xt_idxlist_get_index_stripes, xt_idxlist_delete, &
        xt_idxlist_get_positions_of_indices, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
@@ -57,7 +56,7 @@ PROGRAM test_idxvec
        xt_bounds, xt_idxlist_get_bounding_box, xt_idxlist_copy
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, check_stripes, &
-       check_offsets
+       check_offsets, idxlist_pack_unpack_copy
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
   INTEGER(xt_int_kind), PARAMETER :: index_vector(7) &
@@ -100,45 +99,10 @@ PROGRAM test_idxvec
 CONTAINS
   SUBROUTINE test_idxvec_pack_unpack
     TYPE(xt_idxlist) :: idxvector, idxvector_copy, intersection
-    INTEGER :: buffer_size, position, rank, ierror, request
-    CHARACTER(1), ALLOCATABLE :: send_buffer(:), recv_buffer(:)
     TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(1, 1, 7) /)
     CALL setup_idxvec(idxvector, index_vector)
-    buffer_size = xt_idxlist_get_pack_size(idxvector, mpi_comm_world)
-    ALLOCATE(send_buffer(buffer_size), recv_buffer(buffer_size))
-    position = 0
-    CALL xt_idxlist_pack(idxvector, send_buffer, buffer_size, position, &
-         mpi_comm_world)
-    CALL mpi_comm_rank(mpi_comm_world, rank, ierror)
-    IF (ierror /= mpi_success) &
-         CALL test_abort("mpi_comm_rank failed", &
-         __FILE__, &
-         __LINE__)
-    ! send the buffer
-    CALL mpi_isend(send_buffer, buffer_size, mpi_packed, rank, 0, &
-         mpi_comm_world, request, ierror)
-    IF (ierror /= mpi_success) &
-         CALL test_abort("mpi_isend failed", &
-         __FILE__, &
-         __LINE__)
 
-    CALL mpi_request_free(request, ierror)
-    IF (ierror /= mpi_success) &
-         CALL test_abort("mpi_request_free failed", &
-         __FILE__, &
-         __LINE__)
-
-    ! receive buffer
-    CALL mpi_recv(recv_buffer, buffer_size, mpi_packed, rank, 0, &
-         mpi_comm_world, mpi_status_ignore, ierror)
-    IF (ierror /= mpi_success) &
-         CALL test_abort("mpi_recv failed", &
-         __FILE__, &
-         __LINE__)
-
-    position = 0
-    CALL xt_idxlist_unpack(idxvector_copy, recv_buffer, buffer_size, &
-         position, mpi_comm_world)
+    idxvector_copy = idxlist_pack_unpack_copy(idxvector)
 
     CALL check_idxlist(idxvector_copy, index_vector)
 
