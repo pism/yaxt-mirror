@@ -60,6 +60,7 @@
 #include "xt/xt_xmap.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
@@ -310,10 +311,6 @@ static void send_intersections(void * send_buffer,
                                int (*send_size)[SEND_SIZE_ASIZE],
                                MPI_Request *dir_init_send_requests,
                                MPI_Comm comm) {
-
-  int const src_send_tag = 0;
-  int const dst_send_tag = 1;
-
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
@@ -327,8 +324,8 @@ static void send_intersections(void * send_buffer,
     if (send_size[i][SEND_SIZE_SRC] > 0) {
       xt_mpi_call(MPI_Isend((char *)send_buffer + offset,
                             send_size[i][SEND_SIZE_SRC],
-                            MPI_PACKED, i, src_send_tag, comm,
-                            dir_init_send_requests+2*i+0),
+                            MPI_PACKED, i, xt_mpi_tag_xmap_dist_dir_src_send,
+                            comm, dir_init_send_requests+2*i+0),
                   comm);
       offset += send_size[i][SEND_SIZE_SRC];
     }
@@ -337,8 +334,8 @@ static void send_intersections(void * send_buffer,
     if (send_size[i][SEND_SIZE_DST] > 0) {
       xt_mpi_call(MPI_Isend((char *)send_buffer + offset,
                             send_size[i][SEND_SIZE_DST],
-                            MPI_PACKED, i, dst_send_tag, comm,
-                            dir_init_send_requests+2*i+1),
+                            MPI_PACKED, i, xt_mpi_tag_xmap_dist_dir_dst_send,
+                            comm, dir_init_send_requests+2*i+1),
                   comm);
       offset += send_size[i][SEND_SIZE_DST];
     }
@@ -382,9 +379,6 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
                               struct dist_dir **src_dist_dir,
                               struct dist_dir **dst_dist_dir, MPI_Comm comm) {
 
-  int const src_recv_tag = 0;
-  int const dst_recv_tag = 1;
-
   *src_dist_dir = xmalloc(sizeof (struct dist_dir)
                           + (sizeof (struct dist_dir_entry)
                              * (size_t)recv_size[SEND_NUM_SRC]));
@@ -398,10 +392,10 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
 
   recv_and_unpack_intersection(*src_dist_dir, recv_size[SEND_SIZE_SRC],
                                recv_size[SEND_NUM_SRC], recv_buffer,
-                               src_recv_tag, comm);
+                               xt_mpi_tag_xmap_dist_dir_src_send, comm);
   recv_and_unpack_intersection(*dst_dist_dir, recv_size[SEND_SIZE_DST],
                                recv_size[SEND_NUM_DST], recv_buffer,
-                               dst_recv_tag, comm);
+                               xt_mpi_tag_xmap_dist_dir_dst_send, comm);
 
   free(recv_buffer);
 }
@@ -601,7 +595,7 @@ recv_and_unpack_dist_dir_result(struct dist_dir * dist_dir, int recv_size,
     MPI_Status status;
 
     xt_mpi_call(MPI_Recv(recv_buffer, recv_size, MPI_PACKED,
-                             MPI_ANY_SOURCE, tag, comm, &status), comm);
+                         MPI_ANY_SOURCE, tag, comm, &status), comm);
 
     int received_count;
     xt_mpi_call(MPI_Get_count(&status, MPI_PACKED, &received_count), comm);
@@ -714,9 +708,6 @@ static void recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
                                              int *num_dst_intersections,
                                              MPI_Comm comm) {
 
-  int const src_recv_tag = 0;
-  int const dst_recv_tag = 1;
-
   void * recv_buffer;
 
   recv_buffer = xmalloc((size_t)MAX(recv_size[SEND_SIZE_SRC],
@@ -733,13 +724,15 @@ static void recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
 
   recv_and_unpack_dist_dir_result(src_dist_dir_results,
                                   recv_size[SEND_SIZE_SRC],
-                                  recv_buffer, src_recv_tag, comm);
+                                  recv_buffer,
+                                  xt_mpi_tag_xmap_dist_dir_src_send, comm);
   assert(src_dist_dir_results->num_entries
          == recv_size[SEND_NUM_SRC]);
 
   recv_and_unpack_dist_dir_result(dst_dist_dir_results,
                                   recv_size[SEND_SIZE_DST],
-                                  recv_buffer, dst_recv_tag, comm);
+                                  recv_buffer,
+                                  xt_mpi_tag_xmap_dist_dir_dst_send, comm);
   assert(dst_dist_dir_results->num_entries
          == recv_size[SEND_NUM_DST]);
 

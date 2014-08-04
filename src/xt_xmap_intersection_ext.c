@@ -56,6 +56,7 @@
 #include "xt/xt_xmap.h"
 #include "xt_xmap_internal.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
@@ -585,11 +586,6 @@ exchange_pos_ext_modifications(
   int (*restrict dst_removals_per_intersection)[2],
   MPI_Comm comm)
 {
-  enum {
-    HEADER_EXCHANGE_TAG = 0,
-    DATA_EXCHANGE_TAG = 1,
-  };
-
   MPI_Request * requests
     = xmalloc((size_t)(num_src_intersections + 2 * num_dst_intersections) *
               sizeof(*requests));
@@ -600,7 +596,8 @@ exchange_pos_ext_modifications(
   // set up receives for indices that need to be removed from the send messages
   for (int i = 0; i < num_src_intersections; ++i)
     xt_mpi_call(MPI_Irecv(src_removals_per_intersection[i],
-                          2, MPI_INT, src_com[i].rank, HEADER_EXCHANGE_TAG,
+                          2, MPI_INT, src_com[i].rank,
+                          xt_mpi_tag_xmap_intersection_header_exchange,
                           comm, recv_requests + i), comm);
 
   /* send rebuilt pos_ext vectors that needed to be modified on the
@@ -609,7 +606,8 @@ exchange_pos_ext_modifications(
   unsigned num_active_dst = 0, num_dst_changes = 0;
   for (int i = 0; i < num_dst_intersections; ++i) {
     xt_mpi_call(MPI_Isend(dst_removals_per_intersection[i],
-                          2, MPI_INT, dst_com[i].rank, HEADER_EXCHANGE_TAG,
+                          2, MPI_INT, dst_com[i].rank,
+                          xt_mpi_tag_xmap_intersection_header_exchange,
                           comm, send_header_requests + i), comm);
 
     if (dst_removals_per_intersection[i][1] > 0) {
@@ -620,7 +618,8 @@ exchange_pos_ext_modifications(
              == dst_ext[num_active_dst].rank);
       xt_mpi_call(MPI_Isend(dst_ext[num_active_dst].transfer_pos_ext,
                             dst_removals_per_intersection[i][1],
-                            MPI_2INT, dst_com[i].rank, DATA_EXCHANGE_TAG,
+                            MPI_2INT, dst_com[i].rank,
+                            xt_mpi_tag_xmap_intersection_data_exchange,
                             comm, send_data_requests + num_dst_changes),
                   comm);
       ++num_dst_changes;
@@ -652,7 +651,8 @@ exchange_pos_ext_modifications(
       if (src_removals_per_intersection[i][1] > 0) {
         xt_mpi_call(MPI_Irecv(src_updated_pos_ext + offset,
                               src_removals_per_intersection[i][1],
-                              MPI_2INT, src_com[i].rank, DATA_EXCHANGE_TAG,
+                              MPI_2INT, src_com[i].rank,
+                              xt_mpi_tag_xmap_intersection_data_exchange,
                               comm, recv_requests + num_src_changes), comm);
 
         offset += (size_t)src_removals_per_intersection[i][1];

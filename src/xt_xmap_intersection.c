@@ -57,6 +57,7 @@
 #include "xt/xt_xmap.h"
 #include "xt_xmap_internal.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
@@ -466,7 +467,8 @@ exchange_points_to_remove(int num_src_intersections,
   // set up receives for indices that need to be removed from the send messages
   for (int i = 0; i < num_src_intersections; ++i)
     xt_mpi_call(MPI_Irecv(num_src_indices_to_remove_per_intersection + i,
-                          1, MPI_INT, src_com[i].rank, HEADER_EXCHANGE_TAG,
+                          1, MPI_INT, src_com[i].rank,
+                          xt_mpi_tag_xmap_intersection_header_exchange,
                           comm, recv_requests+i), comm);
 
   // send indices that need to be removed on the target side due to duplicated
@@ -475,14 +477,16 @@ exchange_points_to_remove(int num_src_intersections,
   unsigned num_nonempty_dst_intersections = 0;
   for (int i = 0; i < num_dst_intersections; ++i) {
     xt_mpi_call(MPI_Isend(num_dst_indices_to_remove_per_intersection + i,
-                          1, MPI_INT, dst_com[i].rank, HEADER_EXCHANGE_TAG,
+                          1, MPI_INT, dst_com[i].rank,
+                          xt_mpi_tag_xmap_intersection_header_exchange,
                           comm, send_header_requests + i), comm);
 
     if (num_dst_indices_to_remove_per_intersection[i] > 0) {
 
       xt_mpi_call(MPI_Isend(dst_indices_to_remove + offset,
                             num_dst_indices_to_remove_per_intersection[i],
-                            Xt_int_dt, dst_com[i].rank, DATA_EXCHANGE_TAG,
+                            Xt_int_dt, dst_com[i].rank,
+                            xt_mpi_tag_xmap_intersection_data_exchange,
                             comm,
                             send_data_requests + num_nonempty_dst_intersections),
                   comm);
@@ -513,7 +517,8 @@ exchange_points_to_remove(int num_src_intersections,
       if (num_src_indices_to_remove_per_intersection[i] > 0) {
         xt_mpi_call(MPI_Irecv((*src_indices_to_remove) + offset,
                               num_src_indices_to_remove_per_intersection[i],
-                              Xt_int_dt, src_com[i].rank, DATA_EXCHANGE_TAG,
+                              Xt_int_dt, src_com[i].rank,
+                              xt_mpi_tag_xmap_intersection_data_exchange,
                               comm,
                               recv_requests + num_nonempty_src_intersections),
                     comm);

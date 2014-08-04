@@ -49,6 +49,7 @@
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_simple_base.h"
@@ -65,13 +66,13 @@ xt_exchanger_irecv_isend_s_exchange(const void *src_data, void *dst_data,
 
   for (int i = 0; i < nrecv; ++i)
     xt_mpi_call(MPI_Irecv(dst_data, 1, recv_msgs[i].datatype,
-                          recv_msgs[i].rank, 0, comm,
+                          recv_msgs[i].rank, xt_mpi_tag_exchange_msg, comm,
                           requests+i), comm);
 
   for (int i = 0; i < nsend; ++i)
     xt_mpi_call(MPI_Isend((void *)src_data, 1, send_msgs[i].datatype,
-                          send_msgs[i].rank, 0, comm, requests+nrecv+i),
-                          comm);
+                          send_msgs[i].rank, xt_mpi_tag_exchange_msg, comm,
+                          requests+nrecv+i), comm);
 
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
 
