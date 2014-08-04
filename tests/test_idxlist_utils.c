@@ -288,9 +288,8 @@ idxlist_pack_unpack_copy(Xt_idxlist idxlist)
     = xt_idxlist_get_pack_size(idxlist, MPI_COMM_WORLD);
 
   // allocate send buffers
-  void* send_buffer, * recv_buffer;
-  send_buffer = xmalloc(buffer_size);
-  recv_buffer = xmalloc(buffer_size);
+  void *send_buffer = xmalloc(buffer_size),
+    *recv_buffer = xmalloc(buffer_size);
 
   // pack the index list
   int position = 0;
@@ -298,6 +297,7 @@ idxlist_pack_unpack_copy(Xt_idxlist idxlist)
   assert(buffer_size <= INT_MAX);
   xt_idxlist_pack(idxlist, send_buffer, (int)buffer_size, &position,
                   MPI_COMM_WORLD);
+  assert((size_t)position == buffer_size);
 
   // send the buffer
   int rank;
@@ -315,6 +315,7 @@ idxlist_pack_unpack_copy(Xt_idxlist idxlist)
   Xt_idxlist idxlist_copy
     = xt_idxlist_unpack(recv_buffer, (int)buffer_size, &position,
                         MPI_COMM_WORLD);
+  assert((size_t)position == buffer_size);
   free(recv_buffer);
   return idxlist_copy;
 }
