@@ -89,6 +89,9 @@ xt_finalize()
     xt_idxsection_finalize();
     xt_idxstripes_finalize();
     xt_idxempty_finalize();
+#if ! defined TLS && defined HAVE_PTHREAD
+    xt_exchanger_finalize();
+#endif
 #ifdef INSTR_WITH_SCT
     INSTR_STOP(instr);
     INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);

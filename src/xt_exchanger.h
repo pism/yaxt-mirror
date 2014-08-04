@@ -84,6 +84,9 @@ void xt_exchanger_internal_optimize(int n, void * msgs, size_t msg_type_size,
 #if ! defined TLS && defined HAVE_PTHREAD
 /* internal function to setup pthread key if TLS is unavailable */
 void xt_exchanger_init(void);
+void xt_redist_finalize(void);
+#else
+
 #endif
 
 #endif // XT_EXCHANGER_H

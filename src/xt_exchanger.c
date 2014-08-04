@@ -86,6 +86,15 @@ void xt_exchanger_init(void) {
   }
 }
 
+void xt_exchanger_finalize(void) {
+  int ierror = pthread_key_delete(tls_qsort_data_key);
+  if (ierror) {
+    fprintf(stderr, "%s: error deleting pthread key: %s\n",
+            __func__, strerror(ierror));
+    die("Failed pthread_key_delete in finalization!");
+  }
+}
+
 #else
 
 static TLS int comm_rank, comm_size;
