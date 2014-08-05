@@ -61,5 +61,19 @@ enum xt_mpi_tags {
   xt_mpi_num_tags,
 };
 
+
+extern int xt_mpi_comm_internal_keyval;
+
+void
+xt_mpi_init(void);
+void
+xt_mpi_finalize(void);
+
+MPI_Comm
+xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset);
+
+void
+xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset);
+
 #endif
 

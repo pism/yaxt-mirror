@@ -78,7 +78,7 @@ struct Xt_exchanger_mix_isend_irecv_ {
 
   const struct xt_exchanger_vtable * vtable;
 
-  int n;
+  int n, tag_offset;
   struct mix_msg * msgs;
   MPI_Comm comm;
 };
@@ -95,7 +95,7 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
 
   struct Xt_redist_msg * temp_msgs;
 
-  xt_mpi_call(MPI_Comm_dup(comm, &(exchanger->comm)), comm);
+  exchanger->comm = xt_mpi_comm_smart_dup(comm, &exchanger->tag_offset);
   exchanger->n = nsend + nrecv;
   exchanger->msgs = xmalloc((size_t)exchanger->n * sizeof(*(exchanger->msgs)));
   temp_msgs = xt_redist_msgs_copy((size_t)nsend, send_msgs, exchanger->comm);
@@ -143,7 +143,7 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
 
   xt_redist_msgs_free(nmsg, temp_msgs, exchanger_msr->comm);
 
-  xt_mpi_call(MPI_Comm_free(&(exchanger_msr->comm)), MPI_COMM_WORLD);
+  xt_mpi_comm_smart_dedup(&exchanger_msr->comm, exchanger_msr->tag_offset);
   free(exchanger_msr);
 }
 
@@ -157,20 +157,21 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
 
   MPI_Request *requests
     = xmalloc((size_t)(exchanger_msr->n) * sizeof (*requests));
+  int tag_offset = exchanger_msr->tag_offset;
 
   for (int i = 0; i < exchanger_msr->n; ++i)
     if (exchanger_msr->msgs[i].type == SEND)
       xt_mpi_call(MPI_Isend((void *)src_data, 1,
                             exchanger_msr->msgs[i].data.datatype,
                             exchanger_msr->msgs[i].data.rank,
-                            xt_mpi_tag_exchange_msg,
+                            tag_offset + xt_mpi_tag_exchange_msg,
                             exchanger_msr->comm, requests+i),
                             exchanger_msr->comm);
     else
       xt_mpi_call(MPI_Irecv(dst_data, 1,
                             exchanger_msr->msgs[i].data.datatype,
                             exchanger_msr->msgs[i].data.rank,
-                            xt_mpi_tag_exchange_msg,
+                            tag_offset + xt_mpi_tag_exchange_msg,
                             exchanger_msr->comm, requests+i),
                             exchanger_msr->comm);
 

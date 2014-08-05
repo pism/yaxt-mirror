@@ -52,6 +52,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
 #include "xt_exchanger_simple_base.h"
@@ -74,8 +75,8 @@ struct Xt_exchanger_simple_base_ {
 
   int nsend, nrecv;
   struct Xt_redist_msg * send_msgs, * recv_msgs;
+  int tag_offset;
   MPI_Comm comm;
-
   xt_simple_exchange_func func;
 };
 
@@ -94,7 +95,7 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
 
   exchanger->vtable = &exchanger_simple_base_vtable;
 
-  xt_mpi_call(MPI_Comm_dup(comm, &(exchanger->comm)), comm);
+  exchanger->comm = xt_mpi_comm_smart_dup(comm, &exchanger->tag_offset);
   exchanger->nsend = nsend;
   exchanger->send_msgs = xt_redist_msgs_copy((size_t)nsend, send_msgs, exchanger->comm);
   exchanger->nrecv = nrecv;
@@ -122,7 +123,7 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
   xt_redist_msgs_free((size_t)exchanger_sb->nrecv, exchanger_sb->recv_msgs,
                       exchanger_sb->comm);
 
-  xt_mpi_call(MPI_Comm_free(&(exchanger_sb->comm)), MPI_COMM_WORLD);
+  xt_mpi_comm_smart_dedup(&exchanger_sb->comm, exchanger_sb->tag_offset);
   free(exchanger_sb);
 }
 
@@ -135,5 +136,6 @@ static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
 
   exchanger_sb->func(src_data, dst_data, exchanger_sb->nsend,
                      exchanger_sb->nrecv, exchanger_sb->send_msgs,
-                     exchanger_sb->recv_msgs, exchanger_sb->comm);
+                     exchanger_sb->recv_msgs, exchanger_sb->tag_offset,
+                     exchanger_sb->comm);
 }

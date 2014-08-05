@@ -148,6 +148,7 @@ struct Xt_xmap_intersection_ {
   // for xmap-users like redist
   int max_src_pos; // max possible pos over all src transfer_pos (always >= 0)
   int max_dst_pos; // same for dst
+  int tag_offset;  /* add to make tags on same communicator non-overlapping */
 
   MPI_Comm comm;
 };
@@ -450,12 +451,8 @@ exchange_points_to_remove(int num_src_intersections,
                           int *restrict num_src_indices_to_remove_per_intersection,
                           Xt_int * dst_indices_to_remove,
                           int *restrict num_dst_indices_to_remove_per_intersection,
+                          int tag_offset,
                           MPI_Comm comm) {
-
-  enum {
-    HEADER_EXCHANGE_TAG = 0,
-    DATA_EXCHANGE_TAG = 1,
-  };
 
   MPI_Request * requests
     = xmalloc((size_t)(num_src_intersections + 2 * num_dst_intersections) *
@@ -466,29 +463,31 @@ exchange_points_to_remove(int num_src_intersections,
 
   // set up receives for indices that need to be removed from the send messages
   for (int i = 0; i < num_src_intersections; ++i)
-    xt_mpi_call(MPI_Irecv(num_src_indices_to_remove_per_intersection + i,
-                          1, MPI_INT, src_com[i].rank,
-                          xt_mpi_tag_xmap_intersection_header_exchange,
-                          comm, recv_requests+i), comm);
+    xt_mpi_call(MPI_Irecv(
+                  num_src_indices_to_remove_per_intersection + i, 1, MPI_INT,
+                  src_com[i].rank,
+                  tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
+                  comm, recv_requests+i), comm);
 
   // send indices that need to be removed on the target side due to duplicated
   // receives
   int offset = 0;
   unsigned num_nonempty_dst_intersections = 0;
   for (int i = 0; i < num_dst_intersections; ++i) {
-    xt_mpi_call(MPI_Isend(num_dst_indices_to_remove_per_intersection + i,
-                          1, MPI_INT, dst_com[i].rank,
-                          xt_mpi_tag_xmap_intersection_header_exchange,
-                          comm, send_header_requests + i), comm);
+    xt_mpi_call(MPI_Isend(
+                  num_dst_indices_to_remove_per_intersection + i, 1, MPI_INT,
+                  dst_com[i].rank,
+                  tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
+                  comm, send_header_requests + i), comm);
 
     if (num_dst_indices_to_remove_per_intersection[i] > 0) {
 
-      xt_mpi_call(MPI_Isend(dst_indices_to_remove + offset,
-                            num_dst_indices_to_remove_per_intersection[i],
-                            Xt_int_dt, dst_com[i].rank,
-                            xt_mpi_tag_xmap_intersection_data_exchange,
-                            comm,
-                            send_data_requests + num_nonempty_dst_intersections),
+      xt_mpi_call(MPI_Isend(
+                    dst_indices_to_remove + offset,
+                    num_dst_indices_to_remove_per_intersection[i], Xt_int_dt,
+                    dst_com[i].rank,
+                    tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
+                    comm, send_data_requests + num_nonempty_dst_intersections),
                   comm);
       offset += num_dst_indices_to_remove_per_intersection[i];
       ++num_nonempty_dst_intersections;
@@ -515,13 +514,13 @@ exchange_points_to_remove(int num_src_intersections,
     offset = 0;
     for (int i = 0; i < num_src_intersections; ++i)
       if (num_src_indices_to_remove_per_intersection[i] > 0) {
-        xt_mpi_call(MPI_Irecv((*src_indices_to_remove) + offset,
-                              num_src_indices_to_remove_per_intersection[i],
-                              Xt_int_dt, src_com[i].rank,
-                              xt_mpi_tag_xmap_intersection_data_exchange,
-                              comm,
-                              recv_requests + num_nonempty_src_intersections),
-                    comm);
+        xt_mpi_call(MPI_Irecv(
+                      (*src_indices_to_remove) + offset,
+                      num_src_indices_to_remove_per_intersection[i],
+                      Xt_int_dt, src_com[i].rank,
+                      tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
+                      comm,
+                      recv_requests + num_nonempty_src_intersections), comm);
 
         offset = offset
           + num_src_indices_to_remove_per_intersection[i];
@@ -571,7 +570,8 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
   exchange_points_to_remove(
     num_src_intersections, src_com, num_dst_intersections, dst_com,
     &src_indices_to_remove, num_src_indices_to_remove_per_intersection,
-    dst_indices_to_remove, num_dst_indices_to_remove_per_intersection, comm);
+    dst_indices_to_remove, num_dst_indices_to_remove_per_intersection,
+    xmap->tag_offset, comm);
 
   free(dst_indices_to_remove);
   free(num_dst_indices_to_remove_per_intersection);
@@ -600,10 +600,7 @@ xt_xmap_intersection_new(int num_src_intersections,
 
   xmap->vtable = &xmap_intersection_vtable;
 
-  /* this dup could be saved if we knew comm was already internal to
-   * the library somehow */
-  xt_mpi_call(MPI_Comm_dup(comm, &(xmap->comm)), comm);
-  comm = xmap->comm;
+  xmap->comm = comm = xt_mpi_comm_smart_dup(comm, &xmap->tag_offset);
 
   // generate exchange lists
   if (!generate_transfer_pos(xmap,
@@ -648,8 +645,8 @@ static void xmap_intersection_delete(Xt_xmap xmap) {
                                xmap_intersection->in_msg);
   xmap_intersection_msg_delete(xmap_intersection->n_out,
                                xmap_intersection->out_msg);
-
-  xt_mpi_call(MPI_Comm_free(&(xmap_intersection->comm)), MPI_COMM_WORLD);
+  xt_mpi_comm_smart_dedup(&xmap_intersection->comm,
+                          xmap_intersection->tag_offset);
   free(xmap_intersection);
 }
 

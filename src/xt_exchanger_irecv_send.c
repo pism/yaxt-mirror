@@ -59,19 +59,21 @@ xt_exchanger_irecv_send_s_exchange(const void *src_data, void *dst_data,
                                    int nsend, int nrecv,
                                    struct Xt_redist_msg * send_msgs,
                                    struct Xt_redist_msg * recv_msgs,
-                                   MPI_Comm comm) {
+                                   int tag_offset, MPI_Comm comm) {
 
   MPI_Request *recv_request
     = xmalloc((size_t)nrecv * sizeof (*recv_request));
 
   for (int i = 0; i < nrecv; ++i)
     xt_mpi_call(MPI_Irecv(dst_data, 1, recv_msgs[i].datatype,
-                          recv_msgs[i].rank, xt_mpi_tag_exchange_msg, comm,
+                          recv_msgs[i].rank,
+                          tag_offset + xt_mpi_tag_exchange_msg, comm,
                           recv_request+i), comm);
 
   for (int i = 0; i < nsend; ++i)
     xt_mpi_call(MPI_Send((void *)src_data, 1, send_msgs[i].datatype,
-                         send_msgs[i].rank, xt_mpi_tag_exchange_msg, comm),
+                         send_msgs[i].rank,
+                         tag_offset + xt_mpi_tag_exchange_msg, comm),
                 comm);
 
   xt_mpi_call(MPI_Waitall(nrecv, recv_request, MPI_STATUSES_IGNORE), comm);

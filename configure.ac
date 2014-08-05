@@ -90,6 +90,7 @@ AS_IF([test x$ac_cv_c_char_unsigned = xyes],
 AC_SUBST([C_CHAR_IS_UNSIGNED])
 ACX_CHECK_SIZEOF_RELATION([long], [int])
 ACX_CHECK_SIZEOF_RELATION([long long], [long])
+AC_CHECK_DECLS([__builtin_ctzl],,[AC_CHECK_DECLS([__builtin_clzl])])
 
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly

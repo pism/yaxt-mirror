@@ -45,6 +45,8 @@
 #include "config.h"
 #endif
 
+#include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -53,6 +55,7 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_core.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 
 //! COMPACT_DT enables the anlysis of displacements in order to give a
 //! more compact description to the datatype generators of MPI. For strong
@@ -727,5 +730,188 @@ xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
   MPI_Datatype dt = parse_stripe(v, vlen, old_type);
   free(v);
   return dt;
+}
+
+/* functions to handle optimizations on communicators */
+int xt_mpi_comm_internal_keyval;
+
+typedef unsigned long used_map_elem;
+
+enum {
+  used_map_elem_bits = sizeof (used_map_elem) * CHAR_BIT,
+};
+
+struct xt_mpi_comm_internal_attr {
+  int refcount;
+  unsigned used_map_size;
+  used_map_elem used_map[];
+};
+
+static int
+xt_mpi_comm_internal_keyval_copy(
+  MPI_Comm XT_UNUSED(oldcomm), int XT_UNUSED(keyval),
+  void *XT_UNUSED(extra_state), void *XT_UNUSED(attribute_val_in),
+  void *attribute_val_out, int *flag)
+{
+  struct xt_mpi_comm_internal_attr *new_comm_attr
+    = malloc(sizeof (struct xt_mpi_comm_internal_attr)
+             + sizeof (used_map_elem));
+  int retval;
+  if (new_comm_attr)
+  {
+    new_comm_attr->refcount = 1;
+    new_comm_attr->used_map_size = 1;
+    new_comm_attr->used_map[0] = 1U;
+    *(void **)attribute_val_out = new_comm_attr;
+    *flag = 1;
+    retval = MPI_SUCCESS;
+  } else {
+    *flag = 0;
+    retval = MPI_ERR_NO_MEM;
+  }
+  return retval;
+}
+
+static int
+xt_mpi_comm_internal_keyval_delete(
+  MPI_Comm XT_UNUSED(comm), int XT_UNUSED(comm_keyval),
+  void *attribute_val, void *XT_UNUSED(extra_state))
+{
+  free(attribute_val);
+  return MPI_SUCCESS;
+}
+
+
+void
+xt_mpi_init(void) {
+  xt_mpi_call(MPI_Comm_create_keyval(xt_mpi_comm_internal_keyval_copy,
+                                     xt_mpi_comm_internal_keyval_delete,
+                                     &xt_mpi_comm_internal_keyval, NULL),
+              Xt_default_comm);
+}
+
+void
+xt_mpi_finalize(void) {
+  xt_mpi_call(MPI_Comm_free_keyval(&xt_mpi_comm_internal_keyval),
+              Xt_default_comm);
+}
+
+static struct xt_mpi_comm_internal_attr *
+xt_mpi_comm_get_internal_attr(MPI_Comm comm)
+{
+  int attr_found;
+  void *attr_val;
+  xt_mpi_call(MPI_Comm_get_attr(comm, xt_mpi_comm_internal_keyval,
+                                &attr_val, &attr_found),
+              comm);
+  return attr_found ? attr_val : NULL;
+}
+
+#if HAVE_DECL___BUILTIN_CTZL
+#define ctzl(v) (__builtin_ctzl(v))
+#elif HAVE_DECL___BUILTIN_CLZL
+static inline int
+ctzl(unsigned long v) {
+  enum {
+    ulong_bits = sizeof (unsigned long) * CHAR_BIT,
+  };
+  /* clear all but lowest 1 bit */
+  v = v & ~(v - 1);
+  int c = ulong_bits - __builtin_clzl(v) - 1;
+  return c;
+}
+#else
+static inline int
+ctzl(unsigned long v) {
+  enum {
+    ulong_bits = sizeof (unsigned long) * CHAR_BIT,
+  };
+  // c will be the number of zero bits on the right
+  unsigned int c = ulong_bits;
+  v &= (unsigned long)-(long)v;
+  if (v) c--;
+  if (ulong_bits == 64) {
+    if (v & UINT64_C(0x00000000ffffffff)) c -= 32;
+    if (v & UINT64_C(0x0000ffff0000ffff)) c -= 16;
+    if (v & UINT64_C(0x00ff00ff00ff00ff)) c -= 8;
+    if (v & UINT64_C(0x0f0f0f0f0f0f0f0f)) c -= 4;
+    if (v & UINT64_C(0x3333333333333333)) c -= 2;
+    if (v & UINT64_C(0x5555555555555555)) c -= 1;
+  } else if (used_map_elem_bits == 32) {
+    if (v & 0x0000FFFFUL) c -= 16;
+    if (v & 0x00FF00FFUL) c -= 8;
+    if (v & 0x0F0F0F0FUL) c -= 4;
+    if (v & 0x33333333UL) c -= 2;
+    if (v & 0x55555555UL) c -= 1;
+  } else
+    die("Unexpected size of long.\n");
+  return (int)c;
+}
+#endif
+
+MPI_Comm
+xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset)
+{
+  MPI_Comm comm_dest;
+  struct xt_mpi_comm_internal_attr *comm_xt_attr_val
+    = xt_mpi_comm_get_internal_attr(comm);
+  size_t position = 0;
+  if (comm_xt_attr_val) {
+    comm_dest = comm;
+    int refcount = ++(comm_xt_attr_val->refcount);
+    size_t used_map_size = comm_xt_attr_val->used_map_size;
+    while (position < used_map_size
+           && comm_xt_attr_val->used_map[position] == ~(used_map_elem)0)
+      ++position;
+    if (position >= used_map_size) {
+      /* sadly, we need to recreate the value to enlarge it */
+      struct xt_mpi_comm_internal_attr *new_comm_xt_attr_val
+        = xmalloc(sizeof (*new_comm_xt_attr_val)
+                  + used_map_size * sizeof (used_map_elem));
+      new_comm_xt_attr_val->refcount = refcount;
+      new_comm_xt_attr_val->used_map_size = (unsigned)(used_map_size + 1);
+      for (size_t i = 0; i < used_map_size; ++i)
+        new_comm_xt_attr_val->used_map[i] = comm_xt_attr_val->used_map[i];
+      new_comm_xt_attr_val->used_map[used_map_size] = 1U;
+      position *= used_map_elem_bits;
+      xt_mpi_call(MPI_Comm_set_attr(comm_dest, xt_mpi_comm_internal_keyval,
+                                    new_comm_xt_attr_val), comm_dest);
+    } else {
+      /* not all bits are set, find first unset position and insert */
+      used_map_elem used_map_entry = comm_xt_attr_val->used_map[position],
+        unset_lsb = ~used_map_entry & (used_map_entry + 1),
+        bit_pos = (used_map_elem)ctzl(unset_lsb);
+      comm_xt_attr_val->used_map[position] = used_map_entry | unset_lsb;
+      position = position * used_map_elem_bits + (size_t)bit_pos;
+    }
+  } else {
+    struct xt_mpi_comm_internal_attr *comm_attr
+      = xmalloc(sizeof (*comm_attr) + sizeof (used_map_elem));
+    comm_attr->refcount = 1;
+    comm_attr->used_map_size = 1;
+    comm_attr->used_map[0] = 1U;
+    xt_mpi_call(MPI_Comm_dup(comm, &comm_dest), comm);
+    xt_mpi_call(MPI_Comm_set_attr(comm_dest, xt_mpi_comm_internal_keyval,
+                                  comm_attr), comm_dest);
+  }
+  *tag_offset = (int)(position * xt_mpi_num_tags);
+  return comm_dest;
+}
+
+void
+xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset)
+{
+  struct xt_mpi_comm_internal_attr *comm_xt_attr_val
+    = xt_mpi_comm_get_internal_attr(*comm);
+  int refcount = comm_xt_attr_val ? --(comm_xt_attr_val->refcount) : 0;
+  if (refcount < 1) {
+    xt_mpi_call(MPI_Comm_free(comm), MPI_COMM_WORLD);
+    *comm = MPI_COMM_NULL;
+  } else {
+    size_t position = (unsigned)tag_offset / xt_mpi_num_tags,
+      map_elem = position / used_map_elem_bits,
+      in_elem_bit = position % used_map_elem_bits;
+    comm_xt_attr_val->used_map[map_elem] &= ~((used_map_elem)1 << in_elem_bit);
+  }
 }
 

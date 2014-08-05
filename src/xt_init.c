@@ -51,6 +51,7 @@
 #include "xt_idxsection_internal.h"
 #include "xt_idxempty_internal.h"
 #include "xt_exchanger.h"
+#include "xt_mpi_internal.h"
 #include "instr.h"
 
 INSTR_DEF(instr,"YAXT_lifetime");
@@ -65,6 +66,7 @@ void
 xt_initialize(MPI_Comm default_comm)
 {
   Xt_default_comm = default_comm;
+  xt_mpi_init();
   xt_idxempty_init();
   xt_idxstripes_initialize();
   xt_idxsection_initialize();
@@ -92,6 +94,7 @@ xt_finalize()
 #if ! defined TLS && defined HAVE_PTHREAD
     xt_exchanger_finalize();
 #endif
+    xt_mpi_finalize();
 #ifdef INSTR_WITH_SCT
     INSTR_STOP(instr);
     INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);

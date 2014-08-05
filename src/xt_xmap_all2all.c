@@ -59,6 +59,7 @@
 #include "xt/xt_idxvec.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
@@ -208,9 +209,8 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   INSTR_DEF(t_xt_xmap_all2all_new,"xt_xmap_all2all_new");
   INSTR_START(t_xt_xmap_all2all_new);
 
-  MPI_Comm curr_comm;
-
-  xt_mpi_call(MPI_Comm_dup(comm, &curr_comm), comm);
+  int tag_offset;
+  MPI_Comm newcomm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 
   struct Xt_com_list * src_intersections = NULL, * dst_intersections = NULL;
   int num_src_intersections = 0, num_dst_intersections = 0;
@@ -219,9 +219,7 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   // exchange index lists between all processes in comm
   exchange_idxlists(&src_intersections, &num_src_intersections,
                     &dst_intersections, &num_dst_intersections,
-                    &stripify, src_idxlist, dst_idxlist, curr_comm);
-
-  MPI_Comm_free(&curr_comm);
+                    &stripify, src_idxlist, dst_idxlist, newcomm);
 
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,
@@ -233,8 +231,9 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
 
   Xt_xmap xmap = xmap_new(num_src_intersections, src_intersections,
                           num_dst_intersections, dst_intersections,
-                          src_idxlist, dst_idxlist, comm);
+                          src_idxlist, dst_idxlist, newcomm);
 
+  xt_mpi_comm_smart_dedup(&newcomm, tag_offset);
   for (int i = 0; i < num_src_intersections; ++i)
     if (src_intersections[i].list != NULL)
       xt_idxlist_delete(src_intersections[i].list);
