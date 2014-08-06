@@ -123,4 +123,18 @@ MPI_Datatype xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
                                              int count, MPI_Datatype old_type,
                                              MPI_Comm comm);
 
+
+/**
+ * Annotate communicator that is for exclusive use by YAXT.
+ *
+ * YAXT will trust communicators marked this way to not have active
+ * communications other than those initiated by YAXT functions. This
+ * is useful to prevent unnecessary MPI_Comm_dup() calls.
+ *
+ * @param[inout] comm communicator that will not be used by
+ *                    application code
+ */
+void
+xt_mpi_comm_mark_exclusive(MPI_Comm comm);
+
 #endif // XT_MPI_H

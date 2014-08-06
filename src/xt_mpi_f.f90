@@ -49,6 +49,15 @@
 !! Fortran library, we keep to mpif.h for the library
 MODULE xt_mpi
   IMPLICIT NONE
+  ! we use the Fortran 77 include here because the more modern
+  ! 'USE mpi' of Fortran 90+ introduces crazy object dependencies
+  ! with some compilers (e.g. pgfortran)
   PUBLIC
   INCLUDE "mpif.h"
+  INTERFACE
+    SUBROUTINE xt_mpi_comm_mark_exclusive(comm) &
+         BIND(c, name='xt_mpi_comm_mark_exclusive_f2c')
+      INTEGER, INTENT(inout) :: comm
+    END SUBROUTINE xt_mpi_comm_mark_exclusive
+  END INTERFACE
 END MODULE xt_mpi

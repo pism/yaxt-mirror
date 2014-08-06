@@ -53,7 +53,8 @@ MODULE test_xmap_common
        xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        xt_xmap, xt_xmap_delete, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
-       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks
+       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
+       xt_mpi_comm_mark_exclusive
   IMPLICIT NONE
   PRIVATE
   INTEGER :: my_rank
@@ -71,7 +72,9 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER :: ierror
+    INTEGER :: ierror, i
+    INTEGER :: comms(2)
+
     CALL init_mpi
     CALL xt_initialize(mpi_comm_world)
     CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
@@ -80,8 +83,24 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    CALL test_xmap1(xmap_new)
-    CALL test_xmap2(xmap_new)
+    comms(1) = mpi_comm_world
+    CALL mpi_comm_dup(mpi_comm_world, comms(2), ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("MPI error!", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_mpi_comm_mark_exclusive(comms(2))
+
+    DO i = 1, SIZE(comms)
+      CALL test_xmap1(xmap_new, comms(i))
+      CALL test_xmap2(xmap_new, comms(i))
+    END DO
+
+    CALL mpi_comm_free(comms(2), ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("MPI error!", &
+         __FILE__, &
+         __LINE__)
 
     IF (test_err_count() /= 0) &
          CALL test_abort("non-zero error count!", &
@@ -100,7 +119,7 @@ CONTAINS
     END DO
   END SUBROUTINE shift_idx
 
-  SUBROUTINE test_xmap(src_index_list, dst_index_list, xmap_new)
+  SUBROUTINE test_xmap(src_index_list, dst_index_list, xmap_new, comm)
     INTEGER(xt_int_kind), INTENT(in) :: src_index_list(:), dst_index_list(:)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     INTERFACE
@@ -113,12 +132,14 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+
     TYPE(xt_xmap) :: xmap
     INTEGER :: rank(1)
     src_idxlist = xt_idxvec_new(src_index_list)
     dst_idxlist = xt_idxvec_new(dst_index_list)
 
-    xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
@@ -145,7 +166,7 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_xmap
 
-  SUBROUTINE test_xmap1(xmap_new)
+  SUBROUTINE test_xmap1(xmap_new, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -156,6 +177,8 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+
     INTEGER(xt_int_kind) :: i
     INTEGER(xt_int_kind), PARAMETER :: num_src_idx = 7, num_dst_idx = 7
     INTEGER(xt_int_kind) :: src_index_list(num_src_idx), &
@@ -168,10 +191,10 @@ CONTAINS
       dst_index_list(i) = num_dst_idx - i + 1_xi
     END DO
     CALL shift_idx(dst_index_list, num_src_idx)
-    CALL test_xmap(src_index_list, dst_index_list, xmap_new)
+    CALL test_xmap(src_index_list, dst_index_list, xmap_new, comm)
   END SUBROUTINE test_xmap1
 
-  SUBROUTINE test_xmap2(xmap_new)
+  SUBROUTINE test_xmap2(xmap_new, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -182,6 +205,8 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+
     INTEGER(xt_int_kind) :: src_index_list(14), dst_index_list(13)
     src_index_list = &
          (/ 5_xi, 67_xi, 4_xi, 5_xi, 13_xi, &
@@ -191,7 +216,7 @@ CONTAINS
          (/ 5_xi, 4_xi, 3_xi, 96_xi, 1_xi, &
          &  5_xi, 4_xi, 5_xi,  4_xi, 3_xi, &
          & 13_xi, 2_xi, 1_xi /)
-    CALL test_xmap(src_index_list, dst_index_list, xmap_new)
+    CALL test_xmap(src_index_list, dst_index_list, xmap_new, comm)
   END SUBROUTINE test_xmap2
 
 END MODULE test_xmap_common

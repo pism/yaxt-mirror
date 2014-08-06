@@ -56,9 +56,9 @@
 #include "test_xmap_common.h"
 
 static void
-test_xmap1(xmap_constructor new_xmap);
+test_xmap1(xmap_constructor new_xmap, MPI_Comm comm);
 static void
-test_xmap2(xmap_constructor new_xmap);
+test_xmap2(xmap_constructor new_xmap, MPI_Comm comm);
 
 static int my_rank;
 
@@ -72,8 +72,15 @@ xt_xmap_self_test_main(xmap_constructor new_xmap)
 
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-  test_xmap1(new_xmap);
-  test_xmap2(new_xmap);
+  MPI_Comm comms[2];
+  comms[0] = MPI_COMM_WORLD;
+  MPI_Comm_dup(MPI_COMM_WORLD, &comms[1]);
+  xt_mpi_comm_mark_exclusive(comms[1]);
+
+  for (size_t i = 0; i < 2; ++i) {
+    test_xmap1(new_xmap, comms[i]);
+    test_xmap2(new_xmap, comms[i]);
+  }
 
   xt_finalize();
   MPI_Finalize();
@@ -84,13 +91,13 @@ xt_xmap_self_test_main(xmap_constructor new_xmap)
 static void
 test_xmap(const Xt_int *src_index_list, int num_src_indices,
           const Xt_int *dst_index_list, int num_dst_indices,
-          xmap_constructor new_xmap)
+          xmap_constructor new_xmap, MPI_Comm comm)
 {
   Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, num_src_indices);
   Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, num_dst_indices);
 
   // test of exchange map
-  Xt_xmap xmap = new_xmap(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+  Xt_xmap xmap = new_xmap(src_idxlist, dst_idxlist, comm);
   xt_idxlist_delete(src_idxlist);
   xt_idxlist_delete(dst_idxlist);
 
@@ -121,7 +128,7 @@ static inline void shift_idx(Xt_int idx[], int num, int offset)  {
 }
 
 static void
-test_xmap1(xmap_constructor new_xmap)
+test_xmap1(xmap_constructor new_xmap, MPI_Comm comm)
 {
   // source index list
   Xt_int src_index_list[] = {1,2,3,4,5,6,7};
@@ -136,11 +143,11 @@ test_xmap1(xmap_constructor new_xmap)
   shift_idx(dst_index_list, num_dst_indices, 7);
 
   test_xmap(src_index_list, num_src_indices, dst_index_list,
-            num_dst_indices, new_xmap);
+            num_dst_indices, new_xmap, comm);
 }
 
 static void
-test_xmap2(xmap_constructor new_xmap)
+test_xmap2(xmap_constructor new_xmap, MPI_Comm comm)
 {
   // source index list
   Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
@@ -156,5 +163,5 @@ test_xmap2(xmap_constructor new_xmap)
 
   test_xmap(src_index_list, num_src_indices,
             dst_index_list, num_dst_indices,
-            new_xmap);
+            new_xmap, comm);
 }

@@ -54,6 +54,7 @@
 #include "core/core.h"
 #include "cfortran.h"
 
+#include "xt/xt_mpi.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_xmap.h"
@@ -307,4 +308,9 @@ xt_com_list_contiguous(const struct Xt_com_list *p_com_a,
                        const struct Xt_com_list *p_com_b)
 {
   return (p_com_a + 1 == p_com_b);
+}
+
+void
+xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {
+  xt_mpi_comm_mark_exclusive(MPI_Comm_f2c(*comm));
 }

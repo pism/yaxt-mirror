@@ -915,3 +915,13 @@ xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset)
   }
 }
 
+void
+xt_mpi_comm_mark_exclusive(MPI_Comm comm) {
+  struct xt_mpi_comm_internal_attr *comm_attr
+    = xmalloc(sizeof (*comm_attr) + sizeof (used_map_elem));
+  comm_attr->refcount = 1;
+  comm_attr->used_map_size = 1;
+  comm_attr->used_map[0] = 1U;
+  xt_mpi_call(MPI_Comm_set_attr(comm, xt_mpi_comm_internal_keyval,
+                                comm_attr), comm);
+}

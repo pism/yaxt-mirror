@@ -86,6 +86,7 @@ MODULE yaxt
        xt_redist_collection_static_new, xt_redist_collection_new, &
        xt_redist_repeat_new, xt_is_null, xt_redist_get_mpi_comm, &
        xt_offset_ext, xt_redist_p2p_ext_new
+  USE xt_mpi, ONLY: xt_mpi_comm_mark_exclusive
 
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
   IMPLICIT NONE
@@ -127,6 +128,7 @@ MODULE yaxt
        xt_redist_get_mpi_comm, &
        xt_idxempty_new, xt_redist_collection_static_new, &
        xt_redist_collection_new, xt_slice_c_loc, &
+       xt_mpi_comm_mark_exclusive, &
        xt_is_null, &
        OPERATOR(==), OPERATOR(/=), char
 
