@@ -137,7 +137,9 @@ libyaxt_la_SOURCES =						\
 	xt_exchanger_irecv_send.c				\
 	xt_exchanger_irecv_send.h				\
 	xt_exchanger_irecv_isend.c				\
-	xt_exchanger_irecv_isend.h
+	xt_exchanger_irecv_isend.h				\
+	xt_exchanger_mix_isend_irecv.c				\
+	xt_exchanger_mix_isend_irecv.h
 
 xtinclude_Makefile.inc: Makefile
 	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/\n/g' | grep 'xt/.*\.h$$'` ; \
