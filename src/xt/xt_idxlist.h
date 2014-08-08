@@ -276,10 +276,10 @@ int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist,
  * in the stored index list
  *
  * @param[in]  idxlist     index list in which the given index is to be searched
- * @param[in]  stripes     stripes of indices that are to be searched
  * @param[in]  num_stripes number of stripes in the array \a stripes
- * @param[out] num_exts    number of extents allocated in \a pos_exts
- * @param[out] pos_exts    ranges of positions for the first
+ * @param[in]  stripes     stripes of indices that are to be searched
+ * @param[out] num_ext     number of extents allocated in \a pos_exts
+ * @param[out] pos_ext     ranges of positions for the first
  *                         occurrence of the indices from stripes in idxlist
  * @param[in]  single_match_only if true then do not consider a previous
  *                         matching position again
