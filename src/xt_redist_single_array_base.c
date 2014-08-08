@@ -59,6 +59,7 @@
 #include "xt/xt_idxlist.h"
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
+#include "xt_exchanger.h"
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -96,6 +97,8 @@ struct Xt_redist_sab_ {
 
   const struct xt_redist_vtable *vtable;
 
+  Xt_exchanger exchanger;
+
   int nsend, nrecv;
 
   struct Xt_redist_msg * send_msgs;
@@ -111,11 +114,8 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
 
   Xt_redist_sab redist = xmalloc(sizeof (*redist));
 
-  xt_redist_internal_optimize(nsend, nrecv,
-                              send_msgs,
-                              recv_msgs,
-                              sizeof(*send_msgs),
-                              comm);
+  redist->exchanger = xt_exchanger_default_constructor(nsend, nrecv, send_msgs,
+                                                       recv_msgs, comm);
 
   redist->vtable = &redist_sab_vtable;
   redist->nsend = nsend;
@@ -138,17 +138,12 @@ redist_sab_delete(Xt_redist redist) {
 
   Xt_redist_sab redist_sab = xrsab(redist);
 
-  int i;
+  xt_exchanger_delete(redist_sab->exchanger);
 
-  for (i = 0; i < redist_sab->nsend; ++i)
-    if (redist_sab->send_msgs[i].datatype != MPI_DATATYPE_NULL)
-      MPI_Type_free(&(redist_sab->send_msgs[i].datatype));
-  free(redist_sab->send_msgs);
-
-  for (i = 0; i < redist_sab->nrecv; ++i)
-    if (redist_sab->recv_msgs[i].datatype != MPI_DATATYPE_NULL)
-      MPI_Type_free(&(redist_sab->recv_msgs[i].datatype));
-  free(redist_sab->recv_msgs);
+  xt_redist_msgs_free(redist_sab->nsend, redist_sab->send_msgs,
+                      redist_sab->comm);
+  xt_redist_msgs_free(redist_sab->nrecv, redist_sab->recv_msgs,
+                      redist_sab->comm);
 
   if ((redist_sab->comm != MPI_COMM_WORLD) &&
       (redist_sab->comm != MPI_COMM_SELF))
@@ -175,10 +170,7 @@ redist_sab_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
 
   Xt_redist_sab redist_sab = xrsab(redist);
 
-  xt_redist_s_exchange_internal(src_data, dst_data, redist_sab->nsend,
-                                redist_sab->nrecv, redist_sab->send_msgs,
-                                redist_sab->recv_msgs,
-                                redist_sab->comm);
+  xt_exchanger_s_exchange(redist_sab->exchanger, src_data, dst_data);
 }
 
 static MPI_Datatype

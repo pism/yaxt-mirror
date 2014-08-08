@@ -129,7 +129,15 @@ libyaxt_la_SOURCES =						\
 	xt_idxsection_f.f90					\
 	xt_xmap_f.f90						\
 	xt_redist_f.f90						\
-	yaxt.f90
+	yaxt.f90						\
+	xt_exchanger.c						\
+	xt_exchanger.h						\
+	xt_exchanger_simple_base.c				\
+	xt_exchanger_simple_base.h				\
+	xt_exchanger_irecv_send.c				\
+	xt_exchanger_irecv_send.h				\
+	xt_exchanger_irecv_isend.c				\
+	xt_exchanger_irecv_isend.h
 
 xtinclude_Makefile.inc: Makefile
 	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/\n/g' | grep 'xt/.*\.h$$'` ; \

@@ -59,6 +59,7 @@
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
+#include "xt_exchanger.h"
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -110,11 +111,12 @@ struct redist_collection_msg {
   MPI_Datatype *component_dt; // datatypes of the redists (size == num_redists)
 };
 
-struct redist_msg_cache
+struct exchanger_cache
 {
   size_t token;
-  MPI_Aint *displacements;
-  struct Xt_redist_msg *redist_msgs;
+  MPI_Aint *src_displacements, *dst_displacements;
+  Xt_exchanger * exchangers;
+  struct Xt_redist_msg * msgs;
 };
 
 typedef struct Xt_redist_collection_ *Xt_redist_collection;
@@ -125,7 +127,7 @@ struct Xt_redist_collection_ {
 
   int num_redists;
 
-  struct redist_msg_cache src_cache, dst_cache;
+  struct exchanger_cache cache;
 
   int ndst, nsrc;
   struct redist_collection_msg * send_msgs;
@@ -182,32 +184,33 @@ static void copy_component_dt(struct redist_collection_msg ** msgs, int * nmsgs,
 /* not yet used cache entries are marked with -1 as first displacement,
  * which becomes 0 later on through use */
 static inline void
-init_cache(struct redist_msg_cache *cache,
-           size_t cache_size, size_t ntx, int num_redists)
+init_cache(struct exchanger_cache *cache, size_t cache_size, size_t ntx,
+           int num_redists)
 {
-  size_t num_cache_redist_msgs = ntx * cache_size;
-  struct Xt_redist_msg *p
-    = cache->redist_msgs = xmalloc(num_cache_redist_msgs * sizeof (*p));
-  for (size_t i = 0; i < num_cache_redist_msgs; ++i)
-    p[i].datatype = MPI_DATATYPE_NULL;
+  cache->exchangers = xcalloc(cache_size, sizeof(*(cache->exchangers)));
   size_t num_displ = cache_size * (size_t)num_redists;
-  MPI_Aint *q
-    = cache->displacements = xmalloc(num_displ * sizeof (*q));
+  struct Xt_redist_msg *msgs = cache->msgs = xmalloc(ntx * sizeof (*msgs));
+  for (size_t i = 0; i < ntx; ++i) msgs[i].datatype = MPI_DATATYPE_NULL;
+  MPI_Aint
+    *q = cache->src_displacements = xmalloc(num_displ * sizeof (*q)),
+    *p = cache->dst_displacements = xmalloc(num_displ * sizeof (*p));
   for (size_t i = 0; i < num_displ; i += (size_t)num_redists)
-    q[i] = (MPI_Aint)-1;
+    q[i] = p[i] = (MPI_Aint)-1;
   cache->token = 0;
 }
 
 static inline void
-destruct_cache(struct redist_msg_cache *cache,
+destruct_cache(struct exchanger_cache *cache,
                size_t cache_size, size_t ntx, MPI_Comm comm)
 {
-  size_t num_cache_redist_msgs = ntx * cache_size;
-  for (size_t i = 0; i < num_cache_redist_msgs; ++i)
-    if (cache->redist_msgs[i].datatype != MPI_DATATYPE_NULL)
-      xt_mpi_call(MPI_Type_free(&(cache->redist_msgs[i].datatype)), comm);
-  free(cache->redist_msgs);
-  free(cache->displacements);
+  for (size_t i = 0; i < cache_size; ++i)
+    if (cache->exchangers[i] != NULL)
+      xt_exchanger_delete(cache->exchangers[i]);
+  free(cache->exchangers);
+
+  xt_redist_msgs_free(ntx, cache->msgs, comm);
+  free(cache->src_displacements);
+  free(cache->dst_displacements);
 }
 
 static void check_comms(Xt_redist * redists, int num_redists,
@@ -250,20 +253,12 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   copy_component_dt(&(redist_coll->send_msgs), &(redist_coll->nsrc), redists,
                     num_redists, redist_coll->comm,
                     xt_redist_get_send_MPI_Datatype);
-  init_cache(&redist_coll->src_cache,
-             redist_coll->cache_size, (size_t)redist_coll->nsrc, num_redists);
-
   copy_component_dt(&(redist_coll->recv_msgs), &(redist_coll->ndst), redists,
                     num_redists, redist_coll->comm,
                     xt_redist_get_recv_MPI_Datatype);
-  init_cache(&redist_coll->dst_cache,
-             redist_coll->cache_size, (size_t)redist_coll->ndst, num_redists);
 
-  xt_redist_internal_optimize(redist_coll->nsrc, redist_coll->ndst,
-                              redist_coll->send_msgs,
-                              redist_coll->recv_msgs,
-                              sizeof(*(redist_coll->send_msgs)),
-                              comm);
+  init_cache(&redist_coll->cache, redist_coll->cache_size,
+             redist_coll->nsrc + redist_coll->ndst, num_redists);
 
   return (Xt_redist)redist_coll;
 }
@@ -357,66 +352,91 @@ compute_displ(const void **data, int num_redists,
 
 static size_t
 lookup_cache_index(int num_redists,
-                   MPI_Aint displacements[num_redists],
-                   MPI_Aint (*cached_displacements)[num_redists],
+                   MPI_Aint src_displacements[num_redists],
+                   MPI_Aint dst_displacements[num_redists],
+                   MPI_Aint (*cached_src_displacements)[num_redists],
+                   MPI_Aint (*cached_dst_displacements)[num_redists],
                    size_t cache_size)
 {
-  for (size_t i = 0;
-       i < cache_size && cached_displacements[i][0] == (MPI_Aint)0;
-       ++i) {
+  for (size_t i = 0; i < cache_size &&
+       cached_src_displacements[i][0] == (MPI_Aint)0 &&
+       cached_dst_displacements[i][0] == (MPI_Aint)0; ++i) {
     int mismatch = 0;
     for (int j = 0; j < num_redists; ++j)
-      mismatch |= (displacements[j] != cached_displacements[i][j]);
+      mismatch |= (src_displacements[j] != cached_src_displacements[i][j]) ||
+                  (dst_displacements[j] != cached_dst_displacements[i][j]);
     if (!mismatch) return i;
   }
   return cache_size;
 }
 
-static struct Xt_redist_msg *
-get_compound_datatype(const void ** data, struct redist_collection_msg * msgs,
-                      int num_messages, int num_redists,
-                      struct redist_msg_cache *cache, size_t cache_size,
-                      struct Xt_redist_msg temp_redist_msgs[num_messages],
-                      MPI_Comm comm)
+static Xt_exchanger
+get_exchanger(const void ** src_data, void ** dst_data,
+              struct redist_collection_msg * send_msgs, int num_send_messages,
+              struct redist_collection_msg * recv_msgs, int num_recv_messages,
+              int num_redists, struct exchanger_cache *cache, size_t cache_size,
+              MPI_Comm comm)
 {
-  MPI_Aint displacements[num_redists];
-  compute_displ(data, num_redists, displacements, comm);
+  MPI_Aint displacements[2][num_redists];
+  compute_displ(src_data, num_redists, displacements[0], comm);
+  compute_displ((const void **)dst_data, num_redists, displacements[1], comm);
+
+  Xt_exchanger exchanger;
+
   if (cache_size > 0)
   {
     size_t cache_index
-      = lookup_cache_index(num_redists, displacements,
-                           (MPI_Aint (*)[num_redists])cache->displacements,
+      = lookup_cache_index(num_redists, displacements[0], displacements[1],
+                           (MPI_Aint (*)[num_redists])cache->src_displacements,
+                           (MPI_Aint (*)[num_redists])cache->dst_displacements,
                            cache_size);
-    struct Xt_redist_msg *redist_msgs;
+    
     if (cache_index == cache_size)
     {
       cache_index = cache->token;
-      redist_msgs = cache->redist_msgs + (size_t)num_messages * cache_index;
-      create_all_dt_for_dir(msgs, num_messages, num_redists,
-                            displacements, redist_msgs, comm);
-      memcpy(cache->displacements + cache_index * (size_t)num_redists,
-             displacements, sizeof (displacements));
+      create_all_dt_for_dir(send_msgs, num_send_messages, num_redists,
+                            displacements[0], cache->msgs, comm);
+      create_all_dt_for_dir(recv_msgs, num_recv_messages, num_redists,
+                            displacements[1], cache->msgs +
+                            (size_t)num_send_messages, comm);
+      memcpy(cache->src_displacements + cache_index * (size_t)num_redists,
+             displacements[0], sizeof (displacements[0][0]));
+      memcpy(cache->dst_displacements + cache_index * (size_t)num_redists,
+             displacements[1], sizeof (displacements[1][0]));
+
+      if (cache->exchangers[cache_index] != NULL)
+        xt_exchanger_delete(cache->exchangers[cache_index]);
+
+      exchanger = cache->exchangers[cache_index] =
+        xt_exchanger_default_constructor(num_send_messages, num_recv_messages,
+                                         cache->msgs, cache->msgs +
+                                         (size_t)num_send_messages, comm);
+
       cache->token = (cache->token + 1) % cache_size;
     }
     else
-      redist_msgs = cache->redist_msgs + (size_t)num_messages * cache_index;
-    return redist_msgs;
+      exchanger = cache->exchangers[cache_index];
   }
   else
   {
-    create_all_dt_for_dir(msgs, num_messages, num_redists,
-                          displacements, temp_redist_msgs, comm);
-    return temp_redist_msgs;
+    struct Xt_redist_msg *p = xmalloc((num_send_messages + num_recv_messages) *
+                                      sizeof (*p));
+    for (size_t i = 0; i < num_send_messages + num_recv_messages; ++i)
+      p[i].datatype = MPI_DATATYPE_NULL;
+
+    create_all_dt_for_dir(send_msgs, num_send_messages, num_redists,
+                          displacements[0], p, comm);
+    create_all_dt_for_dir(recv_msgs, num_recv_messages, num_redists,
+                          displacements[1], p + num_send_messages, comm);
+
+    exchanger =
+      xt_exchanger_default_constructor(num_send_messages, num_recv_messages, p,
+                                       p + (size_t)num_send_messages, comm);
+
+    xt_redist_msgs_free(num_send_messages + num_recv_messages, p, comm);
   }
-}
 
-static void clear_temp_redist_msg(int num_messages,
-                                  struct Xt_redist_msg redist_msgs[num_messages],
-                                  MPI_Comm comm) {
-
-  for (int i = 0; i < num_messages; ++i)
-    if (redist_msgs[i].datatype != MPI_DATATYPE_NULL)
-      xt_mpi_call(MPI_Type_free(&(redist_msgs[i].datatype)), comm);
+  return exchanger;
 }
 
 static inline Xt_redist_collection
@@ -435,41 +455,21 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
     Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
              "redist_collection_s_exchange", __FILE__, __LINE__);
 
-  struct Xt_redist_msg *redist_msgs_buffer;
-  struct Xt_redist_msg *temp_redist_msgs_src, *temp_redist_msgs_dst;
-  size_t num_redist_msgs = (size_t)redist_coll->ndst + (size_t)redist_coll->nsrc;
 
-  redist_msgs_buffer = xmalloc(num_redist_msgs * sizeof(*redist_msgs_buffer));
-  temp_redist_msgs_dst = redist_msgs_buffer;
-  temp_redist_msgs_src = redist_msgs_buffer + (size_t)redist_coll->ndst;
+  Xt_exchanger exchanger = get_exchanger(src_data, dst_data,
+                                         redist_coll->send_msgs,
+                                         redist_coll->nsrc,
+                                         redist_coll->recv_msgs,
+                                         redist_coll->ndst,
+                                         redist_coll->num_redists,
+                                         &(redist_coll->cache), 
+                                         redist_coll->cache_size,
+                                         redist_coll->comm);
 
-  size_t cache_size = redist_coll->cache_size;
-  if (cache_size == 0)
-    for (size_t i = 0; i < num_redist_msgs; ++i)
-      temp_redist_msgs_dst[i].datatype = MPI_DATATYPE_NULL;
+  xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0]);
 
-  struct Xt_redist_msg *dst_redist_msgs
-    = get_compound_datatype((const void **)dst_data, redist_coll->recv_msgs,
-                            redist_coll->ndst, redist_coll->num_redists,
-                            &redist_coll->dst_cache, cache_size,
-                            temp_redist_msgs_dst, redist_coll->comm);
-
-  struct Xt_redist_msg *src_redist_msgs
-    = get_compound_datatype(src_data, redist_coll->send_msgs,
-                            redist_coll->nsrc, redist_coll->num_redists,
-                            &redist_coll->src_cache, cache_size,
-                            temp_redist_msgs_src, redist_coll->comm);
-
-  xt_redist_s_exchange_internal(src_data[0], dst_data[0], redist_coll->nsrc,
-                                redist_coll->ndst, src_redist_msgs,
-                                dst_redist_msgs, redist_coll->comm);
-
-  if (cache_size == 0) {
-    clear_temp_redist_msg(redist_coll->ndst + redist_coll->nsrc,
-                          temp_redist_msgs_dst, redist_coll->comm);
-  }
-
-  free(redist_msgs_buffer);
+  if (redist_coll->cache_size == 0)
+    xt_exchanger_delete(exchanger);
 }
 
 static void
@@ -500,10 +500,9 @@ redist_collection_delete(Xt_redist redist) {
                               redist_coll->num_redists,
                               redist_coll->comm);
 
-  destruct_cache(&redist_coll->src_cache, redist_coll->cache_size,
-                 (size_t)redist_coll->nsrc, redist_coll->comm);
-  destruct_cache(&redist_coll->dst_cache, redist_coll->cache_size,
-                 (size_t)redist_coll->ndst, redist_coll->comm);
+  destruct_cache(&redist_coll->cache, redist_coll->cache_size,
+                 (size_t)redist_coll->nsrc + (size_t)redist_coll->ndst,
+                 redist_coll->comm);
 
   xt_mpi_call(MPI_Comm_free(&(redist_coll->comm)), MPI_COMM_WORLD);
 
