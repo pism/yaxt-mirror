@@ -77,10 +77,7 @@ void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
 
 void xt_exchanger_delete(Xt_exchanger);
 
-void xt_exchanger_internal_optimize(int nsend, int nrecv,
-                                    void * send_msgs,
-                                    void * recv_msgs,
-                                    size_t msg_type_size,
+void xt_exchanger_internal_optimize(int n, void * msgs, size_t msg_type_size,
                                     MPI_Comm comm);
 
 
