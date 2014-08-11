@@ -401,9 +401,9 @@ get_exchanger(const void ** src_data, void ** dst_data,
                             displacements[1], cache->msgs +
                             (size_t)num_send_messages, comm);
       memcpy(cache->src_displacements + cache_index * (size_t)num_redists,
-             displacements[0], sizeof (displacements[0][0]));
+             displacements[0], sizeof (displacements[0]));
       memcpy(cache->dst_displacements + cache_index * (size_t)num_redists,
-             displacements[1], sizeof (displacements[1][0]));
+             displacements[1], sizeof (displacements[1]));
 
       if (cache->exchangers[cache_index] != NULL)
         xt_exchanger_delete(cache->exchangers[cache_index]);
