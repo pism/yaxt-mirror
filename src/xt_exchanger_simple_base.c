@@ -96,9 +96,9 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
 
   xt_mpi_call(MPI_Comm_dup(comm, &(exchanger->comm)), comm);
   exchanger->nsend = nsend;
-  exchanger->send_msgs = xt_redist_msgs_copy(nsend, send_msgs, exchanger->comm);
+  exchanger->send_msgs = xt_redist_msgs_copy((size_t)nsend, send_msgs, exchanger->comm);
   exchanger->nrecv = nrecv;
-  exchanger->recv_msgs = xt_redist_msgs_copy(nrecv, recv_msgs, exchanger->comm);
+  exchanger->recv_msgs = xt_redist_msgs_copy((size_t)nrecv, recv_msgs, exchanger->comm);
   exchanger->func = func;
 
   xt_exchanger_internal_optimize(nsend, exchanger->send_msgs,
@@ -117,9 +117,9 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
 
-  xt_redist_msgs_free(exchanger_sb->nsend, exchanger_sb->send_msgs,
+  xt_redist_msgs_free((size_t)exchanger_sb->nsend, exchanger_sb->send_msgs,
                       exchanger_sb->comm);
-  xt_redist_msgs_free(exchanger_sb->nrecv, exchanger_sb->recv_msgs,
+  xt_redist_msgs_free((size_t)exchanger_sb->nrecv, exchanger_sb->recv_msgs,
                       exchanger_sb->comm);
 
   xt_mpi_call(MPI_Comm_free(&(exchanger_sb->comm)), MPI_COMM_WORLD);

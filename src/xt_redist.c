@@ -87,12 +87,13 @@ MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
   return redist->vtable->get_MPI_Comm(redist);
 }
 
-struct Xt_redist_msg * xt_redist_msgs_copy(int n, struct Xt_redist_msg * msgs,
-                                           MPI_Comm comm) {
+struct Xt_redist_msg *xt_redist_msgs_copy(size_t n,
+                                          struct Xt_redist_msg * msgs,
+                                          MPI_Comm comm) {
 
   struct Xt_redist_msg * copy = xmalloc(n * sizeof(*msgs));
 
-  for (int i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
 
     copy[i].rank = msgs[i].rank;
     xt_mpi_call(MPI_Type_dup(msgs[i].datatype, &(copy[i].datatype)), comm);
@@ -101,9 +102,9 @@ struct Xt_redist_msg * xt_redist_msgs_copy(int n, struct Xt_redist_msg * msgs,
   return copy;
 }
 
-void xt_redist_msgs_free(int n, struct Xt_redist_msg * msgs, MPI_Comm comm) {
+void xt_redist_msgs_free(size_t n, struct Xt_redist_msg * msgs, MPI_Comm comm) {
 
-  for (int i = 0; i < n; ++i)
+  for (size_t i = 0; i < n; ++i)
     if (msgs[i].datatype != MPI_DATATYPE_NULL)
       xt_mpi_call(MPI_Type_free(&(msgs[i].datatype)), comm);
   free(msgs);

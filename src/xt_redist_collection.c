@@ -257,8 +257,9 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
                     num_redists, redist_coll->comm,
                     xt_redist_get_recv_MPI_Datatype);
 
-  init_cache(&redist_coll->cache, redist_coll->cache_size,
-             redist_coll->nsrc + redist_coll->ndst, num_redists);
+  init_cache(&redist_coll->cache, (size_t)redist_coll->cache_size,
+             (size_t)redist_coll->nsrc + (size_t)redist_coll->ndst,
+             num_redists);
 
   return (Xt_redist)redist_coll;
 }
@@ -390,7 +391,7 @@ get_exchanger(const void ** src_data, void ** dst_data,
                            (MPI_Aint (*)[num_redists])cache->src_displacements,
                            (MPI_Aint (*)[num_redists])cache->dst_displacements,
                            cache_size);
-    
+
     if (cache_index == cache_size)
     {
       cache_index = cache->token;
@@ -419,9 +420,9 @@ get_exchanger(const void ** src_data, void ** dst_data,
   }
   else
   {
-    struct Xt_redist_msg *p = xmalloc((num_send_messages + num_recv_messages) *
-                                      sizeof (*p));
-    for (size_t i = 0; i < num_send_messages + num_recv_messages; ++i)
+    size_t nmsg = (size_t)num_send_messages + (size_t)num_recv_messages;
+    struct Xt_redist_msg *p = xmalloc(nmsg * sizeof (*p));
+    for (size_t i = 0; i < nmsg; ++i)
       p[i].datatype = MPI_DATATYPE_NULL;
 
     create_all_dt_for_dir(send_msgs, num_send_messages, num_redists,
@@ -433,7 +434,7 @@ get_exchanger(const void ** src_data, void ** dst_data,
       xt_exchanger_default_constructor(num_send_messages, num_recv_messages, p,
                                        p + (size_t)num_send_messages, comm);
 
-    xt_redist_msgs_free(num_send_messages + num_recv_messages, p, comm);
+    xt_redist_msgs_free(nmsg, p, comm);
   }
 
   return exchanger;

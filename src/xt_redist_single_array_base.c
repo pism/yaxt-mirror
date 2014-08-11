@@ -140,9 +140,9 @@ redist_sab_delete(Xt_redist redist) {
 
   xt_exchanger_delete(redist_sab->exchanger);
 
-  xt_redist_msgs_free(redist_sab->nsend, redist_sab->send_msgs,
+  xt_redist_msgs_free((size_t)redist_sab->nsend, redist_sab->send_msgs,
                       redist_sab->comm);
-  xt_redist_msgs_free(redist_sab->nrecv, redist_sab->recv_msgs,
+  xt_redist_msgs_free((size_t)redist_sab->nrecv, redist_sab->recv_msgs,
                       redist_sab->comm);
 
   if ((redist_sab->comm != MPI_COMM_WORLD) &&

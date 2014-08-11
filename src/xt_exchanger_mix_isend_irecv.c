@@ -96,14 +96,14 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
 
   xt_mpi_call(MPI_Comm_dup(comm, &(exchanger->comm)), comm);
   exchanger->n = nsend + nrecv;
-  exchanger->msgs = xmalloc(exchanger->n * sizeof(*(exchanger->msgs)));
-  temp_msgs = xt_redist_msgs_copy(nsend, send_msgs, exchanger->comm);
+  exchanger->msgs = xmalloc((size_t)exchanger->n * sizeof(*(exchanger->msgs)));
+  temp_msgs = xt_redist_msgs_copy((size_t)nsend, send_msgs, exchanger->comm);
   for (int i = 0; i < nsend; ++i) {
     exchanger->msgs[i].data = temp_msgs[i];
     exchanger->msgs[i].type = SEND;
   }
   free(temp_msgs);
-  temp_msgs = xt_redist_msgs_copy(nrecv, recv_msgs, exchanger->comm);
+  temp_msgs = xt_redist_msgs_copy((size_t)nrecv, recv_msgs, exchanger->comm);
   for (int i = 0; i < nrecv; ++i) {
     exchanger->msgs[i+nsend].data = temp_msgs[i];
     exchanger->msgs[i+nsend].type = RECV;
@@ -133,22 +133,22 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
-  struct Xt_redist_msg * temp_msgs = xmalloc(exchanger_msr->n *
-                                             sizeof(*temp_msgs));
+  size_t nmsg = (size_t)exchanger_msr->n;
+  struct Xt_redist_msg * temp_msgs = xmalloc(nmsg * sizeof(*temp_msgs));
 
-  for (int i = 0; i < exchanger_msr->n; ++i)
+  for (size_t i = 0; i < nmsg; ++i)
     temp_msgs[i] = exchanger_msr->msgs[i].data;
   free(exchanger_msr->msgs);
 
-  xt_redist_msgs_free(exchanger_msr->n, temp_msgs, exchanger_msr->comm);
+  xt_redist_msgs_free(nmsg, temp_msgs, exchanger_msr->comm);
 
   xt_mpi_call(MPI_Comm_free(&(exchanger_msr->comm)), MPI_COMM_WORLD);
   free(exchanger_msr);
 }
 
 static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
-                                                const void * src_data,
-                                                void * dst_data) {
+                                                    const void * src_data,
+                                                    void * dst_data) {
 
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
