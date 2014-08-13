@@ -50,7 +50,9 @@
 #include <string.h>
 #include <stdlib.h>
 #if ! defined TLS && defined HAVE_PTHREAD
+#include <stdio.h>
 #include <pthread.h>
+#include "core/core.h"
 #endif
 
 #include "xt_exchanger.h"
