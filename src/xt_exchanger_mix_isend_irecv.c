@@ -154,29 +154,25 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
+  if (exchanger_msr->n > 0) {
+    size_t nmsg = (size_t)exchanger_msr->n;
+    MPI_Comm comm = exchanger_msr->comm;
+    struct mix_msg *restrict msgs = exchanger_msr->msgs;
+    int tag_offset = exchanger_msr->tag_offset;
+    MPI_Request *requests = xmalloc(nmsg * sizeof (*requests));
+    for (size_t i = 0; i < nmsg; ++i)
+      if (msgs[i].type == SEND)
+        xt_mpi_call(MPI_Isend((void *)src_data, 1, msgs[i].data.datatype,
+                              msgs[i].data.rank,
+                              tag_offset + xt_mpi_tag_exchange_msg,
+                              comm, requests+i), comm);
+      else
+        xt_mpi_call(MPI_Irecv(dst_data, 1, msgs[i].data.datatype,
+                              msgs[i].data.rank,
+                              tag_offset + xt_mpi_tag_exchange_msg,
+                              comm, requests+i), comm);
 
-  MPI_Request *requests
-    = xmalloc((size_t)(exchanger_msr->n) * sizeof (*requests));
-  int tag_offset = exchanger_msr->tag_offset;
-
-  for (int i = 0; i < exchanger_msr->n; ++i)
-    if (exchanger_msr->msgs[i].type == SEND)
-      xt_mpi_call(MPI_Isend((void *)src_data, 1,
-                            exchanger_msr->msgs[i].data.datatype,
-                            exchanger_msr->msgs[i].data.rank,
-                            tag_offset + xt_mpi_tag_exchange_msg,
-                            exchanger_msr->comm, requests+i),
-                            exchanger_msr->comm);
-    else
-      xt_mpi_call(MPI_Irecv(dst_data, 1,
-                            exchanger_msr->msgs[i].data.datatype,
-                            exchanger_msr->msgs[i].data.rank,
-                            tag_offset + xt_mpi_tag_exchange_msg,
-                            exchanger_msr->comm, requests+i),
-                            exchanger_msr->comm);
-
-  xt_mpi_call(MPI_Waitall(exchanger_msr->n, requests, MPI_STATUSES_IGNORE),
-              exchanger_msr->comm);
-
-  free(requests);
+    xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE), comm);
+    free(requests);
+  }
 }
