@@ -102,10 +102,14 @@ struct Xt_redist_msg *xt_redist_msgs_copy(size_t n,
   return copy;
 }
 
-void xt_redist_msgs_free(size_t n, struct Xt_redist_msg * msgs, MPI_Comm comm) {
+void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
+                                     MPI_Comm comm, size_t ofs_stride) {
 
-  for (size_t i = 0; i < n; ++i)
-    if (msgs[i].datatype != MPI_DATATYPE_NULL)
-      xt_mpi_call(MPI_Type_free(&(msgs[i].datatype)), comm);
-  free(msgs);
+  unsigned char *restrict msgs_store = (unsigned char *)msgs;
+  for (size_t i = 0; i < n; ++i) {
+    MPI_Datatype *dt
+      = &(((struct Xt_redist_msg *)(msgs_store + i * ofs_stride))->datatype);
+    if (*dt != MPI_DATATYPE_NULL)
+      xt_mpi_call(MPI_Type_free(dt), comm);
+  }
 }

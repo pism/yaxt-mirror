@@ -135,13 +135,11 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
   size_t nmsg = (size_t)exchanger_msr->n;
-  struct Xt_redist_msg * temp_msgs = xmalloc(nmsg * sizeof(*temp_msgs));
 
-  for (size_t i = 0; i < nmsg; ++i)
-    temp_msgs[i] = exchanger_msr->msgs[i].data;
+  xt_redist_msgs_strided_destruct(nmsg, &exchanger_msr->msgs->data,
+                                  exchanger_msr->comm,
+                                  sizeof (*exchanger_msr->msgs));
   free(exchanger_msr->msgs);
-
-  xt_redist_msgs_free(nmsg, temp_msgs, exchanger_msr->comm);
 
   xt_mpi_comm_smart_dedup(&exchanger_msr->comm, exchanger_msr->tag_offset);
   free(exchanger_msr);
