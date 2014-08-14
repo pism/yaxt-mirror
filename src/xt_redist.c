@@ -87,19 +87,24 @@ MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
   return redist->vtable->get_MPI_Comm(redist);
 }
 
-struct Xt_redist_msg *xt_redist_msgs_copy(size_t n,
-                                          struct Xt_redist_msg * msgs,
-                                          MPI_Comm comm) {
+void
+xt_redist_msgs_strided_copy(size_t n,
+                            struct Xt_redist_msg *restrict src,
+                            size_t src_stride,
+                            struct Xt_redist_msg *restrict dst,
+                            size_t dst_stride,
+                            MPI_Comm comm) {
 
-  struct Xt_redist_msg * copy = xmalloc(n * sizeof(*msgs));
 
+  unsigned char *restrict src_store = (unsigned char *)src,
+    *restrict dst_store = (unsigned char *)dst;
   for (size_t i = 0; i < n; ++i) {
-
-    copy[i].rank = msgs[i].rank;
-    xt_mpi_call(MPI_Type_dup(msgs[i].datatype, &(copy[i].datatype)), comm);
+    struct Xt_redist_msg *restrict src_msg
+      = (struct Xt_redist_msg *)(src_store + i * src_stride),
+      *dst_msg = (struct Xt_redist_msg *)(dst_store + i * dst_stride);
+    dst_msg->rank = src_msg->rank;
+    xt_mpi_call(MPI_Type_dup(src_msg->datatype, &(dst_msg->datatype)), comm);
   }
-
-  return copy;
 }
 
 void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,

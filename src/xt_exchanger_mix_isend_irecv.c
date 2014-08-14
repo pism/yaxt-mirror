@@ -100,24 +100,18 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
 
   exchanger->vtable = &exchanger_mix_isend_irecv_vtable;
 
-  struct Xt_redist_msg * temp_msgs;
-
   MPI_Comm comm
     = exchanger->comm = xt_mpi_comm_smart_dup(comm_, &exchanger->tag_offset);
   exchanger->n = nsend + nrecv;
   struct mix_msg *restrict msgs = exchanger->msgs;
-  temp_msgs = xt_redist_msgs_copy((size_t)nsend, send_msgs, comm);
-  for (size_t i = 0; i < (size_t)nsend; ++i) {
-    msgs[i].data = temp_msgs[i];
+  xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
+                              &(msgs[0].data), sizeof (msgs[0]), comm);
+  for (size_t i = 0; i < (size_t)nsend; ++i)
     msgs[i].type = SEND;
-  }
-  free(temp_msgs);
-  temp_msgs = xt_redist_msgs_copy((size_t)nrecv, recv_msgs, comm);
-  for (size_t i = 0; i < (size_t)nrecv; ++i) {
-    msgs[i + (size_t)nsend].data = temp_msgs[i];
+  xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
+                              &(msgs[nsend].data), sizeof (msgs[0]), comm);
+  for (size_t i = 0; i < (size_t)nrecv; ++i)
     msgs[i + (size_t)nsend].type = RECV;
-  }
-  free(temp_msgs);
 
   xt_exchanger_internal_optimize(nmsg, msgs, sizeof(*msgs), comm);
 

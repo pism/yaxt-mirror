@@ -85,9 +85,13 @@ extern void
                                  struct Xt_redist_msg * recv_msgs,
                                  MPI_Comm comm);
 
-struct Xt_redist_msg *xt_redist_msgs_copy(size_t n,
-                                          struct Xt_redist_msg * msgs,
-                                          MPI_Comm comm);
+void
+xt_redist_msgs_strided_copy(size_t n,
+                            struct Xt_redist_msg *restrict src,
+                            size_t src_stride,
+                            struct Xt_redist_msg *restrict dst,
+                            size_t dst_stride,
+                            MPI_Comm comm);
 
 void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
                                      MPI_Comm comm, size_t ofs_stride);
