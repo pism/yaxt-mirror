@@ -102,11 +102,11 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
   exchanger->recv_msgs = xt_redist_msgs_copy((size_t)nrecv, recv_msgs, exchanger->comm);
   exchanger->func = func;
 
-  xt_exchanger_internal_optimize(nsend, exchanger->send_msgs,
+  xt_exchanger_internal_optimize((size_t)nsend, exchanger->send_msgs,
                                  sizeof(*(exchanger->send_msgs)),
                                  exchanger->comm);
 
-  xt_exchanger_internal_optimize(nrecv, exchanger->recv_msgs,
+  xt_exchanger_internal_optimize((size_t)nrecv, exchanger->recv_msgs,
                                  sizeof(*(exchanger->recv_msgs)),
                                  exchanger->comm);
 

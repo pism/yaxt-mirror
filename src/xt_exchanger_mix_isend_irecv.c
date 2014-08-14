@@ -111,7 +111,7 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
   }
   free(temp_msgs);
 
-  xt_exchanger_internal_optimize(exchanger->n, exchanger->msgs,
+  xt_exchanger_internal_optimize((size_t)exchanger->n, exchanger->msgs,
                                  sizeof(*(exchanger->msgs)), exchanger->comm);
 
   for (int i = 1; i < exchanger->n; ++i) {
