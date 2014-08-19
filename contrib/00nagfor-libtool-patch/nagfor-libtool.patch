@@ -1,5 +1,5 @@
---- a/config/ltmain.sh	2012-08-30 12:03:42.435196421 +0200
-+++ b/config/ltmain.sh	2012-10-24 13:10:47.585403030 +0200
+--- a/config/ltmain.sh	2012-06-12 00:20:43.000000000 +0200
++++ b/config/ltmain.sh	2014-08-19 16:34:48.161235251 +0200
 @@ -3229,6 +3229,25 @@
  
  test "$opt_mode" = install && func_mode_install ${1+"$@"}
@@ -44,38 +44,54 @@
 -	*" $dir "*) ;;
 -	*) func_append xrpath " $dir" ;;
 -	esac
-+        func_add2xrpath "$dir"
++	func_add2xrpath "$dir"
  	continue
  	;;
  
-@@ -5801,18 +5807,42 @@
+@@ -5801,18 +5807,58 @@
  	;;
  
        -Wl,*)
-+        wlprefix=`expr length "$wl"`
-+        wlprefix=`expr substr "$arg" 1 $wlprefix`
-+        if test x"$wlprefix" = x"$wl" -a x"$wl" != x"-Wl,"; then
-+          func_append compiler_flags " $arg"
++	wlprefix=`expr length "$wl"`
++	wlprefix=`expr substr "$arg" 1 $wlprefix`
++	if test x"$wlprefix" = x"$wl" -a x"$wl" != x"-Wl,"; then
++	  func_append compiler_flags " $arg"
 +	  func_append compile_command " $arg"
 +	  func_append finalize_command " $arg"
-+	  func_append new_inherited_linker_flags " $arg"
++	  if expr "x$arg" : '^x'"$wl"'-rpath,,' ; then
++           func_stripname "$wl"'-rpath,,' '' "$arg"
++	    dir=$func_stripname_result
++	    func_add2xrpath "$dir"
++	  elif expr "x$arg" : '^x'"$wl"'-rpath$' >/dev/null ; then
++	    func_stripname "$wl" '' "$1"
++	    dir=$func_stripname_result
++	    if ! expr "x$1" : '^x'"$wl" >/dev/null \
++	    || ! test -d "$dir" ; then
++	    func_fatal_error "$wl"'-rpath must be followed by '"$wl"'-escaped directory'
++           fi
++	    shift
++	    func_add2xrpath "$dir"
++	    continue
++	  else
++	    func_append new_inherited_linker_flags " $arg"
++	  fi
 +	  continue
-+        elif expr "x$arg" : '^x-Wl,-rpath,' >/dev/null ; then
-+          func_stripname '-Wl,-rpath,' '' "$arg"
++	elif expr "x$arg" : '^x-Wl,-rpath,' >/dev/null ; then
++	  func_stripname '-Wl,-rpath,' '' "$arg"
 +	  dir=$func_stripname_result
-+          func_add2xrpath "$dir"
++	  func_add2xrpath "$dir"
 +	  continue
-+        elif expr "x$arg" : '^x-Wl,-rpath$' >/dev/null ; then
-+          func_stripname '-Wl,' '' "$1"
-+          dir=$func_stripname_result
-+          if ! expr "x$1" : '^x-Wl,' >/dev/null \
-+            || ! test -d "$dir" ; then
-+            func_fatal_error '-Wl,-rpath must be followed by -Wl-escaped directory'
-+          fi
-+          shift
-+          func_add2xrpath "$dir"
-+          continue
-+        fi
++	elif expr "x$arg" : '^x-Wl,-rpath$' >/dev/null ; then
++	  func_stripname '-Wl,' '' "$1"
++	  dir=$func_stripname_result
++	  if ! expr "x$1" : '^x-Wl,' >/dev/null \
++	    || ! test -d "$dir" ; then
++	    func_fatal_error '-Wl,-rpath must be followed by -Wl-escaped directory'
++         fi
++	  shift
++	  func_add2xrpath "$dir"
++	  continue
++	fi
  	func_stripname '-Wl,' '' "$arg"
  	args=$func_stripname_result
  	arg=
