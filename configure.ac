@@ -185,9 +185,9 @@ main(int argc, char **argv)
         [ignore results of checks for known defects @<:@default: abort on error@:>@])],
      [],[with_regard_for_quality=yes])
    # TODO: add text for fixing of each check
+   AC_MSG_CHECKING([MPI for known defects])
+   AC_MSG_RESULT([])
    for mpi_check_src in "$srcdir/config/checksrc/"* ; do
-     AC_MSG_CHECKING([MPI for known defects])
-     AC_MSG_RESULT([])
      suffix=`echo "$mpi_check_src" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
      subtestname=`echo "$mpi_check_src" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
      AS_CASE([$suffix],
@@ -202,6 +202,8 @@ main(int argc, char **argv)
         AS_IF([test $ac_status -eq 0],
           [AC_MSG_RESULT([okay])],
           [AC_MSG_RESULT([error])
+           AS_IF([test -r "$srcdir/config/checkdoc/${subtestname}.txt"],
+             [cat "$srcdir/config/checkdoc/${subtestname}.txt" >&2])
            AS_IF([test "$with_regard_for_quality" != no],
              [AC_MSG_FAILURE([test $subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation])])])],
        [AC_MSG_RESULT([chosen MPI has known error $subtestname])

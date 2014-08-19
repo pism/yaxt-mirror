@@ -5,7 +5,11 @@ ACLOCAL_AMFLAGS=-I m4
 EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	util/sxpreproc-wrapper util/xlfpreproc-wrapper \
 	config/checksrc/openmpi_struct_dt.c \
+	config/checkdoc/openmpi_struct_dt.txt \
 	config/checksrc/openmpi_dup.c \
+	config/checkdoc/openmpi_dup.txt \
+	config/checksrc/pe5228_iv32584.c \
+	config/checkdoc/pe5228_iv32584.txt \
 	doc/Doxyfile doc/README.build doc/cfortran.doc \
 	doc/cfortran.html doc/cfortran.txt doc/styleguide.txt \
 	doc/images/decomp_idxlist_collection.png \
