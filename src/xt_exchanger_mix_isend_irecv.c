@@ -135,10 +135,10 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
   size_t nmsg = (size_t)exchanger_msr->n;
+  struct mix_msg *restrict msgs = exchanger_msr->msgs;
 
-  xt_redist_msgs_strided_destruct(nmsg, &exchanger_msr->msgs->data,
-                                  exchanger_msr->comm,
-                                  sizeof (*exchanger_msr->msgs));
+  xt_redist_msgs_strided_destruct(nmsg, &msgs[0].data, exchanger_msr->comm,
+                                  sizeof (*msgs));
   xt_mpi_comm_smart_dedup(&exchanger_msr->comm, exchanger_msr->tag_offset);
   free(exchanger_msr);
 }
