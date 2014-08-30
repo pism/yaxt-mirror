@@ -18,7 +18,7 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 # disregard AIX relocations
 /^${exp_sym_prefix}\./b
 # ignore symbols mpi.h introduces into our namespace
-/^${exp_sym_prefix}[Mm][Pp][Ii]\(_\|fc\)/b
+/^${exp_sym_prefix}[Mm][Pp][Ii]\(_\|fc\|priv\)/b
 # ignore initialize/finish symbols from ELF shared objects
 /^${exp_sym_prefix}_\(fini\|init\)/b
 # ignore symbols nagfor injects into our shared objects
