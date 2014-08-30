@@ -856,9 +856,11 @@ xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset)
   struct xt_mpi_comm_internal_attr *comm_xt_attr_val
     = xt_mpi_comm_get_internal_attr(comm);
   size_t position = 0;
-  if (comm_xt_attr_val) {
+  int refcount = comm_xt_attr_val ? comm_xt_attr_val->refcount : 0;
+  if (comm_xt_attr_val
+      && (refcount + 1) < MPI_TAG_UB / xt_mpi_num_tags) {
     comm_dest = comm;
-    int refcount = ++(comm_xt_attr_val->refcount);
+    comm_xt_attr_val->refcount = ++refcount;
     size_t used_map_size = comm_xt_attr_val->used_map_size;
     while (position < used_map_size
            && comm_xt_attr_val->used_map[position] == ~(used_map_elem)0)
