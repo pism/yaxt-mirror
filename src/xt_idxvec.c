@@ -161,7 +161,6 @@ struct Xt_idxvec_ {
 
 Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   INSTR_DEF(t_idxvec_new,"xt_idxvec_new");
-  INSTR_START(t_idxvec_new);
   if (num_indices > 0)
     ;
   else if (num_indices == 0)
@@ -169,6 +168,7 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   else
     die("number of indices passed to xt_idxvec_new must not be negative!");
 
+  INSTR_START(t_idxvec_new);
   size_t vector_size = (size_t)num_indices * sizeof (idxvec[0]),
     header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
                    /sizeof (Xt_int)) * sizeof (Xt_int);
