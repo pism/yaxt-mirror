@@ -108,16 +108,16 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
                               exchanger->comm);
   exchanger->nrecv = nrecv;
   xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
-                              exchanger->msgs + nrecv,
+                              exchanger->msgs + nsend,
                               sizeof (exchanger->msgs[0]),
                               exchanger->comm);
   exchanger->func = func;
 
-  xt_exchanger_internal_optimize((size_t)nsend, exchanger->msgs + nrecv,
+  xt_exchanger_internal_optimize((size_t)nsend, exchanger->msgs,
                                  sizeof(exchanger->msgs[0]),
                                  exchanger->comm);
 
-  xt_exchanger_internal_optimize((size_t)nrecv, exchanger->msgs,
+  xt_exchanger_internal_optimize((size_t)nrecv, exchanger->msgs + nsend,
                                  sizeof(exchanger->msgs[0]),
                                  exchanger->comm);
 
