@@ -56,7 +56,7 @@ dnl
 AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
  [m4_ifval([$2],[ACX_FORTRAN_CHECK_TYPE([$1(kind=$2)],
                    [acx_search_kind_subst=false],
-                   [acx_search_kind_subst=true], [$4])],dnl
+                   [acx_search_kind_subst=true], [$4])],
            [acx_search_kind_subst=true])
   AS_IF([test $acx_search_kind_subst = true],
     [m4_ifval([$5],[AC_CHECK_SIZEOF([$3],,[$5])],[AC_CHECK_SIZEOF([$3])])
@@ -108,7 +108,7 @@ AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
      AS_VAR_POPDEF([acx_c_size])
    ],
    [acx_fortran_kind_subst=$2])
-  AS_IF([test x$acx_fortran_kind_subst != x],
+  AS_IF([test "x$acx_fortran_kind_subst" != "x$2"],
     [AC_MSG_NOTICE([Substituting $1 kind $acx_fortran_kind_subst for $3])
      m4_ifval([$2],[AC_DEFINE_UNQUOTED(AS_TR_CPP($2), $acx_fortran_kind_subst,[type kind override])])
      AC_DEFINE_UNQUOTED(HAVE_FORTRAN_ISO_[]AS_TR_CPP($2), $acx_fortran_kind_subst, [type kind override])

@@ -68,3 +68,6 @@ s/.* (\{0,1\}v\([0-9]*\.[0-9]*\.[0-9]*\))\{0,1\} .*/\1/;p'`
         $3
     ])
 ])
+dnl Local Variables:
+dnl mode: autoconf
+dnl End:
