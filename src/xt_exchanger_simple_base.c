@@ -130,9 +130,9 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
     (Xt_exchanger_simple_base)exchanger;
 
   size_t nmsg = (size_t)exchanger_sb->nsend + (size_t)exchanger_sb->nrecv;
-  xt_redist_msgs_strided_destruct(nmsg, exchanger_sb->msgs,
-                                  exchanger_sb->comm,
-                                  sizeof (exchanger_sb->msgs[0]));
+  struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs;
+  xt_redist_msgs_strided_destruct(nmsg, msgs, exchanger_sb->comm,
+                                  sizeof (msgs[0]));
   xt_mpi_comm_smart_dedup(&exchanger_sb->comm, exchanger_sb->tag_offset);
   free(exchanger_sb);
 }
