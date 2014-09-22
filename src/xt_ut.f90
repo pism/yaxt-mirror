@@ -2,8 +2,8 @@
 !! @file xt_ut.f90
 !!
 !! @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
-!!                                 Thomas Jahns <jahns@dkrz.de>
 !!
+!!                                 Thomas Jahns <jahns@dkrz.de>
 !! @author Jörg Behrens <behrens@dkrz.de>
 !!         Thomas Jahns <jahns@dkrz.de>
 !!
