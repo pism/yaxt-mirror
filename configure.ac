@@ -236,32 +236,36 @@ m4_foreach([substtype],[[XT_INT]],
      [int],
      substtype[_MPIDT=MPI_INT
      AC_CHECK_SIZEOF([int])
+     ]substtype[_FC_KIND=c_int
      ACX_FORTRAN_TYPE_KIND([integer],[c_int],[int],
-       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=INT_MAX
      ]substtype[_MIN="(-INT_MAX)"
      ]substtype[_abs='(abs((v)))'],
      [long],
      substtype[_MPIDT=MPI_LONG
      AC_CHECK_SIZEOF([long])
+     ]substtype[_FC_KIND=c_long
      ACX_FORTRAN_TYPE_KIND([integer],[c_long],[long],
-       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LONG_MAX
      ]substtype[_MIN="(-LONG_MAX)"
      ]substtype[_abs='(labs((v)))'],
      [short],
      substtype[_MPIDT=MPI_SHORT
      AC_CHECK_SIZEOF([short])
+     ]substtype[_FC_KIND=c_short
      ACX_FORTRAN_TYPE_KIND([integer],[c_short],[short],
-       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=SHRT_MAX
      ]substtype[_MIN="(-SHRT_MAX)"
      ]substtype[_abs='((short)abs((v)))'],
      ["long long"],
      substtype[_MPIDT=MPI_LONG_LONG
      AC_CHECK_SIZEOF([long long])
+     ]substtype[_FC_KIND=c_long_long
      ACX_FORTRAN_TYPE_KIND([integer],[c_long_long],[long long],
-       [use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
+       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LLONG_MAX
      ]substtype[_MIN="(-LLONG_MAX)"
      ]substtype[_abs='(llabs((v)))'],
