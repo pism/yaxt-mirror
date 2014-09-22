@@ -118,13 +118,13 @@ AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
 ])
 dnl
 AC_DEFUN([ACX_FORTRAN_C_INT],dnl
-  [ACX_FORTRAN_TYPE_KIND([integer], [c_int], [int],[use iso_c_binding])])
+  [ACX_FORTRAN_TYPE_KIND([integer], [c_int], [int],[      use iso_c_binding])])
 AC_DEFUN([ACX_FORTRAN_C_INT64_T],dnl
   [AC_REQUIRE([AC_TYPE_INT64_T])
-   ACX_FORTRAN_TYPE_KIND([integer], [c_int64_t], [int64_t],dnl
-  [use iso_c_binding])])
+   ACX_FORTRAN_TYPE_KIND([integer], [c_int64_t], [int64_t],
+  [      use iso_c_binding])])
 AC_DEFUN([ACX_FORTRAN_C_FLOAT],dnl
-  [ACX_FORTRAN_TYPE_KIND([real], [c_float], [float],[use iso_c_binding])]))
+  [ACX_FORTRAN_TYPE_KIND([real], [c_float], [float],[      use iso_c_binding])]))
 dnl
 dnl Local Variables:
 dnl mode: autoconf
