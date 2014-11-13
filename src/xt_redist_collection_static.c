@@ -80,7 +80,7 @@ generate_datatype(int num_redists,
   if (num_datatypes != num_redists) {
 
     datatypes_ = xmalloc((size_t)num_datatypes * sizeof(*datatypes_));
-    displacements_ = xmalloc((size_t)num_datatypes * sizeof(*displacements));
+    displacements_ = xmalloc((size_t)num_datatypes * sizeof(*displacements_));
 
     num_datatypes = 0;
 
