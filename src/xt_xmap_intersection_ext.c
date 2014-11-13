@@ -435,9 +435,9 @@ generate_dir_transfer_ext_dst(
         += isign_mask_isect_pos_ext_size & (isect_pos_ext.size + 1);
       int isect_pos_ext_orig_size = isect_pos_ext.size;
       isect_pos_ext.size = abs(isect_pos_ext.size);
-      /* if isect_pos_ext is of negative orientation, add nothing at
-       * the end but subtract from already incremented psum */
       isect_pos_exts_size_psum += isect_pos_ext.size;
+      /* keep progress as inverse of change to psum to compensate for
+       * eventual correction later */
       int progress = -isect_pos_ext.size;
       size_t search_start_pos = 0, insert_pos;
       do {
