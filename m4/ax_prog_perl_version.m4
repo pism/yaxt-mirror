@@ -34,13 +34,13 @@
 #   permitted in any medium without royalty provided the copyright notice
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
-
+#
 #serial 12
-
+#
 AC_DEFUN([AX_PROG_PERL_VERSION],[
     AC_REQUIRE([AC_PROG_SED])
     AC_REQUIRE([AC_PROG_GREP])
-
+#
     AS_IF([test -n "$PERL"],[
         ax_perl_version="$1"
 
