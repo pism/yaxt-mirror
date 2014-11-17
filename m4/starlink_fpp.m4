@@ -304,6 +304,7 @@ AC_DEFUN([_ACX_SL_PROG_FPP],dnl
         [for ac_fpp in `cd $srcdir ; pwd`/util/sxpreproc-wrapper \
            `cd $srcdir ; pwd`/util/xlfpreproc-wrapper \
            `cd $srcdir ; pwd`/util/sunf95preproc-wrapper \
+           `cd $srcdir ; pwd`/util/crayftnpreproc-wrapper \
            "$FC -F" "$FC -F -fpp" "$FC -E" "$FC -E" "$FC -E -cpp" \
            "$FC $FCFLAGS -F" "$FC $FCFLAGS -E" "$FC $FCFLAGS -E" \
            "$FC $FCFLAGS -E -cpp" "$FC $FCFLAGS -x f95-cpp-input -E -P" \
