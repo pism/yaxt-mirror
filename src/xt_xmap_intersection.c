@@ -606,9 +606,34 @@ xt_xmap_intersection_new(int num_src_intersections,
   if (!generate_transfer_pos(xmap,
                              num_src_intersections, src_com,
                              num_dst_intersections, dst_com,
-                             src_idxlist, dst_idxlist, comm))
-    Xt_abort(comm, "ERROR: destination intersections do not match with "
-             "destination index list", __FILE__, __LINE__);
+                             src_idxlist, dst_idxlist, comm)) {
+
+    int num_dst_indices = xt_idxlist_get_num_indices(dst_idxlist);
+    Xt_int const * dst_indices = xt_idxlist_get_indices_const(dst_idxlist);
+    int * found_index_mask = calloc(num_dst_indices, sizeof(*found_index_mask));
+    int * index_positions = malloc(num_dst_indices * sizeof(*index_positions));
+
+    for (int i = 0; i < num_dst_intersections; ++i) {
+      xt_idxlist_get_positions_of_indices(dst_com[i].list, dst_indices,
+                                          num_dst_indices, index_positions, 0);
+      for (int j = 0; j < num_dst_indices; ++j)
+        found_index_mask[j] |= index_positions[j] != -1;
+    }
+
+    int first_missing_pos = 0;
+    while ((first_missing_pos < (num_dst_indices - 1)) &&
+           (found_index_mask[first_missing_pos])) ++first_missing_pos;
+
+    Xt_int missing_index;
+    xt_idxlist_get_index_at_position(dst_idxlist, first_missing_pos,
+                                     &missing_index);
+
+    char error_message[1024];
+    sprintf(error_message, "ERROR: destination intersections do not match "
+            "with destination index list (first missing index %d at position "
+            "%d)", missing_index, first_missing_pos);
+      Xt_abort(comm, error_message, __FILE__, __LINE__);
+  }
 
   // we could also calculate the (more precise) max pos using only xmap data
   // but using this simple estimate we are still okay for usage checks

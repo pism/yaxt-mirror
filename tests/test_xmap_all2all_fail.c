@@ -47,6 +47,9 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+#include <string.h>
+#include <unistd.h>
 #include <mpi.h>
 
 #include <yaxt.h>
@@ -54,16 +57,15 @@
 #define VERBOSE
 #include "tests.h"
 
-static void
-shift_idx(Xt_int idx[], int num, int offset)  {
-  int rank, i;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  for (i=0; i<num; i++) {
-    idx[i] = (Xt_int)(idx[i] + rank*offset);
-  }
-}
+enum {
+  SMALL,
+  BIG,
+} index_list_size;
 
-int main(void) {
+static void
+parse_options(int *argc, char ***argv);
+
+int main(int argc, char **argv) {
 
    // init mpi
    xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
@@ -73,26 +75,24 @@ int main(void) {
    int my_rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
+   index_list_size = SMALL;
+
+   parse_options(&argc, &argv);
+
    {
       // source index list
-      Xt_int src_index_list[] = {1,2,3,4,5,6,7};
-      int src_num_indices
-        = sizeof(src_index_list) / sizeof(src_index_list[0]);
-      shift_idx(src_index_list, src_num_indices, 7);
-
-      Xt_idxlist src_idxlist;
-
-      src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
+      struct Xt_stripe src_stripe;
+      src_stripe.nstrides = (index_list_size == SMALL)?7:1023;
+      src_stripe.start = 1 + my_rank * src_stripe.nstrides;
+      src_stripe.stride = 1;
+      Xt_idxlist src_idxlist = xt_idxstripes_new(&src_stripe, 1);
 
       // destination index list
-      Xt_int dst_index_list[] = {8,7,6,5,4,3,2};
-      int dst_num_indices
-        = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
-      shift_idx(dst_index_list, dst_num_indices, 7);
-
-      Xt_idxlist dst_idxlist;
-
-      dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
+      struct Xt_stripe dst_stripe;
+      dst_stripe.nstrides = src_stripe.nstrides;
+      dst_stripe.start = src_stripe.start + src_stripe.nstrides;
+      dst_stripe.stride = -1;
+      Xt_idxlist dst_idxlist = xt_idxstripes_new(&dst_stripe, 1);
 
       // test of exchange map
       // NOTE: this should fail
@@ -127,4 +127,24 @@ int main(void) {
    xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 
    return TEST_EXIT_CODE;
+}
+
+static void
+parse_options(int *argc, char ***argv)
+{
+  int opt;
+  while ((opt = getopt(*argc, *argv, "s:")) != -1) {
+    switch (opt) {
+    case 's':
+      if (!strcmp(optarg, "small"))
+        index_list_size = SMALL;
+      else if (!strcmp(optarg, "big"))
+        index_list_size = BIG;
+      else
+      {
+        fprintf(stderr, "Unknown data size \"%s\"\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
 }

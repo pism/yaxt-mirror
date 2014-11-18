@@ -303,9 +303,22 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
         num_dst_intersections, dst_com, dst_idxlist_local,
         &(xmap->n_in), &(xmap->in_msg), dst_removals_per_intersection);
 
-    if (!xt_idxlist_pos_ext_is_full_cover(dst_idxlist_local, cover))
-      Xt_abort(comm, "ERROR: destination intersections do not match with "
-               "destination index list", __FILE__, __LINE__);
+    if (!xt_idxlist_pos_ext_is_full_cover(dst_idxlist_local, cover)) {
+      if (xt_idxlist_get_num_indices(dst_idxlist_local) == 0)
+        Xt_abort(comm, "ERROR: ups...this should not have happend...", __FILE__,
+                 __LINE__);
+      int first_missing_pos = 0;
+      Xt_int missing_index;
+      if ((cover.num_pos_ext > 0) && (cover.pos_ext[0].start == 0))
+        first_missing_pos = cover.pos_ext[0].start + cover.pos_ext[0].size - 1;
+      xt_idxlist_get_index_at_position(dst_idxlist_local, first_missing_pos,
+                                       &missing_index);
+      char error_message[1024];
+      sprintf(error_message, "ERROR: destination intersections do not match "
+              "with destination index list (first missing index %d at position "
+              "%d)", missing_index, first_missing_pos);
+        Xt_abort(comm, error_message, __FILE__, __LINE__);
+    }
     xt_cover_finish(&cover);
   }
 
