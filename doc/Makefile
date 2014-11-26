@@ -1,9 +1,6 @@
 
-doc: Doxyfile
-	cd .. && doxygen doc/Doxyfile
-
-Doxyfile: Doxyfile.in ../configure.ac
-	./mk_doxyfile.pl
+html/index.html: ../configure.ac Doxyfile.in
+	cd .. && ./scripts/generate_doc.pl configure.ac doc/Doxyfile.in doc/Doxyfile
 
 clean:
 	rm -rf html/
