@@ -11,7 +11,7 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl forbid acx macro names from remaining unexpanded
 m4_pattern_forbid([^ACX_])
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE([1.10 foreign])
+AM_INIT_AUTOMAKE([1.10 foreign subdir-objects])
 AM_MAINTAINER_MODE
 dnl ######################################################################
 dnl Diagnose incompatible tool versions
