@@ -315,8 +315,8 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
                                        &missing_index);
       char error_message[1024];
       sprintf(error_message, "ERROR: destination intersections do not match "
-              "with destination index list (first missing index %d at position "
-              "%d)", missing_index, first_missing_pos);
+              "with destination index list (first missing index %lld "
+              "at position %d)", (long long)missing_index, first_missing_pos);
         Xt_abort(comm, error_message, __FILE__, __LINE__);
     }
     xt_cover_finish(&cover);

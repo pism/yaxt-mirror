@@ -83,14 +83,14 @@ int main(int argc, char **argv) {
       // source index list
       struct Xt_stripe src_stripe;
       src_stripe.nstrides = (index_list_size == SMALL)?7:1023;
-      src_stripe.start = 1 + my_rank * src_stripe.nstrides;
+      src_stripe.start = (Xt_int)(1 + (Xt_int)my_rank * src_stripe.nstrides);
       src_stripe.stride = 1;
       Xt_idxlist src_idxlist = xt_idxstripes_new(&src_stripe, 1);
 
       // destination index list
       struct Xt_stripe dst_stripe;
       dst_stripe.nstrides = src_stripe.nstrides;
-      dst_stripe.start = src_stripe.start + src_stripe.nstrides;
+      dst_stripe.start = (Xt_int)(src_stripe.start + src_stripe.nstrides);
       dst_stripe.stride = -1;
       Xt_idxlist dst_idxlist = xt_idxstripes_new(&dst_stripe, 1);
 

@@ -609,14 +609,16 @@ xt_xmap_intersection_new(int num_src_intersections,
                              src_idxlist, dst_idxlist, comm)) {
 
     int num_dst_indices = xt_idxlist_get_num_indices(dst_idxlist);
-    Xt_int const * dst_indices = xt_idxlist_get_indices_const(dst_idxlist);
-    int * found_index_mask = calloc(num_dst_indices, sizeof(*found_index_mask));
-    int * index_positions = malloc(num_dst_indices * sizeof(*index_positions));
+    const Xt_int *dst_indices = xt_idxlist_get_indices_const(dst_idxlist);
+    int * found_index_mask = xcalloc((size_t)num_dst_indices,
+                                     sizeof(*found_index_mask));
+    int * index_positions = xmalloc((size_t)num_dst_indices
+                                    * sizeof(*index_positions));
 
-    for (int i = 0; i < num_dst_intersections; ++i) {
+    for (size_t i = 0; i < (size_t)num_dst_intersections; ++i) {
       xt_idxlist_get_positions_of_indices(dst_com[i].list, dst_indices,
                                           num_dst_indices, index_positions, 0);
-      for (int j = 0; j < num_dst_indices; ++j)
+      for (size_t j = 0; j < (size_t)num_dst_indices; ++j)
         found_index_mask[j] |= index_positions[j] != -1;
     }
 
@@ -630,8 +632,8 @@ xt_xmap_intersection_new(int num_src_intersections,
 
     char error_message[1024];
     sprintf(error_message, "ERROR: destination intersections do not match "
-            "with destination index list (first missing index %d at position "
-            "%d)", missing_index, first_missing_pos);
+            "with destination index list (first missing index %lld "
+            "at position %d)", (long long)missing_index, first_missing_pos);
       Xt_abort(comm, error_message, __FILE__, __LINE__);
   }
 
