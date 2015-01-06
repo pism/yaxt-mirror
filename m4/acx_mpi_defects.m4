@@ -52,6 +52,10 @@ dnl the following variables are set to test-specific values:
 dnl acx_subtestname = base file name of the test
 dnl acx_mpi_check_src = path to check source file
 dnl acx_suffix = file suffix of source file
+dnl
+dnl Each test source may contain zero or more of the following stanzas
+dnl acx_mpirun_num_tasks = N
+dnl   specify number of tasks N (positive integer) to run this test with
 dnl TODO: extend for F77 and C++
 AC_DEFUN([ACX_MPI_DEFECTS],
   [AC_MSG_CHECKING([MPI for known defects])
@@ -67,8 +71,17 @@ AC_DEFUN([ACX_MPI_DEFECTS],
         AC_LANG_PUSH([Fortran])],
        [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
      AC_MSG_CHECKING([$acx_subtestname])
+     acx_mpirun_num_tasks=`sed -n '/acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\)/{
+s/.*acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\).*/\1/
+p
+q
+}
+' "$acx_mpi_check_src"`
+     AS_IF([test `expr "$acx_mpirun_num_tasks" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
+            && test "$acx_mpirun_num_tasks" -gt 0],,
+       [acx_mpirun_num_tasks=1])
      AC_LINK_IFELSE(,
-       [acx_mpirun_num_tasks="$MPI_LAUNCH -n 1 ./conftest$EXEEXT"
+       [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
         AC_TRY_EVAL([acx_mpirun_num_tasks])
         AS_IF([test $ac_status -eq 0],
           [AC_MSG_RESULT([okay])m4_ifval([$2],[
@@ -83,6 +96,7 @@ AC_DEFUN([ACX_MPI_DEFECTS],
        [f90|F90],[AC_LANG_POP([Fortran])],
        [c],[AC_LANG_POP([C])])
    done
+   ASX_VAR_UNSET([acx_mpirun_num_tasks])
    ASX_VAR_UNSET([acx_mpi_check_src])
    ASX_VAR_UNSET([acx_suffix])
    ASX_VAR_UNSET([acx_subtestname])
