@@ -139,9 +139,9 @@ AC_DEFUN([_ACX_SL_LANG_PROGRAM_FPP_D],
 # Test for #include statement
 # If unsupported, this should give a type error
 AC_DEFUN([_ACX_SL_LANG_PROGRAM_FPP_I],
-  [AC_LANG_PROGRAM([],[      IMPLICIT CHARACTER (c)
-      !     Comments in test programs should be freeform compliant just in case.
-      !     conftest.inc contains the Fortran statement "REAL cc"
+  [AC_LANG_PROGRAM(,[      IMPLICIT CHARACTER (c)
+       !     Comments in test programs should be freeform compliant just in case.
+       !     conftest.inc contains the Fortran statement "REAL cc"
 @%:@include "conftest.inc"
       cc=1.])])#_ACX_SL_LANG_PROGRAM_FPP_I
 
@@ -450,7 +450,7 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
          AS_MKDIR_P([conftst])
          cd conftst
          ACX_LANG_OTHER_SUFFIX_CONFTEST([inc],
-           [AC_LANG_SOURCE([      !     This statement overrides the IMPLICIT statement in the program
+           [AC_LANG_SOURCE([       !     This statement overrides the IMPLICIT statement in the program
       REAL cc])])
          cd ..
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],[_ACX_SL_LANG_PROGRAM_FPP_I])

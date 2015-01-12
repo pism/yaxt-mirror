@@ -54,8 +54,7 @@ AC_DEFUN([ACX_FORTRAN_CHECK_TYPE],
   AS_VAR_PUSHDEF([acx_fortran_Type], [acx_cv_fortran_type_$1])dnl
   AC_CACHE_CHECK([for Fortran type $1], [acx_fortran_Type],
     [AC_LANG_PUSH([Fortran])
-     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,m4_ifval([$4],[$4
-])dnl
+     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$4],
 [      $1 a(2, 2)
       a = reshape(a, (/ 2, 2 /))])],
        [AS_VAR_SET([acx_fortran_Type], [yes])],

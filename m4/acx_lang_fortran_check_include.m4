@@ -56,8 +56,8 @@ dnl
 AC_DEFUN([ACX_LANG_CHECK_INCLUDE_PATHS_IFELSE(Fortran)],dnl
   [ACX_GENERIC_CHECK_INCLUDE_PATHS_IFELSE(FCFLAGS,$FPP_INCOPT,$@)])
 dnl
-AC_DEFUN([ACX_LANG_INCLUDE_PROGRAM(Fortran)],dnl
-  [AC_LANG_PROGRAM([$2],[     include '$1'])])
+AC_DEFUN([ACX_LANG_INCLUDE_PROGRAM(Fortran)],
+  [AC_LANG_PROGRAM([$2],[      include '$1'])])
 dnl
 dnl Local Variables:
 dnl mode: autoconf

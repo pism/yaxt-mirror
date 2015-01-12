@@ -52,8 +52,6 @@ dnl the original Copyright notice is as follows:
 # that uses prologue
 m4_define([AC_LANG_PROGRAM(Fortran)],dnl
 [      program conftest
-m4_ifval([$1],dnl
-[$1
-])dnl
-$2
+m4_ifval([$1],[$1
+])$2
       end])

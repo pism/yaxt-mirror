@@ -83,12 +83,12 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
         [_AC_RUN_LOG([mv "conftest.$ac_objext" "conftest_c.$ac_objext"],
            [_AS_ECHO_LOG([Renaming C object file.])])
          AC_LANG_PUSH([Fortran])
-         AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-      MODULE conftest_data
-        IMPLICIT NONE
-        PRIVATE
-        REAL :: ri
-        PUBLIC :: ri
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[      MODULE conftest_data
+      IMPLICIT NONE
+      PRIVATE
+      REAL :: ri
+      PUBLIC :: ri
       END MODULE conftest_data
 
       FUNCTION conftest_f(v) RESULT(r)
@@ -97,14 +97,13 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
       REAL :: r
       r = v * 100.0
       ri = 1.0 / v
-      END FUNCTION conftest_f
-])],
+      END FUNCTION conftest_f])],
            [_AC_RUN_LOG([mv "conftest.$ac_objext" "conftest_f.$ac_objext"],
               [_AS_ECHO_LOG([Renaming Fortran object file.])])
             save_LIBS=$LIBS
             LIBS="conftest_c.$ac_objext conftest_f.$ac_objext $LIBS"
-            AC_RUN_IFELSE([AC_LANG_PROGRAM([
-      USE conftest_data, ONLY: ri
+            AC_RUN_IFELSE([AC_LANG_PROGRAM(,
+[      USE conftest_data, ONLY: ri
       IMPLICIT NONE
       INTERFACE
        FUNCTION conftest_c(i, v, p, q) RESULT(f)
@@ -144,9 +143,7 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
              ", boo = ", boo
         FLUSH(0)
         CALL err_exit
-      END IF
-
-])],
+      END IF])],
            [acx_cv_cfortran_works=yes],
            [acx_cv_cfortran_works="error"],
            [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])

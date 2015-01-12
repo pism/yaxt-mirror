@@ -40,13 +40,13 @@ AC_DEFUN([ACX_FC_VOLATILE],
   [AC_REQUIRE([AC_PROG_FC])dnl
    AC_LANG_PUSH([Fortran])
    AC_MSG_CHECKING([wether $FC supports volatile variable attribute])
-   AC_COMPILE_IFELSE([SUBROUTINE f(p)
-     REAL, INTENT(IN) :: p
-     REAL :: x
-     VOLATILE :: x
-     x = x + 1.0
-END SUBROUTINE f
-],dnl
+   AC_COMPILE_IFELSE(
+[      SUBROUTINE f(p)
+      REAL, INTENT(IN) :: p
+      REAL :: x
+      VOLATILE :: x
+      x = x + 1.0
+      END SUBROUTINE f],
      [AC_MSG_RESULT([yes])
       $1],
      [AC_MSG_RESULT([no])

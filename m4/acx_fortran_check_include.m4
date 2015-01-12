@@ -43,10 +43,9 @@ dnl
 # Check the compiler accepts MOD-FILE. The PREAMBLE might be defaulted.
 m4_defun([_ACX_FORTRAN_CHECK_MOD_IFELSE],
   [AC_LANG_PUSH([Fortran])
-   AC_COMPILE_IFELSE([AC_LANG_SOURCE([program conftest
-$4
-use $1
-end program conftest])],
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,m4_ifval([$4],
+[       $4
+])[      use $1])],
      [AS_VAR_SET([acx_Mod], [yes])])
    AC_LANG_POP([Fortran])
    AS_VAR_SET_IF([acx_Mod],[$2],[$3])dnl

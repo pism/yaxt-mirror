@@ -112,8 +112,8 @@ AC_DEFUN([ACX_F90_PACKAGE],
       AC_ARG_VAR(AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]),
         [flags to enable 'USE $1' in Fortran program.])
       ACX_FORTRAN_CHECK_MOD_PATHS_IFELSE([$2],["$[]AS_TR_CPP([$1][root])/include" "$[]AS_TR_CPP([$1][root])/lib"],
-        AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[=]AS_VAR_GET([acx_Mod]),dnl
-        [$5],dnl
+        AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])[=]AS_VAR_GET([acx_Mod]),
+        [$5],
         [$3],m4_ifval([$4],[$4 ])[$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD])])])
    m4_ifval([$6],
      [AC_ARG_WITH(ASX_TR_ARG([$1]_AC_LANG_ABBREV[-lib]),
@@ -128,9 +128,9 @@ AC_DEFUN([ACX_F90_PACKAGE],
          acx_save_FCFLAGS="$FCFLAGS"
          FCFLAGS="$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_MOD]) $FCFLAGS"
          ACX_OPTION_SEARCH_LIBS_MULTI([$6],[$7],,dnl
-           [$10],[$8],m4_ifval([$9],[$9 ])$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB]),dnl
-           [use $2]m4_ifval([$12],[[
-$12]]),[         call $6$13])
+           [$10],[$8],m4_ifval([$9],[$9 ])$[]AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB]),
+           [      use $2]m4_ifval([$12],[[
+      $12]]),[      call $6$13])
          FCFLAGS="$acx_save_FCFLAGS"
          AS_TR_CPP([$1_]_AC_LANG_ABBREV[_LIB])="AS_VAR_GET([ac_Search])"
          AS_VAR_POPDEF([ac_Search])])])

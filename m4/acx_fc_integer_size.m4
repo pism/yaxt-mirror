@@ -49,25 +49,23 @@ dnl  produce program that fails to compile if size_to_test equals
 dnl  the size of type
 dnl
 m4_define([_ACX_LANG_CHECK_SIZEOF_INTEGRAL_TYPE_PROGRAM(Fortran)],
-[AC_LANG_PROGRAM([], [
-   contains
-     $3
-     integer function callee(a)
-       integer a(:)
-       integer i
-       $1 c
-       do i=1,1024,(bit_size(c) - $2)
-         a(i) = a(i)
-       end do
-       callee = a(1)
-     end function callee
-     subroutine caller
-       integer b(1024)
-       $1 c
-       b(1) = callee(b(::(bit_size(c) - $2)))
-     end subroutine
-  ])
-])
+[AC_LANG_PROGRAM([],
+[      contains]m4_ifval([$3],[
+      $3])[
+      integer function callee(a)
+      integer a(:)
+      integer i
+      $1 c
+      do i=1,1024,(bit_size(c) - $2)
+      a(i) = a(i)
+      end do
+      callee = a(1)
+      end function callee
+      subroutine caller
+      integer b(1024)
+      $1 c
+      b(1) = callee(b(::(bit_size(c) - $2)))
+      end subroutine])])
 dnl
 dnl _ACX_
 m4_define([_ACX_FORTRAN_CHECK_SIZEOF_INTEGRAL_TYPE_COMPILE],dnl
@@ -87,14 +85,13 @@ m4_define([_ACX_FORTRAN_CHECK_SIZEOF_INTEGRAL_TYPE_COMPILE],dnl
 dnl
 dnl _ACX_FORTRAN_CHECK_SIZEOF_INTEGRAL_TYPE_RUN(TYPE, [PROLOGUE])
 m4_define([_ACX_FORTRAN_CHECK_SIZEOF_INTEGRAL_TYPE_RUN],dnl
-  [AC_RUN_IFELSE(AC_LANG_PROGRAM([$2], [
-    $1 :: itest
-    integer :: integer_bits
-    integer_bits=bit_size(itest)
-    open(10,file="conftestval")
-    write(10,*)integer_bits
-    close(10)
-]),dnl
+  [AC_RUN_IFELSE([AC_LANG_PROGRAM([$2],
+[      $1 :: itest
+      integer :: integer_bits
+      integer_bits=bit_size(itest)
+      open(10,file="conftestval")
+      write(10,*)integer_bits
+      close(10)])],
      [ac_lo=`cat conftestval`
       AS_VAR_SET([acx_fortran_Sizeof],[`expr $ac_lo / $acx_cv_c_char_bits`])],
      [AS_VAR_SET([acx_fortran_Sizeof],[unavailable])])

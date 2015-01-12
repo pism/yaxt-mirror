@@ -107,10 +107,11 @@ AC_DEFUN([ACX_GENERIC_CHECK_INCLUDE_PATHS_IFELSE],
         break
       done
       AS_VAR_COPY([$1],[save_flags])])
-   AS_VAR_SET_IF([acx_Include],dnl
-     [AS_IF([test x"AS_VAR_GET([acx_Include])" = x],dnl
-        [AC_MSG_RESULT([(none required)])],dnl
-        [AC_MSG_RESULT([AS_VAR_GET([acx_Include])])])],
+   AS_VAR_SET_IF([acx_Include],
+     [acx_temp=]AS_VAR_GET([acx_Include])[
+      AS_IF([test x"$acx_temp" = x],
+        [AC_MSG_RESULT([(none required)])],
+        [AC_MSG_RESULT([$acx_temp])])],
      [AC_MSG_RESULT([not found])])
    AS_VAR_SET_IF([acx_Include], [$5], [$6])
    AS_VAR_POPDEF([acx_Include])])dnl
