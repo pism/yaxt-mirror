@@ -86,7 +86,7 @@ void xt_initialize_f(MPI_Fint *comm_f) {
   xt_initialize(comm_c);
 }
 
-MPI_Fint xt_get_default_comm_f()
+MPI_Fint xt_get_default_comm_f(void)
 {
   return MPI_Comm_c2f(Xt_default_comm);
 }

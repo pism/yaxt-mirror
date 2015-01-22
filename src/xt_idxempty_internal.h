@@ -48,9 +48,9 @@
 #include "xt/xt_core.h"
 
 void
-xt_idxempty_init();
+xt_idxempty_init(void);
 
 void
-xt_idxempty_finalize();
+xt_idxempty_finalize(void);
 
 #endif // XT_IDXEMPTY_INTERNAL_H

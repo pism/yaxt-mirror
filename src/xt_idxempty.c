@@ -145,17 +145,17 @@ static struct xt_idxempty {
 } idxempty;
 
 void
-xt_idxempty_init()
+xt_idxempty_init(void)
 {
   Xt_idxlist_init(&idxempty.parent, &idxempty_vtable, 0);
 }
 
 void
-xt_idxempty_finalize()
+xt_idxempty_finalize(void)
 {
 }
 
-Xt_idxlist xt_idxempty_new() {
+Xt_idxlist xt_idxempty_new(void) {
   return (void*)&idxempty;
 }
 

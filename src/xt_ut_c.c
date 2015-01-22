@@ -124,11 +124,11 @@ void xt_ut_init(int decomp_size, int comm_tmpl_size, int comm_trans_size, int de
   trans_set = xt_handle_set_new(init_val.comm_trans_size);
 }
 
-void xt_ut_finalize() {
+void xt_ut_finalize(void) {
   xt_finalize();
 }
 
-static int new_ideco() {
+static int new_ideco(void) {
   xt_ut_deco_type *data = xmalloc(sizeof(*data));
   return xt_handle_new(deco_set, data);
 }
@@ -146,7 +146,7 @@ void xt_ut_destroy_decomposition(int id) {
   delete_ideco(id);
 }
 
-static int new_itemplate() {
+static int new_itemplate(void) {
   xt_ut_template_type *data = xmalloc(sizeof(*data));
   return xt_handle_new(template_set, data);
 }
@@ -164,7 +164,7 @@ void xt_ut_destroy_transposition_template(int id) {
   delete_itemplate(id);
 }
 
-static int new_itrans() {
+static int new_itrans(void) {
   xt_ut_trans_type *data = xmalloc(sizeof(*data));
   return xt_handle_new(trans_set, data);
 }

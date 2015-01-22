@@ -58,7 +58,7 @@
  *
  * @return returns a Xt_idxlist
  */
-Xt_idxlist xt_idxempty_new();
+Xt_idxlist xt_idxempty_new(void);
 
 Xt_idxlist xt_idxempty_unpack(void *buffer, int buffer_size, int *position,
                               MPI_Comm comm);

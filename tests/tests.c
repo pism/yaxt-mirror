@@ -43,7 +43,7 @@
 
 unsigned err_count__ = 0;
 
-int test_err_count()
+int test_err_count(void)
 {
   return (err_count__ > 0);
 }

@@ -84,7 +84,7 @@ xt_initialize(MPI_Comm default_comm)
 }
 
 void
-xt_finalize()
+xt_finalize(void)
 {
   if (xt_lib_state == xt_lib_initialized)
   {
@@ -105,13 +105,13 @@ xt_finalize()
 }
 
 int
-xt_initialized()
+xt_initialized(void)
 {
   return xt_lib_state > xt_lib_pre_init;
 }
 
 int
-xt_finalized()
+xt_finalized(void)
 {
   return xt_lib_state == xt_lib_finalized;
 }

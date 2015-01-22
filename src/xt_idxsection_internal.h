@@ -53,10 +53,10 @@
 #include "xt/xt_idxlist.h"
 
 void
-xt_idxsection_initialize();
+xt_idxsection_initialize(void);
 
 void
-xt_idxsection_finalize();
+xt_idxsection_finalize(void);
 
 Xt_idxlist
 xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);

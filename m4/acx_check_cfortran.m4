@@ -72,7 +72,7 @@ FCALLSCFUN4(FLOAT,conftest_C,CONFTEST_C,conftest_c,INT,FLOAT,PINT,PFLOAT)
 /* This function is required simply because some Fortran compilers
  * won't stop with exit code n when encountering STOP n */
 static void
-errExit()
+errExit(void)
 {
   exit(1);
 }

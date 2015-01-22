@@ -151,7 +151,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
 static MPI_Datatype stripe_dt;
 
 void
-xt_idxstripes_initialize()
+xt_idxstripes_initialize(void)
 {
   struct Xt_stripe stripe;
 
@@ -175,7 +175,7 @@ xt_idxstripes_initialize()
 }
 
 void
-xt_idxstripes_finalize()
+xt_idxstripes_finalize(void)
 {
   xt_mpi_call(MPI_Type_free(&stripe_dt), Xt_default_comm);
 }

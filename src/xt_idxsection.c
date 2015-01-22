@@ -163,7 +163,7 @@ static int
 idxsection_get_num_indices(Xt_idxsection section);
 
 void
-xt_idxsection_initialize()
+xt_idxsection_initialize(void)
 {
   struct dim_desc dim_desc;
 
@@ -184,7 +184,7 @@ xt_idxsection_initialize()
 }
 
 void
-xt_idxsection_finalize()
+xt_idxsection_finalize(void)
 {
   xt_mpi_call(MPI_Type_free(&dim_desc_dt), Xt_default_comm);
 }

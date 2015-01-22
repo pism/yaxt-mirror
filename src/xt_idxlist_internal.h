@@ -91,7 +91,7 @@ struct Xt_idxlist_ {
 
 void xt_idxlist_intersection_init(void);
 
-Xt_uid xt_idxlist_new_uid();
+Xt_uid xt_idxlist_new_uid(void);
 
 static inline void Xt_idxlist_init(Xt_idxlist idxlist,
                                    const struct xt_idxlist_vtable *vtable,

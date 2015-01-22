@@ -105,7 +105,7 @@ SymPrefix(abort_default)(MPI_Comm comm, const char *msg, const char *source, int
 SymPrefix(abort_func) SymPrefix(abort) = SymPrefix(abort_default);
 
 void
-SymPrefix(restore_default_abort_handler)()
+SymPrefix(restore_default_abort_handler)(void)
 {
   SymPrefix(abort) = SymPrefix(abort_default);
 }

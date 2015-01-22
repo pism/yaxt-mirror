@@ -393,7 +393,7 @@ static pthread_mutex_t nextIdMutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 Xt_uid
-xt_idxlist_new_uid()
+xt_idxlist_new_uid(void)
 {
   Xt_uid thisId;
 #ifdef HAVE_PTHREAD

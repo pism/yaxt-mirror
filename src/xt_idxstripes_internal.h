@@ -55,10 +55,10 @@
 #include "xt_arithmetic_util.h"
 
 void
-xt_idxstripes_initialize();
+xt_idxstripes_initialize(void);
 
 void
-xt_idxstripes_finalize();
+xt_idxstripes_finalize(void);
 
 Xt_idxlist
 xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);

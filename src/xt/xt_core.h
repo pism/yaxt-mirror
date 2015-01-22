@@ -105,19 +105,19 @@ xt_initialize(MPI_Comm default_comm);
  * finalize library
  */
 void
-xt_finalize();
+xt_finalize(void);
 
 /**
  * @return 1 if xt_initialize has been called, zero otherwise
  */
 int
-xt_initialized();
+xt_initialized(void);
 
 /**
  * @return 1 if xt_finalized has been called, zero otherwise
  */
 int
-xt_finalized();
+xt_finalized(void);
 
 
 #endif

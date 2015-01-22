@@ -59,6 +59,6 @@ extern unsigned err_count__;
 
 #define TEST_EXIT_CODE ((!err_count__)?EXIT_SUCCESS:EXIT_FAILURE)
 
-int test_err_count();
+int test_err_count(void);
 
 #endif // TESTS_H
