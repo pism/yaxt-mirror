@@ -1601,7 +1601,7 @@ do{VVCF(T1,A1,B1)  VVCF(T2,A2,B2)  VVCF(T3,A3,B3)  VVCF(T4,A4,B4)  VVCF(T5,A5,B5
 /* VOID breaks U into U and UU. */
 #define       INT_cfUU(T,A) _(T,VVVVVVV_cfTYPE) A
 #define      VOID_cfUU(T,A)             /* Needed for FORTRAN calls C sub.s.  */
-#define    STRING_cfUU(T,A) char *A 
+#define    STRING_cfUU(T,A) const char *A
 
 
 #define      BYTE_cfPU(A)   CFextern INTEGER_BYTE      FCALLSC_QUALIFIER A

@@ -69,6 +69,18 @@ conftest_C(int i, float v, int *p, float *q)
 
 FCALLSCFUN4(FLOAT,conftest_C,CONFTEST_C,conftest_c,INT,FLOAT,PINT,PFLOAT)
 
+/* test string returns */
+static const char *
+conftest_str_C(void)
+{
+  static const char msg@<:@100@:>@ = "aaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  return msg;
+}
+
+FCALLSCFUN0(STRING,conftest_str_C,CONFTEST_STR_C,conftest_str_c)
+
 /* This function is required simply because some Fortran compilers
  * won't stop with exit code n when encountering STOP n */
 static void
@@ -113,10 +125,14 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
          REAL, INTENT(out) :: q
          REAL :: f
        END FUNCTION conftest_c
+       FUNCTION conftest_str_c() result(s)
+         CHARACTER(99) :: s
+       END FUNCTION conftest_str_c
       END INTERFACE
       REAL, PARAMETER :: eps = 10e-6
       REAL :: foo, boo, too
-      INTEGER :: bar, baz
+      INTEGER :: bar, baz, i
+      CHARACTER(99) :: aaaaaa
       bar = 5
       foo = 0.3
       too = conftest_c(bar, foo, baz, boo)
@@ -127,8 +143,8 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
         CALL err_exit
       END IF
       IF (ABS(ri - 1.0 / (bar * foo)) > eps)  THEN
-        WRITE (0, *) "error checking ri, ri=", ri, ", 1.0 / (bar * foo) = ", &
-             1.0 / (bar * foo)
+        WRITE (0, *) "error checking ri, ri=", ri, ", 1.0 / &
+             &(bar * foo) = ", 1.0 / (bar * foo)
         FLUSH(0)
         CALL err_exit
       END IF
@@ -143,7 +159,16 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
              ", boo = ", boo
         FLUSH(0)
         CALL err_exit
-      END IF])],
+      END IF
+      aaaaaa = conftest_str_c()
+      DO i = 1, 99
+        IF (aaaaaa(i:i) /= 'a') THEN
+          WRITE (0, '(a,i0,a)') "error checking aaaaaa(", i, ")=", &
+              aaaaaa(i:i)
+          FLUSH(0)
+          CALL err_exit
+        END IF
+      END DO])],
            [acx_cv_cfortran_works=yes],
            [acx_cv_cfortran_works="error"],
            [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])
