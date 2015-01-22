@@ -265,9 +265,9 @@ AC_DEFUN([_ACX_SL_TEST_FPP],
         [# we have Fortran!  See if the file can be compiled:
          mv $ac_tmp conftest.$ac_ext
          AC_COMPILE_IFELSE(, [_AC_MSG_LOG_CONFTEST
-            $3],dnl
+            $3],
            [_AC_MSG_LOG_CONFTEST
-            $4])],dnl
+            $4])],
         [mv $ac_tmp conftest.$ac_ext
          _AC_MSG_LOG_CONFTEST
          $4])])
@@ -287,16 +287,16 @@ dnl preprocessing failed. So this command doesn't work.
 # for use with the selected Fortran compiler
 #
 # Must be run after _ACX_SL_PROG_FC_CPP
-AC_DEFUN([_ACX_SL_PROG_FPP],dnl
+AC_DEFUN([_ACX_SL_PROG_FPP],
   [acx_sl_fpp_srcext=m4_default([$1],[${ac_fc_srcext-F}])
    AS_VAR_PUSHDEF([acx_sl_prog_fpp],
      [acx_sl_cv_prog_fpp_]_AC_LANG_ABBREV[_]m4_default([$1],[${ac_fc_srcext-f}]))
-   AC_CACHE_CHECK([how to preprocess Fortran files with suffix $acx_sl_fpp_srcext],dnl
-[acx_sl_prog_fpp],
+   AC_CACHE_CHECK([how to preprocess Fortran files with suffix $acx_sl_fpp_srcext],
+     [acx_sl_prog_fpp],
      [AS_VAR_SET([acx_sl_prog_fpp], [])
       # Let the user specify FPP
       AS_IF([test -n "$FPP"],
-        [_ACX_SL_TEST_FPP([$FPP],[$acx_sl_fpp_srcext],dnl
+        [_ACX_SL_TEST_FPP([$FPP],[$acx_sl_fpp_srcext],
            [AS_VAR_SET([acx_sl_prog_fpp], ["$FPP"])],
            [AC_MSG_WARN([user-specified \$FPP ($FPP) does not work])
             FPP=])])
@@ -314,7 +314,7 @@ AC_DEFUN([_ACX_SL_PROG_FPP],dnl
          do
            _ACX_SL_TEST_FPP([$ac_fpp],[$acx_sl_fpp_srcext],[FPP="$ac_fpp"
               break])
-           _ACX_SL_TEST_FPP([$ac_fpp -P],[$acx_sl_fpp_srcext],dnl
+           _ACX_SL_TEST_FPP([$ac_fpp -P],[$acx_sl_fpp_srcext],
              [FPP="$ac_fpp -P"
               break])
          done
@@ -370,9 +370,9 @@ fi
 #    [ACTION-IF-COMPILABLE],[ACTION-IF-NOT-COMPILABLE])
 # helper macro to run the preprocessor or compile directly
 # with preprocessor flags
-m4_define([_ACX_FPP_COMPILE_IFELSE],dnl
-  [m4_if([$2],[direct],dnl
-     [cp conftest.$acx_sl_fpp_srcext conftest.${ac_ext}.tmp],dnl
+m4_define([_ACX_FPP_COMPILE_IFELSE],
+  [m4_if([$2],[direct],
+     [cp conftest.$acx_sl_fpp_srcext conftest.${ac_ext}.tmp],
      [_AC_RUN_LOG([$FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext \
         >conftest.${ac_ext}.tmp],
         [echo Running preprocessor $FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext])])
@@ -400,10 +400,10 @@ m4_define([_ACX_FPP_COMPILE_IFELSE],dnl
 #
 AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
   [AS_VAR_PUSHDEF([acx_sl_fpp_ok], [acx_sl_cv_]_AC_LANG_ABBREV[_$2_ok])
-   AC_CACHE_CHECK([if ]m4_case([$2],[direct],[compilation with $FC],dnl
-[indirect],[preprocessing with $FPP],dnl
-[m4_fatal([$0: only direct or indirect method supported: ']$2['])])[ of Fortran source supports required preprocessor features],dnl
-[acx_sl_fpp_ok],dnl
+   AC_CACHE_CHECK([if ]m4_case([$2],[direct],[compilation with $FC],
+[indirect],[preprocessing with $FPP],
+[m4_fatal([$0: only direct or indirect method supported: ']$2['])])[ of Fortran source supports required preprocessor features],
+[acx_sl_fpp_ok],
      [AS_VAR_SET([acx_sl_fpp_ok], [yes])
       # Set up ac_fpp_need_* flags based on features in $1
       acx_sl_fpp_srcext=m4_default([$3],[${ac_fc_srcext-F}])
@@ -415,7 +415,7 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
       ACX_ASSERT_LANG_IS_FORTRAN_VARIANT
       ac_save_FCFLAGS=$FCFLAGS
 
-      m4_case([$2],[direct],[],[indirect],[],dnl
+      m4_case([$2],[direct],[],[indirect],[],
          [m4_fatal([$0: only direct or indirect method supported: ] $2)])
 
       # We need to skip the following tests if we're trying direct compilation
@@ -433,7 +433,7 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
          do
            AS_IF([test x"$FPP_DEFOPT" != x ],
              [cp conftest.${acx_sl_fpp_srcext}.bak conftest.$acx_sl_fpp_srcext
-              _ACX_FPP_COMPILE_IFELSE([${FPP_DEFOPT}OK],[$2],dnl
+              _ACX_FPP_COMPILE_IFELSE([${FPP_DEFOPT}OK],[$2],
                 [acx_sl_prog_fc_cpp_d=yes; break])])
          done
          FCFLAGS=$ac_save_FCFLAGS
@@ -459,7 +459,7 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
          do
            AS_IF([test x"$FPP_INCOPT" != x ],
              [cp conftest.${acx_sl_fpp_srcext}.bak conftest.$acx_sl_fpp_srcext
-              _ACX_FPP_COMPILE_IFELSE([${FPP_INCOPT}conftst],[$2],dnl
+              _ACX_FPP_COMPILE_IFELSE([${FPP_INCOPT}conftst],[$2],
                 [acx_sl_prog_fc_cpp_i=yes
                  break])])
          done
@@ -477,7 +477,7 @@ dnl
          _AS_ECHO_LOG([Testing preprocessor expansion in Fortran code.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_SUBS])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],dnl
+         _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_subs=yes],[AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
            [_AS_ECHO_LOG([Test successful.])],
@@ -490,7 +490,7 @@ dnl
          _AS_ECHO_LOG([Testing wether preprocessor wraps long lines.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_WRAP])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],dnl
+         _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_wrap=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
            [_AS_ECHO_LOG([Test successful.])],
@@ -502,7 +502,7 @@ dnl
         [_AS_ECHO_LOG([Testing wether preprocessor removes C-style comments.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],dnl
+         _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_CSTYLE=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
            [_AS_ECHO_LOG([Test successful.])],
@@ -513,7 +513,7 @@ dnl
         [_AS_ECHO_LOG([Testing wether preprocessor leaves C-style comments in place.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],dnl
+         _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_CSTYLE=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
            [_AS_ECHO_LOG([Test failed.])],
@@ -524,7 +524,7 @@ dnl
         [_AS_ECHO_LOG([Testing if preprocessor leaves C++-style comments in place.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CXXSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],dnl
+         _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_cxxstyle=yes],[AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
            [_AS_ECHO_LOG([Test successful.])],
@@ -535,8 +535,8 @@ dnl
         [_AS_ECHO_LOG([Testing if preprocessor suppresses C++-style comments.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CXXSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],dnl
-           [acx_sl_prog_fc_cpp_cxxstyle=yes],dnl
+         _ACX_FPP_COMPILE_IFELSE(,[$2],
+           [acx_sl_prog_fc_cpp_cxxstyle=yes],
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
            [_AS_ECHO_LOG([Test failed.])],
@@ -624,7 +624,7 @@ dnl AC_REQUIRE([AC_PROG_CPP([cpp])])dnl
    # ac_prog_fc_cpp_*, which we copy to cv variables afterwards.  This
    # allows this macro to be reusable for other cv variables (see
    # below)
-   ACX_SL_PROG_FC_FPP_FEATURES([$1],[indirect],[$2],,dnl
+   ACX_SL_PROG_FC_FPP_FEATURES([$1],[indirect],[$2],,
       [AC_MSG_FAILURE([required Fortran preprocessor not available])])
   ])# AC_PROG_FPP
 
@@ -654,7 +654,7 @@ AC_DEFUN([ACX_FC_INTEGRAL_FPP],
         [acx_sl_prog_fc_cpp=yes],[FC=f95
          AS_VAR_SET([acx_sl_fpp_ok], [no])])
      ])
-   ACX_SL_PROG_FC_FPP_FEATURES([$1],[indirect],[$2],,dnl
+   ACX_SL_PROG_FC_FPP_FEATURES([$1],[indirect],[$2],,
       [AC_MSG_FAILURE([required Fortran preprocessor not available])])
    ac_first_save_FPPFLAGS=$FPPFLAGS
    FPPFLAGS="$FPPFLAGS $FPPFLAGS_F"
