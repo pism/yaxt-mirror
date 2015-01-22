@@ -95,10 +95,11 @@ AC_DEFUN([ACX_GENERIC_PACKAGE],
 using $1 includes.])
       ACX_LANG_CHECK_INCLUDE_PATHS_IFELSE([$2],[],
         [AS_VAR_COPY([acx_temp],[acx_cv_pkg_inc])
-         AS_VAR_SET([acx_pkg_inc],["$acx_temp"])],dnl
+         acx_temp=`echo "$acx_temp" | sed -e 's/^ *//;s/ *$//'`
+         AS_VAR_COPY([acx_pkg_inc],[acx_temp])],
         [AS_VAR_SET([acx_pkg_bindings],[no])
-         $6],dnl
-[$4],[$]acx_pkg_inc,m4_ifval([$5],[[$5]],[[[]]]))])
+         $6],
+        [$4],[$]acx_pkg_inc,m4_ifval([$5],[[$5]],[[[]]]))])
    m4_ifval([$7],
      [AC_ARG_WITH(ASX_TR_ARG([$1-lib]),
         [AS_HELP_STRING([--with-]ASX_TR_ARG([$1])[-lib],
@@ -113,7 +114,9 @@ using $1 includes.])
          ACX_OPTION_SEARCH_LIBS_MULTI([$7],[$9],,dnl
            [AS_VAR_SET([acx_pkg_bindings],[no])
             $12],[$10],m4_ifval([$11],[$11 ])$[acx_pkg_lib])
-         AS_VAR_SET([acx_pkg_lib],["AS_VAR_GET([ac_Search])"])
+         AS_VAR_COPY([acx_temp],[ac_Search])
+         acx_temp=`echo "$acx_temp" | sed -e 's/^ *//;s/ *$//'`
+         AS_VAR_COPY([acx_pkg_lib],[acx_temp])
          AS_VAR_POPDEF([ac_Search])dnl
         ])
      ])dnl
