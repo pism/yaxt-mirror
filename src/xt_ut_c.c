@@ -80,15 +80,11 @@ typedef struct {
   int domain_size;
 } xt_ut_deco_type;
 
-static const xt_ut_deco_type zero_deco = {.idxvec=NULL, .domain_size=0};
-
 static Xt_handle_set_type deco_set;
 
 typedef struct {
   Xt_xmap xmap;
 } xt_ut_template_type;
-
-static const xt_ut_template_type zero_template = {.xmap=NULL};
 
 static Xt_handle_set_type template_set;
 
@@ -96,8 +92,6 @@ static Xt_handle_set_type template_set;
 typedef struct {
   Xt_redist redist;
 } xt_ut_trans_type;
-
-static const xt_ut_trans_type zero_trans = {.redist = NULL};
 
 
 static Xt_handle_set_type trans_set;
