@@ -290,8 +290,9 @@ get_remote_packed_intersection_size(int recv_size[SEND_SIZE_ASIZE],
                                     MPI_Comm comm) {
 
 #if MPI_VERSION > 2 || ( MPI_VERSION == 2 && MPI_SUBVERSION >= 2)
-  xt_mpi_call(MPI_Reduce_scatter_block(send_size, recv_size, SEND_SIZE_ASIZE,
-                                       MPI_INT, MPI_SUM, comm), comm);
+  xt_mpi_call(MPI_Reduce_scatter_block((int *)send_size, (int *)recv_size,
+                                       SEND_SIZE_ASIZE, MPI_INT, MPI_SUM,
+                                       comm), comm);
 #else
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
