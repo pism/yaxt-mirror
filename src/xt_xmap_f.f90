@@ -60,7 +60,9 @@ MODULE xt_xmap_abstract
   PUBLIC :: xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
        xt_xmap_iterator_get_transfer_pos, &
+       xt_xmap_iterator_get_transfer_pos_ext, &
        xt_xmap_iterator_get_num_transfer_pos, &
+       xt_xmap_iterator_get_num_transfer_pos_ext, &
        xt_xmap_iterator_delete
 
 
