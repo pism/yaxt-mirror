@@ -328,8 +328,6 @@ CONTAINS
 
     INTEGER :: i, j, k
 
-    IF (ALLOCATED(idx_3d)) DEALLOCATE(idx_3d)
-
     SELECT CASE(inflate_pos)
     CASE(1)
       ALLOCATE(idx_3d(ke, ie, je))
