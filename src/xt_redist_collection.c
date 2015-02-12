@@ -63,17 +63,6 @@
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-/**
- * @brief round size to next multiple of mult
- * @param size size to round up from
- * @param mult
- * @return q with q >= size and q mod mult == 0
- */
-static inline size_t sizeRoundUp(size_t size, size_t mult)
-{
-  return ((size + mult - 1)/mult) * mult;
-}
-
 #define DEFFAULT_DATATYPE_CACHE_SIZE (16)
 
 static void
