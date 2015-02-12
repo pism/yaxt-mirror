@@ -171,8 +171,11 @@ CONTAINS
 
     CALL xt_redist_delete(redist_p2p)
 
-    input_data = RESHAPE((/((index_vector_a(i) + j * INT(4*size**2, xi), &
-         i = 1, 2*size**2), j = 0,8) /), (/2*size**2, 9/))
+    DO j = 1, 9
+      DO i = 1, 2*size**2
+        input_data(i, j) = index_vector_a(i) + (j - 1) * INT(4*size**2, xi)
+      END DO
+    END DO
     results_1 = -1
     results_2 = -1
 
@@ -183,10 +186,16 @@ CONTAINS
     results(1) = C_LOC(results_2)
     CALL xt_redist_s_exchange(redist_repeat_2, 1, input, results)
 
-    ref_results_1 = RESHAPE((/((index_vector_b(i) + j * INT(4*size**2, xi), &
-         i = 1, 2*size**2), j = 0, 3) /), (/2*size**2, 4/))
-    ref_results_2 = RESHAPE((/((index_vector_b(i) + j * INT(4*size**2, xi), &
-         i = 1, 2*size**2), j = 0, 8) /), (/2*size**2, 9/))
+    DO j = 1, 4
+      DO i = 1, 2*size**2
+        ref_results_1(i, j) = index_vector_b(i) + (j - 1) * INT(4*size**2, xi)
+      END DO
+    END DO
+    DO j = 1, 9
+      DO i = 1, 2*size**2
+        ref_results_2(i, j) = index_vector_b(i) + (j - 1) * INT(4*size**2, xi)
+      END DO
+    END DO
 
     ref_results_2(:,1:4:3) = -1
     ref_results_2(:,6:8:1) = -1
