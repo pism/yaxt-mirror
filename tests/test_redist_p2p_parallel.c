@@ -58,14 +58,6 @@
 
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 
-static inline int imin(int a, int b) {
-  return  (((a)<(b))?(a):(b));
-}
-
-static inline int imax(int a, int b) {
-  return  (((a)>(b))?(a):(b));
-}
-
 int main(void) {
 
   // init mpi
