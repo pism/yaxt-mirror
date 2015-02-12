@@ -331,10 +331,10 @@ CONTAINS
     SELECT CASE(inflate_pos)
     CASE(1)
       ALLOCATE(idx_3d(ke, ie, je))
-        DO j=1,je
-          DO i=1,ie
-            DO k=1,ke
-              idx_3d(k,i,j) = INT(k + (idx_2d(i,j)-1) * ke, xt_int_kind)
+      DO j=1,je
+        DO i=1,ie
+          DO k=1,ke
+            idx_3d(k,i,j) = INT(k + (idx_2d(i,j)-1) * ke, xt_int_kind)
           ENDDO
         ENDDO
       ENDDO
