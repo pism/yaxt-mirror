@@ -45,8 +45,8 @@ AC_DEFUN([ACX_XLF_QEXTNAME_ADD_APPENDUS],
      [*-ibm-aix*],
      [AC_MSG_CHECKING([if -Dappendus needs to be added to CPPFLAGS for cfortran.h])
       AS_IF([$CC -qversion 2>&1 | grep '^IBM XL C' >/dev/null],
-        [acx_temp_qextname_f77flags=`echo "$F77FLAGS" | sed -n 's/^\(.* \)*-qextname\( .*\)*$/-qextname/;t print;b;: print;p'`
-         acx_temp_qextname_fcflags=`echo "$FCFLAGS" | sed -n 's/^\(.* \)*-qextname\( .*\)*$/-qextname/;t print;b;: print;p'`
+        [acx_temp_qextname_f77flags=`echo "$F77FLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
+         acx_temp_qextname_fcflags=`echo "$FCFLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
       dnl pretend the same option as for FC was used if F77 isn't used at all
       dnl also in case a non-xl compiler is used it will append an underscore
          AC_PROVIDE_IFELSE([AC_PROG_F77],,
@@ -75,7 +75,7 @@ AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
    AC_LANG_CASE([Fortran],[save_FC=$FC ; acx_FC=$FC],
      [Fortran 77],[save_F77=$F77 ; acx_FC=$F77])
    AS_CASE([$host],
-     [x86_64-*-linux-*|i*86-*-linux-*|*-apple-darwin*|ia64-*-linux-*],
+     [x86_64-*-linux-*|i*86-*-linux-*|*-apple-darwin*|ia64-*-linux-*|x86_64-*-freebsd*|i*86-*-freebsd*],
      [acx_temp=`$acx_FC -V 2>&1`
       AS_IF([echo "$acx_temp" | grep '^Copyright.*\(The Portland Group\|NVIDIA CORPORATION\)' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DgFortran])],
@@ -115,7 +115,10 @@ AC_DEFUN([ACX_FIND_CFORTRAN_DEF],
      [acx_cv_cf_flag=''
 dnl test if user already provided a flag
       AS_FOR([MACRO],[macro],[pgiFortran NAGf90Fortran f2cFortran hpuxFortran apolloFortran sunFortran IBMR2Fortran CRAYFortran PATHSCALE_COMPILER gFortran mipsFortran DECFortran vmsFortran CONVEXFortran PowerStationFortran AbsoftUNIXFortran AbsoftProFortran SXFortran],
-        [acx_temp=`echo "$CPPFLAGS $CFLAGS" | sed -n 's/^\(.* \)*-D\('"MACRO"'\)\( .*\)*$/\2/;t print;b;:print;p'`
+        [acx_temp=`echo "$CPPFLAGS $CFLAGS" | sed -n 's/^\(.* \)*-D\('"MACRO"'\)\( .*\)*$/\2/;t print
+b
+: print
+p'`
          AS_IF([test x"$acx_temp" != x],
            [AS_IF([test x"$acx_cv_cf_flag" = x],
               [acx_cv_cf_flag="$acx_temp (user-specified)"],

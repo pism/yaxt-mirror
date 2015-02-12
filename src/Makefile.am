@@ -145,7 +145,7 @@ libyaxt_la_SOURCES =						\
 libyaxt_la_LIBADD = $(MPI_FC_LIB)
 
 xtinclude_Makefile.inc: Makefile
-	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/\n/g' | grep 'xt/.*\.h$$'` ; \
+	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/ /g' | tr ' ' '\n' | grep 'xt/.*\.h$$'` ; \
 	  echo "xtinclude_HEADERS = \\" >$@ ; \
 	  for header in $$headers ; do echo "	$$header \\" ; done \
 	    | sed '$$s/\\$$//' >>$@
