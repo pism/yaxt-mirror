@@ -137,25 +137,25 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
       foo = 0.3
       too = conftest_c(bar, foo, baz, boo)
       IF (ABS(baz - NINT(bar * foo)) /= 0) THEN
-        WRITE (0, *) "error checking, when baz, baz=", baz, &
+        WRITE (0, '(2(a,i0))') "error checking, when baz, baz=", baz, &
              ", NINT(bar * foo) =", NINT(bar * foo)
         FLUSH(0)
         CALL err_exit
       END IF
-      IF (ABS(ri - 1.0 / (bar * foo)) > eps)  THEN
-        WRITE (0, *) "error checking ri, ri=", ri, ", 1.0 / &
+      IF (ABS((ri - 1.0 / (bar * foo)) / ABS(ri)) > eps)  THEN
+        WRITE (0, '(2(a,g24.15))') "error checking ri, ri=", ri, ", 1.0 / &
              &(bar * foo) = ", 1.0 / (bar * foo)
         FLUSH(0)
         CALL err_exit
       END IF
-      IF (ABS(boo - (bar * foo * 100.0)) > eps)  THEN
-        WRITE (0, *) "error checking boo, boo=", boo, &
+      IF (ABS((boo - (bar * foo * 100.0))/ABS(boo)) > eps)  THEN
+        WRITE (0, '(2(a,g24.15))') "error checking boo, boo=", boo, &
              ", bar * foo * 100.0 = ", bar * foo * 100.0
         FLUSH(0)
         CALL err_exit
       END IF
-      IF (too /= boo)  THEN
-        WRITE (0, *) "error checking too vs. boo, too=", too, &
+      IF (too /= boo) THEN
+        WRITE (0, '(2(a,g24.15))') "error checking too vs. boo, too=", too, &
              ", boo = ", boo
         FLUSH(0)
         CALL err_exit
