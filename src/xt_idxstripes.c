@@ -953,12 +953,6 @@ append_ext(struct Xt_pos_ext pos_ext, struct Xt_pos_ext_vec *restrict result)
   }
 }
 
-static inline intptr_t
-roundAddrUpToMultiple(intptr_t addr, intptr_t factor)
-{
-  return (addr + factor - 1)/factor * factor;
-}
-
 struct Xt_stripes_lookup {
   size_t num_stripes;
   const struct Xt_stripe *stripes;
