@@ -156,18 +156,16 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
     struct mix_msg *restrict msgs = exchanger_msr->msgs;
     int tag_offset = exchanger_msr->tag_offset;
     MPI_Request *requests = xmalloc(nmsg * sizeof (*requests));
-    for (size_t i = 0; i < nmsg; ++i)
-      if (msgs[i].type == SEND)
-        xt_mpi_call(MPI_Isend((void *)src_data, 1, msgs[i].data.datatype,
-                              msgs[i].data.rank,
-                              tag_offset + xt_mpi_tag_exchange_msg,
-                              comm, requests+i), comm);
-      else
-        xt_mpi_call(MPI_Irecv(dst_data, 1, msgs[i].data.datatype,
-                              msgs[i].data.rank,
-                              tag_offset + xt_mpi_tag_exchange_msg,
-                              comm, requests+i), comm);
-
+    for (size_t i = 0; i < nmsg; ++i) {
+      typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
+                         int tag, MPI_Comm comm, MPI_Request *request);
+      ifp op = msgs[i].type == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
+      void *data = msgs[i].type == SEND ? (void *)src_data : dst_data;
+      xt_mpi_call(op(data, 1, msgs[i].data.datatype,
+                     msgs[i].data.rank,
+                     tag_offset + xt_mpi_tag_exchange_msg,
+                     comm, requests+i), comm);
+    }
     xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE), comm);
     free(requests);
   }
