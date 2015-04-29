@@ -75,6 +75,9 @@ void xt_redist_delete(Xt_redist redist);
  *                           elements of the input data
  * @param[in,out] dst_data   array containing the addresses of the first
  *                           elements of the output data
+ *
+ * @remark The above implies that NULL or any other invalid pointer
+ * must not be used in either @a src_data or @a dst_data.
  */
 void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
                           const void **src_data, void **dst_data);
@@ -85,6 +88,9 @@ void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
  * @param[in]     redist   redistribution structure
  * @param[in]     src_data address of the first element of the input data
  * @param[in,out] dst_data address of the first element of the output data
+ *
+ * @remark The above implies that NULL or any other invalid pointer
+ * must not be used in either @a src_data or @a dst_data.
  */
 void xt_redist_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data);
 
