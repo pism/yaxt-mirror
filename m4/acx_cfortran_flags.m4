@@ -92,7 +92,7 @@ dnl check if compiling with f2c bindings or with default bindings
             AS_IF([echo "]AC_LANG_CASE([Fortran],[$FCFLAGS],
               [Fortran 77],[$FFLAGS])[" | grep '^\(.* \)*-ff2c\( .*\)*$' >/dev/null],
               [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])],
-              [AS_VAR_SET([acx_cf_flag],[-DgFortran])])])]
+              [AS_VAR_SET([acx_cf_flag],[-DgFortran])])])],
         [acx_temp=`$acx_FC -v 2>&1` \
          && echo $acx_temp | grep '^f2c'],
         [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])])],
