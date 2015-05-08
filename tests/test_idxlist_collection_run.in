@@ -1,5 +1,6 @@
 #! @SHELL@
 set -e
+[ x"@MPI_LAUNCH@" != xtrue ] || exit 77
 @MPI_LAUNCH@ -n 1 @abs_builddir@/test_idxlist_collection
 @MPI_LAUNCH@ -n 1 @abs_builddir@/test_idxlist_collection_f
 #

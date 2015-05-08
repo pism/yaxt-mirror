@@ -58,49 +58,51 @@ dnl acx_mpirun_num_tasks = N
 dnl   specify number of tasks N (positive integer) to run this test with
 dnl TODO: extend for F77 and C++
 AC_DEFUN([ACX_MPI_DEFECTS],
-  [AC_MSG_CHECKING([MPI for known defects])
-   AC_MSG_RESULT([])
-   for acx_mpi_check_src in "$srcdir/m4_ifval([$1],[$1],[config/checksrc])/"* ; do
-     acx_suffix=`echo "$acx_mpi_check_src" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
-     acx_subtestname=`echo "$acx_mpi_check_src" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
-     AS_CASE([$acx_suffix],
-       [c],
-       [cat confdefs.h "$acx_mpi_check_src" >conftest."$acx_suffix"
-        AC_LANG_PUSH([C])],
-       [f90|F90],[cat "$acx_mpi_check_src" >conftest."$acx_suffix"
-        AC_LANG_PUSH([Fortran])],
-       [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
-     AC_MSG_CHECKING([$acx_subtestname])
-     acx_mpirun_num_tasks=`sed -n '/acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\)/{
+  [AS_IF([test x"$MPI_LAUNCH" = xtrue],
+     [AC_MSG_NOTICE([Skipping tests for known MPI defects: MPI launcher unavailable])],
+     [AC_MSG_CHECKING([MPI for known defects])
+      AC_MSG_RESULT([])
+      for acx_mpi_check_src in "$srcdir/m4_ifval([$1],[$1],[config/checksrc])/"* ; do
+        acx_suffix=`echo "$acx_mpi_check_src" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
+        acx_subtestname=`echo "$acx_mpi_check_src" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
+        AS_CASE([$acx_suffix],
+          [c],
+          [cat confdefs.h "$acx_mpi_check_src" >conftest."$acx_suffix"
+           AC_LANG_PUSH([C])],
+          [f90|F90],[cat "$acx_mpi_check_src" >conftest."$acx_suffix"
+           AC_LANG_PUSH([Fortran])],
+          [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
+        AC_MSG_CHECKING([$acx_subtestname])
+        acx_mpirun_num_tasks=`sed -n '/acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\)/{
 s/.*acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\).*/\1/
 p
 q
 }
 ' "$acx_mpi_check_src"`
-     AS_IF([test `expr "$acx_mpirun_num_tasks" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
-            && test "$acx_mpirun_num_tasks" -gt 0],,
-       [acx_mpirun_num_tasks=1])
-     AC_LINK_IFELSE(,
-       [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
-        AC_TRY_EVAL([acx_mpirun_num_tasks])
-        AS_IF([test $ac_status -eq 0],
-          [AC_MSG_RESULT([okay])m4_ifval([$2],[
-           $2])],
+        AS_IF([test `expr "$acx_mpirun_num_tasks" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
+               && test "$acx_mpirun_num_tasks" -gt 0],,
+          [acx_mpirun_num_tasks=1])
+        AC_LINK_IFELSE(,
+          [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
+           AC_TRY_EVAL([acx_mpirun_num_tasks])
+           AS_IF([test $ac_status -eq 0],
+             [AC_MSG_RESULT([okay])m4_ifval([$2],[
+              $2])],
+             [AC_MSG_RESULT([error])
+              m4_ifval([$3],[$3],
+                [AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])],
           [AC_MSG_RESULT([error])
            m4_ifval([$3],[$3],
-             [AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])],
-       [AC_MSG_RESULT([error])
-        m4_ifval([$3],[$3],
-          [AC_MSG_RESULT([chosen MPI has known error $acx_subtestname])])])
-     AS_CASE([$acx_suffix],
-       [f90|F90],[AC_LANG_POP([Fortran])],
-       [c],[AC_LANG_POP([C])])
-   done
-   ASX_VAR_UNSET([acx_mpirun_num_tasks])
-   ASX_VAR_UNSET([acx_mpi_check_src])
-   ASX_VAR_UNSET([acx_suffix])
-   ASX_VAR_UNSET([acx_subtestname])
-  ])
+             [AC_MSG_RESULT([chosen MPI has known error $acx_subtestname])])])
+        AS_CASE([$acx_suffix],
+          [f90|F90],[AC_LANG_POP([Fortran])],
+          [c],[AC_LANG_POP([C])])
+      done
+      ASX_VAR_UNSET([acx_mpirun_num_tasks])
+      ASX_VAR_UNSET([acx_mpi_check_src])
+      ASX_VAR_UNSET([acx_suffix])
+      ASX_VAR_UNSET([acx_subtestname])
+     ])])
 dnl dump text documentation of defect test to stderr
 dnl ACX_MPI_DEFECTS_DOCUMENT([TEST-DOC-DIR=config/checkdoc])
 AC_DEFUN([ACX_MPI_DEFECTS_DOCUMENT],

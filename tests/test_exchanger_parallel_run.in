@@ -1,5 +1,6 @@
 #! @SHELL@
 set -e
+[ x"@MPI_LAUNCH@" != xtrue ] || exit 77
 @MPI_LAUNCH@ -n 3 @abs_builddir@/test_exchanger_parallel \
   -m irecv_send
 @MPI_LAUNCH@ -n 3 @abs_builddir@/test_exchanger_parallel \
