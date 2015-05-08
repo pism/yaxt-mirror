@@ -83,6 +83,8 @@ AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
         [AS_VAR_SET([acx_cf_flag],[-DNAGf90Fortran])],
         [echo "$acx_temp" | grep '^Intel(R) Fortran.*Compiler' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DgFortran])],
+        [echo "$acx_temp" | grep '^Cray Fortran' >/dev/null],
+        [AS_VAR_SET([acx_cf_flag],[-DgFortran])],
         [acx_temp=`$acx_FC --version 2>&1` \
          && echo $acx_temp | grep '^GNU Fortran' >/dev/null],
         [AS_IF([echo $acx_temp | grep g77 >/dev/null],
