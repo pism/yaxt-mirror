@@ -79,8 +79,7 @@ main(int argc, char **argv)
         [AS_IF([$MPI_LAUNCH -n m4_ifval([$1],[$1],[4]) ./conftest$EXEEXT m4_ifval([$1],[$1],[4])],
            [AC_MSG_RESULT([yes])],
            [AC_MSG_RESULT([no])
-            MPI_LAUNCH=true
-            AC_MSG_FAILURE([$MPI_LAUNCH doesn't work])])],
+            MPI_LAUNCH=true])],
         [MPI_LAUNCH=true
          AC_MSG_FAILURE([Cannot compile simple MPI program])])
       AC_LANG_POP([C])])
