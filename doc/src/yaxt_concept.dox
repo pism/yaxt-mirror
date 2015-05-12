@@ -10,64 +10,68 @@
   \section intro Introduction
   \section concept Concept
 
-  The usage of yaxt can be divided into six steps:
-    - defining global index
-    - defining decomposition
-    - generating a data type independent mapping between the two decompositions
-    - generating a data type dependent redistribution object
-    - doing the data exchange(s)
-    - cleaning up the generated yaxt objects
+  The usage of yaxt can be divided into several steps:
 
-  \subsection gindex Defining global index
+    - define global indices
+    - describe local data using global indices (=> index list)
+    - use yaxt to generate a transition from one index list to another (=> xmap) 
+    - describe local data layout (offsets and mpi datatype) 
+    - use yaxt to combine xmap and data layout (=> redist)
+    - optionally aggregate multiple redists
+    - use yaxt to execute collective data exchange(s)
+    - clean up
 
-  Global indices are used in yaxt as an abstraction for the actual data points. The user
-  has to assign a unique global index to each unique data point. If a data point occurs
-  more than once (e.g. in halo) it is possible to assign the same global index to each
-  of these data points.\n
-  For example, if the data is a 1D array one could assign the indices 0 to n-1 to the
-  elements of the array.\n
-  The definion the global index is a theoretically process and has no representation in
-  yaxt.
+  \subsection gindex global indices
 
-  \subsection decomp Define decomposition
+  Global indices are used in yaxt as abstraction of global data
+  points, i.e., they are integer numbers that allow to identify any
+  data point. The concrete values of these indices have no meaning for
+  yaxt and can be choosen freely as long as the values are used
+  consistently when describing different sequences of data points.
 
-  Once the user is able to assign a global index to each data point,
-  each of the data arrays need to be described with respect to the
-  data that is available at each process. This is done by using an
-  index list (\ref Xt_idxlist). The index list contains for each data
-  point that is available on a process the respective global
-  index. The order of global indices within the index list needs to
-  match the order of data points, which they represent, in the actual
-  data array.\n The yaxt library has a varity of methods to generate
-  an index list (see \ref idxlists).
+  \subsection decomp index list
 
-  \subsection xmap Generate mapping
+  An index list (\ref Xt_idxlist) is a sequence of global indices
+  describing local data points. E.g., data points calculated locally
+  ("owned by this process") or data points that are calculated on a
+  different process but are required locally (e.g., halo points). The
+  order of indices must be consistent with the order of offsets used
+  to describe the local data layout. Yaxt offers a variety of methods
+  to generate index lists (see \ref idxlists).
 
-  With two different decompositions (source and target) that are defined on all process
-  the user can generate an exchange map (\ref Xt_xmap) between them. The exchange map
-  matches the source and target decompositions of all processes and generates a mapping
-  between source and target points with identical global indices. \n
-  It is an error if not all data points of the target decomposition can be matched with
-  data points of the source decomposition.\n
-  There are multiple algorithms available to generate an exchange map (see \ref xmaps).
+  \subsection xmap xmap
 
-  \subsection redist Generate redistribution object
+  Using two index lists - one representing source data points and one
+  representing target data points - given on all processes within a
+  mpi communicator, yaxt can calculate an abstract communication
+  pattern ("a pattern for indices") if such a pattern exists, i.e., if
+  for each given local target index there exists an equal source
+  index, local or remote. Yaxt stores this pattern in an exchange map
+  (\ref Xt_xmap). It is an user error if such a pattern does not exist.
+  There are multiple algorithms available to generate exchange maps
+  (see \ref xmaps).
+  It is not unusual that the same index list is used to construct
+  different xmaps where the role of souce and target data points
+  changes, e.g., for global transpositions.
 
-  An exchange map can be used to generate a redistribution object (\ref Xt_redist). Based on the
-  MPI data type passed to the constructure of the redistribution object, an object will be created
-  that is able to redistribute data of the given type, which is distributed according to the
-  source decomposition into the target decomposition. The provided MPI data type allows the
-  redistribution of data with an arbitrary data layout.\n
-  It is possible to merge multiple redistribution object into a single one (see \ref redist_colls).
+  \subsection redist redistribution object
 
-  \subsection exchange Do exchange
+  An abstract communication pattern (xmap) together with data layout
+  information (offsets and MPI datatype of local data points) can
+  be used to create a redistribution object (\ref Xt_redist). It
+  contains all the information required to execute a collective
+  communication that establishes the target state (e.g., updated halo points).
+  It is possible to merge multiple redistribution object into a single
+  one (see \ref redist_colls).
+
+
+  \subsection exchange data exchange
 
   The exchange can be executed by a blocking call to \ref xt_redist_s_exchange or
-  \ref xt_redist_s_exchange1 (only possible for non-merged redistributions). It can be called
-  repeatedly for as many times as necessary.
+  \ref xt_redist_s_exchange1 (only possible for non-merged redistributions).
 
   \subsection cleanup Clean up
 
-  Once any yaxt object is not directly needed anymore it can be deleted by the respective delete
+  If a yaxt object is not needed anymore then it can be deleted by the respective delete
   calls (e.g. \ref xt_idxlist_delete).
  */
