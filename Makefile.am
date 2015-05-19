@@ -63,10 +63,6 @@ clean-local:
           test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile \
 	    || ./config.status $$d/Makefile ; done
 
-distclean-local:
-	@for d in $(SUBDIRS) ; do \
-          rm -f $$d/Makefile ; done
-
 install-exec-local:
 	@for d in $(SUBDIRS); do \
 	  test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile || \
