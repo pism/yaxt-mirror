@@ -7,7 +7,8 @@ BUILT_SOURCES = yaxt.h
 SUBDIRS = f90
 
 ../src/xtinclude_Makefile.inc:
-	(cd ../src ; $(MAKE) xtinclude_Makefile.inc)
+	(cd ../src ; if test -r Makefile ; then \
+	  $(MAKE) xtinclude_Makefile.inc ; fi)
 
 @AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@
 
