@@ -66,6 +66,7 @@ AC_PROG_MKDIR_P
 AX_WITH_PERL([/bin/false], $PATH:$prefix/bin:/usr/bin:/usr/local/bin)
 AX_PROG_PERL_VERSION([5.0005],[],
         AC_MSG_ERROR([Perl (version>=5.0005) is required]))
+ACX_LT_PROBLEMS
 LT_INIT
 AC_SUBST([lt_cv_nm_interface])
 dnl ######################################################################
