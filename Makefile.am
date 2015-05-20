@@ -1,4 +1,5 @@
 SUBDIRS = . src inst_headers tests examples perf
+DIST_SUBDIRS = src inst_headers tests examples perf .
 
 ACLOCAL_AMFLAGS=-I m4
 
@@ -62,6 +63,10 @@ clean-local:
 	@for d in $(SUBDIRS) ; do \
           test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile \
 	    || ./config.status $$d/Makefile ; done
+
+distclean-local:
+	for d in $(SUBDIRS) ; do \
+		test $$d = . || rm -f $$d/Makefile ; done
 
 install-exec-local:
 	@for d in $(SUBDIRS); do \
