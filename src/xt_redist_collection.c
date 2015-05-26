@@ -55,6 +55,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "xt/xt_redist_collection.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
@@ -125,6 +126,7 @@ struct Xt_redist_collection_ {
   size_t cache_size;
 
   MPI_Comm comm;
+  int tag_offset;
 };
 
 static void copy_component_dt(struct redist_collection_msg ** msgs, int * nmsgs,
@@ -235,7 +237,7 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   redist_coll->cache_size
     = (cache_size == -1)?(DEFFAULT_DATATYPE_CACHE_SIZE):(size_t)cache_size;
 
-  xt_mpi_call(MPI_Comm_dup(comm, &(redist_coll->comm)), comm);
+  redist_coll->comm = xt_mpi_comm_smart_dup(comm, &redist_coll->tag_offset);
 
   check_comms(redists, num_redists, comm);
 
@@ -494,7 +496,7 @@ redist_collection_delete(Xt_redist redist) {
                  (size_t)redist_coll->nsrc + (size_t)redist_coll->ndst,
                  redist_coll->comm);
 
-  xt_mpi_call(MPI_Comm_free(&(redist_coll->comm)), MPI_COMM_WORLD);
+  xt_mpi_comm_smart_dedup(&(redist_coll->comm), redist_coll->tag_offset);
 
   free(redist_coll);
 }
