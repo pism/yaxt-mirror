@@ -59,7 +59,7 @@ PROGRAM test_redist_collection_parallel
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
   INTEGER(xt_int_kind) :: dummy
-  INTEGER :: rank, size, ierror, dt_xt_int
+  INTEGER :: rank, world_size, ierror, dt_xt_int
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -68,7 +68,7 @@ PROGRAM test_redist_collection_parallel
        CALL test_abort('mpi_comm_rank failed', &
        __FILE__, &
        __LINE__)
-  CALL mpi_comm_size(mpi_comm_world, size, ierror)
+  CALL mpi_comm_size(mpi_comm_world, world_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
        CALL test_abort('mpi_comm_size failed', &
        __FILE__, &
@@ -83,7 +83,7 @@ PROGRAM test_redist_collection_parallel
     dt_xt_int = xt_int_mpidt
   END IF
 
-  IF (size > 1) THEN
+  IF (world_size > 1) THEN
     CALL test_4redist
     CALL test_rr_exchange
   END IF
@@ -107,11 +107,12 @@ CONTAINS
 
     TYPE(xt_stripe) :: stripe
 
-    global_size(1) = INT(2 * size, xi)
-    global_size(2) = INT(size**2, xi)
-    local_size = size
-    local_start = RESHAPE((/ 0_xi, INT(rank*size, xi), INT(size, xi), &
-         INT(size*size-(rank+1)*size, xi) /), (/ 2, 2 /))
+    global_size(1) = INT(2 * world_size, xi)
+    global_size(2) = INT(world_size**2, xi)
+    local_size = world_size
+    local_start = RESHAPE((/ 0_xi, INT(rank*world_size, xi), &
+         INT(world_size, xi), &
+         INT((world_size-(rank+1))*world_size, xi) /), (/ 2, 2 /))
 
     DO i = 1, 2
       indices_a_(i) = xt_idxsection_new(start, global_size, local_size, &
@@ -122,30 +123,28 @@ CONTAINS
     CALL xt_idxlist_delete(indices_a_(1))
     CALL xt_idxlist_delete(indices_a_(2))
 
-    stripe = xt_stripe(INT(rank * 2 * size**2, xi), 1_xi, 2*size**2)
+    stripe = xt_stripe(INT(rank * 2 * world_size**2, xi), 1_xi, 2*world_size**2)
     indices_b = xt_idxstripes_new(stripe)
 
-    stripe = xt_stripe(0_xi, 1_xi, 2*size**3)
+    stripe = xt_stripe(0_xi, 1_xi, 2*world_size**3)
     indices_all = xt_idxstripes_new(stripe)
   END SUBROUTINE build_idxlists
 
   SUBROUTINE test_4redist
     INTEGER, PARAMETER :: num_tx = 4
     TYPE(xt_idxlist) :: indices_a, indices_b, indices_all
-    INTEGER(xt_int_kind), TARGET :: index_vector_a(2*size**2), &
-         index_vector_b(2*size**2), index_vector_all(2*size**3)
+    INTEGER(xt_int_kind), TARGET :: index_vector_a(2*world_size**2), &
+         index_vector_b(2*world_size**2)
     TYPE(xt_xmap) :: xmaps(num_tx)
     TYPE(xt_redist) :: redists(num_tx), redist
-    INTEGER(xt_int_kind), TARGET :: results_1(2*size**2), &
-         results_2(2*size**2), results_3(2*size**3), results_4(2*size**3)
-    TYPE(c_ptr) :: results(4), input(4)
+    INTEGER(xt_int_kind), POINTER :: results_1(:), &
+         results_2(:), results_3(:), results_4(:), temp(:)
     INTEGER :: i
 
     CALL build_idxlists(indices_a, indices_b, indices_all)
 
     CALL xt_idxlist_get_indices(indices_a, index_vector_a)
     CALL xt_idxlist_get_indices(indices_b, index_vector_b)
-    CALL xt_idxlist_get_indices(indices_all, index_vector_all)
 
     xmaps(1) = xt_xmap_all2all_new(indices_a, indices_b, mpi_comm_world)
     xmaps(2) = xt_xmap_all2all_new(indices_b, indices_a, mpi_comm_world)
@@ -169,7 +168,42 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
+    ALLOCATE(results_1(2*world_size**2), &
+         results_2(2*world_size**2), results_3(2*world_size**3), results_4(2*world_size**3))
 
+    CALL do_4redist(redist, index_vector_a, index_vector_b, &
+         results_1, results_2, results_3, results_4)
+
+    CALL check_4redist_results(results_1, results_2, results_3, results_4, &
+       index_vector_a, index_vector_b)
+
+    ! shift addresses around
+    IF (rank == 0) THEN
+      ALLOCATE(temp(SIZE(results_3)))
+      DEALLOCATE(results_3)
+      results_3 => temp
+    END IF
+
+    CALL do_4redist(redist, index_vector_a, index_vector_b, &
+         results_1, results_2, results_3, results_4)
+
+    CALL check_4redist_results(results_1, results_2, results_3, results_4, &
+       index_vector_a, index_vector_b)
+
+    ! clean up
+    DEALLOCATE(results_1, results_2, results_3, results_4)
+    CALL xt_redist_delete(redist)
+  END SUBROUTINE test_4redist
+
+  SUBROUTINE do_4redist(redist, index_vector_a, index_vector_b, &
+       results_1, results_2, results_3, results_4)
+    TYPE(xt_redist), INTENT(inout) :: redist
+    INTEGER(xt_int_kind), INTENT(in), TARGET :: &
+         index_vector_a(*), index_vector_b(*)
+    INTEGER(xt_int_kind), INTENT(inout), TARGET :: &
+         results_1(*), results_2(*), results_3(*), results_4(*)
+
+    TYPE(c_ptr) :: results(4), input(4)
     results(1) = C_LOC(results_1)
     results(2) = C_LOC(results_2)
     results(3) = C_LOC(results_3)
@@ -182,31 +216,45 @@ CONTAINS
 
     CALL xt_redist_s_exchange(redist, 4, input, results)
 
-    ! check results
-    IF (ANY(results_1(:) /= index_vector_b)) &
+  END SUBROUTINE do_4redist
+
+  SUBROUTINE check_4redist_results(results_1, results_2, results_3, results_4, &
+       index_vector_a, index_vector_b)
+    INTEGER(xt_int_kind), INTENT(in) :: index_vector_a(:), index_vector_b(:), &
+         results_1(:), results_2(:), results_3(0:), results_4(0:)
+    INTEGER(xt_int_kind) :: i, n
+    LOGICAL :: p
+
+    IF (ANY(results_1 /= index_vector_b)) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
 
-    IF (ANY(results_2(:) /= index_vector_a)) &
+    IF (ANY(results_2 /= index_vector_a)) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
 
-    IF (ANY(results_3(:) /= index_vector_all)) &
+    n = SIZE(results_3)
+    n = INT(SIZE(results_3), xt_int_kind)
+    p = .FALSE.
+    DO i = 0, n - 1
+      p = p .OR. results_3(i) /= i
+    END DO
+    IF (p) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
 
-    IF (ANY(results_3(:) /= index_vector_all)) &
+    DO i = 0, n - 1
+      p = p .OR. results_4(i) /= i
+    END DO
+    IF (p) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
+  END SUBROUTINE check_4redist_results
 
-    ! clean up
-
-    CALL xt_redist_delete(redist)
-  END SUBROUTINE test_4redist
 
   ! redist test with two redists that do a round robin exchange in
   ! different directions
@@ -221,9 +269,11 @@ CONTAINS
 
     DO i = 1_xi, 5_xi
       src_indices_(i) = INT(rank, xi) * 5_xi + (i - 1_xi)
-      dst_indices_(i, 1) = MOD(src_indices_(i) + 1_xi, INT(size, xi) * 5_xi)
+      dst_indices_(i, 1) = MOD(src_indices_(i) + 1_xi, &
+           &                   INT(world_size, xi) * 5_xi)
       temp = src_indices_(i) - 1_xi
-      dst_indices_(i, 2) = MERGE(INT(size, xi) * 5_xi - 1_xi, temp, temp < 0_xi)
+      dst_indices_(i, 2) = MERGE(INT(world_size, xi) * 5_xi - 1_xi, &
+           &                     temp, temp < 0_xi)
     END DO
 
     src_indices = xt_idxvec_new(src_indices_, 5)

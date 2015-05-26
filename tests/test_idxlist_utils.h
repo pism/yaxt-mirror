@@ -72,4 +72,14 @@ check_idxlist_copy(Xt_idxlist idxlist, Xt_idxlist idxlist_copy,
                    size_t num_ref_indices, const Xt_int *ref_indices,
                    size_t num_ref_stripes, const struct Xt_stripe *ref_stripes);
 
+static inline int
+cmp_idx_arrays(size_t num_indices,
+               const Xt_int * restrict a, const Xt_int * restrict b)
+{
+  int diff = 0;
+  for (size_t i = 0; i < num_indices; ++i)
+    diff |= a[i] != b[i];
+  return diff;
+}
+
 #endif // TEST_IDXLIST_UTILS_H

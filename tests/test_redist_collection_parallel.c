@@ -45,14 +45,22 @@
 #endif
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include <mpi.h>
 #include <yaxt.h>
+#include "core/ppm_xfuncs.h"
 
 #include "tests.h"
+#include "test_idxlist_utils.h"
 
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+
+static void
+check_4redist_result(int size, void *results[4],
+                     const Xt_int *index_vector_a,
+                     const Xt_int *index_vector_b);
 
 int main(void) {
 
@@ -81,15 +89,18 @@ int main(void) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #endif
-        assert(size * size < XT_INT_MAX);
+        assert((long long)size * size < XT_INT_MAX
+               && (long long)size * size < INT_MAX);
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
 #pragma GCC diagnostic pop
 #endif
-        Xt_int global_size[2] = {(Xt_int)(2*size), (Xt_int)(size*size)};
-        int local_size[2] = {size,size};
+        Xt_int global_size[2]
+          = { (Xt_int)((Xt_int)2 * size), (Xt_int)((Xt_int)size * size) };
+        int local_size[2] = { size, size };
         Xt_int local_start[2][2]
-          = {{0,(Xt_int)(rank*size)},
-             {(Xt_int)size, (Xt_int)(size*size-(rank+1)*size)}};
+          = {{0, (Xt_int)((Xt_int)rank * size)},
+             { (Xt_int)size,
+               (Xt_int)((Xt_int)size * size - (Xt_int)(rank+1) * size) } };
 
         indices_a_[0] = xt_idxsection_new(start, 2, global_size, local_size,
                                             local_start[0]);
@@ -103,7 +114,7 @@ int main(void) {
       }
 
       {
-        struct Xt_stripe stripe = {.start = (Xt_int)(rank*2*size*size),
+        struct Xt_stripe stripe = {.start = (Xt_int)((Xt_int)rank*2*size*size),
                                    .stride = 1, .nstrides = 2*size*size};
 
         indices_b = xt_idxstripes_new(&stripe, 1);
@@ -114,22 +125,32 @@ int main(void) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #endif
-        assert(size * size * size <= XT_INT_MAX);
+        assert((long long)2 * size * size * size <= XT_INT_MAX
+               && (long long)2 * size * size * size <= INT_MAX);
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
 #pragma GCC diagnostic pop
 #endif
-        struct Xt_stripe stripe = {.start = 0, .stride = 1,
-                                   .nstrides = 2*size*size*size};
+        struct Xt_stripe stripe = { .start = 0, .stride = 1,
+                                    .nstrides = 2*size*size*size };
 
         indices_all = xt_idxstripes_new(&stripe, 1);
       }
 
-      Xt_int index_vector_a[2*size*size], index_vector_b[2*size*size],
-             index_vector_all[2*size*size*size];
+      enum
+      {
+        list_a = 0,
+        list_b = 1,
+        list_all = 2,
+      };
+      const int list_sizes[3]
+        = { 2*size*size, 2*size*size, 2 * size * size * size };
 
-      xt_idxlist_get_indices(indices_a, index_vector_a);
-      xt_idxlist_get_indices(indices_b, index_vector_b);
-      xt_idxlist_get_indices(indices_all, index_vector_all);
+      Xt_int *index_vector[2];
+      for (size_t i = 0; i < 2; ++i)
+        index_vector[i] = xmalloc((size_t)list_sizes[i] * sizeof (Xt_int));
+
+      xt_idxlist_get_indices(indices_a, index_vector[list_a]);
+      xt_idxlist_get_indices(indices_b, index_vector[list_b]);
 
       Xt_xmap xmaps[4] = {xt_xmap_all2all_new(indices_a, indices_b,
                                               MPI_COMM_WORLD),
@@ -149,8 +170,8 @@ int main(void) {
                               xt_redist_p2p_new(xmaps[2], Xt_int_dt),
                               xt_redist_p2p_new(xmaps[3], Xt_int_dt)};
 
-      xt_xmap_delete(xmaps[0]), xt_xmap_delete(xmaps[1]);
-      xt_xmap_delete(xmaps[2]), xt_xmap_delete(xmaps[3]);
+      for (size_t i = 0; i < 4; ++i)
+        xt_xmap_delete(xmaps[i]);
 
       Xt_redist redist = xt_redist_collection_new(redists, 4, -1,
                                                   MPI_COMM_WORLD);
@@ -160,39 +181,51 @@ int main(void) {
       if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-      xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
-      xt_redist_delete(redists[2]), xt_redist_delete(redists[3]);
+      for (size_t i = 0; i < 4; ++i)
+        xt_redist_delete(redists[i]);
 
-      Xt_int results_1[2*size*size], results_2[2*size*size];
-      Xt_int results_3[2*size*size*size], results_4[2*size*size*size];
+      enum { num_results = 4 };
 
-      void *results[4] = {results_1, results_2, results_3, results_4};
+      const size_t result_sizes[num_results] =
+        { 2 * (size_t)size * (size_t)size,
+          2 * (size_t)size * (size_t)size,
+          2 * (size_t)size * (size_t)size * (size_t)size,
+          2 * (size_t)size * (size_t)size * (size_t)size };
 
-      const void *input[4] = {index_vector_a, index_vector_b,
-                              index_vector_a, index_vector_b};
+      void *results[num_results];
+      for (size_t i = 0; i < num_results; ++i)
+        results[i] = xmalloc(result_sizes[i] * sizeof (Xt_int));
 
-      xt_redist_s_exchange(redist, 4, input, results);
+      const void *input[num_results]
+        = { index_vector[list_a], index_vector[list_b],
+            index_vector[list_a], index_vector[list_b] };
 
-      // check results
+      xt_redist_s_exchange(redist, num_results, input, results);
 
-      for (int i = 0; i < 2*size*size; ++i)
-        if (((Xt_int *)results[0])[i] != index_vector_b[i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
+      check_4redist_result(size, results, index_vector[list_a],
+                           index_vector[list_b]);
 
-      for (int i = 0; i < 2*size*size; ++i)
-        if (((Xt_int *)results[1])[i] != index_vector_a[i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
+      /*
+       * create another first buffer, to test successful
+       * adaptation to different addresses...
+       */
+      if (rank == 0)
+      {
+        void *temp = results[0];
+        results[0] = xmalloc(result_sizes[0] * sizeof(Xt_int));
+        free(temp);
+      }
+      /* ...and repeat exchange */
+      xt_redist_s_exchange(redist, num_results, input, results);
 
-      for (int i = 0; i < 2*size*size*size; ++i)
-        if (((Xt_int *)results[2])[i] != i)
-          PUT_ERR("error on xt_redist_s_exchange\n");
-
-      for (int i = 0; i < 2*size*size*size; ++i)
-        if (((Xt_int *)results[3])[i] != i)
-          PUT_ERR("error on xt_redist_s_exchange\n");
+      check_4redist_result(size, results, index_vector[list_a],
+                           index_vector[list_b]);
 
       // clean up
-
+      for (size_t i = 0; i < num_results; ++i)
+        free(results[i]);
+      for (size_t i = 0; i < 2; ++i)
+        free(index_vector[i]);
       xt_redist_delete(redist);
     }
 
@@ -274,4 +307,26 @@ static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
   xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
 
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
+}
+
+static void
+check_4redist_result(int size, void *results[4],
+                     const Xt_int *index_vector_a,
+                     const Xt_int *index_vector_b)
+{
+  if (cmp_idx_arrays(2 * (size_t)size * (size_t)size,
+                     (Xt_int *)results[0], index_vector_b))
+    PUT_ERR("error on xt_redist_s_exchange\n");
+
+  if (cmp_idx_arrays(2 * (size_t)size * (size_t)size,
+                     (Xt_int *)results[1], index_vector_a))
+    PUT_ERR("error on xt_redist_s_exchange\n");
+
+  for (int i = 0; i < 2*size*size*size; ++i)
+    if (((Xt_int *)results[2])[i] != i)
+      PUT_ERR("error on xt_redist_s_exchange\n");
+
+  for (int i = 0; i < 2*size*size*size; ++i)
+    if (((Xt_int *)results[3])[i] != i)
+      PUT_ERR("error on xt_redist_s_exchange\n");
 }
