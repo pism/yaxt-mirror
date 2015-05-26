@@ -70,7 +70,7 @@ AC_DEFUN([ACX_SL_FC_MOD_SUFFIX],
      acx_fc_mod_name=
    m4_foreach([acx_fc_mod_name],dnl
      [[conftest.$FCMODEXT], [conftest.mod], [conftest.MOD], [conftest.M],
-      [CONFTEST.MOD]],dnl
+      [CONFTEST.MOD], [CONFTEST.mod]],dnl
      [AS_IF([test -n "acx_fc_mod_name" -a -f "acx_fc_mod_name"],dnl
         [[acx_fc_mod_name]="acx_fc_mod_name" ; break])
      ])
