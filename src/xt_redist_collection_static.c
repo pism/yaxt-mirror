@@ -52,6 +52,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "xt/xt_redist_collection_static.h"
 #include "xt_redist_single_array_base.h"
 #include "ensure_array_size.h"
@@ -186,13 +187,13 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
   int nsend, nrecv;
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
-  MPI_Comm new_comm;
 
   nsend = 0;
   nrecv = 0;
   send_msgs = NULL;
   recv_msgs = NULL;
-  xt_mpi_call(MPI_Comm_dup(comm, &new_comm), comm);
+  int tag_offset;
+  MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 
   check_comms(redists, num_redists, comm);
 
@@ -202,6 +203,9 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
   generate_msg_infos(&recv_msgs, &nrecv, dst_displacements, redists,
                      num_redists, new_comm, xt_redist_get_recv_MPI_Datatype);
 
-  return xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                         new_comm);
+  Xt_redist redist_collection =
+    xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
+                                    new_comm);
+  xt_mpi_comm_smart_dedup(&new_comm, tag_offset);
+  return redist_collection;
 }
