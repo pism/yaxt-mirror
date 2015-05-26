@@ -57,38 +57,40 @@ dnl
 # Currently we warn and continue. We should maybe error out.
 #
 AC_DEFUN([ACX_SL_FC_MOD_SUFFIX],
-  [AC_MSG_CHECKING([for suffix of module files])
-   AC_ARG_VAR([FCMODEXT], [file extension of compiled Fortran module files])
-   ac_fc_mod_uppercase=no
-   AC_LANG_PUSH([Fortran])
-   AC_COMPILE_IFELSE(
-[      module conftest
+  [AC_ARG_VAR([FCMODEXT], [file extension of compiled Fortran module files])
+   AC_CACHE_CHECK([for conftest_module module file name],[acx_cv_fc_mod_name],
+     [AC_LANG_PUSH([Fortran])
+      AC_COMPILE_IFELSE(
+[      module conftest_module
       implicit none
       integer :: i
-      end module conftest])
+      end module conftest_module])
    while :; do
-     acx_fc_mod_name=
-   m4_foreach([acx_fc_mod_name],dnl
-     [[conftest.$FCMODEXT], [conftest.mod], [conftest.MOD], [conftest.M],
-      [CONFTEST.MOD], [CONFTEST.mod]],dnl
-     [AS_IF([test -n "acx_fc_mod_name" -a -f "acx_fc_mod_name"],dnl
-        [[acx_fc_mod_name]="acx_fc_mod_name" ; break])
+     acx_cv_fc_mod_name=
+   m4_foreach([acx_cv_fc_mod_name],
+     [[conftest_module.$FCMODEXT], [conftest_module.mod],
+      [conftest_module.MOD], [conftest_module.M],
+      [CONFTEST_MODULE.MOD], [CONFTEST_MODULE.mod]],
+     [AS_IF([test -n "acx_cv_fc_mod_name" -a -f "acx_cv_fc_mod_name"],
+        [[acx_cv_fc_mod_name]="acx_cv_fc_mod_name" ; break])
      ])
      break
    done
    rm -f conftest*
-   AC_LANG_POP([Fortran])
+   AC_LANG_POP([Fortran])])
 dnl
-   AS_CASE(["$acx_fc_mod_name"],dnl
-     [conftest.$FCMODEXT], [:],
-     [CONFTEST.$FCMODEXT], [ac_fc_mod_uppercase=yes],
-     [conftest.mod], [FCMODEXT=mod],
-     [conftest.MOD], [FCMODEXT=MOD],
-     [conftest.M], [FCMODEXT=M],
-     [CONFTEST.MOD], [FCMODEXT=MOD
-        ac_fc_mod_uppercase=yes])
+   AC_MSG_CHECKING([for suffix of module files])
+   ac_fc_mod_uppercase=no
+   AS_CASE(["$acx_cv_fc_mod_name"],
+     [conftest_module.$FCMODEXT], [:],
+     [CONFTEST_MODULE.$FCMODEXT], [ac_fc_mod_uppercase=yes],
+     [conftest_module.mod], [FCMODEXT=mod],
+     [conftest_module.MOD], [FCMODEXT=MOD],
+     [conftest_module.M], [FCMODEXT=M],
+     [CONFTEST_MODULE.MOD], [FCMODEXT=MOD ; ac_fc_mod_uppercase=yes],
+     [CONFTEST_MODULE.mod], [FCMODEXT=mod ; ac_fc_mod_uppercase=yes])
    AC_MSG_RESULT([${FCMODEXT-not found}])
-   AS_VAR_TEST_SET([FCMODEXT], [$1], [m4_ifval([$2],[$2],dnl
+   AS_VAR_TEST_SET([FCMODEXT], [$1], [m4_ifval([$2],[$2],
      [AC_MSG_WARN([Could not find Fortran module file extension.])])])
 dnl
    AS_IF([test $ac_fc_mod_uppercase = yes],
