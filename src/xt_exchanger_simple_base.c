@@ -85,7 +85,7 @@ Xt_exchanger
 xt_exchanger_simple_base_new(int nsend, int nrecv,
                              struct Xt_redist_msg * send_msgs,
                              struct Xt_redist_msg * recv_msgs,
-                             MPI_Comm comm,
+                             MPI_Comm comm, int tag_offset,
                              xt_simple_exchange_func func) {
 
   if (func == NULL)
@@ -101,25 +101,25 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
 
   exchanger->vtable = &exchanger_simple_base_vtable;
 
-  exchanger->comm = xt_mpi_comm_smart_dup(comm, &exchanger->tag_offset);
+  exchanger->comm = comm, exchanger->tag_offset = tag_offset;
   exchanger->nsend = nsend;
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
                               exchanger->msgs, sizeof (exchanger->msgs[0]),
-                              exchanger->comm);
+                              comm);
   exchanger->nrecv = nrecv;
   xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
                               exchanger->msgs + nsend,
                               sizeof (exchanger->msgs[0]),
-                              exchanger->comm);
+                              comm);
   exchanger->func = func;
 
   xt_exchanger_internal_optimize((size_t)nsend, exchanger->msgs,
                                  sizeof(exchanger->msgs[0]),
-                                 exchanger->comm);
+                                 comm);
 
   xt_exchanger_internal_optimize((size_t)nrecv, exchanger->msgs + nsend,
                                  sizeof(exchanger->msgs[0]),
-                                 exchanger->comm);
+                                 comm);
 
   return (Xt_exchanger)exchanger;
 }
@@ -133,7 +133,6 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
   struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs;
   xt_redist_msgs_strided_destruct(nmsg, msgs, exchanger_sb->comm,
                                   sizeof (msgs[0]));
-  xt_mpi_comm_smart_dedup(&exchanger_sb->comm, exchanger_sb->tag_offset);
   free(exchanger_sb);
 }
 

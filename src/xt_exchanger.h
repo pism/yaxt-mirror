@@ -66,11 +66,16 @@ struct Xt_exchanger_ {
   struct xt_exchanger_vtable * vtable;
 };
 
+/**
+ * @param tag_offset tag tag_offset + xt_mpi_tag_exchange_msg must not
+ * be used on @a comm by any other part of the program during the
+ * lifetime of the created exchanger object
+ */
 extern Xt_exchanger
 (*xt_exchanger_default_constructor)(int nsend, int nrecv,
                                     struct Xt_redist_msg * send_msgs,
                                     struct Xt_redist_msg * recv_msgs,
-                                    MPI_Comm comm);
+                                    MPI_Comm comm, int tag_offset);
 
 void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
                              void * dst_data);

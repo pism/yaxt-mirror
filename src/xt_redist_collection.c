@@ -367,7 +367,7 @@ get_exchanger(const void ** src_data, void ** dst_data,
               struct redist_collection_msg * send_msgs, int num_send_messages,
               struct redist_collection_msg * recv_msgs, int num_recv_messages,
               int num_redists, struct exchanger_cache *cache, size_t cache_size,
-              MPI_Comm comm)
+              MPI_Comm comm, int tag_offset)
 {
   MPI_Aint displacements[2][num_redists];
   compute_displ(src_data, num_redists, displacements[0], comm);
@@ -402,7 +402,8 @@ get_exchanger(const void ** src_data, void ** dst_data,
       exchanger = cache->exchangers[cache_index] =
         xt_exchanger_default_constructor(num_send_messages, num_recv_messages,
                                          cache->msgs, cache->msgs +
-                                         (size_t)num_send_messages, comm);
+                                         (size_t)num_send_messages,
+                                         comm, tag_offset);
 
       cache->token = (cache->token + 1) % cache_size;
     }
@@ -422,8 +423,9 @@ get_exchanger(const void ** src_data, void ** dst_data,
                           displacements[1], p + num_send_messages, comm);
 
     exchanger =
-      xt_exchanger_default_constructor(num_send_messages, num_recv_messages, p,
-                                       p + (size_t)num_send_messages, comm);
+      xt_exchanger_default_constructor(num_send_messages, num_recv_messages,
+                                       p, p + (size_t)num_send_messages,
+                                       comm, tag_offset);
 
     xt_redist_msgs_free(nmsg, p, comm);
   }
@@ -454,9 +456,10 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
                                          redist_coll->recv_msgs,
                                          redist_coll->ndst,
                                          redist_coll->num_redists,
-                                         &(redist_coll->cache), 
+                                         &(redist_coll->cache),
                                          redist_coll->cache_size,
-                                         redist_coll->comm);
+                                         redist_coll->comm,
+                                         redist_coll->tag_offset);
 
   xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0]);
 

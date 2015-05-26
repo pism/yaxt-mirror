@@ -88,7 +88,7 @@ Xt_exchanger
 xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  struct Xt_redist_msg * send_msgs,
                                  struct Xt_redist_msg * recv_msgs,
-                                 MPI_Comm comm_) {
+                                 MPI_Comm comm, int tag_offset) {
 
   assert((nsend >= 0) & (nrecv >= 0));
 
@@ -100,8 +100,7 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
 
   exchanger->vtable = &exchanger_mix_isend_irecv_vtable;
 
-  MPI_Comm comm
-    = exchanger->comm = xt_mpi_comm_smart_dup(comm_, &exchanger->tag_offset);
+  exchanger->comm = comm, exchanger->tag_offset = tag_offset;
   exchanger->n = nsend + nrecv;
   struct mix_msg *restrict msgs = exchanger->msgs;
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
@@ -139,7 +138,6 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
 
   xt_redist_msgs_strided_destruct(nmsg, &msgs[0].data, exchanger_msr->comm,
                                   sizeof (*msgs));
-  xt_mpi_comm_smart_dedup(&exchanger_msr->comm, exchanger_msr->tag_offset);
   free(exchanger_msr);
 }
 

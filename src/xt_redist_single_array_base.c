@@ -53,6 +53,7 @@
 #include <mpi.h>
 
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "xt_redist_single_array_base.h"
 #include "xt_redist_internal.h"
 #include "xt/xt_xmap.h"
@@ -105,6 +106,7 @@ struct Xt_redist_sab_ {
   struct Xt_redist_msg * recv_msgs;
 
   MPI_Comm comm;
+  int tag_offset;
 };
 
 Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
@@ -114,15 +116,17 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
 
   Xt_redist_sab redist = xmalloc(sizeof (*redist));
 
-  redist->exchanger = xt_exchanger_default_constructor(nsend, nrecv, send_msgs,
-                                                       recv_msgs, comm);
+  redist->comm = xt_mpi_comm_smart_dup(comm, &redist->tag_offset);
+  redist->exchanger
+    = xt_exchanger_default_constructor(nsend, nrecv, send_msgs,
+                                       recv_msgs, redist->comm,
+                                       redist->tag_offset);
 
   redist->vtable = &redist_sab_vtable;
   redist->nsend = nsend;
   redist->nrecv = nrecv;
   redist->send_msgs = send_msgs;
   redist->recv_msgs = recv_msgs;
-  redist->comm = comm;
 
   return (Xt_redist)redist;
 }
@@ -145,9 +149,7 @@ redist_sab_delete(Xt_redist redist) {
   xt_redist_msgs_free((size_t)redist_sab->nrecv, redist_sab->recv_msgs,
                       redist_sab->comm);
 
-  if ((redist_sab->comm != MPI_COMM_WORLD) &&
-      (redist_sab->comm != MPI_COMM_SELF))
-    MPI_Comm_free(&(redist_sab->comm));
+  xt_mpi_comm_smart_dedup(&redist_sab->comm, redist_sab->tag_offset);
 
   free(redist_sab);
 }

@@ -75,17 +75,17 @@ Xt_exchanger
 xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                              struct Xt_redist_msg * send_msgs,
                              struct Xt_redist_msg * recv_msgs,
-                             MPI_Comm comm);
+                             MPI_Comm comm, int tag_offset);
 Xt_exchanger
 xt_exchanger_irecv_send_new(int nsend, int nrecv,
                             struct Xt_redist_msg * send_msgs,
                             struct Xt_redist_msg * recv_msgs,
-                            MPI_Comm comm);
+                            MPI_Comm comm, int tag_offset);
 Xt_exchanger
 xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  struct Xt_redist_msg * send_msgs,
                                  struct Xt_redist_msg * recv_msgs,
-                                 MPI_Comm comm);
+                                 MPI_Comm comm, int tag_offset);
 
 void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
                              void * dst_data);
@@ -95,7 +95,7 @@ void xt_exchanger_delete(Xt_exchanger);
 typedef Xt_exchanger (*exchanger_new_func) (int nsend, int nrecv,
                                             struct Xt_redist_msg * send_msgs,
                                             struct Xt_redist_msg * recv_msgs,
-                                            MPI_Comm comm);
+                                            MPI_Comm comm, int tag_offset);
 
 static exchanger_new_func parse_options(int *argc, char ***argv);
 
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
                                            nrecv[(my_rank+3-i)%3],
                                            send_msgs[(my_rank+3-i)%3],
                                            recv_msgs[(my_rank+3-i)%3],
-                                           MPI_COMM_WORLD);
+                                           MPI_COMM_WORLD, 0);
 
     // test
 
@@ -196,12 +196,12 @@ int main(int argc, char **argv)
                                                nrecv[(my_rank+3-i)%3],
                                                send_msgs[(my_rank+3-i)%3],
                                                recv_msgs[0][(my_rank+3-i)%3],
-                                               MPI_COMM_WORLD),
+                                               MPI_COMM_WORLD, 0),
                                  exchanger_new(nsend[(my_rank+3-i)%3],
                                                nrecv[(my_rank+3-i)%3],
                                                send_msgs[(my_rank+3-i)%3],
                                                recv_msgs[1][(my_rank+3-i)%3],
-                                               MPI_COMM_WORLD)};
+                                               MPI_COMM_WORLD, 0)};
 
     // test
 
@@ -264,7 +264,7 @@ int main(int argc, char **argv)
         Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
                                                send_msgs[i][my_rank],
                                                recv_msgs[j][my_rank],
-                                               MPI_COMM_WORLD);
+                                               MPI_COMM_WORLD, 0);
 
         // test
 
@@ -301,7 +301,7 @@ int main(int argc, char **argv)
        {{.rank=(my_rank+2)%3, .datatype=MPI_INT}}};
 
     Xt_exchanger exchanger = exchanger_new(nsend, nrecv, send_msgs[i],
-                                           recv_msgs[i], MPI_COMM_WORLD);
+                                           recv_msgs[i], MPI_COMM_WORLD, 0);
 
     // test
 

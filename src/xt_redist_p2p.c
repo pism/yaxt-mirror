@@ -54,6 +54,7 @@
 #include <mpi.h>
 
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "xt/xt_redist_p2p.h"
 #include "xt_redist_internal.h"
 #include "xt_redist_single_array_base.h"
@@ -135,11 +136,9 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
   MPI_Comm comm;
+  int tag_offset;
 
-  {
-    MPI_Comm xmap_comm = xt_xmap_get_communicator(xmap);
-    xt_mpi_call(MPI_Comm_dup(xmap_comm, &comm), xmap_comm);
-  }
+  comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
   nrecv = xt_xmap_get_num_sources(xmap);
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
@@ -153,8 +152,10 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
                      comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
-  return xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                         comm);
+  Xt_redist result
+    = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+  xt_mpi_comm_smart_dedup(&comm, tag_offset);
+  return result;
 }
 
 /* ====================================================================== */
@@ -326,11 +327,9 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
   MPI_Comm comm;
+  int tag_offset;
 
-  {
-    MPI_Comm xmap_comm = xt_xmap_get_communicator(xmap);
-    xt_mpi_call(MPI_Comm_dup(xmap_comm, &comm), xmap_comm);
-  }
+  comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
   nrecv = xt_xmap_get_num_sources(xmap);
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
@@ -344,8 +343,10 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
                          datatype, &send_msgs, comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
-  return xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                         comm);
+  Xt_redist result
+    = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+  xt_mpi_comm_smart_dedup(&comm, tag_offset);
+  return result;
 }
 
 /* ====================================================================== */
@@ -438,18 +439,16 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
   int nsend, nrecv;
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
-  MPI_Comm comm;
 
   if (!src_block_sizes)
     die("xt_redist_p2p_blocks_off_new: undefined src_block_sizes");
   if (!dst_block_sizes)
     die("xt_redist_p2p_blocks_off_new: undefined dst_block_sizes");
 
-  MPI_Comm xmap_comm;
+  MPI_Comm comm;
+  int tag_offset;
+  comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
-  xmap_comm = xt_xmap_get_communicator(xmap);
-
-  xt_mpi_call(MPI_Comm_dup(xmap_comm, &comm), xmap_comm);
 
   nsend = xt_xmap_get_num_destinations(xmap);
   nrecv = xt_xmap_get_num_sources(xmap);
@@ -498,8 +497,10 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
-  return xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                         comm);
+  Xt_redist result
+    = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+  xt_mpi_comm_smart_dedup(&comm, tag_offset);
+  return result;
 }
 
 Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,

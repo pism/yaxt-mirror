@@ -64,7 +64,7 @@ Xt_exchanger
 xt_exchanger_simple_base_new(int nsend, int nrecv,
                              struct Xt_redist_msg * send_msgs,
                              struct Xt_redist_msg * recv_msgs,
-                             MPI_Comm comm,
+                             MPI_Comm comm, int tag_offset,
                              xt_simple_exchange_func func);
 
 #endif // XT_EXCHANGER_SIMPLE_BASE_H

@@ -53,6 +53,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_mpi_internal.h"
 #include "xt/xt_redist_repeat.h"
 #include "xt_redist_single_array_base.h"
 #include "ensure_array_size.h"
@@ -119,17 +120,15 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
 
   int nsend, nrecv;
   struct Xt_redist_msg * send_msgs, * recv_msgs;
-  MPI_Comm comm;
 
   nsend = 0;
   nrecv = 0;
   send_msgs = NULL;
   recv_msgs = NULL;
 
-  {
-    MPI_Comm redist_comm = xt_redist_get_MPI_Comm(redist);
-    xt_mpi_call(MPI_Comm_dup(redist_comm, &comm), redist_comm);
-  }
+  MPI_Comm comm;
+  int tag_offset;
+  comm = xt_mpi_comm_smart_dup(xt_redist_get_MPI_Comm(redist), &tag_offset);
 
   if (num_repetitions < 1)
     Xt_abort(comm, "ERROR: invalid number of repetitions (Xt_redist_repeat)\n",
@@ -144,6 +143,8 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                      displacements, redist, num_repetitions, comm,
                      xt_redist_get_recv_MPI_Datatype);
 
-  return xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                         comm);
+  Xt_redist result
+    = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+  xt_mpi_comm_smart_dedup(&comm, tag_offset);
+  return result;
 }
