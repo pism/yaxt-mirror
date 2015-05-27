@@ -56,6 +56,11 @@ for (( i = 0 ; i < ${#inargs[@]} ; i++ )) ; do
 	case ${inargs[$i]} in
 		(-o) i=$((i + 1)) ;;
 		(-o*) ;;
+                (-eZ) ;;
+	        (-e*Z*)
+			outargs[$j]="${inargs[$i]//Z/}"
+			j=$((j + 1))
+		;;
 		(*)
 			outargs[$j]="${inargs[$i]}"
 			j=$((j + 1))
