@@ -35,6 +35,8 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 /^${exp_sym_prefix}_*[Xx][Tt]_/b
 # also skip symbols in Fortran yaxt module
 /^${exp_sym_prefix}_*[Yy][Aa][Xx][Tt]\.*_/b
+# skip $-symbols that the Cray compiler puts in
+/^${exp_sym_prefix}.*\\\$.*/b
 p
 }")
   if [ -n "$badsyms" ]; then
