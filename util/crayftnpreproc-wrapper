@@ -41,6 +41,7 @@
 #
 # Wrapper for the ftn command to write preprocessed fortran files to stdout.
 #
+test x"$DEBUG" = x || set -x
 set -e
 # create temp directory for intermediate .i-files
 temporaries="$(mktemp -d -t)"
