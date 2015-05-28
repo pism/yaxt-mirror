@@ -8,8 +8,9 @@ This README is divided into the following topics of increasing specificity.
 4. Specific machine setups
 4.1 Debian GNU/Linux Squeeze 6 x86_64 with OpenMPI 1.4.3
 4.2 IBM AIX 6.1, POWER archictecture
-4.3 CentOS 5.6 x86_64 with Intel MPI and compilers
+4.3 Redhat RHEL6 x86_64 with Intel MPI 4.1.3.049 and compilers 14.0.3
 4.4 Cray CCE
+
 
 1. After checkout
 
@@ -20,6 +21,7 @@ $ autoreconf -i
 This is not required if you have obtained a regular, packaged source
 distribution of yaxt, but only in case you have directly accessed the
 repository.
+
 
 2. General advice for running configure
 
@@ -51,7 +53,23 @@ compilers automatically:
 
 * GCC gfortran, PGI pgfortran, Cray and Intel compilers: -DgFortran
 * NAG Fortran compiler: -DNAGf90Fortran
-* IBM xlc needs -Dappendus if -qextname is used on for the Fortran part.
+* IBM xlc needs -Dappendus if -qextname is used for the Fortran part.
+
+Additionally the following considerations can be useful later on:
+
+* It is possible to build yaxt out-of-source, i.e. to call configure
+  from a directory different from the place the source was put in. If
+  one has e.g. unpacked yaxt in $HOME/src/yaxt and wants to do the
+  build in $HOME/build/yaxt, one would run the following commands:
+
+  $ cd $HOME/build/yaxt
+  $ ../../src/yaxt/configure [OPTIONS-NEEDED-FOR-PLATFORM]
+
+  See descriptions under 4. for the options most appropriate for the
+  system in question.
+
+* 
+
 
 3. Requirements
 
@@ -130,7 +148,16 @@ $ /bin/bash ./configure CC=smartmpcc_r \
   MPI_LAUNCH="$(pwd)/util/mpi_launch_poe" \
   CONFIG_SHELL=/bin/bash
 
-4.3 CentOS 5.6 x86_64 with Intel MPI and compilers
+4.3 Redhat RHEL6 x86_64 with Intel MPI 4.1.3.049 and compilers 14.0.3
+
+To use the Intel compilers with Intel MPI, slightly differently named
+wrappers for the C and Fortran compilers can be used, namely mpiicc
+and mpiifort:
+
+$ ./configure CC=mpiicc \
+  CFLAGS='-O3 -fno-math-errno -march=native -mtune=native' \
+  FC=mpiifort \
+  FCFLAGS='-O3 -heap-arrays -fpp -march=native -mtune=native'
 
 4.4 Cray CCE
 
@@ -147,9 +174,9 @@ wrapper for this purpose in util/pbs_aprun that acts like mpirun but
 creates a job in the background and forwards its output and error code
 to the frontend machine. On systems with a different batch scheduler,
 a different/adapted wrapper might be necessary. We would be interested
-to distribute such wrappers with YAXT.
+to distribute such wrappers with yaxt.
 
-To build YAXT on a Cray system with PBS Pro the following configure
+To build yaxt on a Cray system with PBS Pro the following configure
 was used successfully (note the --host/--build options to switch to
 cross compilation mode):
 
