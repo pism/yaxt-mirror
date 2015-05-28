@@ -9,6 +9,7 @@ This README is divided into the following topics of increasing specificity.
 4.1 Debian GNU/Linux Squeeze 6 x86_64 with OpenMPI 1.4.3
 4.2 IBM AIX 6.1, POWER archictecture
 4.3 CentOS 5.6 x86_64 with Intel MPI and compilers
+4.4 Cray CCE
 
 1. After checkout
 
@@ -130,3 +131,29 @@ $ /bin/bash ./configure CC=smartmpcc_r \
   CONFIG_SHELL=/bin/bash
 
 4.3 CentOS 5.6 x86_64 with Intel MPI and compilers
+
+4.4 Cray CCE
+
+The Cray compiler is a cross-compiler because it builds binaries that
+cannot (fully functionally) run on the interactively usable frontend
+machines. The aprun program starter is functionally similar to mpirun
+on more conventional platforms but requires that the requested
+resources are available to the user. For similar reasons the Cray
+compiler builds static executables/libraries only.
+
+Assuming the Cray system uses PBS, its MPI launcher aprun cannot be
+executed directly but must be started from a PBS job. We provide a
+wrapper for this purpose in util/pbs_aprun that acts like mpirun but
+creates a job in the background and forwards its output and error code
+to the frontend machine. On systems with a different batch scheduler,
+a different/adapted wrapper might be necessary. We would be interested
+to distribute such wrappers with YAXT.
+
+To build YAXT on a Cray system with PBS Pro the following configure
+was used successfully (note the --host/--build options to switch to
+cross compilation mode):
+
+$ ./configure CC=cc FC=ftn FCFLAGS= MPI_LAUNCH=$(pwd)/util/pbs_aprun \
+  --host=x86_64-cray-linux-gnu --build=x86_64-unknown-linux-gnu \
+  --disable-shared \
+  build_alias=x86_64-unknown-linux-gnu host_alias=x86_64-cray-linux-gnu
