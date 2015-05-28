@@ -35,7 +35,9 @@ dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
-dnl ACX_MPIRUN([NUM_TASKS=4],[ACTION-IF-WORKING],[ACTION-IF-FAILED=AC_MSG_FAILURE])
+dnl ACX_MPIRUN([NUM_TASKS=4],[ACTION-IF-WORKING],
+dnl            [ACTION-IF-RUN-FAILS=AC_MSG_FAILURE],
+dnl            [ACTION-IF-BUILD-FAILS=AC_MSG_FAILURE])
 dnl
 dnl First determines mpi launcher program (and sets MPI_LAUNCH to its path),
 dnl then builds and runs simple program with 4 tasks
@@ -81,7 +83,7 @@ main(int argc, char **argv)
            [AC_MSG_RESULT([no])
             MPI_LAUNCH=true])],
         [MPI_LAUNCH=true
-         AC_MSG_FAILURE([Cannot compile simple MPI program])])
+         m4_ifval([$3],[$3],[AC_MSG_FAILURE([Cannot compile simple MPI program])])])
       AC_LANG_POP([C])])
    AS_IF([test x"$MPI_LAUNCH" = xtrue],
      [m4_ifval([$3],[$3],[AC_MSG_FAILURE([failed to run MPI programs])])],
