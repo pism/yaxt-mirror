@@ -37,7 +37,8 @@ dnl LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
-dnl ACX_CHECK_CFORTRAN([OPTIONAL-CFORTRAN-INC-DIR])
+dnl ACX_CHECK_CFORTRAN([OPTIONAL-CFORTRAN-INC-DIR],[ACTION-IF-SUCCESS],
+dnl                    [ACTION-IF-FAILED])
 dnl Test if C compiler can produce objects that link fine to Fortran programs
 dnl when using cfortran.h.
 dnl
@@ -169,27 +170,29 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
           CALL err_exit
         END IF
       END DO])],
-           [acx_cv_cfortran_works=yes],
-           [acx_cv_cfortran_works="error"],
-           [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])
-            AC_MSG_NOTICE([link test succeeded.])
-            acx_cv_cfortran_works=yes])],
+              [acx_cv_cfortran_works=yes],
+              [acx_cv_cfortran_works="error"],
+              [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])
+	       AC_MSG_NOTICE([link test succeeded.])
+               acx_cv_cfortran_works=yes])
+	    LIBS=$save_LIBS],
            [acx_cv_cfortran_works="error compiling Fortran subroutine"])
-         AC_LANG_POP([Fortran])
-         LIBS=$save_LIBS],
+         AC_LANG_POP([Fortran])],
         [acx_cv_cfortran_works="compiling with cfortran.h failed"])
       AC_LANG_POP([C])
       CPPFLAGS=$save_CPPFLAGS
      ])
-   AS_CASE([x"$acx_cv_cfortran_works"],
-     [x"error"],
-     [AC_MSG_FAILURE([Linking/Running with C EXTERNAL built with cfortran.h does not work!])],
-     [x"compiling with cfortran.h failed"],
-     [AC_MSG_FAILURE([Compilation with cfortran.h is not working!])],
-     [x"error compiling Fortran subroutine"],
-     [AC_MSG_FAILURE([compilation of simple Fortran source failed!])],
-     [xyes],,
-     [AC_MSG_FAILURE([Unexpected error when linking C and Fortran via cfortran.h!])])
+   m4_ifval([$3],
+     [AS_IF([test x"$acx_cv_cfortran_works" = xyes],[$2],[$3])],
+     [AS_CASE([x"$acx_cv_cfortran_works"],
+       [x"error"],
+       [AC_MSG_FAILURE([Linking/Running with C EXTERNAL built with cfortran.h does not work!])],
+       [x"compiling with cfortran.h failed"],
+       [AC_MSG_FAILURE([Compilation with cfortran.h is not working!])],
+       [x"error compiling Fortran subroutine"],
+       [AC_MSG_FAILURE([compilation of simple Fortran source failed!])],
+       [xyes],[$2],
+       [AC_MSG_FAILURE([Unexpected error when linking C and Fortran via cfortran.h!])])])
   ])
 dnl
 dnl Local Variables:

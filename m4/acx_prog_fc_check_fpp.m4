@@ -45,7 +45,7 @@ AC_DEFUN([ACX_PROG_FC_CHECK_FPP],dnl
    ASX_VAR_UNSET([fpp_flag])
    AC_CACHE_CHECK([for flag to enable preprocessing],[fpp_flag],
      [FCFLAGS_save=$FCFLAGS
-      for i in none -cpp -fpp -qsuffix=cpp=f90 -eZ ; do
+      for i in none -cpp -fpp -qsuffix=cpp=f90 -eZ -Mpreprocess ; do
         AS_IF([test "x$i" != xnone],
           [FCFLAGS="$FCFLAGS ${i}"])
         AC_COMPILE_IFELSE([_ACX_SL_LANG_PROGRAM_FPP_ONLY],

@@ -284,7 +284,7 @@ dnl preprocessing failed. So this command doesn't work.
 # _ACX_SL_PROG_FPP([SUFFIX], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # ------------
 # Try to figure out how to preprocess files with the given suffix
-# for use with the selected Fortran compiler
+# just like the selected Fortran compiler does
 #
 # Must be run after _ACX_SL_PROG_FC_CPP
 AC_DEFUN([_ACX_SL_PROG_FPP],
@@ -305,12 +305,9 @@ AC_DEFUN([_ACX_SL_PROG_FPP],
            `cd $srcdir ; pwd`/util/xlfpreproc-wrapper \
            `cd $srcdir ; pwd`/util/sunf95preproc-wrapper \
            `cd $srcdir ; pwd`/util/crayftnpreproc-wrapper \
-           "$FC -F" "$FC -F -fpp" "$FC -E" "$FC -E" "$FC -E -cpp" \
+           "$FC -F" "$FC -F -fpp" "$FC -E" "$FC -E -cpp" \
            "$FC $FCFLAGS -F" "$FC $FCFLAGS -E" "$FC $FCFLAGS -E" \
-           "$FC $FCFLAGS -E -cpp" "$FC $FCFLAGS -x f95-cpp-input -E -P" \
-           "${F77-f77} -F" "${F77-f77} -E" 'fpp' \
-           "$CPP" "$CPP -x c" 'cpp' '/lib/cpp' \
-           '/usr/ccs/lib/cpp' 'g77 -E' '${CC-cc} -E'
+           "$FC $FCFLAGS -E -cpp" "$FC $FCFLAGS -x f95-cpp-input -E -P"
          do
            _ACX_SL_TEST_FPP([$ac_fpp],[$acx_sl_fpp_srcext],[FPP="$ac_fpp"
               break])

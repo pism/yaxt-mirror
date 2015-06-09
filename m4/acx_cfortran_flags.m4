@@ -45,7 +45,7 @@ AC_DEFUN([ACX_XLF_QEXTNAME_ADD_APPENDUS],
      [*-ibm-aix*],
      [AC_MSG_CHECKING([if -Dappendus needs to be added to CPPFLAGS for cfortran.h])
       AS_IF([$CC -qversion 2>&1 | grep '^IBM XL C' >/dev/null],
-        [acx_temp_qextname_f77flags=`echo "$F77FLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
+        [acx_temp_qextname_f77flags=`echo "$FFLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
          acx_temp_qextname_fcflags=`echo "$FCFLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
       dnl pretend the same option as for FC was used if F77 isn't used at all
       dnl also in case a non-xl compiler is used it will append an underscore
@@ -129,25 +129,31 @@ p'`
 dnl find automatically from machine/compiler
       AS_IF([test x"$acx_cv_cf_flag" = x],
         [AC_PROVIDE_IFELSE([AC_PROG_FC],
-           [AC_LANG_PUSH([Fortran])
-            AS_VAR_PUSHDEF([acx_cf_flag],[acx_cv_]_AC_LANG_ABBREV[_cf_flag])
-            _ACX_FIND_CFORTRAN_DEF
-            AS_VAR_POPDEF([acx_cf_flag])
-            AC_LANG_POP([Fortran])])
+           [AS_IF([test -n "$FC" -a X"$FC" != Xno],
+              [AC_LANG_PUSH([Fortran])
+               AS_VAR_PUSHDEF([acx_cf_flag],[acx_cv_]_AC_LANG_ABBREV[_cf_flag])
+               _ACX_FIND_CFORTRAN_DEF
+               AS_VAR_POPDEF([acx_cf_flag])
+               AC_LANG_POP([Fortran])])])
          AC_PROVIDE_IFELSE([AC_PROG_F77],
-           [AC_LANG_PUSH([Fortran 77])
-            AS_VAR_PUSHDEF([acx_cf_flag],[acx_cv_]_AC_LANG_ABBREV[_cf_flag])
-            _ACX_FIND_CFORTRAN_DEF
-            AS_VAR_POPDEF([acx_cf_flag])
-            AC_LANG_POP([Fortran 77])])
+           [AS_IF([test -n "$F77" -a X"$F77" != Xno],
+              [AC_LANG_PUSH([Fortran 77])
+               AS_VAR_PUSHDEF([acx_cf_flag],[acx_cv_]_AC_LANG_ABBREV[_cf_flag])
+               _ACX_FIND_CFORTRAN_DEF
+               AS_VAR_POPDEF([acx_cf_flag])
+               AC_LANG_POP([Fortran 77])])])
 dnl check f77 flag matches fc flag
          AC_PROVIDE_IFELSE([AC_PROG_F77],
            [AC_PROVIDE_IFELSE([AC_PROG_FC],
               [dnl both FC and F77 are configured
-               AS_IF([test x"$acx_cv_f77_cf_flag" = x"$acx_cv_fc_cf_flag],
+               AS_IF([test -z "$FC" -o X"$FC" != Xno],
+                 [acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"],
+                 [test -z "$F77" -o X"$F77" != Xno],
                  [acx_cv_cf_flag="$acx_cv_f77_cf_flag (probed)"],
-                 [AC_MSG_ERROR([cfortran.h flag for $F77 does not match the flag for $FC.
-Have you configured compatible compilers?])])
+                 [AS_IF([test x"$acx_cv_f77_cf_flag" = x"$acx_cv_fc_cf_flag"],
+                    [acx_cv_cf_flag="$acx_cv_f77_cf_flag (probed)"],
+                    [AC_MSG_ERROR([cfortran.h flag for $F77 does not match the flag for $FC.
+Have you configured compatible compilers?])])])
               ])],[acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"])
         ])
      ])
