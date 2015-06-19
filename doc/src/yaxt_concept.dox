@@ -61,7 +61,7 @@
   be used to create a redistribution object (\ref Xt_redist). It
   contains all the information required to execute a collective
   communication that establishes the target state (e.g., updated halo points).
-  It is possible to merge multiple redistribution object into a single
+  It is possible to merge multiple redistribution objects into a single
   one (see \ref redist_colls).
 
 
