@@ -352,13 +352,13 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
 /* ====================================================================== */
 
 static void
-aux_gen_simple_block_offsets(int *block_offsets, int *block_sizes,
-                             int block_num) {
+aux_gen_simple_block_offsets(int block_offsets[], int block_sizes[],
+                             size_t num_blocks) {
 
-  if (block_num<1) return;
-  block_offsets[0] = 0;
-  for (int i = 1; i < block_num; ++i) {
-    block_offsets[i] = block_offsets[i-1] + block_sizes[i-1];
+  if (num_blocks > 0) {
+    block_offsets[0] = 0;
+    for (size_t i = 1; i < num_blocks; ++i)
+      block_offsets[i] = block_offsets[i-1] + block_sizes[i-1];
   }
 }
 
@@ -367,15 +367,11 @@ generate_block_datatype(int const * transfer_pos, int num_transfer_pos,
                         int *block_offsets, int *block_sizes,
                         MPI_Datatype base_datatype, MPI_Comm comm) {
 
-  MPI_Datatype type;
-
-  int *bdispl_vec;
-  int *blen_vec;
-
   assert(block_sizes != NULL);
 
-  bdispl_vec = xmalloc(2 * (size_t)num_transfer_pos * sizeof(*bdispl_vec));
-  blen_vec = bdispl_vec + num_transfer_pos;
+  int *bdispl_vec
+    = xmalloc(2 * (size_t)num_transfer_pos * sizeof(*bdispl_vec)),
+    *blen_vec = bdispl_vec + num_transfer_pos;
   assert(block_offsets);
 
   for (int i = 0; i < num_transfer_pos; ++i) {
@@ -384,9 +380,9 @@ generate_block_datatype(int const * transfer_pos, int num_transfer_pos,
     blen_vec[i] = block_sizes[j];
   }
 
-  type = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec,
-                                        num_transfer_pos,
-                                        base_datatype, comm);
+  MPI_Datatype type
+    = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec,
+                                     num_transfer_pos, base_datatype, comm);
 
   free(bdispl_vec);
 
@@ -395,37 +391,39 @@ generate_block_datatype(int const * transfer_pos, int num_transfer_pos,
 
 static void
 generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
-                         int *block_sizes, MPI_Datatype base_datatype,
-                         struct Xt_redist_msg ** msgs, MPI_Comm comm) {
+                         int *block_sizes, int **aux_offsets,
+                         size_t num_blocks,
+                         MPI_Datatype base_datatype,
+                         struct Xt_redist_msg **msgs, MPI_Comm comm) {
 
-  if (num_msgs <= 0) {
+  if (num_msgs > 0) {
+
+    int *block_offsets_;
+    if (block_offsets)
+      block_offsets_ = block_offsets;
+    else {
+      block_offsets_ = *aux_offsets
+        = xrealloc(*aux_offsets, num_blocks * sizeof(*block_offsets_));
+      aux_gen_simple_block_offsets(block_offsets_, block_sizes, num_blocks);
+    }
+
+    struct Xt_redist_msg *curr_msg
+      = *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
+
+    do {
+      const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
+      int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
+      curr_msg->datatype
+        = generate_block_datatype(curr_transfer_pos, curr_num_transfer_pos,
+                                  block_offsets_, block_sizes, base_datatype,
+                                  comm);
+      curr_msg->rank = xt_xmap_iterator_get_rank(iter);
+
+      curr_msg++;
+    } while (xt_xmap_iterator_next(iter));
+
+  } else
     *msgs = NULL;
-    return;
-  }
-
-  *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
-
-  struct Xt_redist_msg * curr_msg;
-
-  curr_msg = *msgs;
-
-  do {
-
-    int const * curr_transfer_pos;
-    int curr_num_transfer_pos;
-
-    curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
-    curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
-
-    curr_msg->datatype
-      = generate_block_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                                block_offsets, block_sizes, base_datatype,
-                                comm);
-    curr_msg->rank = xt_xmap_iterator_get_rank(iter);
-
-    curr_msg++;
-
-  } while (xt_xmap_iterator_next(iter));
 }
 
 Xt_redist
@@ -436,7 +434,6 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
                              int dst_block_num,
                              MPI_Datatype datatype) {
 
-  int nsend, nrecv;
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
 
@@ -445,56 +442,37 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
   if (!dst_block_sizes)
     die("xt_redist_p2p_blocks_off_new: undefined dst_block_sizes");
 
-  MPI_Comm comm;
   int tag_offset;
-  comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
+  MPI_Comm comm
+    = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
 
-  nsend = xt_xmap_get_num_destinations(xmap);
-  nrecv = xt_xmap_get_num_sources(xmap);
+  int nsend = xt_xmap_get_num_destinations(xmap),
+    nrecv = xt_xmap_get_num_sources(xmap);
 
   int *aux_offsets = NULL;
 
-  Xt_xmap_iter dst_iter, src_iter;
-
-  dst_iter = xt_xmap_get_in_iterator(xmap);
-  src_iter = xt_xmap_get_out_iterator(xmap);
+  Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap),
+    src_iter = xt_xmap_get_out_iterator(xmap);
 
   // dst part:
   int max_dst_pos = xt_xmap_get_max_dst_pos(xmap);
   if (dst_block_num < max_dst_pos)
     die("xt_redist_p2p_blocks_off_new: dst_block_num too small");
-
-  if (dst_block_offsets)
-    aux_offsets = dst_block_offsets;
-  else {
-    aux_offsets = xmalloc((size_t)dst_block_num * sizeof(*aux_offsets));
-    aux_gen_simple_block_offsets(aux_offsets, dst_block_sizes, dst_block_num);
-  }
-
-  generate_block_msg_infos(nrecv, dst_iter, aux_offsets, dst_block_sizes,
+  generate_block_msg_infos(nrecv, dst_iter, dst_block_offsets, dst_block_sizes,
+                           &aux_offsets, (size_t)dst_block_num,
                            datatype, &recv_msgs, comm);
-
-  if (!dst_block_offsets) free(aux_offsets);
+  if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   // src part:
   int max_src_pos = xt_xmap_get_max_src_pos(xmap);
   if (src_block_num < max_src_pos)
     die("xt_redist_p2p_blocks_off_new: src_block_num too small");
-
-  if (src_block_offsets)
-    aux_offsets = src_block_offsets;
-  else {
-    aux_offsets = xmalloc((size_t)src_block_num * sizeof(*aux_offsets));
-    aux_gen_simple_block_offsets(aux_offsets, src_block_sizes, src_block_num);
-  }
-
-  generate_block_msg_infos(nsend, src_iter, aux_offsets, src_block_sizes,
+  generate_block_msg_infos(nsend, src_iter, src_block_offsets, src_block_sizes,
+                           &aux_offsets, (size_t)src_block_num,
                            datatype, &send_msgs, comm);
+  free(aux_offsets);
 
-  if (!src_block_offsets) free(aux_offsets);
-
-  if (dst_iter) xt_xmap_iterator_delete(dst_iter);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
   Xt_redist result
