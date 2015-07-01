@@ -11,6 +11,7 @@ Makefile.in
 /config/install-sh
 /config/missing
 /config/ltmain.sh
+/config/test-driver
 /aclocal.m4
 /autom4te.cache
 /include/config.h.in
