@@ -351,7 +351,7 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
 
 /* ====================================================================== */
 
-static void
+static inline void
 aux_gen_simple_block_offsets(int block_offsets[], int block_sizes[],
                              size_t num_blocks) {
 
