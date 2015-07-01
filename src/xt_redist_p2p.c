@@ -389,6 +389,9 @@ generate_block_datatype(int const * transfer_pos, int num_transfer_pos,
   return type;
 }
 
+#if __PGIC__ == 15 && __PGIC_MINOR__ == 4
+#pragma routine novector
+#endif
 static void
 generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter, int *block_offsets,
                          int *block_sizes, int **aux_offsets,
