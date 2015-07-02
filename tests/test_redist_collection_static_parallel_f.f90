@@ -221,23 +221,28 @@ CONTAINS
   ! different directions
   SUBROUTINE test_rr_exchange
     TYPE(xt_idxlist) :: src_indices, dst_indices(2)
-    INTEGER(xt_int_kind), TARGET :: src_indices_(5)
-    INTEGER(xt_int_kind) :: i, temp, dst_indices_(5, 2)
+    INTEGER, PARAMETER :: num_local_indices = 5
+    INTEGER(xt_int_kind), TARGET :: src_indices_(num_local_indices)
+    INTEGER(xt_int_kind) :: i, temp, dst_indices_(num_local_indices, 2)
     TYPE(xt_xmap) :: xmaps(2)
     TYPE(xt_redist) :: redists(2), redist
-    INTEGER(xt_int_kind), TARGET :: results_1(5), results_2(5)
+    INTEGER(xt_int_kind), TARGET :: results_1(num_local_indices)
+    INTEGER(xt_int_kind), VOLATILE, TARGET ::results_2(num_local_indices)
     INTEGER(mpi_address_kind) :: src_displacements(2), dst_displacements(2), &
          addr_temp
     INTEGER :: ierror
 
-    DO i = 1_xi, 5_xi
-      src_indices_(i) = INT(rank, xi) * 5_xi + (i - 1_xi)
-      dst_indices_(i, 1) = MOD(src_indices_(i) + 1_xi, INT(size, xi) * 5_xi)
+    DO i = 1_xi, INT(num_local_indices, xi)
+      src_indices_(i) = INT(rank, xi) * INT(num_local_indices, xi) + (i - 1_xi)
+      dst_indices_(i, 1) = MOD(src_indices_(i) + 1_xi, &
+           &                   INT(size, xi) * INT(num_local_indices, xi))
       temp = src_indices_(i) - 1_xi
-      dst_indices_(i, 2) = MERGE(INT(size, xi) * 5_xi - 1_xi, temp, temp < 0_xi)
+      dst_indices_(i, 2) = MERGE(INT(size, xi) * INT(num_local_indices, xi) &
+           &                     - 1_xi, &
+           &                     temp, temp < 0_xi)
     END DO
 
-    src_indices = xt_idxvec_new(src_indices_, 5)
+    src_indices = xt_idxvec_new(src_indices_, num_local_indices)
     dst_indices(1) = xt_idxvec_new(dst_indices_(:, 1))
     dst_indices(2) = xt_idxvec_new(dst_indices_(:, 2))
 
