@@ -11,7 +11,7 @@ EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	config/checkdoc/openmpi_dup.txt \
 	config/checksrc/pe5228_iv32584.c \
 	config/checkdoc/pe5228_iv32584.txt \
-	doc/Doxyfile doc/README.build doc/cfortran.doc \
+	doc/Doxyfile.in doc/README.build doc/cfortran.doc \
 	doc/cfortran.html doc/cfortran.txt doc/styleguide.txt \
 	doc/images/decomp_idxlist_collection.png \
 	doc/images/decomp_idxlist_collection.svg \
