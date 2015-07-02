@@ -50,5 +50,4 @@ die "Cannot find yaxt version in $conf." unless defined $version;
 
 create_doxyfile($version, $doxy_in, $doxy_out) || die "Found no match in $doxy_in\n";
 
-system("doxygen doc/Doxyfile");
 
