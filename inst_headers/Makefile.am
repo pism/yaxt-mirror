@@ -1,6 +1,6 @@
 xtincludedir = $(includedir)/xt
 
-include_HEADERS = yaxt.h
+nodist_include_HEADERS = yaxt.h
 
 BUILT_SOURCES = yaxt.h
 

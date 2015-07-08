@@ -5,12 +5,21 @@ ACLOCAL_AMFLAGS=-I m4
 
 EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	util/sxpreproc-wrapper util/xlfpreproc-wrapper \
+	util/crayftnpreproc-wrapper \
+	util/pbs_aprun \
 	config/checksrc/openmpi_struct_dt.c \
 	config/checkdoc/openmpi_struct_dt.txt \
 	config/checksrc/openmpi_dup.c \
 	config/checkdoc/openmpi_dup.txt \
 	config/checksrc/pe5228_iv32584.c \
 	config/checkdoc/pe5228_iv32584.txt \
+	contrib/00nagfor-libtool-patch/README.txt \
+	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
+	contrib/01aix-deplib-rpath-patch/README \
+	contrib/01aix-deplib-rpath-patch/aix-deplib-libtool.patch \
+	contrib/02nagfor53-shared-patch/README.txt \
+	contrib/02nagfor53-shared-patch/nagfor53-shared.patch \
+	doc/Makefile \
 	doc/Doxyfile.in doc/README.build doc/cfortran.doc \
 	doc/cfortran.html doc/cfortran.txt doc/styleguide.txt \
 	doc/images/decomp_idxlist_collection.png \
@@ -51,6 +60,7 @@ EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
 	m4/tj_find_type.m4 \
 	scripts/cpp.pm \
 	scripts/header2installheader.pl \
+	scripts/generate_doc.pl \
 	scripts/makef90depends
 
 
