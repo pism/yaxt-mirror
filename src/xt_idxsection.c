@@ -1285,9 +1285,11 @@ idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
   {
     int num_section_indices = xt_idxlist_get_num_indices(body_idxlist);
 
-    // if the indices are already cached or (if the caching would not consume to much
-    // memory and the number of selection indices are sufficient to justify the use
-    // of cached indices)
+    /*
+     * if the indices are already cached or (if the caching would not
+     * consume to much memory and the number of selection indices are
+     * sufficient to justify the use of cached indices)
+     */
     if ((section->index_array_cache != NULL) ||
         (((size_t)num_section_indices * sizeof(Xt_int)
           <= (size_t)128 * 1024U * 1024U)
