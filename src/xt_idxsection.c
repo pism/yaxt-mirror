@@ -59,6 +59,7 @@
 #include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxsection.h"
+#include "xt_idxsection_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt/mergesort.h"
 #include "xt/quicksort.h"

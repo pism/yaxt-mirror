@@ -52,6 +52,7 @@
 #include <yaxt.h>
 #include "core/ppm_xfuncs.h"
 #include "tests.h"
+#include "test_idxlist_utils.h"
 
 static void
 ref_get_positions_of_indices(Xt_int const * indices, int num_indices,

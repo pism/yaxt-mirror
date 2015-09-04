@@ -62,6 +62,7 @@
 #include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+#include "xt/xt_xmap_all2all.h"
 #include "xt/xt_xmap_intersection.h"
 #include "xt_idxlist_internal.h"
 #include "instr.h"

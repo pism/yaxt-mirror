@@ -50,6 +50,7 @@
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxempty.h"
+#include "xt_idxempty_internal.h"
 #include "xt_idxlist_unpack.h"
 #include "xt_idxlist_internal.h"
 #include "xt/xt_mpi.h"

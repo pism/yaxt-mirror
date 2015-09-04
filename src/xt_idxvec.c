@@ -58,6 +58,7 @@
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
+#include "xt_idxvec_internal.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"

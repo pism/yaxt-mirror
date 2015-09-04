@@ -41,6 +41,8 @@
 #include <config.h>
 #endif
 
+#include "tests.h"
+
 unsigned err_count__ = 0;
 
 int test_err_count(void)
