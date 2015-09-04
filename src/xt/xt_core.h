@@ -61,6 +61,10 @@ typedef unsigned XT_INT Xt_uint;
 typedef uint64_t Xt_uid;
 #define XT_INT_MAX CONF_XT_INT_MAX
 #define XT_INT_MIN CONF_XT_INT_MIN
+/**
+ * Use this in calls to printf, scanf etc. for data of type Xt_int
+ */
+#define XT_INT_FMT CONF_XT_INT_FMT
 
 typedef struct Xt_idxlist_ *Xt_idxlist;
 typedef struct Xt_xmap_ *Xt_xmap;

@@ -45,17 +45,15 @@
 #include <config.h>
 #endif
 
+#include <xt/xt_core.h>
+
 static void print_index_list(Xt_idxlist idxlist) {
 
-  static const char *format_string
-    = sizeof(Xt_int) == sizeof(int) ? "%d " :
-    sizeof (Xt_int) == sizeof (long)? "%ld " :
-    sizeof (Xt_int) == sizeof (long long) ? "%lld ":"UNDEF ";
   int n = xt_idxlist_get_num_indices(idxlist);
   Xt_int index;
   for (int i = 0; i < n; ++i) {
     xt_idxlist_get_index_at_position(idxlist, i, &index);
-    printf(format_string, index);
+    printf("%"XT_INT_FMT, index);
   }
   puts("");
 }

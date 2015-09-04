@@ -186,6 +186,7 @@ m4_foreach([substtype],[[XT_INT]],
        [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=INT_MAX
      ]substtype[_MIN="(-INT_MAX)"
+     ]substtype[_FMT="\"d\""
      ]substtype[_abs='(abs((v)))'],
      [long],
      substtype[_MPIDT=MPI_LONG
@@ -195,6 +196,7 @@ m4_foreach([substtype],[[XT_INT]],
        [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LONG_MAX
      ]substtype[_MIN="(-LONG_MAX)"
+     ]substtype[_FMT="\"ld\""
      ]substtype[_abs='(labs((v)))'],
      [short],
      substtype[_MPIDT=MPI_SHORT
@@ -204,6 +206,7 @@ m4_foreach([substtype],[[XT_INT]],
        [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=SHRT_MAX
      ]substtype[_MIN="(-SHRT_MAX)"
+     ]substtype[_FMT="\"hd\""
      ]substtype[_abs='((short)abs((v)))'],
      ["long long"],
      substtype[_MPIDT=MPI_LONG_LONG
@@ -213,6 +216,7 @@ m4_foreach([substtype],[[XT_INT]],
        [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
      ]substtype[_MAX=LLONG_MAX
      ]substtype[_MIN="(-LLONG_MAX)"
+     ]substtype[_FMT="\"lld\""
      ]substtype[_abs='(llabs((v)))'],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    save_FCFLAGS=$FCFLAGS
@@ -240,6 +244,8 @@ m4_foreach([substtype],[[XT_INT]],
      [Maximal value for ]substtype)
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MIN],[$]substtype[_MIN],
      [Minimal value for ]substtype)
+   AC_DEFINE_UNQUOTED([CONF_]substtype[_FMT],[$]substtype[_FMT],
+     [printf(3) format string for ]subsstype)
    AC_DEFINE_UNQUOTED(substtype[_ABS(v)],[$]substtype[_abs],
      [return absolute value of v])
   ])
