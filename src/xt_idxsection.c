@@ -1161,10 +1161,10 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
         = (Xt_int)(index_offset + curr_global_position * abs_global_stride);
       /* FIXME: no guarantee curr_local_position * abs_local_stride
        * <= INT_MAX */
-      int position_offset = (int)(curr_local_position * abs_local_stride);
+      int position_offset_ = (int)(curr_local_position * abs_local_stride);
 
       num_processed += idxsection_get_positions_of_indices_recursive(
-        curr_index_offset, position_offset, indices + num_processed,
+        curr_index_offset, position_offset_, indices + num_processed,
         num_indices - num_processed, positions + num_processed, ndim-1,
         dims + 1);
     }
