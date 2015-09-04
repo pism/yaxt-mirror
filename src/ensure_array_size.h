@@ -59,8 +59,10 @@ xt_realloc_array(void **array, size_t elem_size, size_t *curr_array_size,
     if (req_size_eval > curr_array_size_eval)                           \
     {                                                                   \
       size_t casize = curr_array_size_eval;                             \
-      xt_realloc_array((void **)&(arrayp), sizeof(*(arrayp)), &casize,  \
+      void *arrayp_ = arrayp;                                           \
+      xt_realloc_array(&arrayp_, sizeof(*(arrayp)), &casize,            \
                        req_size_eval);                                  \
+      arrayp = arrayp_;                                                 \
       (curr_array_size) = casize;                                       \
     }                                                                   \
   }                                                                     \
