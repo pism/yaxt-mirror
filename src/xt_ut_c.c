@@ -106,6 +106,8 @@ static Xt_handle_set_type trans_set;
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #endif
 
+void xt_ut_abort(char *msg, char *source, int *line) __attribute__((noreturn));
+
 void xt_ut_abort(char *msg, char *source, int *line) {
   Xt_abort(MPI_COMM_WORLD, msg, source, *line);
 }

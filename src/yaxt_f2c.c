@@ -107,6 +107,8 @@ MPI_Fint xt_get_default_comm_f(void)
 }
 
 void xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
+                int line) __attribute__((noreturn));
+void xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
                 int line) {
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   Xt_abort(comm_c, msg, source, line);
