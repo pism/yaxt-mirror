@@ -131,7 +131,7 @@ MPI_Datatype xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
  * communications other than those initiated by YAXT functions. This
  * is useful to prevent unnecessary MPI_Comm_dup() calls.
  *
- * @param[inout] comm communicator that will not be used by
+ * @param[in,out] comm communicator that will not be used by
  *                    application code
  */
 void
