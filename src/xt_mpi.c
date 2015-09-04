@@ -312,12 +312,13 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
 
 
 static int
-scan_stripe(const int *disp, int disp_len, struct Xt_offset_ext *v, int vsize) {
+scan_stripe(const int *disp, int disp_len, struct Xt_offset_ext *restrict v,
+            size_t vsize) {
 
   if (disp_len<1) return 0;
 
   struct Xt_offset_ext x = zero_stripe;
-  int i = 0;
+  size_t i = 0;
   int p = 0;
   while (p < disp_len) {
 
@@ -388,15 +389,17 @@ scan_stripe(const int *disp, int disp_len, struct Xt_offset_ext *v, int vsize) {
     i++;
   }
 
-  unsigned vn = (unsigned)i;
+  size_t vn = i;
 
   // check:
   p = 0;
-  for (unsigned j = 0; j < vn; j++) {
+  for (size_t j = 0; j < vn; j++) {
     for (int k = 0; k < v[j].size; k++) {
       int d = v[j].start + k*v[j].stride;
-      if (p > disp_len) die("scan_stripe: internal error (1)");
-      if (disp[p] != d) die("scan_stripe: internal error (2)");
+      static const char die_msg[2][32] = { "scan_stripe: internal error (1)",
+                                           "scan_stripe: internal error (2)" };
+      int err_code = p > disp_len || (disp[p] != d) * 2;
+      if (err_code) die(die_msg[err_code - 1]);
       p++;
     }
   }
@@ -729,7 +732,7 @@ xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
   struct Xt_offset_ext *v = xmalloc(sizeof(*v) * (size_t)disp_len);
-  int vlen = scan_stripe(disp, disp_len, v, disp_len);
+  int vlen = scan_stripe(disp, disp_len, v, (size_t)disp_len);
   MPI_Datatype dt = parse_stripe(v, vlen, old_type);
   free(v);
   return dt;
