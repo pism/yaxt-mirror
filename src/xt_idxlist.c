@@ -364,27 +364,27 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
       bounds[i].size = 1;
    }
 
-   for (int i = 1; i < num_indices; ++i) {
+  for (int i = 1; i < num_indices; ++i) {
 
-     xt_idxlist_get_index_at_position(idxlist, i, &curr_index);
-      get_position_in_ndim_space(curr_index, ndim, global_stride,
-                                 global_start_index, curr_position);
+    xt_idxlist_get_index_at_position(idxlist, i, &curr_index);
+    get_position_in_ndim_space(curr_index, ndim, global_stride,
+                               global_start_index, curr_position);
 
-      for (unsigned i = 0; i < ndim; ++i) {
+    for (unsigned i = 0; i < ndim; ++i) {
 
-         if (curr_position[i] < bounds[i].start) {
+      if (curr_position[i] < bounds[i].start) {
 
-           bounds[i].size = (Xt_int)(bounds[i].size + curr_position[i] - bounds[i].start);
-            bounds[i].start = curr_position[i];
+        bounds[i].size = (Xt_int)(bounds[i].size + curr_position[i] - bounds[i].start);
+        bounds[i].start = curr_position[i];
 
-         } else if (curr_position[i] >= bounds[i].start + bounds[i].size) {
+      } else if (curr_position[i] >= bounds[i].start + bounds[i].size) {
 
-           bounds[i].size = (Xt_int)(curr_position[i] - bounds[i].start + 1);
-         }
+        bounds[i].size = (Xt_int)(curr_position[i] - bounds[i].start + 1);
       }
-   }
+    }
+  }
 
-   INSTR_STOP(instr_fallback);
+  INSTR_STOP(instr_fallback);
 }
 
 static Xt_uid nextId = UINT64_C(1);
