@@ -62,8 +62,6 @@
 #include "core/core.h"
 #include "xt_exchanger.h"
 
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
 static void
 redist_sab_delete(Xt_redist redist);
 

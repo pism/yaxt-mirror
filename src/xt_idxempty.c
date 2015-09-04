@@ -295,14 +295,16 @@ static Xt_int
 idxempty_get_min_index(Xt_idxlist XT_UNUSED(idxlist)) {
 
   die("idxempty_get_min_index: empty index list");
-
+#ifndef __clang__
   return -1;
+#endif
 }
 
 static Xt_int
 idxempty_get_max_index(Xt_idxlist XT_UNUSED(idxlist)) {
 
   die("idxempty_get_max_index: empty index list");
-
+#ifndef __clang__
   return -1;
+#endif
 }

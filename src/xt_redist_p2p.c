@@ -65,8 +65,6 @@
 
 #include "xt_arithmetic_util.h"
 
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
 static MPI_Datatype
 generate_datatype(int const * transfer_pos, int num_transfer_pos,
                   int *offsets, MPI_Datatype base_datatype, MPI_Comm comm) {

@@ -67,9 +67,6 @@
 #include "xt/quicksort.h"
 #include "instr.h"
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
 static void
 idxvec_delete(Xt_idxlist data);
 

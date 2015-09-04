@@ -62,8 +62,6 @@
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
 
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
 #define DEFFAULT_DATATYPE_CACHE_SIZE (16)
 
 static void

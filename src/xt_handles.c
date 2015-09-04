@@ -139,8 +139,10 @@ int xt_handle_new(Xt_handle_set_type hset, void *p) {
   }
 
   die("internal error");
-
+  /* GNU C realizes die does not return, other compilers lack this smart */
+#ifndef __GNUC__
   return 0;
+#endif
 }
 
 void xt_handle_delete(Xt_handle_set_type hset, int handle) {

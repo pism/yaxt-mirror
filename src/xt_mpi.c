@@ -90,6 +90,7 @@ void xt_mpi_error(int error_code, MPI_Comm comm) {
   MPI_Abort(comm, error_code);
 }
 
+#ifndef COMPACT_DT
 static MPI_Datatype copy_mpi_datatype(MPI_Datatype old_type, MPI_Comm comm) {
 
   MPI_Datatype datatype;
@@ -218,6 +219,7 @@ static inline int check_for_indexed_block_type(const int *blocklengths,
 
   return 1;
 }
+#endif
 
 MPI_Datatype
 xt_mpi_generate_datatype_block(const int *displacements,
@@ -225,9 +227,9 @@ xt_mpi_generate_datatype_block(const int *displacements,
                                int count, MPI_Datatype old_type,
                                MPI_Comm comm) {
 #ifdef COMPACT_DT
+  (void)comm;
   return xt_mpi_generate_compact_datatype_block(displacements, blocklengths, count, old_type);
-#endif
-
+#else
   MPI_Datatype datatype;
 
   if (count == 0)
@@ -251,6 +253,7 @@ xt_mpi_generate_datatype_block(const int *displacements,
                                         old_type, comm);
 
   return datatype;
+#endif
 }
 
 MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
