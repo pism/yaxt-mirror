@@ -191,7 +191,7 @@ struct Xt_stripes_sort {
                                   * indexed with unsorted index */
 };
 
-enum stripes_flags {
+enum {
   stripes_do_overlap_bit = 0,
   stripes_some_have_zero_stride_bit,
 
