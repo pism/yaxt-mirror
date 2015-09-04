@@ -325,7 +325,7 @@ xt_idxstripes_from_idxlist_new(Xt_idxlist idxlist_src) {
       body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
     Xt_idxstripes idxstripes = xrealloc(stripes, header_size + body_size);
     struct Xt_stripe *stripes_moved
-      = (struct Xt_stripe *)((unsigned char *)idxstripes + header_size);
+      = (struct Xt_stripe *)(void *)((unsigned char *)idxstripes + header_size);
     /* ... move stripes to their final position */
     memmove(stripes_moved, idxstripes, sizeof (*stripes) * (size_t)num_stripes);
     idxstripes->stripes = stripes_moved;
