@@ -392,9 +392,9 @@ scan_stripe(const int *disp, int disp_len, struct Xt_offset_ext *v, int vsize) {
 
   // check:
   p = 0;
-  for (unsigned i = 0; i < vn; i++) {
-    for (int k = 0; k < v[i].size; k++) {
-      int d = v[i].start + k*v[i].stride;
+  for (unsigned j = 0; j < vn; j++) {
+    for (int k = 0; k < v[j].size; k++) {
+      int d = v[j].start + k*v[j].stride;
       if (p > disp_len) die("scan_stripe: internal error (1)");
       if (disp[p] != d) die("scan_stripe: internal error (2)");
       p++;
