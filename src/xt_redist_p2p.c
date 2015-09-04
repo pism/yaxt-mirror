@@ -387,7 +387,7 @@ generate_block_datatype(int const * transfer_pos, int num_transfer_pos,
   return type;
 }
 
-#if __PGIC__ == 15 && __PGIC_MINOR__ == 4
+#if defined (__PGIC__) && (__PGIC__ == 15 && __PGIC_MINOR__ == 4)
 #pragma routine novector
 #endif
 static void
