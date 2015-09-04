@@ -143,10 +143,10 @@ struct Xt_idxvec_ {
 
   struct Xt_idxlist_ parent;
 
-   Xt_int *vector;
+  const Xt_int *vector;
 
    // internal array used to optimise access to vector data
-   Xt_int *sorted_vector;        // sorted version of vector
+  const Xt_int *sorted_vector;        // sorted version of vector
    int    *sorted_vec_positions; // original positions of the
                                  // indices in sorted_vector
   /*
@@ -173,9 +173,9 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   struct Xt_idxvec_ *restrict idxvec_obj = xmalloc(header_size + vector_size);
   Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
 
-  idxvec_obj->vector = (Xt_int *)((unsigned char *)idxvec_obj + header_size);
-
-  memcpy(idxvec_obj->vector, idxvec, vector_size);
+  Xt_int *vector_assign = (Xt_int *)(void *)((unsigned char *)idxvec_obj + header_size);
+  idxvec_obj->vector = vector_assign;
+  memcpy(vector_assign, idxvec, vector_size);
   idxvec_obj->sorted_vector = NULL;
   idxvec_obj->sorted_vec_positions = NULL;
 
@@ -193,7 +193,7 @@ Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
     die("number of indices passed to xt_idxvec_new must not be negative!");
   struct Xt_idxvec_ *restrict idxvec_obj = xmalloc(sizeof (*idxvec_obj));
   Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
-  idxvec_obj->vector = (Xt_int *)idxvec;
+  idxvec_obj->vector = idxvec;
   idxvec_obj->sorted_vector = NULL;
   idxvec_obj->sorted_vec_positions = NULL;
   return (void *)idxvec_obj;
@@ -275,8 +275,10 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                          stripes[sorted_stripe_min_pos[i+1]]);
   overlap_flag[num_stripes - 1] = 0;
 
-  idxvec->sorted_vector = xmalloc((size_t)idxvec->parent.num_indices *
-                                  sizeof(*(idxvec->sorted_vector)));
+  Xt_int *restrict sorted_vector_assign
+    = xmalloc((size_t)idxvec->parent.num_indices
+              * sizeof(*(idxvec->sorted_vector)));
+  idxvec->sorted_vector = sorted_vector_assign;
   idxvec->sorted_vec_positions = xmalloc((size_t)idxvec->parent.num_indices *
                                          sizeof(*(idxvec->sorted_vec_positions)));;
 
@@ -299,14 +301,14 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
       curr_offset
         = (Xt_int)(curr_offset
                    + decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
-                                   idxvec->sorted_vector + offset
+                                   sorted_vector_assign + offset
                                    + curr_offset,
                                    idxvec->sorted_vec_positions + offset
                                    + curr_offset,
                                    sorted_pos_prefix_sum[i+j]));
 
     if (do_overlap)
-      xt_quicksort_index(idxvec->sorted_vector + offset, (int)curr_offset,
+      xt_quicksort_index(sorted_vector_assign + offset, (int)curr_offset,
                          idxvec->sorted_vec_positions + offset, 0);
 
     offset = (Xt_int)(offset + curr_offset);
@@ -335,8 +337,9 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
                    /sizeof (Xt_int)) * sizeof (Xt_int);
   Xt_idxvec idxvec_obj = xmalloc(header_size + vector_size);
 
-  Xt_int *restrict indices = idxvec_obj->vector
-    = (Xt_int *)((unsigned char *)idxvec_obj + header_size);
+  Xt_int *restrict indices
+    = (Xt_int *)(void *)((unsigned char *)idxvec_obj + header_size);
+  idxvec_obj->vector = indices;
 
   size_t k = (size_t)-1;
   for (int i = 0; i < num_stripes; ++i)
@@ -352,9 +355,9 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
 
 static void idxvec_delete(Xt_idxlist obj) {
 
-   if (((Xt_idxvec)obj)->sorted_vector !=
-       ((Xt_idxvec)obj)->vector)
-      free(((Xt_idxvec)obj)->sorted_vector);
+  if (((Xt_idxvec)obj)->sorted_vector !=
+      ((Xt_idxvec)obj)->vector)
+    free((void *)(((Xt_idxvec)obj)->sorted_vector));
    free(((Xt_idxvec)obj)->sorted_vec_positions);
    free(obj);
 }
@@ -383,7 +386,7 @@ void idxvec_pack(Xt_idxlist obj, void *buffer, int buffer_size,
   xt_mpi_call(MPI_Pack(&(idxvec->parent.num_indices), 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
   if (idxvec->parent.num_indices != 0)
-    xt_mpi_call(MPI_Pack(idxvec->vector, idxvec->parent.num_indices,
+    xt_mpi_call(MPI_Pack((Xt_int *)idxvec->vector, idxvec->parent.num_indices,
                          Xt_int_dt, buffer,
                          buffer_size, position, comm), comm);
 }
@@ -402,11 +405,11 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
   Xt_idxvec idxvec = xmalloc(header_size + vector_size);
   Xt_idxlist_init(&idxvec->parent, &idxvec_vtable, num_indices);
 
-  idxvec->vector = (Xt_int *)((unsigned char *)idxvec + header_size);
-
+  Xt_int *vector_assign = (Xt_int *)(void *)((unsigned char *)idxvec + header_size);
+  idxvec->vector = vector_assign;
   if (num_indices != 0) {
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           idxvec->vector, num_indices,
+                           vector_assign, num_indices,
                            Xt_int_dt, comm), comm);
   } else {
     fputs("warning: implementation generated empty vector!\n", stderr);
@@ -419,7 +422,7 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
   return (Xt_idxlist)idxvec;
 }
 
-static Xt_int *
+static const Xt_int *
 get_sorted_vector(Xt_idxvec idxvec) {
 
   if (idxvec->sorted_vector != NULL)
@@ -475,9 +478,11 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   Xt_idxvec inter_vector = xmalloc(header_size + vector_size);
 
-  inter_vector->vector = (Xt_int *)((unsigned char *)inter_vector + header_size);
+  Xt_int *vector_assign
+    = (Xt_int *)(void *)((unsigned char *)inter_vector + header_size);
+  inter_vector->vector = vector_assign;
 
-  Xt_int *restrict sorted_src_vector, *restrict sorted_dst_vector;
+  const Xt_int *restrict sorted_src_vector, *restrict sorted_dst_vector;
 
   // get sorted indices of source and destination
 
@@ -492,14 +497,14 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
            sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
     if (j >= num_indices_src) break;
     if (sorted_src_vector[j] == sorted_dst_vector[i])
-      inter_vector->vector[num_indices_inter++] = sorted_dst_vector[i];
+      vector_assign[num_indices_inter++] = sorted_dst_vector[i];
   }
 
   if (num_indices_inter) {
     vector_size = (size_t)num_indices_inter * sizeof (idxvec_dst->vector[0]);
     inter_vector = xrealloc(inter_vector, header_size + vector_size);
     inter_vector->vector
-      = (Xt_int *)((unsigned char *)inter_vector + header_size);
+      = (Xt_int *)(void *)((unsigned char *)inter_vector + header_size);
   } else {
     free(inter_vector);
     return xt_idxempty_new();
@@ -562,13 +567,13 @@ idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index) {
 }
 
 static int
-idxvec_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
+idxvec_get_indices_at_positions(Xt_idxlist idxlist, const int *restrict positions,
                                 int num_pos, Xt_int *index,
                                 Xt_int undef_idx) {
 
   Xt_idxvec idxvec = (Xt_idxvec)idxlist;
   int num_indices = idxvec->parent.num_indices;
-  Xt_int *v = idxvec->vector;
+  const Xt_int *restrict v = idxvec->vector;
 
   int undef_count = 0;
   for (int ip = 0; ip < num_pos; ip++) {
@@ -599,7 +604,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   if ((offset < 0) || (offset >= num_indices))
     return 1;
 
-  Xt_int *sorted_vector = get_sorted_vector(idxvec_obj);
+  const Xt_int *sorted_vector = get_sorted_vector(idxvec_obj);
 
   if ((index < sorted_vector[0]) ||
       (index > sorted_vector[num_indices-1]))
@@ -690,7 +695,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
    *  on the source side we don't
    */
   Xt_idxvec body_idxvec = (Xt_idxvec)body_idxlist;
-  Xt_int *sorted_body = get_sorted_vector(body_idxvec);
+  const Xt_int *sorted_body = get_sorted_vector(body_idxvec);
   int *sorted_body_pos = body_idxvec->sorted_vec_positions;
   int search_end = body_idxvec->parent.num_indices - 1;
   int num_unmatched = 0;
