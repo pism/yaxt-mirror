@@ -139,21 +139,21 @@ gen_mpi_datatype_vector(int count, int blocklength, int stride,
   MPI_Datatype datatype;
 
   xt_mpi_call(MPI_Type_vector(count, blocklength, stride, old_type,
-                                  &datatype), comm);
+                              &datatype), comm);
   if (offset != 0) {
 
     MPI_Datatype datatype_;
-    int blocklength = 1;
+    int hindexed_blocklength = 1;
     MPI_Aint old_type_size, old_type_lb;
 
     xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                        &old_type_size), comm);
+                                    &old_type_size), comm);
 
     MPI_Aint displacement = offset * old_type_size;
 
-    xt_mpi_call(MPI_Type_create_hindexed(1, &blocklength, &displacement,
-                                             datatype, &datatype_),
-                    comm);
+    xt_mpi_call(MPI_Type_create_hindexed(1, &hindexed_blocklength,
+                                         &displacement, datatype, &datatype_),
+                comm);
     xt_mpi_call(MPI_Type_free(&datatype), comm);
     datatype = datatype_;
   }
