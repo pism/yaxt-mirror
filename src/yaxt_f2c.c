@@ -52,7 +52,14 @@
 #include <mpi.h>
 
 #include "core/core.h"
+#if defined __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include "cfortran.h"
+#if defined __clang__
+#pragma GCC diagnostic pop
+#endif
 
 #include "xt/xt_mpi.h"
 #include "xt/xt_idxlist.h"

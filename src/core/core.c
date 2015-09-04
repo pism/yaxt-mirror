@@ -56,7 +56,14 @@
 #include <config.h>
 #endif
 #include <stdio.h>
+#if defined __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
 #include <cfortran.h>
+#if defined __clang__
+#pragma GCC diagnostic pop
+#endif
 
 #include "core.h"
 #include "symprefix.h"
