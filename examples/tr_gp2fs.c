@@ -72,7 +72,8 @@ struct config {
 
 enum direction { SOURCE = 0, DESTINATION = 1};
 
-void print_index(Xt_idxlist idxsection, int rank, enum direction dir){
+static void
+print_index(Xt_idxlist idxsection, int rank, enum direction dir) {
   static const char dirMsg[2][4] = { "SRC", "DST" };
   for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
     Xt_int value;
@@ -81,18 +82,18 @@ void print_index(Xt_idxlist idxsection, int rank, enum direction dir){
   }
 }
 
-void calc_blocks (int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_block){
-  // global data proportion
-  double prop = 1;
+static void
+calc_blocks(int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_block) {
   // temp num of blocks in x direction
   int tmp_dim1 = -1;
   // temp prop to compare last and actual iteration
   double tmp_prop = -1.0;
 
-  int snprocs = (int)sqrt(nprocs);
+  int snprocs = (int)(sqrt(nprocs));
 
   // calculate global data proportion by division of bigger number by smaller number, so prop <= 1
-  prop = (dim2 < dim1) ? (double)dim2/(double)dim1 : (double)dim1/(double)dim2;
+  double prop = (dim2 < dim1)
+    ? (double)dim2/(double)dim1 : (double)dim1/(double)dim2;
 
   //
   for (int f = snprocs; f > 0; f-- ){
@@ -122,7 +123,8 @@ void calc_blocks (int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_blo
   }
 }
 
-void init_data(int *data_array, int array_len, int j){
+static void
+init_data(int *data_array, int array_len, int j){
   // 0 = source
   if (j == 0)
     for (int i = 0; i < array_len; i++) {
@@ -135,8 +137,9 @@ void init_data(int *data_array, int array_len, int j){
     }
 }
 
-void init_data_with_index_list(int *data_array, int array_len,
-                            Xt_idxlist idxlist) {
+static void
+init_data_with_index_list(int *data_array, int array_len,
+                          Xt_idxlist idxlist) {
 
   if (xt_idxlist_get_num_indices(idxlist) != array_len) {
 
@@ -157,9 +160,10 @@ void init_data_with_index_list(int *data_array, int array_len,
 #endif
 }
 
-int check_data_against_index_list(int *data_array,
-                                  int array_len,
-                                  Xt_idxlist idxlist) {
+static int
+check_data_against_index_list(int *data_array,
+                              int array_len,
+                              Xt_idxlist idxlist) {
 
 #ifdef CHECK_RESULTS
   if (xt_idxlist_get_num_indices(idxlist) != array_len) {
@@ -186,7 +190,8 @@ int check_data_against_index_list(int *data_array,
   return 0;
 }
 
-void calc_config (struct config *conf, int nprocs){
+static void
+calc_config(struct config *conf, int nprocs) {
   int rank;
   MPI_Comm_rank (MPI_COMM_WORLD, &rank);
 
@@ -254,7 +259,8 @@ void calc_config (struct config *conf, int nprocs){
 }
 
 
-void get_config(struct config *conf, int argc, char** argv, int nprocs){
+static void
+get_config(struct config *conf, int argc, char** argv, int nprocs){
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int map = 0;
