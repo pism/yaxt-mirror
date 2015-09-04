@@ -151,12 +151,12 @@ struct Xt_idxsection_ {
 
   Xt_int global_start_index;
   Xt_int local_start_index;
-  int ndim;
 
   Xt_int *index_array_cache;
 
   Xt_int min_index_cache;
   Xt_int max_index_cache;
+  int ndim;
   struct dim_desc dims[];
 };
 
