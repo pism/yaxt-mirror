@@ -147,7 +147,9 @@ int main(void) {
     // generate redist_repeatection
 
     Xt_redist redist_repeat;
-    double src_data[3][5], dst_data[3][3];
+    static const double src_data[3][5]
+      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+    double dst_data[3][3];
     MPI_Aint src_extent =
       (MPI_Aint)((size_t)(src_data[1] - src_data[0]) * sizeof (double));
     MPI_Aint dst_extent =
@@ -166,33 +168,31 @@ int main(void) {
 
     // test exchange
     {
-      double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-      double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
+      for (size_t j = 0; j < 3; ++j)
+        for (size_t i = 0; i < 3; ++i)
+          dst_data[j][i] = -1.0;
 
-      xt_redist_s_exchange1(redist_repeat, (void*)src_data, (void*)dst_data);
+      xt_redist_s_exchange1(redist_repeat, (const void*)src_data, (void*)dst_data);
 
-      double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+      static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
-      int i, j;
-
-      for (i = 0; i < 3; ++i)
-        for (j = 0; j < 3; ++j)
+      for (size_t i = 0; i < 3; ++i)
+        for (size_t j = 0; j < 3; ++j)
           if (ref_dst_data[i][j] != dst_data[i][j])
             PUT_ERR("error in xt_redist_s_exchange\n");
     }
 
     {
-      double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-      double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
+      for (size_t j = 0; j < 3; ++j)
+        for (size_t i = 0; i < 3; ++i)
+          dst_data[j][i] = -1.0;
 
-      xt_redist_s_exchange1(redist_repeat, (void*)src_data, (void*)dst_data);
+      xt_redist_s_exchange1(redist_repeat, (const void*)src_data, (void*)dst_data);
 
-      double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+      static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
-      int i, j;
-
-      for (i = 0; i < 3; ++i)
-        for (j = 0; j < 3; ++j)
+      for (size_t i = 0; i < 3; ++i)
+        for (size_t j = 0; j < 3; ++j)
           if (ref_dst_data[i][j] != dst_data[i][j])
             PUT_ERR("error in xt_redist_s_exchange\n");
     }
