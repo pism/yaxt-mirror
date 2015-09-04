@@ -364,9 +364,9 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
       bounds[i].size = 1;
    }
 
-  for (int i = 1; i < num_indices; ++i) {
+  for (int j = 1; j < num_indices; ++j) {
 
-    xt_idxlist_get_index_at_position(idxlist, i, &curr_index);
+    xt_idxlist_get_index_at_position(idxlist, j, &curr_index);
     get_position_in_ndim_space(curr_index, ndim, global_stride,
                                global_start_index, curr_position);
 
