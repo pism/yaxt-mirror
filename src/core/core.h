@@ -96,6 +96,12 @@ typedef void (*SymPrefix(abort_func))(MPI_Comm comm, const char *msg,
 extern SymPrefix(abort_func) SymPrefix(abort);
 
 /**
+ * Restore default abort handler.
+ */
+void
+SymPrefix(restore_default_abort_handler)(void);
+
+/**
  * communicator object to use by default
  */
 extern MPI_Comm SymPrefix(default_comm);
