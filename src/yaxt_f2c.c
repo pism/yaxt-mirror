@@ -87,6 +87,14 @@ struct xt_redist_f {
   Xt_redist cptr;
 };
 
+/* These functions are meant to be called from Fortran and don't need
+ * an interface declaration in a C header  */
+#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
+  || (defined __clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#endif
+
 void xt_initialize_f(MPI_Fint *comm_f) {
   MPI_Comm comm_c;
   comm_c = MPI_Comm_f2c(*comm_f);
@@ -321,3 +329,7 @@ void
 xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {
   xt_mpi_comm_mark_exclusive(MPI_Comm_f2c(*comm));
 }
+#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
+  || (defined __clang__)
+#pragma GCC diagnostic pop
+#endif

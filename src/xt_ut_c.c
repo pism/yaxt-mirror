@@ -96,6 +96,16 @@ typedef struct {
 
 static Xt_handle_set_type trans_set;
 
+/* the external functions declared here are intended to be called from
+ * Fortran, therefore there is no prototype declaration in a
+ * corresponding .h file.
+ */
+#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
+  || (defined __clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#endif
+
 void xt_ut_abort(char *msg, char *source, int *line) {
   Xt_abort(MPI_COMM_WORLD, msg, source, *line);
 }
@@ -206,7 +216,8 @@ xt_ut_init_oneway_transposition_template(int id_in, int id_out,
 }
 
 
-MPI_Fint xt_ut_init_transposition_simple(MPI_Fint itemplate, MPI_Fint f_datatype) {
+MPI_Fint xt_ut_init_transposition_simple(MPI_Fint itemplate,
+                                         MPI_Fint f_datatype) {
   xt_ut_template_type *template = xt_handle2pointer(template_set, itemplate);
   if (!template) die("xt_ut_init_transposition_simple: invalid handle");
 
@@ -238,12 +249,6 @@ MPI_Fint xt_ut_init_transposition(MPI_Fint itemplate,
   return itrans;
 }
 
-
-void xt_create_id_positions(int positions[], int num) {
-  for (int i=0; i<num; i++) {
-    positions[i] = i;
-  }
-}
 
 void xt_ut_transpose(const void **pt_in, int itrans, int XT_UNUSED(direction),
                      void **pt_out) {
