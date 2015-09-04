@@ -53,7 +53,9 @@
 #include "tests.h"
 
 int main(void) {
-  const int hsize = 32;
+  enum {
+    hsize = 32,
+  };
   int data[hsize];
   int handle[hsize];
   int state[hsize];
