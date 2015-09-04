@@ -63,9 +63,9 @@
  */
 #define xt_mpi_call(call, comm)                 \
   do {                                          \
-  int error_code = call;                        \
-  if (error_code != MPI_SUCCESS)                \
-    xt_mpi_error(error_code, comm);             \
+    int error_code = (call);                    \
+    if (error_code != MPI_SUCCESS)              \
+      xt_mpi_error(error_code, comm);           \
   } while(0)
 
 /**
