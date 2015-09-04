@@ -57,10 +57,10 @@
 #define VERBOSE
 #include "tests.h"
 
-enum {
+static enum {
   SMALL,
   BIG,
-} index_list_size;
+} index_list_size = SMALL;
 
 static void
 parse_options(int *argc, char ***argv);
@@ -74,8 +74,6 @@ int main(int argc, char **argv) {
 
    int my_rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-
-   index_list_size = SMALL;
 
    parse_options(&argc, &argv);
 
