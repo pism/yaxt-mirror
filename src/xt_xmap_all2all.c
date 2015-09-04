@@ -206,7 +206,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
 }
 
 Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
-  INSTR_DEF(t_xt_xmap_all2all_new,"xt_xmap_all2all_new");
+  INSTR_DEF(t_xt_xmap_all2all_new,"xt_xmap_all2all_new")
   INSTR_START(t_xt_xmap_all2all_new);
 
   int tag_offset;

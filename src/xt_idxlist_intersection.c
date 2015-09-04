@@ -96,7 +96,7 @@ xt_default_isect(Xt_idxlist idxlist_src,
                  Xt_idxlist idxlist_dst)
 {
 
-   INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
+   INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback")
 
    // if the get_intersection routine was not able to compute the intersection
    INSTR_START(instr_fallback);

@@ -118,7 +118,7 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   int * num_stripes) {
 
-  INSTR_DEF(instr_fallback,"xt_idxlist_get_index_stripes.fallback");
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_index_stripes.fallback")
 
   if (idxlist->vtable->get_index_stripes != NULL) {
 
@@ -155,7 +155,7 @@ xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
                                     int num_pos, Xt_int *indices,
                                     Xt_int undef_idx) {
 
-  INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback")
 
   if ( idxlist->vtable->get_indices_at_positions ) {
 
@@ -193,7 +193,7 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
                                     int num_indices, int * positions,
                                     int single_match_only) {
 
-  INSTR_DEF(instr_fallback,"xt_idxlist_get_positions_of_indices.fallback");
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_positions_of_indices.fallback")
 
   if (idxlist->vtable->get_positions_of_indices != NULL)
     return idxlist->vtable->get_positions_of_indices(idxlist, indices,
@@ -263,7 +263,7 @@ xt_idxlist_get_positions_of_indices_off(Xt_idxlist idxlist,
                                         int num_indices, int * positions,
                                         int * offsets) {
 
-  INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback");
+  INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback")
 
   if (idxlist->vtable->get_positions_of_indices_off != NULL)
     return idxlist->vtable->get_positions_of_indices_off(idxlist, indices,
@@ -323,7 +323,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
                                  Xt_int global_start_index,
                                  struct Xt_bounds bounds[ndim]) {
 
-   INSTR_DEF(instr_fallback,"xt_idxlist_get_bounding_box.fallback");
+   INSTR_DEF(instr_fallback,"xt_idxlist_get_bounding_box.fallback")
 
    int num_indices = xt_idxlist_get_num_indices(idxlist);
 

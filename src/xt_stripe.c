@@ -60,7 +60,7 @@ void xt_convert_indices_to_stripes(const Xt_int *restrict indices,
                                    struct Xt_stripe **stripes,
                                    int * num_stripes) {
 
-  INSTR_DEF(instr,"xt_idxstripes_convert_to_stripes");
+  INSTR_DEF(instr,"xt_idxstripes_convert_to_stripes")
   INSTR_START(instr);
 
   struct Xt_stripe *restrict temp_stripes = NULL;

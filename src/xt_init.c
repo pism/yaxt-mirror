@@ -54,7 +54,7 @@
 #include "xt_mpi_internal.h"
 #include "instr.h"
 
-INSTR_DEF(instr,"YAXT_lifetime");
+INSTR_DEF(instr,"YAXT_lifetime")
 
 static enum {
   xt_lib_pre_init,

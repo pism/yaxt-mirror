@@ -817,7 +817,7 @@ static void exchange_idxlists(struct Xt_com_list **src_com,
 Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                              MPI_Comm comm) {
 
-  INSTR_DEF(this_instr,"xt_xmap_all2all_new");
+  INSTR_DEF(this_instr,"xt_xmap_all2all_new")
   INSTR_START(this_instr);
 
   int tag_offset;

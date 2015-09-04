@@ -278,7 +278,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
 
 Xt_idxlist
 xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
-  INSTR_DEF(instr,"xt_idxstripes_new");
+  INSTR_DEF(instr,"xt_idxstripes_new")
   INSTR_START(instr);
 
   Xt_idxlist result;
@@ -389,7 +389,7 @@ idxstripes_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 static void
 idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
                 int *position, MPI_Comm comm) {
-  INSTR_DEF(instr,"idxstripes_pack");
+  INSTR_DEF(instr,"idxstripes_pack")
   INSTR_START(instr);
 
   assert(data);
@@ -410,7 +410,7 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
 Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm) {
 
-  INSTR_DEF(instr,"xt_idxstripes_unpack");
+  INSTR_DEF(instr,"xt_idxstripes_unpack")
   INSTR_START(instr);
 
   int num_stripes;
@@ -444,7 +444,7 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
 static Xt_idxlist
 compute_intersection_fallback(Xt_idxstripes idxstripes_src,
                               Xt_idxstripes idxstripes_dst) {
-  INSTR_DEF(instr,"compute_intersection_fallback");
+  INSTR_DEF(instr,"compute_intersection_fallback")
   INSTR_START(instr);
 
   Xt_idxlist idxvec_from_stripes_src;
@@ -502,7 +502,7 @@ static struct Xt_stripe
 get_stripe_intersection(struct Xt_stripe stripe_a,
                         struct Xt_stripe stripe_b) {
 
-  INSTR_DEF(instr,"get_stripe_intersection");
+  INSTR_DEF(instr,"get_stripe_intersection")
   INSTR_START(instr);
 
   struct Xt_bounded_stripe {
@@ -582,7 +582,7 @@ static Xt_idxlist
 idxstripes_compute_intersection(Xt_idxstripes idxstripes_src,
                                 Xt_idxstripes idxstripes_dst) {
 
-  INSTR_DEF(instr,"idxstripes_compute_intersection");
+  INSTR_DEF(instr,"idxstripes_compute_intersection")
   INSTR_START(instr);
 
   struct Xt_stripe *restrict inter_stripes = NULL;
@@ -702,7 +702,7 @@ idxstripes_copy(Xt_idxlist idxlist) {
 
 static void
 idxstripes_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
-  INSTR_DEF(instr,"idxstripes_get_indices");
+  INSTR_DEF(instr,"idxstripes_get_indices")
   INSTR_START(instr);
 
   /// \todo use memcpy with index_array_cache if available
@@ -740,7 +740,7 @@ static void
 idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              int * num_stripes) {
 
-  INSTR_DEF(instr,"idxstripes_get_index_stripes");
+  INSTR_DEF(instr,"idxstripes_get_index_stripes")
   INSTR_START(instr);
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
@@ -791,7 +791,7 @@ static int
 idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
                                  Xt_int * index) {
 
-  INSTR_DEF(instr,"idxstripes_get_index_at_position");
+  INSTR_DEF(instr,"idxstripes_get_index_at_position")
   INSTR_START(instr);
 
   int retval = 1;
@@ -821,7 +821,7 @@ idxstripes_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
                                     int num_pos, Xt_int *index,
                                     Xt_int undef_idx) {
 
-  INSTR_DEF(instr,"idxstripes_get_indices_at_positions");
+  INSTR_DEF(instr,"idxstripes_get_indices_at_positions")
   INSTR_START(instr);
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
@@ -881,7 +881,7 @@ static int
 idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                      int * position, int offset) {
 
-  INSTR_DEF(instr,"idxstripes_get_position_of_index_off");
+  INSTR_DEF(instr,"idxstripes_get_position_of_index_off")
   INSTR_START(instr);
 
   int retval = 1;

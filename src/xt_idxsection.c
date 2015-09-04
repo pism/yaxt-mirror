@@ -194,7 +194,7 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
                              const int local_size[num_dimensions],
                              const Xt_int local_start[num_dimensions]) {
 
-  INSTR_DEF(instr,"xt_idxsection_new");
+  INSTR_DEF(instr,"xt_idxsection_new")
   INSTR_START(instr);
 
   if (num_dimensions <= 0)
@@ -314,7 +314,7 @@ static void
 idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
                 int *position, MPI_Comm comm) {
 
-  INSTR_DEF(instr,"idxsection_pack");
+  INSTR_DEF(instr,"idxsection_pack")
   INSTR_START(instr);
 
   assert(data);
@@ -339,7 +339,7 @@ idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
 Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm) {
 
-  INSTR_DEF(instr,"xt_idxsection_unpack");
+  INSTR_DEF(instr,"xt_idxsection_unpack")
   INSTR_START(instr);
 
   Xt_idxsection section;
@@ -400,7 +400,7 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
   //  - src_idxsection is treated as too big for elemental transforms/access
   //  - dst_idxlist is considered to be small enough (subdomain like) for elemental usage
 
-  INSTR_DEF(instr,"idxsection_get_intersection_with_other_idxlist");
+  INSTR_DEF(instr,"idxsection_get_intersection_with_other_idxlist")
   INSTR_START(instr);
 
   int num_dst_idx = xt_idxlist_get_num_indices(dst_idxlist);
@@ -460,7 +460,7 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
 
 Xt_idxlist
 xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
-  INSTR_DEF(instr,"idxsection_get_intersection.part");
+  INSTR_DEF(instr,"idxsection_get_intersection.part")
 
   // both lists are index section:
 
@@ -622,7 +622,7 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
 
 static void
 idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
-  INSTR_DEF(instr,"idxsection_get_indices");
+  INSTR_DEF(instr,"idxsection_get_indices")
   INSTR_START(instr);
   Xt_idxsection section = (Xt_idxsection)idxlist;
 
@@ -670,7 +670,7 @@ static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
                              int * num_stripes) {
 
-  INSTR_DEF(instr,"idxsection_get_index_stripes.part");
+  INSTR_DEF(instr,"idxsection_get_index_stripes.part")
 
   Xt_idxsection section = (Xt_idxsection)idxlist;
 
@@ -763,7 +763,7 @@ static int
 idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
                                  int * position) {
 
-  INSTR_DEF(instr,"idxsection_get_position_of_index.part");
+  INSTR_DEF(instr,"idxsection_get_position_of_index.part")
 
   Xt_idxsection section = (Xt_idxsection)idxlist;
   *position = -1;
@@ -830,7 +830,7 @@ idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
                                        int *positions,
                                        int single_match_only) {
 
-  INSTR_DEF(instr,"idxsection_get_positions_of_indices_v1.part");
+  INSTR_DEF(instr,"idxsection_get_positions_of_indices_v1.part")
 
   if (num_selection < 1) return 0; //nothing to do
 
@@ -919,7 +919,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
                                            int num_selection, int * positions,
                                            int single_match_only) {
 
-  INSTR_DEF(instr,"idxsection_get_positions_of_indices_v2.part");
+  INSTR_DEF(instr,"idxsection_get_positions_of_indices_v2.part")
 
   if (num_selection < 1) return 0; //nothing to do
 
@@ -1176,8 +1176,8 @@ int idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
                                            int num_selection, int * positions,
                                            int single_match_only) {
 
-  INSTR_DEF(instr,"idxsection_get_positions_of_indices_v3.part");
-  INSTR_DEF(instr2,"idxsection_get_positions_of_indices_recursive");
+  INSTR_DEF(instr,"idxsection_get_positions_of_indices_v3.part")
+  INSTR_DEF(instr2,"idxsection_get_positions_of_indices_recursive")
 
   Xt_idxsection section = (Xt_idxsection)body_idxlist;
 
@@ -1270,7 +1270,7 @@ idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
                                     int num_selection, int * positions,
                                     int single_match_only) {
 
-  INSTR_DEF(instr,"idxsection_get_positions_of_indices");
+  INSTR_DEF(instr,"idxsection_get_positions_of_indices")
   Xt_idxsection section = (Xt_idxsection)body_idxlist;
   int retval = 0;
 

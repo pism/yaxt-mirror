@@ -160,7 +160,7 @@ struct Xt_idxvec_ {
 
 
 Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
-  INSTR_DEF(t_idxvec_new,"xt_idxvec_new");
+  INSTR_DEF(t_idxvec_new,"xt_idxvec_new")
   if (num_indices > 0)
     ;
   else if (num_indices == 0)
