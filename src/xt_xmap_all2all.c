@@ -117,12 +117,12 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
 
   displ[0] = 0;
   int recv_buffer_size = pack_sizes[0];
-  int size_overflow = 0;
-  for (int i = 1; i < comm_size; ++i) {
+  unsigned size_overflow = 0;
+  for (size_t i = 1; i < (size_t)comm_size; ++i) {
 
      displ[i] = displ[i-1] + pack_sizes[i-1];
      recv_buffer_size += pack_sizes[i];
-     size_overflow |= recv_buffer_size & (1 << (sizeof(int) * CHAR_BIT - 1));
+     size_overflow |= (unsigned)recv_buffer_size & (1U << (sizeof(int) * CHAR_BIT - 1));
   }
   if (size_overflow)
     die("accumulated buffer sizes too big");
