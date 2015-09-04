@@ -203,7 +203,7 @@ struct Xt_idxstripes_ {
 
   struct Xt_idxlist_ parent;
 
-  struct Xt_stripe * stripes;
+  const struct Xt_stripe *stripes;
   Xt_int min_index, max_index;
   int num_stripes;
   int flags;
@@ -223,7 +223,7 @@ static void
 idxstripes_aggregate(Xt_idxstripes idxstripes,
                      const char *caller)
 {
-  struct Xt_stripe *restrict stripes = idxstripes->stripes;
+  const struct Xt_stripe *restrict stripes = idxstripes->stripes;
   struct Xt_stripes_sort *restrict stripes_sort = idxstripes->stripes_sort;
   Xt_int min, max;
   {
@@ -293,11 +293,13 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
       body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
     Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
     idxstripes->num_stripes = num_stripes;
-    idxstripes->stripes
-      = (struct Xt_stripe *)((unsigned char *)idxstripes + header_size);
-    memcpy(idxstripes->stripes, stripes,
-           (size_t)num_stripes * sizeof(*(idxstripes->stripes)));
-
+    {
+      struct Xt_stripe *stripes_assign
+        = (struct Xt_stripe *)(idxstripes->stripes_sort + num_stripes);
+      idxstripes->stripes = stripes_assign;
+      memcpy(stripes_assign, stripes,
+             (size_t)num_stripes * sizeof(*(idxstripes->stripes)));
+    }
     idxstripes_aggregate(idxstripes, __func__);
     result = (Xt_idxlist)idxstripes;
   } else
@@ -338,7 +340,7 @@ xt_idxstripes_from_idxlist_new(Xt_idxlist idxlist_src) {
 
 
 Xt_idxlist
-xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes)
+xt_idxstripes_prealloc_new(const struct Xt_stripe *stripes, int num_stripes)
 {
   Xt_idxlist result;
 
@@ -351,7 +353,7 @@ xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes)
       * sizeof (struct Xt_stripe);
     Xt_idxstripes idxstripes = xmalloc(header_size);
     idxstripes->num_stripes = num_stripes;
-    idxstripes->stripes = (struct Xt_stripe *)stripes;
+    idxstripes->stripes = stripes;
     idxstripes_aggregate(idxstripes, __func__);
     result = (Xt_idxlist)idxstripes;
   } else
@@ -402,7 +404,7 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
   xt_mpi_call(MPI_Pack(&stripes->num_stripes, 1, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
   if (num_stripes)
-    xt_mpi_call(MPI_Pack(stripes->stripes, num_stripes, stripe_dt,
+    xt_mpi_call(MPI_Pack((void *)stripes->stripes, num_stripes, stripe_dt,
                          buffer, buffer_size, position, comm), comm);
   INSTR_STOP(instr);
 }
@@ -428,10 +430,13 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
       body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
     Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
     idxstripes->num_stripes = num_stripes;
-    idxstripes->stripes
-      = (struct Xt_stripe *)((unsigned char *)idxstripes + header_size);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, idxstripes->stripes,
-                           num_stripes, stripe_dt, comm),comm);
+    {
+      struct Xt_stripe *stripes_assign
+        = (struct Xt_stripe *)(idxstripes->stripes_sort + num_stripes);
+      idxstripes->stripes = stripes_assign;
+      xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, stripes_assign,
+                             num_stripes, stripe_dt, comm),comm);
+    }
     idxstripes_aggregate(idxstripes, __func__);
     result = (Xt_idxlist)idxstripes;
   } else
@@ -825,7 +830,7 @@ idxstripes_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
   INSTR_START(instr);
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
-  struct Xt_stripe *stripes = idxstripes->stripes;
+  const struct Xt_stripe *stripes = idxstripes->stripes;
 
   int max_pos = idxlist->num_indices - 1;
   int seek_pos;
@@ -1097,7 +1102,7 @@ find_candidates(struct Xt_stripe query,
 
 static struct Xt_idxstripes_ *
 expand_zero_stripes(size_t num_stripes,
-                    struct Xt_stripe *restrict stripes)
+                    const struct Xt_stripe *restrict stripes)
 {
   size_t expansion = 0;
   for (size_t i = 0; i < num_stripes; ++i) {
@@ -1188,7 +1193,7 @@ idxstripes_get_pos_exts_of_index_stripes(
     xt_cover_finish(&cover);
     if (((struct Xt_idxstripes_ *)idxlist)->flags
         & stripes_some_have_zero_stride_mask) {
-      free(idxstripes->stripes);
+      free((void *)idxstripes->stripes);
       xt_idxlist_delete((Xt_idxlist)idxstripes);
     }
   }
