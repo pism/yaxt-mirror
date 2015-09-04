@@ -105,8 +105,8 @@ static TLS int comm_rank, comm_size;
 
 static int compare_exchange_messages (const void * msg_a, const void * msg_b)
 {
-  int rank_a = *(int*)msg_a;
-  int rank_b = *(int*)msg_b;
+  int rank_a = *(const int *)msg_a;
+  int rank_b = *(const int *)msg_b;
 #if ! defined TLS && defined HAVE_PTHREAD
   int comm_rank, comm_size;
   {

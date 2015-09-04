@@ -324,7 +324,8 @@ idxlist_pack_unpack_copy(Xt_idxlist idxlist)
 static int
 xt_int_compare(const void *a, const void *b)
 {
-  return (*(Xt_int *)a > *(Xt_int *)b) - (*(Xt_int *)a < *(Xt_int *)b);
+  return (*(const Xt_int *)a > *(const Xt_int *)b)
+    - (*(const Xt_int *)a < *(const Xt_int *)b);
 }
 
 void
