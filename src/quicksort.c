@@ -65,8 +65,8 @@
 
 void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
-  int pointer_inc = 64;
-  int pointer_size;
+  enum { pointer_inc = 64 };
+  unsigned pointer_size;
 
   int * stackl;
   int * stackr;
@@ -179,8 +179,8 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
 void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
 
-  int pointer_inc = 64;
-  int pointer_size;
+  enum { pointer_inc = 64 };
+  unsigned pointer_size;
 
   int * stackl;
   int * stackr;
