@@ -302,10 +302,11 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
     idxstripes->num_stripes = num_stripes;
     {
       struct Xt_stripe *stripes_assign
-        = (struct Xt_stripe *)(idxstripes->stripes_sort + num_stripes);
+        = (struct Xt_stripe *)(void *)((unsigned char *)idxstripes
+                                       + header_size);
       idxstripes->stripes = stripes_assign;
       memcpy(stripes_assign, stripes,
-             (size_t)num_stripes * sizeof(*(idxstripes->stripes)));
+             (size_t)num_stripes * sizeof(*stripes_assign));
     }
     idxstripes_aggregate(idxstripes, __func__);
     result = (Xt_idxlist)idxstripes;
@@ -439,7 +440,8 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
     idxstripes->num_stripes = num_stripes;
     {
       struct Xt_stripe *stripes_assign
-        = (struct Xt_stripe *)(idxstripes->stripes_sort + num_stripes);
+        = (struct Xt_stripe *)(void *)((unsigned char *)idxstripes
+                                       + header_size);
       idxstripes->stripes = stripes_assign;
       xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, stripes_assign,
                              num_stripes, stripe_dt, comm),comm);
