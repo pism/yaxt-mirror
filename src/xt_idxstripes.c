@@ -162,15 +162,22 @@ xt_idxstripes_initialize(void)
   MPI_Get_address(&stripe.stride, &stride_address);
   MPI_Get_address(&stripe.nstrides, &nstrides_address);
 
-  int block_lengths[5] = {1,1,1,1,1};
-  MPI_Aint displacements[5] = {0, start_address - base_address,
-                               stride_address - base_address,
-                               nstrides_address - base_address,
-                               sizeof(stripe)};
-  MPI_Datatype types[5] = {MPI_LB, Xt_int_dt, Xt_int_dt, MPI_INT, MPI_UB};
+  enum { num_stripe_dt_elems = 3 };
+  int block_lengths[num_stripe_dt_elems] = {1,1,1};
+  MPI_Aint displacements[num_stripe_dt_elems]
+    = {start_address - base_address,
+       stride_address - base_address,
+       nstrides_address - base_address };
+  MPI_Datatype types[num_stripe_dt_elems] = { Xt_int_dt, Xt_int_dt, MPI_INT },
+    stripe_dt_unaligned;
 
-  xt_mpi_call(MPI_Type_create_struct(5, block_lengths, displacements,
-                                     types, &stripe_dt), Xt_default_comm);
+  xt_mpi_call(MPI_Type_create_struct(num_stripe_dt_elems,
+                                     block_lengths, displacements, types,
+                                     &stripe_dt_unaligned), Xt_default_comm);
+  xt_mpi_call(MPI_Type_create_resized(stripe_dt_unaligned, 0,
+                                      (MPI_Aint)sizeof(stripe),
+                                      &stripe_dt), Xt_default_comm);
+  xt_mpi_call(MPI_Type_free(&stripe_dt_unaligned), Xt_default_comm);
   xt_mpi_call(MPI_Type_commit(&stripe_dt), Xt_default_comm);
 }
 
