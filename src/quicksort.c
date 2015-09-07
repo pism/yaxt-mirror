@@ -71,7 +71,8 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
   int * stackl;
   int * stackr;
 
-  int i, j, k, l, r, s;
+  int i, j, k, l, r;
+  unsigned s;
   idxpos_type w, x;
 
   /*  Initialization */
@@ -81,7 +82,7 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
   stackl = xmalloc((size_t)pointer_size * sizeof(stackl[0]));
   stackr = xmalloc((size_t)pointer_size * sizeof(stackr[0]));
 
-  s = 0;
+  s = 1;
   stackl[0] = 0;
   stackr[0] = n-1;
 
@@ -91,11 +92,11 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
   */
 
-  while  ( s > -1 ) {
+  while  ( s > 0 ) {
 
+    --s;
     l = stackl[s];
     r = stackr[s];
-    s = s - 1;
 
     /* ... keep splitting a[l], ... ,a[r] until l>= r. */
 
@@ -143,30 +144,30 @@ void xt_quicksort_idxpos(idxpos_type  *v, int n) {
 
         if ( l < j ) {
 
-          if ( s > pointer_size ) {
+          if ( s >= pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
             stackl = xrealloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
             stackr = xrealloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
-          s = s + 1;
           stackl[s] = l;
           stackr[s] = j;
+          ++s;
         }
         l = i;
       } else {
 
         if ( i < r ) {
 
-          if ( s > pointer_size ) {
+          if ( s >= pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
             stackl = xrealloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
             stackr = xrealloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
-          s = s + 1;
           stackl[s] = i;
           stackr[s] = r;
+          ++s;
         }
         r = j;
       }
@@ -185,7 +186,8 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
   int * stackl;
   int * stackr;
 
-  int i, j, k, l, r, s;
+  int i, j, k, l, r;
+  unsigned s;
   Xt_int w_idx, x_idx;
   int w_pos, x_pos;
 
@@ -205,7 +207,7 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
   stackl = xmalloc((size_t)pointer_size * sizeof(stackl[0]));
   stackr = xmalloc((size_t)pointer_size * sizeof(stackr[0]));
 
-  s = 0;
+  s = 1;
   stackl[0] = 0;
   stackr[0] = n-1;
 
@@ -215,11 +217,11 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
 
   */
 
-  while  ( s > -1 ) {
+  while  ( s > 0 ) {
 
+    --s;
     l = stackl[s];
     r = stackr[s];
-    s = s - 1;
 
     /* ... keep splitting a[l], ... ,a[r] until l>= r. */
 
@@ -272,30 +274,30 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
 
         if ( l < j ) {
 
-          if ( s > pointer_size ) {
+          if ( s >= pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
             stackl = xrealloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
             stackr = xrealloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
-          s = s + 1;
           stackl[s] = l;
           stackr[s] = j;
+          ++s;
         }
         l = i;
       } else {
 
         if ( i < r ) {
 
-          if ( s > pointer_size ) {
+          if ( s >= pointer_size ) {
             pointer_size = pointer_size + pointer_inc;
             stackl = xrealloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
             stackr = xrealloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
           }
 
-          s = s + 1;
           stackl[s] = i;
           stackr[s] = r;
+          ++s;
         }
         r = j;
       }
