@@ -621,7 +621,7 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
                    + dim_ofs * dims[0].global_stride),
           indices + indices_written,
           ndim - 1, dims + 1);
-      overflow |= (indices_written_temp <= INT_MAX - indices_written);
+      overflow |= (indices_written_temp > INT_MAX - indices_written);
       indices_written += indices_written_temp;
     }
     assert(!overflow);
