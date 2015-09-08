@@ -438,7 +438,7 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
 
   pos = xmalloc((size_t)num_dst_idx * sizeof(*pos));
   int num_unmatched = idxsection_get_positions_of_indices(
-    src_idxsection, sorted_dst_idx, (Xt_int)num_dst_idx, pos,
+    src_idxsection, sorted_dst_idx, num_dst_idx, pos,
     single_match_only);
   int num_inter_idx = num_dst_idx - num_unmatched;
   Xt_idxlist result;
@@ -709,7 +709,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
   for (size_t i = 0; i < nstripes; ++i) {
 
     p[i].start  = section->local_start_index;
-    p[i].nstrides = (Xt_int)abs(section->dims[section->ndim-1].local_size);
+    p[i].nstrides = abs(section->dims[section->ndim-1].local_size);
     p[i].stride = 1;
 
     for (int j = 0; j < section->ndim - 1; ++j)
