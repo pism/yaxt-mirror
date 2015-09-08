@@ -2,10 +2,10 @@
 set -e
 [ x"@MPI_LAUNCH@" != xtrue ] || exit 77
 export YAXT_TEST_PERF_GRID=TEST
-@MPI_LAUNCH@ -n 1 @abs_builddir@/test_perf_stripes
-@MPI_LAUNCH@ -n 2 @abs_builddir@/test_perf_stripes
-@MPI_LAUNCH@ -n 3 @abs_builddir@/test_perf_stripes
-@MPI_LAUNCH@ -n 4 @abs_builddir@/test_perf_stripes
+for num_tasks in 1 2 3 4 ; do
+  @abs_top_builddir@/libtool --mode=execute \
+    @MPI_LAUNCH@ -n 1 @abs_builddir@/test_perf_stripes
+done
 #
 # Local Variables:
 # mode: sh
