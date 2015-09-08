@@ -611,18 +611,20 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
   }
   else
   {
-    int indices_written = 0;
+    int indices_written = 0, overflow = 0;
     assert(ndim > 1);
     for (int dim_ofs = 0; dim_ofs < abs_local_size; ++dim_ofs)
     {
-      indices_written
-        = (Xt_int)(indices_written
-                   + idxsection_get_indices_any(
-                     (Xt_int)(start_index
-                              + dim_ofs * dims[0].global_stride),
-                     indices + indices_written,
-                     ndim - 1, dims + 1));
+      int indices_written_temp
+        = idxsection_get_indices_any(
+          (Xt_int)(start_index
+                   + dim_ofs * dims[0].global_stride),
+          indices + indices_written,
+          ndim - 1, dims + 1);
+      overflow |= (indices_written_temp <= INT_MAX - indices_written);
+      indices_written += indices_written_temp;
     }
+    assert(!overflow);
     return indices_written;
   }
 }
