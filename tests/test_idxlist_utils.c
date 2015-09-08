@@ -176,7 +176,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
                                  ref_num_indices, ref_positions, 0);
 
     if (xt_idxlist_get_positions_of_indices(idxlist, ref_indices,
-                                           (Xt_int)ref_num_indices, positions, 1))
+                                            ref_num_indices, positions, 1))
       PUT_ERR("get_positions_of_indices failed\n");
 
     for (int i = 0; i < ref_num_indices; ++i)
@@ -191,7 +191,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
                                  ref_num_indices, ref_positions, 1);
 
     if (xt_idxlist_get_positions_of_indices(idxlist, ref_indices,
-                                           (Xt_int)ref_num_indices, positions, 0))
+                                            ref_num_indices, positions, 0))
       PUT_ERR("get_positions_of_indices failed\n");
 
     for (int i = 0; i < ref_num_indices; ++i)
