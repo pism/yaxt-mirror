@@ -574,8 +574,8 @@ CONTAINS
       im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ! north border exchange without ew-halos
-      ldx = g_core_ie - g_core_is + 1
-      ldy = north_halo
+      ldx = INT(g_core_ie - g_core_is + 1)
+      ldy = INT(north_halo)
       mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
            (/ ldx, ldy /),   (/g_core_is, 1_xt_int_kind/))
       mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
@@ -586,7 +586,7 @@ CONTAINS
       im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
-      ldy = north_halo
+      ldy = INT(north_halo)
       mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
            (/ ldx, ldy /),   (/1_xt_int_kind, 1_xt_int_kind/))
       mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
@@ -596,7 +596,7 @@ CONTAINS
       im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
-      ldy = north_halo
+      ldy = INT(north_halo)
       mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
            (/ ldx, ldy /),   (/INT(g_ie, xt_int_kind), 1_xt_int_kind/))
       mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
@@ -612,7 +612,7 @@ CONTAINS
 
     ! PBC below north border
     ldx = nhalo
-    ldy = INT(g_je, xt_int_kind) - north_halo
+    ldy = INT(INT(g_je, xt_int_kind) - north_halo)
     im = im + 1_xt_int_kind
     IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
     mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
