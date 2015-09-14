@@ -591,7 +591,7 @@ if (e>s) {                           /* Need this to handle NULL string.*/
 } return s; }
 
 #ifndef __CF__KnR
-static int num_elem(char *strv, unsigned elem_len, int term_char, int num_term);
+static int num_elem(const char *strv, unsigned elem_len, int term_char, int num_term);
 #endif
 /* kill_trailingn(s,t,e) will kill the trailing t's in string s. e normally 
 points to the terminating '\0' of s, but may actually point to anywhere in s.
@@ -608,8 +608,7 @@ else if (e>s) {                      /* Watch out for neg. length string.*/
   while (e>s && *--e==t){;}          /* Don't follow t's past beginning. */
   e[*e==t?0:1] = '\0';               /* Handle s[0]=t correctly.       */
 }
-if (0)  /* to prevent not used warnings in gcc (added by TJ) */
-  num_elem("", 0, '\0', 1);
+(void)num_elem;  /* to prevent not used warnings in gcc (added by TJ) */
 
  return s; }
 
@@ -659,7 +658,7 @@ typedef DSC$DESCRIPTOR_A(1) fstringvector;
 #define NUM_ELEM_ARG(B) *_2(A,B),_NUM_ELEM_ARG
 #define TERM_CHARS(A,B) A,B
 #ifndef __CF__KnR
-static int num_elem(char *strv, unsigned elem_len, int term_char, int num_term)
+static int num_elem(const char *strv, unsigned elem_len, int term_char, int num_term)
 #else
 static int num_elem(      strv,          elem_len,     term_char,     num_term)
                     char *strv; unsigned elem_len; int term_char; int num_term;
@@ -678,10 +677,10 @@ for (num=0; ; num++) {
   if (i==(unsigned)num_term) break;
   else strv += elem_len-i;
 }
-if (0) {  /* to prevent not used warnings in gcc (added by ROOT) */
-   c2fstrv(0, 0, 0, 0); f2cstrv(0, 0, 0, 0); kill_trailing(0, 0);
-   vkill_trailing(0, 0, 0, 0); num_elem(0, 0, 0, 0);
-}
+/* to prevent not used warnings in gcc (added by ROOT, changed by TJ
+ * because of unreachable warnings from clang) */
+(void)c2fstrv; (void)f2cstrv; (void)kill_trailing;
+(void)vkill_trailing; (void)num_elem;
 return (int)num;
 }
 /* #endif removed 2/10/98 (CFITSIO) */
