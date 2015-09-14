@@ -93,8 +93,23 @@ AS_IF([test x$ac_cv_c_char_unsigned = xyes],
 AC_SUBST([C_CHAR_IS_UNSIGNED])
 ACX_CHECK_SIZEOF_RELATION([long], [int])
 ACX_CHECK_SIZEOF_RELATION([long long], [long])
-AC_CHECK_DECLS([__builtin_ctzl],,[AC_CHECK_DECLS([__builtin_clzl])])
-
+AC_CHECK_SIZEOF([unsigned long])
+dnl
+AS_FOR([builtin_macro],[builtin],[__builtin_ctzl __builtin_clzl],
+  [AS_VAR_PUSHDEF([builtin_cache],[acx_cv_have_decl_]builtin_macro)
+   AC_CACHE_CHECK([whether ]builtin_macro[ is declared],
+     [builtin_cache],
+     [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  long lbz = builtin_macro][[(56L)]])],
+        [AS_VAR_SET([builtin_cache],[yes])],
+        [AS_VAR_SET([builtin_cache],[no])])])
+   AS_VAR_IF([builtin_cache],[yes],
+     [AC_DEFINE_UNQUOTED([HAVE_DECL_]AS_TR_CPP([builtin_macro]),[1])
+      break],
+     [AC_DEFINE_UNQUOTED([HAVE_DECL_]AS_TR_CPP([builtin_macro]),[0])])])
+AH_TEMPLATE([HAVE_DECL___BUILTIN_CTZL],
+  [Define to 1 if __builtin_ctzl is available, 0 if not])
+AH_TEMPLATE([HAVE_DECL___BUILTIN_CLZL],
+  [Define to 1 if __builtin_clzl is available, 0 if not])
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly
 dnl ######################################################################
