@@ -836,21 +836,22 @@ ctzl(unsigned long v) {
   unsigned int c = ulong_bits;
   v &= (unsigned long)-(long)v;
   if (v) c--;
-  if (ulong_bits == 64) {
-    if (v & UINT64_C(0x00000000ffffffff)) c -= 32;
-    if (v & UINT64_C(0x0000ffff0000ffff)) c -= 16;
-    if (v & UINT64_C(0x00ff00ff00ff00ff)) c -= 8;
-    if (v & UINT64_C(0x0f0f0f0f0f0f0f0f)) c -= 4;
-    if (v & UINT64_C(0x3333333333333333)) c -= 2;
-    if (v & UINT64_C(0x5555555555555555)) c -= 1;
-  } else if (used_map_elem_bits == 32) {
-    if (v & 0x0000FFFFUL) c -= 16;
-    if (v & 0x00FF00FFUL) c -= 8;
-    if (v & 0x0F0F0F0FUL) c -= 4;
-    if (v & 0x33333333UL) c -= 2;
-    if (v & 0x55555555UL) c -= 1;
-  } else
-    die("Unexpected size of long.\n");
+#if SIZEOF_UNSIGNED_LONG * CHAR_BIT == 64
+  if (v & UINT64_C(0x00000000ffffffff)) c -= 32;
+  if (v & UINT64_C(0x0000ffff0000ffff)) c -= 16;
+  if (v & UINT64_C(0x00ff00ff00ff00ff)) c -= 8;
+  if (v & UINT64_C(0x0f0f0f0f0f0f0f0f)) c -= 4;
+  if (v & UINT64_C(0x3333333333333333)) c -= 2;
+  if (v & UINT64_C(0x5555555555555555)) c -= 1;
+#elif SIZEOF_UNSIGNED_LONG * CHAR_BIT == 32
+  if (v & 0x0000FFFFUL) c -= 16;
+  if (v & 0x00FF00FFUL) c -= 8;
+  if (v & 0x0F0F0F0FUL) c -= 4;
+  if (v & 0x33333333UL) c -= 2;
+  if (v & 0x55555555UL) c -= 1;
+#else
+  error "Unexpected size of long.\n"
+#endif
   return (int)c;
 }
 #endif
