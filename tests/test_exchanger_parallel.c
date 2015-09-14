@@ -77,6 +77,11 @@ xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                              struct Xt_redist_msg * recv_msgs,
                              MPI_Comm comm, int tag_offset);
 Xt_exchanger
+xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
+                                    struct Xt_redist_msg * send_msgs,
+                                    struct Xt_redist_msg * recv_msgs,
+                                    MPI_Comm comm, int tag_offset);
+Xt_exchanger
 xt_exchanger_irecv_send_new(int nsend, int nrecv,
                             struct Xt_redist_msg * send_msgs,
                             struct Xt_redist_msg * recv_msgs,
@@ -332,6 +337,8 @@ static exchanger_new_func parse_options(int *argc, char ***argv)
     case 'm':
       if (!strcmp(optarg, "irecv_isend"))
         exchanger_new = xt_exchanger_irecv_isend_new;
+      else if (!strcmp(optarg, "irecv_isend_packed"))
+        exchanger_new = xt_exchanger_irecv_isend_packed_new;
       else if (!strcmp(optarg, "irecv_send"))
         exchanger_new = xt_exchanger_irecv_send_new;
       else if (!strcmp(optarg, "mix_irecv_isend"))

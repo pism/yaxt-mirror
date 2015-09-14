@@ -58,6 +58,7 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_mix_isend_irecv.h"
+#include "xt_exchanger_irecv_isend_packed.h"
 
 Xt_exchanger (*xt_exchanger_default_constructor)
   (int nsend, int nrecv, struct Xt_redist_msg * send_msgs,
