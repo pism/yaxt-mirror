@@ -66,8 +66,14 @@ AC_PROG_MKDIR_P
 AX_WITH_PERL([/bin/false], $PATH:$prefix/bin:/usr/bin:/usr/local/bin)
 AX_PROG_PERL_VERSION([5.0005],[],
         AC_MSG_ERROR([Perl (version>=5.0005) is required]))
+# Set up libtool.
+dnl before switching on libtool, identify compilers that prevent us from
+dnl certain build configurations
 ACX_LT_PROBLEMS
 LT_INIT
+dnl _KPSE_USE_LIBTOOL ensures libtool is also used for configure-time tests,
+dnl which deduces dependent libraries automatically
+_KPSE_USE_LIBTOOL
 AC_SUBST([lt_cv_nm_interface])
 dnl ######################################################################
 dnl Properties of the compiler
