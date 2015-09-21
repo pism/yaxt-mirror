@@ -47,6 +47,7 @@ libyaxt_la_SOURCES =						\
 	xt/mergesort.h						\
 	xt/quicksort.h						\
 	xt/xt_sort.h						\
+	xt_sort_internal.h					\
 	xt/xt_idxlist.h						\
 	xt/xt_idxempty.h					\
 	xt/xt_idxlist_collection.h				\
