@@ -10,7 +10,7 @@
 /*
  * Maintainer: Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
- * URL: https://redmine.dkrz.de/doc/yaxt/html/index.html
+ * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are  permitted provided that the following conditions are
