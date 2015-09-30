@@ -340,6 +340,7 @@ AC_CONFIG_FILES([						\
 	examples/rrobin_run					\
 	examples/row2col_run					\
 	examples/tr_gp2fs_run					\
+	examples/unstruct_halo_exchange_run			\
 	util/serialrun],[chmod a+x "$ac_file"])
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
   inst_headers/Makefile inst_headers/f90/Makefile \

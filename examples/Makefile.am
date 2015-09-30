@@ -39,7 +39,8 @@ noinst_PROGRAMS = 						\
 	idxsection_examples					\
 	row2col							\
 	row2col_f						\
-	tr_gp2fs
+	tr_gp2fs						\
+	unstruct_halo_exchange_f
 
 rrobin_SOURCES = rrobin.c
 
@@ -54,6 +55,8 @@ row2col_f_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
 
 tr_gp2fs_SOURCES = tr_gp2fs.c
 tr_gp2fs_LDADD = $(LDADD) -lm
+
+unstruct_halo_exchange_f_SOURCES = unstruct_halo_exchange_f.f90
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
