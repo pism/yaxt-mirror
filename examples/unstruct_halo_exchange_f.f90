@@ -1,7 +1,6 @@
 !>
 !! @file unstruct_halo_exchange_f.f90
 !! @brief Fortran example of unstructured halo exchange
-!! @example unstruct_halo_exchange_f.f90
 !!
 !! @copyright Copyright  (C)  2015 Moritz Hanke <hanke@dkrz.de>
 !!

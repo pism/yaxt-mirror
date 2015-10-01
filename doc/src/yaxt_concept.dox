@@ -2,6 +2,8 @@
  */
 /** \example ftest_common.f90
  */
+/** \example unstruct_halo_exchange_f.f90
+ */
 
 /** \page concept The concept of yaxt
 
