@@ -45,6 +45,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -787,6 +788,7 @@ xt_mpi_comm_internal_keyval_delete(
   return MPI_SUCCESS;
 }
 
+static int xt_mpi_tag_ub_val;
 
 void
 xt_mpi_init(void) {
@@ -794,6 +796,12 @@ xt_mpi_init(void) {
                                      xt_mpi_comm_internal_keyval_delete,
                                      &xt_mpi_comm_internal_keyval, NULL),
               Xt_default_comm);
+  void *attr;
+  int flag;
+  xt_mpi_call(MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &attr, &flag),
+              MPI_COMM_WORLD);
+  assert(flag);
+  xt_mpi_tag_ub_val = *(int *)attr;
 }
 
 void
@@ -862,17 +870,10 @@ xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset)
   MPI_Comm comm_dest;
   struct xt_mpi_comm_internal_attr *comm_xt_attr_val
     = xt_mpi_comm_get_internal_attr(comm);
-  int mpi_tag_ub_val;
-  {
-    void *attr;
-    int flag;
-    xt_mpi_call(MPI_Comm_get_attr(comm, MPI_TAG_UB, &attr, &flag), comm);
-    mpi_tag_ub_val = *(int *)attr;
-  }
   size_t position = 0;
   int refcount = comm_xt_attr_val ? comm_xt_attr_val->refcount : 0;
   if (comm_xt_attr_val
-      && (refcount + 1) < mpi_tag_ub_val / xt_mpi_num_tags) {
+      && (refcount + 1) < xt_mpi_tag_ub_val / xt_mpi_num_tags) {
     comm_dest = comm;
     comm_xt_attr_val->refcount = ++refcount;
     size_t used_map_size = comm_xt_attr_val->used_map_size;
