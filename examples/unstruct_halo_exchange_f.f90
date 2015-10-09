@@ -105,17 +105,16 @@ PROGRAM unstruct_halo_exchang
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_off_new, xt_redist_delete, &
-       xt_redist_s_exchange1
+       xt_redist_s_exchange1, xi => xt_int_kind
   USE iso_c_binding, ONLY: c_loc
   IMPLICIT NONE
 
   INTEGER :: comm_rank, comm_size
-  INTEGER :: i, j, idx, rank, ierror
+  INTEGER :: i, j, rank, ierror
 
-  INTEGER :: local_indices(12, 0:2)
-  INTEGER :: halo_indices(5, 0:2)
-  INTEGER :: src_indices(12, 0:2)
-  INTEGER :: tgt_indices(5, 0:2)
+  INTEGER(xi) :: local_indices(12, 0:2), idx
+  INTEGER(xi) :: halo_indices(5, 0:2)
+  INTEGER(xi) :: src_indices(12, 0:2), tgt_indices(5, 0:2)
   INTEGER :: src_offsets(12)
   INTEGER :: tgt_offsets(5)
 
@@ -124,7 +123,7 @@ PROGRAM unstruct_halo_exchang
   TYPE(xt_redist) :: redist
   DOUBLE PRECISION, TARGET :: src_data(12), tgt_data(12)
 
-  CHARACTER(64) :: format
+  CHARACTER(64) :: fmt
 
   CALL mpi_init(ierror)
   IF (ierror /= mpi_success) STOP 1
@@ -136,13 +135,22 @@ PROGRAM unstruct_halo_exchang
 
   IF (comm_size /= 3) STOP 3
 
-  local_indices(:,0) = (/1,4,8,0,3,7,12,2,6,11,5,10/)
-  local_indices(:,1) = (/4,8,13,3,7,12,17,6,11,16,10,5/)
-  local_indices(:,2) = (/3,7,12,2,6,11,16,5,10,15,9,14/)
+  local_indices(:,0) = (/    1_xi,  4_xi,  8_xi, &
+       &                  0_xi,  3_xi,  7_xi, 12_xi, &
+       &                     2_xi,  6_xi, 11_xi, &
+       &                         5_xi, 10_xi                 /)
+  local_indices(:,1) = (/    4_xi,  8_xi, 13_xi, &
+       &                  3_xi,  7_xi, 12_xi, 17_xi, &
+       &                     6_xi, 11_xi, 16_xi, &
+       &                        10_xi,  5_xi                 /)
+  local_indices(:,2) = (/    3_xi,  7_xi, 12_xi, &
+       &                  2_xi,  6_xi, 11_xi, 16_xi, &
+       &                     5_xi, 10_xi, 15_xi, &
+       &                         9_xi, 14_xi                 /)
 
-  halo_indices(:,0) = (/8,12,11,10,5/)
-  halo_indices(:,1) = (/4,3,6,10,15/)
-  halo_indices(:,2) = (/3,7,12,2,16/)
+  halo_indices(:,0) = (/  8_xi, 12_xi, 11_xi, 10_xi,  5_xi /)
+  halo_indices(:,1) = (/  4_xi,  3_xi,  6_xi, 10_xi, 15_xi /)
+  halo_indices(:,2) = (/  3_xi,  7_xi, 12_xi,  2_xi, 16_xi /)
 
   DO rank = 0, comm_size - 1
     DO i = 1, SIZE(local_indices, 1)
@@ -174,14 +182,14 @@ PROGRAM unstruct_halo_exchang
   src_data(:) = DBLE(src_indices(:,comm_rank))
   tgt_data(:) = DBLE(src_indices(:,comm_rank))
 
-  format = '(I1, " ", A, " exchange: ", xx(I3))'
-  write(format(29:30), '(I2)') SIZE(src_data, 1)
-  print format, comm_rank, 'before', INT(src_data(:))
+  fmt = '(I1, " ", A, " exchange: ", xx(I3))'
+  WRITE(fmt(29:30), '(I2)') SIZE(src_data, 1)
+  PRINT fmt, comm_rank, 'before', INT(src_data(:))
 
   ! do the exchange
   CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(tgt_data))
 
-  print format, comm_rank, 'after ', INT(tgt_data(:))
+  PRINT fmt, comm_rank, 'after ', INT(tgt_data(:))
 
   ! clean up
   CALL xt_redist_delete(redist)
@@ -193,6 +201,4 @@ PROGRAM unstruct_halo_exchang
   CALL xt_finalize()
   CALL mpi_finalize(ierror)
   IF (ierror /= mpi_success) STOP 1
-CONTAINS
-
 END PROGRAM unstruct_halo_exchang
