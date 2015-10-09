@@ -135,6 +135,7 @@ PROGRAM unstruct_halo_exchang
 
   IF (comm_size /= 3) STOP 3
 
+  ! create description of locally stored indices...
   local_indices(:,0) = (/    1_xi,  4_xi,  8_xi, &
        &                  0_xi,  3_xi,  7_xi, 12_xi, &
        &                     2_xi,  6_xi, 11_xi, &
@@ -148,6 +149,7 @@ PROGRAM unstruct_halo_exchang
        &                     5_xi, 10_xi, 15_xi, &
        &                         9_xi, 14_xi                 /)
 
+  ! ...and list of which of those are shadows of data "owned" by another rank
   halo_indices(:,0) = (/  8_xi, 12_xi, 11_xi, 10_xi,  5_xi /)
   halo_indices(:,1) = (/  4_xi,  3_xi,  6_xi, 10_xi, 15_xi /)
   halo_indices(:,2) = (/  3_xi,  7_xi, 12_xi,  2_xi, 16_xi /)
