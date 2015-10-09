@@ -155,7 +155,7 @@ PROGRAM unstruct_halo_exchang
   DO rank = 0, comm_size - 1
     DO i = 1, SIZE(local_indices, 1)
       idx = local_indices(i, rank)
-      src_indices(i, rank) = MERGE(-1, idx, ANY(halo_indices(:, rank) == idx))
+      src_indices(i, rank) = MERGE(-1_xi, idx, ANY(halo_indices(:, rank) == idx))
     END DO
     tgt_indices(:, rank) = halo_indices(:, rank)
   END DO
