@@ -1350,3 +1350,13 @@ idxsection_get_max_index(Xt_idxlist idxlist) {
   Xt_idxsection section = (Xt_idxsection)idxlist;
   return section->max_index_cache;
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
