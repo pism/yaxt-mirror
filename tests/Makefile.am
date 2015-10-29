@@ -35,6 +35,7 @@
 
 noinst_PROGRAMS = 						\
 	test_mpi_generate_datatype				\
+	test_mpi_smartdedup					\
 	test_exchanger_parallel					\
 	test_handles						\
 	test_idxempty						\
@@ -176,6 +177,7 @@ test_uid_SOURCES = test_uid.c
 test_yaxt_SOURCES = test_yaxt.f90 ftest_common.f90
 test_yaxt_LDADD = $(XT_FC_LDADD)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
+test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
@@ -184,6 +186,7 @@ XT_FC_LDADD = libtestutil.a ../src/libyaxt.la $(MPI_FC_LIB)
 
 TESTS = 							\
 	test_mpi_generate_datatype_run				\
+	test_mpi_smartdedup_run					\
 	test_exchanger_parallel_run				\
 	test_handles_run					\
 	test_idxempty_run					\

@@ -884,7 +884,7 @@ xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset)
       /* sadly, we need to recreate the value to enlarge it */
       struct xt_mpi_comm_internal_attr *new_comm_xt_attr_val
         = xmalloc(sizeof (*new_comm_xt_attr_val)
-                  + used_map_size * sizeof (used_map_elem));
+                  + (used_map_size + 1) * sizeof (used_map_elem));
       new_comm_xt_attr_val->refcount = refcount;
       new_comm_xt_attr_val->used_map_size = (unsigned)(used_map_size + 1);
       for (size_t i = 0; i < used_map_size; ++i)
