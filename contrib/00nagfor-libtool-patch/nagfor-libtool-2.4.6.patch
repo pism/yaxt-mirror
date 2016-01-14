@@ -1,8 +1,8 @@
 --- a/config/ltmain.sh	2012-06-12 00:20:43.000000000 +0200
 +++ b/config/ltmain.sh	2014-08-19 16:34:48.161235251 +0200
-@@ -3229,6 +3229,25 @@
- 
- test "$opt_mode" = install && func_mode_install ${1+"$@"}
+@@ -3217,6 +3217,25 @@
+ }
+ # end func_convert_path_msys_to_cygwin
  
 +func_add2xrpath ()
 +{
@@ -24,9 +24,9 @@
 +  esac
 +}
  
- # func_generate_dlsyms outputname originator pic_p
- # Extract symbols from dlprefiles and create ${outputname}S.o with
-@@ -5727,20 +5746,7 @@
+ # func_convert_path_nix_to_cygwin ARG
+ # Convert path ARG from *nix to Cygwin format.  Requires Cygwin installed in a
+@@ -7147,20 +7166,7 @@
  	func_stripname '-R' '' "$arg"
  	dir=$func_stripname_result
  	# We need an absolute path.
@@ -48,7 +48,7 @@
  	continue
  	;;
  
-@@ -5801,8 +5807,48 @@
+@@ -7221,6 +7227,47 @@
  	;;
  
        -Wl,*)
@@ -59,7 +59,7 @@
 +	  func_append compile_command " $arg"
 +	  func_append finalize_command " $arg"
 +	  if expr "x$arg" : '^x'"$wl"'-rpath,,' ; then
-+           func_stripname "$wl"'-rpath,,' '' "$arg"
++	    func_stripname "$wl"'-rpath,,' '' "$arg"
 +	    dir=$func_stripname_result
 +	    func_add2xrpath "$dir"
 +	  elif expr "x$arg" : '^x'"$wl"'-rpath$' >/dev/null ; then
@@ -68,12 +68,13 @@
 +	    if ! expr "x$1" : '^x'"$wl" >/dev/null \
 +	    || ! test -d "$dir" ; then
 +	    func_fatal_error "$wl"'-rpath must be followed by '"$wl"'-escaped directory'
-+           fi
++	    fi
 +	    shift
 +	    func_add2xrpath "$dir"
 +	    continue
 +	  else
-+	    func_append new_inherited_linker_flags " $arg"
++	    func_stripname "$wl" '' "$arg"
++	    func_append new_inherited_linker_flags " -Wl,$func_stripname_result"
 +	  fi
 +	  continue
 +	elif expr "x$arg" : '^x-Wl,-rpath,' >/dev/null ; then
@@ -87,7 +88,7 @@
 +	  if ! expr "x$1" : '^x-Wl,' >/dev/null \
 +	    || ! test -d "$dir" ; then
 +	    func_fatal_error '-Wl,-rpath must be followed by -Wl-escaped directory'
-+         fi
++	  fi
 +	  shift
 +	  func_add2xrpath "$dir"
 +	  continue
@@ -95,15 +96,25 @@
  	func_stripname '-Wl,' '' "$arg"
  	args=$func_stripname_result
  	arg=
- 	save_ifs=$IFS; IFS=,
- 	for flag in $args; do
-	  IFS=$save_ifs
-          func_quote_for_eval "$flag"
- 	  func_append arg " $wl$func_quote_for_eval_result"
- 	  func_append compiler_flags " $wl$func_quote_for_eval_result"
- 	  func_append linker_flags " $func_quote_for_eval_result"
- 	done
-	IFS=$save_ifs
- 	func_stripname ' ' '' "$arg"
- 	arg=$func_stripname_result
- 	;;
+@@ -9515,6 +9562,10 @@
+ 	  *) func_append new_libs " $deplib" ;;
+ 	  esac
+ 	  ;;
++	-Wl,*)
++	  func_stripname -Wl, '' "$deplib"
++	  func_append new_libs " $wl$func_stripname_result"
++	  ;;
+ 	*) func_append new_libs " $deplib" ;;
+ 	esac
+       done
+@@ -10247,6 +10298,10 @@
+ 	  *) func_append new_libs " $deplib" ;;
+ 	  esac
+ 	  ;;
++	-Wl,*)
++	  func_stripname -Wl, '' "$deplib"
++	  func_append new_libs " $wl$func_stripname_result"
++	  ;;
+ 	*) func_append new_libs " $deplib" ;;
+ 	esac
+       done
