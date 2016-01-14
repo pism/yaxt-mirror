@@ -4,7 +4,7 @@ set -e
 export YAXT_TEST_PERF_GRID=TEST
 for num_tasks in 1 2 3 4 ; do
   @abs_top_builddir@/libtool --mode=execute \
-    @MPI_LAUNCH@ -n 1 @abs_builddir@/test_perf_stripes
+    @MPI_LAUNCH@ -n $num_tasks @abs_builddir@/test_perf_stripes
 done
 #
 # Local Variables:
