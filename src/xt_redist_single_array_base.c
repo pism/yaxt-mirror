@@ -174,34 +174,15 @@ redist_sab_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
 }
 
 static MPI_Datatype
-copy_msg_dt(int nmsg, const struct Xt_redist_msg msg[nmsg],
-            MPI_Comm comm, int rank)
-{
-  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
-
-  for (int i = 0; i < nmsg; ++i)
-    if (msg[i].rank == rank) {
-      xt_mpi_call(MPI_Type_dup(msg[i].datatype, &datatype_copy), comm);
-      break;
-    }
-
-  return datatype_copy;
-}
-
-static MPI_Datatype
 redist_sab_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 
-  Xt_redist_sab redist_sab = xrsab(redist);
-  return copy_msg_dt(redist_sab->nsend, redist_sab->send_msgs,
-                     redist_sab->comm, rank);
+  return xt_exchanger_get_MPI_Datatype(xrsab(redist)->exchanger, rank, SEND);
 }
 
 static MPI_Datatype
 redist_sab_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
-  Xt_redist_sab redist_sab = xrsab(redist);
-  return copy_msg_dt(redist_sab->nrecv, redist_sab->recv_msgs,
-                     redist_sab->comm, rank);
+  return xt_exchanger_get_MPI_Datatype(xrsab(redist)->exchanger, rank, RECV);
 }
 
 static MPI_Comm
