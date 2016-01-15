@@ -173,7 +173,7 @@ CONTAINS
 
     DO j = 1, 9
       DO i = 1, 2*size**2
-        input_data(i, j) = index_vector_a(i) + (j - 1) * INT(4*size**2, xi)
+        input_data(i, j) = index_vector_a(i) + (j - 1_xi) * INT(4*size**2, xi)
       END DO
     END DO
     results_1 = -1
@@ -188,12 +188,12 @@ CONTAINS
 
     DO j = 1, 4
       DO i = 1, 2*size**2
-        ref_results_1(i, j) = index_vector_b(i) + (j - 1) * INT(4*size**2, xi)
+        ref_results_1(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*size**2, xi)
       END DO
     END DO
     DO j = 1, 9
       DO i = 1, 2*size**2
-        ref_results_2(i, j) = index_vector_b(i) + (j - 1) * INT(4*size**2, xi)
+        ref_results_2(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*size**2, xi)
       END DO
     END DO
 
