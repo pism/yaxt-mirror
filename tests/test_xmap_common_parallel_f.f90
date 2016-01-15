@@ -75,7 +75,7 @@ CONTAINS
     CALL xt_initialize(mpi_comm_world)
     CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
     CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
-    IF (comm_size > HUGE(xi)) &
+    IF (comm_size > HUGE(1_xi)) &
          CALL test_abort("number of ranks exceeds test limit", &
          __FILE__, &
          __LINE__)
