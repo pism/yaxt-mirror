@@ -45,7 +45,7 @@
 !
 PROGRAM test_redist_p2p_parallel
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE iso_c_binding, ONLY: c_ptr, c_loc
+  USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_int_kind, xi => xt_int_kind, &
