@@ -145,6 +145,15 @@ void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
    */
   qsort(msgs, n, msg_type_size, compare_exchange_messages);
 }
+
+
+
+MPI_Datatype
+xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
+                              int rank, enum xt_msg_direction direction) {
+  return exchanger->vtable->get_MPI_Datatype(exchanger, rank, direction);
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2

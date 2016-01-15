@@ -51,15 +51,20 @@
 #include <config.h>
 #endif
 
+#include <mpi.h>
+
 #include "xt/xt_core.h"
 #include "xt_redist_internal.h"
 
 typedef struct Xt_exchanger_ *Xt_exchanger;
 
+enum xt_msg_direction {SEND, RECV};
+
 struct xt_exchanger_vtable {
 
   void (*delete)(Xt_exchanger);
   void (*s_exchange)(Xt_exchanger, const void *, void *);
+  MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction);
 };
 
 struct Xt_exchanger_ {
@@ -85,6 +90,9 @@ void xt_exchanger_delete(Xt_exchanger);
 void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
                                     MPI_Comm comm);
 
+MPI_Datatype
+xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
+                              int rank, enum xt_msg_direction direction);
 
 #if ! defined TLS && defined HAVE_PTHREAD
 /* internal function to setup pthread key if TLS is unavailable */

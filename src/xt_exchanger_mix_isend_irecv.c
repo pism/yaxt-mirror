@@ -62,17 +62,22 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger);
 static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                                     const void * src_data,
                                                     void * dst_data);
+static MPI_Datatype
+xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
+                                              int rank,
+                                              enum xt_msg_direction direction);
 
 static const struct xt_exchanger_vtable exchanger_mix_isend_irecv_vtable = {
   .delete = xt_exchanger_mix_isend_irecv_delete,
   .s_exchange = xt_exchanger_mix_isend_irecv_s_exchange,
+  .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
 };
 
 typedef struct Xt_exchanger_mix_isend_irecv_ * Xt_exchanger_mix_isend_irecv;
 
 struct mix_msg {
   struct Xt_redist_msg data;
-  enum {SEND, RECV} type;
+  enum xt_msg_direction type;
 };
 
 struct Xt_exchanger_mix_isend_irecv_ {
@@ -168,6 +173,26 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
     free(requests);
   }
 }
+
+static MPI_Datatype
+xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
+                                              int rank,
+                                              enum xt_msg_direction direction)
+{
+  Xt_exchanger_mix_isend_irecv exchanger_msr =
+    (Xt_exchanger_mix_isend_irecv)exchanger;
+  size_t nmsg = (size_t)exchanger_msr->n;
+  struct mix_msg *restrict msgs = exchanger_msr->msgs;
+  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
+  for (size_t i = 0; i < nmsg; ++i)
+    if (msgs[i].type == direction && msgs[i].data.rank == rank) {
+      xt_mpi_call(MPI_Type_dup(msgs[i].data.datatype, &datatype_copy),
+                  exchanger_msr->comm);
+      break;
+    }
+  return datatype_copy;
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2
@@ -177,4 +202,3 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
  * require-trailing-newline: t
  * End:
  */
-
