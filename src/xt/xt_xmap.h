@@ -209,7 +209,7 @@ void xt_xmap_iterator_delete(Xt_xmap_iter iter);
 /**
  * destructor for an exchange map
  *
- * @param[in] xmap exchange map to be destructed
+ * @param[in] xmap exchange map to be destroyed
  */
 void xt_xmap_delete(Xt_xmap xmap);
 
