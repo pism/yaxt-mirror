@@ -522,3 +522,12 @@ CONTAINS
   END FUNCTION xt_redist_p2p_ext_new_a1d_a1d
 
 END MODULE xt_redist_base
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

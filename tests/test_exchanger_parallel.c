@@ -353,3 +353,12 @@ static exchanger_new_func parse_options(int *argc, char ***argv)
   }
   return exchanger_new;
 }
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

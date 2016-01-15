@@ -335,3 +335,12 @@ xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {
   || (defined __clang__)
 #pragma GCC diagnostic pop
 #endif
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

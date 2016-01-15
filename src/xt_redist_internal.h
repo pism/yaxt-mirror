@@ -105,3 +105,12 @@ xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
 
 
 #endif
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

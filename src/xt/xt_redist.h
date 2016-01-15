@@ -126,3 +126,12 @@ MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist);
 
 #endif // XT_REDIST_H
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

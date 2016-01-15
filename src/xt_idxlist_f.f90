@@ -710,3 +710,12 @@ CONTAINS
   END FUNCTION gpe_is_i4_a_i4_p1d_l
 
 END MODULE xt_idxlist_abstract
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

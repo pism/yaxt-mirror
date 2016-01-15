@@ -61,3 +61,12 @@ MODULE xt_mpi
     END SUBROUTINE xt_mpi_comm_mark_exclusive
   END INTERFACE
 END MODULE xt_mpi
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

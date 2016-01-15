@@ -120,3 +120,12 @@ xt_xmap_intersection_ext_new(
   MPI_Comm comm);
 
 #endif // XT_XMAP_INTERSECTION_H
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

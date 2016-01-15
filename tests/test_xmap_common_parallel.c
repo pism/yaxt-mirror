@@ -319,3 +319,13 @@ test_ping_pong(xmap_constructor xmap_new)
   xt_xmap_delete(xmap);
   xt_xmap_delete(xmap_copy);
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

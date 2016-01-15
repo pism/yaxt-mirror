@@ -263,3 +263,12 @@ CONTAINS
   END SUBROUTINE test_displacement_variations
 
 END PROGRAM test_redist_collection
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!
