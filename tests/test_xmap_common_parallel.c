@@ -280,7 +280,7 @@ test_ping_pong(xmap_constructor xmap_new)
       PUT_ERR("error in xt_xmap_get_destination_ranks\n");
   }
 
-  if (comm_rank == comm_size) {
+  if (comm_rank == comm_size - 1) {
     int src_rank;
     xt_xmap_get_source_ranks(xmap, &src_rank);
     if (src_rank != 0)

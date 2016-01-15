@@ -348,7 +348,7 @@ CONTAINS
            CALL test_abort("error in xt_xmap_get_destination_ranks", &
            __FILE__, &
            __LINE__)
-    ELSE IF (comm_rank == comm_size) THEN
+    ELSE IF (comm_rank == comm_size - 1) THEN
       CALL xt_xmap_get_source_ranks(xmap, src_rank)
       IF (src_rank(1) /= 0) &
            CALL test_abort("error in xt_xmap_get_source_ranks", &
