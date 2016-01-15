@@ -118,17 +118,11 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                                MPI_Aint dst_extent, int num_repetitions,
                                int displacements[num_repetitions]) {
 
-  int nsend, nrecv;
-  struct Xt_redist_msg * send_msgs, * recv_msgs;
-
-  nsend = 0;
-  nrecv = 0;
-  send_msgs = NULL;
-  recv_msgs = NULL;
-
-  MPI_Comm comm;
+  int nsend = 0, nrecv = 0;
+  struct Xt_redist_msg *send_msgs = NULL, *recv_msgs = NULL;
   int tag_offset;
-  comm = xt_mpi_comm_smart_dup(xt_redist_get_MPI_Comm(redist), &tag_offset);
+  MPI_Comm comm
+    = xt_mpi_comm_smart_dup(xt_redist_get_MPI_Comm(redist), &tag_offset);
 
   if (num_repetitions < 1)
     Xt_abort(comm, "ERROR: invalid number of repetitions (Xt_redist_repeat)\n",
