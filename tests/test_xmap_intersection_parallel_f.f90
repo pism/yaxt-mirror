@@ -56,7 +56,7 @@ PROGRAM test_xmap_intersection_parallel
        xt_xmap_iterator_get_rank, xt_xmap_iterator_get_num_transfer_pos, &
        xt_xmap_iterator_get_transfer_pos, xt_xmap_iterator_next, &
        xt_xmap_iterator_delete
-#if defined __PGI && ( __PGIC__ < 12 || (__PGIC__ ==  11 && __PGIC_MINOR__ <= 7))
+#if defined __PGI && ( __PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 7))
   ! PGI Fortran 12.7 and older has a bug that prevents proper passing of
   ! generic interfaces through multiple modules, direct USE instead
   USE xt_xmap_abstract, ONLY: xt_is_null
