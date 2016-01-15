@@ -321,7 +321,6 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
                                 struct Xt_offset_ext dst_extents[],
                                 MPI_Datatype datatype)
 {
-  int nsend, nrecv;
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
   MPI_Comm comm;
@@ -329,13 +328,13 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
 
   comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
-  nrecv = xt_xmap_get_num_sources(xmap);
+  int nrecv = xt_xmap_get_num_sources(xmap);
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
   generate_ext_msg_infos(nrecv, dst_iter, num_dst_ext, dst_extents,
                          datatype, &recv_msgs, comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
-  nsend = xt_xmap_get_num_destinations(xmap);
+  int nsend = xt_xmap_get_num_destinations(xmap);
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
   generate_ext_msg_infos(nsend, src_iter, num_src_ext, src_extents,
                          datatype, &send_msgs, comm);
