@@ -103,6 +103,7 @@ xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
   free(msgs);
 }
 
+void xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
 
 #endif
 /*

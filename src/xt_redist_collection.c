@@ -202,21 +202,6 @@ destruct_cache(struct exchanger_cache *cache,
   free(cache->dst_displacements);
 }
 
-static void check_comms(Xt_redist * redists, int num_redists,
-                        MPI_Comm comm) {
-
-  int result;
-
-  for (int i = 0; i < num_redists; ++i) {
-
-    xt_mpi_call(MPI_Comm_compare(xt_redist_get_MPI_Comm(redists[i]),
-                                 comm, &result), comm);
-
-    if ((result != MPI_IDENT) && (result != MPI_CONGRUENT))
-      Xt_abort(comm, "ERROR: MPI communicators do not match; cannot build "
-               "redist_collection_static\n", __FILE__, __LINE__);
-  }
-}
 
 Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
                                    int cache_size, MPI_Comm comm) {
@@ -237,7 +222,7 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
 
   redist_coll->comm = xt_mpi_comm_smart_dup(comm, &redist_coll->tag_offset);
 
-  check_comms(redists, num_redists, comm);
+  xt_redist_check_comms(redists, num_redists, comm);
 
   copy_component_dt(&(redist_coll->send_msgs), &(redist_coll->nsrc), redists,
                     num_redists, redist_coll->comm,

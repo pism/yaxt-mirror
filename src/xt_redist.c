@@ -119,6 +119,20 @@ void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
   }
 }
 
+void
+xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
+  int result;
+
+  for (int i = 0; i < num_redists; ++i) {
+
+    xt_mpi_call(MPI_Comm_compare(xt_redist_get_MPI_Comm(redists[i]),
+                                 comm, &result), comm);
+
+    if ((result != MPI_IDENT) && (result != MPI_CONGRUENT))
+      Xt_abort(comm, "ERROR: MPI communicators do not match; cannot build "
+               "redist_collection_static\n", __FILE__, __LINE__);
+  }
+}
 
 /*
  * Local Variables:
