@@ -111,9 +111,7 @@ test_xmap_allgather_analog(xmap_constructor xmap_new)
   dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
 
   // test of exchange map
-  Xt_xmap xmap;
-
-  xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+  Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
   // test results
 
@@ -168,9 +166,7 @@ test_ring_1d(xmap_constructor xmap_new)
   dst_idxlist = xt_idxvec_new(dst_index_list, 2);
 
   // test of exchange map
-  Xt_xmap xmap;
-
-  xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+  Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
   // test results
 
@@ -201,22 +197,19 @@ test_ring_1d(xmap_constructor xmap_new)
 static void
 test_pair(xmap_constructor xmap_new)
 {
-  Xt_int src_index_list[2][20] = { //src_index_list[rank][index];
+  enum { numIdx = 20 };
+  static const Xt_int src_index_list[2][numIdx] = { //src_index_list[rank][index];
     {1,2,3,4,5,9,10,11,12,13,17,18,19,20,21,25,26,27,28,29},
     {4,5,6,7,8,12,13,14,15,16,20,21,22,23,24,28,29,30,31,32} };
 
-  Xt_idxlist src_idxlist;
-
-  src_idxlist = xt_idxvec_new(src_index_list[comm_rank], 20);
+  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list[comm_rank], numIdx);
 
   // destination index list
-  Xt_int dst_index_list[2][20] = { //dst_index_list[rank][index];
+  static const Xt_int dst_index_list[2][numIdx] = { //dst_index_list[rank][index];
     {10,15,14,13,12,15,10,11,12,13,23,18,19,20,21,31,26,27,28,29},
     {13,12,11,10,15,12,13,14,15,10,20,21,22,23,18,28,29,30,31,26}};
 
-  Xt_idxlist dst_idxlist;
-
-  dst_idxlist = xt_idxvec_new(dst_index_list[comm_rank], 20);
+  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list[comm_rank], numIdx);
 
   // test of exchange map
   Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
@@ -248,13 +241,14 @@ test_pair(xmap_constructor xmap_new)
 static void
 test_ping_pong(xmap_constructor xmap_new)
 {
-  Xt_int index_list[5] = {0,1,2,3,4};
+  enum { numIdx = 5 };
+  static const Xt_int index_list[numIdx] = {0,1,2,3,4};
 
   Xt_idxlist src_idxlist = (comm_rank == 0)?
-    xt_idxvec_new(index_list, 5) : xt_idxempty_new();
+    xt_idxvec_new(index_list, numIdx) : xt_idxempty_new();
 
   Xt_idxlist dst_idxlist = (comm_rank == comm_size-1)?
-    xt_idxvec_new(index_list, 5) : xt_idxempty_new();
+    xt_idxvec_new(index_list, numIdx) : xt_idxempty_new();
 
   // test of exchange map
   Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
