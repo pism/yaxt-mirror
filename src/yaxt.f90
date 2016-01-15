@@ -71,7 +71,7 @@ MODULE yaxt
   USE xt_idxlist_collection, ONLY: xt_idxlist_collection_new
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
-       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
+       xt_xmap_copy, xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_xmap_all2all_new, xt_xmap_dist_dir_new, xt_is_null, &
        xt_xmap_iter, xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
@@ -111,7 +111,7 @@ MODULE yaxt
        xt_idxvec_new, xt_idxvec_from_stripes_new, &
        xt_idxstripes_new, xt_idxstripes_from_idxlist_new, &
        xt_idxlist_collection_new, xt_idxsection_new, xt_idxfsection_new, &
-       xt_idxmod_new, xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
+       xt_idxmod_new, xt_xmap, xt_xmap_c2f, xt_xmap_f2c, xt_xmap_copy, &
        xt_xmap_all2all_new, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks, xt_xmap_dist_dir_new, &

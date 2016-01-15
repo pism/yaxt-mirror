@@ -79,6 +79,7 @@ struct Xt_xmap_vtable {
   void (*get_source_ranks)(Xt_xmap, int*);
   Xt_xmap_iter (*get_out_iterator)(Xt_xmap);
   Xt_xmap_iter (*get_in_iterator)(Xt_xmap);
+  Xt_xmap (*copy)(Xt_xmap);
   void (*delete)(Xt_xmap);
   int (*get_max_src_pos)(Xt_xmap);
   int (*get_max_dst_pos)(Xt_xmap);

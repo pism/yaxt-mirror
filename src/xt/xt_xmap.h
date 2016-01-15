@@ -207,6 +207,13 @@ int xt_xmap_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter);
 void xt_xmap_iterator_delete(Xt_xmap_iter iter);
 
 /**
+ * copy constructor for an exchange map
+ *
+ * @param[in] xmap exchange map to be copied
+ */
+Xt_xmap xt_xmap_copy(Xt_xmap xmap);
+
+/**
  * destructor for an exchange map
  *
  * @param[in] xmap exchange map to be destroyed

@@ -47,6 +47,8 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
+
 #include <mpi.h>
 #include <yaxt.h>
 
@@ -92,36 +94,19 @@ xt_xmap_parallel_test_main(xmap_constructor xmap_new)
 }
 
 static void
-test_xmap_allgather_analog(xmap_constructor xmap_new)
+check_xmap_allgather_analog_xmap(Xt_xmap xmap)
 {
-  // test in which every process requests data from all processes
-  // source index list
-  Xt_int src_index_list[1] = {(Xt_int)(comm_rank)};
-
-  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, 1);
-
-  // destination index list
-  Xt_int dst_index_list[comm_size];
-
-  for (int i = 0; i < comm_size; ++i)
-    dst_index_list[i] = (Xt_int)(i);
-
-  Xt_idxlist dst_idxlist;
-
-  dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
-
-  // test of exchange map
-  Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-
-  // test results
-
   if (xt_xmap_get_num_destinations(xmap) != comm_size)
     PUT_ERR("error in xt_xmap_get_num_destinations\n");
 
   if (xt_xmap_get_num_sources(xmap) != comm_size)
     PUT_ERR("error in xt_xmap_get_num_sources\n");
 
-  int ranks[comm_size];
+  int *ranks = malloc(sizeof (*ranks) * (size_t)comm_size);
+  if (!ranks) {
+    perror("failed to allocate temporary");
+    abort();
+  }
 
   xt_xmap_get_destination_ranks(xmap, ranks);
   for (int i = 0; i < comm_size; ++i)
@@ -132,44 +117,49 @@ test_xmap_allgather_analog(xmap_constructor xmap_new)
   for (int i = 0; i < comm_size; ++i)
     if (ranks[i] != i)
       PUT_ERR("error in xt_xmap_get_source_ranks\n");
-
-  // clean up
-  xt_xmap_delete(xmap);
-  xt_idxlist_delete(src_idxlist);
-  xt_idxlist_delete(dst_idxlist);
+  free(ranks);
 }
 
-static void
-test_ring_1d(xmap_constructor xmap_new)
-{
-  // test in which each process talks with two other
-  // processes
 
+static void
+test_xmap_allgather_analog(xmap_constructor xmap_new)
+{
+  // test in which every process requests data from all processes
+  // source index list
   Xt_int src_index_list[1] = {(Xt_int)(comm_rank)};
 
-  Xt_idxlist src_idxlist;
-
-  src_idxlist = xt_idxvec_new(src_index_list, 1);
+  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, 1);
 
   // destination index list
-  Xt_int dst_index_list[2] = {(Xt_int)((comm_rank + comm_size - 1)%comm_size),
-                              (Xt_int)((comm_rank             + 1)%comm_size)};
-
-  if (dst_index_list[0] > dst_index_list[1]) {
-    dst_index_list[0] ^= dst_index_list[1];
-    dst_index_list[1] ^= dst_index_list[0];
-    dst_index_list[0] ^= dst_index_list[1];
+  Xt_int *dst_index_list = malloc(sizeof(*dst_index_list) * (size_t)comm_size);
+  if (!dst_index_list) {
+    perror("failed to allocate temporary");
+    abort();
   }
+  for (size_t i = 0; i < (size_t)comm_size; ++i)
+    dst_index_list[i] = (Xt_int)(i);
 
-  Xt_idxlist dst_idxlist;
-
-  dst_idxlist = xt_idxvec_new(dst_index_list, 2);
+  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
+  free(dst_index_list);
 
   // test of exchange map
   Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
   // test results
+  check_xmap_allgather_analog_xmap(xmap);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_xmap_allgather_analog_xmap(xmap_copy);
 
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+  xt_idxlist_delete(src_idxlist);
+  xt_idxlist_delete(dst_idxlist);
+}
+
+static void
+check_ring_xmap(Xt_xmap xmap, const Xt_int dst_index_list[])
+{
   if (xt_xmap_get_num_destinations(xmap) != 2)
     PUT_ERR("error in xt_xmap_get_num_destinations\n");
 
@@ -187,12 +177,65 @@ test_ring_1d(xmap_constructor xmap_new)
   if (ranks[0] != dst_index_list[0] ||
       ranks[1] != dst_index_list[1])
     PUT_ERR("error in xt_xmap_get_source_ranks\n");
+}
+
+static void
+test_ring_1d(xmap_constructor xmap_new)
+{
+  // test in which each process talks with two other
+  // processes
+
+  Xt_int src_index_list[1] = {(Xt_int)(comm_rank)};
+
+  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, 1);
+
+  // destination index list
+  Xt_int dst_index_list[2] = {(Xt_int)((comm_rank + comm_size - 1)%comm_size),
+                              (Xt_int)((comm_rank             + 1)%comm_size)};
+
+  if (dst_index_list[0] > dst_index_list[1]) {
+    dst_index_list[0] ^= dst_index_list[1];
+    dst_index_list[1] ^= dst_index_list[0];
+    dst_index_list[0] ^= dst_index_list[1];
+  }
+
+  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, 2);
+
+  // test of exchange map
+  Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+  xt_idxlist_delete(src_idxlist);
+
+  // test results
+  check_ring_xmap(xmap, dst_index_list);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_ring_xmap(xmap_copy, dst_index_list);
 
   // clean up
   xt_xmap_delete(xmap);
-  xt_idxlist_delete(src_idxlist);
+  xt_xmap_delete(xmap_copy);
   xt_idxlist_delete(dst_idxlist);
 }
+
+static void
+check_pair_xmap(Xt_xmap xmap)
+{
+  if (xt_xmap_get_num_destinations(xmap) != 2)
+    PUT_ERR("error in xt_xmap_get_num_destinations\n");
+
+  if (xt_xmap_get_num_sources(xmap) != 2)
+    PUT_ERR("error in xt_xmap_get_num_sources\n");
+
+  int ranks[2];
+
+  xt_xmap_get_destination_ranks(xmap, ranks);
+  if (ranks[0] != 0 || ranks[1] != 1)
+    PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+
+  xt_xmap_get_source_ranks(xmap, ranks);
+  if (ranks[0] != 0 || ranks[1] != 1)
+    PUT_ERR("error in xt_xmap_get_source_ranks\n");
+}
+
 
 static void
 test_pair(xmap_constructor xmap_new)
@@ -218,24 +261,36 @@ test_pair(xmap_constructor xmap_new)
 
   // test results
 
-  if (xt_xmap_get_num_destinations(xmap) != 2)
-    PUT_ERR("error in xt_xmap_get_num_destinations\n");
-
-  if (xt_xmap_get_num_sources(xmap) != 2)
-    PUT_ERR("error in xt_xmap_get_num_sources\n");
-
-  int ranks[2];
-
-  xt_xmap_get_destination_ranks(xmap, ranks);
-  if (ranks[0] != 0 || ranks[1] != 1)
-    PUT_ERR("error in xt_xmap_get_destination_ranks\n");
-
-  xt_xmap_get_source_ranks(xmap, ranks);
-  if (ranks[0] != 0 || ranks[1] != 1)
-    PUT_ERR("error in xt_xmap_get_source_ranks\n");
-
+  check_pair_xmap(xmap);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_pair_xmap(xmap_copy);
   // clean up
   xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+}
+
+static void
+test_ping_pong_xmap(Xt_xmap xmap)
+{
+  if (xt_xmap_get_num_destinations(xmap) != (comm_rank == 0))
+    PUT_ERR("error in xt_xmap_get_num_destinations (rank == %d)\n", comm_rank);
+
+  if (xt_xmap_get_num_sources(xmap) != (comm_rank == comm_size-1))
+    PUT_ERR("error in xt_xmap_get_num_sources (rank == %d)\n", comm_rank);
+
+  if (comm_rank == 0) {
+    int dst_rank;
+    xt_xmap_get_destination_ranks(xmap, &dst_rank);
+    if (dst_rank != comm_size-1)
+      PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+  }
+
+  if (comm_rank == comm_size - 1) {
+    int src_rank;
+    xt_xmap_get_source_ranks(xmap, &src_rank);
+    if (src_rank != 0)
+      PUT_ERR("error in xt_xmap_get_source_ranks\n");
+  }
 }
 
 static void
@@ -256,37 +311,11 @@ test_ping_pong(xmap_constructor xmap_new)
   xt_idxlist_delete(dst_idxlist);
 
   // test results
-
-  if (comm_rank == 0) {
-    if (xt_xmap_get_num_destinations(xmap) != 1)
-      PUT_ERR("error in xt_xmap_get_num_destinations (rank == 0)\n");
-  } else {
-    if (xt_xmap_get_num_destinations(xmap) != 0)
-      PUT_ERR("error in xt_xmap_get_num_destinations (rank != 0)\n");
-  }
-
-  if (comm_rank == comm_size-1) {
-    if (xt_xmap_get_num_sources(xmap) != 1)
-      PUT_ERR("error in xt_xmap_get_num_sources (rank == 0)\n");
-  } else {
-    if (xt_xmap_get_num_sources(xmap) != 0)
-      PUT_ERR("error in xt_xmap_get_num_sources (rank != 0)\n");
-  }
-
-  if (comm_rank == 0) {
-    int dst_rank;
-    xt_xmap_get_destination_ranks(xmap, &dst_rank);
-    if (dst_rank != comm_size-1)
-      PUT_ERR("error in xt_xmap_get_destination_ranks\n");
-  }
-
-  if (comm_rank == comm_size - 1) {
-    int src_rank;
-    xt_xmap_get_source_ranks(xmap, &src_rank);
-    if (src_rank != 0)
-      PUT_ERR("error in xt_xmap_get_source_ranks\n");
-  }
+  test_ping_pong_xmap(xmap);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  test_ping_pong_xmap(xmap_copy);
 
   // clean up
   xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
 }

@@ -446,19 +446,24 @@ static void test_xmap(
   int num_sends, const struct test_message send_messages[num_sends],
   int num_recvs, const struct test_message recv_messages[num_recvs]) {
 
-  if (xt_xmap_get_num_destinations(xmap) != num_sends)
-    PUT_ERR("ERROR: xt_xmap_get_num_destinations\n");
-  if (xt_xmap_get_num_sources(xmap) != num_recvs)
-    PUT_ERR("ERROR: xt_xmap_get_num_sources\n");
+  enum { numXmaps2Test = 2 };
+  Xt_xmap maps[numXmaps2Test] = { xmap, xt_xmap_copy(xmap) };
+  for (size_t i = 0; i < numXmaps2Test; ++i) {
+    if (xt_xmap_get_num_destinations(maps[i]) != num_sends)
+      PUT_ERR("ERROR: xt_xmap_get_num_destinations\n");
+    if (xt_xmap_get_num_sources(maps[i]) != num_recvs)
+      PUT_ERR("ERROR: xt_xmap_get_num_sources\n");
 
-  Xt_xmap_iter send_iter = xt_xmap_get_out_iterator(xmap);
-  Xt_xmap_iter recv_iter = xt_xmap_get_in_iterator(xmap);
+    Xt_xmap_iter send_iter = xt_xmap_get_out_iterator(maps[i]);
+    Xt_xmap_iter recv_iter = xt_xmap_get_in_iterator(maps[i]);
 
-  test_xmap_iter(send_iter, num_sends, send_messages);
-  test_xmap_iter(recv_iter, num_recvs, recv_messages);
+    test_xmap_iter(send_iter, num_sends, send_messages);
+    test_xmap_iter(recv_iter, num_recvs, recv_messages);
 
-  if (recv_iter != NULL) xt_xmap_iterator_delete(recv_iter);
-  if (send_iter != NULL) xt_xmap_iterator_delete(send_iter);
+    if (recv_iter != NULL) xt_xmap_iterator_delete(recv_iter);
+    if (send_iter != NULL) xt_xmap_iterator_delete(send_iter);
+  }
+  xt_xmap_delete(maps[1]);
 }
 
 static void

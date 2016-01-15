@@ -51,7 +51,7 @@ MODULE test_xmap_common
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
        xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
-       xt_xmap, xt_xmap_delete, &
+       xt_xmap, xt_xmap_copy, xt_xmap_delete, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_mpi_comm_mark_exclusive
@@ -119,30 +119,9 @@ CONTAINS
     END DO
   END SUBROUTINE shift_idx
 
-  SUBROUTINE test_xmap(src_index_list, dst_index_list, xmap_new, comm)
-    INTEGER(xt_int_kind), INTENT(in) :: src_index_list(:), dst_index_list(:)
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
-    INTERFACE
-      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
-        IMPLICIT NONE
-        TYPE(xt_idxlist), INTENT(in) :: src_idxlist
-        TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
-        INTEGER, VALUE, INTENT(in) :: comm
-        TYPE(xt_xmap) :: res
-      END FUNCTION xmap_new
-    END INTERFACE
-    INTEGER, INTENT(inout) :: comm
-
+  SUBROUTINE assert_xmap_is_to_self(xmap)
     TYPE(xt_xmap) :: xmap
     INTEGER :: rank(1)
-    src_idxlist = xt_idxvec_new(src_index_list)
-    dst_idxlist = xt_idxvec_new(dst_index_list)
-
-    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
-    CALL xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
-
     IF (xt_xmap_get_num_destinations(xmap) /= 1) &
          CALL test_abort("error in xmap construction", &
          __FILE__, &
@@ -163,7 +142,38 @@ CONTAINS
          CALL test_abort("error in xt_xmap_get_source_ranks", &
          __FILE__, &
          __LINE__)
+
+  END SUBROUTINE assert_xmap_is_to_self
+
+  SUBROUTINE test_xmap(src_index_list, dst_index_list, xmap_new, comm)
+    INTEGER(xt_int_kind), INTENT(in) :: src_index_list(:), dst_index_list(:)
+    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    INTERFACE
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
+        IMPORT :: xt_idxlist, xt_xmap
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+        TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+
+    TYPE(xt_xmap) :: xmap, xmap_copy
+    src_idxlist = xt_idxvec_new(src_index_list)
+    dst_idxlist = xt_idxvec_new(dst_index_list)
+
+    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
+    CALL xt_idxlist_delete(src_idxlist)
+    CALL xt_idxlist_delete(dst_idxlist)
+
+    CALL assert_xmap_is_to_self(xmap)
+    xmap_copy = xt_xmap_copy(xmap)
+    CALL assert_xmap_is_to_self(xmap_copy)
+
     CALL xt_xmap_delete(xmap)
+    CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_xmap
 
   SUBROUTINE test_xmap1(xmap_new, comm)

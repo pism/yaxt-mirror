@@ -50,7 +50,7 @@ PROGRAM test_xmap_intersection_parallel
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, xt_xmap, &
        xt_idxempty_new, xi => xt_int_kind, &
        xt_xmap_intersection_new, xt_xmap_intersection_ext_new, xt_com_list, &
-       xt_xmap_delete, xt_xmap_iter, &
+       xt_xmap_copy, xt_xmap_delete, xt_xmap_iter, &
        xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_iterator_get_rank, xt_xmap_iterator_get_num_transfer_pos, &
@@ -451,25 +451,33 @@ CONTAINS
 
     INTEGER :: num_sends, num_recvs
     TYPE(xt_xmap_iter) :: send_iter, recv_iter
+    INTEGER, PARAMETER :: num_xmaps_2_test = 2
+    INTEGER :: i
+    TYPE(xt_xmap) :: maps(num_xmaps_2_test)
 
-    num_sends = SIZE(send_messages)
-    num_recvs = SIZE(recv_messages)
-    IF (xt_xmap_get_num_destinations(xmap) /= num_sends) &
-         CALL test_abort('ERROR: xt_xmap_get_num_destinations', &
-         __FILE__, &
-         __LINE__)
-    IF (xt_xmap_get_num_sources(xmap) /= num_recvs) &
-         CALL test_abort('ERROR: xt_xmap_get_num_sources', &
-         __FILE__, &
-         __LINE__)
-    send_iter = xt_xmap_get_out_iterator(xmap)
-    recv_iter = xt_xmap_get_in_iterator(xmap)
+    maps(1) = xmap
+    maps(2) = xt_xmap_copy(xmap)
+    DO i = 1, num_xmaps_2_test
+      num_sends = SIZE(send_messages)
+      num_recvs = SIZE(recv_messages)
+      IF (xt_xmap_get_num_destinations(maps(i)) /= num_sends) &
+           CALL test_abort('ERROR: xt_xmap_get_num_destinations', &
+           __FILE__, &
+           __LINE__)
+      IF (xt_xmap_get_num_sources(maps(i)) /= num_recvs) &
+           CALL test_abort('ERROR: xt_xmap_get_num_sources', &
+           __FILE__, &
+           __LINE__)
+      send_iter = xt_xmap_get_out_iterator(maps(i))
+      recv_iter = xt_xmap_get_in_iterator(maps(i))
 
-    CALL test_xmap_iter(send_iter, send_messages)
-    CALL test_xmap_iter(recv_iter, recv_messages)
+      CALL test_xmap_iter(send_iter, send_messages)
+      CALL test_xmap_iter(recv_iter, recv_messages)
 
-    IF (.NOT. xt_is_null(recv_iter)) CALL xt_xmap_iterator_delete(recv_iter)
-    IF (.NOT. xt_is_null(send_iter)) CALL xt_xmap_iterator_delete(send_iter)
+      IF (.NOT. xt_is_null(recv_iter)) CALL xt_xmap_iterator_delete(recv_iter)
+      IF (.NOT. xt_is_null(send_iter)) CALL xt_xmap_iterator_delete(send_iter)
+    END DO
+    CALL xt_xmap_delete(maps(2))
   END SUBROUTINE test_xmap
 
   SUBROUTINE parse_options

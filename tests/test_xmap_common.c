@@ -89,18 +89,8 @@ xt_xmap_self_test_main(xmap_constructor new_xmap)
 }
 
 static void
-test_xmap(const Xt_int *src_index_list, int num_src_indices,
-          const Xt_int *dst_index_list, int num_dst_indices,
-          xmap_constructor new_xmap, MPI_Comm comm)
+assert_xmap_is_to_self(Xt_xmap xmap)
 {
-  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, num_src_indices);
-  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, num_dst_indices);
-
-  // test of exchange map
-  Xt_xmap xmap = new_xmap(src_idxlist, dst_idxlist, comm);
-  xt_idxlist_delete(src_idxlist);
-  xt_idxlist_delete(dst_idxlist);
-
   // test results
   if (xt_xmap_get_num_destinations(xmap) != 1)
     PUT_ERR("error in xt_xmap_get_num_destinations\n");
@@ -117,8 +107,27 @@ test_xmap(const Xt_int *src_index_list, int num_src_indices,
   xt_xmap_get_source_ranks(xmap, &rank);
   if (rank != my_rank)
     PUT_ERR("error in xt_xmap_get_source_ranks\n");
+}
+
+
+static void
+test_xmap(const Xt_int *src_index_list, int num_src_indices,
+          const Xt_int *dst_index_list, int num_dst_indices,
+          xmap_constructor new_xmap, MPI_Comm comm)
+{
+  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, num_src_indices);
+  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, num_dst_indices);
+
+  // test of exchange map
+  Xt_xmap xmap = new_xmap(src_idxlist, dst_idxlist, comm);
+  xt_idxlist_delete(src_idxlist);
+  xt_idxlist_delete(dst_idxlist);
+  assert_xmap_is_to_self(xmap);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  assert_xmap_is_to_self(xmap_copy);
   // clean up
   xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
 }
 
 static inline void shift_idx(Xt_int idx[], int num, int offset)  {

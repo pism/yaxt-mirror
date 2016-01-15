@@ -73,6 +73,7 @@ static void
 xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks);
 static Xt_xmap_iter xmap_intersection_get_in_iterator(Xt_xmap xmap);
 static Xt_xmap_iter xmap_intersection_get_out_iterator(Xt_xmap xmap);
+static Xt_xmap      xmap_intersection_copy(Xt_xmap xmap);
 static void         xmap_intersection_delete(Xt_xmap xmap);
 static int          xmap_intersection_iterator_next(Xt_xmap_iter iter);
 static int          xmap_intersection_iterator_get_rank(Xt_xmap_iter iter);
@@ -125,6 +126,7 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
         .get_source_ranks      = xmap_intersection_get_source_ranks,
         .get_out_iterator      = xmap_intersection_get_out_iterator,
         .get_in_iterator       = xmap_intersection_get_in_iterator,
+        .copy                  = xmap_intersection_copy,
         .delete                = xmap_intersection_delete,
         .get_max_src_pos       = xmap_intersection_get_max_src_pos,
         .get_max_dst_pos       = xmap_intersection_get_max_dst_pos};
@@ -651,6 +653,48 @@ static int xmap_intersection_get_max_src_pos(Xt_xmap xmap) {
 
 static int xmap_intersection_get_max_dst_pos(Xt_xmap xmap) {
   return xmi(xmap)->max_dst_pos;
+}
+
+
+static void
+xmap_intersection_msg_copy(size_t nmsg, struct exchange_data *restrict msg,
+                           int *nmsg_copy, struct exchange_data **msg_copy) {
+  *nmsg_copy = (int)nmsg;
+  struct exchange_data *restrict msg_copy_
+    = *msg_copy = xmalloc(sizeof (*msg_copy_) * nmsg);
+  for (size_t i = 0; i < nmsg; ++i) {
+    size_t num_transfer_pos
+      = (size_t)(msg_copy_[i].num_transfer_pos = msg[i].num_transfer_pos);
+    msg_copy_[i].num_transfer_pos_ext = msg[i].num_transfer_pos_ext;
+    msg_copy_[i].rank = msg[i].rank;
+    msg_copy_[i].transfer_pos_ext_cache = NULL;
+    size_t size_transfer_pos
+      = num_transfer_pos * sizeof (*(msg[i].transfer_pos));
+    msg_copy_[i].transfer_pos = xmalloc(size_transfer_pos);
+    memcpy(msg_copy_[i].transfer_pos, msg[i].transfer_pos, size_transfer_pos);
+  }
+}
+
+static Xt_xmap
+xmap_intersection_copy(Xt_xmap xmap)
+{
+  Xt_xmap_intersection xmap_intersection = xmi(xmap),
+    xmap_intersection_new = xmalloc(sizeof (*xmap_intersection_new));
+  xmap_intersection_new->vtable = xmap_intersection->vtable;
+  size_t n_in = (size_t)(xmap_intersection_new->n_in = xmap_intersection->n_in),
+    n_out = (size_t)(xmap_intersection_new->n_out = xmap_intersection->n_out);
+  xmap_intersection_new->max_src_pos = xmap_intersection->max_src_pos;
+  xmap_intersection_new->max_dst_pos = xmap_intersection->max_dst_pos;
+  xmap_intersection_msg_copy(n_in, xmap_intersection->in_msg,
+                             &xmap_intersection_new->n_in,
+                             &xmap_intersection_new->in_msg);
+  xmap_intersection_msg_copy(n_out, xmap_intersection->out_msg,
+                             &xmap_intersection_new->n_out,
+                             &xmap_intersection_new->out_msg);
+  xmap_intersection_new->comm
+    = xt_mpi_comm_smart_dup(xmap_intersection->comm,
+                            &xmap_intersection_new->tag_offset);
+  return (Xt_xmap)xmap_intersection_new;
 }
 
 

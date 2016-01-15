@@ -77,6 +77,11 @@ void xt_xmap_get_source_ranks(Xt_xmap xmap, int * ranks) {
   xmap->vtable->get_source_ranks(xmap, ranks);
 }
 
+Xt_xmap xt_xmap_copy(Xt_xmap xmap) {
+
+  return xmap->vtable->copy(xmap);
+}
+
 void xt_xmap_delete(Xt_xmap xmap) {
 
   xmap->vtable->delete(xmap);

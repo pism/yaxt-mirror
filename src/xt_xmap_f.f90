@@ -53,7 +53,7 @@ MODULE xt_xmap_abstract
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: xt_xmap_c2f, xt_xmap_f2c, xt_is_null
-  PUBLIC :: xt_xmap_delete, xt_xmap_get_num_destinations, &
+  PUBLIC :: xt_xmap_copy, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new
@@ -137,6 +137,19 @@ CONTAINS
     p%cptr = xmap
   END FUNCTION xt_xmap_c2f
 
+  FUNCTION xt_xmap_copy(xmap) RESULT(xmap_copy)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    TYPE(xt_xmap) :: xmap_copy
+    INTERFACE
+      FUNCTION xt_xmap_copy_c(xmap) BIND(C, name='xt_xmap_copy') RESULT(res_ptr)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        TYPE(c_ptr) :: res_ptr
+      END FUNCTION xt_xmap_copy_c
+    END INTERFACE
+    xmap_copy%cptr = xt_xmap_copy_c(xmap%cptr)
+  END FUNCTION xt_xmap_copy
   SUBROUTINE xt_xmap_delete_1(xmap)
     TYPE(xt_xmap), INTENT(inout) :: xmap
     CALL xt_xmap_delete_c(xt_xmap_f2c(xmap))
