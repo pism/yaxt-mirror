@@ -48,11 +48,12 @@
 #endif
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <mpi.h>
 
+#include <mpi.h>
 #include <yaxt.h>
 
 #include "tests.h"
@@ -107,6 +108,8 @@ static exchanger_new_func parse_options(int *argc, char ***argv);
 
 static void
 test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new);
+static void
+test_gather(MPI_Comm comm, exchanger_new_func exchanger_new);
 
 int main(int argc, char **argv)
 {
@@ -132,68 +135,7 @@ int main(int argc, char **argv)
 
   test_bcast(MPI_COMM_WORLD, exchanger_new);
 
-  // gather pattern
-  for (int i = 0; i < 3; ++i) {
-
-    // setup
-
-    int nsend[3] = {0, 1, 1};
-    int nrecv[3] = {2, 0, 0};
-
-    MPI_Datatype MPI_INT_CUSTOM;
-
-    MPI_Type_indexed(1, (int[]){1}, (int[]){1}, MPI_INT, &MPI_INT_CUSTOM);
-    MPI_Type_commit(&MPI_INT_CUSTOM);
-
-    struct Xt_redist_msg send_msgs[3][1] =
-      {{{.rank=-1, .datatype=MPI_DATATYPE_NULL}},
-       {{.rank=(0+i)%3, .datatype=MPI_INT}},
-       {{.rank=(0+i)%3, .datatype=MPI_INT}}};
-    struct Xt_redist_msg recv_msgs[2][3][2] =
-      {{{{.rank=(1+i)%3, .datatype=MPI_INT},
-         {.rank=(2+i)%3, .datatype=MPI_INT_CUSTOM}},
-        {{.rank=-1, .datatype=MPI_DATATYPE_NULL},
-         {.rank=-1, .datatype=MPI_DATATYPE_NULL}},
-        {{.rank=-1, .datatype=MPI_DATATYPE_NULL},
-         {.rank=-1, .datatype=MPI_DATATYPE_NULL}}},
-       {{{.rank=(2+i)%3, .datatype=MPI_INT},
-         {.rank=(1+i)%3, .datatype=MPI_INT_CUSTOM}},
-        {{.rank=-1, .datatype=MPI_DATATYPE_NULL},
-         {.rank=-1, .datatype=MPI_DATATYPE_NULL}},
-        {{.rank=-1, .datatype=MPI_DATATYPE_NULL},
-         {.rank=-1, .datatype=MPI_DATATYPE_NULL}}}};
-
-    Xt_exchanger exchanger[2] = {exchanger_new(nsend[(my_rank+3-i)%3],
-                                               nrecv[(my_rank+3-i)%3],
-                                               send_msgs[(my_rank+3-i)%3],
-                                               recv_msgs[0][(my_rank+3-i)%3],
-                                               MPI_COMM_WORLD, 0),
-                                 exchanger_new(nsend[(my_rank+3-i)%3],
-                                               nrecv[(my_rank+3-i)%3],
-                                               send_msgs[(my_rank+3-i)%3],
-                                               recv_msgs[1][(my_rank+3-i)%3],
-                                               MPI_COMM_WORLD, 0)};
-
-    // test
-
-    int src_data[1] = {(my_rank+3-i)%3};
-    int dst_data[2][2] = {{-1, -1}, {-1, -1}};
-
-    xt_exchanger_s_exchange(exchanger[0], (void*)src_data, (void*)dst_data[0]);
-    xt_exchanger_s_exchange(exchanger[1], (void*)src_data, (void*)dst_data[1]);
-
-    if ((my_rank+3-i)%3 == 0) {
-      if ((dst_data[0][0]!=1) || (dst_data[0][1]!=2)) PUT_ERR("invalid data\n");
-      if ((dst_data[1][0]!=2) || (dst_data[1][1]!=1)) PUT_ERR("invalid data\n");
-    }
-
-    // cleanup
-
-    MPI_Type_free(&MPI_INT_CUSTOM);
-    xt_exchanger_delete(exchanger[0]);
-    xt_exchanger_delete(exchanger[1]);
-  }
-
+  test_gather(MPI_COMM_WORLD, exchanger_new);
   // all-to-all pattern
   {
 
@@ -372,6 +314,82 @@ test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
     free(send_msgs);
     xt_exchanger_delete(exchanger);
   }
+}
+
+static void
+test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
+{
+  int my_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  // gather pattern
+  for (int i = 0; i < comm_size; ++i) {
+
+    // setup
+    int nsend = i != my_rank;
+    int nrecv = 0;
+
+
+    struct Xt_redist_msg send_msgs[1] = {{.rank=i, .datatype=MPI_INT}};
+    struct Xt_redist_msg *recv_msgs = NULL;
+    if (my_rank == i) {
+      nrecv = comm_size - 1;
+      recv_msgs = malloc((size_t)nrecv * sizeof (*recv_msgs) * 2);
+      if (nrecv && !recv_msgs) {
+        perror("Failed to allocate message meta-data");
+        abort();
+      }
+      for (size_t j = 0; j < (size_t)nrecv; ++j) {
+        recv_msgs[j].rank = (i + (int)j + 1)%comm_size;
+        MPI_Type_indexed(1, (int[]){1}, (int[]){(int)j}, MPI_INT,
+                         &recv_msgs[j].datatype);
+        MPI_Type_commit(&recv_msgs[j].datatype);
+
+        recv_msgs[j + (size_t)nrecv].rank
+          = (comm_size - (int)j - 1 + i)%comm_size;
+        MPI_Type_indexed(1, (int[]){1}, (int[]){(int)j}, MPI_INT,
+                         &recv_msgs[j + (size_t)nrecv].datatype);
+        MPI_Type_commit(&recv_msgs[j + (size_t)nrecv].datatype);
+      }
+    }
+
+    enum { exchange_fwd, exchange_rev, num_exchanges };
+    Xt_exchanger exchanger[num_exchanges];
+    for (size_t j = 0; j < num_exchanges; ++j)
+      exchanger[j] = exchanger_new(nsend, nrecv,
+                                   send_msgs, recv_msgs + j * (size_t)nrecv, comm, 0);
+
+    // test
+
+    int src_data[1] = {(my_rank+comm_size-i)%comm_size};
+    int *dst_data = NULL;
+    if (my_rank == i) {
+      dst_data = malloc((size_t)nrecv * sizeof (*dst_data) * 2);
+      if (nrecv && !dst_data) {
+        perror("Failed to allocate message meta-data");
+        abort();
+      }
+      for (size_t j = 0; j < 2 * (size_t)nrecv; ++j)
+        dst_data[j] = -1;
+    }
+
+    for (size_t j = 0; j < num_exchanges; ++j)
+      xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * (size_t)nrecv);
+
+    for (size_t j = 0; j < (size_t)nrecv; ++j)
+      if (((size_t)dst_data[j] != j + 1)
+          || ((size_t)dst_data[(size_t)nrecv + j] != (size_t)comm_size - j - 1))
+        PUT_ERR("invalid data\n");
+
+    // cleanup
+    for (size_t j = 0; j < 2 * (size_t)nrecv; ++j)
+      MPI_Type_free(&recv_msgs[j].datatype);
+    free(recv_msgs);
+    free(dst_data);
+    xt_exchanger_delete(exchanger[0]);
+    xt_exchanger_delete(exchanger[1]);
+  }
+
 }
 
 /*
