@@ -105,6 +105,9 @@ typedef Xt_exchanger (*exchanger_new_func) (int nsend, int nrecv,
 
 static exchanger_new_func parse_options(int *argc, char ***argv);
 
+static void
+test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new);
+
 int main(int argc, char **argv)
 {
 
@@ -127,51 +130,7 @@ int main(int argc, char **argv)
 
   exchanger_new_func exchanger_new = parse_options(&argc, &argv);
 
-  // bcast pattern
-  for (int i = 0; i < comm_size; ++i) {
-
-    // setup
-
-    struct Xt_redist_msg *send_msgs = NULL;
-    int nsend = 0;
-    int nrecv = my_rank != i;
-
-    if (my_rank == i) {
-      nsend = comm_size - 1;
-      send_msgs = malloc((size_t)nsend * sizeof (*send_msgs));
-      if (send_msgs == 0) {
-        perror("Failed to allocate message meta-data");
-        abort();
-      }
-      for (size_t j = 0; j < (size_t)i; ++j)
-        send_msgs[j] = (struct Xt_redist_msg){.rank=(int)j,
-                                              .datatype=MPI_INT};
-      for (size_t j = (size_t)i; j < (size_t)nsend; ++j)
-        send_msgs[j] = (struct Xt_redist_msg){.rank=(1+(int)j)%comm_size,
-                                              .datatype=MPI_INT};
-    }
-    struct Xt_redist_msg recv_msgs[2] =
-      {{.rank=-1, .datatype=MPI_DATATYPE_NULL},
-       {.rank=(0+i)%comm_size, .datatype=MPI_INT}};
-
-    Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
-                                           send_msgs,
-                                           recv_msgs + (my_rank != i),
-                                           MPI_COMM_WORLD, 0);
-
-    // test
-
-    int src_data[1] = { my_rank == i ? 4711 : -1 };
-    int dst_data[1] = { my_rank == i ? 4711 : -1 };
-
-    xt_exchanger_s_exchange(exchanger, (void*)(src_data), (void*)(dst_data));
-
-    if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
-
-    // cleanup
-    free(send_msgs);
-    xt_exchanger_delete(exchanger);
-  }
+  test_bcast(MPI_COMM_WORLD, exchanger_new);
 
   // gather pattern
   for (int i = 0; i < 3; ++i) {
@@ -360,6 +319,61 @@ static exchanger_new_func parse_options(int *argc, char ***argv)
   }
   return exchanger_new;
 }
+
+static void
+test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
+{
+  int my_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  // bcast pattern
+  for (int i = 0; i < comm_size; ++i) {
+
+    // setup
+
+    struct Xt_redist_msg *send_msgs = NULL;
+    int nsend = 0;
+    int nrecv = my_rank != i;
+
+    if (my_rank == i) {
+      nsend = comm_size - 1;
+      send_msgs = malloc((size_t)nsend * sizeof (*send_msgs));
+      if (send_msgs == 0) {
+        perror("Failed to allocate message meta-data");
+        abort();
+      }
+      for (size_t j = 0; j < (size_t)i; ++j)
+        send_msgs[j] = (struct Xt_redist_msg){.rank=(int)j,
+                                              .datatype=MPI_INT};
+      for (size_t j = (size_t)i; j < (size_t)nsend; ++j)
+        send_msgs[j] = (struct Xt_redist_msg){.rank=(1+(int)j)%comm_size,
+                                              .datatype=MPI_INT};
+    }
+    struct Xt_redist_msg recv_msgs[2] =
+      {{.rank=-1, .datatype=MPI_DATATYPE_NULL},
+       {.rank=i, .datatype=MPI_INT}};
+
+    Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
+                                           send_msgs,
+                                           recv_msgs + (my_rank != i),
+                                           comm, 0);
+
+    // test
+
+    int src_data[1] = { my_rank == i ? 4711 : -1 };
+    int dst_data[1] = { my_rank == i ? 4711 : -1 };
+
+    xt_exchanger_s_exchange(exchanger, (void*)(src_data), (void*)(dst_data));
+
+    if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
+
+    // cleanup
+    free(send_msgs);
+    xt_exchanger_delete(exchanger);
+  }
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2
