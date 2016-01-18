@@ -58,6 +58,9 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_mix_isend_irecv.h"
 
+static Xt_exchanger
+xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
+                                  MPI_Comm newComm, int new_tag_offset);
 static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger);
 static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                                     const void * src_data,
@@ -68,6 +71,7 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
                                               enum xt_msg_direction direction);
 
 static const struct xt_exchanger_vtable exchanger_mix_isend_irecv_vtable = {
+  .copy = xt_exchanger_mix_isend_irecv_copy,
   .delete = xt_exchanger_mix_isend_irecv_delete,
   .s_exchange = xt_exchanger_mix_isend_irecv_s_exchange,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
@@ -89,6 +93,18 @@ struct Xt_exchanger_mix_isend_irecv_ {
   struct mix_msg msgs[];
 };
 
+static Xt_exchanger_mix_isend_irecv
+xt_exchanger_mix_isend_irecv_alloc(size_t nmsg)
+{
+  Xt_exchanger_mix_isend_irecv exchanger;
+  size_t header_size = sizeof (*exchanger),
+    body_size = sizeof (struct mix_msg) * nmsg;
+  exchanger = xmalloc(header_size + body_size);
+  exchanger->n = (int)nmsg;
+  exchanger->vtable = &exchanger_mix_isend_irecv_vtable;
+  return exchanger;
+}
+
 Xt_exchanger
 xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  struct Xt_redist_msg * send_msgs,
@@ -96,17 +112,10 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  MPI_Comm comm, int tag_offset) {
 
   assert((nsend >= 0) & (nrecv >= 0));
-
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
-  Xt_exchanger_mix_isend_irecv exchanger;
-  size_t header_size = sizeof (*exchanger),
-    body_size = sizeof (struct mix_msg) * nmsg;
-  exchanger = xmalloc(header_size + body_size);
-
-  exchanger->vtable = &exchanger_mix_isend_irecv_vtable;
-
+  Xt_exchanger_mix_isend_irecv exchanger
+    = xt_exchanger_mix_isend_irecv_alloc(nmsg);
   exchanger->comm = comm, exchanger->tag_offset = tag_offset;
-  exchanger->n = nsend + nrecv;
   struct mix_msg *restrict msgs = exchanger->msgs;
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
                               &(msgs[0].data), sizeof (msgs[0]), comm);
@@ -132,6 +141,28 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
 
   return (Xt_exchanger)exchanger;
 }
+
+static Xt_exchanger
+xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
+                                  MPI_Comm new_comm, int new_tag_offset)
+{
+  Xt_exchanger_mix_isend_irecv exchanger_msr =
+    (Xt_exchanger_mix_isend_irecv)exchanger;
+  size_t nmsg = (size_t)exchanger_msr->n;
+  Xt_exchanger_mix_isend_irecv exchanger_copy
+    = xt_exchanger_mix_isend_irecv_alloc(nmsg);
+  exchanger_copy->comm = new_comm;
+  exchanger_copy->tag_offset = new_tag_offset;
+  struct mix_msg *restrict new_msgs = exchanger_copy->msgs,
+    *restrict orig_msgs = exchanger_msr->msgs;
+  xt_redist_msgs_strided_copy(nmsg, &orig_msgs->data, sizeof (*orig_msgs),
+                              &new_msgs->data, sizeof (*new_msgs),
+                              new_comm);
+  for (size_t i = 0; i < nmsg; ++i)
+    new_msgs[i].type = orig_msgs[i].type;
+  return (Xt_exchanger)exchanger_copy;
+}
+
 
 static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
 

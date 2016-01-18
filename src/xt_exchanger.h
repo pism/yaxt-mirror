@@ -61,7 +61,7 @@ typedef struct Xt_exchanger_ *Xt_exchanger;
 enum xt_msg_direction {SEND, RECV};
 
 struct xt_exchanger_vtable {
-
+  Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
   void (*delete)(Xt_exchanger);
   void (*s_exchange)(Xt_exchanger, const void *, void *);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction);
@@ -84,6 +84,9 @@ extern Xt_exchanger
 
 void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
                              void * dst_data);
+
+Xt_exchanger
+xt_exchanger_copy(Xt_exchanger orig, MPI_Comm new_comm, int new_tag_offset);
 
 void xt_exchanger_delete(Xt_exchanger);
 

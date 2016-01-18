@@ -58,6 +58,9 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_simple_base.h"
 
+static Xt_exchanger
+xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
+                              MPI_Comm newComm, int new_tag_offset);
 static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger);
 static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
                                                 const void * src_data,
@@ -69,6 +72,7 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
 
 
 static const struct xt_exchanger_vtable exchanger_simple_base_vtable = {
+  .copy = xt_exchanger_simple_base_copy,
   .delete = xt_exchanger_simple_base_delete,
   .s_exchange = xt_exchanger_simple_base_s_exchange,
   .get_MPI_Datatype = xt_exchanger_simple_base_get_MPI_Datatype,
@@ -87,6 +91,17 @@ struct Xt_exchanger_simple_base_ {
   struct Xt_redist_msg msgs[];
 };
 
+static Xt_exchanger_simple_base
+xt_exchanger_simple_base_alloc(size_t nmsg)
+{
+  Xt_exchanger_simple_base exchanger;
+  size_t header_size = sizeof(*exchanger),
+    body_size = nmsg * sizeof (exchanger->msgs[0]);
+  exchanger = xmalloc(header_size + body_size);
+  exchanger->vtable = &exchanger_simple_base_vtable;
+  return exchanger;
+}
+
 Xt_exchanger
 xt_exchanger_simple_base_new(int nsend, int nrecv,
                              struct Xt_redist_msg * send_msgs,
@@ -100,13 +115,8 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
 
   assert((nsend >= 0) & (nrecv >= 0));
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
-  Xt_exchanger_simple_base exchanger;
-  size_t header_size = sizeof(*exchanger),
-    body_size = nmsg * sizeof (exchanger->msgs[0]);
-  exchanger = xmalloc(header_size + body_size);
-
-  exchanger->vtable = &exchanger_simple_base_vtable;
-
+  Xt_exchanger_simple_base exchanger
+    = xt_exchanger_simple_base_alloc(nmsg);
   exchanger->comm = comm, exchanger->tag_offset = tag_offset;
   exchanger->nsend = nsend;
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
@@ -129,6 +139,31 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
 
   return (Xt_exchanger)exchanger;
 }
+
+static Xt_exchanger
+xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
+                              MPI_Comm new_comm, int new_tag_offset)
+{
+  Xt_exchanger_simple_base exchanger_sb =
+    (Xt_exchanger_simple_base)exchanger;
+  int nsend = exchanger_sb->nsend,
+    nrecv = exchanger_sb->nrecv;
+  size_t nmsg = (size_t)nsend + (size_t)nrecv;
+  Xt_exchanger_simple_base exchanger_copy
+    = xt_exchanger_simple_base_alloc(nmsg);
+  exchanger_copy->nsend = nsend;
+  exchanger_copy->nrecv = nrecv;
+  exchanger_copy->func = exchanger_sb->func;
+  struct Xt_redist_msg *restrict new_msgs = exchanger_copy->msgs,
+    *restrict orig_msgs = exchanger_sb->msgs;
+  xt_redist_msgs_strided_copy(nmsg, orig_msgs, sizeof (*orig_msgs),
+                              new_msgs, sizeof (*new_msgs),
+                              new_comm);
+  exchanger_copy->comm = new_comm;
+  exchanger_copy->tag_offset = new_tag_offset;
+  return (Xt_exchanger)exchanger_copy;
+}
+
 
 static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
 

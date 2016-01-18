@@ -66,6 +66,12 @@ Xt_exchanger (*xt_exchanger_default_constructor)
     xt_exchanger_mix_isend_irecv_new;
     // xt_exchanger_irecv_isend_new;
 
+Xt_exchanger
+xt_exchanger_copy(Xt_exchanger exchanger, MPI_Comm new_comm, int new_tag_offset)
+{
+  return exchanger->vtable->copy(exchanger, new_comm, new_tag_offset);
+}
+
 void xt_exchanger_delete(Xt_exchanger exchanger) {
 
   exchanger->vtable->delete(exchanger);
