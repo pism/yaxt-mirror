@@ -265,6 +265,23 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   // gather pattern
+  // prepare datatypes outside of loop for load-balance
+  MPI_Datatype *dt_by_ofs = malloc((size_t)comm_size * sizeof (*dt_by_ofs));
+  if (!dt_by_ofs) {
+    perror("Failed to allocate receive datatypes");
+    abort();
+  }
+  dt_by_ofs[0] = MPI_INT;
+  for (size_t j = 1; j < (size_t)comm_size; ++j)
+  {
+    MPI_Type_indexed(1, (int[]){1}, (int[]){(int)j}, MPI_INT, dt_by_ofs + j);
+    MPI_Type_commit(dt_by_ofs + j);
+  }
+  int *dst_data = malloc(((size_t)comm_size - 1) * sizeof (*dst_data) * 2);
+  if (comm_size - 1 && !dst_data) {
+    perror("Failed to allocate message receive buffer");
+    abort();
+  }
   for (int i = 0; i < comm_size; ++i) {
 
     // setup
@@ -283,15 +300,11 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
       }
       for (size_t j = 0; j < (size_t)nrecv; ++j) {
         recv_msgs[j].rank = (i + (int)j + 1)%comm_size;
-        MPI_Type_indexed(1, (int[]){1}, (int[]){(int)j}, MPI_INT,
-                         &recv_msgs[j].datatype);
-        MPI_Type_commit(&recv_msgs[j].datatype);
+        recv_msgs[j].datatype = dt_by_ofs[j];
 
         recv_msgs[j + (size_t)nrecv].rank
           = (comm_size - (int)j - 1 + i)%comm_size;
-        MPI_Type_indexed(1, (int[]){1}, (int[]){(int)j}, MPI_INT,
-                         &recv_msgs[j + (size_t)nrecv].datatype);
-        MPI_Type_commit(&recv_msgs[j + (size_t)nrecv].datatype);
+        recv_msgs[j + (size_t)nrecv].datatype = dt_by_ofs[j];
       }
     }
 
@@ -302,18 +315,10 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
                                    send_msgs, recv_msgs + j * (size_t)nrecv, comm, 0);
 
     // test
-
     int src_data[1] = {(my_rank+comm_size-i)%comm_size};
-    int *dst_data = NULL;
-    if (my_rank == i) {
-      dst_data = malloc((size_t)nrecv * sizeof (*dst_data) * 2);
-      if (nrecv && !dst_data) {
-        perror("Failed to allocate message meta-data");
-        abort();
-      }
+    if (my_rank == i)
       for (size_t j = 0; j < 2 * (size_t)nrecv; ++j)
         dst_data[j] = -1;
-    }
 
     for (size_t j = 0; j < num_exchanges; ++j)
       xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * (size_t)nrecv);
@@ -324,14 +329,14 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
         PUT_ERR("invalid data\n");
 
     // cleanup
-    for (size_t j = 0; j < 2 * (size_t)nrecv; ++j)
-      MPI_Type_free(&recv_msgs[j].datatype);
     free(recv_msgs);
-    free(dst_data);
     xt_exchanger_delete(exchanger[0]);
     xt_exchanger_delete(exchanger[1]);
   }
-
+  free(dst_data);
+  for (size_t j = 1; j < (size_t)comm_size; ++j)
+    MPI_Type_free(dt_by_ofs + j);
+  free(dt_by_ofs);
 }
 
 static void
