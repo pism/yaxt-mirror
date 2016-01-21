@@ -128,13 +128,6 @@ int main(int argc, char **argv)
   xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &my_rank), MPI_COMM_WORLD);
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &comm_size), MPI_COMM_WORLD);
 
-  if (comm_size != 3) {
-
-    xt_finalize();
-    MPI_Finalize();
-    return 77;
-  }
-
   exchanger_new_func exchanger_new = parse_options(&argc, &argv);
 
   test_bcast(MPI_COMM_WORLD, exchanger_new);
