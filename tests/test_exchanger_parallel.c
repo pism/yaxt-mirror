@@ -104,7 +104,7 @@ typedef Xt_exchanger (*exchanger_new_func) (int nsend, int nrecv,
                                             struct Xt_redist_msg * recv_msgs,
                                             MPI_Comm comm, int tag_offset);
 
-static exchanger_new_func parse_options(int *argc, char ***argv);
+static exchanger_new_func *parse_options(int *argc, char ***argv);
 
 static void
 test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new);
@@ -128,46 +128,61 @@ int main(int argc, char **argv)
   xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &my_rank), MPI_COMM_WORLD);
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &comm_size), MPI_COMM_WORLD);
 
-  exchanger_new_func exchanger_new = parse_options(&argc, &argv);
+  exchanger_new_func *exchangers_new = parse_options(&argc, &argv);
 
-  test_bcast(MPI_COMM_WORLD, exchanger_new);
+  for (size_t i = 0; exchangers_new[i] != (exchanger_new_func)0; ++i) {
+    exchanger_new_func exchanger_new = exchangers_new[i];
 
-  test_gather(MPI_COMM_WORLD, exchanger_new);
+    test_bcast(MPI_COMM_WORLD, exchanger_new);
 
-  test_all2all(MPI_COMM_WORLD, exchanger_new);
+    test_gather(MPI_COMM_WORLD, exchanger_new);
 
-  test_rr(MPI_COMM_WORLD, exchanger_new);
+    test_all2all(MPI_COMM_WORLD, exchanger_new);
 
+    test_rr(MPI_COMM_WORLD, exchanger_new);
+  }
+  free(exchangers_new);
   xt_finalize();
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
 }
 
-static exchanger_new_func parse_options(int *argc, char ***argv)
+static exchanger_new_func *parse_options(int *argc, char ***argv)
 {
-  exchanger_new_func exchanger_new = xt_exchanger_mix_isend_irecv_new;
+  exchanger_new_func *exchangers_new = malloc(2 * sizeof (*exchangers_new));
+  exchangers_new[0] = xt_exchanger_mix_isend_irecv_new;
+  exchangers_new[1] = (exchanger_new_func)0;
+  size_t cur_ex = 0;
   int opt;
   while ((opt = getopt(*argc, *argv, "m:")) != -1) {
     switch (opt) {
     case 'm':
       if (!strcmp(optarg, "irecv_isend"))
-        exchanger_new = xt_exchanger_irecv_isend_new;
+        exchangers_new[cur_ex] = xt_exchanger_irecv_isend_new;
       else if (!strcmp(optarg, "irecv_isend_packed"))
-        exchanger_new = xt_exchanger_irecv_isend_packed_new;
+        exchangers_new[cur_ex] = xt_exchanger_irecv_isend_packed_new;
       else if (!strcmp(optarg, "irecv_send"))
-        exchanger_new = xt_exchanger_irecv_send_new;
+        exchangers_new[cur_ex] = xt_exchanger_irecv_send_new;
       else if (!strcmp(optarg, "mix_irecv_isend"))
-        exchanger_new = xt_exchanger_mix_isend_irecv_new;
-      else
-      {
+        exchangers_new[cur_ex] = xt_exchanger_mix_isend_irecv_new;
+      else {
         fprintf(stderr, "Unknown exchanger constructor requested %s\n",
                 optarg);
         exit(EXIT_FAILURE);
       }
+      ++cur_ex;
+      void *temp = realloc(exchangers_new,
+                           sizeof (*exchangers_new) * (cur_ex + 1));
+      if (!temp) {
+        perror("failed reallocation");
+        abort();
+      }
+      exchangers_new = temp;
+      exchangers_new[cur_ex] = (exchanger_new_func)0;
     }
   }
-  return exchanger_new;
+  return exchangers_new;
 }
 
 static void
