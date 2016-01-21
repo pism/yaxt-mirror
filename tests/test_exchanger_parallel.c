@@ -305,7 +305,7 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
 
     for (size_t j = 0; j < (size_t)nrecv; ++j)
       if (((size_t)dst_data[j] != j + 1)
-          || ((size_t)dst_data[(size_t)nrecv + j] != (size_t)comm_size - j - 1))
+          || (dst_data[(size_t)nrecv + j] != comm_size - (int)j - 1))
         PUT_ERR("invalid data\n");
 
     // cleanup
