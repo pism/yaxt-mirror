@@ -112,6 +112,8 @@ static void
 test_gather(MPI_Comm comm, exchanger_new_func exchanger_new);
 static void
 test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new);
+static void
+test_rr(MPI_Comm comm, exchanger_new_func exchanger_new);
 
 int main(int argc, char **argv)
 {
@@ -140,37 +142,8 @@ int main(int argc, char **argv)
   test_gather(MPI_COMM_WORLD, exchanger_new);
 
   test_all2all(MPI_COMM_WORLD, exchanger_new);
-  // round robin pattern
-  for (int i = 0; i < 2; ++i) {
 
-    // setup
-
-    int nsend = 1;
-    int nrecv = 1;
-
-    struct Xt_redist_msg send_msgs[2][1] =
-      {{{.rank=(my_rank+2)%3, .datatype=MPI_INT}},
-       {{.rank=(my_rank+1)%3, .datatype=MPI_INT}}};
-    struct Xt_redist_msg recv_msgs[2][1] =
-      {{{.rank=(my_rank+1)%3, .datatype=MPI_INT}},
-       {{.rank=(my_rank+2)%3, .datatype=MPI_INT}}};
-
-    Xt_exchanger exchanger = exchanger_new(nsend, nrecv, send_msgs[i],
-                                           recv_msgs[i], MPI_COMM_WORLD, 0);
-
-    // test
-
-    int src_data[1] = {my_rank};
-    int dst_data[1] = {-1};
-
-    xt_exchanger_s_exchange(exchanger, (void*)(src_data), (void*)(dst_data));
-
-    if (dst_data[0] != (my_rank+1+i)%3) PUT_ERR("invalid data\n");
-
-    // cleanup
-
-    xt_exchanger_delete(exchanger);
-  }
+  test_rr(MPI_COMM_WORLD, exchanger_new);
 
   xt_finalize();
   MPI_Finalize();
@@ -417,6 +390,41 @@ test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new)
   free(dst_data);
   free(recv_msgs);
   free(send_msgs);
+}
+
+static void
+test_rr(MPI_Comm comm, exchanger_new_func exchanger_new)
+{
+  int my_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  // round robin pattern
+  for (int i = 1; i < comm_size; ++i) {
+
+    // setup
+    enum { nsend = 1, nrecv = 1 };
+    struct Xt_redist_msg send_msgs[nsend]
+      = {{.rank=(my_rank + i)%comm_size, .datatype=MPI_INT}};
+    struct Xt_redist_msg recv_msgs[nrecv]
+      = {{.rank=(my_rank + comm_size - i)%comm_size, .datatype=MPI_INT}};
+
+    Xt_exchanger exchanger = exchanger_new(nsend, nrecv, send_msgs,
+                                           recv_msgs, comm, 0);
+
+    // test
+
+    int src_data[1] = {my_rank};
+    int dst_data[1] = {-1};
+
+    xt_exchanger_s_exchange(exchanger, src_data, dst_data);
+
+    if (dst_data[0] != (my_rank + comm_size - i)%comm_size)
+      PUT_ERR("invalid data\n");
+
+    // cleanup
+
+    xt_exchanger_delete(exchanger);
+  }
 }
 
 /*
