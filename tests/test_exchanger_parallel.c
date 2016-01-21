@@ -297,9 +297,8 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
 
     // test
     int src_data[1] = {(my_rank+comm_size-i)%comm_size};
-    if (my_rank == i)
-      for (size_t j = 0; j < 2 * (size_t)nrecv; ++j)
-        dst_data[j] = -1;
+    for (size_t j = 0; j < 2 * (size_t)nrecv; ++j)
+      dst_data[j] = -1;
 
     for (size_t j = 0; j < num_exchanges; ++j)
       xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * (size_t)nrecv);
