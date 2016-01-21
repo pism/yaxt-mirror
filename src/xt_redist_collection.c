@@ -132,7 +132,7 @@ static void copy_component_dt(struct redist_collection_msg ** msgs, int * nmsgs,
                               MPI_Comm comm,
                               MPI_Datatype (*get_MPI_datatype)(Xt_redist,int))
 {
-  size_t msgs_array_size = 0;
+  size_t msgs_array_size = 0, dt_array_size = 0;
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
@@ -141,6 +141,7 @@ static void copy_component_dt(struct redist_collection_msg ** msgs, int * nmsgs,
   assert(*nmsgs >= 0);
   size_t num_messages = (size_t)*nmsgs;
   struct redist_collection_msg *p = *msgs;
+  MPI_Datatype *dt = NULL;
 
   for (int i = 0; i < comm_size; ++i) {
 
@@ -153,16 +154,18 @@ static void copy_component_dt(struct redist_collection_msg ** msgs, int * nmsgs,
     if (flag) {
 
         ENSURE_ARRAY_SIZE(p, msgs_array_size, num_messages+1);
+        if (dt_array_size < num_messages + 1)
+          dt = xrealloc(dt, (dt_array_size = num_messages+1)
+                        * (size_t)num_redists * sizeof (*dt));
 
         p[num_messages].rank = i;
-        p[num_messages].component_dt = xmalloc((size_t)num_redists *
-          sizeof(*(p[num_messages].component_dt)));
-        memcpy(p[num_messages].component_dt, datatypes,
-               (size_t)num_redists * sizeof(*datatypes));
-
+        MPI_Datatype *dts_rank = dt + (size_t)num_redists * num_messages;
+        memcpy(dts_rank, datatypes, (size_t)num_redists * sizeof(*datatypes));
         ++num_messages;
     }
   }
+  for (size_t msg_idx = 0; msg_idx < num_messages; ++msg_idx)
+    p[msg_idx].component_dt = dt + (size_t)num_redists * msg_idx;
 
   if (num_messages > 0)
     p = xrealloc(p, num_messages * sizeof(**msgs));
@@ -460,8 +463,9 @@ free_redist_collection_msgs(struct redist_collection_msg * msgs,
     for (int j = 0; j < num_redists; ++j)
       if (msgs[i].component_dt[j] != MPI_DATATYPE_NULL)
         xt_mpi_call(MPI_Type_free(msgs[i].component_dt+j), comm);
-    free(msgs[i].component_dt);
   }
+  if (nmsgs)
+    free(msgs[0].component_dt);
   free(msgs);
 }
 
