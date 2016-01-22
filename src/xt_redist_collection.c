@@ -228,14 +228,13 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
 
   xt_redist_check_comms(redists, num_redists, comm);
 
-  copy_component_dt(&(redist_coll->send_msgs), &(redist_coll->nsrc), redists,
+  copy_component_dt(&redist_coll->send_msgs, &redist_coll->nsrc, redists,
                     num_redists_, redist_coll->comm,
                     xt_redist_get_send_MPI_Datatype);
-  copy_component_dt(&(redist_coll->recv_msgs), &(redist_coll->ndst), redists,
+  copy_component_dt(&redist_coll->recv_msgs, &redist_coll->ndst, redists,
                     num_redists_, redist_coll->comm,
                     xt_redist_get_recv_MPI_Datatype);
-
-  init_cache(&redist_coll->cache, (size_t)redist_coll->cache_size,
+  init_cache(&redist_coll->cache, redist_coll->cache_size,
              (size_t)redist_coll->nsrc + (size_t)redist_coll->ndst,
              num_redists_);
 
