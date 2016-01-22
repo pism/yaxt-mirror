@@ -72,8 +72,8 @@ dnl automate flag elicitation for cfortran.h
 AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
   [AC_REQUIRE([AC_CANONICAL_HOST])
    _AC_FORTRAN_ASSERT
-   AC_LANG_CASE([Fortran],[save_FC=$FC ; acx_FC=$FC],
-     [Fortran 77],[save_F77=$F77 ; acx_FC=$F77])
+   AC_LANG_CASE([Fortran],[acx_FC=$FC],
+     [Fortran 77],[acx_FC=$F77])
    AS_CASE([$host],
      [x86_64-*-linux-*|i*86-*-linux-*|*-apple-darwin*|ia64-*-linux-*|x86_64-*-freebsd*|i*86-*-freebsd*],
      [acx_temp=`$acx_FC -V 2>&1`
