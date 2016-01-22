@@ -64,6 +64,9 @@ test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 static Xt_xmap
 build_odd_selection_xmap(int src_num_indices);
 
+static void
+test_displacement_variations(void);
+
 
 int main(void) {
 
@@ -122,72 +125,7 @@ int main(void) {
   // set up data
   test_repeated_redist(0);
 
-  { // test with one redist used three times (with different input
-    // data displacements until the cache is full)
-    // set up data
-    enum { nvalues = 5, nselect = 3 };
-    Xt_xmap xmap = build_odd_selection_xmap(nvalues);
-
-    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
-
-    xt_xmap_delete(xmap);
-
-    // generate redist_collection
-
-    enum { num_redists = 3 };
-    Xt_redist redists[num_redists] = {redist, redist, redist};
-
-    Xt_redist redist_coll
-      = xt_redist_collection_new(redists, num_redists, -1, MPI_COMM_WORLD);
-
-    // test communicator of redist
-
-    if (!test_communicator(xt_redist_get_MPI_Comm(redist_coll), MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-    xt_redist_delete(redist);
-
-    static const double src_data[num_redists][5]
-      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-    double dst_data[num_redists][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
-
-    const size_t cache_size = 16;
-
-    double *src_data_ = malloc((5 + cache_size + 2) * sizeof(*src_data_)),
-      *dst_data_ = malloc((num_redists + cache_size + 2) * sizeof(*dst_data_));
-    if (!src_data_ || !dst_data_) {
-      perror("failed allocation of temporaries");
-      abort();
-    }
-    const void *src_data_p[num_redists] = {src_data[0],src_data[1],NULL};
-    void *dst_data_p[num_redists] = {dst_data[0],dst_data[1],NULL};
-
-    // test exchange
-    for (size_t k = 0; k < cache_size + 2; ++k) {
-
-      memcpy(src_data_+k, src_data[2], 5 * sizeof(*src_data_));
-      memcpy(dst_data_+k, dst_data[2], 3 * sizeof(*dst_data_));
-
-      src_data_p[2] = src_data_+k;
-      dst_data_p[2] = dst_data_+k;
-
-      xt_redist_s_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
-
-      static const double ref_dst_data[num_redists][3]
-        = {{1,3,5},{6,8,10},{11,13,15}};
-
-      for (size_t i = 0; i < num_redists; ++i)
-        for (size_t j = 0; j < 3; ++j)
-          if (ref_dst_data[i][j] != ((double *)dst_data_p[i])[j])
-            PUT_ERR("error in xt_redist_s_exchange\n");
-    }
-
-    // clean up
-
-    free(src_data_);
-    free(dst_data_);
-    xt_redist_delete(redist_coll);
-  }
+  test_displacement_variations();
 
   xt_finalize();
   MPI_Finalize();
@@ -326,3 +264,75 @@ static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }
 
+static void
+test_displacement_variations(void)
+{
+  // test with one redist used three times (with different input
+  // data displacements until the cache is full)
+  // set up data
+  enum { nvalues = 5, nselect = 3 };
+  Xt_xmap xmap = build_odd_selection_xmap(nvalues);
+
+  Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+
+  xt_xmap_delete(xmap);
+
+  // generate redist_collection
+
+  enum { num_redists = 3 };
+  Xt_redist redists[num_redists] = {redist, redist, redist};
+
+  Xt_redist redist_coll
+    = xt_redist_collection_new(redists, num_redists, -1, MPI_COMM_WORLD);
+
+  // test communicator of redist
+
+  if (!test_communicator(xt_redist_get_MPI_Comm(redist_coll), MPI_COMM_WORLD))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+  xt_redist_delete(redist);
+
+  static const double src_data[num_redists][5]
+    = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+  double dst_data[num_redists][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
+
+  const size_t cache_size = 16;
+
+  double *src_data_ = malloc((5 + cache_size + 2) * sizeof(*src_data_)),
+    *dst_data_ = malloc((3 + cache_size + 2) * sizeof(*dst_data_));
+  if (!src_data_ || !dst_data_) {
+    perror("failed allocation of temporaries");
+    abort();
+  }
+  const void *src_data_p[num_redists] = {src_data[0],src_data[1],NULL};
+  void *dst_data_p[num_redists] = {dst_data[0],dst_data[1],NULL};
+
+  // test exchange
+  for (size_t k = 0; k < cache_size + 2; ++k) {
+
+    memcpy(src_data_+k, src_data[2], 5 * sizeof(*src_data_));
+    for (size_t i = 0; i < num_redists; ++i)
+      for (size_t j = 0; j < nselect; ++j)
+        dst_data[i][j] = -1;
+    memcpy(dst_data_+k, dst_data[2], 3 * sizeof(*dst_data_));
+
+    src_data_p[2] = src_data_+k;
+    dst_data_p[2] = dst_data_+k;
+
+    xt_redist_s_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
+
+    static const double ref_dst_data[num_redists][nselect]
+      = {{1,3,5},{6,8,10},{11,13,15}};
+
+    for (size_t i = 0; i < num_redists; ++i)
+      for (size_t j = 0; j < nselect; ++j)
+        if (ref_dst_data[i][j] != ((double *)dst_data_p[i])[j])
+          PUT_ERR("error in xt_redist_s_exchange\n");
+  }
+
+  // clean up
+
+  free(src_data_);
+  free(dst_data_);
+  xt_redist_delete(redist_coll);
+}
