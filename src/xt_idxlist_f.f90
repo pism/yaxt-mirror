@@ -280,7 +280,7 @@ CONTAINS
     INTEGER, INTENT(in) :: positions(*)
     INTEGER(xt_int_kind), INTENT(out) :: indices(*)
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
-    INTEGER(i2) :: num_pos
+    INTEGER(i2), INTENT(in) :: num_pos
     INTEGER :: num_subst
 
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
@@ -295,7 +295,7 @@ CONTAINS
     INTEGER, INTENT(in) :: positions(*)
     INTEGER(xt_int_kind), INTENT(out) :: indices(*)
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
-    INTEGER(i4) :: num_pos
+    INTEGER(i4), INTENT(in) :: num_pos
     INTEGER :: num_subst
 
     IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
@@ -315,7 +315,7 @@ CONTAINS
     INTEGER, INTENT(in) :: positions(*)
     INTEGER(xt_int_kind), INTENT(out) :: indices(*)
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
-    INTEGER(i8) :: num_pos
+    INTEGER(i8), INTENT(in) :: num_pos
     INTEGER :: num_subst
 
     IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
