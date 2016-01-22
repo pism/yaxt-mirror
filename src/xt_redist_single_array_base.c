@@ -100,9 +100,6 @@ struct Xt_redist_sab_ {
 
   int nsend, nrecv;
 
-  struct Xt_redist_msg * send_msgs;
-  struct Xt_redist_msg * recv_msgs;
-
   MPI_Comm comm;
   int tag_offset;
 };
@@ -123,9 +120,8 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
   redist->vtable = &redist_sab_vtable;
   redist->nsend = nsend;
   redist->nrecv = nrecv;
-  redist->send_msgs = send_msgs;
-  redist->recv_msgs = recv_msgs;
-
+  xt_redist_msgs_free((size_t)nsend, send_msgs, redist->comm);
+  xt_redist_msgs_free((size_t)nrecv, recv_msgs, redist->comm);
   return (Xt_redist)redist;
 }
 
@@ -142,10 +138,6 @@ redist_sab_delete(Xt_redist redist) {
 
   xt_exchanger_delete(redist_sab->exchanger);
 
-  xt_redist_msgs_free((size_t)redist_sab->nsend, redist_sab->send_msgs,
-                      redist_sab->comm);
-  xt_redist_msgs_free((size_t)redist_sab->nrecv, redist_sab->recv_msgs,
-                      redist_sab->comm);
 
   xt_mpi_comm_smart_dedup(&redist_sab->comm, redist_sab->tag_offset);
 
