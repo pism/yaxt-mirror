@@ -42,7 +42,7 @@ dnl Add -Dappendus to CPPFLAGS if the above applies.
 dnl
 AC_DEFUN([ACX_XLF_QEXTNAME_ADD_APPENDUS],
   [AS_CASE([$host],
-     [*-ibm-aix*],
+     [*-ibm-aix*|powerpc64-*-linux-*|powerpc-*-linux-*],
      [AC_MSG_CHECKING([if -Dappendus needs to be added to CPPFLAGS for cfortran.h])
       AS_IF([$CC -qversion 2>&1 | grep '^IBM XL C' >/dev/null],
         [acx_temp_qextname_f77flags=`echo "$FFLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
