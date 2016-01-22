@@ -243,6 +243,7 @@ CONTAINS
     DO k = 1, cache_size + 2
       src_data_(k:k+src_slice_len-1) = src_data(:,num_slice)
       dst_data_(k:k+dst_slice_len-1) = dst_data(:,num_slice)
+      dst_data = -1.0d0
 
       CALL xt_slice_c_loc(src_data_(k:k+src_slice_len-1), src_data_p(3))
       CALL xt_slice_c_loc(dst_data_(k:k+dst_slice_len-1), dst_data_p(3))
