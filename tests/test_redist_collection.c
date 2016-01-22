@@ -274,15 +274,15 @@ run_displacement_check(Xt_redist redist_coll)
     = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
   double dst_data[num_redists][nselect] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-  enum { cache_size = 16 };
+  enum { cache_size = 16, cache_overrun = 2 };
 
-  double src_data_[nvalues + cache_size + 2],
-    dst_data_[nselect + cache_size + 2];
+  double src_data_[nvalues + cache_size + cache_overrun],
+    dst_data_[nselect + cache_size + cache_overrun];
 
   const void *src_data_p[num_redists] = {src_data[0],src_data[1],NULL};
   void *dst_data_p[num_redists] = {dst_data[0],dst_data[1],NULL};
 
-  for (size_t k = 0; k < cache_size + 2; ++k) {
+  for (size_t k = 0; k < cache_size + cache_overrun; ++k) {
 
     memcpy(src_data_+k, src_data[2], 5 * sizeof(*src_data_));
     for (size_t i = 0; i < num_redists; ++i)

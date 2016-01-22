@@ -195,7 +195,7 @@ CONTAINS
   ! set up data
   SUBROUTINE test_displacement_variations
     INTEGER(xt_int_kind) :: i, j
-    INTEGER, PARAMETER :: cache_size = 16
+    INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
     INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
     INTEGER, PARAMETER :: src_slice_len = 5
     INTEGER, PARAMETER :: dst_slice_len &
@@ -231,8 +231,8 @@ CONTAINS
     dst_data = -1.0d0
 
 
-    ALLOCATE(src_data_(src_slice_len + cache_size + 2), &
-         dst_data_(dst_slice_len + cache_size + 2))
+    ALLOCATE(src_data_(src_slice_len + cache_size + cache_overrun), &
+         dst_data_(dst_slice_len + cache_size + cache_overrun))
 
     DO i = 1, num_slice - 1
       CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
@@ -240,7 +240,7 @@ CONTAINS
     END DO
 
     ! test exchange
-    DO k = 1, cache_size + 2
+    DO k = 1, cache_size + cache_overrun
       src_data_(k:k+src_slice_len-1) = src_data(:,num_slice)
       dst_data_(k:k+dst_slice_len-1) = dst_data(:,num_slice)
       dst_data = -1.0d0
