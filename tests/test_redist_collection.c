@@ -274,14 +274,11 @@ run_displacement_check(Xt_redist redist_coll)
     = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
   double dst_data[num_redists][nselect] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-  const size_t cache_size = 16;
+  enum { cache_size = 16 };
 
-  double *src_data_ = malloc((nvalues + cache_size + 2) * sizeof(*src_data_)),
-    *dst_data_ = malloc((nselect + cache_size + 2) * sizeof(*dst_data_));
-  if (!src_data_ || !dst_data_) {
-    perror("failed allocation of temporaries");
-    abort();
-  }
+  double src_data_[nvalues + cache_size + 2],
+    dst_data_[nselect + cache_size + 2];
+
   const void *src_data_p[num_redists] = {src_data[0],src_data[1],NULL};
   void *dst_data_p[num_redists] = {dst_data[0],dst_data[1],NULL};
 
@@ -306,9 +303,6 @@ run_displacement_check(Xt_redist redist_coll)
         if (ref_dst_data[i][j] != ((double *)dst_data_p[i])[j])
           PUT_ERR("error in xt_redist_s_exchange\n");
   }
-  // clean up
-  free(src_data_);
-  free(dst_data_);
 }
 
 
