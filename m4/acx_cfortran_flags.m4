@@ -98,6 +98,10 @@ dnl check if compiling with f2c bindings or with default bindings
         [acx_temp=`$acx_FC -v 2>&1` \
          && echo $acx_temp | grep '^f2c'],
         [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])])],
+     [powerpc64-*-linux-*|powerpc-*-linux-*],
+     [AS_IF([acx_temp=`$acx_FC -qversion 2>&1` \
+         && echo $acx_temp | grep '^IBM XL Fortran' >/dev/null],
+        [AS_VAR_SET([acx_cf_flag],[-DIBMR2Fortran])])],
      [*-ibm-aix*],
      [dnl xlc set _IBMR2 so nothing needs to be done
       AS_IF([$CC -qversion 2>&1 | grep '^IBM XL C' >/dev/null],,
