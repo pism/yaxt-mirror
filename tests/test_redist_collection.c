@@ -44,6 +44,8 @@
 #include <config.h>
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <mpi.h>
@@ -73,7 +75,8 @@ int main(void) {
 
   { // general test with one redist
     // set up data
-    Xt_xmap xmap = build_odd_selection_xmap(5);
+    enum { nvalues = 5, nselect = nvalues/2+(nvalues&1) };
+    Xt_xmap xmap = build_odd_selection_xmap(nvalues);
 
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
@@ -93,17 +96,14 @@ int main(void) {
 
     // test exchange
 
-    double src_data[] = {1,2,3,4,5};
-    double dst_data[] = {-1,-1,-1};
+    static const double src_data[nvalues] = {1,2,3,4,5};
+    double dst_data[nselect] = {-1,-1,-1};
 
-    double * src_data_p = &src_data[0];
-    double * dst_data_p = &dst_data[0];
+    xt_redist_s_exchange1(redist_coll, src_data, dst_data);
 
-    xt_redist_s_exchange1(redist_coll, src_data_p, dst_data_p);
+    static const double ref_dst_data[nselect] = {1,3,5};
 
-    double ref_dst_data[] = {1,3,5};
-
-    for (size_t i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
+    for (size_t i = 0; i < nselect; ++i)
       if (ref_dst_data[i] != dst_data[i])
         PUT_ERR("error in xt_redist_s_exchange\n");
 
@@ -125,7 +125,8 @@ int main(void) {
   { // test with one redist used three times (with different input
     // data displacements until the cache is full)
     // set up data
-    Xt_xmap xmap = build_odd_selection_xmap(5);
+    enum { nvalues = 5, nselect = 3 };
+    Xt_xmap xmap = build_odd_selection_xmap(nvalues);
 
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
@@ -133,10 +134,11 @@ int main(void) {
 
     // generate redist_collection
 
-    Xt_redist redist_coll;
-    Xt_redist redists[3] = {redist, redist, redist};
+    enum { num_redists = 3 };
+    Xt_redist redists[num_redists] = {redist, redist, redist};
 
-    redist_coll = xt_redist_collection_new(redists, 3, -1, MPI_COMM_WORLD);
+    Xt_redist redist_coll
+      = xt_redist_collection_new(redists, num_redists, -1, MPI_COMM_WORLD);
 
     // test communicator of redist
 
@@ -145,18 +147,20 @@ int main(void) {
 
     xt_redist_delete(redist);
 
-    double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-    double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
+    static const double src_data[num_redists][5]
+      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+    double dst_data[num_redists][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
     const size_t cache_size = 16;
 
-    double * src_data_, * dst_data_;
-
-    src_data_ = malloc((5 + cache_size + 2) * sizeof(*src_data_));
-    dst_data_ = malloc((3 + cache_size + 2) * sizeof(*dst_data_));
-
-    const void *src_data_p[3] = {src_data[0],src_data[1],NULL};
-    void *dst_data_p[3] = {dst_data[0],dst_data[1],NULL};
+    double *src_data_ = malloc((5 + cache_size + 2) * sizeof(*src_data_)),
+      *dst_data_ = malloc((num_redists + cache_size + 2) * sizeof(*dst_data_));
+    if (!src_data_ || !dst_data_) {
+      perror("failed allocation of temporaries");
+      abort();
+    }
+    const void *src_data_p[num_redists] = {src_data[0],src_data[1],NULL};
+    void *dst_data_p[num_redists] = {dst_data[0],dst_data[1],NULL};
 
     // test exchange
     for (size_t k = 0; k < cache_size + 2; ++k) {
@@ -167,11 +171,12 @@ int main(void) {
       src_data_p[2] = src_data_+k;
       dst_data_p[2] = dst_data_+k;
 
-      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
+      xt_redist_s_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
 
-      double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+      static const double ref_dst_data[num_redists][3]
+        = {{1,3,5},{6,8,10},{11,13,15}};
 
-      for (size_t i = 0; i < 3; ++i)
+      for (size_t i = 0; i < num_redists; ++i)
         for (size_t j = 0; j < 3; ++j)
           if (ref_dst_data[i][j] != ((double *)dst_data_p[i])[j])
             PUT_ERR("error in xt_redist_s_exchange\n");
@@ -246,7 +251,8 @@ test_repeated_redist(int cache_size)
 
   // test exchange
   {
-    double src_data[3][5] = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+    static const double src_data[3][5]
+      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
     const void *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
