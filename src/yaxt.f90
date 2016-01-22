@@ -57,7 +57,8 @@ MODULE yaxt
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
-       xt_idxlist_pack, xt_idxlist_unpack, xt_idxlist_copy, &
+       xt_idxlist_pack => xt_idxlist_pack_f, &
+       xt_idxlist_unpack => xt_idxlist_unpack_f, xt_idxlist_copy, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &

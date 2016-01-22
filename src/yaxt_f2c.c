@@ -149,7 +149,7 @@ xt_idxlist_pack_f2c(struct xt_idxlist_f *idxlist, void *buffer,
                   comm_c);
 }
 
-FCALLSCSUB5(xt_idxlist_pack_f2c, XT_IDXLIST_PACK, xt_idxlist_pack,
+FCALLSCSUB5(xt_idxlist_pack_f2c, XT_IDXLIST_PACK_F, xt_idxlist_pack_f,
             PVOID, PVOID, INT, PINT, INT)
 
 static void
@@ -161,7 +161,7 @@ xt_idxlist_unpack_f2c(struct xt_idxlist_f *idxlist, void *buffer,
   idxlist->cptr = xt_idxlist_unpack(buffer, (int)buffer_size, position, comm_c);
 }
 
-FCALLSCSUB5(xt_idxlist_unpack_f2c, XT_IDXLIST_UNPACK, xt_idxlist_unpack,
+FCALLSCSUB5(xt_idxlist_unpack_f2c, XT_IDXLIST_UNPACK_F, xt_idxlist_unpack_f,
             PVOID, PVOID, INT, PINT, INT)
 
 Xt_xmap xt_xmap_all2all_new_f(struct xt_idxlist_f *src_idxlist_f,

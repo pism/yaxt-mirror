@@ -83,23 +83,23 @@ MODULE xt_idxlist_abstract
     END FUNCTION xt_idxlist_get_pack_size
 
   END INTERFACE
-  ! xt_idxlist_pack(type(xt_idxlist), intent(out) :: idxlist,
-  !                 type<*>, intent(inout) :: buffer, integer,
-  !                 intent(in) :: buffer_size,
-  !                 integer, intent(inout) :: position, integer,
-  !                 intent(in) :: comm)
-  EXTERNAL :: xt_idxlist_pack
+  ! xt_idxlist_pack_f(type(xt_idxlist), intent(out) :: idxlist,
+  !                  type<*>, intent(inout) :: buffer, integer,
+  !                  intent(in) :: buffer_size,
+  !                  integer, intent(inout) :: position, integer,
+  !                  intent(in) :: comm)
+  EXTERNAL :: xt_idxlist_pack_f
 
-  ! xt_idxlist_unpack(type(xt_idxlist), intent(out) :: idxlist,
-  !                   type<*>, intent(in) :: buffer,
-  !                   integer, intent(in) :: buffer_size,
-  !                   integer, intent(inout) :: position, integer,
-  !                   intent(in) :: comm)
-  EXTERNAL :: xt_idxlist_unpack
+  ! xt_idxlist_unpack_f(type(xt_idxlist), intent(out) :: idxlist,
+  !                     type<*>, intent(in) :: buffer,
+  !                     integer, intent(in) :: buffer_size,
+  !                     integer, intent(inout) :: position, integer,
+  !                     intent(in) :: comm)
+  EXTERNAL :: xt_idxlist_unpack_f
 
   PUBLIC :: xt_idxlist_delete, xt_idxlist_get_pack_size, &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_is_null, &
-       xt_idxlist_pack, xt_idxlist_unpack, xt_idxlist_copy, &
+       xt_idxlist_pack_f, xt_idxlist_unpack_f, xt_idxlist_copy, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &
