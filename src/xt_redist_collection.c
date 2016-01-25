@@ -67,6 +67,9 @@
 static void
 redist_collection_delete(Xt_redist redist);
 
+static Xt_redist
+redist_collection_copy(Xt_redist redist);
+
 static void
 redist_collection_s_exchange(Xt_redist redist, int num_src_arrays,
                              const void **src_data, void **dst_data);
@@ -85,6 +88,7 @@ static MPI_Comm
 redist_collection_get_MPI_Comm(Xt_redist redist);
 
 static const struct xt_redist_vtable redist_collection_vtable = {
+  .copy                  = redist_collection_copy,
   .delete                = redist_collection_delete,
   .s_exchange            = redist_collection_s_exchange,
   .s_exchange1           = redist_collection_s_exchange1,
@@ -454,6 +458,55 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
 
   if (redist_coll->cache_size == 0)
     xt_exchanger_delete(exchanger);
+}
+
+static void
+copy_msgs(size_t num_redists, unsigned nmsgs,
+          const struct redist_collection_msg *restrict msgs_orig,
+          struct redist_collection_msg **p_msgs_copy,
+          MPI_Comm comm)
+{
+  struct redist_collection_msg *restrict msgs_copy =
+    *p_msgs_copy = xmalloc(nmsgs * sizeof (*msgs_copy));
+  MPI_Datatype *restrict dt_copy
+    = xmalloc(nmsgs * num_redists * sizeof (*dt_copy));
+  for (size_t i = 0; i < nmsgs; ++i)
+  {
+    msgs_copy[i].rank = msgs_orig[i].rank;
+    msgs_copy[i].component_dt = dt_copy + i * num_redists;
+    for (size_t j = 0; j < num_redists; ++j)
+      if (msgs_orig[i].component_dt[j] != MPI_DATATYPE_NULL)
+        xt_mpi_call(MPI_Type_dup(msgs_orig[i].component_dt[j],
+                                 dt_copy + i * num_redists + j), comm);
+      else
+        dt_copy[i * num_redists + j] = MPI_DATATYPE_NULL;
+  }
+}
+
+static Xt_redist
+redist_collection_copy(Xt_redist redist)
+{
+  Xt_redist_collection redist_coll = xrc(redist),
+    redist_copy = xmalloc(sizeof (*redist_copy));
+  redist_copy->vtable = redist_coll->vtable;
+  unsigned num_redists = redist_coll->num_redists;
+  redist_copy->num_redists = num_redists;
+
+  MPI_Comm copy_comm = redist_copy->comm
+    = xt_mpi_comm_smart_dup(redist_coll->comm, &redist_copy->tag_offset);
+
+  unsigned nsrc = redist_coll->nsrc;
+  redist_copy->nsrc = nsrc;
+  copy_msgs(num_redists, nsrc, redist_coll->send_msgs, &redist_copy->send_msgs,
+            copy_comm);
+  unsigned ndst = redist_coll->ndst;
+  redist_copy->ndst = ndst;
+  copy_msgs(num_redists, ndst, redist_coll->recv_msgs, &redist_copy->recv_msgs,
+            copy_comm);
+  size_t cache_size = redist_coll->cache_size;
+  redist_copy->cache_size = cache_size;
+  init_cache(&redist_copy->cache, cache_size, (size_t)ndst + nsrc, num_redists);
+  return (Xt_redist)redist_copy;
 }
 
 static void

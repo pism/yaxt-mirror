@@ -54,7 +54,7 @@ PROGRAM test_redist_collection_parallel
        xt_idxsection_new, xt_idxlist_collection_new, xt_idxstripes_new, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
-       xt_redist_delete, xt_redist_s_exchange, &
+       xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
@@ -136,7 +136,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: index_vector_a(2*world_size**2), &
          index_vector_b(2*world_size**2)
     TYPE(xt_xmap) :: xmaps(num_tx)
-    TYPE(xt_redist) :: redists(num_tx), redist
+    TYPE(xt_redist) :: redists(num_tx), redist, redist_copy
     INTEGER :: i
 
     CALL build_idxlists(indices_a, indices_b, indices_all)
@@ -167,9 +167,12 @@ CONTAINS
     CALL xt_redist_delete(redists)
 
     CALL exchange_4redist(redist, index_vector_a, index_vector_b)
+    redist_copy = xt_redist_copy(redist)
+    CALL xt_redist_delete(redist)
+    CALL exchange_4redist(redist_copy, index_vector_a, index_vector_b)
 
     ! clean up
-    CALL xt_redist_delete(redist)
+    CALL xt_redist_delete(redist_copy)
   END SUBROUTINE test_4redist
 
   SUBROUTINE exchange_4redist(redist, index_vector_a, index_vector_b)
@@ -288,7 +291,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: src_indices_(5)
     INTEGER(xt_int_kind) :: i, temp, dst_indices_(5, 2)
     TYPE(xt_xmap) :: xmaps(2)
-    TYPE(xt_redist) :: redists(2), redist
+    TYPE(xt_redist) :: redists(2), redist, redist_copy
 
     DO i = 1_xi, 5_xi
       src_indices_(i) = INT(rank, xi) * 5_xi + (i - 1_xi)
@@ -323,8 +326,12 @@ CONTAINS
     CALL xt_redist_delete(redists)
 
     CALL rr_exchange(redist, src_indices_, dst_indices_)
-    ! clean up
+    redist_copy = xt_redist_copy(redist)
     CALL xt_redist_delete(redist)
+    CALL rr_exchange(redist_copy, src_indices_, dst_indices_)
+
+    ! clean up
+    CALL xt_redist_delete(redist_copy)
   END SUBROUTINE test_rr_exchange
 
   SUBROUTINE rr_exchange(redist, src_indices_, ref_dst_indices_)

@@ -66,6 +66,7 @@ struct Xt_redist_msg {
 
 struct xt_redist_vtable {
 
+  Xt_redist (*copy)(Xt_redist);
   void (*delete)(Xt_redist);
   void (*s_exchange)(Xt_redist, int, const void **, void **);
   void (*s_exchange1)(Xt_redist, const void *, void *);

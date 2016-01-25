@@ -56,6 +56,11 @@
 #include "core/ppm_xfuncs.h"
 #include "xt_redist_internal.h"
 
+Xt_redist xt_redist_copy(Xt_redist redist) {
+
+  return redist->vtable->copy(redist);
+}
+
 void xt_redist_delete(Xt_redist redist) {
 
   redist->vtable->delete(redist);

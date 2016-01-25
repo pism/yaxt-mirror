@@ -83,6 +83,7 @@ MODULE yaxt
   USE xt_xmap_intersection, ONLY: xt_xmap_intersection_new, &
        xt_xmap_intersection_ext_new, xt_com_list
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f, xt_redist_f2c, &
+       xt_redist_copy, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
@@ -128,7 +129,7 @@ MODULE yaxt
        xt_redist_p2p_off_new, xt_redist_p2p_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
        xt_offset_ext, xt_redist_p2p_ext_new, &
-       xt_redist_repeat_new, xt_redist_delete, &
+       xt_redist_repeat_new, xt_redist_copy, xt_redist_delete, &
        xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_get_mpi_comm, &
        xt_idxempty_new, xt_redist_collection_static_new, &

@@ -176,11 +176,15 @@ int main(void) {
 
       exchange_4redist(redist, MPI_COMM_WORLD,
                        index_vector[list_a], index_vector[list_b]);
+      Xt_redist redist_copy = xt_redist_copy(redist);
+      xt_redist_delete(redist);
+      exchange_4redist(redist_copy, MPI_COMM_WORLD,
+                       index_vector[list_a], index_vector[list_b]);
 
       // clean up
       for (size_t i = 0; i < 2; ++i)
         free(index_vector[i]);
-      xt_redist_delete(redist);
+      xt_redist_delete(redist_copy);
     }
 
     { // redist test with two redists that do a round robin exchange in
@@ -226,9 +230,13 @@ int main(void) {
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
 
       rr_exchange(redist, src_indices_, (const Xt_int (*)[5])dst_indices_);
-      // clean up
 
+      Xt_redist redist_copy = xt_redist_copy(redist);
       xt_redist_delete(redist);
+      rr_exchange(redist_copy, src_indices_, (const Xt_int (*)[5])dst_indices_);
+
+      // clean up
+      xt_redist_delete(redist_copy);
     }
   }
 

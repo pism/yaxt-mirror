@@ -54,8 +54,8 @@ PROGRAM test_redist_collection_static_parallel
        xt_idxsection_new, xt_idxlist_collection_new, xt_idxstripes_new, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_static_new, &
-       xt_redist_delete, xt_redist_s_exchange, xt_redist_s_exchange1, &
-       xt_idxlist_get_indices, xt_int_mpidt
+       xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
+       xt_redist_s_exchange1, xt_idxlist_get_indices, xt_int_mpidt
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
   INTEGER(xt_int_kind) :: dummy
@@ -136,7 +136,7 @@ CONTAINS
     INTEGER(xt_int_kind), POINTER :: index_vector_a(:), &
          index_vector_b(:), index_vector_all(:)
     TYPE(xt_xmap) :: xmaps(num_tx)
-    TYPE(xt_redist) :: redists(num_tx), redist
+    TYPE(xt_redist) :: redists(num_tx), redist, redist_copy
     INTEGER(xt_int_kind), TARGET :: dst(4*size**2 + 4*size**3)
     INTEGER(mpi_address_kind) :: src_displacements(num_tx), &
          dst_displacements(num_tx)
@@ -200,20 +200,23 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
-    CALL test_transpose_gather(redist, dst, src, size_a, size_b, size_all, &
+    CALL test_transpose_gather(redist, dst, size_a, size_b, size_all, &
          index_vector_a, index_vector_b, index_vector_all)
-    ! clean up
-
+    redist_copy = xt_redist_copy(redist)
     CALL xt_redist_delete(redist)
+    CALL test_transpose_gather(redist_copy, dst, size_a, size_b, size_all, &
+         index_vector_a, index_vector_b, index_vector_all)
+
+    ! clean up
+    CALL xt_redist_delete(redist_copy)
   END SUBROUTINE test_4redist
 
-  SUBROUTINE test_transpose_gather(redist, dst, src, size_a, size_b, &
+  SUBROUTINE test_transpose_gather(redist, dst, size_a, size_b, &
        size_all, index_vector_a, index_vector_b, index_vector_all)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER, INTENT(in) :: size_a, size_b, size_all
     INTEGER(xt_int_kind), TARGET, INTENT(inout) :: dst(size_b+size_a+2*size_all)
-    INTEGER(xt_int_kind), TARGET, INTENT(in) :: src(size_b+size_a+size_all), &
-         index_vector_a(size_a)
+    INTEGER(xt_int_kind), TARGET, INTENT(in) :: index_vector_a(size_a)
     INTEGER(xt_int_kind), INTENT(in) :: index_vector_b(size_b), &
          index_vector_all(size_all)
 

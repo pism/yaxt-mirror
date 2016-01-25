@@ -62,6 +62,9 @@
 #include "core/core.h"
 #include "xt_exchanger.h"
 
+static Xt_redist
+redist_sab_copy(Xt_redist redist);
+
 static void
 redist_sab_delete(Xt_redist redist);
 
@@ -82,6 +85,7 @@ static MPI_Comm
 redist_sab_get_MPI_Comm(Xt_redist redist);
 
 static const struct xt_redist_vtable redist_sab_vtable = {
+  .copy                  = redist_sab_copy,
   .delete                = redist_sab_delete,
   .s_exchange            = redist_sab_s_exchange,
   .s_exchange1           = redist_sab_s_exchange1,
@@ -129,6 +133,22 @@ static inline Xt_redist_sab
 xrsab(void *redist)
 {
   return (Xt_redist_sab)redist;
+}
+
+static Xt_redist
+redist_sab_copy(Xt_redist redist)
+{
+  Xt_redist_sab redist_sab = xrsab(redist);
+  Xt_redist_sab redist_sab_new = xmalloc(sizeof *redist_sab_new);
+  redist_sab_new->vtable = redist_sab->vtable;
+  redist_sab_new->nsend = redist_sab->nsend;
+  redist_sab_new->nrecv = redist_sab->nrecv;
+  redist_sab_new->comm = xt_mpi_comm_smart_dup(redist_sab->comm,
+                                               &redist_sab_new->tag_offset);
+  redist_sab_new->exchanger
+    = xt_exchanger_copy(redist_sab->exchanger, redist_sab_new->comm,
+                        redist_sab_new->tag_offset);
+  return (Xt_redist)redist_sab_new;
 }
 
 static void

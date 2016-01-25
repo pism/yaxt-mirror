@@ -60,6 +60,13 @@
 #include "xt/xt_core.h"
 
 /**
+ * redist copy constructor
+ *
+ * @param[in,out] redist redistribution structure
+ */
+Xt_redist xt_redist_copy(Xt_redist redist);
+
+/**
  * destructor
  *
  * @param[in,out] redist redistribution structure

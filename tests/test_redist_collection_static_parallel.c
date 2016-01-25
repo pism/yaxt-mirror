@@ -186,11 +186,14 @@ int main(void) {
 
       test_transpose_gather(redist, dst, src, size_a, size_b, size_all,
                             index_vector_a, index_vector_b);
-
+      Xt_redist redist_copy = xt_redist_copy(redist);
+      test_transpose_gather(redist_copy, dst, src, size_a, size_b, size_all,
+                            index_vector_a, index_vector_b);
       // clean up
       free(src);
       free(dst);
       xt_redist_delete(redist);
+      xt_redist_delete(redist_copy);
     }
 
     { // redist test with two redists that do a round robin exchange in

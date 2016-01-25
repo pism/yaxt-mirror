@@ -133,7 +133,7 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                      displacements, redist, num_repetitions, comm,
                      xt_redist_get_send_MPI_Datatype);
 
-  generate_msg_infos(&recv_msgs, &nrecv, dst_extent, 
+  generate_msg_infos(&recv_msgs, &nrecv, dst_extent,
                      displacements, redist, num_repetitions, comm,
                      xt_redist_get_recv_MPI_Datatype);
 

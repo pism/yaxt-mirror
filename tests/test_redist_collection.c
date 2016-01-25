@@ -110,8 +110,18 @@ int main(void) {
       if (ref_dst_data[i] != dst_data[i])
         PUT_ERR("error in xt_redist_s_exchange\n");
 
+    Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
+    for (size_t i = 0; i < nselect; ++i)
+      dst_data[i] = -1;
+
+    xt_redist_s_exchange1(redist_coll_copy, src_data, dst_data);
+
+    for (size_t i = 0; i < nselect; ++i)
+      if (ref_dst_data[i] != dst_data[i])
+        PUT_ERR("error in xt_redist_s_exchange\n");
     // clean up
 
+    xt_redist_delete(redist_coll_copy);
     xt_redist_delete(redist_coll);
   }
 
@@ -335,6 +345,10 @@ test_displacement_variations(void)
 
   // test exchange
   run_displacement_check(redist_coll);
+  Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
+  run_displacement_check(redist_coll_copy);
+
   // clean up
+  xt_redist_delete(redist_coll_copy);
   xt_redist_delete(redist_coll);
 }

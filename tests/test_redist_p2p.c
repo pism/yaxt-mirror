@@ -105,10 +105,13 @@ int main(void) {
     enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
     run_redist_test(redist, src_data, sizeof (src_data[0]), num_ref_values,
                     ref_dst_data);
-
+    Xt_redist redist_copy = xt_redist_copy(redist);
+    xt_redist_delete(redist);
+    run_redist_test(redist_copy, src_data, sizeof (src_data[0]), num_ref_values,
+                    ref_dst_data);
     // clean up
 
-    xt_redist_delete(redist);
+    xt_redist_delete(redist_copy);
     xt_xmap_delete(xmap);
     xt_idxlist_delete(src_idxlist);
     xt_idxlist_delete(dst_idxlist);
@@ -157,10 +160,13 @@ int main(void) {
     static const double ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
     run_redist_test(redist, src_data, sizeof (src_data[0]), dst_num,
                     ref_dst_data);
-
+    Xt_redist redist_copy = xt_redist_copy(redist);
+    xt_redist_delete(redist);
+    run_redist_test(redist_copy, src_data, sizeof (src_data[0]), dst_num,
+                    ref_dst_data);
     // clean up
 
-    xt_redist_delete(redist);
+    xt_redist_delete(redist_copy);
     xt_xmap_delete(xmap);
     xt_idxlist_delete(src_idxlist);
     xt_idxlist_delete(dst_idxlist);
@@ -206,10 +212,13 @@ int main(void) {
     static const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
     run_redist_test(redist, src_data, sizeof (src_data[0]), dst_num,
                     ref_dst_data);
+    Xt_redist redist_copy = xt_redist_copy(redist);
+    xt_redist_delete(redist);
+    run_redist_test(redist_copy, src_data, sizeof (src_data[0]), dst_num,
+                    ref_dst_data);
 
     // clean up
-
-    xt_redist_delete(redist);
+    xt_redist_delete(redist_copy);
     xt_xmap_delete(xmap);
     xt_idxlist_delete(src_idxlist);
     xt_idxlist_delete(dst_idxlist);

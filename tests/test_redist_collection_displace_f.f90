@@ -51,7 +51,7 @@ MODULE redist_collection_displace
   USE yaxt, ONLY: xt_int_kind, xi => xt_int_kind, &
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
-       xt_redist_delete, xt_redist_s_exchange, &
+       Xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_slice_c_loc
   USE test_redist_common, ONLY: build_odd_selection_xmap
   USE iso_c_binding, ONLY: c_ptr
@@ -69,7 +69,8 @@ CONTAINS
   ! set up data
   SUBROUTINE test_displacement_variations
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redists(num_slice)
+    TYPE(xt_redist) :: redist, redists(num_slice), redist_coll, &
+         redist_coll_copy
 
     xmap = build_odd_selection_xmap(src_slice_len)
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
@@ -85,9 +86,12 @@ CONTAINS
     CALL xt_redist_delete(redist)
 
     CALL run_displacement_check(redist_coll)
+    redist_coll_copy = xt_redist_copy(redist_coll)
+    CALL run_displacement_check(redist_coll_copy)
 
     ! clean up
     CALL xt_redist_delete(redist_coll)
+    CALL xt_redist_delete(redist_coll_copy)
   END SUBROUTINE test_displacement_variations
 
   SUBROUTINE run_displacement_check(redist_coll)

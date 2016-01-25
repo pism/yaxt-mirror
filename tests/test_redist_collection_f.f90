@@ -53,7 +53,8 @@ PROGRAM test_redist_collection
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
-       xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
+       xt_redist_delete, xt_redist_copy, &
+       xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_slice_c_loc
   USE test_redist_common, ONLY: build_odd_selection_xmap
   USE iso_c_binding, ONLY: c_loc, c_ptr
@@ -78,7 +79,7 @@ CONTAINS
     ! general test with one redist
     ! set up data
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redist_coll
+    TYPE(xt_redist) :: redist, redist_coll, redist_copy
     INTEGER, PARAMETER :: src_slice_len = 5, dst_slice_len = 3
     DOUBLE PRECISION, PARAMETER :: &
          ref_dst_data(dst_slice_len) = (/ 1.0d0, 3.0d0, 5.0d0 /), &
@@ -89,8 +90,10 @@ CONTAINS
     xmap = build_odd_selection_xmap(src_slice_len)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
-
     CALL xt_xmap_delete(xmap)
+    redist_copy = xt_redist_copy(redist)
+    CALL xt_redist_delete(redist)
+    redist = redist_copy
 
     ! generate redist_collection
     redist_coll = xt_redist_collection_new((/ redist /), 1, -1, mpi_comm_world)
@@ -177,21 +180,20 @@ CONTAINS
     INTEGER, PARAMETER :: num_slice = 3
     INTEGER, PARAMETER :: src_slice_len = 5
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redists(num_slice), redist_coll
+    TYPE(xt_redist) :: redists(num_slice), redist_coll, redist_coll_copy
 
     xmap = build_odd_selection_xmap(src_slice_len)
 
-    redist = xt_redist_p2p_new(xmap, mpi_double_precision)
+    redists = xt_redist_p2p_new(xmap, mpi_double_precision)
 
     CALL xt_xmap_delete(xmap)
 
     ! generate redist_collection
 
-    redists = redist
     redist_coll = xt_redist_collection_new(redists, 3, cache_size, &
          mpi_comm_world)
 
-    CALL xt_redist_delete(redist)
+    CALL xt_redist_delete(redists(1))
 
     ! test exchange
     CALL test_repeated_redist_ds1(redist_coll)
@@ -199,8 +201,18 @@ CONTAINS
     CALL test_repeated_redist_ds2(redist_coll)
     ! test exchange with original displacements
     CALL test_repeated_redist_ds1(redist_coll)
-    ! clean up
+
+    ! and the copy
+    redist_coll_copy = xt_redist_copy(redist_coll)
     CALL xt_redist_delete(redist_coll)
+    CALL test_repeated_redist_ds1(redist_coll_copy)
+    ! test exchange with changed displacements
+    CALL test_repeated_redist_ds2(redist_coll_copy)
+    ! test exchange with original displacements
+    CALL test_repeated_redist_ds1(redist_coll_copy)
+
+    ! clean up
+    CALL xt_redist_delete(redist_coll_copy)
   END SUBROUTINE test_repeated_redist
 
 END PROGRAM test_redist_collection

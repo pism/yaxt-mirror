@@ -137,7 +137,7 @@ MODULE xt_redist_base
     MODULE PROCEDURE xt_redist_p2p_ext_new_a1d_a1d
   END INTERFACE xt_redist_p2p_ext_new
 
-  PUBLIC :: xt_redist_c2f, xt_redist_f2c, xt_is_null, &
+  PUBLIC :: xt_redist_c2f, xt_redist_f2c, xt_is_null, xt_redist_copy, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
@@ -156,6 +156,19 @@ CONTAINS
     TYPE(xt_redist) :: p
     p%cptr = redist
   END FUNCTION xt_redist_c2f
+
+  FUNCTION xt_redist_copy(redist) RESULT(redist_copy)
+    TYPE(xt_redist), INTENT(in) :: redist
+    TYPE(xt_redist) :: redist_copy
+    INTERFACE
+      FUNCTION xt_redist_copy_c(redist) BIND(C, name='xt_redist_copy')
+        IMPORT:: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: redist
+        TYPE(c_ptr) :: xt_redist_copy_c
+      END FUNCTION xt_redist_copy_c
+    END INTERFACE
+    redist_copy%cptr = xt_redist_copy_c(redist%cptr)
+  END FUNCTION xt_redist_copy
 
   SUBROUTINE xt_redist_delete_1(redist)
     TYPE(xt_redist), INTENT(inout) :: redist
