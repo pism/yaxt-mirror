@@ -57,32 +57,19 @@ MODULE redist_collection_test_help
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
   PRIVATE
+  INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
+    INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
+    INTEGER, PARAMETER :: src_slice_len = 5
+    INTEGER, PARAMETER :: dst_slice_len &
+         = (src_slice_len + dst_step - 1)/dst_step
   PUBLIC :: test_displacement_variations
 CONTAINS
   ! test with one redist used three times (with different input
   ! data displacements until the cache is full)
   ! set up data
   SUBROUTINE test_displacement_variations
-    INTEGER(xt_int_kind) :: i, j
-    INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
-    INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
-    INTEGER, PARAMETER :: src_slice_len = 5
-    INTEGER, PARAMETER :: dst_slice_len &
-         = (src_slice_len + dst_step - 1)/dst_step
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redists(num_slice), redist_coll
-    DOUBLE PRECISION, TARGET, SAVE :: src_data(src_slice_len, num_slice) &
-         = RESHAPE((/ (DBLE(i), i = 1_xi, src_slice_len*num_slice) /), &
-         (/ INT(src_slice_len), INT(num_slice) /))
-    DOUBLE PRECISION, TARGET :: dst_data(dst_slice_len, num_slice)
-    DOUBLE PRECISION, TARGET, ALLOCATABLE :: src_data_(:), dst_data_(:)
-    TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
-    DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len, num_slice) = &
-         RESHAPE((/ ((DBLE(i + j * src_slice_len), &
-         &            i = 1_xi, src_slice_len, dst_step), &
-         &           j = 0_xi, num_slice - 1_xi) /), &
-         &       (/ INT(dst_slice_len), INT(num_slice) /))
-    INTEGER :: k
 
     xmap = build_odd_selection_xmap(src_slice_len)
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
@@ -96,6 +83,28 @@ CONTAINS
          cache_size, mpi_comm_world)
 
     CALL xt_redist_delete(redist)
+
+    CALL run_displacement_check(redist_coll)
+
+    ! clean up
+    CALL xt_redist_delete(redist_coll)
+  END SUBROUTINE test_displacement_variations
+
+  SUBROUTINE run_displacement_check(redist_coll)
+    TYPE(xt_redist), INTENT(in) :: redist_coll
+    INTEGER(xt_int_kind) :: i, j
+    INTEGER :: k
+    DOUBLE PRECISION, TARGET, SAVE :: src_data(src_slice_len, num_slice) &
+         = RESHAPE((/ (DBLE(i), i = 1_xi, src_slice_len*num_slice) /), &
+         (/ INT(src_slice_len), INT(num_slice) /))
+    DOUBLE PRECISION, TARGET :: dst_data(dst_slice_len, num_slice)
+    DOUBLE PRECISION, TARGET, ALLOCATABLE :: src_data_(:), dst_data_(:)
+    TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
+    DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len, num_slice) = &
+         RESHAPE((/ ((DBLE(i + j * src_slice_len), &
+         &            i = 1_xi, src_slice_len, dst_step), &
+         &           j = 0_xi, num_slice - 1_xi) /), &
+         &       (/ INT(dst_slice_len), INT(num_slice) /))
 
     dst_data = -1.0d0
 
@@ -127,10 +136,8 @@ CONTAINS
            __LINE__)
     END DO
 
-    ! clean up
     DEALLOCATE(src_data_, dst_data_)
-    CALL xt_redist_delete(redist_coll)
-  END SUBROUTINE test_displacement_variations
+  END SUBROUTINE run_displacement_check
 END MODULE redist_collection_test_help
 
 PROGRAM test_redist_collection
