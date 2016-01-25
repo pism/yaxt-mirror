@@ -117,7 +117,8 @@ test_idxstripes_SOURCES = test_idxstripes.c tests.h test_idxlist_utils.h
 test_idxstripes_f_SOURCES = test_idxstripes_f.f90
 test_idxstripes_f_LDADD = $(XT_FC_LDADD)
 test_redist_collection_SOURCES = test_redist_collection.c tests.h
-test_redist_collection_f_SOURCES = test_redist_collection_f.f90
+test_redist_collection_f_SOURCES = test_redist_collection_f.f90 \
+	test_redist_collection_displace_f.f90
 test_redist_collection_f_LDADD = $(XT_FC_LDADD)
 test_redist_collection_parallel_SOURCES = test_redist_collection_parallel.c \
 	tests.h
