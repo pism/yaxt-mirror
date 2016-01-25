@@ -98,7 +98,9 @@ CONTAINS
          = RESHAPE((/ (DBLE(i), i = 1_xi, src_slice_len*num_slice) /), &
          (/ INT(src_slice_len), INT(num_slice) /))
     DOUBLE PRECISION, TARGET :: dst_data(dst_slice_len, num_slice)
-    DOUBLE PRECISION, TARGET, ALLOCATABLE :: src_data_(:), dst_data_(:)
+    DOUBLE PRECISION, TARGET :: &
+         src_data_(src_slice_len + cache_size + cache_overrun), &
+         dst_data_(dst_slice_len + cache_size + cache_overrun)
     TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len, num_slice) = &
          RESHAPE((/ ((DBLE(i + j * src_slice_len), &
@@ -108,10 +110,6 @@ CONTAINS
 
     dst_data = -1.0d0
 
-
-    ALLOCATE(src_data_(src_slice_len + cache_size + cache_overrun), &
-         dst_data_(dst_slice_len + cache_size + cache_overrun))
-
     DO i = 1, num_slice - 1
       CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
       CALL xt_slice_c_loc(dst_data(:, i), dst_data_p(i))
@@ -120,7 +118,7 @@ CONTAINS
     ! test exchange
     DO k = 1, cache_size + cache_overrun
       src_data_(k:k+src_slice_len-1) = src_data(:,num_slice)
-      dst_data_(k:k+dst_slice_len-1) = dst_data(:,num_slice)
+      dst_data_(k:k+dst_slice_len-1) = -1.0d0
       dst_data = -1.0d0
 
       CALL xt_slice_c_loc(src_data_(k:k+src_slice_len-1), src_data_p(3))
@@ -135,9 +133,8 @@ CONTAINS
            __FILE__, &
            __LINE__)
     END DO
-
-    DEALLOCATE(src_data_, dst_data_)
   END SUBROUTINE run_displacement_check
+
 END MODULE redist_collection_test_help
 
 PROGRAM test_redist_collection
