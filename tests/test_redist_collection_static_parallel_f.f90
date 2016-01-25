@@ -132,16 +132,31 @@ CONTAINS
   SUBROUTINE test_4redist
     INTEGER, PARAMETER :: num_tx = 4
     TYPE(xt_idxlist) :: indices_a, indices_b, indices_all
-    INTEGER(xt_int_kind), TARGET :: index_vector_a(2*size**2), &
-         index_vector_b(2*size**2), index_vector_all(2*size**3)
+    INTEGER(xt_int_kind), TARGET :: src(4*size**2 + 2*size**3)
+    INTEGER(xt_int_kind), POINTER :: index_vector_a(:), &
+         index_vector_b(:), index_vector_all(:)
     TYPE(xt_xmap) :: xmaps(num_tx)
     TYPE(xt_redist) :: redists(num_tx), redist
-    INTEGER(xt_int_kind), TARGET :: results_1(2*size**2), &
-         results_2(2*size**2), results_3(2*size**3), results_4(2*size**3)
+    INTEGER(xt_int_kind), TARGET :: dst(4*size**2 + 4*size**3)
     TYPE(c_ptr) :: results(1), input(1)
     INTEGER(mpi_address_kind) :: src_displacements(num_tx), &
          dst_displacements(num_tx)
-    INTEGER :: i, ierror
+    INTEGER :: i, ierror, size_a, size_b, size_all
+    INTEGER(xt_int_kind), POINTER :: results_1(:), &
+         results_2(:), results_3(:), results_4(:)
+
+    size_a = 2 * size**2
+    size_b = 2 * size**2
+    size_all = 2 * size**3
+
+    index_vector_a => src(1:size_a)
+    index_vector_b => src(size_a+1:size_a+size_b)
+    index_vector_all => src(size_a+size_b+1:)
+
+    results_1 => dst(1:size_b)
+    results_2 => dst(size_b+1:size_b+size_a)
+    results_3 => dst(size_b+size_a+1:size_b+size_a+size_all)
+    results_4 => dst(size_b+size_a+size_all+1:size_b+size_a+2*size_all)
 
     CALL build_idxlists(indices_a, indices_b, indices_all)
 
@@ -186,8 +201,8 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
-    input(1) = C_LOC(index_vector_a)
-    results(1) = C_LOC(results_1)
+    input(1) = C_LOC(index_vector_a(1))
+    results(1) = C_LOC(results_1(1))
 
     CALL xt_redist_s_exchange(redist, 1, input, results)
 

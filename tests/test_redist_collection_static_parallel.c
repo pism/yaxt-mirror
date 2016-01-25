@@ -45,6 +45,7 @@
 #endif
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -112,12 +113,20 @@ int main(void) {
         indices_all = xt_idxstripes_new(&stripe, 1);
       }
 
-      Xt_int index_vector_a[2*size*size], index_vector_b[2*size*size],
-             index_vector_all[2*size*size*size];
+      size_t size_a = 2*(size_t)size*(size_t)size,
+        size_b = 2*(size_t)size*(size_t)size,
+        size_all = size_a * (size_t)size;
+      Xt_int *src = malloc(sizeof (*src) * (size_a + size_b + size_all));
+      Xt_int *index_vector_a = src, *index_vector_b = src + size_a;
+      /* Xt_int *index_vector_all = src + size_a + size_b; */
+      if (!src) {
+        perror("could not allocate exchange source temporary");
+        abort();
+      }
 
-      xt_idxlist_get_indices(indices_a, index_vector_a);
-      xt_idxlist_get_indices(indices_b, index_vector_b);
-      xt_idxlist_get_indices(indices_all, index_vector_all);
+      xt_idxlist_get_indices(indices_a, src);
+      xt_idxlist_get_indices(indices_b, src + size_a);
+      xt_idxlist_get_indices(indices_all, src + size_a + size_b);
 
       Xt_xmap xmaps[4] = {xt_xmap_all2all_new(indices_a, indices_b,
                                               MPI_COMM_WORLD),
@@ -138,18 +147,23 @@ int main(void) {
         xt_xmap_delete(xmaps[i]);
       }
 
-      Xt_int results_1[2*size*size], results_2[2*size*size];
-      Xt_int results_3[2*size*size*size], results_4[2*size*size*size];
+      Xt_int *dst = malloc(sizeof (*dst) * (size_a + size_b + 2 * size_all));
+      if (!dst) {
+        perror("could not allocate exchange results temporary");
+        abort();
+      }
+
+      Xt_int *results_1 = dst, *results_2 = dst + size_b,
+        *results_3 = dst + size_b + size_a,
+        *results_4 = dst + size_a + size_b + size_all;
 
       MPI_Aint src_displacements[4]
-        = {0, (MPI_Aint)((size_t)(index_vector_b-index_vector_a)
-                         * sizeof(Xt_int)),
-           0, (MPI_Aint)((size_t)(index_vector_b-index_vector_a)
-                         * sizeof(Xt_int))};
+        = {0, (MPI_Aint)(size_a * sizeof(Xt_int)),
+           0, (MPI_Aint)(size_a * sizeof(Xt_int))};
       MPI_Aint dst_displacements[4]
-        = {0, (MPI_Aint)((size_t)(results_2-results_1)*sizeof(Xt_int)),
-           (MPI_Aint)((size_t)(results_3-results_1)*sizeof(Xt_int)),
-           (MPI_Aint)((size_t)(results_4-results_1)*sizeof(Xt_int))};
+        = {0, (MPI_Aint)((size_t)(results_2 - results_1) * sizeof(Xt_int)),
+           (MPI_Aint)((size_t)(results_3 - results_1) * sizeof(Xt_int)),
+           (MPI_Aint)((size_t)(results_4 - results_1) * sizeof(Xt_int))};
 
       Xt_redist redist
         = xt_redist_collection_static_new(redists, 4, src_displacements,
@@ -163,28 +177,29 @@ int main(void) {
       for (size_t i = 0; i < 4; ++i)
         xt_redist_delete(redists[i]);
 
-      xt_redist_s_exchange1(redist, (void*)index_vector_a, (void*)results_1);
+      xt_redist_s_exchange1(redist, src, dst);
 
       // check results
 
-      for (int i = 0; i < 2*size*size; ++i)
+      for (size_t i = 0; i < size_b; ++i)
         if (results_1[i] != index_vector_b[i])
           PUT_ERR("error on xt_redist_s_exchange\n");
 
-      for (int i = 0; i < 2*size*size; ++i)
+      for (size_t i = 0; i < size_a; ++i)
         if (results_2[i] != index_vector_a[i])
           PUT_ERR("error on xt_redist_s_exchange\n");
 
-      for (int i = 0; i < 2*size*size*size; ++i)
-        if (results_3[i] != i)
+      for (size_t i = 0; i < size_all; ++i)
+        if (results_3[i] != (int)i)
           PUT_ERR("error on xt_redist_s_exchange\n");
 
-      for (int i = 0; i < 2*size*size*size; ++i)
-        if (results_4[i] != i)
+      for (size_t i = 0; i < size_all; ++i)
+        if (results_4[i] != (int)i)
           PUT_ERR("error on xt_redist_s_exchange\n");
 
       // clean up
-
+      free(src);
+      free(dst);
       xt_redist_delete(redist);
     }
 
