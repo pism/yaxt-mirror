@@ -47,6 +47,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <mpi.h>
 
@@ -55,6 +56,12 @@
 #include "tests.h"
 
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+static void
+test_transpose_gather(Xt_redist redist,
+                      Xt_int *dst, const Xt_int *src,
+                      size_t size_a, size_t size_b, size_t size_all,
+                      const Xt_int *index_vector_a,
+                      const Xt_int *index_vector_b);
 
 int main(void) {
 
@@ -177,25 +184,8 @@ int main(void) {
       for (size_t i = 0; i < 4; ++i)
         xt_redist_delete(redists[i]);
 
-      xt_redist_s_exchange1(redist, src, dst);
-
-      // check results
-
-      for (size_t i = 0; i < size_b; ++i)
-        if (results_1[i] != index_vector_b[i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
-
-      for (size_t i = 0; i < size_a; ++i)
-        if (results_2[i] != index_vector_a[i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
-
-      for (size_t i = 0; i < size_all; ++i)
-        if (results_3[i] != (int)i)
-          PUT_ERR("error on xt_redist_s_exchange\n");
-
-      for (size_t i = 0; i < size_all; ++i)
-        if (results_4[i] != (int)i)
-          PUT_ERR("error on xt_redist_s_exchange\n");
+      test_transpose_gather(redist, dst, src, size_a, size_b, size_all,
+                            index_vector_a, index_vector_b);
 
       // clean up
       free(src);
@@ -282,4 +272,34 @@ static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
   xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
 
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
+}
+
+static void
+test_transpose_gather(Xt_redist redist,
+                      Xt_int *dst, const Xt_int *src,
+                      size_t size_a, size_t size_b, size_t size_all,
+                      const Xt_int *index_vector_a,
+                      const Xt_int *index_vector_b)
+{
+  memset(dst, 0, size_b + size_a + 2 * size_all);
+  xt_redist_s_exchange1(redist, src, dst);
+  // check results
+  Xt_int *results_1 = dst, *results_2 = dst + size_b,
+    *results_3 = dst + size_b + size_a,
+    *results_4 = dst + size_a + size_b + size_all;
+  for (size_t i = 0; i < size_b; ++i)
+    if (results_1[i] != index_vector_b[i])
+      PUT_ERR("error on xt_redist_s_exchange\n");
+
+  for (size_t i = 0; i < size_a; ++i)
+    if (results_2[i] != index_vector_a[i])
+      PUT_ERR("error on xt_redist_s_exchange\n");
+
+  for (size_t i = 0; i < size_all; ++i)
+    if (results_3[i] != (int)i)
+      PUT_ERR("error on xt_redist_s_exchange\n");
+
+  for (size_t i = 0; i < size_all; ++i)
+    if (results_4[i] != (int)i)
+      PUT_ERR("error on xt_redist_s_exchange\n");
 }

@@ -138,7 +138,6 @@ CONTAINS
     TYPE(xt_xmap) :: xmaps(num_tx)
     TYPE(xt_redist) :: redists(num_tx), redist
     INTEGER(xt_int_kind), TARGET :: dst(4*size**2 + 4*size**3)
-    TYPE(c_ptr) :: results(1), input(1)
     INTEGER(mpi_address_kind) :: src_displacements(num_tx), &
          dst_displacements(num_tx)
     INTEGER :: i, ierror, size_a, size_b, size_all
@@ -201,6 +200,33 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
+    CALL test_transpose_gather(redist, dst, src, size_a, size_b, size_all, &
+         index_vector_a, index_vector_b, index_vector_all)
+    ! clean up
+
+    CALL xt_redist_delete(redist)
+  END SUBROUTINE test_4redist
+
+  SUBROUTINE test_transpose_gather(redist, dst, src, size_a, size_b, &
+       size_all, index_vector_a, index_vector_b, index_vector_all)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, INTENT(in) :: size_a, size_b, size_all
+    INTEGER(xt_int_kind), TARGET, INTENT(inout) :: dst(size_b+size_a+2*size_all)
+    INTEGER(xt_int_kind), TARGET, INTENT(in) :: src(size_b+size_a+size_all), &
+         index_vector_a(size_a)
+    INTEGER(xt_int_kind), INTENT(in) :: index_vector_b(size_b), &
+         index_vector_all(size_all)
+
+    INTEGER(xt_int_kind), POINTER :: results_1(:), &
+         results_2(:), results_3(:), results_4(:)
+    TYPE(c_ptr) :: results(1), input(1)
+
+    results_1 => dst(1:size_b)
+    results_2 => dst(size_b+1:size_b+size_a)
+    results_3 => dst(size_b+size_a+1:size_b+size_a+size_all)
+    results_4 => dst(size_b+size_a+size_all+1:size_b+size_a+2*size_all)
+
+    dst = 0
     input(1) = C_LOC(index_vector_a(1))
     results(1) = C_LOC(results_1(1))
 
@@ -227,10 +253,7 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    ! clean up
-
-    CALL xt_redist_delete(redist)
-  END SUBROUTINE test_4redist
+  END SUBROUTINE test_transpose_gather
 
   ! redist test with two redists that do a round robin exchange in
   ! different directions
