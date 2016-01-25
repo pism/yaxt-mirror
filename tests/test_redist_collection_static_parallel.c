@@ -132,13 +132,11 @@ int main(void) {
       xt_idxlist_delete(indices_b);
       xt_idxlist_delete(indices_all);
 
-      Xt_redist redists[4] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
-                              xt_redist_p2p_new(xmaps[1], Xt_int_dt),
-                              xt_redist_p2p_new(xmaps[2], Xt_int_dt),
-                              xt_redist_p2p_new(xmaps[3], Xt_int_dt)};
-
-      xt_xmap_delete(xmaps[0]), xt_xmap_delete(xmaps[1]);
-      xt_xmap_delete(xmaps[2]), xt_xmap_delete(xmaps[3]);
+      Xt_redist redists[4];
+      for (size_t i = 0; i < 4; ++i) {
+        redists[i] = xt_redist_p2p_new(xmaps[i], Xt_int_dt);
+        xt_xmap_delete(xmaps[i]);
+      }
 
       Xt_int results_1[2*size*size], results_2[2*size*size];
       Xt_int results_3[2*size*size*size], results_4[2*size*size*size];
@@ -162,8 +160,8 @@ int main(void) {
       if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-      xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
-      xt_redist_delete(redists[2]), xt_redist_delete(redists[3]);
+      for (size_t i = 0; i < 4; ++i)
+        xt_redist_delete(redists[i]);
 
       xt_redist_s_exchange1(redist, (void*)index_vector_a, (void*)results_1);
 
