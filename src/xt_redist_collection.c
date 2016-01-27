@@ -311,7 +311,7 @@ create_all_dt_for_dir(struct redist_collection_msg *msgs,
 }
 
 static void
-compute_displ(const void **data, unsigned num_redists,
+compute_displ(const void *const *data, unsigned num_redists,
               MPI_Aint displacements[num_redists],
               MPI_Comm comm)
 {
@@ -349,7 +349,7 @@ lookup_cache_index(unsigned num_redists,
 }
 
 static Xt_exchanger
-get_exchanger(const void ** src_data, void ** dst_data,
+get_exchanger(const void *const * src_data, void *const * dst_data,
               struct redist_collection_msg * send_msgs, unsigned num_send_messages,
               struct redist_collection_msg * recv_msgs, unsigned num_recv_messages,
               unsigned num_redists,
@@ -358,7 +358,7 @@ get_exchanger(const void ** src_data, void ** dst_data,
 {
   MPI_Aint displacements[2][num_redists];
   compute_displ(src_data, num_redists, displacements[0], comm);
-  compute_displ((const void **)dst_data, num_redists, displacements[1], comm);
+  compute_displ((const void *const *)dst_data, num_redists, displacements[1], comm);
 
   Xt_exchanger exchanger;
 
