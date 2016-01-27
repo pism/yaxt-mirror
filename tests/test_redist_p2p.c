@@ -47,8 +47,11 @@
 #include <config.h>
 #endif
 
-#include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <mpi.h>
 
 #include <yaxt.h>
@@ -56,6 +59,9 @@
 #include "tests.h"
 
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+static void
+run_redist_test(Xt_redist redist, const void *src_data, size_t elem_size,
+                size_t num_values, const void *restrict ref_values);
 
 int main(void) {
 
@@ -94,21 +100,11 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
-
     static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
-    double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                         -1,-1,-1};
-
-    const void *src_data_p = &src_data[0];
-    void *dst_data_p = &dst_data[0];
-
-    xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
-
     static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
-
-    for (size_t i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
-      if (ref_dst_data[i] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+    enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
+    run_redist_test(redist, src_data, sizeof (src_data[0]), num_ref_values,
+                    ref_dst_data);
 
     // clean up
 
@@ -157,21 +153,10 @@ int main(void) {
     // test exchange
 
     static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
-    double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-                         -1,-1,-1};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
-    assert(sizeof(dst_data)/sizeof(dst_data[0]) == dst_num);
-
-    const void *src_data_p = &src_data[0];
-    void *dst_data_p = &dst_data[0];
-
-    xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
-
-    static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
-
-    for (Xt_int i = 0; i < dst_num; ++i)
-      if (ref_dst_data[dst_pos[i]] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+    static const double ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
+    run_redist_test(redist, src_data, sizeof (src_data[0]), dst_num,
+                    ref_dst_data);
 
     // clean up
 
@@ -216,22 +201,11 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
-
     static const long src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
-    long dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
-    assert(sizeof(dst_data)/sizeof(dst_data[0]) == dst_num);
-
-    const void *src_data_p = &src_data[0];
-    void *dst_data_p = &dst_data[0];
-
-    xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
-
     static const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
-
-    for (Xt_int i = 0; i < dst_num; ++i)
-      if (ref_dst_data[i] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+    run_redist_test(redist, src_data, sizeof (src_data[0]), dst_num,
+                    ref_dst_data);
 
     // clean up
 
@@ -247,6 +221,27 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
+static void
+run_redist_test(Xt_redist redist, const void *src_data, size_t elem_size,
+                size_t num_values, const void *restrict ref_values)
+{
+  size_t dst_size = num_values * elem_size;
+  void *restrict dst_data = malloc(dst_size);
+  if (dst_size && !dst_data) {
+    perror("could not allocate destination buffer");
+    abort();
+  }
+  memset(dst_data, 0xff, dst_size);
+  const void *src_data_p[1] = { src_data };
+  void *dst_data_p[1] = { dst_data };
+  xt_redist_s_exchange(redist, 1, src_data_p, dst_data_p);
+  if (memcmp(ref_values, dst_data, dst_size))
+    PUT_ERR("error in xt_redist_s_exchange\n");
+
+  free(dst_data);
+}
+
+
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
 
   int result;
@@ -255,6 +250,7 @@ static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
 
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }
+
 /*
  * Local Variables:
  * c-basic-offset: 2

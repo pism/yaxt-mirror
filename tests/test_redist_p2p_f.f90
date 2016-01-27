@@ -79,8 +79,7 @@ PROGRAM test_redist_p2p_f
 CONTAINS
 
   SUBROUTINE test_without_offsets
-    INTEGER, PARAMETER :: src_num_indices = 14, dst_num_indices = 13, &
-         num_arr = 1
+    INTEGER, PARAMETER :: src_num_indices = 14, dst_num_indices = 13
     INTEGER(xt_int_kind), PARAMETER :: src_index_list(src_num_indices) &
          = (/  5_xi, 67_xi,  4_xi,  5_xi, 13_xi, &
          &     9_xi,  2_xi,  1_xi,  0_xi, 96_xi, &
@@ -90,18 +89,28 @@ CONTAINS
          &     5_xi,  4_xi,  5_xi,  4_xi,  3_xi, &
          &    13_xi,  2_xi,  1_xi /)
     INTEGER :: i
-    DOUBLE PRECISION, TARGET :: src_data(src_num_indices) = &
-         (/ (DBLE(i), i=0,13) /)
+#ifndef __PGI
+    DOUBLE PRECISION, PARAMETER :: src_data(src_num_indices) = &
+         (/ (DBLE(i), i=0,src_num_indices-1) /)
+#else
+    ! for PGI Fortran DBLE must be evaluated at run-time
+    DOUBLE PRECISION :: src_data(src_num_indices)
+#endif
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_num_indices) &
          = (/ 0.0d0,  2.0d0, 13.0d0,  9.0d0,  7.0d0, &
          &    0.0d0,  2.0d0,  0.0d0,  2.0d0, 13.0d0, &
          &    4.0d0,  6.0d0,  7.0d0 /)
 
-    DOUBLE PRECISION, TARGET :: dst_data(dst_num_indices)
+    DOUBLE PRECISION :: dst_data(dst_num_indices)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist
-    TYPE(c_ptr) :: src_data_p(num_arr), dst_data_p(num_arr)
+
+#ifdef __PGI
+    DO i = 1, src_num_indices
+      src_data(i) = DBLE(i - 1)
+    END DO
+#endif
 
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices)
 
@@ -121,17 +130,8 @@ CONTAINS
          __LINE__)
 
     ! test exchange
-    dst_data(:) = -1.0d0
-
-    src_data_p(1) = C_LOC(src_data)
-    dst_data_p(1) = C_LOC(dst_data)
-
-    CALL xt_redist_s_exchange(redist, num_arr, src_data_p, dst_data_p)
-
-    IF (ANY(ref_dst_data(:) /= dst_data(:))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    CALL double_ptra_exchange_check(redist, src_num_indices, src_data, &
+         dst_num_indices, dst_data, ref_dst_data)
 
     ! clean up
     CALL xt_redist_delete(redist)
@@ -139,6 +139,26 @@ CONTAINS
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END SUBROUTINE test_without_offsets
+
+  SUBROUTINE double_ptra_exchange_check(redist, src_num, src_data, &
+       dst_num, dst_data, ref_dst_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, INTENT(in) :: src_num, dst_num
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src_data(src_num)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(dst_num)
+    DOUBLE PRECISION, TARGET, INTENT(out) :: dst_data(dst_num)
+    INTEGER, PARAMETER :: num_arr = 1
+    TYPE(c_ptr) :: src_data_p(num_arr), dst_data_p(num_arr)
+
+    src_data_p(1) = C_LOC(src_data)
+    dst_data_p(1) = C_LOC(dst_data)
+    dst_data = -1.0d0
+    CALL xt_redist_s_exchange(redist, num_arr, src_data_p, dst_data_p)
+    IF (ANY(ref_dst_data(:) /= dst_data(:))) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE double_ptra_exchange_check
 
   SUBROUTINE test_with_offsets
     ! source index list
@@ -157,15 +177,24 @@ CONTAINS
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist
-    DOUBLE PRECISION, TARGET :: src_data(src_num) = &
-         (/ ( DBLE(i), i = 0, 13 ) /)
-    DOUBLE PRECISION, TARGET :: dst_data(dst_num)
-    TYPE(c_ptr) :: src_data_p, dst_data_p
+#ifndef __PGI
+    DOUBLE PRECISION, PARAMETER :: src_data(src_num) = &
+         (/ (DBLE(i), i=0,src_num-1) /)
+#else
+    ! for PGI Fortran DBLE must be evaluated at run-time
+    DOUBLE PRECISION :: src_data(src_num)
+#endif
+    DOUBLE PRECISION :: dst_data(dst_num)
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_num) = &
          (/  0.0d0,  2.0d0, 13.0d0,  9.0d0,  7.0d0, &
          &   0.0d0,  2.0d0,  0.0d0,  2.0d0, 13.0d0, &
          &   4.0d0,  6.0d0,  7.0d0 /)
 
+#ifdef __PGI
+    DO i = 1, src_num
+      src_data(i) = DBLE(i - 1)
+    END DO
+#endif
 
     src_idxlist = xt_idxvec_new(src_index_list)
 
@@ -184,18 +213,8 @@ CONTAINS
          __LINE__)
 
     ! test exchange
-    dst_data(:) = -1.0d0
-
-    src_data_p = C_LOC(src_data)
-    dst_data_p = C_LOC(dst_data)
-
-    CALL xt_redist_s_exchange1(redist, src_data_p, dst_data_p)
-
-
-    IF (ANY(ref_dst_data(dst_pos(:) + 1) /= dst_data(:))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    CALL double_exchange_check(redist, src_num, src_data, &
+         dst_num, dst_data, ref_dst_data(dst_num:1:-1))
 
     ! clean up
     CALL xt_redist_delete(redist)
@@ -203,6 +222,25 @@ CONTAINS
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END SUBROUTINE test_with_offsets
+
+  SUBROUTINE double_exchange_check(redist, src_num, src_data, &
+       dst_num, dst_data, ref_dst_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, INTENT(in) :: src_num, dst_num
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src_data(src_num)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(dst_num)
+    DOUBLE PRECISION, TARGET, INTENT(out) :: dst_data(dst_num)
+    TYPE(c_ptr) :: src_data_p, dst_data_p
+
+    src_data_p = C_LOC(src_data)
+    dst_data_p = C_LOC(dst_data)
+    dst_data = -1.0d0
+    CALL xt_redist_s_exchange1(redist, src_data_p, dst_data_p)
+    IF (ANY(ref_dst_data(:) /= dst_data(:))) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE double_exchange_check
 
   SUBROUTINE test_offset_extents
     ! source/destination index lists
@@ -215,10 +253,10 @@ CONTAINS
          (/  5_xi,  4_xi,  3_xi, 96_xi,  1_xi, &
          &   5_xi,  4_xi,  5_xi,  4_xi,  3_xi, &
          &  13_xi, 2_xi, 1_xi /)
-    INTEGER :: i
-    INTEGER(xt_int_kind), TARGET :: src_data(src_num) &
-         = (/ (INT(i, xi), i = 0, 13) /), dst_data(dst_num)
-    INTEGER(xt_int_kind), PARAMETER :: ref_dst_data(dst_num) = &
+    INTEGER(xt_int_kind) :: i
+    INTEGER(xt_int_kind) :: dst_data(dst_num)
+    INTEGER(xt_int_kind), PARAMETER :: src_data(src_num) &
+         = (/ (i, i = 0_xi, 13_xi) /), ref_dst_data(dst_num) = &
          (/  7_xi,  6_xi,  4_xi, 13_xi,  2_xi, &
          &   0_xi,  2_xi,  0_xi,  7_xi,  9_xi, &
          &  13_xi,  2_xi,  0_xi /)
@@ -228,7 +266,6 @@ CONTAINS
     TYPE(xt_offset_ext), PARAMETER :: &
          src_pos(1) = (/ xt_offset_ext(0, src_num, 1) /), &
          dst_pos(1) = (/ xt_offset_ext(dst_num - 1, dst_num, -1) /)
-    TYPE(c_ptr) :: src_data_p, dst_data_p
 
     src_idxlist = xt_idxvec_new(src_index_list)
     dst_idxlist = xt_idxvec_new(dst_index_list)
@@ -245,19 +282,10 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    dst_data(:) = -1_xi
-
     ! test exchange
-    src_data_p = C_LOC(src_data)
-    dst_data_p = C_LOC(dst_data)
+    CALL offset_extents_exchange_check(redist, src_num, src_data, &
+         dst_num, dst_data, ref_dst_data)
 
-    CALL xt_redist_s_exchange1(redist, src_data_p, dst_data_p)
-
-
-    IF (ANY(ref_dst_data(:) /= dst_data(:))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
 
     ! clean up
     CALL xt_redist_delete(redist)
@@ -265,6 +293,25 @@ CONTAINS
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END SUBROUTINE test_offset_extents
+
+  SUBROUTINE offset_extents_exchange_check(redist, src_num, src_data, &
+       dst_num, dst_data, ref_dst_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, INTENT(in) :: src_num, dst_num
+    INTEGER(xt_int_kind), TARGET, INTENT(in) :: src_data(src_num)
+    INTEGER(xt_int_kind), INTENT(in) :: ref_dst_data(dst_num)
+    INTEGER(xt_int_kind), TARGET, INTENT(out) :: dst_data(dst_num)
+    TYPE(c_ptr) :: src_data_p, dst_data_p
+
+    src_data_p = C_LOC(src_data)
+    dst_data_p = C_LOC(dst_data)
+    dst_data = -1_xi
+    CALL xt_redist_s_exchange(redist, src_data_p, dst_data_p)
+    IF (ANY(ref_dst_data(:) /= dst_data(:))) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE offset_extents_exchange_check
 
   FUNCTION test_communicator(comm1, comm2) RESULT(congruent)
     INTEGER, INTENT(in) :: comm1, comm2
