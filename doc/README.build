@@ -10,6 +10,7 @@ This README is divided into the following topics of increasing specificity.
 4.2 IBM AIX 6.1, POWER archictecture
 4.3 Redhat RHEL6 x86_64 with Intel MPI 4.1.3.049 and compilers 14.0.3
 4.4 Cray CCE
+4.5 IBM BlueGene/Q with xlc/xlf
 
 
 1. After checkout
@@ -184,3 +185,57 @@ $ ./configure CC=cc FC=ftn FCFLAGS= MPI_LAUNCH=$(pwd)/util/pbs_aprun \
   --host=x86_64-cray-linux-gnu --build=x86_64-unknown-linux-gnu \
   --disable-shared \
   build_alias=x86_64-unknown-linux-gnu host_alias=x86_64-cray-linux-gnu
+
+
+4.5 IBM BlueGene/Q with xlc/xlf
+
+On BlueGene similar considerations as for aprun on Cray machines are
+true for the runjob starter program: one must have reserved
+corresponding node resources before starting the job. Also command
+syntax is slightly different from mpirun so that a wrapper must be
+used (to be found in the util directory of the yaxt source). On
+systems that use IBM Tivoli Load Leveler for this purpose, one can run
+the configure and make check in jobs. The following job files where
+used on one system for this purpose:
+
+For configure:
+
+#! /bin/bash
+# @ job_name = yaxt-bgq-configure
+# @ comment = "YAXT requires having a working MPI-starter for configure and tests"
+# @ error = LOG.$(job_name).$(jobid).out
+# @ output = LOG.$(job_name).$(jobid).out
+# @ environment = COPY_ALL
+# @ wall_clock_limit = 00:15:00
+# @ notification = error
+# @ notify_user = some@valid.address.org
+# @ job_type = bluegene
+# @ bg_size = 32
+# @ queue
+
+exec ./configure \
+  --disable-shared \
+  FC=mpixlf2003_r \
+  FCFLAGS='-O2 -g -qarch=qp' \
+  CC="mpixlc_r -qlanglvl=extc99" \
+  CFLAGS='-O2 -g -qarch=qp' \
+  MPI_LAUNCH="$(readlink -f ./util/mpi_launch_bgrunjob)" \
+  LDFLAGS='-g'
+
+For make check:
+
+#! /bin/bash
+# @ job_name = yaxt-bgq-make-check
+# @ comment = "YAXT requires having a working MPI-starter for configure and tests"
+# @ error = LOG.$(job_name).$(jobid).out
+# @ output = LOG.$(job_name).$(jobid).out
+# @ environment = COPY_ALL
+# @ wall_clock_limit = 00:15:00
+# @ notification = error
+# @ notify_user = some@valid.address.org
+# @ job_type = bluegene
+# @ bg_size = 32
+# @ queue
+
+make check
+
