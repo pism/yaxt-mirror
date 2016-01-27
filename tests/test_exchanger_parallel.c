@@ -267,45 +267,45 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
 
     // setup
     int nsend = i != my_rank;
-    int nrecv = 0;
+    size_t nrecv = 0;
 
 
     struct Xt_redist_msg send_msgs[1] = {{.rank=i, .datatype=MPI_INT}};
     struct Xt_redist_msg *recv_msgs = NULL;
     if (my_rank == i) {
-      nrecv = comm_size - 1;
-      recv_msgs = malloc((size_t)nrecv * sizeof (*recv_msgs) * 2);
+      nrecv = (size_t)comm_size - 1;
+      recv_msgs = malloc(nrecv * sizeof (*recv_msgs) * 2);
       if (nrecv && !recv_msgs) {
         perror("Failed to allocate message meta-data");
         abort();
       }
-      for (size_t j = 0; j < (size_t)nrecv; ++j) {
+      for (size_t j = 0; j < nrecv; ++j) {
         recv_msgs[j].rank = (i + (int)j + 1)%comm_size;
         recv_msgs[j].datatype = dt_by_ofs[j];
 
-        recv_msgs[j + (size_t)nrecv].rank
+        recv_msgs[j + nrecv].rank
           = (comm_size - (int)j - 1 + i)%comm_size;
-        recv_msgs[j + (size_t)nrecv].datatype = dt_by_ofs[j];
+        recv_msgs[j + nrecv].datatype = dt_by_ofs[j];
       }
     }
 
     enum { exchange_fwd, exchange_rev, num_exchanges };
     Xt_exchanger exchanger[num_exchanges];
     for (size_t j = 0; j < num_exchanges; ++j)
-      exchanger[j] = exchanger_new(nsend, nrecv,
-                                   send_msgs, recv_msgs + j * (size_t)nrecv, comm, 0);
+      exchanger[j] = exchanger_new(nsend, (int)nrecv,
+                                   send_msgs, recv_msgs + j * nrecv, comm, 0);
 
     // test
     int src_data[1] = {(my_rank+comm_size-i)%comm_size};
-    for (size_t j = 0; j < 2 * (size_t)nrecv; ++j)
+    for (size_t j = 0; j < 2 * nrecv; ++j)
       dst_data[j] = -1;
 
     for (size_t j = 0; j < num_exchanges; ++j)
-      xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * (size_t)nrecv);
+      xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * nrecv);
 
-    for (size_t j = 0; j < (size_t)nrecv; ++j)
+    for (size_t j = 0; j < nrecv; ++j)
       if (((size_t)dst_data[j] != j + 1)
-          || (dst_data[(size_t)nrecv + j] != comm_size - (int)j - 1))
+          || (dst_data[nrecv + j] != comm_size - (int)j - 1))
         PUT_ERR("invalid data\n");
 
     // cleanup
