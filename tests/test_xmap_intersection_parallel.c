@@ -60,8 +60,8 @@
 struct test_message {
 
   int rank;       // rank of communication partner
-  const int *pos;   // positions to be sent/received
   int num_pos; // number of positions
+  const int *pos;   // positions to be sent/received
 };
 
 static void test_xmap(
