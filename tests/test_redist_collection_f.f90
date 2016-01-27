@@ -50,7 +50,7 @@ PROGRAM test_redist_collection
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
-  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xi => xt_int_kind, &
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
