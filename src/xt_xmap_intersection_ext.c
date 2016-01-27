@@ -889,10 +889,10 @@ remap_intersection(Xt_idxlist mypart_idxlist,
                    struct exchange_ext *resSet,
                    int single_match_only)
 {
-  struct Xt_stripe *restrict intersection_idxstripes;
+  struct Xt_stripe *intersection_idxstripes;
   int num_stripes;
   xt_idxlist_get_index_stripes(intersection,
-                               (struct Xt_stripe **)&intersection_idxstripes,
+                               &intersection_idxstripes,
                                &num_stripes);
   if (num_pos_updates)
     intersection_idxstripes
