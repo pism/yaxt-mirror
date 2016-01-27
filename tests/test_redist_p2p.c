@@ -69,31 +69,24 @@ int main(void) {
   {
     // source index list
     Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    int src_num_indices
-      = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    enum { src_num_indices
+           = sizeof(src_index_list) / sizeof(src_index_list[0]) };
 
-    Xt_idxlist src_idxlist;
-
-    src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     // destination index list
-    Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-    int dst_num_indices
-      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    static const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
+    enum { dst_num_indices
+           = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
 
-    Xt_idxlist dst_idxlist;
-
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     // xmap
-    Xt_xmap xmap;
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap
+      = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist;
-
-    redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
     // test communicator of redist
 
@@ -102,7 +95,7 @@ int main(void) {
 
     // test exchange
 
-    double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+    static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
                          -1,-1,-1};
 
@@ -111,11 +104,9 @@ int main(void) {
 
     xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
 
-    double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
+    static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
-    size_t i;
-
-    for (i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
+    for (size_t i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
       if (ref_dst_data[i] != dst_data[i])
         PUT_ERR("error in xt_redist_s_exchange\n");
 
@@ -130,23 +121,20 @@ int main(void) {
   // check offsets
   {
     // source index list
-    Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    static const Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
+    enum { src_num = sizeof(src_index_list) / sizeof(src_index_list[0]) };
 
     Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
 
     // destination index list
-    Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-    int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    static const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
+    enum { dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
 
-    Xt_idxlist dst_idxlist;
-
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
 
     // xmap
-    Xt_xmap xmap;
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap
+      = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p with offsets
 
@@ -158,8 +146,8 @@ int main(void) {
     for (int i = 0; i < dst_num; i++)
       dst_pos[i] = dst_num-1-i;
 
-    Xt_redist redist;
-    redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
+    Xt_redist redist
+      = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
 
     // test communicator of redist
 
@@ -168,7 +156,7 @@ int main(void) {
 
     // test exchange
 
-    const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+    static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     double dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
                          -1,-1,-1};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
@@ -179,7 +167,7 @@ int main(void) {
 
     xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
 
-    const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
+    static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
 
     for (Xt_int i = 0; i < dst_num; ++i)
       if (ref_dst_data[dst_pos[i]] != dst_data[i])
@@ -196,19 +184,20 @@ int main(void) {
   // check offset extents
   {
     // source index list
-    const Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    int src_num = sizeof(src_index_list) / sizeof(src_index_list[0]);
+    static const Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
+    enum { src_num = sizeof(src_index_list) / sizeof(src_index_list[0]) };
 
     Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
 
     // destination index list
-    const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-    int dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+    static const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
+    enum { dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
 
     Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
 
     // xmap
-    Xt_xmap xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap
+      = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p with extents of offsets
     struct Xt_offset_ext
@@ -228,7 +217,7 @@ int main(void) {
 
     // test exchange
 
-    const long src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+    static const long src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     long dst_data[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     assert(sizeof(dst_data)/sizeof(dst_data[0]) == dst_num);
@@ -238,7 +227,7 @@ int main(void) {
 
     xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
 
-    const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
+    static const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
 
     for (Xt_int i = 0; i < dst_num; ++i)
       if (ref_dst_data[i] != dst_data[i])
@@ -266,3 +255,12 @@ static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
 
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
