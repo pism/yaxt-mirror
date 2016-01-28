@@ -85,15 +85,7 @@ int main(void) {
         Xt_idxlist indices_a_[2];
 
         Xt_int start = 0;
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-#endif
-        assert((long long)size * size < XT_INT_MAX
-               && (long long)size * size < INT_MAX);
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic pop
-#endif
+        assert(size <= XT_INT_MAX / size && size <= INT_MAX / size);
         Xt_int global_size[2]
           = { (Xt_int)((Xt_int)2 * size), (Xt_int)((Xt_int)size * size) };
         int local_size[2] = { size, size };
@@ -121,15 +113,8 @@ int main(void) {
       }
 
       {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-#endif
-        assert((long long)2 * size * size * size <= XT_INT_MAX
-               && (long long)2 * size * size * size <= INT_MAX);
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic pop
-#endif
+        assert(2 <= XT_INT_MAX / size / size / size
+               && 2 <= INT_MAX / size / size / size);
         struct Xt_stripe stripe = { .start = 0, .stride = 1,
                                     .nstrides = 2*size*size*size };
 
