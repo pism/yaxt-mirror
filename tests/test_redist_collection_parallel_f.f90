@@ -133,12 +133,10 @@ CONTAINS
   SUBROUTINE test_4redist
     INTEGER, PARAMETER :: num_tx = 4
     TYPE(xt_idxlist) :: indices_a, indices_b, indices_all
-    INTEGER(xt_int_kind), TARGET :: index_vector_a(2*world_size**2), &
+    INTEGER(xt_int_kind) :: index_vector_a(2*world_size**2), &
          index_vector_b(2*world_size**2)
     TYPE(xt_xmap) :: xmaps(num_tx)
     TYPE(xt_redist) :: redists(num_tx), redist
-    INTEGER(xt_int_kind), POINTER :: results_1(:), &
-         results_2(:), results_3(:), results_4(:), temp(:)
     INTEGER :: i
 
     CALL build_idxlists(indices_a, indices_b, indices_all)
@@ -168,8 +166,38 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
-    ALLOCATE(results_1(2*world_size**2), &
-         results_2(2*world_size**2), results_3(2*world_size**3), results_4(2*world_size**3))
+    CALL exchange_4redist(redist, index_vector_a, index_vector_b)
+
+    ! clean up
+    CALL xt_redist_delete(redist)
+  END SUBROUTINE test_4redist
+
+  SUBROUTINE exchange_4redist(redist, index_vector_a, index_vector_b)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(xt_int_kind), INTENT(in) :: index_vector_a(2*world_size**2), &
+         index_vector_b(2*world_size**2)
+    INTEGER(xt_int_kind), TARGET, ALLOCATABLE :: buf(:)
+    INTEGER(xt_int_kind), POINTER :: results_1(:), &
+         results_2(:), results_3(:), results_4(:)
+    INTEGER :: result_sizes(4), buf_size, ofs
+    INTEGER, PARAMETER :: result_spacing(4) = (/ 2, 14, 5, 8 /)
+
+    result_sizes(1) = 2*world_size**2
+    result_sizes(2) = 2*world_size**2
+    result_sizes(3) = 2*world_size**3
+    result_sizes(4) = 2*world_size**3
+
+    buf_size = SUM(result_spacing) + SUM(result_sizes)
+    ALLOCATE(buf(buf_size))
+
+    ofs = result_spacing(1)
+    results_1 => buf(ofs+1:ofs+result_sizes(1))
+    ofs = ofs + result_sizes(1) + result_spacing(2)
+    results_2 => buf(ofs+1:ofs+result_sizes(2))
+    ofs = ofs + result_sizes(2) + result_spacing(3)
+    results_3 => buf(ofs+1:ofs+result_sizes(3))
+    ofs = ofs + result_sizes(3) + result_spacing(4)
+    results_4 => buf(ofs+1:ofs+result_sizes(4))
 
     CALL do_4redist(redist, index_vector_a, index_vector_b, &
          results_1, results_2, results_3, results_4)
@@ -179,9 +207,8 @@ CONTAINS
 
     ! shift addresses around
     IF (rank == 0) THEN
-      ALLOCATE(temp(SIZE(results_3)))
-      DEALLOCATE(results_3)
-      results_3 => temp
+      ofs = SUM(result_spacing(1:2)) + SUM(result_sizes(1:2))
+      results_3 => buf(ofs+1:ofs+result_sizes(3))
     END IF
 
     CALL do_4redist(redist, index_vector_a, index_vector_b, &
@@ -189,15 +216,13 @@ CONTAINS
 
     CALL check_4redist_results(results_1, results_2, results_3, results_4, &
        index_vector_a, index_vector_b)
-
     ! clean up
-    DEALLOCATE(results_1, results_2, results_3, results_4)
-    CALL xt_redist_delete(redist)
-  END SUBROUTINE test_4redist
+    DEALLOCATE(buf)
+  END SUBROUTINE exchange_4redist
 
   SUBROUTINE do_4redist(redist, index_vector_a, index_vector_b, &
        results_1, results_2, results_3, results_4)
-    TYPE(xt_redist), INTENT(inout) :: redist
+    TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(xt_int_kind), INTENT(in), TARGET :: &
          index_vector_a(*), index_vector_b(*)
     INTEGER(xt_int_kind), INTENT(inout), TARGET :: &

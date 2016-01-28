@@ -58,9 +58,14 @@
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 
 static void
-check_4redist_result(int size, void *results[4],
-                     const Xt_int *index_vector_a,
-                     const Xt_int *index_vector_b);
+exchange_4redist(Xt_redist redist, MPI_Comm comm,
+                 const Xt_int *index_vector_a, const Xt_int *index_vector_b);
+enum {
+  list_a = 0,
+  list_b = 1,
+  list_all = 2,
+};
+enum { num_redists = 4 };
 
 int main(void) {
 
@@ -121,12 +126,6 @@ int main(void) {
         indices_all = xt_idxstripes_new(&stripe, 1);
       }
 
-      enum
-      {
-        list_a = 0,
-        list_b = 1,
-        list_all = 2,
-      };
       const int list_sizes[3]
         = { 2*size*size, 2*size*size, 2 * size * size * size };
 
@@ -137,7 +136,7 @@ int main(void) {
       xt_idxlist_get_indices(indices_a, index_vector[list_a]);
       xt_idxlist_get_indices(indices_b, index_vector[list_b]);
 
-      Xt_xmap xmaps[4] = {xt_xmap_all2all_new(indices_a, indices_b,
+      Xt_xmap xmaps[num_redists] = {xt_xmap_all2all_new(indices_a, indices_b,
                                               MPI_COMM_WORLD),
                           xt_xmap_all2all_new(indices_b, indices_a,
                                               MPI_COMM_WORLD),
@@ -150,15 +149,15 @@ int main(void) {
       xt_idxlist_delete(indices_b);
       xt_idxlist_delete(indices_all);
 
-      Xt_redist redists[4] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
+      Xt_redist redists[num_redists] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
                               xt_redist_p2p_new(xmaps[1], Xt_int_dt),
                               xt_redist_p2p_new(xmaps[2], Xt_int_dt),
                               xt_redist_p2p_new(xmaps[3], Xt_int_dt)};
 
-      for (size_t i = 0; i < 4; ++i)
+      for (size_t i = 0; i < num_redists; ++i)
         xt_xmap_delete(xmaps[i]);
 
-      Xt_redist redist = xt_redist_collection_new(redists, 4, -1,
+      Xt_redist redist = xt_redist_collection_new(redists, num_redists, -1,
                                                   MPI_COMM_WORLD);
 
       // test communicator of redist
@@ -166,49 +165,14 @@ int main(void) {
       if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-      for (size_t i = 0; i < 4; ++i)
+
+      for (size_t i = 0; i < num_redists; ++i)
         xt_redist_delete(redists[i]);
 
-      enum { num_results = 4 };
-
-      const size_t result_sizes[num_results] =
-        { 2 * (size_t)size * (size_t)size,
-          2 * (size_t)size * (size_t)size,
-          2 * (size_t)size * (size_t)size * (size_t)size,
-          2 * (size_t)size * (size_t)size * (size_t)size };
-
-      void *results[num_results];
-      for (size_t i = 0; i < num_results; ++i)
-        results[i] = xmalloc(result_sizes[i] * sizeof (Xt_int));
-
-      const void *input[num_results]
-        = { index_vector[list_a], index_vector[list_b],
-            index_vector[list_a], index_vector[list_b] };
-
-      xt_redist_s_exchange(redist, num_results, input, results);
-
-      check_4redist_result(size, results, index_vector[list_a],
-                           index_vector[list_b]);
-
-      /*
-       * create another first buffer, to test successful
-       * adaptation to different addresses...
-       */
-      if (rank == 0)
-      {
-        void *temp = results[0];
-        results[0] = xmalloc(result_sizes[0] * sizeof(Xt_int));
-        free(temp);
-      }
-      /* ...and repeat exchange */
-      xt_redist_s_exchange(redist, num_results, input, results);
-
-      check_4redist_result(size, results, index_vector[list_a],
-                           index_vector[list_b]);
+      exchange_4redist(redist, MPI_COMM_WORLD,
+                       index_vector[list_a], index_vector[list_b]);
 
       // clean up
-      for (size_t i = 0; i < num_results; ++i)
-        free(results[i]);
       for (size_t i = 0; i < 2; ++i)
         free(index_vector[i]);
       xt_redist_delete(redist);
@@ -293,6 +257,58 @@ static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
 
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }
+
+
+static void
+check_4redist_result(int size, void *results[4],
+                     const Xt_int *index_vector_a,
+                     const Xt_int *index_vector_b);
+
+static void
+exchange_4redist(Xt_redist redist, MPI_Comm comm,
+                 const Xt_int *index_vector_a, const Xt_int *index_vector_b)
+{
+  int rank, size;
+  xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &size), comm);
+  const size_t result_sizes[num_redists] =
+    { 2 * (size_t)size * (size_t)size,
+      2 * (size_t)size * (size_t)size,
+      2 * (size_t)size * (size_t)size * (size_t)size,
+      2 * (size_t)size * (size_t)size * (size_t)size };
+  const size_t spacing[num_redists] = { 2, 14, 5, 8 };
+  size_t buf_size = 0;
+  for (size_t i = 0; i < num_redists; ++i)
+    buf_size += spacing[i] + result_sizes[i];
+  buf_size *= sizeof (Xt_int);
+  void *buf = xmalloc(buf_size);
+  unsigned char *temp = buf;
+  void *results[num_redists];
+  results[0] = (void *)(temp += spacing[0] * sizeof (Xt_int));
+  for (size_t i = 1; i < num_redists; ++i)
+    results[i] = (void *)(
+      temp += (result_sizes[i-1] + spacing[i]) * sizeof (Xt_int));
+
+  const void *input[num_redists]
+    = { index_vector_a, index_vector_b, index_vector_a, index_vector_b };
+
+  xt_redist_s_exchange(redist, num_redists, input, results);
+  check_4redist_result(size, results, index_vector_a,
+                       index_vector_b);
+  /*
+   * create another first buffer, to test successful
+   * adaptation to different addresses...
+   */
+  if (rank == 0)
+    results[0] = buf;
+
+  /* ...and repeat exchange */
+  xt_redist_s_exchange(redist, num_redists, input, results);
+
+  check_4redist_result(size, results, index_vector_a, index_vector_b);
+  free(buf);
+}
+
 
 static void
 check_4redist_result(int size, void *results[4],
