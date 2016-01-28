@@ -67,6 +67,11 @@ enum {
 };
 enum { num_redists = 4 };
 
+static void
+rr_exchange(Xt_redist redist,
+            const Xt_int src_indices_[5], const Xt_int dst_indices_[2][5]);
+
+
 int main(void) {
 
   // init mpi
@@ -220,23 +225,7 @@ int main(void) {
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
 
-      Xt_int results_1[5] = {-1,-1,-1,-1,-1}, results_2[5] = {-1,-1,-1,-1,-1};
-
-      void *results[2] = {results_1, results_2};
-
-      const void *input[2] = {src_indices_, src_indices_};
-
-      xt_redist_s_exchange(redist, 2, input, results);
-
-      // check results
-
-      for (int i = 0; i < 5; ++i) {
-        if (((Xt_int *)results[0])[i] != dst_indices_[0][i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
-        if (((Xt_int *)results[1])[i] != dst_indices_[1][i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
-      }
-
+      rr_exchange(redist, src_indices_, (const Xt_int (*)[5])dst_indices_);
       // clean up
 
       xt_redist_delete(redist);
@@ -330,4 +319,23 @@ check_4redist_result(int size, void *results[4],
   for (int i = 0; i < 2*size*size*size; ++i)
     if (((Xt_int *)results[3])[i] != i)
       PUT_ERR("error on xt_redist_s_exchange\n");
+}
+
+static void
+rr_exchange(Xt_redist redist,
+            const Xt_int src_indices_[5], const Xt_int dst_indices_[2][5])
+{
+  Xt_int results_[2][5] = { {-1,-1,-1,-1,-1}, {-1,-1,-1,-1,-1} };
+  void *results[2] = {results_[0], results_[1]};
+  const void *input[2] = {src_indices_, src_indices_};
+
+  xt_redist_s_exchange(redist, 2, input, results);
+
+  // check results
+  for (int i = 0; i < 5; ++i) {
+    if (results_[0][i] != dst_indices_[0][i])
+      PUT_ERR("error on xt_redist_s_exchange\n");
+    if (results_[1][i] != dst_indices_[1][i])
+      PUT_ERR("error on xt_redist_s_exchange\n");
+  }
 }

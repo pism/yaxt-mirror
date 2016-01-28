@@ -285,12 +285,10 @@ CONTAINS
   ! different directions
   SUBROUTINE test_rr_exchange
     TYPE(xt_idxlist) :: src_indices, dst_indices(2)
-    INTEGER(xt_int_kind), TARGET :: src_indices_(5)
+    INTEGER(xt_int_kind) :: src_indices_(5)
     INTEGER(xt_int_kind) :: i, temp, dst_indices_(5, 2)
     TYPE(xt_xmap) :: xmaps(2)
     TYPE(xt_redist) :: redists(2), redist
-    INTEGER(xt_int_kind), TARGET :: results_1(5), results_2(5)
-    TYPE(c_ptr) :: results(2), input(2)
 
     DO i = 1_xi, 5_xi
       src_indices_(i) = INT(rank, xi) * 5_xi + (i - 1_xi)
@@ -324,6 +322,20 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
+    CALL rr_exchange(redist, src_indices_, dst_indices_)
+    ! clean up
+    CALL xt_redist_delete(redist)
+  END SUBROUTINE test_rr_exchange
+
+  SUBROUTINE rr_exchange(redist, src_indices_, ref_dst_indices_)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(xt_int_kind), TARGET, INTENT(in) :: src_indices_(5)
+    INTEGER(xt_int_kind) :: ref_dst_indices_(5, 2)
+
+
+    INTEGER(xt_int_kind), TARGET :: results_1(5), results_2(5)
+    TYPE(c_ptr) :: results(2), input(2)
+
     results_1 = -1
     results_2 = -1
 
@@ -336,18 +348,15 @@ CONTAINS
     CALL xt_redist_s_exchange(redist, input, results)
 
     ! check results
-    IF (ANY(results_1(:) /= dst_indices_(:, 1))) &
+    IF (ANY(results_1(:) /= ref_dst_indices_(:, 1))) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
-    IF (ANY(results_2(:) /= dst_indices_(:, 2))) &
+    IF (ANY(results_2(:) /= ref_dst_indices_(:, 2))) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
-
-    ! clean up
-    CALL xt_redist_delete(redist)
-  END SUBROUTINE test_rr_exchange
+  END SUBROUTINE rr_exchange
 
 END PROGRAM test_redist_collection_parallel
 !
