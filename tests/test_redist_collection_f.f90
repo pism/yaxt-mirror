@@ -80,13 +80,11 @@ CONTAINS
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_coll
     INTEGER, PARAMETER :: src_slice_len = 5, dst_slice_len = 3
-    DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len) &
-         = (/ 1.0d0, 3.0d0, 5.0d0 /)
-    DOUBLE PRECISION, TARGET :: &
-         src_data(src_slice_len) = (/ 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0 /), &
-         dst_data(dst_slice_len)
+    DOUBLE PRECISION, PARAMETER :: &
+         ref_dst_data(dst_slice_len) = (/ 1.0d0, 3.0d0, 5.0d0 /), &
+         src_data(src_slice_len) = (/ 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0 /)
+    DOUBLE PRECISION :: dst_data(dst_slice_len)
 
-    dst_data = -1.0d0
 
     xmap = build_odd_selection_xmap(src_slice_len)
 
@@ -100,17 +98,30 @@ CONTAINS
     CALL xt_redist_delete(redist)
 
     ! test exchange
-    CALL xt_redist_s_exchange1(redist_coll, C_LOC(src_data), C_LOC(dst_data))
+    CALL simple_test_exchange(redist_coll, src_slice_len, src_data, &
+         dst_slice_len, dst_data, ref_dst_data)
 
+    ! clean up
+    CALL xt_redist_delete(redist_coll)
+  END SUBROUTINE simple_test
+
+  SUBROUTINE simple_test_exchange(redist, src_len, src_data, &
+       dst_len, dst_data, ref_dst_data)
+    TYPE(xt_redist) :: redist
+    INTEGER, INTENT(in) :: src_len, dst_len
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src_data(src_len)
+    DOUBLE PRECISION, TARGET, INTENT(out) :: dst_data(dst_len)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(dst_len)
+
+    dst_data = -1.0d0
+
+    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(dst_data))
 
     IF (ANY(ref_dst_data /= dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
-
-    ! clean up
-    CALL xt_redist_delete(redist_coll)
-  END SUBROUTINE simple_test
+  END SUBROUTINE simple_test_exchange
 
   SUBROUTINE test_repeated_redist_ds1(redist_coll)
     TYPE(xt_redist), INTENT(in) :: redist_coll
