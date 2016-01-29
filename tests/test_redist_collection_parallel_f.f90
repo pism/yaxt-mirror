@@ -96,7 +96,6 @@ PROGRAM test_redist_collection_parallel
   CALL finish_mpi
 CONTAINS
   SUBROUTINE build_idxlists(indices_a, indices_b, indices_all)
-    ! redist test with four different redists
     TYPE(xt_idxlist), INTENT(out) :: indices_a, indices_b, indices_all
 
     TYPE(xt_idxlist) :: indices_a_(2)
@@ -131,6 +130,7 @@ CONTAINS
   END SUBROUTINE build_idxlists
 
   SUBROUTINE test_4redist
+    ! redist test with four different redists
     INTEGER, PARAMETER :: num_tx = 4
     TYPE(xt_idxlist) :: indices_a, indices_b, indices_all
     INTEGER(xt_int_kind) :: index_vector_a(2*world_size**2), &
