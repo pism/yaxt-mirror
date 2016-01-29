@@ -53,6 +53,7 @@
 #include <yaxt.h>
 
 #include "tests.h"
+#include "test_redist_common.h"
 #include "core/ppm_xfuncs.h"
 
 static void
@@ -61,8 +62,6 @@ test_repeated_redist(int cache_size);
 static int
 test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 
-static Xt_xmap
-build_odd_selection_xmap(int src_num_indices);
 
 static void
 test_displacement_variations(void);
@@ -142,37 +141,6 @@ int main(void) {
 
   return TEST_EXIT_CODE;
 }
-
-enum {
-  selection_stride = 2,
-};
-
-/*
- * build xmap for destination list containing all odd elements of
- * source list dimensioned 1 to src_slice_len
- */
-static Xt_xmap
-build_odd_selection_xmap(int src_num_indices)
-{
-  if (src_num_indices < 0)
-    PUT_ERR("error: src_num_indices < 0");
-  Xt_int *index_list = xmalloc((size_t)src_num_indices
-                               * sizeof (index_list[0]));
-  for (Xt_int i = 0; i < src_num_indices; ++i)
-    index_list[i] = (Xt_int)(i + 1);
-  Xt_idxlist src_idxlist = xt_idxvec_new(index_list, src_num_indices);
-  int dst_num_indices
-    = (int)((src_num_indices + selection_stride - 1) / selection_stride);
-  for (int i = 0; i < dst_num_indices; ++i)
-    index_list[i] = (Xt_int)(i * selection_stride + 1);
-  Xt_idxlist dst_idxlist = xt_idxvec_new(index_list, dst_num_indices);
-  free(index_list);
-  Xt_xmap xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-  xt_idxlist_delete(src_idxlist);
-  xt_idxlist_delete(dst_idxlist);
-  return xmap;
-}
-
 
 static void
 test_repeated_redist(int cache_size)
@@ -352,3 +320,13 @@ test_displacement_variations(void)
   xt_redist_delete(redist_coll_copy);
   xt_redist_delete(redist_coll);
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
