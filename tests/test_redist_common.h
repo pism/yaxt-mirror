@@ -55,6 +55,10 @@
 Xt_xmap
 build_odd_selection_xmap(int src_num_indices);
 
+void
+check_redist(Xt_redist redist, const void *src,
+             size_t dst_size, void *dst, const void *ref_dst_data);
+
 #endif
 /*
  * Local Variables:

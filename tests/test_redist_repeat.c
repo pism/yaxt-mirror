@@ -58,6 +58,7 @@
 
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 
+
 int main(void) {
 
   // init mpi
@@ -93,18 +94,12 @@ int main(void) {
     xt_redist_delete(redist);
 
     // test exchange
-    xt_redist_s_exchange1(redist_repeat, (void*)src_data, (void*)dst_data);
-
     static const double ref_dst_data[] = {1,3,5};
 
-    size_t i;
-
-    for (i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
-      if (ref_dst_data[i] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+    check_redist(redist_repeat, src_data,
+                 sizeof(dst_data), dst_data, ref_dst_data);
 
     // clean up
-
     xt_redist_delete(redist_repeat);
   }
 
@@ -145,31 +140,20 @@ int main(void) {
         for (size_t i = 0; i < dst_slice_len; ++i)
           dst_data[j][i] = -1.0;
 
-      xt_redist_s_exchange1(redist_repeat, src_data, dst_data);
-
       static const double ref_dst_data[num_repetitions][dst_slice_len]
         = {{1,3,5},{6,8,10},{11,13,15}};
-
-      for (size_t i = 0; i < num_repetitions; ++i)
-        for (size_t j = 0; j < dst_slice_len; ++j)
-          if (ref_dst_data[i][j] != dst_data[i][j])
-            PUT_ERR("error in xt_redist_s_exchange\n");
+      check_redist(redist_repeat, src_data,
+                   sizeof (dst_data), dst_data, ref_dst_data);
     }
 
     {
       for (size_t j = 0; j < num_repetitions; ++j)
         for (size_t i = 0; i < dst_slice_len; ++i)
           dst_data[j][i] = -1.0;
-
-      xt_redist_s_exchange1(redist_repeat, src_data, dst_data);
-
       static const double ref_dst_data[num_repetitions][dst_slice_len]
         = {{1,3,5},{6,8,10},{11,13,15}};
-
-      for (size_t i = 0; i < num_repetitions; ++i)
-        for (size_t j = 0; j < dst_slice_len; ++j)
-          if (ref_dst_data[i][j] != dst_data[i][j])
-            PUT_ERR("error in xt_redist_s_exchange\n");
+      check_redist(redist_repeat, src_data,
+                   sizeof (dst_data), dst_data, ref_dst_data);
     }
 
     // clean up
@@ -203,18 +187,10 @@ int main(void) {
         = {{1,2,3,4,5},{-1},{6,7,8,9,10},{-1},{11,12,13,14,15}};
       double dst_data[5][3]
         = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
-
-      xt_redist_s_exchange1(redist_repeat, src_data, dst_data);
-
       static const double ref_dst_data[5][3]
         = {{1,3,5},{-1,-1,-1},{6,8,10},{-1,-1,-1},{11,13,15}};
-
-      int i, j;
-
-      for (i = 0; i < 5; ++i)
-        for (j = 0; j < 3; ++j)
-          if (ref_dst_data[i][j] != dst_data[i][j])
-            PUT_ERR("error in xt_redist_s_exchange\n");
+      check_redist(redist_repeat, src_data,
+                   sizeof (dst_data), dst_data, ref_dst_data);
     }
 
     // clean up

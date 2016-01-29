@@ -44,6 +44,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string.h>
+
 #include "yaxt.h"
 #include "tests.h"
 #include "test_redist_common.h"
@@ -77,6 +79,15 @@ build_odd_selection_xmap(int src_num_indices)
   xt_idxlist_delete(src_idxlist);
   xt_idxlist_delete(dst_idxlist);
   return xmap;
+}
+
+void
+check_redist(Xt_redist redist, const void *src,
+             size_t dst_size, void *dst, const void *ref_dst_data)
+{
+  xt_redist_s_exchange1(redist, src, dst);
+  if (memcmp(dst, ref_dst_data, dst_size))
+    PUT_ERR("error in xt_redist_s_exchange\n");
 }
 
 /*
