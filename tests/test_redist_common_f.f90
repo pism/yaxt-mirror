@@ -83,3 +83,12 @@ CONTAINS
   END FUNCTION build_odd_selection_xmap
 
 END MODULE test_redist_common
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!
