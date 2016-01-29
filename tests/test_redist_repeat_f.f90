@@ -264,3 +264,12 @@ CONTAINS
   END SUBROUTINE test_repeated_redist_with_gap
 
 END PROGRAM test_redist_repeatection_static
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!
