@@ -152,11 +152,9 @@ test_repeated_redist(int cache_size)
   xt_xmap_delete(xmap);
 
   // generate redist_collection
-
-  Xt_redist redist_coll;
   Xt_redist redists[3] = {redist, redist, redist};
-
-  redist_coll = xt_redist_collection_new(redists, 3, cache_size, MPI_COMM_WORLD);
+  Xt_redist redist_coll
+    = xt_redist_collection_new(redists, 3, cache_size, MPI_COMM_WORLD);
 
   // test communicator of redist
 
@@ -176,12 +174,10 @@ test_repeated_redist(int cache_size)
 
     xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
 
-    double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
-    int i, j;
-
-    for (i = 0; i < 3; ++i)
-      for (j = 0; j < 3; ++j)
+    for (size_t i = 0; i < 3; ++i)
+      for (size_t j = 0; j < 3; ++j)
         if (ref_dst_data[i][j] != dst_data[i][j])
           PUT_ERR("error in xt_redist_s_exchange\n");
   }
@@ -197,12 +193,10 @@ test_repeated_redist(int cache_size)
 
     xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
 
-    double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
-    int i, j;
-
-    for (i = 0; i < 3; ++i)
-      for (j = 0; j < 3; ++j)
+    for (size_t i = 0; i < 3; ++i)
+      for (size_t j = 0; j < 3; ++j)
         if (ref_dst_data[i][j] != dst_data[i][j])
           PUT_ERR("error in xt_redist_s_exchange\n");
   }
@@ -218,12 +212,10 @@ test_repeated_redist(int cache_size)
 
     xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
 
-    double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
-    int i, j;
-
-    for (i = 0; i < 3; ++i)
-      for (j = 0; j < 3; ++j)
+    for (size_t i = 0; i < 3; ++i)
+      for (size_t j = 0; j < 3; ++j)
         if (ref_dst_data[i][j] != dst_data[i][j])
           PUT_ERR("error in xt_redist_s_exchange\n");
   }
