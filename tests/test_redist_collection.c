@@ -77,7 +77,7 @@ int main(void) {
 
   { // general test with one redist
     // set up data
-    enum { nvalues = 5, nselect = nvalues/2+(nvalues&1) };
+    enum { nvalues = 5, nselect = (nvalues + 1)/2 };
     Xt_xmap xmap = build_odd_selection_xmap(nvalues);
 
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
