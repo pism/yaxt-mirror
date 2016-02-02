@@ -145,8 +145,8 @@ int main(void) {
 
       xt_redist_delete(redist_p2p);
 
-      xt_redist_s_exchange1(redist_repeat, (void*)input, (void*)result);
-      xt_redist_s_exchange1(redist_repeat_2, (void*)input, (void*)result_2);
+      xt_redist_s_exchange1(redist_repeat, input, result);
+      xt_redist_s_exchange1(redist_repeat_2, input, result_2);
 
       // check results
 
