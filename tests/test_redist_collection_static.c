@@ -51,6 +51,7 @@
 #include <yaxt.h>
 
 #include "tests.h"
+#include "test_redist_common.h"
 
 static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 
@@ -64,24 +65,10 @@ int main(void) {
 
   { // general test with one redist
     // set up data
-    Xt_int src_index_list[] = {1,2,3,4,5};
-    int src_num_indices
-      = sizeof(src_index_list) / sizeof(src_index_list[0]);
-    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
+    enum { src_slice_len = 5, dst_slice_len = 3 };
+    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
 
-    Xt_int dst_index_list[] = {1,3,5};
-    int dst_num_indices
-      = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
-    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
-
-    Xt_xmap xmap;
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-
-    xt_idxlist_delete(src_idxlist);
-    xt_idxlist_delete(dst_idxlist);
-
-    Xt_redist redist;
-    redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
     xt_xmap_delete(xmap);
 
@@ -104,16 +91,11 @@ int main(void) {
 
     // test exchange
 
-    double src_data[] = {1,2,3,4,5};
+    static const double src_data[] = {1,2,3,4,5};
     double dst_data[] = {-1,-1,-1};
-
-    xt_redist_s_exchange1(redist_coll, (void*)src_data, (void*)dst_data);
-
-    double ref_dst_data[] = {1,3,5};
-
-    for (size_t i = 0; i < sizeof(dst_data) / sizeof(dst_data[0]); ++i)
-      if (ref_dst_data[i] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+    static const double ref_dst_data[] = {1,3,5};
+    check_redist(redist_coll, src_data,
+                 sizeof (dst_data), dst_data, ref_dst_data);
 
     // clean up
 
@@ -122,29 +104,12 @@ int main(void) {
 
   { // test with one redist used three times (two exchanges)
     // set up data
-    Xt_int src_index_list[] = {1,2,3,4,5};
-    int src_num_indices = sizeof(src_index_list) / sizeof(src_index_list[0]);
-    Xt_idxlist src_idxlist;
-    src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
-
-    Xt_int dst_index_list[] = {1,3,5};
-    int dst_num_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
-    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
-
-    Xt_xmap xmap;
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-
-    xt_idxlist_delete(src_idxlist);
-    xt_idxlist_delete(dst_idxlist);
-
-    Xt_redist redist;
-    redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_xmap xmap = build_odd_selection_xmap(5);
+    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
     xt_xmap_delete(xmap);
 
     // generate redist_collection
-
-    Xt_redist redist_coll;
     Xt_redist redists[3] = {redist, redist, redist};
     static const double src_data[3][5]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
@@ -156,9 +121,9 @@ int main(void) {
       = {0, (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof(double)),
          (MPI_Aint)((size_t)(dst_data[2] - dst_data[0]) * sizeof(double)) };
 
-    redist_coll = xt_redist_collection_static_new(redists, 3, src_displacements,
-                                                  dst_displacements,
-                                                  MPI_COMM_WORLD);
+     Xt_redist redist_coll
+       = xt_redist_collection_static_new(redists, 3, src_displacements,
+                                         dst_displacements, MPI_COMM_WORLD);
 
     // test communicator of redist
 
@@ -173,31 +138,20 @@ int main(void) {
         for (size_t i = 0; i < 3; ++i)
           dst_data[j][i] = -1.0;
 
-      xt_redist_s_exchange1(redist_coll, (const void*)src_data, (void*)dst_data);
+      xt_redist_s_exchange1(redist_coll, src_data, dst_data);
 
       static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-
-      int i, j;
-
-      for (i = 0; i < 3; ++i)
-        for (j = 0; j < 3; ++j)
-          if (ref_dst_data[i][j] != dst_data[i][j])
-            PUT_ERR("error in xt_redist_s_exchange\n");
+      check_redist(redist_coll, src_data,
+                   sizeof (dst_data), dst_data, ref_dst_data);
     }
 
     {
       for (size_t j = 0; j < 3; ++j)
         for (size_t i = 0; i < 3; ++i)
           dst_data[j][i] = -1.0;
-
-      xt_redist_s_exchange1(redist_coll, (const void*)src_data, (void*)dst_data);
-
       static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-
-      for (size_t i = 0; i < 3; ++i)
-        for (size_t j = 0; j < 3; ++j)
-          if (ref_dst_data[i][j] != dst_data[i][j])
-            PUT_ERR("error in xt_redist_s_exchange\n");
+      check_redist(redist_coll, src_data,
+                   sizeof (dst_data), dst_data, ref_dst_data);
     }
 
     // clean up
