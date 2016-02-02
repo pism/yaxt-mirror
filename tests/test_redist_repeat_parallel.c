@@ -126,8 +126,8 @@ int main(void) {
         for (int j = 0; j < 2*size*size; ++j)
           input[i][j] = (Xt_int)(index_vector_a[j] + i * 4*size*size);
 
-      int displacements[4] = {0, 1, 2, 3};
-      int displacements_2[4] = {1, 2, 4, 8};
+      static const int displacements[4] = {0, 1, 2, 3};
+      static const int displacements_2[4] = {1, 2, 4, 8};
       MPI_Aint extent
         = (MPI_Aint)(2*(size_t)size*(size_t)size * sizeof(Xt_int));
 

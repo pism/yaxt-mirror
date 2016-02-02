@@ -62,7 +62,7 @@
 
 static void
 generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
-                   MPI_Aint extent, int * displacements, Xt_redist redist,
+                   MPI_Aint extent, const int *displacements, Xt_redist redist,
                    int num_repetitions, MPI_Comm comm,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
 
@@ -116,7 +116,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
 
 Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                                MPI_Aint dst_extent, int num_repetitions,
-                               int displacements[num_repetitions]) {
+                               const int displacements[num_repetitions]) {
 
   int nsend = 0, nrecv = 0;
   struct Xt_redist_msg *send_msgs = NULL, *recv_msgs = NULL;
