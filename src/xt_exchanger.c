@@ -153,6 +153,13 @@ void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
 }
 
 
+int
+xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
+                           enum xt_msg_direction direction,
+                           int **ranks)
+{
+  return exchanger->vtable->get_msg_ranks(exchanger, direction, ranks);
+}
 
 MPI_Datatype
 xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,

@@ -61,57 +61,47 @@
 #include "xt_redist_internal.h"
 
 static void
-generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
+generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
                    MPI_Aint extent, const int *displacements, Xt_redist redist,
                    int num_repetitions, MPI_Comm comm,
+                   enum xt_msg_direction direction,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
-
-  size_t msgs_array_size = 0;
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  MPI_Datatype datatype;
-
   assert(*nmsgs >= 0);
   size_t num_messages = (size_t)*nmsgs;
-  struct Xt_redist_msg *p = *msgs;
-  for (int i = 0; i < comm_size; ++i) {
+  int *restrict ranks = NULL;
+  size_t num_ranks
+    = (size_t)xt_redist_get_msg_ranks(redist, direction, (int **)&ranks);
+  struct Xt_redist_msg *restrict p
+    = xrealloc(*msgs, sizeof (*p) * (num_messages + num_ranks));
+  for (size_t i = 0; i < num_ranks; ++i) {
+    MPI_Datatype datatype = get_MPI_datatype(redist, ranks[i]);
+    MPI_Aint curr_lb, curr_extent, curr_true_lb, curr_true_extent;
+    MPI_Datatype datatype_with_extent;
 
-    datatype = get_MPI_datatype(redist, i);
+    // adjust extent of datatype to match the displacements
+    xt_mpi_call(MPI_Type_get_extent(datatype, &curr_lb, &curr_extent), comm);
+    xt_mpi_call(MPI_Type_get_true_extent(datatype, &curr_true_lb,
+                                         &curr_true_extent), comm);
+    if (curr_true_extent > extent)
+      Xt_abort(comm, "ERROR: new datatype extent is too small (Xt_redist_repeat)\n",
+               __FILE__, __LINE__);
+    xt_mpi_call(MPI_Type_create_resized(datatype, curr_lb, extent,
+                                        &datatype_with_extent), comm);
 
-    if (datatype != MPI_DATATYPE_NULL) {
-
-      MPI_Aint curr_lb, curr_extent, curr_true_lb, curr_true_extent;
-      MPI_Datatype datatype_with_extent;
-
-      // adjust extent of datatype to match the displacements
-      xt_mpi_call(MPI_Type_get_extent(datatype, &curr_lb, &curr_extent), comm);
-      xt_mpi_call(MPI_Type_get_true_extent(datatype, &curr_true_lb,
-                                           &curr_true_extent), comm);
-      if (curr_true_extent > extent)
-        Xt_abort(comm, "ERROR: new datatype extent is too small (Xt_redist_repeat)\n",
-                 __FILE__, __LINE__);
-      xt_mpi_call(MPI_Type_create_resized(datatype, curr_lb, extent,
-                                          &datatype_with_extent), comm);
-
-      ENSURE_ARRAY_SIZE(p, msgs_array_size, num_messages+1);
-
-      p[num_messages].rank = i;
-      p[num_messages].datatype =
-        xt_mpi_generate_datatype(displacements, num_repetitions,
+    p[num_messages + i].rank = ranks[i];
+    p[num_messages + i].datatype
+      = xt_mpi_generate_datatype(displacements, num_repetitions,
                                  datatype_with_extent, comm);
-      ++num_messages;
-
-      MPI_Type_free(&datatype_with_extent);
-      MPI_Type_free(&datatype);
-    }
+    MPI_Type_free(&datatype_with_extent);
+    MPI_Type_free(&datatype);
   }
-
-  if (num_messages > 0)
-    p = xrealloc(p, num_messages * sizeof(*p));
+  free(ranks);
   *msgs = p;
-  *nmsgs = (int)num_messages;
+  *nmsgs = (int)(num_messages + num_ranks);
 }
 
 Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
@@ -131,11 +121,11 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
 
   generate_msg_infos(&send_msgs, &nsend, src_extent,
                      displacements, redist, num_repetitions, comm,
-                     xt_redist_get_send_MPI_Datatype);
+                     SEND, xt_redist_get_send_MPI_Datatype);
 
   generate_msg_infos(&recv_msgs, &nrecv, dst_extent,
                      displacements, redist, num_repetitions, comm,
-                     xt_redist_get_recv_MPI_Datatype);
+                     RECV, xt_redist_get_recv_MPI_Datatype);
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);

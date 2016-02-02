@@ -58,6 +58,8 @@
 
 #include "xt/xt_redist.h"
 
+enum xt_msg_direction {SEND, RECV};
+
 struct Xt_redist_msg {
 
   int rank;
@@ -72,6 +74,7 @@ struct xt_redist_vtable {
   void (*s_exchange1)(Xt_redist, const void *, void *);
   MPI_Datatype (*get_send_MPI_Datatype)(Xt_redist, int);
   MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);
+  int (*get_msg_ranks)(Xt_redist, enum xt_msg_direction, int**);
   MPI_Comm (*get_MPI_Comm)(Xt_redist);
 };
 
@@ -105,6 +108,10 @@ xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
 }
 
 void xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
+
+int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
+                            int **ranks);
+
 
 #endif
 /*

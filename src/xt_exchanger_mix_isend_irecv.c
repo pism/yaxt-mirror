@@ -65,6 +65,11 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger);
 static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                                     const void * src_data,
                                                     void * dst_data);
+static int
+xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
+                                           enum xt_msg_direction direction,
+                                           int **ranks);
+
 static MPI_Datatype
 xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
                                               int rank,
@@ -74,6 +79,7 @@ static const struct xt_exchanger_vtable exchanger_mix_isend_irecv_vtable = {
   .copy = xt_exchanger_mix_isend_irecv_copy,
   .delete = xt_exchanger_mix_isend_irecv_delete,
   .s_exchange = xt_exchanger_mix_isend_irecv_s_exchange,
+  .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
 };
 
@@ -203,6 +209,24 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
     xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE), comm);
     free(requests);
   }
+}
+
+static int
+xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
+                                           enum xt_msg_direction direction,
+                                           int **ranks)
+{
+  Xt_exchanger_mix_isend_irecv exchanger_msr =
+    (Xt_exchanger_mix_isend_irecv)exchanger;
+  size_t nmsg = 0, nmsg_all = (size_t)exchanger_msr->n;
+  const struct mix_msg *restrict msgs = exchanger_msr->msgs;
+  for (size_t i = 0; i < nmsg_all; ++i)
+    nmsg += msgs[i].type == direction;
+  int *restrict ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
+  for (size_t i = 0, j = (size_t)-1; i < nmsg_all; ++i)
+    if (msgs[i].type == direction)
+      ranks_[++j] = msgs[i].data.rank;
+  return (int)nmsg;
 }
 
 static MPI_Datatype

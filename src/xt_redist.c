@@ -92,6 +92,13 @@ MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
   return redist->vtable->get_MPI_Comm(redist);
 }
 
+int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
+                            int **ranks)
+{
+  return redist->vtable->get_msg_ranks(redist, direction, ranks);
+}
+
+
 void
 xt_redist_msgs_strided_copy(size_t n,
                             struct Xt_redist_msg *restrict src,

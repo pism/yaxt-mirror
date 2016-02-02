@@ -58,12 +58,11 @@
 
 typedef struct Xt_exchanger_ *Xt_exchanger;
 
-enum xt_msg_direction {SEND, RECV};
-
 struct xt_exchanger_vtable {
   Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
   void (*delete)(Xt_exchanger);
   void (*s_exchange)(Xt_exchanger, const void *, void *);
+  int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int**);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction);
 };
 
@@ -96,6 +95,11 @@ void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
 MPI_Datatype
 xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
                               int rank, enum xt_msg_direction direction);
+
+int
+xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
+                           enum xt_msg_direction direction,
+                           int **ranks);
 
 #if ! defined TLS && defined HAVE_PTHREAD
 /* internal function to setup pthread key if TLS is unavailable */

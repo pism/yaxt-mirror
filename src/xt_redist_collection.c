@@ -84,6 +84,11 @@ redist_collection_get_send_MPI_Datatype(Xt_redist redist, int rank);
 static MPI_Datatype
 redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 
+static int
+redist_collection_get_msg_ranks(Xt_redist redist,
+                                enum xt_msg_direction direction,
+                                int **ranks);
+
 static MPI_Comm
 redist_collection_get_MPI_Comm(Xt_redist redist);
 
@@ -94,6 +99,7 @@ static const struct xt_redist_vtable redist_collection_vtable = {
   .s_exchange1           = redist_collection_s_exchange1,
   .get_send_MPI_Datatype = redist_collection_get_send_MPI_Datatype,
   .get_recv_MPI_Datatype = redist_collection_get_recv_MPI_Datatype,
+  .get_msg_ranks         = redist_collection_get_msg_ranks,
   .get_MPI_Comm          = redist_collection_get_MPI_Comm
 };
 
@@ -582,6 +588,28 @@ redist_collection_s_exchange1(Xt_redist redist,
     Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
              " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
 }
+
+static int
+redist_collection_get_msg_ranks(Xt_redist redist,
+                                enum xt_msg_direction direction,
+                                int **ranks)
+{
+  Xt_redist_collection redist_coll = xrc(redist);
+  unsigned nmsg;
+  struct redist_collection_msg *restrict msg;
+  if (direction == SEND) {
+    nmsg = redist_coll->ndst;
+    msg = redist_coll->send_msgs;
+  } else {
+    nmsg = redist_coll->nsrc;
+    msg = redist_coll->recv_msgs;
+  }
+  int *restrict ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
+  for (size_t i = 0; i < nmsg; ++i)
+    ranks_[i] = msg[i].rank;
+  return (int)nmsg;
+}
+
 
 static MPI_Comm
 redist_collection_get_MPI_Comm(Xt_redist redist) {
