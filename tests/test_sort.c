@@ -54,17 +54,16 @@
 
 static void
 test1(void (*anysort_index)(Xt_int * a, int n, int * idx, int reset_index)) {
-  int tsize = 8;
   Xt_int ivec[]        = {7,5,3,1,2,2,3,3};
   Xt_int sorted_ivec[] = {1,2,2,3,3,3,5,7};
   int pvec[]           = {1,2,3,4,5,6,7,8};
   int sorted_pvec[]    = {3,4,5,2,6,7,1,0};
 
-  tsize = sizeof(ivec) /sizeof(ivec[0]);
-  assert(tsize == sizeof(pvec) /sizeof(pvec[0]));
+  size_t tsize = sizeof(ivec) / sizeof(ivec[0]);
+  assert(tsize == sizeof(pvec) / sizeof(pvec[0]));
 
-  anysort_index(ivec, tsize, pvec, 1);
-  for(int i=0; i<tsize; i++) {
+  anysort_index(ivec, (int)tsize, pvec, 1);
+  for(size_t i=0; i < tsize; i++) {
     if ( ivec[i] != sorted_ivec[i] )
       PUT_ERR("wrong sorting values\n");
     if ( pvec[i] != sorted_pvec[i] )
@@ -72,11 +71,41 @@ test1(void (*anysort_index)(Xt_int * a, int n, int * idx, int reset_index)) {
   }
 }
 
+static void
+test2(void (*sort_int)(int *a, size_t n))
+{
+  int ivec[] = {7,5,3,1,2,2,3,3}, sorted_ivec[] = {1,2,2,3,3,3,5,7};
+  size_t ivec_size = sizeof (ivec) / sizeof (ivec[0]);
+  sort_int(ivec, ivec_size);
+  for(size_t i=0; i < ivec_size; i++)
+    if ( ivec[i] != sorted_ivec[i] )
+      PUT_ERR("wrong sorting values\n");
+  size_t n = 40000;
+  int *large_ivec = malloc(n * sizeof (*large_ivec));
+  for (size_t i = 0; i < n; ++i)
+    large_ivec[i] = (int)(n - i);
+  sort_int(large_ivec, n);
+  for (size_t i = 0; i < n; ++i)
+    if (large_ivec[i] != (int)(i + 1))
+      PUT_ERR("wrong sorting values\n");
+  size_t ofs = 50;
+  for (size_t i = 0; i < n; ++i)
+    large_ivec[i] = (int)(((i + ofs)%n) / 2);
+  sort_int(large_ivec, n);
+  for (size_t i = 0; i < n; ++i)
+    if (large_ivec[i] != (int)(i/2))
+      PUT_ERR("wrong sorting values\n");
+  free(large_ivec);
+}
+
+
 int main(void) {
 
   test1(xt_quicksort_index);
   test1(xt_mergesort_index);
   test1(xt_sort_index);
+
+  test2(xt_sort_int);
 
   return TEST_EXIT_CODE;
 }

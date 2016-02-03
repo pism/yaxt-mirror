@@ -5,7 +5,7 @@
  * @file quicksort.h
  * @brief quicksort declaration
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -51,7 +51,16 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
+
 #include "xt/sort_common.h"
+
+/** quicksort changing structured values
+  *
+  * @param[in,out]  a            array of ints to be sorted
+  * @param[in]      n            length of data
+ **/
+void xt_quicksort_int(int *a, size_t n);
 
 /** quicksort changing structured values
   *
@@ -70,3 +79,13 @@ void xt_quicksort_idxpos(idxpos_type *v, int n);
 void xt_quicksort_index (Xt_int * a, int n, int * idx, int reset_index);
 
 #endif  /* XT_QUICKSORT_H */
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

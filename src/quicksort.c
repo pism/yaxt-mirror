@@ -54,10 +54,13 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "xt/quicksort.h"
@@ -309,3 +312,154 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
   if (v_pos != v_pos_orig) free(v_pos);
 }
 
+
+
+static inline int *med3_int(int *a, int *b, int *c)
+{
+  return *a < *b ?
+      (*b < *c ? b : (*a < *c ? a : c ))
+    : (*b > *c ? b : (*a < *c ? a : c ));
+}
+
+static inline void
+vecswap_int(int *restrict a, int *restrict b, size_t n)
+{
+  for (size_t i = 0; i < n; ++i) {
+    int t = a[i];
+    a[i] = b[i];
+    b[i] = t;
+  }
+}
+
+/*
+ * xt_quicksort_int was derived from the ScalES-PPM library code,
+ * which is derived from genometools, which in turn is derived from
+ * the FreeBSD libc.
+ */
+/*
+  Modifications for integration with genometools
+  2008 Thomas Jahns <Thomas.Jahns@gmx.net>
+
+  The advertising clause 3. was removed due to the corresponding
+  revoke by William Hoskins on July 22, 1999.
+  <ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change>
+*/
+/*-
+ * Copyright (c) 1992, 1993
+ *        The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+void xt_quicksort_int(int *a, size_t n)
+{
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
+  while (1) {
+    bool swap_cnt = false;
+    if (n < 7) {
+      for (int *pm = a + 1; pm < a + n; ++pm)
+        for (int *pl = pm; pl > a && pl[-1] > *pl; --pl) {
+          int t = *pl; *pl = pl[-1]; pl[-1] = t;
+        }
+      return;
+    }
+    {
+      int *pm = a + (n / 2);
+      if (n > 7) {
+        int *pl = a;
+        int *pn = a + (n - 1);
+        if (n > 40) {
+          size_t d = n / 8;
+          pl = med3_int(pl,  pl + d,  pl + 2 * d);
+          pm = med3_int(pm - d,  pm,  pm + d);
+          pn = med3_int(pn - 2 * d,  pn - d,  pn);
+        }
+        pm = med3_int(pl,  pm,  pn);
+      }
+      int t = *a; *a = *pm; *pm = t;
+    }
+    int *pa = a + 1, *pb = pa;
+    int *pc = a + n - 1, *pd = pc;
+    int pivot = *a;
+    for (;;) {
+      while (pb <= pc && *pb <= pivot) {
+        if (*pb == pivot) {
+          swap_cnt = true;
+          int t = *pa; *pa = *pb; *pb = t;
+          ++pa;
+        }
+        ++pb;
+      }
+      while (pb <= pc && *pc >= pivot) {
+        if (*pc == pivot) {
+          swap_cnt = true;
+          int t = *pc; *pc = *pd; *pd = t;
+          --pd;
+        }
+        --pc;
+      }
+      if (pb > pc)
+        break;
+      int t = *pb; *pb = *pc; *pc = t;
+      swap_cnt = true;
+      ++pb;
+      --pc;
+    }
+    if (!swap_cnt) {  /* Switch to insertion sort */
+      for (int *pm = a + 1; pm < a + n; ++pm)
+        for (int *pl = pm; pl > a && pl[-1] > *pl; --pl) {
+          int t = *pl; *pl = pl[-1]; pl[-1] = t;
+        }
+      return;
+    }
+
+    int *pn = a + n;
+    ptrdiff_t pdiff = MIN(pa - a, pb - pa);
+    vecswap_int(a, pb - pdiff, (size_t)pdiff);
+    pdiff = MIN(pd - pc, pn - pd - 1);
+    vecswap_int(pb, pn - pdiff, (size_t)pdiff);
+    if ((pdiff = pb - pa) > (ptrdiff_t)1)
+      xt_quicksort_int(a, (size_t)pdiff);
+    if ((pdiff = pd - pc) > (ptrdiff_t)1) {
+      /* Iterate rather than recurse to save stack space */
+      a = pn - pdiff;
+      n = (size_t)pdiff;
+    }
+    else
+      break;
+  }
+#undef MIN
+}
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

@@ -1,15 +1,18 @@
 /**
  * @file xt_sort.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
  * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
  * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
@@ -47,6 +50,8 @@
 #include "xt/xt_sort.h"
 #include "xt_sort_internal.h"
 
+void (*xt_sort_int)(int *a, size_t n)
+  = xt_quicksort_int;
 void (*xt_sort_index)(Xt_int * a, int n, int * idx, int reset_index)
 = xt_quicksort_index;
 void (*xt_sort_idxpos)(idxpos_type *v, int n) = xt_quicksort_idxpos;
@@ -59,4 +64,14 @@ void (*xt_sort_idxpos)(idxpos_type *v, int n) = xt_quicksort_idxpos;
  *   /\* xt_sort_index  = ; *\/
  *   /\* xt_sort_idxpos = ; *\/
  * }
+ */
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
  */

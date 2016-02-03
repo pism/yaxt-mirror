@@ -51,12 +51,14 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
+
 #include "xt/quicksort.h"
 #include "xt/mergesort.h"
 
 /** \example test_sort.c
  */
-
+extern void (*xt_sort_int)(int *a, size_t n);
 extern void (*xt_sort_index)(Xt_int * a, int n, int * idx, int reset_index);
 extern void (*xt_sort_idxpos)(idxpos_type *v, int n);
 
