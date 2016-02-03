@@ -66,59 +66,6 @@
 #include "xt/xt_sort.h"
 
 
-static MPI_Datatype
-generate_datatype(int num_redists,
-                  MPI_Aint displacements[num_redists],
-                  MPI_Datatype datatypes[num_redists],
-                  int block_lengths[num_redists],
-                  MPI_Comm comm) {
-
-  MPI_Datatype datatype;
-
-  int num_datatypes = 0;
-
-  for (int i = 0; i < num_redists; ++i)
-    if (datatypes[i] != MPI_DATATYPE_NULL)
-      ++num_datatypes;
-
-  MPI_Datatype * datatypes_;
-  MPI_Aint * displacements_;
-
-  if (num_datatypes != num_redists) {
-
-    datatypes_ = xmalloc((size_t)num_datatypes * sizeof(*datatypes_));
-    displacements_ = xmalloc((size_t)num_datatypes * sizeof(*displacements_));
-
-    num_datatypes = 0;
-
-    for (int i = 0; i < num_redists; ++i) {
-      if (datatypes[i] != MPI_DATATYPE_NULL) {
-
-        datatypes_[num_datatypes] = datatypes[i];
-        displacements_[num_datatypes] = displacements[i];
-        ++num_datatypes;
-      }
-    }
-  } else {
-
-    datatypes_ = datatypes;
-    displacements_ = displacements;
-  }
-
-  xt_mpi_call(MPI_Type_create_struct(num_datatypes, block_lengths,
-                                     displacements_, datatypes_, &datatype),
-              comm);
-
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
-  if (num_datatypes != num_redists) {
-    free(datatypes_);
-    free(displacements_);
-  }
-
-  return datatype;
-}
-
 static size_t
 generate_msg_infos(struct Xt_redist_msg ** msgs,
                    MPI_Aint * displacements, Xt_redist * redists,
@@ -164,8 +111,8 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
 
       p[i].rank = min_rank;
       p[i].datatype
-        = generate_datatype((int)num_redists, displacements, datatypes,
-                            block_lengths, comm);
+        = xt_create_compound_datatype(num_redists, displacements, datatypes,
+                                      block_lengths, comm);
       for (size_t j = 0; j < num_redists; ++j) {
         if (datatypes[j] != MPI_DATATYPE_NULL)
           xt_mpi_call(MPI_Type_free(datatypes+j), comm);

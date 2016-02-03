@@ -117,6 +117,13 @@ xt_ranks_uniq_count(size_t num_rank_sets,
                     size_t *restrict num_ranks,
                     const int *ranks[num_rank_sets]);
 
+MPI_Datatype
+xt_create_compound_datatype(size_t num_redists,
+                            MPI_Aint displacements[num_redists],
+                            MPI_Datatype datatypes[num_redists],
+                            int block_lengths[num_redists],
+                            MPI_Comm comm);
+
 #endif
 /*
  * Local Variables:

@@ -177,6 +177,63 @@ xt_ranks_uniq_count(size_t num_rank_sets,
   return num_messages;
 }
 
+MPI_Datatype
+xt_create_compound_datatype(size_t num_redists,
+                            MPI_Aint displacements[num_redists],
+                            MPI_Datatype datatypes[num_redists],
+                            int block_lengths[num_redists],
+                            MPI_Comm comm)
+{
+  size_t num_datatypes = 0;
+  /* allocate more than max_auto_dt datatype items from heap */
+  enum { max_auto_dt = 5 };
+  for (size_t i = 0; i < num_redists; ++i)
+    num_datatypes += (datatypes[i] != MPI_DATATYPE_NULL);
+  MPI_Datatype *datatypes_, dt_single[max_auto_dt];
+  MPI_Aint *displacements_, disp_single[max_auto_dt];
+
+  if (num_datatypes != num_redists) {
+    if (num_datatypes > max_auto_dt) {
+      datatypes_ = xmalloc(num_datatypes * sizeof(*datatypes_));
+      displacements_ = xmalloc(num_datatypes * sizeof(*displacements_));
+    } else {
+      datatypes_ = dt_single;
+      displacements_ = disp_single;
+    }
+    num_datatypes = 0;
+
+    for (size_t i = 0; i < num_redists; ++i) {
+      if (datatypes[i] != MPI_DATATYPE_NULL) {
+
+        datatypes_[num_datatypes] = datatypes[i];
+        displacements_[num_datatypes] = displacements[i];
+        ++num_datatypes;
+      }
+    }
+  } else {
+    datatypes_ = datatypes;
+    displacements_ = displacements;
+  }
+  MPI_Datatype datatype;
+  if (num_datatypes > 1)
+    xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, block_lengths,
+                                       displacements_, datatypes_, &datatype),
+                comm);
+  else if (displacements_[0] == 0)
+    xt_mpi_call(MPI_Type_dup(datatypes_[0], &datatype), comm);
+  else
+    xt_mpi_call(MPI_Type_create_hindexed(1, (int [1]){1}, displacements_,
+                                         datatypes_[0], &datatype), comm);
+
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
+
+  if (num_datatypes != num_redists && num_datatypes > max_auto_dt) {
+    free(datatypes_);
+    free(displacements_);
+  }
+
+  return datatype;
+}
 
 /*
  * Local Variables:

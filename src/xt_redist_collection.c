@@ -261,53 +261,6 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   return (Xt_redist)redist_coll;
 }
 
-static MPI_Datatype
-create_compound_dt(MPI_Aint *displacements, int *block_lengths,
-                   struct redist_collection_msg *msg,
-                   unsigned num_redists, MPI_Comm comm)
-{
-  MPI_Datatype datatype;
-
-  unsigned num_datatypes = 0;
-
-  for (unsigned i = 0; i < num_redists; ++i)
-    num_datatypes += (msg->component_dt[i] != MPI_DATATYPE_NULL);
-
-  MPI_Datatype * datatypes;
-  MPI_Aint * displacements_;
-
-  if (num_datatypes != num_redists) {
-
-    datatypes = xmalloc((size_t)num_datatypes * sizeof(*datatypes));
-    displacements_ = xmalloc((size_t)num_datatypes * sizeof(*displacements));
-
-    num_datatypes = 0;
-
-    for (unsigned i = 0; i < num_redists; ++i) {
-      if (msg->component_dt[i] != MPI_DATATYPE_NULL) {
-        datatypes[num_datatypes] = msg->component_dt[i];
-        displacements_[num_datatypes] = displacements[i];
-        ++num_datatypes;
-      }
-    }
-  } else {
-    datatypes = msg->component_dt;
-    displacements_ = displacements;
-  }
-
-  assert(num_datatypes <= INT_MAX);
-  xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, block_lengths,
-                                     displacements_, datatypes, &datatype),
-              comm);
-
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
-  if (num_datatypes != num_redists) {
-    free(datatypes);
-    free(displacements_);
-  }
-  return datatype;
-}
 
 static void
 create_all_dt_for_dir(struct redist_collection_msg *msgs,
@@ -318,14 +271,15 @@ create_all_dt_for_dir(struct redist_collection_msg *msgs,
 {
   int block_lengths[num_redists];
 
-  for (unsigned i = 0; i < num_redists; ++i)
+  for (size_t i = 0; i < num_redists; ++i)
     block_lengths[i] = 1;
-  for (unsigned i = 0; i < num_messages; ++i)
+  for (size_t i = 0; i < num_messages; ++i)
   {
     if (redist_msgs[i].datatype != MPI_DATATYPE_NULL)
       xt_mpi_call(MPI_Type_free(&(redist_msgs[i].datatype)), comm);
-    redist_msgs[i].datatype = create_compound_dt(displacements, block_lengths,
-                                                 msgs+i, num_redists, comm);
+    redist_msgs[i].datatype
+      = xt_create_compound_datatype(num_redists, displacements,
+                                    msgs[i].component_dt, block_lengths, comm);
     redist_msgs[i].rank = msgs[i].rank;
   }
 }
