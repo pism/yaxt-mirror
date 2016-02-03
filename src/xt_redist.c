@@ -47,6 +47,8 @@
 #include <config.h>
 #endif
 
+#include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "core/core.h"
@@ -145,6 +147,36 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
                "redist_collection_static\n", __FILE__, __LINE__);
   }
 }
+
+size_t
+xt_ranks_uniq_count(size_t num_rank_sets,
+                    size_t *restrict num_ranks,
+                    const int *ranks[num_rank_sets])
+{
+  size_t rank_pos[num_rank_sets];
+  for (size_t j = 0; j < num_rank_sets; ++j)
+    rank_pos[j] = 0;
+  bool ranks_left;
+  size_t num_messages = 0;
+  do {
+    int min_rank = INT_MAX;
+    /* find minimal rank in list, guaranteed to be smaller than comm_size */
+    for (size_t j = 0; j < num_rank_sets; ++j)
+      if (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] < min_rank)
+        min_rank = ranks[j][rank_pos[j]];
+    ranks_left = false;
+    /* increment list index for all redists matching minimal rank and
+     * see if any ranks are left */
+    for (size_t j = 0; j < num_rank_sets; ++j) {
+      rank_pos[j]
+        += (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank);
+      ranks_left |= (rank_pos[j] < num_ranks[j]);
+    }
+    ++num_messages;
+  } while (ranks_left);
+  return num_messages;
+}
+
 
 /*
  * Local Variables:

@@ -1,15 +1,18 @@
 /**
  * @file xt_redist_collection_static.c
  *
- * @copyright Copyright  (C)  2012 Moritz Hanke <hanke@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Moritz Hanke <hanke@dkrz.de>
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
- * Maintainer: Moritz Hanke <hanke@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
@@ -45,6 +48,8 @@
 #endif
 
 #include <assert.h>
+#include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -58,6 +63,7 @@
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
+#include "xt/xt_sort.h"
 
 
 static MPI_Datatype
@@ -113,53 +119,65 @@ generate_datatype(int num_redists,
   return datatype;
 }
 
-static void
-generate_msg_infos(struct Xt_redist_msg ** msgs, int * nmsgs,
+static size_t
+generate_msg_infos(struct Xt_redist_msg ** msgs,
                    MPI_Aint * displacements, Xt_redist * redists,
-                   int num_redists, MPI_Comm comm,
+                   size_t num_redists, MPI_Comm comm,
+                   enum xt_msg_direction direction,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
-
-  size_t msgs_array_size = 0;
-
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   int block_lengths[num_redists];
   MPI_Datatype datatypes[num_redists];
 
-  for (int i = 0; i < num_redists; ++i)
+  for (size_t i = 0; i < num_redists; ++i)
     block_lengths[i] = 1;
 
-  assert(*nmsgs >= 0);
-  size_t num_messages = (size_t)*nmsgs;
-  struct Xt_redist_msg *p = *msgs;
-  for (int i = 0; i < comm_size; ++i) {
-
-    int non_empty_xfer = 0;
-    for (int j = 0; j < num_redists; ++j)
-      non_empty_xfer |= (datatypes[j] = get_MPI_datatype(redists[j], i))
-        != MPI_DATATYPE_NULL;
-
-    if (non_empty_xfer)
-    {
-      ENSURE_ARRAY_SIZE(p, msgs_array_size, num_messages+1);
-
-      p[num_messages].rank = i;
-      p[num_messages].datatype
-        = generate_datatype(num_redists, displacements, datatypes,
-                            block_lengths, comm);
-      ++num_messages;
-
-      for (int j = 0; j < num_redists; ++j)
-        if (datatypes[j] != MPI_DATATYPE_NULL)
-          xt_mpi_call(MPI_Type_free(datatypes+j), comm);
-    }
+  size_t num_ranks[num_redists], rank_pos[num_redists];
+  int *restrict ranks[num_redists];
+  bool ranks_left = false;
+  /* get lists of ranks to send/receive message to/from */
+  for (size_t j = 0; j < num_redists; ++j) {
+    num_ranks[j]
+      = (size_t)xt_redist_get_msg_ranks(redists[j], direction,
+                                        (int **)(ranks + j));
+    /* sort list */
+    xt_sort_int(ranks[j], num_ranks[j]);
+    ranks_left |= (num_ranks[j] > 0);
+    rank_pos[j] = 0;
   }
 
-  if (num_messages > 0)
-    p = xrealloc(p, num_messages * sizeof(*p));
+  size_t num_messages = ranks_left
+    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int **)ranks) : 0;
+  struct Xt_redist_msg *p = NULL;
+  if (num_messages) {
+    p = xmalloc(sizeof (*p) * num_messages);
+    for (size_t i = 0; i < num_messages; ++i) {
+      int min_rank = INT_MAX;
+      for (size_t j = 0; j < num_redists; ++j)
+        if (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] < min_rank)
+          min_rank = ranks[j][rank_pos[j]];
+
+      for (size_t j = 0; j < num_redists; ++j)
+        datatypes[j] =
+          (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank)
+          ? get_MPI_datatype(redists[j], min_rank) : MPI_DATATYPE_NULL;
+
+      p[i].rank = min_rank;
+      p[i].datatype
+        = generate_datatype((int)num_redists, displacements, datatypes,
+                            block_lengths, comm);
+      for (size_t j = 0; j < num_redists; ++j) {
+        if (datatypes[j] != MPI_DATATYPE_NULL)
+          xt_mpi_call(MPI_Type_free(datatypes+j), comm);
+        rank_pos[j]
+          += (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank);
+      }
+    }
+  }
+  for (size_t j = 0; j < num_redists; ++j)
+    free(ranks[j]);
   *msgs = p;
-  *nmsgs = (int)num_messages;
+  return num_messages;
 }
 
 Xt_redist
@@ -168,28 +186,35 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
                                 MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm) {
 
-  int nsend, nrecv;
-  struct Xt_redist_msg * send_msgs = NULL;
-  struct Xt_redist_msg * recv_msgs = NULL;
+  struct Xt_redist_msg *send_msgs, *recv_msgs;
 
-  nsend = 0;
-  nrecv = 0;
-  send_msgs = NULL;
-  recv_msgs = NULL;
   int tag_offset;
   MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 
   xt_redist_check_comms(redists, num_redists, comm);
 
-  generate_msg_infos(&send_msgs, &nsend, src_displacements, redists,
-                     num_redists, new_comm, xt_redist_get_send_MPI_Datatype);
+  size_t num_redists_ = num_redists >= 0 ? (size_t)num_redists : 0;
+  size_t nsend
+    = generate_msg_infos(&send_msgs, src_displacements, redists, num_redists_,
+                         new_comm, SEND, xt_redist_get_send_MPI_Datatype);
 
-  generate_msg_infos(&recv_msgs, &nrecv, dst_displacements, redists,
-                     num_redists, new_comm, xt_redist_get_recv_MPI_Datatype);
+  size_t nrecv
+    = generate_msg_infos(&recv_msgs, dst_displacements, redists, num_redists_,
+                         new_comm, RECV, xt_redist_get_recv_MPI_Datatype);
 
   Xt_redist redist_collection =
-    xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                    new_comm);
+    xt_redist_single_array_base_new((int)nsend, (int)nrecv,
+                                    send_msgs, recv_msgs, new_comm);
   xt_mpi_comm_smart_dedup(&new_comm, tag_offset);
   return redist_collection;
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

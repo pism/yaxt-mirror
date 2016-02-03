@@ -112,6 +112,10 @@ void xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
 int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
                             int **ranks);
 
+size_t
+xt_ranks_uniq_count(size_t num_rank_sets,
+                    size_t *restrict num_ranks,
+                    const int *ranks[num_rank_sets]);
 
 #endif
 /*
