@@ -191,14 +191,17 @@ xt_create_compound_datatype(size_t num_redists,
     num_datatypes += (datatypes[i] != MPI_DATATYPE_NULL);
   MPI_Datatype *datatypes_, dt_auto[max_auto_dt];
   MPI_Aint *displacements_, disp_auto[max_auto_dt];
+  int *block_lengths_, bl_auto[max_auto_dt];
 
   if (num_datatypes != num_redists) {
     if (num_datatypes > max_auto_dt) {
       datatypes_ = xmalloc(num_datatypes * sizeof(*datatypes_));
       displacements_ = xmalloc(num_datatypes * sizeof(*displacements_));
+      block_lengths_ = xmalloc(num_datatypes * sizeof(*block_lengths_));
     } else {
       datatypes_ = dt_auto;
       displacements_ = disp_auto;
+      block_lengths_ = bl_auto;
     }
     num_datatypes = 0;
 
@@ -207,16 +210,18 @@ xt_create_compound_datatype(size_t num_redists,
 
         datatypes_[num_datatypes] = datatypes[i];
         displacements_[num_datatypes] = displacements[i];
+        block_lengths_[num_datatypes] = block_lengths[i];
         ++num_datatypes;
       }
     }
   } else {
     datatypes_ = (MPI_Datatype *)datatypes;
     displacements_ = (MPI_Aint *)displacements;
+    block_lengths_ = (int *)block_lengths;
   }
   MPI_Datatype datatype;
   if (num_datatypes > 1)
-    xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, (int *)block_lengths,
+    xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, block_lengths_,
                                        displacements_, datatypes_, &datatype),
                 comm);
   else if (displacements_[0] == 0)
