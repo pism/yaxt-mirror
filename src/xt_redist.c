@@ -179,26 +179,26 @@ xt_ranks_uniq_count(size_t num_rank_sets,
 
 MPI_Datatype
 xt_create_compound_datatype(size_t num_redists,
-                            MPI_Aint displacements[num_redists],
-                            MPI_Datatype datatypes[num_redists],
-                            int block_lengths[num_redists],
+                            const MPI_Aint displacements[num_redists],
+                            const MPI_Datatype datatypes[num_redists],
+                            const int block_lengths[num_redists],
                             MPI_Comm comm)
 {
   size_t num_datatypes = 0;
   /* allocate more than max_auto_dt datatype items from heap */
-  enum { max_auto_dt = 5 };
+  enum { max_auto_dt = 8 };
   for (size_t i = 0; i < num_redists; ++i)
     num_datatypes += (datatypes[i] != MPI_DATATYPE_NULL);
-  MPI_Datatype *datatypes_, dt_single[max_auto_dt];
-  MPI_Aint *displacements_, disp_single[max_auto_dt];
+  MPI_Datatype *datatypes_, dt_auto[max_auto_dt];
+  MPI_Aint *displacements_, disp_auto[max_auto_dt];
 
   if (num_datatypes != num_redists) {
     if (num_datatypes > max_auto_dt) {
       datatypes_ = xmalloc(num_datatypes * sizeof(*datatypes_));
       displacements_ = xmalloc(num_datatypes * sizeof(*displacements_));
     } else {
-      datatypes_ = dt_single;
-      displacements_ = disp_single;
+      datatypes_ = dt_auto;
+      displacements_ = disp_auto;
     }
     num_datatypes = 0;
 
@@ -211,12 +211,12 @@ xt_create_compound_datatype(size_t num_redists,
       }
     }
   } else {
-    datatypes_ = datatypes;
-    displacements_ = displacements;
+    datatypes_ = (MPI_Datatype *)datatypes;
+    displacements_ = (MPI_Aint *)displacements;
   }
   MPI_Datatype datatype;
   if (num_datatypes > 1)
-    xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, block_lengths,
+    xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, (int *)block_lengths,
                                        displacements_, datatypes_, &datatype),
                 comm);
   else if (displacements_[0] == 0)

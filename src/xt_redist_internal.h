@@ -119,9 +119,9 @@ xt_ranks_uniq_count(size_t num_rank_sets,
 
 MPI_Datatype
 xt_create_compound_datatype(size_t num_redists,
-                            MPI_Aint displacements[num_redists],
-                            MPI_Datatype datatypes[num_redists],
-                            int block_lengths[num_redists],
+                            const MPI_Aint displacements[num_redists],
+                            const MPI_Datatype datatypes[num_redists],
+                            const int block_lengths[num_redists],
                             MPI_Comm comm);
 
 #endif

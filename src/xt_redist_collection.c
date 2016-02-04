@@ -265,7 +265,7 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
 static void
 create_all_dt_for_dir(struct redist_collection_msg *msgs,
                       unsigned num_messages, unsigned num_redists,
-                      MPI_Aint displacements[num_redists],
+                      const MPI_Aint displacements[num_redists],
                       struct Xt_redist_msg redist_msgs[num_messages],
                       MPI_Comm comm)
 {
