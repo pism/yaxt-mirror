@@ -273,8 +273,7 @@ create_all_dt_for_dir(struct redist_collection_msg *msgs,
 
   for (size_t i = 0; i < num_redists; ++i)
     block_lengths[i] = 1;
-  for (size_t i = 0; i < num_messages; ++i)
-  {
+  for (size_t i = 0; i < num_messages; ++i) {
     if (redist_msgs[i].datatype != MPI_DATATYPE_NULL)
       xt_mpi_call(MPI_Type_free(&(redist_msgs[i].datatype)), comm);
     redist_msgs[i].datatype
@@ -289,13 +288,11 @@ compute_displ(const void *const *data, unsigned num_redists,
               MPI_Aint displacements[num_redists],
               MPI_Comm comm)
 {
-  if (num_redists)
-  {
+  if (num_redists) {
     MPI_Aint base_addr, offset;
     xt_mpi_call(MPI_Get_address((void *)data[0], &base_addr), comm);
     displacements[0] = 0;
-    for (unsigned i = 1; i < num_redists; ++i)
-    {
+    for (size_t i = 1; i < num_redists; ++i) {
       xt_mpi_call(MPI_Get_address((void *)data[i], &offset), comm);
       displacements[i] = offset - base_addr;
     }
@@ -304,17 +301,17 @@ compute_displ(const void *const *data, unsigned num_redists,
 
 static size_t
 lookup_cache_index(unsigned num_redists,
-                   MPI_Aint src_displacements[num_redists],
-                   MPI_Aint dst_displacements[num_redists],
-                   MPI_Aint (*cached_src_displacements)[num_redists],
-                   MPI_Aint (*cached_dst_displacements)[num_redists],
+                   const MPI_Aint src_displacements[num_redists],
+                   const MPI_Aint dst_displacements[num_redists],
+                   const MPI_Aint (*cached_src_displacements)[num_redists],
+                   const MPI_Aint (*cached_dst_displacements)[num_redists],
                    size_t cache_size)
 {
   for (size_t i = 0; i < cache_size &&
        cached_src_displacements[i][0] == (MPI_Aint)0 &&
        cached_dst_displacements[i][0] == (MPI_Aint)0; ++i) {
-    int mismatch = 0;
-    for (unsigned j = 0; j < num_redists; ++j)
+    bool mismatch = false;
+    for (size_t j = 0; j < num_redists; ++j)
       mismatch |= (src_displacements[j] != cached_src_displacements[i][j]) ||
                   (dst_displacements[j] != cached_dst_displacements[i][j]);
     if (!mismatch) return i;
@@ -340,8 +337,8 @@ get_exchanger(const void *const * src_data, void *const * dst_data,
   {
     size_t cache_index
       = lookup_cache_index(num_redists, displacements[0], displacements[1],
-                           (MPI_Aint (*)[num_redists])cache->src_displacements,
-                           (MPI_Aint (*)[num_redists])cache->dst_displacements,
+                           (const MPI_Aint (*)[num_redists])cache->src_displacements,
+                           (const MPI_Aint (*)[num_redists])cache->dst_displacements,
                            cache_size);
 
     if (cache_index == cache_size)
@@ -375,7 +372,7 @@ get_exchanger(const void *const * src_data, void *const * dst_data,
   else
   {
     size_t nmsg = (size_t)num_send_messages + (size_t)num_recv_messages;
-    struct Xt_redist_msg *p = xmalloc(nmsg * sizeof (*p));
+    struct Xt_redist_msg *restrict p = xmalloc(nmsg * sizeof (*p));
     for (size_t i = 0; i < nmsg; ++i)
       p[i].datatype = MPI_DATATYPE_NULL;
 
