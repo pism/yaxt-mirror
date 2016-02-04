@@ -205,11 +205,11 @@ init_cache(struct exchanger_cache *cache, size_t cache_size, size_t ntx,
   size_t num_displ = cache_size * num_redists;
   struct Xt_redist_msg *msgs = cache->msgs = xmalloc(ntx * sizeof (*msgs));
   for (size_t i = 0; i < ntx; ++i) msgs[i].datatype = MPI_DATATYPE_NULL;
-  MPI_Aint
-    *q = cache->src_displacements = xmalloc(num_displ * sizeof (*q)),
-    *p = cache->dst_displacements = xmalloc(num_displ * sizeof (*p));
-  for (size_t i = 0; i < num_displ; i += num_redists)
-    q[i] = p[i] = (MPI_Aint)-1;
+  MPI_Aint *restrict q = cache->src_displacements
+    = xmalloc(2 * num_displ * sizeof (*q));
+  cache->dst_displacements = q + num_displ;
+  for (size_t i = 0; i < 2 * num_displ; i += num_redists)
+    q[i] = (MPI_Aint)-1;
   cache->token = 0;
 }
 
@@ -224,7 +224,6 @@ destruct_cache(struct exchanger_cache *cache,
 
   xt_redist_msgs_free(ntx, cache->msgs, comm);
   free(cache->src_displacements);
-  free(cache->dst_displacements);
 }
 
 
