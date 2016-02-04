@@ -145,9 +145,9 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 }
 
 int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
-                                     Xt_int * index) {
+                                     Xt_int *idx) {
 
-  return idxlist->vtable->get_index_at_position(idxlist, position, index);
+  return idxlist->vtable->get_index_at_position(idxlist, position, idx);
 }
 
 int
@@ -182,10 +182,10 @@ xt_idxlist_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
   }
 }
 
-int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
+int xt_idxlist_get_position_of_index(Xt_idxlist idxlist, Xt_int idx,
                                      int * position) {
 
-  return idxlist->vtable->get_position_of_index(idxlist, index, position);
+  return idxlist->vtable->get_position_of_index(idxlist, idx, position);
 }
 
 int
@@ -250,10 +250,10 @@ xt_idxlist_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
   }
 }
 
-int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
+int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int idx,
                                          int * position, int offset) {
 
-  return idxlist->vtable->get_position_of_index_off(idxlist, index,
+  return idxlist->vtable->get_position_of_index_off(idxlist, idx,
                                                     position, offset);
 }
 
@@ -304,18 +304,18 @@ Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist) {
 }
 
 static void
-get_position_in_ndim_space(Xt_int index, unsigned ndim,
+get_position_in_ndim_space(Xt_int idx, unsigned ndim,
                            Xt_int global_stride[ndim],
                            Xt_int global_start_index, Xt_int position[ndim]) {
 
-  index = (Xt_int)(index - global_start_index);
+  idx = (Xt_int)(idx - global_start_index);
 
   for (unsigned i = 0; i < ndim - 1; ++i) {
-    position[i] = (Xt_int)(index / global_stride[i]);
-    index = (Xt_int)(index % global_stride[i]);
+    position[i] = (Xt_int)(idx / global_stride[i]);
+    idx = (Xt_int)(idx % global_stride[i]);
   }
 
-   position[ndim - 1] = index;
+   position[ndim - 1] = idx;
 }
 
 void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
