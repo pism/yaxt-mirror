@@ -416,3 +416,13 @@ xt_idxlist_get_uid(Xt_idxlist idxlist)
   assert(idxlist->uid);
   return idxlist->uid;
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
