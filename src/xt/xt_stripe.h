@@ -1,7 +1,7 @@
 /**
  * @file xt_stripe.h
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -74,6 +74,7 @@ void xt_convert_indices_to_stripes(const Xt_int *indices,
 
 
 #endif
+
 /*
  * Local Variables:
  * c-basic-offset: 2

@@ -1,7 +1,7 @@
 /**
  * @file xt_redist_single_array_base.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -220,3 +220,12 @@ redist_sab_get_MPI_Comm(Xt_redist redist) {
   return redist_sab->comm;
 }
 
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

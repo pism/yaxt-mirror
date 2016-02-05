@@ -1,7 +1,7 @@
 /**
  * @file yaxt_f2c.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -335,6 +335,7 @@ xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {
   || (defined __clang__)
 #pragma GCC diagnostic pop
 #endif
+
 /*
  * Local Variables:
  * c-basic-offset: 2

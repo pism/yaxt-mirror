@@ -1,7 +1,7 @@
 /**
  * @file xt_idxlist_collection.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -436,3 +436,13 @@ idxlist_collection_get_max_index(Xt_idxlist idxlist) {
 
   return max;
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

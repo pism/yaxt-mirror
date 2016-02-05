@@ -1,16 +1,18 @@
 /**
  * @file xt_mpi.c
  *
- * @copyright Copyright  (C)  2013 Moritz Hanke <hanke@dkrz.de>
+ * @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
- *                                 Joerg Behrens <behrens@dkrz.de>
- * @author Moritz Hanke <hanke@dkrz.de>
+ *
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
- *         Joerg Behrens <behrens@dkrz.de>
  */
 /*
  * Keywords:
- * Maintainer: Moritz Hanke <hanke@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *

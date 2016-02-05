@@ -2,7 +2,7 @@
 !> @file xt_idxlist_collection_f.f90
 !> @brief Fortran interface to xt_idxlist_collection constructors
 !>
-!> @copyright Copyright  (C)  2014 Jörg Behrens <behrens@dkrz.de>
+!> @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !>                                 Moritz Hanke <hanke@dkrz.de>
 !>                                 Thomas Jahns <jahns@dkrz.de>
 !>
@@ -96,3 +96,12 @@ CONTAINS
   END FUNCTION xt_idxlist_collection_new_a2d
 
 END MODULE xt_idxlist_collection
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

@@ -1,7 +1,7 @@
 /**
  * @file xt_idxvec.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -801,3 +801,13 @@ idxvec_get_max_index(Xt_idxlist idxlist) {
 
   return get_sorted_vector(idxvec_obj)[idxvec_obj->parent.num_indices-1];
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

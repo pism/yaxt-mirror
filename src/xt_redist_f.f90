@@ -2,7 +2,7 @@
 !! @file xt_redist_f.f90
 !! @brief xt_redist-related procedures of Fortran interface
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!

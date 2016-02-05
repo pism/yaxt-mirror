@@ -2,7 +2,7 @@
 !! @file xt_xmap_f.f90
 !! @brief Fortran interface to yaxt xmap declarations
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!
@@ -400,3 +400,12 @@ CONTAINS
     iter%cptr = c_null_ptr
   END SUBROUTINE xt_xmap_iterator_delete
 END MODULE xt_xmap_abstract
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

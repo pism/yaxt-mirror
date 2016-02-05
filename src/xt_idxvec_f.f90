@@ -2,7 +2,7 @@
 !> @file xt_idxvec_f.f90
 !> @brief Fortran interface to yaxt xt_idxvec functions
 !>
-!> @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!> @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !>                                 Moritz Hanke <hanke@dkrz.de>
 !>                                 Thomas Jahns <jahns@dkrz.de>
 !>
@@ -500,3 +500,12 @@ CONTAINS
   END FUNCTION xt_idxvec_from_stripes_new_a_i8
 
 END MODULE xt_idxvec
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

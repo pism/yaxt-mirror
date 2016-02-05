@@ -1,7 +1,7 @@
 /**
  * @file xt_redist_single_array_base.h
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -78,3 +78,13 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                           MPI_Comm comm);
 
 #endif // XT_REDIST_SINGLE_ARRAY_BASE_H
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

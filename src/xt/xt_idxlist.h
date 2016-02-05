@@ -1,7 +1,7 @@
 /**
  * @file xt_idxlist.h
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -381,3 +381,13 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
 Xt_uid xt_idxlist_get_uid(Xt_idxlist idxlist);
 
 #endif // XT_IDXLIST_H
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

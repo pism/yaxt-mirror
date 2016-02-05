@@ -2,14 +2,17 @@
  * @file mergesort.c
  *
  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
  * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
  * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
@@ -233,3 +236,13 @@ void xt_mergesort_index(Xt_int *val, int n, int *pos, int reset_pos) {
   free(v);
 }
 
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

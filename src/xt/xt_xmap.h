@@ -1,7 +1,7 @@
 /**
  * @file xt_xmap.h
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -247,3 +247,13 @@ int xt_xmap_get_max_dst_pos(Xt_xmap xmap);
 int xt_xmap_is_bijective(Xt_xmap xmap);
 
 #endif // XT_XMAP_H
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

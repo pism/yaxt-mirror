@@ -1,15 +1,18 @@
 /**
  * @file xt_idxmod.h
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
  * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
  * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
@@ -101,3 +104,13 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
                          int modifier_num, int *mstate);
 
 #endif
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

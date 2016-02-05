@@ -2,7 +2,7 @@
  * @file xt_exchanger.h
  * @brief exchanging of data based on information provided by redist's
  *
- * @copyright Copyright  (C)  2014 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *

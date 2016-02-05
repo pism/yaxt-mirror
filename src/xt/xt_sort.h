@@ -1,7 +1,7 @@
 /**
  * @file xt_sort.h
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -63,3 +63,13 @@ extern void (*xt_sort_index)(Xt_int * a, int n, int * idx, int reset_index);
 extern void (*xt_sort_idxpos)(idxpos_type *v, int n);
 
 #endif // XT_SORT_H
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

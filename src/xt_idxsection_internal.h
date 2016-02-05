@@ -1,7 +1,7 @@
 /**
  * @file xt_idxsection_internal.h
  *
- * @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -66,3 +66,13 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
                                                   Xt_idxlist dst_idxlist);
 
 #endif
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

@@ -2,7 +2,7 @@
 !! @file xt_mpi_f.f90
 !! @brief Fortran wrapper for MPI
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!

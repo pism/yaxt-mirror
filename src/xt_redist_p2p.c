@@ -1,7 +1,7 @@
 /**
  * @file xt_redist_p2p.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -498,3 +498,13 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
 
   return xt_redist_p2p_off_new(xmap, NULL, NULL, datatype);
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

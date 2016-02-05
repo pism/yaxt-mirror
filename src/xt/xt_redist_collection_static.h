@@ -1,15 +1,18 @@
 /**
  * @file xt_redist_collection_static.h
  *
- * @copyright Copyright  (C)  2012 Moritz Hanke <hanke@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Moritz Hanke <hanke@dkrz.de>
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
- * Maintainer: Moritz Hanke <hanke@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
@@ -80,3 +83,13 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
                                 MPI_Comm comm);
 
 #endif // XT_REDIST_COLLECTION_STATIC_H
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

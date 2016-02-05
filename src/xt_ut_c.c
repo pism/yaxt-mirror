@@ -2,7 +2,7 @@
  * @file xt_ut_c.c
  * @brief implementation of unitrans using yaxt
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -258,3 +258,13 @@ void xt_ut_transpose(const void **pt_in, int itrans, int XT_UNUSED(direction),
   if (!trans) die("xt_ut_transpose1: invalid handle");
   xt_redist_s_exchange(trans->redist, 1, pt_in, pt_out);
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

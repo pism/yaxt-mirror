@@ -5,7 +5,7 @@
  * contains declaration the redistribution data structure, which
  * is derived from one or more xt_xmaps
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -133,6 +133,7 @@ MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist);
 
 #endif // XT_REDIST_H
+
 /*
  * Local Variables:
  * c-basic-offset: 2

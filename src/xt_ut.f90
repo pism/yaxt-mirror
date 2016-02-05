@@ -1,16 +1,19 @@
 !>
 !! @file xt_ut.f90
 !!
-!! @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
-!!
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+!!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
+!!
 !! @author Jörg Behrens <behrens@dkrz.de>
+!!         Moritz Hanke <hanke@dkrz.de>
 !!         Thomas Jahns <jahns@dkrz.de>
 !!
 
 !
 !  Keywords:
 !  Maintainer: Jörg Behrens <behrens@dkrz.de>
+!              Moritz Hanke <hanke@dkrz.de>
 !              Thomas Jahns <jahns@dkrz.de>
 !  URL: https://doc.redmine.dkrz.de/yaxt/html/
 !
@@ -347,4 +350,13 @@ CONTAINS
 
   END SUBROUTINE ut_transpose_int
 
-End MODULE xt_ut
+END MODULE xt_ut
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

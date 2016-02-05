@@ -1,7 +1,7 @@
 /**
  * @file xt_xmap_intersection.h
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -120,6 +120,7 @@ xt_xmap_intersection_ext_new(
   MPI_Comm comm);
 
 #endif // XT_XMAP_INTERSECTION_H
+
 /*
  * Local Variables:
  * c-basic-offset: 2

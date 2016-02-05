@@ -1,14 +1,17 @@
 /**
  * @file xt_idxlist_intersection.c
  *
- * @copyright Copyright  (C)  2012 Moritz Hanke <hanke@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Moritz Hanke <hanke@dkrz.de>
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
- * Maintainer: Moritz Hanke <hanke@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
@@ -149,4 +152,14 @@ xt_default_isect(Xt_idxlist idxlist_src,
    INSTR_STOP(instr_fallback);
    return intersection;
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
 

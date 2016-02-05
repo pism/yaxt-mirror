@@ -2,16 +2,20 @@
  * @file xt_ut_c.h
  * @brief supportes the unitrans interfaces/wrappers in xt_ut.f90 with yaxt functionality.
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
+ *                                 Thomas Jahns <jahns@dkrz.de>
  *
  * @author Jörg Behrens <behrens@dkrz.de>
  *         Moritz Hanke <hanke@dkrz.de>
+ *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
  * Maintainer: Jörg Behrens <behrens@dkrz.de>
  *             Moritz Hanke <hanke@dkrz.de>
+ *             Thomas Jahns <jahns@dkrz.de>
+ *
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
  * Redistribution and use in source and binary forms, with or without
@@ -94,3 +98,13 @@ int xt_ut_init_oneway_transposition_template(int decomp_handle_in, int decomp_ha
 void xt_ut_destroy_transposition_template(int id);
 
 #endif
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

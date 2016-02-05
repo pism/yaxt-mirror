@@ -1,7 +1,7 @@
 /**
  * @file xt_exchanger_irecv_isend_packed.c
  *
- * @copyright Copyright  (C)  2015 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *

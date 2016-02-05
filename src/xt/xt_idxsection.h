@@ -1,15 +1,18 @@
 /**
  * @file xt_idxsection.h
  *
- * @copyright Copyright  (C)  2012 Moritz Hanke <hanke@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Moritz Hanke <hanke@dkrz.de>
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
- * Maintainer: Moritz Hanke <hanke@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
@@ -82,3 +85,13 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                                 MPI_Comm comm);
 
 #endif // XT_IDXSECTION_H
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
