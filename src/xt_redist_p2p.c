@@ -103,19 +103,13 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, int *offsets,
     return;
   }
 
-  *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
-
-  struct Xt_redist_msg * curr_msg;
-
-  curr_msg = *msgs;
+  struct Xt_redist_msg *restrict curr_msg
+    = *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
 
   do {
 
-    int const * curr_transfer_pos;
-    int curr_num_transfer_pos;
-
-    curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
-    curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
+    const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
+    int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
 
     curr_msg->datatype
       = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
