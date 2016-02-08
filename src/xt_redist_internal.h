@@ -79,7 +79,7 @@ struct xt_redist_vtable {
 };
 
 struct Xt_redist_ {
-  struct xt_redist_vtable *vtable;
+  const struct xt_redist_vtable *vtable;
 };
 
 extern void
