@@ -68,9 +68,11 @@
  *                      communication
  *
  * @remarks The send_msgs and recv_msgs arrays will be used directly
- *          without copying them. When the destructor is call the arrays,
- *          the associated MPI data types and the MPI communicator will be
- *          free by free(), MPI_Type_free() and MPI_Comm_free() respectively.
+ *          without copying them and must be malloc'ed therefore. When
+ *          the destructor \a xt_redist_delete is called, the arrays,
+ *          the associated MPI data types, and the MPI communicator
+ *          will be free'd via free(), MPI_Type_free() and
+ *          MPI_Comm_free() respectively.
  */
 Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                           struct Xt_redist_msg * send_msgs,
