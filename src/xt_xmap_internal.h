@@ -66,7 +66,7 @@ struct Xt_xmap_iter_vtable {
 };
 
 struct Xt_xmap_iter_ {
-  struct Xt_xmap_iter_vtable * vtable;
+  const struct Xt_xmap_iter_vtable * vtable;
 };
 
 
