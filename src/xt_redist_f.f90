@@ -45,6 +45,13 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+
+!>
+!! @example test_redist_collection_displace_f.f90
+!! @example test_redist_common_f.f90
+!! @example test_redist_p2p_f.f90
+!! @example test_redist_p2p_parallel_f.f90
+
 MODULE xt_redist_base
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, i2, i4, i8
   USE xt_xmap_abstract, ONLY: xt_xmap

@@ -45,6 +45,10 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+
+!>
+!! @example test_xmap_intersection_parallel_f.f90
+
 MODULE xt_xmap_intersection
   USE iso_c_binding, ONLY: c_int, c_loc, c_null_ptr, c_ptr
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_slice_c_loc

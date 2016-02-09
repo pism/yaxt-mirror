@@ -56,6 +56,8 @@
 
 /** \example test_idxmod.c
  */
+/** \example test_idxmod_f.f90
+ */
 
 /**
  * A modifier is a pair of compact idxlists that describes an index-to-index

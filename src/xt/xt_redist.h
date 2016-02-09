@@ -60,6 +60,10 @@
 #include "xt/xt_core.h"
 
 /**
+ * \example test_redist_common.c
+ */
+
+/**
  * redist copy constructor
  *
  * @param[in,out] redist redistribution structure

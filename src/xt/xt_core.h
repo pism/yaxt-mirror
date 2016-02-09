@@ -56,6 +56,11 @@
 
 #include <mpi.h>
 
+/** \example test_initialized_finalized.c
+ */
+/** \example test_initialized_finalized_f.f90
+ */
+
 /**
  * Distributed elements are enumerated with numbers of this signed
  * integral type.

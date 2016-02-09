@@ -56,6 +56,9 @@
 #include "xt/xt_core.h"
 #include "xt_redist_internal.h"
 
+/** \example test_exchanger_parallel.c
+ */
+
 typedef struct Xt_exchanger_ *Xt_exchanger;
 
 struct xt_exchanger_vtable {

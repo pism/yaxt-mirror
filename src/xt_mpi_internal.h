@@ -52,6 +52,9 @@
 
 #include <mpi.h>
 
+/** \example test_mpi_smartdedup.c
+ */
+
 enum xt_mpi_tags {
   xt_mpi_tag_exchange_msg,
   xt_mpi_tag_xmap_dist_dir_src_send,

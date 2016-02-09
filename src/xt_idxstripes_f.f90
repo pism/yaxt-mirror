@@ -45,6 +45,10 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+
+!>
+!! @example test_perf_stripes.f90
+
 MODULE xt_idxstripes
   USE xt_core, ONLY: xt_stripe, i2, i4, i8, xt_get_default_comm, &
        xt_abort
