@@ -170,7 +170,7 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
       while (start > local_index_range_lbound)
         start = (Xt_int)(start - global_interval), num_stripes++;
 
-      if (local_index_range_ubound > 0)
+      if ((local_index_range_ubound > 0) && (global_interval != 0))
         num_stripes
           = (int)(num_stripes
                      + ((local_index_range_ubound - start + global_interval)
