@@ -1,5 +1,5 @@
 /**
- * @file test_xmap_intersection_parallel.c
+ * @file test_exchanger_parallel.c
  *
  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>

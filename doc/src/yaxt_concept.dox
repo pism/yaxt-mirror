@@ -10,7 +10,7 @@
   \tableofcontents
 
   \section intro Introduction
-  \section concept Concept
+  \section sec_concept Concept
 
   The usage of yaxt can be divided into several steps:
 

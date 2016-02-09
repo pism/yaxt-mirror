@@ -72,6 +72,9 @@ void
 xt_cover_finish(struct Xt_pos_ext_vec *restrict cover);
 
 /**
+ * @param cover
+ * @param query
+ * @param forward
  * @param search_start_pos should be 0, if \a forward == true
  * or cover->num_pos_ext, if \a forward == false to search all of
  * cover, choose value to start search at if part of cover is known to
@@ -85,7 +88,7 @@ xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
                 size_t search_start_pos);
 
 /**
- * append \range to cover
+ * append range to cover
  *
  * @note user must ensure range actually is appendable, i.e. does not
  * overlap or precede an existing range in \a cover
@@ -95,6 +98,9 @@ xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
                       struct Xt_pos_ext range);
 
 /**
+ * @param cover
+ * @param range
+ * @param forward
  * @param search_start_pos should be 0, if \a forward == true
  * or cover->num_pos_ext, if \a forward == false to search all of
  * cover, choose value to start search at if part of cover is known to
