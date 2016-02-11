@@ -283,7 +283,9 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   free(orig_pos_prefix_sum);
 
   /* i'th stripe overlaps with overlap_count[i] following stripes, or
-   * is part of a stretch of this many overlapping stripes */
+   * is part of a stretch of this many overlapping stripes, if
+   * overlap_count[i] is > 0, in case overlap_count[i] <= 0, this many
+   * non-overlapping stripes follow after negation + 1 */
   int *restrict overlap_count
     = sorted_stripe_min_pos + 2 * num_stripes;
   for (int i = 0; i < num_stripes - 1; ++i) {
@@ -296,14 +298,19 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
       Xt_int range_max_idx = MAX(stripe_minmax[1][i], stripe_minmax[1][i+1]);
       while (j + 1 < num_stripes
              && stripe_minmax[0][j + 1] <= range_max_idx) {
-        overlap_count[j - 1] = 1;
         range_max_idx = MAX(range_max_idx, stripe_minmax[1][j+1]);
         ++j;
       }
       overlap_count[i] = j - i;
+      i = j;
+    } else {
+      int j = i + 1;
+      while (j + 1 < num_stripes
+             && stripe_minmax[0][j + 1] > stripe_minmax[1][j])
+        ++j;
+      overlap_count[i] = -(j - i - 1);
       i = j - 1;
-    } else
-      overlap_count[i] = 0;
+    }
   }
   overlap_count[num_stripes - 1] = 0;
 
@@ -313,7 +320,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   while (i < (size_t)num_stripes) {
 
     bool do_overlap = overlap_count[i] > 0;
-    size_t num_selection = (size_t)overlap_count[i] + 1;
+    size_t num_selection = (size_t)(abs(overlap_count[i])) + 1;
     Xt_int curr_offset = 0;
 
     for (size_t j = 0; j < num_selection; ++j)
