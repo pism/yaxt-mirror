@@ -110,29 +110,21 @@ get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
 
 static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  int num_a, num_b = xt_idxlist_get_num_indices(b);
-  Xt_int min_index;
-  if ((num_a = xt_idxlist_get_num_indices(a)) && num_b)
-    min_index = (Xt_int)(MIN(xt_idxlist_get_min_index(a),
-                             xt_idxlist_get_min_index(b)));
-  else if (num_a)
-    min_index = xt_idxlist_get_min_index(a);
-  else
-    min_index = xt_idxlist_get_min_index(b);
+  int num_a = xt_idxlist_get_num_indices(a),
+    num_b = xt_idxlist_get_num_indices(b);
+  Xt_int min_index_a = num_a ? xt_idxlist_get_min_index(a) : XT_INT_MAX,
+    min_index_b = num_b ? xt_idxlist_get_min_index(b) : XT_INT_MAX,
+    min_index = (Xt_int)MIN(min_index_a, min_index_b);
   return min_index;
 }
 
 static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
-  int num_a, num_b = xt_idxlist_get_num_indices(b);
-  Xt_int max_index;
-  if ((num_a = xt_idxlist_get_num_indices(a)) && num_b)
-    max_index = (Xt_int)(MAX(xt_idxlist_get_max_index(a),
-                             xt_idxlist_get_max_index(b)));
-  else if (num_a)
-    max_index = xt_idxlist_get_max_index(a);
-  else
-    max_index = xt_idxlist_get_max_index(b);
+  int num_a = xt_idxlist_get_num_indices(a),
+    num_b = xt_idxlist_get_num_indices(b);
+  Xt_int max_index_a = num_a ? xt_idxlist_get_max_index(a) : XT_INT_MIN,
+    max_index_b = num_b ? xt_idxlist_get_max_index(b) : XT_INT_MIN,
+    max_index = MAX(max_index_a, max_index_b);
   return max_index;
 }
 
