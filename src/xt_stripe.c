@@ -1,7 +1,7 @@
 /**
  * @file xt_stripe.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -85,9 +85,9 @@ void xt_convert_indices_to_stripes(const Xt_int *restrict indices,
         } while ((i + j) < (size_t)num_indices
                  && indices[i] + (Xt_int)j * stride == indices[i + j]);
       }
-      j-= ((i + j + 2 < (size_t)num_indices)
-           && ((indices[i + j] == indices[i + j + 1] - 1)
-               & (indices[i + j + 1] == indices[i + j + 2] - 1)));
+      j-= ((i + j + 1 < (size_t)num_indices)
+           && ((indices[i + j - 1] == indices[i + j] - 1)
+               & (indices[i + j] == indices[i + j + 1] - 1)));
 
       temp_stripes[num_temp_stripes-1].start  = indices[i];
       temp_stripes[num_temp_stripes-1].stride = stride;
