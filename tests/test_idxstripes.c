@@ -457,6 +457,39 @@ int main(void) {
   }
 
   {
+    // generate idxvec from stripes
+    static const struct Xt_stripe stripes[]
+      = {{.start = 4, .stride = 1, .nstrides = 1},
+         {.start = 5, .stride = 1, .nstrides = 1},
+         {.start = 10, .stride = -10, .nstrides = 2}};
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+    Xt_idxlist idxvec_a = xt_idxvec_from_stripes_new(stripes, num_stripes);
+
+    // generate idxvec containing single elemente that is also with idxvec_a
+    Xt_int index_vector[] = {5};
+    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
+    Xt_idxlist idxvec_b = xt_idxvec_new(index_vector, num_indices);
+
+    // intersect both index vectors
+    Xt_idxlist intersection =
+      xt_idxlist_get_intersection(idxvec_a, idxvec_b);
+
+    // test result
+    if (xt_idxlist_get_num_indices(intersection) != 1) {
+      PUT_ERR("wrong number of indices in intersection\n");
+    } else {
+      Xt_int idx;
+      xt_idxlist_get_index_at_position(intersection, 0, &idx);
+      if (idx != index_vector[0])
+        PUT_ERR("wrong index in intersection\n");
+    }
+    xt_idxlist_delete(intersection);
+    xt_idxlist_delete(idxvec_b);
+    xt_idxlist_delete(idxvec_a);
+  }
+
+
+  {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
     static const struct Xt_stripe stripes[]

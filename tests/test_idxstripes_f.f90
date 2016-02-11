@@ -52,6 +52,7 @@ PROGRAM test_idxstripes_f
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_bounds, xt_pos_ext, &
        xt_stripe, xt_idxlist, xt_idxlist_delete, xt_idxstripes_new, &
        xt_idxvec_from_stripes_new, xt_int_kind, xt_idxlist_copy, &
+       xt_idxvec_from_stripes_new, &
        xt_idxlist_get_index_stripes, xt_idxlist_get_intersection, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_bounding_box, OPERATOR(/=), &
@@ -80,6 +81,7 @@ PROGRAM test_idxstripes_f
   CALL test_intersection9
   CALL test_intersection10
   CALL test_intersection11
+  CALL test_intersection_stripe2vec
   CALL test_get_pos1
   CALL test_get_pos2
   CALL test_get_pos3
@@ -342,6 +344,32 @@ CONTAINS
 
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection14
+
+  SUBROUTINE test_intersection_stripe2vec
+    INTEGER, PARAMETER :: num_stripes = 3
+    TYPE(xt_stripe), PARAMETER :: stripes(num_stripes) &
+         = (/ xt_stripe(4, 1, 1), xt_stripe(5, 1, 1), xt_stripe(10, -10, 2) /)
+    TYPE(xt_idxlist) :: idxvec_a, idxvec_b, intersection
+    INTEGER(xt_int_kind), PARAMETER :: index_vector(1) = (/ 5 /)
+    INTEGER(xt_int_kind) :: intersection_idx
+    LOGICAL :: not_found
+    idxvec_a = xt_idxvec_from_stripes_new(stripes)
+    idxvec_b = xt_idxvec_new(index_vector)
+    intersection = xt_idxlist_get_intersection(idxvec_a, idxvec_b)
+    IF (xt_idxlist_get_num_indices(intersection) /= 1) &
+         CALL test_abort("unexpected number of indices in intersection!", &
+         __FILE__, &
+         __LINE__)
+    not_found = xt_idxlist_get_index_at_position(intersection, 0, &
+         intersection_idx)
+    IF (intersection_idx /= index_vector(1)) &
+         CALL test_abort("unexpected index in intersection!", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_idxlist_delete(intersection)
+    CALL xt_idxlist_delete(idxvec_a)
+    CALL xt_idxlist_delete(idxvec_b)
+  END SUBROUTINE test_intersection_stripe2vec
 
   SUBROUTINE test_get_pos(stripes, pos)
     TYPE(xt_stripe), INTENT(in) :: stripes(:)

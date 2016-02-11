@@ -49,6 +49,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -221,6 +222,8 @@ decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
   return stripe.nstrides;
 }
 
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+
 static void
 generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                     int num_stripes,
@@ -232,25 +235,24 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     return;
   }
 
-  Xt_int * stripe_min;
-  int * sorted_stripe_min_pos;
+  /* stripe_minmax[0][i] is the minimal index in stripe i at first,
+   * later of sorted stripe i, stripe_minmax[1][i] is the
+   * corresponding maximal index */
+  Xt_int (*restrict stripe_minmax)[num_stripes]
+    = xmalloc(2 * sizeof(*stripe_minmax));
+  int *restrict sorted_stripe_min_pos
+    = xmalloc((size_t)num_stripes * sizeof(*sorted_stripe_min_pos));
 
-  stripe_min = xmalloc((size_t)num_stripes * sizeof(*stripe_min));
-  sorted_stripe_min_pos = xmalloc((size_t)num_stripes * sizeof(*sorted_stripe_min_pos));
+  for(int i = 0; i < num_stripes; ++i) {
+    Xt_int ofs = (Xt_int)(stripes[i].stride * (stripes[i].nstrides - 1)),
+      mask = Xt_isign_mask(ofs);
+    stripe_minmax[0][i] = (Xt_int)(stripes[i].start + (ofs & mask));
+  }
 
-  int i, j;
+  xt_quicksort_index(stripe_minmax[0], (int)num_stripes,
+                     sorted_stripe_min_pos, 1);
 
-  for(i = 0; i < num_stripes; ++i)
-    if (stripes[i].stride >= 0)
-      stripe_min[i] = stripes[i].start;
-    else
-      stripe_min[i] = (Xt_int)(stripes[i].start
-                               + stripes[i].stride
-                               * (stripes[i].nstrides - 1));
-
-  xt_quicksort_index(stripe_min, (int)num_stripes, sorted_stripe_min_pos, 1);
-
-  int * sorted_pos_prefix_sum, * orig_pos_prefix_sum;
+  int *restrict sorted_pos_prefix_sum, *restrict orig_pos_prefix_sum;
 
   sorted_pos_prefix_sum
     = xmalloc((size_t)num_stripes * sizeof(*sorted_pos_prefix_sum));
@@ -258,46 +260,62 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     = xmalloc((size_t)num_stripes * sizeof(*orig_pos_prefix_sum));
 
   orig_pos_prefix_sum[0] = 0;
-  for (i = 1; i < num_stripes; ++i)
+  for (int i = 1; i < num_stripes; ++i)
     orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + stripes[i-1].nstrides;
 
-  for (i = 0; i < num_stripes; ++i)
+  for (int i = 0; i < num_stripes; ++i) {
     sorted_pos_prefix_sum[i] = orig_pos_prefix_sum[sorted_stripe_min_pos[i]];
+    int sorted_pos = sorted_stripe_min_pos[i];
+    Xt_int ofs = (Xt_int)(stripes[sorted_pos].stride
+                          * (stripes[sorted_pos].nstrides - 1)),
+      mask = Xt_isign_mask(ofs);
+    stripe_minmax[1][i] = (Xt_int)(stripes[sorted_pos].start + (ofs & ~mask));
+  }
 
   free(orig_pos_prefix_sum);
 
-  int * overlap_flag; // does i'th stripe overlap with (i+1)'th stripe
-
-  overlap_flag = xmalloc((size_t)num_stripes * sizeof(*overlap_flag));
-
-  for (i = 0; i < num_stripes - 1; ++i)
-    overlap_flag[i] = xt_stripes_overlap(stripes[sorted_stripe_min_pos[i]],
-                                         stripes[sorted_stripe_min_pos[i+1]]);
-  overlap_flag[num_stripes - 1] = 0;
+  /* i'th stripe overlaps with overlap_count[i] following stripes, or
+   * is part of a stretch of this many overlapping stripes */
+  int *overlap_count = xmalloc((size_t)num_stripes * sizeof(*overlap_count));
+  for (int i = 0; i < num_stripes - 1; ++i) {
+    bool do_overlap = stripe_minmax[1][i] >= stripe_minmax[0][i + 1];
+    if (do_overlap) {
+      int j = i + 1;
+      /* range_max_idx is the maximal index encountered in a rage of
+       * overlapping stripes, only stop when a stripe starting at
+       * index larger than this is encountered */
+      Xt_int range_max_idx = MAX(stripe_minmax[1][i], stripe_minmax[1][i+1]);
+      while (j + 1 < num_stripes
+             && stripe_minmax[0][j + 1] <= range_max_idx) {
+        overlap_count[j - 1] = 1;
+        range_max_idx = MAX(range_max_idx, stripe_minmax[1][j+1]);
+        ++j;
+      }
+      overlap_count[i] = j - i;
+      i = j - 1;
+    } else
+      overlap_count[i] = 0;
+  }
+  overlap_count[num_stripes - 1] = 0;
 
   Xt_int *restrict sorted_vector_assign
     = xmalloc((size_t)idxvec->parent.num_indices
               * sizeof(*(idxvec->sorted_vector)));
   idxvec->sorted_vector = sorted_vector_assign;
-  idxvec->sorted_vec_positions = xmalloc((size_t)idxvec->parent.num_indices *
-                                         sizeof(*(idxvec->sorted_vec_positions)));;
+  idxvec->sorted_vec_positions
+    = xmalloc((size_t)idxvec->parent.num_indices *
+              sizeof(*(idxvec->sorted_vec_positions)));
 
   Xt_int offset = 0;
 
-  i = 0;
-  while (i < num_stripes) {
+  size_t i = 0;
+  while (i < (size_t)num_stripes) {
 
-    int do_overlap = overlap_flag[i];
-    int num_selection = 1;
-
-    while(i + num_selection < num_stripes &&
-          overlap_flag[i + num_selection] == do_overlap) ++num_selection;
-
-    num_selection += do_overlap;
-
+    bool do_overlap = overlap_count[i] > 0;
+    size_t num_selection = (size_t)overlap_count[i] + 1;
     Xt_int curr_offset = 0;
 
-    for (j = 0; j < num_selection; ++j)
+    for (size_t j = 0; j < num_selection; ++j)
       curr_offset
         = (Xt_int)(curr_offset
                    + decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
@@ -316,9 +334,9 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   }
 
   free(sorted_pos_prefix_sum);
-  free(overlap_flag);
+  free(overlap_count);
   free(sorted_stripe_min_pos);
-  free(stripe_min);
+  free(stripe_minmax);
 }
 
 Xt_idxlist
