@@ -674,12 +674,24 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
           offset++;
         }
 
-      Xt_idxlist temp = xt_idxlist_collection_new(intersections,
-                                                  num_intersections_per_rank);
-      struct Xt_stripe *stripes;
-      int num_stripes;
-      xt_idxlist_get_index_stripes(temp, &stripes, &num_stripes);
-      xt_idxlist_delete(temp);
+      struct Xt_stripe *stripes = NULL;
+      int num_stripes = 0;
+      for (size_t j = 0; j < (size_t)num_intersections_per_rank; ++j) {
+        struct Xt_stripe *stripes_of_intersection;
+        int num_stripes_of_intersection;
+        xt_idxlist_get_index_stripes(intersections[j], &stripes_of_intersection,
+                                     &num_stripes_of_intersection);
+        if (stripes) {
+          stripes = xrealloc(stripes,
+                             (size_t)(num_stripes + num_stripes_of_intersection)
+                             * sizeof (*stripes));
+          memcpy(stripes + num_stripes, stripes_of_intersection,
+                 (size_t)num_stripes_of_intersection * sizeof (*stripes));
+          free(stripes_of_intersection);
+        } else
+          stripes = stripes_of_intersection;
+        num_stripes += num_stripes_of_intersection;
+      }
       qsort(stripes, (size_t)num_stripes, sizeof (*stripes), stripe_cmp);
       p[num_src_ix].list = xt_idxstripes_new(stripes, num_stripes);
       free(stripes);
