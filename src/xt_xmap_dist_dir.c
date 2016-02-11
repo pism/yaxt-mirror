@@ -667,16 +667,12 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
                         num_intersections_per_rank);
 
       int offset = 0;
-      int j = 0;
 
-      while (num_intersections_per_rank != offset) {
-
+      for (int j = 0; num_intersections_per_rank != offset; ++j)
         if (dist_dir_results->entries[j].rank == i) {
           intersections[offset] = dist_dir_results->entries[j].idxlist;
           offset++;
         }
-        ++j;
-      }
 
       Xt_idxlist temp = xt_idxlist_collection_new(intersections,
                                                   num_intersections_per_rank);
