@@ -692,8 +692,7 @@ generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
     }
   }
 
-  p = xrealloc(p, num_src_ix * sizeof(*p));
-  *src_com = p;
+  *src_com = xrealloc(p, num_src_ix * sizeof(*p));
   *num_src_intersections = (int)num_src_ix;
   free(intersections);
 }
