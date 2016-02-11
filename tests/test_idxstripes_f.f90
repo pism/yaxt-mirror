@@ -81,6 +81,9 @@ PROGRAM test_idxstripes_f
   CALL test_intersection9
   CALL test_intersection10
   CALL test_intersection11
+  CALL test_intersection12
+  CALL test_intersection13
+  CALL test_intersection14
   CALL test_intersection_stripe2vec
   CALL test_get_pos1
   CALL test_get_pos2
