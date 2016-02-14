@@ -639,33 +639,19 @@ int main(void) {
                                              single_match_only);
     { // testing of results
       Xt_idxlist intersection = xt_idxvec_from_stripes_new(stripes, num_stripes);
-
       for (int i = 0, k = 0; i < num_ext; ++i) {
-        if (pos_ext[i].size > 0) {
-          for (int j = 0; j < pos_ext[i].size; ++j, ++k) {
-            Xt_int intersection_index;
-            xt_idxlist_get_index_at_position(intersection, k, &intersection_index);
-            int send_pos = pos_ext[i].start + j;
-            Xt_int orig_index;
-            xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
-            if (intersection_index != orig_index) {
-              PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
-              fprintf(stderr, "intersection pos %d index %d orig pos %d index %d\n",
-                      k, intersection_index, send_pos,orig_index);
-            }
-          }
-        } else {
-          for (int j = 0; j < -pos_ext[i].size; ++j, ++k) {
-            Xt_int intersection_index;
-            xt_idxlist_get_index_at_position(intersection, k, &intersection_index);
-            int send_pos = pos_ext[i].start - j;
-            Xt_int orig_index;
-            xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
-            if (intersection_index != orig_index) {
-              PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
-              fprintf(stderr, "intersection pos %d index %d orig pos %d index %d\n",
-                      k, intersection_index, send_pos,orig_index);
-            }
+        int abs_pos_ext_size = abs(pos_ext[i].size),
+          jsign = pos_ext[i].size >= 0 ? 1 : -1;
+        for (int j = 0; j < abs_pos_ext_size; ++j, ++k) {
+          Xt_int intersection_index;
+          xt_idxlist_get_index_at_position(intersection, k, &intersection_index);
+          int send_pos = pos_ext[i].start + jsign * j;
+          Xt_int orig_index;
+          xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
+          if (intersection_index != orig_index) {
+            PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
+            fprintf(stderr, "intersection pos %d index %"XT_INT_FMT" orig pos %d index %"XT_INT_FMT"\n",
+                    k, intersection_index, send_pos, orig_index);
           }
         }
       }
