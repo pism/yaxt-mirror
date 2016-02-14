@@ -204,15 +204,13 @@ static int
 decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
               int * sorted_vec_pos, int pos_offset) {
 
-  int i;
-
   if (stripe.stride >= 0) {
-    for (i = 0; i < stripe.nstrides; ++i) {
+    for (int i = 0; i < stripe.nstrides; ++i) {
       sorted_vector[i] = (Xt_int)(stripe.start + i * stripe.stride);
       sorted_vec_pos[i] = pos_offset + i;
     }
   } else {
-    for (i = 0; i < stripe.nstrides; ++i) {
+    for (int i = 0; i < stripe.nstrides; ++i) {
       int j = stripe.nstrides - i - 1;
       sorted_vector[j] = (Xt_int)(stripe.start + i * stripe.stride);
       sorted_vec_pos[j] = pos_offset + i;
