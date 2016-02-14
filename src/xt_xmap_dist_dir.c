@@ -639,19 +639,20 @@ stripe_cmp(const void *a, const void *b)
 
 
 static void
-generate_intersection_from_dist_dir_results(struct dist_dir *dist_dir_results,
-                                            struct Xt_com_list **src_com,
-                                            int *num_src_intersections,
-                                            MPI_Comm comm) {
+generate_intersection_from_dist_dir_results(
+  const struct dist_dir *dist_dir_results,
+  struct Xt_com_list **src_com,
+  int *num_src_intersections,
+  MPI_Comm comm) {
 
   int comm_size;
 
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  Xt_idxlist * intersections = NULL;
+  Xt_idxlist *restrict intersections = NULL;
   size_t intersections_array_size = 0;
 
-  struct Xt_com_list *p
+  struct Xt_com_list *restrict p
     = xmalloc((size_t)dist_dir_results->num_entries * sizeof(*p));
   size_t num_src_ix = 0;
 
