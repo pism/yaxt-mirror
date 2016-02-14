@@ -1545,10 +1545,11 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
           db, result, cover, single_match_only,
           num_candidates - 1, candidates + 1);
       db_pos += db_step;
-      unmatched +=
-        idxstripes_get_pos_exts_of_index_stripe(
-          intervening, db, result, cover, single_match_only,
-          num_candidates - 1, candidates + 1);
+      if (intervening.start < query.start + query.stride * query.nstrides)
+        unmatched +=
+          idxstripes_get_pos_exts_of_index_stripe(
+            intervening, db, result, cover, single_match_only,
+            num_candidates - 1, candidates + 1);
       query.nstrides -= stride_step;
       query.start = (Xt_int)(query.start + query.stride * stride_step);
       overlap.start = (Xt_int)(overlap.start + overlap.stride);

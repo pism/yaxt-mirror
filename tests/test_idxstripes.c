@@ -488,6 +488,193 @@ int main(void) {
     xt_idxlist_delete(idxvec_a);
   }
 
+  {
+    Xt_int index_vector[] = {
+      3375, 3376,
+      3379, 3380, 3381,
+      3387, 3388, 3389, 3390, 3391, 3392, 3393,
+      3421, 3422, 3423, 3424, 3425, 3426, 3427,
+      3444,
+      3458, 3459,
+      3461, 3462, 3463, 3464, 3465, 3466, 3467, 3468, 3469, 3470,
+        3471, 3472, 3473, 3474, 3475, 3476, 3477, 3478, 3479, 3480,
+      3529,
+      3606, 3607, 3608,
+      3611, 3612, 3613, 3614,
+      3617,
+      3620, 3621, 3622, 3623, 3624, 3625, 3626, 3627, 3628, 3629,
+        3630, 3631,
+      3684, 3685, 3686, 3687, 3688, 3689, 3690, 3691, 3692, 3693,
+        3694, 3695, 3696, 3697, 3698, 3699, 3700, 3701, 3702, 3703,
+        3704, 3705, 3706, 3707, 3708, 3709,
+      3713, 3714, 3715, 3716, 3717, 3718, 3719, 3720, 3721, 3722,
+        3723, 3724, 3725, 3726, 3727, 3728, 3729, 3730, 3731,
+      3741, 3742,
+      3931, 3932,
+      3374,
+      3382,
+      3385,
+      3394,
+      3404,
+      3408,
+      3412,
+      3440,
+      3443,
+      3457,
+      3481,
+      3483,
+      3527,
+      3619,
+      3735,
+      3743,
+      3925,
+      3930,
+      3377, 3378,
+      3383, 3384,
+      3386,
+      3395,
+      3397, 3398,
+      3400,
+      3402, 3403,
+      3407,
+      3409, 3410,
+      3413,
+      3420,
+      3441, 3442,
+      3445,
+      3448, 3449,
+      3451,
+      3460,
+      3482,
+      3519, 3520,
+      3526,
+      3528,
+      3530,
+      3592, 3593,
+      3595, 3596, 3597,
+      3609, 3610,
+      3615, 3616,
+      3618,
+      3644,
+      3710, 3711, 3712,
+      3732, 3733,
+      3736, 3737,
+      3748, 3749,
+      3753, 3754,
+      3759, 3760,
+      3766, 3767,
+      3919, 3920,
+      3924,
+      3926,
+      3933, 3934,
+      2589,
+      2602,
+      2680,
+      3326,
+      3340, 3341,
+      3396,
+      3401,
+      3411,
+      3414,
+      3418,
+      3446, 3447,
+      3450,
+      3515,
+      3521,
+      3525,
+      3582,
+      3590, 3591,
+      3594,
+      3642,
+      3734,
+      3738,
+      3747,
+      3750,
+      3761,
+      3765,
+      3865,
+      3918,
+      3923,
+      3935
+    };
+    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
+    Xt_idxlist idxlist = xt_idxvec_new(index_vector, num_indices);
+
+    struct  Xt_stripe stripes[] = {
+      {.start = 3326, .stride = 14, .nstrides = 2 },
+      {.start = 3341, .stride = 33, .nstrides = 1 },
+      {.start = 3374, .stride = 1 , .nstrides = 25},
+      {.start = 3400, .stride = 1 , .nstrides = 5 },
+      {.start = 3407, .stride = 1 , .nstrides = 8 },
+      {.start = 3418, .stride = 2 , .nstrides = 1 },
+      {.start = 3420, .stride = 1 , .nstrides = 8 },
+      {.start = 3440, .stride = 1 , .nstrides = 12},
+      {.start = 3457, .stride = 1 , .nstrides = 27},
+      {.start = 3515, .stride = 4 , .nstrides = 1 },
+      {.start = 3519, .stride = 1 , .nstrides = 3 },
+      {.start = 3525, .stride = 1 , .nstrides = 6 },
+      {.start = 3582, .stride = 8 , .nstrides = 1 },
+      {.start = 3590, .stride = 1 , .nstrides = 8 },
+      {.start = 3606, .stride = 1 , .nstrides = 26},
+      {.start = 3642, .stride = 2 , .nstrides = 2 },
+      {.start = 3684, .stride = 1 , .nstrides = 55},
+      {.start = 3741, .stride = 1 , .nstrides = 3 },
+      {.start = 3747, .stride = 1 , .nstrides = 4 },
+      {.start = 3753, .stride = 1 , .nstrides = 2 },
+      {.start = 3759, .stride = 1 , .nstrides = 3 },
+      {.start = 3765, .stride = 1 , .nstrides = 3 },
+      {.start = 3865, .stride = 53, .nstrides = 1 },
+      {.start = 3918, .stride = 1 , .nstrides = 3 },
+      {.start = 3923, .stride = 1 , .nstrides = 4 },
+      {.start = 3930, .stride = 1 , .nstrides = 6 }
+    };
+    int num_stripes = sizeof(stripes) / sizeof(stripes[0]);
+
+    int num_ext;
+    struct Xt_pos_ext * pos_ext;
+    int single_match_only = 1;
+
+    xt_idxlist_get_pos_exts_of_index_stripes(idxlist, num_stripes, stripes,
+                                             &num_ext, &pos_ext,
+                                             single_match_only);
+    { // testing of results
+      Xt_idxlist intersection = xt_idxvec_from_stripes_new(stripes, num_stripes);
+
+      for (int i = 0, k = 0; i < num_ext; ++i) {
+        if (pos_ext[i].size > 0) {
+          for (int j = 0; j < pos_ext[i].size; ++j, ++k) {
+            Xt_int intersection_index;
+            xt_idxlist_get_index_at_position(intersection, k, &intersection_index);
+            int send_pos = pos_ext[i].start + j;
+            Xt_int orig_index;
+            xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
+            if (intersection_index != orig_index) {
+              PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
+              fprintf(stderr, "intersection pos %d index %d orig pos %d index %d\n",
+                      k, intersection_index, send_pos,orig_index);
+            }
+          }
+        } else {
+          for (int j = 0; j < -pos_ext[i].size; ++j, ++k) {
+            Xt_int intersection_index;
+            xt_idxlist_get_index_at_position(intersection, k, &intersection_index);
+            int send_pos = pos_ext[i].start - j;
+            Xt_int orig_index;
+            xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
+            if (intersection_index != orig_index) {
+              PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
+              fprintf(stderr, "intersection pos %d index %d orig pos %d index %d\n",
+                      k, intersection_index, send_pos,orig_index);
+            }
+          }
+        }
+      }
+      xt_idxlist_delete(intersection);
+    }
+
+    free(pos_ext);
+    xt_idxlist_delete(idxlist);
+  }
 
   {
     // check idxvec_get_indices_at_positions
