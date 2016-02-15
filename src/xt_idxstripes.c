@@ -254,9 +254,8 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
     sign_err |= stripes[i].nstrides;
     have_zero_stride |= stripes[i].stride == 0;
   }
-  /* shift sign bit into position 0 */
-  sign_err >>= (sizeof (sign_err) * CHAR_BIT - 1);
-  if (sign_err) {
+  /* test sign bit */
+  if (sign_err < 0) {
     static const char template[] = "ERROR: %s called with invalid stripes";
     size_t buf_size = sizeof (template) - 2 + strlen(caller);
     char *msg = xmalloc(buf_size);
