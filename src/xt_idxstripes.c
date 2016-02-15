@@ -1529,6 +1529,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
      */
     int stride_step = (int)(overlap.stride / query.stride);
     int db_step = (int)(overlap.stride/db_stripes[db_stripe_pos].stride);
+    Xt_int last_query_index = query.start + query.stride * (query.nstrides - 1);
     do {
       struct Xt_stripe consecutive_overlap = { .start = query.start,
                                                .stride = 1,
@@ -1543,7 +1544,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
           db, result, cover, single_match_only,
           num_candidates - 1, candidates + 1);
       db_pos += db_step;
-      if (intervening.start < query.start + query.stride * query.nstrides)
+      if (intervening.start <= last_query_index)
         unmatched +=
           idxstripes_get_pos_exts_of_index_stripe(
             intervening, db, result, cover, single_match_only,
