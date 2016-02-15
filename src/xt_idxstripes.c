@@ -1053,7 +1053,7 @@ find_candidates(struct Xt_stripe query,
            && db_stripes_sort[end_pos].range.min <= query_minmax.max)
       ++end_pos;
     /* find all overlaps (which is more complicated if
-     * non-overlapping isn't guaranteed  */
+     * non-overlapping isn't guaranteed) */
     size_t num_candidates;
     if (!db->stripes_do_overlap)
     {
