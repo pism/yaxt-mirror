@@ -1199,8 +1199,7 @@ idxstripes_get_pos_exts_of_index_stripes(
                          sizeof (*result.pos_ext) * result.num_pos_ext);
     destroy_stripes_lookup(&stripes_db);
     xt_cover_finish(&cover);
-    if (((struct Xt_idxstripes_ *)idxlist)->flags
-        & stripes_some_have_zero_stride_mask) {
+    if ((struct Xt_idxstripes_ *)idxlist != idxstripes) {
       free((void *)idxstripes->stripes);
       xt_idxlist_delete((Xt_idxlist)idxstripes);
     }
