@@ -762,8 +762,6 @@ idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
   size_t temp_stripes_array_size = 0;
   size_t num_temp_stripes = 0;
 
-  Xt_int j;
-
   for (int i = 0; i < idxstripes->num_stripes; ++i) {
 
     if (idxstripes->stripes[i].stride == 1) {
@@ -781,11 +779,11 @@ idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                         num_temp_stripes
                         + (size_t)idxstripes->stripes[i].nstrides);
 
-      for (j = 0; j < idxstripes->stripes[i].nstrides; ++j)  {
+      for (int j = 0; j < idxstripes->stripes[i].nstrides; ++j)  {
 
         temp_stripes[num_temp_stripes].start
           = (Xt_int)(idxstripes->stripes[i].start
-                     + j * idxstripes->stripes[i].stride);
+                     + (Xt_int)j * idxstripes->stripes[i].stride);
         temp_stripes[num_temp_stripes].nstrides = 1;
         temp_stripes[num_temp_stripes].stride = 1;
 
