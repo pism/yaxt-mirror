@@ -64,6 +64,7 @@
 #include "xt_idxstripes_internal.h"
 #include "xt_stripe_util.h"
 #include "xt/xt_mpi.h"
+#include "xt/xt_sort.h"
 #include "xt_idxlist_unpack.h"
 #include "xt_cover.h"
 #include "core/core.h"
@@ -1028,12 +1029,6 @@ bsearch_stripes_sort(size_t n,
   return a[right].range.min <= min_key ? right : n;
 }
 
-static int
-icmp(const void *a, const void *b)
-{
-  return *(const int *)a - *(const int *)b;
-}
-
 static void
 find_candidates(struct Xt_stripe query,
                 const struct Xt_stripes_lookup *restrict db,
@@ -1101,7 +1096,7 @@ find_candidates(struct Xt_stripe query,
       }
       assert(j == num_candidates);
     }
-    qsort(candidates->vec, num_candidates, sizeof (int), icmp);
+    xt_sort_int(candidates->vec, num_candidates);
   } else
     candidates->num = 0;
 }
