@@ -562,8 +562,8 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
      * would suffice for Xt_int == short here */
     long long temp
       = (long long)bsa.representative
-      + ((long long)(bsb.representative - bsa.representative) * eg.u * bsa.stride
-         / eg.gcd);
+      + ((long long)(bsb.representative - bsa.representative) * eg.u
+         * XT_INT_ABS(bsa.stride) / eg.gcd);
     /* compute minimal bsi representative >= bsi.min */
     long long abs_bsi_stride = XT_INT_ABS(bsi.stride),
       r_diff = bsi.min - temp,
@@ -1182,8 +1182,9 @@ idxstripes_get_pos_exts_of_index_stripes(
       struct Xt_stripe query = stripes[i];
       int j = query.nstrides;
       query.nstrides = ((query.stride != 0) | (query.nstrides == 0))
-        ? query.nstrides : 1;
-      query.stride = (Xt_int)(query.stride != 0 ? query.stride : 1);
+        ? query.nstrides : (Xt_int)1;
+      query.stride = (Xt_int)((query.stride != 0 && query.nstrides != 1)
+                              ? query.stride : (Xt_int)1);
       find_candidates(query, &stripes_db, &candidates);
       do {
         unmatched += idxstripes_get_pos_exts_of_index_stripe(
@@ -1293,7 +1294,7 @@ idxstripes_get_pos_exts_of_index_stripe(
       {
         struct Xt_stripe query_head = {
           .start = query.start,
-          .stride = stride,
+          .stride = skipLen > 1 ? stride : (Xt_int)1,
           .nstrides = skipLen };
         unmatched
           += idxstripes_get_pos_exts_of_index_stripe(
@@ -1301,6 +1302,7 @@ idxstripes_get_pos_exts_of_index_stripe(
             num_candidates - j - 1, candidates + j + 1);
         query.start = (Xt_int)(query.start + stride * (Xt_int)skipLen);
         query.nstrides -= skipLen;
+        query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
       }
       int db_stripe_skip
         = (int)((overlap_start - db_stripe.start) / stride);
@@ -1309,7 +1311,8 @@ idxstripes_get_pos_exts_of_index_stripe(
 
       unmatched +=
         pos_ext_insert(
-          (struct Xt_stripe){ .start = query.start, .stride = query.stride,
+          (struct Xt_stripe){ .start = query.start,
+              .stride = overlap_nstrides > 1 ? query.stride : (Xt_int)1,
               .nstrides = overlap_nstrides},
           (struct Xt_pos_ext){ .start
               = db_stripes_nstrides_psum[unsort_pos] + db_stripe_skip,
@@ -1321,6 +1324,7 @@ idxstripes_get_pos_exts_of_index_stripe(
         goto search_finished;
       else {
         query.start = (Xt_int)(overlap_start + stride * overlap_nstrides);
+        query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
         query_minmax = xt_stripe2minmax(query);
         continue;
       }
@@ -1400,10 +1404,11 @@ tail_search:
       | (~querySizeMaskNeg & highQuerySkip);
     if (querySkipLen)
     {
+      int absQuerySkipLen = abs(querySkipLen);
       struct Xt_stripe query_skip = {
         .start = query.start,
-        .stride = stride,
-        .nstrides = abs(querySkipLen),
+        .stride = absQuerySkipLen > 1 ? stride : (Xt_int)1,
+        .nstrides = absQuerySkipLen,
       };
       struct Xt_pos_ext pos_ext2add_skip = {
         .start = pos_ext2add.start,
@@ -1415,8 +1420,9 @@ tail_search:
           result, cover, num_candidates, candidates);
       pos_exts_ = result->pos_ext;
       query.start = (Xt_int)(query.start
-                             + stride * (Xt_int)abs(querySkipLen));
-      query.nstrides -= abs(querySkipLen);
+                             + stride * (Xt_int)absQuerySkipLen);
+      query.nstrides -= absQuerySkipLen;
+      query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
       pos_ext2add.start += querySkipLen;
       pos_ext2add.size -= querySkipLen;
     }
@@ -1424,7 +1430,7 @@ tail_search:
      * range */
     struct Xt_stripe query_head = {
       .start = query.start,
-      .stride = stride,
+      .stride = abs(overlapLen) > 1 ? stride : (Xt_int)1,
       .nstrides = abs(overlapLen) };
     /* restart search for overlapping part within following ranges */
     unmatched
@@ -1436,6 +1442,7 @@ tail_search:
       /* shorten query accordingly */
       query.nstrides -= abs(overlapLen);
       query.start = (Xt_int)(query.start + stride * (Xt_int)abs(overlapLen));
+      query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
       int directedOverlapLen = (~querySizeMaskNeg & overlapLen)
         | (querySizeMaskNeg & -overlapLen);
       pos_ext2add.start += directedOverlapLen;
@@ -1469,11 +1476,13 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
   if (skipped)
   {
     unmatched += idxstripes_get_pos_exts_of_index_stripe(
-      (struct Xt_stripe){ .start = query.start, .stride = query.stride,
+      (struct Xt_stripe){ .start = query.start,
+          .stride = skipped > 1 ? query.stride : (Xt_int)1,
           .nstrides = skipped}, db, result, cover,
       single_match_only, num_candidates - 1, candidates + 1);
     query.start = (Xt_int)(query.start + skipped * query.stride);
     query.nstrides -= skipped;
+    query.stride = query.nstrides > 1 ? query.stride : 1;
   }
   /* Since overlap.nstrides > 0, overlap.start always matches, but
    * depending on the stride the remaining overlapping indices might or might
@@ -1495,6 +1504,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
       db, result, cover, single_match_only, num_candidates - 1, candidates + 1);
     query.nstrides -= overlap.nstrides;
     query.start = (Xt_int)(query.start + overlap.nstrides * query.stride);
+    query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
   }
   else if ((overlap.stride == query.stride)
            & (overlap.stride == -db_stripes[db_stripe_pos].stride))
@@ -1507,6 +1517,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
       num_candidates - 1, candidates + 1);
     query.nstrides -= overlap.nstrides;
     query.start = (Xt_int)(query.start + overlap.nstrides * query.stride);
+    query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
   }
   else if (overlap.stride == query.stride)
   {
@@ -1520,6 +1531,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
         num_candidates - 1, candidates + 1);
     query.nstrides -= overlap.nstrides;
     query.start = (Xt_int)(query.start + overlap.nstrides * query.stride);
+    query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
   }
   else /* overlap.stride != query.stride => overlap.stride > query.stride */
   {
@@ -1529,7 +1541,8 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
      */
     int stride_step = (int)(overlap.stride / query.stride);
     int db_step = (int)(overlap.stride/db_stripes[db_stripe_pos].stride);
-    Xt_int last_query_index = query.start + query.stride * (query.nstrides - 1);
+    Xt_int last_query_index = query.start
+      + query.stride * (Xt_int)(query.nstrides - 1);
     do {
       struct Xt_stripe consecutive_overlap = { .start = query.start,
                                                .stride = 1,
@@ -1551,6 +1564,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
             num_candidates - 1, candidates + 1);
       query.nstrides -= stride_step;
       query.start = (Xt_int)(query.start + query.stride * stride_step);
+      query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
       overlap.start = (Xt_int)(overlap.start + overlap.stride);
     } while (--overlap.nstrides);
   }

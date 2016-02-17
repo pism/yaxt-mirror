@@ -663,6 +663,74 @@ int main(void) {
   }
 
   {
+#define NUM_ITERATIONS (128)
+#define MAX_NUM_INDICES (1024)
+#define MAX_INDEX (1024)
+
+    /* demonstrates problem of invalid intersection
+     * get_stripe_intersection({916,-287,2}, {603,300,2})
+     * gives an intersection with nstrides == 1 even though we'd need
+     * nstrides == 0
+     */
+
+    srand(6544668);
+
+    for (int iteration = 0; iteration < NUM_ITERATIONS; ++iteration) {
+
+      int num_indices = rand()%MAX_NUM_INDICES;
+
+      Xt_int * indices = malloc((size_t)num_indices * sizeof(*indices));
+
+      for (int i = 0; i < num_indices; ++i)
+        indices[i] = rand()%MAX_INDEX;
+
+      Xt_idxlist idxlist = xt_idxvec_new(indices, num_indices);
+
+      struct Xt_stripe * stripes;
+      int num_stripes;
+
+      xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
+
+      int num_ext;
+      struct Xt_pos_ext * pos_ext;
+      int single_match_only = 1;
+
+      xt_idxlist_get_pos_exts_of_index_stripes(idxlist, num_stripes, stripes,
+                                               &num_ext, &pos_ext,
+                                               single_match_only);
+      { // testing of results
+        Xt_idxlist intersection =
+          xt_idxvec_from_stripes_new(stripes, num_stripes);
+        for (int i = 0, k = 0; i < num_ext; ++i) {
+          int abs_pos_ext_size = abs(pos_ext[i].size),
+            jsign = pos_ext[i].size >= 0 ? 1 : -1;
+          for (int j = 0; j < abs_pos_ext_size; ++j, ++k) {
+            Xt_int intersection_index;
+            xt_idxlist_get_index_at_position(intersection, k, &intersection_index);
+            int send_pos = pos_ext[i].start + jsign * j;
+            Xt_int orig_index;
+            xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
+            if (intersection_index != orig_index) {
+              PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
+              fprintf(stderr, "intersection pos %d index %"XT_INT_FMT
+                      " orig pos %d index %"XT_INT_FMT"\n", k,
+                      intersection_index, send_pos, orig_index);
+            }
+          }
+        }
+        xt_idxlist_delete(intersection);
+      }
+
+      free(indices);
+      free(stripes);
+      free(pos_ext);
+    }
+#undef NUM_ITERATIONS
+#undef MAX_NUM_INDICES
+#undef MAX_INDEX
+  }
+
+  {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
     static const struct Xt_stripe stripes[]
