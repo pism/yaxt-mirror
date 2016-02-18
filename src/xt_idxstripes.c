@@ -1517,9 +1517,12 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
     /* all parts of the overlap can be used but are non-consecutive
      * in db_stripe */
     int db_step = (int)(overlap.stride/db_stripes[db_stripe_pos].stride);
+    /* todo: try to keep (prefix of) stripe together if the
+     * corresponding positions cannot be inserted anyway */
     for (int i = 0; i < overlap.nstrides; ++i, db_pos += db_step)
-      unmatched += pos_ext_insert(overlap, (struct Xt_pos_ext){
-          .start = db_pos, .size = 1 },
+      unmatched += pos_ext_insert(
+        (struct Xt_stripe){ overlap.start + i * overlap.stride, 1, 1 },
+        (struct Xt_pos_ext){ .start = db_pos, .size = 1 },
         db, result, cover, single_match_only,
         num_candidates - 1, candidates + 1);
     query.nstrides -= overlap.nstrides;
