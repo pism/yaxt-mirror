@@ -721,6 +721,7 @@ int main(void) {
         xt_idxlist_delete(intersection);
       }
 
+      xt_idxlist_delete(idxlist);
       free(indices);
       free(stripes);
       free(pos_ext);
