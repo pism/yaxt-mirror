@@ -45,7 +45,7 @@ dnl
 #   [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND],
 #   [INCLUDES], [INCLUDE-FLAGS])
 # ------------------------------------------------------------------
-# Check wether the compiler accepts HEADER-FILE.
+# Check whether the compiler accepts HEADER-FILE.
 # The INCLUDES might be defaulted.
 AC_DEFUN([ACX_LANG_CHECK_INCLUDE_PATHS_IFELSE],dnl
   [_AC_LANG_DISPATCH([$0],_AC_LANG,$@)])
@@ -80,7 +80,7 @@ AC_DEFUN([ACX_LANG_CHECK_INCLUDE_IFELSE],
 #   [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND],
 #   [INCLUDES], [INCLUDE-FLAGS], [EXTRA-INCLUDE-FLAG-SETS])
 # ------------------------------------------------------------------
-# Check wether the the current language compiler accepts HEADER-FILE.
+# Check whether the the current language compiler accepts HEADER-FILE.
 # The INCLUDES might be defaulted.
 AC_DEFUN([ACX_GENERIC_CHECK_INCLUDE_PATHS_IFELSE],
   [AS_VAR_PUSHDEF([acx_Include], [acx_cv_]_AC_LANG_ABBREV[_include_$3])dnl

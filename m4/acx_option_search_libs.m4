@@ -49,7 +49,7 @@ dnl   [OTHER-LIBRARIES], [EXTRA-FLAGS], [PREAMBLE], [CALL-CODE])
 dnl same as ACX_OPTION_SEARCH_LIBS but does not cache result
 dnl
 dnl Uses either AC_LANG_PROGRAM([PREAMBLE],CALL-CODE) or
-dnl AC_LANG_CALL([PREAMBLE],FUNCTION), depending on wether CALL-CODE
+dnl AC_LANG_CALL([PREAMBLE],FUNCTION), depending on whether CALL-CODE
 dnl is given or not.
 AC_DEFUN([_ACX_OPTION_SEARCH_LIBS],
   [acx_option_func_search_save_LIBS="$LIBS"
@@ -102,20 +102,20 @@ dnl tries each library in the list.
 AC_DEFUN([ACX_OPTION_SEARCH_LIBS_MULTI],
   [AS_VAR_PUSHDEF([ac_Search], [acx_cv_option_search_$1_]_AC_LANG_ABBREV)dnl
    AC_MSG_CHECKING([for library containing $1])
-   AC_CACHE_VAL([ac_Search],dnl
+   AC_CACHE_VAL([ac_Search],
      [while :; do
         m4_if(m4_car($5),[[]],,[_ACX_OPTION_SEARCH_LIBS([$1],[$2],,[$6],[$7],[$8])
         AS_VAR_SET_IF([ac_Search], [break])])
-        m4_foreach([ACX_LibSet], [$5],dnl
+        m4_foreach([ACX_LibSet], [$5],
           [_ACX_OPTION_SEARCH_LIBS([$1],[$2],[ACX_LibSet],[$6],[$7],[$8])
            AS_VAR_SET_IF([ac_Search],[break])
           ])
         break
       done])
-   AS_VAR_SET_IF([ac_Search],dnl
-     [AS_IF([test x"AS_VAR_GET([ac_Search])" = x],dnl
-        [AC_MSG_RESULT([(none required)])],dnl
-        [AC_MSG_RESULT([AS_VAR_GET([ac_Search])])])],dnl
+   AS_VAR_SET_IF([ac_Search],
+     [AS_IF([test x"AS_VAR_GET([ac_Search])" = x],
+        [AC_MSG_RESULT([(none required)])],
+        [AC_MSG_RESULT([AS_VAR_GET([ac_Search])])])],
      [AC_MSG_RESULT([not found])])
    AS_VAR_SET_IF([ac_Search],[$3],[$4])
    AS_VAR_POPDEF([ac_Search])dnl

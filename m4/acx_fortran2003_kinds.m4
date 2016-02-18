@@ -47,7 +47,7 @@ dnl
 dnl ACX_FORTRAN_TYPE_KIND(FORTRAN_TYPE, FORTRAN_KIND, C_CORRESPONDENCE,
 dnl                       [PROLOGUE], [C_PROLOGUE],[ACTION-IF-SUBST])
 dnl
-dnl First tries wether a fortran declaration
+dnl First tries whether a fortran declaration
 dnl FORTRAN_TYPE(kind=FORTRAN_KIND) compiles and if not tries to find
 dnl a fortran kind constant that corresponds to C type
 dnl C_CORRESPONDENCE.
@@ -123,8 +123,8 @@ AC_DEFUN([ACX_FORTRAN_C_INT64_T],dnl
   [AC_REQUIRE([AC_TYPE_INT64_T])
    ACX_FORTRAN_TYPE_KIND([integer], [c_int64_t], [int64_t],
   [      use iso_c_binding])])
-AC_DEFUN([ACX_FORTRAN_C_FLOAT],dnl
-  [ACX_FORTRAN_TYPE_KIND([real], [c_float], [float],[      use iso_c_binding])]))
+AC_DEFUN([ACX_FORTRAN_C_FLOAT],
+  [ACX_FORTRAN_TYPE_KIND([real], [c_float], [float],[      use iso_c_binding])])
 dnl
 dnl Local Variables:
 dnl mode: autoconf

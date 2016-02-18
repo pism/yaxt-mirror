@@ -209,29 +209,24 @@ AC_DEFUN([_ACX_SL_SET_FPP_FEATURE_VARS],
    ac_fpp_need_CSTYLE=no
    ac_fpp_need_cxxstyle=yes
    ac_fpp_need_CXXSTYLE=no
-   dnl FIXME: this should be feasable within m4 constructs, i.e. without
-   dnl using shell loops
-   for _t in $1 nil
-   do
-     AS_CASE([$_t],
-       [define], [ac_fpp_need_d=yes],
-       [nodefine], [ac_fpp_need_d=no],
-       [include], [ac_fpp_need_i=yes],
-       [noinclude], [ac_fpp_need_i=no],
-       [substitute], [ac_fpp_need_subs=yes],
-       [nosubstitute], [ac_fpp_need_subs=no],
-       [wrap], [ac_fpp_need_wrap=yes],
-       [nowwrap], [ac_fpp_need_wrap=no],
-       [cstyle], [ac_fpp_need_cstyle=yes],
-       [nocstyle], [ac_fpp_need_cstyle=no],
-       [CSTYLE], [ac_fpp_need_CSTYLE=yes],
-       [noCSTYLE], [ac_fpp_need_CSTYLE=no],
-       [cxxstyle], [ac_fpp_need_cxxstyle=yes],
-       [nocxxstyle], [ac_fpp_need_cxxstyle=no],
-       [CXXSTYLE], [ac_fpp_need_CXXSTYLE=yes],
-       [noCXXSTYLE], [ac_fpp_need_CXXSTYLE=no],
-       [nil], [])
-   done
+   m4_foreach_w([_t],[$1],[m4_case([_t],
+     [define], [ac_fpp_need_d=yes],
+     [nodefine], [ac_fpp_need_d=no],
+     [include], [ac_fpp_need_i=yes],
+     [noinclude], [ac_fpp_need_i=no],
+     [substitute], [ac_fpp_need_subs=yes],
+     [nosubstitute], [ac_fpp_need_subs=no],
+     [wrap], [ac_fpp_need_wrap=yes],
+     [nowwrap], [ac_fpp_need_wrap=no],
+     [cstyle], [ac_fpp_need_cstyle=yes],
+     [nocstyle], [ac_fpp_need_cstyle=no],
+     [CSTYLE], [ac_fpp_need_CSTYLE=yes],
+     [noCSTYLE], [ac_fpp_need_CSTYLE=no],
+     [cxxstyle], [ac_fpp_need_cxxstyle=yes],
+     [nocxxstyle], [ac_fpp_need_cxxstyle=no],
+     [CXXSTYLE], [ac_fpp_need_CXXSTYLE=yes],
+     [noCXXSTYLE], [ac_fpp_need_CXXSTYLE=no],
+     [nil], [])])
    # Wrapping requires substitution
    test $ac_fpp_need_wrap = yes && ac_fpp_need_subs=yes
    # CSTYLE and cstyle are mutually exclusive.
@@ -256,7 +251,7 @@ AC_DEFUN([_ACX_SL_TEST_FPP],
    ACX_ASSERT_LANG_IS_FORTRAN_VARIANT
    AC_LANG_CONFTEST([_ACX_SL_LANG_PROGRAM_FPP_ONLY])
    ac_tmp=conftest.fppout
-   AS_IF([_AC_RUN_LOG([$1 conftest.$2 >$ac_tmp],dnl
+   AS_IF([_AC_RUN_LOG([$1 conftest.$2 >$ac_tmp],
        [_AC_DO_ECHO([$1 $FPPFLAGS conftest.$2 >$ac_tmp])])],
      [AS_IF([test -f $ac_tmp \
         && ! cmp conftest.$2 $ac_tmp >/dev/null 2>&1 \
@@ -484,7 +479,7 @@ dnl
 dnl
       AS_IF([test $ac_fpp_need_wrap = yes],
         [acx_sl_prog_fc_cpp_wrap=no
-         _AS_ECHO_LOG([Testing wether preprocessor wraps long lines.])
+         _AS_ECHO_LOG([Testing whether preprocessor wraps long lines.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_WRAP])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
@@ -496,7 +491,7 @@ dnl
 dnl
 dnl
       AS_IF([test $ac_fpp_need_CSTYLE = yes],
-        [_AS_ECHO_LOG([Testing wether preprocessor removes C-style comments.])
+        [_AS_ECHO_LOG([Testing whether preprocessor removes C-style comments.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
@@ -507,7 +502,7 @@ dnl
         ])
 dnl
       AS_IF([test $ac_fpp_need_cstyle = yes],
-        [_AS_ECHO_LOG([Testing wether preprocessor leaves C-style comments in place.])
+        [_AS_ECHO_LOG([Testing whether preprocessor leaves C-style comments in place.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
@@ -627,7 +622,7 @@ dnl AC_REQUIRE([AC_PROG_CPP([cpp])])dnl
 
 #
 # ACX_FC_INTEGRAL_FPP(FEATURES,[SUFFIX],[ACTION-IF-TRUE],[ACTION-IF-NOT])
-# Determines wether $FC can process files containing preprocessor directives
+# Determines whether $FC can process files containing preprocessor directives
 # and processes each of the requested features correctly
 # and run the according ACTION-*.
 AC_DEFUN([ACX_FC_INTEGRAL_FPP],

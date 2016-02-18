@@ -1,4 +1,4 @@
-dnl acx_fc_volatile.m4 --- test wether the compiler supports volatile declaration
+dnl acx_fc_volatile.m4 --- test whether the compiler supports volatile declaration
 dnl
 dnl Copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
 dnl
@@ -39,7 +39,7 @@ dnl
 AC_DEFUN([ACX_FC_VOLATILE],
   [AC_REQUIRE([AC_PROG_FC])dnl
    AC_LANG_PUSH([Fortran])
-   AC_MSG_CHECKING([wether $FC supports volatile variable attribute])
+   AC_MSG_CHECKING([whether $FC supports volatile variable attribute])
    AC_COMPILE_IFELSE(
 [      SUBROUTINE f(p)
       REAL, INTENT(IN) :: p

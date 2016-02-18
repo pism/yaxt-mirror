@@ -62,42 +62,43 @@ AC_DEFUN([ACX_MPI_DEFECTS],
      [AC_MSG_NOTICE([Skipping tests for known MPI defects: MPI launcher unavailable])],
      [AC_MSG_CHECKING([MPI for known defects])
       AC_MSG_RESULT([])
-      for acx_mpi_check_src in "$srcdir/m4_ifval([$1],[$1],[config/checksrc])/"* ; do
-        acx_suffix=`echo "$acx_mpi_check_src" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
-        acx_subtestname=`echo "$acx_mpi_check_src" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
-        AS_CASE([$acx_suffix],
-          [c],
-          [cat confdefs.h "$acx_mpi_check_src" >conftest."$acx_suffix"
-           AC_LANG_PUSH([C])],
-          [f90|F90],[cat "$acx_mpi_check_src" >conftest."$acx_suffix"
-           AC_LANG_PUSH([Fortran])],
-          [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
-        AC_MSG_CHECKING([$acx_subtestname])
-        acx_mpirun_num_tasks=`sed -n '/acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\)/{
+      AS_FOR([acx_mpi_check_src_],[acx_mpi_check_src],["$srcdir/m4_ifval([$1],[$1],[config/checksrc])/"*],[
+	AS_IF([test x"$acx_mpi_check_src" = x"$srcdir/]m4_ifval([$1],[$1],[config/checksrc])[/*"],
+	  [break])
+	acx_suffix=`echo "acx_mpi_check_src_" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
+	acx_subtestname=`echo "acx_mpi_check_src_" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
+	AS_CASE([$acx_suffix],
+	  [c],
+	  [cat confdefs.h "acx_mpi_check_src_" >conftest."$acx_suffix"
+	   AC_LANG_PUSH([C])],
+	  [f90|F90],[cat "acx_mpi_check_src_" >conftest."$acx_suffix"
+	   AC_LANG_PUSH([Fortran])],
+	  [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
+	AC_MSG_CHECKING([$acx_subtestname])
+	acx_mpirun_num_tasks=`sed -n '/acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\)/{
 s/.*acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\).*/\1/
 p
 q
 }
-' "$acx_mpi_check_src"`
-        AS_IF([test `expr "$acx_mpirun_num_tasks" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
-               && test "$acx_mpirun_num_tasks" -gt 0],,
-          [acx_mpirun_num_tasks=1])
-        AC_LINK_IFELSE(,
-          [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
-           AC_TRY_EVAL([acx_mpirun_num_tasks])
-           AS_IF([test $ac_status -eq 0],
-             [AC_MSG_RESULT([okay])m4_ifval([$2],[
-              $2])],
-             [AC_MSG_RESULT([error])
-              m4_ifval([$3],[$3],
-                [AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])],
-          [AC_MSG_RESULT([error])
-           m4_ifval([$3],[$3],
-             [AC_MSG_RESULT([chosen MPI has known error $acx_subtestname])])])
-        AS_CASE([$acx_suffix],
-          [f90|F90],[AC_LANG_POP([Fortran])],
-          [c],[AC_LANG_POP([C])])
-      done
+' "acx_mpi_check_src_"`
+	AS_IF([test `expr "$acx_mpirun_num_tasks" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
+	       && test "$acx_mpirun_num_tasks" -gt 0],,
+	  [acx_mpirun_num_tasks=1])
+	AC_LINK_IFELSE(,
+	  [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
+	   _AC_RUN_LOG_LIMIT([LIBC_FATAL_STDERR_=1 $acx_mpirun_num_tasks >&2],[echo "running $acx_mpirun_num_tasks"])
+	   AS_IF([test $ac_status -eq 0],
+	     [AC_MSG_RESULT([okay])m4_ifval([$2],[
+	      $2])],
+	     [AC_MSG_RESULT([error])
+	      m4_ifval([$3],[$3],
+	        [AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])],
+	  [AC_MSG_RESULT([error])
+	   m4_ifval([$3],[$3],
+	     [AC_MSG_RESULT([chosen MPI has known error $acx_subtestname])])])
+	AS_CASE([$acx_suffix],
+	  [f90|F90],[AC_LANG_POP([Fortran])],
+	  [c],[AC_LANG_POP([C])])])
       ASX_VAR_UNSET([acx_mpirun_num_tasks])
       ASX_VAR_UNSET([acx_mpi_check_src])
       ASX_VAR_UNSET([acx_suffix])

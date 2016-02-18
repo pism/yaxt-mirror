@@ -51,7 +51,7 @@ dnl [EXTRA-INCLUDEFLAGS], [ACTION-IF_HEADER-NOT-FOUND], [FUNCTION],
 dnl LIBFLAG, [LIB-CANDIDATES], [EXTRA-LIBS], [EXTRA-LIBFLAGS],
 dnl [ACTION-IF-LIB-NOT-FOUND], [DEFAULT-ROOT])
 dnl -------------------------------------------------------------------
-dnl Check wether INCLUDE can be compiled and FUNCTION is found in
+dnl Check whether INCLUDE can be compiled and FUNCTION is found in
 dnl LIB-CANDIDATES with current language compiler. Sets PACKAGE_LANG_LIB
 dnl and PACKAGE_LANG_INCLUDE variables to necessary compiler
 dnl switches and arguments such that inclusion/compilation succeed for
@@ -111,7 +111,7 @@ using $1 includes.])
       AC_SUBST(acx_pkg_lib)
       AS_VAR_IF([acx_pkg_bindings],[yes],
         [AS_VAR_PUSHDEF([ac_Search],[acx_cv_option_search_$7_]_AC_LANG_ABBREV)dnl
-         ACX_OPTION_SEARCH_LIBS_MULTI([$7],[$9],,dnl
+         ACX_OPTION_SEARCH_LIBS_MULTI([$7],[$9],,
            [AS_VAR_SET([acx_pkg_bindings],[no])
             $12],[$10],m4_ifval([$11],[$11 ])$[acx_pkg_lib])
          AS_VAR_COPY([acx_temp],[ac_Search])

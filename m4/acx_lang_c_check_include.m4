@@ -1,4 +1,4 @@
-dnl acx_lang_c_check_include.m4 --- Check wether an include succeeds
+dnl acx_lang_c_check_include.m4 --- Check whether an include succeeds
 dnl                                 given one from a collection of
 dnl                                 include paths.
 dnl
