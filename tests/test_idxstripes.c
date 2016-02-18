@@ -682,7 +682,7 @@ int main(void) {
       Xt_int * indices = malloc((size_t)num_indices * sizeof(*indices));
 
       for (int i = 0; i < num_indices; ++i)
-        indices[i] = rand()%MAX_INDEX;
+        indices[i] = (Xt_int)(rand()%MAX_INDEX);
 
       Xt_idxlist idxlist = xt_idxvec_new(indices, num_indices);
 
