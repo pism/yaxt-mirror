@@ -1553,7 +1553,8 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
           db, result, cover, single_match_only,
           num_candidates - 1, candidates + 1);
       db_pos += db_step;
-      if (intervening.start <= last_query_index)
+      if (XT_INT_ABS(intervening.start - query.start)
+          <= XT_INT_ABS(last_query_index - query.start))
         unmatched +=
           idxstripes_get_pos_exts_of_index_stripe(
             intervening, db, result, cover, single_match_only,
