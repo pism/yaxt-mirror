@@ -663,9 +663,11 @@ int main(void) {
   }
 
   {
-#define NUM_ITERATIONS (128)
-#define MAX_NUM_INDICES (1024)
-#define MAX_INDEX (1024)
+    enum {
+      NUM_ITERATIONS=128,
+      MAX_NUM_INDICES=1024,
+      MAX_INDEX=1024,
+    };
 
     /* demonstrates problem of invalid intersection
      * get_stripe_intersection({916,-287,2}, {603,300,2})
@@ -726,9 +728,6 @@ int main(void) {
       free(stripes);
       free(pos_ext);
     }
-#undef NUM_ITERATIONS
-#undef MAX_NUM_INDICES
-#undef MAX_INDEX
   }
 
   {
