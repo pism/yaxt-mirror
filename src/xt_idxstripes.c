@@ -1556,12 +1556,13 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
           db, result, cover, single_match_only,
           num_candidates - 1, candidates + 1);
       db_pos += db_step;
-      if (query.nstrides > 1)
+      if (--query.nstrides > 0) {
         unmatched +=
           idxstripes_get_pos_exts_of_index_stripe(
             intervening, db, result, cover, single_match_only,
             num_candidates - 1, candidates + 1);
-      query.nstrides -= stride_step;
+        query.nstrides -= stride_step - 1;
+      }
       query.start = (Xt_int)(query.start + query.stride * stride_step);
       query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
       overlap.start = (Xt_int)(overlap.start + overlap.stride);

@@ -731,6 +731,138 @@ int main(void) {
   }
 
   {
+    static const Xt_int index_vector[] = {
+      178, 179, 180, 181, 182, 183, 184,
+      186, 187, 188, 189, 190,
+      194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
+        208, 209, 210, 211, 212,
+      217,
+      223,
+      426,
+      428, 429, 430,
+      434, 435, 436, 437, 438, 439, 440,
+      442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455,
+        456, 457, 458,
+      670, 671, 672, 673, 674, 675, 676, 677,
+      682,
+      684, 685, 686, 687, 688, 689, 690,
+      692,
+      695,
+      703, 704, 705, 706, 707,
+      894, 895, 896, 897, 898, 899, 900, 901,
+      906, 907, 908,
+      913,
+      915,
+      921, 922, 923, 924, 925, 926, 927,
+      1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103,
+      1107, 1108, 1109, 1110, 1111,
+      1113, 1114,
+      1119, 1120, 1121,
+      2095, 2096, 2097, 2098,
+      2100,
+      2102, 2103, 2104, 2105,
+      2107, 2108, 2109, 2110,
+      2112,
+      2118,
+      2120, 2121, 2122, 2123, 2124, 2125,
+      2127, 2128, 2129, 2130,
+      2134,
+      2140, 2141, 2142, 2143,
+      2145,
+      2148, 2149,
+      2151, 2152, 2153, 2154, 2155, 2156,
+      683,
+      691,
+      903,
+      914,
+      1105,
+      1115,
+      2099,
+      2106,
+      2111,
+      2115,
+      2126,
+      2132,
+      2139,
+      2144,
+      2147,
+      2150,
+      2305,
+      427,
+      465, 466,
+      678,
+      693,
+      902,
+      909,
+      1104,
+      1112,
+      2101,
+      2113, 2114,
+      2116, 2117,
+      2119,
+      2131,
+      2136,
+      2138,
+      2146,
+      2297,
+      2302,
+      2304,
+      2307
+    };
+    enum { num_indices = sizeof(index_vector) / sizeof(index_vector[0]) };
+    Xt_idxlist idxlist = xt_idxvec_new(index_vector, num_indices);
+
+    static const struct  Xt_stripe stripes[] = {
+      {.start = 670, .stride = 1, .nstrides = 9},
+      {.start = 682, .stride = 1, .nstrides = 12},
+      {.start = 695, .stride = 8, .nstrides = 1},
+      {.start = 703, .stride = 1, .nstrides = 5},
+      {.start = 894, .stride = 1, .nstrides = 10},
+      {.start = 906, .stride = 1, .nstrides = 4},
+      {.start = 913, .stride = 1, .nstrides = 3},
+      {.start = 921, .stride = 1, .nstrides = 7}
+    };
+    enum { num_stripes = sizeof(stripes) / sizeof(stripes[0]) };
+
+    int num_ext;
+    struct Xt_pos_ext *restrict pos_ext;
+    int single_match_only = 1;
+
+    int retval = xt_idxlist_get_pos_exts_of_index_stripes(
+      idxlist, num_stripes, stripes, &num_ext, (struct Xt_pos_ext **)&pos_ext,
+      single_match_only);
+
+    { // testing of results
+      if (retval != 0)
+          PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
+      Xt_idxlist intersection
+        = xt_idxvec_from_stripes_new(stripes, num_stripes);
+      for (int i = 0, k = 0; i < num_ext; ++i) {
+        int abs_pos_ext_size = abs(pos_ext[i].size),
+          jsign = pos_ext[i].size >= 0 ? 1 : -1;
+        for (int j = 0; j < abs_pos_ext_size; ++j, ++k) {
+          Xt_int intersection_index;
+          xt_idxlist_get_index_at_position(intersection, k,
+                                           &intersection_index);
+          int send_pos = pos_ext[i].start + jsign * j;
+          Xt_int orig_index;
+          xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
+          if (intersection_index != orig_index) {
+            PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
+            fprintf(stderr, "intersection pos %d index %"XT_INT_FMT
+                    " orig pos %d index %"XT_INT_FMT"\n",
+                    k, intersection_index, send_pos, orig_index);
+          }
+        }
+      }
+      xt_idxlist_delete(intersection);
+    }
+
+    free(pos_ext);
+    xt_idxlist_delete(idxlist);
+  }
+
+  {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
     static const struct Xt_stripe stripes[]
