@@ -197,48 +197,34 @@ AC_ARG_WITH([idxtype],
 char b[($XT_INT)((-($XT_INT)-0.5)+1.5)]]])],,
      [AC_MSG_ERROR([Selected index type not compilable or unsigned])])],
   [XT_INT=int])
+dnl expand setting of variables to describe variable type
+dnl vartype_setq(TYPE_NAME, TYPE_C_TYPE, FC_KIND, TYPE_MPI_DT,
+dnl              TYPE_VAL_MAX, TYPE_VAL_MIN,
+dnl              TYPE_C_PRINTF_FMT, TYPE_C_ABS)
+m4_define([vartype_setq],[$1][_MPIDT=$4
+     AC_CHECK_SIZEOF([$2])
+     ]$1[_FC_KIND=$3
+     ACX_FORTRAN_TYPE_KIND([integer],[$3],[$2],
+       [      use iso_c_binding],,$1[_FC_KIND=$acx_fortran_kind_subst])
+     $1][_MAX=$5
+     $1][_MIN=$6
+     $1][_FMT=$7
+     $1][_abs=$8])dnl
 m4_foreach([substtype],[[XT_INT]],
   [AS_CASE(["$substtype"],
      [int],
-     substtype[_MPIDT=MPI_INT
-     AC_CHECK_SIZEOF([int])
-     ]substtype[_FC_KIND=c_int
-     ACX_FORTRAN_TYPE_KIND([integer],[c_int],[int],
-       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ]substtype[_MAX=INT_MAX
-     ]substtype[_MIN="(-INT_MAX)"
-     ]substtype[_FMT="\"d\""
-     ]substtype[_abs='(abs((v)))'],
+     [vartype_setq(substtype,[int],[c_int],[MPI_INT],
+                   [INT_MAX],["(-INT_MAX)"],["\"d\""],['(abs((v)))'])],
      [long],
-     substtype[_MPIDT=MPI_LONG
-     AC_CHECK_SIZEOF([long])
-     ]substtype[_FC_KIND=c_long
-     ACX_FORTRAN_TYPE_KIND([integer],[c_long],[long],
-       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ]substtype[_MAX=LONG_MAX
-     ]substtype[_MIN="(-LONG_MAX)"
-     ]substtype[_FMT="\"ld\""
-     ]substtype[_abs='(labs((v)))'],
+     [vartype_setq(substtype,[long],[c_long],[MPI_LONG],
+                   [LONG_MAX],["(-LONG_MAX)"],["\"ld\""],['(labs((v)))'])],
      [short],
-     substtype[_MPIDT=MPI_SHORT
-     AC_CHECK_SIZEOF([short])
-     ]substtype[_FC_KIND=c_short
-     ACX_FORTRAN_TYPE_KIND([integer],[c_short],[short],
-       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ]substtype[_MAX=SHRT_MAX
-     ]substtype[_MIN="(-SHRT_MAX)"
-     ]substtype[_FMT="\"hd\""
-     ]substtype[_abs='((short)abs((v)))'],
+     [vartype_setq(substtype,[short],[c_short],[MPI_SHORT],
+                   [SHRT_MAX],["(-SHRT_MAX)"],["\"hd\""],
+                   ['((short)abs((v)))'])],
      ["long long"],
-     substtype[_MPIDT=MPI_LONG_LONG
-     AC_CHECK_SIZEOF([long long])
-     ]substtype[_FC_KIND=c_long_long
-     ACX_FORTRAN_TYPE_KIND([integer],[c_long_long],[long long],
-       [      use iso_c_binding],,substtype[_FC_KIND=$acx_fortran_kind_subst])
-     ]substtype[_MAX=LLONG_MAX
-     ]substtype[_MIN="(-LLONG_MAX)"
-     ]substtype[_FMT="\"lld\""
-     ]substtype[_abs='(llabs((v)))'],
+     [vartype_setq(substtype,[long long],[c_long_long],[MPI_LONG_LONG],
+                   [LLONG_MAX],["(-LLONG_MAX)"],["\"lld\""],['(llabs((v)))'])],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    save_FCFLAGS=$FCFLAGS
    AC_LANG_PUSH([Fortran])
