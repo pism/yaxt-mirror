@@ -1548,7 +1548,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
                                                .nstrides = 1 },
         intervening = { .start = (Xt_int)(query.start + query.stride),
                         .stride = query.stride,
-                        .nstrides = stride_step - 1 };
+                        .nstrides = MIN(query.nstrides - 1, stride_step - 1) };
       /* split off start index, then handle intervening */
       unmatched +=
         pos_ext_insert(consecutive_overlap, (struct Xt_pos_ext){
@@ -1561,7 +1561,7 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
           idxstripes_get_pos_exts_of_index_stripe(
             intervening, db, result, cover, single_match_only,
             num_candidates - 1, candidates + 1);
-        query.nstrides -= stride_step - 1;
+        query.nstrides -= intervening.nstrides;
       }
       query.start = (Xt_int)(query.start + query.stride * stride_step);
       query.stride = query.nstrides > 1 ? query.stride : (Xt_int)1;
