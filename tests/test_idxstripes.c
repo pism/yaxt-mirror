@@ -780,7 +780,7 @@ int main(void) {
     xt_idxlist_delete(idxlist);
   }
 
-    {
+  {
     static const Xt_int index_vector[] = {
 2055, 2056, 2060, 2193, 2199, 2203, 2211, 2212, 2278, 2281, 2311, 2312, 2316,
 2317, 2322, 2332, 2447, 2448, 2452, 2585, 2591, 2595, 2603, 2604, 2670, 2673,
@@ -1065,41 +1065,8 @@ int main(void) {
     };
     enum { num_stripes = sizeof(stripes) / sizeof(stripes[0]) };
 
-    int num_ext;
-    struct Xt_pos_ext *restrict pos_ext;
-    int single_match_only = 1;
+    check_idxlist_stripes_pos_ext(idxlist, num_stripes, stripes);
 
-    int retval = xt_idxlist_get_pos_exts_of_index_stripes(
-      idxlist, num_stripes, stripes, &num_ext, (struct Xt_pos_ext **)&pos_ext,
-      single_match_only);
-
-    { // testing of results
-      if (retval != 0)
-          PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
-      Xt_idxlist intersection
-        = xt_idxvec_from_stripes_new(stripes, num_stripes);
-      for (int i = 0, k = 0; i < num_ext; ++i) {
-        int abs_pos_ext_size = abs(pos_ext[i].size),
-          jsign = pos_ext[i].size >= 0 ? 1 : -1;
-        for (int j = 0; j < abs_pos_ext_size; ++j, ++k) {
-          Xt_int intersection_index;
-          xt_idxlist_get_index_at_position(intersection, k,
-                                           &intersection_index);
-          int send_pos = pos_ext[i].start + jsign * j;
-          Xt_int orig_index;
-          xt_idxlist_get_index_at_position(idxlist, send_pos, &orig_index);
-          if (intersection_index != orig_index) {
-            PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
-            fprintf(stderr, "intersection pos %d index %"XT_INT_FMT
-                    " orig pos %d index %"XT_INT_FMT"\n",
-                    k, intersection_index, send_pos, orig_index);
-          }
-        }
-      }
-      xt_idxlist_delete(intersection);
-    }
-
-    free(pos_ext);
     xt_idxlist_delete(idxlist);
   }
 
