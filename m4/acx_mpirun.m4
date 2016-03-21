@@ -79,6 +79,8 @@ main(int argc, char **argv)
 }
 ])],
         [acx_mpirun_test="$MPI_LAUNCH -n m4_ifval([$1],[$1],[4]) ./conftest$EXEEXT m4_ifval([$1],[$1],[4])"
+         AS_IF([expr "$ac_link" : '^./libtool ' >/dev/null],
+           [acx_mpirun_test="./libtool --mode=execute $acx_mpirun_test"])
          _AC_RUN_LOG([LIBC_FATAL_STDERR_=1 $acx_mpirun_test >&2],[echo "running $acx_mpirun_test"])
          AS_IF([test $ac_status -eq 0],
            [AC_MSG_RESULT([yes])],
