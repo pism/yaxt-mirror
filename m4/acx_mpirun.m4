@@ -88,7 +88,7 @@ main(int argc, char **argv)
             MPI_LAUNCH=true
             m4_ifval([$4],[$4],[AC_MSG_FAILURE([Cannot run simple MPI program])])])],
         [MPI_LAUNCH=true
-         m4_ifval([$3],[$3],[AC_MSG_FAILURE([Cannot compile simple MPI program])])])
+         m4_ifval([$3],[$3],[AC_MSG_FAILURE([Cannot compile or link simple MPI program])])])
       AC_LANG_POP([C])])
    AS_IF([test x"$MPI_LAUNCH" = xtrue],
      [m4_ifval([$3],[$3],[AC_MSG_FAILURE([failed to run MPI programs])])],
