@@ -78,10 +78,13 @@ main(int argc, char **argv)
   return (procnum == cmdnum)?EXIT_SUCCESS:EXIT_FAILURE;
 }
 ])],
-        [AS_IF([$MPI_LAUNCH -n m4_ifval([$1],[$1],[4]) ./conftest$EXEEXT m4_ifval([$1],[$1],[4])],
+        [acx_mpirun_test="$MPI_LAUNCH -n m4_ifval([$1],[$1],[4]) ./conftest$EXEEXT m4_ifval([$1],[$1],[4])"
+         _AC_RUN_LOG([LIBC_FATAL_STDERR_=1 $acx_mpirun_test >&2],[echo "running $acx_mpirun_test"])
+         AS_IF([test $ac_status -eq 0],
            [AC_MSG_RESULT([yes])],
            [AC_MSG_RESULT([no])
-            MPI_LAUNCH=true])],
+            MPI_LAUNCH=true
+            m4_ifval([$4],[$4],[AC_MSG_FAILURE([Cannot run simple MPI program])])])],
         [MPI_LAUNCH=true
          m4_ifval([$3],[$3],[AC_MSG_FAILURE([Cannot compile simple MPI program])])])
       AC_LANG_POP([C])])
