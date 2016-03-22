@@ -50,7 +50,7 @@ dnl TODO: instead of setting C language, perform test for active AC_LANG
 AC_DEFUN([ACX_MPIRUN],
   [AC_PATH_PROGS([MPI_LAUNCH],[mpirun mpiexec],[true])
    AC_ARG_VAR([MPI_LAUNCH],[absolute path to launcher for MPI programs, must be working unless configuring in cross-compilation mode])
-   AS_IF([test x"$cross_compiling" = xno -a x"$MPI_LAUNCH" != xtrue],
+   AS_IF([test $cross_compiling = no -a x"$MPI_LAUNCH" != xtrue],
      [AC_MSG_CHECKING([if $MPI_LAUNCH works])
       AC_LANG_PUSH([C])
       AC_LINK_IFELSE([AC_LANG_SOURCE([

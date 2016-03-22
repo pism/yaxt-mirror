@@ -58,8 +58,22 @@ dnl acx_mpirun_num_tasks = N
 dnl   specify number of tasks N (positive integer) to run this test with
 dnl TODO: extend for F77 and C++
 AC_DEFUN([ACX_MPI_DEFECTS],
-  [AS_IF([test x"$MPI_LAUNCH" = xtrue],
+  [AC_ARG_ENABLE([cross-mpi-defect-checks],
+     AS_HELP_STRING([--enable-cross-mpi-defect-checks],
+       [Run MPI defect tests even in cross-compilation mode. This is]dnl
+[ typically useful in a setup where the mpi-starter (see MPI_LAUNCH)]dnl
+[ executes programs on another system than the one running configure]dnl
+[ which matches the host specification.]dnl
+[ @<:@default=no@:>@]),
+     [AS_IF([test x"$enable_cross_mpi_defect_checks" != xno],
+        [enable_cross_mpi_defect_checks=yes])],
+     [enable_cross_mpi_defect_checks=no])
+   AS_IF([test x"$MPI_LAUNCH" = xtrue],
      [AC_MSG_NOTICE([Skipping tests for known MPI defects: MPI launcher unavailable])],
+     [test $cross_compiling = yes -a $enable_cross_mpi_defect_checks = no],
+     [AC_MSG_NOTICE([Skipping tests for known MPI defects in cross-]dnl
+[compilation mode, consider enabling them via ]dnl
+[--enable-cross-mpi-defect-checks, if possible])],
      [AC_MSG_CHECKING([MPI for known defects])
       AC_MSG_RESULT([])
       AS_FOR([acx_mpi_check_src_],[acx_mpi_check_src],["$srcdir/m4_ifval([$1],[$1],[config/checksrc])/"*],[
