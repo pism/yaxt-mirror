@@ -672,11 +672,10 @@ parse_stripe(const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type) {
   int wlen = m;
   MPI_Datatype result_dt;
   if (wlen == 1 ) {
-    if (wdisp[0] == 0) {
-      xt_mpi_call(MPI_Type_dup(wdt[0], &result_dt), Xt_default_comm);
-    } else {
+    if (wdisp[0] == 0)
+      result_dt = wdt[0];
+    else
       die("parse_stripe: internal error; wlen == 1 && match_disp != 0\n");
-    }
   } else {
     MPI_Aint old_type_lb, old_type_extent;
     MPI_Aint *restrict wbdisp = xmalloc((size_t)wlen * sizeof (*wbdisp));
@@ -692,11 +691,10 @@ parse_stripe(const struct Xt_offset_ext *v, int vlen, MPI_Datatype old_type) {
                                        wdt, &result_dt), Xt_default_comm);
     free(wblocklength);
     free(wbdisp);
+    for(m = 0; m<wlen; m++)
+      xt_mpi_call(MPI_Type_free(&wdt[m]), Xt_default_comm);
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), Xt_default_comm);
-  for(m = 0; m<wlen; m++) {
-    xt_mpi_call(MPI_Type_free(&wdt[m]), Xt_default_comm);
-  }
   free(wdt);
   free(wdisp);
   return result_dt;
