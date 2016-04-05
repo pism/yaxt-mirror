@@ -82,16 +82,11 @@ generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
     = xrealloc(*msgs, sizeof (*p) * (num_messages + num_ranks));
   for (size_t i = 0; i < num_ranks; ++i) {
     MPI_Datatype datatype = get_MPI_datatype(redist, ranks[i]);
-    MPI_Aint curr_lb, curr_extent, curr_true_lb, curr_true_extent;
+    MPI_Aint curr_lb, curr_extent;
     MPI_Datatype datatype_with_extent;
 
     // adjust extent of datatype to match the displacements
     xt_mpi_call(MPI_Type_get_extent(datatype, &curr_lb, &curr_extent), comm);
-    xt_mpi_call(MPI_Type_get_true_extent(datatype, &curr_true_lb,
-                                         &curr_true_extent), comm);
-    if (curr_true_extent > extent)
-      Xt_abort(comm, "ERROR: new datatype extent is too small (Xt_redist_repeat)\n",
-               __FILE__, __LINE__);
     xt_mpi_call(MPI_Type_create_resized(datatype, curr_lb, extent,
                                         &datatype_with_extent), comm);
 

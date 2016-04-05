@@ -198,6 +198,49 @@ int main(void) {
     xt_redist_delete(redist_repeat);
   }
 
+
+  { // test of redist_repeat generated with overlapping repetition of input redist
+    enum { npt = 9 };
+    Xt_xmap xmap = build_odd_selection_xmap(6);
+    int src_pos[npt] = {1,2,3,4,5,6,7,8,9};
+    int dst_pos[npt] = {0,2,4,6,8,10,12,14,16};
+    Xt_redist redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
+
+    xt_xmap_delete(xmap);
+
+    // init data
+    double src_data[npt], dst_data[npt], ref_dst_data[npt];
+    for(int i = 0; i<npt; i++) {
+      src_data[i] = 100+i+1;
+      dst_data[i] = -1;
+      ref_dst_data[i] = -1;
+    }
+
+    // generate reference destination data: {102, 103, ..., 107, -1, -1, ... }
+    xt_redist_s_exchange1(redist, src_data, ref_dst_data);
+    xt_redist_s_exchange1(redist, &src_data[1], &ref_dst_data[1]);
+
+    // generate redist_repeat
+    MPI_Aint src_extent = (MPI_Aint)(1 * sizeof (double));
+    MPI_Aint dst_extent = (MPI_Aint)(1 * sizeof (double));
+    int displacements[2] = {0,1};
+    Xt_redist redist_repeat
+      = xt_redist_repeat_new(redist, src_extent, dst_extent, 2, displacements);
+
+    // test communicator of redist
+    if (!test_communicator(xt_redist_get_MPI_Comm(redist_repeat), MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+    // test exchange
+    check_redist(redist_repeat, src_data,
+                 sizeof (dst_data), dst_data, ref_dst_data);
+
+    // clean up
+    xt_redist_delete(redist);
+    xt_redist_delete(redist_repeat);
+
+  }
+
   xt_finalize();
   MPI_Finalize();
 
