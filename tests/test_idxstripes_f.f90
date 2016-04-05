@@ -125,13 +125,14 @@ CONTAINS
     CALL do_tests(idxstripes, ref_indices)
 
     num_unmatched = xt_idxlist_get_pos_exts_of_index_stripes(idxstripes, &
-         SIZE(stripes), stripes, num_ext, pos_ext, .TRUE.)
+         stripes, pos_ext, .TRUE.)
     IF (num_unmatched /= 0) &
          CALL test_abort("stripes not found", &
          __FILE__, &
          __LINE__)
 
     num_pos = 0
+    num_ext = SIZE(pos_ext)
     DO i = 1, num_ext
       ext_size = pos_ext(i)%size
       IF (num_pos /= pos_ext(i)%start) &

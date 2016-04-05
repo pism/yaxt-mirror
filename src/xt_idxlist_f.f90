@@ -195,6 +195,7 @@ MODULE xt_idxlist_abstract
 
   INTERFACE xt_idxlist_get_pos_exts_of_index_stripes
     MODULE PROCEDURE gpe_is_i4_a_i4_p1d_l
+    MODULE PROCEDURE gpe_is_a_p1d_l
   END INTERFACE xt_idxlist_get_pos_exts_of_index_stripes
 
 CONTAINS
@@ -669,9 +670,9 @@ CONTAINS
        RESULT(num_unmatched)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(i4), INTENT(in) ::  num_stripes
-    TYPE(xt_stripe), TARGET :: stripes(*)
+    TYPE(xt_stripe), TARGET :: stripes(num_stripes)
     INTEGER, INTENT(out) :: num_ext
-    TYPE(Xt_pos_ext), ALLOCATABLE, INTENT(out) :: pos_ext(:)
+    TYPE(xt_pos_ext), ALLOCATABLE, INTENT(out) :: pos_ext(:)
     LOGICAL, INTENT(in) :: single_match_only
     INTEGER :: num_unmatched
 
@@ -708,6 +709,22 @@ CONTAINS
       CALL free_c(pos_ext_c)
     END IF
   END FUNCTION gpe_is_i4_a_i4_p1d_l
+
+  FUNCTION gpe_is_a_p1d_l(idxlist, stripes, pos_ext, single_match_only) &
+       RESULT(num_unmatched)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    TYPE(xt_stripe), TARGET, INTENT(in) :: stripes(:)
+    TYPE(xt_pos_ext), ALLOCATABLE, INTENT(out) :: pos_ext(:)
+    LOGICAL, INTENT(in) :: single_match_only
+    INTEGER :: num_unmatched
+
+    INTEGER :: num_ext
+    INTEGER(i4) :: num_stripes
+
+    num_stripes = SIZE(stripes)
+    num_unmatched = gpe_is_i4_a_i4_p1d_l(idxlist, num_stripes, stripes, &
+         num_ext, pos_ext, single_match_only)
+  END FUNCTION gpe_is_a_p1d_l
 
 END MODULE xt_idxlist_abstract
 !
