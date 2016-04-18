@@ -209,28 +209,26 @@ int main(void) {
     xt_xmap_delete(xmap);
 
     // init data
-    double src_data[npt], dst_data[npt], ref_dst_data[npt];
+    double src_data[npt], dst_data[npt];
+    static const double ref_dst_data[npt]
+        = {102.0, 103.0, 104.0, 105.0, 106.0, 107.0, -1.0, -1.0, -1.0};
     for(int i = 0; i<npt; i++) {
       src_data[i] = 100+i+1;
       dst_data[i] = -1;
-      ref_dst_data[i] = -1;
     }
 
     // generate reference destination data: {102, 103, ..., 107, -1, -1, ... }
-    xt_redist_s_exchange1(redist, src_data, ref_dst_data);
-    xt_redist_s_exchange1(redist, &src_data[1], &ref_dst_data[1]);
+    xt_redist_s_exchange1(redist, src_data, dst_data);
+    xt_redist_s_exchange1(redist, src_data+1, dst_data+1);
 
     // explicit check of ref data:
-    {
-      static const double my_ref[npt]
-        = {102.0, 103.0, 104.0, 105.0, 106.0, 107.0, -1.0, -1.0, -1.0};
-      for(int i=0; i<npt; i++) {
-        if (ref_dst_data[i] != my_ref[i]) {
-          PUT_ERR("error in xt_redist_repeat\n");
-          break;
-        }
+    for(int i=0; i<npt; i++)
+      if (dst_data[i] != ref_dst_data[i]) {
+        PUT_ERR("error in xt_redist_repeat\n");
+        break;
       }
-    }
+    for(int i = 0; i<npt; i++)
+      dst_data[i] = -1;
 
     // generate redist_repeat
     MPI_Aint src_extent = (MPI_Aint)(1 * sizeof (double));
