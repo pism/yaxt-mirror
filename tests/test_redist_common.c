@@ -54,7 +54,7 @@
 
 /*
  * build xmap for destination list containing all odd elements of
- * source list dimensioned 1 to src_slice_len
+ * source list dimensioned 1 to src_num_indices
  */
 Xt_xmap
 build_odd_selection_xmap(int src_num_indices)
@@ -66,7 +66,7 @@ build_odd_selection_xmap(int src_num_indices)
     PUT_ERR("error: src_num_indices < 0");
   Xt_int *index_list = xmalloc((size_t)src_num_indices
                                * sizeof (index_list[0]));
-  for (Xt_int i = 0; i < src_num_indices; ++i)
+  for (int i = 0; i < src_num_indices; ++i)
     index_list[i] = (Xt_int)(i + 1);
   Xt_idxlist src_idxlist = xt_idxvec_new(index_list, src_num_indices);
   int dst_num_indices
