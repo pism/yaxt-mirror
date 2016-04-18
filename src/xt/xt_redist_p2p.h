@@ -88,8 +88,8 @@ Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype);
  * @param[in] datatype     MPI datatype of single element
  *                         in the data to be exchanged
  */
-Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
-                                int *dst_offsets, MPI_Datatype datatype);
+Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, const int *src_offsets,
+                                const int *dst_offsets, MPI_Datatype datatype);
 
 /**
  * constructor for a redistribution using point to point
@@ -107,9 +107,9 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, int *src_offsets,
  */
 Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
                                 int num_src_ext,
-                                struct Xt_offset_ext src_extents[],
+                                const struct Xt_offset_ext src_extents[],
                                 int num_dst_ext,
-                                struct Xt_offset_ext dst_extents[],
+                                const struct Xt_offset_ext dst_extents[],
                                 MPI_Datatype datatype);
 
 /**
@@ -135,8 +135,12 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
  *          effective offsets
  */
 Xt_redist xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
-                                       int *src_block_offsets, int *src_block_sizes, int src_block_num,
-                                       int *dst_block_offsets, int *dst_block_sizes, int dst_block_num,
+                                       const int *src_block_offsets,
+                                       const int *src_block_sizes,
+                                       int src_block_num,
+                                       const int *dst_block_offsets,
+                                       const int *dst_block_sizes,
+                                       int dst_block_num,
                                        MPI_Datatype datatype);
 
 /**
@@ -153,8 +157,10 @@ Xt_redist xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
  * \remarks calls \ref xt_redist_p2p_blocks_off_new with NULL offsets
  */
 Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
-                                   int *src_block_sizes, int src_block_num,
-                                   int *dst_block_sizes, int dst_block_num,
+                                   const int *src_block_sizes,
+                                   int src_block_num,
+                                   const int *dst_block_sizes,
+                                   int dst_block_num,
                                    MPI_Datatype datatype);
 
 #endif // XT_REDIST_P2P_H
