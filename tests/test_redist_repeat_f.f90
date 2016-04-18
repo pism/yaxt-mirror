@@ -45,14 +45,15 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
-PROGRAM test_redist_repeatection_static
+PROGRAM test_redist_repeat
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_xmap, xt_xmap_delete, &
-       xt_redist, xt_redist_p2p_new, xt_redist_repeat_new, &
+       xt_redist, xt_redist_p2p_new, xt_redist_p2p_off_new, &
+       xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange1
-  USE test_redist_common, ONLY: build_odd_selection_xmap
+  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
   USE iso_c_binding, ONLY: c_loc, c_ptr, c_int
   IMPLICIT NONE
   CALL init_mpi
@@ -61,6 +62,7 @@ PROGRAM test_redist_repeatection_static
   CALL simple_test
   CALL test_repeated_redist
   CALL test_repeated_redist_with_gap
+  CALL test_repeated_overlapping_redist
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
@@ -262,7 +264,87 @@ CONTAINS
     CALL xt_redist_delete(redist_repeat)
   END SUBROUTINE test_repeated_redist_with_gap
 
-END PROGRAM test_redist_repeatection_static
+  SUBROUTINE test_repeated_overlapping_redist
+    ! test with one redist used three times (with two different input data
+    ! displacements -> test of cache) (with default cache size)
+    ! set up data
+    INTEGER, PARAMETER :: npt = 9, selection_len = 6
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redist, redist_repeat
+    INTEGER(mpi_address_kind) :: src_extent, dst_extent
+    INTEGER(mpi_address_kind) :: base_address, temp_address
+    INTEGER(c_int), PARAMETER :: displacements(2) = (/ 0, 1 /)
+    INTEGER :: i, j, ierror
+    INTEGER, PARAMETER :: src_pos(npt) = (/ (i, i=1,npt) /), &
+         dst_pos(npt) = (/ (2*i, i = 0, npt-1) /)
+    DOUBLE PRECISION, TARGET :: src_data(npt), dst_data(npt)
+#if __INTEL_COMPILER >= 1600 && __INTEL_COMPILER <= 1602 || defined __PGI
+    DOUBLE PRECISION :: ref_dst_data(npt)
+#else
+    DOUBLE PRECISION, PARAMETER :: ref_dst_data(npt) &
+         = (/ ((DBLE(((2-j)*3+i+101)*((ABS(j)+j)/ABS(j+1)) &
+         &           +(j-1-ABS(j-1))/2), &
+         &     i=1,3 ),j=2,0,-1) /)
+#endif
+    DOUBLE PRECISION, TARGET :: src_template(2), dst_template(2)
+
+    xmap = build_odd_selection_xmap(selection_len)
+
+    redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, mpi_double_precision)
+
+    CALL xt_xmap_delete(xmap)
+
+    ! init data
+#if __INTEL_COMPILER >= 1600 && __INTEL_COMPILER <= 1602 || defined __PGI
+    DO j = 2, 0, -1
+      DO i = 1, 3
+        ref_dst_data(i + (2-j)*3) = DBLE(((2-j)*3+i+101)*((ABS(j)+j)/ABS(j+1)) &
+             &                           +(j-1-ABS(j-1))/2)
+      END DO
+    END DO
+#endif
+    DO i = 1, npt
+      src_data(i) = 1.0d2 + DBLE(i)
+    END DO
+    dst_data = -1.0d0
+
+    ! test individual redists
+    CALL redist_dbl(redist, src_data, dst_data)
+    CALL redist_dbl(redist, src_data(2:), dst_data(2:))
+    ! check individual redists to have desired effect
+    IF (ANY(dst_data /= ref_dst_data)) &
+         CALL test_abort("error in xt_redist_s_exchange1", &
+         __FILE__, &
+         __LINE__)
+    dst_data = -1.0d0
+    ! generate redist_repeat
+    CALL mpi_get_address(src_template(1), base_address, ierror)
+    CALL mpi_get_address(src_template(2), temp_address, ierror)
+    src_extent = temp_address - base_address
+    CALL mpi_get_address(dst_template(1), base_address, ierror)
+    CALL mpi_get_address(dst_template(2), temp_address, ierror)
+    dst_extent = temp_address - base_address
+
+    redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
+         displacements)
+    CALL xt_redist_delete(redist)
+
+    ! test exchange
+    CALL check_redist(redist_repeat, src_data, SIZE(dst_data), &
+         dst_data, ref_dst_data)
+    ! clean up
+    CALL xt_redist_delete(redist_repeat)
+  END SUBROUTINE test_repeated_overlapping_redist
+
+  ! work-around for F2003 restriction on slice c_loc
+  SUBROUTINE redist_dbl(redist, src_data, dst_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src_data(*)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst_data(*)
+    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(dst_data))
+  END SUBROUTINE redist_dbl
+
+END PROGRAM test_redist_repeat
 !
 ! Local Variables:
 ! f90-continuation-indent: 5
