@@ -202,8 +202,8 @@ int main(void) {
   { // test of redist_repeat generated with overlapping repetition of input redist
     enum { npt = 9 };
     Xt_xmap xmap = build_odd_selection_xmap(6);
-    int src_pos[npt] = {1,2,3,4,5,6,7,8,9};
-    int dst_pos[npt] = {0,2,4,6,8,10,12,14,16};
+    static const int src_pos[npt] = {1,2,3,4,5,6,7,8,9};
+    static const int dst_pos[npt] = {0,2,4,6,8,10,12,14,16};
     Xt_redist redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
 
     xt_xmap_delete(xmap);
@@ -222,7 +222,8 @@ int main(void) {
 
     // explicit check of ref data:
     {
-      const double my_ref[npt] = {102.0, 103.0, 104.0, 105.0, 106.0, 107.0, -1.0, -1.0, -1.0};
+      static const double my_ref[npt]
+        = {102.0, 103.0, 104.0, 105.0, 106.0, 107.0, -1.0, -1.0, -1.0};
       for(int i=0; i<npt; i++) {
         if (ref_dst_data[i] != my_ref[i]) {
           PUT_ERR("error in xt_redist_repeat\n");
