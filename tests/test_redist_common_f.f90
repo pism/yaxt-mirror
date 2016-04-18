@@ -46,12 +46,17 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE test_redist_common
+  USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
-       xt_xmap, xt_xmap_all2all_new
+       xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_s_exchange1
+  USE ftest_common, ONLY: test_abort
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: build_odd_selection_xmap
+  INTERFACE check_redist
+    MODULE PROCEDURE check_redist_dp
+  END INTERFACE check_redist
+  PUBLIC :: build_odd_selection_xmap, check_redist
 CONTAINS
   ! build xmap for destination list containing all odd elements of
   ! source list dimensioned 1 to src_slice_len
@@ -81,6 +86,20 @@ CONTAINS
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END FUNCTION build_odd_selection_xmap
+
+  SUBROUTINE check_redist_dp(redist, src, dst_size, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, INTENT(in) :: dst_size
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src(*)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst(dst_size)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(dst_size)
+    dst = -1.0d0
+    CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
+    IF (ANY(dst /= ref_dst)) &
+         CALL test_abort("error in xt_redist_s_exchange1", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE check_redist_dp
 
 END MODULE test_redist_common
 !
