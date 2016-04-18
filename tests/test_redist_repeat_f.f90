@@ -234,7 +234,7 @@ CONTAINS
     TYPE(xt_redist) :: redist, redist_repeat
     INTEGER(mpi_address_kind) :: src_extent, dst_extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
-    INTEGER(c_int) :: displacements(3)
+    INTEGER(c_int), PARAMETER :: displacements(3) = (/0,2,4/)
     DOUBLE PRECISION, TARGET :: src_template(5, 3), dst_template(3, 3)
     INTEGER :: ierror
 
@@ -251,7 +251,6 @@ CONTAINS
     CALL mpi_get_address(dst_template(1,1), base_address, ierror)
     CALL mpi_get_address(dst_template(1,2), temp_address, ierror)
     dst_extent = temp_address - base_address
-    displacements = (/0,2,4/)
 
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
          num_slice, displacements)
