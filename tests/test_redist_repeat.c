@@ -220,6 +220,17 @@ int main(void) {
     xt_redist_s_exchange1(redist, src_data, ref_dst_data);
     xt_redist_s_exchange1(redist, &src_data[1], &ref_dst_data[1]);
 
+    // explicit check of ref data:
+    {
+      const double my_ref[npt] = {102.0, 103.0, 104.0, 105.0, 106.0, 107.0, -1.0, -1.0, -1.0};
+      for(int i=0; i<npt; i++) {
+        if (ref_dst_data[i] != my_ref[i]) {
+          PUT_ERR("error in xt_redist_repeat\n");
+          break;
+        }
+      }
+    }
+
     // generate redist_repeat
     MPI_Aint src_extent = (MPI_Aint)(1 * sizeof (double));
     MPI_Aint dst_extent = (MPI_Aint)(1 * sizeof (double));
