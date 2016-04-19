@@ -45,7 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
-PROGRAM test_redist_collection_static_parallel
+PROGRAM test_redist_repeat_parallel
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
@@ -140,7 +140,8 @@ CONTAINS
     TYPE(c_ptr) :: results(1), input(1)
     INTEGER(mpi_address_kind) :: extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
-    INTEGER(c_int) :: displacements(4), displacements_2(4)
+    INTEGER(c_int), PARAMETER :: displacements(4) = (/0,1,2,3/), &
+         displacements_2(4) = (/1,2,4,8/)
     INTEGER :: i, ierror
     INTEGER(xt_int_kind) :: j
 
@@ -160,9 +161,6 @@ CONTAINS
     CALL mpi_get_address(input_data(1,1), base_address, ierror)
     CALL mpi_get_address(input_data(1,2), temp_address, ierror)
     extent = temp_address - base_address
-
-    displacements = (/0,1,2,3/)
-    displacements_2 = (/1,2,4,8/)
 
     redist_repeat = xt_redist_repeat_new(redist_p2p, extent, extent, &
          4, displacements)
@@ -216,4 +214,13 @@ CONTAINS
     CALL xt_redist_delete(redist_repeat_2)
   END SUBROUTINE test_4redist
 
-END PROGRAM test_redist_collection_static_parallel
+END PROGRAM test_redist_repeat_parallel
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!
