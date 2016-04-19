@@ -68,7 +68,7 @@
 
 static size_t
 generate_msg_infos(struct Xt_redist_msg ** msgs,
-                   MPI_Aint * displacements, Xt_redist * redists,
+                   const MPI_Aint *displacements, Xt_redist *redists,
                    size_t num_redists, MPI_Comm comm,
                    enum xt_msg_direction direction,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
@@ -129,8 +129,8 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
 
 Xt_redist
 xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
-                                MPI_Aint src_displacements[num_redists],
-                                MPI_Aint dst_displacements[num_redists],
+                                const MPI_Aint src_displacements[num_redists],
+                                const MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm) {
 
   struct Xt_redist_msg *send_msgs, *recv_msgs;

@@ -78,8 +78,8 @@
  */
 Xt_redist
 xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
-                                MPI_Aint src_displacements[num_redists],
-                                MPI_Aint dst_displacements[num_redists],
+                                const MPI_Aint src_displacements[num_redists],
+                                const MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm);
 
 #endif // XT_REDIST_COLLECTION_STATIC_H
