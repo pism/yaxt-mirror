@@ -1,7 +1,7 @@
 /**
  * @file test_redist_p2p_parallel.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -133,38 +133,29 @@ int main(void) {
   // test nonuniform numbers of send and receive partners
 
   {
-    int i;
     // source index list
     Xt_int src_index_list[size];
-    int src_num_indices = 0;
+    int src_num_indices = (rank == 0) ? size : 0;
 
-    if (rank == 0) src_num_indices = size;
-    for (i = 0; i < src_num_indices; ++i)
+    for (int i = 0; i < src_num_indices; ++i)
       src_index_list[i] = (Xt_int)i;
 
-    Xt_idxlist src_idxlist;
-
-    src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
 
     // destination index list
     Xt_int dst_index_list[size];
     int dst_num_indices = size;
-    for (i = 0; i < dst_num_indices; ++i)
+    for (int i = 0; i < dst_num_indices; ++i)
       dst_index_list[i] = (Xt_int)i;
 
-    Xt_idxlist dst_idxlist;
-
-    dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     // xmap
-    Xt_xmap xmap;
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap
+      = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist;
-
-    redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
     // test communicator of redist
 
@@ -176,13 +167,16 @@ int main(void) {
 
     double src_data[size];
     double dst_data[size];
-    for (i = 0; i < size; ++i) {
-      if (rank == 0)
+    if (rank == 0)
+      for (int i = 0; i < size; ++i) {
         src_data[i] = (double)i;
-      else
+        dst_data[i] = -1.0;
+      }
+    else
+      for (int i = 0; i < size; ++i) {
         src_data[i] = -2.0;
-      dst_data[i] = -1;
-    }
+        dst_data[i] = -1.0;
+      }
 
     const void *src_data_p = &src_data[0];
     void *dst_data_p = &dst_data[0];
@@ -191,7 +185,7 @@ int main(void) {
 
     //int i;
 
-    for (i = 0; i < size; ++i)
+    for (int i = 0; i < size; ++i)
       if (dst_data[i] != i)
         PUT_ERR("error in xt_redist_s_exchange\n");
 
@@ -344,8 +338,7 @@ int main(void) {
     }
 
     // redist with blocks:
-    Xt_redist block_redist;
-    block_redist
+    Xt_redist block_redist
       = xt_redist_p2p_blocks_off_new(xmap,
                                      src_block_offsets, src_block_sizes, nwin,
                                      dst_block_offsets, dst_block_sizes, nwin,
@@ -365,11 +358,9 @@ int main(void) {
     }
 
     // redist with blocks but without explicit offsets:
-    Xt_redist block_redist2;
-    block_redist2 = xt_redist_p2p_blocks_new(xmap,
-                                             src_block_sizes, nwin,
-                                             dst_block_sizes, nwin,
-                                             MPI_INT);
+    Xt_redist block_redist2
+      = xt_redist_p2p_blocks_new(xmap, src_block_sizes, nwin,
+                                 dst_block_sizes, nwin, MPI_INT);
     // test communicator of redist
 
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(block_redist2),
@@ -402,3 +393,13 @@ int main(void) {
 
  return TEST_EXIT_CODE;
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
