@@ -58,8 +58,7 @@ PROGRAM test_redist_collection_static_parallel
        xt_redist_s_exchange1, xt_idxlist_get_indices, xt_int_mpidt
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
-  INTEGER(xt_int_kind) :: dummy
-  INTEGER :: rank, size, ierror, dt_xt_int
+  INTEGER :: rank, size, ierror
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -73,15 +72,6 @@ PROGRAM test_redist_collection_static_parallel
        CALL test_abort('mpi_comm_size failed', &
        __FILE__, &
        __LINE__)
-  IF (xt_int_mpidt == mpi_datatype_null) THEN
-    CALL mpi_type_create_f90_integer(RANGE(dummy), dt_xt_int, ierror)
-    IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort('mpi_type_create_f90_integer failed', &
-         __FILE__, &
-         __LINE__)
-  ELSE
-    dt_xt_int = xt_int_mpidt
-  END IF
 
   IF (size > 1) THEN
     CALL test_4redist
@@ -173,7 +163,7 @@ CONTAINS
     CALL xt_idxlist_delete(indices_all)
 
     DO i = 1, num_tx
-      redists(i) = xt_redist_p2p_new(xmaps(i), dt_xt_int)
+      redists(i) = xt_redist_p2p_new(xmaps(i), xt_int_mpidt)
       CALL xt_xmap_delete(xmaps(i))
     END DO
 
@@ -293,8 +283,8 @@ CONTAINS
     CALL xt_idxlist_delete(src_indices)
     CALL xt_idxlist_delete(dst_indices)
 
-    redists(1) = xt_redist_p2p_new(xmaps(1), dt_xt_int)
-    redists(2) = xt_redist_p2p_new(xmaps(2), dt_xt_int)
+    redists(1) = xt_redist_p2p_new(xmaps(1), xt_int_mpidt)
+    redists(2) = xt_redist_p2p_new(xmaps(2), xt_int_mpidt)
 
     CALL xt_xmap_delete(xmaps)
 
