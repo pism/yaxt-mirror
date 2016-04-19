@@ -49,7 +49,8 @@ MODULE test_redist_common
   USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
-       xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_s_exchange1
+       xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_s_exchange1, &
+       xi => xt_int_kind
   USE ftest_common, ONLY: test_abort
   IMPLICIT NONE
   PRIVATE
@@ -57,6 +58,8 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_dp
     MODULE PROCEDURE check_redist_dp2
     MODULE PROCEDURE check_redist_dp2_2d
+    MODULE PROCEDURE check_redist_xi
+    MODULE PROCEDURE check_redist_xi2
   END INTERFACE check_redist
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
 CONTAINS
@@ -84,7 +87,7 @@ CONTAINS
     dst_idxlist = xt_idxvec_new(index_list, dst_slice_len)
     DEALLOCATE(index_list)
 
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world);
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END FUNCTION build_odd_selection_xmap
@@ -144,6 +147,36 @@ CONTAINS
          __LINE__)
     CALL check_redist_dp(redist, src, ref_dst_size, dst, ref_dst)
   END SUBROUTINE check_redist_dp2_2d
+
+  SUBROUTINE check_redist_xi(redist, src, dst_size, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, INTENT(in) :: dst_size
+    INTEGER(xi), TARGET, INTENT(in) :: src(*)
+    INTEGER(xi), INTENT(in) :: ref_dst(dst_size)
+    INTEGER(xi), TARGET, INTENT(inout) :: dst(dst_size)
+    dst = -1_xi
+    CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
+    IF (ANY(dst /= ref_dst)) &
+         CALL test_abort("error in xt_redist_s_exchange1", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE check_redist_xi
+
+  SUBROUTINE check_redist_xi2(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(xi), INTENT(in) :: src(:)
+    INTEGER(xi), INTENT(in) :: ref_dst(:)
+    INTEGER(xi), TARGET, INTENT(inout) :: dst(:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size < ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    CALL check_redist_xi(redist, src, ref_dst_size, dst, ref_dst)
+  END SUBROUTINE check_redist_xi2
 
 END MODULE test_redist_common
 !

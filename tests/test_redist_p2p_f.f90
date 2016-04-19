@@ -274,13 +274,11 @@ CONTAINS
          __LINE__)
 
     ! test exchange
-    CALL offset_extents_exchange_check(redist, src_num, src_data, &
-         dst_num, dst_data, ref_dst_data)
+    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
 
     redist_copy = xt_redist_copy(redist)
     CALL xt_redist_delete(redist)
-    CALL offset_extents_exchange_check(redist_copy, src_num, src_data, &
-         dst_num, dst_data, ref_dst_data)
+    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
 
     ! clean up
     CALL xt_redist_delete(redist_copy)
@@ -288,25 +286,6 @@ CONTAINS
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END SUBROUTINE test_offset_extents
-
-  SUBROUTINE offset_extents_exchange_check(redist, src_num, src_data, &
-       dst_num, dst_data, ref_dst_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, INTENT(in) :: src_num, dst_num
-    INTEGER(xt_int_kind), TARGET, INTENT(in) :: src_data(src_num)
-    INTEGER(xt_int_kind), INTENT(in) :: ref_dst_data(dst_num)
-    INTEGER(xt_int_kind), TARGET, INTENT(out) :: dst_data(dst_num)
-    TYPE(c_ptr) :: src_data_p, dst_data_p
-
-    src_data_p = C_LOC(src_data)
-    dst_data_p = C_LOC(dst_data)
-    dst_data = -1_xi
-    CALL xt_redist_s_exchange(redist, src_data_p, dst_data_p)
-    IF (ANY(ref_dst_data(:) /= dst_data(:))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-  END SUBROUTINE offset_extents_exchange_check
 
 END PROGRAM test_redist_p2p_f
 !

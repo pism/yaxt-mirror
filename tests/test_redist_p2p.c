@@ -59,10 +59,6 @@
 #include "tests.h"
 #include "test_redist_common.h"
 
-static void
-run_redist_test(Xt_redist redist, const void *src_data, size_t elem_size,
-                size_t num_values, const void *restrict ref_values);
-
 int main(void) {
 
   // init mpi
@@ -74,18 +70,16 @@ int main(void) {
   // offset-free test:
   {
     // source index list
-    Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-    enum { src_num_indices
-           = sizeof(src_index_list) / sizeof(src_index_list[0]) };
+    static const Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
+    enum { src_num = sizeof(src_index_list) / sizeof(src_index_list[0]) };
 
-    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num_indices);
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, src_num);
 
     // destination index list
     static const Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-    enum { dst_num_indices
-           = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
+    enum { dst_num = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
 
-    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num);
 
     // xmap
     Xt_xmap xmap
@@ -104,12 +98,17 @@ int main(void) {
     static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
     enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
-    run_redist_test(redist, src_data, sizeof (src_data[0]), num_ref_values,
-                    ref_dst_data);
+    double dst_data[dst_num];
+    for (size_t i = 0; i < dst_num; ++i)
+      dst_data[i] = -1.0;
+    check_redist(redist, src_data, sizeof (src_data[0]) * num_ref_values,
+                 dst_data, ref_dst_data);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    run_redist_test(redist_copy, src_data, sizeof (src_data[0]), num_ref_values,
-                    ref_dst_data);
+    for (size_t i = 0; i < dst_num; ++i)
+      dst_data[i] = -1.0;
+    check_redist(redist_copy, src_data, sizeof (src_data[0]) * num_ref_values,
+                 dst_data, ref_dst_data);
     // clean up
 
     xt_redist_delete(redist_copy);
@@ -160,12 +159,17 @@ int main(void) {
     static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     static const double ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
-    run_redist_test(redist, src_data, sizeof (src_data[0]), dst_num,
-                    ref_dst_data);
+    double dst_data[dst_num];
+    for (size_t i = 0; i < dst_num; ++i)
+      dst_data[i] = -1.0;
+    check_redist(redist, src_data, sizeof (src_data[0]) * dst_num,
+                 dst_data, ref_dst_data);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    run_redist_test(redist_copy, src_data, sizeof (src_data[0]), dst_num,
-                    ref_dst_data);
+    for (size_t i = 0; i < dst_num; ++i)
+      dst_data[i] = -1.0;
+    check_redist(redist_copy, src_data, sizeof (src_data[0]) * dst_num,
+                 dst_data, ref_dst_data);
     // clean up
 
     xt_redist_delete(redist_copy);
@@ -213,12 +217,17 @@ int main(void) {
     static const long src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     static const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
-    run_redist_test(redist, src_data, sizeof (src_data[0]), dst_num,
-                    ref_dst_data);
+    long dst_data[dst_num];
+    for (size_t i = 0; i < dst_num; ++i)
+      dst_data[i] = -1L;
+    check_redist(redist, src_data, sizeof (src_data[0]) * dst_num,
+                 dst_data, ref_dst_data);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    run_redist_test(redist_copy, src_data, sizeof (src_data[0]), dst_num,
-                    ref_dst_data);
+    for (size_t i = 0; i < dst_num; ++i)
+      dst_data[i] = -1L;
+    check_redist(redist_copy, src_data, sizeof (src_data[0]) * dst_num,
+                 dst_data, ref_dst_data);
 
     // clean up
     xt_redist_delete(redist_copy);
@@ -231,26 +240,6 @@ int main(void) {
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
-}
-
-static void
-run_redist_test(Xt_redist redist, const void *src_data, size_t elem_size,
-                size_t num_values, const void *restrict ref_values)
-{
-  size_t dst_size = num_values * elem_size;
-  void *restrict dst_data = malloc(dst_size);
-  if (dst_size && !dst_data) {
-    perror("could not allocate destination buffer");
-    abort();
-  }
-  memset(dst_data, 0xff, dst_size);
-  const void *src_data_p[1] = { src_data };
-  void *dst_data_p[1] = { dst_data };
-  xt_redist_s_exchange(redist, 1, src_data_p, dst_data_p);
-  if (memcmp(ref_values, dst_data, dst_size))
-    PUT_ERR("error in xt_redist_s_exchange\n");
-
-  free(dst_data);
 }
 
 /*
