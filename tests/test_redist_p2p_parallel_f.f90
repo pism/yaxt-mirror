@@ -55,6 +55,7 @@ PROGRAM test_redist_p2p_parallel
        xt_redist_s_exchange1, xt_redist_delete, &
        xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new
   USE test_idxlist_utils, ONLY: test_err_count
+  USE test_redist_common, ONLY: communicators_are_congruent
   IMPLICIT NONE
 
   INTEGER :: rank, size, ierror
@@ -117,7 +118,7 @@ CONTAINS
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
     ! test communicator of redist
-    IF (.NOT. test_communicator(xt_redist_get_mpi_comm(redist), &
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
          __FILE__, &
@@ -177,7 +178,7 @@ CONTAINS
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
     ! test communicator of redist
-    IF (.NOT. test_communicator(xt_redist_get_mpi_comm(redist), &
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
          __FILE__, &
@@ -273,7 +274,7 @@ CONTAINS
     redist = xt_redist_p2p_new(xmap, mpi_integer)
 
     ! test communicator of redist
-    IF (.NOT. test_communicator(xt_redist_get_mpi_comm(redist), &
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
          __FILE__, &
@@ -354,7 +355,7 @@ CONTAINS
          src_block_offsets, src_block_sizes, nwin, &
          dst_block_offsets, dst_block_sizes, nwin, mpi_integer)
     ! test communicator of redist
-    IF (.NOT. test_communicator(xt_redist_get_mpi_comm(block_redist), &
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
          __FILE__, &
@@ -373,7 +374,7 @@ CONTAINS
          src_block_sizes, nwin, dst_block_sizes, nwin, mpi_integer)
     ! test communicator of redist
 
-    IF (.NOT. test_communicator(xt_redist_get_mpi_comm(block_redist2), &
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist2), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
          __FILE__, &
@@ -396,17 +397,5 @@ CONTAINS
     CALL xt_idxlist_delete(idxlist_a)
     CALL xt_idxlist_delete(idxlist_b)
   END SUBROUTINE block_redist_test
-
-  FUNCTION test_communicator(comm1, comm2) RESULT(p)
-    INTEGER, INTENT(in) :: comm1, comm2
-    LOGICAL :: p
-    INTEGER :: cmpres, ierror
-    CALL mpi_comm_compare(comm1, comm2, cmpres, ierror)
-    IF (ierror /= mpi_success) &
-       CALL test_abort("MPI error!", &
-       __FILE__, &
-       __LINE__)
-    p = ((cmpres == MPI_IDENT) .OR. (cmpres == MPI_CONGRUENT))
-  END FUNCTION test_communicator
 
 END PROGRAM test_redist_p2p_parallel

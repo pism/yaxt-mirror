@@ -57,8 +57,7 @@
 
 #include "tests.h"
 #include "test_idxlist_utils.h"
-
-static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+#include "test_redist_common.h"
 
 static void
 exchange_4redist(Xt_redist redist, MPI_Comm comm,
@@ -170,7 +169,8 @@ int main(void) {
 
       // test communicator of redist
 
-      if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
 
@@ -227,7 +227,8 @@ int main(void) {
 
       // test communicator of redist
 
-      if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
@@ -248,16 +249,6 @@ int main(void) {
 
   return TEST_EXIT_CODE;
 }
-
-static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
-
-  int result;
-
-  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
-
-  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
-}
-
 
 static void
 check_4redist_result(int size, void *results[4],

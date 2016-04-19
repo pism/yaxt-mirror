@@ -52,8 +52,7 @@
 #include <yaxt.h>
 
 #include "tests.h"
-
-static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
+#include "test_redist_common.h"
 
 int main(void) {
 
@@ -138,9 +137,11 @@ int main(void) {
 
       // test communicator of redist_repeat
 
-      if (!test_communicator(xt_redist_get_MPI_Comm(redist_repeat), MPI_COMM_WORLD))
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
+                                       MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-      if (!test_communicator(xt_redist_get_MPI_Comm(redist_repeat_2), MPI_COMM_WORLD))
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat_2),
+                                       MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
       xt_redist_delete(redist_p2p);
@@ -171,13 +172,4 @@ int main(void) {
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
-}
-
-static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
-
-  int result;
-
-  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
-
-  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }

@@ -57,8 +57,8 @@
 #include <yaxt.h>
 
 #include "tests.h"
+#include "test_redist_common.h"
 
-static int test_communicator(MPI_Comm comm1, MPI_Comm comm2);
 static void
 test_transpose_gather(Xt_redist redist,
                       Xt_int *dst, const Xt_int *src,
@@ -181,7 +181,8 @@ int main(void) {
 
       // test communicator of redist
 
-      if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
       for (size_t i = 0; i < 4; ++i)
@@ -243,7 +244,8 @@ int main(void) {
 
       // test communicator of redist
 
-      if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
       xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
@@ -269,15 +271,6 @@ int main(void) {
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
-}
-
-static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
-
-  int result;
-
-  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
-
-  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }
 
 static void

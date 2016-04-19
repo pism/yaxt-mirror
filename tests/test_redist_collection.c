@@ -59,10 +59,6 @@
 static void
 test_repeated_redist(int cache_size);
 
-static int
-test_communicator(MPI_Comm comm1, MPI_Comm comm2);
-
-
 static void
 test_displacement_variations(void);
 
@@ -91,7 +87,8 @@ int main(void) {
 
     // test communicator of redist
 
-    if (!test_communicator(xt_redist_get_MPI_Comm(redist_coll), MPI_COMM_WORLD))
+    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll),
+                                     MPI_COMM_WORLD))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     xt_redist_delete(redist);
@@ -158,7 +155,8 @@ test_repeated_redist(int cache_size)
 
   // test communicator of redist
 
-  if (!test_communicator(xt_redist_get_MPI_Comm(redist_coll), MPI_COMM_WORLD))
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll),
+                                   MPI_COMM_WORLD))
     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
   xt_redist_delete(redist);
@@ -225,15 +223,6 @@ test_repeated_redist(int cache_size)
   xt_redist_delete(redist_coll);
 }
 
-static int test_communicator(MPI_Comm comm1, MPI_Comm comm2) {
-
-  int result;
-
-  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
-
-  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
-}
-
 enum { num_redists = 3 };
 enum { nvalues = 5, nselect = nvalues/2+(nvalues&1) };
 
@@ -297,7 +286,8 @@ test_displacement_variations(void)
 
   // test communicator of redist
 
-  if (!test_communicator(xt_redist_get_MPI_Comm(redist_coll), MPI_COMM_WORLD))
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll),
+                                   MPI_COMM_WORLD))
     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
   xt_redist_delete(redist);

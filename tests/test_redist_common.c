@@ -81,6 +81,17 @@ build_odd_selection_xmap(int src_num_indices)
   return xmap;
 }
 
+int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2) {
+
+  int result;
+
+  xt_mpi_call(MPI_Comm_compare(comm1, comm2, &result), MPI_COMM_WORLD);
+
+  return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
+}
+
+
+
 void
 check_redist(Xt_redist redist, const void *src,
              size_t dst_size, void *dst, const void *ref_dst_data)

@@ -58,7 +58,7 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_dp2
     MODULE PROCEDURE check_redist_dp2_2d
   END INTERFACE check_redist
-  PUBLIC :: build_odd_selection_xmap, check_redist
+  PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
 CONTAINS
   ! build xmap for destination list containing all odd elements of
   ! source list dimensioned 1 to src_slice_len
@@ -88,6 +88,16 @@ CONTAINS
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END FUNCTION build_odd_selection_xmap
+
+  FUNCTION communicators_are_congruent(comm1, comm2) RESULT(congruent)
+    INTEGER, INTENT(in) :: comm1, comm2
+    LOGICAL :: congruent
+
+    INTEGER :: ierror, rcode
+
+    CALL mpi_comm_compare(comm1, comm2, rcode, ierror)
+    congruent = ((rcode == mpi_ident) .OR. (rcode == mpi_congruent))
+  END FUNCTION communicators_are_congruent
 
   SUBROUTINE check_redist_dp(redist, src, dst_size, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
