@@ -78,16 +78,13 @@ CONTAINS
     TYPE(xt_redist) :: redist, redist_repeat
     INTEGER, PARAMETER :: src_slice_len = 5, dst_slice_len = 3
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len) &
-         = (/ 1.0d0, 3.0d0, 5.0d0 /)
-    DOUBLE PRECISION, TARGET :: &
-         src_data(src_slice_len) = (/ 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0 /), &
-         dst_data(dst_slice_len)
+         = (/ 1.0d0, 3.0d0, 5.0d0 /), &
+         src_data(src_slice_len) = (/ 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0 /)
+    DOUBLE PRECISION :: dst_data(dst_slice_len)
     INTEGER(mpi_address_kind) :: src_extent, dst_extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int) :: displacements(1) = 0
     INTEGER :: ierror
-
-    dst_data = -1.0d0
 
     xmap = build_odd_selection_xmap(src_slice_len)
 
@@ -109,13 +106,7 @@ CONTAINS
     CALL xt_redist_delete(redist)
 
     ! test exchange
-    CALL xt_redist_s_exchange1(redist_repeat, C_LOC(src_data), C_LOC(dst_data))
-
-
-    IF (ANY(ref_dst_data /= dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
 
     ! clean up
     CALL xt_redist_delete(redist_repeat)
@@ -124,65 +115,44 @@ CONTAINS
   SUBROUTINE test_repeated_redist_ds1(redist_repeat)
     TYPE(xt_redist), INTENT(in) :: redist_repeat
     INTEGER :: i, j
-    DOUBLE PRECISION, SAVE, TARGET :: src_data(5, 3) = RESHAPE((/&
+    DOUBLE PRECISION, PARAMETER :: src_data(5, 3) = RESHAPE((/&
          (DBLE(i), i = 1, 15)/), (/ 5, 3 /))
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(3, 3) &
          = RESHAPE((/ ((DBLE(i + j), i = 1,5,2), j = 0,10,5) /), (/ 3, 3 /))
-    DOUBLE PRECISION, TARGET :: dst_data(3, 3)
-    TYPE(c_ptr) :: src_data_p, dst_data_p
+    DOUBLE PRECISION :: dst_data(3, 3)
 
-    dst_data = -1.0d0
-    src_data_p = C_LOC(src_data)
-    dst_data_p = C_LOC(dst_data)
-    CALL xt_redist_s_exchange1(redist_repeat, src_data_p, dst_data_p)
-
-    IF (ANY(ref_dst_data /= dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds1
 
   SUBROUTINE test_repeated_redist_ds1_with_gap(redist_repeat)
     TYPE(xt_redist), INTENT(in) :: redist_repeat
     INTEGER :: i, j
-    DOUBLE PRECISION, SAVE, TARGET :: src_data(5, 5) = RESHAPE((/&
+    DOUBLE PRECISION, PARAMETER :: src_data(5, 5) = RESHAPE((/&
          (DBLE(i), i = 1, 25)/), (/ 5, 5 /))
-    DOUBLE PRECISION :: ref_dst_data(3, 5) &
-         = RESHAPE((/ ((DBLE(i + j), i = 1,5,2), j = 0,20,5) /), (/ 3, 5 /))
-    DOUBLE PRECISION, TARGET :: dst_data(3, 5)
-    TYPE(c_ptr) :: src_data_p, dst_data_p
-
-    dst_data = -1.0d0
-    ref_dst_data(:,2:4:2) = -1.0d0
-    src_data_p = C_LOC(src_data)
-    dst_data_p = C_LOC(dst_data)
-    CALL xt_redist_s_exchange1(redist_repeat, src_data_p, dst_data_p)
-
-    IF (ANY(ref_dst_data /= dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DOUBLE PRECISION :: dst_data(3, 5)
+#ifndef __PGI
+    DOUBLE PRECISION, PARAMETER :: ref_dst_data(3, 5) &
+         = RESHAPE((/ ((DBLE((i + j)*MOD(j+1,2)-MOD(j,2)), i = 1,5,2), &
+         j = 0,20,5) /), (/ 3, 5 /))
+#else
+    DOUBLE PRECISION :: ref_dst_data(3, 5)
+    ref_dst_data &
+         = RESHAPE((/ ((DBLE((i + j)*MOD(j+1,2)-MOD(j,2)), i = 1,5,2), &
+         j = 0,20,5) /), (/ 3, 5 /))
+#endif
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds1_with_gap
 
   SUBROUTINE test_repeated_redist_ds2(redist_repeat)
     TYPE(xt_redist), INTENT(in) :: redist_repeat
     INTEGER :: i, j
-    DOUBLE PRECISION, SAVE, TARGET :: src_data(5, 3) = RESHAPE((/&
+    DOUBLE PRECISION, PARAMETER :: src_data(5, 3) = RESHAPE((/&
          (DBLE(i), i = 20, 34)/), (/ 5, 3 /))
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(3, 3) &
          = RESHAPE((/ ((DBLE(i + j), i = 1,5,2), j = 19,33,5) /), (/ 3, 3 /))
-    DOUBLE PRECISION, TARGET :: dst_data(3, 3)
-    TYPE(c_ptr) :: src_data_p, dst_data_p
+    DOUBLE PRECISION :: dst_data(3, 3)
 
-    dst_data = -1.0d0
-    src_data_p = C_LOC(src_data)
-    dst_data_p = C_LOC(dst_data)
-    CALL xt_redist_s_exchange1(redist_repeat, src_data_p, dst_data_p)
-
-    IF (ANY(ref_dst_data /= dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds2
 
   SUBROUTINE test_repeated_redist

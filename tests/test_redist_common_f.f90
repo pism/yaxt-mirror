@@ -55,6 +55,8 @@ MODULE test_redist_common
   PRIVATE
   INTERFACE check_redist
     MODULE PROCEDURE check_redist_dp
+    MODULE PROCEDURE check_redist_dp2
+    MODULE PROCEDURE check_redist_dp2_2d
   END INTERFACE check_redist
   PUBLIC :: build_odd_selection_xmap, check_redist
 CONTAINS
@@ -100,6 +102,38 @@ CONTAINS
          __FILE__, &
          __LINE__)
   END SUBROUTINE check_redist_dp
+
+  SUBROUTINE check_redist_dp2(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, INTENT(in) :: src(:)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst(:)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size < ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    CALL check_redist_dp(redist, src, ref_dst_size, dst, ref_dst)
+  END SUBROUTINE check_redist_dp2
+
+  SUBROUTINE check_redist_dp2_2d(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, INTENT(in) :: src(:,:)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst(:,:)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:,:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size < ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    CALL check_redist_dp(redist, src, ref_dst_size, dst, ref_dst)
+  END SUBROUTINE check_redist_dp2_2d
 
 END MODULE test_redist_common
 !

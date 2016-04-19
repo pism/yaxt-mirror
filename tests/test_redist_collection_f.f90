@@ -56,7 +56,7 @@ PROGRAM test_redist_collection
        xt_redist_delete, xt_redist_copy, &
        xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_slice_c_loc
-  USE test_redist_common, ONLY: build_odd_selection_xmap
+  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
   IMPLICIT NONE
@@ -101,30 +101,11 @@ CONTAINS
     CALL xt_redist_delete(redist)
 
     ! test exchange
-    CALL simple_test_exchange(redist_coll, src_slice_len, src_data, &
-         dst_slice_len, dst_data, ref_dst_data)
+    CALL check_redist(redist_coll, src_data, dst_data, ref_dst_data)
 
     ! clean up
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE simple_test
-
-  SUBROUTINE simple_test_exchange(redist, src_len, src_data, &
-       dst_len, dst_data, ref_dst_data)
-    TYPE(xt_redist) :: redist
-    INTEGER, INTENT(in) :: src_len, dst_len
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src_data(src_len)
-    DOUBLE PRECISION, TARGET, INTENT(out) :: dst_data(dst_len)
-    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(dst_len)
-
-    dst_data = -1.0d0
-
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(dst_data))
-
-    IF (ANY(ref_dst_data /= dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-  END SUBROUTINE simple_test_exchange
 
   SUBROUTINE test_repeated_redist_ds1(redist_coll)
     TYPE(xt_redist), INTENT(in) :: redist_coll
