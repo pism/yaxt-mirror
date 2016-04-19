@@ -197,7 +197,7 @@ int main(void) {
       = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p with extents of offsets
-    struct Xt_offset_ext
+    static const struct Xt_offset_ext
       src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
       dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
 
