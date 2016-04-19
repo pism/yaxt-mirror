@@ -49,11 +49,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#if ! defined TLS && defined HAVE_PTHREAD
-#include <stdio.h>
-#include <pthread.h>
-#include "core/core.h"
-#endif
 
 #include "xt_exchanger.h"
 #include "xt_exchanger_irecv_isend.h"
@@ -82,64 +77,19 @@ void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void *src_data, void 
   exchanger->vtable->s_exchange(exchanger, src_data, dst_data);
 }
 
-#if ! defined TLS && defined HAVE_PTHREAD
-
-static pthread_key_t tls_qsort_data_key;
-
-void xt_exchanger_init(void) {
-  int ierror = pthread_key_create(&tls_qsort_data_key, NULL);
-  if (ierror) {
-    fprintf(stderr, "%s: error creating pthread key: %s\n",
-            __func__, strerror(ierror));
-    die("Failed pthread_key_create in initialization!");
-  }
-}
-
-void xt_exchanger_finalize(void) {
-  int ierror = pthread_key_delete(tls_qsort_data_key);
-  if (ierror) {
-    fprintf(stderr, "%s: error deleting pthread key: %s\n",
-            __func__, strerror(ierror));
-    die("Failed pthread_key_delete in finalization!");
-  }
-}
-
-#else
-
-static TLS int comm_rank, comm_size;
-
-#endif
-
 static int compare_exchange_messages (const void * msg_a, const void * msg_b)
 {
   int rank_a = *(const int *)msg_a;
   int rank_b = *(const int *)msg_b;
-#if ! defined TLS && defined HAVE_PTHREAD
-  int comm_rank, comm_size;
-  {
-    int *qsort_data = pthread_getspecific(tls_qsort_data_key);
-    comm_size = qsort_data[0];
-    comm_rank = qsort_data[1];
-  }
-#endif
-  if (rank_a <= comm_rank) rank_a += comm_size;
-  if (rank_b <= comm_rank) rank_b += comm_size;
-
   return ( rank_a - rank_b );
 }
 
 void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
                                     MPI_Comm comm) {
 
-#if ! defined TLS && defined HAVE_PTHREAD
-  int qsort_data[2];
-  MPI_Comm_rank(comm, qsort_data + 1);
-  MPI_Comm_size(comm, qsort_data + 0);
-  pthread_setspecific(tls_qsort_data_key, qsort_data);
-#else
+  int comm_rank, comm_size;
   MPI_Comm_rank(comm, &comm_rank);
   MPI_Comm_size(comm, &comm_size);
-#endif
   /* In order to avoid congestion of messages, the order of send and receive
    * messages is changed. This is done by sorting the messages according to the
    * rank of the respective message partner. Before the sorting to ranks that
@@ -149,7 +99,20 @@ void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
    * 1. add comm_size(10): 9, 15, 12, 6, 11
    * 2. sort: 6, 9, 11, 12, 15 -> final order: 6, 9, 1, 2, 5
    */
+  unsigned char *msgs_ = (unsigned char *)msgs;
+  /* apply offset for ranks <= comm_rank */
+  for (size_t i = 0; i < n; ++i) {
+    int *p = (int *)(void *)(msgs_ + i * msg_type_size),
+      r = *p;
+    if (r <= comm_rank) *p = r + comm_size;
+  }
   qsort(msgs, n, msg_type_size, compare_exchange_messages);
+  /* undo offset */
+  for (size_t i = 0; i < n; ++i) {
+    int *p = (int *)(void *)(msgs_ + i * msg_type_size),
+      r = *p;
+    if (r >= comm_size) *p = r - comm_size;
+  }
 }
 
 

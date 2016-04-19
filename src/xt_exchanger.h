@@ -104,14 +104,6 @@ xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
                            int **ranks);
 
-#if ! defined TLS && defined HAVE_PTHREAD
-/* internal function to setup pthread key if TLS is unavailable */
-void xt_exchanger_init(void);
-void xt_exchanger_finalize(void);
-#else
-
-#endif
-
 #endif // XT_EXCHANGER_H
 /*
  * Local Variables:

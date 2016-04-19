@@ -74,9 +74,6 @@ xt_initialize(MPI_Comm default_comm)
   xt_idxstripes_initialize();
   xt_idxsection_initialize();
   xt_idxlist_intersection_init();
-#if ! defined TLS && defined HAVE_PTHREAD
-  xt_exchanger_init();
-#endif
 #ifdef INSTR_WITH_SCT
   sct_init(32, "YAXT", Xt_default_comm);
   setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
@@ -94,9 +91,6 @@ xt_finalize(void)
     xt_idxsection_finalize();
     xt_idxstripes_finalize();
     xt_idxempty_finalize();
-#if ! defined TLS && defined HAVE_PTHREAD
-    xt_exchanger_finalize();
-#endif
     xt_mpi_finalize();
 #ifdef INSTR_WITH_SCT
     INSTR_STOP(instr);
