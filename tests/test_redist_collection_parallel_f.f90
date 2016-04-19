@@ -123,21 +123,22 @@ CONTAINS
     ! redist test with four different redists
     INTEGER, PARAMETER :: num_tx = 4
     TYPE(xt_idxlist) :: indices_a, indices_b, indices_all
-    INTEGER(xt_int_kind) :: index_vector_a(2*world_size**2), &
-         index_vector_b(2*world_size**2)
+    INTEGER(xt_int_kind), ALLOCATABLE :: index_vector_a(:), &
+         index_vector_b(:)
     TYPE(xt_xmap) :: xmaps(num_tx)
     TYPE(xt_redist) :: redists(num_tx), redist, redist_copy
     INTEGER :: i
 
+    ALLOCATE(index_vector_a(2*world_size**2), index_vector_b(2*world_size**2))
     CALL build_idxlists(indices_a, indices_b, indices_all)
-
-    CALL xt_idxlist_get_indices(indices_a, index_vector_a)
-    CALL xt_idxlist_get_indices(indices_b, index_vector_b)
 
     xmaps(1) = xt_xmap_all2all_new(indices_a, indices_b, mpi_comm_world)
     xmaps(2) = xt_xmap_all2all_new(indices_b, indices_a, mpi_comm_world)
     xmaps(3) = xt_xmap_all2all_new(indices_a, indices_all, mpi_comm_world)
     xmaps(4) = xt_xmap_all2all_new(indices_b, indices_all, mpi_comm_world)
+
+    CALL xt_idxlist_get_indices(indices_a, index_vector_a)
+    CALL xt_idxlist_get_indices(indices_b, index_vector_b)
 
     CALL xt_idxlist_delete(indices_a)
     CALL xt_idxlist_delete(indices_b)

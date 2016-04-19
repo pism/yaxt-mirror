@@ -122,12 +122,11 @@ CONTAINS
   SUBROUTINE test_4redist
     INTEGER, PARAMETER :: num_tx = 4
     TYPE(xt_idxlist) :: indices_a, indices_b, indices_all
-    INTEGER(xt_int_kind), TARGET :: src(4*size**2 + 2*size**3)
+    INTEGER(xt_int_kind), ALLOCATABLE, TARGET :: src(:), dst(:)
     INTEGER(xt_int_kind), POINTER :: index_vector_a(:), &
          index_vector_b(:), index_vector_all(:)
     TYPE(xt_xmap) :: xmaps(num_tx)
     TYPE(xt_redist) :: redists(num_tx), redist, redist_copy
-    INTEGER(xt_int_kind), TARGET :: dst(4*size**2 + 4*size**3)
     INTEGER(mpi_address_kind) :: src_displacements(num_tx), &
          dst_displacements(num_tx)
     INTEGER :: i, ierror, size_a, size_b, size_all
@@ -137,6 +136,8 @@ CONTAINS
     size_a = 2 * size**2
     size_b = 2 * size**2
     size_all = 2 * size**3
+
+    ALLOCATE(src(size_a + size_b + size_all), dst(size_b + size_a + 2*size_all))
 
     index_vector_a => src(1:size_a)
     index_vector_b => src(size_a+1:size_a+size_b)
