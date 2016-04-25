@@ -383,6 +383,7 @@ AC_CONFIG_FILES([						\
 	tests/test_redist_collection_static_run			\
 	tests/test_redist_repeat_run				\
 	tests/test_redist_p2p_run				\
+	tests/test_request_parallel_run				\
 	tests/test_exported_symbols				\
 	tests/test_xmap_dist_dir_run				\
 	tests/test_xmap_all2all_run				\

@@ -1,0 +1,12 @@
+#! @SHELL@
+set -e
+[ x"@MPI_LAUNCH@" != xtrue ] || exit 77
+for num_procs in 3 4 ; do
+  @abs_top_builddir@/libtool --mode=execute \
+   @MPI_LAUNCH@ -n $num_procs @abs_builddir@/test_request_parallel
+done
+#
+# Local Variables:
+# mode: sh
+# End:
+#
