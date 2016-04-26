@@ -56,6 +56,9 @@
 #include <mpi.h>
 #include <yaxt.h>
 
+#include "../src/xt_exchanger.h"
+#include "../src/xt_redist_internal.h"
+
 #include "tests.h"
 
 struct test_message {
@@ -87,11 +90,6 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  struct Xt_redist_msg * send_msgs,
                                  struct Xt_redist_msg * recv_msgs,
                                  MPI_Comm comm, int tag_offset);
-
-void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
-                             void * dst_data);
-
-void xt_exchanger_delete(Xt_exchanger);
 
 typedef Xt_exchanger (*exchanger_new_func) (int nsend, int nrecv,
                                             struct Xt_redist_msg * send_msgs,
