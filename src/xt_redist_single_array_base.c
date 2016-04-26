@@ -58,6 +58,7 @@
 #include "xt_redist_internal.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_idxlist.h"
+#include "xt/xt_request.h"
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 #include "xt_exchanger.h"
@@ -72,8 +73,15 @@ static void
 redist_sab_s_exchange(Xt_redist redist, int num_arrays,
                       const void **src_data, void **dst_data);
 
+static Xt_request
+redist_sab_a_exchange(Xt_redist redist, int num_arrays,
+                      const void **src_data, void **dst_data);
+
 static void
 redist_sab_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data);
+
+static Xt_request
+redist_sab_a_exchange1(Xt_redist redist, const void *src_data, void *dst_data);
 
 static MPI_Datatype
 redist_sab_get_send_MPI_Datatype(Xt_redist redist, int rank);
@@ -93,7 +101,9 @@ static const struct xt_redist_vtable redist_sab_vtable = {
   .copy                  = redist_sab_copy,
   .delete                = redist_sab_delete,
   .s_exchange            = redist_sab_s_exchange,
+  .a_exchange            = redist_sab_a_exchange,
   .s_exchange1           = redist_sab_s_exchange1,
+  .a_exchange1           = redist_sab_a_exchange1,
   .get_send_MPI_Datatype = redist_sab_get_send_MPI_Datatype,
   .get_recv_MPI_Datatype = redist_sab_get_recv_MPI_Datatype,
   .get_msg_ranks         = redist_collection_get_msg_ranks,
@@ -183,12 +193,35 @@ redist_sab_s_exchange(Xt_redist redist, int num_arrays,
              "(Xt_redist_single_array_base)", __FILE__, __LINE__);
 }
 
+static Xt_request
+redist_sab_a_exchange(Xt_redist redist, int num_arrays,
+                      const void **src_data, void **dst_data)
+{
+  Xt_redist_sab redist_rep = xrsab(redist);
+  if (num_arrays == 1)
+    return redist_sab_a_exchange1(redist, src_data[0], dst_data[0]);
+  else
+    Xt_abort(redist_rep->comm, "ERROR: multi-array a_exchange is not"
+             " implemented for this xt_redist type "
+             "(Xt_redist_single_array_base)", __FILE__, __LINE__);
+
+  return XT_REQUEST_NULL;
+}
+
 static void
 redist_sab_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
 
   Xt_redist_sab redist_sab = xrsab(redist);
 
   xt_exchanger_s_exchange(redist_sab->exchanger, src_data, dst_data);
+}
+
+static Xt_request
+redist_sab_a_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
+
+  Xt_redist_sab redist_sab = xrsab(redist);
+
+  return xt_exchanger_a_exchange(redist_sab->exchanger, src_data, dst_data);
 }
 
 static MPI_Datatype

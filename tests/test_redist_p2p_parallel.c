@@ -54,9 +54,9 @@
 
 #include <yaxt.h>
 
+#define VERBOSE
 #include "tests.h"
 #include "test_redist_common.h"
-
 int main(void) {
 
   // init mpi
@@ -103,24 +103,32 @@ int main(void) {
                                      MPI_COMM_WORLD))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-    // test exchange
+    // test synchronous and asynchronous exchange
+    for (int j = 0; j < 2; ++j) {
 
-    double src_data[dataSize];
-    double dst_data[dataSize] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+      double src_data[dataSize];
+      double dst_data[dataSize] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
-    for (Xt_int i = 0; i < src_num_indices; ++i)
-      src_data[i] = (double)(rank * dataSize + i);
+      for (Xt_int i = 0; i < src_num_indices; ++i)
+        src_data[i] = (double)(rank * dataSize + i);
 
-    const void *src_data_p = &src_data[0];
-    void *dst_data_p = &dst_data[0];
+      const void *src_data_p = &src_data[0];
+      void *dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
+      if (j == 0) {
+        xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
+      } else {
+        Xt_request request =
+          xt_redist_a_exchange(redist, 1, &src_data_p, &dst_data_p);
+        xt_request_wait(&request);
+      }
 
-    //int i;
+      //int i;
 
-    for (Xt_int i = 0; i < (Xt_int)dataSize; ++i)
-      if (dst_index_list[i] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+      for (Xt_int i = 0; i < (Xt_int)dataSize; ++i)
+        if (dst_index_list[i] != dst_data[i])
+          PUT_ERR("error in xt_redist_s/a_exchange\n");
+    }
 
     // clean up
 
@@ -168,26 +176,38 @@ int main(void) {
     double src_data[size];
     double dst_data[size];
     if (rank == 0)
-      for (int i = 0; i < size; ++i) {
+      for (int i = 0; i < size; ++i)
         src_data[i] = (double)i;
-        dst_data[i] = -1.0;
-      }
     else
-      for (int i = 0; i < size; ++i) {
+      for (int i = 0; i < size; ++i)
         src_data[i] = -2.0;
-        dst_data[i] = -1.0;
-      }
 
     const void *src_data_p = &src_data[0];
     void *dst_data_p = &dst_data[0];
 
-    xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
+    for (int j = 0; j < 2; ++j) {
 
-    //int i;
+      if (rank == 0)
+        for (int i = 0; i < size; ++i)
+          dst_data[i] = -1.0;
+      else
+        for (int i = 0; i < size; ++i)
+          dst_data[i] = -1.0;
 
-    for (int i = 0; i < size; ++i)
-      if (dst_data[i] != i)
-        PUT_ERR("error in xt_redist_s_exchange\n");
+      if (j == 0) {
+        xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
+      } else {
+        Xt_request request =
+          xt_redist_a_exchange(redist, 1, &src_data_p, &dst_data_p);
+        xt_request_wait(&request);
+      }
+
+      //int i;
+
+      for (int i = 0; i < size; ++i)
+        if (dst_data[i] != i)
+          PUT_ERR("error in xt_redist_s_exchange\n");
+    }
 
     // clean up
 
@@ -261,14 +281,25 @@ int main(void) {
     int b_surfdata_ref[nwin];
     for (int i = 0; i < nwin; i++) {
       a_surfdata[i] = gsurfdata[iveca[i]];
-      b_surfdata[i] = -1;
       b_surfdata_ref[i] = gsurfdata[ivecb[i]];
     }
 
-    xt_redist_s_exchange1(redist, a_surfdata, b_surfdata);
-    for (int i = 0; i < nwin; ++i) {
-      if (b_surfdata[i] != b_surfdata_ref[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+    for (int j = 0; j < 2; ++j) {
+
+      for (int i = 0; i < nwin; i++) b_surfdata[i] = -1;
+
+      if (j == 0) {
+        xt_redist_s_exchange1(redist, a_surfdata, b_surfdata);
+      } else {
+        Xt_request request =
+          xt_redist_a_exchange1(redist, a_surfdata, b_surfdata);
+        xt_request_wait(&request);
+      }
+
+      for (int i = 0; i < nwin; ++i) {
+        if (b_surfdata[i] != b_surfdata_ref[i])
+          PUT_ERR("error in xt_redist_s_exchange\n");
+      }
     }
 
     xt_redist_delete(redist);
@@ -297,7 +328,6 @@ int main(void) {
 
     for (int i = 0; i < gvol_size; i++) {
       a_voldata[i] = -1;
-      b_voldata[i] = -1;
       b_voldata_ref[i] = -1;
     }
 
@@ -349,12 +379,21 @@ int main(void) {
                                      MPI_COMM_WORLD))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-    xt_redist_s_exchange1(block_redist, a_voldata, b_voldata);
+    for (int j = 0; j < 2; ++j) {
 
-    for (int i = 0; i < gvol_size; i++) {
-      if (b_voldata[i] != b_voldata_ref[i])
-        PUT_ERR("error in xt_redist_s_exchange (1) for volume data\n");
+      for (int i = 0; i < gvol_size; i++) b_voldata[i] = -1;
 
+      if (j == 0) {
+        xt_redist_s_exchange1(block_redist, a_voldata, b_voldata);
+      } else {
+        Xt_request request =
+          xt_redist_a_exchange1(block_redist, a_voldata, b_voldata);
+        xt_request_wait(&request);
+      }
+
+      for (int i = 0; i < gvol_size; i++)
+        if (b_voldata[i] != b_voldata_ref[i])
+          PUT_ERR("error in xt_redist_s_exchange (1) for volume data\n");
     }
 
     // redist with blocks but without explicit offsets:
@@ -367,16 +406,21 @@ int main(void) {
                                      MPI_COMM_WORLD))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-    for (int i = 0; i < gvol_size; i++) {
-      b_voldata[i] = -1;
-    }
+    for (int j = 0; j < 2; ++j) {
 
-    xt_redist_s_exchange1(block_redist2, a_voldata, b_voldata);
+      for (int i = 0; i < gvol_size; i++) b_voldata[i] = -1;
 
-    for (int i = 0; i < gvol_size; i++) {
-      if (b_voldata[i] != b_voldata_ref[i])
-        PUT_ERR("error in xt_redist_s_exchange (2) for volume data\n");
+      if (j == 0) {
+        xt_redist_s_exchange1(block_redist2, a_voldata, b_voldata);
+      } else {
+        Xt_request request =
+          xt_redist_a_exchange1(block_redist2, a_voldata, b_voldata);
+        xt_request_wait(&request);
+      }
 
+      for (int i = 0; i < gvol_size; i++)
+        if (b_voldata[i] != b_voldata_ref[i])
+          PUT_ERR("error in xt_redist_s_exchange (2) for volume data\n");
     }
 
     xt_redist_delete(block_redist);

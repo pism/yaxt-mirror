@@ -264,23 +264,33 @@ int main(void) {
     double src_data[npt], dst_data[npt];
     static const double ref_dst_data[npt]
         = {102.0, 103.0, 104.0, 105.0, 106.0, 107.0, -1.0, -1.0, -1.0};
-    for(int i = 0; i<npt; i++) {
-      src_data[i] = 100+i+1;
-      dst_data[i] = -1;
-    }
+    for(int i = 0; i<npt; i++) src_data[i] = 100+i+1;
 
-    // generate reference destination data: {102, 103, ..., 107, -1, -1, ... }
-    xt_redist_s_exchange1(redist, src_data, dst_data);
-    xt_redist_s_exchange1(redist, src_data+1, dst_data+1);
+    for (int j = 0; j < 2; ++j) {
 
-    // explicit check of ref data:
-    for(int i=0; i<npt; i++)
-      if (dst_data[i] != ref_dst_data[i]) {
-        PUT_ERR("error in xt_redist_repeat\n");
-        break;
+      for(int i = 0; i<npt; i++) dst_data[i] = -1;
+
+      // generate reference destination data: {102, 103, ..., 107, -1, -1, ... }
+      if (j == 0) {
+        xt_redist_s_exchange1(redist, src_data, dst_data);
+        xt_redist_s_exchange1(redist, src_data+1, dst_data+1);
+      } else {
+        Xt_request request[2] = {
+            xt_redist_a_exchange1(redist, src_data, dst_data),
+            xt_redist_a_exchange1(redist, src_data+1, dst_data+1)};
+        xt_request_wait(&request[0]);
+        xt_request_wait(&request[1]);
       }
-    for(int i = 0; i<npt; i++)
-      dst_data[i] = -1;
+
+      // explicit check of ref data:
+      for(int i=0; i<npt; i++)
+        if (dst_data[i] != ref_dst_data[i]) {
+          PUT_ERR("error in xt_redist_repeat\n");
+          break;
+        }
+      for(int i = 0; i<npt; i++)
+        dst_data[i] = -1;
+    }
 
     // generate redist_repeat
     MPI_Aint src_extent = (MPI_Aint)(1 * sizeof (double));

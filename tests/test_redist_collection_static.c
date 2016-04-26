@@ -136,12 +136,11 @@ int main(void) {
     xt_redist_delete(redist);
 
     // test exchange
+
     {
       for (size_t j = 0; j < 3; ++j)
         for (size_t i = 0; i < 3; ++i)
           dst_data[j][i] = -1.0;
-
-      xt_redist_s_exchange1(redist_coll, src_data, dst_data);
 
       static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
       check_redist(redist_coll, src_data,

@@ -90,15 +90,23 @@ int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2) {
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }
 
-
-
 void
 check_redist(Xt_redist redist, const void *src,
              size_t dst_size, void *dst, const void *ref_dst_data)
 {
-  xt_redist_s_exchange1(redist, src, dst);
-  if (memcmp(dst, ref_dst_data, dst_size))
-    PUT_ERR("error in xt_redist_s_exchange\n");
+  void * tmp_dst = malloc(dst_size);
+  for (int i = 0; i < 2; ++i) {
+    memcpy(tmp_dst, dst, dst_size);
+    if (i == 0) {
+      xt_redist_s_exchange1(redist, src, tmp_dst);
+    } else {
+      Xt_request request = xt_redist_a_exchange1(redist, src, tmp_dst);
+      xt_request_wait(&request);
+    }
+    if (memcmp(tmp_dst, ref_dst_data, dst_size))
+      PUT_ERR("error in xt_redist_s_exchange\n");
+  }
+  free(tmp_dst);
 }
 
 /*

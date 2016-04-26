@@ -149,20 +149,39 @@ int main(void) {
 
       xt_redist_delete(redist_p2p);
 
-      xt_redist_s_exchange1(redist_repeat, input, result);
-      xt_redist_s_exchange1(redist_repeat_2, input, result_2);
+      for (int i = 0; i < 2; ++i) {
 
-      // check results
+        for (int j = 0; j < 4; ++j)
+          for (int k = 0; k < 2*size*size; ++k)
+            result[j][k] = -1;
+        for (int j = 0; j < 9; ++j)
+          for (int k = 0; k < 2*size*size; ++k)
+            result_2[j][k] = -1;
 
-      for (int i = 0; i < 4; ++i)
-        for (int j = 0; j < 2*size*size; ++j)
-          if (result[i][j] != index_vector_b[j] + i * 4*size*size)
-            PUT_ERR("ERROR: in first xt_redist_s_exchange1\n");
+        if (i == 0) {
+          xt_redist_s_exchange1(redist_repeat, input, result);
+          xt_redist_s_exchange1(redist_repeat_2, input, result_2);
+        } else {
+          Xt_request request =
+            xt_redist_a_exchange1(redist_repeat, input, result);
+          Xt_request request_2 =
+            xt_redist_a_exchange1(redist_repeat_2, input, result_2);
+          xt_request_wait(&request);
+          xt_request_wait(&request_2);
+        }
 
-      for (int i = 1; i <= 8; i<<=1)
-        for (int j = 0; j < 2*size*size; ++j)
-          if (result_2[i][j] != index_vector_b[j] + i * 4*size*size)
-            PUT_ERR("ERROR: in second xt_redist_s_exchange1\n");
+        // check results
+
+        for (int i = 0; i < 4; ++i)
+          for (int j = 0; j < 2*size*size; ++j)
+            if (result[i][j] != index_vector_b[j] + i * 4*size*size)
+              PUT_ERR("ERROR: in first xt_redist_s_exchange1\n");
+
+        for (int i = 1; i <= 8; i<<=1)
+          for (int j = 0; j < 2*size*size; ++j)
+            if (result_2[i][j] != index_vector_b[j] + i * 4*size*size)
+              PUT_ERR("ERROR: in second xt_redist_s_exchange1\n");
+      }
 
       // clean up
 

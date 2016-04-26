@@ -63,6 +63,7 @@
 #include "xt/xt_redist_collection.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
+#include "xt/xt_request.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
 
@@ -78,8 +79,16 @@ static void
 redist_collection_s_exchange(Xt_redist redist, int num_src_arrays,
                              const void **src_data, void **dst_data);
 
+static Xt_request
+redist_collection_a_exchange(Xt_redist redist, int num_src_arrays,
+                             const void **src_data, void **dst_data);
+
 static void
 redist_collection_s_exchange1(Xt_redist redist,
+                              const void *src_data, void *dst_data);
+
+static Xt_request
+redist_collection_a_exchange1(Xt_redist redist,
                               const void *src_data, void *dst_data);
 
 static MPI_Datatype
@@ -100,7 +109,9 @@ static const struct xt_redist_vtable redist_collection_vtable = {
   .copy                  = redist_collection_copy,
   .delete                = redist_collection_delete,
   .s_exchange            = redist_collection_s_exchange,
+  .a_exchange            = redist_collection_a_exchange,
   .s_exchange1           = redist_collection_s_exchange1,
+  .a_exchange1           = redist_collection_a_exchange1,
   .get_send_MPI_Datatype = redist_collection_get_send_MPI_Datatype,
   .get_recv_MPI_Datatype = redist_collection_get_recv_MPI_Datatype,
   .get_msg_ranks         = redist_collection_get_msg_ranks,
@@ -426,6 +437,37 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
     xt_exchanger_delete(exchanger);
 }
 
+static Xt_request
+redist_collection_a_exchange(Xt_redist redist, int num_arrays,
+                             const void **src_data, void **dst_data) {
+
+  Xt_redist_collection redist_coll = xrc(redist);
+
+  if (num_arrays != (int)redist_coll->num_redists)
+    Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
+             "redist_collection_a_exchange", __FILE__, __LINE__);
+
+
+  Xt_exchanger exchanger = get_exchanger(src_data, dst_data,
+                                         redist_coll->send_msgs,
+                                         redist_coll->nsrc,
+                                         redist_coll->recv_msgs,
+                                         redist_coll->ndst,
+                                         redist_coll->num_redists,
+                                         &(redist_coll->cache),
+                                         redist_coll->cache_size,
+                                         redist_coll->comm,
+                                         redist_coll->tag_offset);
+
+  Xt_request request =
+    xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0]);
+
+  if (redist_coll->cache_size == 0)
+    xt_exchanger_delete(exchanger);
+
+  return request;
+}
+
 static void
 copy_msgs(size_t num_redists, unsigned nmsgs,
           const struct redist_collection_msg *restrict msgs_orig,
@@ -548,6 +590,19 @@ redist_collection_s_exchange1(Xt_redist redist,
     redist_collection_s_exchange(redist, 1, &src_data, &dst_data);
   else
     Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
+             " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
+}
+
+static Xt_request
+redist_collection_a_exchange1(Xt_redist redist,
+                              const void *src_data, void *dst_data)
+{
+
+  Xt_redist_collection redist_coll = xrc(redist);
+  if (redist_coll->num_redists == 1)
+    return redist_collection_a_exchange(redist, 1, &src_data, &dst_data);
+  else
+    Xt_abort(redist_coll->comm, "ERROR: a_exchange1 is not implemented for"
              " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
 }
 

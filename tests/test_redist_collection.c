@@ -96,25 +96,45 @@ int main(void) {
     // test exchange
 
     static const double src_data[nvalues] = {1,2,3,4,5};
-    double dst_data[nselect] = {-1,-1,-1};
-
-    xt_redist_s_exchange1(redist_coll, src_data, dst_data);
-
+    double dst_data[nselect];
     static const double ref_dst_data[nselect] = {1,3,5};
 
-    for (size_t i = 0; i < nselect; ++i)
-      if (ref_dst_data[i] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+    for (int j = 0; j < 2; ++j) {
+
+      for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
+
+      if (j == 0) {
+        xt_redist_s_exchange1(redist_coll, src_data, dst_data);
+      } else {
+        Xt_request request =
+          xt_redist_a_exchange1(redist_coll, src_data, dst_data);
+        xt_request_wait(&request);
+      }
+
+      for (size_t i = 0; i < nselect; ++i)
+        if (ref_dst_data[i] != dst_data[i])
+          PUT_ERR("error in xt_redist_s_exchange\n");
+    }
 
     Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
-    for (size_t i = 0; i < nselect; ++i)
-      dst_data[i] = -1;
 
-    xt_redist_s_exchange1(redist_coll_copy, src_data, dst_data);
+    for (int j = 0; j < 2; ++j) {
 
-    for (size_t i = 0; i < nselect; ++i)
-      if (ref_dst_data[i] != dst_data[i])
-        PUT_ERR("error in xt_redist_s_exchange\n");
+      for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
+
+      if (j == 0) {
+        xt_redist_s_exchange1(redist_coll_copy, src_data, dst_data);
+      } else {
+        Xt_request request =
+          xt_redist_a_exchange1(redist_coll_copy, src_data, dst_data);
+        xt_request_wait(&request);
+      }
+
+      for (size_t i = 0; i < nselect; ++i)
+        if (ref_dst_data[i] != dst_data[i])
+          PUT_ERR("error in xt_redist_s_exchange\n");
+    }
+
     // clean up
 
     xt_redist_delete(redist_coll_copy);
@@ -212,6 +232,7 @@ test_repeated_redist(int cache_size)
   xt_redist_delete(redist);
 
   // test exchange
+  for (int j = 0; j < 2; ++j)
   {
     static const double src_data[3][5]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
@@ -220,7 +241,13 @@ test_repeated_redist(int cache_size)
     const void *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
     void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
+    if (j == 0) {
+      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
+    } else {
+      Xt_request request =
+        xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p);
+      xt_request_wait(&request);
+    }
 
     static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -231,6 +258,7 @@ test_repeated_redist(int cache_size)
   }
 
   // test exchange with changed displacements
+  for (int j = 0; j < 2; ++j)
   {
     static const double src_data[3][5]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
@@ -239,7 +267,13 @@ test_repeated_redist(int cache_size)
     const void *src_data_p[3] = {src_data[1],src_data[0],src_data[2]};
     void *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
+    if (j == 0) {
+      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
+    } else {
+      Xt_request request =
+        xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p);
+      xt_request_wait(&request);
+    }
 
     static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -250,6 +284,7 @@ test_repeated_redist(int cache_size)
   }
 
   // test exchange with original displacements
+  for (int j = 0; j < 2; ++j)
   {
     static const double src_data[3][5]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
@@ -258,7 +293,13 @@ test_repeated_redist(int cache_size)
     const void *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
     void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
+    if (j == 0) {
+      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
+    } else {
+      Xt_request request =
+        xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p);
+      xt_request_wait(&request);
+    }
 
     static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -277,7 +318,7 @@ enum { num_redists = 3 };
 enum { nvalues = 5, nselect = nvalues/2+(nvalues&1) };
 
 static void
-run_displacement_check(Xt_redist redist_coll)
+run_displacement_check(Xt_redist redist_coll, int sync)
 {
   static const double src_data[num_redists][nvalues]
     = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
@@ -302,7 +343,13 @@ run_displacement_check(Xt_redist redist_coll)
     src_data_p[2] = src_data_+k;
     dst_data_p[2] = dst_data_+k;
 
-    xt_redist_s_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
+    if (sync) {
+      xt_redist_s_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
+    } else {
+      Xt_request request =
+        xt_redist_a_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
+      xt_request_wait(&request);
+    }
 
     static const double ref_dst_data[num_redists][nselect]
       = {{1,3,5},{6,8,10},{11,13,15}};
@@ -344,9 +391,11 @@ test_displacement_variations(void)
 
 
   // test exchange
-  run_displacement_check(redist_coll);
+  run_displacement_check(redist_coll, 0);
+  run_displacement_check(redist_coll, 1);
   Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
-  run_displacement_check(redist_coll_copy);
+  run_displacement_check(redist_coll_copy, 0);
+  run_displacement_check(redist_coll_copy, 1);
 
   // clean up
   xt_redist_delete(redist_coll_copy);

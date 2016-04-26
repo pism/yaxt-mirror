@@ -233,7 +233,7 @@ int main(void) {
       xt_xmap_delete(xmaps[0]);
       xt_xmap_delete(xmaps[1]);
 
-      Xt_int results_1[5] = {-1,-1,-1,-1,-1}, results_2[5] = {-1,-1,-1,-1,-1};
+      Xt_int results_1[5], results_2[5];
 
       MPI_Aint src_displacements[2] = {0, 0};
       MPI_Aint dst_displacements[2]
@@ -252,15 +252,29 @@ int main(void) {
       xt_redist_delete(redists[0]);
       xt_redist_delete(redists[1]);
 
-      xt_redist_s_exchange1(redist, (void*)src_indices_, (void*)results_1);
+      for (int j = 0; j < 2; ++j) {
 
-      // check results
+        for (int i = 0; i < 5; ++i) {
+          results_1[i] = -1;
+          results_2[i] = -1;
+        }
 
-      for (int i = 0; i < 5; ++i) {
-        if (results_1[i] != dst_indices_[0][i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
-        if (results_2[i] != dst_indices_[1][i])
-          PUT_ERR("error on xt_redist_s_exchange\n");
+        if (j == 0) {
+          xt_redist_s_exchange1(redist, (void*)src_indices_, (void*)results_1);
+        } else {
+          Xt_request request =
+            xt_redist_a_exchange1(redist, (void*)src_indices_, (void*)results_1);
+          xt_request_wait(&request);
+        }
+
+        // check results
+
+        for (int i = 0; i < 5; ++i) {
+          if (results_1[i] != dst_indices_[0][i])
+            PUT_ERR("error on xt_redist_s_exchange\n");
+          if (results_2[i] != dst_indices_[1][i])
+            PUT_ERR("error on xt_redist_s_exchange\n");
+        }
       }
 
       // clean up
@@ -282,27 +296,35 @@ test_transpose_gather(Xt_redist redist,
                       const Xt_int *index_vector_a,
                       const Xt_int *index_vector_b)
 {
-  memset(dst, 0, size_b + size_a + 2 * size_all);
-  xt_redist_s_exchange1(redist, src, dst);
-  // check results
-  Xt_int *results_1 = dst, *results_2 = dst + size_b,
-    *results_3 = dst + size_b + size_a,
-    *results_4 = dst + size_a + size_b + size_all;
-  for (size_t i = 0; i < size_b; ++i)
-    if (results_1[i] != index_vector_b[i])
-      PUT_ERR("error on xt_redist_s_exchange\n");
+  for (int j = 0; j < 2; ++j) {
 
-  for (size_t i = 0; i < size_a; ++i)
-    if (results_2[i] != index_vector_a[i])
-      PUT_ERR("error on xt_redist_s_exchange\n");
+    memset(dst, 0, size_b + size_a + 2 * size_all);
+    if (j == 0) {
+      xt_redist_s_exchange1(redist, src, dst);
+    } else {
+      Xt_request request = xt_redist_a_exchange1(redist, src, dst);
+      xt_request_wait(&request);
+    }
+    // check results
+    Xt_int *results_1 = dst, *results_2 = dst + size_b,
+      *results_3 = dst + size_b + size_a,
+      *results_4 = dst + size_a + size_b + size_all;
+    for (size_t i = 0; i < size_b; ++i)
+      if (results_1[i] != index_vector_b[i])
+        PUT_ERR("error on xt_redist_s_exchange\n");
 
-  for (size_t i = 0; i < size_all; ++i)
-    if (results_3[i] != (int)i)
-      PUT_ERR("error on xt_redist_s_exchange\n");
+    for (size_t i = 0; i < size_a; ++i)
+      if (results_2[i] != index_vector_a[i])
+        PUT_ERR("error on xt_redist_s_exchange\n");
 
-  for (size_t i = 0; i < size_all; ++i)
-    if (results_4[i] != (int)i)
-      PUT_ERR("error on xt_redist_s_exchange\n");
+    for (size_t i = 0; i < size_all; ++i)
+      if (results_3[i] != (int)i)
+        PUT_ERR("error on xt_redist_s_exchange\n");
+
+    for (size_t i = 0; i < size_all; ++i)
+      if (results_4[i] != (int)i)
+        PUT_ERR("error on xt_redist_s_exchange\n");
+  }
 }
 
 /*
