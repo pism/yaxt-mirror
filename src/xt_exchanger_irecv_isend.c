@@ -49,6 +49,7 @@
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt/xt_request_msgs.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend.h"
@@ -81,6 +82,35 @@ xt_exchanger_irecv_isend_s_exchange(const void *src_data, void *dst_data,
   free(requests);
 }
 
+static Xt_request
+xt_exchanger_irecv_isend_a_exchange(const void *src_data, void *dst_data,
+                                    int nsend, int nrecv,
+                                    const struct Xt_redist_msg * send_msgs,
+                                    const struct Xt_redist_msg * recv_msgs,
+                                    int tag_offset, MPI_Comm comm) {
+
+  MPI_Request *tmp_requests
+    = xmalloc((size_t)(nrecv + nsend) * sizeof (*tmp_requests));
+
+  for (int i = 0; i < nrecv; ++i)
+    xt_mpi_call(MPI_Irecv(dst_data, 1, recv_msgs[i].datatype,
+                          recv_msgs[i].rank,
+                          tag_offset + xt_mpi_tag_exchange_msg, comm,
+                          tmp_requests+i), comm);
+
+  for (int i = 0; i < nsend; ++i)
+    xt_mpi_call(MPI_Isend((void *)src_data, 1, send_msgs[i].datatype,
+                          send_msgs[i].rank,
+                          tag_offset + xt_mpi_tag_exchange_msg, comm,
+                          tmp_requests+nrecv+i), comm);
+
+  Xt_request requests = xt_request_msgs_new(nrecv + nsend, tmp_requests, comm);
+
+  free(tmp_requests);
+
+  return requests;
+}
+
 Xt_exchanger
 xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,
@@ -89,7 +119,8 @@ xt_exchanger_irecv_isend_new(int nsend, int nrecv,
 
   return xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
                                       comm, tag_offset,
-                                      xt_exchanger_irecv_isend_s_exchange);
+                                      xt_exchanger_irecv_isend_s_exchange,
+                                      xt_exchanger_irecv_isend_a_exchange);
 }
 
 

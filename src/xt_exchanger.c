@@ -78,6 +78,12 @@ void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void *src_data, void 
   exchanger->vtable->s_exchange(exchanger, src_data, dst_data);
 }
 
+Xt_request xt_exchanger_a_exchange(Xt_exchanger exchanger,
+                                   const void *src_data, void *dst_data) {
+
+  return exchanger->vtable->a_exchange(exchanger, src_data, dst_data);
+}
+
 static int compare_exchange_messages (const void * msg_a, const void * msg_b)
 {
   int rank_a = *(const int *)msg_a;

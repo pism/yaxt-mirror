@@ -217,13 +217,25 @@ test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
                                            comm, 0);
 
     // test
+    int test_async = ((exchanger_new != xt_exchanger_irecv_send_new) &&
+                      (exchanger_new != xt_exchanger_irecv_isend_packed_new));
+    for (int j = 0; j < 1 + test_async; ++j) {
 
-    int src_data[1] = { my_rank == i ? 4711 : -1 };
-    int dst_data[1] = { my_rank == i ? 4711 : -1 };
+      int src_data[1] = { my_rank == i ? 4711 : -1 };
+      int dst_data[1] = { my_rank == i ? 4711 : -1 };
 
-    xt_exchanger_s_exchange(exchanger, (void*)(src_data), (void*)(dst_data));
+      if (j == 0) {
+        xt_exchanger_s_exchange(exchanger, (void*)(src_data),
+                                (void*)(dst_data));
+      } else {
+        Xt_request request =
+          xt_exchanger_a_exchange(exchanger, (void*)(src_data),
+                                  (void*)(dst_data));
+        xt_request_wait(&request);
+      }
 
-    if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
+      if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
+    }
 
     // cleanup
     free(send_msgs);

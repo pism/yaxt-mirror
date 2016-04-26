@@ -65,6 +65,9 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger);
 static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
                                                 const void * src_data,
                                                 void * dst_data);
+static Xt_request xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
+                                                      const void * src_data,
+                                                      void * dst_data);
 static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
@@ -80,6 +83,7 @@ static const struct xt_exchanger_vtable exchanger_simple_base_vtable = {
   .copy = xt_exchanger_simple_base_copy,
   .delete = xt_exchanger_simple_base_delete,
   .s_exchange = xt_exchanger_simple_base_s_exchange,
+  .a_exchange = xt_exchanger_simple_base_a_exchange,
   .get_msg_ranks = xt_exchanger_simple_base_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_simple_base_get_MPI_Datatype,
 };
@@ -93,7 +97,8 @@ struct Xt_exchanger_simple_base_ {
   int nsend, nrecv;
   int tag_offset;
   MPI_Comm comm;
-  xt_simple_exchange_func func;
+  xt_simple_s_exchange_func s_func;
+  xt_simple_a_exchange_func a_func;
   struct Xt_redist_msg msgs[];
 };
 
@@ -113,11 +118,12 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,
                              const struct Xt_redist_msg *recv_msgs,
                              MPI_Comm comm, int tag_offset,
-                             xt_simple_exchange_func func) {
+                             xt_simple_s_exchange_func s_func,
+                             xt_simple_a_exchange_func a_func) {
 
-  if (func == NULL)
-    Xt_abort(comm, "ERROR(xt_exchanger_simple_base_new): invalid exchange "
-             "function pointer", __FILE__, __LINE__);
+  if (s_func == NULL)
+    Xt_abort(comm, "ERROR(xt_exchanger_simple_base_new): invalid synchronous "
+             "exchange function pointer", __FILE__, __LINE__);
 
   assert((nsend >= 0) & (nrecv >= 0));
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
@@ -134,7 +140,8 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
                               exchanger->msgs + nsend,
                               sizeof (exchanger->msgs[0]),
                               comm);
-  exchanger->func = func;
+  exchanger->s_func = s_func;
+  exchanger->a_func = a_func;
 
   xt_exchanger_internal_optimize((size_t)nsend, exchanger->msgs,
                                  sizeof(exchanger->msgs[0]),
@@ -160,7 +167,8 @@ xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
     = xt_exchanger_simple_base_alloc(nmsg);
   exchanger_copy->nsend = nsend;
   exchanger_copy->nrecv = nrecv;
-  exchanger_copy->func = exchanger_sb->func;
+  exchanger_copy->s_func = exchanger_sb->s_func;
+  exchanger_copy->a_func = exchanger_sb->a_func;
   struct Xt_redist_msg *restrict new_msgs = exchanger_copy->msgs,
     *restrict orig_msgs = exchanger_sb->msgs;
   xt_redist_msgs_strided_copy(nmsg, orig_msgs, sizeof (*orig_msgs),
@@ -192,10 +200,29 @@ static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
     (Xt_exchanger_simple_base)exchanger;
 
   int nsend = exchanger_sb->nsend;
-  exchanger_sb->func(src_data, dst_data, nsend,
-                     exchanger_sb->nrecv, exchanger_sb->msgs,
-                     exchanger_sb->msgs + (size_t)nsend,
-                     exchanger_sb->tag_offset, exchanger_sb->comm);
+  exchanger_sb->s_func(src_data, dst_data, nsend,
+                       exchanger_sb->nrecv, exchanger_sb->msgs,
+                       exchanger_sb->msgs + (size_t)nsend,
+                       exchanger_sb->tag_offset, exchanger_sb->comm);
+}
+
+static Xt_request xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
+                                                      const void * src_data,
+                                                      void * dst_data) {
+
+  Xt_exchanger_simple_base exchanger_sb =
+    (Xt_exchanger_simple_base)exchanger;
+
+  if (exchanger_sb->a_func == NULL)
+    Xt_abort(exchanger_sb->comm, "ERROR(xt_exchanger_simple_base_a_exchange): "
+             "asynchronous exchange function not defined for current exchanger",
+             __FILE__, __LINE__);
+
+  int nsend = exchanger_sb->nsend;
+  return exchanger_sb->a_func(src_data, dst_data, nsend,
+                              exchanger_sb->nrecv, exchanger_sb->msgs,
+                              exchanger_sb->msgs + (size_t)nsend,
+                              exchanger_sb->tag_offset, exchanger_sb->comm);
 }
 
 static MPI_Datatype

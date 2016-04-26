@@ -54,18 +54,23 @@
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
 
-typedef void (*xt_simple_exchange_func)(const void *src_data, void *dst_data,
-                                        int nsend, int nrecv,
-                                        const struct Xt_redist_msg *send_msgs,
-                                        const struct Xt_redist_msg *recv_msgs,
-                                        int tag_offset, MPI_Comm comm);
+typedef void (*xt_simple_s_exchange_func)(
+  const void *src_data, void *dst_data, int nsend, int nrecv,
+  const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
+  int tag_offset, MPI_Comm comm);
+
+typedef Xt_request (*xt_simple_a_exchange_func)(
+  const void *src_data, void *dst_data, int nsend, int nrecv,
+  const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
+  int tag_offset, MPI_Comm comm);
 
 Xt_exchanger
 xt_exchanger_simple_base_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,
                              const struct Xt_redist_msg *recv_msgs,
                              MPI_Comm comm, int tag_offset,
-                             xt_simple_exchange_func func);
+                             xt_simple_s_exchange_func s_func,
+                             xt_simple_a_exchange_func a_func);
 
 #endif // XT_EXCHANGER_SIMPLE_BASE_H
 

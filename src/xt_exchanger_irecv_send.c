@@ -89,7 +89,8 @@ xt_exchanger_irecv_send_new(int nsend, int nrecv,
 
   return xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
                                       comm, tag_offset,
-                                      xt_exchanger_irecv_send_s_exchange);
+                                      xt_exchanger_irecv_send_s_exchange,
+                                      NULL);
 }
 
 /*

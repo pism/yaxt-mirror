@@ -53,6 +53,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt/xt_request_msgs.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
@@ -65,6 +66,8 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger);
 static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                                     const void * src_data,
                                                     void * dst_data);
+static Xt_request xt_exchanger_mix_isend_irecv_a_exchange(
+  Xt_exchanger exchanger, const void * src_data, void * dst_data);
 static int
 xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
                                            enum xt_msg_direction direction,
@@ -79,6 +82,7 @@ static const struct xt_exchanger_vtable exchanger_mix_isend_irecv_vtable = {
   .copy = xt_exchanger_mix_isend_irecv_copy,
   .delete = xt_exchanger_mix_isend_irecv_delete,
   .s_exchange = xt_exchanger_mix_isend_irecv_s_exchange,
+  .a_exchange = xt_exchanger_mix_isend_irecv_a_exchange,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
 };
@@ -210,6 +214,37 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
     xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE), comm);
     free(requests);
   }
+}
+
+static Xt_request xt_exchanger_mix_isend_irecv_a_exchange(
+  Xt_exchanger exchanger, const void * src_data, void * dst_data) {
+
+  Xt_exchanger_mix_isend_irecv exchanger_msr =
+    (Xt_exchanger_mix_isend_irecv)exchanger;
+
+  Xt_request requests = XT_REQUEST_NULL;
+
+  if (exchanger_msr->n > 0) {
+    size_t nmsg = (size_t)exchanger_msr->n;
+    MPI_Comm comm = exchanger_msr->comm;
+    struct mix_msg *restrict msgs = exchanger_msr->msgs;
+    int tag_offset = exchanger_msr->tag_offset;
+    MPI_Request *tmp_requests = xmalloc(nmsg * sizeof (*tmp_requests));
+    for (size_t i = 0; i < nmsg; ++i) {
+      typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
+                         int tag, MPI_Comm comm, MPI_Request *request);
+      ifp op = msgs[i].type == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
+      void *data = msgs[i].type == SEND ? (void *)src_data : dst_data;
+      xt_mpi_call(op(data, 1, msgs[i].data.datatype,
+                     msgs[i].data.rank,
+                     tag_offset + xt_mpi_tag_exchange_msg,
+                     comm, tmp_requests+i), comm);
+    }
+    requests = xt_request_msgs_new((int)nmsg, tmp_requests, comm);
+    free(tmp_requests);
+  }
+
+  return requests;
 }
 
 static int
