@@ -49,6 +49,7 @@
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt/xt_request_msgs_packed.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend_packed.h"
@@ -125,6 +126,57 @@ xt_exchanger_irecv_isend_packed_s_exchange(
   }
 }
 
+static Xt_request
+xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
+                                           int nsend, int nrecv,
+                                           const struct Xt_redist_msg * send_msgs,
+                                           const struct Xt_redist_msg * recv_msgs,
+                                           int tag_offset, MPI_Comm comm) {
+
+  MPI_Request * tmp_requests =
+    xmalloc((size_t)(nrecv + nsend) * sizeof (*tmp_requests));
+  void ** buffers =
+    xmalloc((size_t)(nrecv + nsend) * sizeof (*buffers));
+
+  int buffer_size;
+  for (int i = 0; i < nrecv; ++i) {
+    xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, &buffer_size),
+                comm);
+    buffers[i] = xmalloc((size_t)buffer_size);
+    xt_mpi_call(MPI_Irecv(buffers[i], buffer_size, MPI_PACKED,
+                          recv_msgs[i].rank,
+                          tag_offset + xt_mpi_tag_exchange_msg, comm,
+                          tmp_requests+i), comm);
+  }
+
+  for (int i = 0; i < nsend; ++i) {
+    int position = 0;
+    xt_mpi_call(MPI_Pack_size(1, send_msgs[i].datatype, comm, &buffer_size),
+                comm);
+    buffers[nrecv + i] = xmalloc((size_t)buffer_size);
+    xt_mpi_call(MPI_Pack((void*)src_data, 1, send_msgs[i].datatype,
+                         buffers[nrecv + i], buffer_size, &position,
+                         comm), comm);
+    xt_mpi_call(MPI_Isend(buffers[nrecv + i], buffer_size, MPI_PACKED,
+                          send_msgs[i].rank,
+                          tag_offset + xt_mpi_tag_exchange_msg, comm,
+                          tmp_requests+nrecv+i), comm);
+  }
+
+  MPI_Datatype * datatypes = xmalloc((size_t)nrecv * sizeof (*datatypes));
+  for (int i = 0; i < nrecv; ++i) datatypes[i] = recv_msgs[i].datatype;
+
+  Xt_request requests =
+    xt_request_msgs_packed_new(nrecv + nsend, tmp_requests, comm, nrecv, nsend,
+                               datatypes, buffers, buffers + nrecv, dst_data);
+
+  free(datatypes);
+  free(buffers);
+  free(tmp_requests);
+
+  return requests;
+}
+
 Xt_exchanger
 xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
                                     const struct Xt_redist_msg *send_msgs,
@@ -134,7 +186,7 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
   return xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
                                       comm, tag_offset,
                                       xt_exchanger_irecv_isend_packed_s_exchange,
-                                      NULL);
+                                      xt_exchanger_irecv_isend_packed_a_exchange);
 }
 
 /*
