@@ -52,17 +52,22 @@ PROGRAM test_redist_p2p_parallel
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_get_mpi_comm, &
        xt_redist_s_exchange, xt_redist_delete, &
-       xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new
+       xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
+       xt_request, xt_redist_a_exchange
   USE test_idxlist_utils, ONLY: test_err_count
   USE test_redist_common, ONLY: communicators_are_congruent, &
-       check_redist
+       check_redist, check_wait_request
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && __PGIC__ == 15
-  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
-  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   IMPLICIT NONE
 
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+  CHARACTER(len=*), PARAMETER :: err_msg(2) = &
+       (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
   INTEGER :: comm_rank, comm_size, ierror
 
   CALL init_mpi
@@ -90,7 +95,6 @@ PROGRAM test_redist_p2p_parallel
        __LINE__)
   CALL xt_finalize
   CALL finish_mpi
-
 
 CONTAINS
   SUBROUTINE simple_test
@@ -129,9 +133,6 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    ! test exchange
-    dst_data(:) = -1.0d0
-
     DO i = 1, src_num_indices
       src_data(i) = DBLE(comm_rank * data_size + i - 1)
     END DO
@@ -153,7 +154,8 @@ CONTAINS
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist
-    INTEGER :: i, src_num_indices, dst_num_indices
+    INTEGER :: i, src_num_indices, dst_num_indices, iexch
+    TYPE(xt_request) :: request
 
     ALLOCATE(src_index_list(comm_size), dst_index_list(comm_size), &
          src_data(comm_size), dst_data(comm_size), ref_dst_data(comm_size))
@@ -193,17 +195,21 @@ CONTAINS
     ELSE
       src_data(:) = -2.0d0
     END IF
-    dst_data(:) = -1.0d0
-
-    CALL xt_redist_s_exchange(redist, src_data, dst_data)
 
     DO i = 1, comm_size
       ref_dst_data(i) = DBLE(i-1)
     END DO
-    IF (cmp_arrays(dst_data, ref_dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst_data(:) = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src_data, dst_data)
+      ELSE
+        request = xt_redist_a_exchange(redist, src_data, dst_data)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst_data, ref_dst_data)) &
+        CALL test_abort(err_msg(iexch), filename, __LINE__)
+    ENDDO
 
     ! clean up
     CALL xt_redist_delete(redist)
@@ -229,6 +235,8 @@ CONTAINS
     TYPE(Xt_idxlist) :: idxlist_a, idxlist_b
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist, block_redist, block_redist2
+    INTEGER :: iexch
+    TYPE(xt_request) :: request
 
     IF (2 * comm_size > HUGE(1_xt_int_kind)) &
          CALL test_abort('too large number of tasks', &

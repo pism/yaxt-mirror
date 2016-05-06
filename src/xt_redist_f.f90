@@ -57,6 +57,7 @@ MODULE xt_redist_base
   USE xt_xmap_abstract, ONLY: xt_xmap
   USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_loc, c_associated
   USE xt_mpi, ONLY: mpi_address_kind
+  USE xt_requests, ONLY: xt_request, xt_request_init, xt_is_null
   IMPLICIT NONE
   PRIVATE
   ! note: this type must not be extended to contain any other
@@ -114,6 +115,15 @@ MODULE xt_redist_base
     MODULE PROCEDURE xt_redist_s_exchange_i8_a1d
   END INTERFACE xt_redist_s_exchange
 
+  INTERFACE xt_redist_a_exchange
+    MODULE PROCEDURE xt_redist_a_exchange1
+    MODULE PROCEDURE xt_redist_a_exchange_a1d
+    MODULE PROCEDURE xt_redist_a_exchange_i2_a1d
+    MODULE PROCEDURE xt_redist_a_exchange_i4_a1d
+    MODULE PROCEDURE xt_redist_a_exchange_i8_a1d
+  END INTERFACE xt_redist_a_exchange
+
+
   INTERFACE
     SUBROUTINE xt_redist_s_exchange_c(redist, num_ptr, src_data_cptr, &
          dst_data_cptr) BIND(C, name='xt_redist_s_exchange')
@@ -122,6 +132,15 @@ MODULE xt_redist_base
       INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
       TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     END SUBROUTINE xt_redist_s_exchange_c
+
+    FUNCTION xt_redist_a_exchange_c(redist, num_ptr, src_data_cptr, &
+         dst_data_cptr) BIND(C, name='xt_redist_a_exchange') RESULT(request)
+      IMPORT:: c_ptr, c_int
+      TYPE(c_ptr), VALUE, INTENT(in) :: redist
+      INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
+      TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+      TYPE(c_ptr) :: request
+    END FUNCTION xt_redist_a_exchange_c
 
     FUNCTION xt_redist_get_mpi_comm(redist) &
          BIND(c, name='xt_redist_get_mpi_comm_c2f') RESULT(comm)
@@ -240,6 +259,7 @@ MODULE xt_redist_base
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
        xt_redist_collection_static_new, xt_redist_collection_new, &
        xt_redist_repeat_new, xt_redist_get_mpi_comm, xt_redist_p2p_ext_new, &
+       xt_redist_a_exchange1, xt_redist_a_exchange, &
        xt_redist_single_array_base_new
 CONTAINS
 
@@ -299,6 +319,25 @@ CONTAINS
          dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange1
 
+  FUNCTION xt_redist_a_exchange1(redist, src_data_cptr, dst_data_cptr) RESULT(request)
+    TYPE(xt_redist), INTENT(in) :: redist
+    TYPE(c_ptr) :: src_data_cptr, dst_data_cptr
+    INTERFACE
+      FUNCTION xt_redist_a_exchange1_c(redist, src_data_cptr, dst_data_cptr) &
+           BIND(C, name='xt_redist_a_exchange1') RESULT(request_c)
+        IMPORT:: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: redist
+        TYPE(c_ptr), VALUE :: src_data_cptr, dst_data_cptr
+        TYPE(c_ptr) :: request_c
+      END FUNCTION xt_redist_a_exchange1_c
+    END INTERFACE
+    TYPE(c_ptr) :: cptr
+    TYPE(xt_request) :: request
+    cptr = xt_redist_a_exchange1_c(xt_redist_f2c(redist), src_data_cptr, &
+         & dst_data_cptr)
+    CALL xt_request_init(request, cptr)
+  END FUNCTION xt_redist_a_exchange1
+
   SUBROUTINE xt_redist_s_exchange_a1d(redist, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(:), dst_data_cptr(:)
@@ -313,6 +352,22 @@ CONTAINS
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_a1d
+
+  FUNCTION xt_redist_a_exchange_a1d(redist, src_data_cptr, dst_data_cptr) RESULT(request)
+    TYPE(xt_redist), INTENT(in) :: redist
+    TYPE(c_ptr) :: src_data_cptr(:), dst_data_cptr(:)
+    INTEGER :: n
+    TYPE(c_ptr) :: cptr
+    TYPE(xt_request) :: request
+    n = SIZE(src_data_cptr)
+    IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    cptr = xt_redist_a_exchange_c(xt_redist_f2c(redist), INT(n, c_int), &
+         src_data_cptr, dst_data_cptr)
+    CALL xt_request_init(request, cptr)
+  END FUNCTION xt_redist_a_exchange_a1d
 
   SUBROUTINE xt_redist_s_exchange_i2_a1d(redist, num_ptr, &
        src_data_cptr, dst_data_cptr)
@@ -329,6 +384,22 @@ CONTAINS
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i2_a1d
 
+  FUNCTION xt_redist_a_exchange_i2_a1d(redist, num_ptr, &
+       src_data_cptr, dst_data_cptr) RESULT(request)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i2), INTENT(in) :: num_ptr
+    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    TYPE(c_ptr) :: cptr
+    TYPE(xt_request) :: request
+    IF (num_ptr < 0_i2) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    cptr =  xt_redist_a_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+         src_data_cptr, dst_data_cptr)
+    CALL xt_request_init(request, cptr)
+  END FUNCTION xt_redist_a_exchange_i2_a1d
+
   SUBROUTINE xt_redist_s_exchange_i4_a1d(redist, num_ptr, &
        src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
@@ -344,6 +415,22 @@ CONTAINS
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i4_a1d
 
+  FUNCTION xt_redist_a_exchange_i4_a1d(redist, num_ptr, &
+       src_data_cptr, dst_data_cptr) RESULT(request)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i4), INTENT(in) :: num_ptr
+    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    TYPE(c_ptr) :: cptr
+    TYPE(xt_request) :: request
+    IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    cptr = xt_redist_a_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+         src_data_cptr, dst_data_cptr)
+    CALL xt_request_init(request, cptr)
+  END FUNCTION xt_redist_a_exchange_i4_a1d
+
   SUBROUTINE xt_redist_s_exchange_i8_a1d(redist, num_ptr, &
        src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
@@ -358,6 +445,22 @@ CONTAINS
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i8_a1d
+
+  FUNCTION xt_redist_a_exchange_i8_a1d(redist, num_ptr, &
+       src_data_cptr, dst_data_cptr) RESULT(request)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i8), INTENT(in) :: num_ptr
+    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    TYPE(c_ptr) :: cptr
+    TYPE(xt_request) :: request
+    IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of pointers", &
+         __FILE__, &
+         __LINE__)
+    cptr = xt_redist_a_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+         src_data_cptr, dst_data_cptr)
+    CALL xt_request_init(request, cptr)
+  END FUNCTION xt_redist_a_exchange_i8_a1d
 
   FUNCTION xt_redist_p2p_new(xmap, datatype) RESULT(res)
     IMPLICIT NONE

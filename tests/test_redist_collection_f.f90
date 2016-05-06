@@ -54,17 +54,23 @@ PROGRAM test_redist_collection
        xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_delete, xt_redist_copy, &
-       xt_redist_s_exchange, &
+       xt_redist_s_exchange, xt_redist_a_exchange, &
        xt_slice_c_loc, xt_idxempty_new, xt_idxlist_delete, &
-       xt_idxlist
+       xt_idxlist, xt_request
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
-  USE xt_redist_base, ONLY: xt_redist_s_exchange
+  USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
-  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
+  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
+       check_wait_request
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
   IMPLICIT NONE
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+  CHARACTER(len=*), PARAMETER :: err_msg(2) = &
+       (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
+
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -232,17 +238,23 @@ CONTAINS
          = RESHAPE((/ ((DBLE(i + j), i = 1,5,2), j = 0,10,5) /), (/ 3, 3 /))
     DOUBLE PRECISION, TARGET :: dst_data(3, 3)
     TYPE(c_ptr) :: src_data_p(3), dst_data_p(3)
-    dst_data = -1.0d0
-    DO i = 1, 3
-      CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
-      CALL xt_slice_c_loc(dst_data(:, i), dst_data_p(i))
-    END DO
-    CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
-
-    IF (cmp_arrays(ref_dst_data, dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    INTEGER :: iexch
+    TYPE(xt_request) :: request
+    DO iexch = 1, 2
+      dst_data = -1.0d0
+      DO i = 1, 3
+        CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
+        CALL xt_slice_c_loc(dst_data(:, i), dst_data_p(i))
+      END DO
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
+      ELSE
+        request = xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(ref_dst_data, dst_data)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+    ENDDO
   END SUBROUTINE test_repeated_redist_ds1
 
   SUBROUTINE test_repeated_redist_ds2(redist_coll)
@@ -254,19 +266,26 @@ CONTAINS
          = RESHAPE((/ ((DBLE(i + j), i = 1,5,2), j = 0,10,5) /), (/ 3, 3 /))
     DOUBLE PRECISION, TARGET :: dst_data(3, 3)
     TYPE(c_ptr) :: src_data_p(3), dst_data_p(3)
-    dst_data = -1.0d0
-    CALL xt_slice_c_loc(src_data(:, 2), src_data_p(1))
-    CALL xt_slice_c_loc(src_data(:, 1), src_data_p(2))
-    CALL xt_slice_c_loc(src_data(:, 3), src_data_p(3))
-    CALL xt_slice_c_loc(dst_data(:, 2), dst_data_p(1))
-    CALL xt_slice_c_loc(dst_data(:, 1), dst_data_p(2))
-    CALL xt_slice_c_loc(dst_data(:, 3), dst_data_p(3))
-    CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
 
-    IF (cmp_arrays(ref_dst_data, dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    INTEGER :: iexch
+    TYPE(xt_request) :: request
+    DO iexch = 1, 2
+      dst_data = -1.0d0
+      CALL xt_slice_c_loc(src_data(:, 2), src_data_p(1))
+      CALL xt_slice_c_loc(src_data(:, 1), src_data_p(2))
+      CALL xt_slice_c_loc(src_data(:, 3), src_data_p(3))
+      CALL xt_slice_c_loc(dst_data(:, 2), dst_data_p(1))
+      CALL xt_slice_c_loc(dst_data(:, 1), dst_data_p(2))
+      CALL xt_slice_c_loc(dst_data(:, 3), dst_data_p(3))
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
+      ELSE
+        request = xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(ref_dst_data, dst_data)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+    ENDDO
   END SUBROUTINE test_repeated_redist_ds2
 
   SUBROUTINE test_repeated_redist(cache_size)

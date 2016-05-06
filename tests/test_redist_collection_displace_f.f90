@@ -52,12 +52,13 @@ MODULE redist_collection_displace
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        Xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
-       xt_slice_c_loc
+       xt_slice_c_loc, xt_request, xt_redist_a_exchange
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
-  USE xt_redist_base, ONLY: xt_redist_s_exchange
+  USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
-  USE test_redist_common, ONLY: build_odd_selection_xmap
+  USE test_redist_common, ONLY: build_odd_selection_xmap, &
+       check_wait_request
   USE iso_c_binding, ONLY: c_ptr
   IMPLICIT NONE
   PRIVATE
@@ -66,6 +67,10 @@ MODULE redist_collection_displace
   INTEGER, PARAMETER :: src_slice_len = 5
   INTEGER, PARAMETER :: dst_slice_len &
        = (src_slice_len + dst_step - 1)/dst_step
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+  CHARACTER(len=*), PARAMETER :: err_msg(2) = &
+       (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
   PUBLIC :: test_displacement_variations
 CONTAINS
   ! test with one redist used three times (with different input
@@ -115,6 +120,8 @@ CONTAINS
          &            i = 1_xi, src_slice_len, dst_step), &
          &           j = 0_xi, num_slice - 1_xi) /), &
          &       (/ INT(dst_slice_len), INT(num_slice) /))
+    TYPE(xt_request) :: request
+    INTEGER :: iexch
 
     dst_data = -1.0d0
 
@@ -127,21 +134,27 @@ CONTAINS
     DO k = 1, cache_size + cache_overrun
       src_data_(k:k+src_slice_len-1) = src_data(:,num_slice)
       dst_data_(k:k+dst_slice_len-1) = -1.0d0
-      dst_data = -1.0d0
+
 
       CALL xt_slice_c_loc(src_data_(k:k+src_slice_len-1), src_data_p(3))
       CALL xt_slice_c_loc(dst_data_(k:k+dst_slice_len-1), dst_data_p(3))
 
-      CALL xt_redist_s_exchange(redist_coll, INT(num_slice), src_data_p, &
-           dst_data_p)
-
-      IF (cmp_arrays(ref_dst_data(:, 1:num_slice-1), &
-           &         dst_data(:, 1:num_slice-1)) &
-           .OR. cmp_arrays(ref_dst_data(:,num_slice), &
-           &               dst_data_(k:k+dst_slice_len-1))) &
-           CALL test_abort("error in xt_redist_s_exchange", &
-           __FILE__, &
-           __LINE__)
+      DO iexch = 1, 2
+        dst_data = -1.0d0
+        IF (iexch == 1) THEN
+          CALL xt_redist_s_exchange(redist_coll, INT(num_slice), src_data_p, &
+               dst_data_p)
+        ELSE
+          request = xt_redist_a_exchange(redist_coll, INT(num_slice), &
+               src_data_p, dst_data_p)
+          CALL check_wait_request(request, filename, __LINE__)
+        ENDIF
+        IF (cmp_arrays(ref_dst_data(:, 1:num_slice-1), &
+             &         dst_data(:, 1:num_slice-1)) &
+             .OR. cmp_arrays(ref_dst_data(:,num_slice), &
+             &               dst_data_(k:k+dst_slice_len-1))) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+      ENDDO
     END DO
   END SUBROUTINE run_displacement_check
 

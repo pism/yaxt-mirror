@@ -51,15 +51,22 @@ PROGRAM test_redist_repeat
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_p2p_off_new, &
-       xt_redist_repeat_new, &
-       xt_redist_delete, xt_redist_s_exchange
+       xt_redist_repeat_new, xt_redist_delete, &
+       xt_redist_s_exchange, xt_redist_a_exchange, &
+       xt_request
 #if defined __PGI && __PGIC__ == 15
-  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
-  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
-  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
+  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
+       check_wait_request
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+  CHARACTER(len=*), PARAMETER :: exch1name(2) = &
+       (/ "xt_redist_s_exchange1", "xt_redist_a_exchange1" /)
+
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -317,6 +324,8 @@ CONTAINS
          &     i=1,3 ),j=2,0,-1) /)
 #endif
     DOUBLE PRECISION, TARGET :: src_template(2), dst_template(2)
+    INTEGER :: iexch
+    TYPE(xt_request) :: request
 
     xmap = build_odd_selection_xmap(selection_len)
 
@@ -336,16 +345,26 @@ CONTAINS
     DO i = 1, npt
       src_data(i) = 1.0d2 + DBLE(i)
     END DO
-    dst_data = -1.0d0
 
-    ! test individual redists
-    CALL xt_redist_s_exchange(redist, src_data, dst_data)
-    CALL xt_redist_s_exchange(redist, src_data(2:), dst_data(2:))
-    ! check individual redists to have desired effect
-    IF (cmp_arrays(dst_data, ref_dst_data)) &
-         CALL test_abort("error in xt_redist_s_exchange1", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+
+      dst_data = -1.0d0
+
+      ! test individual redists
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src_data, dst_data)
+        CALL xt_redist_s_exchange(redist, src_data(2:), dst_data(2:))
+      ELSE
+        request = xt_redist_a_exchange(redist, src_data, dst_data)
+        CALL check_wait_request(request, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src_data(2:), dst_data(2:))
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      ! check individual redists to have desired effect
+      IF (cmp_arrays(dst_data, ref_dst_data)) &
+           CALL test_abort("error in "//exch1name(iexch), &
+           filename,__LINE__)
+    ENDDO
     dst_data = -1.0d0
     ! generate redist_repeat
     CALL mpi_get_address(src_template(1), base_address, ierror)

@@ -52,15 +52,17 @@ MODULE test_redist_common
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_redist, &
        xt_redist_s_exchange, xt_redist_s_exchange1, &
+       xt_redist_a_exchange, xt_redist_a_exchange1, &
+       xt_request, xt_request_wait, xt_is_null, &
        xi => xt_int_kind
 #ifdef __PGI
   ! PGI up to at least 15.4 has a bug that prevents proper import of
   ! multiply extended generics. This is a separate bug from the one exhibited
   ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
-  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
-  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
-  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
-  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE ftest_common, ONLY: test_abort, cmp_arrays
   IMPLICIT NONE
@@ -78,7 +80,11 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_i8
   END INTERFACE check_redist
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
-  PUBLIC :: check_redist_xi
+  PUBLIC :: check_request, check_wait_request, check_redist_xi
+
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+
 CONTAINS
   ! build xmap for destination list containing all odd elements of
   ! source list dimensioned 1 to src_slice_len
@@ -119,38 +125,76 @@ CONTAINS
     congruent = ((rcode == mpi_ident) .OR. (rcode == mpi_congruent))
   END FUNCTION communicators_are_congruent
 
+  SUBROUTINE check_request(request, istate, file, line)
+    TYPE(xt_request), INTENT(in) :: request
+    INTEGER, INTENT(in) :: istate, line
+    CHARACTER(len=*), INTENT(in) :: file
+    INTEGER  :: ir0, is0
+    ir0 = MERGE(0, 1, xt_is_null(request))
+    is0 = MERGE(0, 1, (istate == 0))
+    IF (IEOR(ir0,is0) /= 0) THEN
+      CALL test_abort("error: unexpected request state", &
+           file, line)
+    ENDIF
+  END SUBROUTINE check_request
+
+  SUBROUTINE check_wait_request(request, file, line)
+    TYPE(xt_request), INTENT(inout) :: request
+    CHARACTER(len=*), INTENT(in) :: file
+    INTEGER, INTENT(in) :: line
+    CALL check_request(request, 1, file, line)
+    CALL xt_request_wait(request)
+    CALL check_request(request, 0, file, line)
+  END SUBROUTINE check_wait_request
+
   SUBROUTINE check_redist_dp(redist, src, dst_size, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER, INTENT(in) :: dst_size
     DOUBLE PRECISION, TARGET, INTENT(in) :: src(*)
     DOUBLE PRECISION, INTENT(in) :: ref_dst(dst_size)
     DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(dst_size)
-    dst = -1.0d0
-    CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
-    IF (cmp_arrays(dst, ref_dst)) &
-         CALL test_abort("error in xt_redist_s_exchange1", &
-         __FILE__, &
-         __LINE__)
+    TYPE(xt_request) :: request
+    INTEGER :: iexch
+    DO iexch = 1, 2
+      dst = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst))
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_dp
 
   SUBROUTINE check_redist_dp2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:), ref_dst(:)
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
-
-    INTEGER :: dst_size, ref_dst_size
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1.0d0
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, ref_dst)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_dp2
 
   SUBROUTINE check_redist_dp2_i2(redist, src, dst, ref_dst)
@@ -158,20 +202,27 @@ CONTAINS
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i2), INTENT(in) :: ref_dst(:)
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
-
-    INTEGER :: dst_size, ref_dst_size
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1.0d0
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, DBLE(ref_dst))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, DBLE(ref_dst))) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_dp2_i2
 
   SUBROUTINE check_redist_dp2_i4(redist, src, dst, ref_dst)
@@ -179,20 +230,27 @@ CONTAINS
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i4), INTENT(in) :: ref_dst(:)
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
-
-    INTEGER :: dst_size, ref_dst_size
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1.0d0
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, DBLE(ref_dst))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, DBLE(ref_dst))) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_dp2_i4
 
   SUBROUTINE check_redist_dp2_i8(redist, src, dst, ref_dst)
@@ -200,20 +258,27 @@ CONTAINS
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i8), INTENT(in) :: ref_dst(:)
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
-
-    INTEGER :: dst_size, ref_dst_size
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1.0d0
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, DBLE(ref_dst))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, DBLE(ref_dst))) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_dp2_i8
 
   SUBROUTINE check_redist_dp2_2d(redist, src, dst, ref_dst)
@@ -221,20 +286,27 @@ CONTAINS
     DOUBLE PRECISION, INTENT(in) :: src(:,:)
     DOUBLE PRECISION, INTENT(in) :: ref_dst(:,:)
     DOUBLE PRECISION, INTENT(inout) :: dst(:,:)
-
-    INTEGER :: dst_size, ref_dst_size
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1.0d0
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, ref_dst)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_dp2_2d
 
   SUBROUTINE check_redist_xi(redist, src, dst_size, dst, ref_dst)
@@ -243,12 +315,24 @@ CONTAINS
     INTEGER(xi), TARGET, INTENT(in) :: src(*)
     INTEGER(xi), INTENT(in) :: ref_dst(dst_size)
     INTEGER(xi), TARGET, INTENT(inout) :: dst(dst_size)
-    dst = -1_xi
-    CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
-    IF (cmp_arrays(dst, ref_dst)) &
-         CALL test_abort("error in xt_redist_s_exchange1", &
-         __FILE__, &
-         __LINE__)
+    TYPE(xt_request) :: request
+    INTEGER :: iexch
+    DO iexch = 1, 2
+      dst = -1_xi
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
+      ELSE
+        CALL check_request(request, 0, __FILE__, __LINE__)
+        request = xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst))
+        CALL check_request(request, 1, __FILE__, __LINE__)
+        CALL xt_request_wait(request)
+        CALL check_request(request, 0, __FILE__, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           __FILE__, &
+           __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_xi
 
   SUBROUTINE check_redist_i2(redist, src, dst, ref_dst)
@@ -256,20 +340,27 @@ CONTAINS
     INTEGER(i2), INTENT(in) :: src(:)
     INTEGER(i2), INTENT(in) :: ref_dst(:)
     INTEGER(i2), INTENT(inout) :: dst(:)
-
-    INTEGER :: dst_size, ref_dst_size
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1_i2
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, ref_dst)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1_i2
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_i2
 
   SUBROUTINE check_redist_i4(redist, src, dst, ref_dst)
@@ -277,20 +368,28 @@ CONTAINS
     INTEGER(i4), INTENT(in) :: src(:)
     INTEGER(i4), INTENT(in) :: ref_dst(:)
     INTEGER(i4), INTENT(inout) :: dst(:)
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
 
-    INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1_i4
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, ref_dst)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1_i4
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_i4
 
   SUBROUTINE check_redist_i8(redist, src, dst, ref_dst)
@@ -298,20 +397,28 @@ CONTAINS
     INTEGER(i8), INTENT(in) :: src(:)
     INTEGER(i8), INTENT(in) :: ref_dst(:)
     INTEGER(i8), INTENT(inout) :: dst(:)
+    TYPE(xt_request) :: request
+    INTEGER :: dst_size, ref_dst_size, iexch
 
-    INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    dst = -1_i8
-    CALL xt_redist_s_exchange(redist, src, dst)
-    IF (cmp_arrays(dst, ref_dst)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      dst = -1_i8
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL check_request(request, 0, filename, __LINE__)
+        request = xt_redist_a_exchange(redist, src, dst)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort("error in xt_redist_s_exchange1", &
+           filename, __LINE__)
+    ENDDO
   END SUBROUTINE check_redist_i8
 
 END MODULE test_redist_common

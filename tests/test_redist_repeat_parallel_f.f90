@@ -55,15 +55,21 @@ PROGRAM test_redist_repeat_parallel
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange, &
-       xt_idxlist_get_indices, xt_int_mpidt
+       xt_idxlist_get_indices, xt_int_mpidt, &
+       xt_request, xt_redist_a_exchange
     ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI
-  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
-  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
-  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
+  USE test_redist_common, ONLY: check_wait_request
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+  CHARACTER(len=*), PARAMETER :: err_msg(2) = &
+       (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
   INTEGER :: comm_rank, comm_size, ierror
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -171,6 +177,8 @@ CONTAINS
          displacements_2(4) = (/ 1_c_int, 2_c_int, 4_c_int, 8_c_int /)
     INTEGER :: i, ierror
     INTEGER(xt_int_kind) :: j
+    TYPE(xt_request) :: request1, request2
+    INTEGER :: iexch
 
     CALL build_idxlists(indices_a, indices_b)
 
@@ -201,18 +209,13 @@ CONTAINS
         input_data(i, j) = index_vector_a(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
-    results_1 = -1
-    results_2 = -1
-
-    CALL xt_redist_s_exchange(redist_repeat, input_data, results_1)
-    CALL xt_redist_s_exchange(redist_repeat_2, input_data, results_2)
 
     DO j = 1_xi, 4_xi
       DO i = 1, 2*comm_size**2
         ref_results_1(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
-    DO j = 1, 9
+    DO j = 1_xi, 9_xi
       DO i = 1, 2*comm_size**2
         ref_results_2(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
       END DO
@@ -221,16 +224,26 @@ CONTAINS
     ref_results_2(:,1:4:3) = -1
     ref_results_2(:,6:8:1) = -1
 
-    ! check results
-    IF (ANY(results_1 /= ref_results_1)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-    IF (ANY(results_2 /= ref_results_2)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    DO iexch = 1, 2
+      results_1 = -1
+      results_2 = -1
 
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist_repeat, input_data, results_1)
+        CALL xt_redist_s_exchange(redist_repeat_2, input_data, results_2)
+      ELSE
+        request1 = xt_redist_a_exchange(redist_repeat, input_data, results_1)
+        request2 = xt_redist_a_exchange(redist_repeat_2, input_data, results_2)
+        CALL check_wait_request(request1, filename, __LINE__)
+        CALL check_wait_request(request2, filename, __LINE__)
+      ENDIF
+
+      ! check results
+      IF (ANY(results_1 /= ref_results_1)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+      IF (ANY(results_2 /= ref_results_2)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+    ENDDO
     ! clean up
 
     CALL xt_redist_delete(redist_repeat)
