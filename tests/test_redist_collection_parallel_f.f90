@@ -56,13 +56,21 @@ PROGRAM test_redist_collection_parallel
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt
+       xt_idxlist_get_indices, xt_int_mpidt, &
+       xt_request, xt_redist_a_exchange
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
-  USE xt_redist_base, ONLY: xt_redist_s_exchange
+  USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
+  USE test_redist_common, ONLY: check_wait_request
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
   INTEGER :: rank, world_size, ierror
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+  CHARACTER(len=*), PARAMETER :: err_msg(2) = &
+       (/ "error in xt_redist_s_exchange", "error in xt_redist_a_exchange" /)
+
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -186,6 +194,7 @@ CONTAINS
          results_2(:), results_3(:), results_4(:)
     INTEGER :: result_sizes(4), buf_size, ofs
     INTEGER, PARAMETER :: result_spacing(4) = (/ 2, 14, 5, 8 /)
+    INTEGER :: iexch
 
     result_sizes(1) = 2*world_size**2
     result_sizes(2) = 2*world_size**2
@@ -194,46 +203,51 @@ CONTAINS
 
     buf_size = SUM(result_spacing) + SUM(result_sizes)
     ALLOCATE(buf(buf_size))
-
-    ofs = result_spacing(1)
-    results_1 => buf(ofs+1:ofs+result_sizes(1))
-    ofs = ofs + result_sizes(1) + result_spacing(2)
-    results_2 => buf(ofs+1:ofs+result_sizes(2))
-    ofs = ofs + result_sizes(2) + result_spacing(3)
-    results_3 => buf(ofs+1:ofs+result_sizes(3))
-    ofs = ofs + result_sizes(3) + result_spacing(4)
-    results_4 => buf(ofs+1:ofs+result_sizes(4))
-
-    CALL do_4redist(redist, index_vector_a, index_vector_b, &
-         results_1, results_2, results_3, results_4)
-
-    CALL check_4redist_results(results_1, results_2, results_3, results_4, &
-       index_vector_a, index_vector_b)
-
-    ! shift addresses around
-    IF (rank == 0) THEN
-      ofs = SUM(result_spacing(1:2)) + SUM(result_sizes(1:2))
+    DO iexch = 1, 2
+      buf = -1_xt_int_kind
+      ofs = result_spacing(1)
+      results_1 => buf(ofs+1:ofs+result_sizes(1))
+      ofs = ofs + result_sizes(1) + result_spacing(2)
+      results_2 => buf(ofs+1:ofs+result_sizes(2))
+      ofs = ofs + result_sizes(2) + result_spacing(3)
       results_3 => buf(ofs+1:ofs+result_sizes(3))
-    END IF
+      ofs = ofs + result_sizes(3) + result_spacing(4)
+      results_4 => buf(ofs+1:ofs+result_sizes(4))
 
-    CALL do_4redist(redist, index_vector_a, index_vector_b, &
-         results_1, results_2, results_3, results_4)
+      CALL do_4redist(redist, index_vector_a, index_vector_b, &
+           results_1, results_2, results_3, results_4, iexch)
 
-    CALL check_4redist_results(results_1, results_2, results_3, results_4, &
-       index_vector_a, index_vector_b)
+      CALL check_4redist_results(results_1, results_2, results_3, results_4, &
+           index_vector_a, index_vector_b, iexch)
+      buf = -1_xt_int_kind
+      ! shift addresses around
+      IF (rank == 0) THEN
+        ofs = SUM(result_spacing(1:2)) + SUM(result_sizes(1:2))
+        results_3 => buf(ofs+1:ofs+result_sizes(3))
+      END IF
+
+      CALL do_4redist(redist, index_vector_a, index_vector_b, &
+           results_1, results_2, results_3, results_4, iexch)
+
+      CALL check_4redist_results(results_1, results_2, results_3, results_4, &
+           index_vector_a, index_vector_b, iexch)
+    ENDDO
     ! clean up
     DEALLOCATE(buf)
   END SUBROUTINE exchange_4redist
 
   SUBROUTINE do_4redist(redist, index_vector_a, index_vector_b, &
-       results_1, results_2, results_3, results_4)
+       results_1, results_2, results_3, results_4, iexch)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(xt_int_kind), INTENT(in), TARGET :: &
          index_vector_a(*), index_vector_b(*)
     INTEGER(xt_int_kind), INTENT(inout), TARGET :: &
          results_1(*), results_2(*), results_3(*), results_4(*)
+    INTEGER, INTENT(in) :: iexch
 
     TYPE(c_ptr) :: results(4), input(4)
+    TYPE(xt_request) :: request
+
     results(1) = C_LOC(results_1)
     results(2) = C_LOC(results_2)
     results(3) = C_LOC(results_3)
@@ -243,27 +257,27 @@ CONTAINS
     input(2) = C_LOC(index_vector_b)
     input(3) = C_LOC(index_vector_a)
     input(4) = C_LOC(index_vector_b)
-
-    CALL xt_redist_s_exchange(redist, 4, input, results)
-
+    IF (iexch == 1) THEN
+      CALL xt_redist_s_exchange(redist, 4, input, results)
+    ELSE
+      request = xt_redist_a_exchange(redist, 4, input, results)
+      CALL check_wait_request(request, filename, __LINE__)
+    ENDIF
   END SUBROUTINE do_4redist
 
   SUBROUTINE check_4redist_results(results_1, results_2, results_3, results_4, &
-       index_vector_a, index_vector_b)
+       index_vector_a, index_vector_b, iexch)
     INTEGER(xt_int_kind), INTENT(in) :: index_vector_a(:), index_vector_b(:), &
          results_1(:), results_2(:), results_3(0:), results_4(0:)
+    INTEGER, INTENT(in) :: iexch
     INTEGER(xt_int_kind) :: i, n
     LOGICAL :: p_3, p_4
 
     IF (ANY(results_1 /= index_vector_b)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort(err_msg(iexch), filename, __LINE__)
 
     IF (ANY(results_2 /= index_vector_a)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort(err_msg(iexch), filename, __LINE__)
 
     n = INT(SIZE(results_3), xt_int_kind)
     p_3 = .FALSE.
@@ -272,10 +286,7 @@ CONTAINS
       p_3 = p_3 .OR. results_3(i) /= i
       p_4 = p_4 .OR. results_4(i) /= i
     END DO
-    IF (p_3 .OR. p_4) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    IF (p_3 .OR. p_4) CALL test_abort(err_msg(iexch), filename, __LINE__)
   END SUBROUTINE check_4redist_results
 
 
@@ -339,11 +350,10 @@ CONTAINS
     INTEGER(xt_int_kind), TARGET, INTENT(in) :: src_indices_(5)
     INTEGER(xt_int_kind), INTENT(in) :: ref_dst_indices_(5, 2)
 
-
     INTEGER(xt_int_kind), TARGET :: results(5,2)
     TYPE(c_ptr) :: results_p(2), input(2)
-
-    results = -1
+    INTEGER :: iexch
+    TYPE(xt_request) :: request
 
     CALL xt_slice_c_loc(results(:,1), results_p(1))
     CALL xt_slice_c_loc(results(:,2), results_p(2))
@@ -351,13 +361,20 @@ CONTAINS
     input(1) = C_LOC(src_indices_)
     input(2) = C_LOC(src_indices_)
 
-    CALL xt_redist_s_exchange(redist, input, results_p)
+    DO iexch = 1, 2
+      results = -1
 
-    ! check results
-    IF (ANY(results /= ref_dst_indices_)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, input, results_p)
+      ELSE
+        request = xt_redist_a_exchange(redist, input, results_p)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+
+      ! check results
+      IF (ANY(results /= ref_dst_indices_)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+    ENDDO
   END SUBROUTINE rr_exchange
 
 END PROGRAM test_redist_collection_parallel

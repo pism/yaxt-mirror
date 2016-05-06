@@ -56,13 +56,18 @@ PROGRAM test_redist_collection_static_parallel
        xt_redist, xt_redist_p2p_new, xt_redist_collection_static_new, &
        xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt
-  USE test_redist_common, ONLY: check_redist_xi
+xt_request, xt_redist_a_exchange
+  USE test_redist_common, ONLY: check_redist_xi, check_wait_request
   USE iso_c_binding, ONLY: c_loc, c_ptr
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange
 #endif
   IMPLICIT NONE
+  CHARACTER(len=*), PARAMETER :: filename = &
+__FILE__
+  CHARACTER(len=*), PARAMETER :: err_msg(2) = &
+       (/ "xt_redist_s_exchange", "xt_redist_a_exchange" /)
   INTEGER :: rank, comm_size, ierror
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -220,39 +225,39 @@ CONTAINS
     INTEGER(xt_int_kind), POINTER :: results_1(:), &
          results_2(:), results_3(:), results_4(:)
     TYPE(c_ptr) :: results(1), input(1)
+    INTEGER :: iexch
+    TYPE(xt_request) :: request
 
     results_1 => dst(1:size_b)
     results_2 => dst(size_b+1:size_b+size_a)
     results_3 => dst(size_b+size_a+1:size_b+size_a+size_all)
     results_4 => dst(size_b+size_a+size_all+1:size_b+size_a+2*size_all)
 
-    dst = 0
     input(1) = C_LOC(index_vector_a(1))
     results(1) = C_LOC(results_1(1))
 
-    CALL xt_redist_s_exchange(redist, 1, input, results)
+    DO iexch = 1, 2
+      dst = 0
 
-    ! check results
-    IF (ANY(results_1(:) /= index_vector_b)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, 1, input, results)
+      ELSE
+        request = xt_redist_a_exchange(redist, 1, input, results)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      ! check results
+      IF (ANY(results_1(:) /= index_vector_b)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
 
-    IF (ANY(results_2(:) /= index_vector_a)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+      IF (ANY(results_2(:) /= index_vector_a)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
 
-    IF (ANY(results_3(:) /= index_vector_all)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+      IF (ANY(results_3(:) /= index_vector_all)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
 
-    IF (ANY(results_4(:) /= index_vector_all)) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-
+      IF (ANY(results_4(:) /= index_vector_all)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+    ENDDO
   END SUBROUTINE test_transpose_gather
 
   ! redist test with two redists that do a round robin exchange in
@@ -270,6 +275,7 @@ CONTAINS
     INTEGER(mpi_address_kind) :: src_displacements(2), dst_displacements(2), &
          addr_temp
     INTEGER :: ierror
+    TYPE(xt_request) :: request
 
     num_indices_global = INT(comm_size, xi) * INT(num_local_indices, xi)
     DO i = 1, num_local_indices
