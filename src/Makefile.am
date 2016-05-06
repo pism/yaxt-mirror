@@ -163,6 +163,7 @@ libyaxt_la_SOURCES =						\
 	xt_redist_real_sp.f90					\
 	xt_redist_real_dp.f90					\
 	xt_redist_logical.f90					\
+	xt_request_f.f90					\
 	yaxt.f90
 
 libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)

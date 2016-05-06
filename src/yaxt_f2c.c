@@ -96,6 +96,10 @@ struct xt_redist_msg_f {
   MPI_Fint rank, datatype;
 };
 
+struct xt_request_f {
+  Xt_request cptr;
+};
+
 /* These functions are meant to be called from Fortran and don't need
  * an interface declaration in a C header  */
 #if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
@@ -144,6 +148,11 @@ Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
 }
 
 Xt_redist xt_redist_f2c(struct xt_redist_f *p)
+{
+  return p->cptr;
+}
+
+Xt_request xt_request_f2c(struct xt_request_f *p)
 {
   return p->cptr;
 }
