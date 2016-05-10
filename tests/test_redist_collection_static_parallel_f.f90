@@ -242,7 +242,7 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    IF (ANY(results_3(:) /= index_vector_all)) &
+    IF (ANY(results_4(:) /= index_vector_all)) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
