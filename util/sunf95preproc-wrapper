@@ -50,9 +50,20 @@ if [ "${DEBUG+set}" = set ]; then
 else
   outputRedir=">/dev/null 2>&1"
 fi
-while echo "$1" | grep '^-' >/dev/null 2>&1; do
-  FPPFLAGS="${FPPFLAGS+${FPPFLAGS} }\"$1\""
-  shift
+while [ $# -gt 0 ]; do
+  case $1 in
+    -mdir)
+      shift
+      shift
+      ;;
+    -*)
+      FPPFLAGS="${FPPFLAGS+${FPPFLAGS} }\"$1\""
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
 done
 TRAPCMD=':'
 trap 'eval $TRAPCMD' 0

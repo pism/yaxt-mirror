@@ -36,8 +36,7 @@ dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
 dnl ACX_MPIRUN([NUM_TASKS=4],[ACTION-IF-WORKING],
-dnl            [ACTION-IF-RUN-FAILS=AC_MSG_FAILURE],
-dnl            [ACTION-IF-BUILD-FAILS=AC_MSG_FAILURE])
+dnl            [ACTION-IF-FAILED=AC_MSG_FAILURE])
 dnl
 dnl First determines mpi launcher program (and sets MPI_LAUNCH to its path),
 dnl then builds and runs simple program with 4 tasks
@@ -50,10 +49,11 @@ dnl TODO: instead of setting C language, perform test for active AC_LANG
 AC_DEFUN([ACX_MPIRUN],
   [AC_PATH_PROGS([MPI_LAUNCH],[mpirun mpiexec],[true])
    AC_ARG_VAR([MPI_LAUNCH],[absolute path to launcher for MPI programs, must be working unless configuring in cross-compilation mode])
-   AS_IF([test $cross_compiling = no -a x"$MPI_LAUNCH" != xtrue],
+   AS_IF([test x"$cross_compiling" = xno -a x"$MPI_LAUNCH" != xtrue],
      [AC_MSG_CHECKING([if $MPI_LAUNCH works])
-      AC_LANG_PUSH([C])
-      AC_LINK_IFELSE([AC_LANG_SOURCE([
+      AS_IF([test -x `echo "$MPI_LAUNCH" | sed -e 's/@<:@ 	@:>@.*//'`],
+        [AC_LANG_PUSH([C])
+         AC_LINK_IFELSE([AC_LANG_SOURCE([
 @%:@include <stdio.h>
 @%:@include <stdlib.h>
 
@@ -78,21 +78,20 @@ main(int argc, char **argv)
   return (procnum == cmdnum)?EXIT_SUCCESS:EXIT_FAILURE;
 }
 ])],
-        [acx_mpirun_test="$MPI_LAUNCH -n m4_ifval([$1],[$1],[4]) ./conftest$EXEEXT m4_ifval([$1],[$1],[4])"
-         AS_IF([expr "$ac_link" : '^./libtool ' >/dev/null],
-           [acx_mpirun_test="./libtool --mode=execute $acx_mpirun_test"])
-         _AC_RUN_LOG([LIBC_FATAL_STDERR_=1 $acx_mpirun_test >&2],[echo "running $acx_mpirun_test"])
-         AS_IF([test $ac_status -eq 0],
-           [AC_MSG_RESULT([yes])],
-           [AC_MSG_RESULT([no])
-            MPI_LAUNCH=true
-            m4_ifval([$4],[$4],[AC_MSG_FAILURE([Cannot run simple MPI program])])])],
-        [MPI_LAUNCH=true
-         m4_ifval([$3],[$3],[AC_MSG_FAILURE([Cannot compile or link simple MPI program])])])
-      AC_LANG_POP([C])])
+           [acx_mpirun_test="$MPI_LAUNCH -n m4_ifval([$1],[$1],[4]) ./conftest$EXEEXT m4_ifval([$1],[$1],[4])"
+            AS_IF([expr "$ac_link" : '^./libtool ' >/dev/null],
+              [acx_mpirun_test="./libtool --mode=execute $acx_mpirun_test"])
+            _AC_RUN_LOG([LIBC_FATAL_STDERR_=1 $acx_mpirun_test >&2],[echo "running $acx_mpirun_test"])
+            AS_IF([test $ac_status -eq 0],,
+              [MPI_LAUNCH=true ; MPI_LAUNCH_failMsg="failed to run MPI programs"])],
+           [MPI_LAUNCH=true ; MPI_LAUNCH_failMsg="Cannot compile or link simple MPI program"])
+         AC_LANG_POP([C])],
+        [MPI_LAUNCH_failMsg="Cannot execute $MPI_LAUNCH" ; MPI_LAUNCH=true])])
    AS_IF([test x"$MPI_LAUNCH" = xtrue],
-     [m4_ifval([$3],[$3],[AC_MSG_FAILURE([failed to run MPI programs])])],
-     [$2])
+     [AC_MSG_RESULT([no])
+      m4_ifval([$3],[$3],[AC_MSG_FAILURE([$MPI_LAUNCH_failMsg])])],
+     [AC_MSG_RESULT([yes])m4_ifval([$2],[
+      $2])])
 ])
 dnl
 dnl Local Variables:

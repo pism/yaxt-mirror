@@ -37,65 +37,9 @@ dnl LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
-dnl ACX_CHECK_CFORTRAN([OPTIONAL-CFORTRAN-INC-DIR],[ACTION-IF-SUCCESS],
-dnl                    [ACTION-IF-FAILED])
-dnl Test if C compiler can produce objects that link fine to Fortran programs
-dnl when using cfortran.h.
-dnl
-AC_DEFUN([ACX_CHECK_CFORTRAN],
-  [AC_CACHE_CHECK([if C externals constructed with cfortran.h work],
-     [acx_cv_cfortran_works],
-     [acx_cv_cfortran_works=no
-      save_CPPFLAGS=$CPPFLAGS
-      CPPFLAGS="-I]m4_ifval([$1],[$1],[$srcdir/include])[ $CPPFLAGS"
-dnl build C function
-      AC_LANG_PUSH([C])
-      AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include "cfortran.h"
-@%:@include <math.h>
-@%:@include <stdio.h>
-@%:@include <stdlib.h>
-
-PROTOCCALLSFFUN1(FLOAT,CONFTEST_F,conftest_f,FLOAT)
-#define conftest_F(v) \
-  CCALLSFFUN1(CONFTEST_F,conftest_f,FLOAT,(v));
-
-static float
-conftest_C(int i, float v, int *p, float *q)
-{
-  float f;
-  *p = (int)roundf(v * i);
-  *q = f = conftest_F(v * i);
-  return f;
-}
-
-FCALLSCFUN4(FLOAT,conftest_C,CONFTEST_C,conftest_c,INT,FLOAT,PINT,PFLOAT)
-
-/* test string returns */
-static const char *
-conftest_str_C(void)
-{
-  static const char msg@<:@100@:>@ = "aaaaaaaaaaaaaaaaaaaa"
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-  return msg;
-}
-
-FCALLSCFUN0(STRING,conftest_str_C,CONFTEST_STR_C,conftest_str_c)
-
-/* This function is required simply because some Fortran compilers
- * won't stop with exit code n when encountering STOP n */
-static void
-errExit(void)
-{
-  exit(1);
-}
-
-FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
-
-])],
-        [_AC_RUN_LOG([mv "conftest.$ac_objext" "conftest_c.$ac_objext"],
-           [_AS_ECHO_LOG([Renaming C object file.])])
-         AC_LANG_PUSH([Fortran])
+dnl helper function to emit Fortran test code
+AC_DEFUN([_ACX_CHECK_CFORTRAN_FC],
+  [AC_LANG_PUSH([Fortran])
          AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 [      MODULE conftest_data
       IMPLICIT NONE
@@ -104,13 +48,13 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
       PUBLIC :: ri
       END MODULE conftest_data
 
-      FUNCTION conftest_f(v) RESULT(r)
+      FUNCTION cftstf(v) RESULT(r)
       USE conftest_data, ONLY: ri
       REAL, INTENT(in) :: v
       REAL :: r
       r = v * 100.0
       ri = 1.0 / v
-      END FUNCTION conftest_f])],
+      END FUNCTION cftstf])],
            [_AC_RUN_LOG([mv "conftest.$ac_objext" "conftest_f.$ac_objext"],
               [_AS_ECHO_LOG([Renaming Fortran object file.])])
             save_LIBS=$LIBS
@@ -119,16 +63,16 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
 [      USE conftest_data, ONLY: ri
       IMPLICIT NONE
       INTERFACE
-       FUNCTION conftest_c(i, v, p, q) RESULT(f)
+       FUNCTION cftstc(i, v, p, q) RESULT(f)
          INTEGER, INTENT(in) :: i
          REAL, INTENT(in) :: v
          INTEGER, INTENT(out) :: p
          REAL, INTENT(out) :: q
          REAL :: f
-       END FUNCTION conftest_c
-       FUNCTION conftest_str_c() result(s)
+       END FUNCTION cftstc
+       FUNCTION chtst() result(s)
          CHARACTER(99) :: s
-       END FUNCTION conftest_str_c
+       END FUNCTION chtst
       END INTERFACE
       REAL, PARAMETER :: eps = 10e-6
       REAL :: foo, boo, too
@@ -136,7 +80,7 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
       CHARACTER(99) :: aaaaaa
       bar = 5
       foo = 0.3
-      too = conftest_c(bar, foo, baz, boo)
+      too = cftstc(bar, foo, baz, boo)
       IF (ABS(baz - NINT(bar * foo)) /= 0) THEN
         WRITE (0, '(2(a,i0))') "error checking, when baz, baz=", baz, &
              ", NINT(bar * foo) =", NINT(bar * foo)
@@ -161,9 +105,9 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
         FLUSH(0)
         CALL err_exit
       END IF
-      aaaaaa = conftest_str_c()
+      aaaaaa = chtst()
       DO i = 1, 99
-        IF (aaaaaa(i:i) /= 'a') THEN
+        IF (aaaaaa(i:i) /= 'A') THEN
           WRITE (0, '(a,i0,a)') "error checking aaaaaa(", i, ")=", &
               aaaaaa(i:i)
           FLUSH(0)
@@ -173,11 +117,144 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
               [acx_cv_cfortran_works=yes],
               [acx_cv_cfortran_works="error"],
               [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])
-	       AC_MSG_NOTICE([link test succeeded.])
+	       AC_MSG_NOTICE([cfortran.h link test succeeded for $FC.])
                acx_cv_cfortran_works=yes])
 	    LIBS=$save_LIBS],
            [acx_cv_cfortran_works="error compiling Fortran subroutine"])
-         AC_LANG_POP([Fortran])],
+         AC_LANG_POP([Fortran])])
+
+dnl helper function to emit Fortran 77 test code
+AC_DEFUN([_ACX_CHECK_CFORTRAN_F77],
+  [AC_LANG_PUSH([Fortran 77])
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[      REAL FUNCTION CFTSTF(v)
+      REAL RI
+      COMMON /CFTSTD/ RI
+      REAL V
+      REAL R
+      CFTSTF = V * 100.0
+      RI = 1.0 / V
+      END FUNCTION CFTSTF])],
+           [_AC_RUN_LOG([mv "conftest.$ac_objext" "conftest_f.$ac_objext"],
+              [_AS_ECHO_LOG([Renaming Fortran object file.])])
+            save_LIBS=$LIBS
+            LIBS="conftest_c.$ac_objext conftest_f.$ac_objext $LIBS"
+            AC_RUN_IFELSE([AC_LANG_PROGRAM(,
+[      REAL RI
+      COMMON /CFTSTD/ RI
+      REAL EPS
+      PARAMETER(EPS=10E-6)
+      REAL FOO, BOO, TOO
+      INTEGER BAR, BAZ, I
+      CHARACTER(99) AAAAAA
+      EXTERNAL CFTSTC, CFTSTF, CHTST, ERR_EXIT
+      REAL CFTSTC, CFTSTF
+      CHARACTER(99) CHTST
+      BAR = 5
+      FOO = 0.3
+      TOO = CFTSTC(BAR, FOO, BAZ, BOO)
+      IF (ABS(BAZ - NINT(BAR * FOO)) /= 0) THEN
+        WRITE (0, '(2(A,I0))') "ERROR CHECKING, WHEN BAZ, BAZ=", BAZ,
+     &       ", NINT(BAR * FOO) =", NINT(BAR * FOO)
+        CALL ERR_EXIT
+      END IF
+      IF (ABS((RI - 1.0 / (BAR * FOO)) / ABS(RI)) > EPS)  THEN
+        WRITE (0, '(2(A,F24.15))') "ERROR CHECKING RI, RI=", RI, ",
+     &       1.0 / (BAR * FOO) = ", 1.0 / (BAR * FOO)
+        CALL err_exit
+      END IF
+      IF (ABS((BOO - (BAR * FOO * 100.0))/ABS(BOO)) > EPS)  THEN
+        WRITE (0, '(2(A,F24.15))') "ERROR CHECKING BOO, BOO=", BOO,
+     &       ", BAR * FOO * 100.0 = ", BAR * FOO * 100.0
+        CALL ERR_EXIT
+      END IF
+      IF (TOO /= BOO) THEN
+        WRITE (0, '(2(A,F24.15))') "ERROR CHECKING TOO VS. BOO, TOO=",
+     &       TOO, ", BOO = ", BOO
+        CALL ERR_EXIT
+      END IF
+      AAAAAA = CHTST()
+      DO i = 1, 99
+        IF (AAAAAA(I:I) /= 'A') THEN
+          WRITE (0, '(A,I0,2A)') "ERROR CHECKING AAAAAA(", I, ")=",
+     &        AAAAAA(I:I)
+          CALL ERR_EXIT
+        END IF
+      END DO])],
+              [acx_cv_cfortran_works=yes],
+              [acx_cv_cfortran_works="error"],
+              [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])
+	       AC_MSG_NOTICE([cfortran.h link test succeeded for $F77.])
+               acx_cv_cfortran_works=yes])
+	    LIBS=$save_LIBS],
+           [acx_cv_cfortran_works="error compiling Fortran subroutine"])
+         AC_LANG_POP([Fortran 77])])
+
+dnl ACX_CHECK_CFORTRAN([OPTIONAL-CFORTRAN-INC-DIR],[ACTION-IF-SUCCESS],
+dnl                    [ACTION-IF-FAILED])
+dnl Test if C compiler can produce objects that link fine to Fortran programs
+dnl when using cfortran.h.
+dnl
+AC_DEFUN([ACX_CHECK_CFORTRAN],
+  [AC_CACHE_CHECK([if C externals constructed with cfortran.h work],
+     [acx_cv_cfortran_works],
+     [acx_cv_cfortran_works=no
+      save_CPPFLAGS=$CPPFLAGS
+      CPPFLAGS="-I]m4_ifval([$1],[$1],[$srcdir/include])[ $CPPFLAGS"
+dnl build C function
+      AC_LANG_PUSH([C])
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include "cfortran.h"
+@%:@include <math.h>
+@%:@include <stdio.h>
+@%:@include <stdlib.h>
+
+PROTOCCALLSFFUN1(FLOAT,CFTSTF,cftstf,FLOAT)
+#define conftest_F(v) \
+  CCALLSFFUN1(CFTSTF,cftstf,FLOAT,(v));
+
+static float
+cftstC(int i, float v, int *p, float *q)
+{
+  float f;
+  *p = (int)roundf(v * i);
+  *q = f = conftest_F(v * i);
+  return f;
+}
+
+FCALLSCFUN4(FLOAT,cftstC,CFTSTC,cftstc,INT,FLOAT,PINT,PFLOAT)
+
+/* test string returns */
+static const char *
+conftest_str_C(void)
+{
+  static const char msg@<:@100@:>@ = "AAAAAAAAAAAAAAAAAAAA"
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  return msg;
+}
+
+FCALLSCFUN0(STRING,conftest_str_C,CHTST,chtst)
+
+/* This function is required simply because some Fortran compilers
+ * won't stop with exit code n when encountering STOP n */
+static void
+errExit(void)
+{
+  exit(1);
+}
+
+FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
+
+])],
+        [_AC_RUN_LOG([mv "conftest.$ac_objext" "conftest_c.$ac_objext"],
+           [_AS_ECHO_LOG([Renaming C object file.])])
+         AC_PROVIDE_IFELSE([AC_PROG_FC],
+           [AS_IF([test -n "$FC" -a X"$FC" != Xno],
+              [_ACX_CHECK_CFORTRAN_FC],
+              [acx_cv_cfortran_works=${acx_cv_cfortran_works-yes}])])
+         AC_PROVIDE_IFELSE([AC_PROG_F77],
+           [AS_IF([test -n "$F77" -a X"$F77" != Xno AC_PROVIDE_IFELSE([AC_PROG_FC],[-a x"$acx_cv_cfortran_works" = xyes])],[_ACX_CHECK_CFORTRAN_F77])])
+        ],
         [acx_cv_cfortran_works="compiling with cfortran.h failed"])
       AC_LANG_POP([C])
       CPPFLAGS=$save_CPPFLAGS
