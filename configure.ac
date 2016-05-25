@@ -91,7 +91,7 @@ ACX_FC_VOLATILE([FCFLAGS="${FCFLAGS} ${FPP_DEFOPT}HAVE_VOLATILE"])
 AC_FC_DUMMY_MAIN(,[:])
 AC_FC_WRAPPERS
 dnl
-dnl Check wether char is unsigned by default
+dnl Check whether char is unsigned by default
 AC_C_CHAR_UNSIGNED
 AS_IF([test x$ac_cv_c_char_unsigned = xyes],
   [C_CHAR_IS_UNSIGNED=1],
