@@ -605,7 +605,7 @@ int main(void) {
     enum { num_indices = sizeof(index_vector) / sizeof(index_vector[0]) };
     Xt_idxlist idxlist = xt_idxvec_new(index_vector, num_indices);
 
-    struct  Xt_stripe stripes[] = {
+    static const struct Xt_stripe stripes[] = {
       {.start = 3326, .stride = 14, .nstrides = 2 },
       {.start = 3341, .stride = 33, .nstrides = 1 },
       {.start = 3374, .stride = 1 , .nstrides = 25},
