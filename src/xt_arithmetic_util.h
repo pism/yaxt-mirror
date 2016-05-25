@@ -76,8 +76,8 @@ static inline int
 isign(int x)
 {
 #if (-1 >> 1) == -1
-  return ((x >> (sizeof (int) * CHAR_BIT - 1)) |
-          (int)((unsigned int)(~x) >> (sizeof (int) * CHAR_BIT - 1)));
+  return ((x >> (sizeof (x) * CHAR_BIT - 1)) |
+          (int)((unsigned int)(~x) >> (sizeof (x) * CHAR_BIT - 1)));
 #else
   return (x >= 0) - (x < 0);
 #endif
