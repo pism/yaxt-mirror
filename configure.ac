@@ -287,10 +287,10 @@ AC_ARG_VAR([BUILD_LIBS],
 AC_CONFIG_COMMANDS_PRE([LIBS="${BUILD_LIBS+$BUILD_LIBS }$LIBS"])
 AC_ARG_VAR([BUILD_CC],
   [replace CC with expansion of $BUILD_CC during build but not in configure phase])
-AC_CONFIG_COMMANDS_PRE([CC="${BUILD_CC-$CC}"])
+AC_CONFIG_COMMANDS_PRE([CC=${BUILD_CC-$CC}])
 AC_ARG_VAR([BUILD_FC],
   [replace FC with expansion of $BUILD_FC during build but not in configure phase])
-AC_CONFIG_COMMANDS_PRE([FC="${BUILD_FC-$FC}"])
+AC_CONFIG_COMMANDS_PRE([FC=${BUILD_FC-$FC}])
 
 AC_CONFIG_HEADER([include/config.h])
 
