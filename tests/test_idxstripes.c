@@ -640,6 +640,41 @@ int main(void) {
     xt_idxlist_delete(idxlist);
   }
 
+#if 328669 <= XT_INT_MAX
+  {
+    static const Xt_int index_vector[] = {
+      328669, 30608, 38403
+    };
+    enum { num_indices = sizeof (index_vector) / sizeof (index_vector[0]) };
+    Xt_idxlist idxlist = xt_idxvec_new(index_vector, num_indices);
+
+    static const struct Xt_stripe stripes[] = {
+      { .start = 30608, .stride = 7795, .nstrides = 2 },
+    };
+    enum { num_stripes = sizeof(stripes) / sizeof(stripes[0]) };
+
+    check_idxlist_stripes_pos_ext(idxlist, (size_t)num_stripes, stripes);
+
+    xt_idxlist_delete(idxlist);
+  }
+
+  {
+    static const Xt_int index_vector[] = {
+      679605, 726349, 726346 };
+    enum { num_indices = sizeof (index_vector) / sizeof (index_vector[0]) };
+    Xt_idxlist idxlist = xt_idxvec_new(index_vector, num_indices);
+
+    static const struct Xt_stripe stripes[] = {
+      {.start = 679605, .stride = 46741, .nstrides = 2  },
+    };
+    enum { num_stripes = sizeof (stripes) / sizeof (stripes[0]) };
+
+    check_idxlist_stripes_pos_ext(idxlist, (size_t)num_stripes, stripes);
+
+    xt_idxlist_delete(idxlist);
+  }
+#endif
+
   {
     enum {
       NUM_ITERATIONS=128,

@@ -252,6 +252,7 @@ m4_foreach([substtype],[[XT_INT]],
      [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],
      substtype[_FC_MPIDT=MPI_DATATYPE_NULL])
    FCFLAGS="$FCFLAGS ${FPP_DEFOPT}substtype[]_FC_KIND=$substtype[]_FC_KIND ${FPP_DEFOPT}substtype[]_FC_MPIDT=$substtype[]_FC_MPIDT"
+   eval "FCFLAGS=\"\$FCFLAGS \${FPP_DEFOPT}SIZEOF_[]substtype[]=\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\""
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MAX],[$]substtype[_MAX],
      [Maximal value for ]substtype)
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MIN],[$]substtype[_MIN],

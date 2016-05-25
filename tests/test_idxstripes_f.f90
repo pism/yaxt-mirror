@@ -89,6 +89,10 @@ PROGRAM test_idxstripes_f
   CALL test_idxlist_stripes_pos_ext1
   CALL test_idxlist_stripes_pos_ext2
   CALL test_idxlist_stripes_pos_ext3
+#if SIZEOF_XT_INT > 2
+  CALL test_idxlist_stripes_pos_ext4
+  CALL test_idxlist_stripes_pos_ext5
+#endif
   CALL test_idxlist_stripes_pos_ext_randomized1
   CALL test_get_pos1
   CALL test_get_pos2
@@ -669,6 +673,36 @@ CONTAINS
     CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
     CALL xt_idxlist_delete(idxlist)
   END SUBROUTINE test_idxlist_stripes_pos_ext3
+
+#if SIZEOF_XT_INT > 2
+  SUBROUTINE test_idxlist_stripes_pos_ext4
+    INTEGER, PARAMETER :: num_indices = 3
+    INTEGER(xt_int_kind), PARAMETER :: index_vector(num_indices) &
+         = (/ 328669_xi, 30608_xi, 38403_xi /)
+    INTEGER, PARAMETER :: num_stripes = 1
+    TYPE(xt_stripe), PARAMETER :: stripes(num_stripes) = (/ &
+      xt_stripe(30608_xi, 7795_xi, 2)/)
+    TYPE(xt_idxlist) :: idxlist
+
+    idxlist = xt_idxvec_new(index_vector)
+    CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
+    CALL xt_idxlist_delete(idxlist)
+  END SUBROUTINE test_idxlist_stripes_pos_ext4
+
+  SUBROUTINE test_idxlist_stripes_pos_ext5
+    INTEGER, PARAMETER :: num_indices = 3
+    INTEGER(xt_int_kind), PARAMETER :: index_vector(num_indices) &
+         = (/ 679605_xi, 726349_xi, 726346_xi /)
+    INTEGER, PARAMETER :: num_stripes = 1
+    TYPE(xt_stripe), PARAMETER :: stripes(num_stripes) = (/ &
+      xt_stripe(679605_xi, 46741_xi, 2)/)
+    TYPE(xt_idxlist) :: idxlist
+
+    idxlist = xt_idxvec_new(index_vector)
+    CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
+    CALL xt_idxlist_delete(idxlist)
+  END SUBROUTINE test_idxlist_stripes_pos_ext5
+#endif
 
   SUBROUTINE test_idxlist_stripes_pos_ext_randomized1
     INTEGER, PARAMETER :: num_iterations=128, &
