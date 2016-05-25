@@ -210,6 +210,28 @@ m4_define([vartype_setq],[$1][_MPIDT=$4
      $1][_MIN=$6
      $1][_FMT=$7
      $1][_abs=$8])dnl
+
+dnl
+dnl test if MPI_INTEGER[248] are available
+dnl FIXME: use 'USE mpi' instead of mpif.h if USE mpi can be used
+save_FCFLAGS=$FCFLAGS
+AC_LANG_PUSH([Fortran])
+FCFLAGS="$MPI_FC_INCLUDE $FCFLAGS"
+for mpi_int2test in MPI_INTEGER2 MPI_INTEGER4 MPI_INTEGER8; do
+  AC_MSG_CHECKING([if Fortran MPI bindings define $mpi_int2test])
+  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([
+        IMPLICIT NONE
+        INCLUDE 'mpif.h'
+        INTEGER :: i
+        i = $mpi_int2test
+]),[AC_MSG_RESULT([yes])
+  eval HAVE_FC_$mpi_int2test=1],
+    [AC_MSG_RESULT([no])
+     ASX_VAR_UNSET([HAVE_FC_$mpi_int2test])])
+done
+FCFLAGS=$save_FCFLAGS
+AC_LANG_POP([Fortran])
+
 m4_foreach([substtype],[[XT_INT]],
   [AS_CASE(["$substtype"],
      [int],
@@ -226,23 +248,6 @@ m4_foreach([substtype],[[XT_INT]],
      [vartype_setq(substtype,[long long],[c_long_long],[MPI_LONG_LONG],
                    [LLONG_MAX],["(-LLONG_MAX)"],["\"lld\""],['(llabs((v)))'])],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
-   save_FCFLAGS=$FCFLAGS
-   AC_LANG_PUSH([Fortran])
-   FCFLAGS="$MPI_FC_INCLUDE $FCFLAGS"
-   for mpi_int2test in MPI_INTEGER2 MPI_INTEGER4 MPI_INTEGER8; do
-     AC_MSG_CHECKING([if Fortran MPI bindings define $mpi_int2test])
-     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([
-        IMPLICIT NONE
-        INCLUDE 'mpif.h'
-        INTEGER :: i
-        i = $mpi_int2test
-]),[AC_MSG_RESULT([yes])
-    eval HAVE_FC_$mpi_int2test=1],
-   [AC_MSG_RESULT([no])
-    ASX_VAR_UNSET([HAVE_FC_$mpi_int2test])])
-   done
-   FCFLAGS=$save_FCFLAGS
-   AC_LANG_POP([Fortran])
    AS_IF([eval eval test x\\\"\\\${HAVE_FC_MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[+set}\\\" = xset],
      [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],
      substtype[_FC_MPIDT=MPI_DATATYPE_NULL])
