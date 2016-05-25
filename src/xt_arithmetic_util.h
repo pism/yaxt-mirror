@@ -113,6 +113,20 @@ Xt_isign_mask(Xt_int x)
 }
 
 /**
+ * @return -1 if x < 0, 1 otherwise
+ */
+static inline long long
+llsign(long long x)
+{
+#if (-1 >> 1) == -1
+  return ((x >> (sizeof (x) * CHAR_BIT - 1)) |
+          (long long)((unsigned long long)(~x) >> (sizeof (x) * CHAR_BIT - 1)));
+#else
+  return (x >= 0) - (x < 0);
+#endif
+}
+
+/**
  * @return MIN(a, b)
  */
 static inline int
