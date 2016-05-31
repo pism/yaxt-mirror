@@ -731,13 +731,22 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
   // after the match we will move on one step in order to avoid matching the same position again
   int post_match_step = single_match_only != 0;
 
-  int search_start = 0, i=0;
-  for (; i<num_selection && search_start<=search_end; i++) {
+  int i=0;
+  for (int search_start = 0, ub_guess_ofs = 1;
+       i<num_selection && search_start<=search_end;
+       ++i) {
     int selection_pos = selection_is_ordered ? i : sorted_selection_pos[i];
     Xt_int isel = sorted_selection[i];
     // bisection to find one matching position:
+    int ub = search_start + ub_guess_ofs;
+    ub = ub <= search_end ? ub : search_end;
     int lb = search_start;
-    int ub = search_end;
+     /* guess too low? */
+    if (sorted_body[ub] < isel) {
+      lb = ub + 1;
+      lb = lb <= search_end ? lb : search_end;
+      ub = search_end;
+    }
     while (ub-lb>1) {
       int middle = (ub + lb + 1) / 2;
       /* todo: make branch free with mask/inv mask by predicate */
@@ -766,6 +775,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     // result:
     // update positions and prepare next search:
     positions[selection_pos] = sorted_body_pos[match_pos];
+    ub_guess_ofs = match_pos - search_start;
     search_start = match_pos + post_match_step;
   }
   if (i < num_selection) {
