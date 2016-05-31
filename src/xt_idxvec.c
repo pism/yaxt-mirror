@@ -721,81 +721,59 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
   int *sorted_body_pos = body_idxvec->sorted_vec_positions;
   int search_end = body_idxvec->parent.num_indices - 1;
   int num_unmatched = 0;
-  int match_pos;
-  Xt_int isel, last_isel;
-  int search_start, post_match_step;
 
-  if (single_match_only)
-    // after the match we will move on one step in order to avoid matching the same position again
-    post_match_step = 1;
-  else
-    post_match_step = 0;
+  // after the match we will move on one step in order to avoid matching the same position again
+  int post_match_step = single_match_only != 0;
 
-  search_start = 0;
-  last_isel = sorted_selection[0];
-  for (int i=0; i<num_selection; i++) {
-    if (search_start<=search_end) {
-
-      isel = sorted_selection[i];
-      assert(isel >= last_isel);
-      // bisection to find one matching position:
-      int lb = search_start;
-      int ub = search_end;
-      while (ub-lb>1) {
-        int middle = (ub + lb + 1) / 2;
-        /* todo: make branch free with mask/inv mask by predicate */
-        if (sorted_body[middle] <= isel)
-          lb = middle;
-        else
-          ub = middle;
-      }
-
-      // search is now narrowed to two positions, select one of them:
-      if (isel == sorted_body[lb]) {
-        match_pos = lb;
-      } else if (isel == sorted_body[ub]){
-        match_pos = ub;
-      } else {
-        match_pos = -1;
-        num_unmatched++;
-      }
-
-      if (match_pos>0) {
-        // find left most match >= search_start (bisection can lead to any match >= search_start)
-        while (match_pos > search_start && sorted_body[match_pos-1] == isel) match_pos--;
-      }
-
-      if (match_pos>=0) {
-        /// \todo Do we really need this check?
-        // check (again?) if position is invalid:
-        if (sorted_body[match_pos] != isel) {
-          match_pos = -1;
-          num_unmatched++;
-        }
-      }
-
-    } else {
-      match_pos = -1;
-      num_unmatched++;
+  int search_start = 0, i=0;
+  for (; i<num_selection && search_start<=search_end; i++) {
+    int selection_pos = selection_is_ordered ? i : sorted_selection_pos[i];
+    Xt_int isel = sorted_selection[i];
+    // bisection to find one matching position:
+    int lb = search_start;
+    int ub = search_end;
+    while (ub-lb>1) {
+      int middle = (ub + lb + 1) / 2;
+      /* todo: make branch free with mask/inv mask by predicate */
+      if (sorted_body[middle] <= isel)
+        lb = middle;
+      else
+        ub = middle;
     }
+
+    int match_pos;
+    // search is now narrowed to two positions, select one of them:
+    if (isel == sorted_body[lb]) {
+      match_pos = lb;
+    } else if (isel == sorted_body[ub]){
+      match_pos = ub;
+    } else {
+      num_unmatched++;
+      positions[selection_pos] = -1;
+      continue;
+    }
+
+    // find left most match >= search_start (bisection can lead to any match >= search_start)
+    while (match_pos > search_start && sorted_body[match_pos-1] == isel)
+      --match_pos;
 
     // result:
-    int j;
-    if (selection_is_ordered)
-      j = i;
-    else
-      j = sorted_selection_pos[i];
-
     // update positions and prepare next search:
-    if (match_pos >= 0) {
-      positions[j] = sorted_body_pos[match_pos];
-      search_start = match_pos + post_match_step;
-    } else {
-      positions[j] = -1;
-    }
-
+    positions[selection_pos] = sorted_body_pos[match_pos];
+    search_start = match_pos + post_match_step;
   }
-
+  if (i < num_selection) {
+    if (selection_is_ordered)
+      do {
+        num_unmatched++;
+        positions[i] = -1;
+      } while (++i < num_selection);
+    else
+      do {
+        num_unmatched++;
+        positions[sorted_selection_pos[i]] = -1;
+      } while (++i < num_selection);
+  }
   if (tmp_idx) free(tmp_idx);
   if (sorted_selection_pos) free(sorted_selection_pos);
 
