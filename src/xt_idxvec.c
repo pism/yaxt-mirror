@@ -688,7 +688,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
                                 int num_selection, int *positions,
                                 int single_match_only) {
 
-  if (num_selection == 0) return 0;
+  if (num_selection <= 0) return 0;
 
   int selection_is_ordered = idx_vec_is_sorted(selection_idx, num_selection);
   /// \todo try linear scan of sorted data instead (requires performance test first)
@@ -725,22 +725,22 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
   Xt_idxvec body_idxvec = (Xt_idxvec)body_idxlist;
   const Xt_int *sorted_body = get_sorted_vector(body_idxvec);
   int *sorted_body_pos = body_idxvec->sorted_vec_positions;
-  int search_end = body_idxvec->parent.num_indices - 1;
+  size_t search_end = (size_t)body_idxvec->parent.num_indices - 1;
   int num_unmatched = 0;
 
   // after the match we will move on one step in order to avoid matching the same position again
-  int post_match_step = single_match_only != 0;
+  size_t post_match_step = single_match_only != 0;
 
-  int i=0;
-  for (int search_start = 0, ub_guess_ofs = 1;
-       i<num_selection && search_start<=search_end;
+  size_t i=0;
+  for (size_t search_start = 0, ub_guess_ofs = 1;
+       i < (size_t)num_selection && search_start<=search_end;
        ++i) {
-    int selection_pos = selection_is_ordered ? i : sorted_selection_pos[i];
+    size_t selection_pos = selection_is_ordered ? i : (size_t)sorted_selection_pos[i];
     Xt_int isel = sorted_selection[i];
     // bisection to find one matching position:
-    int ub = search_start + ub_guess_ofs;
+    size_t ub = search_start + ub_guess_ofs;
     ub = ub <= search_end ? ub : search_end;
-    int lb = search_start;
+    size_t lb = search_start;
      /* guess too low? */
     if (sorted_body[ub] < isel) {
       lb = ub + 1;
@@ -748,7 +748,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
       ub = search_end;
     }
     while (ub-lb>1) {
-      int middle = (ub + lb + 1) / 2;
+      size_t middle = (ub + lb + 1) / 2;
       /* todo: make branch free with mask/inv mask by predicate */
       if (sorted_body[middle] <= isel)
         lb = middle;
@@ -756,7 +756,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
         ub = middle;
     }
 
-    int match_pos;
+    size_t match_pos;
     // search is now narrowed to two positions, select one of them:
     if (isel == sorted_body[lb]) {
       match_pos = lb;
@@ -778,17 +778,17 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     ub_guess_ofs = match_pos - search_start;
     search_start = match_pos + post_match_step;
   }
-  if (i < num_selection) {
+  if (i < (size_t)num_selection) {
     if (selection_is_ordered)
       do {
         num_unmatched++;
         positions[i] = -1;
-      } while (++i < num_selection);
+      } while (++i < (size_t)num_selection);
     else
       do {
         num_unmatched++;
         positions[sorted_selection_pos[i]] = -1;
-      } while (++i < num_selection);
+      } while (++i < (size_t)num_selection);
   }
   if (tmp_idx) free(tmp_idx);
 
