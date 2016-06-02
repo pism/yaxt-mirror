@@ -701,12 +701,19 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     sorted_selection = selection_idx;
     sorted_selection_pos = NULL; // not used
   } else {
-    size_t memsize = (size_t)num_selection * sizeof(*sorted_selection);
-    tmp_idx = xmalloc(memsize);
-    memcpy(tmp_idx, selection_idx, memsize);
+    size_t idx_memsize = (size_t)num_selection * sizeof(*sorted_selection),
+      pos_memsize = (size_t)num_selection * sizeof(*sorted_selection_pos),
+      /* round pos_memsize up to next multiple of sizeof (int) */
+      pos_ofs = ((idx_memsize + sizeof (int) - 1)
+                 & ((size_t)-(ssize_t)(sizeof(int)))),
+      /* compute size of merged allocation */
+      alloc_size = pos_ofs + pos_memsize;
+
+    tmp_idx = xmalloc(alloc_size);
+    memcpy(tmp_idx, selection_idx, idx_memsize);
 
     sorted_selection_pos
-      = xmalloc((size_t)num_selection * sizeof(*sorted_selection_pos));
+      = (void *)((unsigned char *)tmp_idx + pos_ofs);
     xt_quicksort_index(tmp_idx, num_selection, sorted_selection_pos, 1);
     sorted_selection = tmp_idx;
   }
@@ -774,7 +781,6 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
       } while (++i < num_selection);
   }
   if (tmp_idx) free(tmp_idx);
-  if (sorted_selection_pos) free(sorted_selection_pos);
 
   return num_unmatched;
 }
