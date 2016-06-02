@@ -749,7 +749,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     }
     /* dividing (ub-lb) by 2 gives 0 iff (ub-lb) < 2 but uses less
      * instructions than comparing to literal 1 */
-    while ((ub-lb)/2) {
+    while ((ub-lb)/16) {
       size_t middle = (ub + lb + 1) / 2;
       /* todo: make branch free with mask/inv mask by predicate */
       if (sorted_body[middle] <= isel)
@@ -757,13 +757,13 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
       else
         ub = middle;
     }
-
+    /* use linear scan for last part of search */
+    while (sorted_body[lb] < isel && lb < ub)
+      ++lb;
     size_t match_pos;
     // search is now narrowed to two positions, select one of them:
     if (isel == sorted_body[lb]) {
       match_pos = lb;
-    } else if (isel == sorted_body[ub]){
-      match_pos = ub;
     } else {
       num_unmatched++;
       positions[selection_pos] = -1;
