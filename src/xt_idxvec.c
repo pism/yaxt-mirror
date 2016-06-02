@@ -781,14 +781,13 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     search_start = match_pos + post_match_step;
   }
   if (i < (size_t)num_selection) {
+    num_unmatched += (int)((size_t)num_selection - i);
     if (selection_is_ordered)
       do {
-        num_unmatched++;
         positions[i] = -1;
       } while (++i < (size_t)num_selection);
     else
       do {
-        num_unmatched++;
         positions[sorted_selection_pos[i]] = -1;
       } while (++i < (size_t)num_selection);
   }
