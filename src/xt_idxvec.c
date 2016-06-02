@@ -747,7 +747,9 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
       lb = lb <= search_end ? lb : search_end;
       ub = search_end;
     }
-    while (ub-lb>1) {
+    /* dividing (ub-lb) by 2 gives 0 iff (ub-lb) < 2 but uses less
+     * instructions than comparing to literal 1 */
+    while ((ub-lb)/2) {
       size_t middle = (ub + lb + 1) / 2;
       /* todo: make branch free with mask/inv mask by predicate */
       if (sorted_body[middle] <= isel)
