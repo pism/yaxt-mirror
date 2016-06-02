@@ -699,7 +699,6 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 
   if (selection_is_ordered) {
     sorted_selection = selection_idx;
-    sorted_selection_pos = NULL; // not used
   } else {
     size_t idx_memsize = (size_t)num_selection * sizeof(*sorted_selection),
       pos_memsize = (size_t)num_selection * sizeof(*sorted_selection_pos),
