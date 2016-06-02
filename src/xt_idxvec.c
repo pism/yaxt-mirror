@@ -675,10 +675,9 @@ idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position) {
 
 static int idx_vec_is_sorted(Xt_int const *idx, int n) {
 
-  if (n<2) return 1;
-
-  for (int i = 1; i < n; i++)
-    if (idx[i] < idx[i-1]) return 0;
+  if (n>=2)
+    for (int i = 1; i < n; i++)
+      if (idx[i] < idx[i-1]) return 0;
 
   return 1;
 }
