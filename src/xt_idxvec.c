@@ -673,13 +673,13 @@ idxvec_get_position_of_index(Xt_idxlist idxlist, Xt_int index, int * position) {
   return idxvec_get_position_of_index_off(idxlist, index, position, 0);
 }
 
-static int idx_vec_is_sorted(Xt_int const *idx, int n) {
+static bool idx_vec_is_sorted(Xt_int const *idx, size_t n) {
 
   if (n>=2)
-    for (int i = 1; i < n; i++)
-      if (idx[i] < idx[i-1]) return 0;
+    for (size_t i = 1; i < n; i++)
+      if (idx[i] < idx[i-1]) return false;
 
-  return 1;
+  return true;
 }
 
 static int
@@ -690,7 +690,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 
   if (num_selection <= 0) return 0;
 
-  int selection_is_ordered = idx_vec_is_sorted(selection_idx, num_selection);
+  bool selection_is_ordered = idx_vec_is_sorted(selection_idx, (size_t)num_selection);
   /// \todo try linear scan of sorted data instead (requires performance test first)
 
   Xt_int const *sorted_selection;
