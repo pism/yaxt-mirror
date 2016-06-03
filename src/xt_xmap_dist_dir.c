@@ -63,6 +63,7 @@
 #include "xt/xt_xmap.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_mpi.h"
+#include "xt_arithmetic_util.h"
 #include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
@@ -170,19 +171,35 @@ get_bucket(const struct bucket_params *bucket_params,
   Xt_int local_interval = bucket_params->local_interval;
   Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
   Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
-  Xt_int start = (Xt_int)(0 + dist_dir_rank * local_interval);
   int num_stripes = 0;
 
-  while (start > local_index_range_lbound)
-    start = (Xt_int)(start - global_interval), num_stripes++;
 
-  if ((local_index_range_ubound > 0) && (global_interval != 0))
-    num_stripes
-      = (int)(num_stripes
-              + ((local_index_range_ubound - start + global_interval)
-                 / global_interval));
-  else
-    num_stripes++;
+  /* find first index in bucket of dist_dir_rank
+     <= local_index_range_lbound */
+  Xt_int start = (Xt_int)(0 + dist_dir_rank * local_interval);
+  {
+    long long start_correction
+      = (long long)local_index_range_lbound - (long long)start;
+    Xt_int corr_steps
+      = (Xt_int)((start_correction
+                  - (llsign_mask(start_correction)
+                     & (long long)(global_interval - 1)))
+                 / (long long)global_interval);
+    start = (Xt_int)(start + corr_steps * global_interval);
+  }
+  /* next find last stripe in bucket of dist_dir_rank
+   * <= local_index_range_ubound */
+  Xt_int end
+    = (Xt_int)(start
+               + (((long long)local_index_range_ubound - (long long)start)
+                  / global_interval) * global_interval);
+  Xt_int use_start_stripe
+    = (Xt_int)(start + local_interval > local_index_range_lbound);
+  num_stripes = (int)(((long long)end - (long long)start)/global_interval)
+    + (int)use_start_stripe;
+  start = (Xt_int)(start
+                   + ((Xt_int)((Xt_uint)use_start_stripe - (Xt_uint)1)
+                      & global_interval));
 
   struct Xt_stripe *restrict stripes = *stripes_;
   ENSURE_ARRAY_SIZE(stripes, *stripes_array_size, (size_t)num_stripes);
