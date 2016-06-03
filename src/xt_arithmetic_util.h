@@ -105,7 +105,7 @@ static inline Xt_int
 Xt_isign_mask(Xt_int x)
 {
 #if (-1 >> 1) == -1
-  return x >> (sizeof (Xt_int) * CHAR_BIT - 1);
+  return x >> (sizeof (x) * CHAR_BIT - 1);
 #else
 #warning Unusual behaviour of shift operator detected.
   return (x < 0) * ~0;
