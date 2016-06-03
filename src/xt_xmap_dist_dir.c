@@ -449,6 +449,7 @@ static int
 cmp_isect_rank(const void *a_, const void *b_)
 {
   const struct isect *a = a_, *b = b_;
+  /* this is safe vs. overflow because ranks are in [0..MAX_INT) */
   return a->rank - b->rank;
 }
 
