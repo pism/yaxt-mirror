@@ -639,16 +639,29 @@ stripe_cmp(const void *a, const void *b)
 }
 
 
-static void
+struct Xt_com_list_list
+{
+  struct Xt_com_list *com;
+  int num_com;
+};
+
+static inline void
+free_com_list_list(struct Xt_com_list_list intersections)
+{
+  size_t num_com = (size_t)intersections.num_com;
+  struct Xt_com_list *restrict com = intersections.com;
+  for (size_t i = 0; i < num_com; ++i)
+    if (com[i].list != NULL)
+      xt_idxlist_delete(com[i].list);
+  free(com);
+}
+
+
+static struct Xt_com_list_list
 generate_intersection_from_dist_dir_results(
   const struct dist_dir *dist_dir_results,
-  struct Xt_com_list **src_com,
-  int *num_src_intersections,
-  MPI_Comm comm) {
+  int comm_size) {
 
-  int comm_size;
-
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   Xt_idxlist *restrict intersections = NULL;
   size_t intersections_array_size = 0;
@@ -702,9 +715,11 @@ generate_intersection_from_dist_dir_results(
     }
   }
 
-  *src_com = xrealloc(p, num_src_ix * sizeof(*p));
-  *num_src_intersections = (int)num_src_ix;
   free(intersections);
+  return (struct Xt_com_list_list){
+    .com = xrealloc(p, num_src_ix * sizeof(*p)),
+    .num_com = (int)num_src_ix
+  };
 }
 
 static void free_dist_dir(struct dist_dir * dist_dir) {
@@ -714,13 +729,12 @@ static void free_dist_dir(struct dist_dir * dist_dir) {
   free(dist_dir);
 }
 
-static void recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
-                                             struct Xt_com_list **src_com,
-                                             int *num_src_intersections,
-                                             struct Xt_com_list **dst_com,
-                                             int *num_dst_intersections,
-                                             int tag_offset,
-                                             MPI_Comm comm) {
+static void
+recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
+                                 struct Xt_com_list_list *src_intersections,
+                                 struct Xt_com_list_list *dst_intersections,
+                                 int tag_offset,
+                                 MPI_Comm comm) {
 
   void * recv_buffer = xmalloc((size_t)MAX(recv_size[SEND_SIZE_SRC],
                                            recv_size[SEND_SIZE_DST]));
@@ -750,22 +764,21 @@ static void recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
 
   free(recv_buffer);
 
-  generate_intersection_from_dist_dir_results(src_dist_dir_results,
-                                              src_com, num_src_intersections,
-                                              comm);
-
-  generate_intersection_from_dist_dir_results(dst_dist_dir_results,
-                                              dst_com, num_dst_intersections,
-                                              comm);
+  int comm_size;
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  *src_intersections =
+    generate_intersection_from_dist_dir_results(src_dist_dir_results,
+                                                comm_size);
+  *dst_intersections =
+    generate_intersection_from_dist_dir_results(dst_dist_dir_results,
+                                                comm_size);
 
   free_dist_dir(src_dist_dir_results);
   free_dist_dir(dst_dist_dir_results);
 }
 
-static void exchange_idxlists(struct Xt_com_list **src_com,
-                              int *num_src_intersections,
-                              struct Xt_com_list **dst_com,
-                              int *num_dst_intersections,
+static void exchange_idxlists(struct Xt_com_list_list *src_intersections,
+                              struct Xt_com_list_list *dst_intersections,
                               Xt_idxlist src_idxlist,
                               Xt_idxlist dst_idxlist,
                               int tag_offset,
@@ -797,16 +810,15 @@ static void exchange_idxlists(struct Xt_com_list **src_com,
   // get the data size the local process will receive from other processes
   get_remote_packed_intersection_size(recv_size, send_size, comm);
 
-  MPI_Request * send_indices_requests;
-  send_indices_requests
+  MPI_Request *send_indices_requests
     = xmalloc(2 * (size_t)comm_size * sizeof(*send_indices_requests));
 
   send_intersections(send_buffer, send_size, send_indices_requests,
                      tag_offset, comm);
 
-  recv_and_unpack_dist_dir_results(recv_size, src_com, num_src_intersections,
-                                   dst_com, num_dst_intersections, tag_offset,
-                                   comm);
+  recv_and_unpack_dist_dir_results(recv_size,
+                                   src_intersections, dst_intersections,
+                                   tag_offset, comm);
 
   xt_mpi_call(MPI_Waitall(2 * comm_size, send_indices_requests,
                               MPI_STATUSES_IGNORE), comm);
@@ -825,27 +837,20 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   int tag_offset;
   MPI_Comm newcomm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 
-  struct Xt_com_list * src_intersections, * dst_intersections;
-  int num_src_intersections, num_dst_intersections;
+  struct Xt_com_list_list src_intersections, dst_intersections;
 
-  exchange_idxlists(&src_intersections, &num_src_intersections,
-                    &dst_intersections, &num_dst_intersections,
+  exchange_idxlists(&src_intersections, &dst_intersections,
                     src_idxlist, dst_idxlist, tag_offset, newcomm);
 
   Xt_xmap xmap
-    = xt_xmap_intersection_new(num_src_intersections, src_intersections,
-                               num_dst_intersections, dst_intersections,
+    = xt_xmap_intersection_new(src_intersections.num_com, src_intersections.com,
+                               dst_intersections.num_com, dst_intersections.com,
                                src_idxlist, dst_idxlist, newcomm);
 
   xt_mpi_comm_smart_dedup(&newcomm, tag_offset);
 
-  for (int i = 0; i < num_src_intersections; ++i)
-    if (src_intersections[i].list != NULL)
-      xt_idxlist_delete(src_intersections[i].list);
-  for (int i = 0; i < num_dst_intersections; ++i)
-    if (dst_intersections[i].list != NULL)
-      xt_idxlist_delete(dst_intersections[i].list);
-  free(src_intersections), free(dst_intersections);
+  free_com_list_list(src_intersections);
+  free_com_list_list(dst_intersections);
 
   INSTR_STOP(this_instr);
   return xmap;
