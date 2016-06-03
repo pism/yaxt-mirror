@@ -94,18 +94,18 @@ struct dist_dir {
 static inline Xt_int
 get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
 
-  int num_indices, global_num_indices;
+  unsigned long long num_indices, global_num_indices;
 
-  num_indices = xt_idxlist_get_num_indices(idxlist);
+  num_indices = (unsigned)xt_idxlist_get_num_indices(idxlist);
 
-  xt_mpi_call(MPI_Allreduce(&num_indices, &global_num_indices, 1, MPI_INT,
-                                MPI_SUM, comm), comm);
+  xt_mpi_call(MPI_Allreduce(&num_indices, &global_num_indices, 1,
+                            MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  return (Xt_int)(((global_num_indices + comm_size - 1)
-                   / comm_size) * comm_size);
+  return (Xt_int)(((global_num_indices + (unsigned)comm_size - 1)
+                   / (unsigned)comm_size) * (unsigned)comm_size);
 }
 
 static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
@@ -134,11 +134,12 @@ static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  Xt_int global_interval, local_interval;
+  Xt_int global_interval;
   global_interval = get_dist_dir_global_interval_size(src_idxlist, comm);
 
   assert(global_interval / comm_size <= INT_MAX);
-  local_interval = (Xt_int)(global_interval / comm_size);
+  /* guard vs. comm_size being larger than number of indices */
+  Xt_int local_interval = MAX((Xt_int)1, (Xt_int)(global_interval / comm_size));
 
   int num_src = xt_idxlist_get_num_indices(src_idxlist),
     num_dst = xt_idxlist_get_num_indices(dst_idxlist);
