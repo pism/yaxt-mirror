@@ -128,61 +128,93 @@ static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
   return max_index;
 }
 
-static void generate_buckets(Xt_idxlist * buckets, Xt_idxlist src_idxlist,
-                             Xt_idxlist dst_idxlist, MPI_Comm comm) {
+struct bucket_params {
+  Xt_int global_interval, local_interval,
+    local_index_range_lbound, local_index_range_ubound;
+  int num_src, num_dst;
+};
+
+static struct bucket_params
+get_bucket_params(Xt_idxlist src_idxlist,
+                  Xt_idxlist dst_idxlist, MPI_Comm comm)
+{
+  int comm_size;
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  Xt_int global_interval
+    = get_dist_dir_global_interval_size(src_idxlist, comm);
+  /* guard vs. comm_size being larger than number of indices */
+  Xt_int local_interval = MAX((Xt_int)1, (Xt_int)(global_interval / comm_size));
+  int num_src = xt_idxlist_get_num_indices(src_idxlist),
+    num_dst = xt_idxlist_get_num_indices(dst_idxlist);
+  Xt_int local_index_range_lbound
+    = get_min_idxlist_index(src_idxlist, dst_idxlist);
+  Xt_int local_index_range_ubound
+    = get_max_idxlist_index(src_idxlist, dst_idxlist);
+  return (struct bucket_params){
+    .global_interval = global_interval,
+    .local_interval = local_interval,
+    .num_src = num_src,
+    .num_dst = num_dst,
+    .local_index_range_lbound = local_index_range_lbound,
+    .local_index_range_ubound = local_index_range_ubound,
+  };
+}
+
+static Xt_idxlist
+get_bucket(const struct bucket_params *bucket_params,
+           struct Xt_stripe **stripes_, size_t *stripes_array_size,
+           int dist_dir_rank)
+{
+  Xt_int global_interval = bucket_params->global_interval;
+  Xt_int local_interval = bucket_params->local_interval;
+  Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
+  Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
+  Xt_int start = (Xt_int)(0 + dist_dir_rank * local_interval);
+  int num_stripes = 0;
+
+  while (start > local_index_range_lbound)
+    start = (Xt_int)(start - global_interval), num_stripes++;
+
+  if ((local_index_range_ubound > 0) && (global_interval != 0))
+    num_stripes
+      = (int)(num_stripes
+              + ((local_index_range_ubound - start + global_interval)
+                 / global_interval));
+  else
+    num_stripes++;
+
+  struct Xt_stripe *restrict stripes = *stripes_;
+  ENSURE_ARRAY_SIZE(stripes, *stripes_array_size, (size_t)num_stripes);
+
+  for (int j = 0; j < num_stripes; ++j) {
+
+    stripes[j].start = (Xt_int)(start + j * global_interval);
+    stripes[j].stride = 1;
+    stripes[j].nstrides = (int)local_interval;
+  }
+
+  *stripes_ = stripes;
+  return xt_idxstripes_new(stripes, num_stripes);
+}
+
+
+static void generate_buckets(const struct bucket_params *bucket_params,
+                             Xt_idxlist * buckets, MPI_Comm comm) {
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  Xt_int global_interval;
-  global_interval = get_dist_dir_global_interval_size(src_idxlist, comm);
-
-  assert(global_interval / comm_size <= INT_MAX);
-  /* guard vs. comm_size being larger than number of indices */
-  Xt_int local_interval = MAX((Xt_int)1, (Xt_int)(global_interval / comm_size));
-
-  int num_src = xt_idxlist_get_num_indices(src_idxlist),
-    num_dst = xt_idxlist_get_num_indices(dst_idxlist);
+  int num_src = bucket_params->num_src,
+    num_dst = bucket_params->num_dst;
 
   if (num_src || num_dst)
   {
-    Xt_int local_index_range_lbound
-      = get_min_idxlist_index(src_idxlist, dst_idxlist);
-    Xt_int local_index_range_ubound
-      = get_max_idxlist_index(src_idxlist, dst_idxlist);
-
     struct Xt_stripe * stripes = NULL;
     size_t stripes_array_size = 0;
-
     // generate buckets for each process
-    for (int i = 0; i < comm_size; ++i) {
-
-      Xt_int start = (Xt_int)(0 + i * local_interval);
-      int num_stripes = 0;
-
-      while (start > local_index_range_lbound)
-        start = (Xt_int)(start - global_interval), num_stripes++;
-
-      if ((local_index_range_ubound > 0) && (global_interval != 0))
-        num_stripes
-          = (int)(num_stripes
-                     + ((local_index_range_ubound - start + global_interval)
-                        / global_interval));
-      else
-        num_stripes++;
-
-      ENSURE_ARRAY_SIZE(stripes, stripes_array_size, (size_t)num_stripes);
-
-      for (int j = 0; j < num_stripes; ++j) {
-
-        stripes[j].start = (Xt_int)(start + j * global_interval);
-        stripes[j].stride = 1;
-        stripes[j].nstrides = (int)local_interval;
-      }
-
-      buckets[i] = xt_idxstripes_new(stripes, num_stripes);
-    }
-
+    for (int i = 0; i < comm_size; ++i)
+      buckets[i] = get_bucket(bucket_params, &stripes, &stripes_array_size, i);
     free(stripes);
   }
   else
@@ -569,7 +601,9 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
 
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   buckets = xmalloc((size_t)comm_size * sizeof(*buckets));
-  generate_buckets(buckets, src_idxlist, dst_idxlist, comm);
+  struct bucket_params bucket_params
+    = get_bucket_params(src_idxlist, dst_idxlist, comm);
+  generate_buckets(&bucket_params, buckets, comm);
 
   int (*send_size)[SEND_SIZE_ASIZE];
   void * send_buffer;
