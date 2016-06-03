@@ -127,6 +127,20 @@ llsign(long long x)
 }
 
 /**
+ * @return ~(long long)0 if x < 0, 0 otherwise
+ */
+static inline long long
+llsign_mask(long long x)
+{
+#if (-1 >> 1) == -1
+  return x >> (sizeof (x) * CHAR_BIT - 1);
+#else
+#warning Unusual behaviour of shift operator detected.
+  return (x < 0) * ~0LL;
+#endif
+}
+
+/**
  * @return MIN(a, b)
  */
 static inline int
