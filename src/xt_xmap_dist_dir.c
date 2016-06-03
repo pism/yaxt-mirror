@@ -173,7 +173,6 @@ get_bucket(const struct bucket_params *bucket_params,
   Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
   int num_stripes = 0;
 
-
   /* find first index in bucket of dist_dir_rank
      <= local_index_range_lbound */
   Xt_int start = (Xt_int)(0 + dist_dir_rank * local_interval);
@@ -215,121 +214,95 @@ get_bucket(const struct bucket_params *bucket_params,
   return xt_idxstripes_new(stripes, num_stripes);
 }
 
-
-static void generate_buckets(const struct bucket_params *bucket_params,
-                             Xt_idxlist * buckets, MPI_Comm comm) {
-
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-
-  int num_src = bucket_params->num_src,
-    num_dst = bucket_params->num_dst;
-
-  if (num_src || num_dst)
-  {
-    struct Xt_stripe * stripes = NULL;
-    size_t stripes_array_size = 0;
-    // generate buckets for each process
-    for (int i = 0; i < comm_size; ++i)
-      buckets[i] = get_bucket(bucket_params, &stripes, &stripes_array_size, i);
-    free(stripes);
-  }
-  else
-  {
-    for (int i = 0; i < comm_size; ++i)
-      buckets[i] = xt_idxempty_new();
-  }
-}
-
 static int
-compute_and_pack_bucket_intersections(Xt_idxlist * buckets,
+compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
                                       Xt_idxlist src_idxlist,
                                       Xt_idxlist dst_idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
                                       void ** send_buffer, MPI_Comm comm) {
 
+
+  int num_msg = 0;
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  int send_buffer_size = 0;
-  int num_msg = 0;
-  struct {
-    Xt_idxlist src, dst;
-  } *send_list = xmalloc((size_t)comm_size * sizeof(*send_list));
+  if (bucket_params->local_index_range_lbound
+      <= bucket_params->local_index_range_ubound) {
+    int send_buffer_size = 0;
+    struct {
+      Xt_idxlist src, dst;
+    } *send_list = xmalloc((size_t)comm_size * sizeof(*send_list));
+    struct Xt_stripe *stripes = NULL;
+    size_t stripes_array_size = 0;
+    for (int i = 0; i < comm_size; ++i) {
+      Xt_idxlist bucket
+        = get_bucket(bucket_params, &stripes, &stripes_array_size, i);
+      send_list[i].src = xt_idxlist_get_intersection(src_idxlist, bucket);
+      send_list[i].dst = xt_idxlist_get_intersection(bucket, dst_idxlist);
+      xt_idxlist_delete(bucket);
 
-  for (int i = 0; i < comm_size; ++i) {
+      if (xt_idxlist_get_num_indices(send_list[i].src) > 0)
+      {
+        send_size[i][SEND_SIZE_SRC]
+          = (int)xt_idxlist_get_pack_size(send_list[i].src, comm);
+        send_size[i][SEND_NUM_SRC] = 1;
+        ++num_msg;
+      }
+      else
+      {
+        send_size[i][SEND_SIZE_SRC] = 0;
+        send_size[i][SEND_NUM_SRC] = 0;
+        xt_idxlist_delete(send_list[i].src);
+        send_list[i].src = NULL;
+      }
 
-    send_list[i].src = xt_idxlist_get_intersection(src_idxlist, buckets[i]);
-    send_list[i].dst = xt_idxlist_get_intersection(buckets[i], dst_idxlist);
+      if (xt_idxlist_get_num_indices(send_list[i].dst) > 0)
+      {
+        send_size[i][SEND_SIZE_DST]
+          = (int)xt_idxlist_get_pack_size(send_list[i].dst, comm);
+        send_size[i][SEND_NUM_DST] = 1;
+        ++num_msg;
+      }
+      else
+      {
+        send_size[i][SEND_SIZE_DST] = 0;
+        send_size[i][SEND_NUM_DST] = 0;
+        xt_idxlist_delete(send_list[i].dst);
+        send_list[i].dst = NULL;
+      }
 
-    if (xt_idxlist_get_num_indices(send_list[i].src) > 0)
-    {
-      send_size[i][SEND_SIZE_SRC]
-        = (int)xt_idxlist_get_pack_size(send_list[i].src, comm);
-      send_size[i][SEND_NUM_SRC] = 1;
-      ++num_msg;
+      send_buffer_size
+        += send_size[i][SEND_SIZE_SRC] + send_size[i][SEND_SIZE_DST];
     }
-    else
-    {
-      send_size[i][SEND_SIZE_SRC] = 0;
-      send_size[i][SEND_NUM_SRC] = 0;
-      xt_idxlist_delete(send_list[i].src);
-      send_list[i].src = NULL;
+
+    *send_buffer = xrealloc(stripes, (size_t)send_buffer_size);
+
+    int position = 0;
+
+    for (int i = 0; i < comm_size; ++i) {
+
+      if (send_size[i][SEND_SIZE_SRC] > 0)
+      {
+        xt_idxlist_pack(send_list[i].src, *send_buffer, send_buffer_size,
+                        &position, comm);
+        xt_idxlist_delete(send_list[i].src);
+      }
     }
 
-    if (xt_idxlist_get_num_indices(send_list[i].dst) > 0)
-    {
-      send_size[i][SEND_SIZE_DST]
-        = (int)xt_idxlist_get_pack_size(send_list[i].dst, comm);
-      send_size[i][SEND_NUM_DST] = 1;
-      ++num_msg;
-    }
-    else
-    {
-      send_size[i][SEND_SIZE_DST] = 0;
-      send_size[i][SEND_NUM_DST] = 0;
-      xt_idxlist_delete(send_list[i].dst);
-      send_list[i].dst = NULL;
+    for (int i = 0; i < comm_size; ++i) {
+
+      if (send_size[i][SEND_SIZE_DST] > 0)
+      {
+        xt_idxlist_pack(send_list[i].dst, *send_buffer, send_buffer_size,
+                        &position, comm);
+        xt_idxlist_delete(send_list[i].dst);
+      }
     }
 
-    send_buffer_size += send_size[i][SEND_SIZE_SRC];
-    send_buffer_size += send_size[i][SEND_SIZE_DST];
-  }
-
-  *send_buffer = xmalloc((size_t)send_buffer_size);
-
-  int position = 0;
-
-  for (int i = 0; i < comm_size; ++i) {
-
-    if (send_size[i][SEND_SIZE_SRC] > 0)
-    {
-      xt_idxlist_pack(send_list[i].src, *send_buffer, send_buffer_size,
-                      &position, comm);
-      xt_idxlist_delete(send_list[i].src);
-    }
-  }
-
-  for (int i = 0; i < comm_size; ++i) {
-
-    if (send_size[i][SEND_SIZE_DST] > 0)
-    {
-      xt_idxlist_pack(send_list[i].dst, *send_buffer, send_buffer_size,
-                      &position, comm);
-      xt_idxlist_delete(send_list[i].dst);
-    }
-  }
-
-  free(send_list);
+    free(send_list);
+  } else
+    memset(send_size, 0, (size_t)comm_size * sizeof (*send_size));
   return num_msg;
-}
-
-static inline void free_buckets(Xt_idxlist * buckets, int num_buckets) {
-
-  for (int i = 0; i < num_buckets; ++i)
-    xt_idxlist_delete(buckets[i]);
-
-  free(buckets);
 }
 
 static void
@@ -614,23 +587,20 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
                                              MPI_Comm comm) {
 
   int comm_size;
-  Xt_idxlist * buckets;
-
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-  buckets = xmalloc((size_t)comm_size * sizeof(*buckets));
+
   struct bucket_params bucket_params
     = get_bucket_params(src_idxlist, dst_idxlist, comm);
-  generate_buckets(&bucket_params, buckets, comm);
 
-  int (*send_size)[SEND_SIZE_ASIZE];
-  void * send_buffer;
+  void *send_buffer = NULL;
 
-  send_size = xmalloc((size_t)comm_size * sizeof(*send_size));
+  int (*send_size)[SEND_SIZE_ASIZE]
+    = xmalloc((size_t)comm_size * sizeof(*send_size));
+
   int num_msg
-    = compute_and_pack_bucket_intersections(buckets, src_idxlist, dst_idxlist,
+    = compute_and_pack_bucket_intersections(&bucket_params,
+                                            src_idxlist, dst_idxlist,
                                             send_size, &send_buffer, comm);
-
-  free_buckets(buckets, comm_size);
 
   int recv_size[SEND_SIZE_ASIZE]; // for src and dst
 
