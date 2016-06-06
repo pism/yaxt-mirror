@@ -465,7 +465,7 @@ match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     }
   *src_dst_intersections
     = xrealloc(src_dst_intersections_,
-               isect_fill * sizeof (src_dst_intersections_[0]));
+               isect_fill * sizeof (*src_dst_intersections_));
   return isect_fill;
 }
 
@@ -623,8 +623,8 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
 }
 
 static void
-recv_and_unpack_dist_dir_result(struct dist_dir * dist_dir, int recv_size,
-                                void * recv_buffer, int tag,
+recv_and_unpack_dist_dir_result(struct dist_dir *dist_dir, int recv_size,
+                                void *restrict recv_buffer, int tag,
                                 MPI_Comm comm)
 {
 
@@ -724,7 +724,7 @@ generate_intersection_from_dist_dir_results(
           offset++;
         }
 
-      struct Xt_stripe *stripes = NULL;
+      struct Xt_stripe *restrict stripes = NULL;
       int num_stripes = 0;
       for (size_t j = 0; j < (size_t)num_intersections_per_rank; ++j) {
         struct Xt_stripe *stripes_of_intersection;
