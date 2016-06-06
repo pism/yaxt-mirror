@@ -772,9 +772,6 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
                                  int tag_offset,
                                  MPI_Comm comm) {
 
-  void * recv_buffer = xmalloc((size_t)MAX(recv_size[SEND_SIZE_SRC],
-                                           recv_size[SEND_SIZE_DST]));
-
   struct dist_dir *src_dist_dir_results
     = xmalloc(sizeof (struct dist_dir)
               + (sizeof (struct dist_dir_entry)
@@ -783,6 +780,9 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
     = xmalloc(sizeof (struct dist_dir)
               + (sizeof (struct dist_dir_entry)
                  * (size_t)recv_size[SEND_NUM_DST]));
+
+  void *recv_buffer = xmalloc((size_t)MAX(recv_size[SEND_SIZE_SRC],
+                                          recv_size[SEND_SIZE_DST]));
 
   recv_and_unpack_dist_dir_result(src_dist_dir_results,
                                   recv_size[SEND_SIZE_SRC],
