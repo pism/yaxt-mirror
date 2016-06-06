@@ -318,8 +318,7 @@ get_remote_packed_intersection_size(int recv_size[SEND_SIZE_ASIZE],
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  int * recv_count;
-  recv_count = xmalloc((size_t)comm_size * sizeof(*recv_count));
+  int *recv_count = xmalloc((size_t)comm_size * sizeof(*recv_count));
   for (int i = 0; i < comm_size; ++i) recv_count[i] = SEND_SIZE_ASIZE;
 
   xt_mpi_call(MPI_Reduce_scatter(send_size, recv_size, recv_count, MPI_INT,
