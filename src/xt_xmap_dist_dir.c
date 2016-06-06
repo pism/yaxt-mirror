@@ -90,7 +90,7 @@ struct dist_dir_entry {
 
 struct dist_dir {
   int num_entries;
-  struct dist_dir_entry entries[];
+  struct Xt_com_list entries[];
 };
 
 static inline Xt_int
@@ -386,7 +386,7 @@ recv_and_unpack_intersection(struct dist_dir *dist_dir, int recv_size,
     int position = 0;
 
     dist_dir->entries[i].rank = status.MPI_SOURCE;
-    dist_dir->entries[i].idxlist =
+    dist_dir->entries[i].list =
       xt_idxlist_unpack(recv_buffer, received_count, &position, comm);
 
     total_recv_size += received_count;
@@ -405,10 +405,10 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
                               int tag_offset, MPI_Comm comm) {
 
   *src_dist_dir = xmalloc(sizeof (struct dist_dir)
-                          + (sizeof (struct dist_dir_entry)
+                          + (sizeof (struct Xt_com_list)
                              * (size_t)recv_size[SEND_NUM_SRC]));
   *dst_dist_dir = xmalloc(sizeof (struct dist_dir)
-                          + (sizeof (struct dist_dir_entry)
+                          + (sizeof (struct Xt_com_list)
                              * (size_t)recv_size[SEND_NUM_DST]));
 
 
@@ -451,7 +451,7 @@ match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     for (int j = 0; j < dst_dist_dir->num_entries; ++j)
     {
       Xt_idxlist intersection = xt_idxlist_get_intersection(
-        src_dist_dir->entries[i].idxlist, dst_dist_dir->entries[j].idxlist);
+        src_dist_dir->entries[i].list, dst_dist_dir->entries[j].list);
       if (xt_idxlist_get_num_indices(intersection) > 0)
       {
         src_dst_intersections_[isect_fill]
@@ -651,7 +651,7 @@ recv_and_unpack_dist_dir_result(struct dist_dir *dist_dir, int recv_size,
                              &dist_dir->entries[num_entries].rank,
                              1, MPI_INT, comm), comm);
 
-      dist_dir->entries[num_entries].idxlist =
+      dist_dir->entries[num_entries].list =
         xt_idxlist_unpack(recv_buffer, received_count, &position, comm);
 
       ++num_entries;
@@ -721,7 +721,7 @@ generate_intersection_from_dist_dir_results(
 
       for (int j = 0; num_intersections_per_rank != offset; ++j)
         if (dist_dir_results->entries[j].rank == i) {
-          intersections[offset] = dist_dir_results->entries[j].idxlist;
+          intersections[offset] = dist_dir_results->entries[j].list;
           offset++;
         }
 
@@ -761,7 +761,7 @@ generate_intersection_from_dist_dir_results(
 static void free_dist_dir(struct dist_dir * dist_dir) {
 
   for (int i = 0; i < dist_dir->num_entries; ++i)
-    xt_idxlist_delete(dist_dir->entries[i].idxlist);
+    xt_idxlist_delete(dist_dir->entries[i].list);
   free(dist_dir);
 }
 
@@ -774,11 +774,11 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
 
   struct dist_dir *src_dist_dir_results
     = xmalloc(sizeof (struct dist_dir)
-              + (sizeof (struct dist_dir_entry)
+              + (sizeof (struct Xt_com_list)
                  * (size_t)recv_size[SEND_NUM_SRC])),
     *dst_dist_dir_results
     = xmalloc(sizeof (struct dist_dir)
-              + (sizeof (struct dist_dir_entry)
+              + (sizeof (struct Xt_com_list)
                  * (size_t)recv_size[SEND_NUM_DST]));
 
   void *recv_buffer = xmalloc((size_t)MAX(recv_size[SEND_SIZE_SRC],
