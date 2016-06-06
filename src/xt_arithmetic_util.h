@@ -108,7 +108,7 @@ Xt_isign_mask(Xt_int x)
   return x >> (sizeof (x) * CHAR_BIT - 1);
 #else
 #warning Unusual behaviour of shift operator detected.
-  return (x < 0) * ~0;
+  return (x < 0) * ~(Xt_int)0;
 #endif
 }
 
