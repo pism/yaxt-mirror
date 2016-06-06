@@ -64,6 +64,7 @@
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_mpi.h"
 #include "xt_arithmetic_util.h"
+#include "xt_idxstripes_internal.h"
 #include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
@@ -211,7 +212,7 @@ get_bucket(const struct bucket_params *bucket_params,
   }
 
   *stripes_ = stripes;
-  return xt_idxstripes_new(stripes, num_stripes);
+  return xt_idxstripes_prealloc_new(stripes, num_stripes);
 }
 
 static int
