@@ -47,6 +47,7 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -735,10 +736,43 @@ static void free_dist_dir(struct dist_dir * dist_dir) {
   free(dist_dir);
 }
 
+static bool
+test_mpi_req(int *restrict num_req_,
+             MPI_Request *restrict req,
+             int *restrict ops_completed, MPI_Comm comm)
+{
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int done_count;
+  size_t num_req = (size_t)*num_req_;
+  xt_mpi_call(MPI_Testsome(*num_req_, req, &done_count, ops_completed,
+                           MPI_STATUSES_IGNORE), comm);
+  if (done_count != MPI_UNDEFINED) {
+    if (num_req > (size_t)done_count) {
+      size_t j = num_req;
+      for (size_t i = 0;
+           i < (size_t)done_count && j >= num_req - (size_t)done_count;
+           ++i)
+        if (ops_completed[i] < (int)num_req - done_count) {
+          while (req[--j] == MPI_REQUEST_NULL);
+          req[ops_completed[i]] = req[j];
+        }
+      num_req -= (size_t)done_count;
+    }
+    else
+      num_req = 0;
+  }
+  *num_req_ = (int)num_req;
+  return num_req == 0;
+}
+
+
 static void
 recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
                                  struct dist_dir **src_intersections,
                                  struct dist_dir **dst_intersections,
+                                 int *num_send_indices_requests,
+                                 MPI_Request *send_indices_requests,
                                  int tag_offset,
                                  MPI_Comm comm) {
 
@@ -761,6 +795,16 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
   assert(src_dist_dir_results->num_entries
          == recv_size[SEND_NUM_SRC]);
 
+  enum { ops_completed_auto_size = 16 };
+  int ops_completed_auto[ops_completed_auto_size];
+  int *ops_completed
+    = *num_send_indices_requests > ops_completed_auto_size
+    ? xmalloc((size_t)*num_send_indices_requests * sizeof (*ops_completed))
+    : ops_completed_auto;
+  bool all_sends_done
+    = test_mpi_req(num_send_indices_requests, send_indices_requests,
+                   ops_completed, comm);
+
   recv_and_unpack_dist_dir_result(dst_dist_dir_results,
                                   recv_size[SEND_SIZE_DST],
                                   recv_buffer, tag_offset
@@ -768,12 +812,23 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
   assert(dst_dist_dir_results->num_entries
          == recv_size[SEND_NUM_DST]);
 
+  if (!all_sends_done)
+    all_sends_done
+      = test_mpi_req(num_send_indices_requests, send_indices_requests,
+                     ops_completed, comm);
   free(recv_buffer);
 
   merge_bucket_intersections(&src_dist_dir_results);
   *src_intersections = src_dist_dir_results;
+
+  if (!all_sends_done)
+    all_sends_done
+      = test_mpi_req(num_send_indices_requests, send_indices_requests,
+                     ops_completed, comm);
+
   merge_bucket_intersections(&dst_dist_dir_results);
   *dst_intersections = dst_dist_dir_results;
+  if (ops_completed != ops_completed_auto) free(ops_completed);
 }
 
 static void exchange_idxlists(struct dist_dir **src_intersections,
@@ -818,6 +873,8 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
 
   recv_and_unpack_dist_dir_results(recv_size,
                                    src_intersections, dst_intersections,
+                                   &num_send_indices_requests,
+                                   send_indices_requests,
                                    tag_offset, comm);
 
   xt_mpi_call(MPI_Waitall(num_send_indices_requests, send_indices_requests,
