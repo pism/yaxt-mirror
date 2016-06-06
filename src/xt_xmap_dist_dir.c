@@ -97,7 +97,8 @@ struct dist_dir {
 
 
 static inline Xt_int
-get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
+get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm,
+                                  int comm_size) {
 
   unsigned long long num_indices, global_num_indices;
 
@@ -105,9 +106,6 @@ get_dist_dir_global_interval_size(Xt_idxlist idxlist, MPI_Comm comm) {
 
   xt_mpi_call(MPI_Allreduce(&num_indices, &global_num_indices, 1,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
-
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   return (Xt_int)(((global_num_indices + (unsigned)comm_size - 1)
                    / (unsigned)comm_size) * (unsigned)comm_size);
@@ -141,13 +139,10 @@ struct bucket_params {
 
 static struct bucket_params
 get_bucket_params(Xt_idxlist src_idxlist,
-                  Xt_idxlist dst_idxlist, MPI_Comm comm)
+                  Xt_idxlist dst_idxlist, MPI_Comm comm, int comm_size)
 {
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-
   Xt_int global_interval
-    = get_dist_dir_global_interval_size(src_idxlist, comm);
+    = get_dist_dir_global_interval_size(src_idxlist, comm, comm_size);
   /* guard vs. comm_size being larger than number of indices */
   Xt_int local_interval = MAX((Xt_int)1, (Xt_int)(global_interval / comm_size));
   int num_src = xt_idxlist_get_num_indices(src_idxlist),
@@ -223,13 +218,11 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
                                       Xt_idxlist src_idxlist,
                                       Xt_idxlist dst_idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
-                                      void ** send_buffer, MPI_Comm comm) {
+                                      void ** send_buffer,
+                                      MPI_Comm comm, int comm_size) {
 
 
   int num_msg = 0;
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-
   if (bucket_params->local_index_range_lbound
       <= bucket_params->local_index_range_ubound) {
     int send_buffer_size = 0;
@@ -335,10 +328,7 @@ get_remote_packed_intersection_size(int recv_size[SEND_SIZE_ASIZE],
 static void send_intersections(void * send_buffer,
                                int (*send_size)[SEND_SIZE_ASIZE],
                                MPI_Request *dir_init_send_requests,
-                               int tag_offset, MPI_Comm comm) {
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-
+                               int tag_offset, MPI_Comm comm, int comm_size) {
   int offset = 0;
   size_t reqOfs = 0;
 
@@ -593,7 +583,7 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   struct bucket_params bucket_params
-    = get_bucket_params(src_idxlist, dst_idxlist, comm);
+    = get_bucket_params(src_idxlist, dst_idxlist, comm, comm_size);
 
   void *send_buffer = NULL;
 
@@ -603,7 +593,8 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
   int num_msg
     = compute_and_pack_bucket_intersections(&bucket_params,
                                             src_idxlist, dst_idxlist,
-                                            send_size, &send_buffer, comm);
+                                            send_size, &send_buffer,
+                                            comm, comm_size);
 
   int recv_size[SEND_SIZE_ASIZE]; // for src and dst
 
@@ -612,7 +603,7 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
   MPI_Request *dir_init_send_requests
     = xmalloc((size_t)num_msg * sizeof(*dir_init_send_requests));
   send_intersections(send_buffer, send_size, dir_init_send_requests,
-                     tag_offset, comm);
+                     tag_offset, comm, comm_size);
 
   free(send_size);
 
@@ -779,8 +770,6 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
 
   free(recv_buffer);
 
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   merge_bucket_intersections(&src_dist_dir_results);
   *src_intersections = src_dist_dir_results;
   merge_bucket_intersections(&dst_dist_dir_results);
@@ -825,7 +814,7 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
               * sizeof(*send_indices_requests));
 
   send_intersections(send_buffer, send_size, send_indices_requests,
-                     tag_offset, comm);
+                     tag_offset, comm, comm_size);
 
   recv_and_unpack_dist_dir_results(recv_size,
                                    src_intersections, dst_intersections,
