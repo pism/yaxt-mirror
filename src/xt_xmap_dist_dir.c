@@ -502,17 +502,11 @@ cmp_isect_dst_rank(const void *a_, const void *b_)
 }
 
 static int
-match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
-                                 struct dist_dir * dst_dist_dir,
-                                 int (*send_size)[SEND_SIZE_ASIZE],
-                                 void ** send_buffer,
-                                 MPI_Comm comm) {
-
-  struct isect *src_dst_intersections;
-
-  size_t num_intersections
-    = match_src_dst_dist_dirs(src_dist_dir, dst_dist_dir,
-                              &src_dst_intersections);
+pack_src_dst_dist_dirs(size_t num_intersections,
+                       struct isect *restrict src_dst_intersections,
+                       int (*send_size)[SEND_SIZE_ASIZE],
+                       void ** send_buffer,
+                       MPI_Comm comm) {
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
@@ -587,8 +581,6 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     /* after this step, the idxlist is no longer needed */
     xt_idxlist_delete(src_dst_intersections[i].idxlist);
   }
-
-  free(src_dst_intersections);
   return num_send_indices_requests;
 }
 
@@ -872,13 +864,19 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
   int recv_size[SEND_SIZE_ASIZE], (*send_size)[SEND_SIZE_ASIZE]
     = xmalloc((size_t)comm_size * sizeof(*send_size));
 
-  // match the source and destination entries in the local distributed
-  // directories and pack the results into a sendable format
-  int num_send_indices_requests
-    = match_and_pack_src_dst_dist_dirs(src_dist_dir, dst_dist_dir, send_size,
-                                       &send_buffer, comm);
+  /* match the source and destination entries in the local distributed
+   * directories... */
+  struct isect *src_dst_intersections;
+  size_t num_intersections
+    = match_src_dst_dist_dirs(src_dist_dir, dst_dist_dir,
+                              &src_dst_intersections);
   free_dist_dir(src_dist_dir);
   free_dist_dir(dst_dist_dir);
+  /* ... and pack the results into a sendable format */
+  int num_send_indices_requests
+    = pack_src_dst_dist_dirs(num_intersections, src_dst_intersections,
+                             send_size, &send_buffer, comm);
+  free(src_dst_intersections);
 
   // get the data size the local process will receive from other processes
   get_remote_packed_intersection_size(recv_size, send_size, comm);
