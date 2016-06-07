@@ -452,8 +452,8 @@ struct isect
 };
 
 static size_t
-match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
-                        struct dist_dir * dst_dist_dir,
+match_src_dst_dist_dirs(const struct dist_dir *src_dist_dir,
+                        const struct dist_dir *dst_dist_dir,
                         struct isect **src_dst_intersections)
 {
   struct isect (*src_dst_intersections_)
@@ -462,23 +462,22 @@ match_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
               * (size_t)dst_dist_dir->num_entries
               * sizeof(**src_dst_intersections));
   size_t isect_fill = 0;
-
-  for (int i = 0; i < src_dist_dir->num_entries; ++i)
-    for (int j = 0; j < dst_dist_dir->num_entries; ++j)
+  const struct Xt_com_list *restrict entries_src = src_dist_dir->entries,
+    *restrict entries_dst = dst_dist_dir->entries;
+  size_t num_entries_src = (size_t)src_dist_dir->num_entries,
+    num_entries_dst = (size_t)dst_dist_dir->num_entries;
+  for (size_t i = 0; i < num_entries_src; ++i)
+    for (size_t j = 0; j < num_entries_dst; ++j)
     {
-      Xt_idxlist intersection = xt_idxlist_get_intersection(
-        src_dist_dir->entries[i].list, dst_dist_dir->entries[j].list);
-      if (xt_idxlist_get_num_indices(intersection) > 0)
-      {
+      Xt_idxlist intersection
+        = xt_idxlist_get_intersection(entries_src[i].list, entries_dst[j].list);
+      if (xt_idxlist_get_num_indices(intersection) > 0) {
         src_dst_intersections_[isect_fill]
-          = (struct isect){ .dst_list = j, .src_list = i,
+          = (struct isect){ .dst_list = (int)j, .src_list = (int)i,
                             .idxlist = intersection };
         ++isect_fill;
-      }
-      else
-      {
+      } else
         xt_idxlist_delete(intersection);
-      }
     }
   *src_dst_intersections
     = xrealloc(src_dst_intersections_,
