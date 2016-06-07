@@ -216,6 +216,22 @@ get_bucket(const struct bucket_params *bucket_params,
   return xt_idxstripes_prealloc_new(stripes, num_stripes);
 }
 
+struct idxlist_dst_src_pair {
+  Xt_idxlist src, dst;
+};
+
+static void
+rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE],
+             struct idxlist_dst_src_pair *restrict send_list)
+{
+  send_size[rank][SEND_SIZE_SRC] = 0;
+  send_size[rank][SEND_NUM_SRC] = 0;
+  send_size[rank][SEND_SIZE_DST] = 0;
+  send_size[rank][SEND_NUM_DST] = 0;
+  send_list[rank].src = NULL;
+  send_list[rank].dst = NULL;
+}
+
 static int
 compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
                                       Xt_idxlist src_idxlist,
@@ -229,14 +245,32 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
   if (bucket_params->local_index_range_lbound
       <= bucket_params->local_index_range_ubound) {
     int send_buffer_size = 0;
-    struct {
-      Xt_idxlist src, dst;
-    } *send_list = xmalloc((size_t)comm_size * sizeof(*send_list));
+    struct idxlist_dst_src_pair *send_list
+      = xmalloc((size_t)comm_size * sizeof(*send_list));
     struct Xt_stripe *stripes = NULL;
     size_t stripes_array_size = 0;
-    for (int i = 0; i < comm_size; ++i) {
+    size_t i = 0;
+    /* is it impossible for early buckets to overlap our lists? */
+    if (bucket_params->local_index_range_lbound >= 0
+        && (bucket_params->local_index_range_ubound
+            < bucket_params->global_interval)) {
+      size_t non_overlapping_bucket_prefix
+        = bucket_params->local_index_range_lbound
+        / bucket_params->local_interva;
+      for (; i < non_overlapping_bucket_prefix; ++i)
+        rank_no_send(i, send_size, send_list);
+    }
+    /* is it impossible for later ranks to overlap our lists? */
+    size_t start_of_non_overlapping_bucket_suffix
+      = (bucket_params->local_index_range_ubound
+         + bucket_params->local_interval - 1) / bucket_params->local_interval;
+    if (bucket_params->local_index_range_lbound < 0
+        || start_of_non_overlapping_bucket_suffix > comm_size)
+      start_of_non_overlapping_bucket_suffix = comm_size;
+
+    for (; i < (size_t)start_of_non_overlapping_bucket_suffix; ++i) {
       Xt_idxlist bucket
-        = get_bucket(bucket_params, &stripes, &stripes_array_size, i);
+        = get_bucket(bucket_params, &stripes, &stripes_array_size, (int)i);
       if (bucket) {
         send_list[i].src = xt_idxlist_get_intersection(src_idxlist, bucket);
         if (xt_idxlist_get_num_indices(send_list[i].src) > 0)
@@ -272,18 +306,14 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
           send_list[i].dst = NULL;
         }
 
-      } else {
-        send_size[i][SEND_SIZE_SRC] = 0;
-        send_size[i][SEND_NUM_SRC] = 0;
-        send_size[i][SEND_SIZE_DST] = 0;
-        send_size[i][SEND_NUM_DST] = 0;
-        send_list[i].src = NULL;
-        send_list[i].dst = NULL;
-      }
+      } else
+        rank_no_send(i, send_size, send_list);
 
       send_buffer_size
         += send_size[i][SEND_SIZE_SRC] + send_size[i][SEND_SIZE_DST];
     }
+    for (; i < (size_t)comm_size; ++i)
+      rank_no_send(i, send_size, send_list);
 
     *send_buffer = xrealloc(stripes, (size_t)send_buffer_size);
 
