@@ -199,6 +199,8 @@ get_bucket(const struct bucket_params *bucket_params,
   start = (Xt_int)(start
                    + ((Xt_int)((Xt_uint)use_start_stripe - (Xt_uint)1)
                       & global_interval));
+  if (!num_stripes)
+    return NULL;
 
   struct Xt_stripe *restrict stripes = *stripes_;
   ENSURE_ARRAY_SIZE(stripes, *stripes_array_size, (size_t)num_stripes);
@@ -235,37 +237,47 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
     for (int i = 0; i < comm_size; ++i) {
       Xt_idxlist bucket
         = get_bucket(bucket_params, &stripes, &stripes_array_size, i);
-      send_list[i].src = xt_idxlist_get_intersection(src_idxlist, bucket);
-      send_list[i].dst = xt_idxlist_get_intersection(bucket, dst_idxlist);
-      xt_idxlist_delete(bucket);
+      if (bucket) {
+        send_list[i].src = xt_idxlist_get_intersection(src_idxlist, bucket);
+        if (xt_idxlist_get_num_indices(send_list[i].src) > 0)
+        {
+          send_size[i][SEND_SIZE_SRC]
+            = (int)xt_idxlist_get_pack_size(send_list[i].src, comm);
+          send_size[i][SEND_NUM_SRC] = 1;
+          ++num_msg;
+        }
+        else
+        {
+          send_size[i][SEND_SIZE_SRC] = 0;
+          send_size[i][SEND_NUM_SRC] = 0;
+          xt_idxlist_delete(send_list[i].src);
+          send_list[i].src = NULL;
+        }
 
-      if (xt_idxlist_get_num_indices(send_list[i].src) > 0)
-      {
-        send_size[i][SEND_SIZE_SRC]
-          = (int)xt_idxlist_get_pack_size(send_list[i].src, comm);
-        send_size[i][SEND_NUM_SRC] = 1;
-        ++num_msg;
-      }
-      else
-      {
+        send_list[i].dst = xt_idxlist_get_intersection(bucket, dst_idxlist);
+        xt_idxlist_delete(bucket);
+
+        if (xt_idxlist_get_num_indices(send_list[i].dst) > 0)
+        {
+          send_size[i][SEND_SIZE_DST]
+            = (int)xt_idxlist_get_pack_size(send_list[i].dst, comm);
+          send_size[i][SEND_NUM_DST] = 1;
+          ++num_msg;
+        }
+        else
+        {
+          send_size[i][SEND_SIZE_DST] = 0;
+          send_size[i][SEND_NUM_DST] = 0;
+          xt_idxlist_delete(send_list[i].dst);
+          send_list[i].dst = NULL;
+        }
+
+      } else {
         send_size[i][SEND_SIZE_SRC] = 0;
         send_size[i][SEND_NUM_SRC] = 0;
-        xt_idxlist_delete(send_list[i].src);
-        send_list[i].src = NULL;
-      }
-
-      if (xt_idxlist_get_num_indices(send_list[i].dst) > 0)
-      {
-        send_size[i][SEND_SIZE_DST]
-          = (int)xt_idxlist_get_pack_size(send_list[i].dst, comm);
-        send_size[i][SEND_NUM_DST] = 1;
-        ++num_msg;
-      }
-      else
-      {
         send_size[i][SEND_SIZE_DST] = 0;
         send_size[i][SEND_NUM_DST] = 0;
-        xt_idxlist_delete(send_list[i].dst);
+        send_list[i].src = NULL;
         send_list[i].dst = NULL;
       }
 
