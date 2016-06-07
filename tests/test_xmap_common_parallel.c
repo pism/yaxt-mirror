@@ -54,9 +54,11 @@
 
 #include "tests.h"
 #include "test_xmap_common.h"
+#include "core/ppm_xfuncs.h"
 
 static void
-test_xmap_allgather_analog(xmap_constructor xmap_new);
+test_xmap_allgather_analog(xmap_constructor xmap_new,
+                           size_t num_indices_per_rank);
 static void
 test_ring_1d(xmap_constructor xmap_new);
 static void
@@ -77,7 +79,9 @@ xt_xmap_parallel_test_main(xmap_constructor xmap_new)
   MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
 
-  test_xmap_allgather_analog(xmap_new);
+  test_xmap_allgather_analog(xmap_new, 1);
+  /* repeat test for large index list that will cause stripifying */
+  test_xmap_allgather_analog(xmap_new, 1024);
 
   if (comm_size > 2) // skip test if there are not enough processes
     test_ring_1d(xmap_new);
@@ -102,11 +106,7 @@ check_xmap_allgather_analog_xmap(Xt_xmap xmap)
   if (xt_xmap_get_num_sources(xmap) != comm_size)
     PUT_ERR("error in xt_xmap_get_num_sources\n");
 
-  int *ranks = malloc(sizeof (*ranks) * (size_t)comm_size);
-  if (!ranks) {
-    perror("failed to allocate temporary");
-    abort();
-  }
+  int *ranks = xmalloc(sizeof (*ranks) * (size_t)comm_size);
 
   xt_xmap_get_destination_ranks(xmap, ranks);
   for (int i = 0; i < comm_size; ++i)
@@ -122,24 +122,27 @@ check_xmap_allgather_analog_xmap(Xt_xmap xmap)
 
 
 static void
-test_xmap_allgather_analog(xmap_constructor xmap_new)
+test_xmap_allgather_analog(xmap_constructor xmap_new,
+                           size_t num_indices_per_rank)
 {
   // test in which every process requests data from all processes
   // source index list
-  Xt_int src_index_list[1] = {(Xt_int)(comm_rank)};
+  Xt_int *src_index_list = xmalloc(num_indices_per_rank * sizeof (Xt_int));
+  for (size_t i = 0; i < num_indices_per_rank; ++i)
+    src_index_list[i]
+      = (Xt_int)((size_t)comm_rank * num_indices_per_rank + i);
 
-  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, 1);
+  Xt_idxlist src_idxlist
+    = xt_idxvec_new(src_index_list, (int)num_indices_per_rank);
+  free(src_index_list);
 
   // destination index list
-  Xt_int *dst_index_list = malloc(sizeof(*dst_index_list) * (size_t)comm_size);
-  if (!dst_index_list) {
-    perror("failed to allocate temporary");
-    abort();
-  }
-  for (size_t i = 0; i < (size_t)comm_size; ++i)
-    dst_index_list[i] = (Xt_int)(i);
+  size_t num_gathered = (size_t)comm_size * num_indices_per_rank;
+  Xt_int *dst_index_list = xmalloc(sizeof(Xt_int) * num_gathered);
+  for (size_t i = 0; i < num_gathered; ++i)
+    dst_index_list[i] = (Xt_int)i;
 
-  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, comm_size);
+  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, (int)num_gathered);
   free(dst_index_list);
 
   // test of exchange map
