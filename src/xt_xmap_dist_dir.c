@@ -216,20 +216,13 @@ get_bucket(const struct bucket_params *bucket_params,
   return xt_idxstripes_prealloc_new(stripes, num_stripes);
 }
 
-struct idxlist_dst_src_pair {
-  Xt_idxlist src, dst;
-};
-
 static void
-rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE],
-             struct idxlist_dst_src_pair *restrict send_list)
+rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE])
 {
   send_size[rank][SEND_SIZE_SRC] = 0;
   send_size[rank][SEND_NUM_SRC] = 0;
   send_size[rank][SEND_SIZE_DST] = 0;
   send_size[rank][SEND_NUM_DST] = 0;
-  send_list[rank].src = NULL;
-  send_list[rank].dst = NULL;
 }
 
 static int
@@ -237,109 +230,96 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
                                       Xt_idxlist src_idxlist,
                                       Xt_idxlist dst_idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
-                                      void ** send_buffer,
+                                      void **send_buffer_,
                                       MPI_Comm comm, int comm_size) {
 
 
   int num_msg = 0;
-  if (bucket_params->local_index_range_lbound
-      <= bucket_params->local_index_range_ubound) {
+  Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
+  Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
+  if (local_index_range_lbound <= local_index_range_ubound) {
     int send_buffer_size = 0;
-    struct idxlist_dst_src_pair *send_list
-      = xmalloc((size_t)comm_size * sizeof(*send_list));
+    Xt_idxlist *restrict send_list_dst
+      = xmalloc(2 * (size_t)comm_size * sizeof(*send_list_dst)),
+      *restrict send_list_src = send_list_dst + (size_t)comm_size;
     struct Xt_stripe *stripes = NULL;
     size_t stripes_array_size = 0;
-    size_t i = 0;
+    Xt_int global_interval = bucket_params->global_interval;
+    Xt_int local_interval = bucket_params->local_interval;
+    size_t first_overlapping_bucket = 0;
     /* is it impossible for early buckets to overlap our lists? */
-    if (bucket_params->local_index_range_lbound >= 0
-        && (bucket_params->local_index_range_ubound
-            < bucket_params->global_interval)) {
-      size_t non_overlapping_bucket_prefix
-        = bucket_params->local_index_range_lbound
-        / bucket_params->local_interva;
-      for (; i < non_overlapping_bucket_prefix; ++i)
-        rank_no_send(i, send_size, send_list);
+    if (local_index_range_lbound >= 0
+        && (local_index_range_ubound < global_interval)) {
+      first_overlapping_bucket
+        = (size_t)(local_index_range_lbound / local_interval);
+      for (size_t i = 0; i < first_overlapping_bucket; ++i)
+        rank_no_send(i, send_size);
     }
     /* is it impossible for later ranks to overlap our lists? */
     size_t start_of_non_overlapping_bucket_suffix
-      = (bucket_params->local_index_range_ubound
-         + bucket_params->local_interval - 1) / bucket_params->local_interval;
-    if (bucket_params->local_index_range_lbound < 0
-        || start_of_non_overlapping_bucket_suffix > comm_size)
-      start_of_non_overlapping_bucket_suffix = comm_size;
-
+      = (size_t)(((long long)local_index_range_ubound + local_interval - 1)
+                 / local_interval) + 1;
+    if (local_index_range_lbound < 0
+        || start_of_non_overlapping_bucket_suffix > (size_t)comm_size)
+      start_of_non_overlapping_bucket_suffix = (size_t)comm_size;
+    size_t i = first_overlapping_bucket;
+    size_t num_src_msg = 0, num_dst_msg = 0;
     for (; i < (size_t)start_of_non_overlapping_bucket_suffix; ++i) {
       Xt_idxlist bucket
         = get_bucket(bucket_params, &stripes, &stripes_array_size, (int)i);
       if (bucket) {
-        send_list[i].src = xt_idxlist_get_intersection(src_idxlist, bucket);
-        if (xt_idxlist_get_num_indices(send_list[i].src) > 0)
-        {
+        Xt_idxlist send4src = xt_idxlist_get_intersection(src_idxlist, bucket);
+        if (xt_idxlist_get_num_indices(send4src) > 0) {
+          send_list_src[num_src_msg] = send4src;
           send_size[i][SEND_SIZE_SRC]
-            = (int)xt_idxlist_get_pack_size(send_list[i].src, comm);
+            = (int)xt_idxlist_get_pack_size(send4src, comm);
           send_size[i][SEND_NUM_SRC] = 1;
-          ++num_msg;
-        }
-        else
-        {
+          ++num_src_msg;
+        } else {
           send_size[i][SEND_SIZE_SRC] = 0;
           send_size[i][SEND_NUM_SRC] = 0;
-          xt_idxlist_delete(send_list[i].src);
-          send_list[i].src = NULL;
+          xt_idxlist_delete(send4src);
         }
 
-        send_list[i].dst = xt_idxlist_get_intersection(bucket, dst_idxlist);
+        Xt_idxlist send4dst = xt_idxlist_get_intersection(bucket, dst_idxlist);
         xt_idxlist_delete(bucket);
-
-        if (xt_idxlist_get_num_indices(send_list[i].dst) > 0)
-        {
+        if (xt_idxlist_get_num_indices(send4dst) > 0) {
+          send_list_dst[num_dst_msg] = send4dst;
           send_size[i][SEND_SIZE_DST]
-            = (int)xt_idxlist_get_pack_size(send_list[i].dst, comm);
+            = (int)xt_idxlist_get_pack_size(send4dst, comm);
           send_size[i][SEND_NUM_DST] = 1;
-          ++num_msg;
-        }
-        else
-        {
+          ++num_dst_msg;
+        } else {
           send_size[i][SEND_SIZE_DST] = 0;
           send_size[i][SEND_NUM_DST] = 0;
-          xt_idxlist_delete(send_list[i].dst);
-          send_list[i].dst = NULL;
+          xt_idxlist_delete(send4dst);
         }
-
       } else
-        rank_no_send(i, send_size, send_list);
+        rank_no_send(i, send_size);
 
       send_buffer_size
         += send_size[i][SEND_SIZE_SRC] + send_size[i][SEND_SIZE_DST];
     }
     for (; i < (size_t)comm_size; ++i)
-      rank_no_send(i, send_size, send_list);
+      rank_no_send(i, send_size);
 
-    *send_buffer = xrealloc(stripes, (size_t)send_buffer_size);
+    void *send_buffer
+      = *send_buffer_ = xrealloc(stripes, (size_t)send_buffer_size);
 
     int position = 0;
-
-    for (int i = 0; i < comm_size; ++i) {
-
-      if (send_size[i][SEND_SIZE_SRC] > 0)
-      {
-        xt_idxlist_pack(send_list[i].src, *send_buffer, send_buffer_size,
-                        &position, comm);
-        xt_idxlist_delete(send_list[i].src);
-      }
+    for (i = 0; i < num_src_msg; ++i) {
+      xt_idxlist_pack(send_list_src[i], send_buffer, send_buffer_size,
+                      &position, comm);
+      xt_idxlist_delete(send_list_src[i]);
     }
 
-    for (int i = 0; i < comm_size; ++i) {
-
-      if (send_size[i][SEND_SIZE_DST] > 0)
-      {
-        xt_idxlist_pack(send_list[i].dst, *send_buffer, send_buffer_size,
-                        &position, comm);
-        xt_idxlist_delete(send_list[i].dst);
-      }
+    for (i = 0; i < num_dst_msg; ++i) {
+      xt_idxlist_pack(send_list_dst[i], send_buffer, send_buffer_size,
+                      &position, comm);
+      xt_idxlist_delete(send_list_dst[i]);
     }
-
-    free(send_list);
+    free(send_list_dst);
+    num_msg = (int)(num_src_msg + num_dst_msg);
   } else
     memset(send_size, 0, (size_t)comm_size * sizeof (*send_size));
   return num_msg;
