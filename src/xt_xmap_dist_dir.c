@@ -446,8 +446,7 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
 
 struct isect
 {
-  int rank;
-  int dst_list, src_list;
+  int dst_rank, src_rank;
   Xt_idxlist idxlist;
 };
 
@@ -473,7 +472,8 @@ match_src_dst_dist_dirs(const struct dist_dir *src_dist_dir,
         = xt_idxlist_get_intersection(entries_src[i].list, entries_dst[j].list);
       if (xt_idxlist_get_num_indices(intersection) > 0) {
         src_dst_intersections_[isect_fill]
-          = (struct isect){ .dst_list = (int)j, .src_list = (int)i,
+          = (struct isect){ .dst_rank = entries_dst[j].rank,
+                            .src_rank = entries_src[i].rank,
                             .idxlist = intersection };
         ++isect_fill;
       } else
@@ -486,11 +486,19 @@ match_src_dst_dist_dirs(const struct dist_dir *src_dist_dir,
 }
 
 static int
-cmp_isect_rank(const void *a_, const void *b_)
+cmp_isect_src_rank(const void *a_, const void *b_)
 {
   const struct isect *a = a_, *b = b_;
   /* this is safe vs. overflow because ranks are in [0..MAX_INT) */
-  return a->rank - b->rank;
+  return a->src_rank - b->src_rank;
+}
+
+static int
+cmp_isect_dst_rank(const void *a_, const void *b_)
+{
+  const struct isect *a = a_, *b = b_;
+  /* this is safe vs. overflow because ranks are in [0..MAX_INT) */
+  return a->dst_rank - b->dst_rank;
 }
 
 static int
@@ -524,19 +532,17 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
     int msg_size = rank_pack_size
       + (int)xt_idxlist_get_pack_size(src_dst_intersections[i].idxlist,
                                       comm);
-    int src = src_dst_intersections[i].src_list,
-        dst = src_dst_intersections[i].dst_list;
-    send_size[src_dist_dir->entries[src].rank][SEND_SIZE_SRC] += msg_size;
-    ++(send_size[src_dist_dir->entries[src].rank][SEND_NUM_SRC]);
-    send_size[dst_dist_dir->entries[dst].rank][SEND_SIZE_DST] += msg_size;
-    ++(send_size[dst_dist_dir->entries[dst].rank][SEND_NUM_DST]);
+    size_t src_rank = (size_t)src_dst_intersections[i].src_rank,
+      dst_rank = (size_t)src_dst_intersections[i].dst_rank;
+    send_size[src_rank][SEND_SIZE_SRC] += msg_size;
+    ++(send_size[src_rank][SEND_NUM_SRC]);
+    send_size[dst_rank][SEND_SIZE_DST] += msg_size;
+    ++(send_size[dst_rank][SEND_NUM_DST]);
     total_send_size += 2*msg_size;
-    src_dst_intersections[i].rank = src_dist_dir->entries[src].rank;
   }
 
-  /* sort intersections by src rank */
   qsort(src_dst_intersections, num_intersections,
-        sizeof (src_dst_intersections[0]), cmp_isect_rank);
+        sizeof (src_dst_intersections[0]), cmp_isect_src_rank);
 
   (*send_buffer) = xmalloc((size_t)total_send_size);
 
@@ -545,42 +551,34 @@ match_and_pack_src_dst_dist_dirs(struct dist_dir * src_dist_dir,
   int num_send_indices_requests = 0;
   for (size_t i = 0; i < num_intersections; ++i)
   {
-    int dst = src_dst_intersections[i].dst_list;
-    int dst_rank = dst_dist_dir->entries[dst].rank;
-
     /* see if this generates a new request? */
     num_send_indices_requests
-      += src_dst_intersections[i].rank != prev_send_rank;
-    prev_send_rank = src_dst_intersections[i].rank;
+      += src_dst_intersections[i].src_rank != prev_send_rank;
+    prev_send_rank = src_dst_intersections[i].src_rank;
 
     // pack rank
-    xt_mpi_call(MPI_Pack(&dst_rank, 1, MPI_INT,
+    xt_mpi_call(MPI_Pack(&src_dst_intersections[i].dst_rank, 1, MPI_INT,
                          (*send_buffer), total_send_size, &position,
                          comm), comm);
     // pack intersection
     xt_idxlist_pack(src_dst_intersections[i].idxlist, (*send_buffer),
                     total_send_size, &position, comm);
 
-    src_dst_intersections[i].rank = dst_rank;
   }
 
-  /* sort intersections by dst rank */
   qsort(src_dst_intersections, num_intersections,
-        sizeof (src_dst_intersections[0]), cmp_isect_rank);
+        sizeof (src_dst_intersections[0]), cmp_isect_dst_rank);
 
   prev_send_rank = -1;
   for (size_t i = 0; i < num_intersections; ++i)
   {
-    int src = src_dst_intersections[i].src_list;
-    int src_rank = src_dist_dir->entries[src].rank;
-
     /* see if this generates a new request? */
     num_send_indices_requests
-      += src_dst_intersections[i].rank != prev_send_rank;
-    prev_send_rank = src_dst_intersections[i].rank;
+      += src_dst_intersections[i].dst_rank != prev_send_rank;
+    prev_send_rank = src_dst_intersections[i].dst_rank;
 
     // pack rank
-    xt_mpi_call(MPI_Pack(&src_rank, 1, MPI_INT,
+    xt_mpi_call(MPI_Pack(&src_dst_intersections[i].src_rank, 1, MPI_INT,
                          (*send_buffer), total_send_size, &position,
                          comm), comm);
     // pack intersection
