@@ -427,7 +427,6 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
                           + (sizeof (struct Xt_com_list)
                              * (size_t)recv_size[SEND_NUM_DST]));
 
-
   void * recv_buffer = xmalloc((size_t)MAX(recv_size[SEND_SIZE_SRC],
                                            recv_size[SEND_SIZE_DST]));
 
@@ -506,10 +505,7 @@ pack_src_dst_dist_dirs(size_t num_intersections,
                        struct isect *restrict src_dst_intersections,
                        int (*send_size)[SEND_SIZE_ASIZE],
                        void ** send_buffer,
-                       MPI_Comm comm) {
-
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+                       MPI_Comm comm, int comm_size) {
 
   int total_send_size = 0;
 
@@ -589,10 +585,7 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
                                              Xt_idxlist src_idxlist,
                                              Xt_idxlist dst_idxlist,
                                              int tag_offset,
-                                             MPI_Comm comm) {
-
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+                                             MPI_Comm comm, int comm_size) {
 
   struct bucket_params bucket_params
     = get_bucket_params(src_idxlist, dst_idxlist, comm, comm_size);
@@ -857,7 +850,7 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
 
   generate_distributed_directories(&src_dist_dir, &dst_dist_dir,
                                    src_idxlist, dst_idxlist,
-                                   tag_offset, comm);
+                                   tag_offset, comm, comm_size);
 
   void * send_buffer;
 
@@ -875,7 +868,7 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
   /* ... and pack the results into a sendable format */
   int num_send_indices_requests
     = pack_src_dst_dist_dirs(num_intersections, src_dst_intersections,
-                             send_size, &send_buffer, comm);
+                             send_size, &send_buffer, comm, comm_size);
   free(src_dst_intersections);
 
   // get the data size the local process will receive from other processes
