@@ -149,7 +149,7 @@ Xt_xmap_iter xt_xmap_get_in_iterator(Xt_xmap xmap);
  * sets an exchange map iterator to the next item
  *
  * @param[in,out] iter exchange map iterator
- * @return             returns 0 if there was not further item
+ * @return             returns 0 if there was no further item
  */
 int xt_xmap_iterator_next(Xt_xmap_iter iter);
 
