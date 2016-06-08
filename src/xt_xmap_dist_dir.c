@@ -168,6 +168,34 @@ get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   };
 }
 
+/**
+ * \brief generates the buckets of the distributed directory
+ *
+ * The bucket of the distributed directory are computed as follows:
+ * - compute sum of the sizes of all src_idxlist's -> global_interval
+ * - local_interval = global_interval / comm_size
+ * - bucket of each process is stripe that is defined as:
+ *      stripe.start = (Xt_int)(rank*local_interval + i*global_interval);
+ *      stripe.stride = 1;
+ *      stripe.nstrides = (int)local_interval;
+ *      bucket[rank] = xt_idxstripes_new(stripes, num_stripes);
+ * - num_stripes and start are choosen such that:
+ *      stripe.start + local_interval
+ *         > get_min_idxlist_index(src_idxlist, dst_idxlist)
+ *      and
+ *      stripe.start + num_stripes*global_interval + local_interval
+ *         > get_max_idxlist_index(src_idxlist, dst_idxlist);
+ *   and $i \in [0,num_stripes)$
+ *
+ * \param[in] bucket_params the parameters
+ * \param[out] stripes_ pointer to pointer of array of the stripes
+ * describing the bucket for rank \a dist_dir_rank. Must point to a
+ * pointer allocated by malloc or related and will be resized if necessary.
+ * \param[out] stripes_array_size number of stripes stored in \a stripes_
+ * \param[in] dist_dir_rank rank for which to compute bucket
+ * \return newly created bucket. The bucket must not be longer lived
+ * than the dynamic memory referenced by \a stripes_ .
+ */
 static Xt_idxlist
 get_bucket(const struct bucket_params *bucket_params,
            struct Xt_stripe **stripes_, size_t *stripes_array_size,
