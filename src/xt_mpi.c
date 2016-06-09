@@ -559,21 +559,22 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
 }
 
 static int
-gen_fallback_type(int *set_start, int *set_end, const struct Xt_offset_ext *v,
+gen_fallback_type(size_t set_start, size_t set_end,
+                  const struct Xt_offset_ext *v,
                   size_t vlen, MPI_Datatype old_type, int *offset,
                   MPI_Datatype *dt) {
-  int ia = *set_start;
-  int ib = *set_end;
-  if (ia<0 || ib <= ia || ib > (int)vlen) return 0;
+  size_t ia = set_start;
+  size_t ib = set_end;
+  if (ib <= ia || ib > vlen) return 0;
 
   int n = 0;
-  for (int i=ia; i < ib; i++) {
+  for (size_t i=ia; i < ib; i++)
     n += v[i].size;
-  }
+
   if (n<1) return 0;
 
   int start;
-  if (ia == 0 && ib == (int)vlen) {
+  if (ia == 0 && ib == vlen) {
     // generate absolute datatype
     start = 0;
   } else {
@@ -586,9 +587,10 @@ gen_fallback_type(int *set_start, int *set_end, const struct Xt_offset_ext *v,
   int *restrict d = xmalloc(sizeof (*d) * (size_t)n);
   size_t p=0;
 
-  for (int i=ia; i < ib; i++) {
-    for (int k=0; k<v[i].size; k++) {
-      d[p] = v[i].start + k * v[i].stride - start;
+  for (size_t i=ia; i < ib; i++) {
+    size_t v_i_size = v[i].size > 0 ? (size_t)v[i].size : 0;
+    for (size_t k=0; k < v_i_size; k++) {
+      d[p] = v[i].start + (int)k * v[i].stride - start;
       p++;
     }
   }
@@ -606,16 +608,14 @@ gen_fallback_type(int *set_start, int *set_end, const struct Xt_offset_ext *v,
   }
   free(d);
 
-  *set_start = *set_end;
-
   return n;
 }
 
 static MPI_Datatype
 parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) {
-
-  int set_start = -1;
-  int set_end = -2;
+  /* [set_start,set_end) describes the prefix of non-matching
+   * elements in v that then need to be handled with gen_fallback_type */
+  size_t set_start = 0, set_end = 0;
   MPI_Datatype *restrict wdt = xmalloc(sizeof(*wdt) * (size_t)vlen);
   int *restrict wdisp = xmalloc(sizeof (*wdisp) * (size_t)vlen);
   MPI_Datatype match_dt;
@@ -627,21 +627,21 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
          match_simple_vec(&p, v, vlen, old_type, &match_disp, &match_dt) ||
          match_contiguous(&p, v, vlen, old_type, &match_disp, &match_dt) ) {
       if (set_start < set_end) {
-        gen_fallback_type(&set_start, &set_end, v, vlen, old_type, &wdisp[m], &wdt[m]);
+        gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m);
         m++;
       }
       wdt[m] = match_dt;
       wdisp[m] = match_disp;
       m++;
+      set_start = p;
     } else {
-      if (set_start>=set_end) set_start = (int)p;
-      set_end = (int)p + 1;
-      p++;
+      /* assign ext investigated last to prefix */
+      set_end = ++p;
     }
 
   }
   if (set_start <  set_end) {
-    gen_fallback_type(&set_start, &set_end, v, vlen, old_type, &wdisp[m], &wdt[m]);
+    gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m);
     m++;
   }
   size_t wlen = m;
