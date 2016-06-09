@@ -564,16 +564,16 @@ gen_fallback_type(int *set_start, int *set_end, const struct Xt_offset_ext *v,
                   MPI_Datatype *dt) {
   int ia = *set_start;
   int ib = *set_end;
-  if (ia<0 || ib < ia || ib >= (int)vlen) return 0;
+  if (ia<0 || ib <= ia || ib > (int)vlen) return 0;
 
   int n = 0;
-  for (int i=ia; i<=ib; i++) {
+  for (int i=ia; i < ib; i++) {
     n += v[i].size;
   }
   if (n<1) return 0;
 
   int start;
-  if (ia == 0 && ib == (int)vlen-1) {
+  if (ia == 0 && ib == (int)vlen) {
     // generate absolute datatype
     start = 0;
   } else {
@@ -586,7 +586,7 @@ gen_fallback_type(int *set_start, int *set_end, const struct Xt_offset_ext *v,
   int *restrict d = xmalloc(sizeof (*d) * (size_t)n);
   size_t p=0;
 
-  for (int i=ia; i<=ib; i++) {
+  for (int i=ia; i < ib; i++) {
     for (int k=0; k<v[i].size; k++) {
       d[p] = v[i].start + k * v[i].stride - start;
       p++;
@@ -606,7 +606,7 @@ gen_fallback_type(int *set_start, int *set_end, const struct Xt_offset_ext *v,
   }
   free(d);
 
-  *set_start = *set_end + 1;
+  *set_start = *set_end;
 
   return n;
 }
@@ -626,7 +626,7 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
          match_indexed(&p, v, vlen, old_type, &match_disp, &match_dt) ||
          match_simple_vec(&p, v, vlen, old_type, &match_disp, &match_dt) ||
          match_contiguous(&p, v, vlen, old_type, &match_disp, &match_dt) ) {
-      if (set_start <= set_end) {
+      if (set_start < set_end) {
         gen_fallback_type(&set_start, &set_end, v, vlen, old_type, &wdisp[m], &wdt[m]);
         m++;
       }
@@ -634,13 +634,13 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
       wdisp[m] = match_disp;
       m++;
     } else {
-      if (set_start>set_end) set_start = (int)p;
-      set_end = (int)p;
+      if (set_start>=set_end) set_start = (int)p;
+      set_end = (int)p + 1;
       p++;
     }
 
   }
-  if (set_start <=  set_end) {
+  if (set_start <  set_end) {
     gen_fallback_type(&set_start, &set_end, v, vlen, old_type, &wdisp[m], &wdt[m]);
     m++;
   }
