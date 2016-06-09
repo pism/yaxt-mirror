@@ -618,27 +618,29 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
   size_t set_start = 0, set_end = 0;
   MPI_Datatype *restrict wdt = xmalloc(sizeof(*wdt) * (size_t)vlen);
   int *restrict wdisp = xmalloc(sizeof (*wdisp) * (size_t)vlen);
-  MPI_Datatype match_dt;
-  int match_disp;
+  /* [p,vlen) is the part of v that still needs matching performed */
+  /* m is the index of the next datatype and displacements to write
+   * to wdt and wdisp respectively */
   size_t p = 0, m = 0;
   while (p<vlen) {
-    if ( match_block_vec(&p, v, vlen, old_type, &match_disp, &match_dt) ||
-         match_indexed(&p, v, vlen, old_type, &match_disp, &match_dt) ||
-         match_simple_vec(&p, v, vlen, old_type, &match_disp, &match_dt) ||
-         match_contiguous(&p, v, vlen, old_type, &match_disp, &match_dt) ) {
+    /* depending on wether there is a non-empty prefix, the datatype
+     * and displacement corresponding to a match need to be written
+     * to wdt[m+1] and wdisp[m+1] or wdt[m] and wdisp[m] respectively */
+    size_t mm = m + (set_start < set_end);
+    if ( match_block_vec(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ||
+         match_indexed(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ||
+         match_simple_vec(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ||
+         match_contiguous(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ) {
       if (set_start < set_end) {
         gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m);
         m++;
       }
-      wdt[m] = match_dt;
-      wdisp[m] = match_disp;
       m++;
       set_start = p;
     } else {
       /* assign ext investigated last to prefix */
       set_end = ++p;
     }
-
   }
   if (set_start <  set_end) {
     gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m);
@@ -666,8 +668,8 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
                                        wdt, &result_dt), Xt_default_comm);
     free(wblocklength);
     free(wbdisp);
-    for(m = 0; m<wlen; m++)
-      xt_mpi_call(MPI_Type_free(&wdt[m]), Xt_default_comm);
+    for (size_t i = 0; i < wlen; i++)
+      xt_mpi_call(MPI_Type_free(wdt+i), Xt_default_comm);
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), Xt_default_comm);
   free(wdt);
