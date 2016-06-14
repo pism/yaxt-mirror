@@ -538,15 +538,17 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   int *restrict bl = xmalloc(2 * n * sizeof (*bl)),
     *restrict d = bl + n;
   bool hom_bl = true;
-  for (size_t i = 0; i < n; i++) {
+  d[0] = v[pstart].start - start;
+  int bl0 = bl[0] = v[pstart].size;
+  for (size_t i = 1; i < n; i++) {
     size_t iv = pstart + i;
     d[i] = v[iv].start - start;
     bl[i] = v[iv].size;
-    hom_bl &= (bl[i] == bl[0]);
+    hom_bl &= (bl[i] == bl0);
   }
 
   if (hom_bl) {
-    xt_mpi_call(MPI_Type_create_indexed_block((int)n, bl[0], d, old_type, dt),
+    xt_mpi_call(MPI_Type_create_indexed_block((int)n, bl0, d, old_type, dt),
                 Xt_default_comm);
   } else {
     xt_mpi_call(MPI_Type_indexed((int)n, bl, d, old_type, dt), Xt_default_comm);
