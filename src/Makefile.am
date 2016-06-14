@@ -1,5 +1,4 @@
 #
-# Keywords:
 # Maintainer: Jörg Behrens <behrens@dkrz.de>
 #             Moritz Hanke <hanke@dkrz.de>
 #             Thomas Jahns <jahns@dkrz.de>
@@ -193,3 +192,10 @@ uninstall-local:
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@
+
+#
+# Local Variables:
+# coding: utf-8
+# show-trailing-whitespace: t
+# End:
+#
