@@ -526,8 +526,9 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   size_t p = *pstart_, pstart = p;
   if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return 0;
 
-  while( p < vlen && v[p].stride == 1 )
-    p++;
+  do
+    ++p;
+  while (p < vlen && v[p].stride == 1);
 
   size_t n = p - pstart;
 
