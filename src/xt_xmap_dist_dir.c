@@ -732,36 +732,32 @@ merge_bucket_intersections(struct dist_dir **dist_dir_results) {
     while (j < num_shards && entries[j].rank == rank)
       ++j;
 
-    size_t num_intersections_per_rank = j - i;
-
-    if (num_intersections_per_rank > 0) {
-      struct Xt_stripe *restrict stripes = NULL;
-      size_t num_stripes = 0;
-      for (; i < j; ++i) {
-        struct Xt_stripe *stripes_of_intersection;
-        int num_stripes_of_intersection;
-        xt_idxlist_get_index_stripes(entries[i].list,
-                                     &stripes_of_intersection,
-                                     &num_stripes_of_intersection);
-        xt_idxlist_delete(entries[i].list);
-        if (stripes) {
-          stripes = xrealloc(stripes,
-                             (num_stripes + (size_t)num_stripes_of_intersection)
-                             * sizeof (*stripes));
-          memcpy(stripes + num_stripes, stripes_of_intersection,
-                 (size_t)num_stripes_of_intersection * sizeof (*stripes));
-          free(stripes_of_intersection);
-        } else
-          stripes = stripes_of_intersection;
-        num_stripes += (size_t)num_stripes_of_intersection;
-      }
-      qsort(stripes, num_stripes, sizeof (*stripes), stripe_cmp);
-      entries[num_isect_agg].list
-        = xt_idxstripes_new(stripes, (int)num_stripes);
-      free(stripes);
-      entries[num_isect_agg].rank = rank;
-      ++num_isect_agg;
+    struct Xt_stripe *restrict stripes = NULL;
+    size_t num_stripes = 0;
+    for (; i < j; ++i) {
+      struct Xt_stripe *stripes_of_intersection;
+      int num_stripes_of_intersection;
+      xt_idxlist_get_index_stripes(entries[i].list,
+                                   &stripes_of_intersection,
+                                   &num_stripes_of_intersection);
+      xt_idxlist_delete(entries[i].list);
+      if (stripes) {
+        stripes = xrealloc(stripes,
+                           (num_stripes + (size_t)num_stripes_of_intersection)
+                           * sizeof (*stripes));
+        memcpy(stripes + num_stripes, stripes_of_intersection,
+               (size_t)num_stripes_of_intersection * sizeof (*stripes));
+        free(stripes_of_intersection);
+      } else
+        stripes = stripes_of_intersection;
+      num_stripes += (size_t)num_stripes_of_intersection;
     }
+    qsort(stripes, num_stripes, sizeof (*stripes), stripe_cmp);
+    entries[num_isect_agg].list
+      = xt_idxstripes_new(stripes, (int)num_stripes);
+    free(stripes);
+    entries[num_isect_agg].rank = rank;
+    ++num_isect_agg;
   }
   (*dist_dir_results)->num_entries = (int)num_isect_agg;
   *dist_dir_results = xrealloc(*dist_dir_results, sizeof (struct dist_dir)
