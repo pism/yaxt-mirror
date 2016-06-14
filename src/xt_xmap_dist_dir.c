@@ -531,7 +531,7 @@ static int
 pack_src_dst_dist_dirs(size_t num_intersections,
                        struct isect *restrict src_dst_intersections,
                        int (*send_size)[SEND_SIZE_ASIZE],
-                       void ** send_buffer,
+                       void **send_buffer_,
                        MPI_Comm comm, int comm_size) {
 
   int total_send_size = 0;
@@ -561,7 +561,7 @@ pack_src_dst_dist_dirs(size_t num_intersections,
   qsort(src_dst_intersections, num_intersections,
         sizeof (src_dst_intersections[0]), cmp_isect_src_rank);
 
-  (*send_buffer) = xmalloc((size_t)total_send_size);
+  void *send_buffer = (*send_buffer_) = xmalloc((size_t)total_send_size);
 
   int position = 0;
   int prev_send_rank = -1;
@@ -575,10 +575,10 @@ pack_src_dst_dist_dirs(size_t num_intersections,
 
     // pack rank
     xt_mpi_call(MPI_Pack(&src_dst_intersections[i].dst_rank, 1, MPI_INT,
-                         (*send_buffer), total_send_size, &position,
+                         send_buffer, total_send_size, &position,
                          comm), comm);
     // pack intersection
-    xt_idxlist_pack(src_dst_intersections[i].idxlist, (*send_buffer),
+    xt_idxlist_pack(src_dst_intersections[i].idxlist, send_buffer,
                     total_send_size, &position, comm);
 
   }
@@ -596,10 +596,10 @@ pack_src_dst_dist_dirs(size_t num_intersections,
 
     // pack rank
     xt_mpi_call(MPI_Pack(&src_dst_intersections[i].src_rank, 1, MPI_INT,
-                         (*send_buffer), total_send_size, &position,
+                         send_buffer, total_send_size, &position,
                          comm), comm);
     // pack intersection
-    xt_idxlist_pack(src_dst_intersections[i].idxlist, (*send_buffer),
+    xt_idxlist_pack(src_dst_intersections[i].idxlist, send_buffer,
                     total_send_size, &position, comm);
     /* after this step, the idxlist is no longer needed */
     xt_idxlist_delete(src_dst_intersections[i].idxlist);
