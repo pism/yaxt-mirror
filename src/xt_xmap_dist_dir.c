@@ -727,10 +727,11 @@ merge_bucket_intersections(struct dist_dir **dist_dir_results) {
   size_t i = 0, num_shards = (size_t)(*dist_dir_results)->num_entries;
   while (i < num_shards) {
     int rank = entries[i].rank;
-    size_t j = i + 1;
+    size_t j = i;
     /* find all entries matching the currently considered rank */
-    while (j < num_shards && entries[j].rank == rank)
+    do
       ++j;
+    while (j < num_shards && entries[j].rank == rank);
 
     struct Xt_stripe *restrict stripes = NULL;
     size_t num_stripes = 0;
