@@ -1646,3 +1646,13 @@ check_pos_ext(size_t num_stripes, const struct Xt_stripe stripes[num_stripes],
   free(pos_ext);
   xt_idxlist_delete(idxstripes);
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
