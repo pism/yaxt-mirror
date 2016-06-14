@@ -85,13 +85,6 @@ enum {
   SEND_SIZE_ASIZE,
 };
 
-static int
-xt_com_list_rank_cmp(const void *a_, const void *b_)
-{
-  const struct Xt_com_list *a = a_, *b = b_;
-  return a->rank - b->rank;
-}
-
 struct dist_dir {
   int num_entries;
   struct Xt_com_list entries[];
@@ -655,6 +648,14 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
                           MPI_STATUSES_IGNORE), comm);
   free(dir_init_send_requests);
   free(send_buffer);
+}
+
+static int
+xt_com_list_rank_cmp(const void *a_, const void *b_)
+{
+  const struct Xt_com_list *a = a_, *b = b_;
+  /* this is overflow-safe because rank's are non-negative ints */
+  return a->rank - b->rank;
 }
 
 static void
