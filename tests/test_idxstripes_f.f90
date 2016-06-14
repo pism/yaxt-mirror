@@ -384,7 +384,7 @@ CONTAINS
          __LINE__)
     not_found = xt_idxlist_get_index_at_position(intersection, 0, &
          intersection_idx)
-    IF (intersection_idx /= index_vector(1)) &
+    IF (not_found .OR. intersection_idx /= index_vector(1)) &
          CALL test_abort("unexpected index in intersection!", &
          __FILE__, &
          __LINE__)
@@ -709,7 +709,7 @@ CONTAINS
          max_num_indices=1024, max_index=1024
 
     INTEGER, ALLOCATABLE :: rseed(:)
-    INTEGER :: rseed_size, i, iteration, num_indices, num_stripes
+    INTEGER :: rseed_size, i, iteration, num_indices
     INTEGER(xt_int_kind), ALLOCATABLE :: indices(:)
     REAL, ALLOCATABLE :: rvals(:)
     TYPE(xt_idxlist) :: idxlist
@@ -733,7 +733,6 @@ CONTAINS
       idxlist = xt_idxvec_new(indices, num_indices)
 
       CALL xt_idxlist_get_index_stripes(idxlist, stripes)
-      num_stripes = SIZE(stripes)
 
       CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
 
@@ -957,12 +956,11 @@ CONTAINS
     INTEGER, INTENT(in) :: ref_unmatched
     CHARACTER(len=*) :: test_desc
 
-    INTEGER :: num_stripes, num_search_stripes, num_ref_pos_ext, num_ext, &
+    INTEGER :: num_search_stripes, num_ref_pos_ext, num_ext, &
          unmatched
     TYPE(xt_idxlist) :: idxstripes
     TYPE(xt_pos_ext), ALLOCATABLE :: pos_ext(:)
 
-    num_stripes = SIZE(stripes)
     num_search_stripes = SIZE(search_stripes)
     num_ref_pos_ext = SIZE(ref_pos_ext)
 
