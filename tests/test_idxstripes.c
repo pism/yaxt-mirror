@@ -49,7 +49,11 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
+#include <sys/time.h>
 
 #include <mpi.h>
 
@@ -687,31 +691,51 @@ int main(void) {
      * gives an intersection with nstrides == 1 even though we'd need
      * nstrides == 0
      */
-
-    srand(6544668);
+    unsigned int seeds[2];
+    seeds[0] = 6544668;
+    const char *renv = getenv("YAXT_FULLY_RANDOM_TESTS");
+    bool fully_random_test
+      = (renv && renv[0] && ((!renv[1] && (renv[0] == '1' || renv[0] == 'y'
+                                           || renv[0] == 'Y'))
+                             || !strcasecmp(renv, "yes")));
+    size_t num_seeds = 1 + (size_t)fully_random_test;
+    if (fully_random_test)
+    {
+      struct timeval tv;
+      int rc = gettimeofday(&tv, NULL);
+      if (rc) {
+        perror("cannot query time of day");
+        xt_mpi_call(MPI_Abort(MPI_COMM_WORLD, 1), MPI_COMM_WORLD);
+      }
+      seeds[1] = (unsigned)((unsigned)tv.tv_sec ^ (unsigned)tv.tv_usec);
+    }
     Xt_int *restrict indices = NULL;
-    for (int iteration = 0; iteration < NUM_ITERATIONS; ++iteration) {
+    for (size_t seed_idx = 0; seed_idx < num_seeds; ++seed_idx) {
+      srand(seeds[seed_idx]);
+      if (seed_idx > 0)
+        fprintf(stderr, "seed=%u\n", seeds[seed_idx]);
+      for (int iteration = 0; iteration < NUM_ITERATIONS; ++iteration) {
 
-      int num_indices = rand()%MAX_NUM_INDICES;
+        int num_indices = rand()%MAX_NUM_INDICES;
 
-      indices
-        = realloc(indices,
-                  (size_t)num_indices * sizeof(*indices));
+        indices
+          = xrealloc(indices, (size_t)num_indices * sizeof(*indices));
 
-      for (int i = 0; i < num_indices; ++i)
-        indices[i] = (Xt_int)(rand()%(2*MAX_INDEX)-MAX_INDEX);
+        for (int i = 0; i < num_indices; ++i)
+          indices[i] = (Xt_int)(rand()%(2*MAX_INDEX)-MAX_INDEX);
 
-      Xt_idxlist idxlist = xt_idxvec_new(indices, num_indices);
+        Xt_idxlist idxlist = xt_idxvec_new(indices, num_indices);
 
-      struct Xt_stripe * stripes;
-      int num_stripes;
+        struct Xt_stripe * stripes;
+        int num_stripes;
 
-      xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
+        xt_idxlist_get_index_stripes(idxlist, &stripes, &num_stripes);
 
-      check_idxlist_stripes_pos_ext(idxlist, (size_t)num_stripes, stripes);
+        check_idxlist_stripes_pos_ext(idxlist, (size_t)num_stripes, stripes);
 
-      xt_idxlist_delete(idxlist);
-      free(stripes);
+        xt_idxlist_delete(idxlist);
+        free(stripes);
+      }
     }
     free(indices);
   }
