@@ -181,8 +181,8 @@ test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
-AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
-LDADD = libtestutil.a ../src/libyaxt.la $(MPI_C_LIB)
+AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_MOD)
+LDADD = libtestutil.a ../src/libyaxt_c.la $(MPI_C_LIB)
 XT_FC_LDADD = libtestutil.a ../src/libyaxt.la $(MPI_FC_LIB)
 
 TESTS = 							\

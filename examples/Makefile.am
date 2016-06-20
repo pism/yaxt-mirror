@@ -50,14 +50,17 @@ idxsection_examples_SOURCES = idxsection_examples.c print_index_list.h
 
 row2col_SOURCES = row2col.c
 
+XT_FC_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
+
 row2col_f_SOURCES = row2col_f.f90
-row2col_f_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
+row2col_f_LDADD = $(XT_FC_LDADD)
 
 tr_gp2fs_SOURCES = tr_gp2fs.c
 tr_gp2fs_LDADD = $(LDADD) -lm
 
 unstruct_halo_exchange_f_SOURCES = unstruct_halo_exchange_f.f90
+unstruct_halo_exchange_f_LDADD = $(XT_FC_LDADD)
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
-AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
-LDADD = ../src/libyaxt.la $(MPI_C_LIB)
+AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_MOD)
+LDADD = ../src/libyaxt_c.la $(MPI_C_LIB)

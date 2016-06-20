@@ -45,15 +45,10 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
-!> since the mpi module generates an unwanted dependency on the MPI
-!! Fortran library, we keep to mpif.h for the library
 MODULE xt_mpi
+  USE mpi
   IMPLICIT NONE
-  ! we use the Fortran 77 include here because the more modern
-  ! 'USE mpi' of Fortran 90+ introduces crazy object dependencies
-  ! with some compilers (e.g. pgfortran)
   PUBLIC
-  INCLUDE "mpif.h"
   INTERFACE
     SUBROUTINE xt_mpi_comm_mark_exclusive(comm) &
          BIND(c, name='xt_mpi_comm_mark_exclusive_f2c')

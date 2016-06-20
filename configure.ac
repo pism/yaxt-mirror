@@ -139,10 +139,6 @@ ACX_C_PACKAGE([MPI],[mpi.h],,,
   [AC_MSG_ERROR([Required header mpi.h not found or not compilable.])],
   [MPI_Waitall],[mpi mpich],,,
   [AC_MSG_ERROR([Cannot link C MPI programs.])])
-ACX_FORTRAN_PACKAGE([MPI],[mpif.h],,,
-  [AC_MSG_ERROR([Required include mpif.h not found or not compilable.])],
-  [mpi_waitall],[mpi mpi_f90 mpi_f77 mpich],[[-lmpi_f77 -lmpi],[-lmpi]],,
-  [AC_MSG_ERROR([Cannot link Fortran MPI programs.])],[])
 ACX_F90_PACKAGE([MPI],[mpi],,,
   [AC_MSG_ERROR([Required Fortran 90 module not found or incompatible.])],
   [mpi_waitall],[mpi mpi_f90 mpi_f77 mpich],[[-lmpi_f77 -lmpi],[-lmpi]],,
@@ -170,7 +166,7 @@ saved_CFLAGS=$CFLAGS
 saved_FCFLAGS=$FCFLAGS
 saved_LIBS=$LIBS
 CFLAGS="$CFLAGS $MPI_C_INCLUDE"
-FCFLAGS="$FCFLAGS $MPI_FC_INCLUDE"
+FCFLAGS="$FCFLAGS $MPI_FC_MOD"
 LIBS="$LIBS $MPI_C_LIB"
 ACX_MPIRUN
    # check MPI defects
@@ -213,15 +209,14 @@ m4_define([vartype_setq],[$1][_MPIDT=$4
 
 dnl
 dnl test if MPI_INTEGER[248] are available
-dnl FIXME: use 'USE mpi' instead of mpif.h if USE mpi can be used
 save_FCFLAGS=$FCFLAGS
 AC_LANG_PUSH([Fortran])
-FCFLAGS="$MPI_FC_INCLUDE $FCFLAGS"
+FCFLAGS="$MPI_FC_MOD $FCFLAGS"
 for mpi_int2test in MPI_INTEGER2 MPI_INTEGER4 MPI_INTEGER8; do
   AC_MSG_CHECKING([if Fortran MPI bindings define $mpi_int2test])
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([
+        USE mpi
         IMPLICIT NONE
-        INCLUDE 'mpif.h'
         INTEGER :: i
         i = $mpi_int2test
 ]),[AC_MSG_RESULT([yes])

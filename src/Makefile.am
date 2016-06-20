@@ -33,13 +33,13 @@
 #
 
 AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
-AM_FCFLAGS  = $(MPI_FC_INCLUDE) $(MPI_FC_MOD)
-lib_LTLIBRARIES = libyaxt.la
+AM_FCFLAGS  = $(MPI_FC_MOD)
+lib_LTLIBRARIES =  libyaxt_c.la libyaxt.la
 
 # headers from subdir xt will be installed (after substituting
 # definitions from config.h). These must be listed in a sequence in
 # which they can be combined in yaxt.h.
-libyaxt_la_SOURCES =						\
+libyaxt_c_la_SOURCES =						\
 	xt/xt_core.h						\
 	xt/xt_handles.h						\
 	xt/sort_common.h					\
@@ -75,7 +75,6 @@ libyaxt_la_SOURCES =						\
 	xt_idxlist.c						\
 	xt_idxlist_intersection.c				\
 	xt_idxlist_collection.c					\
-	xt_idxlist_collection_f.f90				\
 	xt_idxlist_collection_internal.h			\
 	xt_idxlist_unpack.h					\
 	xt_idxlist_unpack.c 					\
@@ -104,11 +103,7 @@ libyaxt_la_SOURCES =						\
 	xt_xmap_dist_dir.c					\
 	xt_xmap_intersection.c					\
 	xt_xmap_intersection_ext.c				\
-	xt_xmap_intersection_f.f90				\
 	xt_init.c						\
-	xt_ut.f90						\
-	xt_ut_c.c						\
-	xt_ut_c.h						\
 	core/core.c						\
 	core/core.h						\
 	core/ppm_xfuncs.h					\
@@ -121,16 +116,6 @@ libyaxt_la_SOURCES =						\
 	mergesort.c						\
 	instr.h							\
 	xt_sort.c						\
-	yaxt_f2c.c						\
-	xt_mpi_f.f90						\
-	xt_core_f.f90						\
-	xt_idxlist_f.f90					\
-	xt_idxvec_f.f90						\
-	xt_idxstripes_f.f90					\
-	xt_idxsection_f.f90					\
-	xt_xmap_f.f90						\
-	xt_redist_f.f90						\
-	yaxt.f90						\
 	xt_exchanger.c						\
 	xt_exchanger.h						\
 	xt_exchanger_simple_base.c				\
@@ -144,10 +129,31 @@ libyaxt_la_SOURCES =						\
 	xt_exchanger_mix_isend_irecv.c				\
 	xt_exchanger_mix_isend_irecv.h
 
-libyaxt_la_LIBADD = $(MPI_FC_LIB)
+libyaxt_la_SOURCES =						\
+	xt_idxlist_collection_f.f90				\
+	xt_xmap_intersection_f.f90				\
+	xt_ut.f90						\
+	xt_ut_c.c						\
+	xt_ut_c.h						\
+	yaxt_f2c.c						\
+	xt_mpi_f.f90						\
+	xt_core_f.f90						\
+	xt_idxlist_f.f90					\
+	xt_idxvec_f.f90						\
+	xt_idxstripes_f.f90					\
+	xt_idxsection_f.f90					\
+	xt_xmap_f.f90						\
+	xt_redist_f.f90						\
+	yaxt.f90
+
+libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)
+libyaxt_la_LDFLAGS = -version-info 0:1:0
+libyaxt_c_la_LDFLAGS = -version-info 0:1:0
+
+
 
 xtinclude_Makefile.inc: Makefile
-	headers=`echo $(libyaxt_la_SOURCES) | sed 's/[ 	][ 	]*/ /g' | tr ' ' '\n' | grep 'xt/.*\.h$$'` ; \
+	headers=`echo $(libyaxt_c_la_SOURCES) | sed 's/[ 	][ 	]*/ /g' | tr ' ' '\n' | grep 'xt/.*\.h$$'` ; \
 	  echo "xtinclude_HEADERS = \\" >$@ ; \
 	  for header in $$headers ; do echo "	$$header \\" ; done \
 	    | sed '$$s/\\$$//' >>$@
