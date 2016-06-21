@@ -449,8 +449,8 @@ CONTAINS
 
   END FUNCTION xt_redist_collection_static_new
 
-  FUNCTION xt_redist_collection_new_a_3i(redists, num_redists, cache_size, comm) &
-       RESULT(res)
+  FUNCTION xt_redist_collection_new_a_3i(redists, num_redists, cache_size, &
+       comm) RESULT(res)
     TYPE(xt_redist), INTENT(in) :: redists(*)
     INTEGER, INTENT(in) :: num_redists, cache_size, comm
     TYPE(xt_redist) :: res

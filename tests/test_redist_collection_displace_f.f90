@@ -53,6 +53,10 @@ MODULE redist_collection_displace
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        Xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_slice_c_loc
+  ! older PGI compilers do not handle generic interface correctly
+#if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
+  USE xt_redist_base, ONLY: xt_redist_s_exchange
+#endif
   USE test_redist_common, ONLY: build_odd_selection_xmap
   USE iso_c_binding, ONLY: c_ptr
   IMPLICIT NONE

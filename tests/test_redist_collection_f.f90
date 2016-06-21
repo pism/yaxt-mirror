@@ -56,6 +56,10 @@ PROGRAM test_redist_collection
        xt_redist_delete, xt_redist_copy, &
        xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_slice_c_loc
+  ! older PGI compilers do not handle generic interface correctly
+#if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
+  USE xt_redist_base, ONLY: xt_redist_s_exchange
+#endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
@@ -64,6 +68,7 @@ PROGRAM test_redist_collection
   CALL xt_initialize(mpi_comm_world)
 
   CALL simple_test
+  CALL simple_test2
   CALL test_repeated_redist(-1)
   CALL test_repeated_redist(0)
   CALL test_displacement_variations
@@ -106,6 +111,84 @@ CONTAINS
     ! clean up
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE simple_test
+
+  SUBROUTINE simple_test2
+    ! general test with one redist
+    ! set up data
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redist_coll, redist_copy, &
+         redist_components(2)
+    INTEGER, PARAMETER :: src_slice_len = 5, dst_slice_len = 3
+    TYPE src_data_collection
+      DOUBLE PRECISION :: dp(src_slice_len)
+      LOGICAL :: l(src_slice_len)
+    END TYPE src_data_collection
+    TYPE dst_data_collection
+      DOUBLE PRECISION :: dp(dst_slice_len)
+      LOGICAL :: l(dst_slice_len)
+    END TYPE dst_data_collection
+    TYPE(src_data_collection), SAVE, TARGET :: src_data = src_data_collection(&
+         (/ 1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0 /), &
+         (/ .TRUE., .FALSE., .TRUE., .FALSE., .TRUE. /))
+    TYPE(dst_data_collection), PARAMETER :: &
+         ref_dst_data = dst_data_collection((/ 1.0d0, 3.0d0, 5.0d0 /), &
+         (/ .TRUE., .TRUE., .TRUE. /))
+    TYPE(dst_data_collection), TARGET :: dst_data
+    TYPE(c_ptr) :: src_data_p(2), dst_data_p(2)
+
+    xmap = build_odd_selection_xmap(src_slice_len)
+
+    redist_components(1) = xt_redist_p2p_new(xmap, mpi_double_precision)
+    redist_components(2) = xt_redist_p2p_new(xmap, mpi_logical)
+    CALL xt_xmap_delete(xmap)
+
+    ! generate redist_collection
+    redist_coll = xt_redist_collection_new(redist_components, mpi_comm_world)
+    CALL xt_redist_delete(redist_components)
+    redist_copy = xt_redist_copy(redist_coll)
+    CALL xt_redist_delete(redist_coll)
+    redist_coll = redist_copy
+
+    ! test exchange
+    ! GNU Fortran versions up to 4.8 cannot call c_loc for type components,
+    ! instant ICE, and some compilers won't create c_ptr's to LOGICALs
+#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
+    src_data_p(1) = C_LOC(src_data%dp)
+#else
+    CALL xt_slice_c_loc(src_data%dp, src_data_p(1))
+#endif
+#if !defined HAVE_FC_LOGICAL_INTEROP || !defined(__GNUC__) || __GNUC__ > 4 \
+    || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
+    CALL xt_slice_c_loc(src_data%l, src_data_p(2))
+#else
+    src_data_p(2) = C_LOC(src_data%l)
+#endif
+    dst_data%dp = -1.0d0
+    dst_data%l = .FALSE.
+#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
+    dst_data_p(1) = C_LOC(dst_data%dp)
+#else
+    CALL xt_slice_c_loc(dst_data%dp, dst_data_p(1))
+#endif
+#if !defined HAVE_FC_LOGICAL_INTEROP || !defined(__GNUC__) || __GNUC__ > 4 \
+    || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
+    CALL xt_slice_c_loc(dst_data%l, dst_data_p(2))
+#else
+    dst_data_p(2) = C_LOC(dst_data%l)
+#endif
+    CALL xt_redist_s_exchange(redist_coll, src_data_p, dst_data_p)
+    IF (ANY(dst_data%l .NEQV. ref_dst_data%l)) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+    IF (ANY(dst_data%dp /= ref_dst_data%dp)) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+
+    ! clean up
+    CALL xt_redist_delete(redist_coll)
+  END SUBROUTINE simple_test2
 
   SUBROUTINE test_repeated_redist_ds1(redist_coll)
     TYPE(xt_redist), INTENT(in) :: redist_coll

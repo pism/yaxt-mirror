@@ -56,7 +56,13 @@ PROGRAM test_redist_repeat_parallel
        xt_redist, xt_redist_p2p_new, xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt
-  USE iso_c_binding, ONLY: c_loc, c_ptr, c_int
+    ! older PGI compilers do not handle generic interface correctly
+#if defined __PGI
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+#endif
+  USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   INTEGER :: rank, size, ierror
   CALL init_mpi
@@ -122,12 +128,11 @@ CONTAINS
                             index_vector_b(2*size**2)
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist_repeat, redist_repeat_2, redist_p2p
-    INTEGER(xt_int_kind), TARGET :: results_1(2*size**2,4), &
-                                    results_2(2*size**2,9)
-    INTEGER(xt_int_kind), TARGET :: input_data(2*size**2,9)
+    INTEGER(xt_int_kind) :: results_1(2*size**2,4), &
+                            results_2(2*size**2,9)
+    INTEGER(xt_int_kind) :: input_data(2*size**2,9)
     INTEGER(xt_int_kind) :: ref_results_1(2*size**2,4), &
                             ref_results_2(2*size**2,9)
-    TYPE(c_ptr) :: results(1), input(1)
     INTEGER(mpi_address_kind) :: extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int), PARAMETER :: displacements(4) = (/0,1,2,3/), &
@@ -167,14 +172,10 @@ CONTAINS
     results_1 = -1
     results_2 = -1
 
-    input(1) = C_LOC(input_data)
-    results(1) = C_LOC(results_1)
+    CALL xt_redist_s_exchange(redist_repeat, input_data, results_1)
+    CALL xt_redist_s_exchange(redist_repeat_2, input_data, results_2)
 
-    CALL xt_redist_s_exchange(redist_repeat, 1, input, results)
-    results(1) = C_LOC(results_2)
-    CALL xt_redist_s_exchange(redist_repeat_2, 1, input, results)
-
-    DO j = 1, 4
+    DO j = 1_xi, 4_xi
       DO i = 1, 2*size**2
         ref_results_1(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*size**2, xi)
       END DO

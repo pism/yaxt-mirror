@@ -90,6 +90,12 @@ MODULE yaxt
        xt_redist_collection_static_new, xt_redist_collection_new, &
        xt_redist_repeat_new, xt_is_null, xt_redist_get_mpi_comm, &
        xt_offset_ext, xt_redist_p2p_ext_new
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+  USE xt_redist_logical, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
   USE xt_mpi, ONLY: xt_mpi_comm_mark_exclusive
 
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc

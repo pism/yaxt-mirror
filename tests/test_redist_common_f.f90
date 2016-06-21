@@ -49,8 +49,18 @@ MODULE test_redist_common
   USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
-       xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_s_exchange1, &
+       xt_xmap, xt_xmap_all2all_new, xt_redist, &
+       xt_redist_s_exchange, xt_redist_s_exchange1, &
        xi => xt_int_kind
+#ifdef __PGI
+  ! PGI up to at least 15.4 has a bug that prevents proper import of
+  ! multiply extended generics. This is a separate bug from the one exhibited
+  ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+#endif
   USE ftest_common, ONLY: test_abort
   IMPLICIT NONE
   PRIVATE
@@ -125,11 +135,16 @@ CONTAINS
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
-    IF (dst_size < ref_dst_size) &
+    IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    CALL check_redist_dp(redist, src, ref_dst_size, dst, ref_dst)
+    dst = -1.0d0
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= ref_dst)) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
   END SUBROUTINE check_redist_dp2
 
   SUBROUTINE check_redist_dp2_2d(redist, src, dst, ref_dst)
@@ -141,11 +156,16 @@ CONTAINS
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
-    IF (dst_size < ref_dst_size) &
+    IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    CALL check_redist_dp(redist, src, ref_dst_size, dst, ref_dst)
+    dst = -1.0d0
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= ref_dst)) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
   END SUBROUTINE check_redist_dp2_2d
 
   SUBROUTINE check_redist_xi(redist, src, dst_size, dst, ref_dst)
@@ -171,11 +191,15 @@ CONTAINS
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
-    IF (dst_size < ref_dst_size) &
+    IF (dst_size /= ref_dst_size) &
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
-    CALL check_redist_xi(redist, src, ref_dst_size, dst, ref_dst)
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= ref_dst)) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
   END SUBROUTINE check_redist_xi2
 
 END MODULE test_redist_common

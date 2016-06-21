@@ -44,15 +44,19 @@
 !  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 PROGRAM test_redist_p2p_f
-  USE iso_c_binding, ONLY: c_ptr, c_loc
   USE mpi
   USE yaxt, ONLY: xt_int_kind, xt_xmap, xt_idxlist, xt_redist, xt_offset_ext, &
        xi => xt_int_kind, xt_int_mpidt, xt_initialize, xt_finalize, &
        xt_idxvec_new, xt_idxlist_delete, &
        xt_redist_p2p_new, xt_redist_p2p_off_new, xt_redist_p2p_ext_new, &
-       xt_redist_s_exchange, xt_redist_s_exchange1, &
+       xt_redist_s_exchange, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
        xt_xmap_all2all_new, xt_xmap_delete
+  ! pgfortran is in most versions well incapable of handling multiply extended
+  ! generic interfaces
+#ifdef __PGI
+  USE xt_redist_logical, ONLY: xt_redist_s_exchange
+#endif
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_redist_common, ONLY: check_redist, communicators_are_congruent
   USE test_idxlist_utils, ONLY: test_err_count
@@ -101,11 +105,12 @@ CONTAINS
          = (/ 0.0d0,  2.0d0, 13.0d0,  9.0d0,  7.0d0, &
          &    0.0d0,  2.0d0,  0.0d0,  2.0d0, 13.0d0, &
          &    4.0d0,  6.0d0,  7.0d0 /)
-
+    LOGICAL :: src_l(src_num_indices), &
+         dst_l(dst_num_indices), ref_dst_l(dst_num_indices)
     DOUBLE PRECISION :: dst_data(dst_num_indices)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redist_copy
+    TYPE(xt_redist) :: redist_dp, redist_copy, redist_l
 
 #ifdef __PGI
     DO i = 1, src_num_indices
@@ -121,24 +126,40 @@ CONTAINS
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
     ! redist_p2p
-    redist = xt_redist_p2p_new(xmap, mpi_double_precision)
+    redist_dp = xt_redist_p2p_new(xmap, mpi_double_precision)
 
     ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_dp), &
          mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_MPI_Comm", &
+         CALL test_abort("error in xt_redist_get_mpi_Comm", &
          __FILE__, &
          __LINE__)
 
     ! test exchange
-    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
+    CALL check_redist(redist_dp, src_data, dst_data, ref_dst_data)
 
-    redist_copy = xt_redist_copy(redist)
-    CALL xt_redist_delete(redist)
+    ! repeat for logicals
+    src_l = MOD(src_data, 2.0d0) == 1.0d0
+    dst_l = .FALSE.
+    ref_dst_l = MOD(ref_dst_data, 2.0d0) == 1.0d0
+    redist_l = xt_redist_p2p_new(xmap, mpi_logical)
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_l), &
+         mpi_comm_world)) &
+         CALL test_abort("error in xt_redist_get_mpi_Comm", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_redist_s_exchange(redist_l, src_l, dst_l)
+    IF (ANY(dst_l .NEQV. ref_dst_l)) &
+         CALL test_abort("error in xt_redist_s_exchange for 1D logical array", &
+         __FILE__, &
+         __LINE__)
+    redist_copy = xt_redist_copy(redist_dp)
+    CALL xt_redist_delete(redist_dp)
     CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
 
     ! clean up
     CALL xt_redist_delete(redist_copy)
+    CALL xt_redist_delete(redist_l)
     CALL xt_xmap_delete(xmap)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
