@@ -1180,3 +1180,12 @@ CONTAINS
     ENDDO
   END FUNCTION str2lower
 END PROGRAM test_idxstripes_f
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

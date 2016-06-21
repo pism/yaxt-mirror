@@ -533,3 +533,12 @@ CONTAINS
   END FUNCTION xmi_new
 
 END PROGRAM test_xmap_intersection_parallel
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!
