@@ -57,7 +57,7 @@ PROGRAM test_idxstripes_f
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_bounding_box, OPERATOR(/=), &
        xt_idxlist_get_pos_exts_of_index_stripes, &
-       xt_idxlist_get_num_indices, xt_idxvec_new, &
+       xt_idxlist_get_num_indices, xt_idxvec_new, xt_idxempty_new, &
        xt_idxstripes_from_idxlist_new
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
@@ -735,6 +735,7 @@ CONTAINS
     REAL, ALLOCATABLE :: rvals(:)
     TYPE(xt_idxlist) :: idxlist
     TYPE(xt_stripe), ALLOCATABLE :: stripes(:)
+    TYPE(xt_stripe) :: stripes_dummy(1)
     INTEGER :: tparts(8), timeseed
     INTEGER :: days_per_month(12), days_prefix
     INTEGER, PARAMETER :: tparts_mult(7) = (/ &
@@ -788,11 +789,18 @@ CONTAINS
       DO i = 1, num_indices
         indices(i) = NINT(rvals(i)*REAL((2*max_index)-max_index), xt_int_kind)
       END DO
-      idxlist = xt_idxvec_new(indices, num_indices)
+      idxlist = xt_idxvec_new(indices(1:num_indices))
 
       CALL xt_idxlist_get_index_stripes(idxlist, stripes)
-
-      CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
+      IF (ALLOCATED(stripes) .EQV. num_indices == 0) &
+         CALL test_abort("get index stripes returned values for empty list", &
+         __FILE__, &
+         __LINE__)
+      IF (num_indices > 0) THEN
+        CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
+      ELSE
+        CALL check_idxlist_stripes_pos_ext(idxlist, stripes_dummy(1:0))
+      END IF
 
       CALL xt_idxlist_delete(idxlist)
     END DO
