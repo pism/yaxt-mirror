@@ -64,22 +64,22 @@ PROGRAM test_redist_repeat_parallel
 #endif
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
-  INTEGER :: rank, size, ierror
+  INTEGER :: comm_rank, comm_size, ierror
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
-  CALL mpi_comm_rank(mpi_comm_world, rank, ierror)
+  CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
   IF (ierror /= MPI_SUCCESS) &
        CALL test_abort('mpi_comm_rank failed', &
        __FILE__, &
        __LINE__)
-  CALL mpi_comm_size(mpi_comm_world, size, ierror)
+  CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
        CALL test_abort('mpi_comm_size failed', &
        __FILE__, &
        __LINE__)
 
-  IF (size > 1) THEN
+  IF (comm_size > 1) THEN
     CALL test_4redist
   END IF
 
@@ -102,11 +102,11 @@ CONTAINS
 
     TYPE(xt_stripe) :: stripe
 
-    global_size(1) = INT(2 * size, xi)
-    global_size(2) = INT(size**2, xi)
-    local_size = size
-    local_start = RESHAPE((/ 0_xi, INT(rank*size, xi), INT(size, xi), &
-         INT(size*size-(rank+1)*size, xi) /), (/ 2, 2 /))
+    global_size(1) = INT(2 * comm_size, xi)
+    global_size(2) = INT(comm_size**2, xi)
+    local_size = comm_size
+    local_start = RESHAPE((/ 0_xi, INT(comm_rank*comm_size, xi), INT(comm_size, xi), &
+         INT(comm_size*comm_size-(comm_rank+1)*comm_size, xi) /), (/ 2, 2 /))
 
     DO i = 1, 2
       indices_a_(i) = xt_idxsection_new(start, global_size, local_size, &
@@ -117,22 +117,23 @@ CONTAINS
     CALL xt_idxlist_delete(indices_a_(1))
     CALL xt_idxlist_delete(indices_a_(2))
 
-    stripe = xt_stripe(start = INT(rank * 2 * size**2, xi), stride = 1_xi, &
-                       nstrides = INT(2*size**2, c_int))
+    stripe = xt_stripe(start = INT(comm_rank * 2 * comm_size**2, xi), &
+         &             stride = 1_xi, &
+         &             nstrides = INT(2*comm_size**2, c_int))
     indices_b = xt_idxstripes_new(stripe)
   END SUBROUTINE build_idxlists
 
   SUBROUTINE test_4redist
     TYPE(xt_idxlist) :: indices_a, indices_b
-    INTEGER(xt_int_kind) :: index_vector_a(2*size**2), &
-                            index_vector_b(2*size**2)
+    INTEGER(xt_int_kind) :: index_vector_a(2*comm_size**2), &
+                            index_vector_b(2*comm_size**2)
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist_repeat, redist_repeat_2, redist_p2p
-    INTEGER(xt_int_kind) :: results_1(2*size**2,4), &
-                            results_2(2*size**2,9)
-    INTEGER(xt_int_kind) :: input_data(2*size**2,9)
-    INTEGER(xt_int_kind) :: ref_results_1(2*size**2,4), &
-                            ref_results_2(2*size**2,9)
+    INTEGER(xt_int_kind) :: results_1(2*comm_size**2,4), &
+                            results_2(2*comm_size**2,9)
+    INTEGER(xt_int_kind) :: input_data(2*comm_size**2,9)
+    INTEGER(xt_int_kind) :: ref_results_1(2*comm_size**2,4), &
+                            ref_results_2(2*comm_size**2,9)
     INTEGER(mpi_address_kind) :: extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int), PARAMETER :: displacements(4) = (/0,1,2,3/), &
@@ -165,8 +166,8 @@ CONTAINS
     CALL xt_redist_delete(redist_p2p)
 
     DO j = 1, 9
-      DO i = 1, 2*size**2
-        input_data(i, j) = index_vector_a(i) + (j - 1_xi) * INT(4*size**2, xi)
+      DO i = 1, 2*comm_size**2
+        input_data(i, j) = index_vector_a(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
     results_1 = -1
@@ -176,13 +177,13 @@ CONTAINS
     CALL xt_redist_s_exchange(redist_repeat_2, input_data, results_2)
 
     DO j = 1_xi, 4_xi
-      DO i = 1, 2*size**2
-        ref_results_1(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*size**2, xi)
+      DO i = 1, 2*comm_size**2
+        ref_results_1(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
     DO j = 1, 9
-      DO i = 1, 2*size**2
-        ref_results_2(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*size**2, xi)
+      DO i = 1, 2*comm_size**2
+        ref_results_2(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
 
