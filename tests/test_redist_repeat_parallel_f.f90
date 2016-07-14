@@ -51,7 +51,7 @@ PROGRAM test_redist_repeat_parallel
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
        xt_idxlist, xt_idxlist_delete, xt_stripe, &
-       xt_idxsection_new, xt_idxlist_collection_new, xt_idxstripes_new, &
+       xt_idxfsection_new, xt_idxlist_collection_new, xt_idxstripes_new, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange, &
@@ -90,26 +90,54 @@ PROGRAM test_redist_repeat_parallel
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
+  ! create index lists to exchange data sections from a global 4D
+  ! array.
+  !
+  ! For the source side, the global array is of size W x X x Y x Z,
+  ! where W=X=Y=comm_size and Z=2. The source data is decomposed
+  ! into two shards of size comm_size*comm_size per process, where one
+  ! shard is positioned at (1, comm_rank, 1, 1), the other at (1,
+  ! comm_size-comm_rank, 1, 2), i.e. the decomposition of the last
+  ! dimension is decomposed anti-symmetrically.
+  !
+  ! The destination decomposition is a contiguous subset of the
+  ! interval [0,W*X*Y*Z-1], the stripe [S, S+2*comm_size^2] with S =
+  ! comm_rank * 2 * comm_size**2. This corresponds to a section of a
+  ! 4D array reshaped to [W,X,Z,Y], decomposed along the Y-axis
+  ! according to comm_rank (but enumerated differently from source
+  ! array).
   SUBROUTINE build_idxlists(indices_a, indices_b)
-    ! redist test with four different redists
     TYPE(xt_idxlist), INTENT(out) :: indices_a, indices_b
 
+    INTEGER, PARAMETER :: glob_rank = 4
     TYPE(xt_idxlist) :: indices_a_(2)
     INTEGER :: i
     INTEGER(xt_int_kind), PARAMETER :: start = 0
-    INTEGER(xt_int_kind) :: global_size(2), local_start(2, 2)
-    INTEGER :: local_size(2)
+    INTEGER(xt_int_kind) :: global_size(glob_rank), local_start(glob_rank, 2)
+    INTEGER :: local_size(glob_rank)
 
     TYPE(xt_stripe) :: stripe
 
-    global_size(1) = INT(2 * comm_size, xi)
-    global_size(2) = INT(comm_size**2, xi)
-    local_size = comm_size
-    local_start = RESHAPE((/ 0_xi, INT(comm_rank*comm_size, xi), INT(comm_size, xi), &
-         INT(comm_size*comm_size-(comm_rank+1)*comm_size, xi) /), (/ 2, 2 /))
+    global_size(1) = INT(comm_size, xi)
+    global_size(2) = INT(comm_size, xi)
+    global_size(3) = INT(comm_size, xi)
+    global_size(4) = 2_xi
+    local_size(1) = comm_size
+    local_size(2) = 1
+    local_size(3) = comm_size
+    local_size(4) = 1
+    local_start(1, 1) = 1_xi
+    local_start(2, 1) = INT(comm_rank + 1, xi)
+    local_start(3, 1) = 1_xi
+    local_start(4, 1) = 1_xi
+    !
+    local_start(1, 2) = 1_xi
+    local_start(2, 2) = INT(comm_size-comm_rank, xi)
+    local_start(3, 2) = 1_xi
+    local_start(4, 2) = 2_xi
 
     DO i = 1, 2
-      indices_a_(i) = xt_idxsection_new(start, global_size, local_size, &
+      indices_a_(i) = xt_idxfsection_new(start, global_size, local_size, &
            local_start(:, i))
     END DO
     indices_a = xt_idxlist_collection_new(indices_a_)
@@ -123,6 +151,8 @@ CONTAINS
     indices_b = xt_idxstripes_new(stripe)
   END SUBROUTINE build_idxlists
 
+  ! redist test for 4 level repetition of redist (i.e. 3D extension of 2D
+  ! redist)
   SUBROUTINE test_4redist
     TYPE(xt_idxlist) :: indices_a, indices_b
     INTEGER(xt_int_kind) :: index_vector_a(2*comm_size**2), &
