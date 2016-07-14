@@ -166,8 +166,9 @@ CONTAINS
                             ref_results_2(2*comm_size**2,9)
     INTEGER(mpi_address_kind) :: extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
-    INTEGER(c_int), PARAMETER :: displacements(4) = (/0,1,2,3/), &
-         displacements_2(4) = (/1,2,4,8/)
+    INTEGER(c_int), PARAMETER :: &
+         displacements(4) = (/ 0_c_int, 1_c_int, 2_c_int, 3_c_int /), &
+         displacements_2(4) = (/ 1_c_int, 2_c_int, 4_c_int, 8_c_int /)
     INTEGER :: i, ierror
     INTEGER(xt_int_kind) :: j
 
