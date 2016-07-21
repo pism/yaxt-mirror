@@ -51,6 +51,9 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 #include <yaxt.h>
 
 void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
@@ -76,7 +79,7 @@ static inline int
 cmp_idx_arrays(size_t num_indices,
                const Xt_int * restrict a, const Xt_int * restrict b)
 {
-  int diff = 0;
+  bool diff = false;
   for (size_t i = 0; i < num_indices; ++i)
     diff |= a[i] != b[i];
   return diff;
