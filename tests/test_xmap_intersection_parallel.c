@@ -487,6 +487,7 @@ parse_options(int *argc, char ***argv)
     }
   }
 }
+
 /*
  * Local Variables:
  * c-basic-offset: 2

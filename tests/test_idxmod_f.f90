@@ -125,7 +125,7 @@ CONTAINS
 
     patch_idxlist = xt_idxvec_new(patch_idx)
 
-    DO i = 1, 8
+    DO i = 1, patch_num
       mstate(i) = i
     END DO
 
@@ -147,7 +147,7 @@ CONTAINS
   ! track modifier usage
   SUBROUTINE test_multimod
     INTEGER, PARAMETER :: g1_src_num = 9, g1_dst_num = 9, &
-         g2_src_num = 5, g2_dst_num = 5, patch_num = 6
+         g2_src_num = 5, g2_dst_num = 5, patch_num = 6, num_mod = 2
     INTEGER(xi) :: i
     INTEGER(xi), PARAMETER :: &
          g1_src_idx(g1_src_num) = (/ (i, i = 1_xi,g1_src_num) /), &
@@ -160,24 +160,27 @@ CONTAINS
          !                           => idx:{4,3,25,2,8,5}
          ref_mpatch_idx(patch_num) = (/ 4_xi, 3_xi, 25_xi, 2_xi, 8_xi, 5_xi /)
 
-    TYPE(xt_idxlist) :: g1_src_idxlist, g1_dst_idxlist, g2_src_idxlist, &
-         g2_dst_idxlist, patch_idxlist, mpatch_idxlist
-    TYPE(xt_modifier) ::  modifier(2)
-    INTEGER :: mstate(patch_num)
+    TYPE(xt_idxlist) :: mod_idxlist(2,2), patch_idxlist, mpatch_idxlist
+    TYPE(xt_modifier) ::  modifier(num_mod)
+    INTEGER :: mstate(patch_num), k
     INTEGER, PARAMETER :: ref_mstate(patch_num) &
-         = (/ IOR(1, 0), IOR(1, 0), IOR(0, 0), IOR(1,2), IOR(1,2), IOR(0,2) /)
+         = (/ IOR(1, 0), IOR(1, 0), IOR(0, 0), &
+         &    IOR(1, 2), IOR(1, 2), IOR(0, 2) /), &
+         src = 1, dst = 2
 
-    g1_src_idxlist = xt_idxvec_new(g1_src_idx, g1_src_num)
-    g1_dst_idxlist = xt_idxvec_new(g1_dst_idx)
-    g2_src_idxlist = xt_idxvec_new(g2_src_idx)
-    g2_dst_idxlist = xt_idxvec_new(g2_dst_idx, g2_dst_num)
+    mod_idxlist(1, src) = xt_idxvec_new(g1_src_idx, g1_src_num)
+    mod_idxlist(1, dst) = xt_idxvec_new(g1_dst_idx)
+    mod_idxlist(2, src) = xt_idxvec_new(g2_src_idx)
+    mod_idxlist(2, dst) = xt_idxvec_new(g2_dst_idx, g2_dst_num)
 
     patch_idxlist = xt_idxvec_new(patch_idx)
     ! reset mstate
     mstate(:) = 0
 
-    modifier(1) = xt_modifier(g1_src_idxlist, g1_dst_idxlist, 1)
-    modifier(2) = xt_modifier(g2_src_idxlist, g2_dst_idxlist, 2)
+    DO k = 1, num_mod
+      modifier(k) = xt_modifier(mod_idxlist(k, src), mod_idxlist(k, dst), &
+           ISHFT(1, k - 1))
+    END DO
     mpatch_idxlist = xt_idxmod_new(patch_idxlist, modifier, 2, mstate)
     CALL check_idxlist(mpatch_idxlist, ref_mpatch_idx)
 
@@ -188,10 +191,7 @@ CONTAINS
          __LINE__)
     CALL xt_idxlist_delete(mpatch_idxlist)
     CALL xt_idxlist_delete(patch_idxlist)
-    CALL xt_idxlist_delete(g2_dst_idxlist)
-    CALL xt_idxlist_delete(g2_src_idxlist)
-    CALL xt_idxlist_delete(g1_dst_idxlist)
-    CALL xt_idxlist_delete(g1_src_idxlist)
+    CALL xt_idxlist_delete(mod_idxlist)
   END SUBROUTINE test_multimod
 
 END PROGRAM test_idxmod_f

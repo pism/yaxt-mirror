@@ -61,6 +61,18 @@
 #include "test_idxlist_utils.h"
 #include "core/ppm_xfuncs.h"
 
+static void
+test_intersection(int num_idx_a, const Xt_int index_vector_a[],
+                  int num_idx_b, const Xt_int index_vector_b[],
+                  int num_idx_isect, const Xt_int index_vector_isect[]);
+static void
+test_idxvec_from_stripes(int num_stripes, const struct Xt_stripe stripes[],
+                         int num_ref_indices, const Xt_int ref_indices[]);
+static void
+test_get_indices_at_positions(int num_idx, const Xt_int indices[],
+                              Xt_int undef_idx,
+                              int num_pos, const int pos[]);
+
 int main(void) {
 
   // init mpi
@@ -71,52 +83,41 @@ int main(void) {
 
   { // test packing and unpacking of index vectors
 
-    Xt_int index_vector[] = {1,2,3,4,5,6,7};
-    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
-
-    Xt_idxlist idxvector;
+    static const Xt_int index_vector[] = {1,2,3,4,5,6,7};
+    enum { num_indices = sizeof(index_vector) / sizeof(index_vector[0]) };
 
     // create an index vector
-
-    idxvector = xt_idxvec_new(index_vector, num_indices);
+    Xt_idxlist idxvector = xt_idxvec_new(index_vector, num_indices);
 
     // test the generated index vector
-
     check_idxlist(idxvector, index_vector, num_indices);
 
-    Xt_idxlist idxvector_copy
-      = idxlist_pack_unpack_copy(idxvector);
+    Xt_idxlist idxvector_copy = idxlist_pack_unpack_copy(idxvector);
 
     // check the received index vector
     check_idxlist(idxvector_copy, index_vector, num_indices);
 
     // compute intersection between the two index vectors
-
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(idxvector, idxvector_copy);
+    Xt_idxlist intersection
+      = xt_idxlist_get_intersection(idxvector, idxvector_copy);
 
     // check the computed intersection (should be identically to the original
     // index vector)
-
     check_idxlist(intersection, index_vector, num_indices);
 
     // check the conversion to stripes
-
     struct Xt_stripe *stripes;
     int num_stripes;
-
     xt_idxlist_get_index_stripes(idxvector, &stripes, &num_stripes);
 
-    struct Xt_stripe ref_stripes[1] = {{.start = 1, .stride = 1, .nstrides = 7}};
-    int ref_num_stripes = 1;
+    static const struct Xt_stripe ref_stripes[]
+      = {{.start = 1, .stride = 1, .nstrides = 7}};
+    enum { ref_num_stripes = sizeof (ref_stripes) / sizeof (ref_stripes[0]) };
 
     check_stripes(stripes, num_stripes, ref_stripes, ref_num_stripes);
 
     // clean up
-
     free(stripes);
-
     xt_idxlist_delete(idxvector);
     xt_idxlist_delete(idxvector_copy);
     xt_idxlist_delete(intersection);
@@ -124,46 +125,36 @@ int main(void) {
 
   { // test copying of index vector
 
-    Xt_int index_vector[] = {1,2,3,4,5,6,7};
-    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
-
-    Xt_idxlist idxvector, idxvector_copy;
+    static const Xt_int index_vector[] = {1,2,3,4,5,6,7};
+    enum { num_indices = sizeof(index_vector) / sizeof(index_vector[0]) };
 
     // create an index vector
 
-    idxvector = xt_idxvec_new(index_vector, num_indices);
+    Xt_idxlist idxvector = xt_idxvec_new(index_vector, num_indices);
 
     // test the generated index vector
-
     check_idxlist(idxvector, index_vector, num_indices);
 
     // copy the index vector
-
-    idxvector_copy = xt_idxlist_copy(idxvector);
+    Xt_idxlist idxvector_copy = xt_idxlist_copy(idxvector);
 
     // check the generated copy
-
     check_idxlist(idxvector_copy, index_vector, num_indices);
 
     // clean up
-
     xt_idxlist_delete(idxvector);
     xt_idxlist_delete(idxvector_copy);
   }
 
   { // test repeated equal indices
 
-    Xt_int index_vector[] = {1,2,3,7,5,6,7,7};
-    int num_indices = sizeof(index_vector) / sizeof(index_vector[0]);
-
-    Xt_idxlist idxvector;
+    static const Xt_int index_vector[] = {1,2,3,7,5,6,7,7};
+    enum { num_indices = sizeof(index_vector) / sizeof(index_vector[0]) };
 
     // create an index vector
-
-    idxvector = xt_idxvec_new(index_vector, num_indices);
+    Xt_idxlist idxvector = xt_idxvec_new(index_vector, num_indices);
 
     // test the generated index vector
-
     check_idxlist(idxvector, index_vector, num_indices);
 
     // clean up
@@ -172,33 +163,37 @@ int main(void) {
 
   { // subtest from test_ut
 
-    const int single_match_only = 1;
-    Xt_int index_vector[] = {10,15,14,13,12,15,10,11,12,13,23,18,19,
-                             20,21,31,26,27,28,29};
-    size_t index_num = sizeof(index_vector) / sizeof(index_vector[0]);
+    enum { single_match_only = 1 };
+    static const Xt_int index_vector[]
+      = { 10, 15, 14, 13, 12, 15, 10, 11, 12, 13, 23, 18, 19,
+          20, 21, 31, 26, 27, 28, 29 };
 
-    Xt_int intersection_vector[] = {12,12,13,13,14,15,15,20,21,23,28,29,31};
-    size_t intersection_num
-      = sizeof(intersection_vector) / sizeof(intersection_vector[0]);
-
-    Xt_idxlist idxvector;
+    static const Xt_int intersection_vector[]
+      = { 12, 12, 13, 13, 14, 15, 15, 20, 21, 23, 28, 29, 31 };
+    enum {
+      index_num = sizeof(index_vector) / sizeof(index_vector[0]),
+      intersection_num
+      = sizeof(intersection_vector) / sizeof(intersection_vector[0]),
+    };
 
     // create an index vector
-
-    idxvector = xt_idxvec_new(index_vector, (int)index_num);
+    Xt_idxlist idxvector = xt_idxvec_new(index_vector, index_num);
 
     // get positions:
     int retval;
     int intersection_pos[intersection_num];
-    int ref_intersection_pos[] = {4,8,3,9,2,1,5,13,14,10,18,19,15};
-    size_t ref_intersection_num
-      = sizeof(ref_intersection_pos) / sizeof(ref_intersection_pos[0]);
+    static const int ref_intersection_pos[]
+      = { 4, 8, 3, 9, 2, 1, 5, 13, 14, 10, 18, 19, 15 };
+    enum {
+      ref_intersection_num
+      = sizeof(ref_intersection_pos) / sizeof(ref_intersection_pos[0])
+    };
 
-    assert(intersection_num == ref_intersection_num);
+    assert((int)intersection_num == (int)ref_intersection_num);
 
     retval = xt_idxlist_get_positions_of_indices(idxvector,
                                                  intersection_vector,
-                                                 (int)intersection_num,
+                                                 intersection_num,
                                                  intersection_pos,
                                                  single_match_only);
     assert(retval == 0);
@@ -210,434 +205,254 @@ int main(void) {
     xt_idxlist_delete(idxvector);
   }
 
-  { // check intersection
-    Xt_int index_vector[2][3] = {{1,2,3},{1,2,3}};
-    int num_indices[2]
-      = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
-         sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
+  {
+    enum {
+      num_vec = 2,
+      num_idx = 3,
+    };
+    // check intersection
+    static Xt_int index_vector[num_vec][num_idx] = {{1,2,3},{1,2,3}};
 
-    Xt_idxlist idxvector[2];
-
-    // create index vectors
-
-    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
-
-    // compute intersection between the two index vectors
-
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
-
-    // check the computed intersection
-
-    Xt_int ref_intersection_indices[] = {1,2,3};
-    int ref_intersection_num_indices =
-      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
-
-    check_idxlist(intersection, ref_intersection_indices,
-                  ref_intersection_num_indices);
-
-    // clean up
-
-    xt_idxlist_delete(idxvector[0]);
-    xt_idxlist_delete(idxvector[1]);
-    xt_idxlist_delete(intersection);
+    test_intersection(num_idx, index_vector[0],
+                      num_idx, index_vector[1],
+                      num_idx, index_vector[0]);
   }
 
-  { // check intersection
-    Xt_int index_vector[2][3] = {{1,2,3},{2,3,4}};
-    int num_indices[2]
-      = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
-         sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
+  {
+    enum {
+      num_vec = 2,
+      num_idx = 3,
+    };
+    // check intersection
+    static const Xt_int index_vector[num_vec][num_idx] = {{1,2,3},{2,3,4}};
+    static const Xt_int ref_intersection_indices[] = {2,3};
+    enum {
+      num_ref_intersection_indices
+      = sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0])
+    };
 
-    Xt_idxlist idxvector[2];
-
-    // create index vectors
-
-    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
-
-    // compute intersection between the two index vectors
-
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
-
-    // check the computed intersection
-
-    Xt_int ref_intersection_indices[] = {2,3};
-    int ref_intersection_num_indices =
-      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
-
-    check_idxlist(intersection, ref_intersection_indices,
-                  ref_intersection_num_indices);
-
-    // clean up
-
-    xt_idxlist_delete(idxvector[0]);
-    xt_idxlist_delete(idxvector[1]);
-    xt_idxlist_delete(intersection);
+    test_intersection(num_idx, index_vector[0],
+                      num_idx, index_vector[1],
+                      num_ref_intersection_indices, ref_intersection_indices);
   }
 
-  { // check intersection
-    Xt_int index_vector[2][3] = {{2,3,4},{1,2,3}};
-    int num_indices[2]
-      = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
-         sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
-
-    Xt_idxlist idxvector[2];
-
-    // create index vectors
-
-    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
-
-    // compute intersection between the two index vectors
-
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
-
-    // check the computed intersection
-
-    Xt_int ref_intersection_indices[] = {2,3};
-    int ref_intersection_num_indices =
-      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
-
-    check_idxlist(intersection, ref_intersection_indices,
-                  ref_intersection_num_indices);
-
-    // clean up
-
-    xt_idxlist_delete(idxvector[0]);
-    xt_idxlist_delete(idxvector[1]);
-    xt_idxlist_delete(intersection);
+  {
+    enum {
+      num_vec = 2,
+      num_idx = 3
+    };
+    // check intersection
+    static const Xt_int index_vector[num_vec][num_idx] = {{2,3,4},{1,2,3}};
+    static const Xt_int ref_intersection_indices[] = {2,3};
+    enum {
+      num_ref_intersection_indices
+      = sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0])
+    };
+    test_intersection(num_idx, index_vector[0],
+                      num_idx, index_vector[1],
+                      num_ref_intersection_indices, ref_intersection_indices);
   }
 
-  { // check intersection
-    Xt_int index_vector[2][3] = {{4,2,3},{3,1,2}};
-    int num_indices[2]
-      = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
-         sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
+  {
+    enum {
+      num_vec = 2,
+      num_idx = 3
+    };
+    // check intersection
+    static const Xt_int index_vector[num_vec][num_idx] = {{4,2,3},{3,1,2}};
+    static const Xt_int ref_intersection_indices[] = {2,3};
+    enum {
+      num_ref_intersection_indices
+      = sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0])
+    };
 
-    Xt_idxlist idxvector[2];
-
-    // create index vectors
-
-    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
-
-    // compute intersection between the two index vectors
-
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
-
-    // check the computed intersection
-
-    Xt_int ref_intersection_indices[] = {2,3};
-    int ref_intersection_num_indices =
-      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
-
-    check_idxlist(intersection, ref_intersection_indices,
-                  ref_intersection_num_indices);
-
-    // clean up
-
-    xt_idxlist_delete(idxvector[0]);
-    xt_idxlist_delete(idxvector[1]);
-    xt_idxlist_delete(intersection);
+    test_intersection(num_idx, index_vector[0],
+                      num_idx, index_vector[1],
+                      num_ref_intersection_indices, ref_intersection_indices);
   }
 
-  { // check intersection
-    Xt_int index_vector[2][3] = {{3,1,2},{4,2,3}};
-    int num_indices[2]
-      = {sizeof(index_vector[0]) / sizeof(index_vector[0][0]),
-         sizeof(index_vector[0]) / sizeof(index_vector[0][0])};
-
-    Xt_idxlist idxvector[2];
-
-    // create index vectors
-
-    idxvector[0] = xt_idxvec_new(index_vector[0], num_indices[0]);
-    idxvector[1] = xt_idxvec_new(index_vector[1], num_indices[1]);
-
-    // compute intersection between the two index vectors
-
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(idxvector[0], idxvector[1]);
-
-    // check the computed intersection
-
-    Xt_int ref_intersection_indices[] = {2,3};
-    int ref_intersection_num_indices =
-      sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0]);
-
-    check_idxlist(intersection, ref_intersection_indices,
-                  ref_intersection_num_indices);
-
-    // clean up
-
-    xt_idxlist_delete(idxvector[0]);
-    xt_idxlist_delete(idxvector[1]);
-    xt_idxlist_delete(intersection);
+  {
+    enum {
+      num_vec = 2,
+      num_idx = 3
+    };
+    // check intersection
+    static const Xt_int index_vector[2][3] = {{3,1,2},{4,2,3}};
+    static const Xt_int ref_intersection_indices[] = {2,3};
+    enum {
+      num_ref_intersection_indices
+      = sizeof(ref_intersection_indices) / sizeof(ref_intersection_indices[0])
+    };
+    test_intersection(num_idx, index_vector[0],
+                      num_idx, index_vector[1],
+                      num_ref_intersection_indices, ref_intersection_indices);
   }
 
-  { // test constructor xt_idxvec_from_stripes_new
-
-    struct Xt_stripe stripes[2] = {{.start = 5, .stride =  1, .nstrides = 5},
-                                   {.start = 4, .stride = -1, .nstrides = 5}};
-
-    // construct
-
-    Xt_idxlist idxvec;
-
-    idxvec = xt_idxvec_from_stripes_new(stripes, 2);
-
-    // test results
-
-    Xt_int ref_indices[] = {5,6,7,8,9,4,3,2,1,0};
-    check_idxlist(idxvec, ref_indices, 10);
-
-    // clean up
-
-    xt_idxlist_delete(idxvec);
+  {
+    // test constructor xt_idxvec_from_stripes_new
+    static const struct Xt_stripe stripes[]
+      = {{.start = 5, .stride =  1, .nstrides = 5},
+         {.start = 4, .stride = -1, .nstrides = 5}};
+    static const Xt_int ref_indices[] = {5,6,7,8,9,4,3,2,1,0};
+    enum {
+      num_stripes = sizeof (stripes) / sizeof (stripes[0]),
+      num_ref_indices = sizeof (ref_indices) / sizeof (ref_indices[0]),
+    };
+    test_idxvec_from_stripes(num_stripes, stripes,
+                             num_ref_indices, ref_indices);
   }
 
-  { // test constructor xt_idxvec_from_stripes_new
-
-    struct Xt_stripe stripes[3] = {{.start = 0, .stride = 1, .nstrides = 5},
-                                   {.start = 2, .stride = 1, .nstrides = 5},
-                                   {.start = 4, .stride = 1, .nstrides = 5}};
-
-    // construct
-
-    Xt_idxlist idxvec;
-
-    idxvec = xt_idxvec_from_stripes_new(stripes, 3);
-
-    // test results
-
-    Xt_int ref_indices[] = {0,1,2,3,4,2,3,4,5,6,4,5,6,7,8};
-    check_idxlist(idxvec, ref_indices, 15);
-
-    // clean up
-
-    xt_idxlist_delete(idxvec);
+  {
+    // test constructor xt_idxvec_from_stripes_new
+    static const struct Xt_stripe stripes[]
+      = {{.start = 0, .stride = 1, .nstrides = 5},
+         {.start = 2, .stride = 1, .nstrides = 5},
+         {.start = 4, .stride = 1, .nstrides = 5}};
+    static const Xt_int ref_indices[]
+      = { 0, 1, 2, 3, 4, 2, 3, 4, 5, 6, 4, 5, 6, 7, 8 };
+    enum {
+      num_stripes = sizeof (stripes) / sizeof (stripes[0]),
+      num_ref_indices = sizeof (ref_indices) / sizeof (ref_indices[0])
+    };
+    test_idxvec_from_stripes(num_stripes, stripes,
+                             num_ref_indices, ref_indices);
   }
 
-  { // test constructor xt_idxvec_from_stripes_new
-
-    struct Xt_stripe stripes[3] = {{.start = 2, .stride = 1, .nstrides = 5},
-                                   {.start = 0, .stride = 1, .nstrides = 5},
-                                   {.start = 4, .stride = 1, .nstrides = 5}};
-
-    // construct
-
-    Xt_idxlist idxvec;
-
-    idxvec = xt_idxvec_from_stripes_new(stripes, 3);
-
-    // test results
-
-    Xt_int ref_indices[] = {2,3,4,5,6,0,1,2,3,4,4,5,6,7,8};
-    check_idxlist(idxvec, ref_indices, 15);
-
-    // clean up
-
-    xt_idxlist_delete(idxvec);
+  {
+    // test constructor xt_idxvec_from_stripes_new
+    static const struct Xt_stripe stripes[]
+      = {{.start = 2, .stride = 1, .nstrides = 5},
+         {.start = 0, .stride = 1, .nstrides = 5},
+         {.start = 4, .stride = 1, .nstrides = 5}};
+    static const Xt_int ref_indices[]
+      = { 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 4, 5, 6, 7, 8 };
+    enum {
+      num_stripes = sizeof (stripes) / sizeof (stripes[0]),
+      num_ref_indices = sizeof (ref_indices) / sizeof (ref_indices[0])
+    };
+    test_idxvec_from_stripes(num_stripes, stripes,
+                             num_ref_indices, ref_indices);
   }
 
-  { // test constructor xt_idxvec_from_stripes_new
-
-    struct Xt_stripe stripes[3] = {{.start = 2, .stride =  1, .nstrides = 5},
-                                   {.start = 4, .stride = -1, .nstrides = 5},
-                                   {.start = 4, .stride =  1, .nstrides = 5}};
-
-    // construct
-
-    Xt_idxlist idxvec;
-
-    idxvec = xt_idxvec_from_stripes_new(stripes, 3);
-
-    // test results
-
-    Xt_int ref_indices[] = {2,3,4,5,6,4,3,2,1,0,4,5,6,7,8};
-    check_idxlist(idxvec, ref_indices, 15);
-
-    // clean up
-
-    xt_idxlist_delete(idxvec);
+  {
+    // test constructor xt_idxvec_from_stripes_new
+    static const struct Xt_stripe stripes[]
+      = {{.start = 2, .stride =  1, .nstrides = 5},
+         {.start = 4, .stride = -1, .nstrides = 5},
+         {.start = 4, .stride =  1, .nstrides = 5}};
+    static const Xt_int ref_indices[]
+      = { 2, 3, 4, 5, 6, 4, 3, 2, 1, 0, 4, 5, 6, 7, 8 };
+    enum {
+      num_stripes = sizeof (stripes) / sizeof (stripes[0]),
+      num_ref_indices = sizeof (ref_indices) / sizeof (ref_indices[0])
+    };
+    test_idxvec_from_stripes(num_stripes, stripes,
+                             num_ref_indices, ref_indices);
   }
 
-  { // test constructor xt_idxvec_from_stripes_new
-
-    struct Xt_stripe stripes[3] = {{.start =  0, .stride =  3, .nstrides = 5},
-                                   {.start =  1, .stride =  3, .nstrides = 5},
-                                   {.start = 14, .stride = -3, .nstrides = 5}};
-
-    // construct
-
-    Xt_idxlist idxvec;
-
-    idxvec = xt_idxvec_from_stripes_new(stripes, 3);
-
-    // test results
-
-    Xt_int ref_indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2};
-    check_idxlist(idxvec, ref_indices, 15);
-
-    // clean up
-
-    xt_idxlist_delete(idxvec);
+  {
+    // test constructor xt_idxvec_from_stripes_new
+    static const struct Xt_stripe stripes[]
+      = {{.start =  0, .stride =  3, .nstrides = 5},
+         {.start =  1, .stride =  3, .nstrides = 5},
+         {.start = 14, .stride = -3, .nstrides = 5}};
+    static const Xt_int ref_indices[]
+      = { 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2 };
+    enum {
+      num_stripes = sizeof (stripes) / sizeof (stripes[0]),
+      num_ref_indices = sizeof (ref_indices) / sizeof (ref_indices[0])
+    };
+    test_idxvec_from_stripes(num_stripes, stripes,
+                             num_ref_indices, ref_indices);
   }
 
-  { // test constructor xt_idxvec_from_stripes_new
-
-    struct Xt_stripe stripes[3] = {{.start =  0, .stride =  3, .nstrides = 5},
-                                   {.start =  2, .stride =  3, .nstrides = 5},
-                                   {.start = 14, .stride = -3, .nstrides = 5}};
-
-    // construct
-
-    Xt_idxlist idxvec;
-
-    idxvec = xt_idxvec_from_stripes_new(stripes, 3);
-
-    // test results
-
-    Xt_int ref_indices[] = {0,3,6,9,12,2,5,8,11,14,14,11,8,5,2};
-    check_idxlist(idxvec, ref_indices, 15);
-
-    // clean up
-
-    xt_idxlist_delete(idxvec);
+  {
+    // test constructor xt_idxvec_from_stripes_new
+    static const struct Xt_stripe stripes[]
+      = {{.start =  0, .stride =  3, .nstrides = 5},
+         {.start =  2, .stride =  3, .nstrides = 5},
+         {.start = 14, .stride = -3, .nstrides = 5}};
+    static const Xt_int ref_indices[]
+      = { 0, 3, 6, 9, 12, 2, 5, 8, 11, 14, 14, 11, 8, 5, 2 };
+    enum {
+      num_stripes = sizeof (stripes) / sizeof (stripes[0]),
+      num_ref_indices = sizeof (ref_indices) / sizeof (ref_indices[0])
+    };
+    test_idxvec_from_stripes(num_stripes, stripes,
+                             num_ref_indices, ref_indices);
   }
 
-  { // test constructor xt_idxvec_from_stripes_new
-
-    struct Xt_stripe stripes[4] = {{.start =  0, .stride = -1, .nstrides = 5},
-                                   {.start =  1, .stride =  1, .nstrides = 5},
-                                   {.start = -5, .stride = -1, .nstrides = 5},
-                                   {.start =  6, .stride =  1, .nstrides = 5}};
-
-    // construct
-
-    Xt_idxlist idxvec;
-
-    idxvec = xt_idxvec_from_stripes_new(stripes, 4);
-
-    // test results
-
-    Xt_int ref_indices[] = {0,-1,-2,-3,-4,1,2,3,4,5,-5,-6,-7,-8,-9,
-                            6,7,8,9,10};
-    check_idxlist(idxvec, ref_indices, 20);
-
-    // clean up
-
-    xt_idxlist_delete(idxvec);
+  {
+    // test constructor xt_idxvec_from_stripes_new
+    static const struct Xt_stripe stripes[]
+      = {{.start =  0, .stride = -1, .nstrides = 5},
+         {.start =  1, .stride =  1, .nstrides = 5},
+         {.start = -5, .stride = -1, .nstrides = 5},
+         {.start =  6, .stride =  1, .nstrides = 5}};
+    static const Xt_int ref_indices[]
+      = {  0, -1, -2, -3, -4,  1,  2,  3,  4,  5,
+          -5, -6, -7, -8, -9,  6,  7,  8,  9,  10 };
+    enum {
+      num_stripes = sizeof (stripes) / sizeof (stripes[0]),
+      num_ref_indices = sizeof (ref_indices) / sizeof (ref_indices[0])
+    };
+    test_idxvec_from_stripes(num_stripes, stripes,
+                             num_ref_indices, ref_indices);
   }
 
   {
     // check idxvec_get_indices_at_positions
     // case: mixed valid and invalid positions
-    const Xt_int undef_idx = XT_INT_MIN;
-    Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
-    int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
-    int pos[] = {0,2,7,9,11,100,11,200,9,300,7,400,5};
-    int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_int ref_sel_idx[num_pos];
-    int ref_undef_count = 0;
-    for (int ip=0; ip<num_pos; ip++) {
-      int p = pos[ip];
-      if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
-        ref_sel_idx[ip] = undef_idx;
-        ref_undef_count++;
-      }
-    }
-    Xt_int sel_idx[num_pos];
-    int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
-                                            (Xt_int)(undef_idx));
-    if (undef_count != ref_undef_count)
-      PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-    for (int ip=0; ip<num_pos; ip++) {
-      if (sel_idx[ip] != ref_sel_idx[ip])
-        PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-    }
-    xt_idxlist_delete(idxvec);
+    Xt_int undef_idx = XT_INT_MIN;
+    static const Xt_int indices[]
+      = { 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2, 1 };
+    static const int pos[]
+      = { 0, 2, 7, 9, 11, 100, 11, 200, 9, 300, 7, 400, 5 };
+    enum {
+      num_indices = sizeof(indices) / sizeof(indices[0]),
+      num_pos = sizeof(pos) / sizeof(pos[0]),
+    };
+    test_get_indices_at_positions(num_indices, indices, undef_idx,
+                                  num_pos, pos);
   }
 
   {
     // check idxvec_get_indices_at_positions
     // case: only valid positions
-    const Xt_int undef_idx = XT_INT_MIN;
-    Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
-    int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
-    int pos[] = {0,2,7,9,11,11,9,7,5};
-    int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_int ref_sel_idx[num_pos];
-    int ref_undef_count = 0;
-    for (Xt_int ip=0; ip<num_pos; ip++) {
-      int p = pos[ip];
-      if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
-        ref_sel_idx[ip] = undef_idx;
-        ref_undef_count++;
-      }
-    }
-    Xt_int sel_idx[num_pos];
-    int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
-                                            (Xt_int)(undef_idx));
-    if (undef_count != ref_undef_count)
-      PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-    for (int ip=0; ip<num_pos; ip++) {
-      if (sel_idx[ip] != ref_sel_idx[ip])
-        PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-    }
-    xt_idxlist_delete(idxvec);
+    Xt_int undef_idx = XT_INT_MIN;
+    static const Xt_int indices[]
+      = { 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2, 1 };
+    static const int pos[]
+      = { 0, 2, 7, 9, 11, 11, 9, 7, 5 };
+    enum {
+      num_indices = sizeof(indices) / sizeof(indices[0]),
+      num_pos = sizeof(pos) / sizeof(pos[0]),
+    };
+    test_get_indices_at_positions(num_indices, indices, undef_idx,
+                                  num_pos, pos);
   }
 
   {
     // check idxvec_get_indices_at_positions
     // case: only invalid positions
-    const Xt_int undef_idx = XT_INT_MIN;
-    Xt_int indices[] = {0,3,6,9,12,1,4,7,10,13,14,11,8,5,2,1};
-    int num_indices = sizeof(indices) / sizeof(indices[0]);
-    Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
-    int pos[] = {100,102,107,109,1011,1011,109,107,105};
-    int num_pos = sizeof(pos) / sizeof(pos[0]);
-    Xt_int ref_sel_idx[num_pos];
-    int ref_undef_count = 0;
-    for (Xt_int ip=0; ip<num_pos; ip++) {
-      int p = pos[ip];
-      if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[ip]) != 0) {
-        ref_sel_idx[ip] = undef_idx;
-        ref_undef_count++;
-      }
-    }
-    Xt_int sel_idx[num_pos];
-    int undef_count
-      = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
-                                            (Xt_int)undef_idx);
-    if (undef_count != ref_undef_count)
-      PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-    for (Xt_int ip=0; ip<num_pos; ip++) {
-      if (sel_idx[ip] != ref_sel_idx[ip])
-        PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-    }
-    xt_idxlist_delete(idxvec);
+    Xt_int undef_idx = XT_INT_MIN;
+    static const Xt_int indices[]
+      = { 0, 3, 6, 9, 12, 1, 4, 7, 10, 13, 14, 11, 8, 5, 2, 1 };
+    static const int pos[]
+      = { 100, 102, 107, 109, 1011, 1011, 109, 107, 105 };
+    enum {
+      num_indices = sizeof(indices) / sizeof(indices[0]),
+      num_pos = sizeof(pos) / sizeof(pos[0]),
+    };
+    test_get_indices_at_positions(num_indices, indices, undef_idx,
+                                  num_pos, pos);
   }
 
   {
     // check get_positions_of_indices
     // case: some unmatched indices
-    Xt_int indices[2] = {0,2};
-    int num_indices = 2;
+    enum { num_indices = 2 };
+    static const Xt_int indices[num_indices] = { 0, 2 };
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
@@ -654,17 +469,17 @@ int main(void) {
       PUT_ERR("xt_idxlist_get_position_of_index_off"
               " did not return an error\n");
 
-    Xt_int selection[] = {1, 2, 3};
-    int num_selection = (int)(sizeof(selection) / sizeof(*selection));
+    static const Xt_int selection[] = { 1, 2, 3 };
+    enum { num_selection = (int)(sizeof(selection) / sizeof(*selection)) };
 
     int positions[num_selection];
-    int ref_positions[] = { -1, 1, -1 };
+    static const int ref_positions[] = { -1, 1, -1 };
 
     if (xt_idxlist_get_positions_of_indices(idxvec, selection, num_selection,
                                             positions, 0) != 2)
       PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
 
-    for (int i=0; i<num_selection; i++) {
+    for (size_t i = 0; i < num_selection; i++) {
       if (positions[i] != ref_positions[i])
         PUT_ERR("xt_idxlist_get_position_of_indices did not return correct position\n");
     }
@@ -679,7 +494,7 @@ int main(void) {
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
-    unsigned ndim = 3;
+    enum { ndim = 3 };
     Xt_int global_size[ndim];
     Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
@@ -704,7 +519,7 @@ int main(void) {
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
-    unsigned ndim = 3;
+    enum { ndim = 3 };
     Xt_int global_size[ndim];
     Xt_int global_start_index = 1;
     struct Xt_bounds bounds[ndim];
@@ -754,6 +569,66 @@ int main(void) {
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
+}
+
+static Xt_idxlist
+setup_idxvec(int num_idx, const Xt_int indices[])
+{
+  Xt_idxlist idxvec = xt_idxvec_new(indices, num_idx);
+  check_idxlist(idxvec, indices, num_idx);
+  return idxvec;
+}
+
+static void
+test_intersection(int num_idx_a, const Xt_int index_vector_a[],
+                  int num_idx_b, const Xt_int index_vector_b[],
+                  int num_idx_isect, const Xt_int index_vector_isect[])
+{
+  Xt_idxlist idxvec_a = setup_idxvec(num_idx_a, index_vector_a),
+    idxvec_b = setup_idxvec(num_idx_b, index_vector_b),
+    intersection = xt_idxlist_get_intersection(idxvec_a, idxvec_b);
+  check_idxlist(intersection, index_vector_isect, num_idx_isect);
+  Xt_idxlist temp[3] = { idxvec_a, idxvec_b, intersection };
+  for (size_t i = 0; i < 3; ++i)
+    xt_idxlist_delete(temp[i]);
+}
+
+static void
+test_idxvec_from_stripes(int num_stripes, const struct Xt_stripe stripes[],
+                         int num_ref_indices, const Xt_int ref_indices[])
+{
+  Xt_idxlist idxvec = xt_idxvec_from_stripes_new(stripes, num_stripes);
+  check_idxlist(idxvec, ref_indices, num_ref_indices);
+  xt_idxlist_delete(idxvec);
+}
+
+static void
+test_get_indices_at_positions(int num_indices, const Xt_int *indices,
+                              Xt_int undef_idx,
+                              int num_pos, const int *pos)
+{
+  Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
+  int ref_undef_count = 0;
+  num_pos = num_pos < 0 ? 0 : num_pos;
+  Xt_int ref_sel_idx[num_pos];
+  for (size_t i = 0; i < (size_t)num_pos; i++) {
+    int p = pos[i];
+    if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[i]) != 0) {
+      ref_sel_idx[i] = undef_idx;
+      ref_undef_count++;
+    }
+  }
+  Xt_int sel_idx[num_pos];
+  int undef_count
+    = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
+                                          undef_idx);
+  if (undef_count != ref_undef_count)
+    PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
+  for (size_t i = 0; i < (size_t)num_pos; i++) {
+    if (sel_idx[i] != ref_sel_idx[i])
+      PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
+  }
+  xt_idxlist_delete(idxvec);
 }
 
 /*
