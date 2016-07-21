@@ -61,8 +61,8 @@ check_stripes(struct Xt_stripe const * stripes, int num_stripes,
               struct Xt_stripe const * ref_stripes, int ref_num_stripes);
 
 void
-check_offsets(size_t num_offsets, int offsets_a[num_offsets],
-              int offsets_b[num_offsets]);
+check_offsets(size_t num_offsets, const int offsets_a[num_offsets],
+              const int offsets_b[num_offsets]);
 
 Xt_idxlist
 idxlist_pack_unpack_copy(Xt_idxlist idxlist);
