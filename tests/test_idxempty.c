@@ -69,9 +69,7 @@ int main(void) {
 
   { // test packing and unpacking
 
-    Xt_idxlist idxempty;
-
-    idxempty = xt_idxempty_new();
+    Xt_idxlist idxempty = xt_idxempty_new();
 
     check_idxlist(idxempty, NULL, 0);
 
@@ -84,9 +82,8 @@ int main(void) {
 
     // compute intersection between the two index vectors
 
-    Xt_idxlist intersection;
-
-    intersection = xt_idxlist_get_intersection(idxempty, idxempty_copy);
+    Xt_idxlist intersection
+      = xt_idxlist_get_intersection(idxempty, idxempty_copy);
 
     // check the computed intersection (should be identically to the original
     // index vector)
@@ -95,7 +92,7 @@ int main(void) {
 
     // check the conversion to stripes
 
-    struct Xt_stripe * stripes;
+    struct Xt_stripe *stripes;
     int num_stripes;
 
     xt_idxlist_get_index_stripes(idxempty, &stripes, &num_stripes);
@@ -105,18 +102,18 @@ int main(void) {
 
     // check the computation of a bounding box
 
-    unsigned ndim = 3;
+    enum { ndim = 3 };
     Xt_int global_size[ndim];
     Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
 
-    for (unsigned i = 0; i < ndim; ++i)
+    for (size_t i = 0; i < ndim; ++i)
       global_size[i] = 10;
 
     xt_idxlist_get_bounding_box(idxempty, ndim, global_size,
                                 global_start_index, bounds);
 
-    for (unsigned i = 0; i < ndim; ++i)
+    for (size_t i = 0; i < ndim; ++i)
       if (bounds[i].size != 0)
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
