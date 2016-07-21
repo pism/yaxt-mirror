@@ -54,12 +54,12 @@ PROGRAM test_xmap_all2all_fail
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
-  INTEGER :: my_rank, ierror
+  INTEGER :: my_rank, ierror, list_size
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
   CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
 
-  CALL test_xmap1
+  CALL test_xmap1(list_size)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
@@ -112,22 +112,58 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_xmap
 
-  SUBROUTINE test_xmap1
-    INTEGER(xt_int_kind) :: i
-    INTEGER(xt_int_kind), PARAMETER :: num_src_idx = 7, num_dst_idx = 7
-    INTEGER(xt_int_kind) :: src_index_list(num_src_idx), &
-         dst_index_list(num_dst_idx)
-    DO i = 1_xi, num_src_idx
-      src_index_list(i) = i
+  SUBROUTINE test_xmap1(num_idx)
+    INTEGER, INTENT(in) :: num_idx
+    INTEGER :: i
+    INTEGER(xt_int_kind) :: src_index_list(num_idx), &
+         dst_index_list(num_idx)
+    DO i = 1, num_idx
+      src_index_list(i) = INT(i, xi)
     END DO
-    CALL shift_idx(src_index_list, num_src_idx)
-    DO i = 1_xi, num_dst_idx
-      dst_index_list(i) = num_dst_idx - i + 2_xi
+    CALL shift_idx(src_index_list, INT(num_idx, xi))
+    DO i = 1, num_idx
+      dst_index_list(i) = INT(num_idx - i + 2, xi)
     END DO
-    CALL shift_idx(dst_index_list, num_src_idx)
+    CALL shift_idx(dst_index_list, INT(num_idx, xi))
     ! note: this should fail because dst/src indices don't match
     CALL test_xmap(src_index_list, dst_index_list)
   END SUBROUTINE test_xmap1
+
+    SUBROUTINE parse_options
+    INTEGER :: i, num_cmd_args, arg_len
+    INTEGER, PARAMETER :: max_opt_arg_len = 80
+    CHARACTER(max_opt_arg_len) :: optarg
+    num_cmd_args = COMMAND_ARGUMENT_COUNT()
+    i = 1
+    DO WHILE (i < num_cmd_args)
+      CALL GET_COMMAND_ARGUMENT(i, optarg, arg_len)
+      IF (optarg(1:2) == '-s' .AND. i < num_cmd_args .AND. arg_len == 2) THEN
+        CALL GET_COMMAND_ARGUMENT(i + 1, optarg, arg_len)
+        IF (arg_len > max_opt_arg_len) &
+             CALL test_abort('incorrect argument to command-line option -m', &
+             __FILE__, &
+             __LINE__)
+        IF (optarg(1:arg_len) == "big") THEN
+          list_size = 1023
+        ELSE IF (optarg(1:arg_len) == "small") THEN
+          list_size = 7
+        ELSE
+          WRITE (0, *) 'arg to -s: ', optarg(1:arg_len)
+          CALL test_abort('incorrect argument to command-line option -m', &
+               __FILE__, &
+               __LINE__)
+        END IF
+        i = i + 2
+      ELSE
+        WRITE (0, *) 'unexpected command-line argument parsing error: ', &
+             TRIM(optarg)
+        FLUSH(0)
+        CALL test_abort('unexpected command-line argument', &
+             __FILE__, &
+             __LINE__)
+      END IF
+    END DO
+  END SUBROUTINE parse_options
 
 END PROGRAM test_xmap_all2all_fail
 !
