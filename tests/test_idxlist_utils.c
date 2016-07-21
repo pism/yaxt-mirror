@@ -105,18 +105,16 @@ static Xt_int get_max_index(int num_indices, const Xt_int *indices) {
 void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
                    int ref_num_indices) {
 
-  int num_indices;
-  num_indices = xt_idxlist_get_num_indices(idxlist);
+  int num_indices = xt_idxlist_get_num_indices(idxlist);
 
   if (num_indices != ref_num_indices)
     PUT_ERR("wrong number of indices in idxlist\n");
 
   Xt_int indices[ref_num_indices];
-  const Xt_int *indices_const;
   Xt_int index;
 
   xt_idxlist_get_indices(idxlist, indices);
-  indices_const = xt_idxlist_get_indices_const(idxlist);
+  const Xt_int *indices_const = xt_idxlist_get_indices_const(idxlist);
   {
     for(int i=0; i<ref_num_indices; i++)
       if (ref_indices[i] != indices_const[i])
