@@ -69,7 +69,7 @@ ref_get_positions_of_indices(Xt_int const * indices, int num_indices,
     found = 0;
     for (int j = 0; j < num_indices; j++) {
       if (selection[i] == indices[j] && (repeat_first_match || !used[j])) {
-        positions[i]= (int)j;
+        positions[i] = j;
         used[j] = 1;
         found = 1;
         break;
