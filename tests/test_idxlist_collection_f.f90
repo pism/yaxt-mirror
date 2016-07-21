@@ -75,19 +75,19 @@ PROGRAM test_idxlist_collection_f
 
 CONTAINS
   SUBROUTINE test_idxlist_collection_pack_unpack
-    INTEGER, PARAMETER :: num_indices = 7
+    INTEGER, PARAMETER :: num_indices = 7, num_vec = 2
     INTEGER(xt_int_kind) :: i, j
-    INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, 2) = &
+    INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, num_vec) = &
          RESHAPE((/ ((INT(i, xt_int_kind), i = 1, num_indices), j = 1, 2) /), &
-         &       shape = (/ num_indices, 2 /))
-    TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(2) = xt_stripe(1, 1, 7)
-
-    idxlists(1) = xt_idxvec_new(index_list(:, 1), num_indices)
-    idxlists(2) = xt_idxvec_new(index_list(:, 2), num_indices)
+         &       shape = (/ num_indices, num_vec /))
+    TYPE(xt_idxlist) :: idxlists(num_vec), collectionlist, collectionlist_copy
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(num_vec) = xt_stripe(1, 1, 7)
+    INTEGER :: k
+    DO k = 1, num_vec
+      idxlists(k) = xt_idxvec_new(index_list(:, k), num_indices)
+    END DO
     collectionlist = xt_idxlist_collection_new(idxlists)
-    CALL xt_idxlist_delete(idxlists(2))
-    CALL xt_idxlist_delete(idxlists(1))
+    CALL xt_idxlist_delete(idxlists)
     CALL check_idxlist(collectionlist, &
          RESHAPE(index_list, (/ SIZE(index_list) /)))
     collectionlist_copy = idxlist_pack_unpack_copy(collectionlist)
@@ -98,20 +98,22 @@ CONTAINS
   END SUBROUTINE test_idxlist_collection_pack_unpack
 
   SUBROUTINE test_idxlist_collection_copy
-    INTEGER, PARAMETER :: num_indices = 7
+    INTEGER, PARAMETER :: num_indices = 7, num_vec = 2
     INTEGER(xt_int_kind) :: i, j
-    INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, 2) = &
+    INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, num_vec) = &
          RESHAPE((/ ((INT(num_indices - (j * num_indices + 1 - j - i) &
          &                * (2*j - 1), xt_int_kind), &
-         &           i=1, num_indices), j=1,0,-1) /), (/ num_indices, 2 /))
-    TYPE(xt_idxlist) :: idxlists(2), collectionlist, collectionlist_copy
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(2) &
+         &           i=1, num_indices), j=1,0,-1) /), &
+         &       (/ num_indices, num_vec /))
+    TYPE(xt_idxlist) :: idxlists(num_vec), collectionlist, collectionlist_copy
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(num_vec) &
          = (/ xt_stripe(1, 1, 7), xt_stripe(7, -1, 7) /)
-    idxlists(1) = xt_idxvec_new(index_list(:, 1), num_indices)
-    idxlists(2) = xt_idxvec_new(index_list(:, 2), num_indices)
+    INTEGER :: k
+    DO k = 1, num_vec
+      idxlists(k) = xt_idxvec_new(index_list(:, k), num_indices)
+    END DO
     collectionlist = xt_idxlist_collection_new(idxlists)
-    CALL xt_idxlist_delete(idxlists(2))
-    CALL xt_idxlist_delete(idxlists(1))
+    CALL xt_idxlist_delete(idxlists)
     CALL check_idxlist(collectionlist, &
          RESHAPE(index_list, (/ SIZE(index_list) /)))
     collectionlist_copy = idxlist_pack_unpack_copy(collectionlist)
@@ -160,7 +162,7 @@ CONTAINS
   END SUBROUTINE test_idxlist_collection_intersection
 
   SUBROUTINE test_idxlist_collection_heterogeneous
-    INTEGER, PARAMETER :: num_indices = 6
+    INTEGER, PARAMETER :: num_indices = 6, num_lists = 3
     INTEGER, PARAMETER :: xi = xt_int_kind
     INTEGER(xt_int_kind), PARAMETER :: &
          index_list(num_indices) = (/ 1_xi, 3_xi, 5_xi, 7_xi, 9_xi, 11_xi /)
@@ -179,8 +181,7 @@ CONTAINS
          &    42_xi, 43_xi, 44_xi, 45_xi, 46_xi, &
          &    52_xi, 53_xi, 54_xi, 55_xi, 56_xi, &
          &    62_xi, 63_xi, 64_xi, 65_xi, 66_xi /)
-
-    TYPE(xt_idxlist) :: idxlists(3), collectionlist
+    TYPE(xt_idxlist) :: idxlists(num_lists), collectionlist
 
     idxlists(1) = xt_idxvec_new(index_list, SIZE(index_list))
     idxlists(2) = xt_idxstripes_new(stripes, SIZE(stripes))
@@ -190,9 +191,7 @@ CONTAINS
     ! generate a collection index list
     collectionlist = xt_idxlist_collection_new(idxlists)
 
-    CALL xt_idxlist_delete(idxlists(1))
-    CALL xt_idxlist_delete(idxlists(2))
-    CALL xt_idxlist_delete(idxlists(3))
+    CALL xt_idxlist_delete(idxlists)
 
     ! test generated collection list
     CALL check_idxlist(collectionlist, ref_index_list)
@@ -202,16 +201,18 @@ CONTAINS
   END SUBROUTINE test_idxlist_collection_heterogeneous
 
   SUBROUTINE test_bounding_box1
-    INTEGER, PARAMETER :: ndim=3
+    INTEGER, PARAMETER :: ndim=3, num_lists = 2
     INTEGER(xt_int_kind), PARAMETER :: global_size_bb(ndim) = 4, &
          global_start_index = 0
-    TYPE(xt_idxlist) :: idxlists(2), collectionlist
+    TYPE(xt_idxlist) :: idxlists(num_lists), collectionlist
     TYPE(xt_bounds) :: bounds(ndim)
-    idxlists(1) = xt_idxempty_new()
-    idxlists(2) = xt_idxempty_new()
+    INTEGER :: i
+
+    DO i = 1, num_lists
+      idxlists(i) = xt_idxempty_new()
+    END DO
     collectionlist = xt_idxlist_collection_new(idxlists)
-    CALL xt_idxlist_delete(idxlists(2))
-    CALL xt_idxlist_delete(idxlists(1))
+    CALL xt_idxlist_delete(idxlists)
     bounds = xt_idxlist_get_bounding_box(collectionlist, global_size_bb, &
          global_start_index)
     IF (ANY(bounds%size /= 0)) &
@@ -222,22 +223,24 @@ CONTAINS
   END SUBROUTINE test_bounding_box1
 
   SUBROUTINE test_bounding_box2
-    INTEGER, PARAMETER :: ndim = 3
+    INTEGER, PARAMETER :: ndim = 3, num_lists = 2, num_indices = 3
     INTEGER, PARAMETER :: xi = xt_int_kind
-    INTEGER(xt_int_kind), PARAMETER :: indices(3, 2) = RESHAPE( &
-         (/ 45_xi, 35_xi, 32_xi, 32_xi, 48_xi, 33_xi /), (/ 3, 2 /)), &
+    INTEGER(xt_int_kind), PARAMETER :: indices(num_indices, num_lists) &
+         = RESHAPE( (/ 45_xi, 35_xi, 32_xi, 32_xi, 48_xi, 33_xi /), &
+         &          (/ num_indices, num_lists /)), &
          global_size(ndim) = (/ 5_xi, 4_xi, 3_xi /), &
          global_start_index = 1
-    TYPE(xt_idxlist) :: idxlists(2), collectionlist
+    TYPE(xt_idxlist) :: idxlists(num_lists), collectionlist
     TYPE(xt_bounds) :: bounds(ndim)
-    TYPE(xt_bounds) :: bounds_ref(ndim) = (/ xt_bounds(2, 2), &
+    TYPE(xt_bounds), PARAMETER :: bounds_ref(ndim) = (/ xt_bounds(2, 2), &
          xt_bounds(2, 2), xt_bounds(1, 2) /)
+    INTEGER :: i
 
-    idxlists(1) = xt_idxvec_new(indices(:, 1), SIZE(indices, 1))
-    idxlists(2) = xt_idxvec_new(indices(:, 2), SIZE(indices, 1))
+    DO i = 1, num_lists
+      idxlists(i) = xt_idxvec_new(indices(:, i), SIZE(indices, 1))
+    END DO
     collectionlist = xt_idxlist_collection_new(idxlists)
-    CALL xt_idxlist_delete(idxlists(2))
-    CALL xt_idxlist_delete(idxlists(1))
+    CALL xt_idxlist_delete(idxlists)
 
     bounds = xt_idxlist_get_bounding_box(collectionlist, global_size, &
          global_start_index)

@@ -70,22 +70,26 @@ int main(void) {
 
   { // test packing and unpacking of collection index lists
 
-    static const Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
     enum {
       num_indices = 7,
       num_ref_stripes = 2,
+      num_lists = 2,
     };
+    static const Xt_int index_list[num_lists][num_indices]
+      = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
 
     // create two index lists
-    Xt_idxlist idxlists[2] = { xt_idxvec_new(index_list[0], num_indices),
-                               xt_idxvec_new(index_list[1], num_indices) };
+    Xt_idxlist idxlists[num_lists];
+    for (size_t i = 0; i < num_lists; ++i)
+      idxlists[i] = xt_idxvec_new(index_list[i], num_indices);
+
     // generate a collection index list
-    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
-    xt_idxlist_delete(idxlists[0]);
-    xt_idxlist_delete(idxlists[1]);
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, num_lists);
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
 
     // test generated collection list
-    check_idxlist(collectionlist, index_list[0], (int)(2*num_indices));
+    check_idxlist(collectionlist, index_list[0], (int)(num_lists*num_indices));
 
     static const struct Xt_stripe ref_stripes[num_ref_stripes]
       = {{.start = 1, .stride = 1, .nstrides = 7},
@@ -102,44 +106,39 @@ int main(void) {
   { // test copying of collection index lists
 
     enum {
+      num_lists = 2,
       num_indices = 7,
       num_ref_stripes = 2,
     };
 
-    static const Xt_int index_list[2][7] = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
+    static const Xt_int index_list[num_lists][num_indices]
+      = {{1,2,3,4,5,6,7},{7,6,5,4,3,2,1}};
 
-    Xt_idxlist idxlists[2];
+    Xt_idxlist idxlists[num_lists];
 
     // create two index lists
-
-    idxlists[0] = xt_idxvec_new(index_list[0], num_indices);
-    idxlists[1] = xt_idxvec_new(index_list[1], num_indices);
+    for (size_t i = 0; i < num_lists; ++i)
+      idxlists[i] = xt_idxvec_new(index_list[i], num_indices);
 
     // generate a collection index list
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
 
-    Xt_idxlist collectionlist, collectionlist_copy;
-
-    collectionlist = xt_idxlist_collection_new(idxlists, 2);
-
-    xt_idxlist_delete(idxlists[0]);
-    xt_idxlist_delete(idxlists[1]);
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
 
     // test generated collection list
-
     check_idxlist(collectionlist, &index_list[0][0], 2 * num_indices);
 
     // copy the index list
-
-    collectionlist_copy = xt_idxlist_copy(collectionlist);
+    Xt_idxlist collectionlist_copy = xt_idxlist_copy(collectionlist);
 
     // check copy of collection list
-
     check_idxlist(collectionlist_copy, &(index_list[0][0]),
                   2 * num_indices);
 
     // check the conversion to stripes
 
-    struct Xt_stripe * stripes;
+    struct Xt_stripe *stripes;
     int num_stripes;
 
     xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
@@ -151,7 +150,6 @@ int main(void) {
     check_stripes(stripes, num_stripes, ref_stripes, num_ref_stripes);
 
     // clean up
-
     free(stripes);
 
     xt_idxlist_delete(collectionlist);
@@ -169,43 +167,32 @@ int main(void) {
       sorted_index_list[num_vecs * num_indices]
         = {0,1,1,1,2,2,2,3,3,3,4,4,4,5,5,6,6,6,7,7,7};
 
-    Xt_idxlist idxlists[3];
+    Xt_idxlist idxlists[num_vecs];
 
     // create two index lists
-
-    idxlists[0] = xt_idxvec_new(index_list[0], num_indices);
-    idxlists[1] = xt_idxvec_new(index_list[1], num_indices);
-    idxlists[2] = xt_idxvec_new(index_list[2], num_indices);
+    for (size_t i = 0; i < num_vecs; ++i)
+      idxlists[i] = xt_idxvec_new(index_list[i], num_indices);
 
     // generate a collection index list
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 3);
 
-    Xt_idxlist collectionlist;
-
-    collectionlist = xt_idxlist_collection_new(idxlists, 3);
-
-    xt_idxlist_delete(idxlists[0]);
-    xt_idxlist_delete(idxlists[1]);
-    xt_idxlist_delete(idxlists[2]);
+    for (size_t i = 0; i < num_vecs; ++i)
+      xt_idxlist_delete(idxlists[i]);
 
     // test generated collection list
-
     check_idxlist(collectionlist, &(index_list[0][0]), (int)(3*num_indices));
 
     // test computing of intersection
+    Xt_idxlist ref_idxvec = xt_idxvec_new(&(index_list[0][0]), 3*num_indices),
+      intersection = xt_idxlist_get_intersection(ref_idxvec, collectionlist);
 
-    Xt_idxlist intersection, ref_idxvec;
-
-    ref_idxvec = xt_idxvec_new(&(index_list[0][0]), 3*num_indices);
-
-    intersection = xt_idxlist_get_intersection(ref_idxvec, collectionlist);
-
-    check_idxlist(intersection, sorted_index_list, (int)(3*num_indices));
+    check_idxlist(intersection, sorted_index_list, (int)(num_vecs*num_indices));
 
     xt_idxlist_delete(intersection);
 
     intersection = xt_idxlist_get_intersection(collectionlist, ref_idxvec);
 
-    check_idxlist(intersection, sorted_index_list, (int)(3*num_indices));
+    check_idxlist(intersection, sorted_index_list, (int)(num_vecs*num_indices));
 
     xt_idxlist_delete(intersection);
     xt_idxlist_delete(ref_idxvec);
@@ -214,38 +201,38 @@ int main(void) {
 
   { // test using various tpyes of index lists
 
-    Xt_int index_list[] = {1,3,5,7,9,11};
-    struct Xt_stripe stripes[] = {{.start = 0, .stride = 2, .nstrides = 5},
-                                  {.start = 1, .stride = 2, .nstrides = 5}};
-    Xt_int global_size[2] = {10,10};
-    int local_size[2] = {5,5};
-    Xt_int local_start[2] = {2,2};
+    enum {
+      num_lists = 3,
+      section_ndims = 2,
+    };
+    static const Xt_int index_list[] = {1,3,5,7,9,11};
+    static const struct Xt_stripe stripes[]
+      = {{.start = 0, .stride = 2, .nstrides = 5},
+         {.start = 1, .stride = 2, .nstrides = 5}};
+    static const Xt_int global_size[section_ndims] = {10,10};
+    static const int local_size[section_ndims] = {5,5};
+    static const Xt_int local_start[section_ndims] = {2,2};
 
-    Xt_int ref_index_list[] = {1,3,5,7,9,11,
-                               0,2,4,6,8,1,3,5,7,9,
-                               22,23,24,25,26,
-                               32,33,34,35,36,
-                               42,43,44,45,46,
-                               52,53,54,55,56,
-                               62,63,64,65,66};
+    static const Xt_int ref_index_list[] = {1,3,5,7,9,11,
+                                            0,2,4,6,8,1,3,5,7,9,
+                                            22,23,24,25,26,
+                                            32,33,34,35,36,
+                                            42,43,44,45,46,
+                                            52,53,54,55,56,
+                                            62,63,64,65,66};
 
-    Xt_idxlist idxlists[3]
+    Xt_idxlist idxlists[num_lists]
       = {xt_idxvec_new(index_list, sizeof(index_list)/sizeof(index_list[0])),
          xt_idxstripes_new(stripes, sizeof(stripes)/sizeof(stripes[0])),
-         xt_idxsection_new(0, 2, global_size, local_size, local_start)};
+         xt_idxsection_new(0, section_ndims, global_size, local_size, local_start)};
 
     // generate a collection index list
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, num_lists);
 
-    Xt_idxlist collectionlist;
-
-    collectionlist = xt_idxlist_collection_new(idxlists, 3);
-
-    xt_idxlist_delete(idxlists[0]);
-    xt_idxlist_delete(idxlists[1]);
-    xt_idxlist_delete(idxlists[2]);
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
 
     // test generated collection list
-
     check_idxlist(collectionlist, ref_index_list,
                   (int)(sizeof(ref_index_list)/sizeof(ref_index_list[0])));
 
@@ -253,29 +240,28 @@ int main(void) {
   }
 
   { // check get_bounding_box
-
-    Xt_idxlist idxlists[2] = {xt_idxempty_new(),
-                              xt_idxempty_new()};
+    enum { num_lists = 2 };
+    Xt_idxlist idxlists[num_lists] = {xt_idxempty_new(),
+                                      xt_idxempty_new()};
 
     // generate a collection index list
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, num_lists);
 
-    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
 
-    xt_idxlist_delete(idxlists[0]);
-    xt_idxlist_delete(idxlists[1]);
-
-    unsigned ndim = 3;
+    enum { ndim = 3 };
     Xt_int global_size_bb[ndim];
-    Xt_int global_start_index = 0;
+    static const Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
 
-    for (unsigned i = 0; i < ndim; ++i)
+    for (size_t i = 0; i < ndim; ++i)
       global_size_bb[i] = 4;
 
     xt_idxlist_get_bounding_box(collectionlist, ndim, global_size_bb,
                                 global_start_index, bounds);
 
-    for (unsigned i = 0; i < ndim; ++i)
+    for (size_t i = 0; i < ndim; ++i)
       if (bounds[i].size != 0)
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
@@ -283,39 +269,37 @@ int main(void) {
   }
 
   {
+    enum {
+      num_lists = 2,
+      num_indices = 3,
+    };
     // check get_bounding_box
-    Xt_int indices[2][3] = {{45,35,32},{32,48,33}};
-    int num_indices = 3;
+    static const Xt_int indices[num_lists][num_indices]
+      = {{45,35,32},{32,48,33}};
 
-    Xt_idxlist idxlists[2];
+    Xt_idxlist idxlists[num_lists];
 
     // create two index lists
-
-    idxlists[0] = xt_idxvec_new(indices[0], num_indices);
-    idxlists[1] = xt_idxvec_new(indices[1], num_indices);
+    for (size_t i = 0; i < num_lists; ++i)
+      idxlists[i] = xt_idxvec_new(indices[i], num_indices);
 
     // generate a collection index list
-
     Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
 
-    xt_idxlist_delete(idxlists[0]);
-    xt_idxlist_delete(idxlists[1]);
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
 
-    unsigned ndim = 3;
-    Xt_int global_size[ndim];
-    Xt_int global_start_index = 1;
+    enum { ndim = 3 };
+    static const Xt_int global_size[ndim] = { 5, 4, 3 };
+    static const Xt_int global_start_index = 1;
     struct Xt_bounds bounds[ndim];
-
-    global_size[0] = 5;
-    global_size[1] = 4;
-    global_size[2] = 3;
 
     xt_idxlist_get_bounding_box(collectionlist, ndim, global_size,
                                 global_start_index, bounds);
 
-    Xt_int ref_start[3] = {2,2,1};
+    static const Xt_int ref_start[3] = { 2, 2, 1 };
 
-    for (unsigned i = 0; i < ndim; ++i)
+    for (size_t i = 0; i < ndim; ++i)
       if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
