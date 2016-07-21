@@ -1,7 +1,7 @@
 !>
 !! @file test_xmap_all2all_parallel_f.f90
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!
@@ -49,3 +49,12 @@ PROGRAM test_xmap_all2all_parallel
   IMPLICIT NONE
   CALL xmap_parallel_test_main(xt_xmap_all2all_new)
 END PROGRAM test_xmap_all2all_parallel
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

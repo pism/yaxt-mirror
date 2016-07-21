@@ -2,7 +2,7 @@
 !! @file test_xmap_dist_dir_f.f90
 !! @brief Fortran test of distributed directory
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!
@@ -51,3 +51,12 @@ PROGRAM test_xmap_dist_dir
   IMPLICIT NONE
   CALL xmap_self_test_main(xt_xmap_dist_dir_new)
 END PROGRAM test_xmap_dist_dir
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

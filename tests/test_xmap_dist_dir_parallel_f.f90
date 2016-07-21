@@ -49,3 +49,12 @@ PROGRAM test_xmap_dist_dir_parallel
   IMPLICIT NONE
   CALL xmap_parallel_test_main(xt_xmap_dist_dir_new)
 END PROGRAM test_xmap_dist_dir_parallel
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

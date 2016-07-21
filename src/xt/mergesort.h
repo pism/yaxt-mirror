@@ -5,13 +5,19 @@
  * @file mergesort.h
  * @brief merge sort declaration
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
+ *                                 Thomas Jahns <jahns@dkrz.de>
  *
  * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
+ *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
  * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
+ *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,3 +70,13 @@ void xt_mergesort_idxpos(idxpos_type *v, int n);
 void xt_mergesort_index (Xt_int * a, int n, int * idx, int reset_index);
 
 #endif  /* XT_MERGESORT_H */
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

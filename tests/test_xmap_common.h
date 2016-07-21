@@ -1,7 +1,7 @@
 /**
  * @file test_xmap_common.h
  *
- * @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -64,3 +64,13 @@ int
 xt_xmap_parallel_test_main(xmap_constructor xmap_constructor);
 
 #endif
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

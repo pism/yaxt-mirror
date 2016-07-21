@@ -1,7 +1,7 @@
 /**
  * @file test_idxlist_utils.c
  *
- * @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -359,3 +359,13 @@ check_idxlist_copy(Xt_idxlist idxlist, Xt_idxlist idxlist_copy,
   // clean up
   free(stripes);
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

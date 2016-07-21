@@ -1,7 +1,7 @@
 !>
 !! @file test_xmap_all2all_fail_f.f90
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!
@@ -130,3 +130,12 @@ CONTAINS
   END SUBROUTINE test_xmap1
 
 END PROGRAM test_xmap_all2all_fail
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!
