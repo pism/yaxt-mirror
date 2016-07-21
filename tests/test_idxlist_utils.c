@@ -80,34 +80,22 @@ ref_get_positions_of_indices(Xt_int const * indices, int num_indices,
   }
 }
 
-static Xt_int get_min_index(Xt_int const * indices, Xt_int num_indices) {
+static Xt_int get_min_index(int num_indices, const Xt_int *indices) {
 
-  Xt_int index;
-  Xt_int i;
+  Xt_int index = num_indices > 0 ? indices[0] : 0;
 
-  if (num_indices > 0)
-    index = indices[0];
-  else
-    index = 0;
-
-  for (i = 1; i < num_indices; ++i)
+  for (int i = 1; i < num_indices; ++i)
     if (index > indices[i])
       index = indices[i];
 
   return index;
 }
 
-static Xt_int get_max_index(Xt_int const * indices, Xt_int num_indices) {
+static Xt_int get_max_index(int num_indices, const Xt_int *indices) {
 
-  Xt_int index;
-  Xt_int i;
+  Xt_int index = num_indices > 0 ? indices[0] : 0;
 
-  if (num_indices > 0)
-    index = indices[0];
-  else
-    index = 0;
-
-  for (i = 1; i < num_indices; ++i)
+  for (int i = 1; i < num_indices; ++i)
     if (index < indices[i])
       index = indices[i];
 
@@ -240,11 +228,11 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
 
   if (ref_num_indices > 0) {
 
-    if (get_min_index(ref_indices, (Xt_int)ref_num_indices) !=
+    if (get_min_index(ref_num_indices, ref_indices) !=
         xt_idxlist_get_min_index(idxlist))
       PUT_ERR("check_idxlist: get_min_index failed\n");
 
-    if (get_max_index(ref_indices, (Xt_int)ref_num_indices) !=
+    if (get_max_index(ref_num_indices, ref_indices) !=
         xt_idxlist_get_max_index(idxlist))
       PUT_ERR("check_idxlist: get_max_index failed\n");
   }
