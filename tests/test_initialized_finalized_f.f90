@@ -46,7 +46,7 @@
 !
 PROGRAM test_initialized_finalized_f
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-!  USE iso_c_binding, ONLY: c_int
+  USE iso_c_binding, ONLY: c_int
   USE mpi
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
@@ -74,7 +74,7 @@ PROGRAM test_initialized_finalized_f
        __FILE__, &
        __LINE__)
 
-  IF (test_err_count() /= 0) &
+  IF (test_err_count() /= 0_c_int) &
        CALL test_abort("non-zero error count!", &
        __FILE__, &
        __LINE__)
