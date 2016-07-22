@@ -58,16 +58,17 @@
 #ifdef FIXED_MPI_ON_BLIZZARD
 
 static int
-test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
-                  int * ref_recv_data) {
+test_datatype_int(MPI_Datatype datatype, int recv_count, const int *send_data,
+                  const int *ref_recv_data) {
 
   int recv_data[recv_count];
   MPI_Status    status;
 
 
   //datatype
-  xt_mpi_call(MPI_Sendrecv(send_data, 1, datatype, 0, 0, recv_data, recv_count,
-                           MPI_INT, 0, 0, MPI_COMM_WORLD, &status),
+  xt_mpi_call(MPI_Sendrecv((void *)send_data, 1, datatype, 0, 0,
+                           recv_data, recv_count, MPI_INT, 0, 0,
+                           MPI_COMM_WORLD, &status),
               MPI_COMM_WORLD);
 
   for (int i = 0; i < recv_count; ++i)
@@ -80,8 +81,8 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
 #else
 
 static int
-test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
-                  int * ref_recv_data) {
+test_datatype_int(MPI_Datatype datatype, int recv_count, const int *send_data,
+                  const int *ref_recv_data) {
 
   int recv_data[recv_count];
   MPI_Status    status;
@@ -90,7 +91,7 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, int * send_data,
   xt_mpi_call(MPI_Irecv(recv_data, recv_count, MPI_INT, 0, 0, MPI_COMM_WORLD,
                         &request), MPI_COMM_WORLD);
 
-  xt_mpi_call(MPI_Send(send_data, 1, datatype, 0, 0, MPI_COMM_WORLD),
+  xt_mpi_call(MPI_Send((void *)send_data, 1, datatype, 0, 0, MPI_COMM_WORLD),
               MPI_COMM_WORLD);
 
   xt_mpi_call(MPI_Wait(&request, &status), MPI_COMM_WORLD);
