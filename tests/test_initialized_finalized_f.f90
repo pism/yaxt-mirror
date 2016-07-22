@@ -44,7 +44,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
-PROGRAM test_idxlist_collection_f
+PROGRAM test_initialized_finalized_f
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
 !  USE iso_c_binding, ONLY: c_int
   USE mpi
@@ -80,7 +80,7 @@ PROGRAM test_idxlist_collection_f
        __LINE__)
   CALL finish_mpi
 
-END PROGRAM test_idxlist_collection_f
+END PROGRAM test_initialized_finalized_f
 !
 ! Local Variables:
 ! f90-continuation-indent: 5
