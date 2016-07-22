@@ -1,7 +1,7 @@
 /**
  * @file test_uid.c
  *
- * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -57,7 +57,7 @@ int main()
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
   xt_initialize(MPI_COMM_WORLD);
   Xt_int a_list[] = { 2, 3, 7, 10 };
-  int a_list_size = sizeof (a_list) / sizeof (a_list[0]);
+  enum { a_list_size = sizeof (a_list) / sizeof (a_list[0]) };
   Xt_idxlist a = xt_idxvec_new(a_list, a_list_size);
   Xt_idxlist b = xt_idxlist_copy(a);
   Xt_uid a_id;
@@ -75,3 +75,13 @@ int main()
   MPI_Finalize();
   return TEST_EXIT_CODE;
 }
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */

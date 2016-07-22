@@ -1,7 +1,7 @@
 !>
 !> @file test_idxlist_collection_f.f90
 !>
-!> @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!> @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !>                                 Moritz Hanke <hanke@dkrz.de>
 !>                                 Thomas Jahns <jahns@dkrz.de>
 !>
@@ -81,3 +81,12 @@ PROGRAM test_idxlist_collection_f
   CALL finish_mpi
 
 END PROGRAM test_idxlist_collection_f
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

@@ -1,7 +1,7 @@
 !>
 !> @file test_idxvec_f.f90
 !>
-!> @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!> @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !>                                 Moritz Hanke <hanke@dkrz.de>
 !>                                 Thomas Jahns <jahns@dkrz.de>
 !>
@@ -501,3 +501,12 @@ CONTAINS
   END SUBROUTINE compare_stripes
 
 END PROGRAM test_idxvec
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

@@ -1,17 +1,20 @@
 !>
-!> @file test_ut.f90
-!>
-!> @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
-!>                                 Moritz Hanke <hanke@dkrz.de>
-!>
-!> @author Jörg Behrens <behrens@dkrz.de>
-!>         Moritz Hanke <hanke@dkrz.de>
-!>
+!! @file test_ut.f90
+!!
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+!!                                 Moritz Hanke <hanke@dkrz.de>
+!!                                 Thomas Jahns <jahns@dkrz.de>
+!!
+!! @author Jörg Behrens <behrens@dkrz.de>
+!!         Moritz Hanke <hanke@dkrz.de>
+!!         Thomas Jahns <jahns@dkrz.de>
+!!
 
 !
 ! Keywords:
 ! Maintainer: Jörg Behrens <behrens@dkrz.de>
 !             Moritz Hanke <hanke@dkrz.de>
+!             Thomas Jahns <jahns@dkrz.de>
 ! URL: https://doc.redmine.dkrz.de/yaxt/html/
 !
 ! Redistribution and use in source and binary forms, with or without
@@ -412,3 +415,12 @@ CONTAINS
   END SUBROUTINE deco
 
 END PROGRAM test_ut
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

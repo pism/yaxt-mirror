@@ -1,7 +1,7 @@
 !
 ! @file test_redist_p2p_parallel_f.f90
 !
-! @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
+! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !                                 Moritz Hanke <hanke@dkrz.de>
 !                                 Thomas Jahns <jahns@dkrz.de>
 !
@@ -399,3 +399,12 @@ CONTAINS
   END SUBROUTINE block_redist_test
 
 END PROGRAM test_redist_p2p_parallel
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!
