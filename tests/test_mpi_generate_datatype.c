@@ -117,9 +117,9 @@ int main(void) {
 
     MPI_Datatype datatype;
 
-    int displacements[1] = {0};
-    int blocklengths[1] = {0};
-    int count = 0;
+    enum { count = 0 };
+    static const int displacements[1] = { 0 };
+    static const int blocklengths[1] = { 0 };
     MPI_Datatype old_type = MPI_INT;
 
     datatype = xt_mpi_generate_datatype(displacements, count, old_type,
@@ -141,13 +141,13 @@ int main(void) {
     { // blocklength == 1 and displacement = 0
       MPI_Datatype datatype;
 
-      int displacements[1] = {0};
-      int blocklengths[1] = {1};
-      int count = 1;
+      enum { count = 1 };
+      static const int displacements[count] = {0};
+      static const int blocklengths[count] = {1};
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[3] = {123,234,345};
-      int ref_recv_data[1] = {123};
+      static const int send_data[3] = { 123, 234, 345 };
+      static const int ref_recv_data[1] = { 123 };
 
       datatype = xt_mpi_generate_datatype(displacements, count, old_type,
                                           MPI_COMM_WORLD);
@@ -171,13 +171,13 @@ int main(void) {
     { // blocklength == 1 and displacement = 1
       MPI_Datatype datatype;
 
-      int displacements[1] = {1};
-      int blocklengths[1] = {1};
-      int count = 1;
+      enum { count = 1 };
+      static const int displacements[count] = { 1 };
+      static const int blocklengths[count] = { 1 };
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[3] = {123,234,345};
-      int ref_recv_data[1] = {234};
+      static const int send_data[3] = { 123, 234, 345 };
+      static const int ref_recv_data[count] = { 234 };
 
       datatype = xt_mpi_generate_datatype(displacements, count, old_type,
                                           MPI_COMM_WORLD);
@@ -202,15 +202,17 @@ int main(void) {
     { // blocklength == 2 and displacement = 0
       MPI_Datatype datatype;
 
-      int element_displacements[2] = {0,1};
-      int block_displacements[1] = {0};
-      int blocklengths[1] = {2};
-      int element_count = 2;
-      int block_count = 1;
+      enum {
+        element_count = 2,
+        block_count = 1,
+      };
+      static const int element_displacements[element_count] = {0,1};
+      static const int block_displacements[block_count] = {0};
+      static const int blocklengths[block_count] = {2};
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[3] = {123,234,345};
-      int ref_recv_data[2] = {123, 234};
+      static const int send_data[3] = { 123, 234, 345 };
+      static const int ref_recv_data[element_count] = { 123, 234 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -234,15 +236,17 @@ int main(void) {
     { // blocklength == 2 and displacement = 1
       MPI_Datatype datatype;
 
-      int element_displacements[2] = {1,2};
-      int block_displacements[1] = {1};
-      int blocklengths[1] = {2};
-      int element_count = 2;
-      int block_count = 1;
+      enum {
+        element_count = 2,
+        block_count = 1,
+      };
+      static const int element_displacements[element_count] = {1,2};
+      static const int block_displacements[block_count] = {1};
+      static int blocklengths[block_count] = {2};
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[3] = {123,234,345};
-      int ref_recv_data[2] = {234,345};
+      static const int send_data[3] = { 123, 234, 345 };
+      static const int ref_recv_data[element_count] = { 234, 345 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -269,15 +273,17 @@ int main(void) {
     { // block length == {1,1,1} and block displacement = {0,2,4}
       MPI_Datatype datatype;
 
-      int element_displacements[3] = {0,2,4};
-      int block_displacements[3] = {0,2,4};
-      int blocklengths[3] = {1,1,1};
-      int element_count = 3;
-      int block_count = 3;
+      enum {
+        element_count = 3,
+        block_count = 3,
+      };
+      static const int element_displacements[element_count] = { 0, 2, 4 };
+      static const int block_displacements[block_count] = { 0, 2, 4 };
+      static const int blocklengths[block_count] = { 1, 1, 1 };
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[5] = {123,234,345,456,567};
-      int ref_recv_data[3] = {123,345,567};
+      static const int send_data[5] = { 123, 234, 345, 456, 567 };
+      static const int ref_recv_data[3] = { 123, 345, 567 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -301,15 +307,18 @@ int main(void) {
     { // block length == {2,2,2} and block displacement = {0,3,6}
       MPI_Datatype datatype;
 
-      int element_displacements[6] = {0,1,3,4,6,7};
-      int block_displacements[3] = {0,3,6};
-      int blocklengths[3] = {2,2,2};
-      int element_count = 6;
-      int block_count = 3;
+      enum {
+        element_count = 6,
+        block_count = 3,
+      };
+      static const int element_displacements[element_count]
+        = { 0, 1, 3, 4, 6, 7 };
+      static const int block_displacements[block_count] = { 0, 3, 6 };
+      static const int blocklengths[block_count] = { 2, 2, 2 };
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[8] = {0,1,2,3,4,5,6,7};
-      int ref_recv_data[6] = {0,1,3,4,6,7};
+      static const int send_data[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+      static const int ref_recv_data[element_count] = { 0, 1, 3, 4, 6, 7 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -334,15 +343,18 @@ int main(void) {
     { // block length == {2,2,2} and block displacement = {1,4,7}
       MPI_Datatype datatype;
 
-      int element_displacements[6] = {1,2,4,5,7,8};
-      int block_displacements[3] = {1,4,7};
-      int blocklengths[3] = {2,2,2};
-      int element_count = 6;
-      int block_count = 3;
+      enum {
+        element_count = 6,
+        block_count = 3,
+      };
+      static const int element_displacements[element_count]
+        = { 1, 2, 4, 5, 7, 8};
+      static const int block_displacements[block_count] = { 1, 4, 7};
+      static const int blocklengths[block_count] = { 2, 2, 2 };
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[9] = {0,1,2,3,4,5,6,7,8};
-      int ref_recv_data[6] = {1,2,4,5,7,8};
+      static const int send_data[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+      static const int ref_recv_data[element_count] = { 1, 2, 4, 5, 7, 8 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -366,15 +378,18 @@ int main(void) {
     { // block length == {2,2,2} and block displacement = {7,4,1}
       MPI_Datatype datatype;
 
-      int element_displacements[6] = {7,8,4,5,1,2};
-      int block_displacements[3] = {7,4,1};
-      int blocklengths[3] = {2,2,2};
-      int element_count = 6;
-      int block_count = 3;
+      enum {
+        element_count = 6,
+        block_count = 3,
+      };
+      static const int element_displacements[element_count]
+        = { 7, 8, 4, 5, 1, 2 };
+      static const int block_displacements[block_count] = { 7, 4, 1 };
+      static const int blocklengths[block_count] = { 2, 2, 2 };
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[9] = {0,1,2,3,4,5,6,7,8};
-      int ref_recv_data[6] = {7,8,4,5,1,2};
+      static const int send_data[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+      static const int ref_recv_data[element_count] = { 7, 8, 4, 5, 1, 2 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -398,15 +413,18 @@ int main(void) {
     { // block length == {2,2,2} and block displacement = {0,3,7}
       MPI_Datatype datatype;
 
-      int element_displacements[6] = {0,1,3,4,7,8};
-      int block_displacements[3] = {0,3,7};
-      int blocklengths[3] = {2,2,2};
-      int element_count = 6;
-      int block_count = 3;
+      enum {
+        element_count = 6,
+        block_count = 3,
+      };
+      static const int element_displacements[element_count]
+        = { 0, 1, 3, 4, 7, 8 };
+      static const int block_displacements[block_count] = { 0, 3, 7 };
+      static const int blocklengths[block_count] = { 2, 2, 2 };
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[9] = {0,1,2,3,4,5,6,7,8};
-      int ref_recv_data[6] = {0,1,3,4,7,8};
+      static const int send_data[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+      static const int ref_recv_data[element_count] = { 0, 1, 3, 4, 7, 8 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -430,15 +448,19 @@ int main(void) {
     { // block length == {2,3,4} and block displacement = {0,3,7}
       MPI_Datatype datatype;
 
-      int element_displacements[9] = {0,1,3,4,5,7,8,9,10};
-      int block_displacements[3] = {0,3,7};
-      int blocklengths[3] = {2,3,4};
-      int element_count = 9;
-      int block_count = 3;
+      enum {
+        element_count = 9,
+        block_count = 3,
+      };
+      static const int element_displacements[element_count]
+        = { 0, 1, 3, 4, 5, 7, 8, 9, 10 };
+      static const int block_displacements[block_count] = { 0, 3, 7 };
+      static const int blocklengths[block_count] = { 2, 3, 4 };
       MPI_Datatype old_type = MPI_INT;
 
-      int send_data[11] = {0,1,2,3,4,5,6,7,8,9,10};
-      int ref_recv_data[9] = {0,1,3,4,5,7,8,9,10};
+      static const int send_data[11] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+      static const int ref_recv_data[element_count]
+        = { 0, 1, 3, 4, 5, 7, 8, 9, 10 };
 
       datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
@@ -464,12 +486,15 @@ int main(void) {
   { // check two encoded trivial vectors
     MPI_Datatype datatype;
 
-    int element_displacements[4] = {2,4,7,9};
-    int element_count = 4;
+    enum { element_count = 4 };
+    static const int element_displacements[element_count] = { 2, 4, 7, 9 };
     MPI_Datatype old_type = MPI_INT;
 
-    int send_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29};
-    int ref_recv_data[4] = {2,4,7,9};
+    static const int send_data[]
+      = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+          10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+          20, 21, 22, 23, 24, 25, 26, 27, 28, 29 };
+    static const int ref_recv_data[element_count] = { 2, 4, 7, 9 };
     datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
 
@@ -483,12 +508,17 @@ int main(void) {
   { // check two encoded non-trivial vectors
     MPI_Datatype datatype;
 
-    int element_displacements[8] = {1,4,7,10, 11,14,17,20};
-    int element_count = 8;
+    enum { element_count = 8 };
+    static const int element_displacements[element_count]
+      = { 1, 4, 7, 10, 11, 14, 17, 20};
     MPI_Datatype old_type = MPI_INT;
 
-    int send_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29};
-    int ref_recv_data[8] = {1,4,7,10, 11,14,17,20};
+    static const int send_data[]
+      = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+          10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+          20, 21, 22, 23, 24, 25, 26, 27, 28, 29 };
+    static const int ref_recv_data[element_count]
+      = { 1, 4, 7, 10, 11, 14, 17, 20};
     datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
     if (test_datatype_int(datatype, element_count, send_data, ref_recv_data))
@@ -499,14 +529,18 @@ int main(void) {
 
   { // check reverse block
     MPI_Datatype datatype;
+    enum { element_count = 14 };
+    static const int element_displacements[element_count]
+      = {14,13,12,11,10,9,8,7,6,5,4,3,2,1};
 
-    int element_displacements[14] = {14,13,12,11,10,9,8,7,6,5,4,3,2,1};
-
-    int element_count = 14;
     MPI_Datatype old_type = MPI_INT;
 
-    int send_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29};
-    int ref_recv_data[14] = {14,13,12,11,10,9,8,7,6,5,4,3,2,1};
+    static const int send_data[]
+      = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+          10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+          20, 21, 22, 23, 24, 25, 26, 27, 28, 29 };
+    static const int ref_recv_data[element_count]
+      = { 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
     datatype = xt_mpi_generate_datatype(element_displacements, element_count,
                                           old_type, MPI_COMM_WORLD);
     if (test_datatype_int(datatype, element_count, send_data, ref_recv_data))
