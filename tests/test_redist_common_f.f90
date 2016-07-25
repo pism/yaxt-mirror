@@ -46,6 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE test_redist_common
+  USE xt_core, ONLY: i2, i4, i8
   USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
@@ -66,10 +67,15 @@ MODULE test_redist_common
   PRIVATE
   INTERFACE check_redist
     MODULE PROCEDURE check_redist_dp
+    MODULE PROCEDURE check_redist_dp2_i2
+    MODULE PROCEDURE check_redist_dp2_i4
+    MODULE PROCEDURE check_redist_dp2_i8
     MODULE PROCEDURE check_redist_dp2
     MODULE PROCEDURE check_redist_dp2_2d
     MODULE PROCEDURE check_redist_xi
-    MODULE PROCEDURE check_redist_xi2
+    MODULE PROCEDURE check_redist_i2
+    MODULE PROCEDURE check_redist_i4
+    MODULE PROCEDURE check_redist_i8
   END INTERFACE check_redist
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
 CONTAINS
@@ -147,6 +153,69 @@ CONTAINS
          __LINE__)
   END SUBROUTINE check_redist_dp2
 
+  SUBROUTINE check_redist_dp2_i2(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, INTENT(in) :: src(:)
+    INTEGER(i2), INTENT(in) :: ref_dst(:)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size /= ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    dst = -1.0d0
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= DBLE(ref_dst))) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE check_redist_dp2_i2
+
+  SUBROUTINE check_redist_dp2_i4(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, INTENT(in) :: src(:)
+    INTEGER(i4), INTENT(in) :: ref_dst(:)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size /= ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    dst = -1.0d0
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= DBLE(ref_dst))) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE check_redist_dp2_i4
+
+  SUBROUTINE check_redist_dp2_i8(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, INTENT(in) :: src(:)
+    INTEGER(i8), INTENT(in) :: ref_dst(:)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size /= ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    dst = -1.0d0
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= DBLE(ref_dst))) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE check_redist_dp2_i8
+
   SUBROUTINE check_redist_dp2_2d(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:,:)
@@ -182,11 +251,11 @@ CONTAINS
          __LINE__)
   END SUBROUTINE check_redist_xi
 
-  SUBROUTINE check_redist_xi2(redist, src, dst, ref_dst)
+  SUBROUTINE check_redist_i2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER(xi), INTENT(in) :: src(:)
-    INTEGER(xi), INTENT(in) :: ref_dst(:)
-    INTEGER(xi), TARGET, INTENT(inout) :: dst(:)
+    INTEGER(i2), INTENT(in) :: src(:)
+    INTEGER(i2), INTENT(in) :: ref_dst(:)
+    INTEGER(i2), TARGET, INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -195,12 +264,55 @@ CONTAINS
          CALL test_abort("error: ref_dst larger than dst", &
          __FILE__, &
          __LINE__)
+    dst = -1_i2
     CALL xt_redist_s_exchange(redist, src, dst)
     IF (ANY(dst /= ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
-  END SUBROUTINE check_redist_xi2
+  END SUBROUTINE check_redist_i2
+
+  SUBROUTINE check_redist_i4(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i4), INTENT(in) :: src(:)
+    INTEGER(i4), INTENT(in) :: ref_dst(:)
+    INTEGER(i4), TARGET, INTENT(inout) :: dst(:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size /= ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    dst = -1_i4
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= ref_dst)) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE check_redist_i4
+
+  SUBROUTINE check_redist_i8(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i8), INTENT(in) :: src(:)
+    INTEGER(i8), INTENT(in) :: ref_dst(:)
+    INTEGER(i8), TARGET, INTENT(inout) :: dst(:)
+
+    INTEGER :: dst_size, ref_dst_size
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size /= ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", &
+         __FILE__, &
+         __LINE__)
+    dst = -1_i8
+    CALL xt_redist_s_exchange(redist, src, dst)
+    IF (ANY(dst /= ref_dst)) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE check_redist_i8
 
 END MODULE test_redist_common
 !
