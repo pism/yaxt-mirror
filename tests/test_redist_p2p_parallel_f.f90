@@ -197,11 +197,12 @@ CONTAINS
     CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(dst_data))
 
     DO i = 1, size
-      IF (dst_data(i) /= DBLE(i - 1)) &
-           CALL test_abort("error in xt_redist_s_exchange", &
-           __FILE__, &
-           __LINE__)
+      IF (dst_data(i) /= DBLE(i - 1)) EXIT
     END DO
+    IF (i <= size) &
+         CALL test_abort("error in xt_redist_s_exchange", &
+         __FILE__, &
+         __LINE__)
 
     ! clean up
     CALL xt_redist_delete(redist)
