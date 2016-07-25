@@ -55,7 +55,8 @@ PROGRAM test_redist_p2p_parallel
        xt_redist_s_exchange1, xt_redist_delete, &
        xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new
   USE test_idxlist_utils, ONLY: test_err_count
-  USE test_redist_common, ONLY: communicators_are_congruent
+  USE test_redist_common, ONLY: communicators_are_congruent, &
+       check_redist
   IMPLICIT NONE
 
   INTEGER :: rank, size, ierror
@@ -97,7 +98,7 @@ CONTAINS
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist
-    DOUBLE PRECISION, TARGET :: src_data(data_size), dst_data(data_size)
+    DOUBLE PRECISION :: src_data(data_size), dst_data(data_size)
     INTEGER :: i
 
     ! source index list
@@ -131,12 +132,8 @@ CONTAINS
       src_data(i) = DBLE(rank * data_size + i - 1)
     END DO
 
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(dst_data))
+    CALL check_redist(redist, src_data, dst_data, dst_index_list)
 
-    IF (ANY(DBLE(dst_index_list(:)) /= dst_data(:))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
     ! clean up
     CALL xt_redist_delete(redist)
     CALL xt_xmap_delete(xmap)
@@ -221,7 +218,7 @@ CONTAINS
          gdepth(:), ig2col_off(:), b_surfdata_ref(:), gvoldata(:), &
          src_block_offsets(:), src_block_sizes(:), dst_block_offsets(:), &
          dst_block_sizes(:), b_voldata_ref(:)
-    INTEGER, TARGET, ALLOCATABLE :: a_surfdata(:), b_surfdata(:), &
+    INTEGER, ALLOCATABLE :: a_surfdata(:), b_surfdata(:), &
          a_voldata(:), b_voldata(:)
     INTEGER(xi), ALLOCATABLE :: iveca(:), ivecb(:)
     INTEGER(xi) :: ia, ib
@@ -288,11 +285,7 @@ CONTAINS
       b_surfdata_ref(i) = gsurfdata(ivecb(i) + 1)
     END DO
 
-    CALL xt_redist_s_exchange1(redist, C_LOC(a_surfdata), C_LOC(b_surfdata))
-    IF (ANY(b_surfdata(:) /= b_surfdata_ref(:))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    CALL check_redist(redist, a_surfdata, b_surfdata, b_surfdata_ref)
     CALL xt_redist_delete(redist)
 
     ! generate global volume data
@@ -313,7 +306,6 @@ CONTAINS
     ALLOCATE(a_voldata(gvol_size), b_voldata(gvol_size), &
          b_voldata_ref(gvol_size))
     a_voldata(:) = -1
-    b_voldata(:) = -1
     b_voldata_ref(:) = -1
 
     qa = 1
@@ -362,13 +354,7 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    CALL xt_redist_s_exchange1(block_redist, &
-         C_LOC(a_voldata), C_LOC(b_voldata))
-
-    IF (ANY(b_voldata(:) /= b_voldata_ref(:))) &
-         CALL test_abort("error in xt_redist_s_exchange (1) for volume data", &
-         __FILE__, &
-         __LINE__)
+    CALL check_redist(block_redist, a_voldata, b_voldata, b_voldata_ref)
 
     ! redist with blocks but without explicit offsets:
     block_redist2 = xt_redist_p2p_blocks_new(xmap, &
@@ -381,15 +367,7 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    b_voldata(:) = -1
-
-    CALL xt_redist_s_exchange1(block_redist2, &
-         C_LOC(a_voldata), C_LOC(b_voldata))
-
-    IF (ANY(b_voldata(:) /= b_voldata_ref(:))) &
-         CALL test_abort("error in xt_redist_s_exchange (2) for volume data", &
-         __FILE__, &
-         __LINE__)
+    CALL check_redist(block_redist2, a_voldata, b_voldata, b_voldata_ref)
 
     ! cleanup
     CALL xt_redist_delete(block_redist2)
