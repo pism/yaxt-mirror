@@ -63,10 +63,11 @@ int main()
   Xt_uid a_id;
   if ((a_id = xt_idxlist_get_uid(a)) == xt_idxlist_get_uid(b))
     PUT_ERR("unexpected duplicate ids");
-  Xt_int g_size[3] = { 5, 5, 5 };
-  int l_size[3] = { 2, 2, 2 };
-  Xt_int l_start[3] = { 1, 2, 0 };
-  Xt_idxlist c = xt_idxsection_new(0, 3, g_size, l_size, l_start);
+  enum { section_ndims = 3 };
+  Xt_int g_size[section_ndims] = { 5, 5, 5 };
+  int l_size[section_ndims] = { 2, 2, 2 };
+  Xt_int l_start[section_ndims] = { 1, 2, 0 };
+  Xt_idxlist c = xt_idxsection_new(0, section_ndims, g_size, l_size, l_start);
   if (xt_idxlist_get_uid(a) == xt_idxlist_get_uid(c)
       || xt_idxlist_get_uid(b) == xt_idxlist_get_uid(c))
     PUT_ERR("unexpected duplicate ids");
