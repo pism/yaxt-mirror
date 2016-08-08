@@ -51,6 +51,7 @@ m4_include([m4/acx_lang_c_check_include.m4])
 dnl
 dnl Local Variables:
 dnl mode: autoconf
+dnl coding: utf-8
 dnl license-project-url: "https://www.dkrz.de/redmine/projects/show/scales-ppm"
 dnl license-default: "bsd"
 dnl End:
