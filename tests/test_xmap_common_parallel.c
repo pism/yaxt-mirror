@@ -210,9 +210,9 @@ test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm)
                               (Xt_int)((comm_rank             + 1)%comm_size)};
 
   if (dst_index_list[0] > dst_index_list[1]) {
-    dst_index_list[0] ^= dst_index_list[1];
-    dst_index_list[1] ^= dst_index_list[0];
-    dst_index_list[0] ^= dst_index_list[1];
+    Xt_int temp = dst_index_list[0];
+    dst_index_list[0] = dst_index_list[1];
+    dst_index_list[1] = temp;
   }
 
   Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, 2);
