@@ -188,18 +188,19 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     }
   }
 
-  /* minimize memory use of tables */
-  srci = xrealloc(srci, src_isect_count * sizeof (**src_intersections));
-  *num_src_intersections = (int)src_isect_count;
-  dsti = xrealloc(dsti, dst_isect_count * sizeof (**dst_intersections));
-  *num_dst_intersections = (int)dst_isect_count;
-
-  *dst_intersections = dsti;
-  *src_intersections = srci;
   *stripify = large_list_seen;
-  // clean up
+
   free(recv_buffer);
   free(pack_sizes);
+
+  /* minimize memory use of tables */
+  *num_src_intersections = (int)src_isect_count;
+  srci = xrealloc(srci, src_isect_count * sizeof (**src_intersections));
+  *src_intersections = srci;
+
+  *num_dst_intersections = (int)dst_isect_count;
+  dsti = xrealloc(dsti, dst_isect_count * sizeof (**dst_intersections));
+  *dst_intersections = dsti;
 }
 
 Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
