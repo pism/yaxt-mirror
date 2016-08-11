@@ -63,6 +63,10 @@ xt_xmap_self_test_main(xmap_constructor xmap_constructor);
 int
 xt_xmap_parallel_test_main(xmap_constructor xmap_constructor);
 
+void
+test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
+               int ping_rank, int pong_rank);
+
 #endif
 
 /*

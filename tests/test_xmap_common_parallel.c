@@ -63,8 +63,6 @@ static void
 test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm);
 static void
 test_pair(xmap_constructor xmap_new, MPI_Comm comm);
-static void
-test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm);
 
 int
 xt_xmap_parallel_test_main(xmap_constructor xmap_new)
@@ -90,7 +88,7 @@ xt_xmap_parallel_test_main(xmap_constructor xmap_new)
     test_pair(xmap_new, comm);
 
   if (comm_size > 1)
-    test_ping_pong(xmap_new, comm);
+    test_ping_pong(xmap_new, comm, 0, comm_size - 1);
 
   xt_finalize();
   MPI_Finalize();
@@ -291,47 +289,46 @@ test_pair(xmap_constructor xmap_new, MPI_Comm comm)
 }
 
 static void
-test_ping_pong_xmap(Xt_xmap xmap, MPI_Comm comm)
+test_ping_pong_xmap(Xt_xmap xmap, MPI_Comm comm, int ping_rank, int pong_rank)
 {
-  int comm_rank, comm_size;
+  int comm_rank;
   MPI_Comm_rank(comm, &comm_rank);
-  MPI_Comm_size(comm, &comm_size);
 
-  if (xt_xmap_get_num_destinations(xmap) != (comm_rank == 0))
+  if (xt_xmap_get_num_destinations(xmap) != (comm_rank == ping_rank))
     PUT_ERR("error in xt_xmap_get_num_destinations (rank == %d)\n", comm_rank);
 
-  if (xt_xmap_get_num_sources(xmap) != (comm_rank == comm_size-1))
+  if (xt_xmap_get_num_sources(xmap) != (comm_rank == pong_rank))
     PUT_ERR("error in xt_xmap_get_num_sources (rank == %d)\n", comm_rank);
 
-  if (comm_rank == 0) {
+  if (comm_rank == ping_rank) {
     int dst_rank;
     xt_xmap_get_destination_ranks(xmap, &dst_rank);
-    if (dst_rank != comm_size-1)
+    if (dst_rank != pong_rank)
       PUT_ERR("error in xt_xmap_get_destination_ranks\n");
   }
 
-  if (comm_rank == comm_size - 1) {
+  if (comm_rank == pong_rank) {
     int src_rank;
     xt_xmap_get_source_ranks(xmap, &src_rank);
-    if (src_rank != 0)
+    if (src_rank != ping_rank)
       PUT_ERR("error in xt_xmap_get_source_ranks\n");
   }
 }
 
-static void
-test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm)
+void
+test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
+               int ping_rank, int pong_rank)
 {
-  int comm_rank, comm_size;
+  int comm_rank;
   MPI_Comm_rank(comm, &comm_rank);
-  MPI_Comm_size(comm, &comm_size);
 
   enum { numIdx = 5 };
   static const Xt_int index_list[numIdx] = {0,1,2,3,4};
 
-  Xt_idxlist src_idxlist = (comm_rank == 0)?
+  Xt_idxlist src_idxlist = (comm_rank == ping_rank)?
     xt_idxvec_new(index_list, numIdx) : xt_idxempty_new();
 
-  Xt_idxlist dst_idxlist = (comm_rank == comm_size-1)?
+  Xt_idxlist dst_idxlist = (comm_rank == pong_rank)?
     xt_idxvec_new(index_list, numIdx) : xt_idxempty_new();
 
   // test of exchange map
@@ -340,9 +337,9 @@ test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm)
   xt_idxlist_delete(dst_idxlist);
 
   // test results
-  test_ping_pong_xmap(xmap, comm);
+  test_ping_pong_xmap(xmap, comm, ping_rank, pong_rank);
   Xt_xmap xmap_copy = xt_xmap_copy(xmap);
-  test_ping_pong_xmap(xmap_copy, comm);
+  test_ping_pong_xmap(xmap_copy, comm, ping_rank, pong_rank);
 
   // clean up
   xt_xmap_delete(xmap);
