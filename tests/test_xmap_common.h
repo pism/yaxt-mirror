@@ -67,6 +67,9 @@ void
 test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
                int ping_rank, int pong_rank);
 
+void
+check_xmap_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm);
+
 #endif
 
 /*

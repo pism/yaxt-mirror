@@ -95,12 +95,15 @@ xt_xmap_parallel_test_main(xmap_constructor xmap_new)
   return TEST_EXIT_CODE;
 }
 
-static void
+void
 check_xmap_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm)
 {
-  int comm_rank, comm_size;
-  MPI_Comm_rank(comm, &comm_rank);
-  MPI_Comm_size(comm, &comm_size);
+  int comm_rank, comm_size, is_inter;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
+  int (*get_comm_size)(MPI_Comm, int *)
+    = is_inter ? MPI_Comm_remote_size : MPI_Comm_size;
+  xt_mpi_call(get_comm_size(comm, &comm_size), comm);
 
   if (xt_xmap_get_num_destinations(xmap) != comm_size)
     PUT_ERR("error in xt_xmap_get_num_destinations\n");
