@@ -64,32 +64,13 @@
 #include "xt/xt_xmap.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_mpi.h"
-#include "xt_arithmetic_util.h"
-#include "xt_idxstripes_internal.h"
 #include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "ensure_array_size.h"
 #include "xt/xt_xmap_intersection.h"
 #include "xt_idxlist_internal.h"
 #include "instr.h"
-
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
-enum {
-  SEND_SIZE_SRC = 0,
-  SEND_SIZE_DST = 1,
-  SEND_NUM_SRC = 2,
-  SEND_NUM_DST = 3,
-  SEND_SIZE_ASIZE,
-};
-
-struct dist_dir {
-  int num_entries;
-  struct Xt_com_list entries[];
-};
-
+#include "xt_xmap_dist_dir_common.h"
 
 static inline Xt_int
 get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
@@ -130,12 +111,6 @@ static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
   return max_index;
 }
 
-struct bucket_params {
-  Xt_int global_interval, local_interval,
-    local_index_range_lbound, local_index_range_ubound;
-  int num_src, num_dst;
-};
-
 static struct bucket_params
 get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                   bool *stripify, MPI_Comm comm, int comm_size)
@@ -161,98 +136,13 @@ get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   };
 }
 
-/**
- * \brief generates the buckets of the distributed directory
- *
- * The buckets of the distributed directory are computed as follows:
- * - compute sum of the sizes of all src_idxlist's and round to next
- *   multiple of comm_size -> global_interval
- * - local_interval_size = global_interval / comm_size
- * - local_interval_start = rank * local_interval_size
- * - local_interval_end = (rank + 1) * local_interval_size
- * - local_interval = $[local_interval_start,local_interval_end)$
- * - bucket of each rank is the set of stripes that is defined as:
- *      stripe[i].start = start + rank*local_interval_start + i*global_interval
- *      stripe[i].stride = 1;
- *      stripe[i].nstrides = (int)local_interval;
- *      with i in [0,num_stripes)
- *      bucket[rank] = xt_idxstripes_new(stripes, num_stripes);
- * - num_stripes and start are choosen such that:
- *      start + local_interval
- *         > get_min_idxlist_index(src_idxlist, dst_idxlist)
- *      (which implies for rank 0
- *       stripe[0].start <= get_min_idxlist_index(src_idxlist, dst_idxlist))
- *   where
- *       start = global_interval * k,
- *       k is minimal
- *   and
- *      start + num_stripes*global_interval
- *         > get_max_idxlist_index(src_idxlist, dst_idxlist);
- *   i.e. local_interval is replicated modulo global_interval for the
- *   whole range of indices.
- *
- * \param[in] bucket_params the parameters
- * \param[out] stripes_ pointer to pointer of array of the stripes
- * describing the bucket for rank \a dist_dir_rank. Must point to a
- * pointer allocated by malloc or related and will be resized if necessary.
- * \param[out] stripes_array_size number of stripes stored in \a stripes_
- * \param[in] dist_dir_rank rank for which to compute bucket
- * \return newly created bucket. The bucket must not be longer lived
- * than the dynamic memory referenced by \a stripes_ .
- */
-static Xt_idxlist
-get_bucket(const struct bucket_params *bucket_params,
-           struct Xt_stripe **stripes_, size_t *stripes_array_size,
-           int dist_dir_rank)
-{
-  Xt_int global_interval = bucket_params->global_interval;
-  Xt_int local_interval = bucket_params->local_interval;
-  Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
-  Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
-  int num_stripes = 0;
-
-  /* find first index in bucket of dist_dir_rank
-     <= local_index_range_lbound */
-  Xt_int start = (Xt_int)(0 + dist_dir_rank * local_interval);
-  {
-    long long start_correction
-      = (long long)local_index_range_lbound - (long long)start;
-    Xt_int corr_steps
-      = (Xt_int)((start_correction
-                  - (llsign_mask(start_correction)
-                     & (long long)(global_interval - 1)))
-                 / (long long)global_interval);
-    start = (Xt_int)(start + corr_steps * global_interval);
-  }
-  /* next find last stripe in bucket of dist_dir_rank
-   * <= local_index_range_ubound */
-  Xt_int end
-    = (Xt_int)(start
-               + (((long long)local_index_range_ubound - (long long)start)
-                  / global_interval) * global_interval);
-  Xt_int use_start_stripe
-    = (Xt_int)(start + local_interval > local_index_range_lbound);
-  num_stripes = (int)(((long long)end - (long long)start)/global_interval)
-    + (int)use_start_stripe;
-  start = (Xt_int)(start
-                   + ((Xt_int)((Xt_uint)use_start_stripe - (Xt_uint)1)
-                      & global_interval));
-  if (!num_stripes)
-    return NULL;
-
-  struct Xt_stripe *restrict stripes = *stripes_;
-  ENSURE_ARRAY_SIZE(stripes, *stripes_array_size, (size_t)num_stripes);
-
-  for (int j = 0; j < num_stripes; ++j) {
-
-    stripes[j].start = (Xt_int)(start + j * global_interval);
-    stripes[j].stride = 1;
-    stripes[j].nstrides = (int)local_interval;
-  }
-
-  *stripes_ = stripes;
-  return xt_idxstripes_prealloc_new(stripes, num_stripes);
-}
+enum {
+  SEND_SIZE_SRC = 0,
+  SEND_SIZE_DST = 1,
+  SEND_NUM_SRC = 2,
+  SEND_NUM_DST = 3,
+  SEND_SIZE_ASIZE,
+};
 
 static void
 rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE])
@@ -304,7 +194,8 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
     size_t num_src_msg = 0, num_dst_msg = 0;
     for (; i < (size_t)start_of_non_overlapping_bucket_suffix; ++i) {
       Xt_idxlist bucket
-        = get_bucket(bucket_params, &stripes, &stripes_array_size, (int)i);
+        = xt_xmap_dist_dir_get_bucket(bucket_params,
+                                      &stripes, &stripes_array_size, (int)i);
       if (bucket) {
         Xt_idxlist send4src = xt_idxlist_get_intersection(src_idxlist, bucket);
         if (xt_idxlist_get_num_indices(send4src) > 0) {
@@ -364,62 +255,6 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
 }
 
 static void
-get_remote_packed_intersection_size(int recv_size[SEND_SIZE_ASIZE],
-                                    int (*send_size)[SEND_SIZE_ASIZE],
-                                    MPI_Comm comm) {
-
-#if MPI_VERSION > 2 || ( MPI_VERSION == 2 && MPI_SUBVERSION >= 2)
-  xt_mpi_call(MPI_Reduce_scatter_block((int *)send_size, (int *)recv_size,
-                                       SEND_SIZE_ASIZE, MPI_INT, MPI_SUM,
-                                       comm), comm);
-#else
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-
-  int *recv_count = xmalloc((size_t)comm_size * sizeof(*recv_count));
-  for (int i = 0; i < comm_size; ++i) recv_count[i] = SEND_SIZE_ASIZE;
-
-  xt_mpi_call(MPI_Reduce_scatter(send_size, recv_size, recv_count, MPI_INT,
-                                 MPI_SUM, comm), comm);
-
-  free(recv_count);
-#endif
-}
-
-static void send_intersections(void * send_buffer,
-                               int (*send_size)[SEND_SIZE_ASIZE],
-                               MPI_Request *dir_init_send_requests,
-                               int tag_offset, MPI_Comm comm, int comm_size) {
-  int offset = 0;
-  size_t reqOfs = 0;
-
-  // pack the intersections into the send buffer
-  for (int i = 0; i < comm_size; ++i)
-    if (send_size[i][SEND_SIZE_SRC] > 0) {
-      xt_mpi_call(MPI_Isend((char *)send_buffer + offset,
-                            send_size[i][SEND_SIZE_SRC],
-                            MPI_PACKED, i, tag_offset
-                            + xt_mpi_tag_xmap_dist_dir_src_send,
-                            comm, dir_init_send_requests + reqOfs),
-                  comm);
-      ++reqOfs;
-      offset += send_size[i][SEND_SIZE_SRC];
-    }
-
-  for (int i = 0; i < comm_size; ++i)
-    if (send_size[i][SEND_SIZE_DST] > 0) {
-      xt_mpi_call(MPI_Isend((char *)send_buffer + offset,
-                            send_size[i][SEND_SIZE_DST],
-                            MPI_PACKED, i, tag_offset
-                            + xt_mpi_tag_xmap_dist_dir_dst_send,
-                            comm, dir_init_send_requests + reqOfs),
-                  comm);
-      ++reqOfs;
-      offset += send_size[i][SEND_SIZE_DST];
-    }
-}
-
-static void
 recv_and_unpack_intersection(struct dist_dir *dist_dir, int recv_size,
                              int recv_count, void * recv_buffer, int tag,
                              MPI_Comm comm) {
@@ -452,6 +287,26 @@ recv_and_unpack_intersection(struct dist_dir *dist_dir, int recv_size,
   dist_dir->num_entries = recv_count;
 }
 
+static void send_intersections(void *send_buffer,
+                               const int (*send_size)[SEND_SIZE_ASIZE],
+                               MPI_Request *dir_init_send_requests,
+                               int tag_offset, MPI_Comm comm, int comm_size) {
+  int src_tag = tag_offset + xt_mpi_tag_xmap_dist_dir_src_send;
+  struct Xt_xmdd_txstat txstat
+    = xt_xmap_dist_dir_send_intersections(send_buffer,
+                                          SEND_SIZE_ASIZE, SEND_SIZE_SRC,
+                                          src_tag, comm, comm_size,
+                                          dir_init_send_requests,
+                                          send_size);
+  int dst_tag = tag_offset + xt_mpi_tag_xmap_dist_dir_dst_send;
+  xt_xmap_dist_dir_send_intersections((unsigned char *)send_buffer
+                                      + txstat.bytes,
+                                      SEND_SIZE_ASIZE, SEND_SIZE_DST,
+                                      dst_tag, comm, comm_size,
+                                      dir_init_send_requests + txstat.num_msg,
+                                      send_size);
+}
+
 static void
 recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
                               struct dist_dir **src_dist_dir,
@@ -480,47 +335,6 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
   free(recv_buffer);
 }
 
-
-struct isect
-{
-  int dst_rank, src_rank;
-  Xt_idxlist idxlist;
-};
-
-static size_t
-match_src_dst_dist_dirs(const struct dist_dir *src_dist_dir,
-                        const struct dist_dir *dst_dist_dir,
-                        struct isect **src_dst_intersections)
-{
-  struct isect (*src_dst_intersections_)
-    = (*src_dst_intersections)
-    = xmalloc((size_t)src_dist_dir->num_entries
-              * (size_t)dst_dist_dir->num_entries
-              * sizeof(**src_dst_intersections));
-  size_t isect_fill = 0;
-  const struct Xt_com_list *restrict entries_src = src_dist_dir->entries,
-    *restrict entries_dst = dst_dist_dir->entries;
-  size_t num_entries_src = (size_t)src_dist_dir->num_entries,
-    num_entries_dst = (size_t)dst_dist_dir->num_entries;
-  for (size_t i = 0; i < num_entries_src; ++i)
-    for (size_t j = 0; j < num_entries_dst; ++j)
-    {
-      Xt_idxlist intersection
-        = xt_idxlist_get_intersection(entries_src[i].list, entries_dst[j].list);
-      if (xt_idxlist_get_num_indices(intersection) > 0) {
-        src_dst_intersections_[isect_fill]
-          = (struct isect){ .dst_rank = entries_dst[j].rank,
-                            .src_rank = entries_src[i].rank,
-                            .idxlist = intersection };
-        ++isect_fill;
-      } else
-        xt_idxlist_delete(intersection);
-    }
-  *src_dst_intersections
-    = xrealloc(src_dst_intersections_,
-               isect_fill * sizeof (*src_dst_intersections_));
-  return isect_fill;
-}
 
 static int
 cmp_isect_src_rank(const void *a_, const void *b_)
@@ -618,6 +432,40 @@ pack_src_dst_dist_dirs(size_t num_intersections,
   return num_send_indices_requests;
 }
 
+/**
+ * @brief wrapper for MPI_Reduce_scatter_block if available or
+ * MPI_Reduce_scatter if not
+ * @param num_sizes number of size entries to reduce over and to be
+ * received via @a recv_size
+ * @param recv_size array to hold result of reduction
+ * @param send_size sizes to sum over, array size must correspond to
+ * corresponding size of comm times @a num_sizes
+ * @param comm MPI communicator to use
+ */
+static void
+xt_xmap_dist_dir_reduce_scatter_sizes(int num_sizes,
+                                      int recv_size[num_sizes],
+                                      int (*send_size)[num_sizes],
+                                      MPI_Comm comm) {
+
+#if MPI_VERSION > 2 || ( MPI_VERSION == 2 && MPI_SUBVERSION >= 2)
+  xt_mpi_call(MPI_Reduce_scatter_block((int *)send_size, (int *)recv_size,
+                                       num_sizes, MPI_INT, MPI_SUM,
+                                       comm), comm);
+#else
+  int comm_size;
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  int *recv_count = xmalloc((size_t)comm_size * sizeof(*recv_count));
+  for (int i = 0; i < comm_size; ++i) recv_count[i] = num_sizes;
+
+  xt_mpi_call(MPI_Reduce_scatter(send_size, recv_size, recv_count, MPI_INT,
+                                 MPI_SUM, comm), comm);
+
+  free(recv_count);
+#endif
+}
+
 static void generate_distributed_directories(struct dist_dir **src_dist_dir,
                                              struct dist_dir **dst_dist_dir,
                                              bool *stripify,
@@ -642,12 +490,13 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
 
   int recv_size[SEND_SIZE_ASIZE]; // for src and dst
 
-  get_remote_packed_intersection_size(recv_size, send_size, comm);
+  /* get packed intersection sizes to be sent from other ranks */
+  xt_xmap_dist_dir_reduce_scatter_sizes(SEND_SIZE_ASIZE, recv_size, send_size, comm);
 
   MPI_Request *dir_init_send_requests
     = xmalloc((size_t)num_msg * sizeof(*dir_init_send_requests));
-  send_intersections(send_buffer, send_size, dir_init_send_requests,
-                     tag_offset, comm, comm_size);
+  send_intersections(send_buffer, (const int (*)[SEND_SIZE_ASIZE])send_size,
+                     dir_init_send_requests, tag_offset, comm, comm_size);
 
   free(send_size);
 
@@ -659,14 +508,6 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
                           MPI_STATUSES_IGNORE), comm);
   free(dir_init_send_requests);
   free(send_buffer);
-}
-
-static int
-xt_com_list_rank_cmp(const void *a_, const void *b_)
-{
-  const struct Xt_com_list *a = a_, *b = b_;
-  /* this is overflow-safe because rank's are non-negative ints */
-  return a->rank - b->rank;
 }
 
 static void
@@ -714,13 +555,6 @@ recv_and_unpack_dist_dir_result(struct dist_dir *dist_dir, int recv_size,
 
 }
 
-static int
-stripe_cmp(const void *a, const void *b)
-{
-  typedef const struct Xt_stripe *csx;
-  return (((csx)a)->start > ((csx)b)->start)
-    - (((csx)b)->start > ((csx)a)->start);
-}
 
 /*
  * @param dist_dir_results contains the intersections of this ranks
@@ -775,13 +609,6 @@ merge_bucket_intersections(struct dist_dir **dist_dir_results) {
   *dist_dir_results = xrealloc(*dist_dir_results, sizeof (struct dist_dir)
                                + (size_t)num_isect_agg
                                * sizeof(struct Xt_com_list));
-}
-
-static void free_dist_dir(struct dist_dir * dist_dir) {
-
-  for (int i = 0; i < dist_dir->num_entries; ++i)
-    xt_idxlist_delete(dist_dir->entries[i].list);
-  free(dist_dir);
 }
 
 static bool
@@ -906,10 +733,10 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
    * directories... */
   struct isect *src_dst_intersections;
   size_t num_intersections
-    = match_src_dst_dist_dirs(src_dist_dir, dst_dist_dir,
-                              &src_dst_intersections);
-  free_dist_dir(src_dist_dir);
-  free_dist_dir(dst_dist_dir);
+    = xt_xmap_dist_dir_match_src_dst(src_dist_dir, dst_dist_dir,
+                                     &src_dst_intersections);
+  xt_xmdd_free_dist_dir(src_dist_dir);
+  xt_xmdd_free_dist_dir(dst_dist_dir);
   /* ... and pack the results into a sendable format */
   int num_send_indices_requests
     = pack_src_dst_dist_dirs(num_intersections, src_dst_intersections,
@@ -917,14 +744,15 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
   free(src_dst_intersections);
 
   // get the data size the local process will receive from other processes
-  get_remote_packed_intersection_size(recv_size, send_size, comm);
+  xt_xmap_dist_dir_reduce_scatter_sizes(SEND_SIZE_ASIZE, recv_size,
+                                        send_size, comm);
 
   MPI_Request *send_indices_requests
     = xmalloc((size_t)num_send_indices_requests
               * sizeof(*send_indices_requests));
 
-  send_intersections(send_buffer, send_size, send_indices_requests,
-                     tag_offset, comm, comm_size);
+  send_intersections(send_buffer, (const int (*)[SEND_SIZE_ASIZE])send_size,
+                     send_indices_requests, tag_offset, comm, comm_size);
 
   recv_and_unpack_dist_dir_results(recv_size,
                                    src_intersections, dst_intersections,
@@ -970,8 +798,8 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
 
   xt_mpi_comm_smart_dedup(&newcomm, tag_offset);
 
-  free_dist_dir(src_intersections);
-  free_dist_dir(dst_intersections);
+  xt_xmdd_free_dist_dir(src_intersections);
+  xt_xmdd_free_dist_dir(dst_intersections);
   INSTR_STOP(this_instr);
   return xmap;
 }
