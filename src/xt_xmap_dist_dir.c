@@ -164,21 +164,32 @@ get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
 /**
  * \brief generates the buckets of the distributed directory
  *
- * The bucket of the distributed directory are computed as follows:
- * - compute sum of the sizes of all src_idxlist's -> global_interval
- * - local_interval = global_interval / comm_size
- * - bucket of each process is stripe that is defined as:
- *      stripe.start = (Xt_int)(rank*local_interval + i*global_interval);
- *      stripe.stride = 1;
- *      stripe.nstrides = (int)local_interval;
+ * The buckets of the distributed directory are computed as follows:
+ * - compute sum of the sizes of all src_idxlist's and round to next
+ *   multiple of comm_size -> global_interval
+ * - local_interval_size = global_interval / comm_size
+ * - local_interval_start = rank * local_interval_size
+ * - local_interval_end = (rank + 1) * local_interval_size
+ * - local_interval = $[local_interval_start,local_interval_end)$
+ * - bucket of each rank is the set of stripes that is defined as:
+ *      stripe[i].start = start + rank*local_interval_start + i*global_interval
+ *      stripe[i].stride = 1;
+ *      stripe[i].nstrides = (int)local_interval;
+ *      with i in [0,num_stripes)
  *      bucket[rank] = xt_idxstripes_new(stripes, num_stripes);
  * - num_stripes and start are choosen such that:
- *      stripe.start + local_interval
+ *      start + local_interval
  *         > get_min_idxlist_index(src_idxlist, dst_idxlist)
- *      and
- *      stripe.start + num_stripes*global_interval + local_interval
+ *      (which implies for rank 0
+ *       stripe[0].start <= get_min_idxlist_index(src_idxlist, dst_idxlist))
+ *   where
+ *       start = global_interval * k,
+ *       k is minimal
+ *   and
+ *      start + num_stripes*global_interval
  *         > get_max_idxlist_index(src_idxlist, dst_idxlist);
- *   and $i \in [0,num_stripes)$
+ *   i.e. local_interval is replicated modulo global_interval for the
+ *   whole range of indices.
  *
  * \param[in] bucket_params the parameters
  * \param[out] stripes_ pointer to pointer of array of the stripes
