@@ -107,13 +107,13 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   int send_buffer_size = (int)size_sum;
 
   // exchange buffer sizes
-  int *pack_sizes = xmalloc((size_t)comm_size * sizeof(*pack_sizes) * 2);
+  int *restrict pack_sizes
+    = xmalloc((size_t)comm_size * sizeof(*pack_sizes) * 2);
 
   xt_mpi_call(MPI_Allgather(&send_buffer_size, 1, MPI_INT,
                             pack_sizes, 1, MPI_INT, comm), comm);
 
-  int *displ = pack_sizes + comm_size;
-
+  int *restrict displ = pack_sizes + comm_size;
   displ[0] = 0;
   int recv_buffer_size = pack_sizes[0];
   unsigned size_overflow = 0;
