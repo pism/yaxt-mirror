@@ -144,7 +144,7 @@ enum {
   SEND_SIZE_ASIZE,
 };
 
-static void
+static inline void
 rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE])
 {
   send_size[rank][SEND_SIZE_SRC] = 0;
