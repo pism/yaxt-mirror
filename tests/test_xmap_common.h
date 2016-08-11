@@ -70,6 +70,9 @@ test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
 void
 check_xmap_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm);
 
+void
+test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm);
+
 #endif
 
 /*

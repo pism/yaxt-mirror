@@ -47,6 +47,7 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -59,8 +60,6 @@
 static void
 test_xmap_allgather_analog(xmap_constructor xmap_new,
                            size_t num_indices_per_rank, MPI_Comm comm);
-static void
-test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm);
 static void
 test_pair(xmap_constructor xmap_new, MPI_Comm comm);
 
@@ -172,33 +171,42 @@ test_xmap_allgather_analog(xmap_constructor xmap_new,
 }
 
 static void
-check_ring_xmap(Xt_xmap xmap, const Xt_int dst_index_list[])
+check_ring_xmap(Xt_xmap xmap, const Xt_int dst_index_list[], bool is_inter)
 {
-  if (xt_xmap_get_num_destinations(xmap) != 2)
+  int num_dst = xt_xmap_get_num_destinations(xmap),
+    num_src = xt_xmap_get_num_sources(xmap);
+  if (!is_inter && (num_dst > 2 || num_dst < 1))
     PUT_ERR("error in xt_xmap_get_num_destinations\n");
 
-  if (xt_xmap_get_num_sources(xmap) != 2)
+  if (num_src > 2 || num_src < 1)
     PUT_ERR("error in xt_xmap_get_num_sources\n");
 
   int ranks[2];
 
-  xt_xmap_get_destination_ranks(xmap, ranks);
-  if (ranks[0] != dst_index_list[0] ||
-      ranks[1] != dst_index_list[1])
-    PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+  if (!is_inter) {
+    xt_xmap_get_destination_ranks(xmap, ranks);
+    xt_sort_int(ranks, (size_t)num_dst);
+    if (ranks[0] != dst_index_list[0] ||
+        ranks[num_dst > 1] != dst_index_list[1])
+      PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+  }
 
   xt_xmap_get_source_ranks(xmap, ranks);
+  xt_sort_int(ranks, (size_t)num_src);
   if (ranks[0] != dst_index_list[0] ||
-      ranks[1] != dst_index_list[1])
+      ranks[num_src > 1] != dst_index_list[1])
     PUT_ERR("error in xt_xmap_get_source_ranks\n");
 }
 
-static void
+void
 test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm)
 {
-  int comm_rank, comm_size;
-  MPI_Comm_rank(comm, &comm_rank);
-  MPI_Comm_size(comm, &comm_size);
+  int comm_rank, comm_size, is_inter;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
+  int (*get_comm_size)(MPI_Comm, int *)
+    = is_inter ? MPI_Comm_remote_size : MPI_Comm_size;
+  xt_mpi_call(get_comm_size(comm, &comm_size), comm);
   // test in which each process talks with two other
   // processes
 
@@ -223,9 +231,9 @@ test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm)
   xt_idxlist_delete(src_idxlist);
 
   // test results
-  check_ring_xmap(xmap, dst_index_list);
+  check_ring_xmap(xmap, dst_index_list, (bool)is_inter);
   Xt_xmap xmap_copy = xt_xmap_copy(xmap);
-  check_ring_xmap(xmap_copy, dst_index_list);
+  check_ring_xmap(xmap_copy, dst_index_list, (bool)is_inter);
 
   // clean up
   xt_xmap_delete(xmap);
