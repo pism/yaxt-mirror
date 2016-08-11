@@ -86,10 +86,12 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     dst(dpos) = src(spos)
    */
 
-  int comm_size, rank;
-
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  int comm_size, rank, is_inter;
   xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
+  xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
+  int (*get_comm_size)(MPI_Comm, int *)
+    = is_inter ? MPI_Comm_remote_size : MPI_Comm_size;
+  xt_mpi_call(get_comm_size(comm, &comm_size), comm);
 
   // allocate memory for intersections
   struct Xt_com_list *dsti = xmalloc((size_t)comm_size * sizeof (*dsti));
@@ -149,7 +151,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     int position = 0;
     // unpack buffers unless local
     Xt_idxlist src, dst;
-    if (i != rank) {
+    if (is_inter || i != rank) {
       src = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
                               pack_sizes[i], &position, comm);
       dst = xt_idxlist_unpack((unsigned char *)recv_buffer + displ[i],
@@ -180,7 +182,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     }
     else
       xt_idxlist_delete(intersect);
-    if (i != rank) {
+    if (is_inter || i != rank) {
       xt_idxlist_delete(src);
       xt_idxlist_delete(dst);
     }
