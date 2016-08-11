@@ -124,7 +124,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     size_overflow |= recv_buffer_size & (1U << (sizeof(int) * CHAR_BIT - 1));
   }
   if (size_overflow)
-    die("accumulated buffer sizes too big");
+    die("accumulated buffer sizes too big,"
+        " use distributed directory (xt_xmap_dist_dir_new)!");
   void *recv_buffer = xmalloc((size_t)recv_buffer_size + size_sum),
     *send_buffer = (unsigned char *)recv_buffer + (size_t)recv_buffer_size;
   // pack local index lists
