@@ -68,9 +68,9 @@
 #include "instr.h"
 
 static void exchange_idxlists(struct Xt_com_list **src_intersections,
-                              int *num_src_intersections,
+                              size_t *num_src_intersections,
                               struct Xt_com_list **dst_intersections,
-                              int * num_dst_intersections,
+                              size_t *num_dst_intersections,
                               int * stripify,
                               Xt_idxlist src_idxlist_local,
                               Xt_idxlist dst_idxlist_local,
@@ -194,11 +194,11 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   free(pack_sizes);
 
   /* minimize memory use of tables */
-  *num_src_intersections = (int)src_isect_count;
+  *num_src_intersections = src_isect_count;
   srci = xrealloc(srci, src_isect_count * sizeof (**src_intersections));
   *src_intersections = srci;
 
-  *num_dst_intersections = (int)dst_isect_count;
+  *num_dst_intersections = dst_isect_count;
   dsti = xrealloc(dsti, dst_isect_count * sizeof (**dst_intersections));
   *dst_intersections = dsti;
 }
@@ -211,7 +211,7 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   MPI_Comm newcomm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 
   struct Xt_com_list * src_intersections = NULL, * dst_intersections = NULL;
-  int num_src_intersections = 0, num_dst_intersections = 0;
+  size_t num_src_intersections, num_dst_intersections;
 
   int stripify;
   // exchange index lists between all processes in comm
@@ -227,15 +227,15 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
                       MPI_Comm comm)
     = stripify ? xt_xmap_intersection_ext_new : xt_xmap_intersection_new;
 
-  Xt_xmap xmap = xmap_new(num_src_intersections, src_intersections,
-                          num_dst_intersections, dst_intersections,
+  Xt_xmap xmap = xmap_new((int)num_src_intersections, src_intersections,
+                          (int)num_dst_intersections, dst_intersections,
                           src_idxlist, dst_idxlist, newcomm);
 
   xt_mpi_comm_smart_dedup(&newcomm, tag_offset);
-  for (int i = 0; i < num_src_intersections; ++i)
+  for (size_t i = 0; i < num_src_intersections; ++i)
     if (src_intersections[i].list != NULL)
       xt_idxlist_delete(src_intersections[i].list);
-  for (int i = 0; i < num_dst_intersections; ++i)
+  for (size_t i = 0; i < num_dst_intersections; ++i)
     if (dst_intersections[i].list != NULL)
       xt_idxlist_delete(dst_intersections[i].list);
   free(src_intersections), free(dst_intersections);
