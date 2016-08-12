@@ -925,6 +925,35 @@ xt_mpi_comm_mark_exclusive(MPI_Comm comm) {
                                 comm_attr), comm);
 }
 
+bool
+xt_mpi_test_some(int *restrict num_req,
+                 MPI_Request *restrict req,
+                 int *restrict ops_completed, MPI_Comm comm)
+{
+  int done_count;
+  size_t num_req_ = (size_t)*num_req;
+  xt_mpi_call(MPI_Testsome(*num_req, req, &done_count, ops_completed,
+                           MPI_STATUSES_IGNORE), comm);
+  if (done_count != MPI_UNDEFINED) {
+    if (num_req_ > (size_t)done_count) {
+      size_t j = num_req_;
+      for (size_t i = 0;
+           i < (size_t)done_count && j >= num_req_ - (size_t)done_count;
+           ++i)
+        if (ops_completed[i] < (int)num_req_ - done_count) {
+          while (req[--j] == MPI_REQUEST_NULL);
+          req[ops_completed[i]] = req[j];
+        }
+      num_req_ -= (size_t)done_count;
+    }
+    else
+      num_req_ = 0;
+  }
+  *num_req = (int)num_req_;
+  return num_req_ == 0;
+}
+
+
 /*
  * Local Variables:
  * c-basic-offset: 2

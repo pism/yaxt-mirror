@@ -50,6 +50,7 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <mpi.h>
 
 /** \example test_mpi_smartdedup.c
@@ -77,6 +78,24 @@ xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset);
 
 void
 xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset);
+
+/**
+ * Given an array of MPI requests, call MPI_Test_some and
+ *
+ * 1. return if no requests are left unfinished
+ * 2. sort non-finished requests into remaining leading part of array
+ * 3. update count of remaining requests
+ *
+ * @param[in,out] num_req pointer to count of requests
+ * @param[in,out] req array of requests to test (size *num_req)
+ * @param[out] ops_completed array of size at least matching req, this
+ * is used as temporary scratch space and overwritten
+ * @param[in] comm communicator to use for failure notifications
+ */
+bool
+xt_mpi_test_some(int *restrict num_req,
+                 MPI_Request req[],
+                 int ops_completed[], MPI_Comm comm);
 
 #endif
 

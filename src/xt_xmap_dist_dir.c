@@ -611,36 +611,6 @@ merge_bucket_intersections(struct dist_dir **dist_dir_results) {
                                * sizeof(struct Xt_com_list));
 }
 
-static bool
-test_mpi_req(int *restrict num_req_,
-             MPI_Request *restrict req,
-             int *restrict ops_completed, MPI_Comm comm)
-{
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int done_count;
-  size_t num_req = (size_t)*num_req_;
-  xt_mpi_call(MPI_Testsome(*num_req_, req, &done_count, ops_completed,
-                           MPI_STATUSES_IGNORE), comm);
-  if (done_count != MPI_UNDEFINED) {
-    if (num_req > (size_t)done_count) {
-      size_t j = num_req;
-      for (size_t i = 0;
-           i < (size_t)done_count && j >= num_req - (size_t)done_count;
-           ++i)
-        if (ops_completed[i] < (int)num_req - done_count) {
-          while (req[--j] == MPI_REQUEST_NULL);
-          req[ops_completed[i]] = req[j];
-        }
-      num_req -= (size_t)done_count;
-    }
-    else
-      num_req = 0;
-  }
-  *num_req_ = (int)num_req;
-  return num_req == 0;
-}
-
 
 static void
 recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
@@ -677,8 +647,8 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
     ? xmalloc((size_t)*num_send_indices_requests * sizeof (*ops_completed))
     : ops_completed_auto;
   bool all_sends_done
-    = test_mpi_req(num_send_indices_requests, send_indices_requests,
-                   ops_completed, comm);
+    = xt_mpi_test_some(num_send_indices_requests, send_indices_requests,
+                       ops_completed, comm);
 
   recv_and_unpack_dist_dir_result(dst_dist_dir_results,
                                   recv_size[SEND_SIZE_DST],
@@ -689,8 +659,8 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
 
   if (!all_sends_done)
     all_sends_done
-      = test_mpi_req(num_send_indices_requests, send_indices_requests,
-                     ops_completed, comm);
+      = xt_mpi_test_some(num_send_indices_requests, send_indices_requests,
+                         ops_completed, comm);
   free(recv_buffer);
 
   merge_bucket_intersections(&src_dist_dir_results);
@@ -698,8 +668,8 @@ recv_and_unpack_dist_dir_results(int recv_size[SEND_SIZE_ASIZE],
 
   if (!all_sends_done)
     all_sends_done
-      = test_mpi_req(num_send_indices_requests, send_indices_requests,
-                     ops_completed, comm);
+      = xt_mpi_test_some(num_send_indices_requests, send_indices_requests,
+                         ops_completed, comm);
 
   merge_bucket_intersections(&dst_dist_dir_results);
   *dst_intersections = dst_dist_dir_results;
