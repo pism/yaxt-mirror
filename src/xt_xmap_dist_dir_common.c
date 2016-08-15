@@ -208,9 +208,10 @@ xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
         = xt_idxlist_get_intersection(entries_src[i].list, entries_dst[j].list);
       if (xt_idxlist_get_num_indices(intersection) > 0) {
         src_dst_intersections_[isect_fill]
-          = (struct isect){ .dst_rank = entries_dst[j].rank,
-                            .src_rank = entries_src[i].rank,
-                            .idxlist = intersection };
+          = (struct isect){
+          .rank = { [xt_xmdd_direction_src]=entries_src[i].rank,
+                    [xt_xmdd_direction_dst]=entries_dst[j].rank},
+          .idxlist = intersection };
         ++isect_fill;
       } else
         xt_idxlist_delete(intersection);
