@@ -233,6 +233,7 @@ xt_xmap_dist_dir_pack_intersections(
 {
   int prev_send_rank = -1;
   int num_send_indices_requests = 0;
+  size_t origin = 1 - target;
   for (size_t i = 0; i < num_intersections; ++i)
   {
     /* see if this generates a new request? */
@@ -241,7 +242,7 @@ xt_xmap_dist_dir_pack_intersections(
     prev_send_rank = send_rank;
 
     // pack rank
-    xt_mpi_call(MPI_Pack((void *)(src_dst_intersections[i].rank + 1 - target),
+    xt_mpi_call(MPI_Pack((void *)(src_dst_intersections[i].rank + origin),
                          1, MPI_INT, buffer, buf_size, position,
                          comm), comm);
     // pack intersection
