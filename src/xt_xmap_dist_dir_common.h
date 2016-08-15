@@ -52,6 +52,8 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+
 #include "xt/xt_idxlist.h"
 #include "xt/xt_xmap_intersection.h"
 
@@ -128,5 +130,13 @@ size_t
 xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
                                const struct dist_dir *dst_dist_dir,
                                struct isect **src_dst_intersections);
+
+int
+xt_xmap_dist_dir_pack_intersections(
+  enum xt_xmdd_direction target,
+  size_t num_intersections,
+  const struct isect *restrict src_dst_intersections,
+  bool isect_idxlist_delete,
+  void *buffer, int buf_size, int *position, MPI_Comm comm);
 
 #endif

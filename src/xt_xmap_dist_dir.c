@@ -384,34 +384,6 @@ send_size_from_intersections(size_t num_intersections,
   return (int)total_send_size;
 }
 
-static int
-pack_intersections(enum xt_xmdd_direction target,
-                   size_t num_intersections,
-                   const struct isect *restrict src_dst_intersections,
-                   bool isect_idxlist_delete,
-                   void *buffer, int buf_size, int *position, MPI_Comm comm)
-{
-  int prev_send_rank = -1;
-  int num_send_indices_requests = 0;
-  for (size_t i = 0; i < num_intersections; ++i)
-  {
-    /* see if this generates a new request? */
-    int send_rank = src_dst_intersections[i].rank[target];
-    num_send_indices_requests += send_rank != prev_send_rank;
-    prev_send_rank = send_rank;
-
-    // pack rank
-    xt_mpi_call(MPI_Pack((void *)(src_dst_intersections[i].rank + 1 - target),
-                         1, MPI_INT, buffer, buf_size, position,
-                         comm), comm);
-    // pack intersection
-    xt_idxlist_pack(src_dst_intersections[i].idxlist, buffer,
-                    buf_size, position, comm);
-    if (isect_idxlist_delete)
-      xt_idxlist_delete(src_dst_intersections[i].idxlist);
-  }
-  return num_send_indices_requests;
-}
 
 static int
 pack_src_dst_dist_dirs(size_t num_intersections,
@@ -430,16 +402,16 @@ pack_src_dst_dist_dirs(size_t num_intersections,
   qsort(src_dst_intersections, num_intersections,
         sizeof (src_dst_intersections[0]), cmp_isect_src_rank);
   int num_send_indices_requests
-    = pack_intersections(xt_xmdd_direction_src,
-                         num_intersections, src_dst_intersections, false,
-                         send_buffer, total_send_size, &position, comm);
+    = xt_xmap_dist_dir_pack_intersections(
+      xt_xmdd_direction_src, num_intersections, src_dst_intersections, false,
+      send_buffer, total_send_size, &position, comm);
 
   qsort(src_dst_intersections, num_intersections,
         sizeof (src_dst_intersections[0]), cmp_isect_dst_rank);
   num_send_indices_requests
-    += pack_intersections(xt_xmdd_direction_dst,
-                          num_intersections, src_dst_intersections, true,
-                          send_buffer, total_send_size, &position, comm);
+    += xt_xmap_dist_dir_pack_intersections(
+      xt_xmdd_direction_dst, num_intersections, src_dst_intersections, true,
+      send_buffer, total_send_size, &position, comm);
   return num_send_indices_requests;
 }
 
