@@ -353,35 +353,48 @@ cmp_isect_dst_rank(const void *a_, const void *b_)
 }
 
 static int
-pack_src_dst_dist_dirs(size_t num_intersections,
-                       struct isect *restrict src_dst_intersections,
-                       int (*send_size)[SEND_SIZE_ASIZE],
-                       void **send_buffer_,
-                       MPI_Comm comm, int comm_size) {
-
-  int total_send_size = 0;
-
-  int rank_pack_size;
-
-  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &rank_pack_size), comm);
-
+send_size_from_intersections(size_t num_intersections,
+                             const struct isect *restrict src_dst_intersections,
+                             MPI_Comm comm, int comm_size,
+                             int (*restrict send_size)[SEND_SIZE_ASIZE])
+{
+  size_t total_send_size = 0;
   for (int i = 0; i < comm_size; ++i)
     send_size[i][SEND_SIZE_SRC] = 0, send_size[i][SEND_SIZE_DST] = 0,
       send_size[i][SEND_NUM_SRC] = 0, send_size[i][SEND_NUM_DST] = 0;
+
+  int rank_pack_size;
+  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &rank_pack_size), comm);
 
   for (size_t i = 0; i < num_intersections; ++i)
   {
     int msg_size = rank_pack_size
       + (int)xt_idxlist_get_pack_size(src_dst_intersections[i].idxlist,
                                       comm);
-    size_t src_rank = (size_t)src_dst_intersections[i].rank[xt_xmdd_direction_src],
+    size_t src_rank
+      = (size_t)src_dst_intersections[i].rank[xt_xmdd_direction_src],
       dst_rank = (size_t)src_dst_intersections[i].rank[xt_xmdd_direction_dst];
     send_size[src_rank][SEND_SIZE_SRC] += msg_size;
     ++(send_size[src_rank][SEND_NUM_SRC]);
     send_size[dst_rank][SEND_SIZE_DST] += msg_size;
     ++(send_size[dst_rank][SEND_NUM_DST]);
-    total_send_size += 2*msg_size;
+    total_send_size += 2*(size_t)msg_size;
   }
+  assert(total_send_size <= INT_MAX);
+  return (int)total_send_size;
+}
+
+static int
+pack_src_dst_dist_dirs(size_t num_intersections,
+                       struct isect *restrict src_dst_intersections,
+                       int (*send_size)[SEND_SIZE_ASIZE],
+                       void **send_buffer_,
+                       MPI_Comm comm, int comm_size) {
+
+  int total_send_size
+    = send_size_from_intersections(num_intersections,
+                                   src_dst_intersections,
+                                   comm, comm_size, send_size);
 
   qsort(src_dst_intersections, num_intersections,
         sizeof (src_dst_intersections[0]), cmp_isect_src_rank);
