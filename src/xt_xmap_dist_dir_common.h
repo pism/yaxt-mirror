@@ -113,7 +113,7 @@ xt_xmap_dist_dir_send_intersections(
   const int send_size[rank_lim][send_size_asize]);
 
 
-enum {
+enum xt_xmdd_direction {
   xt_xmdd_direction_src = 0,
   xt_xmdd_direction_dst = 1,
 };
