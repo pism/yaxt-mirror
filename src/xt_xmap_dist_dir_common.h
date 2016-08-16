@@ -68,13 +68,8 @@ struct dist_dir {
 void
 xt_xmdd_free_dist_dir(struct dist_dir *dist_dir);
 
-static int
-xt_com_list_rank_cmp(const void *a_, const void *b_)
-{
-  const struct Xt_com_list *a = a_, *b = b_;
-  /* this is overflow-safe because rank's are non-negative ints */
-  return a->rank - b->rank;
-}
+int
+xt_com_list_rank_cmp(const void *a_, const void *b_);
 
 struct bucket_params {
   Xt_int global_interval, local_interval,

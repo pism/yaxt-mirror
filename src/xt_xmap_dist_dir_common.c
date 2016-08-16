@@ -339,6 +339,15 @@ xt_xmdd_cmp_isect_dst_rank(const void *a_, const void *b_)
   return a->rank[xt_xmdd_direction_dst] - b->rank[xt_xmdd_direction_dst];
 }
 
+int
+xt_com_list_rank_cmp(const void *a_, const void *b_)
+{
+  const struct Xt_com_list *a = a_, *b = b_;
+  /* this is overflow-safe because rank's are non-negative ints */
+  return a->rank - b->rank;
+}
+
+
 /*
  * Local Variables:
  * c-basic-offset: 2
