@@ -139,4 +139,8 @@ xt_xmap_dist_dir_pack_intersections(
   bool isect_idxlist_delete,
   void *buffer, int buf_size, int *position, MPI_Comm comm);
 
+
+void
+xt_xmap_dist_dir_same_rank_merge(struct dist_dir **dist_dir_results);
+
 #endif

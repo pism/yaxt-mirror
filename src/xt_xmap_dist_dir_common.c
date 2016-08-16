@@ -50,7 +50,10 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "core/ppm_xfuncs.h"
+#include "xt/xt_idxstripes.h"
 #include "xt/xt_mpi.h"
 #include "xt_arithmetic_util.h"
 #include "xt_xmap_dist_dir_common.h"
@@ -253,6 +256,70 @@ xt_xmap_dist_dir_pack_intersections(
       xt_idxlist_delete(src_dst_intersections[i].idxlist);
   }
   return num_send_indices_requests;
+}
+
+
+static int
+stripe_cmp(const void *a, const void *b)
+{
+  typedef const struct Xt_stripe *csx;
+  return (((csx)a)->start > ((csx)b)->start)
+    - (((csx)b)->start > ((csx)a)->start);
+}
+
+/*
+ * @param dist_dir_results contains the intersections of this ranks
+ * dst or src idxlist with other ranks in bucket-sized chunks, the
+ * chunks belonging to the same communication partner are merged
+ * in-place here, i.e. on return (*dist_dir_results)->num_entries is
+ * less than or equal to the previous count and *dist_dir_results
+ * might point somewhere else
+ */
+void
+xt_xmap_dist_dir_same_rank_merge(struct dist_dir **dist_dir_results) {
+
+  struct Xt_com_list *restrict entries = (*dist_dir_results)->entries;
+  size_t num_isect_agg = 0;
+
+  size_t i = 0, num_shards = (size_t)(*dist_dir_results)->num_entries;
+  while (i < num_shards) {
+    int rank = entries[i].rank;
+    size_t j = i;
+    /* find all entries matching the currently considered rank */
+    do
+      ++j;
+    while (j < num_shards && entries[j].rank == rank);
+
+    struct Xt_stripe *restrict stripes = NULL;
+    size_t num_stripes = 0;
+    for (; i < j; ++i) {
+      struct Xt_stripe *stripes_of_intersection;
+      int num_stripes_of_intersection;
+      xt_idxlist_get_index_stripes(entries[i].list,
+                                   &stripes_of_intersection,
+                                   &num_stripes_of_intersection);
+      xt_idxlist_delete(entries[i].list);
+      if (stripes) {
+        stripes = xrealloc(stripes,
+                           (num_stripes + (size_t)num_stripes_of_intersection)
+                           * sizeof (*stripes));
+        memcpy(stripes + num_stripes, stripes_of_intersection,
+               (size_t)num_stripes_of_intersection * sizeof (*stripes));
+        free(stripes_of_intersection);
+      } else
+        stripes = stripes_of_intersection;
+      num_stripes += (size_t)num_stripes_of_intersection;
+    }
+    qsort(stripes, num_stripes, sizeof (*stripes), stripe_cmp);
+    entries[num_isect_agg].list = xt_idxstripes_new(stripes, (int)num_stripes);
+    free(stripes);
+    entries[num_isect_agg].rank = rank;
+    ++num_isect_agg;
+  }
+  (*dist_dir_results)->num_entries = (int)num_isect_agg;
+  *dist_dir_results = xrealloc(*dist_dir_results, sizeof (struct dist_dir)
+                               + (size_t)num_isect_agg
+                               * sizeof(struct Xt_com_list));
 }
 
 
