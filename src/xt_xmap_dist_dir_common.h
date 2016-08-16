@@ -79,7 +79,6 @@ xt_com_list_rank_cmp(const void *a_, const void *b_)
 struct bucket_params {
   Xt_int global_interval, local_interval,
     local_index_range_lbound, local_index_range_ubound;
-  int num_src, num_dst;
 };
 
 Xt_idxlist

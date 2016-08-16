@@ -120,8 +120,6 @@ get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                                         comm, comm_size);
   /* guard vs. comm_size being larger than number of indices */
   Xt_int local_interval = MAX((Xt_int)1, (Xt_int)(global_interval / comm_size));
-  int num_src = xt_idxlist_get_num_indices(src_idxlist),
-    num_dst = xt_idxlist_get_num_indices(dst_idxlist);
   Xt_int local_index_range_lbound
     = get_min_idxlist_index(src_idxlist, dst_idxlist);
   Xt_int local_index_range_ubound
@@ -129,8 +127,6 @@ get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   return (struct bucket_params){
     .global_interval = global_interval,
     .local_interval = local_interval,
-    .num_src = num_src,
-    .num_dst = num_dst,
     .local_index_range_lbound = local_index_range_lbound,
     .local_index_range_ubound = local_index_range_ubound,
   };
