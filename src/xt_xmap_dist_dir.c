@@ -333,22 +333,6 @@ recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
 
 
 static int
-cmp_isect_src_rank(const void *a_, const void *b_)
-{
-  const struct isect *a = a_, *b = b_;
-  /* this is safe vs. overflow because ranks are in [0..MAX_INT) */
-  return a->rank[xt_xmdd_direction_src] - b->rank[xt_xmdd_direction_src];
-}
-
-static int
-cmp_isect_dst_rank(const void *a_, const void *b_)
-{
-  const struct isect *a = a_, *b = b_;
-  /* this is safe vs. overflow because ranks are in [0..MAX_INT) */
-  return a->rank[xt_xmdd_direction_dst] - b->rank[xt_xmdd_direction_dst];
-}
-
-static int
 send_size_from_intersections(size_t num_intersections,
                              const struct isect *restrict src_dst_intersections,
                              MPI_Comm comm, int comm_size,
@@ -396,14 +380,14 @@ pack_src_dst_dist_dirs(size_t num_intersections,
   void *send_buffer = (*send_buffer_) = xmalloc((size_t)total_send_size);
   int position = 0;
   qsort(src_dst_intersections, num_intersections,
-        sizeof (src_dst_intersections[0]), cmp_isect_src_rank);
+        sizeof (src_dst_intersections[0]), xt_xmdd_cmp_isect_src_rank);
   int num_send_indices_requests
     = xt_xmap_dist_dir_pack_intersections(
       xt_xmdd_direction_src, num_intersections, src_dst_intersections, false,
       send_buffer, total_send_size, &position, comm);
 
   qsort(src_dst_intersections, num_intersections,
-        sizeof (src_dst_intersections[0]), cmp_isect_dst_rank);
+        sizeof (src_dst_intersections[0]), xt_xmdd_cmp_isect_dst_rank);
   num_send_indices_requests
     += xt_xmap_dist_dir_pack_intersections(
       xt_xmdd_direction_dst, num_intersections, src_dst_intersections, true,

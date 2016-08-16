@@ -323,6 +323,22 @@ xt_xmap_dist_dir_same_rank_merge(struct dist_dir **dist_dir_results) {
 }
 
 
+int
+xt_xmdd_cmp_isect_src_rank(const void *a_, const void *b_)
+{
+  const struct isect *a = a_, *b = b_;
+  /* this is safe vs. overflow because ranks are in [0..MAX_INT) */
+  return a->rank[xt_xmdd_direction_src] - b->rank[xt_xmdd_direction_src];
+}
+
+int
+xt_xmdd_cmp_isect_dst_rank(const void *a_, const void *b_)
+{
+  const struct isect *a = a_, *b = b_;
+  /* this is safe vs. overflow because ranks are in [0..MAX_INT) */
+  return a->rank[xt_xmdd_direction_dst] - b->rank[xt_xmdd_direction_dst];
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2

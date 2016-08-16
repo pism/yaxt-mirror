@@ -125,6 +125,12 @@ struct isect
   Xt_idxlist idxlist;
 };
 
+int
+xt_xmdd_cmp_isect_src_rank(const void *a_, const void *b_);
+int
+xt_xmdd_cmp_isect_dst_rank(const void *a_, const void *b_);
+
+
 size_t
 xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
                                const struct dist_dir *dst_dist_dir,
