@@ -64,14 +64,17 @@
  */
 
 /**
- * constructor for an exchange map \n
- * this operation is collective over all processes in comm \n
- * it uses a all to all communication for the initialisation
+ * Constructor for an exchange map. \n
+ * This operation is collective over all processes in comm. \n
+ * It uses a distributed directory to reduce communication and
+ * computation during the initialisation at the cost of some extra
+ * latency because more network transfers than for xt_xmap_all2all_new
+ * are required.
  *
  * @param[in] src_idxlist source index list
  * @param[in] dst_idxlist destination index list
  * @param[in] comm        MPI communicator that contains all processes
- *                        that part in the exchange (xt_xmap_all2all_new
+ *                        that take part in the exchange (xt_xmap_dist_dir_new
  *                        will make its own copy of comm)
  */
 Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
