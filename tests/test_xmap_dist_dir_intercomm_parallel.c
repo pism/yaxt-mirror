@@ -55,7 +55,7 @@
 
 int main(void)
 {
-  return xt_xmap_intercomm_parallel_test_main(xt_xmap_dist_dir_icomm_new);
+  return xt_xmap_intercomm_parallel_test_main(xt_xmap_dist_dir_new);
 }
 
 /*

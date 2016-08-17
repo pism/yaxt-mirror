@@ -76,34 +76,6 @@
 #include "xt_xmap_dist_dir_common.h"
 #include "instr.h"
 
-/* given an intercommunicator, determine if this process is in the
- * group containing the minimal rank */
-static inline bool
-rank_is_in_high_group_of_intercomm(MPI_Comm inter_comm)
-{
-  int world_rank, other_group_min_world_rank, my_group_min_world_rank;
-  xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &world_rank), inter_comm);
-  /* instead of reducing the minimal rank back and forth it might
-   * make sense to locally use MPI_Group_translate_ranks on the local
-   * and remote groups */
-  xt_mpi_call(MPI_Allreduce(&world_rank, &other_group_min_world_rank,
-                            1, MPI_INT, MPI_MIN, inter_comm), inter_comm);
-  /* this is effectively a broadcast, but since we don't know the
-   * ordering of the intercomm's groups yet, we can't decide if a
-   * process should be in the group sending or receiving a bcast */
-  xt_mpi_call(MPI_Allreduce(&other_group_min_world_rank,
-                            &my_group_min_world_rank,
-                            1, MPI_INT, MPI_MIN, inter_comm), inter_comm);
-  int my_world_rank_is_minimal
-    = (world_rank == MIN(my_group_min_world_rank, other_group_min_world_rank)),
-    other_group_has_min_world_rank;
-  xt_mpi_call(MPI_Allreduce(&my_world_rank_is_minimal,
-                            &other_group_has_min_world_rank,
-                            1, MPI_INT, MPI_LOR, inter_comm), inter_comm);
-  return other_group_has_min_world_rank;
-}
-
-
 static inline void
 get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
                                   bool *stripify, Xt_int interval_size[2],
@@ -704,29 +676,6 @@ xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
 }
 
 
-
-Xt_xmap xt_xmap_dist_dir_icomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                                   MPI_Comm comm)
-{
-  MPI_Comm merge_comm, local_intra_comm;
-  MPI_Group local_group;
-  xt_mpi_call(MPI_Comm_group(comm, &local_group), comm);
-  xt_mpi_call(MPI_Intercomm_merge(comm, 0, &merge_comm), comm);
-  xt_mpi_call(MPI_Comm_create(merge_comm, local_group, &local_intra_comm),
-              comm);
-  xt_mpi_call(MPI_Group_free(&local_group), comm);
-  xt_mpi_call(MPI_Comm_free(&merge_comm), comm);
-  xt_mpi_comm_mark_exclusive(local_intra_comm);
-
-  bool in_high_group = rank_is_in_high_group_of_intercomm(comm);
-  Xt_xmap xmap
-    = xt_xmap_dist_dir_intercomm_new(src_idxlist, dst_idxlist,
-                                     comm, local_intra_comm,
-                                     in_high_group);
-
-  xt_mpi_call(MPI_Comm_free(&local_intra_comm), local_intra_comm);
-  return xmap;
-}
 
 /*
  * Local Variables:

@@ -645,9 +645,10 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
   free(send_indices_requests);
 }
 
-Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                             MPI_Comm comm) {
-
+Xt_xmap
+xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                               MPI_Comm comm)
+{
   INSTR_DEF(this_instr,"xt_xmap_all2all_new")
   INSTR_START(this_instr);
 

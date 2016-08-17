@@ -52,6 +52,8 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+
 #include "xt/xt_core.h"
 
  /** \example test_xmap_dist_dir_intercomm_parallel.c
@@ -60,9 +62,9 @@
  */
 
 /**
- * constructor for an exchange map \n
- * this operation is collective over all processes in comm \n
- * it uses a all to all communication for the initialisation
+ * Construct an exchange map over an intercommunicator\n
+ * This operation is collective over all processes in comm. \n
+ * It uses a distributed directory for the initialisation
  *
  * @param[in] src_idxlist source index list
  * @param[in] dst_idxlist destination index list
@@ -70,9 +72,10 @@
  *                        that part in the exchange (xt_xmap_dist_dir_icomm_new
  *                        will make its own copy of comm)
  */
-Xt_xmap xt_xmap_dist_dir_icomm_new(Xt_idxlist src_idxlist,
-                                   Xt_idxlist dst_idxlist,
-                                   MPI_Comm comm);
+Xt_xmap
+xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                               MPI_Comm inter_comm_, MPI_Comm intra_comm_,
+                               bool in_high_group);
 
 #endif // XT_XMAP_DIST_DIR_INTERCOMM_H
 

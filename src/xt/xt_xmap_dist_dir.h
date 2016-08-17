@@ -64,11 +64,11 @@
  */
 
 /**
- * Constructor for an exchange map. \n
+ * Construct an exchange map.\n
  * This operation is collective over all processes in comm. \n
  * It uses a distributed directory to reduce communication and
  * computation during the initialisation at the cost of some extra
- * latency because more network transfers than for xt_xmap_all2all_new
+ * latency because more network transfers than for @a xt_xmap_all2all_new
  * are required.
  *
  * @param[in] src_idxlist source index list
@@ -79,6 +79,25 @@
  */
 Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                              MPI_Comm comm);
+
+/**
+ * Construct an exchange map.\n
+ * This operation is collective over all processes in comm. \n
+ * It uses a distributed directory to reduce communication and
+ * computation during the initialisation at the cost of some extra
+ * latency because more network transfers than for \a xt_xmap_all2all_new
+ * are required.
+ *
+ * @param[in] src_idxlist source index list
+ * @param[in] dst_idxlist destination index list
+ * @param[in] comm        MPI communicator that contains all processes
+ *                        that take part in the exchange (xt_xmap_dist_dir_new
+ *                        will make its own copy of comm), must be an
+ *                        intracommunicator.
+ */
+Xt_xmap
+xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                               MPI_Comm comm);
 
 #endif // XT_XMAP_DIST_DIR_H
 
