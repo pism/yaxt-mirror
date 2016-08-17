@@ -77,6 +77,7 @@ noinst_PROGRAMS = 						\
 	test_xmap_dist_dir_f					\
 	test_xmap_dist_dir_parallel				\
 	test_xmap_dist_dir_parallel_f				\
+	test_xmap_dist_dir_intercomm_parallel			\
 	test_xmap_intersection_parallel				\
 	test_xmap_intersection_parallel_f			\
 	test_initialized_finalized				\
@@ -164,6 +165,8 @@ test_xmap_dist_dir_f_LDADD = $(XT_FC_LDADD)
 test_xmap_dist_dir_parallel_SOURCES = test_xmap_dist_dir_parallel.c tests.h
 test_xmap_dist_dir_parallel_f_SOURCES = test_xmap_dist_dir_parallel_f.f90
 test_xmap_dist_dir_parallel_f_LDADD = $(XT_FC_LDADD)
+test_xmap_dist_dir_intercomm_parallel_SOURCES = \
+	test_xmap_dist_dir_intercomm_parallel.c test_xmap_common.h tests.h
 test_xmap_intersection_parallel_SOURCES = test_xmap_intersection_parallel.c tests.h
 test_xmap_intersection_parallel_f_SOURCES = test_xmap_intersection_parallel_f.f90
 test_xmap_intersection_parallel_f_LDADD = $(XT_FC_LDADD)
@@ -214,6 +217,7 @@ TESTS = 							\
 	test_xmap_all2all_intercomm_parallel_run		\
 	test_xmap_dist_dir_run					\
 	test_xmap_dist_dir_parallel_run				\
+	test_xmap_dist_dir_intercomm_parallel_run		\
 	test_xmap_intersection_parallel_run			\
 	test_initialized_finalized_run				\
 	test_exported_symbols					\
