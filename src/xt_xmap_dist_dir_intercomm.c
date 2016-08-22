@@ -79,10 +79,9 @@
 static inline void
 get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
                                   bool *stripify, Xt_int interval_size[2],
-                                  MPI_Comm local_comm, MPI_Comm inter_comm,
-                                  int local_size, int remote_size,
-                                  int comm_rank,
-                                  bool in_high_group)
+                                  MPI_Comm intra_comm, MPI_Comm inter_comm,
+                                  int comm_size, int remote_size,
+                                  int comm_rank, int tag_offset_inter)
 {
   /* global_sums[0] and [1] refer to the local and remote group of
    * intercommunicator inter_comm */
@@ -94,39 +93,26 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
     || (xt_idxlist_get_num_indices(dst) >= CHEAP_VECTOR_SIZE);
 
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums[0], 2,
-                            MPI_UNSIGNED_LONG_LONG, MPI_SUM, local_comm),
-              local_comm);
-  /* instead of bcast one might use hand-programmed limited bcasts
+                            MPI_UNSIGNED_LONG_LONG, MPI_SUM, intra_comm),
+              intra_comm);
+  /* instead of sendrecv one might use hand-programmed multi-casts
    * sending to each rank in a range from the remote group and
    * receiving from the first rank in that group,
    * the better choice probably depends on the asymmetry of the group
    * sizes, i.e. use bcast from a very small to a very large group
    * and few sends from a large to a small group */
-  {
-    int root;
-    if (in_high_group)
-      root = 0;
-    else if (comm_rank != 0)
-      root = MPI_PROC_NULL;
-    else
-      root = MPI_ROOT;
-    xt_mpi_call(MPI_Bcast(global_sums[in_high_group], 2,
-                          MPI_UNSIGNED_LONG_LONG, root, inter_comm),
-                inter_comm);
-    if (!in_high_group)
-      root = 0;
-    else if (comm_rank != 0)
-      root = MPI_PROC_NULL;
-    else
-      root = MPI_ROOT;
-    xt_mpi_call(MPI_Bcast(global_sums[!in_high_group], 2,
-                          MPI_UNSIGNED_LONG_LONG, root, inter_comm),
-                inter_comm);
+  if (comm_rank == 0) {
+    int tag = tag_offset_inter + xt_mpi_tag_xmap_dist_dir_src_send;
+    xt_mpi_call(MPI_Sendrecv(global_sums[0], 2, MPI_UNSIGNED_LONG_LONG, 0, tag,
+                             global_sums[1], 2, MPI_UNSIGNED_LONG_LONG, 0, tag,
+                             inter_comm, MPI_STATUS_IGNORE), inter_comm);
   }
+  xt_mpi_call(MPI_Bcast(global_sums[1], 2, MPI_UNSIGNED_LONG_LONG,
+                        0, intra_comm), intra_comm);
   *stripify = (global_sums[0][1] > 0 || global_sums[1][1] > 0);
   interval_size[0]
-    = (Xt_int)(((global_sums[0][0] + (unsigned)local_size - 1)
-                / (unsigned)local_size) * (unsigned)local_size);
+    = (Xt_int)(((global_sums[0][0] + (unsigned)comm_size - 1)
+                / (unsigned)comm_size) * (unsigned)comm_size);
   interval_size[1]
     = (Xt_int)(((global_sums[1][0] + (unsigned)remote_size - 1)
                 / (unsigned)remote_size) * (unsigned)remote_size);
@@ -360,7 +346,7 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
                                  int tag_offset_inter, int tag_offset_intra,
                                  MPI_Comm inter_comm, MPI_Comm intra_comm,
                                  int remote_size, int comm_size,
-                                 int comm_rank, bool in_high_group) {
+                                 int comm_rank) {
 
   /* interval_size[0] and interval_size[1] are the global interval
    * size for the local and remote group */
@@ -369,7 +355,7 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
                                     stripify, interval_size,
                                     intra_comm, inter_comm,
                                     comm_size, remote_size,
-                                    comm_rank, in_high_group);
+                                    comm_rank, tag_offset_inter);
   void *send_buffer_local, *send_buffer_remote;
   int (*send_size_local)[SEND_SIZE_ASIZE]
     = xmalloc(((size_t)comm_size + (size_t)remote_size)
@@ -526,8 +512,7 @@ exchange_idxlists(struct dist_dir **src_intersections,
                   Xt_idxlist src_idxlist,
                   Xt_idxlist dst_idxlist,
                   int tag_offset_inter, int tag_offset_intra,
-                  MPI_Comm inter_comm, MPI_Comm intra_comm,
-                  bool in_high_group) {
+                  MPI_Comm inter_comm, MPI_Comm intra_comm) {
 
   int comm_size, remote_size, comm_rank;
   xt_mpi_call(MPI_Comm_size(inter_comm, &comm_size), inter_comm);
@@ -541,7 +526,7 @@ exchange_idxlists(struct dist_dir **src_intersections,
                                    tag_offset_inter, tag_offset_intra,
                                    inter_comm, intra_comm,
                                    remote_size, comm_size,
-                                   comm_rank, in_high_group);
+                                   comm_rank);
 
 
   int (*send_size_local)[SEND_SIZE_ASIZE]
@@ -636,8 +621,7 @@ exchange_idxlists(struct dist_dir **src_intersections,
 
 Xt_xmap
 xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                               MPI_Comm inter_comm_, MPI_Comm intra_comm_,
-                               bool in_high_group)
+                               MPI_Comm inter_comm_, MPI_Comm intra_comm_)
 {
   INSTR_DEF(this_instr,"xt_xmap_dist_dir_intercomm_new")
   INSTR_START(this_instr);
@@ -651,7 +635,7 @@ xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   exchange_idxlists(&src_intersections, &dst_intersections, &stripify,
                     src_idxlist, dst_idxlist,
                     tag_offset_inter, tag_offset_intra,
-                    inter_comm, intra_comm, in_high_group);
+                    inter_comm, intra_comm);
 
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,

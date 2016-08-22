@@ -68,14 +68,15 @@
  *
  * @param[in] src_idxlist source index list
  * @param[in] dst_idxlist destination index list
- * @param[in] comm        MPI intercommunicator that contains all processes
+ * @param[in] inter_comm  MPI intercommunicator that contains all processes
  *                        that part in the exchange (xt_xmap_dist_dir_icomm_new
  *                        will make its own copy of comm)
+ * @param[in] intra_comm  MPI intracommunicator corresponding to the group
+ *                        of @a inter_comm that the calling rank belongs to
  */
 Xt_xmap
 xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                               MPI_Comm inter_comm_, MPI_Comm intra_comm_,
-                               bool in_high_group);
+                               MPI_Comm inter_comm, MPI_Comm intra_comm);
 
 #endif // XT_XMAP_DIST_DIR_INTERCOMM_H
 
