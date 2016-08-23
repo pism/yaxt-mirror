@@ -53,13 +53,13 @@
 #include "xt/quicksort.h"
 #include "xt/mergesort.h"
 
-static void insertionsort_idxpos(idxpos_type *w, int n);
+static void insertionsort_idxpos(idxpos_type *w, size_t n);
 static void insertionsort_index(Xt_int *val, int n, int *pos, int reset_pos);
 
 
-static void insertionsort_idxpos(idxpos_type *w, int n) {
+static void insertionsort_idxpos(idxpos_type *w, size_t n) {
 
-  int i, j;
+  size_t i, j;
   for(i = 1; i < n; i++) {
 
     idxpos_type tw = w[i];
@@ -115,11 +115,11 @@ static void insertionsort_index(Xt_int *val, int n, int *pos, int reset_pos) {
 }
 
 static inline void
-my_merge_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb1, int ub1, int lb2, int ub2) {
+my_merge_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, size_t lb1, size_t ub1, size_t lb2, size_t ub2) {
 
-  int p  = lb1;
-  int i1 = lb1;
-  int i2 = lb2;
+  size_t p  = lb1;
+  size_t i1 = lb1;
+  size_t i2 = lb2;
 
   while(i1<=ub1 && i2<=ub2) {
     if (v[i1].idx <= v[i2].idx) {
@@ -144,10 +144,10 @@ my_merge_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb1, int
 }
 
 static void
-my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb, int ub)
+my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, size_t lb, size_t ub)
 {
 
-  int n = ub - lb + 1;
+  size_t n = ub - lb + 1;
   if (n<2) return;
 
   if (n<9) {
@@ -155,20 +155,20 @@ my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb, 
     return;
   }
 
-  int m   = n/4;
+  size_t m   = n/4;
 
   // 4-way subsort:
-  int lb1 = lb;
-  int ub1 = lb1 + m - 1;
+  size_t lb1 = lb;
+  size_t ub1 = lb1 + m - 1;
 
-  int lb2 = ub1+1;
-  int ub2 = lb2 + m - 1;
+  size_t lb2 = ub1+1;
+  size_t ub2 = lb2 + m - 1;
 
-  int lb3 = ub2+1;
-  int ub3 = lb3 + m - 1;
+  size_t lb3 = ub2+1;
+  size_t ub3 = lb3 + m - 1;
 
-  int lb4 = ub3+1;
-  int ub4 = ub;
+  size_t lb4 = ub3+1;
+  size_t ub4 = ub;
 
   my_mergesort_idxpos(v, w, lb1, ub1);
   my_mergesort_idxpos(v, w, lb2, ub2);
@@ -183,12 +183,10 @@ my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, int lb, 
 
 }
 
-void xt_mergesort_idxpos(idxpos_type * restrict v, int n)
+void xt_mergesort_idxpos(idxpos_type * restrict v, size_t n)
 {
 
-  idxpos_type *w;
-
-  w = malloc((size_t)n * sizeof(w[0]));
+  idxpos_type *w = malloc(n * sizeof(w[0]));
   my_mergesort_idxpos(v, w, 0, n-1);
   free(w);
 
@@ -220,7 +218,7 @@ void xt_mergesort_index(Xt_int *val, int n, int *pos, int reset_pos) {
     }
   }
 
-  my_mergesort_idxpos(v,w, 0, n-1);
+  my_mergesort_idxpos(v,w, 0, (size_t)n-1);
   if (pos) {
     for(int i=0; i<n; i++) {
       val[i] = v[i].idx;

@@ -54,7 +54,7 @@ void (*xt_sort_int)(int *a, size_t n)
   = xt_quicksort_int;
 void (*xt_sort_index)(Xt_int * a, int n, int * idx, int reset_index)
 = xt_quicksort_index;
-void (*xt_sort_idxpos)(idxpos_type *v, int n) = xt_quicksort_idxpos;
+void (*xt_sort_idxpos)(idxpos_type *v, size_t n) = xt_quicksort_idxpos;
 
 /*
  * void xt_sort_init(void) {

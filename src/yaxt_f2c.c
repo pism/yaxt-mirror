@@ -120,12 +120,12 @@ void xt_sort_int_f2c(int *a, size_t n)
   xt_sort_int(a, n);
 }
 
-void xt_sort_index_f2c(int *a, int n, int *idx, int reset_index)
+void xt_sort_index_f2c(Xt_int *a, int n, int *idx, int reset_index)
 {
   xt_sort_index(a, n, idx, reset_index);
 }
 
-void xt_sort_idxpos_f2c(idxpos_type *a, int n)
+void xt_sort_idxpos_f2c(idxpos_type *a, size_t n)
 {
   xt_sort_idxpos(a, n);
 }

@@ -51,6 +51,8 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
+
 #include "sort_common.h"
 
 /** mergesort changing structured values
@@ -58,7 +60,7 @@
   * @param[in,out]  v            data to be sorted
   * @param[in]      n            number of elements in v
  **/
-void xt_mergesort_idxpos(idxpos_type *v, int n);
+void xt_mergesort_idxpos(idxpos_type *v, size_t n);
 
 /** mergesort changing values and indices
   *

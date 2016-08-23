@@ -80,8 +80,8 @@ MODULE xt_sort
 
   INTERFACE xt_sort_idxpos
     SUBROUTINE xt_sort_idxpos_f2c(a, n) BIND(c, name='xt_sort_idxpos_f2c')
-      IMPORT :: c_int, xt_idxpos
-      INTEGER(c_int), VALUE :: n
+      IMPORT :: c_size_t, xt_idxpos
+      INTEGER(c_size_t), VALUE :: n
       TYPE(xt_idxpos) :: a(n)
     END SUBROUTINE xt_sort_idxpos_f2c
     MODULE PROCEDURE xt_sort_idxpos_a
@@ -112,7 +112,7 @@ CONTAINS
     TYPE(xt_idxpos), INTENT(inout) :: a(:)
     INTEGER :: a_size
     a_size = SIZE(a)
-    IF (a_size > 1) CALL xt_sort_idxpos_f2c(a, INT(a_size, c_int))
+    IF (a_size > 1) CALL xt_sort_idxpos_f2c(a, INT(a_size, c_size_t))
   END SUBROUTINE xt_sort_idxpos_a
 END MODULE xt_sort
 !

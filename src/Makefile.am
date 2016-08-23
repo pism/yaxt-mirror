@@ -116,6 +116,7 @@ libyaxt_c_la_SOURCES =						\
 	core/xstdio.c						\
 	ensure_array_size.c					\
 	ensure_array_size.h					\
+	xt_quicksort_base.h					\
 	quicksort.c						\
 	mergesort.c						\
 	instr.h							\

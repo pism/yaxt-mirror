@@ -898,7 +898,7 @@ unsorted:
       v[i].idx = selection_idx[i];
       v[i].pos = (int)i;
     }
-    xt_mergesort_idxpos(v, (int)num_selection);
+    xt_mergesort_idxpos(v, (size_t)num_selection);
     Xt_int last_jx = (Xt_int)(v[0].idx - 1); // any index that does not equal v[0].idx will do
     for (size_t i = 0; i < (size_t)num_selection; i++) {
       int j = v[i].pos;

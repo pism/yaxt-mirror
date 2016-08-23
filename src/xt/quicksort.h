@@ -67,7 +67,7 @@ void xt_quicksort_int(int *a, size_t n);
   * @param[in,out]  v            data to be sorted
   * @param[in]      n            length of data
  **/
-void xt_quicksort_idxpos(idxpos_type *v, int n);
+void xt_quicksort_idxpos(idxpos_type *v, size_t n);
 
 /** quicksort changing values and indices
   *
