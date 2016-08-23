@@ -1,7 +1,7 @@
 !>
-!! @file test_xmap_all2all_parallel_f.f90
+!! @file test_xmap_common_parallel_f.f90
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!
