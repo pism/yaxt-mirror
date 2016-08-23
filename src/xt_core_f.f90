@@ -1,15 +1,15 @@
 !>
-!> @file xt_core_f.f90
-!> @brief Fortran interface to yaxt core declarations
-!>
-!> @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
-!>                                 Moritz Hanke <hanke@dkrz.de>
-!>                                 Thomas Jahns <jahns@dkrz.de>
-!>
-!> @author Jörg Behrens <behrens@dkrz.de>
-!>         Moritz Hanke <hanke@dkrz.de>
-!>         Thomas Jahns <jahns@dkrz.de>
-!>
+!! @file xt_core_f.f90
+!! @brief Fortran interface to yaxt core declarations
+!!
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+!!                                 Moritz Hanke <hanke@dkrz.de>
+!!                                 Thomas Jahns <jahns@dkrz.de>
+!!
+!! @author Jörg Behrens <behrens@dkrz.de>
+!!         Moritz Hanke <hanke@dkrz.de>
+!!         Thomas Jahns <jahns@dkrz.de>
+!!
 
 !
 ! Keywords:
