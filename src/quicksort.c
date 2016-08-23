@@ -318,7 +318,7 @@ static inline int *med3_int(int *a, int *b, int *c)
 {
   return *a < *b ?
       (*b < *c ? b : (*a < *c ? a : c ))
-    : (*b > *c ? b : (*a < *c ? a : c ));
+    : (*c < *b ? b : (*a < *c ? a : c ));
 }
 
 static inline void
