@@ -1295,7 +1295,7 @@ idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
 
     /*
      * if the indices are already cached or (if the caching would not
-     * consume to much memory and the number of selection indices are
+     * consume too much memory and the number of selection indices are
      * sufficient to justify the use of cached indices)
      */
     if ((section->index_array_cache != NULL) ||
