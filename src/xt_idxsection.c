@@ -1149,7 +1149,7 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
 
       Xt_int curr_global_position, curr_local_position;
 
-      // compute global position of the smalles index that has not yet been processed
+      // compute global position of the smallest index that has not yet been processed
       curr_global_position = (Xt_int)((indices[num_processed] - index_offset) /
                                       abs_global_stride);
 
