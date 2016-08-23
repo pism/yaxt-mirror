@@ -131,8 +131,8 @@ test_xmap_allgather_analog(xmap_constructor xmap_new,
                            MPI_Comm comm)
 {
   int comm_rank, comm_size;
-  MPI_Comm_rank(comm, &comm_rank);
-  MPI_Comm_size(comm, &comm_size);
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
 
   // test in which every process requests data from all processes
