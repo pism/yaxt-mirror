@@ -74,6 +74,7 @@
 #include "xt/xt_idxmod.h"
 #include "xt/xt_redist_collection_static.h"
 #include "xt/xt_redist_collection.h"
+#include "xt/xt_sort.h"
 
 struct xt_idxlist_f {
    Xt_idxlist cptr;
@@ -112,6 +113,21 @@ void xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
                 int line) {
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   Xt_abort(comm_c, msg, source, line);
+}
+
+void xt_sort_int_f2c(int *a, size_t n)
+{
+  xt_sort_int(a, n);
+}
+
+void xt_sort_index_f2c(int *a, int n, int *idx, int reset_index)
+{
+  xt_sort_index(a, n, idx, reset_index);
+}
+
+void xt_sort_idxpos_f2c(idxpos_type *a, int n)
+{
+  xt_sort_idxpos(a, n);
 }
 
 Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
