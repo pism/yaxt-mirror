@@ -73,11 +73,13 @@ noinst_PROGRAMS = 						\
 	test_xmap_all2all_parallel				\
 	test_xmap_all2all_parallel_f				\
 	test_xmap_all2all_intercomm_parallel			\
+	test_xmap_all2all_intercomm_parallel_f			\
 	test_xmap_dist_dir					\
 	test_xmap_dist_dir_f					\
 	test_xmap_dist_dir_parallel				\
 	test_xmap_dist_dir_parallel_f				\
 	test_xmap_dist_dir_intercomm_parallel			\
+	test_xmap_dist_dir_intercomm_parallel_f			\
 	test_xmap_intersection_parallel				\
 	test_xmap_intersection_parallel_f			\
 	test_initialized_finalized				\
@@ -97,6 +99,7 @@ libtestutil_a_SOURCES = tests.c ftest_common.f90 \
 	test_xmap_common.c test_xmap_common.h test_xmap_common_f.f90 \
 	test_xmap_common_parallel.c test_xmap_common_parallel_f.f90 \
 	test_xmap_common_intercomm_parallel.c \
+	test_xmap_common_intercomm_parallel_f.f90 \
 	test_redist_common.h test_redist_common.c test_redist_common_f.f90
 
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
@@ -159,6 +162,9 @@ test_xmap_all2all_parallel_f_SOURCES = test_xmap_all2all_parallel_f.f90
 test_xmap_all2all_parallel_f_LDADD = $(XT_FC_LDADD)
 test_xmap_all2all_intercomm_parallel_SOURCES = \
 	test_xmap_all2all_intercomm_parallel.c tests.h
+test_xmap_all2all_intercomm_parallel_f_SOURCES = \
+	test_xmap_all2all_intercomm_parallel_f.f90
+test_xmap_all2all_intercomm_parallel_f_LDADD = $(XT_FC_LDADD)
 test_xmap_dist_dir_SOURCES = test_xmap_dist_dir.c test_xmap_common.h
 test_xmap_dist_dir_f_SOURCES = test_xmap_dist_dir_f.f90
 test_xmap_dist_dir_f_LDADD = $(XT_FC_LDADD)
@@ -167,6 +173,9 @@ test_xmap_dist_dir_parallel_f_SOURCES = test_xmap_dist_dir_parallel_f.f90
 test_xmap_dist_dir_parallel_f_LDADD = $(XT_FC_LDADD)
 test_xmap_dist_dir_intercomm_parallel_SOURCES = \
 	test_xmap_dist_dir_intercomm_parallel.c test_xmap_common.h tests.h
+test_xmap_dist_dir_intercomm_parallel_f_SOURCES = \
+	test_xmap_dist_dir_intercomm_parallel_f.f90
+test_xmap_dist_dir_intercomm_parallel_f_LDADD = $(XT_FC_LDADD)
 test_xmap_intersection_parallel_SOURCES = test_xmap_intersection_parallel.c tests.h
 test_xmap_intersection_parallel_f_SOURCES = test_xmap_intersection_parallel_f.f90
 test_xmap_intersection_parallel_f_LDADD = $(XT_FC_LDADD)

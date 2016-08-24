@@ -4,8 +4,8 @@ set -e
 for nproc in 2 3 4 8 ; do
   @abs_top_builddir@/libtool --mode=execute \
     @MPI_LAUNCH@ -n $nproc @abs_builddir@/test_xmap_dist_dir_intercomm_parallel
-  # @abs_top_builddir@/libtool --mode=execute \
-  #   @MPI_LAUNCH@ -n $nproc @abs_builddir@/test_xmap_all2all_intercomm_parallel_f
+  @abs_top_builddir@/libtool --mode=execute \
+    @MPI_LAUNCH@ -n $nproc @abs_builddir@/test_xmap_dist_dir_intercomm_parallel_f
 done
 #
 # Local Variables:
