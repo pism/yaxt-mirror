@@ -1181,11 +1181,12 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
   return num_processed;
 }
 
-static
-int idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
-                                           const Xt_int * restrict selection_idx,
-                                           int num_selection, int * positions,
-                                           int single_match_only) {
+static int
+idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
+                                       const Xt_int *restrict selection_idx,
+                                       int num_selection,
+                                       int *restrict positions,
+                                       int single_match_only) {
 
   INSTR_DEF(instr,"idxsection_get_positions_of_indices_v3.part")
   INSTR_DEF(instr2,"idxsection_get_positions_of_indices_recursive")
