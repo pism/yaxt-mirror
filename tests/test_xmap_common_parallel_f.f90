@@ -48,6 +48,7 @@ MODULE test_xmap_common_parallel
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xt_stripe, &
+       xi => xt_int_kind, xt_sort_int, &
        xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        xt_idxstripes_new, xt_idxempty_new, &
        xt_xmap, xt_xmap_copy, xt_xmap_delete, &
@@ -55,9 +56,11 @@ MODULE test_xmap_common_parallel
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks
   IMPLICIT NONE
   PRIVATE
-  INTEGER, PARAMETER :: xi = xt_int_kind
-  INTEGER :: comm_rank, comm_size
   PUBLIC :: xmap_parallel_test_main
+  PUBLIC :: get_rank_range
+  PUBLIC :: check_allgather_analog_xmap
+  PUBLIC :: test_ring_1d
+  PUBLIC :: test_ping_pong
 CONTAINS
   SUBROUTINE xmap_parallel_test_main(xmap_new)
     INTERFACE
@@ -70,20 +73,32 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
+    INTEGER :: comm, comm_rank, comm_size
     INTEGER :: ierror
     CALL init_mpi
-    CALL xt_initialize(mpi_comm_world)
-    CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
-    CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
+    comm = mpi_comm_world
+    CALL xt_initialize(comm)
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_rank", &
+         __FILE__, &
+         __LINE__)
+    CALL mpi_comm_size(comm, comm_size, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_size", &
+         __FILE__, &
+         __LINE__)
     IF (comm_size > HUGE(1_xi)) &
          CALL test_abort("number of ranks exceeds test limit", &
          __FILE__, &
          __LINE__)
 
-    CALL test_allgather_analog(xmap_new)
-    IF (comm_size > 2) CALL test_ring_1d(xmap_new)
-    IF (comm_size == 2) CALL test_pair(xmap_new)
-    IF (comm_size > 1) CALL test_ping_pong(xmap_new)
+    CALL test_allgather_analog(xmap_new, 1_xi, comm)
+    ! repeat test for large index list that will cause stripifying
+    CALL test_allgather_analog(xmap_new, 1024_xi, comm)
+    IF (comm_size > 2) CALL test_ring_1d(xmap_new, comm)
+    IF (comm_size == 2) CALL test_pair(xmap_new, comm)
+    IF (comm_size > 1) CALL test_ping_pong(xmap_new, comm, 0, comm_size - 1)
 
     IF (test_err_count() /= 0) &
          CALL test_abort("non-zero error count!", &
@@ -93,11 +108,42 @@ CONTAINS
     CALL finish_mpi
   END SUBROUTINE xmap_parallel_test_main
 
-  SUBROUTINE check_allgather_analog_xmap(xmap)
+  SUBROUTINE get_rank_range(comm, is_inter, comm_rank, comm_size)
+    INTEGER, INTENT(inout) :: comm
+    INTEGER, INTENT(out) :: comm_rank, comm_size
+    LOGICAL, INTENT(out) :: is_inter
+    INTEGER :: ierror
+
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_rank", &
+         __FILE__, &
+         __LINE__)
+    CALL mpi_comm_test_inter(comm, is_inter, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_test_inter", &
+         __FILE__, &
+         __LINE__)
+    IF (is_inter) THEN
+      CALL mpi_comm_remote_size(comm, comm_size, ierror)
+    ELSE
+      CALL mpi_comm_size(comm, comm_size, ierror)
+    END IF
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_(remote)_size", &
+         __FILE__, &
+         __LINE__)
+  END SUBROUTINE get_rank_range
+
+  SUBROUTINE check_allgather_analog_xmap(xmap, comm)
     TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER, INTENT(inout) :: comm
     INTEGER, ALLOCATABLE :: ranks(:)
     INTEGER(xt_int_kind) :: i
+    INTEGER :: comm_rank, comm_size
+    LOGICAL :: is_inter
 
+    CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
     IF (xt_xmap_get_num_destinations(xmap) /= INT(comm_size, xi)) &
          CALL test_abort("error in xmap construction", &
          __FILE__, &
@@ -124,7 +170,7 @@ CONTAINS
     DEALLOCATE(ranks)
   END SUBROUTINE check_allgather_analog_xmap
 
-  SUBROUTINE test_allgather_analog(xmap_new)
+  SUBROUTINE test_allgather_analog(xmap_new, num_indices_per_rank, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -135,57 +181,74 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER(xt_int_kind) :: src_index_list(1)
+    INTEGER, INTENT(inout) :: comm
+    INTEGER(xt_int_kind), INTENT(in) :: num_indices_per_rank
+    INTEGER(xt_int_kind), ALLOCATABLE :: src_index_list(:)
+    INTEGER(xt_int_kind) :: i
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_copy
-    TYPE(xt_stripe) :: comm_rank_stripe(1)
+    TYPE(xt_stripe) :: dst_index_stripe(1)
+    INTEGER :: comm_size, comm_rank
+    LOGICAL :: is_inter
+
+    CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
     ! setup
-    src_index_list(1) = INT(comm_rank, xi)
+    ALLOCATE(src_index_list(num_indices_per_rank))
+    DO i = 1_xi, num_indices_per_rank
+      src_index_list(i) = INT(comm_rank, xi) * num_indices_per_rank + i - 1_xi
+    END DO
     src_idxlist = xt_idxvec_new(src_index_list)
-    comm_rank_stripe(1) = xt_stripe(0, 1, comm_size)
-    dst_idxlist = xt_idxstripes_new(comm_rank_stripe)
-    xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    dst_index_stripe(1) = xt_stripe(0, 1, comm_size * INT(num_indices_per_rank))
+    dst_idxlist = xt_idxstripes_new(dst_index_stripe)
+    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
     ! verify expected results
-    CALL check_allgather_analog_xmap(xmap)
+    CALL check_allgather_analog_xmap(xmap, comm)
     xmap_copy = xt_xmap_copy(xmap)
-    CALL check_allgather_analog_xmap(xmap)
+    CALL check_allgather_analog_xmap(xmap, comm)
 
     ! clean up
     CALL xt_xmap_delete(xmap)
     CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_allgather_analog
 
-  SUBROUTINE check_ring_xmap(xmap, dst_index_list)
+  SUBROUTINE check_ring_xmap(xmap, dst_index_list, is_inter)
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER(xt_int_kind), INTENT(in) :: dst_index_list(2)
-    INTEGER :: ranks(2)
-    IF (xt_xmap_get_num_destinations(xmap) /= 2) &
+    LOGICAL, INTENT(in) :: is_inter
+    INTEGER :: ranks(2), num_dst, num_src
+    num_dst = xt_xmap_get_num_destinations(xmap)
+    IF (.NOT. is_inter .AND. (num_dst > 2 .OR. num_dst < 1)) &
          CALL test_abort("error in xt_xmap_get_num_destinations", &
          __FILE__, &
          __LINE__)
 
-    IF (xt_xmap_get_num_sources(xmap) /= 2) &
+    num_src = xt_xmap_get_num_sources(xmap)
+    IF (num_src > 2 .OR. num_src < 1) &
          CALL test_abort("error in xt_xmap_get_num_sources", &
          __FILE__, &
          __LINE__)
 
-    CALL xt_xmap_get_destination_ranks(xmap, ranks)
-    IF (ANY(ranks /= dst_index_list)) &
-         CALL test_abort("error in xt_xmap_get_destination_ranks", &
-         __FILE__, &
-         __LINE__)
+    IF (.NOT. is_inter) THEN
+      CALL xt_xmap_get_destination_ranks(xmap, ranks)
+      CALL xt_sort_int(ranks(1:num_dst))
+      IF (ANY(ranks /= dst_index_list)) &
+           CALL test_abort("error in xt_xmap_get_destination_ranks", &
+           __FILE__, &
+           __LINE__)
+    END IF
 
     CALL xt_xmap_get_source_ranks(xmap, ranks)
+    CALL xt_sort_int(ranks(1:num_src))
     IF (ANY(ranks /= dst_index_list)) &
          CALL test_abort("error in xt_xmap_get_source_ranks", &
          __FILE__, &
          __LINE__)
   END SUBROUTINE check_ring_xmap
 
-  SUBROUTINE test_ring_1d(xmap_new)
+  SUBROUTINE test_ring_1d(xmap_new, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -196,11 +259,15 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
+    INTEGER, INTENT(inout) :: comm
     ! test in which each process talks WITH two other processes
     INTEGER(xt_int_kind) :: src_index_list(1), dst_index_list(2), temp
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_copy
+    INTEGER :: comm_size, comm_rank
+    LOGICAL :: is_inter
 
+    CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
     src_index_list(1) = INT(comm_rank, xi)
     src_idxlist = xt_idxvec_new(src_index_list)
 
@@ -215,14 +282,14 @@ CONTAINS
     dst_idxlist = xt_idxvec_new(dst_index_list, 2)
 
     ! test of exchange map
-    xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
     ! test results
-    CALL check_ring_xmap(xmap, dst_index_list)
+    CALL check_ring_xmap(xmap, dst_index_list, is_inter)
     xmap_copy = xt_xmap_copy(xmap)
-    CALL check_ring_xmap(xmap_copy, dst_index_list)
+    CALL check_ring_xmap(xmap_copy, dst_index_list, is_inter)
 
     ! clean up
     CALL xt_xmap_delete(xmap)
@@ -257,7 +324,7 @@ CONTAINS
          __LINE__)
   END SUBROUTINE check_pair_xmap
 
-  SUBROUTINE test_pair(xmap_new)
+  SUBROUTINE test_pair(xmap_new, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -268,11 +335,12 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
+    INTEGER, INTENT(in) :: comm
     !src_index_list(index, rank)
     INTEGER(xt_int_kind) :: i, j, k
 #ifdef __xlC__
     INTEGER(xt_int_kind), PARAMETER :: src_index_list(20, 0:1) = RESHAPE((/ &
-         &  1_xi, 2_xi, 3_xi, 4_xi, 5_xi, &
+         &  1_xi,  2_xi,  3_xi,  4_xi,  5_xi, &
          &  9_xi, 10_xi, 11_xi, 12_xi, 13_xi, &
          & 17_xi, 18_xi, 19_xi, 20_xi, 21_xi, &
          & 25_xi, 26_xi, 27_xi, 28_xi, 29_xi, &
@@ -299,6 +367,13 @@ CONTAINS
          (/ 20, 2 /))
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_copy
+    INTEGER :: comm_rank, ierror
+
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_rank", &
+         __FILE__, &
+         __LINE__)
 
     src_idxlist = xt_idxvec_new(src_index_list(:, comm_rank))
 
@@ -306,7 +381,7 @@ CONTAINS
     dst_idxlist = xt_idxvec_new(dst_index_list(:, comm_rank))
 
     ! test of exchange map
-    xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
@@ -319,41 +394,48 @@ CONTAINS
     CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_pair
 
-  SUBROUTINE check_ping_pong_xmap(xmap)
+  SUBROUTINE check_ping_pong_xmap(xmap, comm, ping_rank, pong_rank)
     TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER :: expect, dst_rank(1), src_rank(1)
+    INTEGER, INTENT(in) :: comm, ping_rank, pong_rank
+    INTEGER :: expect, dst_rank(1), src_rank(1), comm_rank, ierror
     CHARACTER(len=80) :: msg
 
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('error calling mpi_comm_rank', &
+         __FILE__, &
+         __LINE__)
     WRITE (msg, '(a,i0,a)') "error in xt_xmap_get_num_destinations (rank == ", &
          comm_rank, ")"
-    expect = MERGE(0, 1, comm_rank /= 0)
+    expect = MERGE(1, 0, comm_rank == ping_rank)
     IF (xt_xmap_get_num_destinations(xmap) /= expect) &
          CALL test_abort(TRIM(msg), &
          __FILE__, &
          __LINE__)
 
-    expect = MERGE(0, 1, comm_rank /= comm_size - 1)
+    expect = MERGE(1, 0, comm_rank == pong_rank)
     IF (xt_xmap_get_num_sources(xmap) /= expect) &
          CALL test_abort(msg, &
          __FILE__, &
          __LINE__)
 
-    IF (comm_rank == 0) THEN
+    IF (comm_rank == ping_rank) THEN
       CALL xt_xmap_get_destination_ranks(xmap, dst_rank)
-      IF (dst_rank(1) /= comm_size - 1) &
+      IF (dst_rank(1) /= pong_rank) &
            CALL test_abort("error in xt_xmap_get_destination_ranks", &
            __FILE__, &
            __LINE__)
-    ELSE IF (comm_rank == comm_size - 1) THEN
+    END IF
+    IF (comm_rank == pong_rank) THEN
       CALL xt_xmap_get_source_ranks(xmap, src_rank)
-      IF (src_rank(1) /= 0) &
+      IF (src_rank(1) /= ping_rank) &
            CALL test_abort("error in xt_xmap_get_source_ranks", &
            __FILE__, &
            __LINE__)
     END IF
   END SUBROUTINE check_ping_pong_xmap
 
-  SUBROUTINE test_ping_pong(xmap_new)
+  SUBROUTINE test_ping_pong(xmap_new, comm, ping_rank, pong_rank)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -364,33 +446,38 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER(xt_int_kind) :: index_list(5) = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi /)
+    INTEGER, INTENT(in) :: ping_rank, pong_rank
+    INTEGER, INTENT(inout) :: comm
+    INTEGER(xt_int_kind), PARAMETER :: &
+         index_list(5) = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi /)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_copy
-
-    IF (comm_rank == 0) THEN
-      src_idxlist = xt_idxvec_new(index_list, 5)
+    INTEGER :: comm_rank, comm_size
+    LOGICAL :: is_inter
+    CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
+    IF (comm_rank == ping_rank) THEN
+      src_idxlist = xt_idxvec_new(index_list)
     ELSE
       src_idxlist = xt_idxempty_new()
     END IF
 
 
-    IF (comm_rank == comm_size-1) THEN
-      dst_idxlist = xt_idxvec_new(index_list, 5)
+    IF (comm_rank == pong_rank) THEN
+      dst_idxlist = xt_idxvec_new(index_list)
     ELSE
       dst_idxlist = xt_idxempty_new()
     END IF
 
     ! test of exchange map
 
-    xmap = xmap_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
     ! test results
-    CALL check_ping_pong_xmap(xmap)
+    CALL check_ping_pong_xmap(xmap, comm, ping_rank, pong_rank)
     xmap_copy = xt_xmap_copy(xmap)
-    CALL check_ping_pong_xmap(xmap_copy)
+    CALL check_ping_pong_xmap(xmap_copy, comm, ping_rank, pong_rank)
     ! clean up
     CALL xt_xmap_delete(xmap)
     CALL xt_xmap_delete(xmap_copy)
