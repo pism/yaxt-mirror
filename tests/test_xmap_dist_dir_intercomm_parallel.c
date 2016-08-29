@@ -53,9 +53,27 @@
 
 #include "test_xmap_common.h"
 
+static Xt_xmap
+xmap_dist_dir_intercomm_wrap(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                             MPI_Comm inter_comm)
+{
+  return xt_xmap_dist_dir_intercomm_new(src_idxlist, dst_idxlist, inter_comm,
+                                        xt_intra_group_comm);
+}
+
+
 int main(void)
 {
-  return xt_xmap_intercomm_parallel_test_main(xt_xmap_dist_dir_new);
+  int rc
+    = xt_xmap_intercomm_parallel_test_main(xt_xmap_dist_dir_new, true, false);
+  if (rc == EXIT_SUCCESS)
+    rc = xt_xmap_intercomm_parallel_test_main(xmap_dist_dir_intercomm_wrap,
+                                              false, true);
+  else {
+    xt_finalize();
+    MPI_Finalize();
+  }
+  return rc;
 }
 
 /*

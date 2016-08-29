@@ -62,14 +62,17 @@ test_xmap_allgather_analog(xmap_constructor xmap_new,
 static void
 test_peer(xmap_constructor xmap_new, MPI_Comm comm);
 
+MPI_Comm xt_intra_group_comm;
+
 int
-xt_xmap_intercomm_parallel_test_main(xmap_constructor xmap_new)
+xt_xmap_intercomm_parallel_test_main(xmap_constructor xmap_new,
+                                     bool call_initialize, bool call_finalize)
 {
   // init mpi
-  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
-
-  xt_initialize(MPI_COMM_WORLD);
-
+  if (call_initialize) {
+    xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+    xt_initialize(MPI_COMM_WORLD);
+  }
   MPI_Comm comm = MPI_COMM_WORLD;
   int comm_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
@@ -78,12 +81,12 @@ xt_xmap_intercomm_parallel_test_main(xmap_constructor xmap_new)
   int retval;
   if (comm_size > 1) {
     /* split communicator in half to create intercommunicator */
-    MPI_Comm intra_group_comm, inter_comm;
+    MPI_Comm inter_comm;
     /* favor inequal splits if the left group does not become too small */
     int splitRank = comm_size/2 - (comm_size > 5);
     int inSecondGroup = comm_rank >= splitRank;
-    xt_mpi_call(MPI_Comm_split(comm, inSecondGroup, 0, &intra_group_comm), comm);
-    xt_mpi_call(MPI_Intercomm_create(intra_group_comm, 0, comm,
+    xt_mpi_call(MPI_Comm_split(comm, inSecondGroup, 0, &xt_intra_group_comm), comm);
+    xt_mpi_call(MPI_Intercomm_create(xt_intra_group_comm, 0, comm,
                                      inSecondGroup ? 0 : splitRank,
                                      0, &inter_comm), comm);
 
@@ -99,13 +102,15 @@ xt_xmap_intercomm_parallel_test_main(xmap_constructor xmap_new)
       test_ring_1d(xmap_new, inter_comm);
 
     xt_mpi_call(MPI_Comm_free(&inter_comm), comm);
-    xt_mpi_call(MPI_Comm_free(&intra_group_comm), comm);
+    xt_mpi_call(MPI_Comm_free(&xt_intra_group_comm), comm);
     retval = TEST_EXIT_CODE;
   } else
     retval = 77;
 
-  xt_finalize();
-  MPI_Finalize();
+  if (call_finalize) {
+    xt_finalize();
+    MPI_Finalize();
+  }
   return retval;
 }
 

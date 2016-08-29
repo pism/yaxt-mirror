@@ -66,9 +66,11 @@ MODULE test_xmap_common_intercomm_parallel
       INTEGER(c_int), VALUE, INTENT(in) :: code
     END SUBROUTINE POSIX_EXIT
   END INTERFACE
-  PUBLIC :: xmap_intercomm_parallel_test_main
+  INTEGER :: intra_group_comm
+  PUBLIC :: xmap_intercomm_parallel_test_main, intra_group_comm
 CONTAINS
-  SUBROUTINE xmap_intercomm_parallel_test_main(xmap_new)
+  SUBROUTINE xmap_intercomm_parallel_test_main(xmap_new, call_initialize, &
+       call_finalize)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -79,13 +81,26 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER :: comm, comm_rank, comm_size, ierror, &
-         intra_group_comm, inter_comm, split_rank, retval
-    LOGICAL :: in_second_group
+    LOGICAL, OPTIONAL, INTENT(in) :: call_initialize, call_finalize
+    INTEGER :: comm, comm_rank, comm_size, ierror, inter_comm, split_rank, &
+         retval
+    LOGICAL :: in_second_group, call_finalize_, call_initialize_
 
-    CALL init_mpi
+    IF (PRESENT(call_initialize)) THEN
+      call_initialize_ = call_initialize
+    ELSE
+      call_initialize_ = .TRUE.
+    END IF
+    IF (PRESENT(call_finalize)) THEN
+      call_finalize_ = call_finalize
+    ELSE
+      call_finalize_ = .TRUE.
+    END IF
+    IF (call_initialize_) THEN
+      CALL init_mpi
+      CALL xt_initialize(mpi_comm_world)
+    END IF
     comm = mpi_comm_world
-    CALL xt_initialize(comm)
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error calling mpi_comm_rank", &
@@ -144,8 +159,10 @@ CONTAINS
          CALL test_abort("non-zero error count!", &
          __FILE__, &
          __LINE__)
-    CALL xt_finalize
-    CALL finish_mpi
+    IF (call_finalize_) THEN
+      CALL xt_finalize
+      CALL finish_mpi
+    END IF
     IF (retval /= 0) CALL posix_exit(retval)
   END SUBROUTINE xmap_intercomm_parallel_test_main
 

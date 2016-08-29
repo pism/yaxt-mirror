@@ -48,8 +48,32 @@ PROGRAM test_xmap_dist_dir_intercomm_parallel
   USE test_xmap_common_intercomm_parallel, ONLY: &
        xmap_intercomm_parallel_test_main
   IMPLICIT NONE
-  CALL xmap_intercomm_parallel_test_main(xt_xmap_dist_dir_new)
+  INTERFACE
+    FUNCTION xmap_dist_dir_intercomm_wrap(src_idxlist, dst_idxlist, &
+         inter_comm) RESULT(xmap)
+      USE yaxt, ONLY: xt_xmap, xt_idxlist
+      TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
+      INTEGER, VALUE, INTENT(in) :: inter_comm
+      TYPE(xt_xmap) :: xmap
+    END FUNCTION  xmap_dist_dir_intercomm_wrap
+  END INTERFACE
+  CALL xmap_intercomm_parallel_test_main(xt_xmap_dist_dir_new, &
+       call_finalize=.FALSE.)
+  CALL xmap_intercomm_parallel_test_main(xmap_dist_dir_intercomm_wrap, &
+       call_initialize=.FALSE.)
 END PROGRAM test_xmap_dist_dir_intercomm_parallel
+
+FUNCTION xmap_dist_dir_intercomm_wrap(src_idxlist, dst_idxlist, inter_comm) &
+     RESULT(xmap)
+  USE yaxt, ONLY: xt_xmap_dist_dir_intercomm_new, xt_xmap, xt_idxlist
+  USE test_xmap_common_intercomm_parallel, ONLY: intra_group_comm
+  TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
+  INTEGER, VALUE, INTENT(in) :: inter_comm
+  TYPE(xt_xmap) :: xmap
+  xmap = xt_xmap_dist_dir_intercomm_new(src_idxlist, dst_idxlist, &
+       inter_comm, intra_group_comm)
+END FUNCTION  xmap_dist_dir_intercomm_wrap
+
 !
 ! Local Variables:
 ! f90-continuation-indent: 5
