@@ -591,7 +591,7 @@ gen_fallback_type(size_t set_start, size_t set_end,
   size_t p=0;
 
   for (size_t i=ia; i < ib; i++) {
-    size_t v_i_size = v[i].size > 0 ? (size_t)v[i].size : 0;
+    size_t v_i_size = (size_t)(v[i].size > 0 ? v[i].size : 0);
     for (size_t k=0; k < v_i_size; k++) {
       d[p] = v[i].start + (int)k * v[i].stride - start;
       p++;
