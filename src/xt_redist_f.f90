@@ -124,6 +124,15 @@ MODULE xt_redist_base
       INTEGER(xt_mpi_fint_kind) :: comm
     END FUNCTION xt_redist_get_mpi_comm
 
+    FUNCTION xt_redist_collection_new_f(redists_f, num_redists, cache_size, &
+         comm_f) BIND(C, name='xt_redist_collection_new_f') RESULT(res)
+      IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
+      IMPLICIT NONE
+      TYPE(xt_redist), INTENT(in) :: redists_f(*)
+      INTEGER(xt_mpi_fint_kind), VALUE :: num_redists, cache_size, comm_f
+      TYPE(c_ptr) :: res
+    END FUNCTION xt_redist_collection_new_f
+
     FUNCTION xt_redist_p2p_ext_new_c2f(xmap, num_src_ext, src_extents, &
          num_dst_ext, dst_extents, datatype) &
          BIND(c, name='xt_redist_p2p_ext_new_c2f') RESULT(redist)
@@ -149,6 +158,12 @@ MODULE xt_redist_base
     END FUNCTION xt_redist_repeat_new_c
 
   END INTERFACE
+
+  INTERFACE xt_redist_collection_new
+    MODULE PROCEDURE xt_redist_collection_new_a_3i
+    MODULE PROCEDURE xt_redist_collection_new_a_2i
+    MODULE PROCEDURE xt_redist_collection_new_a_i
+  END INTERFACE xt_redist_collection_new
 
   INTERFACE xt_redist_p2p_ext_new
     MODULE PROCEDURE xt_redist_p2p_ext_new_i2_a1d_i2_a1d
@@ -434,27 +449,36 @@ CONTAINS
 
   END FUNCTION xt_redist_collection_static_new
 
-  FUNCTION xt_redist_collection_new(redists, num_redists, cache_size, comm) &
+  FUNCTION xt_redist_collection_new_a_3i(redists, num_redists, cache_size, comm) &
        RESULT(res)
     TYPE(xt_redist), INTENT(in) :: redists(*)
     INTEGER, INTENT(in) :: num_redists, cache_size, comm
     TYPE(xt_redist) :: res
 
-    INTERFACE
-      FUNCTION xt_redist_collection_new_f(redists_f, num_redists, cache_size, &
-           comm_f) BIND(C, name='xt_redist_collection_new_f') RESULT(res)
-        IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
-        IMPLICIT NONE
-        TYPE(xt_redist), INTENT(in) :: redists_f(*)
-        INTEGER(xt_mpi_fint_kind), VALUE :: num_redists, cache_size, comm_f
-        TYPE(c_ptr) :: res
-      END FUNCTION xt_redist_collection_new_f
-    END INTERFACE
-
     res = xt_redist_c2f(xt_redist_collection_new_f(redists, num_redists, &
          cache_size, comm))
+  END FUNCTION xt_redist_collection_new_a_3i
 
-  END FUNCTION xt_redist_collection_new
+  FUNCTION xt_redist_collection_new_a_2i(redists, cache_size, comm) &
+       RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redists(:)
+    INTEGER, INTENT(in) :: cache_size, comm
+    TYPE(xt_redist) :: res
+
+    res = xt_redist_c2f(xt_redist_collection_new_f(redists, &
+         INT(SIZE(redists), c_int), cache_size, comm))
+  END FUNCTION xt_redist_collection_new_a_2i
+
+  FUNCTION xt_redist_collection_new_a_i(redists, comm) &
+       RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redists(:)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_redist) :: res
+
+    res = xt_redist_collection_new_a_3i(redists, SIZE(redists), &
+         -1, comm)
+  END FUNCTION xt_redist_collection_new_a_i
+
 
   FUNCTION xt_redist_repeat_new_i4_a1d(redist, src_extent, dst_extent, &
        num_repetitions, displacements) RESULT(res)
