@@ -131,13 +131,11 @@ CONTAINS
          __LINE__)
 
     ! test exchange
-    CALL double_ptra_exchange_check(redist, src_num_indices, src_data, &
-         dst_num_indices, dst_data, ref_dst_data)
+    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
 
     redist_copy = xt_redist_copy(redist)
     CALL xt_redist_delete(redist)
-    CALL double_ptra_exchange_check(redist_copy, src_num_indices, src_data, &
-         dst_num_indices, dst_data, ref_dst_data)
+    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
 
     ! clean up
     CALL xt_redist_delete(redist_copy)
@@ -145,26 +143,6 @@ CONTAINS
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END SUBROUTINE test_without_offsets
-
-  SUBROUTINE double_ptra_exchange_check(redist, src_num, src_data, &
-       dst_num, dst_data, ref_dst_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, INTENT(in) :: src_num, dst_num
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src_data(src_num)
-    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(dst_num)
-    DOUBLE PRECISION, TARGET, INTENT(out) :: dst_data(dst_num)
-    INTEGER, PARAMETER :: num_arr = 1
-    TYPE(c_ptr) :: src_data_p(num_arr), dst_data_p(num_arr)
-
-    src_data_p(1) = C_LOC(src_data)
-    dst_data_p(1) = C_LOC(dst_data)
-    dst_data = -1.0d0
-    CALL xt_redist_s_exchange(redist, num_arr, src_data_p, dst_data_p)
-    IF (ANY(ref_dst_data(:) /= dst_data(:))) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-  END SUBROUTINE double_ptra_exchange_check
 
   SUBROUTINE test_with_offsets
     ! source index list
