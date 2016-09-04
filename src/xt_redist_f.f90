@@ -124,6 +124,19 @@ MODULE xt_redist_base
       INTEGER(xt_mpi_fint_kind) :: comm
     END FUNCTION xt_redist_get_mpi_comm
 
+    FUNCTION xt_redist_collection_static_new_f(redists_f, num_redists, &
+         src_displacements, dst_displacements, comm_f) &
+         BIND(C, name='xt_redist_collection_static_new_f') RESULT(res)
+      IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
+      IMPLICIT NONE
+      TYPE(xt_redist), INTENT(in) :: redists_f(*)
+      INTEGER(xt_mpi_fint_kind), VALUE :: num_redists
+      INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*), &
+           dst_displacements(*)
+      INTEGER(xt_mpi_fint_kind), VALUE :: comm_f
+      TYPE(c_ptr) :: res
+    END FUNCTION xt_redist_collection_static_new_f
+
     FUNCTION xt_redist_collection_new_f(redists_f, num_redists, cache_size, &
          comm_f) BIND(C, name='xt_redist_collection_new_f') RESULT(res)
       IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
@@ -158,6 +171,11 @@ MODULE xt_redist_base
     END FUNCTION xt_redist_repeat_new_c
 
   END INTERFACE
+
+  INTERFACE xt_redist_collection_static_new
+    MODULE PROCEDURE xt_redist_collection_static_new_a_i_2ak_i
+    MODULE PROCEDURE xt_redist_collection_static_new_a_2ak_i
+  END INTERFACE xt_redist_collection_static_new
 
   INTERFACE xt_redist_collection_new
     MODULE PROCEDURE xt_redist_collection_new_a_3i
@@ -420,34 +438,38 @@ CONTAINS
 
   END FUNCTION xt_redist_p2p_blocks_off_new
 
-  FUNCTION xt_redist_collection_static_new(redists, num_redists, &
+  FUNCTION xt_redist_collection_static_new_a_i_2ak_i(redists, num_redists, &
        src_displacements, dst_displacements, comm) RESULT(res)
     TYPE(xt_redist), INTENT(in) :: redists(*)
     INTEGER, INTENT(in) :: num_redists, comm
-    INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*)
-    INTEGER(mpi_address_kind), INTENT(in) :: dst_displacements(*)
+    INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*), &
+         dst_displacements(*)
     TYPE(xt_redist) :: res
 
-    INTERFACE
-      FUNCTION xt_redist_collection_static_new_f(redists_f, num_redists, &
-           src_displacements, dst_displacements, comm_f) &
-           BIND(C, name='xt_redist_collection_static_new_f') RESULT(res)
-        IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
-
-        IMPLICIT NONE
-        TYPE(xt_redist), INTENT(in) :: redists_f(*)
-        INTEGER(xt_mpi_fint_kind), VALUE :: num_redists
-        INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*)
-        INTEGER(mpi_address_kind), INTENT(in) :: dst_displacements(*)
-        INTEGER(xt_mpi_fint_kind), VALUE :: comm_f
-        TYPE(c_ptr) :: res
-      END FUNCTION xt_redist_collection_static_new_f
-    END INTERFACE
-
     res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
-         num_redists, src_displacements, dst_displacements, comm))
+         INT(num_redists, c_int), src_displacements, dst_displacements, comm))
+  END FUNCTION xt_redist_collection_static_new_a_i_2ak_i
 
-  END FUNCTION xt_redist_collection_static_new
+  FUNCTION xt_redist_collection_static_new_a_2ak_i(redists, &
+       src_displacements, dst_displacements, comm) RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redists(:)
+    INTEGER, INTENT(in) :: comm
+    INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(:), &
+         dst_displacements(:)
+    TYPE(xt_redist) :: res
+    INTEGER :: num_redists
+
+    num_redists = SIZE(redists)
+    IF (num_redists > HUGE(1_c_int) &
+         .OR. num_redists /= SIZE(src_displacements) &
+         .OR. num_redists /= SIZE(dst_displacements)) &
+         CALL xt_abort("invalid number of redists", &
+         __FILE__, &
+         __LINE__)
+    res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
+         INT(num_redists, c_int), src_displacements, dst_displacements, comm))
+
+  END FUNCTION xt_redist_collection_static_new_a_2ak_i
 
   FUNCTION xt_redist_collection_new_a_3i(redists, num_redists, cache_size, &
        comm) RESULT(res)
