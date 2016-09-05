@@ -42,8 +42,8 @@
 !
 PROGRAM test_idxmod_f
   USE mpi
-  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, xt_idxempty_new, &
-       xt_int_kind, xi => xt_int_kind, xt_stripe, &
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, &
+       xi => xt_int_kind, xt_stripe, &
        xt_modifier, xt_idxvec_new, xt_idxstripes_new, &
        xt_idxlist_delete, xt_idxmod_new
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort

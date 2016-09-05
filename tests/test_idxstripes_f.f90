@@ -57,7 +57,7 @@ PROGRAM test_idxstripes_f
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_bounding_box, OPERATOR(/=), &
        xt_idxlist_get_pos_exts_of_index_stripes, &
-       xt_idxlist_get_num_indices, xt_idxvec_new, xt_idxempty_new, &
+       xt_idxlist_get_num_indices, xt_idxvec_new, &
        xt_idxstripes_from_idxlist_new
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE

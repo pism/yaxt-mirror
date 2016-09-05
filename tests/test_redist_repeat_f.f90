@@ -54,7 +54,7 @@ PROGRAM test_redist_repeat
        xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange1
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
-  USE iso_c_binding, ONLY: c_loc, c_ptr, c_int
+  USE iso_c_binding, ONLY: c_loc, c_int
   IMPLICIT NONE
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)

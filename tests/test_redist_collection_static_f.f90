@@ -52,9 +52,8 @@ PROGRAM test_redist_collection_static
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_static_new, &
-       xt_redist_delete, xt_redist_s_exchange1
+       xt_redist_delete
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
-  USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)

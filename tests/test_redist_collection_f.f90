@@ -54,7 +54,7 @@ PROGRAM test_redist_collection
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_delete, xt_redist_copy, &
-       xt_redist_s_exchange1, xt_redist_s_exchange, &
+       xt_redist_s_exchange, &
        xt_slice_c_loc
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
