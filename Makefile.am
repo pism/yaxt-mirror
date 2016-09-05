@@ -3,10 +3,12 @@ DIST_SUBDIRS = src inst_headers tests examples perf .
 
 ACLOCAL_AMFLAGS=-I m4
 
-EXTRA_DIST = util/mpi_launch_poe util/sunf95preproc-wrapper \
+EXTRA_DIST = util/sunf95preproc-wrapper \
 	util/sxpreproc-wrapper util/xlfpreproc-wrapper \
 	util/crayftnpreproc-wrapper \
 	util/pbs_aprun \
+	util/mpi_launch_poe \
+	util/mpi_launch_bgrunjob \
 	config/checksrc/openmpi_struct_dt.c \
 	config/checkdoc/openmpi_struct_dt.txt \
 	config/checksrc/openmpi_dup.c \
