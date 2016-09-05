@@ -1,5 +1,5 @@
 !>
-!! @file test_redist_p2p.c
+!! @file test_redist_p2p_f.f90
 !!
 !! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
