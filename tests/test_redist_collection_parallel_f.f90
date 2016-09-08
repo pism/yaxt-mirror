@@ -332,29 +332,24 @@ CONTAINS
   SUBROUTINE rr_exchange(redist, src_indices_, ref_dst_indices_)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(xt_int_kind), TARGET, INTENT(in) :: src_indices_(5)
-    INTEGER(xt_int_kind) :: ref_dst_indices_(5, 2)
+    INTEGER(xt_int_kind), INTENT(in) :: ref_dst_indices_(5, 2)
 
 
-    INTEGER(xt_int_kind), TARGET :: results_1(5), results_2(5)
-    TYPE(c_ptr) :: results(2), input(2)
+    INTEGER(xt_int_kind), TARGET :: results(5,2)
+    TYPE(c_ptr) :: results_p(2), input(2)
 
-    results_1 = -1
-    results_2 = -1
+    results = -1
 
-    results(1) = C_LOC(results_1)
-    results(2) = C_LOC(results_2)
+    CALL xt_slice_c_loc(results(:,1), results_p(1))
+    CALL xt_slice_c_loc(results(:,2), results_p(2))
 
     input(1) = C_LOC(src_indices_)
     input(2) = C_LOC(src_indices_)
 
-    CALL xt_redist_s_exchange(redist, input, results)
+    CALL xt_redist_s_exchange(redist, input, results_p)
 
     ! check results
-    IF (ANY(results_1(:) /= ref_dst_indices_(:, 1))) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-    IF (ANY(results_2(:) /= ref_dst_indices_(:, 2))) &
+    IF (ANY(results /= ref_dst_indices_)) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
