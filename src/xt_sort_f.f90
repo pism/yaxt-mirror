@@ -46,8 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_sort
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_size_t, &
-       c_funptr, c_f_procpointer
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_size_t
   USE xt_core, ONLY: xt_abort, xt_int_kind
   IMPLICIT NONE
   PRIVATE
