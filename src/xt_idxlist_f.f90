@@ -713,7 +713,7 @@ CONTAINS
   FUNCTION gpe_is_a_p1d_l(idxlist, stripes, pos_ext, single_match_only) &
        RESULT(num_unmatched)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
-    TYPE(xt_stripe), TARGET, INTENT(in) :: stripes(:)
+    TYPE(xt_stripe), INTENT(in) :: stripes(:)
     TYPE(xt_pos_ext), ALLOCATABLE, INTENT(out) :: pos_ext(:)
     LOGICAL, INTENT(in) :: single_match_only
     INTEGER :: num_unmatched
