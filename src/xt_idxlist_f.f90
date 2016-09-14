@@ -128,7 +128,7 @@ MODULE xt_idxlist_abstract
     SUBROUTINE xt_idxlist_delete_c(idxlist) BIND(C, name='xt_idxlist_delete')
       IMPORT :: c_ptr
       IMPLICIT NONE
-      TYPE(c_ptr), VALUE :: idxlist
+      TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
     END SUBROUTINE xt_idxlist_delete_c
 
     FUNCTION xt_idxlist_get_indices_at_positions_c(idxlist, positions, &
@@ -189,7 +189,7 @@ MODULE xt_idxlist_abstract
 
     SUBROUTINE free_c(p) BIND(c, name='free')
       IMPORT :: c_ptr
-      TYPE(c_ptr), VALUE :: p
+      TYPE(c_ptr), VALUE, INTENT(in) :: p
     END SUBROUTINE free_c
   END INTERFACE
 
@@ -670,7 +670,7 @@ CONTAINS
        RESULT(num_unmatched)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(i4), INTENT(in) ::  num_stripes
-    TYPE(xt_stripe), TARGET :: stripes(num_stripes)
+    TYPE(xt_stripe), INTENT(in), TARGET :: stripes(num_stripes)
     INTEGER, INTENT(out) :: num_ext
     TYPE(xt_pos_ext), ALLOCATABLE, INTENT(out) :: pos_ext(:)
     LOGICAL, INTENT(in) :: single_match_only
