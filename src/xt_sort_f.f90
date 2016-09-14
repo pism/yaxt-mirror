@@ -54,8 +54,8 @@ MODULE xt_sort
   INTERFACE xt_sort_int
     SUBROUTINE xt_sort_int_f2c(a, n) BIND(c, name='xt_sort_int_f2c')
       IMPORT :: c_int, c_size_t
-      INTEGER(c_size_t), VALUE :: n
-      INTEGER(c_int) :: a(n)
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      INTEGER(c_int), INTENT(inout) :: a(n)
     END SUBROUTINE xt_sort_int_f2c
     MODULE PROCEDURE xt_sort_int_a
   END INTERFACE xt_sort_int
@@ -65,8 +65,8 @@ MODULE xt_sort
     SUBROUTINE xt_sort_index_f2c(a, n, positions, reset_positions) &
           BIND(c, name='xt_sort_index_f2c')
       IMPORT :: c_int
-      INTEGER(c_int), VALUE :: n, reset_positions
-      INTEGER(c_int) :: a(n), positions(n)
+      INTEGER(c_int), VALUE, INTENT(in) :: n, reset_positions
+      INTEGER(c_int), INTENT(inout) :: a(n), positions(n)
     END SUBROUTINE xt_sort_index_f2c
     MODULE PROCEDURE xt_sort_index_a_a_l
   END INTERFACE xt_sort_index
@@ -80,8 +80,8 @@ MODULE xt_sort
   INTERFACE xt_sort_idxpos
     SUBROUTINE xt_sort_idxpos_f2c(a, n) BIND(c, name='xt_sort_idxpos_f2c')
       IMPORT :: c_size_t, xt_idxpos
-      INTEGER(c_size_t), VALUE :: n
-      TYPE(xt_idxpos) :: a(n)
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      TYPE(xt_idxpos), INTENT(inout) :: a(n)
     END SUBROUTINE xt_sort_idxpos_f2c
     MODULE PROCEDURE xt_sort_idxpos_a
   END INTERFACE xt_sort_idxpos
