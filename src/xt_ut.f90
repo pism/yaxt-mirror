@@ -123,11 +123,12 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    INTEGER(C_INT) FUNCTION xt_ut_init_decomposition_1d(idx_vec, idx_vec_n) &
-         BIND(C, name='xt_ut_init_decomposition_1d')
+    FUNCTION xt_ut_init_decomposition_1d(idx_vec, idx_vec_n) &
+         BIND(C, name='xt_ut_init_decomposition_1d') RESULT(r)
       IMPORT:: C_INT
       IMPORT:: xt_int_kind
       IMPLICIT NONE
+      INTEGER(C_INT) :: r
       INTEGER(xt_int_kind), DIMENSION(*), INTENT(in) :: idx_vec
       INTEGER(c_int), VALUE, INTENT(in) :: idx_vec_n
     END FUNCTION xt_ut_init_decomposition_1d
@@ -143,11 +144,13 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    INTEGER(C_INT) FUNCTION xt_ut_init_oneway_transposition_template(&
+    FUNCTION xt_ut_init_oneway_transposition_template(&
          decomp_handle_in, decomp_handle_out, mpi_world, check_unique) &
-         & BIND(C, name='xt_ut_init_oneway_transposition_template')
+         & BIND(C, name='xt_ut_init_oneway_transposition_template') &
+         RESULT(r)
       IMPORT:: C_INT
       IMPLICIT NONE
+      INTEGER(C_INT) :: r
       INTEGER(C_INT), VALUE, INTENT(in) :: decomp_handle_in, &
            decomp_handle_out, mpi_world, check_unique
     END FUNCTION xt_ut_init_oneway_transposition_template
