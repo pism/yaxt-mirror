@@ -50,7 +50,7 @@ idxsection_examples_SOURCES = idxsection_examples.c print_index_list.h
 
 row2col_SOURCES = row2col.c
 
-XT_FC_LDADD = ../src/libyaxt.la $(MPI_FC_LIB)
+XT_FC_LDADD = ../src/libyaxt.la ../src/libyaxt_c.la $(MPI_FC_LIB)
 
 row2col_f_SOURCES = row2col_f.f90
 row2col_f_LDADD = $(XT_FC_LDADD)
