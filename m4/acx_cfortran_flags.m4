@@ -95,6 +95,8 @@ dnl check if compiling with f2c bindings or with default bindings
               [Fortran 77],[$FFLAGS])[" | grep '^\(.* \)*-ff2c\( .*\)*$' >/dev/null],
               [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])],
               [AS_VAR_SET([acx_cf_flag],[-DgFortran])])])],
+        [echo $acx_temp | grep '^G95' >/dev/null],
+        [AS_VAR_SET([acx_cf_flag],[-DNAGf90Fortran])],
         [acx_temp=`$acx_FC -v 2>&1` \
          && echo $acx_temp | grep '^f2c'],
         [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])])],
