@@ -199,8 +199,7 @@ MODULE xt_ut
          direction, pt_out) BIND(C, name='xt_ut_transpose')
       IMPORT:: C_INT, c_ptr
       IMPLICIT NONE
-      TYPE(c_ptr) :: pt_in
-      TYPE(c_ptr) :: pt_out
+      TYPE(c_ptr), INTENT(in) :: pt_in, pt_out
       INTEGER(C_INT), VALUE, INTENT(in) :: transposition_handle
       INTEGER(C_INT), VALUE, INTENT(in) :: direction
     END SUBROUTINE xt_ut_transpose
