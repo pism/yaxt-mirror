@@ -69,7 +69,8 @@ CONTAINS
        dst_size, dst_data)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER, INTENT(in) :: src_size, dst_size
-    INTEGER(i8), TARGET :: src_data(src_size), dst_data(dst_size)
+    INTEGER(i8), TARGET, INTENT(in) :: src_data(src_size)
+    INTEGER(i8), TARGET, INTENT(inout) :: dst_data(dst_size)
     TYPE(c_ptr) :: src_data_cptr, dst_data_cptr
     src_data_cptr = C_LOC(src_data)
     dst_data_cptr = C_LOC(dst_data)

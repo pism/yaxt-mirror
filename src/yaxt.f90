@@ -170,7 +170,7 @@ MODULE yaxt
       TYPE(c_ptr), VALUE, INTENT(in) :: patch
       INTEGER(c_int), VALUE, INTENT(in) :: modifier_num
       TYPE(xt_modifier), INTENT(in) :: modifier(modifier_num)
-      TYPE(c_ptr), VALUE :: mstate_ptr
+      TYPE(c_ptr), VALUE, INTENT(in) :: mstate_ptr
       TYPE(c_ptr) :: res
     END FUNCTION xt_idxmod_new_c
   END INTERFACE

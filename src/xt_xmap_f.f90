@@ -93,7 +93,7 @@ MODULE xt_xmap_abstract
     SUBROUTINE xt_xmap_delete_c(xmap) BIND(C, name='xt_xmap_delete')
       IMPORT :: c_ptr
       IMPLICIT NONE
-      TYPE(c_ptr), VALUE :: xmap
+      TYPE(c_ptr), VALUE, INTENT(in) :: xmap
     END SUBROUTINE xt_xmap_delete_c
 
   END INTERFACE

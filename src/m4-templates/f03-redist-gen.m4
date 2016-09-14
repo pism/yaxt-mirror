@@ -9,7 +9,8 @@ define({xt_redist_s_exchange_impl_gen},{
        dst_size, dst_data)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER, INTENT(in) :: src_size, dst_size
-    $2, TARGET :: src_data(src_size), dst_data(dst_size)
+    $2, TARGET, INTENT(in) :: src_data(src_size)
+    $2, TARGET, INTENT(inout) :: dst_data(dst_size)
     TYPE(c_ptr) :: src_data_cptr, dst_data_cptr
 ifelse($2,LOGICAL,
 {#ifdef HAVE_FC_LOGICAL_INTEROP

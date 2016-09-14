@@ -92,7 +92,7 @@ MODULE xt_redist_base
          BIND(C, name='xt_redist_delete')
       IMPORT :: c_ptr
       IMPLICIT NONE
-      TYPE(c_ptr), VALUE :: redist
+      TYPE(c_ptr), VALUE, INTENT(in) :: redist
     END SUBROUTINE xt_redist_delete_c
   END INTERFACE
 
@@ -130,10 +130,10 @@ MODULE xt_redist_base
       IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
       IMPLICIT NONE
       TYPE(xt_redist), INTENT(in) :: redists_f(*)
-      INTEGER(xt_mpi_fint_kind), VALUE :: num_redists
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: num_redists
       INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*), &
            dst_displacements(*)
-      INTEGER(xt_mpi_fint_kind), VALUE :: comm_f
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm_f
       TYPE(c_ptr) :: res
     END FUNCTION xt_redist_collection_static_new_f
 
@@ -142,7 +142,8 @@ MODULE xt_redist_base
       IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind
       IMPLICIT NONE
       TYPE(xt_redist), INTENT(in) :: redists_f(*)
-      INTEGER(xt_mpi_fint_kind), VALUE :: num_redists, cache_size, comm_f
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: &
+           num_redists, cache_size, comm_f
       TYPE(c_ptr) :: res
     END FUNCTION xt_redist_collection_new_f
 
@@ -164,8 +165,8 @@ MODULE xt_redist_base
       IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind, c_int
       IMPLICIT NONE
       TYPE(c_ptr), VALUE, INTENT(in)  :: redist_f
-      INTEGER(mpi_address_kind), VALUE :: src_extent, dst_extent
-      INTEGER(c_int), VALUE :: num_repetitions
+      INTEGER(mpi_address_kind), VALUE, INTENT(in) :: src_extent, dst_extent
+      INTEGER(c_int), VALUE, INTENT(in) :: num_repetitions
       INTEGER(c_int), INTENT(in) :: displacements(*)
       TYPE(c_ptr) :: res
     END FUNCTION xt_redist_repeat_new_c
@@ -246,7 +247,7 @@ CONTAINS
 
   SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
-    TYPE(c_ptr) :: src_data_cptr, dst_data_cptr
+    TYPE(c_ptr), INTENT(in) :: src_data_cptr, dst_data_cptr
     INTERFACE
       SUBROUTINE xt_redist_s_exchange1_c(redist, src_data_cptr, dst_data_cptr) &
            BIND(C, name='xt_redist_s_exchange1')
@@ -261,7 +262,7 @@ CONTAINS
 
   SUBROUTINE xt_redist_s_exchange_a1d(redist, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
-    TYPE(c_ptr) :: src_data_cptr(:), dst_data_cptr(:)
+    TYPE(c_ptr), INTENT(in) :: src_data_cptr(:), dst_data_cptr(:)
     INTEGER :: n
     n = SIZE(src_data_cptr)
     IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(1_c_int)) &
@@ -276,7 +277,7 @@ CONTAINS
        src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i2), INTENT(in) :: num_ptr
-    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     IF (num_ptr < 0_i2) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
@@ -289,7 +290,7 @@ CONTAINS
        src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i4), INTENT(in) :: num_ptr
-    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
@@ -302,7 +303,7 @@ CONTAINS
        src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i8), INTENT(in) :: num_ptr
-    TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &

@@ -180,7 +180,7 @@ CONTAINS
 
   SUBROUTINE com_p_arg(com, com_a, com_p)
     TYPE(xt_com_list), TARGET, INTENT(in) :: com(:)
-    TYPE(xt_com_list), TARGET, ALLOCATABLE :: com_a(:)
+    TYPE(xt_com_list), TARGET, ALLOCATABLE, INTENT(inout) :: com_a(:)
     TYPE(c_ptr), INTENT(out) :: com_p
 
     INTEGER :: com_size
