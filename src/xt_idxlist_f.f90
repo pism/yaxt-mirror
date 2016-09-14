@@ -722,8 +722,12 @@ CONTAINS
     INTEGER(i4) :: num_stripes
 
     num_stripes = SIZE(stripes)
-    num_unmatched = gpe_is_i4_a_i4_p1d_l(idxlist, num_stripes, stripes, &
-         num_ext, pos_ext, single_match_only)
+    IF (num_stripes > 0) THEN
+      num_unmatched = gpe_is_i4_a_i4_p1d_l(idxlist, num_stripes, stripes, &
+           num_ext, pos_ext, single_match_only)
+    ELSE
+      num_unmatched = 0
+    END IF
   END FUNCTION gpe_is_a_p1d_l
 
 END MODULE xt_idxlist_abstract
