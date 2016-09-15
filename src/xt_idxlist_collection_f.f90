@@ -75,7 +75,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: idxlists(:)
     TYPE(xt_idxlist) :: res
 
-    IF (SIZE(idxlists) > INT(HUGE(1_c_int))) &
+    IF (SIZE(idxlists) > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
          __FILE__, &
          __LINE__)
@@ -87,7 +87,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: idxlists(:,:)
     TYPE(xt_idxlist) :: res
 
-    IF (SIZE(idxlists) > INT(HUGE(1_c_int))) &
+    IF (SIZE(idxlists) > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
          __FILE__, &
          __LINE__)
