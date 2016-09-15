@@ -258,8 +258,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: i, temp, dst_indices_(num_local_indices, 2)
     TYPE(xt_xmap) :: xmaps(2)
     TYPE(xt_redist) :: redists(2), redist
-    INTEGER(xt_int_kind), TARGET :: results_1(num_local_indices)
-    INTEGER(xt_int_kind), VOLATILE, TARGET ::results_2(num_local_indices)
+    INTEGER(xt_int_kind), VOLATILE, TARGET :: results(num_local_indices, 2)
     INTEGER(mpi_address_kind) :: src_displacements(2), dst_displacements(2), &
          addr_temp
     INTEGER :: ierror
@@ -291,12 +290,12 @@ CONTAINS
 
     src_displacements = 0_mpi_address_kind
     dst_displacements(1) = 0_mpi_address_kind
-    CALL mpi_get_address(results_2, dst_displacements(2), ierror)
+    CALL mpi_get_address(results(:, 2), dst_displacements(2), ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error in mpi_get_address", &
          __FILE__, &
          __LINE__)
-    CALL mpi_get_address(results_1, addr_temp, ierror)
+    CALL mpi_get_address(results(:, 1), addr_temp, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error in mpi_get_address", &
          __FILE__, &
@@ -312,17 +311,16 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
-    results_1 = -1
-    results_2 = -1
+    results = -1
 
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_indices_), C_LOC(results_1))
+    CALL xt_redist_s_exchange1(redist, C_LOC(src_indices_), C_LOC(results))
 
     ! check results
-    IF (ANY(results_1(:) /= dst_indices_(:, 1))) &
+    IF (ANY(results(:, 1) /= dst_indices_(:, 1))) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
-    IF (ANY(results_2(:) /= dst_indices_(:, 2))) &
+    IF (ANY(results(:, 2) /= dst_indices_(:, 2))) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
