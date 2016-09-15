@@ -58,7 +58,9 @@ MODULE xt_idxlist_abstract
   ! components, its memory pattern has to match void * exactly, which
   ! it does because of C constraints
   TYPE, BIND(C), PUBLIC :: xt_idxlist
+#ifndef __G95__
     PRIVATE
+#endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_idxlist
 
@@ -241,6 +243,7 @@ CONTAINS
     INTEGER, VALUE, INTENT(in) :: position
     INTEGER(xt_int_kind), INTENT(out) :: idx
     LOGICAL :: res
+    INTEGER(c_int) :: position_c
 
     INTERFACE
       FUNCTION xt_idxlist_get_index_at_position_c(idxlist, position, idx) &
@@ -253,8 +256,9 @@ CONTAINS
       END FUNCTION xt_idxlist_get_index_at_position_c
     END INTERFACE
 
+    position_c = INT(position, c_int)
     res = xt_idxlist_get_index_at_position_c(xt_idxlist_f2c(idxlist), &
-         INT(position, c_int), idx) /= 0
+         position_c, idx) /= 0
   END FUNCTION xt_idxlist_get_index_at_position
 
   FUNCTION xt_idxlist_get_indices_at_positions_a1d(idxlist, positions, &
@@ -265,12 +269,14 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(out) :: indices(:)
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
     INTEGER :: num_subst, n
+    INTEGER(c_int) :: num_positions_c
 
     n = SIZE(positions)
     IF (n > HUGE(1_c_int)) n = HUGE(1_c_int)
 
+    num_positions_c = INT(n, c_int)
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
-         INT(positions, c_int), INT(n, c_int), &
+         INT(positions, c_int), num_positions_c, &
          indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d
 
@@ -283,9 +289,11 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
     INTEGER(i2), INTENT(in) :: num_pos
     INTEGER :: num_subst
+    INTEGER(c_int) :: num_pos_c
 
+    num_pos_c = INT(num_pos, c_int)
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
-         INT(positions(1:num_pos), c_int), INT(num_pos, c_int), &
+         INT(positions(1:num_pos), c_int), num_pos_c, &
          indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i2
 
@@ -298,15 +306,16 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
     INTEGER(i4), INTENT(in) :: num_pos
     INTEGER :: num_subst
+    INTEGER(c_int) :: num_pos_c
 
     IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
          CALL xt_abort(xt_get_default_comm(), "invalid number of positions", &
          __FILE__, &
          __LINE__)
 
+    num_pos_c = INT(num_pos, c_int)
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
-         INT(positions(1:num_pos), c_int), INT(num_pos, c_int), &
-         indices, undef_idx)
+         INT(positions(1:num_pos), c_int), num_pos_c, indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i4
 
   FUNCTION xt_idxlist_get_indices_at_positions_a1d_i8(idxlist, positions, &
@@ -318,15 +327,16 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: undef_idx
     INTEGER(i8), INTENT(in) :: num_pos
     INTEGER :: num_subst
+    INTEGER(c_int) :: num_pos_c
 
     IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
          CALL xt_abort(xt_get_default_comm(), "invalid number of positions", &
          __FILE__, &
          __LINE__)
 
+    num_pos_c = INT(num_pos, c_int)
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
-         INT(positions(1:num_pos), c_int), INT(num_pos, c_int), &
-         indices, undef_idx)
+         INT(positions(1:num_pos), c_int), num_pos_c, indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i8
 
   FUNCTION xt_idxlist_get_position_of_index(idxlist, idx, position) &
@@ -362,7 +372,7 @@ CONTAINS
     INTEGER, INTENT(out) :: position
     INTEGER, INTENT(in) :: offset
     LOGICAL :: notfound
-    INTEGER(c_int) :: position_c
+    INTEGER(c_int) :: position_c, offset_c
 
     INTERFACE
       FUNCTION xt_idxlist_get_position_of_index_off_c(idxlist, idx, position, &
@@ -377,8 +387,9 @@ CONTAINS
       END FUNCTION xt_idxlist_get_position_of_index_off_c
     END INTERFACE
 
+    offset_c = INT(offset, c_int)
     notfound = xt_idxlist_get_position_of_index_off_c(xt_idxlist_f2c(idxlist), &
-         idx, position_c, INT(offset, c_int)) /= 0
+         idx, position_c, offset_c) /= 0
     position = INT(position_c)
   END FUNCTION xt_idxlist_get_position_of_index_off
 
@@ -390,7 +401,7 @@ CONTAINS
     INTEGER, INTENT(out) :: positions(:)
     LOGICAL, INTENT(in) :: single_match_only
     INTEGER :: num_missing, n, ofs
-    INTEGER(c_int) :: single_match_only_
+    INTEGER(c_int) :: single_match_only_, num_pos_c
 
     INTERFACE
       FUNCTION xt_idxlist_get_positions_of_indices_c(idxlist, indices, &
@@ -425,10 +436,11 @@ CONTAINS
         ofs = ofs + HUGE(1_c_int)
         n = n - HUGE(1_c_int)
       ELSE
+        num_pos_c = INT(n, c_int)
         num_missing = num_missing &
              + INT(xt_idxlist_get_positions_of_indices_c(&
              xt_idxlist_f2c(idxlist), indices(ofs:), &
-             INT(n, c_int), positions(ofs:), single_match_only_))
+             num_pos_c, positions(ofs:), single_match_only_))
         n = 0
       END IF
     END DO
@@ -472,6 +484,7 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: global_size(:)
     INTEGER(xt_int_kind), INTENT(in) :: global_start_index
     TYPE(xt_bounds) :: bounds(SIZE(global_size))
+    INTEGER(c_int) :: ndim
 
     INTERFACE
       SUBROUTINE xt_idxlist_get_bounding_box_c(idxlist, ndim, global_size, &
@@ -479,15 +492,16 @@ CONTAINS
            BIND(c, name='xt_idxlist_get_bounding_box')
         IMPORT :: c_int, c_ptr, xt_int_kind, xt_bounds
         TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
-        INTEGER(c_int), VALUE, INTENT(in) :: ndim
+        INTEGER(c_int), VALUE :: ndim
         INTEGER(xt_int_kind), INTENT(in) :: global_size(ndim)
         INTEGER(xt_int_kind), VALUE, INTENT(in) :: global_start_index
         TYPE(xt_bounds), INTENT(out) :: bounds(ndim)
       END SUBROUTINE xt_idxlist_get_bounding_box_c
     END INTERFACE
 
+    ndim = INT(SIZE(global_size), c_int)
     CALL xt_idxlist_get_bounding_box_c(xt_idxlist_f2c(idxlist), &
-         INT(SIZE(global_size), c_int), global_size, global_start_index, bounds)
+         ndim, global_size, global_start_index, bounds)
   END FUNCTION xt_idxlist_get_bounding_box
 
   FUNCTION xt_idxlist_get_intersection(idxlist_src, idxlist_dst) &
@@ -676,7 +690,7 @@ CONTAINS
     LOGICAL, INTENT(in) :: single_match_only
     INTEGER :: num_unmatched
 
-    INTEGER(c_int) :: num_unmatched_c, num_ext_c
+    INTEGER(c_int) :: num_unmatched_c, num_ext_c, num_stripes_c
     TYPE(c_ptr) :: pos_ext_c, stripes_c
     TYPE(xt_pos_ext), POINTER :: pos_ext_fptr(:)
     INTEGER :: pos_ext_shape(1)
@@ -688,9 +702,9 @@ CONTAINS
          __LINE__)
 
     stripes_c = C_LOC(stripes)
-
+    num_stripes_c = INT(num_stripes, c_int)
     num_unmatched_c = xt_idxlist_get_pos_exts_of_index_stripes_c(&
-         xt_idxlist_f2c(idxlist), INT(num_stripes, c_int), stripes_c, &
+         xt_idxlist_f2c(idxlist), num_stripes_c, stripes_c, &
          num_ext_c, pos_ext_c, MERGE(1_c_int, 0_c_int, single_match_only))
 
     IF (num_ext_c > HUGE(1) .OR. num_ext_c < 0 &

@@ -119,16 +119,16 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
 
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
-    INTEGER(c_int) :: num_indices
-    IF (SIZE(idxvec) > HUGE(num_indices)) &
+    INTEGER(c_int) :: num_indices_c
+    IF (SIZE(idxvec) > HUGE(num_indices_c)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    num_indices = INT(SIZE(idxvec), c_int)
-    IF (num_indices > 0) THEN
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
+    num_indices_c = INT(SIZE(idxvec), c_int)
+    IF (num_indices_c > 0_c_int) THEN
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices))
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a1d
 
@@ -136,49 +136,54 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a1d_i2
 
   FUNCTION xt_idxvec_new_a1d_i4(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a1d_i4
 
   FUNCTION xt_idxvec_new_a1d_i8(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a1d_i8
 
   FUNCTION xt_idxvec_new_a2d(idxvec) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(:,:)
     TYPE(Xt_idxlist) :: res
-
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
-    INTEGER(c_int) :: num_indices
-    IF (SIZE(idxvec) > HUGE(num_indices)) &
+    INTEGER(c_int) :: num_indices_c
+    IF (SIZE(idxvec) > HUGE(num_indices_c)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    num_indices = INT(SIZE(idxvec), c_int)
-    IF (num_indices > 0) THEN
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
+    num_indices_c = INT(SIZE(idxvec), c_int)
+    IF (num_indices_c > 0_c_int) THEN
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices))
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a2d
 
@@ -186,32 +191,38 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a2d_i2
 
   FUNCTION xt_idxvec_new_a2d_i4(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a2d_i4
 
   FUNCTION xt_idxvec_new_a2d_i8(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a2d_i8
 
   FUNCTION xt_idxvec_new_a3d(idxvec) RESULT(res)
@@ -219,16 +230,16 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
 
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
-    INTEGER(c_int) :: num_indices
-    IF (SIZE(idxvec) > HUGE(num_indices)) &
+    INTEGER(c_int) :: num_indices_c
+    IF (SIZE(idxvec) > HUGE(num_indices_c)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    num_indices = INT(SIZE(idxvec), c_int)
-    IF (num_indices > 0) THEN
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
+    num_indices_c = INT(SIZE(idxvec), c_int)
+    IF (num_indices_c > 0_c_int) THEN
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices))
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a3d
 
@@ -236,33 +247,35 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
-
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
-
+    INTEGER(c_int) :: num_indices_c
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a3d_i2
 
   FUNCTION xt_idxvec_new_a3d_i4(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
-
+    INTEGER(c_int) :: num_indices_c
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a3d_i4
 
   FUNCTION xt_idxvec_new_a3d_i8(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
-
+    INTEGER(c_int) :: num_indices_c
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a3d_i8
 
   FUNCTION xt_idxvec_new_a4d(idxvec) RESULT(res)
@@ -287,33 +300,38 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a4d_i2
 
   FUNCTION xt_idxvec_new_a4d_i4(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a4d_i4
 
   FUNCTION xt_idxvec_new_a4d_i8(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
-
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a4d_i8
 
   FUNCTION xt_idxvec_new_a5d(idxvec) RESULT(res)
@@ -321,16 +339,16 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
 
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
-    INTEGER(c_int) :: num_indices
-    IF (SIZE(idxvec) > HUGE(num_indices)) &
+    INTEGER(c_int) :: num_indices_c
+    IF (SIZE(idxvec) > HUGE(num_indices_c)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    num_indices = INT(SIZE(idxvec), c_int)
-    IF (num_indices > 0) THEN
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
+    num_indices_c = INT(SIZE(idxvec), c_int)
+    IF (num_indices_c > 0_c_int) THEN
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices))
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a5d
 
@@ -338,8 +356,10 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
 
   END FUNCTION xt_idxvec_new_a5d_i2
 
@@ -347,24 +367,28 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a5d_i4
 
   FUNCTION xt_idxvec_new_a5d_i8(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a5d_i8
 
   FUNCTION xt_idxvec_new_a6d(idxvec) RESULT(res)
@@ -372,49 +396,57 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
 
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
-    INTEGER(c_int) :: num_indices
-    IF (SIZE(idxvec) > HUGE(num_indices)) &
+    INTEGER(c_int) :: num_indices_c
+
+    IF (SIZE(idxvec) > HUGE(num_indices_c)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    num_indices = INT(SIZE(idxvec), c_int)
-    IF (num_indices > 0) THEN
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
+    num_indices_c = INT(SIZE(idxvec), c_int)
+    IF (num_indices_c > 0_c_int) THEN
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices))
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a6d
 
   FUNCTION xt_idxvec_new_a6d_i2(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
-    TYPE(Xt_idxlist) :: res
 
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
+
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a6d_i2
 
   FUNCTION xt_idxvec_new_a6d_i4(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a6d_i4
 
   FUNCTION xt_idxvec_new_a6d_i8(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a6d_i8
 
   FUNCTION xt_idxvec_new_a7d(idxvec) RESULT(res)
@@ -422,16 +454,16 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
 
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
-    INTEGER(c_int) :: num_indices
-    IF (SIZE(idxvec) > HUGE(num_indices)) &
+    INTEGER(c_int) :: num_indices_c
+    IF (SIZE(idxvec) > HUGE(num_indices_c)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    num_indices = INT(SIZE(idxvec), c_int)
-    IF (num_indices > 0) THEN
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
+    num_indices_c = INT(SIZE(idxvec), c_int)
+    IF (num_indices_c > 0_c_int) THEN
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
-      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices))
+      res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a7d
 
@@ -439,74 +471,83 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,1,*)
     INTEGER(i2), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a7d_i2
 
   FUNCTION xt_idxvec_new_a7d_i4(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,1,*)
     INTEGER(i4), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a7d_i4
 
   FUNCTION xt_idxvec_new_a7d_i8(idxvec, num_indices) RESULT(res)
     INTEGER(xt_int_kind), INTENT(in) :: idxvec(1,1,1,1,1,1,*)
     INTEGER(i8), VALUE, INTENT(in) :: num_indices
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, INT(num_indices, c_int)))
+    num_indices_c = INT(num_indices, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a7d_i8
 
   FUNCTION xt_idxvec_from_stripes_new_a(stripes) RESULT(res)
     TYPE(xt_stripe), INTENT(in) :: stripes(:)
     TYPE(Xt_idxlist) :: res
-
-    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(SIZE(stripes), c_int)))
+    INTEGER(c_int) :: num_stripes_c
+    num_stripes_c = INT(SIZE(stripes), c_int)
+    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxvec_from_stripes_new_a
 
   FUNCTION xt_idxvec_from_stripes_new_a_i2(stripes, num_stripes) RESULT(res)
     TYPE(xt_stripe), INTENT(in) :: stripes(*)
     INTEGER(i2), INTENT(in) :: num_stripes
     TYPE(Xt_idxlist) :: res
-    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(num_stripes, c_int)))
+    INTEGER(c_int) :: num_stripes_c
+    num_stripes_c = INT(num_stripes, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxvec_from_stripes_new_a_i2
 
   FUNCTION xt_idxvec_from_stripes_new_a_i4(stripes, num_stripes) RESULT(res)
     TYPE(xt_stripe), INTENT(in) :: stripes(*)
     INTEGER(i4), INTENT(in) :: num_stripes
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_stripes_c
 
     IF (i4 /= c_int .AND. num_stripes > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many stripes", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(num_stripes, c_int)))
+    num_stripes_c = INT(num_stripes, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxvec_from_stripes_new_a_i4
 
   FUNCTION xt_idxvec_from_stripes_new_a_i8(stripes, num_stripes) RESULT(res)
     TYPE(xt_stripe), INTENT(in) :: stripes(*)
     INTEGER(i8), INTENT(in) :: num_stripes
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_stripes_c
 
     IF (i8 /= c_int .AND. num_stripes > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "too many stripes", &
          __FILE__, &
          __LINE__)
-    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, &
-         INT(num_stripes, c_int)))
+    num_stripes_c = INT(num_stripes, c_int)
+    res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxvec_from_stripes_new_a_i8
 
 END MODULE xt_idxvec

@@ -78,7 +78,8 @@ CONTAINS
     INTEGER, PARAMETER :: num_indices = 7, num_vec = 2
     INTEGER(xt_int_kind) :: i, j
     INTEGER(xt_int_kind), PARAMETER :: index_list(num_indices, num_vec) = &
-         RESHAPE((/ ((INT(i, xt_int_kind), i = 1, num_indices), j = 1, 2) /), &
+         RESHAPE((/ ((INT(i, xt_int_kind), i = 1, num_indices), &
+         &                                 j = 1, num_vec) /), &
          &       shape = (/ num_indices, num_vec /))
     TYPE(xt_idxlist) :: idxlists(num_vec), collectionlist, collectionlist_copy
     TYPE(xt_stripe), PARAMETER :: ref_stripes(num_vec) = xt_stripe(1, 1, 7)

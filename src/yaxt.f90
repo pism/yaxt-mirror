@@ -220,14 +220,16 @@ CONTAINS
     TYPE(xt_modifier), INTENT(in) :: modifier(:)
     TYPE(Xt_idxlist) :: res
 
-    INTEGER :: modifier_num
-    modifier_num = SIZE(modifier)
-    IF (modifier_num > HUGE(1_c_int)) &
+    INTEGER :: num_modifier
+    INTEGER(c_int) :: num_modifier_c
+    num_modifier = SIZE(modifier)
+    IF (num_modifier > HUGE(1_c_int)) &
          CALL xt_abort("number of modifiers too high", &
          __FILE__, &
          __LINE__)
+    num_modifier_c = INT(num_modifier, c_int)
     res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         INT(modifier_num, c_int), c_null_ptr))
+         num_modifier_c, c_null_ptr))
   END FUNCTION xt_idxmod_new_a1d
 
   FUNCTION xt_idxmod_new_a1d_a1d(patch, modifier, mstate) RESULT(res)
@@ -237,51 +239,59 @@ CONTAINS
     INTEGER(c_int), TARGET, INTENT(inout) :: mstate(*)
     TYPE(Xt_idxlist) :: res
 
-    INTEGER :: modifier_num
-    modifier_num = SIZE(modifier)
-    IF (modifier_num > HUGE(1_c_int)) &
+    INTEGER :: num_modifier
+    INTEGER(c_int) :: num_modifier_c
+    num_modifier = SIZE(modifier)
+    IF (num_modifier > HUGE(1_c_int)) &
          CALL xt_abort("number of modifiers too high", &
          __FILE__, &
          __LINE__)
+    num_modifier_c = INT(num_modifier, c_int)
     res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         INT(modifier_num, c_int), C_LOC(mstate)))
+         num_modifier_c, C_LOC(mstate)))
   END FUNCTION xt_idxmod_new_a1d_a1d
 
-  FUNCTION xt_idxmod_new_a1d_i4(patch, modifier, modifier_num) RESULT(res)
+  FUNCTION xt_idxmod_new_a1d_i4(patch, modifier, num_modifier) RESULT(res)
     IMPLICIT NONE
     TYPE(xt_idxlist), INTENT(in) :: patch
     TYPE(xt_modifier), INTENT(in) :: modifier(*)
-    INTEGER(i4), INTENT(in) :: modifier_num
+    INTEGER(i4), INTENT(in) :: num_modifier
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_modifier_c
 
+    num_modifier_c = INT(num_modifier, c_int)
     res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         INT(modifier_num, c_int), c_null_ptr))
+         num_modifier_c, c_null_ptr))
   END FUNCTION xt_idxmod_new_a1d_i4
 
-  FUNCTION xt_idxmod_new_a1d_i4_a1d(patch, modifier, modifier_num, mstate) &
+  FUNCTION xt_idxmod_new_a1d_i4_a1d(patch, modifier, num_modifier, mstate) &
        RESULT(res)
     IMPLICIT NONE
     TYPE(xt_idxlist), INTENT(in) :: patch
     TYPE(xt_modifier), INTENT(in) :: modifier(*)
-    INTEGER(i4), INTENT(in) :: modifier_num
+    INTEGER(i4), INTENT(in) :: num_modifier
     INTEGER(c_int), TARGET, INTENT(inout) :: mstate(*)
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_modifier_c
 
+    num_modifier_c = INT(num_modifier, c_int)
     res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         INT(modifier_num, c_int), C_LOC(mstate)))
+         num_modifier_c, C_LOC(mstate)))
   END FUNCTION xt_idxmod_new_a1d_i4_a1d
 
-  FUNCTION xt_idxmod_new_a1d_i4_a2d(patch, modifier, modifier_num, mstate) &
+  FUNCTION xt_idxmod_new_a1d_i4_a2d(patch, modifier, num_modifier, mstate) &
        RESULT(res)
     IMPLICIT NONE
     TYPE(xt_idxlist), INTENT(in) :: patch
     TYPE(xt_modifier), INTENT(in) :: modifier(*)
-    INTEGER(i4), INTENT(in) :: modifier_num
+    INTEGER(i4), INTENT(in) :: num_modifier
     INTEGER(c_int), TARGET, INTENT(inout) :: mstate(1,*)
     TYPE(Xt_idxlist) :: res
+    INTEGER(c_int) :: num_modifier_c
 
+    num_modifier_c = INT(num_modifier, c_int)
     res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         INT(modifier_num, c_int), C_LOC(mstate)))
+         num_modifier_c, C_LOC(mstate)))
   END FUNCTION xt_idxmod_new_a1d_i4_a2d
 
 END MODULE yaxt

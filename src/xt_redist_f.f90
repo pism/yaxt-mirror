@@ -63,7 +63,9 @@ MODULE xt_redist_base
   ! components, its memory pattern has to match void * exactly, which
   ! it does because of C constraints
   TYPE, BIND(C), PUBLIC :: xt_redist
+#ifndef __G95__
     PRIVATE
+#endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_redist
 
@@ -264,12 +266,14 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(:), dst_data_cptr(:)
     INTEGER :: n
+    INTEGER(c_int) :: num_ptr_c
     n = SIZE(src_data_cptr)
     IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(n, c_int), &
+    num_ptr_c = INT(n, c_int)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_a1d
 
@@ -278,11 +282,13 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i2), INTENT(in) :: num_ptr
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i2) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+    num_ptr_c = INT(num_ptr, c_int)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i2_a1d
 
@@ -291,11 +297,13 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i4), INTENT(in) :: num_ptr
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+    num_ptr_c = INT(num_ptr, c_int)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i4_a1d
 
@@ -304,11 +312,13 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i8), INTENT(in) :: num_ptr
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+    INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", &
          __FILE__, &
          __LINE__)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), INT(num_ptr, c_int), &
+    num_ptr_c = INT(num_ptr, c_int)
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i8_a1d
 
@@ -446,9 +456,11 @@ CONTAINS
     INTEGER(mpi_address_kind), INTENT(in) :: src_displacements(*), &
          dst_displacements(*)
     TYPE(xt_redist) :: res
+    INTEGER(c_int) :: num_redists_c
 
+    num_redists_c = INT(num_redists, c_int)
     res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
-         INT(num_redists, c_int), src_displacements, dst_displacements, comm))
+         num_redists_c, src_displacements, dst_displacements, comm))
   END FUNCTION xt_redist_collection_static_new_a_i_2ak_i
 
   FUNCTION xt_redist_collection_static_new_a_2ak_i(redists, &
@@ -459,6 +471,7 @@ CONTAINS
          dst_displacements(:)
     TYPE(xt_redist) :: res
     INTEGER :: num_redists
+    INTEGER(c_int) :: num_redists_c
 
     num_redists = SIZE(redists)
     IF (num_redists > HUGE(1_c_int) &
@@ -467,9 +480,9 @@ CONTAINS
          CALL xt_abort("invalid number of redists", &
          __FILE__, &
          __LINE__)
+    num_redists_c = INT(num_redists, c_int)
     res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
-         INT(num_redists, c_int), src_displacements, dst_displacements, comm))
-
+         num_redists_c, src_displacements, dst_displacements, comm))
   END FUNCTION xt_redist_collection_static_new_a_2ak_i
 
   FUNCTION xt_redist_collection_new_a_3i(redists, num_redists, cache_size, &
@@ -487,9 +500,11 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redists(:)
     INTEGER, INTENT(in) :: cache_size, comm
     TYPE(xt_redist) :: res
+    INTEGER(c_int) :: num_redists_c
 
+    num_redists_c = INT(SIZE(redists), c_int)
     res = xt_redist_c2f(xt_redist_collection_new_f(redists, &
-         INT(SIZE(redists), c_int), cache_size, comm))
+         num_redists_c, cache_size, comm))
   END FUNCTION xt_redist_collection_new_a_2i
 
   FUNCTION xt_redist_collection_new_a_i(redists, comm) &
@@ -498,8 +513,7 @@ CONTAINS
     INTEGER, INTENT(in) :: comm
     TYPE(xt_redist) :: res
 
-    res = xt_redist_collection_new_a_3i(redists, SIZE(redists), &
-         -1, comm)
+    res = xt_redist_collection_new_a_3i(redists, SIZE(redists), -1, comm)
   END FUNCTION xt_redist_collection_new_a_i
 
 
@@ -537,14 +551,16 @@ CONTAINS
          dst_extents(num_dst_ext)
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: redist
+    INTEGER(c_int) :: num_src_ext_c, num_dst_ext_c
     IF (num_src_ext < 0_i2 .OR. num_src_ext > HUGE(1_c_int) &
          .OR. num_dst_ext < 0_i2 .OR. num_dst_ext > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of extents", &
          __FILE__, &
          __LINE__)
+    num_src_ext_c = INT(num_src_ext, c_int)
+    num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         INT(num_src_ext, c_int), src_extents, &
-         INT(num_dst_ext, c_int), dst_extents, datatype))
+         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
   END FUNCTION xt_redist_p2p_ext_new_i2_a1d_i2_a1d
 
   FUNCTION xt_redist_p2p_ext_new_i4_a1d_i4_a1d(xmap, num_src_ext, src_extents, &
@@ -555,14 +571,16 @@ CONTAINS
          dst_extents(num_dst_ext)
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: redist
+    INTEGER(c_int) :: num_src_ext_c, num_dst_ext_c
     IF (num_src_ext < 0_i4 .OR. num_src_ext > HUGE(1_c_int) &
          .OR. num_dst_ext < 0_i4 .OR. num_dst_ext > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of extents", &
          __FILE__, &
          __LINE__)
+    num_src_ext_c = INT(num_src_ext, c_int)
+    num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         INT(num_src_ext, c_int), src_extents, &
-         INT(num_dst_ext, c_int), dst_extents, datatype))
+         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
   END FUNCTION xt_redist_p2p_ext_new_i4_a1d_i4_a1d
 
   FUNCTION xt_redist_p2p_ext_new_i8_a1d_i8_a1d(xmap, num_src_ext, src_extents, &
@@ -573,14 +591,16 @@ CONTAINS
          dst_extents(num_dst_ext)
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: redist
+    INTEGER(c_int) :: num_src_ext_c, num_dst_ext_c
     IF (num_src_ext < 0_i8 .OR. num_src_ext > HUGE(1_c_int) &
          .OR. num_dst_ext < 0_i8 .OR. num_dst_ext > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of extents", &
          __FILE__, &
          __LINE__)
+    num_src_ext_c = INT(num_src_ext, c_int)
+    num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         INT(num_src_ext, c_int), src_extents, &
-         INT(num_dst_ext, c_int), dst_extents, datatype))
+         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
   END FUNCTION xt_redist_p2p_ext_new_i8_a1d_i8_a1d
 
   FUNCTION xt_redist_p2p_ext_new_a1d_a1d(xmap, src_extents, dst_extents, &
@@ -591,17 +611,17 @@ CONTAINS
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: redist
     INTEGER :: num_src_ext, num_dst_ext
-
+    INTEGER(c_int) :: num_src_ext_c, num_dst_ext_c
     num_src_ext = SIZE(src_extents)
     num_dst_ext = SIZE(dst_extents)
-
     IF (num_src_ext > HUGE(1_c_int) .OR. num_dst_ext > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of extents", &
          __FILE__, &
          __LINE__)
+    num_src_ext_c = INT(num_src_ext, c_int)
+    num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         INT(num_src_ext, c_int), src_extents, &
-         INT(num_dst_ext, c_int), dst_extents, datatype))
+         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
   END FUNCTION xt_redist_p2p_ext_new_a1d_a1d
 
 END MODULE xt_redist_base

@@ -67,9 +67,17 @@ PROGRAM test_idxmod_f
 CONTAINS
   SUBROUTINE test_idxvec_modifier
     INTEGER, PARAMETER :: g_src_num = 9, g_dst_num=9, patch_num=7
+#ifndef __G95__
     INTEGER(xi) :: i
-    INTEGER(xi), PARAMETER :: g_src_idx(g_src_num) = (/ (i, i=1,g_src_num) /), &
+    INTEGER(xi), PARAMETER :: &
+         g_src_idx(g_src_num) = (/ (i, i=1,g_src_num) /), &
          g_dst_idx(g_dst_num) = (/ (i, i=g_dst_num,1,-1) /), &
+#else
+    INTEGER :: i
+    INTEGER(xi), PARAMETER :: &
+         g_src_idx(g_src_num) = (/ (INT(i, xi), i=1,g_src_num) /), &
+         g_dst_idx(g_dst_num) = (/ (INT(i, xi), i=g_dst_num,1,-1) /), &
+#endif
          patch_idx(patch_num) = (/ 3_xi, 4_xi, 4_xi, 4_xi, 7_xi, 7_xi, 8_xi /)
     ! idx:{3,4,4,4,7,7,8} -> pos:{2,3,3,3,6,6,7} => idx:{7,6,6,6,3,3,2}
     INTEGER(xi), PARAMETER :: &
@@ -148,10 +156,17 @@ CONTAINS
   SUBROUTINE test_multimod
     INTEGER, PARAMETER :: g1_src_num = 9, g1_dst_num = 9, &
          g2_src_num = 5, g2_dst_num = 5, patch_num = 6, num_mod = 2
+#ifndef __G95__
     INTEGER(xi) :: i
     INTEGER(xi), PARAMETER :: &
-         g1_src_idx(g1_src_num) = (/ (i, i = 1_xi,g1_src_num) /), &
-         g1_dst_idx(g1_dst_num) = (/ (i, i = g1_dst_num,1_xi,-1_xi) /), &
+         g1_src_idx(g1_src_num) = (/ (i, i = 1,g1_src_num) /), &
+         g1_dst_idx(g1_dst_num) = (/ (i, i = g1_dst_num,1,-1) /), &
+#else
+    INTEGER :: i
+    INTEGER(xi), PARAMETER :: &
+         g1_src_idx(g1_src_num) = (/ (INT(i, xi), i = 1,g1_src_num) /), &
+         g1_dst_idx(g1_dst_num) = (/ (INT(i, xi), i = g1_dst_num,1,-1) /), &
+#endif
          g2_src_idx(g2_src_num) = (/ 1_xi, 2_xi, 8_xi, 9_xi, 10_xi /), &
          g2_dst_idx(g2_dst_num) = (/ 8_xi, 2_xi, 8_xi, 2_xi, 5_xi /), &
          patch_idx(patch_num) = (/ 6_xi, 7_xi, 25_xi, 8_xi, 9_xi, 10_xi /), &

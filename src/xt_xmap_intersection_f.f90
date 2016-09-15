@@ -132,13 +132,14 @@ CONTAINS
 
     TYPE(xt_com_list), ALLOCATABLE, TARGET :: src_com_a(:), dst_com_a(:)
     TYPE(c_ptr) :: src_com_p, dst_com_p
-
+    INTEGER(c_int) :: num_src_intersections_c, num_dst_intersections_c
+    num_src_intersections_c = INT(SIZE(src_com), c_int)
+    num_dst_intersections_c = INT(SIZE(dst_com), c_int)
     CALL com_p_arg(src_com, src_com_a, src_com_p)
     CALL com_p_arg(dst_com, dst_com_a, dst_com_p)
 
-    xmap = xt_xmap_c2f(xmi_new_f2c(&
-         INT(SIZE(src_com), c_int), src_com_p, &
-         INT(SIZE(dst_com), c_int), dst_com_p, &
+    xmap = xt_xmap_c2f(xmi_new_f2c(num_src_intersections_c, src_com_p, &
+         num_dst_intersections_c, dst_com_p, &
          xt_idxlist_f2c(src_idxlist), xt_idxlist_f2c(dst_idxlist), comm))
   END FUNCTION xmi_new_a_a
 
@@ -152,10 +153,13 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
     INTEGER, INTENT(in) :: comm
     TYPE(xt_xmap) :: xmap
+    INTEGER(c_int) :: num_src_intersections_c, num_dst_intersections_c
+    num_src_intersections_c = INT(num_src_intersections, c_int)
+    num_dst_intersections_c = INT(num_dst_intersections, c_int)
 
     xmap = xt_xmap_c2f(xmi_ext_new_f2c(&
-         num_src_intersections, C_LOC(src_com), &
-         num_dst_intersections, C_LOC(dst_com), &
+         num_src_intersections_c, C_LOC(src_com), &
+         num_dst_intersections_c, C_LOC(dst_com), &
          xt_idxlist_f2c(src_idxlist), xt_idxlist_f2c(dst_idxlist), comm))
   END FUNCTION xmi_ext_new_i_a_i_a
 
@@ -168,13 +172,15 @@ CONTAINS
 
     TYPE(xt_com_list), ALLOCATABLE, TARGET :: src_com_a(:), dst_com_a(:)
     TYPE(c_ptr) :: src_com_p, dst_com_p
+    INTEGER(c_int) :: num_src_intersections_c, num_dst_intersections_c
+    num_src_intersections_c = INT(SIZE(src_com), c_int)
+    num_dst_intersections_c = INT(SIZE(dst_com), c_int)
 
     CALL com_p_arg(src_com, src_com_a, src_com_p)
     CALL com_p_arg(dst_com, dst_com_a, dst_com_p)
 
-    xmap = xt_xmap_c2f(xmi_ext_new_f2c(&
-         INT(SIZE(src_com), c_int), src_com_p, &
-         INT(SIZE(dst_com), c_int), dst_com_p, &
+    xmap = xt_xmap_c2f(xmi_ext_new_f2c(num_src_intersections_c, src_com_p, &
+         num_dst_intersections_c, dst_com_p, &
          xt_idxlist_f2c(src_idxlist), xt_idxlist_f2c(dst_idxlist), comm))
   END FUNCTION xmi_ext_new_a_a
 

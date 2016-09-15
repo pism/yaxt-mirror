@@ -327,9 +327,15 @@ CONTAINS
     TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 1, 5), &
          xt_stripe(1, 1, 5), xt_stripe(2, 1, 5) /), &
          stripes_b(1) = (/ xt_stripe(-2, 1, 10) /)
-    INTEGER(xt_int_kind) :: i
+#ifndef __G95__
+    INTEGER(xi) :: i
     INTEGER(xt_int_kind), PARAMETER :: ref_indices_a(7) &
          = (/ (i, i=0_xi,6_xi) /), &
+#else
+    INTEGER :: i
+    INTEGER(xt_int_kind), PARAMETER :: ref_indices_a(7) &
+         = (/ (INT(i, xi), i=0_xi,6_xi) /), &
+#endif
          ref_indices_b(15) = (/ 0_xi, 1_xi, 1_xi, 2_xi, 2_xi, 2_xi, 3_xi, &
          &                      3_xi, 3_xi, 4_xi, 4_xi, 4_xi, 5_xi, 5_xi, 6_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices_a, ref_indices_b)
@@ -925,9 +931,15 @@ CONTAINS
   SUBROUTINE test_stripe_overlap
     TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 1, 5), &
          xt_stripe(1, 1, 5) /)
-    INTEGER(xt_int_kind) :: i, j
+#ifndef __G95__
+    INTEGER(xi) :: i, j
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ ((i + j, i=0,4), j = 0, 1) /)
+#else
+    INTEGER :: i, j
+    INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
+         = (/ ((INT(i + j, xi), i=0,4), j = 0, 1) /)
+#endif
     CALL stripe_test_general(stripes, ref_indices)
   END SUBROUTINE test_stripe_overlap
 

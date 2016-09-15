@@ -242,6 +242,7 @@ CONTAINS
     INTEGER, INTENT(in)  :: global_size
     INTEGER, INTENT(out) :: handle
 
+    INTEGER(c_int) :: size_myindex_c
     IF (HUGE(1_xt_int_kind) < HUGE(myindex)) THEN
       IF (ANY(myindex > HUGE(1_xt_int_kind)) &
            .OR. ANY(myindex < -HUGE(1_xt_int_kind))) &
@@ -257,8 +258,9 @@ CONTAINS
            __FILE__, &
            __LINE__)
     END IF
+    size_myindex_c = INT(SIZE(myindex), c_int)
     handle = xt_ut_init_decomposition_1d(idx_vec=INT(myindex, xt_int_kind), &
-         idx_vec_n=INT(SIZE(myindex), c_int))
+         idx_vec_n=size_myindex_c)
 
   END SUBROUTINE ut_init_decomposition_1d
 

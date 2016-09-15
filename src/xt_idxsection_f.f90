@@ -81,15 +81,17 @@ CONTAINS
     INTEGER, INTENT(in) :: local_size(:)
     TYPE(xt_idxlist) :: idxsection
     INTEGER :: num_dimensions
+    INTEGER(c_int) :: num_dimensions_c
     num_dimensions = SIZE(global_size)
     IF (SIZE(local_size) /= num_dimensions &
          .OR. SIZE(local_start) /= num_dimensions) &
          CALL xt_abort("non-matching array sizes", &
          __FILE__, &
          __LINE__)
+    num_dimensions_c = INT(num_dimensions, c_int)
     idxsection = xt_idxlist_c2f(&
-         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, INT(local_size, c_int), local_start))
+         xt_idxsection_new_c(start, num_dimensions_c, global_size, &
+         &                   INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_a
 
   FUNCTION xt_idxsection_new_i2(start, num_dimensions, global_size, &
@@ -99,10 +101,12 @@ CONTAINS
          local_start(num_dimensions)
     INTEGER, INTENT(in) :: local_size(num_dimensions)
     TYPE(xt_idxlist) :: idxsection
+    INTEGER(c_int) :: num_dimensions_c
 
+    num_dimensions_c = INT(num_dimensions, c_int)
     idxsection = xt_idxlist_c2f(&
-         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, INT(local_size, c_int), local_start))
+         xt_idxsection_new_c(start, num_dimensions_c, global_size, &
+         &                   INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_i2
 
   FUNCTION xt_idxsection_new_i4(start, num_dimensions, global_size, &
@@ -113,14 +117,16 @@ CONTAINS
     INTEGER, INTENT(in) :: local_size(num_dimensions)
     TYPE(xt_idxlist) :: idxsection
     INTEGER(c_int), PARAMETER :: dummy = 1
+    INTEGER(c_int) :: num_dimensions_c
 
     IF (num_dimensions > HUGE(dummy)) &
          CALL xt_abort("num_dimensions too large", &
          __FILE__, &
          __LINE__)
+    num_dimensions_c = INT(num_dimensions, c_int)
     idxsection = xt_idxlist_c2f(&
-         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, INT(local_size, c_int), local_start))
+         xt_idxsection_new_c(start, num_dimensions_c, global_size, &
+         &                   INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_i4
 
   FUNCTION xt_idxsection_new_i8(start, num_dimensions, global_size, &
@@ -131,14 +137,16 @@ CONTAINS
     INTEGER, INTENT(in) :: local_size(num_dimensions)
     TYPE(xt_idxlist) :: idxsection
     INTEGER(c_int), PARAMETER :: dummy = 1
+    INTEGER(c_int) :: num_dimensions_c
 
     IF (num_dimensions > HUGE(dummy)) &
          CALL xt_abort("num_dimensions too large", &
          __FILE__, &
          __LINE__)
+    num_dimensions_c = INT(num_dimensions, c_int)
     idxsection = xt_idxlist_c2f(&
-         xt_idxsection_new_c(start, INT(num_dimensions, c_int), &
-         &                   global_size, INT(local_size, c_int), local_start))
+         xt_idxsection_new_c(start, num_dimensions_c, global_size, &
+         &                   INT(local_size, c_int), local_start))
   END FUNCTION xt_idxsection_new_i8
 
   !> Fortran style version of \ref xt_idxsection_new. Compared to xt_idxsection_new, here

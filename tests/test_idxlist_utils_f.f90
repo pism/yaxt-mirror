@@ -67,6 +67,7 @@ CONTAINS
 
     INTEGER :: num_ref_indices
     INTEGER(xt_int_kind) :: dummy(1)
+    INTEGER(c_int) :: num_ref_indices_c
 
     INTERFACE
       SUBROUTINE check_idxlist_c(idxlist, ref_indices, ref_num_indices) &
@@ -81,8 +82,9 @@ CONTAINS
 
     num_ref_indices = SIZE(ref_indices)
     IF (num_ref_indices > 0) THEN
+      num_ref_indices_c = INT(num_ref_indices, c_int)
       CALL check_idxlist_c(xt_idxlist_f2c(idxlist), ref_indices, &
-           INT(num_ref_indices, c_int))
+           num_ref_indices_c)
     ELSE
       CALL check_idxlist_c(xt_idxlist_f2c(idxlist), dummy, &
            0_c_int)
@@ -91,7 +93,7 @@ CONTAINS
 
   SUBROUTINE check_stripes(stripes, ref_stripes)
     TYPE(xt_stripe), INTENT(in) :: stripes(:), ref_stripes(:)
-
+    INTEGER(c_int) :: num_stripes_c, ref_num_stripes_c
     INTERFACE
       SUBROUTINE check_stripes_c(stripes, num_stripes, ref_stripes, &
            ref_num_stripes) BIND(c, name='check_stripes')
@@ -102,14 +104,15 @@ CONTAINS
       END SUBROUTINE check_stripes_c
     END INTERFACE
 
-    CALL check_stripes_c(stripes, INT(SIZE(stripes), c_int), &
-         ref_stripes, INT(SIZE(ref_stripes), c_int))
+    num_stripes_c = INT(SIZE(stripes), c_int)
+    ref_num_stripes_c = INT(SIZE(ref_stripes), c_int)
+    CALL check_stripes_c(stripes, num_stripes_c, ref_stripes, ref_num_stripes_c)
 
   END SUBROUTINE check_stripes
 
   SUBROUTINE check_offsets(offsets_a, offsets_b)
     INTEGER(c_int), INTENT(in) :: offsets_a(:), offsets_b(:)
-
+    INTEGER(c_size_t) :: num_offsets_c
     INTERFACE
       SUBROUTINE check_offsets_c(num_offsets, offsets_a, offsets_b) &
            BIND(c, name='check_offsets')
@@ -126,7 +129,8 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    CALL check_offsets_c(INT(SIZE(offsets_a), c_size_t), offsets_a, offsets_b)
+    num_offsets_c = INT(SIZE(offsets_a), c_size_t)
+    CALL check_offsets_c(num_offsets_c, offsets_a, offsets_b)
 
   END SUBROUTINE check_offsets
 
@@ -152,7 +156,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: idxlist, idxlist_copy
     INTEGER(xt_int_kind), INTENT(in) :: ref_indices(:)
     TYPE(xt_stripe), INTENT(in) :: ref_stripes(:)
-
+    INTEGER(c_size_t) :: num_ref_indices_c, num_ref_stripes_c
     INTERFACE
       SUBROUTINE check_idxlist_copy_c(idxlist, idxlist_copy, &
            num_ref_indices, ref_indices, &
@@ -164,10 +168,11 @@ CONTAINS
         TYPE(xt_stripe), INTENT(in) :: ref_stripes(*)
       END SUBROUTINE check_idxlist_copy_c
     END INTERFACE
+    num_ref_indices_c = INT(SIZE(ref_indices), c_size_t)
+    num_ref_stripes_c = INT(SIZE(ref_stripes), c_size_t)
     CALL check_idxlist_copy_c(xt_idxlist_f2c(idxlist), &
-         xt_idxlist_f2c(idxlist_copy), &
-         INT(SIZE(ref_indices), c_size_t), ref_indices, &
-         INT(SIZE(ref_stripes), c_size_t), ref_stripes)
+         xt_idxlist_f2c(idxlist_copy), num_ref_indices_c, ref_indices, &
+         num_ref_stripes_c, ref_stripes)
   END SUBROUTINE check_idxlist_copy
 
 END MODULE test_idxlist_utils

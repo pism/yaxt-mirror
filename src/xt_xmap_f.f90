@@ -71,12 +71,16 @@ MODULE xt_xmap_abstract
   ! components, its memory pattern has to match void * exactly, which
   ! it does because of C constraints
   TYPE, BIND(C), PUBLIC :: xt_xmap
+#ifndef __G95__
     PRIVATE
+#endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_xmap
 
   TYPE, BIND(c), PUBLIC :: xt_xmap_iter
+#ifndef __G95__
     PRIVATE
+#endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_xmap_iter
 
