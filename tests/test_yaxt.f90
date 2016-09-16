@@ -427,7 +427,7 @@ CONTAINS
   SUBROUTINE exchange_int(redist, f, g)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER, TARGET, INTENT(in) :: f(*)
-    INTEGER, TARGET, VOLATILE, INTENT(out) :: g(*)
+    INTEGER, TARGET, INTENT(out) :: g(*)
 
     CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
 
