@@ -258,7 +258,16 @@ CONTAINS
     INTEGER(xt_int_kind) :: i, temp, dst_indices_(num_local_indices, 2)
     TYPE(xt_xmap) :: xmaps(2)
     TYPE(xt_redist) :: redists(2), redist
-    INTEGER(xt_int_kind), VOLATILE, TARGET :: results(num_local_indices, 2)
+    INTEGER(xt_int_kind), TARGET :: results(num_local_indices, 2)
+#if defined __GNUC__ && __GNUC__ == 5
+    ! When having optimization switched on, gfortran 5.1 incorrectly
+    ! evaluates the ANY predicates at the bottom of this subroutines
+    ! at compile time, since it does not account for modifications
+    ! through a C pointer that can legally lead to changes in value
+    ! during xt_redist_s_exchange. Thus declare results volatile to
+    ! prevent this optimization.
+    VOLATILE :: results
+#endif
     INTEGER(mpi_address_kind) :: src_displacements(2), dst_displacements(2), &
          addr_temp
     INTEGER :: ierror
