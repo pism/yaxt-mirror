@@ -3,7 +3,7 @@
 # makef90depends --- generate Fortran 77/90 object file
 #                    dependencies
 #
-# Copyright  (C)  2013  Thomas Jahns <jahns@dkrz.de>
+# Copyright  (C)  2016  Thomas Jahns <jahns@dkrz.de>
 #
 # Version: 1.0
 # Keywords: dependency generator Fortran
@@ -68,7 +68,7 @@
 # because preprocessor conditionals are currently not evaluated
 # correctly and includes are not followed recursively.
 #
-# Author: Thomas Jahns <jahns@dkrz.de>, 2009-2013.
+# Author: Thomas Jahns <jahns@dkrz.de>, 2009-2016.
 # Based on createMakefile.pl by Uwe Schulzweida <schulzweida@dkrz.de>
 #
 use strict;
@@ -864,6 +864,14 @@ sub buildNameSubst(\@)
             @ARGV
                 = grep { ($seen or /^--$/)?$seen++:do {push(@FPPFLAGS, $_) ; 0} }
                     @ARGV;
+         }
+         for (my $i = 0; $i < @FPPFLAGS; ++$i)
+         {
+            if ($FPPFLAGS[$i] eq '-Xlinker' or $FPPFLAGS[$i] eq '-Xcompiler')
+            {
+               splice(@FPPFLAGS, $i, 1);
+               redo;
+            }
          }
          print(STDERR 'FPPFLAGS: ', join(', ', @FPPFLAGS), "\n")
              if $debug;
