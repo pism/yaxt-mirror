@@ -92,15 +92,21 @@ noinst_PROGRAMS = 						\
 	test_yaxt
 
 
-noinst_LIBRARIES = libtestutil.a
+noinst_LTLIBRARIES = libtestutil.la libtestutil_f.la
 
-libtestutil_a_SOURCES = tests.c ftest_common.f90 \
-	test_idxlist_utils.c test_idxlist_utils_f.f90 \
-	test_xmap_common.c test_xmap_common.h test_xmap_common_f.f90 \
-	test_xmap_common_parallel.c test_xmap_common_parallel_f.f90 \
+libtestutil_la_SOURCES = tests.c \
+	test_idxlist_utils.c \
+	test_xmap_common.c test_xmap_common.h \
+	test_xmap_common_parallel.c \
 	test_xmap_common_intercomm_parallel.c \
+	test_redist_common.h test_redist_common.c
+
+libtestutil_f_la_SOURCES = ftest_common.f90 \
+	test_idxlist_utils_f.f90 \
+	test_xmap_common_f.f90 \
+	test_xmap_common_parallel_f.f90 \
 	test_xmap_common_intercomm_parallel_f.f90 \
-	test_redist_common.h test_redist_common.c test_redist_common_f.f90
+	test_redist_common_f.f90
 
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
@@ -187,11 +193,11 @@ test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = $(XT_FC_LDADD)
 test_perf_SOURCES = test_perf.f90
 test_perf_LDADD = $(XT_FC_LDADD)
-test_perf_stripes_SOURCES = test_perf_stripes.f90 ftest_common.f90
+test_perf_stripes_SOURCES = test_perf_stripes.f90
 test_perf_stripes_LDADD = $(XT_FC_LDADD)
 test_sort_SOURCES = test_sort.c tests.h
 test_uid_SOURCES = test_uid.c
-test_yaxt_SOURCES = test_yaxt.f90 ftest_common.f90
+test_yaxt_SOURCES = test_yaxt.f90
 test_yaxt_LDADD = $(XT_FC_LDADD)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
@@ -199,8 +205,9 @@ test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_MOD)
 AM_LDFLAGS = -L../src
-LDADD = libtestutil.a ../src/libyaxt_c.la $(MPI_C_LIB)
-XT_FC_LDADD = libtestutil.a ../src/libyaxt.la ../src/libyaxt_c.la $(MPI_FC_LIB)
+LDADD = libtestutil.la ../src/libyaxt_c.la $(MPI_C_LIB)
+XT_FC_LDADD = libtestutil_f.la libtestutil.la ../src/libyaxt.la \
+	../src/libyaxt_c.la $(MPI_FC_LIB)
 
 TESTS = 							\
 	test_mpi_generate_datatype_run				\
@@ -250,6 +257,9 @@ EXTRA_DIST = core
 	@unique=`for i in $(SOURCES); do \
 	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | grep '\.f90$$' ` ; \
+	  libnamerewriterules=`for i in $(libtestutil_f_la_OBJECTS); do \
+	  echo "$$i" | sed -e 'h;s/^/--obj-transform-name=/' \
+	  -e 's/\.lo$$/\.f90$$/;s/$$/=/;G;s/\n//' ; done` ; \
 	  FC="$(FC)" FPP="$(FPP)" \
 	  $(PERL) -I$(top_srcdir)/scripts \
 	  $(top_srcdir)/scripts/makef90depends --ignore-module iso_c_binding \
@@ -261,7 +271,8 @@ EXTRA_DIST = core
 	  --fpp-sizeof-long-long=$(C_SIZEOF_LONG_LONG) \
 	  --fpp-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
 	  --strip-obj-dirname --parse-cache=./$(DEPDIR)/FC.depdb \
-	  --obj-suf='.$(OBJEXT)' -- \
+	  $$libnamerewriterules \
+	  --obj-transform-name='\.f90$$=.$(OBJEXT)' -- \
 	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
 	  >./$(DEPDIR)/FC.deps.temp
 	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
