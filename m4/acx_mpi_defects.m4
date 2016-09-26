@@ -100,8 +100,8 @@ q
 	  [acx_mpirun_num_tasks=1])
 	AC_LINK_IFELSE(,
 	  [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
-           AS_IF([expr "$ac_link" : '^./libtool ' >/dev/null],
-             [acx_mpirun_num_tasks="./libtool --mode=execute $acx_mpirun_num_tasks"])
+           AS_IF([expr "$ac_link" : '.*/libtool --mode=link' >/dev/null],
+             [acx_mpirun_test=`echo "$ac_link" | sed -e 's@\(.*/libtool --mode=\)link.*@\1@'`"execute $acx_mpirun_test"])
 	   _AC_RUN_LOG_LIMIT([LIBC_FATAL_STDERR_=1 $acx_mpirun_num_tasks >&2],[echo "running $acx_mpirun_num_tasks"])
 	   AS_IF([test $ac_status -eq 0],
 	     [AC_MSG_RESULT([okay])m4_ifval([$2],[
