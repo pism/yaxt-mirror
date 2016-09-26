@@ -19,19 +19,19 @@ AC_PROVIDE_IFELSE([LT_INIT], ,
                   [m4_fatal([$0: requires libtool])])[]dnl
 LT_OUTPUT
 m4_append([AC_LANG(C)],
-[ac_link="./libtool --mode=link --tag=CC $ac_link"
+[ac_link="$ac_pwd/libtool --mode=link --tag=CC $ac_link"
 ])[]dnl
 AC_PROVIDE_IFELSE([AC_PROG_CXX],
 [m4_append([AC_LANG(C++)],
-[ac_link="./libtool --mode=link --tag=CXX $ac_link"
+[ac_link="$ac_pwd/libtool --mode=link --tag=CXX $ac_link"
 ])])[]dnl
 AC_PROVIDE_IFELSE([AC_PROG_FC],
 [m4_append([AC_LANG(Fortran)],
-[ac_link="./libtool --mode=link --tag=FC $ac_link"
+[ac_link="$ac_pwd/libtool --mode=link --tag=FC $ac_link"
 ])])[]dnl
 AC_PROVIDE_IFELSE([AC_PROG_F77],
 [m4_append([AC_LANG(Fortran 77)],
-[ac_link="./libtool --mode=link --tag=F77 $ac_link"
+[ac_link="$ac_pwd/libtool --mode=link --tag=F77 $ac_link"
 ])])[]dnl
 AC_LANG(_AC_LANG)[]dnl
 ]) # _KPSE_USE_LIBTOOL
