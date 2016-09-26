@@ -29,10 +29,9 @@ $(xtinclude_HEADERS): ../src/$@ ../include/config.h \
 	  $(top_srcdir)/scripts/header2installheader.pl \
 	  --config-header=../include/config.h \
 	  --srcdir=$$headerbasedir../src \
-	  --`test $(C_LONG_IS_LARGER_THAN_INT) = 1 || echo \
-	  no`c-long-is-larger-than-int \
-	  --`test $(C_LONG_LONG_IS_LARGER_THAN_LONG) = 1 || echo \
-	  no`c-long-long-is-larger-than-long \
+	  --c-sizeof-int=$(C_SIZEOF_INT) \
+	  --c-sizeof-long=$(C_SIZEOF_LONG) \
+	  --c-sizeof-long-long=$(C_SIZEOF_LONG_LONG) \
 	  --c-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
 	  --dstdir=. \
 	  $$headerbasedir../src/$@

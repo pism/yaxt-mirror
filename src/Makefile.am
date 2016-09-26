@@ -299,10 +299,9 @@ uninstall-local:
 	  --fc-mod-flag=$(FC_MOD_FLAG) --fc-def-opt=$(FPP_DEFOPT) \
 	  --fc-inc-flag=$(FPP_INCOPT) --fc-mod-suf='.$(FCMODEXT)' \
 	  --fc-mod-case=$(FCMODCASE) --prog-fpp='$(FPP)' \
-	  --`test $(C_LONG_IS_LARGER_THAN_INT) = 1 || echo \
-	  no`fpp-long-is-larger-than-int \
-	  --`test $(C_LONG_LONG_IS_LARGER_THAN_LONG) = 1 || echo \
-	  no`fpp-long-long-is-larger-than-long \
+	  --fpp-sizeof-int=$(C_SIZEOF_INT) \
+	  --fpp-sizeof-long=$(C_SIZEOF_LONG) \
+	  --fpp-sizeof-long-long=$(C_SIZEOF_LONG_LONG) \
 	  --fpp-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
 	  --strip-obj-dirname --parse-cache=./$(DEPDIR)/FC.depdb \
 	  --obj-suf='.lo' -- \

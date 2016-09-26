@@ -143,8 +143,13 @@ AS_IF([test x$ac_cv_c_char_unsigned = xyes],
   [C_CHAR_IS_UNSIGNED=1],
   [C_CHAR_IS_UNSIGNED=0])
 AC_SUBST([C_CHAR_IS_UNSIGNED])
-ACX_CHECK_SIZEOF_RELATION([long], [int])
-ACX_CHECK_SIZEOF_RELATION([long long], [long])
+dnl preprocessor implicit type conversions depends on the size of these
+AC_CHECK_SIZEOF([int])
+AC_SUBST([C_SIZEOF_INT],[$ac_cv_sizeof_int])
+AC_CHECK_SIZEOF([long])
+AC_SUBST([C_SIZEOF_LONG],[$ac_cv_sizeof_long])
+AC_CHECK_SIZEOF([long long])
+AC_SUBST([C_SIZEOF_LONG_LONG],[$ac_cv_sizeof_long_long])
 AC_CHECK_SIZEOF([unsigned long])
 dnl
 AS_FOR([builtin_macro],[builtin],[__builtin_ctzl __builtin_clzl],

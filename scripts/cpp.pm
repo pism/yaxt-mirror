@@ -50,8 +50,8 @@ use File::Temp ();
 our ($debug, $operator_match);
 
 # defaults for LP64
-my ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int,
-    $c_char_is_unsigned) = (0, 1, 0);
+my ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long,
+    $c_char_is_unsigned) = (4, 8, 8, 0);
 
 BEGIN {
   $debug = 0;
@@ -68,6 +68,8 @@ BEGIN {
    {
       local $_;
       my ($text) = @_;
+      print STDERR 'transliterating "', $text, '"', $trigraphre, "\n"
+          if ($debug > 3);
       while ($text =~ s{$trigraphre}{$trigraphs{$1}})
       {
       }
@@ -207,15 +209,26 @@ sub parsePreProcExpression
       if ($token eq 'defined')
       {
          # the predicate defined causes the next symbol to be
-         # swallowed and evaluates to 1 or 0 depending on wether the
+         # swallowed and evaluates to 1 or 0 depending on whether the
          # symbol is defined or not
          my ($symreflen, $symoffset);
          if ($tokens[$i + 1] eq '(')
          {
-            $symreflen = 3;
-            $symoffset = 2;
-            die('Expected closing parenthesis, got ', $tokens[$i + 3])
-                if ($tokens[$i + 3] ne ')');
+           my $leadingParens = 1;
+           while ($tokens[$i + $leadingParens + 1] eq '(')
+           {
+             ++$leadingParens;
+           }
+           $symreflen = 1 + $leadingParens * 2;
+           $symoffset = $leadingParens + 1;
+           for (my $j = 1; $j <= $leadingParens; ++$j)
+           {
+             #         defined +   number of (  + symbol + )
+             my $ofs =    $i   + $leadingParens +    1   + $j;
+             die('EOL in defined predicate') if (@tokens <= $ofs);
+             die('Expected closing parenthesis, got ', $tokens[$ofs])
+                 if ($tokens[$ofs] ne ')');
+           }
          }
          else
          {
@@ -363,6 +376,12 @@ BEGIN {
 
    sub preprocResult
    {
+      if (!@preprocCmd)
+      {
+        die('The preprocessing command is not set, but a symbol requires', "\n",
+            'invoking the Fortran preprocessor, please set the FPP',
+            ' environment', "\n", 'variable to retry.');
+      }
       local $_;
       my ($inputSym) = @_;
       print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 1;
@@ -1805,7 +1824,7 @@ BEGIN {
          {
             return 'unsigned-long_long-int';
          }
-         if ($c_long_long_is_larger_than_long)
+         if ($c_sizeof_long_long > $c_sizeof_long)
          {
             if ($val[0][1] eq 'long_long-int'
                 or $val[1][1] eq 'long_long-int')
@@ -1829,7 +1848,7 @@ BEGIN {
          {
             return 'unsigned-long_long-int';
          }
-         if ($c_long_is_larger_than_int)
+         if ($c_sizeof_long > $c_sizeof_int)
          {
             if ($val[0][1] eq 'long-int'
                 or $val[1][1] eq 'long-int')
@@ -1889,10 +1908,12 @@ BEGIN {
     {
       push(@preprocCmd, @{$conf{'FPPFLAGS'}});
     }
-    $c_long_is_larger_than_int = $conf{'c_long_is_larger_than_int'}
-        if (exists($conf{'c_long_is_larger_than_int'}));
-    $c_long_long_is_larger_than_long = $conf{'c_long_long_is_larger_than_long'}
-        if (exists($conf{'c_long_long_is_larger_than_long'}));
+    $c_sizeof_int = $conf{'c_sizeof_int'}
+        if (exists($conf{'c_sizeof_int'}));
+    $c_sizeof_long = $conf{'c_sizeof_long'}
+        if (exists($conf{'c_sizeof_long'}));
+    $c_sizeof_long_long = $conf{'c_sizeof_long_long'}
+        if (exists($conf{'c_sizeof_long_long'}));
     $c_char_is_unsigned = $conf{'c_char_is_unsigned'}
         if (exists($conf{'c_char_is_unsigned'}));
     print STDERR Data::Dumper->Dump([\%conf],['cond']),

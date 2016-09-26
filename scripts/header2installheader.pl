@@ -221,7 +221,7 @@ foreach my $headerFn (@ARGV)
           my $predValue = checkPredicate(%configHDefs, $predicate,
                                          $headerFn, $lineno);
           my $expand = defined($predValue)?1:0;
-          $ignored = (!defined($predValue) or !$predValue or $ignored);
+          $ignored = (($expand and !$predValue) or $ignored);
           push(@predicateLevels, { 'ignored' => $ignored,
                                    'predValue' => $predValue,
                                    'predValueAny' => $predValue,
@@ -425,7 +425,8 @@ sub checkPredicate(\%$$$)
   }
   if (defined($result))
   {
-    print(STDERR 'This predicate could be deduced', "\n");
+    print(STDERR 'This predicate could be deduced', "\n")
+        if $debug > 2;
     $result = eval {
       cpp::evaluatePreProcExpression($predicate, $defines);
     };
@@ -443,16 +444,15 @@ sub checkPredicate(\%$$$)
 {
 
   # choose default appropriate for LP64
-  my ($c_long_long_is_larger_than_long,
-      $c_long_is_larger_than_int, $c_char_is_unsigned) = (0, 1, 0);
+  my ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long,
+      $c_char_is_unsigned) = (4, 8, 8, 0);
 
   sub setup()
   {
     parseOptions();
-    cpp::init({ 'c_long_long_is_larger_than_long'
-                => $c_long_long_is_larger_than_long,
-                'c_long_is_larger_than_int'
-                => $c_long_is_larger_than_int,
+    cpp::init({ 'c_sizeof_int' => $c_sizeof_int,
+                'c_sizeof_long' => $c_sizeof_long,
+                'c_sizeof_long_long' => $c_sizeof_long_long,
                 'c_char_is_unsigned'
                 => $c_char_is_unsigned,
               });
@@ -493,10 +493,10 @@ sub checkPredicate(\%$$$)
                                     'symbol-prefix-F=s' => \$symPrefixes[1],
                                     'symbol-prefix-f=s' => \$symPrefixes[2],
                                     'c-cast-mode=s' => \&set_cast_mode,
-                                    'c-long-long-is-larger-than-long!'
-                                    => \$c_long_long_is_larger_than_long,
-                                    'c-long-is-larger-than-int!'
-                                    => \$c_long_is_larger_than_int,
+                                    'c-sizeof-int=i' => \$c_sizeof_int,
+                                    'c-sizeof-long=i' => \$c_sizeof_long,
+                                    'c-sizeof-long-long=i'
+                                      => \$c_sizeof_long_long,
                                     'c-char-is-signed'
                                     => \&set_c_char_sign,
                                     'c-char-is-unsigned'
@@ -518,13 +518,11 @@ sub checkPredicate(\%$$$)
       my $mode = $_[1];
       if ($mode =~ m{^lp64$}ix)
       {
-         ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int)
-             = (0, 1);
+         ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 8, 8);
       }
       elsif ($mode =~ m{^ilp32$}ix)
       {
-         ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int)
-             = (1, 0);
+         ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 4, 8);
       }
       else
       {

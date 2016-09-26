@@ -3,13 +3,13 @@
 # makef90depends.in --- generate Fortran 77/90 object file
 #                       dependencies
 #
-# Copyright  (C)  2010  Thomas Jahns <jahns@dkrz.de>
+# Copyright  (C)  2013  Thomas Jahns <jahns@dkrz.de>
 #
 # Version: 1.0
 # Keywords: dependency generator Fortran
 # Author: Thomas Jahns <jahns@dkrz.de>
 # Maintainer: Thomas Jahns <jahns@dkrz.de>
-# URL: https://www.dkrz.de/redmine/projects/show/scales-ppm
+# URL: https://www.dkrz.de/redmine/projects/scales-ppm
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are  permitted provided that the following conditions are
@@ -41,8 +41,14 @@
 # Commentary:
 #
 # Please run
-#   perlpod makef90depends
-# for usage information.
+#   pod2usage makef90depends
+# for usage information. And use
+#   pod2man makef90depends | man -l -
+# OR
+#   perldoc makef90depends
+#
+# to view as manual page (the first method will not work on some systems with
+# older man command version)
 #
 # Print Makefile-style dependencies for objects derived from Fortran
 # 90 source files, i.e. if a.f90 includes a line like
@@ -62,7 +68,7 @@
 # because preprocessor conditionals are currently not evaluated
 # correctly and includes are not followed recursively.
 #
-# Author: Thomas Jahns <jahns@dkrz.de>, 2009.
+# Author: Thomas Jahns <jahns@dkrz.de>, 2009-2013.
 # Based on createMakefile.pl by Uwe Schulzweida <schulzweida@dkrz.de>
 #
 use strict;
@@ -80,13 +86,17 @@ use cpp;
 sub hashMerge(\%\%);
 sub debugDefault();
 sub setup();
+sub buildNameSubst(\@);
+sub parseSource($$;$);
 
 my ($debug, $verbose, $dumpCppKeys) = (debugDefault(), 0, undef);
 my (@includeDirs, %defines, @ignoredSysIncludes, @ignoredModules);
 my ($objDepOut, $objectSuffix, $stripObjDirname) = (1, '.o', 0);
-my (@nameSubst, @moduleSearchPath);
-my ($fcmodcase, $fcmodsuffix, $fcmodflag, $fcincflag, $fcdefopt)
-    = ('lc', '.mod', '-I', '-I', '-D');
+my (@depNameSubst, @moduleSearchPath);
+my ($fcmodcase, $fcmodsuffix, $fcmodflag, $fcincflag, $fcdefopt, $fcundefopt)
+    = ('lc', '.mod', '-I', '-I', '-D', '-U');
+my ($stdFSuffices) = (qr{\.(?:f9[05]|for|f|fpp|ftn|f0[38])$}i);
+my ($writePreprocessed, @preprocNameSubst) = (0);
 # stores for each source file previously visited the
 # * timestamp(mtime) of the file
 # * system and program includes referenced
@@ -97,19 +107,16 @@ my (%parseCache, $parseCacheDB);
 my $persistentParseCache = 0;
 
 setup();
+push(@depNameSubst, [$stdFSuffices, $objectSuffix])
+    if (!exists($depNameSubst[0]));
+buildNameSubst(@depNameSubst);
 
-foreach my $transformRule (@nameSubst)
-{
-   my $trCopy = $transformRule;
-   $transformRule = [ $transformRule =~ m{([^=]+)=(.*)} ];
-   die('Malformed rule of transformation: ', $trCopy, "\n")
-       if (@$transformRule != 2);
-}
-
-push @nameSubst, ['\.f90$', $objectSuffix];
-
-#print STDERR Data::Dumper->Dump([\@nameSubst], ['nameSubst']), "\n";
+#print STDERR Data::Dumper->Dump([\@depNameSubst], ['depNameSubst']), "\n";
 #print STDERR Data::Dumper->Dump([\%defines], ['defines']), "\n";
+
+buildNameSubst(@preprocNameSubst);
+push(@preprocNameSubst, [$stdFSuffices, '.fi'])
+    if ($writePreprocessed and !exists($preprocNameSubst[0]));
 
 # filter duplicate filenames, duplicate dependencies make no sense
 my @srcs;
@@ -119,11 +126,13 @@ pushUnique(\@srcs, @ARGV);
 MakeDependsf90mod({ 'includePaths' => \@includeDirs,
                     'moduleDirs' => \@moduleSearchPath,
                     'defines' => \%defines,
-                    'nameSubst' => \@nameSubst,
+                    'depNameSubst' => \@depNameSubst,
                     'stripObjDirname' => $stripObjDirname,
                     'ignoredSysIncludes' => \@ignoredSysIncludes,
                     'ignoredModules' => \@ignoredModules,
                     'dumpCppKeys' => $dumpCppKeys,
+                    'writePreprocessed' => $writePreprocessed,
+                    'preprocNameSubst' => \@preprocNameSubst,
                   }, @srcs);
 
 sub uniq {
@@ -140,13 +149,13 @@ sub MakeDependsf90mod {
        @ignoredSysIncludes, @ignoredModules, $globalDefines, $dumpCppKeys);
    my %cppKeys;
    my $optArgs = {};
-   my ($stripObjDirname) = (0);
+   my ($stripObjDirname, $writePreprocessed, $preprocNameSubst) = (0, 0);
    local $_;
    my @srcs = @_;
    if (ref($srcs[0]) eq 'HASH')
    {
       $optArgs = shift @srcs;
-#      print STDERR Data::Dumper->Dump([\@nameSubst], ['nameSubst']);
+#      print STDERR Data::Dumper->Dump([\@depNameSubst], ['depNameSubst']);
       $stripObjDirname = $optArgs->{'stripObjDirname'}
           if (exists($optArgs->{'stripObjDirname'}));
       @ignoredSysIncludes = @{$optArgs->{'ignoredSysIncludes'}}
@@ -157,6 +166,10 @@ sub MakeDependsf90mod {
           if (exists($optArgs->{'defines'}));
       $dumpCppKeys = exists($optArgs->{'dumpCppKeys'})?
           $optArgs->{'dumpCppKeys'}:0;
+      $writePreprocessed = $optArgs->{'writePreprocessed'}
+          if (exists($optArgs->{'writePreprocessed'}));
+      $preprocNameSubst = $optArgs->{'preprocNameSubst'}
+          if (exists($optArgs->{'preprocNameSubst'}));
       push(@incDirs, @{$optArgs->{'includePaths'}});
       push(@moduleDirs, @{$optArgs->{'moduleDirs'}});
    }
@@ -181,7 +194,14 @@ sub MakeDependsf90mod {
       }
       else
       {
-         my %parse_res = parse_source($srcfile, $globalDefines);
+         my $preprocOutFh = undef;
+         if ($writePreprocessed)
+         {
+            my ($preprocOutFn) = transformFilename($preprocNameSubst, $srcfile);
+            open($preprocOutFh, '>', $preprocOutFn)
+                or die('cannot open (partial) preprocessing output');
+         }
+         my %parse_res = parseSource($srcfile, $globalDefines, $preprocOutFh);
          $parseCache{'source:'.$srcfile} = \%parse_res;
 
          $sys_incs{$srcfile} = $parse_res{'sys_incs'};
@@ -189,6 +209,10 @@ sub MakeDependsf90mod {
          $moduleUse{$srcfile} = $parse_res{'moduleUse'};
          @modulesOfSrcFile = @{$parse_res{'moduleProvide'}};
          @srcfileCppKeys = @{$parse_res{'cppKeys'}};
+         if ($writePreprocessed)
+         {
+            close($preprocOutFh) or die;
+         }
       }
       foreach my $key (@srcfileCppKeys)
       {
@@ -283,7 +307,8 @@ sub MakeDependsf90mod {
                          %{{searchModuleFile(\@moduleDirs, @notFound)}});
                @notFound =
                    grep { !exists $moduleProvide{$_} } @notFound;
-               warn $srcfile, ': module(s) ', join(', ', @notFound),
+               warn $srcfile, ': module', (@notFound>1?'s':()),
+                   ' ', join(', ', @notFound),
                    " not found\n" if @notFound;
             }
             my @dependencies =
@@ -309,7 +334,7 @@ sub MakeDependsf90mod {
    {
       my ($dcpFh, $key, $files);
       open($dcpFh, '>', $dumpCppKeys) or die('Cannot open file for dump: ',
-                                             $dumpCppKeys);
+                                             $dumpCppKeys, ": ", $!);
       while(($key, $files) = each(%cppKeys))
       {
          print($dcpFh join(' ', $key, @$files), "\n");
@@ -319,11 +344,11 @@ sub MakeDependsf90mod {
    }
 }
 
-sub parse_source
+sub parseSource($$;$)
 {
-   my ($srcfile, $globalDefines) = @_;
+   my ($srcfile, $globalDefines, $preprocOut) = @_;
    my ($fh, @sys_incs, @prg_incs, @moduleUse, @moduleProvide);
-   open($fh, $srcfile) or die('Cannot open ', $srcfile, ': ');
+   open($fh, $srcfile) or die('Cannot open ', $srcfile, ': ', $!);
    my %localDefines = %$globalDefines;
    my @predicateLevels = ({'ignored' => 0});
    my $ignored = 0;
@@ -334,13 +359,13 @@ sub parse_source
       while (m{(\\)$}x)
       {
          # adjoin continuation lines
-         my ($contLine, $continuation);
-         $continuation = $1;
+         my ($continuation) = ($1);
          while (defined($continuation))
          {
-            my $contLine = cpp::transliterateTrigraphs(<$fh>);
+            my $contLine = <$fh>;
             if (defined($contLine))
             {
+               $contLine = cpp::transliterateTrigraphs($contLine);
                ($contLine, $continuation) = $contLine =~ m{^(.*?)(\\)?$}x;
                $_ .= $contLine;
             }
@@ -389,7 +414,7 @@ sub parse_source
             {
                die($srcfile, ':', $lineno, ":\n",
                    'Error: invalid conditional expression: ',
-                   $predicate, "\n");
+                   $predicate, "\n", $@);
             }
             $ignored = (!$predValue
                         or $predicateLevels[-1]{'predValueAny'}
@@ -414,7 +439,7 @@ sub parse_source
                {
                   die($srcfile, ':', $lineno, ":\n",
                       'Error: invalid conditional expression: ',
-                      $predicate, "\n");
+                      $predicate, "\n", $@);
                }
                $ignored = (!$predValue or $ignored);
                push(@predicateLevels, { 'ignored' => $ignored,
@@ -471,8 +496,14 @@ sub parse_source
             pushUnique(\@moduleProvide, $moduleName);
          } elsif (/^\s*#*include\s+"(.+)?"/i) {
             pushUnique(\@prg_incs, $1);
+            print(STDERR 'Unsupported preprocessor include "', $1,
+                  '" found while writing preprocessor output!')
+                if (defined($preprocOut));
          } elsif (/^\s*#*include\s+<(.+)?>/i) {
             pushUnique(\@sys_incs, $1);
+            print(STDERR 'Unsupported preprocessor include "', $1,
+                  '" found while writing preprocessor output!')
+                if (defined($preprocOut));
          } elsif (/^\s*include\s+(["'])(.+)?\1/i) {
             pushUnique(\@sys_incs, $2);
          } elsif (/^\s*use\s+([^\s,!]+)/i) {
@@ -481,8 +512,10 @@ sub parse_source
             pushUnique(\@moduleUse, lc($1));
          }
       }
+      print $preprocOut $_
+          if (defined($preprocOut) and !$ignored and !m{^\s*\#});
    }
-   die('Unbalanced #if at line ', $predicateLevels[-1]{'line'},
+   die('Missing #endif for conditional at line ', $predicateLevels[-1]{'line'},
        ' of ', $srcfile, "\n")
        if @predicateLevels > 2;
    my $timestamp = (stat($fh))[9];
@@ -543,10 +576,14 @@ sub transformFilename
    if (ref($_[0]) eq 'HASH')
    {
       my $optArgs = shift @_;
-      @nameSubst = @{$optArgs->{'nameSubst'}}
-          if (exists($optArgs->{'nameSubst'}));
+      @nameSubst = @{$optArgs->{'depNameSubst'}}
+          if (exists($optArgs->{'depNameSubst'}));
       $stripObjDirname = $optArgs->{'stripObjDirname'}
           if (exists($optArgs->{'stripObjDirname'}));
+   }
+   elsif (ref($_[0]) eq 'ARRAY')
+   {
+      @nameSubst = @{shift @_};
    }
    foreach my $filename (@_)
    {
@@ -642,10 +679,24 @@ sub expand
 
 sub whoami  { (caller(1))[3] }
 
+sub buildNameSubst(\@)
+{
+   my ($nameSubst) = @_;
+   foreach my $transformRule (@$nameSubst)
+   {
+      next if (ref($transformRule) eq 'ARRAY');
+      my $trCopy = $transformRule;
+      $transformRule = [ $transformRule =~ m{([^=]+)=(.*)} ];
+      die('Malformed rule of transformation: ', $trCopy, "\n")
+          if (@$transformRule != 2);
+   }
+}
+
+
 {
    # choose defaults for LP64
-   my ($prog_fpp, $c_long_long_is_larger_than_long,
-       $c_long_is_larger_than_int, $c_char_is_unsigned) = (undef, 0, 1, 0);
+   my ($prog_fpp, $c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long,
+       $c_char_is_unsigned) = (undef, 4, 8, 8, 0);
    my (@FPPFLAGS);
 
    sub setup()
@@ -655,10 +706,9 @@ sub whoami  { (caller(1))[3] }
           if (!defined($prog_fpp) && defined($ENV{'FPP'}));
       cpp::init({ defined($prog_fpp)?('FPP' => $prog_fpp):(),
                   'FPPFLAGS' => \@FPPFLAGS,
-                  'c_long_long_is_larger_than_long'
-                  => $c_long_long_is_larger_than_long,
-                  'c_long_is_larger_than_int'
-                  => $c_long_is_larger_than_int,
+                  'c_sizeof_int' => $c_sizeof_int,
+                  'c_sizeof_long' => $c_sizeof_long,
+                  'c_sizeof_long_long' => $c_sizeof_long_long,
                   'c_char_is_unsigned'
                   => $c_char_is_unsigned,
                 });
@@ -674,7 +724,7 @@ sub whoami  { (caller(1))[3] }
       my %mostlyHarmless =
           map { ($_, undef) }
               qw(ALTERNATE_EDITOR COLORTERM
-                 DBUS_SESSION_BUS_ADDRESS DESKTOP_SESSION DISPLAY
+                 DBUS_SESSION_BUS_ADDRESS DEBUG DESKTOP_SESSION DISPLAY
                  EDITOR FPATH_modshare
                  GDMSESSION GDM_LANG GDM_XSERVER_LOCATION
                  GNOME_DESKTOP_SESSION_ID GNOME_KEYRING_PID
@@ -687,7 +737,7 @@ sub whoami  { (caller(1))[3] }
                  MODULEPATH_modshare MUTT_XTITLES
                  PAGER PATH_modshare PROFILEREAD RSYNC_RSH SESSION_MANAGER
                  SHLVL SSH_AGENT_PID SSH_AUTH_SOCK SSH_CLIENT SSH_CONNECTION
-                 SSH_TTY TERM VISUAL WINDOWID WINDOWPATH
+                 SSH_TTY TERM TESTSUITEFLAGS VISUAL WINDOWID WINDOWPATH
                  WINDOW_MANAGER XAUTHORITY XDG_DATA_DIRS);
       $ENVdigest = join("\0",
                         (map { "$_=$ENV{$_}" }
@@ -713,6 +763,7 @@ sub whoami  { (caller(1))[3] }
       print(STDERR join(", ", @ARGV), "\n") if $debug > 2;
       my $result
           = $optionParser->getoptions('debug+' => \$debug,
+                                      'debug-cpp-pm+' => \$cpp::debug,
                                       'help|?!' => \$help,
                                       'usage!' => \$usage,
                                       'dump-cpp-keys=s' => \$dumpCppKeys,
@@ -725,18 +776,23 @@ sub whoami  { (caller(1))[3] }
                                       'fc-mod-flag=s' => \$fcmodflag,
                                       'fc-inc-flag=s' => \$fcincflag,
                                       'fc-def-opt=s' => \$fcdefopt,
+                                      'fc-undef-opt=s' => \$fcundefopt,
                                       'fpp-cast-mode=s' => \&set_cast_mode,
-                                      'fpp-long-long-is-larger-than-long!'
-                                      => \$c_long_long_is_larger_than_long,
-                                      'fpp-long-is-larger-than-int!'
-                                      => \$c_long_is_larger_than_int,
+                                      'fpp-sizeof-int=i' => \$c_sizeof_int,
+                                      'fpp-sizeof-long=i' => \$c_sizeof_long,
+                                      'fpp-sizeof-long-long=i'
+                                      => \$c_sizeof_long_long,
                                       'fpp-char-is-signed'
                                       => \&set_c_char_sign,
                                       'fpp-char-is-unsigned'
                                       => \&set_c_char_sign,
+                                      'write-preprocessed!'
+                                      => \$writePreprocessed,
+                                      'preprocessed-transform-name=s'
+                                      => \@preprocNameSubst,
                                       'prog-fpp=s' => \$prog_fpp,
                                       'obj-suf=s' => \$objectSuffix,
-                                      'obj-transform-name=s' => \@nameSubst,
+                                      'obj-transform-name=s' => \@depNameSubst,
                                       'ignore-sys-include=s' =>
                                       \@ignoredSysIncludes,
                                       'ignore-module=s' => \@ignoredModules,
@@ -767,9 +823,30 @@ sub whoami  { (caller(1))[3] }
             @unhandledOptions = grep { /^$fcincflag(.+)$/?
                                            (!push @includeDirs, $1):1 }
                 @unhandledOptions;
-            @unhandledOptions = grep { /^(?:-D|$fcdefopt)(.+)(?:=(.*))?$/?
-                                           ($defines{$1}=$2 and 0):1 }
-                @unhandledOptions;
+            @unhandledOptions = grep
+            {
+               if (/^(-D|$fcdefopt)(.+?)(?:=(.*))?$/
+                       or /^(-U|$fcundefopt)(.+)$/)
+               {
+                  if ($1 eq '-D' || $1 eq $fcdefopt)
+                  {
+                     $defines{$2}=defined($3)?$3:'';
+                  }
+                  elsif (($1 eq '-U' || $1 eq $fcundefopt) && !defined($3))
+                  {
+                     $defines{$2}=undef;
+                  }
+                  else
+                  {
+                     die('Internal error parsing option: ', $_);
+                  }
+                  0;
+               }
+               else
+               {
+                  1;
+               }
+            } @unhandledOptions;
             print(STDERR 'unhandled options: ', join(', ', @unhandledOptions),
                   "\n") if $debug > 2;
          }
@@ -799,11 +876,8 @@ sub whoami  { (caller(1))[3] }
       for ($i = 0; $i < @names; ++$i)
       {
          my ($name, $definition, $macroArgs)
-             = ($names[$i], $defines{$names[$i]} || '');
-         if ($name =~ m{(.*?)=(.*)})
-         {
-            ($name, $definition) = ($1, $2);
-         }
+             = ($names[$i], $defines{$names[$i]});
+         next if !defined($definition);
          if ($name =~ m{([^(]*)
                         (\(\s*[A-Za-z_]\w*(?:\s*,[A-Za-z_]\w*)*\s*\))}x)
          {
@@ -811,7 +885,9 @@ sub whoami  { (caller(1))[3] }
          }
          die('Malformed define ', $name, $macroArgs?('(', $macroArgs, ')'):'',
              '=', $definition, "\n") if ($name !~ m{^[A-Za-z_]\w+$});
-         $defines{$name} = cpp::parseDefinition($macroArgs, $definition,undef,$name);
+         delete($defines{$names[$i]});
+         $defines{$name} = cpp::parseDefinition($macroArgs, $definition,
+                                                undef,$name);
       }
       # tie cache of parsed files to database if available
       if (defined($parseCacheDB))
@@ -898,13 +974,11 @@ sub whoami  { (caller(1))[3] }
       my $mode = $_[1];
       if ($mode =~ m{^lp64$}ix)
       {
-         ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int)
-             = (0, 1);
+         ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 8, 8);
       }
       elsif ($mode =~ m{^ilp32$}ix)
       {
-         ($c_long_long_is_larger_than_long, $c_long_is_larger_than_int)
-             = (1, 0);
+         ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 4, 8);
       }
       else
       {
@@ -978,7 +1052,7 @@ makef90depends - compute dependencies of FORTRAN 90 object files from source
 
 =head1 SYNOPSIS
 
-makef90depends [options] [--] [source file...]
+makef90depends [options] -- [compiler options] -- [source file...]
 
 Parse each Fortran source file and determine
 prerequisites. Prerequisites are: files included by either C
@@ -1001,6 +1075,13 @@ Define a C preprocessor macro with name B<name>. This option itself
 can also be changed for compilers that use another option
 prefix, e.g. to use -WF,-D for IBM XL Fortran, specify
 B<--fc-def-opt=>I<-WF,-D>.
+
+=item B<-Uname>
+
+Explicitly undefine a C preprocessor macro with name B<name>. This
+option itself can also be changed for compilers that use another
+option prefix, e.g. to use -WF,-U for IBM XL Fortran, specify
+B<--fc-undef-opt=>I<-WF,-D>.
 
 =item B<-I>F<DIR>
 
@@ -1039,6 +1120,14 @@ tracker to assume HAVE_FEATURE to be defined when evaluating file
 structures if B<--fc-def-opt=>I<-Wp,-D> has previously been specified.
 I<PREFIX> defaults to I<-D>.
 
+=item B<--fc-undef-opt=>I<PREFIX>
+
+Change option prefix for Fortran preprocessor macro undefine to
+I<PREFIX>, thus I<-Wp,-D>B<HAVE_FEATURE> will result in the dependency
+tracker to assume HAVE_FEATURE to not be defined when evaluating
+file structures if B<--fc-undef-opt=>I<-Wp,-U> has previously been
+specified.  I<PREFIX> defaults to I<-U>.
+
 =item B<--fc-inc-flag=>I<PREFIX>
 
 Change option prefix for Fortran include file searches to I<PREFIX>,
@@ -1054,42 +1143,34 @@ in "sh -c 'I<FPP>'". I<FPP> must take file arguments and write the
 result to standard output. For fortran compilers not capable of this,
 a wrapper must be provided and specified here.
 
-=item B<--[no]fpp-long-is-larger-than-int>
+=item B<--fpp-sizeof-int=>I<ISIZE>, B<--fpp-sizeof-long=>I<LSIZE>,
+B<--fpp-sizeof-long-long=>I<LLSIZE>
 
-Assert that unsigned vs. long comparisons will be evaluated
-after conversion to long instead of unsigned. Use the B<no> prefix
-to assert the opposite such that comparisons of long vs. unsigned
-int will be carried out as unsigned int.
-
-=item B<--[no]fpp-long-long-is-larger-than-long>
-
-Assert that unsigned long vs. long long comparisons will be evaluated
-after cast to long long instead of unsigned long. Use the B<no> prefix
-to assert the opposite such that comparisons of long long vs. unsigned
-long will be carried out as unsigned long.
+State size of types used in arithmetic preprocessor expressions. This
+is needed to correctly convert values, e.g. unsigned vs. long
+comparisons will be evaluated after conversion to long if I<LSIZE> >
+I<ISIZE> and as unsigned if I<ISIZE> == I<LSIZE>.
 
 =item B<--fpp-cast-mode=>I<MODE>
 
-Set --fpp-long-is-larger-than-int and
---fpp-long-long-is-larger-than-long according to I<MODE> where mode is
+Set --fpp-sizeof-{int|long|long-long} according to I<MODE> where mode is
 one of
 
 =over
 
 =item LP64
 
-Equivalent to --fpp-long-is-larger-than-int and
---nofpp-long-long-is-larger-than-long.
+Equivalent to setting --fpp-sizeof-int=4, --fpp-sizeof-long=8,
+--fpp-sizeof-long-long=8.
 
 =item ILP32
 
-Equivalent to --nofpp-long-is-larger-than-int and
---fpp-long-long-is-larger-than-long.
+Equivalent to setting --fpp-sizeof-int=4, --fpp-sizeof-long=4,
+--fpp-sizeof-long-long=8.
 
 =back
 
-=item B<--fpp-char-is-unsigned>
-=item B<--fpp-char-is-signed>
+=item B<--fpp-char-is-unsigned>, B<--fpp-char-is-signed>
 
 Specify how character constants are interpreted when used in
 arithmetic conversions ore comparisons.
@@ -1099,11 +1180,6 @@ arithmetic conversions ore comparisons.
 Do not prepend path information to object files. By default,
 dependencies for F<a/path/file.o> are written with the directory name
 included.
-
-=item B<--dump-cpp-keys=>F<FILE>
-
-Print the list of files it occurs in for each non-builtin preprocessor
-symbol encountered.
 
 =item B<--obj-transform-name=PATTERN=REPLACEMENT>
 
@@ -1118,6 +1194,27 @@ Ignore inclusions of HEADER for dependency generation.
 
 Ignore MODULE in dependencies.
 
+=item B<--dump-cpp-keys=>F<FILE>
+
+Print the list of files it occurs in for each non-builtin preprocessor
+symbol encountered.
+
+=item B<--write-preprocessed>, B<--no-write-preprocessed>
+
+For each file inspected, also write a preprocessed output file. The
+name of the output file(s) can be specified with
+B<--preprocessed-transform-name> and defaults to change known fortran
+suffices to F<.fi>. The default is to not write preprocessed files.
+
+The set of files inspected might not include all files
+given on the command line, see option B<--parse-cache>.
+
+=item B<--preprocessed-transform-name=PATTERN=REPLACEMENT>
+
+Transform every filename for preprocessing output (see
+B<--write-preprocessed>) with s/PATTERN/REPLACEMENT/. See perlre(5) for
+specific details of the regular expressions used.
+
 =item B<--parse-cache=>F<FILE>
 
 Store and retrieve pre-parsed results from persistent database in
@@ -1131,17 +1228,111 @@ Print usage information.
 
 Produces debugging output.
 
+=item B<--debug-cpp-pm>
+
+Produces debugging output from cpp.pm, too.
+
 =item B<--verbose>
 
 Print verbose progress information.
 
 =back
 
+=head1 EXAMPLES
+
+Given files foo.f90, bar.f90 and baz.f90 with the following contents,
+as given in the doc/makef90depends/example directory of the ScalES-PPM
+distribution:
+
+ ------------bar.f90--------------------
+ MODULE bar
+   USE banana
+ END MODULE bar
+
+ ------------baz.f90--------------------
+ PROGRAM baz
+   USE bar
+   USE mpi
+   USE bork
+ END PROGRAM baz
+
+ ------------foo.f90--------------------
+ MODULE foo
+   TYPE rhubarb
+     INTEGER :: i
+   END TYPE rhubarb
+ END MODULE foo
+ 
+ MODULE banana
+   USE foo, ONLY: rhubarb
+ END MODULE banana
+ ---------------------------------------
+
+Running makef90depends will produce the following:
+
+ $ perl -I../../../scripts ../../../scripts/makef90depends -- -I. -- *.f90
+ bar.o: \
+ 	foo.o
+ baz.o: \
+ 	./bork.mod bar.o
+
+This can be written to a file which can then be included in a
+Makefile.
+
+Also the following diagnostic will be printed to standard error:
+
+ baz.f90: module(s) mpi not found
+
+It can be prevented with the option --ignore-module=mpi.
+
+=head1 AUTHOR
+
+Written by Thomas Jahns.
+
+=head1 Version
+
+makef90depends Version 1.0
+
+=head1 Reporting Bugs
+
+Please report bugs to Thomas Jahns <jahns@dkrz.de>.
+
+=head1 Copyright
+
+Copyright (C) Thomas Jahns <jahns@dkrz.de>.
+
+Redistribution and use in source and binary forms, with or without
+modification, are  permitted provided that the following conditions are
+met:
+
+Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+Neither the name of the DKRZ GmbH nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 =cut
 
 # Local Variables:
 # mode: cperl
 # cperl-indent-level: 3
-# license-project-url: "https://www.dkrz.de/redmine/projects/show/scales-ppm"
+# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"
 # End:
