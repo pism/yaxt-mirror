@@ -356,19 +356,22 @@ sub parseSource($$;$)
    while (<$fh>) {
       $_ = cpp::transliterateTrigraphs($_);
       my $lineno = $.;
-      while (m{(\\)$}x)
       {
-         # adjoin continuation lines
-         my ($continuation) = ($1);
-         while (defined($continuation))
-         {
+         my $contPrefix = $_;
+         my $terminated = (substr($_, -1, 1) eq "\n") ? 1 : 0;
+         while (substr($_, -1 - $terminated, 1) eq '\\') {
+            # adjoin continuation lines
             my $contLine = <$fh>;
-            if (defined($contLine))
-            {
+            if (defined($contLine)) {
                $contLine = cpp::transliterateTrigraphs($contLine);
-               ($contLine, $continuation) = $contLine =~ m{^(.*?)(\\)?$}x;
-               $_ .= $contLine;
+               $_ = substr($_, 0, -1 - $terminated) . $contLine;
+               $contPrefix = $contLine;
+            } else {
+               die('continuation at end of last line in file ', $srcfile,
+                   ' line ', $., ":\n",
+                   $contPrefix, "\n");
             }
+            $terminated = (substr($_, -1, 1) eq "\n") ? 1 : 0;
          }
       }
       if (m{^\s*#\s*(if|ifdef|ifndef|endif|else|elif)\b\s*(.*?)\s*$})
