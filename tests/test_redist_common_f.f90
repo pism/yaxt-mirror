@@ -78,6 +78,7 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_i8
   END INTERFACE check_redist
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
+  PUBLIC :: check_redist_xi
 CONTAINS
   ! build xmap for destination list containing all odd elements of
   ! source list dimensioned 1 to src_slice_len
