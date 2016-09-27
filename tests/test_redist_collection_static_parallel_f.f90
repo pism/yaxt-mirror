@@ -55,10 +55,15 @@ PROGRAM test_redist_collection_static_parallel
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_static_new, &
        xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
-       xt_redist_s_exchange1, xt_idxlist_get_indices, xt_int_mpidt
+       xt_idxlist_get_indices, xt_int_mpidt
+  USE test_redist_common, ONLY: check_redist_xi
   USE iso_c_binding, ONLY: c_loc, c_ptr
+  ! older PGI compilers do not handle generic interface correctly
+#if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
+  USE xt_redist_base, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
-  INTEGER :: rank, size, ierror
+  INTEGER :: rank, comm_size, ierror
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -67,13 +72,13 @@ PROGRAM test_redist_collection_static_parallel
        CALL test_abort('mpi_comm_rank failed', &
        __FILE__, &
        __LINE__)
-  CALL mpi_comm_size(mpi_comm_world, size, ierror)
+  CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
        CALL test_abort('mpi_comm_size failed', &
        __FILE__, &
        __LINE__)
 
-  IF (size > 1) THEN
+  IF (comm_size > 1) THEN
     CALL test_4redist
     CALL test_rr_exchange
   END IF
@@ -97,11 +102,12 @@ CONTAINS
 
     TYPE(xt_stripe) :: stripe
 
-    global_size(1) = INT(2 * size, xi)
-    global_size(2) = INT(size**2, xi)
-    local_size = size
-    local_start = RESHAPE((/ 0_xi, INT(rank*size, xi), INT(size, xi), &
-         INT(size*size-(rank+1)*size, xi) /), (/ 2, 2 /))
+    global_size(1) = INT(2 * comm_size, xi)
+    global_size(2) = INT(comm_size**2, xi)
+    local_size = comm_size
+    local_start = RESHAPE((/ 0_xi, INT(rank*comm_size, xi), &
+         INT(comm_size, xi), INT(comm_size**2-(rank+1)*comm_size, xi) /), &
+         (/ 2, 2 /))
 
     DO i = 1, 2
       indices_a_(i) = xt_idxsection_new(start, global_size, local_size, &
@@ -112,10 +118,10 @@ CONTAINS
     CALL xt_idxlist_delete(indices_a_(1))
     CALL xt_idxlist_delete(indices_a_(2))
 
-    stripe = xt_stripe(INT(rank * 2 * size**2, xi), 1_xi, 2*size**2)
+    stripe = xt_stripe(INT(rank * 2 * comm_size**2, xi), 1_xi, 2*comm_size**2)
     indices_b = xt_idxstripes_new(stripe)
 
-    stripe = xt_stripe(0_xi, 1_xi, 2*size**3)
+    stripe = xt_stripe(0_xi, 1_xi, 2*comm_size**3)
     indices_all = xt_idxstripes_new(stripe)
   END SUBROUTINE build_idxlists
 
@@ -133,9 +139,9 @@ CONTAINS
     INTEGER(xt_int_kind), POINTER :: results_1(:), &
          results_2(:), results_3(:), results_4(:)
 
-    size_a = 2 * size**2
-    size_b = 2 * size**2
-    size_all = 2 * size**3
+    size_a = 2 * comm_size**2
+    size_b = 2 * comm_size**2
+    size_all = 2 * comm_size**3
 
     ALLOCATE(src(size_a + size_b + size_all), dst(size_b + size_a + 2*size_all))
 
@@ -252,50 +258,39 @@ CONTAINS
   ! redist test with two redists that do a round robin exchange in
   ! different directions
   SUBROUTINE test_rr_exchange
-    TYPE(xt_idxlist) :: src_indices, dst_indices(2)
+    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     INTEGER, PARAMETER :: num_local_indices = 5
-    INTEGER(xt_int_kind), TARGET :: src_indices_(num_local_indices)
-    INTEGER(xt_int_kind) :: i, temp, dst_indices_(num_local_indices, 2)
+    INTEGER(xt_int_kind) :: src_indices(num_local_indices)
+    INTEGER(xt_int_kind) :: i_xi, temp, dst_indices(num_local_indices, 2)
+    INTEGER(xt_int_kind) :: num_indices_global
+    INTEGER :: i
     TYPE(xt_xmap) :: xmaps(2)
     TYPE(xt_redist) :: redists(2), redist
-    INTEGER(xt_int_kind), TARGET :: results(num_local_indices, 2)
-#if defined __GNUC__ && __GNUC__ == 5
-    ! When having optimization switched on, gfortran 5.1 incorrectly
-    ! evaluates the ANY predicates at the bottom of this subroutines
-    ! at compile time, since it does not account for modifications
-    ! through a C pointer that can legally lead to changes in value
-    ! during xt_redist_s_exchange. Thus declare results volatile to
-    ! prevent this optimization.
-    VOLATILE :: results
-#endif
+    INTEGER(xt_int_kind) :: results(num_local_indices, 2)
     INTEGER(mpi_address_kind) :: src_displacements(2), dst_displacements(2), &
          addr_temp
     INTEGER :: ierror
 
-    DO i = 1_xi, INT(num_local_indices, xi)
-      src_indices_(i) = INT(rank, xi) * INT(num_local_indices, xi) + (i - 1_xi)
-      dst_indices_(i, 1) = MOD(src_indices_(i) + 1_xi, &
-           &                   INT(size, xi) * INT(num_local_indices, xi))
-      temp = src_indices_(i) - 1_xi
-      dst_indices_(i, 2) = MERGE(INT(size, xi) * INT(num_local_indices, xi) &
-           &                     - 1_xi, &
-           &                     temp, temp < 0_xi)
+    num_indices_global = INT(comm_size, xi) * INT(num_local_indices, xi)
+    DO i = 1, num_local_indices
+      i_xi = INT(i, xi)
+      src_indices(i) &
+           = INT(rank, xi) * INT(num_local_indices, xi) + (i_xi - 1_xi)
+      dst_indices(i, 1) = MOD(src_indices(i) + 1_xi, num_indices_global)
+      temp = src_indices(i) - 1_xi
+      dst_indices(i, 2) = MERGE(num_indices_global - 1_xi, temp, temp < 0_xi)
     END DO
 
-    src_indices = xt_idxvec_new(src_indices_, num_local_indices)
-    dst_indices(1) = xt_idxvec_new(dst_indices_(:, 1))
-    dst_indices(2) = xt_idxvec_new(dst_indices_(:, 2))
+    src_idxlist = xt_idxvec_new(src_indices, num_local_indices)
+    DO i = 1, 2
+      dst_idxlist = xt_idxvec_new(dst_indices(:, i))
+      xmaps(i) = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
+      CALL xt_idxlist_delete(dst_idxlist)
+      redists(i) = xt_redist_p2p_new(xmaps(i), xt_int_mpidt)
+      CALL xt_xmap_delete(xmaps(i))
+    END DO
 
-    xmaps(1) = xt_xmap_all2all_new(src_indices, dst_indices(1), mpi_comm_world)
-    xmaps(2) = xt_xmap_all2all_new(src_indices, dst_indices(2), mpi_comm_world)
-
-    CALL xt_idxlist_delete(src_indices)
-    CALL xt_idxlist_delete(dst_indices)
-
-    redists(1) = xt_redist_p2p_new(xmaps(1), xt_int_mpidt)
-    redists(2) = xt_redist_p2p_new(xmaps(2), xt_int_mpidt)
-
-    CALL xt_xmap_delete(xmaps)
+    CALL xt_idxlist_delete(src_idxlist)
 
     src_displacements = 0_mpi_address_kind
     dst_displacements(1) = 0_mpi_address_kind
@@ -320,19 +315,8 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
-    results = -1
-
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_indices_), C_LOC(results))
-
-    ! check results
-    IF (ANY(results(:, 1) /= dst_indices_(:, 1))) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-    IF (ANY(results(:, 2) /= dst_indices_(:, 2))) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+    CALL check_redist_xi(redist, src_indices, SIZE(dst_indices), &
+         results, dst_indices)
 
     ! clean up
     CALL xt_redist_delete(redist)
