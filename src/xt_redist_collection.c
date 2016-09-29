@@ -480,13 +480,14 @@ free_redist_collection_msgs(struct redist_collection_msg * msgs,
                             unsigned nmsgs, unsigned num_redists,
                             MPI_Comm comm) {
 
-  size_t ndt = (size_t)nmsgs * num_redists;
-  MPI_Datatype *all_component_dt = msgs[0].component_dt;
-  for (size_t i = 0; i < ndt; ++i)
-    if (all_component_dt[i] != MPI_DATATYPE_NULL)
-      xt_mpi_call(MPI_Type_free(all_component_dt + i), comm);
-  if (nmsgs)
+  if (nmsgs) {
+    size_t ndt = (size_t)nmsgs * num_redists;
+    MPI_Datatype *all_component_dt = msgs[0].component_dt;
+    for (size_t i = 0; i < ndt; ++i)
+      if (all_component_dt[i] != MPI_DATATYPE_NULL)
+        xt_mpi_call(MPI_Type_free(all_component_dt + i), comm);
     free(msgs[0].component_dt);
+  }
   free(msgs);
 }
 

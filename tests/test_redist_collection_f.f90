@@ -51,11 +51,11 @@ PROGRAM test_redist_collection
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
-       xt_xmap, xt_xmap_delete, &
+       xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_delete, xt_redist_copy, &
        xt_redist_s_exchange, &
-       xt_slice_c_loc
+       xt_slice_c_loc, xt_idxempty_new, xt_idxlist_delete
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange
@@ -69,6 +69,7 @@ PROGRAM test_redist_collection
 
   CALL simple_test
   CALL simple_test2
+  CALL test_empty_redist
   CALL test_repeated_redist(-1)
   CALL test_repeated_redist(0)
   CALL test_displacement_variations
@@ -189,6 +190,37 @@ CONTAINS
     ! clean up
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE simple_test2
+
+  SUBROUTINE test_empty_redist
+    ! general test with empty redist
+    ! set up data
+    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redist, redist_coll, redist_copy
+
+
+    src_idxlist = xt_idxempty_new()
+    dst_idxlist = xt_idxempty_new()
+
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
+
+    CALL xt_idxlist_delete(src_idxlist)
+    CALL xt_idxlist_delete(dst_idxlist)
+
+    redist = xt_redist_p2p_new(xmap, mpi_double_precision)
+    CALL xt_xmap_delete(xmap)
+    redist_copy = xt_redist_copy(redist)
+    CALL xt_redist_delete(redist)
+    redist = redist_copy
+
+    ! generate redist_collection
+    redist_coll = xt_redist_collection_new((/ redist /), 1, -1, mpi_comm_world)
+
+    CALL xt_redist_delete(redist)
+
+    ! clean up
+    CALL xt_redist_delete(redist_coll)
+  END SUBROUTINE test_empty_redist
 
   SUBROUTINE test_repeated_redist_ds1(redist_coll)
     TYPE(xt_redist), INTENT(in) :: redist_coll
