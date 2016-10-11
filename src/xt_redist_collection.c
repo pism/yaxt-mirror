@@ -433,9 +433,10 @@ copy_msgs(size_t num_redists, unsigned nmsgs,
           MPI_Comm comm)
 {
   struct redist_collection_msg *restrict msgs_copy =
-    *p_msgs_copy = xmalloc(nmsgs * sizeof (*msgs_copy));
+    *p_msgs_copy = nmsgs > 0 ? xmalloc(nmsgs * sizeof (*msgs_copy)) : NULL;
   MPI_Datatype *restrict dt_copy
-    = xmalloc(nmsgs * num_redists * sizeof (*dt_copy));
+    = nmsgs * num_redists > 0
+    ? xmalloc(nmsgs * num_redists * sizeof (*dt_copy)) : NULL;
   for (size_t i = 0; i < nmsgs; ++i)
   {
     msgs_copy[i].rank = msgs_orig[i].rank;
