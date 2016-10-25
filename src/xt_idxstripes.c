@@ -545,18 +545,25 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   bsb.representative = stripe_b.start;
 
   bsa.stride = (Xt_int)((stripe_a.stride & ~stride_zero_mask_a)
-                        | (stride_zero_mask_a & 1));
+                            | (stride_zero_mask_a & 1));
   bsb.stride = (Xt_int)((stripe_b.stride & ~stride_zero_mask_b)
                         | (stride_zero_mask_b & 1));
 
-  struct extended_gcd eg = extended_gcd(XT_INT_ABS(bsa.stride),
-                                        XT_INT_ABS(bsb.stride));
+  /* adjust second representative to minimize difference to first representative */
+  Xt_int abs_bsb_stride = XT_INT_ABS(bsb.stride);
+  long long start_diff = (long long)stripe_a.start - (long long)stripe_b.start;
+  bsb.representative
+    = (Xt_int)(bsb.representative
+               + (start_diff/abs_bsb_stride
+                  + (start_diff%abs_bsb_stride > abs_bsb_stride/2))
+               * abs_bsb_stride);
+  struct extended_gcd eg = extended_gcd(XT_INT_ABS(bsa.stride), abs_bsb_stride);
   bsi.min = MAX(bsa.min, bsb.min);
   bsi.max = MIN(bsa.max, bsb.max);
   /* FIXME: figure out portably larger type than Xt_int, e.g. int
    * would suffice for Xt_int == short here */
   long long temp_stride
-    = ((long long)XT_INT_ABS(bsa.stride) * bsb.stride)/eg.gcd;
+    = ((long long)(XT_INT_ABS(bsa.stride)) * bsb.stride)/eg.gcd;
   bsi.stride = (Xt_int)temp_stride;
   long long min_rep;
   {

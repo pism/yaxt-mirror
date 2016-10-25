@@ -465,6 +465,27 @@ int main(void) {
                              num_ref_indices, ref_indices);
   }
 
+#if 328669 <= XT_INT_MAX
+  {
+    /* test case where overlap equals start of one and end of other
+     * stripe and strides are huge */
+    enum {
+      num_stripes_a = 1,
+      num_stripes_b = 1,
+      num_ref_indices = 1,
+    };
+    static const struct Xt_stripe stripes_a[num_stripes_a]
+      = {{.start = 50201107, .stride = 99947, .nstrides = 2}},
+      stripes_b[num_stripes_b]
+      = {{.start = 110701013, .stride = -60399959, .nstrides = 2}};
+    static const Xt_int ref_indices[num_ref_indices] = {50301054};
+
+    stripe_test_intersection(num_stripes_a, stripes_a,
+                             num_stripes_b, stripes_b,
+                             num_ref_indices, ref_indices);
+  }
+#endif
+
   {
     // generate idxvec from stripes
     static const struct Xt_stripe stripes[]
