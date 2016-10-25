@@ -737,8 +737,13 @@ sub buildNameSubst(\@)
                  MODULEPATH_modshare MUTT_XTITLES
                  PAGER PATH_modshare PROFILEREAD RSYNC_RSH SESSION_MANAGER
                  SHLVL SSH_AGENT_PID SSH_AUTH_SOCK SSH_CLIENT SSH_CONNECTION
-                 SSH_TTY TERM TESTSUITEFLAGS VISUAL WINDOWID WINDOWPATH
-                 WINDOW_MANAGER XAUTHORITY XDG_DATA_DIRS);
+                 SSH_TTY TERM TESTSUITEFLAGS TMUX TMUX_PANE VGL_COMPRESS VISUAL
+                 WINDOWID WINDOWPATH
+                 WINDOW_MANAGER XAUTHORITY
+                 XDG_CURRENT_DESKTOP XDG_DATA_DIRS XDG_MENU_PREFIX
+                 XDG_RUNTIME_DIR XDG_SEAT XDG_SESSION_DESKTOP XDG_SESSION_ID
+                 XDG_VTNR XDG_SESSION_COOKIE XDG_SESSION_ID
+                 XKL_XMODMAP_DISABLE);
       $ENVdigest = join("\0",
                         (map { "$_=$ENV{$_}" }
                          (sort grep { !exists($mostlyHarmless{$_}) } keys(%ENV))));
