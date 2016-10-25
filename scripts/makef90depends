@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #
-# makef90depends.in --- generate Fortran 77/90 object file
-#                       dependencies
+# makef90depends --- generate Fortran 77/90 object file
+#                    dependencies
 #
 # Copyright  (C)  2013  Thomas Jahns <jahns@dkrz.de>
 #
