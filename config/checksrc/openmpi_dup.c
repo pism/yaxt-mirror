@@ -63,8 +63,9 @@ recv_data[1]     = -65536
 ref_recv_data[1] = 2
 
 */
+enum { recv_data_count = 2 };
 
-void do_test(MPI_Datatype * sends, int ref_recv_data[2]);
+void do_test(MPI_Datatype * sends, int ref_recv_data[recv_data_count]);
 
 int main(void) {
 
@@ -92,7 +93,7 @@ int main(void) {
         MPI_Type_commit(&sends[1]);
       }
 
-      int ref_recv_data[2] = {0, 2};
+      int ref_recv_data[recv_data_count] = {0, 2};
 
       do_test(sends, ref_recv_data);
 
@@ -115,7 +116,7 @@ int main(void) {
         MPI_Type_commit(&sends[1]);
       }
 
-      int ref_recv_data[2] = {0, 2};
+      int ref_recv_data[recv_data_count] = {0, 2};
 
       do_test(sends, ref_recv_data);
 
@@ -139,7 +140,7 @@ int main(void) {
         MPI_Type_commit(&sends[1]);
       }
 
-      int ref_recv_data[2] = {0, 1};
+      int ref_recv_data[recv_data_count] = {0, 1};
 
       do_test(sends, ref_recv_data);
 
@@ -153,12 +154,12 @@ int main(void) {
   return 0;
 }
 
-void do_test(MPI_Datatype * sends, int ref_recv_data[2]) {
+void do_test(MPI_Datatype * sends, int ref_recv_data[recv_data_count]) {
 
   MPI_Datatype send_dt;
 
   {
-    int count = 2;
+    enum { count = 2 };
     int array_of_blocklengths[] = {1, 1};
     MPI_Aint array_of_displacements[] = {0, 0};
     MPI_Type_create_struct(count, array_of_blocklengths, array_of_displacements,
@@ -178,7 +179,7 @@ void do_test(MPI_Datatype * sends, int ref_recv_data[2]) {
 
   MPI_Type_free(&send_dt);
 
-  for (int i = 0; i < sizeof(ref_recv_data) / sizeof(ref_recv_data[0]); ++i) {
+  for (int i = 0; i < recv_data_count; ++i) {
 
     if (recv_data[i] != ref_recv_data[i])
       printf("recv_data[%d]     = %d\n"
