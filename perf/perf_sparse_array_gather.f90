@@ -5,17 +5,21 @@ PROGRAM perf_sparse_array_gather
        xt_idxlist, xt_idxfsection_new, xt_idxstripes_new, xt_idxlist_delete, &
        xt_redist, xt_redist_p2p_ext_new, xt_offset_ext, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
-       xt_redist_delete, xt_redist_s_exchange1, &
+       xt_redist_delete, xt_redist_s_exchange, &
        xt_idxstripes_from_idxlist_new
-  USE iso_c_binding, ONLY: c_int, c_loc, c_ptr
+  USE iso_c_binding, ONLY: c_int
   USE mpi
+  ! older PGI compilers do not handle generic interface correctly
+#if defined __PGI && __PGIC__ == 15
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
 
   INTEGER :: gshape(3), gstart(3), nparts(2), num_parts, sshape(3), gsize, &
        section_shape(3), section_start(3), section_size, ofs, ierror
   DOUBLE PRECISION, TARGET, ALLOCATABLE :: gathered_data(:, :, :)
   DOUBLE PRECISION, TARGET, ALLOCATABLE :: scattered_data(:, :, :)
-  TYPE(c_ptr) :: scattered_data_p, gathered_data_p
   TYPE(xt_offset_ext) :: gather_ext(1)
   TYPE(xt_offset_ext), ALLOCATABLE :: scatter_exts(:,:)
   TYPE(xt_idxlist) :: gather_list
@@ -69,8 +73,6 @@ PROGRAM perf_sparse_array_gather
   ! divide gshape(1:2) by nparts(1:2)
   section_start(3) = 1
   section_shape(3) = gshape(3)
-  scattered_data_p = C_LOC(scattered_data)
-  gathered_data_p = C_LOC(gathered_data)
   DO t = 1, 100
     gather_list = xt_idxstripes_new(xt_stripe(0, 1, gsize))
     CALL RANDOM_NUMBER(r)
@@ -105,7 +107,7 @@ PROGRAM perf_sparse_array_gather
          RESHAPE(scatter_exts, (/ num_parts /)), gather_ext, &
          mpi_double_precision)
     CALL xt_xmap_delete(gather_xmap)
-    CALL xt_redist_s_exchange1(gather_redist, scattered_data_p, gathered_data_p)
+    CALL xt_redist_s_exchange(gather_redist, scattered_data, gathered_data)
     IF (check_correctness_of_exchange) THEN
       DO k = 1, gshape(3)
         DO j = 1, gshape(2)

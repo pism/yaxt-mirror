@@ -50,14 +50,19 @@ PROGRAM test_perf_stripes
   USE yaxt, ONLY: xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, xt_redist, &
        xt_redist_p2p_new, xt_redist_delete, xt_redist_p2p_off_new, &
-       xt_redist_p2p_blocks_off_new, xt_redist_s_exchange1, &
+       xt_redist_p2p_blocks_off_new, xt_redist_s_exchange, &
        xt_stripe, xt_idxstripes_new, xt_int_kind, xt_initialize, xt_finalize
 
   USE ftest_common, ONLY: finish_mpi, init_mpi, timer, treset, tstart, &
        tstop, treport, id_map, test_abort, icmp, factorize, regular_deco
 
-  USE ISO_C_BINDING, ONLY: c_loc
-
+  ! PGI compilers up to at least version 15 do not handle generic
+  ! interfaces correctly
+#if defined __PGI
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
   ! global extents including halos:
 
@@ -160,7 +165,7 @@ PROGRAM test_perf_stripes
   ! test 2d-to-2d transposition:
   fval_2d = INT(loc_id_2d)
   CALL tstart(t_exch_2d)
-  CALL exchange_int(redist_tpex_2d, fval_2d, gval_2d)
+  CALL xt_redist_s_exchange(redist_tpex_2d, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
   CALL icmp('2d to 2d check', gval_2d, INT(loc_tpex_2d), mype)
 
@@ -178,7 +183,8 @@ PROGRAM test_perf_stripes
   ! 2d to surface boundsexchange:
   gval_3d = -1
   CALL tstart(t_exch_surf)
-  CALL exchange_int(redist_surf_tpex_2d, fval_2d, gval_3d)
+  CALL xt_redist_s_exchange(redist_surf_tpex_2d, &
+       RESHAPE(fval_2d, (/ 1, ie, je /)), gval_3d)
   CALL tstop(t_exch_surf)
 
   ! check surface:
@@ -213,7 +219,7 @@ PROGRAM test_perf_stripes
   fval_3d = INT(loc_id_3d)
   gval_3d = -1
   CALL tstart(t_exch_3d)
-  CALL exchange_int(redist_tpex_3d, fval_3d, gval_3d)
+  CALL xt_redist_s_exchange(redist_tpex_3d, fval_3d, gval_3d)
   CALL tstop(t_exch_3d)
 
   CALL xt_redist_delete(redist_tpex_3d)
@@ -239,7 +245,7 @@ PROGRAM test_perf_stripes
   gval_3d = -1
 
   CALL tstart(t_exch_3d_ws)
-  CALL exchange_int(redist_tpex_3d_ws, fval_3d, gval_3d)
+  CALL xt_redist_s_exchange(redist_tpex_3d_ws, fval_3d, gval_3d)
   CALL tstop(t_exch_3d_ws)
   if (full_test) then
   ! check 3d exchange:
@@ -253,7 +259,7 @@ PROGRAM test_perf_stripes
   fval_3d = INT(loc_id_3d)
   gval_3d = -1
   CALL tstart(t_exch_3d_wb)
-  CALL exchange_int(redist_tpex_3d_wb, fval_3d, gval_3d)
+  CALL xt_redist_s_exchange(redist_tpex_3d_wb, fval_3d, gval_3d)
   CALL tstop(t_exch_3d_wb)
 
   CALL xt_redist_delete(redist_tpex_3d_wb)
@@ -458,13 +464,6 @@ CONTAINS
     pos3d_surf = undef_int
 
   END SUBROUTINE init_all
-
-  SUBROUTINE exchange_int(redist, f, g)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: f(*)
-    INTEGER, TARGET, INTENT(out) :: g(*)
-    CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
-  END SUBROUTINE exchange_int
 
   SUBROUTINE gen_redist(xmap, send_dt, recv_dt, redist)
     TYPE(xt_xmap), INTENT(in) :: xmap

@@ -50,8 +50,13 @@ PROGRAM test_redist_collection
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
        xt_idxlist, xt_idxfsection_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
-       xt_redist, xt_redist_p2p_new, xt_redist_delete, xt_redist_s_exchange1
-  USE iso_c_binding, ONLY: c_loc, c_int
+       xt_redist, xt_redist_p2p_new, xt_redist_delete, xt_redist_s_exchange
+  USE iso_c_binding, ONLY: c_int
+  ! older PGI compilers do not handle generic interface correctly
+#if defined __PGI && __PGIC__ == 15
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
   INTEGER, PARAMETER :: i4 = SELECTED_INT_KIND(9)
   INTEGER, PARAMETER :: i8 = SELECTED_INT_KIND(14)
@@ -67,7 +72,7 @@ PROGRAM test_redist_collection
   TYPE(xt_idxlist) :: src_idxlist, tgt_idxlist
   TYPE(xt_xmap) :: xmap
   TYPE(xt_redist) :: redist
-  DOUBLE PRECISION, TARGET, ALLOCATABLE :: src_array(:, :), tgt_array(:, :)
+  DOUBLE PRECISION, ALLOCATABLE :: src_array(:, :), tgt_array(:, :)
 
   CALL mpi_init(ierror)
   IF (ierror /= mpi_success) STOP 1
@@ -120,7 +125,7 @@ PROGRAM test_redist_collection
   END DO
 
   ! do the exchange
-  CALL xt_redist_s_exchange1(redist, C_LOC(src_array), C_LOC(tgt_array))
+  CALL xt_redist_s_exchange(redist, src_array, tgt_array)
 
   ! clean up
   DEALLOCATE(tgt_array, src_array)
@@ -148,3 +153,12 @@ CONTAINS
   END FUNCTION uniform_partition_start
 
 END PROGRAM test_redist_collection
+!
+! Local Variables:
+! f90-continuation-indent: 5
+! coding: utf-8
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! End:
+!

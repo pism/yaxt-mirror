@@ -46,19 +46,25 @@
 !
 
 PROGRAM test_yaxt
-  USE iso_c_binding, ONLY: c_loc, c_int
+  USE iso_c_binding, ONLY: c_int
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        &          xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        &          xt_redist, xt_redist_p2p_new, xt_redist_delete, &
        &          xt_initialize, xt_finalize, xt_idxlist_get_num_indices, &
        &          xt_idxlist_get_indices, xt_modifier, xt_idxmod_new, &
-       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_int_kind, &
+       xt_redist_p2p_off_new, xt_redist_s_exchange, xt_int_kind, &
        xt_idxfsection_new, xt_redist_collection_static_new
   USE ftest_common, ONLY: test_abort, icmp, id_map, factorize, regular_deco, &
        finish_mpi
-  USE iso_c_binding, ONLY: c_loc, c_int
 
+  ! PGI compilers up to at least version 15 do not handle generic
+  ! interfaces correctly
+#if defined __PGI
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
 
   INTEGER, PARAMETER :: g_ie = 8, g_je = 4! global extents including halos
@@ -120,7 +126,7 @@ PROGRAM test_yaxt
 
   ! test 2d-to-2d transposition:
   fval = INT(loc_id)
-  CALL exchange_int(redist_tpex, fval, gval)
+  CALL xt_redist_s_exchange(redist_tpex, fval, gval)
 
   CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
 
@@ -137,7 +143,8 @@ PROGRAM test_yaxt
 
   ! 2d to surface boundsexchange:
   gval3d = -1
-  CALL exchange_int(redist_surf_tpex, fval, gval3d)
+  CALL xt_redist_s_exchange(redist_surf_tpex, &
+       RESHAPE(fval, (/ ie, je, 1 /)), gval3d)
 
   CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex), mype)
   ! check sub surface:
@@ -180,11 +187,11 @@ CONTAINS
 
     ref_g = 0
     DO ir = 1, nr
-      CALL xt_redist_s_exchange1(rvec(ir), C_LOC(f(1,1,ir)), C_LOC(ref_g(1,1,ir)));
+      CALL xt_redist_s_exchange(rvec(ir), f(:,:,ir), ref_g(:,:,ir))
     ENDDO
 
     g = 0
-    CALL xt_redist_s_exchange1(rcol, C_LOC(f), C_LOC(g))
+    CALL xt_redist_s_exchange(rcol, f, g)
     IF (ANY(g /= ref_g)) CALL my_abort('(g /= ref_g)', __LINE__)
     CALL xt_redist_delete(rcol)
 
@@ -423,15 +430,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE gen_id_pos
-
-  SUBROUTINE exchange_int(redist, f, g)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: f(*)
-    INTEGER, TARGET, INTENT(out) :: g(*)
-
-    CALL xt_redist_s_exchange1(redist, c_loc(f), c_loc(g));
-
-  END SUBROUTINE exchange_int
 
   SUBROUTINE gen_trans(xmap, send_dt, recv_dt, redist)
     TYPE(xt_xmap), INTENT(in) :: xmap

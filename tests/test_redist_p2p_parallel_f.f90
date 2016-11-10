@@ -52,11 +52,16 @@ PROGRAM test_redist_p2p_parallel
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_get_mpi_comm, &
-       xt_redist_s_exchange1, xt_redist_delete, &
+       xt_redist_s_exchange, xt_redist_delete, &
        xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new
   USE test_idxlist_utils, ONLY: test_err_count
   USE test_redist_common, ONLY: communicators_are_congruent, &
        check_redist
+  ! older PGI compilers do not handle generic interface correctly
+#if defined __PGI && __PGIC__ == 15
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
 
   INTEGER :: rank, size, ierror
@@ -191,7 +196,7 @@ CONTAINS
     END IF
     dst_data(:) = -1.0d0
 
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(dst_data))
+    CALL xt_redist_s_exchange(redist, src_data, dst_data)
 
     DO i = 1, size
       IF (dst_data(i) /= DBLE(i - 1)) EXIT

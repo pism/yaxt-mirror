@@ -105,8 +105,12 @@ PROGRAM unstruct_halo_exchang
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_off_new, xt_redist_delete, &
-       xt_redist_s_exchange1, xi => xt_int_kind
-  USE iso_c_binding, ONLY: c_loc
+       xt_redist_s_exchange, xi => xt_int_kind
+  ! PGI compilers do not handle generic interface correctly
+#if defined __PGI && __PGIC__ == 15
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
 
   INTEGER :: comm_rank, comm_size
@@ -121,7 +125,7 @@ PROGRAM unstruct_halo_exchang
   TYPE(xt_idxlist) :: src_idxlist, tgt_idxlist
   TYPE(xt_xmap) :: xmap
   TYPE(xt_redist) :: redist
-  DOUBLE PRECISION, TARGET :: src_data(12), tgt_data(12)
+  DOUBLE PRECISION :: src_data(12), tgt_data(12)
 
   CHARACTER(64) :: fmt
 
@@ -189,7 +193,7 @@ PROGRAM unstruct_halo_exchang
   PRINT fmt, comm_rank, 'before', INT(src_data(:))
 
   ! do the exchange
-  CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(tgt_data))
+  CALL xt_redist_s_exchange(redist, src_data, tgt_data)
 
   PRINT fmt, comm_rank, 'after ', INT(tgt_data(:))
 
