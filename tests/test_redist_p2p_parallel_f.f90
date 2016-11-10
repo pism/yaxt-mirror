@@ -64,18 +64,18 @@ PROGRAM test_redist_p2p_parallel
 #endif
   IMPLICIT NONE
 
-  INTEGER :: rank, size, ierror
+  INTEGER :: comm_rank, comm_size, ierror
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
-  CALL mpi_comm_rank(mpi_comm_world, rank, ierror)
+  CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
   IF (ierror /= mpi_success) &
        CALL test_abort("MPI error!", &
        __FILE__, &
        __LINE__)
 
-  CALL mpi_comm_size(mpi_comm_world, size, ierror)
+  CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= mpi_success) &
        CALL test_abort("MPI error!", &
        __FILE__, &
@@ -108,14 +108,14 @@ CONTAINS
 
     ! source index list
     DO i = 1, src_num_indices
-      src_index_list(i) = INT(rank * data_size + (i - 1), xi)
+      src_index_list(i) = INT(comm_rank * data_size + (i - 1), xi)
     END DO
 
     src_idxlist = xt_idxvec_new(src_index_list)
     ! destination index list
     DO i = 1, dst_num_indices
       dst_index_list(i) &
-           = INT(MOD(rank * data_size + i + 1, size * data_size), xi)
+           = INT(MOD(comm_rank * data_size + i + 1, comm_size * data_size), xi)
     END DO
     dst_idxlist = xt_idxvec_new(dst_index_list)
     ! xmap
@@ -134,7 +134,7 @@ CONTAINS
     dst_data(:) = -1.0d0
 
     DO i = 1, src_num_indices
-      src_data(i) = DBLE(rank * data_size + i - 1)
+      src_data(i) = DBLE(comm_rank * data_size + i - 1)
     END DO
 
     CALL check_redist(redist, src_data, dst_data, dst_index_list)
@@ -156,9 +156,9 @@ CONTAINS
     TYPE(Xt_redist) :: redist
     INTEGER :: i, src_num_indices, dst_num_indices
 
-    ALLOCATE(src_index_list(size), dst_index_list(size), &
-         src_data(size), dst_data(size))
-    src_num_indices = MERGE(size, 0, rank == 0)
+    ALLOCATE(src_index_list(comm_size), dst_index_list(comm_size), &
+         src_data(comm_size), dst_data(comm_size))
+    src_num_indices = MERGE(comm_size, 0, comm_rank == 0)
     DO i = 1, src_num_indices
       src_index_list(i) = INT(i - 1, xi)
     END DO
@@ -166,7 +166,7 @@ CONTAINS
     src_idxlist = xt_idxvec_new(src_index_list, src_num_indices)
 
     ! destination index list
-    dst_num_indices = size
+    dst_num_indices = comm_size
     DO i = 1, dst_num_indices
       dst_index_list(i) = INT(i - 1, xi)
     END DO
@@ -187,8 +187,8 @@ CONTAINS
          __LINE__)
 
     ! test exchange
-    IF (rank == 0) THEN
-      DO i = 1, size
+    IF (comm_rank == 0) THEN
+      DO i = 1, comm_size
         src_data(i) = DBLE(i - 1)
       END DO
     ELSE
@@ -198,10 +198,10 @@ CONTAINS
 
     CALL xt_redist_s_exchange(redist, src_data, dst_data)
 
-    DO i = 1, size
+    DO i = 1, comm_size
       IF (dst_data(i) /= DBLE(i - 1)) EXIT
     END DO
-    IF (i <= size) &
+    IF (i <= comm_size) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -231,12 +231,12 @@ CONTAINS
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist, block_redist, block_redist2
 
-    IF (2 * size > HUGE(1_xt_int_kind)) &
+    IF (2 * comm_size > HUGE(1_xt_int_kind)) &
          CALL test_abort('too large number of tasks', &
          __FILE__, &
          __LINE__)
     ! the global index domain (1dim problem):
-    ngdom = 2 * size
+    ngdom = 2 * comm_size
     ! start state (index distribution) of global domain
     ALLOCATE(gdoma(ngdom), gdomb(ngdom))
     ! end state ""
@@ -252,10 +252,10 @@ CONTAINS
       gvol_size = gvol_size + gdepth(i)
     END DO
 
-    nwin = ngdom / size ! my local window size of the global surface domain
+    nwin = ngdom / comm_size ! my local window size of the global surface domain
     ! start of my window within global index domain (== global offset)
-    ig0 = rank * nwin
-    IF (nwin * size /= ngdom) &
+    ig0 = comm_rank * nwin
+    IF (nwin * comm_size /= ngdom) &
          CALL test_abort("internal error", &
          __FILE__, &
          __LINE__)
