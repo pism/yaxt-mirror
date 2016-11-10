@@ -161,6 +161,57 @@ int main(void) {
     xt_redist_delete(redist_repeat);
   }
 
+  {
+    // test with one redist used three times with asymmetric displacements
+    // set up data
+    enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
+    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
+    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    xt_xmap_delete(xmap);
+
+    // generate redist_repetition
+
+    enum { num_repetitions = 3 };
+    Xt_redist redist_repeat;
+    static const double src_data[num_repetitions][src_slice_len]
+      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+    double dst_data[num_repetitions][dst_slice_len];
+    MPI_Aint src_extent =
+      (MPI_Aint)((size_t)(src_data[1] - src_data[0]) * sizeof (double));
+    MPI_Aint dst_extent =
+      (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof (double));
+    int src_displacements[num_repetitions] = {0, 1, 2};
+    int dst_displacements[num_repetitions] = {2, 1, 0};
+
+    redist_repeat = xt_redist_repeat_asym_new(redist, src_extent, dst_extent,
+                                              num_repetitions, src_displacements,
+                                              dst_displacements);
+
+    // test communicator of redist
+
+    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
+                                     MPI_COMM_WORLD))
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+    xt_redist_delete(redist);
+
+    // test exchange
+    {
+      for (size_t j = 0; j < num_repetitions; ++j)
+        for (size_t i = 0; i < dst_slice_len; ++i)
+          dst_data[j][i] = -1.0;
+
+      static const double ref_dst_data[num_repetitions][dst_slice_len]
+        = {{11,13,15},{6,8,10},{1,3,5}};
+      check_redist(redist_repeat, src_data,
+                   sizeof (dst_data), dst_data, ref_dst_data);
+    }
+
+    // clean up
+
+    xt_redist_delete(redist_repeat);
+  }
+
   { // test with one redist used three times with gaps between the levels
     enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
     Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);

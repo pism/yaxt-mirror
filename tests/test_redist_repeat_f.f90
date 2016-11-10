@@ -63,6 +63,7 @@ PROGRAM test_redist_repeat
   CALL test_repeated_redist
   CALL test_repeated_redist_with_gap
   CALL test_repeated_overlapping_redist
+  CALL test_repeated_redist_asym
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
@@ -195,6 +196,60 @@ CONTAINS
     ! clean up
     CALL xt_redist_delete(redist_repeat)
   END SUBROUTINE test_repeated_redist
+
+  SUBROUTINE test_repeated_redist_asym
+    ! test asymmetric variant of redist_repeat
+
+    INTEGER, PARAMETER :: num_slice = 3
+    INTEGER, PARAMETER :: src_slice_len = 5
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redist, redist_repeat
+    INTEGER(mpi_address_kind) :: src_extent, dst_extent
+    INTEGER(mpi_address_kind) :: base_address, temp_address
+    INTEGER(c_int) :: src_displacements(3), dst_displacements(3)
+    DOUBLE PRECISION, TARGET :: src_data(5, 3), dst_data(3, 3), ref_dst_data(3, 3)
+    INTEGER, PARAMETER :: dp =  KIND(src_data)
+    INTEGER :: i, ierror
+
+    ! xmap: [1,2,3,4,5] -> [1,3,5]
+    xmap = build_odd_selection_xmap(src_slice_len)
+
+    redist = xt_redist_p2p_new(xmap, mpi_double_precision)
+
+    CALL xt_xmap_delete(xmap)
+
+    ! generate redist_repeat:
+    CALL mpi_get_address(src_data(1,1), base_address, ierror)
+    CALL mpi_get_address(src_data(1,2), temp_address, ierror)
+    src_extent = temp_address - base_address
+    CALL mpi_get_address(dst_data(1,1), base_address, ierror)
+    CALL mpi_get_address(dst_data(1,2), temp_address, ierror)
+    dst_extent = temp_address - base_address
+
+    ! repeated redist parameters:
+    src_displacements = [0,1,2]
+    dst_displacements = [2,0,1]
+
+    ! test data:
+    src_data = RESHAPE( [(i, i = 1, 15)]*1.0_dp, [5,3] )
+    ref_dst_data =  RESHAPE( [6,8,10, 11,13,15, 1,3,5 ]*1.0_dp, [3,3] )
+
+    ! connect to explicit shape interface:
+    redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
+         num_slice, src_displacements, dst_displacements)
+    dst_data = -1.0_dp
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
+    CALL xt_redist_delete(redist_repeat)
+
+    ! connect to assumed shape interface:
+    redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
+         src_displacements, dst_displacements)
+    dst_data = -1.0_dp
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
+    CALL xt_redist_delete(redist_repeat)
+
+    CALL xt_redist_delete(redist)
+  END SUBROUTINE test_repeated_redist_asym
 
   SUBROUTINE test_repeated_redist_with_gap
     ! test with one redist used three times (with two different input data

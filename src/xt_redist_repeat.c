@@ -102,9 +102,10 @@ generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
   *nmsgs = (int)(num_messages + num_ranks);
 }
 
-Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
-                               MPI_Aint dst_extent, int num_repetitions,
-                               const int displacements[num_repetitions]) {
+Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
+                                    MPI_Aint dst_extent, int num_repetitions,
+                                    const int src_displacements[num_repetitions],
+                                    const int dst_displacements[num_repetitions]) {
 
   int nsend = 0, nrecv = 0;
   struct Xt_redist_msg *send_msgs = NULL, *recv_msgs = NULL;
@@ -118,17 +119,27 @@ Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
 
 
   generate_msg_infos(&send_msgs, &nsend, src_extent,
-                     displacements, redist, num_repetitions, comm,
+                     src_displacements, redist, num_repetitions, comm,
                      SEND, xt_redist_get_send_MPI_Datatype);
 
   generate_msg_infos(&recv_msgs, &nrecv, dst_extent,
-                     displacements, redist, num_repetitions, comm,
+                     dst_displacements, redist, num_repetitions, comm,
                      RECV, xt_redist_get_recv_MPI_Datatype);
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
+}
+
+Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
+                               MPI_Aint dst_extent, int num_repetitions,
+                               const int displacements[num_repetitions]) {
+
+  return xt_redist_repeat_asym_new(redist, src_extent,
+                                   dst_extent, num_repetitions,
+                                   displacements,
+                                   displacements);
 }
 
 /*

@@ -72,14 +72,32 @@
  *                            for the destination data
  * @param[in] num_repetitions number of repetitions of the given
  *                            redistribution
- * @param[in] displacements   displacements for each repetition
+ * @param[in] displacements   displacements for repetitions
  *
- * \remarks all redistributions need to be based on the same
- *          MPI communicator
  */
 Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                                MPI_Aint dst_extent, int num_repetitions,
                                const int displacements[num_repetitions]);
+
+/**
+ * constructor for a redistribution that has a repetitive pattern, which
+ * is described by the given redistribution
+ * @param[in] redist          redistribution
+ * @param[in] src_extent      extent that scales the given displacements
+ *                            for the source data
+ * @param[in] dst_extent      extent that scales the given displacements
+ *                            for the destination data
+ * @param[in] num_repetitions number of repetitions of the given
+ *                            redistribution
+ * @param[in] src_displacements  displacements for source repetitions
+ *
+ * @param[in] dst_displacements  displacements for destination repetitions
+ *
+ */
+Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
+                                    MPI_Aint dst_extent, int num_repetitions,
+                                    const int src_displacements[num_repetitions],
+                                    const int dst_displacements[num_repetitions]);
 
 #endif // XT_REDIST_REPEAT_H
 

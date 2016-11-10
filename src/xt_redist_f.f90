@@ -173,6 +173,18 @@ MODULE xt_redist_base
       TYPE(c_ptr) :: res
     END FUNCTION xt_redist_repeat_new_c
 
+    FUNCTION xt_redist_repeat_asym_new_c(redist_f, src_extent, dst_extent, &
+         num_repetitions, src_displacements, dst_displacements) &
+         BIND(C, name='xt_redist_repeat_asym_new') RESULT(res)
+      IMPORT :: xt_redist, mpi_address_kind, c_ptr, xt_mpi_fint_kind, c_int
+      IMPLICIT NONE
+      TYPE(c_ptr), VALUE, INTENT(in)  :: redist_f
+      INTEGER(mpi_address_kind), VALUE, INTENT(in) :: src_extent, dst_extent
+      INTEGER(c_int), VALUE, INTENT(in) :: num_repetitions
+      INTEGER(c_int), INTENT(in) :: src_displacements(*), dst_displacements(*)
+      TYPE(c_ptr) :: res
+    END FUNCTION xt_redist_repeat_asym_new_c
+
   END INTERFACE
 
   INTERFACE xt_redist_collection_static_new
@@ -196,6 +208,8 @@ MODULE xt_redist_base
   INTERFACE xt_redist_repeat_new
     MODULE PROCEDURE xt_redist_repeat_new_i4_a1d
     MODULE PROCEDURE xt_redist_repeat_new_a1d
+    MODULE PROCEDURE xt_redist_repeat_asym_new_i4_a1d
+    MODULE PROCEDURE xt_redist_repeat_asym_new_a1d
   END INTERFACE xt_redist_repeat_new
 
   PUBLIC :: xt_redist_c2f, xt_redist_f2c, xt_is_null, xt_redist_copy, &
@@ -542,6 +556,39 @@ CONTAINS
     res = xt_redist_c2f(xt_redist_repeat_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions, displacements))
   END FUNCTION xt_redist_repeat_new_a1d
+
+  FUNCTION xt_redist_repeat_asym_new_i4_a1d(redist, src_extent, dst_extent, &
+       num_repetitions, src_displacements, dst_displacements) RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(mpi_address_kind), INTENT(in) :: src_extent, dst_extent
+    INTEGER(i4), INTENT(in) :: num_repetitions
+    INTEGER(c_int), INTENT(in) :: src_displacements(num_repetitions), &
+         & dst_displacements(num_repetitions)
+    TYPE(xt_redist) :: res
+    res = xt_redist_c2f(xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
+         src_extent, dst_extent, num_repetitions, src_displacements, &
+         dst_displacements))
+  END FUNCTION xt_redist_repeat_asym_new_i4_a1d
+
+  FUNCTION xt_redist_repeat_asym_new_a1d(redist, src_extent, dst_extent, &
+       src_displacements, dst_displacements) RESULT(res)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(mpi_address_kind), INTENT(in) :: src_extent, dst_extent
+    INTEGER(c_int), INTENT(in) :: src_displacements(:), dst_displacements(:)
+    TYPE(xt_redist) :: res
+
+    INTEGER(i4) :: num_repetitions
+
+    num_repetitions = SIZE(src_displacements)
+    IF (num_repetitions /= SIZE(dst_displacements)) &
+         CALL xt_abort("unequal size for src and dst displacements", &
+         __FILE__, &
+         __LINE__)
+
+    res = xt_redist_c2f(xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
+         src_extent, dst_extent, num_repetitions, src_displacements, &
+         dst_displacements))
+  END FUNCTION xt_redist_repeat_asym_new_a1d
 
   FUNCTION xt_redist_p2p_ext_new_i2_a1d_i2_a1d(xmap, num_src_ext, src_extents, &
        num_dst_ext, dst_extents, datatype) RESULT(redist)
