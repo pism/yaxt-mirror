@@ -165,7 +165,7 @@ CONTAINS
   SUBROUTINE check_redist_collection_static
     INTEGER, PARAMETER :: nr = 2
     TYPE(xt_redist) :: rvec(nr), rcol
-    INTEGER, TARGET :: f(ie,je,nr), g(ie,je,nr), ref_g(ie,je,nr)
+    INTEGER :: f(ie,je,nr), g(ie,je,nr), ref_g(ie,je,nr)
     INTEGER(mpi_address_kind) :: f_addr(nr), g_addr(nr)
     INTEGER(mpi_address_kind) :: f_disp(nr), g_disp(nr)
 

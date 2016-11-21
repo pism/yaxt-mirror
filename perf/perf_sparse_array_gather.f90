@@ -18,8 +18,8 @@ PROGRAM perf_sparse_array_gather
 
   INTEGER :: gshape(3), gstart(3), nparts(2), num_parts, sshape(3), gsize, &
        section_shape(3), section_start(3), section_size, ofs, ierror
-  DOUBLE PRECISION, TARGET, ALLOCATABLE :: gathered_data(:, :, :)
-  DOUBLE PRECISION, TARGET, ALLOCATABLE :: scattered_data(:, :, :)
+  DOUBLE PRECISION, ALLOCATABLE :: gathered_data(:, :, :), &
+       scattered_data(:, :, :)
   TYPE(xt_offset_ext) :: gather_ext(1)
   TYPE(xt_offset_ext), ALLOCATABLE :: scatter_exts(:,:)
   TYPE(xt_idxlist) :: gather_list

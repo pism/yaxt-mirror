@@ -45,7 +45,6 @@
 !
 PROGRAM test_redist_p2p_parallel
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_int_kind, xi => xt_int_kind, &
@@ -150,7 +149,7 @@ CONTAINS
   SUBROUTINE nonuniform_test
     ! source index list
     INTEGER(xt_int_kind), ALLOCATABLE :: src_index_list(:), dst_index_list(:)
-    DOUBLE PRECISION, ALLOCATABLE, TARGET :: src_data(:), dst_data(:)
+    DOUBLE PRECISION, ALLOCATABLE :: src_data(:), dst_data(:)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist
