@@ -338,7 +338,7 @@ CONTAINS
     CALL check_peer_xmap(xmap, stripe_in_local_group(1), remote_size, &
          global_num_idx)
     xmap_copy = xt_xmap_copy(xmap)
-    CALL check_peer_xmap(xmap, stripe_in_local_group(1), remote_size, &
+    CALL check_peer_xmap(xmap_copy, stripe_in_local_group(1), remote_size, &
          global_num_idx)
     CALL xt_xmap_delete(xmap)
     CALL xt_xmap_delete(xmap_copy)
