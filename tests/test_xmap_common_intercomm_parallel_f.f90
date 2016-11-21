@@ -199,7 +199,7 @@ CONTAINS
     ! verify expected results
     CALL check_allgather_analog_xmap(xmap, comm)
     xmap_copy = xt_xmap_copy(xmap)
-    CALL check_allgather_analog_xmap(xmap, comm)
+    CALL check_allgather_analog_xmap(xmap_copy, comm)
 
     ! clean up
     CALL xt_xmap_delete(xmap)
