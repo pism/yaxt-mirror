@@ -62,10 +62,10 @@ MODULE redist_collection_displace
   IMPLICIT NONE
   PRIVATE
   INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
-    INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
-    INTEGER, PARAMETER :: src_slice_len = 5
-    INTEGER, PARAMETER :: dst_slice_len &
-         = (src_slice_len + dst_step - 1)/dst_step
+  INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
+  INTEGER, PARAMETER :: src_slice_len = 5
+  INTEGER, PARAMETER :: dst_slice_len &
+       = (src_slice_len + dst_step - 1)/dst_step
   PUBLIC :: test_displacement_variations
 CONTAINS
   ! test with one redist used three times (with different input
