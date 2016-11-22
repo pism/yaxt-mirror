@@ -211,9 +211,14 @@ CONTAINS
     INTEGER(mpi_address_kind) :: src_extent, dst_extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int) :: src_displacements(3), dst_displacements(3)
-    DOUBLE PRECISION, TARGET :: src_data(5, 3), dst_data(3, 3), ref_dst_data(3, 3)
-    INTEGER, PARAMETER :: dp =  KIND(src_data)
     INTEGER :: i, ierror
+    DOUBLE PRECISION, PARAMETER :: &
+         ref_dst_data(3, 3) = RESHAPE([ 6.0d0, 8.0d0, 10.0d0, 11.0d0, 13.0d0, &
+         &                             15.0d0, 1.0d0,  3.0d0,  5.0d0 ], [3,3] )
+    DOUBLE PRECISION, TARGET :: dst_data(3, 3)
+    DOUBLE PRECISION, TARGET, SAVE :: &
+         src_data(5, 3) = RESHAPE([(DBLE(i), i = 1, 15)], [5,3])
+    INTEGER, PARAMETER :: dp = KIND(src_data)
 
     ! xmap: [1,2,3,4,5] -> [1,3,5]
     xmap = build_odd_selection_xmap(src_slice_len)
@@ -233,10 +238,6 @@ CONTAINS
     ! repeated redist parameters:
     src_displacements = [0,1,2]
     dst_displacements = [2,0,1]
-
-    ! test data:
-    src_data = RESHAPE( [(i, i = 1, 15)]*1.0_dp, [5,3] )
-    ref_dst_data =  RESHAPE( [6,8,10, 11,13,15, 1,3,5 ]*1.0_dp, [3,3] )
 
     ! connect to explicit shape interface:
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
