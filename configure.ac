@@ -136,7 +136,12 @@ AC_FC_DUMMY_MAIN(,[:])
 AC_FC_WRAPPERS
 ACX_FC_LOGICAL_INTEROP([HAVE_FC_LOGICAL_INTEROP=yes
   FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_LOGICAL_INTEROP"])
-dnl
+dnl Do we need helper functions for contiguous arrays?
+ACX_FC_HAVE_IS_CONTIGUOUS([HAVE_FC_IS_CONTIGUOUS=yes
+  FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_IS_CONTIGUOUS"
+  AC_DEFINE([HAVE_FC_IS_CONTIGUOUS],[1])])
+AH_TEMPLATE([HAVE_FC_IS_CONTIGUOUS],
+  [Defined to 1 if Fortran compiler supports IS_CONTIGUOUS query, 0 if not])dnl
 dnl Check whether char is unsigned by default
 AC_C_CHAR_UNSIGNED
 AS_IF([test x$ac_cv_c_char_unsigned = xyes],

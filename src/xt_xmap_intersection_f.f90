@@ -190,6 +190,8 @@ CONTAINS
     TYPE(c_ptr), INTENT(out) :: com_p
 
     INTEGER :: com_size
+    LOGICAL :: com_is_contiguous
+#ifndef HAVE_FC_IS_CONTIGUOUS
     INTERFACE
       FUNCTION xt_com_list_contiguous(com_a, com_b) RESULT(p) &
             BIND(c, name='xt_com_list_contiguous')
@@ -198,6 +200,7 @@ CONTAINS
         INTEGER(c_int) :: p
       END FUNCTION xt_com_list_contiguous
     END INTERFACE
+#endif
 
     com_size = SIZE(com)
     IF (com_size > HUGE(1_c_int)) &
@@ -206,11 +209,16 @@ CONTAINS
          __LINE__)
     IF (com_size > 0) THEN
       IF (com_size > 1) THEN
-        IF (xt_com_list_contiguous(com(1), com(2)) /= 0) THEN
+#ifdef HAVE_FC_IS_CONTIGUOUS
+        com_is_contiguous = IS_CONTIGUOUS(com)
+#else
+        com_is_contiguous = xt_com_list_contiguous(com(1), com(2)) /= 0
+#endif
+        IF (com_is_contiguous) THEN
           CALL xt_slice_c_loc(com(1), com_p)
         ELSE
           ALLOCATE(com_a(com_size))
-          com_a(:) = com(:)
+          com_a = com
           com_p = C_LOC(com_a)
         END IF
       ELSE

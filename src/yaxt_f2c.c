@@ -349,12 +349,14 @@ xt_xmap_intersection_ext_new_f2c(
     src_idxlist, dst_idxlist, MPI_Comm_f2c(comm));
 }
 
+#ifndef HAVE_FC_IS_CONTIGUOUS
 int
 xt_com_list_contiguous(const struct Xt_com_list *p_com_a,
                        const struct Xt_com_list *p_com_b)
 {
   return (p_com_a + 1 == p_com_b);
 }
+#endif
 
 void
 xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {
