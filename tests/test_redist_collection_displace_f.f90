@@ -2,7 +2,7 @@
 !! @file test_redist_collection_displace.f90
 !! @brief Fortran cache displacement test of redist_collection class
 !!
-!! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!

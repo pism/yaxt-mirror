@@ -52,9 +52,13 @@ PROGRAM test_redist_repeat
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_repeat_new, &
-       xt_redist_delete, xt_redist_s_exchange1
+       xt_redist_delete, xt_redist_s_exchange
+#if defined __PGI && __PGIC__ == 15
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+#endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
-  USE iso_c_binding, ONLY: c_loc, c_int
+  USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -302,7 +306,7 @@ CONTAINS
     INTEGER :: i, j, ierror
     INTEGER, PARAMETER :: src_pos(npt) = (/ (i, i=1,npt) /), &
          dst_pos(npt) = (/ (2*i, i = 0, npt-1) /)
-    DOUBLE PRECISION, TARGET :: src_data(npt), dst_data(npt)
+    DOUBLE PRECISION :: src_data(npt), dst_data(npt)
 #if __INTEL_COMPILER >= 1600 && __INTEL_COMPILER <= 1602 || defined __PGI
     DOUBLE PRECISION :: ref_dst_data(npt)
 #else
@@ -334,8 +338,8 @@ CONTAINS
     dst_data = -1.0d0
 
     ! test individual redists
-    CALL redist_dbl(redist, src_data, dst_data)
-    CALL redist_dbl(redist, src_data(2:), dst_data(2:))
+    CALL xt_redist_s_exchange(redist, src_data, dst_data)
+    CALL xt_redist_s_exchange(redist, src_data(2:), dst_data(2:))
     ! check individual redists to have desired effect
     IF (ANY(dst_data /= ref_dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange1", &
@@ -360,14 +364,6 @@ CONTAINS
     ! clean up
     CALL xt_redist_delete(redist_repeat)
   END SUBROUTINE test_repeated_overlapping_redist
-
-  ! work-around for F2003 restriction on slice c_loc
-  SUBROUTINE redist_dbl(redist, src_data, dst_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src_data(*)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst_data(*)
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(dst_data))
-  END SUBROUTINE redist_dbl
 
 END PROGRAM test_redist_repeat
 !
