@@ -135,9 +135,8 @@ CONTAINS
 
   SUBROUTINE check_redist_dp2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, INTENT(in) :: src(:)
-    DOUBLE PRECISION, INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+    DOUBLE PRECISION, INTENT(in) :: src(:), ref_dst(:)
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -158,7 +157,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i2), INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -179,7 +178,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i4), INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -200,7 +199,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i8), INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -221,7 +220,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:,:)
     DOUBLE PRECISION, INTENT(in) :: ref_dst(:,:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:,:)
+    DOUBLE PRECISION, INTENT(inout) :: dst(:,:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -256,7 +255,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i2), INTENT(in) :: src(:)
     INTEGER(i2), INTENT(in) :: ref_dst(:)
-    INTEGER(i2), TARGET, INTENT(inout) :: dst(:)
+    INTEGER(i2), INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -277,7 +276,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i4), INTENT(in) :: src(:)
     INTEGER(i4), INTENT(in) :: ref_dst(:)
-    INTEGER(i4), TARGET, INTENT(inout) :: dst(:)
+    INTEGER(i4), INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
@@ -298,7 +297,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i8), INTENT(in) :: src(:)
     INTEGER(i8), INTENT(in) :: ref_dst(:)
-    INTEGER(i8), TARGET, INTENT(inout) :: dst(:)
+    INTEGER(i8), INTENT(inout) :: dst(:)
 
     INTEGER :: dst_size, ref_dst_size
     dst_size = SIZE(dst)
