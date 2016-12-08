@@ -82,7 +82,7 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
     for (int i = 0; i < num_transfer_pos; ++i)
       tmp_displ[i] = offsets[transfer_pos[i]];
 
-      displ = tmp_displ;
+    displ = tmp_displ;
 
   } else
     displ = transfer_pos;
