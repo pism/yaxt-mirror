@@ -59,8 +59,15 @@
 //#define DEBUG
 //#define CHECK_RESULTS
 
+enum initializationType {
+  INIT_NONE,
+  INIT_SIMPLE,
+  INIT_IDXLIST,
+};
+
 struct config {
 
+  int initialize;
    int x, y, z; // global data size (default 1024 * 512 * 1)
 
    struct {
@@ -72,15 +79,17 @@ struct config {
 
 enum direction { SOURCE = 0, DESTINATION = 1};
 
+#ifdef DEBUG
 static void
 print_index(Xt_idxlist idxsection, int rank, enum direction dir) {
   static const char dirMsg[2][4] = { "SRC", "DST" };
   for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
     Xt_int value;
     xt_idxlist_get_index_at_position (idxsection, p, &value);
-    printf ("rank: %d , INDEX_%s: %ld \n", rank, dirMsg[dir], (long)value);
+    printf ("rank: %d , INDEX_%s: %"XT_INT_FMT" \n", rank, dirMsg[dir], value);
   }
 }
+#endif
 
 static void
 calc_blocks(int nprocs, int dim2, int dim1, int *dim2_block, int *dim1_block) {
@@ -266,7 +275,17 @@ get_config(struct config *conf, int argc, char** argv, int nprocs){
   int map = 0;
   int par = 0;
 
-  while(( par = getopt(argc, argv, "x:y:z:")) != -1) {
+  static const struct {
+    const char str[8];
+    enum initializationType type;
+  } initMap[] = {
+    {  "none", INIT_NONE },
+    {  "simple", INIT_SIMPLE },
+    {  "idxlist", INIT_IDXLIST },
+  };
+  conf->initialize = INIT_NONE;
+  enum { initMapSize = sizeof (initMap) / sizeof (initMap[0]) };
+  while(( par = getopt(argc, argv, "x:y:z:i:")) != -1) {
     switch(par) {
       case 'x':
         conf->x = atoi(optarg);
@@ -282,6 +301,24 @@ get_config(struct config *conf, int argc, char** argv, int nprocs){
         break;
       case '?':
         //printf("No arguments \n");
+        break;
+      case 'i':
+        {
+          size_t i;
+          for (i = 0; i < initMapSize; ++i)
+            if (!strcmp(optarg, initMap[i].str))
+              break;
+          if (i < initMapSize)
+            conf->initialize = initMap[i].type;
+          else {
+            fprintf(stderr, "unknown type of initialization requested: %s\n",
+                    optarg);
+            fputs("available types: ", stderr);
+            for (i = 0; i < initMapSize; ++i)
+              fprintf(stderr, "%s%s", initMap[i].str,
+                      i < initMapSize - 1 ? ", " : "\n");
+          }
+        }
         break;
     }
   }
@@ -373,9 +410,17 @@ int main(int argc, char** argv) {
     dst_array = calloc((size_t)dst_len, sizeof(dst_array));
 
     // init arrays with fake data
-    // init_data(src_array, src_len, 0);
-    // init_data(dst_array, dst_len, 1);
-    init_data_with_index_list(src_array, src_len, src_idxsection);
+   switch (conf.initialize) {
+   case INIT_NONE:
+     break;
+   case INIT_SIMPLE:
+     init_data(src_array, src_len, 0);
+     init_data(dst_array, dst_len, 1);
+     break;
+   case INIT_IDXLIST:
+     init_data_with_index_list(src_array, src_len, src_idxsection);
+     break;
+   }
 
     //array poiter, especially necessary for data array number > 1
     int* src_array_p = src_array;
