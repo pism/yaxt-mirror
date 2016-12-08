@@ -474,9 +474,12 @@ generate_dir_transfer_ext_dst(
                                  &num_stripes);
     struct Xt_pos_ext *restrict isect_pos_exts = NULL;
     int num_isect_pos_exts;
-    int retval = xt_idxlist_get_pos_exts_of_index_stripes(
-      mypart_idxlist, num_stripes, intersection_idxstripes,
-      &num_isect_pos_exts, (struct Xt_pos_ext **)&isect_pos_exts, 1);
+#ifndef NDEBUG
+    int retval =
+#endif
+      xt_idxlist_get_pos_exts_of_index_stripes(
+        mypart_idxlist, num_stripes, intersection_idxstripes,
+        &num_isect_pos_exts, (struct Xt_pos_ext **)&isect_pos_exts, 1);
     assert(retval == 0);
     int isect_pos_exts_size_psum = 0;
     int intersection_size = xt_idxlist_get_num_indices(intersections[i].list);
@@ -906,10 +909,13 @@ remap_intersection(Xt_idxlist mypart_idxlist,
 
   /* match back intersection_idxstripes to positions in mypart */
   resSet->transfer_pos_ext = NULL;
-  int retval = xt_idxlist_get_pos_exts_of_index_stripes(
-    mypart_idxlist, num_stripes, intersection_idxstripes,
-    &resSet->num_transfer_pos_ext,
-    &resSet->transfer_pos_ext, single_match_only);
+#ifndef NDEBUG
+  int retval =
+#endif
+    xt_idxlist_get_pos_exts_of_index_stripes(
+      mypart_idxlist, num_stripes, intersection_idxstripes,
+      &resSet->num_transfer_pos_ext,
+      &resSet->transfer_pos_ext, single_match_only);
   assert(retval == 0);
   free(intersection_idxstripes);
 }

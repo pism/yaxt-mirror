@@ -287,9 +287,12 @@ generate_dir_transfer_pos_dst(int num_intersections,
       = xrealloc(intersection_pos,
                  (size_t)max_intersection_size * sizeof(*intersection_pos));
 
-    int retval = xt_idxlist_get_positions_of_indices(
-      mypart_idxlist, intersection_idxvec, max_intersection_size,
-      intersection_pos, 1);
+#ifndef NDEBUG
+    int retval =
+#endif
+      xt_idxlist_get_positions_of_indices(
+        mypart_idxlist, intersection_idxvec, max_intersection_size,
+        intersection_pos, 1);
     assert(retval == 0);
 
     // we have to enforce single_match_only not only within a single
@@ -417,10 +420,12 @@ generate_dir_transfer_pos_src(int num_intersections,
       offset = offset + num_indices_to_remove;
     }
 
-    int retval;
-    retval = xt_idxlist_get_positions_of_indices(
-      mypart_idxlist, intersection_idxvec, intersection_size,
-      intersection_pos, 0);
+#ifndef NDEBUG
+    int retval =
+#endif
+      xt_idxlist_get_positions_of_indices(
+        mypart_idxlist, intersection_idxvec, intersection_size,
+        intersection_pos, 0);
     assert(retval == 0);
 
     if (intersection_size > 0) {

@@ -267,8 +267,11 @@ create_intersections(struct Xt_xmdd_txstat tx_stat[2],
   struct bucket_params bucket_params
     = get_bucket_params(idxlist, interval_size, comm_size);
   *send_buffer = NULL;
-  size_t num_msg = compute_and_pack_bucket_intersections(
-    &bucket_params, idxlist, send_size, send_buffer, comm, comm_size);
+#ifndef NDEBUG
+  size_t num_msg =
+#endif
+    compute_and_pack_bucket_intersections(
+      &bucket_params, idxlist, send_size, send_buffer, comm, comm_size);
   xt_mpi_call(MPI_Alltoall(send_size, SEND_SIZE_ASIZE, MPI_INT,
                            recv_size, SEND_SIZE_ASIZE, MPI_INT, comm), comm);
   compress_sizes(recv_size, comm_size, tx_stat + 0, NULL);
