@@ -809,22 +809,22 @@ generate_dir_transfer_pos_ext_src(
 
     int num_indices_to_remove = removals_per_intersection[i][0];
 
-    if (num_indices_to_remove != intersection_size) {} else
-      /* intersection is made redundant */
-      continue;
+    /* intersection might be redundant */
+    if (num_indices_to_remove != intersection_size) {
 
-    remap_intersection(mypart_idxlist, intersections[i].list,
-                       (size_t)removals_per_intersection[i][1],
-                       pos_updates + intersection_pos_ext,
-                       resSets_ + new_num_intersections, 0);
+      remap_intersection(mypart_idxlist, intersections[i].list,
+                         (size_t)removals_per_intersection[i][1],
+                         pos_updates + intersection_pos_ext,
+                         resSets_ + new_num_intersections, 0);
 
-    /* evaluate cache lazily */
-    resSets_[new_num_intersections].transfer_pos = NULL;
-    resSets_[new_num_intersections].num_transfer_pos
-      = intersection_size - num_indices_to_remove;
-    resSets_[new_num_intersections].rank = intersections[i].rank;
-    new_num_intersections++;
-    intersection_pos_ext += (size_t)removals_per_intersection[i][1];
+      /* evaluate cache lazily */
+      resSets_[new_num_intersections].transfer_pos = NULL;
+      resSets_[new_num_intersections].num_transfer_pos
+        = intersection_size - num_indices_to_remove;
+      resSets_[new_num_intersections].rank = intersections[i].rank;
+      new_num_intersections++;
+      intersection_pos_ext += (size_t)removals_per_intersection[i][1];
+    }
   }
 
   *resCount = new_num_intersections;
