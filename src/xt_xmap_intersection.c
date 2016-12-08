@@ -301,7 +301,7 @@ generate_dir_transfer_pos_dst(
     int intersection_size = 0;
     int num_indices_to_remove_isect = 0;
 
-    /* at most intersection_size many indices need to be removed */
+    /* at most max_intersection_size many indices need to be removed */
     ENSURE_ARRAY_SIZE(indices_to_remove_, curr_indices_to_remove_size,
                       total_num_indices_to_remove
                       + (size_t)max_intersection_size);
