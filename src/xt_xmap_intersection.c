@@ -249,14 +249,14 @@ count_transfer_pos_ext(size_t intersection_size,
 
 /* compute list positions for recv direction */
 static int
-generate_dir_transfer_pos_dst(int num_intersections,
-                              const struct Xt_com_list
-                              intersections[num_intersections],
-                              Xt_idxlist mypart_idxlist,
-                              int *resCount,
-                              struct exchange_data **resSets,
-                              Xt_int ** indices_to_remove,
-                              int *num_indices_to_remove_per_intersection)
+generate_dir_transfer_pos_dst(
+  int num_intersections,
+  const struct Xt_com_list intersections[num_intersections],
+  Xt_idxlist mypart_idxlist,
+  int *resCount,
+  struct exchange_data **resSets,
+  Xt_int **indices_to_remove,
+  int *restrict num_indices_to_remove_per_intersection)
 {
   struct exchange_data *restrict resSets_
     = *resSets = xmalloc((size_t)num_intersections * sizeof(**resSets));
