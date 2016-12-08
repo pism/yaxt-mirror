@@ -369,8 +369,8 @@ generate_dir_transfer_pos_src(int num_intersections,
                               Xt_idxlist mypart_idxlist,
                               int *resCount,
                               struct exchange_data **resSets,
-                              Xt_int * indices_to_remove,
-                              int * num_indices_to_remove_per_intersection)
+                              const Xt_int *indices_to_remove,
+                              const int *num_indices_to_remove_per_intersection)
 {
 
   struct exchange_data *restrict resSets_ = *resSets
@@ -457,9 +457,9 @@ exchange_points_to_remove(int num_src_intersections,
                           int num_dst_intersections,
                           const struct Xt_com_list
                           dst_com[num_dst_intersections],
-                          Xt_int ** src_indices_to_remove,
+                          Xt_int **src_indices_to_remove,
                           int *restrict num_src_indices_to_remove_per_intersection,
-                          Xt_int * dst_indices_to_remove,
+                          Xt_int *dst_indices_to_remove,
                           int *restrict num_dst_indices_to_remove_per_intersection,
                           int tag_offset,
                           MPI_Comm comm) {
