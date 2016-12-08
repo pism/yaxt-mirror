@@ -690,15 +690,13 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
 
   Xt_idxsection section = (Xt_idxsection)idxlist;
 
-  size_t nstripes;
+  int ndim = section->ndim;
+  struct dim_desc *restrict dims = section->dims;
 
-  if (section->dims[section->ndim-1].local_size == 0)
-    nstripes = 0;
-  else
-    nstripes = 1;
+  size_t nstripes = dims[ndim-1].local_size != 0;
 
-  for (int i = 0; i < section->ndim-1; ++i)
-    nstripes *= (size_t)abs(section->dims[i].local_size);
+  for (int i = 0; i < ndim-1; ++i)
+    nstripes *= (size_t)abs(dims[i].local_size);
 
   if (nstripes == 0) {
     *num_stripes = (int)nstripes;
@@ -708,34 +706,41 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
 
   INSTR_START(instr);
 
-  struct Xt_stripe *p = xmalloc(nstripes * sizeof(**stripes));
+  struct Xt_stripe *restrict p = xmalloc(nstripes * sizeof(**stripes));
 
-  Xt_int *curr_local_position;
-
-  curr_local_position = xcalloc((size_t)(section->ndim-1),
-                                sizeof(*curr_local_position));
+  enum { curr_local_position_auto_size=16 };
+  Xt_int curr_local_position_auto[curr_local_position_auto_size];
+  Xt_int *restrict curr_local_position;
+  if (ndim-2 <= curr_local_position_auto_size) {
+    curr_local_position = curr_local_position_auto;
+    for (int i = 0; i < ndim-1; ++i)
+      curr_local_position[i] = 0;
+  } else
+    curr_local_position
+      = xcalloc((size_t)(ndim-2), sizeof(*curr_local_position));
 
   for (size_t i = 0; i < nstripes; ++i) {
 
     p[i].start  = section->local_start_index;
-    p[i].nstrides = abs(section->dims[section->ndim-1].local_size);
+    p[i].nstrides = abs(dims[ndim-1].local_size);
     p[i].stride = 1;
 
-    for (int j = 0; j < section->ndim - 1; ++j)
+    for (int j = 0; j < ndim - 1; ++j)
       p[i].start = (Xt_int)(p[i].start
                             + curr_local_position[j]
-                            * section->dims[j].global_stride);
+                            * dims[j].global_stride);
 
-      for (int j = section->ndim - 2; j >= 0; --j)
-        if (curr_local_position[j] < abs(section->dims[j].local_size) - 1) {
-          curr_local_position[j]++;
-          break;
-        } else
-          curr_local_position[j] = 0;
+    for (int j = ndim - 2; j >= 0; --j)
+      if (curr_local_position[j] < abs(dims[j].local_size) - 1) {
+        curr_local_position[j]++;
+        break;
+      } else
+        curr_local_position[j] = 0;
   }
   *stripes = p;
   *num_stripes = (int)nstripes;
-  free(curr_local_position);
+  if (curr_local_position != curr_local_position_auto)
+    free(curr_local_position);
 
   INSTR_STOP(instr);
 }
