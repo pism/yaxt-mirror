@@ -47,6 +47,10 @@
 #include <config.h>
 #endif
 
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -180,7 +184,6 @@ int main(void) {
     Xt_idxlist idxvector = xt_idxvec_new(index_vector, index_num);
 
     // get positions:
-    int retval;
     int intersection_pos[intersection_num];
     static const int ref_intersection_pos[]
       = { 4, 8, 3, 9, 2, 1, 5, 13, 14, 10, 18, 19, 15 };
@@ -191,11 +194,11 @@ int main(void) {
 
     assert((int)intersection_num == (int)ref_intersection_num);
 
-    retval = xt_idxlist_get_positions_of_indices(idxvector,
-                                                 intersection_vector,
-                                                 intersection_num,
-                                                 intersection_pos,
-                                                 single_match_only);
+    int retval = xt_idxlist_get_positions_of_indices(idxvector,
+                                                     intersection_vector,
+                                                     intersection_num,
+                                                     intersection_pos,
+                                                     single_match_only);
     assert(retval == 0);
 
     // check positions:
