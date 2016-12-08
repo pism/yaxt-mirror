@@ -181,6 +181,7 @@ static size_t idxempty_get_pack_size(Xt_idxlist XT_UNUSED(data), MPI_Comm comm)
 void idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
                  int *position, MPI_Comm comm) {
 
+  (void)data;
   assert(data);
   int type = EMPTY;
 
