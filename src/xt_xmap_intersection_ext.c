@@ -885,7 +885,7 @@ refine_stripes(int *num_stripes_,
 
 
 /* match index stripes of intersection to corresponding positions in
- * partition list, optionally updating the stripes
+ * part list, optionally updating the stripes
  * @param num_pos_updates number of position extents describing the
  *                        subset of positions from intersections to use
  * @param pos_updates list of position extents to use from \a intersection
