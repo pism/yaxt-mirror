@@ -204,24 +204,31 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
   INSTR_DEF(instr,"xt_idxsection_new")
   INSTR_START(instr);
 
-  if (num_dimensions <= 0)
-    return xt_idxempty_new();
-  Xt_idxsection idxsection = xmalloc(sizeof (*idxsection)
-                                     + (size_t)num_dimensions *
-                                     sizeof (idxsection->dims[0]));
+  Xt_idxsection idxsection = NULL;
+  int num_indices;
+  if (num_dimensions > 0) {
+    idxsection = xmalloc(sizeof (*idxsection)
+                         + (size_t)num_dimensions *
+                         sizeof (idxsection->dims[0]));
 
-  idxsection->global_start_index = start;
-  idxsection->ndim               = num_dimensions;
+    idxsection->global_start_index = start;
+    idxsection->ndim               = num_dimensions;
 
-  idxsection->index_array_cache  = NULL;
+    idxsection->index_array_cache  = NULL;
 
-  for (int i = 0; i < num_dimensions; ++i) {
-    idxsection->dims[i].global_size = global_size[i];
-    idxsection->dims[i].local_size  = local_size[i];
-    idxsection->dims[i].local_start = local_start[i];
+    for (int i = 0; i < num_dimensions; ++i) {
+      idxsection->dims[i].global_size = global_size[i];
+      idxsection->dims[i].local_size  = local_size[i];
+      idxsection->dims[i].local_start = local_start[i];
+    }
+    num_indices = idxsection_get_num_indices(idxsection);
+  } else {
+    num_indices = 0;
   }
-
-  int num_indices = idxsection_get_num_indices(idxsection);
+  if (num_indices == 0) {
+    free(idxsection);
+    return xt_idxempty_new();
+  }
   Xt_idxlist_init(&idxsection->parent, &idxsection_vtable, num_indices);
   idxsection->local_start_index = start;
   idxsection->dims[num_dimensions - 1].global_stride =
