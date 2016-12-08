@@ -304,7 +304,7 @@ exchange_pos_ext_modifications(
   const struct Xt_com_list dst_com[num_dst_intersections],
   struct exchange_ext dst_ext[num_dst_intersections],
   int (*restrict src_removals_per_intersection)[2],
-  int (*restrict dst_removals_per_intersection)[2],
+  const int (*restrict dst_removals_per_intersection)[2],
   int tag_offset,
   MPI_Comm comm);
 
@@ -314,7 +314,7 @@ remap_dst_intersections(int num_dst_intersections,
                         Xt_idxlist mypart_idxlist,
                         int resCount,
                         struct exchange_ext resSets[resCount],
-                        int (*removals_per_intersection)[2]);
+                        const int (*removals_per_intersection)[2]);
 
 static void
 generate_dir_transfer_pos_ext_src(
@@ -323,8 +323,8 @@ generate_dir_transfer_pos_ext_src(
   Xt_idxlist mypart_idxlist,
   int *resCount,
   struct exchange_ext **resSets,
-  int (*restrict removals_per_intersection)[2],
-  struct Xt_pos_ext *pos_updates);
+  const int (*restrict removals_per_intersection)[2],
+  const struct Xt_pos_ext *pos_updates);
 
 static void
 generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
@@ -379,11 +379,11 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
       num_src_intersections, src_com, num_dst_intersections, dst_com,
       xmap->in_msg,
       src_removals_per_intersection,
-      dst_removals_per_intersection, xmap->tag_offset, comm);
+      (const int (*)[2])dst_removals_per_intersection, xmap->tag_offset, comm);
 
   remap_dst_intersections(num_dst_intersections, dst_com, dst_idxlist_local,
                           xmap->n_in, xmap->in_msg,
-                          dst_removals_per_intersection);
+                          (const int (*)[2])dst_removals_per_intersection);
 
   src_removals_per_intersection =
     xrealloc(src_removals_per_intersection, (size_t)num_src_intersections
@@ -392,7 +392,7 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
   generate_dir_transfer_pos_ext_src(
     num_src_intersections, src_com, src_idxlist_local,
     &(xmap->n_out), &(xmap->out_msg),
-    src_removals_per_intersection, pos_updates);
+    (const int (*)[2])src_removals_per_intersection, pos_updates);
 
   free(src_removals_per_intersection);
   free(pos_updates);
@@ -649,7 +649,7 @@ exchange_pos_ext_modifications(
   const struct Xt_com_list dst_com[num_dst_intersections],
   struct exchange_ext dst_ext[num_dst_intersections],
   int (*restrict src_removals_per_intersection)[2],
-  int (*restrict dst_removals_per_intersection)[2],
+  const int (*restrict dst_removals_per_intersection)[2],
   int tag_offset,
   MPI_Comm comm)
 {
@@ -673,7 +673,8 @@ exchange_pos_ext_modifications(
   unsigned num_active_dst = 0, num_dst_changes = 0;
   for (int i = 0; i < num_dst_intersections; ++i) {
     xt_mpi_call(MPI_Isend(
-                  dst_removals_per_intersection[i], 2, MPI_INT, dst_com[i].rank,
+                  (int *)dst_removals_per_intersection[i], 2, MPI_INT,
+                  dst_com[i].rank,
                   tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
                   comm, send_header_requests + i), comm);
 
@@ -746,7 +747,7 @@ static void
 remap_intersection(Xt_idxlist mypart_idxlist,
                    Xt_idxlist intersection,
                    size_t num_pos_updates,
-                   struct Xt_pos_ext pos_updates[num_pos_updates],
+                   const struct Xt_pos_ext pos_updates[num_pos_updates],
                    struct exchange_ext *resSet,
                    int single_match_only);
 
@@ -757,7 +758,7 @@ remap_dst_intersections(
   Xt_idxlist mypart_idxlist,
   int resCount,
   struct exchange_ext resSets[resCount],
-  int (*removals_per_intersection)[2])
+  const int (*removals_per_intersection)[2])
 {
   size_t resIdx = 0;
   for (size_t i = 0; i < (size_t)num_dst_intersections; ++i)
@@ -790,8 +791,8 @@ generate_dir_transfer_pos_ext_src(
   Xt_idxlist mypart_idxlist,
   int *resCount,
   struct exchange_ext **resSets,
-  int (*restrict removals_per_intersection)[2],
-  struct Xt_pos_ext *pos_updates)
+  const int (*restrict removals_per_intersection)[2],
+  const struct Xt_pos_ext *pos_updates)
 {
   struct exchange_ext *restrict resSets_ = *resSets
     = xmalloc((size_t)num_intersections * sizeof(**resSets));
@@ -836,7 +837,7 @@ static struct Xt_stripe *
 refine_stripes(int *num_stripes_,
                struct Xt_stripe *restrict intersection_idxstripes,
                size_t num_pos_updates,
-               struct Xt_pos_ext *restrict pos_updates)
+               const struct Xt_pos_ext *restrict pos_updates)
 {
   /* trim intersection_idxstripes to those actually used */
   size_t num_refined_intersection_idxstripes = 0,
@@ -893,7 +894,7 @@ static void
 remap_intersection(Xt_idxlist mypart_idxlist,
                    Xt_idxlist intersection,
                    size_t num_pos_updates,
-                   struct Xt_pos_ext pos_updates[num_pos_updates],
+                   const struct Xt_pos_ext pos_updates[num_pos_updates],
                    struct exchange_ext *resSet,
                    int single_match_only)
 {
