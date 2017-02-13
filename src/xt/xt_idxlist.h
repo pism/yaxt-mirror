@@ -374,7 +374,7 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
 
 /**
  * return unique list id, where unique means no other index list will
- * return the same id within the same task
+ * return the same id within the same task, also all valid UIDs are non-zero
  * @param[in] idxlist index list of which to query unique id
  * @return unique id
  */
