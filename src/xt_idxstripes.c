@@ -461,20 +461,16 @@ compute_intersection_fallback(Xt_idxstripes idxstripes_src,
   INSTR_DEF(instr,"compute_intersection_fallback")
   INSTR_START(instr);
 
-  Xt_idxlist idxvec_from_stripes_src;
-  Xt_idxlist idxvec_from_stripes_dst;
-
-  idxvec_from_stripes_src
+  Xt_idxlist idxvec_from_stripes_src
     = xt_idxvec_from_stripes_new(idxstripes_src->stripes,
                                  idxstripes_src->num_stripes);
-  idxvec_from_stripes_dst
+  Xt_idxlist idxvec_from_stripes_dst
     = xt_idxvec_from_stripes_new(idxstripes_dst->stripes,
                                  idxstripes_dst->num_stripes);
 
-  Xt_idxlist intersection;
-
-  intersection = xt_idxlist_get_intersection(idxvec_from_stripes_src,
-                                             idxvec_from_stripes_dst);
+  Xt_idxlist intersection
+    = xt_idxlist_get_intersection(idxvec_from_stripes_src,
+                                  idxvec_from_stripes_dst);
 
   xt_idxlist_delete(idxvec_from_stripes_src);
   xt_idxlist_delete(idxvec_from_stripes_dst);

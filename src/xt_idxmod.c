@@ -78,12 +78,11 @@ Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
   for (int im = 0; im < modifier_num; im++) {
     struct Xt_modifier *m = &modifier[im];
 
-    Xt_idxlist intersection_idxlist;
-
     // intersection between extract values and workpatch:
     // any multiplicity of workpatch must be repeated in the intersection therefore
     // workpatch must have the target role
-    intersection_idxlist = xt_idxlist_get_intersection(m->extract,workpatch_idxlist);
+    Xt_idxlist intersection_idxlist
+      = xt_idxlist_get_intersection(m->extract,workpatch_idxlist);
 
     // get intersection index array => inter_idx:
     int intersection_size = xt_idxlist_get_num_indices(intersection_idxlist);
