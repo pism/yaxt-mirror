@@ -538,9 +538,11 @@ CONTAINS
     INTEGER(i4), INTENT(in) :: num_repetitions
     INTEGER(c_int), INTENT(in) :: displacements(num_repetitions)
     TYPE(xt_redist) :: res
+    INTEGER(c_int) :: num_repetitions_c
 
+    num_repetitions_c = INT(num_repetitions, c_int)
     res = xt_redist_c2f(xt_redist_repeat_new_c(xt_redist_f2c(redist), &
-         src_extent, dst_extent, num_repetitions, displacements))
+         src_extent, dst_extent, num_repetitions_c, displacements))
   END FUNCTION xt_redist_repeat_new_i4_a1d
 
   FUNCTION xt_redist_repeat_new_a1d(redist, src_extent, dst_extent, &
@@ -550,11 +552,11 @@ CONTAINS
     INTEGER(c_int), INTENT(in) :: displacements(:)
     TYPE(xt_redist) :: res
 
-    INTEGER(i4) :: num_repetitions
+    INTEGER(c_int) :: num_repetitions_c
 
-    num_repetitions = SIZE(displacements)
+    num_repetitions_c = INT(SIZE(displacements), c_int)
     res = xt_redist_c2f(xt_redist_repeat_new_c(xt_redist_f2c(redist), &
-         src_extent, dst_extent, num_repetitions, displacements))
+         src_extent, dst_extent, num_repetitions_c, displacements))
   END FUNCTION xt_redist_repeat_new_a1d
 
   FUNCTION xt_redist_repeat_asym_new_i4_a1d(redist, src_extent, dst_extent, &
@@ -565,8 +567,11 @@ CONTAINS
     INTEGER(c_int), INTENT(in) :: src_displacements(num_repetitions), &
          & dst_displacements(num_repetitions)
     TYPE(xt_redist) :: res
+    INTEGER(c_int) :: num_repetitions_c
+
+    num_repetitions_c = INT(num_repetitions, c_int)
     res = xt_redist_c2f(xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
-         src_extent, dst_extent, num_repetitions, src_displacements, &
+         src_extent, dst_extent, num_repetitions_c, src_displacements, &
          dst_displacements))
   END FUNCTION xt_redist_repeat_asym_new_i4_a1d
 
