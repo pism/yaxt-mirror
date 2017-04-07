@@ -64,8 +64,12 @@ m4_if(m4_version_compare(AC_AUTOCONF_VERSION,[2.67]),1,
 dnl ######################################################################
 dnl Checks for programs.
 dnl ######################################################################
+dnl Require an ISO C99 compliant C compiler
+m4_pushdef([_AC_PROG_CC_C89])
+m4_define([_AC_PROG_CC_C89],[_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])
 AC_PROG_CC
-AC_PROG_CC_C99
+m4_popdef([_AC_PROG_CC_C89])
+
 AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads libraries and header files.])
    LIBS="$PTHREAD_LIBS $LIBS"
    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
