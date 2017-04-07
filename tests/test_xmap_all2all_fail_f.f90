@@ -58,7 +58,7 @@ PROGRAM test_xmap_all2all_fail
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
   CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
-
+  CALL parse_options
   CALL test_xmap1(list_size)
 
   IF (test_err_count() /= 0) &
@@ -129,7 +129,7 @@ CONTAINS
     CALL test_xmap(src_index_list, dst_index_list)
   END SUBROUTINE test_xmap1
 
-    SUBROUTINE parse_options
+  SUBROUTINE parse_options
     INTEGER :: i, num_cmd_args, arg_len
     INTEGER, PARAMETER :: max_opt_arg_len = 80
     CHARACTER(max_opt_arg_len) :: optarg
@@ -140,7 +140,7 @@ CONTAINS
       IF (optarg(1:2) == '-s' .AND. i < num_cmd_args .AND. arg_len == 2) THEN
         CALL GET_COMMAND_ARGUMENT(i + 1, optarg, arg_len)
         IF (arg_len > max_opt_arg_len) &
-             CALL test_abort('incorrect argument to command-line option -m', &
+             CALL test_abort('incorrect argument to command-line option -s', &
              __FILE__, &
              __LINE__)
         IF (optarg(1:arg_len) == "big") THEN
@@ -149,7 +149,7 @@ CONTAINS
           list_size = 7
         ELSE
           WRITE (0, *) 'arg to -s: ', optarg(1:arg_len)
-          CALL test_abort('incorrect argument to command-line option -m', &
+          CALL test_abort('incorrect argument to command-line option -s', &
                __FILE__, &
                __LINE__)
         END IF
