@@ -80,10 +80,7 @@ int main(void) {
 
     {
       MPI_Datatype sends[2];
-
-      {
-        sends[0] = MPI_INT;
-      }
+      sends[0] = MPI_INT;
       {
         int count = 1;
         int blocklength = 1;
@@ -103,10 +100,9 @@ int main(void) {
     {
       MPI_Datatype sends[2];
 
-      {
-        MPI_Type_dup(MPI_INT, &sends[0]);
-        // by definition of MPI_Type_dup no MPI_Type_commit is required
-      }
+      // by definition of MPI_Type_dup no MPI_Type_commit is required
+      MPI_Type_dup(MPI_INT, &sends[0]);
+
       {
         int count = 1;
         int blocklength = 1;
