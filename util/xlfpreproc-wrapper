@@ -67,6 +67,6 @@ for srcfile in "$@" ; do
 done
 #
 # Local Variables:
-# license-project-url: "https://www.dkrz.de/redmine/projects/show/scales-ppm"
+# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"
 # End:

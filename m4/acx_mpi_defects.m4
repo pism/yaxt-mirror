@@ -6,7 +6,7 @@ dnl
 dnl Keywords: configure configure.ac autoconf MPI mpirun mpiexec
 dnl Author: Thomas Jahns <jahns@dkrz.de>
 dnl Maintainer: Thomas Jahns <jahns@dkrz.de>
-dnl URL: https://www.dkrz.de/redmine/projects/show/scales-ppm
+dnl URL: https://www.dkrz.de/redmine/projects/scales-ppm
 dnl
 dnl Redistribution and use in source and binary forms, with or without
 dnl modification, are  permitted provided that the following conditions are
@@ -128,6 +128,6 @@ AC_DEFUN([ACX_MPI_DEFECTS_DOCUMENT],
 dnl
 dnl Local Variables:
 dnl mode: autoconf
-dnl license-project-url: "https://www.dkrz.de/redmine/projects/show/scales-ppm"
+dnl license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 dnl license-default: "bsd"
 dnl End:
