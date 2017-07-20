@@ -121,7 +121,8 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
   Xt_exchanger_mix_isend_irecv exchanger
     = xt_exchanger_mix_isend_irecv_alloc(nmsg);
-  exchanger->comm = comm, exchanger->tag_offset = tag_offset;
+  exchanger->comm = comm;
+  exchanger->tag_offset = tag_offset;
   struct mix_msg *restrict msgs = exchanger->msgs;
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
                               &(msgs[0].data), sizeof (msgs[0]), comm);

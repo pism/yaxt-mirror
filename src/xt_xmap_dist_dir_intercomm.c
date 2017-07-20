@@ -428,7 +428,8 @@ send_size_from_intersections(size_t num_intersections,
 {
   size_t total_send_size = 0;
   for (int i = 0; i < comm_size; ++i)
-    send_size_target[i][SEND_SIZE] = 0, send_size_target[i][SEND_NUM] = 0;
+    (void)(send_size_target[i][SEND_SIZE] = 0),
+      (void)(send_size_target[i][SEND_NUM] = 0);
 
   int rank_pack_size;
   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &rank_pack_size), comm);

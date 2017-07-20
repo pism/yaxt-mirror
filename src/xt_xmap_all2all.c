@@ -238,7 +238,8 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   for (size_t i = 0; i < num_dst_intersections; ++i)
     if (dst_intersections[i].list != NULL)
       xt_idxlist_delete(dst_intersections[i].list);
-  free(src_intersections), free(dst_intersections);
+  free(src_intersections);
+  free(dst_intersections);
   INSTR_STOP(t_xt_xmap_all2all_new);
   return xmap;
 }

@@ -230,7 +230,8 @@ int main(void) {
       Xt_redist redists[2] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
                               xt_redist_p2p_new(xmaps[1], Xt_int_dt)};
 
-      xt_xmap_delete(xmaps[0]), xt_xmap_delete(xmaps[1]);
+      xt_xmap_delete(xmaps[0]);
+      xt_xmap_delete(xmaps[1]);
 
       Xt_int results_1[5] = {-1,-1,-1,-1,-1}, results_2[5] = {-1,-1,-1,-1,-1};
 
@@ -248,7 +249,8 @@ int main(void) {
                                        MPI_COMM_WORLD))
         PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-      xt_redist_delete(redists[0]), xt_redist_delete(redists[1]);
+      xt_redist_delete(redists[0]);
+      xt_redist_delete(redists[1]);
 
       xt_redist_s_exchange1(redist, (void*)src_indices_, (void*)results_1);
 

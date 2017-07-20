@@ -55,6 +55,7 @@
 #if defined __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
 #endif
 #include "cfortran.h"
 #if defined __clang__

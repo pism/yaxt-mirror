@@ -123,7 +123,8 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
   Xt_exchanger_simple_base exchanger
     = xt_exchanger_simple_base_alloc(nmsg);
-  exchanger->comm = comm, exchanger->tag_offset = tag_offset;
+  exchanger->comm = comm;
+  exchanger->tag_offset = tag_offset;
   exchanger->nsend = nsend;
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
                               exchanger->msgs, sizeof (exchanger->msgs[0]),

@@ -340,8 +340,10 @@ send_size_from_intersections(size_t num_intersections,
 {
   size_t total_send_size = 0;
   for (int i = 0; i < comm_size; ++i)
-    send_size[i][SEND_SIZE_SRC] = 0, send_size[i][SEND_SIZE_DST] = 0,
-      send_size[i][SEND_NUM_SRC] = 0, send_size[i][SEND_NUM_DST] = 0;
+    (void)(send_size[i][SEND_SIZE_SRC] = 0),
+      (void)(send_size[i][SEND_SIZE_DST] = 0),
+      (void)(send_size[i][SEND_NUM_SRC] = 0),
+      (void)(send_size[i][SEND_NUM_DST] = 0);
 
   int rank_pack_size;
   xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &rank_pack_size), comm);
