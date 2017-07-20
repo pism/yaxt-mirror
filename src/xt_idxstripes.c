@@ -977,7 +977,7 @@ struct Xt_stripes_lookup {
   size_t num_stripes;
   const struct Xt_stripe *stripes;
   const struct Xt_stripes_sort *stripes_sort;
-  const int *stripes_nstrides_psum;
+  int *stripes_nstrides_psum;
   bool stripes_do_overlap;
 };
 
@@ -1004,7 +1004,7 @@ create_stripes_lookup(struct Xt_stripes_lookup *restrict db,
 
 static inline void
 destroy_stripes_lookup(struct Xt_stripes_lookup *restrict db) {
-  free((void *)db->stripes_nstrides_psum);
+  free(db->stripes_nstrides_psum);
 }
 
 struct int_vec
