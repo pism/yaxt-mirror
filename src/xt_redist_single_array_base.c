@@ -54,7 +54,7 @@
 
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
-#include "xt_redist_single_array_base.h"
+#include "xt/xt_redist_single_array_base.h"
 #include "xt_redist_internal.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_idxlist.h"

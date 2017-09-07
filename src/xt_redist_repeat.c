@@ -58,7 +58,7 @@
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
 #include "xt/xt_redist_repeat.h"
-#include "xt_redist_single_array_base.h"
+#include "xt/xt_redist_single_array_base.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"

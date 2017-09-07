@@ -50,6 +50,10 @@ noinst_PROGRAMS = 						\
 	test_idxsection_f					\
 	test_idxstripes						\
 	test_idxstripes_f					\
+	test_redist_single_array_base				\
+	test_redist_single_array_base_f				\
+	test_redist_single_array_base_parallel			\
+	test_redist_single_array_base_parallel_f		\
 	test_redist_collection					\
 	test_redist_collection_f				\
 	test_redist_collection_parallel				\
@@ -145,6 +149,12 @@ test_idxsection_f_LDADD = $(XT_FC_LDADD)
 test_idxstripes_SOURCES = test_idxstripes.c tests.h test_idxlist_utils.h
 test_idxstripes_f_SOURCES = test_idxstripes_f.f90
 test_idxstripes_f_LDADD = $(XT_FC_LDADD)
+test_redist_single_array_base_SOURCES = test_redist_single_array_base.c tests.h
+test_redist_single_array_base_f_SOURCES = test_redist_single_array_base_f.f90
+test_redist_single_array_base_f_LDADD = $(XT_FC_LDADD)
+test_redist_single_array_base_parallel_SOURCES = test_redist_single_array_base_parallel.c tests.h
+test_redist_single_array_base_parallel_f_SOURCES = test_redist_single_array_base_parallel_f.f90
+test_redist_single_array_base_parallel_f_LDADD = $(XT_FC_LDADD)
 test_redist_collection_SOURCES = test_redist_collection.c tests.h
 test_redist_collection_f_SOURCES = test_redist_collection_f.f90 \
 	test_redist_collection_displace_f.f90
@@ -237,6 +247,8 @@ TESTS = 							\
 	test_idxmod_run						\
 	test_idxsection_run					\
 	test_idxstripes_run					\
+	test_redist_single_array_base_run			\
+	test_redist_single_array_base_parallel_run		\
 	test_redist_p2p_run					\
 	test_redist_collection_run				\
 	test_redist_collection_parallel_run			\

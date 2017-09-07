@@ -65,12 +65,6 @@ struct test_message {
   int num_pos; // number of positions
 };
 
-struct Xt_redist_msg {
-
-  int rank;
-  MPI_Datatype datatype;
-};
-
 typedef struct Xt_exchanger_ *Xt_exchanger;
 
 Xt_exchanger

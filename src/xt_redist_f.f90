@@ -73,6 +73,10 @@ MODULE xt_redist_base
     INTEGER(c_int) :: start, size, stride
   END TYPE xt_offset_ext
 
+  TYPE, PUBLIC :: xt_redist_msg
+    INTEGER :: rank, datatype
+  END TYPE xt_redist_msg
+
   INTERFACE
     ! this function must not be implemented in Fortran because
     ! PGI 11.x chokes on that
@@ -185,6 +189,17 @@ MODULE xt_redist_base
       TYPE(c_ptr) :: res
     END FUNCTION xt_redist_repeat_asym_new_c
 
+    FUNCTION xt_redist_single_array_base_new_c2f(nsend, nrecv, send_msgs_f, &
+         recv_msgs_f, comm_f) &
+         BIND(C, name='xt_redist_single_array_base_new_c2f') RESULT(res)
+      IMPORT :: xt_redist, xt_redist_msg, c_ptr, c_int, xt_mpi_fint_kind
+      IMPLICIT NONE
+      INTEGER(c_int), VALUE :: nsend, nrecv
+      TYPE(xt_redist_msg), INTENT(in) :: send_msgs_f(*), recv_msgs_f(*)
+      INTEGER(xt_mpi_fint_kind), VALUE :: comm_f
+      TYPE(c_ptr) :: res
+    END FUNCTION xt_redist_single_array_base_new_c2f
+
   END INTERFACE
 
   INTERFACE xt_redist_collection_static_new
@@ -212,12 +227,20 @@ MODULE xt_redist_base
     MODULE PROCEDURE xt_redist_repeat_asym_new_a1d
   END INTERFACE xt_redist_repeat_new
 
+  INTERFACE xt_redist_single_array_base_new
+    MODULE PROCEDURE xt_redist_single_array_base_new_i2_a1d_i2_a1d
+    MODULE PROCEDURE xt_redist_single_array_base_new_i4_a1d_i4_a1d
+    MODULE PROCEDURE xt_redist_single_array_base_new_i8_a1d_i8_a1d
+    MODULE PROCEDURE xt_redist_single_array_base_new_a1d_a1d
+  END INTERFACE xt_redist_single_array_base_new
+
   PUBLIC :: xt_redist_c2f, xt_redist_f2c, xt_is_null, xt_redist_copy, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
        xt_redist_collection_static_new, xt_redist_collection_new, &
-       xt_redist_repeat_new, xt_redist_get_mpi_comm, xt_redist_p2p_ext_new
+       xt_redist_repeat_new, xt_redist_get_mpi_comm, xt_redist_p2p_ext_new, &
+       xt_redist_single_array_base_new
 CONTAINS
 
   FUNCTION xt_redist_is_null(redist) RESULT(p)
@@ -675,6 +698,74 @@ CONTAINS
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
          num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
   END FUNCTION xt_redist_p2p_ext_new_a1d_a1d
+
+  FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d( &
+       nsend, nrecv, send_msgs, recv_msgs, comm) RESULT(redist)
+    INTEGER(i2), INTENT(in) :: nsend, nrecv
+    TYPE(xt_redist_msg) :: send_msgs(nsend), recv_msgs(nrecv)
+    INTEGER :: comm
+    TYPE(xt_redist) :: redist
+    IF (nsend < 0_i2 .OR. nsend > HUGE(1_c_int) &
+         .OR. nrecv < 0_i2 .OR. nrecv > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of send messages", &
+         __FILE__, &
+         __LINE__)
+    redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
+         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
+         recv_msgs, comm))
+  END FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d
+
+  FUNCTION xt_redist_single_array_base_new_i4_a1d_i4_a1d( &
+       nsend, nrecv, send_msgs, recv_msgs, comm) RESULT(redist)
+    INTEGER(i4), INTENT(in) :: nsend, nrecv
+    TYPE(xt_redist_msg) :: send_msgs(nsend), recv_msgs(nrecv)
+    INTEGER :: comm
+    TYPE(xt_redist) :: redist
+    IF (nsend < 0_i4 .OR. nsend > HUGE(1_c_int) &
+         .OR. nrecv < 0_i4 .OR. nrecv > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of send messages", &
+         __FILE__, &
+         __LINE__)
+    redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
+         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
+         recv_msgs, comm))
+  END FUNCTION xt_redist_single_array_base_new_i4_a1d_i4_a1d
+
+  FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d( &
+       nsend, nrecv, send_msgs, recv_msgs, comm) RESULT(redist)
+    INTEGER(i8), INTENT(in) :: nsend, nrecv
+    TYPE(xt_redist_msg) :: send_msgs(nsend), recv_msgs(nrecv)
+    INTEGER :: comm
+    TYPE(xt_redist) :: redist
+    IF (nsend < 0_i8 .OR. nsend > HUGE(1_c_int) &
+         .OR. nrecv < 0_i8 .OR. nrecv > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of send messages", &
+         __FILE__, &
+         __LINE__)
+    redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
+         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
+         recv_msgs, comm))
+  END FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d
+
+  FUNCTION xt_redist_single_array_base_new_a1d_a1d(send_msgs, recv_msgs, comm) &
+       RESULT(redist)
+    TYPE(xt_redist_msg) :: send_msgs(:), recv_msgs(:)
+    INTEGER :: comm
+    TYPE(xt_redist) :: redist
+    INTEGER :: nsend, nrecv
+
+    nsend = SIZE(send_msgs)
+    nrecv = SIZE(recv_msgs)
+
+    IF (nsend < 0_i8 .OR. nsend > HUGE(1_c_int) &
+         .OR. nrecv < 0_i8 .OR. nrecv > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of send messages", &
+         __FILE__, &
+         __LINE__)
+    redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
+         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
+         recv_msgs, comm))
+  END FUNCTION xt_redist_single_array_base_new_a1d_a1d
 
 END MODULE xt_redist_base
 !

@@ -55,7 +55,15 @@
 
 #include "xt/xt_xmap.h"
 #include "xt/xt_redist.h"
-#include "xt_redist_internal.h"
+
+/** \example test_redist_single_array_base.c
+ *  */
+/** \example test_redist_single_array_base_f.f90
+ *  */
+/** \example test_redist_single_array_base_parallel.c
+ *  */
+/** \example test_redist_single_array_base_parallel_f.f90
+ *  */
 
 /**
  * constructor for a redistribution using point to point

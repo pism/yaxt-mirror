@@ -94,7 +94,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_redist_p2p.c						\
 	xt_redist_repeat.c					\
 	xt_redist_single_array_base.c				\
-	xt_redist_single_array_base.h				\
+	xt/xt_redist_single_array_base.h			\
 	xt_stripe.c						\
 	xt_stripe_util.h					\
 	xt_xmap_internal.h					\

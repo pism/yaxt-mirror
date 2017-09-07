@@ -364,6 +364,8 @@ AC_CONFIG_FILES([						\
 	tests/test_idxmod_run					\
 	tests/test_idxsection_run				\
 	tests/test_idxstripes_run				\
+	tests/test_redist_single_array_base_run			\
+	tests/test_redist_single_array_base_parallel_run	\
 	tests/test_redist_collection_run			\
 	tests/test_redist_collection_static_run			\
 	tests/test_redist_repeat_run				\

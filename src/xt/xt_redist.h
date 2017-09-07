@@ -59,6 +59,12 @@
 
 #include "xt/xt_core.h"
 
+struct Xt_redist_msg {
+
+  int rank;
+  MPI_Datatype datatype;
+};
+
 /**
  * \example test_redist_common.c
  */

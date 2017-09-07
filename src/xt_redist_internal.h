@@ -60,12 +60,6 @@
 
 enum xt_msg_direction {SEND, RECV};
 
-struct Xt_redist_msg {
-
-  int rank;
-  MPI_Datatype datatype;
-};
-
 struct xt_redist_vtable {
 
   Xt_redist (*copy)(Xt_redist);
