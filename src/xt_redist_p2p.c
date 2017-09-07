@@ -147,6 +147,9 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, const int *src_offsets,
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+
+  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
+  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
@@ -337,6 +340,9 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+
+  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
+  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
@@ -475,6 +481,9 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+
+  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
+  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }

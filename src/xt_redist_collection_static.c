@@ -152,6 +152,9 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
   Xt_redist redist_collection =
     xt_redist_single_array_base_new((int)nsend, (int)nrecv,
                                     send_msgs, recv_msgs, new_comm);
+
+  xt_redist_msgs_free(nsend, send_msgs, new_comm);
+  xt_redist_msgs_free(nrecv, recv_msgs, new_comm);
   xt_mpi_comm_smart_dedup(&new_comm, tag_offset);
   return redist_collection;
 }

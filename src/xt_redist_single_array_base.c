@@ -130,8 +130,6 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
   redist->vtable = &redist_sab_vtable;
   redist->nsend = nsend;
   redist->nrecv = nrecv;
-  xt_redist_msgs_free((size_t)nsend, send_msgs, redist->comm);
-  xt_redist_msgs_free((size_t)nrecv, recv_msgs, redist->comm);
   return (Xt_redist)redist;
 }
 

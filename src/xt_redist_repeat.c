@@ -128,6 +128,8 @@ Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
+  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
