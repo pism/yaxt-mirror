@@ -70,9 +70,6 @@ generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
                    enum xt_msg_direction direction,
                    MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
 
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-
   assert(*nmsgs >= 0);
   size_t num_messages = (size_t)*nmsgs;
   int *restrict ranks = NULL;
