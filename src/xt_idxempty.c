@@ -163,6 +163,8 @@ xt_idxempty_finalize(void)
 }
 
 Xt_idxlist xt_idxempty_new(void) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
   return (void*)&idxempty;
 }
 

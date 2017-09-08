@@ -654,6 +654,9 @@ xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   INSTR_DEF(this_instr,"xt_xmap_all2all_new")
   INSTR_START(this_instr);
 
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
   int tag_offset;
   MPI_Comm newcomm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 

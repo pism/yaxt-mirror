@@ -287,6 +287,8 @@ Xt_idxlist
 xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
   INSTR_DEF(instr,"xt_idxstripes_new")
   INSTR_START(instr);
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   Xt_idxlist result;
 
@@ -318,6 +320,8 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
 
 Xt_idxlist
 xt_idxstripes_from_idxlist_new(Xt_idxlist idxlist_src) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
   int num_stripes;
   struct Xt_stripe *stripes;
   xt_idxlist_get_index_stripes(idxlist_src, &stripes, &num_stripes);

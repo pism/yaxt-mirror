@@ -207,6 +207,9 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   INSTR_DEF(t_xt_xmap_all2all_new,"xt_xmap_all2all_new")
   INSTR_START(t_xt_xmap_all2all_new);
 
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
   int tag_offset;
   MPI_Comm newcomm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 

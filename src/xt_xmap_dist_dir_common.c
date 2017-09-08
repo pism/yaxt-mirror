@@ -51,6 +51,7 @@
 #endif
 
 #include <string.h>
+#include <assert.h>
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_idxstripes.h"
@@ -353,6 +354,9 @@ xt_com_list_rank_cmp(const void *a_, const void *b_)
 Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                              MPI_Comm comm)
 {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
   int is_inter;
   xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
   Xt_xmap xmap;

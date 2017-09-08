@@ -124,6 +124,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
 
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, const int *src_offsets,
                                 const int *dst_offsets, MPI_Datatype datatype) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   int nsend, nrecv;
   struct Xt_redist_msg * send_msgs = NULL;
@@ -319,6 +321,8 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
                                 const struct Xt_offset_ext dst_extents[],
                                 MPI_Datatype datatype)
 {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
   MPI_Comm comm;
@@ -437,6 +441,8 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
                              const int *dst_block_sizes,
                              int dst_block_num,
                              MPI_Datatype datatype) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
@@ -494,6 +500,8 @@ Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
                                    const int *dst_block_sizes,
                                    int dst_block_num,
                                    MPI_Datatype datatype) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   return xt_redist_p2p_blocks_off_new(xmap,
                                       NULL, src_block_sizes, src_block_num,
@@ -504,6 +512,8 @@ Xt_redist xt_redist_p2p_blocks_new(Xt_xmap xmap,
 
 
 Xt_redist xt_redist_p2p_new(Xt_xmap xmap, MPI_Datatype datatype) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   return xt_redist_p2p_off_new(xmap, NULL, NULL, datatype);
 }

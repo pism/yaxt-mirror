@@ -142,6 +142,8 @@ struct Xt_idxlist_collection_ {
 
 Xt_idxlist
 xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   Xt_idxlist result;
   if (num_idxlists > 1)

@@ -162,6 +162,9 @@ struct Xt_idxvec_ {
 
 Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   INSTR_DEF(t_idxvec_new,"xt_idxvec_new")
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
   if (num_indices > 0)
     ;
   else if (num_indices == 0)
@@ -348,6 +351,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
 Xt_idxlist
 xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
                            int num_stripes) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   long long num_indices = 0;
 

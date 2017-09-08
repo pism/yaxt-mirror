@@ -132,6 +132,8 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
                                 const MPI_Aint src_displacements[num_redists],
                                 const MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   struct Xt_redist_msg *send_msgs, *recv_msgs;
 

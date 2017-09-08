@@ -103,6 +103,8 @@ Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
                                     MPI_Aint dst_extent, int num_repetitions,
                                     const int src_displacements[num_repetitions],
                                     const int dst_displacements[num_repetitions]) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   int nsend = 0, nrecv = 0;
   struct Xt_redist_msg *send_msgs = NULL, *recv_msgs = NULL;
@@ -134,6 +136,8 @@ Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
 Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                                MPI_Aint dst_extent, int num_repetitions,
                                const int displacements[num_repetitions]) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   return xt_redist_repeat_asym_new(redist, src_extent,
                                    dst_extent, num_repetitions,

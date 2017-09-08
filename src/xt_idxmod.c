@@ -47,6 +47,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 #include "xt/xt_core.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
@@ -59,6 +61,8 @@
 Xt_idxlist xt_idxmod_new(Xt_idxlist patch_idxlist,
                          struct Xt_modifier *modifier,
                          int modifier_num, int *mstate) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   int patch_size = xt_idxlist_get_num_indices(patch_idxlist);
 

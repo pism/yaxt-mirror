@@ -203,6 +203,8 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
 
   INSTR_DEF(instr,"xt_idxsection_new")
   INSTR_START(instr);
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   Xt_idxsection idxsection = NULL;
   int num_indices;

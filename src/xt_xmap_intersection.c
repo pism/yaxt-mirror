@@ -606,6 +606,9 @@ xt_xmap_intersection_new(int num_src_intersections,
                          Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                          MPI_Comm comm) {
 
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
   Xt_xmap_intersection xmap = xmalloc(sizeof (*xmap));
 
   xmap->vtable = &xmap_intersection_vtable;

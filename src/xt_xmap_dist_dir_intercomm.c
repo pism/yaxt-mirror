@@ -629,6 +629,10 @@ xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
 {
   INSTR_DEF(this_instr,"xt_xmap_dist_dir_intercomm_new")
   INSTR_START(this_instr);
+
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
   int tag_offset_inter, tag_offset_intra;
   MPI_Comm inter_comm = xt_mpi_comm_smart_dup(inter_comm_, &tag_offset_inter),
     intra_comm = xt_mpi_comm_smart_dup(intra_comm_, &tag_offset_intra);

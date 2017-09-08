@@ -118,6 +118,8 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                           struct Xt_redist_msg * send_msgs,
                                           struct Xt_redist_msg * recv_msgs,
                                           MPI_Comm comm) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   Xt_redist_sab redist = xmalloc(sizeof (*redist));
 

@@ -229,6 +229,8 @@ destruct_cache(struct exchanger_cache *cache,
 
 Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
                                    int cache_size, MPI_Comm comm) {
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
 
   Xt_redist_collection redist_coll = xmalloc(sizeof (*redist_coll));
 
