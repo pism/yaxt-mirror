@@ -50,6 +50,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "xt/xt_mpi.h"
 #include "xt_exchanger.h"
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_mix_isend_irecv.h"
