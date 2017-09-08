@@ -87,9 +87,12 @@ static int compare_exchange_messages (const void * msg_a, const void * msg_b)
 void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
                                     MPI_Comm comm) {
 
-  int comm_rank, comm_size;
-  MPI_Comm_rank(comm, &comm_rank);
-  MPI_Comm_size(comm, &comm_size);
+  int comm_size, comm_rank, is_inter;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
+  int (*get_comm_size)(MPI_Comm, int *)
+    = is_inter ? MPI_Comm_remote_size : MPI_Comm_size;
+  xt_mpi_call(get_comm_size(comm, &comm_size), comm);
   /* In order to avoid congestion of messages, the order of send and receive
    * messages is changed. This is done by sorting the messages according to the
    * rank of the respective message partner. Before the sorting to ranks that
