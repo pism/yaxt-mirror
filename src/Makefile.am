@@ -289,7 +289,7 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
 	-rmdir "$(DESTDIR)$(libdir)/pkgconfig"
 
-./$(DEPDIR)/FC.deps: $(SOURCES) Makefile
+./$(DEPDIR)/FC.deps: $(libyaxt_la_SOURCES) Makefile
 	@unique=`for i in $(SOURCES); do \
 	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | grep '\.f90$$' ` ; \
@@ -308,7 +308,8 @@ uninstall-local:
 	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
 	  >./$(DEPDIR)/FC.deps.temp
 	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
-	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
+	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps \
+	  && touch ./$(DEPDIR)/FC.deps
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@
 
