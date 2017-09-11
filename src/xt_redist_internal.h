@@ -76,13 +76,6 @@ struct Xt_redist_ {
   const struct xt_redist_vtable *vtable;
 };
 
-extern void
-(*xt_redist_s_exchange_internal)(const void *src_data, void *dst_data,
-                                 int nsend, int nrecv,
-                                 struct Xt_redist_msg * send_msgs,
-                                 struct Xt_redist_msg * recv_msgs,
-                                 MPI_Comm comm);
-
 void
 xt_redist_msgs_strided_copy(size_t n,
                             struct Xt_redist_msg *restrict src,
