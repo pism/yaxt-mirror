@@ -333,8 +333,8 @@ xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
 
 void *
 xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
-                                    struct xt_redist_msg_f * send_msgs_f,
-                                    struct xt_redist_msg_f * recv_msgs_f,
+                                    const struct xt_redist_msg_f *send_msgs_f,
+                                    const struct xt_redist_msg_f *recv_msgs_f,
                                     MPI_Fint comm_f)
 {
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);

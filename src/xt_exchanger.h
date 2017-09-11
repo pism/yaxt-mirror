@@ -80,8 +80,8 @@ struct Xt_exchanger_ {
  */
 extern Xt_exchanger
 (*xt_exchanger_default_constructor)(int nsend, int nrecv,
-                                    struct Xt_redist_msg * send_msgs,
-                                    struct Xt_redist_msg * recv_msgs,
+                                    const struct Xt_redist_msg *send_msgs,
+                                    const struct Xt_redist_msg *recv_msgs,
                                     MPI_Comm comm, int tag_offset);
 
 void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,

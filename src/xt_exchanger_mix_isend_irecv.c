@@ -113,8 +113,8 @@ xt_exchanger_mix_isend_irecv_alloc(size_t nmsg)
 
 Xt_exchanger
 xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
-                                 struct Xt_redist_msg * send_msgs,
-                                 struct Xt_redist_msg * recv_msgs,
+                                 const struct Xt_redist_msg *send_msgs,
+                                 const struct Xt_redist_msg *recv_msgs,
                                  MPI_Comm comm, int tag_offset) {
 
   assert((nsend >= 0) & (nrecv >= 0));

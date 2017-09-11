@@ -78,7 +78,7 @@ struct Xt_redist_ {
 
 void
 xt_redist_msgs_strided_copy(size_t n,
-                            struct Xt_redist_msg *restrict src,
+                            const struct Xt_redist_msg *restrict src,
                             size_t src_stride,
                             struct Xt_redist_msg *restrict dst,
                             size_t dst_stride,

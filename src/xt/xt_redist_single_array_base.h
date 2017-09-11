@@ -75,10 +75,11 @@
  * @param[in] comm      MPI communicator that is to be used for the
  *                      communication
  */
-Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
-                                          struct Xt_redist_msg * send_msgs,
-                                          struct Xt_redist_msg * recv_msgs,
-                                          MPI_Comm comm);
+Xt_redist
+xt_redist_single_array_base_new(int nsend, int nrecv,
+                                const struct Xt_redist_msg send_msgs[],
+                                const struct Xt_redist_msg recv_msgs[],
+                                MPI_Comm comm);
 
 #endif // XT_REDIST_SINGLE_ARRAY_BASE_H
 

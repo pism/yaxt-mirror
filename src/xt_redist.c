@@ -103,7 +103,7 @@ int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
 
 void
 xt_redist_msgs_strided_copy(size_t n,
-                            struct Xt_redist_msg *restrict src,
+                            const struct Xt_redist_msg *restrict src,
                             size_t src_stride,
                             struct Xt_redist_msg *restrict dst,
                             size_t dst_stride,
