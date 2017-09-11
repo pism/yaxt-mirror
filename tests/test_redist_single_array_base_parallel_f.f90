@@ -145,9 +145,10 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE :: src_data(:)
     DOUBLE PRECISION :: ref_dst_data(1)
 
-    INTEGER :: i, ierr
+    INTEGER :: i, ierr, nsend
 
-    ALLOCATE(send_msgs(MERGE(comm_size, 0, comm_rank == 0)))
+    nsend = MERGE(comm_size, 0, comm_rank == 0)
+    ALLOCATE(send_msgs(nsend))
     IF (comm_rank == 0) THEN
       DO i = 1, comm_size
         send_msgs(i)%rank = i - 1
@@ -159,8 +160,10 @@ CONTAINS
     recv_msgs(1)%rank = 0
     recv_msgs(1)%datatype = MPI_DOUBLE_PRECISION
 
-    ALLOCATE(src_data(MERGE(comm_size, 0, comm_rank == 0)))
-    src_data(:) = (/ (i-1, i = 1, comm_size) /)
+    ALLOCATE(src_data(nsend))
+    DO i = 1, nsend
+      src_data(i) = DBLE(i-1)
+    END DO
     ref_dst_data(1) = comm_rank
 
     CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
