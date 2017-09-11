@@ -92,8 +92,8 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
-    static double src_data[1];
-    static double ref_dst_data[1];
+    double src_data[1];
+    double ref_dst_data[1];
     enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
     double dst_data[num_ref_values];
     src_data[0] = rank;
@@ -143,7 +143,7 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
-    static double src_data[1];
+    double src_data[1];
     double *ref_dst_data = xmalloc((size_t)size * sizeof(*ref_dst_data));
     double *dst_data = xmalloc((size_t)size * sizeof(*dst_data));
     src_data[0] = rank;
@@ -195,9 +195,9 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
-    static double ref_dst_data[1];
-    static double dst_data[1];
     double *src_data = xmalloc((size_t)nsend * sizeof(*src_data));
+    double ref_dst_data[1];
+    double dst_data[1];
     if (rank == 0) for (int i = 0; i < size; ++i) src_data[i] = i;
     ref_dst_data[0] = rank;
     dst_data[0] = -1.0;
