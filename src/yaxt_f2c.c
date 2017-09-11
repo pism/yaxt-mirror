@@ -52,6 +52,7 @@
 #include <mpi.h>
 
 #include "core/core.h"
+#include "core/ppm_xfuncs.h"
 #if defined __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreserved-id-macro"
@@ -337,9 +338,12 @@ xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
                                     const struct xt_redist_msg_f *recv_msgs_f,
                                     MPI_Fint comm_f)
 {
+  assert(nsend >= 0 && nrecv >= 0);
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
-  struct Xt_redist_msg * send_msgs_c = malloc(nsend * sizeof(*send_msgs_c));
-  struct Xt_redist_msg * recv_msgs_c = malloc(nrecv * sizeof(*recv_msgs_c));
+  struct Xt_redist_msg *send_msgs_c
+    = xmalloc((size_t)nsend * sizeof(*send_msgs_c));
+  struct Xt_redist_msg *recv_msgs_c
+    = xmalloc((size_t)nrecv * sizeof(*recv_msgs_c));
   for (int i = 0; i < nsend; ++i) {
     send_msgs_c[i].rank = send_msgs_f[i].rank;
     send_msgs_c[i].datatype = MPI_Type_f2c(send_msgs_f[i].datatype);
@@ -348,8 +352,8 @@ xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
     recv_msgs_c[i].rank = recv_msgs_f[i].rank;
     recv_msgs_c[i].datatype = MPI_Type_f2c(recv_msgs_f[i].datatype);
   }
-  void * redist = xt_redist_single_array_base_new(nsend, nrecv, send_msgs_c,
-                                                  recv_msgs_c, comm_c);
+  void *redist = xt_redist_single_array_base_new(nsend, nrecv, send_msgs_c,
+                                                 recv_msgs_c, comm_c);
   free(recv_msgs_c);
   free(send_msgs_c);
   return redist;
