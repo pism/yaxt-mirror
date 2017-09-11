@@ -102,11 +102,21 @@ CONTAINS
 
     INTEGER :: i, ierr
     INTEGER, PARAMETER :: num_elem = 10
+#ifndef __PGI
     DOUBLE PRECISION, PARAMETER :: src_data(num_elem) &
          = (/ (DBLE(i), i = 1, num_elem) /)
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(num_elem) &
          = (/ (DBLE(i), i = num_elem, 1, -1) /)
+#else
+    DOUBLE PRECISION :: src_data(num_elem), ref_dst_data(num_elem)
+#endif
 
+#ifdef __PGI
+    DO i = 1, num_elem
+      src_data(i) = DBLE(i)
+      ref_dst_data(i) = DBLE(num_elem - i + 1)
+    END DO
+#endif
     send_msgs(1)%rank = 0
     CALL MPI_Type_contiguous( &
       num_elem, MPI_DOUBLE_PRECISION, send_msgs(1)%datatype, ierr)
