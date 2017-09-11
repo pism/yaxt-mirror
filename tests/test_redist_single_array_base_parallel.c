@@ -148,13 +148,13 @@ int main(void) {
     double *dst_data = xmalloc((size_t)size * sizeof(*dst_data));
     src_data[0] = rank;
     for (int i = 0; i < size; ++i) ref_dst_data[i] = i;
-    for (size_t i = 0; i < size; ++i) dst_data[i] = -1.0;
-    check_redist(redist, src_data, sizeof (src_data[0]) * size,
+    for (size_t i = 0; i < (size_t)size; ++i) dst_data[i] = -1.0;
+    check_redist(redist, src_data, sizeof (src_data[0]) * (size_t)size,
                  dst_data, ref_dst_data);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    for (size_t i = 0; i < size; ++i) dst_data[i] = -1.0;
-    check_redist(redist_copy, src_data, sizeof (src_data[0]) * size,
+    for (size_t i = 0; i < (size_t)size; ++i) dst_data[i] = -1.0;
+    check_redist(redist_copy, src_data, sizeof (src_data[0]) * (size_t)size,
                  dst_data, ref_dst_data);
 
     // clean up
