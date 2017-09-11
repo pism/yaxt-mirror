@@ -386,6 +386,13 @@ xt_com_list_contiguous(const struct Xt_com_list *p_com_a,
 {
   return (p_com_a + 1 == p_com_b);
 }
+
+int
+xt_redist_msg_contiguous(const struct xt_redist_msg_f *p_msgs_a,
+                         const struct xt_redist_msg_f *p_msgs_b)
+{
+  return (p_msgs_a + 1 == p_msgs_b);
+}
 #endif
 
 void

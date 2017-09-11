@@ -55,7 +55,7 @@
 MODULE xt_redist_base
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, i2, i4, i8
   USE xt_xmap_abstract, ONLY: xt_xmap
-  USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_associated
+  USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_loc, c_associated
   USE xt_mpi, ONLY: mpi_address_kind
   IMPLICIT NONE
   PRIVATE
@@ -73,8 +73,8 @@ MODULE xt_redist_base
     INTEGER(c_int) :: start, size, stride
   END TYPE xt_offset_ext
 
-  TYPE, PUBLIC :: xt_redist_msg
-    INTEGER :: rank, datatype
+  TYPE, BIND(c), PUBLIC :: xt_redist_msg
+    INTEGER(xt_mpi_fint_kind) :: rank, datatype
   END TYPE xt_redist_msg
 
   INTERFACE
@@ -192,10 +192,10 @@ MODULE xt_redist_base
     FUNCTION xt_redist_single_array_base_new_c2f(nsend, nrecv, send_msgs_f, &
          recv_msgs_f, comm_f) &
          BIND(C, name='xt_redist_single_array_base_new_c2f') RESULT(res)
-      IMPORT :: xt_redist, xt_redist_msg, c_ptr, c_int, xt_mpi_fint_kind
+      IMPORT :: c_ptr, c_int, xt_mpi_fint_kind
       IMPLICIT NONE
       INTEGER(c_int), VALUE :: nsend, nrecv
-      TYPE(xt_redist_msg), INTENT(in) :: send_msgs_f(*), recv_msgs_f(*)
+      TYPE(c_ptr), VALUE, INTENT(in) :: send_msgs_f, recv_msgs_f
       INTEGER(xt_mpi_fint_kind), VALUE :: comm_f
       TYPE(c_ptr) :: res
     END FUNCTION xt_redist_single_array_base_new_c2f
@@ -702,70 +702,171 @@ CONTAINS
   FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d( &
        nsend, nrecv, send_msgs, recv_msgs, comm) RESULT(redist)
     INTEGER(i2), INTENT(in) :: nsend, nrecv
-    TYPE(xt_redist_msg) :: send_msgs(nsend), recv_msgs(nrecv)
-    INTEGER :: comm
+    TYPE(xt_redist_msg), TARGET, INTENT(in) :: &
+         send_msgs(nsend), recv_msgs(nrecv)
+    INTEGER, INTENT(in) :: comm
     TYPE(xt_redist) :: redist
+
+    INTEGER(c_int) :: nsend_c, nrecv_c
+    TYPE(c_ptr) :: send_msgs_p, recv_msgs_p
+
     IF (nsend < 0_i2 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0_i2 .OR. nrecv > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
+    IF (nsend > 0) THEN
+      send_msgs_p = C_LOC(send_msgs)
+    ELSE
+      send_msgs_p = c_null_ptr
+    END IF
+    IF (nrecv > 0) THEN
+      recv_msgs_p = C_LOC(recv_msgs)
+    ELSE
+      recv_msgs_p = c_null_ptr
+    END IF
+    nsend_c = INT(nsend, c_int)
+    nrecv_c = INT(nrecv, c_int)
     redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
-         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
-         recv_msgs, comm))
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm))
   END FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d
 
   FUNCTION xt_redist_single_array_base_new_i4_a1d_i4_a1d( &
        nsend, nrecv, send_msgs, recv_msgs, comm) RESULT(redist)
     INTEGER(i4), INTENT(in) :: nsend, nrecv
-    TYPE(xt_redist_msg) :: send_msgs(nsend), recv_msgs(nrecv)
-    INTEGER :: comm
+    TYPE(xt_redist_msg), TARGET, INTENT(in) :: &
+         send_msgs(nsend), recv_msgs(nrecv)
+    INTEGER, INTENT(in) :: comm
     TYPE(xt_redist) :: redist
+
+    INTEGER(c_int) :: nsend_c, nrecv_c
+    TYPE(c_ptr) :: send_msgs_p, recv_msgs_p
+
     IF (nsend < 0_i4 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0_i4 .OR. nrecv > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
+    IF (nsend > 0) THEN
+      send_msgs_p = C_LOC(send_msgs)
+    ELSE
+      send_msgs_p = c_null_ptr
+    END IF
+    IF (nrecv > 0) THEN
+      recv_msgs_p = C_LOC(recv_msgs)
+    ELSE
+      recv_msgs_p = c_null_ptr
+    END IF
+    nsend_c = INT(nsend, c_int)
+    nrecv_c = INT(nrecv, c_int)
     redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
-         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
-         recv_msgs, comm))
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm))
   END FUNCTION xt_redist_single_array_base_new_i4_a1d_i4_a1d
 
   FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d( &
        nsend, nrecv, send_msgs, recv_msgs, comm) RESULT(redist)
     INTEGER(i8), INTENT(in) :: nsend, nrecv
-    TYPE(xt_redist_msg) :: send_msgs(nsend), recv_msgs(nrecv)
-    INTEGER :: comm
+    TYPE(xt_redist_msg), TARGET, INTENT(in) :: &
+         send_msgs(nsend), recv_msgs(nrecv)
+    INTEGER, INTENT(in) :: comm
     TYPE(xt_redist) :: redist
+
+    INTEGER(c_int) :: nsend_c, nrecv_c
+    TYPE(c_ptr) :: send_msgs_p, recv_msgs_p
+
     IF (nsend < 0_i8 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0_i8 .OR. nrecv > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
+    IF (nsend > 0) THEN
+      send_msgs_p = C_LOC(send_msgs)
+    ELSE
+      send_msgs_p = c_null_ptr
+    END IF
+    IF (nrecv > 0) THEN
+      recv_msgs_p = C_LOC(recv_msgs)
+    ELSE
+      recv_msgs_p = c_null_ptr
+    END IF
+    nsend_c = INT(nsend, c_int)
+    nrecv_c = INT(nrecv, c_int)
     redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
-         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
-         recv_msgs, comm))
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm))
   END FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d
 
   FUNCTION xt_redist_single_array_base_new_a1d_a1d(send_msgs, recv_msgs, comm) &
        RESULT(redist)
-    TYPE(xt_redist_msg) :: send_msgs(:), recv_msgs(:)
-    INTEGER :: comm
+    TYPE(xt_redist_msg), TARGET, INTENT(in) :: send_msgs(:), recv_msgs(:)
+    INTEGER, INTENT(in) :: comm
     TYPE(xt_redist) :: redist
+
     INTEGER :: nsend, nrecv
+    INTEGER(c_int) :: nsend_c, nrecv_c
+    TYPE(c_ptr) :: send_msgs_p, recv_msgs_p
+    TYPE(xt_redist_msg), ALLOCATABLE, TARGET :: send_msgs_a(:), recv_msgs_a(:)
 
     nsend = SIZE(send_msgs)
     nrecv = SIZE(recv_msgs)
+
+    CALL msgs_p_arg(send_msgs, send_msgs_a, send_msgs_p)
+    CALL msgs_p_arg(recv_msgs, recv_msgs_a, recv_msgs_p)
 
     IF (nsend < 0_i8 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0_i8 .OR. nrecv > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
+    nsend_c = INT(nsend, c_int)
+    nrecv_c = INT(nrecv, c_int)
     redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
-         INT(nsend, c_int), INT(nrecv, c_int), send_msgs, &
-         recv_msgs, comm))
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm))
   END FUNCTION xt_redist_single_array_base_new_a1d_a1d
+
+  SUBROUTINE msgs_p_arg(msgs, msgs_a, msgs_p)
+    TYPE(xt_redist_msg), TARGET, INTENT(in) :: msgs(:)
+    TYPE(xt_redist_msg), TARGET, ALLOCATABLE, INTENT(inout) :: msgs_a(:)
+    TYPE(c_ptr), INTENT(out) :: msgs_p
+
+    INTEGER :: msgs_size
+    LOGICAL :: msgs_is_contiguous
+#ifndef HAVE_FC_IS_CONTIGUOUS
+    INTERFACE
+      FUNCTION xt_redist_msg_contiguous(msgs_a, msgs_b) RESULT(p) &
+            BIND(c, name='xt_redist_msg_contiguous')
+        IMPORT :: c_int, xt_redist_msg
+        TYPE(xt_redist_msg), INTENT(in) :: msgs_a, msgs_b
+        INTEGER(c_int) :: p
+      END FUNCTION xt_redist_msg_contiguous
+    END INTERFACE
+#endif
+
+    msgs_size = SIZE(msgs)
+    IF (msgs_size > HUGE(1_c_int)) &
+         CALL xt_abort('invalid size', &
+         __FILE__, &
+         __LINE__)
+    IF (msgs_size > 0) THEN
+      IF (msgs_size > 1) THEN
+#ifdef HAVE_FC_IS_CONTIGUOUS
+        msgs_is_contiguous = IS_CONTIGUOUS(msgs)
+#else
+        msgs_is_contiguous = xt_redist_msg_contiguous(msgs(1), msgs(2)) /= 0
+#endif
+        IF (msgs_is_contiguous) THEN
+          CALL xt_slice_c_loc(msgs(1), msgs_p)
+        ELSE
+          ALLOCATE(msgs_a(msgs_size))
+          msgs_a = msgs
+          msgs_p = C_LOC(msgs_a)
+        END IF
+      ELSE
+        CALL xt_slice_c_loc(msgs(1), msgs_p)
+      END IF
+    ELSE
+      msgs_p = c_null_ptr
+    END IF
+  END SUBROUTINE msgs_p_arg
 
 END MODULE xt_redist_base
 !
