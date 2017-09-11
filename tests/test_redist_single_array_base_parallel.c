@@ -56,6 +56,7 @@
 
 #include "tests.h"
 #include "test_redist_common.h"
+#include "core/ppm_xfuncs.h"
 
 int main(void) {
 
@@ -115,8 +116,10 @@ int main(void) {
     // send and receive messages
     int nsend = size;
     int nrecv = size;
-    struct Xt_redist_msg * send_msgs = malloc(nsend * sizeof(*send_msgs));
-    struct Xt_redist_msg * recv_msgs = malloc(nrecv * sizeof(*recv_msgs));
+    struct Xt_redist_msg *send_msgs
+      = xmalloc((size_t)nsend * sizeof(*send_msgs));
+    struct Xt_redist_msg *recv_msgs
+      = xmalloc((size_t)nrecv * sizeof(*recv_msgs));
 
     for (int i = 0; i < nsend; ++i) {
       send_msgs[i].rank = i;
@@ -141,8 +144,8 @@ int main(void) {
 
     // test exchange
     static double src_data[1];
-    double  * ref_dst_data = malloc(size * sizeof(*ref_dst_data));
-    double * dst_data = malloc(size * sizeof(*dst_data));
+    double *ref_dst_data = xmalloc((size_t)size * sizeof(*ref_dst_data));
+    double *dst_data = xmalloc((size_t)size * sizeof(*dst_data));
     src_data[0] = rank;
     for (int i = 0; i < size; ++i) ref_dst_data[i] = i;
     for (size_t i = 0; i < size; ++i) dst_data[i] = -1.0;
@@ -168,7 +171,8 @@ int main(void) {
     // send and receive messages
     int nsend = (rank == 0)?(size):(0);
     int nrecv = 1;
-    struct Xt_redist_msg * send_msgs = malloc(nsend * sizeof(*send_msgs));
+    struct Xt_redist_msg *send_msgs
+      = xmalloc((size_t)nsend * sizeof(*send_msgs));
     struct Xt_redist_msg recv_msgs[] = {{.rank = 0, .datatype = MPI_DOUBLE}};
 
     if (rank == 0) {
@@ -191,9 +195,9 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
-    double * src_data = malloc(((rank == 0)?(size):(0)) * sizeof(*src_data));
     static double ref_dst_data[1];
     static double dst_data[1];
+    double *src_data = xmalloc((size_t)nsend * sizeof(*src_data));
     if (rank == 0) for (int i = 0; i < size; ++i) src_data[i] = i;
     ref_dst_data[0] = rank;
     dst_data[0] = -1.0;
