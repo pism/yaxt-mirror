@@ -8,5 +8,5 @@ Description: Distributed memory data (re-)distribution library.
 URL: http://www.dkrz.de/redmine/projects/yaxt
 Version: @VERSION@
 Requires:
-Libs: -L@libdir@ -lyaxt
-Cflags: -I@includedir@
+Libs: -L@libdir@ -lyaxt -lyaxt_c
+Cflags: @FC_MOD_FLAG@@includedir@
