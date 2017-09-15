@@ -150,12 +150,12 @@ CONTAINS
     sbuf = t%dt_work
     CALL mpi_comm_rank(comm, rank, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'MPI_COMM_RANK failed', &
+         CALL test_abort(context//'mpi_comm_rank failed', &
          __FILE__, &
          __LINE__)
     CALL mpi_comm_size(comm, nprocs, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'MPI_COMM_RANK failed', &
+         CALL test_abort(context//'mpi_comm_size failed', &
          __FILE__, &
          __LINE__)
     ALLOCATE(rbuf(0:nprocs-1))
