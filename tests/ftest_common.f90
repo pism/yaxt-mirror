@@ -168,7 +168,8 @@ CONTAINS
          __LINE__)
 
     IF (rank == 0) THEN
-      IF (rbuf(0) /= sbuf) CALL test_abort(context//'internal error (1)', &
+      IF (rbuf(0) < sbuf .OR. rbuf(0) > sbuf) &
+           CALL test_abort(context//'internal error (1)', &
            __FILE__, &
            __LINE__)
       IF (ANY(rbuf < 0.0_dp)) CALL test_abort(context//'internal error (2)', &
