@@ -47,7 +47,7 @@
 !
 PROGRAM test_redist_repeat
   USE mpi
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_p2p_off_new, &
@@ -342,7 +342,7 @@ CONTAINS
     CALL xt_redist_s_exchange(redist, src_data, dst_data)
     CALL xt_redist_s_exchange(redist, src_data(2:), dst_data(2:))
     ! check individual redists to have desired effect
-    IF (ANY(dst_data /= ref_dst_data)) &
+    IF (cmp_arrays(dst_data, ref_dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange1", &
          __FILE__, &
          __LINE__)

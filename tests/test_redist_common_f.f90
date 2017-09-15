@@ -62,7 +62,7 @@ MODULE test_redist_common
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
 #endif
-  USE ftest_common, ONLY: test_abort
+  USE ftest_common, ONLY: test_abort, cmp_arrays
   IMPLICIT NONE
   PRIVATE
   INTERFACE check_redist
@@ -127,7 +127,7 @@ CONTAINS
     DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(dst_size)
     dst = -1.0d0
     CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
-    IF (ANY(dst /= ref_dst)) &
+    IF (cmp_arrays(dst, ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange1", &
          __FILE__, &
          __LINE__)
@@ -147,7 +147,7 @@ CONTAINS
          __LINE__)
     dst = -1.0d0
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= ref_dst)) &
+    IF (cmp_arrays(dst, ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -168,7 +168,7 @@ CONTAINS
          __LINE__)
     dst = -1.0d0
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= DBLE(ref_dst))) &
+    IF (cmp_arrays(dst, DBLE(ref_dst))) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -189,7 +189,7 @@ CONTAINS
          __LINE__)
     dst = -1.0d0
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= DBLE(ref_dst))) &
+    IF (cmp_arrays(dst, DBLE(ref_dst))) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -210,7 +210,7 @@ CONTAINS
          __LINE__)
     dst = -1.0d0
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= DBLE(ref_dst))) &
+    IF (cmp_arrays(dst, DBLE(ref_dst))) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -231,7 +231,7 @@ CONTAINS
          __LINE__)
     dst = -1.0d0
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= ref_dst)) &
+    IF (cmp_arrays(dst, ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -245,7 +245,7 @@ CONTAINS
     INTEGER(xi), TARGET, INTENT(inout) :: dst(dst_size)
     dst = -1_xi
     CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
-    IF (ANY(dst /= ref_dst)) &
+    IF (cmp_arrays(dst, ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange1", &
          __FILE__, &
          __LINE__)
@@ -266,7 +266,7 @@ CONTAINS
          __LINE__)
     dst = -1_i2
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= ref_dst)) &
+    IF (cmp_arrays(dst, ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -287,7 +287,7 @@ CONTAINS
          __LINE__)
     dst = -1_i4
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= ref_dst)) &
+    IF (cmp_arrays(dst, ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -308,7 +308,7 @@ CONTAINS
          __LINE__)
     dst = -1_i8
     CALL xt_redist_s_exchange(redist, src, dst)
-    IF (ANY(dst /= ref_dst)) &
+    IF (cmp_arrays(dst, ref_dst)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)

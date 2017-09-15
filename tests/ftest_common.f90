@@ -46,6 +46,8 @@
 MODULE ftest_common
   USE mpi
   USE xt_core, ONLY: i2, i4, i8
+  USE iso_c_binding, ONLY: c_int, c_bool, c_double, &
+       c_int16_t, c_int32_t, c_int64_t
   IMPLICIT NONE
   PRIVATE
   INTEGER, PUBLIC, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
@@ -67,6 +69,67 @@ MODULE ftest_common
     MODULE PROCEDURE icmp_3d
   END INTERFACE icmp
 
+  INTERFACE cmp_arrays
+
+    FUNCTION cmp_dbl_arrays_(asize, a, b) BIND(c, name='cmp_dbl_arrays')
+      IMPORT :: c_bool, c_int, c_double
+#ifdef HAVE_FC_LOGICAL_C_BOOL
+      LOGICAL(c_bool) :: cmp_dbl_arrays_
+#define cmp_dbl_arrays(asize,a,b) LOGICAL(cmp_dbl_arrays_(asize,a,b))
+#else
+      INTEGER(c_int) :: cmp_dbl_arrays_
+#define cmp_dbl_arrays(asize,a,b) (cmp_dbl_arrays_(asize,a,b) /= 0)
+#endif
+      INTEGER(c_int), VALUE, INTENT(in) :: asize
+      REAL(c_double), INTENT(in) :: a(asize), b(asize)
+    END FUNCTION cmp_dbl_arrays_
+
+    FUNCTION cmp_int16_arrays_(asize, a, b) BIND(c, name='cmp_int16_arrays')
+      IMPORT :: c_bool, c_int, c_int16_t
+#ifdef HAVE_FC_LOGICAL_C_BOOL
+      LOGICAL(c_bool) :: cmp_int16_arrays_
+#define cmp_int16_arrays(asize,a,b) LOGICAL(cmp_int16_arrays_(asize,a,b))
+#else
+      INTEGER(c_int) :: cmp_int16_arrays_
+#define cmp_int16_arrays(asize,a,b) (cmp_int16_arrays_(asize,a,b) /= 0)
+#endif
+      INTEGER(c_int), VALUE, INTENT(in) :: asize
+      INTEGER(c_int16_t), INTENT(in) :: a(asize), b(asize)
+    END FUNCTION cmp_int16_arrays_
+
+    FUNCTION cmp_int32_arrays_(asize, a, b) BIND(c, name='cmp_int32_arrays')
+      IMPORT :: c_bool, c_int, c_int32_t
+#ifdef HAVE_FC_LOGICAL_C_BOOL
+      LOGICAL(c_bool) :: cmp_int32_arrays_
+#define cmp_int32_arrays(asize,a,b) LOGICAL(cmp_int32_arrays_(asize,a,b))
+#else
+      INTEGER(c_int) :: cmp_int32_arrays_
+#define cmp_int32_arrays(asize,a,b) (cmp_int32_arrays_(asize,a,b) /= 0)
+#endif
+      INTEGER(c_int), VALUE, INTENT(in) :: asize
+      INTEGER(c_int32_t), INTENT(in) :: a(asize), b(asize)
+    END FUNCTION cmp_int32_arrays_
+
+    FUNCTION cmp_int64_arrays_(asize, a, b) BIND(c, name='cmp_int64_arrays')
+      IMPORT :: c_bool, c_int, c_int64_t
+#ifdef HAVE_FC_LOGICAL_C_BOOL
+      LOGICAL(c_bool) :: cmp_int64_arrays_
+#define cmp_int64_arrays(asize,a,b) LOGICAL(cmp_int64_arrays_(asize,a,b))
+#else
+      INTEGER(c_int) :: cmp_int64_arrays_
+#define cmp_int64_arrays(asize,a,b) (cmp_int64_arrays_(asize,a,b) /= 0)
+#endif
+      INTEGER(c_int), VALUE, INTENT(in) :: asize
+      INTEGER(c_int64_t), INTENT(in) :: a(asize), b(asize)
+    END FUNCTION cmp_int64_arrays_
+
+    MODULE PROCEDURE cmp_dbl_arrays_a1d_a1d
+    MODULE PROCEDURE cmp_dbl_arrays_a2d_a2d
+    MODULE PROCEDURE cmp_i2_arrays_a1d_a1d
+    MODULE PROCEDURE cmp_i4_arrays_a1d_a1d
+    MODULE PROCEDURE cmp_i8_arrays_a1d_a1d
+  END INTERFACE cmp_arrays
+
   INTERFACE id_map
     MODULE PROCEDURE id_map_i2, id_map_i4, id_map_i8
   END INTERFACE id_map
@@ -79,6 +142,7 @@ MODULE ftest_common
   PUBLIC :: timer, treset, tstart, tstop, treport, mysync
   PUBLIC :: id_map, icmp, factorize, regular_deco
   PUBLIC :: test_abort, set_verbose, get_verbose
+  PUBLIC :: cmp_arrays
 CONTAINS
 
   SUBROUTINE init_mpi
@@ -143,11 +207,11 @@ CONTAINS
 
     CHARACTER(len=*), PARAMETER :: context = 'treport: '
     REAL(dp) :: work_sum, work_max, work_avg, e
-    REAL(dp) :: sbuf
+    REAL(dp) :: sbuf(1)
     REAL(dp), ALLOCATABLE :: rbuf(:)
     INTEGER :: nprocs, rank, ierror
 
-    sbuf = t%dt_work
+    sbuf(1) = t%dt_work
     CALL mpi_comm_rank(comm, rank, ierror)
     IF (ierror /= MPI_SUCCESS) &
          CALL test_abort(context//'mpi_comm_rank failed', &
@@ -168,7 +232,7 @@ CONTAINS
          __LINE__)
 
     IF (rank == 0) THEN
-      IF (rbuf(0) < sbuf .OR. rbuf(0) > sbuf) &
+      IF (cmp_dbl_arrays(1, rbuf, sbuf)) &
            CALL test_abort(context//'internal error (1)', &
            __FILE__, &
            __LINE__)
@@ -344,6 +408,102 @@ CONTAINS
     ENDDO
     IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
   END SUBROUTINE icmp_3d
+
+
+  FUNCTION cmp_dbl_arrays_a1d_a1d(a, b) RESULT(differ)
+    DOUBLE PRECISION, INTENT(in) :: a(:), b(:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_dbl_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_dbl_arrays_a1d_a1d
+
+  FUNCTION cmp_dbl_arrays_a2d_a2d(a, b) RESULT(differ)
+    DOUBLE PRECISION, INTENT(in) :: a(:,:), b(:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_dbl_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_dbl_arrays_a2d_a2d
+
+  FUNCTION cmp_i2_arrays_a1d_a1d(a, b) RESULT(differ)
+    INTEGER(i2), INTENT(in) :: a(:), b(:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int16_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i2_arrays_a1d_a1d
+
+  FUNCTION cmp_i4_arrays_a1d_a1d(a, b) RESULT(differ)
+    INTEGER(i4), INTENT(in) :: a(:), b(:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int32_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i4_arrays_a1d_a1d
+
+  FUNCTION cmp_i8_arrays_a1d_a1d(a, b) RESULT(differ)
+    INTEGER(i8), INTENT(in) :: a(:), b(:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int64_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i8_arrays_a1d_a1d
 
   SUBROUTINE factorize(c, a, b)
     INTEGER, INTENT(in) :: c

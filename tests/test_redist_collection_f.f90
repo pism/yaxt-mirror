@@ -48,7 +48,7 @@
 
 PROGRAM test_redist_collection
   USE mpi
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
@@ -183,7 +183,7 @@ CONTAINS
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
-    IF (ANY(dst_data%dp /= ref_dst_data%dp)) &
+    IF (cmp_arrays(dst_data%dp, ref_dst_data%dp)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -239,7 +239,7 @@ CONTAINS
     END DO
     CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
 
-    IF (ANY(ref_dst_data /= dst_data)) &
+    IF (cmp_arrays(ref_dst_data, dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
@@ -263,7 +263,7 @@ CONTAINS
     CALL xt_slice_c_loc(dst_data(:, 3), dst_data_p(3))
     CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
 
-    IF (ANY(ref_dst_data /= dst_data)) &
+    IF (cmp_arrays(ref_dst_data, dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)

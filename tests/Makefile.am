@@ -106,6 +106,7 @@ libtestutil_la_SOURCES = tests.c \
 	test_redist_common.h test_redist_common.c
 
 libtestutil_f_la_SOURCES = ftest_common.f90 \
+	ftest_common_c.c ftest_common.h \
 	test_idxlist_utils_f.f90 \
 	test_xmap_common_f.f90 \
 	test_xmap_common_parallel_f.f90 \

@@ -47,7 +47,7 @@
 !
 MODULE redist_collection_displace
   USE mpi
-  USE ftest_common, ONLY: test_abort
+  USE ftest_common, ONLY: test_abort, cmp_arrays
   USE yaxt, ONLY: xt_int_kind, xi => xt_int_kind, &
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
@@ -135,8 +135,10 @@ CONTAINS
       CALL xt_redist_s_exchange(redist_coll, INT(num_slice), src_data_p, &
            dst_data_p)
 
-      IF (ANY(ref_dst_data(:, 1:num_slice-1) /= dst_data(:, 1:2)) &
-           .OR. ANY(ref_dst_data(:,3) /= dst_data_(k:k+dst_slice_len-1))) &
+      IF (cmp_arrays(ref_dst_data(:, 1:num_slice-1), &
+           &         dst_data(:, 1:num_slice-1)) &
+           .OR. cmp_arrays(ref_dst_data(:,num_slice), &
+           &               dst_data_(k:k+dst_slice_len-1))) &
            CALL test_abort("error in xt_redist_s_exchange", &
            __FILE__, &
            __LINE__)

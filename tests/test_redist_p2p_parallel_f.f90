@@ -44,7 +44,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 PROGRAM test_redist_p2p_parallel
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_int_kind, xi => xt_int_kind, &
@@ -149,14 +149,14 @@ CONTAINS
   SUBROUTINE nonuniform_test
     ! source index list
     INTEGER(xt_int_kind), ALLOCATABLE :: src_index_list(:), dst_index_list(:)
-    DOUBLE PRECISION, ALLOCATABLE :: src_data(:), dst_data(:)
+    DOUBLE PRECISION, ALLOCATABLE :: src_data(:), dst_data(:), ref_dst_data(:)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist
     INTEGER :: i, src_num_indices, dst_num_indices
 
     ALLOCATE(src_index_list(comm_size), dst_index_list(comm_size), &
-         src_data(comm_size), dst_data(comm_size))
+         src_data(comm_size), dst_data(comm_size), ref_dst_data(comm_size))
     src_num_indices = MERGE(comm_size, 0, comm_rank == 0)
     DO i = 1, src_num_indices
       src_index_list(i) = INT(i - 1, xi)
@@ -198,9 +198,9 @@ CONTAINS
     CALL xt_redist_s_exchange(redist, src_data, dst_data)
 
     DO i = 1, comm_size
-      IF (dst_data(i) /= DBLE(i - 1)) EXIT
+      ref_dst_data(i) = DBLE(i-1)
     END DO
-    IF (i <= comm_size) &
+    IF (cmp_arrays(dst_data, ref_dst_data)) &
          CALL test_abort("error in xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
