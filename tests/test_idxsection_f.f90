@@ -77,10 +77,12 @@ PROGRAM test_idxsection
   CALL test_signed_sizes1
   CALL test_signed_sizes2
   CALL test_signed_size_positions
+  CALL test_signed_size_intersections
   CALL test_section_with_stride1
   CALL test_section_with_stride2
   CALL test_bb1
   CALL test_bb2
+  CALL test_bb3
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
@@ -549,8 +551,8 @@ CONTAINS
         idxsection_b = xt_idxsection_new(start, n, global_size(:, j/4 + 1), &
              local_size(:, MOD(j, 4) + 1), local_start)
         ! create reference index vectors
-        idxvec_a = xt_idxvec_new(indices(:, i))
-        idxvec_b = xt_idxvec_new(indices(:, j))
+        idxvec_a = xt_idxvec_new(indices(:, i+1))
+        idxvec_b = xt_idxvec_new(indices(:, j+1))
 
         ! testing
         idxsection_intersection = xt_idxlist_get_intersection(idxsection_a, &
