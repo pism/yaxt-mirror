@@ -139,9 +139,9 @@ CONTAINS
     CALL check_redist(redist_dp, src_data, dst_data, ref_dst_data)
 
     ! repeat for logicals
-    src_l = MOD(src_data, 2.0d0) == 1.0d0
+    src_l = NINT(MOD(src_data, 2.0d0)) == 1
     dst_l = .FALSE.
-    ref_dst_l = MOD(ref_dst_data, 2.0d0) == 1.0d0
+    ref_dst_l = NINT(MOD(ref_dst_data, 2.0d0)) == 1
     redist_l = xt_redist_p2p_new(xmap, mpi_logical)
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_l), &
          mpi_comm_world)) &
