@@ -258,10 +258,9 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    n = SIZE(results_3)
     n = INT(SIZE(results_3), xt_int_kind)
     p = .FALSE.
-    DO i = 0, n - 1
+    DO i = 0_xi, n - 1_xi
       p = p .OR. results_3(i) /= i
     END DO
     IF (p) &
@@ -269,7 +268,7 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    DO i = 0, n - 1
+    DO i = 0_xi, n - 1_xi
       p = p .OR. results_4(i) /= i
     END DO
     IF (p) &
