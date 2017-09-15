@@ -124,8 +124,8 @@ CONTAINS
     INTEGER(xi), PARAMETER :: &
          patch_idx(patch_num) = (/   0_xi,   1_xi,   3_xi,   3_xi, &
          &                           5_xi,  50_xi, 100_xi, 150_xi /), &
-         ref_mpatch_idx(patch_num) = (/   0, 100,  98,  98, &
-         &                               96,  50, 100, 150 /)
+         ref_mpatch_idx(patch_num) = (/   0_xi, 100_xi,  98_xi,  98_xi, &
+         &                               96_xi,  50_xi, 100_xi, 150_xi /)
 
     g_src_idxlist = xt_idxstripes_new(g_src_stripe)
     g_dst_idxlist = xt_idxstripes_new(g_dst_stripe)
