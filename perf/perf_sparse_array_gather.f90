@@ -16,7 +16,7 @@ PROGRAM perf_sparse_array_gather
 #endif
   IMPLICIT NONE
 
-  INTEGER :: gshape(3), gstart(3), nparts(2), num_parts, sshape(3), gsize, &
+  INTEGER :: gshape(3), nparts(2), num_parts, sshape(3), gsize, &
        section_shape(3), section_start(3), section_size, ofs, ierror
   DOUBLE PRECISION, ALLOCATABLE :: gathered_data(:, :, :), &
        scattered_data(:, :, :)
@@ -48,7 +48,6 @@ PROGRAM perf_sparse_array_gather
   check_correctness_of_exchange = .FALSE.
   CALL parse_options
 
-  gstart(:) = 1
   gshape(1) = 192
   gshape(2) = 96
   gshape(3) = 49
