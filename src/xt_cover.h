@@ -72,9 +72,11 @@ void
 xt_cover_finish(struct Xt_pos_ext_vec *restrict cover);
 
 /**
- * @param cover
- * @param query
- * @param forward
+ * @param cover container of extents describing already covered
+ *              portions of index list
+ * @param query range of positions to query if any in [query.start,query.end] is
+ *              already in cover
+ * @param forward direction to search the cover
  * @param search_start_pos should be 0, if \a forward == true
  * or cover->num_pos_ext, if \a forward == false to search all of
  * cover, choose value to start search at if part of cover is known to
@@ -98,9 +100,13 @@ xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
                       struct Xt_pos_ext range);
 
 /**
- * @param cover
- * @param range
- * @param forward
+ * @param cover container of extents describing already covered
+ *              portions of index list
+ * @param range describes a contiguous interval of positions to search
+ *              for and insert if not found
+ * @param forward direction in which to search \a cover,
+ *              i.e. incrementing from search_start_pos if true and
+ *              decrementing if false
  * @param search_start_pos should be 0, if \a forward == true
  * or cover->num_pos_ext, if \a forward == false to search all of
  * cover, choose value to start search at if part of cover is known to
