@@ -52,13 +52,13 @@
  	;;
  
        -Wl,*)
-+	wlprefix=`expr length "$wl"`
-+	wlprefix=`expr substr "$arg" 1 $wlprefix`
++	wlprefix=`expr x"$wl" : '.*' - 1`
++	wlprefix=`expr x"$arg" : 'x\(.\{'"$wlprefix"'\}\)'`
 +	if test x"$wlprefix" = x"$wl" -a x"$wl" != x"-Wl,"; then
 +	  func_append compiler_flags " $arg"
 +	  func_append compile_command " $arg"
 +	  func_append finalize_command " $arg"
-+	  if expr "x$arg" : '^x'"$wl"'-rpath,,' ; then
++	  if expr "x$arg" : '^x'"$wl"'-rpath,,' >/dev/null ; then
 +	    func_stripname "$wl"'-rpath,,' '' "$arg"
 +	    dir=$func_stripname_result
 +	    func_add2xrpath "$dir"
