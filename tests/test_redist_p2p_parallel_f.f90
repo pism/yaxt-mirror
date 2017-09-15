@@ -225,7 +225,7 @@ CONTAINS
     INTEGER, ALLOCATABLE :: a_surfdata(:), b_surfdata(:), &
          a_voldata(:), b_voldata(:)
     INTEGER(xi), ALLOCATABLE :: iveca(:), ivecb(:)
-    INTEGER(xi) :: ia, ib
+    INTEGER :: ia, ib, blk_ofs_accum, gdepth_i
     TYPE(Xt_idxlist) :: idxlist_a, idxlist_b
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist, block_redist, block_redist2
@@ -312,37 +312,35 @@ CONTAINS
     a_voldata(:) = -1
     b_voldata_ref(:) = -1
 
-    qa = 1
+    qa = 0
+    blk_ofs_accum = 0
     DO i = 1, nwin
-      ia = iveca(i)
-      IF (i > 1) THEN
-        src_block_offsets(i) = src_block_offsets(i - 1) + src_block_sizes(i - 1)
-      ELSE
-        src_block_offsets(i) = 0
-      END IF
-      src_block_sizes(i) = gdepth(INT(ia) + 1)
-      DO j = 1, gdepth(INT(ia) + 1)
-        p = ig2col_off(INT(ia) + 1) + j
-        a_voldata(qa) = gvoldata(p)
-        qa = qa + 1
+      ia = INT(iveca(i)) + 1
+      gdepth_i = gdepth(ia)
+      src_block_offsets(i) = blk_ofs_accum
+      blk_ofs_accum = blk_ofs_accum + gdepth_i
+      src_block_sizes(i) = gdepth_i
+      p = ig2col_off(ia)
+      DO j = 1, gdepth_i
+        a_voldata(qa + j) = gvoldata(p + j)
       END DO
+      qa = qa + gdepth_i
       a_vol_size = a_vol_size + src_block_sizes(i)
     END DO
 
-    qb = 1
+    qb = 0
+    blk_ofs_accum = 0
     DO i = 1, nwin
-      ib = ivecb(i)
-      IF (i > 1) THEN
-        dst_block_offsets(i) = dst_block_offsets(i - 1) + dst_block_sizes(i - 1)
-      ELSE
-        dst_block_offsets(i) = 0
-      END IF
-      dst_block_sizes(i) = gdepth(INT(ib) + 1)
-      DO j = 1, gdepth(INT(ib) + 1)
-        p = ig2col_off(INT(ib) + 1) + j
-        b_voldata_ref(qb) = gvoldata(p)
-        qb = qb + 1
+      ib = INT(ivecb(i)) + 1
+      gdepth_i = gdepth(ib)
+      dst_block_offsets(i) = blk_ofs_accum
+      blk_ofs_accum = blk_ofs_accum + gdepth_i
+      dst_block_sizes(i) = gdepth_i
+      p = ig2col_off(ib)
+      DO j = 1, gdepth_i
+        b_voldata_ref(qb + j) = gvoldata(p + j)
       END DO
+      qb = qb + gdepth_i
       b_vol_size = b_vol_size + dst_block_sizes(i)
     END DO
 
