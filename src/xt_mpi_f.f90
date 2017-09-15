@@ -54,7 +54,8 @@ MODULE xt_mpi
   INTERFACE
     SUBROUTINE xt_mpi_comm_mark_exclusive(comm) &
          BIND(c, name='xt_mpi_comm_mark_exclusive_f2c')
-      INTEGER, INTENT(inout) :: comm
+      IMPORT :: xt_mpi_fint_kind
+      INTEGER(xt_mpi_fint_kind), INTENT(inout) :: comm
     END SUBROUTINE xt_mpi_comm_mark_exclusive
   END INTERFACE
 END MODULE xt_mpi
