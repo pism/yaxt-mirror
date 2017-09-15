@@ -301,15 +301,27 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: local_dst_idx(:,:)
     INTEGER, INTENT(out) :: ihandle
 
-    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
+    INTEGER :: tmp(MAX(SIZE(local_src_idx), SIZE(local_dst_idx)))
 
-    INTEGER :: src_handle, dst_handle
+    INTEGER :: src_handle, dst_handle, i, j, m, n
 
-    src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
-    dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
+    m = SIZE(local_src_idx, 1)
+    n = SIZE(local_src_idx, 2)
+    DO j = 1, n
+      DO i = 1, m
+        tmp((j-1)*m+i) = INT(local_src_idx(i,j))
+      END DO
+    END DO
+    CALL ut_init_decomposition(tmp, g_ie * g_je, src_handle)
 
-    CALL ut_init_decomposition(src, g_ie * g_je, src_handle)
-    CALL ut_init_decomposition(dst, g_ie * g_je, dst_handle)
+    m = SIZE(local_dst_idx, 1)
+    n = SIZE(local_dst_idx, 2)
+    DO j = 1, n
+      DO i = 1, m
+        tmp((j-1)*m+i) = INT(local_dst_idx(i,j))
+      END DO
+    END DO
+    CALL ut_init_decomposition(tmp, g_ie * g_je, dst_handle)
 
     CALL ut_init_oneway_transposition_template(src_handle, dst_handle, &
          MPI_COMM_WORLD, ihandle)
