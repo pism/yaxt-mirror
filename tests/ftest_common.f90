@@ -288,8 +288,7 @@ CONTAINS
   SUBROUTINE icmp_2d(label, f,g, rank)
     CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_2d: '
     CHARACTER(len=*), INTENT(in) :: label
-    INTEGER, INTENT(in) :: f(:,:)
-    INTEGER, INTENT(in) :: g(:,:)
+    INTEGER, INTENT(in) :: f(:,:), g(:,:)
     INTEGER, INTENT(in) :: rank
 
     INTEGER :: i, j, n1, n2
@@ -318,8 +317,7 @@ CONTAINS
   SUBROUTINE icmp_3d(label, f,g, rank)
     CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_3d: '
     CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:,:)
-    INTEGER, INTENT(in)  :: g(:,:,:)
+    INTEGER, INTENT(in)  :: f(:,:,:), g(:,:,:)
     INTEGER, INTENT(in) :: rank
 
     INTEGER :: i1, i2, i3, n1, n2, n3
