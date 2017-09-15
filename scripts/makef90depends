@@ -242,6 +242,7 @@ sub MakeDependsf90mod {
    #
    if ($objDepOut)
    {
+      my %modNotFoundWarned;
       foreach my $srcfile (@srcs)
       {
          my $objfile = transformFilename($optArgs, $srcfile);
@@ -307,9 +308,12 @@ sub MakeDependsf90mod {
                          %{{searchModuleFile(\@moduleDirs, @notFound)}});
                @notFound =
                    grep { !exists $moduleProvide{$_} } @notFound;
+               my @notFoundNotYetWarned
+                   = grep { ! exists $modNotFoundWarned{$_} } @notFound;
+               @modNotFoundWarned{@notFoundNotYetWarned} = undef;
                warn $srcfile, ': module', (@notFound>1?'s':()),
                    ' ', join(', ', @notFound),
-                   " not found\n" if @notFound;
+                   " not found\n" if @notFoundNotYetWarned;
             }
             my @dependencies =
                 map { $moduleProvide{$_} }
