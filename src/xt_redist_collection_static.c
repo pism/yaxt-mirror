@@ -85,8 +85,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
   /* get lists of ranks to send/receive message to/from */
   for (size_t j = 0; j < num_redists; ++j) {
     num_ranks[j]
-      = (size_t)xt_redist_get_msg_ranks(redists[j], direction,
-                                        (int **)(ranks + j));
+      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
     /* sort list */
     xt_sort_int(ranks[j], num_ranks[j]);
     ranks_left |= (num_ranks[j] > 0);

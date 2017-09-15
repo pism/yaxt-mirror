@@ -74,7 +74,7 @@ generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
   size_t num_messages = (size_t)*nmsgs;
   int *restrict ranks = NULL;
   size_t num_ranks
-    = (size_t)xt_redist_get_msg_ranks(redist, direction, (int **)&ranks);
+    = (size_t)xt_redist_get_msg_ranks(redist, direction, &ranks);
   struct Xt_redist_msg *restrict p
     = xrealloc(*msgs, sizeof (*p) * (num_messages + num_ranks));
   for (size_t i = 0; i < num_ranks; ++i) {

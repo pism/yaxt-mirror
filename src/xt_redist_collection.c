@@ -91,7 +91,7 @@ redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 static int
 redist_collection_get_msg_ranks(Xt_redist redist,
                                 enum xt_msg_direction direction,
-                                int **ranks);
+                                int *restrict *ranks);
 
 static MPI_Comm
 redist_collection_get_MPI_Comm(Xt_redist redist);
@@ -153,8 +153,7 @@ static void copy_component_dt(struct redist_collection_msg **msgs,
   /* get lists of ranks to send/receive message to/from */
   for (size_t j = 0; j < num_redists; ++j) {
     num_ranks[j]
-      = (size_t)xt_redist_get_msg_ranks(redists[j], direction,
-                                        (int **)(ranks + j));
+      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
     /* sort list */
     xt_sort_int(ranks[j], num_ranks[j]);
     ranks_left |= (num_ranks[j] > 0);
@@ -162,7 +161,7 @@ static void copy_component_dt(struct redist_collection_msg **msgs,
   }
   /* count number of different ranks to send/receive message to/from */
   size_t num_messages = ranks_left
-    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int **)ranks)
+    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int *const *)ranks)
     : 0;
   /* build messages */
   struct redist_collection_msg *restrict p = NULL;
@@ -556,7 +555,7 @@ redist_collection_s_exchange1(Xt_redist redist,
 static int
 redist_collection_get_msg_ranks(Xt_redist redist,
                                 enum xt_msg_direction direction,
-                                int **ranks)
+                                int *restrict *ranks)
 {
   Xt_redist_collection redist_coll = xrc(redist);
   unsigned nmsg;

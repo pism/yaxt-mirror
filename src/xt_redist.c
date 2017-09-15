@@ -95,7 +95,7 @@ MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
 }
 
 int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
-                            int **ranks)
+                            int *restrict *ranks)
 {
   return redist->vtable->get_msg_ranks(redist, direction, ranks);
 }
@@ -151,7 +151,7 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
 size_t
 xt_ranks_uniq_count(size_t num_rank_sets,
                     size_t *restrict num_ranks,
-                    const int *ranks[num_rank_sets])
+                    const int *const ranks[num_rank_sets])
 {
   size_t rank_pos[num_rank_sets];
   for (size_t j = 0; j < num_rank_sets; ++j)

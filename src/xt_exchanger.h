@@ -65,7 +65,7 @@ struct xt_exchanger_vtable {
   Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
   void (*delete)(Xt_exchanger);
   void (*s_exchange)(Xt_exchanger, const void *, void *);
-  int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int**);
+  int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction);
 };
 
@@ -102,7 +102,7 @@ xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
 int
 xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
-                           int **ranks);
+                           int *restrict *ranks);
 
 #endif // XT_EXCHANGER_H
 /*

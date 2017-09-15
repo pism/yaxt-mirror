@@ -84,7 +84,7 @@ redist_sab_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 static int
 redist_collection_get_msg_ranks(Xt_redist redist,
                                 enum xt_msg_direction direction,
-                                int **ranks);
+                                int *restrict *ranks);
 
 static MPI_Comm
 redist_sab_get_MPI_Comm(Xt_redist redist);
@@ -206,10 +206,9 @@ redist_sab_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 static int
 redist_collection_get_msg_ranks(Xt_redist redist,
                                 enum xt_msg_direction direction,
-                                int **ranks)
+                                int *restrict *ranks)
 {
-  return xt_exchanger_get_msg_ranks(xrsab(redist)->exchanger, direction,
-                                        ranks);
+  return xt_exchanger_get_msg_ranks(xrsab(redist)->exchanger, direction, ranks);
 }
 
 static MPI_Comm

@@ -68,7 +68,7 @@ struct xt_redist_vtable {
   void (*s_exchange1)(Xt_redist, const void *, void *);
   MPI_Datatype (*get_send_MPI_Datatype)(Xt_redist, int);
   MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);
-  int (*get_msg_ranks)(Xt_redist, enum xt_msg_direction, int**);
+  int (*get_msg_ranks)(Xt_redist, enum xt_msg_direction, int *restrict *);
   MPI_Comm (*get_MPI_Comm)(Xt_redist);
 };
 
@@ -97,12 +97,12 @@ xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
 void xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
 
 int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
-                            int **ranks);
+                            int *restrict *ranks);
 
 size_t
 xt_ranks_uniq_count(size_t num_rank_sets,
                     size_t *restrict num_ranks,
-                    const int *ranks[num_rank_sets]);
+                    const int *const ranks[num_rank_sets]);
 
 MPI_Datatype
 xt_create_compound_datatype(size_t num_redists,

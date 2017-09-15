@@ -68,7 +68,7 @@ static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
 static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
-                                       int **ranks);
+                                       int *restrict *ranks);
 
 static MPI_Datatype
 xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
@@ -223,7 +223,7 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
 static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
-                                       int **ranks)
+                                       int *restrict *ranks)
 {
   Xt_exchanger_simple_base exchanger_sb = (Xt_exchanger_simple_base)exchanger;
   size_t nmsg;
