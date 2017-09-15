@@ -47,8 +47,10 @@
 !
 MODULE xt_mpi
   USE mpi
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_long, c_short, c_long_long
   IMPLICIT NONE
   PUBLIC
+  INTEGER, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
   INTERFACE
     SUBROUTINE xt_mpi_comm_mark_exclusive(comm) &
          BIND(c, name='xt_mpi_comm_mark_exclusive_f2c')

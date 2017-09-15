@@ -48,7 +48,7 @@
 MODULE xt_core
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
        c_long, c_short, c_long_long
-  USE xt_mpi, ONLY: XT_INT_FC_MPIDT
+  USE xt_mpi, ONLY: XT_INT_FC_MPIDT, xt_mpi_fint_kind
   IMPLICIT NONE
   PRIVATE
   INTEGER, PUBLIC, PARAMETER :: xt_int_kind   = XT_INT_FC_KIND
@@ -63,7 +63,7 @@ MODULE xt_core
   PUBLIC :: xt_slice_c_loc
   PUBLIC :: OPERATOR(==), OPERATOR(/=)
 
-  INTEGER, PUBLIC, PARAMETER :: xt_mpi_fint_kind = XT_MPI_FINT_FC_KIND
+  PUBLIC :: xt_mpi_fint_kind
   INTEGER, PUBLIC, PARAMETER :: xt_int_mpidt = XT_INT_FC_MPIDT
   INTEGER(xt_int_kind), PARAMETER :: dummy = 0_xt_int_kind
   !> number of decimal places needed to print any variable of type
