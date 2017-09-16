@@ -312,7 +312,8 @@ foreach my $headerFn (@ARGV)
             if (defined($token) && exists($configHDefs{$token})
                 && defined($configHDefs{$token}))
             {
-              print STDERR 'Substituting ', $configHDefs{$token}, ' for ',
+              print STDERR 'Substituting ',
+                  join(' ', @{$configHDefs{$token}{'definition'}[0]}), ' for ',
                   $token, "\n" if $debug > 1;
               $tokenMapping[4][$tok] = 1;
               $tokenMapping[2][$tok] = $configHDefs{$token};
@@ -320,7 +321,7 @@ foreach my $headerFn (@ARGV)
                   - length($tokenMapping[0][$tok]);
               substr($headerLine, $tokenMapping[3][$tok][0],
                      $tokenMapping[3][$tok][1] + 1 - $tokenMapping[3][$tok][0])
-                  =~ s/$token/$configHDefs{$token}/;
+                  =~ s/$token/@{$configHDefs{$token}{'definition'}[0]}/;
               for (my $tokRest = $tok + 1;
                    $tokRest < @{$tokenMapping[0]};
                    ++$tokRest)
@@ -367,15 +368,17 @@ sub internConfigH
     {
       $configHDefs{$1} = undef;
     }
-    elsif ($line =~ m{^\#\s*define\s+(\w+)\s+(.*)$}x)
+    elsif ($line =~ m{$cpp::definition_match}x)
     {
-      my ($macro, $definition, $nextline) = ($1, $2);
+      my ($preProcSym, $args, $definition) = ($1, $2, $3);
+      my ($lineno, $nextline) = ($.);
       while (substr($definition, -1) eq '\\'
              and $nextline = <$configHFh>)
       {
         $definition .= $nextline;
       }
-      $configHDefs{$macro} = $definition;
+      $configHDefs{$preProcSym} = cpp::parseDefinition($args, $definition,
+                                                       $configHFn, $lineno);
     }
     elsif ($line =~ m{^\#\s*(?:if|ifdef|ifndef)\s+}x)
     {
