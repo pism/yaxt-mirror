@@ -423,6 +423,7 @@ sub checkPredicate(\%$$$)
     next if ($token eq 'defined');
     next if (exists($defines->{$token}));
     next if ($token =~ m{$cpp::operator_match});
+    next if ($token =~ m{$cpp::integral_constant_match});
     $result = undef;
     last;
   }
