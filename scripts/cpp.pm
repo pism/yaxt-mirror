@@ -47,7 +47,7 @@ our @EXPORT_OK = qw(transliterateTrigraphs tokenize);
 use Data::Dumper ();
 use File::Temp ();
 
-our ($debug, $operator_match);
+our ($debug, $operator_match, $integral_constant_match, $definition_match);
 
 # defaults for LP64
 my ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long,
@@ -91,6 +91,15 @@ BEGIN {
                         |\)
                         |\#\#
                         |[-,+\*/%&|^!=><])}x;
+
+   $integral_constant_match
+       = qr{^(\d+|0[0-7]+|0[xX][0-9a-fA-F]+)([ul]{1,3})?$}xi;
+
+   $definition_match
+       = qr{^\s*\#+(?:define)
+               \s+([A-Za-z_]\w*)
+               (\(\s*[A-Za-z_]\w*(?:\s*,[A-Za-z_]\w*)*\s*\))?
+               \s+(.*?)\s*$}x;
 
    sub tokenize
    {
@@ -1606,7 +1615,7 @@ BEGIN {
             join(', ', $lex->{'rest'}()), "\n")
           if $debug > 1;
       local $_ = $lex->{'currentsym'}();
-      if (m{^(\d+|0[0-7]+|0[xX][0-9a-fA-F]+)([ul]{1,3})?$}xi)
+      if (m{$integral_constant_match}xi)
       {
          my ($digits, $integer_suffix) = ($1, $2);
          my $inttype = 'int';

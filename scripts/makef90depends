@@ -478,10 +478,7 @@ sub parseSource($$;$)
          print(STDERR ($ignored?'Ignoring':'Evaluating'), ' upcoming text.',
                "\n") if $debug > 1;
       } elsif (!$ignored) {
-         if (m{^\s*\#+(?:define)
-               \s+([A-Za-z_]\w*)
-               (\(\s*[A-Za-z_]\w*(?:\s*,[A-Za-z_]\w*)*\s*\))?
-               \s+(.*?)\s*$}x) {
+         if (m{$cpp::definition_match}x) {
             my ($preProcSym, $args, $definition)
                 = ($1, $2, $3);
             $localDefines{$preProcSym}
