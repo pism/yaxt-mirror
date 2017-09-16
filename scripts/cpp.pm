@@ -90,7 +90,7 @@ BEGIN {
                         |\(
                         |\)
                         |\#\#
-                        |[-,+/%&|^!=><])}x;
+                        |[-,+\*/%&|^!=><])}x;
 
    sub tokenize
    {
@@ -1174,7 +1174,7 @@ BEGIN {
       my $promotion = cpp_arithmetic_conversion($val[0], $val[1]);
       if ($op eq '*')
       {
-         return ('constant', $promotion, $val[0][2] + $val[1][2]);
+         return ('constant', $promotion, $val[0][2] * $val[1][2]);
       }
       elsif ($op eq '/')
       {
