@@ -911,33 +911,28 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   int retval = 1;
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
-
-  int i = 0;
+  const struct Xt_stripe *restrict stripes = idxstripes->stripes;
+  size_t num_stripes = (size_t)idxstripes->num_stripes, i = 0;
   Xt_int position_offset = 0;
 
-  while(i < idxstripes->num_stripes &&
-        position_offset + idxstripes->stripes[i].nstrides <= offset)
-    position_offset
-      = (Xt_int)(position_offset + idxstripes->stripes[i++].nstrides);
+  while (i < num_stripes && position_offset + stripes[i].nstrides <= offset)
+    position_offset = (Xt_int)(position_offset + stripes[i++].nstrides);
 
-  for (; i < idxstripes->num_stripes;
-       position_offset
-         = (Xt_int)(position_offset + idxstripes->stripes[i++].nstrides)) {
+  for (; i < num_stripes;
+       position_offset = (Xt_int)(position_offset + stripes[i++].nstrides)) {
 
-    if ((idxstripes->stripes[i].stride > 0 && index < idxstripes->stripes[i].start)
-        || (idxstripes->stripes[i].stride < 0
-            && index > idxstripes->stripes[i].start))
+    if ((stripes[i].stride > 0 && index < stripes[i].start)
+        || (stripes[i].stride < 0 && index > stripes[i].start))
       continue;
 
-    Xt_int rel_start
-      = (Xt_int)(index - idxstripes->stripes[i].start);
+    Xt_int rel_start = (Xt_int)(index - stripes[i].start);
 
-    if (rel_start%idxstripes->stripes[i].stride) continue;
+    if (rel_start % stripes[i].stride) continue;
 
-    if (rel_start/idxstripes->stripes[i].stride >= idxstripes->stripes[i].nstrides)
+    if (rel_start / stripes[i].stride >= stripes[i].nstrides)
       continue;
 
-    *position = (int)(rel_start/idxstripes->stripes[i].stride + position_offset);
+    *position = (int)(rel_start/stripes[i].stride + position_offset);
 
     retval = 0;
     goto fun_exit;
