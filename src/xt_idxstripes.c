@@ -770,33 +770,33 @@ idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
   INSTR_START(instr);
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  const struct Xt_stripe *restrict stripes_ = idxstripes->stripes;
 
   struct Xt_stripe * temp_stripes = NULL;
   size_t temp_stripes_array_size = 0;
-  size_t num_temp_stripes = 0;
+  size_t num_temp_stripes = 0, num_stripes_ = (size_t)idxstripes->num_stripes;
 
-  for (int i = 0; i < idxstripes->num_stripes; ++i) {
+  for (size_t i = 0; i < num_stripes_; ++i) {
 
-    if (idxstripes->stripes[i].stride == 1) {
+    if (stripes_[i].stride == 1) {
 
       ++num_temp_stripes;
 
       ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
                         num_temp_stripes);
 
-      temp_stripes[num_temp_stripes-1] = idxstripes->stripes[i];
+      temp_stripes[num_temp_stripes-1] = stripes_[i];
 
     } else {
 
       ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
                         num_temp_stripes
-                        + (size_t)idxstripes->stripes[i].nstrides);
+                        + (size_t)stripes_[i].nstrides);
 
-      for (int j = 0; j < idxstripes->stripes[i].nstrides; ++j)  {
+      for (size_t j = 0; j < (size_t)stripes_[i].nstrides; ++j)  {
 
         temp_stripes[num_temp_stripes].start
-          = (Xt_int)(idxstripes->stripes[i].start
-                     + (Xt_int)j * idxstripes->stripes[i].stride);
+          = (Xt_int)(stripes_[i].start + (Xt_int)j * stripes_[i].stride);
         temp_stripes[num_temp_stripes].nstrides = 1;
         temp_stripes[num_temp_stripes].stride = 1;
 
