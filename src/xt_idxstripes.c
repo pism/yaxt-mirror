@@ -732,13 +732,12 @@ idxstripes_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
   INSTR_START(instr);
 
   /// \todo use memcpy with index_array_cache if available
-  Xt_idxstripes stripes = (Xt_idxstripes)idxlist;
-
-  --indices;
-  for (int i = 0; i < stripes->num_stripes; ++i)
-    for (Xt_int j = 0; j < stripes->stripes[i].nstrides; ++j)
-      *(++indices)
-        = (Xt_int)(stripes->stripes[i].start + j * stripes->stripes[i].stride);
+  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  const struct Xt_stripe *restrict stripes = idxstripes->stripes;
+  size_t num_stripes = (size_t)idxstripes->num_stripes;
+  for (size_t i = 0; i < num_stripes; ++i)
+    for (Xt_int j = 0; j < stripes[i].nstrides; ++j)
+      *(indices++) = (Xt_int)(stripes[i].start + j * stripes[i].stride);
 
   INSTR_STOP(instr);
 }
