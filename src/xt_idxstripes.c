@@ -804,23 +804,23 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
   INSTR_DEF(instr,"idxstripes_get_index_at_position")
   INSTR_START(instr);
 
-  int retval = 1;
+  int retval;
 
-  if (position < 0) goto fun_exit;
-
-  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
-  const struct Xt_stripe *restrict stripes = idxstripes->stripes;
-  size_t num_stripes = (size_t)idxstripes->num_stripes;
-  for (size_t i = 0; i < num_stripes; ++i)
-    if (position >= stripes[i].nstrides)
-      position-= (int)stripes[i].nstrides;
-    else {
-      *index = (Xt_int)(stripes[i].start + position * stripes[i].stride);
-      retval = 0;
-      break;
+  if (position >= 0 && position < idxlist->num_indices) {
+    Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+    const struct Xt_stripe *restrict stripes = idxstripes->stripes;
+    size_t num_stripes = (size_t)idxstripes->num_stripes;
+    size_t i = 0;
+    while (i < num_stripes && position >= stripes[i].nstrides) {
+      position-= stripes[i].nstrides;
+      ++i;
     }
+    *index = (Xt_int)(stripes[i].start + position * stripes[i].stride);
+    retval = 0;
+  } else {
+    retval = 1;
+  }
 
- fun_exit: ;
   INSTR_STOP(instr);
   return retval;
 }
