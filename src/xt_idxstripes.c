@@ -820,16 +820,16 @@ idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
 
   int retval = 1;
 
-  Xt_idxstripes stripes = (Xt_idxstripes)idxlist;
-
   if (position < 0) goto fun_exit;
 
-  for (int i = 0; i < stripes->num_stripes; ++i)
-    if (position >= stripes->stripes[i].nstrides)
-      position-= (int)stripes->stripes[i].nstrides;
+  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  const struct Xt_stripe *restrict stripes = idxstripes->stripes;
+  size_t num_stripes = (size_t)idxstripes->num_stripes;
+  for (size_t i = 0; i < num_stripes; ++i)
+    if (position >= stripes[i].nstrides)
+      position-= (int)stripes[i].nstrides;
     else {
-      *index = (Xt_int)(stripes->stripes[i].start
-                        + position * stripes->stripes[i].stride);
+      *index = (Xt_int)(stripes[i].start + position * stripes[i].stride);
       retval = 0;
       break;
     }
