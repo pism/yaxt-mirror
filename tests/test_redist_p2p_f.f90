@@ -243,10 +243,17 @@ CONTAINS
          (/  5_xi,  4_xi,  3_xi, 96_xi,  1_xi, &
          &   5_xi,  4_xi,  5_xi,  4_xi,  3_xi, &
          &  13_xi, 2_xi, 1_xi /)
-    INTEGER(xt_int_kind) :: i
-    INTEGER(xt_int_kind) :: dst_data(dst_num)
+#ifdef __G95__
+    INTEGER :: i
     INTEGER(xt_int_kind), PARAMETER :: src_data(src_num) &
-         = (/ (i, i = 0_xi, 13_xi) /), ref_dst_data(dst_num) = &
+         = (/ (INT(i, xi), i = 0, 13) /)
+#else
+    INTEGER(xt_int_kind) :: i
+    INTEGER(xt_int_kind), PARAMETER :: src_data(src_num) &
+         = (/ (i, i = 0_xi, 13_xi) /)
+#endif
+    INTEGER(xt_int_kind) :: dst_data(dst_num)
+    INTEGER(xt_int_kind), PARAMETER :: ref_dst_data(dst_num) = &
          (/  7_xi,  6_xi,  4_xi, 13_xi,  2_xi, &
          &   0_xi,  2_xi,  0_xi,  7_xi,  9_xi, &
          &  13_xi,  2_xi,  0_xi /)
