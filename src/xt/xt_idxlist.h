@@ -281,6 +281,8 @@ int xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist,
  * @param[out] num_ext     number of extents allocated in \a pos_exts
  * @param[out] pos_ext     ranges of positions for the first
  *                         occurrence of the indices from stripes in idxlist
+ *                         the pointee is newly allocated and must be
+ *                         freed by the caller
  * @param[in]  single_match_only if true then do not consider a previous
  *                         matching position again
  *                         in the next index search - this is required on the
