@@ -71,7 +71,7 @@ PROGRAM test_redist_p2p_f
   ! source index list
   CALL test_without_offsets
   CALL test_with_offsets
-
+  CALL test_offset_extents
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
