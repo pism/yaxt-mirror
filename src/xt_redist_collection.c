@@ -285,15 +285,14 @@ create_all_dt_for_dir(struct redist_collection_msg *msgs,
 
 static void
 compute_displ(const void *const *data, unsigned num_redists,
-              MPI_Aint displacements[num_redists],
-              MPI_Comm comm)
+              MPI_Aint displacements[num_redists])
 {
   if (num_redists) {
     MPI_Aint base_addr, offset;
-    xt_mpi_call(MPI_Get_address((void *)data[0], &base_addr), comm);
+    base_addr = (MPI_Aint)(intptr_t)(const void *)data[0];
     displacements[0] = 0;
     for (size_t i = 1; i < num_redists; ++i) {
-      xt_mpi_call(MPI_Get_address((void *)data[i], &offset), comm);
+      offset = (MPI_Aint)(intptr_t)(const void *)data[i];
       displacements[i] = offset - base_addr;
     }
   }
@@ -328,8 +327,8 @@ get_exchanger(const void *const * src_data, void *const * dst_data,
               MPI_Comm comm, int tag_offset)
 {
   MPI_Aint displacements[2][num_redists];
-  compute_displ(src_data, num_redists, displacements[0], comm);
-  compute_displ((const void *const *)dst_data, num_redists, displacements[1], comm);
+  compute_displ(src_data, num_redists, displacements[0]);
+  compute_displ((const void *const *)dst_data, num_redists, displacements[1]);
 
   Xt_exchanger exchanger;
 
