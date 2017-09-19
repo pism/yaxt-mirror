@@ -110,12 +110,13 @@ xt_redist_msgs_strided_copy(size_t n,
                             MPI_Comm comm) {
 
 
-  unsigned char *restrict src_store = (unsigned char *)src,
-    *restrict dst_store = (unsigned char *)dst;
+  const unsigned char *restrict src_store = (const unsigned char *)src;
+  unsigned char *restrict dst_store = (unsigned char *)dst;
   for (size_t i = 0; i < n; ++i) {
-    struct Xt_redist_msg *restrict src_msg
-      = (struct Xt_redist_msg *)(void *)(src_store + i * src_stride),
-      *dst_msg = (struct Xt_redist_msg *)(void *)(dst_store + i * dst_stride);
+    const struct Xt_redist_msg *restrict src_msg
+      = (const struct Xt_redist_msg *)(const void *)(src_store + i * src_stride);
+    struct Xt_redist_msg *dst_msg
+      = (struct Xt_redist_msg *)(void *)(dst_store + i * dst_stride);
     dst_msg->rank = src_msg->rank;
     xt_mpi_call(MPI_Type_dup(src_msg->datatype, &(dst_msg->datatype)), comm);
   }
