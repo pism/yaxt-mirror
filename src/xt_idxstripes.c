@@ -211,7 +211,7 @@ struct Xt_idxstripes_ {
 
   struct Xt_idxlist_ parent;
 
-  const struct Xt_stripe *stripes;
+  struct Xt_stripe *stripes;
   Xt_int min_index, max_index;
   int num_stripes;
   int flags;
@@ -365,7 +365,8 @@ xt_idxstripes_prealloc_new(const struct Xt_stripe *stripes, int num_stripes)
       * sizeof (struct Xt_stripe);
     Xt_idxstripes idxstripes = xmalloc(header_size);
     idxstripes->num_stripes = num_stripes;
-    idxstripes->stripes = stripes;
+    /* this assignment is safe because no methods modify the pointee */
+    idxstripes->stripes = (struct Xt_stripe *)stripes;
     idxstripes_aggregate(idxstripes, __func__);
     result = (Xt_idxlist)idxstripes;
   } else
@@ -416,7 +417,7 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
   xt_mpi_call(MPI_Pack(&stripes->num_stripes, 1, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
   if (num_stripes)
-    xt_mpi_call(MPI_Pack((void *)stripes->stripes, num_stripes, stripe_dt,
+    xt_mpi_call(MPI_Pack(stripes->stripes, num_stripes, stripe_dt,
                          buffer, buffer_size, position, comm), comm);
   INSTR_STOP(instr);
 }
@@ -1186,7 +1187,7 @@ idxstripes_get_pos_exts_of_index_stripes(
     destroy_stripes_lookup(&stripes_db);
     xt_cover_finish(&cover);
     if ((struct Xt_idxstripes_ *)idxlist != idxstripes) {
-      free((void *)idxstripes->stripes);
+      free(idxstripes->stripes);
       xt_idxlist_delete((Xt_idxlist)idxstripes);
     }
   }
