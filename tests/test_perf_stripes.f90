@@ -321,11 +321,6 @@ CONTAINS
 
   END SUBROUTINE gen_redist_3d_wb
 
-  SUBROUTINE msg(s)
-    CHARACTER(len=*), INTENT(in) :: s
-    IF (verbose) WRITE(0,*) s
-  END SUBROUTINE msg
-
   SUBROUTINE inflate_idx(inflate_pos, idx_2d, idx_3d)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::inflate_idx: '
     INTEGER, INTENT(in) :: inflate_pos
