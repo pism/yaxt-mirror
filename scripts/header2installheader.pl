@@ -290,7 +290,7 @@ foreach my $headerFn (@ARGV)
           }
         }
         # tokenize and replace tokens from config.h definitions
-        # FIXME: this simple approach will fail for funtion-like macros
+        # FIXME: this simple approach will fail for function-like macros
         my @tokenMapping = eval { cpp::tokenize($headerLine); };
         # FIXME: when tokenizing doesn't work that usually means a multi-line
         # construct needs to be accounted for
