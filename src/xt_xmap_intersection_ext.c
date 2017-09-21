@@ -444,7 +444,7 @@ static void
 cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
                           size_t *num_pos_exts,
                           size_t *size_pos_exts,
-                          struct Xt_pos_ext **pos_exts);
+                          struct Xt_pos_ext *restrict *pos_exts);
 
 static struct Xt_pos_ext_vec
 generate_dir_transfer_ext_dst(
@@ -553,7 +553,7 @@ generate_dir_transfer_ext_dst(
             .start = isect_pos_exts_size_psum + progress,
               .size = overlap_desc.overlap },
           &num_isect_transfer_pos_ext, &size_isect_transfer_pos_ext,
-          (struct Xt_pos_ext **)&isect_transfer_pos_ext);
+          &isect_transfer_pos_ext);
         progress += overlap_desc.overlap;
         /* ... lastly the search can continue with the tail ... */
         isect_pos_ext.start += overlap_desc.skip + overlap_desc.overlap;
@@ -602,7 +602,7 @@ static void
 cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
                           size_t *num_pos_exts,
                           size_t *size_pos_exts,
-                          struct Xt_pos_ext **pos_exts)
+                          struct Xt_pos_ext *restrict *pos_exts)
 {
   struct Xt_pos_ext *restrict pos_exts_ = *pos_exts;
   size_t num_pos_exts_ = *num_pos_exts;
