@@ -101,7 +101,7 @@ int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
 
 size_t
 xt_ranks_uniq_count(size_t num_rank_sets,
-                    size_t *restrict num_ranks,
+                    const size_t num_ranks[num_rank_sets],
                     const int *const ranks[num_rank_sets]);
 
 MPI_Datatype
