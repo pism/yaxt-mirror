@@ -471,10 +471,9 @@ generate_dir_transfer_ext_dst(
   for (int i = 0; i < num_intersections; ++i) {
 
     int num_stripes, num_indices_to_remove = 0;
-    struct Xt_stripe *restrict intersection_idxstripes;
+    struct Xt_stripe *intersection_idxstripes;
     xt_idxlist_get_index_stripes(intersections[i].list,
-                                 (struct Xt_stripe **)&intersection_idxstripes,
-                                 &num_stripes);
+                                 &intersection_idxstripes, &num_stripes);
     struct Xt_pos_ext *restrict isect_pos_exts = NULL;
     int num_isect_pos_exts;
 #ifndef NDEBUG
