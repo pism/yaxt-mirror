@@ -60,7 +60,7 @@ PROGRAM test_perf
   ! global extents including halos:
 
   INTEGER, PARAMETER :: nlev = 30
-  INTEGER, PARAMETER :: undef_int = HUGE(undef_int)/2 - 1
+  INTEGER, PARAMETER :: undef_int = (HUGE(undef_int)-1)/2 - 1
   INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
