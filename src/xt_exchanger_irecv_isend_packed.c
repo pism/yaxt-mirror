@@ -61,50 +61,69 @@ xt_exchanger_irecv_isend_packed_s_exchange(
   const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
   int tag_offset, MPI_Comm comm) {
 
-  MPI_Request * requests =
-    xmalloc((size_t)(nrecv + nsend) * sizeof (*requests));
-  void ** buffers =
-    xmalloc((size_t)(nrecv + nsend) * sizeof (*buffers));
+  enum { AUTO_ALLOC_SIZE = 32, };
+  MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
+  int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
 
-  int buffer_size;
-  for (int i = 0; i < nrecv; ++i) {
-    xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, &buffer_size),
+  size_t num_tx = (size_t)nrecv + (size_t)nsend;
+  if (num_tx <= AUTO_ALLOC_SIZE) {
+    requests = requests_auto;
+    buffer_sizes = buffer_sizes_auto;
+  } else {
+    requests = xmalloc(num_tx * sizeof (*requests));
+    buffer_sizes = xmalloc(num_tx * sizeof (*buffer_sizes));
+  }
+
+  for (int i = 0; i < nrecv; ++i)
+    xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, buffer_sizes+i),
                 comm);
-    buffers[i] = xmalloc((size_t)buffer_size);
-    xt_mpi_call(MPI_Irecv(buffers[i], buffer_size, MPI_PACKED,
+  for (int i = 0; i < nsend; ++i)
+    xt_mpi_call(MPI_Pack_size(1, send_msgs[i].datatype, comm,
+                              buffer_sizes+nrecv+i), comm);
+  size_t buffer_size = 0;
+  for (size_t i = 0; i < num_tx; ++i)
+    buffer_size += (size_t)buffer_sizes[i];
+
+  unsigned char *buffer = xmalloc(buffer_size);
+
+  size_t ofs = 0;
+  for (int i = 0; i < nrecv; ++i) {
+    int recv_size = buffer_sizes[i];
+    xt_mpi_call(MPI_Irecv(buffer + ofs, recv_size, MPI_PACKED,
                           recv_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+i), comm);
+    ofs += (size_t)recv_size;
   }
 
   for (int i = 0; i < nsend; ++i) {
     int position = 0;
-    xt_mpi_call(MPI_Pack_size(1, send_msgs[i].datatype, comm, &buffer_size),
-                comm);
-    buffers[nrecv + i] = xmalloc((size_t)buffer_size);
-    xt_mpi_call(MPI_Pack((void*)src_data, 1, send_msgs[i].datatype,
-                         buffers[nrecv + i], buffer_size, &position,
+    int send_size = buffer_sizes[nrecv+i];
+    xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(src_data), 1, send_msgs[i].datatype,
+                         buffer + ofs, send_size, &position,
                          comm), comm);
-    xt_mpi_call(MPI_Isend(buffers[nrecv + i], buffer_size, MPI_PACKED,
+    xt_mpi_call(MPI_Isend(buffer + ofs, send_size, MPI_PACKED,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+nrecv+i), comm);
+    ofs += (size_t)send_size;
   }
 
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
 
+  ofs = 0;
   for (int i = 0; i < nrecv; ++i) {
-    int position = 0;
-    xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, &buffer_size),
-                comm);
-    xt_mpi_call(MPI_Unpack(buffers[i], buffer_size, &position, dst_data,
+    int position = 0, recv_size = buffer_sizes[i];
+    xt_mpi_call(MPI_Unpack(buffer + ofs, recv_size, &position, dst_data,
                            1, recv_msgs[i].datatype, comm), comm);
+    ofs += (size_t)recv_size;
   }
 
-  for (int i = 0; i < nsend + nrecv; ++i)
-    free(buffers[i]);
-  free(buffers);
-  free(requests);
+  free(buffer);
+  if (num_tx > AUTO_ALLOC_SIZE) {
+    free(buffer_sizes);
+    free(requests);
+  }
 }
 
 Xt_exchanger
