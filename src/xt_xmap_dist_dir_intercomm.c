@@ -291,7 +291,7 @@ tx_intersections(size_t num_msg,
   for (size_t i = 0; i < num_msg; ++i)
   {
     int rank = sizes[i][SEND_NUM], count = sizes[i][SEND_SIZE];
-    xt_mpi_call(tx_op((unsigned char *)buffer + ofs,
+    xt_mpi_call(tx_op(buffer + ofs,
                       count, MPI_PACKED, rank, tag, comm, requests + i), comm);
     ofs += (size_t)count;
   }
