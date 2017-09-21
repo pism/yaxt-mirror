@@ -55,7 +55,7 @@ MODULE xt_ut
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
        c_long, c_short, c_long_long, c_ptr, c_loc
 
-  ! \todo to be resolved later(dependency problem): USE yaxt, ONLY : xt_int_kind
+  USE xt_core, ONLY : xt_int_kind
 
   IMPLICIT NONE
   PRIVATE
@@ -67,10 +67,7 @@ MODULE xt_ut
        ut_abort, ut_destroy_decomposition, ut_destroy_transposition, &
        ut_finalize
 
-  ! \todo to be replaced by use yaxt....:
-  INTEGER, PARAMETER, PUBLIC :: xt_int_kind   = XT_INT_FC_KIND
-
-  !PUBLIC :: xt_int_kind
+  PUBLIC :: xt_int_kind
 
   INTEGER, PARAMETER :: inflate_inner = 1
   INTEGER, PARAMETER :: inflate_outer = 2
