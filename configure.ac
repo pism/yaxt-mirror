@@ -225,11 +225,11 @@ CFLAGS="$CFLAGS $MPI_C_INCLUDE"
 FCFLAGS="$FCFLAGS $MPI_FC_MOD"
 LIBS="$LIBS $MPI_C_LIB"
 ACX_MPIRUN
-   # check MPI defects
-   AC_ARG_WITH([regard-for-quality],
-     [AS_HELP_STRING([--without-regard-for-quality],
-        [ignore results of checks for known defects @<:@default: abort on error@:>@])],
-     [],[with_regard_for_quality=yes])
+# check MPI defects
+AC_ARG_WITH([regard-for-quality],
+  [AS_HELP_STRING([--without-regard-for-quality],
+     [ignore results of checks for known defects @<:@default: abort on error@:>@])],
+  [],[with_regard_for_quality=yes])
 ACX_MPI_DEFECTS(,,
   [ACX_MPI_DEFECTS_DOCUMENT
    AS_IF([test "$with_regard_for_quality" != no],
