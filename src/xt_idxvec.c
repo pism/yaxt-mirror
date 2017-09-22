@@ -361,25 +361,28 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
   assert((sizeof (long long) > sizeof (int)) & (num_indices <= INT_MAX)
          & (num_indices >= 0));
 
-  size_t vector_size = (size_t)num_indices * sizeof (Xt_int),
-    header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
-                   /sizeof (Xt_int)) * sizeof (Xt_int);
-  Xt_idxvec idxvec_obj = xmalloc(header_size + vector_size);
+  Xt_idxlist idxlist;
+  if (num_indices > 0) {
+    size_t vector_size = (size_t)num_indices * sizeof (Xt_int),
+      header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
+                     /sizeof (Xt_int)) * sizeof (Xt_int);
+    Xt_idxvec idxvec_obj = xmalloc(header_size + vector_size);
+    Xt_int *restrict indices
+      = (Xt_int *)(void *)((unsigned char *)idxvec_obj + header_size);
+    idxvec_obj->vector = indices;
 
-  Xt_int *restrict indices
-    = (Xt_int *)(void *)((unsigned char *)idxvec_obj + header_size);
-  idxvec_obj->vector = indices;
+    size_t k = (size_t)-1;
+    for (int i = 0; i < num_stripes; ++i)
+      for (int j = 0; j < stripes[i].nstrides; ++j)
+        indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
 
-  size_t k = (size_t)-1;
-  for (int i = 0; i < num_stripes; ++i)
-    for (int j = 0; j < stripes[i].nstrides; ++j)
-      indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
+    Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, (int)num_indices);
 
-  Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, (int)num_indices);
-
-  generate_sorted_vector_from_stripes(stripes, num_stripes, idxvec_obj);
-
-  return (Xt_idxlist)idxvec_obj;
+    generate_sorted_vector_from_stripes(stripes, num_stripes, idxvec_obj);
+    idxlist = (Xt_idxlist)idxvec_obj;
+  } else
+    idxlist = xt_idxempty_new();
+  return idxlist;
 }
 
 static void idxvec_delete(Xt_idxlist obj) {
