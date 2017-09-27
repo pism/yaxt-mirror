@@ -253,7 +253,7 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: index_vector_a(:), index_vector_b(:), &
          results_1(:), results_2(:), results_3(0:), results_4(0:)
     INTEGER(xt_int_kind) :: i, n
-    LOGICAL :: p
+    LOGICAL :: p_3, p_4
 
     IF (ANY(results_1 /= index_vector_b)) &
          CALL test_abort("error on xt_redist_s_exchange", &
@@ -266,19 +266,13 @@ CONTAINS
          __LINE__)
 
     n = INT(SIZE(results_3), xt_int_kind)
-    p = .FALSE.
+    p_3 = .FALSE.
+    p_4 = .FALSE.
     DO i = 0_xi, n - 1_xi
-      p = p .OR. results_3(i) /= i
+      p_3 = p_3 .OR. results_3(i) /= i
+      p_4 = p_4 .OR. results_4(i) /= i
     END DO
-    IF (p) &
-         CALL test_abort("error on xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
-
-    DO i = 0_xi, n - 1_xi
-      p = p .OR. results_4(i) /= i
-    END DO
-    IF (p) &
+    IF (p_3 .OR. p_4) &
          CALL test_abort("error on xt_redist_s_exchange", &
          __FILE__, &
          __LINE__)
