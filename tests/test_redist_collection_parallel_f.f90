@@ -47,7 +47,7 @@
 !
 PROGRAM test_redist_collection_parallel
   USE mpi
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, icbrt
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
        xt_idxlist, xt_idxlist_delete, xt_stripe, xt_idxvec_new, &
@@ -131,9 +131,16 @@ CONTAINS
          index_vector_b(:)
     TYPE(xt_xmap) :: xmaps(num_tx)
     TYPE(xt_redist) :: redists(num_tx), redist, redist_copy
-    INTEGER :: i
+    INTEGER :: i, vec_size
 
-    ALLOCATE(index_vector_a(2*world_size**2), index_vector_b(2*world_size**2))
+    IF (world_size &
+         > icbrt((HUGE(1_xi)-MOD(HUGE(1_xi),2_xi))/2_xi)) &
+         CALL test_abort('communicator too large for test', &
+         __FILE__, &
+         __LINE__)
+
+    vec_size = 2*world_size**2
+    ALLOCATE(index_vector_a(vec_size), index_vector_b(vec_size))
     CALL build_idxlists(indices_a, indices_b, indices_all)
 
     xmaps(1) = xt_xmap_all2all_new(indices_a, indices_b, mpi_comm_world)
@@ -286,6 +293,11 @@ CONTAINS
     INTEGER(xt_int_kind) :: i, temp, dst_indices_(5, 2)
     TYPE(xt_xmap) :: xmaps(2)
     TYPE(xt_redist) :: redists(2), redist, redist_copy
+
+    IF (world_size > (HUGE(1_xi)-MOD(HUGE(1_xi),5_xi))/5_xi) &
+      CALL test_abort('communicator too large for test', &
+           __FILE__, &
+           __LINE__)
 
     DO i = 1_xi, 5_xi
       src_indices_(i) = INT(rank, xi) * 5_xi + (i - 1_xi)
