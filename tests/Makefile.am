@@ -34,6 +34,7 @@
 #
 
 noinst_PROGRAMS = 						\
+	test_misc_f						\
 	test_mpi_generate_datatype				\
 	test_mpi_smartdedup					\
 	test_exchanger_parallel					\
@@ -227,6 +228,8 @@ test_sort_SOURCES = test_sort.c tests.h
 test_uid_SOURCES = test_uid.c
 test_yaxt_SOURCES = test_yaxt.f90
 test_yaxt_LDADD = $(XT_FC_LDADD)
+test_misc_f_SOURCES = test_misc_f.f90
+test_misc_f_LDADD = $(XT_FC_LDADD)
 test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
 
@@ -238,6 +241,7 @@ XT_FC_LDADD = libtestutil_f.la libtestutil.la ../src/libyaxt.la \
 	../src/libyaxt_c.la $(MPI_FC_LIB)
 
 TESTS = 							\
+	test_misc_run						\
 	test_mpi_generate_datatype_run				\
 	test_mpi_smartdedup_run					\
 	test_exchanger_parallel_run				\

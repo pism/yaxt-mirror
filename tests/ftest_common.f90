@@ -134,13 +134,17 @@ MODULE ftest_common
     MODULE PROCEDURE id_map_i2, id_map_i4, id_map_i8
   END INTERFACE id_map
 
+  INTERFACE icbrt
+    MODULE PROCEDURE icbrt_i2, icbrt_i4, icbrt_i8
+  END INTERFACE icbrt
+
   REAL(dp) :: sync_dt_sum = 0.0_dp
   LOGICAL, PARAMETER :: debug = .FALSE.
   LOGICAL :: verbose = .FALSE.
 
   PUBLIC :: init_mpi, finish_mpi
   PUBLIC :: timer, treset, tstart, tstop, treport, mysync
-  PUBLIC :: id_map, icmp, factorize, regular_deco
+  PUBLIC :: id_map, icbrt, icmp, factorize, regular_deco
   PUBLIC :: test_abort, set_verbose, get_verbose
   PUBLIC :: cmp_arrays
   PUBLIC :: run_randomized_tests, init_fortran_random
@@ -533,6 +537,70 @@ CONTAINS
     ENDDO f_loop
 
   END SUBROUTINE factorize
+
+  !> computes n**(1/3)
+  FUNCTION icbrt_i2(n) RESULT(icbrt)
+    INTEGER(i2), INTENT(in) :: n
+    INTEGER(i2) :: icbrt
+    INTEGER, PARAMETER :: nbits = BIT_SIZE(n)-1
+    INTEGER(i2) :: s
+    INTEGER(i2) :: b, x
+
+    x = ABS(n)
+    icbrt = 0
+    DO s = nbits, 0, -3
+      icbrt = icbrt + icbrt
+      b = 3_i2 * icbrt * (icbrt + 1_i2) + 1_i2
+      IF (ISHFT(x, -s) >= b) THEN
+        x = x - ISHFT(b, s)
+        icbrt = icbrt + 1_i2
+      END IF
+    END DO
+    icbrt = SIGN(icbrt, n)
+  END FUNCTION icbrt_i2
+
+  !> computes n**(1/3)
+  FUNCTION icbrt_i4(n) RESULT(icbrt)
+    INTEGER(i4), INTENT(in) :: n
+    INTEGER(i4) :: icbrt
+    INTEGER, PARAMETER :: nbits = BIT_SIZE(n)-1
+    INTEGER(i4) :: s
+    INTEGER(i4) :: b, x
+
+    x = ABS(n)
+    icbrt = 0
+    DO s = nbits-1, 0, -3
+      icbrt = icbrt + icbrt
+      b = 3_i4 * icbrt * (icbrt + 1_i4) + 1_i4
+      IF (ISHFT(x, -s) >= b) THEN
+        x = x - ISHFT(b, s)
+        icbrt = icbrt + 1_i4
+      END IF
+    END DO
+    icbrt = SIGN(icbrt, n)
+  END FUNCTION icbrt_i4
+
+  !> computes n**(1/3)
+  FUNCTION icbrt_i8(n) RESULT(icbrt)
+    INTEGER(i8), INTENT(in) :: n
+    INTEGER(i8) :: icbrt
+    INTEGER, PARAMETER :: nbits = BIT_SIZE(n)-1
+    INTEGER(i8) :: s
+    INTEGER(i8) :: b, x
+
+    x = ABS(n)
+    icbrt = 0
+    DO s = nbits, 0, -3
+      icbrt = icbrt + icbrt
+      b = 3_i8 * icbrt * (icbrt + 1_i8) + 1_i8
+      IF (ISHFT(x, -s) >= b) THEN
+        x = x - ISHFT(b, s)
+        icbrt = icbrt + 1_i8
+      END IF
+    END DO
+    icbrt = SIGN(icbrt, n)
+  END FUNCTION icbrt_i8
+
 
   SUBROUTINE regular_deco(g_cn, c0, cn)
     INTEGER, INTENT(in) :: g_cn

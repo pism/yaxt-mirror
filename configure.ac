@@ -382,6 +382,7 @@ AC_CONFIG_FILES([						\
         tests/test_perf_stripes_run				\
         tests/test_sort_run					\
         tests/test_uid_run					\
+        tests/test_misc_run					\
         tests/test_yaxt_run					\
 	tests/test_mpi_generate_datatype_run			\
 	tests/test_mpi_smartdedup_run				\
