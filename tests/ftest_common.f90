@@ -143,6 +143,7 @@ MODULE ftest_common
   PUBLIC :: id_map, icmp, factorize, regular_deco
   PUBLIC :: test_abort, set_verbose, get_verbose
   PUBLIC :: cmp_arrays
+  PUBLIC :: run_randomized_tests, init_fortran_random
 CONTAINS
 
   SUBROUTINE init_mpi
@@ -569,6 +570,89 @@ CONTAINS
          __FILE__, &
          __LINE__)
   END SUBROUTINE regular_deco
+
+  FUNCTION run_randomized_tests() RESULT(fully_random_tests)
+    LOGICAL :: fully_random_tests
+    CHARACTER(len=32) :: envval
+    INTEGER :: envlen, envstat
+    CALL get_environment_variable("YAXT_FULLY_RANDOM_TESTS", envval, envlen, &
+         status=envstat)
+    IF (envstat == 0 .AND. (envlen == 1 .OR. envlen == 3)) THEN
+      IF (envlen == 1 .AND. (envval(1:1) == 'y' .OR. envval(1:1) == 'Y' &
+           &                 .OR. envval(1:1) == '1')) THEN
+        fully_random_tests = .TRUE.
+      ELSE IF (str2lower(envval(1:3)) == 'yes') THEN
+        fully_random_tests = .TRUE.
+      ELSE
+        fully_random_tests = .FALSE.
+      END IF
+    ELSE
+      fully_random_tests = .FALSE.
+    END IF
+  END FUNCTION run_randomized_tests
+
+  FUNCTION str2lower(s) RESULT(t)
+    CHARACTER(len=*), INTENT(in) :: s
+    CHARACTER(len=LEN(s)) :: t
+    INTEGER, PARAMETER :: idel = ICHAR('a')-ICHAR('A')
+    INTEGER :: i
+    DO i = 1, LEN_TRIM(s)
+      t(i:i) = CHAR( ICHAR(s(i:i)) &
+           + MERGE(idel, 0,       ICHAR(s(i:i)) >= ICHAR('A') &
+           &                .AND. ICHAR(s(i:i)) <= ICHAR('Z')))
+    ENDDO
+  END FUNCTION str2lower
+
+  SUBROUTINE init_fortran_random(full_random)
+    LOGICAL, INTENT(in) :: full_random
+    INTEGER, ALLOCATABLE :: rseed(:)
+
+    INTEGER :: rseed_size, i
+    INTEGER :: tparts(8), timeseed
+    INTEGER :: days_per_month(12), days_prefix
+    INTEGER, PARAMETER :: tparts_mult(7) = (/ &
+         365 * 24 * 60 * 60, & ! year
+         0,                  & ! sum over days_per_month added to day
+         24 * 60 * 60,       & ! day
+         0,                  & ! ignore timezone offset
+         60 * 60,            & ! hour of day
+         60,                 & ! minute of hour
+         1 /)                  ! seconnd
+
+    CALL random_seed(size=rseed_size)
+    ALLOCATE(rseed(rseed_size))
+    DO i = 1, rseed_size
+      rseed(i) = 4711
+    END DO
+    IF (full_random) THEN
+
+      CALL date_and_TIME(values=tparts)
+      days_per_month( 1) = 31
+      days_per_month( 2) = MERGE(28, 29, &
+           MOD(tparts(1), 4) == 0 .AND. (     MOD(tparts(1), 100) /= 0 &
+           &                             .OR. MOD(tparts(1), 400) == 0))
+      days_per_month( 3) = 31
+      days_per_month( 4) = 30
+      days_per_month( 5) = 31
+      days_per_month( 6) = 30
+      days_per_month( 7) = 31
+      days_per_month( 8) = 31
+      days_per_month( 9) = 30
+      days_per_month(10) = 31
+      days_per_month(11) = 30
+      days_per_month(12) = 31
+      tparts(1) = tparts(1) - 1970
+      days_prefix = SUM(days_per_month(1:tparts(2)-1))
+      tparts(3) = tparts(3) + days_prefix - 1
+      tparts(2) = 0
+      timeseed = SUM(tparts(1:7) * tparts_mult)
+      timeseed = IEOR(tparts(8), timeseed) ! mix in microseconds
+      rseed(1) = timeseed
+      WRITE(0, '(a,i0)') 'used extra seed=', rseed(1)
+      FLUSH(0)
+    END IF
+    CALL random_seed(put=rseed)
+  END SUBROUTINE init_fortran_random
 
 END MODULE ftest_common
 !

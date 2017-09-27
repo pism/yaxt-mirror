@@ -45,7 +45,8 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 PROGRAM test_idxstripes_f
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
+       run_randomized_tests, init_fortran_random
   USE mpi
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, &
        idxlist_pack_unpack_copy
@@ -62,8 +63,6 @@ PROGRAM test_idxstripes_f
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
-  CHARACTER(len=32) :: envval
-  INTEGER :: envlen, envstat
   LOGICAL :: fully_random_tests
 
   CALL init_mpi
@@ -97,21 +96,7 @@ PROGRAM test_idxstripes_f
   CALL test_idxlist_stripes_pos_ext5
 #endif
   CALL test_idxlist_stripes_pos_ext_randomized1(.FALSE.)
-  CALL get_environment_VARIABLE("YAXT_FULLY_RANDOM_TESTS", envval, envlen, &
-       status=envstat)
-  IF (envstat == 0 .AND. (envlen == 1 .OR. envlen == 3)) THEN
-    IF (envlen == 1 .AND. (envval(1:1) == 'y' .OR. envval(1:1) == 'Y' &
-         &                 .OR. envval(1:1) == '1')) THEN
-      fully_random_tests = .TRUE.
-    ELSE IF (str2lower(envval(1:3)) == 'yes') THEN
-      fully_random_tests = .TRUE.
-    ELSE
-      fully_random_tests = .FALSE.
-    END IF
-  ELSE
-    fully_random_tests = .FALSE.
-  END IF
-
+  fully_random_tests = run_randomized_tests()
   IF (fully_random_tests) &
        CALL test_idxlist_stripes_pos_ext_randomized1(.TRUE.)
   CALL test_get_pos1
@@ -774,57 +759,14 @@ CONTAINS
     INTEGER, PARAMETER :: num_iterations=128, &
          max_num_indices=1024, max_index=1024
 
-    INTEGER, ALLOCATABLE :: rseed(:)
-    INTEGER :: rseed_size, i, iteration, num_indices
+    INTEGER :: i, iteration, num_indices
     INTEGER(xt_int_kind), ALLOCATABLE :: indices(:)
     REAL, ALLOCATABLE :: rvals(:)
     TYPE(xt_idxlist) :: idxlist
     TYPE(xt_stripe), ALLOCATABLE :: stripes(:)
     TYPE(xt_stripe) :: stripes_dummy(1)
-    INTEGER :: tparts(8), timeseed
-    INTEGER :: days_per_month(12), days_prefix
-    INTEGER, PARAMETER :: tparts_mult(7) = (/ &
-         365 * 24 * 60 * 60, & ! year
-         0,                  & ! sum over days_per_month added to day
-         24 * 60 * 60,       & ! day
-         0,                  & ! ignore timezone offset
-         60 * 60,            & ! hour of day
-         60,                 & ! minute of hour
-         1 /)                  ! seconnd
 
-    CALL random_seed(size=rseed_size)
-    ALLOCATE(rseed(rseed_size))
-    DO i = 1, rseed_size
-      rseed(i) = 4711
-    END DO
-    IF (full_random) THEN
-
-      CALL date_and_TIME(values=tparts)
-      days_per_month( 1) = 31
-      days_per_month( 2) = MERGE(28, 29, &
-           MOD(tparts(1), 4) == 0 .AND. (     MOD(tparts(1), 100) /= 0 &
-           &                             .OR. MOD(tparts(1), 400) == 0))
-      days_per_month( 3) = 31
-      days_per_month( 4) = 30
-      days_per_month( 5) = 31
-      days_per_month( 6) = 30
-      days_per_month( 7) = 31
-      days_per_month( 8) = 31
-      days_per_month( 9) = 30
-      days_per_month(10) = 31
-      days_per_month(11) = 30
-      days_per_month(12) = 31
-      tparts(1) = tparts(1) - 1970
-      days_prefix = SUM(days_per_month(1:tparts(2)-1))
-      tparts(3) = tparts(3) + days_prefix - 1
-      tparts(2) = 0
-      timeseed = SUM(tparts(1:7) * tparts_mult)
-      timeseed = IEOR(tparts(8), timeseed) ! mix in microseconds
-      rseed(1) = timeseed
-      WRITE(0, '(a,i0)') 'used extra seed=', rseed(1)
-      FLUSH(0)
-    END IF
-    CALL random_seed(put=rseed)
+    CALL init_fortran_random(full_random)
     ALLOCATE(indices(max_num_indices), rvals(max_num_indices))
     DO iteration = 1, num_iterations
       CALL random_number(rvals(1))
@@ -1227,17 +1169,6 @@ CONTAINS
          num_ref_unmatched, "search dec stripe over jumbled stripes")
   END SUBROUTINE check_pos_ext8
 
-  FUNCTION str2lower(s) RESULT(t)
-    CHARACTER(len=*), INTENT(in) :: s
-    CHARACTER(len=LEN(s)) :: t
-    INTEGER, PARAMETER :: idel = ICHAR('a')-ICHAR('A')
-    INTEGER :: i
-    DO i = 1, LEN_TRIM(s)
-      t(i:i) = CHAR( ICHAR(s(i:i)) &
-           + MERGE(idel, 0,       ICHAR(s(i:i)) >= ICHAR('A') &
-           &                .AND. ICHAR(s(i:i)) <= ICHAR('Z')))
-    ENDDO
-  END FUNCTION str2lower
 END PROGRAM test_idxstripes_f
 !
 ! Local Variables:
