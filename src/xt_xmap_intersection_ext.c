@@ -446,6 +446,24 @@ cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
                           size_t *size_pos_exts,
                           struct Xt_pos_ext *restrict *pos_exts);
 
+static struct Xt_pos_ext *
+get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
+                              int num_stripes,
+                              const struct Xt_stripe stripes[num_stripes],
+                              int *num_ext,
+                              int single_match_only)
+{
+  struct Xt_pos_ext *pos_ext;
+#ifndef NDEBUG
+  int retval =
+#endif
+    xt_idxlist_get_pos_exts_of_index_stripes(
+      idxlist, num_stripes, stripes,
+      num_ext, &pos_ext, single_match_only);
+  assert(retval == 0);
+  return pos_ext;
+}
+
 static struct Xt_pos_ext_vec
 generate_dir_transfer_ext_dst(
   int num_intersections,
@@ -474,15 +492,11 @@ generate_dir_transfer_ext_dst(
     struct Xt_stripe *intersection_idxstripes;
     xt_idxlist_get_index_stripes(intersections[i].list,
                                  &intersection_idxstripes, &num_stripes);
-    struct Xt_pos_ext *restrict isect_pos_exts = NULL;
     int num_isect_pos_exts;
-#ifndef NDEBUG
-    int retval =
-#endif
-      xt_idxlist_get_pos_exts_of_index_stripes(
+    struct Xt_pos_ext *restrict isect_pos_exts
+      = get_pos_exts_of_index_stripes(
         mypart_idxlist, num_stripes, intersection_idxstripes,
-        &num_isect_pos_exts, (struct Xt_pos_ext **)&isect_pos_exts, 1);
-    assert(retval == 0);
+        &num_isect_pos_exts, 1);
     int isect_pos_exts_size_psum = 0;
     int intersection_size = xt_idxlist_get_num_indices(intersections[i].list);
     /* start with all indices from intersection as used,
