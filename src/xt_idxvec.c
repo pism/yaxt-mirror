@@ -732,7 +732,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
    */
   Xt_idxvec body_idxvec = (Xt_idxvec)body_idxlist;
   const Xt_int *sorted_body = get_sorted_vector(body_idxvec);
-  int *sorted_body_pos = body_idxvec->sorted_vec_positions;
+  const int *sorted_body_pos = body_idxvec->sorted_vec_positions;
   size_t search_end = (size_t)body_idxvec->parent.num_indices - 1;
   int num_unmatched = 0;
 
