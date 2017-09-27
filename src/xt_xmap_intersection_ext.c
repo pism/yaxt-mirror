@@ -689,8 +689,8 @@ exchange_pos_ext_modifications(
   unsigned num_active_dst = 0, num_dst_changes = 0;
   for (int i = 0; i < num_dst_intersections; ++i) {
     xt_mpi_call(MPI_Isend(
-                  (int *)dst_removals_per_intersection[i], 2, MPI_INT,
-                  dst_com[i].rank,
+                  CAST_MPI_SEND_BUF(dst_removals_per_intersection[i]),
+                  2, MPI_INT, dst_com[i].rank,
                   tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
                   comm, send_header_requests + i), comm);
 

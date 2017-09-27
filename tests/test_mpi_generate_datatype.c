@@ -66,7 +66,7 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, const int *send_data,
 
 
   //datatype
-  xt_mpi_call(MPI_Sendrecv((void *)send_data, 1, datatype, 0, 0,
+  xt_mpi_call(MPI_Sendrecv(CAST_MPI_SEND_BUF(send_data), 1, datatype, 0, 0,
                            recv_data, recv_count, MPI_INT, 0, 0,
                            MPI_COMM_WORLD, &status),
               MPI_COMM_WORLD);
@@ -91,8 +91,8 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, const int *send_data,
   xt_mpi_call(MPI_Irecv(recv_data, recv_count, MPI_INT, 0, 0, MPI_COMM_WORLD,
                         &request), MPI_COMM_WORLD);
 
-  xt_mpi_call(MPI_Send((void *)send_data, 1, datatype, 0, 0, MPI_COMM_WORLD),
-              MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Send(CAST_MPI_SEND_BUF(send_data), 1, datatype, 0, 0,
+                       MPI_COMM_WORLD), MPI_COMM_WORLD);
 
   xt_mpi_call(MPI_Wait(&request, &status), MPI_COMM_WORLD);
 

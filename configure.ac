@@ -205,6 +205,14 @@ ACX_F90_PACKAGE([MPI],[mpi],,,
 save_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MPI_C_INCLUDE"
 TJ_FIND_INTEGRAL_TYPE([MPI_Fint],[MPI_FINT],[@%:@include <mpi.h>])
+ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([CAST_MPI_SEND_BUF="(buf)"
+   XT_MPI_SEND_BUF_CONST=const],
+  [CAST_MPI_SEND_BUF="((void *)(buf))"
+   XT_MPI_SEND_BUF_CONST=])
+AC_DEFINE_UNQUOTED([CAST_MPI_SEND_BUF(buf)],[$CAST_MPI_SEND_BUF],
+  [Macro to cast arguments to MPI_Send-like functions (if necessary)])
+AC_DEFINE_UNQUOTED([XT_MPI_SEND_BUF_CONST],[$XT_MPI_SEND_BUF_CONST],
+    [Defined to const, iff buf argument to MPI_Send-like functions can be const])
 TJ_FIND_INTEGRAL_TYPE([MPI_Aint],[xt_mpi_aint],[@%:@include <mpi.h>])
 xt_mpi_aint_kind=c_[]AS_TR_SH([$xt_mpi_aint])
 FCFLAGS="$FCFLAGS ${FPP_DEFOPT}XT_MPI_AINT_KIND=$xt_mpi_aint_kind"

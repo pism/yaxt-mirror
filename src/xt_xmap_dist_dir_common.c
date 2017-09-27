@@ -248,8 +248,10 @@ xt_xmap_dist_dir_pack_intersections(
     prev_send_rank = send_rank;
 
     // pack rank
-    xt_mpi_call(MPI_Pack((void *)(src_dst_intersections[i].rank + origin),
-                         1, MPI_INT, buffer, buf_size, position,
+    XT_MPI_SEND_BUF_CONST int *prank
+      = CAST_MPI_SEND_BUF(src_dst_intersections[i].rank + origin);
+
+    xt_mpi_call(MPI_Pack(prank, 1, MPI_INT, buffer, buf_size, position,
                          comm), comm);
     // pack intersection
     xt_idxlist_pack(src_dst_intersections[i].idxlist, buffer,

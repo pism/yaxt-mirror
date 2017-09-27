@@ -417,7 +417,8 @@ void idxvec_pack(Xt_idxlist obj, void *buffer, int buffer_size,
   xt_mpi_call(MPI_Pack(&(idxvec->parent.num_indices), 1, MPI_INT, buffer,
                            buffer_size, position, comm), comm);
   if (idxvec->parent.num_indices != 0)
-    xt_mpi_call(MPI_Pack((Xt_int *)idxvec->vector, idxvec->parent.num_indices,
+    xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(idxvec->vector),
+                         idxvec->parent.num_indices,
                          Xt_int_dt, buffer,
                          buffer_size, position, comm), comm);
 }
