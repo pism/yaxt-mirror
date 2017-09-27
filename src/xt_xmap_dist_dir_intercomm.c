@@ -321,7 +321,7 @@ isend_intersections(size_t num_msg,
 static void
 unpack_dist_dir(struct Xt_xmdd_txstat tx_stat,
                 const int (*sizes)[SEND_SIZE_ASIZE],
-                const void *buffer,
+                void *buffer,
                 struct dist_dir **dist_dir,
                 MPI_Comm comm)
 {
@@ -336,7 +336,7 @@ unpack_dist_dir(struct Xt_xmdd_txstat tx_stat,
     int rank = sizes[i][SEND_NUM];
     dist_dir_->entries[i].rank = rank;
     dist_dir_->entries[i].list
-      = xt_idxlist_unpack((void *)buffer, (int)buf_size, &position, comm);
+      = xt_idxlist_unpack(buffer, (int)buf_size, &position, comm);
   }
 }
 
