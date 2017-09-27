@@ -148,10 +148,10 @@ struct Xt_idxvec_ {
 
   const Xt_int *vector;
 
-   // internal array used to optimise access to vector data
+  // internal array used to optimise access to vector data
   const Xt_int *sorted_vector;        // sorted version of vector
-   int    *sorted_vec_positions; // original positions of the
-                                 // indices in sorted_vector
+  int    *sorted_vec_positions; // original positions of the
+                                // indices in sorted_vector
   /*
     we have the following relations:
     sorted_vector[i-1] <= sorted_vector[i],
@@ -206,7 +206,7 @@ Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
 }
 
 static int
-decode_stripe(struct Xt_stripe stripe, Xt_int * sorted_vector,
+decode_stripe(struct Xt_stripe stripe, Xt_int *sorted_vector,
               int * sorted_vec_pos, int pos_offset) {
 
   if (stripe.stride >= 0) {
@@ -387,8 +387,7 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
 
 static void idxvec_delete(Xt_idxlist obj) {
 
-  if (((Xt_idxvec)obj)->sorted_vector !=
-      ((Xt_idxvec)obj)->vector)
+  if (((Xt_idxvec)obj)->sorted_vector != ((Xt_idxvec)obj)->vector)
     free((void *)(((Xt_idxvec)obj)->sorted_vector));
    free(((Xt_idxvec)obj)->sorted_vec_positions);
    free(obj);
