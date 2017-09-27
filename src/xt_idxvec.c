@@ -477,11 +477,10 @@ get_sorted_vector(Xt_idxvec idxvec) {
       idxvec->sorted_vec_positions[i] = (int)i;
     return idxvec->sorted_vector = idxvec->vector;
   }
-  Xt_int *sorted_vector
-    = xmalloc((size_t)num_indices * sizeof(*sorted_vector));
+  size_t svec_size = num_indices * sizeof(Xt_int);
+  Xt_int *sorted_vector = xmalloc(svec_size);
 
-  memcpy(sorted_vector, idxvec->vector,
-         (size_t)num_indices * sizeof(*sorted_vector));
+  memcpy(sorted_vector, idxvec->vector, svec_size);
 
   xt_quicksort_index(sorted_vector, (int)num_indices,
                      idxvec->sorted_vec_positions, 1);
