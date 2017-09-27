@@ -312,7 +312,7 @@ CONTAINS
     DOUBLE PRECISION :: ref_dst_data(npt)
 #else
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(npt) &
-         = (/ ((DBLE(((2-j)*3+i+101)*((ABS(j)+j)/ABS(j+1)) &
+         = (/ ((DBLE(((2-j)*3+i+101)*((ABS(j)+j)/ABS(j+MAX(1,j))) &
          &           +(j-1-ABS(j-1))/2), &
          &     i=1,3 ),j=2,0,-1) /)
 #endif
