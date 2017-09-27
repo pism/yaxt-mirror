@@ -56,6 +56,7 @@ MODULE xt_ut
        c_long, c_short, c_long_long, c_ptr, c_loc
 
   USE xt_core, ONLY : xt_int_kind
+  USE xt_mpi, ONLY: xt_mpi_fint_kind
 
   IMPLICIT NONE
   PRIVATE
@@ -163,22 +164,27 @@ MODULE xt_ut
   END INTERFACE
 
   INTERFACE
-    INTEGER FUNCTION xt_ut_init_transposition_simple(itemplate, datatype) &
-         BIND(C, name='xt_ut_init_transposition_simple')
+    FUNCTION xt_ut_init_transposition_simple(itemplate, datatype) &
+         BIND(C, name='xt_ut_init_transposition_simple') RESULT(rc)
+      IMPORT :: xt_mpi_fint_kind
       IMPLICIT NONE
-      INTEGER, VALUE, INTENT(in) :: itemplate
-      INTEGER, VALUE, INTENT(in) :: datatype
+      INTEGER(xt_mpi_fint_kind) :: rc
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: itemplate
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
     END FUNCTION xt_ut_init_transposition_simple
   END INTERFACE
 
   INTERFACE
-    INTEGER FUNCTION xt_ut_init_transposition(itemplate, offset_in, &
+    FUNCTION xt_ut_init_transposition(itemplate, offset_in, &
          offset_in_size, offset_out, offset_out_size, &
-         & datatype)  BIND(C, name='xt_ut_init_transposition')
+         & datatype)  BIND(C, name='xt_ut_init_transposition') RESULT(rc)
+      IMPORT :: xt_mpi_fint_kind
       IMPLICIT NONE
-      INTEGER, VALUE, INTENT(in) :: itemplate, offset_in_size, offset_out_size
-      INTEGER, DIMENSION(*), INTENT(in) :: offset_in, offset_out
-      INTEGER, VALUE, INTENT(in) :: datatype
+      INTEGER(xt_mpi_fint_kind) :: rc
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: itemplate, &
+           offset_in_size, offset_out_size
+      INTEGER(xt_mpi_fint_kind), INTENT(in) :: offset_in(*), offset_out(*)
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
     END FUNCTION xt_ut_init_transposition
   END INTERFACE
 
