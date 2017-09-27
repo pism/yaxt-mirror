@@ -69,7 +69,6 @@ print(STDERR Data::Dumper->Dump([\%configHDefs], [qw(configHDefs)]))
 print(STDERR 'srcBaseDir = ', $srcBaseDir, "\n",
       'dstBaseDir = ', $dstBaseDir, "\n")
     if ($debug);
-
 foreach my $headerFn (@ARGV)
 {
   my ($instHeaderFn) = catfile($dstBaseDir,
@@ -238,8 +237,9 @@ foreach my $headerFn (@ARGV)
                                    'expand' => $expand,
                                  });
           $thisLineIgnored = $expand;
-          print(STDERR __LINE__, ': ', Data::Dumper->Dump([\@predicateLevels],
-                                          ['predicatelevels']))
+          print(STDERR 'In ', cpp::whoami(), ', line ', __LINE__, ': ',
+                Data::Dumper->Dump([\@predicateLevels],
+                                   ['predicatelevels']))
               if $debug > 2;
           if (!$thisLineIgnored) {
             # we don't know enough about this conditional, leave it in
@@ -259,8 +259,8 @@ foreach my $headerFn (@ARGV)
           {
             $predValue = defined($configHDefs{$predicate});
             $predValue = !$predValue if ($clause eq 'ifndef');
-            print(STDERR Data::Dumper->Dump([\$predValue],
-                                            [qw(predicate)]))
+            print(STDERR 'In ', cpp::whoami(), ', line ', __LINE__, ': ',
+                  Data::Dumper->Dump([\$predValue], [qw(predicate)]))
                 if $debug > 1;
             $ignored = (!$predValue or $ignored);
             $expand = 1;
@@ -400,10 +400,21 @@ sub checkPredicate(\%$$$)
   my $result = 4711;
   foreach my $token (@{$tokenMapping[0]})
   {
+    print(STDERR 'Inspecting token ', $token, ' at ', __LINE__+1, "\n")
+        if $debug > 4;
     next if ($token eq 'defined');
+    print(STDERR 'Inspecting token ', $token, ' at ', __LINE__+1, "\n")
+        if $debug > 4;
     next if (exists($defines->{$token}));
+    print(STDERR 'Inspecting token ', $token, ' at ', __LINE__+1, "\n")
+        if $debug > 4;
     next if ($token =~ m{$cpp::operator_match});
+    print(STDERR 'Inspecting token ', $token, ' at ', __LINE__+1, "\n")
+        if $debug > 4;
     next if ($token =~ m{$cpp::integral_constant_match});
+    print(STDERR 'This predicate cannot be deduced because of token "',
+          $token, '"', "\n")
+        if $debug > 3;
     $result = undef;
     last;
   }

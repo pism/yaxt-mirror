@@ -69,7 +69,7 @@ BEGIN {
       local $_;
       my ($text) = @_;
       print STDERR 'transliterating "', $text, '"', $trigraphre, "\n"
-          if ($debug > 3);
+          if ($debug > 4);
       while ($text =~ s{$trigraphre}{$trigraphs{$1}})
       {
       }
@@ -255,8 +255,18 @@ sub parsePreProcExpression
       }
       elsif (validPreProcSym($token))
       {
+         print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 2;
+         print(STDERR
+               Data::Dumper->Dump([\$defines], ['defines']),
+               "\n") if $debug > 4;
+
          push(@$cppKeyOut, $token) if (defined($cppKeyOut));
          insertDefinitionOnDemand($defines, $token);
+         print(STDERR 'token ', $token,
+               (defined($defines->{$token}) ?
+                    ( ': found definition ',
+                      join(' ', @{$defines->{$token}{'definition'}[0]}))
+                    : ' undefined'), "\n") if $debug > 3;
          if (defined($defines->{$token}))
          {
             my @definition = @{$defines->{$token}{'definition'}};
@@ -435,8 +445,12 @@ BEGIN {
    {
       my ($defines, $token) = @_;
       print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 1;
+      print(STDERR Data::Dumper->Dump([\$defines], ['defines']), "\n")
+          if $debug > 4;
       if (exists($defines->{$token}))
       {
+         print(STDERR 'Returning ', @{$defines->{$token}{'definition'}[0]},
+               ' for token ', $token, "\n") if $debug > 3;
          return $defines->{$token};
       }
       else
