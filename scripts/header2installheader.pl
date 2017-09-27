@@ -47,6 +47,7 @@ use cpp qw(transliterateTrigraphs);
 use Storable qw(dclone);
 
 sub checkPredicate(\%$$$);
+sub substituteTokens($\@\%);
 sub setup();
 
 my ($debug, $verbose,
@@ -103,6 +104,7 @@ foreach my $headerFn (@ARGV)
     {
       # FIXME: handle multi-line conditionals
       my ($clause, $predicate) = ($1, $2);
+      my ($predicateStartPos, $predicateEndPos) = ($-[2], $+[2]);
       print(STDERR 'Investigating ', $clause,
             (defined($predicate)?(' ', $predicate):()),
             ' at ', $headerFn, ', line ', $lineno, "\n") if $debug > 1;
@@ -160,8 +162,8 @@ foreach my $headerFn (@ARGV)
         die('#elif without opening #if at line ', $lineno,
             ' of ', $headerFn, "\n")
             if (@predicateLevels < 2);
-        my $predValue = checkPredicate(%configHDefs, $predicate,
-                                       $headerFn, $lineno);
+        my ($predValue, $transformedPredicate)
+            = checkPredicate(%configHDefs, $predicate, $headerFn, $lineno);
         if ((defined($predicateLevels[-1]{'predValueAny'})
              && $predicateLevels[-1]{'predValueAny'})
             || (defined($predValue) && !$predValue))
@@ -204,7 +206,14 @@ foreach my $headerFn (@ARGV)
         {
           # we don't know enough about this conditional, leave it in
           # place
-          # FIXME: we should rewrite portions for which the expansion is known
+          my $transformedHeaderLine
+              = substr($headerLine, $predicateStartPos,
+                       $predicateEndPos - $predicateStartPos,
+                       $transformedPredicate);
+          print(STDERR join("\n", 'Replacing', $headerLine, ' with',
+                            $transformedHeaderLine), "\n")
+              if $debug > 2;
+          $headerLine = $transformedHeaderLine;
         }
         else
         {
@@ -218,8 +227,8 @@ foreach my $headerFn (@ARGV)
         if ($clause eq 'if') {
           # set expand to 1 if all symbols involved in $predicate are
           # defined/undefined in config.h
-          my $predValue = checkPredicate(%configHDefs, $predicate,
-                                         $headerFn, $lineno);
+          my ($predValue, $transformedPredicate)
+              = checkPredicate(%configHDefs, $predicate, $headerFn, $lineno);
           my $expand = defined($predValue)?1:0;
           $ignored = (($expand and !$predValue) or $ignored);
           push(@predicateLevels, { 'ignored' => $ignored,
@@ -232,6 +241,16 @@ foreach my $headerFn (@ARGV)
           print(STDERR __LINE__, ': ', Data::Dumper->Dump([\@predicateLevels],
                                           ['predicatelevels']))
               if $debug > 2;
+          if (!$thisLineIgnored) {
+            # we don't know enough about this conditional, leave it in
+            # place
+            print(STDERR join("\n", 'Replacing predicate ', $predicate, 'in', $headerLine, ' with',
+                              $transformedPredicate), "\n")
+                if $debug > 2;
+            substr($headerLine, $predicateStartPos,
+                   $predicateEndPos - $predicateStartPos,
+                   $transformedPredicate);
+          }
         } elsif (($clause eq 'ifdef') or ($clause eq 'ifndef')) {
           die('Malformed predicate: ', $clause, ' ', $predicate)
               if (not cpp::validPreProcSym($predicate));
@@ -292,48 +311,9 @@ foreach my $headerFn (@ARGV)
         # tokenize and replace tokens from config.h definitions
         # FIXME: this simple approach will fail for function-like macros
         my @tokenMapping = eval { cpp::tokenize($headerLine); };
-        # FIXME: when tokenizing doesn't work that usually means a multi-line
-        # construct needs to be accounted for
-        if (!$@)
-        {
-          print(STDERR Data::Dumper->Dump([\@tokenMapping],
-                                          ['tokenMapping']))
-              if $debug > 3;
-          # list of replacements, pre-filled with original tokens
-          $tokenMapping[2] = [@{$tokenMapping[0]}];
-          # list of adjusted replacement positions, pre-filled with original
-          # token positions
-          $tokenMapping[3] = dclone($tokenMapping[1]);
-          # flag if replaced, initially 0 and then 1 for every replacement
-          $tokenMapping[4] = [ (0) x @{$tokenMapping[1]} ];
-          for(my $tok = 0; $tok < @{$tokenMapping[0]}; ++$tok)
-          {
-            my $token = $tokenMapping[0][$tok];
-            if (defined($token) && exists($configHDefs{$token})
-                && defined($configHDefs{$token}))
-            {
-              print STDERR 'Substituting ',
-                  join(' ', @{$configHDefs{$token}{'definition'}[0]}), ' for ',
-                  $token, "\n" if $debug > 1;
-              $tokenMapping[4][$tok] = 1;
-              $tokenMapping[2][$tok] = $configHDefs{$token};
-              my $lenChange = length($configHDefs{$token})
-                  - length($tokenMapping[0][$tok]);
-              substr($headerLine, $tokenMapping[3][$tok][0],
-                     $tokenMapping[3][$tok][1] + 1 - $tokenMapping[3][$tok][0])
-                  =~ s/$token/@{$configHDefs{$token}{'definition'}[0]}/;
-              for (my $tokRest = $tok + 1;
-                   $tokRest < @{$tokenMapping[0]};
-                   ++$tokRest)
-              {
-                $tokenMapping[3][$tokRest][0] += $lenChange;
-                $tokenMapping[3][$tokRest][1] += $lenChange;
-                print(STDERR Data::Dumper->Dump([\@tokenMapping],
-                                                ['tokenMapping']))
-                    if $debug > 3;
-              }
-            }
-          }
+        if (!$@) {
+          $headerLine = substituteTokens($headerLine, @tokenMapping,
+                                         %configHDefs);
         }
       }
     }
@@ -440,10 +420,56 @@ sub checkPredicate(\%$$$)
           'Error: invalid conditional expression: ',
           $predicate, "\n");
     }
+    return ($result);
+  } else {
+    return (undef, substituteTokens($predicate, @tokenMapping, %$defines));
   }
-  return $result;
 }
 
+sub substituteTokens($\@\%)
+{
+  my ($headerLine, $tokenMapping, $configHDefs) = @_;
+  # FIXME: when tokenizing doesn't work that usually means a multi-line
+  # construct needs to be accounted for
+  print(STDERR 'In ', cpp::whoami(), ', line ', __LINE__, ' ',
+        Data::Dumper->Dump([$tokenMapping], ['tokenMapping']))
+      if $debug > 3;
+  # list of replacements, pre-filled with original tokens
+  $tokenMapping->[2] = [@{$tokenMapping->[0]}];
+  # list of adjusted replacement positions, pre-filled with original
+  # token positions
+  $tokenMapping->[3] = dclone($tokenMapping->[1]);
+  # flag if replaced, initially 0 and then 1 for every replacement
+  $tokenMapping->[4] = [ (0) x @{$tokenMapping->[1]} ];
+  for(my $tok = 0; $tok < @{$tokenMapping->[0]}; ++$tok) {
+    my $token = $tokenMapping->[0][$tok];
+    if (defined($token) && exists($configHDefs->{$token})
+            && defined($configHDefs->{$token}))            {
+      print STDERR 'Substituting ',
+          join(' ', @{$configHDefs->{$token}{'definition'}[0]}), ' for ',
+          $token, "\n" if $debug > 1;
+      $tokenMapping->[4][$tok] = 1;
+      my $replacement = join(' ', @{$configHDefs->{$token}{'definition'}[0]});
+      $tokenMapping->[2][$tok] = $replacement;
+      my $lenChange = length($replacement)
+          - length($tokenMapping->[0][$tok]);
+      substr($headerLine, $tokenMapping->[3][$tok][0],
+             $tokenMapping->[3][$tok][1] + 1 - $tokenMapping->[3][$tok][0])
+          =~ s/$token/@{$configHDefs->{$token}{'definition'}[0]}/;
+      for (my $tokRest = $tok + 1;
+           $tokRest < @{$tokenMapping->[0]};
+           ++$tokRest)
+      {
+        $tokenMapping->[3][$tokRest][0] += $lenChange;
+        $tokenMapping->[3][$tokRest][1] += $lenChange;
+        print(STDERR Data::Dumper->Dump([$tokenMapping],
+                                        ['tokenMapping']))
+            if $debug > 3;
+      }
+    }
+  }
+  return $headerLine;
+}
 
 {
 
