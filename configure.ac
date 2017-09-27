@@ -205,6 +205,9 @@ ACX_F90_PACKAGE([MPI],[mpi],,,
 save_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MPI_C_INCLUDE"
 TJ_FIND_INTEGRAL_TYPE([MPI_Fint],[MPI_FINT],[@%:@include <mpi.h>])
+TJ_FIND_INTEGRAL_TYPE([MPI_Aint],[xt_mpi_aint],[@%:@include <mpi.h>])
+xt_mpi_aint_kind=c_[]AS_TR_SH([$xt_mpi_aint])
+FCFLAGS="$FCFLAGS ${FPP_DEFOPT}XT_MPI_AINT_KIND=$xt_mpi_aint_kind"
 CFLAGS=$save_CFLAGS
 AS_CASE(["$MPI_FINT"],
   [int],[XT_MPI_FINT_MAX=INT_MAX XT_MPI_FINT_FC_KIND=c_int],
