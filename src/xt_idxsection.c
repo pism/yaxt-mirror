@@ -149,10 +149,10 @@ struct Xt_idxsection_ {
 
   struct Xt_idxlist_ parent;
 
+  Xt_int *index_array_cache;
+
   Xt_int global_start_index;
   Xt_int local_start_index;
-
-  Xt_int *index_array_cache;
 
   Xt_int min_index_cache;
   Xt_int max_index_cache;
