@@ -513,15 +513,12 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
     = (Xt_int *)(void *)((unsigned char *)inter_vector + header_size);
   inter_vector->vector = vector_assign;
 
-  const Xt_int *restrict sorted_src_vector, *restrict sorted_dst_vector;
 
   // get sorted indices of source and destination
-
-  sorted_src_vector = get_sorted_vector(idxvec_src);
-  sorted_dst_vector = get_sorted_vector(idxvec_dst);
+  const Xt_int *restrict sorted_src_vector = get_sorted_vector(idxvec_src),
+               *restrict sorted_dst_vector = get_sorted_vector(idxvec_dst);
 
   // compute the intersection
-
   for (size_t i = 0, j = 0; i < num_indices_dst; ++i) {
 
     while (j < num_indices_src &&
