@@ -465,22 +465,23 @@ get_sorted_vector(Xt_idxvec idxvec) {
                                          sizeof(*(idxvec->sorted_vec_positions)));
 
 
+  const Xt_int *restrict vector = idxvec->vector;
   bool sorted = true;
   // check if we are already sorted:
   for (size_t i = 1; i < num_indices; ++i)
-    sorted &= (idxvec->vector[i-1] <= idxvec->vector[i]);
+    sorted &= (vector[i-1] <= vector[i]);
 
   /* we are done if vector is already sorted */
   if (sorted) {
     // gen id-map:
     for (size_t i = 0; i < num_indices; ++i)
       idxvec->sorted_vec_positions[i] = (int)i;
-    return idxvec->sorted_vector = idxvec->vector;
+    return idxvec->sorted_vector = vector;
   }
   size_t svec_size = num_indices * sizeof(Xt_int);
   Xt_int *sorted_vector = xmalloc(svec_size);
 
-  memcpy(sorted_vector, idxvec->vector, svec_size);
+  memcpy(sorted_vector, vector, svec_size);
 
   xt_quicksort_index(sorted_vector, (int)num_indices,
                      idxvec->sorted_vec_positions, 1);
