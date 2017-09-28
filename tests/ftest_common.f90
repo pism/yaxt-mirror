@@ -676,6 +676,7 @@ CONTAINS
     INTEGER, ALLOCATABLE :: rseed(:)
 
     INTEGER :: rseed_size, i
+    CHARACTER(len=32) :: fmt
     INTEGER :: tparts(8), timeseed
     INTEGER :: days_per_month(12), days_prefix
     INTEGER, PARAMETER :: tparts_mult(7) = (/ &
@@ -686,6 +687,8 @@ CONTAINS
          60 * 60,            & ! hour of day
          60,                 & ! minute of hour
          1 /)                  ! seconnd
+    CHARACTER(len=32) :: envval
+    INTEGER :: envlen, envstat
 
     CALL random_seed(size=rseed_size)
     ALLOCATE(rseed(rseed_size))
@@ -716,6 +719,12 @@ CONTAINS
       timeseed = SUM(tparts(1:7) * tparts_mult)
       timeseed = IEOR(tparts(8), timeseed) ! mix in microseconds
       rseed(1) = timeseed
+      CALL get_environment_VARIABLE("YAXT_RANDOM_SEED", envval, envlen, &
+           status=envstat)
+      IF (envstat == 0) THEN
+        WRITE (fmt, '(a,i0,a)') '(i', DIGITS(rseed), ')'
+        READ(envval(1:envlen), fmt) rseed(1)
+      END IF
       WRITE(0, '(a,i0)') 'used extra seed=', rseed(1)
       FLUSH(0)
     END IF
