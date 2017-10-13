@@ -5,9 +5,9 @@
  	;;
  
 +      -Wl,--start-group|-Wl,--end-group|-Wl,-\(|-Wl,-\))
-+        func_append deplibs " $arg"
++	func_append deplibs " $arg"
 +	continue
-+        ;;
++	;;
 +
        -Wl,*)
  	wlprefix=`expr length "$wl"`
@@ -16,15 +16,15 @@
  	  alldeplibs=yes
  	  continue
  	  ;;
-+        -Wl,--start-group|-Wl,--end-group|-Wl,-\(|-Wl,-\))
++	 -Wl,--start-group|-Wl,--end-group|-Wl,-\(|-Wl,-\))
 +	  if test "$linkmode,$pass" = "prog,link"; then
 +	    compile_deplibs="$deplib $compile_deplibs"
 +	    finalize_deplibs="$deplib $finalize_deplibs"
 +	  else
 +	    deplibs="$deplib $deplibs"
-+          fi
++	  fi
 +	  continue
-+          ;;
++	  ;;
  	esac # case $deplib
  
  	if test "$found" = yes || test -f "$lib"; then :
