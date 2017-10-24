@@ -97,7 +97,13 @@
 #error "must define suffix for type to name functions"
 #endif
 #ifndef SORT_TYPE_CMP_LT
-#error "must define suffix for type to name functions"
+#error "must define macro to compare SORT_TYPE for less than relation"
+#endif
+#ifndef SORT_TYPE_CMP_LE
+#error "must define macro to compare SORT_TYPE for less than or equal relation"
+#endif
+#ifndef SORT_TYPE_CMP_EQ
+#error "must define macro to compare SORT_TYPE for equality"
 #endif
 
 #define MED3 NAME_COMPOSE(med3,SORT_TYPE_SUFFIX)
