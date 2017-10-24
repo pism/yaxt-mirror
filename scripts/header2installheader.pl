@@ -69,6 +69,7 @@ print(STDERR Data::Dumper->Dump([\%configHDefs], [qw(configHDefs)]))
 print(STDERR 'srcBaseDir = ', $srcBaseDir, "\n",
       'dstBaseDir = ', $dstBaseDir, "\n")
     if ($debug);
+
 foreach my $headerFn (@ARGV)
 {
   my ($instHeaderFn) = catfile($dstBaseDir,
