@@ -10,8 +10,8 @@
 +	;;
 +
        -Wl,*)
- 	wlprefix=`expr length "$wl"`
- 	wlprefix=`expr substr "$arg" 1 $wlprefix`
+ 	wlprefix=`expr x"$wl" : '.*' - 1`
+ 	wlprefix=`expr x"$arg" : 'x\(.\{'"$wlprefix"'\}\)'`
 @@ -6434,6 +6439,15 @@
  	  alldeplibs=yes
  	  continue
