@@ -40,9 +40,14 @@ AC_DEFUN([_ACX_LT_FORT_FLAGS_MANGLE],
    AC_LANG_CASE([Fortran],[acx_FC=$FC acx_FCFLAGS=$FCFLAGS],
      [Fortran 77],[acx_FC=$F77 acx_FCFLAGS=$FFLAGS])
    acx_temp=`$acx_FC -V 2>&1`
+dnl fix problems from NAG compiler
    AS_IF([echo "$acx_temp" | grep '^NAG Fortran Compiler Release' >/dev/null],
      [acx_FCFLAGS=`echo "$acx_FCFLAGS" | tr ' ' '\n' | sed -e '/^-W@<:@lc@:>@/{' \
 -e 's/^\(-Wl\)/-Xlinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}'     | tr '\n' ' '`])
+dnl fix conflicting use of -module by libtool and ifort
+   AS_CASE(["x${FC_MODOUT}x"],
+     [x'-module 'x|x'-mod 'x],
+     [FC_MODOUT="-Xcompiler ${FC_MODOUT}-Xcompiler "])
    AC_LANG_CASE([Fortran],[FC=$acx_FC FCFLAGS=$acx_FCFLAGS],
      [Fortran 77],[FC=$acx_F77 FCFLAGS=$acx_FFLAGS])])
 dnl
