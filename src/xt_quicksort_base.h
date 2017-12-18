@@ -90,128 +90,176 @@
 #define TOKEN_PASTE(a,b) a##_##b
 #define NAME_COMPOSE(a,b) TOKEN_PASTE(a,b)
 #endif
+
 #ifndef SORT_TYPE
 #error "must define type to sort on"
 #endif
+
 #ifndef SORT_TYPE_SUFFIX
 #error "must define suffix for type to name functions"
 #endif
+
 #ifndef SORT_TYPE_CMP_LT
 #error "must define macro to compare SORT_TYPE for less than relation"
 #endif
+
 #ifndef SORT_TYPE_CMP_LE
 #error "must define macro to compare SORT_TYPE for less than or equal relation"
 #endif
+
 #ifndef SORT_TYPE_CMP_EQ
 #error "must define macro to compare SORT_TYPE for equality"
+#endif
+
+#ifndef XT_SORT_EXTRA_ARGS_DECL
+/* these declarations are appended to parameters, defaults to nothing */
+#define XT_SORT_EXTRA_ARGS_DECL
+#define XT_SORT_EXTRA_ARGS_DECL_UNDEF
+#endif
+
+#ifndef XT_SORT_EXTRA_ARGS_PASS
+/* determines what is passed to the parameters declared in
+ * XT_SORT_EXTRA_ARGS_DECL, defaults to nothing */
+#define XT_SORT_EXTRA_ARGS_PASS
+#define XT_SORT_EXTRA_ARGS_PASS_UNDEF
+#endif
+
+#ifndef XT_SORT_EXTRA_ARGS_SWAP
+#define XT_SORT_EXTRA_ARGS_SWAP(i,j)
+#define XT_SORT_EXTRA_ARGS_SWAP_UNDEF
+#endif
+
+#ifndef XT_SORT_EXTRA_ARGS_ADVANCE
+#define XT_SORT_EXTRA_ARGS_ADVANCE(adv)
+#define XT_SORT_EXTRA_ARGS_ADVANCE_UNDEF
 #endif
 
 #define MED3 NAME_COMPOSE(med3,SORT_TYPE_SUFFIX)
 #define VECSWAP NAME_COMPOSE(vecswap,SORT_TYPE_SUFFIX)
 #define XT_QUICKSORT NAME_COMPOSE(xt_quicksort,SORT_TYPE_SUFFIX)
 
-static inline SORT_TYPE *
-MED3(SORT_TYPE *a, SORT_TYPE *b, SORT_TYPE *c)
+static inline size_t
+MED3(const SORT_TYPE *a, size_t i, size_t j, size_t k XT_SORT_EXTRA_ARGS_DECL)
 {
-  return SORT_TYPE_CMP_LT(*a,*b) ?
-    (SORT_TYPE_CMP_LT(*b,*c) ? b : (SORT_TYPE_CMP_LT(*a,*c) ? a : c ))
-    : (SORT_TYPE_CMP_LT(*c,*b) ? b : (SORT_TYPE_CMP_LT(*a,*c) ? a : c ));
+  return SORT_TYPE_CMP_LT(a[i],a[j],i,j) ?
+    (SORT_TYPE_CMP_LT(a[j],a[k],j,k) ?
+     j : (SORT_TYPE_CMP_LT(a[i],a[k],i,k) ? i : k ))
+    : (SORT_TYPE_CMP_LT(a[k],a[j],k,j) ?
+       j : (SORT_TYPE_CMP_LT(a[i],a[k],i,k) ? i : k));
 }
 
 #ifndef SWAP
-#define SWAP(a,b) do {                          \
-    SORT_TYPE t = a; a = b; b = t;              \
+#define SWAP(i,j) do {                                \
+    SORT_TYPE t = a[i]; a[i] = a[j]; a[j] = t;        \
+    XT_SORT_EXTRA_ARGS_SWAP(i, j);                    \
   } while (0)
 #endif
 
 static inline void
-VECSWAP(SORT_TYPE *restrict a, SORT_TYPE *restrict b, size_t n)
+VECSWAP(SORT_TYPE *restrict a, size_t ia, size_t ib, size_t n XT_SORT_EXTRA_ARGS_DECL)
 {
-  for (size_t i = 0; i < n; ++i) {
-    SORT_TYPE t = a[i];
-    a[i] = b[i];
-    b[i] = t;
-  }
+  for (size_t i = 0; i < n; ++i)
+    SWAP(ia+i, ib+i);
 }
 
-void XT_QUICKSORT(SORT_TYPE *a, size_t n)
+void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
 {
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
   while (1) {
     bool swap_cnt = false;
     if (n < 7) {
-      for (SORT_TYPE *pm = a + 1; pm < a + n; ++pm)
-        for (SORT_TYPE *pl = pm; pl > a && SORT_TYPE_CMP_LT(*pl, pl[-1]); --pl)
-          SWAP(*pl, pl[-1]);
+      for (size_t m = 1; m < n; ++m)
+        for (size_t l = m; l > 0 && SORT_TYPE_CMP_LT(a[l], a[l-1],l,l-1); --l)
+          SWAP(l, l-1);
       return;
     }
     {
-      SORT_TYPE *pm = a + (n / 2);
+      size_t m = n/2;
       if (n > 7) {
-        SORT_TYPE *pl = a;
-        SORT_TYPE *pn = a + (n - 1);
+        size_t l = 0, k = n - 1;
         if (n > 40) {
           size_t d = n / 8;
-          pl = MED3(pl,  pl + d,  pl + 2 * d);
-          pm = MED3(pm - d,  pm,  pm + d);
-          pn = MED3(pn - 2 * d,  pn - d,  pn);
+          l = MED3(a, l,          l + d,  l + 2 * d XT_SORT_EXTRA_ARGS_PASS);
+          m = MED3(a, m - d,      m,      m + d     XT_SORT_EXTRA_ARGS_PASS);
+          k = MED3(a, k - 2 * d,  k - d, k          XT_SORT_EXTRA_ARGS_PASS);
         }
-        pm = MED3(pl,  pm,  pn);
+        m = MED3(a, l,  m,  k XT_SORT_EXTRA_ARGS_PASS);
       }
-      SWAP(*a, *pm);
+      SWAP(0, m);
     }
-    SORT_TYPE *pa = a + 1, *pb = pa;
-    SORT_TYPE *pc = a + n - 1, *pd = pc;
+    size_t i = 1, b = i;
+    size_t c = n - 1, d = c;
     SORT_TYPE pivot = *a;
     for (;;) {
-      while (pb <= pc && SORT_TYPE_CMP_LE(*pb, pivot)) {
-        if (SORT_TYPE_CMP_EQ(*pb, pivot)) {
+      while (b <= c && SORT_TYPE_CMP_LE(a[b], pivot, b, 0)) {
+        if (SORT_TYPE_CMP_EQ(a[b], pivot, b, 0)) {
           swap_cnt = true;
-          SWAP(*pa, *pb);
-          ++pa;
+          SWAP(i, b);
+          ++i;
         }
-        ++pb;
+        ++b;
       }
-      while (pb <= pc && SORT_TYPE_CMP_LE(pivot, *pc)) {
-        if (SORT_TYPE_CMP_EQ(*pc, pivot)) {
+      while (b <= c && SORT_TYPE_CMP_LE(pivot, a[c], 0, c)) {
+        if (SORT_TYPE_CMP_EQ(pivot, a[c], 0, c)) {
           swap_cnt = true;
-          SWAP(*pc, *pd);
-          --pd;
+          SWAP(c, d);
+          --d;
         }
-        --pc;
+        --c;
       }
-      if (pb > pc)
+      if (b > c)
         break;
-      SWAP(*pb, *pc);
+      SWAP(b, c);
       swap_cnt = true;
-      ++pb;
-      --pc;
+      ++b;
+      --c;
     }
     if (!swap_cnt) {  /* Switch to insertion sort */
-      for (SORT_TYPE *pm = a + 1; pm < a + n; ++pm)
-        for (SORT_TYPE *pl = pm; pl > a && SORT_TYPE_CMP_LT(*pl, pl[-1]); --pl)
-          SWAP(*pl, pl[-1]);
+      for (size_t m = 1; m < n; ++m)
+        for (size_t l = m; l > 0 && SORT_TYPE_CMP_LT(a[l], a[l-1], l, l-1); --l)
+          SWAP(l, l-1);
       return;
     }
 
-    SORT_TYPE *pn = a + n;
-    ptrdiff_t pdiff = MIN(pa - a, pb - pa);
-    VECSWAP(a, pb - pdiff, (size_t)pdiff);
-    pdiff = MIN(pd - pc, pn - pd - 1);
-    VECSWAP(pb, pn - pdiff, (size_t)pdiff);
-    if ((pdiff = pb - pa) > (ptrdiff_t)1)
-      XT_QUICKSORT(a, (size_t)pdiff);
-    if ((pdiff = pd - pc) > (ptrdiff_t)1) {
+    size_t pdiff = MIN(i, b - i);
+    VECSWAP(a, 0, b - pdiff, pdiff XT_SORT_EXTRA_ARGS_PASS);
+    pdiff = MIN(d - c, n - d - 1);
+    VECSWAP(a, b, n - pdiff, pdiff XT_SORT_EXTRA_ARGS_PASS);
+    if ((pdiff = b - i) > 1U)
+      XT_QUICKSORT(a, pdiff XT_SORT_EXTRA_ARGS_PASS);
+    if ((pdiff = d - c) > 1U) {
       /* Iterate rather than recurse to save stack space */
-      a = pn - pdiff;
-      n = (size_t)pdiff;
+      size_t adv = n - pdiff;
+      a += adv;
+      n = pdiff;
+      XT_SORT_EXTRA_ARGS_ADVANCE(adv);
     }
     else
       break;
   }
 #undef MIN
 }
+
+#ifdef XT_SORT_EXTRA_ARGS_DECL_UNDEF
+#undef XT_SORT_EXTRA_ARGS_DECL
+#undef XT_SORT_EXTRA_ARGS_DECL_UNDEF
+#endif
+
+#ifdef XT_SORT_EXTRA_ARGS_PASS_UNDEF
+#undef XT_SORT_EXTRA_ARGS_PASS
+#undef XT_SORT_EXTRA_ARGS_PASS_UNDEF
+#endif
+
+#ifdef XT_SORT_EXTRA_ARGS_SWAP_UNDEF
+#undef XT_SORT_EXTRA_ARGS_SWAP
+#undef XT_SORT_EXTRA_ARGS_SWAP_UNDEF
+#endif
+
+#ifdef XT_SORT_EXTRA_ARGS_ADVANCE_UNDEF
+#undef XT_SORT_EXTRA_ARGS_ADVANCE
+#undef XT_SORT_EXTRA_ARGS_ADVANCE_UNDEF
+#endif
 
 /*
  * Local Variables:
