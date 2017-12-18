@@ -58,9 +58,9 @@
 static void
 test1(void (*anysort_index)(Xt_int * a, int n, int * idx, int reset_index)) {
   Xt_int ivec[]        = {7,5,3,1,2,2,3,3};
-  Xt_int sorted_ivec[] = {1,2,2,3,3,3,5,7};
+  static const Xt_int sorted_ivec[] = {1,2,2,3,3,3,5,7};
   int pvec[]           = {1,2,3,4,5,6,7,8};
-  int sorted_pvec[]    = {3,4,5,2,6,7,1,0};
+  static const int sorted_pvec[]    = {3,4,5,2,6,7,1,0};
 
   size_t tsize = sizeof(ivec) / sizeof(ivec[0]);
   assert(tsize == sizeof(pvec) / sizeof(pvec[0]));
@@ -77,7 +77,8 @@ test1(void (*anysort_index)(Xt_int * a, int n, int * idx, int reset_index)) {
 static void
 test2(void (*sort_int)(int *a, size_t n))
 {
-  int ivec[] = {7,5,3,1,2,2,3,3}, sorted_ivec[] = {1,2,2,3,3,3,5,7};
+  int ivec[] = {7,5,3,1,2,2,3,3};
+  static const int sorted_ivec[] = {1,2,2,3,3,3,5,7};
   size_t ivec_size = sizeof (ivec) / sizeof (ivec[0]);
   sort_int(ivec, ivec_size);
   for(size_t i=0; i < ivec_size; i++)
