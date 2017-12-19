@@ -71,7 +71,12 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
      [AS_IF([test -n "$F77" -a X"$F77" != Xno],
         [AC_LANG_PUSH([Fortran 77])
          _ACX_LT_FORT_FLAGS_MANGLE
-         AC_LANG_POP([Fortran 77])])])])dnl
+         AC_LANG_POP([Fortran 77])])])
+dnl substitute -shared-intel if present
+   AS_FOR([acx_flag_var],[acx_flag_var_],[CFLAGS CXXFLAGS FCFLAGS F77FLAGS LDFLAGS],
+     [eval acx_temp="\" \$$acx_flag_var_ \""
+      AS_CASE([$acx_temp],[*\ -shared-intel\ *],
+        [$acx_flag_var_=`echo "$acx_temp" | sed -e 's/ -shared-intel / -Xcompiler -shared-intel /' -e 's/^ //;s/ $//'`])])])dnl
 dnl
 dnl Local Variables:
 dnl mode: autoconf
