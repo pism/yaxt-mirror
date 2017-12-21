@@ -455,9 +455,12 @@ BEGIN {
           if $debug > 4;
       if (exists($defines->{$token}))
       {
-         print(STDERR 'Returning ', @{$defines->{$token}{'definition'}[0]},
-               ' for token ', $token, "\n") if $debug > 3;
-         return $defines->{$token};
+        print(STDERR 'Returning ',
+              defined($defines->{$token}) ?
+                  @{$defines->{$token}{'definition'}[0]}
+                  : 'undef',
+              ' for token ', $token, "\n") if $debug > 3;
+        return $defines->{$token};
       }
       else
       {
