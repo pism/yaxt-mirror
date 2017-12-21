@@ -98,15 +98,14 @@ xt_exchanger_irecv_isend_packed_s_exchange(
 
   for (int i = 0; i < nsend; ++i) {
     int position = 0;
-    int send_size = buffer_sizes[nrecv+i];
     xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(src_data), 1, send_msgs[i].datatype,
-                         buffer + ofs, send_size, &position,
+                         buffer + ofs, buffer_sizes[nrecv+i], &position,
                          comm), comm);
-    xt_mpi_call(MPI_Isend(buffer + ofs, send_size, MPI_PACKED,
+    xt_mpi_call(MPI_Isend(buffer + ofs, position, MPI_PACKED,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+nrecv+i), comm);
-    ofs += (size_t)send_size;
+    ofs += (size_t)position;
   }
 
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
