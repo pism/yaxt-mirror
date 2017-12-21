@@ -451,7 +451,8 @@ BEGIN {
    {
       my ($defines, $token) = @_;
       print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 1;
-      print(STDERR Data::Dumper->Dump([\$defines], ['defines']), "\n")
+      print(STDERR Data::Dumper->Dump([\$defines, \$token],
+                                      ['defines', 'token']), "\n")
           if $debug > 4;
       if (exists($defines->{$token}))
       {
