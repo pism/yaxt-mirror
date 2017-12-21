@@ -87,7 +87,8 @@ void xt_idxlist_delete(Xt_idxlist idxlist);
  * @param[in] idxlist index list for which the packed size needs to be computed
  * @param[in] comm    MPI communicator that will be used to send the buffer for
  *                    which the size is computed
- * @return            returns the size in bytes of the packed index list
+ * @return            returns an upper bound on the size in bytes of the
+ *                    packed index list
  *
  * @remark You need to provide the same buffer for all related calls of
  *         xt_idxlist_get_pack_size , \ref xt_idxlist_pack and
