@@ -428,7 +428,9 @@ BEGIN {
          $p .= $_;
          $preprocOutput .= $_ unless (m{^#});
       }
-      chomp($preprocOutput);
+      while (chomp($preprocOutput))
+      {
+      }
       my $pidmatch = waitpid($child_pid, 0);
       if ($pidmatch != $child_pid or $? != 0 or not close($preprocOutputFh))
       {
