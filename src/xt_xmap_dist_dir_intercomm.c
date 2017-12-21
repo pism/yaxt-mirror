@@ -143,8 +143,6 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
   Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
   if (local_index_range_lbound <= local_index_range_ubound) {
     int send_buffer_size = 0;
-    Xt_idxlist *restrict send_list
-      = xmalloc((size_t)comm_size * sizeof(*send_list));
     struct Xt_stripe *stripes = NULL;
     size_t stripes_array_size = 0;
     Xt_int global_interval = bucket_params->global_interval;
@@ -165,6 +163,10 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
     if (local_index_range_lbound < 0
         || start_of_non_overlapping_bucket_suffix > (size_t)comm_size)
       start_of_non_overlapping_bucket_suffix = (size_t)comm_size;
+    size_t max_num_intersect
+      = start_of_non_overlapping_bucket_suffix - first_overlapping_bucket;
+    Xt_idxlist *restrict send_list
+      = xmalloc(max_num_intersect * sizeof(*send_list));
     size_t i = first_overlapping_bucket;
     for (; i < (size_t)start_of_non_overlapping_bucket_suffix; ++i) {
       Xt_idxlist bucket
