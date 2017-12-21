@@ -396,13 +396,13 @@ static void idxvec_delete(Xt_idxlist obj) {
 static size_t idxvec_get_pack_size(Xt_idxlist obj, MPI_Comm comm) {
 
   Xt_idxvec idxvec = (Xt_idxvec)obj;
-  int size_xt_idx, size_int_type;
+  int size_xt_idx, size_header;
 
-  xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_int_type), comm);
+  xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_header), comm);
   xt_mpi_call(MPI_Pack_size(idxvec->parent.num_indices, Xt_int_dt, comm,
                             &size_xt_idx), comm);
 
-  return (size_t)size_xt_idx + (size_t)size_int_type;
+  return (size_t)size_xt_idx + (size_t)size_header;
 }
 
 void idxvec_pack(Xt_idxlist obj, void *buffer, int buffer_size,
@@ -410,12 +410,9 @@ void idxvec_pack(Xt_idxlist obj, void *buffer, int buffer_size,
 
   assert(obj);
   Xt_idxvec idxvec = (Xt_idxvec)obj;
-  int type = VECTOR;
-
-  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
-                           buffer_size, position, comm), comm);
-  xt_mpi_call(MPI_Pack(&(idxvec->parent.num_indices), 1, MPI_INT, buffer,
-                           buffer_size, position, comm), comm);
+  int header[2] = { VECTOR, idxvec->parent.num_indices };
+  xt_mpi_call(MPI_Pack(header, 2, MPI_INT, buffer,
+                       buffer_size, position, comm), comm);
   if (idxvec->parent.num_indices != 0)
     xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(idxvec->vector),
                          idxvec->parent.num_indices,
