@@ -235,31 +235,42 @@ xt_xmap_dist_dir_pack_intersections(
   size_t num_intersections,
   const struct isect *restrict src_dst_intersections,
   bool isect_idxlist_delete,
-  void *buffer, int buf_size, int *position, MPI_Comm comm)
+  size_t send_size_asize, size_t send_size_idx,
+  int (*send_size)[send_size_asize],
+  unsigned char *buffer, size_t buf_size, size_t *ofs, MPI_Comm comm)
 {
   int prev_send_rank = -1;
   int num_send_indices_requests = 0;
-  size_t origin = 1 - target;
+  size_t origin = 1 ^ target, ofs_ = *ofs;
+  int position = 0;
   for (size_t i = 0; i < num_intersections; ++i)
   {
     /* see if this generates a new request? */
     int send_rank = src_dst_intersections[i].rank[target];
     num_send_indices_requests += send_rank != prev_send_rank;
-    prev_send_rank = send_rank;
 
     // pack rank
     XT_MPI_SEND_BUF_CONST int *prank
       = CAST_MPI_SEND_BUF(src_dst_intersections[i].rank + origin);
-
-    xt_mpi_call(MPI_Pack(prank, 1, MPI_INT, buffer, buf_size, position,
-                         comm), comm);
+    if (send_rank != prev_send_rank && prev_send_rank != -1) {
+      send_size[prev_send_rank][send_size_idx] = position;
+      ofs_ += (size_t)position;
+      position = 0;
+    }
+    prev_send_rank = send_rank;
+    xt_mpi_call(MPI_Pack(prank, 1, MPI_INT, buffer+ofs_, (int)(buf_size-ofs_),
+                         &position, comm), comm);
     // pack intersection
-    xt_idxlist_pack(src_dst_intersections[i].idxlist, buffer,
-                    buf_size, position, comm);
+    xt_idxlist_pack(src_dst_intersections[i].idxlist, buffer+ofs_,
+                    (int)(buf_size-ofs_), &position, comm);
 
     if (isect_idxlist_delete)
       xt_idxlist_delete(src_dst_intersections[i].idxlist);
   }
+  if (prev_send_rank != -1)
+    send_size[prev_send_rank][send_size_idx] = position;
+
+  *ofs = ofs_ + (size_t)position;
   return num_send_indices_requests;
 }
 

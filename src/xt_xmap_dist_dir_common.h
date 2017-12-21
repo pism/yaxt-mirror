@@ -137,7 +137,9 @@ xt_xmap_dist_dir_pack_intersections(
   size_t num_intersections,
   const struct isect *restrict src_dst_intersections,
   bool isect_idxlist_delete,
-  void *buffer, int buf_size, int *position, MPI_Comm comm);
+  size_t send_size_asize, size_t send_size_idx,
+  int (*send_size)[send_size_asize],
+  unsigned char *buffer, size_t buf_size, size_t *ofs, MPI_Comm comm);
 
 
 void
