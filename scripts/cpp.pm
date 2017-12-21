@@ -54,7 +54,11 @@ my ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long,
     $c_char_is_unsigned) = (4, 8, 8, 0);
 
 BEGIN {
-  $debug = 0;
+  if (exists($ENV{'DEBUG_CPP'}) && $ENV{'DEBUG_CPP'} =~ m{^\d+$}) {
+    $debug = $ENV{'DEBUG_CPP'} + 0;
+  } else {
+    $debug = 0;
+  }
 };
 
 BEGIN {
