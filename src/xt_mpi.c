@@ -272,9 +272,9 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
     return MPI_DATATYPE_NULL;
 
 #ifdef COMPACT_DT
+  (void)comm;
   return xt_mpi_generate_compact_datatype(displacements, count, old_type);
-#endif
-
+#else
   int * blocklengths = xmalloc((size_t)count * sizeof(*blocklengths));
   int new_count = 0;
   {
@@ -317,6 +317,7 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
   free(tmp_displ);
 
   return datatype;
+#endif
 }
 
 
