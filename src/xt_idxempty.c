@@ -185,10 +185,10 @@ void idxempty_pack(Xt_idxlist data, void *buffer, int buffer_size,
 
   (void)data;
   assert(data);
-  int type = EMPTY;
+  static const int type = EMPTY;
 
-  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
-                           buffer_size, position, comm), comm);
+  xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(&type), 1, MPI_INT, buffer,
+                       buffer_size, position, comm), comm);
 }
 
 Xt_idxlist xt_idxempty_unpack(void *XT_UNUSED(buffer),
