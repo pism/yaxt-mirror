@@ -5,7 +5,7 @@ dnl Version: 1.0
 dnl Keywords: configure configure.ac autotools
 dnl Author: Thomas Jahns <jahns@dkrz.de>
 dnl Maintainer: Thomas Jahns <jahns@dkrz.de>
-dnl URL: https://www.dkrz.de/redmine/projects/show/scales-ppm
+dnl URL: http://scales.dkrz.de/scales-ppm/
 dnl
 dnl Redistribution and use in source and binary forms, with or without
 dnl modification, are  permitted provided that the following conditions are
@@ -57,7 +57,7 @@ AC_DEFUN([ACX_CHECK_SIZEOF_RELATION],
    AC_SUBST(AS_TR_CPP([C_$1_IS_LARGER_THAN_$2]))])
 dnl
 dnl Local Variables:
-dnl license-project-url: "https://www.dkrz.de/redmine/projects/show/scales-ppm"
+dnl license-project-url: "http://scales.dkrz.de/scales-ppm/"
 dnl license-default: "bsd"
 dnl mode: autoconf
 dnl End:
