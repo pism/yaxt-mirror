@@ -408,6 +408,7 @@ BEGIN {
       local $_;
       my ($inputSym) = @_;
       print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 1;
+      # FIXME: mode depends on file type used
       my ($tempFileFh, $tempFileName)
           = File::Temp::tempfile('SUFFIX' => '.f90');
       print($tempFileFh $inputSym, "\n")
