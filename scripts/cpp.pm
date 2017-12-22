@@ -94,31 +94,32 @@ BEGIN {
                         |\(
                         |\)
                         |\#\#
-                        |[-,+\*/%&|^!=><])}x;
+                        |[-,+\*/%&|^!=><])}xo;
 
    $integral_constant_match
-       = qr{^(\d+|0[0-7]+|0[xX][0-9a-fA-F]+)([ul]{1,3})?$}xi;
+       = qr{^(\d+|0[0-7]+|0[xX][0-9a-fA-F]+)([ul]{1,3})?$}xio;
 
    $definition_match
        = qr{^\s*\#+(?:define)
                \s+([A-Za-z_]\w*)
                (\(\s*[A-Za-z_]\w*(?:\s*,[A-Za-z_]\w*)*\s*\))?
-               \s+(.*?)\s*$}x;
+               \s+(.*?)\s*$}xo;
 
    sub tokenize
    {
+      print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 2;
       local $_;
       my $expression = $_[0];
       my @tokens;
-      if ($expression =~ m{^(.*?)(?=(["']).*?(?<=[^\\])\2)}g)
+      if ($expression =~ m{^([^"']*)(".*?(?<=[^\\])"|'.*?(?<=[^\\])')}go)
       {
-         my ($prefix, $quotemark) = ($1, $2);
-         my $prefixPos = pos($expression) + 1;
-         $expression =~ m{\G($quotemark.*?[^\\]$quotemark)}g;
-         my ($stringOrCharConst, $stringOrCharConstEnd)
-             = ($1, pos($expression));
-         $expression =~ m{\G(.*)}g;
-         my ($suffix, $suffixEnd) = ($1, pos($expression));
+         my ($prefix, $stringOrCharConst,
+             $stringOrCharConstPos, $stringOrCharConstEnd)
+             = ($1, $2,  $-[2], $+[2]);
+         die('invalid character constant in expression >', $expression, '<')
+             if ($stringOrCharConst eq "''");
+         $expression =~ m{\G.*}go;
+         my ($suffix, $suffixEnd) = ($&, pos($expression));
          print(STDERR
                Data::Dumper->Dump([\$prefix, \$stringOrCharConst, \$suffix],
                                   ['prefix', 'stringOrCharConst', 'suffix']),
@@ -126,7 +127,7 @@ BEGIN {
          my ($prefixTokenList, $prefixTokenPosMap) = tokenize($prefix);
          my ($suffixTokenList, $suffixTokenPosMap) = tokenize($suffix);
          @tokens = ([@$prefixTokenList, $stringOrCharConst, @$suffixTokenList],
-                    [@$prefixTokenPosMap, [$prefixPos, $stringOrCharConstEnd],
+                    [@$prefixTokenPosMap, [$stringOrCharConstPos, $stringOrCharConstEnd],
                      map { [$_->[0] + $stringOrCharConstEnd + 1,
                             $_->[1] + $stringOrCharConstEnd + 1] }
                      @$suffixTokenPosMap]);
@@ -139,7 +140,7 @@ BEGIN {
          while ($expression =~ m{(.*?)
                                  (?=\s*$operator_match
                                  |\s+
-                                 |$)}xgc) {
+                                 |$)}xgco) {
             if (defined($1) and $1 ne '')
             {
                my $tokenEndPos = pos($expression);
@@ -151,7 +152,7 @@ BEGIN {
                             $tokenMappings[-1][1] - $tokenMappings[-1][0] + 1),
                      "'\n") if ($debug > 2);
             }
-            $expression =~ m/\s*?($operator_match)|\s+|$/xgc;
+            $expression =~ m/\s*($operator_match)|\s+|$/xgco;
             if (defined($1) and $1 ne '') {
                my $tokenEndPos = pos($expression);
                push(@tokenList, $1);
@@ -399,14 +400,15 @@ BEGIN {
 
    sub preprocResult
    {
+      local $_;
+      my ($inputSym) = @_;
       if (!@preprocCmd)
       {
-        die('The preprocessing command is not set, but a symbol requires', "\n",
+        die('The preprocessing command is not set, but symbol "', $inputSym,
+            ' requires', "\n",
             'invoking the Fortran preprocessor, please set the FPP',
             ' environment', "\n", 'variable to retry.');
       }
-      local $_;
-      my ($inputSym) = @_;
       print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 1;
       # FIXME: mode depends on file type used
       my ($tempFileFh, $tempFileName)
