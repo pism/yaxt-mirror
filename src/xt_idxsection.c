@@ -314,15 +314,14 @@ idxsection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
 
   Xt_idxsection section = (Xt_idxsection)data;
 
-  int size_int_type, size_ndim, size_dim_descs, size_xt_int;
+  int size_header, size_dim_descs, size_xt_int;
 
-  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_int_type), comm);
+  xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_header), comm);
   xt_mpi_call(MPI_Pack_size(2, Xt_int_dt, comm, &size_xt_int), comm);
-  xt_mpi_call(MPI_Pack_size(1, MPI_INT, comm, &size_ndim), comm);
   xt_mpi_call(MPI_Pack_size(section->ndim, dim_desc_dt,
                             comm, &size_dim_descs), comm);
 
-  return (size_t)size_int_type + (size_t)size_ndim + (size_t)size_dim_descs
+  return (size_t)size_header + (size_t)size_dim_descs
     + (size_t)size_xt_int;
 }
 
@@ -335,18 +334,13 @@ idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
 
   assert(data);
   Xt_idxsection section = (Xt_idxsection)data;
-  int type = SECTION;
-
-  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
-                           buffer_size, position, comm), comm);
-  xt_mpi_call(MPI_Pack(&(section->global_start_index), 1,
-                           Xt_int_dt, buffer,
-                           buffer_size, position, comm), comm);
-  xt_mpi_call(MPI_Pack(&(section->local_start_index), 1,
-                           Xt_int_dt, buffer,
-                           buffer_size, position, comm), comm);
-  xt_mpi_call(MPI_Pack(&(section->ndim), 1, MPI_INT, buffer,
-                           buffer_size, position, comm), comm);
+  int header[2] = { SECTION, section->ndim };
+  Xt_int starts[2]
+    = { section->global_start_index, section->local_start_index };
+  xt_mpi_call(MPI_Pack(header, 2, MPI_INT, buffer,
+                       buffer_size, position, comm), comm);
+  xt_mpi_call(MPI_Pack(starts, 2, Xt_int_dt, buffer,
+                       buffer_size, position, comm), comm);
   xt_mpi_call(MPI_Pack(section->dims, section->ndim, dim_desc_dt,
                        buffer, buffer_size, position, comm), comm);
   INSTR_STOP(instr);
@@ -358,29 +352,23 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   INSTR_DEF(instr,"xt_idxsection_unpack")
   INSTR_START(instr);
 
-  Xt_idxsection section;
   int ndim;
-  {
-    Xt_int global_start_index, local_start_index;
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &global_start_index, 1, Xt_int_dt, comm), comm);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &local_start_index, 1, Xt_int_dt, comm), comm);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, &ndim, 1, MPI_INT,
-                           comm), comm);
-    assert(ndim > 0);
-
-    section = xmalloc(sizeof (*section)
-                      + (size_t)ndim * sizeof(section->dims[0]));
-    section->index_array_cache = NULL;
-    section->global_start_index = global_start_index;
-    section->local_start_index = local_start_index;
-    section->ndim = ndim;
-  }
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, &ndim, 1, MPI_INT,
+                         comm), comm);
+  Xt_idxsection section
+    = xmalloc(sizeof (*section) + (size_t)ndim * sizeof(section->dims[0]));
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         &section->global_start_index, 1, Xt_int_dt, comm),
+              comm);
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         &section->local_start_index, 1, Xt_int_dt, comm),
+              comm);
+  assert(ndim > 0);
+  section->index_array_cache = NULL;
+  section->ndim = ndim;
 
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         section->dims, ndim, dim_desc_dt,
-                         comm),comm);
+                         section->dims, ndim, dim_desc_dt, comm),comm);
 
   // due to the possibility of negative local and global sizes, the minimum and
   // maximum can be in any corner of the n-dimensional section
