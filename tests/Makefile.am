@@ -114,6 +114,9 @@ libtestutil_f_la_SOURCES = ftest_common.f90 \
 	test_xmap_common_parallel_f.f90 \
 	test_xmap_common_intercomm_parallel_f.f90 \
 	test_redist_common_f.f90
+
+libtestutil_f_la_LDFLAGS = -static
+libtestutil_la_LDFLAGS = -static
 # overrides to make regular compilations also use libtool
 # static because the libtool libraries in this directory are meant to
 # be statically linked and there is no use for the PIC object
@@ -126,10 +129,10 @@ LTFCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(FC) -static $(AM_FCFLAGS) $(FCFLAGS)
 FCCOMPILE = $(LTFCCOMPILE)
 LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) -static $(AM_CFLAGS) $(CFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(FCLD) -static $(AM_FCFLAGS) $(FCFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
