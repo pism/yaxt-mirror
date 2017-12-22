@@ -409,13 +409,11 @@ idxstripes_pack(Xt_idxlist data, void *buffer, int buffer_size,
 
   assert(data);
   Xt_idxstripes stripes = (Xt_idxstripes)data;
-  int type = STRIPES;
+  int header[2] = { STRIPES, stripes->num_stripes };
 
-  xt_mpi_call(MPI_Pack(&(type), 1, MPI_INT, buffer,
+  xt_mpi_call(MPI_Pack(header, 2, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
   int num_stripes = stripes->num_stripes;
-  xt_mpi_call(MPI_Pack(&stripes->num_stripes, 1, MPI_INT, buffer,
-                       buffer_size, position, comm), comm);
   if (num_stripes)
     xt_mpi_call(MPI_Pack(stripes->stripes, num_stripes, stripe_dt,
                          buffer, buffer_size, position, comm), comm);
