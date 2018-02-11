@@ -227,7 +227,7 @@ static int compare_xtstripes(const void * a_, const void * b_)
           (a->range.min < b->range.min));
 }
 
-static void
+static Xt_idxlist
 idxstripes_aggregate(Xt_idxstripes idxstripes,
                      const char *caller)
 {
@@ -280,6 +280,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   idxstripes->max_index = max;
   idxstripes->index_array_cache = NULL;
   Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable, (int)num_indices);
+  return (Xt_idxlist)idxstripes;
 }
 
 
@@ -310,8 +311,7 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
       memcpy(stripes_assign, stripes,
              (size_t)num_stripes * sizeof(*stripes_assign));
     }
-    idxstripes_aggregate(idxstripes, __func__);
-    result = (Xt_idxlist)idxstripes;
+    result = idxstripes_aggregate(idxstripes, __func__);
   } else
     result = xt_idxempty_new();
   INSTR_STOP(instr);
@@ -342,8 +342,7 @@ xt_idxstripes_from_idxlist_new(Xt_idxlist idxlist_src) {
     memmove(stripes_moved, idxstripes, sizeof (*stripes) * (size_t)num_stripes);
     idxstripes->stripes = stripes_moved;
     idxstripes->num_stripes = num_stripes;
-    idxstripes_aggregate(idxstripes, __func__);
-    result = (Xt_idxlist)idxstripes;
+    result = idxstripes_aggregate(idxstripes, __func__);
   } else
     result = xt_idxempty_new();
   return result;
@@ -367,8 +366,7 @@ xt_idxstripes_prealloc_new(const struct Xt_stripe *stripes, int num_stripes)
     idxstripes->num_stripes = num_stripes;
     /* this assignment is safe because no methods modify the pointee */
     idxstripes->stripes = (struct Xt_stripe *)stripes;
-    idxstripes_aggregate(idxstripes, __func__);
-    result = (Xt_idxlist)idxstripes;
+    result = idxstripes_aggregate(idxstripes, __func__);
   } else
     result = xt_idxempty_new();
   return result;
@@ -449,8 +447,7 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
       xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, stripes_assign,
                              num_stripes, stripe_dt, comm),comm);
     }
-    idxstripes_aggregate(idxstripes, __func__);
-    result = (Xt_idxlist)idxstripes;
+    result = idxstripes_aggregate(idxstripes, __func__);
   } else
     result = xt_idxempty_new();
 
