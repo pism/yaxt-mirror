@@ -10,7 +10,7 @@
 /*
  * Keywords:
  * Maintainer: Thomas Jahns <jahns@dkrz.de>
- * URL: http://scales.dkrz.de/scales-ppm/
+ * URL: https://www.dkrz.de/redmine/projects/scales-ppm
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are  permitted provided that the following conditions are
@@ -57,7 +57,7 @@
 #endif
 /*
  * Local Variables:
- * license-project-url: "http://scales.dkrz.de/scales-ppm/"
+ * license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
  * license-default: "bsd"
  * license-markup: "doxygen"
  * End:

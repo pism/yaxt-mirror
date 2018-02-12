@@ -6,7 +6,7 @@
 # Author: Thomas Jahns <jahns@dkrz.de>
 # Keywords:
 # Maintainer: Thomas Jahns <jahns@dkrz.de>
-# URL: http://scales.dkrz.de/scales-ppm/
+# URL: https://www.dkrz.de/redmine/projects/scales-ppm
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are  permitted provided that the following conditions are
@@ -1967,6 +1967,6 @@ sub whoami  { (caller(1))[3] }
 # Local Variables:
 # mode: cperl
 # cperl-indent-level: 2
-# license-project-url: "http://scales.dkrz.de/scales-ppm/"
+# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"
 # End:

@@ -6,7 +6,7 @@ dnl Version: 1.0
 dnl Keywords: configure configure.ac autotools fortran type check
 dnl Author: Thomas Jahns <jahns@dkrz.de>
 dnl Maintainer: Thomas Jahns <jahns@dkrz.de>
-dnl URL: http://scales.dkrz.de/scales-ppm/
+dnl URL: https://www.dkrz.de/redmine/projects/scales-ppm
 dnl
 dnl Redistribution and use in source and binary forms, with or without
 dnl modification, are  permitted provided that the following conditions are
@@ -110,6 +110,6 @@ _ACX_CHECK_TYPE_DEFINE_HELPER([complex(kind=16)], [FORT_COMPLEX32])
 ])dnl
 dnl Local Variables:
 dnl mode: autoconf
-dnl license-project-url: "http://scales.dkrz.de/scales-ppm/"
+dnl license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 dnl license-default: "bsd"
 dnl End:
