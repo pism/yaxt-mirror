@@ -91,6 +91,7 @@ TMPDIR="${TMPDIR-/tmp}"
   (umask 077 && mkdir "$tmp")
 } || exit $?
 #echo \"$FCFLAGS\"
+trap "rm -rf '$tmp'" 0
 for FortranFile in "$@" ; do
   fppOutput=`echo "$FortranFile" | sed 's:.*/::
 s:^:'"$tmp/"'i.:'`
@@ -101,7 +102,6 @@ s:^:'"$tmp/"'i.:'`
   test "${DEBUG+set}" = set && cat "$fppOutput" >&2
   rm "$fppOutput"
 done
-rm -rf "$tmp"
 #
 # Local Variables:
 # license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
