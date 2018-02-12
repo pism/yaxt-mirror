@@ -192,6 +192,17 @@ int main(void) {
     stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
   }
 
+  { // general tests
+    enum {
+      num_stripes = 1,
+      num_ref_indices = 0,
+    };
+    static const struct Xt_stripe stripes[num_stripes]
+      = {{.start = 179, .stride = -2, .nstrides = 0}};
+
+    stripe_test_general(num_stripes, stripes, num_ref_indices, NULL);
+  }
+
   { // intersection test
     enum {
       num_stripes_a = 2,
