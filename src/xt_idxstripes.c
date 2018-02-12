@@ -263,24 +263,28 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
     snprintf(msg, buf_size, template, caller);
     die(msg);
   }
-  assert(num_indices <= INT_MAX);
-  qsort(stripes_sort, num_stripes, sizeof (*stripes_sort), compare_xtstripes);
+  if (num_indices > 0) {
+    assert(num_indices <= INT_MAX);
+    qsort(stripes_sort, num_stripes, sizeof (*stripes_sort), compare_xtstripes);
+    stripes_sort[stripes_sort[0].position].inv_position = 0;
+    int stripes_do_overlap = 0;
+    for (size_t i = 1; i < num_stripes; ++i) {
+      stripes_do_overlap
+        |= stripes_sort[i - 1].range.max >= stripes_sort[i].range.min;
+      stripes_sort[stripes_sort[i].position].inv_position = (int)i;
+    }
 
-  stripes_sort[stripes_sort[0].position].inv_position = 0;
-  int stripes_do_overlap = 0;
-  for (size_t i = 1; i < num_stripes; ++i) {
-    stripes_do_overlap
-      |= stripes_sort[i - 1].range.max >= stripes_sort[i].range.min;
-    stripes_sort[stripes_sort[i].position].inv_position = (int)i;
+    idxstripes->flags = stripes_do_overlap << stripes_do_overlap_bit
+      | have_zero_stride << stripes_some_have_zero_stride_bit;
+    idxstripes->min_index = min;
+    idxstripes->max_index = max;
+    idxstripes->index_array_cache = NULL;
+    Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable, (int)num_indices);
+    return (Xt_idxlist)idxstripes;
+  } else {
+    free(idxstripes);
+    return xt_idxempty_new();
   }
-
-  idxstripes->flags = stripes_do_overlap << stripes_do_overlap_bit
-    | have_zero_stride << stripes_some_have_zero_stride_bit;
-  idxstripes->min_index = min;
-  idxstripes->max_index = max;
-  idxstripes->index_array_cache = NULL;
-  Xt_idxlist_init(&idxstripes->parent, &idxstripes_vtable, (int)num_indices);
-  return (Xt_idxlist)idxstripes;
 }
 
 
