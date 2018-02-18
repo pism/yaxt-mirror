@@ -62,6 +62,7 @@
 #include "xt/xt_idxempty.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
+#include "xt_stripe_util.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
@@ -308,11 +309,9 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
   size_t temp_stripes_array_size = 0;
   int num_temp_stripes = 0;
 
-  if (collectionlist->num_idxlists > 0) {
-    xt_idxlist_get_index_stripes(collectionlist->idxlists[0], &temp_stripes,
-                                 &num_temp_stripes);
-    temp_stripes_array_size = (size_t)num_temp_stripes;
-  }
+  xt_idxlist_get_index_stripes(collectionlist->idxlists[0], &temp_stripes,
+                               &num_temp_stripes);
+  temp_stripes_array_size = (size_t)num_temp_stripes;
 
   for (int i = 1; i < collectionlist->num_idxlists; ++i) {
 
@@ -325,8 +324,11 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
     ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
                       num_temp_stripes + curr_num_stripes);
 
-    memcpy(temp_stripes + num_temp_stripes, curr_stripes,
-           (size_t)curr_num_stripes * sizeof(*curr_stripes));
+    curr_num_stripes
+      = (int)xt_stripes_merge_copy((size_t)curr_num_stripes,
+                                   temp_stripes + num_temp_stripes,
+                                   curr_stripes,
+                                   num_temp_stripes > 0);
 
     free(curr_stripes);
 

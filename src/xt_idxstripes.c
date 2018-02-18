@@ -306,14 +306,15 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
       * sizeof (struct Xt_stripe),
       body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
     Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
-    idxstripes->num_stripes = num_stripes;
     {
       struct Xt_stripe *stripes_assign
         = (struct Xt_stripe *)(void *)((unsigned char *)idxstripes
                                        + header_size);
       idxstripes->stripes = stripes_assign;
-      memcpy(stripes_assign, stripes,
-             (size_t)num_stripes * sizeof(*stripes_assign));
+      idxstripes->num_stripes
+        = (int)xt_stripes_merge_copy((size_t)num_stripes,
+                                     stripes_assign,
+                                     stripes, false);
     }
     result = idxstripes_aggregate(idxstripes, __func__);
   } else

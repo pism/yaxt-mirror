@@ -50,6 +50,9 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 #include "xt/xt_stripe.h"
 
 #include "xt_arithmetic_util.h"
@@ -79,6 +82,25 @@ xt_stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
   return (mma.max >= mmb.min) & (mma.min <= mmb.max);
 }
 
+
+/**
+ * copy stripes_src to stripes_dst, fusing trivially adjacent stripes
+ * (i.e. having same stride and matching bounds)
+ *
+ * @param num_stripes number of stripes stored at stripes_src
+ * @param stripes_dst target array able to hold at least num_stripes stripes
+ * @param stripes_src source array containing \a num_stripes stripes to
+ * be copied to \a stripes_dst
+ * @param lookback if true, inspects also stripes_dst[-1] for possible
+ * fusion with stripes_src[0]
+ * @return number of stripes written to stripes_dst
+ *
+ */
+size_t
+xt_stripes_merge_copy(size_t num_stripes,
+                      struct Xt_stripe *stripes_dst,
+                      const struct Xt_stripe *stripes_src,
+                      bool lookback);
 
 
 #endif
