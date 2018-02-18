@@ -48,8 +48,12 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 #include "xt/xt_core.h"
 #include "xt/xt_stripe.h"
+#include "xt_stripe_util.h"
 
 #include "core/ppm_xfuncs.h"
 #include "instr.h"
@@ -101,6 +105,48 @@ void xt_convert_indices_to_stripes(const Xt_int *restrict indices,
   *num_stripes = (int)num_temp_stripes;
   INSTR_STOP(instr);
 }
+
+size_t
+xt_stripes_merge_copy(size_t num_stripes,
+                      struct Xt_stripe *stripes_dst,
+                      const struct Xt_stripe *stripes_src,
+                      bool lookback)
+{
+  size_t skip = 1;
+  if (num_stripes) {
+    if (lookback) {
+      Xt_int stride = stripes_src[0].stride,
+        prev_stride = stripes_dst[-1].stride,
+        start = stripes_src[0].start,
+        prev_start = stripes_dst[-1].start;
+      if (stride == prev_stride
+          && start == prev_start + stride * (Xt_int)stripes_dst[-1].nstrides) {
+        /* merge perfectly aligned stripes */
+        stripes_dst[-1].nstrides += stripes_src[0].nstrides;
+        ++skip;
+        goto copy_loop;
+      }
+    }
+    stripes_dst[0] = stripes_src[0];
+  copy_loop:
+    if (num_stripes > 1)
+      for (size_t i = 1; i < num_stripes; ++i) {
+        Xt_int stride = stripes_src[i].stride,
+          prev_stride = stripes_dst[i-skip].stride,
+          start = stripes_src[i].start,
+          prev_start = stripes_dst[i-skip].start;
+        if (stride == prev_stride
+            && start == prev_start + stride * (Xt_int)stripes_dst[i-skip].nstrides) {
+          /* merge perfectly aligned stripes */
+          stripes_dst[i-skip].nstrides += stripes_src[i].nstrides;
+          ++skip;
+        } else
+          stripes_dst[i-skip+1] = stripes_src[i];
+      }
+  }
+  return num_stripes - (skip - 1);
+}
+
 
 
 /*
