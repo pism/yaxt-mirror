@@ -57,6 +57,7 @@
 
 #include "xt/xt_core.h"
 #include "xt/xt_stripe.h"
+#include "xt_stripe_util.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
@@ -118,12 +119,19 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   int * num_stripes) {
 
+  *stripes = NULL;
+  *num_stripes = 0;
+  xt_idxlist_get_index_stripes_keep_buf(idxlist, stripes, num_stripes);
+}
+
+void xt_idxlist_get_index_stripes_keep_buf(Xt_idxlist idxlist,
+                                           struct Xt_stripe ** stripes,
+                                           int * num_stripes) {
+
   INSTR_DEF(instr_fallback,"xt_idxlist_get_index_stripes.fallback")
 
   if (idxlist->vtable->get_index_stripes != NULL) {
-
-    idxlist->vtable->get_index_stripes(idxlist, stripes,
-                                       num_stripes);
+    idxlist->vtable->get_index_stripes(idxlist, stripes, num_stripes);
 
   } else { // fall-back solution
 
@@ -135,14 +143,17 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
 
     xt_idxlist_get_indices(idxlist, indices);
 
-    xt_convert_indices_to_stripes(indices, num_indices,
-                                  stripes, num_stripes);
+    xt_convert_indices_to_stripes_keep_buf(indices, num_indices,
+                                           stripes, num_stripes);
 
     free(indices);
 
     INSTR_STOP(instr_fallback);
   }
 }
+
+
+
 
 int xt_idxlist_get_index_at_position(Xt_idxlist idxlist, int position,
                                      Xt_int *idx) {

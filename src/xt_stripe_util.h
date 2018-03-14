@@ -82,6 +82,11 @@ xt_stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
   return (mma.max >= mmb.min) & (mma.min <= mmb.max);
 }
 
+void
+xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
+                                       int num_indices,
+                                       struct Xt_stripe **stripes,
+                                       int * num_stripes);
 
 /**
  * copy stripes_src to stripes_dst, fusing trivially adjacent stripes

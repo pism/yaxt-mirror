@@ -690,13 +690,14 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
 
   if (nstripes == 0) {
     *num_stripes = (int)nstripes;
-    *stripes = NULL;
     return;
   }
 
   INSTR_START(instr);
 
-  struct Xt_stripe *restrict p = xmalloc(nstripes * sizeof(**stripes));
+  struct Xt_stripe *restrict p = *stripes;
+  if ((size_t)*num_stripes < nstripes)
+    p = xrealloc(p, nstripes * sizeof(**stripes));
 
   enum { curr_local_position_auto_size=16 };
   Xt_int curr_local_position_auto[curr_local_position_auto_size];

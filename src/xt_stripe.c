@@ -55,6 +55,7 @@
 #include "xt/xt_stripe.h"
 #include "xt_stripe_util.h"
 
+#include "xt_stripe_util.h"
 #include "core/ppm_xfuncs.h"
 #include "instr.h"
 #include "ensure_array_size.h"
@@ -62,14 +63,25 @@
 void xt_convert_indices_to_stripes(const Xt_int *restrict indices,
                                    int num_indices,
                                    struct Xt_stripe **stripes,
-                                   int * num_stripes) {
+                                   int * num_stripes)
+{
+  *stripes = NULL;
+  *num_stripes = 0;
+  xt_convert_indices_to_stripes_keep_buf(indices, num_indices,
+                                         stripes, num_stripes);
+}
+
+void xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
+                                            int num_indices,
+                                            struct Xt_stripe **stripes,
+                                            int * num_stripes) {
 
   INSTR_DEF(instr,"xt_idxstripes_convert_to_stripes")
   INSTR_START(instr);
 
-  struct Xt_stripe *restrict temp_stripes = NULL;
+  struct Xt_stripe *restrict temp_stripes = *stripes;
   size_t temp_stripes_array_size = 0;
-  size_t num_temp_stripes = 0;
+  size_t num_temp_stripes = (size_t)*num_stripes * sizeof (*temp_stripes);
 
   if (num_indices > 0) {
     size_t i = 0;

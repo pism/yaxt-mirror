@@ -69,7 +69,8 @@ struct xt_idxlist_vtable {
                                    int num, Xt_int *index, Xt_int undef_idx);
    int (*get_position_of_index)(Xt_idxlist, Xt_int, int *);
    int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, int, int *, int);
-   int (*get_pos_exts_of_index_stripes)(Xt_idxlist, int, const struct Xt_stripe *,
+   int (*get_pos_exts_of_index_stripes)(Xt_idxlist, int,
+                                        const struct Xt_stripe *,
                                         int *, struct Xt_pos_ext **, int);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_int, int *, int);
    int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, int,
@@ -82,6 +83,11 @@ struct xt_idxlist_vtable {
                             struct Xt_bounds bounds[ndim]);
   int idxlist_pack_code;
 };
+
+void
+xt_idxlist_get_index_stripes_keep_buf(Xt_idxlist idxlist,
+                                      struct Xt_stripe ** stripes,
+                                      int * num_stripes);
 
 struct Xt_idxlist_ {
   const struct xt_idxlist_vtable *vtable;

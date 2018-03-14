@@ -222,8 +222,7 @@ static void
 idxempty_get_index_stripes(Xt_idxlist XT_UNUSED(idxlist),
                            struct Xt_stripe **stripes,
                            int * num_stripes) {
-
-  *stripes = NULL;
+  (void)stripes;
   *num_stripes = 0;
 }
 
