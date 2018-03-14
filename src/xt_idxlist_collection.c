@@ -313,13 +313,14 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
                                &num_temp_stripes);
   temp_stripes_array_size = (size_t)num_temp_stripes;
 
+  struct Xt_stripe * curr_stripes = NULL;
+  int curr_num_stripes = 0;
   for (int i = 1; i < collectionlist->num_idxlists; ++i) {
 
-    struct Xt_stripe * curr_stripes;
-    int curr_num_stripes;
 
-    xt_idxlist_get_index_stripes(collectionlist->idxlists[i], &curr_stripes,
-                                 &curr_num_stripes);
+    xt_idxlist_get_index_stripes_keep_buf(collectionlist->idxlists[i],
+                                          &curr_stripes,
+                                          &curr_num_stripes);
 
     ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
                       num_temp_stripes + curr_num_stripes);
@@ -330,10 +331,10 @@ idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
                                    curr_stripes,
                                    num_temp_stripes > 0);
 
-    free(curr_stripes);
-
     num_temp_stripes += curr_num_stripes;
   }
+
+  free(curr_stripes);
 
   *stripes = xrealloc(temp_stripes,
                       (size_t)num_temp_stripes * sizeof(*temp_stripes));

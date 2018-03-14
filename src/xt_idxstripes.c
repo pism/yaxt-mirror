@@ -779,7 +779,7 @@ idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
     if (stripes_[i].stride != 1)
       num_temp_stripes += (size_t)stripes_[i].nstrides - 1U;
   struct Xt_stripe *restrict temp_stripes = *stripes
-    = xmalloc(num_temp_stripes * sizeof(*temp_stripes));
+    = xrealloc(*stripes, num_temp_stripes * sizeof(*temp_stripes));
   *num_stripes = (int)num_temp_stripes;
   num_temp_stripes = 0;
   for (size_t i = 0; i < num_stripes_; ++i)
