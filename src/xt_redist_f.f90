@@ -130,7 +130,7 @@ MODULE xt_redist_base
       IMPORT:: c_ptr, c_int
       TYPE(c_ptr), VALUE, INTENT(in) :: redist
       INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
-      TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+      TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     END SUBROUTINE xt_redist_s_exchange_c
 
     SUBROUTINE xt_redist_a_exchange_c(redist, num_ptr, src_data_cptr, &
@@ -138,7 +138,7 @@ MODULE xt_redist_base
       IMPORT:: c_ptr, c_int
       TYPE(c_ptr), VALUE, INTENT(in) :: redist
       INTEGER(c_int), VALUE, INTENT(in) :: num_ptr
-      TYPE(c_ptr) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
+      TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
       TYPE(c_ptr), INTENT(out) :: request
     END SUBROUTINE  xt_redist_a_exchange_c
 
