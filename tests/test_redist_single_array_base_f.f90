@@ -45,7 +45,7 @@
 !
 PROGRAM test_redist_single_array_base_f
   USE mpi
-  USE yaxt, ONLY: xt_redist, xt_offset_ext, xt_initialize, xt_finalize, &
+  USE yaxt, ONLY: xt_redist, xt_initialize, xt_finalize, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
        xt_redist_msg, xt_redist_single_array_base_new
 
