@@ -55,6 +55,7 @@
 
 #include <yaxt.h>
 
+#include "core/ppm_xfuncs.h"
 #include "tests.h"
 
 int main(int argc, char **argv) {
@@ -88,53 +89,47 @@ int main(int argc, char **argv) {
 
   { // each process receives and sends data from/to every other process
 
-    int msg_size = 1 * 1024 * 1024; // 4 * 1 MiB
-    int * send_buf = malloc(msg_size * sizeof(*send_buf));
-    int * recv_buf = malloc(size * msg_size * sizeof(*recv_buf));
+    size_t msg_size = 1 * 1024 * 1024; // 4 * 1 MiB
+    int * send_buf = xmalloc(msg_size * sizeof(*send_buf));
+    int * recv_buf = xmalloc((size_t)size * msg_size * sizeof(*recv_buf));
 
-    if ((send_buf == NULL) || (recv_buf == NULL)) {
+    for (size_t i = 0; i < msg_size; ++i) send_buf[i] = rank;
+    for (size_t i = 0; i < (size_t)size * msg_size; ++i) recv_buf[i] = -1;
 
-      free(send_buf), free(recv_buf);
-      PUT_ERR("malloc failed for \"big\" test\n");
+    int n = 2 * size;
+    MPI_Request requests[n];
+    MPI_Comm comm = MPI_COMM_WORLD;
 
-    } else {
+    for (int i = 0; i < size; ++i)
+      xt_mpi_call(MPI_Isend(send_buf, (int)msg_size, MPI_INT, i, 0,
+                            MPI_COMM_WORLD, requests + i + size),
+                  MPI_COMM_WORLD);
+    for (int i = 0; i < size; ++i)
+      xt_mpi_call(MPI_Irecv(recv_buf + (size_t)i * msg_size,
+                            (int)msg_size, MPI_INT, i, 0,
+                            MPI_COMM_WORLD, &(requests[i])), MPI_COMM_WORLD);
 
-      for (int i = 0; i < msg_size; ++i) send_buf[i] = rank;
-      for (int i = 0; i < size * msg_size; ++i) recv_buf[i] = -1;
+    Xt_request request = xt_request_msgs_new(n, requests, comm);
 
-      MPI_Request requests[2 * size];
-      int n = sizeof(requests) / sizeof(requests[0]);
-      MPI_Comm comm = MPI_COMM_WORLD;
+    if (request == XT_REQUEST_NULL)
+      PUT_ERR("request ==  XT_REQUEST_NULL after xt_request_msgs_new\n");
 
-      for (unsigned i = 0; i < size; ++i)
-        xt_mpi_call(MPI_Isend(send_buf, msg_size, MPI_INT, i, 0, MPI_COMM_WORLD,
-                              &(requests[i + size])), MPI_COMM_WORLD);
-      for (unsigned i = 0; i < size; ++i)
-        xt_mpi_call(MPI_Irecv(&(recv_buf[i * msg_size]), msg_size, MPI_INT, i, 0,
-                              MPI_COMM_WORLD, &(requests[i])), MPI_COMM_WORLD);
+    xt_request_wait(&request);
 
-      Xt_request request = xt_request_msgs_new(n, requests, comm);
+    if (request != XT_REQUEST_NULL)
+      PUT_ERR("request !=  XT_REQUEST_NULL after xt_request_wait\n");
 
-      if (request == XT_REQUEST_NULL)
-        PUT_ERR("request ==  XT_REQUEST_NULL after xt_request_msgs_new\n");
-
-      xt_request_wait(&request);
-
-      if (request != XT_REQUEST_NULL)
-        PUT_ERR("request !=  XT_REQUEST_NULL after xt_request_wait\n");
-
-      for (int i = 0; i < size; ++i)
-        for (int j = 0; j < msg_size; ++j)
-          if (recv_buf[i * msg_size + j] != i)
-            PUT_ERR("recv_buf[i * msg_size + j] != i\n");
-    }
+    for (int i = 0; i < size; ++i)
+      for (size_t j = 0; j < msg_size; ++j)
+        if (recv_buf[(size_t)i * msg_size + j] != i)
+          PUT_ERR("recv_buf[i * msg_size + j] != i\n");
   }
 
   { // each process receives and sends data from/to every other process with
     // request_msgs_packed
 
-    int * send_buf = malloc(1 * sizeof(*send_buf));
-    int * recv_buf = malloc(1 * sizeof(*recv_buf));
+    int * send_buf = xmalloc(1 * sizeof(*send_buf));
+    int * recv_buf = xmalloc(1 * sizeof(*recv_buf));
 
     send_buf[0] = rank;
     recv_buf[0] = -1;
