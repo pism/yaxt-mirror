@@ -72,21 +72,21 @@ struct Xt_request_msgs_ {
 
   const struct Xt_request_vtable * vtable;
   int n;
-  MPI_Request * requests;
   MPI_Comm comm;
+  MPI_Request requests[];
 };
 
 Xt_request xt_request_msgs_new(int n, MPI_Request * requests,
                                MPI_Comm comm) {
 
   assert(n >= 0);
-  Xt_request_msgs request = xmalloc(1 * sizeof(*request));
+  Xt_request_msgs request
+    = xmalloc(sizeof(*request) + (size_t)n * sizeof(MPI_Request));
 
   request->vtable = &request_msgs_vtable;
   request->n = n;
-  request->requests = xmalloc((size_t)n * sizeof(*request->requests));
-  memcpy(request->requests, requests, (size_t)n * sizeof(*request->requests));
   request->comm = comm;
+  memcpy(request->requests, requests, (size_t)n * sizeof(*request->requests));
 
   return (Xt_request)request;
 }
@@ -97,7 +97,6 @@ static void xt_request_msgs_wait(Xt_request request) {
   xt_mpi_call(MPI_Waitall(request_msgs->n, request_msgs->requests,
                           MPI_STATUSES_IGNORE), request_msgs->comm);
 
-  free(request_msgs->requests);
   free(request_msgs);
 }
 
