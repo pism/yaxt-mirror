@@ -203,44 +203,46 @@ int main(void) {
     { // redist test with two redists that do a round robin exchange in
       // different directions
 
-      Xt_idxlist src_indices, dst_indices[2];
+      enum { numExch = 2, };
+      Xt_idxlist src_indices, dst_indices[numExch];
 
-      Xt_int src_indices_[5], dst_indices_[2][5];
+      enum { partSize = 5, };
+      Xt_int src_indices_[partSize], dst_indices_[numExch][partSize];
 
-      for (Xt_int i = 0; i < 5; ++i) {
-        src_indices_[i] = (Xt_int)(rank * 5 + i);
-        dst_indices_[0][i] = (Xt_int)((src_indices_[i] + 1) % (size * 5));
+      for (Xt_int i = 0; i < partSize; ++i) {
+        src_indices_[i] = (Xt_int)(rank * partSize + i);
+        dst_indices_[0][i] = (Xt_int)((src_indices_[i] + 1) % (size * partSize));
         Xt_int temp = (Xt_int)(src_indices_[i] - 1);
-        dst_indices_[1][i] = (Xt_int)((temp < 0)?(size * 5 - 1):temp);
+        dst_indices_[1][i] = (Xt_int)((temp < 0)?(size * partSize - 1):temp);
       }
 
-      src_indices = xt_idxvec_new(src_indices_, 5);
-      dst_indices[0] = xt_idxvec_new(dst_indices_[0], 5);
-      dst_indices[1] = xt_idxvec_new(dst_indices_[1], 5);
+      src_indices = xt_idxvec_new(src_indices_, partSize);
+      dst_indices[0] = xt_idxvec_new(dst_indices_[0], partSize);
+      dst_indices[1] = xt_idxvec_new(dst_indices_[1], partSize);
 
-      Xt_xmap xmaps[2] = {xt_xmap_all2all_new(src_indices, dst_indices[0],
-                                              MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(src_indices, dst_indices[1],
-                                              MPI_COMM_WORLD)};
+      Xt_xmap xmaps[numExch];
+      for (size_t i = 0; i < numExch; ++i)
+        xmaps[i] = xt_xmap_all2all_new(src_indices, dst_indices[i],
+                                       MPI_COMM_WORLD);
 
       xt_idxlist_delete(src_indices);
       xt_idxlist_delete(dst_indices[0]);
       xt_idxlist_delete(dst_indices[1]);
 
-      Xt_redist redists[2] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
-                              xt_redist_p2p_new(xmaps[1], Xt_int_dt)};
+      Xt_redist redists[numExch];
+      for (size_t i = 0; i < numExch; ++i) {
+        redists[i] = xt_redist_p2p_new(xmaps[i], Xt_int_dt);
+        xt_xmap_delete(xmaps[i]);
+      }
 
-      xt_xmap_delete(xmaps[0]);
-      xt_xmap_delete(xmaps[1]);
+      Xt_int results_1[partSize], results_2[partSize];
 
-      Xt_int results_1[5], results_2[5];
-
-      MPI_Aint src_displacements[2] = {0, 0};
-      MPI_Aint dst_displacements[2]
+      MPI_Aint src_displacements[numExch] = {0, 0};
+      MPI_Aint dst_displacements[numExch]
         = {0, (MPI_Aint)((size_t)(results_2-results_1)*sizeof(Xt_int))};
 
       Xt_redist redist
-        = xt_redist_collection_static_new(redists, 2, src_displacements,
+        = xt_redist_collection_static_new(redists, numExch, src_displacements,
                                           dst_displacements, MPI_COMM_WORLD);
 
       // test communicator of redist
@@ -254,7 +256,7 @@ int main(void) {
 
       for (int j = 0; j < 2; ++j) {
 
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < partSize; ++i) {
           results_1[i] = -1;
           results_2[i] = -1;
         }
@@ -270,7 +272,7 @@ int main(void) {
 
         // check results
 
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < partSize; ++i) {
           if (results_1[i] != dst_indices_[0][i])
             PUT_ERR("error on xt_redist_s_exchange\n");
           if (results_2[i] != dst_indices_[1][i])
