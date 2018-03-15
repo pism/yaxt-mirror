@@ -64,6 +64,14 @@ MODULE test_redist_common
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
+#if defined(__GNUC__) && __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ <= 4)
+  ! gfortran 4.4 botches default initialization for xt_request
+  USE xt_requests, ONLY: xt_request_init
+  USE iso_c_binding, ONLY: c_null_ptr
+#  define REQ_DEFAULT_INIT_FIXUP(req) CALL xt_request_init(req, c_null_ptr)
+#else
+#  define REQ_DEFAULT_INIT_FIXUP(req)
+#endif
   USE ftest_common, ONLY: test_abort, cmp_arrays
   IMPLICIT NONE
   PRIVATE
@@ -155,6 +163,7 @@ CONTAINS
     DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(dst_size)
     TYPE(xt_request) :: request
     INTEGER :: iexch
+    REQ_DEFAULT_INIT_FIXUP(request)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -176,6 +185,8 @@ CONTAINS
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
+
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -204,6 +215,8 @@ CONTAINS
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
+
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -232,6 +245,8 @@ CONTAINS
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
+
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -260,6 +275,8 @@ CONTAINS
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
+
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -288,6 +305,8 @@ CONTAINS
     DOUBLE PRECISION, INTENT(inout) :: dst(:,:)
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
+
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -317,6 +336,8 @@ CONTAINS
     INTEGER(xi), TARGET, INTENT(inout) :: dst(dst_size)
     TYPE(xt_request) :: request
     INTEGER :: iexch
+
+    REQ_DEFAULT_INIT_FIXUP(request)
     DO iexch = 1, 2
       dst = -1_xi
       IF (iexch == 1) THEN
@@ -342,6 +363,8 @@ CONTAINS
     INTEGER(i2), INTENT(inout) :: dst(:)
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
+
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -371,6 +394,7 @@ CONTAINS
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
 
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -400,6 +424,7 @@ CONTAINS
     TYPE(xt_request) :: request
     INTEGER :: dst_size, ref_dst_size, iexch
 
+    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
