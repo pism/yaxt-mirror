@@ -88,7 +88,7 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_i8
   END INTERFACE check_redist
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
-  PUBLIC :: check_request, check_wait_request, check_redist_xi
+  PUBLIC :: check_wait_request, check_redist_xi
 
   CHARACTER(len=*), PARAMETER :: filename = &
 __FILE__
@@ -133,26 +133,31 @@ CONTAINS
     congruent = ((rcode == mpi_ident) .OR. (rcode == mpi_congruent))
   END FUNCTION communicators_are_congruent
 
-  SUBROUTINE check_request(request, istate, file, line)
+  SUBROUTINE assert_request_is_null(request, file, line)
     TYPE(xt_request), INTENT(in) :: request
-    INTEGER, INTENT(in) :: istate, line
+    INTEGER, INTENT(in) :: line
     CHARACTER(len=*), INTENT(in) :: file
-    INTEGER  :: ir0, is0
-    ir0 = MERGE(0, 1, xt_is_null(request))
-    is0 = MERGE(0, 1, (istate == 0))
-    IF (IEOR(ir0,is0) /= 0) THEN
-      CALL test_abort("error: unexpected request state", &
+    IF (.NOT. xt_is_null(request)) &
+      CALL test_abort("error: expected null request", &
            file, line)
-    ENDIF
-  END SUBROUTINE check_request
+  END SUBROUTINE assert_request_is_null
+
+  SUBROUTINE assert_request_is_not_null(request, file, line)
+    TYPE(xt_request), INTENT(in) :: request
+    INTEGER, INTENT(in) :: line
+    CHARACTER(len=*), INTENT(in) :: file
+    IF (xt_is_null(request)) &
+      CALL test_abort("error: expected non-null request", &
+           file, line)
+  END SUBROUTINE assert_request_is_not_null
 
   SUBROUTINE check_wait_request(request, file, line)
     TYPE(xt_request), INTENT(inout) :: request
     CHARACTER(len=*), INTENT(in) :: file
     INTEGER, INTENT(in) :: line
-    CALL check_request(request, 1, file, line)
+    CALL assert_request_is_not_null(request, file, line)
     CALL xt_request_wait(request)
-    CALL check_request(request, 0, file, line)
+    CALL assert_request_is_null(request, file, line)
   END SUBROUTINE check_wait_request
 
   SUBROUTINE check_redist_dp(redist, src, dst_size, dst, ref_dst)
@@ -169,7 +174,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -199,7 +204,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -229,7 +234,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -259,7 +264,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -289,7 +294,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -319,7 +324,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -344,11 +349,11 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
       ELSE
-        CALL check_request(request, 0, __FILE__, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
-        CALL check_request(request, 1, __FILE__, __LINE__)
+        CALL assert_request_is_not_null(request, __FILE__, __LINE__)
         CALL xt_request_wait(request)
-        CALL check_request(request, 0, __FILE__, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -377,7 +382,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -407,7 +412,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
@@ -437,7 +442,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL check_request(request, 0, filename, __LINE__)
+        CALL assert_request_is_null(request, filename, __LINE__)
         CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
