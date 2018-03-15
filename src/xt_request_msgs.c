@@ -47,7 +47,11 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <mpi.h>
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
@@ -75,12 +79,13 @@ struct Xt_request_msgs_ {
 Xt_request xt_request_msgs_new(int n, MPI_Request * requests,
                                MPI_Comm comm) {
 
+  assert(n >= 0);
   Xt_request_msgs request = xmalloc(1 * sizeof(*request));
 
   request->vtable = &request_msgs_vtable;
   request->n = n;
-  request->requests = xmalloc(n * sizeof(*request->requests));
-  memcpy(request->requests, requests, n * sizeof(*request->requests));
+  request->requests = xmalloc((size_t)n * sizeof(*request->requests));
+  memcpy(request->requests, requests, (size_t)n * sizeof(*request->requests));
   request->comm = comm;
 
   return (Xt_request)request;
