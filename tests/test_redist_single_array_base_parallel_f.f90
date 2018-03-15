@@ -100,8 +100,8 @@ CONTAINS
     recv_msgs(1)%rank = MOD(comm_rank + comm_size - 1, comm_size)
     recv_msgs(1)%datatype = MPI_DOUBLE_PRECISION
 
-    src_data(1) = comm_rank
-    ref_dst_data(1) = MOD(comm_rank + comm_size - 1, comm_size)
+    src_data(1) = DBLE(comm_rank)
+    ref_dst_data(1) = DBLE(MOD(comm_rank + comm_size - 1, comm_size))
 
     CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
 
@@ -126,8 +126,10 @@ CONTAINS
       CALL MPI_Type_commit(recv_msgs(i)%datatype, ierr)
     END DO
 
-    src_data(1) = comm_rank
-    ref_dst_data(:) = (/ (i-1, i = 1, comm_size) /)
+    src_data(1) = DBLE(comm_rank)
+    DO i = 1, comm_size
+      ref_dst_data(i) = DBLE(i-1)
+    END DO
 
     CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
 
@@ -164,7 +166,7 @@ CONTAINS
     DO i = 1, nsend
       src_data(i) = DBLE(i-1)
     END DO
-    ref_dst_data(1) = comm_rank
+    ref_dst_data(1) = DBLE(comm_rank)
 
     CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
 
