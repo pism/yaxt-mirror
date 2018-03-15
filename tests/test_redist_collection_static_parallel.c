@@ -56,6 +56,7 @@
 
 #include <yaxt.h>
 
+#include "core/ppm_xfuncs.h"
 #include "tests.h"
 #include "test_redist_common.h"
 
@@ -126,13 +127,9 @@ int main(void) {
       size_t size_a = 2*(size_t)size*(size_t)size,
         size_b = 2*(size_t)size*(size_t)size,
         size_all = size_a * (size_t)size;
-      Xt_int *src = malloc(sizeof (*src) * (size_a + size_b + size_all));
+      Xt_int *src = xmalloc(sizeof (*src) * (size_a + size_b + size_all));
       Xt_int *index_vector_a = src, *index_vector_b = src + size_a;
       /* Xt_int *index_vector_all = src + size_a + size_b; */
-      if (!src) {
-        perror("could not allocate exchange source temporary");
-        abort();
-      }
 
       xt_idxlist_get_indices(indices_a, src);
       xt_idxlist_get_indices(indices_b, src + size_a);
@@ -157,11 +154,7 @@ int main(void) {
         xt_xmap_delete(xmaps[i]);
       }
 
-      Xt_int *dst = malloc(sizeof (*dst) * (size_a + size_b + 2 * size_all));
-      if (!dst) {
-        perror("could not allocate exchange results temporary");
-        abort();
-      }
+      Xt_int *dst = xmalloc(sizeof (*dst) * (size_a + size_b + 2 * size_all));
 
       Xt_int *results_1 = dst, *results_2 = dst + size_b,
         *results_3 = dst + size_b + size_a,
