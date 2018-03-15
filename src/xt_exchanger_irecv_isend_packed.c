@@ -126,12 +126,13 @@ xt_exchanger_irecv_isend_packed_s_exchange(
   }
 }
 
-static Xt_request
+static void
 xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                                            int nsend, int nrecv,
                                            const struct Xt_redist_msg * send_msgs,
                                            const struct Xt_redist_msg * recv_msgs,
-                                           int tag_offset, MPI_Comm comm) {
+                                           int tag_offset, MPI_Comm comm,
+                                           Xt_request *request) {
 
   MPI_Request * tmp_requests =
     xmalloc((size_t)(nrecv + nsend) * sizeof (*tmp_requests));
@@ -174,7 +175,7 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
   free(buffers);
   free(tmp_requests);
 
-  return requests;
+  *request = requests;
 }
 
 Xt_exchanger

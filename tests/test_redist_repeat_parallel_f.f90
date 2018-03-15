@@ -232,8 +232,10 @@ CONTAINS
         CALL xt_redist_s_exchange(redist_repeat, input_data, results_1)
         CALL xt_redist_s_exchange(redist_repeat_2, input_data, results_2)
       ELSE
-        request1 = xt_redist_a_exchange(redist_repeat, input_data, results_1)
-        request2 = xt_redist_a_exchange(redist_repeat_2, input_data, results_2)
+        CALL xt_redist_a_exchange(redist_repeat, input_data, results_1, &
+             request1)
+        CALL xt_redist_a_exchange(redist_repeat_2, input_data, results_2, &
+             request2)
         CALL check_wait_request(request1, filename, __LINE__)
         CALL check_wait_request(request2, filename, __LINE__)
       ENDIF

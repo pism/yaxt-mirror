@@ -242,7 +242,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, 1, input, results)
       ELSE
-        request = xt_redist_a_exchange(redist, 1, input, results)
+        CALL xt_redist_a_exchange(redist, 1, input, results, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       ! check results

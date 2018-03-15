@@ -66,8 +66,9 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger);
 static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                                     const void * src_data,
                                                     void * dst_data);
-static Xt_request xt_exchanger_mix_isend_irecv_a_exchange(
-  Xt_exchanger exchanger, const void * src_data, void * dst_data);
+static void xt_exchanger_mix_isend_irecv_a_exchange(
+  Xt_exchanger exchanger, const void * src_data, void * dst_data,
+  Xt_request *request);
 static int
 xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
                                            enum xt_msg_direction direction,
@@ -216,8 +217,9 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
   }
 }
 
-static Xt_request xt_exchanger_mix_isend_irecv_a_exchange(
-  Xt_exchanger exchanger, const void * src_data, void * dst_data) {
+static void xt_exchanger_mix_isend_irecv_a_exchange(
+  Xt_exchanger exchanger, const void * src_data, void * dst_data,
+  Xt_request *request) {
 
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
@@ -244,7 +246,7 @@ static Xt_request xt_exchanger_mix_isend_irecv_a_exchange(
     free(tmp_requests);
   }
 
-  return requests;
+  *request = requests;
 }
 
 static int

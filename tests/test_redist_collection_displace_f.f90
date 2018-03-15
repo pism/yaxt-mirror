@@ -145,8 +145,8 @@ CONTAINS
           CALL xt_redist_s_exchange(redist_coll, INT(num_slice), src_data_p, &
                dst_data_p)
         ELSE
-          request = xt_redist_a_exchange(redist_coll, INT(num_slice), &
-               src_data_p, dst_data_p)
+          CALL xt_redist_a_exchange(redist_coll, INT(num_slice), &
+               src_data_p, dst_data_p, request)
           CALL check_wait_request(request, filename, __LINE__)
         ENDIF
         IF (cmp_arrays(ref_dst_data(:, 1:num_slice-1), &

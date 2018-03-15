@@ -249,7 +249,8 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
       ELSE
-        request = xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p)
+        CALL xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &
+             request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(ref_dst_data, dst_data)) &
@@ -280,7 +281,8 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
       ELSE
-        request = xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p)
+        CALL xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &
+             request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(ref_dst_data, dst_data)) &

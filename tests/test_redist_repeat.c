@@ -275,9 +275,9 @@ int main(void) {
         xt_redist_s_exchange1(redist, src_data, dst_data);
         xt_redist_s_exchange1(redist, src_data+1, dst_data+1);
       } else {
-        Xt_request request[2] = {
-            xt_redist_a_exchange1(redist, src_data, dst_data),
-            xt_redist_a_exchange1(redist, src_data+1, dst_data+1)};
+        Xt_request request[2];
+        xt_redist_a_exchange1(redist, src_data, dst_data, request+0);
+        xt_redist_a_exchange1(redist, src_data+1, dst_data+1, request+1);
         xt_request_wait(&request[0]);
         xt_request_wait(&request[1]);
       }

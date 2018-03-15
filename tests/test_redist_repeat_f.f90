@@ -355,9 +355,9 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src_data, dst_data)
         CALL xt_redist_s_exchange(redist, src_data(2:), dst_data(2:))
       ELSE
-        request = xt_redist_a_exchange(redist, src_data, dst_data)
+        CALL xt_redist_a_exchange(redist, src_data, dst_data, request)
         CALL check_wait_request(request, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src_data(2:), dst_data(2:))
+        CALL xt_redist_a_exchange(redist, src_data(2:), dst_data(2:), request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       ! check individual redists to have desired effect

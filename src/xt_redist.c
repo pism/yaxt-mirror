@@ -75,10 +75,11 @@ void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
   redist->vtable->s_exchange(redist, num_arrays, src_data, dst_data);
 }
 
-Xt_request xt_redist_a_exchange(Xt_redist redist, int num_arrays,
-                                const void **src_data, void **dst_data) {
+void xt_redist_a_exchange(Xt_redist redist, int num_arrays,
+                          const void **src_data, void **dst_data,
+                          Xt_request *request) {
 
-  return redist->vtable->a_exchange(redist, num_arrays, src_data, dst_data);
+  redist->vtable->a_exchange(redist, num_arrays, src_data, dst_data, request);
 }
 
 void xt_redist_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
@@ -86,10 +87,10 @@ void xt_redist_s_exchange1(Xt_redist redist, const void *src_data, void *dst_dat
   redist->vtable->s_exchange1(redist, src_data, dst_data);
 }
 
-Xt_request xt_redist_a_exchange1(Xt_redist redist, const void *src_data,
-                                 void *dst_data) {
+void xt_redist_a_exchange1(Xt_redist redist, const void *src_data,
+                           void *dst_data, Xt_request *request) {
 
-  return redist->vtable->a_exchange1(redist, src_data, dst_data);
+  redist->vtable->a_exchange1(redist, src_data, dst_data, request);
 }
 
 MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank) {

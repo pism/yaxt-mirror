@@ -161,7 +161,7 @@ CONTAINS
         CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst))
+        CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
@@ -188,7 +188,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
@@ -216,7 +216,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
@@ -244,7 +244,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
@@ -272,7 +272,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
@@ -300,7 +300,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
@@ -323,7 +323,7 @@ CONTAINS
         CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
       ELSE
         CALL check_request(request, 0, __FILE__, __LINE__)
-        request = xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst))
+        CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
         CALL check_request(request, 1, __FILE__, __LINE__)
         CALL xt_request_wait(request)
         CALL check_request(request, 0, __FILE__, __LINE__)
@@ -354,7 +354,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
@@ -383,7 +383,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
@@ -412,7 +412,7 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
         CALL check_request(request, 0, filename, __LINE__)
-        request = xt_redist_a_exchange(redist, src, dst)
+        CALL xt_redist_a_exchange(redist, src, dst, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &

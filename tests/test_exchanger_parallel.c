@@ -225,9 +225,9 @@ test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
         xt_exchanger_s_exchange(exchanger, (void*)(src_data),
                                 (void*)(dst_data));
       } else {
-        Xt_request request =
-          xt_exchanger_a_exchange(exchanger, (void*)(src_data),
-                                  (void*)(dst_data));
+        Xt_request request;
+        xt_exchanger_a_exchange(exchanger, (void*)(src_data),
+                                (void*)(dst_data), &request);
         xt_request_wait(&request);
       }
 
