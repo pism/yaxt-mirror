@@ -48,7 +48,6 @@ PROGRAM test_redist_single_array_base_f
   USE yaxt, ONLY: xt_redist, xt_offset_ext, xt_initialize, xt_finalize, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
        xt_redist_msg, xt_redist_single_array_base_new
-  USE xt_core, ONLY: i2, i4, i8
 
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_redist_common, ONLY: check_redist, communicators_are_congruent
@@ -145,25 +144,7 @@ CONTAINS
 
     redist = &
       xt_redist_single_array_base_new(send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
-
-    redist = &
-      xt_redist_single_array_base_new( &
-        INT(size(send_msgs), i2), INT(size(recv_msgs), i2), &
-        send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
-
-    redist = &
-      xt_redist_single_array_base_new( &
-        INT(size(send_msgs), i4), INT(size(recv_msgs), i4), &
-        send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
-
-    redist = &
-      xt_redist_single_array_base_new( &
-        INT(size(send_msgs), i8), INT(size(recv_msgs), i8), &
-        send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
+    CALL check_redist_extended(redist, src_data, ref_dst_data)
 
   END SUBROUTINE test_single_array_base
 
