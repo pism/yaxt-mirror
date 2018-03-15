@@ -369,7 +369,8 @@ CONTAINS
     INTEGER(i4), INTENT(in) :: ref_dst(:)
     INTEGER(i4), INTENT(inout) :: dst(:)
     TYPE(xt_request) :: request
-    INTEGER :: dst_size, ref_dst_size
+    INTEGER :: dst_size, ref_dst_size, iexch
+
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -397,7 +398,8 @@ CONTAINS
     INTEGER(i8), INTENT(in) :: ref_dst(:)
     INTEGER(i8), INTENT(inout) :: dst(:)
     TYPE(xt_request) :: request
-    INTEGER :: dst_size, ref_dst_size
+    INTEGER :: dst_size, ref_dst_size, iexch
+
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &

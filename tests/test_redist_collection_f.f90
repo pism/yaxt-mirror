@@ -56,7 +56,7 @@ PROGRAM test_redist_collection
        xt_redist_delete, xt_redist_copy, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
        xt_slice_c_loc, xt_idxempty_new, xt_idxlist_delete, &
-       xt_idxlist, xt_reqeust
+       xt_idxlist, xt_request
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange

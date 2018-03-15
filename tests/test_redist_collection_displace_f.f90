@@ -153,7 +153,7 @@ CONTAINS
              &         dst_data(:, 1:num_slice-1)) &
              .OR. cmp_arrays(ref_dst_data(:,num_slice), &
              &               dst_data_(k:k+dst_slice_len-1))) &
-           CALL test_abort(err_msg(iexch, filename, __LINE__)
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
       ENDDO
     END DO
   END SUBROUTINE run_displacement_check

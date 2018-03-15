@@ -55,7 +55,6 @@ PROGRAM test_redist_collection_parallel
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
-       xt_idxlist_get_indices, xt_int_mpidt
        xt_idxlist_get_indices, xt_int_mpidt, &
        xt_request, xt_redist_a_exchange
   ! older PGI compilers do not handle generic interface correctly
