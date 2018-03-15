@@ -210,8 +210,8 @@ int main(void) {
       }
 
       src_indices = xt_idxvec_new(src_indices_, partSize);
-      dst_indices[0] = xt_idxvec_new(dst_indices_[0], partSize);
-      dst_indices[1] = xt_idxvec_new(dst_indices_[1], partSize);
+      for (size_t i = 0; i < numExch; ++i)
+        dst_indices[i] = xt_idxvec_new(dst_indices_[i], partSize);
 
       Xt_xmap xmaps[numExch];
       for (size_t i = 0; i < numExch; ++i)
@@ -219,8 +219,8 @@ int main(void) {
                                        MPI_COMM_WORLD);
 
       xt_idxlist_delete(src_indices);
-      xt_idxlist_delete(dst_indices[0]);
-      xt_idxlist_delete(dst_indices[1]);
+      for (size_t i = 0; i < numExch; ++i)
+        xt_idxlist_delete(dst_indices[i]);
 
       Xt_redist redists[numExch];
       for (size_t i = 0; i < numExch; ++i) {
