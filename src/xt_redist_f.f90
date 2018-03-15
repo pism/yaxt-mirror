@@ -828,12 +828,12 @@ CONTAINS
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
-    IF (nsend > 0) THEN
+    IF (nsend > 0_i2) THEN
       send_msgs_p = C_LOC(send_msgs)
     ELSE
       send_msgs_p = c_null_ptr
     END IF
-    IF (nrecv > 0) THEN
+    IF (nrecv > 0_i2) THEN
       recv_msgs_p = C_LOC(recv_msgs)
     ELSE
       recv_msgs_p = c_null_ptr
@@ -860,12 +860,12 @@ CONTAINS
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
-    IF (nsend > 0) THEN
+    IF (nsend > 0_i4) THEN
       send_msgs_p = C_LOC(send_msgs)
     ELSE
       send_msgs_p = c_null_ptr
     END IF
-    IF (nrecv > 0) THEN
+    IF (nrecv > 0_i4) THEN
       recv_msgs_p = C_LOC(recv_msgs)
     ELSE
       recv_msgs_p = c_null_ptr
@@ -892,12 +892,12 @@ CONTAINS
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
-    IF (nsend > 0) THEN
+    IF (nsend > 0_i8) THEN
       send_msgs_p = C_LOC(send_msgs)
     ELSE
       send_msgs_p = c_null_ptr
     END IF
-    IF (nrecv > 0) THEN
+    IF (nrecv > 0_i8) THEN
       recv_msgs_p = C_LOC(recv_msgs)
     ELSE
       recv_msgs_p = c_null_ptr
@@ -925,8 +925,8 @@ CONTAINS
     CALL msgs_p_arg(send_msgs, send_msgs_a, send_msgs_p)
     CALL msgs_p_arg(recv_msgs, recv_msgs_a, recv_msgs_p)
 
-    IF (nsend < 0_i8 .OR. nsend > HUGE(1_c_int) &
-         .OR. nrecv < 0_i8 .OR. nrecv > HUGE(1_c_int)) &
+    IF (nsend < 0 .OR. nsend > HUGE(1_c_int) &
+         .OR. nrecv < 0 .OR. nrecv > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of send messages", &
          __FILE__, &
          __LINE__)
