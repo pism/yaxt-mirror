@@ -47,6 +47,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "core/ppm_xfuncs.h"
@@ -84,24 +86,26 @@ Xt_request xt_request_msgs_packed_new(int n_requests, MPI_Request * requests,
                                       void ** tmp_buffers,
                                       void * unpacked_data) {
 
+  assert(n_requests >= 0 && n_packed >= 0 && n_tmp_buffers >= 0);
   Xt_request_msgs_packed request = xmalloc(1 * sizeof(*request));
 
   request->vtable = &request_msgs_packed_vtable;
   request->n_requests = n_requests;
-  request->requests = xmalloc(n_requests * sizeof(*request->requests));
-  memcpy(request->requests, requests, n_requests * sizeof(*request->requests));
+  request->requests = xmalloc((size_t)n_requests * sizeof(*request->requests));
+  memcpy(request->requests, requests, (size_t)n_requests * sizeof(*request->requests));
   request->comm = comm;
   request->n_packed = n_packed;
   request->n_tmp_buffers = n_tmp_buffers;
-  request->datatypes = xmalloc(n_packed * sizeof(*request->datatypes));
+  request->datatypes = xmalloc((size_t)n_packed * sizeof(*request->datatypes));
   for (int i = 0; i < n_packed; ++i)
     xt_mpi_call(MPI_Type_dup(datatypes[i], request->datatypes + i), comm);
   request->buffers =
-    xmalloc((n_packed + n_tmp_buffers) * sizeof(*request->buffers));
+    xmalloc(((size_t)n_packed + (size_t)n_tmp_buffers)
+            * sizeof(*request->buffers));
   memcpy(request->buffers, packed_data,
-         n_packed * sizeof(*request->buffers));
+         (size_t)n_packed * sizeof(*request->buffers));
   memcpy(request->buffers + n_packed, tmp_buffers,
-         n_tmp_buffers * sizeof(*request->buffers));
+         (size_t)n_tmp_buffers * sizeof(*request->buffers));
   request->unpacked_data = unpacked_data;
 
   return (Xt_request)request;
