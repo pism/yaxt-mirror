@@ -175,8 +175,7 @@ CONTAINS
     INTEGER(c_int), PARAMETER :: &
          displacements(4) = (/ 0_c_int, 1_c_int, 2_c_int, 3_c_int /), &
          displacements_2(4) = (/ 1_c_int, 2_c_int, 4_c_int, 8_c_int /)
-    INTEGER :: i, ierror
-    INTEGER(xt_int_kind) :: j
+    INTEGER :: i, j, ierror
     TYPE(xt_request) :: request1, request2
     INTEGER :: iexch
 
@@ -206,23 +205,23 @@ CONTAINS
 
     DO j = 1, 9
       DO i = 1, 2*comm_size**2
-        input_data(i, j) = index_vector_a(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
+        input_data(i, j) = index_vector_a(i) + INT(j-1, xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
 
-    DO j = 1_xi, 4_xi
+    DO j = 1, 4
       DO i = 1, 2*comm_size**2
-        ref_results_1(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
+        ref_results_1(i, j) = index_vector_b(i) + INT(j-1, xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
-    DO j = 1_xi, 9_xi
+    DO j = 1, 9
       DO i = 1, 2*comm_size**2
-        ref_results_2(i, j) = index_vector_b(i) + (j - 1_xi) * INT(4*comm_size**2, xi)
+        ref_results_2(i, j) = index_vector_b(i) + INT(j-1, xi) * INT(4*comm_size**2, xi)
       END DO
     END DO
 
-    ref_results_2(:,1:4:3) = -1
-    ref_results_2(:,6:8:1) = -1
+    ref_results_2(:,1:4:3) = -1_xi
+    ref_results_2(:,6:8:1) = -1_xi
 
     DO iexch = 1, 2
       results_1 = -1
