@@ -47,7 +47,9 @@ include({f03-redist-gen.m4})dnl
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 MODULE modname
-  USE xt_redist_base, ONLY: xt_redist, xt_redist_s_exchange1
+  USE xt_redist_base, ONLY: xt_redist, xt_redist_s_exchange1, &
+       xt_redist_a_exchange1
+  USE xt_requests, ONLY: xt_request
 ifelse(typedecl,LOGICAL,
 {#ifdef HAVE_FC_LOGICAL_INTEROP
 })dnl
@@ -64,8 +66,13 @@ ifdef({prologue},{include(prologue)})dnl
 interface_gen_nd(typetag,{xt_redist_s_exchange})dnl
   END INTERFACE xt_redist_s_exchange
   PUBLIC :: xt_redist_s_exchange
+  INTERFACE xt_redist_a_exchange
+interface_gen_nd(typetag,{xt_redist_a_exchange})dnl
+  END INTERFACE xt_redist_a_exchange
+  PUBLIC :: xt_redist_a_exchange
 CONTAINS
 xt_redist_s_exchange_impl_gen(typetag,typedecl)dnl
+xt_redist_a_exchange_impl_gen(typetag,typedecl)dnl
 END MODULE modname
 !
 ! Local Variables:

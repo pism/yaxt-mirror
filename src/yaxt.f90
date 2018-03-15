@@ -94,12 +94,12 @@ MODULE yaxt
        xt_offset_ext, xt_redist_p2p_ext_new, xt_redist_msg, &
        xt_redist_a_exchange1, xt_redist_a_exchange, &
        xt_redist_single_array_base_new
-  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
-  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
-  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
-  USE xt_redist_logical, ONLY: xt_redist_s_exchange
-  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
-  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_logical, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_requests, ONLY: xt_request, xt_request_wait, xt_is_null
   USE xt_mpi, ONLY: xt_mpi_comm_mark_exclusive
 
