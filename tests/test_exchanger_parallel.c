@@ -68,8 +68,6 @@ struct test_message {
   int num_pos; // number of positions
 };
 
-typedef struct Xt_exchanger_ *Xt_exchanger;
-
 Xt_exchanger
 xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                              struct Xt_redist_msg * send_msgs,
