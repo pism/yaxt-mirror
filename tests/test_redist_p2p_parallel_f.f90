@@ -51,23 +51,15 @@ PROGRAM test_redist_p2p_parallel
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_get_mpi_comm, &
-       xt_redist_s_exchange, xt_redist_delete, &
-       xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
-       xt_request, xt_redist_a_exchange
+       xt_redist_delete, &
+       xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new
   USE test_idxlist_utils, ONLY: test_err_count
   USE test_redist_common, ONLY: communicators_are_congruent, &
-       check_redist, check_wait_request
-  ! older PGI compilers do not handle generic interface correctly
-#if defined __PGI && __PGIC__ == 15
-  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
-  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
-#endif
+       check_redist
   IMPLICIT NONE
 
   CHARACTER(len=*), PARAMETER :: filename = &
 __FILE__
-  CHARACTER(len=*), PARAMETER :: err_msg(2) = &
-       (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
   INTEGER :: comm_rank, comm_size, ierror
 
   CALL init_mpi
@@ -154,8 +146,7 @@ CONTAINS
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist
-    INTEGER :: i, src_num_indices, dst_num_indices, iexch
-    TYPE(xt_request) :: request
+    INTEGER :: i, src_num_indices, dst_num_indices
 
     ALLOCATE(src_index_list(comm_size), dst_index_list(comm_size), &
          src_data(comm_size), dst_data(comm_size), ref_dst_data(comm_size))
@@ -199,17 +190,7 @@ CONTAINS
     DO i = 1, comm_size
       ref_dst_data(i) = DBLE(i-1)
     END DO
-    DO iexch = 1, 2
-      dst_data(:) = -1.0d0
-      IF (iexch == 1) THEN
-        CALL xt_redist_s_exchange(redist, src_data, dst_data)
-      ELSE
-        CALL xt_redist_a_exchange(redist, src_data, dst_data, request)
-        CALL check_wait_request(request, filename, __LINE__)
-      ENDIF
-      IF (cmp_arrays(dst_data, ref_dst_data)) &
-        CALL test_abort(err_msg(iexch), filename, __LINE__)
-    ENDDO
+    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
 
     ! clean up
     CALL xt_redist_delete(redist)
