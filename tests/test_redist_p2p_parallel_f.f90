@@ -235,8 +235,6 @@ CONTAINS
     TYPE(Xt_idxlist) :: idxlist_a, idxlist_b
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist, block_redist, block_redist2
-    INTEGER :: iexch
-    TYPE(xt_request) :: request
 
     IF (2 * comm_size > HUGE(1_xt_int_kind)) &
          CALL test_abort('too large number of tasks', &
