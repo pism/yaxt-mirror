@@ -52,7 +52,9 @@ MODULE xt_requests
   PRIVATE
 
   TYPE, BIND(C), PUBLIC :: xt_request
+#ifndef __G95__
     PRIVATE
+#endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_request
 
