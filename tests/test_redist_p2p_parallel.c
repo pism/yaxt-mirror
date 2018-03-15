@@ -109,7 +109,7 @@ int main(void) {
       double src_data[dataSize];
       double dst_data[dataSize] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
-      for (Xt_int i = 0; i < src_num_indices; ++i)
+      for (int i = 0; i < src_num_indices; ++i)
         src_data[i] = (double)(rank * dataSize + i);
 
       const void *src_data_p = &src_data[0];
@@ -125,7 +125,7 @@ int main(void) {
 
       //int i;
 
-      for (Xt_int i = 0; i < (Xt_int)dataSize; ++i)
+      for (int i = 0; i < dataSize; ++i)
         if (dst_index_list[i] != dst_data[i])
           PUT_ERR("error in xt_redist_s/a_exchange\n");
     }
