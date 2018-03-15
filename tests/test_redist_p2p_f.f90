@@ -51,16 +51,14 @@ PROGRAM test_redist_p2p_f
        xt_redist_p2p_new, xt_redist_p2p_off_new, xt_redist_p2p_ext_new, &
        xt_redist_s_exchange, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
-       xt_xmap_all2all_new, xt_xmap_delete, &
-       xt_request, xt_redist_a_exchange
+       xt_xmap_all2all_new, xt_xmap_delete
   ! pgfortran is in most versions well incapable of handling multiply extended
   ! generic interfaces
 #ifdef __PGI
-  USE xt_redist_logical, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_logical, ONLY: xt_redist_s_exchange
 #endif
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE test_redist_common, ONLY: check_redist, communicators_are_congruent, &
-       check_request, check_wait_request
+  USE test_redist_common, ONLY: check_redist, communicators_are_congruent
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = &
