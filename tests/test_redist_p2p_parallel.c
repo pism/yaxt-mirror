@@ -118,8 +118,8 @@ int main(void) {
       if (j == 0) {
         xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
       } else {
-        Xt_request request =
-          xt_redist_a_exchange(redist, 1, &src_data_p, &dst_data_p);
+        Xt_request request;
+        xt_redist_a_exchange(redist, 1, &src_data_p, &dst_data_p, &request);
         xt_request_wait(&request);
       }
 
@@ -197,8 +197,8 @@ int main(void) {
       if (j == 0) {
         xt_redist_s_exchange(redist, 1, &src_data_p, &dst_data_p);
       } else {
-        Xt_request request =
-          xt_redist_a_exchange(redist, 1, &src_data_p, &dst_data_p);
+        Xt_request request;
+        xt_redist_a_exchange(redist, 1, &src_data_p, &dst_data_p, &request);
         xt_request_wait(&request);
       }
 
@@ -291,8 +291,8 @@ int main(void) {
       if (j == 0) {
         xt_redist_s_exchange1(redist, a_surfdata, b_surfdata);
       } else {
-        Xt_request request =
-          xt_redist_a_exchange1(redist, a_surfdata, b_surfdata);
+        Xt_request request;
+        xt_redist_a_exchange1(redist, a_surfdata, b_surfdata, &request);
         xt_request_wait(&request);
       }
 
@@ -386,8 +386,8 @@ int main(void) {
       if (j == 0) {
         xt_redist_s_exchange1(block_redist, a_voldata, b_voldata);
       } else {
-        Xt_request request =
-          xt_redist_a_exchange1(block_redist, a_voldata, b_voldata);
+        Xt_request request;
+        xt_redist_a_exchange1(block_redist, a_voldata, b_voldata, &request);
         xt_request_wait(&request);
       }
 
@@ -413,8 +413,8 @@ int main(void) {
       if (j == 0) {
         xt_redist_s_exchange1(block_redist2, a_voldata, b_voldata);
       } else {
-        Xt_request request =
-          xt_redist_a_exchange1(block_redist2, a_voldata, b_voldata);
+        Xt_request request;
+        xt_redist_a_exchange1(block_redist2, a_voldata, b_voldata, &request);
         xt_request_wait(&request);
       }
 

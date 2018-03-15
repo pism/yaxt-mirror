@@ -100,7 +100,8 @@ check_redist(Xt_redist redist, const void *src,
     if (i == 0) {
       xt_redist_s_exchange1(redist, src, tmp_dst);
     } else {
-      Xt_request request = xt_redist_a_exchange1(redist, src, tmp_dst);
+      Xt_request request;
+      xt_redist_a_exchange1(redist, src, tmp_dst, &request);
       xt_request_wait(&request);
     }
     if (memcmp(tmp_dst, ref_dst_data, dst_size))

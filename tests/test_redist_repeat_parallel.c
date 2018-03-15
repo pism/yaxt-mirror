@@ -162,10 +162,10 @@ int main(void) {
           xt_redist_s_exchange1(redist_repeat, input, result);
           xt_redist_s_exchange1(redist_repeat_2, input, result_2);
         } else {
-          Xt_request request =
-            xt_redist_a_exchange1(redist_repeat, input, result);
-          Xt_request request_2 =
-            xt_redist_a_exchange1(redist_repeat_2, input, result_2);
+          Xt_request request;
+          xt_redist_a_exchange1(redist_repeat, input, result, &request);
+          Xt_request request_2;
+          xt_redist_a_exchange1(redist_repeat_2, input, result_2, &request_2);
           xt_request_wait(&request);
           xt_request_wait(&request_2);
         }

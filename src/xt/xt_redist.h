@@ -109,14 +109,15 @@ void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
  *                           elements of the input data
  * @param[in,out] dst_data   array containing the addresses of the first
  *                           elements of the output data
- * @returns a request object that can be used to complete an asynchronous
- *          exchange
+ * @param[out] request pointer to a request object that can be used to complete
+ *          an asynchronous exchange
  *
  * @remark The above implies that NULL or any other invalid pointer
  * must not be used in either @a src_data or @a dst_data.
  */
-Xt_request xt_redist_a_exchange(Xt_redist redist, int num_arrays,
-                                const void **src_data, void **dst_data);
+void xt_redist_a_exchange(Xt_redist redist, int num_arrays,
+                          const void **src_data, void **dst_data,
+                          Xt_request *request);
 
 /**
  * synchronous redistribution of data - single array case
@@ -136,14 +137,14 @@ void xt_redist_s_exchange1(Xt_redist redist, const void *src_data, void *dst_dat
  * @param[in]     redist   redistribution structure
  * @param[in]     src_data address of the first element of the input data
  * @param[in,out] dst_data address of the first element of the output data
- * @returns a request object that can be used to complete an asynchronous
- *          exchange
+ * @param[out] request pointer to a request object that can be used to complete
+ *          an asynchronous exchange
  *
  * @remark The above implies that NULL or any other invalid pointer
  * must not be used in either @a src_data or @a dst_data.
  */
-Xt_request xt_redist_a_exchange1(Xt_redist redist, const void *src_data,
-                                 void *dst_data);
+void xt_redist_a_exchange1(Xt_redist redist, const void *src_data,
+                           void *dst_data, Xt_request *request);
 
 /**
  * gets a copy of the MPI_Datatype used for the data of the send operation with

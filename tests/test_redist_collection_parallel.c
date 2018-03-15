@@ -297,8 +297,8 @@ exchange_4redist(Xt_redist redist, MPI_Comm comm,
   if (sync) {
     xt_redist_s_exchange(redist, num_redists, input, results);
   } else {
-    Xt_request request =
-      xt_redist_a_exchange(redist, num_redists, input, results);
+    Xt_request request;
+    xt_redist_a_exchange(redist, num_redists, input, results, &request);
     xt_request_wait(&request);
   }
   check_4redist_result(size, results, index_vector_a,
@@ -314,8 +314,8 @@ exchange_4redist(Xt_redist redist, MPI_Comm comm,
   if (sync) {
     xt_redist_s_exchange(redist, num_redists, input, results);
   } else {
-    Xt_request request =
-      xt_redist_a_exchange(redist, num_redists, input, results);
+    Xt_request request;
+    xt_redist_a_exchange(redist, num_redists, input, results, &request);
     xt_request_wait(&request);
   }
 
@@ -358,7 +358,8 @@ rr_exchange(Xt_redist redist,
   if (sync) {
     xt_redist_s_exchange(redist, 2, input, results);
   } else {
-    Xt_request request = xt_redist_a_exchange(redist, 2, input, results);
+    Xt_request request;
+    xt_redist_a_exchange(redist, 2, input, results, &request);
     xt_request_wait(&request);
   }
 

@@ -106,8 +106,8 @@ int main(void) {
       if (j == 0) {
         xt_redist_s_exchange1(redist_coll, src_data, dst_data);
       } else {
-        Xt_request request =
-          xt_redist_a_exchange1(redist_coll, src_data, dst_data);
+        Xt_request request;
+        xt_redist_a_exchange1(redist_coll, src_data, dst_data, &request);
         xt_request_wait(&request);
       }
 
@@ -125,8 +125,8 @@ int main(void) {
       if (j == 0) {
         xt_redist_s_exchange1(redist_coll_copy, src_data, dst_data);
       } else {
-        Xt_request request =
-          xt_redist_a_exchange1(redist_coll_copy, src_data, dst_data);
+        Xt_request request;
+        xt_redist_a_exchange1(redist_coll_copy, src_data, dst_data, &request);
         xt_request_wait(&request);
       }
 
@@ -244,8 +244,8 @@ test_repeated_redist(int cache_size)
     if (j == 0) {
       xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
     } else {
-      Xt_request request =
-        xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p);
+      Xt_request request;
+      xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &request);
       xt_request_wait(&request);
     }
 
@@ -270,8 +270,8 @@ test_repeated_redist(int cache_size)
     if (j == 0) {
       xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
     } else {
-      Xt_request request =
-        xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p);
+      Xt_request request;
+      xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &request);
       xt_request_wait(&request);
     }
 
@@ -296,8 +296,8 @@ test_repeated_redist(int cache_size)
     if (j == 0) {
       xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
     } else {
-      Xt_request request =
-        xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p);
+      Xt_request request;
+      xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &request);
       xt_request_wait(&request);
     }
 
@@ -346,8 +346,9 @@ run_displacement_check(Xt_redist redist_coll, int sync)
     if (sync) {
       xt_redist_s_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
     } else {
-      Xt_request request =
-        xt_redist_a_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
+      Xt_request request;
+      xt_redist_a_exchange(redist_coll, num_redists, src_data_p, dst_data_p,
+                           &request);
       xt_request_wait(&request);
     }
 

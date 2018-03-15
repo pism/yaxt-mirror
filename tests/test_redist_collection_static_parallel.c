@@ -262,8 +262,9 @@ int main(void) {
         if (j == 0) {
           xt_redist_s_exchange1(redist, (void*)src_indices_, (void*)results_1);
         } else {
-          Xt_request request =
-            xt_redist_a_exchange1(redist, (void*)src_indices_, (void*)results_1);
+          Xt_request request;
+          xt_redist_a_exchange1(redist, (void*)src_indices_, (void*)results_1,
+                                &request);
           xt_request_wait(&request);
         }
 
@@ -302,7 +303,8 @@ test_transpose_gather(Xt_redist redist,
     if (j == 0) {
       xt_redist_s_exchange1(redist, src, dst);
     } else {
-      Xt_request request = xt_redist_a_exchange1(redist, src, dst);
+      Xt_request request;
+      xt_redist_a_exchange1(redist, src, dst, &request);
       xt_request_wait(&request);
     }
     // check results

@@ -79,17 +79,19 @@ static void
 redist_collection_s_exchange(Xt_redist redist, int num_src_arrays,
                              const void **src_data, void **dst_data);
 
-static Xt_request
+static void
 redist_collection_a_exchange(Xt_redist redist, int num_src_arrays,
-                             const void **src_data, void **dst_data);
+                             const void **src_data, void **dst_data,
+                             Xt_request *request);
 
 static void
 redist_collection_s_exchange1(Xt_redist redist,
                               const void *src_data, void *dst_data);
 
-static Xt_request
+static void
 redist_collection_a_exchange1(Xt_redist redist,
-                              const void *src_data, void *dst_data);
+                              const void *src_data, void *dst_data,
+                              Xt_request *request);
 
 static MPI_Datatype
 redist_collection_get_send_MPI_Datatype(Xt_redist redist, int rank);
@@ -437,9 +439,10 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
     xt_exchanger_delete(exchanger);
 }
 
-static Xt_request
+static void
 redist_collection_a_exchange(Xt_redist redist, int num_arrays,
-                             const void **src_data, void **dst_data) {
+                             const void **src_data, void **dst_data,
+                             Xt_request *request) {
 
   Xt_redist_collection redist_coll = xrc(redist);
 
@@ -459,13 +462,11 @@ redist_collection_a_exchange(Xt_redist redist, int num_arrays,
                                          redist_coll->comm,
                                          redist_coll->tag_offset);
 
-  Xt_request request =
-    xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0]);
+  xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0], request);
 
   if (redist_coll->cache_size == 0)
     xt_exchanger_delete(exchanger);
 
-  return request;
 }
 
 static void
@@ -593,14 +594,15 @@ redist_collection_s_exchange1(Xt_redist redist,
              " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
 }
 
-static Xt_request
+static void
 redist_collection_a_exchange1(Xt_redist redist,
-                              const void *src_data, void *dst_data)
+                              const void *src_data, void *dst_data,
+                              Xt_request *request)
 {
 
   Xt_redist_collection redist_coll = xrc(redist);
   if (redist_coll->num_redists == 1)
-    return redist_collection_a_exchange(redist, 1, &src_data, &dst_data);
+    redist_collection_a_exchange(redist, 1, &src_data, &dst_data, request);
   else
     Xt_abort(redist_coll->comm, "ERROR: a_exchange1 is not implemented for"
              " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);

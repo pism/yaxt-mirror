@@ -259,7 +259,7 @@ CONTAINS
     IF (iexch == 1) THEN
       CALL xt_redist_s_exchange(redist, 4, input, results)
     ELSE
-      request = xt_redist_a_exchange(redist, 4, input, results)
+      CALL xt_redist_a_exchange(redist, 4, input, results, request)
       CALL check_wait_request(request, filename, __LINE__)
     ENDIF
   END SUBROUTINE do_4redist
@@ -366,7 +366,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, input, results_p)
       ELSE
-        request = xt_redist_a_exchange(redist, input, results_p)
+        CALL xt_redist_a_exchange(redist, input, results_p, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
 

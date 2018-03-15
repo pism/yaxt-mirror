@@ -204,7 +204,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src_data, dst_data)
       ELSE
-        request = xt_redist_a_exchange(redist, src_data, dst_data)
+        CALL xt_redist_a_exchange(redist, src_data, dst_data, request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF
       IF (cmp_arrays(dst_data, ref_dst_data)) &
