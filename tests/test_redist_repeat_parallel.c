@@ -149,7 +149,7 @@ int main(void) {
 
       xt_redist_delete(redist_p2p);
 
-      for (int i = 0; i < 2; ++i) {
+      for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
 
         for (int j = 0; j < 4; ++j)
           for (int k = 0; k < 2*size*size; ++k)
@@ -158,7 +158,7 @@ int main(void) {
           for (int k = 0; k < 2*size*size; ++k)
             result_2[j][k] = -1;
 
-        if (i == 0) {
+        if (sync_mode == 0) {
           xt_redist_s_exchange1(redist_repeat, input, result);
           xt_redist_s_exchange1(redist_repeat_2, input, result_2);
         } else {
