@@ -287,6 +287,8 @@ clean-local:
 
 distclean-local:
 	-rm -f xtinclude_Makefile.inc
+	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
+	  rm -rf core/$(DEPDIR); rmdir core pkgconfig ; fi
 
 install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"

@@ -4,7 +4,8 @@ nodist_include_HEADERS = yaxt.h
 
 BUILT_SOURCES = yaxt.h
 
-SUBDIRS = f90
+SUBDIRS = . f90
+DIST_SUBDIRS = f90 .
 
 ../src/xtinclude_Makefile.inc:
 	(cd ../src ; if test -r Makefile ; then \
@@ -38,6 +39,9 @@ $(xtinclude_HEADERS): ../src/$@ ../include/config.h \
 
 clean-local:
 	rm -rf xt yaxt.h
+
+distclean-local:
+	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir f90
 
 install-data-local: yaxt.h $(xtinclude_HEADERS)
 	@echo " $(MKDIR_P) '$(DESTDIR)$(xtincludedir)'"; \
