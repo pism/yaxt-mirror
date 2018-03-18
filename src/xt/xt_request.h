@@ -55,7 +55,7 @@ extern Xt_request XT_REQUEST_NULL;
 /**
  * Waits for the completion of a request. Afterwards request deallocated and
  * set to \ref XT_REQUEST_NULL
- * @param[inout] request
+ * @param[in,out] request must point to valid request or to XT_REQUEST_NULL
  */
 void xt_request_wait(Xt_request *request);
 
