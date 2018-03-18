@@ -68,14 +68,12 @@ __FILE__
   CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
   IF (ierror /= mpi_success) &
        CALL test_abort("MPI error!", &
-       __FILE__, &
-       __LINE__)
+       filename, __LINE__)
 
   CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= mpi_success) &
        CALL test_abort("MPI error!", &
-       __FILE__, &
-       __LINE__)
+       filename, __LINE__)
 
   CALL simple_test
   CALL nonuniform_test
@@ -83,8 +81,7 @@ __FILE__
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -122,8 +119,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     DO i = 1, src_num_indices
       src_data(i) = DBLE(comm_rank * data_size + i - 1)
@@ -175,8 +171,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ! test exchange
     IF (comm_rank == 0) THEN
@@ -219,8 +214,7 @@ CONTAINS
 
     IF (2 * comm_size > HUGE(1_xt_int_kind)) &
          CALL test_abort('too large number of tasks', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     ! the global index domain (1dim problem):
     ngdom = 2 * comm_size
     ! start state (index distribution) of global domain
@@ -243,8 +237,7 @@ CONTAINS
     ig0 = comm_rank * nwin
     IF (nwin * comm_size /= ngdom) &
          CALL test_abort("internal error", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ! local index
     ALLOCATE(iveca(nwin), ivecb(nwin))
@@ -266,8 +259,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ALLOCATE(a_surfdata(nwin), b_surfdata(nwin), b_surfdata_ref(nwin))
     DO i = 1, nwin
@@ -340,8 +332,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL check_redist(block_redist, a_voldata, b_voldata, b_voldata_ref)
 
@@ -353,8 +344,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist2), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL check_redist(block_redist2, a_voldata, b_voldata, b_voldata_ref)
 

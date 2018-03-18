@@ -77,8 +77,7 @@ __FILE__
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       filename, __LINE__)
 
   CALL xt_finalize
   CALL finish_mpi
@@ -134,8 +133,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_dp), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_Comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ! test exchange
     CALL check_redist(redist_dp, src_data, dst_data, ref_dst_data)
@@ -148,13 +146,11 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_l), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_Comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     CALL xt_redist_s_exchange(redist_l, src_l, dst_l)
     IF (ANY(dst_l .NEQV. ref_dst_l)) &
          CALL test_abort("error in xt_redist_s_exchange for 1D logical array", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     redist_copy = xt_redist_copy(redist_dp)
     CALL xt_redist_delete(redist_dp)
     CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
@@ -216,8 +212,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_MPI_Comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ! test exchange
     CALL check_redist(redist, src_data, dst_data, ref_dst_data(dst_num:1:-1))
@@ -278,8 +273,7 @@ CONTAINS
     IF (.NOT. communicators_are_congruent(xt_redist_get_MPI_Comm(redist), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_MPI_Comm", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ! test exchange
     CALL check_redist(redist, src_data, dst_data, ref_dst_data)
