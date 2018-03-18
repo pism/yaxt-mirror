@@ -69,9 +69,9 @@ typedef struct Xt_request_msgs_packed_ * Xt_request_msgs_packed;
 struct Xt_request_msgs_packed_ {
 
   const struct Xt_request_vtable * vtable;
-  int n_requests;
   MPI_Request * requests;
   MPI_Comm comm;
+  int n_requests;
   int n_packed, n_tmp_buffers;
   MPI_Datatype * datatypes;
   void ** buffers;
