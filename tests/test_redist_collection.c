@@ -99,42 +99,15 @@ int main(void) {
     double dst_data[nselect];
     static const double ref_dst_data[nselect] = {1,3,5};
 
-    for (int j = 0; j < 2; ++j) {
-
-      for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
-
-      if (j == 0) {
-        xt_redist_s_exchange1(redist_coll, src_data, dst_data);
-      } else {
-        Xt_request request;
-        xt_redist_a_exchange1(redist_coll, src_data, dst_data, &request);
-        xt_request_wait(&request);
-      }
-
-      for (size_t i = 0; i < nselect; ++i)
-        if (ref_dst_data[i] != dst_data[i])
-          PUT_ERR("error in xt_redist_s_exchange\n");
-    }
+    for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
+    check_redist(redist_coll, src_data, nselect * sizeof (*dst_data),
+                 dst_data, ref_dst_data);
 
     Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
 
-    for (int j = 0; j < 2; ++j) {
-
-      for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
-
-      if (j == 0) {
-        xt_redist_s_exchange1(redist_coll_copy, src_data, dst_data);
-      } else {
-        Xt_request request;
-        xt_redist_a_exchange1(redist_coll_copy, src_data, dst_data, &request);
-        xt_request_wait(&request);
-      }
-
-      for (size_t i = 0; i < nselect; ++i)
-        if (ref_dst_data[i] != dst_data[i])
-          PUT_ERR("error in xt_redist_s_exchange\n");
-    }
-
+    for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
+    check_redist(redist_coll_copy, src_data, nselect * sizeof (*dst_data),
+                 dst_data, ref_dst_data);
     // clean up
 
     xt_redist_delete(redist_coll_copy);
