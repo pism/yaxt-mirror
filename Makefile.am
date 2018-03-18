@@ -80,8 +80,8 @@ clean-local:
 
 distclean-local:
 	for d in $(SUBDIRS) ; do \
-		test $$d = . || rm -f $$d/Makefile ; done
-
+		test $$d = . || (rm -f $$d/Makefile ; test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir $$d) ; done
+	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir include util
 install-exec-local:
 	@for d in $(SUBDIRS); do \
 	  test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile || \
