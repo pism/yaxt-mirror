@@ -96,6 +96,7 @@ void xt_redist_delete(Xt_redist redist);
  *
  * @remark The above implies that NULL or any other invalid pointer
  * must not be used in either @a src_data or @a dst_data.
+ * @see \ref correct_addresses
  */
 void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
                           const void **src_data, void **dst_data);
@@ -114,6 +115,7 @@ void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
  *
  * @remark The above implies that NULL or any other invalid pointer
  * must not be used in either @a src_data or @a dst_data.
+ * @see \ref correct_addresses
  */
 void xt_redist_a_exchange(Xt_redist redist, int num_arrays,
                           const void **src_data, void **dst_data,
