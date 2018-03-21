@@ -86,9 +86,9 @@ static void comms_construct_destruct(MPI_Comm comm_world)
   int tag_offsets[num_comms];
   comms[0] = comm_world;
   tag_offsets[0] = 0;
-  for (size_t i = 1; i < 128; ++i)
+  for (size_t i = 1; i < num_comms; ++i)
     comms[i] = xt_mpi_comm_smart_dup(comms[i-1], tag_offsets+i);
-  for (size_t i = 1; i < 128; ++i)
+  for (size_t i = 1; i < num_comms; ++i)
     xt_mpi_comm_smart_dedup(comms + i, tag_offsets[i]);
 }
 
