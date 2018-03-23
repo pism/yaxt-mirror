@@ -371,12 +371,10 @@ generate_block_datatype(const int *transfer_pos, int num_transfer_pos,
                         const int *block_offsets, const int *block_sizes,
                         MPI_Datatype base_datatype, MPI_Comm comm) {
 
-  assert(block_sizes != NULL);
+  assert(block_sizes && block_offsets);
 
-  int *bdispl_vec
-    = xmalloc(2 * (size_t)num_transfer_pos * sizeof(*bdispl_vec)),
+  int *bdispl_vec = xmalloc(2 * (size_t)num_transfer_pos * sizeof(*bdispl_vec)),
     *blen_vec = bdispl_vec + num_transfer_pos;
-  assert(block_offsets);
 
   for (int i = 0; i < num_transfer_pos; ++i) {
     int j = transfer_pos[i];
@@ -446,10 +444,7 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
   struct Xt_redist_msg * send_msgs = NULL;
   struct Xt_redist_msg * recv_msgs = NULL;
 
-  if (!src_block_sizes)
-    die("xt_redist_p2p_blocks_off_new: undefined src_block_sizes");
-  if (!dst_block_sizes)
-    die("xt_redist_p2p_blocks_off_new: undefined dst_block_sizes");
+  assert(src_block_sizes && dst_block_sizes);
 
   int tag_offset;
   MPI_Comm comm
