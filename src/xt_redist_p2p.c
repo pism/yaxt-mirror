@@ -358,9 +358,11 @@ aux_gen_simple_block_offsets(int block_offsets[], const int block_sizes[],
                              size_t num_blocks) {
 
   if (num_blocks > 0) {
-    block_offsets[0] = 0;
-    for (size_t i = 1; i < num_blocks; ++i)
-      block_offsets[i] = block_offsets[i-1] + block_sizes[i-1];
+    int accum = 0;
+    for (size_t i = 0; i < num_blocks; ++i) {
+      block_offsets[i] = accum;
+      accum += block_sizes[i];
+    }
   }
 }
 
@@ -391,9 +393,6 @@ generate_block_datatype(const int *transfer_pos, int num_transfer_pos,
   return type;
 }
 
-#if defined (__PGIC__) && (__PGIC__ == 15 && __PGIC_MINOR__ == 4)
-#pragma routine novector
-#endif
 static void
 generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter,
                          const int *block_offsets,
