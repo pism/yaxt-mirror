@@ -617,10 +617,8 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
   size_t wlen = m;
   MPI_Datatype result_dt;
   if (wlen == 1 ) {
-    if (wdisp[0] == 0)
-      result_dt = wdt[0];
-    else
-      die("parse_stripe: internal error; wlen == 1 && match_disp != 0\n");
+    assert(wdisp[0] == 0);
+    result_dt = wdt[0];
   } else {
     MPI_Aint old_type_lb, old_type_extent;
     MPI_Aint *restrict wbdisp = xmalloc((size_t)wlen * sizeof (*wbdisp));
