@@ -68,8 +68,6 @@
 //! performance.
 #define COMPACT_DT
 
-#define zero_stripe ((struct Xt_offset_ext){ .start=0, .stride=0, .size=0 })
-
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type);
@@ -322,98 +320,57 @@ MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
 
 
 static size_t
-scan_stripe(const int *disp, size_t disp_len, struct Xt_offset_ext *restrict v,
-            size_t vsize) {
-
+scan_stripe(const int *disp, size_t disp_len, struct Xt_offset_ext *restrict v)
+{
   if (disp_len<1) return 0;
 
-  struct Xt_offset_ext x = zero_stripe;
-  size_t i = 0, p = 0;
-  while (p < disp_len) {
-
-    if (!x.size) {
-      x.start   = disp[p];
-      x.stride = 1;
-      x.size = 1;
-      p++; continue;
-    }
-
+  struct Xt_offset_ext x = (struct Xt_offset_ext){ disp[0], 1, 1 };
+  size_t i = 0;
+  for (size_t p = 1; p < disp_len; ++p) {
+    int new_stride = disp[p] - disp[p-1];
     if (x.size == 1) {
-      x.stride = disp[p] - disp[p-1];
+      x.stride = new_stride;
       x.size = 2;
-      p++; continue;
-    }
-
-    // x.size >= 2:
-    if (disp[p] - disp[p-1] == x.stride) {
+    } else if (new_stride == x.stride) {
+      // x.size >= 2:
       x.size++;
-      p++; continue;
-    }
-
-    if (x.size > 2 || (x.size == 2 && x.stride == 1) ) {
+    } else if (x.size > 2 || (x.size == 2 && x.stride == 1) ) {
       // we accept small contiguous vectors (nstrides==2, stride==1)
-      if (i >= vsize) die("scan_stripe: vsize too small\n");
       v[i]= x;
       i++;
-      x = zero_stripe;
-      continue;
-    }
-
-    if (x.size == 2) {
+      x = (struct Xt_offset_ext){ disp[p], 1, 1 };
+    } else { // x.size == 2, next offset doesn't match current stride
       // break up trivial vec:
-      if (i >= vsize) die("scan_stripe: vsize too small\n");
-      v[i] = x;
+      v[i].start = x.start;
       v[i].size = 1;
       v[i].stride = 1;
       i++;
       x.start += x.stride;
-      x.size = 1;
-      x.stride = 1;
-      continue;
+      x.size = 2;
+      x.stride = new_stride;
     }
-
   }
-
   // tail cases:
-  if (x.size > 2 || (x.size == 2 && x.stride == 1) ) {
-    if (i >= vsize) die("scan_stripe: vsize too small\n");
-      v[i]= x;
-      i++;
-  } else if (x.size == 2) {
-    if (i+1 >= vsize) die("scan_stripe: vsize too small\n");
-      v[i] = x;
-      v[i].size = 1;
-      v[i].stride = 1;
-      i++;
-      v[i] = x;
-      v[i].start += x.stride;
-      v[i].size = 1;
-      v[i].stride = 1;
-      i++;
-  } else if (x.size == 1) {
-    if (i >= vsize) die("scan_stripe: vsize too small\n");
+  if (x.size > 2 || (x.size == 2 && x.stride == 1)) {
     v[i] = x;
+    i++;
+  } else if (x.size == 2) {
+    v[i].start = x.start;
+    v[i].size = 1;
+    v[i].stride = 1;
+    i++;
+    v[i].start = x.start + x.stride;
+    v[i].size = 1;
+    v[i].stride = 1;
+    i++;
+  } else { // x.size == 1
+    v[i].start = x.start;
     v[i].size = 1;
     v[i].stride = 1;
     i++;
   }
 
-  size_t vn = i;
-
-  // check:
-  p = 0;
-  for (size_t j = 0; j < vn; j++) {
-    for (int k = 0; k < v[j].size; ++k, ++p) {
-      int d = v[j].start + k*v[j].stride;
-      static const char die_msg[2][32] = { "scan_stripe: internal error (1)",
-                                           "scan_stripe: internal error (2)" };
-      int err_code = p > disp_len || (disp[p] != d) * 2;
-      if (err_code) die(die_msg[err_code - 1]);
-    }
-  }
-  if (p != disp_len) die("scan_stripe: internal error (3)");
-
-  return vn;
+  return i;
 }
 
 static int
@@ -723,7 +680,7 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
   struct Xt_offset_ext *v = xmalloc(sizeof(*v) * (size_t)disp_len);
-  size_t vlen = scan_stripe(disp, (size_t)disp_len, v, (size_t)disp_len);
+  size_t vlen = scan_stripe(disp, (size_t)disp_len, v);
   MPI_Datatype dt = parse_stripe(v, vlen, old_type);
   free(v);
   return dt;
