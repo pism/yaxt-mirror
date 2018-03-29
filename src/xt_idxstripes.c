@@ -837,42 +837,46 @@ idxstripes_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
   const struct Xt_stripe *stripes = idxstripes->stripes;
 
-  int max_pos = idxlist->num_indices - 1;
-  int seek_pos;
+  int max_pos = idxlist->num_indices;
   int sub_pos = 0;
-  int stripe_start_pos = 0;
+  /* initial guess which stripe to inspect for position */
   int istripe = 0;
+  /* position range corresponding to stripe indexed by istripe */
+  int stripe_start_pos = 0;
   int undef_count = 0;
 
   for (int ipos = 0; ipos < num_pos; ipos++) {
 
-    seek_pos = positions[ipos];
+    int seek_pos = positions[ipos];
 
-    if (seek_pos < 0 || seek_pos > max_pos) {
+    if (seek_pos >= 0 && seek_pos < max_pos) {
+      while (seek_pos < stripe_start_pos) {
+        istripe--;
+#ifndef NDEBUG
+        if (istripe < 0)
+          die("idxstripes_get_indices_at_positions: internal error:"
+              " crossed 0-boundary");
+#endif
+        stripe_start_pos -= (int)stripes[istripe].nstrides;
+      }
+
+      while (seek_pos > stripe_start_pos + stripes[istripe].nstrides - 1) {
+        stripe_start_pos += (int)stripes[istripe].nstrides;
+        istripe++;
+#ifndef NDEBUG
+        if (istripe >= idxstripes->num_stripes)
+          die("idxstripes_get_indices_at_positions: internal error:"
+              " crossed upper boundary");
+#endif
+      }
+
+      sub_pos = seek_pos - stripe_start_pos;
+      index[ipos]
+        = (Xt_int)(stripes[istripe].start + sub_pos * stripes[istripe].stride);
+    } else {
       index[ipos] = undef_idx;
       undef_count++;
-      continue;
     }
-
-    while (seek_pos < stripe_start_pos) {
-      istripe--;
-      if (istripe < 0)
-        die("idxstripes_get_indices_at_positions: internal error:"
-            " crossed 0-boundary");
-      stripe_start_pos -= (int)stripes[istripe].nstrides;
-    }
-
-    while (seek_pos > stripe_start_pos + stripes[istripe].nstrides - 1) {
-      stripe_start_pos += (int)stripes[istripe].nstrides;
-      istripe++;
-      if (istripe >= idxstripes->num_stripes)
-        die("idxstripes_get_indices_at_positions: internal error:"
-            " crossed boundary");
-    }
-
-    sub_pos = seek_pos - stripe_start_pos;
-    index[ipos]
-      = (Xt_int)(stripes[istripe].start + sub_pos * stripes[istripe].stride);
   }
 
   INSTR_STOP(instr);
