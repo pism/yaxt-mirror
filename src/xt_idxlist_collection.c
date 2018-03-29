@@ -411,9 +411,8 @@ idxlist_collection_get_min_index(Xt_idxlist idxlist) {
 
   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
-  if (collectionlist->num_idxlists == 0)
-    die("idxlist_collection_get_min_index empty collection");
   int num_lists = collectionlist->num_idxlists;
+  assert(num_lists > 0);
 
   Xt_int tmp_min, min = xt_idxlist_get_min_index(collectionlist->idxlists[0]);
 
@@ -429,9 +428,8 @@ idxlist_collection_get_max_index(Xt_idxlist idxlist) {
 
   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
-  if (collectionlist->num_idxlists == 0)
-    die("idxlist_collection_get_max_index empty collection");
   int num_lists = collectionlist->num_idxlists;
+  assert(num_lists > 0);
 
   Xt_int tmp_max, max = xt_idxlist_get_max_index(collectionlist->idxlists[0]);
 
