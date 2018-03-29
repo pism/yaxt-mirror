@@ -802,8 +802,10 @@ idxvec_get_min_index(Xt_idxlist idxlist) {
 
   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
 
+#ifndef NDEBUG
   if (!idxvec_obj->parent.num_indices)
     die("idxvec_get_min_index: empty index vector");
+#endif
 
   return get_sorted_vector(idxvec_obj)[0];
 }
@@ -813,8 +815,10 @@ idxvec_get_max_index(Xt_idxlist idxlist) {
 
   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
 
+#ifndef NDEBUG
   if (!idxvec_obj->parent.num_indices)
     die("idxvec_get_max_index: empty index vector");
+#endif
 
   return get_sorted_vector(idxvec_obj)[idxvec_obj->parent.num_indices-1];
 }
