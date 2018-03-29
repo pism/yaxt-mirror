@@ -69,9 +69,6 @@ static MPI_Datatype
 generate_datatype(const int *transfer_pos, int num_transfer_pos,
                   const int *offsets, MPI_Datatype base_datatype, MPI_Comm comm)
 {
-
-  MPI_Datatype type;
-
   int const * displ;
   int * tmp_displ = NULL;
 
@@ -87,7 +84,9 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
   } else
     displ = transfer_pos;
 
-  type = xt_mpi_generate_datatype(displ, num_transfer_pos, base_datatype, comm);
+
+  MPI_Datatype type
+    = xt_mpi_generate_datatype(displ, num_transfer_pos, base_datatype, comm);
 
   free(tmp_displ);
 
