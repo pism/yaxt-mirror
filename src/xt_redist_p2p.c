@@ -459,18 +459,22 @@ xt_redist_p2p_blocks_off_new(Xt_xmap xmap,
     src_iter = xt_xmap_get_out_iterator(xmap);
 
   // dst part:
+#ifndef NDEBUG
   int max_dst_pos = xt_xmap_get_max_dst_pos(xmap);
   if (dst_block_num < max_dst_pos)
     die("xt_redist_p2p_blocks_off_new: dst_block_num too small");
+#endif
   generate_block_msg_infos(nrecv, dst_iter, dst_block_offsets, dst_block_sizes,
                            &aux_offsets, (size_t)dst_block_num,
                            datatype, &recv_msgs, comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   // src part:
+#ifndef NDEBUG
   int max_src_pos = xt_xmap_get_max_src_pos(xmap);
   if (src_block_num < max_src_pos)
     die("xt_redist_p2p_blocks_off_new: src_block_num too small");
+#endif
   generate_block_msg_infos(nsend, src_iter, src_block_offsets, src_block_sizes,
                            &aux_offsets, (size_t)src_block_num,
                            datatype, &send_msgs, comm);
