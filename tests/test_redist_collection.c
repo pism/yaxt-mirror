@@ -211,7 +211,8 @@ test_repeated_redist(int cache_size)
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-    const void *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
+    static const void *const src_data_p[3]
+      = {src_data[0],src_data[1],src_data[2]};
     void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
     if (sync_mode == 0) {
@@ -237,7 +238,8 @@ test_repeated_redist(int cache_size)
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-    const void *src_data_p[3] = {src_data[1],src_data[0],src_data[2]};
+    static const void *const src_data_p[3]
+      = {src_data[1],src_data[0],src_data[2]};
     void *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
 
     if (sync_mode == 0) {
@@ -263,7 +265,8 @@ test_repeated_redist(int cache_size)
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
-    const void *src_data_p[3] = {src_data[0],src_data[1],src_data[2]};
+    static const void *const src_data_p[3]
+      = {src_data[0],src_data[1],src_data[2]};
     void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
     if (sync_mode == 0) {
