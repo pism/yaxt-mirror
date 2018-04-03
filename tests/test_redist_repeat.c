@@ -288,8 +288,6 @@ int main(void) {
           PUT_ERR("error in xt_redist_repeat\n");
           break;
         }
-      for(int i = 0; i<npt; i++)
-        dst_data[i] = -1;
     }
 
     // generate redist_repeat
@@ -305,6 +303,7 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
+    for(int i = 0; i<npt; i++) dst_data[i] = -1;
     check_redist(redist_repeat, src_data,
                  sizeof (dst_data), dst_data, ref_dst_data);
 
