@@ -217,12 +217,12 @@ CONTAINS
        size_all, index_vector_a, index_vector_b, index_vector_all)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER, INTENT(in) :: size_a, size_b, size_all
-    INTEGER(xt_int_kind), TARGET, INTENT(inout) :: dst(size_b+size_a+2*size_all)
-    INTEGER(xt_int_kind), TARGET, INTENT(in) :: index_vector_a(size_a)
-    INTEGER(xt_int_kind), INTENT(in) :: index_vector_b(size_b), &
+    INTEGER(xi), TARGET, INTENT(inout) :: dst(size_b+size_a+2*size_all)
+    INTEGER(xi), TARGET, INTENT(in) :: index_vector_a(size_a)
+    INTEGER(xi), INTENT(in) :: index_vector_b(size_b), &
          index_vector_all(size_all)
 
-    INTEGER(xt_int_kind), POINTER :: results_1(:), &
+    INTEGER(xi), POINTER :: results_1(:), &
          results_2(:), results_3(:), results_4(:)
     TYPE(c_ptr) :: results(1), input(1)
     INTEGER :: iexch
@@ -237,7 +237,7 @@ CONTAINS
     results(1) = C_LOC(results_1(1))
 
     DO iexch = 1, 2
-      dst = 0
+      dst = 0_xi
 
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, 1, input, results)
@@ -265,13 +265,13 @@ CONTAINS
   SUBROUTINE test_rr_exchange
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     INTEGER, PARAMETER :: num_local_indices = 5
-    INTEGER(xt_int_kind) :: src_indices(num_local_indices)
-    INTEGER(xt_int_kind) :: i_xi, temp, dst_indices(num_local_indices, 2)
-    INTEGER(xt_int_kind) :: num_indices_global
+    INTEGER(xi) :: src_indices(num_local_indices)
+    INTEGER(xi) :: i_xi, temp, dst_indices(num_local_indices, 2)
+    INTEGER(xi) :: num_indices_global
     INTEGER :: i
     TYPE(xt_xmap) :: xmaps(2)
     TYPE(xt_redist) :: redists(2), redist
-    INTEGER(xt_int_kind) :: results(num_local_indices, 2)
+    INTEGER(xi) :: results(num_local_indices, 2)
     INTEGER(mpi_address_kind) :: src_displacements(2), dst_displacements(2), &
          addr_temp
     INTEGER :: ierror
