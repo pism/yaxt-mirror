@@ -260,12 +260,10 @@ int main(void) {
 
         // check results
 
-        for (int i = 0; i < partSize; ++i) {
-          if (results_1[i] != dst_indices_[0][i])
+        for (int i = 0; i < partSize; ++i)
+          if (results_1[i] != dst_indices_[0][i]
+              || results_2[i] != dst_indices_[1][i])
             PUT_ERR("error on xt_redist_s_exchange\n");
-          if (results_2[i] != dst_indices_[1][i])
-            PUT_ERR("error on xt_redist_s_exchange\n");
-        }
       }
 
       // clean up
