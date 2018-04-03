@@ -65,6 +65,23 @@ void
 check_redist(Xt_redist redist, const void *src,
              size_t dst_size, void *dst, const void *ref_dst_data);
 
+void
+wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],
+                void *dst_data_p[]);
+
+typedef void
+(*exchange_func_ptr)(Xt_redist redist, int num_data_p, const void *src_data_p[],
+                     void *dst_data_p[]);
+
+void
+wrap_a_exchange1(Xt_redist redist, const void *src_data_p, void *dst_data_p);
+
+typedef void
+(*exchange1_func_ptr)(Xt_redist redist, const void *src_data_p,
+                     void *dst_data_p);
+
+
+
 #endif
 /*
  * Local Variables:

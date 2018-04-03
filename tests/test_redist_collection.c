@@ -215,13 +215,9 @@ test_repeated_redist(int cache_size)
       = {src_data[0],src_data[1],src_data[2]};
     void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    if (sync_mode == 0) {
-      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
-    } else {
-      Xt_request request;
-      xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &request);
-      xt_request_wait(&request);
-    }
+    exchange_func_ptr exchange_func
+      = sync_mode == 0 ? xt_redist_s_exchange : wrap_a_exchange;
+    exchange_func(redist_coll, 3, (const void **)src_data_p, dst_data_p);
 
     static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -242,13 +238,9 @@ test_repeated_redist(int cache_size)
       = {src_data[1],src_data[0],src_data[2]};
     void *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
 
-    if (sync_mode == 0) {
-      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
-    } else {
-      Xt_request request;
-      xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &request);
-      xt_request_wait(&request);
-    }
+    exchange_func_ptr exchange_func
+      = sync_mode == 0 ? xt_redist_s_exchange : wrap_a_exchange;
+    exchange_func(redist_coll, 3, (const void **)src_data_p, dst_data_p);
 
     static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -269,13 +261,9 @@ test_repeated_redist(int cache_size)
       = {src_data[0],src_data[1],src_data[2]};
     void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
 
-    if (sync_mode == 0) {
-      xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p);
-    } else {
-      Xt_request request;
-      xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &request);
-      xt_request_wait(&request);
-    }
+    exchange_func_ptr exchange_func
+      = sync_mode == 0 ? xt_redist_s_exchange : wrap_a_exchange;
+    exchange_func(redist_coll, 3, (const void **)src_data_p, dst_data_p);
 
     static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
 
@@ -319,14 +307,9 @@ run_displacement_check(Xt_redist redist_coll, int sync)
     src_data_p[2] = src_data_+k;
     dst_data_p[2] = dst_data_+k;
 
-    if (sync) {
-      xt_redist_s_exchange(redist_coll, num_redists, src_data_p, dst_data_p);
-    } else {
-      Xt_request request;
-      xt_redist_a_exchange(redist_coll, num_redists, src_data_p, dst_data_p,
-                           &request);
-      xt_request_wait(&request);
-    }
+    exchange_func_ptr exchange_func
+      = sync ? xt_redist_s_exchange : wrap_a_exchange;
+    exchange_func(redist_coll, num_redists, src_data_p, dst_data_p);
 
     static const double ref_dst_data[num_redists][nselect]
       = {{1,3,5},{6,8,10},{11,13,15}};

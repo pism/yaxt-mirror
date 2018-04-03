@@ -87,6 +87,15 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_i4
     MODULE PROCEDURE check_redist_i8
   END INTERFACE check_redist
+
+  INTERFACE wrap_a_exchange
+    MODULE PROCEDURE wrap_a_exchange_dp
+    MODULE PROCEDURE wrap_a_exchange_dp2d
+    MODULE PROCEDURE wrap_a_exchange_i2
+    MODULE PROCEDURE wrap_a_exchange_i4
+    MODULE PROCEDURE wrap_a_exchange_i8
+  END INTERFACE wrap_a_exchange
+
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
   PUBLIC :: check_wait_request, check_redist_xi
 
@@ -160,23 +169,80 @@ CONTAINS
     CALL assert_request_is_null(request, file, line)
   END SUBROUTINE check_wait_request
 
+  SUBROUTINE wrap_a_exchange_dp(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src(*)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(*)
+    TYPE(xt_request) :: request
+
+    REQ_DEFAULT_INIT_FIXUP(request)
+    CALL assert_request_is_null(request, filename, __LINE__)
+    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
+    CALL check_wait_request(request, filename, __LINE__)
+  END SUBROUTINE wrap_a_exchange_dp
+
+  SUBROUTINE wrap_a_exchange_dp2d(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src(1,*)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(1,*)
+    TYPE(xt_request) :: request
+
+    REQ_DEFAULT_INIT_FIXUP(request)
+    CALL assert_request_is_null(request, filename, __LINE__)
+    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
+    CALL check_wait_request(request, filename, __LINE__)
+  END SUBROUTINE wrap_a_exchange_dp2d
+
+  SUBROUTINE wrap_a_exchange_i2(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i2), TARGET, INTENT(in) :: src(*)
+    INTEGER(i2), TARGET, INTENT(inout) :: dst(*)
+    TYPE(xt_request) :: request
+
+    REQ_DEFAULT_INIT_FIXUP(request)
+    CALL assert_request_is_null(request, filename, __LINE__)
+    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
+    CALL check_wait_request(request, filename, __LINE__)
+  END SUBROUTINE wrap_a_exchange_i2
+
+  SUBROUTINE wrap_a_exchange_i4(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i4), TARGET, INTENT(in) :: src(*)
+    INTEGER(i4), TARGET, INTENT(inout) :: dst(*)
+    TYPE(xt_request) :: request
+
+    REQ_DEFAULT_INIT_FIXUP(request)
+    CALL assert_request_is_null(request, filename, __LINE__)
+    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
+    CALL check_wait_request(request, filename, __LINE__)
+  END SUBROUTINE wrap_a_exchange_i4
+
+  SUBROUTINE wrap_a_exchange_i8(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i8), TARGET, INTENT(in) :: src(*)
+    INTEGER(i8), TARGET, INTENT(inout) :: dst(*)
+    TYPE(xt_request) :: request
+
+    REQ_DEFAULT_INIT_FIXUP(request)
+    CALL assert_request_is_null(request, filename, __LINE__)
+    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
+    CALL check_wait_request(request, filename, __LINE__)
+  END SUBROUTINE wrap_a_exchange_i8
+
   SUBROUTINE check_redist_dp(redist, src, dst_size, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER, INTENT(in) :: dst_size
     DOUBLE PRECISION, TARGET, INTENT(in) :: src(*)
     DOUBLE PRECISION, INTENT(in) :: ref_dst(dst_size)
     DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(dst_size)
-    TYPE(xt_request) :: request
     INTEGER :: iexch
-    REQ_DEFAULT_INIT_FIXUP(request)
+
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -186,13 +252,10 @@ CONTAINS
 
   SUBROUTINE check_redist_dp2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src(:)
-    DOUBLE PRECISION, INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
-    TYPE(xt_request) :: request
+    DOUBLE PRECISION, INTENT(in) :: src(:), ref_dst(:)
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -204,9 +267,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -216,13 +277,11 @@ CONTAINS
 
   SUBROUTINE check_redist_dp2_i2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src(:)
+    DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i2), INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
-    TYPE(xt_request) :: request
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -234,9 +293,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -246,13 +303,11 @@ CONTAINS
 
   SUBROUTINE check_redist_dp2_i4(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src(:)
+    DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i4), INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
-    TYPE(xt_request) :: request
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -264,9 +319,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -276,13 +329,11 @@ CONTAINS
 
   SUBROUTINE check_redist_dp2_i8(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src(:)
+    DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i8), INTENT(in) :: ref_dst(:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
-    TYPE(xt_request) :: request
+    DOUBLE PRECISION, INTENT(inout) :: dst(:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -294,9 +345,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -306,13 +355,10 @@ CONTAINS
 
   SUBROUTINE check_redist_dp2_2d(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src(:,:)
-    DOUBLE PRECISION, INTENT(in) :: ref_dst(:,:)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:,:)
-    TYPE(xt_request) :: request
+    DOUBLE PRECISION, INTENT(in) :: src(:,:), ref_dst(:,:)
+    DOUBLE PRECISION, INTENT(inout) :: dst(:,:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -324,9 +370,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -340,20 +384,14 @@ CONTAINS
     INTEGER(xi), TARGET, INTENT(in) :: src(*)
     INTEGER(xi), INTENT(in) :: ref_dst(dst_size)
     INTEGER(xi), TARGET, INTENT(inout) :: dst(dst_size)
-    TYPE(xt_request) :: request
     INTEGER :: iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     DO iexch = 1, 2
       dst = -1_xi
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
-        CALL assert_request_is_not_null(request, __FILE__, __LINE__)
-        CALL xt_request_wait(request)
-        CALL assert_request_is_null(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -364,13 +402,10 @@ CONTAINS
 
   SUBROUTINE check_redist_i2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER(i2), TARGET, INTENT(in) :: src(:)
-    INTEGER(i2), INTENT(in) :: ref_dst(:)
-    INTEGER(i2), TARGET, INTENT(inout) :: dst(:)
-    TYPE(xt_request) :: request
+    INTEGER(i2), INTENT(in) :: src(:), ref_dst(:)
+    INTEGER(i2), INTENT(inout) :: dst(:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -382,9 +417,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -394,13 +427,10 @@ CONTAINS
 
   SUBROUTINE check_redist_i4(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER(i4), TARGET, INTENT(in) :: src(:)
-    INTEGER(i4), INTENT(in) :: ref_dst(:)
-    INTEGER(i4), TARGET, INTENT(inout) :: dst(:)
-    TYPE(xt_request) :: request
+    INTEGER(i4), INTENT(in) :: src(:), ref_dst(:)
+    INTEGER(i4), INTENT(inout) :: dst(:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -412,9 +442,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
@@ -424,13 +452,10 @@ CONTAINS
 
   SUBROUTINE check_redist_i8(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER(i8), TARGET, INTENT(in) :: src(:)
-    INTEGER(i8), INTENT(in) :: ref_dst(:)
-    INTEGER(i8), TARGET, INTENT(inout) :: dst(:)
-    TYPE(xt_request) :: request
+    INTEGER(i8), INTENT(in) :: src(:), ref_dst(:)
+    INTEGER(i8), INTENT(inout) :: dst(:)
     INTEGER :: dst_size, ref_dst_size, iexch
 
-    REQ_DEFAULT_INIT_FIXUP(request)
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
@@ -442,9 +467,7 @@ CONTAINS
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist, src, dst)
       ELSE
-        CALL assert_request_is_null(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src, dst, request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
            CALL test_abort("error in xt_redist_s_exchange1", &
