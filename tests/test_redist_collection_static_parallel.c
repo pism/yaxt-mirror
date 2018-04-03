@@ -247,21 +247,16 @@ int main(void) {
       xt_redist_delete(redists[0]);
       xt_redist_delete(redists[1]);
 
-      for (int j = 0; j < 2; ++j) {
+      for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
 
         for (int i = 0; i < partSize; ++i) {
           results_1[i] = -1;
           results_2[i] = -1;
         }
 
-        if (j == 0) {
-          xt_redist_s_exchange1(redist, (void*)src_indices_, (void*)results_1);
-        } else {
-          Xt_request request;
-          xt_redist_a_exchange1(redist, (void*)src_indices_, (void*)results_1,
-                                &request);
-          xt_request_wait(&request);
-        }
+        exchange1_func_ptr exchange1_func
+          = sync_mode == 0 ? xt_redist_s_exchange1 : wrap_a_exchange1;
+        exchange1_func(redist, (void*)src_indices_, (void*)results_1);
 
         // check results
 
@@ -292,16 +287,14 @@ test_transpose_gather(Xt_redist redist,
                       const Xt_int *index_vector_a,
                       const Xt_int *index_vector_b)
 {
-  for (int j = 0; j < 2; ++j) {
+  for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
 
     memset(dst, 0, size_b + size_a + 2 * size_all);
-    if (j == 0) {
-      xt_redist_s_exchange1(redist, src, dst);
-    } else {
-      Xt_request request;
-      xt_redist_a_exchange1(redist, src, dst, &request);
-      xt_request_wait(&request);
-    }
+
+    exchange1_func_ptr exchange1_func
+      = sync_mode == 0 ? xt_redist_s_exchange1 : wrap_a_exchange1;
+    exchange1_func(redist, src, dst);
+
     // check results
     Xt_int *results_1 = dst, *results_2 = dst + size_b,
       *results_3 = dst + size_b + size_a,

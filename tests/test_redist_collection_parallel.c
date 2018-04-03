@@ -294,13 +294,9 @@ exchange_4redist(Xt_redist redist, MPI_Comm comm,
   const void *input[num_redists]
     = { index_vector_a, index_vector_b, index_vector_a, index_vector_b };
 
-  if (sync) {
-    xt_redist_s_exchange(redist, num_redists, input, results);
-  } else {
-    Xt_request request;
-    xt_redist_a_exchange(redist, num_redists, input, results, &request);
-    xt_request_wait(&request);
-  }
+  exchange_func_ptr exchange_func
+    = sync ? xt_redist_s_exchange : wrap_a_exchange;
+  exchange_func(redist, num_redists, input, results);
   check_4redist_result(size, results, index_vector_a,
                        index_vector_b);
   /*
@@ -311,13 +307,7 @@ exchange_4redist(Xt_redist redist, MPI_Comm comm,
     results[0] = buf;
 
   /* ...and repeat exchange */
-  if (sync) {
-    xt_redist_s_exchange(redist, num_redists, input, results);
-  } else {
-    Xt_request request;
-    xt_redist_a_exchange(redist, num_redists, input, results, &request);
-    xt_request_wait(&request);
-  }
+  exchange_func(redist, num_redists, input, results);
 
   check_4redist_result(size, results, index_vector_a, index_vector_b);
   free(buf);
@@ -355,13 +345,9 @@ rr_exchange(Xt_redist redist,
   void *results[2] = {results_[0], results_[1]};
   const void *input[2] = {src_indices_, src_indices_};
 
-  if (sync) {
-    xt_redist_s_exchange(redist, 2, input, results);
-  } else {
-    Xt_request request;
-    xt_redist_a_exchange(redist, 2, input, results, &request);
-    xt_request_wait(&request);
-  }
+  exchange_func_ptr exchange_func
+    = sync ? xt_redist_s_exchange : wrap_a_exchange;
+  exchange_func(redist, 2, input, results);
 
   // check results
   for (int i = 0; i < 5; ++i) {

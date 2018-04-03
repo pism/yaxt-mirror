@@ -110,6 +110,23 @@ check_redist(Xt_redist redist, const void *src,
   free(tmp_dst);
 }
 
+void
+wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],
+                void *dst_data_p[])
+{
+  Xt_request request;
+  xt_redist_a_exchange(redist, num_data_p, src_data_p, dst_data_p, &request);
+  xt_request_wait(&request);
+}
+
+void
+wrap_a_exchange1(Xt_redist redist, const void *src_data_p, void *dst_data_p)
+{
+  Xt_request request;
+  xt_redist_a_exchange1(redist, src_data_p, dst_data_p, &request);
+  xt_request_wait(&request);
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2
