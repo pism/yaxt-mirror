@@ -86,7 +86,7 @@ __FILE__
        __LINE__)
 
   IF (comm_size > 1) THEN
-    CALL test_4redist
+    CALL test_4redist(2*comm_size**2)
   END IF
 
   IF (test_err_count() /= 0) &
@@ -159,22 +159,29 @@ CONTAINS
 
   ! redist test for 4 level repetition of redist (i.e. 3D extension of 2D
   ! redist)
-  SUBROUTINE test_4redist
+  SUBROUTINE test_4redist(dim1)
+    INTEGER, INTENT(in) :: dim1
     TYPE(xt_idxlist) :: indices_a, indices_b
-    INTEGER(xt_int_kind) :: index_vector_a(2*comm_size**2), &
-                            index_vector_b(2*comm_size**2)
+    INTEGER(xt_int_kind) :: index_vector_a(dim1), &
+                            index_vector_b(dim1)
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist_repeat, redist_repeat_2, redist_p2p
-    INTEGER(xt_int_kind) :: results_1(2*comm_size**2,4), &
-                            results_2(2*comm_size**2,9)
-    INTEGER(xt_int_kind) :: input_data(2*comm_size**2,9)
-    INTEGER(xt_int_kind) :: ref_results_1(2*comm_size**2,4), &
-                            ref_results_2(2*comm_size**2,9)
+    INTEGER, PARAMETER :: dim2a = 9, rpt_cnt = 4
+    INTEGER(xt_int_kind) :: results_1(dim1,rpt_cnt), &
+                            results_2(dim1,dim2a), dim1_xi
+    INTEGER(xt_int_kind) :: input_data(dim1,dim2a)
+    INTEGER(xt_int_kind) :: ref_results_1(dim1,rpt_cnt), &
+                            ref_results_2(dim1,dim2a)
     INTEGER(mpi_address_kind) :: extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int), PARAMETER :: &
-         displacements(4) = (/ 0_c_int, 1_c_int, 2_c_int, 3_c_int /), &
-         displacements_2(4) = (/ 1_c_int, 2_c_int, 4_c_int, 8_c_int /)
+         displacements(rpt_cnt) = (/ 0_c_int, 1_c_int, 2_c_int, 3_c_int /), &
+         displacements_2(rpt_cnt) = (/ 1_c_int, 2_c_int, 4_c_int, 8_c_int /)
+    ! skip_lev_2 must correspond to the levels skipped via displacements_2
+    LOGICAL, PARAMETER :: skip_lev_2(9) &
+         = (/  .TRUE., .FALSE., .FALSE., &
+         &     .TRUE., .FALSE.,  .TRUE., &
+         &     .TRUE.,  .TRUE., .FALSE. /)
     INTEGER :: i, j, ierror
     TYPE(xt_request) :: request1, request2
     INTEGER :: iexch
@@ -197,31 +204,34 @@ CONTAINS
     extent = temp_address - base_address
 
     redist_repeat = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         4, displacements)
+         rpt_cnt, displacements)
     redist_repeat_2 = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         4, displacements_2)
+         rpt_cnt, displacements_2)
 
     CALL xt_redist_delete(redist_p2p)
 
-    DO j = 1, 9
-      DO i = 1, 2*comm_size**2
-        input_data(i, j) = index_vector_a(i) + INT(j-1, xi) * INT(4*comm_size**2, xi)
+    dim1_xi = INT(dim1, xi)
+    DO j = 1, dim2a
+      DO i = 1, dim1
+        input_data(i, j) = index_vector_a(i) + INT(j-1, xi) * 2_xi * dim1_xi
       END DO
     END DO
 
-    DO j = 1, 4
-      DO i = 1, 2*comm_size**2
-        ref_results_1(i, j) = index_vector_b(i) + INT(j-1, xi) * INT(4*comm_size**2, xi)
+    DO j = 1, rpt_cnt
+      DO i = 1, dim1
+        ref_results_1(i, j) = index_vector_b(i) + INT(j-1, xi) * 2_xi * dim1_xi
       END DO
     END DO
-    DO j = 1, 9
-      DO i = 1, 2*comm_size**2
-        ref_results_2(i, j) = index_vector_b(i) + INT(j-1, xi) * INT(4*comm_size**2, xi)
-      END DO
+    DO j = 1, dim2a
+      IF (skip_lev_2(j)) THEN
+        ref_results_2(:, j) = -1_xi
+      ELSE
+        DO i = 1, dim1
+          ref_results_2(i, j) &
+               = index_vector_b(i) + INT(j-1, xi) * 2_xi * dim1_xi
+        END DO
+      END IF
     END DO
-
-    ref_results_2(:,1:4:3) = -1_xi
-    ref_results_2(:,6:8:1) = -1_xi
 
     DO iexch = 1, 2
       results_1 = -1
