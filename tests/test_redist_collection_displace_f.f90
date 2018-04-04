@@ -48,7 +48,7 @@
 MODULE redist_collection_displace
   USE mpi
   USE ftest_common, ONLY: test_abort, cmp_arrays
-  USE yaxt, ONLY: xt_int_kind, xi => xt_int_kind, &
+  USE yaxt, ONLY: &
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        Xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
@@ -63,7 +63,7 @@ MODULE redist_collection_displace
   IMPLICIT NONE
   PRIVATE
   INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
-  INTEGER(xt_int_kind), PARAMETER :: num_slice = 3_xi, dst_step = 2_xi
+  INTEGER, PARAMETER :: num_slice = 3, dst_step = 2
   INTEGER, PARAMETER :: src_slice_len = 5
   INTEGER, PARAMETER :: dst_slice_len &
        = (src_slice_len + dst_step - 1)/dst_step
@@ -89,7 +89,7 @@ CONTAINS
     ! generate redist_collection
     redists = redist
 
-    redist_coll = xt_redist_collection_new(redists, INT(num_slice), &
+    redist_coll = xt_redist_collection_new(redists, num_slice, &
          cache_size, mpi_comm_world)
 
     CALL xt_redist_delete(redist)
@@ -105,11 +105,11 @@ CONTAINS
 
   SUBROUTINE run_displacement_check(redist_coll)
     TYPE(xt_redist), INTENT(in) :: redist_coll
-    INTEGER(xt_int_kind) :: i, j
+    INTEGER :: i, j
     INTEGER :: k
     DOUBLE PRECISION, TARGET, SAVE :: src_data(src_slice_len, num_slice) &
-         = RESHAPE((/ (DBLE(i), i = 1_xi, src_slice_len*num_slice) /), &
-         (/ INT(src_slice_len), INT(num_slice) /))
+         = RESHAPE((/ (DBLE(i), i = 1, src_slice_len*num_slice) /), &
+         (/ src_slice_len, num_slice /))
     DOUBLE PRECISION, TARGET :: dst_data(dst_slice_len, num_slice)
     DOUBLE PRECISION, TARGET :: &
          src_data_(src_slice_len + cache_size + cache_overrun), &
@@ -117,9 +117,9 @@ CONTAINS
     TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len, num_slice) = &
          RESHAPE((/ ((DBLE(i + j * src_slice_len), &
-         &            i = 1_xi, src_slice_len, dst_step), &
-         &           j = 0_xi, num_slice - 1_xi) /), &
-         &       (/ INT(dst_slice_len), INT(num_slice) /))
+         &            i = 1, src_slice_len, dst_step), &
+         &           j = 0, num_slice - 1) /), &
+         &       (/ dst_slice_len, num_slice /))
     TYPE(xt_request) :: request
     INTEGER :: iexch
 
@@ -142,11 +142,11 @@ CONTAINS
       DO iexch = 1, 2
         dst_data = -1.0d0
         IF (iexch == 1) THEN
-          CALL xt_redist_s_exchange(redist_coll, INT(num_slice), src_data_p, &
+          CALL xt_redist_s_exchange(redist_coll, num_slice, src_data_p, &
                dst_data_p)
         ELSE
-          CALL xt_redist_a_exchange(redist_coll, INT(num_slice), &
-               src_data_p, dst_data_p, request)
+          CALL xt_redist_a_exchange(redist_coll, num_slice, src_data_p, &
+               dst_data_p, request)
           CALL check_wait_request(request, filename, __LINE__)
         ENDIF
         IF (cmp_arrays(ref_dst_data(:, 1:num_slice-1), &
