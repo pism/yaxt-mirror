@@ -120,23 +120,27 @@ int main(void) {
 
       xt_xmap_delete(xmap);
 
-      Xt_int input[9][2*size*size];
-      Xt_int result[4][2*size*size];
-      Xt_int result_2[9][2*size*size];
+      enum { dim1a = 9, rpt_cnt = 4 };
+      size_t dim0 = 2*(size_t)size*(size_t)size;
+      Xt_int input[dim1a][dim0];
+      Xt_int result[rpt_cnt][dim0];
+      Xt_int result_2[dim1a][dim0];
 
-      for (int i = 0; i < 9; ++i)
-        for (int j = 0; j < 2*size*size; ++j)
-          input[i][j] = (Xt_int)(index_vector_a[j] + i * 4*size*size);
+      for (int j = 0; j < dim1a; ++j)
+        for (size_t i = 0; i < dim0; ++i)
+          input[j][i] = (Xt_int)(index_vector_a[i] + j * 2*(Xt_int)dim0);
 
-      static const int displacements[4] = {0, 1, 2, 3};
-      static const int displacements_2[4] = {1, 2, 4, 8};
+      static const int displacements[rpt_cnt] = {0, 1, 2, 3};
+      static const int displacements_2[rpt_cnt] = {1, 2, 4, 8};
       MPI_Aint extent
-        = (MPI_Aint)(2*(size_t)size*(size_t)size * sizeof(Xt_int));
+        = (MPI_Aint)(dim0 * sizeof(Xt_int));
 
       Xt_redist redist_repeat
-        = xt_redist_repeat_new(redist_p2p, extent, extent, 4, displacements);
+        = xt_redist_repeat_new(redist_p2p, extent, extent, rpt_cnt,
+                               displacements);
       Xt_redist redist_repeat_2
-        = xt_redist_repeat_new(redist_p2p, extent, extent, 4, displacements_2);
+        = xt_redist_repeat_new(redist_p2p, extent, extent, rpt_cnt,
+                               displacements_2);
 
       // test communicator of redist_repeat
 
@@ -151,12 +155,12 @@ int main(void) {
 
       for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
 
-        for (int j = 0; j < 4; ++j)
-          for (int k = 0; k < 2*size*size; ++k)
-            result[j][k] = -1;
-        for (int j = 0; j < 9; ++j)
-          for (int k = 0; k < 2*size*size; ++k)
-            result_2[j][k] = -1;
+        for (int j = 0; j < rpt_cnt; ++j)
+          for (size_t i = 0; i < dim0; ++i)
+            result[j][i] = -1;
+        for (int j = 0; j < dim1a; ++j)
+          for (size_t i = 0; i < dim0; ++i)
+            result_2[j][i] = -1;
 
         if (sync_mode == 0) {
           xt_redist_s_exchange1(redist_repeat, input, result);
@@ -172,14 +176,14 @@ int main(void) {
 
         // check results
 
-        for (int i = 0; i < 4; ++i)
-          for (int j = 0; j < 2*size*size; ++j)
-            if (result[i][j] != index_vector_b[j] + i * 4*size*size)
+        for (int j = 0; j < rpt_cnt; ++j)
+          for (size_t i = 0; i < dim0; ++i)
+            if (result[j][i] != index_vector_b[i] + j * 2*(int)dim0)
               PUT_ERR("ERROR: in first xt_redist_s_exchange1\n");
 
-        for (int i = 1; i <= 8; i<<=1)
-          for (int j = 0; j < 2*size*size; ++j)
-            if (result_2[i][j] != index_vector_b[j] + i * 4*size*size)
+        for (int j = 1; j <= 8; j<<=1)
+          for (size_t i = 0; i < dim0; ++i)
+            if (result_2[j][i] != index_vector_b[i] + j * 2*(int)dim0)
               PUT_ERR("ERROR: in second xt_redist_s_exchange1\n");
       }
 
