@@ -103,17 +103,23 @@ CONTAINS
     CALL xt_redist_delete(redist_coll_copy)
   END SUBROUTINE test_displacement_variations
 
+#ifndef HAVE_FC_PTR_BOUND_REMAP
+  SUBROUTINE ptr_bind(p, ub, a)
+    DOUBLE PRECISION, POINTER :: p(:,:)
+    INTEGER, INTENT(in) :: ub(2)
+    DOUBLE PRECISION, TARGET :: a(ub(1), ub(2))
+    p => a
+  END SUBROUTINE ptr_bind
+#endif
+
   SUBROUTINE run_displacement_check(redist_coll)
     TYPE(xt_redist), INTENT(in) :: redist_coll
-    INTEGER :: i, j
-    INTEGER :: k
-    DOUBLE PRECISION, TARGET, SAVE :: src_data(src_slice_len, num_slice) &
-         = RESHAPE((/ (DBLE(i), i = 1, src_slice_len*num_slice) /), &
-         (/ src_slice_len, num_slice /))
-    DOUBLE PRECISION, TARGET :: dst_data(dst_slice_len, num_slice)
+    INTEGER :: i, j, k
     DOUBLE PRECISION, TARGET :: &
-         src_data_(src_slice_len + cache_size + cache_overrun), &
-         dst_data_(dst_slice_len + cache_size + cache_overrun)
+         src(src_slice_len * (num_slice+1) + cache_size + cache_overrun), &
+         dst(dst_slice_len * (num_slice+1) + cache_size + cache_overrun)
+    DOUBLE PRECISION, POINTER :: src_data(:, :), dst_data(:, :)
+    DOUBLE PRECISION, POINTER :: src_data_(:), dst_data_(:)
     TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len, num_slice) = &
          RESHAPE((/ ((DBLE(i + j * src_slice_len), &
@@ -123,7 +129,26 @@ CONTAINS
     TYPE(xt_request) :: request
     INTEGER :: iexch
 
-    dst_data = -1.0d0
+#ifdef HAVE_FC_PTR_BOUND_REMAP
+    src_data(1:src_slice_len, 1:num_slice) => src(1:src_slice_len*num_slice)
+#else
+    CALL ptr_bind(src_data, (/ src_slice_len, num_slice /), src)
+#endif
+    DO j = 1, num_slice
+      DO i = 1, src_slice_len
+        src_data(i, j) = DBLE(i + (j - 1) * src_slice_len)
+      END DO
+    END DO
+
+    src_data_ => src(src_slice_len*num_slice+1:)
+
+#ifdef HAVE_FC_PTR_BOUND_REMAP
+    dst_data(1:dst_slice_len, 1:num_slice) => dst(1:dst_slice_len*num_slice)
+#else
+    CALL ptr_bind(dst_data, (/ dst_slice_len, num_slice /), dst)
+#endif
+
+    dst_data_ => dst(dst_slice_len*num_slice+1:)
 
     DO i = 1, num_slice - 1
       CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
@@ -133,14 +158,13 @@ CONTAINS
     ! test exchange
     DO k = 1, cache_size + cache_overrun
       src_data_(k:k+src_slice_len-1) = src_data(:,num_slice)
-      dst_data_(k:k+dst_slice_len-1) = -1.0d0
 
 
       CALL xt_slice_c_loc(src_data_(k:k+src_slice_len-1), src_data_p(3))
       CALL xt_slice_c_loc(dst_data_(k:k+dst_slice_len-1), dst_data_p(3))
 
       DO iexch = 1, 2
-        dst_data = -1.0d0
+        dst = -1.0d0
         IF (iexch == 1) THEN
           CALL xt_redist_s_exchange(redist_coll, num_slice, src_data_p, &
                dst_data_p)
