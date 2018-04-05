@@ -197,8 +197,7 @@ xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
                                const struct dist_dir *dst_dist_dir,
                                struct isect **src_dst_intersections)
 {
-  struct isect (*src_dst_intersections_)
-    = (*src_dst_intersections)
+  struct isect *src_dst_intersections_ = *src_dst_intersections
     = xmalloc((size_t)src_dist_dir->num_entries
               * (size_t)dst_dist_dir->num_entries
               * sizeof(**src_dst_intersections));
