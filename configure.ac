@@ -114,14 +114,14 @@ AX_WITH_PERL([/bin/false], $PATH:$prefix/bin:/usr/bin:/usr/local/bin)
 AX_PROG_PERL_VERSION([5.0005],[],
         AC_MSG_ERROR([Perl (version>=5.0005) is required]))
 AC_CHECK_PROGS([M4],[m4 gm4 gnum4],[false],,)
+AM_PROG_CC_C_O
+AC_PROG_FC_C_O
 # Set up libtool.
 ACX_USE_LIBTOOL_CONFIGURATION
 AC_SUBST([lt_cv_nm_interface])
 dnl ######################################################################
 dnl Properties of the compiler
 dnl ######################################################################
-AM_PROG_CC_C_O
-AC_PROG_FC_C_O
 ACX_SL_FC_MOD_SUFFIX(,[AC_MSG_ERROR(dnl
 [Fortran module file extension must be known to install F90 modules.])])
 AM_CONDITIONAL([FC_MOD_UPPERCASE],
