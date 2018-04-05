@@ -310,7 +310,7 @@ CONTAINS
     TYPE(xt_redist) :: redist, redist_repeat
     INTEGER(mpi_address_kind) :: src_extent, dst_extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
-    INTEGER(c_int), PARAMETER :: displacements(2) = (/ 0, 1 /)
+    INTEGER(c_int), PARAMETER :: displacements(2) = (/ 0_c_int, 1_c_int /)
     INTEGER :: i, j, ierror
     INTEGER, PARAMETER :: src_pos(npt) = (/ (i, i=1,npt) /), &
          dst_pos(npt) = (/ (2*i, i = 0, npt-1) /)
