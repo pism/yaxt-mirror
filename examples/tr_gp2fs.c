@@ -67,7 +67,7 @@ enum initializationType {
 
 struct config {
 
-  int initialize;
+  enum initializationType initialize;
    int x, y, z; // global data size (default 1024 * 512 * 1)
 
    struct {
