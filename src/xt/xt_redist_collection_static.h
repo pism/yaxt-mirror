@@ -75,7 +75,8 @@
  *
  * @remarks all redistributions need to be based on the same
  *          MPI communicator
- * @see correct_addresses
+ * @par See Also
+ *   \ref correct_addresses
  */
 Xt_redist
 xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
