@@ -57,13 +57,16 @@
 #include "xt/xt_mpi.h"
 
 #include "xt/xt_request_msgs.h"
+#include "xt_mpi_internal.h"
 #include "xt_request_internal.h"
 
 static void xt_request_msgs_wait(Xt_request request);
+static int xt_request_msgs_test(Xt_request request);
 
 static const struct Xt_request_vtable request_msgs_vtable = {
 
   .wait = xt_request_msgs_wait,
+  .test = xt_request_msgs_test,
 };
 
 typedef struct Xt_request_msgs_ * Xt_request_msgs;
@@ -73,6 +76,7 @@ struct Xt_request_msgs_ {
   const struct Xt_request_vtable * vtable;
   int n;
   MPI_Comm comm;
+  int * ops_completed_buffer;
   MPI_Request requests[];
 };
 
@@ -81,11 +85,14 @@ Xt_request xt_request_msgs_new(int n, MPI_Request * requests,
 
   assert(n >= 0);
   Xt_request_msgs request
-    = xmalloc(sizeof(*request) + (size_t)n * sizeof(MPI_Request));
+    = xmalloc(sizeof(*request) + (size_t)n * sizeof(MPI_Request) +
+              (size_t)n * sizeof(int));
 
   request->vtable = &request_msgs_vtable;
   request->n = n;
   request->comm = comm;
+  request->ops_completed_buffer =
+    (int*)((char*)request + sizeof(*request) + (size_t)n * sizeof(MPI_Request));
   memcpy(request->requests, requests, (size_t)n * sizeof(*request->requests));
 
   return (Xt_request)request;
@@ -98,6 +105,19 @@ static void xt_request_msgs_wait(Xt_request request) {
                           MPI_STATUSES_IGNORE), request_msgs->comm);
 
   free(request_msgs);
+}
+
+static int xt_request_msgs_test(Xt_request request) {
+
+  Xt_request_msgs request_msgs = (Xt_request_msgs)request;
+
+  int flag = (int)xt_mpi_test_some(&(request_msgs->n), request_msgs->requests,
+                                   request_msgs->ops_completed_buffer,
+                                   request_msgs->comm);
+
+  if (flag) free(request_msgs);
+
+  return flag;
 }
 
 /*

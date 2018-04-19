@@ -63,3 +63,13 @@ void xt_request_wait(Xt_request *request) {
     *request = XT_REQUEST_NULL;
   }
 }
+
+void xt_request_test(Xt_request *request, int *flag) {
+  assert(request);
+  if (*request != XT_REQUEST_NULL) {
+    *flag = (*request)->vtable->test(*request);
+    if (*flag) *request = XT_REQUEST_NULL;
+  } else {
+    *flag = 1;
+  }
+}

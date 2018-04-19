@@ -51,6 +51,7 @@
 
 struct Xt_request_vtable {
   void (*wait)(Xt_request request);
+  int (*test)(Xt_request request);
 };
 
 struct Xt_request_ {

@@ -216,19 +216,23 @@ test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
 
     // test
     int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
-    for (int j = 0; j < 1 + test_async; ++j) {
+    for (int async = 0; async < 1 + test_async; ++async) {
 
       int src_data[1] = { my_rank == i ? 4711 : -1 };
       int dst_data[1] = { my_rank == i ? 4711 : -1 };
 
-      if (j == 0) {
-        xt_exchanger_s_exchange(exchanger, (void*)(src_data),
-                                (void*)(dst_data));
-      } else {
+      if (async) {
         Xt_request request;
+        int flag;
         xt_exchanger_a_exchange(exchanger, (void*)(src_data),
                                 (void*)(dst_data), &request);
+        xt_request_test(&request, &flag);
         xt_request_wait(&request);
+        xt_request_test(&request, &flag);
+        if (!flag) PUT_ERR("invalid flag result\n");
+      } else {
+        xt_exchanger_s_exchange(exchanger, (void*)(src_data),
+                                (void*)(dst_data));
       }
 
       if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
@@ -297,17 +301,32 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
                                    send_msgs, recv_msgs + j * nrecv, comm, 0);
 
     // test
-    int src_data[1] = {(my_rank+comm_size-i)%comm_size};
-    for (size_t j = 0; j < 2 * nrecv; ++j)
-      dst_data[j] = -1;
+    int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
+    for (int async = 0; async < 1 + test_async; ++async) {
+      int src_data[1] = {(my_rank+comm_size-i)%comm_size};
+      for (size_t j = 0; j < 2 * nrecv; ++j)
+        dst_data[j] = -1;
 
-    for (size_t j = 0; j < num_exchanges; ++j)
-      xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * nrecv);
+      for (size_t j = 0; j < num_exchanges; ++j) {
+        if (async) {
+          Xt_request request;
+          int flag;
+          xt_exchanger_a_exchange(exchanger[j], src_data,
+                                  dst_data + j * nrecv, &request);
+          xt_request_test(&request, &flag);
+          xt_request_wait(&request);
+          xt_request_test(&request, &flag);
+          if (!flag) PUT_ERR("invalid flag result\n");
+        } else {
+          xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * nrecv);
+        }
+      }
 
-    for (size_t j = 0; j < nrecv; ++j)
-      if (((size_t)dst_data[j] != j + 1)
-          || (dst_data[nrecv + j] != comm_size - (int)j - 1))
-        PUT_ERR("invalid data\n");
+      for (size_t j = 0; j < nrecv; ++j)
+        if (((size_t)dst_data[j] != j + 1)
+            || (dst_data[nrecv + j] != comm_size - (int)j - 1))
+          PUT_ERR("invalid data\n");
+    }
 
     // cleanup
     free(recv_msgs);
@@ -377,17 +396,30 @@ test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new)
                                              recv_msgs,
                                              MPI_COMM_WORLD, 0);
       // test
-      int src_data[1] = {my_rank};
-      for (size_t k = 0; k < (size_t)comm_size; ++k)
-        dst_data[k] = my_rank;
+      int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
+      for (int async = 0; async < 1 + test_async; ++async) {
+        int src_data[1] = {my_rank};
+        for (size_t k = 0; k < (size_t)comm_size; ++k)
+          dst_data[k] = my_rank;
 
-      xt_exchanger_s_exchange(exchanger, (void*)src_data, (void*)dst_data);
+        if (async) {
+          Xt_request request;
+          int flag;
+          xt_exchanger_a_exchange(exchanger, (void*)src_data, (void*)dst_data,
+                                  &request);
+          xt_request_test(&request, &flag);
+          xt_request_wait(&request);
+          xt_request_test(&request, &flag);
+          if (!flag) PUT_ERR("invalid flag result\n");
+        } else {
+          xt_exchanger_s_exchange(exchanger, (void*)src_data, (void*)dst_data);
+        }
 
-      for (int k = 0; k < comm_size; ++k)
-        if (dst_data[k] != k) PUT_ERR("invalid data\n");
+        for (int k = 0; k < comm_size; ++k)
+          if (dst_data[k] != k) PUT_ERR("invalid data\n");
+      }
 
       // cleanup
-
       xt_exchanger_delete(exchanger);
     }
   }
@@ -420,17 +452,28 @@ test_rr(MPI_Comm comm, exchanger_new_func exchanger_new)
                                            recv_msgs, comm, 0);
 
     // test
+    int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
+    for (int async = 0; async < 1 + test_async; ++async) {
+      int src_data[1] = {my_rank};
+      int dst_data[1] = {-1};
 
-    int src_data[1] = {my_rank};
-    int dst_data[1] = {-1};
+      if (async) {
+        Xt_request request;
+        int flag;
+        xt_exchanger_a_exchange(exchanger, src_data, dst_data, &request);
+        xt_request_test(&request, &flag);
+        xt_request_wait(&request);
+        xt_request_test(&request, &flag);
+        if (!flag) PUT_ERR("invalid flag result\n");
+      } else {
+        xt_exchanger_s_exchange(exchanger, src_data, dst_data);
+      }
 
-    xt_exchanger_s_exchange(exchanger, src_data, dst_data);
-
-    if (dst_data[0] != (my_rank + comm_size - i)%comm_size)
-      PUT_ERR("invalid data\n");
+      if (dst_data[0] != (my_rank + comm_size - i)%comm_size)
+        PUT_ERR("invalid data\n");
+    }
 
     // cleanup
-
     xt_exchanger_delete(exchanger);
   }
 }

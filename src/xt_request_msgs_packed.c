@@ -55,13 +55,16 @@
 #include "xt/xt_mpi.h"
 
 #include "xt/xt_request_msgs_packed.h"
+#include "xt_mpi_internal.h"
 #include "xt_request_internal.h"
 
 static void xt_request_msgs_wait_packed(Xt_request request);
+static int xt_request_msgs_test_packed(Xt_request request);
 
 static const struct Xt_request_vtable request_msgs_packed_vtable = {
 
   .wait = xt_request_msgs_wait_packed,
+  .test = xt_request_msgs_test_packed,
 };
 
 typedef struct Xt_request_msgs_packed_ * Xt_request_msgs_packed;
@@ -70,6 +73,7 @@ struct Xt_request_msgs_packed_ {
 
   const struct Xt_request_vtable * vtable;
   MPI_Request * requests;
+  int * ops_completed_buffer;
   MPI_Comm comm;
   int n_requests;
   int n_packed, n_tmp_buffers;
@@ -91,8 +95,13 @@ Xt_request xt_request_msgs_packed_new(int n_requests, MPI_Request * requests,
 
   request->vtable = &request_msgs_packed_vtable;
   request->n_requests = n_requests;
-  request->requests = xmalloc((size_t)n_requests * sizeof(*request->requests));
-  memcpy(request->requests, requests, (size_t)n_requests * sizeof(*request->requests));
+  request->requests = xmalloc((size_t)n_requests * sizeof(*request->requests) +
+                              (size_t)n_requests *
+                              sizeof(*request->ops_completed_buffer));
+  request->ops_completed_buffer =
+    (int*)(request->requests + (size_t)n_requests);
+  memcpy(request->requests, requests,
+         (size_t)n_requests * sizeof(*request->requests));
   request->comm = comm;
   request->n_packed = n_packed;
   request->n_tmp_buffers = n_tmp_buffers;
@@ -111,13 +120,7 @@ Xt_request xt_request_msgs_packed_new(int n_requests, MPI_Request * requests,
   return (Xt_request)request;
 }
 
-static void xt_request_msgs_wait_packed(Xt_request request) {
-
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
-
-  xt_mpi_call(MPI_Waitall(request_msgs_packed->n_requests,
-                          request_msgs_packed->requests, MPI_STATUSES_IGNORE),
-              request_msgs_packed->comm);
+static void unpack_data(Xt_request_msgs_packed request_msgs_packed) {
 
   for (int i = 0; i < request_msgs_packed->n_packed; ++i) {
     int position = 0, buffer_size;
@@ -130,6 +133,9 @@ static void xt_request_msgs_wait_packed(Xt_request request) {
                            request_msgs_packed->comm),
                 request_msgs_packed->comm);
   }
+}
+
+static void free_request(Xt_request_msgs_packed request_msgs_packed) {
 
   for (int i = 0; i < request_msgs_packed->n_packed +
        request_msgs_packed->n_tmp_buffers; ++i)
@@ -141,6 +147,36 @@ static void xt_request_msgs_wait_packed(Xt_request request) {
   free(request_msgs_packed->datatypes);
   free(request_msgs_packed->requests);
   free(request_msgs_packed);
+}
+
+static void xt_request_msgs_wait_packed(Xt_request request) {
+
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+
+  xt_mpi_call(MPI_Waitall(request_msgs_packed->n_requests,
+                          request_msgs_packed->requests, MPI_STATUSES_IGNORE),
+              request_msgs_packed->comm);
+
+  unpack_data(request_msgs_packed);
+  free_request(request_msgs_packed);
+}
+
+static int xt_request_msgs_test_packed(Xt_request request) {
+
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+
+  int flag =
+    (int)xt_mpi_test_some(&(request_msgs_packed->n_requests),
+                          request_msgs_packed->requests,
+                          request_msgs_packed->ops_completed_buffer,
+                          request_msgs_packed->comm);
+
+  if (flag) {
+    unpack_data(request_msgs_packed);
+    free_request(request_msgs_packed);
+  }
+
+  return flag;
 }
 
 /*

@@ -53,11 +53,19 @@ typedef struct Xt_request_ *Xt_request;
 extern Xt_request XT_REQUEST_NULL;
 
 /**
- * Waits for the completion of a request. Afterwards request deallocated and
- * set to \ref XT_REQUEST_NULL
+ * Waits for the completion of a request. Afterwards it is deallocated and
+ * set to \ref XT_REQUEST_NULL.
  * @param[in,out] request must point to valid request or to XT_REQUEST_NULL
  */
 void xt_request_wait(Xt_request *request);
+
+/**
+ * Tests for the completion of a request. If it is complete, it is deallocated
+ * and set to \ref XT_REQUEST_NULL.
+ * @param[in,out] request must point to valid request or to XT_REQUEST_NULL
+ * @param[out]    flag    true if request is complete
+ */
+void xt_request_test(Xt_request *request, int *flag);
 
 #endif // XT_REQUEST_H
 
