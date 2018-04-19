@@ -47,7 +47,7 @@
 !
 
 MODULE xt_requests
-  USE iso_c_binding, ONLY: c_null_ptr, c_ptr, c_associated
+  USE iso_c_binding, ONLY: c_null_ptr, c_ptr, c_associated, c_int
   IMPLICIT NONE
   PRIVATE
 
@@ -58,7 +58,8 @@ MODULE xt_requests
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_request
 
-  PUBLIC :: xt_request_init, xt_request_wait, xt_request_f2c, xt_is_null
+  PUBLIC :: xt_request_init, xt_request_wait, xt_request_test, xt_request_f2c, &
+            xt_is_null
 
   INTERFACE
     ! this function must not be implemented in Fortran because
@@ -93,6 +94,20 @@ CONTAINS
     END INTERFACE
     CALL xt_request_wait_c(request%cptr)
   END SUBROUTINE xt_request_wait
+
+  SUBROUTINE xt_request_test(request, flag)
+    TYPE(xt_request), INTENT(inout) :: request
+    INTEGER(c_int), INTENT(out) :: flag
+    INTERFACE
+      SUBROUTINE xt_request_test_c(request_c, flag_c) &
+          BIND(C, name='xt_request_test')
+        IMPORT:: c_ptr, c_int
+        TYPE(c_ptr), INTENT(inout) :: request_c
+        INTEGER(c_int), INTENT(out) :: flag_c
+      END SUBROUTINE xt_request_test_c
+    END INTERFACE
+    CALL xt_request_test_c(request%cptr, flag)
+  END SUBROUTINE xt_request_test
 
   FUNCTION xt_request_is_null(request) RESULT(p)
     TYPE(xt_request), INTENT(in) :: request

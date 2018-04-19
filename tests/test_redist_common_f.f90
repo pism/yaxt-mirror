@@ -47,13 +47,13 @@
 !
 MODULE test_redist_common
   USE xt_core, ONLY: i2, i4, i8
-  USE iso_c_binding, ONLY: c_loc
+  USE iso_c_binding, ONLY: c_loc, c_int
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_redist, &
        xt_redist_s_exchange, xt_redist_s_exchange1, &
        xt_redist_a_exchange, xt_redist_a_exchange1, &
-       xt_request, xt_request_wait, xt_is_null, &
+       xt_request, xt_request_wait, xt_request_test, xt_is_null, &
        xi => xt_int_kind
 #ifdef __PGI
   ! PGI up to at least 15.4 has a bug that prevents proper import of
@@ -97,7 +97,7 @@ MODULE test_redist_common
   END INTERFACE wrap_a_exchange
 
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
-  PUBLIC :: check_wait_request, check_redist_xi
+  PUBLIC :: check_wait_request, check_test_request, check_redist_xi
 
   CHARACTER(len=*), PARAMETER :: filename = &
 __FILE__
@@ -169,6 +169,18 @@ CONTAINS
     CALL assert_request_is_null(request, file, line)
   END SUBROUTINE check_wait_request
 
+  SUBROUTINE check_test_request(request, file, line)
+    TYPE(xt_request), INTENT(inout) :: request
+    CHARACTER(len=*), INTENT(in) :: file
+    INTEGER, INTENT(in) :: line
+    INTEGER(c_int) :: flag
+    CALL xt_request_test(request, flag)
+    IF (xt_is_null(request)) THEN
+      IF (flag == 0) &
+        CALL test_abort("error: expected flag != 0", file, line)
+    END IF
+  END SUBROUTINE check_test_request
+
   SUBROUTINE wrap_a_exchange_dp(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, TARGET, INTENT(in) :: src(*)
@@ -179,6 +191,7 @@ CONTAINS
     CALL assert_request_is_null(request, filename, __LINE__)
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
+    CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_dp
 
   SUBROUTINE wrap_a_exchange_dp2d(redist, src, dst)
@@ -191,6 +204,7 @@ CONTAINS
     CALL assert_request_is_null(request, filename, __LINE__)
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
+    CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_dp2d
 
   SUBROUTINE wrap_a_exchange_i2(redist, src, dst)
@@ -203,6 +217,7 @@ CONTAINS
     CALL assert_request_is_null(request, filename, __LINE__)
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
+    CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_i2
 
   SUBROUTINE wrap_a_exchange_i4(redist, src, dst)
@@ -215,6 +230,7 @@ CONTAINS
     CALL assert_request_is_null(request, filename, __LINE__)
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
+    CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_i4
 
   SUBROUTINE wrap_a_exchange_i8(redist, src, dst)
@@ -227,6 +243,7 @@ CONTAINS
     CALL assert_request_is_null(request, filename, __LINE__)
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
+    CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_i8
 
   SUBROUTINE check_redist_dp(redist, src, dst_size, dst, ref_dst)

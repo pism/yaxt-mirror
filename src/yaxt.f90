@@ -100,7 +100,8 @@ MODULE yaxt
   USE xt_redist_logical, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
-  USE xt_requests, ONLY: xt_request, xt_request_wait, xt_is_null
+  USE xt_requests, ONLY: xt_request, xt_request_wait, xt_request_test, &
+       xt_is_null
   USE xt_mpi, ONLY: xt_mpi_comm_mark_exclusive
 
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
@@ -151,7 +152,7 @@ MODULE yaxt
        xt_mpi_comm_mark_exclusive, &
        xt_is_null, &
        OPERATOR(==), OPERATOR(/=), char, &
-       xt_request, xt_request_wait, xt_redist_a_exchange1, &
+       xt_request, xt_request_wait, xt_request_test, xt_redist_a_exchange1, &
        xt_redist_a_exchange
 
   INTERFACE OPERATOR(==)
