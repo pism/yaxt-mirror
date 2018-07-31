@@ -89,6 +89,12 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  struct Xt_redist_msg * recv_msgs,
                                  MPI_Comm comm, int tag_offset);
 
+Xt_exchanger
+xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
+                                struct Xt_redist_msg *send_msgs,
+                                struct Xt_redist_msg *recv_msgs,
+                                MPI_Comm comm, int tag_offset);
+
 typedef Xt_exchanger (*exchanger_new_func) (int nsend, int nrecv,
                                             struct Xt_redist_msg * send_msgs,
                                             struct Xt_redist_msg * recv_msgs,
@@ -156,6 +162,8 @@ static exchanger_new_func *parse_options(int *argc, char ***argv)
         exchangers_new[cur_ex] = xt_exchanger_irecv_send_new;
       else if (!strcmp(optarg, "mix_irecv_isend"))
         exchangers_new[cur_ex] = xt_exchanger_mix_isend_irecv_new;
+      else if (!strcmp(optarg, "neigh_alltoall"))
+        exchangers_new[cur_ex] = xt_exchanger_neigh_alltoall_new;
       else {
         fprintf(stderr, "Unknown exchanger constructor requested %s\n",
                 optarg);
