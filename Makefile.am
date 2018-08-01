@@ -11,6 +11,8 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	util/mpi_launch_bgrunjob \
 	config/checksrc/openmpi_struct_dt.c \
 	config/checkdoc/openmpi_struct_dt.txt \
+	config/checksrc/openmpi_datatype.c \
+	config/checkdoc/openmpi_datatype.txt \
 	config/checksrc/openmpi_dup.c \
 	config/checkdoc/openmpi_dup.txt \
 	config/checksrc/pe5228_iv32584.c \

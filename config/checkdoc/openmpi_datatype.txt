@@ -1,0 +1,3 @@
+WARNING: your MPI installation suffers from a known defect where some
+data layouts are incorrectly captured by MPI datatypes. At the time
+this bug was found, it was part of all Open MPI version from 2.1 to 3.1.
