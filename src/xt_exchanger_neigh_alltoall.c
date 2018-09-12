@@ -302,6 +302,7 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg *recv_msgs,
                                 MPI_Comm comm, int tag_offset) {
 
+  (void)nsend; (void)nrecv; (void)send_msgs; (void)recv_msgs; (void)tag_offset;
   Xt_abort(comm, "ERROR(xt_exchanger_neigh_alltoall_new): "
            "exchanger_neigh_alltoall requires MPI version 3.0 or higher",
            __FILE__, __LINE__);
