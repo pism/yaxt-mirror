@@ -282,7 +282,6 @@ xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
 {
   Xt_exchanger_neigh_alltoall exchanger_na =
     (Xt_exchanger_neigh_alltoall)exchanger;
-  struct Xt_redist_msg *restrict msgs;
   size_t nsend = (size_t)exchanger_na->nsend,
          nrecv = (size_t)exchanger_na->nrecv,
          nmsg = direction == SEND ? nsend : nrecv,
