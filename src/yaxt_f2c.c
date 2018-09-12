@@ -277,13 +277,8 @@ xt_redist_collection_static_new_f(Xt_redist *redists, MPI_Fint num_redists,
                                   MPI_Aint *dst_displacements,
                                   MPI_Fint comm_f)
 {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-#endif
+#if XT_MPI_FINT_MAX != INT_MAX
   assert((long long)num_redists <= (long long)INT_MAX);
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic pop
 #endif
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   if (num_redists < 1)
@@ -299,14 +294,9 @@ Xt_redist
 xt_redist_collection_new_f(Xt_redist *redists, MPI_Fint num_redists,
                            MPI_Fint cache_size, MPI_Fint comm_f)
 {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-#endif
+#if XT_MPI_FINT_MAX != INT_MAX
   assert((long long)num_redists <= (long long)INT_MAX
          && (long long)cache_size <= (long long)INT_MAX);
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)
-#pragma GCC diagnostic pop
 #endif
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   if (num_redists < 1)
