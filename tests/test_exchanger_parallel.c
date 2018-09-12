@@ -58,6 +58,7 @@
 
 #include "../src/xt_exchanger.h"
 #include "../src/xt_redist_internal.h"
+#include "core/ppm_xfuncs.h"
 
 #include "tests.h"
 
@@ -146,7 +147,7 @@ int main(int argc, char **argv)
 
 static exchanger_new_func *parse_options(int *argc, char ***argv)
 {
-  exchanger_new_func *exchangers_new = malloc(2 * sizeof (*exchangers_new));
+  exchanger_new_func *exchangers_new = xmalloc(2 * sizeof (*exchangers_new));
   exchangers_new[0] = xt_exchanger_mix_isend_irecv_new;
   exchangers_new[1] = (exchanger_new_func)0;
   size_t cur_ex = 0;
@@ -178,13 +179,8 @@ static exchanger_new_func *parse_options(int *argc, char ***argv)
         exit(EXIT_FAILURE);
       }
       ++cur_ex;
-      void *temp = realloc(exchangers_new,
-                           sizeof (*exchangers_new) * (cur_ex + 1));
-      if (!temp) {
-        perror("failed reallocation");
-        abort();
-      }
-      exchangers_new = temp;
+      exchangers_new = xrealloc(exchangers_new,
+                                sizeof (*exchangers_new) * (cur_ex + 1));
       exchangers_new[cur_ex] = (exchanger_new_func)0;
     }
   }
@@ -209,11 +205,7 @@ test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
 
     if (my_rank == i) {
       nsend = comm_size - 1;
-      send_msgs = malloc((size_t)nsend * sizeof (*send_msgs));
-      if (send_msgs == 0) {
-        perror("Failed to allocate message meta-data");
-        abort();
-      }
+      send_msgs = xmalloc((size_t)nsend * sizeof (*send_msgs));
       for (size_t j = 0; j < (size_t)i; ++j)
         send_msgs[j] = (struct Xt_redist_msg){.rank=(int)j,
                                               .datatype=MPI_INT};
@@ -268,22 +260,14 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   // gather pattern
   // prepare datatypes outside of loop for load-balance
-  MPI_Datatype *dt_by_ofs = malloc((size_t)comm_size * sizeof (*dt_by_ofs));
-  if (!dt_by_ofs) {
-    perror("Failed to allocate receive datatypes");
-    abort();
-  }
+  MPI_Datatype *dt_by_ofs = xmalloc((size_t)comm_size * sizeof (*dt_by_ofs));
   dt_by_ofs[0] = MPI_INT;
   for (size_t j = 1; j < (size_t)comm_size; ++j)
   {
     MPI_Type_indexed(1, (int[]){1}, (int[]){(int)j}, MPI_INT, dt_by_ofs + j);
     MPI_Type_commit(dt_by_ofs + j);
   }
-  int *dst_data = malloc(((size_t)comm_size - 1) * sizeof (*dst_data) * 2);
-  if (comm_size - 1 && !dst_data) {
-    perror("Failed to allocate message receive buffer");
-    abort();
-  }
+  int *dst_data = xmalloc(((size_t)comm_size - 1) * sizeof (*dst_data) * 2);
   for (int i = 0; i < comm_size; ++i) {
 
     // setup
@@ -295,11 +279,7 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
     struct Xt_redist_msg *recv_msgs = NULL;
     if (my_rank == i) {
       nrecv = (size_t)comm_size - 1;
-      recv_msgs = malloc(nrecv * sizeof (*recv_msgs) * 2);
-      if (nrecv && !recv_msgs) {
-        perror("Failed to allocate message meta-data");
-        abort();
-      }
+      recv_msgs = xmalloc(nrecv * sizeof (*recv_msgs) * 2);
       for (size_t j = 0; j < nrecv; ++j) {
         recv_msgs[j].rank = (i + (int)j + 1)%comm_size;
         recv_msgs[j].datatype = dt_by_ofs[j];
@@ -366,28 +346,13 @@ test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new)
   int nsend = comm_size - 1;
   int nrecv = comm_size - 1;
 
-  struct Xt_redist_msg *send_msgs = malloc((size_t)nsend * sizeof (*send_msgs));
-  if (nsend && !send_msgs) {
-    perror("Failed to allocate tx message meta-data");
-    abort();
-  }
+  struct Xt_redist_msg *send_msgs = xmalloc((size_t)nsend * sizeof (*send_msgs));
   for (size_t j = 0; j < (size_t)nsend; ++j)
     send_msgs[j].datatype = MPI_INT;
-  struct Xt_redist_msg *recv_msgs = malloc((size_t)nrecv * sizeof (*recv_msgs));
-  if (nrecv && !recv_msgs) {
-    perror("Failed to allocate rx message meta-data");
-    abort();
-  }
-  int *dst_data = malloc((size_t)comm_size * sizeof (*dst_data));
-  if (!dst_data) {
-    perror("Failed to allocate recv data");
-    abort();
-  }
-  MPI_Datatype *dt_by_ofs = malloc((size_t)comm_size * sizeof (*dt_by_ofs));
-  if (!dt_by_ofs) {
-    perror("Failed to allocate datatypes");
-    abort();
-  }
+  struct Xt_redist_msg *recv_msgs
+    = xmalloc((size_t)nrecv * sizeof (*recv_msgs));
+  int *dst_data = xmalloc((size_t)comm_size * sizeof (*dst_data));
+  MPI_Datatype *dt_by_ofs = xmalloc((size_t)comm_size * sizeof (*dt_by_ofs));
   dt_by_ofs[0] = my_rank != 0 ? MPI_INT : MPI_DATATYPE_NULL;
   for (size_t i = 1; i < (size_t)comm_size; ++i)
     if (i != (size_t)my_rank) {
