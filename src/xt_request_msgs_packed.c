@@ -99,7 +99,7 @@ Xt_request xt_request_msgs_packed_new(int n_requests, MPI_Request * requests,
                               (size_t)n_requests *
                               sizeof(*request->ops_completed_buffer));
   request->ops_completed_buffer =
-    (int*)(request->requests + (size_t)n_requests);
+    (int *)(request->requests + (size_t)n_requests);
   memcpy(request->requests, requests,
          (size_t)n_requests * sizeof(*request->requests));
   request->comm = comm;
