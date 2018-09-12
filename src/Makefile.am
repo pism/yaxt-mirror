@@ -321,7 +321,7 @@ uninstall-local:
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps \
 	  && touch ./$(DEPDIR)/FC.deps
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
 
 #
 # Local Variables:

@@ -11,7 +11,7 @@ DIST_SUBDIRS = f90 .
 	(cd ../src ; if test -r Makefile ; then \
 	  $(MAKE) xtinclude_Makefile.inc ; fi)
 
-@AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@ # am--include-marker
 
 yaxt.h: Makefile $(xtinclude_HEADERS)
 	( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
