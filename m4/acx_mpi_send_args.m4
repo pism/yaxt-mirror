@@ -43,7 +43,7 @@ AC_DEFUN([ACX_MPI_SEND_CONST_VOID_P_BUF_ARG],
   [AC_CACHE_CHECK([whether MPI_Send accepts const void * as first argument],
      [acx_cv_mpi_send_takes_const_void],
      [AC_LANG_PUSH([C])
-      AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <stdlib.h>
+      AC_LANG_CONFTEST([AC_LANG_SOURCE([@%:@include <stdlib.h>
 @%:@include <mpi.h>
 
 @%:@define xmpi(ret)           \\
@@ -68,8 +68,17 @@ int main(int argc, char **argv)
   xmpi(MPI_Finalize());
   return EXIT_SUCCESS;
 }
-])],
-        [acx_cv_mpi_send_takes_const_void=yes],
+])])
+      AC_COMPILE_IFELSE(,
+        [# compilation worked without error,
+         # inspect if removing const errors out or creates extra warnings next
+         acx_temp=`cat conftest.err | wc -l`
+         sed 's/const //' conftest.c >conftest.er1 ; mv conftest.er1 conftest.c
+         AC_COMPILE_IFELSE(,
+           [AS_IF([test "$acx_temp" -lt `cat conftest.err | wc -l`],
+              [acx_cv_mpi_send_takes_const_void=yes],
+              [acx_cv_mpi_send_takes_const_void=no])],
+           [acx_cv_mpi_send_takes_const_void=yes])],
         [acx_cv_mpi_send_takes_const_void=no])
       AC_LANG_POP([C])])
     AS_IF([test x"$acx_cv_mpi_send_takes_const_void" = xyes],[$1],
