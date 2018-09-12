@@ -54,6 +54,7 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
 #include <mpi.h>
 
 #include "xt/xt_redist.h"
