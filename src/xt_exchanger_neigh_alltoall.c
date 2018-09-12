@@ -47,25 +47,28 @@
 #include <config.h>
 #endif
 
+#include <mpi.h>
+
+#include "xt_exchanger_neigh_alltoall.h"
+
+#include "core/core.h"
+
+#if MPI_VERSION >= 3
+
 #include <assert.h>
 #include <string.h>
-#include <mpi.h>
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
-#include "xt_exchanger_neigh_alltoall.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_request.h"
 #include "xt/xt_request_msgs.h"
-#include "core/core.h"
 #include "xt_exchanger.h"
 
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
-
-#if MPI_VERSION >= 3
 
 static Xt_exchanger
 xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
