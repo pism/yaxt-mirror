@@ -65,6 +65,8 @@
 
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 
+#if MPI_VERSION >= 3
+
 static Xt_exchanger
 xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
                                  MPI_Comm newComm, int new_tag_offset);
@@ -290,6 +292,25 @@ xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
   memcpy(*ranks, exchanger_na->ranks + ofs, nmsg * sizeof(**ranks));
   return (int)nmsg;
 }
+
+// #if MPI_VERSION >= 3
+#else
+
+Xt_exchanger
+xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
+                                const struct Xt_redist_msg *send_msgs,
+                                const struct Xt_redist_msg *recv_msgs,
+                                MPI_Comm comm, int tag_offset) {
+
+  Xt_abort(comm, "ERROR(xt_exchanger_neigh_alltoall_new): "
+           "exchanger_neigh_alltoall requires MPI version 3.0 or higher",
+           __FILE__, __LINE__);
+
+  return NULL;
+}
+
+// #if MPI_VERSION >= 3
+#endif
 
 /*
  * Local Variables:

@@ -163,7 +163,15 @@ static exchanger_new_func *parse_options(int *argc, char ***argv)
       else if (!strcmp(optarg, "mix_irecv_isend"))
         exchangers_new[cur_ex] = xt_exchanger_mix_isend_irecv_new;
       else if (!strcmp(optarg, "neigh_alltoall"))
+#if MPI_VERSION >= 3
         exchangers_new[cur_ex] = xt_exchanger_neigh_alltoall_new;
+#else
+      {
+        fputs("xt_exchanger_neigh_alltoall_new requires MPI version 3.0 or "
+              "higher\n", stderr);
+        continue;
+      }
+#endif
       else {
         fprintf(stderr, "Unknown exchanger constructor requested %s\n",
                 optarg);
