@@ -111,9 +111,9 @@ static int xt_request_msgs_test(Xt_request request) {
 
   Xt_request_msgs request_msgs = (Xt_request_msgs)request;
 
-  int flag = (int)xt_mpi_test_some(&(request_msgs->n), request_msgs->requests,
-                                   request_msgs->ops_completed_buffer,
-                                   request_msgs->comm);
+  int flag = xt_mpi_test_some(&(request_msgs->n), request_msgs->requests,
+                              request_msgs->ops_completed_buffer,
+                              request_msgs->comm);
 
   if (flag) free(request_msgs);
 

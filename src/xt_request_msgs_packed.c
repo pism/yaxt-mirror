@@ -166,10 +166,10 @@ static int xt_request_msgs_test_packed(Xt_request request) {
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
 
   int flag =
-    (int)xt_mpi_test_some(&(request_msgs_packed->n_requests),
-                          request_msgs_packed->requests,
-                          request_msgs_packed->ops_completed_buffer,
-                          request_msgs_packed->comm);
+    xt_mpi_test_some(&(request_msgs_packed->n_requests),
+                     request_msgs_packed->requests,
+                     request_msgs_packed->ops_completed_buffer,
+                     request_msgs_packed->comm);
 
   if (flag) {
     unpack_data(request_msgs_packed);
