@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < size; ++i)
       xt_mpi_call(MPI_Irecv(recv_buf + (size_t)i * msg_size,
                             (int)msg_size, MPI_INT, i, 0,
-                            MPI_COMM_WORLD, &(requests[i])), MPI_COMM_WORLD);
+                            MPI_COMM_WORLD, requests + i), MPI_COMM_WORLD);
 
     Xt_request request = xt_request_msgs_new(n, requests, comm);
 
