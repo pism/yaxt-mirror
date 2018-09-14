@@ -70,6 +70,12 @@ MODULE xt_requests
       TYPE(xt_request), INTENT(in) :: request
       TYPE(c_ptr) :: p
     END FUNCTION xt_request_f2c
+
+    SUBROUTINE xt_request_wait(request) BIND(C, name='xt_request_wait')
+      IMPORT :: xt_request
+      TYPE(xt_request), INTENT(inout) :: request
+    END SUBROUTINE xt_request_wait
+
   END INTERFACE
 
   INTERFACE xt_is_null
@@ -84,16 +90,6 @@ CONTAINS
     request%cptr = cptr
   END SUBROUTINE xt_request_init
 
-  SUBROUTINE xt_request_wait(request)
-    TYPE(xt_request), INTENT(inout) :: request
-    INTERFACE
-      SUBROUTINE xt_request_wait_c(request_c)  BIND(C, name='xt_request_wait')
-        IMPORT:: c_ptr
-        TYPE(c_ptr), INTENT(inout) :: request_c
-      END SUBROUTINE xt_request_wait_c
-    END INTERFACE
-    CALL xt_request_wait_c(request%cptr)
-  END SUBROUTINE xt_request_wait
 
   SUBROUTINE xt_request_test(request, flag)
     TYPE(xt_request), INTENT(inout) :: request
