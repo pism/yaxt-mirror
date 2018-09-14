@@ -173,12 +173,10 @@ CONTAINS
     TYPE(xt_request), INTENT(inout) :: request
     CHARACTER(len=*), INTENT(in) :: file
     INTEGER, INTENT(in) :: line
-    INTEGER(c_int) :: flag
+    LOGICAL :: flag
     CALL xt_request_test(request, flag)
-    IF (xt_is_null(request)) THEN
-      IF (flag == 0) &
-        CALL test_abort("error: expected flag != 0", file, line)
-    END IF
+    IF (xt_is_null(request) .AND. .NOT. flag) &
+        CALL test_abort("error: expected flag set to .true.", file, line)
   END SUBROUTINE check_test_request
 
   SUBROUTINE wrap_a_exchange_dp(redist, src, dst)

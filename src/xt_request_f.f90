@@ -93,7 +93,8 @@ CONTAINS
 
   SUBROUTINE xt_request_test(request, flag)
     TYPE(xt_request), INTENT(inout) :: request
-    INTEGER(c_int), INTENT(out) :: flag
+    LOGICAL, INTENT(out) :: flag
+    INTEGER(c_int) :: flag_c
     INTERFACE
       SUBROUTINE xt_request_test_c(request_c, flag_c) &
           BIND(C, name='xt_request_test')
@@ -102,7 +103,8 @@ CONTAINS
         INTEGER(c_int), INTENT(out) :: flag_c
       END SUBROUTINE xt_request_test_c
     END INTERFACE
-    CALL xt_request_test_c(request%cptr, flag)
+    CALL xt_request_test_c(request%cptr, flag_c)
+    flag = flag_c /= 0
   END SUBROUTINE xt_request_test
 
   FUNCTION xt_request_is_null(request) RESULT(p)
