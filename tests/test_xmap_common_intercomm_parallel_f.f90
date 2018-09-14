@@ -212,7 +212,7 @@ CONTAINS
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER, INTENT(in) :: num_ref_ranks
     INTEGER(c_int), INTENT(in) :: ref_ranks(num_ref_ranks)
-    INTEGER(c_int) :: peer_rank_buf(num_ref_ranks)
+    INTEGER(c_int), INTENT(out) :: peer_rank_buf(num_ref_ranks)
     INTERFACE
       FUNCTION get_num_peers(xmap) RESULT(num)
         IMPORT :: xt_xmap
