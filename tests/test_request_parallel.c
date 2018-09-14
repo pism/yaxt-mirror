@@ -139,9 +139,9 @@ int main(int argc, char **argv) {
     MPI_Comm comm = MPI_COMM_WORLD;
 
     xt_mpi_call(MPI_Isend(send_buf, 1, MPI_INT, (rank + 1)%size, 0,
-                          MPI_COMM_WORLD, &requests[0]), MPI_COMM_WORLD);
+                          MPI_COMM_WORLD, requests+0), MPI_COMM_WORLD);
     xt_mpi_call(MPI_Irecv(recv_buf, 1, MPI_INT, (rank - 1 + size)%size, 0,
-                          MPI_COMM_WORLD, &requests[1]), MPI_COMM_WORLD);
+                          MPI_COMM_WORLD, requests+1), MPI_COMM_WORLD);
 
     MPI_Datatype unpack_datatype[1] = {MPI_INT};
     int neigh_rank;
