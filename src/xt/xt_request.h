@@ -50,7 +50,7 @@
  */
 
 typedef struct Xt_request_ *Xt_request;
-extern Xt_request XT_REQUEST_NULL;
+#define XT_REQUEST_NULL ((Xt_request)NULL)
 
 /**
  * Waits for the completion of a request. Afterwards it is deallocated and

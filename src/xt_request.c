@@ -54,8 +54,6 @@
 #include "xt/xt_request.h"
 #include "xt_request_internal.h"
 
-Xt_request XT_REQUEST_NULL = (Xt_request)NULL;
-
 void xt_request_wait(Xt_request *request) {
   assert(request);
   if (*request != XT_REQUEST_NULL) {

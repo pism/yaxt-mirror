@@ -78,6 +78,8 @@ MODULE xt_requests
 
   END INTERFACE
 
+  TYPE(xt_request), PARAMETER, PUBLIC :: xt_request_null = xt_request(c_null_ptr)
+
   INTERFACE xt_is_null
     MODULE PROCEDURE xt_request_is_null
   END INTERFACE xt_is_null
