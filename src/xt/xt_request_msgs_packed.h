@@ -67,7 +67,7 @@
  * @remark ownership of the MPI datatypes and the array datatypes remain with
  *         the caller
  * @remark ownership of the buffers packed_data[0..n_packed-1] and
- *         tmp_buffers[0..n_tmp_buffers] is passed to the Xt_request object,
+ *         tmp_buffers[0..n_tmp_buffers-1] is passed to the Xt_request object,
  *         however the caller remain the owner of the packed_data and
  *         tmp_buffers array
  */
