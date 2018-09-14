@@ -91,8 +91,7 @@ Xt_request xt_request_msgs_new(int n, MPI_Request * requests,
   request->vtable = &request_msgs_vtable;
   request->n = n;
   request->comm = comm;
-  request->ops_completed_buffer =
-    (int *)(request->requests + (size_t)n);
+  request->ops_completed_buffer = (int *)(request->requests + (size_t)n);
   memcpy(request->requests, requests, (size_t)n * sizeof(*request->requests));
 
   return (Xt_request)request;
