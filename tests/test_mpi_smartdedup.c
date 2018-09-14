@@ -1,7 +1,7 @@
 /**
  * @file test_mpi_generate_datatype.c
  *
- * @copyright Copyright  (C)  2012 JÃ¶rg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -11,7 +11,7 @@
  */
 /*
  * Keywords:
- * Maintainer: JÃ¶rg Behrens <behrens@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
  *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/

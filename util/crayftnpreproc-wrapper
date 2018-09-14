@@ -3,10 +3,10 @@
 # crayftnpreproc-wrapper --- wrapper to produce Cray ftn style front-end
 #                            preprocessor output on stdout
 #
-# Copyright  (C)  2014  Nathanael Hübbe <nathanael.huebbe@informatik.uni-hamburg.de>
+# Copyright  (C)  2014  Nathanael HÃ¼bbe <nathanael.huebbe@informatik.uni-hamburg.de>
 #                       Thomas Jahns <jahns@dkrz.de>
 #
-# Author: Nathanael Hübbe <nathanael.huebbe@informatik.uni-hamburg.de>
+# Author: Nathanael HÃ¼bbe <nathanael.huebbe@informatik.uni-hamburg.de>
 #         Thomas Jahns <jahns@dkrz.de>
 # Maintainer: Thomas Jahns <jahns@dkrz.de>
 # URL: https://www.dkrz.de/redmine/projects/scales-ppm
@@ -110,5 +110,6 @@ grep -v -h '^#' "${preprocessedFiles[@]}"
 # Local Variables:
 # license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"
+# coding: utf-8
 # End:
 #

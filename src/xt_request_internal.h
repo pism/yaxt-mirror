@@ -2,17 +2,17 @@
  * @brief Provide non-public declarations common to all requests.
  * @file xt_request_internal.h
  *
- * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 JÃ¶rg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Jörg Behrens <behrens@dkrz.de>
+ * @author JÃ¶rg Behrens <behrens@dkrz.de>
  *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
- * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ * Maintainer: JÃ¶rg Behrens <behrens@dkrz.de>
  *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://doc.redmine.dkrz.de/yaxt/html/
