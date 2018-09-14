@@ -130,6 +130,7 @@ int main(int argc, char **argv) {
 
     int * send_buf = xmalloc(1 * sizeof(*send_buf));
     int * recv_buf = xmalloc(1 * sizeof(*recv_buf));
+    void *send_bufp = send_buf, *recv_bufp = recv_buf;
 
     send_buf[0] = rank;
     recv_buf[0] = -1;
@@ -146,8 +147,7 @@ int main(int argc, char **argv) {
     int neigh_rank;
     Xt_request request =
       xt_request_msgs_packed_new(2, requests, comm, 1, 1, unpack_datatype,
-                                 (void **)&recv_buf, (void **)&send_buf,
-                                 &neigh_rank);
+                                 &recv_bufp, &send_bufp, &neigh_rank);
 
     if (request == XT_REQUEST_NULL)
       PUT_ERR("request ==  XT_REQUEST_NULL after xt_request_msgs_packed_new\n");
