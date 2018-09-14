@@ -82,10 +82,11 @@ struct Xt_request_msgs_packed_ {
   void * unpacked_data;
 };
 
-Xt_request xt_request_msgs_packed_new(int n_requests, MPI_Request * requests,
+Xt_request xt_request_msgs_packed_new(int n_requests,
+                                      const MPI_Request *requests,
                                       MPI_Comm comm, int n_packed,
                                       int n_tmp_buffers,
-                                      MPI_Datatype * datatypes,
+                                      const MPI_Datatype * datatypes,
                                       void ** packed_data,
                                       void ** tmp_buffers,
                                       void * unpacked_data) {

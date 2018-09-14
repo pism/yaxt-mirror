@@ -58,7 +58,7 @@
  * @remark ownership of the MPI requests is passed to the Xt_request object,
  *         however the caller remains the owner of the requests array
  */
-Xt_request xt_request_msgs_new(int n, MPI_Request *requests,
+Xt_request xt_request_msgs_new(int n, const MPI_Request requests[n],
                                MPI_Comm comm);
 
 #endif // XT_REQUEST_MSGS_H

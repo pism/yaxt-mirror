@@ -69,18 +69,18 @@ static const struct Xt_request_vtable request_msgs_vtable = {
   .test = xt_request_msgs_test,
 };
 
-typedef struct Xt_request_msgs_ * Xt_request_msgs;
+typedef struct Xt_request_msgs_ *Xt_request_msgs;
 
 struct Xt_request_msgs_ {
 
-  const struct Xt_request_vtable * vtable;
+  const struct Xt_request_vtable *vtable;
   int n;
   MPI_Comm comm;
-  int * ops_completed_buffer;
+  int *ops_completed_buffer;
   MPI_Request requests[];
 };
 
-Xt_request xt_request_msgs_new(int n, MPI_Request * requests,
+Xt_request xt_request_msgs_new(int n, const MPI_Request *requests,
                                MPI_Comm comm) {
 
   assert(n >= 0);
