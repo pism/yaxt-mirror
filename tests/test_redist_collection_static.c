@@ -97,7 +97,8 @@ int main(void) {
     double dst_data[] = {-1,-1,-1};
     static const double ref_dst_data[] = {1,3,5};
     check_redist(redist_coll, src_data,
-                 sizeof (dst_data), dst_data, ref_dst_data);
+                 sizeof (dst_data) / sizeof (dst_data[0]),
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
 
@@ -106,6 +107,8 @@ int main(void) {
 
   { // test with one redist used three times (two exchanges)
     // set up data
+    enum { src_slice_len = 5,
+           dst_slice_len = (src_slice_len+1)/2 };
     Xt_xmap xmap = build_odd_selection_xmap(5);
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
@@ -137,24 +140,14 @@ int main(void) {
 
     // test exchange
 
-    {
-      for (size_t j = 0; j < 3; ++j)
-        for (size_t i = 0; i < 3; ++i)
-          dst_data[j][i] = -1.0;
+    for (size_t j = 0; j < 3; ++j)
+      for (size_t i = 0; i < 3; ++i)
+        dst_data[j][i] = -1.0;
 
-      static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-      check_redist(redist_coll, src_data,
-                   sizeof (dst_data), dst_data, ref_dst_data);
-    }
-
-    {
-      for (size_t j = 0; j < 3; ++j)
-        for (size_t i = 0; i < 3; ++i)
-          dst_data[j][i] = -1.0;
-      static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-      check_redist(redist_coll, src_data,
-                   sizeof (dst_data), dst_data, ref_dst_data);
-    }
+    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+    check_redist(redist_coll, src_data,
+                 sizeof (dst_data) / sizeof (dst_data[0][0]),
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
 

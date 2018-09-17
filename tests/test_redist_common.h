@@ -62,8 +62,16 @@ build_odd_selection_xmap(int src_num_indices);
 int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2);
 
 void
-check_redist(Xt_redist redist, const void *src,
-             size_t dst_size, void *dst, const void *ref_dst_data);
+check_redist_(Xt_redist redist, const void *src,
+              size_t dst_size,
+              void *dst, const void *ref_dst_data,
+              MPI_Datatype dst_data_dt, MPI_Datatype ref_dst_data_dt,
+              const char *file, int line);
+
+#define check_redist(redist, src, dst_size,dst, ref_dst_data,   \
+                     dst_data_dt, ref_dst_data_dt)              \
+  check_redist_(redist, src, dst_size,dst, ref_dst_data,        \
+                dst_data_dt, ref_dst_data_dt, __FILE__, __LINE__)
 
 void
 wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],
@@ -80,8 +88,11 @@ typedef void
 (*exchange1_func_ptr)(Xt_redist redist, const void *src_data_p,
                      void *dst_data_p);
 
+void
+check_wait_request_(Xt_request *request, const char *file, int line);
 
-
+#define check_wait_request(request) \
+  check_wait_request_(request, __FILE__, __LINE__)
 #endif
 /*
  * Local Variables:

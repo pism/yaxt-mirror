@@ -101,14 +101,14 @@ int main(void) {
     double dst_data[dst_num];
     for (size_t i = 0; i < dst_num; ++i)
       dst_data[i] = -1.0;
-    check_redist(redist, src_data, sizeof (src_data[0]) * num_ref_values,
-                 dst_data, ref_dst_data);
+    check_redist(redist, src_data, num_ref_values,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
     for (size_t i = 0; i < dst_num; ++i)
       dst_data[i] = -1.0;
-    check_redist(redist_copy, src_data, sizeof (src_data[0]) * num_ref_values,
-                 dst_data, ref_dst_data);
+    check_redist(redist_copy, src_data, num_ref_values,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     // clean up
 
     xt_redist_delete(redist_copy);
@@ -162,14 +162,14 @@ int main(void) {
     double dst_data[dst_num];
     for (size_t i = 0; i < dst_num; ++i)
       dst_data[i] = -1.0;
-    check_redist(redist, src_data, sizeof (src_data[0]) * dst_num,
-                 dst_data, ref_dst_data);
+    check_redist(redist, src_data, dst_num,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
     for (size_t i = 0; i < dst_num; ++i)
       dst_data[i] = -1.0;
-    check_redist(redist_copy, src_data, sizeof (src_data[0]) * dst_num,
-                 dst_data, ref_dst_data);
+    check_redist(redist_copy, src_data, dst_num,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     // clean up
 
     xt_redist_delete(redist_copy);
@@ -220,14 +220,14 @@ int main(void) {
     long dst_data[dst_num];
     for (size_t i = 0; i < dst_num; ++i)
       dst_data[i] = -1L;
-    check_redist(redist, src_data, sizeof (src_data[0]) * dst_num,
-                 dst_data, ref_dst_data);
+    check_redist(redist, src_data, dst_num,
+                 dst_data, ref_dst_data, MPI_LONG, MPI_LONG);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
     for (size_t i = 0; i < dst_num; ++i)
       dst_data[i] = -1L;
-    check_redist(redist_copy, src_data, sizeof (src_data[0]) * dst_num,
-                 dst_data, ref_dst_data);
+    check_redist(redist_copy, src_data, dst_num,
+                 dst_data, ref_dst_data, MPI_LONG, MPI_LONG);
 
     // clean up
     xt_redist_delete(redist_copy);

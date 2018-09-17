@@ -49,8 +49,8 @@
 #include "yaxt.h"
 #include "tests.h"
 #include "test_redist_common.h"
+#include "core/core.h"
 #include "core/ppm_xfuncs.h"
-
 
 /*
  * build xmap for destination list containing all odd elements of
@@ -91,23 +91,81 @@ int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2) {
 }
 
 void
-check_redist(Xt_redist redist, const void *src,
-             size_t dst_size, void *dst, const void *ref_dst_data)
+check_redist_(Xt_redist redist, const void *src,
+              size_t dst_size, void *dst, const void *ref_dst_data,
+              MPI_Datatype dst_data_dt,
+              MPI_Datatype ref_dst_data_dt,
+              const char *file, int line)
 {
-  void * tmp_dst = malloc(dst_size);
-  for (int i = 0; i < 2; ++i) {
-    memcpy(tmp_dst, dst, dst_size);
-    if (i == 0) {
-      xt_redist_s_exchange1(redist, src, tmp_dst);
+  MPI_Comm comm = xt_redist_get_MPI_Comm(redist);
+  size_t dt_extent;
+  {
+    MPI_Aint dt_lb, dt_extent_;
+    xt_mpi_call(MPI_Type_get_extent(dst_data_dt, &dt_lb, &dt_extent_), comm);
+    dt_extent = (size_t)dt_extent_;
+  }
+  size_t dst_size_ = dst_size * dt_extent;
+  void *tmp_dst = malloc(dst_size_);
+  for (int txmode = 0; txmode < 2; ++txmode) {
+    void *dst_target = txmode == 0 ? tmp_dst : dst;
+    const void *dst_orig = txmode == 0 ? dst : tmp_dst;
+    memcpy(dst_target, dst_orig, dst_size);
+    if (txmode == 0) {
+      xt_redist_s_exchange1(redist, src, dst);
     } else {
-      Xt_request request;
-      xt_redist_a_exchange1(redist, src, tmp_dst, &request);
-      xt_request_wait(&request);
+      wrap_a_exchange1(redist, src, dst);
     }
-    if (memcmp(tmp_dst, ref_dst_data, dst_size))
-      PUT_ERR("error in xt_redist_s_exchange\n");
+    bool compare_failed = false;
+    if (dst_data_dt == ref_dst_data_dt) {
+      compare_failed = memcmp(dst, ref_dst_data, dst_size_);
+    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_INT) {
+      const double *dst_cmp = dst;
+      const int *ref_dst_cmp = ref_dst_data;
+      for (size_t i = 0; i < dst_size; ++i)
+        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG) {
+      const double *dst_cmp = dst;
+      const long *ref_dst_cmp = ref_dst_data;
+      for (size_t i = 0; i < dst_size; ++i)
+        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_SHORT) {
+      const double *dst_cmp = dst;
+      const short *ref_dst_cmp = ref_dst_data;
+      for (size_t i = 0; i < dst_size; ++i)
+        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG_LONG) {
+      const double *dst_cmp = dst;
+      const long long *ref_dst_cmp = ref_dst_data;
+      for (size_t i = 0; i < dst_size; ++i)
+        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+    } else if (dst_data_dt == MPI_DOUBLE
+               && ref_dst_data_dt == MPI_DATATYPE_NULL) {
+      const double *dst_cmp = dst;
+      for (size_t i = 0; i < dst_size; ++i)
+        compare_failed |= (dst_cmp[i] != (double)i);
+    } else
+      Xt_abort(comm, "internal error: unhandled test case!", file, line);
+    if (compare_failed)
+      PUT_ERR("error in xt_redist_s/a_exchange, called from %s, line %d\n",
+              file, line);
   }
   free(tmp_dst);
+}
+
+void
+check_wait_request_(Xt_request *request, const char *file, int line)
+{
+#ifndef VERBOSE
+  (void)file;
+  (void)line;
+#endif
+  if (*request == XT_REQUEST_NULL)
+    PUT_ERR("request ==  XT_REQUEST_NULL before xt_request_wait: %s, line %d\n",
+            file, line);
+  xt_request_wait(request);
+  if (*request != XT_REQUEST_NULL)
+    PUT_ERR("request !=  XT_REQUEST_NULL after xt_request_wait: %s, line %d\n",
+            file, line);
 }
 
 void
@@ -116,7 +174,7 @@ wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],
 {
   Xt_request request;
   xt_redist_a_exchange(redist, num_data_p, src_data_p, dst_data_p, &request);
-  xt_request_wait(&request);
+  check_wait_request(&request);
 }
 
 void
@@ -124,7 +182,7 @@ wrap_a_exchange1(Xt_redist redist, const void *src_data_p, void *dst_data_p)
 {
   Xt_request request;
   xt_redist_a_exchange1(redist, src_data_p, dst_data_p, &request);
-  xt_request_wait(&request);
+  check_wait_request(&request);
 }
 
 /*

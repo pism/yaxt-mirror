@@ -93,19 +93,19 @@ int main(void) {
 
     // test exchange
     double src_data[1];
-    double ref_dst_data[1];
-    enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
-    double dst_data[num_ref_values];
+    enum { num_dst_values = 1 };
+    double ref_dst_data[num_dst_values];
+    double dst_data[num_dst_values];
     src_data[0] = rank;
     ref_dst_data[0] =  (rank + size - 1)%size;
-    for (size_t i = 0; i < num_ref_values; ++i) dst_data[i] = -1.0;
-    check_redist(redist, src_data, sizeof (src_data[0]) * num_ref_values,
-                 dst_data, ref_dst_data);
+    for (size_t i = 0; i < num_dst_values; ++i) dst_data[i] = -1.0;
+    check_redist(redist, src_data, num_dst_values, dst_data, ref_dst_data,
+                 MPI_DOUBLE, MPI_DOUBLE);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    for (size_t i = 0; i < num_ref_values; ++i) dst_data[i] = -1.0;
-    check_redist(redist_copy, src_data, sizeof (src_data[0]) * num_ref_values,
-                 dst_data, ref_dst_data);
+    for (size_t i = 0; i < num_dst_values; ++i) dst_data[i] = -1.0;
+    check_redist(redist_copy, src_data, num_dst_values,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
     xt_redist_delete(redist_copy);
@@ -149,13 +149,13 @@ int main(void) {
     src_data[0] = rank;
     for (int i = 0; i < size; ++i) ref_dst_data[i] = i;
     for (size_t i = 0; i < (size_t)size; ++i) dst_data[i] = -1.0;
-    check_redist(redist, src_data, sizeof (src_data[0]) * (size_t)size,
-                 dst_data, ref_dst_data);
+    check_redist(redist, src_data, (size_t)size,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
     for (size_t i = 0; i < (size_t)size; ++i) dst_data[i] = -1.0;
-    check_redist(redist_copy, src_data, sizeof (src_data[0]) * (size_t)size,
-                 dst_data, ref_dst_data);
+    check_redist(redist_copy, src_data, (size_t)size,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
     free(dst_data);
@@ -196,18 +196,19 @@ int main(void) {
 
     // test exchange
     double *src_data = xmalloc((size_t)nsend * sizeof(*src_data));
-    double ref_dst_data[1];
-    double dst_data[1];
+    enum { num_dst_values = 1 };
+    double ref_dst_data[num_dst_values];
+    double dst_data[num_dst_values];
     if (rank == 0) for (int i = 0; i < size; ++i) src_data[i] = i;
     ref_dst_data[0] = rank;
     dst_data[0] = -1.0;
-    check_redist(redist, src_data, sizeof (ref_dst_data[0]), dst_data,
-                 ref_dst_data);
+    check_redist(redist, src_data, num_dst_values, dst_data, ref_dst_data,
+                 MPI_DOUBLE, MPI_DOUBLE);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
     dst_data[0] = -1.0;
-    check_redist(redist_copy, src_data, sizeof (ref_dst_data[0]), dst_data,
-                 ref_dst_data);
+    check_redist(redist_copy, src_data, num_dst_values, dst_data,
+                 ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
     free(src_data);

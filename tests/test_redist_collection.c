@@ -100,14 +100,14 @@ int main(void) {
     static const double ref_dst_data[nselect] = {1,3,5};
 
     for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
-    check_redist(redist_coll, src_data, nselect * sizeof (*dst_data),
-                 dst_data, ref_dst_data);
+    check_redist(redist_coll, src_data, nselect,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
 
     for (size_t i = 0; i < nselect; ++i) dst_data[i] = -1;
-    check_redist(redist_coll_copy, src_data, nselect * sizeof (*dst_data),
-                 dst_data, ref_dst_data);
+    check_redist(redist_coll_copy, src_data, nselect,
+                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     // clean up
 
     xt_redist_delete(redist_coll_copy);
