@@ -152,6 +152,13 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg *recv_msgs,
                                 MPI_Comm comm, int tag_offset) {
 
+  int flag;
+  xt_mpi_call(MPI_Comm_test_inter(comm, &flag), comm);
+  if (flag)
+    Xt_abort(comm, "ERROR(xt_exchanger_neigh_alltoall_new): "
+             "inter-communicator's are not defined for virtual topologies",
+             __FILE__, __LINE__);
+
   assert((nsend >= 0) & (nrecv >= 0));
   Xt_exchanger_neigh_alltoall exchanger
     = xt_exchanger_neigh_alltoall_alloc((size_t)nsend, (size_t)nrecv);
