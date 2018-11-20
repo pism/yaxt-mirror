@@ -60,6 +60,7 @@
 #include "../src/xt_redist_internal.h"
 #include "core/ppm_xfuncs.h"
 
+#include "core/ppm_xfuncs.h"
 #include "tests.h"
 
 struct test_message {
@@ -111,6 +112,8 @@ static void
 test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new);
 static void
 test_rr(MPI_Comm comm, exchanger_new_func exchanger_new);
+static void
+test_intercomm_all2all(MPI_Comm comm, exchanger_new_func exchanger_new);
 
 int main(int argc, char **argv)
 {
@@ -137,6 +140,8 @@ int main(int argc, char **argv)
     test_all2all(MPI_COMM_WORLD, exchanger_new);
 
     test_rr(MPI_COMM_WORLD, exchanger_new);
+
+    test_intercomm_all2all(MPI_COMM_WORLD, exchanger_new);
   }
   free(exchangers_new);
   xt_finalize();
@@ -457,6 +462,102 @@ test_rr(MPI_Comm comm, exchanger_new_func exchanger_new)
     // cleanup
     xt_exchanger_delete(exchanger);
   }
+}
+
+static void
+test_intercomm_all2all(MPI_Comm comm, exchanger_new_func exchanger_new)
+{
+
+  // inter-communicator's are not defined for virtual topologies, which are
+  // used by xt_exchanger_neigh_alltoall_new
+  if (exchanger_new == xt_exchanger_neigh_alltoall_new) return;
+
+  int my_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  if (comm_size == 1) return;
+
+  // generate intercomm
+  int splitRank = (comm_size * 2) / 3;
+  int group = my_rank >= splitRank;
+  MPI_Comm intra_group_comm;
+  MPI_Comm inter_comm; // split communicator with 2 to 1 ratio
+  xt_mpi_call(MPI_Comm_split(comm, group, 0, &intra_group_comm), comm);
+  xt_mpi_call(MPI_Intercomm_create(intra_group_comm, 0, comm,
+                                   group ? 0 : splitRank,
+                                   0, &inter_comm), comm);
+
+  int intra_rank;
+  int local_size, remote_size;
+  xt_mpi_call(MPI_Comm_rank(inter_comm, &intra_rank), comm);
+  xt_mpi_call(MPI_Comm_size(inter_comm, &local_size), comm);
+  xt_mpi_call(MPI_Comm_remote_size(inter_comm, &remote_size), comm);
+
+  // all-to-all pattern
+  // setup
+  int nsend = remote_size;
+  int nrecv = remote_size;
+
+  struct Xt_redist_msg * send_msgs =
+    xmalloc((size_t)nsend * sizeof (*send_msgs));
+  for (int i = 0; i < nsend; ++i) {
+    send_msgs[i].rank = i;
+    send_msgs[i].datatype = MPI_INT;
+  }
+
+  struct Xt_redist_msg * recv_msgs =
+    xmalloc((size_t)nrecv * sizeof (*recv_msgs));
+  for (int i = 0; i < nrecv; ++i) {
+    recv_msgs[i].rank = i;
+    recv_msgs[i].datatype = MPI_INT;
+    MPI_Type_indexed(
+      1, (int[]){1}, (int[]){(int)i}, MPI_INT, &(recv_msgs[i].datatype));
+    MPI_Type_commit(&(recv_msgs[i].datatype));
+  }
+
+  int *dst_data = xmalloc((size_t)nrecv * sizeof (*dst_data));
+
+  Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
+                                         send_msgs,
+                                         recv_msgs,
+                                         inter_comm, 0);
+  // test
+  int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
+  for (int async = 0; async < 1 + test_async; ++async) {
+
+    int src_data[1] = {my_rank};
+    for (int i = 0; i < nrecv; ++i) dst_data[i] = -1;
+
+    if (async) {
+      Xt_request request;
+      int flag;
+      xt_exchanger_a_exchange(exchanger, (void*)src_data, (void*)dst_data,
+                              &request);
+      xt_request_test(&request, &flag);
+      xt_request_wait(&request);
+      xt_request_test(&request, &flag);
+      if (!flag) PUT_ERR("invalid flag result\n");
+    } else {
+      xt_exchanger_s_exchange(exchanger, (void*)src_data, (void*)dst_data);
+    }
+
+    int dst_data_offset = (my_rank >= splitRank)?0:splitRank;
+    for (int i = 0; i < nrecv; ++i)
+      if (dst_data[i] != i + dst_data_offset) PUT_ERR("invalid data\n");
+  }
+
+  // cleanup
+  xt_exchanger_delete(exchanger);
+
+  for (int i = 0; i < nrecv; ++i) MPI_Type_free(&(recv_msgs[i].datatype));
+
+  free(dst_data);
+  free(recv_msgs);
+  free(send_msgs);
+
+  xt_mpi_call(MPI_Comm_free(&inter_comm), comm);
+  xt_mpi_call(MPI_Comm_free(&intra_group_comm), comm);
 }
 
 /*
