@@ -205,6 +205,138 @@ void xt_quicksort_index(Xt_int * v_idx, int n, int * v_pos, int reset_pos) {
   if (v_pos != v_pos_orig) free(v_pos);
 }
 
+void xt_quicksort_index_int(int * v_idx, int n, int * v_pos, int reset_pos) {
+
+  enum { pointer_inc = 64 };
+  unsigned pointer_size;
+
+  int * stackl;
+  int * stackr;
+
+  int i, j, k, l, r;
+  unsigned s;
+  int w_idx, x_idx;
+  int w_pos, x_pos;
+
+  /*  Initialization */
+  int *v_pos_orig =  v_pos;
+
+  if (!v_pos) v_pos = malloc((size_t)n  * sizeof(v_pos[0]));
+
+  if (v_pos != v_pos_orig || reset_pos) {
+    for(i=0; i<n; i++) {
+      v_pos[i] = i;
+    }
+  }
+
+  pointer_size = pointer_inc;
+
+  stackl = xmalloc((size_t)pointer_size * sizeof(stackl[0]));
+  stackr = xmalloc((size_t)pointer_size * sizeof(stackr[0]));
+
+  s = 1;
+  stackl[0] = 0;
+  stackr[0] = n-1;
+
+  /*  Start sorting
+
+  ... keep taking the top request from the stack until s = 0.
+
+  */
+
+  while  ( s > 0 ) {
+
+    --s;
+    l = stackl[s];
+    r = stackr[s];
+
+    /* ... keep splitting a[l], ... ,a[r] until l>= r. */
+
+    while ( l < r ) {
+
+      i = l;
+      j = r;
+      k = (l+r) / 2;
+      x_idx = v_idx[k];
+      x_pos = v_pos[k];
+
+      /* Search from lower end */
+
+      while(1) {
+        while(1)
+          if ((v_idx[i] < x_idx) || (v_idx[i] == x_idx && v_pos[i] < x_pos))
+            i = i + 1;
+          else
+            break;
+
+        /* Search from upper end */
+
+        while(1)
+          if ((x_idx < v_idx[j]) || (x_idx == v_idx[j] && x_pos < v_pos[j]))
+            j = j - 1;
+          else
+            break;
+
+        /* Swap positions i & j */
+
+        if ( i <= j ) {
+
+          w_idx      = v_idx[i];
+          v_idx[i]   = v_idx[j];
+          v_idx[j]   = w_idx;
+
+          w_pos      = v_pos[i];
+          v_pos[i]   = v_pos[j];
+          v_pos[j]   = w_pos;
+
+          i = i + 1;
+          j = j - 1;
+
+          if ( i > j ) break;
+        } else
+          break;
+      }
+
+      if ( j-l >= r-i ) {
+
+        if ( l < j ) {
+
+          if ( s >= pointer_size ) {
+            pointer_size = pointer_size + pointer_inc;
+            stackl = xrealloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
+            stackr = xrealloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
+          }
+
+          stackl[s] = l;
+          stackr[s] = j;
+          ++s;
+        }
+        l = i;
+      } else {
+
+        if ( i < r ) {
+
+          if ( s >= pointer_size ) {
+            pointer_size = pointer_size + pointer_inc;
+            stackl = xrealloc(stackl, (size_t)pointer_size * sizeof(stackl[0]));
+            stackr = xrealloc(stackr, (size_t)pointer_size * sizeof(stackr[0]));
+          }
+
+          stackl[s] = i;
+          stackr[s] = r;
+          ++s;
+        }
+        r = j;
+      }
+    } /* ( l < r ) */
+  } /* ( s /= 0 ) */
+
+  free(stackl);
+  free(stackr);
+  if (v_pos != v_pos_orig) free(v_pos);
+}
+
+
 #undef SORT_TYPE
 #undef SORT_TYPE_SUFFIX
 #undef SORT_TYPE_CMP_LT

@@ -66,7 +66,6 @@
   It is possible to merge multiple redistribution objects into a single
   one (see \ref redist_colls).
 
-
   \subsection exchange data exchange
 
   The exchange can be executed by a blocking call to \ref xt_redist_s_exchange or
@@ -76,4 +75,17 @@
 
   If a yaxt object is not needed anymore then it can be deleted by the respective delete
   calls (e.g. \ref xt_idxlist_delete).
+
+  \subsection dmap
+
+  Usually the exchange map determines the order in which data points are
+  exchanged. In some cases it might be desirable to adjust this order according
+  to the order in which the data points are actually stored in memory on the
+  source or target side.
+
+  This can be achieved using the data map. It is constructed based on an
+  exchange map and a matching data layout. The data map allows the user to
+  choose between different reorder options. From a data map a redistribution
+  object can be generated.
+
  */

@@ -37,6 +37,7 @@ noinst_PROGRAMS = 						\
 	test_misc_f						\
 	test_mpi_generate_datatype				\
 	test_mpi_smartdedup					\
+	test_dmap_parallel					\
 	test_exchanger_parallel					\
 	test_handles						\
 	test_arithmetic_long					\
@@ -139,6 +140,7 @@ FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 test_arithmetic_long_SOURCES = test_arithmetic_long.c
 test_arithmetic_long_LDADD = libtestutil.la
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
+test_dmap_parallel_SOURCES = test_dmap_parallel.c tests.h
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxempty_f_SOURCES = test_idxempty_f.f90
 test_idxempty_f_LDADD = $(XT_FC_LDADD)
@@ -271,6 +273,7 @@ TESTS = 							\
 	test_redist_p2p_parallel_run				\
 	test_redist_repeat_run					\
 	test_redist_repeat_parallel_run				\
+	test_dmap_parallel_run					\
 	test_request_parallel_run				\
 	test_xmap_all2all_run					\
 	test_xmap_all2all_fail_run				\
