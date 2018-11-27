@@ -176,7 +176,6 @@ redist_sab_delete(Xt_redist redist) {
 
   xt_exchanger_delete(redist_sab->exchanger);
 
-
   xt_mpi_comm_smart_dedup(&redist_sab->comm, redist_sab->tag_offset);
 
   free(redist_sab);
