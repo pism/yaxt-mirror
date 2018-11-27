@@ -141,7 +141,12 @@ libyaxt_c_la_SOURCES =						\
 	xt_exchanger_neigh_alltoall.c				\
 	xt_exchanger_neigh_alltoall.h				\
 	xt_exchanger_mix_isend_irecv.c				\
-	xt_exchanger_mix_isend_irecv.h
+	xt_exchanger_mix_isend_irecv.h				\
+	xt_dmap.c						\
+	xt_dmap_internal.h					\
+	xt/xt_dmap.h						\
+	xt_dmap_offset.c					\
+	xt/xt_dmap_offset.h
 
 libyaxt_la_SOURCES =						\
 	xt_idxlist_collection_f.f90				\

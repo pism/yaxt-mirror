@@ -79,6 +79,7 @@ typedef uint64_t Xt_uid;
 
 typedef struct Xt_idxlist_ *Xt_idxlist;
 typedef struct Xt_xmap_ *Xt_xmap;
+typedef struct Xt_dmap_ *Xt_dmap;
 typedef struct Xt_redist_ *Xt_redist;
 
 /**
