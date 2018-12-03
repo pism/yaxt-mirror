@@ -125,9 +125,16 @@ MODULE ftest_common
 
     MODULE PROCEDURE cmp_dbl_arrays_a1d_a1d
     MODULE PROCEDURE cmp_dbl_arrays_a2d_a2d
+    MODULE PROCEDURE cmp_dbl_arrays_a3d_a3d
     MODULE PROCEDURE cmp_i2_arrays_a1d_a1d
     MODULE PROCEDURE cmp_i4_arrays_a1d_a1d
     MODULE PROCEDURE cmp_i8_arrays_a1d_a1d
+    MODULE PROCEDURE cmp_i2_arrays_a2d_a2d
+    MODULE PROCEDURE cmp_i4_arrays_a2d_a2d
+    MODULE PROCEDURE cmp_i8_arrays_a2d_a2d
+    MODULE PROCEDURE cmp_i2_arrays_a3d_a3d
+    MODULE PROCEDURE cmp_i4_arrays_a3d_a3d
+    MODULE PROCEDURE cmp_i8_arrays_a3d_a3d
   END INTERFACE cmp_arrays
 
   INTERFACE id_map
@@ -440,6 +447,25 @@ CONTAINS
     END IF
   END FUNCTION cmp_dbl_arrays_a2d_a2d
 
+  FUNCTION cmp_dbl_arrays_a3d_a3d(a, b) RESULT(differ)
+    DOUBLE PRECISION, INTENT(in) :: a(:,:,:), b(:,:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_dbl_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_dbl_arrays_a3d_a3d
+
   FUNCTION cmp_i2_arrays_a1d_a1d(a, b) RESULT(differ)
     INTEGER(i2), INTENT(in) :: a(:), b(:)
     LOGICAL :: differ
@@ -496,6 +522,120 @@ CONTAINS
       differ = .FALSE.
     END IF
   END FUNCTION cmp_i8_arrays_a1d_a1d
+
+  FUNCTION cmp_i2_arrays_a2d_a2d(a, b) RESULT(differ)
+    INTEGER(i2), INTENT(in) :: a(:,:), b(:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int16_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i2_arrays_a2d_a2d
+
+  FUNCTION cmp_i4_arrays_a2d_a2d(a, b) RESULT(differ)
+    INTEGER(i4), INTENT(in) :: a(:,:), b(:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int32_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i4_arrays_a2d_a2d
+
+  FUNCTION cmp_i8_arrays_a2d_a2d(a, b) RESULT(differ)
+    INTEGER(i8), INTENT(in) :: a(:,:), b(:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int64_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i8_arrays_a2d_a2d
+
+  FUNCTION cmp_i2_arrays_a3d_a3d(a, b) RESULT(differ)
+    INTEGER(i2), INTENT(in) :: a(:,:,:), b(:,:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int16_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i2_arrays_a3d_a3d
+
+  FUNCTION cmp_i4_arrays_a3d_a3d(a, b) RESULT(differ)
+    INTEGER(i4), INTENT(in) :: a(:,:,:), b(:,:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int32_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i4_arrays_a3d_a3d
+
+  FUNCTION cmp_i8_arrays_a3d_a3d(a, b) RESULT(differ)
+    INTEGER(i8), INTENT(in) :: a(:,:,:), b(:,:,:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different size'
+      differ = .TRUE.
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_int64_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i8_arrays_a3d_a3d
 
   SUBROUTINE factorize(c, a, b)
     INTEGER, INTENT(in) :: c
