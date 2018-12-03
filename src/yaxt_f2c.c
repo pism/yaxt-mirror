@@ -66,16 +66,18 @@
 #include "xt/xt_mpi.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_idxvec.h"
+#include "xt/xt_idxstripes.h"
+#include "xt/xt_idxmod.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_xmap_intersection.h"
 #include "xt/xt_xmap_all2all.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_xmap_dist_dir_intercomm.h"
-#include "xt/xt_idxstripes.h"
+#include "xt/xt_dmap.h"
+#include "xt/xt_dmap_offset.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_redist_p2p.h"
 #include "xt/xt_redist_single_array_base.h"
-#include "xt/xt_idxmod.h"
 #include "xt/xt_redist_collection_static.h"
 #include "xt/xt_redist_collection.h"
 #include "xt/xt_sort.h"
@@ -86,6 +88,10 @@ struct xt_idxlist_f {
 
 struct xt_xmap_f {
    Xt_xmap cptr;
+};
+
+struct xt_dmap_f {
+  Xt_dmap cptr;
 };
 
 struct xt_redist_f {
@@ -143,6 +149,11 @@ void xt_sort_idxpos_f2c(idxpos_type *a, size_t n)
 }
 
 Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
+{
+  return p->cptr;
+}
+
+Xt_dmap xt_dmap_f2c(struct xt_dmap_f *p)
 {
   return p->cptr;
 }
@@ -221,6 +232,33 @@ xt_xmap_dist_dir_intercomm_new_f(struct xt_idxlist_f *src_idxlist_f,
   return xt_xmap_dist_dir_intercomm_new(src_idxlist_f->cptr,
                                         dst_idxlist_f->cptr,
                                         inter_comm_c, intra_comm_c);
+}
+
+void xt_dmap_reorder_f(struct xt_dmap_f *dmap_f, int reorder_type) {
+
+  xt_dmap_reorder(dmap_f->cptr, (enum xt_reorder_type)reorder_type);
+}
+
+void xt_dmap_repeat_f(struct xt_dmap_f *dmap_f, int num_repetitions,
+                      MPI_Fint *src_displacements, MPI_Fint *dst_displacements)
+{
+  assert(sizeof (MPI_Fint) == sizeof (int));
+
+  xt_dmap_repeat(
+    dmap_f->cptr, num_repetitions, src_displacements, dst_displacements);
+}
+
+void * xt_dmap_generate_redist_f(struct xt_dmap_f *dmap_f, MPI_Fint datatype_f)
+{
+  return xt_dmap_generate_redist(dmap_f->cptr, MPI_Type_f2c(datatype_f));
+}
+
+Xt_dmap xt_dmap_offset_new_f(struct xt_xmap_f *xmap_f, MPI_Fint * src_offsets,
+                             MPI_Fint * dst_offsets)
+{
+  assert(sizeof (MPI_Fint) == sizeof (int));
+
+  return xt_dmap_offset_new(xmap_f->cptr, src_offsets, dst_offsets);
 }
 
 Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,
