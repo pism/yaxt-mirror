@@ -38,6 +38,7 @@ noinst_PROGRAMS = 						\
 	test_mpi_generate_datatype				\
 	test_mpi_smartdedup					\
 	test_dmap_parallel					\
+	test_dmap_parallel_f					\
 	test_exchanger_parallel					\
 	test_handles						\
 	test_idxempty						\
@@ -138,6 +139,8 @@ FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
 test_dmap_parallel_SOURCES = test_dmap_parallel.c tests.h
+test_dmap_parallel_f_SOURCES = test_dmap_parallel_f.f90
+test_dmap_parallel_f_LDADD = $(XT_FC_LDADD)
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxempty_f_SOURCES = test_idxempty_f.f90
 test_idxempty_f_LDADD = $(XT_FC_LDADD)
