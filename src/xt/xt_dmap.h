@@ -78,6 +78,8 @@ enum xt_reorder_type {
  * @remark This routine needs to be called for all processes associated with the
  *         data map. The argument num_repetitions needs to be identical on all
  *         processes.
+ * @remarkt The displacements are in reference to the extent for the
+ *          base_datatype provided to \ref xt_dmap_generate_redist.
  */
 void xt_dmap_repeat(Xt_dmap dmap, int num_repetitions,
                     const int src_displacements[num_repetitions],
