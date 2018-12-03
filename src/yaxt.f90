@@ -71,6 +71,7 @@ MODULE yaxt
   USE xt_idxstripes, ONLY: xt_idxstripes_new, xt_idxstripes_from_idxlist_new
   USE xt_idxsection, ONLY: xt_idxsection_new, xt_idxfsection_new
   USE xt_idxlist_collection, ONLY: xt_idxlist_collection_new
+  USE xt_idxmod, ONLY: xt_modifier, xt_idxmod_new
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_copy, xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
@@ -104,7 +105,7 @@ MODULE yaxt
        xt_is_null, xt_request_null
   USE xt_mpi, ONLY: xt_mpi_comm_mark_exclusive
 
-  USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, c_loc
+  USE iso_c_binding, ONLY: c_ptr
   IMPLICIT NONE
 
   PRIVATE
@@ -124,9 +125,10 @@ MODULE yaxt
        xt_idxlist_get_index_stripes, xt_idxlist_get_bounding_box, &
        xt_idxlist_get_pos_exts_of_index_stripes, &
        xt_idxvec_new, xt_idxvec_from_stripes_new, &
+       xt_modifier, xt_idxmod_new, &
        xt_idxstripes_new, xt_idxstripes_from_idxlist_new, &
        xt_idxlist_collection_new, xt_idxsection_new, xt_idxfsection_new, &
-       xt_idxmod_new, xt_xmap, xt_xmap_c2f, xt_xmap_f2c, xt_xmap_copy, &
+       xt_xmap, xt_xmap_c2f, xt_xmap_f2c, xt_xmap_copy, &
        xt_xmap_all2all_new, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks, xt_xmap_dist_dir_new, &
@@ -164,33 +166,6 @@ MODULE yaxt
     MODULE PROCEDURE xt_bounds_ne
   END INTERFACE OPERATOR(/=)
 
-  TYPE, BIND(C), PUBLIC :: xt_modifier
-    TYPE(xt_idxlist) :: extract
-    TYPE(xt_idxlist) :: subst
-    INTEGER(c_int) :: mask
-  END TYPE xt_modifier
-
-  INTERFACE
-    FUNCTION xt_idxmod_new_c(patch, modifier, modifier_num, mstate_ptr) &
-         BIND(C, name='xt_idxmod_new') RESULT(res)
-      IMPORT :: xt_int_kind, xt_modifier, c_ptr, c_int
-      IMPLICIT NONE
-      TYPE(c_ptr), VALUE, INTENT(in) :: patch
-      INTEGER(c_int), VALUE, INTENT(in) :: modifier_num
-      TYPE(xt_modifier), INTENT(in) :: modifier(modifier_num)
-      TYPE(c_ptr), VALUE, INTENT(in) :: mstate_ptr
-      TYPE(c_ptr) :: res
-    END FUNCTION xt_idxmod_new_c
-  END INTERFACE
-
-  INTERFACE xt_idxmod_new
-    MODULE PROCEDURE xt_idxmod_new_a1d
-    MODULE PROCEDURE xt_idxmod_new_a1d_a1d
-    MODULE PROCEDURE xt_idxmod_new_a1d_i4
-    MODULE PROCEDURE xt_idxmod_new_a1d_i4_a1d
-    MODULE PROCEDURE xt_idxmod_new_a1d_i4_a2d
-  END INTERFACE xt_idxmod_new
-
 CONTAINS
 
   FUNCTION xt_idxempty_new() RESULT(res)
@@ -221,86 +196,6 @@ CONTAINS
     LOGICAL :: a_equals_b
     a_equals_b = a%size /= b%size .OR. a%start /= b%start
   END FUNCTION xt_bounds_ne
-
-  FUNCTION xt_idxmod_new_a1d(patch, modifier) RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_idxlist), INTENT(in) :: patch
-    TYPE(xt_modifier), INTENT(in) :: modifier(:)
-    TYPE(Xt_idxlist) :: res
-
-    INTEGER :: num_modifier
-    INTEGER(c_int) :: num_modifier_c
-    num_modifier = SIZE(modifier)
-    IF (num_modifier > HUGE(1_c_int)) &
-         CALL xt_abort("number of modifiers too high", &
-         __FILE__, &
-         __LINE__)
-    num_modifier_c = INT(num_modifier, c_int)
-    res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         num_modifier_c, c_null_ptr))
-  END FUNCTION xt_idxmod_new_a1d
-
-  FUNCTION xt_idxmod_new_a1d_a1d(patch, modifier, mstate) RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_idxlist), INTENT(in) :: patch
-    TYPE(xt_modifier), INTENT(in) :: modifier(:)
-    INTEGER(c_int), TARGET, INTENT(inout) :: mstate(*)
-    TYPE(Xt_idxlist) :: res
-
-    INTEGER :: num_modifier
-    INTEGER(c_int) :: num_modifier_c
-    num_modifier = SIZE(modifier)
-    IF (num_modifier > HUGE(1_c_int)) &
-         CALL xt_abort("number of modifiers too high", &
-         __FILE__, &
-         __LINE__)
-    num_modifier_c = INT(num_modifier, c_int)
-    res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         num_modifier_c, C_LOC(mstate)))
-  END FUNCTION xt_idxmod_new_a1d_a1d
-
-  FUNCTION xt_idxmod_new_a1d_i4(patch, modifier, num_modifier) RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_idxlist), INTENT(in) :: patch
-    TYPE(xt_modifier), INTENT(in) :: modifier(*)
-    INTEGER(i4), INTENT(in) :: num_modifier
-    TYPE(Xt_idxlist) :: res
-    INTEGER(c_int) :: num_modifier_c
-
-    num_modifier_c = INT(num_modifier, c_int)
-    res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         num_modifier_c, c_null_ptr))
-  END FUNCTION xt_idxmod_new_a1d_i4
-
-  FUNCTION xt_idxmod_new_a1d_i4_a1d(patch, modifier, num_modifier, mstate) &
-       RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_idxlist), INTENT(in) :: patch
-    TYPE(xt_modifier), INTENT(in) :: modifier(*)
-    INTEGER(i4), INTENT(in) :: num_modifier
-    INTEGER(c_int), TARGET, INTENT(inout) :: mstate(*)
-    TYPE(Xt_idxlist) :: res
-    INTEGER(c_int) :: num_modifier_c
-
-    num_modifier_c = INT(num_modifier, c_int)
-    res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         num_modifier_c, C_LOC(mstate)))
-  END FUNCTION xt_idxmod_new_a1d_i4_a1d
-
-  FUNCTION xt_idxmod_new_a1d_i4_a2d(patch, modifier, num_modifier, mstate) &
-       RESULT(res)
-    IMPLICIT NONE
-    TYPE(xt_idxlist), INTENT(in) :: patch
-    TYPE(xt_modifier), INTENT(in) :: modifier(*)
-    INTEGER(i4), INTENT(in) :: num_modifier
-    INTEGER(c_int), TARGET, INTENT(inout) :: mstate(1,*)
-    TYPE(Xt_idxlist) :: res
-    INTEGER(c_int) :: num_modifier_c
-
-    num_modifier_c = INT(num_modifier, c_int)
-    res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
-         num_modifier_c, C_LOC(mstate)))
-  END FUNCTION xt_idxmod_new_a1d_i4_a2d
 
 END MODULE yaxt
 !

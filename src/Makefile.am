@@ -157,6 +157,7 @@ libyaxt_la_SOURCES =						\
 	xt_idxvec_f.f90						\
 	xt_idxstripes_f.f90					\
 	xt_idxsection_f.f90					\
+	xt_idxmod_f.f90						\
 	xt_xmap_f.f90						\
 	xt_redist_f.f90						\
 	xt_redist_int_i2.f90					\
