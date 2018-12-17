@@ -142,15 +142,14 @@ CONTAINS
     DOUBLE PRECISION, PARAMETER :: src_data(5, 5) = RESHAPE((/&
          (DBLE(i), i = 1, 25)/), (/ 5, 5 /))
     DOUBLE PRECISION :: dst_data(3, 5)
-#ifndef __PGI
-    DOUBLE PRECISION, PARAMETER :: ref_dst_data(3, 5) &
-         = RESHAPE((/ ((DBLE((i + j)*MOD(j+1,2)-MOD(j,2)), i = 1,5,2), &
-         j = 0,20,5) /), (/ 3, 5 /))
-#else
+#if defined(__PGI) || defined(_CRAYFTN)
     DOUBLE PRECISION :: ref_dst_data(3, 5)
     ref_dst_data &
          = RESHAPE((/ ((DBLE((i + j)*MOD(j+1,2)-MOD(j,2)), i = 1,5,2), &
          j = 0,20,5) /), (/ 3, 5 /))
+#else
+    DOUBLE PRECISION, PARAMETER :: ref_dst_data(3, 5) &
+         = RESHAPE((/ ((DBLE((i + j)*MOD(j+1,2)-MOD(j,2)), i = 1,5,2), j = 0,20,5) /), (/ 3, 5 /))
 #endif
     CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds1_with_gap
