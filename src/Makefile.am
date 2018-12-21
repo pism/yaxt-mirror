@@ -170,8 +170,8 @@ libyaxt_la_SOURCES =						\
 	yaxt.f90
 
 libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)
-libyaxt_la_LDFLAGS = -version-info 4:0:3
-libyaxt_c_la_LDFLAGS = -version-info 4:0:3
+libyaxt_la_LDFLAGS = -version-info 5:0:4
+libyaxt_c_la_LDFLAGS = -version-info 5:0:4
 
 EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4 \
 	m4-templates/f03-redist-gen.m4 \
