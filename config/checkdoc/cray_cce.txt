@@ -1,0 +1,4 @@
+WARNING: your compiler suffers from known defect where memory is accessed
+incorrectly due to wrong analysis of memory alignment properties. This is know
+to occur for the Cray Compilation Environment and should starting with version
+8.7 and 9.0.
