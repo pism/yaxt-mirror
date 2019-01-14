@@ -1219,9 +1219,13 @@ idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
 unsorted_selection:
   temp_selection_idx
     = xmalloc((size_t)num_selection * sizeof(*temp_selection_idx));
+  // sorted_positions
+    // = xmalloc((size_t)num_selection * sizeof(*sorted_positions) * 2);
+  // selection_pos = sorted_positions + num_selection;
   sorted_positions
-    = xmalloc((size_t)num_selection * sizeof(*sorted_positions) * 2);
-  selection_pos = sorted_positions + num_selection;
+    = xmalloc((size_t)num_selection * sizeof(*sorted_positions));
+  selection_pos
+    = xmalloc((size_t)num_selection * sizeof(*selection_pos));
   memcpy(temp_selection_idx, selection_idx,
          (size_t)num_selection * sizeof(*temp_selection_idx));
 
@@ -1257,6 +1261,7 @@ sorted_selection:
       positions[i] = sorted_positions[selection_pos[i]];
 
     free(sorted_positions);
+    free(selection_pos);
     free(temp_selection_idx);
   }
 
