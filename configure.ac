@@ -259,16 +259,18 @@ saved_LIBS=$LIBS
 CFLAGS="$CFLAGS $MPI_C_INCLUDE"
 FCFLAGS="$FCFLAGS $MPI_FC_MOD"
 LIBS="$LIBS $MPI_C_LIB"
-ACX_MPIRUN
 # check MPI defects
 AC_ARG_WITH([regard-for-quality],
   [AS_HELP_STRING([--without-regard-for-quality],
      [ignore results of checks for known defects @<:@default: abort on error@:>@])],
   [],[with_regard_for_quality=yes])
-ACX_MPI_DEFECTS(,,
-  [ACX_MPI_DEFECTS_DOCUMENT
-   AS_IF([test "$with_regard_for_quality" != no],
-     [AC_MSG_FAILURE([test for known defect $subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation, but some tests might fail])])])
+ACX_MPIRUN(,,
+  [AS_VAR_IF([with_regard_for_quality], [yes],
+     [AC_MSG_FAILURE([unable to find a working MPI launch program, which is required for checks for known MPI defects (see --without-regard-for-quality)])])])
+AS_VAR_IF([with_regard_for_quality], [yes],
+  [ACX_MPI_DEFECTS(,,
+     [ACX_MPI_DEFECTS_DOCUMENT
+      AC_MSG_FAILURE([test for known defect $acx_subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation, but some tests might fail])])])
 AS_IF([test "x$MPI_LAUNCH" = xtrue],
   [AC_MSG_WARN([MPI launch command unavailable])])
 FCFLAGS=$saved_FCFLAGS
