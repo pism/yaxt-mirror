@@ -63,6 +63,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_xmap.h						\
 	xt/xt_xmap_all2all.h					\
 	xt/xt_xmap_dist_dir.h					\
+	xt/xt_xmap_dist_radix.h					\
 	xt/xt_xmap_intersection.h				\
 	xt/xt_idxmod.h						\
 	xt/xt_request.h						\
@@ -114,6 +115,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_xmap_dist_dir.c					\
 	xt_xmap_dist_dir_common.h				\
 	xt_xmap_dist_dir_common.c				\
+	xt_xmap_dist_radix.c					\
 	xt/xt_xmap_dist_dir_intercomm.h				\
 	xt_xmap_dist_dir_intercomm.c				\
 	xt_xmap_intersection.c					\

@@ -59,11 +59,22 @@ typedef Xt_xmap (*xmap_constructor)(Xt_idxlist src_idxlist,
                                     Xt_idxlist dst_idxlist,
                                     MPI_Comm comm);
 
+typedef Xt_xmap (*xmap_binary_constructor)(
+  void const * src_ids, int num_src_ids,
+  void const * dst_ids, int num_dst_ids,
+  size_t id_size, MPI_Comm comm);
+
 int
 xt_xmap_self_test_main(xmap_constructor xmap_constructor);
 
 int
+xt_xmap_binary_self_test_main(xmap_binary_constructor xmap_constructor);
+
+int
 xt_xmap_parallel_test_main(xmap_constructor xmap_constructor);
+
+int
+xt_xmap_binary_parallel_test_main(xmap_binary_constructor xmap_constructor);
 
 extern MPI_Comm xt_intra_group_comm;
 
@@ -71,15 +82,27 @@ int
 xt_xmap_intercomm_parallel_test_main(xmap_constructor xmap_constructor,
                                      bool call_initialize, bool call_finalize);
 
-void
-test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
-               int ping_rank, int pong_rank);
+int
+xt_xmap_binary_intercomm_parallel_test_main(
+  xmap_binary_constructor xmap_constructor,
+  bool call_initialize, bool call_finalize);
 
 void
-check_xmap_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm);
+test_xmap_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
+                    int ping_rank, int pong_rank);
 
 void
-test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm);
+test_xmap_binary_ping_pong(xmap_binary_constructor xmap_new, MPI_Comm comm,
+                           int ping_rank, int pong_rank);
+
+void
+test_xmap_ring_1d(xmap_constructor xmap_new, MPI_Comm comm);
+
+void
+test_xmap_binary_ring_1d(xmap_binary_constructor xmap_new, MPI_Comm comm);
+
+void
+check_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm);
 
 #endif
 
