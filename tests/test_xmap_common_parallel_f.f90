@@ -44,6 +44,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE test_xmap_common_parallel
+  USE iso_c_binding, ONLY: c_ptr, c_loc
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
@@ -57,10 +58,11 @@ MODULE test_xmap_common_parallel
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: xmap_parallel_test_main
+  PUBLIC :: xmap_parallel_test_main_dble
   PUBLIC :: get_rank_range
   PUBLIC :: check_allgather_analog_xmap
-  PUBLIC :: test_ring_1d
-  PUBLIC :: test_ping_pong
+  PUBLIC :: test_ring_1d, test_ring_1d_dble
+  PUBLIC :: test_ping_pong, test_ping_pong_dble
 CONTAINS
   SUBROUTINE xmap_parallel_test_main(xmap_new)
     INTERFACE
@@ -107,6 +109,53 @@ CONTAINS
     CALL xt_finalize
     CALL finish_mpi
   END SUBROUTINE xmap_parallel_test_main
+
+  SUBROUTINE xmap_parallel_test_main_dble(xmap_new)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER :: comm, comm_rank, comm_size
+    INTEGER :: ierror
+    CALL init_mpi
+    comm = mpi_comm_world
+    CALL xt_initialize(comm)
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_rank", &
+         __FILE__, &
+         __LINE__)
+    CALL mpi_comm_size(comm, comm_size, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_size", &
+         __FILE__, &
+         __LINE__)
+    IF (comm_size > HUGE(1_xi)) &
+         CALL test_abort("number of ranks exceeds test limit", &
+         __FILE__, &
+         __LINE__)
+
+    CALL test_allgather_analog_dble(xmap_new, 1, comm)
+    ! repeat test for large index list that will cause stripifying
+    CALL test_allgather_analog_dble(xmap_new, 1024, comm)
+    IF (comm_size > 2) CALL test_ring_1d_dble(xmap_new, comm)
+    IF (comm_size == 2) CALL test_pair_dble(xmap_new, comm)
+    IF (comm_size > 1) CALL test_ping_pong_dble(xmap_new, comm, 0, comm_size - 1)
+
+    IF (test_err_count() /= 0) &
+         CALL test_abort("non-zero error count!", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_finalize
+    CALL finish_mpi
+  END SUBROUTINE xmap_parallel_test_main_dble
 
   SUBROUTINE get_rank_range(comm, is_inter, comm_rank, comm_size)
     INTEGER, INTENT(inout) :: comm
@@ -214,6 +263,51 @@ CONTAINS
     CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_allgather_analog
 
+  SUBROUTINE test_allgather_analog_dble(xmap_new, num_indices_per_rank, comm)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+    INTEGER, INTENT(in) :: num_indices_per_rank
+    INTEGER :: i
+    DOUBLE PRECISION, ALLOCATABLE :: src_ids(:), dst_ids(:)
+    TYPE(xt_xmap) :: xmap, xmap_copy
+    INTEGER :: comm_size, comm_rank
+    LOGICAL :: is_inter
+
+    CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
+    ! setup
+    ALLOCATE(src_ids(num_indices_per_rank), &
+             dst_ids(num_indices_per_rank * comm_size))
+    DO i = 1, num_indices_per_rank
+      src_ids(i) = DBLE(comm_rank * num_indices_per_rank + i - 1)
+    END DO
+    DO i = 1, num_indices_per_rank * comm_size
+      dst_ids(i) = DBLE(i - 1)
+    END DO
+
+    xmap = xmap_new(c_loc(src_ids(1)), num_indices_per_rank, &
+                    c_loc(dst_ids(1)), num_indices_per_rank * comm_size, 8, &
+                    comm)
+
+    ! verify expected results
+    CALL check_allgather_analog_xmap(xmap, comm)
+    xmap_copy = xt_xmap_copy(xmap)
+    CALL check_allgather_analog_xmap(xmap, comm)
+
+    ! clean up
+    CALL xt_xmap_delete(xmap)
+    CALL xt_xmap_delete(xmap_copy)
+  END SUBROUTINE test_allgather_analog_dble
+
   SUBROUTINE check_ring_xmap(xmap, dst_index_list, is_inter)
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER(xt_int_kind), INTENT(in) :: dst_index_list(2)
@@ -296,6 +390,51 @@ CONTAINS
     CALL xt_xmap_delete(xmap_copy)
 
   END SUBROUTINE test_ring_1d
+
+  SUBROUTINE test_ring_1d_dble(xmap_new, comm)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+    ! test in which each process talks WITH two other processes
+    DOUBLE PRECISION :: src_ids(1), dst_ids(2), temp
+    TYPE(xt_xmap) :: xmap, xmap_copy
+    INTEGER :: comm_size, comm_rank
+    LOGICAL :: is_inter
+
+    CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
+    src_ids(1) = DBLE(comm_rank)
+
+    ! destination index list
+    dst_ids(1) = DBLE(MOD(comm_rank + comm_size - 1, comm_size))
+    dst_ids(2) = DBLE(MOD(comm_rank             + 1, comm_size))
+    IF (dst_ids(1) > dst_ids(2)) THEN
+      temp = dst_ids(1)
+      dst_ids(1) = dst_ids(2)
+      dst_ids(2) = temp
+    END IF
+
+    ! test of exchange map
+    xmap = xmap_new(c_loc(src_ids(1)), 1, c_loc(dst_ids(1)), 2, 8, comm)
+
+    ! test results
+    CALL check_ring_xmap(xmap, INT(dst_ids, xi), is_inter)
+    xmap_copy = xt_xmap_copy(xmap)
+    CALL check_ring_xmap(xmap_copy, INT(dst_ids, xi), is_inter)
+
+    ! clean up
+    CALL xt_xmap_delete(xmap)
+    CALL xt_xmap_delete(xmap_copy)
+
+  END SUBROUTINE test_ring_1d_dble
 
   SUBROUTINE check_pair_xmap(xmap)
     TYPE(xt_xmap), INTENT(in) :: xmap
@@ -394,6 +533,70 @@ CONTAINS
     CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_pair
 
+  SUBROUTINE test_pair_dble(xmap_new, comm)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(in) :: comm
+    !src_ids(index, rank)
+    INTEGER :: i, j, k
+#ifdef __xlC__
+    DOUBLE PRECISION, PARAMETER :: src_ids(20, 0:1) = RESHAPE((/ &
+         &  1d+0,  2d+0,  3d+0,  4d+0,  5d+0, &
+         &  9d+0, 10d+0, 11d+0, 12d+0, 13d+0, &
+         & 17d+0, 18d+0, 19d+0, 20d+0, 21d+0, &
+         & 25d+0, 26d+0, 27d+0, 28d+0, 29d+0, &
+         &  4d+0,  5d+0,  6d+0,  7d+0,  8d+0, &
+         & 12d+0, 13d+0, 14d+0, 15d+0, 16d+0, &
+         & 20d+0, 21d+0, 22d+0, 23d+0, 24d+0, &
+         & 28d+0, 29d+0, 30d+0, 31d+0, 32d+0 /),  &
+         (/ 20, 2 /))
+#else
+    DOUBLE PRECISION, PARAMETER :: src_ids(20, 0:1) = RESHAPE((/ &
+         (((DBLE(i + j * 8 + k * 3), i = 1, 5), j = 0, 3), &
+         k = 0, 1) /), (/ 20, 2 /))
+#endif
+    ! dst_index_list(index,rank)
+    DOUBLE PRECISION, PARAMETER :: dst_ids(20, 0:1) = RESHAPE((/ &
+         10d+0, 15d+0, 14d+0, 13d+0, 12d+0, &
+         15d+0, 10d+0, 11d+0, 12d+0, 13d+0, &
+         23d+0, 18d+0, 19d+0, 20d+0, 21d+0, &
+         31d+0, 26d+0, 27d+0, 28d+0, 29d+0, &
+         13d+0, 12d+0, 11d+0, 10d+0, 15d+0, &
+         12d+0, 13d+0, 14d+0, 15d+0, 10d+0, &
+         20d+0, 21d+0, 22d+0, 23d+0, 18d+0, &
+         28d+0, 29d+0, 30d+0, 31d+0, 26d+0 /),  &
+         (/ 20, 2 /))
+    TYPE(xt_xmap) :: xmap, xmap_copy
+    INTEGER :: comm_rank, ierror
+
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_rank", &
+         __FILE__, &
+         __LINE__)
+
+    ! test of exchange map
+    xmap = xmap_new(c_loc(src_ids(1, comm_rank)), SIZE(src_ids, 1), &
+                    c_loc(dst_ids(1, comm_rank)), SIZE(dst_ids, 1), 8, comm)
+
+    CALL check_pair_xmap(xmap)
+    xmap_copy = xt_xmap_copy(xmap)
+    CALL check_pair_xmap(xmap_copy)
+
+    ! clean up
+    CALL xt_xmap_delete(xmap)
+    CALL xt_xmap_delete(xmap_copy)
+  END SUBROUTINE test_pair_dble
+
   SUBROUTINE check_ping_pong_xmap(xmap, comm, ping_rank, pong_rank)
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER, INTENT(in) :: comm, ping_rank, pong_rank
@@ -482,6 +685,45 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
     CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_ping_pong
+
+  SUBROUTINE test_ping_pong_dble(xmap_new, comm, ping_rank, pong_rank)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(in) :: ping_rank, pong_rank
+    INTEGER, INTENT(inout) :: comm
+    DOUBLE PRECISION, PARAMETER :: &
+         id_list(5) = (/ 0d+0, 1d+0, 2d+0, 3d+0, 4d+0 /)
+    INTEGER :: num_src_ids, num_dst_ids
+    TYPE(xt_xmap) :: xmap, xmap_copy
+    INTEGER :: comm_rank, comm_size
+    LOGICAL :: is_inter
+    CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
+
+    num_src_ids = MERGE(5, 0, comm_rank == ping_rank)
+    num_dst_ids = MERGE(5, 0, comm_rank == pong_rank)
+
+    ! test of exchange map
+
+    xmap = xmap_new(c_loc(id_list(1)), num_src_ids, &
+                    c_loc(id_list(1)), num_dst_ids, 8, comm)
+
+    ! test results
+    CALL check_ping_pong_xmap(xmap, comm, ping_rank, pong_rank)
+    xmap_copy = xt_xmap_copy(xmap)
+    CALL check_ping_pong_xmap(xmap_copy, comm, ping_rank, pong_rank)
+    ! clean up
+    CALL xt_xmap_delete(xmap)
+    CALL xt_xmap_delete(xmap_copy)
+  END SUBROUTINE test_ping_pong_dble
 END MODULE test_xmap_common_parallel
 !
 ! Local Variables:

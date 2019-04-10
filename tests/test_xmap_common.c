@@ -48,6 +48,7 @@
 #endif
 
 #include <mpi.h>
+#include <string.h>
 
 #include <yaxt.h>
 
@@ -59,6 +60,10 @@ static void
 test_xmap1(xmap_constructor new_xmap, MPI_Comm comm);
 static void
 test_xmap2(xmap_constructor new_xmap, MPI_Comm comm);
+static void
+test_xmap_binary1(xmap_binary_constructor new_xmap, MPI_Comm comm);
+static void
+test_xmap_binary2(xmap_binary_constructor new_xmap, MPI_Comm comm);
 
 static int my_rank;
 
@@ -88,6 +93,32 @@ xt_xmap_self_test_main(xmap_constructor new_xmap)
   return TEST_EXIT_CODE;
 }
 
+int
+xt_xmap_binary_self_test_main(xmap_binary_constructor new_xmap)
+{
+  // init mpi
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+
+  xt_initialize(MPI_COMM_WORLD);
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+  MPI_Comm comms[2];
+  comms[0] = MPI_COMM_WORLD;
+  MPI_Comm_dup(MPI_COMM_WORLD, &comms[1]);
+  xt_mpi_comm_mark_exclusive(comms[1]);
+
+  for (size_t i = 0; i < 2; ++i) {
+    test_xmap_binary1(new_xmap, comms[i]);
+    test_xmap_binary2(new_xmap, comms[i]);
+  }
+
+  xt_finalize();
+  MPI_Finalize();
+
+  return TEST_EXIT_CODE;
+}
+
 static void
 assert_xmap_is_to_self(Xt_xmap xmap)
 {
@@ -109,7 +140,6 @@ assert_xmap_is_to_self(Xt_xmap xmap)
     PUT_ERR("error in xt_xmap_get_source_ranks\n");
 }
 
-
 static void
 test_xmap(const Xt_int *src_index_list, int num_src_indices,
           const Xt_int *dst_index_list, int num_dst_indices,
@@ -122,6 +152,22 @@ test_xmap(const Xt_int *src_index_list, int num_src_indices,
   Xt_xmap xmap = new_xmap(src_idxlist, dst_idxlist, comm);
   xt_idxlist_delete(src_idxlist);
   xt_idxlist_delete(dst_idxlist);
+  assert_xmap_is_to_self(xmap);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  assert_xmap_is_to_self(xmap_copy);
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+}
+
+static void
+test_xmap_binary(void * src_ids, int num_src_ids,
+                 void * dst_ids, int num_dst_ids, size_t id_size,
+                 xmap_binary_constructor new_xmap, MPI_Comm comm) {
+
+  // test of exchange map
+  Xt_xmap xmap =
+    new_xmap(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, comm);
   assert_xmap_is_to_self(xmap);
   Xt_xmap xmap_copy = xt_xmap_copy(xmap);
   assert_xmap_is_to_self(xmap_copy);
@@ -173,6 +219,72 @@ test_xmap2(xmap_constructor new_xmap, MPI_Comm comm)
   test_xmap(src_index_list, num_src_indices,
             dst_index_list, num_dst_indices,
             new_xmap, comm);
+}
+
+static void
+test_xmap_binary1(xmap_binary_constructor new_xmap, MPI_Comm comm) {
+
+  struct coord_3d{double x, y, z;};
+
+  // source ids (5x5x5 cube with 3d coordinates)
+  struct coord_3d src_coords[5][5][5];
+  memset(&(src_coords[0][0][0]), 0, sizeof(src_coords));
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 5; ++j) {
+      for (int k = 0; k < 5; ++k) {
+        src_coords[i][j][k].x = (double)i * 0.25d;
+        src_coords[i][j][k].y = (double)j * 0.25d;
+        src_coords[i][j][k].z = (double)k * 0.25d;
+      }
+    }
+  }
+
+  // destination ids (5x5x5 cube with reversed 3d coordinates)
+  struct coord_3d dst_coords[5][5][5];
+  memset(&(dst_coords[0][0][0]), 0, sizeof(dst_coords));
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 5; ++j) {
+      for (int k = 0; k < 5; ++k) {
+        dst_coords[i][j][k].x = (double)(4 - i) * 0.25d;
+        dst_coords[i][j][k].y = (double)(4 - j) * 0.25d;
+        dst_coords[i][j][k].z = (double)(4 - k) * 0.25d;
+      }
+    }
+  }
+
+  test_xmap_binary(&(src_coords[0][0][0]), 5*5*5,
+                   &(dst_coords[0][0][0]), 5*5*5,
+                   sizeof(src_coords[0][0][0]), new_xmap, comm);
+}
+
+static void
+test_xmap_binary2(xmap_binary_constructor new_xmap, MPI_Comm comm) {
+
+  struct coord_2d{double x, y;};
+
+  // source ids (5x5 square with 2d coordinates)
+  struct coord_2d src_coords[5][5];
+  memset(&(src_coords[0][0]), 0, sizeof(src_coords));
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 5; ++j) {
+      src_coords[i][j].x = (double)i * 0.25d;
+      src_coords[i][j].y = (double)j * 0.25d;
+    }
+  }
+
+  // destination ids (5x5 square with reversed 2d coordinates)
+  struct coord_2d dst_coords[5][5];
+  memset(&(dst_coords[0][0]), 0, sizeof(dst_coords));
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 5; ++j) {
+      dst_coords[i][j].x = (double)(4 - i) * 0.25d;
+      dst_coords[i][j].y = (double)(4 - j) * 0.25d;
+    }
+  }
+
+  test_xmap_binary(&(src_coords[0][0]), 5*5,
+                   &(dst_coords[0][0]), 5*5,
+                   sizeof(src_coords[0][0]), new_xmap, comm);
 }
 
 /*

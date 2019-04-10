@@ -60,8 +60,16 @@
 static void
 test_xmap_allgather_analog(xmap_constructor xmap_new,
                            size_t num_indices_per_rank, MPI_Comm comm);
+
 static void
-test_pair(xmap_constructor xmap_new, MPI_Comm comm);
+test_xmap_binary_allgather_analog(xmap_binary_constructor xmap_new,
+                                  size_t num_indices_per_rank, MPI_Comm comm);
+
+static void
+test_xmap_pair(xmap_constructor xmap_new, MPI_Comm comm);
+
+static void
+test_xmap_binary_pair(xmap_binary_constructor xmap_new, MPI_Comm comm);
 
 int
 xt_xmap_parallel_test_main(xmap_constructor xmap_new)
@@ -81,13 +89,44 @@ xt_xmap_parallel_test_main(xmap_constructor xmap_new)
   test_xmap_allgather_analog(xmap_new, 1024, comm);
 
   if (comm_size > 2) // skip test if there are not enough processes
-    test_ring_1d(xmap_new, comm);
+    test_xmap_ring_1d(xmap_new, comm);
 
   if (comm_size == 2)
-    test_pair(xmap_new, comm);
+    test_xmap_pair(xmap_new, comm);
 
   if (comm_size > 1)
-    test_ping_pong(xmap_new, comm, 0, comm_size - 1);
+    test_xmap_ping_pong(xmap_new, comm, 0, comm_size - 1);
+
+  xt_finalize();
+  MPI_Finalize();
+  return TEST_EXIT_CODE;
+}
+
+int
+xt_xmap_binary_parallel_test_main(xmap_binary_constructor xmap_new)
+{
+  // init mpi
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+
+  xt_initialize(MPI_COMM_WORLD);
+
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int comm_rank, comm_size;
+  MPI_Comm_rank(comm, &comm_rank);
+  MPI_Comm_size(comm, &comm_size);
+
+  test_xmap_binary_allgather_analog(xmap_new, 1, comm);
+  /* repeat test for large index list that will cause stripifying */
+  test_xmap_binary_allgather_analog(xmap_new, 1024, comm);
+
+  if (comm_size > 2) // skip test if there are not enough processes
+    test_xmap_binary_ring_1d(xmap_new, comm);
+
+  if (comm_size == 2)
+    test_xmap_binary_pair(xmap_new, comm);
+
+  if (comm_size > 1)
+    test_xmap_binary_ping_pong(xmap_new, comm, 0, comm_size - 1);
 
   xt_finalize();
   MPI_Finalize();
@@ -95,7 +134,7 @@ xt_xmap_parallel_test_main(xmap_constructor xmap_new)
 }
 
 void
-check_xmap_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm)
+check_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm)
 {
   int comm_rank, comm_size, is_inter;
   xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
@@ -123,7 +162,6 @@ check_xmap_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm)
       PUT_ERR("error in xt_xmap_get_source_ranks\n");
   free(ranks);
 }
-
 
 static void
 test_xmap_allgather_analog(xmap_constructor xmap_new,
@@ -159,15 +197,51 @@ test_xmap_allgather_analog(xmap_constructor xmap_new,
   Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, comm);
 
   // test results
-  check_xmap_allgather_analog_xmap(xmap, comm);
+  check_allgather_analog_xmap(xmap, comm);
   Xt_xmap xmap_copy = xt_xmap_copy(xmap);
-  check_xmap_allgather_analog_xmap(xmap_copy, comm);
+  check_allgather_analog_xmap(xmap_copy, comm);
 
   // clean up
   xt_xmap_delete(xmap);
   xt_xmap_delete(xmap_copy);
   xt_idxlist_delete(src_idxlist);
   xt_idxlist_delete(dst_idxlist);
+}
+
+static void
+test_xmap_binary_allgather_analog(xmap_binary_constructor xmap_new,
+                                  size_t num_indices_per_rank,
+                                  MPI_Comm comm)
+{
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  // test in which every process requests data from all processes
+  // source ids
+  double *src_ids = xmalloc(num_indices_per_rank * sizeof(*src_ids));
+  for (size_t i = 0; i < num_indices_per_rank; ++i)
+    src_ids[i] = (double)((size_t)comm_rank * num_indices_per_rank + i);
+
+  // destination ids
+  size_t num_gathered = (size_t)comm_size * num_indices_per_rank;
+  double *dst_ids = xmalloc(num_gathered * sizeof(*dst_ids));
+  for (size_t i = 0; i < num_gathered; ++i) dst_ids[i] = (double)i;
+
+  // test of exchange map
+  Xt_xmap xmap = xmap_new(src_ids, (int)num_indices_per_rank,
+                          dst_ids, (int)num_gathered, sizeof(double), comm);
+
+  // test results
+  check_allgather_analog_xmap(xmap, comm);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_allgather_analog_xmap(xmap_copy, comm);
+
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+  free(src_ids);
+  free(dst_ids);
 }
 
 static void
@@ -199,7 +273,7 @@ check_ring_xmap(Xt_xmap xmap, const Xt_int dst_index_list[], bool is_inter)
 }
 
 void
-test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm)
+test_xmap_ring_1d(xmap_constructor xmap_new, MPI_Comm comm)
 {
   int comm_rank, comm_size, is_inter;
   xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
@@ -241,6 +315,43 @@ test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm)
   xt_idxlist_delete(dst_idxlist);
 }
 
+void
+test_xmap_binary_ring_1d(xmap_binary_constructor xmap_new, MPI_Comm comm)
+{
+  int comm_rank, comm_size, is_inter;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
+  int (*get_comm_size)(MPI_Comm, int *)
+    = is_inter ? MPI_Comm_remote_size : MPI_Comm_size;
+  xt_mpi_call(get_comm_size(comm, &comm_size), comm);
+  // test in which each process talks with two other
+  // processes
+
+  double src_ids[1] = {(double)(comm_rank)};
+
+  // destination ids
+  Xt_int dst_index_list[2] = {(Xt_int)((comm_rank + comm_size - 1)%comm_size),
+                              (Xt_int)((comm_rank             + 1)%comm_size)};
+  if (dst_index_list[0] > dst_index_list[1]) {
+    Xt_int temp = dst_index_list[0];
+    dst_index_list[0] = dst_index_list[1];
+    dst_index_list[1] = temp;
+  }
+  double dst_ids[2] = {(double)dst_index_list[0], (double)dst_index_list[1]};
+
+  // test of exchange map
+  Xt_xmap xmap = xmap_new(src_ids, 1, dst_ids, 2, sizeof(double), comm);
+
+  // test results
+  check_ring_xmap(xmap, dst_index_list, (bool)is_inter);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_ring_xmap(xmap_copy, dst_index_list, (bool)is_inter);
+
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+}
+
 static void
 check_pair_xmap(Xt_xmap xmap)
 {
@@ -261,9 +372,8 @@ check_pair_xmap(Xt_xmap xmap)
     PUT_ERR("error in xt_xmap_get_source_ranks\n");
 }
 
-
 static void
-test_pair(xmap_constructor xmap_new, MPI_Comm comm)
+test_xmap_pair(xmap_constructor xmap_new, MPI_Comm comm)
 {
   int comm_rank, comm_size;
   MPI_Comm_rank(comm, &comm_rank);
@@ -290,17 +400,48 @@ test_pair(xmap_constructor xmap_new, MPI_Comm comm)
   xt_idxlist_delete(dst_idxlist);
 
   // test results
-
   check_pair_xmap(xmap);
   Xt_xmap xmap_copy = xt_xmap_copy(xmap);
   check_pair_xmap(xmap_copy);
+
   // clean up
   xt_xmap_delete(xmap);
   xt_xmap_delete(xmap_copy);
 }
 
 static void
-test_ping_pong_xmap(Xt_xmap xmap, MPI_Comm comm, int ping_rank, int pong_rank)
+test_xmap_binary_pair(xmap_binary_constructor xmap_new, MPI_Comm comm)
+{
+  int comm_rank, comm_size;
+  MPI_Comm_rank(comm, &comm_rank);
+  MPI_Comm_size(comm, &comm_size);
+
+  enum { numIdx = 20 };
+  static const double src_ids[2][numIdx] = { //src_ids[rank][index];
+    {1,2,3,4,5,9,10,11,12,13,17,18,19,20,21,25,26,27,28,29},
+    {4,5,6,7,8,12,13,14,15,16,20,21,22,23,24,28,29,30,31,32} };
+
+  // destination ids
+  static const double dst_ids[2][numIdx] = { //dst_ids[rank][index];
+    {10,15,14,13,12,15,10,11,12,13,23,18,19,20,21,31,26,27,28,29},
+    {13,12,11,10,15,12,13,14,15,10,20,21,22,23,18,28,29,30,31,26}};
+
+  // test of exchange map
+  Xt_xmap xmap = xmap_new(src_ids[comm_rank], numIdx,
+                          dst_ids[comm_rank], numIdx, sizeof(double), comm);
+
+  // test results
+  check_pair_xmap(xmap);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_pair_xmap(xmap_copy);
+
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+}
+
+static void
+check_ping_pong_xmap(Xt_xmap xmap, MPI_Comm comm, int ping_rank, int pong_rank)
 {
   int comm_rank;
   MPI_Comm_rank(comm, &comm_rank);
@@ -327,8 +468,8 @@ test_ping_pong_xmap(Xt_xmap xmap, MPI_Comm comm, int ping_rank, int pong_rank)
 }
 
 void
-test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
-               int ping_rank, int pong_rank)
+test_xmap_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
+                    int ping_rank, int pong_rank)
 {
   int comm_rank;
   MPI_Comm_rank(comm, &comm_rank);
@@ -348,9 +489,36 @@ test_ping_pong(xmap_constructor xmap_new, MPI_Comm comm,
   xt_idxlist_delete(dst_idxlist);
 
   // test results
-  test_ping_pong_xmap(xmap, comm, ping_rank, pong_rank);
+  check_ping_pong_xmap(xmap, comm, ping_rank, pong_rank);
   Xt_xmap xmap_copy = xt_xmap_copy(xmap);
-  test_ping_pong_xmap(xmap_copy, comm, ping_rank, pong_rank);
+  check_ping_pong_xmap(xmap_copy, comm, ping_rank, pong_rank);
+
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+}
+
+void
+test_xmap_binary_ping_pong(xmap_binary_constructor xmap_new, MPI_Comm comm,
+                           int ping_rank, int pong_rank)
+{
+  int comm_rank;
+  MPI_Comm_rank(comm, &comm_rank);
+
+  enum { numIdx = 5 };
+  static const double ids[numIdx] = {0,1,2,3,4};
+
+  int num_src_ids = (comm_rank == ping_rank)?numIdx:0;
+  int num_dst_ids = (comm_rank == pong_rank)?numIdx:0;
+
+  // test of exchange map
+  Xt_xmap xmap =
+    xmap_new(ids, num_src_ids, ids, num_dst_ids, sizeof(double), comm);
+
+  // test results
+  check_ping_pong_xmap(xmap, comm, ping_rank, pong_rank);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_ping_pong_xmap(xmap_copy, comm, ping_rank, pong_rank);
 
   // clean up
   xt_xmap_delete(xmap);

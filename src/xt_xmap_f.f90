@@ -57,7 +57,7 @@ MODULE xt_xmap_abstract
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
-       xt_xmap_dist_dir_intercomm_new
+       xt_xmap_dist_dir_intercomm_new, xt_xmap_dist_radix_new
   PUBLIC :: xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
        xt_xmap_iterator_get_transfer_pos, &
@@ -236,6 +236,32 @@ CONTAINS
     xmap = xt_xmap_c2f(xt_xmap_dist_dir_intercomm_new_f(src_idxlist, &
          dst_idxlist, inter_comm, intra_comm))
   END FUNCTION xt_xmap_dist_dir_intercomm_new
+
+  FUNCTION xt_xmap_dist_radix_new(src_ids, num_src_ids, dst_ids, num_dst_ids, &
+                                  id_size, comm) RESULT(xmap)
+    IMPLICIT NONE
+    TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+    INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+    INTEGER, VALUE, INTENT(in) :: comm
+    TYPE(xt_xmap) :: xmap
+
+    INTERFACE
+      FUNCTION xt_xmap_dist_radix_new_f(src_ids, num_src_ids, &
+                                     dst_ids, num_dst_ids, id_size, comm) &
+           BIND(C, name='xt_xmap_dist_radix_new_f') RESULT(xmap_ptr)
+        IMPORT :: xt_xmap, xt_mpi_fint_kind, c_ptr, c_int
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in) :: src_ids, dst_ids
+        INTEGER(c_int), VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm
+        TYPE(c_ptr) :: xmap_ptr
+      END FUNCTION xt_xmap_dist_radix_new_f
+    END INTERFACE
+
+    xmap = xt_xmap_c2f( &
+      xt_xmap_dist_radix_new_f( &
+        src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, comm))
+  END FUNCTION xt_xmap_dist_radix_new
 
   FUNCTION xt_xmap_get_num_destinations(xmap) RESULT(num)
     TYPE(xt_xmap), INTENT(in) :: xmap

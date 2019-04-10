@@ -46,6 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE test_xmap_common
+  USE iso_c_binding, ONLY: c_ptr, c_loc
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
@@ -59,7 +60,7 @@ MODULE test_xmap_common
   PRIVATE
   INTEGER :: my_rank
   INTEGER, PARAMETER :: xi = xt_int_kind
-  PUBLIC :: xmap_self_test_main
+  PUBLIC :: xmap_self_test_main, xmap_self_test_main_dble
 CONTAINS
   SUBROUTINE xmap_self_test_main(xmap_new)
     INTERFACE
@@ -110,6 +111,56 @@ CONTAINS
     CALL finish_mpi
   END SUBROUTINE xmap_self_test_main
 
+  SUBROUTINE xmap_self_test_main_dble(xmap_new)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER :: ierror, i
+    INTEGER :: comms(2)
+
+    CALL init_mpi
+    CALL xt_initialize(mpi_comm_world)
+    CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("MPI error!", &
+         __FILE__, &
+         __LINE__)
+
+    comms(1) = mpi_comm_world
+    CALL mpi_comm_dup(mpi_comm_world, comms(2), ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("MPI error!", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_mpi_comm_mark_exclusive(comms(2))
+
+    DO i = 1, SIZE(comms)
+      CALL test_xmap1_dble(xmap_new, comms(i))
+      CALL test_xmap2_dble(xmap_new, comms(i))
+    END DO
+
+    CALL mpi_comm_free(comms(2), ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("MPI error!", &
+         __FILE__, &
+         __LINE__)
+
+    IF (test_err_count() /= 0) &
+         CALL test_abort("non-zero error count!", &
+         __FILE__, &
+         __LINE__)
+    CALL xt_finalize
+    CALL finish_mpi
+  END SUBROUTINE xmap_self_test_main_dble
+
   SUBROUTINE shift_idx(idx, offset)
     INTEGER(xt_int_kind), INTENT(inout) :: idx(:)
     INTEGER(xt_int_kind), INTENT(in) :: offset
@@ -118,6 +169,15 @@ CONTAINS
       idx(i) = idx(i) + INT(my_rank, xi) * offset
     END DO
   END SUBROUTINE shift_idx
+
+  SUBROUTINE shift_ids_dble(ids, offset)
+    DOUBLE PRECISION, INTENT(inout) :: ids(:)
+    DOUBLE PRECISION, INTENT(in) :: offset
+    INTEGER :: i
+    DO i = 1, SIZE(ids)
+      ids(i) = ids(i) + DBLE(my_rank) * offset
+    END DO
+  END SUBROUTINE shift_ids_dble
 
   SUBROUTINE assert_xmap_is_to_self(xmap)
     TYPE(xt_xmap) :: xmap
@@ -176,6 +236,36 @@ CONTAINS
     CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_xmap
 
+  SUBROUTINE test_xmap_dble(src_ids, num_src_ids, dst_ids, num_dst_ids, &
+                            id_size, xmap_new, comm)
+    DOUBLE PRECISION, INTENT(in) :: src_ids(:), dst_ids(:)
+    INTEGER, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+
+    TYPE(xt_xmap) :: xmap, xmap_copy
+
+    xmap = xmap_new(c_loc(src_ids(1)), num_src_ids, c_loc(dst_ids(1)), &
+                    num_dst_ids, id_size, comm)
+
+    CALL assert_xmap_is_to_self(xmap)
+    xmap_copy = xt_xmap_copy(xmap)
+    CALL assert_xmap_is_to_self(xmap_copy)
+
+    CALL xt_xmap_delete(xmap)
+    CALL xt_xmap_delete(xmap_copy)
+  END SUBROUTINE test_xmap_dble
+
   SUBROUTINE test_xmap1(xmap_new, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
@@ -204,6 +294,35 @@ CONTAINS
     CALL test_xmap(src_index_list, dst_index_list, xmap_new, comm)
   END SUBROUTINE test_xmap1
 
+  SUBROUTINE test_xmap1_dble(xmap_new, comm)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+
+    INTEGER :: i
+    INTEGER, PARAMETER :: num_src_ids = 7, num_dst_ids = 7
+    DOUBLE PRECISION :: src_ids(num_src_ids), dst_ids(num_dst_ids)
+    DO i = 1, num_src_ids
+      src_ids(i) = DBLE(i)
+    END DO
+    CALL shift_ids_dble(src_ids, DBLE(num_src_ids))
+    DO i = 1, num_dst_ids
+      dst_ids(i) = DBLE(num_dst_ids - i + 1)
+    END DO
+    CALL shift_ids_dble(dst_ids, DBLE(num_src_ids))
+    CALL test_xmap_dble(src_ids, num_src_ids, dst_ids, num_dst_ids, 8, &
+                        xmap_new, comm)
+  END SUBROUTINE test_xmap1_dble
+
   SUBROUTINE test_xmap2(xmap_new, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
@@ -228,6 +347,32 @@ CONTAINS
          & 13_xi, 2_xi, 1_xi /)
     CALL test_xmap(src_index_list, dst_index_list, xmap_new, comm)
   END SUBROUTINE test_xmap2
+
+  SUBROUTINE test_xmap2_dble(xmap_new, comm)
+    INTERFACE
+      FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &
+                        comm) RESULT(res)
+        IMPORT :: xt_xmap, c_ptr
+        IMPLICIT NONE
+        TYPE(c_ptr), INTENT(in) :: src_ids, dst_ids
+        INTEGER, VALUE, INTENT(in) :: num_src_ids, num_dst_ids, id_size
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(inout) :: comm
+
+    DOUBLE PRECISION :: src_ids(14), dst_ids(13)
+    src_ids = &
+         (/ 5d+0, 67d+0, 4d+0, 5d+0, 13d+0, &
+         &  9d+0,  2d+0, 1d+0, 0d+0, 96d+0, &
+         & 13d+0, 12d+0, 1d+0, 3d+0 /)
+    dst_ids = &
+         (/ 5d+0, 4d+0, 3d+0, 96d+0, 1d+0, &
+         &  5d+0, 4d+0, 5d+0,  4d+0, 3d+0, &
+         & 13d+0, 2d+0, 1d+0 /)
+    CALL test_xmap_dble(src_ids, 14, dst_ids, 13, 8, xmap_new, comm)
+  END SUBROUTINE test_xmap2_dble
 
 END MODULE test_xmap_common
 !

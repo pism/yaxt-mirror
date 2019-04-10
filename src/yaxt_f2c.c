@@ -71,6 +71,7 @@
 #include "xt/xt_xmap_all2all.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_xmap_dist_dir_intercomm.h"
+#include "xt/xt_xmap_dist_radix.h"
 #include "xt/xt_idxstripes.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_redist_p2p.h"
@@ -221,6 +222,17 @@ xt_xmap_dist_dir_intercomm_new_f(struct xt_idxlist_f *src_idxlist_f,
   return xt_xmap_dist_dir_intercomm_new(src_idxlist_f->cptr,
                                         dst_idxlist_f->cptr,
                                         inter_comm_c, intra_comm_c);
+}
+
+Xt_xmap
+xt_xmap_dist_radix_new_f(void * src_ids, int num_src_ids,
+                         void * dst_ids, int num_dst_ids,
+                         int id_size, MPI_Fint comm_f)
+{
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  return
+    xt_xmap_dist_radix_new(
+      src_ids, num_src_ids, dst_ids, num_dst_ids, (size_t)id_size, comm_c);
 }
 
 Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,

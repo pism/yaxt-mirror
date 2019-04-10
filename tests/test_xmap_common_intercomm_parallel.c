@@ -60,7 +60,12 @@ static void
 test_xmap_allgather_analog(xmap_constructor xmap_new,
                            size_t num_indices_per_rank, MPI_Comm comm);
 static void
-test_peer(xmap_constructor xmap_new, MPI_Comm comm);
+test_xmap_binary_allgather_analog(xmap_binary_constructor xmap_new,
+                                  size_t num_indices_per_rank, MPI_Comm comm);
+static void
+test_xmap_peer(xmap_constructor xmap_new, MPI_Comm comm);
+static void
+test_xmap_binary_peer(xmap_binary_constructor xmap_new, MPI_Comm comm);
 
 MPI_Comm xt_intra_group_comm;
 
@@ -94,12 +99,62 @@ xt_xmap_intercomm_parallel_test_main(xmap_constructor xmap_new,
     /* repeat test for large index list that will cause stripifying */
     test_xmap_allgather_analog(xmap_new, 1024, inter_comm);
 
-    test_peer(xmap_new, inter_comm);
+    test_xmap_peer(xmap_new, inter_comm);
 
-    test_ping_pong(xmap_new, inter_comm, 0, 0);
+    test_xmap_ping_pong(xmap_new, inter_comm, 0, 0);
 
     if (splitRank > 2) // skip test if there are not enough processes
-      test_ring_1d(xmap_new, inter_comm);
+      test_xmap_ring_1d(xmap_new, inter_comm);
+
+    xt_mpi_call(MPI_Comm_free(&inter_comm), comm);
+    xt_mpi_call(MPI_Comm_free(&xt_intra_group_comm), comm);
+    retval = TEST_EXIT_CODE;
+  } else
+    retval = 77;
+
+  if (call_finalize) {
+    xt_finalize();
+    MPI_Finalize();
+  }
+  return retval;
+}
+
+int
+xt_xmap_binary_intercomm_parallel_test_main(
+  xmap_binary_constructor xmap_new, bool call_initialize, bool call_finalize)
+{
+  // init mpi
+  if (call_initialize) {
+    xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+    xt_initialize(MPI_COMM_WORLD);
+  }
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  int retval;
+  if (comm_size > 1) {
+    /* split communicator in half to create intercommunicator */
+    MPI_Comm inter_comm;
+    /* favor inequal splits if the left group does not become too small */
+    int splitRank = comm_size/2 - (comm_size > 5);
+    int inSecondGroup = comm_rank >= splitRank;
+    xt_mpi_call(MPI_Comm_split(comm, inSecondGroup, 0, &xt_intra_group_comm), comm);
+    xt_mpi_call(MPI_Intercomm_create(xt_intra_group_comm, 0, comm,
+                                     inSecondGroup ? 0 : splitRank,
+                                     0, &inter_comm), comm);
+
+    test_xmap_binary_allgather_analog(xmap_new, 1, inter_comm);
+    /* repeat test for large index list that will cause stripifying */
+    test_xmap_binary_allgather_analog(xmap_new, 1024, inter_comm);
+
+    test_xmap_binary_peer(xmap_new, inter_comm);
+
+    test_xmap_binary_ping_pong(xmap_new, inter_comm, 0, 0);
+
+    if (splitRank > 2) // skip test if there are not enough processes
+      test_xmap_binary_ring_1d(xmap_new, inter_comm);
 
     xt_mpi_call(MPI_Comm_free(&inter_comm), comm);
     xt_mpi_call(MPI_Comm_free(&xt_intra_group_comm), comm);
@@ -145,9 +200,9 @@ test_xmap_allgather_analog(xmap_constructor xmap_new,
   Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, comm);
 
   // test results
-  check_xmap_allgather_analog_xmap(xmap, comm);
+  check_allgather_analog_xmap(xmap, comm);
   Xt_xmap xmap_copy = xt_xmap_copy(xmap);
-  check_xmap_allgather_analog_xmap(xmap_copy, comm);
+  check_allgather_analog_xmap(xmap_copy, comm);
 
   // clean up
   xt_xmap_delete(xmap);
@@ -156,6 +211,42 @@ test_xmap_allgather_analog(xmap_constructor xmap_new,
   xt_idxlist_delete(dst_idxlist);
 }
 
+static void
+test_xmap_binary_allgather_analog(xmap_binary_constructor xmap_new,
+                                  size_t num_indices_per_rank,
+                                  MPI_Comm comm)
+{
+  int comm_rank, remote_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_remote_size(comm, &remote_size), comm);
+
+  // test in which every process requests data from all processes
+  // source ids
+  double * src_ids = xmalloc(num_indices_per_rank * sizeof(*src_ids));
+  for (size_t i = 0; i < num_indices_per_rank; ++i)
+    src_ids[i] = (double)((size_t)comm_rank * num_indices_per_rank + i);
+
+  // destination ids
+  size_t num_gathered = (size_t)remote_size * num_indices_per_rank;
+  double * dst_ids = xmalloc(num_gathered * sizeof(*dst_ids));
+  for (size_t i = 0; i < num_gathered; ++i) dst_ids[i] = (double)i;
+
+  // test of exchange map
+  Xt_xmap xmap =
+    xmap_new(src_ids, (int)num_indices_per_rank, dst_ids, (int)num_gathered,
+             sizeof(double), comm);
+
+  // test results
+  check_allgather_analog_xmap(xmap, comm);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_allgather_analog_xmap(xmap_copy, comm);
+
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+  free(src_ids);
+  free(dst_ids);
+}
 
 typedef int (*xmap_get_num_peers)(Xt_xmap xmap);
 typedef void (*xmap_get_peer_ranks)(Xt_xmap xmap, int *ranks);
@@ -231,7 +322,7 @@ static long long lcm(int a, int b)
 }
 
 static void
-test_peer(xmap_constructor xmap_new, MPI_Comm comm)
+test_xmap_peer(xmap_constructor xmap_new, MPI_Comm comm)
 {
   int comm_rank, comm_size, remote_size;
   xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
@@ -249,6 +340,45 @@ test_peer(xmap_constructor xmap_new, MPI_Comm comm)
   // test of exchange map
   Xt_xmap xmap = xmap_new(idxlist, idxlist, comm);
   xt_idxlist_delete(idxlist);
+
+  // test results
+
+  check_peer_xmap(xmap, stripe_in_local_group, remote_size,
+                  global_num_idx);
+  Xt_xmap xmap_copy = xt_xmap_copy(xmap);
+  check_peer_xmap(xmap_copy, stripe_in_local_group, remote_size,
+                  global_num_idx);
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmap_copy);
+}
+
+static void
+test_xmap_binary_peer(xmap_binary_constructor xmap_new, MPI_Comm comm)
+{
+  int comm_rank, comm_size, remote_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  xt_mpi_call(MPI_Comm_remote_size(comm, &remote_size), comm);
+
+  long long global_num_idx = lcm(comm_size, remote_size);
+  struct Xt_stripe stripe_in_local_group = {
+    .start = (Xt_int)(global_num_idx / comm_size * comm_rank),
+    .stride = 1,
+    .nstrides = (int)(global_num_idx / comm_size)
+  };
+
+  double * ids =
+    xmalloc((size_t)(stripe_in_local_group.nstrides) * sizeof(*ids));
+  for (int i = 0; i < stripe_in_local_group.nstrides; ++i)
+    ids[i] = (double)(stripe_in_local_group.start +
+                      i * stripe_in_local_group.stride);
+
+  // test of exchange map
+  Xt_xmap xmap = xmap_new(ids, (size_t)(stripe_in_local_group.nstrides),
+                          ids, (size_t)(stripe_in_local_group.nstrides),
+                          sizeof(*ids), comm);
+  free(ids);
 
   // test results
 

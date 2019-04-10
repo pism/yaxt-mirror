@@ -376,6 +376,8 @@ AC_CONFIG_FILES([						\
 	tests/test_redist_repeat_parallel_run			\
 	tests/test_xmap_all2all_parallel_run			\
 	tests/test_xmap_all2all_intercomm_parallel_run		\
+	tests/test_xmap_dist_radix_parallel_run			\
+	tests/test_xmap_dist_radix_intercomm_parallel_run	\
 	tests/test_xmap_dist_dir_parallel_run			\
 	tests/test_xmap_dist_dir_intercomm_parallel_run		\
 	tests/test_xmap_intersection_parallel_run		\
@@ -394,6 +396,7 @@ AC_CONFIG_FILES([						\
 	tests/test_redist_p2p_run				\
 	tests/test_request_parallel_run				\
 	tests/test_exported_symbols				\
+	tests/test_xmap_dist_radix_run				\
 	tests/test_xmap_dist_dir_run				\
 	tests/test_xmap_all2all_run				\
 	tests/test_xmap_all2all_fail_run			\
