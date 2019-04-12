@@ -137,6 +137,7 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
 struct exchange_data {
   // list of relative positions in memory to send or receive
   int * transfer_pos;
+  /* generated on-demand */
   struct Xt_pos_ext *transfer_pos_ext_cache;
   int num_transfer_pos, num_transfer_pos_ext;
   int rank;
@@ -596,6 +597,76 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
   return all_dst_covered;
 }
 
+static void
+generate_exchange_data(int const * transfer_pos, int num_msgs,
+                       int const transfer_pos_counts[num_msgs],
+                       int const ranks[num_msgs], int *resCount,
+                       struct exchange_data **resSets, int *max_pos) {
+
+  struct exchange_data *restrict resSets_
+    = *resSets = xmalloc((size_t)num_msgs * sizeof(**resSets));
+
+  int new_num_msgs = 0, max_pos_ = 0;
+  size_t transfer_pos_offset = 0;
+  for (int i = 0; i < num_msgs; ++i) {
+
+    size_t curr_num_transfer_pos = (size_t)transfer_pos_counts[i];
+
+    if (curr_num_transfer_pos <= 0) continue;
+
+    int * curr_transfer_pos =
+      xmalloc(curr_num_transfer_pos * sizeof(*curr_transfer_pos));
+    memcpy(curr_transfer_pos, transfer_pos + transfer_pos_offset,
+           curr_num_transfer_pos * sizeof(*curr_transfer_pos));
+    for (int j = 0; j < curr_num_transfer_pos; ++j)
+      if (curr_transfer_pos[j] > max_pos_) max_pos_ = curr_transfer_pos[j];
+
+    resSets_[new_num_msgs].transfer_pos = curr_transfer_pos;
+    resSets_[new_num_msgs].num_transfer_pos = (int)curr_num_transfer_pos;
+    resSets_[new_num_msgs].transfer_pos_ext_cache = NULL;
+    resSets_[new_num_msgs].num_transfer_pos_ext =
+      (int)count_transfer_pos_ext(curr_num_transfer_pos, curr_transfer_pos);
+    resSets_[new_num_msgs].rank = ranks[i];
+    transfer_pos_offset += curr_num_transfer_pos;
+    ++new_num_msgs;
+  }
+
+  if (new_num_msgs != num_msgs)
+    *resSets = xrealloc(resSets_, (size_t)new_num_msgs * sizeof(**resSets));
+  *resCount = new_num_msgs;
+  *max_pos = max_pos_;
+}
+
+Xt_xmap
+xt_xmap_base_new(int const * in_transfer_pos, int num_in_msgs,
+                 int const in_transfer_pos_counts[num_in_msgs],
+                 int const in_ranks[num_in_msgs],
+                 int const * out_transfer_pos, int num_out_msgs,
+                 int const out_transfer_pos_counts[num_out_msgs],
+                 int const out_ranks[num_out_msgs],
+                 MPI_Comm comm) {
+
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
+  Xt_xmap_intersection xmap = xmalloc(sizeof (*xmap));
+
+  xmap->vtable = &xmap_intersection_vtable;
+
+  xmap->comm = comm = xt_mpi_comm_smart_dup(comm, &xmap->tag_offset);
+
+  generate_exchange_data(in_transfer_pos, num_in_msgs,
+                         in_transfer_pos_counts, in_ranks,
+                         &(xmap->n_in), &(xmap->in_msg),
+                         &(xmap->max_dst_pos));
+  generate_exchange_data(out_transfer_pos, num_out_msgs,
+                         out_transfer_pos_counts, out_ranks,
+                         &(xmap->n_out), &(xmap->out_msg),
+                         &(xmap->max_src_pos));
+
+  return (Xt_xmap)xmap;
+}
+
 Xt_xmap
 xt_xmap_intersection_new(int num_src_intersections,
                          const struct Xt_com_list
@@ -647,7 +718,7 @@ xt_xmap_intersection_new(int num_src_intersections,
     sprintf(error_message, "ERROR: destination intersections do not match "
             "with destination index list (first missing index %lld "
             "at position %d)", (long long)missing_index, first_missing_pos);
-      Xt_abort(comm, error_message, __FILE__, __LINE__);
+    Xt_abort(comm, error_message, __FILE__, __LINE__);
   }
 
   // we could also calculate the (more precise) max pos using only xmap data
