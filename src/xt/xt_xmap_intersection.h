@@ -119,6 +119,42 @@ xt_xmap_intersection_ext_new(
   Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   MPI_Comm comm);
 
+/**
+ * constructor for an exchange map \n
+ * This operation is collective over all processes in comm \n
+ * it uses basic send and recv transfer positions to generate the exchange map.
+ *
+ * @param[in] in_transfer_pos         array containing all receive positions,
+ *                                    they are sorted first by rank of the
+ *                                    sender and second by their value
+ * @param[in] num_in_msgs             number of receive messages
+ * @param[in] in_transfer_pos_counts  array containg counts of receive positions
+ *                                    per message, they are sorted by their
+ *                                    associated ranks
+ * @param[in] in_ranks                array containing ranks for all receive
+ *                                    messages, they are sorted in ascending
+ *                                    order
+ * @param[in] out_transfer_pos        array containing all send positions,
+ *                                    they are sorted first by rank of the
+ *                                    receiver and second by their value
+ * @param[in] num_out_msgs            number of send messages
+ * @param[in] out_transfer_pos_counts array containg counts of send positions
+ *                                    per message, they are sorted by their
+ *                                    associated ranks
+ * @param[in] out_ranks               array containing ranks for all send
+ *                                    messages, they are sorted in ascending
+ *                                    order
+ * @param[in] comm                    MPI communicator that contains all
+ *                                    processes that part in the exchange
+ */
+Xt_xmap xt_xmap_base_new(
+  int const *in_transfer_pos, int num_in_msgs,
+  int const in_transfer_pos_counts[num_in_msgs],
+  int const in_ranks[num_in_msgs],
+  int const *out_transfer_pos, int num_out_msgs,
+  int const out_transfer_pos_counts[num_out_msgs],
+  int const out_ranks[num_out_msgs], MPI_Comm comm);
+
 #endif // XT_XMAP_INTERSECTION_H
 
 /*
