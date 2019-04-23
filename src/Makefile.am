@@ -294,11 +294,12 @@ distclean-local:
 
 install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"
-	$(install_sh_DATA) pkgconfig/yaxt.pc \
-		"$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
+	for pc in pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc ; do \
+		$(install_sh_DATA) "$$pc" "$(DESTDIR)$(libdir)/$$pc" ; done
 
 uninstall-local:
-	rm -f "$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
+	rm -f "$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc" \
+		"$(DESTDIR)$(libdir)/pkgconfig/yaxt_c.pc"
 	-rmdir "$(DESTDIR)$(libdir)/pkgconfig"
 
 ./$(DEPDIR)/FC.deps: $(libyaxt_la_SOURCES) Makefile
