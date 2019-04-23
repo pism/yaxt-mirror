@@ -81,7 +81,7 @@ clean-local:
           test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile \
 	    || ./config.status $$d/Makefile ; done
 
-distclean-local:
+distclean-local: clean-local
 	for d in $(SUBDIRS) ; do \
 		test $$d = . || (rm -f $$d/Makefile ; test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir $$d) ; done
 	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir include util
