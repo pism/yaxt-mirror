@@ -964,6 +964,7 @@ clean-local:
 
 distclean-local: clean-local
 	for d in $(SUBDIRS) ; do \
+		dd=$$d/$(DEPDIR) ; test ! -d $$dd || (rm -f $$dd/FC.dep* ; rmdir $$dd) ; \
 		test $$d = . || (rm -f $$d/Makefile ; test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir $$d) ; done
 	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir include util
 install-exec-local:
