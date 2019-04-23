@@ -458,6 +458,7 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	doc/src/yaxt_concept.dox \
 	include/cfortran.h \
 	m4/tj_find_type.m4 \
+	m4/forloop2.m4 \
 	scripts/cpp.pm \
 	scripts/header2installheader.pl \
 	scripts/generate_doc.pl \
