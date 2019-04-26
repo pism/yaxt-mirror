@@ -88,6 +88,8 @@ libyaxt_c_la_SOURCES =						\
 	xt_idxstripes.c						\
 	xt_idxvec.c 						\
 	xt_idxvec_internal.h					\
+	xt_memcmp.c						\
+	xt_memcmp.h						\
 	xt_mpi_internal.h					\
 	xt_mpi.c						\
 	xt_redist_internal.h					\
