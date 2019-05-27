@@ -90,18 +90,17 @@ AC_DEFUN([ACX_GENERIC_CHECK_INCLUDE_PATHS_IFELSE],
      [AS_VAR_SET([save_flags],["@S|@$1"])
       while :; do
         m4_foreach([ACX_IncSet],[$9],
-          [for ac_incdir in ''m4_ifval([$4],[ $4]); do
-             AS_IF([test -z "$ac_incdir"],
-               [ac_res="none required"
-                $1="m4_ifval(ACX_IncSet,ACX_IncSet )$8 AS_VAR_GET([save_flags])"],
-               [ac_res="$2$ac_incdir"
-                $1="m4_ifval(ACX_IncSet,ACX_IncSet )$8 $ac_res AS_VAR_GET([save_flags])"])
-             _ACX_LANG_CHECK_INCLUDE_IFELSE([$3],dnl
-               [AS_IF([test -z "$ac_incdir"],dnl
-                  [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )$8["])],dnl
-                  [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )[$8 $2$ac_incdir"])])],,[$7])
-             AS_VAR_SET_IF([acx_Include], [break])
-           done
+          [AS_FOR([AC_INCDIR],[ac_incdir],['']m4_ifval([$4],[ $4]),
+             [AS_IF([test -z "$ac_incdir"],
+                [ac_res="none required"
+                 $1="m4_ifval(ACX_IncSet,ACX_IncSet )$8 AS_VAR_GET([save_flags])"],
+                [ac_res="$2$ac_incdir"
+                 $1="m4_ifval(ACX_IncSet,ACX_IncSet )$8 $ac_res AS_VAR_GET([save_flags])"])
+              _ACX_LANG_CHECK_INCLUDE_IFELSE([$3],dnl
+                [AS_IF([test -z "$ac_incdir"],dnl
+                   [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )$8["])],dnl
+                   [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )[$8 $2$ac_incdir"])])],,[$7])
+              AS_VAR_SET_IF([acx_Include], [break])])
            AS_VAR_SET_IF([acx_Include], [break])
           ])
         break

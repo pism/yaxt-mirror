@@ -54,17 +54,16 @@ dnl is given or not.
 AC_DEFUN([_ACX_OPTION_SEARCH_LIBS],
   [acx_option_func_search_save_LIBS="$LIBS"
    AC_LANG_CONFTEST([m4_ifval([$6],[AC_LANG_PROGRAM([$5],[$6])],[AC_LANG_CALL([$5], [$1])])])
-   for ac_lib in '' $2; do
-     AS_IF([test -z "$ac_lib"],
-       [ac_res="none required"
-        LIBS="m4_ifval([$4],[$4 ])m4_ifnblank($3,[$3 ])$acx_option_func_search_save_LIBS"],
-       [ac_res="-l$ac_lib"
-        LIBS="m4_ifval([$4],[$4 ])$ac_res m4_ifnblank($3,[$3 ])$acx_option_func_search_save_LIBS"])
-     AC_LINK_IFELSE([], [AS_IF([test x"$ac_res" = x"none required"],dnl
+   AS_FOR([AC_LIB],[ac_lib],['' $2],
+     [AS_IF([test -z "]AC_LIB["],
+        [ac_res="none required"
+         LIBS="m4_ifval([$4],[$4 ])m4_ifnblank($3,[$3 ])$acx_option_func_search_save_LIBS"],
+        [ac_res="-l]AC_LIB["
+         LIBS="m4_ifval([$4],[$4 ])$ac_res m4_ifnblank($3,[$3 ])$acx_option_func_search_save_LIBS"])
+      AC_LINK_IFELSE([], [AS_IF([test x"$ac_res" = x"none required"],dnl
         [AS_VAR_SET([ac_Search],["]m4_ifval([$4],[$4 ])[$3"])],dnl
-        [AS_VAR_SET([ac_Search],["]m4_ifval([$4],[$4 ])[-l$ac_lib $3"])])])
-     AS_VAR_SET_IF([ac_Search], [break])
-   done
+        [AS_VAR_SET([ac_Search],["]m4_ifval([$4],[$4 ])[-l]AC_LIB[ $3"])])])
+      AS_VAR_SET_IF([ac_Search], [break])])
    rm conftest.$ac_ext
    LIBS="$acx_option_func_search_save_LIBS"])
 dnl ACX_OPTION_SEARCH_LIBS(FUNCTION, SEARCH-LIBS,

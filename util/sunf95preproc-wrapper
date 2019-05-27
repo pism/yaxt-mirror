@@ -47,6 +47,7 @@
 if [ "${DEBUG+set}" = set ]; then
   set -x
   outputRedir=">&2"
+  echo "$0 $*"
 else
   outputRedir=">/dev/null 2>&1"
 fi
@@ -80,12 +81,19 @@ if [ "${FC+set}" != set ]; then
 fi
 FC=${FC-$F90C}
 # nagfor 5.3 up chokes on -EP flag
-nag=`$FC -V 2>&1 | sed -n '/^NAG/s/NAG Fortran Compiler.*/NAG/
-t print
-b
-: print
-p'`
-[ x"$nag" = xNAG ] || FCFLAGS=${FCFLAGS--EP}
+case `$FC -V 2>&1 | sed 5q` in
+  *NAG\ Fortran\ Compiler*)
+    ;;
+  *PGI\ Compilers\ and\ Tools*)
+    echo 'This wrapper does not support the PGI Fortran compiler, use' >&2
+    echo "  $FC -E" >&2
+    echo "instead." >&2
+    exit 1
+    ;;
+  *)
+    FCFLAGS=${FCFLAGS--EP}
+    ;;
+esac
 # append -fpp if necessary
 IFStr=`echo "$IFS" | sed -n '$!s/$/\\\\n/
 H

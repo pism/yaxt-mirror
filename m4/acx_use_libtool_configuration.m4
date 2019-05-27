@@ -58,7 +58,11 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
   [dnl before switching on libtool, identify compilers that prevent us from
    dnl certain build configurations
    ACX_LT_PROBLEMS
-   AC_REQUIRE([LT_INIT])
+   m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
+     [m4_pushdef([Portland],[PGI\ Compilers\ and\ Tools*|*Port[]land])])dnl
+   LT_INIT
+   m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
+     [m4_popdef([Portland])])dnl
    dnl _KPSE_USE_LIBTOOL ensures libtool is also used for configure-time tests,
    dnl which deduces dependent libraries automatically
    _KPSE_USE_LIBTOOL
