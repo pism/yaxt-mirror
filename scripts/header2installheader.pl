@@ -49,20 +49,27 @@ use Storable qw(dclone);
 sub checkPredicate(\%$$$);
 sub substituteTokens($\@\%);
 sub setup();
+sub internConfigH();
+sub applyInstDef();
+
 
 my ($debug, $verbose,
     $srcBaseDir, $dstBaseDir,
     $parseCacheDB,
-    $configHFn, %configHDefs, @configHInsert, @symPrefixMacros, @symPrefixes
-    )
-    = (exists($ENV{'DEBUG'})?int($ENV{'DEBUG'}):0, 0, '', '');
+    $configHFn, %configHDefs, @configHInsert)
+    = (exists($ENV{'DEBUG'})?int($ENV{'DEBUG'}):0, 0,
+       '', '');
 
 our $headerLine;
 
-@symPrefixMacros = qw(SymPrefix SYMPREFIX symprefix);
-@symPrefixes = qw(PPM_ PPM_ ppm_);
+my @symPrefixMacros = qw(SymPrefix SYMPREFIX symprefix);
+my @symPrefixes = qw(PPM_ PPM_ ppm_);
+
 setup();
+
 internConfigH();
+
+applyInstDef();
 
 print(STDERR Data::Dumper->Dump([\%configHDefs], [qw(configHDefs)]))
     if ($debug > 0);
@@ -245,7 +252,8 @@ foreach my $headerFn (@ARGV)
           if (!$thisLineIgnored) {
             # we don't know enough about this conditional, leave it in
             # place
-            print(STDERR join("\n", 'Replacing predicate ', $predicate, 'in', $headerLine, ' with',
+            print(STDERR join("\n", 'Replacing predicate ', $predicate,
+                              'in', $headerLine, ' with',
                               $transformedPredicate), "\n")
                 if $debug > 2;
             substr($headerLine, $predicateStartPos,
@@ -336,7 +344,7 @@ foreach my $headerFn (@ARGV)
       or die;
 }
 
-sub internConfigH
+sub internConfigH()
 {
   my $configHFh;
   die('unknown path to config.h')
@@ -534,6 +542,8 @@ sub substituteTokens($\@\%)
                                     'symbol-prefix-c=s' => \$symPrefixes[0],
                                     'symbol-prefix-F=s' => \$symPrefixes[1],
                                     'symbol-prefix-f=s' => \$symPrefixes[2],
+                                    'inst-def|D=s' => \&set_inst_def,
+                                    'inst-undef|U=s' => \&set_inst_def,
                                     'c-cast-mode=s' => \&set_cast_mode,
                                     'c-sizeof-int=i' => \$c_sizeof_int,
                                     'c-sizeof-long=i' => \$c_sizeof_long,
@@ -557,20 +567,59 @@ sub substituteTokens($\@\%)
 
    sub set_cast_mode($)
    {
-      my $mode = $_[1];
-      if ($mode =~ m{^lp64$}ix)
-      {
-         ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 8, 8);
-      }
-      elsif ($mode =~ m{^ilp32$}ix)
-      {
-         ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 4, 8);
-      }
-      else
-      {
-         print STDERR 'Unexpected arithmetic conversion mode: ', $mode, "\n";
-         exit(1);
-      }
+     my $mode = $_[1];
+     if ($mode =~ m{^lp64$}ix)
+     {
+       ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 8, 8);
+     }
+     elsif ($mode =~ m{^ilp32$}ix)
+     {
+       ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 4, 8);
+     }
+     else
+     {
+       print STDERR 'Unexpected arithmetic conversion mode: ', $mode, "\n";
+       exit(1);
+     }
+   }
+
+   my (%extraInstDefs, %extraInstUndefs);
+
+   sub set_inst_def($)
+   {
+     my ($opt_name, $opt_val) = @_;
+     die('seen ', $opt_name, " ", $opt_val, "\n");
+     if ($opt_name eq 'inst-def')
+     {
+       my ($macro, $definition) = ($opt_val =~ m{([^=]*)(?:=(.*))?});
+       if (defined($macro))
+       {
+         $definition = '' unless (defined($definition));
+         $extraInstDefs{$macro} = $definition;
+       }
+       else
+       {
+         die('Unexpected installation define ', $opt_val, "\n");
+       }
+     }
+     elsif ($opt_name eq 'inst-def')
+     {
+       die('Unexpected installation define ', $opt_val, "\n")
+           if ($opt_val =~ /=/);
+       $extraInstUndefs{$opt_val} = undef;
+     }
+   }
+
+   sub applyInstDef()
+   {
+     while (my ($macro, $definition) = each(%extraInstDefs))
+     {
+       $configHDefs{$macro} = $definition;
+     }
+     foreach my $macro (keys(%extraInstUndefs))
+     {
+       delete($configHDefs{$macro});
+     }
    }
 
    sub set_c_char_sign($$)
