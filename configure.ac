@@ -401,6 +401,8 @@ AC_CONFIG_FILES([						\
 	tests/test_ut_run					\
         tests/test_perf_run					\
         tests/test_perf_stripes_run				\
+        tests/test_id_buckets_tree_run				\
+        tests/test_id_buckets_parallel_run			\
         tests/test_sort_run					\
         tests/test_uid_run					\
         tests/test_misc_run					\

@@ -71,6 +71,8 @@ libyaxt_c_la_SOURCES =						\
 	xt_arithmetic_util.h					\
 	xt_cover.h						\
 	xt_cover.c						\
+	xt_id_buckets.h						\
+	xt_id_buckets.c						\
 	xt_handles.c						\
 	xt_idxempty_internal.h					\
 	xt_idxempty.c						\

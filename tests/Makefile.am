@@ -95,6 +95,8 @@ noinst_PROGRAMS = 						\
 	test_ut							\
 	test_perf						\
 	test_perf_stripes					\
+	test_id_buckets_tree					\
+	test_id_buckets_parallel				\
 	test_sort						\
 	test_uid						\
 	test_yaxt
@@ -234,6 +236,8 @@ test_perf_SOURCES = test_perf.f90
 test_perf_LDADD = $(XT_FC_LDADD)
 test_perf_stripes_SOURCES = test_perf_stripes.f90
 test_perf_stripes_LDADD = $(XT_FC_LDADD)
+test_id_buckets_tree_SOURCES = test_id_buckets_tree.c tests.h
+test_id_buckets_parallel_SOURCES = test_id_buckets_parallel.c tests.h
 test_sort_SOURCES = test_sort.c tests.h
 test_uid_SOURCES = test_uid.c
 test_yaxt_SOURCES = test_yaxt.f90
@@ -287,6 +291,8 @@ TESTS = 							\
 	test_ut_run						\
 	test_perf_run						\
 	test_perf_stripes_run					\
+	test_id_buckets_tree_run				\
+	test_id_buckets_parallel_run				\
 	test_sort_run						\
 	test_uid_run						\
 	test_yaxt_run
