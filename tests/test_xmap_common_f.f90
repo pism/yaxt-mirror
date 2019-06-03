@@ -238,7 +238,7 @@ CONTAINS
 
   SUBROUTINE test_xmap_dble(src_ids, num_src_ids, dst_ids, num_dst_ids, &
                             id_size, xmap_new, comm)
-    DOUBLE PRECISION, INTENT(in) :: src_ids(:), dst_ids(:)
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src_ids(:), dst_ids(:)
     INTEGER, INTENT(in) :: num_src_ids, num_dst_ids, id_size
     INTERFACE
       FUNCTION xmap_new(src_ids, num_src_ids, dst_ids, num_dst_ids, id_size, &

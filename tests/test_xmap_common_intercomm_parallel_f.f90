@@ -320,7 +320,7 @@ CONTAINS
     END INTERFACE
     INTEGER(xt_int_kind), INTENT(in) :: num_indices_per_rank
     INTEGER, INTENT(inout) :: comm
-    DOUBLE PRECISION, ALLOCATABLE :: src_ids(:), dst_ids(:)
+    DOUBLE PRECISION, ALLOCATABLE, TARGET :: src_ids(:), dst_ids(:)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_copy
     TYPE(xt_stripe) :: src_index_stripe(1), dst_index_stripe(1)
@@ -505,7 +505,7 @@ CONTAINS
     INTEGER :: comm_rank, comm_size, remote_size, ierror
     INTEGER(i8) :: i, global_num_ids, local_num_ids
     TYPE(xt_stripe) :: stripe_in_local_group(1)
-    DOUBLE PRECISION, ALLOCATABLE :: ids_in_local_group(:)
+    DOUBLE PRECISION, ALLOCATABLE, TARGET :: ids_in_local_group(:)
     TYPE(xt_xmap) :: xmap, xmap_copy
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &

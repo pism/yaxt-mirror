@@ -278,7 +278,7 @@ CONTAINS
     INTEGER, INTENT(inout) :: comm
     INTEGER, INTENT(in) :: num_indices_per_rank
     INTEGER :: i
-    DOUBLE PRECISION, ALLOCATABLE :: src_ids(:), dst_ids(:)
+    DOUBLE PRECISION, TARGET, ALLOCATABLE :: src_ids(:), dst_ids(:)
     TYPE(xt_xmap) :: xmap, xmap_copy
     INTEGER :: comm_size, comm_rank
     LOGICAL :: is_inter
@@ -405,7 +405,7 @@ CONTAINS
     END INTERFACE
     INTEGER, INTENT(inout) :: comm
     ! test in which each process talks WITH two other processes
-    DOUBLE PRECISION :: src_ids(1), dst_ids(2), temp
+    DOUBLE PRECISION, TARGET :: src_ids(1), dst_ids(2), temp
     TYPE(xt_xmap) :: xmap, xmap_copy
     INTEGER :: comm_size, comm_rank
     LOGICAL :: is_inter
@@ -549,7 +549,7 @@ CONTAINS
     !src_ids(index, rank)
     INTEGER :: i, j, k
 #ifdef __xlC__
-    DOUBLE PRECISION, PARAMETER :: src_ids(20, 0:1) = RESHAPE((/ &
+    DOUBLE PRECISION, TARGET :: src_ids(20, 0:1) = RESHAPE((/ &
          &  1d+0,  2d+0,  3d+0,  4d+0,  5d+0, &
          &  9d+0, 10d+0, 11d+0, 12d+0, 13d+0, &
          & 17d+0, 18d+0, 19d+0, 20d+0, 21d+0, &
@@ -560,12 +560,12 @@ CONTAINS
          & 28d+0, 29d+0, 30d+0, 31d+0, 32d+0 /),  &
          (/ 20, 2 /))
 #else
-    DOUBLE PRECISION, PARAMETER :: src_ids(20, 0:1) = RESHAPE((/ &
+    DOUBLE PRECISION, TARGET :: src_ids(20, 0:1) = RESHAPE((/ &
          (((DBLE(i + j * 8 + k * 3), i = 1, 5), j = 0, 3), &
          k = 0, 1) /), (/ 20, 2 /))
 #endif
     ! dst_index_list(index,rank)
-    DOUBLE PRECISION, PARAMETER :: dst_ids(20, 0:1) = RESHAPE((/ &
+    DOUBLE PRECISION, TARGET :: dst_ids(20, 0:1) = RESHAPE((/ &
          10d+0, 15d+0, 14d+0, 13d+0, 12d+0, &
          15d+0, 10d+0, 11d+0, 12d+0, 13d+0, &
          23d+0, 18d+0, 19d+0, 20d+0, 21d+0, &
@@ -700,7 +700,7 @@ CONTAINS
     END INTERFACE
     INTEGER, INTENT(in) :: ping_rank, pong_rank
     INTEGER, INTENT(inout) :: comm
-    DOUBLE PRECISION, PARAMETER :: &
+    DOUBLE PRECISION, TARGET :: &
          id_list(5) = (/ 0d+0, 1d+0, 2d+0, 3d+0, 4d+0 /)
     INTEGER :: num_src_ids, num_dst_ids
     TYPE(xt_xmap) :: xmap, xmap_copy
