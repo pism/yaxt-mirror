@@ -43,7 +43,7 @@ AC_DEFUN([_ACX_LT_FORT_FLAGS_MANGLE],
 dnl fix problems from NAG compiler
    AS_IF([echo "$acx_temp" | grep '^NAG Fortran Compiler Release' >/dev/null],
      [acx_FCFLAGS=`echo "$acx_FCFLAGS" | tr ' ' '\n' | sed -e '/^-W@<:@lc@:>@/{' \
--e 's/^\(-Wl\)/-Xlinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}'     | tr '\n' ' '`])
+-e 's/^\(-Wl\)/-XCClinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}'     | tr '\n' ' '`])
 dnl fix conflicting use of -module by libtool and ifort
    AS_CASE(["x${FC_MODOUT}x"],
      [x'-module 'x|x'-mod 'x],
