@@ -868,7 +868,8 @@ sub buildNameSubst(\@)
          }
          for (my $i = 0; $i < @FPPFLAGS; ++$i)
          {
-            if ($FPPFLAGS[$i] eq '-Xlinker' or $FPPFLAGS[$i] eq '-Xcompiler')
+            my $flag = $FPPFLAGS[$i];
+            if ($flag eq '-Xlinker' or $flag eq '-Xcompiler' or $flag eq '-XCClinker')
             {
                splice(@FPPFLAGS, $i, 1);
                redo;
