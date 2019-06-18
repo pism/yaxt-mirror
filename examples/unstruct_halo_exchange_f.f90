@@ -147,7 +147,7 @@ PROGRAM unstruct_halo_exchang
   local_indices(:,1) = (/    4_xi,  8_xi, 13_xi, &
        &                  3_xi,  7_xi, 12_xi, 17_xi, &
        &                     6_xi, 11_xi, 16_xi, &
-       &                        10_xi,  5_xi                 /)
+       &                        10_xi, 15_xi                 /)
   local_indices(:,2) = (/    3_xi,  7_xi, 12_xi, &
        &                  2_xi,  6_xi, 11_xi, 16_xi, &
        &                     5_xi, 10_xi, 15_xi, &
