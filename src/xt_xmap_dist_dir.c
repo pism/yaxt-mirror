@@ -390,16 +390,18 @@ pack_src_dst_dist_dirs(size_t num_intersections,
   unsigned char *send_buffer = (*send_buffer_)
     = xmalloc((size_t)total_send_size);
   size_t ofs = 0;
-  qsort(src_dst_intersections, num_intersections,
-        sizeof (src_dst_intersections[0]), xt_xmdd_cmp_isect_src_rank);
+  if (num_intersections > 1)
+    qsort(src_dst_intersections, num_intersections,
+          sizeof (src_dst_intersections[0]), xt_xmdd_cmp_isect_src_rank);
   int num_send_indices_requests
     = xt_xmap_dist_dir_pack_intersections(
       xt_xmdd_direction_src, num_intersections, src_dst_intersections, false,
       SEND_SIZE_ASIZE, SEND_SIZE_SRC, send_size,
       send_buffer, total_send_size, &ofs, comm);
 
-  qsort(src_dst_intersections, num_intersections,
-        sizeof (src_dst_intersections[0]), xt_xmdd_cmp_isect_dst_rank);
+  if (num_intersections > 1)
+    qsort(src_dst_intersections, num_intersections,
+          sizeof (src_dst_intersections[0]), xt_xmdd_cmp_isect_dst_rank);
   num_send_indices_requests
     += xt_xmap_dist_dir_pack_intersections(
       xt_xmdd_direction_dst, num_intersections, src_dst_intersections, true,
