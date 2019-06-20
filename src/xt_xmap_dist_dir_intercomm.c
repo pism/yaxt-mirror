@@ -457,7 +457,7 @@ send_size_from_intersections(size_t num_intersections,
 }
 
 
-static int
+static size_t
 pack_dist_dirs(size_t num_intersections,
                struct isect *restrict src_dst_intersections,
                int (*send_size)[SEND_SIZE_ASIZE],
@@ -477,7 +477,7 @@ pack_dist_dirs(size_t num_intersections,
         target == xt_xmdd_direction_src
         ? xt_xmdd_cmp_isect_src_rank : xt_xmdd_cmp_isect_dst_rank);
   size_t ofs = 0;
-  int num_requests
+  size_t num_requests
     = xt_xmap_dist_dir_pack_intersections(
       target, num_intersections, src_dst_intersections,
       isect_idxlist_delete,
@@ -562,7 +562,7 @@ exchange_idxlists(struct dist_dir **src_intersections,
   xt_xmdd_free_dist_dir(dst_dist_dir);
   /* ... and pack the results into a sendable format */
   void *send_buffer_local, *send_buffer_remote;
-  int num_send_requests_local
+  size_t num_send_requests_local
     = pack_dist_dirs(num_intersections, src_dst_intersections,
                      send_size_local, &send_buffer_local,
                      xt_xmdd_direction_src, false, intra_comm, comm_size),
@@ -590,11 +590,12 @@ exchange_idxlists(struct dist_dir **src_intersections,
   compress_sizes(send_size_remote, remote_size, tx_stat_remote+1, NULL);
   compress_sizes(recv_size_remote, remote_size, tx_stat_remote+0,
                  isect_counts_recv_remote);
-  assert(tx_stat_local[1].num_msg == (size_t)num_send_requests_local
-         && tx_stat_remote[1].num_msg == (size_t)num_send_requests_remote);
+  assert(tx_stat_local[1].num_msg == num_send_requests_local
+         && tx_stat_remote[1].num_msg == num_send_requests_remote);
   size_t num_requests
-    = (size_t)num_send_requests_local + (size_t)num_send_requests_remote
+    = num_send_requests_local + num_send_requests_remote
     + tx_stat_local[0].num_msg + tx_stat_remote[0].num_msg;
+  assert(num_requests <= INT_MAX);
   MPI_Request *requests
     = xmalloc(num_requests * sizeof(*requests)
               + tx_stat_local[0].bytes + tx_stat_remote[0].bytes);

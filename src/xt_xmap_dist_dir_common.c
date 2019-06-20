@@ -228,7 +228,7 @@ xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
 }
 
 
-int
+size_t
 xt_xmap_dist_dir_pack_intersections(
   enum xt_xmdd_direction target,
   size_t num_intersections,
@@ -239,7 +239,7 @@ xt_xmap_dist_dir_pack_intersections(
   unsigned char *buffer, size_t buf_size, size_t *ofs, MPI_Comm comm)
 {
   int prev_send_rank = -1;
-  int num_send_indices_requests = 0;
+  size_t num_send_indices_requests = 0;
   size_t origin = 1 ^ target, ofs_ = *ofs;
   int position = 0;
   for (size_t i = 0; i < num_intersections; ++i)

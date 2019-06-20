@@ -131,7 +131,7 @@ xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
                                const struct dist_dir *dst_dist_dir,
                                struct isect **src_dst_intersections);
 
-int
+size_t
 xt_xmap_dist_dir_pack_intersections(
   enum xt_xmdd_direction target,
   size_t num_intersections,

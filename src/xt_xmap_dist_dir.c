@@ -393,7 +393,7 @@ pack_src_dst_dist_dirs(size_t num_intersections,
   if (num_intersections > 1)
     qsort(src_dst_intersections, num_intersections,
           sizeof (src_dst_intersections[0]), xt_xmdd_cmp_isect_src_rank);
-  int num_send_indices_requests
+  size_t num_send_indices_requests
     = xt_xmap_dist_dir_pack_intersections(
       xt_xmdd_direction_src, num_intersections, src_dst_intersections, false,
       SEND_SIZE_ASIZE, SEND_SIZE_SRC, send_size,
@@ -407,7 +407,8 @@ pack_src_dst_dist_dirs(size_t num_intersections,
       xt_xmdd_direction_dst, num_intersections, src_dst_intersections, true,
       SEND_SIZE_ASIZE, SEND_SIZE_DST, send_size,
       send_buffer, total_send_size, &ofs, comm);
-  return num_send_indices_requests;
+  assert(num_send_indices_requests <= INT_MAX);
+  return (int)num_send_indices_requests;
 }
 
 /**
