@@ -138,8 +138,8 @@ PROGRAM test_yaxt
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! generate surface transposition:
-  CALL gen_off_trans(xmap_tpex, MPI_INTEGER, id_pos - 1, &
-       MPI_INTEGER, pos3d_surf - 1, redist_surf_tpex)
+  CALL gen_off_trans(xmap_tpex, MPI_INTEGER, id_pos(:,:) - 1, &
+       MPI_INTEGER, pos3d_surf, redist_surf_tpex)
   DEALLOCATE(pos3d_surf, id_pos)
 
   ! 2d to surface boundsexchange:
@@ -359,7 +359,7 @@ CONTAINS
     ! positions for zero based arrays (ECHAM grid point dim order)
     ! old pos = i + j*ie
     ! new pos = i + k*ie + j*ie*nlev
-    INTEGER :: ii,jj, i,j,k, p,q
+    INTEGER :: ii,jj, i,j,k, p
 
     k = 0 ! surface
     DO jj=1,je
@@ -367,8 +367,7 @@ CONTAINS
         p = pos(ii,jj) - 1 ! shift to 0-based index
         j = p/ie
         i = MOD(p,ie)
-        q = i + k*ie + j*ie*nlev
-        pos(ii,jj) = q + 1 ! shift to 1-based index
+        pos(ii,jj) = i + k*ie + j*ie*nlev
       ENDDO
     ENDDO
 
