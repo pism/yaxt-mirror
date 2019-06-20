@@ -75,6 +75,12 @@ xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
 Xt_idxlist
 xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes);
 
+/**
+ * can b be merged into a, i.e. do a and b form a continuous range?
+ *
+ * @param a position extent to merge into
+ * @param b position extent to merge
+ */
 static inline bool
 xt_can_merge_pos_ext(struct Xt_pos_ext a, struct Xt_pos_ext b)
 {
