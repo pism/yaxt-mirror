@@ -941,7 +941,7 @@ append_ext(struct Xt_pos_ext pos_ext, struct Xt_pos_ext_vec *restrict result)
   size_t num_pos_exts_ = result->num_pos_ext,
     size_pos_exts_ = result->size_pos_ext;
   struct Xt_pos_ext *restrict pos_exts_ = result->pos_ext;
-  if (xt_pos_ext_is_appendable(pos_exts_[num_pos_exts_ - 1], pos_ext))
+  if (!xt_can_merge_pos_ext(pos_exts_[num_pos_exts_ - 1], pos_ext))
   {
     if (num_pos_exts_ + 1 == size_pos_exts_)
     {
@@ -1161,7 +1161,7 @@ idxstripes_get_pos_exts_of_index_stripes(
     result.pos_ext = xmalloc((result.size_pos_ext + 1)
                              * sizeof (*result.pos_ext));
     /* put non-concatenable *terminator* at offset -1 */
-    result.pos_ext[0] = (struct Xt_pos_ext){.start = INT_MIN, .size = -1 };
+    result.pos_ext[0] = (struct Xt_pos_ext){.start = INT_MIN, .size = 0 };
     ++result.pos_ext;
     struct Xt_pos_ext_vec cover;
     xt_cover_start(&cover, result.size_pos_ext);
