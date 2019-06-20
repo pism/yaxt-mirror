@@ -132,6 +132,7 @@ PROGRAM test_ut
   CALL ut_destroy_transposition(trans_tpex)
   CALL ut_destroy_transposition(surf_trans_tpex)
 
+  DEALLOCATE(fval, gval, loc_id, loc_tpex, id_pos, gval3d, pos3d_surf)
   CALL ut_finalize()
   CALL finish_mpi
 

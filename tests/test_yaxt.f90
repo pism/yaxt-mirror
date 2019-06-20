@@ -129,8 +129,9 @@ PROGRAM test_yaxt
   CALL xt_redist_s_exchange(redist_tpex, fval, gval)
 
   CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
-
+  DEALLOCATE(gval)
   CALL check_redist_collection_static
+  DEALLOCATE(loc_id)
 
   ! define positions of surface elements within (i,k,j) array
   CALL gen_id_pos(id_pos)
@@ -138,19 +139,22 @@ PROGRAM test_yaxt
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! generate surface transposition:
-  CALL gen_off_trans(xmap_tpex, MPI_INTEGER, INT(id_pos(:,:)) - 1, &
-       MPI_INTEGER, INT(pos3d_surf(:,:)) - 1, redist_surf_tpex)
+  CALL gen_off_trans(xmap_tpex, MPI_INTEGER, id_pos - 1, &
+       MPI_INTEGER, pos3d_surf - 1, redist_surf_tpex)
+  DEALLOCATE(pos3d_surf, id_pos)
 
   ! 2d to surface boundsexchange:
   gval3d = -1
   CALL xt_redist_s_exchange(redist_surf_tpex, &
        RESHAPE(fval, (/ ie, je, 1 /)), gval3d)
+  DEALLOCATE(fval)
 
   CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex), mype)
   ! check sub surface:
   CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1, mype)
 
   ! cleanup:
+  DEALLOCATE(loc_tpex, gval3d)
   CALL xt_xmap_delete(xmap_tpex)
 
   CALL xt_redist_delete(redist_tpex)

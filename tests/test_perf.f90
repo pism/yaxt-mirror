@@ -124,10 +124,11 @@ PROGRAM test_perf
 
 
   ! define bounds exchange for full global index space
-  CALL def_exchange()
-
+  CALL def_exchange(g_id, g_tpex)
+  DEALLOCATE(g_id)
   ! local window of global bounds exchange:
   CALL get_window(g_tpex, loc_tpex_2d)
+  DEALLOCATE(g_tpex)
 
   ! template: loc_id_2d -> loc_tpex_2d
   CALL tstart(t_template_2d)
@@ -157,6 +158,7 @@ PROGRAM test_perf
   CALL gen_off_trans(template_tpex_2d, MPI_INTEGER, id_pos(:,:)-1, &
        MPI_INTEGER, pos3d_surf(:,:)-1, surf_trans_tpex_2d)
   CALL tstop(t_surf_trans)
+  DEALLOCATE(id_pos, pos3d_surf)
 
 
   ! 2d to surface boundsexchange:
@@ -178,7 +180,9 @@ PROGRAM test_perf
 
   ! inflate 2d -> 3d
   CALL inflate_idx(3, loc_id_2d, loc_id_3d)
+  DEALLOCATE(loc_id_2d)
   CALL inflate_idx(3, loc_tpex_2d, loc_tpex_3d)
+  DEALLOCATE(loc_tpex_2d)
 
   ! template: loc_id_3d -> loc_tpex_3d
   CALL tstart(t_template_3d)
@@ -197,7 +201,9 @@ PROGRAM test_perf
   CALL tstart(t_exch_3d)
   CALL exchange3d_3d(trans_tpex_3d, fval_3d, gval_3d)
   CALL tstop(t_exch_3d)
+  DEALLOCATE(fval_3d)
   CALL icmp_3d('3d to 3d check', gval_3d, loc_tpex_3d)
+  DEALLOCATE(gval_3d)
 
   ! cleanup 3d:
   CALL ut_destroy_transposition_template(template_tpex_3d)
@@ -217,6 +223,7 @@ PROGRAM test_perf
   CALL treport(t_trans_3d, TRIM(grid_label), mpi_comm_world)
   CALL treport(t_exch_3d, TRIM(grid_label), mpi_comm_world)
 
+  DEALLOCATE(loc_tpex_3d, loc_id_3d, fval_2d, gval_2d)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -229,8 +236,6 @@ CONTAINS
     INTEGER, ALLOCATABLE, INTENT(out) :: idx_3d(:,:,:)
 
     INTEGER :: i, j, k
-
-    IF (ALLOCATED(idx_3d)) DEALLOCATE(idx_3d)
 
     IF (inflate_pos == 3) THEN
       ALLOCATE(idx_3d(ie, je, ke))
@@ -549,8 +554,9 @@ CONTAINS
   END SUBROUTINE gen_template_3d
 
 
-  SUBROUTINE def_exchange()
-
+  SUBROUTINE def_exchange(g_id, g_tpex)
+    INTEGER, INTENT(in) :: g_id(:, :)
+    INTEGER, INTENT(out) :: g_tpex(:, :)
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
     INTEGER :: i, j

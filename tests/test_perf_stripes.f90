@@ -145,11 +145,12 @@ PROGRAM test_perf_stripes
   CALL get_window(g_id, loc_id_2d)
 
   ! define bounds exchange for full global index space
-  CALL def_exchange()
+  CALL def_exchange(g_id, g_tpex)
   !g_tpex = g_id
-
+  DEALLOCATE(g_id)
   ! local window of global bounds exchange:
   CALL get_window(g_tpex, loc_tpex_2d)
+  DEALLOCATE(g_tpex)
 
   IF (full_test) THEN
   ! xmap: loc_id_2d -> loc_tpex_2d
@@ -179,6 +180,7 @@ PROGRAM test_perf_stripes
   CALL gen_off_redist(xmap_tpex_2d, MPI_INTEGER, id_pos(:,:)-1, &
        MPI_INTEGER, pos3d_surf(:,:)-1, redist_surf_tpex_2d)
   CALL tstop(t_surf_redist)
+  DEALLOCATE(id_pos, pos3d_surf)
 
   ! 2d to surface boundsexchange:
   gval_3d = -1
@@ -198,7 +200,9 @@ PROGRAM test_perf_stripes
 
   ! inflate (i,j) -> (k,i,j)
   CALL inflate_idx(1, loc_id_2d, loc_id_3d)
+  DEALLOCATE(loc_id_2d)
   CALL inflate_idx(1, loc_tpex_2d, loc_tpex_3d)
+  DEALLOCATE(loc_tpex_2d)
 
   IF (full_test) THEN
 
@@ -215,7 +219,6 @@ PROGRAM test_perf_stripes
   CALL xt_xmap_delete(xmap_tpex_3d)
 
   ! test 3d-to-3d transposition:
-  !DEALLOCATE(gval_3d)
   fval_3d = INT(loc_id_3d)
   gval_3d = -1
   CALL tstart(t_exch_3d)
@@ -262,6 +265,7 @@ PROGRAM test_perf_stripes
   CALL xt_redist_s_exchange(redist_tpex_3d_wb, fval_3d, gval_3d)
   CALL tstop(t_exch_3d_wb)
 
+  DEALLOCATE(fval_3d)
   CALL xt_redist_delete(redist_tpex_3d_wb)
 
   CALL icmp('redist_tpex_3d_wb check', gval_3d, INT(loc_tpex_3d), mype)
@@ -296,6 +300,7 @@ PROGRAM test_perf_stripes
   CALL treport(t_redist_3d_wb, TRIM(grid_label), mpi_comm_world)
   CALL treport(t_exch_3d_wb, TRIM(grid_label), mpi_comm_world)
 
+  DEALLOCATE(loc_tpex_3d, loc_id_3d, fval_2d, gval_2d, gval_3d)
   CALL xt_finalize()
   CALL finish_mpi
 
@@ -574,8 +579,10 @@ CONTAINS
 
   END SUBROUTINE gen_xmap_3d
 
-  SUBROUTINE def_exchange()
 
+  SUBROUTINE def_exchange(g_id, g_tpex)
+    INTEGER, INTENT(in) :: g_id(:, :)
+    INTEGER, INTENT(out) :: g_tpex(:, :)
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
     INTEGER :: i, j
