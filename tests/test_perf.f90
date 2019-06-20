@@ -53,7 +53,7 @@ PROGRAM test_perf
        & ut_destroy_transposition_template, ut_destroy_transposition, &
        & ut_init_transposition, xt_int_kind
   USE ftest_common, ONLY: finish_mpi, init_mpi, treset, tstart, tstop, &
-       treport, timer, id_map, factorize, regular_deco, set_verbose
+       treport, timer, id_map, factorize, regular_deco, set_verbose, icmp
   USE yaxt, ONLY: xt_finalize
 
   IMPLICIT NONE
@@ -146,7 +146,7 @@ PROGRAM test_perf
   CALL tstart(t_exch_2d)
   CALL exchange2d_2d(trans_tpex_2d, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
-  CALL icmp_2d('2d to 2d check', gval_2d, loc_tpex_2d)
+  CALL icmp('2d to 2d check', gval_2d, loc_tpex_2d, mype)
 
   ! define positions of surface elements within (i,k,j) array
   CALL id_map(id_pos)
@@ -168,10 +168,10 @@ PROGRAM test_perf
   CALL exchange2d_3d(surf_trans_tpex_2d, fval_2d, gval_3d)
   CALL tstop(t_exch_surf)
 
-  CALL icmp_2d('surface check', gval_3d(:,1,:), loc_tpex_2d)
+  CALL icmp('surface check', gval_3d(:,1,:), loc_tpex_2d, mype)
 
   ! check sub surface:
-  CALL icmp_2d('sub surface check', gval_3d(:,2,:), loc_tpex_2d*0-1)
+  CALL icmp('sub surface check', gval_3d(:,2,:), loc_tpex_2d*0-1, mype)
 
   ! cleanup 2d:
   CALL ut_destroy_transposition_template(template_tpex_2d)
@@ -202,7 +202,7 @@ PROGRAM test_perf
   CALL exchange3d_3d(trans_tpex_3d, fval_3d, gval_3d)
   CALL tstop(t_exch_3d)
   DEALLOCATE(fval_3d)
-  CALL icmp_3d('3d to 3d check', gval_3d, loc_tpex_3d)
+  CALL icmp('3d to 3d check', gval_3d, loc_tpex_3d, mype)
   DEALLOCATE(gval_3d)
 
   ! cleanup 3d:
@@ -273,68 +273,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE gen_pos3d_surf
-
-  SUBROUTINE icmp_2d(label, f,g)
-    CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_2d: '
-    CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:)
-    INTEGER, INTENT(in)  :: g(:,:)
-
-    INTEGER :: i, j, n1, n2
-
-    n1 = SIZE(f,1)
-    n2 = SIZE(f,2)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
-         CALL ut_abort(context//'internal error', &
-         __FILE__, &
-         __LINE__)
-
-    DO j = 1, n2
-      DO i = 1, n1
-        IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,*) context,label,' test failed: i, j, f(i,j), g(i,j) =', &
-               i, j, f(i,j), g(i,j)
-          CALL ut_abort(context//label//' test failed', &
-               __FILE__, &
-               __LINE__)
-        ENDIF
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE icmp_2d
-
-  SUBROUTINE icmp_3d(label, f,g)
-    CHARACTER(len=*), PARAMETER :: context = 'test_perf::icmp_3d: '
-    CHARACTER(len=*), INTENT(in)  :: label
-    INTEGER, INTENT(in)  :: f(:,:,:)
-    INTEGER, INTENT(in)  :: g(:,:,:)
-
-    INTEGER :: i, j, k, n1, n2, n3
-
-    n1 = SIZE(f,1)
-    n2 = SIZE(f,2)
-    n3 = SIZE(f,3)
-    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
-         CALL ut_abort(context//'internal error', &
-         __FILE__, &
-         __LINE__)
-
-    DO k = 1, n3
-      DO j = 1, n2
-        DO i = 1, n1
-          IF (f(i,j,k) /= g(i,j,k)) THEN
-             WRITE(0,*) context,label, &
-                  ' test failed: i, j, f(i,j,k), g(i,j,k) =', &
-                  i, j, k, f(i,j,k), g(i,j,k)
-            CALL ut_abort(context//label//' test failed', &
-                 __FILE__, &
-                 __LINE__)
-          ENDIF
-        ENDDO
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE icmp_3d
 
   SUBROUTINE init_all
     CHARACTER(len=*), PARAMETER :: context = 'init_all: '
