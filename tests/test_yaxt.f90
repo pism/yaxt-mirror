@@ -92,7 +92,6 @@ PROGRAM test_yaxt
   TYPE(xt_redist) :: redist_surf_tpex
 
   INTEGER(xt_int_kind), ALLOCATABLE :: loc_id(:,:), loc_tpex(:,:)
-  INTEGER(c_int), ALLOCATABLE :: mstate(:,:)
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
@@ -207,8 +206,10 @@ CONTAINS
     TYPE(xt_idxlist) :: loc_id_idxlist
     INTEGER(xt_int_kind) :: loc_tpex2(ie,je)
     TYPE(xt_idxlist) :: loc_tpex2_idxlist
+    INTEGER(c_int), ALLOCATABLE :: mstate(:,:)
 
     loc_id_idxlist = xt_idxvec_new(loc_id, SIZE(loc_id))
+    ALLOCATE(mstate(ie,je))
 
     ! use one simple modifier to define index transfer:
     CALL def_tpex_mod_via_idxvec(m_tpex, m_tpex_num)
@@ -407,7 +408,7 @@ CONTAINS
     CALL deco
 
     ALLOCATE(fval(ie,je), gval(ie,je))
-    ALLOCATE(loc_id(ie,je), loc_tpex(ie,je), mstate(ie,je))
+    ALLOCATE(loc_id(ie,je), loc_tpex(ie,je))
     ALLOCATE(id_pos(ie,je), gval3d(ie,nlev,je), pos3d_surf(ie,je))
 
     fval = undef_int
