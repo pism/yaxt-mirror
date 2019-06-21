@@ -276,8 +276,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + stripes[i-1].nstrides;
 
   for (size_t i = 0; i < num_stripes; ++i) {
-    sorted_pos_prefix_sum[i] = orig_pos_prefix_sum[sorted_stripe_min_pos[i]];
     int sorted_pos = sorted_stripe_min_pos[i];
+    sorted_pos_prefix_sum[i] = orig_pos_prefix_sum[sorted_pos];
     Xt_int ofs = (Xt_int)(stripes[sorted_pos].stride
                           * (stripes[sorted_pos].nstrides - 1)),
       mask = Xt_isign_mask(ofs);
@@ -706,9 +706,14 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
   } else {
     size_t idx_memsize = (size_t)num_selection * sizeof(*sorted_selection),
       pos_memsize = (size_t)num_selection * sizeof(*sorted_selection_pos),
+#if defined _CRAYC && _RELEASE_MAJOR < 9
+      pos_ofs_roundup = _MAXVL_8,
+#else
+      pos_ofs_roundup = sizeof(int),
+#endif
       /* round pos_memsize up to next multiple of sizeof (int) */
-      pos_ofs = ((idx_memsize + sizeof (int) - 1)
-                 & ((size_t)-(ssize_t)(sizeof(int)))),
+      pos_ofs = ((idx_memsize + pos_ofs_roundup - 1)
+                 & ((size_t)-(ssize_t)(pos_ofs_roundup))),
       /* compute size of merged allocation */
       alloc_size = pos_ofs + pos_memsize;
 
