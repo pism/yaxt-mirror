@@ -103,8 +103,8 @@ dnl unless the user already set the -qtls option, add it and retry test
 ],[ac_cv_tls=none])])
 AC_PROG_FC
 AC_FC_SRCEXT([f90])
-AC_FC_LINE_LENGTH([unlimited])
 AC_LANG_PUSH([Fortran])
+ACX_FC_LINE_LENGTH([unlimited])
 ACX_PROG_FC_CHECK_FPP
 FCFLAGS="$FCFLAGS $FC_FPP_FLAG"
 AC_PROG_FPP
