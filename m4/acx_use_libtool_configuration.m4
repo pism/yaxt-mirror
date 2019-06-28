@@ -59,7 +59,12 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
    dnl certain build configurations
    ACX_LT_PROBLEMS
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
-     [m4_pushdef([Portland],[PGI\ Compilers\ and\ Tools*|*Port[]land])])dnl
+     [m4_pushdef([Portland],[NAG\ Fortran\ Compiler*)
+	  lt_prog_compiler_wl_FC='-Wl,-Wl,,'
+	  lt_prog_compiler_pic_FC='-PIC'
+	  lt_prog_compiler_static_FC='-Bstatic'
+	  ;;
+	*PGI\ Compilers\ and\ Tools*|*Port[]land])])dnl
    LT_INIT
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
      [m4_popdef([Portland])])dnl
