@@ -149,6 +149,41 @@ imin(int a, int b)
   return a <= b ? a : b;
 }
 
+/* return number of leading zeroes in an Xt_uint */
+#ifdef XT_INT_CLZ
+#define xinlz(v) XT_INT_CLZ(v)
+#else
+static inline int
+xinlz(Xt_uint v)
+{
+  int c = 0;
+#if SIZEOF_XT_INT * CHAR_BIT == 64
+  if (v <= UINT64_C(0x00000000ffffffff)) {c += 32; v <<= 32;}
+  if (v <= UINT64_C(0x0000ffffffffffff)) {c += 16; v <<= 16;}
+  if (v <= UINT64_C(0x00ffffffffffffff)) {c +=  8; v <<=  8;}
+  if (v <= UINT64_C(0x0fffffffffffffff)) {c +=  4; v <<=  4;}
+  if (v <= UINT64_C(0x3fffffffffffffff)) {c +=  2; v <<=  2;}
+  if (v <= UINT64_C(0x7fffffffffffffff)) {c +=  1;}
+#elif SIZEOF_XT_INT * CHAR_BIT == 32
+  if (v <= 0x0000ffffUL) {c += 16; v <<= 16;}
+  if (v <= 0x00ffffffUL) {c +=  8; v <<=  8;}
+  if (v <= 0x0fffffffUL) {c +=  4; v <<=  4;}
+  if (v <= 0x3fffffffUL) {c +=  2; v <<=  2;}
+  if (v <= 0x7fffffffUL) {c +=  1;}
+#elif SIZEOF_XT_INT * CHAR_BIT == 16
+  if (v <= 0x00ffU) {c +=  8; v <<=  8;}
+  if (v <= 0x0fffU) {c +=  4; v <<=  4;}
+  if (v <= 0x3fffU) {c +=  2; v <<=  2;}
+  if (v <= 0x7fffU) {c +=  1;}
+#else
+#error "Unexpected size of Xt_int.\n"
+#endif
+  return c;
+}
+#endif
+
+
+
 #endif
 
 /*

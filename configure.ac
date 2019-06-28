@@ -157,7 +157,8 @@ AS_IF([test x$ac_cv_c_char_unsigned = xyes],
   [C_CHAR_IS_UNSIGNED=1],
   [C_CHAR_IS_UNSIGNED=0])
 AC_SUBST([C_CHAR_IS_UNSIGNED])
-dnl preprocessor implicit type conversions depends on the size of these
+dnl preprocessor implicit type conversions depends on the size of these, also
+dnl the result is used in establishing Xt_long
 AC_CHECK_SIZEOF([int])
 AC_SUBST([C_SIZEOF_INT],[$ac_cv_sizeof_int])
 AC_CHECK_SIZEOF([long])
@@ -165,22 +166,36 @@ AC_SUBST([C_SIZEOF_LONG],[$ac_cv_sizeof_long])
 AC_CHECK_SIZEOF([long long])
 AC_SUBST([C_SIZEOF_LONG_LONG],[$ac_cv_sizeof_long_long])
 AC_CHECK_SIZEOF([unsigned long])
+AC_CHECK_SIZEOF([__int128])
+AC_CHECK_SIZEOF([__int128_t])
 dnl
+dnl check for various builtins
 AS_FOR([builtin_macro],[builtin],[__builtin_ctzl __builtin_clzl],
   [AS_VAR_PUSHDEF([builtin_cache],[acx_cv_have_decl_]builtin_macro)
    AC_CACHE_CHECK([whether ]builtin_macro[ is declared],
      [builtin_cache],
-     [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  long lbz = builtin_macro][[(56L)]])],
+     [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  long lbz = builtin_macro][[(56UL)]])],
         [AS_VAR_SET([builtin_cache],[yes])],
         [AS_VAR_SET([builtin_cache],[no])])])
    AS_VAR_IF([builtin_cache],[yes],
-     [AC_DEFINE_UNQUOTED([HAVE_DECL_]AS_TR_CPP([builtin_macro]),[1])
-      break],
-     [AC_DEFINE_UNQUOTED([HAVE_DECL_]AS_TR_CPP([builtin_macro]),[0])])])
+     [AC_DEFINE_UNQUOTED([HAVE_DECL_]AS_TR_CPP([builtin_macro]),[1])],
+     [AC_DEFINE_UNQUOTED([HAVE_DECL_]AS_TR_CPP([builtin_macro]),[0])])
+   AS_VAR_POPDEF([builtin_cache])])
 AH_TEMPLATE([HAVE_DECL___BUILTIN_CTZL],
   [Define to 1 if __builtin_ctzl is available, 0 if not])
 AH_TEMPLATE([HAVE_DECL___BUILTIN_CLZL],
   [Define to 1 if __builtin_clzl is available, 0 if not])
+AC_CACHE_CHECK([whether __builtin_clz is declared],
+  [acx_cv_have_decl___builtin_clz],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  int nlz = __builtin_clz(56U)])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_clz],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_clz],[no])])])
+AC_CACHE_CHECK([whether __builtin_clzll is declared],
+  [acx_cv_have_decl___builtin_clzll],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  int nlz = __builtin_clzll(56ULL)])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[no])])])
+
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly
 dnl ######################################################################
@@ -272,16 +287,19 @@ char b[($XT_INT)((-($XT_INT)-0.5)+1.5)]]])],,
 dnl expand setting of variables to describe variable type
 dnl vartype_setq(TYPE_NAME, TYPE_C_TYPE, FC_KIND, TYPE_MPI_DT,
 dnl              TYPE_VAL_MAX, TYPE_VAL_MIN,
-dnl              TYPE_C_PRINTF_FMT, TYPE_C_ABS)
+dnl              TYPE_C_PRINTF_FMT, TYPE_C_ABS, TYPE_C_CLZ)
 m4_define([vartype_setq],[$1][_MPIDT=$4
      AC_CHECK_SIZEOF([$2])
-     ]$1[_FC_KIND=$3
+     $1][_FC_KIND=$3
      ACX_FORTRAN_TYPE_KIND([integer],[$3],[$2],
        [      use iso_c_binding],,$1[_FC_KIND=$acx_fortran_kind_subst])
      $1][_MAX=$5
      $1][_MIN=$6
      $1][_FMT=$7
-     $1][_abs=$8])dnl
+     $1][_abs=$8
+     AS_IF([test x"$][$9" = xyes],
+       [m4_if([$2], [short], [$1][_clz="(m4_substr($9,17)((unsigned short)v))"],
+          [$1][_clz="(m4_substr($9,17)(v))"])])])dnl
 
 dnl
 dnl test if MPI_INTEGER[248] are available
@@ -307,17 +325,26 @@ m4_foreach([substtype],[[XT_INT]],
   [AS_CASE(["$substtype"],
      [int],
      [vartype_setq(substtype,[int],[c_int],[MPI_INT],
-                   [INT_MAX],["(-INT_MAX)"],["\"d\""],['(abs((v)))'])],
+                   [INT_MAX],["(-INT_MAX)"],["\"d\""],['(abs((v)))'],
+                   [acx_cv_have_decl___builtin_clz])],
      [long],
      [vartype_setq(substtype,[long],[c_long],[MPI_LONG],
-                   [LONG_MAX],["(-LONG_MAX)"],["\"ld\""],['(labs((v)))'])],
+                   [LONG_MAX],["(-LONG_MAX)"],["\"ld\""],['(labs((v)))'],
+                   [acx_cv_have_decl___builtin_clzl])],
      [short],
      [vartype_setq(substtype,[short],[c_short],[MPI_SHORT],
                    [SHRT_MAX],["(-SHRT_MAX)"],["\"hd\""],
-                   ['((short)abs((v)))'])],
+                   ['((short)abs((v)))'],
+                   [acx_cv_have_decl___builtin_clz])
+      AS_IF([test x"$acx_cv_have_decl___builtin_clz" = xyes \
+             && test $ac_cv_sizeof_int != $ac_cv_sizeof_short],
+        [AS_IF([expr $ac_cv_sizeof_int = $ac_cv_sizeof_short \* 2 >/dev/null],
+           substtype[_clz="($]substtype[_clz - (int)(CHAR_BIT * sizeof (short)))"],
+           [AC_MSG_ERROR([Unexpected size relationship of int ($ac_cv_sizeof_int) and short ($ac_cv_sizeof_short)])])])],
      ["long long"],
      [vartype_setq(substtype,[long long],[c_long_long],[MPI_LONG_LONG],
-                   [LLONG_MAX],["(-LLONG_MAX)"],["\"lld\""],['(llabs((v)))'])],
+                   [LLONG_MAX],["(-LLONG_MAX)"],["\"lld\""],['(llabs((v)))'],
+                   [acx_cv_have_decl___builtin_clzll])],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    AS_IF([eval eval test x\\\"\\\${HAVE_FC_MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[+set}\\\" = xset],
      [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],
@@ -332,6 +359,11 @@ m4_foreach([substtype],[[XT_INT]],
      [printf(3) format string for ]subsstype)
    AC_DEFINE_UNQUOTED(substtype[_ABS(v)],[$]substtype[_abs],
      [return absolute value of v])
+   AC_DEFINE_UNQUOTED([SIZEOF_]substtype,[SIZEOF_]AS_TR_CPP([$substtype]),
+     [The size of `]substtype[', as computed by sizeof.])
+   AS_IF([test -n "$]substtype[_clz"],
+     [AC_DEFINE_UNQUOTED(substtype[_CLZ(v)],[$]substtype[_clz],
+       [return number of leading zero-bits in v])])
   ])
 
 AS_CASE([$XT_INT],
@@ -339,6 +371,34 @@ AS_CASE([$XT_INT],
   [short],[XT_UINT_MPIDT=MPI_UNSIGNED_SHORT],
   [long],[XT_UINT_MPIDT=MPI_UNSIGNED_LONG],
   ["long long"],[XT_UINT_MPIDT=MPI_UNSIGNED_LONG_LONG])
+dnl find type to quickly do double width integer arithmetic on Xt_int,
+dnl if available, because results of AC_COMPUTE_INT are limited to the range
+dnl of long, sizeof must be used as a proxy for value range
+AC_CACHE_CHECK([type to use for long multiplication of Xt_int],
+  [acx_cv_XT_LONG],
+  [eval acx_sizeof_xt_int=\"\$ac_cv_sizeof_[]AS_TR_SH($XT_INT)\"
+   acx_cv_XT_LONG='(unavailable)'
+   AS_FOR([itype_macro],[itype],[int long "long long" __int128 __int128_t],
+     [eval acx_itype_sizeof=\"\$ac_cv_sizeof_[]AS_TR_SH([itype_macro])\"
+      AS_IF([expr "$acx_sizeof_xt_int" \* 2 = "$acx_itype_sizeof" >/dev/null],
+        [acx_cv_XT_LONG="itype_macro" ; break])])])
+AS_IF([test x"$acx_cv_XT_LONG" != 'x(unavailable)'],
+  [AC_DEFINE_UNQUOTED([XT_LONG],[$acx_cv_XT_LONG],[Type to use for fast long multiplication of Xt_int])
+   AS_IF([test x"$acx_cv_XT_LONG" != x__int128_t],
+     [acx_XT_ULONG="unsigned $acx_cv_XT_LONG"],
+     [acx_XT_ULONG="__uint128_t"])
+   AC_DEFINE_UNQUOTED([XT_ULONG],[$acx_XT_ULONG],[Type to use for fast long multiplication of Xt_int])],
+  [AC_CACHE_CHECK([short type to use for manual long multiplication of Xt_int],
+    [acx_cv_XT_SHORT],
+    [acx_cv_XT_SHORT='(unavailable)'
+     AS_FOR([itype_macro],[itype],[char int long],
+       [AS_IF([test itype_macro = char],
+          [acx_itype_sizeof=1],
+          [eval acx_itype_sizeof=\"\$ac_cv_sizeof_[]AS_TR_SH([itype_macro])\"])
+        AS_IF([expr "$acx_sizeof_xt_int" = "$acx_itype_sizeof" \* 2 >/dev/null],
+          [acx_cv_XT_SHORT="itype_macro" ; break])])])])
+AS_IF([test x"$acx_cv_XT_SHORT" != 'x(unavailable)'],
+  [AC_DEFINE_UNQUOTED([XT_SHORT],[$acx_cv_XT_SHORT],[Type to use for manual long multiplication and division of Xt_int])])
 
 AC_DEFINE_UNQUOTED([XT_INT],[$XT_INT],[Type to use for enumeration of distributed elements.])
 AC_DEFINE_UNQUOTED([XT_INT_MPIDT],[$XT_INT_MPIDT],[MPI Datatype for type for enumeration of distributed elements.])

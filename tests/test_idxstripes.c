@@ -442,6 +442,23 @@ int main(void) {
                              num_ref_indices, NULL);
   }
 
+  { // intersection test, both ranges overlap in range but have no
+    // indices in common because of stride
+    enum {
+      num_stripes_a = 1,
+      num_stripes_b = 1,
+      num_ref_indices = 0,
+    };
+    static const struct Xt_stripe stripes_a[num_stripes_a]
+      = {{.start = -923, .stride = 1678, .nstrides = 2}},
+      stripes_b[num_stripes_b] = {{.start = 844, .stride = -1779, .nstrides = 2}};
+
+    stripe_test_intersection(num_stripes_a, stripes_a,
+                             num_stripes_b, stripes_b,
+                             num_ref_indices, NULL);
+  }
+
+
   {
     /* test case where overlap equals start of one and end of other stripe */
     enum {
@@ -723,14 +740,18 @@ int main(void) {
      * gives an intersection with nstrides == 1 even though we'd need
      * nstrides == 0
      */
-    unsigned int seeds[2];
+    enum {
+       num_seeds_max = 3
+    };
+    unsigned int seeds[num_seeds_max];
     seeds[0] = 6544668;
+    seeds[1] = 1561743077;
     const char *renv = getenv("YAXT_FULLY_RANDOM_TESTS");
     bool fully_random_test
       = (renv && renv[0] && ((!renv[1] && (renv[0] == '1' || renv[0] == 'y'
                                            || renv[0] == 'Y'))
                              || !strcasecmp(renv, "yes")));
-    size_t num_seeds = 1 + (size_t)fully_random_test;
+    size_t num_seeds = num_seeds_max - (size_t)!fully_random_test;
     if (fully_random_test)
     {
       struct timeval tv;
@@ -739,7 +760,8 @@ int main(void) {
         perror("cannot query time of day");
         xt_mpi_call(MPI_Abort(MPI_COMM_WORLD, 1), MPI_COMM_WORLD);
       }
-      seeds[1] = (unsigned)((unsigned)tv.tv_sec ^ (unsigned)tv.tv_usec);
+      seeds[num_seeds_max-1]
+        = (unsigned)((unsigned)tv.tv_sec ^ (unsigned)tv.tv_usec);
     }
     Xt_int *restrict indices = NULL;
     for (size_t seed_idx = 0; seed_idx < num_seeds; ++seed_idx) {

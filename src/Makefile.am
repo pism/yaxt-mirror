@@ -69,6 +69,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_request_msgs.h					\
 	xt/xt_request_msgs_packed.h				\
 	xt_arithmetic_util.h					\
+	xt_arithmetic_long.h					\
 	xt_cover.h						\
 	xt_cover.c						\
 	xt_handles.c						\

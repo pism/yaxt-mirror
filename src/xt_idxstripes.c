@@ -56,6 +56,7 @@
 
 #include "xt/xt_core.h"
 #include "xt_arithmetic_util.h"
+#include "xt_arithmetic_long.h"
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
@@ -550,50 +551,205 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   bsb.stride = (Xt_int)((stripe_b.stride & ~stride_zero_mask_b)
                         | (stride_zero_mask_b & 1));
 
+  /* FIXME: adjust the one further away from 0 */
   /* adjust second representative to minimize difference to first representative */
-  Xt_int abs_bsb_stride = XT_INT_ABS(bsb.stride);
-  long long start_diff = (long long)stripe_a.start - (long long)stripe_b.start;
+  Xt_int abs_stride_b = XT_INT_ABS(bsb.stride);
+#ifdef XT_LONG
+  Xt_long start_diff = (Xt_long)stripe_a.start - stripe_b.start;
   bsb.representative
     = (Xt_int)(bsb.representative
-               + (start_diff/abs_bsb_stride
-                  + (start_diff%abs_bsb_stride > abs_bsb_stride/2))
-               * abs_bsb_stride);
-  struct extended_gcd eg = extended_gcd(XT_INT_ABS(bsa.stride), abs_bsb_stride);
+               + (start_diff/abs_stride_b
+                  + (start_diff%abs_stride_b > abs_stride_b/2))
+               * abs_stride_b);
+  start_diff = (Xt_long)bsb.representative - bsa.representative;
+#else
+  Xt_long start_diff = xiisub(stripe_a.start, stripe_b.start);
+  Xt_idiv start_diff_abs_stride_b_div = xlidivu(xlabs(start_diff), abs_stride_b);
+  bsb.representative
+    = (Xt_int)(bsb.representative
+               + (start_diff_abs_stride_b_div.quot
+                  + start_diff_abs_stride_b_div.rem > abs_stride_b/2)
+               * abs_stride_b);
+  start_diff = xiisub(bsb.representative, bsa.representative);
+#endif
+  Xt_int abs_stride_a = XT_INT_ABS(bsa.stride);
+  struct extended_gcd eg = extended_gcd(abs_stride_a, abs_stride_b);
   bsi.min = MAX(bsa.min, bsb.min);
   bsi.max = MIN(bsa.max, bsb.max);
-  /* FIXME: figure out portably larger type than Xt_int, e.g. int
-   * would suffice for Xt_int == short here */
-  long long temp_stride
-    = ((long long)(XT_INT_ABS(bsa.stride)) * bsb.stride)/eg.gcd;
-  bsi.stride = (Xt_int)temp_stride;
-  long long min_rep;
-  {
-    /* computation might generate huge intermediary values */
-    /* FIXME: figure out portably larger type than Xt_int, e.g. int
-     * would suffice for Xt_int == short here */
-    long long temp
-      = (long long)bsa.representative
-      + ((long long)(bsb.representative - bsa.representative) * eg.u
-         * XT_INT_ABS(bsa.stride) / eg.gcd);
-    /* compute minimal bsi representative >= bsi.min */
-    long long abs_bsi_stride = llabs(temp_stride),
-      r_diff = bsi.min - temp,
-      steps = r_diff / abs_bsi_stride;
-    steps = steps + (steps * abs_bsi_stride < r_diff);
-    min_rep = temp + steps * abs_bsi_stride;
-    bsi.representative = (Xt_int)min_rep;
-  }
-  int nstrides = (int)((bsi.max - min_rep)/temp_stride + llsign(temp_stride));
-  int even_divide
-    = ((((bsb.representative - bsa.representative) % eg.gcd) == 0)
-       & (bsi.stride == temp_stride || abs(nstrides) == 1));
-  /* requires two's complement integers */
-  int strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
-                        & (min_rep <= bsi.max) & (min_rep >= bsi.min)) - 1);
-  Xt_int max_rep
-    = (Xt_int)(min_rep + (nstrides - llsign(temp_stride)) * bsi.stride);
+  /* we need to temporarily represent the product
+   * (bsb.representative - bsa.representative) * eg.u * abs_stride_a
+   * so we figure out first, if that product would overflow Xt_int
+   */
+  int stride_a_bits = xt_int_bits - xinlz((Xt_uint)abs_stride_a),
+    stride_bits = xt_int_bits - xinlz((Xt_uint)abs_stride_b) + stride_a_bits,
+    product_bits;
+  if (bsb.representative != bsa.representative)
+    product_bits =
+      xt_int_bits - xinlz((Xt_uint)XT_INT_ABS(eg.u))
+#ifdef XT_LONG
+      + xt_int_bits - xinlz((Xt_uint)xlabs(start_diff))
+#else
+      + xt_int_bits - xinlz(xlabs(start_diff).lo)
+#endif
+      + stride_a_bits;
+  else
+    product_bits = 0;
+  int strides_mask, nstrides;
   struct Xt_stripe intersection;
-  intersection.start = (Xt_int)((bsa.stride >= 0) ? min_rep : max_rep);
+  if (product_bits < xt_int_bits && stride_bits < xt_int_bits) {
+    Xt_int temp_stride = (Xt_int)((abs_stride_a * bsb.stride)/eg.gcd);
+    bsi.stride = (Xt_int)temp_stride;
+    Xt_int min_rep;
+    {
+      Xt_int some_rep
+        = (Xt_int)(bsa.representative
+                   + ((bsb.representative - bsa.representative) * eg.u
+                      * abs_stride_a / eg.gcd));
+      /* compute minimal bsi representative >= bsi.min */
+      Xt_int abs_bsi_stride = XT_INT_ABS(temp_stride),
+        r_diff = (Xt_int)(bsi.min - some_rep),
+        steps = (Xt_int)(r_diff / abs_bsi_stride);
+      steps = (Xt_int)(steps + (steps * abs_bsi_stride < r_diff));
+      min_rep = (Xt_int)(some_rep + steps * abs_bsi_stride);
+      bsi.representative = (Xt_int)min_rep;
+    }
+    nstrides = (int)((bsi.max - min_rep)/temp_stride + llsign(temp_stride));
+    int even_divide
+      = ((((bsb.representative - bsa.representative) % eg.gcd) == 0)
+         & (bsi.stride == temp_stride || abs(nstrides) == 1));
+    /* requires two's complement integers */
+    strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
+                      & (min_rep <= bsi.max) & (min_rep >= bsi.min)) - 1);
+    Xt_int max_rep
+      = (Xt_int)(min_rep + (nstrides - llsign(temp_stride)) * bsi.stride);
+    intersection.start = (Xt_int)((bsa.stride >= 0) ? min_rep : max_rep);
+  } else {
+#ifdef XT_LONG
+#define ABS(x) (((x) < 0) ? -(x) : (x))
+    Xt_long temp_stride = xiimul(abs_stride_a, bsb.stride)/eg.gcd;
+    bsi.stride = (Xt_int)temp_stride;
+    Xt_long min_rep;
+    /* did the computation of bsi.stride remain in Xt_int range? */
+    bool bsi_stride_in_range = xl_is_in_xt_int_range(temp_stride);
+    /* did the computation of min_rep remain in Xt_int range? */
+    bool min_rep_in_range;
+    {
+      Xt_long some_rep;
+      if (bsb.representative != bsa.representative) {
+        /* computation might generate huge intermediary values, needing 3
+         * times as many bits as Xt_int has, so we use long multiplication */
+        Xt_long temp_1 = start_diff * eg.u;
+        Xt_tword temp_2 = xlimulu(temp_1, (Xt_uint)abs_stride_a);
+        /* some_rep will be representable as Xt_long
+         * if dividing by eg.gcd results in a value in the range of Xt_long...*/
+        min_rep_in_range
+          /* ... that means either all bits in temp_2.hi are
+           * identical to the high bit of temp_2.midlo ... */
+          = (temp_2.hi
+             == (Xt_uint)(Xt_isign_mask((Xt_int)(temp_2.midlo >> xt_int_bits))))
+          /* or the aggregate value of temp_2 divided by
+           * XT_LONG_MAX+1 is less than eg.gcd, instead of actually
+           * dividing, we can simply shift the uppermost bit of
+           * temp_2.midlo into temp_2.hi left-shifted by one */
+          | (XT_INT_ABS((Xt_int)(temp_2.hi << 1) | ((Xt_long)temp_2.midlo < 0)) < eg.gcd);
+        /* compute any representative */
+        some_rep
+          = (Xt_long)bsa.representative + ((Xt_long)temp_2.midlo / eg.gcd);
+      } else {
+        min_rep_in_range = true;
+        some_rep = bsa.representative;
+      }
+      /* compute minimal bsi representative >= bsi.min */
+      Xt_long abs_bsi_stride = ABS(temp_stride),
+        r_diff = bsi.min - some_rep,
+        steps = r_diff / abs_bsi_stride;
+      bool steps_in_range = xl_is_in_xt_int_range(steps);
+      steps = steps + (steps * abs_bsi_stride < r_diff);
+      min_rep = some_rep;
+      if (steps_in_range)
+        min_rep += steps * abs_bsi_stride;
+      min_rep_in_range &= xl_is_in_xt_int_range(min_rep);
+      bsi.representative = (Xt_int)min_rep;
+    }
+    int min_rep_mask = ~((int)min_rep_in_range - 1);
+    nstrides = (int)((((bsi.max - min_rep)/temp_stride)+xlsign(temp_stride))
+                         & min_rep_mask)
+      | (~min_rep_mask & (bsb.representative == bsa.representative));
+    int even_divide
+      = ((start_diff%eg.gcd == 0) & (bsi_stride_in_range || abs(nstrides) == 1));
+    /* requires two's complement integers */
+    strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
+                      & (min_rep <= bsi.max) & (min_rep >= bsi.min)) - 1);
+    Xt_int max_rep
+      = (Xt_int)(min_rep + (nstrides - xlsign(temp_stride)) * bsi.stride);
+    intersection.start = (Xt_int)((bsa.stride >= 0) ? min_rep : max_rep);
+#else
+    Xt_long temp_stride = xlldiv(xiimul(abs_stride_a, bsb.stride),
+                                 xi2l(eg.gcd)).quot;
+    bsi.stride = (Xt_int)temp_stride.lo;
+    /* minimal value that is reachable by both stripe starts plus some
+     * multiple of the respective stride */
+    Xt_long min_rep;
+    /* did the computation of bsi.stride remain in Xt_int range? */
+    bool bsi_stride_in_range = xl_is_in_xt_int_range(temp_stride);
+    /* did the computation of min_rep remain in Xt_int range? */
+    bool min_rep_in_range;
+    {
+      Xt_long some_rep;
+      if (bsb.representative != bsa.representative) {
+        /* computation might generate huge intermediary values */
+        Xt_long temp_1
+          = xiimul(bsb.representative - bsa.representative, eg.u);
+        Xt_tword temp_2 = xlimul(temp_1, abs_stride_a);
+        min_rep_in_range
+          = (temp_2.hi
+             == (Xt_uint)(Xt_isign_mask((Xt_int)(temp_2.mid))))
+          | (XT_INT_ABS((Xt_int)(temp_2.hi << 1) | ((Xt_int)temp_2.mid < 0)) < eg.gcd);
+        Xt_long t2 = (Xt_long){.hi = temp_2.mid, .lo = temp_2.lo };
+        Xt_ldiv temp_3;
+        if (eg.gcd == 1) {
+          temp_3.quot = t2;
+          temp_3.rem = (Xt_long){.hi = 0, .lo = 0 };
+        } else if (xlicmp_lt(t2, eg.gcd)) {
+          temp_3.quot = (Xt_long){ 0, 0 };
+          temp_3.rem = t2;
+        } else
+          temp_3 = xlldiv((Xt_long){.hi = temp_2.mid, .lo = temp_2.lo },
+                          xi2l(eg.gcd));
+        some_rep = xliadd(temp_3.quot, bsa.representative);
+      } else {
+        min_rep_in_range = true;
+        some_rep = xi2l(bsa.representative);
+      }
+      /* compute minimal bsi representative >= bsi.min */
+      Xt_long abs_bsi_stride = xlabs(temp_stride),
+        r_diff = xilsub(bsi.min, some_rep);
+      Xt_ldiv steps = xlldiv(r_diff, abs_bsi_stride);
+      bool steps_in_range = xl_is_in_xt_int_range(steps.quot);
+      steps.quot = xlinc(steps.quot, (bool)((Xt_int)steps.rem.hi >= 0
+                                            && steps.rem.lo != 0));
+      if (steps_in_range)
+        min_rep = xlladd(some_rep, xiimul(steps.quot.lo, abs_bsi_stride.lo));
+      else
+        min_rep = some_rep;
+      min_rep_in_range &= xl_is_in_xt_int_range(min_rep);
+      bsi.representative = (Xt_int)min_rep.lo;
+    }
+    if (min_rep_in_range)
+      nstrides = (int)xlldiv(xilsub(bsi.max, min_rep), temp_stride).quot.lo + xlsign(temp_stride);
+    else
+      nstrides = bsb.representative == bsa.representative;
+    int even_divide
+      = ((((bsb.representative - bsa.representative) % eg.gcd) == 0)
+         & (bsi_stride_in_range || abs(nstrides) == 1));
+    /* requires two's complement integers */
+    strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
+                      & xlicmp_le(min_rep, bsi.max) & xlicmp_ge(min_rep, bsi.min)) - 1);
+    Xt_int max_rep
+      = (Xt_int)(min_rep.lo + (nstrides - xlsign(temp_stride)) * bsi.stride);
+    intersection.start = ((bsa.stride >= 0) ? (Xt_int)min_rep.lo : max_rep);
+#endif
+  }
   intersection.stride
     = (Xt_int)(Xt_isign(bsa.stride) * XT_INT_ABS(bsi.stride));
   intersection.nstrides

@@ -39,6 +39,7 @@ noinst_PROGRAMS = 						\
 	test_mpi_smartdedup					\
 	test_exchanger_parallel					\
 	test_handles						\
+	test_arithmetic_long					\
 	test_idxempty						\
 	test_idxempty_f						\
 	test_idxvec						\
@@ -135,6 +136,8 @@ FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 
+test_arithmetic_long_SOURCES = test_arithmetic_long.c
+test_arithmetic_long_LDADD = libtestutil.la
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxempty_f_SOURCES = test_idxempty_f.f90
@@ -250,6 +253,7 @@ TESTS = 							\
 	test_mpi_generate_datatype_run				\
 	test_mpi_smartdedup_run					\
 	test_exchanger_parallel_run				\
+	test_arithmetic_long					\
 	test_handles_run					\
 	test_idxempty_run					\
 	test_idxvec_run						\
