@@ -44,7 +44,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 PROGRAM test_redist_p2p_parallel
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_int_kind, xi => xt_int_kind, &

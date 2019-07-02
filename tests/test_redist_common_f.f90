@@ -52,7 +52,7 @@ MODULE test_redist_common
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_redist, &
        xt_redist_s_exchange, xt_redist_s_exchange1, &
-       xt_redist_a_exchange, xt_redist_a_exchange1, &
+       xt_redist_a_exchange1, &
        xt_request, xt_request_wait, xt_request_test, xt_is_null, &
        xi => xt_int_kind
 #ifdef __PGI
