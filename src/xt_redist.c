@@ -159,7 +159,7 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
 
     if ((result != MPI_IDENT) && (result != MPI_CONGRUENT))
       Xt_abort(comm, "ERROR: MPI communicators do not match; cannot build "
-               "redist_collection_static\n", __FILE__, __LINE__);
+               "redistribution collection\n", __FILE__, __LINE__);
   }
 }
 
