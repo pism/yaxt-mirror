@@ -154,6 +154,10 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
 
   for (int i = 0; i < num_redists; ++i) {
 
+    if (redists[i] == NULL)
+      Xt_abort(comm, "ERROR: invalid redist; cannot build "
+               "redistribution collection\n", __FILE__, __LINE__);
+
     xt_mpi_call(MPI_Comm_compare(xt_redist_get_MPI_Comm(redists[i]),
                                  comm, &result), comm);
 
