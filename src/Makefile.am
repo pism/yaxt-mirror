@@ -45,6 +45,7 @@ endif
 # definitions from config.h). These must be listed in a sequence in
 # which they can be combined in yaxt.h.
 libyaxt_c_la_SOURCES =						\
+	analyze_MPI_datatype.h					\
 	xt/xt_core.h						\
 	xt/xt_config.h						\
 	xt/xt_handles.h						\
