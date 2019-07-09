@@ -193,17 +193,16 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
 }
 
 static void xt_exchanger_write_ddt(
-  Xt_exchanger exchanger, enum xt_msg_direction direction, MPI_Comm comm) {
-  int rank, size;
+  struct mix_msg * msgs, int nmsg, MPI_Comm comm) {
+  int rank;
   xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
-  xt_mpi_call(MPI_Comm_size(comm, &size), comm);
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; i < nmsg; ++i) {
     char ddt_name_format[] = "ddt_%s_from_%d_to_%d";
     char ddt_name[sizeof(ddt_name_format) + 4 + 2 * 10 + 1];
     snprintf(ddt_name, sizeof(ddt_name), ddt_name_format,
-             (direction==SEND)?"send":"recv", rank, i);
-    analyze_MPI_datatype(xt_exchanger_get_MPI_Datatype(exchanger, i, direction),
-                         "xt_exchanger_debug_ddt", ddt_name);
+             (msgs[i].type == SEND)?"send":"recv", rank, msgs[i].data.rank);
+    analyze_MPI_datatype(msgs[i].data.datatype, "xt_exchanger_debug_ddt",
+                         ddt_name);
   }
 }
 
@@ -214,10 +213,9 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
-  if (xt_exchanger_debug) {
-    xt_exchanger_write_ddt(exchanger, SEND, exchanger_msr->comm);
-    xt_exchanger_write_ddt(exchanger, RECV, exchanger_msr->comm);
-  }
+  if (xt_exchanger_debug)
+    xt_exchanger_write_ddt(exchanger_msr->msgs, exchanger_msr->n,
+                           exchanger_msr->comm);
 
   if (exchanger_msr->n > 0) {
     size_t nmsg = (size_t)exchanger_msr->n;
