@@ -55,7 +55,7 @@ void *
 SymPrefix(xcalloc)(size_t nmemb, size_t size, const char *source, int line)
 {
   void *p = calloc(nmemb, size);
-  if (p || !(nmemb * size))
+  if (p || !nmemb || !size)
     ;
   else
     SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
