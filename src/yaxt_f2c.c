@@ -306,9 +306,9 @@ xt_redist_collection_new_f(Xt_redist *redists, MPI_Fint num_redists,
 }
 
 static void
-xt_slice_c_loc_f2c(void *a, void *p)
+xt_slice_c_loc_f2c(void *a, void **p)
 {
-  *(void **)p = a;
+  *p = a;
 }
 
 FCALLSCSUB2(xt_slice_c_loc_f2c,XT_SLICE_C_LOC,xt_slice_c_loc,PVOID,PVOID)
