@@ -33,6 +33,8 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 /^${exp_sym_prefix}\(__get_xmmreg\|__pgdbg_stub\|__pgi_trace\|__set_xmmreg\)/b
 # skip symbols that conform to name prefix xt_
 /^${exp_sym_prefix}_*[Xx][Tt]_/b
+# also skip symbols mangled by asan
+/^[0-9a-fA-F]*[ 	][ 	]*B[ 	]__odr_asan\\.[Xx][Tt]\.*/b
 # also skip symbols in Fortran yaxt module
 /^${exp_sym_prefix}_*[Yy][Aa][Xx][Tt]\.*_/b
 # skip $-symbols that the Cray compiler puts in
