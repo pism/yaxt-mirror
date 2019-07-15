@@ -259,7 +259,7 @@ CONTAINS
 
   SUBROUTINE my_abort(msg, line)
     CHARACTER(*), INTENT(in) :: msg
-    INTEGER, VALUE, INTENT(in) :: line
+    INTEGER, INTENT(in) :: line
     CALL test_abort(msg, &
          __FILE__, &
          line)
