@@ -229,23 +229,25 @@ CONTAINS
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE test_empty_redist
 
-  SUBROUTINE test_repeated_redist_ds1(redist_coll)
+  SUBROUTINE test_repeated_redist_ds(redist_coll, src_data, permutation)
     TYPE(xt_redist), INTENT(in) :: redist_coll
+    DOUBLE PRECISION, INTENT(in), TARGET :: src_data(5, 3)
+    INTEGER, INTENT(in) :: permutation(3)
     INTEGER :: i, j
-    DOUBLE PRECISION, SAVE, TARGET :: src_data(5, 3) = RESHAPE((/&
-         (DBLE(i), i = 1, 15)/), (/ 5, 3 /))
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(3, 3) &
          = RESHAPE((/ ((DBLE(i + j), i = 1,5,2), j = 0,10,5) /), (/ 3, 3 /))
     DOUBLE PRECISION, TARGET :: dst_data(3, 3)
     TYPE(c_ptr) :: src_data_p(3), dst_data_p(3)
+
     INTEGER :: iexch
     TYPE(xt_request) :: request
+
+    DO i = 1, 3
+      CALL xt_slice_c_loc(src_data(:, permutation(i)), src_data_p(i))
+      CALL xt_slice_c_loc(dst_data(:, permutation(i)), dst_data_p(i))
+    END DO
     DO iexch = 1, 2
       dst_data = -1.0d0
-      DO i = 1, 3
-        CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
-        CALL xt_slice_c_loc(dst_data(:, i), dst_data_p(i))
-      END DO
       IF (iexch == 1) THEN
         CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
       ELSE
@@ -256,39 +258,7 @@ CONTAINS
       IF (cmp_arrays(ref_dst_data, dst_data)) &
            CALL test_abort(err_msg(iexch), filename, __LINE__)
     ENDDO
-  END SUBROUTINE test_repeated_redist_ds1
-
-  SUBROUTINE test_repeated_redist_ds2(redist_coll)
-    TYPE(xt_redist), INTENT(in) :: redist_coll
-    INTEGER :: i, j
-    DOUBLE PRECISION, SAVE, TARGET :: src_data(5, 3) = RESHAPE((/&
-         (DBLE(i), i = 1, 15)/), (/ 5, 3 /))
-    DOUBLE PRECISION, PARAMETER :: ref_dst_data(3, 3) &
-         = RESHAPE((/ ((DBLE(i + j), i = 1,5,2), j = 0,10,5) /), (/ 3, 3 /))
-    DOUBLE PRECISION, TARGET :: dst_data(3, 3)
-    TYPE(c_ptr) :: src_data_p(3), dst_data_p(3)
-
-    INTEGER :: iexch
-    TYPE(xt_request) :: request
-    DO iexch = 1, 2
-      dst_data = -1.0d0
-      CALL xt_slice_c_loc(src_data(:, 2), src_data_p(1))
-      CALL xt_slice_c_loc(src_data(:, 1), src_data_p(2))
-      CALL xt_slice_c_loc(src_data(:, 3), src_data_p(3))
-      CALL xt_slice_c_loc(dst_data(:, 2), dst_data_p(1))
-      CALL xt_slice_c_loc(dst_data(:, 1), dst_data_p(2))
-      CALL xt_slice_c_loc(dst_data(:, 3), dst_data_p(3))
-      IF (iexch == 1) THEN
-        CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
-      ELSE
-        CALL xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &
-             request)
-        CALL check_wait_request(request, filename, __LINE__)
-      ENDIF
-      IF (cmp_arrays(ref_dst_data, dst_data)) &
-           CALL test_abort(err_msg(iexch), filename, __LINE__)
-    ENDDO
-  END SUBROUTINE test_repeated_redist_ds2
+  END SUBROUTINE test_repeated_redist_ds
 
   SUBROUTINE test_repeated_redist(cache_size)
     INTEGER, INTENT(in) :: cache_size
@@ -297,8 +267,13 @@ CONTAINS
     ! set up data
     INTEGER, PARAMETER :: num_slice = 3
     INTEGER, PARAMETER :: src_slice_len = 5
+    INTEGER :: i
+    DOUBLE PRECISION, PARAMETER :: src_data(5, num_slice) = RESHAPE((/&
+         (DBLE(i), i = 1, 15)/), (/ 5, num_slice /))
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redists(num_slice), redist_coll, redist_coll_copy
+    INTEGER, PARAMETER :: permutation(3, 3) &
+         = RESHAPE((/ 1, 2, 3, 2, 1, 3, 1, 2, 3 /), (/ 3, 3 /))
 
     xmap = build_odd_selection_xmap(src_slice_len)
 
@@ -313,21 +288,20 @@ CONTAINS
 
     CALL xt_redist_delete(redists(1))
 
-    ! test exchange
-    CALL test_repeated_redist_ds1(redist_coll)
-    ! test exchange with changed displacements
-    CALL test_repeated_redist_ds2(redist_coll)
-    ! test exchange with original displacements
-    CALL test_repeated_redist_ds1(redist_coll)
+    DO i = 1, 3
+      ! test exchange, first with simple sequence, then permuted
+      ! offsets and then original offsets again
+      CALL test_repeated_redist_ds(redist_coll, src_data, permutation(:, i))
+    END DO
 
     ! and the copy
     redist_coll_copy = xt_redist_copy(redist_coll)
     CALL xt_redist_delete(redist_coll)
-    CALL test_repeated_redist_ds1(redist_coll_copy)
-    ! test exchange with changed displacements
-    CALL test_repeated_redist_ds2(redist_coll_copy)
-    ! test exchange with original displacements
-    CALL test_repeated_redist_ds1(redist_coll_copy)
+    DO i = 1, 3
+      ! test exchange, first with simple sequence, then permuted
+      ! offsets and then original offsets again
+      CALL test_repeated_redist_ds(redist_coll_copy, src_data, permutation(:, i))
+    END DO
 
     ! clean up
     CALL xt_redist_delete(redist_coll_copy)
