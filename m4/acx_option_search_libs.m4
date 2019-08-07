@@ -65,7 +65,7 @@ AC_DEFUN([_ACX_OPTION_SEARCH_LIBS],
         [AS_VAR_SET([ac_Search],["]m4_ifval([$4],[$4 ])[-l]AC_LIB[]m4_ifval([$3],[ $3])["])])])
       AS_VAR_SET_IF([ac_Search], [break])])
    rm conftest.$ac_ext
-   LIBS="$acx_option_func_search_save_LIBS"])
+   LIBS=$acx_option_func_search_save_LIBS])
 dnl ACX_OPTION_SEARCH_LIBS(FUNCTION, SEARCH-LIBS,
 dnl   [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND], [OTHER-LIBRARIES],
 dnl   [EXTRA-FLAGS], [PREAMBLE])
