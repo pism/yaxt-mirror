@@ -48,7 +48,7 @@ dnl
 #   [INCLUDES], [INCLUDE-FLAGS], [EXTRA-INCLUDE-FLAG-SETS])
 # ------------------------------------------------------------------
 # Check the compiler accepts HEADER-FILE. The INCLUDES might be defaulted.
-AC_DEFUN([ACX_LANG_CHECK_INCLUDE_PATHS_IFELSE(C)],dnl
+AC_DEFUN([ACX_LANG_CHECK_INCLUDE_PATHS_IFELSE(C)],
   [ACX_GENERIC_CHECK_INCLUDE_PATHS_IFELSE(CPPFLAGS,-I,$@)])
 #
 m4_define([ACX_LANG_INCLUDE_PROGRAM(C)],

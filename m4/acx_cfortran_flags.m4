@@ -44,7 +44,7 @@ AC_DEFUN([ACX_XLF_QEXTNAME_ADD_APPENDUS],
   [AS_CASE([$host],
      [*-ibm-aix*|powerpc64-*-linux-*|powerpc-*-linux-*],
      [AC_MSG_CHECKING([if -Dappendus needs to be added to CPPFLAGS for cfortran.h])
-      AS_IF([$CC -qversion 2>&1 | grep '^IBM XL C' >/dev/null],
+      AS_IF([$CC -qversion 2>&1 | sed 5q | grep '^IBM XL C' >/dev/null],
         [acx_temp_qextname_f77flags=`echo "$FFLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
          acx_temp_qextname_fcflags=`echo "$FCFLAGS" | sed -n '/-qextname/{ s/^\(.* \)*-qextname\( .*\)*$/-qextname/;p;}'`
       dnl pretend the same option as for FC was used if F77 isn't used at all
@@ -72,11 +72,11 @@ dnl automate flag elicitation for cfortran.h
 AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
   [AC_REQUIRE([AC_CANONICAL_HOST])
    _AC_FORTRAN_ASSERT
-   AC_LANG_CASE([Fortran],[acx_FC=$FC],
-     [Fortran 77],[acx_FC=$F77])
+   AS_VAR_PUSHDEF([acx_FC],[AC_LANG_CASE([Fortran],[FC],[Fortran 77],[F77])])dnl
+   AS_VAR_PUSHDEF([acx_FCFLAGS],[AC_LANG_CASE([Fortran],[FCFLAGS],[Fortran 77],[FFLAGS])])dnl
    AS_CASE([$host],
      [x86_64-*-linux-*|i*86-*-linux-*|*-apple-darwin*|ia64-*-linux-*|x86_64-*-freebsd*|i*86-*-freebsd*],
-     [acx_temp=`$acx_FC -V 2>&1`
+     [acx_temp=`$acx_FC -V 2>&1 | sed 5q`
       AS_IF([echo "$acx_temp" | grep '^Copyright.*\(The Portland Group\|NVIDIA CORPORATION\)' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DgFortran])],
         [echo "$acx_temp" | grep '^NAG Fortran Compiler Release' >/dev/null],
@@ -85,24 +85,21 @@ AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
         [AS_VAR_SET([acx_cf_flag],[-DgFortran])],
         [echo "$acx_temp" | grep '^Cray Fortran' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DgFortran])],
-        [acx_temp=`$acx_FC --version 2>&1` \
+        [acx_temp=`$acx_FC --version 2>&1 | sed 5q` \
          && echo $acx_temp | grep '^GNU Fortran' >/dev/null],
         [AS_IF([echo $acx_temp | grep g77 >/dev/null],
            [AS_VAR_SET([acx_cf_flag],[-Dg77Fortran])],
            [dnl assume gfortran
 dnl check if compiling with f2c bindings or with default bindings
-            AS_IF([echo "]AC_LANG_CASE([Fortran],[$FCFLAGS],
-              [Fortran 77],[$FFLAGS])[" | grep '^\(.* \)*-ff2c\( .*\)*$' >/dev/null],
+            AS_IF([echo "$acx_FCFLAGS" | grep '^\(.* \)*-ff2c\( .*\)*$' >/dev/null],
               [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])],
               [AS_VAR_SET([acx_cf_flag],[-DgFortran])])])],
         [echo $acx_temp | grep '^G95' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DNAGf90Fortran])],
-        [acx_temp=`$acx_FC -v 2>&1` \
-         && echo $acx_temp | grep '^f2c'],
+        [$acx_FC -v 2>&1 | sed 5q | grep '^f2c'],
         [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])])],
      [powerpc64-*-linux-*|powerpc-*-linux-*],
-     [AS_IF([acx_temp=`$acx_FC -qversion 2>&1` \
-         && echo $acx_temp | grep '^IBM XL Fortran' >/dev/null],
+     [AS_IF([$acx_FC -qversion 2>&1 | sed 5q | grep '^IBM XL Fortran' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DIBMR2Fortran])])],
      [*-ibm-aix*],
      [dnl xlc set _IBMR2 so nothing needs to be done
@@ -115,7 +112,8 @@ dnl check if compiling with f2c bindings or with default bindings
      [sx*-*-*|es*-*-*],
      [dnl fixme: make sure user is actually using sxf90
 dnl but currently there is no alternative I know of
-      AS_VAR_SET([acx_cf_flag],[-DSXFortran])])])
+      AS_VAR_SET([acx_cf_flag],[-DSXFortran])])
+   AS_VAR_POPDEF([acx_FC])])
 
 AC_DEFUN([ACX_FIND_CFORTRAN_DEF],
   [AC_CACHE_CHECK([C preprocessor flags for Fortran calling convention cfortran.h],
@@ -165,7 +163,8 @@ Have you configured compatible compilers?])])])
      ])
 dnl now that flag is established, add (probed) defines to CPPFLAGS
    AS_IF([echo "$acx_cv_cf_flag" | grep ' (probed)$' >/dev/null],
-     [CPPFLAGS="${CPPFLAGS+$CPPFLAGS }`echo "$acx_cv_cf_flag" | sed 's/ (probed)$//'`"])
+     [acx_temp=`echo "$acx_cv_cf_flag" | sed 's/ (probed)$//'`
+      CPPFLAGS="${CPPFLAGS+$CPPFLAGS }$acx_temp"])
   ])
 dnl
 dnl Local Variables:

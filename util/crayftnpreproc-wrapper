@@ -44,25 +44,46 @@
 test x"$DEBUG" = x || set -x
 set -e
 # create temp directory for intermediate .i-files
-temporaries="$(mktemp -d -t)"
+temporaries=$(mktemp -d -t)
 trap "rm -rf $temporaries" EXIT
-callDir="$PWD"
+callDir=$PWD
 
+declare -i i j
 declare -a inargs outargs preprocessedFiles
 inargs=("$@")
 j=0
 # filter -o option and argument from flags
 for (( i = 0 ; i < ${#inargs[@]} ; i++ )) ; do
-	case ${inargs[$i]} in
+	case ${inargs[i]} in
 		(-o) i=$((i + 1)) ;;
 		(-o*) ;;
                 (-eZ) ;;
 	        (-e*Z*)
-			outargs[$j]="${inargs[$i]//Z/}"
+			outargs[j]=${inargs[i]//Z/}
 			j=$((j + 1))
 		;;
+                (-e)
+                  case ${inargs[i+1]} in
+                    (Z)
+                      # drop lone -e Z entirely
+                      ((++i))
+                      ;;
+                    (*Z*)
+                      # filter Z from other arguments
+		      outargs[j]=${inargs[i]}
+		      outargs[j+1]=${inargs[i+1]//Z/}
+                      ((++i))
+		      j=$((j + 2))
+                      ;;
+                    # copy everything else verbatim
+		    (*)
+		      outargs[j]=${inargs[i]}
+		      j=$((j + 1))
+		      ;;
+                  esac
+                  ;;
 		(*)
-			outargs[$j]="${inargs[$i]}"
+			outargs[j]=${inargs[i]}
 			j=$((j + 1))
 		;;
 	esac
@@ -71,18 +92,18 @@ done
 # find non-option arguments at end of input and convert to absolute
 # path if necessary
 for (( i = ${#outargs[@]} - 1 ; i >= 0 ; i-- )) ; do
-	[[ -r "${outargs[$i]}" ]] || break
-	case "${outargs[$i]}" in
+	[[ -r "${outargs[i]}" ]] || break
+	case ${outargs[i]} in
 		(/*) ;;
-		(*) outargs[$i]="$callDir/${outargs[$i]}" ;;
+		(*) outargs[i]="$callDir/${outargs[i]}" ;;
 	esac
 done
 j=0
 # use previous loop termination to build list of
 # names of .i-files produced by compiler
 for (( i = i + 1 ; i < ${#outargs[@]} ; i++ )) ; do
-	preprocessedFiles[$j]="${outargs[$i]%.*}.i"
-	preprocessedFiles[$j]="${preprocessedFiles[$j]##*/}"
+	preprocessedFiles[j]="${outargs[i]%.*}.i"
+	preprocessedFiles[j]=${preprocessedFiles[j]##*/}
 	j=$((j + 1))
 done
 

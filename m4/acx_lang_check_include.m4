@@ -88,29 +88,37 @@ AC_DEFUN([ACX_GENERIC_CHECK_INCLUDE_PATHS_IFELSE],
    AC_MSG_CHECKING([for $3 extra include path])
    AC_CACHE_VAL([acx_Include],dnl
      [AS_VAR_SET([save_flags],["@S|@$1"])
+      AS_LITERAL_IF([save_flags],,
+	[AS_VAR_COPY([acx_temp],[save_flags
+])])dnl
       while :; do
-        m4_foreach([ACX_IncSet],[$9],
-          [AS_FOR([AC_INCDIR],[ac_incdir],['']m4_ifval([$4],[ $4]),
-             [AS_IF([test -z "$ac_incdir"],
-                [ac_res="none required"
-                 $1="m4_ifval(ACX_IncSet,ACX_IncSet )$8 AS_VAR_GET([save_flags])"],
-                [ac_res="$2$ac_incdir"
-                 $1="m4_ifval(ACX_IncSet,ACX_IncSet )$8 $ac_res AS_VAR_GET([save_flags])"])
-              _ACX_LANG_CHECK_INCLUDE_IFELSE([$3],dnl
-                [AS_IF([test -z "$ac_incdir"],dnl
-                   [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )$8["])],dnl
-                   [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )[$8 $2$ac_incdir"])])],,[$7])
-              AS_VAR_SET_IF([acx_Include], [break])])
-           AS_VAR_SET_IF([acx_Include], [break])
-          ])
-        break
+	m4_foreach([ACX_IncSet],[$9],
+	  [AS_FOR([AC_INCDIR],[ac_incdir],['']m4_ifval([$4],[ $4]),
+	     [AS_IF([test -z "$ac_incdir"],
+	        [ac_res="none required"
+	         $1="m4_ifval(ACX_IncSet,ACX_IncSet )m4_ifval([$8],[$8 ])AS_LITERAL_IF([save_flags],[$save_flags],[$acx_temp])"],
+	        [ac_res="$2$ac_incdir"
+	         $1="m4_ifval(ACX_IncSet,ACX_IncSet )m4_ifval([$8],[$8 ])$ac_res AS_LITERAL_IF([save_flags],[$save_flags],[$acx_temp])"])
+	      _ACX_LANG_CHECK_INCLUDE_IFELSE([$3],dnl
+	        [AS_IF([test -z "$ac_incdir"],dnl
+	           [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )$8["])],dnl
+	           [AS_VAR_SET([acx_Include],["]m4_ifval(ACX_IncSet,ACX_IncSet )[$8 $2$ac_incdir"])])],,[$7])
+	      AS_VAR_SET_IF([acx_Include], [break])])
+	   AS_VAR_SET_IF([acx_Include], [break])
+	  ])
+	break
       done
       AS_VAR_COPY([$1],[save_flags])])
    AS_VAR_SET_IF([acx_Include],
-     [acx_temp=]AS_VAR_GET([acx_Include])[
+     [AS_LITERAL_IF([acx_Include],
+        [AS_VAR_PUSHDEF([acx_temp],[acx_Include])],
+        [AS_VAR_COPY([acx_temp],[acx_Include
+])])dnl
       AS_IF([test x"$acx_temp" = x],
-        [AC_MSG_RESULT([(none required)])],
-        [AC_MSG_RESULT([$acx_temp])])],
+	[AC_MSG_RESULT([(none required)])],
+	[AC_MSG_RESULT([$acx_temp])])
+      AS_LITERAL_IF([acx_Include],
+        [AS_VAR_POPDEF([acx_temp],[acx_Include])])],
      [AC_MSG_RESULT([not found])])
    AS_VAR_SET_IF([acx_Include], [$5], [$6])
    AS_VAR_POPDEF([acx_Include])])dnl

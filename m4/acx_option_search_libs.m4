@@ -52,7 +52,7 @@ dnl Uses either AC_LANG_PROGRAM([PREAMBLE],CALL-CODE) or
 dnl AC_LANG_CALL([PREAMBLE],FUNCTION), depending on whether CALL-CODE
 dnl is given or not.
 AC_DEFUN([_ACX_OPTION_SEARCH_LIBS],
-  [acx_option_func_search_save_LIBS="$LIBS"
+  [acx_option_func_search_save_LIBS=$LIBS
    AC_LANG_CONFTEST([m4_ifval([$6],[AC_LANG_PROGRAM([$5],[$6])],[AC_LANG_CALL([$5], [$1])])])
    AS_FOR([AC_LIB],[ac_lib],['' $2],
      [AS_IF([test -z "]AC_LIB["],
@@ -60,9 +60,9 @@ AC_DEFUN([_ACX_OPTION_SEARCH_LIBS],
          LIBS="m4_ifval([$4],[$4 ])m4_ifnblank($3,[$3 ])$acx_option_func_search_save_LIBS"],
         [ac_res="-l]AC_LIB["
          LIBS="m4_ifval([$4],[$4 ])$ac_res m4_ifnblank($3,[$3 ])$acx_option_func_search_save_LIBS"])
-      AC_LINK_IFELSE([], [AS_IF([test x"$ac_res" = x"none required"],dnl
-        [AS_VAR_SET([ac_Search],["]m4_ifval([$4],[$4 ])[$3"])],dnl
-        [AS_VAR_SET([ac_Search],["]m4_ifval([$4],[$4 ])[-l]AC_LIB[ $3"])])])
+      AC_LINK_IFELSE([], [AS_IF([test x"$ac_res" = x"none required"],
+        [AS_VAR_SET([ac_Search],["]m4_ifval([$4],m4_ifnblank([$3],[$4 $3],[$4]),[$3])["])],
+        [AS_VAR_SET([ac_Search],["]m4_ifval([$4],[$4 ])[-l]AC_LIB[]m4_ifval([$3],[ $3])["])])])
       AS_VAR_SET_IF([ac_Search], [break])])
    rm conftest.$ac_ext
    LIBS="$acx_option_func_search_save_LIBS"])
@@ -106,7 +106,7 @@ AC_DEFUN([ACX_OPTION_SEARCH_LIBS_MULTI],
         m4_if(m4_car($5),[[]],,[_ACX_OPTION_SEARCH_LIBS([$1],[$2],,[$6],[$7],[$8])
         AS_VAR_SET_IF([ac_Search], [break])])
         m4_foreach([ACX_LibSet], [$5],
-          [_ACX_OPTION_SEARCH_LIBS([$1],[$2],[ACX_LibSet],[$6],[$7],[$8])
+          [_ACX_OPTION_SEARCH_LIBS([$1],[$2],ACX_LibSet,[$6],[$7],[$8])
            AS_VAR_SET_IF([ac_Search],[break])
           ])
         break
@@ -114,9 +114,10 @@ AC_DEFUN([ACX_OPTION_SEARCH_LIBS_MULTI],
    AS_VAR_SET_IF([ac_Search],
      [AS_IF([test x"AS_VAR_GET([ac_Search])" = x],
         [AC_MSG_RESULT([(none required)])],
-        [AC_MSG_RESULT([AS_VAR_GET([ac_Search])])])],
-     [AC_MSG_RESULT([not found])])
-   AS_VAR_SET_IF([ac_Search],[$3],[$4])
+        [AC_MSG_RESULT([AS_VAR_GET([ac_Search])])])m4_ifval([$3],[
+	$3])],
+     [AC_MSG_RESULT([not found])m4_ifval([$4],[
+	$4])])
    AS_VAR_POPDEF([ac_Search])dnl
 ])
 dnl

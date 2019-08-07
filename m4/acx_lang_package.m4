@@ -75,57 +75,62 @@ AC_DEFUN([ACX_GENERIC_PACKAGE],
    AC_ARG_WITH(ASX_TR_ARG([$1-root]),
      [AS_HELP_STRING([--with-]ASX_TR_ARG([$1])[-root],
         [set directory to search for $1 headers and library]m4_ifval([$13],[, @<:@default=$13@:>@]))],
-     [AS_VAR_SET([acx_pkg_root],"$AS_TR_SH([with_]ASX_TR_ARG([$1])[_root])")],
+     [AS_VAR_COPY([acx_pkg_root],[withval])],
      m4_ifval([$13], AS_VAR_SET([acx_pkg_root],[$13])))
    AS_VAR_SET_IF([acx_pkg_root],
      [AS_VAR_SET_IF([acx_pkg_lib],,
-        [AS_VAR_COPY([acx_temp],acx_pkg_root)
-         AS_VAR_SET([acx_pkg_lib],["$8$acx_temp/lib"])])
+        [AS_LITERAL_IF([acx_pkg_root],
+           [AS_VAR_SET([acx_pkg_lib],["$8$]acx_pkg_root[/lib"])],
+           [AS_VAR_COPY([acx_temp],acx_pkg_root)
+            AS_VAR_SET([acx_pkg_lib],["$8$acx_temp/lib"])])])
       AS_VAR_SET_IF([acx_pkg_inc],,
-        [AS_VAR_COPY([acx_temp],acx_pkg_root)
-         AS_VAR_SET([acx_pkg_inc],["$3$acx_temp/include"])])])
+        [AS_LITERAL_IF([acx_pkg_root],
+           [AS_VAR_SET([acx_pkg_inc],["$3$]acx_pkg_root[/include"])],
+           [AS_VAR_COPY([acx_temp],acx_pkg_root)
+            AS_VAR_SET([acx_pkg_inc],["$3$acx_temp/include"])])])])
    m4_ifval([$2],
      [AC_ARG_WITH(ASX_TR_ARG([$1-include]),
         [AS_HELP_STRING([--with-[]ASX_TR_ARG([$1])[]-include],
            [specifically set directory to search for $1 headers, ]dnl
 [@<:@default=$]AS_TR_SH(ASX_TR_ARG([with_$1_root]))[/include@:>@])],
-        [AS_VAR_SET([acx_pkg_inc],["]$3[$]AS_TR_SH(ASX_TR_ARG([with_$1_include]))["])])
-      AC_ARG_VAR(acx_pkg_inc,dnl
-[specifically set flags to use when compiling sources
-using $1 includes.])
+        [AS_VAR_SET([acx_pkg_inc],["$3$withval"])])
+      AC_ARG_VAR(acx_pkg_inc,
+	[specifically set flags to use when compiling sources using $1 includes.])
       ACX_LANG_CHECK_INCLUDE_PATHS_IFELSE([$2],[],
-        [AS_VAR_COPY([acx_temp],[acx_cv_pkg_inc])
-         acx_temp=`echo "$acx_temp" | sed -e 's/^ *//;s/ *$//'`
-         AS_VAR_COPY([acx_pkg_inc],[acx_temp])],
-        [AS_VAR_SET([acx_pkg_bindings],[no])
-         $6],
+        [AS_LITERAL_IF([acx_cv_pkg_inc],
+           [AS_VAR_SET([acx_pkg_inc],[`echo "$]acx_cv_pkg_inc[" | sed -e 's/^ *//;s/ *$//'`])],
+           [AS_VAR_COPY([acx_temp],[acx_cv_pkg_inc])
+            acx_temp=`echo "$acx_temp" | sed -e 's/^ *//;s/ *$//'`
+            AS_VAR_COPY([acx_pkg_inc],[acx_temp])])],
+        [AS_VAR_SET([acx_pkg_bindings],[no]); $6],
         [$4],[$]acx_pkg_inc,m4_ifval([$5],[[$5]],[[[]]]))])
    m4_ifval([$7],
      [AC_ARG_WITH(ASX_TR_ARG([$1-lib]),
         [AS_HELP_STRING([--with-]ASX_TR_ARG([$1])[-lib],
         [specifically set directory to search for $1 library, ]dnl
 [@<:@default=$]AS_TR_SH(ASX_TR_ARG([with_$1_root]))[/lib@:>@])],
-        [AS_VAR_SET([acx_pkg_lib],["$8$AS_TR_SH(ASX_TR_ARG([with_$1_lib]))"])])
+        [AS_VAR_SET([acx_pkg_lib],["$8$withval"])])
       AC_ARG_VAR(acx_pkg_lib,
-        [specifically set flags to use when linking $1.])
-      AC_SUBST(acx_pkg_lib)
-      AS_VAR_IF([acx_pkg_bindings],[yes],
+        [specifically set flags to use when linking $1.])dnl
+      AC_SUBST(acx_pkg_lib)dnl
+      AS_VAR_IF([acx_pkg_bindings], [yes],
         [AS_VAR_PUSHDEF([ac_Search],[acx_cv_option_search_$7_]_AC_LANG_ABBREV)dnl
          ACX_OPTION_SEARCH_LIBS_MULTI([$7],[$9],,
            [AS_VAR_SET([acx_pkg_bindings],[no])
-            $12],[$10],m4_ifval([$11],[$11 ])$[acx_pkg_lib])
-         AS_VAR_COPY([acx_temp],[ac_Search])
-         acx_temp=`echo "$acx_temp" | sed -e 's/^ *//;s/ *$//'`
-         AS_VAR_COPY([acx_pkg_lib],[acx_temp])
-         AS_VAR_POPDEF([ac_Search])dnl
-        ])
-     ])dnl
-   AS_VAR_POPDEF([acx_pkg_bindings])
-   AS_VAR_POPDEF([acx_cv_pkg_inc])
-   AS_VAR_POPDEF([acx_pkg_inc])
-   AS_VAR_POPDEF([acx_pkg_lib])
-   AS_VAR_POPDEF([acx_pkg_root])
- ])
+            $12],[$10],m4_ifval([$11],[$11 ])$acx_pkg_lib)
+         AS_LITERAL_IF([ac_Search],
+           [AS_VAR_SET([acx_pkg_lib],
+              [`echo "$]ac_Search[" | sed -e 's/^ *//;s/ *$//'`])],
+           [AS_VAR_COPY([acx_temp],[ac_Search])
+            acx_temp=`echo "$acx_temp" | sed -e 's/^ *//;s/ *$//'`
+            AS_VAR_COPY([acx_pkg_lib],[acx_temp])])
+         AS_VAR_POPDEF([ac_Search])])])
+   AS_VAR_POPDEF([acx_pkg_bindings])dnl
+   AS_VAR_POPDEF([acx_cv_pkg_inc])dnl
+   AS_VAR_POPDEF([acx_pkg_inc])dnl
+   AS_VAR_POPDEF([acx_pkg_lib])dnl
+   AS_VAR_POPDEF([acx_pkg_root])dnl
+  ])
 dnl
 dnl Local Variables:
 dnl mode: autoconf

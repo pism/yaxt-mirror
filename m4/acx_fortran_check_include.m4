@@ -61,27 +61,27 @@ AC_DEFUN([ACX_FORTRAN_CHECK_MOD_PATHS_IFELSE],
    AC_REQUIRE([ACX_SL_FC_CHECK_MOD_PATH_FLAG])
    AS_VAR_PUSHDEF([acx_Mod], [acx_cv_fortran_mod_$1])dnl
    AC_MSG_CHECKING([for $1 m4_default([$7],[extra]) module path])
-   AC_CACHE_VAL([acx_Mod],dnl
-     [ac_mod_search_FCFLAGS_SAVE="$FCFLAGS"
-      for ac_moddir in '' $2; do
-        AS_IF([test -z "$ac_moddir"],
+   AC_CACHE_VAL([acx_Mod],
+     [ac_mod_search_FCFLAGS_SAVE=$FCFLAGS
+      AS_FOR([Ac_moddir],[ac_moddir],['' $2],
+        [AS_IF([test -z "Ac_moddir"],
           [ac_res="none required"
            FCFLAGS="m4_ifval([$6],[$6 ])$ac_mod_search_FCFLAGS_SAVE"],
-          [ac_res="$FC_MOD_FLAG$ac_moddir"
+          [ac_res="$FC_MOD_FLAG]Ac_moddir["
            FCFLAGS="m4_ifval([$6],[$6 ])$ac_res $ac_mod_search_FCFLAGS_SAVE"])
-        _ACX_FORTRAN_CHECK_MOD_IFELSE([$1],dnl
-          [AS_IF([test -z "$ac_moddir"],dnl
-             [AS_VAR_SET([acx_Mod],["$6"])],dnl
-             [AS_VAR_SET([acx_Mod],["]m4_ifval([$6],[$6 ])[$FC_MOD_FLAG$ac_moddir"])])],,[$5])
-        AS_VAR_SET_IF([acx_Mod], [break])dnl
-      done
-      FCFLAGS="$ac_mod_search_FCFLAGS_SAVE"])
-   AS_VAR_SET_IF([acx_Mod],dnl
-     [AS_IF([test x"AS_VAR_GET([acx_Mod])" = x],dnl
-        [AC_MSG_RESULT([(none required)])],dnl
-        [AC_MSG_RESULT([AS_VAR_GET([acx_Mod])])])],
-     [AC_MSG_RESULT([not found])])
-   AS_VAR_SET_IF([acx_Mod], [$3], [$4])[]dnl
+        _ACX_FORTRAN_CHECK_MOD_IFELSE([$1],
+          [AS_IF([test -z "Ac_moddir"],
+             [AS_VAR_SET([acx_Mod],["$6"])],
+             [AS_VAR_SET([acx_Mod],["]m4_ifval([$6],[$6 ])[$FC_MOD_FLAG]Ac_moddir["])])
+           break],,[$5])])
+      FCFLAGS=$ac_mod_search_FCFLAGS_SAVE])
+   AS_VAR_SET_IF([acx_Mod],
+     [AS_IF([test x"AS_VAR_GET([acx_Mod])" = x],
+        [AC_MSG_RESULT([(none required)])],
+        [AC_MSG_RESULT([AS_VAR_GET([acx_Mod])])])m4_ifval([$3],[
+      $3])],
+     [AC_MSG_RESULT([not found])m4_ifval([$4],[
+      $4])])
    AS_VAR_POPDEF([acx_Mod])dnl
 ])# ACX_FORTRAN_CHECK_MOD_PATHS_IFELSE
 dnl

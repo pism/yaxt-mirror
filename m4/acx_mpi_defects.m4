@@ -104,14 +104,15 @@ q
              [acx_mpirun_test=`echo "$ac_link" | sed -e 's@\(.*/libtool --mode=\)link.*@\1@'`"execute $acx_mpirun_test"])
 	   _AC_RUN_LOG_LIMIT([LIBC_FATAL_STDERR_=1 $acx_mpirun_num_tasks >&2],[echo "running $acx_mpirun_num_tasks"])
 	   AS_IF([test $ac_status -eq 0],
-	     [AC_MSG_RESULT([okay])m4_ifval([$2],[
-	      $2])],
-	     [AC_MSG_RESULT([error])
-	      m4_ifval([$3],[$3],
-	        [AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])],
-	  [AC_MSG_RESULT([error])
-	   m4_ifval([$3],[$3],
-	     [AC_MSG_RESULT([chosen MPI has known error $acx_subtestname])])])
+	     [acx_mpi_defects_result=okay; acx_mpi_defects_fail=no]m4_ifval([$2],[
+	      $2]),
+	     [acx_mpi_defects_result=error
+              m4_ifval([$3],[$3], [acx_mpi_defects_fail=yes])])],
+	  [acx_mpi_defects_result=error
+           m4_ifval([$3],[$3],[acx_mpi_defects_fail=yes])])
+        AC_MSG_RESULT([$acx_mpi_defects_result])
+        AS_IF([test x"$acx_mpi_defects_fail" = xyes],
+          [AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])
 	AS_CASE([$acx_suffix],
 	  [f90|F90],[AC_LANG_POP([Fortran])],
 	  [c],[AC_LANG_POP([C])])])

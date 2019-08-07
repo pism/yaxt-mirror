@@ -35,21 +35,34 @@ dnl LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl _ACX_LT_FLAGS_MANGLE
+m4_define([nag_filter_flag_var],
+  [AS_IF([test x${$1+set} = xset],
+     [$1=`echo "$][$1" | tr ' ' '\n' | sed -e '/^-W@<:@lc@:>@/{' \
+-e 's/^\(-Wl\)/-XCClinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}'     | tr '\n' ' '`])])
 AC_DEFUN([_ACX_LT_FORT_FLAGS_MANGLE],
   [_AC_FORTRAN_ASSERT
-   AC_LANG_CASE([Fortran],[acx_FC=$FC acx_FCFLAGS=$FCFLAGS],
-     [Fortran 77],[acx_FC=$F77 acx_FCFLAGS=$FFLAGS])
-   acx_temp=`$acx_FC -V 2>&1`
+   AC_LANG_CASE([Fortran],
+     [AS_VAR_PUSHDEF([acx_FC],[FC])dnl
+      AS_VAR_PUSHDEF([acx_FCFLAGS],[FCFLAGS])dnl
+      AS_VAR_PUSHDEF([acx_LDFLAGS],[FCLDFLAGS])],
+     [Fortran 77],
+     [AS_VAR_PUSHDEF([acx_FC],[F77])dnl
+      AS_VAR_PUSHDEF([acx_FCFLAGS],[FFLAGS])dnl
+      AS_VAR_PUSHDEF([acx_LDFLAGS],[F77LDFLAGS])])
+   acx_temp=`$acx_FC -V 2>&1 | sed 5q`
 dnl fix problems from NAG compiler
-   AS_IF([echo "$acx_temp" | grep '^NAG Fortran Compiler Release' >/dev/null],
-     [acx_FCFLAGS=`echo "$acx_FCFLAGS" | tr ' ' '\n' | sed -e '/^-W@<:@lc@:>@/{' \
--e 's/^\(-Wl\)/-XCClinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}'     | tr '\n' ' '`])
+   AS_CASE(["$acx_temp"],
+     [*NAG\ Fortran\ Compiler\ Release*],
+     [nag_filter_flag_var([acx_FCFLAGS])
+      nag_filter_flag_var([acx_LDFLAGS])])
 dnl fix conflicting use of -module by libtool and ifort
-   AS_CASE(["x${FC_MODOUT}x"],
-     [x'-module 'x|x'-mod 'x],
-     [FC_MODOUT="-Xcompiler ${FC_MODOUT}-Xcompiler "])
-   AC_LANG_CASE([Fortran],[FC=$acx_FC FCFLAGS=$acx_FCFLAGS],
-     [Fortran 77],[FC=$acx_F77 FCFLAGS=$acx_FFLAGS])])
+   AC_LANG_CASE([Fortran],
+     [AS_CASE(["x${FC_MODOUT}x"],
+        [x'-module 'x|x'-mod 'x],
+        [FC_MODOUT="-Xcompiler ${FC_MODOUT}-Xcompiler "])])dnl
+   AS_VAR_POPDEF([acx_FC])dnl
+   AS_VAR_POPDEF([acx_FCFLAGS])dnl
+   AS_VAR_POPDEF([acx_LDFLAGS])])
 dnl
 dnl ACX_USE_LIBTOOL_CONFIGURATION
 dnl Switch compiler to libtool wrapper and prevent occurrence of
@@ -58,16 +71,34 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
   [dnl before switching on libtool, identify compilers that prevent us from
    dnl certain build configurations
    ACX_LT_PROBLEMS
+dnl add some monkey patching for older libtool versions that don't handle
+dnl newer PGI or NAG configurations particularly well
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
-     [m4_pushdef([Portland],[NAG\ Fortran\ Compiler*)
-	  lt_prog_compiler_wl_FC='-Wl,-Wl,,'
-	  lt_prog_compiler_pic_FC='-PIC'
-	  lt_prog_compiler_static_FC='-Bstatic'
+     [m4_pushdef([_LT_COMPILER_PIC],m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),[;;
+	\*Portland\\ ],[;; @%:@(
+	*NAG\\ Fortran\\ Compiler*)
+	  _LT_TAGVAR(lt_prog_compiler_wl, $][1)='-Wl,-Wl,,'
+	  _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-PIC'
+	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
-	*PGI\ Compilers\ and\ Tools*|*Port[]land])])dnl
+	*PGI\\ Compilers\\ and\\ Tools*|*Port][land\\ ]))dnl
+      m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
+          m4_bpatsubst(m4_dquote(m4_defn(
+          [_LT_LINKER_SHLIBS])),[tmp_sharedflag='-shared'],
+          [tmp_sharedflag='-shared'
+	tmp_compiler_flags='$compiler_flags'])),
+        [\$CC '"\$tmp_sharedflag""\$tmp_addflag"' \$libobjs \$deplibs \$compiler_flags \$wl-soname],
+        [$CC '"$tmp_sharedflag""$tmp_addflag"' $libobjs $deplibs '"$tmp_compiler_flags"' $wl-soname])),
+        [  tmp_sharedflag='-Wl,-shared'],
+        [  tmp_sharedflag='-Wl,-shared'
+	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`']))dnl
+      m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],m4_bpatsubst(m4_dquote(
+        m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
+          [test x-\1 = x"$p"]))])dnl
    LT_INIT
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
-     [m4_popdef([Portland])])dnl
+     [m4_popdef([_LT_COMPILER_PIC])m4_popdef([_LT_LINKER_SHLIBS])dnl
+      m4_popdef([_LT_SYS_HIDDEN_LIBDEPS])])dnl
    dnl _KPSE_USE_LIBTOOL ensures libtool is also used for configure-time tests,
    dnl which deduces dependent libraries automatically
    _KPSE_USE_LIBTOOL
@@ -82,13 +113,12 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
          _ACX_LT_FORT_FLAGS_MANGLE
          AC_LANG_POP([Fortran 77])])])
 dnl substitute -shared-intel if present
-   AS_FOR([acx_flag_var],[acx_flag_var_],[CFLAGS CXXFLAGS FCFLAGS F77FLAGS LDFLAGS],
+   AS_FOR([acx_flag_var],[acx_flag_var_],[CFLAGS CXXFLAGS FCFLAGS F77FLAGS LDFLAGS FCLDFLAGS],
      [AS_IF([eval test x\$\{acx_flag_var+set\} = xset],
         [eval acx_temp="\" \$$acx_flag_var_ \""
-         AS_CASE([$acx_temp],[*\ -shared-intel\ *],
-           [eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -shared-intel / -Xcompiler -shared-intel /' -e 's/^ //;s/ $//'`\"])
+         AS_CASE([$acx_temp],[*\ -shared-intel\ *|*\ -static-intel\ *],
+           [acx_temp=`echo "$acx_temp" | sed -e 's/ \(-\(shared\|static\)-intel\) / -Xcompiler \1 -XCClinker \1 /'`])
 dnl take care of ifort/icc/icpc two-part options
-         eval acx_temp="\" \$$acx_flag_var_ \""
          eval acx_flag_var=\"`echo "$acx_temp" | sed -r -e 's/ -(align|allow|assume|ccdefault|check|convert|debug|debug-parameters|diag-type|diag-enable|diag-disable|double-size|dynamic-linker|dyncom|export-dir|extend-source|fp-model|fpscomp|gen-interfaces|heap-arrays|imacros|integer-size|iprefix|iquote|iwithprefixbefore|module|names|opt-report|opt-streaming-stores|pch-dir|pch-use|prof-dir|prof-file|real-size|reentrancy|stand|tcollect-filter|tune|warn|watch) (@<:@^-@:>@@<:@^ @:>@*) / -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"])])])dnl
 dnl
 dnl Local Variables:

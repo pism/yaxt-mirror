@@ -43,7 +43,7 @@ use warnings;
 use File::Path qw(mkpath);
 use File::Spec::Functions qw(catfile splitpath);
 use Getopt::Long ();
-use cpp qw(transliterateTrigraphs);
+use cpp ();
 use Storable qw(dclone);
 
 sub checkPredicate(\%$$$);
@@ -588,7 +588,6 @@ sub substituteTokens($\@\%)
    sub set_inst_def($)
    {
      my ($opt_name, $opt_val) = @_;
-     die('seen ', $opt_name, " ", $opt_val, "\n");
      if ($opt_name eq 'inst-def')
      {
        my ($macro, $definition) = ($opt_val =~ m{([^=]*)(?:=(.*))?});
@@ -602,7 +601,7 @@ sub substituteTokens($\@\%)
          die('Unexpected installation define ', $opt_val, "\n");
        }
      }
-     elsif ($opt_name eq 'inst-def')
+     elsif ($opt_name eq 'inst-undef')
      {
        die('Unexpected installation define ', $opt_val, "\n")
            if ($opt_val =~ /=/);

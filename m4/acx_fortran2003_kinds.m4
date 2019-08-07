@@ -42,10 +42,26 @@ dnl
 dnl
 dnl Code:
 dnl
+dnl identical to AC_CHECK_SIZEOF but does not add a define
+AC_DEFUN([ACX_CHECK_SIZEOF_NODEF],
+  [# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+_AC_CACHE_CHECK_INT([size of $1], [AS_TR_SH([ac_cv_sizeof_$1])],
+  [(long int) (sizeof ($1))],
+  [AC_INCLUDES_DEFAULT([$3])],
+  [if test "$AS_TR_SH([ac_cv_type_$1])" = yes; then
+     AC_MSG_FAILURE([cannot compute sizeof ($1)], 77)
+   else
+     AS_TR_SH([ac_cv_sizeof_$1])=0
+   fi])])
+
 dnl
 dnl
 dnl ACX_FORTRAN_TYPE_KIND(FORTRAN_TYPE, FORTRAN_KIND, C_CORRESPONDENCE,
-dnl                       [PROLOGUE], [C_PROLOGUE],[ACTION-IF-SUBST])
+dnl                       [PROLOGUE], [C_PROLOGUE],[ACTION-IF-SUBST],
+dnl                       [ACTION-IF-NOT-SUBST)
 dnl
 dnl First tries whether a fortran declaration
 dnl FORTRAN_TYPE(kind=FORTRAN_KIND) compiles and if not tries to find
@@ -59,7 +75,7 @@ AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
                    [acx_search_kind_subst=true], [$4])],
            [acx_search_kind_subst=true])
   AS_IF([test $acx_search_kind_subst = true],
-    [m4_ifval([$5],[AC_CHECK_SIZEOF([$3],,[$5])],[AC_CHECK_SIZEOF([$3])])
+    [ACX_CHECK_SIZEOF_NODEF([$3],,[$5])
      AS_VAR_PUSHDEF([acx_c_size], [ac_cv_sizeof_$3])dnl
      AS_VAR_COPY([acx_temp3],[acx_c_size])
      m4_case([$1],[integer],dnl
@@ -73,7 +89,7 @@ AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
           AS_VAR_COPY([acx_temp1],[acx_fortran_ikind_Type])
           AS_VAR_COPY([acx_temp2],[acx_fortran_Sizeof])
           AS_IF([test -n "$acx_temp1" -a "$acx_temp2" = "$acx_temp3"],
-            [acx_fortran_kind_subst="$ac_kind_lo" ac_kind_lo=
+            [acx_fortran_kind_subst=$ac_kind_lo ac_kind_lo=
              ac_kind_hi= ; break],
             [ac_kind_lo=`expr $ac_kind_lo + 1`
              AS_IF([test $ac_kind_lo -gt $ac_kind_hi],
@@ -111,8 +127,8 @@ AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
   AS_IF([test "x$acx_fortran_kind_subst" != "x$2"],
     [AC_MSG_NOTICE([Substituting $1 kind $acx_fortran_kind_subst for $3])
      m4_ifval([$2],[AC_DEFINE_UNQUOTED(AS_TR_CPP($2), $acx_fortran_kind_subst,[type kind override])])
-     AC_DEFINE_UNQUOTED(HAVE_FORTRAN_ISO_[]AS_TR_CPP($2), $acx_fortran_kind_subst, [type kind override])
-     m4_ifval([$6],[$6])])
+     AC_DEFINE_UNQUOTED(AS_TR_CPP([HAVE_FORTRAN_ISO_$2]),[$acx_fortran_kind_subst],[type kind override])m4_ifval([$6],[
+     $6])],[$7])
   ASX_VAR_UNSET([acx_search_kind_subst])
   ASX_VAR_UNSET([acx_fortran_kind_subst])
 ])

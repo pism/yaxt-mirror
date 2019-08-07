@@ -65,8 +65,10 @@ dnl TJ_FIND_TYPE(typedefname,varname,includes,possible values...)
 dnl
 dnl
 dnl  Usage: TJ_FIND_TYPE(system-typedef-name, new-macro-name,
-dnl		         list-of-includes-in-square-brackets,
-dnl			 comma-separated-list-of-types-to-try)
+dnl		         includes,
+dnl			 list-of-types-to-try,
+dnl                      action-if-found,
+dnl                      action-if-failed)
 dnl
 dnl  TJ_FIND_INTEGRAL_TYPE automatically provides a set of integral
 dnl  types, and does not permit specification of additional types.
@@ -85,38 +87,33 @@ dnl  Note:  For now, each of these needs a corresponding entry
 dnl  in acconfig.h.
 dnl
 define([requote], [ifelse($#, 0, , $#, 1, "$1",
-        "$1" [requote(builtin(shift,$@))])])dnl
+        ["$1" requote(builtin(shift,$@))])])dnl
 dnl
 AC_DEFUN([TJ_FIND_TYPE],
-  [AS_VAR_PUSHDEF([tj_type_equiv],[tj_cv_c_type_$1])
+  [AS_VAR_PUSHDEF([tj_type_equiv],[tj_cv_c_type_$1])dnl
    AC_CACHE_CHECK([type of $1],[tj_type_equiv],
-     [AC_LANG_PUSH([C])
-      AC_TRY_COMPILE(
-        [$3],
-        [extern $1 foo; ],
-        [ for try_type in dnl
-            requote(builtin(shift,builtin(shift,builtin(shift,$@))))
-          do
-            AC_TRY_COMPILE(
-              [$3],
-              [ extern $1 foo; extern $try_type foo; ],
-              [ AS_VAR_SET([tj_type_equiv],["$try_type"]); break ]
-              )
-          done],
-        [AC_MSG_ERROR([Cannot find matching typedef for $1.])])
-       AC_LANG_POP([C]) ])
-  m4_ifval([$2],[$2=AS_VAR_GET([tj_type_equiv])])
-  AS_VAR_POPDEF([tj_type_equiv])])
+     [AC_LANG_PUSH([C])dnl
+      AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([$3], [extern $1 foo; ])],
+        [AS_FOR([TRY_TYPE],[try_type],[$4],
+           [AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM([$3],
+               [extern $1 foo; extern $try_type foo;])],
+             [AS_VAR_SET([tj_type_equiv],[$try_type]); break])])])
+       AC_LANG_POP([C])])
+   AS_VAR_SET_IF([tj_type_equiv],
+     [$5],
+     [AC_MSG_ERROR([Cannot find matching typedef for $1.])])
+   m4_ifval([$2],[AS_VAR_COPY([$2],[tj_type_equiv])])
+   AS_VAR_POPDEF([tj_type_equiv])])
 dnl
 dnl
 dnl
 dnl Like above, but the list of types to try is pre-specified.
 dnl
-AC_DEFUN([TJ_FIND_INTEGRAL_TYPE],[
- TJ_FIND_TYPE([$1], [$2], [$3],
-	int, unsigned int, long, unsigned long,
-	short, unsigned short, char, unsigned char,
-	long long, unsigned long long)])
+AC_DEFUN([TJ_FIND_INTEGRAL_TYPE],
+  [TJ_FIND_TYPE([$1], [$2], [$3],
+	[int 'unsigned int' long 'unsigned long' short 'unsigned short' char 'unsigned char' 'long long' 'unsigned long long'])])
 dnl
 dnl Local Variables:
 dnl mode: autoconf
