@@ -1,0 +1,10 @@
+#! /bin/bash
+. /sw/rhel6-x64/etc/profile.mistral
+module load autoconf/2.69 automake/1.14.1 libtool/2.4.6
+autoconf --version
+automake --version
+libtoolize --version
+scripts/reconfigure
+if [ -x scripts/recreate-testsuite.sh ]; then
+  exec scripts/recreate-testsuite.sh
+fi
