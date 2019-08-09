@@ -77,11 +77,10 @@ MODULE test_redist_common
   PRIVATE
   INTERFACE check_redist
     MODULE PROCEDURE check_redist_dp
-    MODULE PROCEDURE check_redist_dp2_i2
-    MODULE PROCEDURE check_redist_dp2_i4
-    MODULE PROCEDURE check_redist_dp2_i8
-    MODULE PROCEDURE check_redist_dp2
-    MODULE PROCEDURE check_redist_dp2_2d
+    MODULE PROCEDURE check_redist_dp_i2
+    MODULE PROCEDURE check_redist_dp_i4
+    MODULE PROCEDURE check_redist_dp_i8
+    MODULE PROCEDURE check_redist_dp_2d
     MODULE PROCEDURE check_redist_xi
     MODULE PROCEDURE check_redist_i2
     MODULE PROCEDURE check_redist_i4
@@ -244,28 +243,7 @@ CONTAINS
     CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_i8
 
-  SUBROUTINE check_redist_dp(redist, src, dst_size, dst, ref_dst)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, INTENT(in) :: dst_size
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src(*)
-    DOUBLE PRECISION, INTENT(in) :: ref_dst(dst_size)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(dst_size)
-    INTEGER :: iexch
-
-    DO iexch = 1, 2
-      dst = -1.0d0
-      IF (iexch == 1) THEN
-        CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
-      ELSE
-        CALL wrap_a_exchange(redist, src, dst)
-      ENDIF
-      IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
-    ENDDO
-  END SUBROUTINE check_redist_dp
-
-  SUBROUTINE check_redist_dp2(redist, src, dst, ref_dst)
+  SUBROUTINE check_redist_dp(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:), ref_dst(:)
     DOUBLE PRECISION, INTENT(inout) :: dst(:)
@@ -288,9 +266,9 @@ CONTAINS
            CALL test_abort("error in xt_redist_s_exchange1", &
            filename, __LINE__)
     ENDDO
-  END SUBROUTINE check_redist_dp2
+  END SUBROUTINE check_redist_dp
 
-  SUBROUTINE check_redist_dp2_i2(redist, src, dst, ref_dst)
+  SUBROUTINE check_redist_dp_i2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i2), INTENT(in) :: ref_dst(:)
@@ -314,9 +292,9 @@ CONTAINS
            CALL test_abort("error in xt_redist_s_exchange1", &
            filename, __LINE__)
     ENDDO
-  END SUBROUTINE check_redist_dp2_i2
+  END SUBROUTINE check_redist_dp_i2
 
-  SUBROUTINE check_redist_dp2_i4(redist, src, dst, ref_dst)
+  SUBROUTINE check_redist_dp_i4(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i4), INTENT(in) :: ref_dst(:)
@@ -340,9 +318,9 @@ CONTAINS
            CALL test_abort("error in xt_redist_s_exchange1", &
            filename, __LINE__)
     ENDDO
-  END SUBROUTINE check_redist_dp2_i4
+  END SUBROUTINE check_redist_dp_i4
 
-  SUBROUTINE check_redist_dp2_i8(redist, src, dst, ref_dst)
+  SUBROUTINE check_redist_dp_i8(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:)
     INTEGER(i8), INTENT(in) :: ref_dst(:)
@@ -366,9 +344,9 @@ CONTAINS
            CALL test_abort("error in xt_redist_s_exchange1", &
            filename, __LINE__)
     ENDDO
-  END SUBROUTINE check_redist_dp2_i8
+  END SUBROUTINE check_redist_dp_i8
 
-  SUBROUTINE check_redist_dp2_2d(redist, src, dst, ref_dst)
+  SUBROUTINE check_redist_dp_2d(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:,:), ref_dst(:,:)
     DOUBLE PRECISION, INTENT(inout) :: dst(:,:)
@@ -391,7 +369,7 @@ CONTAINS
            CALL test_abort("error in xt_redist_s_exchange1", &
            filename, __LINE__)
     ENDDO
-  END SUBROUTINE check_redist_dp2_2d
+  END SUBROUTINE check_redist_dp_2d
 
   SUBROUTINE check_redist_xi(redist, src, dst_size, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist

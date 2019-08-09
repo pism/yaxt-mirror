@@ -379,8 +379,7 @@ CONTAINS
     CALL xt_redist_delete(redist)
 
     ! test exchange
-    CALL check_redist(redist_repeat, src_data, SIZE(dst_data), &
-         dst_data, ref_dst_data)
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
     ! clean up
     CALL xt_redist_delete(redist_repeat)
   END SUBROUTINE test_repeated_overlapping_redist
