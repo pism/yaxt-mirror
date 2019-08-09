@@ -281,9 +281,18 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(dst_size)
     TYPE(xt_request), INTENT(out) :: request
 
+    REAL(sp), TARGET :: dummy(1)
     TYPE(c_ptr) :: src_data_cptr, dst_data_cptr
-    src_data_cptr = C_LOC(src_data)
-    dst_data_cptr = C_LOC(dst_data)
+    IF (src_size > 0) THEN
+      src_data_cptr = C_LOC(src_data)
+    ELSE
+      src_data_cptr = C_LOC(dummy)
+    END IF
+    IF (dst_size > 0) THEN
+      dst_data_cptr = C_LOC(dst_data)
+    ELSE
+      dst_data_cptr = C_LOC(dummy)
+    END IF
     CALL xt_redist_a_exchange1(redist, src_data_cptr, dst_data_cptr, request)
   END SUBROUTINE xt_redist_a_exchange_sp_1d_as
 
@@ -295,25 +304,11 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(:)
     TYPE(xt_request), INTENT(out) :: request
 
-    REAL(sp), POINTER :: src_p(:), dst_p(:)
-    REAL(sp), TARGET :: dummy(1)
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
-    IF (src_size > 0) THEN
-      src_p => src_data
-    ELSE
-      src_p => dummy
-      src_size = 1
-    END IF
-    IF (dst_size > 0) THEN
-      dst_p => dst_data
-    ELSE
-      dst_p => dummy
-      dst_size = 1
-    END IF
-    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_p, dst_size, &
-         dst_p, request)
+    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
+         dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_sp_1d
 
   ! see @ref xt_redist_a_exchange
@@ -324,25 +319,11 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(:,:)
     TYPE(xt_request), INTENT(out) :: request
 
-    REAL(sp), POINTER :: src_p(:,:), dst_p(:,:)
-    REAL(sp), TARGET :: dummy(1,1)
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
-    IF (src_size > 0) THEN
-      src_p => src_data
-    ELSE
-      src_p => dummy
-      src_size = 1
-    END IF
-    IF (dst_size > 0) THEN
-      dst_p => dst_data
-    ELSE
-      dst_p => dummy
-      dst_size = 1
-    END IF
-    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_p, dst_size, &
-         dst_p, request)
+    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
+         dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_sp_2d
 
   ! see @ref xt_redist_a_exchange
@@ -353,25 +334,11 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(:,:,:)
     TYPE(xt_request), INTENT(out) :: request
 
-    REAL(sp), POINTER :: src_p(:,:,:), dst_p(:,:,:)
-    REAL(sp), TARGET :: dummy(1,1,1)
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
-    IF (src_size > 0) THEN
-      src_p => src_data
-    ELSE
-      src_p => dummy
-      src_size = 1
-    END IF
-    IF (dst_size > 0) THEN
-      dst_p => dst_data
-    ELSE
-      dst_p => dummy
-      dst_size = 1
-    END IF
-    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_p, dst_size, &
-         dst_p, request)
+    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
+         dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_sp_3d
 
   ! see @ref xt_redist_a_exchange
@@ -382,25 +349,11 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(:,:,:,:)
     TYPE(xt_request), INTENT(out) :: request
 
-    REAL(sp), POINTER :: src_p(:,:,:,:), dst_p(:,:,:,:)
-    REAL(sp), TARGET :: dummy(1,1,1,1)
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
-    IF (src_size > 0) THEN
-      src_p => src_data
-    ELSE
-      src_p => dummy
-      src_size = 1
-    END IF
-    IF (dst_size > 0) THEN
-      dst_p => dst_data
-    ELSE
-      dst_p => dummy
-      dst_size = 1
-    END IF
-    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_p, dst_size, &
-         dst_p, request)
+    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
+         dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_sp_4d
 
   ! see @ref xt_redist_a_exchange
@@ -411,25 +364,11 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(:,:,:,:,:)
     TYPE(xt_request), INTENT(out) :: request
 
-    REAL(sp), POINTER :: src_p(:,:,:,:,:), dst_p(:,:,:,:,:)
-    REAL(sp), TARGET :: dummy(1,1,1,1,1)
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
-    IF (src_size > 0) THEN
-      src_p => src_data
-    ELSE
-      src_p => dummy
-      src_size = 1
-    END IF
-    IF (dst_size > 0) THEN
-      dst_p => dst_data
-    ELSE
-      dst_p => dummy
-      dst_size = 1
-    END IF
-    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_p, dst_size, &
-         dst_p, request)
+    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
+         dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_sp_5d
 
   ! see @ref xt_redist_a_exchange
@@ -440,25 +379,11 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(:,:,:,:,:,:)
     TYPE(xt_request), INTENT(out) :: request
 
-    REAL(sp), POINTER :: src_p(:,:,:,:,:,:), dst_p(:,:,:,:,:,:)
-    REAL(sp), TARGET :: dummy(1,1,1,1,1,1)
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
-    IF (src_size > 0) THEN
-      src_p => src_data
-    ELSE
-      src_p => dummy
-      src_size = 1
-    END IF
-    IF (dst_size > 0) THEN
-      dst_p => dst_data
-    ELSE
-      dst_p => dummy
-      dst_size = 1
-    END IF
-    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_p, dst_size, &
-         dst_p, request)
+    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
+         dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_sp_6d
 
   ! see @ref xt_redist_a_exchange
@@ -469,25 +394,11 @@ CONTAINS
     REAL(sp), TARGET, INTENT(inout) :: dst_data(:,:,:,:,:,:,:)
     TYPE(xt_request), INTENT(out) :: request
 
-    REAL(sp), POINTER :: src_p(:,:,:,:,:,:,:), dst_p(:,:,:,:,:,:,:)
-    REAL(sp), TARGET :: dummy(1,1,1,1,1,1,1)
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
-    IF (src_size > 0) THEN
-      src_p => src_data
-    ELSE
-      src_p => dummy
-      src_size = 1
-    END IF
-    IF (dst_size > 0) THEN
-      dst_p => dst_data
-    ELSE
-      dst_p => dummy
-      dst_size = 1
-    END IF
-    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_p, dst_size, &
-         dst_p, request)
+    CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
+         dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_sp_7d
 END MODULE xt_redist_real_sp
 !
