@@ -180,6 +180,26 @@ CONTAINS
 
   SUBROUTINE wrap_a_exchange_dp(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src(:)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:)
+    DOUBLE PRECISION, TARGET :: dummy(1)
+    DOUBLE PRECISION, POINTER :: src_p(:), dst_p(:)
+
+    IF (SIZE(src) > 0) THEN
+      src_p => src
+    ELSE
+      src_p => dummy
+    END IF
+    IF (SIZE(dst) > 0) THEN
+      dst_p => dst
+    ELSE
+      dst_p => dummy
+    END IF
+    CALL wrap_a_exchange_dp_as(redist, src_p, dst_p)
+  END SUBROUTINE wrap_a_exchange_dp
+
+  SUBROUTINE wrap_a_exchange_dp_as(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, TARGET, INTENT(in) :: src(*)
     DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(*)
     TYPE(xt_request) :: request
@@ -189,22 +209,47 @@ CONTAINS
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
     CALL check_test_request(request, filename, __LINE__)
-  END SUBROUTINE wrap_a_exchange_dp
+  END SUBROUTINE wrap_a_exchange_dp_as
 
   SUBROUTINE wrap_a_exchange_dp2d(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    DOUBLE PRECISION, TARGET, INTENT(in) :: src(1,*)
-    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(1,*)
-    TYPE(xt_request) :: request
-
-    REQ_DEFAULT_INIT_FIXUP(request)
-    CALL assert_request_is_null(request, filename, __LINE__)
-    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
-    CALL check_wait_request(request, filename, __LINE__)
-    CALL check_test_request(request, filename, __LINE__)
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src(:,:)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: dst(:,:)
+    DOUBLE PRECISION, TARGET :: dummy(1,1)
+    DOUBLE PRECISION, POINTER :: src_p(:,:), dst_p(:,:)
+    IF (SIZE(src) > 0) THEN
+      src_p => src
+    ELSE
+      src_p => dummy
+    END IF
+    IF (SIZE(dst) > 0) THEN
+      dst_p => dst
+    ELSE
+      dst_p => dummy
+    END IF
+    CALL wrap_a_exchange_dp_as(redist, src_p, dst_p)
   END SUBROUTINE wrap_a_exchange_dp2d
 
   SUBROUTINE wrap_a_exchange_i2(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i2), TARGET, INTENT(in) :: src(:)
+    INTEGER(i2), TARGET, INTENT(inout) :: dst(:)
+    INTEGER(i2), TARGET :: dummy(1)
+    INTEGER(i2), POINTER :: src_p(:), dst_p(:)
+    IF (SIZE(src) > 0) THEN
+      src_p => src
+    ELSE
+      src_p => dummy
+    END IF
+    IF (SIZE(dst) > 0) THEN
+      dst_p => dst
+    ELSE
+      dst_p => dummy
+    END IF
+    CALL wrap_a_exchange_i2_as(redist, src_p, dst_p)
+  END SUBROUTINE wrap_a_exchange_i2
+
+  SUBROUTINE wrap_a_exchange_i2_as(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i2), TARGET, INTENT(in) :: src(*)
     INTEGER(i2), TARGET, INTENT(inout) :: dst(*)
@@ -215,9 +260,29 @@ CONTAINS
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
     CALL check_test_request(request, filename, __LINE__)
-  END SUBROUTINE wrap_a_exchange_i2
+  END SUBROUTINE wrap_a_exchange_i2_as
 
   SUBROUTINE wrap_a_exchange_i4(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i4), TARGET, INTENT(in) :: src(:)
+    INTEGER(i4), TARGET, INTENT(inout) :: dst(:)
+    INTEGER(I4), TARGET :: dummy(1)
+    INTEGER(I4), POINTER :: src_p(:), dst_p(:)
+
+    IF (SIZE(src) > 0) THEN
+      src_p => src
+    ELSE
+      src_p => dummy
+    END IF
+    IF (SIZE(dst) > 0) THEN
+      dst_p => dst
+    ELSE
+      dst_p => dummy
+    END IF
+    CALL wrap_a_exchange_i4_as(redist, src_p, dst_p)
+  END SUBROUTINE wrap_a_exchange_i4
+
+  SUBROUTINE wrap_a_exchange_i4_as(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i4), TARGET, INTENT(in) :: src(*)
     INTEGER(i4), TARGET, INTENT(inout) :: dst(*)
@@ -228,9 +293,29 @@ CONTAINS
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
     CALL check_test_request(request, filename, __LINE__)
-  END SUBROUTINE wrap_a_exchange_i4
+  END SUBROUTINE wrap_a_exchange_i4_as
 
   SUBROUTINE wrap_a_exchange_i8(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER(i8), TARGET, INTENT(in) :: src(:)
+    INTEGER(i8), TARGET, INTENT(inout) :: dst(:)
+    INTEGER(I8), TARGET :: dummy(1)
+    INTEGER(I8), POINTER :: src_p(:), dst_p(:)
+
+    IF (SIZE(src) > 0) THEN
+      src_p => src
+    ELSE
+      src_p => dummy
+    END IF
+    IF (SIZE(dst) > 0) THEN
+      dst_p => dst
+    ELSE
+      dst_p => dummy
+    END IF
+    CALL wrap_a_exchange_i8_as(redist, src_p, dst_p)
+  END SUBROUTINE wrap_a_exchange_i8
+
+  SUBROUTINE wrap_a_exchange_i8_as(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER(i8), TARGET, INTENT(in) :: src(*)
     INTEGER(i8), TARGET, INTENT(inout) :: dst(*)
@@ -241,7 +326,7 @@ CONTAINS
     CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
     CALL check_wait_request(request, filename, __LINE__)
     CALL check_test_request(request, filename, __LINE__)
-  END SUBROUTINE wrap_a_exchange_i8
+  END SUBROUTINE wrap_a_exchange_i8_as
 
   SUBROUTINE check_redist_dp(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
