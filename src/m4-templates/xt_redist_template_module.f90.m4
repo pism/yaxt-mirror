@@ -50,6 +50,9 @@ MODULE modname
   USE xt_redist_base, ONLY: xt_redist, xt_redist_s_exchange1, &
        xt_redist_a_exchange1
   USE xt_requests, ONLY: xt_request
+#ifdef HAVE_FC_IS_CONTIGUOUS
+  USE xt_core, ONLY: xt_abort
+#endif
 ifelse(typedecl,LOGICAL,
 {#ifdef HAVE_FC_LOGICAL_INTEROP
 })dnl

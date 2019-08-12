@@ -48,6 +48,9 @@ MODULE xt_redist_real_dp
   USE xt_redist_base, ONLY: xt_redist, xt_redist_s_exchange1, &
        xt_redist_a_exchange1
   USE xt_requests, ONLY: xt_request
+#ifdef HAVE_FC_IS_CONTIGUOUS
+  USE xt_core, ONLY: xt_abort
+#endif
   USE iso_c_binding, ONLY: c_ptr, c_loc
   IMPLICIT NONE
   PRIVATE
@@ -307,6 +310,12 @@ CONTAINS
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
+      CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
+      __FILE__, &
+      __LINE__)
+#endif
     CALL xt_redist_a_exchange_dp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_dp_1d
@@ -322,6 +331,12 @@ CONTAINS
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
+      CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
+      __FILE__, &
+      __LINE__)
+#endif
     CALL xt_redist_a_exchange_dp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_dp_2d
@@ -337,6 +352,12 @@ CONTAINS
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
+      CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
+      __FILE__, &
+      __LINE__)
+#endif
     CALL xt_redist_a_exchange_dp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_dp_3d
@@ -352,6 +373,12 @@ CONTAINS
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
+      CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
+      __FILE__, &
+      __LINE__)
+#endif
     CALL xt_redist_a_exchange_dp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_dp_4d
@@ -367,6 +394,12 @@ CONTAINS
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
+      CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
+      __FILE__, &
+      __LINE__)
+#endif
     CALL xt_redist_a_exchange_dp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_dp_5d
@@ -382,6 +415,12 @@ CONTAINS
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
+      CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
+      __FILE__, &
+      __LINE__)
+#endif
     CALL xt_redist_a_exchange_dp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_dp_6d
@@ -397,6 +436,12 @@ CONTAINS
     INTEGER :: src_size, dst_size
     src_size = SIZE(src_data)
     dst_size = SIZE(dst_data)
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
+      CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
+      __FILE__, &
+      __LINE__)
+#endif
     CALL xt_redist_a_exchange_dp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
   END SUBROUTINE xt_redist_a_exchange_dp_7d
