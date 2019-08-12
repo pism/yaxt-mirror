@@ -211,12 +211,12 @@ CONTAINS
 
   END SUBROUTINE test_single_array_base
 
-  SUBROUTINE check_redist_extended(redist, src_data, ref_dst_data)
+  SUBROUTINE check_redist_extended(redist, src, ref_dst)
     TYPE(xt_redist), INTENT(INOUT) :: redist
-    DOUBLE PRECISION, INTENT(IN) :: src_data(:)
-    DOUBLE PRECISION, INTENT(IN) :: ref_dst_data(:)
+    DOUBLE PRECISION, INTENT(IN) :: src(:)
+    DOUBLE PRECISION, INTENT(IN) :: ref_dst(:)
 
-    DOUBLE PRECISION :: dst_data(SIZE(ref_dst_data))
+    DOUBLE PRECISION :: dst(SIZE(ref_dst))
 
     TYPE(xt_redist) :: redist_copy
 
@@ -228,10 +228,10 @@ CONTAINS
          __LINE__)
 
     ! test exchange
-    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
+    CALL check_redist(redist, src, dst, ref_dst)
     redist_copy = xt_redist_copy(redist)
     CALL xt_redist_delete(redist)
-    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
+    CALL check_redist(redist_copy, src, dst, ref_dst)
     CALL xt_redist_delete(redist_copy)
 
   END SUBROUTINE check_redist_extended
