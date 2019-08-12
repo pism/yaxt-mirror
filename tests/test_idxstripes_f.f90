@@ -72,6 +72,8 @@ PROGRAM test_idxstripes_f
   CALL stripe_test_general3
   CALL stripe_test_general4
   CALL stripe_test_general5
+  CALL stripe_test_general6
+  CALL test_intersection0
   CALL test_intersection1
   CALL test_intersection2
   CALL test_intersection3
@@ -218,6 +220,12 @@ CONTAINS
     CALL stripe_test_general(stripes, ref_indices)
   END SUBROUTINE stripe_test_general5
 
+  SUBROUTINE stripe_test_general6
+    TYPE(xt_stripe), PARAMETER :: stripes(1) = (/ xt_stripe(179, -2, 0) /)
+    INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ 0_xi /)
+    CALL stripe_test_general(stripes, ref_indices(1:0))
+  END SUBROUTINE stripe_test_general6
+
   SUBROUTINE test_intersection(stripes_a, stripes_b, ref_indices_a, ref_indices_b)
     TYPE(xt_stripe), INTENT(in) :: stripes_a(:), stripes_b(:)
     INTEGER(xt_int_kind), INTENT(in) :: ref_indices_a(:)
@@ -239,6 +247,13 @@ CONTAINS
     CALL xt_idxlist_delete(idxstripes_a)
     CALL xt_idxlist_delete(idxstripes_b)
   END SUBROUTINE test_intersection
+
+  SUBROUTINE test_intersection0
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 0, 0) /), &
+         stripes_b(1) = (/ xt_stripe(1, 1, 8) /)
+    INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ 0_xi /)
+    CALL test_intersection(stripes_a(1:0), stripes_b, ref_indices(1:0))
+  END SUBROUTINE test_intersection0
 
   SUBROUTINE test_intersection1
     TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 1, 4), &
