@@ -456,26 +456,13 @@ CONTAINS
     ENDDO
   END SUBROUTINE check_redist_dp_2d
 
-  SUBROUTINE check_redist_xi(redist, src, dst_size, dst, ref_dst)
+  SUBROUTINE check_redist_xi(redist, src_size, src, dst_size, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, INTENT(in) :: dst_size
-    INTEGER(xi), TARGET, INTENT(in) :: src(*)
+    INTEGER, INTENT(in) :: src_size, dst_size
+    INTEGER(xi), TARGET, INTENT(in) :: src(src_size)
     INTEGER(xi), INTENT(in) :: ref_dst(dst_size)
     INTEGER(xi), TARGET, INTENT(inout) :: dst(dst_size)
-    INTEGER :: iexch
-
-    DO iexch = 1, 2
-      dst = -1_xi
-      IF (iexch == 1) THEN
-        CALL xt_redist_s_exchange1(redist, C_LOC(src), C_LOC(dst))
-      ELSE
-        CALL wrap_a_exchange(redist, src, dst)
-      ENDIF
-      IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           __FILE__, &
-           __LINE__)
-    ENDDO
+    CALL check_redist(redist, src, dst, ref_dst)
   END SUBROUTINE check_redist_xi
 
   SUBROUTINE check_redist_i2(redist, src, dst, ref_dst)

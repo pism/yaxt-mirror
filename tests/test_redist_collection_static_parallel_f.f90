@@ -320,8 +320,8 @@ CONTAINS
 
     CALL xt_redist_delete(redists)
 
-    CALL check_redist_xi(redist, src_indices, SIZE(dst_indices), &
-         results, dst_indices)
+    CALL check_redist_xi(redist, num_local_indices, src_indices, &
+         SIZE(results), results, dst_indices)
 
     ! clean up
     CALL xt_redist_delete(redist)
