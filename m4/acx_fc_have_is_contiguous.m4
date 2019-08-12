@@ -43,18 +43,38 @@ AC_DEFUN([ACX_FC_HAVE_IS_CONTIGUOUS],
    AC_CACHE_CHECK([whether $FC supports IS_CONTIGUOUS query],
      [acx_cv_fc_have_is_contiguous],
      [AC_LANG_PUSH([Fortran])
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+      AC_LANG_CONFTEST([AC_LANG_PROGRAM(
       [
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT
       IMPLICIT NONE
+      INTERFACE
+      SUBROUTINE POSIX_EXIT(STATUS) BIND(C, NAME='exit')
+      IMPORT :: C_INT
+      INTEGER(C_INT), VALUE :: STATUS
+      END SUBROUTINE POSIX_EXIT
+      END INTERFACE
       INTEGER, TARGET :: II(10)
       INTEGER, POINTER :: P(:)
-      LOGICAL :: IS_II_CONT, IS_P_CONT
+      DOUBLE PRECISION :: D(2)
+      LOGICAL :: IS_II_CONT, IS_P_CONT, IS_D_CONT
+      IS_D_CONT = TEST_ARG_CONT(D)
       IS_II_CONT = IS_CONTIGUOUS(II)
       P => II(::2)
       IS_P_CONT = IS_CONTIGUOUS(P)
-      PRINT *, IS_II_CONT, IS_P_CONT
-])],
-        [acx_cv_fc_have_is_contiguous=yes],
+      IF (.NOT. IS_D_CONT .OR. .NOT. IS_II_CONT .OR. IS_P_CONT) &
+      CALL POSIX_EXIT(1_C_INT)
+      CONTAINS
+      FUNCTION TEST_ARG_CONT(A) RESULT(IS_CONT)
+      DOUBLE PRECISION, INTENT(IN) :: A(:)
+      LOGICAL :: IS_CONT
+      IS_CONT = IS_CONTIGUOUS(A)
+      END FUNCTION TEST_ARG_CONT
+])])
+      AC_LINK_IFELSE([],
+        [AC_RUN_IFELSE([],
+          [acx_cv_fc_have_is_contiguous=yes],
+          [acx_cv_fc_have_is_contiguous=no],
+          [acx_cv_fc_have_is_contiguous=yes])],
         [acx_cv_fc_have_is_contiguous=no])])
    m4_ifval([$1$2],
      [AS_IF([test $acx_cv_fc_have_is_contiguous = yes],
