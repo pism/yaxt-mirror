@@ -299,12 +299,12 @@ CONTAINS
 
     src_displacements = 0_mpi_address_kind
     dst_displacements(1) = 0_mpi_address_kind
-    CALL mpi_get_address(results(:, 2), dst_displacements(2), ierror)
+    CALL mpi_get_address(results(1, 2), dst_displacements(2), ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error in mpi_get_address", &
          __FILE__, &
          __LINE__)
-    CALL mpi_get_address(results(:, 1), addr_temp, ierror)
+    CALL mpi_get_address(results(1, 1), addr_temp, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error in mpi_get_address", &
          __FILE__, &
