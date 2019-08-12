@@ -142,7 +142,11 @@ CONTAINS
          __LINE__)
 
     num_pos = 0
-    num_ext = SIZE(pos_ext)
+    IF (ALLOCATED(pos_ext)) THEN
+      num_ext = SIZE(pos_ext)
+    ELSE
+      num_ext = 0
+    END IF
     DO i = 1, num_ext
       ext_size = pos_ext(i)%size
       IF (num_pos /= pos_ext(i)%start) &
@@ -156,7 +160,7 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    DEALLOCATE(pos_ext)
+    IF (ALLOCATED(pos_ext)) DEALLOCATE(pos_ext)
     CALL xt_idxlist_delete(idxstripes)
 
     ! test recreation of stripes from reference vector
