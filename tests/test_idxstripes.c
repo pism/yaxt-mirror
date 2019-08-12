@@ -71,6 +71,19 @@ stripe_test_general(int num_stripes, const struct Xt_stripe *stripes,
                     int num_ref_indices, const Xt_int *ref_indices);
 
 static void
+stripe_test_general1(void);
+static void
+stripe_test_general2(void);
+static void
+stripe_test_general3(void);
+static void
+stripe_test_general4(void);
+static void
+stripe_test_general5(void);
+static void
+stripe_test_general6(void);
+
+static void
 stripe_test_intersection(int num_stripes_a, const struct Xt_stripe *stripes_a,
                          int num_stripes_b, const struct Xt_stripe *stripes_b,
                          int num_ref_indices, const Xt_int *ref_indices);
@@ -115,93 +128,17 @@ int main(void) {
 
   xt_initialize(MPI_COMM_WORLD);
 
-  { // general tests
-    enum {
-      num_stripes = 3,
-      num_ref_indices = 15,
-    };
-    static const struct Xt_stripe stripes[num_stripes]
-      = {{.start =  0, .stride = 1, .nstrides = 5},
-         {.start = 10, .stride = 1, .nstrides = 5},
-         {.start = 20, .stride = 1, .nstrides = 5}};
+  stripe_test_general1();
 
-    static const Xt_int ref_indices[num_ref_indices]
-      = {0,1,2,3,4, 10,11,12,13,14, 20,21,22,23,24};
+  stripe_test_general2();
 
-    stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
-  }
+  stripe_test_general3();
 
-  { // general tests
-    enum {
-      num_stripes = 3,
-      num_ref_indices = 15,
-    };
-    static const struct Xt_stripe stripes[num_stripes]
-      = {{.start =  0, .stride = 1, .nstrides = 5},
-         {.start = 10, .stride = 2, .nstrides = 5},
-         {.start = 20, .stride = 3, .nstrides = 5}};
+  stripe_test_general4();
 
-    static const Xt_int ref_indices[num_ref_indices]
-      = {0,1,2,3,4, 10,12,14,16,18, 20,23,26,29,32};
+  stripe_test_general5();
 
-    stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
-  }
-
-  { // general tests
-    enum {
-      num_stripes = 2,
-      num_ref_indices = 10,
-    };
-    static const struct Xt_stripe stripes[num_stripes]
-      = {{.start = 0, .stride = 6, .nstrides = 5},
-         {.start = 1, .stride = 3, .nstrides = 5}};
-
-    static const Xt_int ref_indices[num_ref_indices]
-      = {0,6,12,18,24, 1,4,7,10,13};
-
-    stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
-  }
-
-  { // general tests
-    enum {
-      num_stripes = 2,
-      num_ref_indices = 10,
-    };
-    static const struct Xt_stripe stripes[num_stripes]
-      = {{.start = 0, .stride = -1, .nstrides = 5},
-         {.start = 1, .stride =  1, .nstrides = 5}};
-
-    static const Xt_int ref_indices[num_ref_indices]
-      = {0,-1,-2,-3,-4, 1,2,3,4,5};
-
-    stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
-  }
-
-  { // general tests
-    enum {
-      num_stripes = 2,
-      num_ref_indices = 10,
-    };
-    static const struct Xt_stripe stripes[num_stripes]
-      = {{.start = 9, .stride = -2, .nstrides = 5},
-         {.start = 0, .stride =  2, .nstrides = 5}};
-
-    static const Xt_int ref_indices[num_ref_indices]
-      = {9,7,5,3,1, 0,2,4,6,8};
-
-    stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
-  }
-
-  { // general tests
-    enum {
-      num_stripes = 1,
-      num_ref_indices = 0,
-    };
-    static const struct Xt_stripe stripes[num_stripes]
-      = {{.start = 179, .stride = -2, .nstrides = 0}};
-
-    stripe_test_general(num_stripes, stripes, num_ref_indices, NULL);
-  }
+  stripe_test_general6();
 
   { // intersection test
     enum {
@@ -1544,6 +1481,96 @@ stripe_test_general(int num_stripes, const struct Xt_stripe *stripes,
   check_idxlist(idxstripes, ref_indices, num_ref_indices);
   xt_idxlist_delete(idxvec);
   xt_idxlist_delete(idxstripes);
+}
+
+static void
+stripe_test_general1(void)
+{
+  enum {
+    num_stripes = 3,
+    num_ref_indices = 15,
+  };
+  static const struct Xt_stripe stripes[num_stripes]
+    = {{.start =  0, .stride = 1, .nstrides = 5},
+       {.start = 10, .stride = 1, .nstrides = 5},
+       {.start = 20, .stride = 1, .nstrides = 5}};
+  static const Xt_int ref_indices[num_ref_indices]
+    = {0,1,2,3,4, 10,11,12,13,14, 20,21,22,23,24};
+  stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
+}
+
+static void
+stripe_test_general2(void)
+{
+  enum {
+    num_stripes = 3,
+    num_ref_indices = 15,
+  };
+  static const struct Xt_stripe stripes[num_stripes]
+    = {{.start =  0, .stride = 1, .nstrides = 5},
+       {.start = 10, .stride = 2, .nstrides = 5},
+       {.start = 20, .stride = 3, .nstrides = 5}};
+  static const Xt_int ref_indices[num_ref_indices]
+    = {0,1,2,3,4, 10,12,14,16,18, 20,23,26,29,32};
+
+  stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
+}
+
+static void
+stripe_test_general3(void)
+{
+  enum {
+    num_stripes = 2,
+    num_ref_indices = 10,
+  };
+  static const struct Xt_stripe stripes[num_stripes]
+    = {{.start = 0, .stride = 6, .nstrides = 5},
+       {.start = 1, .stride = 3, .nstrides = 5}};
+  static const Xt_int ref_indices[num_ref_indices]
+    = {0,6,12,18,24, 1,4,7,10,13};
+  stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
+}
+
+static void
+stripe_test_general4(void)
+{
+  enum {
+    num_stripes = 2,
+    num_ref_indices = 10,
+  };
+  static const struct Xt_stripe stripes[num_stripes]
+    = {{.start = 0, .stride = -1, .nstrides = 5},
+       {.start = 1, .stride =  1, .nstrides = 5}};
+  static const Xt_int ref_indices[num_ref_indices]
+    = {0,-1,-2,-3,-4, 1,2,3,4,5};
+  stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
+}
+
+static void
+stripe_test_general5(void)
+{
+  enum {
+    num_stripes = 2,
+    num_ref_indices = 10,
+  };
+  static const struct Xt_stripe stripes[num_stripes]
+    = {{.start = 9, .stride = -2, .nstrides = 5},
+       {.start = 0, .stride =  2, .nstrides = 5}};
+  static const Xt_int ref_indices[num_ref_indices]
+    = {9,7,5,3,1, 0,2,4,6,8};
+  stripe_test_general(num_stripes, stripes, num_ref_indices, ref_indices);
+}
+
+static void
+stripe_test_general6(void)
+{
+  enum {
+    num_stripes = 1,
+    num_ref_indices = 0,
+  };
+  static const struct Xt_stripe stripes[num_stripes]
+    = {{.start = 179, .stride = -2, .nstrides = 0}};
+  stripe_test_general(num_stripes, stripes, num_ref_indices, NULL);
 }
 
 static void
