@@ -694,6 +694,7 @@ CONTAINS
     TYPE(c_ptr) :: pos_ext_c, stripes_c
     TYPE(xt_pos_ext), POINTER :: pos_ext_fptr(:)
     INTEGER :: pos_ext_shape(1)
+    TYPE(xt_pos_ext), TARGET :: dummy_stripe(1)
 
     IF (num_stripes > HUGE(1_c_int) .OR. num_stripes < 0) &
          CALL xt_abort(xt_get_default_comm(), &
@@ -701,7 +702,11 @@ CONTAINS
          __FILE__, &
          __LINE__)
 
-    stripes_c = C_LOC(stripes)
+    IF (num_stripes > 0_i4) THEN
+      stripes_c = C_LOC(stripes)
+    ELSE
+      stripes_c = C_LOC(dummy_stripe)
+    END IF
     num_stripes_c = INT(num_stripes, c_int)
     num_unmatched_c = xt_idxlist_get_pos_exts_of_index_stripes_c(&
          xt_idxlist_f2c(idxlist), num_stripes_c, stripes_c, &
