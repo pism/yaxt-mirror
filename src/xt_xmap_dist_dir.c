@@ -87,8 +87,8 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
 
   *stripify = global_sums[1] > 0;
-  return (Xt_int)(((global_sums[0] + (unsigned)comm_size - 1)
-                   / (unsigned)comm_size) * (unsigned)comm_size);
+  return (Xt_int)(MAX(((global_sums[0] + (unsigned)comm_size - 1)
+                      / (unsigned)comm_size), 1) * (unsigned)comm_size);
 }
 
 static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
@@ -115,11 +115,12 @@ static struct bucket_params
 get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                   bool *stripify, MPI_Comm comm, int comm_size)
 {
+  /* global_interval is a multiple of comm_size and has a size of at least
+     comm_size */
   Xt_int global_interval
     = get_dist_dir_global_interval_size(src_idxlist, dst_idxlist, stripify,
                                         comm, comm_size);
-  /* guard vs. comm_size being larger than number of indices */
-  Xt_int local_interval = MAX((Xt_int)1, (Xt_int)(global_interval / comm_size));
+  Xt_int local_interval = (Xt_int)(global_interval / comm_size);
   Xt_int local_index_range_lbound
     = get_min_idxlist_index(src_idxlist, dst_idxlist);
   Xt_int local_index_range_ubound
