@@ -122,6 +122,10 @@ AC_DEFUN([_ACX_CHECK_CFORTRAN_FC],
               [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])
 	       AC_MSG_NOTICE([cfortran.h link test succeeded for $FC.])
                acx_cv_cfortran_works=yes])
+        rm -f "conftest_f.$ac_objext" "conftest_f.$OBJEXT" ".libs/conftest_f.$OBJEXT"
+dnl Some Fortran compilers create module files not in the current working directory but
+dnl in the directory with the object file, therefore we try to delete everything:
+        rm -f conftest_data* CONFTEST_DATA* .libs/conftest_data* .libs/CONFTEST_DATA*
 	    LIBS=$save_LIBS],
            [acx_cv_cfortran_works="error compiling Fortran subroutine"])
          AC_LANG_POP([Fortran])])
@@ -192,6 +196,7 @@ AC_DEFUN([_ACX_CHECK_CFORTRAN_F77],
               [AC_MSG_NOTICE([Skipping run test for cfortran.h in cross-compilation mode,])
 	       AC_MSG_NOTICE([cfortran.h link test succeeded for $F77.])
                acx_cv_cfortran_works=yes])
+        rm -f "conftest_f.$ac_objext" "conftest_f.$OBJEXT" ".libs/conftest_f.$OBJEXT"
 	    LIBS=$save_LIBS],
            [acx_cv_cfortran_works="error compiling Fortran subroutine"])
          AC_LANG_POP([Fortran 77])])
@@ -263,6 +268,7 @@ FCALLSCSUB0(errExit,ERR_EXIT,err_exit)
               [acx_cv_cfortran_works=${acx_cv_cfortran_works-yes}])])
          AC_PROVIDE_IFELSE([AC_PROG_F77],
            [AS_IF([test -n "$F77" -a X"$F77" != Xno AC_PROVIDE_IFELSE([AC_PROG_FC],[-a x"$acx_cv_cfortran_works" = xyes])],[_ACX_CHECK_CFORTRAN_F77])])
+         rm -f "conftest_c.$ac_objext" "conftest_c.$OBJEXT" ".libs/conftest_c.$OBJEXT"
         ],
         [acx_cv_cfortran_works="compiling with cfortran.h failed"])
       AC_LANG_POP([C])
