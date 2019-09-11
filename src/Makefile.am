@@ -288,7 +288,11 @@ all-local: xtinclude_Makefile.inc
 clean-local:
 	-rm -f *.$(FCMODEXT) i.*.L
 
-distclean-local:
+# The recipe of the rule expects that the object files are already deleted from
+# the 'core' subdirectory, which is not always the case for a parallel run,
+# i.e. when 'make distclean -j2'. Therefore, we explicitly specify a dependency
+# on the 'mostlyclean' rule:
+distclean-local: mostlyclean
 	-rm -f xtinclude_Makefile.inc
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
 	  rm -rf core/$(DEPDIR); rmdir core pkgconfig ; fi

@@ -81,6 +81,10 @@ clean-local:
           test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile \
 	    || ./config.status $$d/Makefile ; done
 
+# The recipe of the rule needs to be called after 'clean-local' because the
+# latter regenerates Makefiles. In order to ensure the order in the case of a
+# parallel run, i.e. when 'make distclean -j2', we express the dependency
+# explicitly:
 distclean-local: clean-local
 	for d in $(SUBDIRS) ; do \
 		test $$d = . || (rm -f $$d/Makefile ; test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir $$d) ; done
