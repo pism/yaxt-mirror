@@ -921,7 +921,7 @@ sub buildNameSubst(\@)
             print(STDERR 'Using persistent database ', $parseCacheDB, "\n")
                 if ($debug);
             my $db = dbmopen(%parseCache, $parseCacheDB, 0666)
-                or die('Could not open database');
+                or die('Could not open database', (($!)?": $!\.":()));
             $db->filter_store_value(sub { $_ = freeze($_) });
             $db->filter_fetch_value(sub { $_ = thaw($_) });
             $persistentParseCache = 1;
