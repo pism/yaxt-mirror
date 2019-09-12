@@ -64,7 +64,7 @@ AC_DEFUN([ACX_SL_FC_CHECK_MOD_PATH_FLAG],dnl
       AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 [      module cnftst
       implicit none
-      integer :: i
+      integer, public :: i
       end module cnftst])],,
         [AC_MSG_ERROR([Cannot compile fortran modules])])
       cd ..
