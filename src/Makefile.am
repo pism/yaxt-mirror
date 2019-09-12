@@ -300,14 +300,20 @@ all-local: xtinclude_Makefile.inc
 clean-local:
 	-rm -f *.$(FCMODEXT) i.*.L
 
-# The recipe of the rule expects that the object files are already deleted from
-# the 'core' subdirectory, which is not always the case for a parallel run,
-# i.e. when 'make distclean -j2'. Therefore, we explicitly specify a dependency
-# on the 'mostlyclean' rule:
+# When an out-of-source build takes place, the recipe of the rule expects that
+# the object files are already deleted from the 'core' subdirectory, which is
+# not always the case for a parallel run, i.e. when 'make distclean -j2'.
+# Therefore, we explicitly specify a dependency on the 'mostlyclean' rule.
+# Moreover, the 'distclean' recipe of the top-level Makefile expects the
+# directory containing this Makefile to be empty as soon as its 'distclean'
+# recipe is executed. This is not the case when the Makefile is generated with
+# Automake 1.16 or later because the $(DEPDIR) subdirectories are not deleted.
+# Therefore, we delete them explicitly as the older versions of Automake do.
 distclean-local: mostlyclean
 	-rm -f xtinclude_Makefile.inc
+	-rm -rf '$(DEPDIR)' 'core/$(DEPDIR)'
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
-	  rm -rf core/$(DEPDIR); rmdir core pkgconfig ; fi
+	  rmdir core pkgconfig ; fi
 
 install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"

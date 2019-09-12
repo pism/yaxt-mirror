@@ -353,3 +353,12 @@ EXTRA_DIST = core
 
 clean-local:
 	-rm -f *.$(FCMODEXT)
+
+# When an out-of-source build takes place, the 'distclean' recipe of the
+# top-level Makefile expects the directory containing this Makefile to be
+# empty as soon as its 'distclean' recipe is executed. This is not the case
+# when the Makefile is generated with Automake 1.16 or later because the
+# $(DEPDIR) subdirectory is not deleted. Therefore, we delete it explicitly
+# as the older versions of Automake do.
+distclean-local:
+	-rm -rf '$(DEPDIR)'
