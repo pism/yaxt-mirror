@@ -298,7 +298,7 @@ xtinclude_Makefile.inc: Makefile
 all-local: xtinclude_Makefile.inc
 
 clean-local:
-	-rm -f *.$(FCMODEXT) i.*.L
+	-rm -f *.$(FCMODEXT) i.*.L *.i
 
 # When an out-of-source build takes place, the recipe of the rule expects that
 # the object files are already deleted from the 'core' subdirectory, which is

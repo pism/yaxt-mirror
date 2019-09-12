@@ -353,7 +353,7 @@ EXTRA_DIST = core
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
 
 clean-local:
-	-rm -f *.$(FCMODEXT)
+	-rm -f *.$(FCMODEXT) *.i
 
 # When an out-of-source build takes place, the 'distclean' recipe of the
 # top-level Makefile expects the directory containing this Makefile to be

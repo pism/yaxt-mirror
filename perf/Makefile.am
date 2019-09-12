@@ -57,6 +57,9 @@ COMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 FCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(FC) -static $(AM_FCFLAGS) $(FCFLAGS)
 
+clean-local:
+	-rm -f *.i
+
 # When an out-of-source build takes place, the 'distclean' recipe of the
 # top-level Makefile expects the directory containing this Makefile to be
 # empty as soon as its 'distclean' recipe is executed. This is not the case
