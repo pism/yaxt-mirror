@@ -482,9 +482,17 @@ AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
 AS_VERSION_COMPARE([$am__api_version],[1.16],[extrasub="${extrasub+$extrasub$as_nl}s/\# am--include-marker\$//"
 ])
 
-# force make to regenerate FC.deps file (because it depends on Makefile)
-AC_CONFIG_COMMANDS([force_dep_regeneration],[sleep 1
-touch tests/Makefile src/Makefile])
+dnl Create dummy Fortran dependency files for Automake version 1.16 or later,
+dnl which don't do so automatically anymore, older versions
+dnl created the files by the time this command is executed. Having
+dnl created the dummy Fortran dependency files, we enforce their
+dnl regeneration at the build time by updating the timestamps of the
+dnl corresponding Makefiles, which the Fortran dependency file have as
+dnl prerequisites.
+AC_CONFIG_COMMANDS([force_dep_regeneration],[touch "tests/${DEPDIR}/FC.deps" "src/${DEPDIR}/FC.deps"
+sleep 1
+touch tests/Makefile src/Makefile],
+[DEPDIR="${DEPDIR}"])
 
 AC_OUTPUT
 dnl
