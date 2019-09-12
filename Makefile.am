@@ -17,6 +17,11 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checkdoc/openmpi_dup.txt \
 	config/checksrc/pe5228_iv32584.c \
 	config/checkdoc/pe5228_iv32584.txt \
+	autogen.sh \
+        contrib/autogen_patches/README.txt \
+        contrib/autogen_patches/libtool.m4.arg_spaces.patch \
+        contrib/autogen_patches/libtool.m4.nag_wrapper.patch \
+        contrib/autogen_patches/ltmain_nag_pthread.patch \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \
