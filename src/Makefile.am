@@ -309,11 +309,16 @@ clean-local:
 # recipe is executed. This is not the case when the Makefile is generated with
 # Automake 1.16 or later because the $(DEPDIR) subdirectories are not deleted.
 # Therefore, we delete them explicitly as the older versions of Automake do.
-distclean-local: mostlyclean
+# We also need to clean-up the 'pkgconfig' and 'core' subdirectories before
+# trying to delete them in the out-of-source build case. First, we make sure that
+# the directory stamps are deleted by introducing a dependency on
+# 'distclean-generic'. Second, we delete the pkgconfig files, which, otherwise,
+# are deleted later by the top-level Makefile.
+distclean-local: mostlyclean distclean-generic
 	-rm -f xtinclude_Makefile.inc
 	-rm -rf '$(DEPDIR)' 'core/$(DEPDIR)'
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
-	  rmdir core pkgconfig ; fi
+	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc; rmdir core pkgconfig ; fi
 
 install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"
