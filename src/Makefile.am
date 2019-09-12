@@ -323,7 +323,8 @@ uninstall-local:
 	  done | grep '\.f90$$' ` ; \
 	  FC="$(FC)" FPP="$(FPP)" \
 	  $(PERL) -I$(top_srcdir)/scripts \
-	  $(top_srcdir)/scripts/makef90depends --ignore-module iso_c_binding \
+	  $(top_srcdir)/scripts/makef90depends \
+	  --ignore-module=iso_c_binding --ignore-module=mpi \
 	  --fc-mod-flag=$(FC_MOD_FLAG) --fc-def-opt=$(FPP_DEFOPT) \
 	  --fc-inc-flag=$(FPP_INCOPT) --fc-mod-suf='.$(FCMODEXT)' \
 	  --fc-mod-case=$(FCMODCASE) --prog-fpp='$(FPP)' \
