@@ -136,13 +136,21 @@ CONTAINS
     CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds1
 
+#ifdef __PGI
+#  define NO_2D_PARAM
+#elif defined(_CRAYFTN)
+#  if _RELEASE_MAJOR < 8 || (_RELEASE_MAJOR == 8 && _RELEASE_MINOR < 7)
+#    define NO_2D_PARAM
+#  endif
+#endif
+
   SUBROUTINE test_repeated_redist_ds1_with_gap(redist_repeat)
     TYPE(xt_redist), INTENT(in) :: redist_repeat
     INTEGER :: i, j
     DOUBLE PRECISION, PARAMETER :: src_data(5, 5) = RESHAPE((/&
          (DBLE(i), i = 1, 25)/), (/ 5, 5 /))
     DOUBLE PRECISION :: dst_data(3, 5)
-#if defined(__PGI) || defined(_CRAYFTN)
+#ifdef NO_2D_PARAM
     DOUBLE PRECISION :: ref_dst_data(3, 5)
     ref_dst_data &
          = RESHAPE((/ ((DBLE((i + j)*MOD(j+1,2)-MOD(j,2)), i = 1,5,2), &
