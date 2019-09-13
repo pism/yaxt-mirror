@@ -128,6 +128,7 @@ CONTAINS
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
+      idxvec_dummy(1) = HUGE(idxvec_dummy)
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a1d
@@ -183,6 +184,7 @@ CONTAINS
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
+      idxvec_dummy(1) = HUGE(idxvec_dummy)
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a2d
@@ -239,6 +241,7 @@ CONTAINS
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
+      idxvec_dummy(1) = HUGE(idxvec_dummy)
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a3d
@@ -292,6 +295,7 @@ CONTAINS
     IF (num_indices > 0) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
     ELSE
+      idxvec_dummy(1) = HUGE(idxvec_dummy)
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices))
     END IF
   END FUNCTION xt_idxvec_new_a4d
@@ -348,6 +352,7 @@ CONTAINS
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
+      idxvec_dummy(1) = HUGE(idxvec_dummy)
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a5d
@@ -406,6 +411,7 @@ CONTAINS
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
+      idxvec_dummy(1) = HUGE(idxvec_dummy)
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a6d
@@ -463,6 +469,7 @@ CONTAINS
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
     ELSE
+      idxvec_dummy(1) = HUGE(idxvec_dummy)
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec_dummy, num_indices_c))
     END IF
   END FUNCTION xt_idxvec_new_a7d

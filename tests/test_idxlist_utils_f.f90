@@ -86,6 +86,7 @@ CONTAINS
       CALL check_idxlist_c(xt_idxlist_f2c(idxlist), ref_indices, &
            num_ref_indices_c)
     ELSE
+      dummy(1) = 0_xt_int_kind
       CALL check_idxlist_c(xt_idxlist_f2c(idxlist), dummy, &
            0_c_int)
     END IF
