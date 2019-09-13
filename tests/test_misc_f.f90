@@ -98,7 +98,12 @@ CONTAINS
     INTEGER(i8) :: i, cubed, cbrt
     CHARACTER(len=132) :: msg
     DO i = -ulim, ulim, 1_i8
-      cubed = i**3_i8
+      ! need to spell that out explcitely for crayftn 8.5.5 at least
+#if defined _CRAYFTN && _REALEASE_MAJOR == 8 && _RELEASE_MINOR == 5
+      cubed = i * i * i
+#else
+      cubed = i**3
+#endif
       cbrt = icbrt(cubed)
       IF (cbrt /= i) THEN
         WRITE (msg, '(4(a,i0))') &
