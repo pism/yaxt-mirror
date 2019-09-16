@@ -1600,6 +1600,24 @@ tail_search:
   return unmatched;
 }
 
+static Xt_int
+idxstripes_get_min_index(Xt_idxlist idxlist) {
+  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  return idxstripes->min_index;
+}
+
+static Xt_int
+idxstripes_get_max_index(Xt_idxlist idxlist) {
+  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  return idxstripes->max_index;
+}
+
+/* unfortunately, Cray cc 8.[56].x miscompile the following function,
+ * hence optimizations must be disabled. Feel free to dig deeper into
+ * the problem, but it's fixed in 8.7. */
+#if defined _CRAYC && _RELEASE_MAJOR == 8 && _RELEASE_MINOR >= 5 && _RELEASE_MINOR < 7
+#pragma _CRI noopt
+#endif
 static struct unmatched_tail
 idxstripes_complex_get_pos_exts_of_index_stripe(
   struct Xt_stripe query,
@@ -1718,19 +1736,6 @@ idxstripes_complex_get_pos_exts_of_index_stripe(
   }
   return (struct unmatched_tail){ .unmatched = unmatched, .query_tail = query};
 }
-
-static Xt_int
-idxstripes_get_min_index(Xt_idxlist idxlist) {
-  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
-  return idxstripes->min_index;
-}
-
-static Xt_int
-idxstripes_get_max_index(Xt_idxlist idxlist) {
-  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
-  return idxstripes->max_index;
-}
-
 
 /*
  * Local Variables:
