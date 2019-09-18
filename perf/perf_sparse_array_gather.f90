@@ -1,7 +1,7 @@
 ! recreates whole array from variously displaced chunks
 PROGRAM perf_sparse_array_gather
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_abort, &
-       xt_int_kind, xt_stripe, xt_abort, xt_idxlist_collection_new, &
+       xt_int_kind, xt_stripe, xt_idxlist_collection_new, &
        xt_idxlist, xt_idxfsection_new, xt_idxstripes_new, xt_idxlist_delete, &
        xt_redist, xt_redist_p2p_ext_new, xt_offset_ext, &
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
