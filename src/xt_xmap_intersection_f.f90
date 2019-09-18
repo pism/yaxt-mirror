@@ -101,7 +101,7 @@ MODULE xt_xmap_intersection
     MODULE PROCEDURE xmi_ext_new_i_a_i_a
     MODULE PROCEDURE xmi_ext_new_a_a
   END INTERFACE xt_xmap_intersection_ext_new
-
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_xmap_intersection_f.f90'
 CONTAINS
   FUNCTION xmi_new_i_a_i_a(num_src_intersections, src_com, &
        num_dst_intersections, dst_com, &
@@ -204,9 +204,7 @@ CONTAINS
 
     com_size = SIZE(com)
     IF (com_size > HUGE(1_c_int)) &
-         CALL xt_abort('invalid size', &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort('invalid size', filename, __LINE__)
     IF (com_size > 0) THEN
       IF (com_size > 1) THEN
 #ifdef HAVE_FC_IS_CONTIGUOUS

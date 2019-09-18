@@ -5,6 +5,8 @@ PROGRAM test_misc
        init_fortran_random
   IMPLICIT NONE
   LOGICAL :: fully_random_tests
+  CHARACTER(len=*), PARAMETER :: filename = 'test_misc_f.f90'
+
   fully_random_tests = run_randomized_tests()
   CALL init_fortran_random(fully_random_tests)
   CALL test_icbrt
@@ -26,9 +28,7 @@ CONTAINS
         WRITE (msg, '(4(a,i0))') &
              "integer cube root computation failed for ", i, &
              "**3 = ", cubed, ", but icbrt(", cubed, ") = ", cbrt
-        CALL test_abort(TRIM(msg), &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
     END DO
   END SUBROUTINE test_icbrt_i2
@@ -47,9 +47,7 @@ CONTAINS
         WRITE (msg, '(4(a,i0))') &
              "integer cube root computation failed for ", i, &
              "**3 = ", cubed, ", but icbrt(", cubed, ") = ", cbrt
-        CALL test_abort(TRIM(msg), &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
       CALL random_number(rnd)
       other_cubed = prev_cubed + MAX(1_i4, INT(rnd * DBLE(cubed - prev_cubed), i4))
@@ -59,9 +57,7 @@ CONTAINS
              "integer cube root computation failed for ", other_cubed, &
              ", expected ", i, &
              ", but icbrt(", other_cubed, ") = ", cbrt
-        CALL test_abort(TRIM(msg), &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
       prev_cubed = cubed
     END DO
@@ -73,9 +69,7 @@ CONTAINS
         WRITE (msg, '(4(a,i0))') &
              "integer cube root computation failed for ", i, &
              "**3 = ", cubed, ", but icbrt(", cubed, ") = ", cbrt
-        CALL test_abort(TRIM(msg), &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
       CALL random_number(rnd)
       other_cubed = cubed + MIN(INT(rnd * DBLE(prev_cubed - cubed), i4), -1_i4)
@@ -85,9 +79,7 @@ CONTAINS
              "integer cube root computation failed for ", other_cubed, &
              ", expected ", i, &
              ", but icbrt(", other_cubed, ") = ", cbrt
-        CALL test_abort(TRIM(msg), &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
       prev_cubed = cubed
     END DO
@@ -109,9 +101,7 @@ CONTAINS
         WRITE (msg, '(4(a,i0))') &
              "integer cube root computation failed for ", i, &
              "**3 = ", cubed, ", but icbrt(", cubed, ") = ", cbrt
-        CALL test_abort(TRIM(msg), &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
     END DO
   END SUBROUTINE test_icbrt_i8

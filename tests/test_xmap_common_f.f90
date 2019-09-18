@@ -60,6 +60,7 @@ MODULE test_xmap_common
   INTEGER :: my_rank
   INTEGER, PARAMETER :: xi = xt_int_kind
   PUBLIC :: xmap_self_test_main
+  CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_common_f.f90'
 CONTAINS
   SUBROUTINE xmap_self_test_main(xmap_new)
     INTERFACE
@@ -79,16 +80,12 @@ CONTAINS
     CALL xt_initialize(mpi_comm_world)
     CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("MPI error!", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("MPI error!", filename, __LINE__)
 
     comms(1) = mpi_comm_world
     CALL mpi_comm_dup(mpi_comm_world, comms(2), ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("MPI error!", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("MPI error!", filename, __LINE__)
     CALL xt_mpi_comm_mark_exclusive(comms(2))
 
     DO i = 1, SIZE(comms)
@@ -98,14 +95,10 @@ CONTAINS
 
     CALL mpi_comm_free(comms(2), ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("MPI error!", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("MPI error!", filename, __LINE__)
 
     IF (test_err_count() /= 0) &
-         CALL test_abort("non-zero error count!", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("non-zero error count!", filename, __LINE__)
     CALL xt_finalize
     CALL finish_mpi
   END SUBROUTINE xmap_self_test_main
@@ -123,25 +116,19 @@ CONTAINS
     TYPE(xt_xmap) :: xmap
     INTEGER :: rank(1)
     IF (xt_xmap_get_num_destinations(xmap) /= 1) &
-         CALL test_abort("error in xmap construction", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xmap construction", filename, __LINE__)
 
     IF (xt_xmap_get_num_sources(xmap) /= 1) &
-         CALL test_abort("error in xt_xmap_get_num_sources", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xt_xmap_get_num_sources", filename, __LINE__)
     CALL xt_xmap_get_destination_ranks(xmap, rank)
     IF (rank(1) /= my_rank) &
          CALL test_abort("error in xt_xmap_get_destination_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL xt_xmap_get_source_ranks(xmap, rank)
     IF (rank(1) /= my_rank) &
          CALL test_abort("error in xt_xmap_get_source_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
   END SUBROUTINE assert_xmap_is_to_self
 

@@ -46,8 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_idxvec
-  USE xt_core, ONLY: i2, i4, i8, xt_int_kind, xt_abort, xt_stripe, &
-       xt_get_default_comm
+  USE xt_core, ONLY: i2, i4, i8, xt_int_kind, xt_abort, xt_stripe
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_int
   IMPLICIT NONE
@@ -112,6 +111,7 @@ MODULE xt_idxvec
     END FUNCTION xt_idxvec_from_stripes_new_c
   END INTERFACE
 
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_idxvec_f.f90'
 CONTAINS
 
   FUNCTION xt_idxvec_new_a1d(idxvec) RESULT(res)
@@ -121,9 +121,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
     INTEGER(c_int) :: num_indices_c
     IF (SIZE(idxvec) > HUGE(num_indices_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(SIZE(idxvec), c_int)
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
@@ -150,9 +148,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a1d_i4
@@ -164,9 +160,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a1d_i8
@@ -177,9 +171,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
     INTEGER(c_int) :: num_indices_c
     IF (SIZE(idxvec) > HUGE(num_indices_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(SIZE(idxvec), c_int)
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
@@ -206,9 +198,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a2d_i4
@@ -220,9 +210,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a2d_i8
@@ -234,9 +222,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
     INTEGER(c_int) :: num_indices_c
     IF (SIZE(idxvec) > HUGE(num_indices_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(SIZE(idxvec), c_int)
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
@@ -261,9 +247,7 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
     INTEGER(c_int) :: num_indices_c
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a3d_i4
@@ -274,9 +258,7 @@ CONTAINS
     TYPE(Xt_idxlist) :: res
     INTEGER(c_int) :: num_indices_c
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a3d_i8
@@ -288,9 +270,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
     INTEGER(c_int) :: num_indices
     IF (SIZE(idxvec) > HUGE(num_indices)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices = INT(SIZE(idxvec), c_int)
     IF (num_indices > 0) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices))
@@ -317,9 +297,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a4d_i4
@@ -331,9 +309,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a4d_i8
@@ -345,9 +321,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
     INTEGER(c_int) :: num_indices_c
     IF (SIZE(idxvec) > HUGE(num_indices_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(SIZE(idxvec), c_int)
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
@@ -375,9 +349,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a5d_i4
@@ -389,9 +361,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a5d_i8
@@ -404,9 +374,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (SIZE(idxvec) > HUGE(num_indices_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(SIZE(idxvec), c_int)
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
@@ -434,9 +402,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a6d_i4
@@ -448,9 +414,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a6d_i8
@@ -462,9 +426,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: idxvec_dummy(1)
     INTEGER(c_int) :: num_indices_c
     IF (SIZE(idxvec) > HUGE(num_indices_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(SIZE(idxvec), c_int)
     IF (num_indices_c > 0_c_int) THEN
       res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
@@ -491,9 +453,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i4 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a7d_i4
@@ -505,9 +465,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices_c
 
     IF (i8 /= c_int .AND. num_indices > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxvec elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxvec elements", filename, __LINE__)
     num_indices_c = INT(num_indices, c_int)
     res = xt_idxlist_c2f(xt_idxvec_new_c(idxvec, num_indices_c))
   END FUNCTION xt_idxvec_new_a7d_i8
@@ -536,9 +494,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (i4 /= c_int .AND. num_stripes > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many stripes", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many stripes", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxvec_from_stripes_new_a_i4
@@ -550,9 +506,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (i8 /= c_int .AND. num_stripes > HUGE(1_c_int)) &
-         CALL xt_abort(xt_get_default_comm(), "too many stripes", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many stripes", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxvec_from_stripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxvec_from_stripes_new_a_i8

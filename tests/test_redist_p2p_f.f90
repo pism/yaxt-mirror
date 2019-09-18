@@ -61,8 +61,7 @@ PROGRAM test_redist_p2p_f
   USE test_redist_common, ONLY: check_redist, communicators_are_congruent
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: filename = 'test_redist_p2p_f.f90'
 
   ! init mpi
   CALL init_mpi
@@ -76,8 +75,7 @@ __FILE__
   CALL test_offset_extents
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       filename, __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
 
   CALL xt_finalize
   CALL finish_mpi
@@ -132,8 +130,7 @@ CONTAINS
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_dp), &
          mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_Comm", &
-         filename, __LINE__)
+         CALL test_abort("error in xt_redist_get_mpi_Comm", filename, __LINE__)
 
     ! test exchange
     CALL check_redist(redist_dp, src_data, dst_data, ref_dst_data)
@@ -145,8 +142,7 @@ CONTAINS
     redist_l = xt_redist_p2p_new(xmap, mpi_logical)
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_l), &
          mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_Comm", &
-         filename, __LINE__)
+         CALL test_abort("error in xt_redist_get_mpi_Comm", filename, __LINE__)
     CALL xt_redist_s_exchange(redist_l, src_l, dst_l)
     IF (ANY(dst_l .NEQV. ref_dst_l)) &
          CALL test_abort("error in xt_redist_s_exchange for 1D logical array", &
@@ -211,8 +207,7 @@ CONTAINS
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_MPI_Comm", &
-         filename, __LINE__)
+         CALL test_abort("error in xt_redist_get_MPI_Comm", filename, __LINE__)
 
     ! test exchange
     CALL check_redist(redist, src_data, dst_data, ref_dst_data(dst_num:1:-1))

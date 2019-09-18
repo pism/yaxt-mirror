@@ -53,7 +53,8 @@ PROGRAM test_redist_single_array_base_f
   USE test_redist_common, ONLY: check_redist, communicators_are_congruent
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
-
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_redist_single_array_base_f.f90'
   ! init mpi
   CALL init_mpi
 
@@ -65,9 +66,7 @@ PROGRAM test_redist_single_array_base_f
   call test_reverse_doubles
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
 
   CALL xt_finalize
   CALL finish_mpi
@@ -143,7 +142,7 @@ CONTAINS
     TYPE(xt_redist) :: redist
 
     redist = &
-      xt_redist_single_array_base_new(send_msgs, recv_msgs, MPI_COMM_WORLD)
+      xt_redist_single_array_base_new(send_msgs, recv_msgs, mpi_comm_world)
     CALL check_redist_extended(redist, src_data, ref_dst_data)
 
   END SUBROUTINE test_single_array_base
@@ -159,10 +158,8 @@ CONTAINS
 
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
-         MPI_COMM_WORLD)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", &
-         __FILE__, &
-         __LINE__)
+         mpi_comm_world)) &
+         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
 
     ! test exchange
     CALL check_redist(redist, src_data, dst_data, ref_dst_data)

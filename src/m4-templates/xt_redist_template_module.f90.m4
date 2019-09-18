@@ -64,6 +64,7 @@ ifelse(typedecl,{LOGICAL},
 })dnl
   IMPLICIT NONE
   PRIVATE
+  CHARACTER(len=*), PARAMETER :: filename = 'modname.f90'
 ifdef({prologue},{include(prologue)})dnl
   INTERFACE xt_redist_s_exchange
 interface_gen_nd(typetag,{xt_redist_s_exchange})dnl

@@ -68,6 +68,8 @@ MODULE test_xmap_common_intercomm_parallel
   END INTERFACE
   INTEGER :: intra_group_comm
   PUBLIC :: xmap_intercomm_parallel_test_main, intra_group_comm
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_xmap_common_intercomm_parallel_f.f90'
 CONTAINS
   SUBROUTINE xmap_intercomm_parallel_test_main(xmap_new, call_initialize, &
        call_finalize)
@@ -103,18 +105,13 @@ CONTAINS
     comm = mpi_comm_world
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_rank", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_rank", filename, __LINE__)
     CALL mpi_comm_size(comm, comm_size, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_size", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_size", filename, __LINE__)
     IF (comm_size > HUGE(1_xi)) &
          CALL test_abort("number of ranks exceeds test limit", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     IF (comm_size > 1) THEN
       retval = 0
@@ -123,15 +120,12 @@ CONTAINS
       CALL mpi_comm_split(comm, MERGE(1, 0, in_second_group), 0, &
            intra_group_comm, ierror)
       IF (ierror /= mpi_success) &
-           CALL test_abort("error calling mpi_comm_split", &
-           __FILE__, &
-           __LINE__)
+           CALL test_abort("error calling mpi_comm_split", filename, __LINE__)
       CALL mpi_intercomm_create(intra_group_comm, 0, comm, &
            MERGE(0, split_rank, in_second_group), 0, inter_comm, ierror)
       IF (ierror /= mpi_success) &
            CALL test_abort("error calling mpi_intercomm_create", &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
       CALL test_allgather_analog(xmap_new, 1_xi, inter_comm)
       ! repeat test for large index list that will cause stripifying
       CALL test_allgather_analog(xmap_new, 1024_xi, inter_comm)
@@ -144,21 +138,15 @@ CONTAINS
 
       CALL mpi_comm_free(inter_comm, ierror)
       IF (ierror /= mpi_success) &
-           CALL test_abort("error calling mpi_comm_free", &
-           __FILE__, &
-           __LINE__)
+           CALL test_abort("error calling mpi_comm_free", filename, __LINE__)
       CALL mpi_comm_free(intra_group_comm, ierror)
       IF (ierror /= mpi_success) &
-           CALL test_abort("error calling mpi_comm_free", &
-           __FILE__, &
-           __LINE__)
+           CALL test_abort("error calling mpi_comm_free", filename, __LINE__)
     ELSE
       retval = 77
     END IF
     IF (test_err_count() /= 0) &
-         CALL test_abort("non-zero error count!", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("non-zero error count!", filename, __LINE__)
     IF (call_finalize_) THEN
       CALL xt_finalize
       CALL finish_mpi
@@ -229,17 +217,13 @@ CONTAINS
     CHARACTER(len=80) :: msg
     IF (get_num_peers(xmap) /= num_ref_ranks) THEN
       WRITE (msg, '(2a)') "error in ", get_num_peers_name
-      CALL test_abort(msg, &
-           __FILE__, &
-           __LINE__)
+      CALL test_abort(msg, filename, __LINE__)
     END IF
     CALL get_peer_ranks(xmap, peer_rank_buf)
     CALL xt_sort_int(peer_rank_buf)
     IF (ANY(peer_rank_buf /= ref_ranks)) THEN
       WRITE (msg, '(2a)') "error in ", get_peer_ranks_name
-      CALL test_abort(msg, &
-           __FILE__, &
-           __LINE__)
+      CALL test_abort(msg, filename, __LINE__)
     END IF
   END SUBROUTINE check_peers
 
@@ -314,19 +298,14 @@ CONTAINS
     TYPE(xt_xmap) :: xmap, xmap_copy
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_rank", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_rank", filename, __LINE__)
     CALL mpi_comm_size(comm, comm_size, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_size", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_size", filename, __LINE__)
     CALL mpi_comm_remote_size(comm, remote_size, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error calling mpi_comm_remote_size", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     global_num_idx = lcm(comm_size, remote_size)
     stripe_in_local_group(1) &
          = xt_stripe(INT(global_num_idx / INT(comm_size, i8) &

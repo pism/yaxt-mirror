@@ -49,7 +49,7 @@ PROGRAM test_idxmod_f
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count
   IMPLICIT NONE
-
+  CHARACTER(len=*), PARAMETER :: filename = 'test_idxmod_f.f90'
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -60,8 +60,7 @@ PROGRAM test_idxmod_f
   CALL xt_finalize
 
   IF (test_err_count() /= 0) CALL test_abort("non-zero error count", &
-       __FILE__, &
-       __LINE__)
+       filename, __LINE__)
 
   CALL finish_mpi
 
@@ -144,9 +143,7 @@ CONTAINS
 
     ! check mstate
     IF (ANY(mstate(:) /= ref_mstate(:))) &
-         CALL test_abort("mstate(:) /= ref_mstate(:)", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("mstate(:) /= ref_mstate(:)", filename, __LINE__)
     CALL xt_idxlist_delete(mpatch_idxlist)
     CALL xt_idxlist_delete(patch_idxlist)
     CALL xt_idxlist_delete(g_dst_idxlist)
@@ -202,9 +199,7 @@ CONTAINS
 
     ! check mstate
     IF (ANY(mstate(:) /= ref_mstate(:))) &
-         CALL test_abort("mstate(:) /= ref_mstate(:)", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("mstate(:) /= ref_mstate(:)", filename, __LINE__)
     CALL xt_idxlist_delete(mpatch_idxlist)
     CALL xt_idxlist_delete(patch_idxlist)
     CALL xt_idxlist_delete(mod_idxlist)

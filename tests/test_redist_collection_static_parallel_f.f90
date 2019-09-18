@@ -64,8 +64,8 @@ PROGRAM test_redist_collection_static_parallel
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   IMPLICIT NONE
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_redist_collection_static_parallel_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "xt_redist_s_exchange", "xt_redist_a_exchange" /)
   INTEGER :: rank, comm_size, ierror
@@ -74,14 +74,10 @@ __FILE__
 
   CALL mpi_comm_rank(mpi_comm_world, rank, ierror)
   IF (ierror /= MPI_SUCCESS) &
-       CALL test_abort('mpi_comm_rank failed', &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort('mpi_comm_rank failed', filename, __LINE__)
   CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
-       CALL test_abort('mpi_comm_size failed', &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort('mpi_comm_size failed', filename, __LINE__)
 
   IF (comm_size > 1) THEN
     CALL test_4redist
@@ -89,9 +85,7 @@ __FILE__
   END IF
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -301,14 +295,10 @@ CONTAINS
     dst_displacements(1) = 0_mpi_address_kind
     CALL mpi_get_address(results(1, 2), dst_displacements(2), ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error in mpi_get_address", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in mpi_get_address", filename, __LINE__)
     CALL mpi_get_address(results(1, 1), addr_temp, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error in mpi_get_address", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in mpi_get_address", filename, __LINE__)
     dst_displacements(2) = dst_displacements(2) - addr_temp
 
     redist = xt_redist_collection_static_new(redists, 2, src_displacements, &

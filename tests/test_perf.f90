@@ -80,6 +80,7 @@ PROGRAM test_perf
   ! process rank, process coords within (0:, 0:) process space
   INTEGER :: mype, mypx, mypy
   LOGICAL :: lroot ! true only for proc 0
+  CHARACTER(len=*), PARAMETER :: filename = 'test_perf.f90'
 
   INTEGER, ALLOCATABLE :: g_id(:,:) ! global id
   ! global "tripolar-like" toy bounds exchange
@@ -248,8 +249,7 @@ CONTAINS
       ENDDO
     ELSE
       CALL ut_abort(context//' unsupported inflate position', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     ENDIF
 
   END SUBROUTINE inflate_idx
@@ -314,13 +314,11 @@ CONTAINS
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
     IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_SIZE failed', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, mype, ierror)
     IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_RANK failed', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (mype==0) THEN
       lroot = .true.
     ELSE
@@ -406,8 +404,7 @@ CONTAINS
 
     IF (send_dt /= recv_dt) &
          CALL ut_abort('gen_trans: (send_dt /= recv_dt) unsupported', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     dt = send_dt
     CALL ut_init_transposition(itemp, dt, itrans)
 
@@ -524,8 +521,7 @@ CONTAINS
       IF (2*north_halo > g_core_je) &
            CALL ut_abort('def_exchange: grid too small (or halo too large) &
            &for tripolar north exchange', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
       DO j = 1, north_halo
         DO i = g_core_is, g_core_ie
           g_tpex(i,j) = g_tpex(g_core_ie + (g_core_is-i), 2*north_halo + (1-j))
@@ -567,7 +563,7 @@ CONTAINS
     INTEGER,INTENT(in) :: gidx(:,:)
 
     IF (ANY(gidx == undef_index)) THEN
-      CALL ut_abort('check_g_idx: check failed', __FILE__, __LINE__)
+      CALL ut_abort('check_g_idx: check failed', filename, __LINE__)
     ENDIF
   END SUBROUTINE check_g_idx
 

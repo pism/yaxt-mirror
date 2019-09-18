@@ -65,8 +65,8 @@ PROGRAM test_redist_collection_parallel
   USE iso_c_binding, ONLY: c_loc, c_ptr
   IMPLICIT NONE
   INTEGER :: rank, world_size, ierror
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_redist_collection_parallel_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error in xt_redist_s_exchange", "error in xt_redist_a_exchange" /)
 
@@ -75,14 +75,10 @@ __FILE__
 
   CALL mpi_comm_rank(mpi_comm_world, rank, ierror)
   IF (ierror /= MPI_SUCCESS) &
-       CALL test_abort('mpi_comm_rank failed', &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort('mpi_comm_rank failed', filename, __LINE__)
   CALL mpi_comm_size(mpi_comm_world, world_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
-       CALL test_abort('mpi_comm_size failed', &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort('mpi_comm_size failed', filename, __LINE__)
 
   IF (world_size > 1) THEN
     CALL test_4redist
@@ -90,9 +86,7 @@ __FILE__
   END IF
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -142,9 +136,7 @@ CONTAINS
 
     IF (world_size &
          > icbrt((HUGE(1_xi)-MOD(HUGE(1_xi),2_xi))/2_xi)) &
-         CALL test_abort('communicator too large for test', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort('communicator too large for test', filename, __LINE__)
 
     vec_size = 2*world_size**2
     ALLOCATE(index_vector_a(vec_size), index_vector_b(vec_size))
@@ -299,9 +291,7 @@ CONTAINS
     TYPE(xt_redist) :: redists(2), redist, redist_copy
 
     IF (world_size > (HUGE(1_xi)-MOD(HUGE(1_xi),5_xi))/5_xi) &
-      CALL test_abort('communicator too large for test', &
-           __FILE__, &
-           __LINE__)
+      CALL test_abort('communicator too large for test', filename, __LINE__)
 
     DO i = 1_xi, 5_xi
       src_indices_(i) = INT(rank, xi) * 5_xi + (i - 1_xi)

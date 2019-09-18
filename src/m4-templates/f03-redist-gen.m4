@@ -124,8 +124,7 @@ forloop({dim},{1},{7},{
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_}{$1}{_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)

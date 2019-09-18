@@ -64,6 +64,7 @@ PROGRAM test_idxstripes_f
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
   LOGICAL :: fully_random_tests
+  CHARACTER(len=*), PARAMETER :: filename = 'test_idxstripes_f.f90'
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -117,9 +118,7 @@ PROGRAM test_idxstripes_f
   CALL check_pos_ext7
   CALL check_pos_ext8
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -139,9 +138,7 @@ CONTAINS
     num_unmatched = xt_idxlist_get_pos_exts_of_index_stripes(idxstripes, &
          stripes, pos_ext, .TRUE.)
     IF (num_unmatched /= 0) &
-         CALL test_abort("stripes not found", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("stripes not found", filename, __LINE__)
 
     num_pos = 0
     IF (ALLOCATED(pos_ext)) THEN
@@ -152,15 +149,12 @@ CONTAINS
     DO i = 1, num_ext
       ext_size = pos_ext(i)%size
       IF (num_pos /= pos_ext(i)%start) &
-           CALL test_abort("position/start mismatch", &
-           __FILE__, &
-           __LINE__)
+           CALL test_abort("position/start mismatch", filename, __LINE__)
       num_pos = num_pos + ext_size
     END DO
     IF (num_pos /= xt_idxlist_get_num_indices(idxstripes)) &
          CALL test_abort("index list length/positions overlap mismatch", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     IF (ALLOCATED(pos_ext)) DEALLOCATE(pos_ext)
     CALL xt_idxlist_delete(idxstripes)
@@ -410,14 +404,12 @@ CONTAINS
     intersection = xt_idxlist_get_intersection(idxvec_a, idxvec_b)
     IF (xt_idxlist_get_num_indices(intersection) /= 1) &
          CALL test_abort("unexpected number of indices in intersection!", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     not_found = xt_idxlist_get_index_at_position(intersection, 0, &
          intersection_idx)
     IF (not_found .OR. intersection_idx /= index_vector(1)) &
          CALL test_abort("unexpected index in intersection!", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     CALL xt_idxlist_delete(intersection)
     CALL xt_idxlist_delete(idxvec_a)
     CALL xt_idxlist_delete(idxvec_b)
@@ -800,8 +792,7 @@ CONTAINS
       CALL xt_idxlist_get_index_stripes(idxlist, stripes)
       IF (ALLOCATED(stripes) .EQV. num_indices == 0) &
          CALL test_abort("get index stripes returned values for empty list", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
       IF (num_indices > 0) THEN
         CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
       ELSE
@@ -831,8 +822,7 @@ CONTAINS
     ! testing of results
     IF (num_unmatched /= 0) &
          CALL test_abort("error in xt_idxlist_get_pos_exts_of_index_stripes", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     intersection = xt_idxvec_from_stripes_new(stripes)
     k = 0
     DO i = 1, num_ext
@@ -852,8 +842,7 @@ CONTAINS
                " orig pos ", send_pos, &
                " index ", orig_index
           CALL test_abort("error in xt_idxlist_get_pos_exts_of_index_stripes", &
-               __FILE__, &
-               __LINE__)
+               filename, __LINE__)
         END IF
         k = k + 1
       END DO
@@ -882,13 +871,10 @@ CONTAINS
     undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, sel_idx, &
          undef_idx)
     IF (undef_count /= ref_undef_count) &
-         CALL test_abort("inequal undef count!", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("inequal undef count!", filename, __LINE__)
     IF (ANY(sel_idx /= ref_sel_idx)) &
          CALL test_abort("incorrect index returned for position!", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     CALL xt_idxlist_delete(idxlist)
   END SUBROUTINE test_get_pos
 
@@ -952,17 +938,14 @@ CONTAINS
     TYPE(xt_idxlist) :: idxstripes
 
     IF (SIZE(global_size) /= SIZE(bounds_ref)) &
-         CALL test_abort("size mismatch for bounding-box", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("size mismatch for bounding-box", filename, __LINE__)
     idxstripes = xt_idxstripes_new(stripes, SIZE(stripes))
 
     bounds = xt_idxlist_get_bounding_box(idxstripes, global_size, &
          global_start_index)
     IF (ANY(bounds /= bounds_ref)) &
          CALL test_abort("boundary box doesn't match reference", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     CALL xt_idxlist_delete(idxstripes)
   END SUBROUTINE test_stripe_bb
 
@@ -1048,18 +1031,12 @@ CONTAINS
          num_ext, pos_ext, single_match_only)
     IF (unmatched /= ref_unmatched) &
          CALL test_abort("error in number of unmatched indices for " &
-         // test_desc, &
-         __FILE__, &
-         __LINE__)
+         // test_desc, filename, __LINE__)
     IF (num_ext < 0 .OR. num_ext /= num_ref_pos_ext) &
-         CALL test_abort("error finding " // test_desc, &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error finding " // test_desc, filename, __LINE__)
     IF (ANY(pos_ext /= ref_pos_ext)) &
          CALL test_abort("incorrect position extent length found in "&
-         // test_desc, &
-         __FILE__, &
-         __LINE__)
+         // test_desc, filename, __LINE__)
     DEALLOCATE(pos_ext)
     CALL xt_idxlist_delete(idxstripes)
   END SUBROUTINE check_pos_ext

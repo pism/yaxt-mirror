@@ -261,6 +261,7 @@ MODULE xt_redist_base
        xt_redist_repeat_new, xt_redist_get_mpi_comm, xt_redist_p2p_ext_new, &
        xt_redist_a_exchange1, xt_redist_a_exchange, &
        xt_redist_single_array_base_new
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_redist_f.f90'
 CONTAINS
 
   FUNCTION xt_redist_is_null(redist) RESULT(p)
@@ -344,9 +345,7 @@ CONTAINS
     INTEGER(c_int) :: num_ptr_c
     n = SIZE(src_data_cptr)
     IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(n, c_int)
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
@@ -361,9 +360,7 @@ CONTAINS
     INTEGER(c_int) :: num_ptr_c
     num_ptr = SIZE(src_data_cptr)
     IF (num_ptr /= SIZE(dst_data_cptr) .OR. num_ptr > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
     CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
@@ -376,9 +373,7 @@ CONTAINS
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i2) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
@@ -392,9 +387,7 @@ CONTAINS
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i2) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
     CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
@@ -407,9 +400,7 @@ CONTAINS
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
@@ -423,9 +414,7 @@ CONTAINS
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
     CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
@@ -438,9 +427,7 @@ CONTAINS
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
@@ -454,9 +441,7 @@ CONTAINS
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(num_ptr), dst_data_cptr(num_ptr)
     INTEGER(c_int) :: num_ptr_c
     IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of pointers", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
     CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
@@ -617,9 +602,7 @@ CONTAINS
     IF (num_redists > HUGE(1_c_int) &
          .OR. num_redists /= SIZE(src_displacements) &
          .OR. num_redists /= SIZE(dst_displacements)) &
-         CALL xt_abort("invalid number of redists", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of redists", filename, __LINE__)
     num_redists_c = INT(num_redists, c_int)
     res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
          num_redists_c, src_displacements, dst_displacements, comm))
@@ -712,9 +695,8 @@ CONTAINS
 
     num_repetitions = SIZE(src_displacements)
     IF (num_repetitions /= SIZE(dst_displacements)) &
-         CALL xt_abort("unequal size for src and dst displacements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("inequal size for src and dst displacements", &
+         filename, __LINE__)
 
     res = xt_redist_c2f(xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions, src_displacements, &
@@ -732,9 +714,7 @@ CONTAINS
     INTEGER(c_int) :: num_src_ext_c, num_dst_ext_c
     IF (num_src_ext < 0_i2 .OR. num_src_ext > HUGE(1_c_int) &
          .OR. num_dst_ext < 0_i2 .OR. num_dst_ext > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
@@ -752,9 +732,7 @@ CONTAINS
     INTEGER(c_int) :: num_src_ext_c, num_dst_ext_c
     IF (num_src_ext < 0_i4 .OR. num_src_ext > HUGE(1_c_int) &
          .OR. num_dst_ext < 0_i4 .OR. num_dst_ext > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
@@ -772,9 +750,7 @@ CONTAINS
     INTEGER(c_int) :: num_src_ext_c, num_dst_ext_c
     IF (num_src_ext < 0_i8 .OR. num_src_ext > HUGE(1_c_int) &
          .OR. num_dst_ext < 0_i8 .OR. num_dst_ext > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
@@ -793,9 +769,7 @@ CONTAINS
     num_src_ext = SIZE(src_extents)
     num_dst_ext = SIZE(dst_extents)
     IF (num_src_ext > HUGE(1_c_int) .OR. num_dst_ext > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
     redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
@@ -815,9 +789,7 @@ CONTAINS
 
     IF (nsend < 0_i2 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0_i2 .OR. nrecv > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of send messages", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of send messages", filename, __LINE__)
     IF (nsend > 0_i2) THEN
       send_msgs_p = C_LOC(send_msgs)
     ELSE
@@ -847,9 +819,7 @@ CONTAINS
 
     IF (nsend < 0_i4 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0_i4 .OR. nrecv > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of send messages", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of send messages", filename, __LINE__)
     IF (nsend > 0_i4) THEN
       send_msgs_p = C_LOC(send_msgs)
     ELSE
@@ -879,9 +849,7 @@ CONTAINS
 
     IF (nsend < 0_i8 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0_i8 .OR. nrecv > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of send messages", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of send messages", filename, __LINE__)
     IF (nsend > 0_i8) THEN
       send_msgs_p = C_LOC(send_msgs)
     ELSE
@@ -917,9 +885,7 @@ CONTAINS
 
     IF (nsend < 0 .OR. nsend > HUGE(1_c_int) &
          .OR. nrecv < 0 .OR. nrecv > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of send messages", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of send messages", filename, __LINE__)
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
     redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
@@ -946,9 +912,7 @@ CONTAINS
 
     msgs_size = SIZE(msgs)
     IF (msgs_size > HUGE(1_c_int)) &
-         CALL xt_abort('invalid size', &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort('invalid size', filename, __LINE__)
     IF (msgs_size > 0) THEN
       IF (msgs_size > 1) THEN
 #ifdef HAVE_FC_IS_CONTIGUOUS

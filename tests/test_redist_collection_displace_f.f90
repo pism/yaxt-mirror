@@ -67,8 +67,8 @@ MODULE redist_collection_displace
   INTEGER, PARAMETER :: src_slice_len = 5
   INTEGER, PARAMETER :: dst_slice_len &
        = (src_slice_len + dst_step - 1)/dst_step
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_redist_collection_displace_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
   PUBLIC :: test_displacement_variations

@@ -68,7 +68,7 @@ MODULE xt_idxlist_collection
   END INTERFACE xt_idxlist_collection_new
 
   PUBLIC :: xt_idxlist_collection_new
-
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_idxlist_collection_f.f90'
 CONTAINS
 
   FUNCTION xt_idxlist_collection_new_a1d(idxlists) RESULT(res)
@@ -78,8 +78,7 @@ CONTAINS
 
     IF (SIZE(idxlists) > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     num_idxlists_c = INT(SIZE(idxlists), c_int)
     res = xt_idxlist_c2f(xt_idxlist_collection_new_c(idxlists, num_idxlists_c))
   END FUNCTION xt_idxlist_collection_new_a1d
@@ -91,8 +90,7 @@ CONTAINS
 
     IF (SIZE(idxlists) > HUGE(1_c_int)) &
          CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     num_idxlists_c = INT(SIZE(idxlists), c_int)
     res = xt_idxlist_c2f(xt_idxlist_collection_new_c(idxlists, num_idxlists_c))
   END FUNCTION xt_idxlist_collection_new_a2d

@@ -55,6 +55,8 @@ PROGRAM test_redist_collection_static
        xt_redist_delete
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
   IMPLICIT NONE
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_redist_collection_static_f.f90'
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -62,9 +64,7 @@ PROGRAM test_redist_collection_static
   CALL test_repeated_redist
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS

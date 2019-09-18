@@ -56,30 +56,26 @@ PROGRAM test_redist_single_array_base_parallel_f
   IMPLICIT NONE
 
   INTEGER :: comm_rank, comm_size, ierror
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_redist_single_array_base_parallel_f.f90'
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
   CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
   IF (ierror /= mpi_success) &
-       CALL test_abort("MPI error!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("MPI error!", filename, __LINE__)
 
   CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= mpi_success) &
-       CALL test_abort("MPI error!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("MPI error!", filename, __LINE__)
 
   CALL test_round_robin
   CALL test_allgather
   CALL test_scatter
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -223,9 +219,7 @@ CONTAINS
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
          MPI_COMM_WORLD)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
 
     ! test exchange
     CALL check_redist(redist, src, dst, ref_dst)

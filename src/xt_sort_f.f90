@@ -87,6 +87,7 @@ MODULE xt_sort
   END INTERFACE xt_sort_idxpos
   PUBLIC :: xt_sort_idxpos
 
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_sort_f.f90'
 CONTAINS
   SUBROUTINE xt_sort_int_a(a)
     INTEGER(c_int), INTENT(inout) :: a(:)
@@ -101,8 +102,7 @@ CONTAINS
     INTEGER :: a_size
     a_size = SIZE(a)
     IF (a_size > SIZE(positions)) &
-         CALL xt_abort("positions array too small", &
-         "xt_sort.f90", __LINE__)
+         CALL xt_abort("positions array too small", filename, __LINE__)
     IF (a_size > 1) CALL xt_sort_index_f2c(a, INT(a_size, c_int), positions, &
          MERGE(1_c_int, 0_c_int, reset_positions))
   END SUBROUTINE xt_sort_index_a_a_l

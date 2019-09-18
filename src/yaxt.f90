@@ -190,7 +190,7 @@ MODULE yaxt
     MODULE PROCEDURE xt_idxmod_new_a1d_i4_a1d
     MODULE PROCEDURE xt_idxmod_new_a1d_i4_a2d
   END INTERFACE xt_idxmod_new
-
+  CHARACTER(len=*), PARAMETER :: filename = 'yaxt.f90'
 CONTAINS
 
   FUNCTION xt_idxempty_new() RESULT(res)
@@ -232,9 +232,7 @@ CONTAINS
     INTEGER(c_int) :: num_modifier_c
     num_modifier = SIZE(modifier)
     IF (num_modifier > HUGE(1_c_int)) &
-         CALL xt_abort("number of modifiers too high", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("number of modifiers too high", filename, __LINE__)
     num_modifier_c = INT(num_modifier, c_int)
     res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
          num_modifier_c, c_null_ptr))
@@ -251,9 +249,7 @@ CONTAINS
     INTEGER(c_int) :: num_modifier_c
     num_modifier = SIZE(modifier)
     IF (num_modifier > HUGE(1_c_int)) &
-         CALL xt_abort("number of modifiers too high", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("number of modifiers too high", filename, __LINE__)
     num_modifier_c = INT(num_modifier, c_int)
     res = xt_idxlist_c2f(xt_idxmod_new_c(xt_idxlist_f2c(patch), modifier, &
          num_modifier_c, C_LOC(mstate)))

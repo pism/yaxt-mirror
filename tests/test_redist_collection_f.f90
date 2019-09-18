@@ -66,8 +66,7 @@ PROGRAM test_redist_collection
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
   IMPLICIT NONE
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: filename = 'test_redist_collection_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
 
@@ -82,9 +81,7 @@ __FILE__
   CALL test_displacement_variations
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -186,13 +183,9 @@ CONTAINS
 #endif
     CALL xt_redist_s_exchange(redist_coll, src_data_p, dst_data_p)
     IF (ANY(dst_data%l .NEQV. ref_dst_data%l)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     IF (cmp_arrays(dst_data%dp, ref_dst_data%dp)) &
-         CALL test_abort("error in xt_redist_s_exchange", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
 
     ! clean up
     CALL xt_redist_delete(redist_coll)

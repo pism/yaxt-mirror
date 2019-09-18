@@ -61,7 +61,7 @@ PROGRAM test_idxvec
   INTEGER, PARAMETER :: xi = xt_int_kind
   INTEGER(xt_int_kind), PARAMETER :: index_vector(7) &
        = (/ 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi /)
-
+  CHARACTER(len=*), PARAMETER :: filename = 'test_idxvec_f.f90'
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -91,9 +91,7 @@ PROGRAM test_idxvec
   CALL test_bounding_box3
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -155,9 +153,7 @@ CONTAINS
     notfound = xt_idxlist_get_positions_of_indices(idxvector, &
          intersection_vector, intersection_pos, single_match_only)
     IF (notfound /= 0) &
-         CALL test_abort('expected indices not found!', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort('expected indices not found!', filename, __LINE__)
     CALL check_offsets(intersection_pos, ref_intersection_pos)
     CALL xt_idxlist_delete(idxvector)
   END SUBROUTINE test_positions
@@ -323,16 +319,13 @@ CONTAINS
          undef_idx)
     IF (undef_count /= ref_undef_count) THEN
       CALL test_abort("test_idxvec_f.f90: (undef_count /= ref_undef_count)", &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END IF
     DO i = 1, num_pos
       IF (sel_idx(i) /= ref_sel_idx(i)) THEN
         WRITE (msg, '(2(a,i0),a)') "test_idxvec_f.f90: (sel_idx(", i, &
              ") /= ref_sel_idx(", i, "))"
-        CALL test_abort(msg, &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
     END DO
     CALL xt_idxlist_delete(idxvec)
@@ -380,33 +373,28 @@ CONTAINS
          position)) &
          CALL test_abort('xt_idxlist_get_position_of_index did not return &
          &an error', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (.NOT. xt_idxlist_get_position_of_index_off(idxvec, 1_xt_int_kind, &
          position, 0)) &
          CALL test_abort('xt_idxlist_get_position_of_index_off did not return &
          &an error', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (.NOT. xt_idxlist_get_position_of_index_off(idxvec, 0_xt_int_kind, &
          position, 1)) &
          CALL test_abort('xt_idxlist_get_position_of_index_off did not return &
          &an error', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (xt_idxlist_get_positions_of_indices(idxvec, selection, positions, &
          .FALSE.) /= 2) THEN
       CALL test_abort('xt_idxlist_get_positions_of_indices did not return &
            &correct number of matches', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END IF
     DO i = 1, SIZE(selection)
       IF (positions(i) /= ref_positions(i)) &
            CALL test_abort('xt_idxlist_get_positions_of_indices returned &
            &incorrect position', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END DO
     CALL xt_idxlist_delete(idxvec)
   END SUBROUTINE test_get_positions_of_indices
@@ -424,9 +412,7 @@ CONTAINS
 
     ndim = SIZE(global_size)
     IF (SIZE(ref_bounds) /= ndim) &
-         CALL test_abort('ERROR: inequal dimensions', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort('ERROR: inequal dimensions', filename, __LINE__)
 
     idxvec = xt_idxvec_new(indices, SIZE(indices))
 
@@ -439,18 +425,14 @@ CONTAINS
         WRITE (0, '(2(a,i0))') 'ref_bounds(', i, ')%start=', ref_bounds(i)%start
         WRITE (msg, '(a,i0)') "ERROR: xt_idxlist_get_bounding_box inequal &
              &starts at i=", i
-        CALL test_abort(msg, &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
       IF (bounds(i)%size /= ref_bounds(i)%size) THEN
         WRITE (0, '(2(a,i0))') 'bounds(', i, ')%size=', bounds(i)%size
         WRITE (0, '(2(a,i0))') 'ref_bounds(', i, ')%size=', ref_bounds(i)%size
         WRITE (msg, '(a,i0)') "ERROR: xt_idxlist_get_bounding_box inequal &
              &size at i=", i
-        CALL test_abort(msg, &
-             __FILE__, &
-             __LINE__)
+        CALL test_abort(msg, filename, __LINE__)
       END IF
     END DO
     CALL xt_idxlist_delete(idxvec)

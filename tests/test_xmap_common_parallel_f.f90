@@ -61,6 +61,7 @@ MODULE test_xmap_common_parallel
   PUBLIC :: check_allgather_analog_xmap
   PUBLIC :: test_ring_1d
   PUBLIC :: test_ping_pong
+  CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_common_parallel_f.f90'
 CONTAINS
   SUBROUTINE xmap_parallel_test_main(xmap_new)
     INTERFACE
@@ -80,18 +81,13 @@ CONTAINS
     CALL xt_initialize(comm)
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_rank", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_rank", filename, __LINE__)
     CALL mpi_comm_size(comm, comm_size, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_size", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_size", filename, __LINE__)
     IF (comm_size > HUGE(1_xi)) &
          CALL test_abort("number of ranks exceeds test limit", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL test_allgather_analog(xmap_new, 1_xi, comm)
     ! repeat test for large index list that will cause stripifying
@@ -101,9 +97,7 @@ CONTAINS
     IF (comm_size > 1) CALL test_ping_pong(xmap_new, comm, 0, comm_size - 1)
 
     IF (test_err_count() /= 0) &
-         CALL test_abort("non-zero error count!", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("non-zero error count!", filename, __LINE__)
     CALL xt_finalize
     CALL finish_mpi
   END SUBROUTINE xmap_parallel_test_main
@@ -116,14 +110,11 @@ CONTAINS
 
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_rank", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_rank", filename, __LINE__)
     CALL mpi_comm_test_inter(comm, is_inter, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error calling mpi_comm_test_inter", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (is_inter) THEN
       CALL mpi_comm_remote_size(comm, comm_size, ierror)
     ELSE
@@ -131,8 +122,7 @@ CONTAINS
     END IF
     IF (ierror /= mpi_success) &
          CALL test_abort("error calling mpi_comm_(remote)_size", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
   END SUBROUTINE get_rank_range
 
   SUBROUTINE check_allgather_analog_xmap(xmap, comm)
@@ -145,28 +135,23 @@ CONTAINS
 
     CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
     IF (xt_xmap_get_num_destinations(xmap) /= INT(comm_size, xi)) &
-         CALL test_abort("error in xmap construction", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xmap construction", filename, __LINE__)
 
     IF (xt_xmap_get_num_sources(xmap) /= INT(comm_size, xi)) &
          CALL test_abort("error in xt_xmap_get_num_sources", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ALLOCATE(ranks(comm_size))
 
     CALL xt_xmap_get_destination_ranks(xmap, ranks)
     IF (ANY(ranks /= (/ (i, i=0_xi,INT(comm_size-1, xi)) /))) &
          CALL test_abort("error in xt_xmap_get_destination_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL xt_xmap_get_source_ranks(xmap, ranks)
     IF (ANY(ranks /= (/ (i, i=0_xi,INT(comm_size-1, xi)) /))) &
          CALL test_abort("error in xt_xmap_get_source_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     DEALLOCATE(ranks)
   END SUBROUTINE check_allgather_analog_xmap
 
@@ -222,30 +207,25 @@ CONTAINS
     num_dst = xt_xmap_get_num_destinations(xmap)
     IF (.NOT. is_inter .AND. (num_dst > 2 .OR. num_dst < 1)) &
          CALL test_abort("error in xt_xmap_get_num_destinations", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     num_src = xt_xmap_get_num_sources(xmap)
     IF (num_src > 2 .OR. num_src < 1) &
-         CALL test_abort("error in xt_xmap_get_num_sources", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xt_xmap_get_num_sources", filename, __LINE__)
 
     IF (.NOT. is_inter) THEN
       CALL xt_xmap_get_destination_ranks(xmap, ranks)
       CALL xt_sort_int(ranks(1:num_dst))
       IF (ANY(ranks /= dst_index_list)) &
            CALL test_abort("error in xt_xmap_get_destination_ranks", &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END IF
 
     CALL xt_xmap_get_source_ranks(xmap, ranks)
     CALL xt_sort_int(ranks(1:num_src))
     IF (ANY(ranks /= dst_index_list)) &
          CALL test_abort("error in xt_xmap_get_source_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
   END SUBROUTINE check_ring_xmap
 
   SUBROUTINE test_ring_1d(xmap_new, comm)
@@ -303,25 +283,20 @@ CONTAINS
     ! test results
     IF (xt_xmap_get_num_destinations(xmap) /= 2) &
          CALL test_abort("error in xt_xmap_get_num_destinations", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     IF (xt_xmap_get_num_sources(xmap) /= 2) &
-         CALL test_abort("error in xt_xmap_get_num_sources", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xt_xmap_get_num_sources", filename, __LINE__)
 
     CALL xt_xmap_get_destination_ranks(xmap, ranks)
     IF (ranks(1) /= 0 .OR. ranks(2) /= 1) &
          CALL test_abort("error in xt_xmap_get_destination_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL xt_xmap_get_source_ranks(xmap, ranks)
     IF (ranks(1) /= 0 .OR. ranks(2) /= 1) &
          CALL test_abort("error in xt_xmap_get_source_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
   END SUBROUTINE check_pair_xmap
 
   SUBROUTINE test_pair(xmap_new, comm)
@@ -371,9 +346,7 @@ CONTAINS
 
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort("error calling mpi_comm_rank", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error calling mpi_comm_rank", filename, __LINE__)
 
     src_idxlist = xt_idxvec_new(src_index_list(:, comm_rank))
 
@@ -402,36 +375,28 @@ CONTAINS
 
     CALL mpi_comm_rank(comm, comm_rank, ierror)
     IF (ierror /= mpi_success) &
-         CALL test_abort('error calling mpi_comm_rank', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort('error calling mpi_comm_rank', filename, __LINE__)
     WRITE (msg, '(a,i0,a)') "error in xt_xmap_get_num_destinations (rank == ", &
          comm_rank, ")"
     expect = MERGE(1, 0, comm_rank == ping_rank)
     IF (xt_xmap_get_num_destinations(xmap) /= expect) &
-         CALL test_abort(TRIM(msg), &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort(msg, filename, __LINE__)
 
     expect = MERGE(1, 0, comm_rank == pong_rank)
     IF (xt_xmap_get_num_sources(xmap) /= expect) &
-         CALL test_abort(msg, &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort(msg, filename, __LINE__)
 
     IF (comm_rank == ping_rank) THEN
       CALL xt_xmap_get_destination_ranks(xmap, dst_rank)
       IF (dst_rank(1) /= pong_rank) &
            CALL test_abort("error in xt_xmap_get_destination_ranks", &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END IF
     IF (comm_rank == pong_rank) THEN
       CALL xt_xmap_get_source_ranks(xmap, src_rank)
       IF (src_rank(1) /= ping_rank) &
            CALL test_abort("error in xt_xmap_get_source_ranks", &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END IF
   END SUBROUTINE check_ping_pong_xmap
 

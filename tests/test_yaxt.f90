@@ -84,7 +84,7 @@ PROGRAM test_yaxt
   LOGICAL :: lroot ! true only for proc 0
 
   INTEGER(xt_int_kind) :: g_id(g_ie, g_je) ! global id
-
+  CHARACTER(len=*), PARAMETER :: filename = 'test_yaxt.f90'
   ! global "tripolar-like" toy bounds exchange
   INTEGER(xt_int_kind) :: g_tpex(g_ie, g_je)
   TYPE(xt_xmap) :: xmap_tpex
@@ -260,9 +260,7 @@ CONTAINS
   SUBROUTINE my_abort(msg, line)
     CHARACTER(*), INTENT(in) :: msg
     INTEGER, INTENT(in) :: line
-    CALL test_abort(msg, &
-         __FILE__, &
-         line)
+    CALL test_abort(msg, filename, line)
   END SUBROUTINE my_abort
 
   SUBROUTINE general_fsection_test

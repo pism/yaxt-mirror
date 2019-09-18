@@ -60,6 +60,8 @@ MODULE test_idxlist_utils
   PUBLIC :: test_err_count
   PUBLIC :: check_idxlist, check_stripes, check_offsets, &
        idxlist_pack_unpack_copy, check_idxlist_copy
+
+  CHARACTER(len=*), PARAMETER :: filename = 'test_idxlist_utils_f.f90'
 CONTAINS
   SUBROUTINE check_idxlist(idxlist, ref_indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
@@ -127,8 +129,7 @@ CONTAINS
 
     IF (SIZE(offsets_a) /= size(offsets_b)) &
          CALL test_abort("inequal number of array elements in eq test", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     num_offsets_c = INT(SIZE(offsets_a), c_size_t)
     CALL check_offsets_c(num_offsets_c, offsets_a, offsets_b)

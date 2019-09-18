@@ -55,7 +55,7 @@ PROGRAM test_idxlist_collection_f
        xt_idxlist_get_intersection, xt_idxsection_new, xt_idxstripes_new, &
        xt_bounds, xt_idxempty_new, xt_idxlist_get_bounding_box, OPERATOR(/=)
   IMPLICIT NONE
-
+  CHARACTER(len=*), PARAMETER :: filename = 'test_idxlist_collection_f.f90'
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
@@ -68,9 +68,7 @@ PROGRAM test_idxlist_collection_f
 
   CALL xt_finalize
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL finish_mpi
 
 CONTAINS
@@ -218,8 +216,7 @@ CONTAINS
          global_start_index)
     IF (ANY(bounds%size /= 0)) &
          CALL test_abort("ERROR: non-zero bounding box size", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     CALL xt_idxlist_delete(collectionlist)
   END SUBROUTINE test_bounding_box1
 
@@ -247,9 +244,7 @@ CONTAINS
          global_start_index)
     CALL xt_idxlist_delete(collectionlist)
     IF (ANY(bounds /= bounds_ref)) &
-         CALL test_abort("ERROR: unexpected boundaries", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("ERROR: unexpected boundaries", filename, __LINE__)
   END SUBROUTINE test_bounding_box2
 
 END PROGRAM test_idxlist_collection_f

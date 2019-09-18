@@ -210,7 +210,7 @@ MODULE xt_ut
 
 
   LOGICAL, PARAMETER :: debug = .TRUE.
-
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_ut.f90'
 CONTAINS
 
   SUBROUTINE ut_abort(msg, source, line)
@@ -249,17 +249,13 @@ CONTAINS
     IF (HUGE(1_xt_int_kind) < HUGE(myindex)) THEN
       IF (ANY(myindex > HUGE(1_xt_int_kind)) &
            .OR. ANY(myindex < -HUGE(1_xt_int_kind))) &
-           CALL ut_abort('ut_init_decomposition_1d: &
-           &index value not supported', &
-           __FILE__, &
-           __LINE__)
+           CALL ut_abort('ut_init_decomposition_1d: index value not supported',&
+           filename, __LINE__)
     END IF
     IF (HUGE(SIZE(myindex)) > HUGE(1_c_int)) THEN
       IF (SIZE(myindex) > HUGE(1_c_int)) &
-           CALL ut_abort('ut_init_decomposition_1: &
-           &array size unsupported', &
-           __FILE__, &
-           __LINE__)
+           CALL ut_abort('ut_init_decomposition_1: array size unsupported', &
+           filename, __LINE__)
     END IF
     size_myindex_c = INT(SIZE(myindex), c_int)
     handle = xt_ut_init_decomposition_1d(idx_vec=INT(myindex, xt_int_kind), &
@@ -325,8 +321,7 @@ CONTAINS
     IF (datatype_in /= datatype_out) THEN
       CALL ut_abort('ut_init_transposition: &
            &(datatype_in /= datatype_out) not supported', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     ENDIF
 
     datatype = datatype_in

@@ -57,6 +57,7 @@ PROGRAM test_idxsection
        idxlist_pack_unpack_copy
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
+  CHARACTER(len=*), PARAMETER :: filename = 'test_idxsection_f.f90'
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -85,9 +86,7 @@ PROGRAM test_idxsection
   CALL test_bb3
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -320,13 +319,11 @@ CONTAINS
     IF (num_found /= 3) &
          CALL test_abort("xt_idxlist_get_positions_of_indices &
          &returned incorrect num_unmatched", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (ANY(positions /= ref_positions)) &
          CALL test_abort("xt_idxlist_get_positions_of_indices &
          &returned incorrect position", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     CALL xt_idxlist_delete(idxsection)
   END SUBROUTINE test_get_positions1
 
@@ -350,21 +347,18 @@ CONTAINS
     IF (num_found /= 3) &
          CALL test_abort("xt_idxlist_get_position_of_indices &
          &returned incorrect num_unmatched", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (ANY(positions /= ref_positions)) &
          CALL test_abort("xt_idxlist_get_position_of_indices &
          &returned incorrect position", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     DO i = 1, num_selection
       notfound = xt_idxlist_get_position_of_index(idxsection, selection(i), p)
       IF (p /= ref_positions(i) &
            .OR. (notfound .AND. ref_positions(i) /= -1)) &
            CALL test_abort("xt_idxlist_get_position_of_index &
            &returned incorrect position", &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END DO
     CALL xt_idxlist_delete(idxsection)
   END SUBROUTINE test_get_positions2
@@ -615,14 +609,12 @@ CONTAINS
          .TRUE.) /= 28) &
          CALL test_abort("error in xt_idxlist_get_positions_of_indices &
          &(wrong number of unmatched indices)", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     IF (ANY(ref_positions /= positions)) &
          call test_abort("error in xt_idxlist_get_positions_of_indices &
          &(wrong position)", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ! clean up
     CALL xt_idxlist_delete(idxsection)
@@ -680,9 +672,7 @@ CONTAINS
          local_size, local_start)
     bounds = xt_idxlist_get_bounding_box(idxsection, global_bb_size, bb_start)
     IF (ANY(bounds /= ref_bb)) &
-         CALL test_abort("bounding box mismatch", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("bounding box mismatch", filename, __LINE__)
     CALL xt_idxlist_delete(idxsection)
   END SUBROUTINE check_bb
 
@@ -738,9 +728,7 @@ CONTAINS
         DEALLOCATE(stripes)
       ELSE
         IF (SIZE(ref_stripes) /= 0) &
-             CALL test_abort("failed to reproduce stripes", &
-             __FILE__, &
-             __LINE__)
+             CALL test_abort("failed to reproduce stripes", filename, __LINE__)
       END IF
     END IF
 

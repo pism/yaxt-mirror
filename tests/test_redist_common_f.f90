@@ -98,8 +98,7 @@ MODULE test_redist_common
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
   PUBLIC :: check_wait_request, check_test_request, check_redist_xi
 
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: filename = 'test_redist_common_f.f90'
 
 CONTAINS
   ! build xmap for destination list containing all odd elements of
@@ -337,9 +336,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -348,8 +345,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp
 
@@ -363,9 +359,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -374,8 +368,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i2
 
@@ -389,9 +382,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -400,8 +391,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i4
 
@@ -415,9 +405,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -426,8 +414,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i8
 
@@ -440,9 +427,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -474,9 +459,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1_i2
       IF (iexch == 1) THEN
@@ -485,8 +468,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i2
 
@@ -499,9 +481,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1_i4
       IF (iexch == 1) THEN
@@ -510,8 +490,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i4
 
@@ -524,9 +503,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1_i8
       IF (iexch == 1) THEN
@@ -535,8 +512,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
-           filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i8
 

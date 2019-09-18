@@ -66,8 +66,7 @@ PROGRAM test_redist_repeat_parallel
   USE test_redist_common, ONLY: check_wait_request
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: filename = 'test_redist_repeat_parallel_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
   INTEGER :: comm_rank, comm_size, ierror
@@ -76,23 +75,17 @@ __FILE__
 
   CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
   IF (ierror /= MPI_SUCCESS) &
-       CALL test_abort('mpi_comm_rank failed', &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort('mpi_comm_rank failed', filename, __LINE__)
   CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
-       CALL test_abort('mpi_comm_size failed', &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort('mpi_comm_size failed', filename, __LINE__)
 
   IF (comm_size > 1) THEN
     CALL test_4redist(2*comm_size**2)
   END IF
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS

@@ -81,6 +81,8 @@ PROGRAM test_xmap_intersection_parallel
 
   INTEGER :: ierror
   INTEGER :: my_rank, comm_size
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_xmap_intersection_parallel_f.f90'
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -89,15 +91,11 @@ PROGRAM test_xmap_intersection_parallel
 
   CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
   IF (ierror /= mpi_success) &
-       CALL test_abort("MPI error!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("MPI error!", filename, __LINE__)
 
   CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= mpi_success) &
-       CALL test_abort("MPI error!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("MPI error!", filename, __LINE__)
 
   IF (comm_size /= 3) THEN
     CALL xt_finalize
@@ -113,9 +111,7 @@ PROGRAM test_xmap_intersection_parallel
   CALL dedup_test
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -405,34 +401,29 @@ CONTAINS
     iter_is_null = xt_is_null(iter)
     IF (num_msgs == 0) THEN
       IF (.NOT. iter_is_null) &
-           CALL test_abort('ERROR: xt_xmap_get_*_iterator (non-null when ' &
-           // 'iter should be null)', &
-           __FILE__, &
-           __LINE__)
+           CALL test_abort('ERROR: xt_xmap_get_*_iterator (non-null when &
+           &iter should be null)', &
+           filename, __LINE__)
     ELSE IF (iter_is_null) THEN
-      CALL test_abort('ERROR: xt_xmap_get_*_iterator ' &
-           // '(iter should not be NULL)', &
-           __FILE__, &
-           __LINE__)
+      CALL test_abort('ERROR: xt_xmap_get_*_iterator &
+           &(iter should not be NULL)', &
+           filename, __LINE__)
     ELSE
       i = 1
       DO WHILE(.TRUE.)
         IF (xt_xmap_iterator_get_rank(iter) /= msgs(i)%rank) &
              CALL test_abort('ERROR: xt_xmap_iterator_get_rank', &
-             __FILE__, &
-             __LINE__)
+             filename, __LINE__)
         num_pos = SIZE(msgs(i)%pos)
         IF (xt_xmap_iterator_get_num_transfer_pos(iter) /= num_pos) THEN
           CALL test_abort("ERROR: xt_xmap_iterator_get_num_transfer_pos", &
-               __FILE__, &
-               __LINE__)
+               filename, __LINE__)
         END IF
         pos => xt_xmap_iterator_get_transfer_pos(iter)
         DO j = 1, num_pos
           IF (pos(j) /= msgs(i)%pos(j)) &
                CALL test_abort('ERROR: xt_xmap_iterator_get_transfer_pos', &
-               __FILE__, &
-               __LINE__)
+               filename, __LINE__)
         END DO
         IF (.NOT. xt_xmap_iterator_next(iter)) EXIT
         i = i + 1
@@ -440,8 +431,7 @@ CONTAINS
       IF (i /= num_msgs) &
            CALL test_abort('ERROR: xt_xmap_iterator_next &
            &(wrong number of messages)', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
     END IF
   END SUBROUTINE test_xmap_iter
 
@@ -461,13 +451,10 @@ CONTAINS
       num_sends = SIZE(send_messages)
       num_recvs = SIZE(recv_messages)
       IF (xt_xmap_get_num_destinations(maps(i)) /= num_sends) &
-           CALL test_abort('ERROR: xt_xmap_get_num_destinations', &
-           __FILE__, &
+           CALL test_abort('ERROR: xt_xmap_get_num_destinations', filename, &
            __LINE__)
       IF (xt_xmap_get_num_sources(maps(i)) /= num_recvs) &
-           CALL test_abort('ERROR: xt_xmap_get_num_sources', &
-           __FILE__, &
-           __LINE__)
+           CALL test_abort('ERROR: xt_xmap_get_num_sources', filename, __LINE__)
       send_iter = xt_xmap_get_out_iterator(maps(i))
       recv_iter = xt_xmap_get_in_iterator(maps(i))
 
@@ -492,8 +479,7 @@ CONTAINS
         CALL GET_COMMAND_ARGUMENT(i + 1, optarg, arg_len)
         IF (arg_len > max_opt_arg_len) &
              CALL test_abort('incorrect argument to command-line option -m', &
-             __FILE__, &
-             __LINE__)
+             filename, __LINE__)
         IF (optarg(1:arg_len) == "xt_xmap_intersection_new") THEN
           xmi_type = xmi_type_base
         ELSE IF (optarg(1:arg_len) == "xt_xmap_intersection_ext_new") THEN
@@ -501,16 +487,14 @@ CONTAINS
         ELSE
           WRITE (0, *) 'arg to -m: ', optarg(1:arg_len)
           CALL test_abort('incorrect argument to command-line option -m', &
-               __FILE__, &
-               __LINE__)
+               filename, __LINE__)
         END IF
         i = i + 2
       ELSE
         WRITE (0, *) 'unexpected command-line argument parsing error: ', &
              TRIM(optarg)
         FLUSH(0)
-        CALL test_abort('unexpected command-line argument -m', &
-             __FILE__, &
+        CALL test_abort('unexpected command-line argument -m', filename, &
              __LINE__)
       END IF
     END DO

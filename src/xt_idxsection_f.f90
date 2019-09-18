@@ -73,6 +73,7 @@ MODULE xt_idxsection
     END FUNCTION xt_idxsection_new_c
   END INTERFACE
 
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_idxsection_f.f90'
 CONTAINS
 
   FUNCTION xt_idxsection_new_a(start, global_size, local_size, local_start) &
@@ -85,9 +86,7 @@ CONTAINS
     num_dimensions = SIZE(global_size)
     IF (SIZE(local_size) /= num_dimensions &
          .OR. SIZE(local_start) /= num_dimensions) &
-         CALL xt_abort("non-matching array sizes", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("non-matching array sizes", filename, __LINE__)
     num_dimensions_c = INT(num_dimensions, c_int)
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, num_dimensions_c, global_size, &
@@ -120,9 +119,7 @@ CONTAINS
     INTEGER(c_int) :: num_dimensions_c
 
     IF (num_dimensions > HUGE(dummy)) &
-         CALL xt_abort("num_dimensions too large", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("num_dimensions too large", filename, __LINE__)
     num_dimensions_c = INT(num_dimensions, c_int)
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, num_dimensions_c, global_size, &
@@ -140,9 +137,7 @@ CONTAINS
     INTEGER(c_int) :: num_dimensions_c
 
     IF (num_dimensions > HUGE(dummy)) &
-         CALL xt_abort("num_dimensions too large", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("num_dimensions too large", filename, __LINE__)
     num_dimensions_c = INT(num_dimensions, c_int)
     idxsection = xt_idxlist_c2f(&
          xt_idxsection_new_c(start, num_dimensions_c, global_size, &
@@ -169,9 +164,7 @@ CONTAINS
 
     ndim = SIZE(global_size)
     IF (SIZE(local_size) /= ndim .OR. SIZE(local_start) /= ndim) &
-         CALL xt_abort("non-matching array sizes", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("non-matching array sizes", filename, __LINE__)
 
     ! check if local indices are a subset of global indices:
     err_state = .FALSE.
@@ -180,8 +173,7 @@ CONTAINS
            (local_start(idim) + local_size(idim) - 1 >  global_size(idim))
     ENDDO
     IF (err_state) CALL xt_abort("local indices out of global index space", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     ! Fortran style map of mult-dim coords to indices:
     ! => reverse order of dimensions and coords starting at 1 (instead of 0 as in c)

@@ -148,6 +148,7 @@ MODULE ftest_common
   PUBLIC :: test_abort, set_verbose, get_verbose
   PUBLIC :: cmp_arrays
   PUBLIC :: run_randomized_tests, init_fortran_random
+  CHARACTER(len=*), PARAMETER :: filename = 'ftest_common.f90'
 CONTAINS
 
   SUBROUTINE init_mpi
@@ -155,7 +156,7 @@ CONTAINS
     INTEGER :: ierror
     CALL mpi_init(ierror)
     IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_INIT failed', &
-         __FILE__, __LINE__)
+         filename, __LINE__)
   END SUBROUTINE init_mpi
 
   SUBROUTINE finish_mpi
@@ -163,7 +164,7 @@ CONTAINS
     INTEGER :: ierror
     CALL MPI_FINALIZE(ierror)
     IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_FINALIZE failed', &
-         __FILE__, &
+         filename, &
          __LINE__)
   END SUBROUTINE finish_mpi
 
@@ -219,31 +220,24 @@ CONTAINS
     sbuf(1) = t%dt_work
     CALL mpi_comm_rank(comm, rank, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'mpi_comm_rank failed', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort(context//'mpi_comm_rank failed', filename, __LINE__)
     CALL mpi_comm_size(comm, nprocs, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL test_abort(context//'mpi_comm_size failed', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort(context//'mpi_comm_size failed', filename, __LINE__)
     ALLOCATE(rbuf(0:nprocs-1))
     rbuf = -1.0_dp
     CALL mpi_gather(sbuf, 1, MPI_DOUBLE_PRECISION, &
          &  rbuf, 1, MPI_DOUBLE_PRECISION, &
          &  0, comm, ierror)
     IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_GATHER failed', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     IF (rank == 0) THEN
       IF (cmp_dbl_arrays(1, rbuf, sbuf)) &
            CALL test_abort(context//'internal error (1)', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
       IF (ANY(rbuf < 0.0_dp)) CALL test_abort(context//'internal error (2)', &
-           __FILE__, &
-           __LINE__)
+           filename, __LINE__)
       work_sum = SUM(rbuf)
       work_max = MAXVAL(rbuf)
       work_avg = work_sum / REAL(nprocs, dp)
@@ -266,8 +260,7 @@ CONTAINS
 
     CALL mpi_barrier(MPI_COMM_WORLD, IERROR)
     IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_BARRIER failed', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     dt = (MPI_WTIME() - t0)
     sync_dt_sum = sync_dt_sum + dt
@@ -327,7 +320,7 @@ CONTAINS
   SUBROUTINE test_abort_msl_f(msg, source, line)
     CHARACTER(*), INTENT(in) :: msg
     CHARACTER(*), INTENT(in) :: source
-    INTEGER, VALUE, INTENT(in) :: line
+    INTEGER, INTENT(in) :: line
     CALL test_abort_cmsl_f(mpi_comm_world, msg, source, line)
   END SUBROUTINE test_abort_msl_f
 
@@ -335,7 +328,7 @@ CONTAINS
     INTEGER, INTENT(in):: comm
     CHARACTER(*), INTENT(in) :: msg
     CHARACTER(*), INTENT(in) :: source
-    INTEGER, VALUE, INTENT(in) :: line
+    INTEGER, INTENT(in) :: line
 
     INTERFACE
       SUBROUTINE c_abort() BIND(c, name='abort')
@@ -346,7 +339,7 @@ CONTAINS
     LOGICAL :: flag
 
     WRITE (0, '(3a,i0,2a)') 'Fatal error in ', source, ', line ', line, &
-         ': ', msg
+         ': ', TRIM(msg)
     FLUSH(0)
     CALL mpi_initialized(flag, ierror)
     IF (ierror == mpi_success .AND. flag) &
@@ -365,18 +358,14 @@ CONTAINS
     n1 = SIZE(f,1)
     n2 = SIZE(f,2)
     IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
-         CALL test_abort(context//'shape mismatch error', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort(context//'shape mismatch error', filename, __LINE__)
 
     DO j = 1, n2
       DO i = 1, n1
         IF (f(i,j) /= g(i,j)) THEN
           WRITE(0,'(2a,4(a,i0))') context, label, ' test failed: i=', &
                i, ', j=', j, ', f(i,j)=', f(i,j), ', g(i,j)=', g(i,j)
-          CALL test_abort(context//label//' test failed', &
-               __FILE__, &
-               __LINE__)
+          CALL test_abort(context//label//' test failed', filename, __LINE__)
         ENDIF
       ENDDO
     ENDDO
@@ -395,7 +384,7 @@ CONTAINS
     n2 = SIZE(f,2)
     n3 = SIZE(f,3)
     IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
-      CALL test_abort(context//label//'shape mismatch', __FILE__, __LINE__)
+      CALL test_abort(context//label//'shape mismatch', filename, __LINE__)
 
     DO i3 = 1, n3
       DO i2 = 1, n2
@@ -404,9 +393,7 @@ CONTAINS
             WRITE(0,*) context,label,&
                  ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
                  i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
-            CALL test_abort(context//label//' test failed', &
-                 __FILE__, &
-                 __LINE__)
+            CALL test_abort(context//label//' test failed', filename, __LINE__)
           ENDIF
         ENDDO
       ENDDO
@@ -517,8 +504,7 @@ CONTAINS
     INTEGER :: x0, i
 
     IF (c<1) CALL test_abort('factorize: invalid process space', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     IF (c <= 3 .OR. c == 5 .OR. c == 7) THEN
       a = c
       b = 1
@@ -613,11 +599,10 @@ CONTAINS
     INTEGER :: it
 
     tn = SIZE(c0)
-    IF (tn<0) CALL test_abort('(tn<0)', __FILE__, __LINE__)
+    IF (tn<0) CALL test_abort('(tn<0)', filename, __LINE__)
     IF (tn>g_cn) CALL test_abort('regular_deco: too many task for such a core&
          & region', &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     d = g_cn/tn
     m = MOD(g_cn, tn)
@@ -634,9 +619,7 @@ CONTAINS
       c0(it) = c0(it-1) + cn(it-1)
     ENDDO
     IF (c0(tn-1)+cn(tn-1) /= g_cn) &
-         CALL test_abort('regular_deco: internal error 1', &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort('regular_deco: internal error 1', filename, __LINE__)
   END SUBROUTINE regular_deco
 
   FUNCTION run_randomized_tests() RESULT(fully_random_tests)

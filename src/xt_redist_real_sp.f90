@@ -54,6 +54,7 @@ MODULE xt_redist_real_sp
   USE iso_c_binding, ONLY: c_ptr, c_loc
   IMPLICIT NONE
   PRIVATE
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_redist_real_sp.f90'
   INTEGER, PARAMETER :: ps = 6
   INTEGER, PARAMETER :: rs = 37
   INTEGER, PARAMETER :: sp = SELECTED_REAL_KIND(ps,rs)
@@ -313,8 +314,7 @@ CONTAINS
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
@@ -334,8 +334,7 @@ CONTAINS
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
@@ -355,8 +354,7 @@ CONTAINS
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
@@ -376,8 +374,7 @@ CONTAINS
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
@@ -397,8 +394,7 @@ CONTAINS
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
@@ -418,8 +414,7 @@ CONTAINS
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)
@@ -439,8 +434,7 @@ CONTAINS
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (.NOT. (IS_CONTIGUOUS(src_data) .AND. IS_CONTIGUOUS(dst_data))) &
       CALL xt_abort('arguments to xt_redist_a_exchange must be contiguous!',&
-      __FILE__, &
-      __LINE__)
+      filename, __LINE__)
 #endif
     CALL xt_redist_a_exchange_sp_1d_as(redist, src_size, src_data, dst_size, &
          dst_data, request)

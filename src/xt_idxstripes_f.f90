@@ -50,8 +50,7 @@
 !! @example test_perf_stripes.f90
 
 MODULE xt_idxstripes
-  USE xt_core, ONLY: xt_stripe, i2, i4, i8, xt_get_default_comm, &
-       xt_abort
+  USE xt_core, ONLY: xt_stripe, i2, i4, i8, xt_abort
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f, xt_idxlist_f2c
   USE iso_c_binding, ONLY: c_ptr, c_int
   IMPLICIT NONE
@@ -102,6 +101,7 @@ MODULE xt_idxstripes
 
   PUBLIC :: xt_idxstripes_from_idxlist_new
 
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_idxstripes_f.f90'
 CONTAINS
 
   FUNCTION xt_idxstripes_new_s(stripe) RESULT(res)
@@ -118,9 +118,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (SIZE(stripes) > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(SIZE(stripes), c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a1d
@@ -142,9 +140,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a1d_i4
@@ -157,9 +153,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a1d_i8
@@ -171,9 +165,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (SIZE(stripes) > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(SIZE(stripes), c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a2d
@@ -194,9 +186,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a2d_i4
@@ -209,9 +199,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a2d_i8
@@ -223,9 +211,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (SIZE(stripes) > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(SIZE(stripes), c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a3d
@@ -247,9 +233,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a3d_i4
@@ -262,9 +246,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a3d_i8
@@ -276,9 +258,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (SIZE(stripes) > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(SIZE(stripes), c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a4d
@@ -300,9 +280,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a4d_i4
@@ -315,9 +293,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a4d_i8
@@ -329,9 +305,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (SIZE(stripes) > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(SIZE(stripes), c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a5d
@@ -353,9 +327,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a5d_i4
@@ -368,9 +340,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a5d_i8
@@ -382,9 +352,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (SIZE(stripes) > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(SIZE(stripes), c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a6d
@@ -406,9 +374,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a6d_i4
@@ -421,9 +387,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a6d_i8
@@ -435,9 +399,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (SIZE(stripes) > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(SIZE(stripes), c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a7d
@@ -459,9 +421,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a7d_i4
@@ -474,9 +434,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes_c
 
     IF (num_stripes > HUGE(num_stripes_c)) &
-         CALL xt_abort(xt_get_default_comm(), "too many idxstripes elements", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("too many idxstripes elements", filename, __LINE__)
     num_stripes_c = INT(num_stripes, c_int)
     res = xt_idxlist_c2f(xt_idxstripes_new_c(stripes, num_stripes_c))
   END FUNCTION xt_idxstripes_new_a7d_i8

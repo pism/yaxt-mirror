@@ -52,32 +52,25 @@ PROGRAM test_initialized_finalized_f
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_initialized, xt_finalized
   IMPLICIT NONE
+  CHARACTER(len=*), PARAMETER :: filename = 'test_initialized_finalized_f.f90'
 
   CALL init_mpi
 
   IF (xt_initialized() .OR. xt_finalized()) &
-       CALL test_abort("ERROR: unexpected library state", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("ERROR: unexpected library state", filename, __LINE__)
 
   CALL xt_initialize(mpi_comm_world)
 
   IF (.NOT. xt_initialized() .OR. xt_finalized()) &
-       CALL test_abort("ERROR: unexpected library state", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("ERROR: unexpected library state", filename, __LINE__)
 
   CALL xt_finalize
 
   IF (.NOT. xt_initialized() .OR. .NOT. xt_finalized()) &
-       CALL test_abort("ERROR: unexpected library state", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("ERROR: unexpected library state", filename, __LINE__)
 
   IF (test_err_count() /= 0_c_int) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL finish_mpi
 
 END PROGRAM test_initialized_finalized_f

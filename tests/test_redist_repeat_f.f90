@@ -62,8 +62,7 @@ PROGRAM test_redist_repeat
        check_wait_request
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
-  CHARACTER(len=*), PARAMETER :: filename = &
-__FILE__
+  CHARACTER(len=*), PARAMETER :: filename = 'test_redist_repeat_f.f90'
   CHARACTER(len=*), PARAMETER :: exch1name(2) = &
        (/ "xt_redist_s_exchange1", "xt_redist_a_exchange1" /)
 
@@ -77,9 +76,7 @@ __FILE__
   CALL test_repeated_redist_asym
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -369,8 +366,7 @@ CONTAINS
       ENDIF
       ! check individual redists to have desired effect
       IF (cmp_arrays(dst_data, ref_dst_data)) &
-           CALL test_abort("error in "//exch1name(iexch), &
-           filename,__LINE__)
+           CALL test_abort("error in "//exch1name(iexch), filename,__LINE__)
     ENDDO
     dst_data = -1.0d0
     ! generate redist_repeat

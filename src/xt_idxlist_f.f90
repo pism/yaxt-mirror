@@ -47,7 +47,7 @@
 !
 MODULE xt_idxlist_abstract
   USE xt_core, ONLY: xt_int_kind, xt_mpi_fint_kind, xt_stripe, &
-       xt_bounds, xt_get_default_comm, xt_abort, i2, i4, i8, &
+       xt_bounds, xt_abort, i2, i4, i8, &
        xt_pos_ext, OPERATOR(==)
   USE iso_c_binding, ONLY: c_ptr, c_int, c_f_pointer, c_null_ptr, &
        c_associated, c_loc
@@ -200,6 +200,7 @@ MODULE xt_idxlist_abstract
     MODULE PROCEDURE gpe_is_a_p1d_l
   END INTERFACE xt_idxlist_get_pos_exts_of_index_stripes
 
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_idxlist_f.f90'
 CONTAINS
 
   FUNCTION xt_idxlist_is_null(idxlist) RESULT(p)
@@ -309,9 +310,7 @@ CONTAINS
     INTEGER(c_int) :: num_pos_c
 
     IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
-         CALL xt_abort(xt_get_default_comm(), "invalid number of positions", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of positions", filename, __LINE__)
 
     num_pos_c = INT(num_pos, c_int)
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
@@ -330,9 +329,7 @@ CONTAINS
     INTEGER(c_int) :: num_pos_c
 
     IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
-         CALL xt_abort(xt_get_default_comm(), "invalid number of positions", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("invalid number of positions", filename, __LINE__)
 
     num_pos_c = INT(num_pos, c_int)
     num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
@@ -420,9 +417,7 @@ CONTAINS
 
     n = SIZE(indices)
     IF (SIZE(positions) < n) THEN
-      CALL xt_abort(xt_get_default_comm(), "positions array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("positions array too small", filename, __LINE__)
     END IF
     num_missing = 0
     ofs = 1
@@ -466,9 +461,7 @@ CONTAINS
     CALL xt_idxlist_get_index_stripes_c(xt_idxlist_f2c(idxlist), &
          stripes_c_ptr, num_stripes)
     IF (num_stripes > HUGE(stripes_shape)) &
-         CALL xt_abort(xt_get_default_comm(), "number of stripes too large", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("number of stripes too large", filename, __LINE__)
     stripes_shape(1) = INT(num_stripes)
     IF (num_stripes > 0) THEN
       ALLOCATE(stripes(INT(num_stripes)))
@@ -551,9 +544,7 @@ CONTAINS
     INTEGER(c_int) :: n
     n = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (n > HUGE(num_indices) .OR. n < -HUGE(num_indices)) &
-         CALL xt_abort(xt_get_default_comm(), "num_indices out of bounds", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("num_indices out of bounds", filename, __LINE__)
     num_indices = INT(n)
   END FUNCTION xt_idxlist_get_num_indices
 
@@ -563,9 +554,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > SIZE(indices)) THEN
-      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
     CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
   END SUBROUTINE xt_idxlist_get_indices_1d
@@ -576,9 +565,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > SIZE(indices)) THEN
-      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
     CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
   END SUBROUTINE xt_idxlist_get_indices_2d
@@ -589,9 +576,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > SIZE(indices)) THEN
-      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
     CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
   END SUBROUTINE xt_idxlist_get_indices_3d
@@ -602,9 +587,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > SIZE(indices)) THEN
-      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
     CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
   END SUBROUTINE xt_idxlist_get_indices_4d
@@ -615,9 +598,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > SIZE(indices)) THEN
-      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
     CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
   END SUBROUTINE xt_idxlist_get_indices_5d
@@ -628,9 +609,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > SIZE(indices)) THEN
-      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
     CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
   END SUBROUTINE xt_idxlist_get_indices_6d
@@ -641,9 +620,7 @@ CONTAINS
     INTEGER(c_int) :: num_indices
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > SIZE(indices)) THEN
-      CALL xt_abort(xt_get_default_comm(), "indices array too small", &
-           __FILE__, &
-           __LINE__)
+      CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
     CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
   END SUBROUTINE xt_idxlist_get_indices_7d
@@ -667,10 +644,8 @@ CONTAINS
     num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
     IF (num_indices > 0_xt_int_kind) THEN
       IF (num_indices > HUGE(indices_shape)) &
-           CALL xt_abort(xt_get_default_comm(), &
-           "too many indices for default integer kind", &
-           __FILE__, &
-           __LINE__)
+           CALL xt_abort("too many indices for default integer kind", &
+           filename, __LINE__)
       indices_shape(1) = INT(num_indices)
       c_indices = xt_idxlist_get_indices_const_c(xt_idxlist_f2c(idxlist))
       CALL C_F_POINTER(c_indices, indices, indices_shape)
@@ -697,10 +672,7 @@ CONTAINS
     TYPE(xt_pos_ext), TARGET :: dummy_stripe(1)
 
     IF (num_stripes > HUGE(1_c_int) .OR. num_stripes < 0) &
-         CALL xt_abort(xt_get_default_comm(), &
-         "interface violation detected", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("interface violation detected", filename, __LINE__)
 
     IF (num_stripes > 0_i4) THEN
       stripes_c = C_LOC(stripes)
@@ -714,10 +686,7 @@ CONTAINS
 
     IF (num_ext_c > HUGE(1) .OR. num_ext_c < 0 &
          .OR. num_unmatched_c > HUGE(1) .OR. num_unmatched_c < 0) &
-         CALL xt_abort(xt_get_default_comm(), &
-         "data representation problem", &
-         __FILE__, &
-         __LINE__)
+         CALL xt_abort("data representation problem", filename, __LINE__)
     num_unmatched = INT(num_unmatched_c)
     num_ext = INT(num_ext_c)
     IF (num_ext > 0) THEN

@@ -30,6 +30,7 @@ PROGRAM perf_sparse_array_gather
   REAL :: r
   INTEGER :: i, j, k, t
   CHARACTER(len=132) :: msg
+  CHARACTER(len=*), PARAMETER :: filename = 'perf_sparse_array_gather.f90'
   LOGICAL :: check_correctness_of_exchange
   INTERFACE
     SUBROUTINE POSIX_EXIT(code) BIND(c, name="exit")
@@ -116,9 +117,7 @@ PROGRAM perf_sparse_array_gather
               WRITE (0, "(a,3(i0,a),g28.16)") "gathered_data(", &
                    i, ", ", j, ", ", k, ") = ", gathered_data(i, j, k)
               WRITE (msg, "(a,3(', ',i0))") "error in data", i, j, k
-              CALL xt_abort(TRIM(msg), &
-                   __FILE__, &
-                   __LINE__)
+              CALL xt_abort(msg, filename, __LINE__)
             END IF
           END DO
         END DO
@@ -151,10 +150,8 @@ CONTAINS
         WRITE (0, *) 'unexpected command-line argument parsing error: ', &
              TRIM(optarg)
         FLUSH(0)
-        CALL xt_abort(mpi_comm_world, 'unexpected command-line argument "' &
-             // optarg(1:arg_len) // '"', &
-             __FILE__, &
-             __LINE__)
+        CALL xt_abort('unexpected command-line argument "' &
+             // optarg(1:arg_len) // '"', filename, __LINE__)
       END IF
       i = i + 1
     END DO

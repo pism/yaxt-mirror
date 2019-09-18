@@ -54,6 +54,7 @@ PROGRAM test_xmap_all2all_fail
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
+  CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_all2all_fail_f.f90'
   INTEGER :: my_rank, ierror, list_size
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
@@ -62,9 +63,7 @@ PROGRAM test_xmap_all2all_fail
   CALL test_xmap1(list_size)
 
   IF (test_err_count() /= 0) &
-       CALL test_abort("non-zero error count!", &
-       __FILE__, &
-       __LINE__)
+       CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -90,25 +89,19 @@ CONTAINS
     CALL xt_idxlist_delete(dst_idxlist)
 
     IF (xt_xmap_get_num_destinations(xmap) /= 1) &
-         CALL test_abort("error in xmap construction", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xmap construction", filename, __LINE__)
 
     IF (xt_xmap_get_num_sources(xmap) /= 1) &
-         CALL test_abort("error in xt_xmap_get_num_sources", &
-         __FILE__, &
-         __LINE__)
+         CALL test_abort("error in xt_xmap_get_num_sources", filename, __LINE__)
     CALL xt_xmap_get_destination_ranks(xmap, rank)
     IF (rank(1) /= my_rank) &
          CALL test_abort("error in xt_xmap_get_destination_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
 
     CALL xt_xmap_get_source_ranks(xmap, rank)
     IF (rank(1) /= my_rank) &
          CALL test_abort("error in xt_xmap_get_source_ranks", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
     CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_xmap
 
@@ -141,8 +134,7 @@ CONTAINS
         CALL GET_COMMAND_ARGUMENT(i + 1, optarg, arg_len)
         IF (arg_len > max_opt_arg_len) &
              CALL test_abort('incorrect argument to command-line option -s', &
-             __FILE__, &
-             __LINE__)
+             filename, __LINE__)
         IF (optarg(1:arg_len) == "big") THEN
           list_size = 1023
         ELSE IF (optarg(1:arg_len) == "small") THEN
@@ -150,8 +142,7 @@ CONTAINS
         ELSE
           WRITE (0, *) 'arg to -s: ', optarg(1:arg_len)
           CALL test_abort('incorrect argument to command-line option -s', &
-               __FILE__, &
-               __LINE__)
+               filename, __LINE__)
         END IF
         i = i + 2
       ELSE
@@ -159,8 +150,7 @@ CONTAINS
              TRIM(optarg)
         FLUSH(0)
         CALL test_abort('unexpected command-line argument', &
-             __FILE__, &
-             __LINE__)
+             filename, __LINE__)
       END IF
     END DO
   END SUBROUTINE parse_options

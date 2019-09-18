@@ -58,6 +58,7 @@ PROGRAM test_idxempty
   TYPE(xt_idxlist) :: idxempty, idxempty_copy
   INTEGER(xt_int_kind) :: no_idx(1)
   TYPE(xt_stripe), ALLOCATABLE :: stripes(:)
+  CHARACTER(len=*), PARAMETER :: filename = 'test_idxempty_f.f90'
 
 
   CALL init_mpi
@@ -79,8 +80,7 @@ PROGRAM test_idxempty
   IF (ALLOCATED(stripes)) &
        CALL test_abort("unexpected non-zero amount of stripes for &
        &empty index set", &
-       __FILE__, &
-       __LINE__)
+       filename, __LINE__)
 
   CALL check_bounding_box
 
@@ -91,8 +91,7 @@ PROGRAM test_idxempty
   CALL finish_mpi
 
   IF (test_err_count() /= 0) CALL test_abort("non-zero error count", &
-       __FILE__, &
-       __LINE__)
+       filename, __LINE__)
 
 CONTAINS
 
@@ -117,8 +116,7 @@ CONTAINS
     IF (ANY(bounds%size /= 0)) &
          CALL test_abort("ERROR: non-zero boundings box for xt_idxempty in &
          &xt_idxlist_get_bounding_box", &
-         __FILE__, &
-         __LINE__)
+         filename, __LINE__)
   END SUBROUTINE check_bounding_box
 
 END PROGRAM test_idxempty
