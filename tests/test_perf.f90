@@ -1,14 +1,14 @@
 !>
-!> @file test_perf.f90
-!>
-!> @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
-!>                                 Moritz Hanke <hanke@dkrz.de>
-!>                                 Thomas Jahns <jahns@dkrz.de>
-!>
-!> @author Jörg Behrens <behrens@dkrz.de>
-!>         Moritz Hanke <hanke@dkrz.de>
-!>         Thomas Jahns <jahns@dkrz.de>
-!>
+!! @file test_perf.f90
+!!
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+!!                                 Moritz Hanke <hanke@dkrz.de>
+!!                                 Thomas Jahns <jahns@dkrz.de>
+!!
+!! @author Jörg Behrens <behrens@dkrz.de>
+!!         Moritz Hanke <hanke@dkrz.de>
+!!         Thomas Jahns <jahns@dkrz.de>
+!!
 
 !
 ! Keywords:
