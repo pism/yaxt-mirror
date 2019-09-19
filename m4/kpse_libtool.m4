@@ -41,4 +41,8 @@ AC_PROVIDE_IFELSE([AC_PROG_F77],
 ac_compile="$ac_pwd/libtool --mode=compile --tag=F77 $ac_compile"
 ])])[]dnl
 AC_LANG(_AC_LANG)[]dnl
+dnl After compiling/linking checks, now also $top_builddir/$objdir
+dnl needs to be cleaned.
+ac_clean_files_save="$ac_clean_files_save $ac_pwd/$objdir"
+ac_clean_files="$ac_clean_files $ac_pwd/$objdir"
 ]) # _KPSE_USE_LIBTOOL
