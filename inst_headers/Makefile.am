@@ -22,9 +22,12 @@ yaxt.h: Makefile $(xtinclude_HEADERS)
 	if test ! -f $@ || ! cmp $@ $@.$$$$.tmp >/dev/null ; then \
 	mv $@.$$$$.tmp $@ ; else rm $@.$$$$.tmp ; fi
 
-$(xtinclude_HEADERS): ../src/$@ ../include/config.h \
-	$(top_srcdir)/scripts/header2installheader.pl
+xt/.dir_stamp:
 	$(MKDIR_P) xt
+	touch xt/.dir_stamp
+
+$(xtinclude_HEADERS): ../src/$@ ../include/config.h \
+	$(top_srcdir)/scripts/header2installheader.pl xt/.dir_stamp
 	headerbasedir=`test -f '../src/$@' || echo '$(srcdir)/'` ; \
 	  $(PERL) -I$(top_srcdir)/scripts \
 	  $(top_srcdir)/scripts/header2installheader.pl \
