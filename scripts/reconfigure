@@ -33,3 +33,10 @@ wget -o /dev/null -O config/config.guess \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
 wget -o /dev/null -O config/config.sub \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+
+#
+# to test if this succeeded, one can run
+# diff -x autom4te.cache -x .git -ur orig/yaxt new/yaxt 2>&1 |less
+# if a known good checkout is at orig/yaxt and a newly reconfigured
+# tree is at new/yaxt
+#
