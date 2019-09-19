@@ -100,8 +100,11 @@ dnl newer PGI or NAG configurations particularly well
 	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`' ;;
 ]))dnl
       m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],m4_bpatsubst(m4_dquote(
-        m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
-          [test x-\1 = x"$p"]))])dnl
+        m4_bpatsubst(m4_dquote(
+          m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
+            [test x-\1 = x"$p"])),
+          [test x-R = x"\$p"],[\& ||
+	   test x-l = x"$p"]))])dnl
    LT_INIT
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
      [m4_popdef([_LT_COMPILER_PIC])m4_popdef([_LT_LINKER_SHLIBS])dnl
