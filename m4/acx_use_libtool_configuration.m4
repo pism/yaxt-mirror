@@ -82,7 +82,8 @@ dnl newer PGI or NAG configurations particularly well
 	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
 	*PGI\\ Compilers\\ and\\ Tools*|*Port][land\\ ]))dnl
-      m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
+      m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(
+        m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
           m4_bpatsubst(m4_dquote(m4_defn(
           [_LT_LINKER_SHLIBS])),[tmp_sharedflag='-shared'],
           [tmp_sharedflag='-shared'
@@ -91,7 +92,13 @@ dnl newer PGI or NAG configurations particularly well
         [$CC '"$tmp_sharedflag""$tmp_addflag"' $libobjs $deplibs '"$tmp_compiler_flags"' $wl-soname])),
         [  tmp_sharedflag='-Wl,-shared'],
         [  tmp_sharedflag='-Wl,-shared'
-	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`']))dnl
+	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`'])),
+        [\*Sun\\ F\*)[ 	]*# Sun Fortran 8\.3
+[ 	]*tmp_sharedflag='-G' ;;
+],[\&	*NAG\\ Fortran\\ Compiler*)
+	  tmp_sharedflag='-Wl,-shared'
+	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`' ;;
+]))dnl
       m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],m4_bpatsubst(m4_dquote(
         m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
           [test x-\1 = x"$p"]))])dnl
