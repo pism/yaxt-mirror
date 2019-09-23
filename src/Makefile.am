@@ -324,9 +324,12 @@ install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"
 	$(install_sh_DATA) pkgconfig/yaxt.pc \
 		"$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
+	$(install_sh_DATA) pkgconfig/yaxt_c.pc \
+		"$(DESTDIR)$(libdir)/pkgconfig/yaxt_c.pc"
 
 uninstall-local:
 	rm -f "$(DESTDIR)$(libdir)/pkgconfig/yaxt.pc"
+	rm -f "$(DESTDIR)$(libdir)/pkgconfig/yaxt_c.pc"
 	-rmdir "$(DESTDIR)$(libdir)/pkgconfig"
 
 ./$(DEPDIR)/FC.deps: $(libyaxt_la_SOURCES) Makefile
