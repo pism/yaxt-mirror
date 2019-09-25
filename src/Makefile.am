@@ -308,7 +308,7 @@ xt_redist_int_i8.f90: \
 
 
 xtinclude_Makefile.inc: Makefile
-	headers=`echo $(libyaxt_c_la_SOURCES) | sed 's/[ 	][ 	]*/ /g' | tr ' ' '\n' | grep 'xt/.*\.h$$'` ; \
+	$(AM_V_GEN)headers=`echo $(libyaxt_c_la_SOURCES) | sed 's/[ 	][ 	]*/ /g' | tr ' ' '\n' | grep 'xt/.*\.h$$'` ; \
 	  echo "xtinclude_HEADERS = \\" >$@ ; \
 	  for header in $$headers ; do echo "	$$header \\" ; done \
 	    | sed '$$s/\\$$//' >>$@
@@ -366,7 +366,7 @@ uninstall-local:
 	  --strip-obj-dirname --parse-cache=./$(DEPDIR)/FC.depdb \
 	  --obj-suf='.lo' -- \
 	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
-	  >./$(DEPDIR)/FC.deps.temp
+	  >./$(DEPDIR)/FC.deps.temp && \
 	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps \
 	  && touch ./$(DEPDIR)/FC.deps

@@ -14,7 +14,7 @@ DIST_SUBDIRS = f90 .
 @AMDEP_TRUE@@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@ # am--include-marker
 
 yaxt.h: Makefile $(xtinclude_HEADERS)
-	( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
+	$(AM_V_GEN)( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
 	for header in $(xtinclude_HEADERS) ; \
 	  do echo "#include <$$header>" ; done ; \
 	echo '#endif' \
@@ -23,12 +23,11 @@ yaxt.h: Makefile $(xtinclude_HEADERS)
 	mv $@.$$$$.tmp $@ ; else rm $@.$$$$.tmp ; fi
 
 xt/.dir_stamp:
-	$(MKDIR_P) xt
-	touch xt/.dir_stamp
+	$(AM_V_GEN)$(MKDIR_P) xt && touch xt/.dir_stamp
 
 $(xtinclude_HEADERS): ../src/$@ ../include/config.h \
 	$(top_srcdir)/scripts/header2installheader.pl xt/.dir_stamp
-	headerbasedir=`test -f '../src/$@' || echo '$(srcdir)/'` ; \
+	$(AM_V_GEN) headerbasedir=`test -f '../src/$@' || echo '$(srcdir)/'` ; \
 	  $(PERL) -I$(top_srcdir)/scripts \
 	  $(top_srcdir)/scripts/header2installheader.pl \
 	  --config-header=../include/config.h \
