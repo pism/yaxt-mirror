@@ -346,7 +346,7 @@ EXTRA_DIST = core
 	  $$libnamerewriterules \
 	  --obj-transform-name='\.f90$$=.$(OBJEXT)' -- \
 	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
-	  >./$(DEPDIR)/FC.deps.temp
+	  >./$(DEPDIR)/FC.deps.temp && \
 	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
 
