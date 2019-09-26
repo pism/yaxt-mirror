@@ -280,7 +280,8 @@ AC_ARG_WITH([regard-for-quality],
      [ignore results of checks for known defects @<:@default: abort on error@:>@])],
   [],[with_regard_for_quality=yes])
 ACX_MPIRUN(,,
-  [AS_VAR_IF([with_regard_for_quality], [yes],
+  [AC_MSG_WARN([$MPI_LAUNCH_failMsg])
+   AS_VAR_IF([with_regard_for_quality], [yes],
      [AC_MSG_FAILURE([unable to find a working MPI launch program, which is required for checks for known MPI defects (see --without-regard-for-quality)])])])
 AS_VAR_IF([with_regard_for_quality], [yes],
   [ACX_MPI_DEFECTS(,,
@@ -295,8 +296,6 @@ AM_CONDITIONAL([OMPI_DT_WORKAROUND],
 AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset],
   [acx_opal_datatype_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_opal_datatype_add_workaround')"`])
 AC_SUBST([acx_opal_datatype_add_workaround])
-AS_IF([test "x$MPI_LAUNCH" = xtrue],
-  [AC_MSG_WARN([MPI launch command unavailable])])
 FCFLAGS=$saved_FCFLAGS
 CFLAGS=$saved_CFLAGS
 LIBS=$saved_LIBS
