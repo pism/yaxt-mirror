@@ -89,9 +89,9 @@ static char const COMBINER_F90_INTEGER_STRING[]      = "MPI_COMBINER_F90_INTEGER
 static char const COMBINER_RESIZED_STRING[]          = "MPI_COMBINER_RESIZED: MPI_Type_create_resized()";
 static char const COMBINER_UNKOWN_STRING[]           = "MPI_COMBINER_UNKOWN: This is an error!";
 
-struct mdt_info_t;
+struct mdt_info;
 
-struct mdt_info_t {
+struct mdt_info {
   char const *combiner_string;
   char name_string[MPI_MAX_OBJECT_NAME];
   MPI_Datatype mdt;
@@ -103,11 +103,11 @@ struct mdt_info_t {
   MPI_Aint *mdt_addrargs;
   MPI_Datatype *mdt_dtargs;
   int *mdt_intargs;
-  struct mdt_info_t *next;
-  struct mdt_info_t *previous;
-  struct mdt_info_t *parent;
-  struct mdt_info_t *first_child;
-  struct mdt_info_t *last_child;
+  struct mdt_info *next;
+  struct mdt_info *previous;
+  struct mdt_info *parent;
+  struct mdt_info *first_child;
+  struct mdt_info *last_child;
   int nest;
   int env_num_ints;
   int env_num_addr;
@@ -153,7 +153,7 @@ static char const * get_combiner_name(const int combiner_id)
   };
 };
 
-static void print_basic(const struct mdt_info_t *info, const char *line_prefix)
+static void print_basic(const struct mdt_info *info, const char *line_prefix)
 {
   if (strlen(info->name_string) > 0)
   {
@@ -166,28 +166,28 @@ static void print_basic(const struct mdt_info_t *info, const char *line_prefix)
   return;
 };
 
-static void print_named(const struct mdt_info_t *info, const char *line_prefix)
+static void print_named(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ elemental datatype\n", line_prefix);
   return;
 };
 
-static void print_dup(const struct mdt_info_t *info, const char *line_prefix)
+static void print_dup(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ copy of child\n", line_prefix);
   return;
 };
 
-static void print_contiguous(const struct mdt_info_t *info, const char *line_prefix)
+static void print_contiguous(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d adjacent replicas of child\n", line_prefix, info->mdt_intargs[0]);
   return;
 };
 
-static void print_vector(const struct mdt_info_t *info, const char *line_prefix)
+static void print_vector(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of %d replicas of child with stride %d\n", line_prefix, 
@@ -195,7 +195,7 @@ static void print_vector(const struct mdt_info_t *info, const char *line_prefix)
   return;
 };
 
-static void print_hvector_int(const struct mdt_info_t *info, const char *line_prefix)
+static void print_hvector_int(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of %d replicas of child with byte-stride %d (Fortran)\n", line_prefix, 
@@ -203,7 +203,7 @@ static void print_hvector_int(const struct mdt_info_t *info, const char *line_pr
   return;
 };
 
-static void print_hvector(const struct mdt_info_t *info, const char *line_prefix)
+static void print_hvector(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of %d replicas of child with byte-stride %d\n", line_prefix,
@@ -211,7 +211,7 @@ static void print_hvector(const struct mdt_info_t *info, const char *line_prefix
   return;
 };
 
-static void print_indexed(const struct mdt_info_t *info, const char *line_prefix)
+static void print_indexed(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of replicas of child with displacements\n", line_prefix,
@@ -219,7 +219,7 @@ static void print_indexed(const struct mdt_info_t *info, const char *line_prefix
   return;
 };
 
-static void print_hindexed_int(const struct mdt_info_t *info, const char *line_prefix)
+static void print_hindexed_int(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of replicas of child with byte-displacements (Fortran)\n", line_prefix,
@@ -227,7 +227,7 @@ static void print_hindexed_int(const struct mdt_info_t *info, const char *line_p
   return;
 };
 
-static void print_hindexed(const struct mdt_info_t *info, const char *line_prefix)
+static void print_hindexed(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of replicas of child with byte-displacements\n", line_prefix,
@@ -235,7 +235,7 @@ static void print_hindexed(const struct mdt_info_t *info, const char *line_prefi
   return;
 };
 
-static void print_indexed_block(const struct mdt_info_t *info, const char *line_prefix)
+static void print_indexed_block(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of %d replicas of child with displacements\n", line_prefix,
@@ -243,7 +243,7 @@ static void print_indexed_block(const struct mdt_info_t *info, const char *line_
   return;
 };
 
-static void print_struct_int(const struct mdt_info_t *info, const char *line_prefix)
+static void print_struct_int(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of replicas of child types with byte-displacements (Fortran)\n", line_prefix,
@@ -251,7 +251,7 @@ static void print_struct_int(const struct mdt_info_t *info, const char *line_pre
   return;
 };
 
-static void print_struct(const struct mdt_info_t *info, const char *line_prefix)
+static void print_struct(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d blocks of replicas of child types with byte-displacements\n", line_prefix,
@@ -272,7 +272,7 @@ static char *  print_int_array(int size, int * array) {
   return tmp;
 }
 
-static void print_subarray(const struct mdt_info_t *info, const char *line_prefix)
+static void print_subarray(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d dimensional subarray in %s ordering\n", line_prefix,
@@ -290,7 +290,7 @@ static void print_subarray(const struct mdt_info_t *info, const char *line_prefi
   return;
 };
 
-static void print_darray(const struct mdt_info_t *info, const char *line_prefix)
+static void print_darray(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ %d dimensional distributed array\n", line_prefix,
@@ -298,7 +298,7 @@ static void print_darray(const struct mdt_info_t *info, const char *line_prefix)
   return;
 };
 
-static void print_resized(const struct mdt_info_t *info, const char *line_prefix)
+static void print_resized(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ child resized by lb %d extent %d\n", line_prefix,
@@ -306,7 +306,7 @@ static void print_resized(const struct mdt_info_t *info, const char *line_prefix
   return;
 };
 
-static void print_f90_real(const struct mdt_info_t *info, const char *line_prefix)
+static void print_f90_real(const struct mdt_info *info, const char *line_prefix)
 { 
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ f90 REAL %d digits %d exponent range\n", line_prefix,
@@ -314,7 +314,7 @@ static void print_f90_real(const struct mdt_info_t *info, const char *line_prefi
   return;
 };
 
-static void print_f90_complex(const struct mdt_info_t *info, const char *line_prefix)
+static void print_f90_complex(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ f90 COMPLEX %d digits %d exponent range\n", line_prefix,
@@ -322,7 +322,7 @@ static void print_f90_complex(const struct mdt_info_t *info, const char *line_pr
   return;
 };
 
-static void print_f90_integer(const struct mdt_info_t *info, const char *line_prefix)
+static void print_f90_integer(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
   fprintf(stdout, "%s ++ f90 INTEGER %d digits\n", line_prefix,
@@ -331,7 +331,7 @@ static void print_f90_integer(const struct mdt_info_t *info, const char *line_pr
 };
 
 
-static void print_combiner_info(const int combiner_id, const struct mdt_info_t *info, const char *line_prefix)
+static void print_combiner_info(const int combiner_id, const struct mdt_info *info, const char *line_prefix)
 {
   switch (combiner_id)
   {
@@ -396,15 +396,15 @@ static void print_combiner_info(const int combiner_id, const struct mdt_info_t *
 };
 
 
-static void cleanup_mdt_infos(struct mdt_info_t *info);
+static void cleanup_mdt_infos(struct mdt_info *info);
 
-static void cleanup_mdt_infos(struct mdt_info_t *info)
+static void cleanup_mdt_infos(struct mdt_info *info)
 {
   while (info != NULL) {
     if (info->first_child != NULL) {
       cleanup_mdt_infos(info->first_child);
     }
-    struct mdt_info_t * myempty = info;
+    struct mdt_info * myempty = info;
     if (info->mdt_intargs != NULL)
       free(info->mdt_intargs);
     if (info->mdt_addrargs != NULL)
@@ -417,9 +417,9 @@ static void cleanup_mdt_infos(struct mdt_info_t *info)
   return;
 };
 
-static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, struct mdt_info_t *info);
+static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, struct mdt_info *info);
 
-static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, struct mdt_info_t *info)
+static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, struct mdt_info *info)
 {
   if (mpidt == MPI_DATATYPE_NULL) return;
 
@@ -450,9 +450,9 @@ static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, 
   }
   if (info->env_num_mdt > 0) {
     int i;
-    struct mdt_info_t * last_info = NULL;
+    struct mdt_info * last_info = NULL;
     for(i = 0; i < info->env_num_mdt; i++) {
-      struct mdt_info_t * this_info = (struct mdt_info_t *) malloc(sizeof(struct mdt_info_t));
+      struct mdt_info * this_info = (struct mdt_info *) malloc(sizeof(struct mdt_info));
       if (i == 0) {
         info->first_child = this_info;
       }
@@ -473,15 +473,15 @@ static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, 
   return;
 };
 
-static void print_MPI_datatype_tree(struct mdt_info_t * const info, const char *line_prefix);
+static void print_MPI_datatype_tree(struct mdt_info * const info, const char *line_prefix);
 
-static void print_MPI_datatype_tree(struct mdt_info_t * const info, const char *line_prefix)
+static void print_MPI_datatype_tree(struct mdt_info * const info, const char *line_prefix)
 {
   static char const nest_prefix_format[] = "%s| ";
   size_t nest_prefix_size = sizeof(nest_prefix_format) + strlen(line_prefix) + 1;
   char * nest_prefix = malloc(nest_prefix_size);
   snprintf(nest_prefix, nest_prefix_size, nest_prefix_format, line_prefix);
-  struct mdt_info_t *tinfo = info;
+  struct mdt_info *tinfo = info;
   while (tinfo != NULL) {
     fprintf(stdout, "%s-->%s\n", nest_prefix, tinfo->combiner_string);
     print_combiner_info(tinfo->env_combiner_id, tinfo, nest_prefix);
@@ -498,7 +498,7 @@ static void print_MPI_datatype_tree(struct mdt_info_t * const info, const char *
 };
 
 static char * get_first_child_name(
-  const struct mdt_info_t * const info, const char * name_prefix) {
+  const struct mdt_info * const info, const char * name_prefix) {
 
   char * first_child_name;
   if(info->first_child->env_combiner_id == MPI_COMBINER_NAMED) {
@@ -520,7 +520,7 @@ static char * get_first_child_name(
 }
 
 static void write_null(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   fprintf(
     reconst_file, "  MPI_Datatype %s = MPI_DATATYPE_NULL;\n", name_prefix);
@@ -528,7 +528,7 @@ static void write_null(
 };
 
 static void write_dup(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_dup(%s, &%s);\n",
@@ -538,7 +538,7 @@ static void write_dup(
 };
 
 static void write_contiguous(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_contiguous(%d, %s, &%s);\n", 
@@ -548,7 +548,7 @@ static void write_contiguous(
 };
 
 static void write_vector(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_vector(%d, %d, %d, %s, &%s);\n",
@@ -559,7 +559,7 @@ static void write_vector(
 };
 
 static void write_hvector(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_hvector(%d, %d, %d, %s, &%s);\n",
@@ -570,7 +570,7 @@ static void write_hvector(
 };
 
 static void write_hvector_int(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   fprintf(reconst_file, "# this is not exactly MPI_COMBINER_HVECTOR_INTEGER ...!\n");
@@ -613,11 +613,11 @@ static void write_set_arrayvar_addr(FILE * reconst_file, const char * arrayname,
 };
 
 static void write_set_arrayvar_ddt(FILE * reconst_file, const char * arrayname, const char * prefix,
-                             const int narray, const struct mdt_info_t * info)
+                             const int narray, const struct mdt_info * info)
 {
   fprintf(reconst_file, "  MPI_Datatype %s%s[%d];\n", prefix, arrayname, narray);
   int i;
-  struct mdt_info_t * cinfo = info->first_child;
+  struct mdt_info * cinfo = info->first_child;
   for(i = 0; i < narray; i++) {
     if(cinfo->env_combiner_id == MPI_COMBINER_NAMED)
     {
@@ -631,7 +631,7 @@ static void write_set_arrayvar_ddt(FILE * reconst_file, const char * arrayname, 
 
 
 static void write_indexed(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   write_set_arrayvar_int(reconst_file, "_bkl", name_prefix, info->mdt_intargs[0], &(info->mdt_intargs[1]));
@@ -644,7 +644,7 @@ static void write_indexed(
 };
 
 static void write_hindexed(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   write_set_arrayvar_int(reconst_file, "_bkl", name_prefix, info->mdt_intargs[0], &(info->mdt_intargs[1]));
@@ -657,7 +657,7 @@ static void write_hindexed(
 };
 
 static void write_hindexed_int(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   write_set_arrayvar_int(reconst_file, "_bkl", name_prefix, info->mdt_intargs[0], &(info->mdt_intargs[1]));
@@ -671,7 +671,7 @@ static void write_hindexed_int(
 };
 
 static void write_indexed_block(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   write_set_arrayvar_int(reconst_file, "_dpl", name_prefix, info->mdt_intargs[0], &(info->mdt_intargs[2]));
@@ -683,7 +683,7 @@ static void write_indexed_block(
 };
 
 static void write_resized(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_resized(%s, %d, %d, &%s);\n",
@@ -694,7 +694,7 @@ static void write_resized(
 };
 
 static void write_f90_real(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 { 
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_f90_real(%d, %d, &%s);\n",
           name_prefix, info->mdt_intargs[0], info->mdt_intargs[1], name_prefix);
@@ -702,7 +702,7 @@ static void write_f90_real(
 };
 
 static void write_f90_complex(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_f90_complex(%d, %d, &%s);\n",
           name_prefix, info->mdt_intargs[0], info->mdt_intargs[1], name_prefix);
@@ -710,7 +710,7 @@ static void write_f90_complex(
 };
 
 static void write_f90_integer(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_f90_integer(%d, &%s);\n",
           name_prefix, info->mdt_intargs[0], name_prefix);
@@ -718,7 +718,7 @@ static void write_f90_integer(
 };
 
 static void write_struct(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   write_set_arrayvar_int(reconst_file, "_bkl", name_prefix, info->mdt_intargs[0], &(info->mdt_intargs[1]));
   write_set_arrayvar_addr(reconst_file, "_dpl", name_prefix, info->mdt_intargs[0], info->mdt_addrargs);
@@ -729,7 +729,7 @@ static void write_struct(
 };
 
 static void write_struct_int(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   write_set_arrayvar_int(reconst_file, "_bkl", name_prefix, info->mdt_intargs[0], &(info->mdt_intargs[1]));
   write_set_arrayvar_addr(reconst_file, "_dpl", name_prefix, info->mdt_intargs[0], info->mdt_addrargs);
@@ -741,7 +741,7 @@ static void write_struct_int(
 };
 
 static void write_subarray(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
@@ -763,7 +763,7 @@ static void write_subarray(
 };
 
 static void write_darray(
-  const struct mdt_info_t * const info, FILE * reconst_file, const char * name_prefix)
+  const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
   fprintf(reconst_file, "  int %s_glob[%d], %s_distr[%d], %s_darg[%d], %s_psiz[%d];\n", name_prefix, info->mdt_intargs[2] ,
@@ -786,7 +786,7 @@ static void write_darray(
 };
 
 static void write_combiner_code(
-  const int combiner_id, const struct mdt_info_t * const info,
+  const int combiner_id, const struct mdt_info * const info,
   FILE * reconst_file, const char * name_prefix)
 {
   switch (combiner_id)
@@ -852,15 +852,15 @@ static void write_combiner_code(
   return;
 };
 
-static void reconstruct_MPI_datatype_tree(const struct mdt_info_t * const info,
+static void reconstruct_MPI_datatype_tree(const struct mdt_info * const info,
                                    FILE *reconst_file,
                                    const char *name_prefix);
 
-static void reconstruct_MPI_datatype_tree(const struct mdt_info_t * const info,
+static void reconstruct_MPI_datatype_tree(const struct mdt_info * const info,
                                    FILE *reconst_file,
                                    const char *name_prefix)
 {
-  const struct mdt_info_t *tinfo = info;
+  const struct mdt_info *tinfo = info;
   int icombiner = 0;
   static char const curr_name_prefix_format[] = "%s_%d";
   size_t curr_name_prefix_size =
@@ -882,17 +882,17 @@ static void reconstruct_MPI_datatype_tree(const struct mdt_info_t * const info,
   return;
 };
 
-static void write_cleanup_tree(const struct mdt_info_t * const info,
+static void write_cleanup_tree(const struct mdt_info * const info,
                         FILE *reconst_file,
                         const char *name_prefix,
                         int skip);
 
-static void write_cleanup_tree(const struct mdt_info_t * const info,
+static void write_cleanup_tree(const struct mdt_info * const info,
                         FILE *reconst_file,
                         const char *name_prefix,
                         int skip)
 {
-  const struct mdt_info_t * tinfo = info;
+  const struct mdt_info * tinfo = info;
   int icombiner = 0;
   static char const curr_name_prefix_format[] = "%s_%d";
   size_t curr_name_prefix_size =
@@ -916,7 +916,7 @@ static void write_cleanup_tree(const struct mdt_info_t * const info,
 };
 
 
-static void reconstruct_MPI_datatype(struct mdt_info_t * const info,
+static void reconstruct_MPI_datatype(struct mdt_info * const info,
                               const char *reconst_file_name_in,
                               const char * datatype_name_in)
 {
@@ -968,10 +968,10 @@ static void reconstruct_MPI_datatype(struct mdt_info_t * const info,
   return;
 };
 
-static struct mdt_info_t * mdt_info_new() {
+static struct mdt_info * mdt_info_new() {
 
-  struct mdt_info_t *info =
-    (struct mdt_info_t *) malloc(sizeof(struct mdt_info_t));
+  struct mdt_info *info =
+    (struct mdt_info *) malloc(sizeof(struct mdt_info));
   static char const null_combiner[] = "";
   static char const null_name_string[] = "MPI_DATATYPE_NULL";
 
@@ -1004,7 +1004,7 @@ static void analyze_MPI_datatype(
   int rank;
   wmpi(MPI_Comm_rank(MPI_COMM_WORLD, &rank), "analyze_MPI_datatype", 0);
   printf("rank %d analyzing provided MPI_Datatype... \n", rank);
-  struct mdt_info_t *info = mdt_info_new();
+  struct mdt_info *info = mdt_info_new();
   analyze_MPI_datatype_nest(mpi_type, 0, info);
   // char line_prefix[1024];
   // snprintf(line_prefix, 1024, "%-6d:: ", rank);
