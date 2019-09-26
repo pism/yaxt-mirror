@@ -157,11 +157,11 @@ static void print_basic(const struct mdt_info *info, const char *line_prefix)
 {
   if (strlen(info->name_string) > 0)
   {
-    fprintf(stdout, "%s ++ >%s<:: pack_size %d; lb %d, ext %d; true: lb %d, ext %d\n", line_prefix,
-            info->name_string, info->pack_size, info->lb, info->extent, info->true_lb, info->true_extent);
+    fprintf(stdout, "%s ++ >%s<:: pack_size %lld; lb %lld, ext %lld; true: lb %lld, ext %lld\n", line_prefix,
+            info->name_string, (long long)info->pack_size, (long long)info->lb, (long long)info->extent, (long long)info->true_lb, (long long)info->true_extent);
   } else {
-    fprintf(stdout, "%s ++ pack_size %d; lb %d, ext %d; true: lb %d, ext %d\n", line_prefix,
-            info->pack_size, info->lb, info->extent, info->true_lb, info->true_extent);
+    fprintf(stdout, "%s ++ pack_size %lld; lb %lld, ext %lld; true: lb %lld, ext %lld\n", line_prefix,
+            (long long)info->pack_size, (long long)info->lb, (long long)info->extent, (long long)info->true_lb, (long long)info->true_extent);
   }
   return;
 };
@@ -206,8 +206,8 @@ static void print_hvector_int(const struct mdt_info *info, const char *line_pref
 static void print_hvector(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
-  fprintf(stdout, "%s ++ %d blocks of %d replicas of child with byte-stride %d\n", line_prefix,
-          info->mdt_intargs[0], info->mdt_intargs[1], info->mdt_addrargs[0]);
+  fprintf(stdout, "%s ++ %d blocks of %d replicas of child with byte-stride %lld\n", line_prefix,
+          info->mdt_intargs[0], info->mdt_intargs[1], (long long)info->mdt_addrargs[0]);
   return;
 };
 
@@ -301,8 +301,8 @@ static void print_darray(const struct mdt_info *info, const char *line_prefix)
 static void print_resized(const struct mdt_info *info, const char *line_prefix)
 {
   print_basic(info, line_prefix);
-  fprintf(stdout, "%s ++ child resized by lb %d extent %d\n", line_prefix,
-          info->mdt_addrargs[0], info->mdt_addrargs[1]);
+  fprintf(stdout, "%s ++ child resized by lb %lld extent %lld\n", line_prefix,
+          (long long)info->mdt_addrargs[0], (long long)info->mdt_addrargs[1]);
   return;
 };
 
@@ -562,8 +562,8 @@ static void write_hvector(
   const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
-  fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_hvector(%d, %d, %d, %s, &%s);\n",
-          name_prefix, info->mdt_intargs[0], info->mdt_intargs[1], info->mdt_addrargs[0], 
+  fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_hvector(%d, %d, %lld, %s, &%s);\n",
+          name_prefix, info->mdt_intargs[0], info->mdt_intargs[1], (long long)info->mdt_addrargs[0],
           first_child_name, name_prefix);
   free(first_child_name);
   return;
@@ -608,7 +608,7 @@ static void write_set_arrayvar_addr(FILE * reconst_file, const char * arrayname,
   fprintf(reconst_file, "  MPI_Aint %s%s[%d];\n", prefix, arrayname, narray);
   int i;
   for(i = 0; i < narray; i++) {
-    fprintf(reconst_file, "%s%s[%d] = %d;\n", prefix, arrayname, i, arrayval[i]);
+    fprintf(reconst_file, "%s%s[%d] = %lld;\n", prefix, arrayname, i, (long long)arrayval[i]);
   }
 };
 
@@ -686,8 +686,8 @@ static void write_resized(
   const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
   char * first_child_name = get_first_child_name(info, name_prefix);
-  fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_resized(%s, %d, %d, &%s);\n",
-          name_prefix, first_child_name, info->mdt_addrargs[0], info->mdt_addrargs[1],
+  fprintf(reconst_file, "  MPI_Datatype %s;\n  MPI_Type_create_resized(%s, %lld, %lld, &%s);\n",
+          name_prefix, first_child_name, (long long)info->mdt_addrargs[0], (long long)info->mdt_addrargs[1],
           name_prefix);
   free(first_child_name);
   return;
@@ -944,12 +944,12 @@ static void reconstruct_MPI_datatype(struct mdt_info * const info,
   fprintf(reconst_cfile, "   see source file >analyze_MPI_Datatype.h< for details */\n");
   fprintf(reconst_cfile, "MPI_Datatype get_%s(void)\n{\n", 
           ((datatype_name_len > 0) ? datatype_name : "reconstuct_rename_me"));
-  fprintf(reconst_cfile, "// packed size - - - - - - : %d\n// lower bound - - - - - - : %d\n",
-          info->pack_size, info->lb);
-  fprintf(reconst_cfile, "// extent  - - - - - - - - : %d\n// min. allocation packed  : %d\n",
-          info->extent, info->pack_size);
-  fprintf(reconst_cfile, "// min. allocation unpacked: %d\n",
-          info->extent+info->lb);
+  fprintf(reconst_cfile, "// packed size - - - - - - : %lld\n// lower bound - - - - - - : %lld\n",
+          (long long)info->pack_size, (long long)info->lb);
+  fprintf(reconst_cfile, "// extent  - - - - - - - - : %lld\n// min. allocation packed  : %lld\n",
+          (long long)info->extent, (long long)info->pack_size);
+  fprintf(reconst_cfile, "// min. allocation unpacked: %lld\n",
+          (long long)(info->extent+info->lb));
   fprintf(reconst_hfile, "MPI_Datatype get_%s(void);\n\n", 
           ((datatype_name_len > 0) ? datatype_name : "reconstuct_rename_me"));
   reconstruct_MPI_datatype_tree(info, reconst_cfile, datatype_name);
