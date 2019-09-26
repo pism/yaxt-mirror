@@ -580,52 +580,65 @@ static void write_hvector_int(
   return;
 };
 
+enum { linebreak_pos = 161 };
+
 static void write_set_arrayvar_int(FILE * reconst_file, const char * arrayname, const char * prefix,
                             const int narray, const int * arrayval)
 {
-  fprintf(reconst_file, "  int %s%s[%d];\n", prefix, arrayname, narray);
-  int l = 512;
-  char line[l];
-  char line2[l];
-  int i;
-  snprintf(line, l, "");
+  fprintf(reconst_file, "  int %s%s[%d] = {\n", prefix, arrayname, narray);
+  enum { bufsize = 512, nindent = 4 };
+  char line[bufsize];
+  int i, pos;
+  for (size_t j = 0; j < nindent; ++j)
+    line[j] = ' ';
+  pos = nindent;
+  line[pos] = 0;
   for(i = 0; i < narray; i++) {
-    snprintf(line2, l, "%s", line);
-    snprintf(line, l, "%s %s%s[%d] = %d;", line2, prefix, arrayname, i, arrayval[i]);
-    if(strlen(line) > 160) {
-      fprintf(reconst_file, " %s\n", line);
-      snprintf(line, l, "");
+    pos += sprintf(line+pos, " %d%s", arrayval[i],
+                   i < narray-1 ? ", " : " };");
+    if (pos > linebreak_pos || i == narray-1) {
+      line[pos] = '\n';
+      line[pos+1] = '\0';
+      fputs(line, reconst_file);
+      for (size_t j = 0; j < nindent; ++j)
+        line[j] = ' ';
+      pos = nindent;
+      line[pos] = 0;
+      pos = 1;
     }
   }
-  if(strlen(line) > 0)
-    fprintf(reconst_file, " %s\n", line);
 };
 
 static void write_set_arrayvar_addr(FILE * reconst_file, const char * arrayname, const char * prefix,
                              const int narray, const MPI_Aint * arrayval)
 {
-  fprintf(reconst_file, "  MPI_Aint %s%s[%d];\n", prefix, arrayname, narray);
-  int i;
+  fprintf(reconst_file, "  MPI_Aint %s%s[%d] = {\n", prefix, arrayname, narray);
+  int i, pos;
+  pos = fputs("   ", reconst_file);
   for(i = 0; i < narray; i++) {
-    fprintf(reconst_file, "%s%s[%d] = %lld;\n", prefix, arrayname, i, (long long)arrayval[i]);
+    pos += fprintf(reconst_file, " %lld%s", (long long)arrayval[i],
+                   i < narray-1 ? (pos < linebreak_pos ? "," : ",\n   ")
+                   : "};\n");
+    if (pos >= linebreak_pos) pos = 3;
   }
 };
 
 static void write_set_arrayvar_ddt(FILE * reconst_file, const char * arrayname, const char * prefix,
                              const int narray, const struct mdt_info * info)
 {
-  fprintf(reconst_file, "  MPI_Datatype %s%s[%d];\n", prefix, arrayname, narray);
+  fprintf(reconst_file, "  MPI_Datatype %s%s[%d] = {\n", prefix, arrayname, narray);
   int i;
   struct mdt_info * cinfo = info->first_child;
   for(i = 0; i < narray; i++) {
     if(cinfo->env_combiner_id == MPI_COMBINER_NAMED)
     {
-      fprintf(reconst_file, "%s%s[%d] = %s;\n", prefix, arrayname, i, cinfo->name_string);
+      fprintf(reconst_file, "    %s,\n", cinfo->name_string);
     } else {
-      fprintf(reconst_file, "%s%s[%d] = %s_%d;\n", prefix, arrayname, i, prefix, i);
+      fprintf(reconst_file, "    %s_%d,\n", prefix, i);
     }
     cinfo = cinfo->next;
   }
+  fputs("  };\n", reconst_file);
 };
 
 
