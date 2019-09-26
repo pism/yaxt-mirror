@@ -424,8 +424,8 @@ static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, 
   if (mpidt == MPI_DATATYPE_NULL) return;
 
   static char const mynameis_format[] = "analyze_MPI_datatype_nest l%d";
-  size_t mynameis_size = sizeof(mynameis_format) + 3 * sizeof(nest) + 1;
-  char * mynameis = malloc(mynameis_size);
+  enum { mynameis_size = sizeof(mynameis_format) + 3 * sizeof(nest) + 1 };
+  char mynameis[mynameis_size];
   snprintf(mynameis, mynameis_size, mynameis_format, nest);
   int icall = 0, dummy;
   info->mdt = mpidt;
@@ -469,7 +469,6 @@ static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, 
       last_info = this_info;
     }
   }
-  free(mynameis);
   return;
 };
 
