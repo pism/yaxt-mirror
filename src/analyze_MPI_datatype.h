@@ -956,8 +956,6 @@ static void reconstruct_MPI_datatype(struct mdt_info * const info,
   write_cleanup_tree(info, reconst_cfile, datatype_name, 1);
   fprintf(reconst_cfile, "  return %s_0;\n", datatype_name);
   fprintf(reconst_cfile, "};\n");
-  fflush(reconst_cfile);
-  fflush(reconst_hfile);
   fclose(reconst_cfile);
   fclose(reconst_hfile);
   flock(fileno(lock_file), LOCK_UN);
