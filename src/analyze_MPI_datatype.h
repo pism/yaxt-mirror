@@ -940,7 +940,6 @@ static void reconstruct_MPI_datatype(struct mdt_info * const info,
   char  * lock_file_name = malloc(reconst_file_name_len + 6 + 1);
   char  * reconst_cfile_name = malloc(reconst_file_name_len + 3 + 1);
   char  * reconst_hfile_name = malloc(reconst_file_name_len + 3 + 1);
-  char dummy[64];
   snprintf(lock_file_name,     reconst_file_name_len + 6 + 1, "%s_lock", reconst_file_name_in);
   snprintf(reconst_cfile_name, reconst_file_name_len + 3 + 1, "%s.c",    reconst_file_name_in);
   snprintf(reconst_hfile_name, reconst_file_name_len + 3 + 1, "%s.h",    reconst_file_name_in);
