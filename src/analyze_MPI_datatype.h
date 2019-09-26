@@ -69,25 +69,25 @@
 #include <string.h>
 #include <mpi.h>
 
-static char const MPI_COMBINER_NAMED_STRING[]            = "MPI_COMBINER_NAMED: predefined datatype";
-static char const MPI_COMBINER_DUP_STRING[]              = "MPI_COMBINER_DUP: MPI_Type_dup()";
-static char const MPI_COMBINER_CONTIGUOUS_STRING[]       = "MPI_COMBINER_CONTIGUOUS: MPI_Type_contiguous()";
-static char const MPI_COMBINER_VECTOR_STRING[]           = "MPI_COMBINER_VECTOR: MPI_Type_vector()";
-static char const MPI_COMBINER_HVECTOR_INTEGER_STRING[]  = "MPI_COMBINER_HVECTOR_INTEGER: MPI_Type_hvector() from FORTRAN";
-static char const MPI_COMBINER_HVECTOR_STRING[]          = "MPI_COMBINER_HVECTOR: MPI_Type_hvector() from C/C++ or MPI_Type_create_hvector()";
-static char const MPI_COMBINER_INDEXED_STRING[]          = "MPI_COMBINER_INDEXED: MPI_Type_indexed()";
-static char const MPI_COMBINER_HINDEXED_INTEGER_STRING[] = "MPI_COMBINER_HINDEXED_INTEGER: MPI_Type_hindexed() from FORTRAN";
-static char const MPI_COMBINER_HINDEXED_STRING[]         = "MPI_COMBINER_HINDEXED: MPI_Type_hindexed() from C/C++ or MPI_Type_create_hindexed()";
-static char const MPI_COMBINER_INDEXED_BLOCK_STRING[]    = "MPI_COMBINER_INDEXED_BLOCK: MPI_Type_create_indexed_block()";
-static char const MPI_COMBINER_STRUCT_INTEGER_STRING[]   = "MPI_COMBINER_STRUCT_INTEGER: MPI_Type_struct() from FORTRAN";
-static char const MPI_COMBINER_STRUCT_STRING[]           = "MPI_COMBINER_STRUCT: MPI_Type_struct() from C/C++ or MPI_Type_create_struct()";
-static char const MPI_COMBINER_SUBARRAY_STRING[]         = "MPI_COMBINER_SUBARRAY: MPI_Type_create_subarray()";
-static char const MPI_COMBINER_DARRAY_STRING[]           = "MPI_COMBINER_DARRAY: MPI_Type_create_darray()";
-static char const MPI_COMBINER_F90_REAL_STRING[]         = "MPI_COMBINER_F90_REAL: MPI_Type_create_f90_real()";
-static char const MPI_COMBINER_F90_COMPLEX_STRING[]      = "MPI_COMBINER_F90_COMPLEX: MPI_Type_create_f90_complex()";
-static char const MPI_COMBINER_F90_INTEGER_STRING[]      = "MPI_COMBINER_F90_INTEGER: MPI_Type_create_f90_integer()";
-static char const MPI_COMBINER_RESIZED_STRING[]          = "MPI_COMBINER_RESIZED: MPI_Type_create_resized()";
-static char const MPI_COMBINER_UNKOWN_STRING[]           = "MPI_COMBINER_UNKOWN: This is an error!";
+static char const COMBINER_NAMED_STRING[]            = "MPI_COMBINER_NAMED: predefined datatype";
+static char const COMBINER_DUP_STRING[]              = "MPI_COMBINER_DUP: MPI_Type_dup()";
+static char const COMBINER_CONTIGUOUS_STRING[]       = "MPI_COMBINER_CONTIGUOUS: MPI_Type_contiguous()";
+static char const COMBINER_VECTOR_STRING[]           = "MPI_COMBINER_VECTOR: MPI_Type_vector()";
+static char const COMBINER_HVECTOR_INTEGER_STRING[]  = "MPI_COMBINER_HVECTOR_INTEGER: MPI_Type_hvector() from FORTRAN";
+static char const COMBINER_HVECTOR_STRING[]          = "MPI_COMBINER_HVECTOR: MPI_Type_hvector() from C/C++ or MPI_Type_create_hvector()";
+static char const COMBINER_INDEXED_STRING[]          = "MPI_COMBINER_INDEXED: MPI_Type_indexed()";
+static char const COMBINER_HINDEXED_INTEGER_STRING[] = "MPI_COMBINER_HINDEXED_INTEGER: MPI_Type_hindexed() from FORTRAN";
+static char const COMBINER_HINDEXED_STRING[]         = "MPI_COMBINER_HINDEXED: MPI_Type_hindexed() from C/C++ or MPI_Type_create_hindexed()";
+static char const COMBINER_INDEXED_BLOCK_STRING[]    = "MPI_COMBINER_INDEXED_BLOCK: MPI_Type_create_indexed_block()";
+static char const COMBINER_STRUCT_INTEGER_STRING[]   = "MPI_COMBINER_STRUCT_INTEGER: MPI_Type_struct() from FORTRAN";
+static char const COMBINER_STRUCT_STRING[]           = "MPI_COMBINER_STRUCT: MPI_Type_struct() from C/C++ or MPI_Type_create_struct()";
+static char const COMBINER_SUBARRAY_STRING[]         = "MPI_COMBINER_SUBARRAY: MPI_Type_create_subarray()";
+static char const COMBINER_DARRAY_STRING[]           = "MPI_COMBINER_DARRAY: MPI_Type_create_darray()";
+static char const COMBINER_F90_REAL_STRING[]         = "MPI_COMBINER_F90_REAL: MPI_Type_create_f90_real()";
+static char const COMBINER_F90_COMPLEX_STRING[]      = "MPI_COMBINER_F90_COMPLEX: MPI_Type_create_f90_complex()";
+static char const COMBINER_F90_INTEGER_STRING[]      = "MPI_COMBINER_F90_INTEGER: MPI_Type_create_f90_integer()";
+static char const COMBINER_RESIZED_STRING[]          = "MPI_COMBINER_RESIZED: MPI_Type_create_resized()";
+static char const COMBINER_UNKOWN_STRING[]           = "MPI_COMBINER_UNKOWN: This is an error!";
 
 struct mdt_info_t;
 
@@ -131,25 +131,25 @@ static char const * get_combiner_name(const int combiner_id)
 {
   switch (combiner_id)
   {
-    case MPI_COMBINER_NAMED:            return MPI_COMBINER_NAMED_STRING;
-    case MPI_COMBINER_DUP:              return MPI_COMBINER_DUP_STRING;
-    case MPI_COMBINER_CONTIGUOUS:       return MPI_COMBINER_CONTIGUOUS_STRING;
-    case MPI_COMBINER_VECTOR:           return MPI_COMBINER_VECTOR_STRING;
-    case MPI_COMBINER_HVECTOR_INTEGER:  return MPI_COMBINER_HVECTOR_INTEGER_STRING;
-    case MPI_COMBINER_HVECTOR:          return MPI_COMBINER_HVECTOR_STRING;
-    case MPI_COMBINER_INDEXED:          return MPI_COMBINER_INDEXED_STRING;
-    case MPI_COMBINER_HINDEXED_INTEGER: return MPI_COMBINER_HINDEXED_INTEGER_STRING;
-    case MPI_COMBINER_HINDEXED:         return MPI_COMBINER_HINDEXED_STRING;
-    case MPI_COMBINER_INDEXED_BLOCK:    return MPI_COMBINER_INDEXED_BLOCK_STRING;
-    case MPI_COMBINER_STRUCT_INTEGER:   return MPI_COMBINER_STRUCT_INTEGER_STRING;
-    case MPI_COMBINER_STRUCT:           return MPI_COMBINER_STRUCT_STRING;
-    case MPI_COMBINER_SUBARRAY:         return MPI_COMBINER_SUBARRAY_STRING;
-    case MPI_COMBINER_DARRAY:           return MPI_COMBINER_DARRAY_STRING;
-    case MPI_COMBINER_F90_REAL:         return MPI_COMBINER_F90_REAL_STRING;
-    case MPI_COMBINER_F90_COMPLEX:      return MPI_COMBINER_F90_COMPLEX_STRING;
-    case MPI_COMBINER_F90_INTEGER:      return MPI_COMBINER_F90_INTEGER_STRING;
-    case MPI_COMBINER_RESIZED:          return MPI_COMBINER_RESIZED_STRING;
-    default:                            return MPI_COMBINER_UNKOWN_STRING;
+    case MPI_COMBINER_NAMED:            return COMBINER_NAMED_STRING;
+    case MPI_COMBINER_DUP:              return COMBINER_DUP_STRING;
+    case MPI_COMBINER_CONTIGUOUS:       return COMBINER_CONTIGUOUS_STRING;
+    case MPI_COMBINER_VECTOR:           return COMBINER_VECTOR_STRING;
+    case MPI_COMBINER_HVECTOR_INTEGER:  return COMBINER_HVECTOR_INTEGER_STRING;
+    case MPI_COMBINER_HVECTOR:          return COMBINER_HVECTOR_STRING;
+    case MPI_COMBINER_INDEXED:          return COMBINER_INDEXED_STRING;
+    case MPI_COMBINER_HINDEXED_INTEGER: return COMBINER_HINDEXED_INTEGER_STRING;
+    case MPI_COMBINER_HINDEXED:         return COMBINER_HINDEXED_STRING;
+    case MPI_COMBINER_INDEXED_BLOCK:    return COMBINER_INDEXED_BLOCK_STRING;
+    case MPI_COMBINER_STRUCT_INTEGER:   return COMBINER_STRUCT_INTEGER_STRING;
+    case MPI_COMBINER_STRUCT:           return COMBINER_STRUCT_STRING;
+    case MPI_COMBINER_SUBARRAY:         return COMBINER_SUBARRAY_STRING;
+    case MPI_COMBINER_DARRAY:           return COMBINER_DARRAY_STRING;
+    case MPI_COMBINER_F90_REAL:         return COMBINER_F90_REAL_STRING;
+    case MPI_COMBINER_F90_COMPLEX:      return COMBINER_F90_COMPLEX_STRING;
+    case MPI_COMBINER_F90_INTEGER:      return COMBINER_F90_INTEGER_STRING;
+    case MPI_COMBINER_RESIZED:          return COMBINER_RESIZED_STRING;
+    default:                            return COMBINER_UNKOWN_STRING;
   };
 };
 
