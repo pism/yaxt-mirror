@@ -521,6 +521,7 @@ static char * get_first_child_name(
 static void write_null(
   const struct mdt_info * const info, FILE * reconst_file, const char * name_prefix)
 {
+  (void)info;
   fprintf(
     reconst_file, "  MPI_Datatype %s = MPI_DATATYPE_NULL;\n", name_prefix);
   return;
