@@ -91,11 +91,19 @@ static char const COMBINER_UNKOWN_STRING[]           = "MPI_COMBINER_UNKOWN: Thi
 
 struct mdt_info;
 
+#if MPI_VERSION < 3
+typedef MPI_Aint MPI_Count;
+#endif
+
 struct mdt_info {
   char const *combiner_string;
   char name_string[MPI_MAX_OBJECT_NAME];
   MPI_Datatype mdt;
+#if MPI_VERSION < 3
+  int pack_size;
+#else
   MPI_Count pack_size;
+#endif
   MPI_Count lb;
   MPI_Count extent;
   MPI_Count true_lb;
@@ -430,9 +438,15 @@ static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, 
   int icall = 0, dummy;
   info->mdt = mpidt;
   info->nest = nest;
+#if MPI_VERSION >= 3
   wmpi(MPI_Type_size_x(mpidt, &(info->pack_size)), mynameis, icall++);
   wmpi(MPI_Type_get_extent_x(mpidt, &(info->lb), &(info->extent)), mynameis, icall++);
   wmpi(MPI_Type_get_true_extent_x(mpidt, &(info->true_lb), &(info->true_extent)), mynameis, icall++);
+#else
+  wmpi(MPI_Type_size(mpidt, &(info->pack_size)), mynameis, icall++);
+  wmpi(MPI_Type_get_extent(mpidt, &(info->lb), &(info->extent)), mynameis, icall++);
+  wmpi(MPI_Type_get_true_extent(mpidt, &(info->true_lb), &(info->true_extent)), mynameis, icall++);
+#endif
   wmpi(MPI_Type_get_name(mpidt, info->name_string,  &(dummy)), mynameis, icall++);
   wmpi(MPI_Type_get_envelope(mpidt, &(info->env_num_ints), &(info->env_num_addr),
                              &(info->env_num_mdt), &(info->env_combiner_id)), mynameis, icall++);
