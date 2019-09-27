@@ -269,14 +269,15 @@ static void print_struct(const struct mdt_info *info, const char *line_prefix)
 
 static char *  print_int_array(int size, int * array) {
 
-  size_t tmp_size = 3 + size * (1 + 3 * sizeof(int)) + 1;
+  size_t tmp_size = 3 + (size_t)size * (1 + 3 * sizeof(int)) + 1;
   char * tmp = malloc(tmp_size);
-
-  snprintf(tmp, tmp_size, "{");
-  for (int i = 0; i < size; i++) {
-    snprintf(tmp, tmp_size, "%s,%d", tmp, array[i]);
+  int pos = sprintf(tmp, "{");
+  if (size > 0) {
+    pos += sprintf(tmp + pos, "%d", array[0]);
+    for (int i = 1; i < size; i++)
+      pos += sprintf(tmp + pos, ",%d", array[i]);
   }
-  snprintf(tmp, tmp_size, "}");
+  strncat(tmp+pos, "}", tmp_size - (size_t)pos);
   return tmp;
 }
 
