@@ -437,9 +437,9 @@ static void analyze_MPI_datatype_nest(const MPI_Datatype mpidt, const int nest, 
   wmpi(MPI_Type_get_envelope(mpidt, &(info->env_num_ints), &(info->env_num_addr),
                              &(info->env_num_mdt), &(info->env_combiner_id)), mynameis, icall++);
   info->combiner_string = get_combiner_name(info->env_combiner_id);
-  info->mdt_intargs = (int *) malloc(sizeof(int)*info->env_num_ints);
-  info->mdt_addrargs = (MPI_Aint *) malloc(sizeof(MPI_Aint)*info->env_num_addr);
-  info->mdt_dtargs = (MPI_Datatype *) malloc(sizeof(MPI_Datatype)*info->env_num_mdt);
+  info->mdt_intargs = (int *) malloc(sizeof(int) * (size_t)info->env_num_ints);
+  info->mdt_addrargs = (MPI_Aint *) malloc(sizeof(MPI_Aint) * (size_t)info->env_num_addr);
+  info->mdt_dtargs = (MPI_Datatype *) malloc(sizeof(MPI_Datatype) * (size_t)info->env_num_mdt);
   if (info->env_combiner_id != MPI_COMBINER_NAMED)
   {
     wmpi(MPI_Type_get_contents(mpidt, info->env_num_ints, info->env_num_addr, info->env_num_mdt,
