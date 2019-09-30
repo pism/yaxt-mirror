@@ -106,13 +106,11 @@ q
 	   AS_IF([test $ac_status -eq 0],
 	     [acx_mpi_defects_result=okay; acx_mpi_defects_fail=no]m4_ifval([$2],[
 	      $2]),
-	     [acx_mpi_defects_result=error
-              m4_ifval([$3],[$3], [acx_mpi_defects_fail=yes])])],
-	  [acx_mpi_defects_result=error
-           m4_ifval([$3],[$3],[acx_mpi_defects_fail=yes])])
+	     [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])],
+	  [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])
         AC_MSG_RESULT([$acx_mpi_defects_result])
         AS_IF([test x"$acx_mpi_defects_fail" = xyes],
-          [AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])
+          [m4_default([$3],[AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])
 	AS_CASE([$acx_suffix],
 	  [f90|F90],[AC_LANG_POP([Fortran])],
 	  [c],[AC_LANG_POP([C])])])
