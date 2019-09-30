@@ -62,15 +62,20 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
    dnl _KPSE_USE_LIBTOOL ensures libtool is also used for configure-time tests,
    dnl which deduces dependent libraries automatically
    _KPSE_USE_LIBTOOL
+   AC_LANG_PUSH([C])
+   _KPSE_CHECK_LIBTOOL
+   AC_LANG_POP([C])
    AC_PROVIDE_IFELSE([AC_PROG_FC],
      [AS_IF([test -n "$FC" -a X"$FC" != Xno],
         [AC_LANG_PUSH([Fortran])
          _ACX_LT_FORT_FLAGS_MANGLE
+         _KPSE_CHECK_LIBTOOL
          AC_LANG_POP([Fortran])])])
    AC_PROVIDE_IFELSE([AC_PROG_F77],
      [AS_IF([test -n "$F77" -a X"$F77" != Xno],
         [AC_LANG_PUSH([Fortran 77])
          _ACX_LT_FORT_FLAGS_MANGLE
+         _KPSE_CHECK_LIBTOOL
          AC_LANG_POP([Fortran 77])])])
 dnl substitute -shared-intel if present
    AS_FOR([acx_flag_var],[acx_flag_var_],[CFLAGS CXXFLAGS FCFLAGS F77FLAGS LDFLAGS],
