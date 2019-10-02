@@ -65,8 +65,8 @@ dnl ######################################################################
 dnl Checks for programs.
 dnl ######################################################################
 dnl Require an ISO C99 compliant C compiler
-m4_pushdef([_AC_PROG_CC_C89])
-m4_define([_AC_PROG_CC_C89],[_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])
+m4_pushdef([_AC_PROG_CC_C89],
+  [_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])
 AC_PROG_CC
 m4_popdef([_AC_PROG_CC_C89])
 
