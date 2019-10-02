@@ -122,8 +122,8 @@ q
 dnl dump text documentation of defect test to stderr
 dnl ACX_MPI_DEFECTS_DOCUMENT([TEST-DOC-DIR=config/checkdoc])
 AC_DEFUN([ACX_MPI_DEFECTS_DOCUMENT],
-  [AS_IF([test -r "$srcdir/m4_ifval([$1],[$1],[config/checkdoc])/${acx_subtestname}.txt"],
-             [cat "$srcdir/m4_ifval([$1],[$1],[config/checkdoc])/${acx_subtestname}.txt" >&2])])
+  [AS_IF([test -r "$srcdir/m4_default([$1],[config/checkdoc])/${acx_subtestname}.txt"],
+             [cat "$srcdir/m4_default([$1],[config/checkdoc])/${acx_subtestname}.txt" >&2])])
 dnl
 dnl Local Variables:
 dnl mode: autoconf
