@@ -280,7 +280,16 @@ ACX_MPIRUN(,,
 AS_VAR_IF([with_regard_for_quality], [yes],
   [ACX_MPI_DEFECTS(,,
      [ACX_MPI_DEFECTS_DOCUMENT
-      AC_MSG_FAILURE([test for known defect $acx_subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation, but some tests might fail])])])
+      AS_CASE(["$acx_subtestname"],[openmpi_datatype],
+        [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected attempting interpositioning work-around!])
+         ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
+           [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)'])],
+        [AC_MSG_FAILURE([test for known defect $acx_subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation, but some tests might fail])])])])
+AM_CONDITIONAL([OMPI_DT_WORKAROUND],
+  [test x${acx_opal_datatype_add_workaround+set} = xset])
+AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset],
+  [acx_opal_datatype_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_opal_datatype_add_workaround')"`])
+AC_SUBST([acx_opal_datatype_add_workaround])
 AS_IF([test "x$MPI_LAUNCH" = xtrue],
   [AC_MSG_WARN([MPI launch command unavailable])])
 FCFLAGS=$saved_FCFLAGS
