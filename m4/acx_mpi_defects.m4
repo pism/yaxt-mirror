@@ -36,9 +36,10 @@ dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
-dnl ACX_MPI_DEFECTS([TEST-SOURCE-DIR=config/checksrc],
+dnl ACX_MPI_DEFECTS([TEST-SOURCE-DIR=$srcdir/config/checksrc],
 dnl                 [ACTION-IF-CHECK-SUCCEEDS],
-dnl                 [ACTION-IF-CHECK-FAILED=AC_MSG_FAILURE])
+dnl                 [ACTION-IF-CHECK-FAILED=AC_MSG_FAILURE],
+dnl                 [LIST-OF-TEST-GLOBS=[*]])
 dnl
 dnl Requires MPI_LAUNCH program. Also CC/FC must be setup to
 dnl build MPI programs.
@@ -76,8 +77,15 @@ AC_DEFUN([ACX_MPI_DEFECTS],
 [--enable-cross-mpi-defect-checks, if possible])],
      [AC_MSG_CHECKING([MPI for known defects])
       AC_MSG_RESULT([])
-      AS_FOR([acx_mpi_check_src_],[acx_mpi_check_src],["$srcdir/m4_ifval([$1],[$1],[config/checksrc])/"*],[
-	AS_IF([test x"$acx_mpi_check_src" = x"$srcdir/]m4_ifval([$1],[$1],[config/checksrc])[/*"],
+m4_ifval([$4],
+  [m4_pushdef([acx_test_pat],
+     m4_dquote(m4_foreach([acx_temp],[$4],
+       ["]m4_dquote(m4_default([$1],[$srcdir/config/checksrc]))[/"]acx_temp)))],
+  [m4_pushdef([acx_test_pat],
+     ["]m4_dquote(m4_default([$1],[$srcdir/config/checksrc]))[/"*])])dnl
+      AS_FOR([acx_mpi_check_src_],[acx_mpi_check_src],acx_test_pat,[
+	AS_IF([test ! -r "]acx_mpi_check_src_[" \
+            && test x"]acx_mpi_check_src_[" = x]m4_bpatsubst(m4_dquote(m4_defn([acx_test_pat])),[[*?]],[\\\&]),
 	  [break])
 	acx_suffix=`echo "acx_mpi_check_src_" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
 	acx_subtestname=`echo "acx_mpi_check_src_" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
@@ -114,6 +122,7 @@ q
 	  [c],[AC_LANG_POP([C])])
         AS_IF([test x"$acx_mpi_defects_fail" = xyes],
           [m4_default([$3],[AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])])
+m4_popdef([acx_test_pat])dnl
       ASX_VAR_UNSET([acx_mpirun_num_tasks])
       ASX_VAR_UNSET([acx_mpi_check_src])
       ASX_VAR_UNSET([acx_suffix])
