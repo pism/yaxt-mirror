@@ -289,20 +289,17 @@ static void dmap_offset_reorder(
 }
 
 static struct Xt_redist_msg * generate_redist_msgs(
-  int count, struct Xt_dmap_msg * dmap_msgs, MPI_Datatype base_datatype,
+  int count, struct Xt_dmap_msg *restrict dmap_msgs, MPI_Datatype base_datatype,
   MPI_Comm comm) {
 
-  struct Xt_redist_msg *redist_msgs
+  struct Xt_redist_msg *restrict redist_msgs
     = xmalloc((size_t)count * sizeof(*redist_msgs));
 
   for (int i = 0; i < count; ++i) {
-
-    struct Xt_dmap_msg * curr_dmap_msg = dmap_msgs + i;
-
     redist_msgs[i].datatype =
       xt_mpi_generate_datatype(
-        curr_dmap_msg->offsets, curr_dmap_msg->count, base_datatype, comm);
-    redist_msgs[i].rank = curr_dmap_msg->rank;
+        dmap_msgs[i].offsets, dmap_msgs[i].count, base_datatype, comm);
+    redist_msgs[i].rank = dmap_msgs[i].rank;
   }
 
   return redist_msgs;
