@@ -205,24 +205,27 @@ Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
   return (void *)idxvec_obj;
 }
 
-static int
+static size_t
 decode_stripe(struct Xt_stripe stripe, Xt_int *sorted_vector,
               int * sorted_vec_pos, int pos_offset) {
 
-  if (stripe.stride >= 0) {
-    for (int i = 0; i < stripe.nstrides; ++i) {
-      sorted_vector[i] = (Xt_int)(stripe.start + i * stripe.stride);
-      sorted_vec_pos[i] = pos_offset + i;
-    }
+  Xt_int stride = stripe.stride, start;
+  int sign;
+  if (stride >= 0) {
+    sign = 1;
+    start = stripe.start;
   } else {
-    for (int i = 0; i < stripe.nstrides; ++i) {
-      int j = stripe.nstrides - i - 1;
-      sorted_vector[j] = (Xt_int)(stripe.start + i * stripe.stride);
-      sorted_vec_pos[j] = pos_offset + i;
-    }
+    sign = -1;
+    start = (Xt_int)(stripe.start + (Xt_int)(stripe.nstrides-1) * stride);
+    stride = (Xt_int)-stride;
+    pos_offset += stripe.nstrides-1;
+  }
+  for (int i = 0; i < stripe.nstrides; ++i) {
+    sorted_vector[i] = (Xt_int)(start + i * stride);
+    sorted_vec_pos[i] = pos_offset + i * sign;
   }
 
-  return stripe.nstrides;
+  return (size_t)stripe.nstrides;
 }
 
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -243,7 +246,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     = xmalloc((size_t)idxvec->parent.num_indices
               * sizeof(*(idxvec->sorted_vector)));
   idxvec->sorted_vector = sorted_vector_assign;
-  idxvec->sorted_vec_positions
+  int *sorted_vec_positions
+    = idxvec->sorted_vec_positions
     = xmalloc((size_t)idxvec->parent.num_indices *
               sizeof(*(idxvec->sorted_vec_positions)));
 
@@ -264,16 +268,15 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   xt_quicksort_index(stripe_minmax[0], (int)num_stripes,
                      sorted_stripe_min_pos, 1);
 
-  int *restrict sorted_pos_prefix_sum, *restrict orig_pos_prefix_sum;
-
-  sorted_pos_prefix_sum
-    = sorted_stripe_min_pos + num_stripes;
-  orig_pos_prefix_sum
+  int *restrict sorted_pos_prefix_sum = sorted_stripe_min_pos + num_stripes,
+    *restrict orig_pos_prefix_sum
     = xmalloc(num_stripes * sizeof(*orig_pos_prefix_sum));
 
-  orig_pos_prefix_sum[0] = 0;
-  for (size_t i = 1; i < num_stripes; ++i)
-    orig_pos_prefix_sum[i] = orig_pos_prefix_sum[i-1] + stripes[i-1].nstrides;
+  int accum = 0;
+  for (size_t i = 0; i < num_stripes; ++i) {
+    orig_pos_prefix_sum[i] = accum;
+    accum += stripes[i].nstrides;
+  }
 
   for (size_t i = 0; i < num_stripes; ++i) {
     int sorted_pos = sorted_stripe_min_pos[i];
@@ -317,30 +320,27 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   }
   overlap_count[num_stripes - 1] = 0;
 
-  Xt_int offset = 0;
+  size_t offset = 0;
 
   size_t i = 0;
   while (i < num_stripes) {
 
     bool do_overlap = overlap_count[i] > 0;
     size_t num_selection = (size_t)(abs(overlap_count[i])) + 1;
-    Xt_int curr_offset = 0;
+    size_t sel_size = 0;
 
     for (size_t j = 0; j < num_selection; ++j)
-      curr_offset
-        = (Xt_int)(curr_offset
-                   + decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
-                                   sorted_vector_assign + offset
-                                   + curr_offset,
-                                   idxvec->sorted_vec_positions + offset
-                                   + curr_offset,
-                                   sorted_pos_prefix_sum[i+j]));
+      sel_size += decode_stripe(stripes[sorted_stripe_min_pos[i+j]],
+                                sorted_vector_assign + offset + sel_size,
+                                sorted_vec_positions + offset + sel_size,
+                                sorted_pos_prefix_sum[i+j]);
 
     if (do_overlap)
-      xt_quicksort_index(sorted_vector_assign + offset, (int)curr_offset,
-                         idxvec->sorted_vec_positions + offset, 0);
+      xt_quicksort_xt_int_permutation(sorted_vector_assign + offset,
+                                      sel_size,
+                                      sorted_vec_positions + offset);
 
-    offset = (Xt_int)(offset + curr_offset);
+    offset += sel_size;
     i += num_selection;
   }
 
