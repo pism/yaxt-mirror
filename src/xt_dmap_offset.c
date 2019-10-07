@@ -248,8 +248,9 @@ static void reorder_offsets(
     if (count > 0)
       // reorder local receive offsets (curr_msg->offsets) based on remote send
       // offsets (recv_buffer + recv_displs[curr_msg->rank])
-      xt_quicksort_index_int(
-        recv_buffer + recv_displs[curr_msg->rank], count, curr_msg->offsets, 0);
+      xt_quicksort_int_permutation(
+        recv_buffer + recv_displs[curr_msg->rank], (size_t)count,
+        curr_msg->offsets);
   }
 
   free(send_buffer);

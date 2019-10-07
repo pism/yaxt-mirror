@@ -60,32 +60,45 @@
   * @param[in,out]  a            array of ints to be sorted
   * @param[in]      n            length of data
  **/
-void xt_quicksort_int(int *a, size_t n);
+void xt_quicksort_int(int a[], size_t n);
 
 /** quicksort changing structured values
   *
-  * @param[in,out]  v            data to be sorted
+  * @param[in,out]  v            array to be sorted
   * @param[in]      n            length of data
  **/
-void xt_quicksort_idxpos(idxpos_type *v, size_t n);
+void xt_quicksort_idxpos(idxpos_type v[], size_t n);
 
 /** quicksort changing values and indices
   *
-  * @param[in,out]  a            data to be sorted
-  * @param[in]      n            length of data
+  * @param[in,out]  a            array to be sorted
+  * @param[in]      n            number of elements in a and idx
   * @param[in,out]  idx          old index of sorted returned a
   * @param[in]      reset_index  override given idx by identity idx
   */
-void xt_quicksort_index (Xt_int * a, int n, int * idx, int reset_index);
+void xt_quicksort_index(Xt_int a[], int n, int *idx, int reset_index);
 
 /** quicksort changing values and indices
+  *
+  * @param[in,out]  a            array to be sorted
+  * @param[in]      n            number of elements in a and idx
+  * @param[in,out]  permutation  contents permuted exactly as a and
+  *                              used to resolve ordering if two
+  *                              elements of \a a have the same value
+  */
+void
+xt_quicksort_xt_int_permutation(Xt_int a[], size_t n, int permutation[]);
+
+/** quicksort sorting values and indices
   *
   * @param[in,out]  a            array of ints to be sorted
   * @param[in]      n            length of data
-  * @param[in,out]  idx          old index of sorted returned a
-  * @param[in]      reset_index  override given idx by identity idx
+  * @param[in,out]  permutation  contents permuted exactly as a and
+  *                              used to resolve ordering if two
+  *                              elements of \a a have the same value
   */
-void xt_quicksort_index_int (int * a, int n, int * idx, int reset_index);
+void
+xt_quicksort_int_permutation(int a[], size_t n, int permutation[]);
 
 #endif  /* XT_QUICKSORT_H */
 
