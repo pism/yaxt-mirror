@@ -100,6 +100,12 @@ void xt_dmap_reorder(Xt_dmap dmap, enum xt_reorder_type type);
  *                          in the data to be exchanged
  */
 Xt_redist xt_dmap_generate_redist(Xt_dmap dmap, MPI_Datatype base_datatype);
+
+/**
+ * release resources of dmap object, must no longer be used after this
+ * call
+ * @param[in] dmap          data map to release
+ */
 void xt_dmap_delete(Xt_dmap dmap);
 
 #endif // XT_DMAP_H
