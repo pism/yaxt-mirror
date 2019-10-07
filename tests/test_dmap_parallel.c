@@ -56,8 +56,10 @@
 
 #include "tests.h"
 
-#define NUM_RANKS (4)
-#define NUM_INDICES_PER_RANK (4)
+enum {
+  NUM_RANKS = 4,
+  NUM_INDICES_PER_RANK = 4,
+};
 
 static void test_dmap(Xt_xmap xmap, enum xt_reorder_type reorder_type) {
 
