@@ -112,7 +112,7 @@ static void generate_msg_infos(
     // get the points that need to be transfered
     const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
     int count = xt_xmap_iterator_get_num_transfer_pos(iter);
-    int * curr_offsets = xmalloc(count * sizeof(*curr_offsets));
+    int *curr_offsets = xmalloc((size_t)count * sizeof(*curr_offsets));
 
     // get the actual offsets of the points that are to be sent
     for (int i = 0; i < count; ++i)
@@ -162,7 +162,8 @@ static void dmap_msg_offset_repeat(int msg_count, struct Xt_dmap_msg * msgs,
 
     struct Xt_dmap_msg * curr_msg = msgs + i;
     int count = curr_msg->count;
-    int * new_offsets = xmalloc(num_repetitions * count * sizeof(*new_offsets));
+    int *new_offsets = xmalloc((size_t)num_repetitions * (size_t)count
+                               * sizeof(*new_offsets));
     int * old_offsets = curr_msg->offsets;
 
     // add displacements to original offsets
@@ -231,9 +232,9 @@ static void reorder_offsets(
     if (count > 0) {
       // pack local send offsets into send buffer
       memcpy(send_buffer + send_displs[curr_msg->rank],
-             curr_msg->offsets, count * sizeof(*send_buffer));
+             curr_msg->offsets, (size_t)count * sizeof(*send_buffer));
       // sort local send offsets
-      xt_quicksort_int(curr_msg->offsets, count);
+      xt_quicksort_int(curr_msg->offsets, (size_t)count);
     }
   }
 
@@ -291,7 +292,8 @@ static struct Xt_redist_msg * generate_redist_msgs(
   int count, struct Xt_dmap_msg * dmap_msgs, MPI_Datatype base_datatype,
   MPI_Comm comm) {
 
-  struct Xt_redist_msg * redist_msgs = xmalloc(count * sizeof(*redist_msgs));
+  struct Xt_redist_msg *redist_msgs
+    = xmalloc((size_t)count * sizeof(*redist_msgs));
 
   for (int i = 0; i < count; ++i) {
 

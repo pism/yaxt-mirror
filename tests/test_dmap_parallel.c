@@ -201,9 +201,9 @@ void test1(void) {
   static Xt_int dst_index_vector[NUM_RANKS*NUM_INDICES_PER_RANK];
 
   for (int i = 0; i < NUM_INDICES_PER_RANK; ++i)
-    src_index_vector[i] = NUM_INDICES_PER_RANK * rank + i;
+    src_index_vector[i] = (Xt_int)(NUM_INDICES_PER_RANK * rank + i);
   for (int i = 0; i < NUM_RANKS*NUM_INDICES_PER_RANK; ++i)
-    dst_index_vector[i] = i;
+    dst_index_vector[i] = (Xt_int)i;
 
   Xt_idxlist src_index_list =
     xt_idxvec_new(src_index_vector, NUM_INDICES_PER_RANK);
@@ -238,17 +238,19 @@ static void test2(void) {
   int rank;
   xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
 
-#define NPROMA (4)
-#define NLEV (20)
-#define NBLK (6)
+  enum {
+    NPROMA = 4,
+    NLEV = 20,
+    NBLK = 6,
+  };
 
   static Xt_int src_index_vector[NPROMA*NBLK];
   static Xt_int dst_index_vector[NPROMA*NBLK*NUM_RANKS];
 
   for (int i = 0; i < NPROMA*NBLK; ++i)
-    src_index_vector[i] = NPROMA*NBLK * rank + i;
+    src_index_vector[i] = (Xt_int)(NPROMA*NBLK * rank + i);
   for (int i = 0; i < NPROMA*NBLK*NUM_RANKS; ++i)
-    dst_index_vector[i] = i;
+    dst_index_vector[i] = (Xt_int)i;
 
   Xt_idxlist src_index_list =
     xt_idxvec_new(src_index_vector, NPROMA*NBLK);
