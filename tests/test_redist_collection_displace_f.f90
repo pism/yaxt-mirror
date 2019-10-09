@@ -52,14 +52,20 @@ MODULE redist_collection_displace
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        Xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
-       xt_slice_c_loc, xt_request, xt_redist_a_exchange
+       xt_request, xt_redist_a_exchange
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
+  ! and when taking the slice address and the optimizer is on,
+  ! some other random failure occurs even with very recent compiler versions
+#if defined __PGI && __PGIC__ <= 19
+#undef HAVE_FC_C_LOC_OF_SLICE
+#endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, &
        check_wait_request
   USE iso_c_binding, ONLY: c_ptr
+#include "xt_slice_c_loc.inc"
   IMPLICIT NONE
   PRIVATE
   INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
@@ -151,8 +157,8 @@ CONTAINS
     dst_data_ => dst(dst_slice_len*num_slice+1:)
 
     DO i = 1, num_slice - 1
-      CALL xt_slice_c_loc(src_data(:, i), src_data_p(i))
-      CALL xt_slice_c_loc(dst_data(:, i), dst_data_p(i))
+      XT_SLICE_C_LOC(src_data(:, i), src_data_p(i))
+      XT_SLICE_C_LOC(dst_data(:, i), dst_data_p(i))
     END DO
 
     ! test exchange
@@ -160,8 +166,8 @@ CONTAINS
       src_data_(k:k+src_slice_len-1) = src_data(:,num_slice)
 
 
-      CALL xt_slice_c_loc(src_data_(k:k+src_slice_len-1), src_data_p(3))
-      CALL xt_slice_c_loc(dst_data_(k:k+dst_slice_len-1), dst_data_p(3))
+      XT_SLICE_C_LOC(src_data_(k:k+src_slice_len-1), src_data_p(3))
+      XT_SLICE_C_LOC(dst_data_(k:k+dst_slice_len-1), dst_data_p(3))
 
       DO iexch = 1, 2
         dst = -1.0d0

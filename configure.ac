@@ -160,7 +160,12 @@ ACX_FC_HAVE_IS_CONTIGUOUS([HAVE_FC_IS_CONTIGUOUS=yes
   FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_IS_CONTIGUOUS"
   AC_DEFINE([HAVE_FC_IS_CONTIGUOUS],[1])])
 AH_TEMPLATE([HAVE_FC_IS_CONTIGUOUS],
-  [Defined to 1 if Fortran compiler supports IS_CONTIGUOUS query, 0 if not])dnl
+  [Defined to 1 iff Fortran compiler supports IS_CONTIGUOUS query])dnl
+ACX_FC_HAVE_C_LOC_OF_SLICE([HAVE_FC_C_LOC_OF_SLICE=yes
+  FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_C_LOC_OF_SLICE"
+  AC_DEFINE([HAVE_FC_C_LOC_OF_SLICE],[1])])
+AH_TEMPLATE([HAVE_FC_C_LOC_OF_SLICE],
+  [Defined to 1 iff Fortran compiler supports C_LOC of an array slice])dnl
 dnl Check whether char is unsigned by default
 AC_C_CHAR_UNSIGNED
 AS_IF([test x$ac_cv_c_char_unsigned = xyes],

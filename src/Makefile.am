@@ -156,6 +156,7 @@ libyaxt_la_SOURCES =						\
 	xt_ut_c.c						\
 	xt_ut_c.h						\
 	yaxt_f2c.c						\
+	xt_slice_c_loc.inc					\
 	xt_mpi_f.f90						\
 	xt_core_f.f90						\
 	xt_sort_f.f90						\

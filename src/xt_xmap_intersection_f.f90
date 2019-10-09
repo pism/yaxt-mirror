@@ -51,9 +51,10 @@
 
 MODULE xt_xmap_intersection
   USE iso_c_binding, ONLY: c_int, c_loc, c_null_ptr, c_ptr
-  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_slice_c_loc
+  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_f2c
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f
+#include "xt_slice_c_loc.inc"
   IMPLICIT NONE
   PRIVATE
 
@@ -213,14 +214,14 @@ CONTAINS
         com_is_contiguous = xt_com_list_contiguous(com(1), com(2)) /= 0
 #endif
         IF (com_is_contiguous) THEN
-          CALL xt_slice_c_loc(com(1), com_p)
+          XT_SLICE_C_LOC(com(1), com_p)
         ELSE
           ALLOCATE(com_a(com_size))
           com_a = com
           com_p = C_LOC(com_a)
         END IF
       ELSE
-        CALL xt_slice_c_loc(com(1), com_p)
+        XT_SLICE_C_LOC(com(1), com_p)
       END IF
     ELSE
       com_p = c_null_ptr

@@ -63,6 +63,7 @@ PROGRAM test_redist_collection_parallel
 #endif
   USE test_redist_common, ONLY: check_wait_request
   USE iso_c_binding, ONLY: c_loc, c_ptr
+#include "xt_slice_c_loc.inc"
   IMPLICIT NONE
   INTEGER :: rank, world_size, ierror
   CHARACTER(len=*), PARAMETER :: &
@@ -335,20 +336,29 @@ CONTAINS
   END SUBROUTINE test_rr_exchange
 
   SUBROUTINE rr_exchange(redist, src_indices_, ref_dst_indices_)
+#if defined __GNUC__ && __GNUC__ >= 5 && __GNUC__ <= 8
+    ! gcc versions 5.x to 8.x have a bug that lets them evaluate the
+    ! ANY test too early if results never gets passed to some external
+    ! routine directly, 9.x is not only fixed again, but requires to
+    ! have the explicit escaping of a pointer to results via C_LOC
+    USE yaxt, ONLY: xt_slice_c_loc
+#undef XT_SLICE_C_LOC
+#define XT_SLICE_C_LOC(slice, cptr) CALL xt_slice_c_loc(slice, cptr)
+#endif
     TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, PARAMETER :: nredist = 2
     INTEGER(xt_int_kind), TARGET, INTENT(in) :: src_indices_(5)
-    INTEGER(xt_int_kind), INTENT(in) :: ref_dst_indices_(5, 2)
+    INTEGER(xt_int_kind), INTENT(in) :: ref_dst_indices_(5, nredist)
 
-    INTEGER(xt_int_kind), TARGET :: results(5,2)
-    TYPE(c_ptr) :: results_p(2), input(2)
-    INTEGER :: iexch
+    INTEGER(xt_int_kind), TARGET :: results(5,nredist)
+    TYPE(c_ptr) :: results_p(nredist), input(nredist)
+    INTEGER :: iexch, i
     TYPE(xt_request) :: request
 
-    CALL xt_slice_c_loc(results(:,1), results_p(1))
-    CALL xt_slice_c_loc(results(:,2), results_p(2))
-
-    input(1) = C_LOC(src_indices_)
-    input(2) = C_LOC(src_indices_)
+    DO i = 1, nredist
+      XT_SLICE_C_LOC(results(:,i), results_p(i))
+      input(i) = C_LOC(src_indices_)
+    END DO
 
     DO iexch = 1, 2
       results = -1

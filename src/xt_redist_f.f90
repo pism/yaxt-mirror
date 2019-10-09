@@ -58,6 +58,7 @@ MODULE xt_redist_base
   USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_loc, c_associated
   USE xt_mpi, ONLY: mpi_address_kind
   USE xt_requests, ONLY: xt_request, xt_request_init, xt_is_null
+#include "xt_slice_c_loc.inc"
   IMPLICIT NONE
   PRIVATE
   ! note: this type must not be extended to contain any other
@@ -921,14 +922,14 @@ CONTAINS
         msgs_is_contiguous = xt_redist_msg_contiguous(msgs(1), msgs(2)) /= 0
 #endif
         IF (msgs_is_contiguous) THEN
-          CALL xt_slice_c_loc(msgs(1), msgs_p)
+          XT_SLICE_C_LOC(msgs(1), msgs_p)
         ELSE
           ALLOCATE(msgs_a(msgs_size))
           msgs_a = msgs
           msgs_p = C_LOC(msgs_a)
         END IF
       ELSE
-        CALL xt_slice_c_loc(msgs(1), msgs_p)
+        XT_SLICE_C_LOC(msgs(1), msgs_p)
       END IF
     ELSE
       msgs_p = c_null_ptr

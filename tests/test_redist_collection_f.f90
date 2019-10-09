@@ -55,8 +55,13 @@ PROGRAM test_redist_collection
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_delete, xt_redist_copy, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
-       xt_slice_c_loc, xt_idxempty_new, xt_idxlist_delete, &
+       xt_idxempty_new, xt_idxlist_delete, &
        xt_idxlist, xt_request
+#if !defined HAVE_FC_LOGICAL_INTEROP || !defined(__GNUC__) || __GNUC__ > 4 \
+  || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
+#else
+  USE yaxt, ONLY: xt_slice_c_loc
+#endif
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
@@ -65,6 +70,7 @@ PROGRAM test_redist_collection
        check_wait_request
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
+#include "xt_slice_c_loc.inc"
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_collection_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
@@ -158,29 +164,23 @@ CONTAINS
     ! GNU Fortran versions up to 4.8 cannot call c_loc for type components,
     ! instant ICE, and some compilers won't create c_ptr's to LOGICALs
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
-    src_data_p(1) = C_LOC(src_data%dp)
+#  define COMP_C_LOC(v, p) p = C_LOC(v)
 #else
-    CALL xt_slice_c_loc(src_data%dp, src_data_p(1))
+#  define COMP_C_LOC(v, p) CALL xt_slice_c_loc(v, p)
 #endif
 #if !defined HAVE_FC_LOGICAL_INTEROP || !defined(__GNUC__) || __GNUC__ > 4 \
     || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
-    CALL xt_slice_c_loc(src_data%l, src_data_p(2))
+#  define L_COMP_C_LOC(v, p) CALL xt_slice_c_loc(v, p)
 #else
-    src_data_p(2) = C_LOC(src_data%l)
+#  define L_COMP_C_LOC(v, p) p = C_LOC(v)
 #endif
+
+    COMP_C_LOC(src_data%dp, src_data_p(1))
+    L_COMP_C_LOC(src_data%l, src_data_p(2))
     dst_data%dp = -1.0d0
     dst_data%l = .FALSE.
-#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
-    dst_data_p(1) = C_LOC(dst_data%dp)
-#else
-    CALL xt_slice_c_loc(dst_data%dp, dst_data_p(1))
-#endif
-#if !defined HAVE_FC_LOGICAL_INTEROP || !defined(__GNUC__) || __GNUC__ > 4 \
-    || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
-    CALL xt_slice_c_loc(dst_data%l, dst_data_p(2))
-#else
-    dst_data_p(2) = C_LOC(dst_data%l)
-#endif
+    COMP_C_LOC(dst_data%dp, dst_data_p(1))
+    L_COMP_C_LOC(dst_data%l, dst_data_p(2))
     CALL xt_redist_s_exchange(redist_coll, src_data_p, dst_data_p)
     IF (ANY(dst_data%l .NEQV. ref_dst_data%l)) &
          CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
@@ -236,8 +236,8 @@ CONTAINS
     TYPE(xt_request) :: request
 
     DO i = 1, 3
-      CALL xt_slice_c_loc(src_data(:, permutation(i)), src_data_p(i))
-      CALL xt_slice_c_loc(dst_data(:, permutation(i)), dst_data_p(i))
+      XT_SLICE_C_LOC(src_data(:, permutation(i)), src_data_p(i))
+      XT_SLICE_C_LOC(dst_data(:, permutation(i)), dst_data_p(i))
     END DO
     DO iexch = 1, 2
       dst_data = -1.0d0
