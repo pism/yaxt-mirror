@@ -104,12 +104,13 @@ static void test_dmap(Xt_xmap xmap, enum xt_reorder_type reorder_type) {
       // by default yaxt sends data in an order that is based on the sorted
       // indices
       // apply reordering to ref_recv_buffer (based on send or receive offsets)
-      if (reorder_type == XT_REORDER_SEND_UP)
-        xt_quicksort_index_int(
-          local_send_offsets, NUM_INDICES_PER_RANK, ref_recv_buffer, 0);
-      else if (reorder_type == XT_REORDER_RECV_UP)
-        xt_quicksort_index_int(
-          remote_recv_offsets, NUM_INDICES_PER_RANK, ref_recv_buffer, 0);
+      if (reorder_type != XT_REORDER_NONE) {
+        int *offsets_to_sort
+          = reorder_type == XT_REORDER_SEND_UP ? local_send_offsets
+          : remote_recv_offsets;
+        xt_quicksort_int_permutation(
+          offsets_to_sort, NUM_INDICES_PER_RANK, ref_recv_buffer);
+      }
 
       MPI_Datatype send_datatype =
         xt_redist_get_send_MPI_Datatype(redist, other_rank);
@@ -153,12 +154,13 @@ static void test_dmap(Xt_xmap xmap, enum xt_reorder_type reorder_type) {
       // by default yaxt sends data in an order that is based on the sorted
       // indices
       // apply reordering to send_buffer (based on send or receive offsets)
-      if (reorder_type == XT_REORDER_SEND_UP)
-        xt_quicksort_index_int(
-          remote_send_offsets, NUM_INDICES_PER_RANK, send_buffer, 0);
-      else if (reorder_type == XT_REORDER_RECV_UP)
-        xt_quicksort_index_int(
-          local_recv_offsets, NUM_INDICES_PER_RANK, send_buffer, 0);
+      if (reorder_type != XT_REORDER_NONE) {
+        int *offsets_to_sort
+          = reorder_type == XT_REORDER_SEND_UP ? remote_send_offsets
+          : local_recv_offsets;
+        xt_quicksort_int_permutation(
+          offsets_to_sort, NUM_INDICES_PER_RANK, send_buffer);
+      }
 
       MPI_Datatype recv_datatype =
         xt_redist_get_recv_MPI_Datatype(redist, other_rank);
