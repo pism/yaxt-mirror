@@ -234,31 +234,9 @@ xt_xmap_dist_dir_intercomm_new_f(struct xt_idxlist_f *src_idxlist_f,
                                         inter_comm_c, intra_comm_c);
 }
 
-void xt_dmap_reorder_f(struct xt_dmap_f *dmap_f, int reorder_type) {
-
-  xt_dmap_reorder(dmap_f->cptr, (enum xt_reorder_type)reorder_type);
-}
-
-void xt_dmap_repeat_f(struct xt_dmap_f *dmap_f, int num_repetitions,
-                      MPI_Fint *src_displacements, MPI_Fint *dst_displacements)
-{
-  assert(sizeof (MPI_Fint) == sizeof (int));
-
-  xt_dmap_repeat(
-    dmap_f->cptr, num_repetitions, src_displacements, dst_displacements);
-}
-
 void * xt_dmap_generate_redist_f(struct xt_dmap_f *dmap_f, MPI_Fint datatype_f)
 {
   return xt_dmap_generate_redist(dmap_f->cptr, MPI_Type_f2c(datatype_f));
-}
-
-Xt_dmap xt_dmap_offset_new_f(struct xt_xmap_f *xmap_f, MPI_Fint * src_offsets,
-                             MPI_Fint * dst_offsets)
-{
-  assert(sizeof (MPI_Fint) == sizeof (int));
-
-  return xt_dmap_offset_new(xmap_f->cptr, src_offsets, dst_offsets);
 }
 
 Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,

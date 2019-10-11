@@ -82,7 +82,7 @@ static const struct xt_dmap_vtable dmap_offset_vtable = {
 
 struct Xt_dmap_msg {
   int rank;
-  int * offsets;
+  int *offsets;
   int count;
 };
 
@@ -112,7 +112,7 @@ static void generate_msg_infos(
     // get the points that need to be transfered
     const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
     int count = xt_xmap_iterator_get_num_transfer_pos(iter);
-    int *curr_offsets = xmalloc((size_t)count * sizeof(*curr_offsets));
+    int *restrict curr_offsets = xmalloc((size_t)count * sizeof(*curr_offsets));
 
     // get the actual offsets of the points that are to be sent
     for (int i = 0; i < count; ++i)

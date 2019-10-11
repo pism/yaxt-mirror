@@ -49,7 +49,10 @@
 
 MODULE xt_dmap_base
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, i2, i4, i8
-  USE xt_xmap_abstract, ONLY: xt_xmap
+  USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_iter, xt_is_null, &
+       xt_xmap_get_out_iterator, xt_xmap_get_in_iterator, &
+       xt_xmap_iterator_next, xt_xmap_iterator_get_num_transfer_pos, &
+       xt_xmap_f2c
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f
   USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_loc, c_associated
   USE xt_mpi, ONLY: mpi_address_kind
@@ -66,9 +69,9 @@ MODULE xt_dmap_base
   END TYPE xt_dmap
 
   ENUM, BIND( C )
-    ENUMERATOR :: XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP
+    ENUMERATOR :: xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
   END ENUM
-  INTEGER, PARAMETER :: xt_reorder_type_kind = KIND(XT_REORDER_NONE)
+  INTEGER, PARAMETER :: xt_reorder_type_kind = KIND(xt_reorder_none)
 
   INTERFACE
     ! this function must not be implemented in Fortran because
@@ -106,21 +109,11 @@ MODULE xt_dmap_base
     MODULE PROCEDURE xt_dmap_repeat_i8_a1d
   END INTERFACE xt_dmap_repeat
 
-  INTERFACE
-    SUBROUTINE xt_dmap_repeat_f(dmap_f, num_repetitions, src_displacements, &
-         dst_displacements) BIND(C, name='xt_dmap_repeat_f')
-      IMPORT:: xt_dmap, c_int, xt_mpi_fint_kind
-      TYPE(xt_dmap), INTENT(in) :: dmap_f
-      INTEGER(c_int), VALUE, INTENT(in) :: num_repetitions
-      INTEGER(xt_mpi_fint_kind), INTENT(in) :: src_displacements(num_repetitions)
-      INTEGER(xt_mpi_fint_kind), INTENT(in) :: dst_displacements(num_repetitions)
-    END SUBROUTINE xt_dmap_repeat_f
-  END INTERFACE
-
   PUBLIC :: xt_dmap_c2f, xt_dmap_f2c, xt_is_null, xt_dmap_delete, &
        xt_dmap_offset_new, xt_dmap_generate_redist, xt_dmap_repeat, &
        xt_dmap_reorder, xt_reorder_type_kind, &
-       XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP
+       xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_dmap_f.f90'
 CONTAINS
 
   FUNCTION xt_dmap_is_null(dmap) RESULT(p)
@@ -156,20 +149,15 @@ CONTAINS
     TYPE(xt_dmap), INTENT(in) :: dmap
     INTEGER, INTENT(in) :: src_offsets(:)
     INTEGER, INTENT(in) :: dst_offsets(:)
-    INTEGER :: num_repetitions_src, num_repetitions_dst
-    num_repetitions_src = SIZE(src_offsets)
-    num_repetitions_dst = SIZE(dst_offsets)
-    IF (num_repetitions_src /= num_repetitions_dst) &
-         CALL xt_abort("invalid number of repetitions", &
-         __FILE__, &
-         __LINE__)
-    IF (num_repetitions_src < 0_c_int .OR. &
-        num_repetitions_src > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
-    CALL xt_dmap_repeat_f( &
-      dmap, INT(num_repetitions_src, c_int), src_offsets, dst_offsets)
+    INTEGER :: num_repetitions
+    INTEGER(i8) :: num_repetitions_i8
+    num_repetitions = SIZE(src_offsets)
+    IF (num_repetitions /= SIZE(dst_offsets)) &
+         CALL xt_abort("invalid number of repetitions", filename, __LINE__)
+    IF (num_repetitions > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_i8 = INT(num_repetitions, i8)
+    CALL xt_dmap_repeat(dmap, num_repetitions_i8, src_offsets, dst_offsets)
   END SUBROUTINE xt_dmap_repeat_a1d
 
   SUBROUTINE xt_dmap_repeat_i2_a1d(dmap, num_repetitions, src_offsets, &
@@ -179,13 +167,12 @@ CONTAINS
     INTEGER(i2), INTENT(in) :: num_repetitions
     INTEGER, INTENT(in) :: src_offsets(num_repetitions)
     INTEGER, INTENT(in) :: dst_offsets(num_repetitions)
+    INTEGER(i8) :: num_repetitions_i8
     IF (num_repetitions < 0_c_int .OR. &
         num_repetitions > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
-    CALL xt_dmap_repeat_f( &
-      dmap, INT(num_repetitions, c_int), src_offsets, dst_offsets)
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_i8 = INT(num_repetitions, i8)
+    CALL xt_dmap_repeat(dmap, num_repetitions_i8, src_offsets, dst_offsets)
   END SUBROUTINE xt_dmap_repeat_i2_a1d
 
   SUBROUTINE xt_dmap_repeat_i4_a1d(dmap, num_repetitions, src_offsets, &
@@ -195,13 +182,12 @@ CONTAINS
     INTEGER(i4), INTENT(in) :: num_repetitions
     INTEGER, INTENT(in) :: src_offsets(num_repetitions)
     INTEGER, INTENT(in) :: dst_offsets(num_repetitions)
+    INTEGER(i8) :: num_repetitions_i8
     IF (num_repetitions < 0_c_int .OR. &
         num_repetitions > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
-    CALL xt_dmap_repeat_f( &
-      dmap, INT(num_repetitions, c_int), src_offsets, dst_offsets)
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_i8 = INT(num_repetitions, i8)
+    CALL xt_dmap_repeat(dmap, num_repetitions_i8, src_offsets, dst_offsets)
   END SUBROUTINE xt_dmap_repeat_i4_a1d
 
   SUBROUTINE xt_dmap_repeat_i8_a1d(dmap, num_repetitions, src_offsets, &
@@ -209,43 +195,72 @@ CONTAINS
     IMPLICIT NONE
     TYPE(xt_dmap), INTENT(in) :: dmap
     INTEGER(i8), INTENT(in) :: num_repetitions
-    INTEGER, INTENT(in) :: src_offsets(num_repetitions)
-    INTEGER, INTENT(in) :: dst_offsets(num_repetitions)
+    INTEGER, TARGET, INTENT(in) :: src_offsets(num_repetitions)
+    INTEGER, TARGET, INTENT(in) :: dst_offsets(num_repetitions)
+    INTEGER(c_int) :: num_repetitions_c
+    INTEGER(c_int), TARGET, ALLOCATABLE :: src_offsets_c(:), dst_offsets_c(:)
+    TYPE(c_ptr) :: src_offsets_p, dst_offsets_p
+    INTERFACE
+      SUBROUTINE xt_dmap_repeat_c(dmap, num_repetitions, src_displacements, &
+           dst_displacements) BIND(C, name='xt_dmap_repeat')
+        IMPORT:: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(in) :: dmap
+        INTEGER(c_int), VALUE, INTENT(in) :: num_repetitions
+        TYPE(c_ptr), VALUE, INTENT(in) :: src_displacements, &
+             dst_displacements
+      END SUBROUTINE xt_dmap_repeat_c
+    END INTERFACE
     IF (num_repetitions < 0_c_int .OR. &
         num_repetitions > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", &
-         __FILE__, &
-         __LINE__)
-    CALL xt_dmap_repeat_f( &
-      dmap, INT(num_repetitions, c_int), src_offsets, dst_offsets)
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_c = INT(num_repetitions, c_int)
+    IF (c_int == KIND(1)) THEN
+      src_offsets_p = C_LOC(src_offsets)
+      dst_offsets_p = C_LOC(dst_offsets)
+    ELSE
+      CALL arg2ci(src_offsets, src_offsets_c)
+      src_offsets_p = C_LOC(src_offsets_c)
+      CALL arg2ci(dst_offsets, dst_offsets_c)
+      dst_offsets_p = C_LOC(dst_offsets_c)
+    END IF
+    CALL xt_dmap_repeat_c(dmap%cptr, num_repetitions_c, &
+         src_offsets_p, dst_offsets_p)
+  CONTAINS
+    SUBROUTINE arg2ci(arg, argc)
+      INTEGER, INTENT(in) :: arg(*)
+      INTEGER(c_int), ALLOCATABLE, INTENT(inout) :: argc(:)
+      INTEGER :: i, n
+      n = INT(num_repetitions)
+      ALLOCATE(argc(n))
+      DO i = 1, n
+        argc(i) = INT(arg(i), c_int)
+      END DO
+    END SUBROUTINE arg2ci
   END SUBROUTINE xt_dmap_repeat_i8_a1d
 
   SUBROUTINE xt_dmap_reorder(dmap, reorder_type)
     IMPLICIT NONE
     TYPE(xt_dmap), INTENT(in) :: dmap
     INTEGER(xt_reorder_type_kind), INTENT(in) :: reorder_type
-
     INTERFACE
-      SUBROUTINE xt_dmap_reorder_f(dmap, reorder_type) &
-           BIND(C, name='xt_dmap_reorder_f')
-        IMPORT:: xt_dmap, c_int
-        TYPE(xt_dmap), INTENT(in) :: dmap
-        INTEGER(c_int), VALUE, INTENT(in) :: reorder_type
-      END SUBROUTINE xt_dmap_reorder_f
+      SUBROUTINE xt_dmap_reorder_c(dmap, reorder_type) &
+           BIND(C, name='xt_dmap_reorder')
+        IMPORT:: xt_reorder_type_kind, c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: dmap
+        INTEGER(xt_reorder_type_kind), VALUE, INTENT(in) :: reorder_type
+      END SUBROUTINE xt_dmap_reorder_c
     END INTERFACE
 
     IF (reorder_type < 0_xt_reorder_type_kind .OR. &
          reorder_type > HUGE(1_c_int)) &
-         CALL xt_abort("invalid reorder type", &
-         __FILE__, &
-         __LINE__)
-    CALL xt_dmap_reorder_f(dmap, INT(reorder_type, c_int))
+         CALL xt_abort("invalid reorder type", filename, __LINE__)
+    CALL xt_dmap_reorder_c(dmap%cptr, reorder_type)
   END SUBROUTINE xt_dmap_reorder
 
   FUNCTION xt_dmap_generate_redist(dmap, datatype) RESULT(redist)
     IMPLICIT NONE
     TYPE(xt_dmap), INTENT(in) :: dmap
-    INTEGER, VALUE, INTENT(in) :: datatype
+    INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: redist
 
     INTERFACE
@@ -264,24 +279,54 @@ CONTAINS
   FUNCTION xt_dmap_offset_new(xmap, src_offsets, dst_offsets) RESULT(dmap)
     IMPLICIT NONE
     TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER, INTENT(in) :: src_offsets(*)
-    INTEGER, INTENT(in) :: dst_offsets(*)
+    INTEGER, TARGET, INTENT(in) :: src_offsets(*)
+    INTEGER, TARGET, INTENT(in) :: dst_offsets(*)
     TYPE(xt_dmap) :: dmap
+    TYPE(xt_xmap_iter) :: iter
+    INTEGER(c_int), TARGET, ALLOCATABLE :: src_offsets_c(:), dst_offsets_c(:)
+    TYPE(c_ptr) :: src_offsets_p, dst_offsets_p
 
     INTERFACE
-      FUNCTION xt_dmap_offset_new_f(xmap_f, src_offsets, dst_offsets) &
-           BIND(C, name='xt_dmap_offset_new_f') RESULT(dmap)
-        IMPORT :: xt_xmap, xt_mpi_fint_kind, c_ptr
+      FUNCTION xt_dmap_offset_new_c(xmap, src_offsets, dst_offsets) &
+           BIND(C, name='xt_dmap_offset_new') RESULT(dmap)
+        IMPORT :: c_int, c_ptr
         IMPLICIT NONE
-        TYPE(xt_xmap), INTENT(in) :: xmap_f
-        INTEGER(xt_mpi_fint_kind), INTENT(in) :: src_offsets(*)
-        INTEGER(xt_mpi_fint_kind), INTENT(in) :: dst_offsets(*)
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap, src_offsets, dst_offsets
         TYPE(c_ptr) :: dmap
-      END FUNCTION xt_dmap_offset_new_f
+      END FUNCTION xt_dmap_offset_new_c
     END INTERFACE
 
-    dmap = xt_dmap_c2f(&
-         xt_dmap_offset_new_f(xmap, src_offsets, dst_offsets))
+    IF (c_int == KIND(1)) THEN
+      src_offsets_p = C_LOC(src_offsets)
+      dst_offsets_p = C_LOC(dst_offsets)
+    ELSE
+      iter = xt_xmap_get_out_iterator(xmap)
+      CALL arg2ci(iter, src_offsets, src_offsets_c)
+      src_offsets_p = C_LOC(src_offsets_c)
+      iter = xt_xmap_get_in_iterator(xmap)
+      CALL arg2ci(iter, dst_offsets, dst_offsets_c)
+      dst_offsets_p = C_LOC(dst_offsets_c)
+    END IF
+    dmap = xt_dmap_c2f(xt_dmap_offset_new_c(xt_xmap_f2c(xmap), &
+         src_offsets_p, dst_offsets_p))
+  CONTAINS
+    SUBROUTINE arg2ci(iter, arg, argc)
+      TYPE(xt_xmap_iter), INTENT(inout) :: iter
+      INTEGER, INTENT(in) :: arg(*)
+      INTEGER(c_int), ALLOCATABLE, INTENT(inout) :: argc(:)
+      INTEGER :: i, n
+      LOGICAL :: avail
+      n = 0
+      avail = .NOT. xt_is_null(iter)
+      DO WHILE (avail)
+        n = n + xt_xmap_iterator_get_num_transfer_pos(iter)
+        avail = xt_xmap_iterator_next(iter)
+      END DO
+      ALLOCATE(argc(n))
+      DO i = 1, n
+        argc(i) = INT(arg(i), c_int)
+      END DO
+    END SUBROUTINE arg2ci
   END FUNCTION xt_dmap_offset_new
 
 END MODULE xt_dmap_base
