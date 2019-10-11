@@ -55,7 +55,6 @@ MODULE xt_dmap_base
        xt_xmap_f2c
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f
   USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_loc, c_associated
-  USE xt_mpi, ONLY: mpi_address_kind
   IMPLICIT NONE
   PRIVATE
   ! note: this type must not be extended to contain any other

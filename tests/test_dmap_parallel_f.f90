@@ -58,7 +58,6 @@ PROGRAM test_dmap_parallel_f
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
 #endif
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
-  USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
   INTEGER :: comm_size, comm_rank, ierror
   CHARACTER(len=*), PARAMETER :: filename = 'test_dmap_parallel_f.f90'
