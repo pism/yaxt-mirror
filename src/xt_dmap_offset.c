@@ -171,7 +171,7 @@ static void dmap_msg_offset_repeat(int msg_count, struct Xt_dmap_msg * msgs,
       for (int k = 0; k < count; ++k)
         new_offsets[j * count + k] = old_offsets[k] + displacements[j];
 
-    free((void*)old_offsets);
+    free(old_offsets);
     curr_msg->offsets = new_offsets;
     curr_msg->count *= num_repetitions;
   }
