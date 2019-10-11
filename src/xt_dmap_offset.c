@@ -193,23 +193,33 @@ static void dmap_offset_repeat(Xt_dmap dmap, int num_repetitions,
   dmap_msg_offset_repeat(nrecv, recv_msgs, num_repetitions, dst_displacements);
 }
 
-static inline void
-setup_buffer(int comm_size, int n, const struct Xt_dmap_msg * msgs,
-             int ** buffer, int ** counts, int ** displs) {
+struct a2abuf
+{
+  int *buffer, *counts, *displs;
+};
 
-  int buffer_size = 0;
-  *counts = xcalloc((size_t)comm_size, sizeof(*counts));
-  *displs = xmalloc((size_t)comm_size * sizeof(*displs));
+static inline struct a2abuf
+setup_buffer(int comm_size, int n, const struct Xt_dmap_msg *msgs)
+{
+  size_t buffer_size = 0;
+  for (int i = 0; i < n; ++i)
+    buffer_size += (size_t)msgs[i].count;
 
-  for (int i = 0; i < n; ++i) {
-    buffer_size += msgs[i].count;
-    (*counts)[msgs[i].rank] = msgs[i].count;
+  int *restrict counts = xmalloc((2 * (size_t)comm_size + buffer_size)
+                                 * sizeof(*counts)),
+    *restrict displs = counts + comm_size,
+    *restrict buffer = counts + 2 * comm_size;
+  for (int i = 0; i < comm_size; ++i)
+    counts[i] = 0;
+
+  for (int i = 0; i < n; ++i)
+    counts[msgs[i].rank] = msgs[i].count;
+
+  for (int i = 0, accu = 0; i < comm_size; ++i) {
+    displs[i] = accu;
+    accu += counts[i];
   }
-
-  for (int i = 0, accu = 0; i < comm_size; accu += (*counts)[i++])
-    (*displs)[i] = accu;
-
-  *buffer = xmalloc((size_t)buffer_size * sizeof(*buffer));
+  return (struct a2abuf){ .buffer=buffer, .counts=counts, .displs=displs };
 }
 
 static void reorder_offsets(
@@ -219,28 +229,25 @@ static void reorder_offsets(
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
-  int * send_buffer, * send_counts, * send_displs;
-  int * recv_buffer, * recv_counts, * recv_displs;
-  setup_buffer(comm_size, nsend, send_msgs,
-               &send_buffer, &send_counts, &send_displs);
-  setup_buffer(comm_size, nrecv, recv_msgs,
-               &recv_buffer, &recv_counts, &recv_displs);
+  struct a2abuf
+    send = setup_buffer(comm_size, nsend, send_msgs),
+    recv = setup_buffer(comm_size, nrecv, recv_msgs);
 
   for (int i = 0; i < nsend; ++i) {
     const struct Xt_dmap_msg * curr_msg = send_msgs + i;
     int count = curr_msg->count;
     if (count > 0) {
       // pack local send offsets into send buffer
-      memcpy(send_buffer + send_displs[curr_msg->rank],
-             curr_msg->offsets, (size_t)count * sizeof(*send_buffer));
+      memcpy(send.buffer + send.displs[curr_msg->rank],
+             curr_msg->offsets, (size_t)count * sizeof(*send.buffer));
       // sort local send offsets
       xt_quicksort_int(curr_msg->offsets, (size_t)count);
     }
   }
 
   // exchange local send offsets
-  xt_mpi_call(MPI_Alltoallv(send_buffer, send_counts, send_displs, MPI_INT,
-                            recv_buffer, recv_counts, recv_displs, MPI_INT,
+  xt_mpi_call(MPI_Alltoallv(send.buffer, send.counts, send.displs, MPI_INT,
+                            recv.buffer, recv.counts, recv.displs, MPI_INT,
                             comm), comm);
 
   for (int i = 0; i < nrecv; ++i) {
@@ -250,16 +257,12 @@ static void reorder_offsets(
       // reorder local receive offsets (curr_msg->offsets) based on remote send
       // offsets (recv_buffer + recv_displs[curr_msg->rank])
       xt_quicksort_int_permutation(
-        recv_buffer + recv_displs[curr_msg->rank], (size_t)count,
+        recv.buffer + recv.displs[curr_msg->rank], (size_t)count,
         curr_msg->offsets);
   }
 
-  free(send_buffer);
-  free(send_counts);
-  free(send_displs);
-  free(recv_buffer);
-  free(recv_counts);
-  free(recv_displs);
+  free(send.counts);
+  free(recv.counts);
 }
 
 static void dmap_offset_reorder(
