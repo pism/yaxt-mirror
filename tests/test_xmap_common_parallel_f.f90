@@ -89,9 +89,9 @@ CONTAINS
          CALL test_abort("number of ranks exceeds test limit", &
          filename, __LINE__)
 
-    CALL test_allgather_analog(xmap_new, 1_xi, comm)
+    CALL test_allgather_analog(xmap_new, 1, comm)
     ! repeat test for large index list that will cause stripifying
-    CALL test_allgather_analog(xmap_new, 1024_xi, comm)
+    CALL test_allgather_analog(xmap_new, 1024, comm)
     IF (comm_size > 2) CALL test_ring_1d(xmap_new, comm)
     IF (comm_size == 2) CALL test_pair(xmap_new, comm)
     IF (comm_size > 1) CALL test_ping_pong(xmap_new, comm, 0, comm_size - 1)
@@ -167,23 +167,26 @@ CONTAINS
       END FUNCTION xmap_new
     END INTERFACE
     INTEGER, INTENT(inout) :: comm
-    INTEGER(xt_int_kind), INTENT(in) :: num_indices_per_rank
-    INTEGER(xt_int_kind), ALLOCATABLE :: src_index_list(:)
-    INTEGER(xt_int_kind) :: i
+    INTEGER, INTENT(in) :: num_indices_per_rank
+    INTEGER(xi), ALLOCATABLE :: src_index_list(:)
+    INTEGER(xi) :: i
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_copy
     TYPE(xt_stripe) :: dst_index_stripe(1)
     INTEGER :: comm_size, comm_rank
+    INTEGER(xi) :: comm_rank_xi, num_indices_per_rank_xi
     LOGICAL :: is_inter
 
     CALL get_rank_range(comm, is_inter, comm_rank, comm_size)
+    comm_rank_xi = INT(comm_rank, xi)
+    num_indices_per_rank_xi = INT(num_indices_per_rank, xi)
     ! setup
     ALLOCATE(src_index_list(num_indices_per_rank))
     DO i = 1_xi, num_indices_per_rank
-      src_index_list(i) = INT(comm_rank, xi) * num_indices_per_rank + i - 1_xi
+      src_index_list(i) = comm_rank_xi * num_indices_per_rank_xi + i - 1_xi
     END DO
     src_idxlist = xt_idxvec_new(src_index_list)
-    dst_index_stripe(1) = xt_stripe(0, 1, comm_size * INT(num_indices_per_rank))
+    dst_index_stripe(1) = xt_stripe(0, 1, comm_size * num_indices_per_rank)
     dst_idxlist = xt_idxstripes_new(dst_index_stripe)
     xmap = xmap_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
