@@ -53,6 +53,10 @@ PROGRAM test_dmap_parallel_f
        XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP, &
        xt_redist, xt_redist_s_exchange, xt_redist_delete, &
        xi => xt_int_kind
+#if defined __PGI && __PGIC__ <= 15
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+#endif
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
