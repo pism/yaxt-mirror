@@ -95,30 +95,25 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
 
 static void
 generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
-                   MPI_Datatype base_datatype, struct Xt_redist_msg ** msgs,
+                   MPI_Datatype base_datatype, struct Xt_redist_msg *msgs,
                    MPI_Comm comm) {
 
-  if (num_msgs <= 0) {
-    *msgs = NULL;
-    return;
+  if (num_msgs > 0) {
+    struct Xt_redist_msg *restrict curr_msg = msgs;
+
+    do {
+
+      const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
+      int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
+
+      curr_msg->datatype
+        = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
+                            offsets, base_datatype, comm);
+      curr_msg->rank = xt_xmap_iterator_get_rank(iter);
+
+      curr_msg++;
+    } while (xt_xmap_iterator_next(iter));
   }
-
-  struct Xt_redist_msg *restrict curr_msg
-    = *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
-
-  do {
-
-    const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
-    int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
-
-    curr_msg->datatype
-      = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                          offsets, base_datatype, comm);
-    curr_msg->rank = xt_xmap_iterator_get_rank(iter);
-
-    curr_msg++;
-
-  } while (xt_xmap_iterator_next(iter));
 }
 
 Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, const int *src_offsets,
@@ -126,31 +121,29 @@ Xt_redist xt_redist_p2p_off_new(Xt_xmap xmap, const int *src_offsets,
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
-  int nsend, nrecv;
-  struct Xt_redist_msg * send_msgs = NULL;
-  struct Xt_redist_msg * recv_msgs = NULL;
-  MPI_Comm comm;
+  int nsend = xt_xmap_get_num_destinations(xmap),
+    nrecv = xt_xmap_get_num_sources(xmap);
+  size_t nmsg = (size_t)nsend + (size_t)nrecv;
+  struct Xt_redist_msg *msgs = xmalloc(nmsg * sizeof (*msgs)),
+    *send_msgs = msgs, *recv_msgs = msgs + nsend;
   int tag_offset;
+  MPI_Comm comm
+    = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
-  comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
-
-  nrecv = xt_xmap_get_num_sources(xmap);
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
-  generate_msg_infos(nrecv, dst_iter, dst_offsets, datatype, &recv_msgs,
+  generate_msg_infos(nrecv, dst_iter, dst_offsets, datatype, recv_msgs,
                      comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
-  nsend = xt_xmap_get_num_destinations(xmap);
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
-  generate_msg_infos(nsend, src_iter, src_offsets, datatype, &send_msgs,
+  generate_msg_infos(nsend, src_iter, src_offsets, datatype, send_msgs,
                      comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
 
-  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
-  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
+  xt_redist_msgs_free(nmsg, msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
@@ -276,41 +269,37 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
                        int num_ext,
                        const struct Xt_offset_ext extents[],
                        MPI_Datatype base_datatype,
-                       struct Xt_redist_msg **msgs,
+                       struct Xt_redist_msg *msgs,
                        MPI_Comm comm)
 {
-  if (num_msgs <= 0) {
-    *msgs = NULL;
-    return;
+  if (num_msgs > 0) {
+    /* partial sums of ext sizes */
+    int *psum_ext_size
+      = xmalloc(((size_t)num_ext + 1) * sizeof (psum_ext_size[0]));
+    psum_ext_size[0] = 0;
+    for (size_t i = 0; i < (size_t)num_ext; ++i)
+      psum_ext_size[i + 1] = psum_ext_size[i] + extents[i].size;
+
+    struct Xt_redist_msg *curr_msg = msgs;
+    do {
+
+      const struct Xt_pos_ext *curr_transfer_pos_ext
+        = xt_xmap_iterator_get_transfer_pos_ext(iter);
+      int curr_num_transfer_pos_ext
+        = xt_xmap_iterator_get_num_transfer_pos_ext(iter);
+
+      curr_msg->datatype
+        = generate_ext_datatype(curr_num_transfer_pos_ext,
+                                curr_transfer_pos_ext,
+                                num_ext, extents, psum_ext_size,
+                                base_datatype, comm);
+      curr_msg->rank = xt_xmap_iterator_get_rank(iter);
+
+      curr_msg++;
+
+    } while (xt_xmap_iterator_next(iter));
+    free(psum_ext_size);
   }
-
-  struct Xt_redist_msg *curr_msg =
-    *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
-
-  /* partial sums of ext sizes */
-  int *psum_ext_size
-    = xmalloc(((size_t)num_ext + 1) * sizeof (psum_ext_size[0]));
-  psum_ext_size[0] = 0;
-  for (size_t i = 0; i < (size_t)num_ext; ++i)
-    psum_ext_size[i + 1] = psum_ext_size[i] + extents[i].size;
-
-  do {
-
-    const struct Xt_pos_ext *curr_transfer_pos_ext
-      = xt_xmap_iterator_get_transfer_pos_ext(iter);
-    int curr_num_transfer_pos_ext
-      = xt_xmap_iterator_get_num_transfer_pos_ext(iter);
-
-    curr_msg->datatype
-      = generate_ext_datatype(curr_num_transfer_pos_ext, curr_transfer_pos_ext,
-                              num_ext, extents, psum_ext_size,
-                              base_datatype, comm);
-    curr_msg->rank = xt_xmap_iterator_get_rank(iter);
-
-    curr_msg++;
-
-  } while (xt_xmap_iterator_next(iter));
-  free(psum_ext_size);
 }
 
 Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
@@ -322,30 +311,30 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
 {
   // ensure that yaxt is initialized
   assert(xt_initialized());
-  struct Xt_redist_msg * send_msgs = NULL;
-  struct Xt_redist_msg * recv_msgs = NULL;
   MPI_Comm comm;
   int tag_offset;
 
   comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
-  int nrecv = xt_xmap_get_num_sources(xmap);
+  int nrecv = xt_xmap_get_num_sources(xmap),
+    nsend = xt_xmap_get_num_destinations(xmap);
+  size_t nmsg = (size_t)nrecv + (size_t)nsend;
+  struct Xt_redist_msg *msgs = xmalloc(nmsg * sizeof (*msgs)),
+    *send_msgs = msgs, *recv_msgs = msgs + nsend;
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
   generate_ext_msg_infos(nrecv, dst_iter, num_dst_ext, dst_extents,
-                         datatype, &recv_msgs, comm);
+                         datatype, recv_msgs, comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
-  int nsend = xt_xmap_get_num_destinations(xmap);
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
   generate_ext_msg_infos(nsend, src_iter, num_src_ext, src_extents,
-                         datatype, &send_msgs, comm);
+                         datatype, send_msgs, comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
 
-  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
-  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
+  xt_redist_msgs_free(nmsg, msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
