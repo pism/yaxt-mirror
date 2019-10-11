@@ -87,16 +87,20 @@ CONTAINS
     TYPE(xt_xmap) :: xmap
     INTEGER, PARAMETER :: nproma = 4, nlev = 20, nblk = 6
     INTEGER :: src_offsets(nproma*nblk)
-    INTEGER :: dst_offsets(nproma*nblk*comm_size)
     INTEGER :: lev_displacements(nlev)
     INTEGER :: src_data(nproma,nlev,nblk)
-    INTEGER :: ref_dst_data(nproma,nlev,nblk*comm_size)
     INTEGER, PARAMETER :: reorder_type(3) &
          = (/xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up/)
 
     TYPE(xt_dmap) :: dmap
     TYPE(xt_redist) :: redist
-    INTEGER :: dst_data(nproma, nlev, nblk*comm_size)
+    INTEGER, ALLOCATABLE :: dst_data(:, :, :), dst_offsets(:), &
+         ref_dst_data(:,:,:)
+
+
+    ALLOCATE(dst_data(nproma, nlev, nblk*comm_size), &
+         ref_dst_data(nproma, nlev, nblk*comm_size), &
+         dst_offsets(nproma*nblk*comm_size))
 
     src_index_list = xt_idxvec_new((/ (INT(i + comm_rank * nproma * nblk, xi), &
          i = 1, nproma*nblk) /))
