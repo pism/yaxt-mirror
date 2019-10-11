@@ -74,14 +74,15 @@ PROGRAM test_dmap_parallel_f
   IF (ierror /= MPI_SUCCESS) CALL test_abort('mpi_rank: MPI_COMM_RANK failed', &
        filename, __LINE__)
 
-  CALL test1()
+  CALL test1(mpi_comm_world, comm_rank, comm_size)
 
   CALL xt_finalize
   CALL finish_mpi
 
 CONTAINS
 
-  SUBROUTINE test1()
+  SUBROUTINE test1(comm, comm_rank, comm_size)
+    INTEGER, INTENT(in) :: comm, comm_rank, comm_size
     INTEGER :: i, j, k
     TYPE(xt_idxlist) :: src_index_list, dst_index_list
     TYPE(xt_xmap) :: xmap
