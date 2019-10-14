@@ -276,7 +276,7 @@ static void dmap_offset_reorder(
   struct Xt_dmap_msg * recv_msgs = send_msgs + (size_t)nsend;
   MPI_Comm comm = dmap_off->comm;
 
-  switch (type) {
+  switch ((int)type) {
     case (XT_REORDER_NONE):
       return;
     case (XT_REORDER_SEND_UP):
