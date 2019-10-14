@@ -89,7 +89,7 @@ static void test_dmap(Xt_xmap xmap, enum xt_reorder_type reorder_type) {
       int local_send_offsets[NUM_INDICES_PER_RANK];  // offsets of the local points that need to be sent
       int remote_recv_offsets[NUM_INDICES_PER_RANK]; // offsets on the remote process for receiving the data
       int send_buffer[NUM_INDICES_PER_RANK];         // local send data
-      int recv_buffer[NUM_INDICES_PER_RANK];         // contains data as it would arrives at the remote process
+      int recv_buffer[NUM_INDICES_PER_RANK];         // contains data as it would arrive at the remote process
       int ref_recv_buffer[NUM_INDICES_PER_RANK];     // expected contents of recv_buffer
 
       memcpy(local_send_offsets, src_offsets[rank],
