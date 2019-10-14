@@ -61,6 +61,8 @@ PROGRAM test_dmap_parallel_f
   IMPLICIT NONE
   INTEGER :: comm_size, comm_rank, ierror
   CHARACTER(len=*), PARAMETER :: filename = 'test_dmap_parallel_f.f90'
+  INTEGER, PARAMETER :: reorder_type(3) &
+       = (/xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up/)
 
   ! init mpi
   CALL init_mpi
@@ -89,8 +91,6 @@ CONTAINS
     INTEGER :: src_offsets(nproma*nblk)
     INTEGER :: lev_displacements(nlev)
     INTEGER :: src_data(nproma,nlev,nblk)
-    INTEGER, PARAMETER :: reorder_type(3) &
-         = (/xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up/)
 
     TYPE(xt_dmap) :: dmap
     TYPE(xt_redist) :: redist
