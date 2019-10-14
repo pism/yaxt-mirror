@@ -193,11 +193,11 @@ static void test_dmap(Xt_xmap xmap, enum xt_reorder_type reorder_type) {
 //
 // The indices in the source and destination arrays are sorted in ascending
 // order. However, the offset arrays differ for all processes.
-void test1(void) {
+static void test1(MPI_Comm comm) {
 
   int rank;
 
-  xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
 
   static Xt_int src_index_vector[NUM_INDICES_PER_RANK];
   static Xt_int dst_index_vector[NUM_RANKS*NUM_INDICES_PER_RANK];
@@ -213,7 +213,7 @@ void test1(void) {
     xt_idxvec_new(dst_index_vector, NUM_RANKS*NUM_INDICES_PER_RANK);
 
   Xt_xmap xmap =
-    xt_xmap_all2all_new(src_index_list, dst_index_list, MPI_COMM_WORLD);
+    xt_xmap_all2all_new(src_index_list, dst_index_list, comm);
 
   enum xt_reorder_type reorder_types[] =
     {XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP};
@@ -235,10 +235,10 @@ void test1(void) {
 // Processes always have the whole level column for each 2D point.
 // The exchange map is generated for the 2D domain, the third dimension is
 // through the use xt_dmap_repeat.
-static void test2(void) {
+static void test2(MPI_Comm comm) {
 
   int rank;
-  xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
 
   enum {
     NPROMA = 4,
@@ -260,7 +260,7 @@ static void test2(void) {
     xt_idxvec_new(dst_index_vector, NPROMA*NBLK*NUM_RANKS);
 
   Xt_xmap xmap =
-    xt_xmap_all2all_new(src_index_list, dst_index_list, MPI_COMM_WORLD);
+    xt_xmap_all2all_new(src_index_list, dst_index_list, comm);
 
   int src_offsets[NPROMA*NBLK];
   int dst_offsets[NPROMA*NBLK*NUM_RANKS];
@@ -330,8 +330,8 @@ int main(void) {
 
   if (size == 4) {
 
-    test1();
-    test2();
+    test1(MPI_COMM_WORLD);
+    test2(MPI_COMM_WORLD);
 
   } else PUT_ERR("Wrong number of processes");
 
