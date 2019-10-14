@@ -72,6 +72,17 @@ MODULE xt_sort
   END INTERFACE xt_sort_index
   PUBLIC :: xt_sort_index
 
+  INTERFACE xt_sort_permutation
+    SUBROUTINE xt_sort_int_permutation_f2c(a, n, permutation) &
+          BIND(c, name='xt_sort_int_permutation_f2c')
+      IMPORT :: c_int, c_size_t
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      INTEGER(c_int), INTENT(inout) :: a(n), permutation(n)
+    END SUBROUTINE xt_sort_int_permutation_f2c
+    MODULE PROCEDURE xt_sort_int_permutation
+  END INTERFACE xt_sort_permutation
+  PUBLIC :: xt_sort_permutation
+
   TYPE, BIND(c), PUBLIC :: xt_idxpos
     INTEGER(xt_int_kind) :: idx
     INTEGER(c_int) :: pos
@@ -113,6 +124,14 @@ CONTAINS
     a_size = SIZE(a)
     IF (a_size > 1) CALL xt_sort_idxpos_f2c(a, INT(a_size, c_size_t))
   END SUBROUTINE xt_sort_idxpos_a
+
+  SUBROUTINE xt_sort_int_permutation(a, permutation)
+    INTEGER(c_int), INTENT(inout) :: a(:), permutation(:)
+    INTEGER :: a_size
+    a_size = SIZE(a)
+    IF (a_size > 1) CALL xt_sort_int_permutation_f2c(a, INT(a_size, c_size_t), &
+         permutation)
+  END SUBROUTINE xt_sort_int_permutation
 END MODULE xt_sort
 !
 ! Local Variables:

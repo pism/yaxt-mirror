@@ -61,6 +61,7 @@
 extern void (*xt_sort_int)(int *a, size_t n);
 extern void (*xt_sort_index)(Xt_int * a, int n, int * idx, int reset_index);
 extern void (*xt_sort_idxpos)(idxpos_type *v, size_t n);
+extern void (*xt_sort_int_permutation)(int a[], size_t n, int permutation[]);
 
 #endif // XT_SORT_H
 

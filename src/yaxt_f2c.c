@@ -148,6 +148,11 @@ void xt_sort_idxpos_f2c(idxpos_type *a, size_t n)
   xt_sort_idxpos(a, n);
 }
 
+void xt_sort_int_permutation_f2c(int *a, size_t n, int *permutation)
+{
+  xt_sort_int_permutation(a, n, permutation);
+}
+
 Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
 {
   return p->cptr;
