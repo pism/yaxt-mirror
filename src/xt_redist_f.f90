@@ -150,6 +150,22 @@ MODULE xt_redist_base
       INTEGER(xt_mpi_fint_kind) :: comm
     END FUNCTION xt_redist_get_mpi_comm
 
+    FUNCTION xt_redist_get_recv_mpi_datatype(redist, rank) &
+         BIND(c, name='xt_redist_get_recv_MPI_Datatype_c2f') RESULT(dt)
+      IMPORT :: xt_redist, xt_mpi_fint_kind
+      TYPE(xt_redist), INTENT(in) :: redist
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: rank
+      INTEGER(xt_mpi_fint_kind) :: dt
+    END FUNCTION xt_redist_get_recv_mpi_datatype
+
+    FUNCTION xt_redist_get_send_mpi_datatype(redist, rank) &
+         BIND(c, name='xt_redist_get_send_MPI_Datatype_c2f') RESULT(dt)
+      IMPORT :: xt_redist, xt_mpi_fint_kind
+      TYPE(xt_redist), INTENT(in) :: redist
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: rank
+      INTEGER(xt_mpi_fint_kind) :: dt
+    END FUNCTION xt_redist_get_send_mpi_datatype
+
     FUNCTION xt_redist_collection_static_new_f(redists_f, num_redists, &
          src_displacements, dst_displacements, comm_f) &
          BIND(C, name='xt_redist_collection_static_new_f') RESULT(res)
@@ -261,7 +277,8 @@ MODULE xt_redist_base
        xt_redist_collection_static_new, xt_redist_collection_new, &
        xt_redist_repeat_new, xt_redist_get_mpi_comm, xt_redist_p2p_ext_new, &
        xt_redist_a_exchange1, xt_redist_a_exchange, &
-       xt_redist_single_array_base_new
+       xt_redist_single_array_base_new, &
+       xt_redist_get_send_mpi_datatype, xt_redist_get_recv_mpi_datatype
   CHARACTER(len=*), PARAMETER :: filename = 'xt_redist_f.f90'
 CONTAINS
 

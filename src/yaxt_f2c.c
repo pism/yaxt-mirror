@@ -336,6 +336,20 @@ xt_redist_get_mpi_comm_c2f(Xt_redist *redist)
   return MPI_Comm_c2f(comm);
 }
 
+MPI_Fint
+xt_redist_get_recv_MPI_Datatype_c2f(Xt_redist *redist, MPI_Fint rank)
+{
+  MPI_Datatype dt = xt_redist_get_recv_MPI_Datatype(*redist, (int)rank);
+  return MPI_Type_c2f(dt);
+}
+
+MPI_Fint
+xt_redist_get_send_MPI_Datatype_c2f(Xt_redist *redist, MPI_Fint rank)
+{
+  MPI_Datatype dt = xt_redist_get_send_MPI_Datatype(*redist, (int)rank);
+  return MPI_Type_c2f(dt);
+}
+
 void *
 xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
                           int num_src_ext, struct Xt_offset_ext src_extents[],
