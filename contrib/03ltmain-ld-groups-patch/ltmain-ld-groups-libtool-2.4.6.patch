@@ -12,7 +12,7 @@
        -Wl,*)
  	wlprefix=`expr x"$wl" : '.*' - 1`
  	wlprefix=`expr x"$arg" : 'x\(.\{'"$wlprefix"'\}\)'`
-@@ -7877,6 +7882,15 @@
+@@ -7879,6 +7884,15 @@
  	  alldeplibs=:
  	  continue
  	  ;;
