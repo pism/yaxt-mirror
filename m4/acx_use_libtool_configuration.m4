@@ -129,9 +129,19 @@ dnl newer PGI or NAG configurations particularly well
    dnl _KPSE_USE_LIBTOOL ensures libtool is also used for configure-time tests,
    dnl which deduces dependent libraries automatically
    _KPSE_USE_LIBTOOL
-   AC_LANG_PUSH([C])
-   _KPSE_CHECK_LIBTOOL
-   AC_LANG_POP([C])
+dnl substitute -shared-intel if present
+   AS_FOR([acx_flag_var],[acx_flag_var_],[CFLAGS CXXFLAGS FCFLAGS F77FLAGS LDFLAGS FCLDFLAGS],
+     [AS_IF([eval test x\$\{acx_flag_var+set\} = xset],
+        [eval acx_temp="\" \$$acx_flag_var_ \""
+         AS_CASE([$acx_temp],[*\ -shared-intel\ *|*\ -static-intel\ *],
+           [acx_temp=`echo "$acx_temp" | sed -e 's/ \(-\(shared\|static\)-intel\)\b/ -Xcompiler \1 -XCClinker \1/'`])
+dnl take care of ifort/icc/icpc two-part options
+         eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -\(align\|allow\|assume\|ccdefault\|check\|convert\|debug\|debug-parameters\|diag-type\|diag-enable\|diag-disable\|double-size\|dynamic-linker\|dyncom\|export-dir\|extend-source\|fp-model\|fpscomp\|gen-interfaces\|heap-arrays\|imacros\|integer-size\|iprefix\|iquote\|iwithprefixbefore\|module\|names\|opt-report\|opt-streaming-stores\|pch-dir\|pch-use\|prof-dir\|prof-file\|real-size\|reentrancy\|stand\|tcollect-filter\|tune\|warn\|watch\) \(@<:@^-@:>@@<:@^ @:>@*\)\b/ -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"])])
+   AC_PROVIDE_IFELSE([AC_PROG_CC],
+     [AS_IF([test -n "$CC" -a X"$CC" != Xno],
+        [AC_LANG_PUSH([C])
+         _KPSE_CHECK_LIBTOOL
+         AC_LANG_POP([C])])])
    AC_PROVIDE_IFELSE([AC_PROG_FC],
      [AS_IF([test -n "$FC" -a X"$FC" != Xno],
         [AC_LANG_PUSH([Fortran])
@@ -144,14 +154,11 @@ dnl newer PGI or NAG configurations particularly well
          _ACX_LT_FORT_FLAGS_MANGLE
          _KPSE_CHECK_LIBTOOL
          AC_LANG_POP([Fortran 77])])])
-dnl substitute -shared-intel if present
-   AS_FOR([acx_flag_var],[acx_flag_var_],[CFLAGS CXXFLAGS FCFLAGS F77FLAGS LDFLAGS FCLDFLAGS],
-     [AS_IF([eval test x\$\{acx_flag_var+set\} = xset],
-        [eval acx_temp="\" \$$acx_flag_var_ \""
-         AS_CASE([$acx_temp],[*\ -shared-intel\ *|*\ -static-intel\ *],
-           [acx_temp=`echo "$acx_temp" | sed -e 's/ \(-\(shared\|static\)-intel\)\b/ -Xcompiler \1 -XCClinker \1/'`])
-dnl take care of ifort/icc/icpc two-part options
-         eval acx_flag_var=\"`echo "$acx_temp" | sed -E -e 's/ -(align|allow|assume|ccdefault|check|convert|debug|debug-parameters|diag-type|diag-enable|diag-disable|double-size|dynamic-linker|dyncom|export-dir|extend-source|fp-model|fpscomp|gen-interfaces|heap-arrays|imacros|integer-size|iprefix|iquote|iwithprefixbefore|module|names|opt-report|opt-streaming-stores|pch-dir|pch-use|prof-dir|prof-file|real-size|reentrancy|stand|tcollect-filter|tune|warn|watch) (@<:@^-@:>@@<:@^ @:>@*)\b/ -Xcompiler -\1 -Xcompiler \2/g' -e 's/^ //;s/ $//'`\"])])])dnl
+   AC_PROVIDE_IFELSE([AC_PROG_CXX],
+     [AS_IF([test -n "$CXX" -a X"$CXX" != Xno],
+        [AC_LANG_PUSH([C++])
+         _KPSE_CHECK_LIBTOOL
+         AC_LANG_POP([C++])])])])dnl
 dnl
 dnl Local Variables:
 dnl mode: autoconf
