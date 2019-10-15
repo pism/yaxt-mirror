@@ -80,7 +80,7 @@ dnl substitute -shared-intel if present
            [eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -shared-intel / -Xcompiler -shared-intel /' -e 's/^ //;s/ $//'`\"])
 dnl take care of ifort/icc/icpc two-part options
          eval acx_temp="\" \$$acx_flag_var_ \""
-         eval acx_flag_var=\"`echo "$acx_temp" | sed -r -e 's/ -(align|allow|assume|ccdefault|check|convert|debug|debug-parameters|diag-type|diag-enable|double-size|dynamic-linker|dyncom|export-dir|extend-source|fp-model|fpscomp|gen-interfaces|heap-arrays|imacros|integer-size|iprefix|iquote|iwithprefixbefore|module|names|opt-report|opt-streaming-stores|pch-dir|pch-use|prof-dir|prof-file|real-size|reentrancy|stand|tcollect-filter|tune|warn|watch) (@<:@^-@:>@@<:@^ @:>@*) / -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"])])
+         eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -\(align\|allow\|assume\|ccdefault\|check\|convert\|debug\|debug-parameters\|diag-type\|diag-enable\|double-size\|dynamic-linker\|dyncom\|export-dir\|extend-source\|fp-model\|fpscomp\|gen-interfaces\|heap-arrays\|imacros\|integer-size\|iprefix\|iquote\|iwithprefixbefore\|module\|names\|opt-report\|opt-streaming-stores\|pch-dir\|pch-use\|prof-dir\|prof-file\|real-size\|reentrancy\|stand\|tcollect-filter\|tune\|warn\|watch\) \(@<:@^-@:>@@<:@^ @:>@*\) / -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"])])
    AC_LANG_PUSH([C])
    _KPSE_CHECK_LIBTOOL
    AC_LANG_POP([C])
