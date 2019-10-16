@@ -773,6 +773,7 @@ uninstall-am:
 
 clean-local:
 	-rm -f *.i
+	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the
 # top-level Makefile expects the directory containing this Makefile to be

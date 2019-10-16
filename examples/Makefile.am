@@ -75,6 +75,7 @@ FCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 
 clean-local:
 	-rm -f *.i
+	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the
 # top-level Makefile expects the directory containing this Makefile to be

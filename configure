@@ -19394,9 +19394,102 @@ do :
      ;;
 esac
          eval acx_temp="\" \$$acx_flag_var_ \""
-         eval $acx_flag_var_=\"`echo "$acx_temp" | sed -r -e 's/ -(align|allow|assume|ccdefault|check|convert|debug|debug-parameters|diag-type|diag-enable|double-size|dynamic-linker|dyncom|export-dir|extend-source|fp-model|fpscomp|gen-interfaces|heap-arrays|imacros|integer-size|iprefix|iquote|iwithprefixbefore|module|names|opt-report|opt-streaming-stores|pch-dir|pch-use|prof-dir|prof-file|real-size|reentrancy|stand|tcollect-filter|tune|warn|watch) ([^-][^ ]*) / -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"
+         eval $acx_flag_var_=\"`echo "$acx_temp" | sed -e 's/ -\(align\|allow\|assume\|ccdefault\|check\|convert\|debug\|debug-parameters\|diag-type\|diag-enable\|double-size\|dynamic-linker\|dyncom\|export-dir\|extend-source\|fp-model\|fpscomp\|gen-interfaces\|heap-arrays\|imacros\|integer-size\|iprefix\|iquote\|iwithprefixbefore\|module\|names\|opt-report\|opt-streaming-stores\|pch-dir\|pch-use\|prof-dir\|prof-file\|real-size\|reentrancy\|stand\|tcollect-filter\|tune\|warn\|watch\) \([^-][^ ]*\) / -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"
 fi
 done
+   ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ac_link="$ac_pwd/libtool --mode=link --tag=CC $ac_link"
+ac_compile="$ac_pwd/libtool --mode=compile --tag=CC $ac_compile"
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether libtool can link C programs" >&5
+$as_echo_n "checking whether libtool can link C programs... " >&6; }
+if ${acx_cv_libtool_c_works+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  acx_cv_libtool_c_works=no
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  acx_cv_libtool_c_works=yes
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_libtool_c_works" >&5
+$as_echo "$acx_cv_libtool_c_works" >&6; }
+   if test "x$acx_cv_libtool_c_works" = xno; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "unable to link a C program using libtool
+See \`config.log' for more details" "$LINENO" 5; }
+fi
+
+   ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ac_link="$ac_pwd/libtool --mode=link --tag=CC $ac_link"
+ac_compile="$ac_pwd/libtool --mode=compile --tag=CC $ac_compile"
+
+   if test -n "$FC" -a X"$FC" != Xno; then :
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+ac_link="$ac_pwd/libtool --mode=link --tag=FC $ac_link"
+ac_compile="$ac_pwd/libtool --mode=compile --tag=FC $ac_compile"
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether libtool can link Fortran programs" >&5
+$as_echo_n "checking whether libtool can link Fortran programs... " >&6; }
+if ${acx_cv_libtool_fc_works+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  acx_cv_libtool_fc_works=no
+      cat > conftest.$ac_ext <<_ACEOF
+      program conftest
+
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  acx_cv_libtool_fc_works=yes
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_libtool_fc_works" >&5
+$as_echo "$acx_cv_libtool_fc_works" >&6; }
+   if test "x$acx_cv_libtool_fc_works" = xno; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "unable to link a Fortran program using libtool
+See \`config.log' for more details" "$LINENO" 5; }
+fi
+
+         ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ac_link="$ac_pwd/libtool --mode=link --tag=CC $ac_link"
+ac_compile="$ac_pwd/libtool --mode=compile --tag=CC $ac_compile"
+
+fi
+
+
 
 
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for conftest_module module file name" >&5

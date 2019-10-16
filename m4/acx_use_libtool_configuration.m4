@@ -85,7 +85,25 @@ dnl substitute -shared-intel if present
            [eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -shared-intel / -Xcompiler -shared-intel /' -e 's/^ //;s/ $//'`\"])
 dnl take care of ifort/icc/icpc two-part options
          eval acx_temp="\" \$$acx_flag_var_ \""
-         eval acx_flag_var=\"`echo "$acx_temp" | sed -r -e 's/ -(align|allow|assume|ccdefault|check|convert|debug|debug-parameters|diag-type|diag-enable|double-size|dynamic-linker|dyncom|export-dir|extend-source|fp-model|fpscomp|gen-interfaces|heap-arrays|imacros|integer-size|iprefix|iquote|iwithprefixbefore|module|names|opt-report|opt-streaming-stores|pch-dir|pch-use|prof-dir|prof-file|real-size|reentrancy|stand|tcollect-filter|tune|warn|watch) (@<:@^-@:>@@<:@^ @:>@*) / -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"])])])dnl
+         eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -\(align\|allow\|assume\|ccdefault\|check\|convert\|debug\|debug-parameters\|diag-type\|diag-enable\|double-size\|dynamic-linker\|dyncom\|export-dir\|extend-source\|fp-model\|fpscomp\|gen-interfaces\|heap-arrays\|imacros\|integer-size\|iprefix\|iquote\|iwithprefixbefore\|module\|names\|opt-report\|opt-streaming-stores\|pch-dir\|pch-use\|prof-dir\|prof-file\|real-size\|reentrancy\|stand\|tcollect-filter\|tune\|warn\|watch\) \(@<:@^-@:>@@<:@^ @:>@*\) / -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"])])
+   AC_LANG_PUSH([C])
+   _KPSE_CHECK_LIBTOOL
+   AC_LANG_POP([C])
+   AC_PROVIDE_IFELSE([AC_PROG_FC],
+     [AS_IF([test -n "$FC" -a X"$FC" != Xno],
+        [AC_LANG_PUSH([Fortran])
+         _KPSE_CHECK_LIBTOOL
+         AC_LANG_POP([Fortran])])])
+   AC_PROVIDE_IFELSE([AC_PROG_F77],
+     [AS_IF([test -n "$F77" -a X"$F77" != Xno],
+        [AC_LANG_PUSH([Fortran 77])
+         _KPSE_CHECK_LIBTOOL
+         AC_LANG_POP([Fortran 77])])])
+   AC_PROVIDE_IFELSE([AC_PROG_CXX],
+     [AS_IF([test -n "$CXX" -a X"$CXX" != Xno],
+        [AC_LANG_PUSH([C++])
+         _KPSE_CHECK_LIBTOOL
+         AC_LANG_POP([C++])])])])dnl
 dnl
 dnl Local Variables:
 dnl mode: autoconf
