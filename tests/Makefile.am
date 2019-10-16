@@ -298,7 +298,6 @@ TESTS = 							\
 XFAIL_TESTS =                                                   \
 	test_xmap_all2all_fail_run
 
-
 AUTOMAKE_OPTIONS = color-tests
 
 EXTRA_DIST = core
@@ -332,6 +331,7 @@ EXTRA_DIST = core
 
 clean-local:
 	-rm -f *.$(FCMODEXT) *.i
+	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the
 # top-level Makefile expects the directory containing this Makefile to be
