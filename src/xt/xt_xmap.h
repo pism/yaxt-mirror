@@ -94,7 +94,7 @@ int xt_xmap_get_num_destinations(Xt_xmap xmap);
  *
  * @param[in] xmap exchange map
  * @return number of prosses from which the local process will
- *         required data in an exchange operation
+ *         require data in an exchange operation
  */
 int xt_xmap_get_num_sources(Xt_xmap xmap);
 
