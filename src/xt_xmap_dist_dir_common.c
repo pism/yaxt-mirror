@@ -107,7 +107,7 @@ void xt_xmdd_free_dist_dir(struct dist_dir *dist_dir) {
  * \param[out] stripes_ pointer to pointer of array of the stripes
  * describing the bucket for rank \a dist_dir_rank. Must point to a
  * pointer allocated by malloc or related and will be resized if necessary.
- * \param[out] stripes_array_size number of stripes stored in \a stripes_
+ * \param[in,out] stripes_array_size number of stripes stored in \a stripes_
  * \param[in] dist_dir_rank rank for which to compute bucket
  * \return newly created bucket. The bucket must not be longer lived
  * than the dynamic memory referenced by \a stripes_ .
