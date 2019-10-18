@@ -93,9 +93,9 @@ dnl newer PGI or NAG configurations particularly well
         [  tmp_sharedflag='-Wl,-shared'],
         [  tmp_sharedflag='-Wl,-shared'
 	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`'])),
-        [\*Sun\\ F\*)[ 	]*# Sun Fortran 8\.3
+        [\*Sun\\ F\*\(.\)[ 	]*# Sun Fortran 8\.3
 [ 	]*tmp_sharedflag='-G' ;;
-],[\&	*NAG\\ Fortran\\ Compiler*)
+],[\&	*NAG\\ Fortran\\ Compiler*\1
 	  tmp_sharedflag='-Wl,-shared'
 	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`' ;;
 ]))dnl
@@ -105,7 +105,22 @@ dnl newer PGI or NAG configurations particularly well
             [test x-\1 = x"$p"])),
           [test x-R = x"\$p"],[\& ||
 	   test x-l = x"$p"]))])dnl
+   m4_foreach([acx_ltconfig],[[[_LT_LANG_C_CONFIG]],[[_LT_LANG_F77_CONFIG]],[[_LT_LANG_FC_CONFIG]]],
+     [m4_pushdef(acx_ltconfig,m4_bpatsubst(m4_dquote(
+        m4_bpatsubst(m4_dquote(m4_defn(acx_ltconfig)),[_LT_TAG_COMPILER
+],
+       [\&  _LT_TAGDECL([with_nagfor], [acx_is_nagfor], [0], [Is the compiler the NAG Fortran compiler?])])),
+       [_LT_CONFIG],
+       [AC_MSG_CHECKING([whether this is the NAG Fortran compiler])
+    $CC -V 2>&1 | grep '^NAG Fortran Compiler Release' >/dev/null 2>&1
+    _lt_result=$?
+    AS_IF([test $_lt_result -eq 0],[_lt_result=yes],[_lt_result=no])
+    AC_MSG_RESULT([$_lt_result])
+    _LT_TAGVAR([acx_is_nagfor], $][1)=$_lt_result
+    \&]))])dnl
    LT_INIT
+   m4_popdef([_LT_LANG_F77_CONFIG])dnl
+   m4_popdef([_LT_LANG_FC_CONFIG])dnl
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
      [m4_popdef([_LT_COMPILER_PIC])m4_popdef([_LT_LINKER_SHLIBS])dnl
       m4_popdef([_LT_SYS_HIDDEN_LIBDEPS])])dnl
