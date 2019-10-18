@@ -16,7 +16,7 @@
  	  alldeplibs=:
  	  continue
  	  ;;
-+	 -Wl,--start-group|-Wl,--end-group|-Wl,-\(|-Wl,-\))
++	-Wl,--start-group|-Wl,--end-group|-Wl,-\(|-Wl,-\))
 +	  if test "$linkmode,$pass" = "prog,link"; then
 +	    compile_deplibs="$deplib $compile_deplibs"
 +	    finalize_deplibs="$deplib $finalize_deplibs"
