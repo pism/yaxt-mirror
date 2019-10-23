@@ -74,7 +74,7 @@ FCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(FC) -static $(AM_FCFLAGS) $(FCFLAGS)
 
 clean-local:
-	-rm -f *.i
+	-rm -f *.i *.dbg
 	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the

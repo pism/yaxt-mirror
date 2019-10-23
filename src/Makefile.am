@@ -316,7 +316,7 @@ xtinclude_Makefile.inc: Makefile
 all-local: xtinclude_Makefile.inc
 
 clean-local:
-	-rm -f *.$(FCMODEXT) i.*.L *.i ompi_workaround.c
+	-rm -f *.$(FCMODEXT) i.*.L *.i ompi_workaround.c *.dbg
 
 
 # When an out-of-source build takes place, the recipe of the rule expects that

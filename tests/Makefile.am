@@ -330,7 +330,7 @@ EXTRA_DIST = core
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
 
 clean-local:
-	-rm -f *.$(FCMODEXT) *.i
+	-rm -f *.$(FCMODEXT) *.i *.dbg
 	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the
