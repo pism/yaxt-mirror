@@ -86,8 +86,6 @@ dnl
 dnl  Note:  For now, each of these needs a corresponding entry
 dnl  in acconfig.h.
 dnl
-define([requote], [ifelse($#, 0, , $#, 1, "$1",
-        ["$1" requote(builtin(shift,$@))])])dnl
 dnl
 AC_DEFUN([TJ_FIND_TYPE],
   [AS_VAR_PUSHDEF([tj_type_equiv],[tj_cv_c_type_$1])dnl
