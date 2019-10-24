@@ -1,6 +1,6 @@
 dnl configure.ac --- autoconf script for YAXT
 dnl
-dnl Copyright  (C)  2016  Thomas Jahns <jahns@dkrz.de>
+dnl Copyright  (C)  2019  Thomas Jahns <jahns@dkrz.de>
 dnl
 dnl Version: 1.0
 dnl Keywords: configure configure.ac autotools
