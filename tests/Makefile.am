@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-noinst_PROGRAMS = 						\
+check_PROGRAMS = 						\
 	test_misc_f						\
 	test_mpi_generate_datatype				\
 	test_mpi_smartdedup					\
@@ -101,7 +101,12 @@ noinst_PROGRAMS = 						\
 	test_yaxt
 
 
-noinst_LTLIBRARIES = libtestutil.la libtestutil_f.la
+check_LTLIBRARIES = libtestutil.la libtestutil_f.la
+
+if ! with_on_demand_check_programs
+all: $(check_LTLIBRARIES) $(check_PROGRAMS)
+endif
+
 
 libtestutil_la_SOURCES = tests.c \
 	test_idxlist_utils.c \

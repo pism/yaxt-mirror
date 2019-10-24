@@ -429,6 +429,17 @@ AC_DEFINE_UNQUOTED([XT_INT],[$XT_INT],[Type to use for enumeration of distribute
 AC_DEFINE_UNQUOTED([XT_INT_MPIDT],[$XT_INT_MPIDT],[MPI Datatype for type for enumeration of distributed elements.])
 AC_DEFINE_UNQUOTED([XT_UINT_MPIDT],[$XT_UINT_MPIDT],[MPI Datatype for type for counts of distributed elements.])
 
+AC_ARG_WITH([on-demand-check-programs],
+  [AS_HELP_STRING([--with-on-demand-check-programs],
+     [only build test programs when calling make check (default: build during make all)])],
+  [AS_CASE([$withval],
+     [yes|no],,
+     [n],[with_on_demand_check_programs=no],
+     [y],[with_on_demand_check_programs=yes],
+     [AC_MSG_FAILURE([unexpected value for --with-on-demand-check-programs: $withval])])],
+  [with_on_demand_check_programs=no])
+AM_CONDITIONAL([with_on_demand_check_programs],
+  [test x$with_on_demand_check_programs = xyes])
 
 AC_ARG_VAR([BUILD_CFLAGS],
   [append to CFLAGS during build but not in configure phase])
