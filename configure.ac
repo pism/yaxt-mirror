@@ -513,7 +513,8 @@ dnl created the dummy Fortran dependency files, we enforce their
 dnl regeneration at the build time by updating the timestamps of the
 dnl corresponding Makefiles, which the Fortran dependency file have as
 dnl prerequisites.
-AC_CONFIG_COMMANDS([force_dep_regeneration],[touch "tests/${DEPDIR}/FC.deps" "src/${DEPDIR}/FC.deps"
+AC_CONFIG_COMMANDS([force_dep_regeneration],[$MKDIR_P "tests/${DEPDIR}" "src/${DEPDIR}"
+touch "tests/${DEPDIR}/FC.deps" "src/${DEPDIR}/FC.deps"
 sleep 1
 touch tests/Makefile src/Makefile],
 [DEPDIR="${DEPDIR}"])

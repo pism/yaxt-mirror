@@ -327,7 +327,7 @@ EXTRA_DIST = core
 	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
+@am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
 
 clean-local:
 	-rm -f *.$(FCMODEXT) *.i *.dbg
