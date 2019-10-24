@@ -341,3 +341,10 @@ clean-local:
 # as the older versions of Automake do.
 distclean-local:
 	-rm -rf '$(DEPDIR)'
+
+#
+# Local Variables:
+# coding: utf-8
+# show-trailing-whitespace: t
+# End:
+#
