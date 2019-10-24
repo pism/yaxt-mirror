@@ -85,3 +85,10 @@ clean-local:
 # as the older versions of Automake do.
 distclean-local:
 	-rm -rf '$(DEPDIR)'
+
+#
+# Local Variables:
+# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
+# coding: utf-8
+# license-default: "bsd"
+# End:
