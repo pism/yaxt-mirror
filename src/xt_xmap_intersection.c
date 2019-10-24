@@ -64,8 +64,10 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
+#include "xt_xmap_intersection_common.h"
 #include "ensure_array_size.h"
 #include "xt_arithmetic_util.h"
+#include "xt/quicksort.h"
 
 static MPI_Comm     xmap_intersection_get_communicator(Xt_xmap xmap);
 static int          xmap_intersection_get_num_destinations(Xt_xmap xmap);
@@ -91,6 +93,8 @@ xmap_intersection_iterator_get_num_transfer_pos_ext(Xt_xmap_iter iter);
 static void         xmap_intersection_iterator_delete(Xt_xmap_iter iter);
 static int          xmap_intersection_get_max_src_pos(Xt_xmap xmap);
 static int          xmap_intersection_get_max_dst_pos(Xt_xmap xmap);
+static Xt_xmap
+xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type);
 
 
 static const struct Xt_xmap_iter_vtable
@@ -132,7 +136,8 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
         .copy                  = xmap_intersection_copy,
         .delete                = xmap_intersection_delete,
         .get_max_src_pos       = xmap_intersection_get_max_src_pos,
-        .get_max_dst_pos       = xmap_intersection_get_max_dst_pos};
+        .get_max_dst_pos       = xmap_intersection_get_max_dst_pos,
+        .reorder               = xmap_intersection_reorder};
 
 struct exchange_data {
   // list of relative positions in memory to send or receive
@@ -208,44 +213,6 @@ static void xmap_intersection_get_source_ranks(Xt_xmap xmap, int * ranks) {
 enum {
   bitsPerCoverageElement = sizeof (unsigned long) * CHAR_BIT,
 };
-
-struct pos_run {
-  size_t len;
-  int start, direction;
-};
-
-/* how many pos values have monotonically either positively or
- * negatively consecutive values */
-static inline struct pos_run
-get_pos_run_len(size_t num_pos, const int *restrict pos)
-{
-  size_t i = 0, j = 1;
-  int direction = 0;
-  int start = pos[0];
-  if (j < num_pos) {
-    direction = isign_mask(pos[1] - pos[0]);
-    while (j < num_pos
-           && pos[j] == start + (~direction & (int)(j - i)) + (direction & -(int)(j - i)))
-      ++j;
-    direction = direction & ((j == 1) - 1);
-  }
-  return (struct pos_run){ .start = start, .len = j, .direction = direction };
-}
-
-
-/* compute number of position extents that would be required
-   to represent transfer positions array */
-static size_t
-count_transfer_pos_ext(size_t intersection_size,
-                       const int *restrict intersection_pos)
-{
-  size_t i = 0, num_transfer_pos_ext = 0;
-  while (i < intersection_size) {
-    i += get_pos_run_len(intersection_size - i, intersection_pos + i).len;
-    ++num_transfer_pos_ext;
-  }
-  return num_transfer_pos_ext;
-}
 
 /* compute list positions for recv direction */
 static int
@@ -335,8 +302,7 @@ generate_dir_transfer_pos_dst(
       resSets_[new_num_intersections].num_transfer_pos = intersection_size;
       resSets_[new_num_intersections].transfer_pos_ext_cache = NULL;
       resSets_[new_num_intersections].num_transfer_pos_ext
-        = (int)count_transfer_pos_ext((size_t)intersection_size,
-                                      intersection_pos);
+        = (int)count_pos_ext((size_t)intersection_size, intersection_pos);
       resSets_[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
       intersection_pos = NULL;
@@ -433,8 +399,7 @@ generate_dir_transfer_pos_src(int num_intersections,
       resSets_[new_num_intersections].num_transfer_pos = intersection_size;
       resSets_[new_num_intersections].transfer_pos_ext_cache = NULL;
       resSets_[new_num_intersections].num_transfer_pos_ext
-        = (int)count_transfer_pos_ext((size_t)intersection_size,
-                                      intersection_pos);
+        = (int)count_pos_ext((size_t)intersection_size, intersection_pos);
       resSets_[new_num_intersections].rank = intersections[i].rank;
       new_num_intersections++;
       intersection_pos = NULL;
@@ -764,6 +729,118 @@ static Xt_xmap_iter xmap_intersection_get_out_iterator(Xt_xmap xmap) {
   return (Xt_xmap_iter)iter;
 }
 
+struct a2abuf
+{
+  int *buffer, *counts, *displs;
+};
+
+static inline struct a2abuf
+setup_buffer(int comm_size, int n, const struct exchange_data *msgs)
+{
+  size_t buffer_size = 0;
+  for (int i = 0; i < n; ++i)
+    buffer_size += (size_t)msgs[i].num_transfer_pos;
+
+  int *restrict counts = xmalloc((2 * (size_t)comm_size + buffer_size)
+                                 * sizeof(*counts)),
+    *restrict displs = counts + comm_size,
+    *restrict buffer = counts + 2 * comm_size;
+  for (int i = 0; i < comm_size; ++i)
+    counts[i] = 0;
+
+  for (int i = 0; i < n; ++i)
+    counts[msgs[i].rank] = msgs[i].num_transfer_pos;
+
+  for (int i = 0, accu = 0; i < comm_size; ++i) {
+    displs[i] = accu;
+    accu += counts[i];
+  }
+  return (struct a2abuf){ .buffer=buffer, .counts=counts, .displs=displs };
+}
+
+static void reorder_transfer_pos(
+  int n_out, int n_in, struct exchange_data * out_msg,
+  struct exchange_data * in_msg, MPI_Comm comm) {
+
+  int comm_size;
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  struct a2abuf
+    out = setup_buffer(comm_size, n_out, out_msg),
+    in = setup_buffer(comm_size, n_in, in_msg);
+
+  for (int i = 0; i < n_out; ++i) {
+    const struct exchange_data * curr_msg = out_msg + i;
+    size_t count = curr_msg->num_transfer_pos;
+    if (count > 0) {
+      // pack local out transfer_pos into out buffer
+      memcpy(out.buffer + out.displs[curr_msg->rank],
+             curr_msg->transfer_pos, count * sizeof(*out.buffer));
+      // sort local out transfer_pos
+      xt_quicksort_int(curr_msg->transfer_pos, count);
+    }
+  }
+
+  // exchange local out transfer_pos
+  xt_mpi_call(MPI_Alltoallv(out.buffer, out.counts, out.displs, MPI_INT,
+                            in.buffer, in.counts, in.displs, MPI_INT,
+                            comm), comm);
+
+  for (int i = 0; i < n_in; ++i) {
+    const struct exchange_data * curr_msg = in_msg + i;
+    int count = curr_msg->num_transfer_pos;
+    if (count > 0)
+      // reorder local receive transfer_pos (curr_msg->transfer_pos) based
+      // on remote out transfer_pos (in_buffer + in_displs[curr_msg->rank])
+      xt_quicksort_int_permutation(
+        in.buffer + in.displs[curr_msg->rank], (size_t)count,
+        curr_msg->transfer_pos);
+  }
+
+  free(out.counts);
+  free(in.counts);
+
+  free(out_msg->transfer_pos_ext_cache);
+  free(in_msg->transfer_pos_ext_cache);
+  out_msg->transfer_pos_ext_cache = NULL;
+  in_msg->transfer_pos_ext_cache = NULL;
+  out_msg->num_transfer_pos_ext =
+    (int)count_pos_ext(
+      (size_t)out_msg->num_transfer_pos, out_msg->transfer_pos);
+  in_msg->num_transfer_pos_ext =
+    (int)count_pos_ext(
+      (size_t)in_msg->num_transfer_pos, in_msg->transfer_pos);
+}
+
+static Xt_xmap
+xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
+
+  Xt_xmap_intersection xmap_intersection_new =
+    xmi(xmap_intersection_copy(xmap));
+
+  int n_out = xmap_intersection_new->n_out;
+  int n_in = xmap_intersection_new->n_in;
+  struct exchange_data * out_msg = xmap_intersection_new->out_msg;
+  struct exchange_data * in_msg = xmap_intersection_new->in_msg;
+  MPI_Comm comm = xmap_intersection_new->comm;
+
+  switch ((int)type) {
+    case (XT_REORDER_NONE):
+      break;
+    case (XT_REORDER_SEND_UP):
+      reorder_transfer_pos(n_out, n_in, out_msg, in_msg, comm);
+      break;
+    case (XT_REORDER_RECV_UP):
+      reorder_transfer_pos(n_in, n_out, in_msg, out_msg, comm);
+      break;
+    default:
+      Xt_abort(comm, "ERROR(xmap_intersection_reorder):invalid reorder type",
+               __FILE__, __LINE__);
+  };
+
+  return (Xt_xmap)xmap_intersection_new;
+}
+
 static int xmap_intersection_iterator_next(Xt_xmap_iter iter) {
 
   Xt_xmap_iter_intersection iter_intersection = xmii(iter);
@@ -794,25 +871,14 @@ static const struct Xt_pos_ext *
 xmap_intersection_iterator_get_transfer_pos_ext(Xt_xmap_iter iter) {
 
   assert(iter != NULL);
-  if (!xmii(iter)->msg->transfer_pos_ext_cache)
-  {
-    size_t i = 0, n = (size_t)xmii(iter)->msg->num_transfer_pos,
-      num_transfer_pos_ext = 0;
-    const int *restrict transfer_pos = xmii(iter)->msg->transfer_pos;
-    struct Xt_pos_ext *restrict transfer_pos_ext
-      = xmalloc((size_t)xmii(iter)->msg->num_transfer_pos_ext
-                * sizeof (transfer_pos_ext[0]));
-    while (i < n)
-    {
-      struct pos_run rn = get_pos_run_len(n - i, transfer_pos + i);
-      transfer_pos_ext[num_transfer_pos_ext]
-        = (struct Xt_pos_ext){ .start = rn.start,
-                               .size = (rn.direction*2 + 1) * (int)rn.len };
-      ++num_transfer_pos_ext;
-      i += rn.len;
-    }
-    assert(xmii(iter)->msg->num_transfer_pos_ext == (int)num_transfer_pos_ext);
-    xmii(iter)->msg->transfer_pos_ext_cache = transfer_pos_ext;
+  if (!xmii(iter)->msg->transfer_pos_ext_cache) {
+    size_t num_transfer_pos_ext = (size_t)((size_t)xmii(iter)->msg->num_transfer_pos_ext);
+    struct Xt_pos_ext * transfer_pos_ext =
+      (xmii(iter)->msg->transfer_pos_ext_cache =
+         xmalloc(num_transfer_pos_ext * sizeof(*transfer_pos_ext)));
+    generate_pos_ext((size_t)xmii(iter)->msg->num_transfer_pos,
+                     xmii(iter)->msg->transfer_pos,
+                     num_transfer_pos_ext, transfer_pos_ext);
   }
   return xmii(iter)->msg->transfer_pos_ext_cache;
 }

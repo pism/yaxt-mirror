@@ -55,6 +55,7 @@
 #endif
 
 #include "xt/xt_dmap.h"
+#include "xt/xt_xmap.h"
 
 struct xt_dmap_vtable {
   void (*repeat)(Xt_dmap dmap, int num_repetitions,

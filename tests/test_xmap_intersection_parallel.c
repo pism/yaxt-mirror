@@ -56,6 +56,7 @@
 
 #include "tests.h"
 #include "xt/xt_xmap_intersection.h"
+#include "xt/xt_xmap.h"
 
 struct test_message {
 
@@ -394,6 +395,74 @@ int main(int argc, char **argv)
     for (int i = 0; i < num_src_intersections; ++i)
       xt_idxlist_delete(src_com[i].list);
     free(src_com);
+  }
+
+  { // checks the reorder functionality of exchange maps
+
+    // setup
+
+    enum { count = 6 };
+    Xt_int src_indices[count] = {0,5,1,4,2,3};
+    Xt_int dst_indices[count] = {5,4,3,2,1,0};
+    Xt_int intersection_indices[count] = {0,1,2,3,4,5};
+
+    struct Xt_com_list src_com =
+      {.list = xt_idxvec_new(intersection_indices, count),
+       .rank = (my_rank + 1) % comm_size};
+    struct Xt_com_list dst_com =
+      {.list = xt_idxvec_new(intersection_indices, count),
+       .rank = (comm_size + my_rank - 1) % comm_size};
+
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_indices, count);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_indices, count);
+
+    Xt_xmap xmap = xmi_new(1, &src_com, 1, &dst_com,
+                           src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+
+    enum xt_reorder_type reorder_types[] =
+      {XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP};
+
+    // test
+
+    for (size_t i = 0; i < sizeof(reorder_types) / sizeof(reorder_types[0]);
+         ++i) {
+
+      enum xt_reorder_type curr_reorder_type = reorder_types[i];
+
+      Xt_xmap xmap_reorder = xt_xmap_reorder(xmap, curr_reorder_type);
+
+      struct test_message send_messages =
+        {.pos = (int[]){0,2,4,5,3,1}, .num_pos = 6};
+      send_messages.rank = (my_rank + 1) % comm_size;
+      struct test_message recv_messages =
+        {.pos = (int[]){5,4,3,2,1,0}, .num_pos = 6};
+      recv_messages.rank = (comm_size + my_rank - 1) % comm_size;
+
+      switch(curr_reorder_type) {
+        case(XT_REORDER_SEND_UP):
+          xt_quicksort_int_permutation(
+            (int*)send_messages.pos, (size_t)count, (int*)recv_messages.pos);
+          break;
+        case(XT_REORDER_RECV_UP):
+          xt_quicksort_int_permutation(
+            (int*)recv_messages.pos, (size_t)count, (int*)send_messages.pos);
+          break;
+        default:
+          break;
+      };
+
+      test_xmap(xmap_reorder, 1, &send_messages, 1, &recv_messages);
+
+      xt_xmap_delete(xmap_reorder);
+    }
+
+    // cleanup
+
+    xt_xmap_delete(xmap);
+    xt_idxlist_delete(dst_idxlist);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_com.list);
+    xt_idxlist_delete(src_com.list);
   }
 
   xt_finalize();

@@ -139,6 +139,10 @@ int xt_xmap_get_max_dst_pos(Xt_xmap xmap) {
   return xmap->vtable->get_max_dst_pos(xmap);
 }
 
+Xt_xmap xt_xmap_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
+  return xmap->vtable->reorder(xmap, type);
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2

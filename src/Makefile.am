@@ -114,6 +114,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_xmap_dist_dir_intercomm.h				\
 	xt_xmap_dist_dir_intercomm.c				\
 	xt_xmap_intersection.c					\
+	xt_xmap_intersection_common.h				\
 	xt_xmap_intersection_ext.c				\
 	xt_init.c						\
 	core/core.c						\

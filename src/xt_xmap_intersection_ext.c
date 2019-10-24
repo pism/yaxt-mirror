@@ -65,9 +65,11 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
+#include "xt_xmap_intersection_common.h"
 #include "xt_arithmetic_util.h"
 #include "ensure_array_size.h"
 #include "xt_cover.h"
+#include "xt/quicksort.h"
 
 static MPI_Comm     xmap_intersection_ext_get_communicator(Xt_xmap xmap);
 static int          xmap_intersection_ext_get_num_destinations(Xt_xmap xmap);
@@ -82,6 +84,8 @@ static Xt_xmap xmap_intersection_ext_copy(Xt_xmap xmap);
 static void xmap_intersection_ext_delete(Xt_xmap xmap);
 static int xmap_intersection_ext_get_max_src_pos(Xt_xmap xmap);
 static int xmap_intersection_ext_get_max_dst_pos(Xt_xmap xmap);
+static Xt_xmap
+xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type);
 
 
 static const struct Xt_xmap_vtable xmap_intersection_vtable = {
@@ -95,7 +99,8 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
         .copy                  = xmap_intersection_ext_copy,
         .delete                = xmap_intersection_ext_delete,
         .get_max_src_pos       = xmap_intersection_ext_get_max_src_pos,
-        .get_max_dst_pos       = xmap_intersection_ext_get_max_dst_pos};
+        .get_max_dst_pos       = xmap_intersection_ext_get_max_dst_pos,
+        .reorder               = xmap_intersection_ext_reorder};
 
 struct exchange_ext {
   // list of relative position extents in index list to send or receive
@@ -937,6 +942,281 @@ remap_intersection(Xt_idxlist mypart_idxlist,
   free(intersection_idxstripes);
 }
 
+static struct Xt_pos_ext * exchange_transfer_pos_ext(
+  int n_out, struct exchange_ext *restrict out_msg,
+  int n_in, struct exchange_ext *restrict in_msg,
+  struct exchange_ext *restrict remote_out_msg,
+  int tag_offset, MPI_Comm comm) {
+
+  MPI_Request * requests
+    = xmalloc((size_t)(n_in + 2 * n_out) * sizeof(*requests));
+  MPI_Request *restrict recv_requests = requests,
+    *restrict send_header_requests = requests + n_in,
+    *restrict send_data_requests = send_header_requests + n_out;
+
+  // set up receives for number of transfer_pos_ext per remote
+  // for (int i = 0; i < n_in; ++i)
+  for (int i = 0; i < n_in; ++i)
+    xt_mpi_call(MPI_Irecv(
+                  &(remote_out_msg[i].num_transfer_pos_ext), 1, MPI_INT,
+                  in_msg[i].rank,
+                  tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
+                  comm, recv_requests + i), comm);
+
+  // send number of transfer_pos_ext
+  unsigned num_active_dst = 0, num_dst_changes = 0;
+  for (int i = 0; i < n_out; ++i) {
+    xt_mpi_call(MPI_Isend(
+                  CAST_MPI_SEND_BUF(&(out_msg[i].num_transfer_pos_ext)),
+                  1, MPI_INT, out_msg[i].rank,
+                  tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
+                  comm, send_header_requests + i), comm);
+
+    if (out_msg[i].num_transfer_pos_ext > 0) {
+
+      xt_mpi_call(MPI_Isend(
+                    CAST_MPI_SEND_BUF(out_msg[i].transfer_pos_ext),
+                    out_msg[i].num_transfer_pos_ext,
+                    MPI_2INT, out_msg[i].rank,
+                    tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
+                    comm, send_data_requests + i),
+                  comm);
+    } else {
+      send_data_requests[i] = MPI_REQUEST_NULL;
+    }
+  }
+
+  // wait for the receiving of headers to complete
+  xt_mpi_call(
+    MPI_Waitall(n_out + n_in, recv_requests, MPI_STATUSES_IGNORE), comm);
+
+  size_t total_num_pos_ext_to_recv = 0;
+
+  for (size_t i = 0; i < (size_t)n_in; ++i)
+    total_num_pos_ext_to_recv +=
+      (size_t)(remote_out_msg[i].num_transfer_pos_ext);
+
+  struct Xt_pos_ext *transfer_pos_ext_buffer;
+  if (total_num_pos_ext_to_recv > 0) {
+
+    transfer_pos_ext_buffer
+      = xmalloc(total_num_pos_ext_to_recv * sizeof(*transfer_pos_ext_buffer));
+
+    // set up receive for transfer_pos_ext
+    size_t offset = 0;
+    for (int i = 0; i < n_in; ++i)
+      if (remote_out_msg[i].num_transfer_pos_ext > 0) {
+        struct Xt_pos_ext *curr_transfer_pos_ext =
+          transfer_pos_ext_buffer + offset;
+        xt_mpi_call(MPI_Irecv(
+                      curr_transfer_pos_ext,
+                      remote_out_msg[i].num_transfer_pos_ext, MPI_2INT,
+                      in_msg[i].rank,
+                      tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
+                      comm, recv_requests + i), comm);
+
+        remote_out_msg[i].transfer_pos_ext = curr_transfer_pos_ext;
+        offset += (size_t)(remote_out_msg[i].num_transfer_pos_ext);
+      } else {
+        remote_out_msg[i].transfer_pos_ext = NULL;
+      }
+  } else
+    transfer_pos_ext_buffer = NULL;
+
+  // move data request handles for compact wait
+  memcpy(send_header_requests, send_data_requests,
+         n_out * sizeof (send_header_requests[0]));
+
+  // wait until all communication is completed
+  xt_mpi_call(
+    MPI_Waitall(n_in + n_out, recv_requests, MPI_STATUSES_IGNORE), comm);
+
+  free(requests);
+  return transfer_pos_ext_buffer;
+}
+
+static void sort_transfer_pos_ext(struct exchange_ext * msg, int n) {
+
+  int buffer_size = 0;
+  for (int i = 0; i < n; ++i)
+    if ((msg[i].transfer_pos == NULL) &&
+        (msg[i].num_transfer_pos > buffer_size))
+      buffer_size = msg[i].num_transfer_pos;
+
+  int *transfer_pos_buffer;
+  if (buffer_size > 0)
+    transfer_pos_buffer =
+      xmalloc((size_t)buffer_size * sizeof(*transfer_pos_buffer));
+
+  for (int i = 0; i < n; ++i) {
+
+    // get the positions array
+    int *restrict transfer_pos;
+    size_t num_transfer_pos = (size_t)(msg[i].num_transfer_pos);
+    if (msg[i].transfer_pos != NULL) {
+      transfer_pos = msg[i].transfer_pos;
+    } else {
+      transfer_pos = transfer_pos_buffer;
+      generate_pos(
+        (size_t)(msg[i].num_transfer_pos_ext), msg[i].transfer_pos_ext,
+        num_transfer_pos, transfer_pos);
+    }
+
+    // sort the positions array
+    xt_quicksort_int(transfer_pos, num_transfer_pos);
+
+    // convert the positions array to position extents array
+    size_t num_transfer_pos_ext = count_pos_ext(num_transfer_pos, transfer_pos);
+    struct Xt_pos_ext * transfer_pos_ext;
+    if (num_transfer_pos_ext != (size_t)(msg[i].num_transfer_pos_ext)) {
+      msg[i].num_transfer_pos_ext = (int)num_transfer_pos_ext;
+      transfer_pos_ext =
+        (msg[i].transfer_pos_ext =
+           xrealloc(msg[i].transfer_pos_ext,
+                    num_transfer_pos_ext * sizeof(*transfer_pos_ext)));
+    } else {
+      transfer_pos_ext = msg[i].transfer_pos_ext;
+    }
+    generate_pos_ext(
+      num_transfer_pos, transfer_pos, num_transfer_pos_ext, transfer_pos_ext);
+  }
+
+  if (buffer_size > 0) free(transfer_pos_buffer);
+}
+
+static void sort_transfer_pos_ext_permutation(
+  struct exchange_ext * msg, int n, struct exchange_ext * permutation_msg) {
+
+  size_t buffer_size = 0;
+  for (int i = 0; i < n; ++i) {
+    size_t curr_buffer_size = 0;
+    if (msg[i].transfer_pos == NULL)
+      curr_buffer_size += (size_t)(msg[i].num_transfer_pos);
+    if (permutation_msg[i].transfer_pos == NULL)
+      curr_buffer_size += (size_t)(permutation_msg[i].num_transfer_pos);
+    if (curr_buffer_size > buffer_size) buffer_size = curr_buffer_size;
+  }
+
+  int *transfer_pos_buffer;
+  if (buffer_size > 0)
+    transfer_pos_buffer =
+      xmalloc(buffer_size * sizeof(*transfer_pos_buffer));
+
+  for (int i = 0; i < n; ++i) {
+
+    // get the positions array
+    int *restrict transfer_pos;
+    size_t num_transfer_pos = (size_t)(msg[i].num_transfer_pos);
+    if (msg[i].transfer_pos != NULL) {
+      transfer_pos = msg[i].transfer_pos;
+    } else {
+      transfer_pos = transfer_pos_buffer;
+      generate_pos(
+        (size_t)(msg[i].num_transfer_pos_ext), msg[i].transfer_pos_ext,
+        num_transfer_pos, transfer_pos);
+    }
+
+    // get the permutation array
+    int *restrict permutation;
+    if (permutation_msg[i].transfer_pos != NULL) {
+      permutation = permutation_msg[i].transfer_pos;
+    } else {
+      permutation =
+        transfer_pos_buffer +
+        ((transfer_pos_buffer==transfer_pos)?num_transfer_pos:0);
+      generate_pos(
+        (size_t)(permutation_msg[i].num_transfer_pos_ext),
+        permutation_msg[i].transfer_pos_ext, num_transfer_pos, permutation);
+    }
+
+    // sort the positions array
+    xt_quicksort_int_permutation(transfer_pos, num_transfer_pos, permutation);
+
+    // convert the permutation array to position extents array
+    size_t num_transfer_pos_ext = count_pos_ext(num_transfer_pos, permutation);
+    struct Xt_pos_ext * transfer_pos_ext;
+    if (num_transfer_pos_ext !=
+        (size_t)(permutation_msg[i].num_transfer_pos_ext)) {
+      permutation_msg[i].num_transfer_pos_ext = (int)num_transfer_pos_ext;
+      transfer_pos_ext =
+        (permutation_msg[i].transfer_pos_ext =
+           xrealloc(permutation_msg[i].transfer_pos_ext,
+                    num_transfer_pos_ext * sizeof(*transfer_pos_ext)));
+    } else {
+      transfer_pos_ext = permutation_msg[i].transfer_pos_ext;
+    }
+    generate_pos_ext(
+      num_transfer_pos, permutation, num_transfer_pos_ext, transfer_pos_ext);
+  }
+
+  if (buffer_size > 0) free(transfer_pos_buffer);
+}
+
+static void reorder_transfer_pos_ext(
+  int n_out, int n_in, struct exchange_ext * out_msg,
+  struct exchange_ext * in_msg, int tag_offset, MPI_Comm comm) {
+
+  int comm_size;
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  struct exchange_ext *restrict remote_out_msg =
+    xmalloc((size_t)n_in * sizeof(*remote_out_msg));
+
+  for (int i = 0; i < n_in; ++i) {
+    remote_out_msg[i].rank = in_msg[i].rank;
+    remote_out_msg[i].num_transfer_pos = in_msg[i].num_transfer_pos;
+    remote_out_msg[i].transfer_pos = NULL;
+  }
+
+  // exchange transfer_pos_ext of out messages to respective receivers
+  struct Xt_pos_ext *transfer_pos_ext_buffer =
+    exchange_transfer_pos_ext(
+      n_out, out_msg, n_in, in_msg, remote_out_msg, tag_offset, comm);
+
+  // sort the transfer positions in all out messages
+  sort_transfer_pos_ext(out_msg, n_out);
+
+  // sort the transfer positions in all in messages based on the remote out
+  // messages
+  sort_transfer_pos_ext_permutation(remote_out_msg, n_in, in_msg);
+
+  free(transfer_pos_ext_buffer);
+  free(remote_out_msg);
+}
+
+static Xt_xmap
+xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
+
+  Xt_xmap_intersection_ext xmap_intersection_ext_new =
+    xmie(xmap_intersection_ext_copy(xmap));
+
+  int n_out = xmap_intersection_ext_new->n_out;
+  int n_in = xmap_intersection_ext_new->n_in;
+  struct exchange_ext * out_msg = xmap_intersection_ext_new->out_msg;
+  struct exchange_ext * in_msg = xmap_intersection_ext_new->in_msg;
+  MPI_Comm comm = xmap_intersection_ext_new->comm;
+  int tag_offset = xmap_intersection_ext_new->tag_offset;
+
+  struct exchange_ext * remote_msg = NULL;
+  int n_remote = 0;
+
+  switch ((int)type) {
+    case (XT_REORDER_NONE):
+      break;
+    case (XT_REORDER_SEND_UP):
+      reorder_transfer_pos_ext(n_out, n_in, out_msg, in_msg, tag_offset, comm);
+      break;
+    case (XT_REORDER_RECV_UP):
+      reorder_transfer_pos_ext(n_in, n_out, in_msg, out_msg, tag_offset, comm);
+      break;
+    default:
+      Xt_abort(comm, "ERROR(xmap_intersection_ext_reorder):invalid reorder "
+               "type", __FILE__, __LINE__);
+  };
+
+  return (Xt_xmap)xmap_intersection_ext_new;
+}
+
 
 /* iterator operations */
 
@@ -1037,19 +1317,11 @@ xmap_intersection_ext_iterator_get_transfer_pos(Xt_xmap_iter iter) {
   struct exchange_ext *restrict msg = xmiei(iter)->msg;
   if ((!msg->num_transfer_pos) | (msg->transfer_pos != NULL)) { } else {
     size_t num_transfer_pos = (size_t)msg->num_transfer_pos;
-    int *restrict transfer_pos = msg->transfer_pos
-      = xmalloc(num_transfer_pos * sizeof (*msg->transfer_pos));
-    size_t num_transfer_pos_ext = (size_t)msg->num_transfer_pos_ext;
-    struct Xt_pos_ext *restrict transfer_pos_ext = msg->transfer_pos_ext;
-    size_t ofs = 0;
-    for (size_t i = 0; i < num_transfer_pos_ext; ++i) {
-      int abssize = abs(transfer_pos_ext[i].size);
-      int step = isign(transfer_pos_ext[i].size);
-      for (int j = 0; j < abssize; ++j)
-        transfer_pos[ofs + (size_t)j] = transfer_pos_ext[i].start + j * step;
-      ofs += (size_t)abssize;
-    }
-    assert(ofs == num_transfer_pos);
+    int * transfer_pos =
+      (msg->transfer_pos = xmalloc(num_transfer_pos * sizeof(*transfer_pos)));
+    generate_pos(
+      (size_t)msg->num_transfer_pos_ext, msg->transfer_pos_ext,
+      num_transfer_pos, transfer_pos);
   }
   return msg->transfer_pos;
 }

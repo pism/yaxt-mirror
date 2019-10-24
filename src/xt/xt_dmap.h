@@ -58,15 +58,10 @@
 #include <mpi.h>
 
 #include "xt/xt_core.h"
+#include "xt/xt_xmap.h"
 
 /** \example test_dmap_parallel.c
  */
-
-enum xt_reorder_type {
-  XT_REORDER_NONE,    //!< no reordering
-  XT_REORDER_SEND_UP, //!< optimise data access on sender side
-  XT_REORDER_RECV_UP, //!< optimise data access on receiver side
-};
 
 
 /**
