@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-noinst_PROGRAMS = 						\
+EXTRA_PROGRAMS = 						\
 	rrobin							\
 	idxlist_examples					\
 	idxsection_examples					\
@@ -41,6 +41,12 @@ noinst_PROGRAMS = 						\
 	row2col_f						\
 	tr_gp2fs						\
 	unstruct_halo_exchange_f
+
+noinst_PROGRAMS =
+if with_example_programs
+noinst_PROGRAMS += $(EXTRA_PROGRAMS)
+endif
+examples: $(EXTRA_PROGRAMS)
 
 rrobin_SOURCES = rrobin.c
 

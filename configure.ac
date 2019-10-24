@@ -441,6 +441,18 @@ AC_ARG_WITH([on-demand-check-programs],
 AM_CONDITIONAL([with_on_demand_check_programs],
   [test x$with_on_demand_check_programs = xyes])
 
+AC_ARG_WITH([example-programs],
+  [AS_HELP_STRING([--without-example-programs],
+     [only build example programs when calling make examples in examples directory (default: build during make all)])],
+  [AS_CASE([$withval],
+     [yes|no],,
+     [n],[with_example_programs=no],
+     [y],[with_example_programs=yes],
+     [AC_MSG_FAILURE([unexpected value for --with-example-programs: '$withval'])])],
+  [with_example_programs=yes])
+AM_CONDITIONAL([with_example_programs],
+  [test x$with_example_programs = xyes])
+
 AC_ARG_VAR([BUILD_CFLAGS],
   [append to CFLAGS during build but not in configure phase])
 AC_CONFIG_COMMANDS_PRE([CFLAGS="$CFLAGS${BUILD_CFLAGS+ $BUILD_CFLAGS}"])
