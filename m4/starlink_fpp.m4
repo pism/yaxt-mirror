@@ -298,6 +298,7 @@ AC_DEFUN([_ACX_SL_PROG_FPP],
       AS_IF([test -z "$FPP"],
         [for ac_fpp in `cd $srcdir ; pwd`/util/sxpreproc-wrapper \
            `cd $srcdir ; pwd`/util/xlfpreproc-wrapper \
+           "$FC -F -fpp -o - -Wp,-w,-P" \
            `cd $srcdir ; pwd`/util/sunf95preproc-wrapper \
            `cd $srcdir ; pwd`/util/crayftnpreproc-wrapper \
            "$FC -F" "$FC -F -fpp" "$FC -E" "$FC -E -cpp" \
