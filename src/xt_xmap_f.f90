@@ -48,14 +48,15 @@
 MODULE xt_xmap_abstract
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
        c_associated, c_f_pointer
-  USE xt_core, ONLY: xt_mpi_fint_kind, xt_pos_ext
+  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_pos_ext
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: xt_xmap_c2f, xt_xmap_f2c, xt_is_null
   PUBLIC :: xt_xmap_copy, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
-       xt_xmap_get_source_ranks
+       xt_xmap_get_source_ranks, xt_xmap_reorder, xt_reorder_type_kind, &
+       xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
        xt_xmap_dist_dir_intercomm_new
   PUBLIC :: xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
@@ -83,6 +84,11 @@ MODULE xt_xmap_abstract
 #endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_xmap_iter
+
+  ENUM, BIND( C )
+    ENUMERATOR :: xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
+  END ENUM
+  INTEGER, PARAMETER :: xt_reorder_type_kind = KIND(xt_reorder_none)
 
   INTERFACE
     ! this function must not be implemented in Fortran because
@@ -127,6 +133,7 @@ MODULE xt_xmap_abstract
       INTEGER(c_int) :: num
     END FUNCTION xt_xmap_iterator_get_num_transfer_pos_ext_c
   END INTERFACE
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_xmap_f.f90'
 CONTAINS
 
   FUNCTION xt_xmap_is_null(xmap) RESULT(p)
@@ -296,6 +303,27 @@ CONTAINS
     END INTERFACE
     CALL xt_xmap_get_source_ranks_c(xmap%cptr, ranks)
   END SUBROUTINE xt_xmap_get_source_ranks
+
+  FUNCTION xt_xmap_reorder(xmap, reorder_type) RESULT(xmap_reorder)
+    IMPLICIT NONE
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER(xt_reorder_type_kind), INTENT(in) :: reorder_type
+    TYPE(xt_xmap) :: xmap_reorder
+    INTERFACE
+      FUNCTION xt_xmap_reorder_c(xmap, reorder_type) &
+           BIND(C, name='xt_xmap_reorder') RESULT(xmap_reorder_ptr)
+        IMPORT:: xt_reorder_type_kind, c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        INTEGER(xt_reorder_type_kind), VALUE, INTENT(in) :: reorder_type
+        TYPE(c_ptr) :: xmap_reorder_ptr
+      END FUNCTION xt_xmap_reorder_c
+    END INTERFACE
+
+    IF (reorder_type < 0_xt_reorder_type_kind .OR. &
+         reorder_type > HUGE(1_c_int)) &
+         CALL xt_abort("invalid reorder type", filename, __LINE__)
+    xmap_reorder%cptr = xt_xmap_reorder_c(xmap%cptr, reorder_type)
+  END FUNCTION xt_xmap_reorder
 
   FUNCTION xt_xmap_get_out_iterator(xmap) RESULT(iter)
     TYPE(xt_xmap), INTENT(in) :: xmap

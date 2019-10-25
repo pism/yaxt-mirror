@@ -82,13 +82,14 @@ MODULE yaxt
        xt_xmap_iterator_get_transfer_pos, &
        xt_xmap_iterator_get_num_transfer_pos, xt_xmap_iterator_delete, &
        xt_xmap_iterator_get_transfer_pos_ext, &
-       xt_xmap_iterator_get_num_transfer_pos_ext
+       xt_xmap_iterator_get_num_transfer_pos_ext, xt_xmap_reorder, &
+       xt_reorder_type_kind, XT_REORDER_NONE, XT_REORDER_SEND_UP, &
+       XT_REORDER_RECV_UP
   USE xt_xmap_intersection, ONLY: xt_xmap_intersection_new, &
        xt_xmap_intersection_ext_new, xt_com_list
   USE xt_dmap_base, ONLY: xt_dmap, xt_dmap_c2f, xt_dmap_f2c, xt_is_null, &
        xt_dmap_delete, xt_dmap_offset_new, xt_dmap_generate_redist, &
-       xt_dmap_repeat, xt_dmap_reorder, xt_reorder_type_kind, XT_REORDER_NONE, &
-       XT_REORDER_SEND_UP, XT_REORDER_RECV_UP
+       xt_dmap_repeat, xt_dmap_reorder
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f, xt_redist_f2c, &
        xt_redist_copy, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
@@ -139,6 +140,8 @@ MODULE yaxt
        xt_xmap_get_source_ranks, xt_xmap_dist_dir_new, &
        xt_xmap_dist_dir_intercomm_new, &
        xt_xmap_intersection_new, xt_xmap_intersection_ext_new, &
+       xt_xmap_reorder, xt_reorder_type_kind, &
+       XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP, &
        xt_com_list, &
        xt_xmap_iter, xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
@@ -146,9 +149,9 @@ MODULE yaxt
        xt_xmap_iterator_get_num_transfer_pos, xt_xmap_iterator_delete, &
        xt_xmap_iterator_get_transfer_pos_ext, &
        xt_xmap_iterator_get_num_transfer_pos_ext, &
-       xt_dmap_c2f, xt_dmap_f2c, xt_dmap_delete, xt_reorder_type_kind, &
+       xt_dmap_c2f, xt_dmap_f2c, xt_dmap_delete, &
        xt_dmap, xt_dmap_offset_new, xt_dmap_generate_redist, xt_dmap_reorder, &
-       xt_dmap_repeat, XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP, &
+       xt_dmap_repeat, &
        xt_redist, xt_redist_f2c, xt_redist_c2f, &
        xt_redist_p2p_off_new, xt_redist_p2p_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &

@@ -52,7 +52,7 @@ MODULE xt_dmap_base
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_iter, xt_is_null, &
        xt_xmap_get_out_iterator, xt_xmap_get_in_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_num_transfer_pos, &
-       xt_xmap_f2c
+       xt_xmap_f2c, xt_reorder_type_kind
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f
   USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_loc, c_associated
   IMPLICIT NONE
@@ -66,11 +66,6 @@ MODULE xt_dmap_base
 #endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_dmap
-
-  ENUM, BIND( C )
-    ENUMERATOR :: xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
-  END ENUM
-  INTEGER, PARAMETER :: xt_reorder_type_kind = KIND(xt_reorder_none)
 
   INTERFACE
     ! this function must not be implemented in Fortran because
@@ -110,8 +105,7 @@ MODULE xt_dmap_base
 
   PUBLIC :: xt_dmap_c2f, xt_dmap_f2c, xt_is_null, xt_dmap_delete, &
        xt_dmap_offset_new, xt_dmap_generate_redist, xt_dmap_repeat, &
-       xt_dmap_reorder, xt_reorder_type_kind, &
-       xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
+       xt_dmap_reorder
   CHARACTER(len=*), PARAMETER :: filename = 'xt_dmap_f.f90'
 CONTAINS
 
