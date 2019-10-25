@@ -47,7 +47,7 @@
 !
 MODULE xt_xmap_abstract
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
-       c_associated, c_f_pointer
+       c_associated, c_f_pointer, c_loc
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_pos_ext
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
@@ -57,7 +57,8 @@ MODULE xt_xmap_abstract
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
        xt_xmap_get_source_ranks, xt_xmap_reorder, xt_reorder_type_kind, &
-       xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
+       xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up, &
+       xt_xmap_update_positions
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
        xt_xmap_dist_dir_intercomm_new
   PUBLIC :: xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
@@ -355,6 +356,48 @@ CONTAINS
          CALL xt_abort("invalid reorder type", filename, __LINE__)
     xmap_reorder%cptr = xt_xmap_reorder_c(xmap%cptr, reorder_type)
   END FUNCTION xt_xmap_reorder
+
+  FUNCTION xt_xmap_update_positions(xmap, src_positions, dst_positions) &
+      RESULT(xmap_updated)
+    IMPLICIT NONE
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER, TARGET, INTENT(in) :: src_positions(*)
+    INTEGER, TARGET, INTENT(in) :: dst_positions(*)
+    TYPE(xt_xmap) :: xmap_updated
+    TYPE(xt_xmap_iter) :: iter
+    INTEGER(c_int), TARGET, ALLOCATABLE :: src_positions_c(:), dst_positions_c(:)
+    TYPE(c_ptr) :: src_positions_p, dst_positions_p
+    INTERFACE
+      FUNCTION xt_xmap_update_positions_c(xmap, src_positions, dst_positions) &
+           BIND(C, name='xt_xmap_update_positions') RESULT(xmap_updated_ptr)
+        IMPORT:: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap, src_positions, dst_positions
+        TYPE(c_ptr) :: xmap_updated_ptr
+      END FUNCTION xt_xmap_update_positions_c
+    END INTERFACE
+
+    IF (c_int == KIND(1)) THEN
+      src_positions_p = C_LOC(src_positions)
+      dst_positions_p = C_LOC(dst_positions)
+    ELSE
+      CALL arg2ci(xt_xmap_get_max_src_pos(xmap), src_positions, src_positions_c)
+      src_positions_p = C_LOC(src_positions_c)
+      CALL arg2ci(xt_xmap_get_max_dst_pos(xmap), dst_positions, dst_positions_c)
+      dst_positions_p = C_LOC(dst_positions_c)
+    END IF
+    xmap_updated%cptr = &
+      xt_xmap_update_positions_c(xmap%cptr, src_positions_p, dst_positions_p)
+    CONTAINS
+      SUBROUTINE arg2ci(n, arg, argc)
+        INTEGER, INTENT(in) :: n, arg(*)
+        INTEGER(c_int), ALLOCATABLE, INTENT(inout) :: argc(:)
+        INTEGER :: i
+        ALLOCATE(argc(n))
+        DO i = 1, n
+          argc(i) = INT(arg(i), c_int)
+        END DO
+      END SUBROUTINE arg2ci
+  END FUNCTION xt_xmap_update_positions
 
   FUNCTION xt_xmap_get_out_iterator(xmap) RESULT(iter)
     TYPE(xt_xmap), INTENT(in) :: xmap

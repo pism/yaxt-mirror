@@ -465,6 +465,57 @@ int main(int argc, char **argv)
     xt_idxlist_delete(src_com.list);
   }
 
+  { // checks the update positions functionality of exchange maps
+
+    // setup
+
+    enum { count = 12, nlev = 2, nproma = 4, nblk = 3};
+    Xt_int src_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
+    Xt_int dst_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
+    Xt_int intersection_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
+
+    struct Xt_com_list src_com =
+      {.list = xt_idxvec_new(intersection_indices, count),
+       .rank = (my_rank + 1) % comm_size};
+    struct Xt_com_list dst_com =
+      {.list = xt_idxvec_new(intersection_indices, count),
+       .rank = (comm_size + my_rank - 1) % comm_size};
+
+    Xt_idxlist src_idxlist = xt_idxvec_new(src_indices, count);
+    Xt_idxlist dst_idxlist = xt_idxvec_new(dst_indices, count);
+
+    Xt_xmap xmap = xmi_new(1, &src_com, 1, &dst_com,
+                           src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+
+    int blocked_positions[count];
+    for (int i = 0, idx = 0; idx < nproma; ++idx)
+      for (int blk = 0; blk < nblk; ++blk, ++i)
+        blocked_positions[i] = idx + blk * nproma * nlev;
+
+    Xt_xmap xmap_single_level_blocked =
+      xt_xmap_update_positions(xmap, blocked_positions, blocked_positions);
+
+    struct test_message send_messages =
+      {.pos = &(blocked_positions[0]), .num_pos = count};
+    send_messages.rank = (my_rank + 1) % comm_size;
+    struct test_message recv_messages =
+      {.pos = &(blocked_positions[0]), .num_pos = count};
+    recv_messages.rank = (comm_size + my_rank - 1) % comm_size;
+
+    // test
+
+    test_xmap(xmap_single_level_blocked, 1, &send_messages, 1, &recv_messages);
+
+    // cleanup
+
+    xt_xmap_delete(xmap_single_level_blocked);
+    xt_xmap_delete(xmap);
+    xt_idxlist_delete(dst_idxlist);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_com.list);
+    xt_idxlist_delete(src_com.list);
+  }
+
   xt_finalize();
   MPI_Finalize();
 

@@ -86,6 +86,10 @@ static int xmap_intersection_ext_get_max_src_pos(Xt_xmap xmap);
 static int xmap_intersection_ext_get_max_dst_pos(Xt_xmap xmap);
 static Xt_xmap
 xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type);
+static Xt_xmap
+xmap_intersection_ext_update_positions(Xt_xmap xmap,
+                                       const int * src_positions,
+                                       const int * dst_positions);
 
 
 static const struct Xt_xmap_vtable xmap_intersection_vtable = {
@@ -100,7 +104,8 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
         .delete                = xmap_intersection_ext_delete,
         .get_max_src_pos       = xmap_intersection_ext_get_max_src_pos,
         .get_max_dst_pos       = xmap_intersection_ext_get_max_dst_pos,
-        .reorder               = xmap_intersection_ext_reorder};
+        .reorder               = xmap_intersection_ext_reorder,
+        .update_pos            = xmap_intersection_ext_update_positions};
 
 struct exchange_ext {
   // list of relative position extents in index list to send or receive
@@ -1217,6 +1222,77 @@ xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
   return (Xt_xmap)xmap_intersection_ext_new;
 }
 
+static void update_positions(
+  int n, struct exchange_ext *restrict msg, const int *restrict new_pos) {
+
+  int max_num_transfer_pos = 0;
+  for (int i = 0; i < n; ++i) {
+    size_t curr_buffer_size = 0;
+    if ((msg[i].transfer_pos == NULL) &&
+        (msg[i].num_transfer_pos > max_num_transfer_pos))
+      max_num_transfer_pos = msg[i].num_transfer_pos;
+  }
+
+  int *transfer_pos_buffer;
+  if (max_num_transfer_pos > 0)
+    transfer_pos_buffer =
+      xmalloc((size_t)max_num_transfer_pos * sizeof(*transfer_pos_buffer));
+
+  for (int i = 0; i < n; ++i) {
+
+    // get the positions array
+    int *restrict transfer_pos;
+    size_t num_transfer_pos = (size_t)(msg[i].num_transfer_pos);
+    if (msg[i].transfer_pos != NULL) {
+      transfer_pos = msg[i].transfer_pos;
+    } else {
+      transfer_pos = transfer_pos_buffer;
+      generate_pos(
+        (size_t)(msg[i].num_transfer_pos_ext), msg[i].transfer_pos_ext,
+        num_transfer_pos, transfer_pos);
+    }
+
+    // update positions
+    for (int j = 0; j < num_transfer_pos; ++j)
+      transfer_pos[j] = new_pos[transfer_pos[j]];
+
+    // convert the permutation array to position extents array
+    size_t num_transfer_pos_ext = count_pos_ext(num_transfer_pos, transfer_pos);
+    struct Xt_pos_ext * transfer_pos_ext;
+    if (num_transfer_pos_ext !=
+        (size_t)(msg[i].num_transfer_pos_ext)) {
+      msg[i].num_transfer_pos_ext = (int)num_transfer_pos_ext;
+      transfer_pos_ext =
+        (msg[i].transfer_pos_ext =
+           xrealloc(msg[i].transfer_pos_ext,
+                    num_transfer_pos_ext * sizeof(*transfer_pos_ext)));
+    } else {
+      transfer_pos_ext = msg[i].transfer_pos_ext;
+    }
+    generate_pos_ext(
+      num_transfer_pos, transfer_pos, num_transfer_pos_ext, transfer_pos_ext);
+  }
+
+  if (max_num_transfer_pos > 0) free(transfer_pos_buffer);
+}
+
+static Xt_xmap
+xmap_intersection_ext_update_positions(Xt_xmap xmap,
+                                       const int * src_positions,
+                                       const int * dst_positions) {
+
+  Xt_xmap_intersection_ext xmap_intersection_ext_new =
+    xmie(xmap_intersection_ext_copy(xmap));
+
+  update_positions(
+    xmap_intersection_ext_new->n_out, xmap_intersection_ext_new->out_msg,
+    src_positions);
+  update_positions(
+    xmap_intersection_ext_new->n_in, xmap_intersection_ext_new->in_msg,
+    dst_positions);
+
+  return (Xt_xmap)xmap_intersection_ext_new;
+}
 
 /* iterator operations */
 

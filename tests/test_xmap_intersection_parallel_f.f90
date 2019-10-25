@@ -57,7 +57,7 @@ PROGRAM test_xmap_intersection_parallel
        xt_xmap_iterator_get_transfer_pos, xt_xmap_iterator_next, &
        xt_xmap_iterator_delete, xt_xmap_reorder, xt_reorder_type_kind, &
        xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up, &
-       xt_sort_permutation
+       xt_sort_permutation, xt_xmap_update_positions
 #if defined __PGI && ( __PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 7))
   ! PGI Fortran 12.7 and older has a bug that prevents proper passing of
   ! generic interfaces through multiple modules, direct USE instead
@@ -112,6 +112,7 @@ PROGRAM test_xmap_intersection_parallel
   CALL full_comm_matrix_test
   CALL dedup_test
   CALL reorder_test
+  CALL update_positions_test
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
@@ -404,11 +405,9 @@ CONTAINS
     TYPE(xt_com_list) ::  src_com(1), dst_com(1)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_reorder
-    INTEGER(xt_reorder_type_kind) :: reorder_types(3) &
+    INTEGER(xt_reorder_type_kind), PARAMETER :: reorder_types(3) &
          = (/ xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up/)
-    INTEGER :: i, num_recv_messages, num_send_messages
-    INTEGER, PARAMETER :: num_recv_pos(2) = (/ 2, 1 /), &
-         num_send_pos(2) = (/ 2, 1 /)
+    INTEGER :: i
     INTEGER, SAVE, TARGET :: send_pos(6), recv_pos(6)
     TYPE(test_message) :: recv_messages(1), send_messages(1)
 
@@ -448,6 +447,56 @@ CONTAINS
     CALL xt_idxlist_delete(dst_com(1)%list)
     CALL xt_idxlist_delete(src_com(1)%list)
   END SUBROUTINE reorder_test
+
+  ! checks the update positions functionality of exchange maps
+  SUBROUTINE update_positions_test
+
+    INTEGER(xt_int_kind), PARAMETER :: indices(12) &
+         = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 8_xi, 9_xi, 10_xi, 11_xi /)
+    TYPE(xt_com_list) ::  src_com(1), dst_com(1)
+    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    TYPE(xt_xmap) :: xmap, xmap_single_level_blocked
+    INTEGER :: i, idx, blk
+    INTEGER, PARAMETER :: nproma = 4, nblk = 3, nlev = 2
+    INTEGER, SAVE, TARGET :: blocked_positions(12)
+    TYPE(test_message) :: recv_messages(1), send_messages(1)
+
+    ! setup
+    src_idxlist = xt_idxvec_new(indices)
+    dst_idxlist = xt_idxvec_new(indices)
+    src_com(1)%list = xt_idxvec_new(indices)
+    src_com(1)%rank = MOD(my_rank + 1, comm_size)
+    dst_com(1)%list = xt_idxvec_new(indices)
+    dst_com(1)%rank = MOD(comm_size + my_rank - 1, comm_size)
+    xmap = xmi_new(src_com, dst_com, src_idxlist, dst_idxlist, mpi_comm_world)
+
+    i = 1
+    DO idx = 0, nproma - 1
+      DO blk = 0, nblk - 1
+        blocked_positions(i) = idx + blk * nproma * nlev
+        i = i + 1
+      END DO
+    END DO
+
+    xmap_single_level_blocked = &
+      xt_xmap_update_positions(xmap, blocked_positions, blocked_positions);
+
+    send_messages(1)%rank = MOD(my_rank + 1, comm_size)
+    send_messages(1)%pos => blocked_positions
+    recv_messages(1)%rank = MOD(comm_size + my_rank - 1, comm_size)
+    recv_messages(1)%pos => blocked_positions
+
+    ! test
+    CALL test_xmap(xmap_single_level_blocked, send_messages, recv_messages)
+
+    ! cleanup
+    CALL xt_xmap_delete(xmap_single_level_blocked)
+    CALL xt_xmap_delete(xmap)
+    CALL xt_idxlist_delete(dst_idxlist)
+    CALL xt_idxlist_delete(src_idxlist)
+    CALL xt_idxlist_delete(dst_com(1)%list)
+    CALL xt_idxlist_delete(src_com(1)%list)
+  END SUBROUTINE update_positions_test
 
   SUBROUTINE test_xmap_iter(iter, msgs)
     TYPE(xt_xmap_iter), INTENT(inout) :: iter

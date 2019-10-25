@@ -143,6 +143,11 @@ Xt_xmap xt_xmap_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
   return xmap->vtable->reorder(xmap, type);
 }
 
+Xt_xmap xt_xmap_update_positions(
+  Xt_xmap xmap, const int * src_positions, const int * dst_positions) {
+  return xmap->vtable->update_pos(xmap, src_positions, dst_positions);
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2

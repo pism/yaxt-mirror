@@ -84,6 +84,8 @@ struct Xt_xmap_vtable {
   int (*get_max_src_pos)(Xt_xmap);
   int (*get_max_dst_pos)(Xt_xmap);
   Xt_xmap (*reorder)(Xt_xmap xmap, enum xt_reorder_type type);
+  Xt_xmap (*update_pos)(Xt_xmap xmap,
+                        const int * src_positions, const int * dst_positions);
 };
 
 struct Xt_xmap_ {
