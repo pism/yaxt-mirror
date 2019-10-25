@@ -75,6 +75,7 @@ MODULE yaxt
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f, xt_xmap_f2c, &
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_copy, xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
+       xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
        xt_xmap_all2all_new, xt_xmap_dist_dir_new, xt_is_null, &
        xt_xmap_dist_dir_intercomm_new, &
        xt_xmap_iter, xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
@@ -138,6 +139,7 @@ MODULE yaxt
        xt_xmap_all2all_new, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_source_ranks, xt_xmap_dist_dir_new, &
+       xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
        xt_xmap_dist_dir_intercomm_new, &
        xt_xmap_intersection_new, xt_xmap_intersection_ext_new, &
        xt_xmap_reorder, xt_reorder_type_kind, &

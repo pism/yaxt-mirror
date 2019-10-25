@@ -55,6 +55,7 @@ MODULE xt_xmap_abstract
   PUBLIC :: xt_xmap_c2f, xt_xmap_f2c, xt_is_null
   PUBLIC :: xt_xmap_copy, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
+       xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
        xt_xmap_get_source_ranks, xt_xmap_reorder, xt_reorder_type_kind, &
        xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
@@ -303,6 +304,36 @@ CONTAINS
     END INTERFACE
     CALL xt_xmap_get_source_ranks_c(xmap%cptr, ranks)
   END SUBROUTINE xt_xmap_get_source_ranks
+
+  FUNCTION xt_xmap_get_max_src_pos(xmap) RESULT(num)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER :: num
+    INTERFACE
+      FUNCTION xt_xmap_get_max_src_pos_c(xmap) RESULT(num) &
+           BIND(c, name='xt_xmap_get_max_src_pos')
+        IMPORT :: c_ptr, c_int
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        INTEGER(c_int) :: num
+      END FUNCTION xt_xmap_get_max_src_pos_c
+    END INTERFACE
+    num = INT(xt_xmap_get_max_src_pos_c(xmap%cptr))
+  END FUNCTION xt_xmap_get_max_src_pos
+
+  FUNCTION xt_xmap_get_max_dst_pos(xmap) RESULT(num)
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER :: num
+    INTERFACE
+      FUNCTION xt_xmap_get_max_dst_pos_c(xmap) RESULT(num) &
+           BIND(c, name='xt_xmap_get_max_dst_pos')
+        IMPORT :: c_ptr, c_int
+        IMPLICIT NONE
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap
+        INTEGER(c_int) :: num
+      END FUNCTION xt_xmap_get_max_dst_pos_c
+    END INTERFACE
+    num = INT(xt_xmap_get_max_dst_pos_c(xmap%cptr))
+  END FUNCTION xt_xmap_get_max_dst_pos
 
   FUNCTION xt_xmap_reorder(xmap, reorder_type) RESULT(xmap_reorder)
     IMPLICIT NONE
