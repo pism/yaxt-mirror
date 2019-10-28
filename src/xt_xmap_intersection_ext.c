@@ -969,7 +969,6 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
                   comm, recv_requests + i), comm);
 
   // send number of transfer_pos_ext
-  unsigned num_active_dst = 0, num_dst_changes = 0;
   for (int i = 0; i < n_out; ++i) {
     xt_mpi_call(MPI_Isend(
                   CAST_MPI_SEND_BUF(&(out_msg[i].num_transfer_pos_ext)),
@@ -1202,9 +1201,6 @@ xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
   MPI_Comm comm = xmap_intersection_ext_new->comm;
   int tag_offset = xmap_intersection_ext_new->tag_offset;
 
-  struct exchange_ext * remote_msg = NULL;
-  int n_remote = 0;
-
   switch ((int)type) {
     case (XT_REORDER_NONE):
       break;
@@ -1227,7 +1223,6 @@ static void update_positions(
 
   int max_num_transfer_pos = 0;
   for (int i = 0; i < n; ++i) {
-    size_t curr_buffer_size = 0;
     if ((msg[i].transfer_pos == NULL) &&
         (msg[i].num_transfer_pos > max_num_transfer_pos))
       max_num_transfer_pos = msg[i].num_transfer_pos;
