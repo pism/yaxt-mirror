@@ -94,7 +94,7 @@ static size_t count_pos_ext(size_t num_pos, const int *restrict pos)
 /*
  * generate position extents for given positions array
  */
-static void generate_pos_ext(
+static inline void generate_pos_ext(
   size_t num_pos, const int *restrict pos,
   size_t num_pos_ext, struct Xt_pos_ext *restrict pos_ext)
 {
@@ -114,7 +114,7 @@ static void generate_pos_ext(
 
 /* compute number of positions that would be required
    to represent position extents */
-static size_t count_pos(
+static inline size_t count_pos(
   size_t num_pos_ext, const struct Xt_pos_ext *restrict pos_ext)
 {
   size_t num_pos = 0;
@@ -122,7 +122,7 @@ static size_t count_pos(
   return num_pos;
 }
 
-static void generate_pos(
+static inline void generate_pos(
   size_t num_pos_ext, const struct Xt_pos_ext *restrict pos_ext,
   size_t num_pos, int *restrict pos)
 {
