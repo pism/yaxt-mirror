@@ -1047,10 +1047,10 @@ static void sort_transfer_pos_ext(struct exchange_ext * msg, int n) {
         (msg[i].num_transfer_pos > buffer_size))
       buffer_size = msg[i].num_transfer_pos;
 
-  int *transfer_pos_buffer;
-  if (buffer_size > 0)
-    transfer_pos_buffer =
-      xmalloc((size_t)buffer_size * sizeof(*transfer_pos_buffer));
+  int *transfer_pos_buffer
+    = buffer_size > 0
+    ? xmalloc((size_t)buffer_size * sizeof(*transfer_pos_buffer))
+    : NULL;
 
   for (int i = 0; i < n; ++i) {
 
@@ -1101,10 +1101,10 @@ static void sort_transfer_pos_ext_permutation(
     if (curr_buffer_size > buffer_size) buffer_size = curr_buffer_size;
   }
 
-  int *transfer_pos_buffer;
-  if (buffer_size > 0)
-    transfer_pos_buffer =
-      xmalloc(buffer_size * sizeof(*transfer_pos_buffer));
+  int *transfer_pos_buffer
+    = buffer_size > 0
+    ? xmalloc(buffer_size * sizeof(*transfer_pos_buffer))
+    : NULL;
 
   for (int i = 0; i < n; ++i) {
 
@@ -1228,10 +1228,10 @@ static void update_positions(
       max_num_transfer_pos = msg[i].num_transfer_pos;
   }
 
-  int *transfer_pos_buffer;
-  if (max_num_transfer_pos > 0)
-    transfer_pos_buffer =
-      xmalloc((size_t)max_num_transfer_pos * sizeof(*transfer_pos_buffer));
+  int *transfer_pos_buffer
+    = max_num_transfer_pos > 0
+    ? xmalloc((size_t)max_num_transfer_pos * sizeof(*transfer_pos_buffer))
+    : NULL;
 
   for (int i = 0; i < n; ++i) {
 
