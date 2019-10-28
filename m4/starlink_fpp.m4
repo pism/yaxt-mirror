@@ -248,7 +248,7 @@ AC_DEFUN([_ACX_SL_SET_FPP_FEATURE_VARS],
 # accordingly.
 AC_DEFUN([_ACX_SL_TEST_FPP],
   [rm -f conftest*
-   ACX_ASSERT_LANG_IS_FORTRAN_VARIANT
+   ACX_ASSERT_LANG_IS_FORTRAN_VARIANT()dnl
    AC_LANG_CONFTEST([_ACX_SL_LANG_PROGRAM_FPP_ONLY])
    ac_tmp=conftest.fppout
    AS_IF([_AC_RUN_LOG([$1 conftest.$2 >$ac_tmp],
@@ -264,8 +264,8 @@ AC_DEFUN([_ACX_SL_TEST_FPP],
            [_AC_MSG_LOG_CONFTEST
             $4])],
         [mv $ac_tmp conftest.$ac_ext
-         _AC_MSG_LOG_CONFTEST
-         $4])])
+         _AC_MSG_LOG_CONFTEST()m4_ifval([$4],[
+         $4])])])
 dnl Preprocessing might fail for one of the following reasons:
 dnl * no output was produced (disk full?),
 dnl * FPP input and output have the same content,
@@ -285,7 +285,7 @@ dnl preprocessing failed. So this command doesn't work.
 AC_DEFUN([_ACX_SL_PROG_FPP],
   [acx_sl_fpp_srcext=m4_default([$1],[${ac_fc_srcext-F}])
    AS_VAR_PUSHDEF([acx_sl_prog_fpp],
-     [acx_sl_cv_prog_fpp_]_AC_LANG_ABBREV[_]m4_default([$1],[${ac_fc_srcext-f}]))
+     [acx_sl_cv_prog_fpp_]_AC_LANG_ABBREV[_]m4_dquote(m4_default([$1],[${ac_fc_srcext-f}])))
    AC_CACHE_CHECK([how to preprocess Fortran files with suffix $acx_sl_fpp_srcext],
      [acx_sl_prog_fpp],
      [AS_VAR_SET([acx_sl_prog_fpp], [])
@@ -296,28 +296,26 @@ AC_DEFUN([_ACX_SL_PROG_FPP],
            [AC_MSG_WARN([user-specified \$FPP ($FPP) does not work])
             FPP=])])
       AS_IF([test -z "$FPP"],
-        [for ac_fpp in `cd $srcdir ; pwd`/util/sxpreproc-wrapper \
-           `cd $srcdir ; pwd`/util/xlfpreproc-wrapper \
+        [ac_fpp=`cd $srcdir ; pwd`
+         AS_FOR([ac_fpp_],[ac_fpp],["$ac_fpp"/util/sxpreproc-wrapper \
+           "$ac_fpp"/util/xlfpreproc-wrapper \
            "$FC -E -fpp" \
            "$FC -F -fpp -o - -Wp,-w,-P" \
-           `cd $srcdir ; pwd`/util/sunf95preproc-wrapper \
-           `cd $srcdir ; pwd`/util/crayftnpreproc-wrapper \
+           "$ac_fpp"/util/sunf95preproc-wrapper \
+           "$ac_fpp"/util/crayftnpreproc-wrapper \
            "$FC -F" "$FC -F -fpp" "$FC -E" "$FC -E -cpp" \
            "$FC $FCFLAGS -F" "$FC $FCFLAGS -E" "$FC $FCFLAGS -E" \
-           "$FC $FCFLAGS -E -cpp" "$FC $FCFLAGS -x f95-cpp-input -E -P"
-         do
-           _ACX_SL_TEST_FPP([$ac_fpp],[$acx_sl_fpp_srcext],[FPP="$ac_fpp"
-              break])
-           _ACX_SL_TEST_FPP([$ac_fpp -P],[$acx_sl_fpp_srcext],
-             [FPP="$ac_fpp -P"
-              break])
-         done
+           "$FC $FCFLAGS -E -cpp" "$FC $FCFLAGS -x f95-cpp-input -E -P"],
+           [_ACX_SL_TEST_FPP([$ac_fpp],[$acx_sl_fpp_srcext],
+              [FPP=$ac_fpp; break])
+            _ACX_SL_TEST_FPP([$ac_fpp -P],[$acx_sl_fpp_srcext],
+              [FPP="$ac_fpp -P"; break])])
          dnl the above tests might generate an executable
          \rm a.out 2>/dev/null])
       AS_IF([test -z "$FPP"], [$3],
-        [AS_VAR_SET([acx_sl_prog_fpp], [$FPP])
-         $2])])
-   AS_VAR_PUSHDEF([acx_sl_prog_fpp])
+        [AS_VAR_SET([acx_sl_prog_fpp], [$FPP])m4_ifval([$2],[
+         $2])])])
+   AS_VAR_POPDEF([acx_sl_prog_fpp])
 ])# _ACX_SL_PROG_FPP
 
 
@@ -590,8 +588,7 @@ AC_DEFUN([_ACX_SL_FC_CHECK_CIFS],
 #
 # This macro sets and substitutes the variables FPP and FPPFLAGS.
 #
-# The macro depends on both FC and CPP, because we must possibly fall
-# back on CPP for preprocessing.
+# The macro depends on FC.
 #
 AC_DEFUN([AC_PROG_FPP],
   [AC_REQUIRE([AC_PROG_FC])dnl
