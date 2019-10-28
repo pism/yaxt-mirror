@@ -1248,7 +1248,7 @@ static void update_positions(
     }
 
     // update positions
-    for (int j = 0; j < num_transfer_pos; ++j)
+    for (size_t j = 0; j < num_transfer_pos; ++j)
       transfer_pos[j] = new_pos[transfer_pos[j]];
 
     // convert the permutation array to position extents array
