@@ -1865,7 +1865,7 @@ BEGIN {
             if ($val[0][1] eq 'long_long-int'
                 or $val[1][1] eq 'long_long-int')
             {
-               return 'unsigned-long_long-int';
+               return 'long_long-int';
             }
          }
          else
