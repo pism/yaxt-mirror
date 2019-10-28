@@ -364,7 +364,6 @@ CONTAINS
     INTEGER, TARGET, INTENT(in) :: src_positions(*)
     INTEGER, TARGET, INTENT(in) :: dst_positions(*)
     TYPE(xt_xmap) :: xmap_updated
-    TYPE(xt_xmap_iter) :: iter
     INTEGER(c_int), TARGET, ALLOCATABLE :: src_positions_c(:), dst_positions_c(:)
     TYPE(c_ptr) :: src_positions_p, dst_positions_p
     INTERFACE
