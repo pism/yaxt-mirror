@@ -1030,7 +1030,7 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
 
   // move data request handles for compact wait
   memcpy(send_header_requests, send_data_requests,
-         n_out * sizeof (send_header_requests[0]));
+         (size_t)n_out * sizeof (send_header_requests[0]));
 
   // wait until all communication is completed
   xt_mpi_call(

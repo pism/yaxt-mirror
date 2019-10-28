@@ -776,13 +776,13 @@ static void reorder_transfer_pos(
 
   for (int i = 0; i < n_out; ++i) {
     const struct exchange_data * curr_msg = out_msg + i;
-    size_t count = curr_msg->num_transfer_pos;
+    int count = curr_msg->num_transfer_pos;
     if (count > 0) {
       // pack local out transfer_pos into out buffer
       memcpy(out.buffer + out.displs[curr_msg->rank],
-             curr_msg->transfer_pos, count * sizeof(*out.buffer));
+             curr_msg->transfer_pos, (size_t)count * sizeof(*out.buffer));
       // sort local out transfer_pos
-      xt_quicksort_int(curr_msg->transfer_pos, count);
+      xt_quicksort_int(curr_msg->transfer_pos, (size_t)count);
     }
   }
 
@@ -867,7 +867,7 @@ static void update_positions(
 
       // reallocate if necessary
       struct Xt_pos_ext * transfer_pos_ext_cache;
-      if (new_num_transfer_pos_ext != msg[i].num_transfer_pos_ext) {
+      if (new_num_transfer_pos_ext != (size_t)msg[i].num_transfer_pos_ext) {
         transfer_pos_ext_cache =
           (msg[i].transfer_pos_ext_cache =
              xrealloc(msg[i].transfer_pos_ext_cache,
@@ -877,7 +877,7 @@ static void update_positions(
         transfer_pos_ext_cache = msg[i].transfer_pos_ext_cache;
       }
       generate_pos_ext(
-        num_transfer_pos, transfer_pos,
+        (size_t)num_transfer_pos, transfer_pos,
         new_num_transfer_pos_ext, transfer_pos_ext_cache);
     }
   }
