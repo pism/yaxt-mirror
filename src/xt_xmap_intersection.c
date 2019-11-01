@@ -487,8 +487,9 @@ exchange_points_to_remove(int num_src_intersections,
   unsigned num_nonempty_src_intersections = 0;
   if (total_num_src_indices_to_recv > 0) {
 
-    *src_indices_to_remove = xmalloc(total_num_src_indices_to_recv
-                                     * sizeof(**src_indices_to_remove));
+    Xt_int *src_indices_to_remove_
+      = *src_indices_to_remove = xmalloc(total_num_src_indices_to_recv
+                                         * sizeof(**src_indices_to_remove));
 
     // set up receive for indices that need to be removed
     offset = 0;
@@ -496,7 +497,7 @@ exchange_points_to_remove(int num_src_intersections,
       if (num_src_indices_to_remove_per_intersection[i] > 0) {
         ++num_nonempty_src_intersections;
         xt_mpi_call(MPI_Irecv(
-                      (*src_indices_to_remove) + offset,
+                      src_indices_to_remove_ + offset,
                       num_src_indices_to_remove_per_intersection[i],
                       Xt_int_dt, src_com[i].rank,
                       tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
