@@ -947,8 +947,8 @@ remap_intersection(Xt_idxlist mypart_idxlist,
 }
 
 static struct Xt_pos_ext * exchange_transfer_pos_ext(
-  int n_out, struct exchange_ext *restrict out_msg,
-  int n_in, struct exchange_ext *restrict in_msg,
+  int n_out, const struct exchange_ext *restrict out_msg,
+  int n_in, const struct exchange_ext *restrict in_msg,
   struct exchange_ext *restrict remote_out_msg,
   int tag_offset, MPI_Comm comm) {
 
