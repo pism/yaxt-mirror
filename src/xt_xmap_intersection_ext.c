@@ -707,9 +707,8 @@ exchange_pos_ext_modifications(
     if (dst_removals_per_intersection[i][1] > 0) {
 
       assert(dst_removals_per_intersection[i][1]
-             == dst_ext[num_active_dst].num_transfer_pos_ext);
-      assert(dst_com[i].rank
-             == dst_ext[num_active_dst].rank);
+             == dst_ext[num_active_dst].num_transfer_pos_ext
+             && dst_com[i].rank == dst_ext[num_active_dst].rank);
       xt_mpi_call(MPI_Isend(
                     dst_ext[num_active_dst].transfer_pos_ext,
                     dst_removals_per_intersection[i][1],
