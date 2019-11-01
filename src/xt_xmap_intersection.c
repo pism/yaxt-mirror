@@ -874,57 +874,23 @@ xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
   return (Xt_xmap)xmap_intersection_new;
 }
 
-static void update_positions(
-  int n, struct exchange_data *restrict msg, const int *restrict new_pos) {
-
-  for (int i = 0; i < n; ++i) {
-
-    int *restrict transfer_pos = msg[i].transfer_pos;
-    int num_transfer_pos = msg[i].num_transfer_pos;
-
-    // update positions
-    for (int j = 0; j < num_transfer_pos; ++j)
-      transfer_pos[j] = new_pos[transfer_pos[j]];
-
-    // if the message contains has a cached position extents array
-    // => update this as well
-    if (msg[i].transfer_pos_ext_cache != NULL) {
-
-      size_t new_num_transfer_pos_ext =
-        count_pos_ext((size_t)num_transfer_pos, transfer_pos);
-
-      // reallocate if necessary
-      struct Xt_pos_ext * transfer_pos_ext_cache;
-      if (new_num_transfer_pos_ext != (size_t)msg[i].num_transfer_pos_ext) {
-        transfer_pos_ext_cache =
-          (msg[i].transfer_pos_ext_cache =
-             xrealloc(msg[i].transfer_pos_ext_cache,
-                      new_num_transfer_pos_ext *
-                      sizeof(*transfer_pos_ext_cache)));
-      } else {
-        transfer_pos_ext_cache = msg[i].transfer_pos_ext_cache;
-      }
-      generate_pos_ext(
-        (size_t)num_transfer_pos, transfer_pos,
-        new_num_transfer_pos_ext, transfer_pos_ext_cache);
-    }
-  }
+static void
+subst_positions(size_t num_pos, int *restrict pos,
+                const int *restrict orig_pos, void *new_pos_)
+{
+  const int *restrict new_pos = new_pos_;
+  for (size_t i = 0; i < num_pos; ++i)
+    pos[i] = new_pos[orig_pos[i]];
 }
 
 static Xt_xmap
 xmap_intersection_update_positions(Xt_xmap xmap,
-                                   const int * src_positions,
-                                   const int * dst_positions) {
+                                   const int *src_positions,
+                                   const int *dst_positions) {
 
-  Xt_xmap_intersection xmap_intersection_new =
-    xmi(xmap_intersection_copy(xmap));
-
-  update_positions(xmap_intersection_new->n_out, xmap_intersection_new->out_msg,
-                   src_positions);
-  update_positions(xmap_intersection_new->n_in, xmap_intersection_new->in_msg,
-                   dst_positions);
-
-  return (Xt_xmap)xmap_intersection_new;
+  return xmap_intersection_copy_(xmap,
+                                 subst_positions, (void *)dst_positions,
+                                 subst_positions, (void *)src_positions);
 }
 
 static int xmap_intersection_iterator_next(Xt_xmap_iter iter) {
