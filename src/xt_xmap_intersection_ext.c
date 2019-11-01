@@ -988,9 +988,9 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
 
   MPI_Request * requests
     = xmalloc((size_t)(n_in + 2 * n_out) * sizeof(*requests));
-  MPI_Request *restrict recv_requests = requests,
-    *restrict send_header_requests = requests + n_in,
-    *restrict send_data_requests = send_header_requests + n_out;
+  MPI_Request *restrict send_header_requests = requests,
+    *restrict recv_requests = requests + n_out,
+    *restrict send_data_requests = recv_requests + n_in;
 
   // set up receives for number of transfer_pos_ext per remote
   // for (int i = 0; i < n_in; ++i)
@@ -1025,7 +1025,7 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
 
   // wait for the receiving of headers to complete
   xt_mpi_call(
-    MPI_Waitall(n_out + n_in, recv_requests, MPI_STATUSES_IGNORE), comm);
+    MPI_Waitall(n_out + n_in, send_header_requests, MPI_STATUSES_IGNORE), comm);
 
   size_t total_num_pos_ext_to_recv = 0;
 
@@ -1059,10 +1059,6 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
       }
   } else
     transfer_pos_ext_buffer = NULL;
-
-  // move data request handles for compact wait
-  memcpy(send_header_requests, send_data_requests,
-         (size_t)n_out * sizeof (send_header_requests[0]));
 
   // wait until all communication is completed
   xt_mpi_call(
