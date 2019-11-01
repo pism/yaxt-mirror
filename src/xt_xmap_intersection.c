@@ -648,7 +648,8 @@ pos_copy_verbatim(size_t num_pos, int *pos, const int *orig_pos, void *state)
 }
 
 static void
-xmap_intersection_msg_copy(size_t nmsg, struct exchange_data *restrict msg,
+xmap_intersection_msg_copy(size_t nmsg,
+                           const struct exchange_data *restrict msg,
                            int *nmsg_copy, struct exchange_data **msg_copy,
                            Xt_pos_copy pos_copy, void *pos_copy_state) {
   *nmsg_copy = (int)nmsg;
