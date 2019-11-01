@@ -98,7 +98,9 @@ static inline void generate_pos_ext(
   size_t num_pos, const int *restrict pos,
   size_t num_pos_ext, struct Xt_pos_ext *restrict pos_ext)
 {
-
+#ifdef NDEBUG
+  (void)num_pos_ext;
+#endif
   size_t i = 0, temp_num_pos_ext = 0;
   while (i < num_pos)
   {
@@ -126,6 +128,9 @@ static inline void generate_pos(
   size_t num_pos_ext, const struct Xt_pos_ext *restrict pos_ext,
   size_t num_pos, int *restrict pos)
 {
+#ifdef NDEBUG
+  (void)num_pos;
+#endif
   size_t ofs = 0;
   for (size_t i = 0; i < num_pos_ext; ++i) {
     int abssize = abs(pos_ext[i].size);
