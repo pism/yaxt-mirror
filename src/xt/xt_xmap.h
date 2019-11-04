@@ -69,12 +69,6 @@
  * methods to be used with Xt_xmap
  */
 
-enum xt_reorder_type {
-  XT_REORDER_NONE,    //!< no reordering
-  XT_REORDER_SEND_UP, //!< optimise data access on sender side
-  XT_REORDER_RECV_UP, //!< optimise data access on receiver side
-};
-
 typedef struct Xt_xmap_iter_ *Xt_xmap_iter;
 
 /**
@@ -241,6 +235,12 @@ int xt_xmap_get_max_src_pos(Xt_xmap xmap);
  * @return         upper limit of range of positions in the destination list
  */
 int xt_xmap_get_max_dst_pos(Xt_xmap xmap);
+
+enum xt_reorder_type {
+  XT_REORDER_NONE,    //!< no reordering
+  XT_REORDER_SEND_UP, //!< optimise data access on sender side
+  XT_REORDER_RECV_UP, //!< optimise data access on receiver side
+};
 
 /**
  * reorder positions
