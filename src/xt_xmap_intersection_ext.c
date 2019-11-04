@@ -1098,18 +1098,13 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
                   tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
                   comm, send_header_requests + i), comm);
 
-    if (out_msg[i].num_transfer_pos_ext > 0) {
-
-      xt_mpi_call(MPI_Isend(
-                    CAST_MPI_SEND_BUF(out_msg[i].transfer_pos_ext),
-                    out_msg[i].num_transfer_pos_ext,
-                    MPI_2INT, out_msg[i].rank,
-                    tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
-                    comm, send_data_requests + i),
-                  comm);
-    } else {
-      send_data_requests[i] = MPI_REQUEST_NULL;
-    }
+    xt_mpi_call(MPI_Isend(
+                  CAST_MPI_SEND_BUF(out_msg[i].transfer_pos_ext),
+                  out_msg[i].num_transfer_pos_ext,
+                  MPI_2INT, out_msg[i].rank,
+                  tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
+                  comm, send_data_requests + i),
+                comm);
   }
 
   // wait for the receiving of headers to complete
@@ -1129,23 +1124,18 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
       = xmalloc(total_num_pos_ext_to_recv * sizeof(*transfer_pos_ext_buffer));
 
     // set up receive for transfer_pos_ext
-    size_t offset = 0;
-    for (int i = 0; i < n_in; ++i)
-      if (remote_out_msg[i].num_transfer_pos_ext > 0) {
-        struct Xt_pos_ext *curr_transfer_pos_ext =
-          transfer_pos_ext_buffer + offset;
-        xt_mpi_call(MPI_Irecv(
-                      curr_transfer_pos_ext,
-                      remote_out_msg[i].num_transfer_pos_ext, MPI_2INT,
-                      in_msg[i].rank,
-                      tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
-                      comm, recv_requests + i), comm);
+    struct Xt_pos_ext *curr_transfer_pos_ext = transfer_pos_ext_buffer;
+    for (int i = 0; i < n_in; ++i) {
+      xt_mpi_call(MPI_Irecv(
+                    curr_transfer_pos_ext,
+                    remote_out_msg[i].num_transfer_pos_ext, MPI_2INT,
+                    in_msg[i].rank,
+                    tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
+                    comm, recv_requests + i), comm);
 
-        remote_out_msg[i].transfer_pos_ext = curr_transfer_pos_ext;
-        offset += (size_t)(remote_out_msg[i].num_transfer_pos_ext);
-      } else {
-        remote_out_msg[i].transfer_pos_ext = NULL;
-      }
+      remote_out_msg[i].transfer_pos_ext = curr_transfer_pos_ext;
+      curr_transfer_pos_ext += remote_out_msg[i].num_transfer_pos_ext;
+    }
   } else
     transfer_pos_ext_buffer = NULL;
 
