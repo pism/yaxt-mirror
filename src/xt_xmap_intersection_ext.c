@@ -1077,9 +1077,9 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
 
   MPI_Request * requests
     = xmalloc((size_t)(n_in + 2 * n_out) * sizeof(*requests));
-  MPI_Request *restrict send_header_requests = requests,
-    *restrict recv_requests = requests + n_out,
-    *restrict send_data_requests = recv_requests + n_in;
+  MPI_Request *send_header_requests = requests,
+    *recv_requests = requests + n_out,
+    *send_data_requests = recv_requests + n_in;
 
   // set up receives for number of transfer_pos_ext per remote
   // for (int i = 0; i < n_in; ++i)
