@@ -470,9 +470,9 @@ int main(int argc, char **argv)
     // setup
 
     enum { count = 12, nlev = 6, nproma = 4, nblk = 3};
-    Xt_int src_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
-    Xt_int dst_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
-    Xt_int intersection_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
+    static const Xt_int src_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
+    static const Xt_int dst_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
+    static const Xt_int intersection_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
     int displacements[nlev];
 
     for (int i = 0; i < (int)nlev; ++i) displacements[i] = i * nproma;

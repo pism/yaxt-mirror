@@ -141,14 +141,12 @@ test_xmap1(xmap_constructor new_xmap, MPI_Comm comm)
 {
   // source index list
   Xt_int src_index_list[] = {1,2,3,4,5,6,7};
-  int num_src_indices
-    = sizeof(src_index_list) / sizeof(src_index_list[0]);
+  enum { num_src_indices = sizeof(src_index_list) / sizeof(src_index_list[0]) };
   shift_idx(src_index_list, num_src_indices, 7);
 
   // destination index list
   Xt_int dst_index_list[] = {7,6,5,4,3,2,1};
-  int num_dst_indices
-    = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+  enum { num_dst_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
   shift_idx(dst_index_list, num_dst_indices, 7);
 
   test_xmap(src_index_list, num_src_indices, dst_index_list,
@@ -160,14 +158,12 @@ test_xmap2(xmap_constructor new_xmap, MPI_Comm comm)
 {
   // source index list
   Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-  int num_src_indices
-    = sizeof(src_index_list) / sizeof(src_index_list[0]);
+  enum { num_src_indices = sizeof(src_index_list) / sizeof(src_index_list[0]) };
   shift_idx(src_index_list, num_src_indices, 100);
 
   // destination index list
   Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-  int num_dst_indices
-    = sizeof(dst_index_list) / sizeof(dst_index_list[0]);
+  enum { num_dst_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
   shift_idx(dst_index_list, num_dst_indices, 100);
 
   test_xmap(src_index_list, num_src_indices,
