@@ -53,7 +53,9 @@ MODULE test_xmap_common_parallel
        xt_idxstripes_new, xt_idxempty_new, &
        xt_xmap, xt_xmap_copy, xt_xmap_delete, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
-       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks
+       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
+       xt_xmap_get_max_dst_pos, xt_xmap_get_max_src_pos, &
+       xt_xmap_update_positions
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: xmap_parallel_test_main
@@ -95,6 +97,11 @@ CONTAINS
     IF (comm_size > 2) CALL test_ring_1d(xmap_new, comm)
     IF (comm_size == 2) CALL test_pair(xmap_new, comm)
     IF (comm_size > 1) CALL test_ping_pong(xmap_new, comm, 0, comm_size - 1)
+
+    ! test maxpos implementation for xt_xmap_intersection
+    CALL test_maxpos(xmap_new, comm, 5)
+    ! test maxpos implementation for xt_xmap_intersection_ext
+    CALL test_maxpos(xmap_new, comm, 501)
 
     IF (test_err_count() /= 0) &
          CALL test_abort("non-zero error count!", filename, __LINE__)
@@ -279,6 +286,103 @@ CONTAINS
     CALL xt_xmap_delete(xmap_copy)
 
   END SUBROUTINE test_ring_1d
+
+  SUBROUTINE test_maxpos(xmap_new, comm, indices_per_rank)
+    INTERFACE
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
+        IMPORT :: xt_idxlist, xt_xmap
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+        TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+        INTEGER, VALUE, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(in) :: comm
+    INTEGER, INTENT(in) :: indices_per_rank
+    ! first setup simple pattern of boundary exchange
+    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    TYPE(xt_xmap) :: xmap, xmup, xmup2
+    INTEGER :: indices_for_exch
+    INTEGER(xt_int_kind) :: src_index(indices_per_rank), &
+         dst_index(indices_per_rank)
+    INTEGER :: max_pos_src, max_pos_dst, max_pos_src_u, max_pos_dst_u, &
+         max_pos_src_u2, max_pos_dst_u2
+    INTEGER :: comm_rank, comm_size, world_size
+    INTEGER :: ierror
+    INTEGER :: i
+    INTEGER :: pos_update1(indices_per_rank), pos_update2(2*indices_per_rank)
+
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_rank", filename, __LINE__)
+    CALL mpi_comm_size(comm, comm_size, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_comm_size", filename, __LINE__)
+
+    world_size = comm_size * indices_per_rank
+
+    ! setup
+    indices_for_exch = indices_per_rank/2
+    DO i = 1, indices_per_rank
+      src_index(i) = INT(i-1 + comm_rank * indices_per_rank, xi)
+    END DO
+    DO i = 1, indices_for_exch
+      dst_index(i) = INT(MOD(i - 1 - indices_for_exch &
+           + (comm_rank+comm_size) * indices_per_rank, world_size), xi)
+    END DO
+    DO i = indices_for_exch+1, indices_per_rank-indices_for_exch
+      dst_index(i) = INT(i-1 + comm_rank * indices_per_rank, xi)
+    END DO
+    DO i = 1, indices_for_exch
+      dst_index(indices_per_rank-indices_for_exch+i) &
+           = INT(MOD(i + (comm_rank+1) * indices_per_rank, world_size), xi)
+    END DO
+    src_idxlist = xt_idxvec_new(src_index)
+    dst_idxlist = xt_idxvec_new(dst_index)
+
+    xmap = xmap_new(src_idxlist, dst_idxlist, comm)
+    CALL xt_idxlist_delete(src_idxlist)
+    CALL xt_idxlist_delete(dst_idxlist)
+
+    ! test
+    max_pos_dst = xt_xmap_get_max_dst_pos(xmap)
+    max_pos_src = xt_xmap_get_max_src_pos(xmap)
+    IF (max_pos_src < indices_per_rank-1) &
+         CALL test_abort("error in xt_xmap_get_max_src_pos", filename, __LINE__)
+    IF (max_pos_dst < indices_per_rank-1) &
+         CALL test_abort("error in xt_xmap_get_max_dst_pos", filename, __LINE__)
+
+    DO i = 1,indices_per_rank
+      pos_update1(i) = (i-1)*2
+    END DO
+
+    xmup = xt_xmap_update_positions(xmap, pos_update1, pos_update1)
+
+    max_pos_dst_u = xt_xmap_get_max_dst_pos(xmup)
+    max_pos_src_u = xt_xmap_get_max_src_pos(xmup)
+    IF (max_pos_src_u < (indices_per_rank-1)*2) &
+         CALL test_abort("error in xt_xmap_get_max_src_pos", filename, __LINE__)
+    IF (max_pos_dst_u < (indices_per_rank-1)*2) &
+         CALL test_abort("error in xt_xmap_get_max_dst_pos", filename, __LINE__)
+
+    DO i = 1, indices_per_rank*2
+      pos_update2(i) = (i-1)/2
+    END DO
+    xmup2 = xt_xmap_update_positions(xmap, pos_update2, pos_update2)
+
+    max_pos_dst_u2 = xt_xmap_get_max_dst_pos(xmup2)
+    max_pos_src_u2 = xt_xmap_get_max_src_pos(xmup2)
+    IF (max_pos_src_u2 >= indices_per_rank) &
+         CALL test_abort("error in xt_xmap_get_max_src_pos", filename, __LINE__)
+    IF (max_pos_dst_u2 >= indices_per_rank) &
+         CALL test_abort("error in xt_xmap_get_max_dst_pos", filename, __LINE__)
+
+    ! cleanup
+    CALL xt_xmap_delete(xmap)
+    CALL xt_xmap_delete(xmup)
+    CALL xt_xmap_delete(xmup2)
+  END SUBROUTINE test_maxpos
 
   SUBROUTINE check_pair_xmap(xmap)
     TYPE(xt_xmap), INTENT(in) :: xmap

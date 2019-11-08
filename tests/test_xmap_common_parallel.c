@@ -63,6 +63,9 @@ test_xmap_allgather_analog(xmap_constructor xmap_new,
 static void
 test_pair(xmap_constructor xmap_new, MPI_Comm comm);
 
+static void
+test_maxpos(xmap_constructor xmap_new, MPI_Comm comm, int indices_per_rank);
+
 int
 xt_xmap_parallel_test_main(xmap_constructor xmap_new)
 {
@@ -89,6 +92,10 @@ xt_xmap_parallel_test_main(xmap_constructor xmap_new)
   if (comm_size > 1)
     test_ping_pong(xmap_new, comm, 0, comm_size - 1);
 
+  // test maxpos implementation for xt_xmap_intersection
+  test_maxpos(xmap_new, comm, 5);
+  // test maxpos implementation for xt_xmap_intersection_ext
+  test_maxpos(xmap_new, comm, 501);
   xt_finalize();
   MPI_Finalize();
   return TEST_EXIT_CODE;
@@ -240,6 +247,77 @@ test_ring_1d(xmap_constructor xmap_new, MPI_Comm comm)
   xt_xmap_delete(xmap_copy);
   xt_idxlist_delete(dst_idxlist);
 }
+
+void
+test_maxpos(xmap_constructor xmap_new, MPI_Comm comm,
+            int indices_per_rank)
+{
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  int world_size = comm_size * indices_per_rank;
+
+  // setup
+  Xt_int src_index[indices_per_rank];
+  for (int i = 0; i < indices_per_rank; ++i)
+    src_index[i] = (Xt_int)(i + comm_rank * indices_per_rank);
+
+  Xt_int dst_index[indices_per_rank];
+  for (int i = 0; i < indices_per_rank/2; ++i)
+    dst_index[i]
+      = (Xt_int)((i - indices_per_rank/2
+                  + (comm_rank+comm_size) * indices_per_rank)%world_size);
+  for (int i = indices_per_rank/2; i < (indices_per_rank+1)/2; ++i)
+    dst_index[i] = (Xt_int)(i + comm_rank * indices_per_rank);
+  for (int i = 0; i < indices_per_rank/2; ++i)
+    dst_index[(indices_per_rank+1)/2+i]
+      = (Xt_int)(((int)i + (comm_rank+1) * indices_per_rank)%world_size);
+  Xt_idxlist src_idxlist = xt_idxvec_new(src_index, indices_per_rank);
+  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index, indices_per_rank);
+
+  Xt_xmap xmap = xmap_new(src_idxlist, dst_idxlist, comm);
+  xt_idxlist_delete(src_idxlist);
+  xt_idxlist_delete(dst_idxlist);
+
+  // test
+  int max_pos_dst = xt_xmap_get_max_dst_pos(xmap),
+    max_pos_src = xt_xmap_get_max_src_pos(xmap);
+  if (max_pos_dst < indices_per_rank-1)
+    PUT_ERR("error in xt_xmap_get_max_dst_pos\n");
+  if (max_pos_src < indices_per_rank-1)
+    PUT_ERR("error in xt_xmap_get_max_src_pos\n");
+
+  int pos_update1[indices_per_rank];
+  for (int i = 0; i < indices_per_rank; ++i)
+    pos_update1[i] = 2*i;
+  Xt_xmap xmup = xt_xmap_update_positions(xmap, pos_update1, pos_update1);
+
+  int max_pos_dst_u = xt_xmap_get_max_dst_pos(xmup),
+    max_pos_src_u = xt_xmap_get_max_src_pos(xmup);
+  if (max_pos_dst_u < (indices_per_rank-1)*2)
+    PUT_ERR("error in xt_xmap_get_max_dst_pos\n");
+  if (max_pos_src_u < (indices_per_rank-1)*2)
+    PUT_ERR("error in xt_xmap_get_max_src_pos\n");
+
+  int pos_update2[2*indices_per_rank];
+  for (int i = 0; i < 2*indices_per_rank; ++i)
+    pos_update2[i] = i/2;
+
+  Xt_xmap xmup2 = xt_xmap_update_positions(xmup, pos_update2, pos_update2);
+
+  int max_pos_dst_u2 = xt_xmap_get_max_dst_pos(xmup2),
+    max_pos_src_u2 = xt_xmap_get_max_src_pos(xmup2);
+  if (max_pos_dst_u2 >= indices_per_rank)
+    PUT_ERR("error in xt_xmap_get_max_dst_pos\n");
+  if (max_pos_src_u2 >= indices_per_rank)
+    PUT_ERR("error in xt_xmap_get_max_src_pos\n");
+
+  // cleanup
+  xt_xmap_delete(xmap);
+  xt_xmap_delete(xmup);
+  xt_xmap_delete(xmup2);
+}
+
 
 static void
 check_pair_xmap(Xt_xmap xmap)

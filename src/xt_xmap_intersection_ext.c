@@ -191,12 +191,12 @@ static int xmap_intersection_ext_get_max_dst_pos(Xt_xmap xmap) {
   return xmie(xmap)->max_dst_pos;
 }
 
-typedef void (*Xt_pos_ext_copy)(size_t num_orig_pos_ext,
-                                size_t *num_pos_ext,
-                                struct Xt_pos_ext **pos_ext,
-                                const struct Xt_pos_ext *orig_pos_ext,
-                                size_t num_orig_pos, const int *orig_pos,
-                                void *state);
+typedef int (*Xt_pos_ext_copy)(size_t num_orig_pos_ext,
+                               size_t *num_pos_ext,
+                               struct Xt_pos_ext **pos_ext,
+                               const struct Xt_pos_ext *orig_pos_ext,
+                               size_t num_orig_pos, const int *orig_pos,
+                               void *state);
 
 typedef void (*Xt_pos_ext_ncopy)(size_t num_orig_pos_ext,
                                  size_t *num_pos_ext,
@@ -206,7 +206,7 @@ typedef void (*Xt_pos_ext_ncopy)(size_t num_orig_pos_ext,
                                  void *state, int num_repetitions,
                                  const int displacements[num_repetitions]);
 
-static void
+static int
 pos_ext_copy_verbatim(size_t num_orig_pos_ext,
                       size_t *num_pos_ext,
                       struct Xt_pos_ext **pos_ext,
@@ -219,6 +219,7 @@ pos_ext_copy_verbatim(size_t num_orig_pos_ext,
   struct Xt_pos_ext *pos_ext_ = *pos_ext = xmalloc(size_pos_ext);
   memcpy(pos_ext_, orig_pos_ext, size_pos_ext);
   *num_pos_ext = num_orig_pos_ext;
+  return -1;
 }
 
 static void
@@ -249,22 +250,29 @@ static void
 xmap_intersection_ext_msg_copy(size_t nmsg,
                                const struct exchange_ext *restrict msg,
                                int *nmsg_copy, struct exchange_ext **msg_copy,
+                               int *max_pos_,
                                Xt_pos_ext_copy pos_ext_copy, void *pec_state)
 {
   *nmsg_copy = (int)nmsg;
   struct exchange_ext *restrict msg_copy_
     = *msg_copy = xmalloc(sizeof (*msg_copy_) * nmsg);
+  int max_pos = 0;
   for (size_t i = 0; i < nmsg; ++i) {
     msg_copy_[i].num_transfer_pos = msg[i].num_transfer_pos;
     msg_copy_[i].rank = msg[i].rank;
     msg_copy_[i].transfer_pos = NULL;
     size_t num_transfer_pos_ext;
-    pos_ext_copy((size_t)msg[i].num_transfer_pos_ext, &num_transfer_pos_ext,
-                 &msg_copy_[i].transfer_pos_ext, msg[i].transfer_pos_ext,
-                 (size_t)msg[i].num_transfer_pos, msg[i].transfer_pos,
-                 pec_state);
+    int new_max_pos
+      = pos_ext_copy((size_t)msg[i].num_transfer_pos_ext, &num_transfer_pos_ext,
+                     &msg_copy_[i].transfer_pos_ext, msg[i].transfer_pos_ext,
+                     (size_t)msg[i].num_transfer_pos, msg[i].transfer_pos,
+                     pec_state);
+    if (new_max_pos > max_pos)
+      max_pos = new_max_pos;
     msg_copy_[i].num_transfer_pos_ext = (int)num_transfer_pos_ext;
   }
+  if (pos_ext_copy != pos_ext_copy_verbatim)
+    *max_pos_ = max_pos;
 }
 
 static void
@@ -306,10 +314,12 @@ xmap_intersection_ext_copy_(Xt_xmap xmap,
   xmap_intersection_ext_msg_copy(n_in, xmap_intersection_ext->in_msg,
                                  &xmap_intersection_ext_new->n_in,
                                  &xmap_intersection_ext_new->in_msg,
+                                 &xmap_intersection_ext_new->max_dst_pos,
                                  pe_cpy_in, peci_state);
   xmap_intersection_ext_msg_copy(n_out, xmap_intersection_ext->out_msg,
                                  &xmap_intersection_ext_new->n_out,
                                  &xmap_intersection_ext_new->out_msg,
+                                 &xmap_intersection_ext_new->max_src_pos,
                                  pe_cpy_out, peco_state);
   xmap_intersection_ext_new->comm
     = xt_mpi_comm_smart_dup(xmap_intersection_ext->comm,
@@ -1332,12 +1342,13 @@ struct up_state
   const int *new_pos;
 };
 
-static void update_positions(size_t num_orig_pos_ext,
-                             size_t *num_pos_ext,
-                             struct Xt_pos_ext **pos_ext,
-                             const struct Xt_pos_ext *orig_pos_ext,
-                             size_t num_orig_pos, const int *orig_pos,
-                             void *state_)
+static int
+update_positions(size_t num_orig_pos_ext,
+                 size_t *num_pos_ext,
+                 struct Xt_pos_ext **pos_ext,
+                 const struct Xt_pos_ext *orig_pos_ext,
+                 size_t num_orig_pos, const int *orig_pos,
+                 void *state_)
 {
   (void)num_orig_pos_ext;
   struct up_state *state = state_;
@@ -1351,14 +1362,20 @@ static void update_positions(size_t num_orig_pos_ext,
     pos = pos_buffer;
   }
   // update positions
-  for (size_t j = 0; j < num_orig_pos; ++j)
-    pos_buffer[j] = new_pos[pos[j]];
+  int max_pos = 0;
+  for (size_t j = 0; j < num_orig_pos; ++j) {
+    int np = new_pos[pos[j]];
+    pos_buffer[j] = np;
+    if (np > max_pos)
+      max_pos = np;
+  }
 
   // convert the array of substituted positions into position extents array
   size_t num_pos_ext_ = *num_pos_ext = count_pos_ext(num_orig_pos, pos_buffer);
   struct Xt_pos_ext *pos_ext_
     = *pos_ext = xmalloc(num_pos_ext_ * sizeof (*pos_ext_));
   generate_pos_ext(num_orig_pos, pos_buffer, num_pos_ext_, pos_ext_);
+  return max_pos;
 }
 
 static Xt_xmap
