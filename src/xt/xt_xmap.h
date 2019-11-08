@@ -267,6 +267,22 @@ Xt_xmap xt_xmap_reorder(Xt_xmap xmap, enum xt_reorder_type type);
 Xt_xmap xt_xmap_update_positions(
   Xt_xmap xmap, const int * src_positions, const int * dst_positions);
 
+/**
+ * inflate the pattern stored in the exchange map by repeating it at provided
+ * offsets
+ * @param[in] xmap              exchange map
+ * @param[in] num_repetitions   number of repetitions of the given data map
+ * @param[in] src_displacements displacements for source repetitions
+ * @param[in] dst_displacements displacements for destination repetitions
+ * @return copy of input xmap, which is spread into multiple repetitions with
+ *         given displacements
+ * @remark This routine is collective for all processes associated with the
+ *         exchange map.
+ */
+Xt_xmap xt_xmap_spread(Xt_xmap xmap, int num_repetitions,
+                       const int src_displacements[num_repetitions],
+                       const int dst_displacements[num_repetitions]);
+
 #endif // XT_XMAP_H
 
 /*

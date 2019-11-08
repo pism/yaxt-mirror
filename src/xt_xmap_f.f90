@@ -48,7 +48,7 @@
 MODULE xt_xmap_abstract
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
        c_associated, c_f_pointer, c_loc
-  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_pos_ext
+  USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_pos_ext, i2, i4, i8
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
   PRIVATE
@@ -58,7 +58,7 @@ MODULE xt_xmap_abstract
        xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
        xt_xmap_get_source_ranks, xt_xmap_reorder, xt_reorder_type_kind, &
        xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up, &
-       xt_xmap_update_positions
+       xt_xmap_update_positions, xt_xmap_spread
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
        xt_xmap_dist_dir_intercomm_new
   PUBLIC :: xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
@@ -135,6 +135,14 @@ MODULE xt_xmap_abstract
       INTEGER(c_int) :: num
     END FUNCTION xt_xmap_iterator_get_num_transfer_pos_ext_c
   END INTERFACE
+
+  INTERFACE xt_xmap_spread
+    MODULE PROCEDURE xt_xmap_spread_a1d
+    MODULE PROCEDURE xt_xmap_spread_i2_a1d
+    MODULE PROCEDURE xt_xmap_spread_i4_a1d
+    MODULE PROCEDURE xt_xmap_spread_i8_a1d
+  END INTERFACE xt_xmap_spread
+
   CHARACTER(len=*), PARAMETER :: filename = 'xt_xmap_f.f90'
 CONTAINS
 
@@ -397,6 +405,117 @@ CONTAINS
         END DO
       END SUBROUTINE arg2ci
   END FUNCTION xt_xmap_update_positions
+
+  FUNCTION xt_xmap_spread_a1d(xmap, src_displacements, dst_displacements) &
+      RESULT(xmap_spread)
+    IMPLICIT NONE
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER, INTENT(in) :: src_displacements(:)
+    INTEGER, INTENT(in) :: dst_displacements(:)
+    TYPE(xt_xmap) :: xmap_spread
+    INTEGER :: num_repetitions
+    INTEGER(i8) :: num_repetitions_i8
+    num_repetitions = SIZE(src_displacements)
+    IF (num_repetitions /= SIZE(dst_displacements)) &
+         CALL xt_abort("invalid number of repetitions", filename, __LINE__)
+    IF (num_repetitions > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_i8 = INT(num_repetitions, i8)
+    xmap_spread = &
+      xt_xmap_spread( &
+        xmap, num_repetitions_i8, src_displacements, dst_displacements);
+  END FUNCTION xt_xmap_spread_a1d
+
+  FUNCTION xt_xmap_spread_i2_a1d(xmap, num_repetitions, src_displacements, &
+                                 dst_displacements) &
+      RESULT(xmap_spread)
+    IMPLICIT NONE
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER(i2), INTENT(in) :: num_repetitions
+    INTEGER, INTENT(in) :: src_displacements(num_repetitions)
+    INTEGER, INTENT(in) :: dst_displacements(num_repetitions)
+    TYPE(xt_xmap) :: xmap_spread
+    INTEGER(i8) :: num_repetitions_i8
+    IF (num_repetitions < 0_c_int .OR. &
+        num_repetitions > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_i8 = INT(num_repetitions, i8)
+    xmap_spread = &
+      xt_xmap_spread( &
+        xmap, num_repetitions_i8, src_displacements, dst_displacements);
+  END FUNCTION xt_xmap_spread_i2_a1d
+
+  FUNCTION xt_xmap_spread_i4_a1d(xmap, num_repetitions, src_displacements, &
+                                 dst_displacements) &
+      RESULT(xmap_spread)
+    IMPLICIT NONE
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER(i4), INTENT(in) :: num_repetitions
+    INTEGER, INTENT(in) :: src_displacements(num_repetitions)
+    INTEGER, INTENT(in) :: dst_displacements(num_repetitions)
+    TYPE(xt_xmap) :: xmap_spread
+    INTEGER(i8) :: num_repetitions_i8
+    IF (num_repetitions < 0_c_int .OR. &
+        num_repetitions > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_i8 = INT(num_repetitions, i8)
+    xmap_spread = &
+      xt_xmap_spread( &
+        xmap, num_repetitions_i8, src_displacements, dst_displacements);
+  END FUNCTION xt_xmap_spread_i4_a1d
+
+  FUNCTION xt_xmap_spread_i8_a1d(xmap, num_repetitions, src_displacements, &
+                                 dst_displacements) &
+      RESULT(xmap_spread)
+    IMPLICIT NONE
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER(i8), INTENT(in) :: num_repetitions
+    INTEGER, INTENT(in) :: src_displacements(num_repetitions)
+    INTEGER, INTENT(in) :: dst_displacements(num_repetitions)
+    INTEGER(c_int) :: num_repetitions_c
+    TYPE(xt_xmap) :: xmap_spread
+    INTEGER(c_int), TARGET, ALLOCATABLE :: &
+      src_displacements_c(:), dst_displacements_c(:)
+    TYPE(c_ptr) :: src_displacements_p, dst_displacements_p
+    INTERFACE
+      FUNCTION xt_xmap_spread_c(xmap, num_repetitions, src_displacements, &
+                                dst_displacements) &
+           BIND(C, name='xt_xmap_spread') RESULT(xmap_spread_ptr)
+        IMPORT:: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(in) :: &
+          xmap, src_displacements, dst_displacements
+        INTEGER(c_int), VALUE, INTENT(in) :: num_repetitions
+        TYPE(c_ptr) :: xmap_spread_ptr
+      END FUNCTION xt_xmap_spread_c
+    END INTERFACE
+    IF (num_repetitions < 0_c_int .OR. &
+        num_repetitions > HUGE(1_c_int)) &
+         CALL xt_abort("invalid number of extents", filename, __LINE__)
+    num_repetitions_c = INT(num_repetitions, c_int)
+    IF (c_int == KIND(1)) THEN
+      src_displacements_p = C_LOC(src_displacements)
+      dst_displacements_p = C_LOC(dst_displacements)
+    ELSE
+      CALL arg2ci(src_displacements, src_displacements_c)
+      src_displacements_p = C_LOC(src_displacements_c)
+      CALL arg2ci(dst_displacements, dst_displacements_c)
+      dst_displacements_p = C_LOC(dst_displacements_c)
+    END IF
+    xmap_spread%cptr = &
+      xt_xmap_spread_c( &
+        xmap%cptr, num_repetitions_c, src_displacements_p, dst_displacements_p)
+  CONTAINS
+    SUBROUTINE arg2ci(arg, argc)
+      INTEGER, INTENT(in) :: arg(*)
+      INTEGER(c_int), ALLOCATABLE, INTENT(inout) :: argc(:)
+      INTEGER :: i, n
+      n = INT(num_repetitions)
+      ALLOCATE(argc(n))
+      DO i = 1, n
+        argc(i) = INT(arg(i), c_int)
+      END DO
+    END SUBROUTINE arg2ci
+  END FUNCTION xt_xmap_spread_i8_a1d
 
   FUNCTION xt_xmap_get_out_iterator(xmap) RESULT(iter)
     TYPE(xt_xmap), INTENT(in) :: xmap

@@ -90,6 +90,10 @@ static Xt_xmap
 xmap_intersection_ext_update_positions(Xt_xmap xmap,
                                        const int * src_positions,
                                        const int * dst_positions);
+static Xt_xmap
+xmap_intersection_ext_spread(Xt_xmap xmap, int num_repetitions,
+                             const int src_displacements[num_repetitions],
+                             const int dst_displacements[num_repetitions]);
 
 
 static const struct Xt_xmap_vtable xmap_intersection_vtable = {
@@ -105,7 +109,8 @@ static const struct Xt_xmap_vtable xmap_intersection_vtable = {
         .get_max_src_pos       = xmap_intersection_ext_get_max_src_pos,
         .get_max_dst_pos       = xmap_intersection_ext_get_max_dst_pos,
         .reorder               = xmap_intersection_ext_reorder,
-        .update_pos            = xmap_intersection_ext_update_positions};
+        .update_pos            = xmap_intersection_ext_update_positions,
+        .spread                = xmap_intersection_ext_spread};
 
 struct exchange_ext {
   // list of relative position extents in index list to send or receive
@@ -193,6 +198,14 @@ typedef void (*Xt_pos_ext_copy)(size_t num_orig_pos_ext,
                                 size_t num_orig_pos, const int *orig_pos,
                                 void *state);
 
+typedef void (*Xt_pos_ext_ncopy)(size_t num_orig_pos_ext,
+                                 size_t *num_pos_ext,
+                                 struct Xt_pos_ext **pos_ext,
+                                 const struct Xt_pos_ext *orig_pos_ext,
+                                 size_t num_orig_pos, const int *orig_pos,
+                                 void *state, int num_repetitions,
+                                 const int displacements[num_repetitions]);
+
 static void
 pos_ext_copy_verbatim(size_t num_orig_pos_ext,
                       size_t *num_pos_ext,
@@ -206,6 +219,30 @@ pos_ext_copy_verbatim(size_t num_orig_pos_ext,
   struct Xt_pos_ext *pos_ext_ = *pos_ext = xmalloc(size_pos_ext);
   memcpy(pos_ext_, orig_pos_ext, size_pos_ext);
   *num_pos_ext = num_orig_pos_ext;
+}
+
+static void
+pos_ext_ncopy_verbatim(size_t num_orig_pos_ext,
+                       size_t *num_pos_ext,
+                       struct Xt_pos_ext **pos_ext,
+                       const struct Xt_pos_ext *orig_pos_ext,
+                       size_t num_orig_pos, const int *orig_pos,
+                       void *state, int num_repetitions,
+                       const int displacements[num_repetitions])
+{
+  (void)state; (void)num_orig_pos; (void)orig_pos;
+  size_t new_num_pos_ext = num_orig_pos_ext * (size_t)num_repetitions;
+  size_t size_pos_ext = new_num_pos_ext * sizeof (**pos_ext);
+  struct Xt_pos_ext *pos_ext_ = *pos_ext = xmalloc(size_pos_ext);
+  for (int i = 0; i < num_repetitions; ++i) {
+    struct Xt_pos_ext *restrict curr_pos_ext =
+      pos_ext_ + (size_t)i * num_orig_pos_ext;
+    const int curr_displacement = displacements[i];
+    memcpy(curr_pos_ext, orig_pos_ext, num_orig_pos_ext * sizeof(**pos_ext));
+    for (size_t j = 0; j < num_orig_pos_ext; ++j)
+      curr_pos_ext[j].start += curr_displacement;
+  }
+  *num_pos_ext = new_num_pos_ext;
 }
 
 static void
@@ -230,6 +267,30 @@ xmap_intersection_ext_msg_copy(size_t nmsg,
   }
 }
 
+static void
+xmap_intersection_ext_msg_ncopy(size_t nmsg,
+                                const struct exchange_ext *restrict msg,
+                                int *nmsg_copy, struct exchange_ext **msg_copy,
+                                Xt_pos_ext_ncopy pos_ext_ncopy, void *pec_state,
+                                int num_repetitions,
+                                const int displacements[num_repetitions])
+{
+  *nmsg_copy = (int)nmsg;
+  struct exchange_ext *restrict msg_copy_
+    = *msg_copy = xmalloc(sizeof (*msg_copy_) * nmsg);
+  for (size_t i = 0; i < nmsg; ++i) {
+    msg_copy_[i].num_transfer_pos = msg[i].num_transfer_pos * num_repetitions;
+    msg_copy_[i].rank = msg[i].rank;
+    msg_copy_[i].transfer_pos = NULL;
+    size_t num_transfer_pos_ext;
+    pos_ext_ncopy((size_t)msg[i].num_transfer_pos_ext, &num_transfer_pos_ext,
+                  &msg_copy_[i].transfer_pos_ext, msg[i].transfer_pos_ext,
+                  (size_t)msg[i].num_transfer_pos, msg[i].transfer_pos,
+                  pec_state, num_repetitions, displacements);
+    msg_copy_[i].num_transfer_pos_ext = (int)num_transfer_pos_ext;
+  }
+}
+
 static Xt_xmap
 xmap_intersection_ext_copy_(Xt_xmap xmap,
                             Xt_pos_ext_copy pe_cpy_in, void *peci_state,
@@ -250,6 +311,37 @@ xmap_intersection_ext_copy_(Xt_xmap xmap,
                                  &xmap_intersection_ext_new->n_out,
                                  &xmap_intersection_ext_new->out_msg,
                                  pe_cpy_out, peco_state);
+  xmap_intersection_ext_new->comm
+    = xt_mpi_comm_smart_dup(xmap_intersection_ext->comm,
+                            &xmap_intersection_ext_new->tag_offset);
+  return (Xt_xmap)xmap_intersection_ext_new;
+}
+
+static Xt_xmap
+xmap_intersection_ext_ncopy_(Xt_xmap xmap,
+                             Xt_pos_ext_ncopy pe_cpy_in, void *peci_state,
+                             Xt_pos_ext_ncopy pe_cpy_out, void *peco_state,
+                             int num_repetitions,
+                             const int src_displacements[num_repetitions],
+                             const int dst_displacements[num_repetitions])
+{
+  Xt_xmap_intersection_ext xmap_intersection_ext = xmie(xmap),
+    xmap_intersection_ext_new = xmalloc(sizeof (*xmap_intersection_ext_new));
+  xmap_intersection_ext_new->vtable = xmap_intersection_ext->vtable;
+  size_t n_in = (size_t)(xmap_intersection_ext_new->n_in = xmap_intersection_ext->n_in),
+    n_out = (size_t)(xmap_intersection_ext_new->n_out = xmap_intersection_ext->n_out);
+  xmap_intersection_ext_new->max_src_pos = xmap_intersection_ext->max_src_pos;
+  xmap_intersection_ext_new->max_dst_pos = xmap_intersection_ext->max_dst_pos;
+  xmap_intersection_ext_msg_ncopy(n_in, xmap_intersection_ext->in_msg,
+                                  &xmap_intersection_ext_new->n_in,
+                                  &xmap_intersection_ext_new->in_msg,
+                                  pe_cpy_in, peci_state, num_repetitions,
+                                  dst_displacements);
+  xmap_intersection_ext_msg_ncopy(n_out, xmap_intersection_ext->out_msg,
+                                  &xmap_intersection_ext_new->n_out,
+                                  &xmap_intersection_ext_new->out_msg,
+                                  pe_cpy_out, peco_state, num_repetitions,
+                                  src_displacements);
   xmap_intersection_ext_new->comm
     = xt_mpi_comm_smart_dup(xmap_intersection_ext->comm,
                             &xmap_intersection_ext_new->tag_offset);
@@ -1309,6 +1401,18 @@ xmap_intersection_ext_update_positions(Xt_xmap xmap,
   free(pos_buffer);
   return xmap_new;
 }
+
+static Xt_xmap
+xmap_intersection_ext_spread(Xt_xmap xmap, int num_repetitions,
+                             const int src_displacements[num_repetitions],
+                             const int dst_displacements[num_repetitions]) {
+
+  return
+    xmap_intersection_ext_ncopy_(
+      xmap, pos_ext_ncopy_verbatim, NULL, pos_ext_ncopy_verbatim, NULL,
+      num_repetitions, src_displacements, dst_displacements);
+}
+
 
 /* iterator operations */
 

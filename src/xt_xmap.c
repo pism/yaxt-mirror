@@ -148,6 +148,14 @@ Xt_xmap xt_xmap_update_positions(
   return xmap->vtable->update_pos(xmap, src_positions, dst_positions);
 }
 
+Xt_xmap xt_xmap_spread(Xt_xmap xmap, int num_repetitions,
+                       const int src_displacements[num_repetitions],
+                       const int dst_displacements[num_repetitions]) {
+  return
+    xmap->vtable->spread(
+      xmap, num_repetitions, src_displacements, dst_displacements);
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2

@@ -465,14 +465,17 @@ int main(int argc, char **argv)
     xt_idxlist_delete(src_com.list);
   }
 
-  { // checks the update positions functionality of exchange maps
+  { // checks the spread and update positions functionality of exchange maps
 
     // setup
 
-    enum { count = 12, nlev = 2, nproma = 4, nblk = 3};
+    enum { count = 12, nlev = 6, nproma = 4, nblk = 3};
     Xt_int src_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
     Xt_int dst_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
     Xt_int intersection_indices[count] = {0,1,2,3,4,5,6,7,8,9,10,11};
+    int displacements[nlev];
+
+    for (int i = 0; i < (int)nlev; ++i) displacements[i] = i * nproma;
 
     struct Xt_com_list src_com =
       {.list = xt_idxvec_new(intersection_indices, count),
@@ -487,27 +490,32 @@ int main(int argc, char **argv)
     Xt_xmap xmap = xmi_new(1, &src_com, 1, &dst_com,
                            src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
-    int blocked_positions[count];
-    for (int i = 0, idx = 0; idx < nproma; ++idx)
-      for (int blk = 0; blk < nblk; ++blk, ++i)
-        blocked_positions[i] = idx + blk * nproma * nlev;
+    int blocked_positions[(int)count * (int)nlev];
+    for (int i = 0, lev = 0; lev < (int)nlev; ++lev)
+      for (int blk = 0; blk < nblk; ++blk)
+        for (int idx = 0; idx < nproma; ++idx, ++i)
+          blocked_positions[i] = idx + (blk * nlev + lev) * nproma;
 
     Xt_xmap xmap_single_level_blocked =
       xt_xmap_update_positions(xmap, blocked_positions, blocked_positions);
+    Xt_xmap xmap_multi_level_blocked =
+      xt_xmap_spread(
+        xmap_single_level_blocked, (int)nlev, displacements, displacements);
 
     struct test_message send_messages =
-      {.pos = &(blocked_positions[0]), .num_pos = count};
+      {.pos = &(blocked_positions[0]), .num_pos = (int)nlev * (int)count};
     send_messages.rank = (my_rank + 1) % comm_size;
     struct test_message recv_messages =
-      {.pos = &(blocked_positions[0]), .num_pos = count};
+      {.pos = &(blocked_positions[0]), .num_pos = (int)nlev * (int)count};
     recv_messages.rank = (comm_size + my_rank - 1) % comm_size;
 
     // test
 
-    test_xmap(xmap_single_level_blocked, 1, &send_messages, 1, &recv_messages);
+    test_xmap(xmap_multi_level_blocked, 1, &send_messages, 1, &recv_messages);
 
     // cleanup
 
+    xt_xmap_delete(xmap_multi_level_blocked);
     xt_xmap_delete(xmap_single_level_blocked);
     xt_xmap_delete(xmap);
     xt_idxlist_delete(dst_idxlist);
