@@ -515,7 +515,6 @@ AC_CONFIG_FILES([						\
         tests/test_yaxt_run					\
 	tests/test_mpi_generate_datatype_run			\
 	tests/test_mpi_smartdedup_run				\
-	tests/test_dmap_parallel_run				\
 	examples/rrobin_run					\
 	examples/row2col_run					\
 	examples/tr_gp2fs_run					\

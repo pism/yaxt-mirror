@@ -73,8 +73,6 @@
 #include "xt/xt_xmap_all2all.h"
 #include "xt/xt_xmap_dist_dir.h"
 #include "xt/xt_xmap_dist_dir_intercomm.h"
-#include "xt/xt_dmap.h"
-#include "xt/xt_dmap_offset.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_redist_p2p.h"
 #include "xt/xt_redist_single_array_base.h"
@@ -88,10 +86,6 @@ struct xt_idxlist_f {
 
 struct xt_xmap_f {
    Xt_xmap cptr;
-};
-
-struct xt_dmap_f {
-  Xt_dmap cptr;
 };
 
 struct xt_redist_f {
@@ -154,11 +148,6 @@ void xt_sort_int_permutation_f2c(int *a, size_t n, int *permutation)
 }
 
 Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
-{
-  return p->cptr;
-}
-
-Xt_dmap xt_dmap_f2c(struct xt_dmap_f *p)
 {
   return p->cptr;
 }
@@ -237,11 +226,6 @@ xt_xmap_dist_dir_intercomm_new_f(struct xt_idxlist_f *src_idxlist_f,
   return xt_xmap_dist_dir_intercomm_new(src_idxlist_f->cptr,
                                         dst_idxlist_f->cptr,
                                         inter_comm_c, intra_comm_c);
-}
-
-void * xt_dmap_generate_redist_f(struct xt_dmap_f *dmap_f, MPI_Fint datatype_f)
-{
-  return xt_dmap_generate_redist(dmap_f->cptr, MPI_Type_f2c(datatype_f));
 }
 
 Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,
