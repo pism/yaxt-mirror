@@ -418,8 +418,6 @@ CONTAINS
     num_repetitions = SIZE(src_displacements)
     IF (num_repetitions /= SIZE(dst_displacements)) &
          CALL xt_abort("invalid number of repetitions", filename, __LINE__)
-    IF (num_repetitions > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_repetitions_i8 = INT(num_repetitions, i8)
     xmap_spread = &
       xt_xmap_spread( &
@@ -436,9 +434,6 @@ CONTAINS
     INTEGER, INTENT(in) :: dst_displacements(num_repetitions)
     TYPE(xt_xmap) :: xmap_spread
     INTEGER(i8) :: num_repetitions_i8
-    IF (num_repetitions < 0_c_int .OR. &
-        num_repetitions > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_repetitions_i8 = INT(num_repetitions, i8)
     xmap_spread = &
       xt_xmap_spread( &
@@ -455,9 +450,6 @@ CONTAINS
     INTEGER, INTENT(in) :: dst_displacements(num_repetitions)
     TYPE(xt_xmap) :: xmap_spread
     INTEGER(i8) :: num_repetitions_i8
-    IF (num_repetitions < 0_c_int .OR. &
-        num_repetitions > HUGE(1_c_int)) &
-         CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_repetitions_i8 = INT(num_repetitions, i8)
     xmap_spread = &
       xt_xmap_spread( &
