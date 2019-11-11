@@ -658,13 +658,16 @@ typedef void (*Xt_pos_ncopy)(size_t num_pos, int *pos, const int *orig_pos,
                              const int displacements[num_repetitions]);
 
 static void
-pos_ncopy_verbatim(size_t num_pos, int *pos, const int *orig_pos, void *state,
-                   int num_repetitions, const int displacements[num_repetitions])
+pos_ncopy_verbatim(size_t num_pos, int *restrict pos,
+                   const int *restrict orig_pos, void *state,
+                   int num_repetitions, const int *restrict displacements)
 {
   (void)state;
-  for (int i = 0, k = 0; i < num_repetitions; ++i)
-    for (int j = 0, curr_disp = displacements[i]; j < num_pos; ++j, ++k)
+  for (int i = 0, k = 0; i < num_repetitions; ++i) {
+    int curr_disp = displacements[i];
+    for (size_t j = 0; j < num_pos; ++j, ++k)
       pos[k] = orig_pos[j] + curr_disp;
+  }
 }
 
 static void
