@@ -462,8 +462,8 @@ CONTAINS
     IMPLICIT NONE
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER(i8), INTENT(in) :: num_repetitions
-    INTEGER, INTENT(in) :: src_displacements(num_repetitions)
-    INTEGER, INTENT(in) :: dst_displacements(num_repetitions)
+    INTEGER, TARGET, INTENT(in) :: src_displacements(num_repetitions)
+    INTEGER, TARGET, INTENT(in) :: dst_displacements(num_repetitions)
     INTEGER(c_int) :: num_repetitions_c
     TYPE(xt_xmap) :: xmap_spread
     INTEGER(c_int), TARGET, ALLOCATABLE :: &
