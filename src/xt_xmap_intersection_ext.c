@@ -1157,12 +1157,12 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
   return transfer_pos_ext_buffer;
 }
 
-static void sort_transfer_pos_ext(struct exchange_ext * msg, int n) {
+static void
+sort_transfer_pos_ext(int n, struct exchange_ext *msg) {
 
   int buffer_size = 0;
   for (int i = 0; i < n; ++i)
-    if ((msg[i].transfer_pos == NULL) &&
-        (msg[i].num_transfer_pos > buffer_size))
+    if (msg[i].transfer_pos == NULL && msg[i].num_transfer_pos > buffer_size)
       buffer_size = msg[i].num_transfer_pos;
 
   int *transfer_pos_buffer
@@ -1206,8 +1206,10 @@ static void sort_transfer_pos_ext(struct exchange_ext * msg, int n) {
   if (buffer_size > 0) free(transfer_pos_buffer);
 }
 
-static void sort_transfer_pos_ext_permutation(
-  struct exchange_ext * msg, int n, struct exchange_ext * permutation_msg) {
+static void
+sort_transfer_pos_ext_permutation(int n,
+                                  struct exchange_ext *msg,
+                                  struct exchange_ext *permutation_msg) {
 
   size_t buffer_size = 0;
   for (int i = 0; i < n; ++i) {
@@ -1296,11 +1298,11 @@ static void reorder_transfer_pos_ext(
       n_out, out_msg, n_in, in_msg, remote_out_msg, tag_offset, comm);
 
   // sort the transfer positions in all out messages
-  sort_transfer_pos_ext(out_msg, n_out);
+  sort_transfer_pos_ext(n_out, out_msg);
 
   // sort the transfer positions in all in messages based on the remote out
   // messages
-  sort_transfer_pos_ext_permutation(remote_out_msg, n_in, in_msg);
+  sort_transfer_pos_ext_permutation(n_in, remote_out_msg, in_msg);
 
   free(transfer_pos_ext_buffer);
   free(remote_out_msg);
