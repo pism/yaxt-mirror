@@ -1213,11 +1213,11 @@ sort_transfer_pos_ext_permutation(int n,
 
   size_t buffer_size = 0;
   for (int i = 0; i < n; ++i) {
-    size_t curr_buffer_size = 0;
-    if (msg[i].transfer_pos == NULL)
-      curr_buffer_size += (size_t)(msg[i].num_transfer_pos);
-    if (permutation_msg[i].transfer_pos == NULL)
-      curr_buffer_size += (size_t)(permutation_msg[i].num_transfer_pos);
+    assert(msg[i].transfer_pos == NULL
+           && permutation_msg[i].transfer_pos == NULL);
+    size_t curr_buffer_size
+      = (size_t)(msg[i].num_transfer_pos)
+      + (size_t)(permutation_msg[i].num_transfer_pos);
     if (curr_buffer_size > buffer_size) buffer_size = curr_buffer_size;
   }
 
@@ -1229,29 +1229,18 @@ sort_transfer_pos_ext_permutation(int n,
   for (int i = 0; i < n; ++i) {
 
     // get the positions array
-    int *restrict transfer_pos;
     size_t num_transfer_pos = (size_t)(msg[i].num_transfer_pos);
-    if (msg[i].transfer_pos != NULL) {
-      transfer_pos = msg[i].transfer_pos;
-    } else {
-      transfer_pos = transfer_pos_buffer;
-      generate_pos(
-        (size_t)(msg[i].num_transfer_pos_ext), msg[i].transfer_pos_ext,
-        num_transfer_pos, transfer_pos);
-    }
+
+    int *restrict transfer_pos = transfer_pos_buffer;
+    generate_pos(
+      (size_t)(msg[i].num_transfer_pos_ext), msg[i].transfer_pos_ext,
+      num_transfer_pos, transfer_pos);
 
     // get the permutation array
-    int *restrict permutation;
-    if (permutation_msg[i].transfer_pos != NULL) {
-      permutation = permutation_msg[i].transfer_pos;
-    } else {
-      permutation =
-        transfer_pos_buffer +
-        ((transfer_pos_buffer==transfer_pos)?num_transfer_pos:0);
-      generate_pos(
-        (size_t)(permutation_msg[i].num_transfer_pos_ext),
-        permutation_msg[i].transfer_pos_ext, num_transfer_pos, permutation);
-    }
+    int *permutation = transfer_pos_buffer + num_transfer_pos;
+    generate_pos(
+      (size_t)(permutation_msg[i].num_transfer_pos_ext),
+      permutation_msg[i].transfer_pos_ext, num_transfer_pos, permutation);
 
     // sort the positions array
     xt_quicksort_int_permutation(transfer_pos, num_transfer_pos, permutation);
@@ -1262,10 +1251,10 @@ sort_transfer_pos_ext_permutation(int n,
     if (num_transfer_pos_ext !=
         (size_t)(permutation_msg[i].num_transfer_pos_ext)) {
       permutation_msg[i].num_transfer_pos_ext = (int)num_transfer_pos_ext;
-      transfer_pos_ext =
-        (permutation_msg[i].transfer_pos_ext =
-           xrealloc(permutation_msg[i].transfer_pos_ext,
-                    num_transfer_pos_ext * sizeof(*transfer_pos_ext)));
+      permutation_msg[i].transfer_pos_ext
+        = transfer_pos_ext
+        = xrealloc(permutation_msg[i].transfer_pos_ext,
+                   num_transfer_pos_ext * sizeof(*transfer_pos_ext));
     } else {
       transfer_pos_ext = permutation_msg[i].transfer_pos_ext;
     }
