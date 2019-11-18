@@ -55,7 +55,7 @@ MODULE test_xmap_common_parallel
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_xmap_get_max_dst_pos, xt_xmap_get_max_src_pos, &
-       xt_xmap_update_positions
+       xt_xmap_update_positions, xt_xmap_spread
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: xmap_parallel_test_main
@@ -302,15 +302,15 @@ CONTAINS
     INTEGER, INTENT(in) :: indices_per_rank
     ! first setup simple pattern of boundary exchange
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
-    TYPE(xt_xmap) :: xmap, xmup, xmup2
+    TYPE(xt_xmap) :: xmap, xmup, xmup2, xmsp
     INTEGER :: indices_for_exch
     INTEGER(xt_int_kind) :: src_index(indices_per_rank), &
          dst_index(indices_per_rank)
     INTEGER :: max_pos_src, max_pos_dst, max_pos_src_u, max_pos_dst_u, &
-         max_pos_src_u2, max_pos_dst_u2
+         max_pos_src_u2, max_pos_dst_u2, max_pos_src_s, max_pos_dst_s
     INTEGER :: comm_rank, comm_size, world_size
     INTEGER :: ierror
-    INTEGER :: i
+    INTEGER :: i, xmspread(2)
     INTEGER :: pos_update1(indices_per_rank), pos_update2(2*indices_per_rank)
 
     CALL mpi_comm_rank(comm, comm_rank, ierror)
@@ -346,6 +346,7 @@ CONTAINS
     CALL xt_idxlist_delete(dst_idxlist)
 
     ! test
+    ! 1. test that initial max positions are in range
     max_pos_dst = xt_xmap_get_max_dst_pos(xmap)
     max_pos_src = xt_xmap_get_max_src_pos(xmap)
     IF (max_pos_src < indices_per_rank-1) &
@@ -353,6 +354,7 @@ CONTAINS
     IF (max_pos_dst < indices_per_rank-1) &
          CALL test_abort("error in xt_xmap_get_max_dst_pos", filename, __LINE__)
 
+    ! 2. expand range and verify it is reflected in max pos
     DO i = 1,indices_per_rank
       pos_update1(i) = (i-1)*2
     END DO
@@ -366,6 +368,7 @@ CONTAINS
     IF (max_pos_dst_u < (indices_per_rank-1)*2) &
          CALL test_abort("error in xt_xmap_get_max_dst_pos", filename, __LINE__)
 
+    ! 3. contract range again and verify max pos is updated
     DO i = 1, indices_per_rank*2
       pos_update2(i) = (i-1)/2
     END DO
@@ -378,10 +381,22 @@ CONTAINS
     IF (max_pos_dst_u2 >= indices_per_rank) &
          CALL test_abort("error in xt_xmap_get_max_dst_pos", filename, __LINE__)
 
+    ! 4. apply spread and check max pos range
+    xmspread(1) = 0
+    xmspread(2) = indices_per_rank*3
+    xmsp = xt_xmap_spread(xmap, 2, xmspread, xmspread)
+    max_pos_dst_s = xt_xmap_get_max_dst_pos(xmsp)
+    max_pos_src_s = xt_xmap_get_max_src_pos(xmsp)
+    IF (max_pos_dst_s < (indices_per_rank-1)*3) &
+         CALL test_abort("error in xt_xmap_get_max_dst_pos", filename, __LINE__)
+    IF (max_pos_src_s < (indices_per_rank-1)*3) &
+         CALL test_abort("error in xt_xmap_get_max_src_pos", filename, __LINE__)
+
     ! cleanup
     CALL xt_xmap_delete(xmap)
     CALL xt_xmap_delete(xmup)
     CALL xt_xmap_delete(xmup2)
+    CALL xt_xmap_delete(xmsp)
   END SUBROUTINE test_maxpos
 
   SUBROUTINE check_pair_xmap(xmap)

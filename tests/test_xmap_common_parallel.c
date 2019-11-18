@@ -280,6 +280,7 @@ test_maxpos(xmap_constructor xmap_new, MPI_Comm comm,
   xt_idxlist_delete(dst_idxlist);
 
   // test
+  // 1. test that initial max positions are in range
   int max_pos_dst = xt_xmap_get_max_dst_pos(xmap),
     max_pos_src = xt_xmap_get_max_src_pos(xmap);
   if (max_pos_dst < indices_per_rank-1)
@@ -287,6 +288,7 @@ test_maxpos(xmap_constructor xmap_new, MPI_Comm comm,
   if (max_pos_src < indices_per_rank-1)
     PUT_ERR("error in xt_xmap_get_max_src_pos\n");
 
+  // 2. expand range and verify it is reflected in max pos
   int pos_update1[indices_per_rank];
   for (int i = 0; i < indices_per_rank; ++i)
     pos_update1[i] = 2*i;
@@ -299,6 +301,7 @@ test_maxpos(xmap_constructor xmap_new, MPI_Comm comm,
   if (max_pos_src_u < (indices_per_rank-1)*2)
     PUT_ERR("error in xt_xmap_get_max_src_pos\n");
 
+  // 3. contract range again and verify max pos is updated
   int pos_update2[2*indices_per_rank];
   for (int i = 0; i < 2*indices_per_rank; ++i)
     pos_update2[i] = i/2;
@@ -312,10 +315,21 @@ test_maxpos(xmap_constructor xmap_new, MPI_Comm comm,
   if (max_pos_src_u2 >= indices_per_rank)
     PUT_ERR("error in xt_xmap_get_max_src_pos\n");
 
+  // 4. apply spread and check max pos range
+  int spread[] = { 0, indices_per_rank*3 };
+  Xt_xmap xmsp = xt_xmap_spread(xmap, 2, spread, spread);
+  int max_pos_dst_s = xt_xmap_get_max_dst_pos(xmsp),
+    max_pos_src_s = xt_xmap_get_max_src_pos(xmsp);
+  if (max_pos_dst_s < (indices_per_rank-1)*3)
+    PUT_ERR("error in xt_xmap_get_max_dst_pos\n");
+  if (max_pos_src_s < (indices_per_rank-1)*3)
+    PUT_ERR("error in xt_xmap_get_max_src_pos\n");
+
   // cleanup
   xt_xmap_delete(xmap);
   xt_xmap_delete(xmup);
   xt_xmap_delete(xmup2);
+  xt_xmap_delete(xmsp);
 }
 
 
