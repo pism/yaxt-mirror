@@ -432,14 +432,14 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
       int first_missing_pos = 0;
       Xt_int missing_index;
       if ((cover.num_pos_ext > 0) && (cover.pos_ext[0].start == 0))
-        first_missing_pos = cover.pos_ext[0].start + cover.pos_ext[0].size - 1;
+        first_missing_pos = cover.pos_ext[0].start + cover.pos_ext[0].size;
       xt_idxlist_get_index_at_position(dst_idxlist_local, first_missing_pos,
                                        &missing_index);
       char error_message[1024];
       sprintf(error_message, "ERROR: destination intersections do not match "
               "with destination index list (first missing index %lld "
               "at position %d)", (long long)missing_index, first_missing_pos);
-        Xt_abort(comm, error_message, __FILE__, __LINE__);
+      Xt_abort(comm, error_message, __FILE__, __LINE__);
     }
     xt_cover_finish(&cover);
   }
