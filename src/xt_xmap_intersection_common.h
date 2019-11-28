@@ -154,10 +154,12 @@ print_miss_msg(Xt_idxlist dst_idxlist, int missing_pos,
 {
   Xt_int missing_index;
   xt_idxlist_get_index_at_position(dst_idxlist, missing_pos, &missing_index);
-  char error_message[1024];
-  sprintf(error_message, "ERROR: destination intersections do not match "
-          "with destination index list (first missing index %lld "
-          "at position %d)", (long long)missing_index, missing_pos);
+  static const char fmt[] = "ERROR: destination intersections do not match "
+    "with destination index list (first missing index %lld "
+    "at position %d)";
+  char error_message[sizeof (fmt)
+                     + (sizeof (long long) + sizeof (int)) * CHAR_BIT / 8 * 3];
+  sprintf(error_message, fmt, (long long)missing_index, missing_pos);
   Xt_abort(comm, error_message, source, line);
 }
 
