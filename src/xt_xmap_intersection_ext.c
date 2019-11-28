@@ -403,8 +403,8 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
                       const struct Xt_com_list src_com[num_src_intersections],
                       int num_dst_intersections,
                       const struct Xt_com_list dst_com[num_dst_intersections],
-                      Xt_idxlist src_idxlist_local,
-                      Xt_idxlist dst_idxlist_local,
+                      Xt_idxlist src_idxlist,
+                      Xt_idxlist dst_idxlist,
                       MPI_Comm comm) {
 
   /* {dst|src}_removals_per_intersection[i][0] denotes the number of
@@ -422,24 +422,17 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
   {
     struct Xt_pos_ext_vec cover
       = generate_dir_transfer_ext_dst(
-        num_dst_intersections, dst_com, dst_idxlist_local,
+        num_dst_intersections, dst_com, dst_idxlist,
         &xmap->n_in, xmap->msg, dst_removals_per_intersection);
 
-    if (!xt_idxlist_pos_ext_is_full_cover(dst_idxlist_local, cover)) {
-      if (xt_idxlist_get_num_indices(dst_idxlist_local) == 0)
+    if (!xt_idxlist_pos_ext_is_full_cover(dst_idxlist, cover)) {
+      if (xt_idxlist_get_num_indices(dst_idxlist) == 0)
         Xt_abort(comm, "ERROR: ups...this should not have happend...", __FILE__,
                  __LINE__);
-      int first_missing_pos = 0;
-      Xt_int missing_index;
-      if ((cover.num_pos_ext > 0) && (cover.pos_ext[0].start == 0))
-        first_missing_pos = cover.pos_ext[0].start + cover.pos_ext[0].size;
-      xt_idxlist_get_index_at_position(dst_idxlist_local, first_missing_pos,
-                                       &missing_index);
-      char error_message[1024];
-      sprintf(error_message, "ERROR: destination intersections do not match "
-              "with destination index list (first missing index %lld "
-              "at position %d)", (long long)missing_index, first_missing_pos);
-      Xt_abort(comm, error_message, __FILE__, __LINE__);
+      int first_missing_pos
+        = ((cover.num_pos_ext > 0) && (cover.pos_ext[0].start == 0))
+        ? cover.pos_ext[0].start + cover.pos_ext[0].size : 0;
+      print_miss_msg(dst_idxlist, first_missing_pos, comm, __FILE__, __LINE__);
     }
     xt_cover_finish(&cover);
   }
@@ -451,7 +444,7 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
       src_removals_per_intersection,
       (const int (*)[2])dst_removals_per_intersection, xmap->tag_offset, comm);
 
-  remap_dst_intersections(num_dst_intersections, dst_com, dst_idxlist_local,
+  remap_dst_intersections(num_dst_intersections, dst_com, dst_idxlist,
                           xmap->n_in, xmap->msg,
                           (const int (*)[2])dst_removals_per_intersection);
 
@@ -460,7 +453,7 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
              * sizeof(*src_removals_per_intersection));
 
   generate_dir_transfer_pos_ext_src(
-    num_src_intersections, src_com, src_idxlist_local,
+    num_src_intersections, src_com, src_idxlist,
     &xmap->n_out, xmap->msg+xmap->n_in,
     (const int (*)[2])src_removals_per_intersection, pos_updates);
   free(src_removals_per_intersection);

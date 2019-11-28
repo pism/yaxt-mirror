@@ -58,6 +58,7 @@ struct pos_run {
   int start, direction;
 };
 
+#include "core/core.h"
 #include "xt_stripe_util.h"
 
 /* how many pos values have monotonically either positively or
@@ -140,6 +141,24 @@ static inline void generate_pos(
     ofs += (size_t)abssize;
   }
   assert(ofs == num_pos);
+}
+
+static inline void
+print_miss_msg(Xt_idxlist dst_idxlist, int missing_pos,
+               MPI_Comm comm, const char *source, int line)
+  __attribute__((noreturn));
+
+static inline void
+print_miss_msg(Xt_idxlist dst_idxlist, int missing_pos,
+               MPI_Comm comm, const char *source, int line)
+{
+  Xt_int missing_index;
+  xt_idxlist_get_index_at_position(dst_idxlist, missing_pos, &missing_index);
+  char error_message[1024];
+  sprintf(error_message, "ERROR: destination intersections do not match "
+          "with destination index list (first missing index %lld "
+          "at position %d)", (long long)missing_index, missing_pos);
+  Xt_abort(comm, error_message, source, line);
 }
 
 #endif

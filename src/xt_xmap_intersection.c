@@ -603,15 +603,7 @@ xt_xmap_intersection_new(int num_src_intersections,
     while ((first_missing_pos < (num_dst_indices - 1)) &&
            (found_index_mask[first_missing_pos])) ++first_missing_pos;
 
-    Xt_int missing_index;
-    xt_idxlist_get_index_at_position(dst_idxlist, first_missing_pos,
-                                     &missing_index);
-
-    char error_message[1024];
-    sprintf(error_message, "ERROR: destination intersections do not match "
-            "with destination index list (first missing index %lld "
-            "at position %d)", (long long)missing_index, first_missing_pos);
-    Xt_abort(comm, error_message, __FILE__, __LINE__);
+    print_miss_msg(dst_idxlist, first_missing_pos, comm, __FILE__, __LINE__);
   }
 
   int n_in = xmap->n_in, n_out = xmap->n_out;
