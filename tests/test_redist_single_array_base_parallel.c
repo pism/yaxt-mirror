@@ -86,6 +86,14 @@ int main(void) {
       xt_redist_single_array_base_new(
         nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
 
+    // test number of send messages
+    if ((int)nsend != xt_redist_get_num_send_msg(redist))
+      PUT_ERR("error in xt_redist_get_num_send_msg\n");
+
+    // test number of recv messages
+    if ((int)nrecv != xt_redist_get_num_recv_msg(redist))
+      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
+
     // test communicator of redist
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
                                      MPI_COMM_WORLD))
@@ -136,6 +144,14 @@ int main(void) {
     Xt_redist redist =
       xt_redist_single_array_base_new(
         nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
+
+    // test number of send messages
+    if ((int)nsend != xt_redist_get_num_send_msg(redist))
+      PUT_ERR("error in xt_redist_get_num_send_msg\n");
+
+    // test number of recv messages
+    if ((int)nrecv != xt_redist_get_num_recv_msg(redist))
+      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
@@ -188,6 +204,14 @@ int main(void) {
     Xt_redist redist =
       xt_redist_single_array_base_new(
         nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
+
+    // test number of send messages
+    if ((int)nsend != xt_redist_get_num_send_msg(redist))
+      PUT_ERR("error in xt_redist_get_num_send_msg\n");
+
+    // test number of recv messages
+    if ((int)nrecv != xt_redist_get_num_recv_msg(redist))
+      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),

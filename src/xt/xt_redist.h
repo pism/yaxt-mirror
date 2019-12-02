@@ -151,6 +151,24 @@ void xt_redist_a_exchange1(Xt_redist redist, const void *src_data,
                            void *dst_data, Xt_request *request);
 
 /**
+ * gets the number of messages send from the local process in an exchange
+ * operation
+ *
+ * @param[in] redist redistribution structure
+ * @return number of messages sent in the exchange operation
+ */
+int xt_redist_get_num_send_msg(Xt_redist redist);
+
+/**
+ * gets the number of messages received by the local process in an exchange
+ * operation
+ *
+ * @param[in] redist redistribution structure
+ * @return number of messages received in the exchange operation
+ */
+int xt_redist_get_num_recv_msg(Xt_redist redist);
+
+/**
  * gets a copy of the MPI_Datatype used for the data of the send operation with
  * the given rank
  *

@@ -85,6 +85,10 @@ static void
 redist_sab_a_exchange1(Xt_redist redist, const void *src_data, void *dst_data,
                        Xt_request *request);
 
+static int redist_sab_get_num_send_msg(Xt_redist redist);
+
+static int redist_sab_get_num_recv_msg(Xt_redist redist);
+
 static MPI_Datatype
 redist_sab_get_send_MPI_Datatype(Xt_redist redist, int rank);
 
@@ -106,6 +110,8 @@ static const struct xt_redist_vtable redist_sab_vtable = {
   .a_exchange            = redist_sab_a_exchange,
   .s_exchange1           = redist_sab_s_exchange1,
   .a_exchange1           = redist_sab_a_exchange1,
+  .get_num_send_msg      = redist_sab_get_num_send_msg,
+  .get_num_recv_msg      = redist_sab_get_num_recv_msg,
   .get_send_MPI_Datatype = redist_sab_get_send_MPI_Datatype,
   .get_recv_MPI_Datatype = redist_sab_get_recv_MPI_Datatype,
   .get_msg_ranks         = redist_sab_get_msg_ranks,
@@ -223,6 +229,16 @@ redist_sab_a_exchange1(Xt_redist redist, const void *src_data, void *dst_data,
   Xt_redist_sab redist_sab = xrsab(redist);
 
   xt_exchanger_a_exchange(redist_sab->exchanger, src_data, dst_data, request);
+}
+
+static int redist_sab_get_num_send_msg(Xt_redist redist) {
+
+  return xrsab(redist)->nsend;
+}
+
+static int redist_sab_get_num_recv_msg(Xt_redist redist) {
+
+  return xrsab(redist)->nrecv;
 }
 
 static MPI_Datatype

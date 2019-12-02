@@ -150,6 +150,22 @@ MODULE xt_redist_base
       INTEGER(xt_mpi_fint_kind) :: comm
     END FUNCTION xt_redist_get_mpi_comm
 
+    FUNCTION xt_redist_get_num_send_msg_c(redist) RESULT(num_send_msg) &
+         BIND(c, name='xt_redist_get_num_send_msg')
+      IMPORT :: c_ptr, c_int
+      IMPLICIT NONE
+      TYPE(c_ptr), VALUE, INTENT(in) :: redist
+      INTEGER(c_int) :: num_send_msg
+    END FUNCTION xt_redist_get_num_send_msg_c
+
+    FUNCTION xt_redist_get_num_recv_msg_c(redist) RESULT(num_recv_msg) &
+         BIND(c, name='xt_redist_get_num_recv_msg')
+      IMPORT :: c_ptr, c_int
+      IMPLICIT NONE
+      TYPE(c_ptr), VALUE, INTENT(in) :: redist
+      INTEGER(c_int) :: num_recv_msg
+    END FUNCTION xt_redist_get_num_recv_msg_c
+
     FUNCTION xt_redist_get_recv_mpi_datatype(redist, rank) &
          BIND(c, name='xt_redist_get_recv_MPI_Datatype_c2f') RESULT(dt)
       IMPORT :: xt_redist, xt_mpi_fint_kind
@@ -278,7 +294,8 @@ MODULE xt_redist_base
        xt_redist_repeat_new, xt_redist_get_mpi_comm, xt_redist_p2p_ext_new, &
        xt_redist_a_exchange1, xt_redist_a_exchange, &
        xt_redist_single_array_base_new, &
-       xt_redist_get_send_mpi_datatype, xt_redist_get_recv_mpi_datatype
+       xt_redist_get_send_mpi_datatype, xt_redist_get_recv_mpi_datatype, &
+       xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg
   CHARACTER(len=*), PARAMETER :: filename = 'xt_redist_f.f90'
 CONTAINS
 
@@ -322,6 +339,26 @@ CONTAINS
       redists(i)%cptr = c_null_ptr
     END DO
   END SUBROUTINE xt_redist_delete_a1d
+
+  FUNCTION xt_redist_get_num_send_msg(redist) RESULT(num_send_msg)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER :: num_send_msg
+    INTEGER(c_int) :: n
+    n = xt_redist_get_num_send_msg_c(xt_redist_f2c(redist))
+    IF (n > HUGE(num_send_msg) .OR. n < -HUGE(num_send_msg)) &
+         CALL xt_abort("num_send_msg out of bounds", filename, __LINE__)
+    num_send_msg = INT(n)
+  END FUNCTION xt_redist_get_num_send_msg
+
+  FUNCTION xt_redist_get_num_recv_msg(redist) RESULT(num_recv_msg)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER :: num_recv_msg
+    INTEGER(c_int) :: n
+    n = xt_redist_get_num_send_msg_c(xt_redist_f2c(redist))
+    IF (n > HUGE(num_recv_msg) .OR. n < -HUGE(num_recv_msg)) &
+         CALL xt_abort("num_recv_msg out of bounds", filename, __LINE__)
+    num_recv_msg = INT(n)
+  END FUNCTION xt_redist_get_num_recv_msg
 
   SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist

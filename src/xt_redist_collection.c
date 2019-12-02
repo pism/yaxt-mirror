@@ -93,6 +93,10 @@ redist_collection_a_exchange1(Xt_redist redist,
                               const void *src_data, void *dst_data,
                               Xt_request *request);
 
+static int redist_collection_get_num_send_msg(Xt_redist redist);
+
+static int redist_collection_get_num_recv_msg(Xt_redist redist);
+
 static MPI_Datatype
 redist_collection_get_send_MPI_Datatype(Xt_redist redist, int rank);
 
@@ -114,6 +118,8 @@ static const struct xt_redist_vtable redist_collection_vtable = {
   .a_exchange            = redist_collection_a_exchange,
   .s_exchange1           = redist_collection_s_exchange1,
   .a_exchange1           = redist_collection_a_exchange1,
+  .get_num_send_msg      = redist_collection_get_num_send_msg,
+  .get_num_recv_msg      = redist_collection_get_num_recv_msg,
   .get_send_MPI_Datatype = redist_collection_get_send_MPI_Datatype,
   .get_recv_MPI_Datatype = redist_collection_get_recv_MPI_Datatype,
   .get_msg_ranks         = redist_collection_get_msg_ranks,
@@ -555,6 +561,16 @@ redist_collection_delete(Xt_redist redist) {
   xt_mpi_comm_smart_dedup(&(redist_coll->comm), redist_coll->tag_offset);
 
   free(redist_coll);
+}
+
+static int redist_collection_get_num_send_msg(Xt_redist redist) {
+
+  return (int)(xrc(redist)->nsrc);
+}
+
+static int redist_collection_get_num_recv_msg(Xt_redist redist) {
+
+  return (int)(xrc(redist)->ndst);
 }
 
 static MPI_Datatype

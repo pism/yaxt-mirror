@@ -72,6 +72,8 @@ struct xt_redist_vtable {
   void (*a_exchange1)(Xt_redist, const void *, void *, Xt_request *);
   MPI_Datatype (*get_send_MPI_Datatype)(Xt_redist, int);
   MPI_Datatype (*get_recv_MPI_Datatype)(Xt_redist, int);
+  int (*get_num_send_msg)(Xt_redist);
+  int (*get_num_recv_msg)(Xt_redist);
   int (*get_msg_ranks)(Xt_redist, enum xt_msg_direction, int *restrict *);
   MPI_Comm (*get_MPI_Comm)(Xt_redist);
 };
