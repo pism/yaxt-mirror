@@ -98,8 +98,8 @@ MODULE yaxt
        xt_offset_ext, xt_redist_p2p_ext_new, xt_redist_msg, &
        xt_redist_a_exchange1, xt_redist_a_exchange, &
        xt_redist_single_array_base_new, &
-       xt_redist_get_recv_mpi_datatype, &
-       xt_redist_get_send_mpi_datatype
+       xt_redist_get_recv_mpi_datatype, xt_redist_get_send_mpi_datatype, &
+       xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
@@ -157,8 +157,8 @@ MODULE yaxt
        xt_redist_repeat_new, xt_redist_copy, xt_redist_delete, &
        xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_get_mpi_comm, &
-       xt_redist_get_recv_mpi_datatype, &
-       xt_redist_get_send_mpi_datatype, &
+       xt_redist_get_recv_mpi_datatype, xt_redist_get_send_mpi_datatype, &
+       xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg, &
        xt_idxempty_new, xt_redist_collection_static_new, &
        xt_redist_collection_new, xt_slice_c_loc, &
        xt_mpi_comm_mark_exclusive, &

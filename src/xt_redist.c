@@ -93,6 +93,16 @@ void xt_redist_a_exchange1(Xt_redist redist, const void *src_data,
   redist->vtable->a_exchange1(redist, src_data, dst_data, request);
 }
 
+int xt_redist_get_num_send_msg(Xt_redist redist) {
+
+  return redist->vtable->get_num_send_msg(redist);
+}
+
+int xt_redist_get_num_recv_msg(Xt_redist redist) {
+
+  return redist->vtable->get_num_recv_msg(redist);
+}
+
 MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 
   return redist->vtable->get_send_MPI_Datatype(redist, rank);
