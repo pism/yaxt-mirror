@@ -90,7 +90,7 @@ clean-local:
 # parallel run, i.e. when 'make distclean -j2', we express the dependency
 # explicitly:
 distclean-local: clean-local
-	for d in $(SUBDIRS) ; do \
+	-for d in $(SUBDIRS) ; do \
 		test $$d = . || (rm -f $$d/Makefile ; test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir $$d) ; done
 	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir include util
 install-exec-local:
