@@ -50,6 +50,7 @@ PROGRAM test_xmap_intersection_parallel
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, xt_xmap, &
        xt_idxempty_new, xi => xt_int_kind, &
        xt_xmap_intersection_new, xt_xmap_intersection_ext_new, xt_com_list, &
+       xt_xmap_intersection_pos_new, xt_com_pos, &
        xt_xmap_copy, xt_xmap_delete, xt_xmap_iter, &
        xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
@@ -113,6 +114,7 @@ PROGRAM test_xmap_intersection_parallel
   CALL dedup_test
   CALL reorder_test
   CALL update_positions_and_spread_test
+  CALL alltoall_pos_test
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
@@ -507,6 +509,36 @@ CONTAINS
     CALL xt_idxlist_delete(dst_com(1)%list)
     CALL xt_idxlist_delete(src_com(1)%list)
   END SUBROUTINE update_positions_and_spread_test
+
+  ! checks xt_xmap_intersection_pos_new constructor
+  SUBROUTINE alltoall_pos_test
+
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_com_pos), TARGET :: src_com(comm_size), dst_com(comm_size)
+    INTEGER, TARGET :: transfer_pos(comm_size)
+    TYPE(test_message) :: recv_messages(comm_size), send_messages(comm_size)
+    INTEGER :: i
+
+    DO i = 1, comm_size
+      transfer_pos(i) = i
+      src_com(i)%transfer_pos => transfer_pos(i:i)
+      src_com(i)%rank = i - 1
+      dst_com(i)%transfer_pos => transfer_pos(i:i)
+      dst_com(i)%rank = i - 1
+      send_messages(i)%rank = i - 1
+      send_messages(i)%pos => transfer_pos(i:i)
+      recv_messages(i)%rank = i - 1
+      recv_messages(i)%pos => transfer_pos(i:i)
+    END DO
+
+    xmap = xt_xmap_intersection_pos_new(src_com, dst_com, mpi_comm_world)
+
+    ! test
+    CALL test_xmap(xmap, send_messages, recv_messages)
+
+    ! cleanup
+    CALL xt_xmap_delete(xmap)
+  END SUBROUTINE alltoall_pos_test
 
   SUBROUTINE test_xmap_iter(iter, msgs)
     TYPE(xt_xmap_iter), INTENT(inout) :: iter

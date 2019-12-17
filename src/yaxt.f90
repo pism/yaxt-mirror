@@ -87,7 +87,8 @@ MODULE yaxt
        xt_reorder_type_kind, XT_REORDER_NONE, XT_REORDER_SEND_UP, &
        XT_REORDER_RECV_UP, xt_xmap_update_positions, xt_xmap_spread
   USE xt_xmap_intersection, ONLY: xt_xmap_intersection_new, &
-       xt_xmap_intersection_ext_new, xt_com_list
+       xt_xmap_intersection_ext_new, xt_com_list, &
+       xt_xmap_intersection_pos_new, xt_com_pos
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f, xt_redist_f2c, &
        xt_redist_copy, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
@@ -139,10 +140,11 @@ MODULE yaxt
        xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
        xt_xmap_dist_dir_intercomm_new, &
        xt_xmap_intersection_new, xt_xmap_intersection_ext_new, &
+       xt_xmap_intersection_pos_new, &
        xt_xmap_reorder, xt_reorder_type_kind, &
        XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP, &
        xt_xmap_update_positions, xt_xmap_spread, &
-       xt_com_list, &
+       xt_com_list, xt_com_pos, &
        xt_xmap_iter, xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
        xt_xmap_iterator_get_transfer_pos, &
