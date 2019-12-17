@@ -57,6 +57,7 @@
 #include "tests.h"
 #include "xt/xt_xmap_intersection.h"
 #include "xt/xt_xmap.h"
+#include "core/ppm_xfuncs.h"
 
 struct test_message {
 
@@ -522,6 +523,47 @@ int main(int argc, char **argv)
     xt_idxlist_delete(src_idxlist);
     xt_idxlist_delete(dst_com.list);
     xt_idxlist_delete(src_com.list);
+  }
+
+  { // alltoall using xt_xmap_intersection_pos_new
+
+    struct Xt_com_pos * src_com =
+      xmalloc(2 * (size_t)comm_size * sizeof(*src_com));
+    struct Xt_com_pos * dst_com = src_com + comm_size;
+    int * transfer_pos = xmalloc((size_t)comm_size * sizeof(*transfer_pos));
+    struct test_message * ref_src_msg =
+      xmalloc(2 * (size_t)comm_size * sizeof(*ref_src_msg));
+    struct test_message * ref_dst_msg = ref_src_msg + comm_size;
+
+    for (int i = 0, offset = my_rank * comm_size; i < comm_size; ++i) {
+
+      transfer_pos[i] = i;
+
+      src_com[i].transfer_pos = transfer_pos + i;
+      src_com[i].num_transfer_pos = 1;
+      src_com[i].rank = i;
+      dst_com[i].transfer_pos = transfer_pos + i;
+      dst_com[i].num_transfer_pos = 1;
+      dst_com[i].rank = i;
+      ref_src_msg[i].pos = transfer_pos + i;
+      ref_src_msg[i].num_pos = 1;
+      ref_src_msg[i].rank = i;
+      ref_dst_msg[i].pos = transfer_pos + i;
+      ref_dst_msg[i].num_pos = 1;
+      ref_dst_msg[i].rank = i;
+    }
+
+    Xt_xmap xmap =
+      xt_xmap_intersection_pos_new(
+        comm_size, src_com, comm_size, dst_com, MPI_COMM_WORLD);
+
+    test_xmap(xmap, comm_size, ref_src_msg, comm_size, ref_dst_msg);
+
+    xt_xmap_delete(xmap);
+
+    free(ref_src_msg);
+    free(transfer_pos);
+    free(src_com);
   }
 
   xt_finalize();

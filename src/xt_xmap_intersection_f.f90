@@ -50,7 +50,7 @@
 !! @example test_xmap_intersection_parallel_f.f90
 
 MODULE xt_xmap_intersection
-  USE iso_c_binding, ONLY: c_int, c_loc, c_null_ptr, c_ptr
+  USE iso_c_binding, ONLY: c_int, c_size_t, c_loc, c_null_ptr, c_ptr
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_f2c
   USE xt_xmap_abstract, ONLY: xt_xmap, xt_xmap_c2f
@@ -63,7 +63,19 @@ MODULE xt_xmap_intersection
     INTEGER(c_int) :: rank
   END TYPE xt_com_list
 
-  PUBLIC :: xt_xmap_intersection_new, xt_xmap_intersection_ext_new
+  TYPE, PUBLIC :: xt_com_pos
+    INTEGER, POINTER :: transfer_pos(:)
+    INTEGER :: rank
+  END TYPE xt_com_pos
+
+  TYPE, BIND(c) :: xt_com_pos_c
+    TYPE(c_ptr) :: transfer_pos
+    INTEGER(c_int) :: num_transfer_pos
+    INTEGER(c_int) :: rank
+  END TYPE xt_com_pos_c
+
+  PUBLIC :: xt_xmap_intersection_new, xt_xmap_intersection_ext_new, &
+            xt_xmap_intersection_pos_new
 
   INTERFACE
     FUNCTION xmi_new_f2c(num_src_intersections, src_com, &
@@ -91,6 +103,16 @@ MODULE xt_xmap_intersection
       INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm
       TYPE(c_ptr) :: xmap
     END FUNCTION xmi_ext_new_f2c
+
+    FUNCTION xmi_pos_new_f2c(num_src_msg, src_com, num_dst_msg, dst_com, comm) &
+         RESULT(xmap) &
+         BIND(c, name='xt_xmap_intersection_pos_new_f2c')
+      IMPORT :: c_int, c_ptr, xt_mpi_fint_kind
+      INTEGER(c_int), VALUE, INTENT(in) :: num_src_msg, num_dst_msg
+      TYPE(c_ptr), VALUE, INTENT(in) :: src_com, dst_com
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm
+      TYPE(c_ptr) :: xmap
+    END FUNCTION xmi_pos_new_f2c
   END INTERFACE
 
   INTERFACE xt_xmap_intersection_new
@@ -102,6 +124,12 @@ MODULE xt_xmap_intersection
     MODULE PROCEDURE xmi_ext_new_i_a_i_a
     MODULE PROCEDURE xmi_ext_new_a_a
   END INTERFACE xt_xmap_intersection_ext_new
+
+  INTERFACE xt_xmap_intersection_pos_new
+    MODULE PROCEDURE xmi_pos_new_a_a
+    MODULE PROCEDURE xmi_pos_new_i_a_i_a
+  END INTERFACE xt_xmap_intersection_pos_new
+
   CHARACTER(len=*), PARAMETER :: filename = 'xt_xmap_intersection_f.f90'
 CONTAINS
   FUNCTION xmi_new_i_a_i_a(num_src_intersections, src_com, &
@@ -180,10 +208,91 @@ CONTAINS
     CALL com_p_arg(src_com, src_com_a, src_com_p)
     CALL com_p_arg(dst_com, dst_com_a, dst_com_p)
 
-    xmap = xt_xmap_c2f(xmi_ext_new_f2c(num_src_intersections_c, src_com_p, &
+    xmap = xt_xmap_c2f(xmi_ext_new_f2c(&
+         num_src_intersections_c, src_com_p, &
          num_dst_intersections_c, dst_com_p, &
          xt_idxlist_f2c(src_idxlist), xt_idxlist_f2c(dst_idxlist), comm))
   END FUNCTION xmi_ext_new_a_a
+
+  FUNCTION xmi_pos_new_i_a_i_a( &
+      num_src_msg, src_com, num_dst_msg, dst_com, comm) RESULT(xmap)
+    TYPE(xt_com_pos), TARGET, INTENT(in) :: src_com(:), dst_com(:)
+    INTEGER, INTENT(in) :: num_src_msg, num_dst_msg
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_xmap) :: xmap
+
+    INTEGER(c_int) :: num_src_msg_c, num_dst_msg_c
+    TYPE(xt_com_pos_c), ALLOCATABLE :: src_com_c(:), dst_com_c(:)
+    INTEGER(c_int), ALLOCATABLE :: pos_buffer(:)
+    INTEGER(c_size_t) :: pos_buffer_offset
+
+    ALLOCATE(pos_buffer(get_total_num_transfer_pos(num_src_msg, src_com) + &
+                        get_total_num_transfer_pos(num_dst_msg, dst_com)))
+
+    num_src_msg_c = INT(num_src_msg, c_int)
+    num_dst_msg_c = INT(num_dst_msg, c_int)
+
+    pos_buffer_offset = 1
+    CALL generate_xt_com_pos_c( &
+      num_src_msg, src_com, src_com_c, pos_buffer, pos_buffer_offset)
+    CALL generate_xt_com_pos_c( &
+      num_dst_msg, dst_com, dst_com_c, pos_buffer, pos_buffer_offset)
+
+    xmap = &
+      xt_xmap_c2f( &
+       xmi_pos_new_f2c(&
+        num_src_msg_c, C_LOC(src_com_c), num_dst_msg_c, C_LOC(dst_com_c), comm))
+
+  CONTAINS
+    FUNCTION get_total_num_transfer_pos(num_msg, com_pos) &
+        RESULT(total_num_transfer_pos)
+      INTEGER, INTENT(in) :: num_msg
+      TYPE(xt_com_pos), TARGET, INTENT(in) :: com_pos(:)
+      INTEGER :: i
+      INTEGER(c_size_t) :: total_num_transfer_pos
+
+      total_num_transfer_pos = 0
+      DO i = 1, num_msg
+        total_num_transfer_pos = &
+          total_num_transfer_pos + SIZE(com_pos(i)%transfer_pos, 1, c_size_t)
+      END DO
+    END FUNCTION get_total_num_transfer_pos
+
+    SUBROUTINE generate_xt_com_pos_c( &
+        num_msg, com_pos, com_pos_c, pos_buffer, pos_buffer_offset)
+      INTEGER, INTENT(in) :: num_msg
+      TYPE(xt_com_pos), TARGET, INTENT(in) :: com_pos(:)
+      TYPE(xt_com_pos_c), ALLOCATABLE, INTENT(inout) :: com_pos_c(:)
+      INTEGER(c_int), TARGET, INTENT(inout) :: pos_buffer(:)
+      INTEGER(c_size_t), INTENT(inout) :: pos_buffer_offset
+      INTEGER :: i
+      INTEGER(c_size_t) :: j, curr_num_transfer_pos
+
+      ALLOCATE(com_pos_c(num_msg))
+
+      DO i = 1, num_msg
+        curr_num_transfer_pos = SIZE(com_pos(i)%transfer_pos, 1, c_size_t)
+        DO j = 0, curr_num_transfer_pos - 1
+          pos_buffer(pos_buffer_offset + j) = &
+            INT(com_pos(i)%transfer_pos(j+1), c_int)
+        END DO
+        com_pos_c(i)%transfer_pos = C_LOC(pos_buffer(pos_buffer_offset))
+        com_pos_c(i)%num_transfer_pos = INT(curr_num_transfer_pos, c_int)
+        com_pos_c(i)%rank = INT(com_pos(i)%rank, c_int)
+        pos_buffer_offset = pos_buffer_offset + curr_num_transfer_pos
+      END DO
+
+    END SUBROUTINE generate_xt_com_pos_c
+  END FUNCTION xmi_pos_new_i_a_i_a
+
+  FUNCTION xmi_pos_new_a_a(src_com, dst_com, comm) RESULT(xmap)
+    TYPE(xt_com_pos), TARGET, INTENT(in) :: src_com(:), dst_com(:)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_xmap) :: xmap
+
+    xmap = &
+      xmi_pos_new_i_a_i_a(SIZE(src_com), src_com, SIZE(dst_com), dst_com, comm)
+  END FUNCTION xmi_pos_new_a_a
 
   SUBROUTINE com_p_arg(com, com_a, com_p)
     TYPE(xt_com_list), TARGET, INTENT(in) :: com(:)

@@ -401,6 +401,15 @@ xt_xmap_intersection_ext_new_f2c(
     src_idxlist, dst_idxlist, MPI_Comm_f2c(comm));
 }
 
+void *
+xt_xmap_intersection_pos_new_f2c(
+  int num_src_msg, const void *src_com, int num_dst_msg, const void *dst_com,
+  MPI_Fint comm)
+{
+  return xt_xmap_intersection_pos_new(
+    num_src_msg, src_com, num_dst_msg, dst_com, MPI_Comm_f2c(comm));
+}
+
 #ifndef HAVE_FC_IS_CONTIGUOUS
 int
 xt_com_list_contiguous(const struct Xt_com_list *p_com_a,

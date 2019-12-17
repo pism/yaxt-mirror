@@ -956,6 +956,66 @@ xmap_intersection_spread(Xt_xmap xmap, int num_repetitions,
                                    .displacements = dst_displacements });
 }
 
+static int get_max_pos_from_com_pos(
+  int num_msg, const struct Xt_com_pos com[num_msg]) {
+
+  int max_pos = 0;
+  for (int i = 0; i < num_msg; ++i) {
+    int curr_num_transfer_pos = com[i].num_transfer_pos;
+    int * curr_transfer_pos = com[i].transfer_pos;
+    for (int j = 0; j < curr_num_transfer_pos; ++j)
+      if (curr_transfer_pos[j] > max_pos) max_pos = curr_transfer_pos[j];
+  }
+  return max_pos;
+}
+
+static void init_exchange_data_from_com_pos(
+  int count, struct exchange_data *restrict msgs,
+  const struct Xt_com_pos *restrict com) {
+
+  for (int i = 0; i < count; ++i) {
+    int num_transfer_pos = com[i].num_transfer_pos;
+    int * transfer_pos =
+      xmalloc((size_t)num_transfer_pos * sizeof(*transfer_pos));
+    int rank = com[i].rank;
+    memcpy(transfer_pos, com[i].transfer_pos,
+           (size_t)num_transfer_pos * sizeof(*transfer_pos));
+    msgs[i].transfer_pos = transfer_pos;
+    msgs[i].transfer_pos_ext_cache = NULL;
+    msgs[i].num_transfer_pos = num_transfer_pos;
+    msgs[i].num_transfer_pos_ext =
+      (int)(count_pos_ext((size_t)num_transfer_pos, transfer_pos));
+    msgs[i].rank = rank;
+  }
+}
+
+Xt_xmap
+xt_xmap_intersection_pos_new(
+  int num_src_msg, const struct Xt_com_pos src_com[num_src_msg],
+  int num_dst_msg, const struct Xt_com_pos dst_com[num_dst_msg],
+  MPI_Comm comm) {
+
+  // ensure that yaxt is initialized
+  assert(xt_initialized());
+
+  size_t num_msg = (size_t)num_src_msg + (size_t)num_dst_msg;
+  Xt_xmap_intersection xmap
+    = xmalloc(sizeof (*xmap) + num_msg * sizeof (struct exchange_data));
+
+  xmap->vtable = &xmap_intersection_vtable;
+  xmap->n_in = num_dst_msg;
+  xmap->n_out = num_src_msg;
+  xmap->max_dst_pos = get_max_pos_from_com_pos(num_dst_msg, dst_com);
+  xmap->max_src_pos = get_max_pos_from_com_pos(num_src_msg, src_com);
+  xmap->comm = comm = xt_mpi_comm_smart_dup(comm, &xmap->tag_offset);
+  init_exchange_data_from_com_pos(
+    num_dst_msg, xmap->msg, dst_com);
+  init_exchange_data_from_com_pos(
+    num_src_msg, xmap->msg + num_dst_msg, src_com);
+
+  return (Xt_xmap)xmap;
+}
+
 static int xmap_intersection_iterator_next(Xt_xmap_iter iter) {
 
   Xt_xmap_iter_intersection iter_intersection = xmii(iter);

@@ -61,6 +61,13 @@ struct Xt_com_list {
   int rank;
 };
 
+struct Xt_com_pos {
+  // list of relative positions in memory to send or receive
+  int * transfer_pos;
+  int num_transfer_pos;
+  int rank;
+};
+
 /**
  * constructor for an exchange map \n
  * this operation is collective over all processes in comm \n
@@ -117,6 +124,26 @@ xt_xmap_intersection_ext_new(
   int num_dst_intersections,
   const struct Xt_com_list dst_com[num_dst_intersections],
   Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+  MPI_Comm comm);
+
+/**
+ * constructor for an exchange map \n
+ * this operation is collective over all processes in comm \n
+ * it uses the provided intersection information to generate the exchange map
+ *
+ * @param[in] num_src_msg number of source messages
+ * @param[in] src_com     array containing relative positions for all
+ *                        source messages and the destination rank
+ * @param[in] num_dst_msg number of destination messages
+ * @param[in] dst_com     array containing relative positions for all
+ *                        destination messages and the source rank
+ * @param[in] comm        MPI communicator that contains all processes
+ *                        that part in the exchange
+ */
+Xt_xmap
+xt_xmap_intersection_pos_new(
+  int num_src_msg, const struct Xt_com_pos src_com[num_src_msg],
+  int num_dst_msg, const struct Xt_com_pos dst_com[num_dst_msg],
   MPI_Comm comm);
 
 #endif // XT_XMAP_INTERSECTION_H
