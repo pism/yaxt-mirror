@@ -38,7 +38,8 @@ dnl _ACX_LT_FLAGS_MANGLE
 m4_define([nag_filter_flag_var],
   [AS_IF([test x${$1+set} = xset],
      [$1=`echo "$][$1" | tr ' ' '\n' | sed -e '/^-W@<:@lc@:>@/{' \
--e 's/^\(-Wl\)/-XCClinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}'     | tr '\n' ' '`])])
+-e 's/^\(-Wl\)/-XCClinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}' \
+   | tr '\n' ' ' | sed -e 's/ $//'`])])
 AC_DEFUN([_ACX_LT_FORT_FLAGS_MANGLE],
   [_AC_FORTRAN_ASSERT
    AC_LANG_CASE([Fortran],
@@ -64,7 +65,7 @@ dnl fix conflicting use of -module by libtool and ifort
    AS_VAR_POPDEF([acx_FCFLAGS])dnl
    AS_VAR_POPDEF([acx_LDFLAGS])])
 dnl
-dnl ACX_USE_LIBTOOL_CONFIGURATION
+dnl ACX_USE_LIBTOOL_CONFIGURATION([ARGS-TO-LT_INIT])
 dnl Switch compiler to libtool wrapper and prevent occurrence of
 dnl problematic setups
 AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
@@ -99,8 +100,8 @@ dnl newer PGI or NAG configurations particularly well
 	  tmp_sharedflag='-Wl,-shared'
 	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`' ;;
 ]))dnl
-      m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],m4_bpatsubst(m4_dquote(
-        m4_bpatsubst(m4_dquote(
+      m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],[AS_UNSET([output_verbose_link_cmd])]
+        m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
           m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
             [test x-\1 = x"$p"])),
           [test x-R = x"\$p"],[\& ||
@@ -118,9 +119,10 @@ dnl newer PGI or NAG configurations particularly well
     AC_MSG_RESULT([$_lt_result])
     _LT_TAGVAR([acx_is_nagfor], $][1)=$_lt_result
     \&]))])dnl
-   LT_INIT
+   LT_INIT([$1])
    m4_popdef([_LT_LANG_F77_CONFIG])dnl
    m4_popdef([_LT_LANG_FC_CONFIG])dnl
+   m4_popdef([_LT_LANG_C_CONFIG])dnl
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
      [m4_popdef([_LT_COMPILER_PIC])m4_popdef([_LT_LINKER_SHLIBS])dnl
       m4_popdef([_LT_SYS_HIDDEN_LIBDEPS])])dnl

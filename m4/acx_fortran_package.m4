@@ -102,7 +102,6 @@ AC_DEFUN([ACX_F90_PACKAGE],
    AC_REQUIRE([_ASX_TR_ARG_PREPARE])dnl
    AC_SUBST(acx_pkg_root)dnl
    AS_VAR_SET([acx_pkg_bindings],[yes])
-   AC_SUBST(acx_pkg_root)dnl
    AC_ARG_WITH(ASX_TR_ARG([$1-root]),
      [AS_HELP_STRING([--with-]ASX_TR_ARG([$1])[-root],
         [set directory to search for $1 headers and library]m4_ifval([$11],[, @<:@default=$11@:>@]))],

@@ -36,7 +36,7 @@ dnl LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
-dnl ACX_FC_XLF_QEXTNAME_ADD_APPENDUS
+dnl ACX_FC_XLF_QEXTNAME_ADD_APPENDUS([ACTION-IF-FAILURE = FAILURE])
 dnl Test if compiler is xlf and if -qextname is in use.
 dnl Add -Dappendus to CPPFLAGS if the above applies.
 dnl
@@ -61,7 +61,11 @@ AC_DEFUN([ACX_XLF_QEXTNAME_ADD_APPENDUS],
               [acx_temp_qextname_fcflags=$acx_temp_qextname_f77flags])])
          AS_CASE([x"$acx_temp_qextname_fcflags$acx_temp_qextname_f77flags"],
            [x-qextname],
-           [AC_MSG_ERROR([Option -qextname must be provided consistently to F77 and FC])],
+           [AC_MSG_RESULT([error])
+            acx_failure_msg="option -qextname must be provided consistently to F77 and FC"
+            m4_default(
+              [$1],
+              [AC_MSG_ERROR([$acx_failure_msg])])],
            [x-qextname-qextname],
            [AC_MSG_RESULT([yes])
             CPPFLAGS="${CPPFLAGS+$CPPFLAGS }-Dappendus"],
@@ -96,7 +100,7 @@ dnl check if compiling with f2c bindings or with default bindings
               [AS_VAR_SET([acx_cf_flag],[-DgFortran])])])],
         [echo $acx_temp | grep '^G95' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-DNAGf90Fortran])],
-        [$acx_FC -v 2>&1 | sed 5q | grep '^f2c'],
+        [$acx_FC -v 2>&1 | sed 5q | grep '^f2c' >/dev/null],
         [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])])],
      [powerpc64-*-linux-*|powerpc-*-linux-*],
      [AS_IF([$acx_FC -qversion 2>&1 | sed 5q | grep '^IBM XL Fortran' >/dev/null],
@@ -128,8 +132,9 @@ p'`
          AS_IF([test x"$acx_temp" != x],
            [AS_IF([test x"$acx_cv_cf_flag" = x],
               [acx_cv_cf_flag="$acx_temp (user-specified)"],
-              [echo ; echo '"'"$acx_cv_cf_flag $acx_temp"'"'
-               AC_MSG_ERROR([Multiple specification of cfortran.h flags])])])])
+              [acx_failure_msg="multiple specification of cfortran.h flags: "`echo "$acx_cv_cf_flag" | sed 's/ (user-specified)$//'`" $acx_temp"
+               acx_cv_cf_flag='error'
+               break])])])
 dnl find automatically from machine/compiler
       AS_IF([test x"$acx_cv_cf_flag" = x],
         [AC_PROVIDE_IFELSE([AC_PROG_FC],
@@ -156,15 +161,16 @@ dnl check f77 flag matches fc flag
                  [acx_cv_cf_flag="$acx_cv_f77_cf_flag (probed)"],
                  [AS_IF([test x"$acx_cv_f77_cf_flag" = x"$acx_cv_fc_cf_flag"],
                     [acx_cv_cf_flag="$acx_cv_f77_cf_flag (probed)"],
-                    [AC_MSG_ERROR([cfortran.h flag for $F77 does not match the flag for $FC.
-Have you configured compatible compilers?])])])
-              ])],[acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"])
-        ])
-     ])
+                    [acx_failure_msg="cfortran.h flag for $F77 does not match the flag for $FC.
+Did you configure compatible compilers?"
+                     acx_cv_cf_flag='error'])])])],
+           [acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"])])])
+   AS_IF([test x"$acx_cv_cf_flag" = xerror],
+     [m4_default([$1],
+        [AC_MSG_ERROR([$acx_failure_msg])])])
 dnl now that flag is established, add (probed) defines to CPPFLAGS
    AS_IF([echo "$acx_cv_cf_flag" | grep ' (probed)$' >/dev/null],
-     [acx_temp=`echo "$acx_cv_cf_flag" | sed 's/ (probed)$//'`
-      CPPFLAGS="${CPPFLAGS+$CPPFLAGS }$acx_temp"])
+     [CPPFLAGS="${CPPFLAGS+$CPPFLAGS }"`echo "$acx_cv_cf_flag" | sed 's/ (probed)$//'`])
   ])
 dnl
 dnl Local Variables:

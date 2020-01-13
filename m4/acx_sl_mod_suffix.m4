@@ -86,7 +86,7 @@ dnl in the directory with the object file, therefore we try to delete everything
 dnl
    AC_MSG_CHECKING([for suffix of module files])
    ac_fc_mod_uppercase=no
-   AS_CASE(["$acx_cv_fc_mod_name"],
+   AS_CASE([$acx_cv_fc_mod_name],
      [conftest_module.$FCMODEXT], [:],
      [CONFTEST_MODULE.$FCMODEXT], [ac_fc_mod_uppercase=yes],
      [conftest_module.mod], [FCMODEXT=mod],
