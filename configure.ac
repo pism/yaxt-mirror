@@ -182,7 +182,12 @@ AC_CHECK_SIZEOF([long long])
 AC_SUBST([C_SIZEOF_LONG_LONG],[$ac_cv_sizeof_long_long])
 AC_CHECK_SIZEOF([unsigned long])
 AC_CHECK_SIZEOF([__int128])
-AC_CHECK_SIZEOF([__int128_t])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([__int128_t f(void) {
+  __int128_t i = 0, j = i + 1;
+  return j >= 0;
+}])],
+  [AC_CHECK_SIZEOF([__int128_t])],
+  [ac_cv_sizeof___int128_t=0])
 dnl
 dnl check for various builtins
 AS_FOR([builtin_macro],[builtin],[__builtin_ctzl __builtin_clzl],
