@@ -74,33 +74,7 @@ AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads librari
    LIBS="$PTHREAD_LIBS $LIBS"
    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
    CC="$PTHREAD_CC"])
-AX_TLS(,[ac_cv_tls=`$CC -qversion 2>&1 | sed -n '/^IBM XL C/{
-n
-s/^Version: \(@<:@0-9@:>@*\).*/\1/
-t print
-b
-: print
-p
-}'`
-   AS_IF([test x"$ac_cv_tls" == x],
-       [ac_cv_tls=none],
-     [test "$ac_cv_tls" -gt 7],
-       [saved_CFLAGS=$CFLAGS
-        CFLAGS=`echo "$CFLAGS" | sed -n '/.*-qtls\(=@<:@^ @:>@*\)\{0,1\}/{
-p
-q
-}
-s/$/ -qtls=initial-exec/
-p
-q
-'`
-dnl unless the user already set the -qtls option, add it and retry test
-       AS_IF([test x"$CFLAGS" = x"$saved_CFLAGS"],
-             [ac_cv_tls=none],
-             [AC_MSG_NOTICE([retrying with -qtls=initial-exec added to CFLAGS])
-              AS_UNSET([ac_cv_tls])
-              AX_TLS(,[CFLAGS=$saved_CFLAGS])])
-],[ac_cv_tls=none])])
+ACX_TLS_XLC_RETRY
 AC_PROG_FC
 AC_FC_SRCEXT([f90])
 AC_FC_FREEFORM
