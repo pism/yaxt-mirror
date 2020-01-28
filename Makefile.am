@@ -9,6 +9,8 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	util/pbs_aprun \
 	util/mpi_launch_poe \
 	util/mpi_launch_bgrunjob \
+	config/checksrc/intelmpi_datatype.c \
+	config/checkdoc/intelmpi_datatype.txt \
 	config/checksrc/openmpi_struct_dt.c \
 	config/checkdoc/openmpi_struct_dt.txt \
 	config/checksrc/openmpi_datatype.c \
