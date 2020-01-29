@@ -268,8 +268,10 @@ AS_VAR_IF([with_regard_for_quality], [yes],
       AS_CASE(["$acx_subtestname"],[openmpi_datatype],
         [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected attempting interpositioning work-around!])
          ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
-           [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)'])],
+           [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
+            extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)'])],
         [AC_MSG_FAILURE([test for known defect $acx_subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation, but some tests might fail])])])])
+AC_SUBST([xt_mpi_workaround_LIBS])
 AM_CONDITIONAL([OMPI_DT_WORKAROUND],
   [test x${acx_opal_datatype_add_workaround+set} = xset])
 AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset],

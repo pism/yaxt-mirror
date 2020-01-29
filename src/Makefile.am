@@ -178,6 +178,7 @@ libyaxt_c_la_LDFLAGS = -version-info 5:0:4
 if OMPI_DT_WORKAROUND
 noinst_LTLIBRARIES = libompi_workaround.la
 nodist_libompi_workaround_la_SOURCES = ompi_workaround.c
+libompi_workaround_la_LIBADD = $(xt_mpi_workaround_LIBS)
 libyaxt_c_la_LIBADD = libompi_workaround.la
 endif
 
