@@ -396,7 +396,7 @@ sub expandMacro
 
 BEGIN {
 
-  our @preprocCmd;
+  our (@preprocCmd, $tempDir);
 
    sub preprocResult
    {
@@ -411,8 +411,12 @@ BEGIN {
       }
       print(STDERR 'In ', whoami(), ', line ', __LINE__, "\n") if $debug > 1;
       # FIXME: mode depends on file type used
+      if (!defined($tempDir))
+      {
+        $tempDir = File::Temp::tempdir('CLEANUP' => 1);
+      }
       my ($tempFileFh, $tempFileName)
-          = File::Temp::tempfile('SUFFIX' => '.f90');
+          = File::Temp::tempfile('DIR' => $tempDir, 'SUFFIX' => '.f90');
       print($tempFileFh $inputSym, "\n")
           or die('Write to temporary file ', $tempFileName, ' failed!');
       close($tempFileFh)
