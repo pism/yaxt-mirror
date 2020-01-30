@@ -173,13 +173,14 @@ libyaxt_la_SOURCES =						\
 
 libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)
 libyaxt_la_LDFLAGS = -version-info 5:0:4
+libyaxt_c_la_LIBADD = $(MPI_C_LIB)
 libyaxt_c_la_LDFLAGS = -version-info 5:0:4
 
 if OMPI_DT_WORKAROUND
 noinst_LTLIBRARIES = libompi_workaround.la
 nodist_libompi_workaround_la_SOURCES = ompi_workaround.c
-libompi_workaround_la_LIBADD = $(xt_mpi_workaround_LIBS)
-libyaxt_c_la_LIBADD = libompi_workaround.la
+libompi_workaround_la_LIBADD = $(xt_mpi_workaround_LIBS) $(MPI_C_LIB)
+libyaxt_c_la_LIBADD += libompi_workaround.la
 endif
 
 ompi_workaround.c: $(acx_opal_datatype_add_workaround)
