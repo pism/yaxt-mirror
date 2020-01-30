@@ -67,7 +67,7 @@ dnl ######################################################################
 dnl Require an ISO C99 compliant C compiler
 m4_pushdef([_AC_PROG_CC_C89],
   [_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])
-AC_PROG_CC
+AC_PROG_CC([mpicc mpiicc mpxlc_r mpixlc_r gcc cc])
 m4_popdef([_AC_PROG_CC_C89])
 
 AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads libraries and header files.])
@@ -75,7 +75,10 @@ AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads librari
    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
    CC="$PTHREAD_CC"])
 ACX_TLS_XLC_RETRY
+m4_pushdef([_AC_F95_FC],[mpifort mpiifort mpxlf_r mpxlf95_r mpxlf_r mpixlf95_r mpif90 mpif77 ]m4_dquote(m4_defn(
+  [_AC_F95_FC])))
 AC_PROG_FC
+m4_popdef([_AC_F95_FC])
 AC_FC_SRCEXT([f90])
 AC_FC_FREEFORM
 AC_LANG_PUSH([Fortran])
