@@ -105,6 +105,7 @@ Makefile
 # Test stage files:
 /tests/*.log
 /tests/*.trs
+/tests/test_arithmetic_long
 /tests/test_exchanger_parallel
 /tests/test_handles
 /tests/test_idxempty
