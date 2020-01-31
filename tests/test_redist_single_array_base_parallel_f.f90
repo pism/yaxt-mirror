@@ -111,15 +111,21 @@ CONTAINS
     DOUBLE PRECISION :: src_data(1)
     DOUBLE PRECISION :: ref_dst_data(comm_size)
 
-    INTEGER :: i, ierr
+    INTEGER :: i, ierror
 
     DO i = 1, comm_size
       send_msgs(i)%rank = i - 1
       send_msgs(i)%datatype = MPI_DOUBLE_PRECISION
       recv_msgs(i)%rank = i - 1
       CALL MPI_Type_create_indexed_block( &
-        1, 1, (/i - 1/), MPI_DOUBLE_PRECISION, recv_msgs(i)%datatype, ierr)
-      CALL MPI_Type_commit(recv_msgs(i)%datatype, ierr)
+        1, 1, (/i - 1/), MPI_DOUBLE_PRECISION, recv_msgs(i)%datatype, ierror)
+      IF (ierror /= mpi_success) &
+           CALL test_abort("error calling mpi_type_create_indexed_block", &
+           filename, __LINE__)
+      CALL MPI_Type_commit(recv_msgs(i)%datatype, ierror)
+      IF (ierror /= mpi_success) &
+           CALL test_abort("error calling mpi_type_commit", &
+           filename, __LINE__)
     END DO
 
     src_data(1) = DBLE(comm_rank)
@@ -130,7 +136,9 @@ CONTAINS
     CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
 
     DO i = 1, comm_size
-      CALL MPI_Type_free(recv_msgs(i)%datatype, ierr)
+      CALL MPI_Type_free(recv_msgs(i)%datatype, ierror)
+      IF (ierror /= mpi_success) &
+           CALL test_abort("error calling mpi_type_free", filename, __LINE__)
     END DO
 
   END SUBROUTINE test_allgather
@@ -143,18 +151,24 @@ CONTAINS
     DOUBLE PRECISION, ALLOCATABLE :: src_data(:)
     DOUBLE PRECISION :: ref_dst_data(1)
 
-    INTEGER :: i, ierr, nsend
+    INTEGER :: i, ierror, nsend, rank, displ(1)
 
     nsend = MERGE(comm_size, 0, comm_rank == 0)
     ALLOCATE(send_msgs(nsend))
-    IF (comm_rank == 0) THEN
-      DO i = 1, comm_size
-        send_msgs(i)%rank = i - 1
-        CALL MPI_Type_create_indexed_block( &
-          1, 1, (/i - 1/), MPI_DOUBLE_PRECISION, send_msgs(i)%datatype, ierr)
-        CALL MPI_Type_commit(send_msgs(i)%datatype, ierr)
-      END DO
-    END IF
+    DO i = 1, nsend
+      rank = i - 1
+      send_msgs(i)%rank = rank
+      displ(1) = rank
+      CALL MPI_Type_create_indexed_block( &
+           1, 1, displ, MPI_DOUBLE_PRECISION, send_msgs(i)%datatype, ierror)
+      IF (ierror /= mpi_success) &
+           CALL test_abort("error calling mpi_type_create_indexed_block", &
+           filename, __LINE__)
+      CALL MPI_Type_commit(send_msgs(i)%datatype, ierror)
+      IF (ierror /= mpi_success) &
+           CALL test_abort("error calling mpi_type_commit", &
+           filename, __LINE__)
+    END DO
     recv_msgs(1)%rank = 0
     recv_msgs(1)%datatype = MPI_DOUBLE_PRECISION
 
@@ -168,7 +182,9 @@ CONTAINS
 
     IF (comm_rank == 0) THEN
       DO i = 1, comm_size
-        CALL MPI_Type_free(send_msgs(i)%datatype, ierr)
+        CALL MPI_Type_free(send_msgs(i)%datatype, ierror)
+        IF (ierror /= mpi_success) &
+             CALL test_abort("error calling mpi_type_free", filename, __LINE__)
       END DO
     END IF
 

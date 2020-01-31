@@ -98,7 +98,7 @@ CONTAINS
     TYPE(xt_redist_msg) :: send_msgs(1)
     TYPE(xt_redist_msg) :: recv_msgs(1)
 
-    INTEGER :: i, ierr
+    INTEGER :: i, ierror
     INTEGER, PARAMETER :: num_elem = 10
 #ifndef __PGI
     DOUBLE PRECISION, PARAMETER :: src_data(num_elem) &
@@ -117,18 +117,34 @@ CONTAINS
 #endif
     send_msgs(1)%rank = 0
     CALL MPI_Type_contiguous( &
-      num_elem, MPI_DOUBLE_PRECISION, send_msgs(1)%datatype, ierr)
-    CALL MPI_Type_commit(send_msgs(1)%datatype, ierr)
+      num_elem, MPI_DOUBLE_PRECISION, send_msgs(1)%datatype, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_type_contiguous", &
+         filename, __LINE__)
+    CALL MPI_Type_commit(send_msgs(1)%datatype, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_type_commit", &
+         filename, __LINE__)
     recv_msgs(1)%rank = 0
     CALL MPI_Type_create_indexed_block( &
       num_elem, 1, (/ (i, i = num_elem - 1, 0, -1) /), MPI_DOUBLE_PRECISION, &
-      recv_msgs(1)%datatype, ierr);
-    CALL MPI_Type_commit(recv_msgs(1)%datatype, ierr)
+      recv_msgs(1)%datatype, ierror);
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_type_create_indexed_block", &
+         filename, __LINE__)
+    CALL MPI_Type_commit(recv_msgs(1)%datatype, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_type_commit", &
+         filename, __LINE__)
 
     CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
 
-    CALL MPI_Type_free(recv_msgs(1)%datatype, ierr)
-    CALL MPI_Type_free(send_msgs(1)%datatype, ierr)
+    CALL MPI_Type_free(recv_msgs(1)%datatype, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_type_free", filename, __LINE__)
+    CALL MPI_Type_free(send_msgs(1)%datatype, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("error calling mpi_type_free", filename, __LINE__)
 
   END SUBROUTINE test_reverse_doubles
 

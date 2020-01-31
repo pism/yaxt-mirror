@@ -63,13 +63,14 @@ int main(void) {
   // init mpi
 
   int rank, size;
+  MPI_Comm comm = MPI_COMM_WORLD;
 
-  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Init(NULL, NULL), comm);
 
-  xt_initialize(MPI_COMM_WORLD);
+  xt_initialize(comm);
 
-  xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
-  xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &size), comm);
 
   // simple round robin
   {
@@ -83,8 +84,7 @@ int main(void) {
 
     // redist_single_array_base
     Xt_redist redist =
-      xt_redist_single_array_base_new(
-        nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
+      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
 
     // test number of send messages
     if (nsend != xt_redist_get_num_send_msg(redist))
@@ -95,8 +95,7 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
+    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
@@ -135,15 +134,14 @@ int main(void) {
     }
     for (int i = 0; i < nrecv; ++i) {
       recv_msgs[i].rank = i;
-      MPI_Type_create_indexed_block(
-        1, 1, &i, MPI_DOUBLE, &(recv_msgs[i].datatype));
-      MPI_Type_commit(&(recv_msgs[i].datatype));
+      xt_mpi_call(MPI_Type_create_indexed_block(
+                    1, 1, &i, MPI_DOUBLE, &(recv_msgs[i].datatype)), comm);
+      xt_mpi_call(MPI_Type_commit(&(recv_msgs[i].datatype)), comm);
     }
 
     // redist_single_array_base
     Xt_redist redist =
-      xt_redist_single_array_base_new(
-        nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
+      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
 
     // test number of send messages
     if (nsend != xt_redist_get_num_send_msg(redist))
@@ -154,8 +152,7 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
+    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
@@ -176,7 +173,8 @@ int main(void) {
     // clean up
     free(dst_data);
     free(ref_dst_data);
-    for (int i = 0; i < nrecv; ++i) MPI_Type_free(&(recv_msgs[i].datatype));
+    for (int i = 0; i < nrecv; ++i)
+      xt_mpi_call(MPI_Type_free(&(recv_msgs[i].datatype)), comm);
     free(recv_msgs);
     free(send_msgs);
     xt_redist_delete(redist_copy);
@@ -194,16 +192,15 @@ int main(void) {
     if (rank == 0) {
       for (int i = 0; i < nsend; ++i) {
         send_msgs[i].rank = i;
-        MPI_Type_create_indexed_block(
-          1, 1, &i, MPI_DOUBLE, &(send_msgs[i].datatype));
-        MPI_Type_commit(&(send_msgs[i].datatype));
+        xt_mpi_call(MPI_Type_create_indexed_block(
+                      1, 1, &i, MPI_DOUBLE, &(send_msgs[i].datatype)), comm);
+        xt_mpi_call(MPI_Type_commit(&(send_msgs[i].datatype)), comm);
       }
     }
 
     // redist_single_array_base
     Xt_redist redist =
-      xt_redist_single_array_base_new(
-        nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
+      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
 
     // test number of send messages
     if (nsend != xt_redist_get_num_send_msg(redist))
@@ -214,8 +211,7 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
+    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
@@ -236,13 +232,14 @@ int main(void) {
 
     // clean up
     free(src_data);
-    for (int i = 0; i < nsend; ++i) MPI_Type_free(&(send_msgs[i].datatype));
+    for (int i = 0; i < nsend; ++i)
+      xt_mpi_call(MPI_Type_free(&(send_msgs[i].datatype)), comm);
     free(send_msgs);
     xt_redist_delete(redist_copy);
   }
 
   xt_finalize();
-  MPI_Finalize();
+  xt_mpi_call(MPI_Finalize(), comm);
 
  return TEST_EXIT_CODE;
 }

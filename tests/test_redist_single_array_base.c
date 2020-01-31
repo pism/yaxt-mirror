@@ -56,6 +56,7 @@
 
 #include <yaxt.h>
 
+#include "core/ppm_xfuncs.h"
 #include "tests.h"
 #include "test_redist_common.h"
 
@@ -63,9 +64,11 @@ int main(void) {
 
   // init mpi
 
-  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  MPI_Comm comm = MPI_COMM_WORLD;
 
-  xt_initialize(MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Init(NULL, NULL), comm);
+
+  xt_initialize(comm);
 
   // single double
   {
@@ -77,8 +80,7 @@ int main(void) {
 
     // redist_single_array_base
     Xt_redist redist =
-      xt_redist_single_array_base_new(
-        nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
+      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
 
     // test number of send messages
     if (nsend != xt_redist_get_num_send_msg(redist))
@@ -89,8 +91,7 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
+    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
@@ -117,11 +118,11 @@ int main(void) {
     MPI_Datatype send_type, recv_type;
     int recv_displs[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
     enum { nelem = sizeof(recv_displs) / sizeof(recv_displs[0]) };
-    MPI_Type_contiguous(nelem, MPI_DOUBLE, &send_type);
-    MPI_Type_create_indexed_block(
-      nelem, 1, recv_displs, MPI_DOUBLE, &recv_type);
-    MPI_Type_commit(&send_type);
-    MPI_Type_commit(&recv_type);
+    xt_mpi_call(MPI_Type_contiguous(nelem, MPI_DOUBLE, &send_type), comm);
+    xt_mpi_call(MPI_Type_create_indexed_block(
+                  nelem, 1, recv_displs, MPI_DOUBLE, &recv_type), comm);
+    xt_mpi_call(MPI_Type_commit(&send_type), comm);
+    xt_mpi_call(MPI_Type_commit(&recv_type), comm);
 
     // send and receive messages
     struct Xt_redist_msg send_msgs[] = { {.rank = 0, .datatype = send_type} };
@@ -131,10 +132,9 @@ int main(void) {
 
     // redist_single_array_base
     Xt_redist redist =
-      xt_redist_single_array_base_new(
-        nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
-    MPI_Type_free(&recv_type);
-    MPI_Type_free(&send_type);
+      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+    xt_mpi_call(MPI_Type_free(&recv_type), comm);
+    xt_mpi_call(MPI_Type_free(&send_type), comm);
 
     // test number of send messages
     if (nsend != xt_redist_get_num_send_msg(redist))
@@ -145,8 +145,7 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
+    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
@@ -168,7 +167,7 @@ int main(void) {
   }
 
   xt_finalize();
-  MPI_Finalize();
+  xt_mpi_call(MPI_Finalize(), comm);
 
   return TEST_EXIT_CODE;
 }
