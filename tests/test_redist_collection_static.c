@@ -94,11 +94,13 @@ int main(void) {
     // test exchange
 
     static const double src_data[] = {1,2,3,4,5};
-    double dst_data[] = {-1,-1,-1};
     static const double ref_dst_data[] = {1,3,5};
+    enum { num_dst_elems = sizeof (ref_dst_data) / sizeof (ref_dst_data[0]) };
+
+    double dst_data[num_dst_elems];
     check_redist(redist_coll, src_data,
-                 sizeof (dst_data) / sizeof (dst_data[0]),
-                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+                 num_dst_elems, dst_data, fill_array_double, NULL,
+                 ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
 
@@ -116,7 +118,7 @@ int main(void) {
 
     // generate redist_collection
     Xt_redist redists[3] = {redist, redist, redist};
-    static const double src_data[3][5]
+    static const double src_data[3][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[3][3];
     MPI_Aint src_displacements[3]
@@ -140,14 +142,11 @@ int main(void) {
 
     // test exchange
 
-    for (size_t j = 0; j < 3; ++j)
-      for (size_t i = 0; i < 3; ++i)
-        dst_data[j][i] = -1.0;
-
     static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
     check_redist(redist_coll, src_data,
                  sizeof (dst_data) / sizeof (dst_data[0][0]),
-                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+                 dst_data, fill_array_double, NULL,
+                 ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
 

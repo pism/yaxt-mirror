@@ -57,6 +57,8 @@
 #define VERBOSE
 #include "tests.h"
 #include "test_redist_common.h"
+
+
 int main(void) {
 
   // init mpi
@@ -105,12 +107,12 @@ int main(void) {
 
     // test synchronous and asynchronous exchange
     double src_data[dataSize];
-    double dst_data[dataSize] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+    double dst_data[dataSize];
 
     for (int i = 0; i < src_num_indices; ++i)
       src_data[i] = (double)(rank * dataSize + i);
 
-    check_redist(redist, src_data, dataSize, dst_data,
+    check_redist(redist, src_data, dataSize, dst_data, fill_array_double, NULL,
                  dst_index_list, MPI_DOUBLE, XT_INT_MPIDT);
 
     // clean up
@@ -163,11 +165,8 @@ int main(void) {
       for (int i = 0; i < size; ++i)
         src_data[i] = -2.0;
 
-    for (int i = 0; i < size; ++i)
-      dst_data[i] = -1.0;
-
     check_redist(redist, src_data, (size_t)size, dst_data,
-                 NULL, MPI_DOUBLE, MPI_DATATYPE_NULL);
+                 fill_array_double, NULL, NULL, MPI_DOUBLE, MPI_DATATYPE_NULL);
 
     // clean up
     xt_redist_delete(redist);
@@ -243,9 +242,8 @@ int main(void) {
       b_surfdata_ref[i] = gsurfdata[ivecb[i]];
     }
 
-    for (int i = 0; i < nwin; i++) b_surfdata[i] = -1;
-    check_redist(redist, a_surfdata, (size_t)nwin, b_surfdata, b_surfdata_ref,
-                 MPI_INT, MPI_INT);
+    check_redist(redist, a_surfdata, (size_t)nwin, b_surfdata,
+                 fill_array_int, NULL, b_surfdata_ref, MPI_INT, MPI_INT);
 
     xt_redist_delete(redist);
 
@@ -324,11 +322,8 @@ int main(void) {
                                      MPI_COMM_WORLD))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-    for (int i = 0; i < gvol_size; i++) b_voldata[i] = -1;
-
-    check_redist(block_redist, a_voldata,
-                 (size_t)gvol_size, b_voldata, b_voldata_ref,
-                 MPI_INT, MPI_INT);
+    check_redist(block_redist, a_voldata, (size_t)gvol_size, b_voldata,
+                 fill_array_int, NULL, b_voldata_ref, MPI_INT, MPI_INT);
 
     // redist with blocks but without explicit offsets:
     Xt_redist block_redist2
@@ -341,11 +336,8 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
 
-    for (int i = 0; i < gvol_size; i++) b_voldata[i] = -1;
-
-    check_redist(block_redist2, a_voldata,
-                 (size_t)gvol_size, b_voldata, b_voldata_ref,
-                 MPI_INT, MPI_INT);
+    check_redist(block_redist2, a_voldata, (size_t)gvol_size, b_voldata,
+                 fill_array_int, NULL, b_voldata_ref, MPI_INT, MPI_INT);
 
     xt_redist_delete(block_redist);
     xt_redist_delete(block_redist2);

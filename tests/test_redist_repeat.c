@@ -75,7 +75,7 @@ int main(void) {
     // generate redist_repeatection
 
     static const double src_data[] = {1,2,3,4,5};
-    double dst_data[] = {-1,-1,-1};
+    double dst_data[dst_slice_len];
     Xt_redist redist_repeat;
     MPI_Aint src_extent = (MPI_Aint)(sizeof(src_data)),
       dst_extent = (MPI_Aint)(sizeof(dst_data));
@@ -95,9 +95,8 @@ int main(void) {
     // test exchange
     static const double ref_dst_data[] = {1,3,5};
 
-    check_redist(redist_repeat, src_data,
-                 sizeof(dst_data) / sizeof (dst_data[0]),
-                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+    check_redist(redist_repeat, src_data, dst_slice_len, dst_data,
+                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
     xt_redist_delete(redist_repeat);
@@ -136,14 +135,10 @@ int main(void) {
     xt_redist_delete(redist);
 
     // test exchange
-    for (size_t j = 0; j < num_repetitions; ++j)
-      for (size_t i = 0; i < dst_slice_len; ++i)
-        dst_data[j][i] = -1.0;
-
     static const double ref_dst_data[num_repetitions][dst_slice_len]
       = {{1,3,5},{6,8,10},{11,13,15}};
-    check_redist(redist_repeat, src_data,
-                 num_repetitions * dst_slice_len, dst_data, ref_dst_data,
+    check_redist(redist_repeat, src_data, num_repetitions * dst_slice_len,
+                 dst_data, fill_array_double, NULL, ref_dst_data,
                  MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
@@ -186,14 +181,10 @@ int main(void) {
     xt_redist_delete(redist);
 
     // test exchange
-    for (size_t j = 0; j < num_repetitions; ++j)
-      for (size_t i = 0; i < dst_slice_len; ++i)
-        dst_data[j][i] = -1.0;
-
     static const double ref_dst_data[num_repetitions][dst_slice_len]
       = {{11,13,15},{6,8,10},{1,3,5}};
-    check_redist(redist_repeat, src_data,
-                 num_repetitions * dst_slice_len, dst_data, ref_dst_data,
+    check_redist(redist_repeat, src_data, num_repetitions * dst_slice_len,
+                 dst_data, fill_array_double, NULL, ref_dst_data,
                  MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
@@ -226,12 +217,11 @@ int main(void) {
     // test exchange
     static const double src_data[rep_dim_size][src_slice_len]
       = {{1,2,3,4,5},{-1},{6,7,8,9,10},{-1},{11,12,13,14,15}};
-    double dst_data[rep_dim_size][dst_slice_len]
-      = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
+    double dst_data[rep_dim_size][dst_slice_len];
     static const double ref_dst_data[rep_dim_size][dst_slice_len]
       = {{1,3,5},{-1,-1,-1},{6,8,10},{-1,-1,-1},{11,13,15}};
-    check_redist(redist_repeat, src_data,
-                 rep_dim_size * dst_slice_len, dst_data, ref_dst_data,
+    check_redist(redist_repeat, src_data, rep_dim_size * dst_slice_len,
+                 dst_data, fill_array_double, NULL, ref_dst_data,
                  MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
@@ -292,10 +282,8 @@ int main(void) {
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange
-    for(int i = 0; i<npt; i++) dst_data[i] = -1;
-    check_redist(redist_repeat, src_data,
-                 npt, dst_data, ref_dst_data,
-                 MPI_DOUBLE, MPI_DOUBLE);
+    check_redist(redist_repeat, src_data, npt, dst_data,
+                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
     // clean up
     xt_redist_delete(redist);

@@ -92,7 +92,10 @@ int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2) {
 
 void
 check_redist_(Xt_redist redist, const void *src,
-              size_t dst_size, void *dst, const void *ref_dst_data,
+              size_t dst_num_elems, void *dst,
+              prepare_dst dst_prep,
+              const void *dst_prep_info,
+              const void *ref_dst_data,
               MPI_Datatype dst_data_dt,
               MPI_Datatype ref_dst_data_dt,
               const char *file, int line)
@@ -104,12 +107,9 @@ check_redist_(Xt_redist redist, const void *src,
     xt_mpi_call(MPI_Type_get_extent(dst_data_dt, &dt_lb, &dt_extent_), comm);
     dt_extent = (size_t)dt_extent_;
   }
-  size_t dst_size_ = dst_size * dt_extent;
-  void *tmp_dst = malloc(dst_size_);
+  size_t dst_size = dst_num_elems * dt_extent;
   for (int txmode = 0; txmode < 2; ++txmode) {
-    void *dst_target = txmode == 0 ? tmp_dst : dst;
-    const void *dst_orig = txmode == 0 ? dst : tmp_dst;
-    memcpy(dst_target, dst_orig, dst_size);
+    dst_prep(dst, dst_prep_info, dst_num_elems);
     if (txmode == 0) {
       xt_redist_s_exchange1(redist, src, dst);
     } else {
@@ -117,31 +117,31 @@ check_redist_(Xt_redist redist, const void *src,
     }
     bool compare_failed = false;
     if (dst_data_dt == ref_dst_data_dt) {
-      compare_failed = memcmp(dst, ref_dst_data, dst_size_);
+      compare_failed = memcmp(dst, ref_dst_data, dst_size);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_INT) {
       const double *dst_cmp = dst;
       const int *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_size; ++i)
+      for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG) {
       const double *dst_cmp = dst;
       const long *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_size; ++i)
+      for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_SHORT) {
       const double *dst_cmp = dst;
       const short *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_size; ++i)
+      for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG_LONG) {
       const double *dst_cmp = dst;
       const long long *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_size; ++i)
+      for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE
                && ref_dst_data_dt == MPI_DATATYPE_NULL) {
       const double *dst_cmp = dst;
-      for (size_t i = 0; i < dst_size; ++i)
+      for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != (double)i);
     } else
       Xt_abort(comm, "internal error: unhandled test case!", file, line);
@@ -149,8 +149,35 @@ check_redist_(Xt_redist redist, const void *src,
       PUT_ERR("error in xt_redist_s/a_exchange, called from %s, line %d\n",
               file, line);
   }
-  free(tmp_dst);
 }
+
+void
+fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems)
+{
+  (void)dst_prep_info;
+  double *restrict a = dst;
+  for (size_t i = 0; i < dst_num_elems; ++i)
+    a[i] = -1;
+}
+
+void
+fill_array_long(void *dst, const void *dst_prep_info, size_t dst_num_elems)
+{
+  (void)dst_prep_info;
+  long *restrict a = dst;
+  for (size_t i = 0; i < dst_num_elems; ++i)
+    a[i] = -1L;
+}
+
+void
+fill_array_int(void *dst, const void *dst_prep_info, size_t dst_num_elems)
+{
+  (void)dst_prep_info;
+  int *restrict a = dst;
+  for (size_t i = 0; i < dst_num_elems; ++i)
+    a[i] = -1;
+}
+
 
 void
 check_wait_request_(Xt_request *request, const char *file, int line)

@@ -99,16 +99,12 @@ int main(void) {
     static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
     enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
     double dst_data[dst_num];
-    for (size_t i = 0; i < dst_num; ++i)
-      dst_data[i] = -1.0;
-    check_redist(redist, src_data, num_ref_values,
-                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+    check_redist(redist, src_data, num_ref_values, dst_data,
+                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    for (size_t i = 0; i < dst_num; ++i)
-      dst_data[i] = -1.0;
-    check_redist(redist_copy, src_data, num_ref_values,
-                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+    check_redist(redist_copy, src_data, num_ref_values, dst_data,
+                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     // clean up
 
     xt_redist_delete(redist_copy);
@@ -160,16 +156,12 @@ int main(void) {
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     static const double ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
     double dst_data[dst_num];
-    for (size_t i = 0; i < dst_num; ++i)
-      dst_data[i] = -1.0;
-    check_redist(redist, src_data, dst_num,
-                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+    check_redist(redist, src_data, dst_num, dst_data,
+                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    for (size_t i = 0; i < dst_num; ++i)
-      dst_data[i] = -1.0;
-    check_redist(redist_copy, src_data, dst_num,
-                 dst_data, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+    check_redist(redist_copy, src_data, dst_num, dst_data,
+                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
     // clean up
 
     xt_redist_delete(redist_copy);
@@ -218,16 +210,12 @@ int main(void) {
     assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
     static const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
     long dst_data[dst_num];
-    for (size_t i = 0; i < dst_num; ++i)
-      dst_data[i] = -1L;
-    check_redist(redist, src_data, dst_num,
-                 dst_data, ref_dst_data, MPI_LONG, MPI_LONG);
+    check_redist(redist, src_data, dst_num, dst_data,
+                 fill_array_long, NULL, ref_dst_data, MPI_LONG, MPI_LONG);
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
-    for (size_t i = 0; i < dst_num; ++i)
-      dst_data[i] = -1L;
-    check_redist(redist_copy, src_data, dst_num,
-                 dst_data, ref_dst_data, MPI_LONG, MPI_LONG);
+    check_redist(redist_copy, src_data, dst_num, dst_data,
+                 fill_array_long, NULL, ref_dst_data, MPI_LONG, MPI_LONG);
 
     // clean up
     xt_redist_delete(redist_copy);

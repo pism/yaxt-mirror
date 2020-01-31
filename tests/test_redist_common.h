@@ -61,17 +61,32 @@ build_odd_selection_xmap(int src_num_indices);
 
 int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2);
 
+typedef void (*prepare_dst)(void *dst, const void *dst_prep_info,
+                            size_t dst_num_elems);
+
 void
 check_redist_(Xt_redist redist, const void *src,
-              size_t dst_size,
-              void *dst, const void *ref_dst_data,
+              size_t dst_num_elems,
+              void *dst,
+              prepare_dst dst_prep,
+              const void *dst_prep_info,
+              const void *ref_dst_data,
               MPI_Datatype dst_data_dt, MPI_Datatype ref_dst_data_dt,
               const char *file, int line);
 
-#define check_redist(redist, src, dst_size,dst, ref_dst_data,   \
-                     dst_data_dt, ref_dst_data_dt)              \
-  check_redist_(redist, src, dst_size,dst, ref_dst_data,        \
-                dst_data_dt, ref_dst_data_dt, __FILE__, __LINE__)
+#define check_redist(redist, src, dst_size, dst, dst_prep, dst_prep_info, \
+                     ref_dst_data, dst_data_dt, ref_dst_data_dt)        \
+  check_redist_(redist, src, dst_size, dst, dst_prep, dst_prep_info,    \
+                ref_dst_data, dst_data_dt, ref_dst_data_dt, __FILE__, __LINE__)
+
+void
+fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems);
+void
+fill_array_long(void *dst, const void *dst_prep_info, size_t dst_num_elems);
+void
+fill_array_int(void *dst, const void *dst_prep_info, size_t dst_num_elems);
+
+
 
 void
 wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],
