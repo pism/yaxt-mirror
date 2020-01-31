@@ -260,7 +260,7 @@ Xt_xmap xt_xmap_reorder(Xt_xmap xmap, enum xt_reorder_type type);
  * @return copy of input xmap with updated positions
  * @remark an index that was at position x is now at position positions[x]
  * @remark positions array needs to have a size of at
- *         least \ref xt_xmap_get_max_dst_pos(xmap) + 1
+ *         least \ref xt_xmap_get_max_dst_pos (xmap) + 1
  * @remark If NULL is passed instead of a positions array, the respective source
  *         and/or destination positions are not updated
  */
