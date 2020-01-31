@@ -47,7 +47,8 @@ PROGRAM test_redist_single_array_base_f
   USE mpi
   USE yaxt, ONLY: xt_redist, xt_initialize, xt_finalize, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
-       xt_redist_msg, xt_redist_single_array_base_new
+       xt_redist_msg, xt_redist_single_array_base_new, &
+       xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg
 
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_redist_common, ONLY: check_redist, communicators_are_congruent
@@ -156,9 +157,18 @@ CONTAINS
     DOUBLE PRECISION, INTENT(IN) :: ref_dst_data(:)
 
     TYPE(xt_redist) :: redist
+    INTEGER :: nsend, nrecv
 
     redist = &
       xt_redist_single_array_base_new(send_msgs, recv_msgs, mpi_comm_world)
+    nsend = SIZE(send_msgs)
+    IF (nsend /= xt_redist_get_num_send_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    nrecv = SIZE(recv_msgs)
+    IF (nrecv /= xt_redist_get_num_recv_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
     CALL check_redist_extended(redist, src_data, ref_dst_data)
 
   END SUBROUTINE test_single_array_base

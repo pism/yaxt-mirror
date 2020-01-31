@@ -47,7 +47,8 @@ PROGRAM test_redist_single_array_base_parallel_f
   USE mpi
   USE yaxt, ONLY: xt_redist, xt_initialize, xt_finalize, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
-       xt_redist_msg, xt_redist_single_array_base_new
+       xt_redist_msg, xt_redist_single_array_base_new, &
+       xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg
   USE xt_core, ONLY: i2, i4, i8
 
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
@@ -198,28 +199,55 @@ CONTAINS
     DOUBLE PRECISION, INTENT(IN) :: ref_dst_data(:)
 
     TYPE(xt_redist) :: redist
+    INTEGER :: nsend, nrecv
 
     redist = &
       xt_redist_single_array_base_new(send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
+    nsend = SIZE(send_msgs)
+    IF (nsend /= xt_redist_get_num_send_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    nrecv = SIZE(recv_msgs)
+    IF (nrecv /= xt_redist_get_num_recv_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    CALL check_redist_extended(redist, src_data, ref_dst_data)
 
     redist = &
-      xt_redist_single_array_base_new( &
-        INT(size(send_msgs), i2), INT(size(recv_msgs), i2), &
-        send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
+         xt_redist_single_array_base_new( &
+         INT(SIZE(send_msgs), i2), INT(SIZE(recv_msgs), i2), &
+         send_msgs, recv_msgs, MPI_COMM_WORLD)
+    IF (nsend /= xt_redist_get_num_send_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    IF (nrecv /= xt_redist_get_num_recv_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    CALL check_redist_extended(redist, src_data, ref_dst_data)
 
     redist = &
-      xt_redist_single_array_base_new( &
-        INT(size(send_msgs), i4), INT(size(recv_msgs), i4), &
-        send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
+         xt_redist_single_array_base_new( &
+         INT(SIZE(send_msgs), i4), INT(SIZE(recv_msgs), i4), &
+         send_msgs, recv_msgs, MPI_COMM_WORLD)
+    IF (nsend /= xt_redist_get_num_send_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    IF (nrecv /= xt_redist_get_num_recv_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    CALL check_redist_extended(redist, src_data, ref_dst_data)
 
     redist = &
       xt_redist_single_array_base_new( &
         INT(size(send_msgs), i8), INT(size(recv_msgs), i8), &
         send_msgs, recv_msgs, MPI_COMM_WORLD)
-    call check_redist_extended(redist, src_data, ref_dst_data)
+    IF (nsend /= xt_redist_get_num_send_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    IF (nrecv /= xt_redist_get_num_recv_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    CALL check_redist_extended(redist, src_data, ref_dst_data)
 
   END SUBROUTINE test_single_array_base
 
