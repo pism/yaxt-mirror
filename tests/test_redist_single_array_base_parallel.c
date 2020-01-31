@@ -87,11 +87,11 @@ int main(void) {
         nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
 
     // test number of send messages
-    if ((int)nsend != xt_redist_get_num_send_msg(redist))
+    if (nsend != xt_redist_get_num_send_msg(redist))
       PUT_ERR("error in xt_redist_get_num_send_msg\n");
 
     // test number of recv messages
-    if ((int)nrecv != xt_redist_get_num_recv_msg(redist))
+    if (nrecv != xt_redist_get_num_recv_msg(redist))
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
@@ -146,11 +146,11 @@ int main(void) {
         nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
 
     // test number of send messages
-    if ((int)nsend != xt_redist_get_num_send_msg(redist))
+    if (nsend != xt_redist_get_num_send_msg(redist))
       PUT_ERR("error in xt_redist_get_num_send_msg\n");
 
     // test number of recv messages
-    if ((int)nrecv != xt_redist_get_num_recv_msg(redist))
+    if (nrecv != xt_redist_get_num_recv_msg(redist))
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
@@ -206,11 +206,11 @@ int main(void) {
         nsend, nrecv, send_msgs, recv_msgs, MPI_COMM_WORLD);
 
     // test number of send messages
-    if ((int)nsend != xt_redist_get_num_send_msg(redist))
+    if (nsend != xt_redist_get_num_send_msg(redist))
       PUT_ERR("error in xt_redist_get_num_send_msg\n");
 
     // test number of recv messages
-    if ((int)nrecv != xt_redist_get_num_recv_msg(redist))
+    if (nrecv != xt_redist_get_num_recv_msg(redist))
       PUT_ERR("error in xt_redist_get_num_recv_msg\n");
 
     // test communicator of redist
