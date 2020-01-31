@@ -1,0 +1,15 @@
+pages:
+  script:
+  - apk update
+  - apk add make
+  - apk add perl
+  - make -C doc
+  - mv doc/html/ public/
+  artifacts:
+    expire_in: 5min
+    paths:
+    - public
+  only:
+  - master
+  tags:
+  - doxygen
