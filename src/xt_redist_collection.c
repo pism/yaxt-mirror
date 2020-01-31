@@ -255,10 +255,6 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   redist_coll->vtable = &redist_collection_vtable;
   unsigned num_redists_ = num_redists >= 0 ? (unsigned)num_redists : 0;
   redist_coll->num_redists = num_redists_;
-  redist_coll->ndst = 0;
-  redist_coll->nsrc = 0;
-  redist_coll->send_msgs = NULL;
-  redist_coll->recv_msgs = NULL;
   if (cache_size < -1)
     Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
              __FILE__, __LINE__);
