@@ -162,7 +162,7 @@ struct Xt_redist_collection_ {
 
 static void copy_component_dt(struct redist_collection_msg **msgs,
                               unsigned *nmsgs,
-                              Xt_redist *redists, unsigned num_redists,
+                              const Xt_redist *redists, unsigned num_redists,
                               enum xt_msg_direction direction,
                               MPI_Datatype (*get_MPI_datatype)(Xt_redist,int))
 {
