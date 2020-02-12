@@ -437,6 +437,18 @@ AC_ARG_WITH([example-programs],
 AM_CONDITIONAL([with_example_programs],
   [test x$with_example_programs = xyes])
 
+AC_ARG_WITH([perf-programs],
+  [AS_HELP_STRING([--without-perf-programs],
+     [only build performance test programs when calling make perf in perf directory (default: build during make all)])],
+  [AS_CASE([$withval],
+     [yes|no],,
+     [n],[with_perf_programs=no],
+     [y],[with_perf_programs=yes],
+     [AC_MSG_FAILURE([unexpected value for --with-perf-programs: '$withval'])])],
+  [with_perf_programs=yes])
+AM_CONDITIONAL([with_perf_programs],
+  [test x$with_perf_programs = xyes])
+
 AC_ARG_VAR([BUILD_CFLAGS],
   [append to CFLAGS during build but not in configure phase])
 AC_CONFIG_COMMANDS_PRE([CFLAGS="$CFLAGS${BUILD_CFLAGS+ $BUILD_CFLAGS}"])

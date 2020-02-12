@@ -33,9 +33,15 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-noinst_PROGRAMS = 						\
+EXTRA_PROGRAMS = 						\
 	perf_idxsection_get_positions_of_indices		\
 	perf_sparse_array_gather
+
+noinst_PROGRAMS =
+if with_perf_programs
+noinst_PROGRAMS += $(EXTRA_PROGRAMS)
+endif
+perf: $(EXTRA_PROGRAMS)
 
 perf_idxsection_get_positions_of_indices_SOURCES = perf_idxsection_get_positions_of_indices.c
 
