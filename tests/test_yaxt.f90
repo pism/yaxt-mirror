@@ -165,6 +165,8 @@ PROGRAM test_yaxt
 
 CONTAINS
 
+#define abort(msg, line) test_abort(msg, filename, line)
+
   SUBROUTINE check_redist_collection_static
     INTEGER, PARAMETER :: nr = 2
     TYPE(xt_redist) :: rvec(nr), rcol
@@ -176,9 +178,11 @@ CONTAINS
     rvec(:) = redist_tpex
     DO ir = 1, nr
       CALL MPI_GET_ADDRESS(f(1,1,ir), f_addr(ir), ierror)
-      IF (ierror /= MPI_SUCCESS) CALL my_abort('MPI_GET_ADDRESS failed', __LINE__)
+      IF (ierror /= MPI_SUCCESS) &
+           CALL abort('MPI_GET_ADDRESS failed', __LINE__)
       CALL MPI_GET_ADDRESS(g(1,1,ir), g_addr(ir), ierror)
-      IF (ierror /= MPI_SUCCESS) CALL my_abort('MPI_GET_ADDRESS failed', __LINE__)
+      IF (ierror /= MPI_SUCCESS) &
+           CALL abort('MPI_GET_ADDRESS failed', __LINE__)
       f_disp(ir) = f_addr(ir) - f_addr(1)
       g_disp(ir) = g_addr(ir) - g_addr(1)
     ENDDO
@@ -195,7 +199,7 @@ CONTAINS
 
     g = 0
     CALL xt_redist_s_exchange(rcol, f, g)
-    IF (ANY(g /= ref_g)) CALL my_abort('(g /= ref_g)', __LINE__)
+    IF (ANY(g /= ref_g)) CALL abort('(g /= ref_g)', __LINE__)
     CALL xt_redist_delete(rcol)
 
   END SUBROUTINE check_redist_collection_static
@@ -218,7 +222,7 @@ CONTAINS
     loc_tpex2 = -1
     CALL xt_idxlist_get_indices(loc_tpex2_idxlist, loc_tpex2)
     IF (ANY(loc_tpex2 /= loc_tpex)) &
-         CALL my_abort('idx copy does not match', __LINE__)
+         CALL abort('idx copy does not match', __LINE__)
     CALL xt_idxlist_delete(loc_tpex2_idxlist)
 
     ! test call without mstate
@@ -226,7 +230,7 @@ CONTAINS
     loc_tpex2 = -1
     CALL xt_idxlist_get_indices(loc_tpex2_idxlist, loc_tpex2)
     IF (ANY(loc_tpex2 /= loc_tpex)) &
-         CALL my_abort('idx copy does not match', __LINE__)
+         CALL abort('idx copy does not match', __LINE__)
     CALL xt_idxlist_delete(loc_tpex2_idxlist)
     CALL delete_modifiers(m_tpex(1:m_tpex_num))
 
@@ -237,7 +241,7 @@ CONTAINS
     CALL xt_idxlist_get_indices(loc_tpex2_idxlist, loc_tpex2)
 
     IF (ANY(loc_tpex2 /= loc_tpex)) &
-         CALL my_abort('idx copy does not match', __LINE__)
+         CALL abort('idx copy does not match', __LINE__)
     CALL xt_idxlist_delete(loc_tpex2_idxlist)
     CALL delete_modifiers(m_tpex(1:m_tpex_num))
 
@@ -256,12 +260,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE delete_modifiers
-
-  SUBROUTINE my_abort(msg, line)
-    CHARACTER(*), INTENT(in) :: msg
-    INTEGER, INTENT(in) :: line
-    CALL test_abort(msg, filename, line)
-  END SUBROUTINE my_abort
 
   SUBROUTINE general_fsection_test
     INTEGER(xt_int_kind), PARAMETER :: gdx = 10_xt_int_kind, gdy=5_xt_int_kind
@@ -292,7 +290,7 @@ CONTAINS
     DO j = 1, gdy
       DO i = 1, gdx
         p = p + 1
-        IF (egis(i,j) /= indices(p)) CALL my_abort('(1) bad indices', __LINE__)
+        IF (egis(i,j) /= indices(p)) CALL abort('(1) bad indices', __LINE__)
       ENDDO
     ENDDO
     CALL xt_idxlist_delete(global_section)
@@ -305,7 +303,7 @@ CONTAINS
     DO j = 1, ldy
       DO i = 1, ldx
         p = p + 1
-        IF (egis(i,j) /= indices(p)) CALL my_abort('(2) bad indices', __LINE__)
+        IF (egis(i,j) /= indices(p)) CALL abort('(2) bad indices', __LINE__)
       ENDDO
     ENDDO
     CALL xt_idxlist_delete(local_section)
@@ -319,7 +317,7 @@ CONTAINS
     DO j = 1, ldy
       DO i = ldx, 1, -1
         p = p + 1
-        IF (egis(i,j) /= indices(p)) CALL my_abort('(3) bad indices', __LINE__)
+        IF (egis(i,j) /= indices(p)) CALL abort('(3) bad indices', __LINE__)
       ENDDO
     ENDDO
     CALL xt_idxlist_delete(local_section)
@@ -332,7 +330,7 @@ CONTAINS
     DO j = ldy, 1, -1
       DO i = 1, ldx
         p = p + 1
-        IF (egis(i,j) /= indices(p)) CALL my_abort('(4) bad indices', __LINE__)
+        IF (egis(i,j) /= indices(p)) CALL abort('(4) bad indices', __LINE__)
       ENDDO
     ENDDO
     CALL xt_idxlist_delete(local_section)
@@ -346,7 +344,7 @@ CONTAINS
     DO j = ldy, 1, -1
       DO i = ldx, 1, -1
         p = p + 1
-        IF (egis(i,j) /= indices(p)) CALL my_abort('(5) bad indices', __LINE__)
+        IF (egis(i,j) /= indices(p)) CALL abort('(5) bad indices', __LINE__)
       ENDDO
     ENDDO
     CALL xt_idxlist_delete(local_section)
@@ -377,17 +375,17 @@ CONTAINS
 
     CALL MPI_INIT(ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL my_abort(context//'MPI_INIT failed', __LINE__)
+         CALL abort(context//'MPI_INIT failed', __LINE__)
 
     CALL xt_initialize(MPI_COMM_WORLD)
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL my_abort(context//'MPI_COMM_SIZE failed', __LINE__)
+         CALL abort(context//'MPI_COMM_SIZE failed', __LINE__)
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, mype, ierror)
     IF (ierror /= MPI_SUCCESS) &
-         CALL my_abort(context//'MPI_COMM_RANK failed', __LINE__)
+         CALL abort(context//'MPI_COMM_RANK failed', __LINE__)
     IF (mype==0) THEN
       lroot = .true.
     ELSE
@@ -441,7 +439,7 @@ CONTAINS
     INTEGER :: dt
 
     IF (send_dt /= recv_dt) &
-         CALL my_abort('gen_trans: (send_dt /= recv_dt) unsupported', __LINE__)
+         CALL abort('gen_trans: (send_dt /= recv_dt) unsupported', __LINE__)
     dt = send_dt
     redist = xt_redist_p2p_new(xmap, dt)
     !CALL ut_init_transposition(itemp, dt, itrans)
@@ -459,7 +457,7 @@ CONTAINS
     !send_offsets = RESHAPE(send_off, (/SIZE(send_off)/) )
     !recv_offsets = RESHAPE(recv_off, (/SIZE(recv_off)/) )
     IF (recv_dt /= send_dt) &
-         CALL my_abort('(datatype_in /= datatype_out) not supported', &
+         CALL abort('(datatype_in /= datatype_out) not supported', &
          __LINE__)
 
     redist = xt_redist_p2p_off_new(xmap, send_off, recv_off, send_dt);
@@ -495,17 +493,17 @@ CONTAINS
 
     src_idxlist = xt_idxvec_new(local_src_idx, g_ie * g_je)
     src_num = INT(xt_idxlist_get_num_indices(src_idxlist))
-    IF (src_num /= g_ie*g_je) CALL my_abort('unexpected src_num', __LINE__)
+    IF (src_num /= g_ie*g_je) CALL abort('unexpected src_num', __LINE__)
     CALL xt_idxlist_get_indices(src_idxlist, cp_src_idx)
-    IF (ANY(cp_src_idx /= local_src_idx)) CALL my_abort('idx copy does not match', &
-         __LINE__)
+    IF (ANY(cp_src_idx /= local_src_idx)) &
+         CALL abort('idx copy does not match', __LINE__)
 
     dst_idxlist = xt_idxvec_new(local_dst_idx, g_ie * g_je)
     dst_num = INT(xt_idxlist_get_num_indices(dst_idxlist))
-    IF (dst_num /= g_ie*g_je) CALL my_abort('unexpected dst_num', __LINE__)
+    IF (dst_num /= g_ie*g_je) CALL abort('unexpected dst_num', __LINE__)
     CALL xt_idxlist_get_indices(dst_idxlist, cp_dst_idx)
-    IF (ANY(cp_dst_idx /= local_dst_idx)) CALL my_abort('idx copy does not match', &
-         __LINE__)
+    IF (ANY(cp_dst_idx /= local_dst_idx)) &
+         CALL abort('idx copy does not match', __LINE__)
 
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist,  MPI_COMM_WORLD)
     CALL xt_idxlist_delete(src_idxlist)
@@ -522,8 +520,8 @@ CONTAINS
     TYPE(xt_idxlist) :: g_start_idxlist
     TYPE(xt_idxlist) :: g_end_idxlist
 
-    IF (SIZE(mvec)<1) CALL my_abort('def_tpex_mod_via_idxvec mvec too small', &
-         __LINE__)
+    IF (SIZE(mvec)<1) &
+         CALL abort('def_tpex_mod_via_idxvec mvec too small', __LINE__)
 
     CALL id_map(g_start_indices)
     g_start_idxlist = xt_idxvec_new(g_start_indices, SIZE(g_start_indices))
@@ -568,11 +566,11 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL my_abort('def_tpex_mod_via_sections: grid too small (or halo too large)' // &
-           'for tripolar north exchange', __LINE__)
+           CALL test_abort('def_tpex_mod_via_sections: grid too small &
+           &(or halo too large) for tripolar north exchange',filename, __LINE__)
 
       im = im + 1_xt_int_kind
-      IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+      IF (SIZE(mvec)<im) CALL abort('(SIZE(mvec)<im)', __LINE__)
       ! north border exchange without ew-halos
       ldx = INT(g_core_ie - g_core_is + 1)
       ldy = INT(north_halo)
@@ -584,7 +582,7 @@ CONTAINS
 
       ! 1. north edge:
       im = im + 1_xt_int_kind
-      IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+      IF (SIZE(mvec)<im) CALL abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
       ldy = INT(north_halo)
       mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
@@ -594,7 +592,7 @@ CONTAINS
       mvec(im)%mask    = 1
       ! 2. north edge:
       im = im + 1_xt_int_kind
-      IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+      IF (SIZE(mvec)<im) CALL abort('(SIZE(mvec)<im)', __LINE__)
       ldx = 1
       ldy = INT(north_halo)
       mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
@@ -614,7 +612,7 @@ CONTAINS
     ldx = nhalo
     ldy = INT(INT(g_je, xt_int_kind) - north_halo)
     im = im + 1_xt_int_kind
-    IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+    IF (SIZE(mvec)<im) CALL abort('(SIZE(mvec)<im)', __LINE__)
     mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
          (/ ldx, ldy /), (/1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
@@ -624,7 +622,7 @@ CONTAINS
     mvec(im)%mask    = 1
 
     im = im + 1_xt_int_kind
-    IF (SIZE(mvec)<im) CALL my_abort('(SIZE(mvec)<im)', __LINE__)
+    IF (SIZE(mvec)<im) CALL abort('(SIZE(mvec)<im)', __LINE__)
     mvec(im)%extract = xt_idxfsection_new(gstart_idx, gsize, &
          (/ ldx, ldy /), (/g_core_ie+1_xt_int_kind, north_halo+1_xt_int_kind/))
     mvec(im)%subst   = xt_idxfsection_new(gstart_idx, gsize, &
@@ -665,8 +663,8 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL my_abort('def_exchange: grid too small (or halo too large)' // &
-           'for tripolar north exchange', __LINE__)
+           CALL test_abort('def_exchange: grid too small (or halo too large)&
+           & for tripolar north exchange', filename, __LINE__)
       DO j = 1, north_halo
         DO i = g_core_is, g_core_ie
           id_out(i,j) = id_out(g_core_ie + (g_core_is-i), 2*north_halo + (1-j))
@@ -700,17 +698,10 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL check_g_idx(id_out)
+    IF (ANY(gidx == undef_index)) &
+         CALL abort('found undefined indices', __LINE__)
 
   END SUBROUTINE def_exchange
-
-  SUBROUTINE check_g_idx(gidx)
-    INTEGER(xt_int_kind), INTENT(in) :: gidx(:,:)
-
-    IF (ANY(gidx == undef_index)) THEN
-      CALL my_abort('check_g_idx: check failed', __LINE__)
-    ENDIF
-  END SUBROUTINE check_g_idx
 
   SUBROUTINE deco
     INTEGER :: cx0(0:nprocx-1), cxn(0:nprocx-1)
