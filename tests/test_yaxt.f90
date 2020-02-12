@@ -55,8 +55,8 @@ PROGRAM test_yaxt
        &          xt_idxlist_get_indices, xt_modifier, xt_idxmod_new, &
        xt_redist_p2p_off_new, xt_redist_s_exchange, xt_int_kind, &
        xt_idxfsection_new, xt_redist_collection_static_new
-  USE ftest_common, ONLY: test_abort, icmp, id_map, factorize, regular_deco, &
-       finish_mpi
+  USE ftest_common, ONLY: test_abort, id_map, factorize, regular_deco, &
+       finish_mpi, cmp_arrays
 
   ! PGI compilers up to at least version 15 do not handle generic
   ! interfaces correctly
@@ -127,7 +127,8 @@ PROGRAM test_yaxt
   fval = INT(loc_id)
   CALL xt_redist_s_exchange(redist_tpex, fval, gval)
 
-  CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
+  IF (cmp_arrays(gval, loc_tpex)) &
+       CALL test_abort('array eqivalence test failed', filename, __LINE__)
   DEALLOCATE(gval)
   CALL check_redist_collection_static
   DEALLOCATE(loc_id)
@@ -145,12 +146,14 @@ PROGRAM test_yaxt
   ! 2d to surface boundsexchange:
   gval3d = -1
   CALL xt_redist_s_exchange(redist_surf_tpex, &
-       RESHAPE(fval, (/ ie, je, 1 /)), gval3d)
+       RESHAPE(fval, (/ ie, 1, je /)), gval3d)
   DEALLOCATE(fval)
 
-  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex), mype)
+  IF (cmp_arrays(gval3d(:, 1, :), loc_tpex)) &
+       CALL test_abort('surface check failed', filename, __LINE__)
   ! check sub surface:
-  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1, mype)
+  IF (ANY(gval3d(:, 2, :) /= -1)) &
+       CALL test_abort('surface check failed', filename, __LINE__)
 
   ! cleanup:
   DEALLOCATE(loc_tpex, gval3d)
@@ -457,8 +460,7 @@ CONTAINS
     !send_offsets = RESHAPE(send_off, (/SIZE(send_off)/) )
     !recv_offsets = RESHAPE(recv_off, (/SIZE(recv_off)/) )
     IF (recv_dt /= send_dt) &
-         CALL abort('(datatype_in /= datatype_out) not supported', &
-         __LINE__)
+         CALL abort('(datatype_in /= datatype_out) not supported', __LINE__)
 
     redist = xt_redist_p2p_off_new(xmap, send_off, recv_off, send_dt);
     !CALL ut_init_transposition(itemp, send_offsets, recv_offsets, send_dt, recv_dt, itrans)
@@ -566,8 +568,8 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL test_abort('def_tpex_mod_via_sections: grid too small &
-           &(or halo too large) for tripolar north exchange',filename, __LINE__)
+           CALL test_abort('def_tpex_mod_via_sections: grid too small '//&
+           '(or halo too large) for tripolar north exchange',filename, __LINE__)
 
       im = im + 1_xt_int_kind
       IF (SIZE(mvec)<im) CALL abort('(SIZE(mvec)<im)', __LINE__)
@@ -663,8 +665,8 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL test_abort('def_exchange: grid too small (or halo too large)&
-           & for tripolar north exchange', filename, __LINE__)
+           CALL test_abort('def_exchange: grid too small (or halo too large)'//&
+           'for tripolar north exchange', filename, __LINE__)
       DO j = 1, north_halo
         DO i = g_core_is, g_core_ie
           id_out(i,j) = id_out(g_core_ie + (g_core_is-i), 2*north_halo + (1-j))
@@ -698,7 +700,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    IF (ANY(gidx == undef_index)) &
+    IF (ANY(id_out == undef_index)) &
          CALL abort('found undefined indices', __LINE__)
 
   END SUBROUTINE def_exchange

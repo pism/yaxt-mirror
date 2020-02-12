@@ -54,7 +54,8 @@ PROGRAM test_perf_stripes
        xt_stripe, xt_idxstripes_new, xt_int_kind, xt_initialize, xt_finalize
 
   USE ftest_common, ONLY: finish_mpi, init_mpi, timer, treset, tstart, &
-       tstop, treport, id_map, test_abort, icmp, factorize, regular_deco
+       tstop, treport, id_map, test_abort, factorize, regular_deco, &
+       cmp_arrays
 
   ! PGI compilers up to at least version 15 do not handle generic
   ! interfaces correctly
@@ -169,7 +170,8 @@ PROGRAM test_perf_stripes
   CALL tstart(t_exch_2d)
   CALL xt_redist_s_exchange(redist_tpex_2d, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
-  CALL icmp('2d to 2d check', gval_2d, INT(loc_tpex_2d), mype)
+  IF (cmp_arrays(gval_2d, loc_tpex_2d)) &
+       CALL test_abort('array eqivalence test failed', filename, __LINE__)
 
   ! define positions of surface elements within (k,i,j) array
   CALL id_map(id_pos)
@@ -191,11 +193,13 @@ PROGRAM test_perf_stripes
   CALL tstop(t_exch_surf)
 
   ! check surface:
-  CALL icmp('surface check', gval_3d(1,:,:), INT(loc_tpex_2d), mype)
+  IF (cmp_arrays(gval_3d(1, :, :), loc_tpex_2d)) &
+       CALL test_abort('surface check failed', filename, __LINE__)
 
   IF (nlev>1) THEN
     ! check sub surface:
-    CALL icmp('sub surface check', gval_3d(2,:,:), INT(loc_tpex_2d)*0-1, mype)
+    IF (ANY(gval_3d(2, :, :) /= -1)) &
+         CALL test_abort('surface check failed', filename, __LINE__)
   ENDIF
   endif
 
@@ -229,7 +233,8 @@ PROGRAM test_perf_stripes
   CALL xt_redist_delete(redist_tpex_3d)
 
   ! check 3d exchange:
-  CALL icmp('3d to 3d check', gval_3d, INT(loc_tpex_3d), mype)
+  IF (cmp_arrays(gval_3d, loc_tpex_3d)) &
+       CALL test_abort('3D array eqivalence test failed', filename, __LINE__)
   endif
 
 
@@ -253,7 +258,9 @@ PROGRAM test_perf_stripes
   CALL tstop(t_exch_3d_ws)
   if (full_test) then
   ! check 3d exchange:
-    CALL icmp('3d to 3d check (using stripes)', gval_3d, INT(loc_tpex_3d), mype)
+  IF (cmp_arrays(gval_3d, loc_tpex_3d)) &
+       CALL test_abort('3D array eqivalence test (using stripes) failed', &
+       filename, __LINE__)
   endif
 
   CALL tstart(t_redist_3d_wb)
@@ -269,7 +276,9 @@ PROGRAM test_perf_stripes
   DEALLOCATE(fval_3d)
   CALL xt_redist_delete(redist_tpex_3d_wb)
 
-  CALL icmp('redist_tpex_3d_wb check', gval_3d, INT(loc_tpex_3d), mype)
+  IF (cmp_arrays(gval_3d, loc_tpex_3d)) &
+       CALL test_abort('3D array eqivalence test after redist failed', &
+       filename, __LINE__)
 
   ! cleanup:
   IF (full_test) THEN

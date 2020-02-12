@@ -130,10 +130,14 @@ MODULE ftest_common
     MODULE PROCEDURE cmp_i4_arrays_a1d_a1d
     MODULE PROCEDURE cmp_i8_arrays_a1d_a1d
     MODULE PROCEDURE cmp_i2_arrays_a2d_a2d
+    MODULE PROCEDURE cmp_i4_i2_arrays_a2d_a2d
     MODULE PROCEDURE cmp_i4_arrays_a2d_a2d
+    MODULE PROCEDURE cmp_i4_i8_arrays_a2d_a2d
     MODULE PROCEDURE cmp_i8_arrays_a2d_a2d
     MODULE PROCEDURE cmp_i2_arrays_a3d_a3d
+    MODULE PROCEDURE cmp_i4_i2_arrays_a3d_a3d
     MODULE PROCEDURE cmp_i4_arrays_a3d_a3d
+    MODULE PROCEDURE cmp_i4_i8_arrays_a3d_a3d
     MODULE PROCEDURE cmp_i8_arrays_a3d_a3d
   END INTERFACE cmp_arrays
 
@@ -361,21 +365,30 @@ CONTAINS
     INTEGER, INTENT(in) :: rank
 
     INTEGER :: i, j, n1, n2
+    LOGICAL :: mismatch_found
 
     n1 = SIZE(f,1)
     n2 = SIZE(f,2)
     IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
          CALL test_abort(context//'shape mismatch error', filename, __LINE__)
 
+    mismatch_found = .FALSE.
     DO j = 1, n2
       DO i = 1, n1
-        IF (f(i,j) /= g(i,j)) THEN
-          WRITE(0,'(2a,4(a,i0))') context, label, ' test failed: i=', &
-               i, ', j=', j, ', f(i,j)=', f(i,j), ', g(i,j)=', g(i,j)
-          CALL test_abort(context//label//' test failed', filename, __LINE__)
-        ENDIF
+        mismatch_found = mismatch_found .OR. f(i,j) /= g(i,j)
+      END DO
+    END DO
+    IF (mismatch_found) THEN
+      DO j = 1, n2
+        DO i = 1, n1
+          IF (f(i,j) /= g(i,j)) THEN
+            WRITE(0,'(2a,4(a,i0))') context, label, ' test failed: i=', &
+                 i, ', j=', j, ', f(i,j)=', f(i,j), ', g(i,j)=', g(i,j)
+            CALL test_abort(context//label//' test failed', filename, __LINE__)
+          ENDIF
+        ENDDO
       ENDDO
-    ENDDO
+    END IF
     IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
   END SUBROUTINE icmp_2d
 
@@ -386,25 +399,37 @@ CONTAINS
     INTEGER, INTENT(in) :: rank
 
     INTEGER :: i1, i2, i3, n1, n2, n3
+    LOGICAL :: mismatch_found
 
     n1 = SIZE(f,1)
     n2 = SIZE(f,2)
     n3 = SIZE(f,3)
     IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
-      CALL test_abort(context//label//'shape mismatch', filename, __LINE__)
+      CALL test_abort(context//label//' shape mismatch', filename, __LINE__)
 
+    mismatch_found = .FALSE.
     DO i3 = 1, n3
       DO i2 = 1, n2
         DO i1 = 1, n1
-          IF (f(i1,i2,i3) /= g(i1,i2,i3)) THEN
-            WRITE(0,*) context,label,&
-                 ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
-                 i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
-            CALL test_abort(context//label//' test failed', filename, __LINE__)
-          ENDIF
+          mismatch_found = mismatch_found .OR. f(i1,i2,i3) /= g(i1,i2,i3)
+        END DO
+      END DO
+    END DO
+    IF (mismatch_found) THEN
+      DO i3 = 1, n3
+        DO i2 = 1, n2
+          DO i1 = 1, n1
+            IF (f(i1,i2,i3) /= g(i1,i2,i3)) THEN
+              WRITE(0,*) context,label,&
+                   ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
+                   i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
+              CALL test_abort(context//label//' test failed', &
+                   filename, __LINE__)
+            ENDIF
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
+    END IF
     IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
   END SUBROUTINE icmp_3d
 
@@ -618,6 +643,104 @@ CONTAINS
     END IF
   END FUNCTION cmp_i4_arrays_a3d_a3d
 
+  FUNCTION cmp_i4_i2_arrays_a2d_a2d(a, b) RESULT(differ)
+    INTEGER(i4), INTENT(in) :: a(:,:)
+    INTEGER(i2), INTENT(in) :: b(:,:)
+    LOGICAL :: differ
+    INTEGER :: i, j, m, n
+
+    m = SIZE(a, 1)
+    n = SIZE(a, 2)
+    IF (m /= SIZE(b, 1) .OR. n /= SIZE(b, 2)) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different shape'
+      differ = .TRUE.
+    ELSE IF (SIZE(a) > 0) THEN
+      differ = .FALSE.
+      DO j = 1, n
+        DO i = 1, m
+          differ = differ .OR. a(i, j) /= INT(b(i, j), i4)
+        END DO
+      END DO
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i4_i2_arrays_a2d_a2d
+
+  FUNCTION cmp_i4_i8_arrays_a2d_a2d(a, b) RESULT(differ)
+    INTEGER(i4), INTENT(in) :: a(:,:)
+    INTEGER(i8), INTENT(in) :: b(:,:)
+    LOGICAL :: differ
+    INTEGER :: i, j, m, n
+
+    m = SIZE(a, 1)
+    n = SIZE(a, 2)
+    IF (m /= SIZE(b, 1) .OR. n /= SIZE(b, 2)) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different shape'
+      differ = .TRUE.
+    ELSE IF (SIZE(a) > 0) THEN
+      differ = .FALSE.
+      DO j = 1, n
+        DO i = 1, m
+          differ = differ .OR. INT(a(i, j), i8) /= b(i, j)
+        END DO
+      END DO
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i4_i8_arrays_a2d_a2d
+
+  FUNCTION cmp_i4_i2_arrays_a3d_a3d(a, b) RESULT(differ)
+    INTEGER(i4), INTENT(in) :: a(:,:,:)
+    INTEGER(i2), INTENT(in) :: b(:,:,:)
+    LOGICAL :: differ
+    INTEGER :: i, j, k, m, n, o
+
+    m = SIZE(a, 1)
+    n = SIZE(a, 2)
+    o = SIZE(a, 3)
+    IF (m /= SIZE(b, 1) .OR. n /= SIZE(b, 2) .OR. o /= SIZE(b, 3)) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different shape'
+      differ = .TRUE.
+    ELSE IF (SIZE(a) > 0) THEN
+      differ = .FALSE.
+      DO k = 1, o
+        DO j = 1, n
+          DO i = 1, m
+            differ = differ .OR. a(i, j, k) /= INT(b(i, j, k), i4)
+          END DO
+        END DO
+      END DO
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i4_i2_arrays_a3d_a3d
+
+  FUNCTION cmp_i4_i8_arrays_a3d_a3d(a, b) RESULT(differ)
+    INTEGER(i4), INTENT(in) :: a(:,:,:)
+    INTEGER(i8), INTENT(in) :: b(:,:,:)
+    LOGICAL :: differ
+    INTEGER :: i, j, k, m, n, o
+
+    m = SIZE(a, 1)
+    n = SIZE(a, 2)
+    o = SIZE(a, 3)
+    IF (m /= SIZE(b, 1) .OR. n /= SIZE(b, 2) .OR. o /= SIZE(b, 3)) THEN
+      WRITE (0, '(a)') 'warning: comparing arrays of different shape'
+      differ = .TRUE.
+    ELSE IF (SIZE(a) > 0) THEN
+      differ = .FALSE.
+      DO k = 1, o
+        DO j = 1, n
+          DO i = 1, m
+            differ = differ .OR. INT(a(i, j, k), i8) /= b(i, j, k)
+          END DO
+        END DO
+      END DO
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_i4_i8_arrays_a3d_a3d
+
   FUNCTION cmp_i8_arrays_a3d_a3d(a, b) RESULT(differ)
     INTEGER(i8), INTENT(in) :: a(:,:,:), b(:,:,:)
     LOGICAL :: differ
@@ -668,13 +791,13 @@ CONTAINS
   FUNCTION icbrt_i2(n) RESULT(icbrt)
     INTEGER(i2), INTENT(in) :: n
     INTEGER(i2) :: icbrt
-    INTEGER, PARAMETER :: nbits = BIT_SIZE(n)-1
+    INTEGER(i2), PARAMETER :: nbits = BIT_SIZE(n)-1_i2
     INTEGER(i2) :: s
     INTEGER(i2) :: b, x
 
     x = ABS(n)
-    icbrt = 0
-    DO s = nbits, 0, -3
+    icbrt = 0_i2
+    DO s = nbits, 0_i2, -3_i2
       icbrt = icbrt + icbrt
       b = 3_i2 * icbrt * (icbrt + 1_i2) + 1_i2
       IF (ISHFT(x, -s) >= b) THEN
@@ -689,13 +812,13 @@ CONTAINS
   FUNCTION icbrt_i4(n) RESULT(icbrt)
     INTEGER(i4), INTENT(in) :: n
     INTEGER(i4) :: icbrt
-    INTEGER, PARAMETER :: nbits = BIT_SIZE(n)-1
+    INTEGER(i4), PARAMETER :: nbits = BIT_SIZE(n)-1_i4
     INTEGER(i4) :: s
     INTEGER(i4) :: b, x
 
     x = ABS(n)
-    icbrt = 0
-    DO s = nbits-1, 0, -3
+    icbrt = 0_i4
+    DO s = nbits-1, 0_i4, -3_i4
       icbrt = icbrt + icbrt
       b = 3_i4 * icbrt * (icbrt + 1_i4) + 1_i4
       IF (ISHFT(x, -s) >= b) THEN
@@ -710,13 +833,13 @@ CONTAINS
   FUNCTION icbrt_i8(n) RESULT(icbrt)
     INTEGER(i8), INTENT(in) :: n
     INTEGER(i8) :: icbrt
-    INTEGER, PARAMETER :: nbits = BIT_SIZE(n)-1
+    INTEGER(i8), PARAMETER :: nbits = BIT_SIZE(n)-1_i8
     INTEGER(i8) :: s
     INTEGER(i8) :: b, x
 
     x = ABS(n)
-    icbrt = 0
-    DO s = nbits, 0, -3
+    icbrt = 0_i8
+    DO s = nbits, 0_i8, -3_i8
       icbrt = icbrt + icbrt
       b = 3_i8 * icbrt * (icbrt + 1_i8) + 1_i8
       IF (ISHFT(x, -s) >= b) THEN
