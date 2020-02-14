@@ -956,37 +956,29 @@ xmap_intersection_spread(Xt_xmap xmap, int num_repetitions,
                                    .displacements = dst_displacements });
 }
 
-static int get_max_pos_from_com_pos(
-  int num_msg, const struct Xt_com_pos com[num_msg]) {
-
-  int max_pos = 0;
-  for (int i = 0; i < num_msg; ++i) {
-    int curr_num_transfer_pos = com[i].num_transfer_pos;
-    int * curr_transfer_pos = com[i].transfer_pos;
-    for (int j = 0; j < curr_num_transfer_pos; ++j)
-      if (curr_transfer_pos[j] > max_pos) max_pos = curr_transfer_pos[j];
-  }
-  return max_pos;
-}
-
 static void init_exchange_data_from_com_pos(
   int count, struct exchange_data *restrict msgs,
-  const struct Xt_com_pos *restrict com) {
+  const struct Xt_com_pos *restrict com, int *max_pos) {
 
+  int max_pos_ = -1;
   for (int i = 0; i < count; ++i) {
     int num_transfer_pos = com[i].num_transfer_pos;
-    int * transfer_pos =
+    int *restrict transfer_pos =
       xmalloc((size_t)num_transfer_pos * sizeof(*transfer_pos));
     int rank = com[i].rank;
-    memcpy(transfer_pos, com[i].transfer_pos,
-           (size_t)num_transfer_pos * sizeof(*transfer_pos));
+    const int *restrict com_transfer_pos = com[i].transfer_pos;
+    for (int j = 0; j < num_transfer_pos; ++j)
+      if (com_transfer_pos[j] > max_pos_) max_pos_ = com_transfer_pos[j];
     msgs[i].transfer_pos = transfer_pos;
     msgs[i].transfer_pos_ext_cache = NULL;
     msgs[i].num_transfer_pos = num_transfer_pos;
     msgs[i].num_transfer_pos_ext =
       (int)(count_pos_ext((size_t)num_transfer_pos, transfer_pos));
     msgs[i].rank = rank;
+    memcpy(transfer_pos, com_transfer_pos,
+           (size_t)num_transfer_pos * sizeof(*transfer_pos));
   }
+  *max_pos = max_pos_;
 }
 
 Xt_xmap
@@ -1005,13 +997,11 @@ xt_xmap_intersection_pos_new(
   xmap->vtable = &xmap_intersection_vtable;
   xmap->n_in = num_dst_msg;
   xmap->n_out = num_src_msg;
-  xmap->max_dst_pos = get_max_pos_from_com_pos(num_dst_msg, dst_com);
-  xmap->max_src_pos = get_max_pos_from_com_pos(num_src_msg, src_com);
   xmap->comm = comm = xt_mpi_comm_smart_dup(comm, &xmap->tag_offset);
   init_exchange_data_from_com_pos(
-    num_dst_msg, xmap->msg, dst_com);
+    num_dst_msg, xmap->msg, dst_com, &xmap->max_dst_pos);
   init_exchange_data_from_com_pos(
-    num_src_msg, xmap->msg + num_dst_msg, src_com);
+    num_src_msg, xmap->msg + num_dst_msg, src_com, &xmap->max_src_pos);
 
   return (Xt_xmap)xmap;
 }
