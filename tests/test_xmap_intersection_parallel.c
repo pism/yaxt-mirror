@@ -535,7 +535,7 @@ int main(int argc, char **argv)
       xmalloc(2 * (size_t)comm_size * sizeof(*ref_src_msg));
     struct test_message * ref_dst_msg = ref_src_msg + comm_size;
 
-    for (int i = 0, offset = my_rank * comm_size; i < comm_size; ++i) {
+    for (int i = 0; i < comm_size; ++i) {
 
       transfer_pos[i] = i;
 
