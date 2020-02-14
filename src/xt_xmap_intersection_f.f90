@@ -250,12 +250,33 @@ CONTAINS
       TYPE(xt_com_pos), INTENT(in) :: com_pos(:)
       INTEGER :: i
       INTEGER :: total_num_transfer_pos
+#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
+      INTEGER, POINTER :: pos(:)
+#endif
 
       total_num_transfer_pos = 0
-      DO i = 1, num_msg
-        total_num_transfer_pos = total_num_transfer_pos &
-             + SIZE(com_pos(i)%transfer_pos)
-      END DO
+#ifdef HAVE_FC_IS_CONTIGUOUS
+      IF (KIND(1) == c_int) THEN
+        DO i = 1, num_msg
+#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
+          pos => com_pos(i)%transfer_pos
+          IF (.NOT. IS_CONTIGUOUS(pos)) THEN
+#else
+          IF (.NOT. IS_CONTIGUOUS(com_pos(i)%transfer_pos)) THEN
+#endif
+            total_num_transfer_pos = total_num_transfer_pos &
+                 + SIZE(com_pos(i)%transfer_pos)
+          END IF
+        END DO
+      ELSE
+#endif
+        DO i = 1, num_msg
+          total_num_transfer_pos = total_num_transfer_pos &
+               + SIZE(com_pos(i)%transfer_pos)
+        END DO
+#ifdef HAVE_FC_IS_CONTIGUOUS
+      ENDIF
+#endif
     END FUNCTION get_total_num_transfer_pos
 
     SUBROUTINE generate_xt_com_pos_c(num_msg, com_pos, com_pos_c, &
@@ -268,19 +289,34 @@ CONTAINS
       INTEGER(c_int), TARGET, INTENT(inout) :: pos_buffer(pos_buffer_size)
       INTEGER, INTENT(inout) :: pos_buffer_offset
       INTEGER :: i, j, curr_num_transfer_pos
-
+#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
+      INTEGER, POINTER :: pos(:)
+#endif
       ALLOCATE(com_pos_c(num_msg))
 
       DO i = 1, num_msg
         curr_num_transfer_pos = SIZE(com_pos(i)%transfer_pos)
-        DO j = 1, curr_num_transfer_pos
-          pos_buffer(pos_buffer_offset + j) = &
-            INT(com_pos(i)%transfer_pos(j), c_int)
-        END DO
-        com_pos_c(i)%transfer_pos = C_LOC(pos_buffer(pos_buffer_offset+1))
+#ifdef HAVE_FC_IS_CONTIGUOUS
+#  if defined __PGI && __PGIC__ > 15 && __PGIC__ < 20
+        pos => com_pos(i)%transfer_pos
+        IF (KIND(1) == c_int .AND. IS_CONTIGUOUS(pos)) THEN
+#  else
+        IF (KIND(1) == c_int .AND. IS_CONTIGUOUS(com_pos(i)%transfer_pos)) THEN
+#endif
+          com_pos_c(i)%transfer_pos = C_LOC(com_pos(i)%transfer_pos(1))
+        ELSE
+#endif
+          DO j = 1, curr_num_transfer_pos
+            pos_buffer(pos_buffer_offset + j) = &
+                 INT(com_pos(i)%transfer_pos(j), c_int)
+          END DO
+          com_pos_c(i)%transfer_pos = C_LOC(pos_buffer(pos_buffer_offset+1))
+          pos_buffer_offset = pos_buffer_offset + curr_num_transfer_pos
+#ifdef HAVE_FC_IS_CONTIGUOUS
+        END IF
+#endif
         com_pos_c(i)%num_transfer_pos = INT(curr_num_transfer_pos, c_int)
         com_pos_c(i)%rank = INT(com_pos(i)%rank, c_int)
-        pos_buffer_offset = pos_buffer_offset + curr_num_transfer_pos
       END DO
 
     END SUBROUTINE generate_xt_com_pos_c
