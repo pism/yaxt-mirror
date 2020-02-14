@@ -224,103 +224,100 @@ CONTAINS
     INTEGER(c_int) :: num_src_msg_c, num_dst_msg_c
     TYPE(xt_com_pos_c), ALLOCATABLE :: src_com_c(:), dst_com_c(:)
     INTEGER(c_int), TARGET, ALLOCATABLE :: pos_buffer(:)
-    INTEGER :: pos_buffer_offset, num_pos_total
+    INTEGER :: pos_buffer_offset, size_pos_buf
 
-    num_pos_total = get_total_num_transfer_pos(num_src_msg, src_com) + &
-                    get_total_num_transfer_pos(num_dst_msg, dst_com)
-    ALLOCATE(pos_buffer(num_pos_total))
+    size_pos_buf = num_pos_copy(num_src_msg, src_com) + &
+                    num_pos_copy(num_dst_msg, dst_com)
+    ALLOCATE(pos_buffer(size_pos_buf))
 
     num_src_msg_c = INT(num_src_msg, c_int)
     num_dst_msg_c = INT(num_dst_msg, c_int)
 
     pos_buffer_offset = 0
     CALL generate_xt_com_pos_c(num_src_msg, src_com, src_com_c, &
-         num_pos_total, pos_buffer, pos_buffer_offset)
+         size_pos_buf, pos_buffer, pos_buffer_offset)
     CALL generate_xt_com_pos_c(num_dst_msg, dst_com, dst_com_c, &
-         num_pos_total, pos_buffer, pos_buffer_offset)
+         size_pos_buf, pos_buffer, pos_buffer_offset)
 
     xmap = &
       xt_xmap_c2f(xmi_pos_new_f2c(&
         num_src_msg_c, src_com_c, num_dst_msg_c, dst_com_c, comm))
 
-  CONTAINS
-    FUNCTION get_total_num_transfer_pos(num_msg, com_pos) &
-        RESULT(total_num_transfer_pos)
-      INTEGER, INTENT(in) :: num_msg
-      TYPE(xt_com_pos), INTENT(in) :: com_pos(:)
-      INTEGER :: i
-      INTEGER :: total_num_transfer_pos
-#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
-      INTEGER, POINTER :: pos(:)
-#endif
+  END FUNCTION xmi_pos_new_i_a_i_a
 
-      total_num_transfer_pos = 0
+  PURE FUNCTION num_pos_copy(num_msg, com_pos) RESULT(total_num_pos)
+    INTEGER, INTENT(in) :: num_msg
+    TYPE(xt_com_pos), INTENT(in) :: com_pos(:)
+    INTEGER :: i
+    INTEGER :: total_num_pos
+#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
+    INTEGER, POINTER :: pos(:)
+#endif
+    total_num_pos = 0
 #ifdef HAVE_FC_IS_CONTIGUOUS
-      IF (KIND(1) == c_int) THEN
-        DO i = 1, num_msg
-#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
-          pos => com_pos(i)%transfer_pos
-          IF (.NOT. IS_CONTIGUOUS(pos)) THEN
-#else
-          IF (.NOT. IS_CONTIGUOUS(com_pos(i)%transfer_pos)) THEN
-#endif
-            total_num_transfer_pos = total_num_transfer_pos &
-                 + SIZE(com_pos(i)%transfer_pos)
-          END IF
-        END DO
-      ELSE
-#endif
-        DO i = 1, num_msg
-          total_num_transfer_pos = total_num_transfer_pos &
-               + SIZE(com_pos(i)%transfer_pos)
-        END DO
-#ifdef HAVE_FC_IS_CONTIGUOUS
-      ENDIF
-#endif
-    END FUNCTION get_total_num_transfer_pos
-
-    SUBROUTINE generate_xt_com_pos_c(num_msg, com_pos, com_pos_c, &
-         pos_buffer_size, pos_buffer, &
-      pos_buffer_offset)
-      INTEGER, INTENT(in) :: num_msg
-      TYPE(xt_com_pos), TARGET, INTENT(in) :: com_pos(:)
-      TYPE(xt_com_pos_c), ALLOCATABLE, INTENT(out) :: com_pos_c(:)
-      INTEGER, INTENT(in) :: pos_buffer_size
-      INTEGER(c_int), TARGET, INTENT(inout) :: pos_buffer(pos_buffer_size)
-      INTEGER, INTENT(inout) :: pos_buffer_offset
-      INTEGER :: i, j, curr_num_transfer_pos
-#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
-      INTEGER, POINTER :: pos(:)
-#endif
-      ALLOCATE(com_pos_c(num_msg))
-
+    IF (KIND(com_pos(i)%transfer_pos) == c_int) THEN
       DO i = 1, num_msg
-        curr_num_transfer_pos = SIZE(com_pos(i)%transfer_pos)
+#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
+        pos => com_pos(i)%transfer_pos
+        IF (.NOT. IS_CONTIGUOUS(pos)) THEN
+#else
+        IF (.NOT. IS_CONTIGUOUS(com_pos(i)%transfer_pos)) THEN
+#endif
+          total_num_pos = total_num_pos &
+               + SIZE(com_pos(i)%transfer_pos)
+        END IF
+      END DO
+    ELSE
+#endif
+      DO i = 1, num_msg
+        total_num_pos = total_num_pos + SIZE(com_pos(i)%transfer_pos)
+      END DO
+#ifdef HAVE_FC_IS_CONTIGUOUS
+    ENDIF
+#endif
+  END FUNCTION num_pos_copy
+
+  SUBROUTINE generate_xt_com_pos_c(num_msg, com_pos, com_pos_c, &
+       size_pos_buf, pos_buffer, &
+       pos_buffer_offset)
+    INTEGER, INTENT(in) :: num_msg
+    TYPE(xt_com_pos), TARGET, INTENT(in) :: com_pos(:)
+    TYPE(xt_com_pos_c), ALLOCATABLE, INTENT(out) :: com_pos_c(:)
+    INTEGER, INTENT(in) :: size_pos_buf
+    INTEGER(c_int), TARGET, INTENT(inout) :: pos_buffer(size_pos_buf)
+    INTEGER, INTENT(inout) :: pos_buffer_offset
+    INTEGER :: i, j, num_pos
+#if defined __PGI && __PGIC__  > 15 && __PGIC__ < 20
+    INTEGER, POINTER :: pos(:)
+#endif
+    ALLOCATE(com_pos_c(num_msg))
+
+    DO i = 1, num_msg
+      num_pos = SIZE(com_pos(i)%transfer_pos)
 #ifdef HAVE_FC_IS_CONTIGUOUS
 #  if defined __PGI && __PGIC__ > 15 && __PGIC__ < 20
-        pos => com_pos(i)%transfer_pos
-        IF (KIND(1) == c_int .AND. IS_CONTIGUOUS(pos)) THEN
+      pos => com_pos(i)%transfer_pos
+      IF (KIND(1) == c_int .AND. IS_CONTIGUOUS(pos)) THEN
 #  else
-        IF (KIND(1) == c_int .AND. IS_CONTIGUOUS(com_pos(i)%transfer_pos)) THEN
+      IF (KIND(1) == c_int .AND. IS_CONTIGUOUS(com_pos(i)%transfer_pos)) THEN
+#  endif
+        com_pos_c(i)%transfer_pos = C_LOC(com_pos(i)%transfer_pos(1))
+      ELSE
 #endif
-          com_pos_c(i)%transfer_pos = C_LOC(com_pos(i)%transfer_pos(1))
-        ELSE
-#endif
-          DO j = 1, curr_num_transfer_pos
-            pos_buffer(pos_buffer_offset + j) = &
+        DO j = 1, num_pos
+          pos_buffer(pos_buffer_offset + j) = &
                  INT(com_pos(i)%transfer_pos(j), c_int)
-          END DO
-          com_pos_c(i)%transfer_pos = C_LOC(pos_buffer(pos_buffer_offset+1))
-          pos_buffer_offset = pos_buffer_offset + curr_num_transfer_pos
+        END DO
+        com_pos_c(i)%transfer_pos = C_LOC(pos_buffer(pos_buffer_offset+1))
+        pos_buffer_offset = pos_buffer_offset + num_pos
 #ifdef HAVE_FC_IS_CONTIGUOUS
-        END IF
+      END IF
 #endif
-        com_pos_c(i)%num_transfer_pos = INT(curr_num_transfer_pos, c_int)
-        com_pos_c(i)%rank = INT(com_pos(i)%rank, c_int)
-      END DO
+      com_pos_c(i)%num_transfer_pos = INT(num_pos, c_int)
+      com_pos_c(i)%rank = INT(com_pos(i)%rank, c_int)
+    END DO
 
-    END SUBROUTINE generate_xt_com_pos_c
-  END FUNCTION xmi_pos_new_i_a_i_a
+  END SUBROUTINE generate_xt_com_pos_c
 
   FUNCTION xmi_pos_new_a_a(src_com, dst_com, comm) RESULT(xmap)
     TYPE(xt_com_pos), INTENT(in) :: src_com(:), dst_com(:)
