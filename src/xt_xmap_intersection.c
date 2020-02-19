@@ -292,13 +292,13 @@ generate_dir_transfer_pos_dst(
        *   if the current value was already in another intersection
        */
       unsigned long mask = 1UL << (pos % bitsPerCoverageElement);
-      int predicate = (coverage[pos/bitsPerCoverageElement] & mask) != 0UL;
+      int is_duplicate = (coverage[pos/bitsPerCoverageElement] & mask) != 0UL;
       intersection_pos[intersection_size] = pos;
       indices_to_remove_[total_num_indices_to_remove
                          + (size_t)num_indices_to_remove_isect]
         = intersection_idxvec[j];
-      intersection_size += predicate ^ 1;
-      num_indices_to_remove_isect += predicate;
+      intersection_size += is_duplicate ^ 1;
+      num_indices_to_remove_isect += is_duplicate;
       coverage[pos/bitsPerCoverageElement] |= mask;
     }
 
