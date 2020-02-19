@@ -349,20 +349,21 @@ xt_xmap_intersection_ext_new(int num_src_intersections,
     xmap = xrealloc(xmap, sizeof (*xmap) + (new_num_isect
                                             * sizeof(struct exchange_ext)));
 
-  // we could also calculate the (more precise) max pos using only xmap data
-  // but using this simple estimate we are still okay for usage checks
-  xmap->max_src_pos = xt_idxlist_get_num_indices(src_idxlist);
-  xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
+  xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist) - 1;
 
   return (Xt_xmap)xmap;
 }
 
-static struct Xt_pos_ext_vec
-generate_dir_transfer_ext_dst(
+struct ted_result {
+  struct Xt_pos_ext_vec cover;
+  int resCount;
+};
+
+static struct ted_result
+generate_dir_transfer_pos_ext_dst(
   int num_intersections,
   const struct Xt_com_list intersections[num_intersections],
   Xt_idxlist mypart_idxlist,
-  int *resCount,
   struct exchange_ext *resSets,
   int (*restrict dst_removals_per_intersection)[2]);
 
@@ -387,12 +388,16 @@ remap_dst_intersections(int num_dst_intersections,
                         struct exchange_ext resSets[resCount],
                         const int (*removals_per_intersection)[2]);
 
-static void
+struct tes_result {
+  int resCount;
+  int max_pos;
+};
+
+static struct tes_result
 generate_dir_transfer_pos_ext_src(
   int num_intersections,
   const struct Xt_com_list intersections[num_intersections],
   Xt_idxlist mypart_idxlist,
-  int *resCount,
   struct exchange_ext *resSets,
   const int (*restrict removals_per_intersection)[2],
   const struct Xt_pos_ext *pos_updates);
@@ -420,11 +425,11 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
     = src_removals_per_intersection + num_src_intersections;
 
   {
-    struct Xt_pos_ext_vec cover
-      = generate_dir_transfer_ext_dst(
+    struct ted_result tedr
+      = generate_dir_transfer_pos_ext_dst(
         num_dst_intersections, dst_com, dst_idxlist,
-        &xmap->n_in, xmap->msg, dst_removals_per_intersection);
-
+        xmap->msg, dst_removals_per_intersection);
+    struct Xt_pos_ext_vec cover = tedr.cover;
     if (!xt_idxlist_pos_ext_is_full_cover(dst_idxlist, cover)) {
       if (xt_idxlist_get_num_indices(dst_idxlist) == 0)
         Xt_abort(comm, "ERROR: ups...this should not have happend...", __FILE__,
@@ -435,6 +440,7 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
       print_miss_msg(dst_idxlist, first_missing_pos, comm, __FILE__, __LINE__);
     }
     xt_cover_finish(&cover);
+    xmap->n_in = tedr.resCount;
   }
 
   // exchange pos_ext of lists where additional indices need to be removed
@@ -452,10 +458,12 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
     xrealloc(src_removals_per_intersection, (size_t)num_src_intersections
              * sizeof(*src_removals_per_intersection));
 
-  generate_dir_transfer_pos_ext_src(
-    num_src_intersections, src_com, src_idxlist,
-    &xmap->n_out, xmap->msg+xmap->n_in,
-    (const int (*)[2])src_removals_per_intersection, pos_updates);
+  struct tes_result tesr
+    = generate_dir_transfer_pos_ext_src(
+      num_src_intersections, src_com, src_idxlist, xmap->msg+xmap->n_in,
+      (const int (*)[2])src_removals_per_intersection, pos_updates);
+  xmap->n_out = tesr.resCount;
+  xmap->max_src_pos = tesr.max_pos;
   free(src_removals_per_intersection);
   free(pos_updates);
 }
@@ -523,12 +531,12 @@ get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
   return pos_ext;
 }
 
-static struct Xt_pos_ext_vec
-generate_dir_transfer_ext_dst(
+static struct ted_result
+generate_dir_transfer_pos_ext_dst(
   int num_intersections,
   const struct Xt_com_list intersections[num_intersections],
   Xt_idxlist mypart_idxlist,
-  int *resCount, struct exchange_ext *restrict resSets,
+  struct exchange_ext *restrict resSets,
   int (*restrict dst_removals_per_intersection)[2])
 {
   int new_num_intersections = 0;
@@ -660,8 +668,18 @@ generate_dir_transfer_ext_dst(
     free(isect_transfer_pos_ext);
     free(isect_pos_exts);
   }
-  *resCount = new_num_intersections;
-  return cover;
+  /* since cover is a struct, at least pgcc 11-13 cannot compile this with a
+   * compound literal or initialize r directly */
+#if defined __PGI && __PGIC__ <= 13
+  struct ted_result r;
+  r.cover = cover;
+  r.resCount = new_num_intersections;
+  return r;
+#else
+  return (struct ted_result){
+    .cover = cover,
+    .resCount = new_num_intersections };
+#endif
 }
 
 static void
@@ -847,14 +865,26 @@ remap_dst_intersections(
   assert(resIdx == (size_t)resCount);
 }
 
+static inline int
+pos_ext_find_max_pos(int num_pos_ext,
+                     const struct Xt_pos_ext *restrict pos_ext)
+{
+  int max_pos = -1;
+  for (size_t i = 0; i < (size_t)num_pos_ext; ++i) {
+    int start = pos_ext[i].start,
+      size = pos_ext[i].size,
+      max = size > 0 ? start + size - 1 : start;
+    if (max > max_pos) max_pos = max;
+  }
+  return max_pos;
+}
 
 /* compute updated positions for send direction */
-static void
+static struct tes_result
 generate_dir_transfer_pos_ext_src(
   int num_intersections,
   const struct Xt_com_list intersections[num_intersections],
   Xt_idxlist mypart_idxlist,
-  int *resCount,
   struct exchange_ext *resSets,
   const int (*restrict removals_per_intersection)[2],
   const struct Xt_pos_ext *pos_updates)
@@ -864,6 +894,7 @@ generate_dir_transfer_pos_ext_src(
   /* indexes into pos_updates */
   size_t intersection_pos_ext = 0;
 
+  int max_pos = -1;
   for (int i = 0; i < num_intersections; ++i) {
 
     int intersection_size
@@ -879,6 +910,10 @@ generate_dir_transfer_pos_ext_src(
                          pos_updates + intersection_pos_ext,
                          resSets + new_num_intersections, 0);
 
+      int max = pos_ext_find_max_pos(
+        resSets[new_num_intersections].num_transfer_pos_ext,
+        resSets[new_num_intersections].transfer_pos_ext);
+      if (max > max_pos) max_pos = max;
       /* evaluate cache lazily */
       resSets[new_num_intersections].transfer_pos = NULL;
       resSets[new_num_intersections].num_transfer_pos
@@ -889,7 +924,10 @@ generate_dir_transfer_pos_ext_src(
     }
   }
 
-  *resCount = new_num_intersections;
+  return (struct tes_result) {
+    .resCount = new_num_intersections,
+    .max_pos = max_pos,
+  };
 }
 
 static struct Xt_stripe *

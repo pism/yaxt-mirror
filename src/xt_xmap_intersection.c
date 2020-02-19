@@ -225,15 +225,19 @@ enum {
   bitsPerCoverageElement = sizeof (unsigned long) * CHAR_BIT,
 };
 
+struct tpd_result {
+  Xt_int *indices_to_remove;
+  int resCount;
+  bool all_dst_covered;
+};
+
 /* compute list positions for recv direction */
-static int
+static struct tpd_result
 generate_dir_transfer_pos_dst(
   int num_intersections,
   const struct Xt_com_list intersections[num_intersections],
   Xt_idxlist mypart_idxlist,
-  int *resCount,
   struct exchange_data *restrict resSets,
-  Xt_int **indices_to_remove,
   int *restrict num_indices_to_remove_per_intersection)
 {
   int mypart_num_indices = xt_idxlist_get_num_indices(mypart_idxlist);
@@ -249,7 +253,7 @@ generate_dir_transfer_pos_dst(
   int new_num_intersections = 0;
   size_t total_num_indices_to_remove = 0;
   size_t curr_indices_to_remove_size = 0;
-  Xt_int *restrict indices_to_remove_ = *indices_to_remove;
+  Xt_int *restrict indices_to_remove = NULL;
   int *restrict intersection_pos = NULL;
 
   for (int i = 0; i < num_intersections; ++i) {
@@ -277,7 +281,7 @@ generate_dir_transfer_pos_dst(
     int num_indices_to_remove_isect = 0;
 
     /* at most max_intersection_size many indices need to be removed */
-    ENSURE_ARRAY_SIZE(indices_to_remove_, curr_indices_to_remove_size,
+    ENSURE_ARRAY_SIZE(indices_to_remove, curr_indices_to_remove_size,
                       total_num_indices_to_remove
                       + (size_t)max_intersection_size);
 
@@ -294,8 +298,8 @@ generate_dir_transfer_pos_dst(
       unsigned long mask = 1UL << (pos % bitsPerCoverageElement);
       int is_duplicate = (coverage[pos/bitsPerCoverageElement] & mask) != 0UL;
       intersection_pos[intersection_size] = pos;
-      indices_to_remove_[total_num_indices_to_remove
-                         + (size_t)num_indices_to_remove_isect]
+      indices_to_remove[total_num_indices_to_remove
+                        + (size_t)num_indices_to_remove_isect]
         = intersection_idxvec[j];
       intersection_size += is_duplicate ^ 1;
       num_indices_to_remove_isect += is_duplicate;
@@ -318,10 +322,9 @@ generate_dir_transfer_pos_dst(
   }
   free(intersection_pos);
 
-  *indices_to_remove = xrealloc(indices_to_remove_,
-                                (size_t)total_num_indices_to_remove
-                                * sizeof (**indices_to_remove));
-  *resCount = new_num_intersections;
+  indices_to_remove
+    = xrealloc(indices_to_remove, total_num_indices_to_remove
+               * sizeof (*indices_to_remove));
 
   // check resulting bit map
   unsigned long all_bits_set = ~0UL;
@@ -329,16 +332,23 @@ generate_dir_transfer_pos_dst(
     all_bits_set &= coverage[i];
 
   free(coverage);
-  return all_bits_set == ~0UL;
+  return (struct tpd_result){
+    .indices_to_remove = indices_to_remove,
+    .resCount = new_num_intersections,
+    .all_dst_covered = all_bits_set == ~0UL };
 }
 
+struct tps_result {
+  int resCount;
+  int max_pos;
+};
+
 /* compute list positions for send direction */
-static void
+static struct tps_result
 generate_dir_transfer_pos_src(int num_intersections,
                               const struct Xt_com_list
                               intersections[num_intersections],
                               Xt_idxlist mypart_idxlist,
-                              int *resCount,
                               struct exchange_data *restrict resSets,
                               const Xt_int *indices_to_remove,
                               const int *num_indices_to_remove_per_intersection)
@@ -349,6 +359,7 @@ generate_dir_transfer_pos_src(int num_intersections,
   Xt_int * new_intersection_idxvec = NULL;
   size_t curr_new_intersection_idxvec_size = 0;
   int *restrict intersection_pos = NULL;
+  int max_pos_ = -1;
 
   for (int i = 0; i < num_intersections; ++i) {
 
@@ -398,6 +409,8 @@ generate_dir_transfer_pos_src(int num_intersections,
     if (intersection_size > 0) {
       resSets[new_num_intersections].transfer_pos = intersection_pos;
       resSets[new_num_intersections].num_transfer_pos = intersection_size;
+      for (int j = 0; j < intersection_size; ++j)
+        if (intersection_pos[j] > max_pos_) max_pos_ = intersection_pos[j];
       resSets[new_num_intersections].transfer_pos_ext_cache = NULL;
       resSets[new_num_intersections].num_transfer_pos_ext
         = (int)count_pos_ext((size_t)intersection_size, intersection_pos);
@@ -410,17 +423,17 @@ generate_dir_transfer_pos_src(int num_intersections,
   free(new_intersection_idxvec);
   free(intersection_pos);
 
-  *resCount = new_num_intersections;
+  return (struct tps_result){ .max_pos = max_pos_,
+      .resCount = new_num_intersections };
 }
 
-static void
+static Xt_int *
 exchange_points_to_remove(int num_src_intersections,
                           const struct Xt_com_list
                           src_com[num_src_intersections],
                           int num_dst_intersections,
                           const struct Xt_com_list
                           dst_com[num_dst_intersections],
-                          Xt_int **src_indices_to_remove,
                           int *restrict num_src_indices_to_remove_per_intersection,
                           Xt_int *dst_indices_to_remove,
                           const int *restrict
@@ -480,11 +493,11 @@ exchange_points_to_remove(int num_src_intersections,
       += (size_t)num_src_indices_to_remove_per_intersection[i];
 
   unsigned num_nonempty_src_intersections = 0;
+  Xt_int *src_indices_to_remove;
   if (total_num_src_indices_to_recv > 0) {
 
-    Xt_int *src_indices_to_remove_
-      = *src_indices_to_remove = xmalloc(total_num_src_indices_to_recv
-                                         * sizeof(**src_indices_to_remove));
+    src_indices_to_remove = xmalloc(total_num_src_indices_to_recv
+                                    * sizeof(*src_indices_to_remove));
 
     // set up receive for indices that need to be removed
     offset = 0;
@@ -492,7 +505,7 @@ exchange_points_to_remove(int num_src_intersections,
       if (num_src_indices_to_remove_per_intersection[i] > 0) {
         ++num_nonempty_src_intersections;
         xt_mpi_call(MPI_Irecv(
-                      src_indices_to_remove_ + offset,
+                      src_indices_to_remove + offset,
                       num_src_indices_to_remove_per_intersection[i],
                       Xt_int_dt, src_com[i].rank,
                       tag_offset + xt_mpi_tag_xmap_intersection_data_exchange,
@@ -504,7 +517,7 @@ exchange_points_to_remove(int num_src_intersections,
       }
 
   } else {
-    *src_indices_to_remove = NULL;
+    src_indices_to_remove = NULL;
   }
 
   // wait until all communication is completed
@@ -512,8 +525,8 @@ exchange_points_to_remove(int num_src_intersections,
                           + (int)num_nonempty_dst_intersections,
                           send_data_requests-num_nonempty_src_intersections,
                           MPI_STATUSES_IGNORE), comm);
-
   free(requests);
+  return src_indices_to_remove;
 }
 
 static int
@@ -526,33 +539,38 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
                       Xt_idxlist dst_idxlist_local,
                       MPI_Comm comm) {
 
-  int * num_src_indices_to_remove_per_intersection =
-    xmalloc((size_t)num_src_intersections
-            * sizeof(*num_src_indices_to_remove_per_intersection));
-  int * num_dst_indices_to_remove_per_intersection =
-    xmalloc((size_t)num_dst_intersections
-            * sizeof(*num_dst_indices_to_remove_per_intersection));
-  Xt_int * src_indices_to_remove = NULL, * dst_indices_to_remove = NULL;
+  int *num_src_indices_to_remove_per_intersection =
+    xmalloc(((size_t)num_src_intersections + (size_t)num_dst_intersections)
+            * sizeof(int)),
+    *num_dst_indices_to_remove_per_intersection =
+    num_src_indices_to_remove_per_intersection + num_src_intersections;
 
-  int all_dst_covered = generate_dir_transfer_pos_dst(
-    num_dst_intersections, dst_com, dst_idxlist_local,
-    &xmap->n_in, xmap->msg, &dst_indices_to_remove,
-    num_dst_indices_to_remove_per_intersection);
-
+  struct tpd_result tpdr
+    = generate_dir_transfer_pos_dst(
+      num_dst_intersections, dst_com, dst_idxlist_local, xmap->msg,
+      num_dst_indices_to_remove_per_intersection);
+  int all_dst_covered = tpdr.all_dst_covered;
+  xmap->n_in = tpdr.resCount;
+  Xt_int *dst_indices_to_remove = tpdr.indices_to_remove;
   // exchange the points that need to be removed
-  exchange_points_to_remove(
-    num_src_intersections, src_com, num_dst_intersections, dst_com,
-    &src_indices_to_remove, num_src_indices_to_remove_per_intersection,
-    dst_indices_to_remove, num_dst_indices_to_remove_per_intersection,
-    xmap->tag_offset, comm);
+  Xt_int *src_indices_to_remove
+    = exchange_points_to_remove(
+      num_src_intersections, src_com, num_dst_intersections, dst_com,
+      num_src_indices_to_remove_per_intersection,
+      dst_indices_to_remove, num_dst_indices_to_remove_per_intersection,
+      xmap->tag_offset, comm);
 
   free(dst_indices_to_remove);
-  free(num_dst_indices_to_remove_per_intersection);
+  num_src_indices_to_remove_per_intersection
+    = xrealloc(num_src_indices_to_remove_per_intersection,
+               (size_t)num_src_intersections * sizeof(int));
 
-  generate_dir_transfer_pos_src(
-    num_src_intersections, src_com, src_idxlist_local,
-    &xmap->n_out, xmap->msg + xmap->n_in,
-    src_indices_to_remove, num_src_indices_to_remove_per_intersection);
+  struct tps_result tpsr
+    = generate_dir_transfer_pos_src(
+      num_src_intersections, src_com, src_idxlist_local, xmap->msg + xmap->n_in,
+      src_indices_to_remove, num_src_indices_to_remove_per_intersection);
+  xmap->max_src_pos = tpsr.max_pos;
+  xmap->n_out = tpsr.resCount;
 
   free(src_indices_to_remove);
   free(num_src_indices_to_remove_per_intersection);
@@ -614,10 +632,7 @@ xt_xmap_intersection_new(int num_src_intersections,
     xmap = xrealloc(xmap, sizeof (*xmap) + (new_num_isect
                                             * sizeof(struct exchange_data)));
 
-  // we could also calculate the (more precise) max pos using only xmap data
-  // but using this simple estimate we are still okay for usage checks
-  xmap->max_src_pos = xt_idxlist_get_num_indices(src_idxlist);
-  xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist);
+  xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist) - 1;
 
   return (Xt_xmap)xmap;
 }
