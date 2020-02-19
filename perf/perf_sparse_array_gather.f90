@@ -148,7 +148,7 @@ CONTAINS
         check_correctness_of_exchange = .TRUE.
       ELSE
         WRITE (0, *) 'unexpected command-line argument parsing error: ', &
-             TRIM(optarg)
+             optarg(1:arg_len)
         FLUSH(0)
         CALL xt_abort('unexpected command-line argument "' &
              // optarg(1:arg_len) // '"', filename, __LINE__)
