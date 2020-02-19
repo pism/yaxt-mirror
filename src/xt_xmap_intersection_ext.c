@@ -548,8 +548,6 @@ generate_dir_transfer_pos_ext_dst(
   struct Xt_pos_ext_vec cover;
   xt_cover_start(&cover, 8);
 
-  struct Xt_pos_ext *restrict isect_transfer_pos_ext = NULL;
-
   for (int i = 0; i < num_intersections; ++i) {
 
     int num_stripes, num_indices_to_remove = 0;
@@ -566,7 +564,7 @@ generate_dir_transfer_pos_ext_dst(
     /* start with all indices from intersection as used,
        later split ranges, if overlaps are found */
     size_t num_isect_transfer_pos_ext = 1, size_isect_transfer_pos_ext = 8;
-    isect_transfer_pos_ext
+    struct Xt_pos_ext *restrict isect_transfer_pos_ext
       = xrealloc(intersection_idxstripes, sizeof (*isect_transfer_pos_ext)
                  * size_isect_transfer_pos_ext);
     intersection_idxstripes = NULL;
