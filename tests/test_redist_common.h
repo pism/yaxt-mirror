@@ -82,11 +82,35 @@ check_redist_(Xt_redist redist, const void *src,
 void
 fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems);
 void
+fill_array_float(void *dst, const void *dst_prep_info, size_t dst_num_elems);
+void
 fill_array_long(void *dst, const void *dst_prep_info, size_t dst_num_elems);
 void
 fill_array_int(void *dst, const void *dst_prep_info, size_t dst_num_elems);
 
+void
+test_redist_single_array_base_(int nsend, const struct Xt_redist_msg *send_msgs,
+                               int nrecv, const struct Xt_redist_msg *recv_msgs,
+                               const void *src_data,
+                               size_t num_dst,
+                               void *dst_data,
+                               prepare_dst dst_prep,
+                               const void *dst_prep_info,
+                               const void *ref_dst_data,
+                               MPI_Datatype dst_data_dt,
+                               MPI_Datatype ref_dst_data_dt,
+                               MPI_Comm comm,
+                               const char *file, int line);
 
+#define test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs, \
+                                      src_data, num_dst, dst_data, dst_prep, \
+                                      dst_prep_info, ref_dst_data,      \
+                                      dst_data_dt, ref_dst_data_dt, comm) \
+  test_redist_single_array_base_(nsend, send_msgs, nrecv, recv_msgs,    \
+                                 src_data, num_dst, dst_data, dst_prep, \
+                                 dst_prep_info, ref_dst_data,           \
+                                 dst_data_dt, ref_dst_data_dt, comm, __FILE__, \
+                                 __LINE__)
 
 void
 wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],

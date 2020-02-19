@@ -73,53 +73,31 @@ int main(void) {
   // single double
   {
     // send and receive messages
-    struct Xt_redist_msg send_msgs[] = { {.rank = 0, .datatype = MPI_DOUBLE} };
-    struct Xt_redist_msg recv_msgs[] = { {.rank = 0, .datatype = MPI_DOUBLE} };
+    static const struct Xt_redist_msg send_msgs[] = { {.rank = 0, .datatype = MPI_DOUBLE} },
+      recv_msgs[] = { {.rank = 0, .datatype = MPI_DOUBLE} };
     enum { nsend = sizeof(send_msgs) / sizeof(send_msgs[0]) };
     enum { nrecv = sizeof(recv_msgs) / sizeof(recv_msgs[0]) };
 
-    // redist_single_array_base
-    Xt_redist redist =
-      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
-
-    // test number of send messages
-    if (nsend != xt_redist_get_num_send_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_send_msg\n");
-
-    // test number of recv messages
-    if (nrecv != xt_redist_get_num_recv_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
-
-    // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
     // test exchange
-    static const double src_data[] = {0};
-    static const double ref_dst_data[] = {0};
+    static const double src_data[] = {-5};
+    static const double ref_dst_data[] = {-5};
     enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
     double dst_data[num_ref_values];
-    check_redist(redist, src_data, num_ref_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data,
-                 MPI_DOUBLE, MPI_DOUBLE);
-    Xt_redist redist_copy = xt_redist_copy(redist);
-    xt_redist_delete(redist);
-    check_redist(redist_copy, src_data, num_ref_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-
-    // clean up
-    xt_redist_delete(redist_copy);
+    test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
+                                  src_data, num_ref_values, dst_data,
+                                  fill_array_double, NULL, ref_dst_data,
+                                  MPI_DOUBLE, MPI_DOUBLE, comm);
   }
 
   // reverse order of some doubles
   {
     // generate datatypes
     MPI_Datatype send_type, recv_type;
-    int recv_displs[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+    static const int recv_displs[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
     enum { nelem = sizeof(recv_displs) / sizeof(recv_displs[0]) };
-    xt_mpi_call(MPI_Type_contiguous(nelem, MPI_DOUBLE, &send_type), comm);
+    xt_mpi_call(MPI_Type_contiguous(nelem, MPI_FLOAT, &send_type), comm);
     xt_mpi_call(MPI_Type_create_indexed_block(
-                  nelem, 1, recv_displs, MPI_DOUBLE, &recv_type), comm);
+                  nelem, 1, (int *)recv_displs, MPI_FLOAT, &recv_type), comm);
     xt_mpi_call(MPI_Type_commit(&send_type), comm);
     xt_mpi_call(MPI_Type_commit(&recv_type), comm);
 
@@ -129,38 +107,18 @@ int main(void) {
     enum { nsend = sizeof(send_msgs) / sizeof(send_msgs[0]) };
     enum { nrecv = sizeof(recv_msgs) / sizeof(recv_msgs[0]) };
 
-    // redist_single_array_base
-    Xt_redist redist =
-      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+    // test exchange
+    static const float src_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    static const float ref_dst_data[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+    enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
+    float dst_data[num_ref_values];
+    test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
+                                  src_data, num_ref_values, dst_data,
+                                  fill_array_float, NULL, ref_dst_data,
+                                  MPI_FLOAT, MPI_FLOAT, comm);
+    // clean up
     xt_mpi_call(MPI_Type_free(&recv_type), comm);
     xt_mpi_call(MPI_Type_free(&send_type), comm);
-
-    // test number of send messages
-    if (nsend != xt_redist_get_num_send_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_send_msg\n");
-
-    // test number of recv messages
-    if (nrecv != xt_redist_get_num_recv_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
-
-    // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-    // test exchange
-    static const double src_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    static const double ref_dst_data[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
-    enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
-    double dst_data[num_ref_values];
-    check_redist(redist, src_data, num_ref_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-    Xt_redist redist_copy = xt_redist_copy(redist);
-    xt_redist_delete(redist);
-    check_redist(redist_copy, src_data, num_ref_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-
-    // clean up
-    xt_redist_delete(redist_copy);
   }
 
   xt_finalize();

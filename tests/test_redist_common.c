@@ -164,6 +164,15 @@ fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems)
 }
 
 void
+fill_array_float(void *dst, const void *dst_prep_info, size_t dst_num_elems)
+{
+  (void)dst_prep_info;
+  float *restrict a = dst;
+  for (size_t i = 0; i < dst_num_elems; ++i)
+    a[i] = -1;
+}
+
+void
 fill_array_long(void *dst, const void *dst_prep_info, size_t dst_num_elems)
 {
   (void)dst_prep_info;

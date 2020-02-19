@@ -83,21 +83,6 @@ int main(void) {
     enum { nrecv = sizeof(recv_msgs) / sizeof(recv_msgs[0]) };
 
     // redist_single_array_base
-    Xt_redist redist =
-      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
-
-    // test number of send messages
-    if (nsend != xt_redist_get_num_send_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_send_msg\n");
-
-    // test number of recv messages
-    if (nrecv != xt_redist_get_num_recv_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
-
-    // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
     // test exchange
     double src_data[1];
     enum { num_dst_values = 1 };
@@ -105,15 +90,10 @@ int main(void) {
     double dst_data[num_dst_values];
     src_data[0] = rank;
     ref_dst_data[0] =  (rank + size - 1)%size;
-    check_redist(redist, src_data, num_dst_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-    Xt_redist redist_copy = xt_redist_copy(redist);
-    xt_redist_delete(redist);
-    check_redist(redist_copy, src_data, num_dst_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-
-    // clean up
-    xt_redist_delete(redist_copy);
+    test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
+                                  src_data, num_dst_values, dst_data,
+                                  fill_array_double, NULL, ref_dst_data,
+                                  MPI_DOUBLE, MPI_DOUBLE, comm);
   }
 
   // allgather
@@ -138,34 +118,16 @@ int main(void) {
     }
 
     // redist_single_array_base
-    Xt_redist redist =
-      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
-
-    // test number of send messages
-    if (nsend != xt_redist_get_num_send_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_send_msg\n");
-
-    // test number of recv messages
-    if (nrecv != xt_redist_get_num_recv_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
-
-    // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
     // test exchange
     double src_data[1];
     double *ref_dst_data = xmalloc((size_t)size * sizeof(*ref_dst_data));
     double *dst_data = xmalloc((size_t)size * sizeof(*dst_data));
     src_data[0] = rank;
     for (int i = 0; i < size; ++i) ref_dst_data[i] = i;
-    check_redist(redist, src_data, (size_t)size, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-    Xt_redist redist_copy = xt_redist_copy(redist);
-    xt_redist_delete(redist);
-    check_redist(redist_copy, src_data, (size_t)size, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-
+    test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
+                                  src_data, (size_t)size, dst_data,
+                                  fill_array_double, NULL, ref_dst_data,
+                                  MPI_DOUBLE, MPI_DOUBLE, comm);
     // clean up
     free(dst_data);
     free(ref_dst_data);
@@ -173,7 +135,6 @@ int main(void) {
       xt_mpi_call(MPI_Type_free(&(recv_msgs[i].datatype)), comm);
     free(recv_msgs);
     free(send_msgs);
-    xt_redist_delete(redist_copy);
   }
 
   // scatter by rank 0
@@ -194,22 +155,6 @@ int main(void) {
       }
     }
 
-    // redist_single_array_base
-    Xt_redist redist =
-      xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
-
-    // test number of send messages
-    if (nsend != xt_redist_get_num_send_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_send_msg\n");
-
-    // test number of recv messages
-    if (nrecv != xt_redist_get_num_recv_msg(redist))
-      PUT_ERR("error in xt_redist_get_num_recv_msg\n");
-
-    // test communicator of redist
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
     // test exchange
     double *src_data = xmalloc((size_t)nsend * sizeof(*src_data));
     enum { num_dst_values = 1 };
@@ -217,19 +162,18 @@ int main(void) {
     double dst_data[num_dst_values];
     if (rank == 0) for (int i = 0; i < size; ++i) src_data[i] = i;
     ref_dst_data[0] = rank;
-    check_redist(redist, src_data, num_dst_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-    Xt_redist redist_copy = xt_redist_copy(redist);
-    xt_redist_delete(redist);
-    check_redist(redist_copy, src_data, num_dst_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+
+    test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
+                                  src_data, num_dst_values, dst_data,
+                                  fill_array_double, NULL, ref_dst_data,
+                                  MPI_DOUBLE, MPI_DOUBLE, comm);
+
 
     // clean up
     free(src_data);
     for (int i = 0; i < nsend; ++i)
       xt_mpi_call(MPI_Type_free(&(send_msgs[i].datatype)), comm);
     free(send_msgs);
-    xt_redist_delete(redist_copy);
   }
 
   xt_finalize();
