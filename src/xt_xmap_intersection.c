@@ -423,7 +423,8 @@ exchange_points_to_remove(int num_src_intersections,
                           Xt_int **src_indices_to_remove,
                           int *restrict num_src_indices_to_remove_per_intersection,
                           Xt_int *dst_indices_to_remove,
-                          int *restrict num_dst_indices_to_remove_per_intersection,
+                          const int *restrict
+                          num_dst_indices_to_remove_per_intersection,
                           int tag_offset,
                           MPI_Comm comm) {
 
@@ -448,7 +449,8 @@ exchange_points_to_remove(int num_src_intersections,
   unsigned num_nonempty_dst_intersections = 0;
   for (int i = 0; i < num_dst_intersections; ++i) {
     xt_mpi_call(MPI_Isend(
-                  num_dst_indices_to_remove_per_intersection + i, 1, MPI_INT,
+                  CAST_MPI_SEND_BUF(
+                    num_dst_indices_to_remove_per_intersection + i), 1, MPI_INT,
                   dst_com[i].rank,
                   tag_offset + xt_mpi_tag_xmap_intersection_header_exchange,
                   comm, send_header_requests + i), comm);
