@@ -509,9 +509,7 @@ Xt_get_pos_ext_overlap(struct Xt_pos_ext a, struct Xt_pos_ext b)
 
 static void
 cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
-                          size_t *num_pos_exts,
-                          size_t *size_pos_exts,
-                          struct Xt_pos_ext *restrict *pos_exts);
+                          struct Xt_pos_ext_vec *pos_exts);
 
 static struct Xt_pos_ext *
 get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
@@ -545,8 +543,9 @@ generate_dir_transfer_pos_ext_dst(
   // intersection, but also between all intersections
   /* ranges already covered from previous intersections, i.e. which
    * must not be transmitted twice */
+  enum { initial_vec_size = 8 };
   struct Xt_pos_ext_vec cover;
-  xt_cover_start(&cover, 8);
+  xt_cover_start(&cover, initial_vec_size);
 
   for (int i = 0; i < num_intersections; ++i) {
 
@@ -563,12 +562,13 @@ generate_dir_transfer_pos_ext_dst(
     int intersection_size = xt_idxlist_get_num_indices(intersections[i].list);
     /* start with all indices from intersection as used,
        later split ranges, if overlaps are found */
-    size_t num_isect_transfer_pos_ext = 1, size_isect_transfer_pos_ext = 8;
-    struct Xt_pos_ext *restrict isect_transfer_pos_ext
-      = xrealloc(intersection_idxstripes, sizeof (*isect_transfer_pos_ext)
-                 * size_isect_transfer_pos_ext);
+    struct Xt_pos_ext_vec transferable
+      = (struct Xt_pos_ext_vec){ .num_pos_ext = 1,
+          .size_pos_ext = initial_vec_size,
+          .pos_ext = xrealloc(intersection_idxstripes,
+                              sizeof (struct Xt_pos_ext) * initial_vec_size) };
     intersection_idxstripes = NULL;
-    isect_transfer_pos_ext[0]
+    transferable.pos_ext[0]
       = (struct Xt_pos_ext){ .start = 0, .size = intersection_size };
     /* find overlap(s) with previously found ranges for all
      * stripes mapped to position extents */
@@ -622,13 +622,11 @@ generate_dir_transfer_pos_ext_dst(
                     & (progress + overlap_desc.skip))
           | (isign_mask_isect_pos_ext_size
              & (isect_pos_ext_orig_size + overlap_desc.tail));
-        /* ... then splitting isect_transfer_pos accordingly, ... */
+        /* ... then splitting transferable accordingly, ... */
         num_indices_to_remove += overlap_desc.overlap;
         cut_pos_ext_from_pos_exts((struct Xt_pos_ext){
             .start = isect_pos_exts_size_psum + progress,
-              .size = overlap_desc.overlap },
-          &num_isect_transfer_pos_ext, &size_isect_transfer_pos_ext,
-          &isect_transfer_pos_ext);
+              .size = overlap_desc.overlap }, &transferable);
         progress += overlap_desc.overlap;
         /* ... lastly the search can continue with the tail ... */
         isect_pos_ext.start += overlap_desc.skip + overlap_desc.overlap;
@@ -647,23 +645,22 @@ generate_dir_transfer_pos_ext_dst(
 
     if (intersection_size > num_indices_to_remove) {
       resSets[new_num_intersections].transfer_pos_ext
-        = xrealloc(isect_transfer_pos_ext, sizeof (*isect_transfer_pos_ext)
-                   * num_isect_transfer_pos_ext);
+        = xrealloc(transferable.pos_ext, sizeof (struct Xt_pos_ext)
+                   * transferable.num_pos_ext);
       /* start with empty cache of positions to transfer */
       resSets[new_num_intersections].transfer_pos = NULL;
       resSets[new_num_intersections].num_transfer_pos
         = intersection_size - num_indices_to_remove;
       resSets[new_num_intersections].num_transfer_pos_ext
-        = (int)num_isect_transfer_pos_ext;
+        = (int)transferable.num_pos_ext;
       resSets[new_num_intersections].rank = intersections[i].rank;
       ++new_num_intersections;
-      isect_transfer_pos_ext = NULL;
-    }
+    } else
+      free(transferable.pos_ext);
     dst_removals_per_intersection[i][0] = num_indices_to_remove;
     dst_removals_per_intersection[i][1]
       = ((num_indices_to_remove == intersection_size)
-         | (num_indices_to_remove == 0))?0:(int)num_isect_transfer_pos_ext;
-    free(isect_transfer_pos_ext);
+         | (num_indices_to_remove == 0))?0:(int)transferable.num_pos_ext;
     free(isect_pos_exts);
   }
   /* since cover is a struct, at least pgcc 11-13 cannot compile this with a
@@ -682,12 +679,10 @@ generate_dir_transfer_pos_ext_dst(
 
 static void
 cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
-                          size_t *num_pos_exts,
-                          size_t *size_pos_exts,
-                          struct Xt_pos_ext *restrict *pos_exts)
+                          struct Xt_pos_ext_vec *pos_exts)
 {
-  struct Xt_pos_ext *restrict pos_exts_ = *pos_exts;
-  size_t num_pos_exts_ = *num_pos_exts;
+  struct Xt_pos_ext *restrict pos_exts_ = pos_exts->pos_ext;
+  size_t num_pos_exts_ = pos_exts->num_pos_ext;
   size_t i = num_pos_exts_;
   while (pos_exts_[--i].start > pos_ext.start)
     ;
@@ -697,7 +692,7 @@ cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
     /* delete fully overlapped transfer part */
     memmove(pos_exts_ + i, pos_exts_ + i + 1,
             sizeof (*pos_exts_) * (num_pos_exts_ - i - 1));
-    *num_pos_exts = --num_pos_exts_;
+    pos_exts->num_pos_ext = --num_pos_exts_;
   }
   else if (db_skip + pos_ext.size == pos_exts_[i].size)
   {
@@ -713,8 +708,9 @@ cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
   else
   {
     struct Xt_pos_ext orig = pos_exts_[i];
-    ENSURE_ARRAY_SIZE(*pos_exts, *size_pos_exts, num_pos_exts_ + 1);
-    pos_exts_ = *pos_exts;
+    ENSURE_ARRAY_SIZE(pos_exts->pos_ext, pos_exts->size_pos_ext,
+                      num_pos_exts_ + 1);
+    pos_exts_ = pos_exts->pos_ext;
     memmove(pos_exts_ + i + 1, pos_exts_ + i,
             (num_pos_exts_ - i) * sizeof (*pos_exts_));
     pos_exts_[i] = (struct Xt_pos_ext){.start = orig.start,
@@ -722,7 +718,7 @@ cut_pos_ext_from_pos_exts(struct Xt_pos_ext pos_ext,
     pos_exts_[i + 1] = (struct Xt_pos_ext){
       .start = pos_ext.start + pos_ext.size,
       .size = orig.size - db_skip - pos_ext.size };
-    *num_pos_exts = ++num_pos_exts_;
+    pos_exts->num_pos_ext = ++num_pos_exts_;
   }
 }
 
