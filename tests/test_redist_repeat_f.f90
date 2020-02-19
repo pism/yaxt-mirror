@@ -54,7 +54,7 @@ PROGRAM test_redist_repeat
        xt_redist_repeat_new, xt_redist_delete, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
        xt_request
-#if defined __PGI && __PGIC__ == 15
+#if defined __PGI && ( __PGIC__ == 15 || __PGIC__ == 14 )
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif

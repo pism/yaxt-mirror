@@ -107,7 +107,7 @@ PROGRAM unstruct_halo_exchang
        xt_redist, xt_redist_p2p_off_new, xt_redist_delete, &
        xt_redist_s_exchange, xi => xt_int_kind
   ! PGI compilers do not handle generic interface correctly
-#if defined __PGI && __PGIC__ == 15
+#if defined __PGI && ( __PGIC__ == 15 || __PGIC__ == 14 )
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
 #endif

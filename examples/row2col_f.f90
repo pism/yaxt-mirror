@@ -53,7 +53,7 @@ PROGRAM test_redist_collection
        xt_redist, xt_redist_p2p_new, xt_redist_delete, xt_redist_s_exchange
   USE iso_c_binding, ONLY: c_int
   ! older PGI compilers do not handle generic interface correctly
-#if defined __PGI && __PGIC__ == 15
+#if defined __PGI && ( __PGIC__ == 15 || __PGIC__ == 14 )
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
 #endif
