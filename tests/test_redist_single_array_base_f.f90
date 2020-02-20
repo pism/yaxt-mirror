@@ -45,13 +45,11 @@
 !
 PROGRAM test_redist_single_array_base_f
   USE mpi
-  USE yaxt, ONLY: xt_redist, xt_initialize, xt_finalize, &
-       xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
-       xt_redist_msg, xt_redist_single_array_base_new, &
-       xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_redist_msg
 
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE test_redist_common, ONLY: check_redist, communicators_are_congruent
+  USE test_redist_common, ONLY: communicators_are_congruent, &
+       test_redist_single_array_base
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: &
@@ -90,7 +88,8 @@ CONTAINS
     recv_msgs(1)%rank = 0
     recv_msgs(1)%datatype = MPI_DOUBLE_PRECISION
 
-    CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
+    CALL test_redist_single_array_base(send_msgs, recv_msgs, src_data, &
+         ref_dst_data, mpi_comm_world)
 
   END SUBROUTINE test_single_double
 
@@ -138,7 +137,8 @@ CONTAINS
          CALL test_abort("error calling mpi_type_commit", &
          filename, __LINE__)
 
-    CALL test_single_array_base(send_msgs, recv_msgs, src_data, ref_dst_data)
+    CALL test_redist_single_array_base(send_msgs, recv_msgs, src_data, &
+         ref_dst_data, mpi_comm_world)
 
     CALL MPI_Type_free(recv_msgs(1)%datatype, ierror)
     IF (ierror /= mpi_success) &
@@ -148,53 +148,6 @@ CONTAINS
          CALL test_abort("error calling mpi_type_free", filename, __LINE__)
 
   END SUBROUTINE test_reverse_doubles
-
-  SUBROUTINE test_single_array_base( &
-      send_msgs, recv_msgs, src_data, ref_dst_data)
-    TYPE(xt_redist_msg), INTENT(IN) :: send_msgs(:)
-    TYPE(xt_redist_msg), INTENT(IN) :: recv_msgs(:)
-    DOUBLE PRECISION, INTENT(IN) :: src_data(:)
-    DOUBLE PRECISION, INTENT(IN) :: ref_dst_data(:)
-
-    TYPE(xt_redist) :: redist
-    INTEGER :: nsend, nrecv
-
-    redist = &
-      xt_redist_single_array_base_new(send_msgs, recv_msgs, mpi_comm_world)
-    nsend = SIZE(send_msgs)
-    IF (nsend /= xt_redist_get_num_send_msg(redist)) &
-         CALL test_abort("error in xt_redist_get_num_send_msg", &
-         filename, __LINE__)
-    nrecv = SIZE(recv_msgs)
-    IF (nrecv /= xt_redist_get_num_recv_msg(redist)) &
-         CALL test_abort("error in xt_redist_get_num_send_msg", &
-         filename, __LINE__)
-    CALL check_redist_extended(redist, src_data, ref_dst_data)
-
-  END SUBROUTINE test_single_array_base
-
-  SUBROUTINE check_redist_extended(redist, src_data, ref_dst_data)
-    TYPE(xt_redist), INTENT(INOUT) :: redist
-    DOUBLE PRECISION, INTENT(IN) :: src_data(:)
-    DOUBLE PRECISION, INTENT(IN) :: ref_dst_data(:)
-
-    DOUBLE PRECISION :: dst_data(SIZE(ref_dst_data))
-
-    TYPE(xt_redist) :: redist_copy
-
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
-
-    ! test exchange
-    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
-    redist_copy = xt_redist_copy(redist)
-    CALL xt_redist_delete(redist)
-    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
-    CALL xt_redist_delete(redist_copy)
-
-  END SUBROUTINE check_redist_extended
 
 END PROGRAM test_redist_single_array_base_f
 !

@@ -50,10 +50,12 @@ MODULE test_redist_common
   USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
-       xt_xmap, xt_xmap_all2all_new, xt_redist, &
+       xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_msg, xt_redist_copy, &
+       xt_redist_single_array_base_new, xt_redist_delete, &
        xt_redist_s_exchange, xt_redist_s_exchange1, &
-       xt_redist_a_exchange1, &
+       xt_redist_a_exchange1, xt_redist_get_mpi_comm, &
        xt_request, xt_request_wait, xt_request_test, xt_is_null, &
+       xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg, &
        xi => xt_int_kind
 #ifdef __PGI
   ! PGI up to at least 15.4 has a bug that prevents proper import of
@@ -95,8 +97,17 @@ MODULE test_redist_common
     MODULE PROCEDURE wrap_a_exchange_i8
   END INTERFACE wrap_a_exchange
 
+  INTERFACE test_redist_single_array_base
+    MODULE PROCEDURE test_redist_single_array_base_dp
+  END INTERFACE test_redist_single_array_base
+
+  INTERFACE check_redist_extended
+    MODULE PROCEDURE check_redist_extended_dp
+  END INTERFACE check_redist_extended
+
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
   PUBLIC :: check_wait_request, check_test_request, check_redist_xi
+  PUBLIC :: test_redist_single_array_base
 
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_common_f.f90'
 
@@ -515,6 +526,53 @@ CONTAINS
            CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i8
+
+  SUBROUTINE test_redist_single_array_base_dp( &
+      send_msgs, recv_msgs, src_data, ref_dst_data, comm)
+    TYPE(xt_redist_msg), INTENT(in) :: send_msgs(:)
+    TYPE(xt_redist_msg), INTENT(in) :: recv_msgs(:)
+    DOUBLE PRECISION, INTENT(in) :: src_data(:)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(:)
+    INTEGER, INTENT(in) :: comm
+
+    TYPE(xt_redist) :: redist
+    INTEGER :: nsend, nrecv
+
+    redist = &
+      xt_redist_single_array_base_new(send_msgs, recv_msgs, comm)
+    nsend = SIZE(send_msgs)
+    IF (nsend /= xt_redist_get_num_send_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    nrecv = SIZE(recv_msgs)
+    IF (nrecv /= xt_redist_get_num_recv_msg(redist)) &
+         CALL test_abort("error in xt_redist_get_num_send_msg", &
+         filename, __LINE__)
+    ! test communicator of redist
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
+         comm)) &
+         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+    CALL check_redist_extended(redist, src_data, ref_dst_data)
+
+  END SUBROUTINE test_redist_single_array_base_dp
+
+  SUBROUTINE check_redist_extended_dp(redist, src_data, ref_dst_data)
+    TYPE(xt_redist), INTENT(inout) :: redist
+    DOUBLE PRECISION, INTENT(in) :: src_data(:)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(:)
+
+    DOUBLE PRECISION :: dst_data(SIZE(ref_dst_data))
+
+    TYPE(xt_redist) :: redist_copy
+
+    ! test exchange
+    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
+    redist_copy = xt_redist_copy(redist)
+    CALL xt_redist_delete(redist)
+    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
+    CALL xt_redist_delete(redist_copy)
+
+  END SUBROUTINE check_redist_extended_dp
 
 END MODULE test_redist_common
 !
