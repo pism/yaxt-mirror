@@ -82,8 +82,7 @@ CONTAINS
 
   SUBROUTINE test_round_robin
 
-    TYPE(xt_redist_msg) :: send_msgs(1)
-    TYPE(xt_redist_msg) :: recv_msgs(1)
+    TYPE(xt_redist_msg) :: send_msgs(1), recv_msgs(1)
 
     INTEGER, PARAMETER :: num_elem = 1
     DOUBLE PRECISION :: src_data(num_elem)
@@ -117,14 +116,13 @@ CONTAINS
       send_msgs(i)%datatype = MPI_DOUBLE_PRECISION
       recv_msgs(i)%rank = i - 1
       CALL MPI_Type_create_indexed_block( &
-        1, 1, (/i - 1/), MPI_DOUBLE_PRECISION, recv_msgs(i)%datatype, ierror)
+           1, 1, (/i - 1/), MPI_DOUBLE_PRECISION, recv_msgs(i)%datatype, ierror)
       IF (ierror /= mpi_success) &
            CALL test_abort("error calling mpi_type_create_indexed_block", &
            filename, __LINE__)
       CALL MPI_Type_commit(recv_msgs(i)%datatype, ierror)
       IF (ierror /= mpi_success) &
-           CALL test_abort("error calling mpi_type_commit", &
-           filename, __LINE__)
+           CALL test_abort("error calling mpi_type_commit", filename, __LINE__)
     END DO
 
     src_data(1) = DBLE(comm_rank)
@@ -166,8 +164,7 @@ CONTAINS
            filename, __LINE__)
       CALL MPI_Type_commit(send_msgs(i)%datatype, ierror)
       IF (ierror /= mpi_success) &
-           CALL test_abort("error calling mpi_type_commit", &
-           filename, __LINE__)
+           CALL test_abort("error calling mpi_type_commit", filename, __LINE__)
     END DO
     recv_msgs(1)%rank = 0
     recv_msgs(1)%datatype = MPI_DOUBLE_PRECISION

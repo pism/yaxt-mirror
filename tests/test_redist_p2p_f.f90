@@ -262,8 +262,7 @@ CONTAINS
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
     ! redist_p2p with extents of offsets
-    redist = xt_redist_p2p_ext_new(xmap, &
-         src_pos, dst_pos, xt_int_mpidt)
+    redist = xt_redist_p2p_ext_new(xmap, src_pos, dst_pos, xt_int_mpidt)
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_MPI_Comm(redist), &
          mpi_comm_world)) &

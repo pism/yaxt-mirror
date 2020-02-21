@@ -191,8 +191,7 @@ CONTAINS
   ! test redist with blocks
   SUBROUTINE block_redist_test
     ! gvol_size: volume of deep ocean
-    INTEGER :: ngdom, gvol_size, i, nwin, ig0, ig, j, p, qa, qb, &
-         a_vol_size, b_vol_size
+    INTEGER :: ngdom, gvol_size, i, nwin, ig0, ig, j, p, qa, qb
     ! gdepth: ocean depth of an one dim. ocean
     INTEGER, ALLOCATABLE :: gdoma(:), gdomb(:), gsurfdata(:), &
          gdepth(:), ig2col_off(:), b_surfdata_ref(:), gvoldata(:), &
@@ -274,8 +273,6 @@ CONTAINS
     ! generate blocks
     ALLOCATE(src_block_offsets(nwin), src_block_sizes(nwin), &
          dst_block_offsets(nwin), dst_block_sizes(nwin))
-    a_vol_size = 0 ! state a volume of my proc
-    b_vol_size = 0 ! state b volume of my proc
     ! we only need local size but simply oversize here
     ALLOCATE(a_voldata(gvol_size), b_voldata(gvol_size), &
          b_voldata_ref(gvol_size))
@@ -295,7 +292,6 @@ CONTAINS
         a_voldata(qa + j) = gvoldata(p + j)
       END DO
       qa = qa + gdepth_i
-      a_vol_size = a_vol_size + src_block_sizes(i)
     END DO
 
     qb = 0
@@ -311,7 +307,6 @@ CONTAINS
         b_voldata_ref(qb + j) = gvoldata(p + j)
       END DO
       qb = qb + gdepth_i
-      b_vol_size = b_vol_size + dst_block_sizes(i)
     END DO
 
     ! redist with blocks
@@ -331,7 +326,7 @@ CONTAINS
          src_block_sizes, nwin, dst_block_sizes, nwin, mpi_integer)
     ! test communicator of redist
 
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist2), &
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist2),&
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
 
