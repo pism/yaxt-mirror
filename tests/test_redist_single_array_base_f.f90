@@ -100,6 +100,8 @@ CONTAINS
 
     INTEGER :: i, ierror
     INTEGER, PARAMETER :: num_elem = 10
+    INTEGER, PARAMETER :: displ(num_elem) &
+         = (/ (i, i = num_elem - 1, 0, -1) /)
 #ifndef __PGI
     DOUBLE PRECISION, PARAMETER :: src_data(num_elem) &
          = (/ (DBLE(i), i = 1, num_elem) /)
@@ -126,9 +128,8 @@ CONTAINS
          CALL test_abort("error calling mpi_type_commit", &
          filename, __LINE__)
     recv_msgs(1)%rank = 0
-    CALL MPI_Type_create_indexed_block( &
-      num_elem, 1, (/ (i, i = num_elem - 1, 0, -1) /), MPI_DOUBLE_PRECISION, &
-      recv_msgs(1)%datatype, ierror);
+    CALL MPI_Type_create_indexed_block(num_elem, 1, displ, &
+         MPI_DOUBLE_PRECISION, recv_msgs(1)%datatype, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("error calling mpi_type_create_indexed_block", &
          filename, __LINE__)
