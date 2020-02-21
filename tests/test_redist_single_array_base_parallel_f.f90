@@ -181,13 +181,11 @@ CONTAINS
     CALL test_redist_single_array_base(send_msgs, recv_msgs, src_data, &
          ref_dst_data, mpi_comm_world)
 
-    IF (comm_rank == 0) THEN
-      DO i = 1, comm_size
-        CALL MPI_Type_free(send_msgs(i)%datatype, ierror)
-        IF (ierror /= mpi_success) &
-             CALL test_abort("error calling mpi_type_free", filename, __LINE__)
-      END DO
-    END IF
+    DO i = 1, nsend
+      CALL MPI_Type_free(send_msgs(i)%datatype, ierror)
+      IF (ierror /= mpi_success) &
+           CALL test_abort("error calling mpi_type_free", filename, __LINE__)
+    END DO
 
   END SUBROUTINE test_scatter
 
