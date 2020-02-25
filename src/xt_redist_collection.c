@@ -144,7 +144,7 @@ struct Xt_redist_collection_ {
 
   struct exchanger_cache cache;
 
-  unsigned ndst, nsrc;
+  unsigned nmsg[2];
   int *send_ranks, *recv_ranks;
 
   size_t cache_size;
@@ -260,8 +260,8 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   Xt_redist_collection redist_coll
     = xmalloc(sizeof (*redist_coll)
               + size_all_component_dt + nmsg * sizeof (int));
-  redist_coll->ndst = nmsg_recv;
-  redist_coll->nsrc = nmsg_send;
+  redist_coll->nmsg[RECV] = nmsg_recv;
+  redist_coll->nmsg[SEND] = nmsg_send;
   redist_coll->send_ranks
     = (int *)(redist_coll->all_component_dt + nmsg * num_redists_);
   redist_coll->recv_ranks = redist_coll->send_ranks + nmsg_send;
@@ -357,8 +357,8 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
               unsigned num_redists)
 {
   MPI_Aint displacements[2][num_redists];
-  unsigned num_send_messages = redist_coll->nsrc,
-    num_recv_messages = redist_coll->ndst;
+  unsigned num_send_messages = redist_coll->nmsg[SEND],
+    num_recv_messages = redist_coll->nmsg[RECV];
   compute_displ(src_data, num_redists, displacements[0]);
   compute_displ((const void *const *)dst_data, num_redists, displacements[1]);
 
@@ -382,12 +382,12 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
       cache_index = cache->token;
       create_all_dt_for_dir(num_send_messages, num_redists,
                             redist_coll->send_ranks, all_component_dt,
-                            displacements[0], cache->msgs, comm);
+                            displacements[SEND], cache->msgs, comm);
       create_all_dt_for_dir(num_recv_messages, num_redists,
                             redist_coll->recv_ranks,
                             all_component_dt + num_send_messages * num_redists,
-                            displacements[1], cache->msgs +
-                            (size_t)num_send_messages, comm);
+                            displacements[RECV],
+                            cache->msgs + num_send_messages, comm);
       memcpy(cache->src_displacements + cache_index * num_redists,
              displacements[0], sizeof (displacements[0]));
       memcpy(cache->dst_displacements + cache_index * num_redists,
@@ -506,20 +506,20 @@ redist_collection_copy(Xt_redist redist)
 {
   Xt_redist_collection redist_coll = xrc(redist);
   unsigned num_redists = redist_coll->num_redists,
-    nsrc = redist_coll->nsrc,
-    ndst = redist_coll->ndst;
-  size_t nmsg = (size_t)ndst + nsrc,
+    nmsg_send = redist_coll->nmsg[SEND],
+    nmsg_recv = redist_coll->nmsg[RECV];
+  size_t nmsg = (size_t)nmsg_recv + nmsg_send,
     size_all_component_dt = sizeof (MPI_Datatype) * num_redists * nmsg;
   Xt_redist_collection redist_copy
     = xmalloc(sizeof (*redist_copy)
               + size_all_component_dt + nmsg * sizeof (int));
   redist_copy->vtable = redist_coll->vtable;
   redist_copy->num_redists = num_redists;
-  redist_copy->nsrc = nsrc;
-  redist_copy->ndst = ndst;
+  redist_copy->nmsg[SEND] = nmsg_send;
+  redist_copy->nmsg[RECV] = nmsg_recv;
   redist_copy->send_ranks
     = (int *)(redist_copy->all_component_dt + nmsg * num_redists);
-  redist_copy->recv_ranks = redist_copy->send_ranks + nsrc;
+  redist_copy->recv_ranks = redist_copy->send_ranks + nmsg_send;
 
   MPI_Comm copy_comm = redist_copy->comm
     = xt_mpi_comm_smart_dup(redist_coll->comm, &redist_copy->tag_offset);
@@ -549,7 +549,7 @@ redist_collection_delete(Xt_redist redist) {
   Xt_redist_collection redist_coll = xrc(redist);
 
   unsigned num_redists = redist_coll->num_redists;
-  size_t nmsg = (size_t)redist_coll->ndst + redist_coll->nsrc;
+  size_t nmsg = (size_t)redist_coll->nmsg[RECV] + redist_coll->nmsg[SEND];
   free_component_dt(nmsg * num_redists, redist_coll->all_component_dt,
                     redist_coll->comm);
 
@@ -563,12 +563,12 @@ redist_collection_delete(Xt_redist redist) {
 
 static int redist_collection_get_num_send_msg(Xt_redist redist) {
 
-  return (int)(xrc(redist)->nsrc);
+  return (int)(xrc(redist)->nmsg[SEND]);
 }
 
 static int redist_collection_get_num_recv_msg(Xt_redist redist) {
 
-  return (int)(xrc(redist)->ndst);
+  return (int)(xrc(redist)->nmsg[RECV]);
 }
 
 static MPI_Datatype
@@ -628,18 +628,15 @@ redist_collection_get_msg_ranks(Xt_redist redist,
                                 int *restrict *ranks)
 {
   Xt_redist_collection redist_coll = xrc(redist);
-  unsigned nmsg;
-  int *ranks_orig;
-  if (direction == SEND) {
-    nmsg = redist_coll->ndst;
-    ranks_orig = redist_coll->send_ranks;
-  } else {
-    nmsg = redist_coll->nsrc;
-    ranks_orig = redist_coll->recv_ranks;
-  }
-  int *ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
-  memcpy(ranks_, ranks_orig, nmsg * sizeof (*ranks));
-  return (int)nmsg;
+  unsigned nmsg_direction = redist_coll->nmsg[direction],
+    nmsg_send = redist_coll->nmsg[SEND];
+  size_t nmsg = (size_t)nmsg_direction + redist_coll->nmsg[!direction];
+  int *ranks_orig
+    = (int *)(redist_coll->all_component_dt + nmsg * redist_coll->num_redists)
+    + (((unsigned)direction-1) & nmsg_send);
+  int *ranks_ = *ranks = xmalloc(nmsg_direction * sizeof (*ranks_));
+  memcpy(ranks_, ranks_orig, nmsg_direction * sizeof (*ranks));
+  return (int)nmsg_direction;
 }
 
 
