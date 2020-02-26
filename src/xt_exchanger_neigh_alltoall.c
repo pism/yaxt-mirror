@@ -107,7 +107,7 @@ struct Xt_exchanger_neigh_alltoall_ {
 
   const struct xt_exchanger_vtable * vtable;
 
-  int nsend, nrecv;
+  int nmsg[2];
   int tag_offset;
   MPI_Comm comm;
   int * ranks;
@@ -163,10 +163,10 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
   Xt_exchanger_neigh_alltoall exchanger
     = xt_exchanger_neigh_alltoall_alloc((size_t)nsend, (size_t)nrecv);
   exchanger->tag_offset = tag_offset;
-  exchanger->nsend = nsend;
+  exchanger->nmsg[SEND] = nsend;
   copy_from_redist_msgs((size_t)nsend, send_msgs, exchanger->ranks,
                         exchanger->datatypes, comm);
-  exchanger->nrecv = nrecv;
+  exchanger->nmsg[RECV] = nrecv;
   copy_from_redist_msgs((size_t)nrecv, recv_msgs, exchanger->ranks + nsend,
                         exchanger->datatypes + nsend, comm);
 
@@ -186,15 +186,15 @@ xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
 {
   Xt_exchanger_neigh_alltoall exchanger_na =
     (Xt_exchanger_neigh_alltoall)exchanger;
-  size_t nsend = (size_t)(exchanger_na->nsend);
-  size_t nrecv = (size_t)(exchanger_na->nrecv);
-  size_t nmsg = nsend + nrecv;
+  size_t nsend = (size_t)(exchanger_na->nmsg[SEND]),
+    nrecv = (size_t)(exchanger_na->nmsg[RECV]),
+    nmsg = nsend + nrecv;
 
   Xt_exchanger_neigh_alltoall
     exchanger_copy = xt_exchanger_neigh_alltoall_alloc(nsend, nrecv);
 
-  exchanger_copy->nsend = (int)nsend;
-  exchanger_copy->nrecv = (int)nrecv;
+  exchanger_copy->nmsg[SEND] = (int)nsend;
+  exchanger_copy->nmsg[RECV] = (int)nrecv;
   exchanger_copy->tag_offset = new_tag_offset;
   exchanger_copy->comm = new_comm;
   memcpy(exchanger_copy->ranks, exchanger_na->ranks,
@@ -211,7 +211,8 @@ static void xt_exchanger_neigh_alltoall_delete(Xt_exchanger exchanger) {
   Xt_exchanger_neigh_alltoall exchanger_na =
     (Xt_exchanger_neigh_alltoall)exchanger;
 
-  size_t nmsg = (size_t)exchanger_na->nsend + (size_t)exchanger_na->nrecv;
+  size_t nmsg = (size_t)exchanger_na->nmsg[SEND]
+    + (size_t)exchanger_na->nmsg[RECV];
   MPI_Comm comm = exchanger_na->comm;
 
   free(exchanger_na->ranks);
@@ -239,7 +240,8 @@ static void xt_exchanger_neigh_alltoall_s_exchange(Xt_exchanger exchanger,
                            exchanger_na->displs, exchanger_na->datatypes,
                            dst_data, exchanger_na->one_counts,
                            exchanger_na->displs, exchanger_na->datatypes +
-                           (size_t)(exchanger_na->nsend), exchanger_na->comm),
+                           (size_t)(exchanger_na->nmsg[SEND]),
+                           exchanger_na->comm),
     MPI_COMM_WORLD);
 }
 
@@ -258,7 +260,7 @@ static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
                             exchanger_na->displs, exchanger_na->datatypes,
                             dst_data, exchanger_na->one_counts,
                             exchanger_na->displs, exchanger_na->datatypes +
-                            (size_t)(exchanger_na->nsend),
+                            (size_t)(exchanger_na->nmsg[SEND]),
                             exchanger_na->comm, &tmp_request), MPI_COMM_WORLD);
 
   *request = xt_request_msgs_new(1, &tmp_request, exchanger_na->comm);
@@ -271,10 +273,9 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
 {
   Xt_exchanger_neigh_alltoall exchanger_na =
     (Xt_exchanger_neigh_alltoall)exchanger;
-  size_t nsend = (size_t)exchanger_na->nsend,
-         nrecv = (size_t)exchanger_na->nrecv,
-         nmsg = direction == SEND ? nsend : nrecv,
-         ofs = direction == SEND ? 0 : nsend;
+  size_t nsend = (size_t)exchanger_na->nmsg[SEND],
+    nmsg = (size_t)exchanger_na->nmsg[direction],
+    ofs = direction == SEND ? 0 : nsend;
   int *restrict ranks = exchanger_na->ranks + ofs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i) {
@@ -294,10 +295,9 @@ xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
 {
   Xt_exchanger_neigh_alltoall exchanger_na =
     (Xt_exchanger_neigh_alltoall)exchanger;
-  size_t nsend = (size_t)exchanger_na->nsend,
-         nrecv = (size_t)exchanger_na->nrecv,
-         nmsg = direction == SEND ? nsend : nrecv,
-         ofs = direction == SEND ? 0 : nsend;
+  size_t nsend = (size_t)exchanger_na->nmsg[SEND],
+    nmsg = (size_t)exchanger_na->nmsg[direction],
+    ofs = direction == SEND ? 0 : nsend;
   *ranks = xmalloc(nmsg * sizeof(**ranks));
   memcpy(*ranks, exchanger_na->ranks + ofs, nmsg * sizeof(**ranks));
   return (int)nmsg;
