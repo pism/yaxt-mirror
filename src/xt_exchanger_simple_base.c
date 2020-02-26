@@ -95,7 +95,7 @@ struct Xt_exchanger_simple_base_ {
 
   const struct xt_exchanger_vtable * vtable;
 
-  int nsend, nrecv;
+  int nmsg[2];
   int tag_offset;
   MPI_Comm comm;
   xt_simple_s_exchange_func s_func;
@@ -132,11 +132,11 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
     = xt_exchanger_simple_base_alloc(nmsg);
   exchanger->comm = comm;
   exchanger->tag_offset = tag_offset;
-  exchanger->nsend = nsend;
+  exchanger->nmsg[SEND] = nsend;
+  exchanger->nmsg[RECV] = nrecv;
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
                               exchanger->msgs, sizeof (exchanger->msgs[0]),
                               comm);
-  exchanger->nrecv = nrecv;
   xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
                               exchanger->msgs + nsend,
                               sizeof (exchanger->msgs[0]),
@@ -161,13 +161,13 @@ xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
 {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
-  int nsend = exchanger_sb->nsend,
-    nrecv = exchanger_sb->nrecv;
+  int nsend = exchanger_sb->nmsg[SEND],
+    nrecv = exchanger_sb->nmsg[RECV];
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
   Xt_exchanger_simple_base exchanger_copy
     = xt_exchanger_simple_base_alloc(nmsg);
-  exchanger_copy->nsend = nsend;
-  exchanger_copy->nrecv = nrecv;
+  exchanger_copy->nmsg[SEND] = nsend;
+  exchanger_copy->nmsg[RECV] = nrecv;
   exchanger_copy->s_func = exchanger_sb->s_func;
   exchanger_copy->a_func = exchanger_sb->a_func;
   struct Xt_redist_msg *restrict new_msgs = exchanger_copy->msgs,
@@ -186,7 +186,7 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
 
-  size_t nmsg = (size_t)exchanger_sb->nsend + (size_t)exchanger_sb->nrecv;
+  size_t nmsg = (size_t)exchanger_sb->nmsg[SEND] + (size_t)exchanger_sb->nmsg[RECV];
   struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs;
   xt_redist_msgs_strided_destruct(nmsg, msgs, exchanger_sb->comm,
                                   sizeof (msgs[0]));
@@ -200,9 +200,9 @@ static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
 
-  int nsend = exchanger_sb->nsend;
+  int nsend = exchanger_sb->nmsg[SEND];
   exchanger_sb->s_func(src_data, dst_data, nsend,
-                       exchanger_sb->nrecv, exchanger_sb->msgs,
+                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
                        exchanger_sb->msgs + (size_t)nsend,
                        exchanger_sb->tag_offset, exchanger_sb->comm);
 }
@@ -220,9 +220,9 @@ static void xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
              "asynchronous exchange function not defined for current exchanger",
              __FILE__, __LINE__);
 
-  int nsend = exchanger_sb->nsend;
+  int nsend = exchanger_sb->nmsg[SEND];
   exchanger_sb->a_func(src_data, dst_data, nsend,
-                       exchanger_sb->nrecv, exchanger_sb->msgs,
+                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
                        exchanger_sb->msgs + (size_t)nsend,
                        exchanger_sb->tag_offset, exchanger_sb->comm, request);
 }
@@ -234,9 +234,8 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
 {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
-  size_t nsend = (size_t)exchanger_sb->nsend,
-    nrecv = (size_t)exchanger_sb->nrecv,
-    nmsg = direction == SEND ? nsend : nrecv,
+  size_t nsend = (size_t)exchanger_sb->nmsg[SEND],
+    nmsg = (size_t)exchanger_sb->nmsg[direction],
     ofs = direction == SEND ? 0 : nsend;
   struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs + ofs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
@@ -255,15 +254,9 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        int *restrict *ranks)
 {
   Xt_exchanger_simple_base exchanger_sb = (Xt_exchanger_simple_base)exchanger;
-  size_t nmsg;
-  struct Xt_redist_msg *restrict msgs;
-  if (direction == SEND) {
-    nmsg = (size_t)exchanger_sb->nsend;
-    msgs = exchanger_sb->msgs;
-  } else {
-    nmsg = (size_t)exchanger_sb->nrecv;
-    msgs = exchanger_sb->msgs + (size_t)exchanger_sb->nsend;
-  }
+  size_t nmsg = (size_t)exchanger_sb->nmsg[direction];
+  struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs
+    + (direction == RECV ? (size_t)exchanger_sb->nmsg[SEND] : 0);
   int *restrict ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
   for (size_t i = 0; i < nmsg; ++i)
     ranks_[i] = msgs[i].rank;
