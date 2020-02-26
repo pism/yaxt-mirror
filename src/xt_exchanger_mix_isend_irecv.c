@@ -175,6 +175,7 @@ xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
   return (Xt_exchanger)exchanger_copy;
 }
 
+enum { max_on_stack_req = 16 };
 
 static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
 
@@ -201,7 +202,10 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
     MPI_Comm comm = exchanger_msr->comm;
     struct mix_msg *restrict msgs = exchanger_msr->msgs;
     int tag_offset = exchanger_msr->tag_offset;
-    MPI_Request *requests = xmalloc(nmsg * sizeof (*requests));
+    MPI_Request req_buf[max_on_stack_req];
+    MPI_Request *requests
+      = nmsg <= max_on_stack_req
+      ? req_buf : xmalloc(nmsg * sizeof (*requests));
     for (size_t i = 0; i < nmsg; ++i) {
       typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
                          int tag, MPI_Comm comm, MPI_Request *request);
@@ -213,7 +217,8 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                      comm, requests+i), comm);
     }
     xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE), comm);
-    free(requests);
+    if (requests != req_buf)
+      free(requests);
   }
 }
 
@@ -231,7 +236,10 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
     MPI_Comm comm = exchanger_msr->comm;
     struct mix_msg *restrict msgs = exchanger_msr->msgs;
     int tag_offset = exchanger_msr->tag_offset;
-    MPI_Request *tmp_requests = xmalloc(nmsg * sizeof (*tmp_requests));
+    MPI_Request req_buf[max_on_stack_req];
+    MPI_Request *tmp_requests
+      = nmsg <= max_on_stack_req
+      ? req_buf : xmalloc(nmsg * sizeof (*tmp_requests));
     for (size_t i = 0; i < nmsg; ++i) {
       typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
                          int tag, MPI_Comm comm, MPI_Request *request);
@@ -243,7 +251,8 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
                      comm, tmp_requests+i), comm);
     }
     requests = xt_request_msgs_new((int)nmsg, tmp_requests, comm);
-    free(tmp_requests);
+    if (tmp_requests != req_buf)
+      free(tmp_requests);
   }
 
   *request = requests;
