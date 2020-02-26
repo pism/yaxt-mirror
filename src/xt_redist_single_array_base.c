@@ -85,15 +85,12 @@ static void
 redist_sab_a_exchange1(Xt_redist redist, const void *src_data, void *dst_data,
                        Xt_request *request);
 
-static int redist_sab_get_num_send_msg(Xt_redist redist);
-
-static int redist_sab_get_num_recv_msg(Xt_redist redist);
-
-static MPI_Datatype
-redist_sab_get_send_MPI_Datatype(Xt_redist redist, int rank);
+static int redist_sab_get_num_msg(Xt_redist redist,
+                                  enum xt_msg_direction direction);
 
 static MPI_Datatype
-redist_sab_get_recv_MPI_Datatype(Xt_redist redist, int rank);
+redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
+                            enum xt_msg_direction direction);
 
 static int
 redist_sab_get_msg_ranks(Xt_redist redist,
@@ -110,10 +107,8 @@ static const struct xt_redist_vtable redist_sab_vtable = {
   .a_exchange            = redist_sab_a_exchange,
   .s_exchange1           = redist_sab_s_exchange1,
   .a_exchange1           = redist_sab_a_exchange1,
-  .get_num_send_msg      = redist_sab_get_num_send_msg,
-  .get_num_recv_msg      = redist_sab_get_num_recv_msg,
-  .get_send_MPI_Datatype = redist_sab_get_send_MPI_Datatype,
-  .get_recv_MPI_Datatype = redist_sab_get_recv_MPI_Datatype,
+  .get_num_msg           = redist_sab_get_num_msg,
+  .get_msg_MPI_Datatype  = redist_sab_get_MPI_Datatype,
   .get_msg_ranks         = redist_sab_get_msg_ranks,
   .get_MPI_Comm          = redist_sab_get_MPI_Comm
 };
@@ -126,7 +121,7 @@ struct Xt_redist_sab_ {
 
   Xt_exchanger exchanger;
 
-  int nsend, nrecv;
+  int nmsg[2];
 
   MPI_Comm comm;
   int tag_offset;
@@ -148,8 +143,8 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                        redist->tag_offset);
 
   redist->vtable = &redist_sab_vtable;
-  redist->nsend = nsend;
-  redist->nrecv = nrecv;
+  redist->nmsg[SEND] = nsend;
+  redist->nmsg[RECV] = nrecv;
   return (Xt_redist)redist;
 }
 
@@ -165,8 +160,8 @@ redist_sab_copy(Xt_redist redist)
   Xt_redist_sab redist_sab = xrsab(redist);
   Xt_redist_sab redist_sab_new = xmalloc(sizeof *redist_sab_new);
   redist_sab_new->vtable = redist_sab->vtable;
-  redist_sab_new->nsend = redist_sab->nsend;
-  redist_sab_new->nrecv = redist_sab->nrecv;
+  for (size_t i = 0; i < 2; ++i)
+    redist_sab_new->nmsg[i] = redist_sab->nmsg[i];
   redist_sab_new->comm = xt_mpi_comm_smart_dup(redist_sab->comm,
                                                &redist_sab_new->tag_offset);
   redist_sab_new->exchanger
@@ -231,26 +226,18 @@ redist_sab_a_exchange1(Xt_redist redist, const void *src_data, void *dst_data,
   xt_exchanger_a_exchange(redist_sab->exchanger, src_data, dst_data, request);
 }
 
-static int redist_sab_get_num_send_msg(Xt_redist redist) {
-
-  return xrsab(redist)->nsend;
-}
-
-static int redist_sab_get_num_recv_msg(Xt_redist redist) {
-
-  return xrsab(redist)->nrecv;
+static int redist_sab_get_num_msg(Xt_redist redist,
+                                  enum xt_msg_direction direction)
+{
+  return xrsab(redist)->nmsg[direction];
 }
 
 static MPI_Datatype
-redist_sab_get_send_MPI_Datatype(Xt_redist redist, int rank) {
-
-  return xt_exchanger_get_MPI_Datatype(xrsab(redist)->exchanger, rank, SEND);
-}
-
-static MPI_Datatype
-redist_sab_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
-
-  return xt_exchanger_get_MPI_Datatype(xrsab(redist)->exchanger, rank, RECV);
+redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
+                            enum xt_msg_direction direction)
+{
+  return xt_exchanger_get_MPI_Datatype(xrsab(redist)->exchanger, rank,
+                                       direction);
 }
 
 static int

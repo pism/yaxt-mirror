@@ -95,22 +95,28 @@ void xt_redist_a_exchange1(Xt_redist redist, const void *src_data,
 
 int xt_redist_get_num_send_msg(Xt_redist redist) {
 
-  return redist->vtable->get_num_send_msg(redist);
+  return redist->vtable->get_num_msg(redist, SEND);
 }
 
 int xt_redist_get_num_recv_msg(Xt_redist redist) {
 
-  return redist->vtable->get_num_recv_msg(redist);
+  return redist->vtable->get_num_msg(redist, RECV);
 }
 
 MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 
-  return redist->vtable->get_send_MPI_Datatype(redist, rank);
+  return redist->vtable->get_msg_MPI_Datatype(redist, rank, SEND);
 }
 
 MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
-  return redist->vtable->get_recv_MPI_Datatype(redist, rank);
+  return redist->vtable->get_msg_MPI_Datatype(redist, rank, RECV);
+}
+
+MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
+                                        enum xt_msg_direction direction)
+{
+  return redist->vtable->get_msg_MPI_Datatype(redist, rank, direction);
 }
 
 MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {

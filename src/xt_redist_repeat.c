@@ -67,9 +67,8 @@ static void
 generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
                    MPI_Aint extent, const int *displacements, Xt_redist redist,
                    int num_repetitions, MPI_Comm comm,
-                   enum xt_msg_direction direction,
-                   MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
-
+                   enum xt_msg_direction direction)
+{
   assert(*nmsgs >= 0);
   size_t num_messages = (size_t)*nmsgs;
   int *restrict ranks = NULL;
@@ -78,7 +77,8 @@ generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
   struct Xt_redist_msg *restrict p
     = xrealloc(*msgs, sizeof (*p) * (num_messages + num_ranks));
   for (size_t i = 0; i < num_ranks; ++i) {
-    MPI_Datatype datatype = get_MPI_datatype(redist, ranks[i]);
+    MPI_Datatype datatype
+      = xt_redist_get_MPI_Datatype(redist, ranks[i], direction);
     MPI_Aint curr_lb, curr_extent;
     MPI_Datatype datatype_with_extent;
 
@@ -118,12 +118,10 @@ Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
 
 
   generate_msg_infos(&send_msgs, &nsend, src_extent,
-                     src_displacements, redist, num_repetitions, comm,
-                     SEND, xt_redist_get_send_MPI_Datatype);
+                     src_displacements, redist, num_repetitions, comm, SEND);
 
   generate_msg_infos(&recv_msgs, &nrecv, dst_extent,
-                     dst_displacements, redist, num_repetitions, comm,
-                     RECV, xt_redist_get_recv_MPI_Datatype);
+                     dst_displacements, redist, num_repetitions, comm, RECV);
 
   Xt_redist result
     = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);

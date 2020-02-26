@@ -93,15 +93,12 @@ redist_collection_a_exchange1(Xt_redist redist,
                               const void *src_data, void *dst_data,
                               Xt_request *request);
 
-static int redist_collection_get_num_send_msg(Xt_redist redist);
-
-static int redist_collection_get_num_recv_msg(Xt_redist redist);
-
-static MPI_Datatype
-redist_collection_get_send_MPI_Datatype(Xt_redist redist, int rank);
+static int redist_collection_get_num_msg(Xt_redist redist,
+                                         enum xt_msg_direction direction);
 
 static MPI_Datatype
-redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int rank);
+redist_collection_get_MPI_Datatype(Xt_redist redist, int rank,
+                                   enum xt_msg_direction direction);
 
 static int
 redist_collection_get_msg_ranks(Xt_redist redist,
@@ -118,10 +115,8 @@ static const struct xt_redist_vtable redist_collection_vtable = {
   .a_exchange            = redist_collection_a_exchange,
   .s_exchange1           = redist_collection_s_exchange1,
   .a_exchange1           = redist_collection_a_exchange1,
-  .get_num_send_msg      = redist_collection_get_num_send_msg,
-  .get_num_recv_msg      = redist_collection_get_num_recv_msg,
-  .get_send_MPI_Datatype = redist_collection_get_send_MPI_Datatype,
-  .get_recv_MPI_Datatype = redist_collection_get_recv_MPI_Datatype,
+  .get_num_msg           = redist_collection_get_num_msg,
+  .get_msg_MPI_Datatype  = redist_collection_get_MPI_Datatype,
   .get_msg_ranks         = redist_collection_get_msg_ranks,
   .get_MPI_Comm          = redist_collection_get_MPI_Comm
 };
@@ -184,7 +179,7 @@ static void align_component_dt(unsigned num_redists, unsigned nmsgs,
                                size_t num_ranks[num_redists],
                                int *out_ranks,
                                MPI_Datatype *component_dt,
-                               MPI_Datatype (*get_MPI_datatype)(Xt_redist,int))
+                               enum xt_msg_direction direction)
 {
   size_t rank_pos[num_redists];
   for (size_t j = 0; j < num_redists; ++j)
@@ -200,7 +195,8 @@ static void align_component_dt(unsigned num_redists, unsigned nmsgs,
       for (size_t j = 0; j < num_redists; ++j)
         component_dt[i * num_redists + j] =
           (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] == min_rank)
-          ? get_MPI_datatype(redists[j], min_rank) : MPI_DATATYPE_NULL;
+          ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction)
+          : MPI_DATATYPE_NULL;
 
       out_ranks[i] = min_rank;
       for (size_t j = 0; j < num_redists; ++j)
@@ -280,11 +276,10 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
   align_component_dt(num_redists_, nmsg_send, redists,
                      ranks[SEND], num_ranks[SEND], redist_coll->send_ranks,
-                     all_component_dt, xt_redist_get_send_MPI_Datatype);
+                     all_component_dt, SEND);
   align_component_dt(num_redists_, nmsg_recv, redists,
                      ranks[RECV], num_ranks[RECV], redist_coll->recv_ranks,
-                     all_component_dt + nmsg_send * num_redists_,
-                     xt_redist_get_recv_MPI_Datatype);
+                     all_component_dt + nmsg_send * num_redists_, RECV);
   init_cache(&redist_coll->cache, redist_coll->cache_size, nmsg,
              num_redists_);
 
@@ -561,34 +556,19 @@ redist_collection_delete(Xt_redist redist) {
   free(redist_coll);
 }
 
-static int redist_collection_get_num_send_msg(Xt_redist redist) {
-
-  return (int)(xrc(redist)->nmsg[SEND]);
-}
-
-static int redist_collection_get_num_recv_msg(Xt_redist redist) {
-
-  return (int)(xrc(redist)->nmsg[RECV]);
+static int redist_collection_get_num_msg(Xt_redist redist,
+                                         enum xt_msg_direction direction)
+{
+  return (int)(xrc(redist)->nmsg[direction]);
 }
 
 static MPI_Datatype
-redist_collection_get_send_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank))
+redist_collection_get_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank),
+                                   enum xt_msg_direction XT_UNUSED(direction))
 {
   Xt_redist_collection redist_coll = xrc(redist);
 
-  Xt_abort(redist_coll->comm, "ERROR: get_send_MPI_Datatype is not"
-           " supported for this xt_redist type (Xt_redist_collection)",
-           __FILE__, __LINE__);
-
-  return MPI_DATATYPE_NULL;
-}
-
-static MPI_Datatype
-redist_collection_get_recv_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank)) {
-
-  Xt_redist_collection redist_coll = xrc(redist);
-
-  Xt_abort(redist_coll->comm, "ERROR: get_recv_MPI_Datatype is not"
+  Xt_abort(redist_coll->comm, "ERROR: datatype retrieval is not"
            " supported for this xt_redist type (Xt_redist_collection)",
            __FILE__, __LINE__);
 

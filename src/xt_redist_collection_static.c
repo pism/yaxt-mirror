@@ -70,9 +70,8 @@ static size_t
 generate_msg_infos(struct Xt_redist_msg ** msgs,
                    const MPI_Aint *displacements, Xt_redist *redists,
                    size_t num_redists, MPI_Comm comm,
-                   enum xt_msg_direction direction,
-                   MPI_Datatype (*get_MPI_datatype)(Xt_redist,int)) {
-
+                   enum xt_msg_direction direction)
+{
   int block_lengths[num_redists];
   MPI_Datatype datatypes[num_redists];
 
@@ -106,7 +105,8 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
       for (size_t j = 0; j < num_redists; ++j)
         datatypes[j] =
           (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank)
-          ? get_MPI_datatype(redists[j], min_rank) : MPI_DATATYPE_NULL;
+          ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction)
+          : MPI_DATATYPE_NULL;
 
       p[i].rank = min_rank;
       p[i].datatype
@@ -144,11 +144,11 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
   size_t num_redists_ = num_redists >= 0 ? (size_t)num_redists : 0;
   size_t nsend
     = generate_msg_infos(&send_msgs, src_displacements, redists, num_redists_,
-                         new_comm, SEND, xt_redist_get_send_MPI_Datatype);
+                         new_comm, SEND);
 
   size_t nrecv
     = generate_msg_infos(&recv_msgs, dst_displacements, redists, num_redists_,
-                         new_comm, RECV, xt_redist_get_recv_MPI_Datatype);
+                         new_comm, RECV);
 
   Xt_redist redist_collection =
     xt_redist_single_array_base_new((int)nsend, (int)nrecv,
