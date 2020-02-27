@@ -19490,6 +19490,7 @@ ac_compile="$ac_pwd/libtool --mode=compile --tag=CC $ac_compile"
 fi
 
 
+rm -f a.out
 
 
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for conftest_module module file name" >&5
