@@ -56,6 +56,7 @@
 #include "xt/xt_redist.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_request.h"
+#include "xt/xt_sort.h"
 #include "core/ppm_xfuncs.h"
 #include "xt_redist_internal.h"
 
@@ -181,6 +182,28 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
       Xt_abort(comm, "ERROR: MPI communicators do not match; cannot build "
                "redistribution collection\n", __FILE__, __LINE__);
   }
+}
+
+unsigned
+xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
+                        const Xt_redist redists[num_redists],
+                        size_t num_ranks[num_redists],
+                        int *restrict ranks[num_redists])
+{
+  bool ranks_left = false;
+  /* get lists of ranks to send/receive message to/from */
+  for (size_t j = 0; j < num_redists; ++j) {
+    size_t nranks = num_ranks[j]
+      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
+    ranks_left |= (nranks > 0);
+    /* sort list */
+    xt_sort_int(ranks[j], nranks);
+  }
+  /* count number of different ranks to send/receive message to/from */
+  size_t num_messages = ranks_left
+    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int *const *)ranks)
+    : 0;
+  return (unsigned)num_messages;
 }
 
 size_t

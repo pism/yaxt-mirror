@@ -58,7 +58,6 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
-#include "xt/xt_sort.h"
 #include "xt_mpi_internal.h"
 #include "xt/xt_redist_collection.h"
 #include "ensure_array_size.h"
@@ -150,29 +149,6 @@ struct Xt_redist_collection_ {
   MPI_Datatype all_component_dt[];
 };
 
-static unsigned
-get_msg_count(const Xt_redist *redists, unsigned num_redists,
-              enum xt_msg_direction direction,
-              size_t num_ranks[num_redists],
-              int *restrict ranks[num_redists])
-{
-  bool ranks_left = false;
-  /* get lists of ranks to send/receive message to/from */
-  for (size_t j = 0; j < num_redists; ++j) {
-    size_t nranks = num_ranks[j]
-      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
-    ranks_left |= (nranks > 0);
-    /* sort list */
-    xt_sort_int(ranks[j], nranks);
-  }
-  /* count number of different ranks to send/receive message to/from */
-  size_t num_messages = ranks_left
-    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int *const *)ranks)
-    : 0;
-  return (unsigned)num_messages;
-}
-
-
 static void align_component_dt(unsigned num_redists, unsigned nmsgs,
                                const Xt_redist *redists,
                                int *restrict in_ranks[num_redists],
@@ -247,10 +223,10 @@ Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
   unsigned num_redists_ = num_redists >= 0 ? (unsigned)num_redists : 0;
   size_t num_ranks[2][num_redists_];
   int *restrict ranks[2][num_redists_];
-  unsigned nmsg_send = get_msg_count(redists, num_redists_, SEND,
-                                     num_ranks[SEND], ranks[SEND]),
-    nmsg_recv = get_msg_count(redists, num_redists_, RECV,
-                              num_ranks[RECV], ranks[RECV]);
+  unsigned nmsg_send = xt_redist_agg_msg_count(num_redists_, SEND, redists,
+                                               num_ranks[SEND], ranks[SEND]),
+    nmsg_recv = xt_redist_agg_msg_count(num_redists_, RECV, redists,
+                                        num_ranks[RECV], ranks[RECV]);
   size_t nmsg = (size_t)nmsg_send + nmsg_recv;
   size_t size_all_component_dt = sizeof (MPI_Datatype) * num_redists_ * nmsg;
   Xt_redist_collection redist_coll

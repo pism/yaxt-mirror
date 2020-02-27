@@ -118,6 +118,12 @@ xt_create_compound_datatype(size_t num_redists,
                             const int block_lengths[num_redists],
                             MPI_Comm comm);
 
+unsigned
+xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
+                        const Xt_redist redists[num_redists],
+                        size_t num_ranks[num_redists],
+                        int *restrict ranks[num_redists]);
+
 #endif
 /*
  * Local Variables:

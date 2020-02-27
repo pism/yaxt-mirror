@@ -63,38 +63,30 @@
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
-#include "xt/xt_sort.h"
 
 
 static size_t
 generate_msg_infos(struct Xt_redist_msg ** msgs,
-                   const MPI_Aint *displacements, Xt_redist *redists,
+                   const MPI_Aint *displacements,
+                   const Xt_redist *redists,
                    size_t num_redists, MPI_Comm comm,
                    enum xt_msg_direction direction)
 {
-  int block_lengths[num_redists];
-  MPI_Datatype datatypes[num_redists];
-
-  for (size_t i = 0; i < num_redists; ++i)
-    block_lengths[i] = 1;
-
-  size_t num_ranks[num_redists], rank_pos[num_redists];
+  size_t num_ranks[num_redists];
   int *restrict ranks[num_redists];
-  bool ranks_left = false;
-  /* get lists of ranks to send/receive message to/from */
-  for (size_t j = 0; j < num_redists; ++j) {
-    num_ranks[j]
-      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
-    /* sort list */
-    xt_sort_int(ranks[j], num_ranks[j]);
-    ranks_left |= (num_ranks[j] > 0);
-    rank_pos[j] = 0;
-  }
 
-  size_t num_messages = ranks_left
-    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int **)ranks) : 0;
+  size_t num_messages = xt_redist_agg_msg_count(num_redists, direction,
+                                                redists, num_ranks, ranks);
+  /* get lists of ranks to send/receive message to/from */
+  size_t rank_pos[num_redists];
+  for (size_t j = 0; j < num_redists; ++j)
+    rank_pos[j] = 0;
   struct Xt_redist_msg *p = NULL;
   if (num_messages) {
+    MPI_Datatype datatypes[num_redists];
+    int block_lengths[num_redists];
+    for (size_t i = 0; i < num_redists; ++i)
+      block_lengths[i] = 1;
     p = xmalloc(sizeof (*p) * num_messages);
     for (size_t i = 0; i < num_messages; ++i) {
       int min_rank = INT_MAX;
