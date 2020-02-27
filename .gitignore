@@ -21,6 +21,7 @@ Makefile.in
 
 # Configure stage files:
 .deps
+/a.out
 /config.log
 /config.lt
 /config.status
