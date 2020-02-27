@@ -118,6 +118,8 @@ AM_PROG_CC_C_O
 AC_PROG_FC_C_O
 # Set up libtool.
 ACX_USE_LIBTOOL_CONFIGURATION
+dnl Clean up after Libtool checks:
+rm -f a.out
 AC_SUBST([lt_cv_nm_interface])
 dnl ######################################################################
 dnl Properties of the compiler
