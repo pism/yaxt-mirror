@@ -224,7 +224,7 @@ static void xt_exchanger_neigh_alltoall_delete(Xt_exchanger exchanger) {
       xt_mpi_call(MPI_Type_free(dt), comm);
   }
   free(exchanger_na->datatypes);
-  xt_mpi_call(MPI_Comm_free(&(exchanger_na->comm)), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Comm_free(&(exchanger_na->comm)), Xt_default_comm);
   free(exchanger_na);
 }
 
@@ -242,7 +242,7 @@ static void xt_exchanger_neigh_alltoall_s_exchange(Xt_exchanger exchanger,
                            exchanger_na->displs, exchanger_na->datatypes +
                            (size_t)(exchanger_na->nmsg[SEND]),
                            exchanger_na->comm),
-    MPI_COMM_WORLD);
+    exchanger_na->comm);
 }
 
 static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
@@ -261,7 +261,8 @@ static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
                             dst_data, exchanger_na->one_counts,
                             exchanger_na->displs, exchanger_na->datatypes +
                             (size_t)(exchanger_na->nmsg[SEND]),
-                            exchanger_na->comm, &tmp_request), MPI_COMM_WORLD);
+                            exchanger_na->comm, &tmp_request),
+    exchanger_na->comm);
 
   *request = xt_request_msgs_new(1, &tmp_request, exchanger_na->comm);
 }
