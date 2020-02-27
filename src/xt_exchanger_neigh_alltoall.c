@@ -281,7 +281,7 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i) {
     if (ranks[i] == rank) {
-      xt_mpi_call(MPI_Type_dup(exchanger_na->datatypes[i], &datatype_copy),
+      xt_mpi_call(MPI_Type_dup(exchanger_na->datatypes[i+ofs], &datatype_copy),
                   exchanger_na->comm);
       break;
     }
