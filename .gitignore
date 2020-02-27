@@ -167,3 +167,7 @@ Makefile
 /tests/test_xmap_intersection_parallel
 /tests/test_xmap_intersection_parallel_f
 /tests/test_yaxt
+
+# MacOS files
+*.dSYM
+.DS_Store
