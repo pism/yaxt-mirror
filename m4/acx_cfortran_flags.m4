@@ -1,7 +1,7 @@
-dnl acx_fc_c_link.m4 --- transform library c flags into version
-dnl                      that suits the fortran compiler
+dnl acx_cfortran_flags.m4 --- determine flags for C compiler to build external
+dnl                           functions for F77/FC with cfortran.h
 dnl
-dnl Copyright  (C)  2011  Thomas Jahns <jahns@dkrz.de>
+dnl Copyright  (C)  2020  Thomas Jahns <jahns@dkrz.de>
 dnl
 dnl Version: 1.0
 dnl Keywords:
