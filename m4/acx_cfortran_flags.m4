@@ -155,13 +155,13 @@ dnl check f77 flag matches fc flag
          AC_PROVIDE_IFELSE([AC_PROG_F77],
            [AC_PROVIDE_IFELSE([AC_PROG_FC],
               [dnl both FC and F77 are configured
-               AS_IF([test -z "$FC" -o X"$FC" != Xno],
-                 [acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"],
-                 [test -z "$F77" -o X"$F77" != Xno],
+               AS_IF([test -z "$FC" -o X"$FC" = Xno],
                  [acx_cv_cf_flag="$acx_cv_f77_cf_flag (probed)"],
+                 [test -z "$F77" -o X"$F77" = Xno],
+                 [acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"],
                  [AS_IF([test x"$acx_cv_f77_cf_flag" = x"$acx_cv_fc_cf_flag"],
                     [acx_cv_cf_flag="$acx_cv_f77_cf_flag (probed)"],
-                    [acx_failure_msg="cfortran.h flag for $F77 does not match the flag for $FC.
+                    [acx_failure_msg="cfortran.h flag for $F77 ($acx_cv_f77_cf_flag) does not match the flag for $FC ($acx_cv_fc_cf_flag).
 Did you configure compatible compilers?"
                      acx_cv_cf_flag='error'])])])],
            [acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"])])])
