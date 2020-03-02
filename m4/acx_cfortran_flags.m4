@@ -122,19 +122,21 @@ AC_DEFUN([ACX_FIND_CFORTRAN_DEF],
      [acx_cv_cf_flag],
      [acx_cv_cf_flag=''
 dnl test if user already provided a flag
-      AS_FOR([MACRO],[macro],[pgiFortran NAGf90Fortran f2cFortran hpuxFortran apolloFortran sunFortran IBMR2Fortran CRAYFortran PATHSCALE_COMPILER gFortran mipsFortran DECFortran vmsFortran CONVEXFortran PowerStationFortran AbsoftUNIXFortran AbsoftProFortran SXFortran],
-        [acx_temp=`echo "$CPPFLAGS $CFLAGS" | sed -n 's/^\(.* \)*-D\('"MACRO"'\)\( .*\)*$/\2/;t print
-b
-: print
+      acx_temp=`echo " $CPPFLAGS $CFLAGS " | sed -n 'm4_foreach_w([MACRO],[pgiFortran NAGf90Fortran f2cFortran hpuxFortran apolloFortran sunFortran IBMR2Fortran CRAYFortran PATHSCALE_COMPILER gFortran mipsFortran DECFortran vmsFortran CONVEXFortran PowerStationFortran AbsoftUNIXFortran AbsoftProFortran SXFortran],[/ -D[]MACRO/{
+x
+s/$/ -D[]MACRO/
+x
+}
+])x
+s/^ //
 p'`
-         AS_IF([test x"$acx_temp" != x],
-           [AS_IF([test x"$acx_cv_cf_flag" = x],
-              [acx_cv_cf_flag="$acx_temp (user-specified)"],
-              [acx_failure_msg="multiple specification of cfortran.h flags: "`echo "$acx_cv_cf_flag" | sed 's/ (user-specified)$//'`" $acx_temp"
-               acx_cv_cf_flag='error'
-               break])])])
+      AS_CASE([$acx_temp],
+        [-D*\ -D*],
+        [acx_failure_msg="multiple specification of cfortran.h flags: $acx_temp"
+         acx_cv_cf_flag='error'],
+        [-D*],
+        [acx_cv_cf_flag="$acx_temp (user-specified)"],
 dnl find automatically from machine/compiler
-      AS_IF([test x"$acx_cv_cf_flag" = x],
         [AC_PROVIDE_IFELSE([AC_PROG_FC],
            [AS_IF([test -n "$FC" -a X"$FC" != Xno],
               [AC_LANG_PUSH([Fortran])
@@ -163,11 +165,12 @@ dnl check f77 flag matches fc flag
 Did you configure compatible compilers?"
                      acx_cv_cf_flag='error'])])])],
            [acx_cv_cf_flag="$acx_cv_fc_cf_flag (probed)"])])])
-   AS_IF([test x"$acx_cv_cf_flag" = xerror],
+   AS_CASE([$acx_cv_cf_flag],
+     [error],
      [m4_default([$1],
-        [AC_MSG_ERROR([$acx_failure_msg])])])
+        [AC_MSG_ERROR([$acx_failure_msg])])],
 dnl now that flag is established, add (probed) defines to CPPFLAGS
-   AS_IF([echo "$acx_cv_cf_flag" | grep ' (probed)$' >/dev/null],
+     [*\ \(probed\)],
      [CPPFLAGS="${CPPFLAGS+$CPPFLAGS }"`echo "$acx_cv_cf_flag" | sed 's/ (probed)$//'`])
   ])
 dnl
