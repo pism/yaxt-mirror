@@ -50,7 +50,7 @@ AC_DEFUN([_ACX_LT_FORT_FLAGS_MANGLE],
      [AS_VAR_PUSHDEF([acx_FC],[F77])dnl
       AS_VAR_PUSHDEF([acx_FCFLAGS],[FFLAGS])dnl
       AS_VAR_PUSHDEF([acx_LDFLAGS],[F77LDFLAGS])])
-   acx_temp=`$acx_FC -V 2>&1 | sed 5q`
+   acx_temp=`$acx_FC -V 2>&1 | sed -n 1,5p`
 dnl fix problems from NAG compiler
    AS_CASE(["$acx_temp"],
      [*NAG\ Fortran\ Compiler\ Release*],
@@ -75,17 +75,19 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
 dnl add some monkey patching for older libtool versions that don't handle
 dnl newer PGI or NAG configurations particularly well
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
-     [m4_pushdef([_LT_COMPILER_PIC],m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),[;;
+     [m4_pushdef([_LT_COMPILER_PIC],m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),[;;
 	\*Portland\\ ],[;; @%:@(
 	*NAG\\ Fortran\\ Compiler*)
 	  _LT_TAGVAR(lt_prog_compiler_wl, $][1)='-Wl,-Wl,,'
 	  _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-PIC'
 	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
-	*PGI\\ Compilers\\ and\\ Tools*|*Port][land\\ ]))dnl
+	*PGI\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),[sed 5q`],[sed -n 1,5p`]))dnl
+      m4_pushdef([_LT_LANG_CXX_CONFIG],m4_bpatsubst(m4_dquote(m4_defn([_LT_LANG_CXX_CONFIG])),
+        [sed 5q`],[sed -n 1,5p`]))dnl
       m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
-          m4_bpatsubst(m4_dquote(m4_defn(
+        m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn(
           [_LT_LINKER_SHLIBS])),[tmp_sharedflag='-shared'],
           [tmp_sharedflag='-shared'
 	tmp_compiler_flags='$compiler_flags'])),
@@ -99,7 +101,7 @@ dnl newer PGI or NAG configurations particularly well
 ],[\&	*NAG\\ Fortran\\ Compiler*\1
 	  tmp_sharedflag='-Wl,-shared'
 	  tmp_compiler_flags='`echo \$compiler_flags | sed -e '"'"'s/ -W@<:@cl@:>@,-no-pie\\b//g'"'"'`' ;;
-]))dnl
+])),[sed 5q`],[sed -n 1,5p`]))dnl
       m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],[AS_UNSET([output_verbose_link_cmd])]
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
           m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
