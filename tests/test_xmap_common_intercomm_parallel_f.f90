@@ -46,7 +46,7 @@
 MODULE test_xmap_common_intercomm_parallel
   USE iso_c_binding, ONLY: c_int
   USE mpi
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, posix_exit
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xt_stripe, &
        xi => xt_int_kind, &
@@ -60,12 +60,6 @@ MODULE test_xmap_common_intercomm_parallel
        check_allgather_analog_xmap, test_ping_pong, test_ring_1d
   IMPLICIT NONE
   PRIVATE
-  INTERFACE
-    SUBROUTINE POSIX_EXIT(code) BIND(c, name="exit")
-      IMPORT :: c_int
-      INTEGER(c_int), VALUE, INTENT(in) :: code
-    END SUBROUTINE POSIX_EXIT
-  END INTERFACE
   INTEGER :: intra_group_comm
   PUBLIC :: xmap_intercomm_parallel_test_main, intra_group_comm
   CHARACTER(len=*), PARAMETER :: &

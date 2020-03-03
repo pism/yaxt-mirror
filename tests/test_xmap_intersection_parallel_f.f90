@@ -43,7 +43,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 PROGRAM test_xmap_intersection_parallel
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, posix_exit
   USE mpi
   USE iso_c_binding, ONLY: c_int
   USE test_idxlist_utils, ONLY: test_err_count
@@ -73,12 +73,6 @@ PROGRAM test_xmap_intersection_parallel
     INTEGER :: rank       ! rank of communication partner
     INTEGER, POINTER :: pos(:)   ! positions to be sent/received
   END TYPE test_message
-  INTERFACE
-    SUBROUTINE posix_exit(code) BIND(c, name='exit')
-      USE iso_c_binding, ONLY: c_int
-      INTEGER(c_int), VALUE, INTENT(in) :: code
-    END SUBROUTINE posix_exit
-  END INTERFACE
 
   INTEGER, PARAMETER :: xmi_type_base = 0, xmi_type_ext = 1
   INTEGER :: xmi_type

@@ -69,6 +69,14 @@ MODULE ftest_common
     MODULE PROCEDURE icmp_3d
   END INTERFACE icmp
 
+  INTERFACE
+    SUBROUTINE posix_exit(code) BIND(c, name="exit")
+      IMPORT :: c_int
+      INTEGER(c_int), VALUE, INTENT(in) :: code
+    END SUBROUTINE posix_exit
+  END INTERFACE
+  PUBLIC :: posix_exit
+
   INTERFACE cmp_arrays
 
     FUNCTION cmp_dbl_arrays_(asize, a, b) BIND(c, name='cmp_dbl_arrays')
