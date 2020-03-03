@@ -4,18 +4,21 @@ LIBC_FATAL_STDERR_=1
 export LIBC_FATAL_STDERR_
 [ x"@MPI_LAUNCH@" != xtrue ] || exit 77
 ulimit -c 0
-@abs_top_builddir@/libtool --mode=execute \
-  @MPI_LAUNCH@ -n 1 @abs_builddir@/test_xmap_all2all_fail -s small \
-  >/dev/null 2>&1 \
-  || @abs_top_builddir@/libtool --mode=execute \
-  @MPI_LAUNCH@ -n 1 @abs_builddir@/test_xmap_all2all_fail -s big \
-  >/dev/null 2>&1 \
-  || @abs_top_builddir@/libtool --mode=execute \
-  @MPI_LAUNCH@ -n 1 @abs_builddir@/test_xmap_all2all_fail_f -s small \
-  >/dev/null 2>&1 \
-  || @abs_top_builddir@/libtool --mode=execute \
-  @MPI_LAUNCH@ -n 1 @abs_builddir@/test_xmap_all2all_fail_f -s big \
-  >/dev/null 2>&1
+for setup_size  in small big; do
+  for suffix in '' '_f'; do
+    if @abs_top_builddir@/libtool --mode=execute \
+        @MPI_LAUNCH@ -n 1 \
+        @abs_builddir@/test_xmap_all2all_fail$suffix -s $setup_size \
+        >/dev/null 2>&1; then
+      exit 1
+    else
+      rc=$?
+      if [ $rc -ne 3 ]; then
+        exit 1
+      fi
+    fi
+  done
+done
 #
 # Local Variables:
 # mode: sh

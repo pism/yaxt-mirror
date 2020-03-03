@@ -51,8 +51,15 @@ PROGRAM test_xmap_all2all_fail
        xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
-       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks
+       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
+       xt_set_abort_handler, xt_restore_default_abort_hndl
   IMPLICIT NONE
+  INTERFACE
+    SUBROUTINE xfail_abort(comm, msg, source, line)
+      INTEGER, INTENT(in) :: comm, line
+      CHARACTER(len=*), INTENT(in) :: msg, source
+    END SUBROUTINE xfail_abort
+  END INTERFACE
   INTEGER, PARAMETER :: xi = xt_int_kind
   CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_all2all_fail_f.f90'
   INTEGER :: my_rank, ierror, list_size
@@ -84,7 +91,9 @@ CONTAINS
     src_idxlist = xt_idxvec_new(src_index_list)
     dst_idxlist = xt_idxvec_new(dst_index_list)
 
+    CALL xt_set_abort_handler(xfail_abort)
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    CALL xt_restore_default_abort_hndl
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
 
@@ -156,6 +165,21 @@ CONTAINS
   END SUBROUTINE parse_options
 
 END PROGRAM test_xmap_all2all_fail
+
+SUBROUTINE xfail_abort(comm, msg, source, line)
+  USE iso_c_binding, ONLY: c_int
+  USE mpi
+  USE ftest_common, ONLY: posix_exit
+  INTEGER, INTENT(in) :: comm, line
+  CHARACTER(len=*), INTENT(in) :: msg, source
+  INTEGER :: ierror
+  WRITE (0, '(4a,i0)') msg, ' at ', source, ', line ', line
+  FLUSH(0)
+  CALL mpi_abort(comm, 3, ierror)
+  CALL posix_exit(3_c_int)
+END SUBROUTINE xfail_abort
+
+
 !
 ! Local Variables:
 ! f90-continuation-indent: 5

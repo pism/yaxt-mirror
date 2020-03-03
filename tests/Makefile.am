@@ -293,9 +293,7 @@ TESTS = 							\
 	test_perf_stripes_run					\
 	test_sort_run						\
 	test_uid_run						\
-	test_yaxt_run
-
-XFAIL_TESTS =                                                   \
+	test_yaxt_run						\
 	test_xmap_all2all_fail_run
 
 AUTOMAKE_OPTIONS = color-tests

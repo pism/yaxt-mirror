@@ -57,6 +57,11 @@
 #define VERBOSE
 #include "tests.h"
 
+/* If we're not using GNU C, elide __attribute__ */
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
 static enum {
   SMALL,
   BIG,
@@ -64,6 +69,15 @@ static enum {
 
 static void
 parse_options(int *argc, char ***argv);
+static void
+xfail_abort(MPI_Comm comm, const char *msg, const char *source, int line)
+  __attribute__((noreturn));
+
+typedef void (*Xt_abort_func)(MPI_Comm comm, const char *msg,
+                              const char *source, int line)
+  __attribute__((noreturn));
+extern Xt_abort_func Xt_abort;
+
 
 int main(int argc, char **argv) {
 
@@ -94,26 +108,12 @@ int main(int argc, char **argv) {
 
       // test of exchange map
       // NOTE: this should fail
+      Xt_abort = xfail_abort;
       Xt_xmap xmap
         = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
-      // test results
-
-      if (xt_xmap_get_num_destinations(xmap) != 1)
-        PUT_ERR("error in xt_xmap_get_num_destinations\n");
-
-      if (xt_xmap_get_num_sources(xmap) != 1)
-        PUT_ERR("error in xt_xmap_get_num_destinations\n");
-
-      int rank;
-
-      xt_xmap_get_destination_ranks(xmap, &rank);
-      if (rank != my_rank)
-        PUT_ERR("error in xt_xmap_get_destination_ranks\n");
-
-      xt_xmap_get_source_ranks(xmap, &rank);
-      if (rank != my_rank)
-        PUT_ERR("error in xt_xmap_get_source_ranks\n");
+      /* this position should not be reached */
+      MPI_Abort(MPI_COMM_WORLD, 1);
 
       // clean up
       xt_xmap_delete(xmap);
@@ -145,6 +145,14 @@ parse_options(int *argc, char ***argv)
       }
     }
   }
+}
+
+static void
+xfail_abort(MPI_Comm comm, const char *msg, const char *source, int line)
+{
+  fprintf(stderr, "Fatal error in %s, line %d: %s\n", source, line, msg);
+  MPI_Abort(comm, 3);
+  abort();
 }
 
 /*
