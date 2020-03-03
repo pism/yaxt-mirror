@@ -1,5 +1,7 @@
 #! @SHELL@
 set -e
+LIBC_FATAL_STDERR_=1
+export LIBC_FATAL_STDERR_
 [ x"@MPI_LAUNCH@" != xtrue ] || exit 77
 for nprocs in 1 2 3 4 8 ; do
   @abs_top_builddir@/libtool --mode=execute \

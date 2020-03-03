@@ -1,5 +1,7 @@
 #! @SHELL@
 set -e
+LIBC_FATAL_STDERR_=1
+export LIBC_FATAL_STDERR_
 [ x"@MPI_LAUNCH@" != xtrue ] || exit 77
 export YAXT_TEST_PERF_GRID=TEST
 for num_tasks in 1 2 3 4 ; do

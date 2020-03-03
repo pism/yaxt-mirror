@@ -1,4 +1,7 @@
 #! @SHELL@
+set -e
+LIBC_FATAL_STDERR_=1
+export LIBC_FATAL_STDERR_
 NM="@NM@"
 lt_cv_nm_interface="@lt_cv_nm_interface@"
 abs_builddir="@abs_builddir@"
