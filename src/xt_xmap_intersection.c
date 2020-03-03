@@ -622,7 +622,9 @@ xt_xmap_intersection_new(int num_src_intersections,
     int first_missing_pos = 0;
     while ((first_missing_pos < (num_dst_indices - 1)) &&
            (found_index_mask[first_missing_pos])) ++first_missing_pos;
-
+    free(found_index_mask);
+    free(index_positions);
+    xmap_intersection_delete((Xt_xmap)xmap);
     print_miss_msg(dst_idxlist, first_missing_pos, comm, __FILE__, __LINE__);
   }
 
