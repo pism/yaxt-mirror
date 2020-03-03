@@ -110,7 +110,7 @@ extern MPI_Comm SymPrefix(default_comm);
  * This function
  * prints the message argument and file and line of the error
  * to standard error, and
- * calls either MPI_Abort or abort depending on wether
+ * calls either MPI_Abort or abort depending on whether
  * MPI is initialized.
  * @param comm MPI communcator object to use on call to MPI_Abort
  * @param msg message text to print
@@ -130,6 +130,16 @@ SymPrefix(set_default_comm)(MPI_Comm comm);
 
 #define die(msg) \
   SymPrefix(abort)(SymPrefix(default_comm), (msg), __FILE__, __LINE__)
+
+#ifdef USE_MPI
+static inline int
+SymPrefix(mpi_calls_are_allowed)(void)
+{
+  int init_flag = 0, finished_flag = 0;
+  return MPI_Initialized(&init_flag) == MPI_SUCCESS && init_flag
+    && MPI_Finalized(&finished_flag) == MPI_SUCCESS && !finished_flag;
+}
+#endif
 
 #endif
 /*

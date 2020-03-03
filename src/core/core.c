@@ -66,21 +66,26 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "core.h"
-#include "symprefix.h"
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
+
+#include "core/ppm_visibility.h"
+#include "core/core.h"
+#include "core/symprefix.h"
 
 MPI_Comm SymPrefix(default_comm) = MPI_COMM_WORLD;
 
-#define XT_F2C_Data COMMON_BLOCK(XT_F2C_DATA,xt_f2c_data)
+#define F2C_Data COMMON_BLOCK(SYMPREFIX(F2C_DATA),symprefix(f2c_data))
 
 typedef struct
 {
-  MPI_Fint xt_default_comm;
-} XT_F2C_Def;
+  MPI_Fint symprefix(default_comm);
+} SymPrefix(F2C_Def);
 
-COMMON_BLOCK_DEF(XT_F2C_Def,XT_F2C_Data);
+COMMON_BLOCK_DEF(SymPrefix(F2C_Def),F2C_Data);
 
-XT_F2C_Def XT_F2C_Data;
+SymPrefix(F2C_Def) F2C_Data;
 
 void
 SymPrefix(set_default_comm)(MPI_Comm comm)
@@ -92,20 +97,23 @@ SymPrefix(set_default_comm)(MPI_Comm comm)
   comm_f = comm;
 #endif
   SymPrefix(default_comm) = comm;
-  XT_F2C_Data.xt_default_comm = comm_f;
+  F2C_Data.symprefix(default_comm) = comm_f;
 }
 
 void
 SymPrefix(abort_default)(MPI_Comm comm, const char *msg, const char *source, int line)
 {
-  int flag = 0;
   fprintf(stderr, "Fatal error in %s, line %d: %s\n", source, line, msg);
 #ifdef USE_MPI
 #if defined (__xlC__) && defined (_AIX)
 #pragma omp critical
 #endif
-  if (MPI_Initialized(&flag) == MPI_SUCCESS && flag)
+  if (SymPrefix(mpi_calls_are_allowed)())
     MPI_Abort(comm, 1);
+  else
+    abort();
+#else
+  (void)comm;
 #endif
   abort();
 }

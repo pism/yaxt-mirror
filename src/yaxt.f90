@@ -53,7 +53,8 @@ MODULE yaxt
   USE xt_core, ONLY: i4, xt_int_kind, xt_int_mpidt, &
        xt_abort, xt_initialize, xt_get_default_comm, xt_stripe, xt_bounds, &
        char, xt_finalize, xt_initialized, xt_finalized, xt_slice_c_loc, &
-       xt_pos_ext, OPERATOR(/=), OPERATOR(==)
+       xt_pos_ext, OPERATOR(/=), OPERATOR(==), &
+       xt_set_abort_handler => set_abort_handler, xt_restore_default_abort_hndl
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
        xt_sort_permutation
   USE xt_idxlist_abstract, ONLY: &
@@ -118,6 +119,7 @@ MODULE yaxt
 
   PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, &
        xt_initialized, xt_finalized, &
+       xt_set_abort_handler, xt_restore_default_abort_hndl, &
        xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, xt_pos_ext, &
        xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &
        xt_idxlist, xt_idxlist_delete,  &

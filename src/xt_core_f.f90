@@ -110,6 +110,9 @@ MODULE xt_core
     SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
     END SUBROUTINE xt_finalize
 
+    SUBROUTINE xt_restore_default_abort_hndl
+    END SUBROUTINE xt_restore_default_abort_hndl
+
   END INTERFACE
 
   INTERFACE xt_abort
@@ -141,6 +144,8 @@ MODULE xt_core
   END INTERFACE OPERATOR(/=)
 
   EXTERNAL :: xt_slice_c_loc
+
+  PUBLIC :: set_abort_handler, xt_restore_default_abort_hndl
 
 CONTAINS
 
@@ -205,6 +210,25 @@ CONTAINS
     p = a%start /= b%start .OR. (a%size /= b%size &
          .AND. .NOT. (ABS(a%size) == 1 .AND. ABS(a%size) == ABS(b%size)))
   END FUNCTION xt_pos_ext_ne
+
+  !> set routine f to use as abort function which is called on xt_abort
+  SUBROUTINE set_abort_handler(f)
+    INTERFACE
+      SUBROUTINE f(comm, msg, source, line)
+        INTEGER, INTENT(in) :: comm, line
+        CHARACTER(len=*), INTENT(in) :: msg, source
+      END SUBROUTINE f
+      SUBROUTINE xt_set_abort_handler(f)
+        INTERFACE
+          SUBROUTINE f(comm, msg, source, line)
+            INTEGER, INTENT(in) :: comm, line
+            CHARACTER(len=*), INTENT(in) :: msg, source
+          END SUBROUTINE f
+        END INTERFACE
+      END SUBROUTINE xt_set_abort_handler
+    END INTERFACE
+    CALL xt_set_abort_handler(f)
+  END SUBROUTINE set_abort_handler
 
 END MODULE xt_core
 !

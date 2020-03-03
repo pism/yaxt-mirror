@@ -121,6 +121,7 @@ libyaxt_c_la_SOURCES =						\
 	core/core.h						\
 	core/ppm_xfuncs.h					\
 	core/symprefix.h					\
+	core/ppm_visibility.h					\
 	core/xmalloc.c						\
 	core/xstdio.c						\
 	ensure_array_size.c					\
@@ -152,6 +153,7 @@ libyaxt_la_SOURCES =						\
 	xt_ut_c.c						\
 	xt_ut_c.h						\
 	yaxt_f2c.c						\
+	core/core_cf.c						\
 	xt_slice_c_loc.inc					\
 	xt_mpi_f.f90						\
 	xt_core_f.f90						\
