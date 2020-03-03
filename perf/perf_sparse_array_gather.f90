@@ -33,16 +33,16 @@ PROGRAM perf_sparse_array_gather
   CHARACTER(len=*), PARAMETER :: filename = 'perf_sparse_array_gather.f90'
   LOGICAL :: check_correctness_of_exchange
   INTERFACE
-    SUBROUTINE POSIX_EXIT(code) BIND(c, name="exit")
+    SUBROUTINE posix_exit(code) BIND(c, name="exit")
       IMPORT :: c_int
       INTEGER(c_int), VALUE, INTENT(in) :: code
-    END SUBROUTINE POSIX_EXIT
+    END SUBROUTINE posix_exit
   END INTERFACE
 
   CALL mpi_init(ierror)
   IF (ierror /= mpi_success) THEN
     WRITE (0, *) "MPI initialization failed"
-    CALL POSIX_EXIT(1)
+    CALL POSIX_EXIT(1_c_int)
   END IF
   CALL xt_initialize(mpi_comm_world)
 

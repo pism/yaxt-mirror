@@ -45,6 +45,7 @@
 PROGRAM test_xmap_intersection_parallel
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE mpi
+  USE iso_c_binding, ONLY: c_int
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, xt_xmap, &
@@ -103,7 +104,7 @@ PROGRAM test_xmap_intersection_parallel
   IF (comm_size /= 3) THEN
     CALL xt_finalize
     CALL finish_mpi
-    CALL posix_exit(77)
+    CALL posix_exit(77_c_int)
   END IF
 
   ! parse_options(&argc, &argv);
