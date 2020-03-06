@@ -63,6 +63,9 @@
 struct Xt_redist_msg {
 
   int rank;
+#if SIZEOF_MPI_DATATYPE == 2 * SIZEOF_INT
+  int padding;
+#endif
   MPI_Datatype datatype;
 };
 

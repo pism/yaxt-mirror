@@ -237,6 +237,9 @@ AC_DEFINE_UNQUOTED([XT_MPI_SEND_BUF_CONST],[$XT_MPI_SEND_BUF_CONST],
 TJ_FIND_INTEGRAL_TYPE([MPI_Aint],[xt_mpi_aint],[@%:@include <mpi.h>])
 xt_mpi_aint_kind=c_[]AS_TR_SH([$xt_mpi_aint])
 FCFLAGS="$FCFLAGS ${FPP_DEFOPT}XT_MPI_AINT_KIND=$xt_mpi_aint_kind"
+AC_CHECK_SIZEOF([MPI_Datatype],,[@%:@include <mpi.h>])
+AS_IF([test $ac_cv_sizeof_MPI_Datatype -eq 0],
+  [AC_MSG_FAILURE([Could not detect size of MPI_Datatype!])])
 CFLAGS=$save_CFLAGS
 AS_CASE(["$MPI_FINT"],
   [int],[XT_MPI_FINT_MAX=INT_MAX XT_MPI_FINT_FC_KIND=c_int],

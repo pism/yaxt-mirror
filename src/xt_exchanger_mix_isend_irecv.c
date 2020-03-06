@@ -92,7 +92,13 @@ typedef struct Xt_exchanger_mix_isend_irecv_ * Xt_exchanger_mix_isend_irecv;
 
 struct mix_msg {
   struct Xt_redist_msg data;
+#if SIZEOF_MPI_DATATYPE == 2 * SIZEOF_INT
+#  define MSG_DIR(msg) ((enum xt_msg_direction)((msg).data.padding))
+#  define type data.padding
+#else
   enum xt_msg_direction type;
+#  define MSG_DIR(msg) ((msg).type)
+#endif
 };
 
 struct Xt_exchanger_mix_isend_irecv_ {
@@ -142,7 +148,7 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
 
   for (size_t i = 1; i < nmsg; ++i) {
 
-    if ((msgs[i-1].data.rank == msgs[i].data.rank) && (msgs[i].type == SEND)) {
+    if (msgs[i-1].data.rank == msgs[i].data.rank && MSG_DIR(msgs[i]) == SEND) {
 
       struct mix_msg temp = msgs[i-1];
       msgs[i-1] = msgs[i];
@@ -209,8 +215,8 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
     for (size_t i = 0; i < nmsg; ++i) {
       typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
                          int tag, MPI_Comm comm, MPI_Request *request);
-      ifp op = msgs[i].type == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
-      void *data = msgs[i].type == SEND ? (void *)src_data : dst_data;
+      ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
+      void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
       xt_mpi_call(op(data, 1, msgs[i].data.datatype,
                      msgs[i].data.rank,
                      tag_offset + xt_mpi_tag_exchange_msg,
@@ -243,8 +249,8 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
     for (size_t i = 0; i < nmsg; ++i) {
       typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
                          int tag, MPI_Comm comm, MPI_Request *request);
-      ifp op = msgs[i].type == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
-      void *data = msgs[i].type == SEND ? (void *)src_data : dst_data;
+      ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
+      void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
       xt_mpi_call(op(data, 1, msgs[i].data.datatype,
                      msgs[i].data.rank,
                      tag_offset + xt_mpi_tag_exchange_msg,
@@ -268,10 +274,10 @@ xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
   size_t nmsg = 0, nmsg_all = (size_t)exchanger_msr->n;
   const struct mix_msg *restrict msgs = exchanger_msr->msgs;
   for (size_t i = 0; i < nmsg_all; ++i)
-    nmsg += msgs[i].type == direction;
+    nmsg += MSG_DIR(msgs[i]) == direction;
   int *restrict ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
   for (size_t i = 0, j = (size_t)-1; i < nmsg_all; ++i)
-    if (msgs[i].type == direction)
+    if (MSG_DIR(msgs[i]) == direction)
       ranks_[++j] = msgs[i].data.rank;
   return (int)nmsg;
 }
@@ -287,7 +293,7 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
   struct mix_msg *restrict msgs = exchanger_msr->msgs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i)
-    if (msgs[i].type == direction && msgs[i].data.rank == rank) {
+    if (MSG_DIR(msgs[i]) == direction && msgs[i].data.rank == rank) {
       xt_mpi_call(MPI_Type_dup(msgs[i].data.datatype, &datatype_copy),
                   exchanger_msr->comm);
       break;
