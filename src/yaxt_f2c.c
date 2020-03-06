@@ -359,9 +359,8 @@ xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
   assert(nsend >= 0 && nrecv >= 0);
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   struct Xt_redist_msg *send_msgs_c
-    = xmalloc((size_t)nsend * sizeof(*send_msgs_c));
-  struct Xt_redist_msg *recv_msgs_c
-    = xmalloc((size_t)nrecv * sizeof(*recv_msgs_c));
+    = xmalloc(((size_t)nsend + (size_t)nrecv) * sizeof(*send_msgs_c)),
+    *recv_msgs_c = send_msgs_c + nsend;
   for (int i = 0; i < nsend; ++i) {
     send_msgs_c[i].rank = send_msgs_f[i].rank;
     send_msgs_c[i].datatype = MPI_Type_f2c(send_msgs_f[i].datatype);
@@ -372,7 +371,6 @@ xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
   }
   void *redist = xt_redist_single_array_base_new(nsend, nrecv, send_msgs_c,
                                                  recv_msgs_c, comm_c);
-  free(recv_msgs_c);
   free(send_msgs_c);
   return redist;
 }
