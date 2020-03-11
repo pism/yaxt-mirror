@@ -70,6 +70,30 @@ Xt_config xt_config_new(void);
  */
 void xt_config_delete(Xt_config config);
 
+enum Xt_exchangers {
+  xt_exchanger_irecv_send,
+  xt_exchanger_irecv_isend,
+  xt_exchanger_irecv_isend_packed,
+  xt_exchanger_mix_isend_irecv,
+  xt_exchanger_neigh_alltoall,
+};
+
+/**
+ * set exchanger to use when the \a config object is passed to constructors
+ * @param[in,out] config configuration object to modify
+ * @param method an entry from enum Xt_exchangers to signify the
+ * desired exchanger for data transfers
+ */
+void xt_config_set_exchange_method(Xt_config config, int method);
+
+/**
+ * get exchanger used when the \a config object is passed to constructors
+ * @param[in] config configuration object to modify
+ * @return an entry from enum Xt_exchangers representing the method of
+ * data transfer used
+ */
+int xt_config_get_exchange_method(Xt_config config);
+
 #endif
 
 /*
