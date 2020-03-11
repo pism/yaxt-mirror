@@ -52,10 +52,12 @@
 
 #include <xt/xt_config.h>
 #include "xt_config_internal.h"
+#include "xt_exchanger_irecv_send.h"
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_mix_isend_irecv.h"
 #include "xt_exchanger_irecv_isend_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
+#include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
 const struct Xt_config_ xt_default_config = {
@@ -73,6 +75,52 @@ void xt_config_delete(Xt_config config)
 {
   free(config);
 }
+
+static struct {
+  Xt_exchanger_new f;
+  int code;
+} exchanger_table[] = {
+  { xt_exchanger_irecv_send_new, xt_exchanger_irecv_send },
+  { xt_exchanger_irecv_isend_new, xt_exchanger_irecv_isend },
+  { xt_exchanger_irecv_isend_packed_new, xt_exchanger_irecv_isend_packed },
+  { xt_exchanger_mix_isend_irecv_new, xt_exchanger_mix_isend_irecv },
+  { xt_exchanger_neigh_alltoall_new, xt_exchanger_neigh_alltoall },
+};
+
+enum {
+  num_exchanger = sizeof (exchanger_table) / sizeof (exchanger_table[0]),
+};
+
+
+
+int xt_config_get_exchange_method(Xt_config config)
+{
+  Xt_exchanger_new exchanger_new = config->exchanger_new;
+  for (size_t i = 0; i < num_exchanger; ++i)
+    if (exchanger_table[i].f == exchanger_new)
+      return (int)i;
+  static const char fmt[]
+    = "error: unexpected exchanger function (%p)!\n";
+  char buf[sizeof (fmt) + 9];
+  sprintf(buf, fmt, (void *)exchanger_new);
+  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
+}
+
+
+void xt_config_set_exchange_method(Xt_config config, int method)
+{
+  for (size_t i = 0; i < num_exchanger; ++i)
+    if (exchanger_table[i].code == method) {
+      config->exchanger_new = exchanger_table[i].f;
+      return;
+    }
+  static const char fmt[]
+    = "error: user-requested exchanger code (%d) does not exist!\n";
+  char buf[sizeof (fmt) + 9];
+  sprintf(buf, fmt, method);
+  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
+}
+
 
 
 /*

@@ -46,7 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_config_f
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_null_ptr
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_null_ptr, c_int
   IMPLICIT NONE
   PRIVATE
   ! note: this type must not be extended to contain any other
@@ -59,6 +59,14 @@ MODULE xt_config_f
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_config
   PUBLIC :: xt_config_new, xt_config_delete
+  PUBLIC :: xt_config_get_exchange_method, xt_config_set_exchange_method
+  INTEGER, PUBLIC, PARAMETER :: &
+       xt_exchanger_irecv_send = 0, &
+       xt_exchanger_irecv_isend = 1, &
+       xt_exchanger_irecv_isend_packed = 2, &
+       xt_exchanger_mix_isend_irecv = 3, &
+       xt_exchanger_neigh_alltoall = 4
+
 CONTAINS
 
   FUNCTION xt_config_new() RESULT(config)
@@ -85,6 +93,36 @@ CONTAINS
     END INTERFACE
     CALL xt_config_delete_c(config%cptr)
   END SUBROUTINE xt_config_delete
+
+  SUBROUTINE xt_config_set_exchange_method(config, method)
+    TYPE(xt_config), INTENT(inout) :: config
+    INTEGER, INTENT(in) :: method
+    INTEGER(c_int) :: method_c
+    INTERFACE
+      SUBROUTINE xt_config_set_exchange_method_c(config, method) &
+           BIND(c, name='xt_config_set_exchange_method')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int), VALUE :: method
+      END SUBROUTINE xt_config_set_exchange_method_c
+    END INTERFACE
+    method_c = INT(method, c_int)
+    CALL xt_config_set_exchange_method_c(config%cptr, method_c)
+  END SUBROUTINE xt_config_set_exchange_method
+
+  FUNCTION xt_config_get_exchange_method(config) RESULT(method)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: method
+    INTERFACE
+      FUNCTION xt_config_get_exchange_method_c(config) RESULT(method) &
+           BIND(c, name='xt_config_get_exchange_method')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int) :: method
+      END FUNCTION xt_config_get_exchange_method_c
+    END INTERFACE
+    method = INT(xt_config_get_exchange_method_c(config%cptr))
+  END FUNCTION xt_config_get_exchange_method
 
 END MODULE xt_config_f
 !
