@@ -468,7 +468,7 @@ copy_component_dt(size_t num_component_dt,
     if (orig_dt != MPI_DATATYPE_NULL)
       xt_mpi_call(MPI_Type_dup(orig_dt, component_dt_copy + i), comm);
     else
-      component_dt_copy[i] = MPI_DATATYPE_NULL;
+      component_dt_copy[i] = orig_dt;
   }
 }
 
