@@ -112,6 +112,11 @@ xt_exchanger_irecv_isend_a_exchange(const void *src_data, void *dst_data,
   *request = requests;
 }
 
+/**
+ * @param tag_offset tag tag_offset + xt_mpi_tag_exchange_msg must not
+ * be used on @a comm by any other part of the program during the
+ * lifetime of the created exchanger object
+ */
 Xt_exchanger
 xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,

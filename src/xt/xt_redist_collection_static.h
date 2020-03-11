@@ -51,6 +51,7 @@
 #include <config.h>
 #endif
 
+#include "xt/xt_config.h"
 #include "xt/xt_redist.h"
 
 /** \example test_redist_collection_static.c
@@ -64,7 +65,7 @@
 
 /**
  * constructor for a redistribution collection that is comprised
- * of multiple other redistributions
+ * of multiple other redistributions with default settings
  * @param[in] redists           redistributions
  * @param[in] num_redists       number of redistributions
  * @param[in] src_displacements array of displacements of the source
@@ -83,6 +84,30 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
                                 const MPI_Aint src_displacements[num_redists],
                                 const MPI_Aint dst_displacements[num_redists],
                                 MPI_Comm comm);
+
+/**
+ * constructor for a redistribution collection that is comprised
+ * of multiple other redistributions with custom settings
+ * @param[in] redists           redistributions
+ * @param[in] num_redists       number of redistributions
+ * @param[in] src_displacements array of displacements of the source
+ *                              input arrays for the exchange
+ * @param[in] dst_displacements array of displacements of the destination
+ *                              input arrays for the exchange
+ * @param[in] comm              MPI communicator
+ * @param[in] config            configuration object for customizable settings
+ *
+ * @remarks all redistributions need to be based on the same
+ *          MPI communicator
+ * @par See Also
+ *   \ref correct_addresses
+ */
+Xt_redist
+xt_redist_collection_static_custom_new(
+  Xt_redist *redists, int num_redists,
+  const MPI_Aint src_displacements[num_redists],
+  const MPI_Aint dst_displacements[num_redists],
+  MPI_Comm comm, Xt_config config);
 
 #endif // XT_REDIST_COLLECTION_STATIC_H
 

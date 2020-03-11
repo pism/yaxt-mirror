@@ -53,6 +53,7 @@
 
 #include <mpi.h>
 
+#include "xt/xt_config.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_redist.h"
 
@@ -67,7 +68,7 @@
 
 /**
  * constructor for a redistribution using point to point
- * communication for the exchange
+ * communication for the exchange using default configuration
  * @param[in] nsend     number of send messages
  * @param[in] nrecv     number of receive messages
  * @param[in] send_msgs array with send messages
@@ -80,6 +81,22 @@ xt_redist_single_array_base_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg send_msgs[],
                                 const struct Xt_redist_msg recv_msgs[],
                                 MPI_Comm comm);
+
+/**
+ * constructor for a redistribution using point to point
+ * communication for the exchange with custom configuration
+ * @param[in] nsend     number of send messages
+ * @param[in] nrecv     number of receive messages
+ * @param[in] send_msgs array with send messages
+ * @param[in] recv_msgs array with receive messages
+ * @param[in] comm      MPI communicator that is to be used for the
+ *                      communication
+ */
+Xt_redist
+xt_redist_single_array_base_custom_new(int nsend, int nrecv,
+                                       const struct Xt_redist_msg send_msgs[],
+                                       const struct Xt_redist_msg recv_msgs[],
+                                       MPI_Comm comm, Xt_config config);
 
 #endif // XT_REDIST_SINGLE_ARRAY_BASE_H
 

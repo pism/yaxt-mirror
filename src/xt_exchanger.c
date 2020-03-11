@@ -57,13 +57,6 @@
 #include "xt_exchanger_irecv_isend_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
 
-Xt_exchanger (*xt_exchanger_default_constructor)
-  (int nsend, int nrecv, const struct Xt_redist_msg *send_msgs,
-   const struct Xt_redist_msg *recv_msgs, MPI_Comm comm, int tag_offset) =
-    xt_exchanger_mix_isend_irecv_new;
-    // xt_exchanger_irecv_isend_new;
-    // xt_exchanger_neigh_alltoall_new;
-
 Xt_exchanger
 xt_exchanger_copy(Xt_exchanger exchanger, MPI_Comm new_comm, int new_tag_offset)
 {
