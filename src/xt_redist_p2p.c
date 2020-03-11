@@ -311,10 +311,9 @@ Xt_redist xt_redist_p2p_ext_new(Xt_xmap xmap,
 {
   // ensure that yaxt is initialized
   assert(xt_initialized());
-  MPI_Comm comm;
   int tag_offset;
-
-  comm = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
+  MPI_Comm comm
+    = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
   int nrecv = xt_xmap_get_num_sources(xmap),
     nsend = xt_xmap_get_num_destinations(xmap);
