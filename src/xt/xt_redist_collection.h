@@ -51,6 +51,7 @@
 #include <config.h>
 #endif
 
+#include "xt/xt_config.h"
 #include "xt/xt_redist.h"
 
 /** \example test_redist_collection.c
@@ -64,7 +65,7 @@
 
 /**
  * constructor for a redistribution collection that is comprised
- * of multiple other redistributions
+ * of multiple other redistributions with default settings
  * @param[in] redists     redistributions
  * @param[in] num_redists number of redistributions
  * @param[in] cache_size  number of cached datatypes required for
@@ -81,6 +82,28 @@
  */
 Xt_redist xt_redist_collection_new(Xt_redist * redists, int num_redists,
                                    int cache_size, MPI_Comm comm);
+
+/**
+ * constructor for a redistribution collection that is comprised
+ * of multiple other redistributions with custom settings
+ * @param[in] redists     redistributions
+ * @param[in] num_redists number of redistributions
+ * @param[in] cache_size  number of cached datatypes required for
+ *                        different input array displacements \n
+ *                        n = -1 => default cache size \n
+ *                        n =  0 => no cache \n
+ *                        n >  0 => cache size = n
+ * @param[in] comm        MPI communicator
+ * @param[in] config      custom configuration object
+ *
+ * @remarks all redistributions need to be based on the same
+ *          MPI communicator
+ * @par See Also
+ *   \ref correct_addresses
+ */
+Xt_redist xt_redist_collection_custom_new(Xt_redist * redists, int num_redists,
+                                          int cache_size, MPI_Comm comm,
+                                          Xt_config config);
 
 #endif // XT_REDIST_COLLECTION_H
 

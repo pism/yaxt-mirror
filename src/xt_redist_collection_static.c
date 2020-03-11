@@ -63,6 +63,7 @@
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
+#include "xt_config_internal.h"
 
 
 static size_t
@@ -119,10 +120,22 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
 }
 
 Xt_redist
-xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
+xt_redist_collection_static_new(Xt_redist *redists, int num_redists,
                                 const MPI_Aint src_displacements[num_redists],
                                 const MPI_Aint dst_displacements[num_redists],
-                                MPI_Comm comm) {
+                                MPI_Comm comm)
+{
+  return xt_redist_collection_static_custom_new(
+    redists, num_redists, src_displacements, dst_displacements, comm,
+    (Xt_config)&xt_default_config);
+}
+
+Xt_redist
+xt_redist_collection_static_custom_new(
+  Xt_redist * redists, int num_redists,
+  const MPI_Aint src_displacements[num_redists],
+  const MPI_Aint dst_displacements[num_redists],
+  MPI_Comm comm, Xt_config config) {
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
@@ -143,8 +156,8 @@ xt_redist_collection_static_new(Xt_redist * redists, int num_redists,
                          new_comm, RECV);
 
   Xt_redist redist_collection =
-    xt_redist_single_array_base_new((int)nsend, (int)nrecv,
-                                    send_msgs, recv_msgs, new_comm);
+    xt_redist_single_array_base_custom_new(
+      (int)nsend, (int)nrecv, send_msgs, recv_msgs, new_comm, config);
 
   xt_redist_msgs_free(nsend, send_msgs, new_comm);
   xt_redist_msgs_free(nrecv, recv_msgs, new_comm);

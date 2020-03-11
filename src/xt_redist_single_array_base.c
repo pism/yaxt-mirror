@@ -62,6 +62,7 @@
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 #include "xt_exchanger.h"
+#include "xt_config_internal.h"
 
 static Xt_redist
 redist_sab_copy(Xt_redist redist);
@@ -130,7 +131,19 @@ struct Xt_redist_sab_ {
 Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
                                           const struct Xt_redist_msg *send_msgs,
                                           const struct Xt_redist_msg *recv_msgs,
-                                          MPI_Comm comm) {
+                                          MPI_Comm comm)
+{
+  return xt_redist_single_array_base_custom_new(nsend, nrecv, send_msgs,
+                                                recv_msgs, comm,
+                                                (Xt_config)&xt_default_config);
+}
+
+Xt_redist xt_redist_single_array_base_custom_new(
+  int nsend, int nrecv,
+  const struct Xt_redist_msg *send_msgs,
+  const struct Xt_redist_msg *recv_msgs,
+  MPI_Comm comm, Xt_config config)
+{
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
@@ -138,9 +151,8 @@ Xt_redist xt_redist_single_array_base_new(int nsend, int nrecv,
 
   redist->comm = xt_mpi_comm_smart_dup(comm, &redist->tag_offset);
   redist->exchanger
-    = xt_exchanger_default_constructor(nsend, nrecv, send_msgs,
-                                       recv_msgs, redist->comm,
-                                       redist->tag_offset);
+    = config->exchanger_new(nsend, nrecv, send_msgs, recv_msgs,
+                            redist->comm, redist->tag_offset);
 
   redist->vtable = &redist_sab_vtable;
   redist->nmsg[SEND] = nsend;

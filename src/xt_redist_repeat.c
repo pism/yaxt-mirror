@@ -62,6 +62,7 @@
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
+#include "xt_config_internal.h"
 
 static void
 generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
@@ -99,10 +100,24 @@ generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
   *nmsgs = (int)(num_messages + num_ranks);
 }
 
-Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
-                                    MPI_Aint dst_extent, int num_repetitions,
-                                    const int src_displacements[num_repetitions],
-                                    const int dst_displacements[num_repetitions]) {
+Xt_redist
+xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
+                          MPI_Aint dst_extent, int num_repetitions,
+                          const int src_displacements[num_repetitions],
+                          const int dst_displacements[num_repetitions])
+{
+  return xt_redist_repeat_asym_custom_new(
+    redist, src_extent, dst_extent, num_repetitions,
+    src_displacements, dst_displacements, (Xt_config)&xt_default_config);
+}
+
+Xt_redist
+xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
+                                 MPI_Aint dst_extent, int num_repetitions,
+                                 const int src_displacements[num_repetitions],
+                                 const int dst_displacements[num_repetitions],
+                                 Xt_config config)
+{
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
@@ -123,8 +138,8 @@ Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
   generate_msg_infos(&recv_msgs, &nrecv, dst_extent,
                      dst_displacements, redist, num_repetitions, comm, RECV);
 
-  Xt_redist result
-    = xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+  Xt_redist result = xt_redist_single_array_base_custom_new(
+    nsend, nrecv, send_msgs, recv_msgs, comm, config);
   xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
   xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
@@ -134,13 +149,19 @@ Xt_redist xt_redist_repeat_asym_new(Xt_redist redist, MPI_Aint src_extent,
 Xt_redist xt_redist_repeat_new(Xt_redist redist, MPI_Aint src_extent,
                                MPI_Aint dst_extent, int num_repetitions,
                                const int displacements[num_repetitions]) {
-  // ensure that yaxt is initialized
-  assert(xt_initialized());
+  return xt_redist_repeat_asym_custom_new(
+    redist, src_extent, dst_extent, num_repetitions, displacements,
+    displacements, (Xt_config)&xt_default_config);
+}
 
-  return xt_redist_repeat_asym_new(redist, src_extent,
-                                   dst_extent, num_repetitions,
-                                   displacements,
-                                   displacements);
+Xt_redist xt_redist_repeat_custom_new(Xt_redist redist, MPI_Aint src_extent,
+                                      MPI_Aint dst_extent, int num_repetitions,
+                                      const int displacements[num_repetitions],
+                                      Xt_config config)
+{
+  return xt_redist_repeat_asym_custom_new(
+    redist, src_extent, dst_extent, num_repetitions, displacements,
+    displacements, config);
 }
 
 /*

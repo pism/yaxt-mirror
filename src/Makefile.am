@@ -41,6 +41,7 @@ lib_LTLIBRARIES =  libyaxt_c.la libyaxt.la
 # which they can be combined in yaxt.h.
 libyaxt_c_la_SOURCES =						\
 	xt/xt_core.h						\
+	xt/xt_config.h						\
 	xt/xt_handles.h						\
 	xt/sort_common.h					\
 	xt/mergesort.h						\
@@ -70,6 +71,8 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_request_msgs_packed.h				\
 	xt_arithmetic_util.h					\
 	xt_arithmetic_long.h					\
+	xt_config_internal.h					\
+	xt_config.c						\
 	xt_cover.h						\
 	xt_cover.c						\
 	xt_handles.c						\
