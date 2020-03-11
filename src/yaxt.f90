@@ -55,6 +55,7 @@ MODULE yaxt
        char, xt_finalize, xt_initialized, xt_finalized, xt_slice_c_loc, &
        xt_pos_ext, OPERATOR(/=), OPERATOR(==), &
        xt_set_abort_handler => set_abort_handler, xt_restore_default_abort_hndl
+  USE xt_config_f, ONLY: xt_config, xt_config_new, xt_config_delete
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
        xt_sort_permutation
   USE xt_idxlist_abstract, ONLY: &
@@ -171,6 +172,8 @@ MODULE yaxt
        xt_request, xt_request_null, &
        xt_request_wait, xt_request_test, xt_redist_a_exchange1, &
        xt_redist_a_exchange
+
+  PUBLIC :: xt_config, xt_config_new, xt_config_delete
 
   INTERFACE OPERATOR(==)
     MODULE PROCEDURE xt_bounds_eq
