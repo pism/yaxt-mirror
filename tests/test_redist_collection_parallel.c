@@ -60,20 +60,18 @@
 #include "test_redist_common.h"
 
 static void
-exchange_4redist(Xt_redist redist, MPI_Comm comm,
-                 const Xt_int *index_vector_a, const Xt_int *index_vector_b,
-                 int sync);
+rr_exchange(Xt_redist redist,
+            const Xt_int src_indices_[5], const Xt_int dst_indices_[2][5],
+            int sync);
+
 enum {
   list_a = 0,
   list_b = 1,
   list_all = 2,
 };
-enum { num_redists = 4 };
 
 static void
-rr_exchange(Xt_redist redist,
-            const Xt_int src_indices_[5], const Xt_int dst_indices_[2][5],
-            int sync);
+test_4redist(MPI_Comm comm);
 
 
 int main(void) {
@@ -91,110 +89,7 @@ int main(void) {
 
   if (size > 1) {
 
-    { // redist test with four different redists
-
-      Xt_idxlist indices_a, indices_b, indices_all;
-
-      {
-        Xt_idxlist indices_a_[2];
-
-        Xt_int start = 0;
-        assert(size <= XT_INT_MAX / size && size <= INT_MAX / size);
-        Xt_int global_size[2]
-          = { (Xt_int)((Xt_int)2 * size), (Xt_int)((Xt_int)size * size) };
-        int local_size[2] = { size, size };
-        Xt_int local_start[2][2]
-          = {{0, (Xt_int)((Xt_int)rank * size)},
-             { (Xt_int)size,
-               (Xt_int)((Xt_int)size * size - (Xt_int)(rank+1) * size) } };
-
-        indices_a_[0] = xt_idxsection_new(start, 2, global_size, local_size,
-                                            local_start[0]);
-        indices_a_[1] = xt_idxsection_new(start, 2, global_size, local_size,
-                                            local_start[1]);
-
-        indices_a = xt_idxlist_collection_new(indices_a_, 2);
-
-        xt_idxlist_delete(indices_a_[0]);
-        xt_idxlist_delete(indices_a_[1]);
-      }
-
-      {
-        struct Xt_stripe stripe = {.start = (Xt_int)((Xt_int)rank*2*size*size),
-                                   .stride = 1, .nstrides = 2*size*size};
-
-        indices_b = xt_idxstripes_new(&stripe, 1);
-      }
-
-      {
-        assert(2 <= XT_INT_MAX / size / size / size
-               && 2 <= INT_MAX / size / size / size);
-        struct Xt_stripe stripe = { .start = 0, .stride = 1,
-                                    .nstrides = 2*size*size*size };
-
-        indices_all = xt_idxstripes_new(&stripe, 1);
-      }
-
-      const int list_sizes[3]
-        = { 2*size*size, 2*size*size, 2 * size * size * size };
-
-      Xt_int *index_vector[2];
-      for (size_t i = 0; i < 2; ++i)
-        index_vector[i] = xmalloc((size_t)list_sizes[i] * sizeof (Xt_int));
-
-      xt_idxlist_get_indices(indices_a, index_vector[list_a]);
-      xt_idxlist_get_indices(indices_b, index_vector[list_b]);
-
-      Xt_xmap xmaps[num_redists] = {xt_xmap_all2all_new(indices_a, indices_b,
-                                              MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(indices_b, indices_a,
-                                              MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(indices_a, indices_all,
-                                              MPI_COMM_WORLD),
-                          xt_xmap_all2all_new(indices_b, indices_all,
-                                              MPI_COMM_WORLD)};
-
-      xt_idxlist_delete(indices_a);
-      xt_idxlist_delete(indices_b);
-      xt_idxlist_delete(indices_all);
-
-      Xt_redist redists[num_redists] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
-                              xt_redist_p2p_new(xmaps[1], Xt_int_dt),
-                              xt_redist_p2p_new(xmaps[2], Xt_int_dt),
-                              xt_redist_p2p_new(xmaps[3], Xt_int_dt)};
-
-      for (size_t i = 0; i < num_redists; ++i)
-        xt_xmap_delete(xmaps[i]);
-
-      Xt_redist redist = xt_redist_collection_new(redists, num_redists, -1,
-                                                  MPI_COMM_WORLD);
-
-      // test communicator of redist
-
-      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                       MPI_COMM_WORLD))
-        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-
-      for (size_t i = 0; i < num_redists; ++i)
-        xt_redist_delete(redists[i]);
-
-      exchange_4redist(redist, MPI_COMM_WORLD,
-                       index_vector[list_a], index_vector[list_b], 0);
-      exchange_4redist(redist, MPI_COMM_WORLD,
-                       index_vector[list_a], index_vector[list_b], 1);
-      Xt_redist redist_copy = xt_redist_copy(redist);
-      xt_redist_delete(redist);
-      exchange_4redist(redist_copy, MPI_COMM_WORLD,
-                       index_vector[list_a], index_vector[list_b], 0);
-      exchange_4redist(redist_copy, MPI_COMM_WORLD,
-                       index_vector[list_a], index_vector[list_b], 1);
-
-      // clean up
-      for (size_t i = 0; i < 2; ++i)
-        free(index_vector[i]);
-      xt_redist_delete(redist_copy);
-    }
+    test_4redist(MPI_COMM_WORLD);
 
     { // redist test with two redists that do a round robin exchange in
       // different directions
@@ -260,6 +155,125 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
+enum { num_redists = 4 };
+
+static void
+exchange_4redist(Xt_redist redist, MPI_Comm comm,
+                 const Xt_int *index_vector_a, const Xt_int *index_vector_b,
+                 int sync);
+
+static void
+test_4redist(MPI_Comm comm)
+{
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  // redist test with four different redists
+  Xt_idxlist indices_a, indices_b, indices_all;
+
+  assert(comm_size <= XT_INT_MAX / comm_size
+         && comm_size <= INT_MAX / comm_size);
+  int comm_size_sq = comm_size * comm_size;
+
+  {
+    Xt_int start = 0;
+    Xt_int global_size[2]
+      = { (Xt_int)((Xt_int)2 * comm_size), (Xt_int)((Xt_int)comm_size_sq) };
+    int local_size[2] = { comm_size, comm_size };
+    Xt_int local_start[2][2] = {
+      {0, (Xt_int)((Xt_int)comm_rank * comm_size)},
+      { (Xt_int)comm_size,
+        (Xt_int)((Xt_int)comm_size_sq - (Xt_int)(comm_rank+1) * comm_size) }
+    };
+
+    Xt_idxlist indices_a_[2]
+      = { [0] = xt_idxsection_new(start, 2, global_size, local_size,
+                                  local_start[0]),
+          [1] = xt_idxsection_new(start, 2, global_size, local_size,
+                                  local_start[1]) };
+
+    indices_a = xt_idxlist_collection_new(indices_a_, 2);
+
+    xt_idxlist_delete(indices_a_[0]);
+    xt_idxlist_delete(indices_a_[1]);
+  }
+
+  {
+    struct Xt_stripe stripe = {
+      .start = (Xt_int)((Xt_int)comm_rank*2*comm_size_sq),
+      .stride = 1, .nstrides = 2*comm_size_sq
+    };
+    indices_b = xt_idxstripes_new(&stripe, 1);
+  }
+
+  {
+    assert(2 <= XT_INT_MAX / comm_size_sq / comm_size
+           && 2 <= INT_MAX / comm_size_sq / comm_size);
+    struct Xt_stripe stripe = { .start = 0, .stride = 1,
+                                .nstrides = 2*comm_size_sq*comm_size };
+
+    indices_all = xt_idxstripes_new(&stripe, 1);
+  }
+
+  const int list_sizes[3]
+    = { 2*comm_size_sq, 2*comm_size_sq, 2 * comm_size_sq * comm_size };
+
+  Xt_int *index_vector[2];
+  for (size_t i = 0; i < 2; ++i)
+    index_vector[i] = xmalloc((size_t)list_sizes[i] * sizeof (Xt_int));
+
+  xt_idxlist_get_indices(indices_a, index_vector[list_a]);
+  xt_idxlist_get_indices(indices_b, index_vector[list_b]);
+
+  Xt_xmap xmaps[num_redists] = {
+    xt_xmap_all2all_new(indices_a, indices_b, comm),
+    xt_xmap_all2all_new(indices_b, indices_a, comm),
+    xt_xmap_all2all_new(indices_a, indices_all, comm),
+    xt_xmap_all2all_new(indices_b, indices_all, comm)
+  };
+
+  xt_idxlist_delete(indices_a);
+  xt_idxlist_delete(indices_b);
+  xt_idxlist_delete(indices_all);
+
+  Xt_redist redists[num_redists] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
+                                    xt_redist_p2p_new(xmaps[1], Xt_int_dt),
+                                    xt_redist_p2p_new(xmaps[2], Xt_int_dt),
+                                    xt_redist_p2p_new(xmaps[3], Xt_int_dt)};
+
+  for (size_t i = 0; i < num_redists; ++i)
+    xt_xmap_delete(xmaps[i]);
+
+  Xt_redist redist = xt_redist_collection_new(redists, num_redists, -1,
+                                              comm);
+
+  // test communicator of redist
+
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                   comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+
+  for (size_t i = 0; i < num_redists; ++i)
+    xt_redist_delete(redists[i]);
+
+  exchange_4redist(redist, comm, index_vector[list_a], index_vector[list_b], 0);
+  exchange_4redist(redist, comm, index_vector[list_a], index_vector[list_b], 1);
+  Xt_redist redist_copy = xt_redist_copy(redist);
+  xt_redist_delete(redist);
+  exchange_4redist(redist_copy, comm,
+                   index_vector[list_a], index_vector[list_b], 0);
+  exchange_4redist(redist_copy, comm,
+                   index_vector[list_a], index_vector[list_b], 1);
+
+  // clean up
+  for (size_t i = 0; i < 2; ++i)
+    free(index_vector[i]);
+  xt_redist_delete(redist_copy);
+}
+
+
 static void
 check_4redist_result(int size, void *results[4],
                      const Xt_int *index_vector_a,
@@ -270,14 +284,18 @@ exchange_4redist(Xt_redist redist, MPI_Comm comm,
                  const Xt_int *index_vector_a, const Xt_int *index_vector_b,
                  int sync)
 {
-  int rank, size;
-  xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
-  xt_mpi_call(MPI_Comm_size(comm, &size), comm);
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  size_t comm_size_ = (size_t)comm_size;
+  assert(comm_size_ <= SIZE_MAX / comm_size_ / comm_size_);
+  size_t comm_size_sq_ = comm_size_ * comm_size_,
+    comm_size_cb_ = comm_size_sq_ * comm_size_;
   const size_t result_sizes[num_redists] =
-    { 2 * (size_t)size * (size_t)size,
-      2 * (size_t)size * (size_t)size,
-      2 * (size_t)size * (size_t)size * (size_t)size,
-      2 * (size_t)size * (size_t)size * (size_t)size };
+    { 2 * comm_size_sq_,
+      2 * comm_size_sq_,
+      2 * comm_size_cb_,
+      2 * comm_size_cb_ };
   const size_t spacing[num_redists] = { 2, 14, 5, 8 };
   size_t buf_size = 0;
   for (size_t i = 0; i < num_redists; ++i)
@@ -297,42 +315,43 @@ exchange_4redist(Xt_redist redist, MPI_Comm comm,
   exchange_func_ptr exchange_func
     = sync ? xt_redist_s_exchange : wrap_a_exchange;
   exchange_func(redist, num_redists, input, results);
-  check_4redist_result(size, results, index_vector_a,
+  check_4redist_result(comm_size, results, index_vector_a,
                        index_vector_b);
   /*
    * create another first buffer, to test successful
    * adaptation to different addresses...
    */
-  if (rank == 0)
+  if (comm_rank == 0)
     results[0] = buf;
 
   /* ...and repeat exchange */
   exchange_func(redist, num_redists, input, results);
 
-  check_4redist_result(size, results, index_vector_a, index_vector_b);
+  check_4redist_result(comm_size, results, index_vector_a, index_vector_b);
   free(buf);
 }
 
 
 static void
-check_4redist_result(int size, void *results[4],
+check_4redist_result(int comm_size, void *results[4],
                      const Xt_int *index_vector_a,
                      const Xt_int *index_vector_b)
 {
-  if (cmp_idx_arrays(2 * (size_t)size * (size_t)size,
-                     (Xt_int *)results[0], index_vector_b))
+  size_t comm_size_ = (size_t)comm_size,
+    comm_size_sq_ = comm_size_ * comm_size_,
+    comm_size_cb_ = comm_size_sq_ * comm_size_;
+  if (cmp_idx_arrays(2 * comm_size_sq_, (Xt_int *)results[0], index_vector_b))
     PUT_ERR("error on xt_redist_s_exchange\n");
 
-  if (cmp_idx_arrays(2 * (size_t)size * (size_t)size,
-                     (Xt_int *)results[1], index_vector_a))
+  if (cmp_idx_arrays(2 * comm_size_sq_, (Xt_int *)results[1], index_vector_a))
     PUT_ERR("error on xt_redist_s_exchange\n");
 
-  for (int i = 0; i < 2*size*size*size; ++i)
-    if (((Xt_int *)results[2])[i] != i)
+  for (size_t i = 0; i < 2*comm_size_cb_; ++i)
+    if (((Xt_int *)results[2])[i] != (Xt_int)i)
       PUT_ERR("error on xt_redist_s_exchange\n");
 
-  for (int i = 0; i < 2*size*size*size; ++i)
-    if (((Xt_int *)results[3])[i] != i)
+  for (size_t i = 0; i < 2*comm_size_cb_; ++i)
+    if (((Xt_int *)results[3])[i] != (Xt_int)i)
       PUT_ERR("error on xt_redist_s_exchange\n");
 }
 
