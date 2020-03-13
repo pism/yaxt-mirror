@@ -57,9 +57,15 @@
 #include <yaxt.h>
 
 #include "../src/xt_exchanger.h"
+#include "../src/xt_exchanger_irecv_send.h"
+#include "../src/xt_exchanger_irecv_isend.h"
+#include "../src/xt_exchanger_mix_isend_irecv.h"
+#include "../src/xt_exchanger_irecv_isend_packed.h"
+#include "../src/xt_exchanger_neigh_alltoall.h"
 #include "../src/xt_redist_internal.h"
 #include "core/ppm_xfuncs.h"
 
+#include "test_redist_common.h"
 #include "core/ppm_xfuncs.h"
 #include "tests.h"
 
@@ -70,50 +76,18 @@ struct test_message {
   int num_pos; // number of positions
 };
 
-Xt_exchanger
-xt_exchanger_irecv_isend_new(int nsend, int nrecv,
-                             struct Xt_redist_msg * send_msgs,
-                             struct Xt_redist_msg * recv_msgs,
-                             MPI_Comm comm, int tag_offset);
-Xt_exchanger
-xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
-                                    struct Xt_redist_msg * send_msgs,
-                                    struct Xt_redist_msg * recv_msgs,
-                                    MPI_Comm comm, int tag_offset);
-Xt_exchanger
-xt_exchanger_irecv_send_new(int nsend, int nrecv,
-                            struct Xt_redist_msg * send_msgs,
-                            struct Xt_redist_msg * recv_msgs,
-                            MPI_Comm comm, int tag_offset);
-Xt_exchanger
-xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
-                                 struct Xt_redist_msg * send_msgs,
-                                 struct Xt_redist_msg * recv_msgs,
-                                 MPI_Comm comm, int tag_offset);
-
-Xt_exchanger
-xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
-                                struct Xt_redist_msg *send_msgs,
-                                struct Xt_redist_msg *recv_msgs,
-                                MPI_Comm comm, int tag_offset);
-
-typedef Xt_exchanger (*exchanger_new_func) (int nsend, int nrecv,
-                                            struct Xt_redist_msg * send_msgs,
-                                            struct Xt_redist_msg * recv_msgs,
-                                            MPI_Comm comm, int tag_offset);
-
-static exchanger_new_func *parse_options(int *argc, char ***argv);
+static Xt_exchanger_new *parse_options(int *argc, char ***argv);
 
 static void
-test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new);
+test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new);
 static void
-test_gather(MPI_Comm comm, exchanger_new_func exchanger_new);
+test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new);
 static void
-test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new);
+test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new);
 static void
-test_rr(MPI_Comm comm, exchanger_new_func exchanger_new);
+test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new);
 static void
-test_intercomm_all2all(MPI_Comm comm, exchanger_new_func exchanger_new);
+test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new);
 
 int main(int argc, char **argv)
 {
@@ -128,10 +102,10 @@ int main(int argc, char **argv)
   xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &my_rank), MPI_COMM_WORLD);
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &comm_size), MPI_COMM_WORLD);
 
-  exchanger_new_func *exchangers_new = parse_options(&argc, &argv);
+  Xt_exchanger_new *exchangers_new = parse_options(&argc, &argv);
 
-  for (size_t i = 0; exchangers_new[i] != (exchanger_new_func)0; ++i) {
-    exchanger_new_func exchanger_new = exchangers_new[i];
+  for (size_t i = 0; exchangers_new[i] != (Xt_exchanger_new)0; ++i) {
+    Xt_exchanger_new exchanger_new = exchangers_new[i];
 
     test_bcast(MPI_COMM_WORLD, exchanger_new);
 
@@ -150,50 +124,55 @@ int main(int argc, char **argv)
   return TEST_EXIT_CODE;
 }
 
-static exchanger_new_func *parse_options(int *argc, char ***argv)
+static Xt_exchanger_new *parse_options(int *argc, char ***argv)
 {
-  exchanger_new_func *exchangers_new = xmalloc(2 * sizeof (*exchangers_new));
+  static Xt_exchanger_new exchanger_table[] = {
+    [xt_exchanger_irecv_send] = xt_exchanger_irecv_send_new,
+    [xt_exchanger_irecv_isend] = xt_exchanger_irecv_isend_new,
+    [xt_exchanger_irecv_isend_packed] = xt_exchanger_irecv_isend_packed_new,
+    [xt_exchanger_mix_isend_irecv] = xt_exchanger_mix_isend_irecv_new,
+    [xt_exchanger_neigh_alltoall] = xt_exchanger_neigh_alltoall_new,
+  };
+  enum {
+    num_exchanger = sizeof (exchanger_table) / sizeof (exchanger_table[0]),
+  };
+  Xt_exchanger_new *exchangers_new = xmalloc(2 * sizeof (*exchangers_new));
   exchangers_new[0] = xt_exchanger_mix_isend_irecv_new;
-  exchangers_new[1] = (exchanger_new_func)0;
+  exchangers_new[1] = (Xt_exchanger_new)0;
   size_t cur_ex = 0;
   int opt;
   while ((opt = getopt(*argc, *argv, "m:")) != -1) {
     switch (opt) {
     case 'm':
-      if (!strcmp(optarg, "irecv_isend"))
-        exchangers_new[cur_ex] = xt_exchanger_irecv_isend_new;
-      else if (!strcmp(optarg, "irecv_isend_packed"))
-        exchangers_new[cur_ex] = xt_exchanger_irecv_isend_packed_new;
-      else if (!strcmp(optarg, "irecv_send"))
-        exchangers_new[cur_ex] = xt_exchanger_irecv_send_new;
-      else if (!strcmp(optarg, "mix_irecv_isend"))
-        exchangers_new[cur_ex] = xt_exchanger_mix_isend_irecv_new;
-      else if (!strcmp(optarg, "neigh_alltoall"))
-#if MPI_VERSION >= 3
-        exchangers_new[cur_ex] = xt_exchanger_neigh_alltoall_new;
-#else
       {
-        fputs("xt_exchanger_neigh_alltoall_new requires MPI version 3.0 or "
-              "higher\n", stderr);
-        continue;
-      }
+        int exchanger_new_id = exchanger_id_by_name(optarg);
+        if (exchanger_new_id == -1)
+        {
+          fprintf(stderr, "Unknown exchanger constructor requested: %s\n",
+                  optarg);
+          exit(EXIT_FAILURE);
+        }
+#if MPI_VERSION < 3
+        else if (exchanger_new_id == xt_exchanger_neigh_alltoall)
+        {
+          fputs("xt_exchanger_neigh_alltoall_new requires MPI version 3.0 or "
+                "higher\n", stderr);
+          continue;
+        }
 #endif
-      else {
-        fprintf(stderr, "Unknown exchanger constructor requested %s\n",
-                optarg);
-        exit(EXIT_FAILURE);
-      }
-      ++cur_ex;
-      exchangers_new = xrealloc(exchangers_new,
-                                sizeof (*exchangers_new) * (cur_ex + 1));
-      exchangers_new[cur_ex] = (exchanger_new_func)0;
+        exchangers_new[cur_ex] = exchanger_table[exchanger_new_id];
+        ++cur_ex;
+        exchangers_new = xrealloc(exchangers_new,
+                                  sizeof (*exchangers_new) * (cur_ex + 1));
+        exchangers_new[cur_ex] = (Xt_exchanger_new)0;
+    }
     }
   }
   return exchangers_new;
 }
 
 static void
-test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
+test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -258,7 +237,7 @@ test_bcast(MPI_Comm comm, exchanger_new_func exchanger_new)
 }
 
 static void
-test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
+test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -341,7 +320,7 @@ test_gather(MPI_Comm comm, exchanger_new_func exchanger_new)
 }
 
 static void
-test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new)
+test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -419,7 +398,7 @@ test_all2all(MPI_Comm comm, exchanger_new_func exchanger_new)
 }
 
 static void
-test_rr(MPI_Comm comm, exchanger_new_func exchanger_new)
+test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -465,7 +444,7 @@ test_rr(MPI_Comm comm, exchanger_new_func exchanger_new)
 }
 
 static void
-test_intercomm_all2all(MPI_Comm comm, exchanger_new_func exchanger_new)
+test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 {
 
   // inter-communicator's are not defined for virtual topologies, which are
