@@ -503,9 +503,8 @@ CONTAINS
   END SUBROUTINE xt_redist_a_exchange_i8_a1d
 
   FUNCTION xt_redist_p2p_new(xmap, datatype) RESULT(res)
-    IMPLICIT NONE
     TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER, VALUE, INTENT(in) :: datatype
+    INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: res
 
     INTERFACE
@@ -529,17 +528,16 @@ CONTAINS
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER, INTENT(in) :: src_offsets(*)
     INTEGER, INTENT(in) :: dst_offsets(*)
-    INTEGER, VALUE, INTENT(in) :: datatype
+    INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: res
 
     INTERFACE
       FUNCTION xt_redist_p2p_off_new_f(xmap, src_offsets, dst_offsets, &
            datatype) BIND(C, name='xt_redist_p2p_off_new_f') RESULT(res_ptr)
-        IMPORT :: xt_xmap, xt_redist, c_int, c_ptr, xt_mpi_fint_kind
+        IMPORT :: xt_xmap, xt_redist, c_ptr, xt_mpi_fint_kind
         IMPLICIT NONE
         TYPE(xt_xmap), INTENT(in) :: xmap
-        INTEGER(xt_mpi_fint_kind), INTENT(in) :: src_offsets(*)
-        INTEGER(xt_mpi_fint_kind), INTENT(in) :: dst_offsets(*)
+        INTEGER(xt_mpi_fint_kind), INTENT(in) :: src_offsets(*), dst_offsets(*)
         INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_off_new_f
@@ -556,11 +554,9 @@ CONTAINS
        RESULT(res)
     IMPLICIT NONE
     TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
-    INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
-    INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
-    INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
-    INTEGER, VALUE, INTENT(in) :: datatype
+    INTEGER(c_int), INTENT(in) :: src_block_sizes(*), src_block_num, &
+         dst_block_sizes(*), dst_block_num
+    INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: res
     INTERFACE
       FUNCTION xt_redist_p2p_blocks_new_f(xmap, &
@@ -571,10 +567,8 @@ CONTAINS
         IMPORT :: xt_xmap, xt_mpi_fint_kind, xt_redist, c_int, c_ptr
         IMPLICIT NONE
         TYPE(xt_xmap), INTENT(in) :: xmap
-        INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
-        INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
+        INTEGER(c_int), VALUE, INTENT(in) :: src_block_num, dst_block_num
+        INTEGER(c_int), INTENT(in) :: src_block_sizes(*), dst_block_sizes(*)
         INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_blocks_new_f
@@ -599,7 +593,7 @@ CONTAINS
     INTEGER(c_int), INTENT(in) :: dst_block_offsets(*)
     INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
     INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
-    INTEGER, VALUE, INTENT(in) :: datatype
+    INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: res
     INTERFACE
       FUNCTION xt_redist_p2p_blocks_off_new_f(xmap, src_block_offsets, &
@@ -610,12 +604,9 @@ CONTAINS
         IMPORT :: xt_xmap, xt_redist, xt_mpi_fint_kind, c_int, c_ptr
         IMPLICIT NONE
         TYPE(xt_xmap), INTENT(in) :: xmap
-        INTEGER(c_int), INTENT(in) :: src_block_offsets(*)
-        INTEGER(c_int), INTENT(in) :: src_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: src_block_num
-        INTEGER(c_int), INTENT(in) :: dst_block_offsets(*)
-        INTEGER(c_int), INTENT(in) :: dst_block_sizes(*)
-        INTEGER(c_int), VALUE, INTENT(in) :: dst_block_num
+        INTEGER(c_int), INTENT(in) :: src_block_offsets(*), src_block_sizes(*),&
+             dst_block_offsets(*), dst_block_sizes(*)
+        INTEGER(c_int), VALUE, INTENT(in) :: src_block_num, dst_block_num
         INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: datatype
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_blocks_off_new_f
