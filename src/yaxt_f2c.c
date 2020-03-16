@@ -80,12 +80,18 @@
 #include "xt/xt_redist_collection.h"
 #include "xt/xt_sort.h"
 
+#include "xt_config_internal.h"
+
 struct xt_idxlist_f {
    Xt_idxlist cptr;
 };
 
 struct xt_xmap_f {
    Xt_xmap cptr;
+};
+
+struct xt_config_f {
+  Xt_config cptr;
 };
 
 struct xt_redist_f {
@@ -153,6 +159,11 @@ Xt_idxlist xt_idxlist_f2c(struct xt_idxlist_f *p)
 }
 
 Xt_redist xt_redist_f2c(struct xt_redist_f *p)
+{
+  return p->cptr;
+}
+
+Xt_config xt_config_f2c(struct xt_config_f *p)
 {
   return p->cptr;
 }
@@ -246,16 +257,71 @@ Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,
                                       datatype_c);
 }
 
+Xt_redist
+xt_redist_p2p_blocks_off_custom_new_f(struct xt_xmap_f *xmap_f,
+                                      int *src_block_offsets,
+                                      int *src_block_sizes,
+                                      int src_block_num,
+                                      int *dst_block_offsets,
+                                      int *dst_block_sizes,
+                                      int dst_block_num,
+                                      MPI_Fint datatype_f,
+                                      struct xt_config_f *config)
+{
+  MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
+
+  return xt_redist_p2p_blocks_off_custom_new(
+    xmap_f->cptr, src_block_offsets, src_block_sizes, src_block_num,
+    dst_block_offsets, dst_block_sizes, dst_block_num, datatype_c,
+    config->cptr);
+}
+
 Xt_redist xt_redist_p2p_blocks_new_f(struct xt_xmap_f *xmap_f,
                                      int *src_block_sizes, int src_block_num,
                                      int *dst_block_sizes, int dst_block_num,
                                      MPI_Fint datatype_f) {
   MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
 
-  return xt_redist_p2p_blocks_new(xmap_f->cptr,
-                                  src_block_sizes, src_block_num,
-                                  dst_block_sizes, dst_block_num,
-                                  datatype_c);
+  return xt_redist_p2p_blocks_new(
+    xmap_f->cptr, src_block_sizes, src_block_num,
+    dst_block_sizes, dst_block_num, datatype_c);
+}
+
+Xt_redist
+xt_redist_p2p_blocks_custom_new_f(struct xt_xmap_f *xmap_f,
+                                  int *src_block_sizes, int src_block_num,
+                                  int *dst_block_sizes, int dst_block_num,
+                                  MPI_Fint datatype_f,
+                                  struct xt_config_f *config)
+{
+  MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
+
+  return xt_redist_p2p_blocks_custom_new(
+    xmap_f->cptr, src_block_sizes, src_block_num,
+    dst_block_sizes, dst_block_num, datatype_c, config->cptr);
+}
+
+Xt_redist
+xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
+                          int num_src_ext, struct Xt_offset_ext src_extents[],
+                          int num_dst_ext, struct Xt_offset_ext dst_extents[],
+                          MPI_Fint datatype_f)
+{
+  return xt_redist_p2p_ext_new(*xmap, num_src_ext, src_extents,
+                               num_dst_ext, dst_extents,
+                               MPI_Type_f2c(datatype_f));
+}
+
+Xt_redist
+xt_redist_p2p_ext_custom_new_c2f(
+  Xt_xmap *xmap,
+  int num_src_ext, struct Xt_offset_ext src_extents[],
+  int num_dst_ext, struct Xt_offset_ext dst_extents[],
+  MPI_Fint datatype_f, struct xt_config_f *config)
+{
+  return xt_redist_p2p_ext_custom_new(*xmap, num_src_ext, src_extents,
+                                      num_dst_ext, dst_extents,
+                                      MPI_Type_f2c(datatype_f), config->cptr);
 }
 
 Xt_redist
@@ -270,10 +336,30 @@ xt_redist_p2p_off_new_f(struct xt_xmap_f *xmap_f,
 }
 
 Xt_redist
+xt_redist_p2p_off_custom_new_f(struct xt_xmap_f *xmap_f,
+                               MPI_Fint *src_offsets, MPI_Fint *dst_offsets,
+                               MPI_Fint datatype_f, struct xt_config_f *config)
+{
+  MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
+  assert(sizeof (MPI_Fint) == sizeof (int));
+
+  return xt_redist_p2p_off_custom_new(xmap_f->cptr, src_offsets, dst_offsets,
+                                      datatype_c, config->cptr);
+}
+
+Xt_redist
 xt_redist_p2p_new_f(struct xt_xmap_f *xmap_f, MPI_Fint datatype_f) {
   MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
 
   return xt_redist_p2p_new(xmap_f->cptr, datatype_c);
+}
+
+Xt_redist
+xt_redist_p2p_custom_new_f(struct xt_xmap_f *xmap_f, MPI_Fint datatype_f,
+                           struct xt_config_f *config) {
+  MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
+
+  return xt_redist_p2p_custom_new(xmap_f->cptr, datatype_c, config->cptr);
 }
 
 Xt_redist
@@ -289,10 +375,26 @@ xt_redist_collection_static_new_f(Xt_redist *redists, MPI_Fint num_redists,
   if (num_redists < 1)
     Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
 
-  return xt_redist_collection_static_new(redists, (int)num_redists,
-                                         src_displacements,
-                                         dst_displacements,
-                                         comm_c);
+  return xt_redist_collection_static_new(
+    redists, (int)num_redists, src_displacements, dst_displacements, comm_c);
+}
+
+Xt_redist
+xt_redist_collection_static_custom_new_f(
+  Xt_redist *redists, MPI_Fint num_redists,
+  MPI_Aint *src_displacements, MPI_Aint *dst_displacements,
+  MPI_Fint comm_f, struct xt_config_f *config)
+{
+#if XT_MPI_FINT_MAX != INT_MAX
+  assert((long long)num_redists <= (long long)INT_MAX);
+#endif
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  if (num_redists < 1)
+    Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
+
+  return xt_redist_collection_static_custom_new(
+    redists, (int)num_redists, src_displacements, dst_displacements,
+    comm_c, config->cptr);
 }
 
 Xt_redist
@@ -308,6 +410,22 @@ xt_redist_collection_new_f(Xt_redist *redists, MPI_Fint num_redists,
     Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
   return xt_redist_collection_new(redists, (int)num_redists,
                                   (int)cache_size, comm_c);
+}
+
+Xt_redist
+xt_redist_collection_custom_new_f(Xt_redist *redists, MPI_Fint num_redists,
+                                  MPI_Fint cache_size, MPI_Fint comm_f,
+                                  struct xt_config_f *config)
+{
+#if XT_MPI_FINT_MAX != INT_MAX
+  assert((long long)num_redists <= (long long)INT_MAX
+         && (long long)cache_size <= (long long)INT_MAX);
+#endif
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  if (num_redists < 1)
+    Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
+  return xt_redist_collection_custom_new(redists, (int)num_redists,
+                                         (int)cache_size, comm_c, config->cptr);
 }
 
 static void
@@ -340,21 +458,10 @@ xt_redist_get_send_MPI_Datatype_c2f(Xt_redist *redist, MPI_Fint rank)
 }
 
 void *
-xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
-                          int num_src_ext, struct Xt_offset_ext src_extents[],
-                          int num_dst_ext, struct Xt_offset_ext dst_extents[],
-                          MPI_Fint datatype_f)
-{
-  return xt_redist_p2p_ext_new(*xmap, num_src_ext, src_extents,
-                               num_dst_ext, dst_extents,
-                               MPI_Type_f2c(datatype_f));
-}
-
-void *
-xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
-                                    const struct xt_redist_msg_f *send_msgs_f,
-                                    const struct xt_redist_msg_f *recv_msgs_f,
-                                    MPI_Fint comm_f)
+xt_redist_single_array_base_custom_new_c2f(
+  int nsend, int nrecv, const struct xt_redist_msg_f *send_msgs_f,
+  const struct xt_redist_msg_f *recv_msgs_f, MPI_Fint comm_f,
+  struct xt_config_f *config)
 {
   assert(nsend >= 0 && nrecv >= 0);
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
@@ -369,10 +476,21 @@ xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
     recv_msgs_c[i].rank = recv_msgs_f[i].rank;
     recv_msgs_c[i].datatype = MPI_Type_f2c(recv_msgs_f[i].datatype);
   }
-  void *redist = xt_redist_single_array_base_new(nsend, nrecv, send_msgs_c,
-                                                 recv_msgs_c, comm_c);
+  void *redist = xt_redist_single_array_base_custom_new(
+    nsend, nrecv, send_msgs_c, recv_msgs_c, comm_c, config->cptr);
   free(send_msgs_c);
   return redist;
+}
+
+void *
+xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
+                                    const struct xt_redist_msg_f *send_msgs_f,
+                                    const struct xt_redist_msg_f *recv_msgs_f,
+                                    MPI_Fint comm_f)
+{
+  return xt_redist_single_array_base_custom_new_c2f(
+    nsend, nrecv, send_msgs_f, recv_msgs_f, comm_f,
+    &(struct xt_config_f){ (Xt_config)&xt_default_config });
 }
 
 void *

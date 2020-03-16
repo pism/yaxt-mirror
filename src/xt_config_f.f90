@@ -58,7 +58,20 @@ MODULE xt_config_f
 #endif
     TYPE(c_ptr) :: cptr = c_null_ptr
   END TYPE xt_config
+
+  INTERFACE
+    ! this function must not be implemented in Fortran because
+    ! PGI 11.x chokes on that
+    FUNCTION xt_config_f2c(config) BIND(c, name='xt_config_f2c') RESULT(p)
+      IMPORT :: c_ptr, xt_config
+      IMPLICIT NONE
+      TYPE(xt_config), INTENT(in) :: config
+      TYPE(c_ptr) :: p
+    END FUNCTION xt_config_f2c
+  END INTERFACE
+
   PUBLIC :: xt_config_new, xt_config_delete
+  PUBLIC :: xt_config_f2c
   PUBLIC :: xt_config_get_exchange_method, xt_config_set_exchange_method
   INTEGER, PUBLIC, PARAMETER :: &
        xt_exchanger_irecv_send = 0, &

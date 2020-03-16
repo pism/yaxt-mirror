@@ -96,17 +96,20 @@ MODULE yaxt
        xt_xmap_intersection_ext_new, xt_com_list, &
        xt_xmap_intersection_pos_new, xt_com_pos
   USE xt_redist_base, ONLY: xt_redist, xt_redist_c2f, xt_redist_f2c, &
-       xt_redist_copy, &
+       xt_redist_copy, xt_redist_p2p_custom_new, &
        xt_redist_delete, xt_redist_s_exchange1, xt_redist_s_exchange, &
-       xt_redist_p2p_new, xt_redist_p2p_off_new, &
-       xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_off_new, &
+       xt_redist_p2p_off_new, xt_redist_p2p_off_custom_new, &
+       xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_custom_new, &
+       xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_off_custom_new, &
        xt_redist_collection_static_new, xt_redist_collection_new, &
        xt_redist_repeat_new, xt_is_null, xt_redist_get_mpi_comm, &
        xt_offset_ext, xt_redist_p2p_ext_new, xt_redist_msg, &
        xt_redist_a_exchange1, xt_redist_a_exchange, &
        xt_redist_single_array_base_new, &
+       xt_redist_single_array_base_custom_new, &
        xt_redist_get_recv_mpi_datatype, xt_redist_get_send_mpi_datatype, &
        xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg
+  USE xt_redist_rename, ONLY: xt_redist_p2p_new
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
@@ -159,9 +162,7 @@ MODULE yaxt
        xt_xmap_iterator_get_transfer_pos_ext, &
        xt_xmap_iterator_get_num_transfer_pos_ext, &
        xt_redist, xt_redist_f2c, xt_redist_c2f, &
-       xt_redist_p2p_off_new, xt_redist_p2p_new, &
-       xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new, &
-       xt_redist_msg, xt_redist_single_array_base_new, &
+       xt_redist_msg, &
        xt_offset_ext, xt_redist_p2p_ext_new, &
        xt_redist_repeat_new, xt_redist_copy, xt_redist_delete, &
        xt_redist_s_exchange1, xt_redist_s_exchange, &
@@ -182,6 +183,13 @@ MODULE yaxt
        xt_exchanger_irecv_send, xt_exchanger_irecv_isend, &
        xt_exchanger_irecv_isend_packed, xt_exchanger_mix_isend_irecv, &
        xt_exchanger_neigh_alltoall
+
+  PUBLIC :: xt_redist_p2p_new, xt_redist_p2p_custom_new
+  PUBLIC :: xt_redist_p2p_off_new, xt_redist_p2p_off_custom_new
+  PUBLIC :: xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_custom_new
+  PUBLIC :: xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_off_custom_new
+  PUBLIC :: xt_redist_single_array_base_new, &
+       xt_redist_single_array_base_custom_new
 
   INTERFACE OPERATOR(==)
     MODULE PROCEDURE xt_bounds_eq
