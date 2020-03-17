@@ -191,91 +191,76 @@ test_empty_redist(MPI_Comm comm)
 static void
 test_repeated_redist(MPI_Comm comm, int cache_size)
 {
-  Xt_xmap xmap = build_odd_selection_xmap(5);
+  enum { num_slice = 3,
+         src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
+  Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
 
   Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
   xt_xmap_delete(xmap);
 
   // generate redist_collection
-  Xt_redist redists[3] = {redist, redist, redist};
+  Xt_redist redists[num_slice] = {redist, redist, redist};
   Xt_redist redist_coll
-    = xt_redist_collection_new(redists, 3, cache_size, comm);
+    = xt_redist_collection_new(redists, num_slice, cache_size, comm);
 
   // test communicator of redist
-
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))
     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
   xt_redist_delete(redist);
 
   // test exchange
-  for (int sync_mode = 0; sync_mode < 2; ++sync_mode)
   {
-    static const double src_data[3][5]
+    static const double src_data[num_slice][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-    double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
+    static const double ref_dst_data[num_slice][dst_slice_len]
+      = {{1,3,5},{6,8,10},{11,13,15}};
+    double dst_data[num_slice][dst_slice_len];
 
-    static const void *const src_data_p[3]
-      = {src_data[0],src_data[1],src_data[2]};
-    void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
+    static const void *const src_data_p[num_slice]
+      = { src_data[0], src_data[1], src_data[2]};
+    void *dst_data_p[num_slice] = { dst_data[0], dst_data[1], dst_data[2] };
 
-    exchange_func_ptr exchange_func
-      = sync_mode == 0 ? xt_redist_s_exchange : wrap_a_exchange;
-    exchange_func(redist_coll, 3, (const void **)src_data_p, dst_data_p);
-
-    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-
-    for (size_t i = 0; i < 3; ++i)
-      for (size_t j = 0; j < 3; ++j)
-        if (ref_dst_data[i][j] != dst_data[i][j])
-          PUT_ERR("error in xt_redist_s_exchange\n");
+    check_redist_coll(redist_coll, sync_mode_test_all,
+                      num_slice, (const void **)src_data_p,
+                      num_slice * dst_slice_len, dst_data_p, dst_data[0],
+                      fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
+                      MPI_DOUBLE);
   }
-
   // test exchange with changed displacements
-  for (int sync_mode = 0; sync_mode < 2; ++sync_mode)
   {
-    static const double src_data[3][5]
+    static const double src_data[num_slice][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-    double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
-
-    static const void *const src_data_p[3]
+    static const double ref_dst_data[num_slice][dst_slice_len]
+      = {{1,3,5},{6,8,10},{11,13,15}};
+    double dst_data[num_slice][dst_slice_len];
+    static const void *const src_data_p[num_slice]
       = {src_data[1],src_data[0],src_data[2]};
-    void *dst_data_p[3] = {dst_data[1],dst_data[0],dst_data[2]};
+    void *dst_data_p[num_slice] = { dst_data[1], dst_data[0], dst_data[2] };
 
-    exchange_func_ptr exchange_func
-      = sync_mode == 0 ? xt_redist_s_exchange : wrap_a_exchange;
-    exchange_func(redist_coll, 3, (const void **)src_data_p, dst_data_p);
-
-    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-
-    for (size_t i = 0; i < 3; ++i)
-      for (size_t j = 0; j < 3; ++j)
-        if (ref_dst_data[i][j] != dst_data[i][j])
-          PUT_ERR("error in xt_redist_s_exchange\n");
+    check_redist_coll(redist_coll, sync_mode_test_all,
+                      num_slice, (const void **)src_data_p,
+                      num_slice * dst_slice_len, dst_data_p, dst_data[0],
+                      fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
+                      MPI_DOUBLE);
   }
 
   // test exchange with original displacements
-  for (int sync_mode = 0; sync_mode < 2; ++sync_mode)
   {
-    static const double src_data[3][5]
+    static const double src_data[num_slice][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-    double dst_data[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
-
-    static const void *const src_data_p[3]
-      = {src_data[0],src_data[1],src_data[2]};
-    void *dst_data_p[3] = {dst_data[0],dst_data[1],dst_data[2]};
-
-    exchange_func_ptr exchange_func
-      = sync_mode == 0 ? xt_redist_s_exchange : wrap_a_exchange;
-    exchange_func(redist_coll, 3, (const void **)src_data_p, dst_data_p);
-
-    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-
-    for (size_t i = 0; i < 3; ++i)
-      for (size_t j = 0; j < 3; ++j)
-        if (ref_dst_data[i][j] != dst_data[i][j])
-          PUT_ERR("error in xt_redist_s_exchange\n");
+    static const double ref_dst_data[num_slice][dst_slice_len]
+      = {{1,3,5},{6,8,10},{11,13,15}};
+    double dst_data[num_slice][3];
+    static const void *const src_data_p[num_slice]
+      = { src_data[0], src_data[1], src_data[2] };
+    void *dst_data_p[num_slice] = { dst_data[0], dst_data[1], dst_data[2] };
+    check_redist_coll(redist_coll, sync_mode_test_all,
+                      num_slice, (const void **)src_data_p,
+                      num_slice * dst_slice_len, dst_data_p, dst_data[0],
+                      fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
+                      MPI_DOUBLE);
   }
 
   // clean up
@@ -291,38 +276,47 @@ run_displacement_check(Xt_redist redist_coll, int sync)
 {
   static const double src_data[num_redists][nvalues]
     = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-  double dst_data[num_redists][nselect] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 
   enum { cache_size = 16, cache_overrun = 2 };
 
-  double src_data_[nvalues + cache_size + cache_overrun],
-    dst_data_[nselect + cache_size + cache_overrun];
+  double src_data_[nvalues + cache_size + cache_overrun];
+  enum {
+    num_dst_elems = num_redists * nselect + cache_size + cache_overrun
+  };
+  double dst_data[num_dst_elems];
 
   const void *src_data_p[num_redists] = {src_data[0],src_data[1],NULL};
-  void *dst_data_p[num_redists] = {dst_data[0],dst_data[1],NULL};
+  void *dst_data_p[num_redists] = {dst_data+0,dst_data+nselect,NULL};
+
+  double ref_dst_data[num_dst_elems];
+  for (size_t j = 0; j < num_redists-1; ++j)
+    for (size_t i = 0; i < nselect; ++i)
+      ref_dst_data[j*nselect + i] = src_data[j][i*2];
 
   for (size_t k = 0; k < cache_size + cache_overrun; ++k) {
 
-    memcpy(src_data_+k, src_data[2], 5 * sizeof(*src_data_));
-    for (size_t i = 0; i < num_redists; ++i)
-      for (size_t j = 0; j < nselect; ++j)
-        dst_data[i][j] = -1;
-    memcpy(dst_data_+k, dst_data[2], 3 * sizeof(*dst_data_));
+    memcpy(src_data_+k, src_data[2], nvalues * sizeof(*src_data_));
+    for (size_t i = 0; i < num_dst_elems; ++i)
+      dst_data[i] = -1;
 
-    src_data_p[2] = src_data_+k;
-    dst_data_p[2] = dst_data_+k;
+    src_data_p[2] = src_data_ + k;
+    dst_data_p[2] = dst_data + nselect*2 + k;
 
-    exchange_func_ptr exchange_func
-      = sync ? xt_redist_s_exchange : wrap_a_exchange;
-    exchange_func(redist_coll, num_redists, src_data_p, dst_data_p);
-
-    static const double ref_dst_data[num_redists][nselect]
-      = {{1,3,5},{6,8,10},{11,13,15}};
-
-    for (size_t i = 0; i < num_redists; ++i)
-      for (size_t j = 0; j < nselect; ++j)
-        if (ref_dst_data[i][j] != ((double *)dst_data_p[i])[j])
-          PUT_ERR("error in xt_redist_s_exchange\n");
+    /* put every second value from src_data[3] into ref_dst_data
+     * starting at (num_redists-1)*nselect + k, i.e. with offset k
+     * vs. a contiguous transformation */
+    for (size_t i = 0; i < k; ++i)
+      ref_dst_data[(num_redists-1)*nselect + i] = -1;
+    for (size_t i = 0; i < nselect; ++i)
+      ref_dst_data[(num_redists-1)*nselect + k + i]
+        = src_data[num_redists-1][i*2];
+    for (size_t i = num_redists*nselect + k; i < num_dst_elems; ++i)
+      ref_dst_data[i] = -1;
+    check_redist_coll(redist_coll,
+                      sync ? sync_mode_test_s : sync_mode_test_a,
+                      num_redists, src_data_p, num_dst_elems, dst_data_p,
+                      dst_data, fill_array_double, NULL, ref_dst_data,
+                      MPI_DOUBLE, MPI_DOUBLE);
   }
 }
 

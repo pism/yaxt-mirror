@@ -64,10 +64,18 @@ int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2);
 typedef void (*prepare_dst)(void *dst, const void *dst_prep_info,
                             size_t dst_num_elems);
 
+enum {
+  sync_mode_test_all,
+  sync_mode_test_a,
+  sync_mode_test_s
+};
+
 void
-check_redist_(Xt_redist redist, const void *src,
+check_redist_(Xt_redist redist, int sync_mode,
+              int num_redists, const void *src[num_redists],
               size_t dst_num_elems,
-              void *dst,
+              void *dst[num_redists],
+              void *dst_buf_base,
               prepare_dst dst_prep,
               const void *dst_prep_info,
               const void *ref_dst_data,
@@ -76,9 +84,23 @@ check_redist_(Xt_redist redist, const void *src,
 
 #define check_redist(redist, src, dst_size, dst, dst_prep, dst_prep_info, \
                      ref_dst_data, dst_data_dt, ref_dst_data_dt)        \
-  check_redist_(redist, src, dst_size, dst, dst_prep, dst_prep_info,    \
-                ref_dst_data, dst_data_dt, ref_dst_data_dt, __FILE__, __LINE__)
+  do {                                                                  \
+    void *dst_[1] = { dst };                                            \
+    const void *src_[1] = { src };                                      \
+    check_redist_(redist, sync_mode_test_all, 1, src_, dst_size, dst_,  \
+                  dst, dst_prep, dst_prep_info,                         \
+                  ref_dst_data, dst_data_dt, ref_dst_data_dt,           \
+                  __FILE__, __LINE__);                                  \
+  } while (0)
 
+#define check_redist_coll(redist, sync_mode, num_redists, src,          \
+                          dst_size, dst,                                \
+                          dst_buf_base, dst_prep, dst_prep_info,        \
+                          ref_dst_data, dst_data_dt, ref_dst_data_dt)   \
+  check_redist_(redist, sync_mode, num_redists, src, dst_size, dst,     \
+                dst_buf_base, dst_prep, dst_prep_info,                  \
+                ref_dst_data, dst_data_dt, ref_dst_data_dt,             \
+                __FILE__, __LINE__)
 void
 fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems);
 void

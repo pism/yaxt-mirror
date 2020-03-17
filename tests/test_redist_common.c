@@ -94,8 +94,12 @@ int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2) {
 }
 
 void
-check_redist_(Xt_redist redist, const void *src,
-              size_t dst_num_elems, void *dst,
+check_redist_(Xt_redist redist,
+              int sync_mode,
+              int num_redists,
+              const void *src[],
+              size_t dst_num_elems, void *dst[],
+              void *dst_buf_base,
               prepare_dst dst_prep,
               const void *dst_prep_info,
               const void *ref_dst_data,
@@ -111,39 +115,41 @@ check_redist_(Xt_redist redist, const void *src,
     dt_extent = (size_t)dt_extent_;
   }
   size_t dst_size = dst_num_elems * dt_extent;
-  for (int txmode = 0; txmode < 2; ++txmode) {
-    dst_prep(dst, dst_prep_info, dst_num_elems);
+  int start_txmode = sync_mode == sync_mode_test_a ? 1 : 0,
+    end_txmode = sync_mode == sync_mode_test_s ? 1 : 2;
+  for (int txmode = start_txmode; txmode < end_txmode; ++txmode) {
+    dst_prep(dst_buf_base, dst_prep_info, dst_num_elems);
     if (txmode == 0) {
-      xt_redist_s_exchange1(redist, src, dst);
+      xt_redist_s_exchange(redist, num_redists, src, dst);
     } else {
-      wrap_a_exchange1(redist, src, dst);
+      wrap_a_exchange(redist, num_redists, src, dst);
     }
     bool compare_failed = false;
     if (dst_data_dt == ref_dst_data_dt) {
-      compare_failed = memcmp(dst, ref_dst_data, dst_size);
+      compare_failed = memcmp(dst_buf_base, ref_dst_data, dst_size);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_INT) {
-      const double *dst_cmp = dst;
+      const double *dst_cmp = dst_buf_base;
       const int *ref_dst_cmp = ref_dst_data;
       for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG) {
-      const double *dst_cmp = dst;
+      const double *dst_cmp = dst_buf_base;
       const long *ref_dst_cmp = ref_dst_data;
       for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_SHORT) {
-      const double *dst_cmp = dst;
+      const double *dst_cmp = dst_buf_base;
       const short *ref_dst_cmp = ref_dst_data;
       for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG_LONG) {
-      const double *dst_cmp = dst;
+      const double *dst_cmp = dst_buf_base;
       const long long *ref_dst_cmp = ref_dst_data;
       for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE
                && ref_dst_data_dt == MPI_DATATYPE_NULL) {
-      const double *dst_cmp = dst;
+      const double *dst_cmp = dst_buf_base;
       for (size_t i = 0; i < dst_num_elems; ++i)
         compare_failed |= (dst_cmp[i] != (double)i);
     } else
