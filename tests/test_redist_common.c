@@ -196,6 +196,33 @@ fill_array_int(void *dst, const void *dst_prep_info, size_t dst_num_elems)
     a[i] = -1;
 }
 
+void
+fill_array_short(void *dst, const void *dst_prep_info, size_t dst_num_elems)
+{
+  (void)dst_prep_info;
+  short *restrict a = dst;
+  for (size_t i = 0; i < dst_num_elems; ++i)
+    a[i] = (short)-1;
+}
+
+void
+fill_array_long_long(void *dst, const void *dst_prep_info, size_t dst_num_elems)
+{
+  (void)dst_prep_info;
+  long long *restrict a = dst;
+  for (size_t i = 0; i < dst_num_elems; ++i)
+    a[i] = -1;
+}
+
+void
+fill_array_xt_int(void *dst, const void *dst_prep_info, size_t dst_num_elems)
+{
+  (void)dst_prep_info;
+  Xt_int *restrict a = dst;
+  for (size_t i = 0; i < dst_num_elems; ++i)
+    a[i] = (Xt_int)-1;
+}
+
 
 void
 check_wait_request_(Xt_request *request, const char *file, int line)

@@ -109,6 +109,16 @@ void
 fill_array_long(void *dst, const void *dst_prep_info, size_t dst_num_elems);
 void
 fill_array_int(void *dst, const void *dst_prep_info, size_t dst_num_elems);
+void
+fill_array_short(void *dst, const void *dst_prep_info, size_t dst_num_elems);
+void
+fill_array_long_long(void *dst, const void *dst_prep_info,
+                     size_t dst_num_elems);
+void
+fill_array_xt_int(void *dst, const void *dst_prep_info,
+                  size_t dst_num_elems);
+
+
 
 void
 test_redist_single_array_base_(int nsend, const struct Xt_redist_msg *send_msgs,

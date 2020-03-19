@@ -298,29 +298,6 @@ check_4redist_result(int comm_size, void *results[4],
 enum { elems_per_rank = 5, };
 
 static void
-rr_exchange(Xt_redist redist,
-            const Xt_int src_indices_[elems_per_rank],
-            const Xt_int dst_indices_[2][elems_per_rank],
-            int sync)
-{
-  Xt_int results_[2][elems_per_rank] = { {-1,-1,-1,-1,-1}, {-1,-1,-1,-1,-1} };
-  void *results[2] = {results_[0], results_[1]};
-  const void *input[2] = {src_indices_, src_indices_};
-
-  exchange_func_ptr exchange_func
-    = sync ? xt_redist_s_exchange : wrap_a_exchange;
-  exchange_func(redist, 2, input, results);
-
-  // check results
-  for (int i = 0; i < elems_per_rank; ++i) {
-    if (results_[0][i] != dst_indices_[0][i])
-      PUT_ERR("error on xt_redist_s_exchange\n");
-    if (results_[1][i] != dst_indices_[1][i])
-      PUT_ERR("error on xt_redist_s_exchange\n");
-  }
-}
-
-static void
 test_rr_redist(MPI_Comm comm)
 {
   int comm_rank, comm_size;
@@ -368,17 +345,20 @@ test_rr_redist(MPI_Comm comm)
   xt_redist_delete(redists[0]);
   xt_redist_delete(redists[1]);
 
-  rr_exchange(redist, src_indices_,
-              (const Xt_int (*)[elems_per_rank])dst_indices_, 0);
-  rr_exchange(redist, src_indices_,
-              (const Xt_int (*)[elems_per_rank])dst_indices_, 1);
+  Xt_int results_[2][elems_per_rank];
+  void *results[2] = {results_[0], results_[1]};
+  const void *input[2] = {src_indices_, src_indices_};
+  check_redist_coll(redist, sync_mode_test_all,
+                    2, input, 2 * elems_per_rank, results,
+                    results_, fill_array_xt_int, NULL,
+                    dst_indices_, Xt_int_dt, Xt_int_dt);
 
   Xt_redist redist_copy = xt_redist_copy(redist);
   xt_redist_delete(redist);
-  rr_exchange(redist_copy, src_indices_,
-              (const Xt_int (*)[elems_per_rank])dst_indices_, 0);
-  rr_exchange(redist_copy, src_indices_,
-              (const Xt_int (*)[elems_per_rank])dst_indices_, 1);
+  check_redist_coll(redist_copy, sync_mode_test_all,
+                    2, input, 2 * elems_per_rank, results,
+                    results_, fill_array_xt_int, NULL,
+                    dst_indices_, Xt_int_dt, Xt_int_dt);
 
   // clean up
   xt_redist_delete(redist_copy);
