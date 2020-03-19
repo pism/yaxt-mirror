@@ -306,7 +306,7 @@ test_rr_redist(MPI_Comm comm)
 
   // redist test with two redists that do a round robin exchange in
   // different directions
-  Xt_idxlist src_indices, dst_indices[2];
+  Xt_idxlist src_indices;
 
   Xt_int src_indices_[elems_per_rank], dst_indices_[2][elems_per_rank];
 
@@ -320,30 +320,23 @@ test_rr_redist(MPI_Comm comm)
   }
 
   src_indices = xt_idxvec_new(src_indices_, elems_per_rank);
-  dst_indices[0] = xt_idxvec_new(dst_indices_[0], elems_per_rank);
-  dst_indices[1] = xt_idxvec_new(dst_indices_[1], elems_per_rank);
-
-  Xt_xmap xmaps[2] = {xt_xmap_all2all_new(src_indices, dst_indices[0], comm),
-                      xt_xmap_all2all_new(src_indices, dst_indices[1], comm)};
-
+  Xt_redist redists[2];
+  for (size_t i = 0; i < 2; ++i) {
+    Xt_idxlist dst_indices = xt_idxvec_new(dst_indices_[i], elems_per_rank);
+    Xt_xmap xmap = xt_xmap_all2all_new(src_indices, dst_indices, comm);
+    xt_idxlist_delete(dst_indices);
+    redists[i] = xt_redist_p2p_new(xmap, Xt_int_dt);
+    xt_xmap_delete(xmap);
+  }
   xt_idxlist_delete(src_indices);
-  xt_idxlist_delete(dst_indices[0]);
-  xt_idxlist_delete(dst_indices[1]);
-
-  Xt_redist redists[2] = {xt_redist_p2p_new(xmaps[0], Xt_int_dt),
-                          xt_redist_p2p_new(xmaps[1], Xt_int_dt)};
-
-  xt_xmap_delete(xmaps[0]);
-  xt_xmap_delete(xmaps[1]);
-
   Xt_redist redist = xt_redist_collection_new(redists, 2, -1, comm);
 
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-  xt_redist_delete(redists[0]);
-  xt_redist_delete(redists[1]);
+  for (size_t i = 0; i < 2; ++i)
+    xt_redist_delete(redists[i]);
 
   Xt_int results_[2][elems_per_rank];
   void *results[2] = {results_[0], results_[1]};
