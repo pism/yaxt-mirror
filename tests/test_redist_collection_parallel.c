@@ -306,8 +306,6 @@ test_rr_redist(MPI_Comm comm)
 
   // redist test with two redists that do a round robin exchange in
   // different directions
-  Xt_idxlist src_indices;
-
   Xt_int src_indices_[elems_per_rank], dst_indices_[2][elems_per_rank];
 
   for (Xt_int i = 0; i < elems_per_rank; ++i) {
@@ -319,7 +317,7 @@ test_rr_redist(MPI_Comm comm)
       = (Xt_int)((temp < 0)?(comm_size * elems_per_rank - 1):temp);
   }
 
-  src_indices = xt_idxvec_new(src_indices_, elems_per_rank);
+  Xt_idxlist src_indices = xt_idxvec_new(src_indices_, elems_per_rank);
   Xt_redist redists[2];
   for (size_t i = 0; i < 2; ++i) {
     Xt_idxlist dst_indices = xt_idxvec_new(dst_indices_[i], elems_per_rank);

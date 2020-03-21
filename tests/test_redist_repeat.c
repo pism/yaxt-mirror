@@ -157,7 +157,6 @@ int main(void) {
     // generate redist_repetition
 
     enum { num_repetitions = 3 };
-    Xt_redist redist_repeat;
     static const double src_data[num_repetitions][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[num_repetitions][dst_slice_len];
@@ -168,9 +167,10 @@ int main(void) {
     int src_displacements[num_repetitions] = {0, 1, 2};
     int dst_displacements[num_repetitions] = {2, 1, 0};
 
-    redist_repeat = xt_redist_repeat_asym_new(redist, src_extent, dst_extent,
-                                              num_repetitions, src_displacements,
-                                              dst_displacements);
+    Xt_redist redist_repeat
+      = xt_redist_repeat_asym_new(redist, src_extent, dst_extent,
+                                  num_repetitions, src_displacements,
+                                  dst_displacements);
 
     // test communicator of redist
 
