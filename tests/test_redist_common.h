@@ -168,6 +168,8 @@ check_wait_request_(Xt_request *request, const char *file, int line);
 int
 exchanger_id_by_name(const char *name);
 
+Xt_config
+redist_exchanger_option(int *argc, char ***argv);
 
 #endif
 /*

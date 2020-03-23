@@ -48,6 +48,7 @@
 #endif
 
 #include <string.h>
+#include <unistd.h>
 
 #include "yaxt.h"
 #include "tests.h"
@@ -276,6 +277,33 @@ exchanger_id_by_name(const char *name)
     exchanger_new = -1;
   return exchanger_new;
 }
+
+Xt_config
+redist_exchanger_option(int *argc, char ***argv)
+{
+  Xt_config config = xt_config_new();
+  int opt;
+  while ((opt = getopt(*argc, *argv, "m:")) != -1)
+    switch (opt) {
+    case 'm':
+      {
+        int exchanger_id = exchanger_id_by_name(optarg);
+        if (exchanger_id != -1)
+          xt_config_set_exchange_method(config, exchanger_id);
+        else {
+          fprintf(stderr, "error: unexpected command-line argument for "
+                  "option -m: %s\n", optarg);
+          xt_config_delete(config);
+          return NULL;
+        }
+      }
+    case '?':
+      break;
+    }
+  return config;
+}
+
+
 
 /*
  * Local Variables:

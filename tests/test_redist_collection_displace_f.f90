@@ -52,7 +52,7 @@ MODULE redist_collection_displace
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        Xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
-       xt_request, xt_redist_a_exchange
+       xt_request, xt_redist_a_exchange, xt_config
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
@@ -82,13 +82,15 @@ CONTAINS
   ! test with one redist used three times (with different input
   ! data displacements until the cache is full)
   ! set up data
-  SUBROUTINE test_displacement_variations
+  SUBROUTINE test_displacement_variations(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redists(num_slice), redist_coll, &
          redist_coll_copy
 
     xmap = build_odd_selection_xmap(src_slice_len)
-    redist = xt_redist_p2p_new(xmap, mpi_double_precision)
+    redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
 
     CALL xt_xmap_delete(xmap)
 
@@ -96,7 +98,7 @@ CONTAINS
     redists = redist
 
     redist_coll = xt_redist_collection_new(redists, num_slice, &
-         cache_size, mpi_comm_world)
+         cache_size, comm, config)
 
     CALL xt_redist_delete(redist)
 

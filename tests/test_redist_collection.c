@@ -57,19 +57,19 @@
 #include "core/ppm_xfuncs.h"
 
 static void
-simple_test(MPI_Comm comm);
+simple_test(MPI_Comm comm, Xt_config config);
 
 static void
-test_empty_redist(MPI_Comm comm);
+test_empty_redist(MPI_Comm comm, Xt_config config);
 
 static void
-test_repeated_redist(MPI_Comm comm, int cache_size);
+test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size);
 
 static void
-test_displacement_variations(MPI_Comm comm);
+test_displacement_variations(MPI_Comm comm, Xt_config config);
 
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
@@ -77,22 +77,25 @@ int main(void) {
 
   xt_initialize(MPI_COMM_WORLD);
 
-  simple_test(MPI_COMM_WORLD);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
-  test_empty_redist(MPI_COMM_WORLD);
+  simple_test(MPI_COMM_WORLD, config);
+
+  test_empty_redist(MPI_COMM_WORLD, config);
 
   // test with one redist used three times (with two different input data
   // displacements -> test of cache) (with default cache size)
   // set up data
-  test_repeated_redist(MPI_COMM_WORLD, -1);
+  test_repeated_redist(MPI_COMM_WORLD, config, -1);
 
   // test with one redist used three times (with two different input data
   // displacements -> test of cache) (with cache size == 0)
   // set up data
-  test_repeated_redist(MPI_COMM_WORLD, 0);
+  test_repeated_redist(MPI_COMM_WORLD, config, 0);
 
-  test_displacement_variations(MPI_COMM_WORLD);
+  test_displacement_variations(MPI_COMM_WORLD, config);
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
@@ -100,7 +103,7 @@ int main(void) {
 }
 
 static void
-simple_test(MPI_Comm comm)
+simple_test(MPI_Comm comm, Xt_config config)
 { // general test with one redist
   // set up data
   enum { nvalues = 5, nselect = (nvalues + 1)/2 };
@@ -113,7 +116,7 @@ simple_test(MPI_Comm comm)
   // generate redist_collection
 
   Xt_redist redist_coll
-    = xt_redist_collection_new(&redist, 1, -1, comm);
+    = xt_redist_collection_custom_new(&redist, 1, -1, comm, config);
 
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))
@@ -141,7 +144,7 @@ simple_test(MPI_Comm comm)
 }
 
 static void
-test_empty_redist(MPI_Comm comm)
+test_empty_redist(MPI_Comm comm, Xt_config config)
 { // test empty redist
   Xt_idxlist src_idxlist = xt_idxempty_new();
   Xt_idxlist dst_idxlist = xt_idxempty_new();
@@ -155,7 +158,8 @@ test_empty_redist(MPI_Comm comm)
   xt_xmap_delete(xmap);
 
   // generate redist_collection
-  Xt_redist redist_coll = xt_redist_collection_new(&redist, 1, -1, comm);
+  Xt_redist redist_coll
+    = xt_redist_collection_custom_new(&redist, 1, -1, comm, config);
 
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))
@@ -189,7 +193,7 @@ test_empty_redist(MPI_Comm comm)
 
 
 static void
-test_repeated_redist(MPI_Comm comm, int cache_size)
+test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
 {
   enum { num_slice = 3,
          src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
@@ -202,7 +206,8 @@ test_repeated_redist(MPI_Comm comm, int cache_size)
   // generate redist_collection
   Xt_redist redists[num_slice] = {redist, redist, redist};
   Xt_redist redist_coll
-    = xt_redist_collection_new(redists, num_slice, cache_size, comm);
+    = xt_redist_collection_custom_new(redists, num_slice, cache_size, comm,
+                                      config);
 
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))
@@ -322,7 +327,7 @@ run_displacement_check(Xt_redist redist_coll, int sync)
 
 
 static void
-test_displacement_variations(MPI_Comm comm)
+test_displacement_variations(MPI_Comm comm, Xt_config config)
 {
   // test with one redist used three times (with different input
   // data displacements until the cache is full)
@@ -338,7 +343,7 @@ test_displacement_variations(MPI_Comm comm)
   Xt_redist redists[num_redists] = {redist, redist, redist};
 
   Xt_redist redist_coll
-    = xt_redist_collection_new(redists, num_redists, -1, comm);
+    = xt_redist_collection_custom_new(redists, num_redists, -1, comm, config);
 
   // test communicator of redist
 

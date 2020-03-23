@@ -47,7 +47,7 @@
 !
 MODULE test_redist_common
   USE xt_core, ONLY: i2, i4, i8
-  USE iso_c_binding, ONLY: c_loc
+  USE iso_c_binding, ONLY: c_loc, c_int, c_char, c_null_char
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_msg, xt_redist_copy, &
@@ -56,7 +56,8 @@ MODULE test_redist_common
        xt_redist_a_exchange1, xt_redist_get_mpi_comm, &
        xt_request, xt_request_wait, xt_request_test, xt_is_null, &
        xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg, &
-       xi => xt_int_kind
+       xi => xt_int_kind, xt_config, xt_config_new, &
+       xt_config_set_exchange_method
 #ifdef __PGI
   ! PGI up to at least 15.4 has a bug that prevents proper import of
   ! multiply extended generics. This is a separate bug from the one exhibited
@@ -108,6 +109,7 @@ MODULE test_redist_common
   PUBLIC :: build_odd_selection_xmap, check_redist, communicators_are_congruent
   PUBLIC :: check_wait_request, check_test_request, check_redist_xi
   PUBLIC :: test_redist_single_array_base
+  PUBLIC :: redist_exchanger_option
 
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_common_f.f90'
 
@@ -573,6 +575,53 @@ CONTAINS
     CALL xt_redist_delete(redist_copy)
 
   END SUBROUTINE check_redist_extended_dp
+
+  FUNCTION redist_exchanger_option() RESULT(config)
+    TYPE(xt_config) :: config
+    INTEGER :: i, j, num_cmd_args, arg_len
+    INTEGER(c_int) :: exchanger_id
+    INTEGER, PARAMETER :: max_opt_arg_len = 80
+    CHARACTER(max_opt_arg_len) :: optarg
+    CHARACTER(len=1, kind=c_char) :: optarg_c(max_opt_arg_len+1)
+    INTERFACE
+      FUNCTION exchanger_id_by_name(name) RESULT(exchanger_id) &
+           BIND(c, name='exchanger_id_by_name')
+        IMPORT :: c_char, c_int
+        CHARACTER(len=1, kind=c_char), INTENT(in) :: name(*)
+        INTEGER(c_int) :: exchanger_id
+      END FUNCTION exchanger_id_by_name
+    END INTERFACE
+    config = xt_config_new()
+    num_cmd_args = COMMAND_ARGUMENT_COUNT()
+    i = 1
+    DO WHILE (i < num_cmd_args)
+      CALL GET_COMMAND_ARGUMENT(i, optarg, arg_len)
+      IF (optarg(1:2) == '-m' .AND. i < num_cmd_args .AND. arg_len == 2) THEN
+        CALL GET_COMMAND_ARGUMENT(i + 1, optarg, arg_len)
+        IF (arg_len > max_opt_arg_len) &
+             CALL test_abort('incorrect argument to command-line option -s', &
+             filename, __LINE__)
+        DO j = 1, arg_len
+          optarg_c(j) = optarg(j:j)
+        END DO
+        optarg_c(arg_len+1) = c_null_char
+        exchanger_id = exchanger_id_by_name(optarg_c)
+        IF (exchanger_id == -1_c_int) THEN
+          WRITE (0, *) 'arg to -m: ', optarg(1:arg_len)
+          CALL test_abort('incorrect argument to command-line option -m', &
+               filename, __LINE__)
+        END IF
+        CALL xt_config_set_exchange_method(config, INT(exchanger_id))
+        i = i + 2
+      ELSE
+        WRITE (0, *) 'unexpected command-line argument parsing error: ', &
+             optarg(1:arg_len)
+        FLUSH(0)
+        CALL test_abort('unexpected command-line argument', &
+             filename, __LINE__)
+      END IF
+    END DO
+  END FUNCTION redist_exchanger_option
 
 END MODULE test_redist_common
 !
