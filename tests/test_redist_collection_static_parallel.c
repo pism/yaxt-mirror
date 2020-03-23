@@ -227,11 +227,11 @@ int main(void) {
         xt_xmap_delete(xmaps[i]);
       }
 
-      Xt_int results_1[partSize], results_2[partSize];
+      Xt_int results[2][partSize];
 
-      MPI_Aint src_displacements[numExch] = {0, 0};
-      MPI_Aint dst_displacements[numExch]
-        = {0, (MPI_Aint)((size_t)(results_2-results_1)*sizeof(Xt_int))};
+      MPI_Aint src_displacements[numExch] = {0, 0},
+        ofs = (MPI_Aint)((size_t)(results[0]-results[1])*sizeof(Xt_int)),
+        dst_displacements[numExch] = {0, ofs};
 
       Xt_redist redist
         = xt_redist_collection_static_new(redists, numExch, src_displacements,
@@ -248,20 +248,17 @@ int main(void) {
 
       for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
 
-        for (int i = 0; i < partSize; ++i) {
-          results_1[i] = -1;
-          results_2[i] = -1;
-        }
+        fill_array_xt_int(results, NULL, 2 * partSize);
 
         exchange1_func_ptr exchange1_func
           = sync_mode == 0 ? xt_redist_s_exchange1 : wrap_a_exchange1;
-        exchange1_func(redist, (void*)src_indices_, (void*)results_1);
+        exchange1_func(redist, (void*)src_indices_, (void*)results[1]);
 
         // check results
 
         for (int i = 0; i < partSize; ++i)
-          if (results_1[i] != dst_indices_[0][i]
-              || results_2[i] != dst_indices_[1][i])
+          if (results[1][i] != dst_indices_[0][i]
+              || results[0][i] != dst_indices_[1][i])
             PUT_ERR("error on xt_redist_s_exchange\n");
       }
 
@@ -286,7 +283,7 @@ test_transpose_gather(Xt_redist redist,
 {
   for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
 
-    memset(dst, 0, size_b + size_a + 2 * size_all);
+    fill_array_xt_int(dst, NULL, size_b + size_a + 2 * size_all);
 
     exchange1_func_ptr exchange1_func
       = sync_mode == 0 ? xt_redist_s_exchange1 : wrap_a_exchange1;
