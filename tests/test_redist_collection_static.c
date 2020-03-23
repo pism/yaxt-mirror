@@ -76,11 +76,10 @@ int main(void) {
     // generate redist_collection
 
     Xt_redist redist_coll;
-    MPI_Aint src_displacements[1] = {0};
-    MPI_Aint dst_displacements[1] = {0};
+    static const MPI_Aint displacements[1] = {0};
 
-    redist_coll = xt_redist_collection_static_new(&redist, 1, src_displacements,
-                                                  dst_displacements,
+    redist_coll = xt_redist_collection_static_new(&redist, 1, displacements,
+                                                  displacements,
                                                   MPI_COMM_WORLD);
 
     // test communicator of redist
