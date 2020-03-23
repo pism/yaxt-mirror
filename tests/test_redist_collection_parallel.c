@@ -67,28 +67,29 @@ enum {
 };
 
 static void
-test_4redist(MPI_Comm comm);
+test_4redist(MPI_Comm comm, Xt_config config);
 
 static void
-test_rr_redist(MPI_Comm comm);
+test_rr_redist(MPI_Comm comm, Xt_config config);
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
   int comm_size;
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &comm_size), MPI_COMM_WORLD);
 
   if (comm_size > 1) {
+    test_4redist(MPI_COMM_WORLD, config);
 
-    test_4redist(MPI_COMM_WORLD);
-
-    test_rr_redist(MPI_COMM_WORLD);
+    test_rr_redist(MPI_COMM_WORLD, config);
   }
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
@@ -103,7 +104,7 @@ exchange_4redist(Xt_redist redist, MPI_Comm comm,
                  int sync);
 
 static void
-test_4redist(MPI_Comm comm)
+test_4redist(MPI_Comm comm, Xt_config config)
 {
   int comm_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
@@ -122,16 +123,15 @@ test_4redist(MPI_Comm comm)
       = { (Xt_int)((Xt_int)2 * comm_size), (Xt_int)((Xt_int)comm_size_sq) };
     int local_size[2] = { comm_size, comm_size };
     Xt_int local_start[2][2] = {
-      {0, (Xt_int)((Xt_int)comm_rank * comm_size)},
+      { 0, (Xt_int)((Xt_int)comm_rank * comm_size) },
       { (Xt_int)comm_size,
         (Xt_int)((Xt_int)comm_size_sq - (Xt_int)(comm_rank+1) * comm_size) }
     };
 
-    Xt_idxlist indices_a_[2]
-      = { [0] = xt_idxsection_new(start, 2, global_size, local_size,
-                                  local_start[0]),
-          [1] = xt_idxsection_new(start, 2, global_size, local_size,
-                                  local_start[1]) };
+    Xt_idxlist indices_a_[2];
+    for (size_t i = 0; i < 2; ++i)
+      indices_a_[i] = xt_idxsection_new(start, 2, global_size, local_size,
+                                        local_start[i]);
 
     indices_a = xt_idxlist_collection_new(indices_a_, 2);
 
@@ -185,8 +185,8 @@ test_4redist(MPI_Comm comm)
   for (size_t i = 0; i < num_redists; ++i)
     xt_xmap_delete(xmaps[i]);
 
-  Xt_redist redist = xt_redist_collection_new(redists, num_redists, -1,
-                                              comm);
+  Xt_redist redist = xt_redist_collection_custom_new(redists, num_redists, -1,
+                                                     comm, config);
 
   // test communicator of redist
 
@@ -298,7 +298,7 @@ check_4redist_result(int comm_size, void *results[4],
 enum { elems_per_rank = 5, };
 
 static void
-test_rr_redist(MPI_Comm comm)
+test_rr_redist(MPI_Comm comm, Xt_config config)
 {
   int comm_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
@@ -327,7 +327,8 @@ test_rr_redist(MPI_Comm comm)
     xt_xmap_delete(xmap);
   }
   xt_idxlist_delete(src_indices);
-  Xt_redist redist = xt_redist_collection_new(redists, 2, -1, comm);
+  Xt_redist redist = xt_redist_collection_custom_new(redists, 2, -1, comm,
+                                                     config);
 
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
