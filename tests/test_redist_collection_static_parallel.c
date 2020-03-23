@@ -61,11 +61,11 @@
 #include "test_redist_common.h"
 
 static void
-test_4redist(MPI_Comm comm);
+test_4redist(MPI_Comm comm, Xt_config config);
 static void
-test_rr_exchange(MPI_Comm comm);
+test_rr_exchange(MPI_Comm comm, Xt_config config);
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
@@ -74,15 +74,17 @@ int main(void) {
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &comm_size), MPI_COMM_WORLD);
 
   if (comm_size > 1) {
 
-    test_4redist(MPI_COMM_WORLD);
-    test_rr_exchange(MPI_COMM_WORLD);
+    test_4redist(MPI_COMM_WORLD, config);
+    test_rr_exchange(MPI_COMM_WORLD, config);
   }
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
@@ -97,7 +99,7 @@ test_transpose_gather(Xt_redist redist,
                       const Xt_int *index_vector_b);
 
 static void
-test_4redist(MPI_Comm comm)
+test_4redist(MPI_Comm comm, Xt_config config)
 { // redist test with four different redists
   Xt_idxlist indices_a, indices_b, indices_all;
   int comm_size, comm_rank;
@@ -180,9 +182,8 @@ test_4redist(MPI_Comm comm)
        (MPI_Aint)((size_t)(results_3 - results_1) * sizeof(Xt_int)),
        (MPI_Aint)((size_t)(results_4 - results_1) * sizeof(Xt_int))};
 
-  Xt_redist redist
-    = xt_redist_collection_static_new(redists, 4, src_displacements,
-                                      dst_displacements, comm);
+  Xt_redist redist = xt_redist_collection_static_custom_new(
+    redists, 4, src_displacements, dst_displacements, comm, config);
 
   // test communicator of redist
 
@@ -242,7 +243,7 @@ test_transpose_gather(Xt_redist redist,
 }
 
 static void
-test_rr_exchange(MPI_Comm comm)
+test_rr_exchange(MPI_Comm comm, Xt_config config)
 { // redist test with two redists that do a round robin exchange in
   // different directions
 
@@ -284,17 +285,15 @@ test_rr_exchange(MPI_Comm comm)
     ofs = (MPI_Aint)((size_t)(results[0]-results[1])*sizeof(Xt_int)),
     dst_displacements[numExch] = {0, ofs};
 
-  Xt_redist redist
-    = xt_redist_collection_static_new(redists, numExch, src_displacements,
-                                      dst_displacements, comm);
+  Xt_redist redist = xt_redist_collection_static_custom_new(
+    redists, numExch, src_displacements, dst_displacements, comm, config);
+  xt_redist_delete(redists[0]);
+  xt_redist_delete(redists[1]);
 
   // test communicator of redist
-
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-  xt_redist_delete(redists[0]);
-  xt_redist_delete(redists[1]);
 
   for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
 
