@@ -97,15 +97,14 @@ int main(void) {
           = {{0, (Xt_int)(rank*size)},
              {(Xt_int)size, (Xt_int)(size*size-(rank+1)*size)}};
 
-        indices_a_[0] = xt_idxsection_new(start, 2, global_size, local_size,
-                                          local_start[0]);
-        indices_a_[1] = xt_idxsection_new(start, 2, global_size, local_size,
-                                          local_start[1]);
+        for (size_t i = 0; i < 2; ++i)
+          indices_a_[i] = xt_idxsection_new(start, 2, global_size, local_size,
+                                            local_start[i]);
 
         indices_a = xt_idxlist_collection_new(indices_a_, 2);
 
-        xt_idxlist_delete(indices_a_[0]);
-        xt_idxlist_delete(indices_a_[1]);
+        for (size_t i = 0; i < 2; ++i)
+          xt_idxlist_delete(indices_a_[i]);
       }
 
       {
