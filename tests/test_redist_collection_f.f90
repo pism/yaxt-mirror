@@ -56,7 +56,7 @@ PROGRAM test_redist_collection
        xt_redist_delete, xt_redist_copy, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
        xt_idxempty_new, xt_idxlist_delete, &
-       xt_idxlist, xt_request
+       xt_idxlist, xt_request, xt_config, xt_config_delete
 #if !defined HAVE_FC_LOGICAL_INTEROP || !defined(__GNUC__) || __GNUC__ > 4 \
   || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
 #else
@@ -67,7 +67,7 @@ PROGRAM test_redist_collection
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
-       check_wait_request
+       check_wait_request, redist_exchanger_option
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
 #include "xt_slice_c_loc.inc"
@@ -75,24 +75,29 @@ PROGRAM test_redist_collection
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_collection_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
+  TYPE(xt_config) :: config
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
-  CALL simple_test
-  CALL simple_test2
-  CALL test_empty_redist
-  CALL test_repeated_redist(-1)
-  CALL test_repeated_redist(0)
-  CALL test_displacement_variations
+  CALL simple_test(mpi_comm_world, config)
+  CALL simple_test2(mpi_comm_world, config)
+  CALL test_empty_redist(mpi_comm_world, config)
+  CALL test_repeated_redist(mpi_comm_world, config, -1)
+  CALL test_repeated_redist(mpi_comm_world, config, 0)
+  CALL test_displacement_variations(mpi_comm_world, config)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
-  SUBROUTINE simple_test
+  SUBROUTINE simple_test(comm, config)
     ! general test with one redist
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! set up data
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_coll, redist_copy
@@ -112,7 +117,7 @@ CONTAINS
     redist = redist_copy
 
     ! generate redist_collection
-    redist_coll = xt_redist_collection_new((/ redist /), 1, -1, mpi_comm_world)
+    redist_coll = xt_redist_collection_new((/ redist /), 1, -1, comm, config)
 
     CALL xt_redist_delete(redist)
 
@@ -123,8 +128,10 @@ CONTAINS
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE simple_test
 
-  SUBROUTINE simple_test2
+  SUBROUTINE simple_test2(comm, config)
     ! general test with one redist
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! set up data
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist_coll, redist_copy, &
@@ -154,7 +161,7 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
 
     ! generate redist_collection
-    redist_coll = xt_redist_collection_new(redist_components, mpi_comm_world)
+    redist_coll = xt_redist_collection_new(redist_components, comm, config)
     CALL xt_redist_delete(redist_components)
     redist_copy = xt_redist_copy(redist_coll)
     CALL xt_redist_delete(redist_coll)
@@ -191,8 +198,10 @@ CONTAINS
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE simple_test2
 
-  SUBROUTINE test_empty_redist
+  SUBROUTINE test_empty_redist(comm, config)
     ! general test with empty redist
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! set up data
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
@@ -202,7 +211,7 @@ CONTAINS
     src_idxlist = xt_idxempty_new()
     dst_idxlist = xt_idxempty_new()
 
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm)
 
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
@@ -214,7 +223,7 @@ CONTAINS
     redist = redist_copy
 
     ! generate redist_collection
-    redist_coll = xt_redist_collection_new((/ redist /), 1, -1, mpi_comm_world)
+    redist_coll = xt_redist_collection_new((/ redist /), 1, -1, comm, config)
 
     CALL xt_redist_delete(redist)
 
@@ -253,7 +262,9 @@ CONTAINS
     ENDDO
   END SUBROUTINE test_repeated_redist_ds
 
-  SUBROUTINE test_repeated_redist(cache_size)
+  SUBROUTINE test_repeated_redist(comm, config, cache_size)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     INTEGER, INTENT(in) :: cache_size
     ! test with one redist used three times (with two different input data
     ! displacements -> test of cache) (with default cache size)
@@ -277,7 +288,7 @@ CONTAINS
     ! generate redist_collection
 
     redist_coll = xt_redist_collection_new(redists, 3, cache_size, &
-         mpi_comm_world)
+         comm, config)
 
     CALL xt_redist_delete(redists(1))
 
