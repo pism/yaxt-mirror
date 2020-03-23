@@ -56,6 +56,12 @@
 #include "tests.h"
 #include "test_redist_common.h"
 
+static void
+simple_test(MPI_Comm comm);
+
+static void
+test_repeated_redist(MPI_Comm comm);
+
 int main(void) {
 
   // init mpi
@@ -64,99 +70,98 @@ int main(void) {
 
   xt_initialize(MPI_COMM_WORLD);
 
-  { // general test with one redist
-    // set up data
-    enum { src_slice_len = 5, dst_slice_len = 3 };
-    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
-
-    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
-
-    xt_xmap_delete(xmap);
-
-    // generate redist_collection
-
-    Xt_redist redist_coll;
-    static const MPI_Aint displacements[1] = {0};
-
-    redist_coll = xt_redist_collection_static_new(&redist, 1, displacements,
-                                                  displacements,
-                                                  MPI_COMM_WORLD);
-
-    // test communicator of redist
-
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-    xt_redist_delete(redist);
-
-    // test exchange
-
-    static const double src_data[] = {1,2,3,4,5};
-    static const double ref_dst_data[] = {1,3,5};
-    enum { num_dst_elems = sizeof (ref_dst_data) / sizeof (ref_dst_data[0]) };
-
-    double dst_data[num_dst_elems];
-    check_redist(redist_coll, src_data,
-                 num_dst_elems, dst_data, fill_array_double, NULL,
-                 ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-
-    // clean up
-
-    xt_redist_delete(redist_coll);
-  }
-
-  { // test with one redist used three times (two exchanges)
-    // set up data
-    enum { src_slice_len = 5,
-           dst_slice_len = (src_slice_len+1)/2 };
-    Xt_xmap xmap = build_odd_selection_xmap(5);
-    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
-
-    xt_xmap_delete(xmap);
-
-    // generate redist_collection
-    Xt_redist redists[3] = {redist, redist, redist};
-    static const double src_data[3][src_slice_len]
-      = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
-    double dst_data[3][3];
-    MPI_Aint src_displacements[3]
-      = {0, (MPI_Aint)((size_t)(src_data[1] - src_data[0]) * sizeof (double)),
-         (MPI_Aint)((size_t)(src_data[2] - src_data[0]) * sizeof(double)) };
-    MPI_Aint dst_displacements[3]
-      = {0, (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof(double)),
-         (MPI_Aint)((size_t)(dst_data[2] - dst_data[0]) * sizeof(double)) };
-
-     Xt_redist redist_coll
-       = xt_redist_collection_static_new(redists, 3, src_displacements,
-                                         dst_displacements, MPI_COMM_WORLD);
-
-    // test communicator of redist
-
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-    xt_redist_delete(redist);
-
-    // test exchange
-
-    static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
-    check_redist(redist_coll, src_data,
-                 sizeof (dst_data) / sizeof (dst_data[0][0]),
-                 dst_data, fill_array_double, NULL,
-                 ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-
-    // clean up
-
-    xt_redist_delete(redist_coll);
-  }
+  simple_test(MPI_COMM_WORLD);
 
   xt_finalize();
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
 }
+
+static void
+simple_test(MPI_Comm comm)
+{ // general test with one redist
+  // set up data
+  enum { src_slice_len = 5, dst_slice_len = 3 };
+  Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
+
+  Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+
+  xt_xmap_delete(xmap);
+
+  // generate redist_collection
+
+  static const MPI_Aint displacements[1] = {0};
+
+  Xt_redist redist_coll
+    = xt_redist_collection_static_new(&redist, 1, displacements,
+                                      displacements, comm);
+
+  // test communicator of redist
+
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+  xt_redist_delete(redist);
+
+  // test exchange
+  static const double src_data[] = {1,2,3,4,5};
+  static const double ref_dst_data[] = {1,3,5};
+  enum { num_dst_elems = sizeof (ref_dst_data) / sizeof (ref_dst_data[0]) };
+
+  double dst_data[num_dst_elems];
+  check_redist(redist_coll, src_data,
+               num_dst_elems, dst_data, fill_array_double, NULL,
+               ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+
+  // clean up
+  xt_redist_delete(redist_coll);
+}
+
+static void
+test_repeated_redist(MPI_Comm comm)
+{ // test with one redist used three times (two exchanges)
+  // set up data
+  enum { src_slice_len = 5,
+         dst_slice_len = (src_slice_len+1)/2 };
+  Xt_xmap xmap = build_odd_selection_xmap(5);
+  Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+
+  xt_xmap_delete(xmap);
+
+  // generate redist_collection
+  Xt_redist redists[3] = {redist, redist, redist};
+  static const double src_data[3][src_slice_len]
+    = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
+  double dst_data[3][3];
+  MPI_Aint src_displacements[3]
+    = {0, (MPI_Aint)((size_t)(src_data[1] - src_data[0]) * sizeof (double)),
+       (MPI_Aint)((size_t)(src_data[2] - src_data[0]) * sizeof(double)) };
+  MPI_Aint dst_displacements[3]
+    = {0, (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof(double)),
+       (MPI_Aint)((size_t)(dst_data[2] - dst_data[0]) * sizeof(double)) };
+
+  Xt_redist redist_coll
+    = xt_redist_collection_static_new(redists, 3, src_displacements,
+                                      dst_displacements, comm);
+
+  // test communicator of redist
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+  xt_redist_delete(redist);
+
+  // test exchange
+  static const double ref_dst_data[3][3] = {{1,3,5},{6,8,10},{11,13,15}};
+  check_redist(redist_coll, src_data,
+               sizeof (dst_data) / sizeof (dst_data[0][0]),
+               dst_data, fill_array_double, NULL,
+               ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+
+  // clean up
+  xt_redist_delete(redist_coll);
+}
+
 
 /*
  * Local Variables:
