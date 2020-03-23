@@ -56,12 +56,12 @@ PROGRAM test_redist_collection_parallel
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt, &
-       xt_request, xt_redist_a_exchange
+       xt_request, xt_redist_a_exchange, xt_config, xt_config_delete
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
-  USE test_redist_common, ONLY: check_wait_request
+  USE test_redist_common, ONLY: check_wait_request, redist_exchanger_option
   USE iso_c_binding, ONLY: c_loc, c_ptr
 #include "xt_slice_c_loc.inc"
   IMPLICIT NONE
@@ -70,9 +70,11 @@ PROGRAM test_redist_collection_parallel
        filename = 'test_redist_collection_parallel_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error in xt_redist_s_exchange", "error in xt_redist_a_exchange" /)
+  TYPE(xt_config) :: config
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
   CALL mpi_comm_rank(mpi_comm_world, rank, ierror)
   IF (ierror /= MPI_SUCCESS) &
@@ -82,8 +84,8 @@ PROGRAM test_redist_collection_parallel
        CALL test_abort('mpi_comm_size failed', filename, __LINE__)
 
   IF (world_size > 1) THEN
-    CALL test_4redist
-    CALL test_rr_exchange
+    CALL test_4redist(mpi_comm_world, config)
+    CALL test_rr_exchange(mpi_comm_world, config)
   END IF
 
   IF (test_err_count() /= 0) &
@@ -125,8 +127,10 @@ CONTAINS
     indices_all = xt_idxstripes_new(stripe)
   END SUBROUTINE build_idxlists
 
-  SUBROUTINE test_4redist
+  SUBROUTINE test_4redist(comm, config)
     ! redist test with four different redists
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     INTEGER, PARAMETER :: num_tx = 4
     TYPE(xt_idxlist) :: indices_a, indices_b, indices_all
     INTEGER(xt_int_kind), ALLOCATABLE :: index_vector_a(:), &
@@ -143,10 +147,10 @@ CONTAINS
     ALLOCATE(index_vector_a(vec_size), index_vector_b(vec_size))
     CALL build_idxlists(indices_a, indices_b, indices_all)
 
-    xmaps(1) = xt_xmap_all2all_new(indices_a, indices_b, mpi_comm_world)
-    xmaps(2) = xt_xmap_all2all_new(indices_b, indices_a, mpi_comm_world)
-    xmaps(3) = xt_xmap_all2all_new(indices_a, indices_all, mpi_comm_world)
-    xmaps(4) = xt_xmap_all2all_new(indices_b, indices_all, mpi_comm_world)
+    xmaps(1) = xt_xmap_all2all_new(indices_a, indices_b, comm)
+    xmaps(2) = xt_xmap_all2all_new(indices_b, indices_a, comm)
+    xmaps(3) = xt_xmap_all2all_new(indices_a, indices_all, comm)
+    xmaps(4) = xt_xmap_all2all_new(indices_b, indices_all, comm)
 
     CALL xt_idxlist_get_indices(indices_a, index_vector_a)
     CALL xt_idxlist_get_indices(indices_b, index_vector_b)
@@ -160,10 +164,10 @@ CONTAINS
       CALL xt_xmap_delete(xmaps(i))
     END DO
 
-    redist = xt_redist_collection_new(redists, num_tx, -1, mpi_comm_world)
+    redist = xt_redist_collection_new(redists, num_tx, -1, comm, config)
 
     ! test communicator of redist
-    ! if (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+    ! if (!test_communicator(xt_redist_get_MPI_Comm(redist), COMM))
     !   PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     CALL xt_redist_delete(redists)
@@ -284,7 +288,10 @@ CONTAINS
 
   ! redist test with two redists that do a round robin exchange in
   ! different directions
-  SUBROUTINE test_rr_exchange
+  SUBROUTINE test_rr_exchange(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+
     TYPE(xt_idxlist) :: src_indices, dst_indices(2)
     INTEGER(xt_int_kind) :: src_indices_(5)
     INTEGER(xt_int_kind) :: i, temp, dst_indices_(5, 2)
@@ -307,8 +314,8 @@ CONTAINS
     dst_indices(1) = xt_idxvec_new(dst_indices_(:, 1))
     dst_indices(2) = xt_idxvec_new(dst_indices_(:, 2))
 
-    xmaps(1) = xt_xmap_all2all_new(src_indices, dst_indices(1), mpi_comm_world)
-    xmaps(2) = xt_xmap_all2all_new(src_indices, dst_indices(2), mpi_comm_world)
+    xmaps(1) = xt_xmap_all2all_new(src_indices, dst_indices(1), comm)
+    xmaps(2) = xt_xmap_all2all_new(src_indices, dst_indices(2), comm)
 
     CALL xt_idxlist_delete(src_indices)
     CALL xt_idxlist_delete(dst_indices)
@@ -318,10 +325,10 @@ CONTAINS
 
     CALL xt_xmap_delete(xmaps)
 
-    redist = xt_redist_collection_new(redists, 2, -1, mpi_comm_world)
+    redist = xt_redist_collection_new(redists, 2, -1, comm, config)
 
     ! test communicator of redist
-    ! IF (!test_communicator(xt_redist_get_MPI_Comm(redist), MPI_COMM_WORLD))
+    ! IF (!test_communicator(xt_redist_get_MPI_Comm(redist), comm))
     !     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     CALL xt_redist_delete(redists)
