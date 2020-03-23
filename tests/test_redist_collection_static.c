@@ -57,21 +57,24 @@
 #include "test_redist_common.h"
 
 static void
-simple_test(MPI_Comm comm);
+simple_test(MPI_Comm comm, Xt_config config);
 
 static void
-test_repeated_redist(MPI_Comm comm);
+test_repeated_redist(MPI_Comm comm, Xt_config config);
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
-  simple_test(MPI_COMM_WORLD);
+  simple_test(MPI_COMM_WORLD, config);
+  test_repeated_redist(MPI_COMM_WORLD, config);
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
@@ -79,7 +82,7 @@ int main(void) {
 }
 
 static void
-simple_test(MPI_Comm comm)
+simple_test(MPI_Comm comm, Xt_config config)
 { // general test with one redist
   // set up data
   enum { src_slice_len = 5, dst_slice_len = 3 };
@@ -94,8 +97,8 @@ simple_test(MPI_Comm comm)
   static const MPI_Aint displacements[1] = {0};
 
   Xt_redist redist_coll
-    = xt_redist_collection_static_new(&redist, 1, displacements,
-                                      displacements, comm);
+    = xt_redist_collection_static_custom_new(&redist, 1, displacements,
+                                             displacements, comm, config);
 
   // test communicator of redist
 
@@ -119,7 +122,7 @@ simple_test(MPI_Comm comm)
 }
 
 static void
-test_repeated_redist(MPI_Comm comm)
+test_repeated_redist(MPI_Comm comm, Xt_config config)
 { // test with one redist used three times (two exchanges)
   // set up data
   enum { src_slice_len = 5,
@@ -142,8 +145,8 @@ test_repeated_redist(MPI_Comm comm)
        (MPI_Aint)((size_t)(dst_data[2] - dst_data[0]) * sizeof(double)) };
 
   Xt_redist redist_coll
-    = xt_redist_collection_static_new(redists, 3, src_displacements,
-                                      dst_displacements, comm);
+    = xt_redist_collection_static_custom_new(redists, 3, src_displacements,
+                                             dst_displacements, comm, config);
 
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))

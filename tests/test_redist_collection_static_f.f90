@@ -52,24 +52,30 @@ PROGRAM test_redist_collection_static
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_static_new, &
-       xt_redist_delete
-  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist
+       xt_redist_delete, xt_config, xt_config_delete
+  USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
+       redist_exchanger_option
   IMPLICIT NONE
+  TYPE(xt_config) :: config
   CHARACTER(len=*), PARAMETER :: &
        filename = 'test_redist_collection_static_f.f90'
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
-  CALL simple_test
-  CALL test_repeated_redist
+  CALL simple_test(mpi_comm_world, config)
+  CALL test_repeated_redist(mpi_comm_world, config)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
-  SUBROUTINE simple_test
+  SUBROUTINE simple_test(comm, config)
     ! general test with one redist
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! set up data
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_coll
@@ -79,8 +85,7 @@ CONTAINS
          ref_dst_data(dst_slice_len) = (/ 1.0d0, 3.0d0, 5.0d0 /)
     DOUBLE PRECISION :: dst_data(dst_slice_len)
     INTEGER(mpi_address_kind), PARAMETER :: &
-         src_displacements(1) = 0_mpi_address_kind, &
-         dst_displacements(1) = 0_mpi_address_kind
+         displacements(1) = 0_mpi_address_kind
 
     xmap = build_odd_selection_xmap(src_slice_len)
 
@@ -90,7 +95,7 @@ CONTAINS
 
     ! generate redist_collection
     redist_coll = xt_redist_collection_static_new((/ redist /), 1, &
-         src_displacements, dst_displacements, mpi_comm_world)
+         displacements, displacements, comm, config)
 
     CALL xt_redist_delete(redist)
 
@@ -125,9 +130,11 @@ CONTAINS
     CALL check_redist(redist_coll, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds2
 
-  SUBROUTINE test_repeated_redist
+  SUBROUTINE test_repeated_redist(comm, config)
     ! test with one redist used three times (with two different input data
     ! displacements -> test of cache) (with default cache size)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! set up data
     INTEGER, PARAMETER :: num_slice = 3
     INTEGER, PARAMETER :: src_slice_len = 5
@@ -158,7 +165,7 @@ CONTAINS
     END DO
 
     redist_coll = xt_redist_collection_static_new(redists, num_slice, &
-         src_displacements, dst_displacements, mpi_comm_world)
+         src_displacements, dst_displacements, comm, config)
     CALL xt_redist_delete(redist)
 
     ! test exchange
