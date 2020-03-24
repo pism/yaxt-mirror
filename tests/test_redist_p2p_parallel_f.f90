@@ -52,17 +52,20 @@ PROGRAM test_redist_p2p_parallel
        xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, xt_redist_get_mpi_comm, &
        xt_redist_delete, &
-       xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_new
+       xt_redist_p2p_blocks_off_custom_new, xt_redist_p2p_blocks_custom_new, &
+       xt_config, xt_config_delete
   USE test_idxlist_utils, ONLY: test_err_count
   USE test_redist_common, ONLY: communicators_are_congruent, &
-       check_redist
+       check_redist, redist_exchanger_option
   IMPLICIT NONE
 
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_p2p_parallel_f.f90'
+  TYPE(xt_config) :: config
   INTEGER :: comm_rank, comm_size, ierror
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
   CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
   IF (ierror /= mpi_success) &
@@ -78,6 +81,7 @@ PROGRAM test_redist_p2p_parallel
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -109,7 +113,7 @@ CONTAINS
     ! xmap
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
     ! redist_p2p
-    redist = xt_redist_p2p_new(xmap, mpi_double_precision)
+    redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
 
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
@@ -160,7 +164,7 @@ CONTAINS
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
     ! redist_p2p
-    redist = xt_redist_p2p_new(xmap, mpi_double_precision)
+    redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
 
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
@@ -244,7 +248,7 @@ CONTAINS
     xmap = xt_xmap_all2all_new(idxlist_a, idxlist_b, mpi_comm_world)
 
     ! simple redist
-    redist = xt_redist_p2p_new(xmap, mpi_integer)
+    redist = xt_redist_p2p_new(xmap, mpi_integer, config)
 
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
@@ -310,10 +314,9 @@ CONTAINS
     END DO
 
     ! redist with blocks
-    block_redist &
-         = xt_redist_p2p_blocks_off_new(xmap, &
+    block_redist = xt_redist_p2p_blocks_off_custom_new(xmap, &
          src_block_offsets, src_block_sizes, nwin, &
-         dst_block_offsets, dst_block_sizes, nwin, mpi_integer)
+         dst_block_offsets, dst_block_sizes, nwin, mpi_integer, config)
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist), &
          mpi_comm_world)) &
@@ -322,8 +325,8 @@ CONTAINS
     CALL check_redist(block_redist, a_voldata, b_voldata, b_voldata_ref)
 
     ! redist with blocks but without explicit offsets:
-    block_redist2 = xt_redist_p2p_blocks_new(xmap, &
-         src_block_sizes, nwin, dst_block_sizes, nwin, mpi_integer)
+    block_redist2 = xt_redist_p2p_blocks_custom_new(xmap, &
+         src_block_sizes, nwin, dst_block_sizes, nwin, mpi_integer, config)
     ! test communicator of redist
 
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist2),&

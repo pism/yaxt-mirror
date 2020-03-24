@@ -59,7 +59,7 @@
 #include "test_redist_common.h"
 
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
@@ -68,7 +68,7 @@ int main(void) {
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
-
+  Xt_config config = redist_exchanger_option(&argc, &argv);
   xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
 
@@ -97,7 +97,7 @@ int main(void) {
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
 
     // test communicator of redist
 
@@ -147,7 +147,7 @@ int main(void) {
       = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
 
     // test communicator of redist
 
@@ -226,7 +226,7 @@ int main(void) {
     Xt_xmap xmap = xt_xmap_all2all_new(idxlist_a, idxlist_b, MPI_COMM_WORLD);
 
     // simple redist:
-    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_INT);
+    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_INT, config);
 
     // test communicator of redist
 
@@ -283,10 +283,9 @@ int main(void) {
         else
           src_block_offsets[i] = src_block_offsets[i-1]+src_block_sizes[i-1];
         src_block_sizes[i]   = gdepth[ia];
-        for (int j = 0; j < gdepth[ia]; j++) {
+        for (int j = 0; j < gdepth[ia]; j++, qa++) {
           int p = ig2col_off[ia] + j;
           a_voldata[qa] = gvoldata[p];
-          qa++;
         }
         a_vol_size += src_block_sizes[i];
       }
@@ -311,11 +310,10 @@ int main(void) {
     }
 
     // redist with blocks:
-    Xt_redist block_redist
-      = xt_redist_p2p_blocks_off_new(xmap,
-                                     src_block_offsets, src_block_sizes, nwin,
-                                     dst_block_offsets, dst_block_sizes, nwin,
-                                     MPI_INT);
+    Xt_redist block_redist = xt_redist_p2p_blocks_off_custom_new(
+      xmap, src_block_offsets, src_block_sizes, nwin,
+      dst_block_offsets, dst_block_sizes, nwin,
+      MPI_INT, config);
     // test communicator of redist
 
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(block_redist),
@@ -326,9 +324,8 @@ int main(void) {
                  fill_array_int, NULL, b_voldata_ref, MPI_INT, MPI_INT);
 
     // redist with blocks but without explicit offsets:
-    Xt_redist block_redist2
-      = xt_redist_p2p_blocks_new(xmap, src_block_sizes, nwin,
-                                 dst_block_sizes, nwin, MPI_INT);
+    Xt_redist block_redist2 = xt_redist_p2p_blocks_custom_new(
+      xmap, src_block_sizes, nwin, dst_block_sizes, nwin, MPI_INT, config);
     // test communicator of redist
 
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(block_redist2),
@@ -348,6 +345,7 @@ int main(void) {
     // end of test
   }
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
