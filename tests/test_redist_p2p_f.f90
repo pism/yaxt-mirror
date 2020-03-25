@@ -48,25 +48,29 @@ PROGRAM test_redist_p2p_f
   USE yaxt, ONLY: xt_int_kind, xt_xmap, xt_idxlist, xt_redist, xt_offset_ext, &
        xi => xt_int_kind, xt_int_mpidt, xt_initialize, xt_finalize, &
        xt_idxvec_new, xt_idxlist_delete, &
-       xt_redist_p2p_new, xt_redist_p2p_off_new, xt_redist_p2p_ext_new, &
+       xt_redist_p2p_new, xt_redist_p2p_off_custom_new, xt_redist_p2p_ext_new, &
        xt_redist_s_exchange, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
-       xt_xmap_all2all_new, xt_xmap_delete
+       xt_xmap_all2all_new, xt_xmap_delete, &
+       xt_config, xt_config_delete
   ! pgfortran is in most versions well incapable of handling multiply extended
   ! generic interfaces
 #ifdef __PGI
   USE xt_redist_logical, ONLY: xt_redist_s_exchange
 #endif
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE test_redist_common, ONLY: check_redist, communicators_are_congruent
+  USE test_redist_common, ONLY: check_redist, communicators_are_congruent, &
+       redist_exchanger_option
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_p2p_f.f90'
+  TYPE(xt_config) :: config
 
   ! init mpi
   CALL init_mpi
 
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
   ! offset-free test:
   ! source index list
@@ -77,6 +81,7 @@ PROGRAM test_redist_p2p_f
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
 
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 
@@ -125,7 +130,7 @@ CONTAINS
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
     ! redist_p2p
-    redist_dp = xt_redist_p2p_new(xmap, mpi_double_precision)
+    redist_dp = xt_redist_p2p_new(xmap, mpi_double_precision, config)
 
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_dp), &
@@ -139,7 +144,7 @@ CONTAINS
     src_l = NINT(MOD(src_data, 2.0d0)) == 1
     dst_l = .FALSE.
     ref_dst_l = NINT(MOD(ref_dst_data, 2.0d0)) == 1
-    redist_l = xt_redist_p2p_new(xmap, mpi_logical)
+    redist_l = xt_redist_p2p_new(xmap, mpi_logical, config)
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_l), &
          mpi_comm_world)) &
          CALL test_abort("error in xt_redist_get_mpi_Comm", filename, __LINE__)
@@ -202,7 +207,8 @@ CONTAINS
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
     ! redist_p2p with offsets
-    redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, mpi_double_precision)
+    redist = xt_redist_p2p_off_custom_new(xmap, src_pos, dst_pos, &
+         mpi_double_precision, config)
 
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
@@ -262,7 +268,7 @@ CONTAINS
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
     ! redist_p2p with extents of offsets
-    redist = xt_redist_p2p_ext_new(xmap, src_pos, dst_pos, xt_int_mpidt)
+    redist = xt_redist_p2p_ext_new(xmap, src_pos, dst_pos, xt_int_mpidt, config)
     ! test communicator of redist
     IF (.NOT. communicators_are_congruent(xt_redist_get_MPI_Comm(redist), &
          mpi_comm_world)) &

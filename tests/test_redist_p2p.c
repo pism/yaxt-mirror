@@ -59,13 +59,14 @@
 #include "tests.h"
 #include "test_redist_common.h"
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
   // offset-free test:
   {
@@ -86,7 +87,7 @@ int main(void) {
       = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
 
     // test communicator of redist
 
@@ -141,8 +142,8 @@ int main(void) {
     for (int i = 0; i < dst_num; i++)
       dst_pos[i] = dst_num-1-i;
 
-    Xt_redist redist
-      = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_off_custom_new(
+      xmap, src_pos, dst_pos, MPI_DOUBLE, config);
 
     // test communicator of redist
 
@@ -193,11 +194,9 @@ int main(void) {
       src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
       dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
 
-    Xt_redist redist
-      = xt_redist_p2p_ext_new(xmap,
-                              sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
-                              sizeof (dst_pos)/sizeof (dst_pos[0]), dst_pos,
-                              MPI_LONG);
+    Xt_redist redist = xt_redist_p2p_ext_custom_new(
+      xmap, sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
+      sizeof (dst_pos)/sizeof (dst_pos[0]), dst_pos, MPI_LONG, config);
 
     // test communicator of redist
 
@@ -224,6 +223,7 @@ int main(void) {
     xt_idxlist_delete(dst_idxlist);
   }
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
