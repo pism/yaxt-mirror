@@ -132,17 +132,19 @@ test_redist_single_array_base_(int nsend, const struct Xt_redist_msg *send_msgs,
                                MPI_Datatype dst_data_dt,
                                MPI_Datatype ref_dst_data_dt,
                                MPI_Comm comm,
+                               Xt_config config,
                                const char *file, int line);
 
 #define test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs, \
                                       src_data, num_dst, dst_data, dst_prep, \
                                       dst_prep_info, ref_dst_data,      \
-                                      dst_data_dt, ref_dst_data_dt, comm) \
+                                      dst_data_dt, ref_dst_data_dt, comm, \
+                                      config)                           \
   test_redist_single_array_base_(nsend, send_msgs, nrecv, recv_msgs,    \
                                  src_data, num_dst, dst_data, dst_prep, \
                                  dst_prep_info, ref_dst_data,           \
-                                 dst_data_dt, ref_dst_data_dt, comm, __FILE__, \
-                                 __LINE__)
+                                 dst_data_dt, ref_dst_data_dt, comm, config, \
+                                 __FILE__, __LINE__)
 
 void
 wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],

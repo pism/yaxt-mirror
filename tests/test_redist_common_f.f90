@@ -530,18 +530,19 @@ CONTAINS
   END SUBROUTINE check_redist_i8
 
   SUBROUTINE test_redist_single_array_base_dp( &
-      send_msgs, recv_msgs, src_data, ref_dst_data, comm)
+      send_msgs, recv_msgs, src_data, ref_dst_data, comm, config)
     TYPE(xt_redist_msg), INTENT(in) :: send_msgs(:)
     TYPE(xt_redist_msg), INTENT(in) :: recv_msgs(:)
     DOUBLE PRECISION, INTENT(in) :: src_data(:)
     DOUBLE PRECISION, INTENT(in) :: ref_dst_data(:)
     INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
 
     TYPE(xt_redist) :: redist
     INTEGER :: nsend, nrecv
 
     redist = &
-      xt_redist_single_array_base_new(send_msgs, recv_msgs, comm)
+      xt_redist_single_array_base_new(send_msgs, recv_msgs, comm, config)
     nsend = SIZE(send_msgs)
     IF (nsend /= xt_redist_get_num_send_msg(redist)) &
          CALL test_abort("error in xt_redist_get_num_send_msg", &

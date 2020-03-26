@@ -45,34 +45,42 @@
 !
 PROGRAM test_redist_single_array_base_f
   USE mpi
-  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_redist_msg
+  USE yaxt, ONLY: xt_initialize, xt_finalize, xt_redist_msg, &
+       xt_config, xt_config_delete
 
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_redist_common, ONLY: communicators_are_congruent, &
-       test_redist_single_array_base
+       test_redist_single_array_base, redist_exchanger_option
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: &
        filename = 'test_redist_single_array_base_f.f90'
+  TYPE(xt_config) :: config
+
   ! init mpi
   CALL init_mpi
 
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
   ! single double
-  call test_single_double
+  CALL test_single_double(mpi_comm_world, config)
   ! reverse order of some doubles
-  call test_reverse_doubles
+  CALL test_reverse_doubles(mpi_comm_world, config)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
 
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 
 CONTAINS
 
-  SUBROUTINE test_single_double
+  SUBROUTINE test_single_double(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+
 
     TYPE(xt_redist_msg) :: send_msgs(1)
     TYPE(xt_redist_msg) :: recv_msgs(1)
@@ -89,11 +97,14 @@ CONTAINS
     recv_msgs(1)%datatype = MPI_DOUBLE_PRECISION
 
     CALL test_redist_single_array_base(send_msgs, recv_msgs, src_data, &
-         ref_dst_data, mpi_comm_world)
+         ref_dst_data, comm, config)
 
   END SUBROUTINE test_single_double
 
-  SUBROUTINE test_reverse_doubles
+  SUBROUTINE test_reverse_doubles(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+
 
     TYPE(xt_redist_msg) :: send_msgs(1)
     TYPE(xt_redist_msg) :: recv_msgs(1)
@@ -139,7 +150,7 @@ CONTAINS
          filename, __LINE__)
 
     CALL test_redist_single_array_base(send_msgs, recv_msgs, src_data, &
-         ref_dst_data, mpi_comm_world)
+         ref_dst_data, comm, config)
 
     CALL MPI_Type_free(recv_msgs(1)%datatype, ierror)
     IF (ierror /= mpi_success) &
