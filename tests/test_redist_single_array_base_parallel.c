@@ -58,7 +58,7 @@
 #include "test_redist_common.h"
 #include "core/ppm_xfuncs.h"
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
@@ -68,6 +68,7 @@ int main(void) {
   xt_mpi_call(MPI_Init(NULL, NULL), comm);
 
   xt_initialize(comm);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
   xt_mpi_call(MPI_Comm_rank(comm, &rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &size), comm);
@@ -93,7 +94,7 @@ int main(void) {
     test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
                                   src_data, num_dst_values, dst_data,
                                   fill_array_double, NULL, ref_dst_data,
-                                  MPI_DOUBLE, MPI_DOUBLE, comm);
+                                  MPI_DOUBLE, MPI_DOUBLE, comm, config);
   }
 
   // allgather
@@ -127,7 +128,7 @@ int main(void) {
     test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
                                   src_data, (size_t)size, dst_data,
                                   fill_array_double, NULL, ref_dst_data,
-                                  MPI_DOUBLE, MPI_DOUBLE, comm);
+                                  MPI_DOUBLE, MPI_DOUBLE, comm, config);
     // clean up
     free(dst_data);
     free(ref_dst_data);
@@ -166,7 +167,7 @@ int main(void) {
     test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
                                   src_data, num_dst_values, dst_data,
                                   fill_array_double, NULL, ref_dst_data,
-                                  MPI_DOUBLE, MPI_DOUBLE, comm);
+                                  MPI_DOUBLE, MPI_DOUBLE, comm, config);
 
 
     // clean up
@@ -176,6 +177,7 @@ int main(void) {
     free(send_msgs);
   }
 
+  xt_config_delete(config);
   xt_finalize();
   xt_mpi_call(MPI_Finalize(), comm);
 

@@ -60,7 +60,7 @@
 #include "tests.h"
 #include "test_redist_common.h"
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
@@ -69,6 +69,7 @@ int main(void) {
   xt_mpi_call(MPI_Init(NULL, NULL), comm);
 
   xt_initialize(comm);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
   // single double
   {
@@ -86,7 +87,7 @@ int main(void) {
     test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
                                   src_data, num_ref_values, dst_data,
                                   fill_array_double, NULL, ref_dst_data,
-                                  MPI_DOUBLE, MPI_DOUBLE, comm);
+                                  MPI_DOUBLE, MPI_DOUBLE, comm, config);
   }
 
   // reverse order of some doubles
@@ -115,12 +116,13 @@ int main(void) {
     test_redist_single_array_base(nsend, send_msgs, nrecv, recv_msgs,
                                   src_data, num_ref_values, dst_data,
                                   fill_array_float, NULL, ref_dst_data,
-                                  MPI_FLOAT, MPI_FLOAT, comm);
+                                  MPI_FLOAT, MPI_FLOAT, comm, config);
     // clean up
     xt_mpi_call(MPI_Type_free(&recv_type), comm);
     xt_mpi_call(MPI_Type_free(&send_type), comm);
   }
 
+  xt_config_delete(config);
   xt_finalize();
   xt_mpi_call(MPI_Finalize(), comm);
 

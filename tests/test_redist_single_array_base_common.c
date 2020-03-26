@@ -60,10 +60,11 @@ test_redist_single_array_base_(int nsend, const struct Xt_redist_msg *send_msgs,
                                MPI_Datatype dst_data_dt,
                                MPI_Datatype ref_dst_data_dt,
                                MPI_Comm comm,
+                               Xt_config config,
                                const char *file, int line)
 {
-  Xt_redist redist =
-    xt_redist_single_array_base_new(nsend, nrecv, send_msgs, recv_msgs, comm);
+  Xt_redist redist = xt_redist_single_array_base_custom_new(
+    nsend, nrecv, send_msgs, recv_msgs, comm, config);
   // test number of send messages
   if (nsend != xt_redist_get_num_send_msg(redist))
     PUT_ERR("error in xt_redist_get_num_send_msg\n");
