@@ -57,7 +57,7 @@
 #include "tests.h"
 #include "test_redist_common.h"
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
@@ -66,6 +66,7 @@ int main(void) {
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
   xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
@@ -134,8 +135,8 @@ int main(void) {
 
       Xt_redist redist_repeat[2];
       for (size_t i = 0; i < 2; ++i)
-        redist_repeat[i] = xt_redist_repeat_new(
-          redist_p2p, extent, extent, rpt_cnt, displacements[i]);
+        redist_repeat[i] = xt_redist_repeat_custom_new(
+          redist_p2p, extent, extent, rpt_cnt, displacements[i], config);
 
       // test communicator of redist_repeat
 
@@ -185,6 +186,7 @@ int main(void) {
     }
   }
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 

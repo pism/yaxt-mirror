@@ -56,33 +56,36 @@ PROGRAM test_redist_repeat_parallel
        xt_redist, xt_redist_p2p_new, xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt, &
-       xt_request, xt_redist_a_exchange
+       xt_request, xt_redist_a_exchange, xt_config, xt_config_delete
     ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
-  USE test_redist_common, ONLY: check_wait_request
+  USE test_redist_common, ONLY: check_wait_request, redist_exchanger_option
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_repeat_parallel_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
+  TYPE(xt_config) :: config
   INTEGER :: comm_size, ierror
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
   CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
        CALL test_abort('mpi_comm_size failed', filename, __LINE__)
 
   IF (comm_size > 1) THEN
-    CALL test_4redist(mpi_comm_world, 2*comm_size**2)
+    CALL test_4redist(mpi_comm_world, config, 2*comm_size**2)
   END IF
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -150,8 +153,9 @@ CONTAINS
 
   ! redist test for 4 level repetition of redist (i.e. 3D extension of 2D
   ! redist)
-  SUBROUTINE test_4redist(comm, dim1)
+  SUBROUTINE test_4redist(comm, config, dim1)
     INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     INTEGER, INTENT(in) :: dim1
     TYPE(xt_idxlist) :: indices_a, indices_b
     INTEGER(xt_int_kind) :: index_vector_a(dim1), &
@@ -205,9 +209,9 @@ CONTAINS
     extent = temp_address - base_address
 
     redist_repeat = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         rpt_cnt, displacements(:, 1))
+         rpt_cnt, displacements(:, 1), config)
     redist_repeat_2 = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         rpt_cnt, displacements(:, 2))
+         rpt_cnt, displacements(:, 2), config)
 
     CALL xt_redist_delete(redist_p2p)
 
