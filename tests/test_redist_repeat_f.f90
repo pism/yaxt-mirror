@@ -53,34 +53,39 @@ PROGRAM test_redist_repeat
        xt_redist, xt_redist_p2p_new, xt_redist_p2p_off_new, &
        xt_redist_repeat_new, xt_redist_delete, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
-       xt_request
+       xt_request, xt_config, xt_config_delete
 #if defined __PGI && ( __PGIC__ == 15 || __PGIC__ == 14 )
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
-       check_wait_request
+       check_wait_request, redist_exchanger_option
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_repeat_f.f90'
   CHARACTER(len=*), PARAMETER :: exch1name(2) = &
        (/ "xt_redist_s_exchange1", "xt_redist_a_exchange1" /)
+  TYPE(xt_config) :: config
 
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
+  config = redist_exchanger_option()
 
-  CALL simple_test
-  CALL test_repeated_redist
-  CALL test_repeated_redist_with_gap
-  CALL test_repeated_overlapping_redist
-  CALL test_repeated_redist_asym
+  CALL simple_test(mpi_comm_world, config)
+  CALL test_repeated_redist(mpi_comm_world, config)
+  CALL test_repeated_redist_with_gap(mpi_comm_world, config)
+  CALL test_repeated_overlapping_redist(mpi_comm_world, config)
+  CALL test_repeated_redist_asym(mpi_comm_world, config)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
-  SUBROUTINE simple_test
+  SUBROUTINE simple_test(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! general test with one redist
     ! set up data
     TYPE(xt_xmap) :: xmap
@@ -110,7 +115,7 @@ CONTAINS
 
     ! generate redist_repeat
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, 1, &
-                                         displacements)
+                                         displacements, config)
 
     CALL xt_redist_delete(redist)
 
@@ -171,7 +176,9 @@ CONTAINS
     CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds2
 
-  SUBROUTINE test_repeated_redist
+  SUBROUTINE test_repeated_redist(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! test with one redist used three times (with two different input data
     ! displacements -> test of cache) (with default cache size)
     ! set up data
@@ -201,7 +208,7 @@ CONTAINS
     displacements = (/0,1,2/)
 
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
-         num_slice, displacements)
+         num_slice, displacements, config)
     CALL xt_redist_delete(redist)
 
     ! test exchange
@@ -212,7 +219,9 @@ CONTAINS
     CALL xt_redist_delete(redist_repeat)
   END SUBROUTINE test_repeated_redist
 
-  SUBROUTINE test_repeated_redist_asym
+  SUBROUTINE test_repeated_redist_asym(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
     ! test asymmetric variant of redist_repeat
 
     INTEGER, PARAMETER :: num_slice = 3
@@ -252,14 +261,14 @@ CONTAINS
 
     ! connect to explicit shape interface:
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
-         num_slice, src_displacements, dst_displacements)
+         num_slice, src_displacements, dst_displacements, config)
     dst_data = -1.0_dp
     CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
     CALL xt_redist_delete(redist_repeat)
 
     ! connect to assumed shape interface:
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
-         src_displacements, dst_displacements)
+         src_displacements, dst_displacements, config)
     dst_data = -1.0_dp
     CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
     CALL xt_redist_delete(redist_repeat)
@@ -267,7 +276,10 @@ CONTAINS
     CALL xt_redist_delete(redist)
   END SUBROUTINE test_repeated_redist_asym
 
-  SUBROUTINE test_repeated_redist_with_gap
+  SUBROUTINE test_repeated_redist_with_gap(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+
     ! test with one redist used three times (with two different input data
     ! displacements -> test of cache) (with default cache size)
     ! set up data
@@ -296,7 +308,7 @@ CONTAINS
     dst_extent = temp_address - base_address
 
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
-         num_slice, displacements)
+         num_slice, displacements, config)
     CALL xt_redist_delete(redist)
 
     ! test exchange
@@ -305,7 +317,10 @@ CONTAINS
     CALL xt_redist_delete(redist_repeat)
   END SUBROUTINE test_repeated_redist_with_gap
 
-  SUBROUTINE test_repeated_overlapping_redist
+  SUBROUTINE test_repeated_overlapping_redist(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+
     ! test with one redist used three times (with two different input data
     ! displacements -> test of cache) (with default cache size)
     ! set up data
@@ -329,7 +344,7 @@ CONTAINS
 #endif
     DOUBLE PRECISION, TARGET :: src_template(2), dst_template(2)
     INTEGER :: iexch
-    TYPE(xt_request) :: request
+    TYPE(xt_request) :: request(2)
 
     xmap = build_odd_selection_xmap(selection_len)
 
@@ -359,10 +374,10 @@ CONTAINS
         CALL xt_redist_s_exchange(redist, src_data, dst_data)
         CALL xt_redist_s_exchange(redist, src_data(2:), dst_data(2:))
       ELSE
-        CALL xt_redist_a_exchange(redist, src_data, dst_data, request)
-        CALL check_wait_request(request, filename, __LINE__)
-        CALL xt_redist_a_exchange(redist, src_data(2:), dst_data(2:), request)
-        CALL check_wait_request(request, filename, __LINE__)
+        CALL xt_redist_a_exchange(redist, src_data, dst_data, request(1))
+        CALL xt_redist_a_exchange(redist, src_data(2:), dst_data(2:), request(2))
+        CALL check_wait_request(request(1), filename, __LINE__)
+        CALL check_wait_request(request(2), filename, __LINE__)
       ENDIF
       ! check individual redists to have desired effect
       IF (cmp_arrays(dst_data, ref_dst_data)) &
@@ -378,7 +393,7 @@ CONTAINS
     dst_extent = temp_address - base_address
 
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
-         displacements)
+         displacements, config)
     CALL xt_redist_delete(redist)
 
     ! test exchange

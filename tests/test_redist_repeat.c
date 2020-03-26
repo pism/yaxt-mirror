@@ -57,13 +57,14 @@
 #include "test_redist_common.h"
 
 
-int main(void) {
+int main(int argc, char **argv) {
 
   // init mpi
 
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
+  Xt_config config = redist_exchanger_option(&argc, &argv);
 
   { // general test with one redist
     // set up data
@@ -76,13 +77,12 @@ int main(void) {
 
     static const double src_data[] = {1,2,3,4,5};
     double dst_data[dst_slice_len];
-    Xt_redist redist_repeat;
     MPI_Aint src_extent = (MPI_Aint)(sizeof(src_data)),
       dst_extent = (MPI_Aint)(sizeof(dst_data));
     int displacements[1] = {0};
 
-    redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, 1,
-                                         displacements);
+    Xt_redist redist_repeat = xt_redist_repeat_custom_new(
+      redist, src_extent, dst_extent, 1, displacements, config);
 
     // test communicator of redist
 
@@ -113,7 +113,6 @@ int main(void) {
     // generate redist_repeatection
 
     enum { num_repetitions = 3 };
-    Xt_redist redist_repeat;
     static const double src_data[num_repetitions][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[num_repetitions][dst_slice_len];
@@ -123,8 +122,9 @@ int main(void) {
       (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof (double));
     int displacements[num_repetitions] = {0, 1, 2};
 
-    redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent,
-                                         num_repetitions, displacements);
+    Xt_redist redist_repeat = xt_redist_repeat_custom_new(
+      redist, src_extent, dst_extent,
+      num_repetitions, displacements, config);
 
     // test communicator of redist
 
@@ -168,9 +168,9 @@ int main(void) {
     int dst_displacements[num_repetitions] = {2, 1, 0};
 
     Xt_redist redist_repeat
-      = xt_redist_repeat_asym_new(redist, src_extent, dst_extent,
-                                  num_repetitions, src_displacements,
-                                  dst_displacements);
+      = xt_redist_repeat_asym_custom_new(redist, src_extent, dst_extent,
+                                         num_repetitions, src_displacements,
+                                         dst_displacements, config);
 
     // test communicator of redist
 
@@ -203,8 +203,8 @@ int main(void) {
     MPI_Aint src_extent = (MPI_Aint)(src_slice_len * sizeof (double));
     MPI_Aint dst_extent = (MPI_Aint)(dst_slice_len * sizeof (double));
     int displacements[3] = {0, 2, 4};
-    Xt_redist redist_repeat
-      = xt_redist_repeat_new(redist, src_extent, dst_extent, 3, displacements);
+    Xt_redist redist_repeat = xt_redist_repeat_custom_new(
+      redist, src_extent, dst_extent, 3, displacements, config);
 
     // test communicator of redist
 
@@ -235,7 +235,8 @@ int main(void) {
     Xt_xmap xmap = build_odd_selection_xmap(6);
     static const int src_pos[npt] = {1,2,3,4,5,6,7,8,9};
     static const int dst_pos[npt] = {0,2,4,6,8,10,12,14,16};
-    Xt_redist redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, MPI_DOUBLE);
+    Xt_redist redist = xt_redist_p2p_off_custom_new(
+      xmap, src_pos, dst_pos, MPI_DOUBLE, config);
 
     xt_xmap_delete(xmap);
 
@@ -273,8 +274,8 @@ int main(void) {
     MPI_Aint src_extent = (MPI_Aint)(1 * sizeof (double));
     MPI_Aint dst_extent = (MPI_Aint)(1 * sizeof (double));
     int displacements[2] = {0,1};
-    Xt_redist redist_repeat
-      = xt_redist_repeat_new(redist, src_extent, dst_extent, 2, displacements);
+    Xt_redist redist_repeat = xt_redist_repeat_custom_new(
+      redist, src_extent, dst_extent, 2, displacements, config);
 
     // test communicator of redist
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
@@ -291,6 +292,7 @@ int main(void) {
 
   }
 
+  xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
