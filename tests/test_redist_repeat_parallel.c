@@ -87,10 +87,9 @@ int main(void) {
           = {{ 0, (Xt_int)(rank*size)},
              { (Xt_int)size, (Xt_int)(size*size-(rank+1)*size) }};
 
-        indices_a_[0] = xt_idxsection_new(start, 2, global_size, local_size,
-                                          local_start[0]);
-        indices_a_[1] = xt_idxsection_new(start, 2, global_size, local_size,
-                                          local_start[1]);
+        for (size_t i = 0; i < 2; ++i)
+          indices_a_[i] = xt_idxsection_new(start, 2, global_size, local_size,
+                                            local_start[i]);
 
         indices_a = xt_idxlist_collection_new(indices_a_, 2);
 
@@ -130,26 +129,20 @@ int main(void) {
         for (size_t i = 0; i < dim0; ++i)
           input[j][i] = (Xt_int)(index_vector_a[i] + j * 2*(Xt_int)dim0);
 
-      static const int displacements[rpt_cnt] = {0, 1, 2, 3};
-      static const int displacements_2[rpt_cnt] = {1, 2, 4, 8};
-      MPI_Aint extent
-        = (MPI_Aint)(dim0 * sizeof(Xt_int));
+      static const int displacements[2][rpt_cnt] = { {0,1,2,3}, {1,2,4,8} };
+      MPI_Aint extent = (MPI_Aint)(dim0 * sizeof(Xt_int));
 
-      Xt_redist redist_repeat
-        = xt_redist_repeat_new(redist_p2p, extent, extent, rpt_cnt,
-                               displacements);
-      Xt_redist redist_repeat_2
-        = xt_redist_repeat_new(redist_p2p, extent, extent, rpt_cnt,
-                               displacements_2);
+      Xt_redist redist_repeat[2];
+      for (size_t i = 0; i < 2; ++i)
+        redist_repeat[i] = xt_redist_repeat_new(
+          redist_p2p, extent, extent, rpt_cnt, displacements[i]);
 
       // test communicator of redist_repeat
 
-      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
-                                       MPI_COMM_WORLD))
-        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat_2),
-                                       MPI_COMM_WORLD))
-        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+      for (size_t i = 0; i < 2; ++i)
+        if (!communicators_are_congruent(xt_redist_get_MPI_Comm(
+                                           redist_repeat[i]), MPI_COMM_WORLD))
+          PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
       xt_redist_delete(redist_p2p);
 
@@ -163,12 +156,12 @@ int main(void) {
             result_2[j][i] = -1;
 
         if (sync_mode == 0) {
-          xt_redist_s_exchange1(redist_repeat, input, result);
-          xt_redist_s_exchange1(redist_repeat_2, input, result_2);
+          xt_redist_s_exchange1(redist_repeat[0], input, result);
+          xt_redist_s_exchange1(redist_repeat[1], input, result_2);
         } else {
           Xt_request request[2];
-          xt_redist_a_exchange1(redist_repeat, input, result, request+0);
-          xt_redist_a_exchange1(redist_repeat_2, input, result_2, request+1);
+          xt_redist_a_exchange1(redist_repeat[0], input, result, request+0);
+          xt_redist_a_exchange1(redist_repeat[1], input, result_2, request+1);
           xt_request_wait(request+0);
           xt_request_wait(request+1);
         }
@@ -187,9 +180,8 @@ int main(void) {
       }
 
       // clean up
-
-      xt_redist_delete(redist_repeat_2);
-      xt_redist_delete(redist_repeat);
+      for (size_t i = 0; i < 2; ++i)
+        xt_redist_delete(redist_repeat[i]);
     }
   }
 

@@ -69,19 +69,16 @@ PROGRAM test_redist_repeat_parallel
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_repeat_parallel_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
-  INTEGER :: comm_rank, comm_size, ierror
+  INTEGER :: comm_size, ierror
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
 
-  CALL mpi_comm_rank(mpi_comm_world, comm_rank, ierror)
-  IF (ierror /= MPI_SUCCESS) &
-       CALL test_abort('mpi_comm_rank failed', filename, __LINE__)
   CALL mpi_comm_size(mpi_comm_world, comm_size, ierror)
   IF (ierror /= MPI_SUCCESS) &
        CALL test_abort('mpi_comm_size failed', filename, __LINE__)
 
   IF (comm_size > 1) THEN
-    CALL test_4redist(2*comm_size**2)
+    CALL test_4redist(mpi_comm_world, 2*comm_size**2)
   END IF
 
   IF (test_err_count() /= 0) &
@@ -105,8 +102,9 @@ CONTAINS
   ! 4D array reshaped to [W,X,Z,Y], decomposed along the Y-axis
   ! according to comm_rank (but enumerated differently from source
   ! array).
-  SUBROUTINE build_idxlists(indices_a, indices_b)
+  SUBROUTINE build_idxlists(indices_a, indices_b, comm_size, comm_rank)
     TYPE(xt_idxlist), INTENT(out) :: indices_a, indices_b
+    INTEGER, INTENT(in) :: comm_size, comm_rank
 
     INTEGER, PARAMETER :: glob_rank = 4
     TYPE(xt_idxlist) :: indices_a_(2)
@@ -152,7 +150,8 @@ CONTAINS
 
   ! redist test for 4 level repetition of redist (i.e. 3D extension of 2D
   ! redist)
-  SUBROUTINE test_4redist(dim1)
+  SUBROUTINE test_4redist(comm, dim1)
+    INTEGER, INTENT(in) :: comm
     INTEGER, INTENT(in) :: dim1
     TYPE(xt_idxlist) :: indices_a, indices_b
     INTEGER(xt_int_kind) :: index_vector_a(dim1), &
@@ -168,8 +167,9 @@ CONTAINS
     INTEGER(mpi_address_kind) :: extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
     INTEGER(c_int), PARAMETER :: &
-         displacements(rpt_cnt) = (/ 0_c_int, 1_c_int, 2_c_int, 3_c_int /), &
-         displacements_2(rpt_cnt) = (/ 1_c_int, 2_c_int, 4_c_int, 8_c_int /)
+         displacements(rpt_cnt, 2) &
+         = RESHAPE((/ 0_c_int, 1_c_int, 2_c_int, 3_c_int, &
+         &            1_c_int, 2_c_int, 4_c_int, 8_c_int /), (/ rpt_cnt, 2 /))
     ! skip_lev_2 must correspond to the levels skipped via displacements_2
     LOGICAL, PARAMETER :: skip_lev_2(9) &
          = (/  .TRUE., .FALSE., .FALSE., &
@@ -178,13 +178,21 @@ CONTAINS
     INTEGER :: i, j, ierror
     TYPE(xt_request) :: request1, request2
     INTEGER :: iexch
+    INTEGER :: comm_rank, comm_size
 
-    CALL build_idxlists(indices_a, indices_b)
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    IF (ierror /= MPI_SUCCESS) &
+         CALL test_abort('mpi_comm_rank failed', filename, __LINE__)
+    CALL mpi_comm_size(comm, comm_size, ierror)
+    IF (ierror /= MPI_SUCCESS) &
+         CALL test_abort('mpi_comm_size failed', filename, __LINE__)
+
+    CALL build_idxlists(indices_a, indices_b, comm_size, comm_rank)
 
     CALL xt_idxlist_get_indices(indices_a, index_vector_a)
     CALL xt_idxlist_get_indices(indices_b, index_vector_b)
 
-    xmap = xt_xmap_all2all_new(indices_a, indices_b, mpi_comm_world)
+    xmap = xt_xmap_all2all_new(indices_a, indices_b, comm)
 
     CALL xt_idxlist_delete(indices_a)
     CALL xt_idxlist_delete(indices_b)
@@ -197,9 +205,9 @@ CONTAINS
     extent = temp_address - base_address
 
     redist_repeat = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         rpt_cnt, displacements)
+         rpt_cnt, displacements(:, 1))
     redist_repeat_2 = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         rpt_cnt, displacements_2)
+         rpt_cnt, displacements(:, 2))
 
     CALL xt_redist_delete(redist_p2p)
 
