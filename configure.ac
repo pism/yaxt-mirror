@@ -270,6 +270,13 @@ ACX_MPIRUN(,[saved_MPI_LAUNCH=$MPI_LAUNCH],
      [AC_MSG_FAILURE([unable to find a working MPI launch program, which is
 required for checks for known MPI defects (see --without-regard-for-quality)])],
      [saved_MPI_LAUNCH=$MPI_LAUNCH ; MPI_LAUNCH=true])])
+dnl do not remove conftest.err we need to inspect the output
+m4_pushdef([_AC_RUN_LOG_LIMIT],
+  m4_bpatsubst(m4_dquote(m4_defn([_AC_RUN_LOG_LIMIT])),
+    [rm -f conftest.er1 conftest.err],[rm -f conftest.er1]))dnl
+m4_pushdef([_AC_LINK_IFELSE],
+  m4_bpatsubst(m4_dquote(m4_defn([_AC_LINK_IFELSE])),
+    [rm -f core conftest.err],[rm -f core]))dnl
 ACX_MPI_DEFECTS(,,
   [ACX_MPI_DEFECTS_DOCUMENT
    AS_CASE(["$acx_subtestname"],[openmpi_datatype],
@@ -277,6 +284,13 @@ ACX_MPI_DEFECTS(,,
       ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
         [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
          extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'])],
+     [incorrect_mpi_abort_exitcode],
+     [AC_MSG_WARN([Your installation drops the exit code of MPI_Abort!
+Consider getting a better MPI/batch scheduler.])
+      AS_IF([grep -v -i 'mpi_abort(@<:@^,()@:>@*, 2)' conftest.err >/dev/null],
+        [AC_MSG_NOTICE([Implementing fragile work-around for tests!])
+         AC_DEFINE([XT_NEED_MPI_ABORT_WORK_AROUND],[1],
+           [To pass the value for MPI_Abort to the surrounding execution environment, a hack is needed.])])],
      [AS_VAR_IF([with_regard_for_quality],[yes],
         [AC_MSG_FAILURE([test for known defect $acx_subtestname failed,
 re-configure with --without-regard-for-quality in case you must use the

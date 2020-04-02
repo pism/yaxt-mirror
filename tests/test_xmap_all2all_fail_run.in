@@ -6,15 +6,19 @@ export LIBC_FATAL_STDERR_
 ulimit -c 0
 for setup_size  in small big; do
   for suffix in '' '_f'; do
-    if @abs_top_builddir@/libtool --mode=execute \
+    if diags=`@abs_top_builddir@/libtool --mode=execute \
         @MPI_LAUNCH@ -n 1 \
         @abs_builddir@/test_xmap_all2all_fail$suffix -s $setup_size \
-        >/dev/null 2>&1; then
+        2>&1`; then
       exit 1
     else
       rc=$?
       if [ $rc -ne 3 ]; then
-        exit 1
+        if echo x"$diags" | grep -i 'mpi_abort([^,()]*, 3)' >/dev/null ; then
+          continue
+        else
+          exit 1
+        fi
       fi
     fi
   done

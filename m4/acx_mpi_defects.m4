@@ -106,12 +106,21 @@ q
 	AS_IF([test `expr "$acx_mpirun_num_tasks" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
 	       && test "$acx_mpirun_num_tasks" -gt 0],,
 	  [acx_mpirun_num_tasks=1])
+        acx_mpirun_expected_exitcode=`sed -n '/acx_mpirun_expected_exitcode *= *\(@<:@0-9@:>@*\)/{
+s/.*acx_mpirun_expected_exitcode *= *\(@<:@0-9@:>@*\).*/\1/
+p
+q
+}
+' "acx_mpi_check_src_"`
+	AS_IF([test `expr "$acx_mpirun_expected_exitcode" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
+	       && test "$acx_mpirun_expected_exitcode" -gt 0],,
+	  [acx_mpirun_expected_exitcode=0])
 	AC_LINK_IFELSE(,
 	  [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
            AS_IF([expr "$ac_link" : '.*/libtool --mode=link' >/dev/null],
              [acx_mpirun_test=`echo "$ac_link" | sed -e 's@\(.*/libtool --mode=\)link.*@\1@'`"execute $acx_mpirun_test"])
 	   _AC_RUN_LOG_LIMIT([LIBC_FATAL_STDERR_=1 $acx_mpirun_num_tasks >&2],[echo "running $acx_mpirun_num_tasks"])
-	   AS_IF([test $ac_status -eq 0],
+	   AS_IF([test $ac_status -eq $acx_mpirun_expected_exitcode],
 	     [acx_mpi_defects_result=okay; acx_mpi_defects_fail=no]m4_ifval([$2],[
 	      $2]),
 	     [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])],

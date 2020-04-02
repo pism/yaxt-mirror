@@ -49,7 +49,13 @@
 
 #include <assert.h>
 #include <string.h>
+#ifdef XT_NEED_MPI_ABORT_WORK_AROUND
+#  include <fcntl.h>
+#  include <sys/stat.h>
+#  include <sys/types.h>
+#endif
 #include <unistd.h>
+
 #include <mpi.h>
 
 #include <yaxt.h>
@@ -151,6 +157,13 @@ static void
 xfail_abort(MPI_Comm comm, const char *msg, const char *source, int line)
 {
   fprintf(stderr, "Fatal error in %s, line %d: %s\n", source, line, msg);
+#ifdef XT_NEED_MPI_ABORT_WORK_AROUND
+  int fd = open("test_xmap_all2all_fail.result.txt",
+                O_WRONLY | O_TRUNC | O_CREAT | O_NOCTTY, 0777);
+  static const char exit_msg[] = "exited with code 3\n";
+  write(fd, exit_msg, sizeof (exit_msg));
+  close(fd);
+#endif
   MPI_Abort(comm, 3);
   abort();
 }
