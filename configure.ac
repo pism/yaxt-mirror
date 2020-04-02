@@ -264,25 +264,34 @@ AC_ARG_WITH([regard-for-quality],
   [AS_HELP_STRING([--without-regard-for-quality],
      [ignore results of checks for known defects @<:@default: abort on error@:>@])],
   [],[with_regard_for_quality=yes])
-ACX_MPIRUN(,,
+ACX_MPIRUN(,[saved_MPI_LAUNCH=$MPI_LAUNCH],
   [AC_MSG_WARN([$MPI_LAUNCH_failMsg])
    AS_VAR_IF([with_regard_for_quality], [yes],
-     [AC_MSG_FAILURE([unable to find a working MPI launch program, which is required for checks for known MPI defects (see --without-regard-for-quality)])])])
-AS_VAR_IF([with_regard_for_quality], [yes],
-  [ACX_MPI_DEFECTS(,,
-     [ACX_MPI_DEFECTS_DOCUMENT
-      AS_CASE(["$acx_subtestname"],[openmpi_datatype],
-        [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected attempting interpositioning work-around!])
-         ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
-           [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
-            extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'])],
-        [AC_MSG_FAILURE([test for known defect $acx_subtestname failed, re-configure with --without-regard-for-quality in case you must use the given MPI implementation, but some tests might fail])])])])
+     [AC_MSG_FAILURE([unable to find a working MPI launch program, which is
+required for checks for known MPI defects (see --without-regard-for-quality)])],
+     [saved_MPI_LAUNCH=$MPI_LAUNCH ; MPI_LAUNCH=true])])
+ACX_MPI_DEFECTS(,,
+  [ACX_MPI_DEFECTS_DOCUMENT
+   AS_CASE(["$acx_subtestname"],[openmpi_datatype],
+     [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected attempting interpositioning work-around!])
+      ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
+        [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
+         extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'])],
+     [AS_VAR_IF([with_regard_for_quality],[yes],
+        [AC_MSG_FAILURE([test for known defect $acx_subtestname failed,
+re-configure with --without-regard-for-quality in case you must use the
+given MPI implementation, but some tests might fail])],
+        [AC_MSG_NOTICE([ignoring failed test for known defect $acx_subtestname,
+because configure option --without-regard-for-quality is active])])])])
+m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
+rm -f conftest.err
 AC_SUBST([xt_mpi_workaround_LIBS])
 AM_CONDITIONAL([OMPI_DT_WORKAROUND],
   [test x${acx_opal_datatype_add_workaround+set} = xset])
 AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset],
   [acx_opal_datatype_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_opal_datatype_add_workaround')"`])
 AC_SUBST([acx_opal_datatype_add_workaround])
+MPI_LAUNCH=$saved_MPI_LAUNCH
 FCFLAGS=$saved_FCFLAGS
 CFLAGS=$saved_CFLAGS
 LIBS=$saved_LIBS
