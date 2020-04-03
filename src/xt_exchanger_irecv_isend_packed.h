@@ -54,6 +54,21 @@
 #include "xt_exchanger.h"
 #include "xt_redist_internal.h"
 
+/**
+ * Constructor for an exchanger using asynchronous send and recv, the data is
+ * is packed before/unpacked after the exchange. This ensures that the data
+ * being handled by MPI is in one contiguous buffer.
+ * @param[in] nsend      number of send messages
+ * @param[in] nrecv      number of receive messages
+ * @param[in] send_msgs  array with send messages
+ * @param[in] recv_msgs  array with receive messages
+ * @param[in] comm       MPI communicator that is to be used for the
+ *                       communication
+ * @param[in] tag_offset tag
+ * @remark tag_offset + xt_mpi_tag_exchange_msg must not
+ *         be used on @a comm by any other part of the program during the
+ *         lifetime of the created exchanger object
+ */
 Xt_exchanger
 xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
                                     const struct Xt_redist_msg *send_msgs,

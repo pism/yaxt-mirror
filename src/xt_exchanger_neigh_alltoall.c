@@ -152,6 +152,11 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg *recv_msgs,
                                 MPI_Comm comm, int tag_offset) {
 
+  /** note: tag_offset + xt_mpi_tag_exchange_msg must not
+   *        be used on @a comm by any other part of the program during the
+   *        lifetime of the created exchanger object
+   */
+
   int flag;
   xt_mpi_call(MPI_Comm_test_inter(comm, &flag), comm);
   if (flag)

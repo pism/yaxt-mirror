@@ -91,6 +91,7 @@ xt_redist_single_array_base_new(int nsend, int nrecv,
  * @param[in] recv_msgs array with receive messages
  * @param[in] comm      MPI communicator that is to be used for the
  *                      communication
+ * @param[in] config    configuration object for custom settings
  */
 Xt_redist
 xt_redist_single_array_base_custom_new(int nsend, int nrecv,

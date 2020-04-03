@@ -64,6 +64,21 @@ typedef void (*xt_simple_a_exchange_func)(
   const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
   int tag_offset, MPI_Comm comm, Xt_request *request);
 
+/**
+ * constructor for an exchanger using asynchronous send and recv
+ * @param[in] nsend      number of send messages
+ * @param[in] nrecv      number of receive messages
+ * @param[in] send_msgs  array with send messages
+ * @param[in] recv_msgs  array with receive messages
+ * @param[in] comm       MPI communicator that is to be used for the
+ *                       communication
+ * @param[in] tag_offset tag
+ * @param[in] s_func     function pointer used for synchronous exchanges
+ * @param[in] a_func     function pointer used for asynchronous exchanges
+ * @remark tag_offset + xt_mpi_tag_exchange_msg must not
+ *         be used on @a comm by any other part of the program during the
+ *         lifetime of the created exchanger object
+ */
 Xt_exchanger
 xt_exchanger_simple_base_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,

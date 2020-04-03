@@ -1,5 +1,5 @@
 /**
- * @file xt_config_internal.c
+ * @file xt_config.c
  * @brief implementation of configuration object
  *
  * @copyright Copyright  (C)  2020 Jörg Behrens <behrens@dkrz.de>

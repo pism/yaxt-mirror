@@ -122,6 +122,11 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
                              xt_simple_s_exchange_func s_func,
                              xt_simple_a_exchange_func a_func) {
 
+  /** note: tag_offset + xt_mpi_tag_exchange_msg must not
+   *        be used on @a comm by any other part of the program during the
+   *        lifetime of the created exchanger object
+   */
+
   if (s_func == NULL)
     Xt_abort(comm, "ERROR(xt_exchanger_simple_base_new): invalid synchronous "
              "exchange function pointer", __FILE__, __LINE__);

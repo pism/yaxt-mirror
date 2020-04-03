@@ -128,6 +128,11 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  const struct Xt_redist_msg *recv_msgs,
                                  MPI_Comm comm, int tag_offset) {
 
+  /** note: tag_offset + xt_mpi_tag_exchange_msg must not
+   *        be used on @a comm by any other part of the program during the
+   *        lifetime of the created exchanger object
+   */
+
   assert((nsend >= 0) & (nrecv >= 0));
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
   Xt_exchanger_mix_isend_irecv exchanger

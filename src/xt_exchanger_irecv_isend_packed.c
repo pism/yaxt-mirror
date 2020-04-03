@@ -184,6 +184,10 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
                                     const struct Xt_redist_msg *recv_msgs,
                                     MPI_Comm comm, int tag_offset) {
 
+  /** note: tag_offset + xt_mpi_tag_exchange_msg must not
+   *        be used on @a comm by any other part of the program during the
+   *        lifetime of the created exchanger object
+   */
   return xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
                                       comm, tag_offset,
                                       xt_exchanger_irecv_isend_packed_s_exchange,
