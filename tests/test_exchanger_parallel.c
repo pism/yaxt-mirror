@@ -97,11 +97,6 @@ int main(int argc, char **argv)
 
   xt_initialize(MPI_COMM_WORLD);
 
-  int my_rank, comm_size;
-
-  xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &my_rank), MPI_COMM_WORLD);
-  xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &comm_size), MPI_COMM_WORLD);
-
   Xt_exchanger_new *exchangers_new = parse_options(&argc, &argv);
 
   for (size_t i = 0; exchangers_new[i] != (Xt_exchanger_new)0; ++i) {
