@@ -184,28 +184,6 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
   }
 }
 
-unsigned
-xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
-                        const Xt_redist redists[num_redists],
-                        size_t num_ranks[num_redists],
-                        int *restrict ranks[num_redists])
-{
-  bool ranks_left = false;
-  /* get lists of ranks to send/receive message to/from */
-  for (size_t j = 0; j < num_redists; ++j) {
-    size_t nranks = num_ranks[j]
-      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
-    ranks_left |= (nranks > 0);
-    /* sort list */
-    xt_sort_int(ranks[j], nranks);
-  }
-  /* count number of different ranks to send/receive message to/from */
-  size_t num_messages = ranks_left
-    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int *const *)ranks)
-    : 0;
-  return (unsigned)num_messages;
-}
-
 size_t
 xt_ranks_uniq_count(size_t num_rank_sets,
                     const size_t *restrict num_ranks,
@@ -235,23 +213,45 @@ xt_ranks_uniq_count(size_t num_rank_sets,
   return num_messages;
 }
 
+unsigned
+xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
+                        const Xt_redist redists[num_redists],
+                        size_t num_ranks[num_redists],
+                        int *restrict ranks[num_redists])
+{
+  bool ranks_left = false;
+  /* get lists of ranks to send/receive message to/from */
+  for (size_t j = 0; j < num_redists; ++j) {
+    size_t nranks = num_ranks[j]
+      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
+    ranks_left |= (nranks > 0);
+    /* sort list */
+    xt_sort_int(ranks[j], nranks);
+  }
+  /* count number of different ranks to send/receive message to/from */
+  size_t num_messages = ranks_left
+    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int *const *)ranks)
+    : 0;
+  return (unsigned)num_messages;
+}
+
 MPI_Datatype
-xt_create_compound_datatype(size_t num_redists,
-                            const MPI_Aint displacements[num_redists],
-                            const MPI_Datatype datatypes[num_redists],
-                            const int block_lengths[num_redists],
+xt_create_compound_datatype(size_t count,
+                            const MPI_Aint displacements[count],
+                            const MPI_Datatype datatypes[count],
+                            const int block_lengths[count],
                             MPI_Comm comm)
 {
   size_t num_datatypes = 0;
   /* allocate more than max_auto_dt datatype items from heap */
   enum { max_auto_dt = 8 };
-  for (size_t i = 0; i < num_redists; ++i)
+  for (size_t i = 0; i < count; ++i)
     num_datatypes += (datatypes[i] != MPI_DATATYPE_NULL);
   MPI_Datatype *datatypes_, dt_auto[max_auto_dt];
   MPI_Aint *displacements_, disp_auto[max_auto_dt];
   int *block_lengths_, bl_auto[max_auto_dt];
 
-  if (num_datatypes != num_redists) {
+  if (num_datatypes != count) {
     if (num_datatypes > max_auto_dt) {
       datatypes_ = xmalloc(num_datatypes * sizeof(*datatypes_));
       displacements_ = xmalloc(num_datatypes * sizeof(*displacements_));
@@ -263,7 +263,7 @@ xt_create_compound_datatype(size_t num_redists,
     }
     num_datatypes = 0;
 
-    for (size_t i = 0; i < num_redists; ++i) {
+    for (size_t i = 0; i < count; ++i) {
       if (datatypes[i] != MPI_DATATYPE_NULL) {
 
         datatypes_[num_datatypes] = datatypes[i];
@@ -290,7 +290,7 @@ xt_create_compound_datatype(size_t num_redists,
 
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
-  if (num_datatypes != num_redists && num_datatypes > max_auto_dt) {
+  if (num_datatypes != count && num_datatypes > max_auto_dt) {
     free(datatypes_);
     free(displacements_);
   }

@@ -106,16 +106,11 @@ int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
 MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
                                         enum xt_msg_direction direction);
 
-size_t
-xt_ranks_uniq_count(size_t num_rank_sets,
-                    const size_t num_ranks[num_rank_sets],
-                    const int *const ranks[num_rank_sets]);
-
 MPI_Datatype
-xt_create_compound_datatype(size_t num_redists,
-                            const MPI_Aint displacements[num_redists],
-                            const MPI_Datatype datatypes[num_redists],
-                            const int block_lengths[num_redists],
+xt_create_compound_datatype(size_t count,
+                            const MPI_Aint displacements[count],
+                            const MPI_Datatype datatypes[count],
+                            const int block_lengths[count],
                             MPI_Comm comm);
 
 unsigned
