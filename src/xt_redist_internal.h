@@ -98,14 +98,53 @@ xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
   free(msgs);
 }
 
+/**
+ * Checks whether a number of redists are based on the same communicator. This
+ * is a requirement in case these redists are to be combined into a redist
+ * collection.
+ * @param[in] redists     redistribution objects to be checked
+ * @param[in] num_redists number of redistribution objects is redists
+ * @param[in] comm        reference communicator
+ * @remark In case this check fails, it will abort the program.
+ */
 void xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
 
+/**
+ * Gets the ranks of all processes that receive data from/send data to the local
+ * process in the exchanges defined by the redist.
+ * @param[in]  redist    redistribution object
+ * @param[in]  direction specifices whether ranks for the outgoing or incoming
+ *                       messages are requested
+ * @param[out] ranks     ranks for all outgoing/incoming messages
+ * @return number of outgoing/incoming message
+ * @remark the user needs to ensure that array ranks is big enough to hold all
+ *         ranks
+ */
 int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
                             int *restrict *ranks);
 
+/**
+ * Gets a MPI derived datatype that encodes all data sent/received in a
+ * specified message.
+ * @param[in] redist    redistribution object
+ * @param[in] rank      MPI rank of the communicator partner
+ * @param[in] direction specifices whether the datatype for an outgoing or
+ *                      incoming message is requested
+ * @return Datatype for the specified message. The return value is
+ *         MPI_DATATYPE_NULL, if no data for the specified message.
+ */
 MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
                                         enum xt_msg_direction direction);
 
+/**
+ * Generates a new MPI derived datatype from a number of MPI derived datatypes.
+ * @param[in] count         number of datatypes
+ * @param[in] displacements byte displacement of each block
+ * @param[in] datatypes     type of elements in each block
+ * @param[in] block_lengths number of elements in each block
+ * @param[in] comm          communicator
+ * @return new MPI derived datatype
+ */
 MPI_Datatype
 xt_create_compound_datatype(size_t count,
                             const MPI_Aint displacements[count],
@@ -113,6 +152,20 @@ xt_create_compound_datatype(size_t count,
                             const int block_lengths[count],
                             MPI_Comm comm);
 
+/**
+ * Determines number of processes that receive data from/send data to the local
+ * processes by any redists provided to this routine.
+ * @param[in]  num_redists number of redistribution objects
+ * @param[in]  direction   specifices whether the of outgoing or incoming
+ *                         message is to be determined
+ * @param[in]  redists     redistribution objects
+ * @param[out] num_ranks   number of incoming/outgoing messages per redist
+ * @param[out] ranks       ranks of communicator partners for each redist
+ * @return Number of processes that receive data from/send data to the
+ *         local process.
+ * @remark the user needs to ensure that rank arrays are big enough to hold all
+ *         ranks
+ */
 unsigned
 xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
                         const Xt_redist redists[num_redists],
