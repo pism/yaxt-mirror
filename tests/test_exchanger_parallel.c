@@ -48,6 +48,8 @@
 #endif
 
 #include <assert.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,6 +90,8 @@ static void
 test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new);
 static void
 test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new);
+
+static int test_freq = 3;
 
 int main(int argc, char **argv)
 {
@@ -136,7 +140,7 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
   exchangers_new[1] = (Xt_exchanger_new)0;
   size_t cur_ex = 0;
   int opt;
-  while ((opt = getopt(*argc, *argv, "m:")) != -1) {
+  while ((opt = getopt(*argc, *argv, "m:s:")) != -1) {
     switch (opt) {
     case 'm':
       {
@@ -160,7 +164,31 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
         exchangers_new = xrealloc(exchangers_new,
                                   sizeof (*exchangers_new) * (cur_ex + 1));
         exchangers_new[cur_ex] = (Xt_exchanger_new)0;
-    }
+      }
+      break;
+    case 's':
+      {
+        char *endptr;
+        errno = 0;
+        long v = strtol(optarg, &endptr, 0);
+        if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+            || (errno != 0 && v == 0)) {
+          perror("failed to parse argument to -s option");
+          exit(EXIT_FAILURE);
+        }
+        if (endptr == optarg) {
+          fputs("malformed argument to -s option, no digits were found\n",
+                stderr);
+          exit(EXIT_FAILURE);
+        }
+        if (v < 1 || v > INT_MAX) {
+          fprintf(stderr, "value of -s option (%ld) out of range [1,%d]\n",
+                  v, INT_MAX);
+          exit(EXIT_FAILURE);
+        }
+        test_freq = (int)v;
+      }
+      break;
     }
   }
   return exchangers_new;
@@ -174,7 +202,8 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new)
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
 
   // bcast pattern
-  for (int i = 0; i < comm_size; ++i) {
+  int incr = comm_size/test_freq + (comm_size < test_freq);
+  for (int i = 0; i < comm_size; i += incr) {
 
     // setup
 
@@ -247,7 +276,8 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new)
     MPI_Type_commit(dt_by_ofs + j);
   }
   int *dst_data = xmalloc(((size_t)comm_size - 1) * sizeof (*dst_data) * 2);
-  for (int i = 0; i < comm_size; ++i) {
+  int incr = comm_size/test_freq + (comm_size < test_freq);
+  for (int i = 0; i < comm_size; i += incr) {
 
     // setup
     int nsend = i != my_rank;
@@ -339,12 +369,14 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
       MPI_Type_commit(dt_by_ofs + i);
     } else
       dt_by_ofs[i] = MPI_DATATYPE_NULL;
-  for (size_t i = 0; i < (size_t)comm_size - 1; ++i) {
+  size_t comm_size_ = (size_t)comm_size,
+    incr = (size_t)(comm_size/test_freq + (comm_size < test_freq));
+  for (size_t i = 0; i < comm_size_ - 1; i += incr) {
     for (size_t j = 0; j < (size_t)nsend; ++j) {
       int ofs = my_rank + 1 + (int)i + (int)j;
       send_msgs[j].rank = (ofs + (ofs >= comm_size + my_rank))%comm_size;
     }
-    for (size_t j = 0; j < (size_t)comm_size - 1; ++j) {
+    for (size_t j = 0; j < comm_size_ - 1; j += incr) {
       for (size_t k = 0; k < (size_t)nrecv; ++k) {
         int ofs = ((int)i + (int)j + (int)k)%(comm_size - 1);
         ofs += ofs >= my_rank;
@@ -359,7 +391,7 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
       int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
       for (int async = 0; async < 1 + test_async; ++async) {
         int src_data[1] = {my_rank};
-        for (size_t k = 0; k < (size_t)comm_size; ++k)
+        for (size_t k = 0; k < comm_size_; ++k)
           dst_data[k] = my_rank;
 
         if (async) {
@@ -383,7 +415,7 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
       xt_exchanger_delete(exchanger);
     }
   }
-  for (size_t i = 1; i < (size_t)comm_size; ++i)
+  for (size_t i = 1; i < comm_size_; ++i)
     if (i != (size_t)my_rank)
       MPI_Type_free(dt_by_ofs + i);
   free(dt_by_ofs);
@@ -399,7 +431,8 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new)
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   // round robin pattern
-  for (int i = 1; i < comm_size; ++i) {
+  int incr = comm_size/test_freq + (comm_size < test_freq);
+  for (int i = 1; i < comm_size; i += incr) {
 
     // setup
     enum { nsend = 1, nrecv = 1 };
@@ -486,7 +519,7 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
     recv_msgs[i].rank = i;
     recv_msgs[i].datatype = MPI_INT;
     MPI_Type_indexed(
-      1, (int[]){1}, (int[]){(int)i}, MPI_INT, &(recv_msgs[i].datatype));
+      1, (int[]){1}, (int[]){i}, MPI_INT, &(recv_msgs[i].datatype));
     MPI_Type_commit(&(recv_msgs[i].datatype));
   }
 
