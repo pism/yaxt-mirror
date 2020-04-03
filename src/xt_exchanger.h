@@ -75,25 +75,77 @@ struct Xt_exchanger_ {
   struct xt_exchanger_vtable * vtable;
 };
 
+/**
+ * Executes a synchronous data exchange.
+ * @param[in]  exchanger exchanger object
+ * @param[in]  src_data  source data
+ * @param[out] dat_data  destination data
+ */
 void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
                              void * dst_data);
 
+/**
+ * Executes a asynchronous data exchange.
+ * @param[in]  exchanger exchanger object
+ * @param[in]  src_data  source data
+ * @param[out] dat_data  destination data
+ */
 void xt_exchanger_a_exchange(Xt_exchanger exchanger,
                              const void * src_data, void * dst_data,
                              Xt_request *request);
 
+/**
+ * Copies an exchange object.
+ * @param[in] orig           exchanger object to be copied
+ * @param[in] new_comm       communicator to be used by the new exchanger
+ * @param[in] new_tag_offset new tag_offset
+ */
 Xt_exchanger
 xt_exchanger_copy(Xt_exchanger orig, MPI_Comm new_comm, int new_tag_offset);
 
+/**
+ * Destructor for an exchanger.
+ */
 void xt_exchanger_delete(Xt_exchanger);
 
+/**
+ * Support routine, that reorders a number of provided messages, such that
+ * network congestion is potentially reduced.
+ * @param[in]     n             number of messages
+ * @param[in,out] msgs          messages to be reordered
+ * @param[in]     msg_type_size size of the elements in msgs
+ * @param[in]     comm          communicator associated to the messages
+ * @remark The first data element in the messages needs to be an integer
+ *         containing the rank.
+ */
 void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
                                     MPI_Comm comm);
 
+/**
+ * gets a copy of the MPI_Datatype used for a specificed message
+ * @param[in] exchanger exchanger object
+ * @param[in] rank      MPI rank
+ * @param[in] direction specific whether the datatype of an incoming or outgoing
+ *                      message is requested
+ * @return MPI_Datatype for the specificed message
+ * @remark returns MPI_DATATYPE_NULL if there is no message matching the
+ *         specificed configuration
+ */
 MPI_Datatype
 xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
                               int rank, enum xt_msg_direction direction);
 
+/**
+ * Gets the ranks of all processes that receive data from/send data to the local
+ * process in the specificed message.
+ * @param[in]  exchanger exchanger object
+ * @param[in]  direction specifices whether ranks for the outgoing or incoming
+ *                       messages are requested
+ * @param[out] ranks     ranks for all outgoing/incoming messages
+ * @return number of outgoing/incoming message
+ * @remark the user needs to ensure that array ranks is big enough to hold all
+ *         ranks
+ */
 int
 xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
