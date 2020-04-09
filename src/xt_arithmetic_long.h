@@ -251,7 +251,7 @@ xlnegate(Xt_long a, bool negate)
 static inline bool
 xl_is_in_xt_int_range(Xt_long a)
 {
-  return Xt_isign_mask(a.lo) == (Xt_int)a.hi;
+  return Xt_isign_mask((Xt_int)a.lo) == (Xt_int)a.hi;
 }
 
 static inline Xt_long
@@ -316,8 +316,10 @@ static inline Xt_long
 xlisub(Xt_long a, Xt_int b)
 {
   Xt_uint al = a.lo, ah = a.hi;
-  Xt_uint carry = ((~al & b) | ((~(al ^ b)) & (al - (Xt_uint)b))) >> (xt_int_bits-1);
-  Xt_long r = { .lo = al - b, .hi = ah - carry };
+  Xt_uint carry
+    = ((~al & (Xt_uint)b) | ((~(al ^ (Xt_uint)b)) & (al - (Xt_uint)b)))
+    >> (xt_int_bits-1);
+  Xt_long r = { .lo = al - (Xt_uint)b, .hi = ah - carry };
   return r;
 }
 
@@ -342,15 +344,15 @@ xiimul(Xt_int a, Xt_int b)
   const Xt_uint lo_mask = ((Xt_uint)1 << xt_hint_bits) - 1U;
   Xt_uint a_lo = (Xt_uint)a & lo_mask,
     b_lo = (Xt_uint)b & lo_mask,
-    a_hi = a >> xt_hint_bits,
-    b_hi = b >> xt_hint_bits,
+    a_hi = (Xt_uint)(a >> xt_hint_bits),
+    b_hi = (Xt_uint)(b >> xt_hint_bits),
     lo_prod = a_lo*b_lo;
-  Xt_int t = a_hi*b_lo + (lo_prod >> xt_hint_bits);
-  Xt_int w1 = t & lo_mask,
+  Xt_int t = (Xt_int)(a_hi*b_lo + (lo_prod >> xt_hint_bits));
+  Xt_int w1 = (Xt_int)((Xt_uint)t & lo_mask),
     w2 = t >> xt_hint_bits;
-  w1 = a_lo*b_hi + w1;
-  Xt_long r = { .hi = a_hi * b_hi + w2 + (w1 >> xt_hint_bits),
-                .lo = a * b };
+  w1 = (Xt_int)(a_lo*b_hi + (Xt_uint)w1);
+  Xt_long r = { .hi = a_hi * b_hi + (Xt_uint)w2 + (Xt_uint)(w1 >> xt_hint_bits),
+                .lo = (Xt_uint)(a * b) };
   return r;
 }
 
@@ -380,7 +382,7 @@ xlimul(Xt_long a, Xt_int b)
   const Xt_uint lo_mask = ((Xt_uint)1 << (xt_hint_bits)) - 1U;
   Xt_tword r;
 
-  Xt_uint bl = b & lo_mask, bh = (Xt_uint)b >> xt_hint_bits,
+  Xt_uint bl = (Xt_uint)b & lo_mask, bh = (Xt_uint)b >> xt_hint_bits,
     a0 = a.lo & lo_mask, a1 = a.lo >> xt_hint_bits,
     a2 = a.hi & lo_mask, a3 = a.hi >> xt_hint_bits;
   Xt_uint t = a0*bl;
@@ -396,7 +398,7 @@ xlimul(Xt_long a, Xt_int b)
   r.mid = accum | (t << xt_hint_bits);
   r.hi = t >> xt_hint_bits;
   t = a0*bh + (r.lo >> xt_hint_bits);
-  r.lo = r.lo & lo_mask | (t << xt_hint_bits);
+  r.lo = (r.lo & lo_mask) | (t << xt_hint_bits);
   k = t >> xt_hint_bits;
   t = a1*bh + (r.mid & lo_mask) + k;
   accum = t & lo_mask;
@@ -453,7 +455,7 @@ xlidivu(Xt_ulong a, Xt_uint b)
     rhat;                    // A remainder.
 
   if (ah >= b)       // overflow, set remainder to impossible value
-    return (Xt_idiv){ .quot = ~(Xt_uint)0, .rem = ~(Xt_uint)0 };
+    return (Xt_idiv){ .quot = (Xt_int)~(Xt_uint)0, .rem = (Xt_int)~(Xt_uint)0 };
 
   // Shift amount for norm.
   int s = xinlz(b);            // 0 <= s <= xt_int_bits.
@@ -462,7 +464,8 @@ xlidivu(Xt_ulong a, Xt_uint b)
   vn1 = b >> xt_hint_bits;  // Break divisor up into
   vn0 = b & lo_mask;        // two half-words
 
-  un32 = (ah << s) | (al >> (xt_int_bits - s)) & (-s >> (int_bits-1));
+  un32 = (ah << s)
+    | ((al >> (xt_int_bits - s)) & (Xt_uint)(-s >> (int_bits-1)));
   un10 = al << s;           // Shift dividend left.
 
   un1 = un10 >> xt_hint_bits; // Break right half of
@@ -486,7 +489,8 @@ xlidivu(Xt_ulong a, Xt_uint b)
     if (rhat >= base) break;
   }
 
-  return (Xt_idiv){ .quot = q1*base + q0, .rem = (un21*base + un0 - q0*b) >> s};
+  return (Xt_idiv){ .quot = (Xt_int)(q1*base + q0),
+      .rem = (Xt_int)((un21*base + un0 - q0*b) >> s)};
 }
 
 typedef XT_SHORT Xt_short;
@@ -522,23 +526,20 @@ xdivmnu(Xt_ushort *restrict q, Xt_ushort *restrict r,
 
   const Xt_uint lo_mask = ((Xt_uint)1 << (xt_hint_bits)) - 1U;
   const Xt_uint base = (Xt_uint)1 << xt_hint_bits; // Number base
-  Xt_uint qhat;            // Estimated quotient digit.
-  Xt_uint rhat;            // A remainder.
-  Xt_uint p;               // Product of two digits.
-  Xt_int s, t, k;
+  Xt_int s, t;
 
-   if (m < n || n <= 0 || v[n-1] == 0)
-     return;              // Return if invalid param.
+  if (m < n || n <= 0 || v[n-1] == 0)
+    return;              // Return if invalid param.
 
-   if (n == 1) {                        // Take care of
-      k = 0;                            // the case of a
-      for (int j = m - 1; j >= 0; j--) {    // single-digit
-         q[j] = (k*base + u[j])/v[0];      // divisor here.
-         k = (k*base + (Xt_int)u[j]) - (Xt_int)(q[j]*v[0]);
-      }
-      if (r != NULL) r[0] = k;
-      return;
-   }
+  if (n == 1) {                                      // Take care of
+    Xt_uint k = 0;                                    // the case of a
+    for (int j = m - 1; j >= 0; j--) {               // single-digit
+      q[j] = (Xt_ushort)((k*base + u[j])/v[0]);      // divisor here.
+      k = (k*base + (Xt_int)u[j]) - (Xt_int)(q[j]*v[0]);
+    }
+    if (r != NULL) r[0] = (Xt_ushort)k;
+    return;
+  }
 
    // Normalize by shifting v left just enough so that
    // its high-order bit is on, and shift u left the
@@ -558,36 +559,37 @@ xdivmnu(Xt_ushort *restrict q, Xt_ushort *restrict r,
    un[0] = u[0] << s;
 
    for (int j = m - n; j >= 0; j--) {       // Main loop.
-      // Compute estimate qhat of q[j].
-      qhat = (un[j+n]*base + un[j+n-1])/vn[n-1];
+    // Compute estimated quotient digit qhat of q[j].
+    Xt_uint qhat = (un[j+n]*base + un[j+n-1])/vn[n-1],
+      // and remainder
       rhat = (un[j+n]*base + un[j+n-1]) - qhat*vn[n-1];
-      while (qhat >= base || qhat*vn[n-2] > base*rhat + un[j+n-2]) {
+    while (qhat >= base || qhat*vn[n-2] > base*rhat + un[j+n-2]) {
         --qhat;
         rhat += vn[n-1];
         if (rhat >= base) break;
       }
 
       // Multiply and subtract.
-      k = 0;
+      Xt_int k = 0;
       for (int i = 0; i < n; i++) {
-         p = qhat*vn[i];
-         t = un[i+j] - k - (Xt_int)(p & lo_mask);
-         un[i+j] = t;
-         k = (p >> xt_hint_bits) - (t >> xt_hint_bits);
+        Xt_uint p = qhat*vn[i];  // Product of two digits.
+        t = un[i+j] - k - (Xt_int)(p & lo_mask);
+        un[i+j] = (Xt_ushort)t;
+        k = (Xt_int)(p >> xt_hint_bits) - (t >> xt_hint_bits);
       }
       t = un[j+n] - k;
-      un[j+n] = t;
+      un[j+n] = (Xt_ushort)t;
 
-      q[j] = qhat;              // Store quotient digit.
+      q[j] = (Xt_ushort)qhat;   // Store quotient digit.
       if (t < 0) {              // If we subtracted too
          q[j] = q[j] - 1;       // much, add back.
          k = 0;
          for (int i = 0; i < n; i++) {
             t = un[i+j] + vn[i] + k;
-            un[i+j] = t;
+            un[i+j] = (Xt_ushort)t;
             k = t >> xt_hint_bits;
          }
-         un[j+n] = un[j+n] + k;
+         un[j+n] = (Xt_ushort)(un[j+n] + k);
       }
    } // End j.
   // If the caller wants the remainder, unnormalize
@@ -624,16 +626,15 @@ xlldivu(Xt_ulong u, Xt_ulong v)
 
   Xt_uint qhat;            // Estimated quotient digit.
   Xt_uint rhat;            // A remainder.
-  Xt_uint p;               // Product of two digits.
-  int s, i, j;
   Xt_ldiv d;
 
   if (v.hi == 0U) {             // Take care of the case of a single-word
     d.quot.hi = u.hi/v.lo;      // divisor here.
     Xt_uint k = u.hi - d.quot.hi*v.lo;
     Xt_idiv dl = xlidivu((Xt_ulong){ .hi = k, .lo = u.lo }, v.lo);
-    d.quot.lo = dl.quot;    // divisor here.
-    d.rem = xllsub((Xt_long){ .hi = k, .lo = u.lo }, xiimul(d.quot.lo, v.lo));
+    d.quot.lo = (Xt_uint)dl.quot;    // divisor here.
+    d.rem = xllsub((Xt_long){ .hi = k, .lo = u.lo },
+                   xiimul((Xt_int)d.quot.lo, (Xt_int)v.lo));
   } else if (u.hi < v.hi || (u.hi == v.hi && u.lo < v.lo)) {
     d.quot = (Xt_long){ 0U, 0U };
     d.rem = u;
@@ -664,7 +665,7 @@ xlldivu(Xt_ulong u, Xt_ulong v)
 
       // Multiply and subtract.
       Xt_uint p = qhat * (vn.lo & lo_mask);
-      Xt_int t = (un.lo & lo_mask) - (p & lo_mask);
+      Xt_int t = (Xt_int)((un.lo & lo_mask) - (p & lo_mask));
       Xt_uint accum = (Xt_uint)t & lo_mask;
       Xt_int k = (Xt_int)(p >> xt_hint_bits) - (Xt_int)(t >> xt_hint_bits);
       p = qhat * (vn.lo >> xt_hint_bits);
@@ -679,7 +680,7 @@ xlldivu(Xt_ulong u, Xt_ulong v)
       t = (Xt_int)(un.mid >> xt_hint_bits) - k - (Xt_int)(p & lo_mask);
       un.mid = accum | ((Xt_uint)t << xt_hint_bits);
       k = (Xt_int)(p >> xt_hint_bits) - (t >> xt_hint_bits);
-      t = (un.hi & lo_mask) - k;
+      t = (Xt_int)((un.hi & lo_mask) - (Xt_uint)k);
       un.hi = (un.hi & ~lo_mask) + (Xt_uint)t;
 
       d.quot.hi = 0U;
@@ -687,16 +688,18 @@ xlldivu(Xt_ulong u, Xt_ulong v)
       if (t < 0) {              // If we subtracted too
         --d.quot.lo;            // much, add back.
         t = (Xt_int)(un.lo & lo_mask) + (Xt_int)(vn.lo & lo_mask);
-        accum = t & lo_mask;
+        accum = (Xt_uint)t & lo_mask;
         k = t >> xt_hint_bits;
-        t = (un.lo >> xt_hint_bits) + (vn.lo >> xt_hint_bits) + k;
+        t = (Xt_int)((un.lo >> xt_hint_bits) + (vn.lo >> xt_hint_bits)
+                     + (Xt_uint)k);
         un.lo = accum | ((Xt_uint)t << xt_hint_bits);
         k = t >> xt_hint_bits;
-        t = (un.mid & lo_mask) + (vn.hi & lo_mask) + k;
-        accum = t & lo_mask;
+        t = (Xt_int)((un.mid & lo_mask) + (vn.hi & lo_mask) + (Xt_uint)k);
+        accum = (Xt_uint)t & lo_mask;
         k = t >> xt_hint_bits;
-        t = (un.mid >> xt_hint_bits) + (un.hi >> xt_hint_bits) + k;
-        un.mid = accum | (t << xt_hint_bits);
+        t = (Xt_int)((un.mid >> xt_hint_bits) + (un.hi >> xt_hint_bits)
+                     + (Xt_uint)k);
+        un.mid = accum | ((Xt_uint)t << xt_hint_bits);
         k = t >> xt_hint_bits;
         un.hi += (Xt_uint)k;
       }

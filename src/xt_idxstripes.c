@@ -564,7 +564,8 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   start_diff = (Xt_long)bsb.representative - bsa.representative;
 #else
   Xt_long start_diff = xiisub(stripe_a.start, stripe_b.start);
-  Xt_idiv start_diff_abs_stride_b_div = xlidivu(xlabs(start_diff), abs_stride_b);
+  Xt_idiv start_diff_abs_stride_b_div
+    = xlidivu(xlabs(start_diff), (Xt_uint)abs_stride_b);
   bsb.representative
     = (Xt_int)(bsb.representative
                + (start_diff_abs_stride_b_div.quot
@@ -729,7 +730,9 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
       steps.quot = xlinc(steps.quot, (bool)((Xt_int)steps.rem.hi >= 0
                                             && steps.rem.lo != 0));
       if (steps_in_range)
-        min_rep = xlladd(some_rep, xiimul(steps.quot.lo, abs_bsi_stride.lo));
+        min_rep = xlladd(some_rep,
+                         xiimul((Xt_int)steps.quot.lo,
+                                (Xt_int)abs_bsi_stride.lo));
       else
         min_rep = some_rep;
       min_rep_in_range &= xl_is_in_xt_int_range(min_rep);
@@ -746,7 +749,8 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
     strides_mask = ~(((even_divide) & (bsi.min <= bsi.max)
                       & xlicmp_le(min_rep, bsi.max) & xlicmp_ge(min_rep, bsi.min)) - 1);
     Xt_int max_rep
-      = (Xt_int)(min_rep.lo + (nstrides - xlsign(temp_stride)) * bsi.stride);
+      = (Xt_int)(min_rep.lo
+                 + (Xt_uint)((nstrides - xlsign(temp_stride)) * bsi.stride));
     intersection.start = ((bsa.stride >= 0) ? (Xt_int)min_rep.lo : max_rep);
 #endif
   }
@@ -1328,7 +1332,7 @@ idxstripes_get_pos_exts_of_index_stripes(
       struct Xt_stripe query = stripes[i];
       int j = query.nstrides;
       query.nstrides = ((query.stride != 0) | (query.nstrides == 0))
-        ? query.nstrides : (Xt_int)1;
+        ? query.nstrides : 1;
       query.stride = (Xt_int)((query.stride != 0 && query.nstrides != 1)
                               ? query.stride : (Xt_int)1);
       find_candidates(query, &stripes_db, &candidates);
