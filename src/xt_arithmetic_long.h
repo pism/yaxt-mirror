@@ -724,6 +724,8 @@ static inline Xt_ldiv
 xtidiv(Xt_tword a, Xt_int b)
 {
   /* todo: implement */
+  (void)a;
+  (void)b;
   Xt_ldiv r = { { 0, 0 }, { 0, 0 } };
   return r;
 }
