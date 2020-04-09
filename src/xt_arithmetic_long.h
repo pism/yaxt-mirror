@@ -548,13 +548,13 @@ xdivmnu(Xt_ushort *restrict q, Xt_ushort *restrict r,
    s = xinlz(v[n-1]) - xt_hint_bits;        // 0 <= s <= 15.
    Xt_ushort vn[n];                       /* normalized v */
    for (int i = n - 1; i > 0; i--)
-      vn[i] = (v[i] << s) | (v[i-1] >> xt_hint_bits-s);
+     vn[i] = (v[i] << s) | (v[i-1] >> (xt_hint_bits-s));
    vn[0] = v[0] << s;
 
    Xt_ushort un[m + 1];                   /* normalized u */
    un[m] = u[m-1] >> (xt_hint_bits-s);
    for (int i = m - 1; i > 0; i--)
-      un[i] = (u[i] << s) | (u[i-1] >> xt_hint_bits-s);
+     un[i] = (u[i] << s) | (u[i-1] >> (xt_hint_bits-s));
    un[0] = u[0] << s;
 
    for (int j = m - n; j >= 0; j--) {       // Main loop.
@@ -590,13 +590,12 @@ xdivmnu(Xt_ushort *restrict q, Xt_ushort *restrict r,
          un[j+n] = un[j+n] + k;
       }
    } // End j.
-   // If the caller wants the remainder, unnormalize
-   // it and pass it back.
-   if (r != NULL) {
-      for (int i = 0; i < n; i++)
-         r[i] = (un[i] >> s) | (un[i+1] << xt_hint_bits-s);
-   }
-   return;
+  // If the caller wants the remainder, unnormalize
+  // it and pass it back.
+  if (r != NULL) {
+    for (int i = 0; i < n; i++)
+      r[i] = (un[i] >> s) | (un[i+1] << (xt_hint_bits-s));
+  }
 }
 
 static inline void
