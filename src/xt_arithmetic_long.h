@@ -339,17 +339,17 @@ enum {
 static inline Xt_long
 xiimul(Xt_int a, Xt_int b)
 {
-  const Xt_uint lo_mask = ((Xt_uint)1 << (xt_hint_bits)) - 1U;
+  const Xt_uint lo_mask = ((Xt_uint)1 << xt_hint_bits) - 1U;
   Xt_uint a_lo = (Xt_uint)a & lo_mask,
     b_lo = (Xt_uint)b & lo_mask,
-    a_hi = a >> (xt_int_bits/2),
-    b_hi = b >> (xt_int_bits/2),
+    a_hi = a >> xt_hint_bits,
+    b_hi = b >> xt_hint_bits,
     lo_prod = a_lo*b_lo;
-  Xt_int t = a_hi*b_lo + (lo_prod >> (xt_int_bits/2));
+  Xt_int t = a_hi*b_lo + (lo_prod >> xt_hint_bits);
   Xt_int w1 = t & lo_mask,
-    w2 = t >> (xt_int_bits/2);
+    w2 = t >> xt_hint_bits;
   w1 = a_lo*b_hi + w1;
-  Xt_long r = { .hi = a_hi * b_hi + w2 + (w1 >> (xt_int_bits/2)),
+  Xt_long r = { .hi = a_hi * b_hi + w2 + (w1 >> xt_hint_bits),
                 .lo = a * b };
   return r;
 }
