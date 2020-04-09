@@ -241,7 +241,6 @@ xllo(Xt_long x)
 static inline Xt_long
 xlnegate(Xt_long a, bool negate)
 {
-  Xt_uint sign_mask = (Xt_uint)(Xt_isign_mask((Xt_int)a.hi));
   Xt_uint borrow = (Xt_uint)((Xt_uint)negate & (Xt_uint)(-(Xt_int)a.lo != 0));
   Xt_long r = { .hi = (a.hi ^ (Xt_uint)-(Xt_int)negate) + negate - borrow,
                 .lo = (a.lo ^ (Xt_uint)-(Xt_int)negate) + negate };
@@ -316,7 +315,7 @@ xllsub(Xt_long a, Xt_long b)
 static inline Xt_long
 xlisub(Xt_long a, Xt_int b)
 {
-  Xt_uint al = a.lo, ah = a.hi, bh = (Xt_uint)(Xt_isign_mask(b));
+  Xt_uint al = a.lo, ah = a.hi;
   Xt_uint carry = ((~al & b) | ((~(al ^ b)) & (al - (Xt_uint)b))) >> (xt_int_bits-1);
   Xt_long r = { .lo = al - b, .hi = ah - carry };
   return r;
