@@ -708,8 +708,8 @@ xlldivu(Xt_ulong u, Xt_ulong v)
       xl2a(ua, u);
       xl2a(va, v);
       int m = 4, n = 4;
-      while (ua[m] == 0U) --m;
-      while (va[n] == 0U) --n;
+      while (ua[m-1] == 0U) --m;
+      while (va[n-1] == 0U) --n;
       xdivmnu(qa, ra, ua, va, m, n);
       d.quot = xa2l(qa);
       d.rem = xa2l(ra);
