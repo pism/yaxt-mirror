@@ -126,19 +126,6 @@ SymPrefix(restore_default_abort_handler)(void)
   SymPrefix(abort) = SymPrefix(abort_default);
 }
 
-#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
-  || (defined __clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-prototypes"
-#endif
-FCALLSCSUB0(SymPrefix(restore_default_abort_handler),
-            SYMPREFIX(RESTORE_DEFAULT_ABORT_HNDL),
-            symprefix(restore_default_abort_hndl))
-#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
-  || (defined __clang__)
-#pragma GCC diagnostic pop
-#endif
-
 /*
  * Local Variables:
  * license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"

@@ -121,6 +121,19 @@ abort_default_f(MPI_Fint *comm_f, const char *msg, const char *source,
 #undef FCALLSC_QUALIFIER
 #define FCALLSC_QUALIFIER
 
+#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
+  || (defined __clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#endif
+FCALLSCSUB0(SymPrefix(restore_default_abort_handler),
+            SYMPREFIX(RESTORE_DEFAULT_ABORT_HNDL),
+            symprefix(restore_default_abort_hndl))
+#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
+  || (defined __clang__)
+#pragma GCC diagnostic pop
+#endif
+
 FCALLSCSUB4(abort_default_f,SYMPREFIX(ABORT_DEFAULT),
             symprefix(abort_default),
             PVOID,STRING,STRING,INT)
