@@ -379,7 +379,7 @@ xtlo(Xt_tword x)
 static inline Xt_tword
 xlimul(Xt_long a, Xt_int b)
 {
-  const Xt_uint lo_mask = ((Xt_uint)1 << (xt_hint_bits)) - 1U;
+  const Xt_uint lo_mask = ((Xt_uint)1 << xt_hint_bits) - 1U;
   Xt_tword r;
 
   Xt_uint bl = (Xt_uint)b & lo_mask, bh = (Xt_uint)b >> xt_hint_bits,
@@ -445,7 +445,7 @@ This is the version that's in the hacker book. */
 static inline Xt_idiv
 xlidivu(Xt_ulong a, Xt_uint b)
 {
-  const Xt_uint lo_mask = ((Xt_uint)1 << (xt_hint_bits)) - 1U;
+  const Xt_uint lo_mask = ((Xt_uint)1 << xt_hint_bits) - 1U;
   const Xt_uint base = (Xt_uint)1 << xt_hint_bits; // Number base
   Xt_uint un1, un0,          // Norm. dividend LSD's.
     ah = a.hi, al = a.lo,
@@ -524,7 +524,7 @@ xdivmnu(Xt_ushort *restrict q, Xt_ushort *restrict r,
         const Xt_ushort *restrict u, const Xt_ushort *restrict v,
         int m, int n) {
 
-  const Xt_uint lo_mask = ((Xt_uint)1 << (xt_hint_bits)) - 1U;
+  const Xt_uint lo_mask = ((Xt_uint)1 << xt_hint_bits) - 1U;
   const Xt_uint base = (Xt_uint)1 << xt_hint_bits; // Number base
   Xt_int s, t;
 
@@ -621,7 +621,7 @@ xa2l(Xt_ushort a[4])
 static inline Xt_ldiv
 xlldivu(Xt_ulong u, Xt_ulong v)
 {
-  const Xt_uint lo_mask = ((Xt_uint)1 << (xt_hint_bits)) - 1U;
+  const Xt_uint lo_mask = ((Xt_uint)1 << xt_hint_bits) - 1U;
   const Xt_uint base = (Xt_uint)1 << xt_hint_bits; // Number base
 
   Xt_uint qhat;            // Estimated quotient digit.
