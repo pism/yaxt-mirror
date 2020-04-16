@@ -73,6 +73,10 @@ int main()
     PUT_ERR("unexpected duplicate ids");
   if (xt_idxlist_get_uid(a) != a_id)
     PUT_ERR("unexpected id change");
+  xt_idxlist_delete(c);
+  xt_idxlist_delete(b);
+  xt_idxlist_delete(a);
+  xt_finalize();
   MPI_Finalize();
   return TEST_EXIT_CODE;
 }
