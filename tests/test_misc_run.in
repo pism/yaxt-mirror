@@ -1,5 +1,6 @@
 #! @SHELL@
 set -e
+@with_fortran_FALSE@exit 77
 LIBC_FATAL_STDERR_=1
 export LIBC_FATAL_STDERR_
 [ x"@MPI_LAUNCH@" != xtrue ] || exit 77

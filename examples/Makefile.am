@@ -38,9 +38,14 @@ EXTRA_PROGRAMS = 						\
 	idxlist_examples					\
 	idxsection_examples					\
 	row2col							\
+	tr_gp2fs
+
+
+if with_fortran
+EXTRA_PROGRAMS += 						\
 	row2col_f						\
-	tr_gp2fs						\
 	unstruct_halo_exchange_f
+endif
 
 noinst_PROGRAMS =
 if with_example_programs

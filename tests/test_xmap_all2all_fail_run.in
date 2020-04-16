@@ -6,6 +6,7 @@ export LIBC_FATAL_STDERR_
 ulimit -c 0
 for setup_size  in small big; do
   for suffix in '' '_f'; do
+    @with_fortran_FALSE@test x"$suffix" != x_f || continue
     if diags=`@abs_top_builddir@/libtool --mode=execute \
         @MPI_LAUNCH@ -n 1 \
         @abs_builddir@/test_xmap_all2all_fail$suffix -s $setup_size \

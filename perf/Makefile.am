@@ -34,8 +34,12 @@
 #
 
 EXTRA_PROGRAMS = 						\
-	perf_idxsection_get_positions_of_indices		\
+	perf_idxsection_get_positions_of_indices
+
+if with_fortran
+EXTRA_PROGRAMS += 						\
 	perf_sparse_array_gather
+endif
 
 noinst_PROGRAMS =
 if with_perf_programs

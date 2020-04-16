@@ -34,7 +34,12 @@
 
 AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
 AM_FCFLAGS  = $(MPI_FC_MOD)
-lib_LTLIBRARIES =  libyaxt_c.la libyaxt.la
+lib_LTLIBRARIES = libyaxt_c.la
+if with_fortran
+lib_LTLIBRARIES += libyaxt.la
+else
+AM_CPPFLAGS += -DWITHOUT_FORTRAN
+endif
 
 # headers from subdir xt will be installed (after substituting
 # definitions from config.h). These must be listed in a sequence in
@@ -336,6 +341,10 @@ clean-local:
 # the directory stamps are deleted by introducing a dependency on
 # 'distclean-generic'. Second, we delete the pkgconfig files, which, otherwise,
 # are deleted later by the top-level Makefile.
+PKG_CFG_FILES = pkgconfig/yaxt_c.pc
+if with_fortran
+PKG_CFG_FILES += pkgconfig/yaxt.pc
+endif
 distclean-local: mostlyclean distclean-generic
 	-rm -f xtinclude_Makefile.inc
 	-rm -rf '$(DEPDIR)' 'core/$(DEPDIR)'
@@ -344,7 +353,7 @@ distclean-local: mostlyclean distclean-generic
 
 install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"
-	for pc in pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc ; do \
+	for pc in $(PKG_CFG_FILES) ; do \
 		$(install_sh_DATA) "$$pc" "$(DESTDIR)$(libdir)/$$pc" ; done
 
 uninstall-local:
@@ -352,6 +361,7 @@ uninstall-local:
 		"$(DESTDIR)$(libdir)/pkgconfig/yaxt_c.pc"
 	-rmdir "$(DESTDIR)$(libdir)/pkgconfig"
 
+if with_fortran
 ./$(DEPDIR)/FC.deps: $(libyaxt_la_SOURCES) Makefile
 	@unique=`for i in $(SOURCES); do \
 	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -376,6 +386,7 @@ uninstall-local:
 	  && touch ./$(DEPDIR)/FC.deps
 
 @am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
+endif
 
 #
 # Local Variables:

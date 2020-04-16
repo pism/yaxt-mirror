@@ -34,72 +34,78 @@
 #
 
 check_PROGRAMS = 						\
-	test_misc_f						\
 	test_mpi_generate_datatype				\
 	test_mpi_smartdedup					\
 	test_exchanger_parallel					\
 	test_handles						\
 	test_arithmetic_long					\
 	test_idxempty						\
-	test_idxempty_f						\
 	test_idxvec						\
-	test_idxvec_f						\
 	test_idxlist_collection					\
-	test_idxlist_collection_f				\
 	test_idxmod						\
-	test_idxmod_f						\
 	test_idxsection						\
-	test_idxsection_f					\
 	test_idxstripes						\
-	test_idxstripes_f					\
 	test_redist_single_array_base				\
-	test_redist_single_array_base_f				\
 	test_redist_single_array_base_parallel			\
-	test_redist_single_array_base_parallel_f		\
 	test_redist_collection					\
-	test_redist_collection_f				\
 	test_redist_collection_parallel				\
-	test_redist_collection_parallel_f			\
 	test_redist_collection_static				\
-	test_redist_collection_static_f				\
 	test_redist_collection_static_parallel			\
-	test_redist_collection_static_parallel_f		\
 	test_redist_p2p						\
-	test_redist_p2p_f					\
 	test_redist_p2p_parallel				\
-	test_redist_p2p_parallel_f				\
 	test_redist_repeat					\
-	test_redist_repeat_f					\
 	test_redist_repeat_parallel				\
-	test_redist_repeat_parallel_f				\
 	test_request_parallel					\
 	test_xmap_all2all					\
-	test_xmap_all2all_f					\
 	test_xmap_all2all_fail					\
-	test_xmap_all2all_fail_f				\
 	test_xmap_all2all_parallel				\
-	test_xmap_all2all_parallel_f				\
 	test_xmap_all2all_intercomm_parallel			\
-	test_xmap_all2all_intercomm_parallel_f			\
 	test_xmap_dist_dir					\
-	test_xmap_dist_dir_f					\
 	test_xmap_dist_dir_parallel				\
-	test_xmap_dist_dir_parallel_f				\
 	test_xmap_dist_dir_intercomm_parallel			\
-	test_xmap_dist_dir_intercomm_parallel_f			\
 	test_xmap_intersection_parallel				\
-	test_xmap_intersection_parallel_f			\
 	test_initialized_finalized				\
+	test_sort						\
+	test_uid
+
+check_LTLIBRARIES = libtestutil.la
+
+if with_fortran
+check_PROGRAMS += 						\
+	test_misc_f						\
+	test_idxempty_f						\
+	test_idxvec_f						\
+	test_idxlist_collection_f				\
+	test_idxmod_f						\
+	test_idxsection_f					\
+	test_idxstripes_f					\
+	test_redist_single_array_base_f				\
+	test_redist_single_array_base_parallel_f		\
+	test_redist_collection_f				\
+	test_redist_collection_parallel_f			\
+	test_redist_collection_static_f				\
+	test_redist_collection_static_parallel_f		\
+	test_redist_p2p_f					\
+	test_redist_p2p_parallel_f				\
+	test_redist_repeat_f					\
+	test_redist_repeat_parallel_f				\
+	test_xmap_all2all_f					\
+	test_xmap_all2all_fail_f				\
+	test_xmap_all2all_parallel_f				\
+	test_xmap_all2all_intercomm_parallel_f			\
+	test_xmap_dist_dir_f					\
+	test_xmap_dist_dir_parallel_f				\
+	test_xmap_dist_dir_intercomm_parallel_f			\
+	test_xmap_intersection_parallel_f			\
 	test_initialized_finalized_f				\
 	test_ut							\
 	test_perf						\
 	test_perf_stripes					\
-	test_sort						\
-	test_uid						\
 	test_yaxt
 
+check_LTLIBRARIES += libtestutil_f.la
+endif
 
-check_LTLIBRARIES = libtestutil.la libtestutil_f.la
 
 if ! with_on_demand_check_programs
 all: $(check_LTLIBRARIES) $(check_PROGRAMS)
@@ -300,6 +306,7 @@ AUTOMAKE_OPTIONS = color-tests
 
 EXTRA_DIST = core
 
+if with_fortran
 ./$(DEPDIR)/FC.deps: $(SOURCES) Makefile
 	@unique=`for i in $(SOURCES); do \
 	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -327,6 +334,7 @@ EXTRA_DIST = core
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
 
 @am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
+endif
 
 clean-local:
 	-rm -f *.$(FCMODEXT) *.i *.dbg

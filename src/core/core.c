@@ -53,21 +53,23 @@
  * Code:
  */
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#  include <config.h>
 #endif
 #include <stdio.h>
-#if defined __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreserved-id-macro"
-#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#include <stdlib.h>
+#ifndef WITHOUT_FORTRAN
+#  if defined __clang__
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#    pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#  endif
+#  include <cfortran.h>
+#  if defined __clang__
+#    pragma GCC diagnostic pop
+#  endif
 #endif
-#include <cfortran.h>
-#if defined __clang__
-#pragma GCC diagnostic pop
-#endif
-
 #ifdef USE_MPI
-#include <mpi.h>
+#  include <mpi.h>
 #endif
 
 #include "core/ppm_visibility.h"
@@ -76,6 +78,7 @@
 
 MPI_Comm SymPrefix(default_comm) = MPI_COMM_WORLD;
 
+#ifndef WITHOUT_FORTRAN
 #define F2C_Data COMMON_BLOCK(SYMPREFIX(F2C_DATA),symprefix(f2c_data))
 
 typedef struct
@@ -86,18 +89,21 @@ typedef struct
 COMMON_BLOCK_DEF(SymPrefix(F2C_Def),F2C_Data);
 
 SymPrefix(F2C_Def) F2C_Data;
+#endif
 
 void
 SymPrefix(set_default_comm)(MPI_Comm comm)
 {
+#ifndef WITHOUT_FORTRAN
   MPI_Fint comm_f;
-#if defined(USE_MPI)
+#  if defined(USE_MPI)
   comm_f = MPI_Comm_c2f(comm);
-#else
+#  else
   comm_f = comm;
+#  endif
+  F2C_Data.symprefix(default_comm) = comm_f;
 #endif
   SymPrefix(default_comm) = comm;
-  F2C_Data.symprefix(default_comm) = comm_f;
 }
 
 void
