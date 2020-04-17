@@ -47,6 +47,7 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -128,10 +129,11 @@ int main(void) {
     static const int ref_mstate[]
       = {1, 2|mod_mask, 3|mod_mask, 4|mod_mask, 5|mod_mask, 6, 7, 8};
     // check mstate:
-    for (size_t i = 0; i < patch_num; i++) {
-      if (mstate[i] != ref_mstate[i])
-        PUT_ERR("(mstate[i] != ref_mstate[i])\n");
-    }
+    bool mismatch = false;
+    for (size_t i = 0; i < patch_num; i++)
+      mismatch |= (mstate[i] != ref_mstate[i]);
+    if (mismatch)
+      PUT_ERR("(mstate[i] != ref_mstate[i])\n");
 
     xt_idxlist_delete(mpatch_idxlist);
     xt_idxlist_delete(patch_idxlist);
@@ -184,10 +186,11 @@ int main(void) {
     check_idxlist(mpatch_idxlist, ref_mpatch_idx, patch_num);
 
     // check mstate:
-    for (size_t i = 0; i < patch_num; i++) {
-      if (mstate[i] != ref_mstate[i])
-        PUT_ERR("(mstate[i] != ref_mstate[i])\n");
-    }
+    bool mismatch = false;
+    for (size_t i = 0; i < patch_num; i++)
+      mismatch |= (mstate[i] != ref_mstate[i]);
+    if (mismatch)
+      PUT_ERR("(mstate[i] != ref_mstate[i])\n");
 
     xt_idxlist_delete(mpatch_idxlist);
     xt_idxlist_delete(patch_idxlist);

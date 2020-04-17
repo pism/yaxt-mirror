@@ -261,9 +261,12 @@ int main(void) {
     xt_idxlist_get_bounding_box(collectionlist, ndim, global_size_bb,
                                 global_start_index, bounds);
 
+    bool mismatch = false;
     for (size_t i = 0; i < ndim; ++i)
-      if (bounds[i].size != 0)
-        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+      mismatch |= (bounds[i].size != 0);
+
+    if (mismatch)
+      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
     xt_idxlist_delete(collectionlist);
   }
@@ -299,9 +302,12 @@ int main(void) {
 
     static const Xt_int ref_start[3] = { 2, 2, 1 };
 
+    bool mismatch = false;
     for (size_t i = 0; i < ndim; ++i)
-      if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
-        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+      mismatch |= (bounds[i].size != 2 || bounds[i].start != ref_start[i]);
+
+    if (mismatch)
+      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
     xt_idxlist_delete(collectionlist);
   }

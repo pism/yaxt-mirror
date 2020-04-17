@@ -482,10 +482,12 @@ int main(void) {
                                             positions, 0) != 2)
       PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
 
-    for (size_t i = 0; i < num_selection; i++) {
-      if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_position_of_indices did not return correct position\n");
-    }
+    bool mismatch = false;
+    for (size_t i = 0; i < num_selection; i++)
+      mismatch |= (positions[i] != ref_positions[i]);
+    if (mismatch)
+      PUT_ERR("xt_idxlist_get_position_of_indices did not return correct"
+              " position\n");
 
     xt_idxlist_delete(idxvec);
   }
@@ -508,9 +510,11 @@ int main(void) {
     xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
                                 global_start_index, bounds);
 
+    bool mismatch = false;
     for (unsigned i = 0; i < ndim; ++i)
-      if (bounds[i].size != 2 || bounds[i].start != 1)
-        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+      mismatch |= (bounds[i].size != 2 || bounds[i].start != 1);
+    if (mismatch)
+      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
     xt_idxlist_delete(idxvec);
   }
@@ -536,9 +540,11 @@ int main(void) {
 
     Xt_int ref_start[3] = {2,2,1};
 
-    for (unsigned i = 0; i < ndim; ++i)
-      if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
-        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+    bool mismatch = false;
+    for (size_t i = 0; i < ndim; ++i)
+      mismatch |= (bounds[i].size != 2 || bounds[i].start != ref_start[i]);
+    if (mismatch)
+      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
     xt_idxlist_delete(idxvec);
   }
@@ -561,9 +567,11 @@ int main(void) {
     xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
                                 global_start_index, bounds);
 
-    for (unsigned i = 0; i < ndim; ++i)
-      if (bounds[i].size != 0)
-        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+    bool mismatch = false;
+    for (size_t i = 0; i < ndim; ++i)
+      mismatch |= (bounds[i].size != 0);
+    if (mismatch)
+      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
     xt_idxlist_delete(idxvec);
   }
@@ -626,11 +634,12 @@ test_get_indices_at_positions(int num_indices, const Xt_int *indices,
     = xt_idxlist_get_indices_at_positions(idxvec, pos, num_pos, sel_idx,
                                           undef_idx);
   if (undef_count != ref_undef_count)
-    PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-  for (size_t i = 0; i < (size_t)num_pos; i++) {
-    if (sel_idx[i] != ref_sel_idx[i])
-      PUT_ERR("test_idxvec.c: (sel_idx[ip] != ref_sel_idx[ip])\n");
-  }
+    PUT_ERR("test_idxvec.c: undef_count != ref_undef_count\n");
+  bool mismatch = false;
+  for (size_t i = 0; i < (size_t)num_pos; i++)
+    mismatch |= (sel_idx[i] != ref_sel_idx[i]);
+  if (mismatch)
+    PUT_ERR("test_idxvec.c: sel_idx != ref_sel_idx\n");
   xt_idxlist_delete(idxvec);
 }
 

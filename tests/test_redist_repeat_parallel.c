@@ -169,15 +169,19 @@ int main(int argc, char **argv) {
 
         // check results
 
+        bool mismatch = false;
         for (int j = 0; j < rpt_cnt; ++j)
           for (size_t i = 0; i < dim0; ++i)
-            if (result[j][i] != index_vector_b[i] + j * 2*(int)dim0)
-              PUT_ERR("ERROR: in first xt_redist_s_exchange1\n");
+            mismatch |= (result[j][i] != index_vector_b[i] + j * 2*(int)dim0);
+        if (mismatch)
+          PUT_ERR("ERROR: in first xt_redist_s_exchange1\n");
 
+        mismatch = false;
         for (int j = 1; j <= 8; j<<=1)
           for (size_t i = 0; i < dim0; ++i)
-            if (result_2[j][i] != index_vector_b[i] + j * 2*(int)dim0)
-              PUT_ERR("ERROR: in second xt_redist_s_exchange1\n");
+            mismatch |= (result_2[j][i] != index_vector_b[i] + j * 2*(int)dim0);
+        if (mismatch)
+          PUT_ERR("ERROR: in second xt_redist_s_exchange1\n");
       }
 
       // clean up

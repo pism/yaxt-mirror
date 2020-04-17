@@ -173,9 +173,11 @@ check_peers(Xt_xmap xmap, size_t num_ref_ranks, const int *ref_ranks,
     PUT_ERR("error in %s\n", get_num_peers_name);
   get_peer_ranks(xmap, peer_rank_buf);
   xt_sort_int(peer_rank_buf, num_ref_ranks);
+  bool mismatch = false;
   for (size_t i = 0; i < num_ref_ranks; ++i)
-    if (peer_rank_buf[i] != ref_ranks[i])
-      PUT_ERR("error in %s\n", get_peer_ranks_name);
+    mismatch |= (peer_rank_buf[i] != ref_ranks[i]);
+  if (mismatch)
+    PUT_ERR("error in %s\n", get_peer_ranks_name);
 }
 
 static void

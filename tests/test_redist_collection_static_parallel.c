@@ -224,21 +224,29 @@ test_transpose_gather(Xt_redist redist,
     Xt_int *results_1 = dst, *results_2 = dst + size_b,
       *results_3 = dst + size_b + size_a,
       *results_4 = dst + size_a + size_b + size_all;
+    bool mismatch = false;
     for (size_t i = 0; i < size_b; ++i)
-      if (results_1[i] != index_vector_b[i])
-        PUT_ERR("error on xt_redist_s_exchange\n");
+      mismatch |= (results_1[i] != index_vector_b[i]);
+    if (mismatch)
+      PUT_ERR("error on xt_redist_s_exchange\n");
 
+    mismatch = false;
     for (size_t i = 0; i < size_a; ++i)
-      if (results_2[i] != index_vector_a[i])
-        PUT_ERR("error on xt_redist_s_exchange\n");
+      mismatch |= (results_2[i] != index_vector_a[i]);
+    if (mismatch)
+      PUT_ERR("error on xt_redist_s_exchange\n");
 
+    mismatch = false;
     for (size_t i = 0; i < size_all; ++i)
-      if (results_3[i] != (int)i)
-        PUT_ERR("error on xt_redist_s_exchange\n");
+      mismatch |= (results_3[i] != (int)i);
+    if (mismatch)
+      PUT_ERR("error on xt_redist_s_exchange\n");
 
+    mismatch = false;
     for (size_t i = 0; i < size_all; ++i)
-      if (results_4[i] != (int)i)
-        PUT_ERR("error on xt_redist_s_exchange\n");
+      mismatch |= (results_4[i] != (int)i);
+    if (mismatch)
+      PUT_ERR("error on xt_redist_s_exchange\n");
   }
 }
 
@@ -304,10 +312,12 @@ test_rr_exchange(MPI_Comm comm, Xt_config config)
     exchange1_func(redist, (void*)src_indices_, (void*)results[1]);
 
     // check results
+    bool mismatch = false;
     for (int i = 0; i < partSize; ++i)
-      if (results[1][i] != dst_indices_[0][i]
-          || results[0][i] != dst_indices_[1][i])
-        PUT_ERR("error on xt_redist_s_exchange\n");
+      mismatch |= (results[1][i] != dst_indices_[0][i]
+                   || results[0][i] != dst_indices_[1][i]);
+    if (mismatch)
+      PUT_ERR("error on xt_redist_s_exchange\n");
   }
 
   // clean up

@@ -327,10 +327,12 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new)
         }
       }
 
+      bool mismatch = false;
       for (size_t j = 0; j < nrecv; ++j)
-        if (((size_t)dst_data[j] != j + 1)
-            || (dst_data[nrecv + j] != comm_size - (int)j - 1))
-          PUT_ERR("invalid data\n");
+        mismatch |= (((size_t)dst_data[j] != j + 1)
+                     || (dst_data[nrecv + j] != comm_size - (int)j - 1));
+      if (mismatch)
+        PUT_ERR("invalid data\n");
     }
 
     // cleanup
@@ -407,8 +409,11 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
           xt_exchanger_s_exchange(exchanger, (void*)src_data, (void*)dst_data);
         }
 
+        bool mismatch = false;
         for (int k = 0; k < comm_size; ++k)
-          if (dst_data[k] != k) PUT_ERR("invalid data\n");
+          mismatch |= (dst_data[k] != k);
+        if (mismatch)
+          PUT_ERR("invalid data\n");
       }
 
       // cleanup
@@ -550,8 +555,11 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
     }
 
     int dst_data_offset = (my_rank >= splitRank)?0:splitRank;
+    bool mismatch = false;
     for (int i = 0; i < nrecv; ++i)
-      if (dst_data[i] != i + dst_data_offset) PUT_ERR("invalid data\n");
+      mismatch |= (dst_data[i] != i + dst_data_offset);
+    if (mismatch)
+      PUT_ERR("invalid data\n");
   }
 
   // cleanup

@@ -66,12 +66,15 @@ test1(void (*anysort_index)(Xt_int * a, int n, int * idx, int reset_index)) {
   assert(tsize == sizeof(pvec) / sizeof(pvec[0]));
 
   anysort_index(ivec, (int)tsize, pvec, 1);
+  bool mismatch_values = false, mismatch_positions = false;
   for(size_t i=0; i < tsize; i++) {
-    if ( ivec[i] != sorted_ivec[i] )
-      PUT_ERR("wrong sorting values\n");
-    if ( pvec[i] != sorted_pvec[i] )
-      PUT_ERR("wrong sorting positions\n");
+    mismatch_values |= ( ivec[i] != sorted_ivec[i] );
+    mismatch_positions |= ( pvec[i] != sorted_pvec[i] );
   }
+  if ( mismatch_values )
+    PUT_ERR("wrong sorting values\n");
+  if ( mismatch_positions )
+      PUT_ERR("wrong sorting positions\n");
 }
 
 static void
@@ -81,24 +84,30 @@ test2(void (*sort_int)(int *a, size_t n))
   static const int sorted_ivec[] = {1,2,2,3,3,3,5,7};
   size_t ivec_size = sizeof (ivec) / sizeof (ivec[0]);
   sort_int(ivec, ivec_size);
+  bool mismatch = false;
   for(size_t i=0; i < ivec_size; i++)
-    if ( ivec[i] != sorted_ivec[i] )
-      PUT_ERR("wrong sorting values\n");
+    mismatch |= ( ivec[i] != sorted_ivec[i] );
+  if (mismatch)
+    PUT_ERR("wrong sorting values\n");
   size_t n = 40000;
   int *large_ivec = malloc(n * sizeof (*large_ivec));
   for (size_t i = 0; i < n; ++i)
     large_ivec[i] = (int)(n - i);
   sort_int(large_ivec, n);
+  mismatch = false;
   for (size_t i = 0; i < n; ++i)
-    if (large_ivec[i] != (int)(i + 1))
-      PUT_ERR("wrong sorting values\n");
+    mismatch |= (large_ivec[i] != (int)(i + 1));
+  if (mismatch)
+    PUT_ERR("wrong sorting values\n");
   size_t ofs = 50;
   for (size_t i = 0; i < n; ++i)
     large_ivec[i] = (int)(((i + ofs)%n) / 2);
   sort_int(large_ivec, n);
+  mismatch = false;
   for (size_t i = 0; i < n; ++i)
-    if (large_ivec[i] != (int)(i/2))
-      PUT_ERR("wrong sorting values\n");
+    mismatch |= (large_ivec[i] != (int)(i/2));
+  if (mismatch)
+    PUT_ERR("wrong sorting values\n");
   free(large_ivec);
 }
 

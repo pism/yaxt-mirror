@@ -47,6 +47,8 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+
 #include <mpi.h>
 
 #include <yaxt.h>
@@ -71,11 +73,11 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, const int *send_data,
                            MPI_COMM_WORLD, &status),
               MPI_COMM_WORLD);
 
+  bool mismatch = false;
   for (int i = 0; i < recv_count; ++i)
-    if (recv_data[i] != ref_recv_data[i])
-      return 1;
+    mismatch |= (recv_data[i] != ref_recv_data[i]);
 
-  return 0;
+  return mismatch;
 }
 
 #else
@@ -96,11 +98,11 @@ test_datatype_int(MPI_Datatype datatype, int recv_count, const int *send_data,
 
   xt_mpi_call(MPI_Wait(&request, &status), MPI_COMM_WORLD);
 
+  bool mismatch = false;
   for (int i = 0; i < recv_count; ++i)
-    if (recv_data[i] != ref_recv_data[i])
-      return 1;
+    mismatch |= (recv_data[i] != ref_recv_data[i]);
 
-  return 0;
+  return mismatch;
 }
 
 #endif

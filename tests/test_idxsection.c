@@ -439,11 +439,12 @@ int main(void) {
       PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
               " num_unmatched\n");
 
-    for (int i=0; i<num_selection; i++) {
-      if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
-                " position\n");
-    }
+    bool mismatch = false;
+    for (int i=0; i<num_selection; i++)
+      mismatch |= (positions[i] != ref_positions[i]);
+    if (mismatch)
+      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
+              " position\n");
 
     xt_idxlist_delete(idxsection);
   }
@@ -452,34 +453,40 @@ int main(void) {
     // check get_positions_of_indices with single_match_only = 0
 
     Xt_int start = 0;
-    int num_dimensions = 2;
-    Xt_int global_size[2] = {4,4};
-    int local_size [2] = {2,2};
-    Xt_int local_start[2] = {0,2};
+    enum { num_dimensions = 2 };
+    static const Xt_int global_size[num_dimensions] = {4,4};
+    static const int local_size[num_dimensions] = {2,2};
+    static const Xt_int local_start[num_dimensions] = {0,2};
 
-    Xt_idxlist idxsection = xt_idxsection_new(start, num_dimensions, global_size,
-                                   local_size, local_start);
+    Xt_idxlist idxsection
+      = xt_idxsection_new(start, num_dimensions, global_size,
+                          local_size, local_start);
 
     // we have indices = {2,3,6,7}
-    Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    int num_selection = (int)(sizeof(selection) / sizeof(*selection));
+    static const Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
+    enum { num_selection = sizeof(selection) / sizeof(*selection) };
 
     int positions[num_selection];
-    int ref_positions[] = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0+3, 7*0+3, 6*0+2, 8*0-1};
+    static const int ref_positions[]
+      = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0+3, 7*0+3, 6*0+2, 8*0-1};
     int single_match_only = 0;
 
     if (xt_idxlist_get_positions_of_indices(idxsection, selection, num_selection, positions, single_match_only) != 3)
       PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
 
+    bool mismatch = false;
+    for (int i=0; i<num_selection; i++)
+      mismatch |= (positions[i] != ref_positions[i]);
+    if (mismatch)
+      PUT_ERR("xt_idxlist_get_positions_of_indices did not return correct"
+              " position\n");
+
     for (int i=0; i<num_selection; i++) {
       int p;
-
       xt_idxlist_get_position_of_index(idxsection, selection[i], &p);
-
       if (p != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_position_of_index did not return correct position\n");
-      if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_positions_of_indices did not return correct position\n");
+        PUT_ERR("xt_idxlist_get_position_of_index did not return correct"
+                " position\n");
     }
 
     xt_idxlist_delete(idxsection);
@@ -744,9 +751,12 @@ int main(void) {
       PUT_ERR("error in xt_idxlist_get_positions_of_indices"
               " (wrong number of unmatched indices)\n");
 
+    bool mismatch = false;
     for (int i = 0; i < 34; ++i)
-      if (ref_positions[i] != positions[i])
-        PUT_ERR("error in xt_idxlist_get_positions_of_indices (wrong position)\n");
+      mismatch |= (ref_positions[i] != positions[i]);
+    if (mismatch)
+      PUT_ERR("error in xt_idxlist_get_positions_of_indices"
+              " (wrong position)\n");
 
     // clean up
 
@@ -867,9 +877,11 @@ int main(void) {
 
     Xt_int ref_start[3] = {2,2,1};
 
-    for (unsigned i = 0; i < ndim; ++i)
-      if (bounds[i].size != 2 || bounds[i].start != ref_start[i])
-        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+    bool mismatch = false;
+    for (int i = 0; i < ndim; ++i)
+      mismatch |= (bounds[i].size != 2 || bounds[i].start != ref_start[i]);
+    if (mismatch)
+      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
     xt_idxlist_delete(idxsection);
   }
@@ -904,9 +916,12 @@ int main(void) {
     Xt_int ref_start[3] = {2,1,1};
     Xt_int ref_size[3] = {2,3,2};
 
-    for (unsigned i = 0; i < ndim; ++i)
-      if (bounds[i].size != ref_size[i] || bounds[i].start != ref_start[i])
-        PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+    bool mismatch = false;
+    for (int i = 0; i < ndim; ++i)
+      mismatch |= (bounds[i].size != ref_size[i]
+                   || bounds[i].start != ref_start[i]);
+    if (mismatch)
+      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
     xt_idxlist_delete(idxsection);
   }

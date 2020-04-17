@@ -263,11 +263,11 @@ int main(int argc, char **argv) {
       }
 
       // explicit check of ref data:
+      bool mismatch = false;
       for(int i=0; i<npt; i++)
-        if (dst_data[i] != ref_dst_data[i]) {
-          PUT_ERR("error in xt_redist_repeat\n");
-          break;
-        }
+        mismatch |= (dst_data[i] != ref_dst_data[i]);
+      if (mismatch)
+        PUT_ERR("error in xt_redist_repeat\n");
     }
 
     // generate redist_repeat

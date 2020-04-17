@@ -286,13 +286,17 @@ check_4redist_result(int comm_size, void *results[4],
   if (cmp_idx_arrays(2 * comm_size_sq_, (Xt_int *)results[1], index_vector_a))
     PUT_ERR("error on xt_redist_s_exchange\n");
 
+  bool mismatch = false;
   for (size_t i = 0; i < 2*comm_size_cb_; ++i)
-    if (((Xt_int *)results[2])[i] != (Xt_int)i)
-      PUT_ERR("error on xt_redist_s_exchange\n");
+    mismatch |= (((Xt_int *)results[2])[i] != (Xt_int)i);
+  if (mismatch)
+    PUT_ERR("error on xt_redist_s_exchange\n");
 
+  mismatch = false;
   for (size_t i = 0; i < 2*comm_size_cb_; ++i)
-    if (((Xt_int *)results[3])[i] != (Xt_int)i)
-      PUT_ERR("error on xt_redist_s_exchange\n");
+    mismatch |= (((Xt_int *)results[3])[i] != (Xt_int)i);
+  if (mismatch)
+    PUT_ERR("error on xt_redist_s_exchange\n");
 }
 
 enum { elems_per_rank = 5, };

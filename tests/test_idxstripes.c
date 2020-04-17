@@ -1463,14 +1463,16 @@ stripe_test_general(int num_stripes, const struct Xt_stripe *stripes,
   struct Xt_pos_ext *pos_ext;
   xt_idxlist_get_pos_exts_of_index_stripes(idxstripes, num_stripes, stripes,
                                            &num_ext, &pos_ext, 1);
+  bool mismatch = false;
   size_t num_pos = 0;
   for (int i = 0; i < num_ext; ++i)
   {
     size_t ext_size = (size_t)pos_ext[i].size;
-    if (num_pos != (size_t)pos_ext[i].start)
-      PUT_ERR("position/start mismatch at extent %d\n", i);
+    mismatch |= (num_pos != (size_t)pos_ext[i].start);
     num_pos += ext_size;
   }
+  if (mismatch)
+    PUT_ERR("position/start mismatch\n");
   if (num_pos != (size_t)xt_idxlist_get_num_indices(idxstripes))
     PUT_ERR("index list length/positions overlap mismatch\n");
 
@@ -1648,11 +1650,13 @@ check_idxvec_get_indices_at_positions(int num_stripes,
   int undef_count = xt_idxlist_get_indices_at_positions(idxlist, pos, num_pos,
                                                         sel_idx, undef_idx);
   if (undef_count != ref_undef_count)
-    PUT_ERR("test_idxvec.c: (undef_count != ref_undef_count)\n");
-  for (int i=0; i<num_pos; i++) {
-    if (sel_idx[i] != ref_sel_idx[i])
-      PUT_ERR("test_idxvec.c: (sel_idx[%d] != ref_sel_idx[%d])\n", i, i);
-  }
+    PUT_ERR("test_idxstripes.c: (undef_count != ref_undef_count)\n");
+  bool mismatch = false;
+  for (int i=0; i<num_pos; i++)
+    mismatch |= (sel_idx[i] != ref_sel_idx[i]);
+  if (mismatch)
+    PUT_ERR("test_idxstripes.c: sel_idx mismatch\n");
+
   xt_idxlist_delete(idxlist);
 }
 
@@ -1668,7 +1672,7 @@ get_idxlist_pos_exts_of_index_stripes(
     idxlist, (int)num_stripes, stripes, &num_ext_, &pos_ext_,
     single_match_only);
   if (retval != 0 || num_ext_ < 0)
-      PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
+    PUT_ERR("error in xt_idxlist_get_pos_exts_of_index_stripes\n");
   *num_ext = (size_t)num_ext_;
   return pos_ext_;
 }
@@ -1725,10 +1729,13 @@ check_bb(int num_stripes, const struct Xt_stripe *stripes,
   xt_idxlist_get_bounding_box(idxstripes, ndim, global_size,
                               global_start_index, bounds);
 
-  for (unsigned i = 0; i < ndim; ++i)
-    if ((bounds[i].size != ref_bounds[i].size) |
-        ((ref_bounds[i].size != 0) & (bounds[i].start != ref_bounds[i].start)))
-      PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
+  bool mismatch = false;
+  for (size_t i = 0; i < ndim; ++i)
+    mismatch |= ((bounds[i].size != ref_bounds[i].size) |
+                 ((ref_bounds[i].size != 0)
+                  & (bounds[i].start != ref_bounds[i].start)));
+  if (mismatch)
+    PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
   xt_idxlist_delete(idxstripes);
 }
@@ -1756,12 +1763,16 @@ check_pos_ext(size_t num_stripes, const struct Xt_stripe stripes[num_stripes],
     PUT_ERR("error in number of unmatched indices for %s", test_desc);
   if (num_ext < 0 || (size_t)num_ext != num_ref_pos_ext)
     PUT_ERR("error finding %s\n", test_desc);
+  bool mismatched_start = false,
+    mismatched_size = false;
   for (size_t i = 0; i < num_ref_pos_ext; ++i) {
-    if (pos_ext[i].start != ref_pos_ext[i].start)
-      PUT_ERR("incorrect starting position found in %s\n", test_desc);
-    if (pos_ext[i].size != ref_pos_ext[i].size)
-      PUT_ERR("incorrect position extent length found in %s\n", test_desc);
+    mismatched_start |= (pos_ext[i].start != ref_pos_ext[i].start);
+    mismatched_size |= (pos_ext[i].size != ref_pos_ext[i].size);
   }
+  if (mismatched_start)
+    PUT_ERR("incorrect starting position found in %s\n", test_desc);
+  if (mismatched_size)
+    PUT_ERR("incorrect position extent length found in %s\n", test_desc);
   free(pos_ext);
   xt_idxlist_delete(idxstripes);
 }

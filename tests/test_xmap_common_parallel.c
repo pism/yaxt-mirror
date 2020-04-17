@@ -120,14 +120,18 @@ check_xmap_allgather_analog_xmap(Xt_xmap xmap, MPI_Comm comm)
   int *ranks = xmalloc(sizeof (*ranks) * (size_t)comm_size);
 
   xt_xmap_get_destination_ranks(xmap, ranks);
+  bool mismatch = false;
   for (int i = 0; i < comm_size; ++i)
-    if (ranks[i] != i)
-      PUT_ERR("error in xt_xmap_get_destination_ranks\n");
+    mismatch |= (ranks[i] != i);
+  if (mismatch)
+    PUT_ERR("error in xt_xmap_get_destination_ranks\n");
 
   xt_xmap_get_source_ranks(xmap, ranks);
+  mismatch = false;
   for (int i = 0; i < comm_size; ++i)
-    if (ranks[i] != i)
-      PUT_ERR("error in xt_xmap_get_source_ranks\n");
+    mismatch |= (ranks[i] != i);
+  if (mismatch)
+    PUT_ERR("error in xt_xmap_get_source_ranks\n");
   free(ranks);
 }
 

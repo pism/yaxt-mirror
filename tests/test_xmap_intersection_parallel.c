@@ -598,10 +598,11 @@ static void test_xmap_iter(Xt_xmap_iter iter, int num_msgs,
 
       const int *restrict pos = xt_xmap_iterator_get_transfer_pos(iter);
 
+      bool mismatch = false;
       for (int j = 0; j < msgs[i].num_pos; ++j)
-        if (pos[j] != msgs[i].pos[j])
-          PUT_ERR("ERROR: xt_xmap_iterator_get_transfer_pos\n");
-
+        mismatch |= (pos[j] != msgs[i].pos[j]);
+      if (mismatch)
+        PUT_ERR("ERROR: xt_xmap_iterator_get_transfer_pos\n");
       ++i;
 
     } while (xt_xmap_iterator_next(iter));

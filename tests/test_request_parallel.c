@@ -48,6 +48,7 @@
 #endif
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -108,10 +109,12 @@ int main(int argc, char **argv) {
 
     check_wait_request(&request);
 
+    bool mismatch = false;
     for (int i = 0; i < size; ++i)
       for (size_t j = 0; j < msg_size; ++j)
-        if (recv_buf[(size_t)i * msg_size + j] != i)
-          PUT_ERR("recv_buf[i * msg_size + j] != i\n");
+        mismatch |= (recv_buf[(size_t)i * msg_size + j] != i);
+    if (mismatch)
+      PUT_ERR("recv_buf[i * msg_size + j] != i\n");
   }
 
   { // each process receives and sends data from/to every other process with
