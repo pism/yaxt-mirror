@@ -110,7 +110,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   if (num_indices != ref_num_indices)
     PUT_ERR("wrong number of indices in idxlist\n");
 
-  size_t ref_num_indices_ = ref_num_indices > 0 ? (size_t)ref_num_indices : (size_t)1;
+  size_t ref_num_indices_ = (size_t)(ref_num_indices > 0 ? ref_num_indices : 1);
   Xt_int indices[ref_num_indices_];
   Xt_int index;
 
