@@ -63,8 +63,8 @@
 
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices,
-         struct Xt_stripe * ref_stripes, int ref_num_stripes);
+do_tests(Xt_idxlist idxlist, const Xt_int *ref_indices, int num_indices,
+         const struct Xt_stripe *ref_stripes, int ref_num_stripes);
 
 int main(void) {
 
@@ -933,8 +933,8 @@ int main(void) {
 }
 
 static void
-do_tests(Xt_idxlist idxlist, Xt_int * ref_indices, int num_indices,
-         struct Xt_stripe * ref_stripes, int ref_num_stripes) {
+do_tests(Xt_idxlist idxlist, const Xt_int *ref_indices, int num_indices,
+         const struct Xt_stripe *ref_stripes, int ref_num_stripes) {
 
   check_idxlist(idxlist, ref_indices, num_indices);
 
