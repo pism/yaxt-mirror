@@ -55,7 +55,7 @@
 
 #include "tests.h"
 
-#undef FIXED_MPI_ON_BLIZZARD
+#define FIXED_MPI_ON_BLIZZARD
 
 #ifdef FIXED_MPI_ON_BLIZZARD
 
