@@ -494,18 +494,15 @@ int main(void) {
 
   {
     // check get_bounding_box
-    Xt_int indices[2] = {21,42};
+    static const Xt_int indices[2] = {21,42};
     int num_indices = 2;
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
     enum { ndim = 3 };
-    Xt_int global_size[ndim];
+    static const Xt_int global_size[ndim] = { 4, 4, 4 };
     Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
-
-    for (unsigned i = 0; i < ndim; ++i)
-      global_size[i] = 4;
 
     xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
                                 global_start_index, bounds);
@@ -527,18 +524,14 @@ int main(void) {
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
     enum { ndim = 3 };
-    Xt_int global_size[ndim];
+    static const Xt_int global_size[ndim] = { 5, 4, 3 };
     Xt_int global_start_index = 1;
     struct Xt_bounds bounds[ndim];
-
-    global_size[0] = 5;
-    global_size[1] = 4;
-    global_size[2] = 3;
 
     xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
                                 global_start_index, bounds);
 
-    Xt_int ref_start[3] = {2,2,1};
+    static const Xt_int ref_start[3] = {2,2,1};
 
     bool mismatch = false;
     for (size_t i = 0; i < ndim; ++i)
@@ -551,18 +544,15 @@ int main(void) {
 
   {
     // check get_bounding_box
-    Xt_int indices[1] = {-1};
+    static const Xt_int indices[1] = {-1};
     int num_indices = 0;
 
     Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
 
-    unsigned ndim = 3;
-    Xt_int global_size[ndim];
+    enum { ndim = 3 };
+    static const Xt_int global_size[ndim] = { 4, 4, 4 };
     Xt_int global_start_index = 0;
     struct Xt_bounds bounds[ndim];
-
-    for (unsigned i = 0; i < ndim; ++i)
-      global_size[i] = 4;
 
     xt_idxlist_get_bounding_box(idxvec, ndim, global_size,
                                 global_start_index, bounds);
