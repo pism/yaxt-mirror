@@ -82,7 +82,7 @@ clean-local:
 
 distclean-local:
 if ! with_fortran
-	rm f90/Makefile
+	rm -f f90/Makefile
 endif
 	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir f90
 
