@@ -158,11 +158,8 @@ xfail_abort(MPI_Comm comm, const char *msg, const char *source, int line)
 {
   fprintf(stderr, "Fatal error in %s, line %d: %s\n", source, line, msg);
 #ifdef XT_NEED_MPI_ABORT_WORK_AROUND
-  int fd = open("test_xmap_all2all_fail.result.txt",
-                O_WRONLY | O_TRUNC | O_CREAT | O_NOCTTY, 0777);
-  static const char exit_msg[] = "exited with code 3\n";
-  write(fd, exit_msg, sizeof (exit_msg));
-  close(fd);
+  static const char exit_msg[] = "MPI_Abort(0xdeadbeef, 3)\n";
+  write(STDERR_FILENO, exit_msg, sizeof (exit_msg));
 #endif
   MPI_Abort(comm, 3);
   abort();

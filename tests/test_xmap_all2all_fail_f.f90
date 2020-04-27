@@ -174,6 +174,9 @@ SUBROUTINE xfail_abort(comm, msg, source, line)
   CHARACTER(len=*), INTENT(in) :: msg, source
   INTEGER :: ierror
   WRITE (0, '(4a,i0)') msg, ' at ', source, ', line ', line
+#ifdef XT_NEED_MPI_ABORT_WORK_AROUND
+  WRITE (0, '(a)') 'MPI_Abort(0xdeadbeef, 3)'
+#endif
   FLUSH(0)
   CALL mpi_abort(comm, 3, ierror)
   CALL posix_exit(3_c_int)
