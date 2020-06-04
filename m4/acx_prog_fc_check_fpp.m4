@@ -46,7 +46,7 @@ AC_DEFUN([ACX_PROG_FC_CHECK_FPP],dnl
    m4_pushdef([acx_flags_var],m4_case(_AC_LANG,[Fortran],[FCFLAGS],[Fortran 77],[FFLAGS]))dnl
    AC_CACHE_CHECK([for flag to enable preprocessing],[fpp_flag],
      []acx_flags_var[_save=$]acx_flags_var[
-      for i in none -cpp -fpp -qsuffix=cpp=f90 -eT -eZ -Mpreprocess ; do
+      for i in none -cpp -fpp -qsuffix=cpp=f90 -eT -eZ -Mpreprocess -x\ f95-cpp-input ; do
 	AS_IF([test "x$i" != xnone],
 	  []acx_flags_var[="$]acx_flags_var[ ${i}"])
 	AC_COMPILE_IFELSE([_ACX_SL_LANG_PROGRAM_FPP_ONLY],

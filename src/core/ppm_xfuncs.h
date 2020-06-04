@@ -44,11 +44,15 @@
 #define PPM_XFUNCS_INCLUDED
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#  include <config.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef USE_MPI
+#  include <mpi.h>
+#endif
 
 #include "core/symprefix.h"
 
@@ -82,6 +86,17 @@ int
 SymPrefix(xfputc)(int c, FILE *stream, const char *source, int line);
 
 #define xfputc(c,stream) SymPrefix(xfputc)((c),(stream), __FILE__, __LINE__)
+
+#ifdef USE_MPI
+void
+SymPrefix(xmpi)(int errcode, const char *source, int line);
+
+#define xmpi(errcode)                           \
+  do {                                          \
+    if (errcode == MPI_SUCCESS) ; else          \
+      SymPrefix(xmpi)(errcode, __FILE__, __LINE__);     \
+  } while (0)
+#endif
 
 #endif
 /*

@@ -90,7 +90,7 @@ sub buildNameSubst(\@);
 sub parseSource($$;$);
 
 my ($debug, $verbose, $dumpCppKeys) = (debugDefault(), 0, undef);
-my (@includeDirs, %defines, @ignoredSysIncludes, @ignoredModules);
+my (@includeDirs, %defines, @ignoredSysIncludes, %ignoredModules);
 my ($objDepOut, $objectSuffix, $stripObjDirname) = (1, '.o', 0);
 my (@depNameSubst, @moduleSearchPath);
 my ($fcmodcase, $fcmodsuffix, $fcmodflag, $fcincflag, $fcdefopt, $fcundefopt)
@@ -129,7 +129,7 @@ MakeDependsf90mod({ 'includePaths' => \@includeDirs,
                     'depNameSubst' => \@depNameSubst,
                     'stripObjDirname' => $stripObjDirname,
                     'ignoredSysIncludes' => \@ignoredSysIncludes,
-                    'ignoredModules' => \@ignoredModules,
+                    'ignoredModules' => \%ignoredModules,
                     'dumpCppKeys' => $dumpCppKeys,
                     'writePreprocessed' => $writePreprocessed,
                     'preprocNameSubst' => \@preprocNameSubst,
@@ -146,7 +146,7 @@ sub uniq {
 sub MakeDependsf90mod {
    my (%moduleProvide, %incs, %sys_incs, %prg_incs, %moduleUse,
        $objfile, @incDirs, @moduleDirs,
-       @ignoredSysIncludes, @ignoredModules, $globalDefines, $dumpCppKeys);
+       @ignoredSysIncludes, $ignoredModules, $globalDefines, $dumpCppKeys);
    my %cppKeys;
    my $optArgs = {};
    my ($stripObjDirname, $writePreprocessed, $preprocNameSubst) = (0, 0);
@@ -160,8 +160,8 @@ sub MakeDependsf90mod {
           if (exists($optArgs->{'stripObjDirname'}));
       @ignoredSysIncludes = @{$optArgs->{'ignoredSysIncludes'}}
           if (exists($optArgs->{'ignoredSysIncludes'}));
-      @ignoredModules = @{$optArgs->{'ignoredModules'}}
-          if (exists($optArgs->{'ignoredModules'}));
+      $ignoredModules = exists($optArgs->{'ignoredModules'})
+          ? $optArgs->{'ignoredModules'} : {};
       $globalDefines = $optArgs->{'defines'}
           if (exists($optArgs->{'defines'}));
       $dumpCppKeys = exists($optArgs->{'dumpCppKeys'})?
@@ -301,8 +301,8 @@ sub MakeDependsf90mod {
          if (@{$incs{$srcfile}} + @{$moduleUse{$srcfile}}) {
             {
                my @notFound =
-                   grep { my $module = $_; !exists $moduleProvide{$_}
-                              and not grep { $module eq $_ } @ignoredModules }
+                   grep { !exists $moduleProvide{$_}
+                          and not exists($ignoredModules->{$_}) }
                        @{$moduleUse{$srcfile}};
                hashMerge(%moduleProvide,
                          %{{searchModuleFile(\@moduleDirs, @notFound)}});
@@ -792,6 +792,7 @@ sub buildNameSubst(\@)
                   (grep { ($seen[1] or /^--$/)?$seen[1]++:0 } @ARGV));
       }
       print(STDERR join(", ", @ARGV), "\n") if $debug > 2;
+      my @ignoredModules;
       my $result
           = $optionParser->getoptions('debug+' => \$debug,
                                       'debug-cpp-pm+' => \$cpp::debug,
@@ -829,6 +830,7 @@ sub buildNameSubst(\@)
                                       'ignore-module=s' => \@ignoredModules,
                                       'parse-cache=s' => \$parseCacheDB,
                                      );
+      %ignoredModules = map { $_ => undef } @ignoredModules;
       if($help or $usage)
       {
          pod2usage( {

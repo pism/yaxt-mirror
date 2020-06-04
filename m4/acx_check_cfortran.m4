@@ -58,6 +58,8 @@ AC_DEFUN([_ACX_CHECK_CFORTRAN_FC],
            [ACX_MV_OBJ([conftest],[conftest_f])
             save_LIBS=$LIBS
             LIBS="conftest_c.$ac_objext conftest_f.$ac_objext $LIBS"
+            AS_CASE([$FC_FPP_FLAG],[-x\ f??-cpp-input],
+              [LIBS="-x none $LIBS"])
             AC_RUN_IFELSE([AC_LANG_PROGRAM(,
 [      USE conftest_data, ONLY: ri
       IMPLICIT NONE
@@ -142,6 +144,8 @@ AC_DEFUN([_ACX_CHECK_CFORTRAN_F77],
            [ACX_MV_OBJ([conftest],[conftest_f])
             save_LIBS=$LIBS
             LIBS="conftest_c.$ac_objext conftest_f.$ac_objext $LIBS"
+            AS_CASE([$FC_FPP_FLAG],[-x\ f??-cpp-input],
+              [LIBS="-x none $LIBS"])
             AC_RUN_IFELSE([AC_LANG_PROGRAM(,
 [      REAL RI
       COMMON /CFTSTD/ RI

@@ -433,7 +433,7 @@ BEGIN {
       while (<$preprocOutputFh>)
       {
          $p .= $_;
-         $preprocOutput .= $_ unless (m{^#});
+         $preprocOutput .= $_ if (rindex($_, '#', 0) && $_ ne "\n");
       }
       while (chomp($preprocOutput))
       {
