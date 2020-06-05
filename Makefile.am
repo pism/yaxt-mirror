@@ -19,7 +19,7 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checkdoc/openmpi_dup.txt \
 	config/checksrc/pe5228_iv32584.c \
 	config/checkdoc/pe5228_iv32584.txt \
-	config/checkdoc/incorrect_mpi_abort_exitcode.c \
+	config/checksrc/incorrect_mpi_abort_exitcode.c \
 	config/checkdoc/incorrect_mpi_abort_exitcode.txt \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
