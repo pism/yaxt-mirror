@@ -138,7 +138,7 @@ dnl substitute -shared-intel if present
          AS_CASE([$acx_temp],[*\ -shared-intel\ *|*\ -static-intel\ *],
            [acx_temp=`echo "$acx_temp" | sed -e 's/ \(-\(shared\|static\)-intel\)\b/ -Xcompiler \1 -XCClinker \1/'`])
 dnl take care of ifort/icc/icpc two-part options
-         eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -\(align\|allow\|assume\|ccdefault\|check\|convert\|debug\|debug-parameters\|diag-type\|diag-enable\|diag-disable\|double-size\|dynamic-linker\|dyncom\|export-dir\|extend-source\|fp-model\|fpscomp\|gen-interfaces\|heap-arrays\|imacros\|integer-size\|iprefix\|iquote\|iwithprefixbefore\|module\|names\|opt-report\|opt-streaming-stores\|pch-dir\|pch-use\|prof-dir\|prof-file\|real-size\|reentrancy\|stand\|tcollect-filter\|tune\|warn\|watch\) \(@<:@^-@:>@@<:@^ @:>@*\)\b/ -Xcompiler -\1 -Xcompiler \2 /g' -e 's/^ //;s/ $//'`\"])])
+         eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -\(align\|allow\|assume\|ccdefault\|check\|convert\|debug\|debug-parameters\|diag-type\|diag-enable\|diag-disable\|double-size\|dynamic-linker\|dyncom\|export-dir\|extend-source\|fp-model\|fpscomp\|gen-interfaces\|heap-arrays\|imacros\|integer-size\|iprefix\|iquote\|iwithprefixbefore\|module\|names\|opt-report\|opt-streaming-stores\|pch-dir\|pch-use\|prof-dir\|prof-file\|real-size\|reentrancy\|stand\|tcollect-filter\|tune\|warn\|watch\) \(@<:@^-@:>@@<:@^ @:>@*\)\b/ -Xcompiler -\1 -Xcompiler \2/g' -e 's/^ //;s/ $//'`\"])])
    AC_PROVIDE_IFELSE([AC_PROG_CC],
      [AS_IF([test -n "$CC" -a X"$CC" != Xno],
         [AC_LANG_PUSH([C])
