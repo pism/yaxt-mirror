@@ -89,7 +89,7 @@ void xt_config_set_exchange_method(Xt_config config, int method);
 /**
  * get exchanger used when the \a config object is passed to constructors
  * @param[in] config configuration object to modify
- * @return an entry from enum Xt_exchangers representing the method of
+ * @return an entry from \a Xt_exchangers representing the method of
  * data transfer used
  */
 int xt_config_get_exchange_method(Xt_config config);
