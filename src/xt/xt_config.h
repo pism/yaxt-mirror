@@ -94,6 +94,18 @@ void xt_config_set_exchange_method(Xt_config config, int method);
  */
 int xt_config_get_exchange_method(Xt_config config);
 
+/**
+ * map exchanger name string to method id from \a Xt_exchangers
+ * @param[in] name string that is supposed to match the part of the
+ * corresponding enum after xt_exchanger_
+ * @return for the string "irecv_send", the value of
+ * xt_exchanger_irecv_send will be returned, for strings matching no
+ * known exchanger, -1 will be returned
+ */
+int
+xt_exchanger_id_by_name(const char *name);
+
+
 #endif
 
 /*

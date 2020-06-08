@@ -58,7 +58,10 @@ struct Xt_config_ {
   Xt_exchanger_new exchanger_new;
 };
 
-extern const struct Xt_config_ xt_default_config;
+extern struct Xt_config_ xt_default_config;
+
+void
+xt_config_defaults_init(void);
 
 /*
  * Local Variables:

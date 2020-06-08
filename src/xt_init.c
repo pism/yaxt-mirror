@@ -49,6 +49,7 @@
 
 #include <stdlib.h>
 #include "core/core.h"
+#include "xt_config_internal.h"
 #include "xt_idxlist_internal.h"
 #include "xt_idxstripes_internal.h"
 #include "xt_idxsection_internal.h"
@@ -70,6 +71,7 @@ xt_initialize(MPI_Comm default_comm)
 {
   Xt_default_comm = default_comm;
   xt_mpi_init();
+  xt_config_defaults_init();
   xt_idxempty_init();
   xt_idxstripes_initialize();
   xt_idxsection_initialize();

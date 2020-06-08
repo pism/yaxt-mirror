@@ -144,7 +144,7 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
     switch (opt) {
     case 'm':
       {
-        int exchanger_new_id = exchanger_id_by_name(optarg);
+        int exchanger_new_id = xt_exchanger_id_by_name(optarg);
         if (exchanger_new_id == -1)
         {
           fprintf(stderr, "Unknown exchanger constructor requested: %s\n",

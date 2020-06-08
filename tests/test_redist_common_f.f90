@@ -57,7 +57,7 @@ MODULE test_redist_common
        xt_request, xt_request_wait, xt_request_test, xt_is_null, &
        xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg, &
        xi => xt_int_kind, xt_config, xt_config_new, &
-       xt_config_set_exchange_method
+       xt_config_set_exchange_method, xt_exchanger_id_by_name
 #ifdef __PGI
   ! PGI up to at least 15.4 has a bug that prevents proper import of
   ! multiply extended generics. This is a separate bug from the one exhibited
@@ -579,19 +579,10 @@ CONTAINS
 
   FUNCTION redist_exchanger_option() RESULT(config)
     TYPE(xt_config) :: config
-    INTEGER :: i, j, num_cmd_args, arg_len
-    INTEGER(c_int) :: exchanger_id
+    INTEGER :: i, num_cmd_args, arg_len
+    INTEGER :: exchanger_id
     INTEGER, PARAMETER :: max_opt_arg_len = 80
     CHARACTER(max_opt_arg_len) :: optarg
-    CHARACTER(len=1, kind=c_char) :: optarg_c(max_opt_arg_len+1)
-    INTERFACE
-      FUNCTION exchanger_id_by_name(name) RESULT(exchanger_id) &
-           BIND(c, name='exchanger_id_by_name')
-        IMPORT :: c_char, c_int
-        CHARACTER(len=1, kind=c_char), INTENT(in) :: name(*)
-        INTEGER(c_int) :: exchanger_id
-      END FUNCTION exchanger_id_by_name
-    END INTERFACE
     config = xt_config_new()
     num_cmd_args = COMMAND_ARGUMENT_COUNT()
     i = 1
@@ -602,17 +593,13 @@ CONTAINS
         IF (arg_len > max_opt_arg_len) &
              CALL test_abort('incorrect argument to command-line option -s', &
              filename, __LINE__)
-        DO j = 1, arg_len
-          optarg_c(j) = optarg(j:j)
-        END DO
-        optarg_c(arg_len+1) = c_null_char
-        exchanger_id = exchanger_id_by_name(optarg_c)
-        IF (exchanger_id == -1_c_int) THEN
+        exchanger_id = xt_exchanger_id_by_name(optarg)
+        IF (exchanger_id == -1) THEN
           WRITE (0, *) 'arg to -m: ', optarg(1:arg_len)
           CALL test_abort('incorrect argument to command-line option -m', &
                filename, __LINE__)
         END IF
-        CALL xt_config_set_exchange_method(config, INT(exchanger_id))
+        CALL xt_config_set_exchange_method(config, exchanger_id)
         i = i + 2
       ELSE
         WRITE (0, *) 'unexpected command-line argument parsing error: ', &

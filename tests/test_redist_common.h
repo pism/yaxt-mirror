@@ -167,9 +167,6 @@ check_wait_request_(Xt_request *request, const char *file, int line);
 #define check_wait_request(request) \
   check_wait_request_(request, __FILE__, __LINE__)
 
-int
-exchanger_id_by_name(const char *name);
-
 Xt_config
 redist_exchanger_option(int *argc, char ***argv);
 

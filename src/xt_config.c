@@ -48,6 +48,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include <mpi.h>
 
 #include <xt/xt_config.h>
@@ -60,7 +62,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
-const struct Xt_config_ xt_default_config = {
+struct Xt_config_ xt_default_config = {
   .exchanger_new = xt_exchanger_mix_isend_irecv_new,
 };
 
@@ -76,22 +78,35 @@ void xt_config_delete(Xt_config config)
   free(config);
 }
 
-static struct {
+static const struct {
+  char name[20];
   Xt_exchanger_new f;
   int code;
 } exchanger_table[] = {
-  { xt_exchanger_irecv_send_new, xt_exchanger_irecv_send },
-  { xt_exchanger_irecv_isend_new, xt_exchanger_irecv_isend },
-  { xt_exchanger_irecv_isend_packed_new, xt_exchanger_irecv_isend_packed },
-  { xt_exchanger_mix_isend_irecv_new, xt_exchanger_mix_isend_irecv },
-  { xt_exchanger_neigh_alltoall_new, xt_exchanger_neigh_alltoall },
+  { "irecv_send",
+    xt_exchanger_irecv_send_new, xt_exchanger_irecv_send },
+  { "irecv_isend",
+    xt_exchanger_irecv_isend_new, xt_exchanger_irecv_isend },
+  { "irecv_isend_packed",
+    xt_exchanger_irecv_isend_packed_new, xt_exchanger_irecv_isend_packed },
+  { "mix_irecv_isend",
+    xt_exchanger_mix_isend_irecv_new, xt_exchanger_mix_isend_irecv },
+  { "neigh_alltoall",
+    xt_exchanger_neigh_alltoall_new, xt_exchanger_neigh_alltoall },
 };
 
 enum {
   num_exchanger = sizeof (exchanger_table) / sizeof (exchanger_table[0]),
 };
 
-
+int
+xt_exchanger_id_by_name(const char *name)
+{
+  for (size_t i = 0; i < num_exchanger; ++i)
+    if (!strcmp(name, exchanger_table[i].name))
+      return exchanger_table[i].code;
+  return -1;
+}
 
 int xt_config_get_exchange_method(Xt_config config)
 {
@@ -121,7 +136,16 @@ void xt_config_set_exchange_method(Xt_config config, int method)
   Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
 }
 
-
+void
+xt_config_defaults_init(void)
+{
+  const char *config_env = getenv("XT_CONFIG_DEFAULT_EXCHANGE_METHOD");
+  if (config_env) {
+    int exchanger_id = xt_exchanger_id_by_name(config_env);
+    if (exchanger_id != -1)
+      xt_config_set_exchange_method(&xt_default_config, exchanger_id);
+  }
+}
 
 /*
  * Local Variables:

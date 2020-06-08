@@ -46,7 +46,8 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 MODULE xt_config_f
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_null_ptr, c_int
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_null_ptr, c_int, &
+       c_char, c_null_char
   IMPLICIT NONE
   PRIVATE
   ! note: this type must not be extended to contain any other
@@ -72,6 +73,7 @@ MODULE xt_config_f
 
   PUBLIC :: xt_config_new, xt_config_delete
   PUBLIC :: xt_config_f2c
+  PUBLIC :: xt_exchanger_id_by_name
   PUBLIC :: xt_config_get_exchange_method, xt_config_set_exchange_method
   INTEGER, PUBLIC, PARAMETER :: &
        xt_exchanger_irecv_send = 0, &
@@ -136,6 +138,29 @@ CONTAINS
     END INTERFACE
     method = INT(xt_config_get_exchange_method_c(config%cptr))
   END FUNCTION xt_config_get_exchange_method
+
+  FUNCTION xt_exchanger_id_by_name(name) RESULT(exchanger_id)
+    CHARACTER(len=*), INTENT(in) :: name
+    INTEGER :: exchanger_id
+    INTERFACE
+      FUNCTION xt_exchanger_id_by_name_c(name) RESULT(exchanger_id) &
+           BIND(c, name='xt_exchanger_id_by_name')
+        IMPORT :: c_char, c_int
+        CHARACTER(len=1, kind=c_char), INTENT(in) :: name(*)
+        INTEGER(c_int) :: exchanger_id
+      END FUNCTION xt_exchanger_id_by_name_c
+    END INTERFACE
+    INTEGER(c_int) :: c_id
+    CHARACTER(len=1) :: name_c(LEN(name)+1)
+    INTEGER :: i, nlen
+    nlen = LEN(name)
+    DO i = 1, nlen
+      name_c(i) = name(i:i)
+    END DO
+    name_c(nlen+1) = c_null_char
+    c_id = xt_exchanger_id_by_name_c(name_c)
+    exchanger_id = INT(c_id)
+  END FUNCTION xt_exchanger_id_by_name
 
 END MODULE xt_config_f
 !

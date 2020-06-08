@@ -258,26 +258,6 @@ wrap_a_exchange1(Xt_redist redist, const void *src_data_p, void *dst_data_p)
   check_wait_request(&request);
 }
 
-
-int
-exchanger_id_by_name(const char *name)
-{
-  int exchanger_new;
-  if (!strcmp(name, "irecv_isend"))
-    exchanger_new = xt_exchanger_irecv_isend;
-  else if (!strcmp(name, "irecv_isend_packed"))
-    exchanger_new = xt_exchanger_irecv_isend_packed;
-  else if (!strcmp(name, "irecv_send"))
-    exchanger_new = xt_exchanger_irecv_send;
-  else if (!strcmp(name, "mix_irecv_isend"))
-    exchanger_new = xt_exchanger_mix_isend_irecv;
-  else if (!strcmp(name, "neigh_alltoall"))
-    exchanger_new = xt_exchanger_neigh_alltoall;
-  else
-    exchanger_new = -1;
-  return exchanger_new;
-}
-
 Xt_config
 redist_exchanger_option(int *argc, char ***argv)
 {
@@ -287,7 +267,7 @@ redist_exchanger_option(int *argc, char ***argv)
     switch (opt) {
     case 'm':
       {
-        int exchanger_id = exchanger_id_by_name(optarg);
+        int exchanger_id = xt_exchanger_id_by_name(optarg);
         if (exchanger_id != -1)
           xt_config_set_exchange_method(config, exchanger_id);
         else {

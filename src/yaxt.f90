@@ -56,6 +56,7 @@ MODULE yaxt
        xt_pos_ext, OPERATOR(/=), OPERATOR(==), &
        xt_set_abort_handler => set_abort_handler, xt_restore_default_abort_hndl
   USE xt_config_f, ONLY: xt_config, xt_config_new, xt_config_delete, &
+       xt_exchanger_id_by_name, &
        xt_config_get_exchange_method, xt_config_set_exchange_method, &
        xt_exchanger_irecv_send, xt_exchanger_irecv_isend, &
        xt_exchanger_irecv_isend_packed, xt_exchanger_mix_isend_irecv, &
@@ -179,6 +180,7 @@ MODULE yaxt
        xt_redist_a_exchange
 
   PUBLIC :: xt_config, xt_config_new, xt_config_delete, &
+       xt_exchanger_id_by_name, &
        xt_config_get_exchange_method, xt_config_set_exchange_method, &
        xt_exchanger_irecv_send, xt_exchanger_irecv_isend, &
        xt_exchanger_irecv_isend_packed, xt_exchanger_mix_isend_irecv, &
