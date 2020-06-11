@@ -519,11 +519,13 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
   // compute the intersection
   for (size_t i = 0, j = 0; i < num_indices_dst; ++i) {
 
-    while (j < num_indices_src &&
-           sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
-    if (j >= num_indices_src) break;
-    if (sorted_src_vector[j] == sorted_dst_vector[i])
-      vector_assign[num_indices_inter++] = sorted_dst_vector[i];
+    while (j < num_indices_src
+           && sorted_src_vector[j] < sorted_dst_vector[i]) ++j;
+    if (j < num_indices_src) {
+      vector_assign[num_indices_inter] = sorted_dst_vector[i];
+      num_indices_inter += sorted_src_vector[j] == sorted_dst_vector[i];
+    } else
+      break;
   }
 
   if (num_indices_inter) {
