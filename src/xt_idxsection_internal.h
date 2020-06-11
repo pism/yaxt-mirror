@@ -59,11 +59,12 @@ void
 xt_idxsection_finalize(void);
 
 Xt_idxlist
-xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
+xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
+                               Xt_config config);
 
 Xt_idxlist
-xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
-                                                  Xt_idxlist dst_idxlist);
+xt_idxsection_get_intersection_with_other_idxlist(
+  Xt_idxlist src_idxsection, Xt_idxlist dst_idxlist, Xt_config config);
 
 #endif
 

@@ -52,6 +52,7 @@
 #endif
 
 #include <stdlib.h>
+#include "xt/xt_config.h"
 #include "xt/xt_core.h"
 #include "xt/xt_stripe.h"
 
@@ -159,6 +160,23 @@ Xt_idxlist xt_idxlist_unpack(void* buffer, int buffer_size,
  */
 Xt_idxlist
 xt_idxlist_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
+
+/**
+ * computes the intersection between two index lists with custom
+ * configuration
+ *
+ * @param[in] idxlist_src index list for sender
+ * @param[in] idxlist_dst index list for receiver
+ * @param[in] config      custom configuration parameters
+ * @return                return the intersection of idxlist_a and idxlist_b
+ * @remark multiple occurrences of an element in idxlist_dst will result in
+ *         multiple occurrences of the element in the intersection if
+ *         idxlist_src contains it
+ * @remark the elements in the resulting index list are sorted
+ */
+Xt_idxlist
+xt_idxlist_get_intersection_custom(Xt_idxlist idxlist_src,
+                                   Xt_idxlist idxlist_dst, Xt_config config);
 
 /**
  * generates a copy of a given index list

@@ -51,6 +51,7 @@
 #include <config.h>
 #endif
 
+#include "xt/xt_config.h"
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 
@@ -109,7 +110,8 @@ static inline void Xt_idxlist_init(Xt_idxlist idxlist,
 }
 
 Xt_idxlist
-xt_default_isect(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
+xt_default_isect(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
+                 Xt_config config);
 
 /*
  * for index lists this large, stripe representation generally gives

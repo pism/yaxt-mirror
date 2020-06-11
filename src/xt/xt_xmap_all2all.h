@@ -80,6 +80,22 @@
 Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                             MPI_Comm comm);
 
+/**
+ * constructor for an exchange map with custom parameters\n
+ * this operation is collective over all processes in comm \n
+ * it uses all-to-all communication for the initialisation
+ *
+ * @param[in] src_idxlist source index list
+ * @param[in] dst_idxlist destination index list
+ * @param[in] comm        MPI communicator that contains all processes
+ *                        that take part in the exchange (xt_xmap_all2all_new
+ *                        will make its own copy of comm)
+ * @param[in] config      custom parameters
+ */
+Xt_xmap
+xt_xmap_all2all_custom_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                           MPI_Comm comm, Xt_config config);
+
 #endif // XT_XMAP_ALL2ALL_H
 
 /*

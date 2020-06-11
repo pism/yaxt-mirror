@@ -63,7 +63,8 @@ void
 xt_idxstripes_finalize(void);
 
 Xt_idxlist
-xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst);
+xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
+                               Xt_config config);
 
 /**
  * Generates an index list that is built up of stripes of indices.

@@ -161,7 +161,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     large_list_seen
       |= (xt_idxlist_get_num_indices(src) >= config->idxv_cnv_size)
       | (xt_idxlist_get_num_indices(dst) >= config->idxv_cnv_size);
-    Xt_idxlist intersect = xt_idxlist_get_intersection(src, dst_idxlist_local);
+    Xt_idxlist intersect
+      = xt_idxlist_get_intersection_custom(src, dst_idxlist_local, config);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
       dsti[dst_isect_count].list = intersect;
@@ -171,7 +172,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     else
       xt_idxlist_delete(intersect);
 
-    intersect = xt_idxlist_get_intersection(src_idxlist_local, dst);
+    intersect
+      = xt_idxlist_get_intersection_custom(src_idxlist_local, dst, config);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
       srci[src_isect_count].list = intersect;
@@ -199,6 +201,14 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   *num_dst_intersections = dst_isect_count;
   dsti = xrealloc(dsti, dst_isect_count * sizeof (**dst_intersections));
   *dst_intersections = dsti;
+}
+
+Xt_xmap
+xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                    MPI_Comm comm)
+{
+  return xt_xmap_all2all_custom_new(src_idxlist, dst_idxlist,
+                                    comm, &xt_default_config);
 }
 
 Xt_xmap
@@ -246,14 +256,6 @@ xt_xmap_all2all_custom_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   free(dst_intersections);
   INSTR_STOP(t_xt_xmap_all2all_new);
   return xmap;
-}
-
-Xt_xmap
-xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                    MPI_Comm comm)
-{
-  return xt_xmap_all2all_custom_new(src_idxlist, dst_idxlist,
-                                    comm, &xt_default_config);
 }
 
 /*

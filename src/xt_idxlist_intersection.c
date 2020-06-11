@@ -58,12 +58,14 @@
 #include "xt_idxempty_internal.h"
 #include "xt_idxlist_collection_internal.h"
 #include "xt/xt_idxvec.h"
+#include "xt_config_internal.h"
 #include "xt_idxvec_internal.h"
 #include "xt_idxsection_internal.h"
 #include "xt_idxstripes_internal.h"
 
 typedef Xt_idxlist (*intersection_get)(Xt_idxlist idxlist_src,
-                                       Xt_idxlist idxlist_dst);
+                                       Xt_idxlist idxlist_dst,
+                                       Xt_config config);
 
 #define empty_isect ((intersection_get)(void (*)(void))xt_idxempty_new)
 
@@ -90,13 +92,22 @@ Xt_idxlist
 xt_idxlist_get_intersection(Xt_idxlist idxlist_src,
                             Xt_idxlist idxlist_dst)
 {
+  return xt_idxlist_get_intersection_custom(idxlist_src, idxlist_dst,
+                                            &xt_default_config);
+}
+
+Xt_idxlist
+xt_idxlist_get_intersection_custom(Xt_idxlist idxlist_src,
+                                   Xt_idxlist idxlist_dst, Xt_config config)
+{
   return intersection_get_matrix[idxlist_src->vtable->idxlist_pack_code]
-    [idxlist_dst->vtable->idxlist_pack_code](idxlist_src, idxlist_dst);
+    [idxlist_dst->vtable->idxlist_pack_code](idxlist_src, idxlist_dst, config);
 }
 
 Xt_idxlist
 xt_default_isect(Xt_idxlist idxlist_src,
-                 Xt_idxlist idxlist_dst)
+                 Xt_idxlist idxlist_dst,
+                 Xt_config config)
 {
 
    INSTR_DEF(instr_fallback,"xt_idxlist_get_intersection.fallback")
@@ -111,8 +122,8 @@ xt_default_isect(Xt_idxlist idxlist_src,
      return xt_idxempty_new();
 
    Xt_idxlist intersection;
-   if (num_indices_src < CHEAP_VECTOR_SIZE
-       && num_indices_dst < CHEAP_VECTOR_SIZE) {
+   if (num_indices_src < config->idxv_cnv_size
+       && num_indices_dst < config->idxv_cnv_size) {
      Xt_int *indices_src
        = xmalloc(((size_t)num_indices_src + (size_t)num_indices_dst)
                  * sizeof (indices_src[0])),
@@ -125,7 +136,7 @@ xt_default_isect(Xt_idxlist idxlist_src,
        idxvec_dst = xt_idxvec_prealloc_new(indices_dst, num_indices_dst);
 
      intersection
-       = xt_idxvec_get_intersection(idxvec_src, idxvec_dst);
+       = xt_idxvec_get_intersection(idxvec_src, idxvec_dst, config);
 
      xt_idxlist_delete(idxvec_src);
      xt_idxlist_delete(idxvec_dst);
@@ -140,7 +151,7 @@ xt_default_isect(Xt_idxlist idxlist_src,
        idxstripes_dst = xt_idxstripes_prealloc_new(stripes_dst,
                                                    num_stripes_dst);
      intersection
-       = xt_idxstripes_get_intersection(idxstripes_src, idxstripes_dst);
+       = xt_idxstripes_get_intersection(idxstripes_src, idxstripes_dst, config);
      xt_idxlist_delete(idxstripes_dst);
      xt_idxlist_delete(idxstripes_src);
      free(stripes_dst);

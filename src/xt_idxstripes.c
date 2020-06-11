@@ -866,7 +866,8 @@ idxstripes_compute_intersection(Xt_idxstripes idxstripes_src,
 }
 
 Xt_idxlist
-xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst)
+xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
+                               Xt_config XT_UNUSED(config))
 {
   // both lists are index stripes:
   Xt_idxstripes idxstripes_src = (Xt_idxstripes)idxlist_src,
@@ -911,15 +912,10 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
   if (idxstripes->index_array_cache) return idxstripes->index_array_cache;
 
   int num_indices = idxlist->num_indices;
-
   Xt_int *tmp_index_array
-    = xmalloc((size_t)num_indices * sizeof( *(idxstripes->index_array_cache) ) );
-
+    = xmalloc((size_t)num_indices * sizeof (*tmp_index_array));
   idxstripes_get_indices(idxlist, tmp_index_array);
-
-  idxstripes->index_array_cache = tmp_index_array;
-
-  return idxstripes->index_array_cache;
+  return idxstripes->index_array_cache = tmp_index_array;
 }
 
 static void

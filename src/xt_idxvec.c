@@ -489,7 +489,9 @@ get_sorted_vector(Xt_idxvec idxvec) {
 }
 
 Xt_idxlist
-xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
+xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
+                           Xt_config XT_UNUSED(config))
+{
 
   // both lists are index vectors:
 

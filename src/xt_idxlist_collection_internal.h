@@ -54,7 +54,8 @@
 
 Xt_idxlist
 xt_idxlist_collection_get_intersection(Xt_idxlist idxlist_src,
-                                       Xt_idxlist idxlist_dst);
+                                       Xt_idxlist idxlist_dst,
+                                       Xt_config config);
 
 #endif
 

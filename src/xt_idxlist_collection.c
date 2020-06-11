@@ -252,7 +252,8 @@ xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
 
 Xt_idxlist
 xt_idxlist_collection_get_intersection(Xt_idxlist XT_UNUSED(idxlist_src),
-                                       Xt_idxlist XT_UNUSED(idxlist_dst)) {
+                                       Xt_idxlist XT_UNUSED(idxlist_dst),
+                                       Xt_config XT_UNUSED(config)) {
 
   return NULL;
 }

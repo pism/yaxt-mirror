@@ -396,8 +396,9 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
 
 Xt_idxlist
 xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
-                                                  Xt_idxlist dst_idxlist) {
-
+                                                  Xt_idxlist dst_idxlist,
+                                                  Xt_config XT_UNUSED(config))
+{
   // intersection between an idxsection and a general idxlist:
   //
   // performance picture:
@@ -463,7 +464,9 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
 }
 
 Xt_idxlist
-xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
+xt_idxsection_get_intersection(Xt_idxlist idxlist_src,
+                               Xt_idxlist idxlist_dst,
+                               Xt_config config) {
   INSTR_DEF(instr,"idxsection_get_intersection.part")
 
   // both lists are index section:
@@ -473,7 +476,7 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   if (idxsection_src->ndim != idxsection_dst->ndim ||
       idxsection_src->global_start_index != idxsection_dst->global_start_index)
-    return xt_default_isect(idxlist_src, idxlist_dst);
+    return xt_default_isect(idxlist_src, idxlist_dst, config);
 
   int i;
 
@@ -483,7 +486,7 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
     if (XT_INT_ABS(idxsection_src->dims[i].global_size)
         != XT_INT_ABS(idxsection_dst->dims[i].global_size))
       return xt_idxsection_get_intersection_with_other_idxlist(
-        idxlist_src, idxlist_dst);
+        idxlist_src, idxlist_dst, config);
 
   Xt_int *local_start, *global_size;
   int *local_size;
