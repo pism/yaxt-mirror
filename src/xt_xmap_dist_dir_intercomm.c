@@ -70,10 +70,10 @@
 #include "xt_mpi_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "ensure_array_size.h"
 #include "xt/xt_xmap_intersection.h"
 #include "xt_idxlist_internal.h"
 #include "xt_xmap_dist_dir_common.h"
+#include "xt_config_internal.h"
 #include "instr.h"
 
 static inline void
@@ -81,7 +81,8 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
                                   bool *stripify, Xt_int interval_size[2],
                                   MPI_Comm intra_comm, MPI_Comm inter_comm,
                                   int comm_size, int remote_size,
-                                  int comm_rank, int tag_offset_inter)
+                                  int comm_rank, int tag_offset_inter,
+                                  Xt_config config)
 {
   /* global_sums[0] and [1] refer to the local and remote group of
    * intercommunicator inter_comm */
@@ -89,8 +90,8 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
 
   unsigned num_indices_src = (unsigned)xt_idxlist_get_num_indices(src);
   local_vals[0] = num_indices_src;
-  local_vals[1] = (num_indices_src >= CHEAP_VECTOR_SIZE)
-    || (xt_idxlist_get_num_indices(dst) >= CHEAP_VECTOR_SIZE);
+  local_vals[1] = (num_indices_src >= (unsigned)config->idxv_cnv_size)
+    || (xt_idxlist_get_num_indices(dst) >= config->idxv_cnv_size);
 
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums[0], 2,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, intra_comm),
@@ -357,7 +358,7 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
                                  int tag_offset_inter, int tag_offset_intra,
                                  MPI_Comm inter_comm, MPI_Comm intra_comm,
                                  int remote_size, int comm_size,
-                                 int comm_rank) {
+                                 int comm_rank, Xt_config config) {
 
   /* interval_size[0] and interval_size[1] are the global interval
    * size for the local and remote group */
@@ -366,7 +367,7 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
                                     stripify, interval_size,
                                     intra_comm, inter_comm,
                                     comm_size, remote_size,
-                                    comm_rank, tag_offset_inter);
+                                    comm_rank, tag_offset_inter, config);
   void *send_buffer_local, *send_buffer_remote;
   int (*send_size_local)[SEND_SIZE_ASIZE]
     = xmalloc(((size_t)comm_size + (size_t)remote_size)
@@ -527,7 +528,8 @@ exchange_idxlists(struct dist_dir **src_intersections,
                   Xt_idxlist src_idxlist,
                   Xt_idxlist dst_idxlist,
                   int tag_offset_inter, int tag_offset_intra,
-                  MPI_Comm inter_comm, MPI_Comm intra_comm) {
+                  MPI_Comm inter_comm, MPI_Comm intra_comm,
+                  Xt_config config) {
 
   int comm_size, remote_size, comm_rank;
   xt_mpi_call(MPI_Comm_size(inter_comm, &comm_size), inter_comm);
@@ -541,7 +543,7 @@ exchange_idxlists(struct dist_dir **src_intersections,
                                    tag_offset_inter, tag_offset_intra,
                                    inter_comm, intra_comm,
                                    remote_size, comm_size,
-                                   comm_rank);
+                                   comm_rank, config);
 
 
   int (*send_size_local)[SEND_SIZE_ASIZE]
@@ -636,8 +638,11 @@ exchange_idxlists(struct dist_dir **src_intersections,
 
 
 Xt_xmap
-xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                               MPI_Comm inter_comm_, MPI_Comm intra_comm_)
+xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
+                                      Xt_idxlist dst_idxlist,
+                                      MPI_Comm inter_comm_,
+                                      MPI_Comm intra_comm_,
+                                      Xt_config config)
 {
   INSTR_DEF(this_instr,"xt_xmap_dist_dir_intercomm_new")
   INSTR_START(this_instr);
@@ -655,7 +660,7 @@ xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   exchange_idxlists(&src_intersections, &dst_intersections, &stripify,
                     src_idxlist, dst_idxlist,
                     tag_offset_inter, tag_offset_intra,
-                    inter_comm, intra_comm);
+                    inter_comm, intra_comm, config);
 
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,
@@ -679,7 +684,13 @@ xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   return xmap;
 }
 
-
+Xt_xmap
+xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                               MPI_Comm inter_comm, MPI_Comm intra_comm)
+{
+  return xt_xmap_dist_dir_intercomm_custom_new(
+    src_idxlist, dst_idxlist, inter_comm, intra_comm, &xt_default_config);
+}
 
 /*
  * Local Variables:

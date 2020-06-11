@@ -64,6 +64,7 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_all2all.h"
 #include "xt/xt_xmap_intersection.h"
+#include "xt_config_internal.h"
 #include "xt_idxlist_internal.h"
 #include "instr.h"
 
@@ -74,7 +75,7 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
                               int * stripify,
                               Xt_idxlist src_idxlist_local,
                               Xt_idxlist dst_idxlist_local,
-                              MPI_Comm comm)
+                              MPI_Comm comm, Xt_config config)
 {
 
   /*
@@ -158,8 +159,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
       dst = dst_idxlist_local;
     }
     large_list_seen
-      |= (xt_idxlist_get_num_indices(src) >= CHEAP_VECTOR_SIZE)
-      | (xt_idxlist_get_num_indices(dst) >= CHEAP_VECTOR_SIZE);
+      |= (xt_idxlist_get_num_indices(src) >= config->idxv_cnv_size)
+      | (xt_idxlist_get_num_indices(dst) >= config->idxv_cnv_size);
     Xt_idxlist intersect = xt_idxlist_get_intersection(src, dst_idxlist_local);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
 
@@ -200,7 +201,9 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
   *dst_intersections = dsti;
 }
 
-Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm) {
+Xt_xmap
+xt_xmap_all2all_custom_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                           MPI_Comm comm, Xt_config config) {
   INSTR_DEF(t_xt_xmap_all2all_new,"xt_xmap_all2all_new")
   INSTR_START(t_xt_xmap_all2all_new);
 
@@ -217,7 +220,8 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   // exchange index lists between all processes in comm
   exchange_idxlists(&src_intersections, &num_src_intersections,
                     &dst_intersections, &num_dst_intersections,
-                    &stripify, src_idxlist, dst_idxlist, newcomm);
+                    &stripify, src_idxlist, dst_idxlist, newcomm,
+                    config);
 
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,
@@ -242,6 +246,14 @@ Xt_xmap xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_
   free(dst_intersections);
   INSTR_STOP(t_xt_xmap_all2all_new);
   return xmap;
+}
+
+Xt_xmap
+xt_xmap_all2all_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                    MPI_Comm comm)
+{
+  return xt_xmap_all2all_custom_new(src_idxlist, dst_idxlist,
+                                    comm, &xt_default_config);
 }
 
 /*

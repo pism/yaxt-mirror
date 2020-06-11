@@ -53,6 +53,7 @@
 #endif
 
 #include "xt/xt_core.h"
+#include "xt/xt_config.h"
 
 /** \example test_xmap_dist_dir.c
  */
@@ -85,6 +86,24 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
  * This operation is collective over all processes in comm. \n
  * It uses a distributed directory to reduce communication and
  * computation during the initialisation at the cost of some extra
+ * latency because more network transfers than for @a xt_xmap_all2all_new
+ * are required.
+ *
+ * @param[in] src_idxlist source index list
+ * @param[in] dst_idxlist destination index list
+ * @param[in] comm        MPI communicator that contains all processes
+ *                        that take part in the exchange (xt_xmap_dist_dir_new
+ *                        will make its own copy of comm)
+ */
+Xt_xmap
+xt_xmap_dist_dir_custom_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                            MPI_Comm comm, Xt_config config);
+
+/**
+ * Construct an exchange map.\n
+ * This operation is collective over all processes in comm. \n
+ * It uses a distributed directory to reduce communication and
+ * computation during the initialisation at the cost of some extra
  * latency because more network transfers than for \a xt_xmap_all2all_new
  * are required.
  *
@@ -98,6 +117,28 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
 Xt_xmap
 xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                                MPI_Comm comm);
+
+/**
+ * Construct an exchange map.\n
+ * This operation is collective over all processes in comm. \n
+ * It uses a distributed directory to reduce communication and
+ * computation during the initialisation at the cost of some extra
+ * latency because more network transfers than for \a xt_xmap_all2all_new
+ * are required.
+ *
+ * @param[in] src_idxlist source index list
+ * @param[in] dst_idxlist destination index list
+ * @param[in] comm        MPI communicator that contains all processes
+ *                        that take part in the exchange (xt_xmap_dist_dir_new
+ *                        will make its own copy of comm), must be an
+ *                        intracommunicator.
+ * @param[in] config      custom configuration parameters
+ */
+Xt_xmap
+xt_xmap_dist_dir_intracomm_custom_new(Xt_idxlist src_idxlist,
+                                      Xt_idxlist dst_idxlist,
+                                      MPI_Comm comm,
+                                      Xt_config config);
 
 #endif // XT_XMAP_DIST_DIR_H
 

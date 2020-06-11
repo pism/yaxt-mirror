@@ -220,11 +220,32 @@ Xt_xmap xt_xmap_all2all_new_f(struct xt_idxlist_f *src_idxlist_f,
   return xt_xmap_all2all_new(src_idxlist_f->cptr, dst_idxlist_f->cptr, comm_c);
 }
 
-Xt_xmap xt_xmap_dist_dir_new_f(struct xt_idxlist_f *src_idxlist_f,
-                               struct xt_idxlist_f *dst_idxlist_f,
-                               MPI_Fint comm_f) {
+Xt_xmap
+xt_xmap_all2all_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
+                             struct xt_idxlist_f *dst_idxlist_f,
+                             MPI_Fint comm_f, struct xt_config_f *config_f)
+{
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  return xt_xmap_all2all_custom_new(src_idxlist_f->cptr, dst_idxlist_f->cptr,
+                                    comm_c, config_f->cptr);
+}
+
+Xt_xmap
+xt_xmap_dist_dir_new_f(struct xt_idxlist_f *src_idxlist_f,
+                       struct xt_idxlist_f *dst_idxlist_f, MPI_Fint comm_f)
+{
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   return xt_xmap_dist_dir_new(src_idxlist_f->cptr, dst_idxlist_f->cptr, comm_c);
+}
+
+Xt_xmap
+xt_xmap_dist_dir_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
+                              struct xt_idxlist_f *dst_idxlist_f,
+                              MPI_Fint comm_f, struct xt_config_f *config_f)
+{
+  MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
+  return xt_xmap_dist_dir_custom_new(src_idxlist_f->cptr, dst_idxlist_f->cptr,
+                                     comm_c, config_f->cptr);
 }
 
 Xt_xmap
@@ -234,9 +255,22 @@ xt_xmap_dist_dir_intercomm_new_f(struct xt_idxlist_f *src_idxlist_f,
 {
   MPI_Comm inter_comm_c = MPI_Comm_f2c(inter_comm_f),
     intra_comm_c = MPI_Comm_f2c(intra_comm_f);
-  return xt_xmap_dist_dir_intercomm_new(src_idxlist_f->cptr,
-                                        dst_idxlist_f->cptr,
-                                        inter_comm_c, intra_comm_c);
+  return xt_xmap_dist_dir_intercomm_new(
+    src_idxlist_f->cptr, dst_idxlist_f->cptr, inter_comm_c, intra_comm_c);
+}
+
+Xt_xmap
+xt_xmap_dist_dir_intercomm_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
+                                        struct xt_idxlist_f *dst_idxlist_f,
+                                        MPI_Fint inter_comm_f,
+                                        MPI_Fint intra_comm_f,
+                                        struct xt_config_f *config_f)
+{
+  MPI_Comm inter_comm_c = MPI_Comm_f2c(inter_comm_f),
+    intra_comm_c = MPI_Comm_f2c(intra_comm_f);
+  return xt_xmap_dist_dir_intercomm_custom_new(
+    src_idxlist_f->cptr, dst_idxlist_f->cptr, inter_comm_c, intra_comm_c,
+    config_f->cptr);
 }
 
 Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,

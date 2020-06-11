@@ -44,7 +44,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 PROGRAM test_xmap_dist_dir_intercomm_parallel
-  USE yaxt, ONLY: xt_xmap_dist_dir_new
+  USE xt_xmap_abstract, ONLY: xt_xmap_dist_dir_new
   USE test_xmap_common_intercomm_parallel, ONLY: &
        xmap_intercomm_parallel_test_main
   IMPLICIT NONE

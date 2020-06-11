@@ -44,7 +44,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 PROGRAM test_xmap_all2all
-  USE yaxt, ONLY: xt_xmap_all2all_new
+  USE xt_xmap_abstract, ONLY: xt_xmap_all2all_new
   USE test_xmap_common, ONLY: xmap_self_test_main
   IMPLICIT NONE
   CALL xmap_self_test_main(xt_xmap_all2all_new)

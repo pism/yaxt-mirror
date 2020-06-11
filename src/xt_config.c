@@ -48,6 +48,7 @@
 #include <config.h>
 #endif
 
+#include <errno.h>
 #include <string.h>
 
 #include <mpi.h>
@@ -59,11 +60,13 @@
 #include "xt_exchanger_mix_isend_irecv.h"
 #include "xt_exchanger_irecv_isend_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
+#include "xt_idxlist_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
 struct Xt_config_ xt_default_config = {
   .exchanger_new = xt_exchanger_mix_isend_irecv_new,
+  .idxv_cnv_size = CHEAP_VECTOR_SIZE,
 };
 
 Xt_config xt_config_new(void)
@@ -167,6 +170,20 @@ abort:
   Xt_abort(Xt_default_comm, msg, "xt_config.c", __LINE__);
 }
 
+int xt_config_get_idxvec_autoconvert_size(Xt_config config)
+{
+  return config->idxv_cnv_size;
+}
+
+void
+xt_config_set_idxvec_autoconvert_size(Xt_config config, int cnvsize)
+{
+  if (cnvsize > 3)
+    config->idxv_cnv_size = cnvsize;
+}
+
+
+
 void
 xt_config_defaults_init(void)
 {
@@ -178,6 +195,25 @@ xt_config_defaults_init(void)
     else
       fprintf(stderr, "warning: Unexpected value "
               "for XT_CONFIG_DEFAULT_EXCHANGE_METHOD=%s\n", config_env);
+  }
+  config_env = getenv("XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE");
+  if (config_env) {
+    char *endptr;
+    long v = strtol(config_env, &endptr, 0);
+    if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+        || (errno != 0 && v == 0)) {
+      perror("failed to parse value of "
+             "XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE environment variable");
+    } else if (endptr == config_env) {
+      fputs("malformed value of XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE"
+            " environment variable, no digits were found\n",
+            stderr);
+    } else if (v < 1 || v > INT_MAX) {
+      fprintf(stderr, "value of XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE"
+              " environment variable (%ld) out of range [1,%d]\n",
+              v, INT_MAX);
+    } else
+      xt_config_set_idxvec_autoconvert_size(&xt_default_config, (int)v);
   }
 }
 

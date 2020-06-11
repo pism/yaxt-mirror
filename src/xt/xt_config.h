@@ -88,7 +88,7 @@ void xt_config_set_exchange_method(Xt_config config, int method);
 
 /**
  * get exchanger used when the \a config object is passed to constructors
- * @param[in] config configuration object to modify
+ * @param[in] config configuration object to query
  * @return an entry from \a Xt_exchangers representing the method of
  * data transfer used
  */
@@ -105,6 +105,32 @@ int xt_config_get_exchange_method(Xt_config config);
 int
 xt_exchanger_id_by_name(const char *name);
 
+/**
+ * query size at which index lists of vector type will be converted
+ *
+ * For many operations it makes sense to first compress large index
+ * vectors to stripes before continuing further computations.
+ *
+ * @param[in] config   configuration object to query
+ * @return             size of vectors at which conversion happens
+ */
+int
+xt_config_get_idxvec_autoconvert_size(Xt_config config);
+
+/**
+ * query size at which index lists of vector type will be converted
+ *
+ * For many operations it makes sense to first compress large index
+ * vectors to stripes before continuing further computations. This
+ * function sets the size of vectors at which this conversion
+ * happens for operations that are called with the configuration
+ * object as parameter.
+ *
+ * @param[in,out] config   configuration object to modify
+ * @param[in]     cnvsize  size of vectors at which conversion happens
+ */
+void
+xt_config_set_idxvec_autoconvert_size(Xt_config config, int cnvsize);
 
 #endif
 

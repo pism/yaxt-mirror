@@ -68,20 +68,22 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
+#include "xt_config_internal.h"
 #include "xt_idxlist_internal.h"
 #include "instr.h"
 #include "xt_xmap_dist_dir_common.h"
 
 static inline Xt_int
 get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
-                                  bool *stripify, MPI_Comm comm, int comm_size)
+                                  bool *stripify, MPI_Comm comm, int comm_size,
+                                  Xt_config config)
 {
   unsigned long long local_vals[2], global_sums[2];
 
   unsigned num_indices_src = (unsigned)xt_idxlist_get_num_indices(src);
   local_vals[0] = num_indices_src;
-  local_vals[1] = (num_indices_src >= CHEAP_VECTOR_SIZE)
-    || (xt_idxlist_get_num_indices(dst) >= CHEAP_VECTOR_SIZE);
+  local_vals[1] = (num_indices_src >= (unsigned)config->idxv_cnv_size)
+    || (xt_idxlist_get_num_indices(dst) >= config->idxv_cnv_size);
 
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums, 2,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
@@ -113,13 +115,14 @@ static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
 
 static struct bucket_params
 get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                  bool *stripify, MPI_Comm comm, int comm_size)
+                  bool *stripify, MPI_Comm comm, int comm_size,
+                  Xt_config config)
 {
   /* global_interval is a multiple of comm_size and has a size of at least
      comm_size */
   Xt_int global_interval
     = get_dist_dir_global_interval_size(src_idxlist, dst_idxlist, stripify,
-                                        comm, comm_size);
+                                        comm, comm_size, config);
   Xt_int local_interval = (Xt_int)(global_interval / comm_size);
   Xt_int local_index_range_lbound
     = get_min_idxlist_index(src_idxlist, dst_idxlist);
@@ -452,10 +455,12 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
                                              Xt_idxlist src_idxlist,
                                              Xt_idxlist dst_idxlist,
                                              int tag_offset,
-                                             MPI_Comm comm, int comm_size) {
+                                             MPI_Comm comm, int comm_size,
+                                             Xt_config config) {
 
   struct bucket_params bucket_params
-    = get_bucket_params(src_idxlist, dst_idxlist, stripify, comm, comm_size);
+    = get_bucket_params(src_idxlist, dst_idxlist, stripify, comm, comm_size,
+                        config);
 
   void *send_buffer = NULL;
 
@@ -606,7 +611,8 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
                               Xt_idxlist src_idxlist,
                               Xt_idxlist dst_idxlist,
                               int tag_offset,
-                              MPI_Comm comm) {
+                              MPI_Comm comm,
+                              Xt_config config) {
 
   int comm_size;
 
@@ -616,7 +622,7 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
 
   generate_distributed_directories(&src_dist_dir, &dst_dist_dir, stripify,
                                    src_idxlist, dst_idxlist,
-                                   tag_offset, comm, comm_size);
+                                   tag_offset, comm, comm_size, config);
 
   void * send_buffer;
 
@@ -663,8 +669,9 @@ static void exchange_idxlists(struct dist_dir **src_intersections,
 }
 
 Xt_xmap
-xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                               MPI_Comm comm)
+xt_xmap_dist_dir_intracomm_custom_new(
+  Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+  MPI_Comm comm, Xt_config config)
 {
   INSTR_DEF(this_instr,"xt_xmap_all2all_new")
   INSTR_START(this_instr);
@@ -679,7 +686,7 @@ xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
 
   bool stripify;
   exchange_idxlists(&src_intersections, &dst_intersections, &stripify,
-                    src_idxlist, dst_idxlist, tag_offset, newcomm);
+                    src_idxlist, dst_idxlist, tag_offset, newcomm, config);
 
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,
@@ -700,6 +707,14 @@ xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   xt_xmdd_free_dist_dir(dst_intersections);
   INSTR_STOP(this_instr);
   return xmap;
+}
+
+Xt_xmap
+xt_xmap_dist_dir_intracomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                               MPI_Comm comm)
+{
+  return xt_xmap_dist_dir_intracomm_custom_new(src_idxlist, dst_idxlist, comm,
+                                               &xt_default_config);
 }
 
 /*

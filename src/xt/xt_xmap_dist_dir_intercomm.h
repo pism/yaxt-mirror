@@ -54,6 +54,7 @@
 
 #include <stdbool.h>
 
+#include "xt/xt_config.h"
 #include "xt/xt_core.h"
 
  /** \example test_xmap_dist_dir_intercomm_parallel.c
@@ -77,6 +78,26 @@
 Xt_xmap
 xt_xmap_dist_dir_intercomm_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                                MPI_Comm inter_comm, MPI_Comm intra_comm);
+
+/**
+ * Construct an exchange map over an intercommunicator with custom parameters\n
+ * This operation is collective over all processes in comm. \n
+ * It uses a distributed directory for the initialisation
+ *
+ * @param[in] src_idxlist source index list
+ * @param[in] dst_idxlist destination index list
+ * @param[in] inter_comm  MPI intercommunicator that contains all processes
+ *                        that part in the exchange (xt_xmap_dist_dir_icomm_new
+ *                        will make its own copy of comm)
+ * @param[in] intra_comm  MPI intracommunicator corresponding to the group
+ *                        of @a inter_comm that the calling rank belongs to
+ * @param[in] config      custom parameter object
+ */
+Xt_xmap
+xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
+                                      Xt_idxlist dst_idxlist,
+                                      MPI_Comm inter_comm, MPI_Comm intra_comm,
+                                      Xt_config config);
 
 #endif // XT_XMAP_DIST_DIR_INTERCOMM_H
 

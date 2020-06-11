@@ -62,6 +62,7 @@
 #include "xt_xmap_dist_dir_common.h"
 #include "ensure_array_size.h"
 #include "xt_idxstripes_internal.h"
+#include "xt_config_internal.h"
 
 void xt_xmdd_free_dist_dir(struct dist_dir *dist_dir) {
   size_t num_entries
@@ -362,9 +363,17 @@ xt_com_list_rank_cmp(const void *a_, const void *b_)
   return a->rank - b->rank;
 }
 
+Xt_xmap
+xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                     MPI_Comm comm)
+{
+  return xt_xmap_dist_dir_custom_new(src_idxlist, dst_idxlist, comm,
+                                     &xt_default_config);
+}
 
-Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                             MPI_Comm comm)
+Xt_xmap
+xt_xmap_dist_dir_custom_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+                            MPI_Comm comm, Xt_config config)
 {
   // ensure that yaxt is initialized
   assert(xt_initialized());
@@ -373,7 +382,8 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
   Xt_xmap xmap;
   if (!is_inter)
-    xmap = xt_xmap_dist_dir_intracomm_new(src_idxlist, dst_idxlist, comm);
+    xmap = xt_xmap_dist_dir_intracomm_custom_new(src_idxlist, dst_idxlist, comm,
+                                                 config);
   else {
     MPI_Comm merge_comm, local_intra_comm;
     MPI_Group local_group;
@@ -385,8 +395,9 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
     xt_mpi_call(MPI_Comm_free(&merge_comm), comm);
     xt_mpi_comm_mark_exclusive(local_intra_comm);
 
-    xmap = xt_xmap_dist_dir_intercomm_new(src_idxlist, dst_idxlist,
-                                          comm, local_intra_comm);
+    xmap
+      = xt_xmap_dist_dir_intercomm_custom_new(src_idxlist, dst_idxlist,
+                                              comm, local_intra_comm, config);
 
     xt_mpi_call(MPI_Comm_free(&local_intra_comm), local_intra_comm);
   }

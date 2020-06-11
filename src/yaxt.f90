@@ -60,7 +60,9 @@ MODULE yaxt
        xt_config_get_exchange_method, xt_config_set_exchange_method, &
        xt_exchanger_irecv_send, xt_exchanger_irecv_isend, &
        xt_exchanger_irecv_isend_packed, xt_exchanger_mix_isend_irecv, &
-       xt_exchanger_neigh_alltoall
+       xt_exchanger_neigh_alltoall, &
+       xt_config_get_idxvec_autoconvert_size, &
+       xt_config_set_idxvec_autoconvert_size
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
        xt_sort_permutation
   USE xt_idxlist_abstract, ONLY: &
@@ -83,8 +85,8 @@ MODULE yaxt
        xt_xmap_delete, xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_copy, xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
-       xt_xmap_all2all_new, xt_xmap_dist_dir_new, xt_is_null, &
-       xt_xmap_dist_dir_intercomm_new, &
+       xt_xmap_all2all_custom_new, xt_xmap_dist_dir_custom_new, xt_is_null, &
+       xt_xmap_dist_dir_intercomm_custom_new, &
        xt_xmap_iter, xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
        xt_xmap_iterator_get_transfer_pos, &
@@ -93,6 +95,8 @@ MODULE yaxt
        xt_xmap_iterator_get_num_transfer_pos_ext, xt_xmap_reorder, &
        xt_reorder_type_kind, XT_REORDER_NONE, XT_REORDER_SEND_UP, &
        XT_REORDER_RECV_UP, xt_xmap_update_positions, xt_xmap_spread
+  USE xt_xmap_rename, ONLY: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
+       xt_xmap_dist_dir_intercomm_new
   USE xt_xmap_intersection, ONLY: xt_xmap_intersection_new, &
        xt_xmap_intersection_ext_new, xt_com_list, &
        xt_xmap_intersection_pos_new, xt_com_pos
@@ -145,11 +149,10 @@ MODULE yaxt
        xt_idxstripes_new, xt_idxstripes_from_idxlist_new, &
        xt_idxlist_collection_new, xt_idxsection_new, xt_idxfsection_new, &
        xt_idxmod_new, xt_xmap, xt_xmap_c2f, xt_xmap_f2c, xt_xmap_copy, &
-       xt_xmap_all2all_new, xt_xmap_delete, xt_xmap_get_num_destinations, &
+       xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
-       xt_xmap_get_source_ranks, xt_xmap_dist_dir_new, &
+       xt_xmap_get_source_ranks, &
        xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
-       xt_xmap_dist_dir_intercomm_new, &
        xt_xmap_intersection_new, xt_xmap_intersection_ext_new, &
        xt_xmap_intersection_pos_new, &
        xt_xmap_reorder, xt_reorder_type_kind, &
@@ -179,12 +182,19 @@ MODULE yaxt
        xt_request_wait, xt_request_test, xt_redist_a_exchange1, &
        xt_redist_a_exchange
 
+  PUBLIC :: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
+  PUBLIC :: xt_xmap_dist_dir_new, xt_xmap_dist_dir_custom_new
+  PUBLIC :: xt_xmap_dist_dir_intercomm_new, &
+       xt_xmap_dist_dir_intercomm_custom_new
+
   PUBLIC :: xt_config, xt_config_new, xt_config_delete, &
        xt_exchanger_id_by_name, &
        xt_config_get_exchange_method, xt_config_set_exchange_method, &
        xt_exchanger_irecv_send, xt_exchanger_irecv_isend, &
        xt_exchanger_irecv_isend_packed, xt_exchanger_mix_isend_irecv, &
-       xt_exchanger_neigh_alltoall
+       xt_exchanger_neigh_alltoall, &
+       xt_config_get_idxvec_autoconvert_size, &
+       xt_config_set_idxvec_autoconvert_size
 
   PUBLIC :: xt_redist_p2p_new, xt_redist_p2p_custom_new
   PUBLIC :: xt_redist_p2p_off_new, xt_redist_p2p_off_custom_new

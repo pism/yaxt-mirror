@@ -49,6 +49,7 @@ MODULE xt_xmap_abstract
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
        c_associated, c_f_pointer, c_loc
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_pos_ext, i2, i4, i8
+  USE xt_config_f, ONLY: xt_config
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
   PRIVATE
@@ -59,8 +60,10 @@ MODULE xt_xmap_abstract
        xt_xmap_get_source_ranks, xt_xmap_reorder, xt_reorder_type_kind, &
        xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up, &
        xt_xmap_update_positions, xt_xmap_spread
-  PUBLIC :: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
-       xt_xmap_dist_dir_intercomm_new
+  PUBLIC :: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
+  PUBLIC :: xt_xmap_dist_dir_new,  xt_xmap_dist_dir_custom_new
+  PUBLIC ::  xt_xmap_dist_dir_intercomm_new,  &
+       xt_xmap_dist_dir_intercomm_custom_new
   PUBLIC :: xt_xmap_get_in_iterator, xt_xmap_get_out_iterator, &
        xt_xmap_iterator_next, xt_xmap_iterator_get_rank, &
        xt_xmap_iterator_get_transfer_pos, &
@@ -209,6 +212,31 @@ CONTAINS
     xmap = xt_xmap_c2f(xt_xmap_all2all_new_f(src_idxlist, dst_idxlist, comm))
   END FUNCTION xt_xmap_all2all_new
 
+  FUNCTION xt_xmap_all2all_custom_new(src_idxlist, dst_idxlist, comm, config) &
+       RESULT(xmap)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+    TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_xmap) :: xmap
+
+    INTERFACE
+      FUNCTION xt_xmap_all2all_custom_new_f(src_idxlist, dst_idxlist, comm, &
+           config) BIND(C, name='xt_xmap_all2all_custom_new_f') RESULT(xmap_ptr)
+        IMPORT :: xt_idxlist, xt_xmap, xt_mpi_fint_kind, xt_config, c_ptr
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
+        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm
+        TYPE(xt_config), INTENT(in) :: config
+        TYPE(c_ptr) :: xmap_ptr
+      END FUNCTION xt_xmap_all2all_custom_new_f
+    END INTERFACE
+
+    xmap = xt_xmap_c2f(xt_xmap_all2all_custom_new_f(src_idxlist, dst_idxlist, &
+         comm, config))
+  END FUNCTION xt_xmap_all2all_custom_new
+
   FUNCTION xt_xmap_dist_dir_new(src_idxlist, dst_idxlist, comm) RESULT(xmap)
     IMPLICIT NONE
     TYPE(xt_idxlist), INTENT(in) :: src_idxlist
@@ -229,6 +257,30 @@ CONTAINS
 
     xmap = xt_xmap_c2f(xt_xmap_dist_dir_new_f(src_idxlist, dst_idxlist, comm))
   END FUNCTION xt_xmap_dist_dir_new
+
+  FUNCTION xt_xmap_dist_dir_custom_new(src_idxlist, dst_idxlist, comm, config) &
+       RESULT(xmap)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+    TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_xmap) :: xmap
+    INTERFACE
+      FUNCTION xt_xmap_dist_dir_custom_new_f(src_idxlist, dst_idxlist, comm, &
+           config) BIND(C, name='xt_xmap_dist_dir_custom_new_f') &
+           RESULT(xmap_ptr)
+        IMPORT :: xt_idxlist, xt_xmap, xt_mpi_fint_kind, xt_config, c_ptr
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
+        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm
+        TYPE(xt_config), INTENT(in) :: config
+        TYPE(c_ptr) :: xmap_ptr
+      END FUNCTION xt_xmap_dist_dir_custom_new_f
+    END INTERFACE
+    xmap = xt_xmap_c2f(xt_xmap_dist_dir_custom_new_f(src_idxlist, dst_idxlist, &
+         comm, config))
+  END FUNCTION xt_xmap_dist_dir_custom_new
 
   FUNCTION xt_xmap_dist_dir_intercomm_new(src_idxlist, dst_idxlist, &
        inter_comm, intra_comm) RESULT(xmap)
@@ -253,6 +305,33 @@ CONTAINS
     xmap = xt_xmap_c2f(xt_xmap_dist_dir_intercomm_new_f(src_idxlist, &
          dst_idxlist, inter_comm, intra_comm))
   END FUNCTION xt_xmap_dist_dir_intercomm_new
+
+  FUNCTION xt_xmap_dist_dir_intercomm_custom_new(src_idxlist, dst_idxlist, &
+       inter_comm, intra_comm, config) RESULT(xmap)
+    IMPLICIT NONE
+    TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+    TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+    INTEGER, INTENT(in) :: inter_comm, intra_comm
+    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_xmap) :: xmap
+
+    INTERFACE
+      FUNCTION xt_xmap_dist_dir_intercomm_custom_new_f(src_idxlist, &
+           dst_idxlist, inter_comm, intra_comm, config) &
+           BIND(C, name='xt_xmap_dist_dir_intercomm_custom_new_f') &
+           RESULT(xmap_ptr)
+        IMPORT :: xt_idxlist, xt_xmap, xt_mpi_fint_kind, xt_config, c_ptr
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
+        INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: inter_comm, intra_comm
+        TYPE(xt_config), INTENT(in) :: config
+        TYPE(c_ptr) :: xmap_ptr
+      END FUNCTION xt_xmap_dist_dir_intercomm_custom_new_f
+    END INTERFACE
+
+    xmap = xt_xmap_c2f(xt_xmap_dist_dir_intercomm_custom_new_f(src_idxlist, &
+         dst_idxlist, inter_comm, intra_comm, config))
+  END FUNCTION xt_xmap_dist_dir_intercomm_custom_new
 
   FUNCTION xt_xmap_get_num_destinations(xmap) RESULT(num)
     TYPE(xt_xmap), INTENT(in) :: xmap
@@ -639,6 +718,32 @@ CONTAINS
     iter%cptr = c_null_ptr
   END SUBROUTINE xt_xmap_iterator_delete
 END MODULE xt_xmap_abstract
+
+MODULE xt_xmap_rename
+  USE xt_xmap_abstract, ONLY: xt_xmap_all2all_orig_new => xt_xmap_all2all_new, &
+       xt_xmap_all2all_custom_new, &
+       xt_xmap_dist_dir_orig_new => xt_xmap_dist_dir_new, &
+       xt_xmap_dist_dir_custom_new, &
+       xt_xmap_dist_dir_intercomm_orig_new => xt_xmap_dist_dir_intercomm_new, &
+       xt_xmap_dist_dir_intercomm_custom_new
+  IMPLICIT NONE
+  PRIVATE
+  INTERFACE xt_xmap_all2all_new
+    MODULE PROCEDURE xt_xmap_all2all_orig_new
+    MODULE PROCEDURE xt_xmap_all2all_custom_new
+  END INTERFACE xt_xmap_all2all_new
+  PUBLIC :: xt_xmap_all2all_new
+  INTERFACE xt_xmap_dist_dir_new
+    MODULE PROCEDURE xt_xmap_dist_dir_orig_new
+    MODULE PROCEDURE xt_xmap_dist_dir_custom_new
+  END INTERFACE xt_xmap_dist_dir_new
+  PUBLIC :: xt_xmap_dist_dir_new
+  INTERFACE xt_xmap_dist_dir_intercomm_new
+    MODULE PROCEDURE xt_xmap_dist_dir_intercomm_orig_new
+    MODULE PROCEDURE xt_xmap_dist_dir_intercomm_custom_new
+  END INTERFACE xt_xmap_dist_dir_intercomm_new
+  PUBLIC :: xt_xmap_dist_dir_intercomm_new
+END MODULE xt_xmap_rename
 !
 ! Local Variables:
 ! f90-continuation-indent: 5

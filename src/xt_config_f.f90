@@ -48,6 +48,7 @@
 MODULE xt_config_f
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_null_ptr, c_int, &
        c_char, c_null_char
+  USE xt_core, ONLY: xt_abort
   IMPLICIT NONE
   PRIVATE
   ! note: this type must not be extended to contain any other
@@ -75,12 +76,16 @@ MODULE xt_config_f
   PUBLIC :: xt_config_f2c
   PUBLIC :: xt_exchanger_id_by_name
   PUBLIC :: xt_config_get_exchange_method, xt_config_set_exchange_method
+  PUBLIC :: xt_config_get_idxvec_autoconvert_size, &
+       xt_config_set_idxvec_autoconvert_size
   INTEGER, PUBLIC, PARAMETER :: &
        xt_exchanger_irecv_send = 0, &
        xt_exchanger_irecv_isend = 1, &
        xt_exchanger_irecv_isend_packed = 2, &
        xt_exchanger_mix_isend_irecv = 3, &
        xt_exchanger_neigh_alltoall = 4
+
+  CHARACTER(len=*), PARAMETER :: filename = 'xt_config_f.f90'
 
 CONTAINS
 
@@ -161,6 +166,39 @@ CONTAINS
     c_id = xt_exchanger_id_by_name_c(name_c)
     exchanger_id = INT(c_id)
   END FUNCTION xt_exchanger_id_by_name
+
+  FUNCTION xt_config_get_idxvec_autoconvert_size(config) RESULT(cnvsize)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: cnvsize
+    INTERFACE
+      FUNCTION xt_config_get_idxvec_autoconvert_size_c(config) RESULT(cnvsize) &
+           BIND(c, name='xt_config_get_idxvec_autoconvert_size')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int) :: cnvsize
+      END FUNCTION xt_config_get_idxvec_autoconvert_size_c
+    END INTERFACE
+    cnvsize = INT(xt_config_get_idxvec_autoconvert_size_c(config%cptr))
+  END FUNCTION xt_config_get_idxvec_autoconvert_size
+
+  SUBROUTINE xt_config_set_idxvec_autoconvert_size(config, cnvsize)
+    TYPE(xt_config), INTENT(inout) :: config
+    INTEGER, INTENT(in) :: cnvsize
+    INTEGER(c_int) :: cnvsize_c
+    INTERFACE
+      SUBROUTINE xt_config_set_idxvec_autoconvert_size_c(config, cnvsize) &
+           BIND(c, name='xt_config_set_idxvec_autoconvert_size')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int), VALUE :: cnvsize
+      END SUBROUTINE xt_config_set_idxvec_autoconvert_size_c
+    END INTERFACE
+    IF (cnvsize > HUGE(1_c_int) .OR. cnvsize < 1) &
+      CALL xt_abort("invalid conversion size", filename, __LINE__)
+
+    cnvsize_c = INT(cnvsize, c_int)
+    CALL xt_config_set_idxvec_autoconvert_size_c(config%cptr, cnvsize_c)
+  END SUBROUTINE xt_config_set_idxvec_autoconvert_size
 
 END MODULE xt_config_f
 !

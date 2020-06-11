@@ -55,7 +55,15 @@
 #include "xt_exchanger.h"
 
 struct Xt_config_ {
+  /**
+   * constructor to use when creating the exchanger of a redist
+   */
   Xt_exchanger_new exchanger_new;
+  /**
+   * automatically compress index lists of vector type at this size
+   * into another representation to save on computation/memory overall
+   */
+  int idxv_cnv_size;
 };
 
 extern struct Xt_config_ xt_default_config;
