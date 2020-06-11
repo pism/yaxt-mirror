@@ -116,11 +116,8 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
                             pack_sizes, 1, MPI_INT, comm), comm);
 
   int *restrict displ = pack_sizes + comm_size;
-  displ[0] = 0;
-  unsigned recv_buffer_size = (unsigned)pack_sizes[0];
-  unsigned size_overflow = 0;
-  for (size_t i = 1; i < (size_t)comm_size; ++i) {
-
+  unsigned recv_buffer_size = 0, size_overflow = 0;
+  for (size_t i = 0; i < (size_t)comm_size; ++i) {
     displ[i] = (int)recv_buffer_size;
     recv_buffer_size += (unsigned)pack_sizes[i];
     size_overflow |= recv_buffer_size & (1U << (sizeof(int) * CHAR_BIT - 1));
