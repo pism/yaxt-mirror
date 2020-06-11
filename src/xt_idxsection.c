@@ -468,10 +468,8 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst) {
 
   // both lists are index section:
 
-  Xt_idxsection idxsection_src, idxsection_dst;
-
-  idxsection_src = (Xt_idxsection)idxlist_src;
-  idxsection_dst = (Xt_idxsection)idxlist_dst;
+  Xt_idxsection idxsection_src = (Xt_idxsection)idxlist_src,
+    idxsection_dst = (Xt_idxsection)idxlist_dst;
 
   if (idxsection_src->ndim != idxsection_dst->ndim ||
       idxsection_src->global_start_index != idxsection_dst->global_start_index)

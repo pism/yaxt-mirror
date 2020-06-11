@@ -104,10 +104,8 @@ xt_default_isect(Xt_idxlist idxlist_src,
    // if the get_intersection routine was not able to compute the intersection
    INSTR_START(instr_fallback);
 
-   int num_indices_src, num_indices_dst;
-
-   num_indices_src = xt_idxlist_get_num_indices(idxlist_src);
-   num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
+   int num_indices_src = xt_idxlist_get_num_indices(idxlist_src),
+     num_indices_dst = xt_idxlist_get_num_indices(idxlist_dst);
 
    if (num_indices_src == 0 || num_indices_dst == 0)
      return xt_idxempty_new();
