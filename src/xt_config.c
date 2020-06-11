@@ -92,7 +92,12 @@ static const struct {
   { "mix_irecv_isend",
     xt_exchanger_mix_isend_irecv_new, xt_exchanger_mix_isend_irecv },
   { "neigh_alltoall",
-    xt_exchanger_neigh_alltoall_new, xt_exchanger_neigh_alltoall },
+#if MPI_VERSION >= 3
+    xt_exchanger_neigh_alltoall_new,
+#else
+    (Xt_exchanger_new)0,
+#endif
+    xt_exchanger_neigh_alltoall },
 };
 
 enum {
@@ -108,15 +113,25 @@ xt_exchanger_id_by_name(const char *name)
   return -1;
 }
 
+static inline size_t
+exchanger_by_function(Xt_exchanger_new exchanger_new)
+{
+  for (size_t i = 0; i < num_exchanger; ++i)
+    if (exchanger_table[i].f == exchanger_new)
+      return i;
+  return SIZE_MAX;
+}
+
+
 int xt_config_get_exchange_method(Xt_config config)
 {
   Xt_exchanger_new exchanger_new = config->exchanger_new;
-  for (size_t i = 0; i < num_exchanger; ++i)
-    if (exchanger_table[i].f == exchanger_new)
-      return (int)i;
+  size_t eentry = exchanger_by_function(exchanger_new);
+  if (eentry != SIZE_MAX)
+    return exchanger_table[eentry].code;
   static const char fmt[]
-    = "error: unexpected exchanger function (%p)!\n";
-  char buf[sizeof (fmt) + 9];
+    = "error: unexpected exchanger function (%p)!";
+  char buf[sizeof (fmt) + 3*sizeof(void *)];
   sprintf(buf, fmt, (void *)exchanger_new);
   Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
 }
@@ -124,16 +139,32 @@ int xt_config_get_exchange_method(Xt_config config)
 
 void xt_config_set_exchange_method(Xt_config config, int method)
 {
+  static const char fmt[]
+    = "error: user-requested exchanger code (%d) does not exist!";
+  char buf[sizeof (fmt) + 3*sizeof(int)];
+  const char *msg = buf;
   for (size_t i = 0; i < num_exchanger; ++i)
     if (exchanger_table[i].code == method) {
-      config->exchanger_new = exchanger_table[i].f;
+      Xt_exchanger_new exchanger_new;
+      if (exchanger_table[i].f) {
+        exchanger_new = exchanger_table[i].f;
+      } else {
+        exchanger_new = xt_default_config.exchanger_new;
+        size_t default_entry = exchanger_by_function(exchanger_new);
+        if (default_entry == SIZE_MAX) {
+          msg = "error: invalid default exchanger constructor!";
+          goto abort;
+        }
+        fprintf(stderr, "warning: %s exchanger unavailable, using "
+                "%s instead\n",
+                exchanger_table[i].name, exchanger_table[default_entry].name);
+      }
+      config->exchanger_new = exchanger_new;
       return;
     }
-  static const char fmt[]
-    = "error: user-requested exchanger code (%d) does not exist!\n";
-  char buf[sizeof (fmt) + 9];
   sprintf(buf, fmt, method);
-  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
+abort:
+  Xt_abort(Xt_default_comm, msg, "xt_config.c", __LINE__);
 }
 
 void
@@ -144,6 +175,9 @@ xt_config_defaults_init(void)
     int exchanger_id = xt_exchanger_id_by_name(config_env);
     if (exchanger_id != -1)
       xt_config_set_exchange_method(&xt_default_config, exchanger_id);
+    else
+      fprintf(stderr, "warning: Unexpected value "
+              "for XT_CONFIG_DEFAULT_EXCHANGE_METHOD=%s\n", config_env);
   }
 }
 

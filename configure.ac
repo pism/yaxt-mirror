@@ -253,6 +253,9 @@ FCFLAGS="$FCFLAGS ${FPP_DEFOPT}XT_MPI_AINT_KIND=$xt_mpi_aint_kind"
 AC_CHECK_SIZEOF([MPI_Datatype],,[@%:@include <mpi.h>])
 AS_IF([test $ac_cv_sizeof_MPI_Datatype -eq 0],
   [AC_MSG_FAILURE([Could not detect size of MPI_Datatype!])])
+AC_COMPUTE_INT([MPI_VERSION], [MPI_VERSION], [@%:@include <mpi.h>],
+  [AC_MSG_ERROR([cannot determine MPI version!])])
+AM_CONDITIONAL([USE_MPI3],[test $MPI_VERSION -ge 3])
 CFLAGS=$save_CFLAGS
 AS_CASE(["$MPI_FINT"],
   [int],[XT_MPI_FINT_MAX=INT_MAX XT_MPI_FINT_FC_KIND=c_int],

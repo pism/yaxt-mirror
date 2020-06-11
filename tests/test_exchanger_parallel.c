@@ -130,7 +130,9 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
     [xt_exchanger_irecv_isend] = xt_exchanger_irecv_isend_new,
     [xt_exchanger_irecv_isend_packed] = xt_exchanger_irecv_isend_packed_new,
     [xt_exchanger_mix_isend_irecv] = xt_exchanger_mix_isend_irecv_new,
+#if MPI_VERSION >= 3
     [xt_exchanger_neigh_alltoall] = xt_exchanger_neigh_alltoall_new,
+#endif
   };
   enum {
     num_exchanger = sizeof (exchanger_table) / sizeof (exchanger_table[0]),
@@ -479,10 +481,11 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 static void
 test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 {
-
+#if MPI_VERSION >= 3
   // inter-communicator's are not defined for virtual topologies, which are
   // used by xt_exchanger_neigh_alltoall_new
   if (exchanger_new == xt_exchanger_neigh_alltoall_new) return;
+#endif
 
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
