@@ -53,11 +53,7 @@
 
 #include "tests.h"
 
-extern MPI_Comm
-xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset);
-
-extern void
-xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset);
+#include "../src/xt_mpi_internal.h"
 
 static void comms_construct_destruct(MPI_Comm comm_world);
 
@@ -67,11 +63,11 @@ int main(void)
   // init mpi
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
-  xt_initialize(MPI_COMM_WORLD);
+  xt_mpi_init();
   comms_construct_destruct(MPI_COMM_WORLD);
   xt_mpi_comm_mark_exclusive(MPI_COMM_WORLD);
   comms_construct_destruct(MPI_COMM_WORLD);
-    xt_finalize();
+  xt_mpi_finalize();
   xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 
   return TEST_EXIT_CODE;
