@@ -259,8 +259,10 @@ xt_mpi_generate_datatype_block(const int *displacements,
 #endif
 }
 
-MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
-                                      MPI_Datatype old_type, MPI_Comm comm) {
+MPI_Datatype
+xt_mpi_generate_datatype(int const * displacements, int count,
+                         MPI_Datatype old_type, MPI_Comm comm)
+{
   if (count <= 0)
     return MPI_DATATYPE_NULL;
 
@@ -892,8 +894,7 @@ xt_mpi_test_some(int *restrict num_req,
                            MPI_STATUSES_IGNORE), comm);
   if (done_count != MPI_UNDEFINED) {
     if (num_req_ > (size_t)done_count) {
-      size_t j = num_req_;
-      for (size_t i = 0;
+      for (size_t i = 0, j = num_req_;
            i < (size_t)done_count && j >= num_req_ - (size_t)done_count;
            ++i)
         if (ops_completed[i] < (int)num_req_ - done_count) {
