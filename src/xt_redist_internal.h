@@ -57,6 +57,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_request.h"
 
@@ -80,7 +81,7 @@ struct Xt_redist_ {
   const struct xt_redist_vtable *vtable;
 };
 
-void
+PPM_DSO_INTERNAL void
 xt_redist_msgs_strided_copy(size_t n,
                             const struct Xt_redist_msg *restrict src,
                             size_t src_stride,
@@ -88,8 +89,9 @@ xt_redist_msgs_strided_copy(size_t n,
                             size_t dst_stride,
                             MPI_Comm comm);
 
-void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
-                                     MPI_Comm comm, size_t ofs_stride);
+PPM_DSO_INTERNAL void
+xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
+                                MPI_Comm comm, size_t ofs_stride);
 
 static inline void
 xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
@@ -107,7 +109,8 @@ xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
  * @param[in] comm        reference communicator
  * @remark In case this check fails, it will abort the program.
  */
-void xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
+PPM_DSO_INTERNAL void
+xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
 
 /**
  * Gets the ranks of all processes that receive data from/send data to the local
@@ -120,8 +123,9 @@ void xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
  * @remark the user needs to ensure that array ranks is big enough to hold all
  *         ranks
  */
-int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
-                            int *restrict *ranks);
+PPM_DSO_INTERNAL int
+xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
+                        int *restrict *ranks);
 
 /**
  * Gets a MPI derived datatype that encodes all data sent/received in a
@@ -133,8 +137,9 @@ int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
  * @return Datatype for the specified message. The return value is
  *         MPI_DATATYPE_NULL, if no data for the specified message.
  */
-MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
-                                        enum xt_msg_direction direction);
+PPM_DSO_INTERNAL MPI_Datatype
+xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
+                           enum xt_msg_direction direction);
 
 /**
  * Generates a new MPI derived datatype from a number of MPI derived datatypes.
@@ -145,7 +150,7 @@ MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
  * @param[in] comm          communicator
  * @return new MPI derived datatype
  */
-MPI_Datatype
+PPM_DSO_INTERNAL MPI_Datatype
 xt_create_compound_datatype(size_t count,
                             const MPI_Aint displacements[count],
                             const MPI_Datatype datatypes[count],
@@ -166,7 +171,7 @@ xt_create_compound_datatype(size_t count,
  * @remark the user needs to ensure that rank arrays are big enough to hold all
  *         ranks
  */
-unsigned
+PPM_DSO_INTERNAL unsigned
 xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
                         const Xt_redist redists[num_redists],
                         size_t num_ranks[num_redists],

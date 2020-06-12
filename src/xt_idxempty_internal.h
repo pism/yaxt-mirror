@@ -51,12 +51,13 @@
 #include <config.h>
 #endif
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 
-void
+PPM_DSO_INTERNAL void
 xt_idxempty_init(void);
 
-void
+PPM_DSO_INTERNAL void
 xt_idxempty_finalize(void);
 
 #endif // XT_IDXEMPTY_INTERNAL_H

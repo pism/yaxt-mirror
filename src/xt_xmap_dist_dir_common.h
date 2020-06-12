@@ -54,6 +54,7 @@
 
 #include <stdbool.h>
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_xmap_intersection.h"
 
@@ -65,10 +66,10 @@ struct dist_dir {
   struct Xt_com_list entries[];
 };
 
-void
+PPM_DSO_INTERNAL void
 xt_xmdd_free_dist_dir(struct dist_dir *dist_dir);
 
-int
+PPM_DSO_INTERNAL int
 xt_com_list_rank_cmp(const void *a_, const void *b_);
 
 struct bucket_params {
@@ -76,7 +77,7 @@ struct bucket_params {
     local_index_range_lbound, local_index_range_ubound;
 };
 
-Xt_idxlist
+PPM_DSO_INTERNAL Xt_idxlist
 xt_xmap_dist_dir_get_bucket(const struct bucket_params *bucket_params,
                             struct Xt_stripe **stripes_,
                             size_t *stripes_array_size,
@@ -120,18 +121,18 @@ struct isect
   Xt_idxlist idxlist;
 };
 
-int
+PPM_DSO_INTERNAL int
 xt_xmdd_cmp_isect_src_rank(const void *a_, const void *b_);
-int
+PPM_DSO_INTERNAL int
 xt_xmdd_cmp_isect_dst_rank(const void *a_, const void *b_);
 
 
-size_t
+PPM_DSO_INTERNAL size_t
 xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
                                const struct dist_dir *dst_dist_dir,
                                struct isect **src_dst_intersections);
 
-size_t
+PPM_DSO_INTERNAL size_t
 xt_xmap_dist_dir_pack_intersections(
   enum xt_xmdd_direction target,
   size_t num_intersections,
@@ -142,7 +143,7 @@ xt_xmap_dist_dir_pack_intersections(
   unsigned char *buffer, size_t buf_size, size_t *ofs, MPI_Comm comm);
 
 
-void
+PPM_DSO_INTERNAL void
 xt_xmap_dist_dir_same_rank_merge(struct dist_dir **dist_dir_results);
 
 

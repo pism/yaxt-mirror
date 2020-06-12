@@ -50,8 +50,9 @@
 
 #include <mpi.h>
 
-#include <xt/xt_redist.h>
-#include <xt/xt_config.h>
+#include "core/ppm_visibility.h"
+#include "xt/xt_redist.h"
+#include "xt/xt_config.h"
 #include "xt_exchanger.h"
 
 struct Xt_config_ {
@@ -68,7 +69,7 @@ struct Xt_config_ {
 
 extern struct Xt_config_ xt_default_config;
 
-void
+PPM_DSO_INTERNAL void
 xt_config_defaults_init(void);
 
 /*

@@ -55,6 +55,7 @@
 
 #include "xt/xt_stripe.h"
 
+#include "core/ppm_visibility.h"
 #include "xt_arithmetic_util.h"
 
 struct Xt_stripe_minmax {
@@ -82,7 +83,7 @@ xt_stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
   return (mma.max >= mmb.min) & (mma.min <= mmb.max);
 }
 
-void
+PPM_DSO_INTERNAL void
 xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
                                        int num_indices,
                                        struct Xt_stripe **stripes,
@@ -101,7 +102,7 @@ xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
  * @return number of stripes written to stripes_dst
  *
  */
-size_t
+PPM_DSO_INTERNAL size_t
 xt_stripes_merge_copy(size_t num_stripes,
                       struct Xt_stripe *stripes_dst,
                       const struct Xt_stripe *stripes_src,

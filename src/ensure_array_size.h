@@ -51,7 +51,9 @@
 #include <config.h>
 #endif
 
-void
+#include "core/ppm_visibility.h"
+
+PPM_DSO_INTERNAL void
 xt_realloc_array(void **array, size_t elem_size, size_t *curr_array_size,
                  size_t requested_size);
 

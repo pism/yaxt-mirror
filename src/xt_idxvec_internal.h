@@ -50,14 +50,15 @@
 #include <config.h>
 #endif
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 
-Xt_idxlist
+PPM_DSO_INTERNAL Xt_idxlist
 xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
                            Xt_config config);
 
-Xt_idxlist
+PPM_DSO_INTERNAL Xt_idxlist
 xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices);
 
 #endif

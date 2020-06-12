@@ -53,6 +53,8 @@
 #include <stdbool.h>
 #include <mpi.h>
 
+#include "core/ppm_visibility.h"
+
 /** \example test_mpi_smartdedup.c
  */
 
@@ -68,15 +70,15 @@ enum xt_mpi_tags {
 
 extern int xt_mpi_comm_internal_keyval;
 
-void
+PPM_DSO_INTERNAL void
 xt_mpi_init(void);
-void
+PPM_DSO_INTERNAL void
 xt_mpi_finalize(void);
 
-MPI_Comm
+PPM_DSO_INTERNAL MPI_Comm
 xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset);
 
-void
+PPM_DSO_INTERNAL void
 xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset);
 
 /**
@@ -92,7 +94,7 @@ xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset);
  * is used as temporary scratch space and overwritten
  * @param[in] comm communicator to use for failure notifications
  */
-bool
+PPM_DSO_INTERNAL bool
 xt_mpi_test_some(int *restrict num_req,
                  MPI_Request req[],
                  int ops_completed[], MPI_Comm comm);

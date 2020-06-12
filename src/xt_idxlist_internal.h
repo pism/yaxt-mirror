@@ -51,6 +51,7 @@
 #include <config.h>
 #endif
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_config.h"
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
@@ -85,7 +86,7 @@ struct xt_idxlist_vtable {
   int idxlist_pack_code;
 };
 
-void
+PPM_DSO_INTERNAL void
 xt_idxlist_get_index_stripes_keep_buf(Xt_idxlist idxlist,
                                       struct Xt_stripe ** stripes,
                                       int * num_stripes);
@@ -96,9 +97,9 @@ struct Xt_idxlist_ {
   Xt_uid uid;
 };
 
-void xt_idxlist_intersection_init(void);
+PPM_DSO_INTERNAL void xt_idxlist_intersection_init(void);
 
-Xt_uid xt_idxlist_new_uid(void);
+PPM_DSO_INTERNAL Xt_uid xt_idxlist_new_uid(void);
 
 static inline void Xt_idxlist_init(Xt_idxlist idxlist,
                                    const struct xt_idxlist_vtable *vtable,
@@ -109,7 +110,7 @@ static inline void Xt_idxlist_init(Xt_idxlist idxlist,
   idxlist->num_indices = num_indices;
 }
 
-Xt_idxlist
+PPM_DSO_INTERNAL Xt_idxlist
 xt_default_isect(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
                  Xt_config config);
 

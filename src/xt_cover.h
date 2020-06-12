@@ -53,6 +53,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 
 struct Xt_pos_ext_vec {
@@ -64,11 +65,11 @@ struct Xt_pos_range {
   int start, end;
 };
 
-void
+PPM_DSO_INTERNAL void
 xt_cover_start(struct Xt_pos_ext_vec *restrict cover,
                size_t initial_size);
 
-void
+PPM_DSO_INTERNAL void
 xt_cover_finish(struct Xt_pos_ext_vec *restrict cover);
 
 /**
@@ -84,7 +85,7 @@ xt_cover_finish(struct Xt_pos_ext_vec *restrict cover);
  * @return index of first position extent in cover that overlaps or is
  * adjacent to \a query
  */
-size_t
+PPM_DSO_INTERNAL size_t
 xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
                 struct Xt_pos_range query, bool forward,
                 size_t search_start_pos);
@@ -95,7 +96,7 @@ xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
  * @note user must ensure range actually is appendable, i.e. does not
  * overlap or precede an existing range in \a cover
  */
-void
+PPM_DSO_INTERNAL void
 xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
                       struct Xt_pos_ext range);
 
@@ -114,7 +115,7 @@ xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
  * @return SIZE_MAX if \a range could be fully integrated with \a
  * cover, position \a i of overlapping \a cover.pos_ext[i] otherwise
  */
-size_t
+PPM_DSO_INTERNAL size_t
 xt_cover_insert_or_overlap(struct Xt_pos_ext_vec *restrict cover,
                            struct Xt_pos_range range, bool forward,
                            size_t search_start_pos);
@@ -122,7 +123,7 @@ xt_cover_insert_or_overlap(struct Xt_pos_ext_vec *restrict cover,
 /**
  * tests if sorted pos_ext in \a coverage do indeed fully cover \a idxlist
  */
-bool
+PPM_DSO_INTERNAL bool
 xt_idxlist_pos_ext_is_full_cover(Xt_idxlist idxlist,
                                  struct Xt_pos_ext_vec cover);
 

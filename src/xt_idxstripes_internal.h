@@ -52,17 +52,18 @@
 
 #include <stdbool.h>
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 #include "xt/xt_idxlist.h"
 #include "xt_arithmetic_util.h"
 
-void
+PPM_DSO_INTERNAL void
 xt_idxstripes_initialize(void);
 
-void
+PPM_DSO_INTERNAL void
 xt_idxstripes_finalize(void);
 
-Xt_idxlist
+PPM_DSO_INTERNAL Xt_idxlist
 xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
                                Xt_config config);
 
@@ -73,7 +74,7 @@ xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
  * @param[in] stripes     array defining the stripes
  * @param[in] num_stripes number of stripes
  */
-Xt_idxlist
+PPM_DSO_INTERNAL Xt_idxlist
 xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes);
 
 /**
