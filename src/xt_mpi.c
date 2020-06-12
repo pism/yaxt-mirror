@@ -228,8 +228,6 @@ xt_mpi_generate_datatype_block(const int *displacements,
                                const int *blocklengths,
                                int count, MPI_Datatype old_type,
                                MPI_Comm comm) {
-  // ensure that yaxt is initialized
-  assert(xt_initialized());
 
 #ifdef COMPACT_DT
   (void)comm;
@@ -263,9 +261,6 @@ xt_mpi_generate_datatype_block(const int *displacements,
 
 MPI_Datatype xt_mpi_generate_datatype(int const * displacements, int count,
                                       MPI_Datatype old_type, MPI_Comm comm) {
-  // ensure that yaxt is initialized
-  assert(xt_initialized());
-
   if (count <= 0)
     return MPI_DATATYPE_NULL;
 
@@ -648,8 +643,6 @@ xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
                                 int count, MPI_Datatype old_type,
                                 MPI_Comm XT_UNUSED(comm))
 {
-  // ensure that yaxt is initialized
-  assert(xt_initialized());
   if (count < 1) return MPI_DATATYPE_NULL;
   return parse_stripe(v, (size_t)count, old_type);
 }
