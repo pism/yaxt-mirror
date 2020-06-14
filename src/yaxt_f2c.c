@@ -492,6 +492,23 @@ PPM_DSO_INTERNAL void *
 xt_redist_single_array_base_custom_new_c2f(
   int nsend, int nrecv, const struct xt_redist_msg_f *send_msgs_f,
   const struct xt_redist_msg_f *recv_msgs_f, MPI_Fint comm_f,
+  struct xt_config_f *config);
+
+PPM_DSO_INTERNAL void *
+xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
+                                    const struct xt_redist_msg_f *send_msgs_f,
+                                    const struct xt_redist_msg_f *recv_msgs_f,
+                                    MPI_Fint comm_f)
+{
+  return xt_redist_single_array_base_custom_new_c2f(
+    nsend, nrecv, send_msgs_f, recv_msgs_f, comm_f,
+    &(struct xt_config_f){ (Xt_config)&xt_default_config });
+}
+
+PPM_DSO_INTERNAL void *
+xt_redist_single_array_base_custom_new_c2f(
+  int nsend, int nrecv, const struct xt_redist_msg_f *send_msgs_f,
+  const struct xt_redist_msg_f *recv_msgs_f, MPI_Fint comm_f,
   struct xt_config_f *config)
 {
   assert(nsend >= 0 && nrecv >= 0);
@@ -511,17 +528,6 @@ xt_redist_single_array_base_custom_new_c2f(
     nsend, nrecv, send_msgs_c, recv_msgs_c, comm_c, config->cptr);
   free(send_msgs_c);
   return redist;
-}
-
-PPM_DSO_INTERNAL void *
-xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
-                                    const struct xt_redist_msg_f *send_msgs_f,
-                                    const struct xt_redist_msg_f *recv_msgs_f,
-                                    MPI_Fint comm_f)
-{
-  return xt_redist_single_array_base_custom_new_c2f(
-    nsend, nrecv, send_msgs_f, recv_msgs_f, comm_f,
-    &(struct xt_config_f){ (Xt_config)&xt_default_config });
 }
 
 PPM_DSO_INTERNAL void *
