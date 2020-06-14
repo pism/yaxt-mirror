@@ -72,7 +72,7 @@ CONTAINS
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
-        INTEGER, VALUE, INTENT(in) :: comm
+        INTEGER, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
@@ -169,7 +169,7 @@ CONTAINS
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
-        INTEGER, VALUE, INTENT(in) :: comm
+        INTEGER, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
@@ -245,7 +245,7 @@ CONTAINS
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
-        INTEGER, VALUE, INTENT(in) :: comm
+        INTEGER, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
@@ -294,7 +294,7 @@ CONTAINS
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
-        INTEGER, VALUE, INTENT(in) :: comm
+        INTEGER, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
@@ -428,7 +428,7 @@ CONTAINS
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
-        INTEGER, VALUE, INTENT(in) :: comm
+        INTEGER, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
@@ -529,7 +529,7 @@ CONTAINS
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
-        INTEGER, VALUE, INTENT(in) :: comm
+        INTEGER, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE

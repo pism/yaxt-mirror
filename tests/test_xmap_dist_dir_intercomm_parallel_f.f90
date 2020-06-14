@@ -53,7 +53,7 @@ PROGRAM test_xmap_dist_dir_intercomm_parallel
          inter_comm) RESULT(xmap)
       USE yaxt, ONLY: xt_xmap, xt_idxlist
       TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
-      INTEGER, VALUE, INTENT(in) :: inter_comm
+      INTEGER, INTENT(in) :: inter_comm
       TYPE(xt_xmap) :: xmap
     END FUNCTION  xmap_dist_dir_intercomm_wrap
   END INTERFACE
@@ -68,7 +68,7 @@ FUNCTION xmap_dist_dir_intercomm_wrap(src_idxlist, dst_idxlist, inter_comm) &
   USE yaxt, ONLY: xt_xmap_dist_dir_intercomm_new, xt_xmap, xt_idxlist
   USE test_xmap_common_intercomm_parallel, ONLY: intra_group_comm
   TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
-  INTEGER, VALUE, INTENT(in) :: inter_comm
+  INTEGER, INTENT(in) :: inter_comm
   TYPE(xt_xmap) :: xmap
   xmap = xt_xmap_dist_dir_intercomm_new(src_idxlist, dst_idxlist, &
        inter_comm, intra_group_comm)
