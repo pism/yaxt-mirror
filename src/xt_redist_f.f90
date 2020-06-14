@@ -639,7 +639,6 @@ CONTAINS
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: res
-
     INTERFACE
       FUNCTION xt_redist_p2p_new_f(xmap, datatype) &
            BIND(C, name='xt_redist_p2p_new_f') RESULT(res_ptr)
@@ -650,9 +649,7 @@ CONTAINS
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_new_f
     END INTERFACE
-
-    res = xt_redist_c2f(xt_redist_p2p_new_f(xmap, datatype))
-
+    res%cptr = xt_redist_p2p_new_f(xmap, datatype)
   END FUNCTION xt_redist_p2p_new
 
   FUNCTION xt_redist_p2p_custom_new(xmap, datatype, config) RESULT(res)
@@ -660,7 +657,6 @@ CONTAINS
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
-
     INTERFACE
       FUNCTION xt_redist_p2p_custom_new_f(xmap, datatype, config) &
            BIND(C, name='xt_redist_p2p_custom_new_f') RESULT(res_ptr)
@@ -672,9 +668,7 @@ CONTAINS
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_custom_new_f
     END INTERFACE
-
-    res = xt_redist_c2f(xt_redist_p2p_custom_new_f(xmap, datatype, config))
-
+    res%cptr = xt_redist_p2p_custom_new_f(xmap, datatype, config)
   END FUNCTION xt_redist_p2p_custom_new
 
   FUNCTION xt_redist_p2p_off_new(xmap, src_offsets, dst_offsets, datatype) &
@@ -685,7 +679,6 @@ CONTAINS
     INTEGER, INTENT(in) :: dst_offsets(*)
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: res
-
     INTERFACE
       FUNCTION xt_redist_p2p_off_new_f(xmap, src_offsets, dst_offsets, &
            datatype) BIND(C, name='xt_redist_p2p_off_new_f') RESULT(res_ptr)
@@ -697,10 +690,7 @@ CONTAINS
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_off_new_f
     END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_off_new_f(xmap, src_offsets, dst_offsets, datatype))
-
+    res%cptr = xt_redist_p2p_off_new_f(xmap, src_offsets, dst_offsets, datatype)
   END FUNCTION xt_redist_p2p_off_new
 
   FUNCTION xt_redist_p2p_off_custom_new(xmap, src_offsets, dst_offsets, &
@@ -711,7 +701,6 @@ CONTAINS
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
-
     INTERFACE
       FUNCTION xt_redist_p2p_off_custom_new_f(xmap, src_offsets, dst_offsets, &
            datatype, config) BIND(C, name='xt_redist_p2p_off_custom_new_f') &
@@ -725,11 +714,8 @@ CONTAINS
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_off_custom_new_f
     END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_off_custom_new_f(xmap, src_offsets, dst_offsets, &
-         datatype, config))
-
+    res%cptr = xt_redist_p2p_off_custom_new_f(xmap, src_offsets, dst_offsets, &
+         datatype, config)
   END FUNCTION xt_redist_p2p_off_custom_new
 
   FUNCTION xt_redist_p2p_blocks_new(xmap, src_block_sizes, src_block_num, &
@@ -757,12 +743,10 @@ CONTAINS
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_blocks_new_f
     END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_blocks_new_f(xmap, &
-         &                          src_block_sizes, src_block_num, &
-         &                          dst_block_sizes, dst_block_num, &
-         &                          datatype))
+    res%cptr = xt_redist_p2p_blocks_new_f(xmap, &
+         &                                src_block_sizes, src_block_num, &
+         &                                dst_block_sizes, dst_block_num, &
+         &                                datatype)
   END FUNCTION xt_redist_p2p_blocks_new
 
   FUNCTION xt_redist_p2p_blocks_custom_new(xmap, src_block_sizes, &
@@ -793,12 +777,9 @@ CONTAINS
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_blocks_custom_new_f
     END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_blocks_custom_new_f(xmap, &
+    res%cptr = xt_redist_p2p_blocks_custom_new_f(xmap, &
          &  src_block_sizes, src_block_num, &
-         &  dst_block_sizes, dst_block_num, &
-         &  datatype, config))
+         &  dst_block_sizes, dst_block_num, datatype, config)
   END FUNCTION xt_redist_p2p_blocks_custom_new
 
   FUNCTION xt_redist_p2p_blocks_off_new(xmap, src_block_offsets, &
@@ -831,13 +812,9 @@ CONTAINS
         TYPE(c_ptr) :: res_ptr
       END FUNCTION xt_redist_p2p_blocks_off_new_f
     END INTERFACE
-
-    res = xt_redist_c2f(&
-         xt_redist_p2p_blocks_off_new_f(xmap, src_block_offsets, &
-           src_block_sizes, src_block_num, &
-           dst_block_offsets, dst_block_sizes, dst_block_num, &
-           datatype))
-
+    res%cptr = xt_redist_p2p_blocks_off_new_f(xmap, src_block_offsets, &
+         src_block_sizes, src_block_num, &
+         dst_block_offsets, dst_block_sizes, dst_block_num, datatype)
   END FUNCTION xt_redist_p2p_blocks_off_new
 
   FUNCTION xt_redist_p2p_blocks_off_custom_new(xmap, src_block_offsets, &
@@ -871,12 +848,10 @@ CONTAINS
       END FUNCTION xt_redist_p2p_blocks_off_custom_new_f
     END INTERFACE
 
-    res = xt_redist_c2f(&
-         xt_redist_p2p_blocks_off_custom_new_f(xmap, src_block_offsets, &
-           src_block_sizes, src_block_num, &
-           dst_block_offsets, dst_block_sizes, dst_block_num, &
-           datatype, config))
-
+    res%cptr = xt_redist_p2p_blocks_off_custom_new_f(xmap, &
+         src_block_offsets, src_block_sizes, src_block_num, &
+         dst_block_offsets, dst_block_sizes, dst_block_num, &
+         datatype, config)
   END FUNCTION xt_redist_p2p_blocks_off_custom_new
 
   FUNCTION xt_redist_collection_static_new_a_i_2ak_i(redists, num_redists, &
@@ -887,10 +862,9 @@ CONTAINS
          dst_displacements(*)
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_redists_c
-
     num_redists_c = INT(num_redists, c_int)
-    res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
-         num_redists_c, src_displacements, dst_displacements, comm))
+    res%cptr = xt_redist_collection_static_new_f(redists, &
+         num_redists_c, src_displacements, dst_displacements, comm)
   END FUNCTION xt_redist_collection_static_new_a_i_2ak_i
 
   FUNCTION xt_redist_collection_static_new_a_i_2ak_i_cfg(redists, num_redists, &
@@ -902,10 +876,9 @@ CONTAINS
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_redists_c
-
     num_redists_c = INT(num_redists, c_int)
-    res = xt_redist_c2f(xt_redist_collection_static_custom_new_f(redists, &
-         num_redists_c, src_displacements, dst_displacements, comm, config))
+    res%cptr = xt_redist_collection_static_custom_new_f(redists, &
+         num_redists_c, src_displacements, dst_displacements, comm, config)
   END FUNCTION xt_redist_collection_static_new_a_i_2ak_i_cfg
 
   FUNCTION xt_redist_collection_static_new_a_2ak_i(redists, &
@@ -917,15 +890,14 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER :: num_redists
     INTEGER(c_int) :: num_redists_c
-
     num_redists = SIZE(redists)
     IF (num_redists > HUGE(1_c_int) &
          .OR. num_redists /= SIZE(src_displacements) &
          .OR. num_redists /= SIZE(dst_displacements)) &
          CALL xt_abort("invalid number of redists", filename, __LINE__)
     num_redists_c = INT(num_redists, c_int)
-    res = xt_redist_c2f(xt_redist_collection_static_new_f(redists, &
-         num_redists_c, src_displacements, dst_displacements, comm))
+    res%cptr = xt_redist_collection_static_new_f(redists, &
+         num_redists_c, src_displacements, dst_displacements, comm)
   END FUNCTION xt_redist_collection_static_new_a_2ak_i
 
   FUNCTION xt_redist_collection_static_new_a_2ak_i_cfg(redists, &
@@ -938,15 +910,14 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER :: num_redists
     INTEGER(c_int) :: num_redists_c
-
     num_redists = SIZE(redists)
     IF (num_redists > HUGE(1_c_int) &
          .OR. num_redists /= SIZE(src_displacements) &
          .OR. num_redists /= SIZE(dst_displacements)) &
          CALL xt_abort("invalid number of redists", filename, __LINE__)
     num_redists_c = INT(num_redists, c_int)
-    res = xt_redist_c2f(xt_redist_collection_static_custom_new_f(redists, &
-         num_redists_c, src_displacements, dst_displacements, comm, config))
+    res%cptr = xt_redist_collection_static_custom_new_f(redists, &
+         num_redists_c, src_displacements, dst_displacements, comm, config)
   END FUNCTION xt_redist_collection_static_new_a_2ak_i_cfg
 
   FUNCTION xt_redist_collection_new_a_3i(redists, num_redists, cache_size, &
@@ -954,9 +925,8 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redists(*)
     INTEGER, INTENT(in) :: num_redists, cache_size, comm
     TYPE(xt_redist) :: res
-
-    res = xt_redist_c2f(xt_redist_collection_new_f(redists, num_redists, &
-         cache_size, comm))
+    res%cptr = xt_redist_collection_new_f(redists, num_redists, &
+         cache_size, comm)
   END FUNCTION xt_redist_collection_new_a_3i
 
   FUNCTION xt_redist_collection_new_a_3i_cfg(redists, num_redists, cache_size, &
@@ -965,9 +935,8 @@ CONTAINS
     INTEGER, INTENT(in) :: num_redists, cache_size, comm
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
-
-    res = xt_redist_c2f(xt_redist_collection_custom_new_f(redists, num_redists,&
-         cache_size, comm, config))
+    res%cptr = xt_redist_collection_custom_new_f(redists, num_redists,&
+         cache_size, comm, config)
   END FUNCTION xt_redist_collection_new_a_3i_cfg
 
   FUNCTION xt_redist_collection_new_a_2i(redists, cache_size, comm) &
@@ -976,10 +945,9 @@ CONTAINS
     INTEGER, INTENT(in) :: cache_size, comm
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_redists_c
-
     num_redists_c = INT(SIZE(redists), c_int)
-    res = xt_redist_c2f(xt_redist_collection_new_f(redists, &
-         num_redists_c, cache_size, comm))
+    res%cptr = xt_redist_collection_new_f(redists, &
+         num_redists_c, cache_size, comm)
   END FUNCTION xt_redist_collection_new_a_2i
 
   FUNCTION xt_redist_collection_new_a_2i_cfg(redists, cache_size, comm, &
@@ -989,10 +957,9 @@ CONTAINS
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_redists_c
-
     num_redists_c = INT(SIZE(redists), c_int)
-    res = xt_redist_c2f(xt_redist_collection_custom_new_f(redists, &
-         num_redists_c, cache_size, comm, config))
+    res%cptr = xt_redist_collection_custom_new_f(redists, &
+         num_redists_c, cache_size, comm, config)
   END FUNCTION xt_redist_collection_new_a_2i_cfg
 
   FUNCTION xt_redist_collection_new_a_i(redists, comm) &
@@ -1024,10 +991,9 @@ CONTAINS
     INTEGER(c_int), INTENT(in) :: displacements(num_repetitions)
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
-
     num_repetitions_c = INT(num_repetitions, c_int)
-    res = xt_redist_c2f(xt_redist_repeat_new_c(xt_redist_f2c(redist), &
-         src_extent, dst_extent, num_repetitions_c, displacements))
+    res%cptr = xt_redist_repeat_new_c(xt_redist_f2c(redist), &
+         src_extent, dst_extent, num_repetitions_c, displacements)
   END FUNCTION xt_redist_repeat_new_i4_a1d
 
   FUNCTION xt_redist_repeat_new_i4_a1d_cfg(redist, src_extent, dst_extent, &
@@ -1039,11 +1005,10 @@ CONTAINS
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
-
     num_repetitions_c = INT(num_repetitions, c_int)
-    res = xt_redist_c2f(xt_redist_repeat_custom_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_custom_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions_c, displacements, &
-         xt_config_f2c(config)))
+         xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_new_i4_a1d_cfg
 
   FUNCTION xt_redist_repeat_new_a1d(redist, src_extent, dst_extent, &
@@ -1052,12 +1017,10 @@ CONTAINS
     INTEGER(mpi_address_kind), INTENT(in) :: src_extent, dst_extent
     INTEGER(c_int), INTENT(in) :: displacements(:)
     TYPE(xt_redist) :: res
-
     INTEGER(c_int) :: num_repetitions_c
-
     num_repetitions_c = INT(SIZE(displacements), c_int)
-    res = xt_redist_c2f(xt_redist_repeat_new_c(xt_redist_f2c(redist), &
-         src_extent, dst_extent, num_repetitions_c, displacements))
+    res%cptr = xt_redist_repeat_new_c(xt_redist_f2c(redist), &
+         src_extent, dst_extent, num_repetitions_c, displacements)
   END FUNCTION xt_redist_repeat_new_a1d
 
   FUNCTION xt_redist_repeat_new_a1d_cfg(redist, src_extent, dst_extent, &
@@ -1067,13 +1030,11 @@ CONTAINS
     INTEGER(c_int), INTENT(in) :: displacements(:)
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
-
     INTEGER(c_int) :: num_repetitions_c
-
     num_repetitions_c = INT(SIZE(displacements), c_int)
-    res = xt_redist_c2f(xt_redist_repeat_custom_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_custom_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions_c, displacements, &
-         xt_config_f2c(config)))
+         xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_new_a1d_cfg
 
   FUNCTION xt_redist_repeat_asym_new_i4_a1d(redist, src_extent, dst_extent, &
@@ -1085,11 +1046,10 @@ CONTAINS
          & dst_displacements(num_repetitions)
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
-
     num_repetitions_c = INT(num_repetitions, c_int)
-    res = xt_redist_c2f(xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions_c, src_displacements, &
-         dst_displacements))
+         dst_displacements)
   END FUNCTION xt_redist_repeat_asym_new_i4_a1d
 
   FUNCTION xt_redist_repeat_asym_new_i4_a1d_cfg(redist, src_extent, dst_extent,&
@@ -1103,12 +1063,10 @@ CONTAINS
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
-
     num_repetitions_c = INT(num_repetitions, c_int)
-    res = xt_redist_c2f(xt_redist_repeat_asym_custom_new_c(&
-         xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_custom_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions_c, src_displacements, &
-         dst_displacements, xt_config_f2c(config)))
+         dst_displacements, xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_asym_new_i4_a1d_cfg
 
   FUNCTION xt_redist_repeat_asym_new_a1d(redist, src_extent, dst_extent, &
@@ -1117,17 +1075,14 @@ CONTAINS
     INTEGER(mpi_address_kind), INTENT(in) :: src_extent, dst_extent
     INTEGER(c_int), INTENT(in) :: src_displacements(:), dst_displacements(:)
     TYPE(xt_redist) :: res
-
     INTEGER(i4) :: num_repetitions
-
     num_repetitions = SIZE(src_displacements)
     IF (num_repetitions /= SIZE(dst_displacements)) &
          CALL xt_abort("inequal size for src and dst displacements", &
          filename, __LINE__)
-
-    res = xt_redist_c2f(xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions, src_displacements, &
-         dst_displacements))
+         dst_displacements)
   END FUNCTION xt_redist_repeat_asym_new_a1d
 
   FUNCTION xt_redist_repeat_asym_new_a1d_cfg(redist, src_extent, dst_extent, &
@@ -1137,18 +1092,14 @@ CONTAINS
     INTEGER(c_int), INTENT(in) :: src_displacements(:), dst_displacements(:)
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
-
     INTEGER(i4) :: num_repetitions
-
     num_repetitions = SIZE(src_displacements)
     IF (num_repetitions /= SIZE(dst_displacements)) &
          CALL xt_abort("inequal size for src and dst displacements", &
          filename, __LINE__)
-
-    res = xt_redist_c2f(xt_redist_repeat_asym_custom_new_c(&
-         xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_custom_new_c(xt_redist_f2c(redist), &
          src_extent, dst_extent, num_repetitions, src_displacements, &
-         dst_displacements, xt_config_f2c(config)))
+         dst_displacements, xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_asym_new_a1d_cfg
 
   FUNCTION xt_redist_p2p_ext_new_i2_a1d_i2_a1d(xmap, num_src_ext, src_extents, &
@@ -1165,8 +1116,8 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
+    redist%cptr = xt_redist_p2p_ext_new_c2f(xmap, &
+         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype)
   END FUNCTION xt_redist_p2p_ext_new_i2_a1d_i2_a1d
 
   FUNCTION xt_redist_p2p_ext_new_i2_a1d_i2_a1d_cfg(xmap, num_src_ext, &
@@ -1184,9 +1135,8 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_custom_new_c2f(xmap, &
-         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype, &
-         config))
+    redist%cptr = xt_redist_p2p_ext_custom_new_c2f(xmap, num_src_ext_c, &
+         src_extents, num_dst_ext_c, dst_extents, datatype, config)
   END FUNCTION xt_redist_p2p_ext_new_i2_a1d_i2_a1d_cfg
 
   FUNCTION xt_redist_p2p_ext_new_i4_a1d_i4_a1d(xmap, num_src_ext, src_extents, &
@@ -1203,8 +1153,8 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
+    redist%cptr = xt_redist_p2p_ext_new_c2f(xmap, num_src_ext_c, &
+         src_extents, num_dst_ext_c, dst_extents, datatype)
   END FUNCTION xt_redist_p2p_ext_new_i4_a1d_i4_a1d
 
   FUNCTION xt_redist_p2p_ext_new_i4_a1d_i4_a1d_cfg(xmap, num_src_ext, &
@@ -1222,9 +1172,9 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_custom_new_c2f(xmap, &
+    redist%cptr = xt_redist_p2p_ext_custom_new_c2f(xmap, &
          num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype, &
-         config))
+         config)
   END FUNCTION xt_redist_p2p_ext_new_i4_a1d_i4_a1d_cfg
 
   FUNCTION xt_redist_p2p_ext_new_i8_a1d_i8_a1d(xmap, num_src_ext, src_extents, &
@@ -1241,8 +1191,8 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
+    redist%cptr = xt_redist_p2p_ext_new_c2f(xmap, num_src_ext_c, &
+         src_extents, num_dst_ext_c, dst_extents, datatype)
   END FUNCTION xt_redist_p2p_ext_new_i8_a1d_i8_a1d
 
   FUNCTION xt_redist_p2p_ext_new_i8_a1d_i8_a1d_cfg(xmap, num_src_ext, &
@@ -1260,16 +1210,14 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_custom_new_c2f(xmap, &
-         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype, &
-         config))
+    redist%cptr = xt_redist_p2p_ext_custom_new_c2f(xmap, num_src_ext_c, &
+         src_extents, num_dst_ext_c, dst_extents, datatype, config)
   END FUNCTION xt_redist_p2p_ext_new_i8_a1d_i8_a1d_cfg
 
   FUNCTION xt_redist_p2p_ext_new_a1d_a1d(xmap, src_extents, dst_extents, &
        datatype) RESULT(redist)
     TYPE(xt_xmap), INTENT(in) :: xmap
-    TYPE(xt_offset_ext), INTENT(in) :: src_extents(:), &
-         dst_extents(:)
+    TYPE(xt_offset_ext), INTENT(in) :: src_extents(:), dst_extents(:)
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: redist
     INTEGER :: num_src_ext, num_dst_ext
@@ -1280,15 +1228,14 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_new_c2f(xmap, &
-         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype))
+    redist%cptr = xt_redist_p2p_ext_new_c2f(xmap, num_src_ext_c, &
+         src_extents, num_dst_ext_c, dst_extents, datatype)
   END FUNCTION xt_redist_p2p_ext_new_a1d_a1d
 
   FUNCTION xt_redist_p2p_ext_new_a1d_a1d_cfg(xmap, src_extents, dst_extents, &
        datatype, config) RESULT(redist)
     TYPE(xt_xmap), INTENT(in) :: xmap
-    TYPE(xt_offset_ext), INTENT(in) :: src_extents(:), &
-         dst_extents(:)
+    TYPE(xt_offset_ext), INTENT(in) :: src_extents(:), dst_extents(:)
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: redist
@@ -1300,9 +1247,8 @@ CONTAINS
          CALL xt_abort("invalid number of extents", filename, __LINE__)
     num_src_ext_c = INT(num_src_ext, c_int)
     num_dst_ext_c = INT(num_dst_ext, c_int)
-    redist = xt_redist_c2f(xt_redist_p2p_ext_custom_new_c2f(xmap, &
-         num_src_ext_c, src_extents, num_dst_ext_c, dst_extents, datatype, &
-         config))
+    redist%cptr = xt_redist_p2p_ext_custom_new_c2f(xmap, num_src_ext_c, &
+         src_extents, num_dst_ext_c, dst_extents, datatype, config)
   END FUNCTION xt_redist_p2p_ext_new_a1d_a1d_cfg
 
   FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d( &
@@ -1331,8 +1277,8 @@ CONTAINS
     END IF
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
-    redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
-         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm))
+    redist%cptr = xt_redist_single_array_base_new_c2f(&
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm)
   END FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d
 
   FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d_cfg( &
@@ -1362,8 +1308,8 @@ CONTAINS
     END IF
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
-    redist = xt_redist_c2f(xt_redist_single_array_base_custom_new_c2f(&
-         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config))
+    redist%cptr = xt_redist_single_array_base_custom_new_c2f(&
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config)
   END FUNCTION xt_redist_single_array_base_new_i2_a1d_i2_a1d_cfg
 
   FUNCTION xt_redist_single_array_base_new_i4_a1d_i4_a1d( &
@@ -1423,8 +1369,8 @@ CONTAINS
     END IF
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
-    redist = xt_redist_c2f(xt_redist_single_array_base_custom_new_c2f(&
-         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config))
+    redist%cptr = xt_redist_single_array_base_custom_new_c2f(&
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config)
   END FUNCTION xt_redist_single_array_base_new_i4_a1d_i4_a1d_cfg
 
   FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d( &
@@ -1453,8 +1399,8 @@ CONTAINS
     END IF
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
-    redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
-         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm))
+    redist%cptr = xt_redist_single_array_base_new_c2f(&
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm)
   END FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d
 
   FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d_cfg( &
@@ -1484,8 +1430,8 @@ CONTAINS
     END IF
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
-    redist = xt_redist_c2f(xt_redist_single_array_base_custom_new_c2f(&
-         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config))
+    redist%cptr = xt_redist_single_array_base_custom_new_c2f(&
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config)
   END FUNCTION xt_redist_single_array_base_new_i8_a1d_i8_a1d_cfg
 
   FUNCTION xt_redist_single_array_base_new_a1d_a1d(send_msgs, recv_msgs, comm) &
@@ -1510,8 +1456,8 @@ CONTAINS
          CALL xt_abort("invalid number of send messages", filename, __LINE__)
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
-    redist = xt_redist_c2f(xt_redist_single_array_base_new_c2f(&
-         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm))
+    redist%cptr = xt_redist_single_array_base_new_c2f(&
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm)
   END FUNCTION xt_redist_single_array_base_new_a1d_a1d
 
   FUNCTION xt_redist_single_array_base_new_a1d_a1d_cfg(send_msgs, recv_msgs, &
@@ -1537,8 +1483,8 @@ CONTAINS
          CALL xt_abort("invalid number of send messages", filename, __LINE__)
     nsend_c = INT(nsend, c_int)
     nrecv_c = INT(nrecv, c_int)
-    redist = xt_redist_c2f(xt_redist_single_array_base_custom_new_c2f(&
-         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config))
+    redist%cptr = xt_redist_single_array_base_custom_new_c2f(&
+         nsend_c, nrecv_c, send_msgs_p, recv_msgs_p, comm, config)
   END FUNCTION xt_redist_single_array_base_new_a1d_a1d_cfg
 
   SUBROUTINE msgs_p_arg(msgs, msgs_a, msgs_p)

@@ -209,7 +209,7 @@ CONTAINS
       END FUNCTION xt_xmap_all2all_new_f
     END INTERFACE
 
-    xmap = xt_xmap_c2f(xt_xmap_all2all_new_f(src_idxlist, dst_idxlist, comm))
+    xmap%cptr = xt_xmap_all2all_new_f(src_idxlist, dst_idxlist, comm)
   END FUNCTION xt_xmap_all2all_new
 
   FUNCTION xt_xmap_all2all_custom_new(src_idxlist, dst_idxlist, comm, config) &
@@ -233,8 +233,8 @@ CONTAINS
       END FUNCTION xt_xmap_all2all_custom_new_f
     END INTERFACE
 
-    xmap = xt_xmap_c2f(xt_xmap_all2all_custom_new_f(src_idxlist, dst_idxlist, &
-         comm, config))
+    xmap%cptr = xt_xmap_all2all_custom_new_f(src_idxlist, dst_idxlist, &
+         comm, config)
   END FUNCTION xt_xmap_all2all_custom_new
 
   FUNCTION xt_xmap_dist_dir_new(src_idxlist, dst_idxlist, comm) RESULT(xmap)
@@ -255,7 +255,7 @@ CONTAINS
       END FUNCTION xt_xmap_dist_dir_new_f
     END INTERFACE
 
-    xmap = xt_xmap_c2f(xt_xmap_dist_dir_new_f(src_idxlist, dst_idxlist, comm))
+    xmap%cptr = xt_xmap_dist_dir_new_f(src_idxlist, dst_idxlist, comm)
   END FUNCTION xt_xmap_dist_dir_new
 
   FUNCTION xt_xmap_dist_dir_custom_new(src_idxlist, dst_idxlist, comm, config) &
@@ -278,8 +278,8 @@ CONTAINS
         TYPE(c_ptr) :: xmap_ptr
       END FUNCTION xt_xmap_dist_dir_custom_new_f
     END INTERFACE
-    xmap = xt_xmap_c2f(xt_xmap_dist_dir_custom_new_f(src_idxlist, dst_idxlist, &
-         comm, config))
+    xmap%cptr = xt_xmap_dist_dir_custom_new_f(src_idxlist, dst_idxlist, &
+         comm, config)
   END FUNCTION xt_xmap_dist_dir_custom_new
 
   FUNCTION xt_xmap_dist_dir_intercomm_new(src_idxlist, dst_idxlist, &
@@ -302,8 +302,8 @@ CONTAINS
       END FUNCTION xt_xmap_dist_dir_intercomm_new_f
     END INTERFACE
 
-    xmap = xt_xmap_c2f(xt_xmap_dist_dir_intercomm_new_f(src_idxlist, &
-         dst_idxlist, inter_comm, intra_comm))
+    xmap%cptr = xt_xmap_dist_dir_intercomm_new_f(src_idxlist, &
+         dst_idxlist, inter_comm, intra_comm)
   END FUNCTION xt_xmap_dist_dir_intercomm_new
 
   FUNCTION xt_xmap_dist_dir_intercomm_custom_new(src_idxlist, dst_idxlist, &
@@ -329,8 +329,8 @@ CONTAINS
       END FUNCTION xt_xmap_dist_dir_intercomm_custom_new_f
     END INTERFACE
 
-    xmap = xt_xmap_c2f(xt_xmap_dist_dir_intercomm_custom_new_f(src_idxlist, &
-         dst_idxlist, inter_comm, intra_comm, config))
+    xmap%cptr = xt_xmap_dist_dir_intercomm_custom_new_f(src_idxlist, &
+         dst_idxlist, inter_comm, intra_comm, config)
   END FUNCTION xt_xmap_dist_dir_intercomm_custom_new
 
   FUNCTION xt_xmap_get_num_destinations(xmap) RESULT(num)
