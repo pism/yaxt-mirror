@@ -51,6 +51,7 @@
 #include <assert.h>
 #include <mpi.h>
 
+#include "core/ppm_visibility.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #if defined __clang__
@@ -125,8 +126,9 @@ MPI_Fint xt_get_default_comm_f(void)
   return MPI_Comm_c2f(Xt_default_comm);
 }
 
-void xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
-                int line) __attribute__((noreturn));
+PPM_DSO_INTERNAL void
+xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
+           int line) __attribute__((noreturn));
 void xt_abort_f(MPI_Fint comm_f, const char *msg, const char *source,
                 int line) {
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
@@ -213,14 +215,15 @@ xt_idxlist_unpack_f2c(struct xt_idxlist_f *idxlist, void *buffer,
 FCALLSCSUB5(xt_idxlist_unpack_f2c, XT_IDXLIST_UNPACK_F, xt_idxlist_unpack_f,
             PVOID, PVOID, INT, PINT, INT)
 
-Xt_xmap xt_xmap_all2all_new_f(struct xt_idxlist_f *src_idxlist_f,
-                              struct xt_idxlist_f *dst_idxlist_f,
-                              MPI_Fint comm_f) {
+PPM_DSO_INTERNAL Xt_xmap
+xt_xmap_all2all_new_f(struct xt_idxlist_f *src_idxlist_f,
+                      struct xt_idxlist_f *dst_idxlist_f, MPI_Fint comm_f)
+{
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   return xt_xmap_all2all_new(src_idxlist_f->cptr, dst_idxlist_f->cptr, comm_c);
 }
 
-Xt_xmap
+PPM_DSO_INTERNAL Xt_xmap
 xt_xmap_all2all_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
                              struct xt_idxlist_f *dst_idxlist_f,
                              MPI_Fint comm_f, struct xt_config_f *config_f)
@@ -230,7 +233,7 @@ xt_xmap_all2all_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
                                     comm_c, config_f->cptr);
 }
 
-Xt_xmap
+PPM_DSO_INTERNAL Xt_xmap
 xt_xmap_dist_dir_new_f(struct xt_idxlist_f *src_idxlist_f,
                        struct xt_idxlist_f *dst_idxlist_f, MPI_Fint comm_f)
 {
@@ -238,7 +241,7 @@ xt_xmap_dist_dir_new_f(struct xt_idxlist_f *src_idxlist_f,
   return xt_xmap_dist_dir_new(src_idxlist_f->cptr, dst_idxlist_f->cptr, comm_c);
 }
 
-Xt_xmap
+PPM_DSO_INTERNAL Xt_xmap
 xt_xmap_dist_dir_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
                               struct xt_idxlist_f *dst_idxlist_f,
                               MPI_Fint comm_f, struct xt_config_f *config_f)
@@ -248,7 +251,7 @@ xt_xmap_dist_dir_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
                                      comm_c, config_f->cptr);
 }
 
-Xt_xmap
+PPM_DSO_INTERNAL Xt_xmap
 xt_xmap_dist_dir_intercomm_new_f(struct xt_idxlist_f *src_idxlist_f,
                                  struct xt_idxlist_f *dst_idxlist_f,
                                  MPI_Fint inter_comm_f, MPI_Fint intra_comm_f)
@@ -259,7 +262,7 @@ xt_xmap_dist_dir_intercomm_new_f(struct xt_idxlist_f *src_idxlist_f,
     src_idxlist_f->cptr, dst_idxlist_f->cptr, inter_comm_c, intra_comm_c);
 }
 
-Xt_xmap
+PPM_DSO_INTERNAL Xt_xmap
 xt_xmap_dist_dir_intercomm_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
                                         struct xt_idxlist_f *dst_idxlist_f,
                                         MPI_Fint inter_comm_f,
@@ -273,34 +276,27 @@ xt_xmap_dist_dir_intercomm_custom_new_f(struct xt_idxlist_f *src_idxlist_f,
     config_f->cptr);
 }
 
-Xt_redist xt_redist_p2p_blocks_off_new_f(struct xt_xmap_f *xmap_f,
-                                         int *src_block_offsets,
-                                         int *src_block_sizes,
-                                         int src_block_num,
-                                         int *dst_block_offsets,
-                                         int *dst_block_sizes,
-                                         int dst_block_num,
-                                         MPI_Fint datatype_f) {
+PPM_DSO_INTERNAL Xt_redist
+xt_redist_p2p_blocks_off_new_f(
+  struct xt_xmap_f *xmap_f,
+  int *src_block_offsets, int *src_block_sizes, int src_block_num,
+  int *dst_block_offsets, int *dst_block_sizes, int dst_block_num,
+  MPI_Fint datatype_f)
+{
   MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
 
-  return xt_redist_p2p_blocks_off_new(xmap_f->cptr,
-                                      src_block_offsets, src_block_sizes,
-                                      src_block_num,
-                                      dst_block_offsets, dst_block_sizes,
-                                      dst_block_num,
-                                      datatype_c);
+  return xt_redist_p2p_blocks_off_new(
+    xmap_f->cptr,
+    src_block_offsets, src_block_sizes, src_block_num,
+    dst_block_offsets, dst_block_sizes, dst_block_num, datatype_c);
 }
 
-Xt_redist
-xt_redist_p2p_blocks_off_custom_new_f(struct xt_xmap_f *xmap_f,
-                                      int *src_block_offsets,
-                                      int *src_block_sizes,
-                                      int src_block_num,
-                                      int *dst_block_offsets,
-                                      int *dst_block_sizes,
-                                      int dst_block_num,
-                                      MPI_Fint datatype_f,
-                                      struct xt_config_f *config)
+PPM_DSO_INTERNAL Xt_redist
+xt_redist_p2p_blocks_off_custom_new_f(
+  struct xt_xmap_f *xmap_f,
+  int *src_block_offsets, int *src_block_sizes, int src_block_num,
+  int *dst_block_offsets, int *dst_block_sizes, int dst_block_num,
+  MPI_Fint datatype_f, struct xt_config_f *config)
 {
   MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
 
@@ -310,10 +306,11 @@ xt_redist_p2p_blocks_off_custom_new_f(struct xt_xmap_f *xmap_f,
     config->cptr);
 }
 
-Xt_redist xt_redist_p2p_blocks_new_f(struct xt_xmap_f *xmap_f,
-                                     int *src_block_sizes, int src_block_num,
-                                     int *dst_block_sizes, int dst_block_num,
-                                     MPI_Fint datatype_f) {
+PPM_DSO_INTERNAL Xt_redist
+xt_redist_p2p_blocks_new_f(
+  struct xt_xmap_f *xmap_f, int *src_block_sizes, int src_block_num,
+  int *dst_block_sizes, int dst_block_num, MPI_Fint datatype_f)
+{
   MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
 
   return xt_redist_p2p_blocks_new(
@@ -321,7 +318,7 @@ Xt_redist xt_redist_p2p_blocks_new_f(struct xt_xmap_f *xmap_f,
     dst_block_sizes, dst_block_num, datatype_c);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_p2p_blocks_custom_new_f(struct xt_xmap_f *xmap_f,
                                   int *src_block_sizes, int src_block_num,
                                   int *dst_block_sizes, int dst_block_num,
@@ -335,7 +332,7 @@ xt_redist_p2p_blocks_custom_new_f(struct xt_xmap_f *xmap_f,
     dst_block_sizes, dst_block_num, datatype_c, config->cptr);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
                           int num_src_ext, struct Xt_offset_ext src_extents[],
                           int num_dst_ext, struct Xt_offset_ext dst_extents[],
@@ -346,7 +343,7 @@ xt_redist_p2p_ext_new_c2f(Xt_xmap *xmap,
                                MPI_Type_f2c(datatype_f));
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_p2p_ext_custom_new_c2f(
   Xt_xmap *xmap,
   int num_src_ext, struct Xt_offset_ext src_extents[],
@@ -358,7 +355,7 @@ xt_redist_p2p_ext_custom_new_c2f(
                                       MPI_Type_f2c(datatype_f), config->cptr);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_p2p_off_new_f(struct xt_xmap_f *xmap_f,
                         MPI_Fint *src_offsets, MPI_Fint *dst_offsets,
                         MPI_Fint datatype_f) {
@@ -369,7 +366,7 @@ xt_redist_p2p_off_new_f(struct xt_xmap_f *xmap_f,
                                datatype_c);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_p2p_off_custom_new_f(struct xt_xmap_f *xmap_f,
                                MPI_Fint *src_offsets, MPI_Fint *dst_offsets,
                                MPI_Fint datatype_f, struct xt_config_f *config)
@@ -381,14 +378,14 @@ xt_redist_p2p_off_custom_new_f(struct xt_xmap_f *xmap_f,
                                       datatype_c, config->cptr);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_p2p_new_f(struct xt_xmap_f *xmap_f, MPI_Fint datatype_f) {
   MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
 
   return xt_redist_p2p_new(xmap_f->cptr, datatype_c);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_p2p_custom_new_f(struct xt_xmap_f *xmap_f, MPI_Fint datatype_f,
                            struct xt_config_f *config) {
   MPI_Datatype datatype_c = MPI_Type_f2c(datatype_f);
@@ -396,7 +393,7 @@ xt_redist_p2p_custom_new_f(struct xt_xmap_f *xmap_f, MPI_Fint datatype_f,
   return xt_redist_p2p_custom_new(xmap_f->cptr, datatype_c, config->cptr);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_collection_static_new_f(Xt_redist *redists, MPI_Fint num_redists,
                                   MPI_Aint *src_displacements,
                                   MPI_Aint *dst_displacements,
@@ -413,7 +410,7 @@ xt_redist_collection_static_new_f(Xt_redist *redists, MPI_Fint num_redists,
     redists, (int)num_redists, src_displacements, dst_displacements, comm_c);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_collection_static_custom_new_f(
   Xt_redist *redists, MPI_Fint num_redists,
   MPI_Aint *src_displacements, MPI_Aint *dst_displacements,
@@ -431,7 +428,7 @@ xt_redist_collection_static_custom_new_f(
     comm_c, config->cptr);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_collection_new_f(Xt_redist *redists, MPI_Fint num_redists,
                            MPI_Fint cache_size, MPI_Fint comm_f)
 {
@@ -446,7 +443,7 @@ xt_redist_collection_new_f(Xt_redist *redists, MPI_Fint num_redists,
                                   (int)cache_size, comm_c);
 }
 
-Xt_redist
+PPM_DSO_INTERNAL Xt_redist
 xt_redist_collection_custom_new_f(Xt_redist *redists, MPI_Fint num_redists,
                                   MPI_Fint cache_size, MPI_Fint comm_f,
                                   struct xt_config_f *config)
@@ -491,7 +488,7 @@ xt_redist_get_send_MPI_Datatype_c2f(Xt_redist *redist, MPI_Fint rank)
   return MPI_Type_c2f(dt);
 }
 
-void *
+PPM_DSO_INTERNAL void *
 xt_redist_single_array_base_custom_new_c2f(
   int nsend, int nrecv, const struct xt_redist_msg_f *send_msgs_f,
   const struct xt_redist_msg_f *recv_msgs_f, MPI_Fint comm_f,
@@ -516,7 +513,7 @@ xt_redist_single_array_base_custom_new_c2f(
   return redist;
 }
 
-void *
+PPM_DSO_INTERNAL void *
 xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
                                     const struct xt_redist_msg_f *send_msgs_f,
                                     const struct xt_redist_msg_f *recv_msgs_f,
@@ -527,7 +524,7 @@ xt_redist_single_array_base_new_c2f(int nsend, int nrecv,
     &(struct xt_config_f){ (Xt_config)&xt_default_config });
 }
 
-void *
+PPM_DSO_INTERNAL void *
 xt_xmap_intersection_new_f2c(
   int num_src_intersections,
   const struct Xt_com_list src_com[num_src_intersections],
@@ -540,7 +537,7 @@ xt_xmap_intersection_new_f2c(
                                   src_idxlist, dst_idxlist, MPI_Comm_f2c(comm));
 }
 
-void *
+PPM_DSO_INTERNAL void *
 xt_xmap_intersection_ext_new_f2c(
   int num_src_intersections, const void *src_com,
   int num_dst_intersections, const void *dst_com,
@@ -551,7 +548,7 @@ xt_xmap_intersection_ext_new_f2c(
     src_idxlist, dst_idxlist, MPI_Comm_f2c(comm));
 }
 
-void *
+PPM_DSO_INTERNAL void *
 xt_xmap_intersection_pos_new_f2c(
   int num_src_msg, const void *src_com, int num_dst_msg, const void *dst_com,
   MPI_Fint comm)
@@ -561,14 +558,14 @@ xt_xmap_intersection_pos_new_f2c(
 }
 
 #ifndef HAVE_FC_IS_CONTIGUOUS
-int
+PPM_DSO_INTERNAL int
 xt_com_list_contiguous(const struct Xt_com_list *p_com_a,
                        const struct Xt_com_list *p_com_b)
 {
   return (p_com_a + 1 == p_com_b);
 }
 
-int
+PPM_DSO_INTERNAL int
 xt_redist_msg_contiguous(const struct xt_redist_msg_f *p_msgs_a,
                          const struct xt_redist_msg_f *p_msgs_b)
 {
