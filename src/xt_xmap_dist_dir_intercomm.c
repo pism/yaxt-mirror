@@ -188,8 +188,7 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
           send_size[i][SEND_NUM] = 1;
           ++num_msg;
         } else {
-          send_size[i][SEND_SIZE] = 0;
-          send_size[i][SEND_NUM] = 0;
+          rank_no_send(i, send_size);
           xt_idxlist_delete(isect2send);
         }
       } else
