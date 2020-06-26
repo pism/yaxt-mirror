@@ -1,6 +1,10 @@
 /**
  * @file xt_core.h
  *
+ * \brief base definitions header file
+ *
+ * contains types used throughout the library and general initialization
+ *
  * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
@@ -101,13 +105,6 @@ struct Xt_offset_ext
 {
   int start, size, stride;
 };
-
-/**
- * \file xt_core.h
- * \brief base definitions header file
- *
- * contains types used throughout the library and general initialization
- */
 
 /**
  * initialize library
