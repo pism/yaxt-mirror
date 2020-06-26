@@ -115,6 +115,8 @@ xt_initialize(MPI_Comm default_comm);
 
 /**
  * finalize library
+ * @note this call only deallocates resources allocated via
+ * xt_initialize and not objects explicitly created by xt_*_new calls.
  */
 void
 xt_finalize(void);
