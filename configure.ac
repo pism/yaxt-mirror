@@ -290,13 +290,23 @@ m4_pushdef([_AC_RUN_LOG_LIMIT],
 m4_pushdef([_AC_LINK_IFELSE],
   m4_bpatsubst(m4_dquote(m4_defn([_AC_LINK_IFELSE])),
     [rm -f core conftest.err],[rm -f core]))dnl
+dnl common failure action for MPI defect tests
+m4_define([mpi_defect_fail_action],
+  [AS_VAR_IF([with_regard_for_quality],[yes],
+     [AC_MSG_FAILURE([test for known defect $acx_subtestname failed,
+re-configure with --without-regard-for-quality in case you must use the
+given MPI implementation, but some tests might fail])],
+     [AC_MSG_NOTICE([ignoring failed test for known defect $acx_subtestname,
+because configure option --without-regard-for-quality is active])])])
 ACX_MPI_DEFECTS(,,
   [ACX_MPI_DEFECTS_DOCUMENT
    AS_CASE(["$acx_subtestname"],[openmpi_datatype],
      [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected attempting interpositioning work-around!])
       ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
         [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
-         extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'])],
+         extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'],
+        [AC_MSG_WARN([Cannot apply Open MPI datatype bug work-around.])
+         mpi_defect_fail_action])],
      [incorrect_mpi_abort_exitcode],
      [AC_MSG_WARN([Your installation drops the exit code of MPI_Abort!
 Consider getting a better MPI/batch scheduler.])
@@ -304,12 +314,7 @@ Consider getting a better MPI/batch scheduler.])
         [AC_MSG_NOTICE([Implementing fragile work-around for tests!])
          AC_DEFINE([XT_NEED_MPI_ABORT_WORK_AROUND],[1],
            [To pass the value for MPI_Abort to the surrounding execution environment, a hack is needed.])])],
-     [AS_VAR_IF([with_regard_for_quality],[yes],
-        [AC_MSG_FAILURE([test for known defect $acx_subtestname failed,
-re-configure with --without-regard-for-quality in case you must use the
-given MPI implementation, but some tests might fail])],
-        [AC_MSG_NOTICE([ignoring failed test for known defect $acx_subtestname,
-because configure option --without-regard-for-quality is active])])])])
+     [mpi_defect_fail_action])])
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
 rm -f conftest.err
 AC_SUBST([xt_mpi_workaround_LIBS])
