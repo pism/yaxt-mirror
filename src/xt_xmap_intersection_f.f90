@@ -144,8 +144,16 @@ CONTAINS
     TYPE(xt_xmap) :: xmap
     TYPE(c_ptr) :: src_com_p, dst_com_p
 
-    src_com_p = C_LOC(src_com)
-    dst_com_p = C_LOC(dst_com)
+    IF (num_src_intersections > 0) THEN
+      src_com_p = C_LOC(src_com)
+    ELSE
+      src_com_p = c_null_ptr
+    END IF
+    IF (num_dst_intersections > 0) THEN
+      dst_com_p = C_LOC(dst_com)
+    ELSE
+      dst_com_p = c_null_ptr
+    END IF
     xmap = xt_xmap_c2f(xmi_new_f2c(&
          num_src_intersections, src_com_p, &
          num_dst_intersections, dst_com_p, &
