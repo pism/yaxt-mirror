@@ -77,6 +77,9 @@ static Xt_xmap (*xmi_new)(
   Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm);
 
 static void
+test_strided_block_pos_alltoall(MPI_Comm comm, int nblk, int blksz);
+
+static void
 parse_options(int *argc, char ***argv);
 
 int main(int argc, char **argv)
@@ -525,51 +528,58 @@ int main(int argc, char **argv)
     xt_idxlist_delete(src_com.list);
   }
 
-  { // alltoall using xt_xmap_intersection_pos_new
-
-    struct Xt_com_pos * src_com =
-      xmalloc(2 * (size_t)comm_size * sizeof(*src_com));
-    struct Xt_com_pos * dst_com = src_com + comm_size;
-    int * transfer_pos = xmalloc((size_t)comm_size * sizeof(*transfer_pos));
-    struct test_message * ref_src_msg =
-      xmalloc(2 * (size_t)comm_size * sizeof(*ref_src_msg));
-    struct test_message * ref_dst_msg = ref_src_msg + comm_size;
-
-    for (int i = 0; i < comm_size; ++i) {
-
-      transfer_pos[i] = i;
-
-      src_com[i].transfer_pos = transfer_pos + i;
-      src_com[i].num_transfer_pos = 1;
-      src_com[i].rank = i;
-      dst_com[i].transfer_pos = transfer_pos + i;
-      dst_com[i].num_transfer_pos = 1;
-      dst_com[i].rank = i;
-      ref_src_msg[i].pos = transfer_pos + i;
-      ref_src_msg[i].num_pos = 1;
-      ref_src_msg[i].rank = i;
-      ref_dst_msg[i].pos = transfer_pos + i;
-      ref_dst_msg[i].num_pos = 1;
-      ref_dst_msg[i].rank = i;
-    }
-
-    Xt_xmap xmap =
-      xt_xmap_intersection_pos_new(
-        comm_size, src_com, comm_size, dst_com, MPI_COMM_WORLD);
-
-    test_xmap(xmap, comm_size, ref_src_msg, comm_size, ref_dst_msg);
-
-    xt_xmap_delete(xmap);
-
-    free(ref_src_msg);
-    free(transfer_pos);
-    free(src_com);
-  }
+  test_strided_block_pos_alltoall(MPI_COMM_WORLD, 1, 1);
+  test_strided_block_pos_alltoall(MPI_COMM_WORLD, 2, 1);
+  test_strided_block_pos_alltoall(MPI_COMM_WORLD, 5, 2000);
 
   xt_finalize();
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
+}
+
+static void
+test_strided_block_pos_alltoall(MPI_Comm comm, int nblk, int blksz)
+{
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  struct Xt_com_pos *src_com =
+    xmalloc(2 * (size_t)comm_size * sizeof(*src_com)),
+    *dst_com = src_com + comm_size;
+  int (*transfer_pos)[nblk][blksz]
+    = xmalloc((size_t)nblk * (size_t)blksz
+              * (size_t)comm_size * sizeof(*transfer_pos));
+  struct test_message *ref_src_msg =
+    xmalloc(2 * (size_t)comm_size * sizeof(*ref_src_msg)),
+    *ref_dst_msg = ref_src_msg + comm_size;
+
+  for (int rank = 0; rank < comm_size; ++rank) {
+    for (int j = 0; j < nblk; ++j)
+      for (int i = 0; i < blksz; ++i)
+        transfer_pos[rank][j][i] = i + j*blksz*comm_size;
+
+    ref_src_msg[rank].pos     = src_com[rank].transfer_pos
+      = (int *)(transfer_pos + rank);
+    ref_src_msg[rank].num_pos = src_com[rank].num_transfer_pos = nblk*blksz;
+    ref_src_msg[rank].rank    = src_com[rank].rank             = rank;
+    ref_dst_msg[rank].pos     = dst_com[rank].transfer_pos
+      = (int *)(transfer_pos + rank);
+    ref_dst_msg[rank].num_pos = dst_com[rank].num_transfer_pos = nblk*blksz;
+    ref_dst_msg[rank].rank    = dst_com[rank].rank             = rank;
+  }
+
+  Xt_xmap xmap =
+    xt_xmap_intersection_pos_new(comm_size, src_com, comm_size, dst_com, comm);
+
+  test_xmap(xmap, comm_size, ref_src_msg, comm_size, ref_dst_msg);
+
+  xt_xmap_delete(xmap);
+
+  free(ref_src_msg);
+  free(transfer_pos);
+  free(src_com);
 }
 
 static void test_xmap_iter(Xt_xmap_iter iter, int num_msgs,
@@ -603,6 +613,27 @@ static void test_xmap_iter(Xt_xmap_iter iter, int num_msgs,
         mismatch |= (pos[j] != msgs[i].pos[j]);
       if (mismatch)
         PUT_ERR("ERROR: xt_xmap_iterator_get_transfer_pos\n");
+
+      int num_transfer_pos_ext
+        = xt_xmap_iterator_get_num_transfer_pos_ext(iter);
+      const struct Xt_pos_ext *restrict pos_ext
+        = xt_xmap_iterator_get_transfer_pos_ext(iter);
+
+      mismatch = false;
+      size_t ofs = 0;
+      for (size_t pe = 0; pe < (size_t)num_transfer_pos_ext; ++pe) {
+        int pos_ext_size = abs(pos_ext[pe].size);
+        if (pos_ext[pe].size > 0)
+          for (int j = 0; j < pos_ext_size; ++j)
+            mismatch |= (pos[ofs+(size_t)j] != pos_ext[pe].start + j);
+        else
+          for (int j = 0; j < pos_ext_size; ++j)
+            mismatch |= (pos[ofs+(size_t)j] != pos_ext[pe].start - j);
+        ofs += (size_t)pos_ext_size;
+      }
+      if (mismatch || (int)ofs != msgs[i].num_pos)
+        PUT_ERR("ERROR: xt_xmap_iterator_get_transfer_pos_ext\n");
+
       ++i;
 
     } while (xt_xmap_iterator_next(iter));

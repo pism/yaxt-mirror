@@ -57,6 +57,8 @@ PROGRAM test_xmap_intersection_parallel
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_iterator_get_rank, xt_xmap_iterator_get_num_transfer_pos, &
        xt_xmap_iterator_get_transfer_pos, xt_xmap_iterator_next, &
+       xt_pos_ext, xt_xmap_iterator_get_num_transfer_pos_ext, &
+       xt_xmap_iterator_get_transfer_pos_ext, &
        xt_xmap_iterator_delete, xt_xmap_reorder, xt_reorder_type_kind, &
        xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up, &
        xt_sort_permutation, xt_xmap_update_positions, xt_xmap_spread
@@ -539,9 +541,10 @@ CONTAINS
     TYPE(xt_xmap_iter), INTENT(inout) :: iter
     TYPE(test_message), INTENT(in) :: msgs(:)
 
-    INTEGER :: num_msgs, num_pos, i, j
+    INTEGER :: num_msgs, num_pos, num_pos_ext, i, j, ofs, pe, pos_ext_size
     INTEGER, POINTER :: pos(:)
-    LOGICAL :: iter_is_null
+    TYPE(xt_pos_ext), POINTER :: pos_ext(:)
+    LOGICAL :: iter_is_null, mismatch
 
     num_msgs = SIZE(msgs)
     iter_is_null = xt_is_null(iter)
@@ -566,11 +569,35 @@ CONTAINS
                filename, __LINE__)
         END IF
         pos => xt_xmap_iterator_get_transfer_pos(iter)
+        mismatch = .FALSE.
         DO j = 1, num_pos
-          IF (pos(j) /= msgs(i)%pos(j)) &
-               CALL test_abort('ERROR: xt_xmap_iterator_get_transfer_pos', &
-               filename, __LINE__)
+          mismatch = mismatch .OR. pos(j) /= msgs(i)%pos(j)
         END DO
+        IF (mismatch) &
+             CALL test_abort('ERROR: xt_xmap_iterator_get_transfer_pos', &
+             filename, __LINE__)
+
+        num_pos_ext = xt_xmap_iterator_get_num_transfer_pos_ext(iter)
+        pos_ext => xt_xmap_iterator_get_transfer_pos_ext(iter)
+        ofs = 0
+        mismatch = .FALSE.
+        DO pe = 1, num_pos_ext
+          pos_ext_size = ABS(pos_ext(pe)%size)
+          IF (pos_ext(pe)%size > 0) THEN
+            DO j = 1, pos_ext_size
+              mismatch = mismatch .OR. pos(ofs+j) /= pos_ext(pe)%start + j - 1
+            END DO
+          ELSE
+            DO j = 1, pos_ext_size
+              mismatch = mismatch .OR. pos(ofs+j) /= pos_ext(pe)%start - j + 1
+            END DO
+          END IF
+          ofs = ofs + pos_ext_size
+        END DO
+        IF (mismatch .OR. ofs /= num_pos) &
+             CALL test_abort('ERROR: xt_xmap_iterator_get_transfer_pos_ext', &
+             filename, __LINE__)
+
         IF (.NOT. xt_xmap_iterator_next(iter)) EXIT
         i = i + 1
       END DO

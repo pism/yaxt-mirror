@@ -285,11 +285,14 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
 {
   if (num_msgs > 0) {
     /* partial sums of ext sizes */
-    int *psum_ext_size
+    int *restrict psum_ext_size
       = xmalloc(((size_t)num_ext + 1) * sizeof (psum_ext_size[0]));
-    psum_ext_size[0] = 0;
-    for (size_t i = 0; i < (size_t)num_ext; ++i)
-      psum_ext_size[i + 1] = psum_ext_size[i] + extents[i].size;
+    int accum = 0;
+    for (size_t i = 0; i < (size_t)num_ext; ++i) {
+      psum_ext_size[i] = accum;
+      accum += extents[i].size;
+    }
+    psum_ext_size[num_ext] = accum;
 
     struct Xt_redist_msg *curr_msg = msgs;
     do {

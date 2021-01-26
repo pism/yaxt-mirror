@@ -338,13 +338,13 @@ generate_dir_transfer_pos_dst(
     .all_dst_covered = all_bits_set == ~0UL };
 }
 
-struct tps_result {
-  int resCount;
-  int max_pos;
+
+struct pos_count_max {
+  int count, max_pos;
 };
 
 /* compute list positions for send direction */
-static struct tps_result
+static struct pos_count_max
 generate_dir_transfer_pos_src(int num_intersections,
                               const struct Xt_com_list
                               intersections[num_intersections],
@@ -423,8 +423,8 @@ generate_dir_transfer_pos_src(int num_intersections,
   free(new_intersection_idxvec);
   free(intersection_pos);
 
-  return (struct tps_result){ .max_pos = max_pos_,
-      .resCount = new_num_intersections };
+  return (struct pos_count_max){ .max_pos = max_pos_,
+      .count = new_num_intersections };
 }
 
 static Xt_int *
@@ -565,12 +565,12 @@ generate_transfer_pos(struct Xt_xmap_intersection_ *xmap,
     = xrealloc(num_src_indices_to_remove_per_intersection,
                (size_t)num_src_intersections * sizeof(int));
 
-  struct tps_result tpsr
+  struct pos_count_max tpsr
     = generate_dir_transfer_pos_src(
       num_src_intersections, src_com, src_idxlist_local, xmap->msg + xmap->n_in,
       src_indices_to_remove, num_src_indices_to_remove_per_intersection);
   xmap->max_src_pos = tpsr.max_pos;
-  xmap->n_out = tpsr.resCount;
+  xmap->n_out = tpsr.count;
 
   free(src_indices_to_remove);
   free(num_src_indices_to_remove_per_intersection);
@@ -975,6 +975,45 @@ xmap_intersection_spread(Xt_xmap xmap, int num_repetitions,
                                    .displacements = dst_displacements });
 }
 
+/* how many pos values have monotonically either positively or
+ * negatively consecutive values and copy to pos_copy */
+static inline struct pos_run copy_get_pos_run_len(
+  size_t num_pos, const int *restrict pos,
+  int *restrict pos_copy)
+{
+  size_t i = 0, j = 1;
+  int direction = 0;
+  int start = pos_copy[0] = pos[0];
+  if (j < num_pos) {
+    direction = isign_mask(pos[1] - pos[0]);
+    while (j < num_pos
+           && (pos_copy[j] = pos[j]) == start + (~direction & (int)(j - i)) +
+           (direction & -(int)(j - i))) {
+      pos_copy[j] = pos[j];
+      ++j;
+    }
+    direction = direction & ((j == 1) - 1);
+  }
+  return (struct pos_run){ .start = start, .len = j, .direction = direction };
+}
+
+/* compute number of position extents that would be required
+   to represent positions array and copy to pos_copy */
+static struct pos_count_max
+max_count_pos_ext_and_copy(int max_pos, size_t num_pos, const int *restrict pos,
+                           int *restrict pos_copy)
+{
+  size_t i = 0, num_pos_ext = 0;
+  while (i < num_pos) {
+    struct pos_run run = copy_get_pos_run_len(num_pos - i, pos + i, pos_copy + i);
+    i += run.len;
+    int max_of_run = (run.start & run.direction) | ((run.start + (int)run.len - 1) & ~run.direction);
+    if (max_of_run > max_pos) max_pos = max_of_run;
+    ++num_pos_ext;
+  }
+  return (struct pos_count_max){ .count = (int)num_pos_ext, .max_pos = max_pos };
+}
+
 static void init_exchange_data_from_com_pos(
   int count, struct exchange_data *restrict msgs,
   const struct Xt_com_pos *restrict com, int *max_pos) {
@@ -984,18 +1023,15 @@ static void init_exchange_data_from_com_pos(
     int num_transfer_pos = com[i].num_transfer_pos;
     int *restrict transfer_pos =
       xmalloc((size_t)num_transfer_pos * sizeof(*transfer_pos));
-    int rank = com[i].rank;
-    const int *restrict com_transfer_pos = com[i].transfer_pos;
-    for (int j = 0; j < num_transfer_pos; ++j)
-      if (com_transfer_pos[j] > max_pos_) max_pos_ = com_transfer_pos[j];
     msgs[i].transfer_pos = transfer_pos;
     msgs[i].transfer_pos_ext_cache = NULL;
     msgs[i].num_transfer_pos = num_transfer_pos;
-    msgs[i].num_transfer_pos_ext =
-      (int)(count_pos_ext((size_t)num_transfer_pos, transfer_pos));
-    msgs[i].rank = rank;
-    memcpy(transfer_pos, com_transfer_pos,
-           (size_t)num_transfer_pos * sizeof(*transfer_pos));
+    msgs[i].rank = com[i].rank;
+    struct pos_count_max max_count
+      = max_count_pos_ext_and_copy(max_pos_, (size_t)num_transfer_pos,
+                                   com[i].transfer_pos, transfer_pos);
+    msgs[i].num_transfer_pos_ext = max_count.count;
+    if (max_count.max_pos > max_pos_) max_pos_ = max_count.max_pos;
   }
   *max_pos = max_pos_;
 }
