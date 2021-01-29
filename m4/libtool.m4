@@ -114,16 +114,19 @@ func_cc_basename ()
         compile | *[[\\/]]compile | ccache | *[[\\/]]ccache ) ;;
         distcc | *[[\\/]]distcc | purify | *[[\\/]]purify ) ;;
         \-*) ;;
+        mpicc | *[\\/]mpicc | \
+        mpic++ | *[\\/]mpic++ | mpicxx | *[\\/]mpicxx | mpiCC | *[\\/]mpiCC | \
+        mpif77 | *[\\/]mpif77 | mpif90 | *[\\/]mpif90 | mpifort | *[\\/]mpifort )
+          # OpenMPI or MPICH wrapper
+          mpi_cc_temp=
+          mpi_show=`$cc_temp -show 2>/dev/null`
+          test $? -eq 0 && mpi_cc_temp=`$ECHO "$mpi_show" | cut -d' ' -f1`
+          test -z $mpi_cc_temp >/dev/null 2>&1 || cc_temp=$mpi_cc_temp
+          break;;
         *) break;;
       esac
     done
     func_cc_basename_result=`$ECHO "$cc_temp" | $SED "s%.*/%%; s%^$host_alias-%%"`
-
-    # Set result to 'nagfor-wrapper' when NAG compiler is called via a wrapper (e.g. mpif90).
-    case $func_cc_basename_result in
-      nagfor*) ;;
-      *) $cc_temp -V 2>&1 | $GREP '^NAG Fortran Compiler Release' >/dev/null 2>&1 && func_cc_basename_result='nagfor-wrapper' ;;
-    esac
 }
 ])# _LT_PREPARE_CC_BASENAME
 
@@ -5210,6 +5213,8 @@ _LT_EOF
 	  _LT_TAGVAR(whole_archive_flag_spec, $1)=
 	  tmp_sharedflag='--shared' ;;
         nagfor*)                        # NAGFOR 5.3
+          _LT_TAGVAR(whole_archive_flag_spec, $1)='$wl--whole-archive`for conv in $convenience\"\"; do test  -n \"$conv\" && new_convenience=\"$new_convenience,$conv\"; done; func_echo_all \"$new_convenience\"` $wl--no-whole-archive'
+          _LT_TAGVAR(compiler_needs_object, $1)=yes
           tmp_sharedflag='-Wl,-shared' ;;
 	xl[[cC]]* | bgxl[[cC]]* | mpixl[[cC]]*) # IBM XL C 8.0 on PPC (deal with xlf below)
 	  tmp_sharedflag='-qmkshrobj'
