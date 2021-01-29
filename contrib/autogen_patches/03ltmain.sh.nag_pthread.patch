@@ -14,7 +14,7 @@
  	  for tmp_inherited_linker_flag in $tmp_inherited_linker_flags; do
  	    case " $new_inherited_linker_flags " in
  	      *" $tmp_inherited_linker_flag "*) ;;
-@@ -9493,6 +9500,22 @@ EOF
+@@ -9494,6 +9501,22 @@ EOF
  	  ;;
        esac
  
