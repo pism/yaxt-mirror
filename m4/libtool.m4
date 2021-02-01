@@ -114,9 +114,9 @@ func_cc_basename ()
         compile | *[[\\/]]compile | ccache | *[[\\/]]ccache ) ;;
         distcc | *[[\\/]]distcc | purify | *[[\\/]]purify ) ;;
         \-*) ;;
-        mpicc | *[\\/]mpicc | \
-        mpic++ | *[\\/]mpic++ | mpicxx | *[\\/]mpicxx | mpiCC | *[\\/]mpiCC | \
-        mpif77 | *[\\/]mpif77 | mpif90 | *[\\/]mpif90 | mpifort | *[\\/]mpifort )
+        mpicc | *[[\\/]]mpicc | \
+        mpic++ | *[[\\/]]mpic++ | mpicxx | *[[\\/]]mpicxx | mpiCC | *[[\\/]]mpiCC | \
+        mpif77 | *[[\\/]]mpif77 | mpif90 | *[[\\/]]mpif90 | mpifort | *[[\\/]]mpifort )
           # OpenMPI or MPICH wrapper
           mpi_cc_temp=
           mpi_show=`$cc_temp -show 2>/dev/null`
