@@ -49,6 +49,7 @@
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wreserved-id-macro"
 #endif
+#define CF_USE_ALLOCA 1
 #include <cfortran.h>
 #if defined __clang__
 #  pragma GCC diagnostic pop
@@ -81,6 +82,11 @@ FCALLSCSUB1(SymPrefix(set_default_comm_f), SYMPREFIX(SET_DEFAULT_COMM),
 static void
 abort_f(MPI_Fint *comm_f, const char *msg,
                    const char *source, int line)
+  __attribute__((noreturn));
+
+static void
+abort_f(MPI_Fint *comm_f, const char *msg,
+                   const char *source, int line)
 {
   MPI_Comm comm_c = MPI_COMM_NULL;
 #if defined(USE_MPI)
@@ -96,8 +102,12 @@ abort_f(MPI_Fint *comm_f, const char *msg,
   SymPrefix(abort)(comm_c, msg, source, line);
 }
 
+#undef CFattributes
+#define CFattributes __attribute__((noreturn))
 FCALLSCSUB4(abort_f, SYMPREFIX(ABORT), symprefix(abort),
             PVOID, STRING, STRING, INT)
+#undef CFattributes
+#define CFattributes
 
 static void
 SymPrefix(abort_handler_wrapper)(MPI_Comm comm, const char msg[],
@@ -105,12 +115,17 @@ SymPrefix(abort_handler_wrapper)(MPI_Comm comm, const char msg[],
   __attribute__((noreturn));
 
 static void
-SymPrefix(set_abort_handler_f)(void (*abort_handler)());
+SymPrefix(set_abort_handler_f)(void (*abort_handler)(void));
 
 #undef ROUTINE_1
-#define ROUTINE_1 (void (*)())
+#define ROUTINE_1 (void (*)(void))
 FCALLSCSUB1(SymPrefix(set_abort_handler_f), SYMPREFIX(SET_ABORT_HANDLER),
             symprefix(set_abort_handler), ROUTINE)
+
+static void
+abort_default_f(MPI_Fint *comm_f, const char *msg, const char *source,
+                int line)
+  __attribute__((noreturn));
 
 static void
 abort_default_f(MPI_Fint *comm_f, const char *msg, const char *source,
@@ -129,22 +144,17 @@ abort_default_f(MPI_Fint *comm_f, const char *msg, const char *source,
 #undef FCALLSC_QUALIFIER
 #define FCALLSC_QUALIFIER
 
-#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
-  || (defined __clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-prototypes"
-#endif
 FCALLSCSUB0(SymPrefix(restore_default_abort_handler),
             SYMPREFIX(RESTORE_DEFAULT_ABORT_HNDL),
             symprefix(restore_default_abort_hndl))
-#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))\
-  || (defined __clang__)
-#pragma GCC diagnostic pop
-#endif
 
+#undef CFattributes
+#define CFattributes __attribute__((noreturn))
 FCALLSCSUB4(abort_default_f,SYMPREFIX(ABORT_DEFAULT),
             symprefix(abort_default),
             PVOID,STRING,STRING,INT)
+#undef CFattributes
+#define CFattributes
 
 /* this must be the last piece of code in the file because we
  * redefine a cfortran.h internal here, to allow calls to Fortran
@@ -156,12 +166,11 @@ FCALLSCSUB4(abort_default_f,SYMPREFIX(ABORT_DEFAULT),
 __attribute__((noreturn))
 PROTOCCALLSFSUB4(*SymPrefix(fortran_abort_func),,PVOID,STRING,STRING,INT)
 #undef CFextern
-#define CFextern static
 
 static SymPrefix(fortran_abort_func) SymPrefix(fortran_abort_fp);
 
 static void
-SymPrefix(set_abort_handler_f)(void (*abort_handler)())
+SymPrefix(set_abort_handler_f)(void (*abort_handler)(void))
 {
   SymPrefix(fortran_abort_fp)
     = (SymPrefix(fortran_abort_func))abort_handler;

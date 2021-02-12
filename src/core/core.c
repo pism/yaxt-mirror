@@ -66,6 +66,10 @@
 #  if defined __clang__
 #    pragma GCC diagnostic pop
 #  endif
+#  if defined __GNUC__
+#    undef COMMON_BLOCK_DEF
+#    define COMMON_BLOCK_DEF(DEFINITION, NAME) extern DEFINITION NAME __attribute__((aligned(16),common))
+#  endif
 #endif
 #ifdef USE_MPI
 #  include <mpi.h>
@@ -87,9 +91,12 @@ typedef struct
 
 COMMON_BLOCK_DEF(SymPrefix(F2C_Def),F2C_Data);
 
-SymPrefix(F2C_Def) F2C_Data;
+SymPrefix(F2C_Def) F2C_Data
+#  if defined __GNUC__
+                   __attribute__((aligned(16),common))
+#  endif
 #endif
-
+                   ;
 void
 SymPrefix(set_default_comm)(MPI_Comm comm)
 {
