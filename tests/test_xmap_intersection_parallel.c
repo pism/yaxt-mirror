@@ -560,12 +560,22 @@ test_strided_block_pos_alltoall(MPI_Comm comm, int nblk, int blksz)
       for (int i = 0; i < blksz; ++i)
         transfer_pos[rank][j][i] = i + j*blksz*comm_size;
 
+#if defined __PGI && __PGIC__ <= 15
+    ref_src_msg[rank].pos     = src_com[rank].transfer_pos
+      = (int *)transfer_pos + rank * nblk * blksz;
+#else
     ref_src_msg[rank].pos     = src_com[rank].transfer_pos
       = (int *)(transfer_pos + rank);
+#endif
     ref_src_msg[rank].num_pos = src_com[rank].num_transfer_pos = nblk*blksz;
     ref_src_msg[rank].rank    = src_com[rank].rank             = rank;
+#if defined __PGI && __PGIC__ <= 15
+    ref_dst_msg[rank].pos     = dst_com[rank].transfer_pos
+      = (int *)transfer_pos + rank * nblk * blksz;
+#else
     ref_dst_msg[rank].pos     = dst_com[rank].transfer_pos
       = (int *)(transfer_pos + rank);
+#endif
     ref_dst_msg[rank].num_pos = dst_com[rank].num_transfer_pos = nblk*blksz;
     ref_dst_msg[rank].rank    = dst_com[rank].rank             = rank;
   }
