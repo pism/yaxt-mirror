@@ -38,7 +38,8 @@ dnl _ACX_LT_FLAGS_MANGLE
 m4_define([nag_filter_flag_var],
   [AS_IF([test x${$1+set} = xset],
      [$1=`echo "$][$1" | tr ' ' '\n' | sed -e '/^-W@<:@lc@:>@/{' \
--e 's/^\(-Wl\)/-XCClinker \1/;s/^\(-Wc\)/-Xcompiler \1/' -e '}' \
+-e 's/^\(-Wl\)/-XCClinker \1/;s/^\(-Wc,\)/-Xcompiler \1/' \
+-e 's/^\(-Wc=.*\)/-Xcompiler \1 -XCClinker \1/' -e '}' \
    | tr '\n' ' ' | sed -e 's/ $//'`])])
 AC_DEFUN([_ACX_LT_FORT_FLAGS_MANGLE],
   [_AC_FORTRAN_ASSERT
