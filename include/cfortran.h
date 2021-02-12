@@ -402,10 +402,12 @@ only C calling FORTRAN subroutines will work using K&R style.*/
 
 #ifndef apolloFortran
 #define COMMON_BLOCK_DEF(DEFINITION, NAME) extern DEFINITION NAME
-#define CF_NULL_PROTO
+#define CF_NULL_PROTO void
+#define CF_VOID_PROTO void
 #else                                         /* HP doesn't understand #elif. */
 /* Without ANSI prototyping, Apollo promotes float functions to double.    */
 /* Note that VAX/VMS, IBM, Mips choke on 'type function(...);' prototypes. */
+#define CF_VOID_PROTO void
 #define CF_NULL_PROTO ...
 #ifndef __CF__APOLLO67
 #define COMMON_BLOCK_DEF(DEFINITION, NAME) \
@@ -766,7 +768,7 @@ return (int)num;
    while the following equivalent typedef is fine.
    For consistency use the typedef on all machines.
  */
-typedef void (*cfCAST_FUNCTION)(CF_NULL_PROTO);
+typedef void (*cfCAST_FUNCTION)(CF_VOID_PROTO);
 
 #define VCF(TN,I)       _Icf4(4,V,TN,_(A,I),_(B,I),F)
 #define VVCF(TN,AI,BI)  _Icf4(4,V,TN,AI,BI,S)
@@ -781,7 +783,7 @@ typedef void (*cfCAST_FUNCTION)(CF_NULL_PROTO);
 #define PINT_cfV(      T,A,B,F) _(T,_cfVP)(A,B)
 #define PVOID_cfV(     T,A,B,F)
 #if defined(apolloFortran) || defined(hpuxFortran800) || defined(AbsoftUNIXFortran) || defined(AbsoftProFortran)
-#define    ROUTINE_cfV(T,A,B,F) void (*B)(CF_NULL_PROTO) = (cfCAST_FUNCTION)A;
+#define    ROUTINE_cfV(T,A,B,F) void (*B)(CF_VOID_PROTO) = (cfCAST_FUNCTION)A;
 #else
 #define    ROUTINE_cfV(T,A,B,F)
 #endif
@@ -1997,7 +1999,7 @@ for the same function in the same source code. Something done by the experts in
 debugging only.*/    
 
 #define PROTOCCALLSFFUN0(F,UN,LN)                                              \
-_(F,_cfPU)( CFC_(UN,LN))(CF_NULL_PROTO);                                       \
+_(F,_cfPU)( CFC_(UN,LN))(CF_VOID_PROTO);                                       \
 static _Icf(2,U,F,CFFUN(UN),0)() {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(F,_cfX)}
 
 #define PROTOCCALLSFFUN1( T0,UN,LN,T1)                                         \
@@ -2030,8 +2032,8 @@ static _Icf(2,U,F,CFFUN(UN),0)() {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(
 /* HP/UX 9.01 cc requires the blank between '_Icf(3,G,T0,UN,LN) CCCF(T1,1,0)' */
 
 #ifndef __CF__KnR
-#define PROTOCCALLSFFUN14(T0,UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)  \
- _(T0,_cfPU)(CFC_(UN,LN))(CF_NULL_PROTO); static _Icf(2,U,T0,CFFUN(UN),0)(     \
+#define PROTOCCALLSFFUN14(T0,UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE) \
+ _(T0,_cfPU)(CFC_(UN,LN))(CFARGT14(NCF,DCF,ABSOFT_cf2(T0),T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)); static _Icf(2,U,T0,CFFUN(UN),0)( \
    CFARGT14FS(UCF,HCF,_Z,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE) )          \
 {       CFARGT14S(VCF,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)    _(T0,_cfE) \
  CCF(LN,T1,1)  CCF(LN,T2,2)  CCF(LN,T3,3)  CCF(LN,T4,4)  CCF(LN,T5,5)          \
