@@ -45,7 +45,15 @@
 
 #define FCALLSC_QUALIFIER PPM_DSO_INTERNAL
 
-#include "cfortran.h"
+#if defined __clang__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+#include <cfortran.h>
+#if defined __clang__
+#  pragma GCC diagnostic pop
+#endif
+
 
 #include "core/ppm_visibility.h"
 #include "core.h"
