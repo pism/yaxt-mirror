@@ -434,6 +434,9 @@ only C calling FORTRAN subroutines will work using K&R style.*/
 #if USE_NEW_DELETE
 #define _cf_malloc(N) new char[N]
 #define _cf_free(P)   delete[] P
+#elif CF_USE_ALLOCA
+#define _cf_malloc(N) (char *)alloca(N)
+#define _cf_free(P)
 #else
 #define _cf_malloc(N) (char *)malloc(N)
 #define _cf_free(P)   free(P)
@@ -1211,6 +1214,7 @@ typedef void (*cfCAST_FUNCTION)(CF_VOID_PROTO);
 #define CFextern extern
 #endif
 
+#define CFattributes
 
 #ifdef CFSUBASFUN
 #define PROTOCCALLSFSUB0(UN,LN) \
@@ -1225,7 +1229,7 @@ typedef void (*cfCAST_FUNCTION)(CF_VOID_PROTO);
 /* Note: Prevent compiler warnings, null #define PROTOCCALLSFSUB14/20 after 
    #include-ing cfortran.h if calling the FORTRAN wrapper within the same 
    source code where the wrapper is created. */
-#define PROTOCCALLSFSUB0(UN,LN)     _(VOID,_cfPU)(CFC_(UN,LN))();
+#define PROTOCCALLSFSUB0(UN,LN)     _(VOID,_cfPU)(CFC_(UN,LN))(CF_VOID_PROTO);
 #ifndef __CF__KnR
 #define PROTOCCALLSFSUB14(UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE) \
  _(VOID,_cfPU)(CFC_(UN,LN))( CFARGT14(NCF,KCF,_Z,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE) );
@@ -2000,7 +2004,7 @@ debugging only.*/
 
 #define PROTOCCALLSFFUN0(F,UN,LN)                                              \
 _(F,_cfPU)( CFC_(UN,LN))(CF_VOID_PROTO);                                       \
-static _Icf(2,U,F,CFFUN(UN),0)() {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(F,_cfX)}
+static _Icf(2,U,F,CFFUN(UN),0)(CF_VOID_PROTO) {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(F,_cfX)}
 
 #define PROTOCCALLSFFUN1( T0,UN,LN,T1)                                         \
         PROTOCCALLSFFUN5 (T0,UN,LN,T1,CF_0,CF_0,CF_0,CF_0)
@@ -2237,7 +2241,7 @@ static _Icf(2,U,F,CFFUN(UN),0)() {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(
 #define  DEFAULT_cfR(A,B,D)
 #define  LOGICAL_cfR(A,B,D)
 #define PLOGICAL_cfR(A,B,D) *A=C2FLOGICAL(*A);
-#define   STRING_cfR(A,B,D) if (B) _cf_free(B);
+#define   STRING_cfR(A,B,D) _cf_free(B);
 #define  STRINGV_cfR(A,B,D) _cf_free(B);
 /* A and D as defined above for TSTRING(V) */
 #define RRRRPSTR( A,B,D)    if (B) memcpy(A,B, _cfMIN(strlen(B),D)),           \
@@ -2258,23 +2262,18 @@ static _Icf(2,U,F,CFFUN(UN),0)() {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(
 #define PNSTRING_cfR(A,B,D) PSTRING_cfR(A,B,D)
 #define PPSTRING_cfR(A,B,D)
 
-#define    BYTE_cfFZ(UN,LN) INTEGER_BYTE     FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#define  DOUBLE_cfFZ(UN,LN) DOUBLE_PRECISION FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#define     INT_cfFZ(UN,LN) int   FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#define LOGICAL_cfFZ(UN,LN) int   FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#define    LONG_cfFZ(UN,LN) long  FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#define LONGLONG_cfFZ(UN,LN) LONGLONG FCALLSC_QUALIFIER fcallsc(UN,LN)( /* added by MR December 2005 */
-#define   SHORT_cfFZ(UN,LN) short FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#define    VOID_cfFZ(UN,LN) void  FCALLSC_QUALIFIER fcallsc(UN,LN)(
+#define    BYTE_cfFZ(UN,LN)  BYTE_cfF(UN,LN)void
+#define  DOUBLE_cfFZ(UN,LN)  DOUBLE_cfF(UN,LN)void
+#define     INT_cfFZ(UN,LN)  INT_cfF(UN,LN)void
+#define LOGICAL_cfFZ(UN,LN)  LOGICAL_cfF(UN,LN)void
+#define    LONG_cfFZ(UN,LN)  LONG_cfF(UN,LN)void
+#define LONGLONG_cfFZ(UN,LN) LONGLONG_cfF(UN,LN)void /* added by MR December 2005 */
+#define   SHORT_cfFZ(UN,LN)  SHORT_cfF(UN,LN)void
+#define    VOID_cfFZ(UN,LN)  VOID_cfF(UN,LN)void
 #ifndef __CF__KnR
-/* The void is req'd by the Apollo, to make this an ANSI function declaration.
-   The Apollo promotes K&R float functions to double. */
-#if defined (f2cFortran) && ! defined (gFortran)
-/* f2c/g77 return double from FORTRAN REAL functions. (KMCCARTY, 2005/12/09) */
-#define FLOAT_cfFZ(UN,LN) DOUBLE_PRECISION FCALLSC_QUALIFIER fcallsc(UN,LN)(void
-#else
-#define FLOAT_cfFZ(UN,LN) FORTRAN_REAL FCALLSC_QUALIFIER fcallsc(UN,LN)(void
-#endif
+/* The void is req'd by the Apollo, to make this an ANSI function declaration. */
+
+#define FLOAT_cfFZ(UN,LN) FLOAT_cfF(UN,LN)void
 #ifdef vmsFortran
 #define  STRING_cfFZ(UN,LN) void  FCALLSC_QUALIFIER fcallsc(UN,LN)(fstring *AS
 #else
@@ -2289,16 +2288,7 @@ static _Icf(2,U,F,CFFUN(UN),0)() {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(
 #endif
 #endif
 #else
-#if ! (defined(FLOATFUNCTIONTYPE)&&defined(ASSIGNFLOAT)&&defined(RETURNFLOAT))
-#if defined (f2cFortran) && ! defined (gFortran)
-/* f2c/g77 return double from FORTRAN REAL functions. (KMCCARTY, 2005/12/09) */
-#define   FLOAT_cfFZ(UN,LN) DOUBLE_PRECISION  FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#else
-#define   FLOAT_cfFZ(UN,LN) FORTRAN_REAL      FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#endif
-#else
-#define   FLOAT_cfFZ(UN,LN) FLOATFUNCTIONTYPE FCALLSC_QUALIFIER fcallsc(UN,LN)(
-#endif
+#define   FLOAT_cfFZ(UN,LN) FLOAT_cfF(UN,LN)
 #if defined(vmsFortran) || defined(CRAYFortran) || defined(AbsoftUNIXFortran)
 #define  STRING_cfFZ(UN,LN) void  FCALLSC_QUALIFIER fcallsc(UN,LN)(AS
 #else
@@ -2306,24 +2296,25 @@ static _Icf(2,U,F,CFFUN(UN),0)() {_(F,_cfE) _Icf(3,GZ,F,UN,LN) ABSOFT_cf1(F));_(
 #endif
 #endif
 
-#define    BYTE_cfF(UN,LN)     BYTE_cfFZ(UN,LN)
-#define  DOUBLE_cfF(UN,LN)   DOUBLE_cfFZ(UN,LN)
+#define    BYTE_cfF(UN,LN)  INTEGER_BYTE     FCALLSC_QUALIFIER fcallsc(UN,LN)(
+#define  DOUBLE_cfF(UN,LN)  DOUBLE_PRECISION FCALLSC_QUALIFIER fcallsc(UN,LN)(
 #ifndef __CF_KnR
 #if defined (f2cFortran) && ! defined (gFortran)
+/* The Apollo promotes K&R float functions to double. */
 /* f2c/g77 return double from FORTRAN REAL functions. (KMCCARTY, 2005/12/09) */
 #define   FLOAT_cfF(UN,LN)  DOUBLE_PRECISION FCALLSC_QUALIFIER fcallsc(UN,LN)(
 #else
 #define   FLOAT_cfF(UN,LN)  FORTRAN_REAL FCALLSC_QUALIFIER fcallsc(UN,LN)(
 #endif
 #else
-#define   FLOAT_cfF(UN,LN)    FLOAT_cfFZ(UN,LN)
+#define   FLOAT_cfF(UN,LN)  FLOATFUNCTIONTYPE FCALLSC_QUALIFIER fcallsc(UN,LN)(
 #endif
-#define     INT_cfF(UN,LN)      INT_cfFZ(UN,LN)
-#define LOGICAL_cfF(UN,LN)  LOGICAL_cfFZ(UN,LN)
-#define    LONG_cfF(UN,LN)     LONG_cfFZ(UN,LN)
-#define LONGLONG_cfF(UN,LN) LONGLONG_cfFZ(UN,LN) /* added by MR December 2005 */
-#define   SHORT_cfF(UN,LN)    SHORT_cfFZ(UN,LN)
-#define    VOID_cfF(UN,LN)     VOID_cfFZ(UN,LN)
+#define     INT_cfF(UN,LN)  int   FCALLSC_QUALIFIER fcallsc(UN,LN)(
+#define LOGICAL_cfF(UN,LN)  int   FCALLSC_QUALIFIER fcallsc(UN,LN)(
+#define    LONG_cfF(UN,LN)  long  FCALLSC_QUALIFIER fcallsc(UN,LN)(
+#define LONGLONG_cfF(UN,LN) LONGLONG FCALLSC_QUALIFIER fcallsc(UN,LN)( /* added by MR December 2005 */
+#define   SHORT_cfF(UN,LN)  short FCALLSC_QUALIFIER fcallsc(UN,LN)(
+#define    VOID_cfF(UN,LN)  void  FCALLSC_QUALIFIER fcallsc(UN,LN)(
 #define  STRING_cfF(UN,LN)   STRING_cfFZ(UN,LN),
 
 #define     INT_cfFF
@@ -2387,7 +2378,7 @@ string. */
 #define LONGLONG_cfI  return A0; /* added by MR December 2005 */
 #define   SHORT_cfI  return A0;
 #define  STRING_cfI  return   ;
-#define    VOID_cfI  return   ;
+#define    VOID_cfI
 
 #ifdef OLD_VAXC                                  /* Allow %CC-I-PARAMNOTUSED. */
 #pragma standard
@@ -2502,10 +2493,21 @@ string. */
 
 
 #ifndef __CF__KnR
-#define FCALLSCFUN0(T0,CN,UN,LN) CFextern _(T0,_cfFZ)(UN,LN) ABSOFT_cf2(T0))   \
+#if defined(AbsoftUNIXFortran) || defined(AbsoftProFortran)
+#define FCALLSCFUN0(T0,CN,UN,LN) CFextern _(T0,_cfFZ)(UN,LN) ABSOFT_cf2(T0)) \
+                               CFattributes;                                 \
+        CFextern _(T0,_cfFZ)(UN,LN) ABSOFT_cf2(T0))                          \
         {_Icf(2,UU,T0,A0,0); _Icf(0,L,T0,0,0) CN(); _Icf(0,K,T0,0,0) _(T0,_cfI)}
+#else
+#define FCALLSCFUN0(T0,CN,UN,LN) CFextern _(T0,_cfFZ)(UN,LN)) CFattributes;  \
+        CFextern _(T0,_cfFZ)(UN,LN))                            \
+        {_Icf(2,UU,T0,A0,0); _Icf(0,L,T0,0,0) CN(); _Icf(0,K,T0,0,0) _(T0,_cfI)}
+#endif
 
 #define FCALLSCFUN14(T0,CN,UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)    \
+                                 CFextern _(T0,_cfF)(UN,LN)                    \
+ CFARGT14(NCF,DCF,ABSOFT_cf2(T0),T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE) )  \
+                                                                CFattributes;  \
                                  CFextern _(T0,_cfF)(UN,LN)                    \
  CFARGT14(NCF,DCF,ABSOFT_cf2(T0),T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE) )  \
  {                 CFARGT14S(QCF,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)    \
@@ -2516,6 +2518,9 @@ string. */
                    CFARGT14S(RCF,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)  _(T0,_cfI) }
 
 #define FCALLSCFUN27(T0,CN,UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE,TF,TG,TH,TI,TJ,TK,TL,TM,TN,TO,TP,TQ,TR)   \
+                                 CFextern _(T0,_cfF)(UN,LN)                    \
+ CFARGT27(NCF,DCF,ABSOFT_cf2(T0),T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE,TF,TG,TH,TI,TJ,TK,TL,TM,TN,TO,TP,TQ,TR) ) \
+                                                                CFattributes;  \
                                  CFextern _(T0,_cfF)(UN,LN)                    \
  CFARGT27(NCF,DCF,ABSOFT_cf2(T0),T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE,TF,TG,TH,TI,TJ,TK,TL,TM,TN,TO,TP,TQ,TR) ) \
  {                 CFARGT27S(QCF,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE,TF,TG,TH,TI,TJ,TK,TL,TM,TN,TO,TP,TQ,TR)   \
