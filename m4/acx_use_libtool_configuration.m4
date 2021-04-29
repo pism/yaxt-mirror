@@ -83,7 +83,7 @@ dnl newer PGI or NAG configurations particularly well
 	  _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-PIC'
 	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
-	*PGI\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),[sed 5q`],[sed -n 1,5p`]))dnl
+	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),[sed 5q`],[sed -n 1,5p`]))dnl
       m4_pushdef([_LT_LANG_CXX_CONFIG],m4_bpatsubst(m4_dquote(m4_defn([_LT_LANG_CXX_CONFIG])),
         [sed 5q`],[sed -n 1,5p`]))dnl
       m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(
