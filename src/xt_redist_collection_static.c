@@ -113,8 +113,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
       }
     }
   }
-  for (size_t j = 0; j < num_redists; ++j)
-    free(ranks[j]);
+  free(ranks[0]);
   *msgs = p;
   return num_messages;
 }

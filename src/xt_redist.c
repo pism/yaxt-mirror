@@ -221,14 +221,28 @@ xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
 {
   bool ranks_left = false;
   /* get lists of ranks to send/receive message to/from */
+  size_t num_ranks_total = 0;
   for (size_t j = 0; j < num_redists; ++j) {
-    ranks[j] = NULL;
-    size_t nranks = num_ranks[j]
-      = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
-    ranks_left |= (nranks > 0);
-    /* sort list */
-    xt_sort_int(ranks[j], nranks);
+    size_t redist_num_ranks
+      = (size_t)(redists[j]->vtable->get_num_msg(redists[j], direction));
+    num_ranks[j] = redist_num_ranks;
+    num_ranks_total += redist_num_ranks;
   }
+  if (num_ranks_total) {
+    int *ranks_buf = xmalloc(num_ranks_total * sizeof (*ranks_buf));
+    size_t ofs = 0;
+    for (size_t j = 0; j < num_redists; ++j) {
+      ranks[j] = ranks_buf + ofs;
+      size_t nranks
+        = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
+      ranks_left |= (nranks > 0);
+      /* sort list */
+      xt_sort_int(ranks[j], nranks);
+      ofs += nranks;
+    }
+  } else
+    for (size_t j = 0; j < num_redists; ++j)
+      ranks[j] = NULL;
   /* count number of different ranks to send/receive message to/from */
   size_t num_messages = ranks_left
     ? xt_ranks_uniq_count(num_redists, num_ranks, (const int *const *)ranks)

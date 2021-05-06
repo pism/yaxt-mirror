@@ -182,8 +182,7 @@ static void align_component_dt(unsigned num_redists, unsigned nmsgs,
           += (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] == min_rank);
     }
   }
-  for (size_t j = 0; j < num_redists; ++j)
-    free(in_ranks[j]);
+  free(in_ranks[0]);
 }
 
 /* not yet used cache entries are marked with -1 as first displacement,
