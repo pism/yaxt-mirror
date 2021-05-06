@@ -262,7 +262,9 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
   size_t nmsg = (size_t)exchanger_sb->nmsg[direction];
   struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs
     + (direction == RECV ? (size_t)exchanger_sb->nmsg[SEND] : 0);
-  int *restrict ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
+  int *restrict ranks_ = *ranks;
+  if (!ranks_)
+    ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
   for (size_t i = 0; i < nmsg; ++i)
     ranks_[i] = msgs[i].rank;
   return (int)nmsg;

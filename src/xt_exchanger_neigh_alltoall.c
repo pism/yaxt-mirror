@@ -300,8 +300,10 @@ xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
   size_t nsend = (size_t)exchanger_na->nmsg[SEND],
     nmsg = (size_t)exchanger_na->nmsg[direction],
     ofs = direction == SEND ? 0 : nsend;
-  *ranks = xmalloc(nmsg * sizeof(**ranks));
-  memcpy(*ranks, exchanger_na->ranks + ofs, nmsg * sizeof(**ranks));
+  int *ranks_ = *ranks;
+  if (!ranks_)
+    ranks_ = *ranks = xmalloc(nmsg * sizeof(**ranks));
+  memcpy(ranks_, exchanger_na->ranks + ofs, nmsg * sizeof(**ranks));
   return (int)nmsg;
 }
 

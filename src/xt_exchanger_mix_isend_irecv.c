@@ -280,7 +280,9 @@ xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
   const struct mix_msg *restrict msgs = exchanger_msr->msgs;
   for (size_t i = 0; i < nmsg_all; ++i)
     nmsg += MSG_DIR(msgs[i]) == direction;
-  int *restrict ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
+  int *restrict ranks_ = *ranks;
+  if (!ranks_)
+    ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
   for (size_t i = 0, j = (size_t)-1; i < nmsg_all; ++i)
     if (MSG_DIR(msgs[i]) == direction)
       ranks_[++j] = msgs[i].data.rank;

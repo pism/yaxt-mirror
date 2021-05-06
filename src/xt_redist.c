@@ -222,6 +222,7 @@ xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
   bool ranks_left = false;
   /* get lists of ranks to send/receive message to/from */
   for (size_t j = 0; j < num_redists; ++j) {
+    ranks[j] = NULL;
     size_t nranks = num_ranks[j]
       = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
     ranks_left |= (nranks > 0);

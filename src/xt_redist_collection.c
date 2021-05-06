@@ -154,7 +154,7 @@ struct Xt_redist_collection_ {
 static void align_component_dt(unsigned num_redists, unsigned nmsgs,
                                const Xt_redist *redists,
                                int *restrict in_ranks[num_redists],
-                               size_t num_ranks[num_redists],
+                               const size_t num_ranks[num_redists],
                                int *out_ranks,
                                MPI_Datatype *component_dt,
                                enum xt_msg_direction direction)
@@ -601,8 +601,12 @@ redist_collection_get_msg_ranks(Xt_redist redist,
   int *ranks_orig
     = (int *)(redist_coll->all_component_dt + nmsg * redist_coll->num_redists)
     + (((unsigned)direction-1) & nmsg_send);
-  int *ranks_ = *ranks = xmalloc(nmsg_direction * sizeof (*ranks_));
-  memcpy(ranks_, ranks_orig, nmsg_direction * sizeof (*ranks));
+  if (nmsg_direction > 0) {
+    int *ranks_ = *ranks;
+    if (!ranks_)
+      ranks_ = *ranks = xmalloc(nmsg_direction * sizeof (*ranks_));
+    memcpy(ranks_, ranks_orig, nmsg_direction * sizeof (*ranks));
+  }
   return (int)nmsg_direction;
 }
 
