@@ -889,15 +889,12 @@ CONTAINS
          dst_displacements(:)
     TYPE(xt_redist) :: res
     INTEGER :: num_redists
-    INTEGER(c_int) :: num_redists_c
     num_redists = SIZE(redists)
-    IF (num_redists > HUGE(1_c_int) &
-         .OR. num_redists /= SIZE(src_displacements) &
+    IF (num_redists /= SIZE(src_displacements) &
          .OR. num_redists /= SIZE(dst_displacements)) &
          CALL xt_abort("invalid number of redists", filename, __LINE__)
-    num_redists_c = INT(num_redists, c_int)
     res%cptr = xt_redist_collection_static_new_f(redists, &
-         num_redists_c, src_displacements, dst_displacements, comm)
+         num_redists, src_displacements, dst_displacements, comm)
   END FUNCTION xt_redist_collection_static_new_a_2ak_i
 
   FUNCTION xt_redist_collection_static_new_a_2ak_i_cfg(redists, &
@@ -909,15 +906,12 @@ CONTAINS
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
     INTEGER :: num_redists
-    INTEGER(c_int) :: num_redists_c
     num_redists = SIZE(redists)
-    IF (num_redists > HUGE(1_c_int) &
-         .OR. num_redists /= SIZE(src_displacements) &
+    IF (num_redists /= SIZE(src_displacements) &
          .OR. num_redists /= SIZE(dst_displacements)) &
          CALL xt_abort("invalid number of redists", filename, __LINE__)
-    num_redists_c = INT(num_redists, c_int)
     res%cptr = xt_redist_collection_static_custom_new_f(redists, &
-         num_redists_c, src_displacements, dst_displacements, comm, config)
+         num_redists, src_displacements, dst_displacements, comm, config)
   END FUNCTION xt_redist_collection_static_new_a_2ak_i_cfg
 
   FUNCTION xt_redist_collection_new_a_3i(redists, num_redists, cache_size, &
@@ -944,10 +938,10 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redists(:)
     INTEGER, INTENT(in) :: cache_size, comm
     TYPE(xt_redist) :: res
-    INTEGER(c_int) :: num_redists_c
-    num_redists_c = INT(SIZE(redists), c_int)
+    INTEGER :: num_redists
+    num_redists = SIZE(redists)
     res%cptr = xt_redist_collection_new_f(redists, &
-         num_redists_c, cache_size, comm)
+         num_redists, cache_size, comm)
   END FUNCTION xt_redist_collection_new_a_2i
 
   FUNCTION xt_redist_collection_new_a_2i_cfg(redists, cache_size, comm, &
@@ -956,10 +950,10 @@ CONTAINS
     INTEGER, INTENT(in) :: cache_size, comm
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_redist) :: res
-    INTEGER(c_int) :: num_redists_c
-    num_redists_c = INT(SIZE(redists), c_int)
+    INTEGER :: num_redists
+    num_redists = SIZE(redists)
     res%cptr = xt_redist_collection_custom_new_f(redists, &
-         num_redists_c, cache_size, comm, config)
+         num_redists, cache_size, comm, config)
   END FUNCTION xt_redist_collection_new_a_2i_cfg
 
   FUNCTION xt_redist_collection_new_a_i(redists, comm) &
