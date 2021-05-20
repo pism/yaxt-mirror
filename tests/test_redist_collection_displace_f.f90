@@ -59,7 +59,7 @@ MODULE redist_collection_displace
 #endif
   ! and when taking the slice address and the optimizer is on,
   ! some other random failure occurs even with very recent compiler versions
-#if defined __PGI && __PGIC__ <= 19
+#if defined __PGI && (__PGIC__ <= 19 || __PGIC__ == 20 && __PGIC_MINOR__ == 11)
 #undef HAVE_FC_C_LOC_OF_SLICE
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, &
