@@ -65,18 +65,14 @@
 #include "xt_config_internal.h"
 
 static void
-generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
+generate_msg_infos(struct Xt_redist_msg *restrict msgs,
                    MPI_Aint extent, const int *displacements, Xt_redist redist,
                    int num_repetitions, MPI_Comm comm,
                    enum xt_msg_direction direction)
 {
-  assert(*nmsgs >= 0);
-  size_t num_messages = (size_t)*nmsgs;
   int *restrict ranks = NULL;
   size_t num_ranks
     = (size_t)xt_redist_get_msg_ranks(redist, direction, &ranks);
-  struct Xt_redist_msg *restrict p
-    = xrealloc(*msgs, sizeof (*p) * (num_messages + num_ranks));
   for (size_t i = 0; i < num_ranks; ++i) {
     MPI_Datatype datatype
       = xt_redist_get_MPI_Datatype(redist, ranks[i], direction);
@@ -88,16 +84,14 @@ generate_msg_infos(struct Xt_redist_msg **msgs, int *nmsgs,
     xt_mpi_call(MPI_Type_create_resized(datatype, curr_lb, extent,
                                         &datatype_with_extent), comm);
 
-    p[num_messages + i].rank = ranks[i];
-    p[num_messages + i].datatype
+    msgs[i].rank = ranks[i];
+    msgs[i].datatype
       = xt_mpi_generate_datatype(displacements, num_repetitions,
                                  datatype_with_extent, comm);
     MPI_Type_free(&datatype_with_extent);
     MPI_Type_free(&datatype);
   }
   free(ranks);
-  *msgs = p;
-  *nmsgs = (int)(num_messages + num_ranks);
 }
 
 Xt_redist
@@ -121,8 +115,6 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
-  int nsend = 0, nrecv = 0;
-  struct Xt_redist_msg *send_msgs = NULL, *recv_msgs = NULL;
   int tag_offset;
   MPI_Comm comm
     = xt_mpi_comm_smart_dup(xt_redist_get_MPI_Comm(redist), &tag_offset);
@@ -131,17 +123,21 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
     Xt_abort(comm, "ERROR: invalid number of repetitions (Xt_redist_repeat)\n",
              __FILE__, __LINE__);
 
+  int nmsg[2];
+  for (int i = 0; i < 2; ++i)
+    nmsg[i] = redist->vtable->get_num_msg(redist, (enum xt_msg_direction)i);
+  size_t num_messages = (size_t)nmsg[SEND] + (size_t)nmsg[RECV];
+  struct Xt_redist_msg *msgs = xmalloc(sizeof (*msgs) * num_messages);
 
-  generate_msg_infos(&send_msgs, &nsend, src_extent,
-                     src_displacements, redist, num_repetitions, comm, SEND);
+  generate_msg_infos(msgs, src_extent, src_displacements,
+                     redist, num_repetitions, comm, SEND);
 
-  generate_msg_infos(&recv_msgs, &nrecv, dst_extent,
-                     dst_displacements, redist, num_repetitions, comm, RECV);
+  generate_msg_infos(msgs+nmsg[0], dst_extent, dst_displacements,
+                     redist, num_repetitions, comm, RECV);
 
   Xt_redist result = xt_redist_single_array_base_custom_new(
-    nsend, nrecv, send_msgs, recv_msgs, comm, config);
-  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
-  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
+    nmsg[SEND], nmsg[RECV], msgs, msgs+nmsg[SEND], comm, config);
+  xt_redist_msgs_free(num_messages, msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
