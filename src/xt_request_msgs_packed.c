@@ -123,16 +123,15 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
 
 static void unpack_data(Xt_request_msgs_packed request_msgs_packed) {
 
-  for (int i = 0; i < request_msgs_packed->n_packed; ++i) {
+  MPI_Comm comm = request_msgs_packed->comm;
+  int n_packed = request_msgs_packed->n_packed;
+  for (int i = 0; i < n_packed; ++i) {
     int position = 0, buffer_size;
     xt_mpi_call(MPI_Pack_size(1, request_msgs_packed->datatypes[i],
-                request_msgs_packed->comm, &buffer_size),
-                request_msgs_packed->comm);
+                comm, &buffer_size), comm);
     xt_mpi_call(MPI_Unpack(request_msgs_packed->buffers[i], buffer_size,
                            &position, request_msgs_packed->unpacked_data,
-                           1, request_msgs_packed->datatypes[i],
-                           request_msgs_packed->comm),
-                request_msgs_packed->comm);
+                           1, request_msgs_packed->datatypes[i], comm), comm);
   }
 }
 
