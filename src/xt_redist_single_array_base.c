@@ -91,7 +91,8 @@ static int redist_sab_get_num_msg(Xt_redist redist,
 
 static MPI_Datatype
 redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
-                            enum xt_msg_direction direction);
+                            enum xt_msg_direction direction,
+                            bool do_dup);
 
 static int
 redist_sab_get_msg_ranks(Xt_redist redist,
@@ -246,10 +247,11 @@ static int redist_sab_get_num_msg(Xt_redist redist,
 
 static MPI_Datatype
 redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
-                            enum xt_msg_direction direction)
+                            enum xt_msg_direction direction,
+                            bool do_dup)
 {
   return xt_exchanger_get_MPI_Datatype(xrsab(redist)->exchanger, rank,
-                                       direction);
+                                       direction, do_dup);
 }
 
 static int

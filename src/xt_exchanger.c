@@ -131,9 +131,9 @@ xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
 }
 
 MPI_Datatype
-xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
-                              int rank, enum xt_msg_direction direction) {
-  return exchanger->vtable->get_MPI_Datatype(exchanger, rank, direction);
+xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger, int rank,
+                              enum xt_msg_direction direction, bool do_dup) {
+  return exchanger->vtable->get_MPI_Datatype(exchanger, rank, direction, do_dup);
 }
 
 /*

@@ -85,7 +85,8 @@ xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
 static MPI_Datatype
 xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
                                              int rank,
-                                             enum xt_msg_direction direction);
+                                             enum xt_msg_direction direction,
+                                             bool do_dup);
 
 
 static const struct xt_exchanger_vtable exchanger_neigh_alltoall_vtable = {
@@ -271,7 +272,8 @@ static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
 static MPI_Datatype
 xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
                                              int rank,
-                                             enum xt_msg_direction direction)
+                                             enum xt_msg_direction direction,
+                                             bool do_dup)
 {
   Xt_exchanger_neigh_alltoall exchanger_na =
     (Xt_exchanger_neigh_alltoall)exchanger;
@@ -282,8 +284,11 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i) {
     if (ranks[i] == rank) {
-      xt_mpi_call(MPI_Type_dup(exchanger_na->datatypes[i+ofs], &datatype_copy),
-                  exchanger_na->comm);
+      if (do_dup)
+        xt_mpi_call(MPI_Type_dup(exchanger_na->datatypes[i+ofs], &datatype_copy),
+                    exchanger_na->comm);
+      else
+        datatype_copy = exchanger_na->datatypes[i+ofs];
       break;
     }
   }

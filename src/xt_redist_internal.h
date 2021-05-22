@@ -54,6 +54,7 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <mpi.h>
 
@@ -71,7 +72,8 @@ struct xt_redist_vtable {
   void (*a_exchange)(Xt_redist, int, const void **, void **, Xt_request *);
   void (*s_exchange1)(Xt_redist, const void *, void *);
   void (*a_exchange1)(Xt_redist, const void *, void *, Xt_request *);
-  MPI_Datatype (*get_msg_MPI_Datatype)(Xt_redist, int, enum xt_msg_direction);
+  MPI_Datatype (*get_msg_MPI_Datatype)(Xt_redist, int, enum xt_msg_direction,
+                                       bool need_dup);
   int (*get_num_msg)(Xt_redist, enum xt_msg_direction);
   int (*get_msg_ranks)(Xt_redist, enum xt_msg_direction, int *restrict *);
   MPI_Comm (*get_MPI_Comm)(Xt_redist);
@@ -135,12 +137,14 @@ xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
  * @param[in] rank      MPI rank of the communicator partner
  * @param[in] direction specifices whether the datatype for an outgoing or
  *                      incoming message is requested
+ * @param[in] do_dup    if true only return MPI_Datatype_dup of
+ *                      internally stored datatype
  * @return Datatype for the specified message. The return value is
  *         MPI_DATATYPE_NULL, if no data for the specified message.
  */
 PPM_DSO_INTERNAL MPI_Datatype
 xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
-                           enum xt_msg_direction direction);
+                           enum xt_msg_direction direction, bool do_dup);
 
 /**
  * Generates a new MPI derived datatype from a number of MPI derived datatypes.

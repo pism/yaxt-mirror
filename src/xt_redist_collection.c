@@ -98,7 +98,7 @@ static int redist_collection_get_num_msg(Xt_redist redist,
 
 static MPI_Datatype
 redist_collection_get_MPI_Datatype(Xt_redist redist, int rank,
-                                   enum xt_msg_direction direction);
+                                   enum xt_msg_direction direction, bool do_dup);
 
 static int
 redist_collection_get_msg_ranks(Xt_redist redist,
@@ -173,7 +173,7 @@ static void align_component_dt(unsigned num_redists, unsigned nmsgs,
       for (size_t j = 0; j < num_redists; ++j)
         component_dt[i * num_redists + j] =
           (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] == min_rank)
-          ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction)
+          ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction, true)
           : MPI_DATATYPE_NULL;
 
       out_ranks[i] = min_rank;
@@ -550,7 +550,8 @@ static int redist_collection_get_num_msg(Xt_redist redist,
 
 static MPI_Datatype
 redist_collection_get_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank),
-                                   enum xt_msg_direction XT_UNUSED(direction))
+                                   enum xt_msg_direction XT_UNUSED(direction),
+                                   bool XT_UNUSED(do_dup))
 {
   Xt_redist_collection redist_coll = xrc(redist);
 

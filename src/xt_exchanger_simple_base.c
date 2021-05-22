@@ -49,6 +49,7 @@
 
 #include <assert.h>
 #include <mpi.h>
+#include <stdbool.h>
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
@@ -77,7 +78,8 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
 static MPI_Datatype
 xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           int rank,
-                                          enum xt_msg_direction direction);
+                                          enum xt_msg_direction direction,
+                                          bool do_dup);
 
 
 static const struct xt_exchanger_vtable exchanger_simple_base_vtable = {
@@ -235,7 +237,8 @@ static void xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
 static MPI_Datatype
 xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           int rank,
-                                          enum xt_msg_direction direction)
+                                          enum xt_msg_direction direction,
+                                          bool do_dup)
 {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
@@ -246,8 +249,11 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i)
     if (msgs[i].rank == rank) {
-      xt_mpi_call(MPI_Type_dup(msgs[i].datatype, &datatype_copy),
-                  exchanger_sb->comm);
+      if (do_dup)
+        xt_mpi_call(MPI_Type_dup(msgs[i].datatype, &datatype_copy),
+                    exchanger_sb->comm);
+      else
+        datatype_copy = msgs[i].datatype;
       break;
     }
   return datatype_copy;

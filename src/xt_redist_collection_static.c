@@ -98,7 +98,7 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
       for (size_t j = 0; j < num_redists; ++j)
         datatypes[j] =
           (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank)
-          ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction)
+          ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction, false)
           : MPI_DATATYPE_NULL;
 
       p[i].rank = min_rank;
@@ -106,8 +106,6 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
         = xt_create_compound_datatype(num_redists, displacements, datatypes,
                                       block_lengths, comm);
       for (size_t j = 0; j < num_redists; ++j) {
-        if (datatypes[j] != MPI_DATATYPE_NULL)
-          xt_mpi_call(MPI_Type_free(datatypes+j), comm);
         rank_pos[j]
           += (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank);
       }

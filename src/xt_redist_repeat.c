@@ -75,7 +75,7 @@ generate_msg_infos(struct Xt_redist_msg *restrict msgs,
     = (size_t)xt_redist_get_msg_ranks(redist, direction, &ranks);
   for (size_t i = 0; i < num_ranks; ++i) {
     MPI_Datatype datatype
-      = xt_redist_get_MPI_Datatype(redist, ranks[i], direction);
+      = xt_redist_get_MPI_Datatype(redist, ranks[i], direction, false);
     MPI_Aint curr_lb, curr_extent;
     MPI_Datatype datatype_with_extent;
 
@@ -89,7 +89,6 @@ generate_msg_infos(struct Xt_redist_msg *restrict msgs,
       = xt_mpi_generate_datatype(displacements, num_repetitions,
                                  datatype_with_extent, comm);
     MPI_Type_free(&datatype_with_extent);
-    MPI_Type_free(&datatype);
   }
   free(ranks);
 }

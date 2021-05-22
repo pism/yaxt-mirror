@@ -106,18 +106,19 @@ int xt_redist_get_num_recv_msg(Xt_redist redist) {
 
 MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank) {
 
-  return redist->vtable->get_msg_MPI_Datatype(redist, rank, SEND);
+  return redist->vtable->get_msg_MPI_Datatype(redist, rank, SEND, true);
 }
 
 MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank) {
 
-  return redist->vtable->get_msg_MPI_Datatype(redist, rank, RECV);
+  return redist->vtable->get_msg_MPI_Datatype(redist, rank, RECV, true);
 }
 
 MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
-                                        enum xt_msg_direction direction)
+                                        enum xt_msg_direction direction,
+                                        bool do_dup)
 {
-  return redist->vtable->get_msg_MPI_Datatype(redist, rank, direction);
+  return redist->vtable->get_msg_MPI_Datatype(redist, rank, direction, do_dup);
 }
 
 MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {

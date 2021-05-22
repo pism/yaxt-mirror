@@ -77,7 +77,8 @@ xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
 static MPI_Datatype
 xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
                                               int rank,
-                                              enum xt_msg_direction direction);
+                                              enum xt_msg_direction direction,
+                                              bool do_dup);
 
 static const struct xt_exchanger_vtable exchanger_mix_isend_irecv_vtable = {
   .copy = xt_exchanger_mix_isend_irecv_copy,
@@ -292,7 +293,8 @@ xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
 static MPI_Datatype
 xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
                                               int rank,
-                                              enum xt_msg_direction direction)
+                                              enum xt_msg_direction direction,
+                                              bool do_dup)
 {
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
@@ -301,8 +303,11 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i)
     if (MSG_DIR(msgs[i]) == direction && msgs[i].data.rank == rank) {
-      xt_mpi_call(MPI_Type_dup(msgs[i].data.datatype, &datatype_copy),
-                  exchanger_msr->comm);
+      if (do_dup)
+        xt_mpi_call(MPI_Type_dup(msgs[i].data.datatype, &datatype_copy),
+                    exchanger_msr->comm);
+      else
+        datatype_copy = msgs[i].data.datatype;
       break;
     }
   return datatype_copy;

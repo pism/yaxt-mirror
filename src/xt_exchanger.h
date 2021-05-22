@@ -51,6 +51,7 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <mpi.h>
 
 #include "xt/xt_core.h"
@@ -68,7 +69,8 @@ struct xt_exchanger_vtable {
   void (*s_exchange)(Xt_exchanger, const void *, void *);
   void (*a_exchange)(Xt_exchanger, const void *, void *, Xt_request *request);
   int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
-  MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction);
+  MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction,
+                                   bool);
 };
 
 struct Xt_exchanger_ {
@@ -127,13 +129,15 @@ void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
  * @param[in] rank      MPI rank
  * @param[in] direction specific whether the datatype of an incoming or outgoing
  *                      message is requested
+ * @param[in[ do_dup    mpi datatype copy will be dup if true
  * @return MPI_Datatype for the specificed message
  * @remark returns MPI_DATATYPE_NULL if there is no message matching the
  *         specificed configuration
  */
 MPI_Datatype
 xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
-                              int rank, enum xt_msg_direction direction);
+                              int rank, enum xt_msg_direction direction,
+                              bool do_dup);
 
 /**
  * Gets the ranks of all processes that receive data from/send data to the local
