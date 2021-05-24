@@ -413,7 +413,7 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter,
                          const int *block_sizes, int **aux_offsets,
                          size_t num_blocks,
                          MPI_Datatype base_datatype,
-                         struct Xt_redist_msg **msgs, MPI_Comm comm) {
+                         struct Xt_redist_msg *msgs, MPI_Comm comm) {
 
   if (num_msgs > 0) {
 
@@ -426,23 +426,20 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter,
       aux_gen_simple_block_offsets(*aux_offsets, block_sizes, num_blocks);
     }
 
-    struct Xt_redist_msg *curr_msg
-      = *msgs = xmalloc((size_t)num_msgs * sizeof(**msgs));
-
+    size_t ofs = 0;
     do {
       const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
       int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
-      curr_msg->datatype
+      msgs[ofs].datatype
         = generate_block_datatype(curr_transfer_pos, curr_num_transfer_pos,
                                   block_offsets_, block_sizes, base_datatype,
                                   comm);
-      curr_msg->rank = xt_xmap_iterator_get_rank(iter);
+      msgs[ofs].rank = xt_xmap_iterator_get_rank(iter);
 
-      curr_msg++;
+      ofs++;
     } while (xt_xmap_iterator_next(iter));
 
-  } else
-    *msgs = NULL;
+  }
 }
 
 Xt_redist
@@ -473,12 +470,7 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
                                     Xt_config config)
 {
   // ensure that yaxt is initialized
-  assert(xt_initialized());
-
-  struct Xt_redist_msg * send_msgs = NULL;
-  struct Xt_redist_msg * recv_msgs = NULL;
-
-  assert(src_block_sizes && dst_block_sizes);
+  assert(xt_initialized() && src_block_sizes && dst_block_sizes);
 
   int tag_offset;
   MPI_Comm comm
@@ -487,6 +479,9 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
 
   int nsend = xt_xmap_get_num_destinations(xmap),
     nrecv = xt_xmap_get_num_sources(xmap);
+
+  size_t nmsg = ((size_t)nsend + (size_t)nrecv);
+  struct Xt_redist_msg *msgs = xmalloc(nmsg * sizeof (*msgs));
 
   int *aux_offsets = NULL;
 
@@ -501,7 +496,7 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
 #endif
   generate_block_msg_infos(nrecv, dst_iter, dst_block_offsets, dst_block_sizes,
                            &aux_offsets, (size_t)dst_block_num,
-                           datatype, &recv_msgs, comm);
+                           datatype, msgs, comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   // src part:
@@ -512,17 +507,16 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
 #endif
   generate_block_msg_infos(nsend, src_iter, src_block_offsets, src_block_sizes,
                            &aux_offsets, (size_t)src_block_num,
-                           datatype, &send_msgs, comm);
+                           datatype, msgs+nrecv, comm);
   free(aux_offsets);
 
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
   Xt_redist result
     = xt_redist_single_array_base_custom_new(
-      nsend, nrecv, send_msgs, recv_msgs, comm, config);
+      nsend, nrecv, msgs+nrecv, msgs, comm, config);
 
-  xt_redist_msgs_free((size_t)nsend, send_msgs, comm);
-  xt_redist_msgs_free((size_t)nrecv, recv_msgs, comm);
+  xt_redist_msgs_free(nmsg, msgs, comm);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
