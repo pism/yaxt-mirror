@@ -131,7 +131,7 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
    *        lifetime of the created exchanger object
    */
 
-  if (s_func == NULL)
+  if (s_func == 0)
     Xt_abort(comm, "ERROR(xt_exchanger_simple_base_new): invalid synchronous "
              "exchange function pointer", __FILE__, __LINE__);
 
