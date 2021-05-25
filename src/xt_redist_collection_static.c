@@ -66,30 +66,25 @@
 #include "xt_config_internal.h"
 
 
-static size_t
-generate_msg_infos(struct Xt_redist_msg ** msgs,
-                   const MPI_Aint *displacements,
-                   const Xt_redist *redists,
-                   size_t num_redists, MPI_Comm comm,
+static void
+generate_msg_infos(size_t nmsg, size_t num_redists,
+                   struct Xt_redist_msg *msgs,
+                   const MPI_Aint displacements[num_redists],
+                   const Xt_redist redists[num_redists],
+                   const size_t num_ranks[num_redists],
+                   const int *restrict ranks[num_redists],
+                   MPI_Comm comm,
                    enum xt_msg_direction direction)
 {
-  size_t num_ranks[num_redists];
-  int *restrict ranks[num_redists];
-
-  size_t num_messages = xt_redist_agg_msg_count(num_redists, direction,
-                                                redists, num_ranks, ranks);
-  /* get lists of ranks to send/receive message to/from */
-  size_t rank_pos[num_redists];
-  for (size_t j = 0; j < num_redists; ++j)
-    rank_pos[j] = 0;
-  struct Xt_redist_msg *p = NULL;
-  if (num_messages) {
+  if (nmsg) {
+    size_t rank_pos[num_redists];
+    for (size_t j = 0; j < num_redists; ++j)
+      rank_pos[j] = 0;
     MPI_Datatype datatypes[num_redists];
     int block_lengths[num_redists];
     for (size_t i = 0; i < num_redists; ++i)
       block_lengths[i] = 1;
-    p = xmalloc(sizeof (*p) * num_messages);
-    for (size_t i = 0; i < num_messages; ++i) {
+    for (size_t i = 0; i < nmsg; ++i) {
       int min_rank = INT_MAX;
       for (size_t j = 0; j < num_redists; ++j)
         if (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] < min_rank)
@@ -101,8 +96,8 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
           ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction, false)
           : MPI_DATATYPE_NULL;
 
-      p[i].rank = min_rank;
-      p[i].datatype
+      msgs[i].rank = min_rank;
+      msgs[i].datatype
         = xt_create_compound_datatype(num_redists, displacements, datatypes,
                                       block_lengths, comm);
       for (size_t j = 0; j < num_redists; ++j) {
@@ -111,9 +106,6 @@ generate_msg_infos(struct Xt_redist_msg ** msgs,
       }
     }
   }
-  free(ranks[0]);
-  *msgs = p;
-  return num_messages;
 }
 
 Xt_redist
@@ -136,28 +128,35 @@ xt_redist_collection_static_custom_new(
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
-  struct Xt_redist_msg *send_msgs, *recv_msgs;
-
   int tag_offset;
   MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 
   xt_redist_check_comms(redists, num_redists, comm);
 
   size_t num_redists_ = num_redists >= 0 ? (size_t)num_redists : 0;
-  size_t nsend
-    = generate_msg_infos(&send_msgs, src_displacements, redists, num_redists_,
-                         new_comm, SEND);
-
-  size_t nrecv
-    = generate_msg_infos(&recv_msgs, dst_displacements, redists, num_redists_,
-                         new_comm, RECV);
+  int *restrict ranks[2][num_redists_];
+  size_t num_ranks[2][num_redists_];
+  size_t nmsg[2];
+  /* get lists of ranks to send/receive message to/from */
+  for (size_t i = 0; i < 2; ++i)
+    nmsg[i] = xt_redist_agg_msg_count(num_redists_, (enum xt_msg_direction)i,
+                                      redists, num_ranks[i], ranks[i]);
+  size_t nmsg_sum = nmsg[SEND] + nmsg[RECV];
+  struct Xt_redist_msg *msgs = xmalloc(sizeof (*msgs) * nmsg_sum);
+  for (size_t i = 0; i < 2; ++i) {
+    size_t ofs = i == 0 ? 0 : nmsg[SEND];
+    const MPI_Aint *disp = i == 0 ? src_displacements : dst_displacements;
+    generate_msg_infos(nmsg[i], num_redists_, msgs+ofs, disp, redists,
+                       num_ranks[i], (const int *restrict (*))ranks[i], new_comm,
+                       (enum xt_msg_direction)i);
+    free(ranks[i][0]);
+  }
 
   Xt_redist redist_collection =
     xt_redist_single_array_base_custom_new(
-      (int)nsend, (int)nrecv, send_msgs, recv_msgs, new_comm, config);
+      (int)nmsg[SEND], (int)nmsg[RECV], msgs, msgs+nmsg[SEND], new_comm, config);
 
-  xt_redist_msgs_free(nsend, send_msgs, new_comm);
-  xt_redist_msgs_free(nrecv, recv_msgs, new_comm);
+  xt_redist_msgs_free(nmsg_sum, msgs, new_comm);
   xt_mpi_comm_smart_dedup(&new_comm, tag_offset);
   return redist_collection;
 }
