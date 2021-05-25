@@ -205,14 +205,14 @@ init_cache(struct exchanger_cache *cache, size_t cache_size, size_t ntx,
 
 static inline void
 destruct_cache(struct exchanger_cache *cache,
-               size_t cache_size, size_t ntx, MPI_Comm comm)
+               size_t cache_size)
 {
   for (size_t i = 0; i < cache_size; ++i)
     if (cache->exchangers[i] != NULL)
       xt_exchanger_delete(cache->exchangers[i]);
   free(cache->exchangers);
 
-  xt_redist_msgs_free(ntx, cache->msgs, comm);
+  free(cache->msgs);
   free(cache->src_displacements);
 }
 
@@ -243,6 +243,9 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
     = xmalloc(sizeof (*redist_coll)
               + size_all_component_dt + nmsg * sizeof (int));
   redist_coll->config = *config;
+  /* all mpi datatypes are created for the exclusive use by the
+   * underlying exchanger, no need for dup'ing them */
+  redist_coll->config.flags |= exch_no_dt_dup;
   redist_coll->nmsg[RECV] = nmsg_recv;
   redist_coll->nmsg[SEND] = nmsg_send;
   redist_coll->send_ranks
@@ -288,8 +291,6 @@ create_all_dt_for_dir(
   for (size_t i = 0; i < num_redists; ++i)
     block_lengths[i] = 1;
   for (size_t i = 0; i < num_messages; ++i) {
-    if (redist_msgs[i].datatype != MPI_DATATYPE_NULL)
-      xt_mpi_call(MPI_Type_free(&(redist_msgs[i].datatype)), comm);
     redist_msgs[i].datatype
       = xt_create_compound_datatype(num_redists, displacements,
                                     component_dt + i * num_redists,
@@ -394,8 +395,6 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
   {
     size_t nmsg = (size_t)num_send_messages + (size_t)num_recv_messages;
     struct Xt_redist_msg *restrict p = xmalloc(nmsg * sizeof (*p));
-    for (size_t i = 0; i < nmsg; ++i)
-      p[i].datatype = MPI_DATATYPE_NULL;
 
     create_all_dt_for_dir(num_send_messages, num_redists,
                           redist_coll->send_ranks,
@@ -411,7 +410,7 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
                                         p, p + (size_t)num_send_messages, comm,
                                         tag_offset, &redist_coll->config);
 
-    xt_redist_msgs_free(nmsg, p, comm);
+    free(p);
   }
 
   return exchanger;
@@ -536,8 +535,7 @@ redist_collection_delete(Xt_redist redist) {
   free_component_dt(nmsg * num_redists, redist_coll->all_component_dt,
                     redist_coll->comm);
 
-  destruct_cache(&redist_coll->cache, redist_coll->cache_size,
-                 nmsg, redist_coll->comm);
+  destruct_cache(&redist_coll->cache, redist_coll->cache_size);
 
   xt_mpi_comm_smart_dedup(&(redist_coll->comm), redist_coll->tag_offset);
 
