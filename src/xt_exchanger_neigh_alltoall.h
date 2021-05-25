@@ -73,7 +73,7 @@ Xt_exchanger
 xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg *send_msgs,
                                 const struct Xt_redist_msg *recv_msgs,
-                                MPI_Comm comm, int tag_offset);
+                                MPI_Comm comm, int tag_offset, Xt_config config);
 
 #endif // XT_EXCHANGER_NEIGH_ALLTOALL_H
 

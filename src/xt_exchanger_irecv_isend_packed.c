@@ -60,8 +60,8 @@ xt_exchanger_irecv_isend_packed_s_exchange(
   const void *src_data, void *dst_data,
   int nsend, int nrecv,
   const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
-  int tag_offset, MPI_Comm comm) {
-
+  int tag_offset, MPI_Comm comm)
+{
   enum { AUTO_ALLOC_SIZE = 32, };
   MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
   int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
@@ -182,8 +182,9 @@ Xt_exchanger
 xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
                                     const struct Xt_redist_msg *send_msgs,
                                     const struct Xt_redist_msg *recv_msgs,
-                                    MPI_Comm comm, int tag_offset) {
-
+                                    MPI_Comm comm, int tag_offset,
+                                    Xt_config config)
+{
   /** note: tag_offset + xt_mpi_tag_exchange_msg must not
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
@@ -191,7 +192,8 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
   return xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
                                       comm, tag_offset,
                                       xt_exchanger_irecv_isend_packed_s_exchange,
-                                      xt_exchanger_irecv_isend_packed_a_exchange);
+                                      xt_exchanger_irecv_isend_packed_a_exchange,
+                                      config);
 }
 
 /*

@@ -54,6 +54,7 @@
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+#include "xt_config_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
@@ -135,11 +136,14 @@ static void copy_from_redist_msgs(size_t n,
                                   const struct Xt_redist_msg *restrict msgs,
                                   int *restrict ranks,
                                   MPI_Datatype *restrict datatypes,
-                                  MPI_Comm comm) {
+                                  MPI_Comm comm, bool dt_dup) {
 
   for (size_t i = 0; i < n; ++i) {
     ranks[i] = msgs[i].rank;
-    xt_mpi_call(MPI_Type_dup(msgs[i].datatype, datatypes + i), comm);
+    if (dt_dup)
+      xt_mpi_call(MPI_Type_dup(msgs[i].datatype, datatypes + i), comm);
+    else
+      datatypes[i] = msgs[i].datatype;
   }
 }
 
@@ -147,8 +151,8 @@ Xt_exchanger
 xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg *send_msgs,
                                 const struct Xt_redist_msg *recv_msgs,
-                                MPI_Comm comm, int tag_offset) {
-
+                                MPI_Comm comm, int tag_offset, Xt_config config)
+{
   /** note: tag_offset + xt_mpi_tag_exchange_msg must not
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
@@ -166,11 +170,12 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
     = xt_exchanger_neigh_alltoall_alloc((size_t)nsend, (size_t)nrecv);
   exchanger->tag_offset = tag_offset;
   exchanger->nmsg[SEND] = nsend;
+  bool dt_dup = !(config->flags & exch_no_dt_dup);
   copy_from_redist_msgs((size_t)nsend, send_msgs, exchanger->ranks,
-                        exchanger->datatypes, comm);
+                        exchanger->datatypes, comm, dt_dup);
   exchanger->nmsg[RECV] = nrecv;
   copy_from_redist_msgs((size_t)nrecv, recv_msgs, exchanger->ranks + nsend,
-                        exchanger->datatypes + nsend, comm);
+                        exchanger->datatypes + nsend, comm, dt_dup);
 
   int reorder = 0; // no reordering of ranks in new comm
   xt_mpi_call(

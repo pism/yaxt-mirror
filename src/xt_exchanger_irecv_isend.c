@@ -48,6 +48,7 @@
 #endif
 
 #include "core/ppm_xfuncs.h"
+#include "xt_config_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_request_msgs.h"
 #include "xt_mpi_internal.h"
@@ -116,7 +117,8 @@ Xt_exchanger
 xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,
                              const struct Xt_redist_msg *recv_msgs,
-                             MPI_Comm comm, int tag_offset) {
+                             MPI_Comm comm, int tag_offset,
+                             Xt_config config) {
 
   /** note: tag_offset + xt_mpi_tag_exchange_msg must not
    *        be used on @a comm by any other part of the program during the
@@ -125,7 +127,8 @@ xt_exchanger_irecv_isend_new(int nsend, int nrecv,
   return xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
                                       comm, tag_offset,
                                       xt_exchanger_irecv_isend_s_exchange,
-                                      xt_exchanger_irecv_isend_a_exchange);
+                                      xt_exchanger_irecv_isend_a_exchange,
+                                      config);
 }
 
 

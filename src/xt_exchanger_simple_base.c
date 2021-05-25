@@ -54,6 +54,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
@@ -122,8 +123,9 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *recv_msgs,
                              MPI_Comm comm, int tag_offset,
                              xt_simple_s_exchange_func s_func,
-                             xt_simple_a_exchange_func a_func) {
-
+                             xt_simple_a_exchange_func a_func,
+                             Xt_config config)
+{
   /** note: tag_offset + xt_mpi_tag_exchange_msg must not
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
@@ -141,13 +143,14 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
   exchanger->tag_offset = tag_offset;
   exchanger->nmsg[SEND] = nsend;
   exchanger->nmsg[RECV] = nrecv;
+  bool dt_dup = !(config->flags & exch_no_dt_dup);
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
                               exchanger->msgs, sizeof (exchanger->msgs[0]),
-                              comm);
+                              comm, dt_dup);
   xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
                               exchanger->msgs + nsend,
                               sizeof (exchanger->msgs[0]),
-                              comm);
+                              comm, dt_dup);
   exchanger->s_func = s_func;
   exchanger->a_func = a_func;
 
@@ -181,7 +184,7 @@ xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
     *restrict orig_msgs = exchanger_sb->msgs;
   xt_redist_msgs_strided_copy(nmsg, orig_msgs, sizeof (*orig_msgs),
                               new_msgs, sizeof (*new_msgs),
-                              new_comm);
+                              new_comm, true);
   exchanger_copy->comm = new_comm;
   exchanger_copy->tag_offset = new_tag_offset;
   return (Xt_exchanger)exchanger_copy;

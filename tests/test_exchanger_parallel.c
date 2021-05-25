@@ -81,15 +81,15 @@ struct test_message {
 static Xt_exchanger_new *parse_options(int *argc, char ***argv);
 
 static void
-test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new);
+test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
 static void
-test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new);
+test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
 static void
-test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new);
+test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
 static void
-test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new);
+test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
 static void
-test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new);
+test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
 
 static int test_freq = 3;
 
@@ -102,20 +102,22 @@ int main(int argc, char **argv)
   xt_initialize(MPI_COMM_WORLD);
 
   Xt_exchanger_new *exchangers_new = parse_options(&argc, &argv);
+  Xt_config config = xt_config_new();
 
   for (size_t i = 0; exchangers_new[i] != (Xt_exchanger_new)0; ++i) {
     Xt_exchanger_new exchanger_new = exchangers_new[i];
 
-    test_bcast(MPI_COMM_WORLD, exchanger_new);
+    test_bcast(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_gather(MPI_COMM_WORLD, exchanger_new);
+    test_gather(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_all2all(MPI_COMM_WORLD, exchanger_new);
+    test_all2all(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_rr(MPI_COMM_WORLD, exchanger_new);
+    test_rr(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_intercomm_all2all(MPI_COMM_WORLD, exchanger_new);
+    test_intercomm_all2all(MPI_COMM_WORLD, exchanger_new, config);
   }
+  xt_config_delete(config);
   free(exchangers_new);
   xt_finalize();
   MPI_Finalize();
@@ -197,7 +199,7 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
 }
 
 static void
-test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new)
+test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -230,7 +232,7 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new)
     Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
                                            send_msgs,
                                            recv_msgs + (my_rank != i),
-                                           comm, 0);
+                                           comm, 0, config);
 
     // test
     int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
@@ -263,7 +265,7 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 }
 
 static void
-test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new)
+test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -305,7 +307,8 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new)
     Xt_exchanger exchanger[num_exchanges];
     for (size_t j = 0; j < num_exchanges; ++j)
       exchanger[j] = exchanger_new(nsend, (int)nrecv,
-                                   send_msgs, recv_msgs + j * nrecv, comm, 0);
+                                   send_msgs, recv_msgs + j * nrecv, comm, 0,
+                                   config);
 
     // test
     int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
@@ -349,7 +352,7 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 }
 
 static void
-test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
+test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -390,7 +393,7 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
       Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
                                              send_msgs,
                                              recv_msgs,
-                                             MPI_COMM_WORLD, 0);
+                                             MPI_COMM_WORLD, 0, config);
       // test
       int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
       for (int async = 0; async < 1 + test_async; ++async) {
@@ -432,7 +435,7 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 }
 
 static void
-test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new)
+test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -449,7 +452,7 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new)
       = {{.rank=(my_rank + comm_size - i)%comm_size, .datatype=MPI_INT}};
 
     Xt_exchanger exchanger = exchanger_new(nsend, nrecv, send_msgs,
-                                           recv_msgs, comm, 0);
+                                           recv_msgs, comm, 0, config);
 
     // test
     int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
@@ -479,7 +482,7 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new)
 }
 
 static void
-test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
+test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 {
 #if MPI_VERSION >= 3
   // inter-communicator's are not defined for virtual topologies, which are
@@ -536,7 +539,7 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new)
   Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
                                          send_msgs,
                                          recv_msgs,
-                                         inter_comm, 0);
+                                         inter_comm, 0, config);
   // test
   int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
   for (int async = 0; async < 1 + test_async; ++async) {

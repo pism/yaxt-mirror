@@ -54,6 +54,7 @@
 #include <stdbool.h>
 #include <mpi.h>
 
+#include "xt/xt_config.h"
 #include "xt/xt_core.h"
 #include "xt/xt_request.h"
 #include "xt_redist_internal.h"
@@ -159,7 +160,8 @@ typedef Xt_exchanger
 (*Xt_exchanger_new)(int nsend, int nrecv,
                     const struct Xt_redist_msg *send_msgs,
                     const struct Xt_redist_msg *recv_msgs,
-                    MPI_Comm comm, int tag_offset);
+                    MPI_Comm comm, int tag_offset,
+                    Xt_config config);
 
 #endif // XT_EXCHANGER_H
 /*

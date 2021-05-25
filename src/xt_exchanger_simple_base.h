@@ -51,6 +51,7 @@
 #endif
 
 #include "xt/xt_core.h"
+#include "xt/xt_config.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
 
@@ -75,6 +76,7 @@ typedef void (*xt_simple_a_exchange_func)(
  * @param[in] tag_offset tag
  * @param[in] s_func     function pointer used for synchronous exchanges
  * @param[in] a_func     function pointer used for asynchronous exchanges
+ * @param[in] config     optional customization parameters
  * @remark tag_offset + xt_mpi_tag_exchange_msg must not
  *         be used on @a comm by any other part of the program during the
  *         lifetime of the created exchanger object
@@ -85,7 +87,8 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *recv_msgs,
                              MPI_Comm comm, int tag_offset,
                              xt_simple_s_exchange_func s_func,
-                             xt_simple_a_exchange_func a_func);
+                             xt_simple_a_exchange_func a_func,
+                             Xt_config config);
 
 #endif // XT_EXCHANGER_SIMPLE_BASE_H
 

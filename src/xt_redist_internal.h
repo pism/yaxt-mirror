@@ -89,7 +89,7 @@ xt_redist_msgs_strided_copy(size_t n,
                             size_t src_stride,
                             struct Xt_redist_msg *restrict dst,
                             size_t dst_stride,
-                            MPI_Comm comm);
+                            MPI_Comm comm, bool dt_dup);
 
 PPM_DSO_INTERNAL void
 xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,

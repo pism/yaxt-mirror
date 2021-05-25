@@ -52,6 +52,7 @@
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+#include "xt_config_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_request_msgs.h"
 #include "xt_mpi_internal.h"
@@ -127,8 +128,9 @@ Xt_exchanger
 xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  const struct Xt_redist_msg *send_msgs,
                                  const struct Xt_redist_msg *recv_msgs,
-                                 MPI_Comm comm, int tag_offset) {
-
+                                 MPI_Comm comm, int tag_offset,
+                                 Xt_config config)
+{
   /** note: tag_offset + xt_mpi_tag_exchange_msg must not
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
@@ -141,12 +143,14 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
   exchanger->comm = comm;
   exchanger->tag_offset = tag_offset;
   struct mix_msg *restrict msgs = exchanger->msgs;
+  bool dt_dup = !(config->flags & exch_no_dt_dup);
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
-                              &(msgs[0].data), sizeof (msgs[0]), comm);
+                              &(msgs[0].data), sizeof (msgs[0]), comm, dt_dup);
   for (size_t i = 0; i < (size_t)nsend; ++i)
     msgs[i].type = SEND;
   xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
-                              &(msgs[nsend].data), sizeof (msgs[0]), comm);
+                              &(msgs[nsend].data), sizeof (msgs[0]), comm,
+                              dt_dup);
   for (size_t i = 0; i < (size_t)nrecv; ++i)
     msgs[i + (size_t)nsend].type = RECV;
 
@@ -181,7 +185,7 @@ xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
     *restrict orig_msgs = exchanger_msr->msgs;
   xt_redist_msgs_strided_copy(nmsg, &orig_msgs->data, sizeof (*orig_msgs),
                               &new_msgs->data, sizeof (*new_msgs),
-                              new_comm);
+                              new_comm, true);
   for (size_t i = 0; i < nmsg; ++i)
     new_msgs[i].type = orig_msgs[i].type;
   return (Xt_exchanger)exchanger_copy;

@@ -67,6 +67,7 @@
 struct Xt_config_ xt_default_config = {
   .exchanger_new = xt_exchanger_mix_isend_irecv_new,
   .idxv_cnv_size = CHEAP_VECTOR_SIZE,
+  .flags = 0,
 };
 
 Xt_config xt_config_new(void)

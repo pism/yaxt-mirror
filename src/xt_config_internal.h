@@ -48,12 +48,19 @@
 #include <config.h>
 #endif
 
+#include <stdint.h>
+
 #include <mpi.h>
 
 #include "core/ppm_visibility.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_config.h"
 #include "xt_exchanger.h"
+
+enum xt_config_flags {
+  exch_no_dt_dup = (1 << 0),
+};
+
 
 struct Xt_config_ {
   /**
@@ -65,6 +72,9 @@ struct Xt_config_ {
    * into another representation to save on computation/memory overall
    */
   int idxv_cnv_size;
+  /**
+   * binary combination of xt_config_flags */
+  int32_t flags;
 };
 
 extern struct Xt_config_ xt_default_config;

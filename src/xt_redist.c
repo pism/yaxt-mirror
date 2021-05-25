@@ -139,7 +139,7 @@ xt_redist_msgs_strided_copy(size_t n,
                             size_t src_stride,
                             struct Xt_redist_msg *restrict dst,
                             size_t dst_stride,
-                            MPI_Comm comm) {
+                            MPI_Comm comm, bool dt_dup) {
 
 
   const unsigned char *restrict src_store = (const unsigned char *)src;
@@ -150,7 +150,10 @@ xt_redist_msgs_strided_copy(size_t n,
     struct Xt_redist_msg *dst_msg
       = (struct Xt_redist_msg *)(void *)(dst_store + i * dst_stride);
     dst_msg->rank = src_msg->rank;
-    xt_mpi_call(MPI_Type_dup(src_msg->datatype, &(dst_msg->datatype)), comm);
+    if (dt_dup)
+      xt_mpi_call(MPI_Type_dup(src_msg->datatype, &(dst_msg->datatype)), comm);
+    else
+      dst_msg->datatype = src_msg->datatype;
   }
 }
 

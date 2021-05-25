@@ -144,7 +144,7 @@ struct Xt_redist_collection_ {
 
   size_t cache_size;
 
-  Xt_exchanger_new exchanger_new;
+  struct Xt_config_ config;
   MPI_Comm comm;
   int tag_offset;
 
@@ -242,7 +242,7 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   Xt_redist_collection redist_coll
     = xmalloc(sizeof (*redist_coll)
               + size_all_component_dt + nmsg * sizeof (int));
-  redist_coll->exchanger_new = config->exchanger_new;
+  redist_coll->config = *config;
   redist_coll->nmsg[RECV] = nmsg_recv;
   redist_coll->nmsg[SEND] = nmsg_send;
   redist_coll->send_ranks
@@ -379,11 +379,12 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
         xt_exchanger_delete(cache->exchangers[cache_index]);
 
       exchanger = cache->exchangers[cache_index] =
-        redist_coll->exchanger_new((int)num_send_messages,
-                                   (int)num_recv_messages,
-                                   cache->msgs, cache->msgs
-                                   + (size_t)num_send_messages,
-                                   comm, tag_offset);
+        redist_coll->config.exchanger_new((int)num_send_messages,
+                                          (int)num_recv_messages,
+                                          cache->msgs, cache->msgs
+                                          + (size_t)num_send_messages,
+                                          comm, tag_offset,
+                                          &redist_coll->config);
       cache->token = (cache->token + 1) % cache_size;
     }
     else
@@ -405,9 +406,10 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
                           displacements[1], p + num_send_messages, comm);
 
     exchanger =
-      redist_coll->exchanger_new((int)num_send_messages, (int)num_recv_messages,
-                                 p, p + (size_t)num_send_messages, comm,
-                                 tag_offset);
+      redist_coll->config.exchanger_new((int)num_send_messages,
+                                        (int)num_recv_messages,
+                                        p, p + (size_t)num_send_messages, comm,
+                                        tag_offset, &redist_coll->config);
 
     xt_redist_msgs_free(nmsg, p, comm);
   }
@@ -495,7 +497,7 @@ redist_collection_copy(Xt_redist redist)
               + size_all_component_dt + nmsg * sizeof (int));
   redist_copy->vtable = redist_coll->vtable;
   redist_copy->num_redists = num_redists;
-  redist_copy->exchanger_new = redist_coll->exchanger_new;
+  redist_copy->config = redist_coll->config;
   redist_copy->nmsg[SEND] = nmsg_send;
   redist_copy->nmsg[RECV] = nmsg_recv;
   redist_copy->send_ranks
