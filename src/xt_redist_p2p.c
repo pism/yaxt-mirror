@@ -207,13 +207,25 @@ generate_ext_datatype(int num_transfer_pos_ext,
                       const struct Xt_pos_ext transfer_pos_ext[],
                       int num_ext, const struct Xt_offset_ext extents[],
                       const int psum_ext_size[],
+                      void **work_buf, size_t *work_buf_size,
                       MPI_Datatype base_datatype, MPI_Comm comm)
 {
   if (num_transfer_pos_ext > 0)
   {
-    size_t size_dt_stripes = 8, num_dt_stripes = 0;
-    struct Xt_offset_ext *dt_stripes
-      = xmalloc(size_dt_stripes * sizeof (*dt_stripes));
+    struct Xt_offset_ext *dt_stripes;
+    size_t size_dt_stripes, num_dt_stripes = 0;
+    enum
+    {
+      dt_stripes_init_size = 8,
+      dt_stripes_init_alloc = dt_stripes_init_size * sizeof (*dt_stripes),
+    };
+    if (*work_buf_size < dt_stripes_init_alloc) {
+      dt_stripes = xrealloc(*work_buf, dt_stripes_init_alloc);
+      size_dt_stripes = dt_stripes_init_size;
+    } else {
+      dt_stripes = *work_buf;
+      size_dt_stripes = *work_buf_size / sizeof (*dt_stripes);
+    }
     int i = 0,
       search_start_ext
       = pos2disp(transfer_pos_ext[0].start,
@@ -271,7 +283,8 @@ generate_ext_datatype(int num_transfer_pos_ext,
     MPI_Datatype type
       = xt_mpi_generate_datatype_stripe(dt_stripes, (int)num_dt_stripes,
                                         base_datatype, comm);
-    free(dt_stripes);
+    *work_buf = dt_stripes;
+    *work_buf_size = size_dt_stripes * sizeof (*dt_stripes);
     return type;
   }
   else
@@ -297,6 +310,9 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
     }
     psum_ext_size[num_ext] = accum;
 
+    void *buf = NULL;
+    size_t buf_size = 0;
+
     struct Xt_redist_msg *curr_msg = msgs;
     do {
 
@@ -309,6 +325,7 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
         = generate_ext_datatype(curr_num_transfer_pos_ext,
                                 curr_transfer_pos_ext,
                                 num_ext, extents, psum_ext_size,
+                                &buf, &buf_size,
                                 base_datatype, comm);
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
@@ -316,6 +333,7 @@ generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
 
     } while (xt_xmap_iterator_next(iter));
     free(psum_ext_size);
+    free(buf);
   }
 }
 
