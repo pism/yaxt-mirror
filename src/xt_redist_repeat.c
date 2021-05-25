@@ -134,9 +134,12 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
   generate_msg_infos(msgs+nmsg[0], dst_extent, dst_displacements,
                      redist, num_repetitions, comm, RECV);
 
+  struct Xt_config_ config_ = *config;
+  config_.flags |= exch_no_dt_dup;
+
   Xt_redist result = xt_redist_single_array_base_custom_new(
-    nmsg[SEND], nmsg[RECV], msgs, msgs+nmsg[SEND], comm, config);
-  xt_redist_msgs_free(num_messages, msgs, comm);
+    nmsg[SEND], nmsg[RECV], msgs, msgs+nmsg[SEND], comm, &config_);
+  free(msgs);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
