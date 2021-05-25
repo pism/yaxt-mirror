@@ -147,16 +147,20 @@ xt_redist_collection_static_custom_new(
     size_t ofs = i == 0 ? 0 : nmsg[SEND];
     const MPI_Aint *disp = i == 0 ? src_displacements : dst_displacements;
     generate_msg_infos(nmsg[i], num_redists_, msgs+ofs, disp, redists,
-                       num_ranks[i], (const int *restrict (*))ranks[i], new_comm,
-                       (enum xt_msg_direction)i);
+                       num_ranks[i], (const int *restrict (*))ranks[i],
+                       new_comm, (enum xt_msg_direction)i);
     free(ranks[i][0]);
   }
 
+  struct Xt_config_ config_ = *config;
+  config_.flags |= exch_no_dt_dup;
+
   Xt_redist redist_collection =
     xt_redist_single_array_base_custom_new(
-      (int)nmsg[SEND], (int)nmsg[RECV], msgs, msgs+nmsg[SEND], new_comm, config);
+      (int)nmsg[SEND], (int)nmsg[RECV], msgs, msgs+nmsg[SEND], new_comm,
+      &config_);
 
-  xt_redist_msgs_free(nmsg_sum, msgs, new_comm);
+  free(msgs);
   xt_mpi_comm_smart_dedup(&new_comm, tag_offset);
   return redist_collection;
 }
