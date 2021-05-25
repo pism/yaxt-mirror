@@ -151,10 +151,13 @@ xt_redist_p2p_off_custom_new(Xt_xmap xmap, const int *src_offsets,
                      comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
-  Xt_redist result = xt_redist_single_array_base_custom_new(
-    nsend, nrecv, send_msgs, recv_msgs, comm, config);
+  struct Xt_config_ config_ = *config;
+  config_.flags |= exch_no_dt_dup;
 
-  xt_redist_msgs_free(nmsg, msgs, comm);
+  Xt_redist result = xt_redist_single_array_base_custom_new(
+    nsend, nrecv, send_msgs, recv_msgs, comm, &config_);
+
+  free(msgs);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
@@ -359,10 +362,13 @@ xt_redist_p2p_ext_custom_new(Xt_xmap xmap,
                          datatype, send_msgs, comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
-  Xt_redist result = xt_redist_single_array_base_custom_new(
-    nsend, nrecv, send_msgs, recv_msgs, comm, config);
+  struct Xt_config_ config_ = *config;
+  config_.flags |= exch_no_dt_dup;
 
-  xt_redist_msgs_free(nmsg, msgs, comm);
+  Xt_redist result = xt_redist_single_array_base_custom_new(
+    nsend, nrecv, send_msgs, recv_msgs, comm, &config_);
+
+  free(msgs);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
@@ -512,11 +518,14 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
 
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
+  struct Xt_config_ config_ = *config;
+  config_.flags |= exch_no_dt_dup;
+
   Xt_redist result
     = xt_redist_single_array_base_custom_new(
-      nsend, nrecv, msgs+nrecv, msgs, comm, config);
+      nsend, nrecv, msgs+nrecv, msgs, comm, &config_);
 
-  xt_redist_msgs_free(nmsg, msgs, comm);
+  free(msgs);
   xt_mpi_comm_smart_dedup(&comm, tag_offset);
   return result;
 }
