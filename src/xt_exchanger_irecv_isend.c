@@ -56,13 +56,13 @@
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_simple_base.h"
 
-static void
-xt_exchanger_irecv_isend_s_exchange(const void *src_data, void *dst_data,
-                                    int nsend, int nrecv,
-                                    const struct Xt_redist_msg *send_msgs,
-                                    const struct Xt_redist_msg *recv_msgs,
-                                    int tag_offset, MPI_Comm comm) {
-
+static MPI_Request *
+redist_msgs_to_req(const void *src_data, void *dst_data,
+                   int nsend, int nrecv,
+                   const struct Xt_redist_msg *send_msgs,
+                   const struct Xt_redist_msg *recv_msgs,
+                   int tag_offset, MPI_Comm comm)
+{
   MPI_Request *requests
     = xmalloc((size_t)(nrecv + nsend) * sizeof (*requests));
 
@@ -77,9 +77,20 @@ xt_exchanger_irecv_isend_s_exchange(const void *src_data, void *dst_data,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+nrecv+i), comm);
+  return requests;
+}
 
+static void
+xt_exchanger_irecv_isend_s_exchange(const void *src_data, void *dst_data,
+                                    int nsend, int nrecv,
+                                    const struct Xt_redist_msg *send_msgs,
+                                    const struct Xt_redist_msg *recv_msgs,
+                                    int tag_offset, MPI_Comm comm) {
+
+  MPI_Request *requests = redist_msgs_to_req(src_data, dst_data, nsend, nrecv,
+                                             send_msgs, recv_msgs, tag_offset,
+                                             comm);
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
-
   free(requests);
 }
 
@@ -92,20 +103,8 @@ xt_exchanger_irecv_isend_a_exchange(const void *src_data, void *dst_data,
                                     Xt_request *request) {
 
   MPI_Request *tmp_requests
-    = xmalloc((size_t)(nrecv + nsend) * sizeof (*tmp_requests));
-
-  for (int i = 0; i < nrecv; ++i)
-    xt_mpi_call(MPI_Irecv(dst_data, 1, recv_msgs[i].datatype,
-                          recv_msgs[i].rank,
-                          tag_offset + xt_mpi_tag_exchange_msg, comm,
-                          tmp_requests+i), comm);
-
-  for (int i = 0; i < nsend; ++i)
-    xt_mpi_call(MPI_Isend(CAST_MPI_SEND_BUF(src_data), 1, send_msgs[i].datatype,
-                          send_msgs[i].rank,
-                          tag_offset + xt_mpi_tag_exchange_msg, comm,
-                          tmp_requests+nrecv+i), comm);
-
+    = redist_msgs_to_req(src_data, dst_data, nsend, nrecv,
+                         send_msgs, recv_msgs, tag_offset, comm);
   Xt_request requests = xt_request_msgs_new(nrecv + nsend, tmp_requests, comm);
 
   free(tmp_requests);
