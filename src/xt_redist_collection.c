@@ -334,14 +334,14 @@ lookup_cache_index(unsigned num_redists,
 
 static Xt_exchanger
 get_exchanger(struct Xt_redist_collection_ *redist_coll,
-              const void *const * src_data, void *const * dst_data,
+              const void *const * src_data, const void *const * dst_data,
               unsigned num_redists)
 {
   MPI_Aint displacements[2][num_redists];
   unsigned num_send_messages = redist_coll->nmsg[SEND],
     num_recv_messages = redist_coll->nmsg[RECV];
   compute_displ(src_data, num_redists, displacements[0]);
-  compute_displ((const void *const *)dst_data, num_redists, displacements[1]);
+  compute_displ(dst_data, num_redists, displacements[1]);
 
   Xt_exchanger exchanger;
 
@@ -431,7 +431,8 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
 
 
   Xt_exchanger exchanger = get_exchanger(redist_coll,
-                                         src_data, dst_data,
+                                         src_data,
+                                         (const void *const (*))dst_data,
                                          redist_coll->num_redists);
 
   xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0]);
@@ -453,7 +454,8 @@ redist_collection_a_exchange(Xt_redist redist, int num_arrays,
 
 
   Xt_exchanger exchanger = get_exchanger(redist_coll,
-                                         src_data, dst_data,
+                                         src_data,
+                                         (const void *const (*))dst_data,
                                          redist_coll->num_redists);
 
   xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0], request);
