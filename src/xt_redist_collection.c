@@ -316,8 +316,7 @@ compute_displ(const void *const *data, unsigned num_redists,
 
 static size_t
 lookup_cache_index(unsigned num_redists,
-                   const MPI_Aint src_displacements[num_redists],
-                   const MPI_Aint dst_displacements[num_redists],
+                   const MPI_Aint displacements[2][num_redists],
                    const MPI_Aint (*cached_displacements)[2][num_redists],
                    size_t cache_size)
 {
@@ -325,9 +324,9 @@ lookup_cache_index(unsigned num_redists,
        cached_displacements[i][SEND][0] == (MPI_Aint)0 &&
        cached_displacements[i][RECV][0] == (MPI_Aint)0; ++i) {
     bool mismatch = false;
-    for (size_t j = 0; j < num_redists; ++j)
-      mismatch |= (src_displacements[j] != cached_displacements[i][SEND][j]) ||
-                  (dst_displacements[j] != cached_displacements[i][RECV][j]);
+    for (size_t d = 0; d < 2; ++d)
+      for (size_t j = 0; j < num_redists; ++j)
+        mismatch |= (displacements[d][j] != cached_displacements[i][d][j]);
     if (!mismatch) return i;
   }
   return cache_size;
@@ -354,8 +353,10 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
   if (cache_size > 0)
   {
     size_t cache_index
-      = lookup_cache_index(num_redists, displacements[0], displacements[1],
-                           (const MPI_Aint (*)[2][num_redists])cache->displacements,
+      = lookup_cache_index(num_redists,
+                           (const MPI_Aint (*)[num_redists])displacements,
+                           (const MPI_Aint (*)[2][num_redists])
+                           cache->displacements,
                            cache_size);
 
     if (cache_index == cache_size)
