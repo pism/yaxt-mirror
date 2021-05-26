@@ -124,7 +124,8 @@ static const struct xt_redist_vtable redist_collection_vtable = {
 struct exchanger_cache
 {
   size_t token;
-  MPI_Aint *src_displacements, *dst_displacements;
+  /* array structure: [cache_size][2][num_redists] */
+  MPI_Aint *displacements;
   Xt_exchanger * exchangers;
   struct Xt_redist_msg * msgs;
 };
@@ -195,9 +196,8 @@ init_cache(struct exchanger_cache *cache, size_t cache_size, size_t ntx,
   size_t num_displ = cache_size * num_redists;
   struct Xt_redist_msg *msgs = cache->msgs = xmalloc(ntx * sizeof (*msgs));
   for (size_t i = 0; i < ntx; ++i) msgs[i].datatype = MPI_DATATYPE_NULL;
-  MPI_Aint *restrict q = cache->src_displacements
+  MPI_Aint *restrict q = cache->displacements
     = xmalloc(2 * num_displ * sizeof (*q));
-  cache->dst_displacements = q + num_displ;
   for (size_t i = 0; i < 2 * num_displ; i += num_redists)
     q[i] = (MPI_Aint)-1;
   cache->token = 0;
@@ -213,7 +213,7 @@ destruct_cache(struct exchanger_cache *cache,
   free(cache->exchangers);
 
   free(cache->msgs);
-  free(cache->src_displacements);
+  free(cache->displacements);
 }
 
 Xt_redist xt_redist_collection_new(Xt_redist *redists, int num_redists,
@@ -318,17 +318,16 @@ static size_t
 lookup_cache_index(unsigned num_redists,
                    const MPI_Aint src_displacements[num_redists],
                    const MPI_Aint dst_displacements[num_redists],
-                   const MPI_Aint (*cached_src_displacements)[num_redists],
-                   const MPI_Aint (*cached_dst_displacements)[num_redists],
+                   const MPI_Aint (*cached_displacements)[2][num_redists],
                    size_t cache_size)
 {
   for (size_t i = 0; i < cache_size &&
-       cached_src_displacements[i][0] == (MPI_Aint)0 &&
-       cached_dst_displacements[i][0] == (MPI_Aint)0; ++i) {
+       cached_displacements[i][SEND][0] == (MPI_Aint)0 &&
+       cached_displacements[i][RECV][0] == (MPI_Aint)0; ++i) {
     bool mismatch = false;
     for (size_t j = 0; j < num_redists; ++j)
-      mismatch |= (src_displacements[j] != cached_src_displacements[i][j]) ||
-                  (dst_displacements[j] != cached_dst_displacements[i][j]);
+      mismatch |= (src_displacements[j] != cached_displacements[i][SEND][j]) ||
+                  (dst_displacements[j] != cached_displacements[i][RECV][j]);
     if (!mismatch) return i;
   }
   return cache_size;
@@ -356,8 +355,7 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
   {
     size_t cache_index
       = lookup_cache_index(num_redists, displacements[0], displacements[1],
-                           (const MPI_Aint (*)[num_redists])cache->src_displacements,
-                           (const MPI_Aint (*)[num_redists])cache->dst_displacements,
+                           (const MPI_Aint (*)[2][num_redists])cache->displacements,
                            cache_size);
 
     if (cache_index == cache_size)
@@ -371,10 +369,8 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
                             all_component_dt + num_send_messages * num_redists,
                             displacements[RECV],
                             cache->msgs + num_send_messages, comm);
-      memcpy(cache->src_displacements + cache_index * num_redists,
-             displacements[0], sizeof (displacements[0]));
-      memcpy(cache->dst_displacements + cache_index * num_redists,
-             displacements[1], sizeof (displacements[1]));
+      memcpy(cache->displacements + cache_index * 2 * num_redists,
+             displacements, sizeof (displacements));
 
       if (cache->exchangers[cache_index] != NULL)
         xt_exchanger_delete(cache->exchangers[cache_index]);
