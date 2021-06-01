@@ -291,8 +291,9 @@ xt_create_compound_datatype(size_t count,
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   if (num_datatypes != count && num_datatypes > max_auto_dt) {
-    free(datatypes_);
+    free(block_lengths_);
     free(displacements_);
+    free(datatypes_);
   }
 
   return datatype;
