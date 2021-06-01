@@ -272,9 +272,12 @@ xt_create_compound_datatype(size_t count,
 
   if (num_datatypes != count) {
     if (num_datatypes > max_auto_dt) {
-      datatypes_ = xmalloc(num_datatypes * sizeof(*datatypes_));
-      displacements_ = xmalloc(num_datatypes * sizeof(*displacements_));
-      block_lengths_ = xmalloc(num_datatypes * sizeof(*block_lengths_));
+      size_t buf_size = num_datatypes * sizeof(*datatypes_)
+        + num_datatypes * sizeof(*displacements_)
+        + num_datatypes * sizeof(*block_lengths_);
+      displacements_ = xmalloc(buf_size);
+      datatypes_ = (MPI_Datatype *)(displacements_ + num_datatypes);
+      block_lengths_ = (int *)(datatypes_ + num_datatypes);
     } else {
       datatypes_ = dt_auto;
       displacements_ = disp_auto;
@@ -309,11 +312,8 @@ xt_create_compound_datatype(size_t count,
 
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
-  if (num_datatypes != count && num_datatypes > max_auto_dt) {
-    free(block_lengths_);
+  if (num_datatypes != count && num_datatypes > max_auto_dt)
     free(displacements_);
-    free(datatypes_);
-  }
 
   return datatype;
 }
