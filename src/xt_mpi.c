@@ -559,15 +559,10 @@ gen_fallback_type(size_t set_start, size_t set_end,
   }
 
   if (n==1 && d[0] == 0) {
-    // At the moment we disable the embed aspect that was used to avoid MPI_Type_dup.
-    // It turned out this creates more complexity when freeing the intermediate datatypes in the callin function.
-    // maybe we just forget the whole idea - then we can also remove the embed logic here.
-    //if (embed)
-    //  *dt = old_type;
-    //else
-    xt_mpi_call(MPI_Type_dup(old_type, dt), Xt_default_comm);
+    *dt = old_type;
   } else {
-    xt_mpi_call(MPI_Type_create_indexed_block(n, 1, d, old_type, dt), Xt_default_comm);
+    xt_mpi_call(MPI_Type_create_indexed_block(n, 1, d, old_type, dt),
+                Xt_default_comm);
   }
   free(d);
 
@@ -616,6 +611,8 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
   MPI_Datatype result_dt;
   if (wlen == 1 ) {
     assert(wdisp[0] == 0);
+    if (wdt[0] == old_type)
+      xt_mpi_call(MPI_Type_dup(old_type, wdt), Xt_default_comm);
     result_dt = wdt[0];
   } else {
     MPI_Aint old_type_lb, old_type_extent;
@@ -633,7 +630,8 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
     free(wblocklength);
     free(wbdisp);
     for (size_t i = 0; i < wlen; i++)
-      xt_mpi_call(MPI_Type_free(wdt+i), Xt_default_comm);
+      if (wdt[i] != old_type)
+        xt_mpi_call(MPI_Type_free(wdt+i), Xt_default_comm);
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), Xt_default_comm);
   free(wdt);
