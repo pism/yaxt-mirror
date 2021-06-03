@@ -68,8 +68,6 @@ enum xt_mpi_tags {
 };
 
 
-extern int xt_mpi_comm_internal_keyval;
-
 PPM_DSO_INTERNAL void
 xt_mpi_init(void);
 PPM_DSO_INTERNAL void

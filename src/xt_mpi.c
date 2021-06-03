@@ -680,7 +680,7 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
 }
 
 /* functions to handle optimizations on communicators */
-int xt_mpi_comm_internal_keyval;
+static int xt_mpi_comm_internal_keyval;
 
 typedef unsigned long used_map_elem;
 
