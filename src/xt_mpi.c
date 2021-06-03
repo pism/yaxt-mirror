@@ -70,10 +70,11 @@
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
-                                       int count, MPI_Datatype old_type);
+                                       int count, MPI_Datatype old_type,
+                                       MPI_Comm comm);
 static MPI_Datatype
 xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
-                                 MPI_Datatype old_type);
+                                 MPI_Datatype old_type, MPI_Comm comm);
 
 
 //taken from http://beige.ucs.indiana.edu/I590/node85.html
@@ -230,8 +231,8 @@ xt_mpi_generate_datatype_block(const int *displacements,
                                MPI_Comm comm) {
 
 #ifdef COMPACT_DT
-  (void)comm;
-  return xt_mpi_generate_compact_datatype_block(displacements, blocklengths, count, old_type);
+  return xt_mpi_generate_compact_datatype_block(displacements, blocklengths,
+                                                count, old_type, comm);
 #else
   MPI_Datatype datatype;
 
@@ -267,8 +268,7 @@ xt_mpi_generate_datatype(int const * displacements, int count,
     return MPI_DATATYPE_NULL;
 
 #ifdef COMPACT_DT
-  (void)comm;
-  return xt_mpi_generate_compact_datatype(displacements, count, old_type);
+  return xt_mpi_generate_compact_datatype(displacements, count, old_type, comm);
 #else
   int * blocklengths = xmalloc((size_t)count * sizeof(*blocklengths));
   int new_count = 0;
@@ -372,7 +372,8 @@ scan_stripe(const int *disp, size_t disp_len, struct Xt_offset_ext *restrict v)
 
 static int
 match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
-                 MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
+                 MPI_Datatype old_type, int *disp, MPI_Datatype *dt,
+                 MPI_Comm comm) {
   // we only accept non-trivial matches (nsteps>2) with stride /= 1
   // using only one vector from v
   size_t p = *pstart_;
@@ -386,8 +387,7 @@ match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   *disp = vlen > 1 ? v[p].start : 0;
 
   MPI_Datatype dt1;
-  xt_mpi_call(MPI_Type_vector(nstrides, 1, stride, old_type, &dt1),
-              Xt_default_comm);
+  xt_mpi_call(MPI_Type_vector(nstrides, 1, stride, old_type, &dt1), comm);
 
   int start = v[p].start - *disp;
   if (!start) {
@@ -396,15 +396,15 @@ match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
     // (start != 0) => add offset:
     MPI_Aint old_type_size, old_type_lb;
     xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                    &old_type_size), Xt_default_comm);
+                                    &old_type_size), comm);
 
     MPI_Aint displacement = start * old_type_size;
     int bl2 = 1;
     MPI_Datatype dt2;
     xt_mpi_call(MPI_Type_create_hindexed(1, &bl2, &displacement, dt1, &dt2),
-                Xt_default_comm);
+                comm);
 
-    xt_mpi_call(MPI_Type_free(&dt1), Xt_default_comm);
+    xt_mpi_call(MPI_Type_free(&dt1), comm);
 
     *dt = dt2;
   }
@@ -416,7 +416,8 @@ match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
  */
 static bool
 match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
-                MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
+                MPI_Datatype old_type, int *disp, MPI_Datatype *dt,
+                MPI_Comm comm) {
   // using at least 3 vectors
   size_t p = *pstart_, pstart = p;
   if (p+2 >= vlen || v[p].stride != 1 || v[p+1].stride != 1 ) return 0;
@@ -436,8 +437,7 @@ match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   *disp = n == vlen ? 0 : v[pstart].start;
 
   MPI_Datatype dt1;
-  xt_mpi_call(MPI_Type_vector((int)n, bl, vstride, old_type, &dt1),
-              Xt_default_comm);
+  xt_mpi_call(MPI_Type_vector((int)n, bl, vstride, old_type, &dt1), comm);
 
   int start = v[pstart].start - *disp;
 
@@ -448,14 +448,14 @@ match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
     // (start != 0) => add offset:
     MPI_Aint old_type_size, old_type_lb;
     xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                    &old_type_size), Xt_default_comm);
+                                    &old_type_size), comm);
 
     MPI_Aint displacement = start * old_type_size;
     int bl2 = 1;
     MPI_Datatype dt2;
     xt_mpi_call(MPI_Type_create_hindexed(1, &bl2, &displacement, dt1, &dt2),
-                Xt_default_comm);
-    xt_mpi_call(MPI_Type_free(&dt1), Xt_default_comm);
+                comm);
+    xt_mpi_call(MPI_Type_free(&dt1), comm);
     *dt = dt2;
   }
   return n != 0;
@@ -463,17 +463,18 @@ match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
 
 static bool
 match_contiguous(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
-                 MPI_Datatype old_type, int *restrict disp, MPI_Datatype *dt) {
+                 MPI_Datatype old_type, int *restrict disp, MPI_Datatype *dt,
+                 MPI_Comm comm) {
   size_t p = *pstart_;
   if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return 0;
 
   int d = v[p].start - (*disp = vlen > 1 ? v[p].start : 0);
 
   if (!d)
-    xt_mpi_call(MPI_Type_contiguous(v[p].size, old_type, dt), Xt_default_comm) ;
+    xt_mpi_call(MPI_Type_contiguous(v[p].size, old_type, dt), comm) ;
   else
     xt_mpi_call(MPI_Type_create_indexed_block(1, v[p].size, &d, old_type, dt),
-                Xt_default_comm);
+                comm);
 
   *pstart_ = p+1;
   return v[p].size != 0;
@@ -481,7 +482,8 @@ match_contiguous(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
 
 static bool
 match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
-              MPI_Datatype old_type, int *disp, MPI_Datatype *dt) {
+              MPI_Datatype old_type, int *disp, MPI_Datatype *dt,
+              MPI_Comm comm) {
   // we only accept non-trivial matches
   size_t p = *pstart_, pstart = p;
   if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return 0;
@@ -510,9 +512,9 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
 
   if (hom_bl) {
     xt_mpi_call(MPI_Type_create_indexed_block((int)n, bl0, d, old_type, dt),
-                Xt_default_comm);
+                comm);
   } else {
-    xt_mpi_call(MPI_Type_indexed((int)n, bl, d, old_type, dt), Xt_default_comm);
+    xt_mpi_call(MPI_Type_indexed((int)n, bl, d, old_type, dt), comm);
   }
 
   *pstart_ = p;
@@ -525,7 +527,7 @@ static int
 gen_fallback_type(size_t set_start, size_t set_end,
                   const struct Xt_offset_ext *v,
                   size_t vlen, MPI_Datatype old_type, int *offset,
-                  MPI_Datatype *dt) {
+                  MPI_Datatype *dt, MPI_Comm comm) {
   size_t ia = set_start;
   size_t ib = set_end;
   if (ib <= ia || ib > vlen) return 0;
@@ -562,7 +564,7 @@ gen_fallback_type(size_t set_start, size_t set_end,
     *dt = old_type;
   } else {
     xt_mpi_call(MPI_Type_create_indexed_block(n, 1, d, old_type, dt),
-                Xt_default_comm);
+                comm);
   }
   free(d);
 
@@ -570,7 +572,9 @@ gen_fallback_type(size_t set_start, size_t set_end,
 }
 
 static MPI_Datatype
-parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) {
+parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type,
+             MPI_Comm comm)
+{
   /* [set_start,set_end) describes the prefix of non-matching
    * elements in v that then need to be handled with gen_fallback_type */
   size_t set_start = 0, set_end = 0;
@@ -586,14 +590,15 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
      * and displacement corresponding to a match need to be written
      * to wdt[m+1] and wdisp[m+1] or wdt[m] and wdisp[m] respectively */
     size_t mm = m + (set_start < set_end);
-    if ( match_block_vec(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ||
-         match_indexed(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ||
-         match_simple_vec(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ||
-         match_contiguous(&p, v, vlen, old_type, wdisp+mm, wdt+mm) ) {
+    if ( match_block_vec(&p, v, vlen, old_type, wdisp+mm, wdt+mm, comm) ||
+         match_indexed(&p, v, vlen, old_type, wdisp+mm, wdt+mm, comm) ||
+         match_simple_vec(&p, v, vlen, old_type, wdisp+mm, wdt+mm, comm) ||
+         match_contiguous(&p, v, vlen, old_type, wdisp+mm, wdt+mm, comm) ) {
       /* in case a match is found generate fallback datatype for
        * non-matching, preceding extents */
       if (set_start < set_end) {
-        gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m);
+        gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m,
+                          comm);
         m++;
       }
       m++;
@@ -604,7 +609,8 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
     }
   }
   if (set_start <  set_end) {
-    gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m);
+    gen_fallback_type(set_start, set_end, v, vlen, old_type, wdisp+m, wdt+m,
+                      comm);
     m++;
   }
   size_t wlen = m;
@@ -612,7 +618,7 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
   if (wlen == 1 ) {
     assert(wdisp[0] == 0);
     if (wdt[0] == old_type)
-      xt_mpi_call(MPI_Type_dup(old_type, wdt), Xt_default_comm);
+      xt_mpi_call(MPI_Type_dup(old_type, wdt), comm);
     result_dt = wdt[0];
   } else {
     MPI_Aint old_type_lb, old_type_extent;
@@ -620,20 +626,20 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
     int *restrict wblocklength
       = xmalloc((size_t)wlen * sizeof (*wblocklength));;
     xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                    &old_type_extent), Xt_default_comm);
+                                    &old_type_extent), comm);
     for(size_t i=0; i<wlen; i++) {
       wbdisp[i] = wdisp[i] * old_type_extent;
       wblocklength[i] = 1;
     }
     xt_mpi_call(MPI_Type_create_struct((int)wlen, wblocklength, wbdisp,
-                                       wdt, &result_dt), Xt_default_comm);
+                                       wdt, &result_dt), comm);
     free(wblocklength);
     free(wbdisp);
     for (size_t i = 0; i < wlen; i++)
       if (wdt[i] != old_type)
-        xt_mpi_call(MPI_Type_free(wdt+i), Xt_default_comm);
+        xt_mpi_call(MPI_Type_free(wdt+i), comm);
   }
-  xt_mpi_call(MPI_Type_commit(&result_dt), Xt_default_comm);
+  xt_mpi_call(MPI_Type_commit(&result_dt), comm);
   free(wdt);
   return result_dt;
 }
@@ -641,17 +647,18 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
 MPI_Datatype
 xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
                                 int count, MPI_Datatype old_type,
-                                MPI_Comm XT_UNUSED(comm))
+                                MPI_Comm comm)
 {
   if (count < 1) return MPI_DATATYPE_NULL;
-  return parse_stripe(v, (size_t)count, old_type);
+  return parse_stripe(v, (size_t)count, old_type, comm);
 }
 
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
-                                       int count, MPI_Datatype old_type) {
-
+                                       int count, MPI_Datatype old_type,
+                                       MPI_Comm comm)
+{
   if (count < 1) return MPI_DATATYPE_NULL;
   struct Xt_offset_ext *restrict v = xmalloc(sizeof(*v) * (size_t)count);
   for (size_t i=0; i<(size_t)count; ++i) {
@@ -659,20 +666,20 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
     v[i].stride = 1;
     v[i].size = blocklengths[i];
   }
-  MPI_Datatype dt = parse_stripe(v, (size_t)count, old_type);
+  MPI_Datatype dt = parse_stripe(v, (size_t)count, old_type, comm);
   free(v);
   return dt;
 }
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
-                                 MPI_Datatype old_type) {
-
+                                 MPI_Datatype old_type, MPI_Comm comm)
+{
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
   struct Xt_offset_ext *v = xmalloc(sizeof(*v) * (size_t)disp_len);
   size_t vlen = scan_stripe(disp, (size_t)disp_len, v);
-  MPI_Datatype dt = parse_stripe(v, vlen, old_type);
+  MPI_Datatype dt = parse_stripe(v, vlen, old_type, comm);
   free(v);
   return dt;
 }
