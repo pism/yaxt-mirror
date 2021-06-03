@@ -579,8 +579,9 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
   /* [set_start,set_end) describes the prefix of non-matching
    * elements in v that then need to be handled with gen_fallback_type */
   size_t set_start = 0, set_end = 0;
-  MPI_Datatype *restrict wdt = xmalloc(sizeof(*wdt) * (size_t)vlen);
-  int *restrict wdisp = xmalloc(sizeof (*wdisp) * (size_t)vlen);
+  MPI_Datatype *restrict wdt = xmalloc(sizeof(*wdt) * (size_t)vlen
+    + sizeof (int) * (size_t)vlen);
+  int *restrict wdisp = (int *)(wdt + vlen);
   /* [p,vlen) is the part of v that still needs matching performed */
   /* m is the index of the next datatype and displacements to write
    * to wdt and wdisp respectively */
@@ -636,7 +637,6 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type) 
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), Xt_default_comm);
   free(wdt);
-  free(wdisp);
   return result_dt;
 }
 
