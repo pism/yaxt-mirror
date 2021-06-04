@@ -419,9 +419,9 @@ match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
                 MPI_Comm comm) {
   // using at least 3 vectors
   size_t p = *pstart_, pstart = p;
-  if (p+2 >= vlen || v[p].stride != 1 || v[p+1].stride != 1 ) return 0;
+  if (p+2 >= vlen || v[p].stride != 1 || v[p+1].stride != 1 ) return false;
   int bl = v[p].size;
-  if (bl < 1 || v[p+1].size != bl) return 0;
+  if (bl < 1 || v[p+1].size != bl) return false;
 
   int vstride = v[p+1].start - v[p].start;
 
@@ -463,7 +463,7 @@ match_contiguous(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
                  MPI_Aint *restrict disp, MPI_Datatype *dt,
                  MPI_Comm comm) {
   size_t p = *pstart_;
-  if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return 0;
+  if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return false;
 
   int disp_ = vlen > 1 ? v[p].start : 0;
   *disp = disp_ * old_type_extent;
@@ -486,7 +486,7 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
               MPI_Comm comm) {
   // we only accept non-trivial matches
   size_t p = *pstart_, pstart = p;
-  if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return 0;
+  if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return false;
 
   do
     ++p;
