@@ -572,7 +572,7 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type,
    * to wdt and wdisp respectively */
   size_t p = 0, m = 0;
   while (p<vlen) {
-    /* depending on wether there is a non-empty prefix, the datatype
+    /* depending on whether there is a non-empty prefix, the datatype
      * and displacement corresponding to a match need to be written
      * to wdt[m+1] and wdisp[m+1] or wdt[m] and wdisp[m] respectively */
     size_t mm = m + (set_start < set_end);
