@@ -511,7 +511,7 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   return n != 0;
 }
 
-static int
+static void
 gen_fallback_type(size_t set_start, size_t set_end,
                   const struct Xt_offset_ext *v, size_t vlen,
                   MPI_Datatype old_type, MPI_Aint old_type_extent,
@@ -519,13 +519,13 @@ gen_fallback_type(size_t set_start, size_t set_end,
                   MPI_Datatype *dt, MPI_Comm comm) {
   size_t ia = set_start;
   size_t ib = set_end;
-  if (ib <= ia || ib > vlen) return 0;
+  if (ib <= ia || ib > vlen) return;
 
   int n = 0;
   for (size_t i=ia; i < ib; i++)
     n += v[i].size;
 
-  if (n<1) return 0;
+  if (n<1) return;
 
   // generate absolute datatype if ia == 0 && ib == vlen,
   // else generate relative datatype that gets embedded by the caller
@@ -551,8 +551,6 @@ gen_fallback_type(size_t set_start, size_t set_end,
                 comm);
   }
   free(d);
-
-  return n;
 }
 
 static MPI_Datatype
