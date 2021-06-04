@@ -370,7 +370,7 @@ scan_stripe(const int *disp, size_t disp_len, struct Xt_offset_ext *restrict v)
   return i;
 }
 
-static int
+static bool
 match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
                  MPI_Datatype old_type, MPI_Aint old_type_extent,
                  MPI_Aint *disp, MPI_Datatype *dt,
@@ -378,10 +378,10 @@ match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   // we only accept non-trivial matches (nsteps>2) with stride /= 1
   // using only one vector from v
   size_t p = *pstart_;
-  if (p >= vlen) return 0;
+  if (p >= vlen) return false;
   int nstrides = v[p].size;
   int stride = v[p].stride;
-  if (nstrides < 2 || stride == 1 ) return 0;
+  if (nstrides < 2 || stride == 1 ) return false;
 
   *pstart_ = p + 1;
 
@@ -406,7 +406,7 @@ match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
 
     *dt = dt2;
   }
-  return nstrides;
+  return nstrides != 0;
 }
 
 /**
