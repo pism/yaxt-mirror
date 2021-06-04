@@ -388,23 +388,17 @@ match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   int disp_ = vlen > 1 ? v[p].start : 0;
   *disp = disp_ * old_type_extent;
 
-  MPI_Datatype dt1;
-  xt_mpi_call(MPI_Type_vector(nstrides, 1, stride, old_type, &dt1), comm);
+  xt_mpi_call(MPI_Type_vector(nstrides, 1, stride, old_type, dt), comm);
 
   int start = v[p].start - disp_;
-  if (!start) {
-    *dt = dt1;
-  } else {
+  if (start) {
+    MPI_Datatype dt1 = *dt;
+
     // (start != 0) => add offset:
     MPI_Aint displacement = start * old_type_extent;
-    int bl2 = 1;
-    MPI_Datatype dt2;
-    xt_mpi_call(MPI_Type_create_hindexed(1, &bl2, &displacement, dt1, &dt2),
+    xt_mpi_call(MPI_Type_create_hindexed(1, &(int){1}, &displacement, dt1, dt),
                 comm);
-
     xt_mpi_call(MPI_Type_free(&dt1), comm);
-
-    *dt = dt2;
   }
   return nstrides != 0;
 }
@@ -432,27 +426,22 @@ match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   }
   size_t n = p - pstart;
   if (n<3) return false;
+  *pstart_ = p;
 
   int disp_ = n == vlen ? 0 : v[pstart].start;
   *disp = disp_ * old_type_extent;
 
-  MPI_Datatype dt1;
-  xt_mpi_call(MPI_Type_vector((int)n, bl, vstride, old_type, &dt1), comm);
+  xt_mpi_call(MPI_Type_vector((int)n, bl, vstride, old_type, dt), comm);
 
   int start = v[pstart].start - disp_;
 
-  *pstart_ = p;
-  if (!start) {
-    *dt = dt1;
-  } else {
+  if (start) {
+    MPI_Datatype dt1 = *dt;
     // (start != 0) => add offset:
     MPI_Aint displacement = start * old_type_extent;
-    int bl2 = 1;
-    MPI_Datatype dt2;
-    xt_mpi_call(MPI_Type_create_hindexed(1, &bl2, &displacement, dt1, &dt2),
+    xt_mpi_call(MPI_Type_create_hindexed(1, &(int){1}, &displacement, dt1, dt),
                 comm);
     xt_mpi_call(MPI_Type_free(&dt1), comm);
-    *dt = dt2;
   }
   return n != 0;
 }
@@ -495,6 +484,7 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   size_t n = p - pstart;
 
   if (n < 2) return false;
+  *pstart_ = p;
 
   int start = n == vlen ? 0 : v[pstart].start;
   *disp = start * old_type_extent;
@@ -516,8 +506,6 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   } else {
     xt_mpi_call(MPI_Type_indexed((int)n, bl, d, old_type, dt), comm);
   }
-
-  *pstart_ = p;
 
   free(bl);
   return n != 0;
