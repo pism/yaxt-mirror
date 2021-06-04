@@ -632,8 +632,23 @@ xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
                                 int count, MPI_Datatype old_type,
                                 MPI_Comm comm)
 {
-  if (count < 1) return MPI_DATATYPE_NULL;
-  return parse_stripe(v, (size_t)count, old_type, comm);
+  size_t count_ = (size_t)0;
+  for (int i=0; i<count; ++i)
+    count_ += (size_t)(v[i].size > 0);
+  if (count_ < 1) return MPI_DATATYPE_NULL;
+  struct Xt_offset_ext *v_comp;
+  if ((size_t)count != count_) {
+    v_comp = xmalloc(count_ * sizeof (*v_comp));
+    for (size_t i=0, j=0; i<(size_t)count; ++i) {
+      v_comp[j] = v[i];
+      j+= v[i].size > 0;
+    }
+  } else
+    v_comp = (struct Xt_offset_ext *)v;
+  MPI_Datatype dt = parse_stripe(v_comp, count_, old_type, comm);
+  if ((size_t)count != count_)
+    free(v_comp);
+  return dt;
 }
 
 
@@ -642,14 +657,20 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type,
                                        MPI_Comm comm)
 {
-  if (count < 1) return MPI_DATATYPE_NULL;
-  struct Xt_offset_ext *restrict v = xmalloc(sizeof(*v) * (size_t)count);
+  size_t count_ = (size_t)0;
+  for (int i=0; i<count; ++i)
+    count_ += (size_t)(blocklengths[i] > 0);
+  if (count_ < 1) return MPI_DATATYPE_NULL;
+  struct Xt_offset_ext *restrict v = xmalloc(sizeof(*v) * count_);
+  size_t j=0;
   for (size_t i=0; i<(size_t)count; ++i) {
-    v[i].start = disp[i];
-    v[i].stride = 1;
-    v[i].size = blocklengths[i];
+    v[j].start = disp[i];
+    v[j].stride = 1;
+    int bl = blocklengths[i];
+    v[j].size = bl;
+    j += (size_t)(bl > 0);
   }
-  MPI_Datatype dt = parse_stripe(v, (size_t)count, old_type, comm);
+  MPI_Datatype dt = parse_stripe(v, count_, old_type, comm);
   free(v);
   return dt;
 }
