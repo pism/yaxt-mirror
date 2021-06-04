@@ -613,9 +613,8 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type,
   } else {
     int *restrict wblocklength
       = xmalloc((size_t)wlen * sizeof (*wblocklength));
-    for(size_t i=0; i<wlen; i++) {
+    for(size_t i=0; i<wlen; i++)
       wblocklength[i] = 1;
-    }
     xt_mpi_call(MPI_Type_create_struct((int)wlen, wblocklength, wdisp,
                                        wdt, &result_dt), comm);
     free(wblocklength);
