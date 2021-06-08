@@ -415,7 +415,8 @@ match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
   size_t p = *pstart_, pstart = p;
   if (p+2 >= vlen || v[p].stride != 1 || v[p+1].stride != 1 ) return false;
   int bl = v[p].size;
-  if (bl < 1 || v[p+1].size != bl) return false;
+  assert(bl > 0);
+  if (v[p+1].size != bl) return false;
 
   int vstride = v[p+1].start - v[p].start;
 
@@ -525,7 +526,9 @@ gen_fallback_type(size_t set_start, size_t set_end,
   for (size_t i=ia; i < ib; i++)
     n += v[i].size;
 
-  if (n<1) return;
+  /* todo: given the guarantees for v that fceb584 introduced,
+   * this check should never fire */
+  assert(n>0);
 
   // generate absolute datatype if ia == 0 && ib == vlen,
   // else generate relative datatype that gets embedded by the caller
@@ -535,14 +538,22 @@ gen_fallback_type(size_t set_start, size_t set_end,
 
   int *restrict d = xmalloc(sizeof (*d) * (size_t)n);
   size_t p=0;
+#ifndef NDEBUG
+  /* did any element of v have non-positive size? */
+  bool found_np = false;
+#endif
 
   for (size_t i=ia; i < ib; i++) {
+#ifndef NDEBUG
+    found_np |= v[i].size <= 0;
+#endif
     size_t v_i_size = (size_t)(v[i].size > 0 ? v[i].size : 0);
     for (size_t k=0; k < v_i_size; k++) {
       d[p] = v[i].start + (int)k * v[i].stride - start;
       p++;
     }
   }
+  assert(!found_np);
 
   if (n==1 && d[0] == 0) {
     *dt = old_type;
