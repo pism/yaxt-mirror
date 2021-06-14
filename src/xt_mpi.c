@@ -595,7 +595,7 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type,
                             wdisp+mm, wdt+mm, comm)
         || match_contiguous(&p, v, vlen, old_type, old_type_extent,
                             wdisp+mm, wdt+mm, comm) ) {
-      /* in case a match is found generate fallback datatype for
+      /* in case a match is found, generate fallback datatype for
        * non-matching, preceding extents */
       if (set_start < set_end) {
         gen_fallback_type(set_start, set_end, v, vlen, old_type,
