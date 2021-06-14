@@ -623,12 +623,14 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type,
     result_dt = wdt[0];
   } else {
     int *restrict wblocklength
-      = xmalloc((size_t)wlen * sizeof (*wblocklength));
+      = wlen * sizeof (int) <= (vlen - wlen) * sizeof (*wdt)
+      ? (void *)(wdt + wlen) : xmalloc(wlen * sizeof (*wblocklength));
     for(size_t i=0; i<wlen; i++)
       wblocklength[i] = 1;
     xt_mpi_call(MPI_Type_create_struct((int)wlen, wblocklength, wdisp,
                                        wdt, &result_dt), comm);
-    free(wblocklength);
+    if (wlen * sizeof (int) > (vlen - wlen) * sizeof (*wdt))
+      free(wblocklength);
     for (size_t i = 0; i < wlen; i++)
       if (wdt[i] != old_type)
         xt_mpi_call(MPI_Type_free(wdt+i), comm);
