@@ -531,12 +531,23 @@ CONTAINS
     TYPE(c_ptr), INTENT(in) :: src_data_cptr(:), dst_data_cptr(:)
     INTEGER :: n
     INTEGER(c_int) :: num_ptr_c
+#if __INTEL_COMPILER == 1910 && __INTEL_COMPILER_UPDATE == 2
+    TYPE(c_ptr) :: contig_src_data_cptr(SIZE(src_data_cptr)), &
+         contig_dst_data_cptr(SIZE(dst_data_cptr))
+    contig_src_data_cptr = src_data_cptr
+    contig_dst_data_cptr = dst_data_cptr
+#endif
     n = SIZE(src_data_cptr)
     IF (n /= SIZE(dst_data_cptr) .OR. n > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(n, c_int)
+#if __INTEL_COMPILER == 1910 && __INTEL_COMPILER_UPDATE == 2
+    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+         contig_src_data_cptr, contig_dst_data_cptr)
+#else
     CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr)
+#endif
   END SUBROUTINE xt_redist_s_exchange_a1d
 
   SUBROUTINE xt_redist_a_exchange_a1d(redist, src_data_cptr, dst_data_cptr, &
@@ -546,12 +557,23 @@ CONTAINS
     TYPE(xt_request), INTENT(out) :: request
     INTEGER :: num_ptr
     INTEGER(c_int) :: num_ptr_c
+#if __INTEL_COMPILER == 1910 && __INTEL_COMPILER_UPDATE == 2
+    TYPE(c_ptr) :: contig_src_data_cptr(SIZE(src_data_cptr)), &
+         contig_dst_data_cptr(SIZE(dst_data_cptr))
+    contig_src_data_cptr = src_data_cptr
+    contig_dst_data_cptr = dst_data_cptr
+#endif
     num_ptr = SIZE(src_data_cptr)
     IF (num_ptr /= SIZE(dst_data_cptr) .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
+#if __INTEL_COMPILER == 1910 && __INTEL_COMPILER_UPDATE == 2
+    CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+         contig_src_data_cptr, contig_dst_data_cptr, request)
+#else
     CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
+#endif
   END SUBROUTINE xt_redist_a_exchange_a1d
 
   SUBROUTINE xt_redist_s_exchange_i2_a1d(redist, num_ptr, &
