@@ -1,11 +1,11 @@
 /**
- * @file intelmpi_datatype.c
- * @brief demonstrates a problem some IntelMPI and MVAPICH2 versions have with
- * transferring some data layouts
+ * @file incorrect_mpi_abort_exitcode.c
+ * @brief tests whether non-zero exit codes passed to MPI_Abort are
+ * made available as an exit code of the MPI launcher
  *
- * @copyright Copyright  (C)  2019 Moritz Hanke <hanke@dkrz.de>
+ * @copyright Copyright  (C)  2020 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Moritz Hanke <hanke@dkrz.de>
+ * @author Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
