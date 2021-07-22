@@ -174,7 +174,7 @@ xt_xmap_dist_dir_send_intersections(
   size_t send_size_asize, size_t send_size_entry,
   int tag, MPI_Comm comm, int rank_lim,
   MPI_Request *restrict requests,
-  const int (*send_size)[send_size_asize])
+  const int send_size[rank_lim][send_size_asize])
 {
   size_t offset = 0;
   size_t reqOfs = 0;

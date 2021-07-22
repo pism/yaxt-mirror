@@ -83,12 +83,12 @@ struct Xt_request_msgs_packed_ {
 };
 
 Xt_request xt_request_msgs_packed_new(int n_requests,
-                                      const MPI_Request *requests,
+                                      const MPI_Request requests[n_requests],
                                       MPI_Comm comm, int n_packed,
                                       int n_tmp_buffers,
-                                      const MPI_Datatype * datatypes,
-                                      void ** packed_data,
-                                      void ** tmp_buffers,
+                                      const MPI_Datatype datatypes[n_packed],
+                                      void *packed_data[n_packed],
+                                      void *tmp_buffers[n_tmp_buffers],
                                       void * unpacked_data) {
 
   assert(n_requests >= 0 && n_packed >= 0 && n_tmp_buffers >= 0);

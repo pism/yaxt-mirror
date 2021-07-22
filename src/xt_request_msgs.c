@@ -80,7 +80,7 @@ struct Xt_request_msgs_ {
   MPI_Request requests[];
 };
 
-Xt_request xt_request_msgs_new(int n, const MPI_Request *requests,
+Xt_request xt_request_msgs_new(int n, const MPI_Request requests[n],
                                MPI_Comm comm) {
 
   assert(n >= 0);

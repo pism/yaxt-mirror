@@ -108,12 +108,11 @@ idxstripes_get_indices_at_positions(Xt_idxlist idxlist, const int *positions,
                                     int num, Xt_int *index,
                                     Xt_int undef_idx);
 static int
-idxstripes_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
-                                         int num_stripes,
-                                         const struct Xt_stripe *stripes,
-                                         int *num_ext,
-                                         struct Xt_pos_ext **pos_ext,
-                                         int single_match_only);
+idxstripes_get_pos_exts_of_index_stripes(
+  Xt_idxlist idxlist,
+  int num_stripes, const struct Xt_stripe stripes[num_stripes],
+  int *num_ext, struct Xt_pos_ext **pos_ext,
+  int single_match_only);
 
 static int
 idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_int index,

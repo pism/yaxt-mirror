@@ -267,7 +267,8 @@ check_stripes(struct Xt_stripe const * stripes, int num_stripes,
 }
 
 void
-check_offsets(size_t num_offsets, const int *offsets_a, const int *offsets_b)
+check_offsets(size_t num_offsets, const int offsets_a[num_offsets],
+              const int offsets_b[num_offsets])
 {
   bool mismatch = false;
   for(size_t i=0; i<num_offsets; i++)
