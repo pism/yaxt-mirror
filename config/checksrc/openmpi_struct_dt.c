@@ -126,16 +126,17 @@ static int
 do_test(MPI_Datatype * recvs, MPI_Datatype * sends, int * inputs[2])
 {
 
-  int results_1[8] = {-1,-1,-1,-1,-1,-1,-1,-1},
-    results_2[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
-  int * results[2] = {results_1, results_2};
+  int results_[3][8] = { {-1,-1,-1,-1,-1,-1,-1,-1},
+                        {-1,-1,-1,-1,-1,-1,-1,-1},
+                        {-1,-1,-1,-1,-1,-1,-1,-1} } ;
+  int *results[2] = {results_[2], results_[0]};
 
   MPI_Datatype send_dt, recv_dt;
 
   {
     int count = 2;
     int array_of_blocklengths[] = {1, 1};
-    MPI_Aint array_of_displacements[] = {0, (results[1] - results[0]) * sizeof(int)};
+    MPI_Aint array_of_displacements[] = {0, ((unsigned char *)results[1] - (unsigned char *)results[0])};
     MPI_Type_create_struct(count, array_of_blocklengths, array_of_displacements,
                            recvs, &recv_dt);
     MPI_Type_commit(&recv_dt);
@@ -157,23 +158,18 @@ do_test(MPI_Datatype * recvs, MPI_Datatype * sends, int * inputs[2])
   MPI_Type_free(&send_dt);
   MPI_Type_free(&recv_dt);
 
-  int ref_results_1[8] = {4,5,-1,-1,6,7,-1,-1},
-    ref_results_2[8] = {-1,-1,-1,-1,8,9,12,13};
+  static const int ref_results[2][8] = { {4,5,-1,-1,6,7,-1,-1},
+                                         {-1,-1,-1,-1,8,9,12,13} };
   int retcode = 0;
 
-  for (int i = 0; i < 8; ++i) {
+  for (int j = 0; j < 2; ++j)
+    for (int i = 0; i < 8; ++i) {
 
-    retcode |= (results_1[i] != ref_results_1[i]);
-    if (results_1[i] != ref_results_1[i])
-      fprintf(stderr, "   results_1[%d]     = %d\n"
-              "!= ref_results_1[%d] = %d\n",
-              i, results_1[i], i, ref_results_1[i]);
-
-    retcode |= (results_2[i] != ref_results_2[i]);
-    if (results_2[i] != ref_results_2[i])
-      fprintf(stderr, "   results_2[%d]     = %d\n"
-              "!= ref_results_2[%d] = %d\n",
-              i, results_2[i], i, ref_results_2[i]);
-  }
+      retcode |= (results[j][i] != ref_results[j][i]);
+      if (results[j][i] != ref_results[j][i])
+        fprintf(stderr, "   results[%d][%d]     = %d\n"
+                "!= ref_results[%d][%d] = %d\n",
+                j, i, results[j][i], j, i, ref_results[j][i]);
+    }
   return retcode;
 }
