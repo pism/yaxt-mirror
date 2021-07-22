@@ -628,6 +628,17 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
 }
 
 static void
+idxsection_create_index_array_cache(Xt_idxsection section)
+{
+  size_t num_indices = (size_t)section->parent.num_indices;
+  Xt_int *indices = section->index_array_cache
+    = xmalloc(num_indices * sizeof(*(section->index_array_cache)));
+  idxsection_get_indices_any(section->local_start_index, indices,
+                             section->ndim, section->dims);
+}
+
+
+static void
 idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
   INSTR_DEF(instr,"idxsection_get_indices")
   INSTR_START(instr);
@@ -636,28 +647,13 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
   int num_indices = idxlist->num_indices;
 
   if (num_indices > 0) {
-
     // if the indices are already computed
-    if (section->index_array_cache != NULL) {
-      memcpy(indices, section->index_array_cache,
-             (size_t)num_indices * sizeof(*indices));
-      goto fun_exit;
-    } else
-      section->index_array_cache
-        = xmalloc((size_t)num_indices * sizeof(*(section->index_array_cache)));
-
-    // if this routine was called by idxsection_get_indices_const
-    if (indices == NULL)
-      indices = section->index_array_cache;
-
-    idxsection_get_indices_any(section->local_start_index, indices,
-                               section->ndim, section->dims);
-
-    if (section->index_array_cache != indices)
-      memcpy(section->index_array_cache, indices,
-             (size_t)num_indices * sizeof(*indices));
+    if (section->index_array_cache != NULL);
+    else
+      idxsection_create_index_array_cache(section);
+    memcpy(indices, section->index_array_cache,
+           (size_t)num_indices * sizeof(*indices));
   }
- fun_exit: ;
   INSTR_STOP(instr);
 }
 
@@ -665,10 +661,8 @@ static Xt_int const*
 idxsection_get_indices_const(Xt_idxlist idxlist) {
 
   Xt_idxsection idxsection = (Xt_idxsection)idxlist;
-
   if (idxsection->index_array_cache == NULL)
-    idxsection_get_indices(idxlist, NULL);
-
+    idxsection_create_index_array_cache(idxsection);
   return idxsection->index_array_cache;
 }
 
