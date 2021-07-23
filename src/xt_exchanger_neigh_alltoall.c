@@ -177,11 +177,11 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
   copy_from_redist_msgs((size_t)nrecv, recv_msgs, exchanger->ranks + nsend,
                         exchanger->datatypes + nsend, comm, dt_dup);
 
-  int reorder = 0; // no reordering of ranks in new comm
+  enum { no_reorder = 0 }; // no reordering of ranks in new comm
   xt_mpi_call(
     MPI_Dist_graph_create_adjacent(
       comm, nrecv, exchanger->ranks + nsend, MPI_UNWEIGHTED, nsend,
-      exchanger->ranks, MPI_UNWEIGHTED, MPI_INFO_NULL, reorder,
+      exchanger->ranks, MPI_UNWEIGHTED, MPI_INFO_NULL, no_reorder,
       &(exchanger->comm)), comm);
 
   return (Xt_exchanger)exchanger;
