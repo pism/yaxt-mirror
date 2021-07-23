@@ -101,7 +101,7 @@ struct Xt_xmdd_txstat {
  * greater-than-zero entries in @a send_size column @a send_size_entry
  * @param send_size 2-dimensional array of individual message sizes
  */
-struct Xt_xmdd_txstat
+PPM_DSO_INTERNAL struct Xt_xmdd_txstat
 xt_xmap_dist_dir_send_intersections(
   void *restrict send_buffer,
   size_t send_size_asize, size_t send_size_entry,
