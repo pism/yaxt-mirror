@@ -151,6 +151,11 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
 
 static MPI_Datatype stripe_dt;
 
+#if __GNUC__ >= 11
+__attribute__ ((access (none, 1)))
+int MPI_Get_address(XT_MPI_SEND_BUF_CONST void *location, MPI_Aint *address);
+#endif
+
 void
 xt_idxstripes_initialize(void)
 {

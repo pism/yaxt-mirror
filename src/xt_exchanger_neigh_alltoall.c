@@ -178,11 +178,20 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                         exchanger->datatypes + nsend, comm, dt_dup);
 
   enum { no_reorder = 0 }; // no reordering of ranks in new comm
+#if __GNUC__ == 11
+  /* GCC 11 has no means to specify that the special value pointer
+   * MPI_UNWEIGHTED does not need to point to something of size > 0 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#endif
   xt_mpi_call(
     MPI_Dist_graph_create_adjacent(
       comm, nrecv, exchanger->ranks + nsend, MPI_UNWEIGHTED, nsend,
       exchanger->ranks, MPI_UNWEIGHTED, MPI_INFO_NULL, no_reorder,
       &(exchanger->comm)), comm);
+#if __GNUC__ == 11
+#pragma GCC diagnostic pop
+#endif
 
   return (Xt_exchanger)exchanger;
 }

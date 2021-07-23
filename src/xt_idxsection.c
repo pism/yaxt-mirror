@@ -163,6 +163,11 @@ struct Xt_idxsection_ {
 static int
 idxsection_get_num_indices(Xt_idxsection section);
 
+#if __GNUC__ >= 11
+__attribute__ ((access (none, 1)))
+int MPI_Get_address(XT_MPI_SEND_BUF_CONST void *location, MPI_Aint *address);
+#endif
+
 void
 xt_idxsection_initialize(void)
 {
