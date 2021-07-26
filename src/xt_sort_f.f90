@@ -64,9 +64,10 @@ MODULE xt_sort
   INTERFACE xt_sort_index
     SUBROUTINE xt_sort_index_f2c(a, n, positions, reset_positions) &
           BIND(c, name='xt_sort_index_f2c')
-      IMPORT :: c_int
+      IMPORT :: c_int, xt_int_kind
       INTEGER(c_int), VALUE, INTENT(in) :: n, reset_positions
-      INTEGER(c_int), INTENT(inout) :: a(n), positions(n)
+      INTEGER(xt_int_kind), INTENT(inout) :: a(n)
+      INTEGER(c_int), INTENT(inout) :: positions(n)
     END SUBROUTINE xt_sort_index_f2c
     MODULE PROCEDURE xt_sort_index_a_a_l
   END INTERFACE xt_sort_index
@@ -108,7 +109,8 @@ CONTAINS
   END SUBROUTINE xt_sort_int_a
 
   SUBROUTINE xt_sort_index_a_a_l(a, positions, reset_positions)
-    INTEGER(c_int), INTENT(inout) :: a(:), positions(:)
+    INTEGER(xt_int_kind), INTENT(inout) :: a(:)
+    INTEGER(c_int), INTENT(inout) :: positions(:)
     LOGICAL, INTENT(in) :: reset_positions
     INTEGER :: a_size
     a_size = SIZE(a)
