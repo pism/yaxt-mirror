@@ -66,6 +66,7 @@
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 #include "xt_stripe_util.h"
+#include "xt/xt_sort.h"
 #include "xt/quicksort.h"
 #include "instr.h"
 
@@ -265,8 +266,9 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     stripe_minmax[0][i] = (Xt_int)(stripes[i].start + (ofs & mask));
   }
 
-  xt_quicksort_index(stripe_minmax[0], (int)num_stripes,
-                     sorted_stripe_min_pos, 1);
+  xt_assign_id_map_int(num_stripes, sorted_stripe_min_pos, 0);
+  xt_quicksort_xt_int_permutation(stripe_minmax[0], (int)num_stripes,
+                                  sorted_stripe_min_pos);
 
   int *restrict sorted_pos_prefix_sum = sorted_stripe_min_pos + num_stripes,
     *restrict orig_pos_prefix_sum
@@ -480,8 +482,9 @@ get_sorted_vector(Xt_idxvec idxvec) {
 
   memcpy(sorted_vector, vector, svec_size);
 
-  xt_quicksort_index(sorted_vector, (int)num_indices,
-                     idxvec->sorted_vec_positions, 1);
+  xt_assign_id_map_int(num_indices, idxvec->sorted_vec_positions, 0);
+  xt_quicksort_xt_int_permutation(sorted_vector, num_indices,
+                                  idxvec->sorted_vec_positions);
 
   idxvec->sorted_vector = sorted_vector;
 
@@ -726,7 +729,9 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 
     sorted_selection_pos
       = (void *)((unsigned char *)tmp_idx + pos_ofs);
-    xt_quicksort_index(tmp_idx, num_selection, sorted_selection_pos, 1);
+    xt_assign_id_map_int((size_t)num_selection, sorted_selection_pos, 0);
+    xt_quicksort_xt_int_permutation(tmp_idx, (size_t)num_selection,
+                                    sorted_selection_pos);
     sorted_selection = tmp_idx;
   }
 

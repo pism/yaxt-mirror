@@ -64,7 +64,7 @@ MODULE yaxt
        xt_config_get_idxvec_autoconvert_size, &
        xt_config_set_idxvec_autoconvert_size
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
-       xt_sort_permutation
+       xt_sort_permutation, xt_assign_id_map
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
@@ -134,7 +134,6 @@ MODULE yaxt
        xt_initialized, xt_finalized, &
        xt_set_abort_handler, xt_restore_default_abort_hndl, &
        xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, xt_pos_ext, &
-       xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &
        xt_idxlist, xt_idxlist_delete,  &
        xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_pack_size, xt_idxlist_pack, xt_idxlist_unpack, &
@@ -182,6 +181,8 @@ MODULE yaxt
        xt_request_wait, xt_request_test, xt_redist_a_exchange1, &
        xt_redist_a_exchange
 
+  PUBLIC :: xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &
+       xt_assign_id_map
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
   PUBLIC :: xt_xmap_dist_dir_new, xt_xmap_dist_dir_custom_new
   PUBLIC :: xt_xmap_dist_dir_intercomm_new, &

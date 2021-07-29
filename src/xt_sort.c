@@ -69,6 +69,15 @@ void (*xt_sort_int_permutation)(int a[], size_t n, int permutation[])
  * }
  */
 
+void
+xt_assign_id_map_int(size_t n, int *restrict a, int ofs)
+{
+  for(size_t i = 0; i < n; i++)
+    a[i] = (int)i + ofs;
+}
+
+
+
 /*
  * Local Variables:
  * c-basic-offset: 2

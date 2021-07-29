@@ -62,6 +62,7 @@
 #include "xt_idxsection_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt/mergesort.h"
+#include "xt/xt_sort.h"
 #include "xt/quicksort.h"
 #include "xt_idxlist_unpack.h"
 #include "core/ppm_xfuncs.h"
@@ -958,7 +959,9 @@ unsorted:
          (size_t)num_selection * sizeof(*temp_selection_idx));
   selection_pos = xmalloc((size_t)num_selection * sizeof(*selection_pos));
 
-  xt_quicksort_index(temp_selection_idx, num_selection, selection_pos, 1);
+  xt_assign_id_map_int((size_t)num_selection, selection_pos, 0);
+  xt_quicksort_xt_int_permutation(temp_selection_idx, (size_t)num_selection,
+                                  selection_pos);
   sorted_selection_idx = temp_selection_idx;
 
 sorted: ;
@@ -1232,7 +1235,9 @@ unsorted_selection:
   memcpy(temp_selection_idx, selection_idx,
          (size_t)num_selection * sizeof(*temp_selection_idx));
 
-  xt_quicksort_index(temp_selection_idx, num_selection, selection_pos, 1);
+  xt_assign_id_map_int((size_t)num_selection, selection_pos, 0);
+  xt_quicksort_xt_int_permutation(temp_selection_idx, (size_t)num_selection,
+                                  selection_pos);
   sorted_selection_idx = temp_selection_idx;
 sorted_selection:
 

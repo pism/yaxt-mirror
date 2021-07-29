@@ -99,6 +99,19 @@ MODULE xt_sort
   END INTERFACE xt_sort_idxpos
   PUBLIC :: xt_sort_idxpos
 
+  INTERFACE xt_assign_id_map
+    SUBROUTINE xt_assign_id_map_int(n, a, ofs) &
+         BIND(c, name='xt_assign_id_map_int')
+      IMPORT :: c_int, c_size_t
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      INTEGER(c_int), INTENT(out) :: a(n)
+      INTEGER(c_int), VALUE, INTENT(in) :: ofs
+    END SUBROUTINE xt_assign_id_map_int
+    MODULE PROCEDURE xt_assign_id_map_a
+    MODULE PROCEDURE xt_assign_id_map_ai
+  END INTERFACE xt_assign_id_map
+  PUBLIC :: xt_assign_id_map
+
   CHARACTER(len=*), PARAMETER :: filename = 'xt_sort_f.f90'
 CONTAINS
   SUBROUTINE xt_sort_int_a(a)
@@ -134,6 +147,36 @@ CONTAINS
     IF (a_size > 1) CALL xt_sort_int_permutation_f2c(a, INT(a_size, c_size_t), &
          permutation)
   END SUBROUTINE xt_sort_int_permutation
+
+  SUBROUTINE xt_assign_id_map_a(a)
+    INTEGER(c_int), INTENT(out) :: a(:)
+    INTEGER(c_size_t) :: n
+    INTEGER(c_int) :: ofs
+#ifdef HAVE_SIZE_KIND_ARGUMENT
+    n = SIZE(a, kind=c_size_t)
+#else
+    n = INT(SIZE(a), kind=c_size_t)
+#endif
+    IF (n >= 1) THEN
+      ofs = 0_c_int
+      CALL xt_assign_id_map_int(n, a, ofs)
+    END IF
+  END SUBROUTINE xt_assign_id_map_a
+
+  SUBROUTINE xt_assign_id_map_ai(a, ofs)
+    INTEGER(c_int), INTENT(out) :: a(:)
+    INTEGER(c_int), INTENT(in) :: ofs
+    INTEGER(c_size_t) :: n
+#ifdef HAVE_SIZE_KIND_ARGUMENT
+    n = SIZE(a, kind=c_size_t)
+#else
+    n = INT(SIZE(a), kind=c_size_t)
+#endif
+    IF (n >= 1) THEN
+      CALL xt_assign_id_map_int(n, a, ofs)
+    END IF
+  END SUBROUTINE xt_assign_id_map_ai
+
 END MODULE xt_sort
 !
 ! Local Variables:

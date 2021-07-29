@@ -65,6 +65,16 @@ extern void (*xt_sort_idxpos)(idxpos_type *v, size_t n);
 extern void (*xt_sort_int_permutation)(int *restrict a, size_t n,
                                        int *restrict permutation);
 
+
+/**
+ * assign \f$a[i] = i + ofs \forall i \in [0,n)\f$
+ * @param n length of array \a a to assign to
+ * @param a array to initialize
+ * @param ofs offset of assigned values, typically 1 for Fortran style arrays
+ */
+extern void
+xt_assign_id_map_int(size_t n, int *restrict a, int ofs);
+
 #endif // XT_SORT_H
 
 /*

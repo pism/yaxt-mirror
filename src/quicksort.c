@@ -53,6 +53,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "xt/xt_sort.h"
 #include "xt/quicksort.h"
 #include "xt/sort_common.h"
 #include "core/ppm_xfuncs.h"
@@ -76,8 +77,7 @@ void xt_quicksort_index(Xt_int *restrict v_idx, int n, int *restrict v_pos,
   if (!v_pos) v_pos = xmalloc((size_t)n  * sizeof(v_pos[0]));
 
   if (v_pos != v_pos_orig || reset_pos)
-    for(size_t i = 0; i < (size_t)n; i++)
-      v_pos[i] = (int)i;
+    xt_assign_id_map_int((size_t)n, v_pos, 0);
 
   xt_quicksort_xt_int_permutation(v_idx, (size_t)n, v_pos);
   if (v_pos != v_pos_orig) free(v_pos);
