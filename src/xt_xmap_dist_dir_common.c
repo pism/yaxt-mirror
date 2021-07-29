@@ -228,7 +228,7 @@ xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
   return isect_fill;
 }
 
-#if __GNUC__ == 11 && __GNUC_MINOR__ == 1
+#if __GNUC__ == 11 && __GNUC_MINOR__ <= 2
 /* gcc 11.1 has a bug in the -fsanitize=undefined functionality
  * which creates a bogus warning without the below suppression, bug
  * report at https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101585 */
@@ -281,7 +281,7 @@ xt_xmap_dist_dir_pack_intersections(
   return num_send_indices_requests;
 }
 
-#if __GNUC__ == 11
+#if __GNUC__ == 11 && __GNUC_MINOR__ <= 2
 #pragma GCC diagnostic pop
 #endif
 
