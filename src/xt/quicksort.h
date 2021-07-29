@@ -76,7 +76,8 @@ void xt_quicksort_idxpos(idxpos_type v[], size_t n);
   * @param[in,out]  idx          old index of sorted returned a
   * @param[in]      reset_index  override given idx by identity idx
   */
-void xt_quicksort_index(Xt_int a[], int n, int *idx, int reset_index);
+void xt_quicksort_index(Xt_int *restrict a, int n, int *restrict idx,
+                        int reset_index);
 
 /** quicksort changing values and indices
   *
@@ -87,18 +88,19 @@ void xt_quicksort_index(Xt_int a[], int n, int *idx, int reset_index);
   *                              elements of \a a have the same value
   */
 void
-xt_quicksort_xt_int_permutation(Xt_int a[], size_t n, int permutation[]);
+xt_quicksort_xt_int_permutation(Xt_int *restrict a, size_t n,
+                                int *restrict permutation);
 
 /** quicksort sorting values and indices
   *
-  * @param[in,out]  a            array of ints to be sorted
+  * @param[in,out]  a            array of n ints to be sorted
   * @param[in]      n            length of data
   * @param[in,out]  permutation  contents permuted exactly as a and
   *                              used to resolve ordering if two
   *                              elements of \a a have the same value
   */
 void
-xt_quicksort_int_permutation(int a[], size_t n, int permutation[]);
+xt_quicksort_int_permutation(int *restrict a, size_t n, int *restrict permutation);
 
 #endif  /* XT_QUICKSORT_H */
 

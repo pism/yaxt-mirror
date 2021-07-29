@@ -1,18 +1,8 @@
 /**
  * @file quicksort.c
- * @brief Non-recursive stack version of Quicksort
+ * @brief recursive version of Quicksort
  *
- *  based on N. Wirth's Pascal Book, 'Algorithms + Data Structures = Programms'.
- *  by Alan Miller ( 19 Jul 1995 )
- *
- *  based on:
- * - http://www.nag.com/nagware/examples.asp
- * - http://www.nag.com/nagware/Examples/nur.f90
- *
- *  see also:
- * - http://en.wikipedia.org/wiki/Quicksort
- *
- * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2021 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -77,7 +67,8 @@
 void
 xt_quicksort_xt_int_permutation(Xt_int *a, size_t n, int *restrict permutation);
 
-void xt_quicksort_index(Xt_int *v_idx, int n, int *v_pos, int reset_pos) {
+void xt_quicksort_index(Xt_int *restrict v_idx, int n, int *restrict v_pos,
+                        int reset_pos) {
 
   /*  Initialization */
   int *v_pos_orig =  v_pos;

@@ -59,9 +59,11 @@
 /** \example test_sort.c
  */
 extern void (*xt_sort_int)(int *a, size_t n);
-extern void (*xt_sort_index)(Xt_int * a, int n, int * idx, int reset_index);
+extern void (*xt_sort_index)(Xt_int *restrict a, int n, int *restrict idx,
+                             int reset_index);
 extern void (*xt_sort_idxpos)(idxpos_type *v, size_t n);
-extern void (*xt_sort_int_permutation)(int a[], size_t n, int permutation[]);
+extern void (*xt_sort_int_permutation)(int *restrict a, size_t n,
+                                       int *restrict permutation);
 
 #endif // XT_SORT_H
 
