@@ -1,14 +1,14 @@
 !>
-!> @file ftest_common.f90
-!>
-!> @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
-!>                                 Moritz Hanke <hanke@dkrz.de>
-!>                                 Thomas Jahns <jahns@dkrz.de>
-!>
-!> @author Jörg Behrens <behrens@dkrz.de>
-!>         Moritz Hanke <hanke@dkrz.de>
-!>         Thomas Jahns <jahns@dkrz.de>
-!>
+!! @file ftest_common.f90
+!!
+!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+!!                                 Moritz Hanke <hanke@dkrz.de>
+!!                                 Thomas Jahns <jahns@dkrz.de>
+!!
+!! @author Jörg Behrens <behrens@dkrz.de>
+!!         Moritz Hanke <hanke@dkrz.de>
+!!         Thomas Jahns <jahns@dkrz.de>
+!!
 
 !
 ! Maintainer: Jörg Behrens <behrens@dkrz.de>
