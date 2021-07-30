@@ -66,10 +66,12 @@ int main(int argc, char **argv) {
   xt_initialize(MPI_COMM_WORLD);
   Xt_config config = redist_exchanger_option(&argc, &argv);
 
+  MPI_Comm comm = MPI_COMM_WORLD;
+
   { // general test with one redist
     // set up data
     enum { src_slice_len = 5, dst_slice_len = 3 };
-    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
+    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
     xt_xmap_delete(xmap);
 
@@ -87,7 +89,7 @@ int main(int argc, char **argv) {
     // test communicator of redist
 
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
-                                     MPI_COMM_WORLD))
+                                     comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     xt_redist_delete(redist);
@@ -106,7 +108,7 @@ int main(int argc, char **argv) {
     // test with one redist used three times (two exchanges)
     // set up data
     enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
-    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
+    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
     xt_xmap_delete(xmap);
 
@@ -129,7 +131,7 @@ int main(int argc, char **argv) {
     // test communicator of redist
 
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
-                                     MPI_COMM_WORLD))
+                                     comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     xt_redist_delete(redist);
@@ -150,7 +152,7 @@ int main(int argc, char **argv) {
     // test with one redist used three times with asymmetric displacements
     // set up data
     enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
-    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
+    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
     xt_xmap_delete(xmap);
 
@@ -175,7 +177,7 @@ int main(int argc, char **argv) {
     // test communicator of redist
 
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
-                                     MPI_COMM_WORLD))
+                                     comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     xt_redist_delete(redist);
@@ -195,7 +197,7 @@ int main(int argc, char **argv) {
   { // test with one redist used three times with gaps between the levels
     enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2,
            rep_dim_size = 5 };
-    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
+    Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
     xt_xmap_delete(xmap);
 
@@ -209,7 +211,7 @@ int main(int argc, char **argv) {
     // test communicator of redist
 
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
-                                     MPI_COMM_WORLD))
+                                     comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     xt_redist_delete(redist);
@@ -232,7 +234,7 @@ int main(int argc, char **argv) {
 
   { // test of redist_repeat generated with overlapping repetition of input redist
     enum { npt = 9 };
-    Xt_xmap xmap = build_odd_selection_xmap(6);
+    Xt_xmap xmap = build_odd_selection_xmap(6, comm);
     static const int src_pos[npt] = {1,2,3,4,5,6,7,8,9};
     static const int dst_pos[npt] = {0,2,4,6,8,10,12,14,16};
     Xt_redist redist = xt_redist_p2p_off_custom_new(
@@ -279,7 +281,7 @@ int main(int argc, char **argv) {
 
     // test communicator of redist
     if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
-                                     MPI_COMM_WORLD))
+                                     comm))
       PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
     // test exchange

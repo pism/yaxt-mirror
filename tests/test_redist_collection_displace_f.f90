@@ -90,7 +90,7 @@ CONTAINS
     TYPE(xt_redist) :: redist, redists(num_slice), redist_coll, &
          redist_coll_copy
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
     redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
 
     CALL xt_xmap_delete(xmap)

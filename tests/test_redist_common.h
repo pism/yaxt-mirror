@@ -57,7 +57,7 @@
 #include "yaxt.h"
 
 Xt_xmap
-build_odd_selection_xmap(int src_num_indices);
+build_odd_selection_xmap(int src_num_indices, MPI_Comm comm);
 
 int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2);
 

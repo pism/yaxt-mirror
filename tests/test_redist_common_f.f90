@@ -117,8 +117,8 @@ MODULE test_redist_common
 CONTAINS
   ! build xmap for destination list containing all odd elements of
   ! source list dimensioned 1 to src_slice_len
-  FUNCTION build_odd_selection_xmap(src_slice_len) RESULT(xmap)
-    INTEGER, INTENT(in) :: src_slice_len
+  FUNCTION build_odd_selection_xmap(src_slice_len, comm) RESULT(xmap)
+    INTEGER, INTENT(in) :: src_slice_len, comm
     TYPE(xt_xmap) :: xmap
     INTEGER :: i, j, dst_slice_len
     INTEGER, PARAMETER :: dst_step = 2
@@ -139,7 +139,7 @@ CONTAINS
     dst_idxlist = xt_idxvec_new(index_list, dst_slice_len)
     DEALLOCATE(index_list)
 
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
   END FUNCTION build_odd_selection_xmap

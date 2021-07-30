@@ -86,7 +86,7 @@ simple_test(MPI_Comm comm, Xt_config config)
 { // general test with one redist
   // set up data
   enum { src_slice_len = 5, dst_slice_len = 3 };
-  Xt_xmap xmap = build_odd_selection_xmap(src_slice_len);
+  Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
 
   Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
@@ -127,7 +127,7 @@ test_repeated_redist(MPI_Comm comm, Xt_config config)
   // set up data
   enum { src_slice_len = 5,
          dst_slice_len = (src_slice_len+1)/2 };
-  Xt_xmap xmap = build_odd_selection_xmap(5);
+  Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
   Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
 
   xt_xmap_delete(xmap);

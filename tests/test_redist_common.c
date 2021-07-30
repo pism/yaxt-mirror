@@ -61,7 +61,7 @@
  * source list dimensioned 1 to src_num_indices
  */
 Xt_xmap
-build_odd_selection_xmap(int src_num_indices)
+build_odd_selection_xmap(int src_num_indices, MPI_Comm comm)
 {
   enum {
     selection_stride = 2,
@@ -79,7 +79,7 @@ build_odd_selection_xmap(int src_num_indices)
     index_list[i] = (Xt_int)(i * selection_stride + 1);
   Xt_idxlist dst_idxlist = xt_idxvec_new(index_list, dst_num_indices);
   free(index_list);
-  Xt_xmap xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+  Xt_xmap xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm);
   xt_idxlist_delete(src_idxlist);
   xt_idxlist_delete(dst_idxlist);
   return xmap;

@@ -87,7 +87,7 @@ CONTAINS
     INTEGER(mpi_address_kind), PARAMETER :: &
          displacements(1) = 0_mpi_address_kind
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
@@ -145,7 +145,7 @@ CONTAINS
     DOUBLE PRECISION, TARGET :: src_template(5, 3), dst_template(3, 3)
     INTEGER :: i, ierror
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 

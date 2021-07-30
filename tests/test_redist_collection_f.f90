@@ -109,7 +109,7 @@ CONTAINS
     DOUBLE PRECISION :: dst_data(dst_slice_len)
 
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
     CALL xt_xmap_delete(xmap)
@@ -155,7 +155,7 @@ CONTAINS
     TYPE(dst_data_collection), TARGET :: dst_data
     TYPE(c_ptr) :: src_data_p(2), dst_data_p(2)
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist_components(1) = xt_redist_p2p_new(xmap, mpi_double_precision)
     redist_components(2) = xt_redist_p2p_new(xmap, mpi_logical)
@@ -280,7 +280,7 @@ CONTAINS
     INTEGER, PARAMETER :: permutation(3, 3) &
          = RESHAPE((/ 1, 2, 3, 2, 1, 3, 1, 2, 3 /), (/ 3, 3 /))
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redists = xt_redist_p2p_new(xmap, mpi_double_precision)
 

@@ -100,7 +100,7 @@ CONTAINS
     INTEGER(c_int) :: displacements(1) = 0
     INTEGER :: ierror
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
@@ -192,7 +192,7 @@ CONTAINS
     DOUBLE PRECISION, TARGET :: src_template(5, 3), dst_template(3, 3)
     INTEGER :: ierror
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
@@ -241,7 +241,7 @@ CONTAINS
     INTEGER, PARAMETER :: dp = KIND(src_data)
 
     ! xmap: [1,2,3,4,5] -> [1,3,5]
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
@@ -293,7 +293,7 @@ CONTAINS
     DOUBLE PRECISION, TARGET :: src_template(5, 3), dst_template(3, 3)
     INTEGER :: ierror
 
-    xmap = build_odd_selection_xmap(src_slice_len)
+    xmap = build_odd_selection_xmap(src_slice_len, comm)
 
     redist = xt_redist_p2p_new(xmap, mpi_double_precision)
 
@@ -346,7 +346,7 @@ CONTAINS
     INTEGER :: iexch
     TYPE(xt_request) :: request(2)
 
-    xmap = build_odd_selection_xmap(selection_len)
+    xmap = build_odd_selection_xmap(selection_len, comm)
 
     redist = xt_redist_p2p_off_new(xmap, src_pos, dst_pos, mpi_double_precision)
 
