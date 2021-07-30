@@ -109,9 +109,9 @@ static int
 idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                  int * position, int offset);
 
-static int
+static size_t
 idxvec_get_positions_of_indices(Xt_idxlist idxlist, const Xt_int *indices,
-                                int num_indices, int *positions,
+                                size_t num_indices, int *positions,
                                 int single_match_only);
 
 static Xt_int
@@ -267,7 +267,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   }
 
   xt_assign_id_map_int(num_stripes, sorted_stripe_min_pos, 0);
-  xt_quicksort_xt_int_permutation(stripe_minmax[0], (int)num_stripes,
+  xt_quicksort_xt_int_permutation(stripe_minmax[0], num_stripes,
                                   sorted_stripe_min_pos);
 
   int *restrict sorted_pos_prefix_sum = sorted_stripe_min_pos + num_stripes,
@@ -693,15 +693,13 @@ static bool idx_vec_is_sorted(Xt_int const *idx, size_t n) {
   return true;
 }
 
-static int
+static size_t
 idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
                                 const Xt_int *selection_idx,
-                                int num_selection, int *positions,
+                                size_t num_selection, int *positions,
                                 int single_match_only) {
 
-  if (num_selection <= 0) return 0;
-
-  bool selection_is_ordered = idx_vec_is_sorted(selection_idx, (size_t)num_selection);
+  bool selection_is_ordered = idx_vec_is_sorted(selection_idx, num_selection);
   /// \todo try linear scan of sorted data instead (requires performance test first)
 
   Xt_int const *sorted_selection;
@@ -711,8 +709,8 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
   if (selection_is_ordered) {
     sorted_selection = selection_idx;
   } else {
-    size_t idx_memsize = (size_t)num_selection * sizeof(*sorted_selection),
-      pos_memsize = (size_t)num_selection * sizeof(*sorted_selection_pos),
+    size_t idx_memsize = num_selection * sizeof(*sorted_selection),
+      pos_memsize = num_selection * sizeof(*sorted_selection_pos),
 #if defined _CRAYC && _RELEASE_MAJOR < 9
       pos_ofs_roundup = _MAXVL_8,
 #else
@@ -729,8 +727,8 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 
     sorted_selection_pos
       = (void *)((unsigned char *)tmp_idx + pos_ofs);
-    xt_assign_id_map_int((size_t)num_selection, sorted_selection_pos, 0);
-    xt_quicksort_xt_int_permutation(tmp_idx, (size_t)num_selection,
+    xt_assign_id_map_int(num_selection, sorted_selection_pos, 0);
+    xt_quicksort_xt_int_permutation(tmp_idx, num_selection,
                                     sorted_selection_pos);
     sorted_selection = tmp_idx;
   }
@@ -743,14 +741,14 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
   const Xt_int *sorted_body = get_sorted_vector(body_idxvec);
   const int *sorted_body_pos = body_idxvec->sorted_vec_positions;
   size_t search_end = (size_t)body_idxvec->parent.num_indices - 1;
-  int num_unmatched = 0;
+  size_t num_unmatched = 0;
 
   // after the match we will move on one step in order to avoid matching the same position again
   size_t post_match_step = single_match_only != 0;
 
   size_t i=0;
   for (size_t search_start = 0, ub_guess_ofs = 1;
-       i < (size_t)num_selection && search_start<=search_end;
+       i < num_selection && search_start<=search_end;
        ++i) {
     size_t selection_pos = selection_is_ordered ? i : (size_t)sorted_selection_pos[i];
     Xt_int isel = sorted_selection[i];
@@ -795,16 +793,16 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     ub_guess_ofs = match_pos - search_start;
     search_start = match_pos + post_match_step;
   }
-  if (i < (size_t)num_selection) {
-    num_unmatched += (int)((size_t)num_selection - i);
+  if (i < num_selection) {
+    num_unmatched += num_selection - i;
     if (selection_is_ordered)
       do {
         positions[i] = -1;
-      } while (++i < (size_t)num_selection);
+      } while (++i < num_selection);
     else
       do {
         positions[sorted_selection_pos[i]] = -1;
-      } while (++i < (size_t)num_selection);
+      } while (++i < num_selection);
   }
   if (tmp_idx) free(tmp_idx);
 

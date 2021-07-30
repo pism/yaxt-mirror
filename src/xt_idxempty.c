@@ -101,9 +101,9 @@ static int
 idxempty_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                    int * position, int offset);
 
-static int
+static size_t
 idxempty_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
-                                  int num_indices, int *positions,
+                                  size_t num_indices, int *positions,
                                   int single_match_only);
 
 static int
@@ -264,11 +264,11 @@ idxempty_get_position_of_index(Xt_idxlist XT_UNUSED(idxlist),
   return 1;
 }
 
-int idxempty_get_positions_of_indices(Xt_idxlist XT_UNUSED(body_idxlist),
-                                      const Xt_int *XT_UNUSED(selection_idx),
-                                      int num_selection,
-                                      int *XT_UNUSED(positions),
-                                      int XT_UNUSED(single_match_only)) {
+size_t idxempty_get_positions_of_indices(Xt_idxlist XT_UNUSED(body_idxlist),
+                                         const Xt_int *XT_UNUSED(selection_idx),
+                                         size_t num_selection,
+                                         int *XT_UNUSED(positions),
+                                         int XT_UNUSED(single_match_only)) {
 
   return num_selection;
 }

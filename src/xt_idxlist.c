@@ -206,31 +206,38 @@ xt_idxlist_get_positions_of_indices(Xt_idxlist idxlist, Xt_int const * indices,
 
   INSTR_DEF(instr_fallback,"xt_idxlist_get_positions_of_indices.fallback")
 
-  if (idxlist->vtable->get_positions_of_indices != NULL)
-    return idxlist->vtable->get_positions_of_indices(idxlist, indices,
-                                                     num_indices,
-                                                     positions,
-                                                     single_match_only);
-  else {
-    INSTR_START(instr_fallback);
+  size_t num_failed_lookups;
+  if (num_indices > 0) {
+    if (idxlist->vtable->get_positions_of_indices != NULL)
+      num_failed_lookups
+        = idxlist->vtable->get_positions_of_indices(idxlist, indices,
+                                                    (size_t)num_indices,
+                                                    positions,
+                                                    single_match_only);
+    else {
+      INSTR_START(instr_fallback);
 
-    int num_tmp_indices;
-    num_tmp_indices = xt_idxlist_get_num_indices(idxlist);
-    Xt_int *tmp_indices;
-    tmp_indices = xmalloc((size_t)num_tmp_indices * sizeof (tmp_indices[0]));
-    xt_idxlist_get_indices(idxlist, tmp_indices);
-    Xt_idxlist tmp_idxvec;
-    tmp_idxvec = xt_idxvec_prealloc_new(tmp_indices, num_tmp_indices);
-    int retval
-      = tmp_idxvec->vtable->get_positions_of_indices(tmp_idxvec, indices,
-                                                     num_indices, positions,
-                                                     single_match_only);
-    xt_idxlist_delete(tmp_idxvec);
-    free(tmp_indices);
+      int num_tmp_indices
+        = xt_idxlist_get_num_indices(idxlist);
+      Xt_int *tmp_indices
+        = xmalloc((size_t)num_tmp_indices * sizeof (tmp_indices[0]));
+      xt_idxlist_get_indices(idxlist, tmp_indices);
+      Xt_idxlist tmp_idxvec
+        = xt_idxvec_prealloc_new(tmp_indices, num_tmp_indices);
+      num_failed_lookups
+        = tmp_idxvec->vtable->get_positions_of_indices(tmp_idxvec, indices,
+                                                       (size_t)num_indices,
+                                                       positions,
+                                                       single_match_only);
+      xt_idxlist_delete(tmp_idxvec);
+      free(tmp_indices);
 
-    INSTR_STOP(instr_fallback);
-    return retval;
-  }
+      INSTR_STOP(instr_fallback);
+    }
+  } else
+    num_failed_lookups = 0;
+  assert(num_failed_lookups <= INT_MAX);
+  return (int)num_failed_lookups;
 }
 
 int

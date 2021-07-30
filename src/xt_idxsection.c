@@ -103,9 +103,10 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
 static int
 idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                      int * position, int offset);
-static int
-idxsection_get_positions_of_indices(Xt_idxlist body_idxlist, Xt_int const * selection_idx,
-                                    int num_selection, int *positions,
+static size_t
+idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
+                                    Xt_int const *selection_idx,
+                                    size_t num_selection, int *positions,
                                     int single_match_only);
 
 static Xt_int
@@ -414,48 +415,41 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
   INSTR_DEF(instr,"idxsection_get_intersection_with_other_idxlist")
   INSTR_START(instr);
 
-  int num_dst_idx = xt_idxlist_get_num_indices(dst_idxlist);
+  size_t num_dst_idx = (size_t)(xt_idxlist_get_num_indices(dst_idxlist));
 
   Xt_int const* dst_idx = xt_idxlist_get_indices_const(dst_idxlist);
-  int * pos;
   int single_match_only = 0;
-  int i, j;
-
-  for (i = 1; i < num_dst_idx; ++i)
-    if (dst_idx[i] < dst_idx[i-1])
-      break;
 
   Xt_int const * sorted_dst_idx;
   Xt_int * temp_dst_idx = NULL;
 
-  // if the destination indices are not sorted
-  if (num_dst_idx > 1 && i != num_dst_idx) {
+  for (size_t i = 1; i < num_dst_idx; ++i)
+    if (dst_idx[i] < dst_idx[i-1])
+      goto unsorted;
+  sorted_dst_idx = dst_idx;
+  goto get_pos;
+unsorted:
+  temp_dst_idx = xmalloc(num_dst_idx * sizeof(*temp_dst_idx));
+  memcpy(temp_dst_idx, dst_idx, num_dst_idx * sizeof(*temp_dst_idx));
 
-    temp_dst_idx = xmalloc((size_t)num_dst_idx * sizeof(*temp_dst_idx));
-    memcpy(temp_dst_idx, dst_idx, (size_t)num_dst_idx * sizeof(*temp_dst_idx));
-
-    xt_mergesort_index(temp_dst_idx, num_dst_idx, NULL, 0);
-
-    sorted_dst_idx = temp_dst_idx;
-  } else
-    sorted_dst_idx = dst_idx;
-
-  pos = xmalloc((size_t)num_dst_idx * sizeof(*pos));
-  int num_unmatched = idxsection_get_positions_of_indices(
+  xt_mergesort_index(temp_dst_idx, (int)num_dst_idx, NULL, 0);
+  sorted_dst_idx = temp_dst_idx;
+get_pos:;
+  int *pos = xmalloc(num_dst_idx * sizeof(*pos));
+  size_t num_unmatched = idxsection_get_positions_of_indices(
     src_idxsection, sorted_dst_idx, num_dst_idx, pos,
     single_match_only);
-  int num_inter_idx = num_dst_idx - num_unmatched;
+  size_t num_inter_idx = num_dst_idx - num_unmatched;
   Xt_idxlist result;
   if (num_inter_idx != 0) {
-    Xt_int *intersection = xmalloc((size_t)num_inter_idx
-                                   * sizeof(*intersection));
+    Xt_int *intersection = xmalloc(num_inter_idx * sizeof(*intersection));
 
-    for(i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++) {
+    for(size_t i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++) {
       intersection[j] = sorted_dst_idx[i];
       j += (pos[i] >= 0);
     }
 
-    result = xt_idxvec_new(intersection, num_inter_idx);
+    result = xt_idxvec_new(intersection, (int)num_inter_idx);
     free(intersection);
   } else {
     result = xt_idxempty_new();
@@ -836,35 +830,34 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   return retval;
 }
 
-static int
+static size_t
 idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
                                        const Xt_int selection_idx[],
-                                       int num_selection,
+                                       size_t num_selection,
                                        int positions[],
                                        int single_match_only) {
 
   INSTR_DEF(instr,"idxsection_get_positions_of_indices_v1.part")
-
-  if (num_selection < 1) return 0; //nothing to do
-
   if (num_selection == 1)
-    return idxsection_get_position_of_index(body_idxlist, *selection_idx,
-                                            positions);
+    return (size_t)(idxsection_get_position_of_index(body_idxlist,
+                                                     *selection_idx,
+                                                     positions));
 
-  int num_unmatched = 0;
+  size_t num_unmatched = 0;
 
   if (!single_match_only) {
     // this is the easy case, we don't care about multiple uses of the same position
-    for (int i = 0; i < num_selection; ++i)
+    for (size_t i = 0; i < num_selection; ++i)
       num_unmatched
-        += idxsection_get_position_of_index(body_idxlist, selection_idx[i],
-                                            &positions[i]);
+        += (size_t)(idxsection_get_position_of_index(body_idxlist,
+                                                     selection_idx[i],
+                                                     &positions[i]));
     return num_unmatched;
   }
 
   INSTR_START(instr);
 
-  for (size_t i = 1; i < (size_t)num_selection; ++i)
+  for (size_t i = 1; i < num_selection; ++i)
     if (selection_idx[i] < selection_idx[i-1])
       goto unsorted;
 
@@ -873,15 +866,15 @@ idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
     // we need an index that is different from the current one
     Xt_int prev_index = (Xt_int)(selection_idx[0] - 1);
 
-    for (size_t i = 0; i < (size_t)num_selection; i++) {
+    for (size_t i = 0; i < num_selection; i++) {
 
       Xt_int curr_index = selection_idx[i];
 
       if (prev_index != curr_index) {
 
         num_unmatched
-          += idxsection_get_position_of_index(body_idxlist, curr_index,
-                                              positions + i);
+          += (size_t)(idxsection_get_position_of_index(body_idxlist, curr_index,
+                                                       positions + i));
         prev_index = curr_index;
 
       } else {
@@ -897,19 +890,20 @@ idxsection_get_positions_of_indices_v1(Xt_idxlist body_idxlist,
 unsorted:
   {
     // the remaining (single_match_only) case follows:
-    idxpos_type *v = xmalloc((size_t)num_selection * sizeof(*v) );
-    for (size_t i = 0; i < (size_t)num_selection; i++) {
+    idxpos_type *v = xmalloc(num_selection * sizeof(*v) );
+    for (size_t i = 0; i < num_selection; i++) {
       v[i].idx = selection_idx[i];
       v[i].pos = (int)i;
     }
-    xt_mergesort_idxpos(v, (size_t)num_selection);
+    xt_mergesort_idxpos(v, num_selection);
     Xt_int last_jx = (Xt_int)(v[0].idx - 1); // any index that does not equal v[0].idx will do
-    for (size_t i = 0; i < (size_t)num_selection; i++) {
+    for (size_t i = 0; i < num_selection; i++) {
       int j = v[i].pos;
       Xt_int jx = v[i].idx;
       if (jx != last_jx) {
         num_unmatched
-          += idxsection_get_position_of_index(body_idxlist, jx, &positions[j]);
+          += (size_t)(idxsection_get_position_of_index(body_idxlist, jx,
+                                                       &positions[j]));
         last_jx = jx;
       } else {
         // for an idxsection there is a unique map from indices to positions,
@@ -925,18 +919,17 @@ end:
   return num_unmatched;
 }
 
-static
-int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
-                                           const Xt_int selection_idx[],
-                                           int num_selection, int positions[],
-                                           int single_match_only) {
+static size_t
+idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
+                                       const Xt_int selection_idx[],
+                                       size_t num_selection, int positions[],
+                                       int single_match_only) {
 
   INSTR_DEF(instr,"idxsection_get_positions_of_indices_v2.part")
 
-  if (num_selection < 1) return 0; //nothing to do
-
   if (num_selection == 1)
-    return idxsection_get_position_of_index(body_idxlist, *selection_idx, positions);
+    return (size_t)(idxsection_get_position_of_index(body_idxlist,
+                                                     *selection_idx, positions));
 
   INSTR_START(instr);
 
@@ -944,8 +937,7 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
   const Xt_int *restrict sorted_selection_idx;
   int * selection_pos = NULL;
 
-  size_t i;
-  for (i = 1; i < (size_t)num_selection; ++i)
+  for (size_t i = 1; i < num_selection; ++i)
     if (selection_idx[i] < selection_idx[i-1])
       goto unsorted;
 
@@ -954,13 +946,13 @@ int idxsection_get_positions_of_indices_v2(Xt_idxlist body_idxlist,
 unsorted:
   // the indices are not sorted
   temp_selection_idx
-    = xmalloc((size_t)num_selection * sizeof(*temp_selection_idx));
+    = xmalloc(num_selection * sizeof(*temp_selection_idx));
   memcpy(temp_selection_idx, selection_idx,
-         (size_t)num_selection * sizeof(*temp_selection_idx));
-  selection_pos = xmalloc((size_t)num_selection * sizeof(*selection_pos));
+         num_selection * sizeof(*temp_selection_idx));
+  selection_pos = xmalloc(num_selection * sizeof(*selection_pos));
 
-  xt_assign_id_map_int((size_t)num_selection, selection_pos, 0);
-  xt_quicksort_xt_int_permutation(temp_selection_idx, (size_t)num_selection,
+  xt_assign_id_map_int(num_selection, selection_pos, 0);
+  xt_quicksort_xt_int_permutation(temp_selection_idx, num_selection,
                                   selection_pos);
   sorted_selection_idx = temp_selection_idx;
 
@@ -986,12 +978,11 @@ sorted: ;
   // }
 
   // the following loops are an unrolled version of the one above
-
+  size_t i = 0;
   if (!single_match_only) {
 
     if (selection_pos == NULL) {
-      i = 0;
-      for (size_t j = 0; i < (size_t)num_selection && j < num_body_indices; ++i) {
+      for (size_t j = 0; i < num_selection && j < num_body_indices; ++i) {
 
         while(j < num_body_indices && body_indices[j] < sorted_selection_idx[i]) ++j;
 
@@ -1000,8 +991,7 @@ sorted: ;
         positions[i] = (body_indices[j] == sorted_selection_idx[i])?(int)j:-1;
       }
     } else {
-      i = 0;
-      for (size_t j = 0; i < (size_t)num_selection && j < num_body_indices; ++i) {
+      for (size_t j = 0; i < num_selection && j < num_body_indices; ++i) {
 
         while(j < num_body_indices && body_indices[j] < sorted_selection_idx[i]) ++j;
 
@@ -1015,8 +1005,7 @@ sorted: ;
     Xt_int last_idx = (Xt_int)(sorted_selection_idx[0] - 1);
 
     if (selection_pos == NULL) {
-      i = 0;
-      for (size_t j = 0; i < (size_t)num_selection && j < num_body_indices; ++i) {
+      for (size_t j = 0; i < num_selection && j < num_body_indices; ++i) {
 
         while(j < num_body_indices && body_indices[j] < sorted_selection_idx[i]) ++j;
 
@@ -1028,8 +1017,7 @@ sorted: ;
         last_idx = sorted_selection_idx[i];
       }
     } else {
-      i = 0;
-      for (size_t j = 0; i < (size_t)num_selection && j < num_body_indices; ++i) {
+      for (size_t j = 0; i < num_selection && j < num_body_indices; ++i) {
 
         while(j < num_body_indices && body_indices[j] < sorted_selection_idx[i]) ++j;
 
@@ -1045,19 +1033,19 @@ sorted: ;
 
   // process indices that were not handled by the loop above
   if (selection_pos == NULL)
-    for (; i < (size_t)num_selection; ++i)
+    for (; i < num_selection; ++i)
       positions[i] = -1;
   else
-    for (; i < (size_t)num_selection; ++i)
+    for (; i < num_selection; ++i)
       positions[selection_pos[i]] = -1;
 
   free(temp_selection_idx);
   free(selection_pos);
 
-  int num_unmatched = 0;
+  size_t num_unmatched = 0;
 
   // count the number of unmachted indices
-  for (size_t j = 0; j < (size_t)num_selection; ++j)
+  for (size_t j = 0; j < num_selection; ++j)
     num_unmatched += positions[j] == -1;
 
   INSTR_STOP(instr);
@@ -1187,10 +1175,10 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
   return num_processed;
 }
 
-static int
+static size_t
 idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
                                        const Xt_int *restrict selection_idx,
-                                       int num_selection,
+                                       size_t num_selection,
                                        int *restrict positions,
                                        int single_match_only) {
 
@@ -1199,10 +1187,10 @@ idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
 
   Xt_idxsection section = (Xt_idxsection)body_idxlist;
 
-  if (num_selection < 1) return 0; //nothing to do
-
   if (num_selection == 1)
-    return idxsection_get_position_of_index(body_idxlist, *selection_idx, positions);
+    return (size_t)(idxsection_get_position_of_index(body_idxlist,
+                                                     *selection_idx,
+                                                     positions));
 
   INSTR_START(instr);
 
@@ -1211,7 +1199,7 @@ idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
   int *sorted_positions;
   int *selection_pos = NULL;
 
-  for (size_t i = 1; i < (size_t)num_selection; ++i)
+  for (size_t i = 1; i < num_selection; ++i)
     if (selection_idx[i] < selection_idx[i-1])
       goto unsorted_selection;
 
@@ -1221,22 +1209,22 @@ idxsection_get_positions_of_indices_v3(Xt_idxlist body_idxlist,
   // if the selection is not sorted
 unsorted_selection:
   temp_selection_idx
-    = xmalloc((size_t)num_selection * sizeof(*temp_selection_idx));
+    = xmalloc(num_selection * sizeof(*temp_selection_idx));
   {
-    size_t num_sp_alloc = (size_t)num_selection;
+    size_t num_sp_alloc = num_selection;
 #if defined _CRAYC && _RELEASE_MAJOR < 9
     num_sp_alloc = (num_sp_alloc + _MAXVL_32 - 1) & ~(_MAXVL_32 - 1);
 #endif
-    size_t total_alloc = num_sp_alloc + (size_t)num_selection;
+    size_t total_alloc = num_sp_alloc + num_selection;
     sorted_positions
       = xmalloc(total_alloc * sizeof(*sorted_positions));
     selection_pos = sorted_positions + num_sp_alloc;
   }
   memcpy(temp_selection_idx, selection_idx,
-         (size_t)num_selection * sizeof(*temp_selection_idx));
+         num_selection * sizeof(*temp_selection_idx));
 
-  xt_assign_id_map_int((size_t)num_selection, selection_pos, 0);
-  xt_quicksort_xt_int_permutation(temp_selection_idx, (size_t)num_selection,
+  xt_assign_id_map_int(num_selection, selection_pos, 0);
+  xt_quicksort_xt_int_permutation(temp_selection_idx, num_selection,
                                   selection_pos);
   sorted_selection_idx = temp_selection_idx;
 sorted_selection:
@@ -1246,14 +1234,14 @@ sorted_selection:
   size_t num_processed
     = idxsection_get_positions_of_indices_recursive(
       section->global_start_index,
-      0, sorted_selection_idx, (size_t)num_selection,
+      0, sorted_selection_idx, num_selection,
       sorted_positions, section->ndim,
       section->dims);
 
   INSTR_STOP(instr2);
 
   // set remaining index positions to -1
-  for (size_t i = num_processed; i < (size_t)num_selection; ++i)
+  for (size_t i = num_processed; i < num_selection; ++i)
     sorted_positions[i] = -1;
 
   // apply single match only rule
@@ -1265,7 +1253,7 @@ sorted_selection:
   // convert positions if unsorted
   if (sorted_selection_idx != selection_idx) {
 
-    for (size_t i = 0; i < (size_t)num_selection; ++i)
+    for (size_t i = 0; i < num_selection; ++i)
       positions[i] = sorted_positions[selection_pos[i]];
 
     free(sorted_positions);
@@ -1273,25 +1261,25 @@ sorted_selection:
   }
 
   // count the number of unmached indices
-  size_t num_unmatched = (size_t)num_selection - num_processed;
+  size_t num_unmatched = num_selection - num_processed;
 
   for (size_t i = 0; i < num_processed; ++i)
     num_unmatched += positions[i] == -1;
 
   INSTR_STOP(instr);
 
-  return (int)num_unmatched;
+  return num_unmatched;
 }
 
-static int
+static size_t
 idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
                                     const Xt_int *selection_idx,
-                                    int num_selection, int * positions,
+                                    size_t num_selection, int * positions,
                                     int single_match_only) {
 
   INSTR_DEF(instr,"idxsection_get_positions_of_indices")
   Xt_idxsection section = (Xt_idxsection)body_idxlist;
-  int retval = 0;
+  size_t retval = 0;
 
 
   INSTR_START(instr);
@@ -1307,7 +1295,8 @@ idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
     }
 
   {
-    int num_section_indices = xt_idxlist_get_num_indices(body_idxlist);
+    size_t num_section_indices
+      = (size_t)(xt_idxlist_get_num_indices(body_idxlist));
 
     /*
      * if the indices are already cached or (if the caching would not
@@ -1317,7 +1306,7 @@ idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
     if ((section->index_array_cache != NULL) ||
         (((size_t)num_section_indices * sizeof(Xt_int)
           <= (size_t)128 * 1024U * 1024U)
-         && ((Xt_int)num_section_indices <= 1000 * num_selection))) {
+         && (num_section_indices <= 1000 * num_selection))) {
       retval = idxsection_get_positions_of_indices_v2(body_idxlist, selection_idx,
                                                       num_selection, positions,
                                                       single_match_only);

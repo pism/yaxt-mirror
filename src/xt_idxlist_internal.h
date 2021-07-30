@@ -70,7 +70,8 @@ struct xt_idxlist_vtable {
    int (*get_indices_at_positions)(Xt_idxlist idxlist, const int *positions,
                                    int num, Xt_int *index, Xt_int undef_idx);
    int (*get_position_of_index)(Xt_idxlist, Xt_int, int *);
-   int (*get_positions_of_indices)(Xt_idxlist, Xt_int const *, int, int *, int);
+   size_t (*get_positions_of_indices)(Xt_idxlist, Xt_int const *,
+                                      size_t, int *, int);
    int (*get_pos_exts_of_index_stripes)(Xt_idxlist, int,
                                         const struct Xt_stripe *,
                                         int *, struct Xt_pos_ext **, int);
