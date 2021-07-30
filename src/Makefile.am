@@ -33,7 +33,7 @@
 #
 
 AM_CPPFLAGS = -I../include -I$(srcdir)/../include $(MPI_C_INCLUDE)
-AM_FCFLAGS  = $(MPI_FC_MOD)
+AM_FCFLAGS  = $(MPI_FC_MOD) $(FPP_INCOPT)../include
 lib_LTLIBRARIES = libyaxt_c.la
 if with_fortran
 lib_LTLIBRARIES += libyaxt.la

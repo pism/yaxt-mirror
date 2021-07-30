@@ -52,6 +52,7 @@
 !! @example test_redist_p2p_f.f90
 !! @example test_redist_p2p_parallel_f.f90
 
+#include "fc_feature_defs.inc"
 MODULE xt_redist_base
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, i2, i4, i8
   USE xt_config_f, ONLY: xt_config, xt_config_f2c

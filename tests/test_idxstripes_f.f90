@@ -44,6 +44,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 PROGRAM test_idxstripes_f
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
        run_randomized_tests, init_fortran_random

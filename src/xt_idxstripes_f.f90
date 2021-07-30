@@ -45,10 +45,10 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 
 !>
 !! @example test_perf_stripes.f90
-
 MODULE xt_idxstripes
   USE xt_core, ONLY: xt_stripe, i2, i4, i8, xt_abort
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f, xt_idxlist_f2c

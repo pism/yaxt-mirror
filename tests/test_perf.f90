@@ -44,7 +44,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
-
+#include "fc_feature_defs.inc"
 PROGRAM test_perf
   USE mpi
   USE xt_ut, ONLY: ut_init, ut_mode_dt_p2p, comm_forward, ut_abort, &

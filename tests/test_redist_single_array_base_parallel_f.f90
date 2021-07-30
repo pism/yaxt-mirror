@@ -43,6 +43,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 PROGRAM test_redist_single_array_base_parallel_f
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_redist_msg, &

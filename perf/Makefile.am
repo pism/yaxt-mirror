@@ -54,7 +54,8 @@ perf_sparse_array_gather_LDADD = ../src/libyaxt.la ../src/libyaxt_c.la \
 	$(MPI_FC_LIB)
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
-AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_MOD)
+AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
+	$(FPP_INCOPT)../include $(MPI_FC_MOD)
 LDADD = ../src/libyaxt_c.la $(MPI_C_LIB)
 
 EXTRA_DIST = core

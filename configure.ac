@@ -122,15 +122,17 @@ ACX_SL_FC_MOD_SUFFIX(,
 AC_LANG_PUSH([Fortran])
 ACX_SL_FC_CHECK_MOD_PATH_FLAG
 AC_LANG_POP([Fortran])
-ACX_FC_VOLATILE([FCFLAGS="${FCFLAGS} ${FPP_DEFOPT}HAVE_VOLATILE"])
-ACX_FC_HAVE_SIZE_KIND_ARGUMENT(
-  [FCFLAGS="${FCFLAGS} ${FPP_DEFOPT}HAVE_SIZE_KIND_ARGUMENT"])
+ACX_FC_VOLATILE([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_VOLATILE"])
+ACX_FC_HAVE_SIZE_KIND_ARGUMENT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_SIZE_KIND_ARGUMENT"])
 AC_FC_DUMMY_MAIN(,[:])
 AC_FC_WRAPPERS
 ACX_FC_LOGICAL_INTEROP([HAVE_FC_LOGICAL_INTEROP=yes ;dnl
- FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_LOGICAL_INTEROP"])
-ACX_FC_LOGICAL_C_BOOL(
-  [FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_LOGICAL_C_BOOL"])
+ XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_LOGICAL_INTEROP"])
+ACX_FC_LOGICAL_C_BOOL([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_LOGICAL_C_BOOL"])
 dnl
 dnl check if the compiler supports pointer bounds remapping
 ACX_FC_POINTER_BOUNDS_REMAP([HAVE_POINTER_REMAP=yes],[HAVE_POINTER_REMAP=no])
@@ -139,13 +141,16 @@ AS_VAR_IF([HAVE_POINTER_REMAP],[yes],
   [AC_MSG_NOTICE([Disabling native low-bounds mapping, $FC has a known defective implementation.])
    HAVE_POINTER_REMAP=no])])
 AS_IF([test $HAVE_POINTER_REMAP = yes],
-  [FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_PTR_BOUND_REMAP"])
+  [XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_PTR_BOUND_REMAP"])
 dnl Do we need helper functions for contiguous arrays?
 ACX_FC_HAVE_IS_CONTIGUOUS([HAVE_FC_IS_CONTIGUOUS=yes
-  FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_IS_CONTIGUOUS"
+  XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_IS_CONTIGUOUS"
 AC_DEFINE([HAVE_FC_IS_CONTIGUOUS],[1])])
 ACX_FC_HAVE_C_LOC_OF_SLICE([HAVE_FC_C_LOC_OF_SLICE=yes
-  FCFLAGS="${FCFLAGS+$FCFLAGS }${FPP_DEFOPT}HAVE_FC_C_LOC_OF_SLICE"
+  XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_C_LOC_OF_SLICE"
   AC_DEFINE([HAVE_FC_C_LOC_OF_SLICE],[1])])
 fi
 AM_CONDITIONAL([FC_MOD_UPPERCASE],
@@ -251,7 +256,8 @@ AC_DEFINE_UNQUOTED([XT_MPI_SEND_BUF_CONST],[$XT_MPI_SEND_BUF_CONST],
     [Defined to const, iff buf argument to MPI_Send-like functions can be const])
 TJ_FIND_INTEGRAL_TYPE([MPI_Aint],[xt_mpi_aint],[@%:@include <mpi.h>])
 xt_mpi_aint_kind=c_[]AS_TR_SH([$xt_mpi_aint])
-FCFLAGS="$FCFLAGS ${FPP_DEFOPT}XT_MPI_AINT_KIND=$xt_mpi_aint_kind"
+XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define XT_MPI_AINT_KIND $xt_mpi_aint_kind"
 AC_CHECK_SIZEOF([MPI_Datatype],,[@%:@include <mpi.h>])
 AS_IF([test $ac_cv_sizeof_MPI_Datatype -eq 0],
   [AC_MSG_FAILURE([Could not detect size of MPI_Datatype!])])
@@ -267,7 +273,8 @@ AS_CASE(["$MPI_FINT"],
 AC_DEFINE_UNQUOTED([XT_MPI_FINT_MAX],[$XT_MPI_FINT_MAX],
   [Maximum value of MPI_Fint.])
 # Match MPI_Fint in reverse to make sure Fortran/C-APIs match
-FCFLAGS="$FCFLAGS ${FPP_DEFOPT}XT_MPI_FINT_FC_KIND=$XT_MPI_FINT_FC_KIND"
+XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define XT_MPI_FINT_FC_KIND $XT_MPI_FINT_FC_KIND"
 # the following is needed for source parts from libraries with
 # optional MPI dependencies
 AC_DEFINE([USE_MPI],[1],[use MPI parallel process environment])
@@ -411,8 +418,11 @@ m4_foreach([substtype],[[XT_INT]],
    AS_IF([eval eval test x\\\"\\\${HAVE_FC_MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[+set}\\\" = xset],
      [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],
      substtype[_FC_MPIDT=MPI_DATATYPE_NULL])
-   FCFLAGS="$FCFLAGS ${FPP_DEFOPT}substtype[]_FC_KIND=$substtype[]_FC_KIND ${FPP_DEFOPT}substtype[]_FC_MPIDT=$substtype[]_FC_MPIDT"
-   eval "FCFLAGS=\"\$FCFLAGS \${FPP_DEFOPT}SIZEOF_[]substtype[]=\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\""
+   XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define substtype[]_FC_KIND $substtype[]_FC_KIND
+@%:@define substtype[]_FC_MPIDT $substtype[]_FC_MPIDT"
+   eval "XT_FC_FEATURE_DEFS=\"\$XT_FC_FEATURE_DEFS
+@%:@define SIZEOF_[]substtype[] \$ac_cv_sizeof_]AS_TR_SH([$substtype])[\""
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MAX],[$]substtype[_MAX],
      [Maximal value for ]substtype)
    AC_DEFINE_UNQUOTED([CONF_]substtype[_MIN],[$]substtype[_MIN],
@@ -522,6 +532,9 @@ AC_ARG_VAR([BUILD_FC],
 AC_CONFIG_COMMANDS_PRE([FC=${BUILD_FC-$FC}])
 
 AC_CONFIG_HEADER([include/config.h])
+AC_SUBST([XT_FC_FEATURE_DEFS])
+AM_SUBST_NOTMAKE([XT_FC_FEATURE_DEFS])
+AC_CONFIG_FILES([include/fc_feature_defs.inc])
 
 AC_CONFIG_FILES([						\
 	perf/perf_idxsection_get_positions_of_indices_run	\

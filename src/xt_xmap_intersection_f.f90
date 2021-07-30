@@ -49,6 +49,7 @@
 !>
 !! @example test_xmap_intersection_parallel_f.f90
 
+#include "fc_feature_defs.inc"
 MODULE xt_xmap_intersection
   USE iso_c_binding, ONLY: c_int, c_size_t, c_loc, c_null_ptr, c_ptr
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind

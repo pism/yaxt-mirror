@@ -44,6 +44,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE test_idxlist_utils
   USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_c2f, xt_idxlist_f2c, &
        xt_stripe

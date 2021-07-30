@@ -44,6 +44,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE xt_idxsection
   USE iso_c_binding, ONLY: c_int, c_ptr
   USE xt_core, ONLY: xt_int_kind, xt_abort, i2, i4, i8

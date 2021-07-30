@@ -46,6 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 
+#include "fc_feature_defs.inc"
 MODULE xt_requests
   USE iso_c_binding, ONLY: c_null_ptr, c_ptr, c_associated, c_int
   IMPLICIT NONE

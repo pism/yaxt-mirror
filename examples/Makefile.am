@@ -73,7 +73,8 @@ unstruct_halo_exchange_f_SOURCES = unstruct_halo_exchange_f.f90
 unstruct_halo_exchange_f_LDADD = $(XT_FC_LDADD)
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
-AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_MOD)
+AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
+	$(FPP_INCOPT)../include $(MPI_FC_MOD)
 LDADD = ../src/libyaxt_c.la $(MPI_C_LIB)
 
 # overrides to make regular compilations also use libtool

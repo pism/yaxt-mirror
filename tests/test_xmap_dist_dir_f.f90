@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 PROGRAM test_xmap_dist_dir
   USE xt_xmap_abstract, ONLY: xt_xmap_dist_dir_new
   USE test_xmap_common, ONLY: xmap_self_test_main

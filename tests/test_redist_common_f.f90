@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE test_redist_common
   USE xt_core, ONLY: i2, i4, i8
   USE iso_c_binding, ONLY: c_loc, c_int, c_char, c_null_char

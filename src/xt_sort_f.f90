@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE xt_sort
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_size_t
   USE xt_core, ONLY: xt_abort, xt_int_kind

@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE xt_idxlist_collection
   USE xt_core, ONLY: xt_abort, xt_get_default_comm
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f

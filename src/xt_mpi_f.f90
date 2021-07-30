@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE xt_mpi
   USE mpi, orig_mpi_address_kind => mpi_address_kind
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_long, c_short, c_long_long

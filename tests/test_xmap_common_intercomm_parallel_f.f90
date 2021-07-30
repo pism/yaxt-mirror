@@ -43,6 +43,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE test_xmap_common_intercomm_parallel
   USE iso_c_binding, ONLY: c_int
   USE mpi

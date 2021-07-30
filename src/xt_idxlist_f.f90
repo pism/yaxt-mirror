@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 MODULE xt_idxlist_abstract
   USE xt_core, ONLY: xt_int_kind, xt_mpi_fint_kind, xt_stripe, &
        xt_bounds, xt_abort, i2, i4, i8, &

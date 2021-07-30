@@ -256,7 +256,8 @@ test_mpi_smartdedup_LDADD =  libtestutil.la ../src/xt_mpi.lo \
 	../src/core/xmalloc.lo ../src/core/core.lo $(MPI_C_LIB)
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
-AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 $(MPI_FC_MOD)
+AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
+	$(FPP_INCOPT)../include $(MPI_FC_MOD)
 AM_LDFLAGS = -L../src
 LDADD = libtestutil.la ../src/libyaxt_c.la $(MPI_C_LIB)
 XT_FC_LDADD = libtestutil_f.la libtestutil.la ../src/libyaxt.la \

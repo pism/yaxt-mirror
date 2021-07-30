@@ -46,6 +46,7 @@ include({f03-redist-gen.m4})dnl
 ! LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#include "fc_feature_defs.inc"
 MODULE modname
   USE xt_redist_base, ONLY: xt_redist, xt_redist_s_exchange1, &
        xt_redist_a_exchange1
