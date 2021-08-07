@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     double dst_data[dst_slice_len];
     MPI_Aint src_extent = (MPI_Aint)(sizeof(src_data)),
       dst_extent = (MPI_Aint)(sizeof(dst_data));
-    int displacements[1] = {0};
+    static const int displacements[1] = {0};
 
     Xt_redist redist_repeat = xt_redist_repeat_custom_new(
       redist, src_extent, dst_extent, 1, displacements, config);
@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
       (MPI_Aint)((size_t)(src_data[1] - src_data[0]) * sizeof (double));
     MPI_Aint dst_extent =
       (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof (double));
-    int displacements[num_repetitions] = {0, 1, 2};
+    static const int displacements[num_repetitions] = {0, 1, 2};
 
     Xt_redist redist_repeat = xt_redist_repeat_custom_new(
       redist, src_extent, dst_extent,
@@ -166,8 +166,8 @@ int main(int argc, char **argv) {
       (MPI_Aint)((size_t)(src_data[1] - src_data[0]) * sizeof (double));
     MPI_Aint dst_extent =
       (MPI_Aint)((size_t)(dst_data[1] - dst_data[0]) * sizeof (double));
-    int src_displacements[num_repetitions] = {0, 1, 2};
-    int dst_displacements[num_repetitions] = {2, 1, 0};
+    static const int src_displacements[num_repetitions] = {0, 1, 2},
+      dst_displacements[num_repetitions] = {2, 1, 0};
 
     Xt_redist redist_repeat
       = xt_redist_repeat_asym_custom_new(redist, src_extent, dst_extent,
@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
     // generate redist_repeatection
     MPI_Aint src_extent = (MPI_Aint)(src_slice_len * sizeof (double));
     MPI_Aint dst_extent = (MPI_Aint)(dst_slice_len * sizeof (double));
-    int displacements[3] = {0, 2, 4};
+    static const int displacements[3] = {0, 2, 4};
     Xt_redist redist_repeat = xt_redist_repeat_custom_new(
       redist, src_extent, dst_extent, 3, displacements, config);
 
@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
     // generate redist_repeat
     MPI_Aint src_extent = (MPI_Aint)(1 * sizeof (double));
     MPI_Aint dst_extent = (MPI_Aint)(1 * sizeof (double));
-    int displacements[2] = {0,1};
+    static const int displacements[2] = {0,1};
     Xt_redist redist_repeat = xt_redist_repeat_custom_new(
       redist, src_extent, dst_extent, 2, displacements, config);
 
