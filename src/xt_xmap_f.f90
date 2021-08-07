@@ -178,7 +178,7 @@ CONTAINS
   END FUNCTION xt_xmap_copy
   SUBROUTINE xt_xmap_delete_1(xmap)
     TYPE(xt_xmap), INTENT(inout) :: xmap
-    CALL xt_xmap_delete_c(xt_xmap_f2c(xmap))
+    CALL xt_xmap_delete_c(xmap%cptr)
     xmap%cptr = c_null_ptr
   END SUBROUTINE xt_xmap_delete_1
 
@@ -187,7 +187,7 @@ CONTAINS
     INTEGER :: i, n
     n = SIZE(xmaps)
     DO i = 1, n
-      CALL xt_xmap_delete_c(xt_xmap_f2c(xmaps(i)))
+      CALL xt_xmap_delete_c(xmaps(i)%cptr)
       xmaps(i)%cptr = c_null_ptr
     END DO
   END SUBROUTINE xt_xmap_delete_a1d

@@ -212,7 +212,7 @@ CONTAINS
 
   SUBROUTINE xt_idxlist_delete_1(idxlist)
     TYPE(xt_idxlist), INTENT(inout) :: idxlist
-    CALL xt_idxlist_delete_c(xt_idxlist_f2c(idxlist))
+    CALL xt_idxlist_delete_c(idxlist%cptr)
     idxlist%cptr = c_null_ptr
   END SUBROUTINE xt_idxlist_delete_1
 
@@ -221,7 +221,7 @@ CONTAINS
     INTEGER :: i, n
     n = SIZE(idxlists)
     DO i = 1, n
-      CALL xt_idxlist_delete_c(xt_idxlist_f2c(idxlists(i)))
+      CALL xt_idxlist_delete_c(idxlists(i)%cptr)
       idxlists(i)%cptr = c_null_ptr
     END DO
   END SUBROUTINE xt_idxlist_delete_a1d
@@ -233,7 +233,7 @@ CONTAINS
     n = SIZE(idxlists, 2)
     DO j = 1, n
       DO i = 1, m
-        CALL xt_idxlist_delete_c(xt_idxlist_f2c(idxlists(i, j)))
+        CALL xt_idxlist_delete_c(idxlists(i, j)%cptr)
         idxlists(i, j)%cptr = c_null_ptr
       END DO
     END DO
@@ -259,7 +259,7 @@ CONTAINS
     END INTERFACE
 
     position_c = INT(position, c_int)
-    res = xt_idxlist_get_index_at_position_c(xt_idxlist_f2c(idxlist), &
+    res = xt_idxlist_get_index_at_position_c(idxlist%cptr, &
          position_c, idx) /= 0
   END FUNCTION xt_idxlist_get_index_at_position
 
@@ -277,7 +277,7 @@ CONTAINS
     IF (n > HUGE(1_c_int)) n = HUGE(1_c_int)
 
     num_positions_c = INT(n, c_int)
-    num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
+    num_subst = xt_idxlist_get_indices_at_positions_c(idxlist%cptr, &
          INT(positions, c_int), num_positions_c, &
          indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d
@@ -294,7 +294,7 @@ CONTAINS
     INTEGER(c_int) :: num_pos_c
 
     num_pos_c = INT(num_pos, c_int)
-    num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
+    num_subst = xt_idxlist_get_indices_at_positions_c(idxlist%cptr, &
          INT(positions(1:num_pos), c_int), num_pos_c, &
          indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i2
@@ -314,7 +314,7 @@ CONTAINS
          CALL xt_abort("invalid number of positions", filename, __LINE__)
 
     num_pos_c = INT(num_pos, c_int)
-    num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
+    num_subst = xt_idxlist_get_indices_at_positions_c(idxlist%cptr, &
          INT(positions(1:num_pos), c_int), num_pos_c, indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i4
 
@@ -333,7 +333,7 @@ CONTAINS
          CALL xt_abort("invalid number of positions", filename, __LINE__)
 
     num_pos_c = INT(num_pos, c_int)
-    num_subst = xt_idxlist_get_indices_at_positions_c(xt_idxlist_f2c(idxlist), &
+    num_subst = xt_idxlist_get_indices_at_positions_c(idxlist%cptr, &
          INT(positions(1:num_pos), c_int), num_pos_c, indices, undef_idx)
   END FUNCTION xt_idxlist_get_indices_at_positions_a1d_i8
 
@@ -357,7 +357,7 @@ CONTAINS
       END FUNCTION xt_idxlist_get_position_of_index_c
     END INTERFACE
 
-    notfound = xt_idxlist_get_position_of_index_c(xt_idxlist_f2c(idxlist), &
+    notfound = xt_idxlist_get_position_of_index_c(idxlist%cptr, &
          idx, position_c) /= 0
     position = INT(position_c)
   END FUNCTION xt_idxlist_get_position_of_index
@@ -386,7 +386,7 @@ CONTAINS
     END INTERFACE
 
     offset_c = INT(offset, c_int)
-    notfound = xt_idxlist_get_position_of_index_off_c(xt_idxlist_f2c(idxlist), &
+    notfound = xt_idxlist_get_position_of_index_off_c(idxlist%cptr, &
          idx, position_c, offset_c) /= 0
     position = INT(position_c)
   END FUNCTION xt_idxlist_get_position_of_index_off
@@ -427,7 +427,7 @@ CONTAINS
       IF (n > HUGE(1_c_int)) THEN
         num_missing = num_missing &
              + INT(xt_idxlist_get_positions_of_indices_c(&
-             xt_idxlist_f2c(idxlist), indices(ofs:), HUGE(1_c_int), &
+             idxlist%cptr, indices(ofs:), HUGE(1_c_int), &
              positions(ofs:), single_match_only_))
         ofs = ofs + HUGE(1_c_int)
         n = n - HUGE(1_c_int)
@@ -435,7 +435,7 @@ CONTAINS
         num_pos_c = INT(n, c_int)
         num_missing = num_missing &
              + INT(xt_idxlist_get_positions_of_indices_c(&
-             xt_idxlist_f2c(idxlist), indices(ofs:), &
+             idxlist%cptr, indices(ofs:), &
              num_pos_c, positions(ofs:), single_match_only_))
         n = 0
       END IF
@@ -459,7 +459,7 @@ CONTAINS
     INTEGER(c_int) :: num_stripes
     TYPE(xt_stripe), POINTER :: stripes_f_ptr(:)
     INTEGER :: stripes_shape(1)
-    CALL xt_idxlist_get_index_stripes_c(xt_idxlist_f2c(idxlist), &
+    CALL xt_idxlist_get_index_stripes_c(idxlist%cptr, &
          stripes_c_ptr, num_stripes)
     IF (num_stripes > HUGE(stripes_shape)) &
          CALL xt_abort("number of stripes too large", filename, __LINE__)
@@ -494,7 +494,7 @@ CONTAINS
     END INTERFACE
 
     ndim = INT(SIZE(global_size), c_int)
-    CALL xt_idxlist_get_bounding_box_c(xt_idxlist_f2c(idxlist), &
+    CALL xt_idxlist_get_bounding_box_c(idxlist%cptr, &
          ndim, global_size, global_start_index, bounds)
   END FUNCTION xt_idxlist_get_bounding_box
 
@@ -513,7 +513,7 @@ CONTAINS
     END INTERFACE
 
     intersection = xt_idxlist_c2f(xt_idxlist_get_intersection_c(&
-         xt_idxlist_f2c(idxlist_src), xt_idxlist_f2c(idxlist_dst)))
+         idxlist_src%cptr, idxlist_dst%cptr))
   END FUNCTION xt_idxlist_get_intersection
 
   FUNCTION xt_idxlist_copy(idxlist) RESULT(copy)
@@ -529,7 +529,7 @@ CONTAINS
       END FUNCTION xt_idxlist_copy_c
     END INTERFACE
 
-    copy = xt_idxlist_c2f(xt_idxlist_copy_c(xt_idxlist_f2c(idxlist)))
+    copy = xt_idxlist_c2f(xt_idxlist_copy_c(idxlist%cptr))
 
   END FUNCTION xt_idxlist_copy
 
@@ -543,7 +543,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER :: num_indices
     INTEGER(c_int) :: n
-    n = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    n = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (n > HUGE(num_indices) .OR. n < -HUGE(num_indices)) &
          CALL xt_abort("num_indices out of bounds", filename, __LINE__)
     num_indices = INT(n)
@@ -553,77 +553,77 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(xt_int_kind), INTENT(out) :: indices(:)
     INTEGER(c_int) :: num_indices
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > SIZE(indices)) THEN
       CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
-    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+    CALL xt_idxlist_get_indices_c(idxlist%cptr, indices)
   END SUBROUTINE xt_idxlist_get_indices_1d
 
   SUBROUTINE xt_idxlist_get_indices_2d(idxlist, indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(xt_int_kind), INTENT(out) :: indices(:,:)
     INTEGER(c_int) :: num_indices
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > SIZE(indices)) THEN
       CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
-    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+    CALL xt_idxlist_get_indices_c(idxlist%cptr, indices)
   END SUBROUTINE xt_idxlist_get_indices_2d
 
   SUBROUTINE xt_idxlist_get_indices_3d(idxlist, indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:)
     INTEGER(c_int) :: num_indices
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > SIZE(indices)) THEN
       CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
-    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+    CALL xt_idxlist_get_indices_c(idxlist%cptr, indices)
   END SUBROUTINE xt_idxlist_get_indices_3d
 
   SUBROUTINE xt_idxlist_get_indices_4d(idxlist, indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:)
     INTEGER(c_int) :: num_indices
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > SIZE(indices)) THEN
       CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
-    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+    CALL xt_idxlist_get_indices_c(idxlist%cptr, indices)
   END SUBROUTINE xt_idxlist_get_indices_4d
 
   SUBROUTINE xt_idxlist_get_indices_5d(idxlist, indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:,:)
     INTEGER(c_int) :: num_indices
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > SIZE(indices)) THEN
       CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
-    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+    CALL xt_idxlist_get_indices_c(idxlist%cptr, indices)
   END SUBROUTINE xt_idxlist_get_indices_5d
 
   SUBROUTINE xt_idxlist_get_indices_6d(idxlist, indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:,:,:)
     INTEGER(c_int) :: num_indices
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > SIZE(indices)) THEN
       CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
-    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+    CALL xt_idxlist_get_indices_c(idxlist%cptr, indices)
   END SUBROUTINE xt_idxlist_get_indices_6d
 
   SUBROUTINE xt_idxlist_get_indices_7d(idxlist, indices)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     INTEGER(xt_int_kind), INTENT(out) :: indices(:,:,:,:,:,:,:)
     INTEGER(c_int) :: num_indices
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > SIZE(indices)) THEN
       CALL xt_abort("indices array too small", filename, __LINE__)
     END IF
-    CALL xt_idxlist_get_indices_c(xt_idxlist_f2c(idxlist), indices)
+    CALL xt_idxlist_get_indices_c(idxlist%cptr, indices)
   END SUBROUTINE xt_idxlist_get_indices_7d
 
   FUNCTION xt_idxlist_get_indices_const(idxlist) RESULT(indices)
@@ -642,13 +642,13 @@ CONTAINS
         TYPE(c_ptr) :: indices
       END FUNCTION xt_idxlist_get_indices_const_c
     END INTERFACE
-    num_indices = xt_idxlist_get_num_indices_c(xt_idxlist_f2c(idxlist))
+    num_indices = xt_idxlist_get_num_indices_c(idxlist%cptr)
     IF (num_indices > 0_xt_int_kind) THEN
       IF (num_indices > HUGE(indices_shape)) &
            CALL xt_abort("too many indices for default integer kind", &
            filename, __LINE__)
       indices_shape(1) = INT(num_indices)
-      c_indices = xt_idxlist_get_indices_const_c(xt_idxlist_f2c(idxlist))
+      c_indices = xt_idxlist_get_indices_const_c(idxlist%cptr)
       CALL C_F_POINTER(c_indices, indices, indices_shape)
     ELSE
       indices => dummy(1:0)
@@ -682,7 +682,7 @@ CONTAINS
     END IF
     num_stripes_c = INT(num_stripes, c_int)
     num_unmatched_c = xt_idxlist_get_pos_exts_of_index_stripes_c(&
-         xt_idxlist_f2c(idxlist), num_stripes_c, stripes_c, &
+         idxlist%cptr, num_stripes_c, stripes_c, &
          num_ext_c, pos_ext_c, MERGE(1_c_int, 0_c_int, single_match_only))
 
     IF (num_ext_c > HUGE(1) .OR. num_ext_c < 0 &
