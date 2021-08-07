@@ -128,7 +128,7 @@ CONTAINS
       END SUBROUTINE check_offsets_c
     END INTERFACE
 
-    IF (SIZE(offsets_a) /= size(offsets_b)) &
+    IF (SIZE(offsets_a) /= SIZE(offsets_b)) &
          CALL test_abort("inequal number of array elements in eq test", &
          filename, __LINE__)
 
