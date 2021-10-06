@@ -187,7 +187,7 @@ CONTAINS
     DO i = 1_xi, num_dst_idx
       dst_index_list(i) = num_dst_idx - i + 1_xi
     END DO
-    CALL shift_idx(dst_index_list, num_src_idx)
+    CALL shift_idx(dst_index_list, num_dst_idx)
     CALL test_xmap(src_index_list, dst_index_list, xmap_new, comm)
   END SUBROUTINE test_xmap1
 
