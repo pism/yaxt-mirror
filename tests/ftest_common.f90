@@ -45,10 +45,11 @@
 !
 #include "fc_feature_defs.inc"
 MODULE ftest_common
+#include "xt_slice_c_loc.inc"
   USE mpi
   USE xt_core, ONLY: i2, i4, i8
   USE iso_c_binding, ONLY: c_int, c_bool, c_double, &
-       c_int16_t, c_int32_t, c_int64_t
+       c_int16_t, c_int32_t, c_int64_t, c_size_t, c_loc, c_ptr
   IMPLICIT NONE
   PRIVATE
   INTEGER, PUBLIC, PARAMETER :: dp = SELECTED_REAL_KIND(12, 307)
@@ -158,6 +159,24 @@ MODULE ftest_common
     MODULE PROCEDURE icbrt_i2, icbrt_i4, icbrt_i8
   END INTERFACE icbrt
 
+  INTERFACE random_fill
+    MODULE PROCEDURE random_fill_i4, random_fill_i8
+  END INTERFACE random_fill
+
+  INTERFACE crc32
+    FUNCTION memcrc(a, n) BIND(c, name="memcrc") RESULT(crcval)
+      IMPORT :: c_ptr, c_size_t, c_int32_t
+      TYPE(c_ptr), VALUE, INTENT(in) :: a
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      INTEGER(c_int32_t) :: crcval
+    END function memcrc
+    MODULE PROCEDURE memcrc_i4, memcrc_i8
+  END INTERFACE crc32
+
+  INTERFACE permute
+    MODULE PROCEDURE permute_i4
+  END INTERFACE permute
+
   REAL(dp) :: sync_dt_sum = 0.0_dp
   LOGICAL, PARAMETER :: debug = .FALSE.
   LOGICAL :: verbose = .FALSE.
@@ -166,7 +185,8 @@ MODULE ftest_common
   PUBLIC :: timer, treset, tstart, tstop, treport, mysync
   PUBLIC :: id_map, icbrt, icmp, factorize, regular_deco
   PUBLIC :: test_abort, set_verbose, get_verbose
-  PUBLIC :: cmp_arrays
+  PUBLIC :: cmp_arrays, crc32
+  PUBLIC :: random_fill, permute
   PUBLIC :: run_randomized_tests, init_fortran_random
   CHARACTER(len=*), PARAMETER :: filename = 'ftest_common.f90'
 CONTAINS
@@ -985,6 +1005,92 @@ CONTAINS
     END IF
     CALL random_seed(put=rseed)
   END SUBROUTINE init_fortran_random
+
+  SUBROUTINE random_fill_i4(a)
+    INTEGER(i4), ALLOCATABLE :: a(:)
+    INTEGER :: n, nb, i, j
+    INTEGER, PARAMETER :: block_len=8
+    REAL(c_double) :: rand_nums(block_len)
+    REAL(c_double) :: sc
+    n = SIZE(a)
+    nb = n/block_len
+    sc = REAL(HUGE(a), c_double)
+    DO j = 1, nb
+      CALL RANDOM_NUMBER(rand_nums)
+      DO i = 1, block_len
+        a(i+(j-1)*block_len) = NINT(rand_nums(i) * sc, i4)
+      END DO
+    END DO
+    CALL RANDOM_NUMBER(rand_nums)
+    DO i = 1, MOD(n, block_len)
+      a(i+nb*block_len) = NINT(rand_nums(i) * sc, i4)
+    END DO
+  END SUBROUTINE random_fill_i4
+
+  SUBROUTINE random_fill_i8(a)
+    INTEGER(i8), ALLOCATABLE :: a(:)
+    INTEGER :: n, nb, i, j
+    INTEGER, PARAMETER :: block_len=8
+    REAL(c_double) :: rand_nums(block_len), sc
+    n = SIZE(a)
+    nb = n/block_len
+    sc = REAL(HUGE(a), c_double)
+    DO j = 1, nb
+      CALL RANDOM_NUMBER(rand_nums)
+      DO i = 1, block_len
+        a(i+(j-1)*block_len) = NINT(rand_nums(i) * sc, i8)
+      END DO
+    END DO
+    CALL RANDOM_NUMBER(rand_nums)
+    DO i = 1, MOD(n, block_len)
+      a(i+nb*block_len) = NINT(rand_nums(i) * sc, i8)
+    END DO
+  END SUBROUTINE random_fill_i8
+
+
+  FUNCTION memcrc_i4(a) RESULT(crcval)
+    INTEGER(i4), TARGET, INTENT(in) :: a(:)
+    INTEGER(c_int32_t) :: crcval
+    TYPE(c_ptr) :: p
+    INTEGER(c_size_t) :: n
+    XT_SLICE_C_LOC(a, p)
+    n = SIZE(a) * 4_c_size_t
+    crcval = memcrc(p, n)
+  END FUNCTION memcrc_i4
+
+  FUNCTION memcrc_i8(a) RESULT(crcval)
+    INTEGER(i8), TARGET, INTENT(in) :: a(:)
+    INTEGER(c_int32_t) :: crcval
+    TYPE(c_ptr) :: p
+    INTEGER(c_size_t) :: n
+    XT_SLICE_C_LOC(a, p)
+    n = SIZE(a) * 8_c_size_t
+    crcval = memcrc(p, n)
+  END FUNCTION memcrc_i8
+
+  SUBROUTINE permute_i4(a, p)
+    INTEGER(i4), INTENT(inout) :: a(:), p(:)
+
+    INTEGER :: i, n, next
+    INTEGER(i4) :: t, temp
+
+    n = SIZE(a)
+    DO i = 1, n
+      next = i
+      ! Check if it is already
+      ! considered in cycle
+      DO WHILE (p(next) >= 0)
+        ! Swap the current element according
+        ! to the permutation in P
+        t = a(i)
+        temp = p(next)
+        a(i) = a(temp)
+        a(temp) = t
+        p(next) = -temp
+        next = temp
+      END DO
+    END DO
+  END SUBROUTINE permute_i4
 
 END MODULE ftest_common
 !

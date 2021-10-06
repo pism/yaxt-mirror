@@ -101,6 +101,7 @@ check_PROGRAMS += 						\
 	test_ut							\
 	test_perf						\
 	test_perf_stripes					\
+	test_sort_f						\
 	test_yaxt
 
 check_LTLIBRARIES += libtestutil_f.la
@@ -113,6 +114,7 @@ endif
 
 
 libtestutil_la_SOURCES = tests.c \
+	cksum.c cksum.h \
 	test_idxlist_utils.c \
 	test_xmap_common.c test_xmap_common.h \
 	test_xmap_common_parallel.c \
@@ -245,6 +247,8 @@ test_perf_LDADD = $(XT_FC_LDADD)
 test_perf_stripes_SOURCES = test_perf_stripes.f90
 test_perf_stripes_LDADD = $(XT_FC_LDADD)
 test_sort_SOURCES = test_sort.c tests.h
+test_sort_f_SOURCES = test_sort_f.f90
+test_sort_f_LDADD = $(XT_FC_LDADD)
 test_uid_SOURCES = test_uid.c
 test_yaxt_SOURCES = test_yaxt.f90
 test_yaxt_LDADD = $(XT_FC_LDADD)
