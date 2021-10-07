@@ -61,6 +61,12 @@
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
 
+#if ! (HAVE_DECL___BUILTIN_CTZL || HAVE_DECL___BUILTIN_CLZL)       \
+  && (HAVE_DECL___LZCNT && SIZEOF_LONG == SIZEOF_INT               \
+      || HAVE_DECL___LZCNT64 && SIZEOF_LONG == 8 && CHAR_BIT == 8)
+#include <intrin.h>
+#endif
+
 //! COMPACT_DT enables the anlysis of displacements in order to give a
 //! more compact description to the datatype generators of MPI. For strong
 //! enough MPI implementations this not required. Then you can undefine
@@ -785,7 +791,9 @@ xt_mpi_comm_get_internal_attr(MPI_Comm comm)
 
 #if HAVE_DECL___BUILTIN_CTZL
 #define ctzl(v) (__builtin_ctzl(v))
-#elif HAVE_DECL___BUILTIN_CLZL
+#elif HAVE_DECL___BUILTIN_CLZL                                     \
+  || HAVE_DECL___LZCNT && SIZEOF_LONG == SIZEOF_INT                \
+  || HAVE_DECL___LZCNT64 && SIZEOF_LONG == 8 && CHAR_BIT == 8
 static inline int
 ctzl(unsigned long v) {
   enum {
@@ -793,7 +801,15 @@ ctzl(unsigned long v) {
   };
   /* clear all but lowest 1 bit */
   v = v & ~(v - 1);
-  int c = ulong_bits - __builtin_clzl(v) - 1;
+  int c = ulong_bits - 1 - (int)
+#if HAVE_DECL___BUILTIN_CTZL
+    __builtin_clzl(v)
+#elif HAVE_DECL___LZCNT && SIZEOF_LONG == SIZEOF_INT
+    __lzcnt(v)
+#else
+    __lzcnt64(v)
+#endif
+    ;
   return c;
 }
 #else

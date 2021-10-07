@@ -209,6 +209,25 @@ AC_CACHE_CHECK([whether __builtin_clzll is declared],
      [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[yes])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[no])])])
 
+AC_CACHE_CHECK([whether __lzcnt is available],
+  [acx_cv_have_decl___lzcnt],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <intrin.h>],
+       [  unsigned nlz = __lzcnt(56U)])],
+     [AS_VAR_SET([acx_cv_have_decl___lzcnt],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___lzcnt],[no])])])
+AC_DEFINE_UNQUOTED([HAVE_DECL___LZCNT],
+  [`test "$acx_cv_have_decl___lzcnt" = yes ; expr 1 - $?`],
+  [PGI/Nvidia style __lzcnt is available])
+AC_CACHE_CHECK([whether __lzcnt64 is available],
+  [acx_cv_have_decl___lzcnt64],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <intrin.h>],
+       [  unsigned __int64 nlz = __lzcnt64(56ULL)])],
+     [AS_VAR_SET([acx_cv_have_decl___lzcnt64],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___lzcnt64],[no])])])
+AC_DEFINE_UNQUOTED([HAVE_DECL___LZCNT64],
+  [`test "$acx_cv_have_decl___lzcnt64" = yes ; expr 1 - $?`],
+  [PGI/Nvidia style __lzcnt64 is available])
+
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly
 dnl ######################################################################
