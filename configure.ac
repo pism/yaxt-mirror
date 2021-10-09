@@ -208,7 +208,17 @@ AC_CACHE_CHECK([whether __builtin_clzll is declared],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  int nlz = __builtin_clzll(56ULL)])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[yes])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[no])])])
-
+dnl
+AC_CACHE_CHECK([whether __lzcnt16 is available],
+  [acx_cv_have_decl___lzcnt16],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <intrin.h>],
+       [  unsigned short nlz = __lzcnt16((unsigned short)56)])],
+     [AS_VAR_SET([acx_cv_have_decl___lzcnt16],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___lzcnt16],[no])])])
+AC_DEFINE_UNQUOTED([HAVE_DECL___LZCNT16],
+  [`test "$acx_cv_have_decl___lzcnt16" = yes ; expr 1 - $?`],
+  [PGI/Nvidia style __lzcnt16 is available])
+dnl
 AC_CACHE_CHECK([whether __lzcnt is available],
   [acx_cv_have_decl___lzcnt],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <intrin.h>],
@@ -218,6 +228,7 @@ AC_CACHE_CHECK([whether __lzcnt is available],
 AC_DEFINE_UNQUOTED([HAVE_DECL___LZCNT],
   [`test "$acx_cv_have_decl___lzcnt" = yes ; expr 1 - $?`],
   [PGI/Nvidia style __lzcnt is available])
+dnl
 AC_CACHE_CHECK([whether __lzcnt64 is available],
   [acx_cv_have_decl___lzcnt64],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <intrin.h>],
@@ -227,7 +238,7 @@ AC_CACHE_CHECK([whether __lzcnt64 is available],
 AC_DEFINE_UNQUOTED([HAVE_DECL___LZCNT64],
   [`test "$acx_cv_have_decl___lzcnt64" = yes ; expr 1 - $?`],
   [PGI/Nvidia style __lzcnt64 is available])
-
+dnl
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly
 dnl ######################################################################
@@ -383,9 +394,13 @@ m4_define([vartype_setq],[$1][_MPIDT=$4
      $1][_MIN=$6
      $1][_FMT=$7
      $1][_abs=$8
-     AS_IF([test x"$][$9" = xyes],
-       [m4_if([$2], [short], [$1][_clz="(m4_substr($9,17)((unsigned short)v))"],
-          [$1][_clz="(m4_substr($9,17)(v))"])])])dnl
+     m4_foreach([clz_func],[$9],
+       [AS_VAR_IF(clz_func,[yes],
+          [$1][_clz="@{:@]AS_LITERAL_WORD_IF([clz_func],
+            [m4_substr(clz_func,[17])],
+            ["`expr "x]clz_func[" 'x\(.\{17\}\)'`"])[@{:@@{:@m4_if([$2],
+            [short], [@{:@unsigned short@:}@])v@:}@@:}@@:}@"])
+])])dnl
 
 dnl
 dnl test if MPI_INTEGER[248] are available
@@ -414,16 +429,23 @@ m4_foreach([substtype],[[XT_INT]],
      [int],
      [vartype_setq(substtype,[int],[c_int],[MPI_INT],
                    [INT_MAX],["(-INT_MAX)"],["\"d\""],['(abs((v)))'],
-                   [acx_cv_have_decl___builtin_clz])],
+                   [[acx_cv_have_decl___builtin_clz],
+                    [acx_cv_have_decl___lzcnt]])],
      [long],
-     [vartype_setq(substtype,[long],[c_long],[MPI_LONG],
+     [AS_IF([test $ac_cv_sizeof_long -eq $ac_cv_sizeof_long_long],
+        [acx_nvidia_intrinsic_presence=acx_cv_have_decl___lzcnt64],
+        [test $ac_cv_sizeof_long -eq $ac_cv_sizeof_int],
+        [acx_nvidia_intrinsic_presence=acx_cv_have_decl___lzcnt])
+      vartype_setq(substtype,[long],[c_long],[MPI_LONG],
                    [LONG_MAX],["(-LONG_MAX)"],["\"ld\""],['(labs((v)))'],
-                   [acx_cv_have_decl___builtin_clzl])],
+                   [[acx_cv_have_decl___builtin_clzl],
+                    [$acx_nvidia_intrinsic_presence]])],
      [short],
      [vartype_setq(substtype,[short],[c_short],[MPI_SHORT],
                    [SHRT_MAX],["(-SHRT_MAX)"],["\"hd\""],
                    ['((short)abs((v)))'],
-                   [acx_cv_have_decl___builtin_clz])
+                   [[acx_cv_have_decl___builtin_clz],
+                    [acx_cv_have_decl___lzcnt16]])
       AS_IF([test x"$acx_cv_have_decl___builtin_clz" = xyes \
              && test $ac_cv_sizeof_int != $ac_cv_sizeof_short],
         [AS_IF([expr $ac_cv_sizeof_int = $ac_cv_sizeof_short \* 2 >/dev/null],
@@ -432,7 +454,8 @@ m4_foreach([substtype],[[XT_INT]],
      ["long long"],
      [vartype_setq(substtype,[long long],[c_long_long],[MPI_LONG_LONG],
                    [LLONG_MAX],["(-LLONG_MAX)"],["\"lld\""],['(llabs((v)))'],
-                   [acx_cv_have_decl___builtin_clzll])],
+                   [[acx_cv_have_decl___builtin_clzll],
+                    [acx_cv_have_decl___lzcnt64]])],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    AS_IF([eval eval test x\\\"\\\${HAVE_FC_MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[+set}\\\" = xset],
      [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],

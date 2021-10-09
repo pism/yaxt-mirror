@@ -52,6 +52,10 @@
 
 #include <limits.h>
 
+#if HAVE_DECL___LZCNT || HAVE_DECL___LZCNT64 || HAVE_DECL___LZCNT16
+#  include <intrin.h>
+#endif
+
 #include "xt/xt_core.h"
 
 /* simple operations on Xt_int */

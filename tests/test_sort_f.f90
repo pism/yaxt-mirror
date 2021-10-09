@@ -3,7 +3,6 @@ PROGRAM test_sort
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_sort_index, xt_sort_int, xt_sort_permutation
-  USE xt_core, ONLY: i4, i8
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
        random_fill, crc32, permute
   IMPLICIT NONE
