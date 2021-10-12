@@ -47,6 +47,7 @@ FOR ANY SUPPORT OR SERVICE OF THE CFORTRAN.H PACKAGE.
  * MR  = Martin Reinecke
  * WDP = William D Pence
  * BR  = Bastien ROUCARIES
+ * TJ  = Thomas Jahns
  * -- Kevin McCarty, for Debian (19 Dec. 2005) */
 
 /*******
@@ -84,6 +85,8 @@ FOR ANY SUPPORT OR SERVICE OF THE CFORTRAN.H PACKAGE.
 		via a #define or -D, default to gfortran behavior rather than
 		g77 behavior. (KMCCARTY)
       Oct 2009: Add warning if guessing default fortran. Move g77 above guessing bloc
+      Oct 2021: Accomodate for change to size_t string lengths in
+                gfortran 8 and later (TJ)
  *******/
 
 /* 
@@ -205,18 +208,30 @@ only C calling FORTRAN subroutines will work using K&R style.*/
 #if        defined(__CYGWIN__)                 /* 04/11/02 LEB (CFITSIO) */
 #define       f2cFortran 
 #define	      gFortran /* 8/26/08 (KMCCARTY) */
+#if __GNUC__ > 7
+#define       gFortran8 /* 10/11/21 TJ */
+#endif
 #endif
 #if        defined(__GNUC__) && defined(linux) /* 06/21/00 PDW (CFITSIO) */
 #define       f2cFortran 
 #define	      gFortran /* 8/26/08 (KMCCARTY) */
+#if __GNUC__ > 7
+#define       gFortran8 /* 10/11/21 TJ */
+#endif
 #endif
 #if defined(macintosh)                         /* 11/1999 (CFITSIO) */
 #define f2cFortran
 #define	      gFortran /* 8/26/08 (KMCCARTY) */
+#if __GNUC__ > 7
+#define       gFortran8 /* 10/11/21 TJ */
+#endif
 #endif
 #if defined(__APPLE__)                         /* 11/2002 (CFITSIO) */
 #define f2cFortran
 #define	      gFortran /* 8/26/08 (KMCCARTY) */
+#if __GNUC__ > 7
+#define       gFortran8 /* 10/11/21 TJ */
+#endif
 #endif
 #if defined(__hpux)             /* 921107: Use __hpux instead of __hp9000s300 */
 #define       hpuxFortran       /*         Should also allow hp9000s7/800 use.*/
@@ -1732,7 +1747,11 @@ do{VVCF(T1,A1,B1)  VVCF(T2,A2,B2)  VVCF(T3,A3,B3)  VVCF(T4,A4,B4)  VVCF(T5,A5,B5
 #define   HCF(TN,I)         _(TN,_cfSTR)(3,H,cfCOMMA, H,_(C,I),0,0)
 #define  HHCF(TN,I)         _(TN,_cfSTR)(3,H,cfCOMMA,HH,_(C,I),0,0)
 #define HHHCF(TN,I)         _(TN,_cfSTR)(3,H,cfCOLON, H,_(C,I),0,0)
+#ifdef gFortran8                /* 10/11/21 TJ */
+#define  H_CF_SPECIAL       size_t
+#else
 #define  H_CF_SPECIAL       unsigned
+#endif
 #define HH_CF_SPECIAL
 #define  DEFAULT_cfH(M,I,A)
 #define  LOGICAL_cfH(S,U,B)

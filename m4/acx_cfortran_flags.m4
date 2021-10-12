@@ -96,7 +96,10 @@ dnl check if compiling with f2c bindings or with default bindings
             AS_CASE([" $acx_FCFLAGS "],
               [*\ -ff2c\ *],
               [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])],
-              [AS_VAR_SET([acx_cf_flag],[-DgFortran])])],
+              [AS_VAR_SET([acx_cf_flag],[-DgFortran])
+               acx_temp=`$acx_FC --version 2>&1 | sed -n -e '/^GNU Fortran/{' \
+                  -e 's/^GNU Fortran\@{:@ @{:@@<:@^@:}@@:>@*@:}@\)\{0,1\} \(@<:@0-9.@:>@*\)\( .*\)\{0,1\}/\2/;p;}'`
+               AS_VERSION_COMPARE([$acx_temp],[7],,,[AS_VAR_SET([acx_cf_flag],["-DgFortran -DgFortran8"])])])],
            [AS_CASE([`$acx_FC -v 2>&1 | sed -n 1,5p`],
               [*f2c*],
               [AS_VAR_SET([acx_cf_flag],[-Df2cFortran])])])])],
