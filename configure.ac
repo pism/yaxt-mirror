@@ -181,6 +181,15 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([__int128_t f(void) {
 }])],
   [AC_CHECK_SIZEOF([__int128_t])],
   [ac_cv_sizeof___int128_t=0])
+dnl test what type to use for int64_t (usually long or long long)
+TJ_FIND_INTEGRAL_TYPE([int64_t],[DEFINED_INT64_T],[@%:@include <inttypes.h>])
+AS_IF([test x"$DEFINED_INT64_T" = x"long long"],
+  [AC_DEFINE([INT64_T_IS_LONG_LONG],[1],
+     [defined if int64_t is long long in disguise])],
+  [test x"$DEFINED_INT64_T" = x"long"],
+  [AC_DEFINE([INT64_T_IS_LONG],[1],
+     [defined if int64_t is long in disguise])])
+dnl
 dnl
 dnl check for various builtins
 AS_FOR([builtin_macro],[builtin],[__builtin_ctzl __builtin_clzl],
@@ -246,6 +255,8 @@ if test_with_fortran ; then
 ACX_FIND_CFORTRAN_DEF
 ACX_XLF_QEXTNAME_ADD_APPENDUS
 ACX_CHECK_CFORTRAN
+dnl we want to copy strings to the stack for cf calls
+AC_FUNC_ALLOCA
 fi
 
 dnl ######################################################################

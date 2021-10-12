@@ -259,7 +259,7 @@ test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
 test_mpi_smartdedup_LDADD =  libtestutil.la ../src/xt_mpi.lo \
 	../src/core/xmalloc.lo ../src/core/core.lo $(MPI_C_LIB)
 
-AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
+AM_CPPFLAGS = -I../inst_headers -I$(top_srcdir)/include $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
 	$(FPP_INCOPT)../include $(MPI_FC_MOD)
 AM_LDFLAGS = -L../src
