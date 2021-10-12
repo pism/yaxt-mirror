@@ -44,6 +44,7 @@
 !  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 !  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fc_feature_defs.inc"
+#define UNUSED(x) IF (SIZE( (/(x)/) ) < 0) CONTINUE
 
 !>
 !! @example test_perf.f90
@@ -247,6 +248,8 @@ CONTAINS
     INTEGER, INTENT(out) :: handle
 
     INTEGER(c_int) :: size_myindex_c
+
+    UNUSED(global_size)
     IF (HUGE(1_xt_int_kind) < HUGE(myindex)) THEN
       IF (ANY(myindex > HUGE(1_xt_int_kind)) &
            .OR. ANY(myindex < -HUGE(1_xt_int_kind))) &
