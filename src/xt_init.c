@@ -48,7 +48,9 @@
 #endif
 
 #include <stdlib.h>
+
 #include "core/core.h"
+#include "xt_init_internal.h"
 #include "xt_config_internal.h"
 #include "xt_idxlist_internal.h"
 #include "xt_idxstripes_internal.h"
@@ -60,11 +62,8 @@
 
 INSTR_DEF(instr,"YAXT_lifetime")
 
-static enum {
-  xt_lib_pre_init,
-  xt_lib_initialized,
-  xt_lib_finalized,
-} xt_lib_state = xt_lib_pre_init;
+int xt_lib_state __attribute__((aligned(16),common));
+
 
 void
 xt_initialize(MPI_Comm default_comm)

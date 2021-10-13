@@ -148,6 +148,13 @@ MODULE xt_core
 
   PUBLIC :: set_abort_handler, xt_restore_default_abort_hndl
 
+  ENUM, BIND( C )
+    ENUMERATOR :: xt_lib_pre_init, &
+         xt_lib_initialized, &
+         xt_lib_finalized
+  END ENUM
+  INTEGER(c_int), PUBLIC, BIND(c, name='xt_lib_state') :: xt_lib_state
+
 CONTAINS
 
   SUBROUTINE xt_abort4(comm, msg, source, line)
@@ -174,28 +181,14 @@ CONTAINS
          stripe%stride, ', ', stripe%nstrides, ')'
   END FUNCTION xt_stripe2char
 
-  FUNCTION xt_initialized() RESULT(is_initialized)
+  PURE FUNCTION xt_initialized() RESULT(is_initialized)
     LOGICAL :: is_initialized
-    INTERFACE
-      FUNCTION xt_initialized_c() BIND(c, name='xt_initialized') &
-           RESULT(is_initialized)
-        IMPORT :: c_int
-        INTEGER(c_int) :: is_initialized
-      END FUNCTION xt_initialized_c
-    END INTERFACE
-    is_initialized = xt_initialized_c() /= 0
+    is_initialized = xt_lib_state > xt_lib_pre_init
   END FUNCTION xt_initialized
 
-  FUNCTION xt_finalized() RESULT(is_finalized)
+  PURE FUNCTION xt_finalized() RESULT(is_finalized)
     LOGICAL :: is_finalized
-    INTERFACE
-      FUNCTION xt_finalized_c() BIND(c, name='xt_finalized') &
-           RESULT(is_finalized)
-        IMPORT :: c_int
-        INTEGER(c_int) :: is_finalized
-      END FUNCTION xt_finalized_c
-    END INTERFACE
-    is_finalized = xt_finalized_c() /= 0
+    is_finalized = xt_lib_state == xt_lib_finalized
   END FUNCTION xt_finalized
 
   ELEMENTAL FUNCTION xt_pos_ext_eq(a, b) RESULT(p)
