@@ -92,16 +92,7 @@ static const struct xt_exchanger_vtable exchanger_mix_isend_irecv_vtable = {
 
 typedef struct Xt_exchanger_mix_isend_irecv_ * Xt_exchanger_mix_isend_irecv;
 
-struct mix_msg {
-  struct Xt_redist_msg data;
-#if SIZEOF_MPI_DATATYPE == 2 * SIZEOF_INT
-#  define MSG_DIR(msg) ((enum xt_msg_direction)((msg).data.padding))
-#  define type data.padding
-#else
-  enum xt_msg_direction type;
-#  define MSG_DIR(msg) ((msg).type)
-#endif
-};
+#define MSG_DIR(msg) ((msg).rank < 0)
 
 struct Xt_exchanger_mix_isend_irecv_ {
 
@@ -109,7 +100,7 @@ struct Xt_exchanger_mix_isend_irecv_ {
 
   int n, tag_offset;
   MPI_Comm comm;
-  struct mix_msg msgs[];
+  struct Xt_redist_msg msgs[];
 };
 
 static Xt_exchanger_mix_isend_irecv
@@ -117,12 +108,38 @@ xt_exchanger_mix_isend_irecv_alloc(size_t nmsg)
 {
   Xt_exchanger_mix_isend_irecv exchanger;
   size_t header_size = sizeof (*exchanger),
-    body_size = sizeof (struct mix_msg) * nmsg;
+    body_size = sizeof (struct Xt_redist_msg) * nmsg;
   exchanger = xmalloc(header_size + body_size);
   exchanger->n = (int)nmsg;
   exchanger->vtable = &exchanger_mix_isend_irecv_vtable;
   return exchanger;
 }
+
+static inline int
+adjusted_rank(int r, int comm_rank, int comm_size)
+{
+  int r_ = r & INT_MAX;
+  return r_ + (r_ <= comm_rank ? comm_size : 0);
+}
+
+#define XT_SORTFUNC_DECL static
+#define SORT_TYPE struct Xt_redist_msg
+#define SORT_TYPE_SUFFIX redist_msg_mix
+#define SORT_TYPE_CMP_LT(u,v,i,j)                       \
+  (adjusted_rank((u).rank, comm_rank, comm_size)        \
+   < adjusted_rank((v).rank, comm_rank, comm_size))
+#define SORT_TYPE_CMP_LE(u,v,i,j)                       \
+  (adjusted_rank((u).rank, comm_rank, comm_size)        \
+   <= adjusted_rank((v).rank, comm_rank, comm_size))
+#define SORT_TYPE_CMP_EQ(u,v,i,j) \
+  (((u).rank & INT_MAX) == ((v).rank & INT_MAX))
+#define XT_SORT_EXTRA_ARGS_DECL , int comm_rank, int comm_size
+#define XT_SORT_EXTRA_ARGS_PASS , comm_rank, comm_size
+#define XT_SORT_VECSWAP_EXTRA_ARGS_DECL
+#define XT_SORT_VECSWAP_EXTRA_ARGS_PASS
+
+#include "xt_quicksort_base.h"
+
 
 Xt_exchanger
 xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
@@ -142,25 +159,32 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
     = xt_exchanger_mix_isend_irecv_alloc(nmsg);
   exchanger->comm = comm;
   exchanger->tag_offset = tag_offset;
-  struct mix_msg *restrict msgs = exchanger->msgs;
+  struct Xt_redist_msg *restrict msgs = exchanger->msgs;
   bool dt_dup = !(config->flags & exch_no_dt_dup);
   xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
-                              &(msgs[0].data), sizeof (msgs[0]), comm, dt_dup);
-  for (size_t i = 0; i < (size_t)nsend; ++i)
-    msgs[i].type = SEND;
+                              msgs, sizeof (msgs[0]), comm, dt_dup);
   xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
-                              &(msgs[nsend].data), sizeof (msgs[0]), comm,
+                              msgs+nsend, sizeof (msgs[0]), comm,
                               dt_dup);
   for (size_t i = 0; i < (size_t)nrecv; ++i)
-    msgs[i + (size_t)nsend].type = RECV;
+    msgs[i + (size_t)nsend].rank |= ~INT_MAX;
 
-  xt_exchanger_internal_optimize(nmsg, msgs, sizeof(*msgs), comm);
+  {
+    int comm_size, comm_rank, is_inter;
+    xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+    xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
+    int (*get_comm_size)(MPI_Comm, int *)
+      = is_inter ? MPI_Comm_remote_size : MPI_Comm_size;
+    xt_mpi_call(get_comm_size(comm, &comm_size), comm);
+    xt_quicksort_redist_msg_mix(msgs, nmsg, comm_rank, comm_size);
+  }
 
   for (size_t i = 1; i < nmsg; ++i) {
 
-    if (msgs[i-1].data.rank == msgs[i].data.rank && MSG_DIR(msgs[i]) == SEND) {
+    if ((msgs[i-1].rank & INT_MAX) == (msgs[i].rank & INT_MAX)
+        && MSG_DIR(msgs[i]) == SEND) {
 
-      struct mix_msg temp = msgs[i-1];
+      struct Xt_redist_msg temp = msgs[i-1];
       msgs[i-1] = msgs[i];
       msgs[i] = temp;
       i++;
@@ -181,13 +205,11 @@ xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
     = xt_exchanger_mix_isend_irecv_alloc(nmsg);
   exchanger_copy->comm = new_comm;
   exchanger_copy->tag_offset = new_tag_offset;
-  struct mix_msg *restrict new_msgs = exchanger_copy->msgs,
+  struct Xt_redist_msg *restrict new_msgs = exchanger_copy->msgs,
     *restrict orig_msgs = exchanger_msr->msgs;
-  xt_redist_msgs_strided_copy(nmsg, &orig_msgs->data, sizeof (*orig_msgs),
-                              &new_msgs->data, sizeof (*new_msgs),
+  xt_redist_msgs_strided_copy(nmsg, orig_msgs, sizeof (*orig_msgs),
+                              new_msgs, sizeof (*new_msgs),
                               new_comm, true);
-  for (size_t i = 0; i < nmsg; ++i)
-    new_msgs[i].type = orig_msgs[i].type;
   return (Xt_exchanger)exchanger_copy;
 }
 
@@ -199,9 +221,9 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
   size_t nmsg = (size_t)exchanger_msr->n;
-  struct mix_msg *restrict msgs = exchanger_msr->msgs;
+  struct Xt_redist_msg *restrict msgs = exchanger_msr->msgs;
 
-  xt_redist_msgs_strided_destruct(nmsg, &msgs[0].data, exchanger_msr->comm,
+  xt_redist_msgs_strided_destruct(nmsg, msgs, exchanger_msr->comm,
                                   sizeof (*msgs));
   free(exchanger_msr);
 }
@@ -216,7 +238,7 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
   if (exchanger_msr->n > 0) {
     size_t nmsg = (size_t)exchanger_msr->n;
     MPI_Comm comm = exchanger_msr->comm;
-    struct mix_msg *restrict msgs = exchanger_msr->msgs;
+    struct Xt_redist_msg *restrict msgs = exchanger_msr->msgs;
     int tag_offset = exchanger_msr->tag_offset;
     MPI_Request req_buf[max_on_stack_req];
     MPI_Request *requests
@@ -227,8 +249,7 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                          int tag, MPI_Comm comm, MPI_Request *request);
       ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
       void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
-      xt_mpi_call(op(data, 1, msgs[i].data.datatype,
-                     msgs[i].data.rank,
+      xt_mpi_call(op(data, 1, msgs[i].datatype, msgs[i].rank & INT_MAX,
                      tag_offset + xt_mpi_tag_exchange_msg,
                      comm, requests+i), comm);
     }
@@ -250,7 +271,7 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
   if (exchanger_msr->n > 0) {
     size_t nmsg = (size_t)exchanger_msr->n;
     MPI_Comm comm = exchanger_msr->comm;
-    struct mix_msg *restrict msgs = exchanger_msr->msgs;
+    struct Xt_redist_msg *restrict msgs = exchanger_msr->msgs;
     int tag_offset = exchanger_msr->tag_offset;
     MPI_Request req_buf[max_on_stack_req];
     MPI_Request *tmp_requests
@@ -261,8 +282,7 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
                          int tag, MPI_Comm comm, MPI_Request *request);
       ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
       void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
-      xt_mpi_call(op(data, 1, msgs[i].data.datatype,
-                     msgs[i].data.rank,
+      xt_mpi_call(op(data, 1, msgs[i].datatype, msgs[i].rank & INT_MAX,
                      tag_offset + xt_mpi_tag_exchange_msg,
                      comm, tmp_requests+i), comm);
     }
@@ -282,7 +302,7 @@ xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
   size_t nmsg = 0, nmsg_all = (size_t)exchanger_msr->n;
-  const struct mix_msg *restrict msgs = exchanger_msr->msgs;
+  const struct Xt_redist_msg *restrict msgs = exchanger_msr->msgs;
   for (size_t i = 0; i < nmsg_all; ++i)
     nmsg += MSG_DIR(msgs[i]) == direction;
   int *restrict ranks_ = *ranks;
@@ -290,7 +310,7 @@ xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
     ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));
   for (size_t i = 0, j = (size_t)-1; i < nmsg_all; ++i)
     if (MSG_DIR(msgs[i]) == direction)
-      ranks_[++j] = msgs[i].data.rank;
+      ranks_[++j] = msgs[i].rank & INT_MAX;
   return (int)nmsg;
 }
 
@@ -303,15 +323,16 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
   size_t nmsg = (size_t)exchanger_msr->n;
-  struct mix_msg *restrict msgs = exchanger_msr->msgs;
+  struct Xt_redist_msg *restrict msgs = exchanger_msr->msgs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
+  if (direction == RECV) rank |= ~INT_MAX;
   for (size_t i = 0; i < nmsg; ++i)
-    if (MSG_DIR(msgs[i]) == direction && msgs[i].data.rank == rank) {
+    if (msgs[i].rank == rank) {
       if (do_dup)
-        xt_mpi_call(MPI_Type_dup(msgs[i].data.datatype, &datatype_copy),
+        xt_mpi_call(MPI_Type_dup(msgs[i].datatype, &datatype_copy),
                     exchanger_msr->comm);
       else
-        datatype_copy = msgs[i].data.datatype;
+        datatype_copy = msgs[i].datatype;
       break;
     }
   return datatype_copy;
