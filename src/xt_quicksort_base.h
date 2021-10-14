@@ -111,6 +111,11 @@
 #error "must define macro to compare SORT_TYPE for equality"
 #endif
 
+#ifndef XT_SORTFUNC_DECL
+#define XT_SORTFUNC_DECL
+#define XT_SORTFUNC_DECL_UNDEF
+#endif
+
 #ifndef XT_SORT_EXTRA_ARGS_DECL
 /* these declarations are appended to parameters, defaults to nothing */
 #define XT_SORT_EXTRA_ARGS_DECL
@@ -122,6 +127,16 @@
  * XT_SORT_EXTRA_ARGS_DECL, defaults to nothing */
 #define XT_SORT_EXTRA_ARGS_PASS
 #define XT_SORT_EXTRA_ARGS_PASS_UNDEF
+#endif
+
+#ifndef XT_SORT_VECSWAP_EXTRA_ARGS_DECL
+#define XT_SORT_VECSWAP_EXTRA_ARGS_DECL XT_SORT_EXTRA_ARGS_DECL
+#define XT_SORT_VECSWAP_EXTRA_ARGS_DECL_UNDEF
+#endif
+
+#ifndef XT_SORT_VECSWAP_EXTRA_ARGS_PASS
+#define XT_SORT_VECSWAP_EXTRA_ARGS_PASS XT_SORT_EXTRA_ARGS_PASS
+#define XT_SORT_VECSWAP_EXTRA_ARGS_PASS_UNDEF
 #endif
 
 #ifndef XT_SORT_EXTRA_ARGS_SWAP
@@ -156,12 +171,13 @@ MED3(const SORT_TYPE *a, size_t i, size_t j, size_t k XT_SORT_EXTRA_ARGS_DECL)
 #endif
 
 static inline void
-VECSWAP(SORT_TYPE *restrict a, size_t ia, size_t ib, size_t n XT_SORT_EXTRA_ARGS_DECL)
+VECSWAP(SORT_TYPE *restrict a, size_t ia, size_t ib, size_t n XT_SORT_VECSWAP_EXTRA_ARGS_DECL)
 {
   for (size_t i = 0; i < n; ++i)
     SWAP(ia+i, ib+i);
 }
 
+XT_SORTFUNC_DECL
 void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
 {
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
@@ -223,9 +239,9 @@ void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
     }
 
     size_t pdiff = MIN(i, b - i);
-    VECSWAP(a, 0, b - pdiff, pdiff XT_SORT_EXTRA_ARGS_PASS);
+    VECSWAP(a, 0, b - pdiff, pdiff XT_SORT_VECSWAP_EXTRA_ARGS_PASS);
     pdiff = MIN(d - c, n - d - 1);
-    VECSWAP(a, b, n - pdiff, pdiff XT_SORT_EXTRA_ARGS_PASS);
+    VECSWAP(a, b, n - pdiff, pdiff XT_SORT_VECSWAP_EXTRA_ARGS_PASS);
     if ((pdiff = b - i) > 1U)
       XT_QUICKSORT(a, pdiff XT_SORT_EXTRA_ARGS_PASS);
     if ((pdiff = d - c) > 1U) {
@@ -240,6 +256,21 @@ void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
   }
 #undef MIN
 }
+
+#ifdef XT_SORT_VECSWAP_EXTRA_ARGS_PASS_UNDEF
+#undef XT_SORT_VECSWAP_EXTRA_ARGS_PASS
+#undef XT_SORT_VECSWAP_EXTRA_ARGS_PASS_UNDEF
+#endif
+
+#ifdef XT_SORT_VECSWAP_EXTRA_ARGS_DECL_UNDEF
+#undef XT_SORT_VECSWAP_EXTRA_ARGS_DECL
+#undef XT_SORT_VECSWAP_EXTRA_ARGS_DECL_UNDEF
+#endif
+
+#ifdef XT_SORT_EXTRA_ARGS_DECL_UNDEF
+#undef XT_SORT_EXTRA_ARGS_DECL
+#undef XT_SORT_EXTRA_ARGS_DECL_UNDEF
+#endif
 
 #ifdef XT_SORT_EXTRA_ARGS_DECL_UNDEF
 #undef XT_SORT_EXTRA_ARGS_DECL
