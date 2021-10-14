@@ -116,12 +116,11 @@ void xt_exchanger_delete(Xt_exchanger);
  * network congestion is potentially reduced.
  * @param[in]     n             number of messages
  * @param[in,out] msgs          messages to be reordered
- * @param[in]     msg_type_size size of the elements in msgs
  * @param[in]     comm          communicator associated to the messages
  * @remark The first data element in the messages needs to be an integer
  *         containing the rank.
  */
-void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
+void xt_exchanger_internal_optimize(size_t n, struct Xt_redist_msg *msgs,
                                     MPI_Comm comm);
 
 /**

@@ -80,14 +80,30 @@ void xt_exchanger_a_exchange(Xt_exchanger exchanger,
   exchanger->vtable->a_exchange(exchanger, src_data, dst_data, request);
 }
 
-static int compare_exchange_messages (const void * msg_a, const void * msg_b)
+static inline int
+adjusted_rank(int r, int comm_rank, int comm_size)
 {
-  int rank_a = *(const int *)msg_a;
-  int rank_b = *(const int *)msg_b;
-  return ( rank_a - rank_b );
+  return r + (r <= comm_rank ? comm_size : 0);
 }
 
-void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
+#define XT_SORTFUNC_DECL static
+#define SORT_TYPE struct Xt_redist_msg
+#define SORT_TYPE_SUFFIX redist_msg
+#define SORT_TYPE_CMP_LT(u,v,i,j)                       \
+  (adjusted_rank((u).rank, comm_rank, comm_size)        \
+   < adjusted_rank((v).rank, comm_rank, comm_size))
+#define SORT_TYPE_CMP_LE(u,v,i,j)                       \
+  (adjusted_rank((u).rank, comm_rank, comm_size)        \
+   <= adjusted_rank((v).rank, comm_rank, comm_size))
+#define SORT_TYPE_CMP_EQ(u,v,i,j) (((u).rank) == ((v).rank))
+#define XT_SORT_EXTRA_ARGS_DECL , int comm_rank, int comm_size
+#define XT_SORT_EXTRA_ARGS_PASS , comm_rank, comm_size
+#define XT_SORT_VECSWAP_EXTRA_ARGS_DECL
+#define XT_SORT_VECSWAP_EXTRA_ARGS_PASS
+
+#include "xt_quicksort_base.h"
+
+void xt_exchanger_internal_optimize(size_t n, struct Xt_redist_msg *msgs,
                                     MPI_Comm comm) {
 
   int comm_size, comm_rank, is_inter;
@@ -105,20 +121,7 @@ void xt_exchanger_internal_optimize(size_t n, void * msgs, size_t msg_type_size,
    * 1. add comm_size(10): 9, 15, 12, 6, 11
    * 2. sort: 6, 9, 11, 12, 15 -> final order: 6, 9, 1, 2, 5
    */
-  unsigned char *msgs_ = (unsigned char *)msgs;
-  /* apply offset for ranks <= comm_rank */
-  for (size_t i = 0; i < n; ++i) {
-    int *p = (int *)(void *)(msgs_ + i * msg_type_size),
-      r = *p;
-    if (r <= comm_rank) *p = r + comm_size;
-  }
-  qsort(msgs, n, msg_type_size, compare_exchange_messages);
-  /* undo offset */
-  for (size_t i = 0; i < n; ++i) {
-    int *p = (int *)(void *)(msgs_ + i * msg_type_size),
-      r = *p;
-    if (r >= comm_size) *p = r - comm_size;
-  }
+  xt_quicksort_redist_msg(msgs, n, comm_rank, comm_size);
 }
 
 

@@ -155,11 +155,9 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
   exchanger->a_func = a_func;
 
   xt_exchanger_internal_optimize((size_t)nsend, exchanger->msgs,
-                                 sizeof(exchanger->msgs[0]),
                                  comm);
 
   xt_exchanger_internal_optimize((size_t)nrecv, exchanger->msgs + nsend,
-                                 sizeof(exchanger->msgs[0]),
                                  comm);
 
   return (Xt_exchanger)exchanger;
