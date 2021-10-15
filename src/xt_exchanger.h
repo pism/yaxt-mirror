@@ -58,6 +58,8 @@
 #include "xt/xt_core.h"
 #include "xt/xt_request.h"
 #include "xt_redist_internal.h"
+#include "core/ppm_visibility.h"
+
 
 /** \example test_exchanger_parallel.c
  */
@@ -84,8 +86,9 @@ struct Xt_exchanger_ {
  * @param[in]  src_data  source data
  * @param[out] dat_data  destination data
  */
-void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
-                             void * dst_data);
+PPM_DSO_INTERNAL void
+xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
+                        void * dst_data);
 
 /**
  * Executes a asynchronous data exchange.
@@ -93,9 +96,10 @@ void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
  * @param[in]  src_data  source data
  * @param[out] dat_data  destination data
  */
-void xt_exchanger_a_exchange(Xt_exchanger exchanger,
-                             const void * src_data, void * dst_data,
-                             Xt_request *request);
+PPM_DSO_INTERNAL void
+xt_exchanger_a_exchange(Xt_exchanger exchanger,
+                        const void * src_data, void * dst_data,
+                        Xt_request *request);
 
 /**
  * Copies an exchange object.
@@ -103,13 +107,14 @@ void xt_exchanger_a_exchange(Xt_exchanger exchanger,
  * @param[in] new_comm       communicator to be used by the new exchanger
  * @param[in] new_tag_offset new tag_offset
  */
-Xt_exchanger
+PPM_DSO_INTERNAL Xt_exchanger
 xt_exchanger_copy(Xt_exchanger orig, MPI_Comm new_comm, int new_tag_offset);
 
 /**
  * Destructor for an exchanger.
  */
-void xt_exchanger_delete(Xt_exchanger);
+PPM_DSO_INTERNAL void
+xt_exchanger_delete(Xt_exchanger);
 
 /**
  * Support routine, that reorders a number of provided messages, such that
@@ -120,8 +125,9 @@ void xt_exchanger_delete(Xt_exchanger);
  * @remark The first data element in the messages needs to be an integer
  *         containing the rank.
  */
-void xt_exchanger_internal_optimize(size_t n, struct Xt_redist_msg *msgs,
-                                    MPI_Comm comm);
+PPM_DSO_INTERNAL void
+xt_exchanger_internal_optimize(size_t n, struct Xt_redist_msg *msgs,
+                               MPI_Comm comm);
 
 /**
  * gets a copy of the MPI_Datatype used for a specificed message
@@ -134,7 +140,7 @@ void xt_exchanger_internal_optimize(size_t n, struct Xt_redist_msg *msgs,
  * @remark returns MPI_DATATYPE_NULL if there is no message matching the
  *         specificed configuration
  */
-MPI_Datatype
+PPM_DSO_INTERNAL MPI_Datatype
 xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
                               int rank, enum xt_msg_direction direction,
                               bool do_dup);
@@ -150,7 +156,7 @@ xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
  * @remark the user needs to ensure that array ranks is big enough to hold all
  *         ranks
  */
-int
+PPM_DSO_INTERNAL int
 xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
                            int *restrict *ranks);
