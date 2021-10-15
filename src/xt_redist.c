@@ -134,42 +134,6 @@ int xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
 
 
 void
-xt_redist_msgs_strided_copy(size_t n,
-                            const struct Xt_redist_msg *restrict src,
-                            size_t src_stride,
-                            struct Xt_redist_msg *restrict dst,
-                            size_t dst_stride,
-                            MPI_Comm comm, bool dt_dup) {
-
-
-  const unsigned char *restrict src_store = (const unsigned char *)src;
-  unsigned char *restrict dst_store = (unsigned char *)dst;
-  for (size_t i = 0; i < n; ++i) {
-    const struct Xt_redist_msg *restrict src_msg
-      = (const struct Xt_redist_msg *)(const void *)(src_store + i * src_stride);
-    struct Xt_redist_msg *dst_msg
-      = (struct Xt_redist_msg *)(void *)(dst_store + i * dst_stride);
-    dst_msg->rank = src_msg->rank;
-    if (dt_dup)
-      xt_mpi_call(MPI_Type_dup(src_msg->datatype, &(dst_msg->datatype)), comm);
-    else
-      dst_msg->datatype = src_msg->datatype;
-  }
-}
-
-void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
-                                     MPI_Comm comm, size_t ofs_stride) {
-
-  unsigned char *restrict msgs_store = (unsigned char *)msgs;
-  for (size_t i = 0; i < n; ++i) {
-    MPI_Datatype *dt
-      = &(((struct Xt_redist_msg *)(void *)(msgs_store + i * ofs_stride))->datatype);
-    if (*dt != MPI_DATATYPE_NULL)
-      xt_mpi_call(MPI_Type_free(dt), comm);
-  }
-}
-
-void
 xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
   int result;
 
