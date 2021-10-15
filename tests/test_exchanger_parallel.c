@@ -56,7 +56,6 @@
 #include <unistd.h>
 
 #include <mpi.h>
-#include <yaxt.h>
 
 #include "../src/xt_exchanger.h"
 #include "../src/xt_exchanger_irecv_send.h"
@@ -65,6 +64,8 @@
 #include "../src/xt_exchanger_irecv_isend_packed.h"
 #include "../src/xt_exchanger_neigh_alltoall.h"
 #include "../src/xt_redist_internal.h"
+#include "../src/xt_mpi_internal.h"
+#include "../src/xt_config_internal.h"
 #include "core/ppm_xfuncs.h"
 
 #include "test_redist_common.h"
@@ -99,7 +100,8 @@ int main(int argc, char **argv)
   // init mpi
   xt_mpi_call(MPI_Init(&argc, &argv), MPI_COMM_WORLD);
 
-  xt_initialize(MPI_COMM_WORLD);
+  xt_mpi_init();
+  xt_config_defaults_init();
 
   Xt_exchanger_new *exchangers_new = parse_options(&argc, &argv);
   Xt_config config = xt_config_new();
@@ -119,7 +121,9 @@ int main(int argc, char **argv)
   }
   xt_config_delete(config);
   free(exchangers_new);
-  xt_finalize();
+
+  xt_mpi_finalize();
+
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
