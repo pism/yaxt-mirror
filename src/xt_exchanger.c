@@ -80,51 +80,6 @@ void xt_exchanger_a_exchange(Xt_exchanger exchanger,
   exchanger->vtable->a_exchange(exchanger, src_data, dst_data, request);
 }
 
-static inline int
-adjusted_rank(int r, int comm_rank, int comm_size)
-{
-  return r + (r <= comm_rank ? comm_size : 0);
-}
-
-#define XT_SORTFUNC_DECL static
-#define SORT_TYPE struct Xt_redist_msg
-#define SORT_TYPE_SUFFIX redist_msg
-#define SORT_TYPE_CMP_LT(u,v,i,j)                       \
-  (adjusted_rank((u).rank, comm_rank, comm_size)        \
-   < adjusted_rank((v).rank, comm_rank, comm_size))
-#define SORT_TYPE_CMP_LE(u,v,i,j)                       \
-  (adjusted_rank((u).rank, comm_rank, comm_size)        \
-   <= adjusted_rank((v).rank, comm_rank, comm_size))
-#define SORT_TYPE_CMP_EQ(u,v,i,j) (((u).rank) == ((v).rank))
-#define XT_SORT_EXTRA_ARGS_DECL , int comm_rank, int comm_size
-#define XT_SORT_EXTRA_ARGS_PASS , comm_rank, comm_size
-#define XT_SORT_VECSWAP_EXTRA_ARGS_DECL
-#define XT_SORT_VECSWAP_EXTRA_ARGS_PASS
-
-#include "xt_quicksort_base.h"
-
-void xt_exchanger_internal_optimize(size_t n, struct Xt_redist_msg *msgs,
-                                    MPI_Comm comm) {
-
-  int comm_size, comm_rank, is_inter;
-  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
-  xt_mpi_call(MPI_Comm_test_inter(comm, &is_inter), comm);
-  int (*get_comm_size)(MPI_Comm, int *)
-    = is_inter ? MPI_Comm_remote_size : MPI_Comm_size;
-  xt_mpi_call(get_comm_size(comm, &comm_size), comm);
-  /* In order to avoid congestion of messages, the order of send and receive
-   * messages is changed. This is done by sorting the messages according to the
-   * rank of the respective message partner. Before the sorting to ranks that
-   * are smaller or equal to the local rank the size of the communicator is
-   * added.
-   * example: process 5 is supposed to communicate with processes: 9, 5, 2, 6, 1
-   * 1. add comm_size(10): 9, 15, 12, 6, 11
-   * 2. sort: 6, 9, 11, 12, 15 -> final order: 6, 9, 1, 2, 5
-   */
-  xt_quicksort_redist_msg(msgs, n, comm_rank, comm_size);
-}
-
-
 int
 xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
