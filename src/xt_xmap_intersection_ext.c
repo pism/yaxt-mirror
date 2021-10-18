@@ -71,6 +71,14 @@
 #include "xt_cover.h"
 #include "xt/quicksort.h"
 
+/* unfortunately GCC 11 cannot handle the literal constants used for
+ * MPI_STATUSES_IGNORE by MPICH */
+#if __GNUC__ == 11 && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 static MPI_Comm     xmap_intersection_ext_get_communicator(Xt_xmap xmap);
 static int          xmap_intersection_ext_get_num_destinations(Xt_xmap xmap);
 static int          xmap_intersection_ext_get_num_sources(Xt_xmap xmap);

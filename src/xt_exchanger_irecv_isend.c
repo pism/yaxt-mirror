@@ -56,6 +56,14 @@
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_simple_base.h"
 
+/* unfortunately GCC 11 cannot handle the literal constants used for
+ * MPI_STATUSES_IGNORE by MPICH */
+#if __GNUC__ == 11 && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 static MPI_Request *
 redist_msgs_to_req(const void *src_data, void *dst_data,
                    int nsend, int nrecv,

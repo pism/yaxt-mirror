@@ -100,8 +100,19 @@ Xt_request xt_request_msgs_new(int n, const MPI_Request requests[n],
 static void xt_request_msgs_wait(Xt_request request) {
 
   Xt_request_msgs request_msgs = (Xt_request_msgs)request;
+
+#if __GNUC__ == 11 && defined MPICH
+  /* GCC 11 has no means to specify that the special value pointer
+   * MPI_STATUSES_IGNORE does not need to point to something of size > 0 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
   xt_mpi_call(MPI_Waitall(request_msgs->n, request_msgs->requests,
                           MPI_STATUSES_IGNORE), request_msgs->comm);
+#if __GNUC__ == 11 && defined MPICH
+#pragma GCC diagnostic pop
+#endif
 
   free(request_msgs);
 }

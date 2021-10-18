@@ -928,8 +928,20 @@ xt_mpi_test_some(int *restrict num_req,
 {
   int done_count;
   size_t num_req_ = (size_t)*num_req;
+
+#if __GNUC__ == 11
+  /* GCC 11 has no means to specify that the special value pointer
+   * MPI_STATUSES_IGNORE does not need to point to something of size > 0 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#endif
   xt_mpi_call(MPI_Testsome(*num_req, req, &done_count, ops_completed,
                            MPI_STATUSES_IGNORE), comm);
+#if __GNUC__ == 11
+#pragma GCC diagnostic pop
+#endif
+
   if (done_count != MPI_UNDEFINED) {
     if (num_req_ > (size_t)done_count) {
       for (size_t i = 0, j = num_req_;

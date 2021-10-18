@@ -73,6 +73,14 @@
 #include "instr.h"
 #include "xt_xmap_dist_dir_common.h"
 
+/* unfortunately GCC 11 cannot handle the literal constants used for
+ * MPI_STATUSES_IGNORE by MPICH */
+#if __GNUC__ == 11 && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 static inline Xt_int
 get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
                                   bool *stripify, MPI_Comm comm, int comm_size,

@@ -152,10 +152,19 @@ static void xt_request_msgs_wait_packed(Xt_request request) {
 
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
 
+/* unfortunately GCC 11 cannot handle the literal constants used for
+ * MPI_STATUSES_IGNORE by MPICH */
+#if __GNUC__ == 11 && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
   xt_mpi_call(MPI_Waitall(request_msgs_packed->n_requests,
                           request_msgs_packed->requests, MPI_STATUSES_IGNORE),
               request_msgs_packed->comm);
-
+#if __GNUC__ == 11 && defined MPICH
+#pragma GCC diagnostic pop
+#endif
   unpack_data(request_msgs_packed);
   free_request(request_msgs_packed);
 }
