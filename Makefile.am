@@ -23,6 +23,7 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checkdoc/incorrect_mpi_abort_exitcode.txt \
 	config/checksrc/mpich_3.4_yaksa_hindexed.c \
 	config/checkdoc/mpich_3.4_yaksa_hindexed.txt \
+	config/checkpatch/mpich_3.4_yaksa_hindexed.patch \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \

@@ -362,6 +362,12 @@ ACX_MPI_DEFECTS(,,
          extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'],
         [AC_MSG_WARN([Cannot apply Open MPI datatype bug work-around.])
          mpi_defect_fail_action])],
+     [mpich_3.4_yaksa_hindexed],
+     [AC_MSG_WARN([known MPICH 3.4-3.4.2 problem detected, attempting interpositioning work-around!])
+      ACX_MPICH34_DT_WORKAROUND(,[mpich_3.4_yaksa_hindexed.c],
+        [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}yaks[ai]_type_create_h\\\\{0,1\\\\}indexed/b'],
+        [AC_MSG_WARN([Cannot apply MPICH YAKSA datatype bug work-around.])
+         mpi_defect_fail_action])],
      [incorrect_mpi_abort_exitcode],
      [AC_MSG_WARN([Your installation drops the exit code of MPI_Abort!
 Consider getting a better MPI/batch scheduler.])
@@ -376,8 +382,17 @@ AC_SUBST([xt_mpi_workaround_LIBS])
 AM_CONDITIONAL([OMPI_DT_WORKAROUND],
   [test x${acx_opal_datatype_add_workaround+set} = xset])
 AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset],
-  [acx_opal_datatype_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_opal_datatype_add_workaround')"`])
+  [acx_opal_datatype_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_opal_datatype_add_workaround')"`
+  xt_mpi_workaround_sources="${xt_mpi_workaround_sources+$xt_mpi_workaround_sources }ompi_workaround.c"])
 AC_SUBST([acx_opal_datatype_add_workaround])
+AM_CONDITIONAL([MPICH_DT_WORKAROUND],
+  [test x${acx_yaksa_add_workaround+set} = xset])
+AS_IF([test x${acx_yaksa_add_workaround+set} = xset],
+  [acx_yaksa_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_yaksa_add_workaround')"`
+   xt_mpi_workaround_sources="${xt_mpi_workaround_sources+$xt_mpi_workaround_sources }mpich_workaround.c"])
+AC_SUBST([acx_yaksa_add_workaround])
+AM_CONDITIONAL([MPI_DT_WORKAROUND],
+  [test x${xt_mpi_workaround_sources+set} = xset])
 MPI_LAUNCH=$saved_MPI_LAUNCH
 FCFLAGS=$saved_FCFLAGS
 CFLAGS=$saved_CFLAGS
