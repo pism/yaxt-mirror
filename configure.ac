@@ -354,8 +354,9 @@ given MPI implementation, but some tests might fail])],
 because configure option --without-regard-for-quality is active])])])
 ACX_MPI_DEFECTS(,,
   [ACX_MPI_DEFECTS_DOCUMENT
-   AS_CASE(["$acx_subtestname"],[openmpi_datatype],
-     [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected attempting interpositioning work-around!])
+   AS_CASE(["$acx_subtestname"],
+     [openmpi_datatype],
+     [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected, attempting interpositioning work-around!])
       ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
         [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
          extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'],
