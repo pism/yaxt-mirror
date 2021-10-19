@@ -72,7 +72,8 @@ m4_popdef([_AC_PROG_CC_C89])
 
 AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads libraries and header files.])
    LIBS="$PTHREAD_LIBS $LIBS"
-   CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+   test -n "$PTHREAD_CFLAGS" || ASX_VAR_UNSET([PTHREAD_CFLAGS])
+   CFLAGS="$CFLAGS${PTHREAD_CFLAGS+ $PTHREAD_CFLAGS}"
    CC="$PTHREAD_CC"])
 ACX_TLS_XLC_RETRY
 if test "X$FC" != Xno ; then
