@@ -223,6 +223,24 @@ Xt_redist xt_redist_collection_new(Xt_redist *redists, int num_redists,
                                          comm, (Xt_config)&xt_default_config);
 }
 
+static Xt_redist_collection
+alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv)
+{
+  size_t nmsg = nmsg_recv + nmsg_send,
+    size_all_component_dt = sizeof (MPI_Datatype) * num_redists * nmsg;
+  Xt_redist_collection redist_coll
+    = xmalloc(sizeof (*redist_coll)
+              + size_all_component_dt + nmsg * sizeof (int));
+  redist_coll->vtable = &redist_collection_vtable;
+  redist_coll->num_redists = (unsigned)num_redists;
+  redist_coll->nmsg[SEND] = (unsigned)nmsg_send;
+  redist_coll->nmsg[RECV] = (unsigned)nmsg_recv;
+  redist_coll->send_ranks
+    = (int *)(redist_coll->all_component_dt + nmsg * num_redists);
+  redist_coll->recv_ranks = redist_coll->send_ranks + nmsg_send;
+  return redist_coll;
+}
+
 Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
                                           int cache_size, MPI_Comm comm,
                                           Xt_config config)
@@ -238,21 +256,12 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
     nmsg_recv = xt_redist_agg_msg_count(num_redists_, RECV, redists,
                                         num_ranks[RECV], ranks[RECV]);
   size_t nmsg = (size_t)nmsg_send + nmsg_recv;
-  size_t size_all_component_dt = sizeof (MPI_Datatype) * num_redists_ * nmsg;
-  Xt_redist_collection redist_coll
-    = xmalloc(sizeof (*redist_coll)
-              + size_all_component_dt + nmsg * sizeof (int));
+  Xt_redist_collection redist_coll = alloc_redist_coll(num_redists_, nmsg_send,
+                                                       nmsg_recv);
   redist_coll->config = *config;
   /* all mpi datatypes are created for the exclusive use by the
    * underlying exchanger, no need for dup'ing them */
   redist_coll->config.flags |= exch_no_dt_dup;
-  redist_coll->nmsg[RECV] = nmsg_recv;
-  redist_coll->nmsg[SEND] = nmsg_send;
-  redist_coll->send_ranks
-    = (int *)(redist_coll->all_component_dt + nmsg * num_redists_);
-  redist_coll->recv_ranks = redist_coll->send_ranks + nmsg_send;
-  redist_coll->vtable = &redist_collection_vtable;
-  redist_coll->num_redists = num_redists_;
   if (cache_size < -1)
     Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
              __FILE__, __LINE__);
@@ -488,19 +497,10 @@ redist_collection_copy(Xt_redist redist)
   unsigned num_redists = redist_coll->num_redists,
     nmsg_send = redist_coll->nmsg[SEND],
     nmsg_recv = redist_coll->nmsg[RECV];
-  size_t nmsg = (size_t)nmsg_recv + nmsg_send,
-    size_all_component_dt = sizeof (MPI_Datatype) * num_redists * nmsg;
-  Xt_redist_collection redist_copy
-    = xmalloc(sizeof (*redist_copy)
-              + size_all_component_dt + nmsg * sizeof (int));
-  redist_copy->vtable = redist_coll->vtable;
-  redist_copy->num_redists = num_redists;
+  size_t nmsg = (size_t)nmsg_recv + nmsg_send;
+  Xt_redist_collection redist_copy = alloc_redist_coll(num_redists, nmsg_send,
+                                                       nmsg_recv);
   redist_copy->config = redist_coll->config;
-  redist_copy->nmsg[SEND] = nmsg_send;
-  redist_copy->nmsg[RECV] = nmsg_recv;
-  redist_copy->send_ranks
-    = (int *)(redist_copy->all_component_dt + nmsg * num_redists);
-  redist_copy->recv_ranks = redist_copy->send_ranks + nmsg_send;
 
   MPI_Comm copy_comm = redist_copy->comm
     = xt_mpi_comm_smart_dup(redist_coll->comm, &redist_copy->tag_offset);
