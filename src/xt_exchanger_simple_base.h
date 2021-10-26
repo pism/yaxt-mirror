@@ -81,7 +81,7 @@ typedef void (*xt_simple_a_exchange_func)(
  *         be used on @a comm by any other part of the program during the
  *         lifetime of the created exchanger object
  */
-Xt_exchanger
+PPM_DSO_INTERNAL Xt_exchanger
 xt_exchanger_simple_base_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,
                              const struct Xt_redist_msg *recv_msgs,

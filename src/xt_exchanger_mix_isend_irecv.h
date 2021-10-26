@@ -50,6 +50,7 @@
 #include <config.h>
 #endif
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
@@ -70,7 +71,7 @@
  *         be used on @a comm by any other part of the program during the
  *         lifetime of the created exchanger object
  */
-Xt_exchanger
+PPM_DSO_INTERNAL Xt_exchanger
 xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  const struct Xt_redist_msg *send_msgs,
                                  const struct Xt_redist_msg *recv_msgs,

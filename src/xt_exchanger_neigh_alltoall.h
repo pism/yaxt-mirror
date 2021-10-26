@@ -50,12 +50,13 @@
 #include <config.h>
 #endif
 
+#include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 #include "xt_exchanger.h"
 #include "xt_redist_internal.h"
 
 /**
- * constructor for an exchanger using a collective all to all operation on a
+ * constructor for an exchanger using a collective all-to-all operation on a
  * virtual topoloy
  * @param[in] nsend      number of send messages
  * @param[in] nrecv      number of receive messages
@@ -69,7 +70,7 @@
  *         lifetime of the created exchanger object
  * @remark this exchanger requires MPI Version 3 or higher
  */
-Xt_exchanger
+PPM_DSO_INTERNAL Xt_exchanger
 xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg *send_msgs,
                                 const struct Xt_redist_msg *recv_msgs,
