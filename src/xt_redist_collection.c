@@ -340,8 +340,8 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
   MPI_Aint displacements[2][num_redists];
   unsigned num_send_messages = redist_coll->nmsg[SEND],
     num_recv_messages = redist_coll->nmsg[RECV];
-  compute_displ(src_data, num_redists, displacements[0]);
-  compute_displ(dst_data, num_redists, displacements[1]);
+  compute_displ(src_data, num_redists, displacements[SEND]);
+  compute_displ(dst_data, num_redists, displacements[RECV]);
 
   Xt_exchanger exchanger;
 
@@ -395,11 +395,11 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
 
     create_all_dt_for_dir(num_send_messages, num_redists,
                           redist_coll->send_ranks,
-                          all_component_dt, displacements[0], p, comm);
+                          all_component_dt, displacements[SEND], p, comm);
     create_all_dt_for_dir(num_recv_messages, num_redists,
                           redist_coll->recv_ranks,
                           all_component_dt + num_send_messages * num_redists,
-                          displacements[1], p + num_send_messages, comm);
+                          displacements[RECV], p + num_send_messages, comm);
 
     exchanger =
       redist_coll->config.exchanger_new((int)num_send_messages,
