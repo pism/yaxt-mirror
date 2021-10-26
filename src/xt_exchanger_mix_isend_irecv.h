@@ -78,6 +78,10 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
                                  MPI_Comm comm, int tag_offset,
                                  Xt_config config);
 
+PPM_DSO_INTERNAL extern const struct xt_exchanger_vtable
+xt_exchanger_mix_isend_irecv_vtable;
+
+
 #endif // XT_EXCHANGER_MIX_ISEND_IRECV_H
 
 /*

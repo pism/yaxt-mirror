@@ -155,6 +155,17 @@ typedef Xt_exchanger
                     MPI_Comm comm, int tag_offset,
                     Xt_config config);
 
+/**
+ * Given an exchanger constructor, query the vtable pointer
+ *
+ * @param[in] exchanger_new function to create new exchanger to query
+ *                          vtable pointer for
+ * @return vtable pointer
+ */
+PPM_DSO_INTERNAL const struct xt_exchanger_vtable *
+xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new);
+
+
 #endif // XT_EXCHANGER_H
 /*
  * Local Variables:

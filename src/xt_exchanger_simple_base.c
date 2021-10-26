@@ -83,7 +83,7 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           bool do_dup);
 
 
-static const struct xt_exchanger_vtable exchanger_simple_base_vtable = {
+const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .copy = xt_exchanger_simple_base_copy,
   .delete = xt_exchanger_simple_base_delete,
   .s_exchange = xt_exchanger_simple_base_s_exchange,
@@ -113,7 +113,7 @@ xt_exchanger_simple_base_alloc(size_t nmsg)
   size_t header_size = sizeof(*exchanger),
     body_size = nmsg * sizeof (exchanger->msgs[0]);
   exchanger = xmalloc(header_size + body_size);
-  exchanger->vtable = &exchanger_simple_base_vtable;
+  exchanger->vtable = &xt_exchanger_simple_base_vtable;
   return exchanger;
 }
 

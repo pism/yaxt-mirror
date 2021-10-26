@@ -90,7 +90,7 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
                                              bool do_dup);
 
 
-static const struct xt_exchanger_vtable exchanger_neigh_alltoall_vtable = {
+const struct xt_exchanger_vtable xt_exchanger_neigh_alltoall_vtable = {
   .copy = xt_exchanger_neigh_alltoall_copy,
   .delete = xt_exchanger_neigh_alltoall_delete,
   .s_exchange = xt_exchanger_neigh_alltoall_s_exchange,
@@ -124,7 +124,7 @@ xt_exchanger_neigh_alltoall_alloc(size_t nsend, size_t nrecv)
   exchanger->datatypes = xmalloc(nmsg * sizeof(*(exchanger->datatypes)));
   exchanger->one_counts = xmalloc(max_msgs * sizeof(*(exchanger->one_counts)));
   exchanger->displs = xmalloc(max_msgs * sizeof(*(exchanger->displs)));
-  exchanger->vtable = &exchanger_neigh_alltoall_vtable;
+  exchanger->vtable = &xt_exchanger_neigh_alltoall_vtable;
   for (size_t i = 0; i < max_msgs; ++i) {
     exchanger->one_counts[i] = 1;
     exchanger->displs[i] = 0;

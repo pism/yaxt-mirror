@@ -76,6 +76,10 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
                                 const struct Xt_redist_msg *recv_msgs,
                                 MPI_Comm comm, int tag_offset, Xt_config config);
 
+PPM_DSO_INTERNAL extern const struct xt_exchanger_vtable
+xt_exchanger_neigh_alltoall_vtable;
+
+
 #endif // XT_EXCHANGER_NEIGH_ALLTOALL_H
 
 /*

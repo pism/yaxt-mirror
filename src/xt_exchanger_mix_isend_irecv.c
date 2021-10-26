@@ -89,7 +89,8 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
                                               enum xt_msg_direction direction,
                                               bool do_dup);
 
-static const struct xt_exchanger_vtable exchanger_mix_isend_irecv_vtable = {
+const struct xt_exchanger_vtable
+xt_exchanger_mix_isend_irecv_vtable = {
   .copy = xt_exchanger_mix_isend_irecv_copy,
   .delete = xt_exchanger_mix_isend_irecv_delete,
   .s_exchange = xt_exchanger_mix_isend_irecv_s_exchange,
@@ -119,7 +120,7 @@ xt_exchanger_mix_isend_irecv_alloc(size_t nmsg)
     body_size = sizeof (struct Xt_redist_msg) * nmsg;
   exchanger = xmalloc(header_size + body_size);
   exchanger->n = (int)nmsg;
-  exchanger->vtable = &exchanger_mix_isend_irecv_vtable;
+  exchanger->vtable = &xt_exchanger_mix_isend_irecv_vtable;
   return exchanger;
 }
 

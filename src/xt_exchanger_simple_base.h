@@ -90,6 +90,10 @@ xt_exchanger_simple_base_new(int nsend, int nrecv,
                              xt_simple_a_exchange_func a_func,
                              Xt_config config);
 
+PPM_DSO_INTERNAL extern const struct xt_exchanger_vtable
+xt_exchanger_simple_base_vtable;
+
+
 #endif // XT_EXCHANGER_SIMPLE_BASE_H
 
 /*
