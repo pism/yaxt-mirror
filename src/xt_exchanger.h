@@ -74,6 +74,9 @@ struct xt_exchanger_vtable {
   int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction,
                                    bool);
+  void (*team_share_default_init)(void *share);
+  void (*team_share_destroy)(void *share);
+  size_t team_share_size;
 };
 
 struct Xt_exchanger_ {
@@ -164,6 +167,81 @@ typedef Xt_exchanger
  */
 PPM_DSO_INTERNAL const struct xt_exchanger_vtable *
 xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new);
+
+/* team shares refer to expensive data that can be shared among
+ * multiple instances of exchangers that are of the same class and
+ * derived from the same xmap or communication matrix */
+
+enum { team_share_align = sizeof (void *) };
+
+/**
+ * Given an exchanger, query the size of shared data for a team.
+ *
+ * @param[in] exchanger exchanger object to query team shared data size for.
+ * @return size of shared data
+ */
+PPM_DSO_INTERNAL size_t
+xt_exchanger_team_get_share_size(Xt_exchanger exchanger);
+
+/**
+ * Given an exchanger constructor, query the size of shared data for a
+ * team.
+ *
+ * @param[in] exchanger_new function to create new exchanger to query
+ *                          team shared data size for.
+ * @return size of shared data
+ */
+PPM_DSO_INTERNAL size_t
+xt_exchanger_new_team_get_share_size(Xt_exchanger_new exchanger_new);
+
+/**
+ * Given an exchanger, initialize shared data for a team to default values.
+ *
+ * @param[in] exchanger exchanger object to default initialize team
+ * shared data for.
+ * @param[out] share    object to initialize
+ */
+PPM_DSO_INTERNAL void
+xt_exchanger_team_share_default_init(Xt_exchanger exchanger,
+                                     void *share);
+/**
+ * Given an exchanger constructor, initialize shared data for a team
+ * to default values.
+ *
+ * @param[in] exchanger_new exchanger constructor to default initialize team
+ * shared data for.
+ * @param[out] share    object to initialize
+ */
+PPM_DSO_INTERNAL void
+xt_exchanger_new_team_share_default_init(Xt_exchanger_new exchanger_new,
+                                         void *share);
+
+/**
+ * Given an exchanger, destroy shared data for a team and reset to default
+ * values.
+ * This call is collective for all MPI ranks in the communicator the
+ * exchanger was constructed for.
+ *
+ * @param[in] exchanger exchanger object to destroy team shared data for.
+ * @param[out] share    object to destroy
+ */
+PPM_DSO_INTERNAL void
+xt_exchanger_team_share_destroy(Xt_exchanger exchanger, void *share);
+
+/**
+ * Given an exchanger constructor, destroy shared data for a team and
+ * reset to default values.
+ *
+ * This call is collective for all MPI ranks
+ * in the communicator the exchanger team was constructed for.
+ *
+ * @param[in] exchanger exchanger object to destroy team shared data for.
+ * @param[out] share    object to destroy
+ */
+PPM_DSO_INTERNAL void
+xt_exchanger_new_team_share_destroy(Xt_exchanger_new exchanger_new,
+                                    void *share);
+
 
 
 #endif // XT_EXCHANGER_H

@@ -142,6 +142,7 @@ libyaxt_c_la_SOURCES =						\
 	instr.h							\
 	xt_sort.c						\
 	xt_exchanger.c						\
+	xt_exchanger_team.c					\
 	xt_exchanger_vtable.c					\
 	xt_exchanger.h						\
 	xt_exchanger_simple_base.c				\
