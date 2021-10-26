@@ -143,7 +143,7 @@ s/^ *//;s/ *$//'`])
      [acx_opal_datatype_add_workaround="$ac_pwd/m4_default([$5],[config/workarounds/openmpi])/v$acx_ompi_version/opal_datatype_add.c"],
      [3|4],
      [acx_opal_datatype_add_workaround="$ac_pwd/m4_default([$5],[config/workarounds/openmpi])/v$acx_ompi_version/opal_datatype_optimize.c"])
-   test -r $acx_opal_datatype_add_workaround || \
+   test -r "$acx_opal_datatype_add_workaround" || \
      acx_opal_datatype_add_workaround=`echo "$acx_opal_datatype_add_workaround"\
        | sed -e 's@^'"$ac_pwd"'@'"$srcdir"'@'`
    cp "$acx_opal_datatype_add_workaround" conftest.c \
