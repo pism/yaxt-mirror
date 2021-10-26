@@ -68,6 +68,10 @@ struct Xt_config_ {
    */
   Xt_exchanger_new exchanger_new;
   /**
+   * pointer to exchanger team share data
+   */
+  void *exchanger_team_share;
+  /**
    * automatically compress index lists of vector type at this size
    * into another representation to save on computation/memory overall
    */
