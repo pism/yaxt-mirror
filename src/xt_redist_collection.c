@@ -135,14 +135,12 @@ struct Xt_redist_collection_ {
 
   const struct xt_redist_vtable *vtable;
 
-  unsigned num_redists;
-
   struct exchanger_cache cache;
+
+  unsigned num_redists, cache_size;
 
   unsigned nmsg[2];
   int *send_ranks, *recv_ranks;
-
-  size_t cache_size;
 
   struct Xt_config_ config;
   MPI_Comm comm;
@@ -278,7 +276,7 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
     Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
              __FILE__, __LINE__);
   redist_coll->cache_size
-    = (cache_size == -1)?(DEFFAULT_DATATYPE_CACHE_SIZE):(size_t)cache_size;
+    = (cache_size == -1)?((unsigned)DEFFAULT_DATATYPE_CACHE_SIZE):(unsigned)cache_size;
 
   redist_coll->comm = xt_mpi_comm_smart_dup(comm, &redist_coll->tag_offset);
 
@@ -537,7 +535,7 @@ redist_collection_custom_copy(Xt_redist redist, Xt_config config)
   copy_component_dt(num_redists * nmsg,
                     redist_coll->all_component_dt,
                     redist_copy->all_component_dt, copy_comm);
-  size_t cache_size = redist_coll->cache_size;
+  unsigned cache_size = redist_coll->cache_size;
   redist_copy->cache_size = cache_size;
   init_cache(&redist_copy->cache, cache_size, num_redists);
   return (Xt_redist)redist_copy;
