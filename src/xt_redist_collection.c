@@ -140,7 +140,7 @@ struct Xt_redist_collection_ {
   unsigned num_redists, cache_size;
 
   unsigned nmsg[2];
-  int *send_ranks, *recv_ranks;
+  int *msg_ranks;
 
   struct Xt_config_ config;
   MPI_Comm comm;
@@ -240,9 +240,8 @@ alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv,
   redist_coll->num_redists = (unsigned)num_redists;
   redist_coll->nmsg[SEND] = (unsigned)nmsg_send;
   redist_coll->nmsg[RECV] = (unsigned)nmsg_recv;
-  redist_coll->send_ranks
+  redist_coll->msg_ranks
     = (int *)(redist_coll->all_component_dt + nmsg * num_redists);
-  redist_coll->recv_ranks = redist_coll->send_ranks + nmsg_send;
   redist_coll->config = *config;
   /* all mpi datatypes are created for the exclusive use by the
    * underlying exchanger, no need for dup'ing them */
@@ -284,10 +283,11 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
 
   MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
   align_component_dt(num_redists_, nmsg_send, redists,
-                     ranks[SEND], num_ranks[SEND], redist_coll->send_ranks,
+                     ranks[SEND], num_ranks[SEND], redist_coll->msg_ranks,
                      all_component_dt, SEND);
   align_component_dt(num_redists_, nmsg_recv, redists,
-                     ranks[RECV], num_ranks[RECV], redist_coll->recv_ranks,
+                     ranks[RECV], num_ranks[RECV],
+                     redist_coll->msg_ranks+nmsg_send,
                      all_component_dt + nmsg_send * num_redists_, RECV);
   init_cache(&redist_coll->cache, redist_coll->cache_size, num_redists_);
 
@@ -363,10 +363,10 @@ create_exchanger(struct Xt_redist_collection_ *redist_coll,
   const MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
   MPI_Comm comm = redist_coll->comm;
   create_all_dt_for_dir(num_send_messages, num_redists,
-                        redist_coll->send_ranks, all_component_dt,
+                        redist_coll->msg_ranks, all_component_dt,
                         displacements[SEND], msgs, comm);
   create_all_dt_for_dir(num_recv_messages, num_redists,
-                        redist_coll->recv_ranks,
+                        redist_coll->msg_ranks+num_send_messages,
                         all_component_dt + num_send_messages * num_redists,
                         displacements[RECV],
                         msgs + num_send_messages, comm);
@@ -511,7 +511,7 @@ redist_collection_copy(Xt_redist redist)
   void *team_share = config.exchanger_team_share;
   if ((unsigned char *)team_share > (unsigned char *)redist_coll
       && (unsigned char *)team_share <
-      (unsigned char *)(redist_coll->send_ranks + nmsg) + team_share_align)
+      (unsigned char *)(redist_coll->msg_ranks + nmsg) + team_share_align)
     config.exchanger_team_share = NULL;
   return redist_collection_custom_copy(redist, &config);
 }
@@ -530,8 +530,8 @@ redist_collection_custom_copy(Xt_redist redist, Xt_config config)
   MPI_Comm copy_comm = redist_copy->comm
     = xt_mpi_comm_smart_dup(redist_coll->comm, &redist_copy->tag_offset);
 
-  memcpy(redist_copy->send_ranks, redist_coll->send_ranks,
-         sizeof (*redist_copy->send_ranks) * nmsg);
+  memcpy(redist_copy->msg_ranks, redist_coll->msg_ranks,
+         sizeof (*redist_copy->msg_ranks) * nmsg);
   copy_component_dt(num_redists * nmsg,
                     redist_coll->all_component_dt,
                     redist_copy->all_component_dt, copy_comm);
@@ -564,7 +564,7 @@ redist_collection_delete(Xt_redist redist) {
   void *team_share = redist_coll->config.exchanger_team_share;
   if ((unsigned char *)team_share > (unsigned char *)redist_coll
       && (unsigned char *)team_share
-      < (unsigned char *)(redist_coll->send_ranks + nmsg) + team_share_align) {
+      < (unsigned char *)(redist_coll->msg_ranks + nmsg) + team_share_align) {
     xt_exchanger_new_team_share_destroy(redist_coll->config.exchanger_new,
                                         team_share);
   }
