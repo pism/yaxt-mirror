@@ -358,23 +358,23 @@ create_exchanger(struct Xt_redist_collection_ *redist_coll,
                  MPI_Aint displacements[2][num_redists],
                  struct Xt_redist_msg *msgs)
 {
-  unsigned num_send_messages = redist_coll->nmsg[SEND],
-    num_recv_messages = redist_coll->nmsg[RECV];
+  unsigned nmsg_send = redist_coll->nmsg[SEND],
+    nmsg_recv = redist_coll->nmsg[RECV];
   const MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
   MPI_Comm comm = redist_coll->comm;
-  create_all_dt_for_dir(num_send_messages, num_redists,
+  create_all_dt_for_dir(nmsg_send, num_redists,
                         redist_coll->msg_ranks, all_component_dt,
                         displacements[SEND], msgs, comm);
-  create_all_dt_for_dir(num_recv_messages, num_redists,
-                        redist_coll->msg_ranks+num_send_messages,
-                        all_component_dt + num_send_messages * num_redists,
+  create_all_dt_for_dir(nmsg_recv, num_redists,
+                        redist_coll->msg_ranks+nmsg_send,
+                        all_component_dt + nmsg_send * num_redists,
                         displacements[RECV],
-                        msgs + num_send_messages, comm);
+                        msgs + nmsg_send, comm);
   return
-    redist_coll->config.exchanger_new((int)num_send_messages,
-                                      (int)num_recv_messages,
+    redist_coll->config.exchanger_new((int)nmsg_send,
+                                      (int)nmsg_recv,
                                       msgs, msgs
-                                      + (size_t)num_send_messages,
+                                      + (size_t)nmsg_send,
                                       comm, redist_coll->tag_offset,
                                       &redist_coll->config);
 }
@@ -386,8 +386,8 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
               unsigned num_redists)
 {
   MPI_Aint displacements[2][num_redists];
-  unsigned num_send_messages = redist_coll->nmsg[SEND],
-    num_recv_messages = redist_coll->nmsg[RECV];
+  unsigned nmsg_send = redist_coll->nmsg[SEND],
+    nmsg_recv = redist_coll->nmsg[RECV];
   compute_displ(src_data, num_redists, displacements[SEND]);
   compute_displ(dst_data, num_redists, displacements[RECV]);
 
@@ -416,7 +416,7 @@ get_exchanger(struct Xt_redist_collection_ *redist_coll,
     if (cache->exchangers[cache_index] != NULL)
       xt_exchanger_delete(cache->exchangers[cache_index]);
   }
-  size_t nmsg = (size_t)num_send_messages + num_recv_messages;
+  size_t nmsg = (size_t)nmsg_send + nmsg_recv;
   struct Xt_redist_msg *restrict p = xmalloc(nmsg * sizeof (*p));
 
   exchanger =
