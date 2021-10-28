@@ -218,7 +218,7 @@ Xt_redist xt_redist_collection_new(Xt_redist *redists, int num_redists,
 
 static Xt_redist_collection
 alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv,
-                  Xt_config config)
+                  Xt_config config, MPI_Comm comm)
 {
   size_t nmsg = nmsg_recv + nmsg_send,
     header_size = sizeof (struct Xt_redist_collection_),
@@ -226,9 +226,12 @@ alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv,
     ranks_size = nmsg * sizeof (int),
     team_data_size,
     own_size = header_size + all_component_dt_size + ranks_size;
+  Xt_exchanger_new exchanger_new = (Xt_exchanger_new)0;
   if (!config->exchanger_team_share) {
+    exchanger_new
+      = xt_config_get_exchange_new_by_comm(config, comm);
     team_data_size
-      = xt_exchanger_new_team_get_share_size(config->exchanger_new);
+      = xt_exchanger_new_team_get_share_size(exchanger_new);
     /* round up own size to align beginning of team_data */
     own_size = ((own_size + team_share_align - 1)
                 / team_share_align) * team_share_align;
@@ -250,7 +253,7 @@ alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv,
     redist_coll->config.exchanger_team_share
       = (unsigned char *)redist_coll + own_size;
     xt_exchanger_new_team_share_default_init(
-      config->exchanger_new, redist_coll->config.exchanger_team_share);
+      exchanger_new, redist_coll->config.exchanger_team_share);
   }
   return redist_coll;
 }
@@ -269,15 +272,18 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
                                                num_ranks[SEND], ranks[SEND]),
     nmsg_recv = xt_redist_agg_msg_count(num_redists_, RECV, redists,
                                         num_ranks[RECV], ranks[RECV]);
-  Xt_redist_collection redist_coll = alloc_redist_coll(num_redists_, nmsg_send,
-                                                       nmsg_recv, config);
+  int tag_offset;
+  MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
+  Xt_redist_collection redist_coll
+    = alloc_redist_coll(num_redists_, nmsg_send, nmsg_recv, config, new_comm);
   if (cache_size < -1)
     Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
              __FILE__, __LINE__);
   redist_coll->cache_size
     = (cache_size == -1)?((unsigned)DEFFAULT_DATATYPE_CACHE_SIZE):(unsigned)cache_size;
 
-  redist_coll->comm = xt_mpi_comm_smart_dup(comm, &redist_coll->tag_offset);
+  redist_coll->comm = new_comm;
+  redist_coll->tag_offset = tag_offset;
 
   xt_redist_check_comms(redists, num_redists, comm);
 
@@ -370,13 +376,11 @@ create_exchanger(struct Xt_redist_collection_ *redist_coll,
                         all_component_dt + nmsg_send * num_redists,
                         displacements[RECV],
                         msgs + nmsg_send, comm);
-  return
-    redist_coll->config.exchanger_new((int)nmsg_send,
-                                      (int)nmsg_recv,
-                                      msgs, msgs
-                                      + (size_t)nmsg_send,
-                                      comm, redist_coll->tag_offset,
-                                      &redist_coll->config);
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(&redist_coll->config, comm);
+  return exchanger_new((int)nmsg_send, (int)nmsg_recv,
+                       msgs, msgs + nmsg_send, comm, redist_coll->tag_offset,
+                       &redist_coll->config);
 }
 
 
@@ -524,11 +528,13 @@ redist_collection_custom_copy(Xt_redist redist, Xt_config config)
     nmsg_send = redist_coll->nmsg[SEND],
     nmsg_recv = redist_coll->nmsg[RECV];
   size_t nmsg = (size_t)nmsg_recv + nmsg_send;
-  Xt_redist_collection redist_copy = alloc_redist_coll(num_redists, nmsg_send,
-                                                       nmsg_recv, config);
-
-  MPI_Comm copy_comm = redist_copy->comm
-    = xt_mpi_comm_smart_dup(redist_coll->comm, &redist_copy->tag_offset);
+  int tag_offset;
+  MPI_Comm copy_comm
+    = xt_mpi_comm_smart_dup(redist_coll->comm, &tag_offset);
+  Xt_redist_collection redist_copy
+    = alloc_redist_coll(num_redists, nmsg_send, nmsg_recv, config, copy_comm);
+  redist_copy->comm = copy_comm;
+  redist_copy->tag_offset = tag_offset;
 
   memcpy(redist_copy->msg_ranks, redist_coll->msg_ranks,
          sizeof (*redist_copy->msg_ranks) * nmsg);
@@ -565,8 +571,10 @@ redist_collection_delete(Xt_redist redist) {
   if ((unsigned char *)team_share > (unsigned char *)redist_coll
       && (unsigned char *)team_share
       < (unsigned char *)(redist_coll->msg_ranks + nmsg) + team_share_align) {
-    xt_exchanger_new_team_share_destroy(redist_coll->config.exchanger_new,
-                                        team_share);
+    Xt_exchanger_new exchanger_new
+      = xt_config_get_exchange_new_by_comm(&redist_coll->config,
+                                           redist_coll->comm);
+    xt_exchanger_new_team_share_destroy(exchanger_new, team_share);
   }
   xt_mpi_comm_smart_dedup(&(redist_coll->comm), redist_coll->tag_offset);
 

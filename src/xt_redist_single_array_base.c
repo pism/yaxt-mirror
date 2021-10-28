@@ -151,9 +151,11 @@ Xt_redist xt_redist_single_array_base_custom_new(
   Xt_redist_sab redist = xmalloc(sizeof (*redist));
 
   redist->comm = xt_mpi_comm_smart_dup(comm, &redist->tag_offset);
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(config, redist->comm);
   redist->exchanger
-    = config->exchanger_new(nsend, nrecv, send_msgs, recv_msgs,
-                            redist->comm, redist->tag_offset, config);
+    = exchanger_new(nsend, nrecv, send_msgs, recv_msgs,
+                    redist->comm, redist->tag_offset, config);
 
   redist->vtable = &redist_sab_vtable;
   redist->nmsg[SEND] = nsend;
