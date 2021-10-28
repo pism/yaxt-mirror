@@ -76,7 +76,6 @@ struct Xt_request_msgs_ {
   const struct Xt_request_vtable *vtable;
   int n;
   MPI_Comm comm;
-  int *ops_completed_buffer;
   MPI_Request requests[];
 };
 
@@ -91,7 +90,6 @@ Xt_request xt_request_msgs_new(int n, const MPI_Request requests[n],
   request->vtable = &request_msgs_vtable;
   request->n = n;
   request->comm = comm;
-  request->ops_completed_buffer = (int *)(request->requests + (size_t)n);
   memcpy(request->requests, requests, (size_t)n * sizeof(*request->requests));
 
   return (Xt_request)request;
@@ -121,9 +119,10 @@ static int xt_request_msgs_test(Xt_request request) {
 
   Xt_request_msgs request_msgs = (Xt_request_msgs)request;
 
+  size_t n = (size_t)request_msgs->n;
+  int *ops_completed_buffer = (int *)(request_msgs->requests + n);
   int flag = xt_mpi_test_some(&(request_msgs->n), request_msgs->requests,
-                              request_msgs->ops_completed_buffer,
-                              request_msgs->comm);
+                              ops_completed_buffer, request_msgs->comm);
 
   if (flag) free(request_msgs);
 
