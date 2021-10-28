@@ -86,6 +86,17 @@ extern struct Xt_config_ xt_default_config;
 PPM_DSO_INTERNAL void
 xt_config_defaults_init(void);
 
+/**
+ * Get appropriate exchanger constructor.
+ *
+ * @param config configuration object
+ * @param comm communicator to use the constructor with
+ * @returns configured exchanger constructor, or a fallback if the
+ * configured constructor does not apply to \a comm.
+ */
+PPM_DSO_INTERNAL Xt_exchanger_new
+xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm);
+
 /*
  * Local Variables:
  * c-basic-offset: 2

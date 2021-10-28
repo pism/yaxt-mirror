@@ -54,6 +54,7 @@
 #include <mpi.h>
 
 #include <xt/xt_config.h>
+#include <xt/xt_mpi.h>
 #include "xt_config_internal.h"
 #include "xt_exchanger_irecv_send.h"
 #include "xt_exchanger_irecv_isend.h"
@@ -141,6 +142,22 @@ int xt_config_get_exchange_method(Xt_config config)
   Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
 }
 
+Xt_exchanger_new
+xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm)
+{
+  Xt_exchanger_new exchanger_new = config->exchanger_new;
+#if MPI_VERSION >= 3
+  if (exchanger_new == xt_exchanger_neigh_alltoall_new) {
+    int flag;
+    xt_mpi_call(MPI_Comm_test_inter(comm, &flag), comm);
+    if (flag)
+      exchanger_new = xt_exchanger_mix_isend_irecv_new;
+  }
+#else
+  (void)comm;
+#endif
+  return exchanger_new;
+}
 
 void xt_config_set_exchange_method(Xt_config config, int method)
 {
