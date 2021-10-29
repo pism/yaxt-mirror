@@ -24,6 +24,9 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checksrc/mpich_3.4_yaksa_hindexed.c \
 	config/checkdoc/mpich_3.4_yaksa_hindexed.txt \
 	config/checkpatch/mpich_3.4_yaksa_hindexed.patch \
+	config/checksrc/mpich_unweighted_topo_comm_dup.c \
+	config/checkdoc/mpich_unweighted_topo_comm_dup.txt \
+	config/checkpatch/mpich_3.x_unweighted.patch \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \

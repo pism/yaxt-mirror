@@ -368,6 +368,10 @@ ACX_MPI_DEFECTS(,,
         [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}yaks[ai]_type_create_h\\\\{0,1\\\\}indexed/b'],
         [AC_MSG_WARN([Cannot apply MPICH YAKSA datatype bug work-around.])
          mpi_defect_fail_action])],
+     [mpich_unweighted_topo_comm_dup],
+     [AC_MSG_WARN([known MPICH 3.0-3.4.2 problem detected, activating work-around!])
+      AC_DEFINE([NEED_MPICH_UNWEIGHTED_COMM_DUP_WORKAROUND],,
+        [work around problem with MPI_Comm_dup])],
      [incorrect_mpi_abort_exitcode],
      [AC_MSG_WARN([Your installation drops the exit code of MPI_Abort!
 Consider getting a better MPI/batch scheduler.])

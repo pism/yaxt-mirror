@@ -273,7 +273,10 @@ xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
     team_share_copy->one_counts[i] = 1;
     team_share_copy->displs[i] = 0;
   }
-#if defined MPICH_NUMVERSION && MPICH_NUMVERSION < 40000000
+#ifndef NEED_MPICH_UNWEIGHTED_COMM_DUP_WORKAROUND
+  xt_mpi_call(MPI_Comm_dup(team_share->nb_comm, &team_share_copy->nb_comm),
+              new_comm);
+#else
   /* MPICH up to version 3.4.2 at least cannot do MPI_Comm_dup
    * for topology communicators */
   enum { no_reorder = 0 }; // no reordering of ranks in new comm
@@ -291,9 +294,6 @@ xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
 #if __GNUC__ == 11
 #pragma GCC diagnostic pop
 #endif
-#else
-  xt_mpi_call(MPI_Comm_dup(team_share->nb_comm, &team_share_copy->nb_comm),
-              new_comm);
 #endif
   for (size_t i = 0; i < nmsg; ++i)
     xt_mpi_call(MPI_Type_dup(exchanger_na->datatypes[i],
