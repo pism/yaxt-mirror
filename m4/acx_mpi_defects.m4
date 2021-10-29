@@ -75,7 +75,8 @@ AC_DEFUN([ACX_MPI_DEFECTS],
      [AC_MSG_NOTICE([Skipping tests for known MPI defects in cross-]dnl
 [compilation mode, consider enabling them via ]dnl
 [--enable-cross-mpi-defect-checks, if possible])],
-     [AC_MSG_CHECKING([MPI for known defects])
+     [AC_LANG_PUSH([C])
+      AC_MSG_CHECKING([MPI for known defects])
       AC_MSG_RESULT([])
 m4_ifval([$4],
   [m4_pushdef([acx_test_pat],
@@ -89,13 +90,6 @@ m4_ifval([$4],
 	  [break])
 	acx_suffix=`echo "acx_mpi_check_src_" | sed 's/^.*\.\(@<:@^.@:>@*\)$/\1/'`
 	acx_subtestname=`echo "acx_mpi_check_src_" | sed 's/^.*\/\(@<:@^\/@:>@*\)\.@<:@^.@:>@*/\1/'`
-	AS_CASE([$acx_suffix],
-	  [c],
-	  [cat confdefs.h "acx_mpi_check_src_" >conftest."$acx_suffix"
-	   AC_LANG_PUSH([C])],
-	  [f90|F90],[cat "acx_mpi_check_src_" >conftest."$acx_suffix"
-	   AC_LANG_PUSH([Fortran])],
-	  [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
 	AC_MSG_CHECKING([$acx_subtestname])
 	acx_mpirun_num_tasks=`sed -n '/acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\)/{
 s/.*acx_mpirun_num_tasks *= *\(@<:@0-9@:>@*\).*/\1/
@@ -115,20 +109,25 @@ q
 	AS_IF([test `expr "$acx_mpirun_expected_exitcode" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
 	       && test "$acx_mpirun_expected_exitcode" -gt 0],,
 	  [acx_mpirun_expected_exitcode=0])
+	AS_CASE([$acx_suffix],
+	  [c],
+	  [cat confdefs.h "acx_mpi_check_src_" >conftest."$acx_suffix"],
+	  [f90|F90],[cat "acx_mpi_check_src_" >conftest."$acx_suffix"
+	   _AC_LANG_SET(,[Fortran])],
+	  [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
 	AC_LINK_IFELSE(,
 	  [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
-           AS_IF([expr "$ac_link" : '.*/libtool --mode=link' >/dev/null],
-             [acx_mpirun_test=`echo "$ac_link" | sed -e 's@\(.*/libtool --mode=\)link.*@\1@'`"execute $acx_mpirun_test"])
+	   AS_IF([expr "$ac_link" : '.*/libtool --mode=link' >/dev/null],
+	     [acx_mpirun_test=`echo "$ac_link" | sed -e 's@\(.*/libtool --mode=\)link.*@\1@'`"execute $acx_mpirun_test"])
 	   _AC_RUN_LOG_LIMIT([LIBC_FATAL_STDERR_=1 $acx_mpirun_num_tasks >&2],[echo "running $acx_mpirun_num_tasks"])
 	   AS_IF([test $ac_status -eq $acx_mpirun_expected_exitcode],
 	     [acx_mpi_defects_result=okay; acx_mpi_defects_fail=no]m4_ifval([$2],[
 	      $2]),
 	     [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])],
 	  [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])
-        AC_MSG_RESULT([$acx_mpi_defects_result])
 	AS_CASE([$acx_suffix],
-	  [f90|F90],[AC_LANG_POP([Fortran])],
-	  [c],[AC_LANG_POP([C])])
+	  [f90|F90],[_AC_LANG_SET(,[C])])])
+        AC_MSG_RESULT([$acx_mpi_defects_result])
         AS_IF([test x"$acx_mpi_defects_fail" = xyes],
           [m4_default([$3],[AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])])
 m4_popdef([acx_test_pat])dnl
@@ -136,6 +135,7 @@ m4_popdef([acx_test_pat])dnl
       ASX_VAR_UNSET([acx_mpi_check_src])
       ASX_VAR_UNSET([acx_suffix])
       ASX_VAR_UNSET([acx_subtestname])
+      AC_LANG_POP([C])
      ])])
 dnl dump text documentation of defect test to stderr
 dnl ACX_MPI_DEFECTS_DOCUMENT([TEST-DOC-DIR=config/checkdoc])
