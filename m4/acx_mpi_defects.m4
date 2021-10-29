@@ -109,24 +109,46 @@ q
 	AS_IF([test `expr "$acx_mpirun_expected_exitcode" : "@<:@0-9@:>@@<:@0-9@:>@*$"` -gt 0 \
 	       && test "$acx_mpirun_expected_exitcode" -gt 0],,
 	  [acx_mpirun_expected_exitcode=0])
-	AS_CASE([$acx_suffix],
-	  [c],
-	  [cat confdefs.h "acx_mpi_check_src_" >conftest."$acx_suffix"],
-	  [f90|F90],[cat "acx_mpi_check_src_" >conftest."$acx_suffix"
-	   _AC_LANG_SET(,[Fortran])],
-	  [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
-	AC_LINK_IFELSE(,
-	  [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
-	   AS_IF([expr "$ac_link" : '.*/libtool --mode=link' >/dev/null],
-	     [acx_mpirun_test=`echo "$ac_link" | sed -e 's@\(.*/libtool --mode=\)link.*@\1@'`"execute $acx_mpirun_test"])
-	   _AC_RUN_LOG_LIMIT([LIBC_FATAL_STDERR_=1 $acx_mpirun_num_tasks >&2],[echo "running $acx_mpirun_num_tasks"])
-	   AS_IF([test $ac_status -eq $acx_mpirun_expected_exitcode],
-	     [acx_mpi_defects_result=okay; acx_mpi_defects_fail=no]m4_ifval([$2],[
-	      $2]),
+dnl check if test should only run if MPI version matches
+        acx_mpi_expected_version=`sed -n '/acx_mpi_expected_version *\(==\|>=\|<=\|>\|<\|!=\) *\(@<:@0-9@:>@@<:@0-9.@:>@*\)/{
+s/.*acx_mpi_expected_version *\(\(==\|>=\|<=\|>\|<\|!=\) @<:@0-9@:>@@<:@0-9.@:>@*\).*/\1/
+p
+q
+}
+' "acx_mpi_check_src_"`
+	AS_IF([expr "$acx_mpi_expected_version" : "\(==\|>=\|<=\|>\|<\|!=\) @<:@0-9@:>@@<:@0-9.@:>@*$" >/dev/null],
+          [acx_mpi_expected_version=`echo "$acx_mpi_expected_version" \
+            | sed -e 's/^==/eq/;s/^>=/ge/;s/^<=/le/;s/^>/gt/;s/^</lt/;]dnl
+[s/!=/ne/;s/  */ v/'`],
+	  [ASX_VAR_UNSET([acx_mpi_expected_version])])
+        AS_IF([test x${acx_mpi_expected_version+set} = xset],
+          [AC_COMPUTE_INT([MPI_VERSION], [MPI_VERSION],
+             [@%:@include <mpi.h>],
+             [AC_MSG_ERROR([cannot determine MPI version!])])
+           AC_COMPUTE_INT([MPI_SUBVERSION], [MPI_SUBVERSION],
+             [@%:@include <mpi.h>],
+             [AC_MSG_ERROR([cannot determine MPI sub-version!])])])
+        AS_IF([test x${acx_mpi_expected_version+set} = x \
+          || $PERL -e "use strict; use warnings; exit(!(v${MPI_VERSION}.${MPI_SUBVERSION} ${acx_mpi_expected_version}))"],
+	  [AS_CASE([$acx_suffix],
+	     [c],
+	     [cat confdefs.h "acx_mpi_check_src_" >conftest."$acx_suffix"],
+	     [f90|F90],[cat "acx_mpi_check_src_" >conftest."$acx_suffix"
+	      _AC_LANG_SET(,[Fortran])],
+	     [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
+           AC_LINK_IFELSE(,
+	     [acx_mpirun_num_tasks="$MPI_LAUNCH -n $acx_mpirun_num_tasks ./conftest$EXEEXT"
+             AS_IF([expr "$ac_link" : '.*/libtool --mode=link' >/dev/null],
+               [acx_mpirun_test=`echo "$ac_link" | sed -e 's@\(.*/libtool --mode=\)link.*@\1@'`"execute $acx_mpirun_test"])
+	     _AC_RUN_LOG_LIMIT([LIBC_FATAL_STDERR_=1 $acx_mpirun_num_tasks >&2],[echo "running $acx_mpirun_num_tasks"])
+	     AS_IF([test $ac_status -eq $acx_mpirun_expected_exitcode],
+	       [acx_mpi_defects_result=okay; acx_mpi_defects_fail=no]m4_ifval([$2],[
+	        $2]),
 	     [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])],
-	  [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])
-	AS_CASE([$acx_suffix],
-	  [f90|F90],[_AC_LANG_SET(,[C])])])
+	     [acx_mpi_defects_result=error ; acx_mpi_defects_fail=yes])
+           AS_CASE([$acx_suffix],
+	     [f90|F90],[_AC_LANG_SET(,[C])])],
+        [acx_mpi_defects_result=skipped ; acx_mpi_defects_fail=no])
         AC_MSG_RESULT([$acx_mpi_defects_result])
         AS_IF([test x"$acx_mpi_defects_fail" = xyes],
           [m4_default([$3],[AC_MSG_FAILURE([chosen MPI has known error $acx_subtestname])])])])
