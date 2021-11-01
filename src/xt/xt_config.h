@@ -16,7 +16,7 @@
  *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  *
- * URL: https://doc.redmine.dkrz.de/yaxt/html/
+ * URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are  permitted provided that the following conditions are
