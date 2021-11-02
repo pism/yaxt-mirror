@@ -478,7 +478,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER :: num_send_msg
     INTEGER(c_int) :: n
-    n = xt_redist_get_num_send_msg_c(xt_redist_f2c(redist))
+    n = xt_redist_get_num_send_msg_c(redist%cptr)
     IF (n > HUGE(num_send_msg) .OR. n < -HUGE(num_send_msg)) &
          CALL xt_abort("num_send_msg out of bounds", filename, __LINE__)
     num_send_msg = INT(n)
@@ -488,7 +488,7 @@ CONTAINS
     TYPE(xt_redist), INTENT(in) :: redist
     INTEGER :: num_recv_msg
     INTEGER(c_int) :: n
-    n = xt_redist_get_num_recv_msg_c(xt_redist_f2c(redist))
+    n = xt_redist_get_num_recv_msg_c(redist%cptr)
     IF (n > HUGE(num_recv_msg) .OR. n < -HUGE(num_recv_msg)) &
          CALL xt_abort("num_recv_msg out of bounds", filename, __LINE__)
     num_recv_msg = INT(n)
@@ -505,8 +505,7 @@ CONTAINS
         TYPE(c_ptr), VALUE :: src_data_cptr, dst_data_cptr
       END SUBROUTINE xt_redist_s_exchange1_c
     END INTERFACE
-    CALL xt_redist_s_exchange1_c(xt_redist_f2c(redist), src_data_cptr, &
-         dst_data_cptr)
+    CALL xt_redist_s_exchange1_c(redist%cptr, src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange1
 
   SUBROUTINE xt_redist_a_exchange1(redist, src_data_cptr, dst_data_cptr, &
@@ -523,7 +522,7 @@ CONTAINS
         TYPE(xt_request), INTENT(out) :: request_c
       END SUBROUTINE xt_redist_a_exchange1_c
     END INTERFACE
-    CALL xt_redist_a_exchange1_c(xt_redist_f2c(redist), src_data_cptr, &
+    CALL xt_redist_a_exchange1_c(redist%cptr, src_data_cptr, &
          & dst_data_cptr, request)
   END SUBROUTINE xt_redist_a_exchange1
 
@@ -543,10 +542,10 @@ CONTAINS
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(n, c_int)
 #if __INTEL_COMPILER == 1910 && __INTEL_COMPILER_UPDATE == 2
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_s_exchange_c(redist%cptr, num_ptr_c, &
          contig_src_data_cptr, contig_dst_data_cptr)
 #else
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_s_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr)
 #endif
   END SUBROUTINE xt_redist_s_exchange_a1d
@@ -569,10 +568,10 @@ CONTAINS
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
 #if __INTEL_COMPILER == 1910 && __INTEL_COMPILER_UPDATE == 2
-    CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_a_exchange_c(redist%cptr, num_ptr_c, &
          contig_src_data_cptr, contig_dst_data_cptr, request)
 #else
-    CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_a_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
 #endif
   END SUBROUTINE xt_redist_a_exchange_a1d
@@ -586,7 +585,7 @@ CONTAINS
     IF (num_ptr < 0_i2) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_s_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i2_a1d
 
@@ -600,7 +599,7 @@ CONTAINS
     IF (num_ptr < 0_i2) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
-    CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_a_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
   END SUBROUTINE xt_redist_a_exchange_i2_a1d
 
@@ -613,7 +612,7 @@ CONTAINS
     IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_s_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i4_a1d
 
@@ -627,7 +626,7 @@ CONTAINS
     IF (num_ptr < 0_i4 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
-    CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_a_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
   END SUBROUTINE  xt_redist_a_exchange_i4_a1d
 
@@ -640,7 +639,7 @@ CONTAINS
     IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
-    CALL xt_redist_s_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_s_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr)
   END SUBROUTINE xt_redist_s_exchange_i8_a1d
 
@@ -654,7 +653,7 @@ CONTAINS
     IF (num_ptr < 0_i8 .OR. num_ptr > HUGE(1_c_int)) &
          CALL xt_abort("invalid number of pointers", filename, __LINE__)
     num_ptr_c = INT(num_ptr, c_int)
-    CALL xt_redist_a_exchange_c(xt_redist_f2c(redist), num_ptr_c, &
+    CALL xt_redist_a_exchange_c(redist%cptr, num_ptr_c, &
          src_data_cptr, dst_data_cptr, request)
   END SUBROUTINE xt_redist_a_exchange_i8_a1d
 
@@ -1009,7 +1008,7 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
     num_repetitions_c = INT(num_repetitions, c_int)
-    res%cptr = xt_redist_repeat_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions_c, displacements)
   END FUNCTION xt_redist_repeat_new_i4_a1d
 
@@ -1023,7 +1022,7 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
     num_repetitions_c = INT(num_repetitions, c_int)
-    res%cptr = xt_redist_repeat_custom_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_custom_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions_c, displacements, &
          xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_new_i4_a1d_cfg
@@ -1036,7 +1035,7 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
     num_repetitions_c = INT(SIZE(displacements), c_int)
-    res%cptr = xt_redist_repeat_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions_c, displacements)
   END FUNCTION xt_redist_repeat_new_a1d
 
@@ -1049,7 +1048,7 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
     num_repetitions_c = INT(SIZE(displacements), c_int)
-    res%cptr = xt_redist_repeat_custom_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_custom_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions_c, displacements, &
          xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_new_a1d_cfg
@@ -1064,7 +1063,7 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
     num_repetitions_c = INT(num_repetitions, c_int)
-    res%cptr = xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions_c, src_displacements, &
          dst_displacements)
   END FUNCTION xt_redist_repeat_asym_new_i4_a1d
@@ -1081,7 +1080,7 @@ CONTAINS
     TYPE(xt_redist) :: res
     INTEGER(c_int) :: num_repetitions_c
     num_repetitions_c = INT(num_repetitions, c_int)
-    res%cptr = xt_redist_repeat_asym_custom_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_custom_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions_c, src_displacements, &
          dst_displacements, xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_asym_new_i4_a1d_cfg
@@ -1097,7 +1096,7 @@ CONTAINS
     IF (num_repetitions /= SIZE(dst_displacements)) &
          CALL xt_abort("inequal size for src and dst displacements", &
          filename, __LINE__)
-    res%cptr = xt_redist_repeat_asym_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions, src_displacements, &
          dst_displacements)
   END FUNCTION xt_redist_repeat_asym_new_a1d
@@ -1114,7 +1113,7 @@ CONTAINS
     IF (num_repetitions /= SIZE(dst_displacements)) &
          CALL xt_abort("inequal size for src and dst displacements", &
          filename, __LINE__)
-    res%cptr = xt_redist_repeat_asym_custom_new_c(xt_redist_f2c(redist), &
+    res%cptr = xt_redist_repeat_asym_custom_new_c(redist%cptr, &
          src_extent, dst_extent, num_repetitions, src_displacements, &
          dst_displacements, xt_config_f2c(config))
   END FUNCTION xt_redist_repeat_asym_new_a1d_cfg
