@@ -87,7 +87,7 @@ struct Xt_exchanger_ {
  * Executes a synchronous data exchange.
  * @param[in]  exchanger exchanger object
  * @param[in]  src_data  source data
- * @param[out] dat_data  destination data
+ * @param[out] dst_data  destination data
  */
 PPM_DSO_INTERNAL void
 xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
@@ -97,7 +97,7 @@ xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
  * Executes a asynchronous data exchange.
  * @param[in]  exchanger exchanger object
  * @param[in]  src_data  source data
- * @param[out] dat_data  destination data
+ * @param[out] dst_data  destination data
  */
 PPM_DSO_INTERNAL void
 xt_exchanger_a_exchange(Xt_exchanger exchanger,
@@ -125,7 +125,7 @@ xt_exchanger_delete(Xt_exchanger);
  * @param[in] rank      MPI rank
  * @param[in] direction specific whether the datatype of an incoming or outgoing
  *                      message is requested
- * @param[in[ do_dup    mpi datatype copy will be dup if true
+ * @param[in] do_dup    mpi datatype copy will be dup if true
  * @return MPI_Datatype for the specificed message
  * @remark returns MPI_DATATYPE_NULL if there is no message matching the
  *         specificed configuration
@@ -235,8 +235,9 @@ xt_exchanger_team_share_destroy(Xt_exchanger exchanger, void *share);
  * This call is collective for all MPI ranks
  * in the communicator the exchanger team was constructed for.
  *
- * @param[in] exchanger exchanger object to destroy team shared data for.
- * @param[out] share    object to destroy
+ * @param[in] exchanger_new exchanger constructor to destroy team
+ *                          shared data for.
+ * @param[out] share        shared state object to destroy
  */
 PPM_DSO_INTERNAL void
 xt_exchanger_new_team_share_destroy(Xt_exchanger_new exchanger_new,

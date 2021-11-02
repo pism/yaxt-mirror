@@ -120,7 +120,7 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm);
  * @param[in]  redist    redistribution object
  * @param[in]  direction specifices whether ranks for the outgoing or incoming
  *                       messages are requested
- * @param[inout] ranks     ranks for all outgoing/incoming messages
+ * @param[in,out] ranks  ranks for all outgoing/incoming messages
  * @return number of outgoing/incoming message
  * @remark the user needs to ensure that array ranks is big enough to hold all
  *         ranks, each element of ranks must be either a pointer to a valid
