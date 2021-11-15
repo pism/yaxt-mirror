@@ -68,7 +68,7 @@ int xt_lib_state __attribute__((aligned(16),common));
 void
 xt_initialize(MPI_Comm default_comm)
 {
-  Xt_default_comm = default_comm;
+  Xt_set_default_comm(default_comm);
   xt_mpi_init();
   xt_config_defaults_init();
   xt_idxempty_init();
