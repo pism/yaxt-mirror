@@ -400,9 +400,6 @@ CONTAINS
     mypy = mype / nprocx
     mypx = MOD(mype, nprocx)
 
-    !CALL ut_init(decomp_size=30, comm_tmpl_size=30, comm_size=30, &
-    !     &       debug_lvl=0, mode=ut_mode_dt_p2p, debug_unit=0)
-
     CALL deco
 
     ALLOCATE(fval(ie,je), gval(ie,je))
@@ -445,7 +442,6 @@ CONTAINS
          CALL abort('gen_trans: (send_dt /= recv_dt) unsupported', __LINE__)
     dt = send_dt
     redist = xt_redist_p2p_new(xmap, dt)
-    !CALL ut_init_transposition(itemp, dt, itrans)
 
   END SUBROUTINE gen_trans
 
@@ -463,7 +459,6 @@ CONTAINS
          CALL abort('(datatype_in /= datatype_out) not supported', __LINE__)
 
     redist = xt_redist_p2p_off_new(xmap, send_off, recv_off, send_dt);
-    !CALL ut_init_transposition(itemp, send_offsets, recv_offsets, send_dt, recv_dt, itrans)
 
   END SUBROUTINE gen_off_trans
 
