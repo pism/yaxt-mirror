@@ -232,5 +232,7 @@ END MODULE xt_core
 ! indent-tabs-mode: nil
 ! show-trailing-whitespace: t
 ! require-trailing-newline: t
+! license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+! license-default: "bsd"
 ! End:
 !
