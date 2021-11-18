@@ -46,14 +46,15 @@
 !
 #include "fc_feature_defs.inc"
 PROGRAM test_perf
+  USE iso_c_binding, ONLY: C_LOC
   USE mpi
-  USE xt_ut, ONLY: ut_init, ut_mode_dt_p2p, comm_forward, ut_abort, &
-       & ut_transpose, ut_init_decomposition, &
-       & ut_init_oneway_transposition_template, ut_destroy_decomposition, &
-       & ut_destroy_transposition_template, ut_destroy_transposition, &
-       & ut_init_transposition, xt_int_kind
+  USE yaxt, ONLY: xt_finalize, xt_idxlist, xt_idxvec_new, xt_xmap, &
+       xt_xmap_all2all_new, xt_redist, xt_redist_p2p_new, &
+       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_idxlist_delete, &
+       xt_xmap_delete, xt_redist_delete, xt_int_kind, xt_initialize
   USE ftest_common, ONLY: finish_mpi, init_mpi, treset, tstart, tstop, &
-       treport, timer, id_map, factorize, regular_deco, set_verbose, icmp
+       treport, timer, id_map, factorize, regular_deco, set_verbose, icmp, &
+       test_abort
   USE yaxt, ONLY: xt_finalize
 
   IMPLICIT NONE
@@ -82,32 +83,38 @@ PROGRAM test_perf
   LOGICAL :: lroot ! true only for proc 0
   CHARACTER(len=*), PARAMETER :: filename = 'test_perf.f90'
 
-  INTEGER, ALLOCATABLE :: g_id(:,:) ! global id
+  INTEGER(xt_int_kind), ALLOCATABLE :: g_id(:,:) ! global id
   ! global "tripolar-like" toy bounds exchange
   INTEGER, ALLOCATABLE :: g_tpex(:, :)
-  INTEGER :: template_tpex_2d, trans_tpex_2d
-  INTEGER :: template_tpex_3d, trans_tpex_3d
 
-  INTEGER, ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
-  INTEGER, ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
+  INTEGER(xt_int_kind), ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
   INTEGER, ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
   INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
-  INTEGER :: surf_trans_tpex_2d
   LOGICAL :: verbose
 
-  TYPE(timer) :: t_all, t_surf_trans, t_exch_surf
-  TYPE(timer) :: t_template_2d, t_trans_2d, t_exch_2d
-  TYPE(timer) :: t_template_3d, t_trans_3d, t_exch_3d
+  TYPE(timer) :: t_all, t_surf_redist, t_exch_surf
+  TYPE(timer) :: t_idxlist_2d, t_xmap_2d, t_redist_2d, t_exch_2d
+  TYPE(timer) :: t_idxlist_3d, t_xmap_3d, t_redist_3d, t_exch_3d
+
+  ! yaxt data:
+  TYPE(xt_idxlist) :: id_2d_idxlist, tpex_2d_idxlist
+  TYPE(xt_idxlist) :: id_3d_idxlist, tpex_3d_idxlist
+  TYPE(xt_xmap) :: tpex_2d_xmap, tpex_3d_xmap
+  TYPE(xt_redist) :: tpex_2d_redist, surf_tpex_redist
+  TYPE(xt_redist) :: tpex_3d_redist
 
   CALL treset(t_all, 'all')
-  CALL treset(t_surf_trans, 'surf_trans')
+  CALL treset(t_surf_redist, 'surf_redist')
   CALL treset(t_exch_surf, 'exch_surf')
-  CALL treset(t_template_2d, 'template_2d')
-  CALL treset(t_trans_2d, 'trans_2d')
+  CALL treset(t_idxlist_2d, 'idxlist_2d')
+  CALL treset(t_xmap_2d, 'xmap_2d')
+  CALL treset(t_redist_2d, 'redist_2d')
   CALL treset(t_exch_2d, 'exch_2d')
-  CALL treset(t_template_3d, 'template_3d')
-  CALL treset(t_trans_3d, 'trans_3d')
+  CALL treset(t_idxlist_3d, 'idxlist_3d')
+  CALL treset(t_xmap_3d, 'xmap_3d')
+  CALL treset(t_redist_3d, 'redist_3d')
   CALL treset(t_exch_3d, 'exch_3d')
 
   CALL init_mpi
@@ -131,21 +138,24 @@ PROGRAM test_perf
   CALL get_window(g_tpex, loc_tpex_2d)
   DEALLOCATE(g_tpex)
 
-  ! template: loc_id_2d -> loc_tpex_2d
-  CALL tstart(t_template_2d)
-  CALL gen_template_2d(loc_id_2d, loc_tpex_2d, template_tpex_2d)
-  CALL tstop(t_template_2d)
+  ! gen xmap: loc_id_2d -> loc_tpex_2d
+  CALL tstart(t_idxlist_2d)
+  id_2d_idxlist = win2d_to_idxlist(loc_id_2d)
+  tpex_2d_idxlist = win2d_to_idxlist(loc_tpex_2d)
+  CALL tstop(t_idxlist_2d)
+  CALL tstart(t_xmap_2d)
+  tpex_2d_xmap = xt_xmap_all2all_new(id_2d_idxlist, tpex_2d_idxlist, MPI_COMM_WORLD)
+  CALL tstop(t_xmap_2d)
 
-  ! transposition: loc_id_2d:data -> loc_tpex_2d:data
-  CALL tstart(t_trans_2d)
-  CALL gen_trans(template_tpex_2d, MPI_INTEGER, MPI_INTEGER, trans_tpex_2d)
-  CALL tstop(t_trans_2d)
+  ! gen redist: loc_id_2d:data -> loc_tpex_2d:data
+  CALL tstart(t_redist_2d)
+  tpex_2d_redist = xt_redist_p2p_new(tpex_2d_xmap,  MPI_INTEGER)
+  CALL tstop(t_redist_2d)
 
-
-  ! test 2d-to-2d transposition:
+  ! test 2d-to-2d redist
   fval_2d = loc_id_2d
   CALL tstart(t_exch_2d)
-  CALL exchange2d_2d(trans_tpex_2d, fval_2d, gval_2d)
+  CALL exchange_2d_2d(tpex_2d_redist, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
   CALL icmp('2d to 2d check', gval_2d, loc_tpex_2d, mype)
 
@@ -154,19 +164,17 @@ PROGRAM test_perf
   CALL id_map(pos3d_surf)
   CALL gen_pos3d_surf(pos3d_surf)
 
-  ! generate surface transposition:
-  CALL tstart(t_surf_trans)
-  CALL gen_off_trans(template_tpex_2d, MPI_INTEGER, id_pos(:,:)-1, &
-       MPI_INTEGER, pos3d_surf(:,:)-1, surf_trans_tpex_2d)
-  CALL tstop(t_surf_trans)
+  ! gen surface redist:
+  CALL tstart(t_surf_redist)
+  surf_tpex_redist = xt_redist_p2p_off_new(tpex_2d_xmap, id_pos(:,:)-1, pos3d_surf(:,:)-1, MPI_INTEGER)
+  CALL tstop(t_surf_redist)
   DEALLOCATE(id_pos, pos3d_surf)
-
 
   ! 2d to surface boundsexchange:
   ALLOCATE(gval_3d(ie,nlev,je))
   gval_3d = -1
   CALL tstart(t_exch_surf)
-  CALL exchange2d_3d(surf_trans_tpex_2d, fval_2d, gval_3d)
+  CALL exchange_2d_3d(surf_tpex_redist, fval_2d, gval_3d)
   CALL tstop(t_exch_surf)
 
   CALL icmp('surface check', gval_3d(:,1,:), loc_tpex_2d, mype)
@@ -175,9 +183,10 @@ PROGRAM test_perf
   CALL icmp('sub surface check', gval_3d(:,2,:), loc_tpex_2d*0-1, mype)
 
   ! cleanup 2d:
-  CALL ut_destroy_transposition_template(template_tpex_2d)
-  CALL ut_destroy_transposition(trans_tpex_2d)
-  CALL ut_destroy_transposition(surf_trans_tpex_2d)
+  CALL xt_idxlist_delete(id_2d_idxlist)
+  CALL xt_idxlist_delete(tpex_2d_idxlist)
+  CALL xt_xmap_delete(tpex_2d_xmap)
+  CALL xt_redist_delete(tpex_2d_redist)
 
   ! inflate 2d -> 3d
   CALL inflate_idx(3, loc_id_2d, loc_id_3d)
@@ -185,50 +194,62 @@ PROGRAM test_perf
   CALL inflate_idx(3, loc_tpex_2d, loc_tpex_3d)
   DEALLOCATE(loc_tpex_2d)
 
-  ! template: loc_id_3d -> loc_tpex_3d
-  CALL tstart(t_template_3d)
-  CALL gen_template_3d(loc_id_3d, loc_tpex_3d, template_tpex_3d)
-  CALL tstop(t_template_3d)
+  ! gen xmap: loc_id_3d -> loc_tpex_3d
+  CALL tstart(t_idxlist_3d)
+  id_3d_idxlist = win3d_to_idxlist(loc_id_3d)
+  tpex_3d_idxlist = win3d_to_idxlist(loc_tpex_3d)
+  CALL tstop(t_idxlist_3d)
+  CALL tstart(t_xmap_3d)
+  tpex_3d_xmap = xt_xmap_all2all_new(id_3d_idxlist, tpex_3d_idxlist, MPI_COMM_WORLD)
+  CALL tstop(t_xmap_3d)
 
-  ! transposition: loc_id_3d:data -> loc_tpex_3d:data
-  CALL tstart(t_trans_3d)
-  CALL gen_trans(template_tpex_3d, MPI_INTEGER, MPI_INTEGER, trans_tpex_3d)
-  CALL tstop(t_trans_3d)
+  ! gen redist: loc_id_3d:data -> loc_tpex_3d:data
+  CALL tstart(t_redist_3d)
+  tpex_3d_redist = xt_redist_p2p_new(tpex_3d_xmap,  MPI_INTEGER)
+  CALL tstop(t_redist_3d)
 
-  ! test 3d-to-3d transposition:
+  ! test 3d-to-3d redist:
   DEALLOCATE(gval_3d)
   ALLOCATE(fval_3d(ie,je,nlev), gval_3d(ie,je,nlev))
   fval_3d = loc_id_3d
   CALL tstart(t_exch_3d)
-  CALL exchange3d_3d(trans_tpex_3d, fval_3d, gval_3d)
+  CALL exchange_3d_3d(tpex_3d_redist, fval_3d, gval_3d)
   CALL tstop(t_exch_3d)
   DEALLOCATE(fval_3d)
   CALL icmp('3d to 3d check', gval_3d, loc_tpex_3d, mype)
   DEALLOCATE(gval_3d)
 
   ! cleanup 3d:
-  CALL ut_destroy_transposition_template(template_tpex_3d)
-  CALL ut_destroy_transposition(trans_tpex_3d)
+  CALL xt_idxlist_delete(id_3d_idxlist)
+  CALL xt_idxlist_delete(tpex_3d_idxlist)
+  CALL xt_xmap_delete(tpex_3d_xmap)
+  CALL xt_redist_delete(tpex_3d_redist)
 
   CALL tstop(t_all)
 
   IF (verbose) WRITE(0,*) 'timer report for nprocs=',nprocs
 
-  CALL treport(t_all, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_surf_trans, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_exch_surf, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_template_2d, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_trans_2d, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_exch_2d, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_template_3d, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_trans_3d, TRIM(grid_label), mpi_comm_world)
-  CALL treport(t_exch_3d, TRIM(grid_label), mpi_comm_world)
+  CALL tvec_report((/t_all, t_surf_redist, t_exch_surf, t_idxlist_2d, t_xmap_2d, &
+       t_redist_2d, t_exch_2d, t_idxlist_3d, t_xmap_3d,t_redist_3d, t_exch_3d/), &
+       TRIM(grid_label), mpi_comm_world)
 
   DEALLOCATE(loc_tpex_3d, loc_id_3d, fval_2d, gval_2d)
+
+  ! finalize:
   CALL xt_finalize
   CALL finish_mpi
 
 CONTAINS
+
+  SUBROUTINE tvec_report(tvec, extra_label, comm)
+    TYPE(timer), INTENT(in) :: tvec(:)
+    CHARACTER(len=*), INTENT(in) :: extra_label
+    INTEGER, INTENT(in) :: comm
+    INTEGER :: it
+    DO it = 1, SIZE(tvec)
+      CALL treport(tvec(it), extra_label, comm)
+    ENDDO
+  END SUBROUTINE tvec_report
 
   SUBROUTINE inflate_idx(inflate_pos, idx_2d, idx_3d)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::inflate_idx: '
@@ -248,7 +269,7 @@ CONTAINS
         ENDDO
       ENDDO
     ELSE
-      CALL ut_abort(context//' unsupported inflate position', &
+      CALL test_abort(context//' unsupported inflate position', &
            filename, __LINE__)
     ENDIF
 
@@ -313,11 +334,11 @@ CONTAINS
     END SELECT
 
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_SIZE failed', &
+    IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_COMM_SIZE failed', &
          filename, __LINE__)
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, mype, ierror)
-    IF (ierror /= MPI_SUCCESS) CALL ut_abort(context//'MPI_COMM_RANK failed', &
+    IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_COMM_RANK failed', &
          filename, __LINE__)
     IF (mype==0) THEN
       lroot = .true.
@@ -327,8 +348,8 @@ CONTAINS
     ENDIF
     CALL set_verbose(verbose)
     CALL factorize(nprocs, nprocx, nprocy)
-    IF (lroot .AND. verbose) WRITE(0,*) 'nprocx, nprocy=',nprocx, nprocy
-    IF (lroot .AND. verbose) WRITE(0,*) 'g_ie, g_je=',g_ie, g_je
+    IF (verbose) WRITE(0,*) 'nprocx, nprocy=',nprocx, nprocy
+    IF (verbose) WRITE(0,*) 'g_ie, g_je=',g_ie, g_je
     mypy = mype / nprocx
     mypx = MOD(mype, nprocx)
 
@@ -348,89 +369,36 @@ CONTAINS
     id_pos = undef_int
     pos3d_surf = undef_int
 
-    CALL ut_init(decomp_size=30, comm_tmpl_size=30, comm_size=30, &
-         &       debug_lvl=0, mode=ut_mode_dt_p2p, debug_unit=0)
+    CALL xt_initialize(MPI_COMM_WORLD)
 
   END SUBROUTINE init_all
 
-  SUBROUTINE exchange2d_2d(itrans, f, g)
-    INTEGER, INTENT(in) :: itrans
-    INTEGER, TARGET, INTENT(in) :: f(:,:)
-    INTEGER, TARGET, INTENT(out) :: g(:,:)
-
-    INTEGER, POINTER :: p_in, p_out
-
-    p_in => f(1,1)
-    p_out=> g(1,1)
-
-    CALL ut_transpose(p_in, itrans, comm_forward, p_out)
-
-  END SUBROUTINE exchange2d_2d
-
-  SUBROUTINE exchange3d_3d(itrans, f, g)
-    INTEGER, INTENT(in) :: itrans
-    INTEGER, TARGET, INTENT(in) :: f(:,:,:)
-    INTEGER, TARGET, INTENT(out) :: g(:,:,:)
-
-    INTEGER, POINTER :: p_in, p_out
-
-    p_in => f(1,1,1)
-    p_out=> g(1,1,1)
-
-    CALL ut_transpose(p_in, itrans, comm_forward, p_out)
-
-  END SUBROUTINE exchange3d_3d
+  SUBROUTINE exchange_2d_2d(redist, start_data, end_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, TARGET, INTENT(in) :: start_data(:,:)
+    INTEGER, TARGET, INTENT(out) :: end_data(:,:)
+    CALL xt_redist_s_exchange1(redist, C_LOC(start_data), C_LOC(end_data))
+  END SUBROUTINE exchange_2d_2d
 
 
-  SUBROUTINE exchange2d_3d(itrans, f, g)
-    INTEGER, INTENT(in) :: itrans
-    INTEGER, TARGET, INTENT(in) :: f(:,:)
-    INTEGER, TARGET, INTENT(out) :: g(:,:,:)
+  SUBROUTINE exchange_3d_3d(redist, start_data, end_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, TARGET, INTENT(in) :: start_data(:,:,:)
+    INTEGER, TARGET, INTENT(out) :: end_data(:,:,:)
+    CALL xt_redist_s_exchange1(redist, C_LOC(start_data), C_LOC(end_data))
+  END SUBROUTINE exchange_3d_3d
 
-    INTEGER, POINTER :: p_in, p_out
-
-    p_in => f(1,1)
-    p_out=> g(1,1,1)
-
-    CALL ut_transpose(p_in, itrans, comm_forward, p_out)
-
-  END SUBROUTINE exchange2d_3d
-
-  SUBROUTINE gen_trans(itemp, send_dt, recv_dt, itrans)
-    INTEGER,INTENT(in) :: itemp, send_dt, recv_dt
-    INTEGER,INTENT(out) :: itrans
-
-    INTEGER :: dt
-
-    IF (send_dt /= recv_dt) &
-         CALL ut_abort('gen_trans: (send_dt /= recv_dt) unsupported', &
-         filename, __LINE__)
-    dt = send_dt
-    CALL ut_init_transposition(itemp, dt, itrans)
-
-  END SUBROUTINE gen_trans
-
-  SUBROUTINE gen_off_trans(itemp, send_dt, send_off, recv_dt, recv_off, itrans)
-    INTEGER,INTENT(in) :: itemp, send_dt, recv_dt
-    INTEGER,INTENT(in) :: send_off(:,:), recv_off(:,:)
-    INTEGER,INTENT(out) :: itrans
-
-    INTEGER :: send_offsets(SIZE(send_off)), recv_offsets(SIZE(recv_off))
-
-    send_offsets = RESHAPE(send_off, (/SIZE(send_off)/) )
-    recv_offsets = RESHAPE(recv_off, (/SIZE(recv_off)/) )
-
-    CALL ut_init_transposition(itemp, send_offsets, recv_offsets, &
-         send_dt, recv_dt, itrans)
-
-  END SUBROUTINE gen_off_trans
+  SUBROUTINE exchange_2d_3d(redist, src_data, target_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, TARGET, INTENT(in) :: src_data(:,:)
+    INTEGER, TARGET, INTENT(out) :: target_data(:,:,:)
+    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(target_data))
+  END SUBROUTINE exchange_2d_3d
 
   SUBROUTINE get_window(gval, win)
     INTEGER, INTENT(in) :: gval(:,:)
     INTEGER, INTENT(out) :: win(:,:)
-
     INTEGER :: i, j, ig, jg
-
     DO j = 1, je
       jg = p_joff + j
       DO i = 1, ie
@@ -438,56 +406,17 @@ CONTAINS
         win(i,j) =  gval(ig,jg)
       ENDDO
     ENDDO
-
   END SUBROUTINE get_window
 
-  SUBROUTINE gen_template_2d(local_src_idx, local_dst_idx, ihandle)
-    INTEGER, INTENT(in) :: local_src_idx(:,:)
-    INTEGER, INTENT(in) :: local_dst_idx(:,:)
-    INTEGER, INTENT(out) :: ihandle
+  TYPE(xt_idxlist) FUNCTION win2d_to_idxlist(win) RESULT(idxlist)
+    INTEGER(xt_int_kind), INTENT(in) :: win(:,:)
+    idxlist = xt_idxvec_new(RESHAPE(win,(/SIZE(win)/)))
+  END FUNCTION win2d_to_idxlist
 
-    INTEGER :: src(SIZE(local_src_idx)), dst(size(local_dst_idx))
-
-    INTEGER :: src_handle, dst_handle
-
-    src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
-    dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
-
-    CALL ut_init_decomposition(src, g_ie * g_je, src_handle)
-    CALL ut_init_decomposition(dst, g_ie * g_je, dst_handle)
-
-    CALL ut_init_oneway_transposition_template(src_handle, dst_handle, &
-         MPI_COMM_WORLD, ihandle)
-
-    CALL ut_destroy_decomposition(dst_handle)
-    CALL ut_destroy_decomposition(src_handle)
-
-  END SUBROUTINE gen_template_2d
-
-  SUBROUTINE gen_template_3d(local_src_idx, local_dst_idx, ihandle)
-    INTEGER, INTENT(in) :: local_src_idx(:,:,:)
-    INTEGER, INTENT(in) :: local_dst_idx(:,:,:)
-    INTEGER, INTENT(out) :: ihandle
-
-    INTEGER, ALLOCATABLE :: src(:), dst(:)
-    INTEGER :: src_handle, dst_handle
-
-    ALLOCATE(src(SIZE(local_src_idx)), dst(SIZE(local_dst_idx)))
-
-    src = RESHAPE( local_src_idx, (/SIZE(local_src_idx)/) )
-    dst = RESHAPE( local_dst_idx, (/SIZE(local_dst_idx)/) )
-
-    CALL ut_init_decomposition(src, g_ie * g_je, src_handle)
-    CALL ut_init_decomposition(dst, g_ie * g_je, dst_handle)
-
-    CALL ut_init_oneway_transposition_template(src_handle, dst_handle, &
-         MPI_COMM_WORLD, ihandle)
-
-    CALL ut_destroy_decomposition(dst_handle)
-    CALL ut_destroy_decomposition(src_handle)
-
-  END SUBROUTINE gen_template_3d
-
+  TYPE(xt_idxlist) FUNCTION win3d_to_idxlist(win) RESULT(idxlist)
+    INTEGER(xt_int_kind), INTENT(in) :: win(:,:,:)
+    idxlist = xt_idxvec_new(RESHAPE(win,(/SIZE(win)/)))
+  END FUNCTION win3d_to_idxlist
 
   SUBROUTINE def_exchange(g_id, g_tpex)
     INTEGER, INTENT(in) :: g_id(:, :)
@@ -519,7 +448,7 @@ CONTAINS
       ENDIF
 
       IF (2*north_halo > g_core_je) &
-           CALL ut_abort('def_exchange: grid too small (or halo too large) &
+           CALL test_abort('def_exchange: grid too small (or halo too large) &
            &for tripolar north exchange', &
            filename, __LINE__)
       DO j = 1, north_halo
@@ -563,7 +492,7 @@ CONTAINS
     INTEGER,INTENT(in) :: gidx(:,:)
 
     IF (ANY(gidx == undef_index)) THEN
-      CALL ut_abort('check_g_idx: check failed', filename, __LINE__)
+      CALL test_abort('check_g_idx: check failed', filename, __LINE__)
     ENDIF
   END SUBROUTINE check_g_idx
 
