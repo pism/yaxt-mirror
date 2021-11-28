@@ -430,7 +430,7 @@ m4_define([vartype_setq],[$1][_MPIDT=$4
        [AS_VAR_IF(clz_func,[yes],
           [$1][_clz="@{:@]AS_LITERAL_WORD_IF([clz_func],
             [m4_substr(clz_func,[17])],
-            ["`expr "x]clz_func[" 'x\(.\{17\}\)'`"])[@{:@@{:@m4_if([$2],
+            ["`expr "x]clz_func[" : 'x.\{17\}\(.*\)'`"])[@{:@@{:@m4_if([$2],
             [short], [@{:@unsigned short@:}@])v@:}@@:}@@:}@"])
 ])])dnl
 
