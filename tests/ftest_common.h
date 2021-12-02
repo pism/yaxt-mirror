@@ -45,6 +45,10 @@
 #ifndef FTEST_COMMON_H
 #define FTEST_COMMON_H
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <assert.h>
 #include <stdbool.h>
 #include <inttypes.h>

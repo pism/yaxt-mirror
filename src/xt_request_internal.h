@@ -47,6 +47,10 @@
 #ifndef XT_REQUEST_INTERNAL_H
 #define XT_REQUEST_INTERNAL_H
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "xt/xt_request.h"
 
 struct Xt_request_vtable {

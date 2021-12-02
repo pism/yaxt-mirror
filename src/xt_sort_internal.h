@@ -46,6 +46,10 @@
 #ifndef XT_SORT_INTERNAL_H
 #define XT_SORT_INTERNAL_H
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "core/ppm_visibility.h"
 
 PPM_DSO_INTERNAL void xt_sort_init(void);
