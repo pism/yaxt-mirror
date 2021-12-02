@@ -1,17 +1,17 @@
 /**
  * @file test_redist_single_array_base_common.c
  *
- * @copyright Copyright  (C)  2020 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2020 JÃ¶rg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Jörg Behrens <behrens@dkrz.de>
+ * @author JÃ¶rg Behrens <behrens@dkrz.de>
  *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
- * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ * Maintainer: JÃ¶rg Behrens <behrens@dkrz.de>
  *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
@@ -90,3 +90,16 @@ test_redist_single_array_base_(int nsend, const struct Xt_redist_msg *send_msgs,
                 dst_data_dt, ref_dst_data_dt, file, line);
   xt_redist_delete(redist);
 }
+
+/*
+ * Local Variables:
+ * coding: utf-8
+ * c-file-style: "Java"
+ * c-basic-offset: 2
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+ * license-default: "bsd"
+ * End:
+ */

@@ -1,17 +1,17 @@
 /**
  * @file xt_arithmetic_long.h
  *
- * @copyright Copyright  (C)  2016 Jrg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
- * @author Jrg Behrens <behrens@dkrz.de>
+ * @author Jörg Behrens <behrens@dkrz.de>
  *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
  * Keywords:
- * Maintainer: Jrg Behrens <behrens@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
  *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
@@ -808,3 +808,15 @@ xttcmp_eq(Xt_tword a, Xt_tword b)
 #endif
 
 #endif
+/*
+ * Local Variables:
+ * coding: utf-8
+ * c-file-style: "Java"
+ * c-basic-offset: 2
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+ * license-default: "bsd"
+ * End:
+ */

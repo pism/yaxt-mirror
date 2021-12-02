@@ -4,12 +4,12 @@
  * @copyright Copyright  (C)  2021  Thomas Jahns <jahns@dkrz.de>
  *
  * Version: 1.0
- * @author Jörg Behrens <behrens@dkrz.de>
+ * @author JÃ¶rg Behrens <behrens@dkrz.de>
  *         Moritz Hanke <hanke@dkrz.de>
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
- * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ * Maintainer: JÃ¶rg Behrens <behrens@dkrz.de>
  *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
@@ -231,6 +231,7 @@ memcrc_finish(uint32_t *state, off_t total_size)
 
 /*
  * Local Variables:
+ * coding: utf-8
  * c-file-style: "Java"
  * c-basic-offset: 2
  * indent-tabs-mode: nil
