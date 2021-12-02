@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 PROGRAM perf_sparse_array_gather
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_abort, &
        xt_int_kind, xt_stripe, xt_idxlist_collection_new, &

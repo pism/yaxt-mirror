@@ -42,6 +42,7 @@
 ! LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#include "fc_feature_defs.inc"
 PROGRAM test_xmap_intersection_parallel
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, posix_exit
   USE mpi

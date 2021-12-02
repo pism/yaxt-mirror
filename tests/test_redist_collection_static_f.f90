@@ -45,6 +45,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 PROGRAM test_redist_collection_static
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort

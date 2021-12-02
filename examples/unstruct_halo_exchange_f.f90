@@ -98,7 +98,7 @@
   !        \    /  \    /
   !         \  /    \  /
   !          09------14
-
+#include "fc_feature_defs.inc"
 PROGRAM unstruct_halo_exchang
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &

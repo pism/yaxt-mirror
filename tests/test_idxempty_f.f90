@@ -44,6 +44,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
+#include "fc_feature_defs.inc"
 PROGRAM test_idxempty
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, xt_idxempty_new, &

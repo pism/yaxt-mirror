@@ -44,7 +44,7 @@
 ! NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
-
+#include "fc_feature_defs.inc"
 PROGRAM test_perf_stripes
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
