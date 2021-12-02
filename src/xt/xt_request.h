@@ -10,7 +10,6 @@
  *         Thomas Jahns <jahns@dkrz.de>
  */
 /*
- * Keywords:
  * Maintainer: Jörg Behrens <behrens@dkrz.de>
  *             Moritz Hanke <hanke@dkrz.de>
  *             Thomas Jahns <jahns@dkrz.de>
