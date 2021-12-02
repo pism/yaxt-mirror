@@ -1,6 +1,6 @@
 !>
-!! @file test_redist_collection_static_parallel_f.f90
-!! @brief Fortran test of redist_collection_static class
+!! @file test_redist_repeat_parallel_f.f90
+!! @brief Parallelized Fortran test of redist_repeat class
 !!
 !! @copyright Copyright  (C)  2013 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>

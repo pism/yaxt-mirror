@@ -1,5 +1,5 @@
 /**
- * @file xt_exchanger_mix_isend_irecv.c
+ * @file xt_exchanger_team.c
  *
  * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>

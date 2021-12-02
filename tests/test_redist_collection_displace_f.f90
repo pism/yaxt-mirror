@@ -1,5 +1,5 @@
 !>
-!! @file test_redist_collection_displace.f90
+!! @file test_redist_collection_displace_f.f90
 !! @brief Fortran cache displacement test of redist_collection class
 !!
 !! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>

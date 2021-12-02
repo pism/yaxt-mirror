@@ -1,5 +1,5 @@
 !>
-!! @file test_redist_repeatection_static_f.f90
+!! @file test_redist_repeat_f.f90
 !! @brief Fortran test of redist_repeatection_static class
 !!
 !! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>

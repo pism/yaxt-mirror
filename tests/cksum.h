@@ -1,12 +1,16 @@
+/**
+ * @file cksum.h header for composable implementation of crc32 algorithm
+ *
+ * @copyright Copyright  (C)  2021  Thomas Jahns <jahns@dkrz.de>
+ *
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
+ *         Thomas Jahns <jahns@dkrz.de>
+ */
 /*
- * cksum.h --- provide composable implementation of crc32 algorithm
- *
- * Copyright  (C)  2021  Thomas Jahns <jahns@dkrz.de>
- *
- * Version: 1.0
- * Author: Thomas Jahns <jahns@dkrz.de>
- * Keywords:
- * Maintainer: Thomas Jahns <jahns@dkrz.de>
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
+ *             Thomas Jahns <jahns@dkrz.de>
  * URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
  *
  * Redistribution and use in source and binary forms, with or without

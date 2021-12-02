@@ -1,5 +1,5 @@
 /**
- * @file test_mpi_generate_datatype.c
+ * @file test_mpi_smartdedup.c
  *
  * @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>

@@ -1,5 +1,5 @@
 !>
-!! @file test_xmap_comm_intercomm_parallel_f.f90
+!! @file test_xmap_common_intercomm_parallel_f.f90
 !!
 !! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>

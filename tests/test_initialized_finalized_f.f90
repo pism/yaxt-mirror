@@ -1,5 +1,5 @@
 !>
-!! @file test_idxlist_collection_f.f90
+!! @file test_initialized_finalized_f.f90
 !!
 !! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>

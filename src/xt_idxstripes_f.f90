@@ -1,5 +1,5 @@
 !>
-!! @file yaxt.f90
+!! @file xt_idxstripes_f.f90
 !! @brief Fortran interface to yaxt implementation
 !!
 !! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>

@@ -1,5 +1,5 @@
 !>
-!! @file test_idxmod.c
+!! @file test_idxmod_f.f90
 !!
 !! @copyright Copyright  (C)  2012 Jörg Behrens <behrens@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>

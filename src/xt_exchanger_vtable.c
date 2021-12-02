@@ -1,5 +1,5 @@
 /**
- * @file xt_exchanger_get_vtable.c
+ * @file xt_exchanger_vtable.c
  *
  * @copyright Copyright  (C)  2021 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
