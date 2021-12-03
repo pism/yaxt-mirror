@@ -81,6 +81,7 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	doc/src/rrobin.dox \
 	doc/src/xmaps.dox \
 	doc/src/yaxt_concept.dox \
+	doc/src/correct_use_of_addresses.dox \
 	include/cfortran.h \
 	m4/tj_find_type.m4 \
 	m4/forloop2.m4 \
