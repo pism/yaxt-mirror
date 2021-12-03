@@ -186,7 +186,8 @@ check_data_against_index_list(int *data_array,
     xt_idxlist_get_index_at_position(idxlist, i, &index);
     if (data_array[i] != index) {
 
-      fputs("error in check_data_against_index_list: data does not match\n", stderr);
+      fputs("error in check_data_against_index_list: data does not match\n",
+            stderr);
       return 1;
     }
   }
