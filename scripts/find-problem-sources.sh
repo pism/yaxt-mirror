@@ -1,9 +1,39 @@
 #! /bin/bash
 declare -a c_files f90_files
-read -a c_files -d '' -r < <(find . ! -path ./config/checksrc/\* \
+c_files=()
+f90_files=()
+
+function add_file_to_category()
+{
+  case $1 in
+    config/checksrc/*|config/work/arounds/*|include/cfortran.h)
+      :
+      ;;
+    *.c|*.h)
+      c_files+=("$1")
+      ;;
+    *.f90)
+      f90_files+=("$1")
+      ;;
+  esac
+}
+
+if (( $# == 0 )); then
+  read -a c_files -d '' -r < <(find . ! -path ./config/checksrc/\* \
            ! -path ./config/workarounds/\* \
            ! -path ./include/cfortran.h \
            -type f \( -name \*.c -o -name \*.h \) -print)
+  read -a f90_files -d '' -r < <(find . ! -path ./config/checksrc/\* \
+                       -type f \( -name \*.f90 \) -print)
+elif [[ $# = 1 && x"$1" = x- ]]; then
+  while read f ; do
+    add_file_to_category "$f"
+  done
+else
+  for f in "$@"; do
+    add_file_to_category "$f"
+  done
+fi
 for ((i=0; i < ${#c_files[@]}; ++i)) ; do
   f=${c_files[i]}
   declare -i problem_found
@@ -25,8 +55,6 @@ for ((i=0; i < ${#c_files[@]}; ++i)) ; do
     i=$((i-1))
   fi
 done
-read -a f90_files -d '' -r < <(find . ! -path ./config/checksrc/\* \
-                       -type f \( -name \*.f90 \) -print)
 for ((i=0; i < ${#f90_files[@]}; ++i)) ; do
   f=${f90_files[i]}
   declare -i problem_found
