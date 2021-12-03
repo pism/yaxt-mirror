@@ -83,7 +83,8 @@ enum direction { SOURCE = 0, DESTINATION = 1};
 static void
 print_index(Xt_idxlist idxsection, int rank, enum direction dir) {
   static const char dirMsg[2][4] = { "SRC", "DST" };
-  for (int p = 0; p < xt_idxlist_get_num_indices(idxsection); p ++){
+  int num_idx = xt_idxlist_get_num_indices(idxsection);
+  for (int p = 0; p < num_idx; p ++){
     Xt_int value;
     xt_idxlist_get_index_at_position (idxsection, p, &value);
     printf ("rank: %d , INDEX_%s: %"XT_INT_FMT" \n", rank, dirMsg[dir], value);
