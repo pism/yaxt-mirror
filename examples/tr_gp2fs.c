@@ -357,17 +357,16 @@ int main(int argc, char** argv) {
     get_config(&conf, argc, argv, nprocs);
 
     // global param
-    int num_dims = 3;
+    enum { num_dims = 3 };
     Xt_int global_size[3] = {(Xt_int)conf.z, (Xt_int)conf.y, (Xt_int)conf.x};
 
     // -- SOURCE index list by section
-    Xt_idxlist src_idxsection;
     Xt_int start = 0;
 
     //create source index section
-    src_idxsection = xt_idxsection_new(start, num_dims, global_size,
-                                       conf.src.local_size,
-                                       conf.src.local_start);
+    Xt_idxlist src_idxsection
+      = xt_idxsection_new(start, num_dims, global_size,
+                          conf.src.local_size, conf.src.local_start);
 
 #ifdef DEBUG
     // 0 = soruce
@@ -376,25 +375,21 @@ int main(int argc, char** argv) {
 #endif
 
     // --- DEST-ination index list by section
-    Xt_idxlist dst_idxsection;
-
-    dst_idxsection = xt_idxsection_new(start, num_dims, global_size,
-                                       conf.dst.local_size,
-                                       conf.dst.local_start);
+    Xt_idxlist dst_idxsection
+      = xt_idxsection_new(start, num_dims, global_size,
+                          conf.dst.local_size, conf.dst.local_start);
 
     // 1 = dest
 #ifdef DEBUG
     print_index(dst_idxsection, rank, DESTINATION);
 #endif
     // xmap
-    Xt_xmap xmap;
-
-    xmap = xt_xmap_all2all_new(src_idxsection, dst_idxsection, MPI_COMM_WORLD);
+    Xt_xmap xmap
+      = xt_xmap_all2all_new(src_idxsection, dst_idxsection, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist;
-
-    redist = xt_redist_p2p_new(xmap, MPI_INTEGER);
+    Xt_redist redist
+      = xt_redist_p2p_new(xmap, MPI_INT);
 
     // --- local data array
     int *src_array, *dst_array;

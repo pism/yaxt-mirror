@@ -69,7 +69,7 @@ int main(void) {
 
   {
     // init source and destination data array, local data 5 elements length
-    int len = 5;
+    enum { len = 5 };
     int src_array[len];
     int dst_array[len];
 
@@ -87,30 +87,24 @@ int main(void) {
     // output barrier
     MPI_Barrier (MPI_COMM_WORLD);
 
-    // source index list by stripes
-    Xt_idxlist src_idxlist;
 
     struct Xt_stripe src_stripes = {.start = (Xt_int)(rank*len), .stride = 1,  .nstrides = len};
-    src_idxlist = xt_idxstripes_new(&src_stripes, 1);
-
-    // destination index list by stripes
-    Xt_idxlist dst_idxlist;
+    // source index list by stripes
+    Xt_idxlist src_idxlist = xt_idxstripes_new(&src_stripes, 1);
 
     struct Xt_stripe dst_stripes = {.start = (Xt_int)(((rank+1)*len)%(size*len)),
                                     .stride = 1,  .nstrides = len};
-    dst_idxlist = xt_idxstripes_new(&dst_stripes, 1);
+    // destination index list by stripes
+    Xt_idxlist dst_idxlist = xt_idxstripes_new(&dst_stripes, 1);
 
     // xmap
-    Xt_xmap xmap;
-
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    Xt_xmap xmap
+      = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
 
     // redist_p2p
-    Xt_redist redist;
+    Xt_redist redist = xt_redist_p2p_new(xmap, MPI_INTEGER);
 
-    redist = xt_redist_p2p_new(xmap, MPI_INTEGER);
-
-    //array poiter, especially necessary for data array number > 1
+    // array pointer, especially necessary for data array number > 1
     int* src_array_p = &src_array[0];
     int* dst_array_p = &dst_array[0];
 

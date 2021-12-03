@@ -54,18 +54,18 @@ int main(void) {
 
     for (int i = 0; i < 16; ++i) {
 
-      Xt_idxlist idxsection;
 
       Xt_int start = 0;
-      int num_dimensions = 2;
-      Xt_int global_size[4][2] = {{5,10},{5,-10},{-5,10},{-5,-10}};
-      int local_size [4][2] = {{3,4},{3,-4},{-3,4},{-3,-4}};
-      Xt_int local_start[2] = {1,2};
+      enum { num_dimensions = 2 };
+      static const Xt_int global_size[4][2] = {{5,10},{5,-10},{-5,10},{-5,-10}};
+      static const int local_size [4][2] = {{3,4},{3,-4},{-3,4},{-3,-4}};
+      static const Xt_int local_start[2] = {1,2};
 
       // create index section
 
-      idxsection = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
-                                     local_size[i & 3], local_start);
+      Xt_idxlist idxsection
+        = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
+                            local_size[i & 3], local_start);
 
       // testing
 
@@ -83,18 +83,18 @@ int main(void) {
   { // test 2D section with stride in x
 
     //! [custom stride in x]
-    Xt_idxlist idxsection;
 
     Xt_int start = 0;
-    int num_dimensions = 3;
-    Xt_int global_size[3] = {5,5,2};
-    int local_size [3] = {3,4,1};
-    Xt_int local_start[3] = {2,0,1};
+    enum { num_dimensions = 3 };
+    static const Xt_int global_size[3] = {5,5,2};
+    static const int local_size [3] = {3,4,1};
+    static const Xt_int local_start[3] = {2,0,1};
 
     // create index section
 
-    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
-                                   local_size, local_start);
+    Xt_idxlist idxsection
+      = xt_idxsection_new(start, num_dimensions, global_size,
+                          local_size, local_start);
     //! [custom stride in x]
 
     // testing
@@ -110,18 +110,18 @@ int main(void) {
   { // test 2D section with stride in x and y
 
     //! [custom stride in x and y]
-    Xt_idxlist idxsection;
 
     Xt_int start = 0;
-    int num_dimensions = 4;
-    Xt_int global_size[4] = {3,2,5,2};
-    int local_size [4] = {3,1,4,1};
-    Xt_int local_start[4] = {0,1,1,0};
+    enum { num_dimensions = 4 };
+    static const Xt_int global_size[4] = {3,2,5,2};
+    static const int local_size [4] = {3,1,4,1};
+    static const Xt_int local_start[4] = {0,1,1,0};
 
     // create index section
 
-    idxsection = xt_idxsection_new(start, num_dimensions, global_size,
-                                   local_size, local_start);
+    Xt_idxlist idxsection
+      = xt_idxsection_new(start, num_dimensions, global_size,
+                          local_size, local_start);
     //! [custom stride in x and y]
 
     // testing
