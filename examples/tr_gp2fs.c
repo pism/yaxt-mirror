@@ -160,10 +160,7 @@ init_data_with_index_list(int *data_array, int array_len,
 
 #ifdef CHECK_RESULTS
   for (int i = 0; i < array_len; ++i) {
-
-    Xt_int index;
-    xt_idxlist_get_index_at_position(idxlist, i, &index);
-    data_array[i] = index;
+    xt_idxlist_get_index_at_position(idxlist, i, data_array+i);
   }
 #else
   memset(data_array, 0, sizeof(*data_array) * (size_t)array_len);
