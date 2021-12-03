@@ -128,3 +128,15 @@ int main(void) {
 
   return 0;
 }
+/*
+ * Local Variables:
+ * c-file-style: "Java"
+ * coding: utf-8
+ * c-basic-offset: 2
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+ * license-default: "bsd"
+ * End:
+ */

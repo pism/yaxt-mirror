@@ -208,3 +208,14 @@ PROGRAM unstruct_halo_exchang
   CALL mpi_finalize(ierror)
   IF (ierror /= mpi_success) STOP 1
 END PROGRAM unstruct_halo_exchang
+!
+! Local Variables:
+! coding: utf-8
+! f90-continuation-indent: 5
+! indent-tabs-mode: nil
+! show-trailing-whitespace: t
+! require-trailing-newline: t
+! license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+! license-default: "bsd"
+! End:
+!

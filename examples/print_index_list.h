@@ -53,9 +53,20 @@ static void print_index_list(Xt_idxlist idxlist) {
   Xt_int index;
   for (int i = 0; i < n; ++i) {
     xt_idxlist_get_index_at_position(idxlist, i, &index);
-    printf("%"XT_INT_FMT, index);
+    printf("%"XT_INT_FMT"%s", index, i < n - 1 ? ", " : "\n");
   }
-  puts("");
 }
 
 #endif
+/*
+ * Local Variables:
+ * coding: utf-8
+ * c-file-style: "Java"
+ * c-basic-offset: 2
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+ * license-default: "bsd"
+ * End:
+ */
