@@ -88,7 +88,9 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	scripts/cpp.pm \
 	scripts/header2installheader.pl \
 	scripts/generate_doc.pl \
-	scripts/makef90depends
+	scripts/makef90depends \
+	scripts/reconfigure \
+	scripts/reconfigure-mistral
 
 
 all-local:
