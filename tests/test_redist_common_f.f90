@@ -113,6 +113,10 @@ MODULE test_redist_common
 
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_common_f.f90'
 
+  CHARACTER(len=29), PARAMETER :: check_redist_err_msg(2) = (/ &
+       "error in xt_redist_s_exchange", &
+       "error in xt_redist_a_exchange" /)
+
 CONTAINS
   ! build xmap for destination list containing all odd elements of
   ! source list dimensioned 1 to src_slice_len
@@ -358,7 +362,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp
 
@@ -381,7 +385,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i2
 
@@ -404,7 +408,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i4
 
@@ -427,7 +431,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i8
 
@@ -449,7 +453,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange", &
+           CALL test_abort(check_redist_err_msg(iexch), &
            filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_2d
@@ -481,7 +485,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i2
 
@@ -503,7 +507,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i4
 
@@ -525,7 +529,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i8
 
