@@ -53,8 +53,7 @@ MODULE test_redist_common
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_msg, xt_redist_copy, &
        xt_redist_single_array_base_new, xt_redist_delete, &
-       xt_redist_s_exchange, xt_redist_s_exchange1, &
-       xt_redist_a_exchange1, xt_redist_get_mpi_comm, &
+       xt_redist_s_exchange, xt_redist_a_exchange1, xt_redist_get_mpi_comm, &
        xt_request, xt_request_wait, xt_request_test, xt_is_null, &
        xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg, &
        xi => xt_int_kind, xt_config, xt_config_new, &
@@ -63,10 +62,10 @@ MODULE test_redist_common
   ! PGI up to at least 15.4 has a bug that prevents proper import of
   ! multiply extended generics. This is a separate bug from the one exhibited
   ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
-  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
-  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
-  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
-  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
 #endif
 #if defined(__GNUC__) && __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ <= 4)
   ! gfortran 4.4 botches default initialization for xt_request
@@ -359,7 +358,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp
 
@@ -382,7 +381,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i2
 
@@ -405,7 +404,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i4
 
@@ -428,7 +427,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, DBLE(ref_dst))) &
-           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_i8
 
@@ -450,7 +449,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", &
+           CALL test_abort("error in xt_redist_s_exchange", &
            filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_2d
@@ -482,7 +481,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i2
 
@@ -504,7 +503,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i4
 
@@ -526,7 +525,7 @@ CONTAINS
         CALL wrap_a_exchange(redist, src, dst)
       ENDIF
       IF (cmp_arrays(dst, ref_dst)) &
-           CALL test_abort("error in xt_redist_s_exchange1", filename, __LINE__)
+           CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_i8
 
