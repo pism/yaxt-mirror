@@ -90,7 +90,8 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	scripts/generate_doc.pl \
 	scripts/makef90depends \
 	scripts/reconfigure \
-	scripts/reconfigure-mistral
+	scripts/reconfigure-mistral \
+	LICENSE COPYING
 
 
 all-local:
