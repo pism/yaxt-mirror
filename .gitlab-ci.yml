@@ -37,11 +37,17 @@ stages:
   tags:
     - mistral, singularity
 
-.init_build_gcc:
+.init_build_gcc_6_4:
   extends: .init_build
   before_script:
     - *load_basic_modules
     - module load gcc/6.4.0 openmpi/2.0.2p2_hpcx-gcc64 
+
+.init_build_gcc_9_1:
+  extends: .init_build
+  before_script:
+    - *load_basic_modules
+    - module load gcc/9.1.0-gcc-7.1.0 openmpi/2.0.2p2-gcc-9.1.0
 
 .init_build_intel:
   extends: .init_build
@@ -73,7 +79,7 @@ stages:
 gen_cov_data:
   stage: coverage
   dependencies: []
-  extends: .init_build_gcc
+  extends: .init_build_gcc_6_4
   script:
     - export OMPI_MCA_btl_sm_use_knem=0
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
@@ -96,9 +102,9 @@ gen_cov_data:
       - ./*/*/*/*.gcda
     expire_in: 5min
 
-run_test_gcc:
+run_test_gcc_6_4:
   stage: tests
-  extends: .init_build_gcc
+  extends: .init_build_gcc_6_4
   script:
     - export OMPI_MCA_btl_sm_use_knem=0
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
@@ -111,6 +117,28 @@ run_test_gcc:
       --disable-silent-rules
 # build yaxt and unit tests without running tests
     - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+# run tests
+    - make check
+  artifacts:
+    paths:
+      - make.err
+    expire_in: 5min
+
+run_test_gcc_9_1:
+  stage: tests
+  extends: .init_build_gcc_9_1
+  script:
+    - export OMPI_MCA_btl_sm_use_knem=0
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - autoreconf -i
+    - >
+      ./configure
+      CC=mpicc FC=mpifort
+      FCFLAGS="-O2 -march=native -cpp -Wall -Wextra"
+      CFLAGS="-O2 -march=native -Wall -Wextra"
+      --disable-silent-rules
+# build yaxt and unit tests without running tests
+    - make -j8 2> >(tee make.err)
 # run tests
     - make check
   artifacts:
@@ -184,7 +212,7 @@ gen_cov_rep_html:
   stage: documentation
   needs:
     - gen_cov_data
-  extends: .init_build_gcc
+  extends: .init_build_gcc_6_4
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
       when: always
@@ -234,13 +262,13 @@ check_warning_intel:
   needs:
     - run_test_intel
 
-check_warning_gcc:
+check_warning_gcc_6_4:
   stage: tests
   extends: .check_warning
   variables:
     OUTPUT_FILE: make.err
   needs:
-    - run_test_gcc
+    - run_test_gcc_6_4
 
 check_warning_nag:
   stage: tests
@@ -290,7 +318,7 @@ gen_cov_rep_xml:
   stage: documentation
   needs:
     - gen_cov_data
-  extends: .init_build_gcc
+  extends: .init_build_gcc_6_4
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: always
