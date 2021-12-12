@@ -197,7 +197,8 @@ CONTAINS
     TYPE(xt_redist) :: redist, redist_repeat
     INTEGER(mpi_address_kind) :: src_extent, dst_extent
     INTEGER(mpi_address_kind) :: base_address, temp_address
-    INTEGER(c_int) :: displacements(3)
+    INTEGER(c_int), PARAMETER :: &
+         displacements(3)= (/ 0_c_int, 1_c_int, 2_c_int /)
     DOUBLE PRECISION, TARGET :: src_template(5, 3), dst_template(3, 3)
     INTEGER :: ierror
 
@@ -222,7 +223,6 @@ CONTAINS
     IF (ierror /= mpi_success) &
          CALL test_abort('mpi_get_address failed', filename, __LINE__)
     dst_extent = temp_address - base_address
-    displacements = (/0,1,2/)
 
     redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
          num_slice, displacements, config)
