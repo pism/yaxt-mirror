@@ -126,12 +126,13 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(inout) :: a(:)
     INTEGER(c_int), INTENT(inout) :: positions(:)
     LOGICAL, INTENT(in) :: reset_positions
-    INTEGER :: a_size
-    a_size = SIZE(a)
+    INTEGER(c_int) :: a_size, reset_positions_c
+    a_size = INT(SIZE(a), c_int)
+    reset_positions_c = MERGE(1_c_int, 0_c_int, reset_positions)
     IF (a_size > SIZE(positions)) &
          CALL xt_abort("positions array too small", filename, __LINE__)
-    IF (a_size > 1) CALL xt_sort_index_f2c(a, INT(a_size, c_int), positions, &
-         MERGE(1_c_int, 0_c_int, reset_positions))
+    IF (a_size > 1) CALL xt_sort_index_f2c(a, a_size, positions, &
+         reset_positions_c)
   END SUBROUTINE xt_sort_index_a_a_l
 
   SUBROUTINE xt_sort_idxpos_a(a)
@@ -143,10 +144,13 @@ CONTAINS
 
   SUBROUTINE xt_sort_int_permutation(a, permutation)
     INTEGER(c_int), INTENT(inout) :: a(:), permutation(:)
-    INTEGER :: a_size
-    a_size = SIZE(a)
-    IF (a_size > 1) CALL xt_sort_int_permutation_f2c(a, INT(a_size, c_size_t), &
-         permutation)
+    INTEGER(c_size_t) :: a_size
+#ifdef HAVE_SIZE_KIND_ARGUMENT
+    a_size = SIZE(a, kind=c_size_t)
+#else
+    a_size = INT(SIZE(a), kind=c_size_t)
+#endif
+    IF (a_size > 1) CALL xt_sort_int_permutation_f2c(a, a_size, permutation)
   END SUBROUTINE xt_sort_int_permutation
 
   SUBROUTINE xt_assign_id_map_a(a)
