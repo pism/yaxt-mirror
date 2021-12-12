@@ -150,7 +150,7 @@ MODULE ftest_common
   END INTERFACE icbrt
 
   INTERFACE random_fill
-    MODULE PROCEDURE random_fill_i4, random_fill_i8
+    MODULE PROCEDURE random_fill_i2, random_fill_i4, random_fill_i8
   END INTERFACE random_fill
 
   INTERFACE crc32
@@ -160,11 +160,13 @@ MODULE ftest_common
       INTEGER(c_size_t), VALUE, INTENT(in) :: n
       INTEGER(c_int32_t) :: crcval
     END function memcrc
-    MODULE PROCEDURE memcrc_i4, memcrc_i8
+    MODULE PROCEDURE memcrc_i2, memcrc_i4, memcrc_i8
   END INTERFACE crc32
 
   INTERFACE permute
+    MODULE PROCEDURE permute_i2
     MODULE PROCEDURE permute_i4
+    MODULE PROCEDURE permute_i8
   END INTERFACE permute
 
   REAL(dp) :: sync_dt_sum = 0.0_dp
@@ -980,6 +982,27 @@ CONTAINS
     CALL random_seed(put=rseed)
   END SUBROUTINE init_fortran_random
 
+  SUBROUTINE random_fill_i2(a)
+    INTEGER(i2), ALLOCATABLE :: a(:)
+    INTEGER :: n, nb, i, j
+    INTEGER, PARAMETER :: block_len=8
+    REAL(c_double) :: rand_nums(block_len)
+    REAL(c_double) :: sc
+    n = SIZE(a)
+    nb = n/block_len
+    sc = REAL(HUGE(a), c_double)
+    DO j = 1, nb
+      CALL RANDOM_NUMBER(rand_nums)
+      DO i = 1, block_len
+        a(i+(j-1)*block_len) = NINT(rand_nums(i) * sc, i2)
+      END DO
+    END DO
+    CALL RANDOM_NUMBER(rand_nums)
+    DO i = 1, MOD(n, block_len)
+      a(i+nb*block_len) = NINT(rand_nums(i) * sc, i2)
+    END DO
+  END SUBROUTINE random_fill_i2
+
   SUBROUTINE random_fill_i4(a)
     INTEGER(i4), ALLOCATABLE :: a(:)
     INTEGER :: n, nb, i, j
@@ -1021,6 +1044,15 @@ CONTAINS
     END DO
   END SUBROUTINE random_fill_i8
 
+  FUNCTION memcrc_i2(a) RESULT(crcval)
+    INTEGER(i2), TARGET, INTENT(in) :: a(:)
+    INTEGER(c_int32_t) :: crcval
+    TYPE(c_ptr) :: p
+    INTEGER(c_size_t) :: n
+    XT_SLICE_C_LOC(a, p)
+    n = SIZE(a) * 2_c_size_t
+    crcval = memcrc(p, n)
+  END FUNCTION memcrc_i2
 
   FUNCTION memcrc_i4(a) RESULT(crcval)
     INTEGER(i4), TARGET, INTENT(in) :: a(:)
@@ -1042,11 +1074,37 @@ CONTAINS
     crcval = memcrc(p, n)
   END FUNCTION memcrc_i8
 
-  SUBROUTINE permute_i4(a, p)
-    INTEGER(i4), INTENT(inout) :: a(:), p(:)
+  SUBROUTINE permute_i2(a, p)
+    INTEGER(i2), INTENT(inout) :: a(:)
+    INTEGER, INTENT(inout) :: p(:)
 
-    INTEGER :: i, n, next
-    INTEGER(i4) :: t, temp
+    INTEGER :: i, n, next, temp
+    INTEGER(i2) :: t
+
+    n = SIZE(a)
+    DO i = 1, n
+      next = i
+      ! Check if it is already
+      ! considered in cycle
+      DO WHILE (p(next) >= 0)
+        ! Swap the current element according
+        ! to the permutation in P
+        t = a(i)
+        temp = p(next)
+        a(i) = a(temp)
+        a(temp) = t
+        p(next) = -temp
+        next = temp
+      END DO
+    END DO
+  END SUBROUTINE permute_i2
+
+  SUBROUTINE permute_i4(a, p)
+    INTEGER(i4), INTENT(inout) :: a(:)
+    INTEGER, INTENT(inout) :: p(:)
+
+    INTEGER :: i, n, next, temp
+    INTEGER(i4) :: t
 
     n = SIZE(a)
     DO i = 1, n
@@ -1065,6 +1123,31 @@ CONTAINS
       END DO
     END DO
   END SUBROUTINE permute_i4
+
+  SUBROUTINE permute_i8(a, p)
+    INTEGER(i8), INTENT(inout) :: a(:)
+    INTEGER, INTENT(inout) :: p(:)
+
+    INTEGER :: i, n, next, temp
+    INTEGER(i8) :: t
+
+    n = SIZE(a)
+    DO i = 1, n
+      next = i
+      ! Check if it is already
+      ! considered in cycle
+      DO WHILE (p(next) >= 0)
+        ! Swap the current element according
+        ! to the permutation in P
+        t = a(i)
+        temp = p(next)
+        a(i) = a(temp)
+        a(temp) = t
+        p(next) = -temp
+        next = temp
+      END DO
+    END DO
+  END SUBROUTINE permute_i8
 
 END MODULE ftest_common
 !
