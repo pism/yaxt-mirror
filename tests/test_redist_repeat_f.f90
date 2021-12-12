@@ -108,10 +108,18 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
 
     CALL mpi_get_address(src_data(1), base_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     CALL mpi_get_address(src_data(2), temp_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     src_extent = (temp_address - base_address) * src_slice_len
     CALL mpi_get_address(dst_data(1), base_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     CALL mpi_get_address(dst_data(2), temp_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     dst_extent = (temp_address - base_address) * dst_slice_len
 
     ! generate redist_repeat
@@ -201,10 +209,18 @@ CONTAINS
 
     ! generate redist_repeat
     CALL mpi_get_address(src_template(1,1), base_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     CALL mpi_get_address(src_template(1,2), temp_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     src_extent = temp_address - base_address
     CALL mpi_get_address(dst_template(1,1), base_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     CALL mpi_get_address(dst_template(1,2), temp_address, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort('mpi_get_address failed', filename, __LINE__)
     dst_extent = temp_address - base_address
     displacements = (/0,1,2/)
 
