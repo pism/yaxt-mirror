@@ -170,17 +170,20 @@ CONTAINS
 
     ! test exchange
     ! GNU Fortran versions up to 4.8 cannot call c_loc for type components,
-    ! instant ICE, and some compilers won't create c_ptr's to LOGICALs
+    ! instant ICE, and
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
 #  define COMP_C_LOC(v, p) p = C_LOC(v)
 #else
 #  define COMP_C_LOC(v, p) CALL xt_slice_c_loc(v, p)
 #endif
-#if !defined HAVE_FC_LOGICAL_INTEROP || !defined(__GNUC__) || __GNUC__ > 4 \
-    || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
-#  define L_COMP_C_LOC(v, p) CALL xt_slice_c_loc(v, p)
-#else
+    ! some compilers won't create c_ptr's to LOGICALs and gfortran
+    ! version 8 and below  has a bug that prevents it from noticing the escaped
+    ! pointer (and computes ANY(dst_data%l .NEQV. ref_dst_data%l early
+    ! for that reason).
+#if defined HAVE_FC_LOGICAL_INTEROP && ( !defined __GNUC__ || __GNUC__ > 8 )
 #  define L_COMP_C_LOC(v, p) p = C_LOC(v)
+#else
+#  define L_COMP_C_LOC(v, p) CALL xt_slice_c_loc(v, p)
 #endif
 
     COMP_C_LOC(src_data%dp, src_data_p(1))
