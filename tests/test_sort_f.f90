@@ -50,7 +50,8 @@ PROGRAM test_sort
   USE iso_c_binding, ONLY: c_int, c_double, c_int32_t
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
-       xt_sort_index, xt_sort_int, xt_sort_permutation
+       xt_sort_index, xt_sort_int, xt_sort_permutation, &
+       xi => xt_int_kind
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
        random_fill, crc32, permute
   IMPLICIT NONE
@@ -59,6 +60,7 @@ PROGRAM test_sort
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
   CALL test_int_sort()
+  CALL test_xt_int_sort()
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -92,9 +94,34 @@ CONTAINS
     crc_after = crc32(a)
     IF (crc_after /= crc_before) &
          CALL test_abort("error in data reconstruction!", filename, __LINE__)
-
-    DEALLOCATE(a, permutation)
   END SUBROUTINE test_int_sort
+
+  SUBROUTINE test_xt_int_sort()
+    INTEGER(c_int), ALLOCATABLE :: permutation(:)
+    INTEGER(xi), ALLOCATABLE :: b(:)
+    REAL(c_double) :: rnd
+    INTEGER :: n, i
+    INTEGER(c_int32_t) :: crc_before, crc_after
+    LOGICAL :: err_found
+    CALL RANDOM_NUMBER(rnd)
+    n = NINT(rnd * range_size)
+    ALLOCATE(b(n), permutation(n))
+    CALL random_fill(b)
+    crc_before = crc32(b)
+    DO i = 1, n
+      permutation(i) = i
+    END DO
+    CALL xt_sort_index(b, permutation, reset_positions=.FALSE.)
+    err_found = .FALSE.
+    DO i = 2, n
+      err_found = err_found .OR. b(i-1) > b(i)
+    END DO
+    IF (err_found) CALL test_abort("discontinuity found!", filename, __LINE__)
+    CALL permute(b, permutation)
+    crc_after = crc32(b)
+    IF (crc_after /= crc_before) &
+         CALL test_abort("error in data reconstruction!", filename, __LINE__)
+  END SUBROUTINE test_xt_int_sort
 
 END PROGRAM test_sort
 !
