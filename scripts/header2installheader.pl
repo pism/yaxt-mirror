@@ -79,8 +79,12 @@ print(STDERR 'srcBaseDir = ', $srcBaseDir, "\n",
 
 foreach my $headerFn (@ARGV)
 {
+  my $srcBaseDirStrLen = length($srcBaseDir);
+  die('Unexpected prefix for ', $headerFn,
+      ' should start with ', $srcBaseDir)
+      if (substr($headerFn, 0, $srcBaseDirStrLen) ne $srcBaseDir);
   my ($instHeaderFn) = catfile($dstBaseDir,
-                               ($headerFn =~ m{^$srcBaseDir(.*)$}));
+                               substr($headerFn, $srcBaseDirStrLen));
   my (undef, $instHeaderDir, undef) = splitpath($instHeaderFn);
   mkpath($instHeaderDir)
       unless (-d $instHeaderDir);
