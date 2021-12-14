@@ -143,6 +143,7 @@ run_test_gcc_9_1:
     - make check
   artifacts:
     paths:
+      - config.log
       - make.err
     expire_in: 5min
 
