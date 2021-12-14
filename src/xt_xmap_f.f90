@@ -429,6 +429,17 @@ CONTAINS
     TYPE(xt_xmap), INTENT(in) :: xmap
     INTEGER(xt_reorder_type_kind), INTENT(in) :: reorder_type
     TYPE(xt_xmap) :: xmap_reorder
+    ! fixme: evil hack because gfortran with all warnings enabled throws a
+    ! hissy fit for dummy arguments of type integer(xt_reorder_kind)
+    ! of bind(c) routines, but the value of xt_reorder_kind always
+    ! matches c_int for that compiler anyway
+#ifdef __GNUC__
+    LOGICAL, PARAMETER :: static_assert_xt_reorder_type_kind &
+         = xt_reorder_type_kind == c_int
+    INTEGER, PARAMETER :: assert_check &
+         = 1 / MERGE(1, 0, static_assert_xt_reorder_type_kind)
+#  define xt_reorder_type_kind c_int
+#endif
     INTERFACE
       FUNCTION xt_xmap_reorder_c(xmap, reorder_type) &
            BIND(C, name='xt_xmap_reorder') RESULT(xmap_reorder_ptr)
@@ -438,11 +449,19 @@ CONTAINS
         TYPE(c_ptr) :: xmap_reorder_ptr
       END FUNCTION xt_xmap_reorder_c
     END INTERFACE
+#ifdef __GNUC__
+#  define UNUSED(x) IF (SIZE( (/(x)/) ) < 0) CONTINUE
+    UNUSED(assert_check)
+#endif
 
     IF (reorder_type < 0_xt_reorder_type_kind .OR. &
          reorder_type > HUGE(1_c_int)) &
          CALL xt_abort("invalid reorder type", filename, __LINE__)
     xmap_reorder%cptr = xt_xmap_reorder_c(xmap%cptr, reorder_type)
+  ! fixme: undo effect of above hack
+#ifdef __GNUC__
+#  undef xt_reorder_type_kind
+#endif
   END FUNCTION xt_xmap_reorder
 
   FUNCTION xt_xmap_update_positions(xmap, src_positions, dst_positions) &
