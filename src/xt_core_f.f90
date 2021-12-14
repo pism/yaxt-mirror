@@ -103,7 +103,7 @@ MODULE xt_core
     END FUNCTION xt_get_default_comm
 
     SUBROUTINE xt_initialize(default_comm) BIND(C, name='xt_initialize_f')
-      IMPORT:: c_int, xt_mpi_fint_kind
+      IMPORT:: xt_mpi_fint_kind
       IMPLICIT NONE
       INTEGER(xt_mpi_fint_kind), INTENT(in) :: default_comm
     END SUBROUTINE xt_initialize
@@ -123,7 +123,7 @@ MODULE xt_core
 
   INTERFACE
     SUBROUTINE xt_abort_c(comm, msg, source, line) BIND(c, name='xt_abort_f')
-      IMPORT :: c_char, c_int, xt_mpi_fint_kind
+      IMPORT :: c_char, xt_mpi_fint_kind
       IMPLICIT NONE
       INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in):: comm
       CHARACTER(kind=c_char), DIMENSION(*), INTENT(in) :: msg

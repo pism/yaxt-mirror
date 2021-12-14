@@ -48,7 +48,7 @@
 #include "fc_feature_defs.inc"
 MODULE test_redist_common
   USE xt_core, ONLY: i2, i4, i8
-  USE iso_c_binding, ONLY: c_loc, c_int, c_char, c_null_char
+  USE iso_c_binding, ONLY: c_loc
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_msg, xt_redist_copy, &

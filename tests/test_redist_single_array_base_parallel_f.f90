@@ -50,7 +50,7 @@ PROGRAM test_redist_single_array_base_parallel_f
        xt_config, xt_config_delete
 
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
-  USE test_redist_common, ONLY: communicators_are_congruent, &
+  USE test_redist_common, ONLY: &
        test_redist_single_array_base, redist_exchanger_option
   USE test_idxlist_utils, ONLY: test_err_count
   IMPLICIT NONE

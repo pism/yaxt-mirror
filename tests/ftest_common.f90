@@ -48,7 +48,7 @@ MODULE ftest_common
 #include "xt_slice_c_loc.inc"
   USE mpi
   USE xt_core, ONLY: i2, i4, i8
-  USE iso_c_binding, ONLY: c_int, c_bool, c_double, &
+  USE iso_c_binding, ONLY: c_int, c_double, &
        c_int16_t, c_int32_t, c_int64_t, c_size_t, c_loc, c_ptr
   IMPLICIT NONE
   PRIVATE

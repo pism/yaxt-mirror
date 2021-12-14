@@ -59,7 +59,7 @@ MODULE xt_redist_base
   USE xt_xmap_abstract, ONLY: xt_xmap
   USE iso_c_binding, ONLY: c_int, c_null_ptr, c_ptr, c_loc, c_associated
   USE xt_mpi, ONLY: mpi_address_kind
-  USE xt_requests, ONLY: xt_request, xt_request_init, xt_is_null
+  USE xt_requests, ONLY: xt_request
 #include "xt_slice_c_loc.inc"
   IMPLICIT NONE
   PRIVATE

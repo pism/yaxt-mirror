@@ -47,7 +47,6 @@
 !
 #include "fc_feature_defs.inc"
 PROGRAM test_misc
-  USE iso_c_binding, ONLY: c_long, c_int
   USE xt_core, ONLY: i2, i4, i8
   USE ftest_common, ONLY: icbrt, test_abort, run_randomized_tests, &
        init_fortran_random
