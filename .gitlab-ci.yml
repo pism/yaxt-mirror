@@ -134,8 +134,10 @@ run_test_gcc_9_1:
     - >
       ./configure
       CC=mpicc FC=mpifort
-      FCFLAGS="-O2 -march=native -Wall -Wextra -Werror"
-      CFLAGS="-O2 -march=native -Wall -Wextra -Werror"
+      FCFLAGS="-O2 -march=native"
+      BUILD_FCFLAGS="-Wall -Wextra -Werror"
+      CFLAGS="-O2 -march=native"
+      BUILD_CFLAGS="-Wall -Wextra -Werror"
       --disable-silent-rules
 # build yaxt and unit tests without running tests
     - make -j8 2> >(tee make.err)
