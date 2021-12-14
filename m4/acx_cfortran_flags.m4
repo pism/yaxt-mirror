@@ -80,7 +80,7 @@ AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
    AS_VAR_PUSHDEF([acx_FCFLAGS],[AC_LANG_CASE([Fortran],[FCFLAGS],[Fortran 77],[FFLAGS])])dnl
    AS_CASE([$host],
      [x86_64-*-linux-*|i*86-*-linux-*|*-apple-darwin*|ia64-*-linux-*|x86_64-*-freebsd*|i*86-*-freebsd*],
-     [AS_CASE([`$acx_FC -V 2>&1 | sed -n 1,5p`],
+     [AS_CASE([`$acx_FC -V 2>&1 | sed -n 1,10p`],
         [*NAG\ Fortran\ Compiler\ Release*],
         [AS_VAR_SET([acx_cf_flag],[-DNAGf90Fortran])],
         [*Copyright*The\ Portland\ Group*|*Copyright*NVIDIA\ CORPORATION*|*Intel\(R\)\ Fortran*Compiler*|*Cray\ Fortran*],
