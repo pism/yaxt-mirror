@@ -91,6 +91,7 @@ PROGRAM test_redist_collection_parallel
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
+  CALL xt_config_delete(config)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
