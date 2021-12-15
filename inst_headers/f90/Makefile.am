@@ -56,7 +56,6 @@ XT_IDXLIST_ABSTRACT_MOD_NAME=XT_IDXLIST_ABSTRACT
 XT_CORE_MOD_NAME=XT_CORE
 XT_IDXVEC_MOD_NAME=XT_IDXVEC
 XT_IDXSTRIPES_MOD_NAME=XT_IDXSTRIPES
-XT_UT_MOD_NAME=XT_UT
 YAXT_MOD_NAME=YAXT
 else
 ##LOWERCASE_MODULE_NAME_MARKER do not remove##
@@ -81,12 +80,8 @@ XT_IDXLIST_ABSTRACT_MOD_NAME=xt_idxlist_abstract
 XT_CORE_MOD_NAME=xt_core
 XT_IDXVEC_MOD_NAME=xt_idxvec
 XT_IDXSTRIPES_MOD_NAME=xt_idxstripes
-XT_UT_MOD_NAME=xt_ut
 YAXT_MOD_NAME=yaxt
 endif
-
-$(XT_UT_MOD_NAME).$(FCMODEXT): ../../src/$(XT_UT_MOD_NAME).$(FCMODEXT)
-	$(AM_V_GEN)$(LN_S) ../../src/$(XT_UT_MOD_NAME).$(FCMODEXT) .
 
 $(YAXT_MOD_NAME).$(FCMODEXT): ../../src/$(YAXT_MOD_NAME).$(FCMODEXT)
 	$(AM_V_GEN)$(LN_S) ../../src/$(YAXT_MOD_NAME).$(FCMODEXT) .
@@ -179,7 +174,6 @@ include_HEADERS= \
 	$(XT_CORE_MOD_NAME).$(FCMODEXT) \
 	$(XT_IDXVEC_MOD_NAME).$(FCMODEXT) \
 	$(XT_IDXSTRIPES_MOD_NAME).$(FCMODEXT) \
-	$(XT_UT_MOD_NAME).$(FCMODEXT) \
 	$(YAXT_MOD_NAME).$(FCMODEXT)
 
 dist-hook:
@@ -188,3 +182,8 @@ dist-hook:
 
 clean-local:
 	rm -f *.$(FCMODEXT)
+
+# Local Variables:
+# coding: utf-8
+# mode: Makefile
+# End:

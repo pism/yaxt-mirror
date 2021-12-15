@@ -47,7 +47,6 @@ endif
 libyaxt_c_la_SOURCES =						\
 	xt/xt_core.h						\
 	xt/xt_config.h						\
-	xt/xt_handles.h						\
 	xt/sort_common.h					\
 	xt/mergesort.h						\
 	xt/quicksort.h						\
@@ -80,7 +79,6 @@ libyaxt_c_la_SOURCES =						\
 	xt_config.c						\
 	xt_cover.h						\
 	xt_cover.c						\
-	xt_handles.c						\
 	xt_idxempty_internal.h					\
 	xt_idxempty.c						\
 	xt_idxlist_internal.h					\
@@ -165,9 +163,6 @@ endif
 libyaxt_la_SOURCES =						\
 	xt_idxlist_collection_f.f90				\
 	xt_xmap_intersection_f.f90				\
-	xt_ut.f90						\
-	xt_ut_c.c						\
-	xt_ut_c.h						\
 	yaxt_f2c.c						\
 	core/core_cf.c						\
 	xt_slice_c_loc.inc					\

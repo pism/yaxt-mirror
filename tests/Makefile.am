@@ -37,7 +37,6 @@ check_PROGRAMS = 						\
 	test_mpi_generate_datatype				\
 	test_mpi_smartdedup					\
 	test_exchanger_parallel					\
-	test_handles						\
 	test_arithmetic_long					\
 	test_idxempty						\
 	test_idxvec						\
@@ -258,7 +257,6 @@ test_xmap_intersection_parallel_f_LDADD = $(XT_FC_LDADD)
 test_initialized_finalized_SOURCES = test_initialized_finalized.c tests.h
 test_initialized_finalized_f_SOURCES = test_initialized_finalized_f.f90
 test_initialized_finalized_f_LDADD = $(XT_FC_LDADD)
-test_handles_SOURCES = test_handles.c tests.h
 test_ut_SOURCES = test_ut.f90
 test_ut_LDADD = $(XT_FC_LDADD)
 test_perf_SOURCES = test_perf.f90
@@ -292,7 +290,6 @@ TESTS = 							\
 	test_mpi_smartdedup_run					\
 	test_exchanger_parallel_run				\
 	test_arithmetic_long					\
-	test_handles_run					\
 	test_idxempty_run					\
 	test_idxvec_run						\
 	test_idxlist_collection_run				\
