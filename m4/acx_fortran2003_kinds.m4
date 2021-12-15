@@ -78,7 +78,8 @@ AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
     [ACX_CHECK_SIZEOF_NODEF([$3],,[$5])
      AS_VAR_PUSHDEF([acx_c_size], [ac_cv_sizeof_$3])dnl
      AS_VAR_COPY([acx_temp3],[acx_c_size])
-     m4_case([$1],[integer],
+     m4_case([$1],
+       [integer],
        [ac_kind_lo=1 ac_kind_hi=32
         while :; do
           ACX_FORTRAN_CHECK_SIZEOF_INTEGRAL_TYPE([$1(kind=$ac_kind_lo)])
@@ -98,7 +99,8 @@ AC_DEFUN([ACX_FORTRAN_TYPE_KIND],
           ASX_VAR_UNSET([acx_temp1])
           AS_VAR_POPDEF([acx_fortran_Sizeof])
           AS_VAR_POPDEF([acx_fortran_ikind_Type])
-        done],[real],
+        done],
+       [real],
        [ac_kind_lo=1 ac_kind_hi=32
         while :; do
           ACX_FORTRAN_RUN_CHECK_SIZEOF([$1(kind=$ac_kind_lo)])
