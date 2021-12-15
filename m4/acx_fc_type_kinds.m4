@@ -58,8 +58,7 @@ AC_DEFUN([ACX_FORTRAN_CHECK_TYPE],
 [      $1 a(2, 2)
       a = reshape(a, (/ 2, 2 /))])],
        [AS_VAR_SET([acx_fortran_Type], [yes])],
-       [AS_VAR_SET([acx_fortran_Type], [no])]
-     )
+       [AS_VAR_SET([acx_fortran_Type], [no])])
      AC_LANG_POP([Fortran])])
   m4_ifval([$2$3],dnl
     [AS_IF([test x]AS_VAR_GET([acx_fortran_Type])[ = xyes], [$2], [$3])])dnl
