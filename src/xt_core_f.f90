@@ -163,7 +163,7 @@ CONTAINS
     CHARACTER(len=*), INTENT(in) :: source
     INTEGER, INTENT(in) :: line
     CALL xt_abort_c(comm, TRIM(msg)//c_null_char, &
-         TRIM(source)//c_null_char, INT(line, c_int))
+         TRIM(source)//c_null_char, line)
   END SUBROUTINE xt_abort4
 
   SUBROUTINE xt_abort3(msg, source, line)
@@ -171,7 +171,7 @@ CONTAINS
     CHARACTER(len=*), INTENT(in) :: source
     INTEGER, INTENT(in) :: line
     CALL xt_abort_c(xt_get_default_comm(), TRIM(msg)//c_null_char, &
-         TRIM(source)//c_null_char, INT(line, c_int))
+         TRIM(source)//c_null_char, line)
   END SUBROUTINE xt_abort3
 
   ELEMENTAL FUNCTION xt_stripe2char(stripe) RESULT(str)
