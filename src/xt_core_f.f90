@@ -47,8 +47,10 @@
 !
 #include "fc_feature_defs.inc"
 MODULE xt_core
-  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int, &
-       c_long, c_short, c_long_long
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_char, c_null_char, c_int
+#ifdef XT_INT_FC_KIND_IN_ISO_C_BINDING
+  USE, INTRINSIC :: iso_c_binding, ONLY: XT_INT_FC_KIND
+#endif
   USE xt_mpi, ONLY: XT_INT_FC_MPIDT, xt_mpi_fint_kind
   IMPLICIT NONE
   PRIVATE

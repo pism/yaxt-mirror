@@ -421,6 +421,9 @@ m4_define([vartype_setq],[$1][_MPIDT=$4
      if test_with_fortran ; then
      ACX_FORTRAN_TYPE_KIND([integer],[$3],[$2],
        [      use iso_c_binding],,$1[_FC_KIND=$acx_fortran_kind_subst])
+     AS_IF([test x"$][$1][_FC_KIND" = x"$3"],
+       [XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define $1][_FC_KIND_IN_ISO_C_BINDING"])
      fi
      $1][_MAX=$5
      $1][_MIN=$6
