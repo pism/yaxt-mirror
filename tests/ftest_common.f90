@@ -68,7 +68,11 @@ MODULE ftest_common
 
   INTERFACE icmp
     MODULE PROCEDURE icmp_2d
+    MODULE PROCEDURE icmp_2d_i2
+    MODULE PROCEDURE icmp_2d_i8
     MODULE PROCEDURE icmp_3d
+    MODULE PROCEDURE icmp_3d_i2
+    MODULE PROCEDURE icmp_3d_i8
   END INTERFACE icmp
 
   INTERFACE
@@ -379,6 +383,41 @@ CONTAINS
     CALL c_abort
   END SUBROUTINE test_abort_cmsl_f
 
+  SUBROUTINE icmp_2d_i2(label, f,g, rank)
+    CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_2d_i8: '
+    CHARACTER(len=*), INTENT(in) :: label
+    INTEGER, INTENT(in) :: f(:,:)
+    INTEGER(i2), INTENT(in) :: g(:,:)
+    INTEGER, INTENT(in) :: rank
+
+    INTEGER :: i, j, n1, n2
+    LOGICAL :: mismatch_found
+
+    n1 = SIZE(f,1)
+    n2 = SIZE(f,2)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
+         CALL test_abort(context//'shape mismatch error', filename, __LINE__)
+
+    mismatch_found = .FALSE.
+    DO j = 1, n2
+      DO i = 1, n1
+        mismatch_found = mismatch_found .OR. f(i,j) /= INT(g(i,j))
+      END DO
+    END DO
+    IF (mismatch_found) THEN
+      DO j = 1, n2
+        DO i = 1, n1
+          IF (f(i,j) /= INT(g(i,j))) THEN
+            WRITE(0,'(2a,4(a,i0))') context, label, ' test failed: i=', &
+                 i, ', j=', j, ', f(i,j)=', f(i,j), ', g(i,j)=', g(i,j)
+            CALL test_abort(context//label//' test failed', filename, __LINE__)
+          ENDIF
+        ENDDO
+      ENDDO
+    END IF
+    IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
+  END SUBROUTINE icmp_2d_i2
+
   SUBROUTINE icmp_2d(label, f,g, rank)
     CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_2d: '
     CHARACTER(len=*), INTENT(in) :: label
@@ -412,6 +451,85 @@ CONTAINS
     END IF
     IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
   END SUBROUTINE icmp_2d
+
+  SUBROUTINE icmp_2d_i8(label, f,g, rank)
+    CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_2d_i8: '
+    CHARACTER(len=*), INTENT(in) :: label
+    INTEGER, INTENT(in) :: f(:,:)
+    INTEGER(i8), INTENT(in) :: g(:,:)
+    INTEGER, INTENT(in) :: rank
+
+    INTEGER :: i, j, n1, n2
+    LOGICAL :: mismatch_found
+
+    n1 = SIZE(f,1)
+    n2 = SIZE(f,2)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2) &
+         CALL test_abort(context//'shape mismatch error', filename, __LINE__)
+
+    mismatch_found = .FALSE.
+    DO j = 1, n2
+      DO i = 1, n1
+        mismatch_found = mismatch_found .OR. INT(f(i,j),i8) /= g(i,j)
+      END DO
+    END DO
+    IF (mismatch_found) THEN
+      DO j = 1, n2
+        DO i = 1, n1
+          IF (INT(f(i,j), i8) /= g(i,j)) THEN
+            WRITE(0,'(2a,4(a,i0))') context, label, ' test failed: i=', &
+                 i, ', j=', j, ', f(i,j)=', f(i,j), ', g(i,j)=', g(i,j)
+            CALL test_abort(context//label//' test failed', filename, __LINE__)
+          ENDIF
+        ENDDO
+      ENDDO
+    END IF
+    IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
+  END SUBROUTINE icmp_2d_i8
+
+  SUBROUTINE icmp_3d_i2(label, f,g, rank)
+    CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_3d_i8: '
+    CHARACTER(len=*), INTENT(in)  :: label
+    INTEGER, INTENT(in)  :: f(:,:,:)
+    INTEGER(i2), INTENT(in)  :: g(:,:,:)
+    INTEGER, INTENT(in) :: rank
+
+    INTEGER :: i, j, k, n1, n2, n3
+    LOGICAL :: mismatch_found
+
+    n1 = SIZE(f,1)
+    n2 = SIZE(f,2)
+    n3 = SIZE(f,3)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
+      CALL test_abort(context//label//' shape mismatch', filename, __LINE__)
+
+    mismatch_found = .FALSE.
+    DO k = 1, n3
+      DO j = 1, n2
+        DO i = 1, n1
+          mismatch_found = mismatch_found &
+               .OR. f(i,j,k) /= INT(g(i,j,k))
+        END DO
+      END DO
+    END DO
+    IF (mismatch_found) THEN
+      DO k = 1, n3
+        DO j = 1, n2
+          DO i = 1, n1
+            IF (f(i,j,k) /= INT(g(i,j,k))) THEN
+              WRITE(0,*) context,label,&
+                   ' test failed: i, j, k, f(i,j,k), g(i,j,k) =', &
+                   i, j, k, f(i,j,k), g(i,j,k)
+              CALL test_abort(context//label//' test failed', &
+                   filename, __LINE__)
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+    END IF
+    IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
+  END SUBROUTINE icmp_3d_i2
+
 
   SUBROUTINE icmp_3d(label, f,g, rank)
     CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_3d: '
@@ -453,6 +571,49 @@ CONTAINS
     END IF
     IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
   END SUBROUTINE icmp_3d
+
+  SUBROUTINE icmp_3d_i8(label, f,g, rank)
+    CHARACTER(len=*), PARAMETER :: context = 'ftest_common::icmp_3d_i8: '
+    CHARACTER(len=*), INTENT(in)  :: label
+    INTEGER, INTENT(in)  :: f(:,:,:)
+    INTEGER(i8), INTENT(in)  :: g(:,:,:)
+    INTEGER, INTENT(in) :: rank
+
+    INTEGER :: i1, i2, i3, n1, n2, n3
+    LOGICAL :: mismatch_found
+
+    n1 = SIZE(f,1)
+    n2 = SIZE(f,2)
+    n3 = SIZE(f,3)
+    IF (SIZE(g,1) /= n1 .OR. SIZE(g,2) /= n2 .OR. SIZE(g,3) /= n3) &
+      CALL test_abort(context//label//' shape mismatch', filename, __LINE__)
+
+    mismatch_found = .FALSE.
+    DO i3 = 1, n3
+      DO i2 = 1, n2
+        DO i1 = 1, n1
+          mismatch_found = mismatch_found &
+               .OR. INT(f(i1,i2,i3), i8) /= g(i1,i2,i3)
+        END DO
+      END DO
+    END DO
+    IF (mismatch_found) THEN
+      DO i3 = 1, n3
+        DO i2 = 1, n2
+          DO i1 = 1, n1
+            IF (INT(f(i1,i2,i3), i8) /= g(i1,i2,i3)) THEN
+              WRITE(0,*) context,label,&
+                   ' test failed: i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3) =', &
+                   i1, i2, i3, f(i1,i2,i3), g(i1,i2,i3)
+              CALL test_abort(context//label//' test failed', &
+                   filename, __LINE__)
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+    END IF
+    IF (verbose) WRITE(0,*) rank,':',context//label//' passed'
+  END SUBROUTINE icmp_3d_i8
 
 
   PURE FUNCTION cmp_dbl_arrays_a1d_a1d(a, b) RESULT(differ)
