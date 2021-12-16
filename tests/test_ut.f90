@@ -46,14 +46,22 @@
 !
 #include "fc_feature_defs.inc"
 PROGRAM test_ut
-  USE iso_c_binding, ONLY: C_LOC
   USE mpi
   USE yaxt, ONLY: xt_finalize, xt_idxlist, xt_idxvec_new, xt_xmap, &
        xt_xmap_all2all_new, xt_redist, xt_redist_p2p_new, &
-       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_idxlist_delete, &
+       xt_redist_p2p_off_new, xt_redist_s_exchange, xt_idxlist_delete, &
        xt_xmap_delete, xt_redist_delete, xt_int_kind, xt_initialize
   USE ftest_common, ONLY: finish_mpi, icmp, id_map, factorize, regular_deco, &
        test_abort
+  USE test_redist_common, ONLY: xt_redist_s_exchange
+#ifdef __PGI
+  ! PGI up to at least 15.4 has a bug that prevents proper import of
+  ! multiply extended generics. This is a separate bug from the one exhibited
+  ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
 
   ! global extents including halos
@@ -114,7 +122,7 @@ PROGRAM test_ut
   ! test 2d-to-2d bounds exchange:
   fval = INT(loc_id)
   gval = undef_int
-  CALL exchange2d_2d(tpex_redist, fval, gval)
+  CALL xt_redist_s_exchange(tpex_redist, fval, gval)
   CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
 
   ! define positions of surface elements within (i,k,j) array
@@ -127,7 +135,7 @@ PROGRAM test_ut
 
   ! test surface bounds exchange:
   gval3d = -1
-  CALL exchange2d_3d(surf_tpex_redist, fval, gval3d)
+  CALL xt_redist_s_exchange(surf_tpex_redist, fval, gval3d)
   CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex), mype)
 
   ! check sub surface:
@@ -226,24 +234,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE gen_id_pos
-
-  SUBROUTINE exchange2d_2d(redist, start_data, end_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: start_data(:,:)
-    INTEGER, TARGET, INTENT(out) :: end_data(:,:)
-
-    CALL xt_redist_s_exchange1(redist, C_LOC(start_data), C_LOC(end_data))
-
-  END SUBROUTINE exchange2d_2d
-
-  SUBROUTINE exchange2d_3d(redist, src_data, target_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: src_data(:,:)
-    INTEGER, TARGET, INTENT(out) :: target_data(:,:,:)
-
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(target_data))
-
-  END SUBROUTINE exchange2d_3d
 
   SUBROUTINE get_window(gval, win)
     INTEGER(xt_int_kind), INTENT(in) :: gval(:,:)

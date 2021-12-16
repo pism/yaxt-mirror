@@ -48,11 +48,13 @@
 #include "fc_feature_defs.inc"
 MODULE test_redist_common
   USE xt_core, ONLY: i2, i4, i8
-  USE iso_c_binding, ONLY: c_loc
+  USE, INTRINSIC :: iso_c_binding, ONLY: c_ptr, c_loc
+#include "xt_slice_c_loc.inc"
   USE mpi
   USE yaxt, ONLY: xt_idxlist, xt_int_kind, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_all2all_new, xt_redist, xt_redist_msg, xt_redist_copy, &
        xt_redist_single_array_base_new, xt_redist_delete, &
+       xt_redist_s_exchange1, &
        xt_redist_s_exchange, xt_redist_a_exchange1, xt_redist_get_mpi_comm, &
        xt_request, xt_request_wait, xt_request_test, xt_is_null, &
        xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg, &
@@ -90,6 +92,10 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_i8
   END INTERFACE check_redist
 
+  INTERFACE xt_redist_s_exchange
+    MODULE PROCEDURE xt_rse_int_a2d_a3d
+  END INTERFACE xt_redist_s_exchange
+
   INTERFACE wrap_a_exchange
     MODULE PROCEDURE wrap_a_exchange_dp
     MODULE PROCEDURE wrap_a_exchange_dp2d
@@ -110,6 +116,7 @@ MODULE test_redist_common
   PUBLIC :: check_wait_request, check_test_request, check_redist_xi
   PUBLIC :: test_redist_single_array_base
   PUBLIC :: redist_exchanger_option
+  PUBLIC :: xt_redist_s_exchange
 
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_common_f.f90'
 
@@ -614,6 +621,17 @@ CONTAINS
       END IF
     END DO
   END FUNCTION redist_exchanger_option
+
+  SUBROUTINE xt_rse_int_a2d_a3d(redist, src_data, target_data)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER, TARGET, INTENT(in) :: src_data(:,:)
+    INTEGER, TARGET, INTENT(out) :: target_data(:,:,:)
+    TYPE(c_ptr) :: src_p, dst_p
+
+    XT_SLICE_C_LOC(src_data, src_p)
+    XT_SLICE_C_LOC(target_data, dst_p)
+    CALL xt_redist_s_exchange1(redist, src_p, dst_p)
+  END SUBROUTINE xt_rse_int_a2d_a3d
 
 END MODULE test_redist_common
 !

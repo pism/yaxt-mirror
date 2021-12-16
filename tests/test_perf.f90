@@ -46,17 +46,25 @@
 !
 #include "fc_feature_defs.inc"
 PROGRAM test_perf
-  USE iso_c_binding, ONLY: C_LOC
   USE mpi
   USE yaxt, ONLY: xt_finalize, xt_idxlist, xt_idxvec_new, xt_xmap, &
        xt_xmap_all2all_new, xt_redist, xt_redist_p2p_new, &
-       xt_redist_p2p_off_new, xt_redist_s_exchange1, xt_idxlist_delete, &
-       xt_xmap_delete, xt_redist_delete, xt_int_kind, xt_initialize
+       xt_redist_p2p_off_new, xt_redist_s_exchange, xt_idxlist_delete, &
+       xt_xmap_delete, xt_redist_delete, xt_int_kind, xt_initialize, &
+       xi => xt_int_kind
   USE ftest_common, ONLY: finish_mpi, init_mpi, treset, tstart, tstop, &
        treport, timer, id_map, factorize, regular_deco, set_verbose, icmp, &
        test_abort
+  USE test_redist_common, only: xt_redist_s_exchange
   USE yaxt, ONLY: xt_finalize
-
+#ifdef __PGI
+  ! PGI up to at least 15.4 has a bug that prevents proper import of
+  ! multiply extended generics. This is a separate bug from the one exhibited
+  ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
+  USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
+  USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
+#endif
   IMPLICIT NONE
   ! global extents including halos:
 
@@ -155,7 +163,7 @@ PROGRAM test_perf
   ! test 2d-to-2d redist
   fval_2d = loc_id_2d
   CALL tstart(t_exch_2d)
-  CALL exchange_2d_2d(tpex_2d_redist, fval_2d, gval_2d)
+  CALL xt_redist_s_exchange(tpex_2d_redist, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
   CALL icmp('2d to 2d check', gval_2d, loc_tpex_2d, mype)
 
@@ -174,7 +182,7 @@ PROGRAM test_perf
   ALLOCATE(gval_3d(ie,nlev,je))
   gval_3d = -1
   CALL tstart(t_exch_surf)
-  CALL exchange_2d_3d(surf_tpex_redist, fval_2d, gval_3d)
+  CALL xt_redist_s_exchange(surf_tpex_redist, fval_2d, gval_3d)
   CALL tstop(t_exch_surf)
 
   CALL icmp('surface check', gval_3d(:,1,:), loc_tpex_2d, mype)
@@ -213,7 +221,7 @@ PROGRAM test_perf
   ALLOCATE(fval_3d(ie,je,nlev), gval_3d(ie,je,nlev))
   fval_3d = loc_id_3d
   CALL tstart(t_exch_3d)
-  CALL exchange_3d_3d(tpex_3d_redist, fval_3d, gval_3d)
+  CALL xt_redist_s_exchange(tpex_3d_redist, fval_3d, gval_3d)
   CALL tstop(t_exch_3d)
   DEALLOCATE(fval_3d)
   CALL icmp('3d to 3d check', gval_3d, loc_tpex_3d, mype)
@@ -373,28 +381,6 @@ CONTAINS
     CALL xt_initialize(MPI_COMM_WORLD)
 
   END SUBROUTINE init_all
-
-  SUBROUTINE exchange_2d_2d(redist, start_data, end_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: start_data(:,:)
-    INTEGER, TARGET, INTENT(out) :: end_data(:,:)
-    CALL xt_redist_s_exchange1(redist, C_LOC(start_data), C_LOC(end_data))
-  END SUBROUTINE exchange_2d_2d
-
-
-  SUBROUTINE exchange_3d_3d(redist, start_data, end_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: start_data(:,:,:)
-    INTEGER, TARGET, INTENT(out) :: end_data(:,:,:)
-    CALL xt_redist_s_exchange1(redist, C_LOC(start_data), C_LOC(end_data))
-  END SUBROUTINE exchange_3d_3d
-
-  SUBROUTINE exchange_2d_3d(redist, src_data, target_data)
-    TYPE(xt_redist), INTENT(in) :: redist
-    INTEGER, TARGET, INTENT(in) :: src_data(:,:)
-    INTEGER, TARGET, INTENT(out) :: target_data(:,:,:)
-    CALL xt_redist_s_exchange1(redist, C_LOC(src_data), C_LOC(target_data))
-  END SUBROUTINE exchange_2d_3d
 
   SUBROUTINE get_window(gval, win)
     INTEGER(xt_int_kind), INTENT(in) :: gval(:,:)
