@@ -127,12 +127,13 @@ PROGRAM test_ut
   CALL icmp('2d to 2d check', gval, loc_tpex, mype)
 
   ! define positions of surface elements within (i,k,j) array
-  CALL gen_id_pos(id_pos)
-  CALL gen_id_pos(pos3d_surf)
+  CALL id_map(id_pos, 0)
+  CALL id_map(pos3d_surf, 0)
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! generate surface redist for (i,j)-source data and (i,k,j)-target data:
-  surf_tpex_redist = xt_redist_p2p_off_new(tpex_xmap, id_pos(:,:)-1, pos3d_surf(:,:)-1, MPI_INTEGER)
+  surf_tpex_redist = xt_redist_p2p_off_new(tpex_xmap, id_pos, &
+       pos3d_surf, MPI_INTEGER)
 
   ! test surface bounds exchange:
   gval3d = -1
@@ -165,16 +166,15 @@ CONTAINS
     ! positions for zero based arrays (ECHAM grid point dim order)
     ! old pos = i + j*ie
     ! new pos = i + k*ie + j*ie*nlev
-    INTEGER :: ii,jj, i,j,k, p,q
+    INTEGER :: ii,jj, i,j,k, p
 
     k = 0 ! surface
     DO jj=1,je
       DO ii=1,ie
-        p = pos(ii,jj) - 1 ! shift to 0-based index
+        p = pos(ii,jj)
         j = p/ie
         i = MOD(p,ie)
-        q = i + k*ie + j*ie*nlev
-        pos(ii,jj) = q + 1 ! shift to 1-based index
+        pos(ii,jj) = i + k*ie + j*ie*nlev
       ENDDO
     ENDDO
 
@@ -223,22 +223,6 @@ CONTAINS
     pos3d_surf = undef_int
 
   END SUBROUTINE init_all
-
-  SUBROUTINE gen_id_pos(pos)
-    INTEGER, INTENT(out) :: pos(:,:)
-
-    INTEGER :: i,j
-    INTEGER :: p
-
-    p = 0
-    DO j = 1, SIZE(pos,2)
-      DO i = 1, SIZE(pos,1)
-        p = p + 1
-        pos(i,j) = p
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE gen_id_pos
 
   SUBROUTINE get_window(gval, win)
     INTEGER(xt_int_kind), INTENT(in) :: gval(:,:)

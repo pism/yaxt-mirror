@@ -162,13 +162,13 @@ PROGRAM test_perf
   CALL icmp('2d to 2d check', gval_2d, loc_tpex_2d, mype)
 
   ! define positions of surface elements within (i,k,j) array
-  CALL id_map(id_pos)
-  CALL id_map(pos3d_surf)
+  CALL id_map(id_pos, 0)
+  CALL id_map(pos3d_surf, 0)
   CALL gen_pos3d_surf(pos3d_surf)
 
   ! gen surface redist:
   CALL tstart(t_surf_redist)
-  surf_tpex_redist = xt_redist_p2p_off_new(tpex_2d_xmap, id_pos(:,:)-1, pos3d_surf(:,:)-1, MPI_INTEGER)
+  surf_tpex_redist = xt_redist_p2p_off_new(tpex_2d_xmap, id_pos, pos3d_surf, MPI_INTEGER)
   CALL tstop(t_surf_redist)
   DEALLOCATE(id_pos, pos3d_surf)
 
@@ -287,16 +287,15 @@ CONTAINS
     ! positions for zero based arrays (ECHAM grid point dim order)
     ! old pos = i + j*ie
     ! new pos = i + k*ie + j*ie*nlev
-    INTEGER :: ii,jj, i,j,k, p,q
+    INTEGER :: ii,jj, i,j,k, p
 
     k = 0 ! surface
     DO jj=1,je
       DO ii=1,ie
-        p = pos(ii,jj) - 1 ! shift to 0-based index
+        p = pos(ii,jj)
         j = p/ie
         i = MOD(p,ie)
-        q = i + k*ie + j*ie*nlev
-        pos(ii,jj) = q + 1 ! shift to 1-based index
+        pos(ii,jj) = i + k*ie + j*ie*nlev
       ENDDO
     ENDDO
 
