@@ -140,8 +140,8 @@ PROGRAM test_perf
 
   ! gen xmap: loc_id_2d -> loc_tpex_2d
   CALL tstart(t_idxlist_2d)
-  id_2d_idxlist = win2d_to_idxlist(loc_id_2d)
-  tpex_2d_idxlist = win2d_to_idxlist(loc_tpex_2d)
+  id_2d_idxlist = xt_idxvec_new(loc_id_2d)
+  tpex_2d_idxlist = xt_idxvec_new(loc_tpex_2d)
   CALL tstop(t_idxlist_2d)
   CALL tstart(t_xmap_2d)
   tpex_2d_xmap = xt_xmap_all2all_new(id_2d_idxlist, tpex_2d_idxlist, MPI_COMM_WORLD)
@@ -196,8 +196,8 @@ PROGRAM test_perf
 
   ! gen xmap: loc_id_3d -> loc_tpex_3d
   CALL tstart(t_idxlist_3d)
-  id_3d_idxlist = win3d_to_idxlist(loc_id_3d)
-  tpex_3d_idxlist = win3d_to_idxlist(loc_tpex_3d)
+  id_3d_idxlist = xt_idxvec_new(loc_id_3d)
+  tpex_3d_idxlist = xt_idxvec_new(loc_tpex_3d)
   CALL tstop(t_idxlist_3d)
   CALL tstart(t_xmap_3d)
   tpex_3d_xmap = xt_xmap_all2all_new(id_3d_idxlist, tpex_3d_idxlist, MPI_COMM_WORLD)
@@ -408,16 +408,6 @@ CONTAINS
       ENDDO
     ENDDO
   END SUBROUTINE get_window
-
-  TYPE(xt_idxlist) FUNCTION win2d_to_idxlist(win) RESULT(idxlist)
-    INTEGER(xt_int_kind), INTENT(in) :: win(:,:)
-    idxlist = xt_idxvec_new(RESHAPE(win,(/SIZE(win)/)))
-  END FUNCTION win2d_to_idxlist
-
-  TYPE(xt_idxlist) FUNCTION win3d_to_idxlist(win) RESULT(idxlist)
-    INTEGER(xt_int_kind), INTENT(in) :: win(:,:,:)
-    idxlist = xt_idxvec_new(RESHAPE(win,(/SIZE(win)/)))
-  END FUNCTION win3d_to_idxlist
 
   SUBROUTINE def_exchange(g_id, g_tpex)
     INTEGER(xt_int_kind), INTENT(in) :: g_id(:, :)

@@ -104,8 +104,8 @@ PROGRAM test_ut
   CALL get_window(g_tpex, loc_tpex)
 
   ! gen xmap: loc_id -> loc_tpex:
-  start_idxlist = win2idxlist(loc_id)
-  end_idxlist = win2idxlist(loc_tpex)
+  start_idxlist = xt_idxvec_new(loc_id)
+  end_idxlist = xt_idxvec_new(loc_tpex)
   tpex_xmap = xt_xmap_all2all_new(start_idxlist, end_idxlist, MPI_COMM_WORLD)
 
   ! gen transposition with default offsets:
@@ -260,12 +260,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE get_window
-
-  TYPE(xt_idxlist) FUNCTION win2idxlist(win) RESULT(idxlist)
-    INTEGER(xt_int_kind), INTENT(in) :: win(:,:)
-    ! build idxvector representation of win:
-    idxlist = xt_idxvec_new(RESHAPE(win,(/SIZE(win)/)))
-  END FUNCTION win2idxlist
 
   SUBROUTINE def_exchange(id_in, id_out)
     INTEGER(xt_int_kind), INTENT(in) :: id_in(:,:)
