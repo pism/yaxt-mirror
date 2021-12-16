@@ -155,7 +155,7 @@ PROGRAM test_perf
   CALL tstop(t_redist_2d)
 
   ! test 2d-to-2d redist
-  fval_2d = loc_id_2d
+  CALL copy_xi(loc_id_2d, fval_2d)
   CALL tstart(t_exch_2d)
   CALL xt_redist_s_exchange(tpex_2d_redist, fval_2d, gval_2d)
   CALL tstop(t_exch_2d)
@@ -217,7 +217,7 @@ PROGRAM test_perf
   ! test 3d-to-3d redist:
   DEALLOCATE(gval_3d)
   ALLOCATE(fval_3d(ie,je,nlev), gval_3d(ie,je,nlev))
-  fval_3d = loc_id_3d
+  CALL copy_xi_3d(loc_id_3d, fval_3d)
   CALL tstart(t_exch_3d)
   CALL xt_redist_s_exchange(tpex_3d_redist, fval_3d, gval_3d)
   CALL tstop(t_exch_3d)
@@ -246,6 +246,35 @@ PROGRAM test_perf
   CALL finish_mpi
 
 CONTAINS
+
+  SUBROUTINE copy_xi(s, d)
+    INTEGER(xt_int_kind), INTENT(in) :: s(:,:)
+    INTEGER, INTENT(out) :: d(:,:)
+    INTEGER :: i, j, m, n
+    m = SIZE(s, 1)
+    n = SIZE(s, 2)
+    DO j = 1, n
+      DO i = 1, m
+        d(i, j) = INT(s(i, j))
+      END DO
+    END DO
+  END SUBROUTINE copy_xi
+
+  SUBROUTINE copy_xi_3d(s, d)
+    INTEGER(xt_int_kind), INTENT(in) :: s(:,:,:)
+    INTEGER, INTENT(out) :: d(:,:,:)
+    INTEGER :: i, j, k, m, n, o
+    m = SIZE(s, 1)
+    n = SIZE(s, 2)
+    o = SIZE(s, 3)
+    DO k = 1, o
+      DO j = 1, n
+        DO i = 1, m
+          d(i, j, k) = INT(s(i, j, k))
+        END DO
+      END DO
+    END DO
+  END SUBROUTINE copy_xi_3d
 
   SUBROUTINE tvec_report(tvec, extra_label, comm)
     TYPE(timer), INTENT(in) :: tvec(:)
