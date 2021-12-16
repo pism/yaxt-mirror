@@ -123,7 +123,7 @@ PROGRAM test_ut
   fval = INT(loc_id)
   gval = undef_int
   CALL xt_redist_s_exchange(tpex_redist, fval, gval)
-  CALL icmp('2d to 2d check', gval, INT(loc_tpex), mype)
+  CALL icmp('2d to 2d check', gval, loc_tpex, mype)
 
   ! define positions of surface elements within (i,k,j) array
   CALL gen_id_pos(id_pos)
@@ -136,7 +136,7 @@ PROGRAM test_ut
   ! test surface bounds exchange:
   gval3d = -1
   CALL xt_redist_s_exchange(surf_tpex_redist, fval, gval3d)
-  CALL icmp('surface check', gval3d(:,1,:), INT(loc_tpex), mype)
+  CALL icmp('surface check', gval3d(:,1,:), loc_tpex, mype)
 
   ! check sub surface:
   CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1, mype)
