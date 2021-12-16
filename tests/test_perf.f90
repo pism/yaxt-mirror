@@ -73,14 +73,7 @@ PROGRAM test_perf
   INTEGER(xt_int_kind), PARAMETER :: undef_index = -1_xi
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
-  INTEGER, PARAMETER :: grid_kind_test = 1
-  INTEGER, PARAMETER :: grid_kind_toy  = 2
-  INTEGER, PARAMETER :: grid_kind_tp10 = 3
-  INTEGER, PARAMETER :: grid_kind_tp04 = 4
-  INTEGER, PARAMETER :: grid_kind_tp6M = 5
-  INTEGER :: grid_kind = grid_kind_test
-
-  CHARACTER(len=10) :: grid_label
+  CHARACTER(len=8) :: grid_label
   INTEGER :: g_ie, g_je ! global domain extents
   INTEGER :: ie, je, ke ! local extents, including halos
   INTEGER :: p_ioff, p_joff ! offsets within global domain
@@ -314,29 +307,24 @@ CONTAINS
 
     verbose = .TRUE.
 
-    SELECT CASE (TRIM(ADJUSTL(grid_str)))
+    SELECT CASE (ADJUSTL(grid_str))
     CASE('TOY')
-      grid_kind = grid_kind_toy
       grid_label = 'TOY'
       g_ie = 66
       g_je = 36
     CASE('TP10')
-      grid_kind = grid_kind_tp10
       grid_label = 'TP10'
       g_ie = 362
       g_je = 192
     CASE('TP04')
-      grid_kind = grid_kind_tp04
       grid_label = 'TP04'
       g_ie = 802
       g_je = 404
     CASE('TP6M')
-      grid_kind = grid_kind_tp6m
       grid_label = 'TP6M'
       g_ie = 3602
       g_je = 2394
     CASE default
-      grid_kind = grid_kind_test
       grid_label = 'TEST'
       g_ie = 32
       g_je = 12
