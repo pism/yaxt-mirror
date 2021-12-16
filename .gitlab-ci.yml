@@ -178,8 +178,9 @@ run_test_nag:
     - autoreconf -i
     - >
       ./configure
-      FCFLAGS="-O0 -fpp -g"
-      CFLAGS="-O0 -g -Wall"
+      FCFLAGS="-C=alias -C=array -C=bits -C=dangling -C=do -C=intovf -C=present -C=pointer -C=recursion -gline -nan -g -fpp -colour=warn:yellow -wmismatch=mpi_pack,mpi_unpack,mpi_bcast,mpi_send,mpi_recv,mpi_allreduce,mpi_isend,mpi_irecv,mpi_allgather,mpi_allgatherv,mpi_gather,mpi_gatherv,mpi_sendrecv,mpi_type_get_extent,xt_slice_c_loc -w=uda -w=alloctr -w=uep -w=x77 -f2008 -Wc,-pipe"
+      CFLAGS="-O0 -g -pipe"
+      BUILD_CFLAGS="-Wall -Werror"
       CC=mpicc FC=mpif90
       --disable-silent-rules
 # build yaxt and unit tests without running tests
