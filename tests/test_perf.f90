@@ -194,6 +194,7 @@ PROGRAM test_perf
   CALL xt_idxlist_delete(id_2d_idxlist)
   CALL xt_idxlist_delete(tpex_2d_idxlist)
   CALL xt_xmap_delete(tpex_2d_xmap)
+  CALL xt_redist_delete(surf_tpex_redist)
   CALL xt_redist_delete(tpex_2d_redist)
 
   ! inflate 2d -> 3d

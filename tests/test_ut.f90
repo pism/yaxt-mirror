@@ -145,6 +145,7 @@ PROGRAM test_ut
   CALL xt_idxlist_delete(start_idxlist)
   CALL xt_idxlist_delete(end_idxlist)
   CALL xt_xmap_delete(tpex_xmap)
+  CALL xt_redist_delete(surf_tpex_redist)
   CALL xt_redist_delete(tpex_redist)
 
   DEALLOCATE(fval, gval, loc_id, loc_tpex, id_pos, gval3d, pos3d_surf)
