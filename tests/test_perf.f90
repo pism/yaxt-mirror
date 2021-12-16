@@ -62,7 +62,7 @@ PROGRAM test_perf
 
   INTEGER, PARAMETER :: nlev = 30
   INTEGER, PARAMETER :: undef_int = (HUGE(undef_int)-1)/2 - 1
-  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
+  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1_xi
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
 
   INTEGER, PARAMETER :: grid_kind_test = 1
@@ -85,7 +85,7 @@ PROGRAM test_perf
 
   INTEGER(xt_int_kind), ALLOCATABLE :: g_id(:,:) ! global id
   ! global "tripolar-like" toy bounds exchange
-  INTEGER, ALLOCATABLE :: g_tpex(:, :)
+  INTEGER(xt_int_kind), ALLOCATABLE :: g_tpex(:, :)
 
   INTEGER(xt_int_kind), ALLOCATABLE :: loc_id_2d(:,:), loc_tpex_2d(:,:)
   INTEGER(xt_int_kind), ALLOCATABLE :: loc_id_3d(:,:,:), loc_tpex_3d(:,:,:)
@@ -254,8 +254,8 @@ CONTAINS
   SUBROUTINE inflate_idx(inflate_pos, idx_2d, idx_3d)
     CHARACTER(len=*), PARAMETER :: context = 'test_perf::inflate_idx: '
     INTEGER, INTENT(in) :: inflate_pos
-    INTEGER, INTENT(in) :: idx_2d(:,:)
-    INTEGER, ALLOCATABLE, INTENT(out) :: idx_3d(:,:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: idx_2d(:,:)
+    INTEGER(xt_int_kind), ALLOCATABLE, INTENT(out) :: idx_3d(:,:,:)
 
     INTEGER :: i, j, k
 
@@ -264,7 +264,8 @@ CONTAINS
       DO k=1,ke
         DO j=1,je
           DO i=1,ie
-            idx_3d(i,j,k) = idx_2d(i,j) + (k-1) * g_ie * g_je
+            idx_3d(i,j,k) = idx_2d(i,j) + INT(k-1,xi) * INT(g_ie, xi)&
+                 & * INT(g_je, xi)
           ENDDO
         ENDDO
       ENDDO
@@ -364,8 +365,8 @@ CONTAINS
 
     fval_2d = undef_int
     gval_2d = undef_int
-    loc_id_2d = undef_int
-    loc_tpex_2d = undef_int
+    loc_id_2d = undef_index
+    loc_tpex_2d = undef_index
     id_pos = undef_int
     pos3d_surf = undef_int
 
@@ -396,8 +397,8 @@ CONTAINS
   END SUBROUTINE exchange_2d_3d
 
   SUBROUTINE get_window(gval, win)
-    INTEGER, INTENT(in) :: gval(:,:)
-    INTEGER, INTENT(out) :: win(:,:)
+    INTEGER(xt_int_kind), INTENT(in) :: gval(:,:)
+    INTEGER(xt_int_kind), INTENT(out) :: win(:,:)
     INTEGER :: i, j, ig, jg
     DO j = 1, je
       jg = p_joff + j
@@ -419,8 +420,8 @@ CONTAINS
   END FUNCTION win3d_to_idxlist
 
   SUBROUTINE def_exchange(g_id, g_tpex)
-    INTEGER, INTENT(in) :: g_id(:, :)
-    INTEGER, INTENT(out) :: g_tpex(:, :)
+    INTEGER(xt_int_kind), INTENT(in) :: g_id(:, :)
+    INTEGER(xt_int_kind), INTENT(out) :: g_tpex(:, :)
     LOGICAL, PARAMETER :: increased_north_halo = .FALSE.
     LOGICAL, PARAMETER :: with_north_halo = .true.
     INTEGER :: i, j
@@ -489,7 +490,7 @@ CONTAINS
   END SUBROUTINE def_exchange
 
   SUBROUTINE check_g_idx(gidx)
-    INTEGER,INTENT(in) :: gidx(:,:)
+    INTEGER(xt_int_kind),INTENT(in) :: gidx(:,:)
 
     IF (ANY(gidx == undef_index)) THEN
       CALL test_abort('check_g_idx: check failed', filename, __LINE__)

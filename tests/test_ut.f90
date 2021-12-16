@@ -61,7 +61,7 @@ PROGRAM test_ut
   LOGICAL, PARAMETER :: verbose = .FALSE.
   INTEGER, PARAMETER :: nlev = 3
   INTEGER, PARAMETER :: undef_int = g_ie * g_je * nlev + 1
-  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1
+  INTEGER(xt_int_kind), PARAMETER :: undef_index = -1_xt_int_kind
   INTEGER, PARAMETER :: nhalo = 1 ! 1dim. halo border size
   CHARACTER(len=*), PARAMETER :: filename = 'test_ut.f90'
 

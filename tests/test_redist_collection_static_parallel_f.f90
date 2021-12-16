@@ -100,7 +100,7 @@ CONTAINS
 
     TYPE(xt_idxlist) :: indices_a_(2)
     INTEGER :: i
-    INTEGER(xt_int_kind), PARAMETER :: start = 0
+    INTEGER(xt_int_kind), PARAMETER :: start = 0_xi
     INTEGER(xt_int_kind) :: global_size(2), local_start(2, 2)
     INTEGER :: local_size(2)
 
