@@ -93,6 +93,7 @@ PROGRAM test_perf
   INTEGER, ALLOCATABLE :: fval_2d(:,:), gval_2d(:,:)
   INTEGER, ALLOCATABLE :: fval_3d(:,:,:), gval_3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
+  INTEGER, ALLOCATABLE :: ref_m1(:,:)
   LOGICAL :: verbose
 
   TYPE(timer) :: t_all, t_surf_redist, t_exch_surf
@@ -181,8 +182,11 @@ PROGRAM test_perf
   CALL icmp('surface check', gval_3d(:,1,:), loc_tpex_2d, mype)
 
   ! check sub surface:
-  CALL icmp('sub surface check', gval_3d(:,2,:), loc_tpex_2d*0-1, mype)
+  ALLOCATE(ref_m1(SIZE(loc_tpex_2d, 1), SIZE(loc_tpex_2d, 2)))
+  ref_m1 = -1
+  CALL icmp('sub surface check', gval_3d(:,2,:), ref_m1, mype)
 
+  DEALLOCATE(ref_m1)
   ! cleanup 2d:
   CALL xt_idxlist_delete(id_2d_idxlist)
   CALL xt_idxlist_delete(tpex_2d_idxlist)

@@ -90,6 +90,7 @@ PROGRAM test_ut
   INTEGER, ALLOCATABLE :: fval(:,:), gval(:,:)
   INTEGER, ALLOCATABLE :: gval3d(:,:,:)
   INTEGER, ALLOCATABLE :: id_pos(:,:), pos3d_surf(:,:)
+  INTEGER, ALLOCATABLE :: ref_m1(:,:)
 
   ! yaxt data:
   TYPE(xt_idxlist) :: start_idxlist, end_idxlist
@@ -139,7 +140,10 @@ PROGRAM test_ut
   CALL icmp('surface check', gval3d(:,1,:), loc_tpex, mype)
 
   ! check sub surface:
-  CALL icmp('sub surface check', gval3d(:,2,:), INT(loc_tpex)*0-1, mype)
+  ALLOCATE(ref_m1(SIZE(loc_tpex, 1), SIZE(loc_tpex, 2)))
+  ref_m1 = -1
+  CALL icmp('sub surface check', gval3d(:,2,:), ref_m1, mype)
+  DEALLOCATE(ref_m1)
 
   ! cleanup:
   CALL xt_idxlist_delete(start_idxlist)
