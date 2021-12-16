@@ -98,6 +98,8 @@ xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
  * @param[in]  exchanger exchanger object
  * @param[in]  src_data  source data
  * @param[out] dst_data  destination data
+ * @param[out] request   pointer that will reference request object
+ *                       created for duration of exchange
  */
 PPM_DSO_INTERNAL void
 xt_exchanger_a_exchange(Xt_exchanger exchanger,

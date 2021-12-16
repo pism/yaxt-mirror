@@ -94,6 +94,8 @@ Xt_xmap xt_xmap_dist_dir_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
  * @param[in] comm        MPI communicator that contains all processes
  *                        that take part in the exchange (xt_xmap_dist_dir_new
  *                        will make its own copy of comm)
+ * @param[in] config      Object holding non-default configuration
+ *                        settings for the ensuing operations.
  */
 Xt_xmap
 xt_xmap_dist_dir_custom_new(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,

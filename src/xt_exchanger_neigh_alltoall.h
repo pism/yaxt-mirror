@@ -65,6 +65,8 @@
  * @param[in] comm       MPI communicator that is to be used for the
  *                       communication
  * @param[in] tag_offset tag
+ * @param[in] config      custom configuration parameters
+
  * @remark tag_offset + xt_mpi_tag_exchange_msg must not
  *         be used on @a comm by any other part of the program during the
  *         lifetime of the created exchanger object
