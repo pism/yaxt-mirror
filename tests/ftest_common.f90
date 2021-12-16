@@ -308,46 +308,67 @@ CONTAINS
     RETURN
   END FUNCTION work_time
 
-  PURE SUBROUTINE id_map_i2(map)
+  PURE SUBROUTINE id_map_i2(map, ofs)
     INTEGER(i2), INTENT(out) :: map(:,:)
+    INTEGER(i2), OPTIONAL, INTENT(in) :: ofs
 
     INTEGER :: i, j, m, n
+    INTEGER :: ofs_
 
     m = SIZE(map, 1)
     n = SIZE(map, 2)
+    IF (PRESENT(ofs)) THEN
+      ofs_ = INT(ofs) - 1
+    ELSE
+      ofs_ = 0
+    END IF
     DO j = 1, n
       DO i = 1, m
-        map(i,j) = INT((j - 1) * m + i, i2)
+        map(i,j) = INT((j - 1) * m + i + ofs_, i2)
       ENDDO
     ENDDO
 
   END SUBROUTINE id_map_i2
 
-  PURE SUBROUTINE id_map_i4(map)
+  PURE SUBROUTINE id_map_i4(map, ofs)
     INTEGER(i4), INTENT(out) :: map(:,:)
+    INTEGER(i4), OPTIONAL, INTENT(in) :: ofs
 
     INTEGER :: i, j, m, n
+    INTEGER(i4) :: ofs_
 
     m = SIZE(map, 1)
     n = SIZE(map, 2)
+    IF (PRESENT(ofs)) THEN
+      ofs_ = ofs - 1_i4
+    ELSE
+      ofs_ = 0_i4
+    END IF
     DO j = 1, n
       DO i = 1, m
-        map(i,j) = INT((j - 1) * m + i, i4)
+        map(i,j) = INT((j - 1) * m + i, i4) + ofs_
       ENDDO
     ENDDO
 
   END SUBROUTINE id_map_i4
 
-  PURE SUBROUTINE id_map_i8(map)
+  PURE SUBROUTINE id_map_i8(map, ofs)
     INTEGER(i8), INTENT(out) :: map(:,:)
+    INTEGER(i8), OPTIONAL, INTENT(in) :: ofs
 
     INTEGER :: i, j, m, n
+    INTEGER(i8) :: ofs_
 
     m = SIZE(map, 1)
     n = SIZE(map, 2)
+    IF (PRESENT(ofs)) THEN
+      ofs_ = ofs - 1_i8
+    ELSE
+      ofs_ = 0_i8
+    END IF
     DO j = 1, n
       DO i = 1, m
-        map(i,j) = INT((j - 1) * m + i, i8)
+        map(i,j) = INT((j - 1) * m + i, i8) + ofs_
       ENDDO
     ENDDO
 
