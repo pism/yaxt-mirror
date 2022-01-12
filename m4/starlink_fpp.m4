@@ -247,7 +247,7 @@ AC_DEFUN([_ACX_SL_SET_FPP_FEATURE_VARS],
 #  * acx_sl_prog_fpp_suffix
 # accordingly.
 AC_DEFUN([_ACX_SL_TEST_FPP],
-  [rm -f conftest*
+  [rm -rf conftest*
    ACX_ASSERT_LANG_IS_FORTRAN_VARIANT()dnl
    AC_LANG_CONFTEST([_ACX_SL_LANG_PROGRAM_FPP_ONLY])
    ac_tmp=conftest.fppout
@@ -273,7 +273,7 @@ dnl * the output did not contain the critical part of the source file
 dnl * some syntax error crept into the output
 dnl indicating that this is a case-insensitive filesystem or
 dnl preprocessing failed. So this command doesn't work.
-   rm -f conftest*
+   rm -rf conftest*
 ])# _ACX_SL_TEST_FPP
 
 # _ACX_SL_PROG_FPP([SUFFIX], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
@@ -348,7 +348,7 @@ AS_IF([AC_TRY_EVAL(ac_cmd) && \
      cat conftest.f | grep '/[[*]].*[[*]]/' >/dev/null 2>&1],
      [ac_cv_prog_fpp_cstyle=$ac_flag])
    FPPFLAGS=$ac_save_FPPFLAGS])
-rm -f conftest*
+rm -rf conftest*
 AC_LANG_POP(Fortran)dnl
 ])
 if test "x$ac_cv_prog_fpp_cstyle" = "xunknown"; then
@@ -536,7 +536,7 @@ dnl
         ])
 dnl
       FCFLAGS=$ac_save_FCFLAGS
-      rm -f conftest.*
+      rm -rf conftest.*
       AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],[$4],[$5])
      ])
    #FIXME we should probably do the AC_SUBST somewhere else.
