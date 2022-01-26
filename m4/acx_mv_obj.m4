@@ -1,4 +1,4 @@
-dnl acx_mv_lo.m4 --- shell function to rename a libtool .lo file
+dnl acx_mv_obj.m4 --- shell function to rename a libtool .lo file
 dnl
 dnl Copyright  (C)  2019  Thomas Jahns <jahns@dkrz.de>
 dnl
@@ -43,7 +43,7 @@ dnl
 AC_DEFUN([ACX_MV_OBJ],
   [AC_REQUIRE_SHELL_FN([acx_fn_mv_obj],
      [AS_FUNCTION_DESCRIBE([ac_fn_mv_obj], [LINENO FROM TO],
-       [Rename FROM.$ac_ext to TO.$ac_ext, and return whether this succeeded.])],
+       [Rename FROM.$ac_objext to TO.$ac_objext, and return whether this succeeded.])],
      [AS_LINENO_PUSH([$[]1])
       acx_path_from=`echo "$[]2" | sed -e 's!/\{0,1\}@<:@^/@:>@*$[]!!'`
       test -z "$acx_path_from" && ASX_VAR_UNSET([acx_path_from])
