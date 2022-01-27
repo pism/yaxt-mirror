@@ -46,19 +46,20 @@
 use strict;
 use warnings;
 
+# find package version in AC_INIT macro of configure.ac
 sub match_version_from_ac_init {
   my $file = shift || die "sub match_version_from_ac_init: missing argument";
-  open(F, "<$file") || die "Cannot open $file.";
-  while(my $line = <F>) {
+  my $fh;
+  open($fh, '<', $file) || die "Cannot open $file.";
+  while(my $line = <$fh>) {
     if ($line =~ /^\s*AC_INIT/) {
       $line =~ s/\s+//g;
       if ($line =~ /^AC_INIT\(\[yaxt\],\[([\d\.\w]+)\]/) {
-        close(F);
         return $1;
       }
     }
   }
-  close(F);
+  close($fh);
   return undef;
 }
 
@@ -66,19 +67,19 @@ sub create_doxyfile {
   my ($version, $in, $out) = @_;
   die "sub create_doxyfile: missing argument"
     unless defined($version) and defined($in) and defined($out);
-  open(F, "<$in") || die "Cannot open $in.";
-  open(G, ">$out") || die "Cannot open $out.";
+  my ($fh_in, $fh_out);
+  open($fh_in, '<', $in) || die "Cannot open $in.";
+  open($fh_out, '>', $out) || die "Cannot open $out.";
   my $match = 0;
-  while(my $line = <F>) {
+  while(my $line = <$fh_in>) {
     if ($line =~ /^(\s*PROJECT_NUMBER\s*=\s*)/) {
-      print G "PROJECT_NUMBER = $version\n";
+      $line = "PROJECT_NUMBER = $version\n";
       $match++;
-    } else {
-      print G $line;
     }
+    print $fh_out $line;
   }
-  close(G);
-  close(F);
+  close($fh_out);
+  close($fh_in);
   return $match;
 }
 
