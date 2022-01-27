@@ -30,6 +30,7 @@ Makefile.in
 /examples/unstruct_halo_exchange_run
 /include/config.h
 /include/stamp-h1
+/include/fc_feature_defs.inc
 /libtool
 /perf/Makefile
 /perf/perf_idxsection_get_positions_of_indices_run
@@ -149,6 +150,7 @@ Makefile
 /tests/test_redist_single_array_base_parallel_f
 /tests/test_request_parallel
 /tests/test_sort
+/tests/test_sort_f
 /tests/test_uid
 /tests/test_ut
 /tests/test_xmap_all2all
