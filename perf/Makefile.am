@@ -1,5 +1,12 @@
 #
-# Keywords:
+# Copyright  (C)  2022 Jörg Behrens <behrens@dkrz.de>
+#                      Moritz Hanke <hanke@dkrz.de>
+#                      Thomas Jahns <jahns@dkrz.de>
+#
+# Author: Jörg Behrens <behrens@dkrz.de>
+#         Moritz Hanke <hanke@dkrz.de>
+#         Thomas Jahns <jahns@dkrz.de>
+#
 # Maintainer: Jörg Behrens <behrens@dkrz.de>
 #             Moritz Hanke <hanke@dkrz.de>
 #             Thomas Jahns <jahns@dkrz.de>
