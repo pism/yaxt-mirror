@@ -80,7 +80,7 @@ while : ; do
       exit 1
     else
       echo -n 'New version number: '
-      read newVersion
+      read -r newVersion
       sed -i -e '/^AC_INIT/{' \
         -e 's/^\(AC_INIT(\[[a-z]*\],\[\)\([0-9.]*\)\(\],\)/\1'"$newVersion"'\3/' \
         -e '}' configure.ac
@@ -106,12 +106,12 @@ lasttag=$(git tag | tail -n 1)
 mergebase=$(git merge-base "${lasttag}" HEAD)
 declare -a lalibs lalibdirs
 coproc LTLIBS {
-  find . -name Makefile.am | xargs grep -H _LTLIBRARIES \
+  find . -name Makefile.am -exec grep -H _LTLIBRARIES \{\} + \
     | grep -v '\(noinst\|check\)_LTLIBRARIES' \
     | sed -e 's/^\(.*Makefile.am:\) *[a-z_]*_LTLIBRARIES *+\{0,1\}=/\1/'
 }
 lalibs=()
-while read libline ; do
+while read -r libline ; do
   echo "inspecting $libline" >&2
   libpath=${libline%%/Makefile.am:*}
   las=${libline##${libpath}/Makefile.am:}
@@ -119,7 +119,7 @@ while read libline ; do
     lalibdirs+=("${libpath}")
     lalibs+=("${la/.la/_la}")
   done
-done <&${LTLIBS[0]}
+done <&"${LTLIBS[0]}"
 set -e
 declare -i i
 for ((i=0 ; i < ${#lalibs[@]}; ++i)) ; do
@@ -140,7 +140,7 @@ for ((i=0 ; i < ${#lalibs[@]}; ++i)) ; do
     interfaceChangedRemoved=false
   fi
   # FIXME: make more specific to sources making up the libraries
-  if git diff --exit-code -s ${mergebase} "${libpath}" ; then
+  if git diff --exit-code -s "${mergebase}" "${libpath}" ; then
     codeChange=false
   else
     codeChange=:
@@ -189,7 +189,7 @@ declare -a config_files
 config_files=()
 for config_file in config/* ; do
   if [[ $config_file != config/workarounds ]]; then
-    config_files+=($config_file)
+    config_files+=("$config_file")
   fi
 done
 config_files+=(m4/lt* m4/libtool.m4 include/config.h.in configure)

@@ -83,7 +83,7 @@ if git diff-index --exit-code HEAD -- >&6 ; then
 else
   echo "error: untracked/modified files found!" >&2
   git status >&6 2>&6
-  ${PAGER-less} $log
+  ${PAGER-less} "$log"
   trap '' EXIT
   exit 1
 fi

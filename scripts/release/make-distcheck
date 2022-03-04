@@ -29,7 +29,7 @@ set -e
 . scripts/release/get-package-and-version.shinc
 if (( ${DEBUG:-0} )); then
   set -x
-  MAKE_DEBUG_ARGS=(--debug SHELL="bash -x")
+  MAKE_DEBUG_ARGS=(--debug 'SHELL=bash -x')
 else
   MAKE_DEBUG_ARGS=()
 fi

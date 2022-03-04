@@ -57,7 +57,7 @@ if [[ -w configure.ac && -r configure.ac && \
   # 2. import common script settings
   . scripts/release/get-package-and-version.shinc
   test -d "${log_dir}"
-  if [[ $version != $new_version ]]; then
+  if [[ $version != "$new_version" ]]; then
     echo 'Version mismatch after editing configure.ac:' \
          "$version" 'vs.' "$new_version" >&2
     exit 1
