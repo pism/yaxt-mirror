@@ -87,3 +87,12 @@ else
   trap '' EXIT
   exit 1
 fi
+
+#
+# Local Variables:
+# mode: sh
+# coding: utf-8
+# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
+# license-default: "bsd"
+# End:
+#

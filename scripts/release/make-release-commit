@@ -202,6 +202,7 @@ $reconfCmd >"$log_dir/post-release-commit-reconf.log" 2>&1
 #
 # Local Variables:
 # mode: sh
+# coding: utf-8
 # license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"
 # End:

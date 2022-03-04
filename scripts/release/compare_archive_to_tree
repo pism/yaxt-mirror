@@ -267,6 +267,7 @@ sub is_dir_in_git(\%$)
 
 # Local Variables:
 # mode: cperl
+# coding: utf-8
 # cperl-indent-level: 2
 # license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"

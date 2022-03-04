@@ -60,6 +60,7 @@ log_dir=${log_dir-"${package}-${version}-release-logs"}
 mkdir -p "$log_dir"
 #
 # Local Variables:
+# coding: utf-8
 # mode: sh
 # End:
 #
