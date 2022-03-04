@@ -112,7 +112,7 @@ coproc LTLIBS {
     | sed -e 's/^\(.*Makefile.am:\) *[a-z_]*_LTLIBRARIES *+\{0,1\}=/\1/'
 }
 lalibs=()
-while read libline <&${LTLIBS[0]} ; do
+while read libline ; do
   echo "inspecting $libline" >&2
   libpath=${libline%%/Makefile.am:*}
   las=${libline##${libpath}/Makefile.am:}
@@ -120,7 +120,7 @@ while read libline <&${LTLIBS[0]} ; do
     lalibdirs+=("${libpath}")
     lalibs+=("${la/.la/_la}")
   done
-done
+done <&${LTLIBS[0]}
 set -e
 declare -i i
 for ((i=0 ; i < ${#lalibs[@]}; ++i)) ; do
