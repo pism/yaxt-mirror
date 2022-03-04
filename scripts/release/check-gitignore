@@ -43,6 +43,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 set -e
+# shellcheck source=get-package-and-version.shinc
 . scripts/release/get-package-and-version.shinc
 if [[ x${TMPDIR+set} = x ]]; then
   if [[ -d "$XDG_RUNTIME_DIR" && -w "$XDG_RUNTIME_DIR" ]]; then

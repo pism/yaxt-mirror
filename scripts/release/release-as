@@ -55,7 +55,8 @@ if [[ -w configure.ac && -r configure.ac && \
     -e '/^AC_INIT(/s/AC_INIT(\([^,]*\),[^,]*,/AC_INIT(\1,['"${new_version}],/" \
     configure.ac
   # 2. import common script settings
-  . scripts/release/get-package-and-version.shinc
+  # shellcheck source=get-package-and-version.shinc
+  source scripts/release/get-package-and-version.shinc
   test -d "${log_dir}"
   if [[ $version != "$new_version" ]]; then
     echo 'Version mismatch after editing configure.ac:' \

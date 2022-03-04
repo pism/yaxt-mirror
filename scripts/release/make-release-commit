@@ -69,9 +69,12 @@ yesno_ask()
   done
 }
 
+# shellcheck source=get-package-and-version.shinc
 . scripts/release/get-package-and-version.shinc
 while : ; do
   yesno_ask "Is version '$version' what you want to publish?" newVersionOkay
+  # the variable newVersionOkay is set indirectly by yesno_ask
+  # shellcheck disable=SC2154
   if ! $newVersionOkay ; then
     yesno_ask 'Do you want to specify another version number?' \
               userProvidesNewVersion
@@ -130,6 +133,8 @@ for ((i=0 ; i < ${#lalibs[@]}; ++i)) ; do
   yesno_ask \
     "Was there any change/removal/addition to/of an exported $libname interface?" \
     interfaceChangedRemovedAdded
+  # the variable interfaceChangedRemovedAdded is set indirectly by yesno_ask
+  # shellcheck disable=SC2154
   if $interfaceChangedRemovedAdded; then
     yesno_ask "Were any exported interfaces of $libname added?" \
       interfaceAdded

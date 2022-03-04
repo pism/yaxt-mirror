@@ -42,6 +42,7 @@ trap 'echo "Failed to run $BASH_COMMAND">&2' ERR
 # check that generated files and scripts are in place
 if [[ -r configure && -r scripts/release/make-release-commit ]]; then
   # 1. import common script settings
+  # shellcheck source=get-package-and-version.shinc
   . scripts/release/get-package-and-version.shinc
   # 2. check the version about to be released is actually new
   # fixme: also check release branch does not exist

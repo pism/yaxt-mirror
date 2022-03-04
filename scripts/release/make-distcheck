@@ -26,6 +26,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 set -e
+# shellcheck source=get-package-and-version.shinc
 . scripts/release/get-package-and-version.shinc
 if (( ${DEBUG:-0} )); then
   set -x
