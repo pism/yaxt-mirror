@@ -60,7 +60,7 @@ my %ignore_archive_missing = map { $_ => undef } (
   '.gitignore',
   '.gitlab-ci.yml',
   'include/.vcs_dummy',
-  'scripts/release/reconfigure-mistral',
+  'scripts/release/Makefile',
   'scripts/release/compare_archive_to_tree',
   'scripts/release/get-package-and-version.shinc',
   'scripts/release/make-distcheck',
