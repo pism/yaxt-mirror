@@ -116,12 +116,16 @@ print(STDERR Data::Dumper->Dump([\%links, \%in_archive_files],
 my %archive_hashes;
 {
   open(my $tar_list_fh, '-|', 'tar', '--extract', '--verbose',
-       '--strip=1', '--show-transformed-names',
        '--to-command=git hash-object --stdin',
        '--file', $archive)
       or die("failed to list archive contents: $!");
   while (my $path = <$tar_list_fh>) {
     chomp($path);
+    my $path_sep_pos = index($path, '/');
+    next if ($path_sep_pos == length($path)-1);
+    if ($path_sep_pos != -1) {
+      substr($path, 0, $path_sep_pos+1) = '';
+    }
     if (exists($in_archive_files{$path})) {
       $_ = <$tar_list_fh>;
       chomp;
