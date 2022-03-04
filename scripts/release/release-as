@@ -42,7 +42,14 @@
 set -e
 new_version=$1
 # check the whole kit is there
-if [[ -w configure.ac && -r configure.ac && -x scripts/release/make-release ]]; then
+if [[ -w configure.ac && -r configure.ac && \
+        -x scripts/release/make-release ]]; then
+  # 0. check no uncomitted modifications are in tree
+  git update-index -q --really-refresh
+  if ! git diff-index --exit-code HEAD -- >&2 ; then
+    echo 'error: modified files found!' >&2
+    exit 1
+  fi
   # 1. insert new version
   sed -i \
     -e '/^AC_INIT(/s/AC_INIT(\([^,]*\),[^,]*,/AC_INIT(\1,['"${new_version}],/" \
