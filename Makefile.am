@@ -12,7 +12,7 @@
 # Maintainer: Jörg Behrens <behrens@dkrz.de>
 #             Moritz Hanke <hanke@dkrz.de>
 #             Thomas Jahns <jahns@dkrz.de>
-# URL: http://https://www.dkrz.de/redmine/projects/scales-ppm
+# URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are  permitted provided that the following conditions are
@@ -169,3 +169,12 @@ check-local:
 	@for d in $(SUBDIRS); do \
 	  test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile || \
 	  ./config.status $$d/Makefile ; done
+
+#
+# Local Variables:
+# mode: Makefile
+# coding: utf-8
+# license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+# license-default: "bsd"
+# End:
+#
