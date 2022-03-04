@@ -45,13 +45,13 @@ normalize_yes_no_input()
 {
   case "$2" in
     y|yes|Y|Yes|YES)
-      eval $1=:
+      typeset -g "$1=:"
       ;;
     n|no|N|No|NO)
-      eval $1=false
+      typeset -g "$1=false"
       ;;
     *)
-      eval $1=invalid
+      typeset -g "$1=invalid"
       ;;
   esac
 }
@@ -60,10 +60,9 @@ yesno_ask()
 {
   while : ; do
     echo -n "$1 (y/n) "
-    read temp
-    normalize_yes_no_input temp "$temp"
-    eval $2=\$temp
-    if [[ $temp != invalid ]]; then
+    read -r temp
+    normalize_yes_no_input "$2" "$temp"
+    if [[ $2 != invalid ]]; then
       break
     fi
     echo "invalid answer, please answer yes or no" >&2
