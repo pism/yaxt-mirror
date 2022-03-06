@@ -181,6 +181,7 @@ s/^\('"${lalib}"'_LDFLAGS *= *-version-info \)\([0-9:]*\)/\1'"${newLibVersionInf
     git add "${libpath}/Makefile.am"
   fi
 done
+exec >"${log_dir}/make-release-commit.log" 2>&1
 git add configure.ac
 if ! git diff-index  --quiet --cached HEAD ; then
   git commit -m 'Pre-release version bump.'
