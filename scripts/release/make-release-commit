@@ -189,7 +189,7 @@ git tag "v$version"
 prevBranch=$(git rev-parse --abbrev-ref HEAD)
 git checkout -b "$branchOfNewVersion"
 $reconfCmd >"$log_dir/post-bump-reconf.log" 2>&1
-find . -name Makefile.in -print0 | xargs -0 git add -f
+find . -name Makefile.in -exec git add -f \{\} +
 declare -a config_files
 config_files=()
 for config_file in config/* ; do
