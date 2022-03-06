@@ -45,9 +45,13 @@ if [[ -r configure && -r scripts/release/make-release-commit ]]; then
   # shellcheck source=get-package-and-version.shinc
   . scripts/release/get-package-and-version.shinc
   # 2. check the version about to be released is actually new
-  # fixme: also check release branch does not exist
-  if git tag | grep "v$version" > /dev/null ; then
+  if git tag | grep "^v$version\$" > /dev/null ; then
     echo "A tag for version $version has already been created." >&2
+    echo "Perhaps set new version in configure.ac first?" >&2
+    exit 1
+  fi
+  if git branch | grep "release-$version\$" >/dev/null ; then
+    echo "A branch named release-$version has already been created." >&2
     echo "Perhaps set new version in configure.ac first?" >&2
     exit 1
   fi
