@@ -79,16 +79,22 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
 dnl add some monkey patching for older libtool versions that don't handle
 dnl newer PGI or NAG configurations particularly well
    m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.7]),1),-1,
-     [m4_pushdef([_LT_COMPILER_PIC],m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),[;;
+     [m4_pushdef([_LT_COMPILER_PIC],
+       m4_bpatsubst(m4_dquote(
+       m4_bpatsubst(m4_dquote(
+       m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),[;;
 	\*Portland\\ ],[;; @%:@(
 	*NAG\\ Fortran\\ Compiler*)
 	  _LT_TAGVAR(lt_prog_compiler_wl, $][1)='-Wl,-Wl,,'
 	  _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-PIC'
 	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
-	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`]))dnl
-      m4_pushdef([_LT_LANG_CXX_CONFIG],m4_bpatsubst(m4_dquote(m4_defn([_LT_LANG_CXX_CONFIG])),
-        acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`]))dnl
+	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`])),[pgcpp\*],[pgcpp* | pgc++* ]))dnl
+      m4_pushdef([_LT_LANG_CXX_CONFIG],
+        m4_bpatsubst(m4_dquote(
+        m4_bpatsubst(m4_dquote(m4_defn([_LT_LANG_CXX_CONFIG])),
+          acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`])),
+          [pgcpp\*],[pgcpp* | pgc++* ]))dnl
       m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn(
