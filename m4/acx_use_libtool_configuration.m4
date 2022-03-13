@@ -92,8 +92,11 @@ dnl newer PGI or NAG configurations particularly well
 	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`])),[pgcpp\*],[pgcpp* | pgc++* ]))dnl
       m4_pushdef([_LT_LANG_CXX_CONFIG],
         m4_bpatsubst(m4_dquote(
+        m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_defn([_LT_LANG_CXX_CONFIG])),
           acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`])),
+          [\$CC\( \$pic_flag\)? -shared -nostdlib \$predep_objects \$libobjs \$deplibs \$postdep_objects ],
+          [$CC\1 -shared $libobjs $deplibs ])),
           [pgcpp\*],[pgcpp* | pgc++* ]))dnl
       m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
