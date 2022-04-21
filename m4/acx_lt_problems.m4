@@ -54,10 +54,10 @@ dnl     causes a duplicate exit handler that fails and clobbers the
 dnl     programs exit status (set to 128).
 dnl
 AC_DEFUN([_ACX_LT_PROBLEMS],
-  [AC_REQUIRE([AC_CANONICAL_HOST])
-   AC_LANG_CASE([Fortran],[acx_Comp=$FC],
-     [Fortran 77],[acx_Comp=$F77],
-     [C],[acx_Comp=$CC])
+  [AC_REQUIRE([AC_CANONICAL_HOST])dnl
+   AC_LANG_CASE([Fortran],[m4_pushdef([acx_Comp],[FC])m4_pushdef([acx_flags_var],[FCFLAGS])],
+     [Fortran 77],[m4_pushdef([acx_Comp],[F77])m4_pushdef([acx_flags_var],[FFLAGS])],
+     [C],[m4_pushdef([acx_Comp],[CC])m4_pushdef([acx_flags_var],[CFLAGS])])dnl
    _AS_ECHO_LOG([testing if $acx_Comp cannot build working shared objects])
    AS_CASE([$host],
      [*-ibm-aix*],
@@ -65,8 +65,11 @@ AC_DEFUN([_ACX_LT_PROBLEMS],
         [acx_cv_disable_shared=yes])],
      [x86_64-*-linux-*|i*86-*-linux-*|*-apple-darwin*|ia64-*-linux-*|x86_64-*-freebsd*|i*86-*-freebsd*],
      [AS_IF([$acx_Comp -V 2>&1 | grep '^Intel(R).*Fortran.*Compiler.*Version 15.0.@<:@123@:>@' >/dev/null],
-        [acx_cv_disable_shared=yes])])
-   _AS_ECHO_LOG([result: $acx_cv_disable_shared])])
+        [AS_CASE([" $acx_flags_var $LDFLAGS "],
+           [*\ -Qlocation,ld,*\ *],
+           [acx_cv_disable_shared=yes],
+           [acx_flags_var="$acx_flags_var -Qlocation,ld,$ac_abs_confdir/util/icomp15"])])])
+   _AS_ECHO_LOG([result: $acx_cv_disable_shared])m4_popdef([acx_Comp])m4_popdef([acx_flags_var])])
 dnl
 dnl run test for C and Fortran compilers
 AC_DEFUN([ACX_LT_PROBLEMS],
