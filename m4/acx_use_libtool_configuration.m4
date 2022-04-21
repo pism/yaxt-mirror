@@ -137,7 +137,9 @@ dnl substitute -shared-intel if present
      [AS_IF([eval test x\$\{acx_flag_var+set\} = xset],
         [eval acx_temp="\" \$$acx_flag_var_ \""
          AS_CASE([$acx_temp],[*\ -shared-intel\ *|*\ -static-intel\ *],
-           [acx_temp=`echo "$acx_temp" | sed -e 's/ \(-\(shared\|static\)-intel\)\b/ -Xcompiler \1 -XCClinker \1/'`])
+           [acx_temp=`echo "$acx_temp" | sed -e 's/ \(-\(shared\|static\)-intel\)\b/ -Xcompiler \1 -XCClinker \1/g'`])
+         AS_CASE([$acx_temp],[*\ -Qlocation,*\ *],
+           [acx_temp=`echo "$acx_temp" | sed -e 's/ \(-Qlocation,@<:@^, @:>@*,@<:@^ @:>@*\)\b/ -Xcompiler \1 -XCClinker \1/g'`])
 dnl take care of ifort/icc/icpc two-part options
          eval acx_flag_var=\"`echo "$acx_temp" | sed -e 's/ -\(align\|allow\|assume\|ccdefault\|check\|convert\|debug\|debug-parameters\|diag-type\|diag-enable\|diag-disable\|double-size\|dynamic-linker\|dyncom\|export-dir\|extend-source\|fp-model\|fpscomp\|gen-interfaces\|heap-arrays\|imacros\|integer-size\|iprefix\|iquote\|iwithprefixbefore\|module\|names\|opt-report\|opt-streaming-stores\|pch-dir\|pch-use\|prof-dir\|prof-file\|real-size\|reentrancy\|stand\|tcollect-filter\|tune\|warn\|watch\) \(@<:@^-@:>@@<:@^ @:>@*\)\b/ -Xcompiler -\1 -Xcompiler \2/g' -e 's/^ //;s/ $//'`\"])])
    AC_PROVIDE_IFELSE([AC_PROG_CC],
