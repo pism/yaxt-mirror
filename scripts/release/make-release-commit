@@ -59,18 +59,16 @@ normalize_yes_no_input()
 yesno_ask()
 {
   while : ; do
-    echo -n "$1 (y/n) "
-    read -r temp
+    read -p "$1 (y/n) " -r temp
     normalize_yes_no_input "$2" "$temp"
-    if [[ $2 != invalid ]]; then
-      break
-    fi
-    echo "invalid answer, please answer yes or no" >&2
+    [[ $2 = invalid ]] || break
+    echo 'invalid answer, please answer yes or no' >&2
   done
 }
 
+script_dir=scripts/release
 # shellcheck source=get-package-and-version.shinc
-. scripts/release/get-package-and-version.shinc
+. "${script_dir}/get-package-and-version.shinc"
 while : ; do
   yesno_ask "Is version '$version' what you want to publish?" newVersionOkay
   # the variable newVersionOkay is set indirectly by yesno_ask
@@ -82,8 +80,7 @@ while : ; do
       echo "Aborting release. Change version in configure.ac AC_INIT?" >&2
       exit 1
     else
-      echo -n 'New version number: '
-      read -r newVersion
+      read -p 'New version number: ' -r newVersion
       sed -i -e '/^AC_INIT/{' \
         -e 's/^\(AC_INIT(\[[a-z]*\],\[\)\([0-9.]*\)\(\],\)/\1'"$newVersion"'\3/' \
         -e '}' configure.ac
@@ -105,13 +102,13 @@ done
 # branchOfNewVersion git branch to put release-relevant files in
 #
 # FIXME: make sure this is actually the latest release
-lasttag=$(git tag | tail -n 1)
+lasttag=$(git tag | ${SORT_V-sort -V} | tail -n 1)
 mergebase=$(git merge-base "${lasttag}" HEAD)
 declare -a lalibs lalibdirs
 coproc LTLIBS {
   find . -name Makefile.am -exec grep -H _LTLIBRARIES \{\} + \
-    | grep -v '\(noinst\|check\)_LTLIBRARIES' \
-    | sed -e 's/^\(.*Makefile.am:\) *[a-z_]*_LTLIBRARIES *+\{0,1\}=/\1/'
+    | sed -e '/\(noinst\|check\)_LTLIBRARIES/d' \
+          -e 's/^\(.*Makefile.am:\) *[a-z_]*_LTLIBRARIES *+\{0,1\}= */\1/'
 }
 lalibs=()
 while read -r libline ; do
@@ -198,7 +195,11 @@ for config_file in config/* ; do
     config_files+=("$config_file")
   fi
 done
-config_files+=(m4/lt* m4/libtool.m4 include/config.h.in configure)
+config_files+=(m4/lt* m4/libtool.m4 include/config.h.in configure
+               aclocal.m4)
+if [[ -r "${script_dir}/extra_release_dist_files" ]]; then
+  mapfile -t -O ${#config_files[@]} config_files <"${script_dir}/extra_release_dist_files"
+fi
 git add -f "${config_files[@]}"
 git commit -n -m 'Add autotools files of release.'
 git checkout "$prevBranch"

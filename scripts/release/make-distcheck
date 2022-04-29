@@ -47,18 +47,33 @@ BUILD_DIR=$(mktemp -d -t "${package}-distcheck-XXXXXX")
 trap 'rm -rf "$BUILD_DIR"' EXIT
 SRC_DIR=$PWD
 cd "${BUILD_DIR}"
-"$SRC_DIR"/configure \
-  --prefix="${BUILD_DIR}-install"
-mf_version=$(sed -n -e '/^PACKAGE_VERSION = /{
+for ((i=0; i < 2; ++i)); do
+  args=(--prefix="${BUILD_DIR}-install")
+  if ((i == 0)); then
+    args+=(--enable-maintainer-mode)
+  fi
+  "$SRC_DIR"/configure "${args[@]}"
+  mf_version=$(sed -n -e '/^PACKAGE_VERSION = /{
 s/^PACKAGE_VERSION =[ 	]*//; s/ *$//; p ; q }' Makefile)
-if [[ "$mf_version" != "$version" ]]; then
-  echo "error: versions from Makefile ($mf_version) and configure.ac" \
-       "($version) don't match" >&2
-  exit 1
-fi
-make "${MAKE_DEBUG_ARGS[@]}" -j
-make "${MAKE_DEBUG_ARGS[@]}" -j check
-make "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
+  if [[ "$mf_version" != "$version" ]]; then
+    echo "error: versions from Makefile ($mf_version) and configure.ac" \
+         "($version) don't match" >&2
+    exit 1
+  fi
+  make "${MAKE_DEBUG_ARGS[@]}" -j
+  make "${MAKE_DEBUG_ARGS[@]}" -j check
+  case $i in
+    0)
+      make "${MAKE_DEBUG_ARGS[@]}" -C src ppm/ppm_ptr_bnds_remap.f90
+      make "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
+      make "${MAKE_DEBUG_ARGS[@]}" distclean
+      ls -lR
+      ;;
+    1)
+      make "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
+      ;;
+  esac
+done
 if [[ -x "$(command -v repack)" ]]; then
   # creates xz and bzip2 versions of archive
   repack --keep "$package-$version.tar.gz"
