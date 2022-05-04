@@ -60,7 +60,7 @@ MODULE test_xmap_common
   PRIVATE
   INTEGER :: my_rank
   INTEGER, PARAMETER :: xi = xt_int_kind
-  PUBLIC :: xmap_self_test_main
+  PUBLIC :: xmap_self_test_main, test_self_xmap_construct
   CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_common_f.f90'
 CONTAINS
   SUBROUTINE xmap_self_test_main(xmap_new)
@@ -133,7 +133,7 @@ CONTAINS
 
   END SUBROUTINE assert_xmap_is_to_self
 
-  SUBROUTINE test_xmap(src_index_list, dst_index_list, xmap_new, comm)
+  SUBROUTINE test_self_xmap_construct(src_index_list, dst_index_list, xmap_new, comm)
     INTEGER(xt_int_kind), INTENT(in) :: src_index_list(:), dst_index_list(:)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     INTERFACE
@@ -162,7 +162,7 @@ CONTAINS
 
     CALL xt_xmap_delete(xmap)
     CALL xt_xmap_delete(xmap_copy)
-  END SUBROUTINE test_xmap
+  END SUBROUTINE test_self_xmap_construct
 
   SUBROUTINE test_xmap1(xmap_new, comm)
     INTERFACE
@@ -189,7 +189,7 @@ CONTAINS
       dst_index_list(i) = num_dst_idx - i + 1_xi
     END DO
     CALL shift_idx(dst_index_list, num_dst_idx)
-    CALL test_xmap(src_index_list, dst_index_list, xmap_new, comm)
+    CALL test_self_xmap_construct(src_index_list, dst_index_list, xmap_new, comm)
   END SUBROUTINE test_xmap1
 
   SUBROUTINE test_xmap2(xmap_new, comm)
@@ -214,7 +214,7 @@ CONTAINS
          (/ 5_xi, 4_xi, 3_xi, 96_xi, 1_xi, &
          &  5_xi, 4_xi, 5_xi,  4_xi, 3_xi, &
          & 13_xi, 2_xi, 1_xi /)
-    CALL test_xmap(src_index_list, dst_index_list, xmap_new, comm)
+    CALL test_self_xmap_construct(src_index_list, dst_index_list, xmap_new, comm)
   END SUBROUTINE test_xmap2
 
 END MODULE test_xmap_common

@@ -61,6 +61,10 @@ typedef Xt_xmap (*xmap_constructor)(Xt_idxlist src_idxlist,
 
 int
 xt_xmap_self_test_main(xmap_constructor xmap_constructor);
+void
+test_self_xmap_construct(const Xt_int *src_index_list, int num_src_indices,
+                         const Xt_int *dst_index_list, int num_dst_indices,
+                         xmap_constructor new_xmap, MPI_Comm comm);
 
 int
 xt_xmap_parallel_test_main(xmap_constructor xmap_constructor);
