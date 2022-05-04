@@ -48,10 +48,20 @@
  */
 
 #include <stdlib.h>
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <mpi.h>
 
 int main(void) {
   MPI_Init(NULL,NULL);
+  int fd = open("conftest.error_exit.txt",
+                O_WRONLY | O_TRUNC | O_CREAT | O_NOCTTY, 0777);
+  static const char exit_msg[] = "MPI_Abort(0xdeadbeef, 2)\n";
+  write(fd, exit_msg, sizeof (exit_msg));
+  close(fd);
   MPI_Abort(MPI_COMM_WORLD, 2);
   /* This should not execute, ever */
   MPI_Finalize();

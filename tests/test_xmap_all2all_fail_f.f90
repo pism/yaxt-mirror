@@ -174,11 +174,25 @@ SUBROUTINE xfail_abort(comm, msg, source, line)
   INTEGER, INTENT(in) :: comm, line
   CHARACTER(len=*), INTENT(in) :: msg, source
   INTEGER :: ierror
-  WRITE (0, '(4a,i0)') msg, ' at ', source, ', line ', line
 #ifdef XT_NEED_MPI_ABORT_WORK_AROUND
-  WRITE (0, '(a)') 'MPI_Abort(0xdeadbeef, 3)'
+  INTEGER :: abort_msg_lun
 #endif
+  WRITE (0, '(4a,i0)') msg, ' at ', source, ', line ', line
+
+#ifdef XT_NEED_MPI_ABORT_WORK_AROUND
+#  if XT_NEED_MPI_ABORT_WORK_AROUND == 1
+  abort_msg_lun = 0
+#  elif XT_NEED_MPI_ABORT_WORK_AROUND == 2
   FLUSH(0)
+  abort_msg_lun = 10
+  OPEN(unit=abort_msg_lun, status='replace', &
+       file='test_xmap_all2all_fail.result.txt', &
+       action='write', iostat=ierror)
+#  endif
+  WRITE (abort_msg_lun, '(a)') 'MPI_Abort(0xdeadbeef, 3)'
+  FLUSH(abort_msg_lun)
+#endif
+
   CALL mpi_abort(comm, 3, ierror)
   CALL posix_exit(3_c_int)
 END SUBROUTINE xfail_abort

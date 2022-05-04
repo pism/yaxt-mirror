@@ -378,10 +378,13 @@ Consider getting a better MPI/batch scheduler.])
       AS_IF([grep -v -i 'mpi_abort(@<:@^,()@:>@*, 2)' conftest.err >/dev/null],
         [AC_MSG_NOTICE([Implementing fragile work-around for tests!])
          AC_DEFINE([XT_NEED_MPI_ABORT_WORK_AROUND],[1],
-           [To pass the value for MPI_Abort to the surrounding execution environment, a hack is needed.])])],
+           [To pass the value for MPI_Abort to the surrounding execution environment, a hack is needed.])],
+        [grep -v -i 'mpi_abort(@<:@^,()@:>@*, 2)' conftest.error_exit.txt >/dev/null],
+        [AC_MSG_NOTICE([Implementing very fragile work-around for tests!])
+         AC_DEFINE([XT_NEED_MPI_ABORT_WORK_AROUND],[2])])],
      [mpi_defect_fail_action])])
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
-rm -f conftest.err
+rm -f conftest.err conftest.error_exit.txt
 AC_SUBST([xt_mpi_workaround_LIBS])
 AM_CONDITIONAL([OMPI_DT_WORKAROUND],
   [test x${acx_opal_datatype_add_workaround+set} = xset])
