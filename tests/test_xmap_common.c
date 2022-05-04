@@ -111,13 +111,34 @@ assert_xmap_is_to_self(Xt_xmap xmap)
 
 
 void
-test_self_xmap_construct(const Xt_int *src_index_list, int num_src_indices,
-                         const Xt_int *dst_index_list, int num_dst_indices,
+test_self_xmap_construct_idxvec(
+  const Xt_int *src_index_list, int num_src_indices,
+  const Xt_int *dst_index_list, int num_dst_indices,
+  xmap_constructor new_xmap, MPI_Comm comm)
+{
+  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, num_src_indices),
+    dst_idxlist = xt_idxvec_new(dst_index_list, num_dst_indices);
+  test_self_xmap_construct(src_idxlist, dst_idxlist, new_xmap, comm);
+}
+
+
+void
+test_self_xmap_construct_idxstripes(
+  const struct Xt_stripe *src_indices, int num_src_stripes,
+  const struct Xt_stripe *dst_indices, int num_dst_stripes,
+  xmap_constructor new_xmap, MPI_Comm comm)
+{
+  Xt_idxlist
+    src_idxlist = xt_idxstripes_new(src_indices, num_src_stripes),
+    dst_idxlist = xt_idxstripes_new(dst_indices, num_dst_stripes);
+  test_self_xmap_construct(src_idxlist, dst_idxlist, new_xmap, comm);
+}
+
+void
+test_self_xmap_construct(Xt_idxlist src_idxlist,
+                         Xt_idxlist dst_idxlist,
                          xmap_constructor new_xmap, MPI_Comm comm)
 {
-  Xt_idxlist src_idxlist = xt_idxvec_new(src_index_list, num_src_indices);
-  Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, num_dst_indices);
-
   // test of exchange map
   Xt_xmap xmap = new_xmap(src_idxlist, dst_idxlist, comm);
   xt_idxlist_delete(src_idxlist);
@@ -139,37 +160,37 @@ static inline void shift_idx(Xt_int idx[], int num, int offset)  {
 static void
 test_xmap1(xmap_constructor new_xmap, MPI_Comm comm)
 {
+  struct Xt_stripe src_stripe, dst_stripe;
   // source index list
-  Xt_int src_index_list[] = {1,2,3,4,5,6,7};
-  enum { num_src_indices = sizeof(src_index_list) / sizeof(src_index_list[0]) };
-  shift_idx(src_index_list, num_src_indices, 7);
+  src_stripe.nstrides = 7;
+  src_stripe.start = (Xt_int)(1 + (Xt_int)my_rank * src_stripe.nstrides);
+  src_stripe.stride = 1;
 
   // destination index list
-  Xt_int dst_index_list[] = {7,6,5,4,3,2,1};
-  enum { num_dst_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
-  shift_idx(dst_index_list, num_dst_indices, 7);
+  dst_stripe.nstrides = src_stripe.nstrides;
+  dst_stripe.start = (Xt_int)(src_stripe.start + src_stripe.nstrides - 1);
+  dst_stripe.stride = -1;
 
-  test_self_xmap_construct(src_index_list, num_src_indices,
-                           dst_index_list, num_dst_indices,
-                           new_xmap, comm);
+  test_self_xmap_construct_idxstripes(&src_stripe, 1, &dst_stripe, 1,
+                                      new_xmap, comm);
 }
 
 static void
 test_xmap2(xmap_constructor new_xmap, MPI_Comm comm)
 {
   // source index list
-  Xt_int src_index_list[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
-  enum { num_src_indices = sizeof(src_index_list) / sizeof(src_index_list[0]) };
-  shift_idx(src_index_list, num_src_indices, 100);
+  Xt_int src_indices[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
+  enum { num_src_indices = sizeof(src_indices) / sizeof(src_indices[0]) };
+  shift_idx(src_indices, num_src_indices, 100);
 
   // destination index list
-  Xt_int dst_index_list[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
-  enum { num_dst_indices = sizeof(dst_index_list) / sizeof(dst_index_list[0]) };
-  shift_idx(dst_index_list, num_dst_indices, 100);
+  Xt_int dst_indices[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
+  enum { num_dst_indices = sizeof(dst_indices) / sizeof(dst_indices[0]) };
+  shift_idx(dst_indices, num_dst_indices, 100);
 
-  test_self_xmap_construct(src_index_list, num_src_indices,
-                           dst_index_list, num_dst_indices,
-                           new_xmap, comm);
+  test_self_xmap_construct_idxvec(src_indices, num_src_indices,
+                                  dst_indices, num_dst_indices,
+                                  new_xmap, comm);
 }
 
 /*

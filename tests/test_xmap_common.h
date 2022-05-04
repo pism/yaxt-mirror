@@ -59,12 +59,30 @@ typedef Xt_xmap (*xmap_constructor)(Xt_idxlist src_idxlist,
                                     Xt_idxlist dst_idxlist,
                                     MPI_Comm comm);
 
+enum test_idxlist_size {
+  SMALL,
+  BIG,
+};
+
 int
 xt_xmap_self_test_main(xmap_constructor xmap_constructor);
+
+/* note: calls xt_idxlist_delete for src_idxlist and dst_idxlist */
 void
-test_self_xmap_construct(const Xt_int *src_index_list, int num_src_indices,
-                         const Xt_int *dst_index_list, int num_dst_indices,
+test_self_xmap_construct(Xt_idxlist src_idxlist,
+                         Xt_idxlist dst_idxlist,
                          xmap_constructor new_xmap, MPI_Comm comm);
+void
+test_self_xmap_construct_idxvec(
+  const Xt_int *src_index_list, int num_src_indices,
+  const Xt_int *dst_index_list, int num_dst_indices,
+  xmap_constructor new_xmap, MPI_Comm comm);
+
+void
+test_self_xmap_construct_idxstripes(
+  const struct Xt_stripe *src_index_list, int num_src_stripes,
+  const struct Xt_stripe *dst_index_list, int num_dst_stripes,
+  xmap_constructor new_xmap, MPI_Comm comm);
 
 int
 xt_xmap_parallel_test_main(xmap_constructor xmap_constructor);

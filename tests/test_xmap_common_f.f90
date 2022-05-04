@@ -47,11 +47,13 @@
 !
 #include "fc_feature_defs.inc"
 MODULE test_xmap_common
+  USE iso_c_binding, ONLY: c_int
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
-       xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
+       xt_stripe, xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
+       xt_idxstripes_new, xi => xt_int_kind, &
        xt_xmap, xt_xmap_copy, xt_xmap_delete, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
@@ -59,8 +61,12 @@ MODULE test_xmap_common
   IMPLICIT NONE
   PRIVATE
   INTEGER :: my_rank
-  INTEGER, PARAMETER :: xi = xt_int_kind
   PUBLIC :: xmap_self_test_main, test_self_xmap_construct
+  INTERFACE test_self_xmap_construct
+    MODULE PROCEDURE test_self_xmap_construct_idxlist
+    MODULE PROCEDURE test_self_xmap_construct_indices
+    MODULE PROCEDURE test_self_xmap_construct_stripes
+  END INTERFACE test_self_xmap_construct
   CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_common_f.f90'
 CONTAINS
   SUBROUTINE xmap_self_test_main(xmap_new)
@@ -133,9 +139,49 @@ CONTAINS
 
   END SUBROUTINE assert_xmap_is_to_self
 
-  SUBROUTINE test_self_xmap_construct(src_index_list, dst_index_list, xmap_new, comm)
-    INTEGER(xt_int_kind), INTENT(in) :: src_index_list(:), dst_index_list(:)
+  SUBROUTINE test_self_xmap_construct_stripes(src_stripes, dst_stripes, &
+       xmap_new, comm)
+    TYPE(xt_stripe), INTENT(in) :: src_stripes(:), dst_stripes(:)
+    INTERFACE
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
+        IMPORT :: xt_idxlist, xt_xmap
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+        TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+        INTEGER, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(in) :: comm
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    src_idxlist = xt_idxstripes_new(src_stripes)
+    dst_idxlist = xt_idxstripes_new(dst_stripes)
+    CALL test_self_xmap_construct(src_idxlist, dst_idxlist, xmap_new, comm)
+  END SUBROUTINE test_self_xmap_construct_stripes
+
+  SUBROUTINE test_self_xmap_construct_indices(src_indices, dst_indices, &
+       xmap_new, comm)
+    INTEGER(xi), INTENT(in) :: src_indices(:), dst_indices(:)
+    INTERFACE
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
+        IMPORT :: xt_idxlist, xt_xmap
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+        TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+        INTEGER, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
+    src_idxlist = xt_idxvec_new(src_indices)
+    dst_idxlist = xt_idxvec_new(dst_indices)
+    CALL test_self_xmap_construct(src_idxlist, dst_idxlist, xmap_new, comm)
+  END SUBROUTINE test_self_xmap_construct_indices
+
+  SUBROUTINE test_self_xmap_construct_idxlist(src_idxlist, dst_idxlist, &
+       xmap_new, comm)
+    TYPE(xt_idxlist), INTENT(inout) :: src_idxlist, dst_idxlist
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -149,8 +195,6 @@ CONTAINS
     INTEGER, INTENT(in) :: comm
 
     TYPE(xt_xmap) :: xmap, xmap_copy
-    src_idxlist = xt_idxvec_new(src_index_list)
-    dst_idxlist = xt_idxvec_new(dst_index_list)
 
     xmap = xmap_new(src_idxlist, dst_idxlist, comm)
     CALL xt_idxlist_delete(src_idxlist)
@@ -162,7 +206,7 @@ CONTAINS
 
     CALL xt_xmap_delete(xmap)
     CALL xt_xmap_delete(xmap_copy)
-  END SUBROUTINE test_self_xmap_construct
+  END SUBROUTINE test_self_xmap_construct_idxlist
 
   SUBROUTINE test_xmap1(xmap_new, comm)
     INTERFACE
