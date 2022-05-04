@@ -157,7 +157,7 @@ CONTAINS
         i = i + 2
       ELSE
         WRITE (0, *) 'unexpected command-line argument parsing error: ', &
-             TRIM(optarg)
+             optarg(1:arg_len)
         FLUSH(0)
         CALL test_abort('unexpected command-line argument', &
              filename, __LINE__)
