@@ -61,6 +61,8 @@ simple_test(MPI_Comm comm, Xt_config config);
 
 static void
 test_empty_redist(MPI_Comm comm, Xt_config config);
+static void
+test_empty_redist2(MPI_Comm comm, Xt_config config);
 
 static void
 test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size);
@@ -82,6 +84,8 @@ int main(int argc, char **argv) {
   simple_test(MPI_COMM_WORLD, config);
 
   test_empty_redist(MPI_COMM_WORLD, config);
+
+  test_empty_redist2(MPI_COMM_WORLD, config);
 
   // test with one redist used three times (with two different input data
   // displacements -> test of cache) (with default cache size)
@@ -191,6 +195,43 @@ test_empty_redist(MPI_Comm comm, Xt_config config)
   xt_redist_delete(redist_coll);
 }
 
+static void
+test_empty_redist2(MPI_Comm comm, Xt_config config)
+{ // test empty redist
+
+  // generate redist_collection
+  Xt_redist redist_coll
+    = xt_redist_collection_custom_new(NULL, 0, 1, comm, config);
+
+  // test communicator of redist
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll), comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+  // test exchange
+  static const double src_data[1] = {-1};
+  double dst_data[1] = {-2};
+
+  xt_redist_s_exchange(redist_coll, 0, NULL, NULL);
+  xt_redist_s_exchange1(redist_coll, src_data, dst_data);
+
+  static const double ref_dst_data[1] = {-2};
+
+  if (ref_dst_data[0] != dst_data[0])
+    PUT_ERR("error in xt_redist_s_exchange\n");
+
+  Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
+  dst_data[0] = -2;
+
+  xt_redist_s_exchange(redist_coll_copy, 0, NULL, NULL);
+  xt_redist_s_exchange1(redist_coll_copy, src_data, dst_data);
+
+  if (ref_dst_data[0] != dst_data[0])
+    PUT_ERR("error in xt_redist_s_exchange\n");
+
+  // clean up
+  xt_redist_delete(redist_coll_copy);
+  xt_redist_delete(redist_coll);
+}
 
 static void
 test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
