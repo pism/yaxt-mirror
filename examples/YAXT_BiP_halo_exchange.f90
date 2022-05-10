@@ -15,7 +15,7 @@ module data_mod
        xt_idxlist, xt_idxvec_new, xt_idxlist_delete, &
        xt_xmap, xt_xmap_dist_dir_new, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_off_new, xt_xmap_all2all_new, &
-       xt_redist_delete, xt_redist_s_exchange
+       xt_redist_delete, xt_redist_s_exchange, xt_int_kind
   use const_mod
   implicit none
 
@@ -66,8 +66,8 @@ function data_constructor(partition, halo, count_no) result(self)
 
   call system_clock(count_no(2))
   ! create decomposition descriptors
-  src_idxlist = xt_idxvec_new(src_indices, size(src_indices))
-  tgt_idxlist = xt_idxvec_new(tgt_indices, size(tgt_indices))
+  src_idxlist = xt_idxvec_new(int(src_indices,xt_int_kind), size(src_indices))
+  tgt_idxlist = xt_idxvec_new(int(tgt_indices,xt_int_kind), size(tgt_indices))
 
   call system_clock(count_no(3))
   ! generate exchange map
@@ -144,7 +144,7 @@ program YAXT_BiP_halo_exchange
 ! Can be run on virtually any number of MPI tasks and will partition accordingly
 
 use mpi
-use yaxt, only: xt_initialize, xt_finalize
+use yaxt, only: xt_initialize, xt_finalize, xt_int_kind
 use data_mod
 use const_mod
 implicit none
@@ -171,6 +171,11 @@ implicit none
   integer(int64), allocatable :: partition( : ), halo( : )
   integer(int32)              :: num_local, num_halo
   integer(int32)              :: ierror
+
+  if (xt_int_kind /= int64) then
+    print *, "ERROR: xt_int_kind /= int64; reconfigure yaxt accordingly"
+    stop
+  end if
 
   ! Read namelist input for dimensions of domain
   open(unit=50,file="YAXT_BiP.nml",status="old")
