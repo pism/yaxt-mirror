@@ -10,6 +10,7 @@
 /config/missing
 /config/test-driver
 /configure
+/configure~
 /include/config.h.in
 /include/config.h.in~
 /m4/libtool.m4
@@ -18,6 +19,7 @@
 /m4/ltversion.m4
 /m4/lt~obsolete.m4
 Makefile.in
+Makefile.in~
 
 # Configure stage files:
 .deps

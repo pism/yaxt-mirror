@@ -74,7 +74,7 @@ for patch in "${patches[@]}"; do
   patch -p1 <$patch
 done
 autoreconf -i
-find . -name Makefile.in -print0 | xargs -0 sed -i -e 's/[	 ][	 ]*$//'
+find . -name Makefile.in -print0 | xargs -0 sed -i~ -e 's/[	 ][	 ]*$//'
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
 wget -o /dev/null -O config/config.guess \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
