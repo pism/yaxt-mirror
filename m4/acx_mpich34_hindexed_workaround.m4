@@ -97,7 +97,7 @@ extern pthread_mutex_t yaksui_atomic_mutex;],
      [echo "" >"$acx_yaksa_add_workaround/yaksa_config.h"],
      [echo "@%:@define HAVE_C11_ATOMICS 1" >"$acx_yaksa_add_workaround/yaksa_config.h"])
    dnl 3. build fixed yaksa_indexed.c
-   patch -p5 -d "$acx_yaksa_add_workaround" -o - >conftest.c \
+   patch -p5 -d "$acx_yaksa_add_workaround" -o "$ac_pwd/conftest.c" \
      < "$srcdir/config/checkpatch/mpich_3.4_yaksa_hindexed.patch" \
      || { is_affected_mpich=false ; break ; }
    AC_COMPILE_IFELSE(,
