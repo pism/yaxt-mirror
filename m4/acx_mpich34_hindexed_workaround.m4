@@ -82,7 +82,8 @@ AC_DEFUN([ACX_MPICH34_DT_WORKAROUND],
      "$acx_temp"'src/backend/cuda/include/yaksuri_cuda_pre.h' \
      "$acx_temp"'src/backend/cuda/include/yaksuri_cuda_post.h' \
      "$acx_temp"'src/backend/ze/include/yaksuri_ze_pre.h' \
-     "$acx_temp"'src/backend/ze/include/yaksuri_ze_post.h'
+     "$acx_temp"'src/backend/ze/include/yaksuri_ze_post.h' \
+     >&AS_MESSAGE_LOG_FD 2>&1
    dnl 2.b. and patch version into header template
    sed -e 's/@YAKSA_NUMVERSION@/unreleased/;s/@YAKSA_VERSION@/unreleased/' \
      yaksa.h.in >yaksa.h
