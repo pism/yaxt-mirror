@@ -49,9 +49,10 @@ EXTRA_PROGRAMS = 						\
 
 
 if with_fortran
-EXTRA_PROGRAMS += 						\
-	row2col_f						\
-	unstruct_halo_exchange_f
+EXTRA_PROGRAMS +=							\
+	row2col_f										\
+	unstruct_halo_exchange_f		\
+	YAXT_BiP_halo_exchange
 endif
 
 noinst_PROGRAMS =
@@ -75,6 +76,9 @@ row2col_f_LDADD = $(XT_FC_LDADD)
 
 tr_gp2fs_SOURCES = tr_gp2fs.c
 tr_gp2fs_LDADD = $(LDADD) -lm
+
+YAXT_BiP_halo_exchange_SOURCES = YAXT_BiP_halo_exchange.f90
+YAXT_BiP_halo_exchange_LDADD = $(XT_FC_LDADD)
 
 unstruct_halo_exchange_f_SOURCES = unstruct_halo_exchange_f.f90
 unstruct_halo_exchange_f_LDADD = $(XT_FC_LDADD)
