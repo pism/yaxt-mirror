@@ -40,9 +40,15 @@
 #
 case $(uname -s) in
   Darwin)
-    libtoolize=glibtoolize ;;
+    libtoolize=glibtoolize
+    if which gsed >/dev/null 2>&1; then
+      sedi='gsed -i'
+    else
+      sedi="sed -i ''"
+    fi ;;
   *)
-    libtoolize=libtoolize ;;
+    libtoolize=libtoolize
+    sedi='sed -i' ;;
 esac
 
 $libtoolize --force --copy
@@ -74,7 +80,7 @@ for patch in "${patches[@]}"; do
   patch -p1 <$patch
 done
 autoreconf -i
-find . -name Makefile.in -print0 | xargs -0 sed -i -e 's/[	 ][	 ]*$//'
+eval "find . -name Makefile.in -print0 | xargs -0 $sedi -e 's/[	 ][	 ]*\$//'"
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
 wget -o /dev/null -O config/config.guess \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
