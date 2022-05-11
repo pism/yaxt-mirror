@@ -24,13 +24,14 @@ Makefile.in
 /config.log
 /config.lt
 /config.status
+/config/workarounds
 /examples/row2col_run
 /examples/rrobin_run
 /examples/tr_gp2fs_run
 /examples/unstruct_halo_exchange_run
 /include/config.h
-/include/stamp-h1
 /include/fc_feature_defs.inc
+/include/stamp-h1
 /libtool
 /perf/Makefile
 /perf/perf_idxsection_get_positions_of_indices_run
@@ -97,6 +98,8 @@ Makefile
 /inst_headers/yaxt.h
 /perf/perf_idxsection_get_positions_of_indices
 /perf/perf_sparse_array_gather
+/src/mpich_workaround.c
+/src/ompi_workaround.c
 /src/xtinclude_Makefile.inc
 
 # Documentation stage files:
