@@ -105,8 +105,8 @@ CONTAINS
   END SUBROUTINE xmap_self_test_main
 
   SUBROUTINE shift_idx(idx, offset)
-    INTEGER(xt_int_kind), INTENT(inout) :: idx(:)
-    INTEGER(xt_int_kind), INTENT(in) :: offset
+    INTEGER(xi), INTENT(inout) :: idx(:)
+    INTEGER(xi), INTENT(in) :: offset
     INTEGER :: i
     DO i = 1, SIZE(idx)
       idx(i) = idx(i) + INT(my_rank, xi) * offset
@@ -146,7 +146,7 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER, INTENT(inout) :: comm
+    INTEGER, INTENT(in) :: comm
 
     TYPE(xt_xmap) :: xmap, xmap_copy
     src_idxlist = xt_idxvec_new(src_index_list)
@@ -175,11 +175,11 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER, INTENT(inout) :: comm
+    INTEGER, INTENT(in) :: comm
 
-    INTEGER(xt_int_kind) :: i
-    INTEGER(xt_int_kind), PARAMETER :: num_src_idx = 7, num_dst_idx = 7
-    INTEGER(xt_int_kind) :: src_index_list(num_src_idx), &
+    INTEGER(xi) :: i
+    INTEGER(xi), PARAMETER :: num_src_idx = 7, num_dst_idx = 7
+    INTEGER(xi) :: src_index_list(num_src_idx), &
          dst_index_list(num_dst_idx)
     DO i = 1_xi, num_src_idx
       src_index_list(i) = i
@@ -203,9 +203,9 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER, INTENT(inout) :: comm
+    INTEGER, INTENT(in) :: comm
 
-    INTEGER(xt_int_kind) :: src_index_list(14), dst_index_list(13)
+    INTEGER(xi) :: src_index_list(14), dst_index_list(13)
     src_index_list = &
          (/ 5_xi, 67_xi, 4_xi, 5_xi, 13_xi, &
          &  9_xi,  2_xi, 1_xi, 0_xi, 96_xi, &
