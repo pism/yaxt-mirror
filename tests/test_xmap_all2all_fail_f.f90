@@ -45,21 +45,26 @@
 !
 #include "fc_feature_defs.inc"
 PROGRAM test_xmap_all2all_fail
+  USE iso_c_binding, ONLY: c_int
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
+       xt_stripe, &
        xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
        xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_set_abort_handler, xt_restore_default_abort_hndl
+  USE test_xmap_common, ONLY : test_self_xmap_construct
   IMPLICIT NONE
   INTERFACE
-    SUBROUTINE xfail_abort(comm, msg, source, line)
-      INTEGER, INTENT(in) :: comm, line
-      CHARACTER(len=*), INTENT(in) :: msg, source
-    END SUBROUTINE xfail_abort
+    FUNCTION xmap_new_fail3(src_idxlist, dst_idxlist, comm) RESULT(xmap)
+      IMPORT :: xt_xmap, xt_idxlist
+      TYPE(xt_xmap) :: xmap
+      TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
+      INTEGER, INTENT(in) :: comm
+    END FUNCTION xmap_new_fail3
   END INTERFACE
   INTEGER, PARAMETER :: xi = xt_int_kind
   CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_all2all_fail_f.f90'
@@ -68,68 +73,29 @@ PROGRAM test_xmap_all2all_fail
   CALL xt_initialize(mpi_comm_world)
   CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
   CALL parse_options
-  CALL test_xmap1(list_size)
+  CALL test_xmap1(list_size, mpi_comm_world)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
-  SUBROUTINE shift_idx(idx, offset)
-    INTEGER(xt_int_kind), INTENT(inout) :: idx(:)
-    INTEGER(xt_int_kind), INTENT(in) :: offset
-    INTEGER :: i
-    DO i = 1, SIZE(idx)
-      idx(i) = idx(i) + INT(my_rank, xi) * offset
-    END DO
-  END SUBROUTINE shift_idx
+  SUBROUTINE test_xmap1(num_idx, comm)
+    INTEGER, INTENT(in) :: num_idx, comm
+    TYPE(xt_stripe) :: src_stripe(1), dst_stripe(1)
 
-  SUBROUTINE test_xmap(src_index_list, dst_index_list)
-    INTEGER(xt_int_kind), INTENT(in) :: src_index_list(:), dst_index_list(:)
-    TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
-    TYPE(xt_xmap) :: xmap
-    INTEGER :: rank(1)
-    src_idxlist = xt_idxvec_new(src_index_list)
-    dst_idxlist = xt_idxvec_new(dst_index_list)
+    ! soruce index list
+    src_stripe(1)%nstrides = INT(num_idx, c_int)
+    src_stripe(1)%start = 1_xi + INT(my_rank, xi) * INT(num_idx, xi)
+    src_stripe(1)%stride = 1_xi
 
-    CALL xt_set_abort_handler(xfail_abort)
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
-    CALL xt_restore_default_abort_hndl
-    CALL xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
-
-    IF (xt_xmap_get_num_destinations(xmap) /= 1) &
-         CALL test_abort("error in xmap construction", filename, __LINE__)
-
-    IF (xt_xmap_get_num_sources(xmap) /= 1) &
-         CALL test_abort("error in xt_xmap_get_num_sources", filename, __LINE__)
-    CALL xt_xmap_get_destination_ranks(xmap, rank)
-    IF (rank(1) /= my_rank) &
-         CALL test_abort("error in xt_xmap_get_destination_ranks", &
-         filename, __LINE__)
-
-    CALL xt_xmap_get_source_ranks(xmap, rank)
-    IF (rank(1) /= my_rank) &
-         CALL test_abort("error in xt_xmap_get_source_ranks", &
-         filename, __LINE__)
-    CALL xt_xmap_delete(xmap)
-  END SUBROUTINE test_xmap
-
-  SUBROUTINE test_xmap1(num_idx)
-    INTEGER, INTENT(in) :: num_idx
-    INTEGER :: i
-    INTEGER(xt_int_kind) :: src_index_list(num_idx), &
-         dst_index_list(num_idx)
-    DO i = 1, num_idx
-      src_index_list(i) = INT(i, xi)
-    END DO
-    CALL shift_idx(src_index_list, INT(num_idx, xi))
-    DO i = 1, num_idx
-      dst_index_list(i) = INT(num_idx - i + 2, xi)
-    END DO
-    CALL shift_idx(dst_index_list, INT(num_idx, xi))
+    ! destination index list
+    dst_stripe(1)%nstrides = INT(num_idx, c_int)
+    dst_stripe(1)%start = src_stripe(1)%start + src_stripe(1)%nstrides
+    dst_stripe(1)%stride = -1_xi
     ! note: this should fail because dst/src indices don't match
-    CALL test_xmap(src_index_list, dst_index_list)
+    CALL test_self_xmap_construct(src_stripe, dst_stripe,&
+         & xmap_new_fail3, comm)
   END SUBROUTINE test_xmap1
 
   SUBROUTINE parse_options
@@ -197,6 +163,22 @@ SUBROUTINE xfail_abort(comm, msg, source, line)
   CALL posix_exit(3_c_int)
 END SUBROUTINE xfail_abort
 
+FUNCTION xmap_new_fail3(src_idxlist, dst_idxlist, comm) RESULT(xmap)
+  USE yaxt, ONLY: xt_xmap, xt_idxlist, xt_xmap_all2all_new, &
+       xt_set_abort_handler, xt_restore_default_abort_hndl
+  TYPE(xt_xmap) :: xmap
+  TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
+  INTEGER, INTENT(in) :: comm
+  INTERFACE
+    SUBROUTINE xfail_abort(comm, msg, source, line)
+      INTEGER, INTENT(in) :: comm, line
+      CHARACTER(len=*), INTENT(in) :: msg, source
+    END SUBROUTINE xfail_abort
+  END INTERFACE
+  CALL xt_set_abort_handler(xfail_abort)
+  xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm)
+  CALL xt_restore_default_abort_hndl
+END FUNCTION xmap_new_fail3
 
 !
 ! Local Variables:

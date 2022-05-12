@@ -62,76 +62,83 @@
 
 #define VERBOSE
 #include "tests.h"
+#include "test_xmap_common.h"
 
 /* If we're not using GNU C, elide __attribute__ */
 #ifndef __GNUC__
 #  define  __attribute__(x)  /*NOTHING*/
 #endif
 
-static enum {
-  SMALL,
-  BIG,
-} index_list_size = SMALL;
+static enum test_idxlist_size index_list_size = SMALL;
 
 static void
 parse_options(int *argc, char ***argv);
-static void
-xfail_abort(MPI_Comm comm, const char *msg, const char *source, int line)
-  __attribute__((noreturn));
 
 typedef void (*Xt_abort_func)(MPI_Comm comm, const char *msg,
                               const char *source, int line)
   __attribute__((noreturn));
 extern Xt_abort_func Xt_abort;
 
+static Xt_xmap
+xmap_new_fail3(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm);
+
+
 
 int main(int argc, char **argv) {
 
    // init mpi
-   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  MPI_Comm comm = MPI_COMM_WORLD;
+  xt_mpi_call(MPI_Init(NULL, NULL), comm);
 
-   xt_initialize(MPI_COMM_WORLD);
+  xt_initialize(comm);
 
-   int my_rank;
-   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  int my_rank;
+  MPI_Comm_rank(comm, &my_rank);
 
-   parse_options(&argc, &argv);
+  parse_options(&argc, &argv);
 
-   {
-      // source index list
-      struct Xt_stripe src_stripe;
-      src_stripe.nstrides = (index_list_size == SMALL)?7:1023;
-      src_stripe.start = (Xt_int)(1 + (Xt_int)my_rank * src_stripe.nstrides);
-      src_stripe.stride = 1;
-      Xt_idxlist src_idxlist = xt_idxstripes_new(&src_stripe, 1);
+  {
+    // source index list
+    struct Xt_stripe src_stripe;
+    src_stripe.nstrides = (index_list_size == SMALL)?7:1023;
+    src_stripe.start = (Xt_int)(1 + (Xt_int)my_rank * src_stripe.nstrides);
+    src_stripe.stride = 1;
 
-      // destination index list
-      struct Xt_stripe dst_stripe;
-      dst_stripe.nstrides = src_stripe.nstrides;
-      dst_stripe.start = (Xt_int)(src_stripe.start + src_stripe.nstrides);
-      dst_stripe.stride = -1;
-      Xt_idxlist dst_idxlist = xt_idxstripes_new(&dst_stripe, 1);
+    // destination index list
+    struct Xt_stripe dst_stripe;
+    dst_stripe.nstrides = src_stripe.nstrides;
+    dst_stripe.start = (Xt_int)(src_stripe.start + src_stripe.nstrides);
+    dst_stripe.stride = -1;
 
-      // test of exchange map
-      // NOTE: this should fail
-      Xt_abort = xfail_abort;
-      Xt_xmap xmap
-        = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    test_self_xmap_construct_idxstripes(&src_stripe, 1, &dst_stripe, 1,
+                                        xmap_new_fail3, comm);
+  }
 
-      /* this position should not be reached */
-      MPI_Abort(MPI_COMM_WORLD, 1);
+  xt_finalize();
+  xt_mpi_call(MPI_Finalize(), comm);
 
-      // clean up
-      xt_xmap_delete(xmap);
-      xt_idxlist_delete(src_idxlist);
-      xt_idxlist_delete(dst_idxlist);
-   }
-
-   xt_finalize();
-   xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
-
-   return TEST_EXIT_CODE;
+  return TEST_EXIT_CODE;
 }
+
+static void
+xfail_abort(MPI_Comm comm, const char *msg, const char *source, int line)
+  __attribute__((noreturn));
+
+static Xt_xmap
+xmap_new_fail3(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist, MPI_Comm comm)
+{
+  Xt_abort_func orig_xt_abort = Xt_abort;
+  // test of exchange map constructor error handling
+  Xt_abort = xfail_abort;
+  // NOTE: this is the call which should fail
+  Xt_xmap xmap
+    = xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm);
+  /* this position should not be reached */
+  Xt_abort = orig_xt_abort;
+  MPI_Abort(MPI_COMM_WORLD, 1);
+  return xmap;
+}
+
 
 static void
 parse_options(int *argc, char ***argv)
