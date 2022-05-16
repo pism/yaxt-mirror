@@ -63,7 +63,7 @@ stages:
 
 .install_gcovr: &install_gcovr
   - export PATH=$PATH:$HOME/.local/bin
-  - pip install gcovr
+  - pip install gcovr==5.0
 
 .check_warning:
   variables:
