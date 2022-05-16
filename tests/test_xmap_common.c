@@ -56,7 +56,8 @@
 #include "test_xmap_common.h"
 
 static void
-test_xmap1(xmap_constructor new_xmap, MPI_Comm comm);
+test_xmap1(xmap_constructor new_xmap,
+           int lsize, MPI_Comm comm);
 static void
 test_xmap2(xmap_constructor new_xmap, MPI_Comm comm);
 
@@ -78,7 +79,9 @@ xt_xmap_self_test_main(xmap_constructor new_xmap)
   xt_mpi_comm_mark_exclusive(comms[1]);
 
   for (size_t i = 0; i < 2; ++i) {
-    test_xmap1(new_xmap, comms[i]);
+    static const int lsizes[2] = { 7, 1023 };
+    for (size_t j = 0; j < 2; ++j)
+      test_xmap1(new_xmap, lsizes[j], comms[i]);
     test_xmap2(new_xmap, comms[i]);
   }
 
@@ -158,17 +161,18 @@ static inline void shift_idx(Xt_int idx[], int num, int offset)  {
 }
 
 static void
-test_xmap1(xmap_constructor new_xmap, MPI_Comm comm)
+test_xmap1(xmap_constructor new_xmap,
+           int lsize, MPI_Comm comm)
 {
   struct Xt_stripe src_stripe, dst_stripe;
   // source index list
-  src_stripe.nstrides = 7;
-  src_stripe.start = (Xt_int)(1 + (Xt_int)my_rank * src_stripe.nstrides);
+  src_stripe.nstrides = lsize;
+  src_stripe.start = (Xt_int)(1 + (Xt_int)my_rank * (Xt_int)lsize);
   src_stripe.stride = 1;
 
   // destination index list
-  dst_stripe.nstrides = src_stripe.nstrides;
-  dst_stripe.start = (Xt_int)(src_stripe.start + src_stripe.nstrides - 1);
+  dst_stripe.nstrides = lsize;
+  dst_stripe.start = (Xt_int)(src_stripe.start + lsize - 1);
   dst_stripe.stride = -1;
 
   test_self_xmap_construct_idxstripes(&src_stripe, 1, &dst_stripe, 1,

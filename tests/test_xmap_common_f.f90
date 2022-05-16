@@ -80,8 +80,9 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
-    INTEGER :: ierror, i
+    INTEGER :: ierror, i, j
     INTEGER :: comms(2)
+    INTEGER(xi), PARAMETER :: lsize(2) = (/ 7_xi, 1023_xi /)
 
     CALL init_mpi
     CALL xt_initialize(mpi_comm_world)
@@ -96,7 +97,10 @@ CONTAINS
     CALL xt_mpi_comm_mark_exclusive(comms(2))
 
     DO i = 1, SIZE(comms)
-      CALL test_xmap1(xmap_new, comms(i))
+      DO j = 1, 2
+        CALL test_xmap1a(xmap_new, lsize(j), comms(i))
+        CALL test_xmap1b(xmap_new, lsize(j), comms(i))
+      END DO
       CALL test_xmap2(xmap_new, comms(i))
     END DO
 
@@ -208,7 +212,7 @@ CONTAINS
     CALL xt_xmap_delete(xmap_copy)
   END SUBROUTINE test_self_xmap_construct_idxlist
 
-  SUBROUTINE test_xmap1(xmap_new, comm)
+  SUBROUTINE test_xmap1a(xmap_new, lsize, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         IMPORT :: xt_idxlist, xt_xmap
@@ -219,22 +223,45 @@ CONTAINS
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
     END INTERFACE
+    INTEGER(xi), INTENT(in) :: lsize
     INTEGER, INTENT(in) :: comm
 
-    INTEGER(xi) :: i
-    INTEGER(xi), PARAMETER :: num_src_idx = 7, num_dst_idx = 7
-    INTEGER(xi) :: src_index_list(num_src_idx), &
-         dst_index_list(num_dst_idx)
-    DO i = 1_xi, num_src_idx
-      src_index_list(i) = i
+    INTEGER(xt_int_kind) :: src_indices(lsize), dst_indices(lsize), i
+    DO i = 1_xi, lsize
+      src_indices(i) = i
     END DO
-    CALL shift_idx(src_index_list, num_src_idx)
-    DO i = 1_xi, num_dst_idx
-      dst_index_list(i) = num_dst_idx - i + 1_xi
+    CALL shift_idx(src_indices, lsize)
+    DO i = 1_xi, lsize
+      dst_indices(i) = lsize - i + 1_xi
     END DO
-    CALL shift_idx(dst_index_list, num_dst_idx)
-    CALL test_self_xmap_construct(src_index_list, dst_index_list, xmap_new, comm)
-  END SUBROUTINE test_xmap1
+    CALL shift_idx(dst_indices, lsize)
+
+    CALL test_self_xmap_construct(src_indices, dst_indices, &
+         xmap_new, comm)
+  END SUBROUTINE test_xmap1a
+
+  SUBROUTINE test_xmap1b(xmap_new, lsize, comm)
+    INTERFACE
+      FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
+        IMPORT :: xt_idxlist, xt_xmap
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+        TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+        INTEGER, INTENT(in) :: comm
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_new
+    END INTERFACE
+    INTEGER(xi), INTENT(in) :: lsize
+    INTEGER, INTENT(in) :: comm
+
+    TYPE(xt_stripe) :: src_stripe(1), dst_stripe(1)
+    src_stripe(1) = xt_stripe(1_xi + INT(my_rank, xi) * lsize, &
+         1_xi, INT(lsize, c_int))
+    dst_stripe(1) = xt_stripe(INT(my_rank+1, xi) * lsize, &
+         -1_xi, INT(lsize, c_int))
+    CALL test_self_xmap_construct(src_stripe, dst_stripe, &
+         xmap_new, comm)
+  END SUBROUTINE test_xmap1b
 
   SUBROUTINE test_xmap2(xmap_new, comm)
     INTERFACE
