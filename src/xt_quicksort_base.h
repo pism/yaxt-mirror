@@ -162,6 +162,7 @@
 #define MED3 NAME_COMPOSE(med3,SORT_TYPE_SUFFIX)
 #define VECSWAP NAME_COMPOSE(vecswap,SORT_TYPE_SUFFIX)
 #define XT_QUICKSORT NAME_COMPOSE(xt_quicksort,SORT_TYPE_SUFFIX)
+#define XT_QUICKSORT_INNER NAME_COMPOSE(xt_qsort_i,SORT_TYPE_SUFFIX)
 
 static inline size_t
 MED3(const SORT_TYPE *a, size_t i, size_t j, size_t k
@@ -188,8 +189,8 @@ VECSWAP(SORT_TYPE *restrict a, size_t ia, size_t ib, size_t n XT_SORT_VECSWAP_EX
     SWAP(ia+i, ib+i);
 }
 
-XT_SORTFUNC_DECL
-void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
+static
+void XT_QUICKSORT_INNER(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
 {
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
@@ -257,7 +258,7 @@ void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
     pdiff = MIN(d - c, n - d - 1);
     VECSWAP(a, b, n - pdiff, pdiff XT_SORT_VECSWAP_EXTRA_ARGS_PASS);
     if ((pdiff = b - i) > 1U)
-      XT_QUICKSORT(a, pdiff XT_SORT_EXTRA_ARGS_PASS);
+      XT_QUICKSORT_INNER(a, pdiff XT_SORT_EXTRA_ARGS_PASS);
     if ((pdiff = d - c) > 1U) {
       /* Iterate rather than recurse to save stack space */
       size_t adv = n - pdiff;
@@ -270,6 +271,13 @@ void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
   }
 #undef MIN
 }
+
+XT_SORTFUNC_DECL
+void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
+{
+  XT_QUICKSORT_INNER(a, n XT_SORT_EXTRA_ARGS_PASS);
+}
+
 
 #ifdef XT_SORT_MED3_EXTRA_ARGS_PASS_UNDEF
 #undef XT_SORT_MED3_EXTRA_ARGS_PASS
