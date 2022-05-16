@@ -139,6 +139,16 @@
 #define XT_SORT_VECSWAP_EXTRA_ARGS_PASS_UNDEF
 #endif
 
+#ifndef XT_SORT_MED3_EXTRA_ARGS_DECL
+#define XT_SORT_MED3_EXTRA_ARGS_DECL XT_SORT_EXTRA_ARGS_DECL
+#define XT_SORT_MED3_EXTRA_ARGS_DECL_UNDEF
+#endif
+
+#ifndef XT_SORT_MED3_EXTRA_ARGS_PASS
+#define XT_SORT_MED3_EXTRA_ARGS_PASS XT_SORT_EXTRA_ARGS_PASS
+#define XT_SORT_MED3_EXTRA_ARGS_PASS_UNDEF
+#endif
+
 #ifndef XT_SORT_EXTRA_ARGS_SWAP
 #define XT_SORT_EXTRA_ARGS_SWAP(i,j)
 #define XT_SORT_EXTRA_ARGS_SWAP_UNDEF
@@ -154,7 +164,8 @@
 #define XT_QUICKSORT NAME_COMPOSE(xt_quicksort,SORT_TYPE_SUFFIX)
 
 static inline size_t
-MED3(const SORT_TYPE *a, size_t i, size_t j, size_t k XT_SORT_EXTRA_ARGS_DECL)
+MED3(const SORT_TYPE *a, size_t i, size_t j, size_t k
+     XT_SORT_MED3_EXTRA_ARGS_DECL)
 {
   return SORT_TYPE_CMP_LT(a[i],a[j],i,j) ?
     (SORT_TYPE_CMP_LT(a[j],a[k],j,k) ?
@@ -196,11 +207,14 @@ void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
         size_t l = 0, k = n - 1;
         if (n > 40) {
           size_t d = n / 8;
-          l = MED3(a, l,          l + d,  l + 2 * d XT_SORT_EXTRA_ARGS_PASS);
-          m = MED3(a, m - d,      m,      m + d     XT_SORT_EXTRA_ARGS_PASS);
-          k = MED3(a, k - 2 * d,  k - d, k          XT_SORT_EXTRA_ARGS_PASS);
+          l = MED3(a, l,          l + d,  l + 2 * d
+                   XT_SORT_MED3_EXTRA_ARGS_PASS);
+          m = MED3(a, m - d,      m,      m + d
+                   XT_SORT_MED3_EXTRA_ARGS_PASS);
+          k = MED3(a, k - 2 * d,  k - d, k
+                   XT_SORT_MED3_EXTRA_ARGS_PASS);
         }
-        m = MED3(a, l,  m,  k XT_SORT_EXTRA_ARGS_PASS);
+        m = MED3(a, l,  m,  k XT_SORT_MED3_EXTRA_ARGS_PASS);
       }
       SWAP(0, m);
     }
@@ -256,6 +270,16 @@ void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
   }
 #undef MIN
 }
+
+#ifdef XT_SORT_MED3_EXTRA_ARGS_PASS_UNDEF
+#undef XT_SORT_MED3_EXTRA_ARGS_PASS
+#undef XT_SORT_MED3_EXTRA_ARGS_PASS_UNDEF
+#endif
+
+#ifdef XT_SORT_MED3_EXTRA_ARGS_DECL_UNDEF
+#undef XT_SORT_MED3_EXTRA_ARGS_DECL
+#undef XT_SORT_MED3_EXTRA_ARGS_DECL_UNDEF
+#endif
 
 #ifdef XT_SORT_VECSWAP_EXTRA_ARGS_PASS_UNDEF
 #undef XT_SORT_VECSWAP_EXTRA_ARGS_PASS
