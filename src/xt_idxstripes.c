@@ -588,7 +588,7 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
   int stride_a_bits = xt_int_bits - xinlz((Xt_uint)abs_stride_a),
     stride_bits = xt_int_bits - xinlz((Xt_uint)abs_stride_b) + stride_a_bits,
     product_bits;
-  if (bsb.representative != bsa.representative)
+  if (eg.u && bsb.representative != bsa.representative)
     product_bits =
       xt_int_bits - xinlz((Xt_uint)XT_INT_ABS(eg.u))
 #ifdef XT_LONG
