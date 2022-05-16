@@ -231,7 +231,7 @@ void XT_QUICKSORT(SORT_TYPE *restrict a, size_t n XT_SORT_EXTRA_ARGS_DECL)
       ++b;
       --c;
     }
-    if (!swap_cnt) {  /* Switch to insertion sort */
+    if (n < (16384 / sizeof (SORT_TYPE)) && !swap_cnt) {  /* Switch to insertion sort */
       for (size_t m = 1; m < n; ++m)
         for (size_t l = m; l > 0 && SORT_TYPE_CMP_LT(a[l], a[l-1], l, l-1); --l)
           SWAP(l, l-1);
