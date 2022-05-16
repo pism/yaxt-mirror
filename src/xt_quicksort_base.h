@@ -158,7 +158,7 @@ MED3(const SORT_TYPE *a, size_t i, size_t j, size_t k XT_SORT_EXTRA_ARGS_DECL)
 {
   return SORT_TYPE_CMP_LT(a[i],a[j],i,j) ?
     (SORT_TYPE_CMP_LT(a[j],a[k],j,k) ?
-     j : (SORT_TYPE_CMP_LT(a[i],a[k],i,k) ? i : k ))
+     j : (SORT_TYPE_CMP_LT(a[i],a[k],i,k) ? k : i ))
     : (SORT_TYPE_CMP_LT(a[k],a[j],k,j) ?
        j : (SORT_TYPE_CMP_LT(a[i],a[k],i,k) ? i : k));
 }
