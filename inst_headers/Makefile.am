@@ -44,8 +44,6 @@ xtincludedir = $(includedir)/xt
 
 nodist_include_HEADERS = yaxt.h
 
-BUILT_SOURCES = yaxt.h
-
 SUBDIRS =
 DIST_SUBDIRS =
 if with_fortran
@@ -104,10 +102,6 @@ install-data-local: yaxt.h $(xtinclude_HEADERS)
 
 uninstall-local:
 	rm -rf "$(DESTDIR)$(xtincludedir)"
-
-dist-hook:
-	-rm $(distdir)/xt/*.h
-	-rmdir $(distdir)/xt
 
 #
 # Local Variables:
