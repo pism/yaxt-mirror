@@ -154,7 +154,8 @@ clean-local:
 distclean-local: clean-local
 	-for d in $(SUBDIRS) ; do \
 		test $$d = . || (rm -f $$d/Makefile ; test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir $$d) ; done
-	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir include util
+	-rm -rf config/workarounds
+	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir include util config
 install-exec-local:
 	@for d in $(SUBDIRS); do \
 	  test $$d = . -o $(srcdir)/$$d/Makefile.in -ot $$d/Makefile || \
