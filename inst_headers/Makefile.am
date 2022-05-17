@@ -45,10 +45,8 @@ xtincludedir = $(includedir)/xt
 nodist_include_HEADERS = yaxt.h
 
 SUBDIRS =
-DIST_SUBDIRS =
 if with_fortran
-SUBDIRS += . f90
-DIST_SUBDIRS += f90 .
+SUBDIRS += f90
 endif
 
 ../src/xtinclude_Makefile.inc:
@@ -87,9 +85,6 @@ clean-local:
 	rm -rf xt yaxt.h
 
 distclean-local:
-if ! with_fortran
-	rm -f f90/Makefile
-endif
 	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir f90
 
 install-data-local: yaxt.h $(xtinclude_HEADERS)
