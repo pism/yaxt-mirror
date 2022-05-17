@@ -104,7 +104,9 @@ extern pthread_mutex_t yaksui_atomic_mutex;],
      [acx_yaksa_add_workaround="$acx_yaksa_add_workaround/xt_yaksa_indexed.c"
       mv conftest.c "$acx_yaksa_add_workaround"
       ACX_MV_OBJ([conftest],[mpich_workaround])],
-     [is_affected_mpich=false ; break])
+     [is_affected_mpich=false
+      rm -f conftest.$ac_ext])
+   $is_affected_mpich || break
    dnl 4. verify listed tests now succeed
    CPPFLAGS=$acx_saved_CPPFLAGS
    LIBS="mpich_workaround.$ac_objext $LIBS"

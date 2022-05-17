@@ -151,7 +151,9 @@ s/^ *//;s/ *$//'`])
    as_dir=src as_fn_mkdir_p
    AC_COMPILE_IFELSE(,
      [ACX_MV_OBJ([conftest],[ompi_workaround])],
-     [is_affected_ompi=false ; break])
+     [is_affected_ompi=false])
+   rm -f conftest.$ac_ext
+   $is_affected_ompi || break
    dnl 4. verify listed tests now succeed
    CPPFLAGS=$acx_saved_CPPFLAGS
    CFLAGS=$acx_saved_CFLAGS
