@@ -50,12 +50,7 @@ PROGRAM test_xmap_all2all_fail
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
-       xt_stripe, &
-       xt_idxlist, xt_idxlist_delete, xt_idxvec_new, &
-       xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
-       xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
-       xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
-       xt_set_abort_handler, xt_restore_default_abort_hndl
+       xt_stripe, xt_idxlist, xt_xmap
   USE test_xmap_common, ONLY : test_self_xmap_construct
   IMPLICIT NONE
   INTERFACE
