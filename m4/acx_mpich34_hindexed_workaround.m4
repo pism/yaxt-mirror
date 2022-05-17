@@ -112,6 +112,7 @@ extern pthread_mutex_t yaksui_atomic_mutex;],
    LIBS="mpich_workaround.$ac_objext $LIBS"
    acx_mpich_check_dir=`echo "acx_mpi_check_src_" | sed -e 's@/@<:@^/@:>@*$[]@@'`
    ACX_MPI_DEFECTS([$acx_mpich_check_dir],, [is_affected_mpich=false], [$2])
+   rm -f "mpich_workaround."*
    break
    done
    CPPFLAGS=$acx_saved_CPPFLAGS
