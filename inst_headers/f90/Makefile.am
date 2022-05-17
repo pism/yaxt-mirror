@@ -159,7 +159,7 @@ $(XT_XMAP_RENAME_MOD_NAME).$(FCMODEXT): ../../src/$(XT_XMAP_RENAME_MOD_NAME).$(F
 ##MODULE_RECIPE_MARKER do not remove ##
 
 ##INCLUDE_HEADER_MARKER do not remove ##
-include_HEADERS= \
+nodist_include_HEADERS= \
 	$(XT_XMAP_RENAME_MOD_NAME).$(FCMODEXT) \
 	$(XT_REDIST_RENAME_MOD_NAME).$(FCMODEXT) \
 	$(XT_CONFIG_F_MOD_NAME).$(FCMODEXT) \
@@ -182,10 +182,6 @@ include_HEADERS= \
 	$(XT_IDXVEC_MOD_NAME).$(FCMODEXT) \
 	$(XT_IDXSTRIPES_MOD_NAME).$(FCMODEXT) \
 	$(YAXT_MOD_NAME).$(FCMODEXT)
-
-dist-hook:
-	for nondistfile in $(noinst_HEADERS) $(include_HEADERS) ; do \
-	  rm -f $(distdir)/$$nondistfile ; done
 
 clean-local:
 	rm -f *.$(FCMODEXT)
