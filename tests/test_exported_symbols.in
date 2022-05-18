@@ -53,7 +53,7 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
   exp_sym_prefix='[0-9a-fA-F]*[ 	][ 	]*[TDBGRSVW][ 	]'
   badsyms=$("$abs_top_builddir"/libtool --mode=clean --silent \
     ls "$abs_top_builddir"/src/*.la 2>/dev/null \
-    | grep '\.\(so.*\|a\)$' | xargs $NM \
+    | grep '\.\(so.*\|dylib\|a\)$' | xargs $NM \
     | sed -n "
 # select exported symbols of any kind for further investigation
 /^${exp_sym_prefix}[^ 	]*/{
