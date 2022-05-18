@@ -114,7 +114,7 @@ AM_PROG_CC_C_O
 # Set up libtool.
 ACX_USE_LIBTOOL_CONFIGURATION
 AC_SUBST([lt_cv_nm_interface])
-acx_symprfx=$ac_symprfx
+AC_SUBST([acx_symprfx],[$ac_symprfx])
 dnl ######################################################################
 dnl Properties of the compiler
 dnl ######################################################################
