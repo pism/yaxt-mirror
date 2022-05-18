@@ -78,7 +78,7 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 # ignore symbols pgfortran/pgcc injects into our shared objects
 /^${exp_sym_prefix}\(__get_xmmreg\|__pgdbg_stub\|__pgi_trace\|__set_xmmreg\|__pgi_data_section_start\|_mp_preinit\)/b
 # skip symbols that conform to name prefix xt_
-/^${exp_sym_prefix}_*[Xx][Tt]_/b
+/^${exp_sym_prefix}@acx_symprfx@[Xx][Tt]_/b
 # also skip symbols mangled by asan
 /^[0-9a-fA-F]*[ 	][ 	]*B[ 	]__odr_asan\\.[Xx][Tt]\.*/b
 # also skip symbols in Fortran yaxt module
