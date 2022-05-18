@@ -114,6 +114,7 @@ AM_PROG_CC_C_O
 # Set up libtool.
 ACX_USE_LIBTOOL_CONFIGURATION
 AC_SUBST([lt_cv_nm_interface])
+acx_symprfx=$ac_symprfx
 dnl ######################################################################
 dnl Properties of the compiler
 dnl ######################################################################
@@ -359,13 +360,13 @@ ACX_MPI_DEFECTS(,,
      [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected, attempting interpositioning work-around!])
       ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
         [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
-         extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}opal_datatype_\\\\(commit\\\\|add\\\\)/b'],
+         extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'opal_datatype_\\\\(commit\\\\|add\\\\)/b'],
         [AC_MSG_WARN([Cannot apply Open MPI datatype bug work-around.])
          mpi_defect_fail_action])],
      [mpich_3.4_yaksa_hindexed],
      [AC_MSG_WARN([known MPICH 3.4-3.4.2 problem detected, attempting interpositioning work-around!])
       ACX_MPICH34_DT_WORKAROUND(,[mpich_3.4_yaksa_hindexed.c],
-        [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}yaks[ai]_type_create_h\\\\{0,1\\\\}indexed/b'],
+        [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'yaks[ai]_type_create_h\\\\{0,1\\\\}indexed/b'],
         [AC_MSG_WARN([Cannot apply MPICH YAKSA datatype bug work-around.])
          mpi_defect_fail_action])],
      [mpich_unweighted_topo_comm_dup],
