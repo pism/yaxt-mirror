@@ -128,12 +128,15 @@ xt_redist_collection_static_custom_new(
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
+  if (num_redists <= 0)
+    return xt_redist_single_array_base_custom_new(0, 0, NULL, NULL, comm, config);
+
+  size_t num_redists_ = num_redists >= 0 ? (size_t)num_redists : 0;
   int tag_offset;
   MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
 
   xt_redist_check_comms(redists, num_redists, comm);
 
-  size_t num_redists_ = num_redists >= 0 ? (size_t)num_redists : 0;
   int *restrict ranks[2][num_redists_];
   size_t num_ranks[2][num_redists_];
   size_t nmsg[2];

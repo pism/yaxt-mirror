@@ -265,9 +265,10 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
-  unsigned num_redists_ = num_redists >= 0 ? (unsigned)num_redists : 0;
-  size_t num_ranks[2][num_redists_];
-  int *restrict ranks[2][num_redists_];
+  unsigned num_redists_ = num_redists > 0 ? (unsigned)num_redists : 0,
+    num_redists_auto = num_redists > 0 ? (unsigned)num_redists : 1;
+  size_t num_ranks[2][num_redists_auto];
+  int *restrict ranks[2][num_redists_auto];
   unsigned nmsg_send = xt_redist_agg_msg_count(num_redists_, SEND, redists,
                                                num_ranks[SEND], ranks[SEND]),
     nmsg_recv = xt_redist_agg_msg_count(num_redists_, RECV, redists,
@@ -276,7 +277,9 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
   Xt_redist_collection redist_coll
     = alloc_redist_coll(num_redists_, nmsg_send, nmsg_recv, config, new_comm);
-  if (cache_size < -1)
+  if (num_redists_ == 0)
+    cache_size = (cache_size != 0);
+  else if (cache_size < -1)
     Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
              __FILE__, __LINE__);
   redist_coll->cache_size
@@ -287,14 +290,16 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
 
   xt_redist_check_comms(redists, num_redists, comm);
 
-  MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
-  align_component_dt(num_redists_, nmsg_send, redists,
-                     ranks[SEND], num_ranks[SEND], redist_coll->msg_ranks,
-                     all_component_dt, SEND);
-  align_component_dt(num_redists_, nmsg_recv, redists,
-                     ranks[RECV], num_ranks[RECV],
-                     redist_coll->msg_ranks+nmsg_send,
-                     all_component_dt + nmsg_send * num_redists_, RECV);
+  if (num_redists_) {
+    MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
+    align_component_dt(num_redists_, nmsg_send, redists,
+                       ranks[SEND], num_ranks[SEND], redist_coll->msg_ranks,
+                       all_component_dt, SEND);
+    align_component_dt(num_redists_, nmsg_recv, redists,
+                       ranks[RECV], num_ranks[RECV],
+                       redist_coll->msg_ranks+nmsg_send,
+                       all_component_dt + nmsg_send * num_redists_, RECV);
+  }
   init_cache(&redist_coll->cache, redist_coll->cache_size, num_redists_);
 
   return (Xt_redist)redist_coll;
@@ -443,20 +448,19 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
 
   Xt_redist_collection redist_coll = xrc(redist);
 
-  if (num_arrays != (int)redist_coll->num_redists)
+  if (num_arrays < (int)redist_coll->num_redists)
     Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
              "redist_collection_s_exchange", __FILE__, __LINE__);
+  if (redist_coll->num_redists) {
+    Xt_exchanger exchanger = get_exchanger(redist_coll,
+                                           src_data,
+                                           (const void *const (*))dst_data,
+                                           redist_coll->num_redists);
+    xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0]);
 
-
-  Xt_exchanger exchanger = get_exchanger(redist_coll,
-                                         src_data,
-                                         (const void *const (*))dst_data,
-                                         redist_coll->num_redists);
-
-  xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0]);
-
-  if (redist_coll->cache_size == 0)
-    xt_exchanger_delete(exchanger);
+    if (redist_coll->cache_size == 0)
+      xt_exchanger_delete(exchanger);
+  }
 }
 
 static void
@@ -470,17 +474,17 @@ redist_collection_a_exchange(Xt_redist redist, int num_arrays,
     Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
              "redist_collection_a_exchange", __FILE__, __LINE__);
 
+  if (redist_coll->num_redists) {
+    Xt_exchanger exchanger = get_exchanger(redist_coll,
+                                           src_data,
+                                           (const void *const (*))dst_data,
+                                           redist_coll->num_redists);
 
-  Xt_exchanger exchanger = get_exchanger(redist_coll,
-                                         src_data,
-                                         (const void *const (*))dst_data,
-                                         redist_coll->num_redists);
+    xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0], request);
 
-  xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0], request);
-
-  if (redist_coll->cache_size == 0)
-    xt_exchanger_delete(exchanger);
-
+    if (redist_coll->cache_size == 0)
+      xt_exchanger_delete(exchanger);
+  }
 }
 
 static void
@@ -607,7 +611,7 @@ redist_collection_s_exchange1(Xt_redist redist,
 {
 
   Xt_redist_collection redist_coll = xrc(redist);
-  if (redist_coll->num_redists == 1)
+  if (redist_coll->num_redists <= 1)
     redist_collection_s_exchange(redist, 1, &src_data, &dst_data);
   else
     Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
@@ -621,7 +625,7 @@ redist_collection_a_exchange1(Xt_redist redist,
 {
 
   Xt_redist_collection redist_coll = xrc(redist);
-  if (redist_coll->num_redists == 1)
+  if (redist_coll->num_redists <= 1)
     redist_collection_a_exchange(redist, 1, &src_data, &dst_data, request);
   else
     Xt_abort(redist_coll->comm, "ERROR: a_exchange1 is not implemented for"

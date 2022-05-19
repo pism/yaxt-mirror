@@ -48,13 +48,14 @@
 
 #include "fc_feature_defs.inc"
 PROGRAM test_redist_collection
+  USE iso_c_binding, ONLY: c_ptr, c_null_ptr
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
-       xt_redist_delete, xt_redist_copy, &
+       xt_redist_delete, xt_redist_copy, xt_redist_get_mpi_comm, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
        xt_idxempty_new, xt_idxlist_delete, &
        xt_idxlist, xt_request, xt_config, xt_config_delete
@@ -68,7 +69,8 @@ PROGRAM test_redist_collection
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
-       check_wait_request, redist_exchanger_option
+       check_wait_request, redist_exchanger_option, &
+       communicators_are_congruent
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
 #include "xt_slice_c_loc.inc"
@@ -234,6 +236,53 @@ CONTAINS
     ! clean up
     CALL xt_redist_delete(redist_coll)
   END SUBROUTINE test_empty_redist
+
+  SUBROUTINE test_empty_redist2(comm, config)
+    ! general test with empty redist
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+
+    TYPE(xt_redist) :: redists(1), redist_coll, redist_copy
+    INTEGER :: stored_comm
+    DOUBLE PRECISION, PARAMETER :: src_data(1) = (/ -1.0d0 /), &
+         ref_dst_data(1) = (/ -2.0d0 /)
+    DOUBLE PRECISION :: dst_data(1)
+    TYPE(c_ptr) :: nulls(1)
+
+    ! generate redist_collection
+    redist_coll = xt_redist_collection_new(redists, 0, 1, comm, config)
+
+    ! test communicator of redist
+    stored_comm = xt_redist_get_mpi_comm(redist_coll)
+    IF (.NOT. communicators_are_congruent(stored_comm, comm)) &
+         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+    ! test exchange
+    dst_data(1) = -2.0d0
+#if __GNUC__ != 5 || __GNUC_MINOR__ > 1
+    nulls(1) = c_null_ptr
+#endif
+
+    CALL xt_redist_s_exchange(redist_coll, 0, nulls, nulls)
+    IF (cmp_arrays(dst_data, ref_dst_data)) &
+         CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+
+    CALL xt_redist_s_exchange(redist_coll, src_data, dst_data)
+    IF (cmp_arrays(dst_data, ref_dst_data)) &
+         CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+
+    redist_copy = xt_redist_copy(redist_coll)
+
+    CALL xt_redist_s_exchange(redist_copy, 0, nulls, nulls)
+    IF (cmp_arrays(dst_data, ref_dst_data)) &
+         CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+    CALL xt_redist_s_exchange(redist_copy, src_data, dst_data)
+    IF (cmp_arrays(dst_data, ref_dst_data)) &
+         CALL test_abort("error in xt_redist_s_exchange", filename, __LINE__)
+
+    ! clean up
+    CALL xt_redist_delete(redist_copy)
+    CALL xt_redist_delete(redist_coll)
+  END SUBROUTINE test_empty_redist2
 
   SUBROUTINE test_repeated_redist_ds(redist_coll, src_data, permutation)
     TYPE(xt_redist), INTENT(in) :: redist_coll
