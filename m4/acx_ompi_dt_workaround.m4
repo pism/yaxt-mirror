@@ -65,6 +65,7 @@ AC_DEFUN([ACX_OMPI_DT_WORKAROUND],
      [2.0.3|2.0.4|2.1.*|3.*|4.0.0|4.0.1], ,
      [1.*|2.0.0|2.0.1|2.0.2],       [is_affected_ompi=false ; break],
      [is_affected_ompi=false ; break])
+   dnl todo: download sources and patch automatically as for mpich3.4
    dnl 2. deduce header location and flags
    ASX_VAR_UNSET([acx_ompi_path])
    AC_ARG_VAR([OMPI_MCA_C_INCLUDE],[flags needed to compile Open MPI MCA modules])
