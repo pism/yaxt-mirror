@@ -264,8 +264,15 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
 {
   // ensure that yaxt is initialized
   assert(xt_initialized());
-
-  unsigned num_redists_ = num_redists >= 0 ? (unsigned)num_redists : 0;
+#ifndef NDEBUG
+  if (num_redists > 0) ; else
+    Xt_abort(comm, "ERROR: invalid number of redists passed",
+             "xt_redist_collection_custom_new", __LINE__);
+  if (cache_size >= -1) ; else
+    Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
+             __FILE__, __LINE__);
+#endif
+  unsigned num_redists_ = (unsigned)num_redists;
   size_t num_ranks[2][num_redists_];
   int *restrict ranks[2][num_redists_];
   unsigned nmsg_send = xt_redist_agg_msg_count(num_redists_, SEND, redists,
@@ -276,11 +283,9 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
   Xt_redist_collection redist_coll
     = alloc_redist_coll(num_redists_, nmsg_send, nmsg_recv, config, new_comm);
-  if (cache_size < -1)
-    Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
-             __FILE__, __LINE__);
   redist_coll->cache_size
-    = (cache_size == -1)?((unsigned)DEFFAULT_DATATYPE_CACHE_SIZE):(unsigned)cache_size;
+    = (cache_size == -1)
+    ?((unsigned)DEFFAULT_DATATYPE_CACHE_SIZE):(unsigned)cache_size;
 
   redist_coll->comm = new_comm;
   redist_coll->tag_offset = tag_offset;
