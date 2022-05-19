@@ -120,7 +120,7 @@ s/^ *//;s/ *$//'`])
                AS_IF([test -x "$acx_temp/bin/ompi_info"],
                  [acx_cv_ompi_build_cflags="$acx_temp/bin/ompi_info"; break])])])
          AS_IF([test x"${acx_cv_ompi_build_cflags+set}" = xset && expr "`$acx_cv_ompi_build_cflags --version | head -n 1`" : 'Open MPI v'"$acx_ompi_version" >/dev/null],
-          [acx_cv_ompi_build_cflags=`$acx_cv_ompi_build_cflags -c | sed -n -e '/^ *Build CFLAGS:/{' -e 's/^ *Build CFLAGS: *//;p;}'`])])
+          [acx_cv_ompi_build_cflags=`$acx_cv_ompi_build_cflags -c | sed -n -e '/^ *Build CFLAGS:/s/^ *Build CFLAGS: *//p'`])])
       AS_IF([test x"${acx_cv_ompi_build_cflags+set}" = xset],
         [OMPI_BUILD_CFLAGS=$acx_cv_ompi_build_cflags],
         [is_affected_ompi=false ; break])],
