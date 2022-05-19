@@ -55,7 +55,11 @@ PROGRAM test_xmap_all2all_fail
   IMPLICIT NONE
   INTERFACE
     FUNCTION xmap_new_fail3(src_idxlist, dst_idxlist, comm) RESULT(xmap)
+#if __INTEL_COMPILER == 1500
+      USE yaxt, ONLY: xt_xmap, xt_idxlist
+#else
       IMPORT :: xt_xmap, xt_idxlist
+#endif
       TYPE(xt_xmap) :: xmap
       TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
       INTEGER, INTENT(in) :: comm
