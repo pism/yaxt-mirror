@@ -64,7 +64,6 @@ s/^PACKAGE_VERSION =[ 	]*//; s/ *$//; p ; q }' Makefile)
   make "${MAKE_DEBUG_ARGS[@]}" -j check
   case $i in
     0)
-      make "${MAKE_DEBUG_ARGS[@]}" -C src ppm/ppm_ptr_bnds_remap.f90
       make "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
       make "${MAKE_DEBUG_ARGS[@]}" distclean
       ls -lR
