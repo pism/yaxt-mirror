@@ -60,6 +60,7 @@
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
 #include "xt/xt_redist_collection.h"
+#include "xt/xt_redist_empty.h"
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_request.h"
@@ -264,6 +265,8 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
 {
   // ensure that yaxt is initialized
   assert(xt_initialized());
+
+  if (num_redists == 0) return xt_redist_empty_new(comm);
 
   unsigned num_redists_ = num_redists >= 0 ? (unsigned)num_redists : 0;
   size_t num_ranks[2][num_redists_];

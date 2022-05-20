@@ -70,6 +70,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_redist.h						\
 	xt/xt_redist_collection.h				\
 	xt/xt_redist_collection_static.h			\
+	xt/xt_redist_empty.h					\
 	xt/xt_redist_p2p.h					\
 	xt/xt_redist_repeat.h					\
 	xt/xt_stripe.h						\
@@ -110,6 +111,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_redist_msg.c						\
 	xt_redist_collection.c					\
 	xt_redist_collection_static.c				\
+	xt_redist_empty.c					\
 	xt_redist_p2p.c						\
 	xt_redist_repeat.c					\
 	xt_redist_single_array_base.c				\
