@@ -158,6 +158,7 @@ $(XT_XMAP_RENAME_MOD_NAME).$(FCMODEXT): ../../src/$(XT_XMAP_RENAME_MOD_NAME).$(F
 
 ##MODULE_RECIPE_MARKER do not remove ##
 
+if with_fortran
 ##INCLUDE_HEADER_MARKER do not remove ##
 nodist_include_HEADERS= \
 	$(XT_XMAP_RENAME_MOD_NAME).$(FCMODEXT) \
@@ -182,6 +183,7 @@ nodist_include_HEADERS= \
 	$(XT_IDXVEC_MOD_NAME).$(FCMODEXT) \
 	$(XT_IDXSTRIPES_MOD_NAME).$(FCMODEXT) \
 	$(YAXT_MOD_NAME).$(FCMODEXT)
+endif
 
 clean-local:
 	rm -f *.$(FCMODEXT)
