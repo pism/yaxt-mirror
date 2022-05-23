@@ -110,15 +110,6 @@ print(STDERR Data::Dumper->Dump([\%links, \%in_archive_files],
                                 ['links', 'in_archive_files']))
     if $debug;
 
-# {
-#   my ($tmp_fh, $tmp_filename) = File::Temp::tempfile(TMPDIR => 1, UNLINK => 1);
-#   $ENV{'COMPARE_ARCHIVE_TO_TREE_FILE_LIST'} = $tmp_filename;
-#   defined(syswrite($tmp_fh, pack('Q(Q/A*Q)*', scalar keys(%in_archive_files),
-#   %in_archive_files)))
-#       or die("could not dump file: $!");
-# #  system('hexdump', '-C', $tmp_filename);
-# }
-
 # map regular files from archive to their git hash
 my %archive_hashes;
 {
