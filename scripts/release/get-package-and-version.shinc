@@ -44,11 +44,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # meant to be included in shell scripts
-package=$(grep -A 2 '^AC_INIT' configure.ac)
-version=$(echo "$package" | sed -n -e '/^AC_INIT/{' -e \
-              's/^AC_INIT(\[[a-z]*\],\[\([0-9.]*\)\],.*/\1/;p;q;}')
-package=$(echo "$package" | sed -n -e '/^AC_INIT/{' -e \
-              's/^AC_INIT(\[\([a-z]*\)\],\[[0-9.]*\],.*/\1/;p;q;}')
+package=$(autoconf '--trace=AC_INIT:$1#$2')
+version=${package#*#}
+package=${package%#*}
 hostname=${hostname-$(hostname)}
 if [[ -x "scripts/reconfigure-${hostname}" ]]; then
   reconfCmd="scripts/reconfigure-${hostname}"
