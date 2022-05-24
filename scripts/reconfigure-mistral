@@ -1,6 +1,7 @@
 #! /bin/bash
 #
-# scripts/reconfigure-mistral --- script for yaxt tests
+# reconfigure-mistral --- run scripts/reconfigure in reprocible
+#                         environment on DKRZ mistral
 #
 # Copyright  (C)  2022 Jörg Behrens <behrens@dkrz.de>
 #                      Moritz Hanke <hanke@dkrz.de>
@@ -48,6 +49,11 @@ autoconf --version
 automake --version
 libtoolize --version
 scripts/reconfigure
-if [ -x scripts/recreate-testsuite.sh ]; then
-  exec scripts/recreate-testsuite.sh
-fi
+#
+# Local Variables:
+# mode: sh
+# coding: utf-8
+# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
+# license-default: "bsd"
+# End:
+#
