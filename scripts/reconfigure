@@ -53,7 +53,7 @@ case $(uname -s) in
 esac
 
 SED=${SED-sed}
-if sed_version=$($SED --version) && [[ $sed_version = *GNU\ sed* ]]; then
+if sed_version=$($SED --version 2>/dev/null) && [[ $sed_version = *GNU\ sed* ]]; then
   sed_inplace_options=('-i')
 elif $SED -E </dev/null 2>/dev/null >/dev/null ; then
   # assume modern FreeBSD sed
@@ -98,10 +98,21 @@ autoreconf -i
 find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
   -e 's/[	 ][	 ]*$//' \{\} +
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
-wget -o /dev/null -O config/config.guess \
+
+if command -v wget >/dev/null ; then
+  DL_CMD=(wget -o /dev/null -O)
+elif command -v curl >/dev/null ; then
+  DL_CMD=(curl -s -o)
+fi
+
+"${DL_CMD[@]}" config/config.guess \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-wget -o /dev/null -O config/config.sub \
+"${DL_CMD[@]}" config/config.sub \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+
+if [ -x scripts/recreate-testsuite.sh ]; then
+  scripts/recreate-testsuite.sh
+fi
 
 #
 # to test if this succeeded, one can run
