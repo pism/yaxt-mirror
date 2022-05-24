@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 #
 # checklicense --- check whether files in the repository carry the
 #                  required license statement

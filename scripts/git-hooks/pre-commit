@@ -91,6 +91,8 @@ REPOTOP="$(git rev-parse --show-toplevel)"
 HOOKDIR="${REPOTOP}/scripts/git-hooks"
 TESTDIR="${REPOTOP}/test"
 if [[ -d "$TESTDIR" ]]; then
+  [[ -x scripts/generate-testsuite-m4-input && -r test/package.m4 ]] \
+    || scripts/generate-testsuite-m4-input >test/package.m4
   (cd "${TESTDIR}" ; autom4te --language=autotest -I "${TESTDIR}" \
                               -o testsuite testsuite.at)
 fi

@@ -54,6 +54,8 @@ sub parseOptions();
 
 my ($verbose, $debug) = (0, 0);
 
+my ($gnutar) = 'tar';
+
 # the following files are specific to the vcs and are not needed in
 # the source archive
 my %ignore_archive_missing = map { $_ => undef } (
@@ -64,6 +66,7 @@ my %ignore_archive_missing = map { $_ => undef } (
   'scripts/release/compare_archive_to_tree',
   'scripts/release/extra_release_dist_files',
   'scripts/release/get-package-and-version.shinc',
+  'scripts/release/setup-sed.shinc',
   'scripts/release/make-distcheck',
   'scripts/release/make-release',
   'scripts/release/make-release-commit',
@@ -88,7 +91,7 @@ print(STDERR "archive: ", $archive,
 # establish hard links in archive
 my (%links, %in_archive_files);
 {
-  open(my $tar_list_fh, '-|', 'tar', '--list', '--verbose',
+  open(my $tar_list_fh, '-|', $gnutar, '--list', '--verbose',
        '--strip=1', '--show-transformed-names', '--file', $archive)
       or die("failed to list archive contents: $!");
   while (<$tar_list_fh>) {
@@ -113,7 +116,7 @@ print(STDERR Data::Dumper->Dump([\%links, \%in_archive_files],
 # map regular files from archive to their git hash
 my %archive_hashes;
 {
-  open(my $tar_list_fh, '-|', 'tar', '--extract', '--verbose',
+  open(my $tar_list_fh, '-|', $gnutar, '--extract', '--verbose',
        '--to-command=git hash-object --stdin',
        '--file', $archive)
       or die("failed to list archive contents: $!");
@@ -284,6 +287,7 @@ sub parseOptions()
   my $result
       = $optionParser->getoptions('debug+' => \$debug,
                                   'help|?!' => \$help,
+                                  'gnutar=s' => \$gnutar,
                                   'usage!' => \$usage,
                                   'verbose+' => \$verbose);
   if($help or $usage)

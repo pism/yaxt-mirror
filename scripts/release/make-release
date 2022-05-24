@@ -73,7 +73,9 @@ if [[ -r configure && -r scripts/release/make-release-commit ]]; then
     archive_msg=${archive_msg#Find archives in }
     scripts/release/check-gitignore
     IFS=" " read -r -a archives <<< "${archive_msg}"
-    scripts/release/compare_archive_to_tree "${archives[0]}" "release-$version"
+    TAR=${TAR-tar}
+    scripts/release/compare_archive_to_tree --gnutar="$TAR" \
+       "${archives[0]}" "release-$version"
   else
     echo "warning: release script missing." >&2
     echo "Are you in the correct and autoreconf'ed directory?" >&2

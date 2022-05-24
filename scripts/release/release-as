@@ -41,22 +41,25 @@
 #
 set -e
 new_version=$1
+script_dir=scripts/release
 # check the whole kit is there
 if [[ -w configure.ac && -r configure.ac && \
-        -x scripts/release/make-release ]]; then
+        -x "${script_dir}/make-release" ]]; then
   # 0. check no uncomitted modifications are in tree
   git update-index -q --really-refresh
   if ! git diff-index --exit-code HEAD -- >&2 ; then
     echo 'error: modified files found!' >&2
     exit 1
   fi
+  # shellcheck source=setup-sed.shinc
+  . "${script_dir}/setup-sed.shinc"
   # 1. insert new version
-  sed -i \
+  ${SED} "${sed_inplace_options[@]}" \
     -e '/^AC_INIT(/s/AC_INIT(\([^,]*\),[^,]*,/AC_INIT(\1,['"${new_version}],/" \
     configure.ac
   # 2. import common script settings
   # shellcheck source=get-package-and-version.shinc
-  source scripts/release/get-package-and-version.shinc
+  source "${script_dir}/get-package-and-version.shinc"
   test -d "${log_dir}"
   if [[ $version != "$new_version" ]]; then
     echo 'Version mismatch after editing configure.ac:' \
@@ -74,10 +77,10 @@ if [[ -w configure.ac && -r configure.ac && \
     exit 1
   fi
   # now that the tree is prepared, perform everything we need for the release
-  exec scripts/release/make-release
+  exec ${script_dir}/make-release
 else
   echo 'error: insufficient permissions for configure.ac or' \
-       'scripts/release/make-release!' >&2
+       '${script_dir}/make-release!' >&2
   exit 1
 fi
 #

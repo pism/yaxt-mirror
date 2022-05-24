@@ -52,6 +52,7 @@ git branch -D "release-${version_to_undo}"
 if [[ "$(git log --format=%H -1)" == "$commit_of_tag" ]]; then
   echo "Resetting to commit before version bump of ${commit_of_tag}." >&2
   git reset --hard HEAD^
+  scripts/reconfigure
 else
   echo \
     "HEAD is not at ${commit_of_tag}, cannot not reset without losing history" \

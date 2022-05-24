@@ -55,14 +55,20 @@ if [[ x${TMPDIR+set} = x ]]; then
   fi
   export TMPDIR
 fi
-tmpsrc=$(mktemp -d --tmpdir)
-log=$(mktemp --tmpdir)
+tmpsrc=$(mktemp -d "${TMPDIR-/tmp}/tmp.XXXXXXXXXX")
+log=$(mktemp "${TMPDIR-/tmp}/tmp.XXXXXXXXXX")
 exec 6>"$log"
 echo "creating temporary source directory in $tmpsrc"
-trap 'rm -rf "$tmpsrc" "$log"' EXIT
+if (( ${DEBUG:-0} == 0)) && [[ -z "${KEEP_BUILDDIR-}" ]] ; then
+  trap 'rm -rf "$tmpsrc" "$log"' EXIT
+fi
 repo=$PWD
 cd "$tmpsrc"
-rsync -aHSXA --copy-unsafe-links "$repo"/. .
+if command -v rsync >/dev/null ; then
+  rsync -aHSXA --copy-unsafe-links "$repo"/. .
+else
+  cp -a "$repo"/. .
+fi
 bash -x $reconfCmd >&6 2>&6
 set +e
 git update-index -q --ignore-submodules --refresh
@@ -73,10 +79,16 @@ echo "performing in-place build"
 echo "  configure"
 ./configure CFLAGS='-O2 -pipe' FCFLAGS='-O2 -pipe' \
             --enable-maintainer-mode >&6 2>&6
-echo "  make"
-make -j >&6 2>&6
+if [[ -z "${MAKE+set}" ]]; then
+  MAKE=$(sed -n -e '/^MAKE = /{
+s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
+}' Makefile)
+  [[ -n "${MAKE}" ]] || MAKE=make
+fi
+echo "  ${MAKE}"
+${MAKE} -j >&6 2>&6
 echo "  make check"
-make -j8 check >&6 2>&6
+${MAKE} -j8 check >&6 2>&6
 git update-index -q --really-refresh
 if git diff-index --exit-code HEAD -- >&6 ; then
   echo 'success: no unexpected files were created/modified.' >&2

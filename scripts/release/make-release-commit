@@ -51,6 +51,7 @@ normalize_yes_no_input()
       typeset -g "$1=false"
       ;;
     *)
+      printf 'encountered invalid input: "%s"\n' "$2" >&2
       typeset -g "$1=invalid"
       ;;
   esac
@@ -58,6 +59,7 @@ normalize_yes_no_input()
 
 yesno_ask()
 {
+  local temp
   while : ; do
     read -p "$1 (y/n) " -r temp
     normalize_yes_no_input "$2" "$temp"
@@ -69,6 +71,8 @@ yesno_ask()
 script_dir=scripts/release
 # shellcheck source=get-package-and-version.shinc
 . "${script_dir}/get-package-and-version.shinc"
+# shellcheck source=setup-sed.shinc
+. "${script_dir}/setup-sed.shinc"
 while : ; do
   yesno_ask "Is version '$version' what you want to publish?" newVersionOkay
   # the variable newVersionOkay is set indirectly by yesno_ask
@@ -81,7 +85,7 @@ while : ; do
       exit 1
     else
       read -p 'New version number: ' -r newVersion
-      sed -i -e '/^AC_INIT/{' \
+      ${SED} "${sed_inplace_options[@]}" -e '/^AC_INIT/{' \
         -e 's/^\(AC_INIT(\[[a-z]*\],\[\)\([0-9.]*\)\(\],\)/\1'"$newVersion"'\3/' \
         -e '}' configure.ac
       version=$newVersion
@@ -107,7 +111,7 @@ mergebase=$(git merge-base "${lasttag}" HEAD)
 declare -a lalibs lalibdirs
 coproc LTLIBS {
   find . -name Makefile.am -exec grep -H _LTLIBRARIES \{\} + \
-    | sed -e '/\(noinst\|check\)_LTLIBRARIES/d' \
+    | sed -e '/noinst_LTLIBRARIES/d' -e '/check_LTLIBRARIES/d' \
           -e 's/^\(.*Makefile.am:\) *[a-z_]*_LTLIBRARIES *+\{0,1\}= */\1/'
 }
 lalibs=()

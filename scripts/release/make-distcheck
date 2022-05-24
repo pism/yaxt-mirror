@@ -43,8 +43,10 @@ if [[ x${TMPDIR+set} = x ]]; then
   TMPDIR=$(mktemp -d "${TMPDIR}/$(id -un)-XXXXXX")
   export TMPDIR
 fi
-BUILD_DIR=$(mktemp -d -t "${package}-distcheck-XXXXXX")
-trap 'rm -rf "$BUILD_DIR"' EXIT
+BUILD_DIR=$(mktemp -d "${TMPDIR}/${package}-distcheck.XXXXXX")
+if (( ${DEBUG:-0} == 0)) && [[ -z "${KEEP_BUILDDIR-}" ]] ; then
+  trap 'rm -rf "$BUILD_DIR"' EXIT
+fi
 SRC_DIR=$PWD
 cd "${BUILD_DIR}"
 for ((i=0; i < 2; ++i)); do
@@ -54,22 +56,29 @@ for ((i=0; i < 2; ++i)); do
   fi
   "$SRC_DIR"/configure "${args[@]}"
   mf_version=$(sed -n -e '/^PACKAGE_VERSION = /{
-s/^PACKAGE_VERSION =[ 	]*//; s/ *$//; p ; q }' Makefile)
+s/^PACKAGE_VERSION =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
+}' Makefile)
+  if [[ -z "${MAKE+set}" ]]; then
+    MAKE=$(sed -n -e '/^MAKE = /{
+s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
+}' Makefile)
+    [[ -n "${MAKE}" ]] || MAKE=make
+  fi
   if [[ "$mf_version" != "$version" ]]; then
     echo "error: versions from Makefile ($mf_version) and configure.ac" \
          "($version) don't match" >&2
     exit 1
   fi
-  make "${MAKE_DEBUG_ARGS[@]}" -j
-  make "${MAKE_DEBUG_ARGS[@]}" -j check
+  ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j
+  ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j check
   case $i in
     0)
-      make "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
-      make "${MAKE_DEBUG_ARGS[@]}" distclean
+      ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
+      ${MAKE} "${MAKE_DEBUG_ARGS[@]}" distclean
       ls -lR
       ;;
     1)
-      make "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
+      ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
       ;;
   esac
 done
