@@ -64,8 +64,15 @@ AC_DEFUN([ACX_MPICH34_DT_WORKAROUND],
    acx_yaksa_add_workaround=m4_default([$5],[config/workarounds/mpich34_yaksa_patch])
    $MKDIR_P "$acx_yaksa_add_workaround"
    cd "$acx_yaksa_add_workaround"
+   AC_CHECK_PROGS([DL_CMD], [wget curl],[/bin/false])
+   AS_CASE([`$DL_CMD --version`],
+     [*curl\ *],
+     [DL_CMD="$DL_CMD -s -O -C -"],
+     [*GNU\ Wget*],
+     [DL_CMD="$DL_CMD -q -c"],
+     [is_affected_mpich=false ; break])
    acx_temp='https://github.com/pmodels/yaksa/raw/78739ed61c835a68991a34cff581b59b35be310e/'
-   test -r xt_yaksa_indexed.c || wget -q -c \
+   test -r xt_yaksa_indexed.c || $DL_CMD \
      "$acx_temp"'src/frontend/types/yaksa_indexed.c' \
      "$acx_temp"'src/frontend/include/yaksi.h' \
      "$acx_temp"'src/frontend/include/yaksa.h.in' \
