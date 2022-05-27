@@ -137,6 +137,7 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	scripts/makef90depends \
 	scripts/reconfigure \
 	scripts/reconfigure-mistral \
+	scripts/reconfigure-levante \
 	LICENSE COPYING
 
 
