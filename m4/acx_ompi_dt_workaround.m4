@@ -141,19 +141,48 @@ s/^ *//;s/ *$//'`])
    dnl corresponding to Open MPI version
    AS_CASE([$OMPI_MAJOR_VERSION],
      [2],
-     [acx_opal_datatype_add_workaround="$ac_pwd/m4_default([$5],[config/workarounds/openmpi])/v$acx_ompi_version/opal_datatype_add.c"],
+     [acx_opal_datatype_add_workaround=opal_datatype_add.c],
      [3|4],
-     [acx_opal_datatype_add_workaround="$ac_pwd/m4_default([$5],[config/workarounds/openmpi])/v$acx_ompi_version/opal_datatype_optimize.c"])
-   test -r "$acx_opal_datatype_add_workaround" || \
-     acx_opal_datatype_add_workaround=`echo "$acx_opal_datatype_add_workaround"\
-       | sed -e 's@^'"$ac_pwd"'@'"$srcdir"'@'`
-   cp "$acx_opal_datatype_add_workaround" conftest.c \
-     || { is_affected_ompi=false ; break ; }
+     [acx_opal_datatype_add_workaround=opal_datatype_optimize.c])
+   acx_temp="m4_default([$5],[config/workarounds/openmpi])/v$acx_ompi_version"
+   AS_IF([test -r "$ac_pwd/$acx_temp/$acx_opal_datatype_add_workaround"],
+     [acx_opal_datatype_add_workaround="$ac_pwd/$acx_temp/$acx_opal_datatype_add_workaround"
+      cp "$acx_opal_datatype_add_workaround" conftest.c \
+        || { is_affected_ompi=false ; break ; }],
+     [test -r "$srcdir/$acx_temp/$acx_opal_datatype_add_workaround"],
+     [acx_opal_datatype_add_workaround="$srcdir/$acx_temp/$acx_opal_datatype_add_workaround"
+      cp "$acx_opal_datatype_add_workaround" conftest.c \
+        || { is_affected_ompi=false ; break ; }],
+     [dnl patched source not availabe, download and patch
+      AC_CHECK_PROGS([DL_CMD], [wget curl],[/bin/false])
+      AS_CASE([`$DL_CMD --version`],
+        [*curl\ *],
+        [DL_CMD="$DL_CMD -O -C -"],
+        [*GNU\ Wget*],
+        [DL_CMD="$DL_CMD -q -c"],
+        [is_affected_ompi=false ; break])
+      { $MKDIR_P "$ac_pwd/$acx_temp/stage" && \
+        cd "$ac_pwd/$acx_temp/stage" && \
+        $DL_CMD \
+          "https://raw.githubusercontent.com/open-mpi/ompi/v$acx_ompi_version/opal/datatype/$acx_opal_datatype_add_workaround" && \
+        cd "$ac_pwd" && \
+        patch -p3 -d "$acx_temp/stage" -o "$ac_pwd/conftest.c" \
+          <"$srcdir/config/checkpatch/openmpi_datatype.$acx_opal_datatype_add_workaround.patch" ; } \
+        || { cd "$ac_pwd" ; is_affected_ompi=false ; break ; }
+      acx_opal_datatype_add_workaround="$ac_pwd/$acx_temp/stage/$acx_opal_datatype_add_workaround"])
    as_dir=src as_fn_mkdir_p
    AC_COMPILE_IFELSE(,
-     [ACX_MV_OBJ([conftest],[ompi_workaround])],
+     [ACX_MV_OBJ([conftest],[ompi_workaround])
+      AS_CASE([$acx_opal_datatype_add_workaround],
+        ["$ac_pwd/$acx_temp/stage/"*],
+        [acx_temp=`echo "$acx_opal_datatype_add_workaround" | sed -e 's/\/stage\(\/@<:@^/@:>@*\)$/\\1/'`
+         mv conftest.c "$acx_temp"
+         acx_opal_datatype_add_workaround=$acx_temp])],
      [is_affected_ompi=false
       rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+      AS_CASE([$acx_opal_datatype_add_workaround],
+        ["$acx_temp/stage"*],
+        [rm -f "$acx_opal_datatype_add_workaround"])
       break])
    dnl 4. verify listed tests now succeed
    CPPFLAGS=$acx_saved_CPPFLAGS

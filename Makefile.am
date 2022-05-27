@@ -68,6 +68,8 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checksrc/mpich_3.4_yaksa_hindexed.c \
 	config/checkdoc/mpich_3.4_yaksa_hindexed.txt \
 	config/checkpatch/mpich_3.4_yaksa_hindexed.patch \
+	config/checkpatch/openmpi_datatype.opal_datatype_add.c.patch \
+	config/checkpatch/openmpi_datatype.opal_datatype_optimize.c.patch \
 	config/checksrc/mpich_unweighted_topo_comm_dup.c \
 	config/checkdoc/mpich_unweighted_topo_comm_dup.txt \
 	config/checkpatch/mpich_3.x_unweighted.patch \
