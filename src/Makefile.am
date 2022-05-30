@@ -194,9 +194,9 @@ libyaxt_la_SOURCES =						\
 	yaxt.f90
 
 libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)
-libyaxt_la_LDFLAGS = -version-info 10:0:9
+libyaxt_la_LDFLAGS = -version-info 10:1:9
 libyaxt_c_la_LIBADD = $(MPI_C_LIB)
-libyaxt_c_la_LDFLAGS = -version-info 10:0:9
+libyaxt_c_la_LDFLAGS = -version-info 10:1:9
 
 if MPI_DT_WORKAROUND
 noinst_LTLIBRARIES = libmpi_workaround.la
