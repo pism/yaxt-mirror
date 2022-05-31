@@ -92,7 +92,7 @@ unset gz_archive xz_archive
 if [[ -r "$package-$version.tar.gz" ]]; then
   archive="$package-$version.tar.gz"
   size=$(stat --format '%s' "$archive" 2>/dev/null || stat -f '%z' "$archive")
-  gz_archive="attachment:${archive}.tar.gz ($size bytes)|"
+  gz_archive="attachment:${archive} ($size bytes)|"
 else
   gz_archive="|"
 fi
