@@ -170,8 +170,8 @@ xfail_abort(MPI_Comm comm, const char *msg, const char *source, int line)
 #  if XT_NEED_MPI_ABORT_WORK_AROUND == 1
   fd = STDERR_FILENO;
 #  elif XT_NEED_MPI_ABORT_WORK_AROUND == 2
-  int fd = open("test_xmap_all2all_fail.result.txt",
-                O_WRONLY | O_TRUNC | O_CREAT | O_NOCTTY, 0777);
+  fd = open("test_xmap_all2all_fail.result.txt",
+            O_WRONLY | O_TRUNC | O_CREAT | O_NOCTTY, 0777);
 #  endif
   write(fd, exit_msg, sizeof (exit_msg)-1);
 #  if XT_NEED_MPI_ABORT_WORK_AROUND == 2
