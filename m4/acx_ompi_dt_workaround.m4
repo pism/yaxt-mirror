@@ -156,18 +156,34 @@ s/^ *//;s/ *$//'`])
      [dnl patched source not availabe, download and patch
       AC_CHECK_PROGS([DL_CMD], [wget curl],[/bin/false])
       AS_CASE([`$DL_CMD --version`],
-        [*curl\ *],
-        [DL_CMD="$DL_CMD -O -C -"],
-        [*GNU\ Wget*],
-        [DL_CMD="$DL_CMD -q -c"],
+        [*curl\ *], [
+acx_fn_downloader()
+{
+  acx_tmp=1
+  for arg ; do
+    if test "$acx_tmp" -eq 1 ; then
+      set -- ; acx_tmp=0
+    fi
+    set -- "$][@" -O "$arg"
+  done
+  $DL_CMD -s -C - "$][@"
+}
+],
+        [*GNU\ Wget*], [
+acx_fn_downloader()
+{
+  $DL_CMD -q -c "$][@"
+}
+],
         [is_affected_ompi=false ; break])
-      { $MKDIR_P "$ac_pwd/$acx_temp/stage" && \
+      _AC_RUN_LOG([$MKDIR_P "$ac_pwd/$acx_temp/stage" && \
         cd "$ac_pwd/$acx_temp/stage" && \
-        $DL_CMD \
+        acx_fn_downloader \
           "https://raw.githubusercontent.com/open-mpi/ompi/v$acx_ompi_version/opal/datatype/$acx_opal_datatype_add_workaround" && \
         cd "$ac_pwd" && \
         patch -p3 -d "$acx_temp/stage" -o "$ac_pwd/conftest.c" \
-          <"$srcdir/config/checkpatch/openmpi_datatype.$acx_opal_datatype_add_workaround.patch" ; } \
+          <"$srcdir/config/checkpatch/openmpi_datatype.$acx_opal_datatype_add_workaround.patch"],
+        [echo "downloading and patching Open MPI source file $acx_opal_datatype_add_workaround"]) \
         || { cd "$ac_pwd" ; is_affected_ompi=false ; break ; }
       acx_opal_datatype_add_workaround="$ac_pwd/$acx_temp/stage/$acx_opal_datatype_add_workaround"])
    as_dir=src as_fn_mkdir_p

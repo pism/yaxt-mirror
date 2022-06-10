@@ -62,17 +62,33 @@ AC_DEFUN([ACX_MPICH34_DT_WORKAROUND],
    AS_IF([expr "$acx_mpich_version >= 30400300 & $acx_mpich_version <= 40000000" >/dev/null],,[is_affected_mpich=false ; break])
    dnl 2.a. download header files
    acx_yaksa_add_workaround=m4_default([$5],[config/workarounds/mpich34_yaksa_patch])
-   $MKDIR_P "$acx_yaksa_add_workaround"
-   cd "$acx_yaksa_add_workaround"
-   AC_CHECK_PROGS([DL_CMD], [wget curl],[/bin/false])
-   AS_CASE([`$DL_CMD --version`],
-     [*curl\ *],
-     [DL_CMD="$DL_CMD -s -O -C -"],
-     [*GNU\ Wget*],
-     [DL_CMD="$DL_CMD -q -c"],
-     [is_affected_mpich=false ; break])
-   acx_temp='https://raw.githubusercontent.com/pmodels/yaksa/78739ed61c835a68991a34cff581b59b35be310e/'
-   test -r xt_yaksa_indexed.c || $DL_CMD \
+   AS_IF([test -r "$acx_yaksa_add_workaround/xt_yaksa_indexed.c"],,
+     [AC_CHECK_PROGS([DL_CMD], [wget curl],[/bin/false])
+      AS_CASE([`$DL_CMD --version`],
+        [*curl\ *], [
+acx_fn_downloader()
+{
+  acx_temp=1
+  for arg ; do
+    if test "$acx_temp" -eq 1 ; then
+      set -- ; acx_temp=0
+    fi
+    set -- "$][@" -O "$arg"
+  done
+  $DL_CMD -s -C - "$][@"
+}
+],
+        [*GNU\ Wget*], [
+acx_fn_downloader()
+{
+  $DL_CMD -q -c "$][@"
+}
+],
+        [is_affected_mpich=false ; break])
+      $MKDIR_P "$acx_yaksa_add_workaround"
+      cd "$acx_yaksa_add_workaround"
+      acx_temp='https://raw.githubusercontent.com/pmodels/yaksa/78739ed61c835a68991a34cff581b59b35be310e/'
+      _AC_RUN_LOG([acx_fn_downloader \
      "$acx_temp"'src/frontend/types/yaksa_indexed.c' \
      "$acx_temp"'src/frontend/include/yaksi.h' \
      "$acx_temp"'src/frontend/include/yaksa.h.in' \
@@ -90,11 +106,11 @@ AC_DEFUN([ACX_MPICH34_DT_WORKAROUND],
      "$acx_temp"'src/backend/cuda/include/yaksuri_cuda_post.h' \
      "$acx_temp"'src/backend/ze/include/yaksuri_ze_pre.h' \
      "$acx_temp"'src/backend/ze/include/yaksuri_ze_post.h' \
-     >&AS_MESSAGE_LOG_FD 2>&1
+         >&AS_MESSAGE_LOG_FD], [echo "downloading sources to patch"])
    dnl 2.b. and patch version into header template
    sed -e 's/@YAKSA_NUMVERSION@/unreleased/;s/@YAKSA_VERSION@/unreleased/' \
      yaksa.h.in >yaksa.h
-   cd ../../..
+      cd ../../..])
    CPPFLAGS="-I$acx_yaksa_add_workaround $CPPFLAGS"
    dnl 2.c. detect whether to use C11 atomics
    AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <pthread.h>
