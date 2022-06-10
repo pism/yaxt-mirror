@@ -71,7 +71,7 @@ AC_DEFUN([ACX_MPICH34_DT_WORKAROUND],
      [*GNU\ Wget*],
      [DL_CMD="$DL_CMD -q -c"],
      [is_affected_mpich=false ; break])
-   acx_temp='https://github.com/pmodels/yaksa/raw/78739ed61c835a68991a34cff581b59b35be310e/'
+   acx_temp='https://raw.githubusercontent.com/pmodels/yaksa/78739ed61c835a68991a34cff581b59b35be310e/'
    test -r xt_yaksa_indexed.c || $DL_CMD \
      "$acx_temp"'src/frontend/types/yaksa_indexed.c' \
      "$acx_temp"'src/frontend/include/yaksi.h' \
