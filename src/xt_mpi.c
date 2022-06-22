@@ -581,8 +581,7 @@ parse_stripe(const struct Xt_offset_ext *v, size_t vlen, MPI_Datatype old_type,
   xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
                                   &old_type_extent), comm);
   MPI_Aint *restrict wdisp
-    = xmalloc(sizeof(MPI_Datatype) * (size_t)vlen
-              + sizeof (MPI_Aint) * (size_t)vlen);
+    = xmalloc(sizeof(MPI_Datatype) * vlen + sizeof (MPI_Aint) * vlen);
   MPI_Datatype *restrict wdt = (MPI_Datatype *)(wdisp + vlen);
   /* [p,vlen) is the part of v that still needs matching performed */
   /* m is the index of the next datatype and displacements to write
