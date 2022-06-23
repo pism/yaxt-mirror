@@ -515,7 +515,7 @@ match_contiguous(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
                 comm);
 
   *pstart_ = p+1;
-  return v[p].size != 0;
+  return true;
 }
 
 static void
