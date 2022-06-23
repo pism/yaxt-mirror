@@ -376,39 +376,6 @@ scan_stripe(const int *disp, size_t disp_len, struct Xt_offset_ext *restrict v)
   return i;
 }
 
-static bool
-match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
-                 MPI_Datatype old_type, MPI_Aint old_type_extent,
-                 MPI_Aint *disp, MPI_Datatype *dt,
-                 MPI_Comm comm) {
-  // we only accept non-trivial matches (nsteps>2) with stride /= 1
-  // using only one vector from v
-  size_t p = *pstart_;
-  if (p >= vlen) return false;
-  int nstrides = v[p].size;
-  int stride = v[p].stride;
-  if (nstrides < 2 || stride == 1 ) return false;
-
-  *pstart_ = p + 1;
-
-  int disp_ = vlen > 1 ? v[p].start : 0;
-  *disp = disp_ * old_type_extent;
-
-  xt_mpi_call(MPI_Type_vector(nstrides, 1, stride, old_type, dt), comm);
-
-  int start = v[p].start - disp_;
-  if (start) {
-    MPI_Datatype dt1 = *dt;
-
-    // (start != 0) => add offset:
-    MPI_Aint displacement = start * old_type_extent;
-    xt_mpi_call(MPI_Type_create_hindexed(1, &(int){1}, &displacement, dt1, dt),
-                comm);
-    xt_mpi_call(MPI_Type_free(&dt1), comm);
-  }
-  return nstrides != 0;
-}
-
 /**
  * @return true if matched, false if not matched
  */
@@ -454,28 +421,6 @@ match_block_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
 }
 
 static bool
-match_contiguous(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
-                 MPI_Datatype old_type, MPI_Aint old_type_extent,
-                 MPI_Aint *restrict disp, MPI_Datatype *dt,
-                 MPI_Comm comm) {
-  size_t p = *pstart_;
-  if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return false;
-
-  int disp_ = vlen > 1 ? v[p].start : 0;
-  *disp = disp_ * old_type_extent;
-  int d = v[p].start - disp_;
-
-  if (!d)
-    xt_mpi_call(MPI_Type_contiguous(v[p].size, old_type, dt), comm) ;
-  else
-    xt_mpi_call(MPI_Type_create_indexed_block(1, v[p].size, &d, old_type, dt),
-                comm);
-
-  *pstart_ = p+1;
-  return v[p].size != 0;
-}
-
-static bool
 match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
               MPI_Datatype old_type, MPI_Aint old_type_extent,
               MPI_Aint *disp, MPI_Datatype *dt,
@@ -516,6 +461,61 @@ match_indexed(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
 
   free(bl);
   return n != 0;
+}
+
+static bool
+match_simple_vec(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
+                 MPI_Datatype old_type, MPI_Aint old_type_extent,
+                 MPI_Aint *disp, MPI_Datatype *dt,
+                 MPI_Comm comm) {
+  // we only accept non-trivial matches (nsteps>2) with stride /= 1
+  // using only one vector from v
+  size_t p = *pstart_;
+  if (p >= vlen) return false;
+  int nstrides = v[p].size;
+  int stride = v[p].stride;
+  if (nstrides < 2 || stride == 1 ) return false;
+
+  *pstart_ = p + 1;
+
+  int disp_ = vlen > 1 ? v[p].start : 0;
+  *disp = disp_ * old_type_extent;
+
+  xt_mpi_call(MPI_Type_vector(nstrides, 1, stride, old_type, dt), comm);
+
+  int start = v[p].start - disp_;
+  if (start) {
+    MPI_Datatype dt1 = *dt;
+
+    // (start != 0) => add offset:
+    MPI_Aint displacement = start * old_type_extent;
+    xt_mpi_call(MPI_Type_create_hindexed(1, &(int){1}, &displacement, dt1, dt),
+                comm);
+    xt_mpi_call(MPI_Type_free(&dt1), comm);
+  }
+  return nstrides != 0;
+}
+
+static bool
+match_contiguous(size_t *pstart_, const struct Xt_offset_ext *v, size_t vlen,
+                 MPI_Datatype old_type, MPI_Aint old_type_extent,
+                 MPI_Aint *restrict disp, MPI_Datatype *dt,
+                 MPI_Comm comm) {
+  size_t p = *pstart_;
+  if (p >= vlen || v[p].stride != 1 || v[p].size < 2) return false;
+
+  int disp_ = vlen > 1 ? v[p].start : 0;
+  *disp = disp_ * old_type_extent;
+  int d = v[p].start - disp_;
+
+  if (!d)
+    xt_mpi_call(MPI_Type_contiguous(v[p].size, old_type, dt), comm) ;
+  else
+    xt_mpi_call(MPI_Type_create_indexed_block(1, v[p].size, &d, old_type, dt),
+                comm);
+
+  *pstart_ = p+1;
+  return v[p].size != 0;
 }
 
 static void
