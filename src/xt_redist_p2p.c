@@ -239,10 +239,9 @@ generate_ext_datatype(int num_transfer_pos_ext,
                                      search_start_ext);
         struct Xt_offset_ext base_ext = extents[search_start_ext],
           derived_ext;
-        int preceding = psum_ext_size[search_start_ext];
+        int pos_remaining = current_pos_ext.start - psum_ext_size[search_start_ext];
         derived_ext.start
-          = base_ext.start + ((current_pos_ext.start - preceding)
-                              * base_ext.stride);
+          = base_ext.start + pos_remaining * base_ext.stride;
         int isign_mask_current_pos_ext_size = isign_mask(current_pos_ext.size);
         /* find number of positions in containing extent,
          * which precede current_pos_ext.start
@@ -251,10 +250,9 @@ generate_ext_datatype(int num_transfer_pos_ext,
          * if (current_pos_ext.size > 0) */
         derived_ext.size = imin(abs(current_pos_ext.size),
                                 (~isign_mask_current_pos_ext_size
-                                 & (base_ext.size
-                                    - (current_pos_ext.start - preceding)))
+                                 & (base_ext.size - pos_remaining))
                                 | (isign_mask_current_pos_ext_size
-                                   & (current_pos_ext.start - preceding + 1)));
+                                   & (pos_remaining + 1)));
         derived_ext.stride
           = (~isign_mask_current_pos_ext_size & base_ext.stride)
           | (isign_mask_current_pos_ext_size & -base_ext.stride);
