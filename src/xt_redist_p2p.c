@@ -164,26 +164,19 @@ xt_redist_p2p_off_custom_new(Xt_xmap xmap, const int *src_offsets,
 
 /* ====================================================================== */
 
-struct ext_disp
-{
-  int disp, ext_idx;
-};
-
-static inline struct ext_disp
-pos2disp(int pos, int num_ext, const struct Xt_offset_ext extents[],
-         const int psum_ext_size[])
+static inline int
+pos2disp(int pos, int num_ext, const int psum_ext_size[])
 {
   int j = 0;
   /* FIXME: use bsearch if linear search is too slow, i.e. num_ext >> 1000 */
   /* what extent covers the pos'th position? */
   while (j < num_ext && pos >= psum_ext_size[j + 1])
     ++j;
-  int disp = extents[j].start + (pos - psum_ext_size[j]) * extents[j].stride;
-  return (struct ext_disp){ .disp = disp, .ext_idx = j };
+  return j;
 }
 
-static inline struct ext_disp
-pos2disp2(int pos, int num_ext, const struct Xt_offset_ext extents[],
+static inline int
+pos2disp2(int pos, int num_ext,
           const int psum_ext_size[], int start_ext)
 {
   int j = start_ext;
@@ -198,8 +191,7 @@ pos2disp2(int pos, int num_ext, const struct Xt_offset_ext extents[],
   else
     while (j < num_ext && pos >= psum_ext_size[j + 1])
       ++j;
-  int disp = extents[j].start + (pos - psum_ext_size[j]) * extents[j].stride;
-  return (struct ext_disp){ .disp = disp, .ext_idx = j };
+  return j;
 }
 
 static MPI_Datatype
@@ -229,7 +221,7 @@ generate_ext_datatype(int num_transfer_pos_ext,
     int i = 0,
       search_start_ext
       = pos2disp(transfer_pos_ext[0].start,
-                 num_ext, extents, psum_ext_size).ext_idx;
+                 num_ext, psum_ext_size);
     do
     {
       struct Xt_pos_ext current_pos_ext = transfer_pos_ext[i];
@@ -242,13 +234,12 @@ generate_ext_datatype(int num_transfer_pos_ext,
       }
       do {
         /* find extent containing start position of current range */
-        struct ext_disp pos = pos2disp2(current_pos_ext.start,
-                                        num_ext, extents, psum_ext_size,
-                                        search_start_ext);
-        search_start_ext = pos.ext_idx;
-        struct Xt_offset_ext base_ext = extents[pos.ext_idx],
+        search_start_ext = pos2disp2(current_pos_ext.start,
+                                     num_ext, psum_ext_size,
+                                     search_start_ext);
+        struct Xt_offset_ext base_ext = extents[search_start_ext],
           derived_ext;
-        int preceding = psum_ext_size[pos.ext_idx];
+        int preceding = psum_ext_size[search_start_ext];
         derived_ext.start
           = base_ext.start + ((current_pos_ext.start - preceding)
                               * base_ext.stride);
