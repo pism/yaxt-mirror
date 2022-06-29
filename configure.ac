@@ -67,7 +67,10 @@ dnl ######################################################################
 dnl Require an ISO C99 compliant C compiler
 m4_pushdef([_AC_PROG_CC_C89],
   [_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])
+m4_pushdef([_AM_PROG_CC_C_O],m4_bpatsubst(m4_dquote(m4_defn([_AM_PROG_CC_C_O])),
+  [rm -f\(.* conftest\*.*\)], [rm -rf\1]))dnl
 AC_PROG_CC([mpicc mpiicc mpxlc_r mpixlc_r gcc cc])
+m4_popdef([_AM_PROG_CC_C_O])
 m4_popdef([_AC_PROG_CC_C89])
 
 AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads libraries and header files.])
