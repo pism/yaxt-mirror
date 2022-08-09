@@ -67,6 +67,8 @@
   XT_TOKEN_PASTE2(XT_MPI_STRP_PRS_PREFIX,gen_fallback_type)
 #define XT_MPI_STRP_PRS_ENTRY \
   XT_TOKEN_PASTE3(parse_,XT_MPI_STRP_PRS_PREFIX,stripe)
+#define XT_MPI_STRP_PRS_DRIVER \
+  XT_TOKEN_PASTE3(xt_mpi_generate_datatype_,XT_MPI_STRP_PRS_PREFIX,stripe)
 
 /**
  * @return true if matched, false if not matched
@@ -377,6 +379,31 @@ XT_MPI_STRP_PRS_ENTRY(
   free(wdisp);
   return result_dt;
 }
+
+MPI_Datatype
+XT_MPI_STRP_PRS_DRIVER(const XT_MPI_OFFSET_EXT *v,
+                       int count, MPI_Datatype old_type,
+                       MPI_Comm comm)
+{
+  size_t count_ = (size_t)0;
+  for (int i=0; i<count; ++i)
+    count_ += (size_t)(v[i].size > 0);
+  if (count_ < 1) return MPI_DATATYPE_NULL;
+  XT_MPI_OFFSET_EXT *v_comp;
+  if ((size_t)count != count_) {
+    v_comp = xmalloc(count_ * sizeof (*v_comp));
+    for (size_t i=0, j=0; i<(size_t)count; ++i) {
+      v_comp[j] = v[i];
+      j+= v[i].size > 0;
+    }
+  } else
+    v_comp = (XT_MPI_OFFSET_EXT *)v;
+  MPI_Datatype dt = XT_MPI_STRP_PRS_ENTRY(v_comp, count_, old_type, comm);
+  if ((size_t)count != count_)
+    free(v_comp);
+  return dt;
+}
+
 
 #undef XT_MPI_STRP_PRS_ENTRY
 #undef XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE
