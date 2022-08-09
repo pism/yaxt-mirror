@@ -243,7 +243,8 @@ EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4 \
 	m4-templates/int-prologue-i4.m4 \
 	m4-templates/int-prologue-i8.m4 \
 	m4-templates/real-prologue-dp.m4 \
-	m4-templates/real-prologue-sp.m4
+	m4-templates/real-prologue-sp.m4 \
+	xt_mpi_stripe_parse.c
 
 f03_redist_module_template=`i=m4-templates/xt_redist_template_module.f90.m4 ; \
 	if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; `
