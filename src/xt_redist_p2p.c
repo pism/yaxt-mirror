@@ -244,6 +244,8 @@ generate_ext_datatype(int num_transfer_pos_ext,
           = base_ext.start + pos_remaining * base_ext.stride;
         int isign_mask_current_pos_ext_size
           = isign_mask(current_pos_ext.size);
+        MPI_Aint asign_mask_current_pos_ext_size
+          = asign_mask(current_pos_ext.size);
         /* find number of positions in containing extent,
          * which precede current_pos_ext.start
          * if (current_pos_ext.size < 0)
@@ -254,8 +256,9 @@ generate_ext_datatype(int num_transfer_pos_ext,
                                  & (base_ext.size - pos_remaining))
                                 | (isign_mask_current_pos_ext_size
                                    & (pos_remaining + 1)));
-        derived_ext.stride = current_pos_ext.size > 0
-          ? base_ext.stride : -base_ext.stride;
+        derived_ext.stride
+          = (~asign_mask_current_pos_ext_size & base_ext.stride)
+          | (asign_mask_current_pos_ext_size & -base_ext.stride);
         dt_stripes[num_dt_stripes++] = derived_ext;
         current_pos_ext.size
           += (~isign_mask_current_pos_ext_size & -derived_ext.size)
