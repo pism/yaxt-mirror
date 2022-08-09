@@ -418,6 +418,65 @@ xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
   return dt;
 }
 
+#if MPI_VERSION < 3
+static inline int
+XtMPI_Type_create_hindexed_block(int count, int blocklength,
+                                 const MPI_Aint array_of_displacements[],
+                                 MPI_Datatype oldtype, MPI_Datatype *newtype)
+{
+  size_t count_ = count > 0 ? (size_t)count : 0;
+  MPI_Datatype *restrict oldtypes = xmalloc(count_ * sizeof (*oldtypes)
+                                   + count_ * sizeof (int));
+  int *restrict blocklengths = (int *)(oldtypes + count_);
+  for (size_t i = 0; i < count_; ++i) {
+    blocklengths[i] = blocklength;
+    oldtypes[i] = oldtype;
+  }
+  int rc = MPI_Type_create_struct(count, blocklengths,
+                                  CAST_MPI_SEND_BUF(array_of_displacements),
+                                  oldtypes, newtype);
+  free(oldtypes);
+  return rc;
+}
+
+#define MPI_Type_create_hindexed_block XtMPI_Type_create_hindexed_block
+#endif
+
+#define XT_MPI_STR_PRS_PREFIX a
+#define XT_MPI_STR_PRS_UNITSTRIDE old_type_extent
+#define XT_MPI_STR_PRS_AOFS_TYPE MPI_Aint
+#define XT_MPI_STR_PRS_DISP_ADJUST(val) (val)
+#define XT_MPI_STR_PRS_BLOCK_VEC_CREATE MPI_Type_create_hvector
+#define XT_MPI_STR_PRS_INDEXED_BLOCK_CREATE MPI_Type_create_hindexed_block
+#define XT_MPI_STR_PRS_INDEXED_CREATE MPI_Type_create_hindexed
+#include "xt_mpi_stripe_parse.c"
+
+
+
+MPI_Datatype
+xt_mpi_generate_datatype_astripe(const struct Xt_aoffset_ext *v,
+                                 int count, MPI_Datatype old_type,
+                                 MPI_Comm comm)
+{
+  size_t count_ = (size_t)0;
+  for (int i=0; i<count; ++i)
+    count_ += (size_t)(v[i].size > 0);
+  if (count_ < 1) return MPI_DATATYPE_NULL;
+  struct Xt_aoffset_ext *v_comp;
+  if ((size_t)count != count_) {
+    v_comp = xmalloc(count_ * sizeof (*v_comp));
+    for (size_t i=0, j=0; i<(size_t)count; ++i) {
+      v_comp[j] = v[i];
+      j+= v[i].size > 0;
+    }
+  } else
+    v_comp = (struct Xt_aoffset_ext *)v;
+  MPI_Datatype dt = parse_astripe(v_comp, count_, old_type, comm);
+  if ((size_t)count != count_)
+    free(v_comp);
+  return dt;
+}
+
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
