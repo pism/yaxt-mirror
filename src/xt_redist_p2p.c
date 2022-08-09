@@ -197,14 +197,14 @@ pos2disp2(int pos, int num_ext,
 static MPI_Datatype
 generate_ext_datatype(int num_transfer_pos_ext,
                       const struct Xt_pos_ext transfer_pos_ext[],
-                      int num_ext, const struct Xt_offset_ext extents[],
+                      int num_ext, const struct Xt_aoffset_ext extents[],
                       const int psum_ext_size[],
                       void **work_buf, size_t *work_buf_size,
                       MPI_Datatype base_datatype, MPI_Comm comm)
 {
   if (num_transfer_pos_ext > 0)
   {
-    struct Xt_offset_ext *dt_stripes;
+    struct Xt_aoffset_ext *dt_stripes;
     size_t size_dt_stripes, num_dt_stripes = 0;
     enum
     {
@@ -237,12 +237,13 @@ generate_ext_datatype(int num_transfer_pos_ext,
         search_start_ext = pos2disp2(current_pos_ext.start,
                                      num_ext, psum_ext_size,
                                      search_start_ext);
-        struct Xt_offset_ext base_ext = extents[search_start_ext],
+        struct Xt_aoffset_ext base_ext = extents[search_start_ext],
           derived_ext;
         int pos_remaining = current_pos_ext.start - psum_ext_size[search_start_ext];
         derived_ext.start
           = base_ext.start + pos_remaining * base_ext.stride;
-        int isign_mask_current_pos_ext_size = isign_mask(current_pos_ext.size);
+        int isign_mask_current_pos_ext_size
+          = isign_mask(current_pos_ext.size);
         /* find number of positions in containing extent,
          * which precede current_pos_ext.start
          * if (current_pos_ext.size < 0)
@@ -253,9 +254,8 @@ generate_ext_datatype(int num_transfer_pos_ext,
                                  & (base_ext.size - pos_remaining))
                                 | (isign_mask_current_pos_ext_size
                                    & (pos_remaining + 1)));
-        derived_ext.stride
-          = (~isign_mask_current_pos_ext_size & base_ext.stride)
-          | (isign_mask_current_pos_ext_size & -base_ext.stride);
+        derived_ext.stride = current_pos_ext.size > 0
+          ? base_ext.stride : -base_ext.stride;
         dt_stripes[num_dt_stripes++] = derived_ext;
         current_pos_ext.size
           += (~isign_mask_current_pos_ext_size & -derived_ext.size)
@@ -270,8 +270,8 @@ generate_ext_datatype(int num_transfer_pos_ext,
       /* only advance current_pos_ext after it has been mapped completely */
     } while (++i < num_transfer_pos_ext);
     MPI_Datatype type
-      = xt_mpi_generate_datatype_stripe(dt_stripes, (int)num_dt_stripes,
-                                        base_datatype, comm);
+      = xt_mpi_generate_datatype_astripe(dt_stripes, (int)num_dt_stripes,
+                                         base_datatype, comm);
     *work_buf = dt_stripes;
     *work_buf_size = size_dt_stripes * sizeof (*dt_stripes);
     return type;
@@ -281,9 +281,9 @@ generate_ext_datatype(int num_transfer_pos_ext,
 }
 
 static void
-generate_ext_msg_infos(int num_msgs, Xt_xmap_iter iter,
+generate_aext_msg_infos(int num_msgs, Xt_xmap_iter iter,
                        int num_ext,
-                       const struct Xt_offset_ext extents[],
+                       const struct Xt_aoffset_ext extents[],
                        MPI_Datatype base_datatype,
                        struct Xt_redist_msg *msgs,
                        MPI_Comm comm)
@@ -348,6 +348,53 @@ xt_redist_p2p_ext_custom_new(Xt_xmap xmap,
                              MPI_Datatype datatype,
                              Xt_config config)
 {
+  size_t num_src_ext_ = num_src_ext > 0 ? (size_t)num_src_ext : (size_t)0,
+    num_dst_ext_ = num_dst_ext > 0 ? (size_t)num_dst_ext : (size_t)0;
+  MPI_Aint elem_extent, lb;
+  struct Xt_aoffset_ext *aexts
+    = xmalloc((num_src_ext_ + num_dst_ext_) * sizeof (*aexts));
+  xt_mpi_call(MPI_Type_get_extent(datatype, &lb, &elem_extent), MPI_COMM_SELF);
+  for (size_t i = 0; i < num_src_ext_; ++i) {
+    aexts[i].start = elem_extent * src_extents[i].start;
+    aexts[i].size = src_extents[i].size;
+    aexts[i].stride = elem_extent * src_extents[i].stride;
+  }
+  struct Xt_aoffset_ext *dst_aexts = aexts+num_src_ext_;
+  for (size_t i = 0; i < num_dst_ext_; ++i) {
+    dst_aexts[i].start = elem_extent * dst_extents[i].start;
+    dst_aexts[i].size = dst_extents[i].size;
+    dst_aexts[i].stride = elem_extent * dst_extents[i].stride;
+  }
+  Xt_redist redist
+    = xt_redist_p2p_aext_custom_new(xmap, num_src_ext, aexts,
+                                    num_dst_ext, dst_aexts, datatype,
+                                    config);
+  free(aexts);
+  return redist;
+}
+
+Xt_redist
+xt_redist_p2p_aext_new(Xt_xmap xmap,
+                       int num_src_ext,
+                       const struct Xt_aoffset_ext src_extents[],
+                       int num_dst_ext,
+                       const struct Xt_aoffset_ext dst_extents[],
+                       MPI_Datatype datatype)
+{
+  return xt_redist_p2p_aext_custom_new(xmap, num_src_ext, src_extents,
+                                       num_dst_ext, dst_extents, datatype,
+                                       (Xt_config)&xt_default_config);
+}
+
+Xt_redist
+xt_redist_p2p_aext_custom_new(Xt_xmap xmap,
+                             int num_src_ext,
+                             const struct Xt_aoffset_ext src_extents[],
+                             int num_dst_ext,
+                             const struct Xt_aoffset_ext dst_extents[],
+                             MPI_Datatype datatype,
+                             Xt_config config)
+{
   // ensure that yaxt is initialized
   assert(xt_initialized());
   int tag_offset;
@@ -360,13 +407,13 @@ xt_redist_p2p_ext_custom_new(Xt_xmap xmap,
   struct Xt_redist_msg *msgs = xmalloc(nmsg * sizeof (*msgs)),
     *send_msgs = msgs, *recv_msgs = msgs + nsend;
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
-  generate_ext_msg_infos(nrecv, dst_iter, num_dst_ext, dst_extents,
-                         datatype, recv_msgs, comm);
+  generate_aext_msg_infos(nrecv, dst_iter, num_dst_ext, dst_extents,
+                          datatype, recv_msgs, comm);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
-  generate_ext_msg_infos(nsend, src_iter, num_src_ext, src_extents,
-                         datatype, send_msgs, comm);
+  generate_aext_msg_infos(nsend, src_iter, num_src_ext, src_extents,
+                          datatype, send_msgs, comm);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
 
   struct Xt_config_ config_ = *config;

@@ -376,23 +376,23 @@ scan_stripe(const int *disp, size_t disp_len, struct Xt_offset_ext *restrict v)
   return i;
 }
 
-#define XT_MPI_STR_PRS_PREFIX
-#define XT_MPI_STR_PRS_UNITSTRIDE 1
-#define XT_MPI_STR_PRS_AOFS_TYPE int
-#define XT_MPI_STR_PRS_DISP_ADJUST(val) ((val) * old_type_extent)
-#define XT_MPI_STR_PRS_BLOCK_VEC_CREATE MPI_Type_vector
-#define XT_MPI_STR_PRS_INDEXED_BLOCK_CREATE MPI_Type_create_indexed_block
-#define XT_MPI_STR_PRS_INDEXED_CREATE MPI_Type_indexed
-#define XT_MPI_STR_PRS_FALLBACK_NEEDS_OLD_TYPE_EXTENT
+#define XT_MPI_STRP_PRS_PREFIX
+#define XT_MPI_STRP_PRS_UNITSTRIDE 1
+#define XT_MPI_STRP_PRS_AOFS_TYPE int
+#define XT_MPI_STRP_PRS_DISP_ADJUST(val) ((val) * old_type_extent)
+#define XT_MPI_STRP_PRS_BLOCK_VEC_CREATE MPI_Type_vector
+#define XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE MPI_Type_create_indexed_block
+#define XT_MPI_STRP_PRS_INDEXED_CREATE MPI_Type_indexed
+#define XT_MPI_STRP_PRS_FALLBACK_NEEDS_OLD_TYPE_EXTENT
 #include "xt_mpi_stripe_parse.c"
-#undef XT_MPI_STR_PRS_PREFIX
-#undef XT_MPI_STR_PRS_UNITSTRIDE
-#undef XT_MPI_STR_PRS_AOFS_TYPE
-#undef XT_MPI_STR_PRS_DISP_ADJUST
-#undef XT_MPI_STR_PRS_BLOCK_VEC_CREATE
-#undef XT_MPI_STR_PRS_INDEXED_BLOCK_CREATE
-#undef XT_MPI_STR_PRS_INDEXED_CREATE
-#undef XT_MPI_STR_PRS_FALLBACK_NEEDS_OLD_TYPE_EXTENT
+#undef XT_MPI_STRP_PRS_PREFIX
+#undef XT_MPI_STRP_PRS_UNITSTRIDE
+#undef XT_MPI_STRP_PRS_AOFS_TYPE
+#undef XT_MPI_STRP_PRS_DISP_ADJUST
+#undef XT_MPI_STRP_PRS_BLOCK_VEC_CREATE
+#undef XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE
+#undef XT_MPI_STRP_PRS_INDEXED_CREATE
+#undef XT_MPI_STRP_PRS_FALLBACK_NEEDS_OLD_TYPE_EXTENT
 
 MPI_Datatype
 xt_mpi_generate_datatype_stripe(const struct Xt_offset_ext *v,
@@ -442,13 +442,13 @@ XtMPI_Type_create_hindexed_block(int count, int blocklength,
 #define MPI_Type_create_hindexed_block XtMPI_Type_create_hindexed_block
 #endif
 
-#define XT_MPI_STR_PRS_PREFIX a
-#define XT_MPI_STR_PRS_UNITSTRIDE old_type_extent
-#define XT_MPI_STR_PRS_AOFS_TYPE MPI_Aint
-#define XT_MPI_STR_PRS_DISP_ADJUST(val) (val)
-#define XT_MPI_STR_PRS_BLOCK_VEC_CREATE MPI_Type_create_hvector
-#define XT_MPI_STR_PRS_INDEXED_BLOCK_CREATE MPI_Type_create_hindexed_block
-#define XT_MPI_STR_PRS_INDEXED_CREATE MPI_Type_create_hindexed
+#define XT_MPI_STRP_PRS_PREFIX a
+#define XT_MPI_STRP_PRS_UNITSTRIDE old_type_extent
+#define XT_MPI_STRP_PRS_AOFS_TYPE MPI_Aint
+#define XT_MPI_STRP_PRS_DISP_ADJUST(val) (val)
+#define XT_MPI_STRP_PRS_BLOCK_VEC_CREATE MPI_Type_create_hvector
+#define XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE MPI_Type_create_hindexed_block
+#define XT_MPI_STRP_PRS_INDEXED_CREATE MPI_Type_create_hindexed
 #include "xt_mpi_stripe_parse.c"
 
 
