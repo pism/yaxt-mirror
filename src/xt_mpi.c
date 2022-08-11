@@ -321,53 +321,101 @@ xt_mpi_generate_datatype(int const * displacements, int count,
 #endif
 }
 
+static size_t
+xt_disp2ext_count(size_t disp_len, const int *disp)
+{
+  if (!disp_len) return 0;
+  size_t i = 0;
+  int cur_stride = 1, cur_size = 1;
+  int last_disp = disp[0];
+  for (size_t p = 1; p < disp_len; ++p) {
+    int new_disp = disp[p];
+    int new_stride = new_disp - last_disp;
+    if (cur_size == 1) {
+      cur_stride = new_stride;
+      cur_size = 2;
+    } else if (new_stride == cur_stride) {
+      // cur_size >= 2:
+      cur_size++;
+    } else if (cur_size > 2 || (cur_size == 2 && cur_stride == 1) ) {
+      // we accept small contiguous vectors (nstrides==2, stride==1)
+      i++;
+      cur_stride = 1;
+      cur_size = 1;
+    } else { // cur_size == 2, next offset doesn't match current stride
+      // break up trivial vec:
+      i++;
+      cur_size = 2;
+      cur_stride = new_stride;
+    }
+    last_disp = new_disp;
+  }
+  // tail cases:
+  if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
+    i++;
+  } else if (cur_size == 2) {
+    i+=2;
+  } else { // cur_size == 1
+    i++;
+  }
+
+  return i;
+}
 
 static size_t
-scan_stripe(const int *disp, size_t disp_len, struct Xt_offset_ext *restrict v)
+xt_disp2ext(size_t disp_len, const int *disp,
+            struct Xt_offset_ext *restrict v)
 {
   if (disp_len<1) return 0;
 
-  struct Xt_offset_ext x = (struct Xt_offset_ext){ disp[0], 1, 1 };
+  int cur_start = disp[0], cur_stride = 1, cur_size = 1;
+  int last_disp = cur_start;
   size_t i = 0;
   for (size_t p = 1; p < disp_len; ++p) {
-    int new_stride = disp[p] - disp[p-1];
-    if (x.size == 1) {
-      x.stride = new_stride;
-      x.size = 2;
-    } else if (new_stride == x.stride) {
-      // x.size >= 2:
-      x.size++;
-    } else if (x.size > 2 || (x.size == 2 && x.stride == 1) ) {
+    int new_disp = disp[p];
+    int new_stride = new_disp - last_disp;
+    if (cur_size == 1) {
+      cur_stride = new_stride;
+      cur_size = 2;
+    } else if (new_stride == cur_stride) {
+      // cur_size >= 2:
+      cur_size++;
+    } else if (cur_size > 2 || (cur_size == 2 && cur_stride == 1) ) {
       // we accept small contiguous vectors (nstrides==2, stride==1)
-      v[i]= x;
+      v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
+                                     .size = cur_size };
       i++;
-      x = (struct Xt_offset_ext){ disp[p], 1, 1 };
-    } else { // x.size == 2, next offset doesn't match current stride
+      cur_start = new_disp;
+      cur_stride = 1;
+      cur_size = 1;
+    } else { // cur_size == 2, next offset doesn't match current stride
       // break up trivial vec:
-      v[i].start = x.start;
+      v[i].start = cur_start;
       v[i].size = 1;
       v[i].stride = 1;
       i++;
-      x.start += x.stride;
-      x.size = 2;
-      x.stride = new_stride;
+      cur_start += cur_stride;
+      cur_size = 2;
+      cur_stride = new_stride;
     }
+    last_disp = new_disp;
   }
   // tail cases:
-  if (x.size > 2 || (x.size == 2 && x.stride == 1)) {
-    v[i] = x;
+  if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
+    v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
+                                   .size = cur_size };
     i++;
-  } else if (x.size == 2) {
-    v[i].start = x.start;
+  } else if (cur_size == 2) {
+    v[i].start = cur_start;
     v[i].size = 1;
     v[i].stride = 1;
     i++;
-    v[i].start = x.start + x.stride;
+    v[i].start = cur_start + cur_stride;
     v[i].size = 1;
     v[i].stride = 1;
     i++;
-  } else { // x.size == 1
-    v[i].start = x.start;
+  } else { // cur_size == 1
+    v[i].start = cur_start;
     v[i].size = 1;
     v[i].stride = 1;
     i++;
@@ -457,8 +505,9 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
 {
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
-  struct Xt_offset_ext *v = xmalloc(sizeof(*v) * (size_t)disp_len);
-  size_t vlen = scan_stripe(disp, (size_t)disp_len, v);
+  size_t vlen = xt_disp2ext_count((size_t)disp_len, disp);
+  struct Xt_offset_ext *v = xmalloc(sizeof(*v) * vlen);
+  xt_disp2ext((size_t)disp_len, disp, v);
   MPI_Datatype dt = parse_stripe(v, vlen, old_type, comm);
   free(v);
   return dt;
