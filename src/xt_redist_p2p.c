@@ -66,30 +66,132 @@
 
 #include "xt_arithmetic_util.h"
 
+/* the following two functions fullfil the same purpose as
+ * xt_disp2ext and xt_disp2ext_count but work with an indirection  */
+static size_t
+xt_mdisp2ext_count(size_t disp_len, const int *disp, const int *pos)
+{
+  if (!disp_len) return 0;
+  size_t i = 0;
+  int cur_stride = 1, cur_size = 1;
+  int last_disp = disp[pos[0]];
+  for (size_t p = 1; p < disp_len; ++p) {
+    int new_disp = disp[pos[p]];
+    int new_stride = new_disp - last_disp;
+    if (cur_size == 1) {
+      cur_stride = new_stride;
+      cur_size = 2;
+    } else if (new_stride == cur_stride) {
+      // cur_size >= 2:
+      cur_size++;
+    } else if (cur_size > 2 || (cur_size == 2 && cur_stride == 1) ) {
+      // we accept small contiguous vectors (nstrides==2, stride==1)
+      i++;
+      cur_stride = 1;
+      cur_size = 1;
+    } else { // cur_size == 2, next offset doesn't match current stride
+      // break up trivial vec:
+      i++;
+      cur_size = 2;
+      cur_stride = new_stride;
+    }
+    last_disp = new_disp;
+  }
+  // tail cases:
+  if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
+    i++;
+  } else if (cur_size == 2) {
+    i+=2;
+  } else { // cur_size == 1
+    i++;
+  }
+
+  return i;
+}
+
+static size_t
+xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
+             struct Xt_offset_ext *restrict v)
+{
+  if (disp_len<1) return 0;
+
+  int cur_start = disp[pos[0]], cur_stride = 1, cur_size = 1;
+  int last_disp = cur_start;
+  size_t i = 0;
+  for (size_t p = 1; p < disp_len; ++p) {
+    int new_disp = disp[pos[p]];
+    int new_stride = new_disp - last_disp;
+    if (cur_size == 1) {
+      cur_stride = new_stride;
+      cur_size = 2;
+    } else if (new_stride == cur_stride) {
+      // cur_size >= 2:
+      cur_size++;
+    } else if (cur_size > 2 || (cur_size == 2 && cur_stride == 1) ) {
+      // we accept small contiguous vectors (nstrides==2, stride==1)
+      v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
+                                     .size = cur_size };
+      i++;
+      cur_start = new_disp;
+      cur_stride = 1;
+      cur_size = 1;
+    } else { // cur_size == 2, next offset doesn't match current stride
+      // break up trivial vec:
+      v[i].start = cur_start;
+      v[i].size = 1;
+      v[i].stride = 1;
+      i++;
+      cur_start += cur_stride;
+      cur_size = 2;
+      cur_stride = new_stride;
+    }
+    last_disp = new_disp;
+  }
+  // tail cases:
+  if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
+    v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
+                                   .size = cur_size };
+    i++;
+  } else if (cur_size == 2) {
+    v[i].start = cur_start;
+    v[i].size = 1;
+    v[i].stride = 1;
+    i++;
+    v[i].start = cur_start + cur_stride;
+    v[i].size = 1;
+    v[i].stride = 1;
+    i++;
+  } else { // cur_size == 1
+    v[i].start = cur_start;
+    v[i].size = 1;
+    v[i].stride = 1;
+    i++;
+  }
+
+  return i;
+}
+
+
 static MPI_Datatype
 generate_datatype(const int *transfer_pos, int num_transfer_pos,
                   const int *offsets, MPI_Datatype base_datatype, MPI_Comm comm)
 {
-  int const * displ;
-  int * tmp_displ = NULL;
-
+  struct Xt_offset_ext *restrict v;
+  size_t vlen;
   if (offsets != NULL) {
-
-    tmp_displ = xmalloc((size_t)num_transfer_pos * sizeof(int));
-
-    for (int i = 0; i < num_transfer_pos; ++i)
-      tmp_displ[i] = offsets[transfer_pos[i]];
-
-    displ = tmp_displ;
-
-  } else
-    displ = transfer_pos;
-
+    vlen = xt_mdisp2ext_count((size_t)num_transfer_pos, offsets, transfer_pos);
+    v = xmalloc(sizeof(*v) * vlen);
+    xt_mdisp2ext((size_t)num_transfer_pos, offsets, transfer_pos, v);
+  } else {
+    vlen = xt_disp2ext_count((size_t)num_transfer_pos, transfer_pos);
+    v = xmalloc(sizeof(*v) * vlen);
+    xt_disp2ext((size_t)num_transfer_pos, transfer_pos, v);
+  }
 
   MPI_Datatype type
-    = xt_mpi_generate_datatype(displ, num_transfer_pos, base_datatype, comm);
+    = xt_mpi_generate_datatype_stripe(v, (int)vlen, base_datatype, comm);
 
-  free(tmp_displ);
+  free(v);
 
   return type;
 }
