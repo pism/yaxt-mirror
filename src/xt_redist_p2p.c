@@ -174,24 +174,30 @@ xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
 
 static MPI_Datatype
 generate_datatype(const int *transfer_pos, int num_transfer_pos,
-                  const int *offsets, MPI_Datatype base_datatype, MPI_Comm comm)
+                  const int *offsets, MPI_Datatype base_datatype,
+                  size_t *vsize, struct Xt_offset_ext **v,
+                  MPI_Comm comm)
 {
-  struct Xt_offset_ext *restrict v;
+  struct Xt_offset_ext *v_ = *v;
   size_t vlen;
   if (offsets != NULL) {
     vlen = xt_mdisp2ext_count((size_t)num_transfer_pos, offsets, transfer_pos);
-    v = xmalloc(sizeof(*v) * vlen);
-    xt_mdisp2ext((size_t)num_transfer_pos, offsets, transfer_pos, v);
+    if (vlen > *vsize) {
+      *v = v_ = xrealloc(v_, sizeof(*v_) * vlen);
+      *vsize = vlen;
+    }
+    xt_mdisp2ext((size_t)num_transfer_pos, offsets, transfer_pos, v_);
   } else {
     vlen = xt_disp2ext_count((size_t)num_transfer_pos, transfer_pos);
-    v = xmalloc(sizeof(*v) * vlen);
-    xt_disp2ext((size_t)num_transfer_pos, transfer_pos, v);
+    if (vlen > *vsize) {
+      *v = v_ = xrealloc(v_, sizeof(*v_) * vlen);
+      *vsize = vlen;
+    }
+    xt_disp2ext((size_t)num_transfer_pos, transfer_pos, v_);
   }
 
   MPI_Datatype type
-    = xt_mpi_generate_datatype_stripe(v, (int)vlen, base_datatype, comm);
-
-  free(v);
+    = xt_mpi_generate_datatype_stripe(v_, (int)vlen, base_datatype, comm);
 
   return type;
 }
@@ -202,6 +208,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
                    MPI_Comm comm) {
 
   if (num_msgs > 0) {
+    size_t vsize = 0;
+    struct Xt_offset_ext *v = NULL;
     struct Xt_redist_msg *restrict curr_msg = msgs;
 
     do {
@@ -211,11 +219,12 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
 
       curr_msg->datatype
         = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                            offsets, base_datatype, comm);
+                            offsets, base_datatype, &vsize, &v, comm);
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
     } while (xt_xmap_iterator_next(iter));
+    free(v);
   }
 }
 
