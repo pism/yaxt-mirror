@@ -67,6 +67,13 @@ enum xt_mpi_tags {
   xt_mpi_num_tags,
 };
 
+PPM_DSO_INTERNAL size_t
+xt_disp2ext_count(size_t disp_len, const int *disp);
+
+PPM_DSO_INTERNAL size_t
+xt_disp2ext(size_t disp_len, const int *disp,
+            struct Xt_offset_ext *restrict v);
+
 
 PPM_DSO_INTERNAL void
 xt_mpi_init(void);

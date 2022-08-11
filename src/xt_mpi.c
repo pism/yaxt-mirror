@@ -321,7 +321,7 @@ xt_mpi_generate_datatype(int const * displacements, int count,
 #endif
 }
 
-static size_t
+size_t
 xt_disp2ext_count(size_t disp_len, const int *disp)
 {
   if (!disp_len) return 0;
@@ -362,7 +362,7 @@ xt_disp2ext_count(size_t disp_len, const int *disp)
   return i;
 }
 
-static size_t
+size_t
 xt_disp2ext(size_t disp_len, const int *disp,
             struct Xt_offset_ext *restrict v)
 {
