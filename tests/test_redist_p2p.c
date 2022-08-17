@@ -184,6 +184,10 @@ int main(int argc, char **argv) {
 }
 
 static void
+check_offset_extents_redist(Xt_redist redist, size_t src_num, size_t dst_num,
+                            MPI_Comm comm);
+
+static void
 check_offset_extents(MPI_Comm comm, Xt_config config)
 {
   // source index list
@@ -203,37 +207,59 @@ check_offset_extents(MPI_Comm comm, Xt_config config)
     = xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm);
 
   // redist_p2p with extents of offsets
-  static const struct Xt_offset_ext
-    src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
-    dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
+  {
+    static const struct Xt_offset_ext
+      src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
+      dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
 
-  Xt_redist redist = xt_redist_p2p_ext_custom_new(
-    xmap, sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
-    sizeof (dst_pos)/sizeof (dst_pos[0]), dst_pos, MPI_LONG, config);
+    Xt_redist redist = xt_redist_p2p_ext_custom_new(
+      xmap, sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
+      sizeof (dst_pos)/sizeof (dst_pos[0]), dst_pos, MPI_LONG, config);
 
+    check_offset_extents_redist(redist, src_num, dst_num, comm);
+  }
+  {
+    static const struct Xt_aoffset_ext
+      src_pos[1] = { { .start = (MPI_Aint)0,
+                       .size = src_num, .stride =  (MPI_Aint)sizeof (long) } },
+      dst_pos[1] = { { .start = (MPI_Aint)((dst_num - 1)*sizeof (long)),
+                       .size = dst_num, .stride = -(MPI_Aint)(sizeof (long)) }};
+
+    Xt_redist redist = xt_redist_p2p_aext_custom_new(
+      xmap, sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
+      sizeof (dst_pos)/sizeof (dst_pos[0]), dst_pos, MPI_LONG, config);
+
+    check_offset_extents_redist(redist, src_num, dst_num, comm);
+  }
+
+  // clean up
+  xt_xmap_delete(xmap);
+  xt_idxlist_delete(src_idxlist);
+  xt_idxlist_delete(dst_idxlist);
+}
+
+static void
+check_offset_extents_redist(Xt_redist redist, size_t src_num, size_t dst_num,
+                            MPI_Comm comm)
+{
   // test communicator of redist
-
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     comm))
+                                   comm))
     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
   // test exchange
   static const long src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
   assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
   static const long ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
-  long dst_data[dst_num];
+  assert(sizeof(ref_dst_data)/sizeof(ref_dst_data[0]) == dst_num);
+  long dst_data[sizeof(ref_dst_data)/sizeof(ref_dst_data[0])];
   check_redist(redist, src_data, dst_num, dst_data,
                fill_array_long, NULL, ref_dst_data, MPI_LONG, MPI_LONG);
   Xt_redist redist_copy = xt_redist_copy(redist);
   xt_redist_delete(redist);
   check_redist(redist_copy, src_data, dst_num, dst_data,
                fill_array_long, NULL, ref_dst_data, MPI_LONG, MPI_LONG);
-
-  // clean up
   xt_redist_delete(redist_copy);
-  xt_xmap_delete(xmap);
-  xt_idxlist_delete(src_idxlist);
-  xt_idxlist_delete(dst_idxlist);
 }
 
 
