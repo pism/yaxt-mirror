@@ -10,7 +10,7 @@
 /*
  * Keywords: fail-safe wrappers
  * Maintainer: Thomas Jahns <jahns@dkrz.de>
- * URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
+ * URL: https://swprojects.dkrz.de/redmine/projects/scales-ppm
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are  permitted provided that the following conditions are
@@ -101,7 +101,7 @@ SymPrefix(xmpi)(int errcode, const char *source, int line);
 #endif
 /*
  * Local Variables:
- * license-project-url: "https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/"
+ * license-project-url: "https://swprojects.dkrz.de/redmine/projects/scales-ppm"
  * license-markup: "doxygen"
  * license-default: "bsd"
  * End:
