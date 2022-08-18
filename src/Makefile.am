@@ -163,7 +163,9 @@ libyaxt_c_la_SOURCES =						\
 	xt_exchanger_irecv_isend_packed.h			\
 	xt_exchanger_neigh_alltoall.h				\
 	xt_exchanger_mix_isend_irecv.c				\
-	xt_exchanger_mix_isend_irecv.h
+	xt_exchanger_mix_isend_irecv.h				\
+	xt/xt_ddt.h				\
+	xt_ddt.c
 
 if USE_MPI3
 libyaxt_c_la_SOURCES +=						\

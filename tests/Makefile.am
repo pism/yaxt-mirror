@@ -72,7 +72,8 @@ check_PROGRAMS = 						\
 	test_xmap_intersection_parallel				\
 	test_initialized_finalized				\
 	test_sort						\
-	test_uid
+	test_uid						\
+	test_ddt
 
 check_LTLIBRARIES = libtestutil.la
 
@@ -285,6 +286,7 @@ test_mpi_generate_datatype_SOURCES = test_mpi_generate_datatype.c tests.h
 test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
 test_mpi_smartdedup_LDADD =  libtestutil.la ../src/xt_mpi.lo \
 	../src/core/xmalloc.lo ../src/core/core.lo $(MPI_C_LIB)
+test_ddt_SOURCES = test_ddt.c tests.h
 
 AM_CPPFLAGS = -I../inst_headers -I$(top_srcdir)/include $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
@@ -333,7 +335,8 @@ TESTS = 							\
 	test_sort_run						\
 	test_uid_run						\
 	test_yaxt_run						\
-	test_xmap_all2all_fail_run
+	test_xmap_all2all_fail_run	\
+  test_ddt_run
 
 AUTOMAKE_OPTIONS = color-tests
 

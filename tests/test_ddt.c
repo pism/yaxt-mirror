@@ -1,0 +1,814 @@
+/**
+ * @file test_ddt.c
+ *
+ * @copyright Copyright  (C)  2022 Jörg Behrens <behrens@dkrz.de>
+ *                                 Moritz Hanke <hanke@dkrz.de>
+ *                                 Thomas Jahns <jahns@dkrz.de>
+ *
+ * @author Jörg Behrens <behrens@dkrz.de>
+ *         Moritz Hanke <hanke@dkrz.de>
+ *         Thomas Jahns <jahns@dkrz.de>
+ */
+/*
+ * Keywords:
+ * Maintainer: Jörg Behrens <behrens@dkrz.de>
+ *             Moritz Hanke <hanke@dkrz.de>
+ *             Thomas Jahns <jahns@dkrz.de>
+ * URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are  permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * Neither the name of the DKRZ GmbH nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include <string.h>
+#include <mpi.h>
+
+#include <yaxt.h>
+
+#include "tests.h"
+
+static int check_xt_ddt(
+  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size);
+
+int main(void) {
+
+  // init mpi
+
+  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+
+  xt_initialize(MPI_COMM_WORLD);
+
+  { // elemental integer datatype
+    MPI_Datatype mpi_ddt = MPI_INT;
+    int const in_data[] = {1337};
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR MPI_INT");
+  }
+
+  { // elemental double datatype
+    MPI_Datatype mpi_ddt = MPI_DOUBLE;
+    double const in_data[] = {1337.0};
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR MPI_DOUBLE");
+  }
+
+  { // elemental float datatype
+    MPI_Datatype mpi_ddt = MPI_FLOAT;
+    float const in_data[] = {1337.0};
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR MPI_FLOAT");
+  }
+
+  { // MPI_Type_dup(MPI_INT)
+    MPI_Datatype mpi_ddt;
+    MPI_Type_dup(MPI_INT, &mpi_ddt);
+    int const in_data[] = {1337};
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR DUP(INT)");
+  }
+
+  { // MPI_Type_contiguous(7, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 7};
+    MPI_Type_contiguous(COUNT, MPI_DOUBLE, &mpi_ddt);
+    double in_data[COUNT];
+    for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR CONT(7, DOUBLE)");
+  }
+
+  { // MPI_Type_contiguous(0, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 0};
+    MPI_Type_contiguous(COUNT, MPI_DOUBLE, &mpi_ddt);
+    double in_data[COUNT+1];
+    for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR CONT(0, DOUBLE)");
+  }
+
+  { // MPI_Type_contiguous(1, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1};
+    MPI_Type_contiguous(COUNT, MPI_DOUBLE, &mpi_ddt);
+    double in_data[COUNT];
+    for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR CONT(1, DOUBLE)");
+  }
+
+  { // MPI_Type_contiguous(3, MPI_Type_contiguous(3,MPI_FLOAT))
+    enum {COUNT = 3};
+    MPI_Datatype cont_mpi_ddt;
+    {
+      MPI_Type_contiguous(COUNT, MPI_FLOAT, &cont_mpi_ddt);
+    }
+    MPI_Datatype mpi_ddt;
+    MPI_Type_contiguous(COUNT, cont_mpi_ddt, &mpi_ddt);
+    MPI_Type_free(&cont_mpi_ddt);
+    float in_data[COUNT][COUNT];
+    for (size_t i = 0, k = 0; i < COUNT; ++i)
+      for (size_t j = 0; j < COUNT; ++j, ++k)
+        in_data[i][j] = (float)k;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR CONT(3, CONT(3, DOUBLE))");
+  }
+
+  { // MPI_Type_vector(3, 5, 16, MPI_FLOAT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 3, BLOCKLENGTH = 5, STRIDE = 16};
+    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * STRIDE};
+    float in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR VECTOR(3, 5, 16, FLOAT)");
+  }
+
+  { // MPI_Type_vector(1, 1, 16, MPI_FLOAT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1, STRIDE = 16};
+    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * STRIDE};
+    float in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR VECTOR(1, 1, 16, FLOAT)");
+  }
+
+  { // MPI_Type_vector(3, 1, 16, MPI_LONG_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 3, BLOCKLENGTH = 1, STRIDE = 16};
+    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_LONG_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * STRIDE};
+    long double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (long double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR VECTOR(3, 1, 16, LONG_DOUBLE)");
+  }
+
+  { // MPI_Type_vector(1, 1, 1, MPI_FLOAT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1, STRIDE = 1};
+    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * STRIDE};
+    float in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR VECTOR(1, 1, 1, FLOAT)");
+  }
+
+  { // MPI_Type_vector(0, 1, 1, MPI_CHAR)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 0, BLOCKLENGTH = 1, STRIDE = 1};
+    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = 1};
+    char in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (char)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR VECTOR(0, 1, 1, CHAR)");
+  }
+
+  { // MPI_Type_create_hvector(3, 5, 16*sizeof(int), MPI_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 3, BLOCKLENGTH = 5, STRIDE = 16*sizeof(int)};
+    MPI_Type_create_hvector(COUNT, BLOCKLENGTH, STRIDE, MPI_INT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * STRIDE};
+    int in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HVECTOR(3, 5, 16*sizeof(int), INT)");
+  }
+
+  { // MPI_Type_create_hvector(1, 1, 16*sizeof(int), MPI_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1, STRIDE = 16*sizeof(int)};
+    MPI_Type_create_hvector(COUNT, BLOCKLENGTH, STRIDE, MPI_INT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * STRIDE};
+    int in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HVECTOR(1, 1, 16*sizeof(int), INT)");
+  }
+
+  { // MPI_Type_create_hvector(1, 1, sizeof(int), MPI_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1, STRIDE = sizeof(int)};
+    MPI_Type_create_hvector(COUNT, BLOCKLENGTH, STRIDE, MPI_INT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * STRIDE};
+    int in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HVECTOR(1, 1, sizeof(int), INT)");
+  }
+
+  { // MPI_Type_indexed(4, {8,4,2,1}, {0,8,16,24}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4};
+    int const array_of_blocklengths[COUNT] = {8,4,2,1};
+    int const array_of_displacements[COUNT] = {0,8,16,24};
+    MPI_Type_indexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * 8};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED(4, {8,4,2,1}, {0,8,16,24}, DOUBLE)");
+  }
+
+  { // MPI_Type_indexed(1, {1}, {2}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1};
+    int const array_of_blocklengths[COUNT] = {1};
+    int const array_of_displacements[COUNT] = {2};
+    MPI_Type_indexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * 3};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED(1, {1}, {2}, DOUBLE)");
+  }
+
+  { // MPI_Type_indexed(1, {1}, {0}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1};
+    int const array_of_blocklengths[COUNT] = {1};
+    int const array_of_displacements[COUNT] = {0};
+    MPI_Type_indexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * 2};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED(1, {1}, {0}, DOUBLE)");
+  }
+
+  { // MPI_Type_indexed(0, {1}, {0}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 0};
+    int const array_of_blocklengths[1] = {-1};
+    int const array_of_displacements[1] = {-1};
+    MPI_Type_indexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = 1};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED(0, {1}, {0}, DOUBLE)");
+  }
+
+  { // MPI_Type_indexed(1, {0}, {0}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1};
+    int const array_of_blocklengths[COUNT] = {0};
+    int const array_of_displacements[COUNT] = {0};
+    MPI_Type_indexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = 1};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED(1, {0}, {0}, DOUBLE)");
+  }
+
+  { // MPI_Type_create_hindexed(
+    //   4, {8,4,2,1}, sizeof(float)*{0,8,16,24}, MPI_FLOAT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4};
+    int const array_of_blocklengths[COUNT] = {8,4,2,1};
+    MPI_Aint const array_of_displacements[COUNT] =
+      {0*sizeof(float),8*sizeof(float),16*sizeof(float),24*sizeof(float)};
+    MPI_Type_create_hindexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * 8};
+    float in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HINDEXED(4, {8,4,2,1}, sizeof(float)*{0,8,16,24}, FLOAT)");
+  }
+
+  { // MPI_Type_create_hindexed(1, {1}, sizeof(float)*{2}, MPI_FLOAT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1};
+    int const array_of_blocklengths[COUNT] = {1};
+    MPI_Aint const array_of_displacements[COUNT] = {2*sizeof(float)};
+    MPI_Type_create_hindexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * 4};
+    float in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HINDEXED(1, {1}, sizeof(float)*{2}, FLOAT)");
+  }
+
+  { // MPI_Type_create_hindexed(1, {1}, {0}, MPI_FLOAT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1};
+    int const array_of_blocklengths[COUNT] = {1};
+    MPI_Aint const array_of_displacements[COUNT] = {0};
+    MPI_Type_create_hindexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = COUNT * 2};
+    float in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HINDEXED(1, {1}, {0}, FLOAT)");
+  }
+
+  { // MPI_Type_create_indexed_block(4, 3, {0,4,12,8}, MPI_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4, BLOCKLENGTH = 3};
+    int const array_of_displacements[COUNT] = {0,4,12,8};
+    MPI_Type_create_indexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_INT, &mpi_ddt);
+    enum {IN_DATA_COUNT = 16};
+    int in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED_BLOCK(4, 3, {0,4,12,8}, INT)");
+  }
+
+  { // MPI_Type_create_indexed_block(1, 1, {2}, MPI_CHAR)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1};
+    int const array_of_displacements[COUNT] = {2};
+    MPI_Type_create_indexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_CHAR, &mpi_ddt);
+    enum {IN_DATA_COUNT = 3};
+    char in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (char)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED_BLOCK(1, 1, {2}, CHAR)");
+  }
+
+  { // MPI_Type_create_indexed_block(1, 1, {0}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1};
+    int const array_of_displacements[COUNT] = {0};
+    MPI_Type_create_indexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = 2};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED_BLOCK(1, 1, {0}, DOUBLE)");
+  }
+
+  { // MPI_Type_create_indexed_block(0, 1, {0}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 0, BLOCKLENGTH = 1};
+    int const array_of_displacements[1] = {0};
+    MPI_Type_create_indexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = 1};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED_BLOCK(0, 1, {0}, DOUBLE)");
+  }
+
+  { // MPI_Type_create_indexed_block(1, 0, {0}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 0};
+    int const array_of_displacements[COUNT] = {0};
+    MPI_Type_create_indexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = 1};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED_BLOCK(1, 0, {0}, DOUBLE)");
+  }
+
+  { // MPI_Type_create_hindexed_block(
+    //   4, 3, sizeof(double)*{0,4,12,8}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4, BLOCKLENGTH = 3};
+    MPI_Aint const array_of_displacements[COUNT] =
+      {sizeof(double)*0,sizeof(double)*4,sizeof(double)*12,sizeof(double)*8};
+    MPI_Type_create_hindexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = 16};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HINDEXED_BLOCK(4, 3, sizeof(double)*{0,4,12,8}, DOUBLE)");
+  }
+
+  { // MPI_Type_create_hindexed_block(
+    //   1, 1, sizeof(double)*{2}, MPI_DOUBLE)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1};
+    MPI_Aint const array_of_displacements[COUNT] =
+      {sizeof(double)*2};
+    MPI_Type_create_hindexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+    enum {IN_DATA_COUNT = 3};
+    double in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HINDEXED_BLOCK(1, 1, sizeof(double)*{2}, DOUBLE)");
+  }
+
+  { // MPI_Type_create_hindexed_block(
+    //   1, 1, {0}, MPI_FLOAT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1, BLOCKLENGTH = 1};
+    MPI_Aint const array_of_displacements[COUNT] = {0};
+    MPI_Type_create_hindexed_block(
+      COUNT, BLOCKLENGTH, array_of_displacements, MPI_FLOAT, &mpi_ddt);
+    enum {IN_DATA_COUNT = 1};
+    float in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR HINDEXED_BLOCK(1, 1, {0}, FLOAT)");
+  }
+
+  { // MPI_Type_create_struct(...)
+    struct {
+      char dummy1;
+      int i[3];
+      char dummy2[3];
+      float f;
+      char dummy3[5];
+      double d[2];
+    } const in_data[] =
+    {{.dummy1 = 'a',
+      .i = {1, 2, 3},
+      .dummy2 = {'b', 'c'},
+      .f = 5.0,
+      .dummy3 = {'d', 'e', 'f'},
+      .d = {6.0, 7.0}}};
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 3};
+    int const array_of_blocklengths[COUNT] = {3, 1, 2};
+    MPI_Aint base_address, i_address, f_address, d_address;
+    MPI_Get_address(in_data, &base_address);
+    MPI_Get_address(in_data[0].i, &i_address);
+    MPI_Get_address(&in_data[0].f, &f_address);
+    MPI_Get_address(in_data[0].d, &d_address);
+    MPI_Aint array_of_displacements[COUNT] =
+      {(MPI_Aint)(i_address - base_address),
+       (MPI_Aint)(f_address - base_address),
+       (MPI_Aint)(d_address - base_address)};
+    MPI_Datatype const array_of_types[COUNT] =
+      {MPI_INT, MPI_FLOAT, MPI_DOUBLE};
+    MPI_Type_create_struct(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      array_of_types, &mpi_ddt);
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR STRUCT(...)");
+  }
+
+  { // MPI_Type_create_struct(1, {1}, {0}, {MPI_INT})
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 1};
+    int const array_of_blocklengths[COUNT] = {1};
+    MPI_Aint array_of_displacements[COUNT] = {0};
+    MPI_Datatype const array_of_types[COUNT] = {MPI_INT};
+    int in_data[COUNT];
+    for (size_t i = 0; i < COUNT; ++i) in_data[i] = (int)i;
+    MPI_Type_create_struct(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      array_of_types, &mpi_ddt);
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR STRUCT(1, {1}, {0}, {INT})");
+  }
+
+  { // MPI_Type_create_subarray(
+    //   4, {8,4,3,7}, {2,3,1,4}, {3,1,0,2}, order, MPI_DOUBLE)
+    int order_types[] = {MPI_ORDER_FORTRAN, MPI_ORDER_C};
+    for (size_t order_idx = 0;
+         order_idx < sizeof(order_types) / sizeof(order_types[0]);
+         ++order_idx) {
+
+      MPI_Datatype mpi_ddt;
+      enum {NDIM = 4, DIM0 = 8, DIM1 = 4, DIM2 = 4, DIM3 = 7};
+      int const array_of_sizes[NDIM] = {DIM0, DIM1, DIM2, DIM3};
+      int const array_of_subsizes[NDIM] = {2, 3, 1, 4};
+      int const array_of_starts[NDIM] = {3,1,0,2};
+      enum {IN_DATA_COUNT = DIM0 * DIM1 * DIM2 * DIM3};
+      double in_data[IN_DATA_COUNT];
+      for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
+      MPI_Type_create_subarray(
+        NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
+        order_types[order_idx], MPI_DOUBLE, &mpi_ddt);
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR(
+        "ERROR SUBARRAY(4, {8,4,3,7}, {2,3,1,4}, {3,1,0,2}, order, DOUBLE)");
+    }
+  }
+
+  { // MPI_Type_create_subarray(1, {8}, {4}, {2}, order, MPI_FLOAT)
+    int order_types[] = {MPI_ORDER_FORTRAN, MPI_ORDER_C};
+    for (size_t order_idx = 0;
+         order_idx < sizeof(order_types) / sizeof(order_types[0]);
+         ++order_idx) {
+
+      MPI_Datatype mpi_ddt;
+      enum {NDIM = 1, DIM0 = 8};
+      int const array_of_sizes[NDIM] = {DIM0};
+      int const array_of_subsizes[NDIM] = {4};
+      int const array_of_starts[NDIM] = {2};
+      enum {IN_DATA_COUNT = DIM0};
+      float in_data[IN_DATA_COUNT];
+      for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
+      MPI_Type_create_subarray(
+        NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
+        order_types[order_idx], MPI_FLOAT, &mpi_ddt);
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR(
+        "ERROR SUBARRAY(1, {8}, {4}, {2}, order, FLOAT)");
+    }
+  }
+
+  { // MPI_Type_create_subarray(1, {1}, {1}, {0}, order, MPI_INT)
+    int order_types[] = {MPI_ORDER_FORTRAN, MPI_ORDER_C};
+    for (size_t order_idx = 0;
+         order_idx < sizeof(order_types) / sizeof(order_types[0]);
+         ++order_idx) {
+
+      MPI_Datatype mpi_ddt;
+      enum {NDIM = 1, DIM0 = 1};
+      int const array_of_sizes[NDIM] = {DIM0};
+      int const array_of_subsizes[NDIM] = {1};
+      int const array_of_starts[NDIM] = {0};
+      enum {IN_DATA_COUNT = DIM0};
+      int in_data[IN_DATA_COUNT];
+      for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
+      MPI_Type_create_subarray(
+        NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
+        order_types[order_idx], MPI_FLOAT, &mpi_ddt);
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR(
+        "ERROR SUBARRAY(1, {1}, {1}, {0}, order, INT)");
+    }
+  }
+
+  { // MPI_Type_create_resized(MPI_FLOAT, -3, 16)
+    MPI_Datatype mpi_ddt;
+    enum {LB = -3, EXTENT = 16};
+    MPI_Type_create_resized(MPI_FLOAT, LB, EXTENT, &mpi_ddt);
+    float in_data[] = {1337.0};
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR RESIZED(MPI_FLOAT, -3, 16)");
+  }
+
+  { // MPI_Type_create_resized(MPI_INT, -4, 0)
+    MPI_Datatype mpi_ddt;
+    enum {LB = -4, EXTENT = 0};
+    MPI_Type_create_resized(MPI_INT, LB, EXTENT, &mpi_ddt);
+    int in_data[] = {1337};
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR RESIZED(MPI_INT, -4, 0)");
+  }
+
+  { // INDEXED(
+    //   4, {1,2,3,4}, {3,7,9,12},
+    //   STRUCT(
+    //     3,{1,1,1,1},{...},
+    //     {CONT(0,DUP(MPI_INT)),
+    //      CONT(3,MPI_INT16_T),
+    //      VECTOR(3,3,9,MPI_DOUBLE),
+    //      CONT(0,MPI_CHAR)}))
+    struct {
+      char c1[3];
+      int i[2];
+      int16_t i16[3];
+      double d[9][9];
+      char c2[5];
+    } in_data[4][4];
+    for (size_t i = 0; i < 4; ++i) {
+      for (size_t j = 0; j < 4; ++j) {
+        for (size_t k = 0; k < 3; ++k)
+          in_data[i][j].c1[k] = (char)((i * 4 + j) * 3 + k);
+        for (size_t k = 0; k < 2; ++k)
+          in_data[i][j].i[k] = (int)((i * 4 + j) * 2 + k);
+        for (size_t k = 0; k < 3; ++k)
+          in_data[i][j].i16[k] = (int)((i * 4 + j) * 3 + k);
+        for (size_t k = 0; k < 9; ++k)
+          for (size_t l = 0; l < 9; ++l)
+            in_data[i][j].d[k][j] = (double)(((i * 4  + j) * 9 + k) * 9 + l);
+        for (size_t k = 0; k < 5; ++k)
+          in_data[i][j].c2[k] = (char)((i * 4 + j) * 5 + k);
+      }
+    }
+
+    MPI_Datatype struct_mpi_ddt;
+    {// STRUCT(3,{1,1,1},{...},{i_mpi_ddt,d_mpi_ddt,c_mpi_ddt})
+
+      MPI_Datatype i_mpi_ddt, i16_mpi_ddt, d_mpi_ddt, c_mpi_ddt;
+      { // {CONT(0,DUP(MPI_INT)),
+        //  CONT(0,MPI_INT16_T),
+        //  VECTOR(3,3,9,MPI_DOUBLE),
+        //  CONT(0,MPI_CHAR)}
+
+        { // CONT(0,DUP(MPI_INT)
+          MPI_Datatype dup_mpi_int;
+          MPI_Type_dup(MPI_INT, &dup_mpi_int);
+          enum {COUNT = 0};
+          MPI_Type_contiguous(COUNT, dup_mpi_int, &i_mpi_ddt);
+          MPI_Type_free(&dup_mpi_int);
+        }
+
+        { // CONT(3,MPI_INT16_T)
+          enum {COUNT = 3};
+          MPI_Type_contiguous(COUNT, MPI_INT16_T, &i16_mpi_ddt);
+        }
+
+        { // VECTOR(3,3,9,MPI_DOUBLE)
+          enum {COUNT = 3, BLOCKLENGTH = 3, STRIDE = 9};
+          MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_DOUBLE, &d_mpi_ddt);
+        }
+
+        { // CONT(0,MPI_CHAR)
+          enum {COUNT = 0};
+          MPI_Type_contiguous(COUNT, MPI_CHAR, &c_mpi_ddt);
+        }
+      }
+
+      enum {COUNT = 4};
+      int const array_of_blocklengths[COUNT] = {1, 1, 1, 1};
+      MPI_Aint base_address, i_address, i16_address, d_address, c_address;
+      MPI_Get_address(in_data, &base_address);
+      MPI_Get_address(in_data[0][0].i, &i_address);
+      MPI_Get_address(in_data[0][0].i16, &i16_address);
+      MPI_Get_address(&(in_data[0][0].d[3][3]), &d_address);
+      MPI_Get_address(in_data[0][0].c2, &c_address);
+      MPI_Aint array_of_displacements[COUNT] =
+        {(MPI_Aint)(i_address - base_address),
+         (MPI_Aint)(i16_address - base_address),
+         (MPI_Aint)(d_address - base_address),
+         (MPI_Aint)(c_address - base_address)};
+      MPI_Datatype const array_of_types[COUNT] =
+        {i_mpi_ddt, i16_mpi_ddt, d_mpi_ddt, c_mpi_ddt};
+      MPI_Type_create_struct(
+        COUNT, array_of_blocklengths, array_of_displacements,
+        array_of_types, &struct_mpi_ddt);
+
+      MPI_Type_free(&i_mpi_ddt);
+      MPI_Type_free(&i16_mpi_ddt);
+      MPI_Type_free(&d_mpi_ddt);
+      MPI_Type_free(&c_mpi_ddt);
+    }
+
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4};
+    int const array_of_blocklengths[COUNT] = {1,2,3,4};
+    int const array_of_displacements[COUNT] = {3,7,9,12};
+    MPI_Type_indexed(
+      COUNT, array_of_blocklengths, array_of_displacements,
+      struct_mpi_ddt, &mpi_ddt);
+    MPI_Type_free(&struct_mpi_ddt);
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+      PUT_ERR("ERROR INDEXED(...)");
+  }
+
+  xt_finalize();
+  xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
+
+  return TEST_EXIT_CODE;
+}
+
+static int check_xt_ddt(
+  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size) {
+
+  if (in_data_size > INT_MAX) {
+    PUT_ERR("in_data_size > INT_MAX");
+    return 0;
+  }
+
+  // check type of the MPI Datatype
+  int num_ints, num_adds, num_dtypes, combiner;
+  MPI_Type_get_envelope(
+    mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner);
+
+  // if mpi_ddt is a derived MPI datatype
+  if (combiner != MPI_COMBINER_NAMED)
+    MPI_Type_commit(&mpi_ddt);
+
+  // parse MPI Datatype and convert it to xt_ddt
+  Xt_ddt ddt = xt_ddt_new(mpi_ddt);
+
+  void * buffer = malloc(4 * in_data_size);
+  void * pack_data_mpi_ddt = (unsigned char*)buffer + 0 * in_data_size;
+  void * pack_data_xt_ddt =  (unsigned char*)buffer + 1 * in_data_size;
+  void * out_data_mpi_ddt =  (unsigned char*)buffer + 2 * in_data_size;
+  void * out_data_xt_ddt =   (unsigned char*)buffer + 3 * in_data_size;
+
+  // initialise buffer
+  memset(buffer, -1, 4 * in_data_size);
+
+  // pack in_data
+  int position = 0;
+  MPI_Pack(
+    in_data, 1, mpi_ddt, pack_data_mpi_ddt, (int)in_data_size,
+    &position, MPI_COMM_WORLD);
+  xt_ddt_pack(ddt, in_data, pack_data_xt_ddt);
+
+  // unpack data
+  position = 0;
+  MPI_Unpack(
+    pack_data_mpi_ddt, (int)in_data_size, &position,
+    out_data_mpi_ddt, 1, mpi_ddt, MPI_COMM_WORLD);
+  xt_ddt_unpack(ddt, pack_data_xt_ddt, out_data_xt_ddt);
+
+  // compare out buffers
+  int err_flag =
+    memcmp(out_data_mpi_ddt, out_data_xt_ddt, in_data_size);
+
+  // clean up
+  free(buffer);
+  xt_ddt_delete(ddt);
+
+  // if mpi_ddt is a derived MPI datatype
+  if (combiner != MPI_COMBINER_NAMED)
+    MPI_Type_free(&mpi_ddt);
+
+  return err_flag;
+}
+
+/*
+ * Local Variables:
+ * c-basic-offset: 2
+ * coding: utf-8
+ * indent-tabs-mode: nil
+ * show-trailing-whitespace: t
+ * require-trailing-newline: t
+ * End:
+ */
