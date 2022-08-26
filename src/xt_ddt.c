@@ -753,57 +753,31 @@ static void xt_ddt_tree_delete(struct xt_ddt_tree_elem * tree) {
   if (tree != NULL) xt_ddt_tree_elem_delete(tree);
 }
 
-static size_t xt_ddt_tree_elem_get_num_sections(
-  struct xt_ddt_tree_elem * elem, MPI_Datatype * prev_dtype) {
+static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
 
-  size_t num_sections = 0;
+  MPI_Aint true_lb, true_extent;
+  xt_mpi_call(
+    MPI_Type_get_true_extent(mpi_ddt, &true_lb, &true_extent),
+    MPI_COMM_WORLD);
 
-  switch (elem->type) {
-
-    case(DTYPE): {
-
-      if (elem->dtype == *prev_dtype) {
-        return 0;
-      } else {
-        *prev_dtype = elem->dtype;
-        return 1;
-      }
-      break;
-    } 
-    case (SINGLE_SUB): {
-
-      struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
-
-      for (int i = 0; i < elem->displ_count; ++i)
-        num_sections +=
-          xt_ddt_tree_elem_get_num_sections(sub_elem, prev_dtype);
-      break;
-    }
-    case (MULTI_SUB): {
-
-      struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
-
-      for (int i = 0; i < elem->displ_count; ++i)
-        num_sections +=
-          xt_ddt_tree_elem_get_num_sections(sub_elems[i], prev_dtype);
-      break;
-    }
+  switch(true_extent) {
+    case 1:  return 5;
+    case 2:  return 4;
+    case 4:  return 3;
+    case 8:  return 2;
+    case 16: return 1;
+    case 32: return 0;
+    default:
+      Xt_abort(
+        MPI_COMM_WORLD,
+        "ERROR(mpi_ddt_to_data_idx): datatype size", __FILE__, __LINE__);
   };
-
-  return num_sections;
+  return SIZE_MAX;
 }
 
-static size_t xt_ddt_tree_get_num_sections(struct xt_ddt_tree_elem * tree) {
-
-  MPI_Datatype prev_dtype = MPI_DATATYPE_NULL;
-
-  return
-    (tree != NULL)?xt_ddt_tree_elem_get_num_sections(tree, &prev_dtype):0;
-}
-
-static void xt_ddt_tree_elem_get_section_sizes(
+static void xt_ddt_tree_elem_get_data_sizes(
   struct xt_ddt_tree_elem * elem, MPI_Datatype * prev_dtype,
-  size_t ** section_sizes) {
+  size_t * prev_data_idx, struct xt_ddt_data * data) {
 
   if (elem == NULL) return;
 
@@ -811,13 +785,13 @@ static void xt_ddt_tree_elem_get_section_sizes(
 
     case(DTYPE): {
 
-      if (elem->dtype == *prev_dtype) {
-        **section_sizes += (size_t)(elem->displ_count);
-      } else {
-        *section_sizes += 1;
-        **section_sizes = (size_t)(elem->displ_count);
+      if (elem->dtype != *prev_dtype) {
+
         *prev_dtype = elem->dtype;
+        *prev_data_idx = mpi_ddt_to_data_idx(elem->dtype);
       }
+
+      data[*prev_data_idx].displ_count += (size_t)(elem->displ_count);
       break;
     } 
     case (SINGLE_SUB): {
@@ -825,8 +799,8 @@ static void xt_ddt_tree_elem_get_section_sizes(
       struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
 
       for (int i = 0; i < elem->displ_count; ++i)
-        xt_ddt_tree_elem_get_section_sizes(
-          sub_elem, prev_dtype, section_sizes);
+        xt_ddt_tree_elem_get_data_sizes(
+          sub_elem, prev_dtype, prev_data_idx, data);
       break;
     }
     case (MULTI_SUB): {
@@ -834,27 +808,27 @@ static void xt_ddt_tree_elem_get_section_sizes(
       struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
 
       for (int i = 0; i < elem->displ_count; ++i)
-        xt_ddt_tree_elem_get_section_sizes(
-          sub_elems[i], prev_dtype, section_sizes);
+        xt_ddt_tree_elem_get_data_sizes(
+          sub_elems[i], prev_dtype, prev_data_idx, data);
       break;
     }
   };
 }
 
-static void xt_ddt_tree_get_section_sizes(
-  struct xt_ddt_tree_elem * tree, size_t * section_sizes) {
+static void xt_ddt_tree_get_data_sizes(
+  struct xt_ddt_tree_elem * tree, struct xt_ddt_data * data) {
 
   MPI_Datatype prev_dtype = MPI_DATATYPE_NULL;
-  size_t * temp_section_sizes = section_sizes - 1;
+  size_t prev_data_idx = SIZE_MAX;
 
   if (tree != NULL)
-    xt_ddt_tree_elem_get_section_sizes(
-      tree, &prev_dtype, &temp_section_sizes);
+    xt_ddt_tree_elem_get_data_sizes(
+      tree, &prev_dtype, &prev_data_idx, data);
 }
 
-static void xt_ddt_tree_elem_to_sections(
-  struct xt_ddt_tree_elem * elem, struct xt_ddt_data ** data, size_t displ, 
-  MPI_Datatype * prev_dtype) {
+static void xt_ddt_tree_elem_to_data(
+  struct xt_ddt_tree_elem * elem, struct xt_ddt_data * data, size_t displ,
+  MPI_Datatype * prev_dtype, size_t * prev_data_idx) {
 
   if (elem == NULL) return;
 
@@ -868,20 +842,15 @@ static void xt_ddt_tree_elem_to_sections(
 
       if (elem->dtype != *prev_dtype) {
 
-        *data += 1;
-        MPI_Aint true_lb, true_extent;
-        MPI_Type_get_true_extent(
-          elem->dtype, &true_lb, &true_extent);
-        ((*data)->element_size) = (size_t)true_extent;
-        (*data)->displ_count = 0;
         *prev_dtype = elem->dtype;
+        *prev_data_idx = mpi_ddt_to_data_idx(elem->dtype);
       }
 
-      size_t displ_count = (*data)->displ_count;
-      size_t * displs = (*data)->displs;
+      size_t displ_count = data[*prev_data_idx].displ_count;
+      size_t * displs = data[*prev_data_idx].displs;
       for (size_t i = 0; i < elem_displ_count; ++i, ++displ_count)
         displs[displ_count] = elem_displs[i] + displ;
-      (*data)->displ_count = displ_count;
+      data[*prev_data_idx].displ_count = displ_count;
 
       break;
     } 
@@ -890,8 +859,9 @@ static void xt_ddt_tree_elem_to_sections(
       struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
 
       for (size_t i = 0; i < elem_displ_count; ++i)
-        xt_ddt_tree_elem_to_sections(
-          sub_elem, data, displ + elem_displs[i], prev_dtype);
+        xt_ddt_tree_elem_to_data(
+          sub_elem, data, displ + elem_displs[i],
+          prev_dtype, prev_data_idx);
       break;
     }
     case (MULTI_SUB): {
@@ -899,23 +869,24 @@ static void xt_ddt_tree_elem_to_sections(
       struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
 
       for (size_t i = 0; i < elem_displ_count; ++i)
-        xt_ddt_tree_elem_to_sections(
-          sub_elems[i], data, displ + elem_displs[i], prev_dtype);
+        xt_ddt_tree_elem_to_data(
+          sub_elems[i], data, displ + elem_displs[i],
+          prev_dtype, prev_data_idx);
       break;
     }
   };
 }
 
-static void xt_ddt_tree_to_sections(
+static void xt_ddt_tree_to_data(
   struct xt_ddt_tree_elem * tree, struct xt_ddt_data * data) {
 
-  MPI_Datatype prev_dtype = MPI_DATATYPE_NULL;
   size_t displ = 0;
-  struct xt_ddt_data * temp_data = data - 1;
+  MPI_Datatype prev_dtype = MPI_DATATYPE_NULL;
+  size_t prev_data_idx = SIZE_MAX;
 
   if (tree != NULL)
-    xt_ddt_tree_elem_to_sections(
-      tree, &temp_data, displ, &prev_dtype);
+    xt_ddt_tree_elem_to_data(
+      tree, data, displ, &prev_dtype, &prev_data_idx);
 }
 
 Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
@@ -923,34 +894,44 @@ Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   // parse the MPI datatype
   struct xt_ddt_tree_elem * tree = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 0);
 
-  // count the number of contiguous sections with the same elemental
-  // datatype extent
-  size_t num_sections = xt_ddt_tree_get_num_sections(tree);
-  Xt_ddt ddt = xmalloc(1 * sizeof(*ddt) + num_sections * sizeof(ddt->data[0]));
-  ddt->count = num_sections;
+  struct xt_ddt_data data[6];
+  for (int i = 0; i < 6; ++i) {
+    data[i].element_size = 1 << (5 - i);
+    data[i].displ_count = 0;
+    data[i].displs = NULL;
+  }
 
-  // if there is at least one section
-  if (num_sections > 0) {
+  // determine the number of displacements for each elemental data size
+  xt_ddt_tree_get_data_sizes(tree, data);
 
-    // determine the size of each section
-    size_t * section_sizes = xmalloc(num_sections * sizeof(*section_sizes));
-    xt_ddt_tree_get_section_sizes(tree, section_sizes);
+  // compute the total number of elemental data
+  size_t total_displs_size = 0;
+  size_t data_count = 0;
+  for (size_t i = 0; i < 6; ++i) {
+    total_displs_size += data[i].displ_count;
+    if (data[i].displ_count > 0) ++data_count;
+  }
 
-    // compute the total size of all sections
-    size_t displs_size = 0;
-    for (size_t i = 0; i < num_sections; ++i) displs_size += section_sizes[i];
+  Xt_ddt ddt = xmalloc(1 * sizeof(*ddt) + data_count * sizeof(ddt->data[0]));
+  ddt->count = data_count;
+
+  if (total_displs_size > 0) {
 
     // allocate memory for all displacements
-    size_t * displs = xmalloc(displs_size * sizeof(*displs));
+    size_t * displs = xmalloc(total_displs_size * sizeof(*displs));
 
-    for (size_t i = 0, offset = 0; i < num_sections; ++i) {
-      ddt->data[i].displs = displs + offset;
-      offset += section_sizes[i];
+    for (size_t i = 0, offset = 0; i < 6; ++i) {
+      data[i].displs = displs + offset;
+      offset += data[i].displ_count;
+      data[i].displ_count = 0;
     }
-    free(section_sizes);
 
     // determine all displacements
-    xt_ddt_tree_to_sections(tree, &(ddt->data[0]));
+    xt_ddt_tree_to_data(tree, data);
+
+    for (int i = 0, j = 0; i < 6; ++i)
+      if (data[i].displ_count > 0)
+        ddt->data[j++] = data[i];
   }
 
   // free internal representation of MPI datatype
