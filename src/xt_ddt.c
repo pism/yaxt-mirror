@@ -591,7 +591,7 @@ static struct xt_ddt_tree_elem *
 
       free(array_of_ints);
 
-      break;;
+      break;
     }
     case MPI_COMBINER_HINDEXED:{
 
@@ -948,6 +948,18 @@ void xt_ddt_delete(Xt_ddt ddt) {
   // are part of the same allocation
   if (ddt->count > 0) free(ddt->data[0].displs);
   free(ddt);
+}
+
+size_t xt_ddt_get_pack_size(Xt_ddt ddt) {
+
+  if (ddt == NULL) return 0;
+
+  size_t pack_size = 0;
+
+  for (size_t i = 0; i < ddt->count; ++i)
+    pack_size += ddt->data[i].element_size * ddt->data[i].displ_count;
+
+  return pack_size;
 }
 
 void xt_ddt_pack(Xt_ddt ddt, void const * src, void * dst) {

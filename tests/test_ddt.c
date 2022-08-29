@@ -54,7 +54,8 @@
 #include "tests.h"
 
 static int check_xt_ddt(
-  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size);
+  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
+  size_t ref_pack_size);
 
 int main(void) {
 
@@ -68,7 +69,7 @@ int main(void) {
     MPI_Datatype mpi_ddt = MPI_INT;
     int const in_data[] = {1337};
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR MPI_INT");
   }
 
@@ -76,7 +77,7 @@ int main(void) {
     MPI_Datatype mpi_ddt = MPI_DOUBLE;
     double const in_data[] = {1337.0};
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR MPI_DOUBLE");
   }
 
@@ -84,7 +85,7 @@ int main(void) {
     MPI_Datatype mpi_ddt = MPI_FLOAT;
     float const in_data[] = {1337.0};
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR MPI_FLOAT");
   }
 
@@ -93,7 +94,7 @@ int main(void) {
     MPI_Type_dup(MPI_INT, &mpi_ddt);
     int const in_data[] = {1337};
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR DUP(INT)");
   }
 
@@ -104,7 +105,8 @@ int main(void) {
     double in_data[COUNT];
     for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), COUNT * sizeof(in_data[0])))
       PUT_ERR("ERROR CONT(7, DOUBLE)");
   }
 
@@ -115,7 +117,7 @@ int main(void) {
     double in_data[COUNT+1];
     for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), 0))
       PUT_ERR("ERROR CONT(0, DOUBLE)");
   }
 
@@ -126,7 +128,8 @@ int main(void) {
     double in_data[COUNT];
     for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), COUNT * sizeof(in_data[0])))
       PUT_ERR("ERROR CONT(1, DOUBLE)");
   }
 
@@ -144,7 +147,9 @@ int main(void) {
       for (size_t j = 0; j < COUNT; ++j, ++k)
         in_data[i][j] = (float)k;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * COUNT * sizeof(in_data[0][0])))
       PUT_ERR("ERROR CONT(3, CONT(3, DOUBLE))");
   }
 
@@ -156,7 +161,9 @@ int main(void) {
     float in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR VECTOR(3, 5, 16, FLOAT)");
   }
 
@@ -168,7 +175,9 @@ int main(void) {
     float in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR VECTOR(1, 1, 16, FLOAT)");
   }
 
@@ -178,9 +187,12 @@ int main(void) {
     MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_LONG_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * STRIDE};
     long double in_data[IN_DATA_COUNT];
+    memset(in_data, -1, sizeof(in_data));
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (long double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR VECTOR(3, 1, 16, LONG_DOUBLE)");
   }
 
@@ -192,7 +204,9 @@ int main(void) {
     float in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR VECTOR(1, 1, 1, FLOAT)");
   }
 
@@ -204,7 +218,9 @@ int main(void) {
     char in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (char)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH* sizeof(in_data[0])))
       PUT_ERR("ERROR VECTOR(0, 1, 1, CHAR)");
   }
 
@@ -216,7 +232,9 @@ int main(void) {
     int in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR HVECTOR(3, 5, 16*sizeof(int), INT)");
   }
 
@@ -228,7 +246,9 @@ int main(void) {
     int in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR HVECTOR(1, 1, 16*sizeof(int), INT)");
   }
 
@@ -240,7 +260,9 @@ int main(void) {
     int in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR HVECTOR(1, 1, sizeof(int), INT)");
   }
 
@@ -256,7 +278,8 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 15 * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED(4, {8,4,2,1}, {0,8,16,24}, DOUBLE)");
   }
 
@@ -272,7 +295,8 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED(1, {1}, {2}, DOUBLE)");
   }
 
@@ -288,7 +312,8 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED(1, {1}, {0}, DOUBLE)");
   }
 
@@ -304,7 +329,7 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), 0))
       PUT_ERR("ERROR INDEXED(0, {1}, {0}, DOUBLE)");
   }
 
@@ -320,7 +345,7 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), 0))
       PUT_ERR("ERROR INDEXED(1, {0}, {0}, DOUBLE)");
   }
 
@@ -338,7 +363,8 @@ int main(void) {
     float in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 15 * sizeof(in_data[0])))
       PUT_ERR("ERROR HINDEXED(4, {8,4,2,1}, sizeof(float)*{0,8,16,24}, FLOAT)");
   }
 
@@ -354,7 +380,8 @@ int main(void) {
     float in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
       PUT_ERR("ERROR HINDEXED(1, {1}, sizeof(float)*{2}, FLOAT)");
   }
 
@@ -370,7 +397,8 @@ int main(void) {
     float in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
       PUT_ERR("ERROR HINDEXED(1, {1}, {0}, FLOAT)");
   }
 
@@ -384,7 +412,9 @@ int main(void) {
     int in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED_BLOCK(4, 3, {0,4,12,8}, INT)");
   }
 
@@ -398,7 +428,9 @@ int main(void) {
     char in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (char)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED_BLOCK(1, 1, {2}, CHAR)");
   }
 
@@ -412,7 +444,9 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED_BLOCK(1, 1, {0}, DOUBLE)");
   }
 
@@ -426,7 +460,9 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED_BLOCK(0, 1, {0}, DOUBLE)");
   }
 
@@ -440,7 +476,9 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED_BLOCK(1, 0, {0}, DOUBLE)");
   }
 
@@ -456,7 +494,9 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR HINDEXED_BLOCK(4, 3, sizeof(double)*{0,4,12,8}, DOUBLE)");
   }
 
@@ -472,7 +512,9 @@ int main(void) {
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR HINDEXED_BLOCK(1, 1, sizeof(double)*{2}, DOUBLE)");
   }
 
@@ -487,7 +529,9 @@ int main(void) {
     float in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR HINDEXED_BLOCK(1, 1, {0}, FLOAT)");
   }
 
@@ -524,7 +568,9 @@ int main(void) {
       COUNT, array_of_blocklengths, array_of_displacements,
       array_of_types, &mpi_ddt);
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          (3 * sizeof(int) + 1 * sizeof(float) + 2 * sizeof(double))))
       PUT_ERR("ERROR STRUCT(...)");
   }
 
@@ -540,7 +586,8 @@ int main(void) {
       COUNT, array_of_blocklengths, array_of_displacements,
       array_of_types, &mpi_ddt);
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
       PUT_ERR("ERROR STRUCT(1, {1}, {0}, {INT})");
   }
 
@@ -563,7 +610,9 @@ int main(void) {
         NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
         order_types[order_idx], MPI_DOUBLE, &mpi_ddt);
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          2 * 3 * 1 * 4 * sizeof(in_data[0])))
       PUT_ERR(
         "ERROR SUBARRAY(4, {8,4,3,7}, {2,3,1,4}, {3,1,0,2}, order, DOUBLE)");
     }
@@ -587,9 +636,10 @@ int main(void) {
         NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
         order_types[order_idx], MPI_FLOAT, &mpi_ddt);
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
-      PUT_ERR(
-        "ERROR SUBARRAY(1, {8}, {4}, {2}, order, FLOAT)");
+      if (check_xt_ddt(
+            mpi_ddt, in_data, sizeof(in_data), 4 * sizeof(in_data[0])))
+        PUT_ERR(
+          "ERROR SUBARRAY(1, {8}, {4}, {2}, order, FLOAT)");
     }
   }
 
@@ -611,7 +661,8 @@ int main(void) {
         NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
         order_types[order_idx], MPI_FLOAT, &mpi_ddt);
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
       PUT_ERR(
         "ERROR SUBARRAY(1, {1}, {1}, {0}, order, INT)");
     }
@@ -623,7 +674,7 @@ int main(void) {
     MPI_Type_create_resized(MPI_FLOAT, LB, EXTENT, &mpi_ddt);
     float in_data[] = {1337.0};
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR RESIZED(MPI_FLOAT, -3, 16)");
   }
 
@@ -633,7 +684,7 @@ int main(void) {
     MPI_Type_create_resized(MPI_INT, LB, EXTENT, &mpi_ddt);
     int in_data[] = {1337};
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR RESIZED(MPI_INT, -4, 0)");
   }
 
@@ -652,6 +703,7 @@ int main(void) {
       double d[9][9];
       char c2[5];
     } in_data[4][4];
+    memset(&in_data[0][0], -1, sizeof(in_data));
     for (size_t i = 0; i < 4; ++i) {
       for (size_t j = 0; j < 4; ++j) {
         for (size_t k = 0; k < 3; ++k)
@@ -673,7 +725,7 @@ int main(void) {
 
       MPI_Datatype i_mpi_ddt, i16_mpi_ddt, d_mpi_ddt, c_mpi_ddt;
       { // {CONT(0,DUP(MPI_INT)),
-        //  CONT(0,MPI_INT16_T),
+        //  CONT(3,MPI_INT16_T),
         //  VECTOR(3,3,9,MPI_DOUBLE),
         //  CONT(0,MPI_CHAR)}
 
@@ -735,7 +787,9 @@ int main(void) {
       struct_mpi_ddt, &mpi_ddt);
     MPI_Type_free(&struct_mpi_ddt);
 
-    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data)))
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          (1 + 2 + 3 + 4) * (3 * sizeof(int16_t) + 3 * 3 * sizeof(double))))
       PUT_ERR("ERROR INDEXED(...)");
   }
 
@@ -746,7 +800,8 @@ int main(void) {
 }
 
 static int check_xt_ddt(
-  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size) {
+  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
+  size_t ref_pack_size) {
 
   if (in_data_size > INT_MAX) {
     PUT_ERR("in_data_size > INT_MAX");
@@ -764,6 +819,8 @@ static int check_xt_ddt(
 
   // parse MPI Datatype and convert it to xt_ddt
   Xt_ddt ddt = xt_ddt_new(mpi_ddt);
+
+  if (xt_ddt_get_pack_size(ddt) != ref_pack_size) return 1;
 
   void * buffer = malloc(4 * in_data_size);
   void * pack_data_mpi_ddt = (unsigned char*)buffer + 0 * in_data_size;

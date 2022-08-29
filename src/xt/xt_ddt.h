@@ -68,6 +68,7 @@ typedef struct Xt_ddt_ *Xt_ddt;
 Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt);
 void xt_ddt_delete(Xt_ddt ddt);
 
+size_t xt_ddt_get_pack_size(Xt_ddt ddt);
 void xt_ddt_pack(Xt_ddt ddt, void const * src, void * dst);
 void xt_ddt_unpack(Xt_ddt ddt, void const * src, void * dst);
 
