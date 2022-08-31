@@ -82,7 +82,8 @@ MODULE xt_config_f
        xt_exchanger_irecv_isend = 1, &
        xt_exchanger_irecv_isend_packed = 2, &
        xt_exchanger_mix_isend_irecv = 3, &
-       xt_exchanger_neigh_alltoall = 4
+       xt_exchanger_neigh_alltoall = 4, &
+       xt_exchanger_irecv_isend_ddt_packed = 5
   PUBLIC :: xt_config_get_idxvec_autoconvert_size, &
        xt_config_set_idxvec_autoconvert_size
   PUBLIC :: xt_config_get_redist_mthread_mode, &

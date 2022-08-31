@@ -61,6 +61,7 @@
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_mix_isend_irecv.h"
 #include "xt_exchanger_irecv_isend_packed.h"
+#include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
 #include "xt_idxlist_internal.h"
 #include "core/core.h"
@@ -86,7 +87,7 @@ void xt_config_delete(Xt_config config)
 }
 
 static const struct {
-  char name[20];
+  char name[32];
   Xt_exchanger_new f;
   int code;
 } exchanger_table[] = {
@@ -96,6 +97,8 @@ static const struct {
     xt_exchanger_irecv_isend_new, xt_exchanger_irecv_isend },
   { "irecv_isend_packed",
     xt_exchanger_irecv_isend_packed_new, xt_exchanger_irecv_isend_packed },
+  { "irecv_isend_ddt_packed",
+    xt_exchanger_irecv_isend_ddt_packed_new, xt_exchanger_irecv_isend_ddt_packed },
   { "mix_irecv_isend",
     xt_exchanger_mix_isend_irecv_new, xt_exchanger_mix_isend_irecv },
   { "neigh_alltoall",

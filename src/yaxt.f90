@@ -63,7 +63,8 @@ MODULE yaxt
        xt_exchanger_irecv_isend_packed, xt_exchanger_mix_isend_irecv, &
        xt_exchanger_neigh_alltoall, &
        xt_config_get_idxvec_autoconvert_size, &
-       xt_config_set_idxvec_autoconvert_size
+       xt_config_set_idxvec_autoconvert_size, &
+       xt_exchanger_irecv_isend_ddt_packed
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
        xt_sort_permutation, xt_assign_id_map
   USE xt_idxlist_abstract, ONLY: &
@@ -198,7 +199,8 @@ MODULE yaxt
        xt_exchanger_irecv_isend_packed, xt_exchanger_mix_isend_irecv, &
        xt_exchanger_neigh_alltoall, &
        xt_config_get_idxvec_autoconvert_size, &
-       xt_config_set_idxvec_autoconvert_size
+       xt_config_set_idxvec_autoconvert_size, &
+       xt_exchanger_irecv_isend_ddt_packed
 
   PUBLIC :: xt_redist_p2p_new, xt_redist_p2p_custom_new
   PUBLIC :: xt_redist_p2p_off_new, xt_redist_p2p_off_custom_new

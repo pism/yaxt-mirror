@@ -161,10 +161,12 @@ test_arithmetic_long_SOURCES = test_arithmetic_long.c
 test_arithmetic_long_LDADD = libtestutil.la
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
 test_exchanger_parallel_LDADD =  libtestutil.la \
+	../src/xt_ddt.lo \
 	../src/xt_config.lo \
 	../src/xt_exchanger_irecv_isend.lo \
 	../src/xt_exchanger_irecv_send.lo \
 	../src/xt_exchanger_irecv_isend_packed.lo \
+	../src/xt_exchanger_irecv_isend_ddt_packed.lo \
 	../src/xt_exchanger_mix_isend_irecv.lo \
 	../src/xt_exchanger_simple_base.lo
 if USE_MPI3
@@ -174,6 +176,8 @@ test_exchanger_parallel_LDADD += ../src/xt_exchanger.lo \
 	../src/xt_redist_msg.lo \
 	../src/xt_request_msgs.lo \
 	../src/xt_request_msgs_ebuf.lo \
+	../src/xt_request_msgs_packed.lo \
+	../src/xt_request_msgs_ddt_packed.lo \
 	../src/xt_request.lo \
 	../src/xt_mpi.lo \
 	../src/core/xmalloc.lo \

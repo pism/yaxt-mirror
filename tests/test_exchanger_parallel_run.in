@@ -52,7 +52,7 @@ for num_procs in 3 4 6 9; do
   @abs_top_builddir@/libtool --mode=execute \
    @MPI_LAUNCH@ -n $num_procs @abs_builddir@/test_exchanger_parallel \
    -m irecv_send -m irecv_isend -m irecv_isend_packed -m mix_irecv_isend \
-   -m neigh_alltoall
+   -m neigh_alltoall -m irecv_isend_ddt_packed
 done
 #
 # Local Variables:

@@ -62,6 +62,7 @@
 #include "../src/xt_exchanger_irecv_isend.h"
 #include "../src/xt_exchanger_mix_isend_irecv.h"
 #include "../src/xt_exchanger_irecv_isend_packed.h"
+#include "../src/xt_exchanger_irecv_isend_ddt_packed.h"
 #include "../src/xt_exchanger_neigh_alltoall.h"
 #include "../src/xt_redist_internal.h"
 #include "../src/xt_mpi_internal.h"
@@ -157,6 +158,7 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
     [xt_exchanger_irecv_send] = xt_exchanger_irecv_send_new,
     [xt_exchanger_irecv_isend] = xt_exchanger_irecv_isend_new,
     [xt_exchanger_irecv_isend_packed] = xt_exchanger_irecv_isend_packed_new,
+    [xt_exchanger_irecv_isend_ddt_packed] = xt_exchanger_irecv_isend_ddt_packed_new,
     [xt_exchanger_mix_isend_irecv] = xt_exchanger_mix_isend_irecv_new,
 #if MPI_VERSION >= 3
     [xt_exchanger_neigh_alltoall] = xt_exchanger_neigh_alltoall_new,

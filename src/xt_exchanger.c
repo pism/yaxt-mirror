@@ -55,6 +55,7 @@
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_mix_isend_irecv.h"
 #include "xt_exchanger_irecv_isend_packed.h"
+#include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
 
 Xt_exchanger

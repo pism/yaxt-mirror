@@ -56,6 +56,7 @@
 #  include "xt_exchanger_neigh_alltoall.h"
 #endif
 #include "xt_exchanger_irecv_isend_packed.h"
+#include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_irecv_send.h"
 
@@ -67,6 +68,7 @@ xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new)
     vtab = &xt_exchanger_mix_isend_irecv_vtable;
   else if (exchanger_new == xt_exchanger_irecv_isend_new
            || exchanger_new == xt_exchanger_irecv_isend_packed_new
+           || exchanger_new == xt_exchanger_irecv_isend_ddt_packed_new
            || exchanger_new == xt_exchanger_irecv_send_new)
     vtab = &xt_exchanger_simple_base_vtable;
 #if MPI_VERSION >= 3
