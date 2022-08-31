@@ -782,7 +782,8 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     default:
       Xt_abort(
         Xt_default_comm,
-        "ERROR(mpi_ddt_to_data_idx): datatype size", __FILE__, __LINE__);
+        "ERROR(mpi_ddt_to_data_idx): unsupported datatype size",
+        __FILE__, __LINE__);
   };
   return SIZE_MAX;
 }
@@ -1072,6 +1073,50 @@ size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
   return pack_size;
 }
 
+static void xt_ddt_pack_8(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    ((int8_t*)dst)[i] = *(int8_t*)((unsigned char *)src + displs[i]);
+}
+
+static void xt_ddt_pack_16(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    ((int16_t*)dst)[i] = *(int16_t*)((unsigned char *)src + displs[i]);
+}
+
+static void xt_ddt_pack_32(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    ((int32_t*)dst)[i] = *(int32_t*)((unsigned char *)src + displs[i]);
+}
+
+static void xt_ddt_pack_64(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    ((int64_t*)dst)[i] = *(int64_t*)((unsigned char *)src + displs[i]);
+}
+
+static void xt_ddt_pack_128(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i) {
+    int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
+    ((int64_t*)dst)[2 * i + 0] = src_64[0];
+    ((int64_t*)dst)[2 * i + 1] = src_64[1];
+  }
+}
+
+static void xt_ddt_pack_256(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i) {
+    int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
+    ((int64_t*)dst)[4 * i + 0] = src_64[0];
+    ((int64_t*)dst)[4 * i + 1] = src_64[1];
+    ((int64_t*)dst)[4 * i + 2] = src_64[2];
+    ((int64_t*)dst)[4 * i + 3] = src_64[3];
+  }
+}
+
 void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 
   Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
@@ -1085,13 +1130,89 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     size_t displ_count = ddt->data[i].displ_count;
     size_t * displs = ddt->data[i].displs;
 
-    // for all displacements of the current section
-    for (size_t j = 0; j < displ_count; ++j)
-      memcpy(
-        (unsigned char *)dst + dst_offset + j * element_size,
-        (unsigned char *)src + displs[j], element_size);
+    switch (element_size) {
+      case 1:
+        xt_ddt_pack_8(
+          displ_count, displs, src,
+          (void*)((unsigned char *)dst + dst_offset));
+        break;
+      case 2:
+        xt_ddt_pack_16(
+          displ_count, displs, src,
+          (void*)((unsigned char *)dst + dst_offset));
+        break;
+      case 4:
+        xt_ddt_pack_32(
+          displ_count, displs, src,
+          (void*)((unsigned char *)dst + dst_offset));
+        break;
+      case 8:
+        xt_ddt_pack_64(
+          displ_count, displs, src,
+          (void*)((unsigned char *)dst + dst_offset));
+        break;
+      case 16:
+        xt_ddt_pack_128(
+          displ_count, displs, src,
+          (void*)((unsigned char *)dst + dst_offset));
+        break;
+      case 32:
+        xt_ddt_pack_256(
+          displ_count, displs, src,
+          (void*)((unsigned char *)dst + dst_offset));
+        break;
+      default:
+        Xt_abort(
+          Xt_default_comm,
+          "ERROR(xt_ddt_pack): unsupported datatype size",
+          __FILE__, __LINE__);
+    }
 
     dst_offset += displ_count * element_size;
+  }
+}
+
+static void xt_ddt_unpack_8(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    *(int8_t*)((unsigned char *)dst + displs[i]) = ((int8_t*)src)[i];
+}
+
+static void xt_ddt_unpack_16(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    *(int16_t*)((unsigned char *)dst + displs[i]) = ((int16_t*)src)[i];
+}
+
+static void xt_ddt_unpack_32(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    *(int32_t*)((unsigned char *)dst + displs[i]) = ((int32_t*)src)[i];
+}
+
+static void xt_ddt_unpack_64(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i)
+    *(int64_t*)((unsigned char *)dst + displs[i]) = ((int64_t*)src)[i];
+}
+
+static void xt_ddt_unpack_128(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i) {
+    int64_t * dst_64 = (int64_t*)((unsigned char *)dst + displs[i]);
+    dst_64[0] = ((int64_t*)src)[2 * i + 0];
+    dst_64[1] = ((int64_t*)src)[2 * i + 1];
+  }
+}
+
+static void xt_ddt_unpack_256(
+  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  for (size_t i = 0; i < count; ++i) {
+    int64_t * dst_64 = (int64_t*)((unsigned char *)src + displs[i]);
+    dst_64[0] = ((int64_t*)src)[4 * i + 0];
+    dst_64[1] = ((int64_t*)src)[4 * i + 1];
+    dst_64[2] = ((int64_t*)src)[4 * i + 2];
+    dst_64[3] = ((int64_t*)src)[4 * i + 3];
   }
 }
 
@@ -1108,11 +1229,43 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     size_t displ_count = ddt->data[i].displ_count;
     size_t * displs = ddt->data[i].displs;
 
-    // for all displacements of the current section
-    for (size_t j = 0; j < displ_count; ++j)
-      memcpy(
-        ((unsigned char *)dst) + displs[j],
-        ((unsigned char *)src) + src_offset + j * element_size, element_size);
+    switch (element_size) {
+      case 1:
+        xt_ddt_unpack_8(
+          displ_count, displs,
+          (void*)((unsigned char *)src + src_offset), dst);
+        break;
+      case 2:
+        xt_ddt_unpack_16(
+          displ_count, displs,
+          (void*)((unsigned char *)src + src_offset), dst);
+        break;
+      case 4:
+        xt_ddt_unpack_32(
+          displ_count, displs,
+          (void*)((unsigned char *)src + src_offset), dst);
+        break;
+      case 8:
+        xt_ddt_unpack_64(
+          displ_count, displs,
+          (void*)((unsigned char *)src + src_offset), dst);
+        break;
+      case 16:
+        xt_ddt_unpack_128(
+          displ_count, displs,
+          (void*)((unsigned char *)src + src_offset), dst);
+        break;
+      case 32:
+        xt_ddt_unpack_256(
+          displ_count, displs,
+          (void*)((unsigned char *)src + src_offset), dst);
+        break;
+      default:
+        Xt_abort(
+          Xt_default_comm,
+          "ERROR(xt_ddt_unpack): unsupported datatype size",
+          __FILE__, __LINE__);
+    }
 
     src_offset += displ_count * element_size;
   }
