@@ -52,7 +52,15 @@
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+#include "xt/xt_mpi.h"
 #include "xt/xt_ddt.h"
+
+/* attribute handle for attaching xt_ddt objects to MPI datatypes */
+static int xt_ddt_internal_keyval = MPI_KEYVAL_INVALID;
+
+/* attribute attached MPI_COMM_SELF which cleans up
+ * xt_mpi_datatype_ddt_internal_keyval when finalize is called */
+static int xt_ddt_cleanup_internal_keyval = MPI_KEYVAL_INVALID;
 
 struct xt_ddt_data {
   size_t element_size; // size in byte of base element
@@ -64,10 +72,14 @@ struct xt_ddt_data {
 
 struct Xt_ddt_ {
 
+  int ref_count;
+
   // if exchange data is on GPU, one kernel per data entry is launched
   size_t count; // number of elements in data
   struct xt_ddt_data data[];
 };
+
+typedef struct Xt_ddt_ *Xt_ddt;
 
 struct xt_ddt_tree_elem {
   MPI_Aint extent; // not necessarly the true extent
@@ -127,10 +139,10 @@ static void free_unnamed_mpi_ddt(MPI_Datatype mpi_ddt) {
   int num_ints, num_adds, num_dtypes, combiner;
   xt_mpi_call(
     MPI_Type_get_envelope(
-      mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner), MPI_COMM_WORLD);
+      mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner), Xt_default_comm);
 
   if (combiner != MPI_COMBINER_NAMED)
-    xt_mpi_call(MPI_Type_free(&mpi_ddt), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Type_free(&mpi_ddt), Xt_default_comm);
 }
 
 // generates a ddt tree element with count contiguous entries of mpi_ddt
@@ -214,7 +226,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_vector_new(
 
   MPI_Aint lb, base_extent;
   xt_mpi_call(
-    MPI_Type_get_extent(mpi_ddt, &lb, &base_extent), MPI_COMM_WORLD);
+    MPI_Type_get_extent(mpi_ddt, &lb, &base_extent), Xt_default_comm);
 
   MPI_Aint hstride = base_extent * (MPI_Aint)stride;
 
@@ -319,7 +331,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_indexed_block_new(
 
   MPI_Aint lb, base_extent;
   xt_mpi_call(
-    MPI_Type_get_extent(mpi_ddt, &lb, &base_extent), MPI_COMM_WORLD);
+    MPI_Type_get_extent(mpi_ddt, &lb, &base_extent), Xt_default_comm);
 
   MPI_Aint * hdisplacements = xmalloc((size_t)count * sizeof(*hdisplacements));
   for (int i = 0; i < count; ++i)
@@ -346,7 +358,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
     MPI_Aint true_lb, true_extent;
     xt_mpi_call(
       MPI_Type_get_true_extent(mpi_ddts[i], &true_lb, &true_extent),
-      MPI_COMM_WORLD);
+      Xt_default_comm);
 
     if ((blocklengths[i] != 0) && (true_extent != 0)) {
 
@@ -485,13 +497,13 @@ static struct xt_ddt_tree_elem *
   int num_ints, num_adds, num_dtypes, combiner;
   xt_mpi_call(
     MPI_Type_get_envelope(
-      mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner), MPI_COMM_WORLD);
+      mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner), Xt_default_comm);
   MPI_Datatype array_of_dtypes_single[1];
   MPI_Datatype * array_of_dtypes = array_of_dtypes_single;
 
   // get the extent of the MPI datatype
   MPI_Aint lb, extent;
-  xt_mpi_call(MPI_Type_get_extent(mpi_ddt, &lb, &extent), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Type_get_extent(mpi_ddt, &lb, &extent), Xt_default_comm);
 
   struct xt_ddt_tree_elem * elem;
 
@@ -500,7 +512,7 @@ static struct xt_ddt_tree_elem *
 
     default: {
       Xt_abort(
-        MPI_COMM_WORLD,
+        Xt_default_comm,
         "ERROR(mpi_ddt_2_xt_ddt_tree): unsupported combiner type",
         __FILE__, __LINE__);
       return NULL;
@@ -518,7 +530,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem = mpi_ddt_2_xt_ddt_tree(array_of_dtypes[0], 1);
       break;
@@ -532,7 +544,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_cont_new(
@@ -548,7 +560,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_vector_new(
@@ -565,7 +577,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_hvector_new(
@@ -581,7 +593,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_indexed_new(
@@ -603,7 +615,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_hindexed_new(
@@ -623,7 +635,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_indexed_block_new(
@@ -643,7 +655,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_hindexed_block_new(
@@ -666,7 +678,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_struct_new(
@@ -688,7 +700,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem =
         xt_ddt_tree_elem_subarray_new(
@@ -711,7 +723,7 @@ static struct xt_ddt_tree_elem *
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
-          array_of_ints, array_of_adds, array_of_dtypes), MPI_COMM_WORLD);
+          array_of_ints, array_of_adds, array_of_dtypes), Xt_default_comm);
 
       elem = xt_ddt_tree_elem_resized_new(extent, array_of_dtypes[0]);
       break;
@@ -719,7 +731,7 @@ static struct xt_ddt_tree_elem *
   };
 
   if ((combiner != MPI_COMBINER_NAMED) && (free_mpi_ddt))
-    xt_mpi_call(MPI_Type_free(&mpi_ddt), MPI_COMM_WORLD);
+    xt_mpi_call(MPI_Type_free(&mpi_ddt), Xt_default_comm);
 
   return elem;
 }
@@ -758,7 +770,7 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
   MPI_Aint true_lb, true_extent;
   xt_mpi_call(
     MPI_Type_get_true_extent(mpi_ddt, &true_lb, &true_extent),
-    MPI_COMM_WORLD);
+    Xt_default_comm);
 
   switch(true_extent) {
     case 1:  return 5;
@@ -769,7 +781,7 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     case 32: return 0;
     default:
       Xt_abort(
-        MPI_COMM_WORLD,
+        Xt_default_comm,
         "ERROR(mpi_ddt_to_data_idx): datatype size", __FILE__, __LINE__);
   };
   return SIZE_MAX;
@@ -889,7 +901,7 @@ static void xt_ddt_tree_to_data(
       tree, data, displ, &prev_dtype, &prev_data_idx);
 }
 
-Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
+static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
 
   // parse the MPI datatype
   struct xt_ddt_tree_elem * tree = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 0);
@@ -913,6 +925,7 @@ Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   }
 
   Xt_ddt ddt = xmalloc(1 * sizeof(*ddt) + data_count * sizeof(ddt->data[0]));
+  ddt->ref_count = 1;
   ddt->count = data_count;
 
   if (total_displs_size > 0) {
@@ -940,9 +953,18 @@ Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   return ddt;
 }
 
+void xt_ddt_inc_ref_count(Xt_ddt ddt) {
+
+  ddt->ref_count++;
+}
+
 void xt_ddt_delete(Xt_ddt ddt) {
 
   if (ddt == NULL) return;
+
+  ddt->ref_count--;
+
+  if (ddt->ref_count) return;
 
   // only the displacements of the first entry needs to be freed, all other
   // are part of the same allocation
@@ -950,7 +972,95 @@ void xt_ddt_delete(Xt_ddt ddt) {
   free(ddt);
 }
 
-size_t xt_ddt_get_pack_size(Xt_ddt ddt) {
+static int xt_ddt_internal_keyval_copy(
+  MPI_Datatype XT_UNUSED(dtype), int XT_UNUSED(dtype_keyval),
+  void *XT_UNUSED(extra_state), void *attribute_val_in,
+  void *attribute_val_out, int *flag) {
+
+  xt_ddt_inc_ref_count((Xt_ddt)attribute_val_in);
+  *(Xt_ddt*)attribute_val_out = (Xt_ddt)attribute_val_in;
+  *flag = 1;
+  return MPI_SUCCESS;
+}
+
+static int xt_ddt_internal_keyval_delete(
+  MPI_Datatype XT_UNUSED(dtype), int XT_UNUSED(dtype_keyval),
+  void *attribute_val, void *XT_UNUSED(extra_state)) {
+
+  xt_ddt_delete((Xt_ddt)attribute_val);
+  return MPI_SUCCESS;
+}
+
+static int xt_ddt_cleanup_internal_keyval_delete(
+  MPI_Comm comm, int XT_UNUSED(dtype_keyval),
+  void *XT_UNUSED(attribute_val), void *XT_UNUSED(extra_state))
+{
+
+  if (xt_ddt_internal_keyval != MPI_KEYVAL_INVALID) {
+    xt_mpi_call(
+      MPI_Type_free_keyval(&xt_ddt_internal_keyval), comm);
+    xt_ddt_internal_keyval = MPI_KEYVAL_INVALID;
+  }
+
+  xt_mpi_call(
+    MPI_Comm_free_keyval(&xt_ddt_cleanup_internal_keyval), comm);
+  xt_ddt_cleanup_internal_keyval = MPI_KEYVAL_INVALID;
+  
+  return MPI_SUCCESS;
+}
+
+static Xt_ddt get_xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
+
+  // if xt_ddt_internal_keyval has not yet been created
+  if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID) {
+
+    // create keyval that will store xt_ddt's in MPI_Datatype's
+    xt_mpi_call(
+      MPI_Type_create_keyval(
+        // MPI_TYPE_NULL_COPY_FN,
+        xt_ddt_internal_keyval_copy,
+        xt_ddt_internal_keyval_delete,
+        &xt_ddt_internal_keyval, NULL),
+      Xt_default_comm);
+
+    // register a callback in MPI_Finalize (via an attribute to MPI_COMM_SELF)
+    // to clean up xt_ddt_internal_keyval
+    xt_mpi_call(
+      MPI_Comm_create_keyval(
+        MPI_COMM_NULL_COPY_FN,
+        xt_ddt_cleanup_internal_keyval_delete,
+        &xt_ddt_cleanup_internal_keyval, NULL),
+      Xt_default_comm);
+    xt_mpi_call(
+      MPI_Comm_set_attr(
+        MPI_COMM_SELF, xt_ddt_cleanup_internal_keyval, NULL),
+      Xt_default_comm);
+  }
+
+  // get xt_ddt from MPI datatype, if available
+  void * attr;
+  int flag;
+  xt_mpi_call(
+    MPI_Type_get_attr(
+      mpi_ddt, xt_ddt_internal_keyval, &attr, &flag), Xt_default_comm);
+
+  // if the MPI datatype had already a xt_ddt attached to itself
+  if (flag) return (Xt_ddt)attr;
+
+  // generate a xt_ddt from the MPI datatype
+  Xt_ddt ddt = xt_ddt_new(mpi_ddt);
+
+  // attach this xt_ddt to the MPI datatype for later use
+  xt_mpi_call(
+    MPI_Type_set_attr(
+      mpi_ddt, xt_ddt_internal_keyval, (void*)ddt), Xt_default_comm);
+
+  return ddt;
+}
+
+size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
+
+  Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
 
   if (ddt == NULL) return 0;
 
@@ -962,7 +1072,9 @@ size_t xt_ddt_get_pack_size(Xt_ddt ddt) {
   return pack_size;
 }
 
-void xt_ddt_pack(Xt_ddt ddt, void const * src, void * dst) {
+void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+  Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
 
   size_t dst_offset = 0;
 
@@ -983,7 +1095,9 @@ void xt_ddt_pack(Xt_ddt ddt, void const * src, void * dst) {
   }
 }
 
-void xt_ddt_unpack(Xt_ddt ddt, void const * src, void * dst) {
+void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+  Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
 
   size_t src_offset = 0;
 
@@ -1003,7 +1117,6 @@ void xt_ddt_unpack(Xt_ddt ddt, void const * src, void * dst) {
     src_offset += displ_count * element_size;
   }
 }
-
 
 /*
  * Local Variables:

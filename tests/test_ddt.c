@@ -110,6 +110,20 @@ int main(void) {
       PUT_ERR("ERROR CONT(7, DOUBLE)");
   }
 
+  { // MPI_Dup(MPI_Type_contiguous(7, MPI_DOUBLE))
+    MPI_Datatype mpi_ddt, cont_mpi_ddt;
+    enum {COUNT = 7};
+    MPI_Type_contiguous(COUNT, MPI_DOUBLE, &cont_mpi_ddt);
+    MPI_Type_dup(cont_mpi_ddt, &mpi_ddt);
+    MPI_Type_free(&cont_mpi_ddt);
+    double in_data[COUNT];
+    for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
+
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data), COUNT * sizeof(in_data[0])))
+      PUT_ERR("ERROR DUP(CONT(7, DOUBLE))");
+  }
+
   { // MPI_Type_contiguous(0, MPI_DOUBLE)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 0};
@@ -787,10 +801,20 @@ int main(void) {
       struct_mpi_ddt, &mpi_ddt);
     MPI_Type_free(&struct_mpi_ddt);
 
+    // force generation of ddt data
+    if (xt_ddt_get_pack_size(mpi_ddt) == 0) PUT_ERR("");
+    MPI_Datatype mpi_ddt_cpy;
+    MPI_Type_dup(mpi_ddt, &mpi_ddt_cpy);
+
     if (check_xt_ddt(
           mpi_ddt, in_data, sizeof(in_data),
           (1 + 2 + 3 + 4) * (3 * sizeof(int16_t) + 3 * 3 * sizeof(double))))
       PUT_ERR("ERROR INDEXED(...)");
+
+    if (check_xt_ddt(
+          mpi_ddt_cpy, in_data, sizeof(in_data),
+          (1 + 2 + 3 + 4) * (3 * sizeof(int16_t) + 3 * 3 * sizeof(double))))
+      PUT_ERR("ERROR DUP(INDEXED(...))");
   }
 
   xt_finalize();
@@ -817,10 +841,7 @@ static int check_xt_ddt(
   if (combiner != MPI_COMBINER_NAMED)
     MPI_Type_commit(&mpi_ddt);
 
-  // parse MPI Datatype and convert it to xt_ddt
-  Xt_ddt ddt = xt_ddt_new(mpi_ddt);
-
-  if (xt_ddt_get_pack_size(ddt) != ref_pack_size) return 1;
+  if (xt_ddt_get_pack_size(mpi_ddt) != ref_pack_size) return 1;
 
   void * buffer = malloc(4 * in_data_size);
   void * pack_data_mpi_ddt = (unsigned char*)buffer + 0 * in_data_size;
@@ -836,14 +857,14 @@ static int check_xt_ddt(
   MPI_Pack(
     in_data, 1, mpi_ddt, pack_data_mpi_ddt, (int)in_data_size,
     &position, MPI_COMM_WORLD);
-  xt_ddt_pack(ddt, in_data, pack_data_xt_ddt);
+  xt_ddt_pack(mpi_ddt, in_data, pack_data_xt_ddt);
 
   // unpack data
   position = 0;
   MPI_Unpack(
     pack_data_mpi_ddt, (int)in_data_size, &position,
     out_data_mpi_ddt, 1, mpi_ddt, MPI_COMM_WORLD);
-  xt_ddt_unpack(ddt, pack_data_xt_ddt, out_data_xt_ddt);
+  xt_ddt_unpack(mpi_ddt, pack_data_xt_ddt, out_data_xt_ddt);
 
   // compare out buffers
   int err_flag =
@@ -851,7 +872,6 @@ static int check_xt_ddt(
 
   // clean up
   free(buffer);
-  xt_ddt_delete(ddt);
 
   // if mpi_ddt is a derived MPI datatype
   if (combiner != MPI_COMBINER_NAMED)

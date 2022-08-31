@@ -518,7 +518,7 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
 }
 
 /* functions to handle optimizations on communicators */
-static int xt_mpi_comm_internal_keyval;
+static int xt_mpi_comm_internal_keyval = MPI_KEYVAL_INVALID;
 
 typedef unsigned long used_map_elem;
 
@@ -570,6 +570,7 @@ static int xt_mpi_tag_ub_val;
 
 void
 xt_mpi_init(void) {
+  assert(xt_mpi_comm_internal_keyval == MPI_KEYVAL_INVALID);
   xt_mpi_call(MPI_Comm_create_keyval(xt_mpi_comm_internal_keyval_copy,
                                      xt_mpi_comm_internal_keyval_delete,
                                      &xt_mpi_comm_internal_keyval, NULL),
@@ -584,6 +585,7 @@ xt_mpi_init(void) {
 
 void
 xt_mpi_finalize(void) {
+  assert(xt_mpi_comm_internal_keyval != MPI_KEYVAL_INVALID);
   xt_mpi_call(MPI_Comm_free_keyval(&xt_mpi_comm_internal_keyval),
               Xt_default_comm);
 }
@@ -593,6 +595,7 @@ xt_mpi_comm_get_internal_attr(MPI_Comm comm)
 {
   int attr_found;
   void *attr_val;
+  assert(xt_mpi_comm_internal_keyval != MPI_KEYVAL_INVALID);
   xt_mpi_call(MPI_Comm_get_attr(comm, xt_mpi_comm_internal_keyval,
                                 &attr_val, &attr_found),
               comm);
@@ -679,6 +682,7 @@ xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset)
         new_comm_xt_attr_val->used_map[i] = comm_xt_attr_val->used_map[i];
       new_comm_xt_attr_val->used_map[used_map_size] = 1U;
       position *= used_map_elem_bits;
+      assert(xt_mpi_comm_internal_keyval != MPI_KEYVAL_INVALID);
       xt_mpi_call(MPI_Comm_set_attr(comm_dest, xt_mpi_comm_internal_keyval,
                                     new_comm_xt_attr_val), comm_dest);
     } else {
@@ -696,6 +700,7 @@ xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset)
     comm_attr->used_map_size = 1;
     comm_attr->used_map[0] = 1U;
     xt_mpi_call(MPI_Comm_dup(comm, &comm_dest), comm);
+    assert(xt_mpi_comm_internal_keyval != MPI_KEYVAL_INVALID);
     xt_mpi_call(MPI_Comm_set_attr(comm_dest, xt_mpi_comm_internal_keyval,
                                   comm_attr), comm_dest);
   }
@@ -727,6 +732,7 @@ xt_mpi_comm_mark_exclusive(MPI_Comm comm) {
   comm_attr->refcount = 1;
   comm_attr->used_map_size = 1;
   comm_attr->used_map[0] = 1U;
+  assert(xt_mpi_comm_internal_keyval != MPI_KEYVAL_INVALID);
   xt_mpi_call(MPI_Comm_set_attr(comm, xt_mpi_comm_internal_keyval,
                                 comm_attr), comm);
 }

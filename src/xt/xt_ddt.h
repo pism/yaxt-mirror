@@ -56,21 +56,34 @@
 #endif
 
 #include <mpi.h>
-#include <xt/xt_mpi.h>
-
-#include "xt/xt_core.h"
 
 /** \example test_ddt.c
  */
 
-typedef struct Xt_ddt_ *Xt_ddt;
+/**
+ * gets the buffer size required to pack the data in mpi_ddt
+ * @param[in] mpi_ddt MPI Datatype
+ * @returns required packing buffer size
+ */
+size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt);
 
-Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt);
-void xt_ddt_delete(Xt_ddt ddt);
+/**
+ * packs the data from the source buffer into destination buffer, based on
+ * the data layout described by MPI datatype
+ * @param[in]  mpi_ddt MPI datatype
+ * @param[in]  src     source buffer
+ * @param[out] dst     destination buffer
+ */
+void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst);
 
-size_t xt_ddt_get_pack_size(Xt_ddt ddt);
-void xt_ddt_pack(Xt_ddt ddt, void const * src, void * dst);
-void xt_ddt_unpack(Xt_ddt ddt, void const * src, void * dst);
+/**
+ * unpacks the data from the source buffer into destination buffer, based on
+ * the data layout described by MPI datatype
+ * @param[in]  mpi_ddt MPI datatype
+ * @param[in]  src     source buffer
+ * @param[out] dst     destination buffer
+ */
+void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst);
 
 #endif // XT_DDT_H
 
