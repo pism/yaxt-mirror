@@ -142,28 +142,17 @@ dnl substitute -shared-intel if present
            [acx_temp=`echo "$acx_temp" | sed -E -e 's/ (-Qlocation,@<:@^, @:>@*,@<:@^@<:@:blank:@:>@@:>@*)/ -Xcompiler \1 -XCClinker \1/g'`])
 dnl take care of ifort/icc/icpc two-part options
          eval acx_flag_var=\"`echo "$acx_temp" | sed -E -e 's/ -(align|allow|assume|ccdefault|check|convert|debug|debug-parameters|diag-type|diag-enable|diag-disable|double-size|dynamic-linker|dyncom|export-dir|extend-source|fp-model|fpscomp|gen-interfaces|heap-arrays|imacros|integer-size|iprefix|iquote|iwithprefixbefore|module|names|opt-report|opt-streaming-stores|pch-dir|pch-use|prof-dir|prof-file|real-size|reentrancy|stand|tcollect-filter|tune|warn|watch) (@<:@^-@:>@@<:@^@<:@:blank:@:>@@:>@*)/ -Xcompiler -\1 -Xcompiler \2/g' -e 's/^ //;s/ $//'`\"])])
-   AC_PROVIDE_IFELSE([AC_PROG_CC],
-     [AS_IF([test -n "$CC" -a X"$CC" != Xno],
-        [AC_LANG_PUSH([C])
+   m4_foreach([lng],[[C],[Fortran],[Fortran 77],[C++]],
+  [m4_define([lCC],[_AC_LANG_DISPATCH([_AC_CC],m4_defn([lng]))])dnl
+   AC_PROVIDE_IFELSE([AC_PROG_]_AC_LANG_DISPATCH([_AC_CC],m4_defn([lng])),
+     [AS_IF([test -n "$]m4_defn([lCC])[" -a X"$lCC" != Xno],
+        [AC_LANG_PUSH(m4_defn([lng]))
+         m4_if(m4_if(m4_defn([lng]),[Fortran],[1],m4_defn([lng]),[Fortran 77],[1],[2]),[1],
+           [_ACX_LT_FORT_FLAGS_MANGLE])
          _KPSE_CHECK_LIBTOOL
-         AC_LANG_POP([C])])])
-   AC_PROVIDE_IFELSE([AC_PROG_FC],
-     [AS_IF([test -n "$FC" -a X"$FC" != Xno],
-        [AC_LANG_PUSH([Fortran])
-         _ACX_LT_FORT_FLAGS_MANGLE
-         _KPSE_CHECK_LIBTOOL
-         AC_LANG_POP([Fortran])])])
-   AC_PROVIDE_IFELSE([AC_PROG_F77],
-     [AS_IF([test -n "$F77" -a X"$F77" != Xno],
-        [AC_LANG_PUSH([Fortran 77])
-         _ACX_LT_FORT_FLAGS_MANGLE
-         _KPSE_CHECK_LIBTOOL
-         AC_LANG_POP([Fortran 77])])])
-   AC_PROVIDE_IFELSE([AC_PROG_CXX],
-     [AS_IF([test -n "$CXX" -a X"$CXX" != Xno],
-        [AC_LANG_PUSH([C++])
-         _KPSE_CHECK_LIBTOOL
-         AC_LANG_POP([C++])])])])dnl
+         AC_LANG_POP(m4_defn([lng]))])
+])])
+   m4_popdef([fix_nag_shared_link])])dnl
 dnl
 dnl Local Variables:
 dnl mode: autoconf
