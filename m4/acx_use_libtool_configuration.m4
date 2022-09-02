@@ -142,6 +142,23 @@ dnl substitute -shared-intel if present
            [acx_temp=`echo "$acx_temp" | sed -E -e 's/ (-Qlocation,@<:@^, @:>@*,@<:@^@<:@:blank:@:>@@:>@*)/ -Xcompiler \1 -XCClinker \1/g'`])
 dnl take care of ifort/icc/icpc two-part options
          eval acx_flag_var=\"`echo "$acx_temp" | sed -E -e 's/ -(align|allow|assume|ccdefault|check|convert|debug|debug-parameters|diag-type|diag-enable|diag-disable|double-size|dynamic-linker|dyncom|export-dir|extend-source|fp-model|fpscomp|gen-interfaces|heap-arrays|imacros|integer-size|iprefix|iquote|iwithprefixbefore|module|names|opt-report|opt-streaming-stores|pch-dir|pch-use|prof-dir|prof-file|real-size|reentrancy|stand|tcollect-filter|tune|warn|watch) (@<:@^-@:>@@<:@^@<:@:blank:@:>@@:>@*)/ -Xcompiler -\1 -Xcompiler \2/g' -e 's/^ //;s/ $//'`\"])])
+dnl NAG Fortran injects several object files into shared objects which
+dnl are only needed and helpful when calling the Fortran code from
+dnl C/C++ without explicit initialization of the NAG Fortran
+dnl RTL. Since these libraries are meant to be linked into Fortran
+dnl programs compiled with the same compiler or a newer version, that
+dnl only causes overhead and potential problems.
+   m4_pushdef([fix_nag_shared_link],
+     [AC_LANG_CASE([Fortran],[m4_pushdef([acx_flags_var],[FCFLAGS])m4_pushdef([acx_lt_tag],[FC])],
+        [Fortran 77],[m4_pushdef([acx_flags_var],[FFLAGS])m4_pushdef([acx_lt_tag],[F77])],
+        [C],[m4_pushdef([acx_flags_var],[CFLAGS])m4_pushdef([acx_lt_tag],[])])dnl
+      AS_IF([test x"$_LT_TAGVAR([acx_is_nagfor],m4_defn([acx_lt_tag]))" = xyes],
+        [AS_CASE([" $acx_flags_var $LDFLAGS "],
+           [*\ -B*\ *],
+           [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore symbols nagfor injects into our shared objects\\\\${as_nl}/"'^${exp_sym_prefix}'"${acx_symprfx}"'(__NAGf90_|f90_)/b'
+],
+           [acx_flags_var="$acx_flags_var -XCClinker -Wl,-B${ac_abs_confdir}/util/nagdynlib"])])])dnl
+dnl
    m4_foreach([lng],[[C],[Fortran],[Fortran 77],[C++]],
   [m4_define([lCC],[_AC_LANG_DISPATCH([_AC_CC],m4_defn([lng]))])dnl
    AC_PROVIDE_IFELSE([AC_PROG_]_AC_LANG_DISPATCH([_AC_CC],m4_defn([lng])),
@@ -150,6 +167,7 @@ dnl take care of ifort/icc/icpc two-part options
          m4_if(m4_if(m4_defn([lng]),[Fortran],[1],m4_defn([lng]),[Fortran 77],[1],[2]),[1],
            [_ACX_LT_FORT_FLAGS_MANGLE])
          _KPSE_CHECK_LIBTOOL
+         fix_nag_shared_link
          AC_LANG_POP(m4_defn([lng]))])
 ])])
    m4_popdef([fix_nag_shared_link])])dnl
