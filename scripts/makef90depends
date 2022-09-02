@@ -1033,7 +1033,7 @@ sub buildNameSubst(\@)
       $ENV{'DEBUG'} = "$debug" if $debug;
    }
 
-   sub set_cast_mode($)
+   sub set_cast_mode($$)
    {
       my $mode = $_[1];
       if ($mode =~ m{^lp64$}ix)
@@ -1051,7 +1051,7 @@ sub buildNameSubst(\@)
       }
    }
 
-   sub set_c_char_sign($$)
+   sub set_c_char_sign($)
    {
       my $mode = $_[0];
       if ($mode =~ m{fpp-char-is-unsigned})
