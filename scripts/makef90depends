@@ -752,7 +752,14 @@ sub buildNameSubst(\@)
                  PAGER PATH_modshare PROFILEREAD PROMAGIC_USEGLX
                  QT_ACCESSIBILITY QT_LINUX_ACCESSIBILITY_ALWAYS_ON
                  QT_QPA_PLATFORMTHEME
-                 RSYNC_RSH SESSION_MANAGER
+                 RSYNC_RSH
+                 SCHROOT_ALIAS_NAME
+                 SCHROOT_CHROOT_NAME
+                 SCHROOT_COMMAND
+                 SCHROOT_GID
+                 SCHROOT_GROUP
+                 SCHROOT_SESSION_ID
+                 SESSION_MANAGER
                  SHLVL SLURM_JOBID SLURM_JOB_ID SLURM_JOB_NODELIST
                  SLURM_NODELIST
                  SSH_AGENT_PID SSH_AUTH_SOCK SSH_CLIENT SSH_CONNECTION
