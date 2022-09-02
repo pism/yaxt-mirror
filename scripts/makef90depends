@@ -998,19 +998,34 @@ sub buildNameSubst(\@)
             $parseCache{'options:'} = \@optArgs;
             $parseCache{'env:'} = \$ENVdigest;
             $parseCache{'schema_version:'} = \$depdb_schema_version;
-            if ($debug) {
-               require Text::Diff;
-               if ($ENVdigest ne $savedENVdigest) {
-                  $savedENVdigest =~ tr/\0/\n/;
-                  $ENVdigest =~ tr/\0/\n/;
-                  print(STDERR Text::Diff::diff(\$savedENVdigest, \$ENVdigest),
-                        "\n");
+            if ($debug or $ENVdigest ne $savedENVdigest) {
+               my $ENVdiff;
+               eval {
+                  require Text::Diff;
+                  if ($ENVdigest ne $savedENVdigest) {
+                     $savedENVdigest =~ tr/\0/\n/;
+                     $ENVdigest =~ tr/\0/\n/;
+                     $ENVdiff = Text::Diff::diff(\$savedENVdigest, \$ENVdigest);
+                  }
+                  if ($debug) {
+                     my ($optArgs_serialized, $savedOptArgs_serialized)
+                         = (join("\n", @optArgs), join("\n", @savedOptArgs));
+                     print(STDERR Text::Diff::diff(\$optArgs_serialized,
+                                                   \$savedOptArgs_serialized), "\n")
+                         if ($optArgs_serialized ne $savedOptArgs_serialized);
+                  }
+               };
+               if (defined ($ENVdiff)) {
+                  my $ENVdiffFP;
+                  if ($debug) {
+                     print(STDERR $ENVdiff, "\n");
+                  }
+                  if (open($ENVdiffFP, '>>',
+                           File::Spec->catfile(File::Spec->tmpdir(),
+                                               'makef90depends-envdiff.txt'))) {
+                     print($ENVdiffFP $ENVdiff, "\n");
+                  }
                }
-               my ($optArgs_serialized, $savedOptArgs_serialized)
-                   = (join("\n", @optArgs), join("\n", @savedOptArgs));
-               print(STDERR Text::Diff::diff(\$optArgs_serialized,
-                                             \$savedOptArgs_serialized), "\n")
-                   if ($optArgs_serialized ne $savedOptArgs_serialized);
             }
          }
       }
