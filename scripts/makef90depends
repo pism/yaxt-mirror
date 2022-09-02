@@ -989,7 +989,7 @@ sub buildNameSubst(\@)
             }
             print STDERR 'dependency database: ',
                 (@changes > 1?
-                 join(', ', @changes[0..$#changes-1]) . ', and ' . $changes[-1]
+                 join(', ', @changes[0..$#changes-1], 'and ' . $changes[-1])
                  :$changes[0]),
                      ' changed, forcing rebuild', "\n";
             while (my ($k, $v) = each %parseCache) {
