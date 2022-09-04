@@ -57,6 +57,7 @@
 #include "xt/xt_mpi.h"
 
 #include "xt/xt_request_msgs.h"
+#include "xt_request_msgs_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_internal.h"
 
@@ -79,17 +80,28 @@ struct Xt_request_msgs_ {
   MPI_Request requests[];
 };
 
-Xt_request xt_request_msgs_new(int n, const MPI_Request requests[n],
-                               MPI_Comm comm) {
-
-  assert(n >= 0);
+Xt_request
+xt_request_msgs_alloc(int n, MPI_Comm comm)
+{
   Xt_request_msgs request
     = xmalloc(sizeof(*request) + (size_t)n * sizeof(MPI_Request) +
               (size_t)n * sizeof(int));
-
   request->vtable = &request_msgs_vtable;
   request->n = n;
   request->comm = comm;
+  return (Xt_request)request;
+}
+
+
+Xt_request
+xt_request_msgs_new(int n,
+                    const MPI_Request requests[n],
+                    MPI_Comm comm)
+{
+  assert(n >= 0);
+  Xt_request_msgs request
+    = (Xt_request_msgs)xt_request_msgs_alloc(n, comm);
+
   memcpy(request->requests, requests, (size_t)n * sizeof(*request->requests));
 
   return (Xt_request)request;

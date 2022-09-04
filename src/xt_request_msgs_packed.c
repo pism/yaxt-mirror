@@ -55,6 +55,7 @@
 #include "xt/xt_mpi.h"
 
 #include "xt/xt_request_msgs_packed.h"
+#include "xt_request_msgs_packed_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_internal.h"
 
@@ -82,6 +83,24 @@ struct Xt_request_msgs_packed_ {
   void *buffers[];
 };
 
+Xt_request
+xt_request_msgs_packed_alloc(int n_requests,
+                             int n_packed,
+                             int n_tmp_buffers,
+                             MPI_Comm comm)
+{
+  size_t hdr_size = sizeof(struct Xt_request_msgs_packed_),
+    bufp_size
+    = ((size_t)n_packed + (size_t)n_tmp_buffers) * sizeof(void *);
+  Xt_request_msgs_packed request = xmalloc(hdr_size + bufp_size);
+  request->vtable = &request_msgs_packed_vtable;
+  request->comm = comm;
+  request->n_requests = n_requests;
+  request->n_packed = n_packed;
+  request->n_tmp_buffers = n_tmp_buffers;
+  return (Xt_request)request;
+}
+
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm, int n_packed,
@@ -92,13 +111,9 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
                                       void * unpacked_data) {
 
   assert(n_requests >= 0 && n_packed >= 0 && n_tmp_buffers >= 0);
-  size_t hdr_size = sizeof(struct Xt_request_msgs_packed_),
-    bufp_size
-    = ((size_t)n_packed + (size_t)n_tmp_buffers) * sizeof(void *);
-  Xt_request_msgs_packed request = xmalloc(hdr_size + bufp_size);
-
-  request->vtable = &request_msgs_packed_vtable;
-  request->n_requests = n_requests;
+  Xt_request_msgs_packed request
+    = (Xt_request_msgs_packed)xt_request_msgs_packed_alloc(
+      n_requests, n_packed, n_tmp_buffers, comm);
   request->requests = xmalloc((size_t)n_requests * sizeof(*request->requests) +
                               (size_t)n_requests *
                               sizeof(*request->ops_completed_buffer));
@@ -106,9 +121,6 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
     (int *)(request->requests + (size_t)n_requests);
   memcpy(request->requests, requests,
          (size_t)n_requests * sizeof(*request->requests));
-  request->comm = comm;
-  request->n_packed = n_packed;
-  request->n_tmp_buffers = n_tmp_buffers;
   request->datatypes = xmalloc((size_t)n_packed * sizeof(*request->datatypes));
   for (int i = 0; i < n_packed; ++i)
     xt_mpi_call(MPI_Type_dup(datatypes[i], request->datatypes + i), comm);
