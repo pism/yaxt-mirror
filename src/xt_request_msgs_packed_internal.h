@@ -64,6 +64,11 @@ xt_request_msgs_packed_alloc(int n_requests,
                              int n_packed,
                              int n_tmp_buffers, MPI_Comm comm);
 
+/**
+ * @param request xt_request_msgs_packed object
+ */
+PPM_DSO_INTERNAL MPI_Request *
+xt_request_msgs_packed_get_req_ptr(Xt_request request);
 
 #endif
 

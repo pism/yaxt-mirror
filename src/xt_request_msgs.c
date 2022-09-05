@@ -107,6 +107,15 @@ xt_request_msgs_new(int n,
   return (Xt_request)request;
 }
 
+MPI_Request *
+xt_request_msgs_get_req_ptr(Xt_request request)
+{
+  Xt_request_msgs request_msgs = (Xt_request_msgs)request;
+  assert(request_msgs->vtable == &request_msgs_vtable);
+  return request_msgs->requests;
+}
+
+
 static void xt_request_msgs_wait(Xt_request request) {
 
   Xt_request_msgs request_msgs = (Xt_request_msgs)request;

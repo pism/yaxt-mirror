@@ -198,6 +198,14 @@ static int xt_request_msgs_test_packed(Xt_request request) {
   return flag;
 }
 
+MPI_Request *
+xt_request_msgs_packed_get_req_ptr(Xt_request request)
+{
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  assert(request_msgs_packed->vtable == &request_msgs_packed_vtable);
+  return request_msgs_packed->requests;
+}
+
 /*
  * Local Variables:
  * c-basic-offset: 2

@@ -63,6 +63,12 @@
 PPM_DSO_INTERNAL Xt_request
 xt_request_msgs_alloc(int n, MPI_Comm comm);
 
+/**
+ * @param request xt_request_msgs object
+ */
+PPM_DSO_INTERNAL MPI_Request *
+xt_request_msgs_get_req_ptr(Xt_request request);
+
 #endif
 
 /*
