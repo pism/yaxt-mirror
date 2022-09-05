@@ -50,6 +50,7 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_request_msgs_packed.h"
+#include "xt_request_msgs_packed_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend_packed.h"
@@ -186,6 +187,20 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
   *request = requests;
 }
 
+static Xt_exchanger_omp_share
+xt_exchanger_irecv_isend_packed_create_omp_share(
+  int nsend, int nrecv,
+  const struct Xt_redist_msg *send_msgs,
+  const struct Xt_redist_msg *recv_msgs,
+  MPI_Comm comm)
+{
+  (void)send_msgs;
+  (void)recv_msgs;
+  return (Xt_exchanger_omp_share)(
+    xt_request_msgs_packed_alloc(nsend+nrecv, nrecv, nsend, comm));
+}
+
+
 Xt_exchanger
 xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
                                     const struct Xt_redist_msg *send_msgs,
@@ -197,11 +212,13 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
    */
-  return xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                      comm, tag_offset,
-                                      xt_exchanger_irecv_isend_packed_s_exchange,
-                                      xt_exchanger_irecv_isend_packed_a_exchange,
-                                      config);
+  return xt_exchanger_simple_base_new(
+    nsend, nrecv, send_msgs, recv_msgs,
+    comm, tag_offset,
+    xt_exchanger_irecv_isend_packed_s_exchange,
+    xt_exchanger_irecv_isend_packed_a_exchange,
+    xt_exchanger_irecv_isend_packed_create_omp_share,
+    config);
 }
 
 /*

@@ -94,6 +94,13 @@ xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger, int rank,
   return exchanger->vtable->get_MPI_Datatype(exchanger, rank, direction, do_dup);
 }
 
+Xt_exchanger_omp_share
+xt_exchanger_create_omp_share(Xt_exchanger exchanger)
+{
+  return exchanger->vtable->create_omp_share(exchanger);
+}
+
+
 /*
  * Local Variables:
  * c-basic-offset: 2

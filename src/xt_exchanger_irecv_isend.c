@@ -51,6 +51,7 @@
 #include "xt_config_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_request_msgs.h"
+#include "xt_request_msgs_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend.h"
@@ -120,6 +121,20 @@ xt_exchanger_irecv_isend_a_exchange(const void *src_data, void *dst_data,
   *request = requests;
 }
 
+static Xt_exchanger_omp_share
+xt_exchanger_irecv_isend_create_omp_share(
+  int nsend, int nrecv,
+  const struct Xt_redist_msg *send_msgs,
+  const struct Xt_redist_msg *recv_msgs,
+  MPI_Comm comm)
+{
+  (void)send_msgs;
+  (void)recv_msgs;
+  int nmsg = nsend + nrecv;
+  return (Xt_exchanger_omp_share)xt_request_msgs_alloc(nmsg, comm);
+}
+
+
 Xt_exchanger
 xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                              const struct Xt_redist_msg *send_msgs,
@@ -135,6 +150,7 @@ xt_exchanger_irecv_isend_new(int nsend, int nrecv,
                                       comm, tag_offset,
                                       xt_exchanger_irecv_isend_s_exchange,
                                       xt_exchanger_irecv_isend_a_exchange,
+                                      xt_exchanger_irecv_isend_create_omp_share,
                                       config);
 }
 
