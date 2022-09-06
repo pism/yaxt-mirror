@@ -94,7 +94,11 @@ xt_request_msgs_packed_alloc(int n_requests,
     = ((size_t)n_packed + (size_t)n_tmp_buffers) * sizeof(void *),
     bufr_size = (size_t)n_requests * sizeof(MPI_Request)
     + (size_t)n_requests * sizeof(int);
-  Xt_request_msgs_packed request = xmalloc(hdr_size + bufp_size + bufr_size);
+  /* round allocation up to next multiple of sizeof (MPI_Datatype) */
+  size_t dt_ofs = ((hdr_size + bufp_size + bufr_size + sizeof (MPI_Datatype) - 1)
+                   & -sizeof(MPI_Datatype)),
+    dt_size = sizeof (MPI_Datatype) * (size_t)n_packed;
+  Xt_request_msgs_packed request = xmalloc(dt_ofs + dt_size);
   request->vtable = &request_msgs_packed_vtable;
   request->comm = comm;
   request->n_requests = n_requests;
@@ -103,6 +107,7 @@ xt_request_msgs_packed_alloc(int n_requests,
   request->requests = (MPI_Request *)(request->buffers+n_requests);
   request->ops_completed_buffer
     = (int *)(request->requests + (size_t)n_requests);
+  request->datatypes = (MPI_Datatype *)((unsigned char *)request + dt_ofs);
   return (Xt_request)request;
 }
 
@@ -121,7 +126,6 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
       n_requests, n_packed, n_tmp_buffers, comm);
   memcpy(request->requests, requests,
          (size_t)n_requests * sizeof(*request->requests));
-  request->datatypes = xmalloc((size_t)n_packed * sizeof(*request->datatypes));
   for (int i = 0; i < n_packed; ++i)
     xt_mpi_call(MPI_Type_dup(datatypes[i], request->datatypes + i), comm);
   memcpy(request->buffers, packed_data,
@@ -155,7 +159,6 @@ static void free_request(Xt_request_msgs_packed request_msgs_packed) {
   for (int i = 0; i < request_msgs_packed->n_packed; ++i)
     xt_mpi_call(MPI_Type_free(request_msgs_packed->datatypes+i),
                 request_msgs_packed->comm);
-  free(request_msgs_packed->datatypes);
   free(request_msgs_packed);
 }
 
@@ -202,8 +205,40 @@ MPI_Request *
 xt_request_msgs_packed_get_req_ptr(Xt_request request)
 {
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
-  assert(request_msgs_packed->vtable == &request_msgs_packed_vtable);
+  assert(request->vtable == &request_msgs_packed_vtable);
   return request_msgs_packed->requests;
+}
+
+MPI_Datatype *
+xt_request_msgs_packed_get_dt_ptr(Xt_request request)
+{
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  assert(request->vtable == &request_msgs_packed_vtable);
+  return request_msgs_packed->datatypes;
+}
+
+void **
+xt_request_msgs_packed_get_packed_ptr(Xt_request request)
+{
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  assert(request->vtable == &request_msgs_packed_vtable);
+  return request_msgs_packed->buffers;
+}
+
+void **
+xt_request_msgs_packed_get_unpacked_ptr(Xt_request request)
+{
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  assert(request->vtable == &request_msgs_packed_vtable);
+  return &request_msgs_packed->unpacked_data;
+}
+
+void **
+xt_request_msgs_packed_get_tmp_buf_ptr(Xt_request request)
+{
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  assert(request->vtable == &request_msgs_packed_vtable);
+  return request_msgs_packed->buffers+request_msgs_packed->n_packed;
 }
 
 /*

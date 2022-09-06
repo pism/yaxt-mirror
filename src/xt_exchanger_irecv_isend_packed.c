@@ -141,49 +141,49 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                                            const struct Xt_redist_msg * send_msgs,
                                            const struct Xt_redist_msg * recv_msgs,
                                            int tag_offset, MPI_Comm comm,
-                                           Xt_request *request) {
+                                           Xt_request *request)
+{
+  Xt_request requests
+    = xt_request_msgs_packed_alloc(nrecv + nsend, nrecv, nsend, comm);
 
-  MPI_Request * tmp_requests =
-    xmalloc((size_t)(nrecv + nsend) * sizeof (*tmp_requests));
-  void ** buffers =
-    xmalloc((size_t)(nrecv + nsend) * sizeof (*buffers));
+  MPI_Request *tmp_requests
+    = xt_request_msgs_packed_get_req_ptr(requests);
+  void **packedp
+    = xt_request_msgs_packed_get_packed_ptr(requests);
 
   int buffer_size;
   for (int i = 0; i < nrecv; ++i) {
     xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, &buffer_size),
                 comm);
-    buffers[i] = xmalloc((size_t)buffer_size);
-    xt_mpi_call(MPI_Irecv(buffers[i], buffer_size, MPI_PACKED,
+    packedp[i] = xmalloc((size_t)buffer_size);
+    xt_mpi_call(MPI_Irecv(packedp[i], buffer_size, MPI_PACKED,
                           recv_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           tmp_requests+i), comm);
   }
 
+  void **tmp_buf
+    = xt_request_msgs_packed_get_tmp_buf_ptr(requests);
   for (int i = 0; i < nsend; ++i) {
     int position = 0;
     xt_mpi_call(MPI_Pack_size(1, send_msgs[i].datatype, comm, &buffer_size),
                 comm);
-    buffers[nrecv + i] = xmalloc((size_t)buffer_size);
+    tmp_buf[i] = xmalloc((size_t)buffer_size);
     xt_mpi_call(MPI_Pack((void*)src_data, 1, send_msgs[i].datatype,
-                         buffers[nrecv + i], buffer_size, &position,
+                         tmp_buf[i], buffer_size, &position,
                          comm), comm);
-    xt_mpi_call(MPI_Isend(buffers[nrecv + i], buffer_size, MPI_PACKED,
+    xt_mpi_call(MPI_Isend(tmp_buf[i], buffer_size, MPI_PACKED,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           tmp_requests+nrecv+i), comm);
   }
 
-  MPI_Datatype * datatypes = xmalloc((size_t)nrecv * sizeof (*datatypes));
-  for (int i = 0; i < nrecv; ++i) datatypes[i] = recv_msgs[i].datatype;
+  MPI_Datatype *datatypes
+    = xt_request_msgs_packed_get_dt_ptr(requests);
+  for (int i = 0; i < nrecv; ++i)
+    xt_mpi_call(MPI_Type_dup(recv_msgs[i].datatype, datatypes+i), comm);
 
-  Xt_request requests =
-    xt_request_msgs_packed_new(nrecv + nsend, tmp_requests, comm, nrecv, nsend,
-                               datatypes, buffers, buffers + nrecv, dst_data);
-
-  free(datatypes);
-  free(buffers);
-  free(tmp_requests);
-
+  *(xt_request_msgs_packed_get_unpacked_ptr(requests)) = dst_data;
   *request = requests;
 }
 

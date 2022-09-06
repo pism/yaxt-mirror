@@ -70,6 +70,19 @@ xt_request_msgs_packed_alloc(int n_requests,
 PPM_DSO_INTERNAL MPI_Request *
 xt_request_msgs_packed_get_req_ptr(Xt_request request);
 
+PPM_DSO_INTERNAL MPI_Datatype *
+xt_request_msgs_packed_get_dt_ptr(Xt_request request);
+
+PPM_DSO_INTERNAL void **
+xt_request_msgs_packed_get_packed_ptr(Xt_request request);
+
+PPM_DSO_INTERNAL void **
+xt_request_msgs_packed_get_unpacked_ptr(Xt_request request);
+
+PPM_DSO_INTERNAL void **
+xt_request_msgs_packed_get_tmp_buf_ptr(Xt_request request);
+
+
 #endif
 
 /*
