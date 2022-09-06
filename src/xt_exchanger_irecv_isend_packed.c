@@ -144,7 +144,8 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                                            Xt_request *request)
 {
   Xt_request requests
-    = xt_request_msgs_packed_alloc(nrecv + nsend, nrecv, nsend, comm);
+    = xt_request_msgs_packed_alloc(nrecv + nsend, nrecv, nsend, comm,
+                                   0);
 
   MPI_Request *tmp_requests
     = xt_request_msgs_packed_get_req_ptr(requests);
@@ -197,7 +198,7 @@ xt_exchanger_irecv_isend_packed_create_omp_share(
   (void)send_msgs;
   (void)recv_msgs;
   return (Xt_exchanger_omp_share)(
-    xt_request_msgs_packed_alloc(nsend+nrecv, nrecv, nsend, comm));
+    xt_request_msgs_packed_alloc(nsend+nrecv, nrecv, nsend, comm, 0));
 }
 
 
