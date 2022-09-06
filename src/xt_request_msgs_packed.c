@@ -116,6 +116,12 @@ xt_request_msgs_packed_alloc(int n_requests,
   return (Xt_request)request;
 }
 
+static inline void *
+extra_buf(Xt_request_msgs_packed request_msgs_packed)
+{
+  return request_msgs_packed->datatypes+request_msgs_packed->n_packed;
+}
+
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm, int n_packed,
@@ -159,12 +165,9 @@ static void unpack_data(Xt_request_msgs_packed request_msgs_packed) {
 static void
 free_request(Xt_request_msgs_packed request_msgs_packed)
 {
-  int n_packed = request_msgs_packed->n_packed,
-    n_tmp_buffers = request_msgs_packed->n_tmp_buffers;
+  int n_packed = request_msgs_packed->n_packed;
   if (request_msgs_packed->finalizer != no_finalizer)
-    request_msgs_packed->finalizer(request_msgs_packed->datatypes+n_packed);
-  for (int i = 0; i < n_packed + n_tmp_buffers; ++i)
-    free(request_msgs_packed->buffers[i]);
+    request_msgs_packed->finalizer(extra_buf(request_msgs_packed));
   for (int i = 0; i < n_packed; ++i)
     xt_mpi_call(MPI_Type_free(request_msgs_packed->datatypes+i),
                 request_msgs_packed->comm);
@@ -258,6 +261,15 @@ xt_request_msgs_packed_set_finalizer(Xt_request request,
   assert(request->vtable == &request_msgs_packed_vtable);
   request_msgs_packed->finalizer = finalizer;
 }
+
+void *
+xt_request_msgs_packed_get_extra_buf(Xt_request request)
+{
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  assert(request->vtable == &request_msgs_packed_vtable);
+  return extra_buf(request_msgs_packed);
+}
+
 
 /*
  * Local Variables:

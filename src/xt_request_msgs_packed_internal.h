@@ -87,6 +87,9 @@ PPM_DSO_INTERNAL void
 xt_request_msgs_packed_set_finalizer(Xt_request request,
                                      void (*finalizer)(void *));
 
+PPM_DSO_INTERNAL void *
+xt_request_msgs_packed_get_extra_buf(Xt_request request);
+
 
 #endif
 
