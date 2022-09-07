@@ -72,39 +72,32 @@ typedef struct Xt_request_msgs_packed_ * Xt_request_msgs_packed;
 
 struct Xt_request_msgs_packed_ {
   const struct Xt_request_vtable *vtable;
-  MPI_Request *requests;
   int *ops_completed_buffer;
   MPI_Comm comm;
   int n_requests;
-  int n_packed;
   void (*finalizer)(Xt_request, void *);
   size_t extra_buf_ofs;
-  void *buffers[];
+  MPI_Request requests[];
 };
 
 #define no_finalizer ((void (*)(Xt_request, void *))0)
 
 Xt_request
 xt_request_msgs_packed_alloc(int n_requests,
-                             int n_packed,
                              MPI_Comm comm,
                              size_t extra_buf_size)
 {
   size_t hdr_size = sizeof(struct Xt_request_msgs_packed_),
-    bufp_size
-    = ((size_t)n_packed) * sizeof(void *),
     bufr_size = (size_t)n_requests * sizeof(MPI_Request)
     + (size_t)n_requests * sizeof(int);
   /* round allocation up to next multiple of sizeof (void *) to place
    * beginning of user requested extra buffer */
-  size_t ofs = ((hdr_size + bufp_size + bufr_size + sizeof (void *) - 1)
+  size_t ofs = ((hdr_size + bufr_size + sizeof (void *) - 1)
                    & -sizeof(void *));
   Xt_request_msgs_packed request = xmalloc(ofs + extra_buf_size);
   request->vtable = &request_msgs_packed_vtable;
   request->comm = comm;
   request->n_requests = n_requests;
-  request->n_packed = n_packed;
-  request->requests = (MPI_Request *)(request->buffers+n_packed);
   request->finalizer = no_finalizer;
   request->ops_completed_buffer
     = (int *)(request->requests + (size_t)n_requests);
@@ -121,17 +114,13 @@ extra_buf(Xt_request_msgs_packed request_msgs_packed)
 
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
-                                      MPI_Comm comm, int n_packed,
-                                      void *packed_data[n_packed]) {
+                                      MPI_Comm comm) {
 
-  assert(n_requests >= 0 && n_packed >= 0);
+  assert(n_requests >= 0);
   Xt_request_msgs_packed request
-    = (Xt_request_msgs_packed)xt_request_msgs_packed_alloc(
-      n_requests, n_packed, comm, 0);
+    = (Xt_request_msgs_packed)xt_request_msgs_packed_alloc(n_requests, comm, 0);
   memcpy(request->requests, requests,
          (size_t)n_requests * sizeof(*request->requests));
-  memcpy(request->buffers, packed_data,
-         (size_t)n_packed * sizeof(*request->buffers));
 
   return (Xt_request)request;
 }
@@ -187,14 +176,6 @@ xt_request_msgs_packed_get_req_ptr(Xt_request request)
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
   assert(request->vtable == &request_msgs_packed_vtable);
   return request_msgs_packed->requests;
-}
-
-void **
-xt_request_msgs_packed_get_packed_ptr(Xt_request request)
-{
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
-  assert(request->vtable == &request_msgs_packed_vtable);
-  return request_msgs_packed->buffers;
 }
 
 MPI_Comm

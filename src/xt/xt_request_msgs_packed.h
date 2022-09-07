@@ -55,24 +55,12 @@
  * @param[in] n_requests    number of entries in requests array
  * @param[in] requests      array containg MPI requests
  * @param[in] comm          MPI communicator
- * @param[in] n_packed      number of entries in datatypes and packed_data
- * @param[in] n_tmp_buffers number of entries in tmp_buffers
- * @param[in] packed_data   array of buffers containing packed data
- * @param[in] tmp_buffers   array of buffers that need to be freed after the
- *                          completion of exchange
  * @remark ownership of the MPI requests is passed to the Xt_request object,
  *         however the caller remains the owner of the requests array
- * @remark ownership of the MPI datatypes and the array datatypes remain with
- *         the caller
- * @remark ownership of the buffers packed_data[0..n_packed-1] and
- *         tmp_buffers[0..n_tmp_buffers-1] is passed to the Xt_request object,
- *         however the caller remain the owner of the packed_data and
- *         tmp_buffers array
  */
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
-                                      MPI_Comm comm, int n_packed,
-                                      void *packed_data[n_packed]);
+                                      MPI_Comm comm);
 
 #endif // XT_REQUEST_MSGS_PACKED_H
 

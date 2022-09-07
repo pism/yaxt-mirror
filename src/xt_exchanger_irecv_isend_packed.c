@@ -225,7 +225,7 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
     + sizeof (size_t) * ((size_t)nrecv+1)
     + sizeof (MPI_Datatype) * (size_t)nrecv;
   Xt_request requests
-    = xt_request_msgs_packed_alloc(nrecv + nsend, nrecv, comm,
+    = xt_request_msgs_packed_alloc(nrecv + nsend, comm,
                                    inventory_size + buffer_size);
   xt_request_msgs_packed_set_finalizer(requests, finalize_packed_a_exchange);
 
@@ -241,14 +241,11 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                         comm, tag_offset,
                         tmp_requests);
 
-  void **packedp
-    = xt_request_msgs_packed_get_packed_ptr(requests);
   size_t ofs = inventory_size;
   size_t *buf_ofs = (void *)(buffer + sizeof (struct inventory_header));
   for (int i = 0; i < nrecv; ++i) {
     int recv_size = buffer_sizes[i];
     buf_ofs[i] = ofs;
-    packedp[i] = buffer + ofs;
     ofs += (size_t)recv_size;
   }
   buf_ofs[nrecv] = ofs;
@@ -278,7 +275,7 @@ xt_exchanger_irecv_isend_packed_create_omp_share(
   (void)send_msgs;
   (void)recv_msgs;
   return (Xt_exchanger_omp_share)(
-    xt_request_msgs_packed_alloc(nsend+nrecv, nrecv, comm, 0));
+    xt_request_msgs_packed_alloc(nsend+nrecv, comm, 0));
 }
 
 
