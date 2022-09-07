@@ -57,7 +57,6 @@
  * @param[in] comm          MPI communicator
  * @param[in] n_packed      number of entries in datatypes and packed_data
  * @param[in] n_tmp_buffers number of entries in tmp_buffers
- * @param[in] datatypes     array of datatypes to be used for unpacking
  * @param[in] packed_data   array of buffers containing packed data
  * @param[in] tmp_buffers   array of buffers that need to be freed after the
  *                          completion of exchange
@@ -75,7 +74,6 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm, int n_packed,
                                       int n_tmp_buffers,
-                                      const MPI_Datatype datatypes[n_packed],
                                       void *packed_data[n_packed],
                                       void *tmp_buffers[n_tmp_buffers],
                                       void *unpacked_data);

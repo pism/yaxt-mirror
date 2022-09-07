@@ -117,35 +117,37 @@ int main(int argc, char **argv) {
       PUT_ERR("recv_buf[i * msg_size + j] != i\n");
   }
 
-  { // each process receives and sends data from/to every other process with
-    // request_msgs_packed
-
-    int * send_buf = xmalloc(1 * sizeof(*send_buf));
-    int * recv_buf = xmalloc(1 * sizeof(*recv_buf));
-    void *send_bufp = send_buf, *recv_bufp = recv_buf;
-
-    send_buf[0] = rank;
-    recv_buf[0] = -1;
-
-    MPI_Request requests[2];
-    MPI_Comm comm = MPI_COMM_WORLD;
-
-    xt_mpi_call(MPI_Isend(send_buf, 1, MPI_INT, (rank + 1)%size, 0,
-                          MPI_COMM_WORLD, requests+0), MPI_COMM_WORLD);
-    xt_mpi_call(MPI_Irecv(recv_buf, 1, MPI_INT, (rank - 1 + size)%size, 0,
-                          MPI_COMM_WORLD, requests+1), MPI_COMM_WORLD);
-
-    MPI_Datatype unpack_datatype[1] = {MPI_INT};
-    int neigh_rank;
-    Xt_request request =
-      xt_request_msgs_packed_new(2, requests, comm, 1, 1, unpack_datatype,
-                                 &recv_bufp, &send_bufp, &neigh_rank);
-
-    check_wait_request(&request);
-
-    if (neigh_rank != (rank - 1 + size)%size)
-      PUT_ERR("neigh_rank != (rank - 1 + size)%size after xt_request_wait\n");
-  }
+  /*
+   * { // each process receives and sends data from/to every other process with
+   *   // request_msgs_packed
+   *
+   *   int * send_buf = xmalloc(1 * sizeof(*send_buf));
+   *   int * recv_buf = xmalloc(1 * sizeof(*recv_buf));
+   *   void *send_bufp = send_buf, *recv_bufp = recv_buf;
+   *
+   *   send_buf[0] = rank;
+   *   recv_buf[0] = -1;
+   *
+   *   MPI_Request requests[2];
+   *   MPI_Comm comm = MPI_COMM_WORLD;
+   *
+   *   xt_mpi_call(MPI_Isend(send_buf, 1, MPI_INT, (rank + 1)%size, 0,
+   *                         MPI_COMM_WORLD, requests+0), MPI_COMM_WORLD);
+   *   xt_mpi_call(MPI_Irecv(recv_buf, 1, MPI_INT, (rank - 1 + size)%size, 0,
+   *                         MPI_COMM_WORLD, requests+1), MPI_COMM_WORLD);
+   *
+   *   MPI_Datatype unpack_datatype[1] = {MPI_INT};
+   *   int neigh_rank;
+   *   Xt_request request =
+   *     xt_request_msgs_packed_new(2, requests, comm, 1, 1, unpack_datatype,
+   *                                &recv_bufp, &send_bufp, &neigh_rank);
+   *
+   *   check_wait_request(&request);
+   *
+   *   if (neigh_rank != (rank - 1 + size)%size)
+   *     PUT_ERR("neigh_rank != (rank - 1 + size)%size after xt_request_wait\n");
+   * }
+   */
 
   xt_finalize();
   MPI_Finalize();

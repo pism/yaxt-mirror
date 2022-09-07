@@ -79,12 +79,12 @@ struct Xt_request_msgs_packed_ {
   int n_requests;
   int n_packed, n_tmp_buffers;
   void * unpacked_data;
-  MPI_Datatype *datatypes;
-  void (*finalizer)(void *);
+  void (*finalizer)(Xt_request, void *);
+  size_t extra_buf_ofs;
   void *buffers[];
 };
 
-#define no_finalizer ((void (*)(void *))0)
+#define no_finalizer ((void (*)(Xt_request, void *))0)
 
 Xt_request
 xt_request_msgs_packed_alloc(int n_requests,
@@ -98,11 +98,11 @@ xt_request_msgs_packed_alloc(int n_requests,
     = ((size_t)n_packed + (size_t)n_tmp_buffers) * sizeof(void *),
     bufr_size = (size_t)n_requests * sizeof(MPI_Request)
     + (size_t)n_requests * sizeof(int);
-  /* round allocation up to next multiple of sizeof (MPI_Datatype) */
-  size_t dt_ofs = ((hdr_size + bufp_size + bufr_size + sizeof (MPI_Datatype) - 1)
-                   & -sizeof(MPI_Datatype)),
-    dt_size = sizeof (MPI_Datatype) * (size_t)n_packed;
-  Xt_request_msgs_packed request = xmalloc(dt_ofs + dt_size + extra_buf_size);
+  /* round allocation up to next multiple of sizeof (void *) to place
+   * beginning of user requested extra buffer */
+  size_t ofs = ((hdr_size + bufp_size + bufr_size + sizeof (void *) - 1)
+                   & -sizeof(void *));
+  Xt_request_msgs_packed request = xmalloc(ofs + extra_buf_size);
   request->vtable = &request_msgs_packed_vtable;
   request->comm = comm;
   request->n_requests = n_requests;
@@ -112,21 +112,21 @@ xt_request_msgs_packed_alloc(int n_requests,
   request->finalizer = no_finalizer;
   request->ops_completed_buffer
     = (int *)(request->requests + (size_t)n_requests);
-  request->datatypes = (MPI_Datatype *)((unsigned char *)request + dt_ofs);
+  request->extra_buf_ofs = ofs;
   return (Xt_request)request;
 }
 
 static inline void *
 extra_buf(Xt_request_msgs_packed request_msgs_packed)
 {
-  return request_msgs_packed->datatypes+request_msgs_packed->n_packed;
+  size_t ofs = request_msgs_packed->extra_buf_ofs;
+  return (unsigned char *)request_msgs_packed + ofs;
 }
 
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm, int n_packed,
                                       int n_tmp_buffers,
-                                      const MPI_Datatype datatypes[n_packed],
                                       void *packed_data[n_packed],
                                       void *tmp_buffers[n_tmp_buffers],
                                       void * unpacked_data) {
@@ -137,8 +137,6 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
       n_requests, n_packed, n_tmp_buffers, comm, 0);
   memcpy(request->requests, requests,
          (size_t)n_requests * sizeof(*request->requests));
-  for (int i = 0; i < n_packed; ++i)
-    xt_mpi_call(MPI_Type_dup(datatypes[i], request->datatypes + i), comm);
   memcpy(request->buffers, packed_data,
          (size_t)n_packed * sizeof(*request->buffers));
   memcpy(request->buffers + n_packed, tmp_buffers,
@@ -148,29 +146,12 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
   return (Xt_request)request;
 }
 
-static void unpack_data(Xt_request_msgs_packed request_msgs_packed) {
-
-  MPI_Comm comm = request_msgs_packed->comm;
-  int n_packed = request_msgs_packed->n_packed;
-  for (int i = 0; i < n_packed; ++i) {
-    int position = 0, buffer_size;
-    xt_mpi_call(MPI_Pack_size(1, request_msgs_packed->datatypes[i],
-                comm, &buffer_size), comm);
-    xt_mpi_call(MPI_Unpack(request_msgs_packed->buffers[i], buffer_size,
-                           &position, request_msgs_packed->unpacked_data,
-                           1, request_msgs_packed->datatypes[i], comm), comm);
-  }
-}
-
 static void
-free_request(Xt_request_msgs_packed request_msgs_packed)
+finish_requests(Xt_request_msgs_packed request_msgs_packed)
 {
-  int n_packed = request_msgs_packed->n_packed;
   if (request_msgs_packed->finalizer != no_finalizer)
-    request_msgs_packed->finalizer(extra_buf(request_msgs_packed));
-  for (int i = 0; i < n_packed; ++i)
-    xt_mpi_call(MPI_Type_free(request_msgs_packed->datatypes+i),
-                request_msgs_packed->comm);
+    request_msgs_packed->finalizer((Xt_request)request_msgs_packed,
+                                   extra_buf(request_msgs_packed));
   free(request_msgs_packed);
 }
 
@@ -191,8 +172,7 @@ static void xt_request_msgs_wait_packed(Xt_request request) {
 #if __GNUC__ == 11 && defined MPICH
 #pragma GCC diagnostic pop
 #endif
-  unpack_data(request_msgs_packed);
-  free_request(request_msgs_packed);
+  finish_requests(request_msgs_packed);
 }
 
 static int xt_request_msgs_test_packed(Xt_request request) {
@@ -205,10 +185,8 @@ static int xt_request_msgs_test_packed(Xt_request request) {
                      request_msgs_packed->ops_completed_buffer,
                      request_msgs_packed->comm);
 
-  if (flag) {
-    unpack_data(request_msgs_packed);
-    free_request(request_msgs_packed);
-  }
+  if (flag)
+    finish_requests(request_msgs_packed);
 
   return flag;
 }
@@ -219,14 +197,6 @@ xt_request_msgs_packed_get_req_ptr(Xt_request request)
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
   assert(request->vtable == &request_msgs_packed_vtable);
   return request_msgs_packed->requests;
-}
-
-MPI_Datatype *
-xt_request_msgs_packed_get_dt_ptr(Xt_request request)
-{
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
-  assert(request->vtable == &request_msgs_packed_vtable);
-  return request_msgs_packed->datatypes;
 }
 
 void **
@@ -253,9 +223,17 @@ xt_request_msgs_packed_get_tmp_buf_ptr(Xt_request request)
   return request_msgs_packed->buffers+request_msgs_packed->n_packed;
 }
 
+MPI_Comm
+xt_request_msgs_packed_get_comm(Xt_request request)
+{
+  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  assert(request->vtable == &request_msgs_packed_vtable);
+  return request_msgs_packed->comm;
+}
+
 void
 xt_request_msgs_packed_set_finalizer(Xt_request request,
-                                     void (*finalizer)(void *))
+                                     void (*finalizer)(Xt_request, void *))
 {
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
   assert(request->vtable == &request_msgs_packed_vtable);
