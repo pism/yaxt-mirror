@@ -78,7 +78,6 @@ struct Xt_request_msgs_packed_ {
   MPI_Comm comm;
   int n_requests;
   int n_packed, n_tmp_buffers;
-  void * unpacked_data;
   void (*finalizer)(Xt_request, void *);
   size_t extra_buf_ofs;
   void *buffers[];
@@ -128,8 +127,7 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
                                       MPI_Comm comm, int n_packed,
                                       int n_tmp_buffers,
                                       void *packed_data[n_packed],
-                                      void *tmp_buffers[n_tmp_buffers],
-                                      void * unpacked_data) {
+                                      void *tmp_buffers[n_tmp_buffers]) {
 
   assert(n_requests >= 0 && n_packed >= 0 && n_tmp_buffers >= 0);
   Xt_request_msgs_packed request
@@ -141,7 +139,6 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
          (size_t)n_packed * sizeof(*request->buffers));
   memcpy(request->buffers + n_packed, tmp_buffers,
          (size_t)n_tmp_buffers * sizeof(*request->buffers));
-  request->unpacked_data = unpacked_data;
 
   return (Xt_request)request;
 }
@@ -205,14 +202,6 @@ xt_request_msgs_packed_get_packed_ptr(Xt_request request)
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
   assert(request->vtable == &request_msgs_packed_vtable);
   return request_msgs_packed->buffers;
-}
-
-void **
-xt_request_msgs_packed_get_unpacked_ptr(Xt_request request)
-{
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
-  assert(request->vtable == &request_msgs_packed_vtable);
-  return &request_msgs_packed->unpacked_data;
 }
 
 void **

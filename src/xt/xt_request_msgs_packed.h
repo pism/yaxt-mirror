@@ -60,7 +60,6 @@
  * @param[in] packed_data   array of buffers containing packed data
  * @param[in] tmp_buffers   array of buffers that need to be freed after the
  *                          completion of exchange
- * @param[in] unpacked_data target buffer for unpacking
  * @remark ownership of the MPI requests is passed to the Xt_request object,
  *         however the caller remains the owner of the requests array
  * @remark ownership of the MPI datatypes and the array datatypes remain with
@@ -75,8 +74,7 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
                                       MPI_Comm comm, int n_packed,
                                       int n_tmp_buffers,
                                       void *packed_data[n_packed],
-                                      void *tmp_buffers[n_tmp_buffers],
-                                      void *unpacked_data);
+                                      void *tmp_buffers[n_tmp_buffers]);
 
 #endif // XT_REQUEST_MSGS_PACKED_H
 

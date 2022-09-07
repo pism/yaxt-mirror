@@ -75,9 +75,6 @@ PPM_DSO_INTERNAL void **
 xt_request_msgs_packed_get_packed_ptr(Xt_request request);
 
 PPM_DSO_INTERNAL void **
-xt_request_msgs_packed_get_unpacked_ptr(Xt_request request);
-
-PPM_DSO_INTERNAL void **
 xt_request_msgs_packed_get_tmp_buf_ptr(Xt_request request);
 
 PPM_DSO_INTERNAL void

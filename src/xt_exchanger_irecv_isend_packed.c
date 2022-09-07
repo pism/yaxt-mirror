@@ -166,6 +166,7 @@ xt_exchanger_irecv_isend_packed_s_exchange(
 struct inventory_header
 {
   int nsend, nrecv;
+  void *dst_data;
 };
 
 /*
@@ -185,14 +186,14 @@ finalize_packed_a_exchange(Xt_request request, void *buf)
   (void)nsend;
   MPI_Comm comm = xt_request_msgs_packed_get_comm(request);
   MPI_Datatype *datatypes = (MPI_Datatype *)(header+1);
-  void *unpacked_data = *xt_request_msgs_packed_get_unpacked_ptr(request);
+  void *dst_data = header->dst_data;
   void **buffers = xt_request_msgs_packed_get_packed_ptr(request);
   for (int i = 0; i < nrecv; ++i) {
     int position = 0, buffer_size;
     xt_mpi_call(MPI_Pack_size(1, datatypes[i],
                 comm, &buffer_size), comm);
     xt_mpi_call(MPI_Unpack(buffers[i], buffer_size,
-                           &position, unpacked_data,
+                           &position, dst_data,
                            1, datatypes[i], comm), comm);
   }
   for (int i = 0; i < nrecv; ++i)
@@ -256,11 +257,11 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
   struct inventory_header *header = (void *)buffer;
   header->nsend = nsend;
   header->nrecv = nrecv;
+  header->dst_data = dst_data;
 
   MPI_Datatype *datatypes = (void *)(buffer + sizeof (struct inventory_header));
   for (int i = 0; i < nrecv; ++i)
     xt_mpi_call(MPI_Type_dup(recv_msgs[i].datatype, datatypes+i), comm);
-  *(xt_request_msgs_packed_get_unpacked_ptr(requests)) = dst_data;
   *request = requests;
 
   if (num_tx > AUTO_ALLOC_SIZE)
