@@ -72,7 +72,6 @@ typedef struct Xt_request_msgs_packed_ * Xt_request_msgs_packed;
 
 struct Xt_request_msgs_packed_ {
   const struct Xt_request_vtable *vtable;
-  int *ops_completed_buffer;
   MPI_Comm comm;
   int n_requests;
   void (*finalizer)(Xt_request, void *);
@@ -99,8 +98,6 @@ xt_request_msgs_packed_alloc(int n_requests,
   request->comm = comm;
   request->n_requests = n_requests;
   request->finalizer = no_finalizer;
-  request->ops_completed_buffer
-    = (int *)(request->requests + (size_t)n_requests);
   request->extra_buf_ofs = ofs;
   return (Xt_request)request;
 }
@@ -161,7 +158,8 @@ static int xt_request_msgs_test_packed(Xt_request request) {
   int flag =
     xt_mpi_test_some(&(request_msgs_packed->n_requests),
                      request_msgs_packed->requests,
-                     request_msgs_packed->ops_completed_buffer,
+                     (int *)(request_msgs_packed->requests
+                             + request_msgs_packed->n_requests),
                      request_msgs_packed->comm);
 
   if (flag)
