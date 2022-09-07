@@ -221,16 +221,15 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
   size_t buffer_size = get_buffer_sizes(buffer_sizes, nsend, nrecv,
                                         send_msgs, recv_msgs, comm);
   size_t inventory_size
-    = sizeof (struct inventory_header) + sizeof (MPI_Datatype) * (size_t)nrecv;
+    = sizeof (struct inventory_header)
+    + sizeof (MPI_Datatype) * (size_t)nrecv;
   Xt_request requests
-    = xt_request_msgs_packed_alloc(nrecv + nsend, nrecv, nsend, comm,
+    = xt_request_msgs_packed_alloc(nrecv + nsend, nrecv, comm,
                                    inventory_size + buffer_size);
   xt_request_msgs_packed_set_finalizer(requests, finalize_packed_a_exchange);
 
   MPI_Request *tmp_requests
     = xt_request_msgs_packed_get_req_ptr(requests);
-  void **packedp
-    = xt_request_msgs_packed_get_packed_ptr(requests);
 
   unsigned char *buffer
     = xt_request_msgs_packed_get_extra_buf(requests);
@@ -241,6 +240,8 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                         comm, tag_offset,
                         tmp_requests);
 
+  void **packedp
+    = xt_request_msgs_packed_get_packed_ptr(requests);
   size_t ofs = inventory_size;
   for (int i = 0; i < nrecv; ++i) {
     int recv_size = buffer_sizes[i];
@@ -248,12 +249,6 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
     ofs += (size_t)recv_size;
   }
 
-  void **tmp_buf
-    = xt_request_msgs_packed_get_tmp_buf_ptr(requests);
-  for (int i = 0; i < nsend; ++i) {
-    tmp_buf[i] = buffer + ofs;
-    ofs += (size_t)buffer_sizes[nrecv+i];
-  }
   struct inventory_header *header = (void *)buffer;
   header->nsend = nsend;
   header->nrecv = nrecv;
@@ -278,7 +273,7 @@ xt_exchanger_irecv_isend_packed_create_omp_share(
   (void)send_msgs;
   (void)recv_msgs;
   return (Xt_exchanger_omp_share)(
-    xt_request_msgs_packed_alloc(nsend+nrecv, nrecv, nsend, comm, 0));
+    xt_request_msgs_packed_alloc(nsend+nrecv, nrecv, comm, 0));
 }
 
 

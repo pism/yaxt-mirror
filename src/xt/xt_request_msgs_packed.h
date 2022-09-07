@@ -72,9 +72,7 @@
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm, int n_packed,
-                                      int n_tmp_buffers,
-                                      void *packed_data[n_packed],
-                                      void *tmp_buffers[n_tmp_buffers]);
+                                      void *packed_data[n_packed]);
 
 #endif // XT_REQUEST_MSGS_PACKED_H
 
