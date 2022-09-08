@@ -47,7 +47,16 @@
 #include <config.h>
 #endif
 #include <string.h>
+#include <unistd.h>
 #include <mpi.h>
+
+#ifdef _OPENACC
+#include <openacc.h>
+#else
+#ifdef __INTEL_COMPILER
+#pragma warning disable 161
+#endif
+#endif
 
 #include <yaxt.h>
 
@@ -60,7 +69,6 @@ static int check_xt_ddt(
 int main(void) {
 
   // init mpi
-
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
@@ -129,7 +137,7 @@ int main(void) {
     enum {COUNT = 0};
     MPI_Type_contiguous(COUNT, MPI_DOUBLE, &mpi_ddt);
     double in_data[COUNT+1];
-    for (size_t i = 0; i < COUNT; ++i) in_data[i] = (double)i;
+    for (size_t i = 0; i < COUNT+1; ++i) in_data[i] = (double)i;
 
     if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), 0))
       PUT_ERR("ERROR CONT(0, DOUBLE)");
@@ -843,39 +851,73 @@ static int check_xt_ddt(
 
   if (xt_ddt_get_pack_size(mpi_ddt) != ref_pack_size) return 1;
 
-  void * buffer = malloc(4 * in_data_size);
-  void * pack_data_mpi_ddt = (unsigned char*)buffer + 0 * in_data_size;
-  void * pack_data_xt_ddt =  (unsigned char*)buffer + 1 * in_data_size;
-  void * out_data_mpi_ddt =  (unsigned char*)buffer + 2 * in_data_size;
-  void * out_data_xt_ddt =   (unsigned char*)buffer + 3 * in_data_size;
+  void * pack_data = malloc(ref_pack_size);
+  void * out_data =  malloc(in_data_size);
+  void * ref_out_data = malloc(in_data_size);
+  memset(ref_out_data, -1, in_data_size);
 
-  // initialise buffer
-  memset(buffer, -1, 4 * in_data_size);
+  // generate reference data
+  {
+    int position = 0;
+    MPI_Pack(
+      in_data, 1, mpi_ddt, pack_data, (int)in_data_size,
+      &position, MPI_COMM_WORLD);
+    position = 0;
+    MPI_Unpack(
+      pack_data, (int)in_data_size, &position,
+      ref_out_data, 1, mpi_ddt, MPI_COMM_WORLD);
+  }
 
-  // pack in_data
-  int position = 0;
-  MPI_Pack(
-    in_data, 1, mpi_ddt, pack_data_mpi_ddt, (int)in_data_size,
-    &position, MPI_COMM_WORLD);
-  xt_ddt_pack(mpi_ddt, in_data, pack_data_xt_ddt);
+  int err_flag = 0;
 
-  // unpack data
-  position = 0;
-  MPI_Unpack(
-    pack_data_mpi_ddt, (int)in_data_size, &position,
-    out_data_mpi_ddt, 1, mpi_ddt, MPI_COMM_WORLD);
-  xt_ddt_unpack(mpi_ddt, pack_data_xt_ddt, out_data_xt_ddt);
+#pragma acc data copyin(in_data[0:in_data_size]) \
+                 create(pack_data[0:ref_pack_size], \
+                        out_data[0:in_data_size])
+  {
+#ifdef _OPENACC
+    for (int data_on_gpu = 0; data_on_gpu < 2; ++data_on_gpu) {
+      for (int buffer_on_gpu = 0; buffer_on_gpu < 2; ++buffer_on_gpu) {
+#endif
 
-  // compare out buffers
-  int err_flag =
-    memcmp(out_data_mpi_ddt, out_data_xt_ddt, in_data_size);
+        // initialise out data (also on device, if necessary)
+        memset(out_data, -1, in_data_size);
+#pragma acc update device(out_data[0:in_data_size]) if (data_on_gpu)
+
+        // use device pointers of in_data and out_data, if they
+        // are on the device
+#pragma acc host_data use_device(in_data, out_data) if(data_on_gpu)
+        {
+
+          // use device pointer of pack_data, if it is on the device
+#pragma acc host_data use_device(pack_data) if (buffer_on_gpu)
+          {
+            // pack in_data
+            xt_ddt_pack(mpi_ddt, in_data, pack_data);
+
+            // unpack data
+            xt_ddt_unpack(mpi_ddt, pack_data, out_data);
+          }
+        }
+
+        // copy data from device to host, if necessary
+#pragma acc update self(out_data[0:in_data_size]) if (data_on_gpu)
+
+        // compare out buffers
+        err_flag |= memcmp(out_data, ref_out_data, in_data_size);
+
+#ifdef _OPENACC
+      } // buffer_on_gpu
+    } // data_on_gpu
+#endif
+  }
 
   // clean up
-  free(buffer);
+  free(ref_out_data);
+  free(out_data);
+  free(pack_data);
 
   // if mpi_ddt is a derived MPI datatype
-  if (combiner != MPI_COMBINER_NAMED)
-    MPI_Type_free(&mpi_ddt);
+  if (combiner != MPI_COMBINER_NAMED) MPI_Type_free(&mpi_ddt);
 
   return err_flag;
 }

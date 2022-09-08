@@ -50,6 +50,18 @@
 #include <string.h>
 #include <mpi.h>
 
+#ifdef _OPENACC
+#include <cuda_runtime_api.h>
+#include <openacc.h>
+
+#define h_void void
+#define d_void void
+#else
+#ifdef __INTEL_COMPILER
+#pragma warning disable 161
+#endif
+#endif
+
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
@@ -969,7 +981,17 @@ void xt_ddt_delete(Xt_ddt ddt) {
 
   // only the displacements of the first entry needs to be freed, all other
   // are part of the same allocation
-  if (ddt->count > 0) free(ddt->data[0].displs);
+  if (ddt->count > 0) {
+#ifdef _OPENACC
+    if (acc_is_present(
+          ddt->data[0].displs, ddt->data[0].displ_count * sizeof(size_t)))
+      for (size_t i = 0; i < ddt->count; ++i)
+        // acc_delete_finalize(
+        acc_delete(
+          ddt->data[i].displs, ddt->data[i].displ_count * sizeof(size_t));
+#endif
+    free(ddt->data[0].displs);
+  }
   free(ddt);
 }
 
@@ -1074,31 +1096,41 @@ size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
 }
 
 static void xt_ddt_pack_8(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int pack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int8_t*)dst)[i] = *(int8_t*)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_16(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int pack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int16_t*)dst)[i] = *(int16_t*)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_32(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int pack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int32_t*)dst)[i] = *(int32_t*)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_64(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int pack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int64_t*)dst)[i] = *(int64_t*)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_128(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int pack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
     ((int64_t*)dst)[2 * i + 0] = src_64[0];
@@ -1107,7 +1139,9 @@ static void xt_ddt_pack_128(
 }
 
 static void xt_ddt_pack_256(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int pack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
     ((int64_t*)dst)[4 * i + 0] = src_64[0];
@@ -1117,7 +1151,55 @@ static void xt_ddt_pack_256(
   }
 }
 
+#ifdef _OPENACC
+#define CUDA_ERROR_CHECK(ret)                                \
+do{                                                          \
+    cudaError_t err = ret;                                   \
+    if(err != cudaSuccess)                                   \
+    {                                                        \
+      fprintf(stderr, "Cuda error %d %s:: %s\n",             \
+              __LINE__, __func__, cudaGetErrorString(err));  \
+      exit(EXIT_FAILURE);                                    \
+    }                                                        \
+}while(0);
+
+static int is_device_pointer(const void *ptr) {
+
+  struct cudaPointerAttributes attributes;
+  CUDA_ERROR_CHECK(cudaPointerGetAttributes(&attributes, ptr));
+  return attributes.type == cudaMemoryTypeDevice;
+}
+#endif
+
 void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+#ifdef _OPENACC
+  int src_on_gpu = is_device_pointer(src);
+  int dst_on_gpu = is_device_pointer(dst);
+
+  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
+  void * h_dst, * d_dst;
+
+  // if the source is in GPU memory but the destination is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (src_on_gpu && !dst_on_gpu) {
+    h_dst = dst;
+    d_dst = acc_malloc(pack_size);
+    dst = d_dst;
+  }
+
+  // if the destination is in GPU memory but the source is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (!src_on_gpu && dst_on_gpu) {
+    h_dst = xmalloc(pack_size);
+    d_dst = dst;
+    dst = h_dst;
+  }
+#else
+  int const src_on_gpu = 0;
+#endif
 
   Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
 
@@ -1130,36 +1212,42 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     size_t displ_count = ddt->data[i].displ_count;
     size_t * displs = ddt->data[i].displs;
 
+#ifdef _OPENACC
+    if (src_on_gpu)
+        displs =
+          (size_t*)acc_copyin((h_void*)displs, displ_count * sizeof(size_t));
+#endif
+
     switch (element_size) {
       case 1:
         xt_ddt_pack_8(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset));
+          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
         break;
       case 2:
         xt_ddt_pack_16(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset));
+          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
         break;
       case 4:
         xt_ddt_pack_32(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset));
+          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
         break;
       case 8:
         xt_ddt_pack_64(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset));
+          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
         break;
       case 16:
         xt_ddt_pack_128(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset));
+          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
         break;
       case 32:
         xt_ddt_pack_256(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset));
+          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
         break;
       default:
         Xt_abort(
@@ -1170,34 +1258,62 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 
     dst_offset += displ_count * element_size;
   }
+
+#ifdef _OPENACC
+  // if the source is in GPU memory but the destination is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (src_on_gpu && !dst_on_gpu) {
+    acc_memcpy_from_device(h_dst, d_dst, pack_size);
+    acc_free(d_dst);
+  }
+
+  // if the destination is in GPU memory but the source is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (!src_on_gpu && dst_on_gpu) {
+    acc_memcpy_to_device(d_dst, h_dst, pack_size);
+    free(h_dst);
+  }
+#endif
 }
 
 static void xt_ddt_unpack_8(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int unpack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int8_t*)((unsigned char *)dst + displs[i]) = ((int8_t*)src)[i];
 }
 
 static void xt_ddt_unpack_16(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int unpack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int16_t*)((unsigned char *)dst + displs[i]) = ((int16_t*)src)[i];
 }
 
 static void xt_ddt_unpack_32(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int unpack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int32_t*)((unsigned char *)dst + displs[i]) = ((int32_t*)src)[i];
 }
 
 static void xt_ddt_unpack_64(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int unpack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int64_t*)((unsigned char *)dst + displs[i]) = ((int64_t*)src)[i];
 }
 
 static void xt_ddt_unpack_128(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int unpack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * dst_64 = (int64_t*)((unsigned char *)dst + displs[i]);
     dst_64[0] = ((int64_t*)src)[2 * i + 0];
@@ -1206,7 +1322,9 @@ static void xt_ddt_unpack_128(
 }
 
 static void xt_ddt_unpack_256(
-  size_t count, size_t *restrict displs, void const * src, void * dst) {
+  size_t count, size_t *restrict displs, void const *restrict src,
+  void *restrict dst, int unpack_on_gpu) {
+#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * dst_64 = (int64_t*)((unsigned char *)src + displs[i]);
     dst_64[0] = ((int64_t*)src)[4 * i + 0];
@@ -1217,6 +1335,36 @@ static void xt_ddt_unpack_256(
 }
 
 void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+#ifdef _OPENACC
+  int src_on_gpu = is_device_pointer(src);
+  int dst_on_gpu = is_device_pointer(dst);
+
+  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
+  void * h_src, * d_src;
+
+  // if the source is in GPU memory but the destination is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (src_on_gpu && !dst_on_gpu) {
+    h_src = xmalloc(pack_size);
+    d_src = (void*)src;
+    acc_memcpy_from_device(h_src, d_src, pack_size);
+    src = h_src;
+  }
+
+  // if the destination is in GPU memory but the source is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (!src_on_gpu && dst_on_gpu) {
+    h_src = (void*)src;
+    d_src = acc_malloc(pack_size);
+    acc_memcpy_to_device(d_src, h_src, pack_size);
+    src = d_src;
+  }
+#else
+  int const dst_on_gpu = 0;
+#endif
 
   Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
 
@@ -1229,36 +1377,42 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     size_t displ_count = ddt->data[i].displ_count;
     size_t * displs = ddt->data[i].displs;
 
+#ifdef _OPENACC
+    if (dst_on_gpu)
+      displs =
+        (size_t*)acc_copyin((h_void*)displs, displ_count * sizeof(size_t));
+#endif
+
     switch (element_size) {
       case 1:
         xt_ddt_unpack_8(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst);
+          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
         break;
       case 2:
         xt_ddt_unpack_16(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst);
+          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
         break;
       case 4:
         xt_ddt_unpack_32(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst);
+          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
         break;
       case 8:
         xt_ddt_unpack_64(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst);
+          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
         break;
       case 16:
         xt_ddt_unpack_128(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst);
+          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
         break;
       case 32:
         xt_ddt_unpack_256(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst);
+          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
         break;
       default:
         Xt_abort(
@@ -1269,6 +1423,18 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 
     src_offset += displ_count * element_size;
   }
+
+#ifdef _OPENACC
+  // if the source is in GPU memory but the destination is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (src_on_gpu && !dst_on_gpu) free(h_src);
+
+  // if the destination is in GPU memory but the source is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if (!src_on_gpu && dst_on_gpu) acc_free(d_src);
+#endif
 }
 
 /*
