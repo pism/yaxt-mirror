@@ -111,7 +111,7 @@ MPI_Request *
 xt_request_msgs_get_req_ptr(Xt_request request)
 {
   Xt_request_msgs request_msgs = (Xt_request_msgs)request;
-  assert(request_msgs->vtable == &request_msgs_vtable);
+  assert(request->vtable == &request_msgs_vtable);
   return request_msgs->requests;
 }
 
