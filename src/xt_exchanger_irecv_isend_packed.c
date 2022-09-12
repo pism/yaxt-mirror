@@ -132,8 +132,8 @@ xt_exchanger_irecv_isend_packed_s_exchange(
     requests = requests_auto;
     buffer_sizes = buffer_sizes_auto;
   } else {
-    requests = xmalloc(num_tx * sizeof (*requests));
-    buffer_sizes = xmalloc(num_tx * sizeof (*buffer_sizes));
+    requests = xmalloc(num_tx * sizeof (*requests) + num_tx * sizeof (*buffer_sizes));
+    buffer_sizes = (int *)(requests + num_tx);
   }
 
   size_t buffer_size = get_buffer_sizes(buffer_sizes, nsend, nrecv,
@@ -158,7 +158,6 @@ xt_exchanger_irecv_isend_packed_s_exchange(
 
   free(buffer);
   if (num_tx > AUTO_ALLOC_SIZE) {
-    free(buffer_sizes);
     free(requests);
   }
 }
