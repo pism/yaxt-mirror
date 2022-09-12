@@ -115,6 +115,7 @@ start_packed_transfer(unsigned char *buffer, int *buffer_sizes,
   }
 }
 
+enum { AUTO_ALLOC_SIZE = 32, };
 
 static void
 xt_exchanger_irecv_isend_packed_s_exchange(
@@ -123,7 +124,6 @@ xt_exchanger_irecv_isend_packed_s_exchange(
   const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
   int tag_offset, MPI_Comm comm)
 {
-  enum { AUTO_ALLOC_SIZE = 32, };
   MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
   int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
 
@@ -200,7 +200,6 @@ finalize_packed_a_exchange(Xt_request request, void *buf)
     xt_mpi_call(MPI_Type_free(datatypes+i), comm);
 }
 
-
 static void
 xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                                            int nsend, int nrecv,
@@ -209,7 +208,6 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                                            int tag_offset, MPI_Comm comm,
                                            Xt_request *request)
 {
-  enum { AUTO_ALLOC_SIZE = 32, };
   int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
 
   size_t num_tx = (size_t)nrecv + (size_t)nsend;
