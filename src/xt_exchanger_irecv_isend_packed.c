@@ -47,6 +47,11 @@
 #include <config.h>
 #endif
 
+#include <mpi.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_request_msgs_packed.h"
@@ -65,53 +70,80 @@
 #endif
 
 static size_t
-get_buffer_sizes(int *buffer_sizes,
-                 int nsend, int nrecv,
-                 const struct Xt_redist_msg *send_msgs,
-                 const struct Xt_redist_msg *recv_msgs,
-                 MPI_Comm comm)
+get_buffer_offsets(size_t *restrict buf_ofs,
+                   int nsend, int nrecv,
+                   const struct Xt_redist_msg *send_msgs,
+                   const struct Xt_redist_msg *recv_msgs,
+                   MPI_Comm comm)
 {
-  for (int i = 0; i < nrecv; ++i)
-    xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, buffer_sizes+i),
+  int buf_size;
+  size_t accum = 0;
+  for (int i = 0; i < nrecv; ++i) {
+    buf_ofs[i] = accum;
+    xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, &buf_size),
                 comm);
-  for (int i = 0; i < nsend; ++i)
+    accum += (size_t)buf_size;
+  }
+  for (int i = 0; i < nsend; ++i) {
+    buf_ofs[nrecv+i] = accum;
     xt_mpi_call(MPI_Pack_size(1, send_msgs[i].datatype, comm,
-                              buffer_sizes+nrecv+i), comm);
-  size_t buffer_size = 0;
-  size_t num_tx = (size_t)nrecv + (size_t)nsend;
-  for (size_t i = 0; i < num_tx; ++i)
-    buffer_size += (size_t)buffer_sizes[i];
-  return buffer_size;
+                              &buf_size), comm);
+    accum += (size_t)buf_size;
+  }
+  buf_ofs[nsend+nrecv] = accum;
+  return accum;
+}
+
+static size_t
+get_buffer_size(int nsend, int nrecv,
+                const struct Xt_redist_msg *send_msgs,
+                const struct Xt_redist_msg *recv_msgs,
+                MPI_Comm comm)
+{
+  int buf_size;
+  size_t accum = 0;
+  for (int i = 0; i < nrecv; ++i) {
+    xt_mpi_call(MPI_Pack_size(1, recv_msgs[i].datatype, comm, &buf_size),
+                comm);
+    accum += (size_t)buf_size;
+  }
+  for (int i = 0; i < nsend; ++i) {
+    xt_mpi_call(MPI_Pack_size(1, send_msgs[i].datatype, comm,
+                              &buf_size), comm);
+    accum += (size_t)buf_size;
+  }
+
+  return accum;
 }
 
 static void
-start_packed_transfer(unsigned char *buffer, int *buffer_sizes,
+start_packed_transfer(unsigned char *buffer,
+                      int send_start,
+                      const size_t *buf_ofs,
                       const void *src_data, int nsend, int nrecv,
                       const struct Xt_redist_msg *send_msgs,
                       const struct Xt_redist_msg *recv_msgs,
                       MPI_Comm comm, int tag_offset,
                       MPI_Request *requests)
 {
-  size_t ofs = 0;
   for (int i = 0; i < nrecv; ++i) {
-    int recv_size = buffer_sizes[i];
-    xt_mpi_call(MPI_Irecv(buffer + ofs, recv_size, MPI_PACKED,
+    int recv_size = (int)(buf_ofs[i+1] - buf_ofs[i]);
+    xt_mpi_call(MPI_Irecv(buffer + buf_ofs[i], recv_size, MPI_PACKED,
                           recv_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+i), comm);
-    ofs += (size_t)recv_size;
   }
 
   for (int i = 0; i < nsend; ++i) {
     int position = 0;
+    int buf_size = (int)(buf_ofs[send_start+i+1] - buf_ofs[send_start+i]);
     xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(src_data), 1, send_msgs[i].datatype,
-                         buffer + ofs, buffer_sizes[nrecv+i], &position,
+                         buffer + buf_ofs[send_start+i], buf_size, &position,
                          comm), comm);
-    xt_mpi_call(MPI_Isend(buffer + ofs, position, MPI_PACKED,
+    xt_mpi_call(MPI_Isend(buffer + buf_ofs[send_start+i], position, MPI_PACKED,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+nrecv+i), comm);
-    ofs += (size_t)position;
   }
 }
 
@@ -125,22 +157,22 @@ xt_exchanger_irecv_isend_packed_s_exchange(
   int tag_offset, MPI_Comm comm)
 {
   MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
-  int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
+  size_t *buf_ofs, buf_ofs_auto[AUTO_ALLOC_SIZE+1];
 
   size_t num_tx = (size_t)nrecv + (size_t)nsend;
   if (num_tx <= AUTO_ALLOC_SIZE) {
     requests = requests_auto;
-    buffer_sizes = buffer_sizes_auto;
+    buf_ofs = buf_ofs_auto;
   } else {
-    requests = xmalloc(num_tx * sizeof (*requests) + num_tx * sizeof (*buffer_sizes));
-    buffer_sizes = (int *)(requests + num_tx);
+    requests = xmalloc((num_tx+(num_tx&1)) * sizeof (*requests) + (num_tx+1) * sizeof (*buf_ofs));
+    buf_ofs = (size_t *)(requests + (num_tx+(num_tx&1)));
   }
 
-  size_t buffer_size = get_buffer_sizes(buffer_sizes, nsend, nrecv,
-                                        send_msgs, recv_msgs, comm);
+  size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
+                                          send_msgs, recv_msgs, comm);
   unsigned char *buffer = xmalloc(buffer_size);
 
-  start_packed_transfer(buffer, buffer_sizes,
+  start_packed_transfer(buffer, nrecv, buf_ofs,
                         src_data, nsend, nrecv,
                         send_msgs, recv_msgs,
                         comm, tag_offset,
@@ -148,19 +180,73 @@ xt_exchanger_irecv_isend_packed_s_exchange(
 
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
 
-  size_t ofs = 0;
   for (int i = 0; i < nrecv; ++i) {
-    int position = 0, recv_size = buffer_sizes[i];
-    xt_mpi_call(MPI_Unpack(buffer + ofs, recv_size, &position, dst_data,
+    int position = 0, recv_size = (int)(buf_ofs[i+1]-buf_ofs[i]);
+    xt_mpi_call(MPI_Unpack(buffer + buf_ofs[i], recv_size, &position, dst_data,
                            1, recv_msgs[i].datatype, comm), comm);
-    ofs += (size_t)recv_size;
   }
 
   free(buffer);
-  if (num_tx > AUTO_ALLOC_SIZE) {
+  if (num_tx > AUTO_ALLOC_SIZE)
     free(requests);
-  }
 }
+
+#ifdef _OPENMP
+static void
+xt_exchanger_irecv_isend_packed_s_exchange_omp(
+  const void *src_data, void *dst_data,
+  int nsend, int nrecv,
+  const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
+  int tag_offset, MPI_Comm comm)
+{
+  MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
+  size_t *buf_ofs, buf_ofs_auto[AUTO_ALLOC_SIZE+1];
+
+  size_t num_tx = (size_t)nrecv + (size_t)nsend;
+  if (num_tx <= AUTO_ALLOC_SIZE) {
+    requests = requests_auto;
+    buf_ofs = buf_ofs_auto;
+  } else {
+    requests = xmalloc((num_tx+(num_tx&1)) * sizeof (*requests) + (num_tx+1) * sizeof (*buf_ofs));
+    buf_ofs = (size_t *)(requests + (num_tx+(num_tx&1)));
+  }
+
+  size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
+                                          send_msgs, recv_msgs, comm);
+  unsigned char *buffer = xmalloc(buffer_size);
+
+#pragma omp parallel
+  {
+    int num_threads = omp_get_num_threads(),
+      tid = omp_get_thread_num();
+    int start_send = (nsend * tid) / num_threads,
+      nsend_ = (nsend * (tid+1)) / num_threads - start_send,
+      start_recv = (nrecv * tid) / num_threads,
+      end_recv = (nrecv * (tid+1)) / num_threads,
+      nrecv_ = end_recv - start_recv,
+      nreq = nrecv_+nsend_,
+      start_req = start_send+start_recv;
+    start_packed_transfer(buffer, start_send+nrecv-start_recv,
+                          buf_ofs+start_recv,
+                          src_data, nsend_, nrecv_,
+                          send_msgs+start_send, recv_msgs+start_recv,
+                          comm, tag_offset,
+                          requests+start_req);
+
+    xt_mpi_call(MPI_Waitall(nreq, requests+start_req, MPI_STATUSES_IGNORE),
+                comm);
+    for (int i = start_recv; i < end_recv; ++i) {
+      int position = 0, recv_size = (int)(buf_ofs[i+1]-buf_ofs[i]);
+      xt_mpi_call(MPI_Unpack(buffer + buf_ofs[i], recv_size, &position,
+                             dst_data, 1, recv_msgs[i].datatype, comm), comm);
+    }
+  }
+
+  free(buffer);
+  if (num_tx > AUTO_ALLOC_SIZE)
+    free(requests);
+}
+#endif
 
 struct inventory_header
 {
@@ -207,16 +293,16 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
                                            int tag_offset, MPI_Comm comm,
                                            Xt_request *request)
 {
-  int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
+  size_t *buf_ofs, buf_ofs_auto[AUTO_ALLOC_SIZE+1];
 
   size_t num_tx = (size_t)nrecv + (size_t)nsend;
   if (num_tx <= AUTO_ALLOC_SIZE)
-    buffer_sizes = buffer_sizes_auto;
+    buf_ofs = buf_ofs_auto;
   else
-    buffer_sizes = xmalloc(num_tx * sizeof (*buffer_sizes));
+    buf_ofs = xmalloc((num_tx+1) * sizeof (*buf_ofs));
 
-  size_t buffer_size = get_buffer_sizes(buffer_sizes, nsend, nrecv,
-                                        send_msgs, recv_msgs, comm);
+  size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
+                                          send_msgs, recv_msgs, comm);
   size_t inventory_size
     = sizeof (struct inventory_header)
     + sizeof (size_t) * ((size_t)nrecv+1)
@@ -232,20 +318,16 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
   unsigned char *buffer
     = xt_request_msgs_packed_get_extra_buf(requests);
 
-  start_packed_transfer(buffer+inventory_size, buffer_sizes,
+  start_packed_transfer(buffer+inventory_size, nrecv, buf_ofs,
                         src_data, nsend, nrecv,
                         send_msgs, recv_msgs,
                         comm, tag_offset,
                         tmp_requests);
 
-  size_t ofs = inventory_size;
-  size_t *buf_ofs = (void *)(buffer + sizeof (struct inventory_header));
-  for (int i = 0; i < nrecv; ++i) {
-    int recv_size = buffer_sizes[i];
-    buf_ofs[i] = ofs;
-    ofs += (size_t)recv_size;
+  size_t *buf_ofs_ = (void *)(buffer + sizeof (struct inventory_header));
+  for (int i = 0; i <= nrecv; ++i) {
+    buf_ofs_[i] = buf_ofs[i]+inventory_size;
   }
-  buf_ofs[nrecv] = ofs;
 
   struct inventory_header *header = (void *)buffer;
   header->nsend = nsend;
@@ -259,7 +341,7 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
   *request = requests;
 
   if (num_tx > AUTO_ALLOC_SIZE)
-    free(buffer_sizes);
+    free(buf_ofs);
 }
 
 static Xt_exchanger_omp_share
@@ -269,23 +351,14 @@ xt_exchanger_irecv_isend_packed_create_omp_share(
   const struct Xt_redist_msg *recv_msgs,
   MPI_Comm comm)
 {
-  int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
-
-  size_t num_tx = (size_t)nrecv + (size_t)nsend;
-  if (num_tx <= AUTO_ALLOC_SIZE)
-    buffer_sizes = buffer_sizes_auto;
-  else
-    buffer_sizes = xmalloc(num_tx * sizeof (*buffer_sizes));
-
-  size_t buffer_size = get_buffer_sizes(buffer_sizes, nsend, nrecv,
-                                        send_msgs, recv_msgs, comm);
+  size_t buf_size = get_buffer_size(nsend, nrecv, send_msgs, recv_msgs, comm);
   size_t inventory_size
     = sizeof (struct inventory_header)
     + sizeof (size_t) * ((size_t)nrecv+1)
     + sizeof (MPI_Datatype) * (size_t)nrecv;
   Xt_request shared_req
     = xt_request_msgs_packed_alloc(nsend+nrecv, comm,
-                                   inventory_size + buffer_size);
+                                   inventory_size + buf_size);
   return (Xt_exchanger_omp_share)shared_req;
 }
 
@@ -301,10 +374,31 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
    */
+  static const xt_simple_s_exchange_func
+    s_exch_by_mthread_mode[] = {
+    xt_exchanger_irecv_isend_packed_s_exchange,
+#ifdef _OPENMP
+    xt_exchanger_irecv_isend_packed_s_exchange_omp,
+#else
+    (xt_simple_s_exchange_func)0,
+#endif
+  };
+/*
+ *   static const xt_simple_a_exchange_func
+ *     a_exch_by_mthread_mode[] = {
+ *     xt_exchanger_irecv_isend_packed_a_exchange,
+ * #ifdef _OPENMP
+ *     xt_exchanger_irecv_isend_packed_a_exchange_omp,
+ * #else
+ *     (xt_simple_a_exchange_func)0,
+ * #endif
+ *   };
+ */
+  int mthread_mode = xt_config_get_redist_mthread_mode(config);
   return xt_exchanger_simple_base_new(
     nsend, nrecv, send_msgs, recv_msgs,
     comm, tag_offset,
-    xt_exchanger_irecv_isend_packed_s_exchange,
+    s_exch_by_mthread_mode[mthread_mode],
     xt_exchanger_irecv_isend_packed_a_exchange,
     xt_exchanger_irecv_isend_packed_create_omp_share,
     config);

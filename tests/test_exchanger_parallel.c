@@ -98,26 +98,48 @@ int main(int argc, char **argv)
 {
 
   // init mpi
+#ifndef _OPENMP
   xt_mpi_call(MPI_Init(&argc, &argv), MPI_COMM_WORLD);
+#else
+  int thread_support_provided = MPI_THREAD_SINGLE;
+  xt_mpi_call(MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE,
+                              &thread_support_provided), MPI_COMM_WORLD);
+#endif
 
   xt_mpi_init();
   xt_config_defaults_init();
 
   Xt_exchanger_new *exchangers_new = parse_options(&argc, &argv);
   Xt_config config = xt_config_new();
+  int mt_configs_2_test[] = {
+    XT_MT_NONE,
+#ifdef _OPENMP
+    XT_MT_OPENMP,
+#endif
+  };
+  enum {
+    num_mt_modes = sizeof (mt_configs_2_test) / sizeof (mt_configs_2_test[0]),
+  };
+  for (size_t m = 0; m < num_mt_modes; ++m) {
+#ifdef _OPENMP
+    if (mt_configs_2_test[m] == XT_MT_OPENMP
+        && thread_support_provided != MPI_THREAD_MULTIPLE)
+      continue;
+#endif
+    xt_config_set_redist_mthread_mode(config, mt_configs_2_test[m]);
+    for (size_t i = 0; exchangers_new[i] != (Xt_exchanger_new)0; ++i) {
+      Xt_exchanger_new exchanger_new = exchangers_new[i];
 
-  for (size_t i = 0; exchangers_new[i] != (Xt_exchanger_new)0; ++i) {
-    Xt_exchanger_new exchanger_new = exchangers_new[i];
+      test_bcast(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_bcast(MPI_COMM_WORLD, exchanger_new, config);
+      test_gather(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_gather(MPI_COMM_WORLD, exchanger_new, config);
+      test_all2all(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_all2all(MPI_COMM_WORLD, exchanger_new, config);
+      test_rr(MPI_COMM_WORLD, exchanger_new, config);
 
-    test_rr(MPI_COMM_WORLD, exchanger_new, config);
-
-    test_intercomm_all2all(MPI_COMM_WORLD, exchanger_new, config);
+      test_intercomm_all2all(MPI_COMM_WORLD, exchanger_new, config);
+    }
   }
   xt_config_delete(config);
   free(exchangers_new);
