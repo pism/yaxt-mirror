@@ -237,6 +237,25 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger) {
   free(exchanger_msr);
 }
 
+static inline void
+redist_msgs_to_req(size_t nmsg,
+                   const struct Xt_redist_msg *restrict msgs,
+                   const void *src_data, void *dst_data,
+                   MPI_Request *requests,
+                   MPI_Comm comm, int tag_offset)
+{
+  for (size_t i = 0; i < nmsg; ++i) {
+    typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
+                       int tag, MPI_Comm comm, MPI_Request *request);
+    ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
+    void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
+    xt_mpi_call(op(data, 1, msgs[i].datatype, msgs[i].rank & INT_MAX,
+                   tag_offset + xt_mpi_tag_exchange_msg,
+                   comm, requests+i), comm);
+  }
+}
+
+
 static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                                     const void * src_data,
                                                     void * dst_data) {
@@ -246,23 +265,15 @@ static void xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
 
   if (exchanger_msr->n > 0) {
     size_t nmsg = (size_t)exchanger_msr->n;
-    MPI_Comm comm = exchanger_msr->comm;
-    struct Xt_redist_msg *restrict msgs = exchanger_msr->msgs;
-    int tag_offset = exchanger_msr->tag_offset;
     MPI_Request req_buf[max_on_stack_req];
     MPI_Request *requests
       = nmsg <= max_on_stack_req
       ? req_buf : xmalloc(nmsg * sizeof (*requests));
-    for (size_t i = 0; i < nmsg; ++i) {
-      typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
-                         int tag, MPI_Comm comm, MPI_Request *request);
-      ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
-      void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
-      xt_mpi_call(op(data, 1, msgs[i].datatype, msgs[i].rank & INT_MAX,
-                     tag_offset + xt_mpi_tag_exchange_msg,
-                     comm, requests+i), comm);
-    }
-    xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE), comm);
+    redist_msgs_to_req(nmsg, exchanger_msr->msgs,
+                       src_data, dst_data, requests,
+                       exchanger_msr->comm, exchanger_msr->tag_offset);
+    xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE),
+                exchanger_msr->comm);
     if (requests != req_buf)
       free(requests);
   }
@@ -275,32 +286,20 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
-  Xt_request requests = XT_REQUEST_NULL;
-
   if (exchanger_msr->n > 0) {
     size_t nmsg = (size_t)exchanger_msr->n;
-    MPI_Comm comm = exchanger_msr->comm;
-    struct Xt_redist_msg *restrict msgs = exchanger_msr->msgs;
-    int tag_offset = exchanger_msr->tag_offset;
-    MPI_Request req_buf[max_on_stack_req];
-    MPI_Request *tmp_requests
-      = nmsg <= max_on_stack_req
-      ? req_buf : xmalloc(nmsg * sizeof (*tmp_requests));
-    for (size_t i = 0; i < nmsg; ++i) {
-      typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
-                         int tag, MPI_Comm comm, MPI_Request *request);
-      ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
-      void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
-      xt_mpi_call(op(data, 1, msgs[i].datatype, msgs[i].rank & INT_MAX,
-                     tag_offset + xt_mpi_tag_exchange_msg,
-                     comm, tmp_requests+i), comm);
-    }
-    requests = xt_request_msgs_new((int)nmsg, tmp_requests, comm);
-    if (tmp_requests != req_buf)
-      free(tmp_requests);
-  }
+    Xt_request requests
+      = xt_request_msgs_alloc((int)nmsg, exchanger_msr->comm);
+    MPI_Request *requests_
+      = xt_request_msgs_get_req_ptr(requests);
+    redist_msgs_to_req(nmsg, exchanger_msr->msgs,
+                       src_data, dst_data, requests_,
+                       exchanger_msr->comm, exchanger_msr->tag_offset);
+    *request = requests;
+  } else
+    *request = XT_REQUEST_NULL;
+}
 
-  *request = requests;
 }
 
 static int
