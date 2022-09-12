@@ -727,7 +727,10 @@ sub buildNameSubst(\@)
       # don't influence compiler behaviour, feel free to submit more
       my %mostlyHarmless =
           map { ($_, undef) }
-              qw(ALTERNATE_EDITOR COLORTERM
+              qw(_LMFILES_
+                 _LMFILES__modshare
+                 ALLINEA_LICENCE_DIR ALLINEA_NO_TREESERVER_KILL_TARGET
+                 ALTERNATE_EDITOR COLORTERM
                  DBUS_SESSION_BUS_ADDRESS DEBUG DESKTOP_SESSION DISPLAY
                  EDITOR FPATH_modshare
                  FONT_ENCODINGS_DIRECTORY
@@ -763,7 +766,7 @@ sub buildNameSubst(\@)
                  SHLVL SLURM_JOBID SLURM_JOB_ID SLURM_JOB_NODELIST
                  SLURM_NODELIST
                  SSH_AGENT_PID SSH_AUTH_SOCK SSH_CLIENT SSH_CONNECTION
-                 SSH_TTY TERM TEST_LOGS TESTSUITEFLAGS
+                 SSH_TTY TERM TEST_LOGS TESTS TESTSUITEFLAGS
                  TMPDIR TMUX TMUX_PANE
                  USERNAME
                  VBOX_CROGL_FORCE_SUPPORTED
