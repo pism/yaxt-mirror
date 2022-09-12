@@ -270,10 +270,24 @@ xt_exchanger_irecv_isend_packed_create_omp_share(
   const struct Xt_redist_msg *recv_msgs,
   MPI_Comm comm)
 {
-  (void)send_msgs;
-  (void)recv_msgs;
-  return (Xt_exchanger_omp_share)(
-    xt_request_msgs_packed_alloc(nsend+nrecv, comm, 0));
+  int *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
+
+  size_t num_tx = (size_t)nrecv + (size_t)nsend;
+  if (num_tx <= AUTO_ALLOC_SIZE)
+    buffer_sizes = buffer_sizes_auto;
+  else
+    buffer_sizes = xmalloc(num_tx * sizeof (*buffer_sizes));
+
+  size_t buffer_size = get_buffer_sizes(buffer_sizes, nsend, nrecv,
+                                        send_msgs, recv_msgs, comm);
+  size_t inventory_size
+    = sizeof (struct inventory_header)
+    + sizeof (size_t) * ((size_t)nrecv+1)
+    + sizeof (MPI_Datatype) * (size_t)nrecv;
+  Xt_request shared_req
+    = xt_request_msgs_packed_alloc(nsend+nrecv, comm,
+                                   inventory_size + buffer_size);
+  return (Xt_exchanger_omp_share)shared_req;
 }
 
 
