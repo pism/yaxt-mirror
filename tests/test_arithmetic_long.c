@@ -64,11 +64,19 @@ test_xiimul(void);
 static void
 test_xlimul(void);
 
+static void
+test_xlhi(void);
+
+static void
+test_xllo(void);
+
 int main(void)
 {
   test_xlabs();
   test_xiimul();
   test_xlimul();
+  test_xlhi();
+  test_xllo();
   return TEST_EXIT_CODE;
 }
 
@@ -159,6 +167,56 @@ test_xlimul(void)
               (unsigned long long)xtmid(tst[i].r),
               (unsigned long long)xtlo(tst[i].r));
       PUT_ERR("error: failed long multiplication test");
+    }
+  }
+}
+
+static void
+test_xlhi(void)
+{
+  struct tstV {
+    Xt_long a;
+    Xt_uint r;
+  };
+  static const struct tstV tst[] = {
+    { XL(0, 0), 0 },
+    { XL(0, 1), 0 },
+    { XL(1, 1), 1 },
+    { XL(21, 1), 21 },
+    { XL(-1, -1), (Xt_uint)XT_INT_MAX * 2 + 1 }, /* higher bytes of -1 is 0xFF.. */
+  };
+  size_t num_tests = sizeof (tst) / sizeof (tst[0]);
+  for (size_t i = 0; i < num_tests; ++i) {
+    Xt_uint p = xlhi(tst[i].a);
+    if (p != tst[i].r) {
+      fprintf(stderr, "i=%zu, p=%llu, tst[%zu].r=%llu\n",
+              i, (unsigned long long)p, i, (unsigned long long)tst[i].r);
+      PUT_ERR("error: failed long xlhi test");
+    }
+  }
+}
+
+static void
+test_xllo(void)
+{
+  struct tstV {
+    Xt_long a;
+    Xt_uint r;
+  };
+  static const struct tstV tst[] = {
+    { XL(0, 0), 0 }, 
+    { XL(0, 1), 1 }, 
+    { XL(-1, -1), (Xt_uint)XT_INT_MAX * 2 + 1 }, /* lower bytes of -1 is 0xFF.. */
+    { XL(0, 21), 21 }, /* lower bytes of 21 is 21 */
+    { XL(-1, -21), (Xt_uint)XT_INT_MAX * 2 + 1 - 20 }, /* lower bytes of -21 is 0xFF.. - 20 */
+  };
+  size_t num_tests = sizeof (tst) / sizeof (tst[0]);
+  for (size_t i = 0; i < num_tests; ++i) {
+    Xt_uint p = xllo(tst[i].a);
+    if (p != tst[i].r) {
+      fprintf(stderr, "i=%zu, p=%llu, tst[%zu].r=%llu\n",
+              i, (unsigned long long)p, i, (unsigned long long)tst[i].r);
+      PUT_ERR("error: failed long xlhi test");
     }
   }
 }
