@@ -1094,6 +1094,88 @@ size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
   return pack_size;
 }
 
+void * xt_ddt_malloc(
+  size_t alloc_size, enum xt_ddt_memtype memtype) {
+
+  switch (memtype) {
+    default:
+      Xt_abort(
+        Xt_default_comm,
+        "ERROR(xt_ddt_malloc): unsupported memory type",
+        __FILE__, __LINE__);
+      return NULL;
+    case (XT_DDT_HOST_MEM):
+      return xmalloc(alloc_size);
+    case (XT_DDT_DEVICE_MEM):
+      return acc_malloc(alloc_size);
+  }
+}
+
+void xt_ddt_free(void * ptr, enum xt_ddt_memtype memtype) {
+
+  switch (memtype) {
+    default:
+      Xt_abort(
+        Xt_default_comm,
+        "ERROR(xt_ddt_free): unsupported memory type",
+        __FILE__, __LINE__);
+      break;;
+    case (XT_DDT_HOST_MEM):
+      free(ptr);
+      break;
+    case (XT_DDT_DEVICE_MEM):
+      acc_free(ptr);
+      break;
+  }
+}
+
+void xt_ddt_memcpy(
+  void * dst, void const * src, size_t buffer_size,
+  enum xt_ddt_memtype dst_memtype, enum xt_ddt_memtype src_memtype) {
+
+  if (src_memtype == dst_memtype) {
+    switch (src_memtype) {
+      default:
+        Xt_abort(
+          Xt_default_comm,
+          "ERROR(xt_ddt_memcpy): unsupported memory type",
+          __FILE__, __LINE__);
+        break;
+      case (XT_DDT_HOST_MEM):
+        memcpy(dst, src, buffer_size);
+        break;
+      case (XT_DDT_DEVICE_MEM):
+        acc_memcpy_device(dst, (void*)src, buffer_size);
+        break;
+    }
+  } else {
+    switch (src_memtype) {
+      default:
+        Xt_abort(
+          Xt_default_comm,
+          "ERROR(xt_ddt_memcpy): unsupported source memory type",
+          __FILE__, __LINE__);
+        break;
+      case (XT_DDT_HOST_MEM):
+        if (dst_memtype != XT_DDT_DEVICE_MEM)
+          Xt_abort(
+            Xt_default_comm,
+            "ERROR(xt_ddt_memcpy): unsupported destination memory type",
+            __FILE__, __LINE__);
+        acc_memcpy_to_device(dst, (void*)src, buffer_size);
+        break;
+      case (XT_DDT_DEVICE_MEM):
+        if (dst_memtype != XT_DDT_HOST_MEM)
+          Xt_abort(
+            Xt_default_comm,
+            "ERROR(xt_ddt_memcpy): unsupported destination memory type",
+            __FILE__, __LINE__);
+        acc_memcpy_from_device(dst, (void*)src, buffer_size);
+        break;
+    }
+  }
+}
+
 static void xt_ddt_pack_8(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
@@ -1243,28 +1325,16 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
   enum xt_ddt_memtype dst_memtype = xt_ddt_get_memtype(dst);
 
-  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
-  void * h_dst, * d_dst;
+  size_t pack_size;
+  void * orig_dst;
 
-  // if the source is in GPU memory but the destination is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
-      (dst_memtype == XT_DDT_HOST_MEM)) {
-    h_dst = dst;
-    d_dst = acc_malloc(pack_size);
-    dst = d_dst;
+  // if the source and destination are in different memory types
+  if (src_memtype != dst_memtype) {
+    pack_size = xt_ddt_get_pack_size(mpi_ddt);
+    orig_dst = dst;
+    dst = xt_ddt_malloc(pack_size, src_memtype);
   }
 
-  // if the destination is in GPU memory but the source is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_HOST_MEM) &&
-      (dst_memtype == XT_DDT_DEVICE_MEM)) {
-    h_dst = xmalloc(pack_size);
-    d_dst = dst;
-    dst = h_dst;
-  }
 #else
   enum xt_ddt_memtype src_memtype = XT_DDT_HOST_MEM;
 #endif
@@ -1273,22 +1343,10 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     get_xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
 
 #ifdef _OPENACC
-  // if the source is in GPU memory but the destination is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
-      (dst_memtype == XT_DDT_HOST_MEM)) {
-    acc_memcpy_from_device(h_dst, d_dst, pack_size);
-    acc_free(d_dst);
-  }
-
-  // if the destination is in GPU memory but the source is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_HOST_MEM) &&
-      (dst_memtype == XT_DDT_DEVICE_MEM)) {
-    acc_memcpy_to_device(d_dst, h_dst, pack_size);
-    free(h_dst);
+  // if the source and destination are in different memory types
+  if (src_memtype != dst_memtype) {
+    xt_ddt_memcpy(orig_dst, dst, pack_size, dst_memtype, src_memtype);
+    xt_ddt_free(dst, src_memtype);
   }
 #endif
 }
@@ -1416,29 +1474,15 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
   enum xt_ddt_memtype dst_memtype = xt_ddt_get_memtype(dst);
 
-  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
-  void * h_src, * d_src;
+  size_t pack_size;
+  void const * orig_src;
 
-  // if the source is in GPU memory but the destination is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
-      (dst_memtype == XT_DDT_HOST_MEM)) {
-    h_src = xmalloc(pack_size);
-    d_src = (void*)src;
-    acc_memcpy_from_device(h_src, d_src, pack_size);
-    src = h_src;
-  }
-
-  // if the destination is in GPU memory but the source is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_HOST_MEM) &&
-      (dst_memtype == XT_DDT_DEVICE_MEM)) {
-    h_src = (void*)src;
-    d_src = acc_malloc(pack_size);
-    acc_memcpy_to_device(d_src, h_src, pack_size);
-    src = d_src;
+  // if the source and destination are in different memory types
+  if (src_memtype != dst_memtype) {
+    pack_size = xt_ddt_get_pack_size(mpi_ddt);
+    orig_src = src;
+    src = xt_ddt_malloc(pack_size, dst_memtype);
+    xt_ddt_memcpy((void*)src, orig_src, pack_size, dst_memtype, src_memtype);
   }
 #else
   enum xt_ddt_memtype dst_memtype = XT_DDT_HOST_MEM;
@@ -1448,17 +1492,8 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     get_xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
 
 #ifdef _OPENACC
-  // if the source is in GPU memory but the destination is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
-      (dst_memtype == XT_DDT_HOST_MEM)) free(h_src);
-
-  // if the destination is in GPU memory but the source is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if ((src_memtype == XT_DDT_HOST_MEM) &&
-      (dst_memtype == XT_DDT_DEVICE_MEM)) acc_free(d_src);
+  // if the source and destination are in different memory types
+  if (src_memtype != dst_memtype) xt_ddt_free((void*)src, dst_memtype);
 #endif
 }
 

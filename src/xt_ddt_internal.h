@@ -84,6 +84,33 @@ void xt_ddt_pack_internal(
 void xt_ddt_unpack_internal(
   Xt_ddt ddt, void const * src, void * dst, enum xt_ddt_memtype memtype);
 
+/**
+ * allocates memory of the specified type
+ * @param[in] alloc_size size of memory to be allocated
+ * @param[in] memtype    type of memory to be allocated
+ * @return allocated memory
+ */
+void * xt_ddt_malloc(size_t alloc_size, enum xt_ddt_memtype memtype);
+
+/**
+ * frees memory that was allocated using \xt_ddt_malloc
+ * @param[in] ptr     pointer to memory
+ * @param[in] memtype type of memory to be freed
+ */
+void xt_ddt_free(void * ptr, enum xt_ddt_memtype memtype);
+
+/**
+ * copies memory; src and dst can have different memory types
+ * @param[in] dst         pointer to destination
+ * @param[in] src         pointer to source
+ * @param[in] buffer_size size of memory to be copied
+ * @param[in] src_memtype type of source memory
+ * @param[in] tgt_memtype type of target memory
+ */
+void xt_ddt_memcpy(
+  void * dst, void const * src, size_t buffer_size,
+  enum xt_ddt_memtype dst_memtype, enum xt_ddt_memtype src_memtype);
+
 #endif // XT_DDT_INTERNAL_H
 
 /*
