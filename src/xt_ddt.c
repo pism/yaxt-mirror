@@ -66,6 +66,7 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_ddt.h"
+#include "xt_ddt_internal.h"
 
 /* attribute handle for attaching xt_ddt objects to MPI datatypes */
 static int xt_ddt_internal_keyval = MPI_KEYVAL_INVALID;
@@ -90,8 +91,6 @@ struct Xt_ddt_ {
   size_t count; // number of elements in data
   struct xt_ddt_data data[];
 };
-
-typedef struct Xt_ddt_ *Xt_ddt;
 
 struct xt_ddt_tree_elem {
   MPI_Aint extent; // not necessarly the true extent
@@ -1163,47 +1162,25 @@ do{                                                          \
     }                                                        \
 }while(0);
 
-static int is_device_pointer(const void *ptr) {
+enum xt_ddt_memtype xt_ddt_get_memtype(const void *ptr) {
 
   struct cudaPointerAttributes attributes;
   CUDA_ERROR_CHECK(cudaPointerGetAttributes(&attributes, ptr));
-  return attributes.type == cudaMemoryTypeDevice;
+  return
+    ((attributes.type == cudaMemoryTypeDevice)?
+       (XT_DDT_DEVICE_MEM):(XT_DDT_HOST_MEM));
+}
+#else
+enum xt_ddt_memtype xt_ddt_get_memtype(const void *XT_UNUSED(ptr)) {
+  return XT_DDT_HOST_MEM;
 }
 #endif
 
-void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
-
-#ifdef _OPENACC
-  int src_on_gpu = is_device_pointer(src);
-  int dst_on_gpu = is_device_pointer(dst);
-
-  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
-  void * h_dst, * d_dst;
-
-  // if the source is in GPU memory but the destination is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if (src_on_gpu && !dst_on_gpu) {
-    h_dst = dst;
-    d_dst = acc_malloc(pack_size);
-    dst = d_dst;
-  }
-
-  // if the destination is in GPU memory but the source is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if (!src_on_gpu && dst_on_gpu) {
-    h_dst = xmalloc(pack_size);
-    d_dst = dst;
-    dst = h_dst;
-  }
-#else
-  int const src_on_gpu = 0;
-#endif
-
-  Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
+void xt_ddt_pack_internal(
+  Xt_ddt ddt, void const * src, void * dst, enum xt_ddt_memtype memtype) {
 
   size_t dst_offset = 0;
+  int on_gpu = memtype == XT_DDT_DEVICE_MEM;
 
   // for all sections with the same elemental datatype extent
   for (size_t i = 0; i < ddt->count; ++i) {
@@ -1213,7 +1190,7 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     size_t * displs = ddt->data[i].displs;
 
 #ifdef _OPENACC
-    if (src_on_gpu)
+    if (on_gpu)
         displs =
           (size_t*)acc_copyin((h_void*)displs, displ_count * sizeof(size_t));
 #endif
@@ -1222,48 +1199,85 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
       case 1:
         xt_ddt_pack_8(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
+          (void*)((unsigned char *)dst + dst_offset), on_gpu);
         break;
       case 2:
         xt_ddt_pack_16(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
+          (void*)((unsigned char *)dst + dst_offset), on_gpu);
         break;
       case 4:
         xt_ddt_pack_32(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
+          (void*)((unsigned char *)dst + dst_offset), on_gpu);
         break;
       case 8:
         xt_ddt_pack_64(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
+          (void*)((unsigned char *)dst + dst_offset), on_gpu);
         break;
       case 16:
         xt_ddt_pack_128(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
+          (void*)((unsigned char *)dst + dst_offset), on_gpu);
         break;
       case 32:
         xt_ddt_pack_256(
           displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), src_on_gpu);
+          (void*)((unsigned char *)dst + dst_offset), on_gpu);
         break;
       default:
         Xt_abort(
           Xt_default_comm,
-          "ERROR(xt_ddt_pack): unsupported datatype size",
+          "ERROR(xt_ddt_pack_internal): unsupported datatype size",
           __FILE__, __LINE__);
     }
 
     dst_offset += displ_count * element_size;
   }
+}
+
+void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+#ifdef _OPENACC
+  enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
+  enum xt_ddt_memtype dst_memtype = xt_ddt_get_memtype(dst);
+
+  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
+  void * h_dst, * d_dst;
+
+  // if the source is in GPU memory but the destination is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
+      (dst_memtype == XT_DDT_HOST_MEM)) {
+    h_dst = dst;
+    d_dst = acc_malloc(pack_size);
+    dst = d_dst;
+  }
+
+  // if the destination is in GPU memory but the source is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if ((src_memtype == XT_DDT_HOST_MEM) &&
+      (dst_memtype == XT_DDT_DEVICE_MEM)) {
+    h_dst = xmalloc(pack_size);
+    d_dst = dst;
+    dst = h_dst;
+  }
+#else
+  enum xt_ddt_memtype src_memtype = XT_DDT_HOST_MEM;
+#endif
+
+  xt_ddt_pack_internal(
+    get_xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
 
 #ifdef _OPENACC
   // if the source is in GPU memory but the destination is not
   // (in order to not interfer with caller, we cannot map host and
   //  device pointers to each other)
-  if (src_on_gpu && !dst_on_gpu) {
+  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
+      (dst_memtype == XT_DDT_HOST_MEM)) {
     acc_memcpy_from_device(h_dst, d_dst, pack_size);
     acc_free(d_dst);
   }
@@ -1271,7 +1285,8 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   // if the destination is in GPU memory but the source is not
   // (in order to not interfer with caller, we cannot map host and
   //  device pointers to each other)
-  if (!src_on_gpu && dst_on_gpu) {
+  if ((src_memtype == XT_DDT_HOST_MEM) &&
+      (dst_memtype == XT_DDT_DEVICE_MEM)) {
     acc_memcpy_to_device(d_dst, h_dst, pack_size);
     free(h_dst);
   }
@@ -1334,41 +1349,11 @@ static void xt_ddt_unpack_256(
   }
 }
 
-void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
-
-#ifdef _OPENACC
-  int src_on_gpu = is_device_pointer(src);
-  int dst_on_gpu = is_device_pointer(dst);
-
-  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
-  void * h_src, * d_src;
-
-  // if the source is in GPU memory but the destination is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if (src_on_gpu && !dst_on_gpu) {
-    h_src = xmalloc(pack_size);
-    d_src = (void*)src;
-    acc_memcpy_from_device(h_src, d_src, pack_size);
-    src = h_src;
-  }
-
-  // if the destination is in GPU memory but the source is not
-  // (in order to not interfer with caller, we cannot map host and
-  //  device pointers to each other)
-  if (!src_on_gpu && dst_on_gpu) {
-    h_src = (void*)src;
-    d_src = acc_malloc(pack_size);
-    acc_memcpy_to_device(d_src, h_src, pack_size);
-    src = d_src;
-  }
-#else
-  int const dst_on_gpu = 0;
-#endif
-
-  Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
+void xt_ddt_unpack_internal(
+  Xt_ddt ddt, void const * src, void * dst, enum xt_ddt_memtype memtype) {
 
   size_t src_offset = 0;
+  int on_gpu = memtype == XT_DDT_DEVICE_MEM;
 
   // for all sections with the same elemental datatype extent
   for (size_t i = 0; i < ddt->count; ++i) {
@@ -1378,7 +1363,7 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     size_t * displs = ddt->data[i].displs;
 
 #ifdef _OPENACC
-    if (dst_on_gpu)
+    if (on_gpu)
       displs =
         (size_t*)acc_copyin((h_void*)displs, displ_count * sizeof(size_t));
 #endif
@@ -1387,53 +1372,93 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
       case 1:
         xt_ddt_unpack_8(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
+          (void*)((unsigned char *)src + src_offset), dst, on_gpu);
         break;
       case 2:
         xt_ddt_unpack_16(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
+          (void*)((unsigned char *)src + src_offset), dst, on_gpu);
         break;
       case 4:
         xt_ddt_unpack_32(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
+          (void*)((unsigned char *)src + src_offset), dst, on_gpu);
         break;
       case 8:
         xt_ddt_unpack_64(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
+          (void*)((unsigned char *)src + src_offset), dst, on_gpu);
         break;
       case 16:
         xt_ddt_unpack_128(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
+          (void*)((unsigned char *)src + src_offset), dst, on_gpu);
         break;
       case 32:
         xt_ddt_unpack_256(
           displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, dst_on_gpu);
+          (void*)((unsigned char *)src + src_offset), dst, on_gpu);
         break;
       default:
         Xt_abort(
           Xt_default_comm,
-          "ERROR(xt_ddt_unpack): unsupported datatype size",
+          "ERROR(xt_ddt_unpack_internal): unsupported datatype size",
           __FILE__, __LINE__);
     }
 
     src_offset += displ_count * element_size;
   }
+}
+
+void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+#ifdef _OPENACC
+  enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
+  enum xt_ddt_memtype dst_memtype = xt_ddt_get_memtype(dst);
+
+  size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
+  void * h_src, * d_src;
+
+  // if the source is in GPU memory but the destination is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
+      (dst_memtype == XT_DDT_HOST_MEM)) {
+    h_src = xmalloc(pack_size);
+    d_src = (void*)src;
+    acc_memcpy_from_device(h_src, d_src, pack_size);
+    src = h_src;
+  }
+
+  // if the destination is in GPU memory but the source is not
+  // (in order to not interfer with caller, we cannot map host and
+  //  device pointers to each other)
+  if ((src_memtype == XT_DDT_HOST_MEM) &&
+      (dst_memtype == XT_DDT_DEVICE_MEM)) {
+    h_src = (void*)src;
+    d_src = acc_malloc(pack_size);
+    acc_memcpy_to_device(d_src, h_src, pack_size);
+    src = d_src;
+  }
+#else
+  enum xt_ddt_memtype dst_memtype = XT_DDT_HOST_MEM;
+#endif
+
+  xt_ddt_unpack_internal(
+    get_xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
 
 #ifdef _OPENACC
   // if the source is in GPU memory but the destination is not
   // (in order to not interfer with caller, we cannot map host and
   //  device pointers to each other)
-  if (src_on_gpu && !dst_on_gpu) free(h_src);
+  if ((src_memtype == XT_DDT_DEVICE_MEM) &&
+      (dst_memtype == XT_DDT_HOST_MEM)) free(h_src);
 
   // if the destination is in GPU memory but the source is not
   // (in order to not interfer with caller, we cannot map host and
   //  device pointers to each other)
-  if (!src_on_gpu && dst_on_gpu) acc_free(d_src);
+  if ((src_memtype == XT_DDT_HOST_MEM) &&
+      (dst_memtype == XT_DDT_DEVICE_MEM)) acc_free(d_src);
 #endif
 }
 
