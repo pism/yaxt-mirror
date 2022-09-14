@@ -70,6 +70,9 @@ test_xlhi(void);
 static void
 test_xllo(void);
 
+static void
+test_xthi_mid_lo(void);
+
 int main(void)
 {
   test_xlabs();
@@ -77,6 +80,7 @@ int main(void)
   test_xlimul();
   test_xlhi();
   test_xllo();
+  test_xthi_mid_lo();
   return TEST_EXIT_CODE;
 }
 
@@ -217,6 +221,44 @@ test_xllo(void)
       fprintf(stderr, "i=%zu, p=%llu, tst[%zu].r=%llu\n",
               i, (unsigned long long)p, i, (unsigned long long)tst[i].r);
       PUT_ERR("error: failed long xlhi test");
+    }
+  }
+}
+
+static void
+test_xthi_mid_lo(void)
+{
+  struct tstV {
+    Xt_tword a;
+    Xt_uint h, m, l;
+  };
+  static const struct tstV tst[] = {
+    { XT(0, 0, 0), 0, 0, 0 },
+    { XT(1, 1, 1), 1, 1, 1 },
+    { XT(-1, -1, -1), -1, -1, -1 },
+    { XT(21, -35, 13), 21, -35, 13 },
+    { XT(-13, 21, 35), -13, 21, 35 },
+    { XT(35, 13, -21), 35, 13, -21 },
+  };
+  size_t num_tests = sizeof (tst) / sizeof (tst[0]);
+  for (size_t i = 0; i < num_tests; ++i) {
+    Xt_uint p = xthi(tst[i].a);
+    if (p != tst[i].h) {
+      fprintf(stderr, "i=%zu, p=%llu, tst[%zu].r=%llu\n",
+              i, (unsigned long long)p, i, (unsigned long long)tst[i].h);
+      PUT_ERR("error: failed long xthi test");
+    }
+    p = xtmid(tst[i].a);
+    if (p != tst[i].m) {
+      fprintf(stderr, "i=%zu, p=%llu, tst[%zu].r=%llu\n",
+              i, (unsigned long long)p, i, (unsigned long long)tst[i].m);
+      PUT_ERR("error: failed long xtmid test");
+    }
+    p = xtlo(tst[i].a);
+    if (p != tst[i].l) {
+      fprintf(stderr, "i=%zu, p=%llu, tst[%zu].r=%llu\n",
+              i, (unsigned long long)p, i, (unsigned long long)tst[i].l);
+      PUT_ERR("error: failed long xtlo test");
     }
   }
 }
