@@ -181,3 +181,7 @@ Makefile
 # MacOS files:
 *.dSYM
 .DS_Store
+
+# compiler, rsync configs
+.fortls
+.vim-arsync
