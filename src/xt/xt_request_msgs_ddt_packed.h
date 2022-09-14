@@ -49,19 +49,22 @@
 #include <mpi.h>
 
 #include "xt/xt_request.h"
+#include "xt/xt_ddt.h"
 
 /**
  * constructor for message request handle
- * @param[in] n_requests    number of entries in requests array
- * @param[in] requests      array containg MPI requests
- * @param[in] comm          MPI communicator
- * @param[in] n_packed      number of entries in datatypes and packed_data
- * @param[in] n_tmp_buffers number of entries in tmp_buffers
- * @param[in] datatypes     array of datatypes to be used for unpacking
- * @param[in] packed_data   array of buffers containing packed data
- * @param[in] tmp_buffers   array of buffers that need to be freed after the
- *                          completion of exchange
- * @param[in] unpacked_data target buffer for unpacking
+ * @param[in] n_requests     number of entries in requests array
+ * @param[in] requests       array containg MPI requests
+ * @param[in] comm           MPI communicator
+ * @param[in] n_packed       number of entries in datatypes and packed_data
+ * @param[in] n_tmp_buffers  number of entries in tmp_buffers
+ * @param[in] packed_ddts    array of Xt_ddt's to be used for unpacking
+ * @param[in] packed_data    array of buffers containing packed data
+ * @param[in] tmp_buffers    array of buffers that need to be freed after the
+ *                           completion of exchange
+ * @param[in] unpacked_data  target buffer for unpacking
+ * @param[in] packed_memtype memory type of buffers in packed_data
+ * @param[in] tmp_memtype    memory type of buffers in tmp_buffers
  * @remark ownership of the MPI requests is passed to the Xt_request object,
  *         however the caller remains the owner of the requests array
  * @remark ownership of the MPI datatypes and the array datatypes remain with
@@ -75,10 +78,12 @@ Xt_request xt_request_msgs_ddt_packed_new(int n_requests,
                                           const MPI_Request requests[n_requests],
                                           MPI_Comm comm, int n_packed,
                                           int n_tmp_buffers,
-                                          const MPI_Datatype datatypes[n_packed],
+                                          Xt_ddt pack_ddts[n_packed],
                                           void *packed_data[n_packed],
                                           void *tmp_buffers[n_tmp_buffers],
-                                          void *unpacked_data);
+                                          void * unpacked_data,
+                                          enum xt_ddt_memtype pack_memtype,
+                                          enum xt_ddt_memtype tmp_memtype);
 
 #endif // XT_REQUEST_MSGS_DDT_PACKED_H
 

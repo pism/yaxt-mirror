@@ -54,10 +54,10 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 
-#include "xt/xt_ddt.h"
 #include "xt/xt_request_msgs_ddt_packed.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_internal.h"
+#include "xt_ddt_internal.h"
 
 static void xt_request_msgs_wait_ddt_packed(Xt_request request);
 static int xt_request_msgs_test_ddt_packed(Xt_request request);
@@ -79,7 +79,9 @@ struct Xt_request_msgs_ddt_packed_ {
   int n_requests;
   int n_packed, n_tmp_buffers;
   void * unpacked_data;
-  MPI_Datatype *datatypes;
+  Xt_ddt * ddts;
+  enum xt_ddt_memtype packed_memtype;
+  enum xt_ddt_memtype tmp_memtype;
   void *buffers[];
 };
 
@@ -87,10 +89,12 @@ Xt_request xt_request_msgs_ddt_packed_new(int n_requests,
                                           const MPI_Request requests[n_requests],
                                           MPI_Comm comm, int n_packed,
                                           int n_tmp_buffers,
-                                          const MPI_Datatype datatypes[n_packed],
+                                          Xt_ddt packed_ddts[n_packed],
                                           void *packed_data[n_packed],
                                           void *tmp_buffers[n_tmp_buffers],
-                                          void * unpacked_data) {
+                                          void * unpacked_data,
+                                          enum xt_ddt_memtype packed_memtype,
+                                          enum xt_ddt_memtype tmp_memtype) {
 
   assert(n_requests >= 0 && n_packed >= 0 && n_tmp_buffers >= 0);
   size_t hdr_size = sizeof(struct Xt_request_msgs_ddt_packed_),
@@ -110,9 +114,13 @@ Xt_request xt_request_msgs_ddt_packed_new(int n_requests,
   request->comm = comm;
   request->n_packed = n_packed;
   request->n_tmp_buffers = n_tmp_buffers;
-  request->datatypes = xmalloc((size_t)n_packed * sizeof(*request->datatypes));
-  for (int i = 0; i < n_packed; ++i)
-    xt_mpi_call(MPI_Type_dup(datatypes[i], request->datatypes + i), comm);
+  request->ddts = xmalloc((size_t)n_packed * sizeof(*request->ddts));
+  for (int i = 0; i < n_packed; ++i) {
+    request->ddts[i] = packed_ddts[i];
+    xt_ddt_inc_ref_count(request->ddts[i]);
+  }
+  request->packed_memtype = packed_memtype;
+  request->tmp_memtype = tmp_memtype;
   memcpy(request->buffers, packed_data,
          (size_t)n_packed * sizeof(*request->buffers));
   memcpy(request->buffers + n_packed, tmp_buffers,
@@ -126,21 +134,28 @@ static void unpack_data(Xt_request_msgs_ddt_packed request_msgs_ddt_packed) {
 
   int n_packed = request_msgs_ddt_packed->n_packed;
   for (int i = 0; i < n_packed; ++i)
-    xt_ddt_unpack(
-      request_msgs_ddt_packed->datatypes[i],
+    xt_ddt_unpack_internal(
+      request_msgs_ddt_packed->ddts[i],
       request_msgs_ddt_packed->buffers[i],
-      request_msgs_ddt_packed->unpacked_data);
+      request_msgs_ddt_packed->unpacked_data,
+      request_msgs_ddt_packed->packed_memtype);
 }
 
 static void free_request(Xt_request_msgs_ddt_packed request_msgs_ddt_packed) {
 
-  for (int i = 0; i < request_msgs_ddt_packed->n_packed +
-       request_msgs_ddt_packed->n_tmp_buffers; ++i)
-    free(request_msgs_ddt_packed->buffers[i]);
   for (int i = 0; i < request_msgs_ddt_packed->n_packed; ++i)
-    xt_mpi_call(MPI_Type_free(request_msgs_ddt_packed->datatypes+i),
-                request_msgs_ddt_packed->comm);
-  free(request_msgs_ddt_packed->datatypes);
+    xt_ddt_free(
+      request_msgs_ddt_packed->buffers[i],
+      request_msgs_ddt_packed->packed_memtype);
+  for (int i = request_msgs_ddt_packed->n_packed;
+       i < request_msgs_ddt_packed->n_packed +
+       request_msgs_ddt_packed->n_tmp_buffers; ++i)
+    xt_ddt_free(
+      request_msgs_ddt_packed->buffers[i],
+      request_msgs_ddt_packed->tmp_memtype);
+  for (int i = 0; i < request_msgs_ddt_packed->n_packed; ++i)
+    xt_ddt_delete(request_msgs_ddt_packed->ddts[i]);
+  free(request_msgs_ddt_packed->ddts);
   free(request_msgs_ddt_packed->requests);
   free(request_msgs_ddt_packed);
 }
@@ -170,7 +185,8 @@ static void xt_request_msgs_wait_ddt_packed(Xt_request request) {
 
 static int xt_request_msgs_test_ddt_packed(Xt_request request) {
 
-  Xt_request_msgs_ddt_packed request_msgs_ddt_packed = (Xt_request_msgs_ddt_packed)request;
+  Xt_request_msgs_ddt_packed request_msgs_ddt_packed =
+    (Xt_request_msgs_ddt_packed)request;
 
   int flag =
     xt_mpi_test_some(&(request_msgs_ddt_packed->n_requests),

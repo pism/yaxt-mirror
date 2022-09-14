@@ -53,7 +53,6 @@
 #include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 #include "xt/xt_config.h"
-#include "xt/xt_ddt.h"
 #include "xt_exchanger.h"
 #include "xt_redist_internal.h"
 

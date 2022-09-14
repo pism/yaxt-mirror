@@ -54,6 +54,7 @@
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_simple_base.h"
+#include "xt_ddt_internal.h"
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -83,31 +84,40 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     buffer_sizes = xmalloc(num_tx * sizeof (*buffer_sizes));
   }
 
+  size_t recv_buffer_size = 0;
+  size_t send_buffer_size = 0;
   for (int i = 0; i < nrecv; ++i)
-    buffer_sizes[i] = xt_ddt_get_pack_size(recv_msgs[i].datatype);
+    recv_buffer_size +=
+      ((buffer_sizes[i] = xt_ddt_get_pack_size(recv_msgs[i].datatype)));
   for (int i = 0; i < nsend; ++i)
-    buffer_sizes[nrecv+i] = xt_ddt_get_pack_size(send_msgs[i].datatype);
-  size_t buffer_size = 0;
-  for (size_t i = 0; i < num_tx; ++i)
-    buffer_size += buffer_sizes[i];
+    send_buffer_size +=
+      ((buffer_sizes[nrecv+i] = xt_ddt_get_pack_size(send_msgs[i].datatype)));
 
-  unsigned char *buffer = xmalloc(buffer_size);
+  enum xt_ddt_memtype src_data_memtype = xt_ddt_get_memtype(src_data);
+  enum xt_ddt_memtype dst_data_memtype = xt_ddt_get_memtype(dst_data);
+  unsigned char * send_buffer =
+    xt_ddt_malloc(send_buffer_size, src_data_memtype);
+  unsigned char * recv_buffer =
+    xt_ddt_malloc(recv_buffer_size, dst_data_memtype);
 
   size_t ofs = 0;
   for (int i = 0; i < nrecv; ++i) {
     int recv_size = (int)buffer_sizes[i];
-    xt_mpi_call(MPI_Irecv(buffer + ofs, recv_size, MPI_BYTE,
+    xt_mpi_call(MPI_Irecv(recv_buffer + ofs, recv_size, MPI_BYTE,
                           recv_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+i), comm);
     ofs += (size_t)recv_size;
   }
 
+  ofs = 0;
   for (int i = 0; i < nsend; ++i) {
-    size_t send_size = (int)xt_ddt_get_pack_size(send_msgs[i].datatype);
-    xt_ddt_pack(
-      send_msgs[i].datatype, CAST_MPI_SEND_BUF(src_data), buffer + ofs);
-    xt_mpi_call(MPI_Isend(buffer + ofs, (int)send_size, MPI_BYTE,
+    size_t send_size = (int)(buffer_sizes[nrecv+i]);
+    xt_ddt_pack_internal(
+      Xt_ddt_from_mpi_ddt(send_msgs[i].datatype),
+      CAST_MPI_SEND_BUF(src_data), send_buffer + ofs,
+      src_data_memtype);
+    xt_mpi_call(MPI_Isend(send_buffer + ofs, (int)send_size, MPI_BYTE,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+nrecv+i), comm);
@@ -119,11 +129,14 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
   ofs = 0;
   for (int i = 0; i < nrecv; ++i) {
     size_t recv_size = buffer_sizes[i];
-    xt_ddt_unpack(recv_msgs[i].datatype, buffer + ofs, dst_data);
+    xt_ddt_unpack_internal(
+      Xt_ddt_from_mpi_ddt(recv_msgs[i].datatype),
+      recv_buffer + ofs, dst_data, dst_data_memtype);
     ofs += recv_size;
   }
 
-  free(buffer);
+  xt_ddt_free(recv_buffer, src_data_memtype);
+  xt_ddt_free(send_buffer, src_data_memtype);
   if (num_tx > AUTO_ALLOC_SIZE) {
     free(buffer_sizes);
     free(requests);
@@ -143,9 +156,14 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
   void ** buffers =
     xmalloc((size_t)(nrecv + nsend) * sizeof (*buffers));
 
+  enum xt_ddt_memtype src_data_memtype = xt_ddt_get_memtype(src_data);
+  enum xt_ddt_memtype dst_data_memtype = xt_ddt_get_memtype(dst_data);
+
+  Xt_ddt * recv_ddts = xmalloc((size_t)nrecv * sizeof(*recv_ddts));
   for (int i = 0; i < nrecv; ++i) {
+    recv_ddts[i] = Xt_ddt_from_mpi_ddt(recv_msgs[i].datatype);
     size_t buffer_size = xt_ddt_get_pack_size(recv_msgs[i].datatype);
-    buffers[i] = xmalloc(buffer_size);
+    buffers[i] = xt_ddt_malloc(buffer_size, dst_data_memtype);
     xt_mpi_call(MPI_Irecv(buffers[i], (int)buffer_size, MPI_BYTE,
                           recv_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
@@ -154,23 +172,23 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
 
   for (int i = 0; i < nsend; ++i) {
     size_t buffer_size = xt_ddt_get_pack_size(send_msgs[i].datatype);
-    buffers[nrecv + i] = xmalloc(buffer_size);
-    xt_ddt_pack(send_msgs[i].datatype, (void*)src_data, buffers[nrecv + i]);
+    buffers[nrecv + i] = xt_ddt_malloc(buffer_size, src_data_memtype);
+    xt_ddt_pack_internal(
+      Xt_ddt_from_mpi_ddt(send_msgs[i].datatype),
+      (void*)src_data, buffers[nrecv + i], src_data_memtype);
     xt_mpi_call(MPI_Isend(buffers[nrecv + i], (int)buffer_size, MPI_BYTE,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           tmp_requests+nrecv+i), comm);
   }
 
-  MPI_Datatype * datatypes = xmalloc((size_t)nrecv * sizeof (*datatypes));
-  for (int i = 0; i < nrecv; ++i) datatypes[i] = recv_msgs[i].datatype;
-
   Xt_request requests =
     xt_request_msgs_ddt_packed_new(
       nrecv + nsend, tmp_requests, comm, nrecv, nsend,
-      datatypes, buffers, buffers + nrecv, dst_data);
+      recv_ddts, buffers, buffers + nrecv, dst_data,
+      src_data_memtype, dst_data_memtype);
 
-  free(datatypes);
+  free(recv_ddts);
   free(buffers);
   free(tmp_requests);
 
