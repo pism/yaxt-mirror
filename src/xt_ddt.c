@@ -1031,7 +1031,7 @@ static int xt_ddt_cleanup_internal_keyval_delete(
   return MPI_SUCCESS;
 }
 
-static Xt_ddt get_xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
+Xt_ddt Xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
 
   // if xt_ddt_internal_keyval has not yet been created
   if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID) {
@@ -1082,7 +1082,7 @@ static Xt_ddt get_xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
 
 size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
 
-  Xt_ddt ddt = get_xt_ddt_from_mpi_ddt(mpi_ddt);
+  Xt_ddt ddt = Xt_ddt_from_mpi_ddt(mpi_ddt);
 
   if (ddt == NULL) return 0;
 
@@ -1340,7 +1340,7 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 #endif
 
   xt_ddt_pack_internal(
-    get_xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
+    Xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types
@@ -1489,7 +1489,7 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 #endif
 
   xt_ddt_unpack_internal(
-    get_xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
+    Xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types

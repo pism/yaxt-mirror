@@ -53,7 +53,33 @@
 
 #include "xt/xt_ddt.h"
 
+/**
+ * Returns a xt_ddt object for the provided MPI datatype.
+ * The routine will first check whether there is already a xt_ddt for this
+ * MPI datatype and will retrieve it, if available. Otherwise a new xt_ddt
+ * will be generated and cached in the MPI datatype.
+ * @param[in] mpi_ddt MPI datatype
+ * @return xt_ddt object
+ * @remark the returned xt_ddt object is only valid as long as the mpi_ddt
+ *         is not freed
+ * @remark no \ref xt_ddt_delete needs to be called for the xt_ddt object
+ *         returned by this routine
+ */
+Xt_ddt Xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt);
 
+/**
+ * deletes a xt_ddt object
+ * @param[in] ddt xt_ddt object
+ */
+void xt_ddt_delete(Xt_ddt ddt);
+
+/**
+ * increases the internal reference counter for the given xt_ddt object
+ * @param[in] ddt xt_ddt object
+ * @remark for each reference of a xt_ddt object
+ *         \ref xt_ddt_delete has to be called
+ */
+void xt_ddt_inc_ref_count(Xt_ddt ddt);
 
 /**
  * determines the type of memory associated with the provided pointer
