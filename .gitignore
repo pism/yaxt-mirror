@@ -39,6 +39,7 @@ Makefile.in
 /perf/perf_sparse_array_gather_run
 /src/pkgconfig/yaxt.pc
 /src/pkgconfig/yaxt_c.pc
+/tests/test_ddt_run
 /tests/test_exchanger_parallel_run
 /tests/test_exported_symbols
 /tests/test_handles_run
@@ -111,6 +112,7 @@ Makefile
 /tests/*.log
 /tests/*.trs
 /tests/test_arithmetic_long
+/tests/test_ddt
 /tests/test_exchanger_parallel
 /tests/test_handles
 /tests/test_idxempty
