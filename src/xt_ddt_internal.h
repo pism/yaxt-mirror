@@ -65,7 +65,7 @@
  * @remark no \ref xt_ddt_delete needs to be called for the xt_ddt object
  *         returned by this routine
  */
-Xt_ddt Xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt);
+Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt);
 
 /**
  * deletes a xt_ddt object
@@ -87,6 +87,13 @@ void xt_ddt_inc_ref_count(Xt_ddt ddt);
  * @returns type of memory
  */
 enum xt_ddt_memtype xt_ddt_get_memtype(const void *ptr);
+
+/**
+ * gets the buffer size required to pack the data in ddt
+ * @param[in] ddt xt_ddt object
+ * @returns required packing buffer size
+ */
+size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt);
 
 /**
  * packs the data from the source buffer into destination buffer

@@ -87,6 +87,8 @@ struct Xt_ddt_ {
 
   int ref_count;
 
+  size_t pack_size;
+
   // if exchange data is on GPU, one kernel per data entry is launched
   size_t count; // number of elements in data
   struct xt_ddt_data data[];
@@ -931,14 +933,19 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   // compute the total number of elemental data
   size_t total_displs_size = 0;
   size_t data_count = 0;
+  size_t pack_size = 0;
   for (size_t i = 0; i < 6; ++i) {
     total_displs_size += data[i].displ_count;
-    if (data[i].displ_count > 0) ++data_count;
+    if (data[i].displ_count > 0) {
+      pack_size += data[i].element_size * data[i].displ_count;
+      ++data_count;
+    }
   }
 
   Xt_ddt ddt = xmalloc(1 * sizeof(*ddt) + data_count * sizeof(ddt->data[0]));
   ddt->ref_count = 1;
   ddt->count = data_count;
+  ddt->pack_size = pack_size;
 
   if (total_displs_size > 0) {
 
@@ -1031,7 +1038,7 @@ static int xt_ddt_cleanup_internal_keyval_delete(
   return MPI_SUCCESS;
 }
 
-Xt_ddt Xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
+Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
 
   // if xt_ddt_internal_keyval has not yet been created
   if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID) {
@@ -1080,18 +1087,14 @@ Xt_ddt Xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
   return ddt;
 }
 
+size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt) {
+
+  return (ddt == NULL)?0:(ddt->pack_size);
+}
+
 size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
 
-  Xt_ddt ddt = Xt_ddt_from_mpi_ddt(mpi_ddt);
-
-  if (ddt == NULL) return 0;
-
-  size_t pack_size = 0;
-
-  for (size_t i = 0; i < ddt->count; ++i)
-    pack_size += ddt->data[i].element_size * ddt->data[i].displ_count;
-
-  return pack_size;
+  return xt_ddt_get_pack_size_internal(xt_ddt_from_mpi_ddt(mpi_ddt));
 }
 
 void * xt_ddt_malloc(
@@ -1340,7 +1343,7 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 #endif
 
   xt_ddt_pack_internal(
-    Xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
+    xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types
@@ -1489,7 +1492,7 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 #endif
 
   xt_ddt_unpack_internal(
-    Xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
+    xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types
