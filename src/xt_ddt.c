@@ -1182,7 +1182,7 @@ void xt_ddt_memcpy(
 static void xt_ddt_pack_8(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int8_t*)dst)[i] = *(int8_t*)((unsigned char *)src + displs[i]);
 }
@@ -1190,7 +1190,7 @@ static void xt_ddt_pack_8(
 static void xt_ddt_pack_16(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int16_t*)dst)[i] = *(int16_t*)((unsigned char *)src + displs[i]);
 }
@@ -1198,7 +1198,7 @@ static void xt_ddt_pack_16(
 static void xt_ddt_pack_32(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int32_t*)dst)[i] = *(int32_t*)((unsigned char *)src + displs[i]);
 }
@@ -1206,7 +1206,7 @@ static void xt_ddt_pack_32(
 static void xt_ddt_pack_64(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     ((int64_t*)dst)[i] = *(int64_t*)((unsigned char *)src + displs[i]);
 }
@@ -1214,24 +1214,24 @@ static void xt_ddt_pack_64(
 static void xt_ddt_pack_128(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
+  int64_t (*restrict dst_)[2] = (int64_t(*)[2])dst;
+#pragma acc parallel loop independent deviceptr(src, dst_, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
-    ((int64_t*)dst)[2 * i + 0] = src_64[0];
-    ((int64_t*)dst)[2 * i + 1] = src_64[1];
+#pragma acc loop independent
+    for (int j = 0; j < 2; ++j) dst_[i][j] = src_64[j];
   }
 }
 
 static void xt_ddt_pack_256(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (pack_on_gpu)
+  int64_t (*restrict dst_)[4] = (int64_t(*)[4])dst;
+#pragma acc parallel loop independent deviceptr(src, dst_, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
-    ((int64_t*)dst)[4 * i + 0] = src_64[0];
-    ((int64_t*)dst)[4 * i + 1] = src_64[1];
-    ((int64_t*)dst)[4 * i + 2] = src_64[2];
-    ((int64_t*)dst)[4 * i + 3] = src_64[3];
+#pragma acc loop independent
+    for (int j = 0; j < 4; ++j) dst_[i][j] = src_64[j];
   }
 }
 
@@ -1357,7 +1357,7 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 static void xt_ddt_unpack_8(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int8_t*)((unsigned char *)dst + displs[i]) = ((int8_t*)src)[i];
 }
@@ -1365,7 +1365,7 @@ static void xt_ddt_unpack_8(
 static void xt_ddt_unpack_16(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int16_t*)((unsigned char *)dst + displs[i]) = ((int16_t*)src)[i];
 }
@@ -1373,7 +1373,7 @@ static void xt_ddt_unpack_16(
 static void xt_ddt_unpack_32(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int32_t*)((unsigned char *)dst + displs[i]) = ((int32_t*)src)[i];
 }
@@ -1381,7 +1381,7 @@ static void xt_ddt_unpack_32(
 static void xt_ddt_unpack_64(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
+#pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
     *(int64_t*)((unsigned char *)dst + displs[i]) = ((int64_t*)src)[i];
 }
@@ -1389,24 +1389,26 @@ static void xt_ddt_unpack_64(
 static void xt_ddt_unpack_128(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
+  int64_t const (*src_)[2] = (int64_t const (*)[2])src;
+#pragma acc parallel loop independent deviceptr(src_, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * dst_64 = (int64_t*)((unsigned char *)dst + displs[i]);
-    dst_64[0] = ((int64_t*)src)[2 * i + 0];
-    dst_64[1] = ((int64_t*)src)[2 * i + 1];
+    dst_64[0] = src_[i][0];
+    dst_64[1] = src_[i][1];
   }
 }
 
 static void xt_ddt_unpack_256(
   size_t count, size_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
-#pragma acc parallel deviceptr(src, dst, displs) if (unpack_on_gpu)
+  int64_t const (*src_)[4] = (int64_t const(*)[4])src;
+#pragma acc parallel loop independent deviceptr(src_, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i) {
     int64_t * dst_64 = (int64_t*)((unsigned char *)src + displs[i]);
-    dst_64[0] = ((int64_t*)src)[4 * i + 0];
-    dst_64[1] = ((int64_t*)src)[4 * i + 1];
-    dst_64[2] = ((int64_t*)src)[4 * i + 2];
-    dst_64[3] = ((int64_t*)src)[4 * i + 3];
+    dst_64[0] = src_[i][0];
+    dst_64[1] = src_[i][1];
+    dst_64[2] = src_[i][2];
+    dst_64[3] = src_[i][3];
   }
 }
 
