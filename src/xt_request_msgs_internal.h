@@ -53,6 +53,7 @@
 
 #include <mpi.h>
 
+#include "xt/xt_config.h"
 #include "xt/xt_request.h"
 #include "core/ppm_visibility.h"
 
@@ -61,7 +62,8 @@
  * @return Xt_request_msgs object ready for \a n MPI requests
  */
 PPM_DSO_INTERNAL Xt_request
-xt_request_msgs_alloc(int n, MPI_Comm comm);
+xt_request_msgs_alloc(int n, MPI_Comm comm, Xt_config config);
+
 
 /**
  * @param request xt_request_msgs object

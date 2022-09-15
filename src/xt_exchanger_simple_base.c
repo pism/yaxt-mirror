@@ -102,6 +102,7 @@ struct Xt_exchanger_simple_base_ {
   const struct xt_exchanger_vtable * vtable;
 
   int nmsg[2];
+  int config_flags;
   int tag_offset;
   MPI_Comm comm;
   xt_simple_s_exchange_func s_func;

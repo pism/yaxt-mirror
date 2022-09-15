@@ -54,6 +54,7 @@
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_msgs_internal.h"
 #include "xt_redist_internal.h"
@@ -144,8 +145,10 @@ xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
                                        const struct Xt_redist_msg *recv_msgs,
                                        int tag_offset, MPI_Comm comm) {
 
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
   Xt_exchanger_omp_share shared_req
-    = (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm);
+    = (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm, &conf);
 #pragma omp parallel
   xt_exchanger_irecv_send_s_exchange_mt(src_data, dst_data,
                                         nsend, nrecv,
@@ -169,7 +172,9 @@ xt_exchanger_irecv_send_create_omp_share(
   (void)nsend;
   (void)send_msgs;
   (void)recv_msgs;
-  return (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm);
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
+  return (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm, &conf);
 }
 
 
