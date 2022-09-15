@@ -64,6 +64,17 @@ m4_if(m4_version_compare(AC_AUTOCONF_VERSION,[2.67]),1,
 dnl ######################################################################
 dnl Checks for programs.
 dnl ######################################################################
+CHECK_GNU_MAKE
+dnl we prefer GNU make because the System V make on many commercial
+dnl platforms is slow
+AC_CHECK_PROGS([MAKE], [$_cv_gnu_make_command gmake gnumake make])
+dnl maintainers need GNU make for the regeneration rules, so enforce that
+dnl
+AS_IF([test "x${_cv_gnu_make_command}x$USE_MAINTAINER_MODE" = xxyes],
+  [AC_MSG_FAILURE([maintainers need to use GNU make or compatible])])
+dnl Only substitute MAKE in Makefiles if actually needed
+AC_PROG_MAKE_SET
+AM_SUBST_NOTMAKE([MAKE])
 dnl Require an ISO C99 compliant C compiler
 m4_pushdef([_AC_PROG_CC_C89],
   [_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])

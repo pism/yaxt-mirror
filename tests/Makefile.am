@@ -178,6 +178,9 @@ test_exchanger_parallel_LDADD += ../src/xt_exchanger.lo \
 	../src/core/xmalloc.lo \
 	../src/core/core.lo $(MPI_C_LIB)
 
+@ifGNUmake@../src/%.lo: ../src/%.c
+@ifGNUmake@	$(MAKE) -C ../src $(notdir $@)
+
 test_idxempty_SOURCES = test_idxempty.c tests.h test_idxlist_utils.h
 test_idxempty_f_SOURCES = test_idxempty_f.f90
 test_idxempty_f_LDADD = $(XT_FC_LDADD)
