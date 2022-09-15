@@ -53,6 +53,7 @@
 
 #include <mpi.h>
 
+#include "xt/xt_config.h"
 #include "core/ppm_visibility.h"
 
 /**
@@ -62,7 +63,8 @@
 PPM_DSO_INTERNAL Xt_request
 xt_request_msgs_packed_alloc(int n_requests,
                              MPI_Comm comm,
-                             size_t extra_buf_size);
+                             size_t extra_buf_size,
+                             Xt_config config);
 
 /**
  * @param request xt_request_msgs_packed object

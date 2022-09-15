@@ -49,6 +49,7 @@
 #include <mpi.h>
 
 #include "xt/xt_request.h"
+#include "xt/xt_config.h"
 
 /**
  * constructor for message request handle
@@ -61,6 +62,21 @@
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm);
+
+/**
+ * customizable constructor for message request handle
+ * @param[in] n_requests    number of entries in requests array
+ * @param[in] requests      array containg MPI requests
+ * @param[in] comm          MPI communicator
+ * @param[in] config        configuration object handle
+ * @remark ownership of the MPI requests is passed to the Xt_request object,
+ *         however the caller remains the owner of the requests array
+ */
+Xt_request
+xt_request_msgs_packed_custom_new(int n_requests,
+                                  const MPI_Request requests[n_requests],
+                                  MPI_Comm comm,
+                                  Xt_config config);
 
 #endif // XT_REQUEST_MSGS_PACKED_H
 

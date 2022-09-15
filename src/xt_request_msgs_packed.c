@@ -51,22 +51,42 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <mpi.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 
 #include "xt/xt_request_msgs_packed.h"
 #include "xt_request_msgs_packed_internal.h"
+#include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_internal.h"
 
-static void xt_request_msgs_wait_packed(Xt_request request);
-static int xt_request_msgs_test_packed(Xt_request request);
+static void xt_request_msgs_packed_wait(Xt_request request);
+static int xt_request_msgs_packed_test(Xt_request request);
+
+#ifdef _OPENMP
+static void
+xt_request_msgs_packed_wait_omp(Xt_request request);
+static int
+xt_request_msgs_packed_test_omp(Xt_request request);
+#endif
 
 static const struct Xt_request_vtable request_msgs_packed_vtable = {
 
-  .wait = xt_request_msgs_wait_packed,
-  .test = xt_request_msgs_test_packed,
+  .wait = xt_request_msgs_packed_wait,
+  .test = xt_request_msgs_packed_test,
+}
+#ifdef _OPENMP
+  , request_msgs_packed_auto_omp_vtable = {
+  .wait = xt_request_msgs_packed_wait_omp,
+  .test = xt_request_msgs_packed_test_omp,
 };
+#endif
+;
 
 typedef struct Xt_request_msgs_packed_ * Xt_request_msgs_packed;
 
@@ -84,7 +104,8 @@ struct Xt_request_msgs_packed_ {
 Xt_request
 xt_request_msgs_packed_alloc(int n_requests,
                              MPI_Comm comm,
-                             size_t extra_buf_size)
+                             size_t extra_buf_size,
+                             Xt_config config)
 {
   size_t hdr_size = sizeof(struct Xt_request_msgs_packed_),
     bufr_size = (size_t)n_requests * sizeof(MPI_Request)
@@ -94,6 +115,14 @@ xt_request_msgs_packed_alloc(int n_requests,
   size_t ofs = ((hdr_size + bufr_size + sizeof (void *) - 1)
                    & -sizeof(void *));
   Xt_request_msgs_packed request = xmalloc(ofs + extra_buf_size);
+#ifndef _OPENMP
+  (void)config;
+#else
+  int mthread_mode = xt_config_get_redist_mthread_mode(config);
+  if (mthread_mode == XT_MT_OPENMP)
+    request->vtable = &request_msgs_packed_auto_omp_vtable;
+  else
+#endif
   request->vtable = &request_msgs_packed_vtable;
   request->comm = comm;
   request->n_requests = n_requests;
@@ -112,10 +141,20 @@ extra_buf(Xt_request_msgs_packed request_msgs_packed)
 Xt_request xt_request_msgs_packed_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm) {
+  return xt_request_msgs_packed_custom_new(n_requests, requests, comm,
+                                           &xt_default_config);
+}
 
+Xt_request
+xt_request_msgs_packed_custom_new(int n_requests,
+                                  const MPI_Request requests[n_requests],
+                                  MPI_Comm comm,
+                                  Xt_config config)
+{
   assert(n_requests >= 0);
   Xt_request_msgs_packed request
-    = (Xt_request_msgs_packed)xt_request_msgs_packed_alloc(n_requests, comm, 0);
+    = (Xt_request_msgs_packed)xt_request_msgs_packed_alloc(
+      n_requests, comm, 0, config);
   memcpy(request->requests, requests,
          (size_t)n_requests * sizeof(*request->requests));
 
@@ -131,7 +170,7 @@ finish_requests(Xt_request_msgs_packed request_msgs_packed)
   free(request_msgs_packed);
 }
 
-static void xt_request_msgs_wait_packed(Xt_request request) {
+static void xt_request_msgs_packed_wait(Xt_request request) {
 
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
 
@@ -151,7 +190,7 @@ static void xt_request_msgs_wait_packed(Xt_request request) {
   finish_requests(request_msgs_packed);
 }
 
-static int xt_request_msgs_test_packed(Xt_request request) {
+static int xt_request_msgs_packed_test(Xt_request request) {
 
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
 
@@ -172,7 +211,12 @@ MPI_Request *
 xt_request_msgs_packed_get_req_ptr(Xt_request request)
 {
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+#ifndef _OPENMP
   assert(request->vtable == &request_msgs_packed_vtable);
+#else
+  assert(request->vtable == &request_msgs_packed_vtable
+         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+#endif
   return request_msgs_packed->requests;
 }
 
@@ -180,7 +224,12 @@ MPI_Comm
 xt_request_msgs_packed_get_comm(Xt_request request)
 {
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+#ifndef _OPENMP
   assert(request->vtable == &request_msgs_packed_vtable);
+#else
+  assert(request->vtable == &request_msgs_packed_vtable
+         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+#endif
   return request_msgs_packed->comm;
 }
 
@@ -189,7 +238,12 @@ xt_request_msgs_packed_set_finalizer(Xt_request request,
                                      void (*finalizer)(Xt_request, void *))
 {
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+#ifndef _OPENMP
   assert(request->vtable == &request_msgs_packed_vtable);
+#else
+  assert(request->vtable == &request_msgs_packed_vtable
+         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+#endif
   request_msgs_packed->finalizer = finalizer;
 }
 
@@ -197,10 +251,82 @@ void *
 xt_request_msgs_packed_get_extra_buf(Xt_request request)
 {
   Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+#ifndef _OPENMP
   assert(request->vtable == &request_msgs_packed_vtable);
+#else
+  assert(request->vtable == &request_msgs_packed_vtable
+         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+#endif
   return extra_buf(request_msgs_packed);
 }
 
+
+#ifdef _OPENMP
+static void
+finish_requests_mt(Xt_request_msgs_packed request_msgs_packed)
+{
+  if (request_msgs_packed->finalizer != no_finalizer)
+    request_msgs_packed->finalizer((Xt_request)request_msgs_packed,
+                                   extra_buf(request_msgs_packed));
+#pragma omp barrier
+#pragma omp master
+  free(request_msgs_packed);
+}
+
+static void
+xt_request_msgs_packed_wait_omp(Xt_request request)
+{
+#pragma omp parallel
+  {
+    Xt_request_msgs_packed request_msgs = (Xt_request_msgs_packed)request;
+    int num_threads = omp_get_num_threads(),
+      tid = omp_get_thread_num();
+    int nreq = request_msgs->n_requests,
+      start_req = (nreq * tid) / num_threads,
+      nreq_ = (nreq * (tid+1)) / num_threads - start_req;
+
+/* unfortunately GCC 11 cannot handle the literal constants used for
+ * MPI_STATUSES_IGNORE by MPICH */
+#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+    xt_mpi_call(MPI_Waitall(nreq_, request_msgs->requests+start_req,
+                            MPI_STATUSES_IGNORE), request_msgs->comm);
+#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#pragma GCC diagnostic pop
+#endif
+#pragma omp barrier
+    finish_requests_mt(request_msgs);
+  }
+}
+
+static int
+xt_request_msgs_packed_test_omp(Xt_request request)
+{
+  bool flag = true;
+#pragma omp parallel
+  {
+    Xt_request_msgs_packed request_msgs = (Xt_request_msgs_packed)request;
+
+    int *ops_completed_buffer
+      = (int *)(request_msgs->requests + request_msgs->n_requests);
+    bool flag_
+      = xt_mpi_test_some_mt(&request_msgs->n_requests,
+                            request_msgs->requests,
+                            ops_completed_buffer,
+                            request_msgs->comm);
+#pragma omp master
+    flag = flag_;
+#pragma omp barrier
+    if (flag_)
+      finish_requests_mt(request_msgs);
+  }
+
+  return flag;
+}
+#endif
 
 /*
  * Local Variables:
