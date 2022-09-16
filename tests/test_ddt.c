@@ -52,10 +52,10 @@
 
 #ifdef _OPENACC
 #include <openacc.h>
+#define STR(s) #s
+#define PragmaACC(args) _Pragma(STR(acc args))
 #else
-#ifdef __INTEL_COMPILER
-#pragma warning disable 161
-#endif
+#define PragmaACC(args)
 #endif
 
 #include <yaxt.h>
@@ -887,9 +887,9 @@ static int check_xt_ddt_off(
 
   int err_flag = 0;
 
-#pragma acc data copyin(in_data[0:in_data_size]) \
-                 create(pack_data[0:ref_pack_size], \
-                        out_data[0:in_data_size])
+PragmaACC(data copyin(in_data[0:in_data_size]) \
+               create(pack_data[0:ref_pack_size], \
+                      out_data[0:in_data_size]))
   {
 #ifdef _OPENACC
     for (int data_on_gpu = 0; data_on_gpu < 2; ++data_on_gpu) {
@@ -898,15 +898,15 @@ static int check_xt_ddt_off(
 
         // initialise out data (also on device, if necessary)
         memset(out_data, -1, in_data_size);
-#pragma acc update device(out_data[0:in_data_size]) if (data_on_gpu)
+PragmaACC(update device(out_data[0:in_data_size]) if (data_on_gpu))
 
         // use device pointers of in_data and out_data, if they
         // are on the device
-#pragma acc host_data use_device(in_data, out_data) if(data_on_gpu)
+PragmaACC(host_data use_device(in_data, out_data) if(data_on_gpu))
         {
 
           // use device pointer of pack_data, if it is on the device
-#pragma acc host_data use_device(pack_data) if (buffer_on_gpu)
+PragmaACC(host_data use_device(pack_data) if (buffer_on_gpu))
           {
             // pack in_data
             xt_ddt_pack(
@@ -921,7 +921,7 @@ static int check_xt_ddt_off(
         }
 
         // copy data from device to host, if necessary
-#pragma acc update self(out_data[0:in_data_size]) if (data_on_gpu)
+PragmaACC(update self(out_data[0:in_data_size]) if (data_on_gpu))
 
         // compare out buffers
         err_flag |= memcmp(out_data, ref_out_data, in_data_size);
