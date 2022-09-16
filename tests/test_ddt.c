@@ -65,6 +65,9 @@
 static int check_xt_ddt(
   MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
   size_t ref_pack_size);
+static int check_xt_ddt_off(
+  MPI_Datatype mpi_ddt, void const * in_data, int in_data_offset,
+  size_t in_data_size, size_t ref_pack_size);
 
 int main(void) {
 
@@ -235,7 +238,7 @@ int main(void) {
   { // MPI_Type_vector(0, 1, 1, MPI_CHAR)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 0, BLOCKLENGTH = 1, STRIDE = 1};
-    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_FLOAT, &mpi_ddt);
+    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_CHAR, &mpi_ddt);
     enum {IN_DATA_COUNT = 1};
     char in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (char)i;
@@ -244,6 +247,20 @@ int main(void) {
           mpi_ddt, in_data, sizeof(in_data),
           COUNT * BLOCKLENGTH* sizeof(in_data[0])))
       PUT_ERR("ERROR VECTOR(0, 1, 1, CHAR)");
+  }
+
+  { // MPI_Type_vector(3, 3, -3, MPI_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 3, BLOCKLENGTH = 3, STRIDE = -3};
+    MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_INT, &mpi_ddt);
+    enum {IN_DATA_COUNT = 9};
+    int in_data[IN_DATA_COUNT];
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
+
+    if (check_xt_ddt_off(
+          mpi_ddt, in_data, 6 * sizeof(int), sizeof(in_data),
+          COUNT * BLOCKLENGTH* sizeof(in_data[0])))
+      PUT_ERR("ERROR VECTOR(3, 3, -3, INT)");
   }
 
   { // MPI_Type_create_hvector(3, 5, 16*sizeof(int), MPI_INT)
@@ -831,9 +848,9 @@ int main(void) {
   return TEST_EXIT_CODE;
 }
 
-static int check_xt_ddt(
-  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
-  size_t ref_pack_size) {
+static int check_xt_ddt_off(
+  MPI_Datatype mpi_ddt, void const * in_data, int in_data_offset,
+  size_t in_data_size, size_t ref_pack_size) {
 
   if (in_data_size > INT_MAX) {
     PUT_ERR("in_data_size > INT_MAX");
@@ -860,12 +877,12 @@ static int check_xt_ddt(
   {
     int position = 0;
     MPI_Pack(
-      in_data, 1, mpi_ddt, pack_data, (int)in_data_size,
-      &position, MPI_COMM_WORLD);
+      (void const *)((char unsigned*)in_data + in_data_offset),
+      1, mpi_ddt, pack_data, (int)in_data_size, &position, MPI_COMM_WORLD);
     position = 0;
     MPI_Unpack(
       pack_data, (int)in_data_size, &position,
-      ref_out_data, 1, mpi_ddt, MPI_COMM_WORLD);
+      (void*)((char unsigned *)ref_out_data + in_data_offset), 1, mpi_ddt, MPI_COMM_WORLD);
   }
 
   int err_flag = 0;
@@ -892,10 +909,14 @@ static int check_xt_ddt(
 #pragma acc host_data use_device(pack_data) if (buffer_on_gpu)
           {
             // pack in_data
-            xt_ddt_pack(mpi_ddt, in_data, pack_data);
+            xt_ddt_pack(
+              mpi_ddt, (void const*)((char unsigned*)in_data + in_data_offset),
+              pack_data);
 
             // unpack data
-            xt_ddt_unpack(mpi_ddt, pack_data, out_data);
+            xt_ddt_unpack(
+              mpi_ddt, pack_data,
+              (void*)((char unsigned *)out_data + in_data_offset));
           }
         }
 
@@ -920,6 +941,13 @@ static int check_xt_ddt(
   if (combiner != MPI_COMBINER_NAMED) MPI_Type_free(&mpi_ddt);
 
   return err_flag;
+}
+
+static int check_xt_ddt(
+  MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
+  size_t ref_pack_size) {
+
+  return check_xt_ddt_off(mpi_ddt, in_data, 0, in_data_size, ref_pack_size);
 }
 
 /*

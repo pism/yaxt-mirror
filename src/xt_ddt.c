@@ -78,7 +78,7 @@ static int xt_ddt_cleanup_internal_keyval = MPI_KEYVAL_INVALID;
 struct xt_ddt_data {
   size_t element_size; // size in byte of base element
   size_t displ_count;  // number of elements in displs
-  size_t * displs;     // displacements in byte of elements
+  ssize_t * displs;    // displacements in byte of elements (int does not work)
                        // (if required this array has to be available
                        //  in GPU memory)
 };
@@ -130,7 +130,7 @@ static inline MPI_Aint * xt_ddt_tree_elem_alloc_displs(
          xmalloc((size_t)displ_count * sizeof(*(elem->displs.multi)))));
 }
 
-static struct xt_ddt_tree_elem * 
+static struct xt_ddt_tree_elem *
   mpi_ddt_2_xt_ddt_tree(MPI_Datatype mpi_ddt, int free_mpi_ddt);
 
 static struct xt_ddt_tree_elem * xt_ddt_tree_elem_named_new(
@@ -313,7 +313,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_block_new(
   MPI_Aint extent, int count, int blocklength, MPI_Aint * displacements,
   MPI_Datatype mpi_ddt) {
 
-  // if there are no blocks or if the blocks are empty 
+  // if there are no blocks or if the blocks are empty
   if ((count == 0) || (blocklength == 0)) {
     free_unnamed_mpi_ddt(mpi_ddt);
     return NULL;
@@ -398,7 +398,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
       xt_ddt_tree_elem_hindexed_block_new(
         extent, 1, blocklengths[0], displacements, *mpi_ddts);
 
-  struct xt_ddt_tree_elem ** sub_elems = 
+  struct xt_ddt_tree_elem ** sub_elems =
     xmalloc((size_t)count * sizeof(*sub_elems));
 
   struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
@@ -503,7 +503,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_resized_new(
 }
 
 // generates a ddt tree element from a MPI datatype
-static struct xt_ddt_tree_elem * 
+static struct xt_ddt_tree_elem *
   mpi_ddt_2_xt_ddt_tree(MPI_Datatype mpi_ddt, int free_mpi_ddt) {
 
   // get parameters for decoding of MPI datatype
@@ -819,7 +819,7 @@ static void xt_ddt_tree_elem_get_data_sizes(
 
       data[*prev_data_idx].displ_count += (size_t)(elem->displ_count);
       break;
-    } 
+    }
     case (SINGLE_SUB): {
 
       struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
@@ -853,7 +853,7 @@ static void xt_ddt_tree_get_data_sizes(
 }
 
 static void xt_ddt_tree_elem_to_data(
-  struct xt_ddt_tree_elem * elem, struct xt_ddt_data * data, size_t displ,
+  struct xt_ddt_tree_elem * elem, struct xt_ddt_data * data, MPI_Aint displ,
   MPI_Datatype * prev_dtype, size_t * prev_data_idx) {
 
   if (elem == NULL) return;
@@ -873,13 +873,13 @@ static void xt_ddt_tree_elem_to_data(
       }
 
       size_t displ_count = data[*prev_data_idx].displ_count;
-      size_t * displs = data[*prev_data_idx].displs;
+      ssize_t * displs = data[*prev_data_idx].displs;
       for (size_t i = 0; i < elem_displ_count; ++i, ++displ_count)
-        displs[displ_count] = elem_displs[i] + displ;
+        displs[displ_count] = (ssize_t)displ + (ssize_t)elem_displs[i];
       data[*prev_data_idx].displ_count = displ_count;
 
       break;
-    } 
+    }
     case (SINGLE_SUB): {
 
       struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
@@ -906,7 +906,7 @@ static void xt_ddt_tree_elem_to_data(
 static void xt_ddt_tree_to_data(
   struct xt_ddt_tree_elem * tree, struct xt_ddt_data * data) {
 
-  size_t displ = 0;
+  MPI_Aint displ = 0;
   MPI_Datatype prev_dtype = MPI_DATATYPE_NULL;
   size_t prev_data_idx = SIZE_MAX;
 
@@ -950,7 +950,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   if (total_displs_size > 0) {
 
     // allocate memory for all displacements
-    size_t * displs = xmalloc(total_displs_size * sizeof(*displs));
+    ssize_t * displs = xmalloc(total_displs_size * sizeof(*displs));
 
     for (size_t i = 0, offset = 0; i < 6; ++i) {
       data[i].displs = displs + offset;
@@ -990,11 +990,11 @@ void xt_ddt_delete(Xt_ddt ddt) {
   if (ddt->count > 0) {
 #ifdef _OPENACC
     if (acc_is_present(
-          ddt->data[0].displs, ddt->data[0].displ_count * sizeof(size_t)))
+          ddt->data[0].displs, ddt->data[0].displ_count * sizeof(ssize_t)))
       for (size_t i = 0; i < ddt->count; ++i)
         // acc_delete_finalize(
         acc_delete(
-          ddt->data[i].displs, ddt->data[i].displ_count * sizeof(size_t));
+          ddt->data[i].displs, ddt->data[i].displ_count * sizeof(ssize_t));
 #endif
     free(ddt->data[0].displs);
   }
@@ -1180,7 +1180,7 @@ void xt_ddt_memcpy(
 }
 
 static void xt_ddt_pack_8(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1188,7 +1188,7 @@ static void xt_ddt_pack_8(
 }
 
 static void xt_ddt_pack_16(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1196,7 +1196,7 @@ static void xt_ddt_pack_16(
 }
 
 static void xt_ddt_pack_32(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1204,7 +1204,7 @@ static void xt_ddt_pack_32(
 }
 
 static void xt_ddt_pack_64(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (pack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1212,7 +1212,7 @@ static void xt_ddt_pack_64(
 }
 
 static void xt_ddt_pack_128(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
   int64_t (*restrict dst_)[2] = (int64_t(*)[2])dst;
 #pragma acc parallel loop independent deviceptr(src, dst_, displs) if (pack_on_gpu)
@@ -1224,7 +1224,7 @@ static void xt_ddt_pack_128(
 }
 
 static void xt_ddt_pack_256(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int pack_on_gpu) {
   int64_t (*restrict dst_)[4] = (int64_t(*)[4])dst;
 #pragma acc parallel loop independent deviceptr(src, dst_, displs) if (pack_on_gpu)
@@ -1272,12 +1272,12 @@ void xt_ddt_pack_internal(
 
     size_t element_size = ddt->data[i].element_size;
     size_t displ_count = ddt->data[i].displ_count;
-    size_t * displs = ddt->data[i].displs;
+    ssize_t * displs = ddt->data[i].displs;
 
 #ifdef _OPENACC
     if (on_gpu)
         displs =
-          (size_t*)acc_copyin((h_void*)displs, displ_count * sizeof(size_t));
+          (ssize_t*)acc_copyin((h_void*)displs, displ_count * sizeof(ssize_t));
 #endif
 
     switch (element_size) {
@@ -1355,7 +1355,7 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 }
 
 static void xt_ddt_unpack_8(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1363,7 +1363,7 @@ static void xt_ddt_unpack_8(
 }
 
 static void xt_ddt_unpack_16(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1371,7 +1371,7 @@ static void xt_ddt_unpack_16(
 }
 
 static void xt_ddt_unpack_32(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1379,7 +1379,7 @@ static void xt_ddt_unpack_32(
 }
 
 static void xt_ddt_unpack_64(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
 #pragma acc parallel loop independent deviceptr(src, dst, displs) if (unpack_on_gpu)
   for (size_t i = 0; i < count; ++i)
@@ -1387,7 +1387,7 @@ static void xt_ddt_unpack_64(
 }
 
 static void xt_ddt_unpack_128(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
   int64_t const (*src_)[2] = (int64_t const (*)[2])src;
 #pragma acc parallel loop independent deviceptr(src_, dst, displs) if (unpack_on_gpu)
@@ -1399,7 +1399,7 @@ static void xt_ddt_unpack_128(
 }
 
 static void xt_ddt_unpack_256(
-  size_t count, size_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, int unpack_on_gpu) {
   int64_t const (*src_)[4] = (int64_t const(*)[4])src;
 #pragma acc parallel loop independent deviceptr(src_, dst, displs) if (unpack_on_gpu)
@@ -1423,12 +1423,12 @@ void xt_ddt_unpack_internal(
 
     size_t element_size = ddt->data[i].element_size;
     size_t displ_count = ddt->data[i].displ_count;
-    size_t * displs = ddt->data[i].displs;
+    ssize_t * displs = ddt->data[i].displs;
 
 #ifdef _OPENACC
     if (on_gpu)
       displs =
-        (size_t*)acc_copyin((h_void*)displs, displ_count * sizeof(size_t));
+        (ssize_t*)acc_copyin((h_void*)displs, displ_count * sizeof(ssize_t));
 #endif
 
     switch (element_size) {
