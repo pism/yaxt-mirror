@@ -180,6 +180,8 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
     Xt_ddt send_ddt = xt_ddt_from_mpi_ddt(send_msgs[i].datatype);
     size_t buffer_size = xt_ddt_get_pack_size_internal(send_ddt);
     buffers[nrecv + i] = xt_ddt_malloc(buffer_size, src_data_memtype);
+//! \TODO merge all packing kernels into single kernel call -> less overhead,
+//!       but not overlapping of packing and sending
     xt_ddt_pack_internal(
       send_ddt, (void*)src_data, buffers[nrecv + i], src_data_memtype);
     xt_mpi_call(MPI_Isend(buffers[nrecv + i], (int)buffer_size, MPI_BYTE,
@@ -212,7 +214,7 @@ xt_exchanger_irecv_isend_ddt_packed_new(int nsend, int nrecv,
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
    */
-  return 
+  return
     xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
                                  comm, tag_offset,
                                  xt_exchanger_irecv_isend_ddt_packed_s_exchange,

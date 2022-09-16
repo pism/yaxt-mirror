@@ -132,6 +132,7 @@ Xt_request xt_request_msgs_ddt_packed_new(int n_requests,
 
 static void unpack_data(Xt_request_msgs_ddt_packed request_msgs_ddt_packed) {
 
+//! \TODO merge all unpacking kernels into single kernel call -> less overhead
   int n_packed = request_msgs_ddt_packed->n_packed;
   for (int i = 0; i < n_packed; ++i)
     xt_ddt_unpack_internal(
