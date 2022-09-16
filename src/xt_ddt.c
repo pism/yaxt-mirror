@@ -54,11 +54,11 @@
 #include <cuda_runtime_api.h>
 #include <openacc.h>
 
-#define STR(s) #s
-#define XtPragmaACC(args) _Pragma(STR(acc args))
-
 #define h_void void
 #define d_void void
+
+#define STR(s) #s
+#define XtPragmaACC(args) _Pragma(STR(acc args))
 #else
 #define XtPragmaACC(args)
 #endif
@@ -1035,11 +1035,13 @@ static int xt_ddt_cleanup_internal_keyval_delete(
   xt_mpi_call(
     MPI_Comm_free_keyval(&xt_ddt_cleanup_internal_keyval), comm);
   xt_ddt_cleanup_internal_keyval = MPI_KEYVAL_INVALID;
-  
+
   return MPI_SUCCESS;
 }
 
 Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
+
+NVTX_PUSH(xt_ddt_from_mpi_ddt);
 
   // if xt_ddt_internal_keyval has not yet been created
   if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID) {
@@ -1075,7 +1077,7 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
       mpi_ddt, xt_ddt_internal_keyval, &attr, &flag), Xt_default_comm);
 
   // if the MPI datatype had already a xt_ddt attached to itself
-  if (flag) return (Xt_ddt)attr;
+  if (flag) {NVTX_POP; return (Xt_ddt)attr;}
 
   // generate a xt_ddt from the MPI datatype
   Xt_ddt ddt = xt_ddt_new(mpi_ddt);
@@ -1085,7 +1087,7 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
     MPI_Type_set_attr(
       mpi_ddt, xt_ddt_internal_keyval, (void*)ddt), Xt_default_comm);
 
-  return ddt;
+  NVTX_POP; return ddt;
 }
 
 size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt) {
@@ -1250,9 +1252,12 @@ do{                                                          \
 
 enum xt_ddt_memtype xt_ddt_get_memtype(const void *ptr) {
 
+  NVTX_PUSH(xt_ddt_get_memtype);
+
   struct cudaPointerAttributes attributes;
   CUDA_ERROR_CHECK(cudaPointerGetAttributes(&attributes, ptr));
-  return
+
+  NVTX_POP; return
     ((attributes.type == cudaMemoryTypeDevice)?
        (XT_DDT_DEVICE_MEM):(XT_DDT_HOST_MEM));
 }
@@ -1264,6 +1269,8 @@ enum xt_ddt_memtype xt_ddt_get_memtype(const void *XT_UNUSED(ptr)) {
 
 void xt_ddt_pack_internal(
   Xt_ddt ddt, void const * src, void * dst, enum xt_ddt_memtype memtype) {
+
+  NVTX_PUSH(xt_ddt_pack_internal);
 
   size_t dst_offset = 0;
   int on_gpu = memtype == XT_DDT_DEVICE_MEM;
@@ -1321,9 +1328,13 @@ void xt_ddt_pack_internal(
 
     dst_offset += displ_count * element_size;
   }
+  NVTX_POP;
 }
 
 void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+  NVTX_PUSH(xt_ddt_pack);
+  NVTX_PUSH(xt_ddt_pack:initialise);
 
 #ifdef _OPENACC
   enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
@@ -1339,12 +1350,16 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     dst = xt_ddt_malloc(pack_size, src_memtype);
   }
 
+  NVTX_POP; //xt_ddt_pack:initialise
+
 #else
   enum xt_ddt_memtype src_memtype = XT_DDT_HOST_MEM;
 #endif
 
   xt_ddt_pack_internal(
     xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
+
+  NVTX_PUSH(xt_ddt_pack:finalise);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types
@@ -1353,6 +1368,9 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
     xt_ddt_free(dst, src_memtype);
   }
 #endif
+
+  NVTX_POP; // xt_ddt_pack:finalise
+  NVTX_POP; // xt_ddt_pack
 }
 
 static void xt_ddt_unpack_8(
@@ -1416,6 +1434,8 @@ XtPragmaACC(parallel loop independent deviceptr(src_, dst, displs) if (unpack_on
 void xt_ddt_unpack_internal(
   Xt_ddt ddt, void const * src, void * dst, enum xt_ddt_memtype memtype) {
 
+  NVTX_PUSH(xt_ddt_unpack_internal);
+
   size_t src_offset = 0;
   int on_gpu = memtype == XT_DDT_DEVICE_MEM;
 
@@ -1472,9 +1492,13 @@ void xt_ddt_unpack_internal(
 
     src_offset += displ_count * element_size;
   }
+  NVTX_POP;
 }
 
 void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+
+  NVTX_PUSH(xt_ddt_unpack);
+  NVTX_PUSH(xt_ddt_unpack:initialise);
 
 #ifdef _OPENACC
   enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
@@ -1494,13 +1518,20 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   enum xt_ddt_memtype dst_memtype = XT_DDT_HOST_MEM;
 #endif
 
+  NVTX_POP; // xt_ddt_unpack:initialise
+
   xt_ddt_unpack_internal(
     xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
+
+  NVTX_PUSH(xt_ddt_unpack:finalise);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) xt_ddt_free((void*)src, dst_memtype);
 #endif
+
+  NVTX_POP; // xt_ddt_unpack:finalise
+  NVTX_POP; // xt_ddt_unpack
 }
 
 /*

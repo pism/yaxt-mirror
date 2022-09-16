@@ -69,8 +69,10 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
   const void *src_data, void *dst_data,
   int nsend, int nrecv,
   const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
-  int tag_offset, MPI_Comm comm)
-{
+  int tag_offset, MPI_Comm comm) {
+
+  NVTX_PUSH(xt_exchanger_irecv_isend_ddt_packed_s_exchange);
+
   enum { AUTO_ALLOC_SIZE = 32, };
   MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
   size_t *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
@@ -147,6 +149,7 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     free(buffer_sizes);
     free(requests);
   }
+  NVTX_POP; // xt_exchanger_irecv_isend_ddt_packed_s_exchange
 }
 
 static void
@@ -156,6 +159,8 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
                                                const struct Xt_redist_msg * recv_msgs,
                                                int tag_offset, MPI_Comm comm,
                                                Xt_request *request) {
+
+  NVTX_PUSH(xt_exchanger_irecv_isend_ddt_packed_a_exchange);
 
   MPI_Request * tmp_requests =
     xmalloc((size_t)(nrecv + nsend) * sizeof (*tmp_requests));
@@ -201,6 +206,8 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
   free(tmp_requests);
 
   *request = requests;
+
+  NVTX_POP; // xt_exchanger_irecv_isend_ddt_packed_a_exchange
 }
 
 Xt_exchanger

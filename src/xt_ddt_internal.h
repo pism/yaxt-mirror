@@ -53,6 +53,19 @@
 
 #include "xt/xt_ddt.h"
 
+#if defined(_OPENACC) && defined(XT_WITH_NVTX)
+
+#include <nvToolsExt.h>
+#define NVTX_PUSH(arg) nvtxRangePush(#arg)
+#define NVTX_POP nvtxRangePop()
+
+#else
+
+#define NVTX_PUSH(arg)
+#define NVTX_POP
+
+#endif
+
 /**
  * Returns a xt_ddt object for the provided MPI datatype.
  * The routine will first check whether there is already a xt_ddt for this
