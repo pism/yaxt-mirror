@@ -168,7 +168,7 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
   Xt_ddt * recv_ddts = xmalloc((size_t)nrecv * sizeof(*recv_ddts));
   for (int i = 0; i < nrecv; ++i) {
     recv_ddts[i] = xt_ddt_from_mpi_ddt(recv_msgs[i].datatype);
-    size_t buffer_size = xt_ddt_get_pack_size(recv_msgs[i].datatype);
+    size_t buffer_size = xt_ddt_get_pack_size_internal(recv_ddts[i]);
     buffers[i] = xt_ddt_malloc(buffer_size, dst_data_memtype);
     xt_mpi_call(MPI_Irecv(buffers[i], (int)buffer_size, MPI_BYTE,
                           recv_msgs[i].rank,
