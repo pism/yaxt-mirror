@@ -1,8 +1,9 @@
 /**
- * @file xt_request_msgs_packed_internal.h
- * @brief internal interfaces for xt_request_msgs_packed
+ * @file xt_request_msgs_ebuf.h
+ * @brief functions to create collection of request handles augmented
+ *        with user-defined buffer
  *
- * @copyright Copyright  (C)  2022 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -44,46 +45,51 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef XT_REQUEST_MSGS_PACKED_INTERNAL_H
-#define XT_REQUEST_MSGS_PACKED_INTERNAL_H
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#ifndef XT_REQUEST_MSGS_EBUF_H
+#define XT_REQUEST_MSGS_EBUF_H
 
 #include <mpi.h>
 
+#include "xt/xt_request.h"
 #include "xt/xt_config.h"
-#include "core/ppm_visibility.h"
+
 
 /**
- * @param n_requests number of requests that can be stored
- * @return Xt_request_msgs object ready for \a n MPI requests
+ * signature of function to be called after all requests of the
+ * xt_request_msgs_ebuf object have finished
  */
-PPM_DSO_INTERNAL Xt_request
-xt_request_msgs_packed_alloc(int n_requests,
-                             MPI_Comm comm,
-                             size_t extra_buf_size,
-                             Xt_config config);
+typedef void (*Xt_request_msgs_ebuf_finalizer)(Xt_request request_msgs,
+                                               void *ebuf);
 
 /**
- * @param request xt_request_msgs_packed object
+ * constructor for message request handle
+ * @param[in] n_requests    number of entries in requests array
+ * @param[in] requests      array containg MPI requests
+ * @param[in] comm          MPI communicator
+ * @remark ownership of the MPI requests is passed to the Xt_request object,
+ *         however the caller remains the owner of the requests array
  */
-PPM_DSO_INTERNAL MPI_Request *
-xt_request_msgs_packed_get_req_ptr(Xt_request request);
+Xt_request
+xt_request_msgs_ebuf_new(int n_requests,
+                         const MPI_Request requests[n_requests],
+                         MPI_Comm comm);
 
-PPM_DSO_INTERNAL void
-xt_request_msgs_packed_set_finalizer(Xt_request request,
-                                     void (*finalizer)(Xt_request, void *));
+/**
+ * customizable constructor for message request handle
+ * @param[in] n_requests    number of entries in requests array
+ * @param[in] requests      array containg MPI requests
+ * @param[in] comm          MPI communicator
+ * @param[in] config        configuration object handle
+ * @remark ownership of the MPI requests is passed to the Xt_request object,
+ *         however the caller remains the owner of the requests array
+ */
+Xt_request
+xt_request_msgs_ebuf_custom_new(int n_requests,
+                                const MPI_Request requests[n_requests],
+                                MPI_Comm comm,
+                                Xt_config config);
 
-PPM_DSO_INTERNAL void *
-xt_request_msgs_packed_get_extra_buf(Xt_request request);
-
-PPM_DSO_INTERNAL MPI_Comm
-xt_request_msgs_packed_get_comm(Xt_request request);
-
-
-#endif
+#endif // XT_REQUEST_MSGS_EBUF_H
 
 /*
  * Local Variables:

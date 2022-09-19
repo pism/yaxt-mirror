@@ -54,8 +54,8 @@
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
-#include "xt/xt_request_msgs_packed.h"
-#include "xt_request_msgs_packed_internal.h"
+#include "xt/xt_request_msgs_ebuf.h"
+#include "xt_request_msgs_ebuf_internal.h"
 #include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
@@ -271,7 +271,7 @@ finalize_packed_a_exchange(Xt_request request, void *buf)
   int nsend = header->nsend,
     nrecv = header->nrecv;
   (void)nsend;
-  MPI_Comm comm = xt_request_msgs_packed_get_comm(request);
+  MPI_Comm comm = xt_request_msgs_ebuf_get_comm(request);
   MPI_Datatype *datatypes = (MPI_Datatype *)
     ((unsigned char *)(header+1) + sizeof (size_t) * ((size_t)nrecv+1));
   void *dst_data = header->dst_data;
@@ -309,16 +309,16 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
     + sizeof (size_t) * ((size_t)nrecv+1)
     + sizeof (MPI_Datatype) * (size_t)nrecv;
   Xt_request requests
-    = xt_request_msgs_packed_alloc(nrecv + nsend, comm,
-                                   inventory_size + buffer_size,
-                                   &xt_default_config);
-  xt_request_msgs_packed_set_finalizer(requests, finalize_packed_a_exchange);
+    = xt_request_msgs_ebuf_alloc(nrecv + nsend, comm,
+                                 inventory_size + buffer_size,
+                                 &xt_default_config);
+  xt_request_msgs_ebuf_set_finalizer(requests, finalize_packed_a_exchange);
 
   MPI_Request *tmp_requests
-    = xt_request_msgs_packed_get_req_ptr(requests);
+    = xt_request_msgs_ebuf_get_req_ptr(requests);
 
   unsigned char *buffer
-    = xt_request_msgs_packed_get_extra_buf(requests);
+    = xt_request_msgs_ebuf_get_extra_buf(requests);
 
   start_packed_transfer(buffer+inventory_size, nrecv, buf_ofs,
                         src_data, nsend, nrecv,
@@ -354,7 +354,7 @@ finalize_packed_a_exchange_mt(Xt_request request, void *buf)
   int nsend = header->nsend,
     nrecv = header->nrecv;
   (void)nsend;
-  MPI_Comm comm = xt_request_msgs_packed_get_comm(request);
+  MPI_Comm comm = xt_request_msgs_ebuf_get_comm(request);
   MPI_Datatype *datatypes = (MPI_Datatype *)
     ((unsigned char *)(header+1) + sizeof (size_t) * ((size_t)nrecv+1));
   void *dst_data = header->dst_data;
@@ -398,17 +398,17 @@ xt_exchanger_irecv_isend_packed_a_exchange_omp(const void *src_data, void *dst_d
   struct Xt_config_ conf = xt_default_config;
   xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
   Xt_request requests
-    = xt_request_msgs_packed_alloc(nrecv + nsend, comm,
-                                   inventory_size + buffer_size, &conf);
-  xt_request_msgs_packed_set_finalizer(
+    = xt_request_msgs_ebuf_alloc(nrecv + nsend, comm,
+                                 inventory_size + buffer_size, &conf);
+  xt_request_msgs_ebuf_set_finalizer(
     requests, finalize_packed_a_exchange_mt);
 #pragma omp parallel firstprivate(requests, inventory_size)
   {
     MPI_Request *prequests
-      = xt_request_msgs_packed_get_req_ptr(requests);
+      = xt_request_msgs_ebuf_get_req_ptr(requests);
 
     unsigned char *buffer
-      = xt_request_msgs_packed_get_extra_buf(requests);
+      = xt_request_msgs_ebuf_get_extra_buf(requests);
 
     int num_threads = omp_get_num_threads(),
       tid = omp_get_thread_num();
@@ -465,8 +465,8 @@ xt_exchanger_irecv_isend_packed_create_omp_share(
   struct Xt_config_ conf = xt_default_config;
   xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
   Xt_request shared_req
-    = xt_request_msgs_packed_alloc(nsend+nrecv, comm,
-                                   inventory_size + buf_size, &conf);
+    = xt_request_msgs_ebuf_alloc(nsend+nrecv, comm,
+                                 inventory_size + buf_size, &conf);
   return (Xt_exchanger_omp_share)shared_req;
 }
 

@@ -1,5 +1,5 @@
 /**
- * @file xt_request_msgs_packed.c
+ * @file xt_request_msgs_ebuf.c
  *
  * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
@@ -59,38 +59,38 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 
-#include "xt/xt_request_msgs_packed.h"
-#include "xt_request_msgs_packed_internal.h"
+#include "xt/xt_request_msgs_ebuf.h"
+#include "xt_request_msgs_ebuf_internal.h"
 #include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_internal.h"
 
-static void xt_request_msgs_packed_wait(Xt_request request);
-static int xt_request_msgs_packed_test(Xt_request request);
+static void xt_request_msgs_ebuf_wait(Xt_request request);
+static int xt_request_msgs_ebuf_test(Xt_request request);
 
 #ifdef _OPENMP
 static void
-xt_request_msgs_packed_wait_omp(Xt_request request);
+xt_request_msgs_ebuf_wait_omp(Xt_request request);
 static int
-xt_request_msgs_packed_test_omp(Xt_request request);
+xt_request_msgs_ebuf_test_omp(Xt_request request);
 #endif
 
-static const struct Xt_request_vtable request_msgs_packed_vtable = {
+static const struct Xt_request_vtable request_msgs_ebuf_vtable = {
 
-  .wait = xt_request_msgs_packed_wait,
-  .test = xt_request_msgs_packed_test,
+  .wait = xt_request_msgs_ebuf_wait,
+  .test = xt_request_msgs_ebuf_test,
 }
 #ifdef _OPENMP
-  , request_msgs_packed_auto_omp_vtable = {
-  .wait = xt_request_msgs_packed_wait_omp,
-  .test = xt_request_msgs_packed_test_omp,
+  , request_msgs_ebuf_auto_omp_vtable = {
+  .wait = xt_request_msgs_ebuf_wait_omp,
+  .test = xt_request_msgs_ebuf_test_omp,
 };
 #endif
 ;
 
-typedef struct Xt_request_msgs_packed_ * Xt_request_msgs_packed;
+typedef struct Xt_request_msgs_ebuf_ * Xt_request_msgs_ebuf;
 
-struct Xt_request_msgs_packed_ {
+struct Xt_request_msgs_ebuf_ {
   const struct Xt_request_vtable *vtable;
   MPI_Comm comm;
   int n_requests;
@@ -102,28 +102,28 @@ struct Xt_request_msgs_packed_ {
 #define no_finalizer ((void (*)(Xt_request, void *))0)
 
 Xt_request
-xt_request_msgs_packed_alloc(int n_requests,
-                             MPI_Comm comm,
-                             size_t extra_buf_size,
-                             Xt_config config)
+xt_request_msgs_ebuf_alloc(int n_requests,
+                           MPI_Comm comm,
+                           size_t extra_buf_size,
+                           Xt_config config)
 {
-  size_t hdr_size = sizeof(struct Xt_request_msgs_packed_),
+  size_t hdr_size = sizeof(struct Xt_request_msgs_ebuf_),
     bufr_size = (size_t)n_requests * sizeof(MPI_Request)
     + (size_t)n_requests * sizeof(int);
   /* round allocation up to next multiple of sizeof (void *) to place
    * beginning of user requested extra buffer */
   size_t ofs = ((hdr_size + bufr_size + sizeof (void *) - 1)
                    & -sizeof(void *));
-  Xt_request_msgs_packed request = xmalloc(ofs + extra_buf_size);
+  Xt_request_msgs_ebuf request = xmalloc(ofs + extra_buf_size);
 #ifndef _OPENMP
   (void)config;
 #else
   int mthread_mode = xt_config_get_redist_mthread_mode(config);
   if (mthread_mode == XT_MT_OPENMP)
-    request->vtable = &request_msgs_packed_auto_omp_vtable;
+    request->vtable = &request_msgs_ebuf_auto_omp_vtable;
   else
 #endif
-  request->vtable = &request_msgs_packed_vtable;
+  request->vtable = &request_msgs_ebuf_vtable;
   request->comm = comm;
   request->n_requests = n_requests;
   request->finalizer = no_finalizer;
@@ -132,28 +132,28 @@ xt_request_msgs_packed_alloc(int n_requests,
 }
 
 static inline void *
-extra_buf(Xt_request_msgs_packed request_msgs_packed)
+extra_buf(Xt_request_msgs_ebuf request_msgs_ebuf)
 {
-  size_t ofs = request_msgs_packed->extra_buf_ofs;
-  return (unsigned char *)request_msgs_packed + ofs;
+  size_t ofs = request_msgs_ebuf->extra_buf_ofs;
+  return (unsigned char *)request_msgs_ebuf + ofs;
 }
 
-Xt_request xt_request_msgs_packed_new(int n_requests,
+Xt_request xt_request_msgs_ebuf_new(int n_requests,
                                       const MPI_Request requests[n_requests],
                                       MPI_Comm comm) {
-  return xt_request_msgs_packed_custom_new(n_requests, requests, comm,
+  return xt_request_msgs_ebuf_custom_new(n_requests, requests, comm,
                                            &xt_default_config);
 }
 
 Xt_request
-xt_request_msgs_packed_custom_new(int n_requests,
+xt_request_msgs_ebuf_custom_new(int n_requests,
                                   const MPI_Request requests[n_requests],
                                   MPI_Comm comm,
                                   Xt_config config)
 {
   assert(n_requests >= 0);
-  Xt_request_msgs_packed request
-    = (Xt_request_msgs_packed)xt_request_msgs_packed_alloc(
+  Xt_request_msgs_ebuf request
+    = (Xt_request_msgs_ebuf)xt_request_msgs_ebuf_alloc(
       n_requests, comm, 0, config);
   memcpy(request->requests, requests,
          (size_t)n_requests * sizeof(*request->requests));
@@ -162,17 +162,17 @@ xt_request_msgs_packed_custom_new(int n_requests,
 }
 
 static void
-finish_requests(Xt_request_msgs_packed request_msgs_packed)
+finish_requests(Xt_request_msgs_ebuf request_msgs_ebuf)
 {
-  if (request_msgs_packed->finalizer != no_finalizer)
-    request_msgs_packed->finalizer((Xt_request)request_msgs_packed,
-                                   extra_buf(request_msgs_packed));
-  free(request_msgs_packed);
+  if (request_msgs_ebuf->finalizer != no_finalizer)
+    request_msgs_ebuf->finalizer((Xt_request)request_msgs_ebuf,
+                                   extra_buf(request_msgs_ebuf));
+  free(request_msgs_ebuf);
 }
 
-static void xt_request_msgs_packed_wait(Xt_request request) {
+static void xt_request_msgs_ebuf_wait(Xt_request request) {
 
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  Xt_request_msgs_ebuf request_msgs_ebuf = (Xt_request_msgs_ebuf)request;
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -181,104 +181,104 @@ static void xt_request_msgs_packed_wait(Xt_request request) {
 #pragma GCC diagnostic ignored "-Wstringop-overread"
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
-  xt_mpi_call(MPI_Waitall(request_msgs_packed->n_requests,
-                          request_msgs_packed->requests, MPI_STATUSES_IGNORE),
-              request_msgs_packed->comm);
+  xt_mpi_call(MPI_Waitall(request_msgs_ebuf->n_requests,
+                          request_msgs_ebuf->requests, MPI_STATUSES_IGNORE),
+              request_msgs_ebuf->comm);
 #if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
 #pragma GCC diagnostic pop
 #endif
-  finish_requests(request_msgs_packed);
+  finish_requests(request_msgs_ebuf);
 }
 
-static int xt_request_msgs_packed_test(Xt_request request) {
+static int xt_request_msgs_ebuf_test(Xt_request request) {
 
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  Xt_request_msgs_ebuf request_msgs_ebuf = (Xt_request_msgs_ebuf)request;
 
   int flag =
-    xt_mpi_test_some(&(request_msgs_packed->n_requests),
-                     request_msgs_packed->requests,
-                     (int *)(request_msgs_packed->requests
-                             + request_msgs_packed->n_requests),
-                     request_msgs_packed->comm);
+    xt_mpi_test_some(&(request_msgs_ebuf->n_requests),
+                     request_msgs_ebuf->requests,
+                     (int *)(request_msgs_ebuf->requests
+                             + request_msgs_ebuf->n_requests),
+                     request_msgs_ebuf->comm);
 
   if (flag)
-    finish_requests(request_msgs_packed);
+    finish_requests(request_msgs_ebuf);
 
   return flag;
 }
 
 MPI_Request *
-xt_request_msgs_packed_get_req_ptr(Xt_request request)
+xt_request_msgs_ebuf_get_req_ptr(Xt_request request)
 {
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  Xt_request_msgs_ebuf request_msgs_ebuf = (Xt_request_msgs_ebuf)request;
 #ifndef _OPENMP
-  assert(request->vtable == &request_msgs_packed_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable);
 #else
-  assert(request->vtable == &request_msgs_packed_vtable
-         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable
+         || request->vtable == &request_msgs_ebuf_auto_omp_vtable);
 #endif
-  return request_msgs_packed->requests;
+  return request_msgs_ebuf->requests;
 }
 
 MPI_Comm
-xt_request_msgs_packed_get_comm(Xt_request request)
+xt_request_msgs_ebuf_get_comm(Xt_request request)
 {
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  Xt_request_msgs_ebuf request_msgs_ebuf = (Xt_request_msgs_ebuf)request;
 #ifndef _OPENMP
-  assert(request->vtable == &request_msgs_packed_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable);
 #else
-  assert(request->vtable == &request_msgs_packed_vtable
-         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable
+         || request->vtable == &request_msgs_ebuf_auto_omp_vtable);
 #endif
-  return request_msgs_packed->comm;
+  return request_msgs_ebuf->comm;
 }
 
 void
-xt_request_msgs_packed_set_finalizer(Xt_request request,
-                                     void (*finalizer)(Xt_request, void *))
+xt_request_msgs_ebuf_set_finalizer(Xt_request request,
+                                   Xt_request_msgs_ebuf_finalizer finalizer)
 {
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  Xt_request_msgs_ebuf request_msgs_ebuf = (Xt_request_msgs_ebuf)request;
 #ifndef _OPENMP
-  assert(request->vtable == &request_msgs_packed_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable);
 #else
-  assert(request->vtable == &request_msgs_packed_vtable
-         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable
+         || request->vtable == &request_msgs_ebuf_auto_omp_vtable);
 #endif
-  request_msgs_packed->finalizer = finalizer;
+  request_msgs_ebuf->finalizer = finalizer;
 }
 
 void *
-xt_request_msgs_packed_get_extra_buf(Xt_request request)
+xt_request_msgs_ebuf_get_extra_buf(Xt_request request)
 {
-  Xt_request_msgs_packed request_msgs_packed = (Xt_request_msgs_packed)request;
+  Xt_request_msgs_ebuf request_msgs_ebuf = (Xt_request_msgs_ebuf)request;
 #ifndef _OPENMP
-  assert(request->vtable == &request_msgs_packed_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable);
 #else
-  assert(request->vtable == &request_msgs_packed_vtable
-         || request->vtable == &request_msgs_packed_auto_omp_vtable);
+  assert(request->vtable == &request_msgs_ebuf_vtable
+         || request->vtable == &request_msgs_ebuf_auto_omp_vtable);
 #endif
-  return extra_buf(request_msgs_packed);
+  return extra_buf(request_msgs_ebuf);
 }
 
 
 #ifdef _OPENMP
 static void
-finish_requests_mt(Xt_request_msgs_packed request_msgs_packed)
+finish_requests_mt(Xt_request_msgs_ebuf request_msgs_ebuf)
 {
-  if (request_msgs_packed->finalizer != no_finalizer)
-    request_msgs_packed->finalizer((Xt_request)request_msgs_packed,
-                                   extra_buf(request_msgs_packed));
+  if (request_msgs_ebuf->finalizer != no_finalizer)
+    request_msgs_ebuf->finalizer((Xt_request)request_msgs_ebuf,
+                                   extra_buf(request_msgs_ebuf));
 #pragma omp barrier
 #pragma omp master
-  free(request_msgs_packed);
+  free(request_msgs_ebuf);
 }
 
 static void
-xt_request_msgs_packed_wait_omp(Xt_request request)
+xt_request_msgs_ebuf_wait_omp(Xt_request request)
 {
 #pragma omp parallel
   {
-    Xt_request_msgs_packed request_msgs = (Xt_request_msgs_packed)request;
+    Xt_request_msgs_ebuf request_msgs = (Xt_request_msgs_ebuf)request;
     int num_threads = omp_get_num_threads(),
       tid = omp_get_thread_num();
     int nreq = request_msgs->n_requests,
@@ -303,12 +303,12 @@ xt_request_msgs_packed_wait_omp(Xt_request request)
 }
 
 static int
-xt_request_msgs_packed_test_omp(Xt_request request)
+xt_request_msgs_ebuf_test_omp(Xt_request request)
 {
   bool flag = true;
 #pragma omp parallel
   {
-    Xt_request_msgs_packed request_msgs = (Xt_request_msgs_packed)request;
+    Xt_request_msgs_ebuf request_msgs = (Xt_request_msgs_ebuf)request;
 
     int *ops_completed_buffer
       = (int *)(request_msgs->requests + request_msgs->n_requests);

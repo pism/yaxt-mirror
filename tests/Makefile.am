@@ -172,7 +172,7 @@ endif
 test_exchanger_parallel_LDADD += ../src/xt_exchanger.lo \
 	../src/xt_redist_msg.lo \
 	../src/xt_request_msgs.lo \
-	../src/xt_request_msgs_packed.lo \
+	../src/xt_request_msgs_ebuf.lo \
 	../src/xt_request.lo \
 	../src/xt_mpi.lo \
 	../src/core/xmalloc.lo \
