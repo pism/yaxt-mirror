@@ -727,7 +727,7 @@ sub buildNameSubst(\@)
       # don't influence compiler behaviour, feel free to submit more
       my %mostlyHarmless =
           map { ($_, undef) }
-              qw(_LMFILES_
+              qw(_LMFILES_ __LMFILES__
                  _LMFILES__modshare
                  ALLINEA_LICENCE_DIR ALLINEA_NO_TREESERVER_KILL_TARGET
                  ALTERNATE_EDITOR COLORTERM
@@ -752,6 +752,7 @@ sub buildNameSubst(\@)
                  MODULEPATH MODULEPATH_modshare MODULE_VERSION
                  MODULE_VERSION_STACK
                  MUTT_XTITLES
+                 OLDPWD
                  PAGER PATH_modshare PROFILEREAD PROMAGIC_USEGLX
                  QT_ACCESSIBILITY QT_LINUX_ACCESSIBILITY_ALWAYS_ON
                  QT_QPA_PLATFORMTHEME
