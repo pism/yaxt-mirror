@@ -53,6 +53,20 @@
 #include "xt/xt_request.h"
 #include "xt/xt_config.h"
 
+/**
+ * function called after the xt_request_msgs_ebuf object has been
+ * created to actually create the requests
+ * @param requests_msgs handle of requests just created
+ * @param requests points to requests array which must be initialized
+ * in this function
+ * @param ebuf points to memory of extra_buf_size chars, aligned like
+ * a data pointer
+ */
+typedef void (*Xt_fill_ebuf_requests)(Xt_request requests_msgs,
+                                      MPI_Request *requests,
+                                      void *ebuf,
+                                      void *data,
+                                      MPI_Comm comm);
 
 /**
  * signature of function to be called after all requests of the
@@ -62,30 +76,48 @@ typedef void (*Xt_request_msgs_ebuf_finalizer)(Xt_request request_msgs,
                                                void *ebuf);
 
 /**
- * constructor for message request handle
- * @param[in] n_requests    number of entries in requests array
- * @param[in] requests      array containg MPI requests
- * @param[in] comm          MPI communicator
- * @remark ownership of the MPI requests is passed to the Xt_request object,
- *         however the caller remains the owner of the requests array
+ * constructor for message request handle associated with extra buffer
+ * @param[in] n_requests     number of requests needed
+ * @param[in] extra_buf_size amount of extra bytes to allocate and
+ *                           make available to \a init
+ * @param[in] init           function to call before returning which
+ *                           will then initialize the requests array
+ *                           completely and the extra buffer as
+ *                           needed
+ * @param[in] data           pointer to caller-defined additional information
+ *                           needed by and passed to init
+ * @param[in] comm           MPI communicator
+ * @return request handle associated with extra buffer
  */
 Xt_request
 xt_request_msgs_ebuf_new(int n_requests,
-                         const MPI_Request requests[n_requests],
+                         size_t extra_buf_size,
+                         Xt_fill_ebuf_requests init,
+                         void *data,
+                         Xt_request_msgs_ebuf_finalizer finalize,
                          MPI_Comm comm);
 
 /**
  * customizable constructor for message request handle
  * @param[in] n_requests    number of entries in requests array
- * @param[in] requests      array containg MPI requests
- * @param[in] comm          MPI communicator
- * @param[in] config        configuration object handle
- * @remark ownership of the MPI requests is passed to the Xt_request object,
- *         however the caller remains the owner of the requests array
+ * @param[in] extra_buf_size amount of extra bytes to allocate and
+ *                           make available to \a init
+ * @param[in] init           function to call before returning which
+ *                           will then initialize the requests array
+ *                           completely and the extra buffer as
+ *                           needed
+ * @param[in] data           pointer to caller-defined additional information
+ *                           needed by and passed to init
+ * @param[in] comm           MPI communicator
+ * @param[in] config         configuration object handle
+ * @return request handle associated with extra buffer
  */
 Xt_request
 xt_request_msgs_ebuf_custom_new(int n_requests,
-                                const MPI_Request requests[n_requests],
+                                size_t extra_buf_size,
+                                Xt_fill_ebuf_requests init,
+                                void *data,
+                                Xt_request_msgs_ebuf_finalizer finalize,
                                 MPI_Comm comm,
                                 Xt_config config);
 

@@ -138,26 +138,33 @@ extra_buf(Xt_request_msgs_ebuf request_msgs_ebuf)
   return (unsigned char *)request_msgs_ebuf + ofs;
 }
 
-Xt_request xt_request_msgs_ebuf_new(int n_requests,
-                                      const MPI_Request requests[n_requests],
-                                      MPI_Comm comm) {
-  return xt_request_msgs_ebuf_custom_new(n_requests, requests, comm,
-                                           &xt_default_config);
+Xt_request
+xt_request_msgs_ebuf_new(int n_requests,
+                         size_t extra_buf_size,
+                         Xt_fill_ebuf_requests init,
+                         void *data,
+                         Xt_request_msgs_ebuf_finalizer finalize,
+                         MPI_Comm comm) {
+  return xt_request_msgs_ebuf_custom_new(n_requests, extra_buf_size, init, data,
+                                         finalize, comm, &xt_default_config);
 }
 
 Xt_request
 xt_request_msgs_ebuf_custom_new(int n_requests,
-                                  const MPI_Request requests[n_requests],
-                                  MPI_Comm comm,
-                                  Xt_config config)
+                                size_t extra_buf_size,
+                                Xt_fill_ebuf_requests init,
+                                void *data,
+                                Xt_request_msgs_ebuf_finalizer finalize,
+                                MPI_Comm comm,
+                                Xt_config config)
 {
   assert(n_requests >= 0);
   Xt_request_msgs_ebuf request
     = (Xt_request_msgs_ebuf)xt_request_msgs_ebuf_alloc(
-      n_requests, comm, 0, config);
-  memcpy(request->requests, requests,
-         (size_t)n_requests * sizeof(*request->requests));
-
+      n_requests, comm, extra_buf_size, config);
+  xt_request_msgs_ebuf_set_finalizer((Xt_request)request, finalize);
+  init((Xt_request)request, request->requests, extra_buf(request),
+       data, comm);
   return (Xt_request)request;
 }
 
