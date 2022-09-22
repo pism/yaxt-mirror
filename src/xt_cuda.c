@@ -278,16 +278,38 @@ static int load_cuda_library(void) {
 
   } else {
 
-    // warn user about failed loading of CUDA library
-    fprintf(
-      stderr,
-      "-----------------------------------------------------------------------\n"
-      "WARNING: yaxt was compiled with CUDA-support, but the library could not\n"
-      "         be loaded. CUDA-support will be deactivated. Try setting\n"
-      "         LD_LIBRARY_PATH to the location of libcuda.so.1 or set RPATH\n"
-      "         accordingly.\n"
-      "-----------------------------------------------------------------------\n"
-      );
+    int print_warning = 1;
+
+    // check whether we are supposed to write a warning or not
+    char const * cuda_warning_env =
+      getenv("XT_CUDA_WARN_ON_MISSING_LIBCUDA");
+
+    if (cuda_warning_env) {
+      if (!strcmp(cuda_warning_env, "0")) print_warning = 0;
+      else if (!strcmp(cuda_warning_env, "1")) print_warning = 1;
+      else {
+        Xt_abort(
+          Xt_default_comm,
+          "invalid value of XT_CUDA_WARN_ON_MISSING_LIBCUDA "
+          "environment variable (has to be \"0\" or \"1\")",
+          __FILE__, __LINE__);
+      }
+    }
+
+    if (print_warning) {
+      // warn user about failed loading of CUDA library
+      fprintf(
+        stderr,
+        "-----------------------------------------------------------------------\n"
+        "WARNING: yaxt was compiled with CUDA-support, but the library could not\n"
+        "         be loaded. CUDA-support will be deactivated. Try setting\n"
+        "         LD_LIBRARY_PATH to the location of libcuda.so.1 or set RPATH\n"
+        "         accordingly.\n"
+        "         To suppress this message set the\n"
+        "         XT_CUDA_WARN_ON_MISSING_LIBCUDA environment variable to \"0\"\n"
+        "-----------------------------------------------------------------------\n"
+        );
+    }
   }
 
   return load_successfull;
