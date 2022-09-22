@@ -1424,13 +1424,10 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   enum xt_memtype src_memtype = xt_gpu_get_memtype(src);
   enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
 
-  size_t pack_size;
-  void const * orig_src;
-
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
-    pack_size = xt_ddt_get_pack_size(mpi_ddt);
-    orig_src = src;
+    size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
+    void const * orig_src = src;
     src = xt_gpu_malloc(pack_size, dst_memtype);
     xt_gpu_memcpy((void*)src, orig_src, pack_size, dst_memtype, src_memtype);
   }
