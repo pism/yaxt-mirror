@@ -52,6 +52,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_gpu.h"
+#include "xt_cuda.h"
 
 static void * default_malloc(size_t alloc_size, enum xt_memtype memtype);
 static void default_free(void * ptr, enum xt_memtype memtype);
@@ -71,21 +72,13 @@ static struct xt_gpu_vtable vtable = {
   .instr_pop   = default_instr_pop,
 };
 
+void xt_gpu_init() {
 
-void xt_gpu_set_vtable(struct xt_gpu_vtable vtable_) {
-
-  if ((vtable_.malloc == NULL) ||
-      (vtable_.free == NULL) ||
-      (vtable_.memcpy == NULL) ||
-      (vtable_.get_memtype == NULL) ||
-      (vtable_.instr_push == NULL) ||
-      (vtable_.instr_pop == NULL))
-    Xt_abort(
-      Xt_default_comm,
-      "ERROR(xt_gpu_set_vtable): invalid vtable", __FILE__, __LINE__);
-
-  vtable = vtable_;
-};
+#ifdef HAVE_CUDA
+  struct xt_gpu_vtable const * cuda_vtable = xt_cuda_init();
+  if (cuda_vtable != NULL) vtable = *cuda_vtable;
+#endif
+}
 
 #define STR(s) #s
 #define CHECK_FOR_HOST_MEM(type)                             \

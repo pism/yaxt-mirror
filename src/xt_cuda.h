@@ -49,12 +49,14 @@
 #ifndef XT_CUDA_H
 #define XT_CUDA_H
 
+#include "xt/xt_gpu.h"
+
 /**
- * Initialises CUDA and sets vtable of xt_gpu if it was successfull
- * @return 1 -> successfull\n
-           0 -> failed
+ * Initialises CUDA
+ * @return NULL if CUDA could not be initialised\n
+ *         otherwise a valid vtable is returned
  */
-int xt_cuda_init(void);
+struct xt_gpu_vtable const * xt_cuda_init(void);
 
 #endif // XT_CUDA_H
 

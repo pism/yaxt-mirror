@@ -61,6 +61,8 @@
 
 #endif
 
+#include <stddef.h>
+
 enum xt_memtype {
   XT_MEMTYPE_HOST,
   XT_MEMTYPE_DEVICE,
@@ -80,10 +82,10 @@ struct xt_gpu_vtable {
 };
 
 /**
- * set function table to be used by the xt_gpu routines
- * @param[in] vtable function table
+ * initialises xt_gpu
+ * @remark if yaxt was compiled with CUDA support, xt_gpu will try to use it
  */
-void xt_gpu_set_vtable(struct xt_gpu_vtable vtable);
+void xt_gpu_init();
 
 /**
  * allocates memory of the specified type

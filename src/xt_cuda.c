@@ -315,35 +315,30 @@ static int load_cuda_library(void) {
   return load_successfull;
 }
 
-int xt_cuda_init(void) {
-
-  if (load_cuda_library()) {
-
-    struct xt_gpu_vtable
-      cuda_vtable = {
-        .malloc =      xt_cuda_malloc,
-        .free =        xt_cuda_free,
-        .memcpy =      xt_cuda_memcpy,
-        .get_memtype = xt_cuda_get_memtype,
+static struct xt_gpu_vtable const cuda_vtable = {
+  .malloc      = xt_cuda_malloc,
+  .free        = xt_cuda_free,
+  .memcpy      = xt_cuda_memcpy,
+  .get_memtype = xt_cuda_get_memtype,
 #ifdef XT_CUDA_NVTX_ENABLE
-        .instr_push =  nvtxRangePush,
-        .instr_pop =   nvtxRangePop,
+  .instr_push =  nvtxRangePush,
+  .instr_pop =   nvtxRangePop,
 #else
-        .instr_push =  dummy_instr_push,
-        .instr_pop =   dummy_instr_pop,
+  .instr_push =  dummy_instr_push,
+  .instr_pop =   dummy_instr_pop,
 #endif
-      };
-    xt_gpu_set_vtable(cuda_vtable);
-    return 1;
-  } else {
-    return 0;
-  }
+};
+
+struct xt_gpu_vtable const * xt_cuda_init(void) {
+
+  if (load_cuda_library()) return &cuda_vtable;
+  else return NULL;
 }
 
 #else // HAVE_CUDA
 
-int xt_cuda_init(void) {
-  return 0;
+struct xt_gpu_vtable const * xt_cuda_init(void) {
+  return NULL;
 }
 
 #endif // HAVE_CUDA
