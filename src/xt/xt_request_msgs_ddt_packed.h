@@ -50,6 +50,7 @@
 
 #include "xt/xt_request.h"
 #include "xt/xt_ddt.h"
+#include "xt/xt_gpu.h"
 
 /**
  * constructor for message request handle
@@ -82,8 +83,8 @@ Xt_request xt_request_msgs_ddt_packed_new(int n_requests,
                                           void *packed_data[n_packed],
                                           void *tmp_buffers[n_tmp_buffers],
                                           void * unpacked_data,
-                                          enum xt_ddt_memtype pack_memtype,
-                                          enum xt_ddt_memtype tmp_memtype);
+                                          enum xt_memtype pack_memtype,
+                                          enum xt_memtype tmp_memtype);
 
 #endif // XT_REQUEST_MSGS_DDT_PACKED_H
 

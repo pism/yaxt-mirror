@@ -51,7 +51,6 @@
 #include <mpi.h>
 
 #ifdef _OPENACC
-#include <cuda_runtime_api.h>
 #include <openacc.h>
 
 #define h_void void
@@ -1041,7 +1040,7 @@ static int xt_ddt_cleanup_internal_keyval_delete(
 
 Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
 
-NVTX_PUSH(xt_ddt_from_mpi_ddt);
+  XT_GPU_INSTR_PUSH(xt_ddt_from_mpi_ddt);
 
   // if xt_ddt_internal_keyval has not yet been created
   if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID) {
@@ -1077,7 +1076,7 @@ NVTX_PUSH(xt_ddt_from_mpi_ddt);
       mpi_ddt, xt_ddt_internal_keyval, &attr, &flag), Xt_default_comm);
 
   // if the MPI datatype had already a xt_ddt attached to itself
-  if (flag) {NVTX_POP; return (Xt_ddt)attr;}
+  if (flag) {XT_GPU_INSTR_POP; return (Xt_ddt)attr;}
 
   // generate a xt_ddt from the MPI datatype
   Xt_ddt ddt = xt_ddt_new(mpi_ddt);
@@ -1087,7 +1086,7 @@ NVTX_PUSH(xt_ddt_from_mpi_ddt);
     MPI_Type_set_attr(
       mpi_ddt, xt_ddt_internal_keyval, (void*)ddt), Xt_default_comm);
 
-  NVTX_POP; return ddt;
+  XT_GPU_INSTR_POP; return ddt;
 }
 
 size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt) {
@@ -1098,88 +1097,6 @@ size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt) {
 size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
 
   return xt_ddt_get_pack_size_internal(xt_ddt_from_mpi_ddt(mpi_ddt));
-}
-
-void * xt_ddt_malloc(
-  size_t alloc_size, enum xt_ddt_memtype memtype) {
-
-  switch (memtype) {
-    default:
-      Xt_abort(
-        Xt_default_comm,
-        "ERROR(xt_ddt_malloc): unsupported memory type",
-        __FILE__, __LINE__);
-      return NULL;
-    case (XT_DDT_HOST_MEM):
-      return xmalloc(alloc_size);
-    case (XT_DDT_DEVICE_MEM):
-      return acc_malloc(alloc_size);
-  }
-}
-
-void xt_ddt_free(void * ptr, enum xt_ddt_memtype memtype) {
-
-  switch (memtype) {
-    default:
-      Xt_abort(
-        Xt_default_comm,
-        "ERROR(xt_ddt_free): unsupported memory type",
-        __FILE__, __LINE__);
-      break;;
-    case (XT_DDT_HOST_MEM):
-      free(ptr);
-      break;
-    case (XT_DDT_DEVICE_MEM):
-      acc_free(ptr);
-      break;
-  }
-}
-
-void xt_ddt_memcpy(
-  void * dst, void const * src, size_t buffer_size,
-  enum xt_ddt_memtype dst_memtype, enum xt_ddt_memtype src_memtype) {
-
-  if (src_memtype == dst_memtype) {
-    switch (src_memtype) {
-      default:
-        Xt_abort(
-          Xt_default_comm,
-          "ERROR(xt_ddt_memcpy): unsupported memory type",
-          __FILE__, __LINE__);
-        break;
-      case (XT_DDT_HOST_MEM):
-        memcpy(dst, src, buffer_size);
-        break;
-      case (XT_DDT_DEVICE_MEM):
-        acc_memcpy_device(dst, (void*)src, buffer_size);
-        break;
-    }
-  } else {
-    switch (src_memtype) {
-      default:
-        Xt_abort(
-          Xt_default_comm,
-          "ERROR(xt_ddt_memcpy): unsupported source memory type",
-          __FILE__, __LINE__);
-        break;
-      case (XT_DDT_HOST_MEM):
-        if (dst_memtype != XT_DDT_DEVICE_MEM)
-          Xt_abort(
-            Xt_default_comm,
-            "ERROR(xt_ddt_memcpy): unsupported destination memory type",
-            __FILE__, __LINE__);
-        acc_memcpy_to_device(dst, (void*)src, buffer_size);
-        break;
-      case (XT_DDT_DEVICE_MEM):
-        if (dst_memtype != XT_DDT_HOST_MEM)
-          Xt_abort(
-            Xt_default_comm,
-            "ERROR(xt_ddt_memcpy): unsupported destination memory type",
-            __FILE__, __LINE__);
-        acc_memcpy_from_device(dst, (void*)src, buffer_size);
-        break;
-    }
-  }
 }
 
 static void xt_ddt_pack_8(
@@ -1238,42 +1155,13 @@ XtPragmaACC(loop independent)
   }
 }
 
-#ifdef _OPENACC
-#define CUDA_ERROR_CHECK(ret)                                \
-do{                                                          \
-    cudaError_t err = ret;                                   \
-    if(err != cudaSuccess)                                   \
-    {                                                        \
-      fprintf(stderr, "Cuda error %d %s:: %s\n",             \
-              __LINE__, __func__, cudaGetErrorString(err));  \
-      exit(EXIT_FAILURE);                                    \
-    }                                                        \
-}while(0);
-
-enum xt_ddt_memtype xt_ddt_get_memtype(const void *ptr) {
-
-  NVTX_PUSH(xt_ddt_get_memtype);
-
-  struct cudaPointerAttributes attributes;
-  CUDA_ERROR_CHECK(cudaPointerGetAttributes(&attributes, ptr));
-
-  NVTX_POP; return
-    ((attributes.type == cudaMemoryTypeDevice)?
-       (XT_DDT_DEVICE_MEM):(XT_DDT_HOST_MEM));
-}
-#else
-enum xt_ddt_memtype xt_ddt_get_memtype(const void *XT_UNUSED(ptr)) {
-  return XT_DDT_HOST_MEM;
-}
-#endif
-
 void xt_ddt_pack_internal(
-  Xt_ddt ddt, void const * src, void * dst, enum xt_ddt_memtype memtype) {
+  Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype) {
 
-  NVTX_PUSH(xt_ddt_pack_internal);
+  XT_GPU_INSTR_PUSH(xt_ddt_pack_internal);
 
   size_t dst_offset = 0;
-  int on_gpu = memtype == XT_DDT_DEVICE_MEM;
+  int on_gpu = memtype == XT_DEVICE_MEM;
 
   // for all sections with the same elemental datatype extent
   for (size_t i = 0; i < ddt->count; ++i) {
@@ -1328,17 +1216,17 @@ void xt_ddt_pack_internal(
 
     dst_offset += displ_count * element_size;
   }
-  NVTX_POP;
+  XT_GPU_INSTR_POP;
 }
 
 void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 
-  NVTX_PUSH(xt_ddt_pack);
-  NVTX_PUSH(xt_ddt_pack:initialise);
+  XT_GPU_INSTR_PUSH(xt_ddt_pack);
+  XT_GPU_INSTR_PUSH(xt_ddt_pack:initialise);
 
 #ifdef _OPENACC
-  enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
-  enum xt_ddt_memtype dst_memtype = xt_ddt_get_memtype(dst);
+  enum xt_memtype src_memtype = xt_gpu_get_memtype(src);
+  enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
 
   size_t pack_size;
   void * orig_dst;
@@ -1347,30 +1235,30 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   if (src_memtype != dst_memtype) {
     pack_size = xt_ddt_get_pack_size(mpi_ddt);
     orig_dst = dst;
-    dst = xt_ddt_malloc(pack_size, src_memtype);
+    dst = xt_gpu_malloc(pack_size, src_memtype);
   }
 
-  NVTX_POP; //xt_ddt_pack:initialise
+  XT_GPU_INSTR_POP; //xt_ddt_pack:initialise
 
 #else
-  enum xt_ddt_memtype src_memtype = XT_DDT_HOST_MEM;
+  enum xt_memtype src_memtype = XT_HOST_MEM;
 #endif
 
   xt_ddt_pack_internal(
     xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
 
-  NVTX_PUSH(xt_ddt_pack:finalise);
+  XT_GPU_INSTR_PUSH(xt_ddt_pack:finalise);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
-    xt_ddt_memcpy(orig_dst, dst, pack_size, dst_memtype, src_memtype);
-    xt_ddt_free(dst, src_memtype);
+    xt_gpu_memcpy(orig_dst, dst, pack_size, dst_memtype, src_memtype);
+    xt_gpu_free(dst, src_memtype);
   }
 #endif
 
-  NVTX_POP; // xt_ddt_pack:finalise
-  NVTX_POP; // xt_ddt_pack
+  XT_GPU_INSTR_POP; // xt_ddt_pack:finalise
+  XT_GPU_INSTR_POP; // xt_ddt_pack
 }
 
 static void xt_ddt_unpack_8(
@@ -1432,12 +1320,12 @@ XtPragmaACC(parallel loop independent deviceptr(src_, dst, displs) if (unpack_on
 }
 
 void xt_ddt_unpack_internal(
-  Xt_ddt ddt, void const * src, void * dst, enum xt_ddt_memtype memtype) {
+  Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype) {
 
-  NVTX_PUSH(xt_ddt_unpack_internal);
+  XT_GPU_INSTR_PUSH(xt_ddt_unpack_internal);
 
   size_t src_offset = 0;
-  int on_gpu = memtype == XT_DDT_DEVICE_MEM;
+  int on_gpu = memtype == XT_DEVICE_MEM;
 
   // for all sections with the same elemental datatype extent
   for (size_t i = 0; i < ddt->count; ++i) {
@@ -1492,17 +1380,17 @@ void xt_ddt_unpack_internal(
 
     src_offset += displ_count * element_size;
   }
-  NVTX_POP;
+  XT_GPU_INSTR_POP;
 }
 
 void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 
-  NVTX_PUSH(xt_ddt_unpack);
-  NVTX_PUSH(xt_ddt_unpack:initialise);
+  XT_GPU_INSTR_PUSH(xt_ddt_unpack);
+  XT_GPU_INSTR_PUSH(xt_ddt_unpack:initialise);
 
 #ifdef _OPENACC
-  enum xt_ddt_memtype src_memtype = xt_ddt_get_memtype(src);
-  enum xt_ddt_memtype dst_memtype = xt_ddt_get_memtype(dst);
+  enum xt_memtype src_memtype = xt_gpu_get_memtype(src);
+  enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
 
   size_t pack_size;
   void const * orig_src;
@@ -1511,27 +1399,27 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   if (src_memtype != dst_memtype) {
     pack_size = xt_ddt_get_pack_size(mpi_ddt);
     orig_src = src;
-    src = xt_ddt_malloc(pack_size, dst_memtype);
-    xt_ddt_memcpy((void*)src, orig_src, pack_size, dst_memtype, src_memtype);
+    src = xt_gpu_malloc(pack_size, dst_memtype);
+    xt_gpu_memcpy((void*)src, orig_src, pack_size, dst_memtype, src_memtype);
   }
 #else
-  enum xt_ddt_memtype dst_memtype = XT_DDT_HOST_MEM;
+  enum xt_memtype dst_memtype = XT_HOST_MEM;
 #endif
 
-  NVTX_POP; // xt_ddt_unpack:initialise
+  XT_GPU_INSTR_POP; // xt_ddt_unpack:initialise
 
   xt_ddt_unpack_internal(
     xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
 
-  NVTX_PUSH(xt_ddt_unpack:finalise);
+  XT_GPU_INSTR_PUSH(xt_ddt_unpack:finalise);
 
 #ifdef _OPENACC
   // if the source and destination are in different memory types
-  if (src_memtype != dst_memtype) xt_ddt_free((void*)src, dst_memtype);
+  if (src_memtype != dst_memtype) xt_gpu_free((void*)src, dst_memtype);
 #endif
 
-  NVTX_POP; // xt_ddt_unpack:finalise
-  NVTX_POP; // xt_ddt_unpack
+  XT_GPU_INSTR_POP; // xt_ddt_unpack:finalise
+  XT_GPU_INSTR_POP; // xt_ddt_unpack
 }
 
 /*

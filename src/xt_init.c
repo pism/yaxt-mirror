@@ -59,6 +59,7 @@
 #include "xt_exchanger.h"
 #include "xt_mpi_internal.h"
 #include "instr.h"
+#include "xt_cuda.h"
 
 INSTR_DEF(instr,"YAXT_lifetime")
 
@@ -80,6 +81,9 @@ xt_initialize(MPI_Comm default_comm)
   setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
   setenv("SCT_CALLSTATS", "0", 0);
   INSTR_START(instr);
+#endif
+#ifdef HAVE_CUDA
+  xt_cuda_init();
 #endif
   xt_lib_state = xt_lib_initialized;
 }

@@ -80,8 +80,8 @@ struct Xt_request_msgs_ddt_packed_ {
   int n_packed, n_tmp_buffers;
   void * unpacked_data;
   Xt_ddt * ddts;
-  enum xt_ddt_memtype packed_memtype;
-  enum xt_ddt_memtype tmp_memtype;
+  enum xt_memtype packed_memtype;
+  enum xt_memtype tmp_memtype;
   void *buffers[];
 };
 
@@ -93,8 +93,8 @@ Xt_request xt_request_msgs_ddt_packed_new(int n_requests,
                                           void *packed_data[n_packed],
                                           void *tmp_buffers[n_tmp_buffers],
                                           void * unpacked_data,
-                                          enum xt_ddt_memtype packed_memtype,
-                                          enum xt_ddt_memtype tmp_memtype) {
+                                          enum xt_memtype packed_memtype,
+                                          enum xt_memtype tmp_memtype) {
 
   assert(n_requests >= 0 && n_packed >= 0 && n_tmp_buffers >= 0);
   size_t hdr_size = sizeof(struct Xt_request_msgs_ddt_packed_),
@@ -145,13 +145,13 @@ static void unpack_data(Xt_request_msgs_ddt_packed request_msgs_ddt_packed) {
 static void free_request(Xt_request_msgs_ddt_packed request_msgs_ddt_packed) {
 
   for (int i = 0; i < request_msgs_ddt_packed->n_packed; ++i)
-    xt_ddt_free(
+    xt_gpu_free(
       request_msgs_ddt_packed->buffers[i],
       request_msgs_ddt_packed->packed_memtype);
   for (int i = request_msgs_ddt_packed->n_packed;
        i < request_msgs_ddt_packed->n_packed +
        request_msgs_ddt_packed->n_tmp_buffers; ++i)
-    xt_ddt_free(
+    xt_gpu_free(
       request_msgs_ddt_packed->buffers[i],
       request_msgs_ddt_packed->tmp_memtype);
   for (int i = 0; i < request_msgs_ddt_packed->n_packed; ++i)

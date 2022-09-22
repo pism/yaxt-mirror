@@ -161,6 +161,8 @@ test_arithmetic_long_SOURCES = test_arithmetic_long.c
 test_arithmetic_long_LDADD = libtestutil.la
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
 test_exchanger_parallel_LDADD =  libtestutil.la \
+	../src/xt_cuda.lo \
+	../src/xt_gpu.lo \
 	../src/xt_ddt.lo \
 	../src/xt_config.lo \
 	../src/xt_exchanger_irecv_isend.lo \

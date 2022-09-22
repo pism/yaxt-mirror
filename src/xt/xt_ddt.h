@@ -59,11 +59,6 @@
 
 typedef struct Xt_ddt_ *Xt_ddt;
 
-enum xt_ddt_memtype {
-  XT_DDT_DEVICE_MEM,
-  XT_DDT_HOST_MEM,
-};
-
 /** \example test_ddt.c
  */
 
