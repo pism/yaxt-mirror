@@ -62,8 +62,9 @@
 #endif
 
 enum xt_memtype {
-  XT_DEVICE_MEM,
-  XT_HOST_MEM,
+  XT_MEMTYPE_HOST,
+  XT_MEMTYPE_DEVICE,
+  XT_MEMTYPE_COUNT,
 };
 
 struct xt_gpu_vtable {

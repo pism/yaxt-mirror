@@ -121,9 +121,9 @@ static void * xt_cuda_malloc(
         "ERROR(xt_cuda_malloc): unsupported memory type",
         __FILE__, __LINE__);
       return NULL;
-    case (XT_HOST_MEM):
+    case (XT_MEMTYPE_HOST):
       return xmalloc(alloc_size);
-    case (XT_DEVICE_MEM): {
+    case (XT_MEMTYPE_DEVICE): {
       CUdeviceptr dptr;
       // cuMemAlloc fails for (alloc_size == 0)
       CU_ERROR_CHECK(func_cuMemAlloc(&dptr, MAX(alloc_size,1)));
@@ -141,10 +141,10 @@ static void xt_cuda_free(void * ptr, enum xt_memtype memtype) {
         "ERROR(xt_cuda_free): unsupported memory type",
         __FILE__, __LINE__);
       break;;
-    case (XT_HOST_MEM):
+    case (XT_MEMTYPE_HOST):
       free(ptr);
       break;
-    case (XT_DEVICE_MEM):
+    case (XT_MEMTYPE_DEVICE):
       CU_ERROR_CHECK(func_cuMemFree((CUdeviceptr)ptr));
       break;
   }
@@ -162,10 +162,10 @@ static void xt_cuda_memcpy(
           "ERROR(xt_cuda_memcpy): unsupported memory type",
           __FILE__, __LINE__);
         break;
-      case (XT_HOST_MEM):
+      case (XT_MEMTYPE_HOST):
         memcpy(dst, src, buffer_size);
         break;
-      case (XT_DEVICE_MEM):
+      case (XT_MEMTYPE_DEVICE):
         CU_ERROR_CHECK(
           func_cuMemcpyDtoD(
             (CUdeviceptr)dst, (CUdeviceptr)src, buffer_size));
@@ -179,8 +179,8 @@ static void xt_cuda_memcpy(
           "ERROR(xt_cuda_memcpy): unsupported source memory type",
           __FILE__, __LINE__);
         break;
-      case (XT_HOST_MEM):
-        if (dst_memtype != XT_DEVICE_MEM)
+      case (XT_MEMTYPE_HOST):
+        if (dst_memtype != XT_MEMTYPE_DEVICE)
           Xt_abort(
             Xt_default_comm,
             "ERROR(xt_cuda_memcpy): unsupported destination memory type",
@@ -188,8 +188,8 @@ static void xt_cuda_memcpy(
         CU_ERROR_CHECK(
           func_cuMemcpyHtoD((CUdeviceptr)dst, src, buffer_size));
         break;
-      case (XT_DEVICE_MEM):
-        if (dst_memtype != XT_HOST_MEM)
+      case (XT_MEMTYPE_DEVICE):
+        if (dst_memtype != XT_MEMTYPE_HOST)
           Xt_abort(
             Xt_default_comm,
             "ERROR(xt_cuda_memcpy): unsupported destination memory type",
@@ -217,7 +217,7 @@ static enum xt_memtype xt_cuda_get_memtype(const void *ptr) {
   return
     ((ret == CUDA_SUCCESS) &&
      (memorytype == CU_MEMORYTYPE_DEVICE))?
-       (XT_DEVICE_MEM):(XT_HOST_MEM);
+       (XT_MEMTYPE_DEVICE):(XT_MEMTYPE_HOST);
 }
 
 #ifndef XT_CUDA_NVTX_ENABLE

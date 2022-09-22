@@ -90,7 +90,7 @@ void xt_gpu_set_vtable(struct xt_gpu_vtable vtable_) {
 #define STR(s) #s
 #define CHECK_FOR_HOST_MEM(type)                             \
   do {                                                       \
-    if (type != XT_HOST_MEM) {                               \
+    if (type != XT_MEMTYPE_HOST) {                           \
       Xt_abort(                                              \
         Xt_default_comm,                                     \
         "ERROR(" STR(__func__) "): unsupported memory type", \
@@ -124,7 +124,7 @@ static void default_memcpy(
 
 static enum xt_memtype default_get_memtype(const void *ptr) {
 
-  return XT_HOST_MEM;
+  return XT_MEMTYPE_HOST;
 }
 
 static int default_instr_push(char const * XT_UNUSED(name)) {return 0;}
