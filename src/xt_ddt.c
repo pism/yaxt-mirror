@@ -661,6 +661,7 @@ static struct xt_ddt_tree_elem *
 
       break;
     }
+#if MPI_VERSION >= 3
     case MPI_COMBINER_HINDEXED_BLOCK:{
 
       int array_of_ints[2];
@@ -681,6 +682,7 @@ static struct xt_ddt_tree_elem *
 
       break;
     }
+#endif
     case MPI_COMBINER_STRUCT:{
 
       int * array_of_ints =
