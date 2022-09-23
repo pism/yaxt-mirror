@@ -1131,6 +1131,9 @@ static void xt_ddt_copy_displs(Xt_ddt ddt, enum xt_memtype memtype) {
 static void xt_ddt_pack_8(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1141,6 +1144,9 @@ XtPragmaACC(
 static void xt_ddt_pack_16(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1151,6 +1157,9 @@ XtPragmaACC(
 static void xt_ddt_pack_32(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1161,6 +1170,9 @@ XtPragmaACC(
 static void xt_ddt_pack_64(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1172,6 +1184,9 @@ static void xt_ddt_pack_128(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
   int64_t (*restrict dst_)[2] = (int64_t(*)[2])dst;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1186,6 +1201,9 @@ static void xt_ddt_pack_256(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
   int64_t (*restrict dst_)[4] = (int64_t(*)[4])dst;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1294,6 +1312,9 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 static void xt_ddt_unpack_8(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1304,6 +1325,9 @@ XtPragmaACC(
 static void xt_ddt_unpack_16(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1314,6 +1338,9 @@ XtPragmaACC(
 static void xt_ddt_unpack_32(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1324,6 +1351,9 @@ XtPragmaACC(
 static void xt_ddt_unpack_64(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1335,6 +1365,9 @@ static void xt_ddt_unpack_128(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
   int64_t const (*src_)[2] = (int64_t const (*)[2])src;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src_, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
@@ -1349,6 +1382,9 @@ static void xt_ddt_unpack_256(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
   int64_t const (*src_)[4] = (int64_t const(*)[4])src;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
 XtPragmaACC(
   parallel loop independent deviceptr(src_, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
