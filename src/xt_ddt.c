@@ -794,6 +794,7 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     case 2:  return 4;
     case 4:  return 3;
     case 8:  return 2;
+    case 12: return 6;
     case 16: return 1;
     case 32: return 0;
     default:
@@ -924,12 +925,15 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   // parse the MPI datatype
   struct xt_ddt_tree_elem * tree = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 0);
 
-  struct xt_ddt_data data[6];
+  struct xt_ddt_data data[7];
   for (int i = 0; i < 6; ++i) {
     data[i].element_size = (size_t)1 << (5 - i);
     data[i].displ_count = 0;
     for (int j = 0; j < XT_MEMTYPE_COUNT; ++j) data[i].displs[j] = NULL;
   }
+  data[6].element_size = 12;
+  data[6].displ_count = 0;
+  for (int j = 0; j < XT_MEMTYPE_COUNT; ++j) data[6].displs[j] = NULL;
 
   // determine the number of displacements for each elemental data size
   xt_ddt_tree_get_data_sizes(tree, data);
@@ -938,7 +942,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   size_t total_displs_size = 0;
   size_t data_count = 0;
   size_t pack_size = 0;
-  for (size_t i = 0; i < 6; ++i) {
+  for (size_t i = 0; i < 7; ++i) {
     total_displs_size += data[i].displ_count;
     if (data[i].displ_count > 0) {
       pack_size += data[i].element_size * data[i].displ_count;
@@ -959,7 +963,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
     ssize_t * displs =
       xt_gpu_malloc(total_displs_size * sizeof(*displs), XT_MEMTYPE_HOST);
 
-    for (size_t i = 0, offset = 0; i < 6; ++i) {
+    for (size_t i = 0, offset = 0; i < 7; ++i) {
       data[i].displs[XT_MEMTYPE_HOST] = displs + offset;
       offset += data[i].displ_count;
       data[i].displ_count = 0;
@@ -968,7 +972,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
     // determine all displacements
     xt_ddt_tree_to_data(tree, data);
 
-    for (int i = 0, j = 0; i < 6; ++i)
+    for (int i = 0, j = 0; i < 7; ++i)
       if (data[i].displ_count > 0)
         ddt->data[j++] = data[i];
   }
@@ -1197,6 +1201,23 @@ XtPragmaACC(loop independent)
   }
 }
 
+static void xt_ddt_pack_96(
+  size_t count, ssize_t *restrict displs, void const *restrict src,
+  void *restrict dst, enum xt_memtype memtype) {
+  int32_t (*restrict dst_)[3] = (int32_t(*)[3])dst;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst_, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    int32_t *src_32 = (int32_t*)((unsigned char *)src + displs[i]);
+XtPragmaACC(loop independent)
+    for (int j = 0; j < 3; ++j) dst_[i][j] = src_32[j];
+  }
+}
+
 static void xt_ddt_pack_256(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
@@ -1249,6 +1270,11 @@ void xt_ddt_pack_internal(
         break;
       case 8:
         xt_ddt_pack_64(
+          displ_count, displs, src,
+          (void*)((unsigned char *)dst + dst_offset), memtype);
+        break;
+      case 12:
+        xt_ddt_pack_96(
           displ_count, displs, src,
           (void*)((unsigned char *)dst + dst_offset), memtype);
         break;
@@ -1361,6 +1387,24 @@ XtPragmaACC(
     *(int64_t*)((unsigned char *)dst + displs[i]) = ((int64_t*)src)[i];
 }
 
+static void xt_ddt_unpack_96(
+  size_t count, ssize_t *restrict displs, void const *restrict src,
+  void *restrict dst, enum xt_memtype memtype) {
+  int32_t const (*src_)[3] = (int32_t const (*)[3])src;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src_, dst, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    int32_t * dst_32 = (int32_t*)((unsigned char *)dst + displs[i]);
+    dst_32[0] = src_[i][0];
+    dst_32[1] = src_[i][1];
+    dst_32[2] = src_[i][2];
+  }
+}
+
 static void xt_ddt_unpack_128(
   size_t count, ssize_t *restrict displs, void const *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
@@ -1432,6 +1476,11 @@ void xt_ddt_unpack_internal(
         break;
       case 8:
         xt_ddt_unpack_64(
+          displ_count, displs,
+          (void*)((unsigned char *)src + src_offset), dst, memtype);
+        break;
+      case 12:
+        xt_ddt_unpack_96(
           displ_count, displs,
           (void*)((unsigned char *)src + src_offset), dst, memtype);
         break;
