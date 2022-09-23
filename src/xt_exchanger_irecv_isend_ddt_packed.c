@@ -121,7 +121,7 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
 
   ofs = 0;
   for (int i = 0; i < nsend; ++i) {
-    size_t send_size = (int)(buffer_sizes[nrecv+i]);
+    size_t send_size = buffer_sizes[nrecv+i];
     xt_ddt_pack_internal(
       ddts[nrecv+i], CAST_MPI_SEND_BUF(src_data), send_buffer + ofs,
       src_data_memtype);

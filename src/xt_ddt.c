@@ -108,7 +108,7 @@ struct xt_ddt_tree_elem {
       struct xt_ddt_tree_elem ** multi; // multiple sub elements (type == MULTI_SUB)
     } sub_elems;
   };
-  int displ_count;    // number of displacement
+  size_t displ_count;    // number of displacement
   union {
     MPI_Aint single;  // single displacement (displ_count == 1)
     MPI_Aint * multi; // multiple displacements (displ_count > 1)
@@ -118,7 +118,7 @@ struct xt_ddt_tree_elem {
 // returns a pointer to the displacements of an element, if displ_count > 0
 // they will be allocated first
 static inline MPI_Aint * xt_ddt_tree_elem_alloc_displs(
-  struct xt_ddt_tree_elem * elem, int displ_count) {
+  struct xt_ddt_tree_elem * elem, size_t displ_count) {
 
   elem->displ_count = displ_count;
   if (displ_count <= 1)
@@ -126,7 +126,7 @@ static inline MPI_Aint * xt_ddt_tree_elem_alloc_displs(
   else
     return
      ((elem->displs.multi =
-         xmalloc((size_t)displ_count * sizeof(*(elem->displs.multi)))));
+         xmalloc(displ_count * sizeof(*(elem->displs.multi)))));
 }
 
 static struct xt_ddt_tree_elem *
@@ -193,7 +193,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_cont_new(
   }
 
   elem->extent = (MPI_Aint)count * sub_elem_extent;
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, count);
+  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
   for (int i = 0; i < count; ++i) displs[i] = (MPI_Aint)i * sub_elem_extent;
 
   return elem;
@@ -225,7 +225,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hvector_new(
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
 
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, count);
+  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
   for (int i = 0; i < count; ++i) displs[i] = (MPI_Aint)i * stride;
 
   return elem;
@@ -252,8 +252,9 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_new(
   MPI_Aint extent, int count, int * blocklengths,
   MPI_Aint * displacements, MPI_Datatype mpi_ddt) {
 
-  int displ_count = 0;
-  for (int i = 0; i < count; ++i) displ_count += blocklengths[i];
+  size_t displ_count = 0;
+  for (int i = 0; i < count; ++i)
+    displ_count += (size_t)blocklengths[i];
 
   // if there are no entries
   if (displ_count == 0) {
@@ -329,7 +330,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_block_new(
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, count);
+  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
 
   for (int i = 0; i < count; ++i) displs[i] = displacements[i];
 
@@ -363,9 +364,10 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
   MPI_Aint extent, int count, int * blocklengths, MPI_Aint * displacements,
   MPI_Datatype * mpi_ddts) {
 
+  size_t count_ = count > 0 ? (size_t)count : (size_t)0;
   // remove empty blocks
-  int new_count = 0;
-  for (int i = 0; i < count; ++i) {
+  size_t new_count = 0;
+  for (size_t i = 0; i < count_; ++i) {
 
     MPI_Aint true_lb, true_extent;
     xt_mpi_call(
@@ -374,7 +376,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
 
     if ((blocklengths[i] != 0) && (true_extent != 0)) {
 
-      if (new_count != count) {
+      if (new_count != count_) {
 
         blocklengths[new_count] = blocklengths[i];
         displacements[new_count] = displacements[i];
@@ -386,28 +388,28 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
       free_unnamed_mpi_ddt(mpi_ddts[i]);
     }
   }
-  if (new_count != count) count = new_count;
+  if (new_count != count_) count_ = new_count;
 
   // if there are no blocks
-  if (count == 0) return NULL;
+  if (count_ == 0) return NULL;
 
   // if there is only a single block
-  if (count == 1)
+  if (count_ == 1)
     return
       xt_ddt_tree_elem_hindexed_block_new(
         extent, 1, blocklengths[0], displacements, *mpi_ddts);
 
   struct xt_ddt_tree_elem ** sub_elems =
-    xmalloc((size_t)count * sizeof(*sub_elems));
+    xmalloc(count_ * sizeof(*sub_elems));
 
   struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
 
   elem->extent = extent;
   elem->type = MULTI_SUB;
   elem->sub_elems.multi = sub_elems;
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, count);
+  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, count_);
 
-  for (int i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count_; ++i) {
     sub_elems[i] = xt_ddt_tree_elem_cont_new(blocklengths[i], mpi_ddts[i]);
     displs[i] = displacements[i];
   }
@@ -442,10 +444,11 @@ static void xt_ddt_tree_elem_subarray_get_displs(
     starts += 1;
   }
 
-  size_t sub_array_size = 1, sub_array_extent = base_extent;
+  size_t sub_array_size = 1;
+  MPI_Aint sub_array_extent = base_extent;
   for (size_t i = 0; i < ndim-1; ++i) {
     sub_array_size *= (size_t)(sub_sizes[i]);
-    sub_array_extent *= (MPI_Aint)(sizes[i]);
+    sub_array_extent *= sizes[i];
   }
 
   // set current offset to the first entry in the current dimension
@@ -483,7 +486,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_subarray_new(
 
   size_t displ_count = 1;
   for (int i = 0; i < ndim; ++i)
-    displ_count *= (size_t)(sub_sizes[i]);
+    displ_count *= (size_t)sub_sizes[i];
 
   MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, displ_count);
   xt_ddt_tree_elem_subarray_get_displs(
@@ -763,7 +766,7 @@ static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem * elem) {
       break;
     case (MULTI_SUB): {
       struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
-      for (int i = 0; i < elem->displ_count; ++i)
+      for (size_t i = 0; i < elem->displ_count; ++i)
         xt_ddt_tree_elem_delete(sub_elems[i]);
       free(sub_elems);
       break;
@@ -823,7 +826,7 @@ static void xt_ddt_tree_elem_get_data_sizes(
 
       struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
 
-      for (int i = 0; i < elem->displ_count; ++i)
+      for (size_t i = 0; i < elem->displ_count; ++i)
         xt_ddt_tree_elem_get_data_sizes(
           sub_elem, prev_dtype, prev_data_idx, data);
       break;
@@ -832,7 +835,7 @@ static void xt_ddt_tree_elem_get_data_sizes(
 
       struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
 
-      for (int i = 0; i < elem->displ_count; ++i)
+      for (size_t i = 0; i < elem->displ_count; ++i)
         xt_ddt_tree_elem_get_data_sizes(
           sub_elems[i], prev_dtype, prev_data_idx, data);
       break;
@@ -857,7 +860,7 @@ static void xt_ddt_tree_elem_to_data(
 
   if (elem == NULL) return;
 
-  size_t elem_displ_count = (size_t)(elem->displ_count);
+  size_t elem_displ_count = elem->displ_count;
   MPI_Aint * elem_displs =
     (elem_displ_count <= 1)?(&(elem->displs.single)):(elem->displs.multi);
 
@@ -921,7 +924,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
 
   struct xt_ddt_data data[6];
   for (int i = 0; i < 6; ++i) {
-    data[i].element_size = 1 << (5 - i);
+    data[i].element_size = (size_t)1 << (5 - i);
     data[i].displ_count = 0;
     for (int j = 0; j < XT_MEMTYPE_COUNT; ++j) data[i].displs[j] = NULL;
   }
