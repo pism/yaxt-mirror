@@ -300,7 +300,7 @@ ACX_F90_PACKAGE([MPI],[mpi],,,
 ],[(1, req, stat, ierror)])
 fi
 
-save_CFLAGS=$CFLAGS
+saved_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MPI_C_INCLUDE"
 TJ_FIND_INTEGRAL_TYPE([MPI_Fint],[MPI_FINT],[@%:@include <mpi.h>])
 ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([CAST_MPI_SEND_BUF="(buf)"
@@ -321,7 +321,7 @@ AS_IF([test $ac_cv_sizeof_MPI_Datatype -eq 0],
 AC_COMPUTE_INT([MPI_VERSION], [MPI_VERSION], [@%:@include <mpi.h>],
   [AC_MSG_ERROR([cannot determine MPI version!])])
 AM_CONDITIONAL([USE_MPI3],[test $MPI_VERSION -ge 3])
-CFLAGS=$save_CFLAGS
+CFLAGS=$saved_CFLAGS
 AS_CASE(["$MPI_FINT"],
   [int],[XT_MPI_FINT_MAX=INT_MAX XT_MPI_FINT_FC_KIND=c_int],
   [long],[XT_MPI_FINT_MAX=LONG_MAX XT_MPI_FINT_FC_KIND=c_long],
@@ -458,7 +458,7 @@ m4_define([vartype_setq],[$1][_MPIDT=$4
 dnl
 dnl test if MPI_INTEGER[248] are available
 if test_with_fortran ; then
-save_FCFLAGS=$FCFLAGS
+saved_FCFLAGS=$FCFLAGS
 AC_LANG_PUSH([Fortran])
 FCFLAGS="$MPI_FC_MOD $FCFLAGS"
 for mpi_int2test in MPI_INTEGER2 MPI_INTEGER4 MPI_INTEGER8; do
@@ -473,7 +473,7 @@ for mpi_int2test in MPI_INTEGER2 MPI_INTEGER4 MPI_INTEGER8; do
     [AC_MSG_RESULT([no])
      ASX_VAR_UNSET([HAVE_FC_$mpi_int2test])])
 done
-FCFLAGS=$save_FCFLAGS
+FCFLAGS=$saved_FCFLAGS
 AC_LANG_POP([Fortran])
 fi
 
