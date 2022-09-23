@@ -415,6 +415,16 @@ AS_IF([test x${acx_yaksa_add_workaround+set} = xset],
 AC_SUBST([acx_yaksa_add_workaround])
 AM_CONDITIONAL([MPI_DT_WORKAROUND],
   [test x${xt_mpi_workaround_sources+set} = xset])
+dnl
+dnl test if MPI_INT16_T is available
+AC_CHECK_DECL([MPI_INT16_T],,
+  [TJ_FIND_INTEGRAL_TYPE([int16_t],[xt_mpi_dt_int16_t],[AC_INCLUDES_DEFAULT
+@%:@include <mpi.h>],
+    [XT_MPI_INT16_T=MPI_[]AS_TR_CPP([$xt_mpi_dt_int16_t])
+     AC_MSG_NOTICE([adding macro definition of MPI_INT16_T as $XT_MPI_INT16_T])
+     AC_DEFINE_UNQUOTED([MPI_INT16_T],[$XT_MPI_INT16_T],[work around missing define in older MPI implementations])],[:])],
+  [AC_INCLUDES_DEFAULT
+@%:@include <mpi.h>])
 MPI_LAUNCH=$saved_MPI_LAUNCH
 FCFLAGS=$saved_FCFLAGS
 CFLAGS=$saved_CFLAGS
