@@ -766,7 +766,7 @@ int main(void) {
         for (size_t k = 0; k < 2; ++k)
           in_data[i][j].i[k] = (int)((i * 4 + j) * 2 + k);
         for (size_t k = 0; k < 3; ++k)
-          in_data[i][j].i16[k] = (int)((i * 4 + j) * 3 + k);
+          in_data[i][j].i16[k] = (int16_t)((i * 4 + j) * 3 + k);
         for (size_t k = 0; k < 9; ++k)
           for (size_t l = 0; l < 9; ++l)
             in_data[i][j].d[k][j] = (double)(((i * 4  + j) * 9 + k) * 9 + l);
