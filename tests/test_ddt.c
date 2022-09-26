@@ -898,7 +898,7 @@ static int check_xt_ddt_off(
   {
     int position = 0;
     MPI_Pack(
-      (void const *)((char unsigned*)in_data + in_data_offset),
+      CAST_MPI_SEND_BUF((char unsigned*)in_data + in_data_offset),
       1, mpi_ddt, pack_data, (int)in_data_size, &position, MPI_COMM_WORLD);
     position = 0;
     MPI_Unpack(
