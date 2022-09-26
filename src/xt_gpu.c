@@ -115,8 +115,9 @@ static void default_memcpy(
   memcpy(dst, src, buffer_size);
 }
 
-static enum xt_memtype default_get_memtype(const void *ptr) {
-
+static enum xt_memtype default_get_memtype(const void *ptr)
+{
+  (void)ptr;
   return XT_MEMTYPE_HOST;
 }
 
