@@ -73,7 +73,7 @@ static int xt_ddt_cleanup_internal_keyval = MPI_KEYVAL_INVALID;
 struct xt_ddt_data {
   size_t element_size; // size in byte of base element
   size_t displ_count;  // number of elements in displs
-  ssize_t * displs[XT_MEMTYPE_COUNT];
+  ssize_t *displs[XT_MEMTYPE_COUNT];
                        // displacements in byte of elements (int does not work)
                        // (if required this array has to be available
                        //  in GPU memory)
@@ -104,21 +104,22 @@ struct xt_ddt_tree_elem {
   union {
     MPI_Datatype dtype;                 // basic MPI datatype (type == DTYPE)
     union {
-      struct xt_ddt_tree_elem * single; // single sub element (type == SINGLE_SUB)
-      struct xt_ddt_tree_elem ** multi; // multiple sub elements (type == MULTI_SUB)
+      struct xt_ddt_tree_elem *single; // single sub element (type == SINGLE_SUB)
+      struct xt_ddt_tree_elem **multi; // multiple sub elements (type == MULTI_SUB)
     } sub_elems;
   };
   size_t displ_count;    // number of displacement
   union {
     MPI_Aint single;  // single displacement (displ_count == 1)
-    MPI_Aint * multi; // multiple displacements (displ_count > 1)
+    MPI_Aint *multi;  // multiple displacements (displ_count > 1)
   } displs;
 };
 
 // returns a pointer to the displacements of an element, if displ_count > 0
 // they will be allocated first
-static inline MPI_Aint * xt_ddt_tree_elem_alloc_displs(
-  struct xt_ddt_tree_elem * elem, size_t displ_count) {
+static inline MPI_Aint *
+xt_ddt_tree_elem_alloc_displs(
+  struct xt_ddt_tree_elem *elem, size_t displ_count) {
 
   elem->displ_count = displ_count;
   if (displ_count <= 1)
@@ -132,10 +133,10 @@ static inline MPI_Aint * xt_ddt_tree_elem_alloc_displs(
 static struct xt_ddt_tree_elem *
   mpi_ddt_2_xt_ddt_tree(MPI_Datatype mpi_ddt, int free_mpi_ddt);
 
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_named_new(
-  MPI_Aint extent, MPI_Datatype mpi_ddt) {
-
-  struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
+static struct xt_ddt_tree_elem *
+xt_ddt_tree_elem_named_new(MPI_Aint extent, MPI_Datatype mpi_ddt)
+{
+  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
 
   elem->extent = extent;
   elem->type = DTYPE;
@@ -158,8 +159,9 @@ static void free_unnamed_mpi_ddt(MPI_Datatype mpi_ddt) {
 }
 
 // generates a ddt tree element with count contiguous entries of mpi_ddt
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_cont_new(
-  int count, MPI_Datatype mpi_ddt) {
+static struct xt_ddt_tree_elem *
+xt_ddt_tree_elem_cont_new(int count, MPI_Datatype mpi_ddt)
+{
 
   // if the sub element count is zero
   if (count == 0) {
@@ -200,7 +202,8 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_cont_new(
 }
 
 // generates a ddt tree element based on a hvector style memory layout
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hvector_new(
+static struct xt_ddt_tree_elem *
+xt_ddt_tree_elem_hvector_new(
   MPI_Aint extent, int count, int blocklength, MPI_Aint stride,
   MPI_Datatype mpi_ddt) {
 
@@ -210,7 +213,7 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hvector_new(
     return NULL;
   }
 
-  struct xt_ddt_tree_elem * sub_elem =
+  struct xt_ddt_tree_elem *sub_elem =
     xt_ddt_tree_elem_cont_new(blocklength, mpi_ddt);
 
   // if the sub element is empty
@@ -219,20 +222,20 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hvector_new(
   // if there is only a single sub element
   if (count == 1) return sub_elem;
 
-  struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
 
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
 
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
+  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
   for (int i = 0; i < count; ++i) displs[i] = (MPI_Aint)i * stride;
 
   return elem;
 }
 
 // generates a ddt tree element based on a vector style memory layout
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_vector_new(
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_vector_new(
   MPI_Aint extent, int count, int blocklength, int stride,
   MPI_Datatype mpi_ddt) {
 
@@ -248,9 +251,9 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_vector_new(
 }
 
 // generates a ddt tree element based on a hindexed style memory layout
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_new(
-  MPI_Aint extent, int count, int * blocklengths,
-  MPI_Aint * displacements, MPI_Datatype mpi_ddt) {
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_hindexed_new(
+  MPI_Aint extent, int count, int *blocklengths,
+  MPI_Aint *displacements, MPI_Datatype mpi_ddt) {
 
   size_t displ_count = 0;
   for (int i = 0; i < count; ++i)
@@ -264,17 +267,17 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_new(
 
   MPI_Aint lb, base_extent;
   MPI_Type_get_extent(mpi_ddt, &lb, &base_extent);
-  struct xt_ddt_tree_elem * sub_elem = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 1);
+  struct xt_ddt_tree_elem *sub_elem = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 1);
 
   // if the sub element is empty
   if (sub_elem == NULL) return NULL;
 
-  struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
 
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, displ_count);
+  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, displ_count);
 
   size_t idx = 0;
   for (int i = 0; i < count; ++i) {
@@ -288,18 +291,18 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_new(
 }
 
 // generates a ddt tree element based on an indexed style memory layout
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_indexed_new(
-  MPI_Aint extent, int count, int * blocklengths,
-  int * displacements, MPI_Datatype mpi_ddt) {
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_indexed_new(
+  MPI_Aint extent, int count, int *blocklengths,
+  int *displacements, MPI_Datatype mpi_ddt) {
 
   MPI_Aint lb, base_extent;
   MPI_Type_get_extent(mpi_ddt, &lb, &base_extent);
 
-  MPI_Aint * hdisplacements = xmalloc((size_t)count * sizeof(*hdisplacements));
+  MPI_Aint *hdisplacements = xmalloc((size_t)count * sizeof(*hdisplacements));
   for (int i = 0; i < count; ++i)
     hdisplacements[i] = (MPI_Aint)displacements[i] * base_extent;
 
-  struct xt_ddt_tree_elem * elem =
+  struct xt_ddt_tree_elem *elem =
     xt_ddt_tree_elem_hindexed_new(
       extent, count, blocklengths, hdisplacements, mpi_ddt);
 
@@ -309,8 +312,8 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_indexed_new(
 }
 
 // generates a ddt tree element based on an hindexed block style memory layout
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_block_new(
-  MPI_Aint extent, int count, int blocklength, MPI_Aint * displacements,
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_hindexed_block_new(
+  MPI_Aint extent, int count, int blocklength, MPI_Aint *displacements,
   MPI_Datatype mpi_ddt) {
 
   // if there are no blocks or if the blocks are empty
@@ -319,18 +322,18 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_block_new(
     return NULL;
   }
 
-  struct xt_ddt_tree_elem * sub_elem =
+  struct xt_ddt_tree_elem *sub_elem =
     xt_ddt_tree_elem_cont_new(blocklength, mpi_ddt);
 
   // if the sub element is empty
   if (sub_elem == NULL) return NULL;
 
-  struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
 
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
+  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
 
   for (int i = 0; i < count; ++i) displs[i] = displacements[i];
 
@@ -338,19 +341,19 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_hindexed_block_new(
 }
 
 // generates a ddt tree element based on an indexed block style memory layout
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_indexed_block_new(
-  MPI_Aint extent, int count, int blocklength, int * displacements,
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_indexed_block_new(
+  MPI_Aint extent, int count, int blocklength, int *displacements,
   MPI_Datatype mpi_ddt) {
 
   MPI_Aint lb, base_extent;
   xt_mpi_call(
     MPI_Type_get_extent(mpi_ddt, &lb, &base_extent), Xt_default_comm);
 
-  MPI_Aint * hdisplacements = xmalloc((size_t)count * sizeof(*hdisplacements));
+  MPI_Aint *hdisplacements = xmalloc((size_t)count * sizeof(*hdisplacements));
   for (int i = 0; i < count; ++i)
     hdisplacements[i] = (MPI_Aint)displacements[i] * base_extent;
 
-  struct xt_ddt_tree_elem * elem =
+  struct xt_ddt_tree_elem *elem =
     xt_ddt_tree_elem_hindexed_block_new(
       extent, count, blocklength, hdisplacements, mpi_ddt);
 
@@ -360,9 +363,9 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_indexed_block_new(
 }
 
 // generates a ddt tree element based on a struct style memory layout
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
-  MPI_Aint extent, int count, int * blocklengths, MPI_Aint * displacements,
-  MPI_Datatype * mpi_ddts) {
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_struct_new(
+  MPI_Aint extent, int count, int *blocklengths, MPI_Aint *displacements,
+  MPI_Datatype *mpi_ddts) {
 
   size_t count_ = count > 0 ? (size_t)count : (size_t)0;
   // remove empty blocks
@@ -399,15 +402,15 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
       xt_ddt_tree_elem_hindexed_block_new(
         extent, 1, blocklengths[0], displacements, *mpi_ddts);
 
-  struct xt_ddt_tree_elem ** sub_elems =
+  struct xt_ddt_tree_elem **sub_elems =
     xmalloc(count_ * sizeof(*sub_elems));
 
-  struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
 
   elem->extent = extent;
   elem->type = MULTI_SUB;
   elem->sub_elems.multi = sub_elems;
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, count_);
+  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, count_);
 
   for (size_t i = 0; i < count_; ++i) {
     sub_elems[i] = xt_ddt_tree_elem_cont_new(blocklengths[i], mpi_ddts[i]);
@@ -420,8 +423,8 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_struct_new(
 // generate the displacements for a subarray
 // (this routine is recursive)
 static void xt_ddt_tree_elem_subarray_get_displs(
-  MPI_Aint * displs, MPI_Aint dim_displ,
-  size_t ndim, int * sizes, int * sub_sizes, int * starts, int order,
+  MPI_Aint *displs, MPI_Aint dim_displ,
+  size_t ndim, int *sizes, int *sub_sizes, int *starts, int order,
   MPI_Aint base_extent) {
 
   // if the base element is reached
@@ -468,18 +471,18 @@ static void xt_ddt_tree_elem_subarray_get_displs(
   }
 }
 
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_subarray_new(
-  MPI_Aint extent, int ndim, int * sizes, int * sub_sizes,
-  int * starts, int order, MPI_Datatype mpi_ddt) {
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_subarray_new(
+  MPI_Aint extent, int ndim, int *sizes, int *sub_sizes,
+  int *starts, int order, MPI_Datatype mpi_ddt) {
 
-  struct xt_ddt_tree_elem * sub_elem = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 1);
+  struct xt_ddt_tree_elem *sub_elem = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 1);
 
   // if the sub element is empty
   if (sub_elem == NULL) return NULL;
 
   MPI_Aint base_extent = sub_elem->extent;
 
-  struct xt_ddt_tree_elem * elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
@@ -488,17 +491,17 @@ static struct xt_ddt_tree_elem * xt_ddt_tree_elem_subarray_new(
   for (int i = 0; i < ndim; ++i)
     displ_count *= (size_t)sub_sizes[i];
 
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, displ_count);
+  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, displ_count);
   xt_ddt_tree_elem_subarray_get_displs(
     displs, 0, (size_t)ndim, sizes, sub_sizes, starts, order, base_extent);
 
   return elem;
 }
 
-static struct xt_ddt_tree_elem * xt_ddt_tree_elem_resized_new(
+static struct xt_ddt_tree_elem *xt_ddt_tree_elem_resized_new(
   MPI_Aint extent, MPI_Datatype mpi_ddt) {
 
-  struct xt_ddt_tree_elem * elem = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 1);
+  struct xt_ddt_tree_elem *elem = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 1);
   elem->extent = extent;
 
   return elem;
@@ -514,13 +517,13 @@ static struct xt_ddt_tree_elem *
     MPI_Type_get_envelope(
       mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner), Xt_default_comm);
   MPI_Datatype array_of_dtypes_single[1];
-  MPI_Datatype * array_of_dtypes = array_of_dtypes_single;
+  MPI_Datatype *array_of_dtypes = array_of_dtypes_single;
 
   // get the extent of the MPI datatype
   MPI_Aint lb, extent;
   xt_mpi_call(MPI_Type_get_extent(mpi_ddt, &lb, &extent), Xt_default_comm);
 
-  struct xt_ddt_tree_elem * elem;
+  struct xt_ddt_tree_elem *elem;
 
   // decode MPI datatype
   switch (combiner) {
@@ -540,8 +543,8 @@ static struct xt_ddt_tree_elem *
 
     case MPI_COMBINER_DUP: {
 
-      int * array_of_ints = NULL;
-      MPI_Aint * array_of_adds = NULL;
+      int *array_of_ints = NULL;
+      MPI_Aint *array_of_adds = NULL;
       xt_mpi_call(
         MPI_Type_get_contents(
           mpi_ddt, num_ints, num_adds, num_dtypes,
@@ -554,7 +557,7 @@ static struct xt_ddt_tree_elem *
     case MPI_COMBINER_CONTIGUOUS: {
 
       int array_of_ints[1];
-      MPI_Aint * array_of_adds = NULL;
+      MPI_Aint *array_of_adds = NULL;
 
       xt_mpi_call(
         MPI_Type_get_contents(
@@ -570,7 +573,7 @@ static struct xt_ddt_tree_elem *
     case MPI_COMBINER_VECTOR: {
 
       int array_of_ints[3];
-      MPI_Aint * array_of_adds = NULL;
+      MPI_Aint *array_of_adds = NULL;
 
       xt_mpi_call(
         MPI_Type_get_contents(
@@ -602,8 +605,8 @@ static struct xt_ddt_tree_elem *
     }
     case MPI_COMBINER_INDEXED:{
 
-      int * array_of_ints = xmalloc((size_t)num_ints * sizeof(*array_of_ints));
-      MPI_Aint * array_of_adds = NULL;
+      int *array_of_ints = xmalloc((size_t)num_ints * sizeof(*array_of_ints));
+      MPI_Aint *array_of_adds = NULL;
 
       xt_mpi_call(
         MPI_Type_get_contents(
@@ -622,9 +625,9 @@ static struct xt_ddt_tree_elem *
     }
     case MPI_COMBINER_HINDEXED:{
 
-      int * array_of_ints =
+      int *array_of_ints =
         xmalloc((size_t)num_ints * sizeof(*array_of_ints));
-      MPI_Aint * array_of_adds =
+      MPI_Aint *array_of_adds =
         xmalloc((size_t)num_adds * sizeof(*array_of_adds));
 
       xt_mpi_call(
@@ -644,8 +647,8 @@ static struct xt_ddt_tree_elem *
     }
     case MPI_COMBINER_INDEXED_BLOCK:{
 
-      int * array_of_ints = xmalloc((size_t)num_ints * sizeof(*array_of_ints));
-      MPI_Aint * array_of_adds = NULL;
+      int *array_of_ints = xmalloc((size_t)num_ints * sizeof(*array_of_ints));
+      MPI_Aint *array_of_adds = NULL;
 
       xt_mpi_call(
         MPI_Type_get_contents(
@@ -665,7 +668,7 @@ static struct xt_ddt_tree_elem *
     case MPI_COMBINER_HINDEXED_BLOCK:{
 
       int array_of_ints[2];
-      MPI_Aint * array_of_adds =
+      MPI_Aint *array_of_adds =
         xmalloc((size_t)num_adds * sizeof(*array_of_adds));
 
       xt_mpi_call(
@@ -685,9 +688,9 @@ static struct xt_ddt_tree_elem *
 #endif
     case MPI_COMBINER_STRUCT:{
 
-      int * array_of_ints =
+      int *array_of_ints =
         xmalloc((size_t)num_ints * sizeof(*array_of_ints));
-      MPI_Aint * array_of_adds =
+      MPI_Aint *array_of_adds =
         xmalloc((size_t)num_adds * sizeof(*array_of_adds));
       array_of_dtypes =
         xmalloc((size_t)num_dtypes * sizeof(*array_of_dtypes));
@@ -710,9 +713,9 @@ static struct xt_ddt_tree_elem *
     }
     case MPI_COMBINER_SUBARRAY:{
 
-      int * array_of_ints =
+      int *array_of_ints =
         xmalloc((size_t)num_ints * sizeof(*array_of_ints));
-      MPI_Aint * array_of_adds = NULL;
+      MPI_Aint *array_of_adds = NULL;
 
       xt_mpi_call(
         MPI_Type_get_contents(
@@ -734,7 +737,7 @@ static struct xt_ddt_tree_elem *
     }
     case MPI_COMBINER_RESIZED:{
 
-      int * array_of_ints = NULL;
+      int *array_of_ints = NULL;
       MPI_Aint array_of_adds[2];
 
       xt_mpi_call(
@@ -753,7 +756,7 @@ static struct xt_ddt_tree_elem *
   return elem;
 }
 
-static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem * elem) {
+static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem *elem) {
 
   if (elem == NULL) return;
 
@@ -767,7 +770,7 @@ static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem * elem) {
       xt_ddt_tree_elem_delete(elem->sub_elems.single);
       break;
     case (MULTI_SUB): {
-      struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
+      struct xt_ddt_tree_elem **sub_elems = elem->sub_elems.multi;
       for (size_t i = 0; i < elem->displ_count; ++i)
         xt_ddt_tree_elem_delete(sub_elems[i]);
       free(sub_elems);
@@ -777,7 +780,7 @@ static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem * elem) {
   free(elem);
 }
 
-static void xt_ddt_tree_delete(struct xt_ddt_tree_elem * tree) {
+static void xt_ddt_tree_delete(struct xt_ddt_tree_elem *tree) {
 
   if (tree != NULL) xt_ddt_tree_elem_delete(tree);
 }
@@ -807,8 +810,8 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
 }
 
 static void xt_ddt_tree_elem_get_data_sizes(
-  struct xt_ddt_tree_elem * elem, MPI_Datatype * prev_dtype,
-  size_t * prev_data_idx, struct xt_ddt_data * data) {
+  struct xt_ddt_tree_elem *elem, MPI_Datatype *prev_dtype,
+  size_t *prev_data_idx, struct xt_ddt_data *data) {
 
   if (elem == NULL) return;
 
@@ -827,7 +830,7 @@ static void xt_ddt_tree_elem_get_data_sizes(
     }
     case (SINGLE_SUB): {
 
-      struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
+      struct xt_ddt_tree_elem *sub_elem = elem->sub_elems.single;
 
       for (size_t i = 0; i < elem->displ_count; ++i)
         xt_ddt_tree_elem_get_data_sizes(
@@ -836,7 +839,7 @@ static void xt_ddt_tree_elem_get_data_sizes(
     }
     case (MULTI_SUB): {
 
-      struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
+      struct xt_ddt_tree_elem **sub_elems = elem->sub_elems.multi;
 
       for (size_t i = 0; i < elem->displ_count; ++i)
         xt_ddt_tree_elem_get_data_sizes(
@@ -847,7 +850,7 @@ static void xt_ddt_tree_elem_get_data_sizes(
 }
 
 static void xt_ddt_tree_get_data_sizes(
-  struct xt_ddt_tree_elem * tree, struct xt_ddt_data * data) {
+  struct xt_ddt_tree_elem *tree, struct xt_ddt_data *data) {
 
   MPI_Datatype prev_dtype = MPI_DATATYPE_NULL;
   size_t prev_data_idx = SIZE_MAX;
@@ -858,13 +861,13 @@ static void xt_ddt_tree_get_data_sizes(
 }
 
 static void xt_ddt_tree_elem_to_data(
-  struct xt_ddt_tree_elem * elem, struct xt_ddt_data * data, MPI_Aint displ,
-  MPI_Datatype * prev_dtype, size_t * prev_data_idx) {
+  struct xt_ddt_tree_elem *elem, struct xt_ddt_data *data, MPI_Aint displ,
+  MPI_Datatype *prev_dtype, size_t *prev_data_idx) {
 
   if (elem == NULL) return;
 
   size_t elem_displ_count = elem->displ_count;
-  MPI_Aint * elem_displs =
+  MPI_Aint *elem_displs =
     (elem_displ_count <= 1)?(&(elem->displs.single)):(elem->displs.multi);
 
   switch (elem->type) {
@@ -878,7 +881,7 @@ static void xt_ddt_tree_elem_to_data(
       }
 
       size_t displ_count = data[*prev_data_idx].displ_count;
-      ssize_t * displs = data[*prev_data_idx].displs[XT_MEMTYPE_HOST];
+      ssize_t *displs = data[*prev_data_idx].displs[XT_MEMTYPE_HOST];
       for (size_t i = 0; i < elem_displ_count; ++i, ++displ_count)
         displs[displ_count] = (ssize_t)displ + (ssize_t)elem_displs[i];
       data[*prev_data_idx].displ_count = displ_count;
@@ -887,7 +890,7 @@ static void xt_ddt_tree_elem_to_data(
     }
     case (SINGLE_SUB): {
 
-      struct xt_ddt_tree_elem * sub_elem = elem->sub_elems.single;
+      struct xt_ddt_tree_elem *sub_elem = elem->sub_elems.single;
 
       for (size_t i = 0; i < elem_displ_count; ++i)
         xt_ddt_tree_elem_to_data(
@@ -897,7 +900,7 @@ static void xt_ddt_tree_elem_to_data(
     }
     case (MULTI_SUB): {
 
-      struct xt_ddt_tree_elem ** sub_elems = elem->sub_elems.multi;
+      struct xt_ddt_tree_elem **sub_elems = elem->sub_elems.multi;
 
       for (size_t i = 0; i < elem_displ_count; ++i)
         xt_ddt_tree_elem_to_data(
@@ -909,7 +912,7 @@ static void xt_ddt_tree_elem_to_data(
 }
 
 static void xt_ddt_tree_to_data(
-  struct xt_ddt_tree_elem * tree, struct xt_ddt_data * data) {
+  struct xt_ddt_tree_elem *tree, struct xt_ddt_data *data) {
 
   MPI_Aint displ = 0;
   MPI_Datatype prev_dtype = MPI_DATATYPE_NULL;
@@ -923,7 +926,7 @@ static void xt_ddt_tree_to_data(
 static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
 
   // parse the MPI datatype
-  struct xt_ddt_tree_elem * tree = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 0);
+  struct xt_ddt_tree_elem *tree = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 0);
 
   struct xt_ddt_data data[7];
   for (int i = 0; i < 6; ++i) {
@@ -960,7 +963,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   if (total_displs_size > 0) {
 
     // allocate memory for all displacements
-    ssize_t * displs =
+    ssize_t *displs =
       xt_gpu_malloc(total_displs_size * sizeof(*displs), XT_MEMTYPE_HOST);
 
     for (size_t i = 0, offset = 0; i < 7; ++i) {
@@ -1076,7 +1079,7 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
   }
 
   // get xt_ddt from MPI datatype, if available
-  void * attr;
+  void *attr;
   int flag;
   xt_mpi_call(
     MPI_Type_get_attr(
@@ -1114,7 +1117,7 @@ static void xt_ddt_copy_displs(Xt_ddt ddt, enum xt_memtype memtype) {
     total_displs_size += ddt->data[i].displ_count;
 
   // allocate displacements in specified memory type
-  ssize_t * displs;
+  ssize_t *displs;
   size_t buffer_size = total_displs_size * sizeof(*displs);
   displs = xt_gpu_malloc(buffer_size, memtype);
 
@@ -1133,7 +1136,7 @@ static void xt_ddt_copy_displs(Xt_ddt ddt, enum xt_memtype memtype) {
 }
 
 static void xt_ddt_pack_8(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1146,7 +1149,7 @@ XtPragmaACC(
 }
 
 static void xt_ddt_pack_16(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1159,7 +1162,7 @@ XtPragmaACC(
 }
 
 static void xt_ddt_pack_32(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1172,7 +1175,7 @@ XtPragmaACC(
 }
 
 static void xt_ddt_pack_64(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1185,7 +1188,7 @@ XtPragmaACC(
 }
 
 static void xt_ddt_pack_128(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
   int64_t (*restrict dst_)[2] = (int64_t(*)[2])dst;
 #ifndef _OPENACC
@@ -1195,14 +1198,14 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
+    int64_t *src_64 = (int64_t*)((unsigned char *)src + displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 2; ++j) dst_[i][j] = src_64[j];
   }
 }
 
 static void xt_ddt_pack_96(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
   int32_t (*restrict dst_)[3] = (int32_t(*)[3])dst;
 #ifndef _OPENACC
@@ -1219,7 +1222,7 @@ XtPragmaACC(loop independent)
 }
 
 static void xt_ddt_pack_256(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
   int64_t (*restrict dst_)[4] = (int64_t(*)[4])dst;
 #ifndef _OPENACC
@@ -1229,14 +1232,14 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    int64_t * src_64 = (int64_t*)((unsigned char *)src + displs[i]);
+    int64_t *src_64 = (int64_t*)((unsigned char *)src + displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 4; ++j) dst_[i][j] = src_64[j];
   }
 }
 
 void xt_ddt_pack_internal(
-  Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype) {
+  Xt_ddt ddt, const void *src, void *dst, enum xt_memtype memtype) {
 
   XT_GPU_INSTR_PUSH(xt_ddt_pack_internal);
 
@@ -1250,7 +1253,7 @@ void xt_ddt_pack_internal(
 
     size_t element_size = ddt->data[i].element_size;
     size_t displ_count = ddt->data[i].displ_count;
-    ssize_t * displs = ddt->data[i].displs[memtype];
+    ssize_t *displs = ddt->data[i].displs[memtype];
 
     switch (element_size) {
       case 1:
@@ -1300,7 +1303,7 @@ void xt_ddt_pack_internal(
   XT_GPU_INSTR_POP;
 }
 
-void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+void xt_ddt_pack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
 
   XT_GPU_INSTR_PUSH(xt_ddt_pack);
   XT_GPU_INSTR_PUSH(xt_ddt_pack:initialise);
@@ -1309,7 +1312,7 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
 
   size_t pack_size;
-  void * orig_dst;
+  void *orig_dst;
 
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
@@ -1336,7 +1339,7 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
 }
 
 static void xt_ddt_unpack_8(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1349,7 +1352,7 @@ XtPragmaACC(
 }
 
 static void xt_ddt_unpack_16(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1362,7 +1365,7 @@ XtPragmaACC(
 }
 
 static void xt_ddt_unpack_32(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1375,7 +1378,7 @@ XtPragmaACC(
 }
 
 static void xt_ddt_unpack_64(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
@@ -1388,9 +1391,9 @@ XtPragmaACC(
 }
 
 static void xt_ddt_unpack_96(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
-  int32_t const (*src_)[3] = (int32_t const (*)[3])src;
+  const int32_t (*src_)[3] = (const int32_t (*)[3])src;
 #ifndef _OPENACC
   (void)memtype;
 #endif
@@ -1398,7 +1401,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src_, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    int32_t * dst_32 = (int32_t*)((unsigned char *)dst + displs[i]);
+    int32_t *dst_32 = (int32_t*)((unsigned char *)dst + displs[i]);
     dst_32[0] = src_[i][0];
     dst_32[1] = src_[i][1];
     dst_32[2] = src_[i][2];
@@ -1406,9 +1409,9 @@ XtPragmaACC(
 }
 
 static void xt_ddt_unpack_128(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
-  int64_t const (*src_)[2] = (int64_t const (*)[2])src;
+  const int64_t (*src_)[2] = (const int64_t (*)[2])src;
 #ifndef _OPENACC
   (void)memtype;
 #endif
@@ -1416,16 +1419,16 @@ XtPragmaACC(
   parallel loop independent deviceptr(src_, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    int64_t * dst_64 = (int64_t*)((unsigned char *)dst + displs[i]);
+    int64_t *dst_64 = (int64_t *)((unsigned char *)dst + displs[i]);
     dst_64[0] = src_[i][0];
     dst_64[1] = src_[i][1];
   }
 }
 
 static void xt_ddt_unpack_256(
-  size_t count, ssize_t *restrict displs, void const *restrict src,
+  size_t count, ssize_t *restrict displs, const void *restrict src,
   void *restrict dst, enum xt_memtype memtype) {
-  int64_t const (*src_)[4] = (int64_t const(*)[4])src;
+  const int64_t (*src_)[4] = (const int64_t(*)[4])src;
 #ifndef _OPENACC
   (void)memtype;
 #endif
@@ -1433,7 +1436,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src_, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    int64_t * dst_64 = (int64_t*)((unsigned char *)src + displs[i]);
+    int64_t *dst_64 = (int64_t *)((unsigned char *)dst + displs[i]);
     dst_64[0] = src_[i][0];
     dst_64[1] = src_[i][1];
     dst_64[2] = src_[i][2];
@@ -1442,7 +1445,7 @@ XtPragmaACC(
 }
 
 void xt_ddt_unpack_internal(
-  Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype) {
+  Xt_ddt ddt, const void *src, void *dst, enum xt_memtype memtype) {
 
   XT_GPU_INSTR_PUSH(xt_ddt_unpack_internal);
 
@@ -1456,7 +1459,7 @@ void xt_ddt_unpack_internal(
 
     size_t element_size = ddt->data[i].element_size;
     size_t displ_count = ddt->data[i].displ_count;
-    ssize_t * displs = ddt->data[i].displs[memtype];
+    ssize_t *displs = ddt->data[i].displs[memtype];
 
     switch (element_size) {
       case 1:
@@ -1506,7 +1509,7 @@ void xt_ddt_unpack_internal(
   XT_GPU_INSTR_POP;
 }
 
-void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
+void xt_ddt_unpack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
 
   XT_GPU_INSTR_PUSH(xt_ddt_unpack);
   XT_GPU_INSTR_PUSH(xt_ddt_unpack:initialise);
@@ -1517,7 +1520,7 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst) {
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
     size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
-    void const * orig_src = src;
+    const void *orig_src = src;
     src = xt_gpu_malloc(pack_size, dst_memtype);
     xt_gpu_memcpy((void*)src, orig_src, pack_size, dst_memtype, src_memtype);
   }
