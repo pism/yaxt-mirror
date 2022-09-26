@@ -739,6 +739,18 @@ int main(void) {
     //      CONT(3,MPI_INT16_T),
     //      VECTOR(3,3,9,MPI_DOUBLE),
     //      CONT(0,MPI_CHAR)}))
+    // Unfortunately: on buggy OpenMPI versions, contiguous needs to
+    //   have at least count 1, this seems to be fixed since OpenMPI
+    //   4.0.2 and apparently wasn't present in very old releases.
+#if defined OMPI_MAJOR_VERSION \
+  && ( OMPI_MAJOR_VERSION == 1 && OMPI_MINOR_VERSION >= 8               \
+       || OMPI_MAJOR_VERSION == 2                                       \
+       || OMPI_MAJOR_VERSION == 3                                       \
+       || OMPI_MAJOR_VERSION == 4 && OMPI_MINOR_VERSION == 0 && OMPI_RELEASE_VERSION == 1 )
+    enum { minimal_cont_count = 1, };
+#else
+    enum { minimal_cont_count = 0, };
+#endif
     struct {
       char c1[3];
       int i[2];
@@ -767,16 +779,17 @@ int main(void) {
     {// STRUCT(3,{1,1,1},{...},{i_mpi_ddt,d_mpi_ddt,c_mpi_ddt})
 
       MPI_Datatype i_mpi_ddt, i16_mpi_ddt, d_mpi_ddt, c_mpi_ddt;
-      { // {CONT(0,DUP(MPI_INT)),
+      { // {CONT(minimal_cont_count,DUP(MPI_INT)),
         //  CONT(3,MPI_INT16_T),
         //  VECTOR(3,3,9,MPI_DOUBLE),
-        //  CONT(0,MPI_CHAR)}
+        //  CONT(minimal_cont_count,MPI_CHAR)}
 
-        { // CONT(0,DUP(MPI_INT)
+        { // CONT(minimal_cont_count,DUP(MPI_INT)
           MPI_Datatype dup_mpi_int;
           MPI_Type_dup(MPI_INT, &dup_mpi_int);
-          enum {COUNT = 0};
-          MPI_Type_contiguous(COUNT, dup_mpi_int, &i_mpi_ddt);
+          enum {COUNT = minimal_cont_count};
+          xt_mpi_call(MPI_Type_contiguous(COUNT, dup_mpi_int, &i_mpi_ddt),
+                      MPI_COMM_WORLD);
           MPI_Type_free(&dup_mpi_int);
         }
 
@@ -791,7 +804,7 @@ int main(void) {
         }
 
         { // CONT(0,MPI_CHAR)
-          enum {COUNT = 0};
+          enum {COUNT = minimal_cont_count};
           MPI_Type_contiguous(COUNT, MPI_CHAR, &c_mpi_ddt);
         }
       }
@@ -805,11 +818,11 @@ int main(void) {
       MPI_Get_address(&(in_data[0][0].d[3][3]), &d_address);
       MPI_Get_address(in_data[0][0].c2, &c_address);
       MPI_Aint array_of_displacements[COUNT] =
-        {(MPI_Aint)(i_address - base_address),
-         (MPI_Aint)(i16_address - base_address),
-         (MPI_Aint)(d_address - base_address),
-         (MPI_Aint)(c_address - base_address)};
-      MPI_Datatype const array_of_types[COUNT] =
+        { i_address - base_address,
+          i16_address - base_address,
+          d_address - base_address,
+          c_address - base_address };
+      const MPI_Datatype array_of_types[COUNT] =
         {i_mpi_ddt, i16_mpi_ddt, d_mpi_ddt, c_mpi_ddt};
       MPI_Type_create_struct(
         COUNT, (int *)array_of_blocklengths, array_of_displacements,
@@ -835,14 +848,18 @@ int main(void) {
     MPI_Datatype mpi_ddt_cpy;
     MPI_Type_dup(mpi_ddt, &mpi_ddt_cpy);
 
+    size_t ref_pack_size
+      = (1 + 2 + 3 + 4)
+      * (minimal_cont_count * sizeof (int)
+         + 3 * sizeof(int16_t)
+         + 3 * 3 * sizeof(double)
+         + minimal_cont_count);
     if (check_xt_ddt(
-          mpi_ddt, in_data, sizeof(in_data),
-          (1 + 2 + 3 + 4) * (3 * sizeof(int16_t) + 3 * 3 * sizeof(double))))
+          mpi_ddt, in_data, sizeof(in_data), ref_pack_size))
       PUT_ERR("ERROR INDEXED(...)");
 
     if (check_xt_ddt(
-          mpi_ddt_cpy, in_data, sizeof(in_data),
-          (1 + 2 + 3 + 4) * (3 * sizeof(int16_t) + 3 * 3 * sizeof(double))))
+          mpi_ddt_cpy, in_data, sizeof(in_data), ref_pack_size))
       PUT_ERR("ERROR DUP(INDEXED(...))");
   }
 
