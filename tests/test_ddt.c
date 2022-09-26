@@ -311,7 +311,7 @@ int main(void) {
     int const array_of_blocklengths[COUNT] = {8,4,2,1};
     int const array_of_displacements[COUNT] = {0,8,16,24};
     MPI_Type_indexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (int *)array_of_displacements,
       MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * 8};
     double in_data[IN_DATA_COUNT];
@@ -328,7 +328,7 @@ int main(void) {
     int const array_of_blocklengths[COUNT] = {1};
     int const array_of_displacements[COUNT] = {2};
     MPI_Type_indexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (int *)array_of_displacements,
       MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * 3};
     double in_data[IN_DATA_COUNT];
@@ -345,7 +345,7 @@ int main(void) {
     int const array_of_blocklengths[COUNT] = {1};
     int const array_of_displacements[COUNT] = {0};
     MPI_Type_indexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (int *)array_of_displacements,
       MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * 2};
     double in_data[IN_DATA_COUNT];
@@ -362,7 +362,7 @@ int main(void) {
     int const array_of_blocklengths[1] = {-1};
     int const array_of_displacements[1] = {-1};
     MPI_Type_indexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (int *)array_of_displacements,
       MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = 1};
     double in_data[IN_DATA_COUNT];
@@ -378,7 +378,7 @@ int main(void) {
     int const array_of_blocklengths[COUNT] = {0};
     int const array_of_displacements[COUNT] = {0};
     MPI_Type_indexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (int *)array_of_displacements,
       MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = 1};
     double in_data[IN_DATA_COUNT];
@@ -396,7 +396,7 @@ int main(void) {
     MPI_Aint const array_of_displacements[COUNT] =
       {0*sizeof(float),8*sizeof(float),16*sizeof(float),24*sizeof(float)};
     MPI_Type_create_hindexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (MPI_Aint *)array_of_displacements,
       MPI_FLOAT, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * 8};
     float in_data[IN_DATA_COUNT];
@@ -413,7 +413,7 @@ int main(void) {
     int const array_of_blocklengths[COUNT] = {1};
     MPI_Aint const array_of_displacements[COUNT] = {2*sizeof(float)};
     MPI_Type_create_hindexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (MPI_Aint *)array_of_displacements,
       MPI_FLOAT, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * 4};
     float in_data[IN_DATA_COUNT];
@@ -430,7 +430,7 @@ int main(void) {
     int const array_of_blocklengths[COUNT] = {1};
     MPI_Aint const array_of_displacements[COUNT] = {0};
     MPI_Type_create_hindexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (MPI_Aint *)array_of_displacements,
       MPI_FLOAT, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * 2};
     float in_data[IN_DATA_COUNT];
@@ -446,7 +446,7 @@ int main(void) {
     enum {COUNT = 4, BLOCKLENGTH = 3};
     int const array_of_displacements[COUNT] = {0,4,12,8};
     MPI_Type_create_indexed_block(
-      COUNT, BLOCKLENGTH, array_of_displacements, MPI_INT, &mpi_ddt);
+      COUNT, BLOCKLENGTH, (int *)array_of_displacements, MPI_INT, &mpi_ddt);
     enum {IN_DATA_COUNT = 16};
     int in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
@@ -462,7 +462,7 @@ int main(void) {
     enum {COUNT = 1, BLOCKLENGTH = 1};
     int const array_of_displacements[COUNT] = {2};
     MPI_Type_create_indexed_block(
-      COUNT, BLOCKLENGTH, array_of_displacements, MPI_CHAR, &mpi_ddt);
+      COUNT, BLOCKLENGTH, (int *)array_of_displacements, MPI_CHAR, &mpi_ddt);
     enum {IN_DATA_COUNT = 3};
     char in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (char)i;
@@ -478,7 +478,7 @@ int main(void) {
     enum {COUNT = 1, BLOCKLENGTH = 1};
     int const array_of_displacements[COUNT] = {0};
     MPI_Type_create_indexed_block(
-      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+      COUNT, BLOCKLENGTH, (int *)array_of_displacements, MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = 2};
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
@@ -494,7 +494,7 @@ int main(void) {
     enum {COUNT = 0, BLOCKLENGTH = 1};
     int const array_of_displacements[1] = {0};
     MPI_Type_create_indexed_block(
-      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+      COUNT, BLOCKLENGTH, (int *)array_of_displacements, MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = 1};
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
@@ -510,7 +510,7 @@ int main(void) {
     enum {COUNT = 1, BLOCKLENGTH = 0};
     int const array_of_displacements[COUNT] = {0};
     MPI_Type_create_indexed_block(
-      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+      COUNT, BLOCKLENGTH, (int *)array_of_displacements, MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = 1};
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
@@ -528,7 +528,8 @@ int main(void) {
     MPI_Aint const array_of_displacements[COUNT] =
       {sizeof(double)*0,sizeof(double)*4,sizeof(double)*12,sizeof(double)*8};
     MPI_Type_create_hindexed_block(
-      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+      COUNT, BLOCKLENGTH, (MPI_Aint*)array_of_displacements,
+      MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = 16};
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
@@ -546,7 +547,8 @@ int main(void) {
     MPI_Aint const array_of_displacements[COUNT] =
       {sizeof(double)*2};
     MPI_Type_create_hindexed_block(
-      COUNT, BLOCKLENGTH, array_of_displacements, MPI_DOUBLE, &mpi_ddt);
+      COUNT, BLOCKLENGTH, (MPI_Aint *)array_of_displacements,
+      MPI_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = 3};
     double in_data[IN_DATA_COUNT];
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
@@ -593,10 +595,10 @@ int main(void) {
     enum {COUNT = 3};
     int const array_of_blocklengths[COUNT] = {3, 1, 2};
     MPI_Aint base_address, i_address, f_address, d_address;
-    MPI_Get_address(in_data, &base_address);
-    MPI_Get_address(in_data[0].i, &i_address);
-    MPI_Get_address(&in_data[0].f, &f_address);
-    MPI_Get_address(in_data[0].d, &d_address);
+    MPI_Get_address((void *)in_data, &base_address);
+    MPI_Get_address((void *)in_data[0].i, &i_address);
+    MPI_Get_address((void *)&in_data[0].f, &f_address);
+    MPI_Get_address((void *)in_data[0].d, &d_address);
     MPI_Aint array_of_displacements[COUNT] =
       {(MPI_Aint)(i_address - base_address),
        (MPI_Aint)(f_address - base_address),
@@ -604,8 +606,8 @@ int main(void) {
     MPI_Datatype const array_of_types[COUNT] =
       {MPI_INT, MPI_FLOAT, MPI_DOUBLE};
     MPI_Type_create_struct(
-      COUNT, array_of_blocklengths, array_of_displacements,
-      array_of_types, &mpi_ddt);
+      COUNT, (int *)array_of_blocklengths, (MPI_Aint *)array_of_displacements,
+      (MPI_Datatype *)array_of_types, &mpi_ddt);
 
     if (check_xt_ddt(
           mpi_ddt, in_data, sizeof(in_data),
@@ -622,8 +624,8 @@ int main(void) {
     int in_data[COUNT];
     for (size_t i = 0; i < COUNT; ++i) in_data[i] = (int)i;
     MPI_Type_create_struct(
-      COUNT, array_of_blocklengths, array_of_displacements,
-      array_of_types, &mpi_ddt);
+      COUNT, (int *)array_of_blocklengths, (MPI_Aint *)array_of_displacements,
+      (MPI_Datatype *)array_of_types, &mpi_ddt);
 
     if (check_xt_ddt(
           mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
@@ -646,8 +648,8 @@ int main(void) {
       double in_data[IN_DATA_COUNT];
       for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (double)i;
       MPI_Type_create_subarray(
-        NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
-        order_types[order_idx], MPI_DOUBLE, &mpi_ddt);
+        NDIM, (int *)array_of_sizes, (int *)array_of_subsizes,
+        (int *)array_of_starts, order_types[order_idx], MPI_DOUBLE, &mpi_ddt);
 
     if (check_xt_ddt(
           mpi_ddt, in_data, sizeof(in_data),
@@ -672,8 +674,8 @@ int main(void) {
       float in_data[IN_DATA_COUNT];
       for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (float)i;
       MPI_Type_create_subarray(
-        NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
-        order_types[order_idx], MPI_FLOAT, &mpi_ddt);
+        NDIM, (int *)array_of_sizes, (int *)array_of_subsizes,
+        (int *)array_of_starts, order_types[order_idx], MPI_FLOAT, &mpi_ddt);
 
       if (check_xt_ddt(
             mpi_ddt, in_data, sizeof(in_data), 4 * sizeof(in_data[0])))
@@ -697,8 +699,8 @@ int main(void) {
       int in_data[IN_DATA_COUNT];
       for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (int)i;
       MPI_Type_create_subarray(
-        NDIM, array_of_sizes, array_of_subsizes, array_of_starts,
-        order_types[order_idx], MPI_FLOAT, &mpi_ddt);
+        NDIM, (int *)array_of_sizes, (int *)array_of_subsizes,
+        (int *)array_of_starts, order_types[order_idx], MPI_FLOAT, &mpi_ddt);
 
     if (check_xt_ddt(
           mpi_ddt, in_data, sizeof(in_data), 1 * sizeof(in_data[0])))
@@ -808,8 +810,8 @@ int main(void) {
       MPI_Datatype const array_of_types[COUNT] =
         {i_mpi_ddt, i16_mpi_ddt, d_mpi_ddt, c_mpi_ddt};
       MPI_Type_create_struct(
-        COUNT, array_of_blocklengths, array_of_displacements,
-        array_of_types, &struct_mpi_ddt);
+        COUNT, (int *)array_of_blocklengths, array_of_displacements,
+        (MPI_Datatype *)array_of_types, &struct_mpi_ddt);
 
       MPI_Type_free(&i_mpi_ddt);
       MPI_Type_free(&i16_mpi_ddt);
@@ -822,7 +824,7 @@ int main(void) {
     int const array_of_blocklengths[COUNT] = {1,2,3,4};
     int const array_of_displacements[COUNT] = {3,7,9,12};
     MPI_Type_indexed(
-      COUNT, array_of_blocklengths, array_of_displacements,
+      COUNT, (int *)array_of_blocklengths, (int *)array_of_displacements,
       struct_mpi_ddt, &mpi_ddt);
     MPI_Type_free(&struct_mpi_ddt);
 
