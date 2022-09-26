@@ -521,6 +521,7 @@ int main(void) {
       PUT_ERR("ERROR INDEXED_BLOCK(1, 0, {0}, DOUBLE)");
   }
 
+#if MPI_VERSION >= 3
   { // MPI_Type_create_hindexed_block(
     //   4, 3, sizeof(double)*{0,4,12,8}, MPI_DOUBLE)
     MPI_Datatype mpi_ddt;
@@ -575,9 +576,10 @@ int main(void) {
           COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR HINDEXED_BLOCK(1, 1, {0}, FLOAT)");
   }
+#endif
 
   { // MPI_Type_create_struct(...)
-    const struct {
+    static const struct {
       char dummy1;
       int i[3];
       char dummy2[3];
