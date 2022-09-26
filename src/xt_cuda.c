@@ -64,6 +64,8 @@
 #include <nvToolsExt.h>
 #endif
 
+static const char filename[] = "xt_cuda.c";
+
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 
 #define STRINGIFY2(x) #x
@@ -119,7 +121,7 @@ static void * xt_cuda_malloc(
       Xt_abort(
         Xt_default_comm,
         "ERROR(xt_cuda_malloc): unsupported memory type",
-        __FILE__, __LINE__);
+        filename, __LINE__);
       return NULL;
     case (XT_MEMTYPE_HOST):
       return xmalloc(alloc_size);
@@ -139,7 +141,7 @@ static void xt_cuda_free(void * ptr, enum xt_memtype memtype) {
       Xt_abort(
         Xt_default_comm,
         "ERROR(xt_cuda_free): unsupported memory type",
-        __FILE__, __LINE__);
+        filename, __LINE__);
       break;;
     case (XT_MEMTYPE_HOST):
       free(ptr);
@@ -160,7 +162,7 @@ static void xt_cuda_memcpy(
         Xt_abort(
           Xt_default_comm,
           "ERROR(xt_cuda_memcpy): unsupported memory type",
-          __FILE__, __LINE__);
+          filename, __LINE__);
         break;
       case (XT_MEMTYPE_HOST):
         memcpy(dst, src, buffer_size);
@@ -177,14 +179,14 @@ static void xt_cuda_memcpy(
         Xt_abort(
           Xt_default_comm,
           "ERROR(xt_cuda_memcpy): unsupported source memory type",
-          __FILE__, __LINE__);
+          filename, __LINE__);
         break;
       case (XT_MEMTYPE_HOST):
         if (dst_memtype != XT_MEMTYPE_DEVICE)
           Xt_abort(
             Xt_default_comm,
             "ERROR(xt_cuda_memcpy): unsupported destination memory type",
-            __FILE__, __LINE__);
+            filename, __LINE__);
         CU_ERROR_CHECK(
           func_cuMemcpyHtoD((CUdeviceptr)dst, src, buffer_size));
         break;
@@ -193,7 +195,7 @@ static void xt_cuda_memcpy(
           Xt_abort(
             Xt_default_comm,
             "ERROR(xt_cuda_memcpy): unsupported destination memory type",
-            __FILE__, __LINE__);
+            filename, __LINE__);
         CU_ERROR_CHECK(
           func_cuMemcpyDtoH(dst, (CUdeviceptr)src, buffer_size))
         break;
@@ -292,7 +294,7 @@ static int load_cuda_library(void) {
           Xt_default_comm,
           "invalid value of XT_CUDA_WARN_ON_MISSING_LIBCUDA "
           "environment variable (has to be \"0\" or \"1\")",
-          __FILE__, __LINE__);
+          filename, __LINE__);
       }
     }
 
