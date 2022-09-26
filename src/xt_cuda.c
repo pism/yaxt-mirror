@@ -298,8 +298,7 @@ static int load_cuda_library(void) {
 
     if (print_warning) {
       // warn user about failed loading of CUDA library
-      fprintf(
-        stderr,
+      fputs(
         "-----------------------------------------------------------------------\n"
         "WARNING: yaxt was compiled with CUDA-support, but the library could not\n"
         "         be loaded. CUDA-support will be deactivated. Try setting\n"
@@ -307,8 +306,8 @@ static int load_cuda_library(void) {
         "         accordingly.\n"
         "         To suppress this message set the\n"
         "         XT_CUDA_WARN_ON_MISSING_LIBCUDA environment variable to \"0\"\n"
-        "-----------------------------------------------------------------------\n"
-        );
+        "-----------------------------------------------------------------------\n",
+        stderr);
     }
   }
 
