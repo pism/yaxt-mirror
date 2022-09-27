@@ -168,7 +168,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_exchanger_neigh_alltoall.h				\
 	xt_exchanger_mix_isend_irecv.c				\
 	xt_exchanger_mix_isend_irecv.h				\
-	xt/xt_gpu.h						\
+	xt_gpu.h						\
 	xt_gpu.c						\
 	xt_ddt.h						\
 	xt_ddt_internal.h					\

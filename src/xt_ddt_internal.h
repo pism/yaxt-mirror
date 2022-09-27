@@ -52,7 +52,7 @@
 #define XT_DDT_INTERNAL_H
 
 #include "xt_ddt.h"
-#include "xt/xt_gpu.h"
+#include "xt_gpu.h"
 
 #include "core/ppm_visibility.h"
 

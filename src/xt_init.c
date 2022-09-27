@@ -59,7 +59,7 @@
 #include "xt_exchanger.h"
 #include "xt_mpi_internal.h"
 #include "instr.h"
-#include "xt/xt_gpu.h"
+#include "xt_gpu.h"
 
 INSTR_DEF(instr,"YAXT_lifetime")
 

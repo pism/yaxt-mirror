@@ -51,7 +51,7 @@
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "xt/xt_gpu.h"
+#include "xt_gpu.h"
 #ifdef HAVE_CUDA
 #  include "xt_cuda.h"
 #endif

@@ -62,7 +62,7 @@
 #include <yaxt.h>
 
 #include "../src/xt_ddt.h"
-#include "../src/xt/xt_gpu.h"
+#include "../src/xt_gpu.h"
 
 #include "tests.h"
 

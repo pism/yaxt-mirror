@@ -63,6 +63,8 @@
 
 #include <stddef.h>
 
+#include "core/ppm_visibility.h"
+
 enum xt_memtype {
   XT_MEMTYPE_HOST,
   XT_MEMTYPE_DEVICE,
@@ -70,7 +72,6 @@ enum xt_memtype {
 };
 
 struct xt_gpu_vtable {
-  
   void* (*malloc)(size_t alloc_size, enum xt_memtype memtype);
   void (*free)(void * ptr, enum xt_memtype memtype);
   void (*memcpy)(
@@ -85,7 +86,8 @@ struct xt_gpu_vtable {
  * initialises xt_gpu
  * @remark if yaxt was compiled with CUDA support, xt_gpu will try to use it
  */
-void xt_gpu_init(void);
+PPM_DSO_INTERNAL void
+xt_gpu_init(void);
 
 /**
  * allocates memory of the specified type
@@ -94,14 +96,16 @@ void xt_gpu_init(void);
  * @return allocated memory of specified size and memory type\n
            NULL, if allocation failed
  */
-void * xt_gpu_malloc(size_t alloc_size, enum xt_memtype memtype);
+PPM_DSO_INTERNAL void *
+xt_gpu_malloc(size_t alloc_size, enum xt_memtype memtype);
 
 /**
  * frees memory that was previously allocated using \ref xt_gpu_malloc
  * @param[in] ptr     pointer to be freed
  * @param[in] memtype type memory associated to ptr
  */
-void xt_gpu_free(void * ptr, enum xt_memtype memtype);
+PPM_DSO_INTERNAL void
+xt_gpu_free(void * ptr, enum xt_memtype memtype);
 
 /**
  * copies memory from src to dst
@@ -111,7 +115,7 @@ void xt_gpu_free(void * ptr, enum xt_memtype memtype);
  * @param[in] dst_memtype type of destination memory
  * @param[in] src_memtype type of source memory
  */
-void xt_gpu_memcpy(
+PPM_DSO_INTERNAL void xt_gpu_memcpy(
   void * dst, void const * src, size_t buffer_size,
   enum xt_memtype dst_memtype, enum xt_memtype src_memtype);
 
@@ -122,8 +126,8 @@ void xt_gpu_memcpy(
  */
 enum xt_memtype xt_gpu_get_memtype(const void *ptr);
 
-int xt_gpu_instr_push(char const * name);
-int xt_gpu_instr_pop();
+PPM_DSO_INTERNAL int xt_gpu_instr_push(char const * name);
+PPM_DSO_INTERNAL int xt_gpu_instr_pop();
 
 #endif // XT_GPU_H
 

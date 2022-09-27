@@ -51,7 +51,7 @@
 #include "core/ppm_visibility.h"
 #include "xt/xt_request.h"
 #include "xt_ddt.h"
-#include "xt/xt_gpu.h"
+#include "xt_gpu.h"
 
 /**
  * constructor for message request handle

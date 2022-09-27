@@ -57,7 +57,7 @@
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-#include "xt/xt_gpu.h"
+#include "xt_gpu.h"
 
 #ifdef XT_CUDA_NVTX_ENABLE
 #include <nvToolsExt.h>

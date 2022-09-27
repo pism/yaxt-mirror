@@ -49,7 +49,7 @@
 #ifndef XT_CUDA_H
 #define XT_CUDA_H
 
-#include "xt/xt_gpu.h"
+#include "xt_gpu.h"
 #include "core/ppm_visibility.h"
 
 /**
