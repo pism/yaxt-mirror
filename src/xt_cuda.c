@@ -311,10 +311,9 @@ static struct xt_gpu_vtable const cuda_vtable = {
 #endif
 };
 
-struct xt_gpu_vtable const * xt_cuda_init(void) {
+const struct xt_gpu_vtable *xt_cuda_init(void) {
 
-  if (load_cuda_library()) return &cuda_vtable;
-  else return NULL;
+  return load_cuda_library() ? &cuda_vtable : (struct xt_gpu_vtable *)NULL;
 }
 
 /*
