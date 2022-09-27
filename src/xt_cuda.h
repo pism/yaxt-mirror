@@ -50,13 +50,15 @@
 #define XT_CUDA_H
 
 #include "xt/xt_gpu.h"
+#include "core/ppm_visibility.h"
 
 /**
  * Initialises CUDA
  * @return NULL if CUDA could not be initialised\n
  *         otherwise a valid vtable is returned
  */
-struct xt_gpu_vtable const * xt_cuda_init(void);
+PPM_DSO_INTERNAL const struct xt_gpu_vtable *
+xt_cuda_init(void);
 
 #endif // XT_CUDA_H
 
