@@ -79,7 +79,7 @@ do {                                                        \
       stderr, "ERROR:failed to load routine \"%s\" "        \
       "from %s\n", STRINGIFY(name), lib);                   \
   }                                                         \
-} while(0);
+} while(0)
 
 #define CU_ERROR_CHECK(ret)                             \
 do{                                                     \
@@ -94,7 +94,7 @@ do{                                                     \
               __LINE__, __func__, err_string);          \
       exit(EXIT_FAILURE);                               \
     }                                                   \
-} while(0);
+} while(0)
 
 static CUresult (*func_cuGetErrorString)(CUresult error, const char** pStr);
 static CUresult (*func_cuPointerGetAttribute)
@@ -192,7 +192,7 @@ static void xt_cuda_memcpy(
             "ERROR(xt_cuda_memcpy): unsupported destination memory type",
             filename, __LINE__);
         CU_ERROR_CHECK(
-          func_cuMemcpyDtoH(dst, (CUdeviceptr)src, buffer_size))
+          func_cuMemcpyDtoH(dst, (CUdeviceptr)src, buffer_size));
         break;
     }
   }
