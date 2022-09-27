@@ -54,6 +54,8 @@
 #include "xt/xt_ddt.h"
 #include "xt/xt_gpu.h"
 
+#include "core/ppm_visibility.h"
+
 /**
  * Returns a xt_ddt object for the provided MPI datatype.
  * The routine will first check whether there is already a xt_ddt for this
@@ -66,13 +68,15 @@
  * @remark no \ref xt_ddt_delete needs to be called for the xt_ddt object
  *         returned by this routine
  */
-Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt);
+PPM_DSO_INTERNAL Xt_ddt
+xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt);
 
 /**
  * deletes a xt_ddt object
  * @param[in] ddt xt_ddt object
  */
-void xt_ddt_delete(Xt_ddt ddt);
+PPM_DSO_INTERNAL void
+xt_ddt_delete(Xt_ddt ddt);
 
 /**
  * increases the internal reference counter for the given xt_ddt object
@@ -80,14 +84,16 @@ void xt_ddt_delete(Xt_ddt ddt);
  * @remark for each reference of a xt_ddt object
  *         \ref xt_ddt_delete has to be called
  */
-void xt_ddt_inc_ref_count(Xt_ddt ddt);
+PPM_DSO_INTERNAL void
+xt_ddt_inc_ref_count(Xt_ddt ddt);
 
 /**
  * gets the buffer size required to pack the data in ddt
  * @param[in] ddt xt_ddt object
  * @returns required packing buffer size
  */
-size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt);
+PPM_DSO_INTERNAL size_t
+xt_ddt_get_pack_size_internal(Xt_ddt ddt);
 
 /**
  * packs the data from the source buffer into destination buffer
@@ -97,18 +103,18 @@ size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt);
  * @param[in]  memtype type of source and destination memory
  * @remark both src and dst have to point to the same type of memory
  */
-void xt_ddt_pack_internal(
+PPM_DSO_INTERNAL void xt_ddt_pack_internal(
   Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype);
 
 /**
- * inpacks the data from the source buffer into destination buffer
+ * unpacks the data from the source buffer into destination buffer
  * @param[in]  ddt     xt_ddt object
  * @param[in]  src     source buffer
  * @param[out] dst     destination buffer
  * @param[in]  memtype type of source and destination memory
  * @remark both src and dst have to point to the same type of memory
  */
-void xt_ddt_unpack_internal(
+PPM_DSO_INTERNAL void xt_ddt_unpack_internal(
   Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype);
 
 #endif // XT_DDT_INTERNAL_H
