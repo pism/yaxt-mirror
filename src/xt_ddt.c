@@ -1113,8 +1113,8 @@ size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
 static void xt_ddt_copy_displs(Xt_ddt ddt, enum xt_memtype memtype) {
 
   // count total number of displacements
-  size_t total_displs_size = 0;
-  for (size_t i = 0; i < ddt->count; ++i)
+  size_t total_displs_size = 0, count = ddt->count;
+  for (size_t i = 0; i < count; ++i)
     total_displs_size += ddt->data[i].displ_count;
 
   // allocate displacements in specified memory type
@@ -1128,7 +1128,7 @@ static void xt_ddt_copy_displs(Xt_ddt ddt, enum xt_memtype memtype) {
     buffer_size, memtype, XT_MEMTYPE_HOST);
 
   // set displacements for all data entries
-  for (size_t i = 0, offset = 0; i < ddt->count; ++i) {
+  for (size_t i = 0, offset = 0; i < count; ++i) {
     ddt->data[i].displs[memtype] = displs + offset;
     offset += ddt->data[i].displ_count;
   }
