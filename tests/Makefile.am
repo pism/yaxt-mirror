@@ -295,7 +295,9 @@ test_mpi_smartdedup_SOURCES = test_mpi_smartdedup.c tests.h
 test_mpi_smartdedup_LDADD =  libtestutil.la ../src/xt_mpi.lo \
 	../src/core/xmalloc.lo ../src/core/core.lo $(MPI_C_LIB)
 test_ddt_SOURCES = test_ddt.c tests.h
-
+test_ddt_LDADD = libtestutil.la ../src/xt_ddt.lo ../src/xt_gpu.lo \
+	../src/xt_mpi.lo \
+	../src/core/xmalloc.lo ../src/core/core.lo $(MPI_C_LIB)
 AM_CPPFLAGS = -I../inst_headers -I$(top_srcdir)/include $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
 	$(FPP_INCOPT)../include $(MPI_FC_MOD)
@@ -343,8 +345,8 @@ TESTS = 							\
 	test_sort_run						\
 	test_uid_run						\
 	test_yaxt_run						\
-	test_xmap_all2all_fail_run	\
-  test_ddt_run
+	test_xmap_all2all_fail_run				\
+	test_ddt_run
 
 AUTOMAKE_OPTIONS = color-tests
 

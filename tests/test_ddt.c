@@ -61,6 +61,9 @@
 
 #include <yaxt.h>
 
+#include "../src/xt_ddt.h"
+#include "../src/xt/xt_gpu.h"
+
 #include "tests.h"
 
 static int check_xt_ddt(
@@ -74,8 +77,7 @@ int main(void) {
 
   // init mpi
   xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
-
-  xt_initialize(MPI_COMM_WORLD);
+  xt_gpu_init();
 
   { // elemental integer datatype
     MPI_Datatype mpi_ddt = MPI_INT;
@@ -864,7 +866,6 @@ int main(void) {
       PUT_ERR("ERROR DUP(INDEXED(...))");
   }
 
-  xt_finalize();
   xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 
   return TEST_EXIT_CODE;

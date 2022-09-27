@@ -50,7 +50,7 @@
 
 #include "core/ppm_visibility.h"
 #include "xt/xt_request.h"
-#include "xt/xt_ddt.h"
+#include "xt_ddt.h"
 #include "xt/xt_gpu.h"
 
 /**

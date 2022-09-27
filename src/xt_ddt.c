@@ -61,7 +61,7 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
-#include "xt/xt_ddt.h"
+#include "xt_ddt.h"
 #include "xt_ddt_internal.h"
 
 /* attribute handle for attaching xt_ddt objects to MPI datatypes */

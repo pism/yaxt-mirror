@@ -57,6 +57,8 @@
 
 #include <mpi.h>
 
+#include "core/ppm_visibility.h"
+
 typedef struct Xt_ddt_ *Xt_ddt;
 
 /** \example test_ddt.c
@@ -67,7 +69,8 @@ typedef struct Xt_ddt_ *Xt_ddt;
  * @param[in] mpi_ddt MPI Datatype
  * @returns required packing buffer size
  */
-size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt);
+PPM_DSO_INTERNAL size_t
+xt_ddt_get_pack_size(MPI_Datatype mpi_ddt);
 
 /**
  * packs the data from the source buffer into destination buffer, based on
@@ -76,7 +79,8 @@ size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt);
  * @param[in]  src     source buffer
  * @param[out] dst     destination buffer
  */
-void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst);
+PPM_DSO_INTERNAL void
+xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst);
 
 /**
  * unpacks the data from the source buffer into destination buffer, based on
@@ -85,7 +89,8 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst);
  * @param[in]  src     source buffer
  * @param[out] dst     destination buffer
  */
-void xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst);
+PPM_DSO_INTERNAL void
+xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst);
 
 #endif // XT_DDT_H
 
