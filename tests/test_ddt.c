@@ -53,7 +53,8 @@
 #ifdef _OPENACC
 #include <openacc.h>
 #define STR(s) #s
-#define PragmaACC(args) _Pragma(STR(acc args))
+#define my_Pragma(args) _Pragma(args)
+#define PragmaACC(args) my_Pragma(STR(acc args))
 #else
 #define PragmaACC(args)
 #endif

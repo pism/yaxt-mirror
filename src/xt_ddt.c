@@ -52,7 +52,8 @@
 
 #ifdef _OPENACC
 #define STR(s) #s
-#define XtPragmaACC(args) _Pragma(STR(acc args))
+#define xt_Pragma(args) _Pragma(args)
+#define XtPragmaACC(args) xt_Pragma(STR(acc args))
 #else
 #define XtPragmaACC(args)
 #endif
