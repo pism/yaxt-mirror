@@ -47,6 +47,7 @@
 #include "config.h"
 #endif
 
+#include <stdbool.h>
 #include <string.h>
 #include <mpi.h>
 
@@ -1248,8 +1249,11 @@ void xt_ddt_pack_internal(
   // if the displacements are not avaible in the required memory type
   if (!ddt->displs_available[memtype]) xt_ddt_copy_displs(ddt, memtype);
 
+  size_t count = ddt->count;
+  bool found_unsupported = false;
+
   // for all sections with the same elemental datatype extent
-  for (size_t i = 0; i < ddt->count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
 
     size_t element_size = ddt->data[i].element_size;
     size_t displ_count = ddt->data[i].displ_count;
@@ -1292,14 +1296,16 @@ void xt_ddt_pack_internal(
           (void*)((unsigned char *)dst + dst_offset), memtype);
         break;
       default:
-        Xt_abort(
-          Xt_default_comm,
-          "ERROR(xt_ddt_pack_internal): unsupported datatype size",
-          __FILE__, __LINE__);
+        found_unsupported |= true;
     }
 
     dst_offset += displ_count * element_size;
   }
+  if (found_unsupported)
+    Xt_abort(
+      Xt_default_comm,
+      "ERROR(xt_ddt_pack_internal): unsupported datatype size",
+      __FILE__, __LINE__);
   XT_GPU_INSTR_POP;
 }
 
@@ -1458,8 +1464,11 @@ void xt_ddt_unpack_internal(
   // if the displacements are not avaible in the required memory type
   if (!ddt->displs_available[memtype]) xt_ddt_copy_displs(ddt, memtype);
 
+  size_t count = ddt->count;
+  bool found_unsupported = false;
+
   // for all sections with the same elemental datatype extent
-  for (size_t i = 0; i < ddt->count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
 
     size_t element_size = ddt->data[i].element_size;
     size_t displ_count = ddt->data[i].displ_count;
@@ -1502,14 +1511,16 @@ void xt_ddt_unpack_internal(
           (void*)((unsigned char *)src + src_offset), dst, memtype);
         break;
       default:
-        Xt_abort(
-          Xt_default_comm,
-          "ERROR(xt_ddt_unpack_internal): unsupported datatype size",
-          __FILE__, __LINE__);
+        found_unsupported |= true;
     }
 
     src_offset += displ_count * element_size;
   }
+  if (found_unsupported)
+    Xt_abort(
+      Xt_default_comm,
+        "ERROR(xt_ddt_unpack_internal): unsupported datatype size",
+        __FILE__, __LINE__);
   XT_GPU_INSTR_POP;
 }
 
