@@ -85,7 +85,7 @@ struct xt_gpu_vtable {
  * initialises xt_gpu
  * @remark if yaxt was compiled with CUDA support, xt_gpu will try to use it
  */
-void xt_gpu_init();
+void xt_gpu_init(void);
 
 /**
  * allocates memory of the specified type
