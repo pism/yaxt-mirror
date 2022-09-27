@@ -54,7 +54,7 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 
-#include "xt/xt_request_msgs_ddt_packed.h"
+#include "xt_request_msgs_ddt_packed.h"
 #include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_internal.h"

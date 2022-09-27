@@ -49,7 +49,7 @@
 
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
-#include "xt/xt_request_msgs_ddt_packed.h"
+#include "xt_request_msgs_ddt_packed.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"

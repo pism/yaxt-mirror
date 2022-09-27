@@ -82,7 +82,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_request_msgs.h					\
 	xt/xt_request_msgs_ebuf.h				\
 	xt/xt_request_msgs_packed.h				\
-	xt/xt_request_msgs_ddt_packed.h				\
+	xt_request_msgs_ddt_packed.h				\
 	xt_arithmetic_util.h					\
 	xt_arithmetic_long.h					\
 	xt_config_internal.h					\
