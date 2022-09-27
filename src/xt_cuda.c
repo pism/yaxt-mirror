@@ -49,8 +49,6 @@
 
 #include "xt_cuda.h"
 
-#ifdef HAVE_CUDA
-
 #include <cuda.h>
 #include <dlfcn.h>
 #include <stdio.h>
@@ -335,14 +333,6 @@ struct xt_gpu_vtable const * xt_cuda_init(void) {
   if (load_cuda_library()) return &cuda_vtable;
   else return NULL;
 }
-
-#else // HAVE_CUDA
-
-struct xt_gpu_vtable const * xt_cuda_init(void) {
-  return NULL;
-}
-
-#endif // HAVE_CUDA
 
 /*
  * Local Variables:

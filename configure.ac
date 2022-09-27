@@ -280,7 +280,23 @@ dnl Checks for header files.
 dnl ######################################################################
 dnl
 AC_HEADER_STDC
-
+while : ; do[]m4_pushdef([cuda_includes],[AC_INCLUDES_DEFAULT
+@%:@include <cuda.h>])m4_pushdef([no_cuda],[AC_MSG_NOTICE([$1, not building CUDA component])
+acx_cuda_version=0 ; break])
+AC_CHECK_HEADER([cuda.h],
+  [AC_CHECK_DECL([CUDA_VERSION],
+     [AC_COMPUTE_INT([acx_cuda_version],
+        [CUDA_VERSION],[cuda_includes],[no_cuda([Cannot determine CUDA version])])
+      AC_CHECK_HEADERS([dlfcn.h],,
+        [no_cuda([cuda.h found but dlsym is unavailable])])],
+     [no_cuda([CUDA_VERSION definition not found])],[cuda_includes])],
+  [no_cuda([cuda header not found])])
+  break
+done[]m4_popdef([no_cuda])m4_popdef([cuda_includes])
+AS_IF([test "$acx_cuda_version" -ge 6050],
+  [AC_DEFINE([HAVE_CUDA],[1],
+     [defined to 1 iff a cuda header of the 6.5 or newer version was found])])
+AM_CONDITIONAL([HAVE_CUDA],[test "$acx_cuda_version" -ge 6050])
 #  ----------------------------------------------------------------------
 # Compile with MPI support
 dnl

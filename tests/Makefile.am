@@ -161,7 +161,6 @@ test_arithmetic_long_SOURCES = test_arithmetic_long.c
 test_arithmetic_long_LDADD = libtestutil.la
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
 test_exchanger_parallel_LDADD =  libtestutil.la \
-	../src/xt_cuda.lo \
 	../src/xt_gpu.lo \
 	../src/xt_ddt.lo \
 	../src/xt_config.lo \
@@ -173,6 +172,9 @@ test_exchanger_parallel_LDADD =  libtestutil.la \
 	../src/xt_exchanger_simple_base.lo
 if USE_MPI3
 test_exchanger_parallel_LDADD += ../src/xt_exchanger_neigh_alltoall.lo
+endif
+if HAVE_CUDA
+test_exchanger_parallel_LDADD += ../src/xt_cuda.lo
 endif
 test_exchanger_parallel_LDADD += ../src/xt_exchanger.lo \
 	../src/xt_redist_msg.lo \

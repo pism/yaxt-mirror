@@ -168,19 +168,20 @@ libyaxt_c_la_SOURCES =						\
 	xt_exchanger_neigh_alltoall.h				\
 	xt_exchanger_mix_isend_irecv.c				\
 	xt_exchanger_mix_isend_irecv.h				\
-	xt_cuda.h						\
-	xt_cuda.c						\
-	xt/xt_gpu.h					\
+	xt/xt_gpu.h						\
 	xt_gpu.c						\
-	xt/xt_ddt.h				\
-	xt_ddt_internal.h				\
+	xt/xt_ddt.h						\
+	xt_ddt_internal.h					\
 	xt_ddt.c
 
 if USE_MPI3
 libyaxt_c_la_SOURCES +=						\
 	xt_exchanger_neigh_alltoall.c
 endif
-
+if HAVE_CUDA
+libyaxt_c_la_SOURCES += xt_cuda.h				\
+	xt_cuda.c
+endif
 libyaxt_la_SOURCES =						\
 	xt_idxlist_collection_f.f90				\
 	xt_xmap_intersection_f.f90				\

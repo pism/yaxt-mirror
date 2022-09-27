@@ -52,7 +52,9 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_gpu.h"
-#include "xt_cuda.h"
+#ifdef HAVE_CUDA
+#  include "xt_cuda.h"
+#endif
 
 static void * default_malloc(size_t alloc_size, enum xt_memtype memtype);
 static void default_free(void * ptr, enum xt_memtype memtype);
