@@ -51,6 +51,7 @@
 
 #include <cuda.h>
 #include <dlfcn.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -75,6 +76,7 @@ do {                                                        \
   if (ptr != NULL) {                                        \
     *(void **)(&(func_ ## name)) = ptr;                     \
   } else {                                                  \
+    load_successful = false;                                \
     fprintf(                                                \
       stderr, "ERROR:failed to load routine \"%s\" "        \
       "from %s\n", STRINGIFY(name), lib);                   \
@@ -225,9 +227,9 @@ static int dummy_instr_pop() {return 0;}
 static int load_cuda_library(void) {
 
   static int first_call = 1;
-  static int load_successfull = 0;
+  static bool load_successful = false;
 
-  if (!first_call) return load_successfull;
+  if (!first_call) return load_successful;
   first_call = 0;
 
   static const char lib[] =
@@ -240,13 +242,11 @@ static int load_cuda_library(void) {
     "libcuda.so.1"
 #endif
     ;
-  void *libcuda_handle = NULL;
+  void *libcuda_handle = dlopen(lib, RTLD_NOW);
 
-  libcuda_handle = dlopen(lib, RTLD_NOW);
+  load_successful = libcuda_handle != NULL;
 
-  load_successfull = libcuda_handle != NULL;
-
-  if (load_successfull) {
+  if (load_successful) {
 
     // load required CUDA library functions
     DLSYM(cuGetErrorString);
@@ -294,7 +294,7 @@ static int load_cuda_library(void) {
     }
   }
 
-  return load_successfull;
+  return load_successful;
 }
 
 static struct xt_gpu_vtable const cuda_vtable = {
