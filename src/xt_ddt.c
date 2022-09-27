@@ -1319,6 +1319,11 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
 
   size_t pack_size;
   void *orig_dst;
+  /* pacify buggy -Wmaybe-uninitialized */
+#if defined __GNUC__ && __GNUC__ <= 11
+  pack_size = 0;
+  orig_dst = NULL;
+#endif
 
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
