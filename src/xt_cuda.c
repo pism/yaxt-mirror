@@ -77,10 +77,7 @@ do {                                                        \
   } else {                                                  \
     fprintf(                                                \
       stderr, "ERROR:failed to load routine \"%s\" "        \
-      "from %s%s%s\n", STRINGIFY(name),                     \
-      ((strlen(paths[path_idx-1])>0)?paths[path_idx-1]:""), \
-      ((strlen(paths[path_idx-1])>0)?"/":""),               \
-      libs[lib_idx-1]);                                     \
+      "from %s\n", STRINGIFY(name), lib);                   \
   }                                                         \
 } while(0);
 
@@ -233,33 +230,19 @@ static int load_cuda_library(void) {
   if (!first_call) return load_successfull;
   first_call = 0;
 
-  char *paths[] = {"", "/usr/lib64"};
-  char *libs[] = {"libcuda.so.1", "libcuda.dylib"};
-  size_t path_idx, lib_idx;
+  static const char lib[] =
+#ifdef __linux__
+    "libcuda.so.1"
+#elif defined __APPLE__ && defined __MACH__
+    "libcuda.dylib"
+#else
+#warning "unsupported system, but trying libcuda.so.1"
+    "libcuda.so.1"
+#endif
+    ;
+  void *libcuda_handle = NULL;
 
-  void * libcuda_handle = NULL;
-
-  for (path_idx = 0;
-       (path_idx < sizeof(paths)/sizeof(paths[0])) &&
-       (libcuda_handle == NULL); ++path_idx) {
-
-    for (lib_idx = 0;
-         (lib_idx < sizeof(libs)/sizeof(libs[0])) &&
-         (libcuda_handle == NULL); ++lib_idx) {
-
-      char * filename;
-      size_t path_length = strlen(paths[path_idx]);
-      filename =
-        malloc(path_length + strlen(libs[lib_idx]) + 2);
-      sprintf(
-        filename, "%s%s%s", (path_length > 0 )?paths[path_idx]:"",
-        (path_length > 0)?"/":"", libs[lib_idx]);
-
-      libcuda_handle = dlopen(filename, RTLD_NOW);
-
-      free(filename);
-    }
-  }
+  libcuda_handle = dlopen(lib, RTLD_NOW);
 
   load_successfull = libcuda_handle != NULL;
 
