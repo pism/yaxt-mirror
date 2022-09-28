@@ -80,6 +80,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_idxmod.h						\
 	xt/xt_request.h						\
 	xt/xt_request_msgs.h					\
+	xt/xt_request_msgs_ebuf.h				\
 	xt/xt_request_msgs_packed.h				\
 	xt_arithmetic_util.h					\
 	xt_arithmetic_long.h					\
@@ -116,6 +117,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/xt_redist_single_array_base.h			\
 	xt_request.c						\
 	xt_request_msgs.c					\
+	xt_request_msgs_ebuf.c					\
 	xt_request_msgs_packed.c				\
 	xt_request_internal.h					\
 	xt_stripe.c						\

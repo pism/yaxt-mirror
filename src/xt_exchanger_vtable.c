@@ -59,7 +59,7 @@
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_irecv_send.h"
 
-PPM_DSO_INTERNAL const struct xt_exchanger_vtable *
+const struct xt_exchanger_vtable *
 xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new)
 {
   const struct xt_exchanger_vtable *vtab = NULL;

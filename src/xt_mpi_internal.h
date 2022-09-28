@@ -104,6 +104,16 @@ xt_mpi_test_some(int *restrict num_req,
                  MPI_Request req[],
                  int ops_completed[], MPI_Comm comm);
 
+#ifdef _OPENMP
+/**
+ * multi-thread version, meant to be called by all OpenMP threads,
+ * contains omp barrier
+ */
+PPM_DSO_INTERNAL bool
+xt_mpi_test_some_mt(int *restrict num_req,
+                    MPI_Request *restrict req,
+                    int *restrict ops_completed, MPI_Comm comm);
+#endif
 #endif
 
 /*

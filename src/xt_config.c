@@ -48,6 +48,7 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 
@@ -201,7 +202,32 @@ xt_config_set_idxvec_autoconvert_size(Xt_config config, int cnvsize)
     config->idxv_cnv_size = cnvsize;
 }
 
+int
+xt_config_get_redist_mthread_mode(Xt_config config)
+{
+  return (config->flags & (int32_t)xt_mthread_mode_mask) >> xt_mthread_mode_bit_ofs;
+}
 
+void
+xt_config_set_redist_mthread_mode(Xt_config config, int mode)
+{
+  assert(mode >= XT_MT_NONE && mode <= XT_MT_OPENMP);
+#ifndef _OPENMP
+  if (mode == XT_MT_OPENMP)
+    Xt_abort(Xt_default_comm, "error: automatic opening of OpenMP parallel regions requested,"
+             " but OpenMP is not configured.\n", "xt_config.c", __LINE__);
+#else
+  if (mode == XT_MT_OPENMP) {
+    int thread_support_provided = MPI_THREAD_SINGLE;
+    xt_mpi_call(MPI_Query_thread(&thread_support_provided), Xt_default_comm);
+    if (thread_support_provided != MPI_THREAD_MULTIPLE)
+      Xt_abort(Xt_default_comm, "error: automatic opening of OpenMP parallel regions requested,\n"
+             "        but MPI is not running in thread-safe mode.\n", "xt_config.c", __LINE__);
+  }
+#endif
+  config->flags = (config->flags & ~(int32_t)xt_mthread_mode_mask)
+    | ((int32_t)mode << xt_mthread_mode_bit_ofs);
+}
 
 void
 xt_config_defaults_init(void)
@@ -234,6 +260,44 @@ xt_config_defaults_init(void)
     } else
       xt_config_set_idxvec_autoconvert_size(&xt_default_config, (int)v);
   }
+  config_env = getenv("XT_CONFIG_DEFAULT_MULTI_THREAD_MODE");
+  if (config_env) {
+    char *endptr;
+    long v = strtol(config_env, &endptr, 0);
+    if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+        || (errno != 0 && v == 0)) {
+      perror("failed to parse value of "
+             "XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE environment variable");
+      goto dont_set_mt_mode;
+    } else if (v < XT_MT_NONE || v > XT_MT_OPENMP) {
+      fprintf(stderr, "numeric value of XT_CONFIG_DEFAULT_MULTI_THREAD_MODE"
+              " environment variable (%ld) out of range [0,%d]\n",
+              v, XT_MT_OPENMP);
+      goto dont_set_mt_mode;
+    } else {
+      if (endptr == config_env) {
+        if (!strcasecmp(config_env, "XT_MT_OPENMP")) {
+#ifndef _OPENMP
+          fputs("multi-threaded operation requested via "
+                "XT_CONFIG_DEFAULT_MULTI_THREAD_MODE, but OpenMP support is not"
+                " compiled in!\n", stderr);
+          goto dont_set_mt_mode;
+#else
+          v = XT_MT_OPENMP;
+#endif
+        } else if (!strcasecmp(config_env, "XT_MT_NONE")) {
+          v = XT_MT_NONE;
+        } else {
+          fputs("unexpected value of XT_CONFIG_DEFAULT_MULTI_THREAD_MODE"
+                " environment variable, unrecognized text or numeral\n",
+                stderr);
+          goto dont_set_mt_mode;
+        }
+      }
+    }
+    xt_config_set_idxvec_autoconvert_size(&xt_default_config, (int)v);
+  }
+dont_set_mt_mode:;
 }
 
 /*
