@@ -111,26 +111,8 @@ struct xt_ddt_tree_elem {
     } sub_elems;
   };
   size_t displ_count;    // number of displacement
-  union {
-    MPI_Aint single;  // single displacement (displ_count == 1)
-    MPI_Aint *multi;  // multiple displacements (displ_count > 1)
-  } displs;
+  MPI_Aint displs[];
 };
-
-// returns a pointer to the displacements of an element, if displ_count > 0
-// they will be allocated first
-static inline MPI_Aint *
-xt_ddt_tree_elem_alloc_displs(
-  struct xt_ddt_tree_elem *elem, size_t displ_count) {
-
-  elem->displ_count = displ_count;
-  if (displ_count <= 1)
-    return &(elem->displs.single);
-  else
-    return
-     ((elem->displs.multi =
-         xmalloc(displ_count * sizeof(*(elem->displs.multi)))));
-}
 
 static struct xt_ddt_tree_elem *
   mpi_ddt_2_xt_ddt_tree(MPI_Datatype mpi_ddt, int free_mpi_ddt);
@@ -138,13 +120,12 @@ static struct xt_ddt_tree_elem *
 static struct xt_ddt_tree_elem *
 xt_ddt_tree_elem_named_new(MPI_Aint extent, MPI_Datatype mpi_ddt)
 {
-  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
-
+  struct xt_ddt_tree_elem *elem = xmalloc(sizeof(*elem) + sizeof (MPI_Aint));
   elem->extent = extent;
   elem->type = DTYPE;
   elem->dtype = mpi_ddt;
   elem->displ_count = 1;
-  elem->displs.single = 0;
+  elem->displs[0] = 0;
   return elem;
 }
 
@@ -185,19 +166,20 @@ xt_ddt_tree_elem_cont_new(int count, MPI_Datatype mpi_ddt)
   // if the sub element is a basic MPI_Datatype
   if ((sub_elem->type == DTYPE) &&
       (sub_elem->displ_count == 1) &&
-      (sub_elem->displs.single == 0)) {
+      (sub_elem->displs[0] == 0)) {
 
-    elem = sub_elem;
-
+    elem = xrealloc(sub_elem,
+                    sizeof (*elem) + (size_t)count * sizeof (MPI_Aint));
   } else {
 
-    elem = xmalloc(1 * sizeof(*elem));
+    elem = xmalloc(sizeof(*elem) + (size_t)count * sizeof (MPI_Aint));
     elem->type = SINGLE_SUB;
     elem->sub_elems.single = sub_elem;
   }
 
+  elem->displ_count = (size_t)count;
   elem->extent = (MPI_Aint)count * sub_elem_extent;
-  MPI_Aint * displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
+  MPI_Aint *displs = elem->displs;
   for (int i = 0; i < count; ++i) displs[i] = (MPI_Aint)i * sub_elem_extent;
 
   return elem;
@@ -224,13 +206,15 @@ xt_ddt_tree_elem_hvector_new(
   // if there is only a single sub element
   if (count == 1) return sub_elem;
 
-  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem
+    = xmalloc(sizeof(*elem) + (size_t)count * sizeof (MPI_Aint));
 
+  elem->displ_count = (size_t)count;
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
 
-  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
+  MPI_Aint *displs = elem->displs;
   for (int i = 0; i < count; ++i) displs[i] = (MPI_Aint)i * stride;
 
   return elem;
@@ -274,12 +258,14 @@ static struct xt_ddt_tree_elem *xt_ddt_tree_elem_hindexed_new(
   // if the sub element is empty
   if (sub_elem == NULL) return NULL;
 
-  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem
+    = xmalloc(sizeof(*elem) + displ_count * sizeof (MPI_Aint));
 
+  elem->displ_count = displ_count;
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
-  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, displ_count);
+  MPI_Aint *displs = elem->displs;
 
   size_t idx = 0;
   for (int i = 0; i < count; ++i) {
@@ -330,12 +316,14 @@ static struct xt_ddt_tree_elem *xt_ddt_tree_elem_hindexed_block_new(
   // if the sub element is empty
   if (sub_elem == NULL) return NULL;
 
-  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
+  struct xt_ddt_tree_elem *elem
+    = xmalloc(sizeof(*elem) + (size_t)count * sizeof (MPI_Aint));
 
+  elem->displ_count = (size_t)count;
   elem->extent = extent;
   elem->type = SINGLE_SUB;
   elem->sub_elems.single = sub_elem;
-  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, (size_t)count);
+  MPI_Aint *displs = elem->displs;
 
   for (int i = 0; i < count; ++i) displs[i] = displacements[i];
 
@@ -407,12 +395,13 @@ static struct xt_ddt_tree_elem *xt_ddt_tree_elem_struct_new(
   struct xt_ddt_tree_elem **sub_elems =
     xmalloc(count_ * sizeof(*sub_elems));
 
-  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
-
+  struct xt_ddt_tree_elem *elem
+    = xmalloc(sizeof(*elem) + count_ * sizeof (MPI_Aint));
+  elem->displ_count = count_;
   elem->extent = extent;
   elem->type = MULTI_SUB;
   elem->sub_elems.multi = sub_elems;
-  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, count_);
+  MPI_Aint *displs = elem->displs;
 
   for (size_t i = 0; i < count_; ++i) {
     sub_elems[i] = xt_ddt_tree_elem_cont_new(blocklengths[i], mpi_ddts[i]);
@@ -484,16 +473,18 @@ static struct xt_ddt_tree_elem *xt_ddt_tree_elem_subarray_new(
 
   MPI_Aint base_extent = sub_elem->extent;
 
-  struct xt_ddt_tree_elem *elem = xmalloc(1 * sizeof(*elem));
-  elem->extent = extent;
-  elem->type = SINGLE_SUB;
-  elem->sub_elems.single = sub_elem;
-
   size_t displ_count = 1;
   for (int i = 0; i < ndim; ++i)
     displ_count *= (size_t)sub_sizes[i];
 
-  MPI_Aint *displs = xt_ddt_tree_elem_alloc_displs(elem, displ_count);
+  struct xt_ddt_tree_elem *elem
+    = xmalloc(sizeof(*elem) + displ_count * sizeof (MPI_Aint));
+  elem->displ_count = displ_count;
+  elem->extent = extent;
+  elem->type = SINGLE_SUB;
+  elem->sub_elems.single = sub_elem;
+
+  MPI_Aint *displs = elem->displs;
   xt_ddt_tree_elem_subarray_get_displs(
     displs, 0, (size_t)ndim, sizes, sub_sizes, starts, order, base_extent);
 
@@ -762,8 +753,6 @@ static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem *elem) {
 
   if (elem == NULL) return;
 
-  if (elem->displ_count > 1) free(elem->displs.multi);
-
   switch (elem->type) {
 
     default:
@@ -869,8 +858,7 @@ static void xt_ddt_tree_elem_to_data(
   if (elem == NULL) return;
 
   size_t elem_displ_count = elem->displ_count;
-  MPI_Aint *elem_displs =
-    (elem_displ_count <= 1)?(&(elem->displs.single)):(elem->displs.multi);
+  MPI_Aint *elem_displs = elem->displs;
 
   switch (elem->type) {
 
