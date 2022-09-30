@@ -49,6 +49,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <mpi.h>
+#include <complex.h>
 
 #ifdef _OPENACC
 #include <openacc.h>
@@ -101,6 +102,53 @@ int main(int argc, char **argv) {
 
     if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR MPI_FLOAT");
+  }
+
+  { // elemental long double complex datatype
+    MPI_Datatype mpi_ddt = MPI_C_LONG_DOUBLE_COMPLEX;
+    long double const in_data[][2] = {{1337.0,-1337.0}};
+
+    if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
+      PUT_ERR("ERROR MPI_C_LONG_DOUBLE_COMPLEX");
+  }
+
+  { // elemental float + int datatype
+    MPI_Datatype mpi_ddt = MPI_FLOAT_INT;
+    struct {
+      float f;
+      int i;
+    } in_data[] = {{.f = 1337.0, .i = 1337}};
+
+    if (check_xt_ddt(
+          mpi_ddt, in_data,
+          sizeof(in_data), sizeof(in_data[0].f) + sizeof(in_data[0].i)))
+      PUT_ERR("ERROR MPI_FLOAT_INT");
+  }
+
+  { // elemental double + int datatype
+    MPI_Datatype mpi_ddt = MPI_DOUBLE_INT;
+    struct {
+      double d;
+      int i;
+    } in_data[] = {{.d = 1337.0, .i = 1337}};
+
+    if (check_xt_ddt(
+          mpi_ddt, in_data,
+          sizeof(in_data), sizeof(in_data[0].d) + sizeof(in_data[0].i)))
+      PUT_ERR("ERROR MPI_DOUBLE_INT");
+  }
+
+  { // elemental long double + int datatype
+    MPI_Datatype mpi_ddt = MPI_LONG_DOUBLE_INT;
+    struct {
+      long double ld;
+      int i;
+    } in_data[] = {{.ld = 1337.0, .i = 1337}};
+
+    if (check_xt_ddt(
+          mpi_ddt, in_data,
+          sizeof(in_data), sizeof(in_data[0].ld) + sizeof(in_data[0].i)))
+      PUT_ERR("ERROR MPI_LONG_DOUBLE_INT");
   }
 
   { // MPI_Type_dup(MPI_INT)
@@ -159,6 +207,63 @@ int main(int argc, char **argv) {
     if (check_xt_ddt(
           mpi_ddt, in_data, sizeof(in_data), COUNT * sizeof(in_data[0])))
       PUT_ERR("ERROR CONT(1, DOUBLE)");
+  }
+
+  { // MPI_Type_contiguous(4, MPI_FLOAT_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4};
+    MPI_Type_contiguous(COUNT, MPI_FLOAT_INT, &mpi_ddt);
+    struct {
+      float f;
+      int i;
+    } in_data[COUNT];
+    for (size_t i = 0; i < COUNT; ++i) {
+      in_data[i].f = (float)i;
+      in_data[i].i = (int)i;
+    }
+
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * (sizeof(in_data[0].f) + sizeof(in_data[0].i))))
+      PUT_ERR("ERROR CONT(4, MPI_FLOAT_INT)");
+  }
+
+  { // MPI_Type_contiguous(4, MPI_DOUBLE_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4};
+    MPI_Type_contiguous(COUNT, MPI_DOUBLE_INT, &mpi_ddt);
+    struct {
+      double d;
+      int i;
+    } in_data[COUNT];
+    for (size_t i = 0; i < COUNT; ++i) {
+      in_data[i].d = (double)i;
+      in_data[i].i = (int)i;
+    }
+
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * (sizeof(in_data[0].d) + sizeof(in_data[0].i))))
+      PUT_ERR("ERROR CONT(4, MPI_DOUBLE_INT)");
+  }
+
+  { // MPI_Type_contiguous(4, MPI_LONG_DOUBLE_INT)
+    MPI_Datatype mpi_ddt;
+    enum {COUNT = 4};
+    MPI_Type_contiguous(COUNT, MPI_LONG_DOUBLE_INT, &mpi_ddt);
+    struct {
+      long double ld;
+      int i;
+    } in_data[COUNT];
+    for (size_t i = 0; i < COUNT; ++i) {
+      in_data[i].ld = (long double)i;
+      in_data[i].i = (int)i;
+    }
+
+    if (check_xt_ddt(
+          mpi_ddt, in_data, sizeof(in_data),
+          COUNT * (sizeof(in_data[0].ld) + sizeof(in_data[0].i))))
+      PUT_ERR("ERROR CONT(4, MPI_LONG_DOUBLE_INT)");
   }
 
   { // MPI_Type_contiguous(3, MPI_Type_contiguous(3,MPI_FLOAT))

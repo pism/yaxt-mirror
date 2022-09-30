@@ -73,7 +73,7 @@ static int xt_ddt_internal_keyval = MPI_KEYVAL_INVALID;
 static int xt_ddt_cleanup_internal_keyval = MPI_KEYVAL_INVALID;
 
 struct xt_ddt_data {
-  size_t element_size; // size in byte of base element
+  size_t kernel_idx;   // index into the list of available pack/unpack kernels
   size_t displ_count;  // number of elements in displs
   ssize_t *displs[XT_MEMTYPE_COUNT];
                        // displacements in byte of elements (int does not work)
@@ -110,11 +110,104 @@ struct xt_ddt_tree_elem {
   // struct xt_ddt_tree_elem *sub_elems[]; when type == SINGLE_SUB or MULTI_SUB
 };
 
+static void xt_ddt_pack_8(
+  size_t count, ssize_t *restrict displs, const uint8_t *restrict src,
+  uint8_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_16(
+  size_t count, ssize_t *restrict displs, const uint16_t *restrict src,
+  uint16_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_32(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_96(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_64(
+  size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
+  uint64_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_128(
+  size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
+  uint64_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_160(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_256(
+  size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
+  uint64_t (*restrict dst)[4], enum xt_memtype memtype);
+
+static void xt_ddt_unpack_8(
+  size_t count, ssize_t *restrict displs, const uint8_t *restrict src,
+  uint8_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_16(
+  size_t count, ssize_t *restrict displs, const uint16_t *restrict src,
+  uint16_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_32(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_96(
+  size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[3],
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_64(
+  size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
+  uint64_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_128(
+  size_t count, ssize_t *restrict displs, const uint64_t (*restrict src)[2],
+  uint64_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_160(
+  size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[5],
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_256(
+  size_t count, ssize_t *restrict displs, const uint64_t (*restrict src)[4],
+  uint64_t *restrict dst, enum xt_memtype memtype);
+
+typedef void (*kernel_func)
+  (size_t, ssize_t*, const void*, void*, enum xt_memtype);
+
+static struct xt_un_pack_kernels {
+  size_t base_pack_size;
+  size_t element_size;
+  kernel_func pack;
+  kernel_func unpack;
+} valid_kernels[] = {
+  {.base_pack_size = 1,
+   .element_size = 1,
+   .pack = (kernel_func)xt_ddt_pack_8,
+   .unpack = (kernel_func)xt_ddt_unpack_8},
+  {.base_pack_size = 2,
+   .element_size = 2,
+   .pack = (kernel_func)xt_ddt_pack_16,
+   .unpack = (kernel_func)xt_ddt_unpack_16},
+  {.base_pack_size = 4,
+   .element_size = 4,
+   .pack = (kernel_func)xt_ddt_pack_32,
+   .unpack = (kernel_func)xt_ddt_unpack_32},
+  {.base_pack_size = 8,
+   .element_size = 8,
+   .pack = (kernel_func)xt_ddt_pack_64,
+   .unpack = (kernel_func)xt_ddt_unpack_64},
+  {.base_pack_size = 4,
+   .element_size = 12,
+   .pack = (kernel_func)xt_ddt_pack_96,
+   .unpack = (kernel_func)xt_ddt_unpack_96},
+  {.base_pack_size = 8,
+   .element_size = 16,
+   .pack = (kernel_func)xt_ddt_pack_128,
+   .unpack = (kernel_func)xt_ddt_unpack_128},
+  {.base_pack_size = 4,
+   .element_size = 20,
+   .pack = (kernel_func)xt_ddt_pack_160,
+   .unpack = (kernel_func)xt_ddt_unpack_160},
+  {.base_pack_size = 8,
+   .element_size = 32,
+   .pack = (kernel_func)xt_ddt_pack_256,
+   .unpack = (kernel_func)xt_ddt_unpack_256},
+};
+enum {NUM_VALID_KERNELS = sizeof(valid_kernels)/sizeof(valid_kernels[0])};
+
 static inline void *after_displs(struct xt_ddt_tree_elem *elem)
 {
   return (void *)(elem->displs + elem->displ_count);
 }
-
 
 static struct xt_ddt_tree_elem *
   mpi_ddt_2_xt_ddt_tree(MPI_Datatype mpi_ddt, int free_mpi_ddt);
@@ -796,20 +889,16 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     MPI_Type_get_true_extent(mpi_ddt, &true_lb, &true_extent),
     Xt_default_comm);
 
-  switch(true_extent) {
-    case 1:  return 5;
-    case 2:  return 4;
-    case 4:  return 3;
-    case 8:  return 2;
-    case 12: return 6;
-    case 16: return 1;
-    case 32: return 0;
-    default:
-      Xt_abort(
-        Xt_default_comm,
-        "ERROR(mpi_ddt_to_data_idx): unsupported datatype size",
-        __FILE__, __LINE__);
-  };
+  for (size_t i = 0; i < NUM_VALID_KERNELS; ++i)
+    if (valid_kernels[i].element_size == true_extent)
+      return i;
+
+  char err_msg[128];
+  snprintf(
+    err_msg, sizeof(err_msg),
+    "ERROR(mpi_ddt_to_data_idx): unsupported datatype size (%d Byte)",
+    (int)true_extent);
+  Xt_abort(Xt_default_comm, err_msg, __FILE__, __LINE__);
   return SIZE_MAX;
 }
 
@@ -935,20 +1024,38 @@ static void xt_ddt_tree_to_data(
       tree, data, displ, &prev_dtype, &prev_data_idx);
 }
 
+static int compare_kernels(const void * a, const void * b) {
+  struct xt_un_pack_kernels const * k_a = (struct xt_un_pack_kernels const *)a;
+  struct xt_un_pack_kernels const * k_b = (struct xt_un_pack_kernels const *)b;
+
+  int ret = (k_a->base_pack_size < k_b->base_pack_size) -
+            (k_a->base_pack_size > k_b->base_pack_size);
+  if (ret) return ret;
+  else return (k_a->element_size < k_b->element_size) -
+              (k_a->element_size > k_b->element_size);
+}
+
 static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
+
+  static bool sort_kernels = true;
+  if (sort_kernels) {
+    // sort the supported kernels by their base_pack_size (this
+    // avoids alignment issues when packing)
+    qsort(valid_kernels, NUM_VALID_KERNELS, sizeof(*valid_kernels),
+          compare_kernels);
+    sort_kernels = false;
+  }
+
 
   // parse the MPI datatype
   struct xt_ddt_tree_elem *tree = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 0);
 
-  struct xt_ddt_data data[7];
-  for (int i = 0; i < 6; ++i) {
-    data[i].element_size = (size_t)1 << (5 - i);
+  struct xt_ddt_data data[NUM_VALID_KERNELS];
+  for (size_t i = 0; i < NUM_VALID_KERNELS; ++i) {
+    data[i].kernel_idx = i;
     data[i].displ_count = 0;
     for (int j = 0; j < XT_MEMTYPE_COUNT; ++j) data[i].displs[j] = NULL;
   }
-  data[6].element_size = 12;
-  data[6].displ_count = 0;
-  for (int j = 0; j < XT_MEMTYPE_COUNT; ++j) data[6].displs[j] = NULL;
 
   // determine the number of displacements for each elemental data size
   xt_ddt_tree_get_data_sizes(tree, data);
@@ -957,10 +1064,11 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   size_t total_displs_size = 0;
   size_t data_count = 0;
   size_t pack_size = 0;
-  for (size_t i = 0; i < 7; ++i) {
+  for (size_t i = 0; i < NUM_VALID_KERNELS; ++i) {
     total_displs_size += data[i].displ_count;
     if (data[i].displ_count > 0) {
-      pack_size += data[i].element_size * data[i].displ_count;
+      pack_size +=
+        valid_kernels[data[i].kernel_idx].element_size * data[i].displ_count;
       ++data_count;
     }
   }
@@ -978,7 +1086,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
     ssize_t *displs =
       xt_gpu_malloc(total_displs_size * sizeof(*displs), XT_MEMTYPE_HOST);
 
-    for (size_t i = 0, offset = 0; i < 7; ++i) {
+    for (size_t i = 0, offset = 0; i < NUM_VALID_KERNELS; ++i) {
       data[i].displs[XT_MEMTYPE_HOST] = displs + offset;
       offset += data[i].displ_count;
       data[i].displ_count = 0;
@@ -987,7 +1095,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
     // determine all displacements
     xt_ddt_tree_to_data(tree, data);
 
-    for (int i = 0, j = 0; i < 7; ++i)
+    for (int i = 0, j = 0; i < NUM_VALID_KERNELS; ++i)
       if (data[i].displ_count > 0)
         ddt->data[j++] = data[i];
   }
@@ -1186,6 +1294,23 @@ XtPragmaACC(
     dst[i] = *(uint32_t*)((unsigned char *)src + displs[i]);
 }
 
+static void xt_ddt_pack_96(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t (*restrict dst_)[3] = (uint32_t(*)[3])dst;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst_, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    uint32_t *src_32 = (uint32_t*)((unsigned char *)src + displs[i]);
+XtPragmaACC(loop independent)
+    for (int j = 0; j < 3; ++j) dst_[i][j] = src_32[j];
+  }
+}
+
 static void xt_ddt_pack_64(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
   uint64_t *restrict dst, enum xt_memtype memtype) {
@@ -1216,10 +1341,10 @@ XtPragmaACC(loop independent)
   }
 }
 
-static void xt_ddt_pack_96(
+static void xt_ddt_pack_160(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
   uint32_t *restrict dst, enum xt_memtype memtype) {
-  uint32_t (*restrict dst_)[3] = (uint32_t(*)[3])dst;
+  uint32_t (*restrict dst_)[5] = (uint32_t(*)[5])dst;
 #ifndef _OPENACC
   (void)memtype;
 #endif
@@ -1229,7 +1354,7 @@ XtPragmaACC(
   for (size_t i = 0; i < count; ++i) {
     uint32_t *src_32 = (uint32_t*)((unsigned char *)src + displs[i]);
 XtPragmaACC(loop independent)
-    for (int j = 0; j < 3; ++j) dst_[i][j] = src_32[j];
+    for (int j = 0; j < 5; ++j) dst_[i][j] = src_32[j];
   }
 }
 
@@ -1260,62 +1385,19 @@ void xt_ddt_pack_internal(
   if (!ddt->displs_available[memtype]) xt_ddt_copy_displs(ddt, memtype);
 
   size_t count = ddt->count;
-  bool found_unsupported = false;
 
   // for all sections with the same elemental datatype extent
   for (size_t i = 0; i < count; ++i) {
 
-    size_t element_size = ddt->data[i].element_size;
+    struct xt_un_pack_kernels * kernel =
+      &valid_kernels[ddt->data[i].kernel_idx];
     size_t displ_count = ddt->data[i].displ_count;
-    ssize_t *displs = ddt->data[i].displs[memtype];
+    kernel->pack(
+      displ_count, ddt->data[i].displs[memtype], src,
+      (void*)((unsigned char *)dst + dst_offset), memtype);
 
-    switch (element_size) {
-      case 1:
-        xt_ddt_pack_8(
-          displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), memtype);
-        break;
-      case 2:
-        xt_ddt_pack_16(
-          displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), memtype);
-        break;
-      case 4:
-        xt_ddt_pack_32(
-          displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), memtype);
-        break;
-      case 8:
-        xt_ddt_pack_64(
-          displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), memtype);
-        break;
-      case 12:
-        xt_ddt_pack_96(
-          displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), memtype);
-        break;
-      case 16:
-        xt_ddt_pack_128(
-          displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), memtype);
-        break;
-      case 32:
-        xt_ddt_pack_256(
-          displ_count, displs, src,
-          (void*)((unsigned char *)dst + dst_offset), memtype);
-        break;
-      default:
-        found_unsupported |= true;
-    }
-
-    dst_offset += displ_count * element_size;
+    dst_offset += displ_count * kernel->element_size;
   }
-  if (found_unsupported)
-    Xt_abort(
-      Xt_default_comm,
-      "ERROR(xt_ddt_pack_internal): unsupported datatype size",
-      __FILE__, __LINE__);
   XT_GPU_INSTR_POP;
 }
 
@@ -1403,21 +1485,6 @@ XtPragmaACC(
   }
 }
 
-static void xt_ddt_unpack_64(
-  size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t *restrict dst, enum xt_memtype memtype) {
-#ifndef _OPENACC
-  (void)memtype;
-#endif
-XtPragmaACC(
-  parallel loop independent deviceptr(src, dst, displs)
-  if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint64_t *dst_ = (uint64_t*)((unsigned char *)dst + displs[i]);
-    dst_[0] = src[i];
-  }
-}
-
 static void xt_ddt_unpack_96(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[3],
   uint32_t *restrict dst, enum xt_memtype memtype) {
@@ -1435,6 +1502,21 @@ XtPragmaACC(
   }
 }
 
+static void xt_ddt_unpack_64(
+  size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
+  uint64_t *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    uint64_t *dst_ = (uint64_t*)((unsigned char *)dst + displs[i]);
+    dst_[0] = src[i];
+  }
+}
+
 static void xt_ddt_unpack_128(
   size_t count, ssize_t *restrict displs, const uint64_t (*restrict src)[2],
   uint64_t *restrict dst, enum xt_memtype memtype) {
@@ -1448,6 +1530,25 @@ XtPragmaACC(
     uint64_t *dst_64 = (uint64_t *)((unsigned char *)dst + displs[i]);
     dst_64[0] = src[i][0];
     dst_64[1] = src[i][1];
+  }
+}
+
+static void xt_ddt_unpack_160(
+  size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[5],
+  uint32_t *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    uint32_t *dst_32 = (uint32_t *)((unsigned char *)dst + displs[i]);
+    dst_32[0] = src[i][0];
+    dst_32[1] = src[i][1];
+    dst_32[2] = src[i][2];
+    dst_32[3] = src[i][3];
+    dst_32[4] = src[i][4];
   }
 }
 
@@ -1480,62 +1581,19 @@ void xt_ddt_unpack_internal(
   if (!ddt->displs_available[memtype]) xt_ddt_copy_displs(ddt, memtype);
 
   size_t count = ddt->count;
-  bool found_unsupported = false;
 
   // for all sections with the same elemental datatype extent
   for (size_t i = 0; i < count; ++i) {
 
-    size_t element_size = ddt->data[i].element_size;
+    struct xt_un_pack_kernels * kernel =
+      &valid_kernels[ddt->data[i].kernel_idx];
     size_t displ_count = ddt->data[i].displ_count;
-    ssize_t *displs = ddt->data[i].displs[memtype];
+    kernel->unpack(
+      displ_count, ddt->data[i].displs[memtype],
+      (void*)((unsigned char *)src + src_offset), dst, memtype);
 
-    switch (element_size) {
-      case 1:
-        xt_ddt_unpack_8(
-          displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, memtype);
-        break;
-      case 2:
-        xt_ddt_unpack_16(
-          displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, memtype);
-        break;
-      case 4:
-        xt_ddt_unpack_32(
-          displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, memtype);
-        break;
-      case 8:
-        xt_ddt_unpack_64(
-          displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, memtype);
-        break;
-      case 12:
-        xt_ddt_unpack_96(
-          displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, memtype);
-        break;
-      case 16:
-        xt_ddt_unpack_128(
-          displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, memtype);
-        break;
-      case 32:
-        xt_ddt_unpack_256(
-          displ_count, displs,
-          (void*)((unsigned char *)src + src_offset), dst, memtype);
-        break;
-      default:
-        found_unsupported |= true;
-    }
-
-    src_offset += displ_count * element_size;
+    src_offset += displ_count * kernel->element_size;
   }
-  if (found_unsupported)
-    Xt_abort(
-      Xt_default_comm,
-        "ERROR(xt_ddt_unpack_internal): unsupported datatype size",
-        __FILE__, __LINE__);
   XT_GPU_INSTR_POP;
 }
 
