@@ -75,7 +75,7 @@ static void
 xt_request_msgs_packed_ddt_finalize(Xt_request request, void *ebuf)
 {
   (void)request;
-  //! \TODO merge all unpacking kernels into single kernel call -> less overhead
+  //! \todo merge all unpacking kernels into single kernel call -> less overhead
   struct Xt_request_msgs_ddt_packed *request_msgs_ddt_packed = ebuf;
   int n_packed = request_msgs_ddt_packed->n_packed,
     n_tmp_buffers = request_msgs_ddt_packed->n_tmp_buffers;

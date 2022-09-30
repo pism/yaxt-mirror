@@ -185,7 +185,7 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
     Xt_ddt send_ddt = xt_ddt_from_mpi_ddt(send_msgs[i].datatype);
     size_t buffer_size = xt_ddt_get_pack_size_internal(send_ddt);
     buffers[nrecv + i] = xt_gpu_malloc(buffer_size, src_data_memtype);
-//! \TODO merge all packing kernels into single kernel call -> less overhead,
+//! \todo merge all packing kernels into single kernel call -> less overhead,
 //!       but not overlapping of packing and sending
     xt_ddt_pack_internal(
       send_ddt, (void*)src_data, buffers[nrecv + i], src_data_memtype);
