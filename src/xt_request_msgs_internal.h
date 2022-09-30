@@ -59,6 +59,8 @@
 
 /**
  * @param n number of requests that can be stored
+ * @param comm communicator to use for error handling
+ * @param config custom configuration object handle
  * @return Xt_request_msgs object ready for \a n MPI requests
  */
 PPM_DSO_INTERNAL Xt_request
@@ -67,6 +69,8 @@ xt_request_msgs_alloc(int n, MPI_Comm comm, Xt_config config);
 
 /**
  * @param request xt_request_msgs object
+ * @return Pointer to first element of MPI_Request array for requests
+ * stored in request object
  */
 PPM_DSO_INTERNAL MPI_Request *
 xt_request_msgs_get_req_ptr(Xt_request request);

@@ -59,6 +59,9 @@
 
 /**
  * @param n_requests number of requests that can be stored
+ * @param comm communicator to use for error handling
+ * @param config custom configuration object handle
+ * @param extra_buf_size size of buffer to allocate additionally
  * @return Xt_request_msgs object ready for \a n MPI requests
  */
 PPM_DSO_INTERNAL Xt_request
@@ -69,6 +72,8 @@ xt_request_msgs_ebuf_alloc(int n_requests,
 
 /**
  * @param request xt_request_msgs_ebuf object
+ * @return Pointer to first element of MPI_Request array for requests
+ * stored in request object
  */
 PPM_DSO_INTERNAL MPI_Request *
 xt_request_msgs_ebuf_get_req_ptr(Xt_request request);

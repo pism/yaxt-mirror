@@ -86,6 +86,9 @@ typedef void (*Xt_request_msgs_ebuf_finalizer)(Xt_request request_msgs,
  *                           needed
  * @param[in] data           pointer to caller-defined additional information
  *                           needed by and passed to init
+ * @param[in] finalize       pointer to function to call when deleting
+ *                           the request handle object (because all
+ *                           requests are finished)
  * @param[in] comm           MPI communicator
  * @return request handle associated with extra buffer
  */
@@ -108,6 +111,9 @@ xt_request_msgs_ebuf_new(int n_requests,
  *                           needed
  * @param[in] data           pointer to caller-defined additional information
  *                           needed by and passed to init
+ * @param[in] finalize       pointer to function to call when deleting
+ *                           the request handle object (because all
+ *                           requests are finished)
  * @param[in] comm           MPI communicator
  * @param[in] config         configuration object handle
  * @return request handle associated with extra buffer

@@ -60,12 +60,12 @@
  * @param[in] comm           MPI communicator
  * @param[in] n_packed       number of entries in datatypes and packed_data
  * @param[in] n_tmp_buffers  number of entries in tmp_buffers
- * @param[in] packed_ddts    array of Xt_ddt's to be used for unpacking
+ * @param[in] pack_ddts    array of Xt_ddt's to be used for unpacking
  * @param[in] packed_data    array of buffers containing packed data
  * @param[in] tmp_buffers    array of buffers that need to be freed after the
  *                           completion of exchange
  * @param[in] unpacked_data  target buffer for unpacking
- * @param[in] packed_memtype memory type of buffers in packed_data
+ * @param[in] pack_memtype memory type of buffers in packed_data
  * @param[in] tmp_memtype    memory type of buffers in tmp_buffers
  * @remark ownership of the MPI requests is passed to the Xt_request object,
  *         however the caller remains the owner of the requests array
