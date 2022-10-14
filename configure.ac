@@ -394,7 +394,7 @@ ACX_MPI_DEFECTS(,,
         [AC_MSG_WARN([Cannot apply Open MPI datatype bug work-around.])
          mpi_defect_fail_action])],
      [mpich_3.4_yaksa_hindexed],
-     [AC_MSG_WARN([known MPICH 3.4-3.4.2 problem detected, attempting interpositioning work-around!])
+     [AC_MSG_WARN([known MPICH 3.4-3.4.3 problem detected, attempting interpositioning work-around!])
       ACX_MPICH34_DT_WORKAROUND(,[mpich_3.4_yaksa_hindexed.c],
         [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'yaks[ai]_type_create_h?indexed/b'],
         [AC_MSG_WARN([Cannot apply MPICH YAKSA datatype bug work-around.])

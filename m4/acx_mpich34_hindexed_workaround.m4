@@ -144,7 +144,7 @@ extern pthread_mutex_t yaksui_atomic_mutex;],
    AS_IF([$is_affected_mpich],[$3],
      [ASX_VAR_UNSET([acx_yaksa_add_workaround])
       m4_default([$4],
-        [AC_MSG_FAILURE([Cannot apply MPICH 3.4-3.4.2 datatype bug work-around.])])])
+        [AC_MSG_FAILURE([Cannot apply MPICH 3.4-3.4.3 datatype bug work-around.])])])
 
    AC_LANG_POP([C])])
 dnl
