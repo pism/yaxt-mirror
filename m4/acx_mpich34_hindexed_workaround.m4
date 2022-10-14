@@ -50,7 +50,7 @@ dnl and checks if linking with those fixes the issue.
 dnl See ACX_MPI_DEFECTS for further description of tests.
 AC_DEFUN([ACX_MPICH34_DT_WORKAROUND],
   [AC_LANG_PUSH([C])
-   dnl 1. detect Open MPI version
+   dnl 1. detect MPICH version
    is_affected_mpich=:
    acx_saved_CPPFLAGS=$CPPFLAGS
    acx_saved_LIBS=$LIBS
@@ -59,7 +59,7 @@ AC_DEFUN([ACX_MPICH34_DT_WORKAROUND],
 @%:@include <mpi.h>],
      [is_affected_mpich=false ; break])
    $is_affected_mpich || break
-   AS_IF([expr "$acx_mpich_version >= 30400300 & $acx_mpich_version <= 40000000" >/dev/null],,[is_affected_mpich=false ; break])
+   AS_IF([expr "$acx_mpich_numversion >= 30400300 & $acx_mpich_numversion <= 40000000" >/dev/null],,[is_affected_mpich=false ; break])
    dnl 2.a. download header files
    acx_yaksa_add_workaround=m4_default([$5],[config/workarounds/mpich34_yaksa_patch])
    AS_IF([test -r "$acx_yaksa_add_workaround/xt_yaksa_indexed.c"],,
