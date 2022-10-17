@@ -69,6 +69,7 @@
 #include "../src/xt_config_internal.h"
 #include "core/ppm_xfuncs.h"
 
+#include "ctest_common.h"
 #include "test_redist_common.h"
 #include "core/ppm_xfuncs.h"
 #include "tests.h"
@@ -98,14 +99,8 @@ static int test_freq = 3;
 int main(int argc, char **argv)
 {
 
-  // init mpi
-#ifndef _OPENMP
-  xt_mpi_call(MPI_Init(&argc, &argv), MPI_COMM_WORLD);
-#else
-  int thread_support_provided = MPI_THREAD_SINGLE;
-  xt_mpi_call(MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE,
-                              &thread_support_provided), MPI_COMM_WORLD);
-#endif
+  MPI_Comm comm = MPI_COMM_WORLD;
+  test_init_mpi(&argc, &argv, comm);
 
   xt_mpi_init();
   xt_config_defaults_init();
@@ -123,6 +118,8 @@ int main(int argc, char **argv)
   };
   for (size_t m = 0; m < num_mt_modes; ++m) {
 #ifdef _OPENMP
+    int thread_support_provided;
+    xt_mpi_call(MPI_Query_thread(&thread_support_provided), comm);
     if (mt_configs_2_test[m] == XT_MT_OPENMP
         && thread_support_provided != MPI_THREAD_MULTIPLE)
       continue;
@@ -131,15 +128,15 @@ int main(int argc, char **argv)
     for (size_t i = 0; exchangers_new[i] != (Xt_exchanger_new)0; ++i) {
       Xt_exchanger_new exchanger_new = exchangers_new[i];
 
-      test_bcast(MPI_COMM_WORLD, exchanger_new, config);
+      test_bcast(comm, exchanger_new, config);
 
-      test_gather(MPI_COMM_WORLD, exchanger_new, config);
+      test_gather(comm, exchanger_new, config);
 
-      test_all2all(MPI_COMM_WORLD, exchanger_new, config);
+      test_all2all(comm, exchanger_new, config);
 
-      test_rr(MPI_COMM_WORLD, exchanger_new, config);
+      test_rr(comm, exchanger_new, config);
 
-      test_intercomm_all2all(MPI_COMM_WORLD, exchanger_new, config);
+      test_intercomm_all2all(comm, exchanger_new, config);
     }
   }
   xt_config_delete(config);
@@ -421,7 +418,7 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
       Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
                                              send_msgs,
                                              recv_msgs,
-                                             MPI_COMM_WORLD, 0, config);
+                                             comm, 0, config);
       // test
       int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
       for (int async = 0; async < 1 + test_async; ++async) {

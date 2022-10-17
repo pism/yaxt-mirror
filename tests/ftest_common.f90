@@ -190,7 +190,13 @@ CONTAINS
   SUBROUTINE init_mpi
     CHARACTER(len=*), PARAMETER :: context = 'init_mpi: '
     INTEGER :: ierror
+#ifndef _OPENMP
     CALL mpi_init(ierror)
+#else
+    INTEGER :: th_provided
+    th_provided = mpi_thread_single
+    CALL mpi_init_thread(mpi_thread_multiple, th_provided, ierror)
+#endif
     IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_INIT failed', &
          filename, __LINE__)
   END SUBROUTINE init_mpi

@@ -65,6 +65,7 @@
 #include "../src/xt_gpu.h"
 
 #include "tests.h"
+#include "ctest_common.h"
 
 static int check_xt_ddt(
   MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
@@ -73,10 +74,9 @@ static int check_xt_ddt_off(
   MPI_Datatype mpi_ddt, void const * in_data, int in_data_offset,
   size_t in_data_size, size_t ref_pack_size);
 
-int main(void) {
+int main(int argc, char **argv) {
 
-  // init mpi
-  xt_mpi_call(MPI_Init(NULL, NULL), MPI_COMM_WORLD);
+  test_init_mpi(&argc, &argv, MPI_COMM_WORLD);
   xt_gpu_init();
 
   { // elemental integer datatype

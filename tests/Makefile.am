@@ -122,6 +122,7 @@ endif
 
 libtestutil_la_SOURCES = tests.c \
 	cksum.c cksum.h \
+	ctest_common.c ctest_common.h \
 	test_idxlist_utils.c \
 	test_xmap_common.c test_xmap_common.h \
 	test_xmap_common_parallel.c \
