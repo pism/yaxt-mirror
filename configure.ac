@@ -384,7 +384,7 @@ given MPI implementation, but some tests might fail])],
      [AC_MSG_NOTICE([ignoring failed test for known defect $acx_subtestname,
 because configure option --without-regard-for-quality is active])])])
 ACX_MPI_DEFECTS(,,
-  [ACX_MPI_DEFECTS_DOCUMENT
+  [ACX_MPI_DEFECTS_DOCUMENT([${acx_subtestname}])
    AS_CASE(["$acx_subtestname"],
      [openmpi_datatype],
      [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected, attempting interpositioning work-around!])
