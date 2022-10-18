@@ -267,38 +267,43 @@ xt_config_defaults_init(void)
   if (config_env) {
     char *endptr;
     long v = strtol(config_env, &endptr, 0);
-    if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
-        || (errno != 0 && v == 0)) {
-      perror("failed to parse value of "
-             "XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE environment variable");
-      goto dont_set_mt_mode;
-    } else if (v < XT_MT_NONE || v > XT_MT_OPENMP) {
-      fprintf(stderr, "numeric value of XT_CONFIG_DEFAULT_MULTI_THREAD_MODE"
-              " environment variable (%ld) out of range [0,%d]\n",
-              v, XT_MT_OPENMP);
-      goto dont_set_mt_mode;
+    if (endptr != config_env) {
+      if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+          || (errno != 0 && v == 0)) {
+        perror("failed to parse value of "
+               "XT_CONFIG_DEFAULT_MULTI_THREAD_MODE environment variable");
+        goto dont_set_mt_mode;
+      } else if (v < XT_MT_NONE || v > XT_MT_OPENMP) {
+        fprintf(stderr, "numeric value of XT_CONFIG_DEFAULT_MULTI_THREAD_MODE"
+                " environment variable (%ld) out of range [0,%d]\n",
+                v, XT_MT_OPENMP);
+        goto dont_set_mt_mode;
+      } else if (*endptr) {
+        fprintf(stderr, "trailing text '%s' found after numeric value (%*s) in "
+                "XT_CONFIG_DEFAULT_MULTI_THREAD_MODE environment variable\n",
+                endptr, (int)(endptr-config_env), config_env);
+        goto dont_set_mt_mode;
+      }
     } else {
-      if (endptr == config_env) {
-        if (!strcasecmp(config_env, "XT_MT_OPENMP")) {
+      if (!strcasecmp(config_env, "XT_MT_OPENMP")) {
 #ifndef _OPENMP
-          fputs("multi-threaded operation requested via "
-                "XT_CONFIG_DEFAULT_MULTI_THREAD_MODE, but OpenMP support is not"
-                " compiled in!\n", stderr);
-          goto dont_set_mt_mode;
+        fputs("multi-threaded operation requested via "
+              "XT_CONFIG_DEFAULT_MULTI_THREAD_MODE, but OpenMP support is not"
+              " compiled in!\n", stderr);
+        goto dont_set_mt_mode;
 #else
-          v = XT_MT_OPENMP;
+        v = XT_MT_OPENMP;
 #endif
-        } else if (!strcasecmp(config_env, "XT_MT_NONE")) {
-          v = XT_MT_NONE;
-        } else {
-          fputs("unexpected value of XT_CONFIG_DEFAULT_MULTI_THREAD_MODE"
-                " environment variable, unrecognized text or numeral\n",
-                stderr);
-          goto dont_set_mt_mode;
-        }
+      } else if (!strcasecmp(config_env, "XT_MT_NONE")) {
+        v = XT_MT_NONE;
+      } else {
+        fputs("unexpected value of XT_CONFIG_DEFAULT_MULTI_THREAD_MODE"
+              " environment variable, unrecognized text or numeral\n",
+              stderr);
+        goto dont_set_mt_mode;
       }
     }
-    xt_config_set_idxvec_autoconvert_size(&xt_default_config, (int)v);
+    xt_config_set_redist_mthread_mode(&xt_default_config, (int)v);
   }
 dont_set_mt_mode:;
 }
