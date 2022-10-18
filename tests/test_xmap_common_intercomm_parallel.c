@@ -66,11 +66,12 @@ test_peer(xmap_constructor xmap_new, MPI_Comm comm);
 MPI_Comm xt_intra_group_comm;
 
 int
-xt_xmap_intercomm_parallel_test_main(xmap_constructor xmap_new,
+xt_xmap_intercomm_parallel_test_main(int *argc, char ***argv,
+                                     xmap_constructor xmap_new,
                                      bool call_initialize, bool call_finalize)
 {
   if (call_initialize) {
-    test_init_mpi(NULL, NULL, MPI_COMM_WORLD);
+    test_init_mpi(argc, argv, MPI_COMM_WORLD);
     xt_initialize(MPI_COMM_WORLD);
   }
   MPI_Comm comm = MPI_COMM_WORLD;

@@ -65,9 +65,10 @@ test_xmap2(xmap_constructor new_xmap, MPI_Comm comm);
 static int my_rank;
 
 int
-xt_xmap_self_test_main(xmap_constructor new_xmap)
+xt_xmap_self_test_main(int *argc, char ***argv,
+                       xmap_constructor new_xmap)
 {
-  test_init_mpi(NULL, NULL, MPI_COMM_WORLD);
+  test_init_mpi(argc, argv, MPI_COMM_WORLD);
 
   xt_initialize(MPI_COMM_WORLD);
 
