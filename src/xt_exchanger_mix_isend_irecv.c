@@ -253,6 +253,7 @@ xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
   size_t nmsg = (size_t)exchanger_msr->n;
+  /* fixme: needs to use custom config */
   Xt_exchanger_mix_isend_irecv exchanger_copy
     = xt_exchanger_mix_isend_irecv_alloc(nmsg, &xt_default_config);
   exchanger_copy->comm = new_comm;
@@ -332,9 +333,10 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
 
   if (exchanger_msr->n > 0) {
     size_t nmsg = (size_t)exchanger_msr->n;
+    struct Xt_config_ conf = xt_default_config;
+    xt_config_set_redist_mthread_mode(&conf, XT_MT_NONE);
     Xt_request requests
-      = xt_request_msgs_alloc((int)nmsg, exchanger_msr->comm,
-                              &xt_default_config);
+      = xt_request_msgs_alloc((int)nmsg, exchanger_msr->comm, &conf);
     MPI_Request *requests_
       = xt_request_msgs_get_req_ptr(requests);
     redist_msgs_to_req(nmsg, exchanger_msr->msgs,

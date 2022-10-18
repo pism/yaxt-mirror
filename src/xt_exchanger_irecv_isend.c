@@ -189,8 +189,10 @@ xt_exchanger_irecv_isend_a_exchange(const void *src_data, void *dst_data,
                                     int tag_offset, MPI_Comm comm,
                                     Xt_request *request) {
 
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_NONE);
   Xt_request requests_ = *request
-    = xt_request_msgs_alloc(nrecv + nsend, comm, &xt_default_config);
+    = xt_request_msgs_alloc(nrecv + nsend, comm, &conf);
 
   MPI_Request *requests
     = xt_request_msgs_get_req_ptr(requests_);

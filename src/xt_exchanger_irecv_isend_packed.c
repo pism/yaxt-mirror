@@ -308,10 +308,11 @@ xt_exchanger_irecv_isend_packed_a_exchange(const void *src_data, void *dst_data,
     = sizeof (struct inventory_header)
     + sizeof (size_t) * ((size_t)nrecv+1)
     + sizeof (MPI_Datatype) * (size_t)nrecv;
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_NONE);
   Xt_request requests
     = xt_request_msgs_ebuf_alloc(nrecv + nsend, comm,
-                                 inventory_size + buffer_size,
-                                 &xt_default_config);
+                                 inventory_size + buffer_size, &conf);
   xt_request_msgs_ebuf_set_finalizer(requests, finalize_packed_a_exchange);
 
   MPI_Request *tmp_requests

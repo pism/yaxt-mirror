@@ -103,9 +103,10 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
   size_t hdr_size = sizeof(struct Xt_request_msgs_packed),
     bufp_size = ((size_t)n_packed + (size_t)n_tmp_buffers) * sizeof(void *);
 
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_NONE);
   Xt_request request
-    = xt_request_msgs_ebuf_alloc(n_requests, comm, hdr_size+bufp_size,
-                                 &xt_default_config);
+    = xt_request_msgs_ebuf_alloc(n_requests, comm, hdr_size+bufp_size, &conf);
   MPI_Request *requests_
     = xt_request_msgs_ebuf_get_req_ptr(request);
   memcpy(requests_, requests,
