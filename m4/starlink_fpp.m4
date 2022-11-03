@@ -309,9 +309,9 @@ AC_DEFUN([_ACX_SL_PROG_FPP],
            [_ACX_SL_TEST_FPP([$ac_fpp],[$acx_sl_fpp_srcext],
               [FPP=$ac_fpp; break])
             _ACX_SL_TEST_FPP([$ac_fpp -P],[$acx_sl_fpp_srcext],
-              [FPP="$ac_fpp -P"; break])])
-         dnl the above tests might generate an executable
-         \rm a.out 2>/dev/null])
+              [FPP="$ac_fpp -P"; break])])])
+      dnl the above tests might generate an executable
+      \rm a.out 2>/dev/null
       AS_IF([test -n "$FPP"], [AS_VAR_SET([acx_sl_prog_fpp], [$FPP])])])
    AS_VAR_COPY([FPP], [acx_sl_prog_fpp])
    AS_IF([test -z "$FPP"], [$3],
