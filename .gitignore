@@ -22,6 +22,7 @@ Makefile.in
 
 # Configure stage files:
 .deps
+/config.cache
 /config.log
 /config.lt
 /config.status
