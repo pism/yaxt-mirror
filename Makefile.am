@@ -73,6 +73,9 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checksrc/mpich_unweighted_topo_comm_dup.c \
 	config/checkdoc/mpich_unweighted_topo_comm_dup.txt \
 	config/checkpatch/mpich_3.x_unweighted.patch \
+	config/checkdoc/mpich_neighbor_alltoallw.txt \
+	config/checksrc/mpich_neighbor_alltoallw.c \
+	config/checkpatch/mpich_neighbor_alltoallw.patch \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \
