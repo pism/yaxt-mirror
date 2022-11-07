@@ -269,9 +269,7 @@ int main(int argc, char **argv) {
   { // MPI_Type_contiguous(3, MPI_Type_contiguous(3,MPI_FLOAT))
     enum {COUNT = 3};
     MPI_Datatype cont_mpi_ddt;
-    {
-      MPI_Type_contiguous(COUNT, MPI_FLOAT, &cont_mpi_ddt);
-    }
+    MPI_Type_contiguous(COUNT, MPI_FLOAT, &cont_mpi_ddt);
     MPI_Datatype mpi_ddt;
     MPI_Type_contiguous(COUNT, cont_mpi_ddt, &mpi_ddt);
     MPI_Type_free(&cont_mpi_ddt);
