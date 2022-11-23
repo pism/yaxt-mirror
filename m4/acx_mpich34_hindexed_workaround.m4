@@ -129,8 +129,7 @@ extern pthread_mutex_t yaksui_atomic_mutex;],
      < "$srcdir/config/checkpatch/mpich_3.4_yaksa_hindexed.patch" \
      || { is_affected_mpich=false ; break ; }
    AC_COMPILE_IFELSE(,
-     [acx_yaksa_add_workaround="$acx_yaksa_add_workaround/xt_yaksa_indexed.c"
-      mv conftest.c "$acx_yaksa_add_workaround"
+     [mv conftest.c "$acx_yaksa_add_workaround/xt_yaksa_indexed.c"
       ACX_MV_OBJ([conftest],[mpich_workaround])],
      [is_affected_mpich=false
       rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
