@@ -170,6 +170,9 @@ dnl
          fix_nag_shared_link
          AC_LANG_POP(m4_defn([lng]))])
 ])])
+   dnl adjust libobjs handling to deal with $ac_objext being .lo
+   m4_pushdef([_AC_LIBOBJS_NORMALIZE],m4_bpatsubst(m4_dquote(m4_defn([_AC_LIBOBJS_NORMALIZE])),
+     [s/\\\.obj],[s/.lo\$//;\&]))dnl
    m4_popdef([fix_nag_shared_link])])dnl
 dnl
 dnl Local Variables:
