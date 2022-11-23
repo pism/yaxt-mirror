@@ -3,6 +3,7 @@
 \(^\|/\).gitignore$
 ^include/config.h.in$
 ^src/m4.deps$
+^src/mpi-workarounds/.*_wrap\.c$
 ^src/pkgconfig/yaxt.pc.in$
 ^src/pkgconfig/yaxt_c.pc.in$
 ^src/xt_slice_c_loc.inc$

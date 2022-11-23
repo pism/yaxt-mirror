@@ -383,6 +383,7 @@ re-configure with --without-regard-for-quality in case you must use the
 given MPI implementation, but some tests might fail])],
      [AC_MSG_NOTICE([ignoring failed test for known defect $acx_subtestname,
 because configure option --without-regard-for-quality is active])])])
+AC_CONFIG_LIBOBJ_DIR([src/mpi-workarounds])
 ACX_MPI_DEFECTS(,,
   [ACX_MPI_DEFECTS_DOCUMENT([${acx_subtestname}])
    AS_CASE(["$acx_subtestname"],
@@ -390,13 +391,22 @@ ACX_MPI_DEFECTS(,,
      [AC_MSG_WARN([known OpenMPI 2.0.3-4.0.1 problem detected, attempting interpositioning work-around!])
       ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
         [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
-         extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'opal_datatype_(commit|add)/b'],
+         extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'opal_datatype_(commit|add)/b'
+         AC_LIBSOURCES([xt_opal_datatype_add_wrap.c, xt_opal_datatype_optimize_wrap.c])dnl
+         xt_temp=`expr "X/$acx_opal_datatype_add_workaround" : 'X.*/\(@<:@^/@:>@*\)\.c$'`
+         _AC_LIBOBJ([${xt_temp}_wrap])
+         xt_temp=`expr "${acx_opal_datatype_add_workaround}" : '\(.*\)/@<:@^/@:>@*\.c$'`
+         XT_WORKAROUND_MPI_CFLAGS=$OMPI_BUILD_CFLAGS
+         XT_WORKAROUND_MPI_CPPFLAGS="-I$xt_temp $OMPI_MCA_C_INCLUDE ${XT_WORKAROUND_MPI_CPPFLAGS-$CPPFLAGS}"],
         [AC_MSG_WARN([Cannot apply Open MPI datatype bug work-around.])
          mpi_defect_fail_action])],
      [mpich_3.4_yaksa_hindexed],
      [AC_MSG_WARN([known MPICH 3.4-3.4.3 problem detected, attempting interpositioning work-around!])
       ACX_MPICH34_DT_WORKAROUND(,[mpich_3.4_yaksa_hindexed.c],
-        [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'yaks[ai]_type_create_h?indexed/b'],
+        [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'yaks[ai]_type_create_h?indexed/b'
+         AC_LIBOBJ([xt_yaksa_indexed_wrap])dnl
+         XT_WORKAROUND_MPI_CFLAGS=$CFLAGS
+         XT_WORKAROUND_MPI_CPPFLAGS="-I$ac_pwd/$acx_yaksa_add_workaround ${XT_WORKAROUND_MPI_CPPFLAGS-$CPPFLAGS}"],
         [AC_MSG_WARN([Cannot apply MPICH YAKSA datatype bug work-around.])
          mpi_defect_fail_action])],
      [mpich_unweighted_topo_comm_dup],
@@ -417,19 +427,17 @@ Consider getting a better MPI/batch scheduler.])
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
 rm -f conftest.err conftest.error_exit.txt
 AC_SUBST([xt_mpi_workaround_LIBS])
-AM_CONDITIONAL([OMPI_DT_WORKAROUND],
-  [test x${acx_opal_datatype_add_workaround+set} = xset])
 AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset],
   [acx_opal_datatype_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_opal_datatype_add_workaround')"`
   xt_mpi_workaround_sources="${xt_mpi_workaround_sources+$xt_mpi_workaround_sources }ompi_workaround.c"])
 AC_SUBST([acx_opal_datatype_add_workaround])
-AM_CONDITIONAL([MPICH_DT_WORKAROUND],
-  [test x${acx_yaksa_add_workaround+set} = xset])
 AS_IF([test x${acx_yaksa_add_workaround+set} = xset],
   [acx_yaksa_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_yaksa_add_workaround')"`
    xt_mpi_workaround_sources="${xt_mpi_workaround_sources+$xt_mpi_workaround_sources }mpich_workaround.c"])
 AC_SUBST([acx_yaksa_add_workaround])
-AM_CONDITIONAL([MPI_DT_WORKAROUND],
+AC_SUBST([XT_WORKAROUND_MPI_CFLAGS])
+AC_SUBST([XT_WORKAROUND_MPI_CPPFLAGS])
+AM_CONDITIONAL([XT_ADD_MPI_WORKAROUND],
   [test x${xt_mpi_workaround_sources+set} = xset])
 dnl
 dnl test if MPI_INT16_T is available
@@ -702,7 +710,7 @@ AC_CONFIG_FILES([						\
 	examples/tr_gp2fs_run					\
 	examples/unstruct_halo_exchange_run			\
 	util/serialrun],[chmod a+x "$ac_file"])
-AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile \
+AC_CONFIG_FILES([Makefile src/Makefile src/mpi-workarounds/Makefile tests/Makefile examples/Makefile \
   inst_headers/Makefile inst_headers/f90/Makefile \
   src/pkgconfig/yaxt.pc src/pkgconfig/yaxt_c.pc perf/Makefile])
 # edit out the am--include-marker that's required for automake 1.16

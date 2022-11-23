@@ -49,6 +49,9 @@ else
 AM_CPPFLAGS += -DWITHOUT_FORTRAN
 endif
 
+SUBDIRS = mpi-workarounds .
+DIST_SUBDIRS = mpi-workarounds .
+
 # headers from subdir xt will be installed (after substituting
 # definitions from config.h). These must be listed in a sequence in
 # which they can be combined in yaxt.h.
@@ -212,44 +215,9 @@ libyaxt_la_LDFLAGS = -version-info 10:1:9
 libyaxt_c_la_LIBADD = $(MPI_C_LIB)
 libyaxt_c_la_LDFLAGS = -version-info 10:1:9
 
-if MPI_DT_WORKAROUND
-noinst_LTLIBRARIES = libmpi_workaround.la
-libmpi_workaround_la_LIBADD = $(xt_mpi_workaround_LIBS) $(MPI_C_LIB)
-libyaxt_c_la_LIBADD += libmpi_workaround.la
+if XT_ADD_MPI_WORKAROUND
+libyaxt_c_la_LIBADD += mpi-workarounds/libmpi_workaround.la
 endif
-nodist_libmpi_workaround_la_SOURCES =
-if OMPI_DT_WORKAROUND
-nodist_libmpi_workaround_la_SOURCES += ompi_workaround.c
-endif
-if MPICH_DT_WORKAROUND
-nodist_libmpi_workaround_la_SOURCES += mpich_workaround.c
-endif
-ompi_workaround.c: $(acx_opal_datatype_add_workaround)
-	cp $^ $@
-
-mpich_workaround.c: $(acx_yaksa_add_workaround)
-	cp $^ $@
-
-libmpi_workaround_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(OMPI_BUILD_CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-
-ompi_workaround.lo: ompi_workaround.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(OMPI_MCA_C_INCLUDE) $(OMPI_BUILD_CFLAGS) -MT $@ -MD -MP -MF $(DEPDIR)/ompi_workaround.Tpo -c -o $@ `test -f 'ompi_workaround.c' || echo '$(srcdir)/'`ompi_workaround.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ompi_workaround.Tpo $(DEPDIR)/ompi_workaround.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ompi_workaround.c' object='ompi_workaround.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(OMPI_MCA_C_INCLUDE) $(OMPI_BUILD_CFLAGS) -c -o $@ `test -f 'ompi_workaround.c' || echo '$(srcdir)/'`ompi_workaround.c
-
-mpich_workaround.lo: mpich_workaround.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) -I../config/workarounds/mpich34_yaksa_patch $(CFLAGS) -MT $@ -MD -MP -MF $(DEPDIR)/mpich_workaround.Tpo -c -o $@ `test -f 'mpich_workaround.c' || echo '$(srcdir)/'`mpich_workaround.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mpich_workaround.Tpo $(DEPDIR)/mpich_workaround.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mpich_workaround.c' object='mpich_workaround.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) -I../config/workarounds/mpich34_yaksa_patch $(CFLAGS) -c -o $@ `test -f 'mpich_workaround.c' || echo '$(srcdir)/'`mpich_workaround.c
-
-
 
 EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4 \
 	m4-templates/f03-redist-gen.m4 \
@@ -365,8 +333,7 @@ xtinclude_Makefile.inc: Makefile
 all-local: xtinclude_Makefile.inc
 
 clean-local:
-	-rm -f *.$(FCMODEXT) i.*.L *.i \
-		ompi_workaround.c mpich_workaround.c *.dbg
+	-rm -f *.$(FCMODEXT) i.*.L *.i *.dbg
 
 
 # When an out-of-source build takes place, the recipe of the rule expects that
@@ -391,7 +358,7 @@ distclean-local: mostlyclean distclean-generic
 	-rm -f xtinclude_Makefile.inc
 	-rm -rf '$(DEPDIR)' 'core/$(DEPDIR)'
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
-	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc; rmdir core pkgconfig ; fi
+	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc; rmdir core pkgconfig mpi-workarounds; fi
 
 install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"

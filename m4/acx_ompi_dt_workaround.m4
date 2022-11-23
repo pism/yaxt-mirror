@@ -143,12 +143,12 @@ s/^ *//;s/ *$//'`])
      [3|4],
      [acx_opal_datatype_add_workaround=opal_datatype_optimize.c])
    acx_temp="m4_default([$5],[config/workarounds/openmpi])/v$acx_ompi_version"
-   AS_IF([test -r "$ac_pwd/$acx_temp/$acx_opal_datatype_add_workaround"],
-     [acx_opal_datatype_add_workaround="$ac_pwd/$acx_temp/$acx_opal_datatype_add_workaround"
+   AS_IF([test -r "$ac_pwd/$acx_temp/xt_$acx_opal_datatype_add_workaround"],
+     [acx_opal_datatype_add_workaround="$ac_pwd/$acx_temp/xt_$acx_opal_datatype_add_workaround"
       cp "$acx_opal_datatype_add_workaround" conftest.c \
         || { is_affected_ompi=false ; break ; }],
-     [test -r "$srcdir/$acx_temp/$acx_opal_datatype_add_workaround"],
-     [acx_opal_datatype_add_workaround="$srcdir/$acx_temp/$acx_opal_datatype_add_workaround"
+     [test -r "$srcdir/$acx_temp/xt_$acx_opal_datatype_add_workaround"],
+     [acx_opal_datatype_add_workaround="$srcdir/$acx_temp/xt_$acx_opal_datatype_add_workaround"
       cp "$acx_opal_datatype_add_workaround" conftest.c \
         || { is_affected_ompi=false ; break ; }],
      [dnl patched source not availabe, download and patch
@@ -183,7 +183,7 @@ acx_fn_downloader()
           <"$srcdir/config/checkpatch/openmpi_datatype.$acx_opal_datatype_add_workaround.patch"],
         [echo "downloading and patching Open MPI source file $acx_opal_datatype_add_workaround"]) \
         || { cd "$ac_pwd" ; is_affected_ompi=false ; break ; }
-      acx_opal_datatype_add_workaround="$ac_pwd/$acx_temp/stage/$acx_opal_datatype_add_workaround"])
+      acx_opal_datatype_add_workaround="$ac_pwd/$acx_temp/stage/xt_$acx_opal_datatype_add_workaround"])
    as_dir=src as_fn_mkdir_p
    AC_COMPILE_IFELSE(,
      [ACX_MV_OBJ([conftest],[ompi_workaround])
