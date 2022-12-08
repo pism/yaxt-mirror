@@ -425,7 +425,8 @@ Consider getting a better MPI/batch scheduler.])
          AC_DEFINE([XT_NEED_MPI_ABORT_WORK_AROUND],[2])])],
      [mpich_neighbor_alltoallw],
      [AC_MSG_WARN([known MPICH 4.0-4.0.2 problem detected, disabling use of MPI_Neighbor_alltoall!])
-      xt_disable_nb_a2a=yes],
+      xt_disable_nb_a2a=yes
+      mpi_defect_fail_action],
      [mpi_defect_fail_action])])
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
 rm -f conftest.err conftest.error_exit.txt
