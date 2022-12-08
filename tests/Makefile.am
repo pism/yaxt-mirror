@@ -171,7 +171,7 @@ test_exchanger_parallel_LDADD =  libtestutil.la \
 	../src/xt_exchanger_irecv_isend_ddt_packed.lo \
 	../src/xt_exchanger_mix_isend_irecv.lo \
 	../src/xt_exchanger_simple_base.lo
-if USE_MPI3
+if USE_NB_A2A
 test_exchanger_parallel_LDADD += ../src/xt_exchanger_neigh_alltoall.lo
 endif
 if HAVE_CUDA

@@ -336,7 +336,6 @@ AS_IF([test $ac_cv_sizeof_MPI_Datatype -eq 0],
   [AC_MSG_FAILURE([Could not detect size of MPI_Datatype!])])
 AC_COMPUTE_INT([MPI_VERSION], [MPI_VERSION], [@%:@include <mpi.h>],
   [AC_MSG_ERROR([cannot determine MPI version!])])
-AM_CONDITIONAL([USE_MPI3],[test $MPI_VERSION -ge 3])
 CFLAGS=$saved_CFLAGS
 AS_CASE(["$MPI_FINT"],
   [int],[XT_MPI_FINT_MAX=INT_MAX XT_MPI_FINT_FC_KIND=c_int],
@@ -384,6 +383,7 @@ given MPI implementation, but some tests might fail])],
      [AC_MSG_NOTICE([ignoring failed test for known defect $acx_subtestname,
 because configure option --without-regard-for-quality is active])])])
 AC_CONFIG_LIBOBJ_DIR([src/mpi-workarounds])
+xt_disable_nb_a2a=no
 ACX_MPI_DEFECTS(,,
   [ACX_MPI_DEFECTS_DOCUMENT([${acx_subtestname}])
    AS_CASE(["$acx_subtestname"],
@@ -423,6 +423,9 @@ Consider getting a better MPI/batch scheduler.])
         [grep -v -i 'mpi_abort(@<:@^,()@:>@*, 2)' conftest.error_exit.txt >/dev/null],
         [AC_MSG_NOTICE([Implementing very fragile work-around for tests!])
          AC_DEFINE([XT_NEED_MPI_ABORT_WORK_AROUND],[2])])],
+     [mpich_neighbor_alltoallw],
+     [AC_MSG_WARN([known MPICH 4.0-4.0.2 problem detected, disabling use of MPI_Neighbor_alltoall!])
+      xt_disable_nb_a2a=yes],
      [mpi_defect_fail_action])])
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
 rm -f conftest.err conftest.error_exit.txt
@@ -437,6 +440,10 @@ AS_IF([test x${acx_yaksa_add_workaround+set} = xset],
 AC_SUBST([acx_yaksa_add_workaround])
 AC_SUBST([XT_WORKAROUND_MPI_CFLAGS])
 AC_SUBST([XT_WORKAROUND_MPI_CPPFLAGS])
+AM_CONDITIONAL([USE_NB_A2A],[test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno])
+AS_IF([test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno],
+  [AC_DEFINE([XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL],[1],
+     [defined if MPI_Neighbor_alltoall functions are actually working])])
 AM_CONDITIONAL([XT_ADD_MPI_WORKAROUND],
   [test x${xt_mpi_workaround_sources+set} = xset])
 dnl

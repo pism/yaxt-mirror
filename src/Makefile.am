@@ -177,7 +177,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_ddt_internal.h					\
 	xt_ddt.c
 
-if USE_MPI3
+if USE_NB_A2A
 libyaxt_c_la_SOURCES +=						\
 	xt_exchanger_neigh_alltoall.c
 endif

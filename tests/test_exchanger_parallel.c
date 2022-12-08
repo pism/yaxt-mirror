@@ -157,7 +157,7 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
     [xt_exchanger_irecv_isend_packed] = xt_exchanger_irecv_isend_packed_new,
     [xt_exchanger_irecv_isend_ddt_packed] = xt_exchanger_irecv_isend_ddt_packed_new,
     [xt_exchanger_mix_isend_irecv] = xt_exchanger_mix_isend_irecv_new,
-#if MPI_VERSION >= 3
+#ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
     [xt_exchanger_neigh_alltoall] = xt_exchanger_neigh_alltoall_new,
 #endif
   };
@@ -180,7 +180,7 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
                   optarg);
           exit(EXIT_FAILURE);
         }
-#if MPI_VERSION < 3
+#ifndef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
         else if (exchanger_new_id == xt_exchanger_neigh_alltoall)
         {
           fputs("xt_exchanger_neigh_alltoall_new requires MPI version 3.0 or "
@@ -509,7 +509,7 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 static void
 test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 {
-#if MPI_VERSION >= 3
+#ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
   // inter-communicator's are not defined for virtual topologies, which are
   // used by xt_exchanger_neigh_alltoall_new
   if (exchanger_new == xt_exchanger_neigh_alltoall_new) return;

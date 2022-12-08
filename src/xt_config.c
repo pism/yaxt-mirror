@@ -102,7 +102,7 @@ static const struct {
   { "mix_irecv_isend",
     xt_exchanger_mix_isend_irecv_new, xt_exchanger_mix_isend_irecv },
   { "neigh_alltoall",
-#if MPI_VERSION >= 3
+#ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
     xt_exchanger_neigh_alltoall_new,
 #else
     (Xt_exchanger_new)0,
@@ -150,7 +150,7 @@ Xt_exchanger_new
 xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm)
 {
   Xt_exchanger_new exchanger_new = config->exchanger_new;
-#if MPI_VERSION >= 3
+#ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
   if (exchanger_new == xt_exchanger_neigh_alltoall_new) {
     int flag;
     xt_mpi_call(MPI_Comm_test_inter(comm, &flag), comm);
