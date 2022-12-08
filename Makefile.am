@@ -76,6 +76,9 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checkdoc/mpich_neighbor_alltoallw.txt \
 	config/checksrc/mpich_neighbor_alltoallw.c \
 	config/checkpatch/mpich_neighbor_alltoallw.patch \
+	config/checkdoc/mpich_zero_size_contiguous.txt \
+	config/checkpatch/mpich_zero_size_contiguous.patch \
+	config/checksrc/mpich_zero_size_contiguous.c \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \

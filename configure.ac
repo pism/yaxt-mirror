@@ -427,6 +427,11 @@ Consider getting a better MPI/batch scheduler.])
      [AC_MSG_WARN([known MPICH 4.0-4.0.2 problem detected, disabling use of MPI_Neighbor_alltoall!])
       xt_disable_nb_a2a=yes
       mpi_defect_fail_action],
+     [mpich_zero_size_contiguous],
+     [AC_MSG_WARN([known MPICH 3.4.3, 4.0-4.0.2 problem detected, disabling tests of zero size datatypes!])
+      AC_DEFINE([XT_CANNOT_SUPPORT_ZERO_SIZE_DT],[1],
+        [defined to 1 if this MPI does not support zero-size datatypes])
+      mpi_defect_fail_action],
      [mpi_defect_fail_action])])
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
 rm -f conftest.err conftest.error_exit.txt

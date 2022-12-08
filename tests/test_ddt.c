@@ -186,6 +186,7 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR DUP(CONT(7, DOUBLE))");
   }
 
+#ifndef XT_CANNOT_SUPPORT_ZERO_SIZE_DT
   { // MPI_Type_contiguous(0, MPI_DOUBLE)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 0};
@@ -196,6 +197,9 @@ int main(int argc, char **argv) {
     if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), 0))
       PUT_ERR("ERROR CONT(0, DOUBLE)");
   }
+#else
+#warning "Skipping tests for defective MPI! Zero-size datatypes unsupported."
+#endif                                          \
 
   { // MPI_Type_contiguous(1, MPI_DOUBLE)
     MPI_Datatype mpi_ddt;
@@ -341,6 +345,7 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR VECTOR(1, 1, 1, FLOAT)");
   }
 
+#ifndef XT_CANNOT_SUPPORT_ZERO_SIZE_DT
   { // MPI_Type_vector(0, 1, 1, MPI_CHAR)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 0, BLOCKLENGTH = 1, STRIDE = 1};
@@ -354,6 +359,7 @@ int main(int argc, char **argv) {
           COUNT * BLOCKLENGTH* sizeof(in_data[0])))
       PUT_ERR("ERROR VECTOR(0, 1, 1, CHAR)");
   }
+#endif
 
   { // MPI_Type_vector(3, 3, -3, MPI_INT)
     MPI_Datatype mpi_ddt;
@@ -462,6 +468,7 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR INDEXED(1, {1}, {0}, DOUBLE)");
   }
 
+#ifndef XT_CANNOT_SUPPORT_ZERO_SIZE_DT
   { // MPI_Type_indexed(0, {1}, {0}, MPI_DOUBLE)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 0};
@@ -493,6 +500,7 @@ int main(int argc, char **argv) {
     if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), 0))
       PUT_ERR("ERROR INDEXED(1, {0}, {0}, DOUBLE)");
   }
+#endif
 
   { // MPI_Type_create_hindexed(
     //   4, {8,4,2,1}, sizeof(float)*{0,8,16,24}, MPI_FLOAT)
@@ -595,6 +603,7 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR INDEXED_BLOCK(1, 1, {0}, DOUBLE)");
   }
 
+#ifndef XT_CANNOT_SUPPORT_ZERO_SIZE_DT
   { // MPI_Type_create_indexed_block(0, 1, {0}, MPI_DOUBLE)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 0, BLOCKLENGTH = 1};
@@ -610,6 +619,7 @@ int main(int argc, char **argv) {
           COUNT * BLOCKLENGTH * sizeof(in_data[0])))
       PUT_ERR("ERROR INDEXED_BLOCK(0, 1, {0}, DOUBLE)");
   }
+#endif
 
   { // MPI_Type_create_indexed_block(1, 0, {0}, MPI_DOUBLE)
     MPI_Datatype mpi_ddt;
