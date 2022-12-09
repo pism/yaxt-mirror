@@ -364,11 +364,11 @@ fi
 # with preprocessor flags
 m4_define([_ACX_FPP_COMPILE_IFELSE],
   [m4_if([$2],[direct],
-     [cp conftest.$acx_sl_fpp_srcext conftest.${ac_ext}.tmp],
+     [cp conftest.$acx_sl_fpp_srcext conftest.${ac_ext}.tmp
+      FCFLAGS="$FPPFLAGS $1 $ac_save_FCFLAGS"],
      [_AC_RUN_LOG([$FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext \
         >conftest.${ac_ext}.tmp],
         [echo Running preprocessor $FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext])])
-   m4_if([$2],[direct],[FCFLAGS="$FPPFLAGS $1 $ac_save_FCFLAGS"])
    mv conftest.${ac_ext}.tmp conftest.${ac_ext}
    AC_COMPILE_IFELSE(,[$3],[$4])])
 
