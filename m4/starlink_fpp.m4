@@ -484,7 +484,8 @@ dnl
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_WRAP])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_wrap=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
+           [acx_sl_prog_fc_cpp_wrap=yes],
+           [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
@@ -496,7 +497,8 @@ dnl
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_CSTYLE=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
+           [acx_sl_prog_fc_cpp_CSTYLE=yes],
+           [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
@@ -507,7 +509,8 @@ dnl
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_CSTYLE=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
+           [acx_sl_prog_fc_cpp_CSTYLE=yes],
+           [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test failed.])],
            [_AS_ECHO_LOG([Test successful.])])
@@ -518,7 +521,8 @@ dnl
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CXXSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_cxxstyle=yes],[AS_VAR_SET([acx_sl_fpp_ok], [no])])
+           [acx_sl_prog_fc_cpp_cxxstyle=yes],
+           [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
