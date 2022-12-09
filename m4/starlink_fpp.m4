@@ -393,9 +393,10 @@ m4_define([_ACX_FPP_COMPILE_IFELSE],
 AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
   [AS_VAR_PUSHDEF([acx_sl_fpp_ok], [acx_sl_cv_]_AC_LANG_ABBREV[_$2_ok])
    AC_CACHE_CHECK([if ]m4_case([$2],[direct],[compilation with $FC],
-[indirect],[preprocessing with $FPP],
-[m4_fatal([$0: only direct or indirect method supported: ']$2['])])[ of Fortran source supports required preprocessor features],
-[acx_sl_fpp_ok],
+        [indirect],[preprocessing with $FPP],
+        [m4_fatal([$0: only direct or indirect method supported: ']$2['])]) dnl
+[of Fortran source supports required preprocessor features],
+     [acx_sl_fpp_ok],
      [AS_VAR_SET([acx_sl_fpp_ok], [yes])
       # Set up ac_fpp_need_* flags based on features in $1
       acx_sl_fpp_srcext=m4_default([$3],[${ac_fc_srcext-F}])
