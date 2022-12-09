@@ -391,7 +391,10 @@ m4_define([_ACX_FPP_COMPILE_IFELSE],
 # Sets ac_fpp_ok to "no" if a requested feature is unavailable
 #
 AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
-  [AS_VAR_PUSHDEF([acx_sl_fpp_ok], [acx_sl_cv_]_AC_LANG_ABBREV[_$2_ok])
+  [AS_VAR_PUSHDEF([acx_sl_fpp_ok], [acx_sl_cv_]_AC_LANG_ABBREV[_$2_ok])dnl
+   m4_pushdef([AC_MSG_RESULT],m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn([AC_MSG_RESULT])),
+[_AS_ECHO_LOG],[ac_res=`expr "$][1" : '\\(@<:@^|@:>@\\)'` ; _AS_ECHO_LOG])),
+     [$][1],[$ac_res]))
    AC_CACHE_CHECK([if ]m4_case([$2],[direct],[compilation with $FC],
         [indirect],[preprocessing with $FPP],
         [m4_fatal([$0: only direct or indirect method supported: ']$2['])]) dnl
@@ -402,44 +405,42 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
       acx_sl_fpp_srcext=m4_default([$3],[${ac_fc_srcext-F}])
       _ACX_SL_SET_FPP_FEATURE_VARS([$1])
 
-      acx_sl_prog_fc_cpp_CSTYLE=no
-      acx_sl_prog_fc_cpp_cxxstyle=no
-
       ACX_ASSERT_LANG_IS_FORTRAN_VARIANT
       ac_save_FCFLAGS=$FCFLAGS
 
       m4_case([$2],[direct],[],[indirect],[],
          [m4_fatal([$0: only direct or indirect method supported: ] $2)])
 
+      while : ; do
       # We need to skip the following tests if we're trying direct compilation
       # and FC won't preprocess.
       AS_IF([test x$ac_fpp_need_d = xyes],
-        [acx_sl_prog_fc_cpp_d=no
-         _AS_ECHO_LOG([Trying flag to create preprocessor defines.])
+        [_AS_ECHO_LOG([Trying flag to create preprocessor defines.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_D])
          # Normally we expect to be able to define preprocessor macros
          # with -D, but this might be IBM xlf compiler, which needs
          # -WF,-D or Fujitsu VPP700 which needs -Wp,-D
          mv conftest.$acx_sl_fpp_srcext conftest.${acx_sl_fpp_srcext}.bak
+         while : ; do
          for FPP_DEFOPT in "$FPP_DEFOPT" '-D' '-WF,-D' '-Wp,-D'
          do
            AS_IF([test x"$FPP_DEFOPT" != x ],
              [cp conftest.${acx_sl_fpp_srcext}.bak conftest.$acx_sl_fpp_srcext
               _ACX_FPP_COMPILE_IFELSE([${FPP_DEFOPT}OK],[$2],
-                [acx_sl_prog_fc_cpp_d=yes; break])])
+                [break 2])])
+         done
+         AS_VAR_SET([acx_sl_fpp_ok], [no])
+         break
          done
          FCFLAGS=$ac_save_FCFLAGS
-         AS_IF([test $acx_sl_prog_fc_cpp_d = no],
-           [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok],[yes],
            [_AS_ECHO_LOG([Test successful.])],
-           [_AS_ECHO_LOG([Test failed.])])
+           [_AS_ECHO_LOG([Test failed.]) ; break])
         ])
 
       AS_IF([test $ac_fpp_need_i = yes],
-        [acx_sl_prog_fc_cpp_i=no
-         _AS_ECHO_LOG([Trying flag to add directories to preprocessor search path.])
+        [_AS_ECHO_LOG([Trying flag to add directories to preprocessor search path.])
          AS_MKDIR_P([conftst])
          cd conftst
          ACX_LANG_OTHER_SUFFIX_CONFTEST([inc],
@@ -448,47 +449,45 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
          cd ..
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],[_ACX_SL_LANG_PROGRAM_FPP_I])
          mv conftest.$acx_sl_fpp_srcext conftest.${acx_sl_fpp_srcext}.bak
+         while : ; do
          for FPP_INCOPT in "$FPP_INCOPT" '-I' '-WF,-I' '-Wp,-I'
          do
            AS_IF([test x"$FPP_INCOPT" != x ],
              [cp conftest.${acx_sl_fpp_srcext}.bak conftest.$acx_sl_fpp_srcext
               _ACX_FPP_COMPILE_IFELSE([${FPP_INCOPT}conftst],[$2],
-                [acx_sl_prog_fc_cpp_i=yes
-                 break])])
+                [break 2])])
+         done
+         AS_VAR_SET([acx_sl_fpp_ok], [no])
+         break
          done
          FCFLAGS=$ac_save_FCFLAGS
          rm -rf conftst
-         AS_IF([test $acx_sl_prog_fc_cpp_i = no],
-           [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
-           [_AS_ECHO_LOG([Test failed.])])])
+           [_AS_ECHO_LOG([Test failed.]) ; break])])
 dnl
 dnl
       AS_IF([test $ac_fpp_need_subs = yes],
-        [acx_sl_prog_fc_cpp_subs=no
-         _AS_ECHO_LOG([Testing preprocessor expansion in Fortran code.])
+        [_AS_ECHO_LOG([Testing preprocessor expansion in Fortran code.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_SUBS])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_subs=yes],[AS_VAR_SET([acx_sl_fpp_ok], [no])])
+         _ACX_FPP_COMPILE_IFELSE(,[$2],,
+           [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
-           [_AS_ECHO_LOG([Test failed.])])
+           [_AS_ECHO_LOG([Test failed.]) ; break])
         ])
 dnl
 dnl
       AS_IF([test $ac_fpp_need_wrap = yes],
-        [acx_sl_prog_fc_cpp_wrap=no
-         _AS_ECHO_LOG([Testing whether preprocessor wraps long lines.])
+        [_AS_ECHO_LOG([Testing whether preprocessor wraps long lines.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_WRAP])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_wrap=yes],
+         _ACX_FPP_COMPILE_IFELSE(,[$2],,
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
-           [_AS_ECHO_LOG([Test failed.])])
+           [_AS_ECHO_LOG([Test failed.]) ; break])
         ])
 dnl
 dnl
@@ -496,23 +495,21 @@ dnl
         [_AS_ECHO_LOG([Testing whether preprocessor removes C-style comments.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_CSTYLE=yes],
+         _ACX_FPP_COMPILE_IFELSE(,[$2],,
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
-           [_AS_ECHO_LOG([Test failed.])])
+           [_AS_ECHO_LOG([Test failed.]) ; break])
         ])
 dnl
       AS_IF([test $ac_fpp_need_cstyle = yes],
         [_AS_ECHO_LOG([Testing whether preprocessor leaves C-style comments in place.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_CSTYLE=yes],
+         _ACX_FPP_COMPILE_IFELSE(,[$2],,
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
-           [_AS_ECHO_LOG([Test failed.])],
+           [_AS_ECHO_LOG([Test failed.]) ; break],
            [_AS_ECHO_LOG([Test successful.])])
         ])
 dnl
@@ -520,33 +517,38 @@ dnl
         [_AS_ECHO_LOG([Testing if preprocessor leaves C++-style comments in place.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CXXSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_cxxstyle=yes],
+         _ACX_FPP_COMPILE_IFELSE(,[$2],,
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
-           [_AS_ECHO_LOG([Test failed.])])
+           [_AS_ECHO_LOG([Test failed.]) ; break])
         ])
 dnl
       AS_IF([test $ac_fpp_need_CXXSTYLE = yes],
         [_AS_ECHO_LOG([Testing if preprocessor suppresses C++-style comments.])
          ACX_LANG_OTHER_SUFFIX_CONFTEST([$acx_sl_fpp_srcext],
            [_ACX_SL_LANG_PROGRAM_FPP_CXXSTYLE])
-         _ACX_FPP_COMPILE_IFELSE(,[$2],
-           [acx_sl_prog_fc_cpp_cxxstyle=yes],
+         _ACX_FPP_COMPILE_IFELSE(,[$2],,
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
          AS_VAR_IF([acx_sl_fpp_ok], [yes],
-           [_AS_ECHO_LOG([Test failed.])],
+           [_AS_ECHO_LOG([Test failed.]) ; break],
            [_AS_ECHO_LOG([Test successful.])])
         ])
 dnl
+      break
+      done
       FCFLAGS=$ac_save_FCFLAGS
       rm -rf conftest.*
-      AS_VAR_IF([acx_sl_fpp_ok], [yes], [$4], [$5])
+      AS_VAR_COPY([acx_temp],[acx_sl_fpp_ok])
+      AS_VAR_SET([acx_sl_fpp_ok], ["$acx_temp|$FPP_DEFOPT|$FPP_INCOPT"])
      ])
+   m4_popdef([AC_MSG_RESULT])dnl
+   AS_VAR_COPY([acx_temp],[acx_sl_fpp_ok])
+   AS_CASE([$acx_temp],
+     [yes\|*], [$4], [$5])
    #FIXME we should probably do the AC_SUBST somewhere else.
-   AC_SUBST([FPP_DEFOPT])
-   AC_SUBST([FPP_INCOPT])
+   AC_SUBST([FPP_DEFOPT],[`expr "$acx_temp" : '.*|\(.*\)|'`])dnl
+   AC_SUBST([FPP_INCOPT],[`expr "$acx_temp" : '.*|.*|\(.*\)'`])dnl
    AS_VAR_POPDEF([acx_sl_fpp_ok])
  ])#ACX_SL_PROG_FC_FPP_FEATURES
 
