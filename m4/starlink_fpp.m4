@@ -431,7 +431,7 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
          FCFLAGS=$ac_save_FCFLAGS
          AS_IF([test $acx_sl_prog_fc_cpp_d = no],
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok],[yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
         ])
@@ -459,7 +459,7 @@ AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
          rm -rf conftst
          AS_IF([test $acx_sl_prog_fc_cpp_i = no],
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])])
 dnl
@@ -471,7 +471,7 @@ dnl
            [_ACX_SL_LANG_PROGRAM_FPP_SUBS])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_subs=yes],[AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
         ])
@@ -484,7 +484,7 @@ dnl
            [_ACX_SL_LANG_PROGRAM_FPP_WRAP])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_wrap=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
         ])
@@ -496,7 +496,7 @@ dnl
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_CSTYLE=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
         ])
@@ -507,7 +507,7 @@ dnl
            [_ACX_SL_LANG_PROGRAM_FPP_CSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_CSTYLE=yes], [AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test failed.])],
            [_AS_ECHO_LOG([Test successful.])])
         ])
@@ -518,7 +518,7 @@ dnl
            [_ACX_SL_LANG_PROGRAM_FPP_CXXSTYLE])
          _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_cxxstyle=yes],[AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test successful.])],
            [_AS_ECHO_LOG([Test failed.])])
         ])
@@ -530,14 +530,14 @@ dnl
          _ACX_FPP_COMPILE_IFELSE(,[$2],
            [acx_sl_prog_fc_cpp_cxxstyle=yes],
            [AS_VAR_SET([acx_sl_fpp_ok], [no])])
-         AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],
+         AS_VAR_IF([acx_sl_fpp_ok], [yes],
            [_AS_ECHO_LOG([Test failed.])],
            [_AS_ECHO_LOG([Test successful.])])
         ])
 dnl
       FCFLAGS=$ac_save_FCFLAGS
       rm -rf conftest.*
-      AS_IF([test x[]AS_VAR_GET([acx_sl_fpp_ok]) = xyes],[$4],[$5])
+      AS_VAR_IF([acx_sl_fpp_ok], [yes], [$4], [$5])
      ])
    #FIXME we should probably do the AC_SUBST somewhere else.
    AC_SUBST([FPP_DEFOPT])
