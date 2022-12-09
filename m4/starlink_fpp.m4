@@ -314,7 +314,7 @@ AC_DEFUN([_ACX_SL_PROG_FPP],
       \rm a.out 2>/dev/null
       AS_IF([test -n "$FPP"], [AS_VAR_SET([acx_sl_prog_fpp], [$FPP])])])
    AS_VAR_COPY([FPP], [acx_sl_prog_fpp])
-   AS_IF([test -z "$FPP"], [$3], [$2])
+   m4_ifnblank([$2$3],[AS_IF([test -z "$FPP"], [$3], [$2])])
    AS_VAR_POPDEF([acx_sl_prog_fpp])
 ])# _ACX_SL_PROG_FPP
 
