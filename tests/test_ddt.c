@@ -986,13 +986,15 @@ int main(int argc, char **argv) {
 }
 
 static int check_xt_ddt_off(
-  MPI_Datatype mpi_ddt, const void *in_data, int in_data_offset,
+  MPI_Datatype mpi_ddt, const void *in_data_, int in_data_offset,
   size_t in_data_size, size_t ref_pack_size) {
 
   if (in_data_size > INT_MAX) {
     PUT_ERR("in_data_size > INT_MAX");
     return 0;
   }
+
+  const unsigned char *in_data = in_data_;
 
   // check type of the MPI Datatype
   int num_ints, num_adds, num_dtypes, combiner;
@@ -1005,21 +1007,21 @@ static int check_xt_ddt_off(
 
   if (xt_ddt_get_pack_size(mpi_ddt) != ref_pack_size) return 1;
 
-  void * pack_data = xmalloc(ref_pack_size);
-  void * out_data =  xmalloc(in_data_size);
-  void * ref_out_data = xmalloc(in_data_size);
+  void *pack_data = xmalloc(ref_pack_size);
+  unsigned char *out_data = xmalloc(in_data_size);
+  unsigned char *ref_out_data = xmalloc(in_data_size);
   memset(ref_out_data, -1, in_data_size);
 
   // generate reference data
   {
     int position = 0;
     MPI_Pack(
-      CAST_MPI_SEND_BUF((char unsigned*)in_data + in_data_offset),
-      1, mpi_ddt, pack_data, (int)in_data_size, &position, MPI_COMM_WORLD);
+      CAST_MPI_SEND_BUF(in_data + in_data_offset),
+      1, mpi_ddt, pack_data, (int)ref_pack_size, &position, MPI_COMM_WORLD);
     position = 0;
     MPI_Unpack(
-      pack_data, (int)in_data_size, &position,
-      (void*)((char unsigned *)ref_out_data + in_data_offset), 1, mpi_ddt, MPI_COMM_WORLD);
+      pack_data, (int)ref_pack_size, &position,
+      ref_out_data + in_data_offset, 1, mpi_ddt, MPI_COMM_WORLD);
   }
 
   int err_flag = 0;
@@ -1043,7 +1045,7 @@ PragmaACC(update device(out_data[0:in_data_size]) if (data_on_gpu))
 PragmaACC(host_data use_device(in_data, out_data) if(data_on_gpu))
 #elif defined _OPENACC
         void *in_tmp = in_data, *out_tmp = out_data;
-        void *in_data = data_on_gpu ? acc_deviceptr(in_tmp) : in_tmp,
+        unsigned char *in_data = data_on_gpu ? acc_deviceptr(in_tmp) : in_tmp,
           *out_data = buffer_on_gpu ? acc_deviceptr(out_tmp) : out_tmp;
 #endif
         {
@@ -1058,13 +1060,12 @@ PragmaACC(host_data use_device(pack_data) if (buffer_on_gpu))
           {
             // pack in_data
             xt_ddt_pack(
-              mpi_ddt, (void const*)((char unsigned*)in_data + in_data_offset),
+              mpi_ddt, in_data + in_data_offset,
               pack_data);
 
             // unpack data
             xt_ddt_unpack(
-              mpi_ddt, pack_data,
-              (void*)((char unsigned *)out_data + in_data_offset));
+              mpi_ddt, pack_data, out_data + in_data_offset);
           }
         }
 
