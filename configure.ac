@@ -617,7 +617,10 @@ AS_IF([test x"$acx_cv_XT_SHORT" != 'x(unavailable)'],
 AC_DEFINE_UNQUOTED([XT_INT],[$XT_INT],[Type to use for enumeration of distributed elements.])
 AC_DEFINE_UNQUOTED([XT_INT_MPIDT],[$XT_INT_MPIDT],[MPI Datatype for type for enumeration of distributed elements.])
 AC_DEFINE_UNQUOTED([XT_UINT_MPIDT],[$XT_UINT_MPIDT],[MPI Datatype for type for counts of distributed elements.])
-
+dnl
+dnl checks needed for tests only
+AC_CHECK_TYPES([long double _Complex])
+dnl
 AC_ARG_WITH([on-demand-check-programs],
   [AS_HELP_STRING([--with-on-demand-check-programs],
      [only build test programs when calling make check (default: build during make all)])],

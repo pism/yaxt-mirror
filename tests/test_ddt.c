@@ -46,10 +46,13 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include <assert.h>
 #include <string.h>
 #include <unistd.h>
 #include <mpi.h>
 #include <complex.h>
+#include <float.h>
 
 #ifdef _OPENACC
 #include <openacc.h>
@@ -105,20 +108,22 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR MPI_FLOAT");
   }
 
+#if (MPI_VERSION > 2 || ( MPI_VERSION == 2 && MPI_SUBVERSION >= 2)) && defined HAVE_LONG_DOUBLE__COMPLEX
   { // elemental long double complex datatype
     MPI_Datatype mpi_ddt = MPI_C_LONG_DOUBLE_COMPLEX;
-    long double _Complex in_data[] = {1337.0 + -1337.0*I};
+    static const long double _Complex in_data[] = {1337.0 + -1337.0*I};
 
     if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR MPI_C_LONG_DOUBLE_COMPLEX");
   }
+#endif
 
   { // elemental float + int datatype
     MPI_Datatype mpi_ddt = MPI_FLOAT_INT;
-    struct {
+    static const struct {
       float f;
       int i;
-    } in_data[] = {{.f = 1337.0, .i = 1337}};
+    } in_data[] = {{.f = 1337.0f, .i = 1337}};
 
     if (check_xt_ddt(
           mpi_ddt, in_data,
@@ -128,7 +133,7 @@ int main(int argc, char **argv) {
 
   { // elemental double + int datatype
     MPI_Datatype mpi_ddt = MPI_DOUBLE_INT;
-    struct {
+    static const struct {
       double d;
       int i;
     } in_data[] = {{.d = 1337.0, .i = 1337}};
@@ -141,11 +146,10 @@ int main(int argc, char **argv) {
 
   { // elemental long double + int datatype
     MPI_Datatype mpi_ddt = MPI_LONG_DOUBLE_INT;
-    struct {
+    static const struct {
       long double ld;
       int i;
-    } in_data[] = {{.ld = 1337.0, .i = 1337}};
-
+    } in_data[] = {{ .ld = 1337.0, .i = 1337 }};
     if (check_xt_ddt(
           mpi_ddt, in_data,
           sizeof(in_data), sizeof(in_data[0].ld) + sizeof(in_data[0].i)))
@@ -260,9 +264,14 @@ int main(int argc, char **argv) {
       long double ld;
       int i;
     } in_data[COUNT];
+    size_t ldbl_size = (LDBL_MANT_DIG == 64 ? 10 : sizeof(long double));
     for (size_t i = 0; i < COUNT; ++i) {
       in_data[i].ld = (long double)i;
       in_data[i].i = (int)i;
+      // on x86 and x86_64 we need to fix the missing initialization
+      // of the bytes following the 80 used bits of a long double
+      memset((unsigned char *)(in_data+i)+ldbl_size, 0,
+             sizeof (long double) - ldbl_size);
     }
 
     if (check_xt_ddt(
@@ -323,8 +332,14 @@ int main(int argc, char **argv) {
     MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_LONG_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * STRIDE};
     long double in_data[IN_DATA_COUNT];
-    memset(in_data, -1, sizeof(in_data));
-    for (size_t i = 0; i < IN_DATA_COUNT; ++i) in_data[i] = (long double)i;
+    size_t ldbl_size = (LDBL_MANT_DIG == 64 ? 10 : sizeof(long double));
+    for (size_t i = 0; i < IN_DATA_COUNT; ++i) {
+      in_data[i] = (long double)i;
+      // on x86 and x86_64 we need to fix the missing initialization
+      // of the bytes following the 80 bits actually used in a long double
+      memset((unsigned char *)(in_data+i)+ldbl_size, 0,
+             sizeof (long double) - ldbl_size);
+    }
 
     if (check_xt_ddt(
           mpi_ddt, in_data, sizeof(in_data),
