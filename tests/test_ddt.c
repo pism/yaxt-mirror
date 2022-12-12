@@ -62,6 +62,7 @@
 
 #include <yaxt.h>
 
+#include "core/ppm_xfuncs.h"
 #include "../src/xt_ddt.h"
 #include "../src/xt_gpu.h"
 
@@ -1004,9 +1005,9 @@ static int check_xt_ddt_off(
 
   if (xt_ddt_get_pack_size(mpi_ddt) != ref_pack_size) return 1;
 
-  void * pack_data = malloc(ref_pack_size);
-  void * out_data =  malloc(in_data_size);
-  void * ref_out_data = malloc(in_data_size);
+  void * pack_data = xmalloc(ref_pack_size);
+  void * out_data =  xmalloc(in_data_size);
+  void * ref_out_data = xmalloc(in_data_size);
   memset(ref_out_data, -1, in_data_size);
 
   // generate reference data
