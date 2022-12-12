@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
   { // elemental long double complex datatype
     MPI_Datatype mpi_ddt = MPI_C_LONG_DOUBLE_COMPLEX;
-    long double const in_data[][2] = {{1337.0,-1337.0}};
+    long double _Complex in_data[] = {1337.0 + -1337.0*I};
 
     if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR MPI_C_LONG_DOUBLE_COMPLEX");
