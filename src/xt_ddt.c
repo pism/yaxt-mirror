@@ -890,7 +890,7 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     Xt_default_comm);
 
   for (size_t i = 0; i < NUM_VALID_KERNELS; ++i)
-    if (valid_kernels[i].element_size == true_extent)
+    if (valid_kernels[i].element_size == (size_t)true_extent)
       return i;
 
   char err_msg[128];
