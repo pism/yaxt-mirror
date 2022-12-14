@@ -125,6 +125,8 @@ libyaxt_c_la_SOURCES =						\
 	xt_request_msgs_packed.c				\
 	xt_request_msgs_ddt_packed.c				\
 	xt_request_internal.h					\
+	xt_request_msgs_internal.h				\
+	xt_request_msgs_ebuf_internal.h				\
 	xt_stripe.c						\
 	xt_stripe_util.h					\
 	xt_xmap_internal.h					\
@@ -219,13 +221,14 @@ if XT_ADD_MPI_WORKAROUND
 libyaxt_c_la_LIBADD += mpi-workarounds/libmpi_workaround.la
 endif
 
-EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4 \
-	m4-templates/f03-redist-gen.m4 \
-	m4-templates/int-prologue-i2.m4 \
-	m4-templates/int-prologue-i4.m4 \
-	m4-templates/int-prologue-i8.m4 \
-	m4-templates/real-prologue-dp.m4 \
-	m4-templates/real-prologue-sp.m4 \
+EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4	\
+	m4-templates/f03-redist-gen.m4				\
+	m4-templates/int-prologue-i2.m4				\
+	m4-templates/int-prologue-i4.m4				\
+	m4-templates/int-prologue-i8.m4				\
+	m4-templates/real-prologue-dp.m4			\
+	m4-templates/real-prologue-sp.m4			\
+	xt_redist_p2p_ext.c					\
 	xt_mpi_stripe_parse.c
 
 f03_redist_module_template=`i=m4-templates/xt_redist_template_module.f90.m4 ; \
