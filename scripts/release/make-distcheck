@@ -45,7 +45,7 @@ if [[ x${TMPDIR+set} = x ]]; then
 fi
 BUILD_DIR=$(mktemp -d "${TMPDIR}/${package}-distcheck.XXXXXX")
 if (( ${DEBUG:-0} == 0)) && [[ -z "${KEEP_BUILDDIR-}" ]] ; then
-  trap 'rm -rf "$BUILD_DIR"' EXIT
+  trap 'chmod -R u+w "$BUILD_DIR" ; rm -rf "$BUILD_DIR"' EXIT
 fi
 SRC_DIR=$PWD
 cd "${BUILD_DIR}"
