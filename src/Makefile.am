@@ -357,7 +357,7 @@ PKG_CFG_FILES = pkgconfig/yaxt_c.pc
 if with_fortran
 PKG_CFG_FILES += pkgconfig/yaxt.pc
 endif
-distclean-local: mostlyclean distclean-generic
+distclean-local: mostlyclean-compile distclean-generic
 	-rm -f xtinclude_Makefile.inc
 	-rm -rf '$(DEPDIR)' 'core/$(DEPDIR)'
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
