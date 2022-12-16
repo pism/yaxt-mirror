@@ -72,6 +72,9 @@
 #include "tests.h"
 #include "ctest_common.h"
 
+enum { padding_byte_value = -1 };
+
+
 static int check_xt_ddt(
   MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
   size_t ref_pack_size);
@@ -335,9 +338,16 @@ int main(int argc, char **argv) {
     size_t ldbl_size = (LDBL_MANT_DIG == 64 ? 10 : sizeof(long double));
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) {
       in_data[i] = (long double)i;
-      // on x86 and x86_64 we need to fix the missing initialization
-      // of the bytes following the 80 bits actually used in a long double
-      memset((unsigned char *)(in_data+i)+ldbl_size, 0,
+      // On x86 and x86_64 we need to fix the missing initialization
+      // of the bytes following the 80 bits actually used in a long
+      // double. For alignment reasons, the sizeof (long double) is 12
+      // or 16 on these platforms, even though only 10 are actually used.
+      //
+      // Also this needs to use the same byte value as used later to
+      // initialize the buffer in the copy test because some MPI
+      // implementations copy only the 10 bytes that matter and others
+      // the whole 12 or 16, like xt_ddt does.
+      memset((unsigned char *)(in_data+i)+ldbl_size, padding_byte_value,
              sizeof (long double) - ldbl_size);
     }
 
@@ -890,7 +900,7 @@ int main(int argc, char **argv) {
       double d[9][9];
       char c2[5];
     } in_data[4][4];
-    memset(&in_data[0][0], -1, sizeof(in_data));
+    memset(&in_data[0][0], padding_byte_value, sizeof(in_data));
     for (size_t i = 0; i < 4; ++i) {
       for (size_t j = 0; j < 4; ++j) {
         for (size_t k = 0; k < 3; ++k)
@@ -1025,7 +1035,7 @@ static int check_xt_ddt_off(
   void *pack_data = xmalloc(ref_pack_size);
   unsigned char *out_data = xmalloc(in_data_size);
   unsigned char *ref_out_data = xmalloc(in_data_size);
-  memset(ref_out_data, -1, in_data_size);
+  memset(ref_out_data, padding_byte_value, in_data_size);
 
   // generate reference data
   {
@@ -1051,7 +1061,7 @@ PragmaACC(data copyin(in_data[0:in_data_size]) \
 #endif
 
         // initialise out data (also on device, if necessary)
-        memset(out_data, -1, in_data_size);
+        memset(out_data, padding_byte_value, in_data_size);
 PragmaACC(update device(out_data[0:in_data_size]) if (data_on_gpu))
 
         // use device pointers of in_data and out_data, if they
