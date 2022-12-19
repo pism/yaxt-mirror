@@ -298,16 +298,16 @@ static int load_cuda_library(void) {
 }
 
 static struct xt_gpu_vtable const cuda_vtable = {
-  .malloc      = xt_cuda_malloc,
-  .free        = xt_cuda_free,
-  .memcpy      = xt_cuda_memcpy,
-  .get_memtype = xt_cuda_get_memtype,
+  .Malloc      = xt_cuda_malloc,
+  .Free        = xt_cuda_free,
+  .Memcpy      = xt_cuda_memcpy,
+  .Get_memtype = xt_cuda_get_memtype,
 #ifdef XT_CUDA_NVTX_ENABLE
-  .instr_push =  nvtxRangePush,
-  .instr_pop =   nvtxRangePop,
+  .Instr_push =  nvtxRangePush,
+  .Instr_pop =   nvtxRangePop,
 #else
-  .instr_push =  dummy_instr_push,
-  .instr_pop =   dummy_instr_pop,
+  .Instr_push =  dummy_instr_push,
+  .Instr_pop =   dummy_instr_pop,
 #endif
 };
 

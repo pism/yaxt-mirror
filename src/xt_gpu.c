@@ -66,12 +66,12 @@ static int default_instr_push(char const *);
 static int default_instr_pop();
 
 static struct xt_gpu_vtable vtable = {
-  .malloc      = default_malloc,
-  .free        = default_free,
-  .memcpy      = default_memcpy,
-  .get_memtype = default_get_memtype,
-  .instr_push  = default_instr_push,
-  .instr_pop   = default_instr_pop,
+  .Malloc      = default_malloc,
+  .Free        = default_free,
+  .Memcpy      = default_memcpy,
+  .Get_memtype = default_get_memtype,
+  .Instr_push  = default_instr_push,
+  .Instr_pop   = default_instr_pop,
 };
 
 void xt_gpu_init() {
@@ -127,29 +127,29 @@ static int default_instr_push(char const * XT_UNUSED(name)) {return 0;}
 static int default_instr_pop() {return 0;}
 
 void * xt_gpu_malloc(size_t alloc_size, enum xt_memtype memtype) {
-  return vtable.malloc(alloc_size, memtype);
+  return vtable.Malloc(alloc_size, memtype);
 }
 
 void xt_gpu_free(void * ptr, enum xt_memtype memtype) {
-  vtable.free(ptr, memtype);
+  vtable.Free(ptr, memtype);
 }
 
 void xt_gpu_memcpy(
   void * dst, void const * src, size_t buffer_size,
   enum xt_memtype dst_memtype, enum xt_memtype src_memtype) {
-  vtable.memcpy(dst, src, buffer_size, dst_memtype, src_memtype);
+  vtable.Memcpy(dst, src, buffer_size, dst_memtype, src_memtype);
 }
 
 enum xt_memtype xt_gpu_get_memtype(const void *ptr) {
-  return vtable.get_memtype(ptr);
+  return vtable.Get_memtype(ptr);
 }
 
 int xt_gpu_instr_push(char const * name) {
-  return vtable.instr_push(name);
+  return vtable.Instr_push(name);
 }
 
 int xt_gpu_instr_pop() {
-  return vtable.instr_pop();
+  return vtable.Instr_pop();
 }
 
 /*

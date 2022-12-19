@@ -72,14 +72,14 @@ enum xt_memtype {
 };
 
 struct xt_gpu_vtable {
-  void* (*malloc)(size_t alloc_size, enum xt_memtype memtype);
-  void (*free)(void * ptr, enum xt_memtype memtype);
-  void (*memcpy)(
+  void* (*Malloc)(size_t alloc_size, enum xt_memtype memtype);
+  void (*Free)(void * ptr, enum xt_memtype memtype);
+  void (*Memcpy)(
     void * dst, void const * src, size_t buffer_size,
     enum xt_memtype dst_memtype, enum xt_memtype src_memtype);
-  enum xt_memtype (*get_memtype)(const void *ptr);
-  int (*instr_push)(char const * name);
-  int (*instr_pop)();
+  enum xt_memtype (*Get_memtype)(const void *ptr);
+  int (*Instr_push)(char const * name);
+  int (*Instr_pop)();
 };
 
 /**
