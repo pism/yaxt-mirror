@@ -138,7 +138,7 @@ CONTAINS
     CHARACTER(len=132) :: msg
     DO i = -ulim, ulim, 1_i8
       ! need to spell that out explcitely for crayftn 8.5.5 at least
-#if defined _CRAYFTN && _REALEASE_MAJOR == 8 && _RELEASE_MINOR == 5
+#if defined _CRAYFTN && _RELEASE_MAJOR == 8 && _RELEASE_MINOR == 5
       cubed = i * i * i
 #else
       cubed = i**3
