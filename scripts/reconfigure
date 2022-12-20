@@ -95,7 +95,7 @@ for patch in "${patches[@]}"; do
   patch -p1 <$patch
 done
 autoreconf -i
-find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
+LC_ALL=C find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
   -e 's/[	 ][	 ]*$//' \{\} +
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
 
