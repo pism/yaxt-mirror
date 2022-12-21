@@ -405,7 +405,7 @@ ACX_MPI_DEFECTS(,,
      [mpich_3.4_yaksa_hindexed],
      [AC_MSG_WARN([known MPICH 3.4-3.4.3 problem detected, attempting interpositioning work-around!])
       ACX_MPICH34_DT_WORKAROUND(,[mpich_3.4_yaksa_hindexed.c],
-        [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'yaks[ai]_type_create_h?indexed/b'
+        [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore yaksa symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'yaks[ai]_type_create_h?indexed/b'
          AC_LIBOBJ([xt_yaksa_indexed_wrap])dnl
          XT_WORKAROUND_MPI_CFLAGS=$CFLAGS
          XT_WORKAROUND_MPI_CPPFLAGS="-I$ac_pwd/$acx_yaksa_add_workaround ${XT_WORKAROUND_MPI_CPPFLAGS-$CPPFLAGS}"],
