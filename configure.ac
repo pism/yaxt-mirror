@@ -394,9 +394,15 @@ ACX_MPI_DEFECTS(,,
       ACX_OMPI_DT_WORKAROUND(,[openmpi_datatype.c],
         [xt_mpi_workaround_LIBS=$ac_cv_search_opal_output
          extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore opal symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'opal_datatype_(commit|add)/b'
-         AC_LIBSOURCES([xt_opal_datatype_add_wrap.c, xt_opal_datatype_optimize_wrap.c])dnl
-         xt_temp=`expr "X/$acx_opal_datatype_add_workaround" : 'X.*/\(@<:@^/@:>@*\)\.c$'`
-         _AC_LIBOBJ([${xt_temp}_wrap])
+         AS_CASE([$acx_opal_datatype_add_workaround],
+           [*/xt_opal_datatype_optimize.c],
+           [AC_LIBOBJ([xt_opal_datatype_optimize_wrap])
+            XT_WORKAROUND_MPI_SYMBIND="${XT_WORKAROUND_MPI_SYMBIND+$XT_WORKAROUND_MPI_SYMBIND }XT_SYM(opal_datatype_commit)"],
+           [*/xt_opal_datatype_add.c],
+           [AC_LIBOBJ([xt_opal_datatype_add_wrap])
+            XT_WORKAROUND_MPI_SYMBIND="${XT_WORKAROUND_MPI_SYMBIND+$XT_WORKAROUND_MPI_SYMBIND }XT_SYM(opal_datatype_commit)"],
+           [AC_MSG_WARN([Unexpected Open MPI datatype bug work-around.])
+            mpi_defect_fail_action])
          xt_temp=`expr "${acx_opal_datatype_add_workaround}" : '\(.*\)/@<:@^/@:>@*\.c$'`
          XT_WORKAROUND_MPI_CFLAGS=$OMPI_BUILD_CFLAGS
          XT_WORKAROUND_MPI_CPPFLAGS="-I$xt_temp $OMPI_MCA_C_INCLUDE ${XT_WORKAROUND_MPI_CPPFLAGS-$CPPFLAGS}"],
@@ -407,6 +413,7 @@ ACX_MPI_DEFECTS(,,
       ACX_MPICH34_DT_WORKAROUND(,[mpich_3.4_yaksa_hindexed.c],
         [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore yaksa symbols overriden by us\\\\${as_nl}/"'^\${exp_sym_prefix}'"${acx_symprfx}"'yaks[ai]_type_create_h?indexed/b'
          AC_LIBOBJ([xt_yaksa_indexed_wrap])dnl
+         XT_WORKAROUND_MPI_SYMBIND="${XT_WORKAROUND_MPI_SYMBIND+$XT_WORKAROUND_MPI_SYMBIND }XT_SYM(yaksa_type_create_indexed)"
          XT_WORKAROUND_MPI_CFLAGS=$CFLAGS
          XT_WORKAROUND_MPI_CPPFLAGS="-I$ac_pwd/$acx_yaksa_add_workaround ${XT_WORKAROUND_MPI_CPPFLAGS-$CPPFLAGS}"],
         [AC_MSG_WARN([Cannot apply MPICH YAKSA datatype bug work-around.])
@@ -447,6 +454,11 @@ AS_IF([test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno],
 AM_CONDITIONAL([XT_ADD_MPI_WORKAROUND],
   [test x${acx_opal_datatype_add_workaround+set} = xset \
      -o x${acx_yaksa_add_workaround+set} = xset])
+AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset \
+         -o x${acx_yaksa_add_workaround+set} = xset],
+  [AC_DEFINE_UNQUOTED([XT_WORKAROUND_MPI_SYMBIND],
+     [$XT_WORKAROUND_MPI_SYMBIND],
+     [symbols to add a dependency on for correct static builds])])
 dnl
 dnl test if MPI_INT16_T is available
 AC_CHECK_DECL([MPI_INT16_T],,
