@@ -438,14 +438,6 @@ Consider getting a better MPI/batch scheduler.])
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
 rm -f conftest.err conftest.error_exit.txt
 AC_SUBST([xt_mpi_workaround_LIBS])
-AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset],
-  [acx_opal_datatype_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_opal_datatype_add_workaround')"`
-  xt_mpi_workaround_sources="${xt_mpi_workaround_sources+$xt_mpi_workaround_sources }ompi_workaround.c"])
-AC_SUBST([acx_opal_datatype_add_workaround])
-AS_IF([test x${acx_yaksa_add_workaround+set} = xset],
-  [acx_yaksa_add_workaround=`perl -e "use Cwd abs_path; print abs_path('$acx_yaksa_add_workaround')"`
-   xt_mpi_workaround_sources="${xt_mpi_workaround_sources+$xt_mpi_workaround_sources }mpich_workaround.c"])
-AC_SUBST([acx_yaksa_add_workaround])
 AC_SUBST([XT_WORKAROUND_MPI_CFLAGS])
 AC_SUBST([XT_WORKAROUND_MPI_CPPFLAGS])
 AM_CONDITIONAL([USE_NB_A2A],[test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno])
@@ -453,7 +445,8 @@ AS_IF([test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno],
   [AC_DEFINE([XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL],[1],
      [defined if MPI_Neighbor_alltoall functions are actually working])])
 AM_CONDITIONAL([XT_ADD_MPI_WORKAROUND],
-  [test x${xt_mpi_workaround_sources+set} = xset])
+  [test x${acx_opal_datatype_add_workaround+set} = xset \
+     -o x${acx_yaksa_add_workaround+set} = xset])
 dnl
 dnl test if MPI_INT16_T is available
 AC_CHECK_DECL([MPI_INT16_T],,
