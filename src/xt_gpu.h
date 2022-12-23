@@ -79,7 +79,7 @@ struct xt_gpu_vtable {
     enum xt_memtype dst_memtype, enum xt_memtype src_memtype);
   enum xt_memtype (*Get_memtype)(const void *ptr);
   int (*Instr_push)(char const * name);
-  int (*Instr_pop)();
+  int (*Instr_pop)(void);
 };
 
 /**
@@ -127,7 +127,7 @@ PPM_DSO_INTERNAL void xt_gpu_memcpy(
 enum xt_memtype xt_gpu_get_memtype(const void *ptr);
 
 PPM_DSO_INTERNAL int xt_gpu_instr_push(char const * name);
-PPM_DSO_INTERNAL int xt_gpu_instr_pop();
+PPM_DSO_INTERNAL int xt_gpu_instr_pop(void);
 
 #endif // XT_GPU_H
 

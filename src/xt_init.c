@@ -123,6 +123,7 @@ xt_finalized(void)
 extern int yaksa_type_create_indexed(int, const int *,
                                      const int *, uint64_t,
                                      void *, uint64_t *);
+struct opal_datatype_t;
 extern int32_t opal_datatype_commit(struct opal_datatype_t *);
 extern int32_t opal_datatype_add(struct opal_datatype_t *,
                                  const struct opal_datatype_t *,

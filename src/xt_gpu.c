@@ -63,7 +63,7 @@ static void default_memcpy(
   enum xt_memtype dst_memtype, enum xt_memtype src_memtype);
 static enum xt_memtype default_get_memtype(const void *ptr);
 static int default_instr_push(char const *);
-static int default_instr_pop();
+static int default_instr_pop(void);
 
 static struct xt_gpu_vtable vtable = {
   .Malloc      = default_malloc,
@@ -124,7 +124,7 @@ static enum xt_memtype default_get_memtype(const void *ptr)
 }
 
 static int default_instr_push(char const * XT_UNUSED(name)) {return 0;}
-static int default_instr_pop() {return 0;}
+static int default_instr_pop(void) {return 0;}
 
 void * xt_gpu_malloc(size_t alloc_size, enum xt_memtype memtype) {
   return vtable.Malloc(alloc_size, memtype);
