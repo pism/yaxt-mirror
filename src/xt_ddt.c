@@ -857,19 +857,18 @@ static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem *elem) {
 
   if (elem == NULL) return;
 
-  size_t num_sub_elem;
+  size_t num_sub_elem = 0;
   switch (elem->type) {
-    default:
-      num_sub_elem = 0;
-      break;
-    case (SINGLE_SUB):
-      num_sub_elem = 1;
-      break;
-    case (MULTI_SUB): {
-      num_sub_elem = elem->displ_count;
-      break;
-    }
-  };
+  case DTYPE:
+    num_sub_elem = 0;
+    break;
+  case SINGLE_SUB:
+    num_sub_elem = 1;
+    break;
+  case MULTI_SUB:
+    num_sub_elem = elem->displ_count;
+    break;
+  }
   struct xt_ddt_tree_elem **sub_elems
     = (struct xt_ddt_tree_elem **)(elem->displs + elem->displ_count);
   for (size_t i = 0; i < num_sub_elem; ++i)
