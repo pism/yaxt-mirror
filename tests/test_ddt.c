@@ -1072,7 +1072,7 @@ PragmaACC(update device(out_data[0:in_data_size]) if (data_on_gpu))
 
         // use device pointers of in_data and out_data, if they
         // are on the device
-#if _OPENACC >= 201711
+#if defined _OPENACC && _OPENACC >= 201711
 PragmaACC(host_data use_device(in_data, out_data) if(data_on_gpu))
 #elif defined _OPENACC
         void *in_tmp = in_data, *out_tmp = out_data;
@@ -1082,7 +1082,7 @@ PragmaACC(host_data use_device(in_data, out_data) if(data_on_gpu))
         {
 
           // use device pointer of pack_data, if it is on the device
-#if _OPENACC >= 201711
+#if defined _OPENACC && _OPENACC >= 201711
 PragmaACC(host_data use_device(pack_data) if (buffer_on_gpu))
 #elif defined _OPENACC
   void *tmp = pack_data;
