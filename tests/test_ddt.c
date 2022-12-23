@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     static const struct {
       long double ld;
       int i;
-    } in_data[] = {{ .ld = 1337.0, .i = 1337 }};
+    } in_data[] = {{ .ld = 1337.0L, .i = 1337 }};
     if (check_xt_ddt(
           mpi_ddt, in_data,
           sizeof(in_data), sizeof(in_data[0].ld) + sizeof(in_data[0].i)))
