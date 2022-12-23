@@ -47,6 +47,13 @@ case " $* " in
         # skip rtl components only needed if we wanted to use the
         # library with another compiler
         ;;
+        (/*.[oa])
+          if nm "$arg" | grep '^[0-9a-fA-F]\{8,16\} T __NAGf90' >/dev/null ; then
+            :
+          else
+            ld_args+=("$arg")
+          fi
+          ;;
         (*)
           ld_args+=("$arg")
           ;;
