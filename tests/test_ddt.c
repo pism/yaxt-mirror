@@ -74,6 +74,7 @@
 
 enum { padding_byte_value = -1 };
 
+enum { ldbl_size = LDBL_MANT_DIG == 64 ? 10 : sizeof(long double) };
 
 static int check_xt_ddt(
   MPI_Datatype mpi_ddt, void const * in_data, size_t in_data_size,
@@ -274,7 +275,6 @@ int main(int argc, char **argv) {
       long double ld;
       int i;
     } in_data[COUNT];
-    size_t ldbl_size = (LDBL_MANT_DIG == 64 ? 10 : sizeof(long double));
     for (size_t i = 0; i < COUNT; ++i) {
       in_data[i].ld = (long double)i;
       in_data[i].i = (int)i;
@@ -342,7 +342,6 @@ int main(int argc, char **argv) {
     MPI_Type_vector(COUNT, BLOCKLENGTH, STRIDE, MPI_LONG_DOUBLE, &mpi_ddt);
     enum {IN_DATA_COUNT = COUNT * STRIDE};
     long double in_data[IN_DATA_COUNT];
-    size_t ldbl_size = (LDBL_MANT_DIG == 64 ? 10 : sizeof(long double));
     for (size_t i = 0; i < IN_DATA_COUNT; ++i) {
       in_data[i] = (long double)i;
       // On x86 and x86_64 we need to fix the missing initialization
