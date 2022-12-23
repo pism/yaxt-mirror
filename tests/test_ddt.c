@@ -112,9 +112,16 @@ int main(int argc, char **argv) {
   }
 
 #if (MPI_VERSION > 2 || ( MPI_VERSION == 2 && MPI_SUBVERSION >= 2)) && defined HAVE_LONG_DOUBLE__COMPLEX
+#ifdef HAVE_DECL___BUILTIN_COMPLEX
+#define Xt_complex_value(real,imag) __builtin_complex(real, imag)
+#elif defined __clang__
+#define Xt_complex_value(real,imag) (__extension__ (long double _Complex){(real), (imag)})
+#else
+#define Xt_complex_value(real,imag) (real + imag*I)
+#endif
   { // elemental long double complex datatype
     MPI_Datatype mpi_ddt = MPI_C_LONG_DOUBLE_COMPLEX;
-    static const long double _Complex in_data[] = {1337.0 + -1337.0*I};
+    static const long double _Complex in_data[] = { Xt_complex_value(1337.0L, -1337.0L) };
 
     if (check_xt_ddt(mpi_ddt, in_data, sizeof(in_data), sizeof(in_data[0])))
       PUT_ERR("ERROR MPI_C_LONG_DOUBLE_COMPLEX");

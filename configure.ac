@@ -266,6 +266,11 @@ AC_DEFINE_UNQUOTED([HAVE_DECL___LZCNT64],
   [`test "$acx_cv_have_decl___lzcnt64" = yes ; expr 1 - $?`],
   [PGI/Nvidia style __lzcnt64 is available])
 dnl
+AC_CACHE_CHECK([whether __builtin_complex is available],
+  [acx_cv_have_decl___builtin_complex],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <complex.h>],[   long double _Complex c =  __builtin_complex(1.0L, -2.5L)])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_complex],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_complex],[no])])])
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly
 dnl ######################################################################
