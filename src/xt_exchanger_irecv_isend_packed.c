@@ -166,7 +166,7 @@ xt_exchanger_irecv_isend_packed_s_exchange(
     buf_ofs = buf_ofs_auto;
   } else {
     requests = xmalloc((num_tx+(num_tx&1)) * sizeof (*requests) + (num_tx+1) * sizeof (*buf_ofs));
-    buf_ofs = (size_t *)(requests + (num_tx+(num_tx&1)));
+    buf_ofs = (void *)(requests + (num_tx+(num_tx&1)));
   }
 
   size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
@@ -273,7 +273,7 @@ finalize_packed_a_exchange(Xt_request request, void *buf)
   (void)nsend;
   MPI_Comm comm = xt_request_msgs_ebuf_get_comm(request);
   MPI_Datatype *datatypes = (MPI_Datatype *)
-    ((unsigned char *)(header+1) + sizeof (size_t) * ((size_t)nrecv+1));
+    (void *)((unsigned char *)(header+1) + sizeof (size_t) * ((size_t)nrecv+1));
   void *dst_data = header->dst_data;
   size_t *buf_ofs = (void *)(header+1);
   for (int i = 0; i < nrecv; ++i) {

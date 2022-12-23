@@ -206,7 +206,7 @@ enum {NUM_VALID_KERNELS = sizeof(valid_kernels)/sizeof(valid_kernels[0])};
 
 static inline void *after_displs(struct xt_ddt_tree_elem *elem)
 {
-  return (void *)(elem->displs + elem->displ_count);
+  return elem->displs + elem->displ_count;
 }
 
 static struct xt_ddt_tree_elem *
@@ -1214,7 +1214,7 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
   // attach this xt_ddt to the MPI datatype for later use
   xt_mpi_call(
     MPI_Type_set_attr(
-      mpi_ddt, xt_ddt_internal_keyval, (void*)ddt), Xt_default_comm);
+      mpi_ddt, xt_ddt_internal_keyval, ddt), Xt_default_comm);
 
   XT_GPU_INSTR_POP; return ddt;
 }
@@ -1265,7 +1265,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i)
-    dst[i] = *(uint8_t*)((unsigned char *)src + displs[i]);
+    dst[i] = *(uint8_t*)(void *)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_16(
@@ -1278,7 +1278,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i)
-    dst[i] = *(uint16_t*)((unsigned char *)src + displs[i]);
+    dst[i] = *(uint16_t*)(void *)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_32(
@@ -1291,7 +1291,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i)
-    dst[i] = *(uint32_t*)((unsigned char *)src + displs[i]);
+    dst[i] = *(uint32_t*)(void *)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_96(
@@ -1305,7 +1305,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint32_t *src_32 = (uint32_t*)((unsigned char *)src + displs[i]);
+    uint32_t *src_32 = (void *)((unsigned char *)src + displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 3; ++j) dst_[i][j] = src_32[j];
   }
@@ -1321,7 +1321,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i)
-    dst[i] = *(uint64_t*)((unsigned char *)src + displs[i]);
+    dst[i] = *(uint64_t*)(void *)((unsigned char *)src + displs[i]);
 }
 
 static void xt_ddt_pack_128(
@@ -1335,7 +1335,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint64_t *src_64 = (uint64_t*)((unsigned char *)src + displs[i]);
+    uint64_t *src_64 = (void *)((unsigned char *)src + displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 2; ++j) dst_[i][j] = src_64[j];
   }
@@ -1352,7 +1352,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint32_t *src_32 = (uint32_t*)((unsigned char *)src + displs[i]);
+    uint32_t *src_32 = (void *)((unsigned char *)src + displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 5; ++j) dst_[i][j] = src_32[j];
   }
@@ -1368,7 +1368,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint64_t *src_64 = (uint64_t*)((unsigned char *)src + displs[i]);
+    uint64_t *src_64 = (void *)((unsigned char *)src + displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 4; ++j) dst[i][j] = src_64[j];
   }
@@ -1394,7 +1394,7 @@ void xt_ddt_pack_internal(
     size_t displ_count = ddt->data[i].displ_count;
     kernel->pack(
       displ_count, ddt->data[i].displs[memtype], src,
-      (void*)((unsigned char *)dst + dst_offset), memtype);
+      (unsigned char *)dst + dst_offset, memtype);
 
     dst_offset += displ_count * kernel->element_size;
   }
@@ -1465,7 +1465,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint16_t *dst_ = (uint16_t*)((unsigned char *)dst + displs[i]);
+    uint16_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
     dst_[0] = src[i];
   }
 }
@@ -1480,7 +1480,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint32_t *dst_ = (uint32_t*)((unsigned char *)dst + displs[i]);
+    uint32_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
     dst_[0] = src[i];
   }
 }
@@ -1495,7 +1495,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint32_t *dst_32 = (uint32_t*)((unsigned char *)dst + displs[i]);
+    uint32_t *dst_32 = (void *)((unsigned char *)dst + displs[i]);
     dst_32[0] = src[i][0];
     dst_32[1] = src[i][1];
     dst_32[2] = src[i][2];
@@ -1512,7 +1512,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint64_t *dst_ = (uint64_t*)((unsigned char *)dst + displs[i]);
+    uint64_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
     dst_[0] = src[i];
   }
 }
@@ -1527,7 +1527,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint64_t *dst_64 = (uint64_t *)((unsigned char *)dst + displs[i]);
+    uint64_t *dst_64 = (void *)((unsigned char *)dst + displs[i]);
     dst_64[0] = src[i][0];
     dst_64[1] = src[i][1];
   }
@@ -1543,7 +1543,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint32_t *dst_32 = (uint32_t *)((unsigned char *)dst + displs[i]);
+    uint32_t *dst_32 = (void *)((unsigned char *)dst + displs[i]);
     dst_32[0] = src[i][0];
     dst_32[1] = src[i][1];
     dst_32[2] = src[i][2];
@@ -1562,7 +1562,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    uint64_t *dst_64 = (uint64_t *)((unsigned char *)dst + displs[i]);
+    uint64_t *dst_64 = (void *)((unsigned char *)dst + displs[i]);
     dst_64[0] = src[i][0];
     dst_64[1] = src[i][1];
     dst_64[2] = src[i][2];
@@ -1590,7 +1590,7 @@ void xt_ddt_unpack_internal(
     size_t displ_count = ddt->data[i].displ_count;
     kernel->unpack(
       displ_count, ddt->data[i].displs[memtype],
-      (void*)((unsigned char *)src + src_offset), dst, memtype);
+      (unsigned char *)src + src_offset, dst, memtype);
 
     src_offset += displ_count * kernel->element_size;
   }
@@ -1605,23 +1605,24 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
   enum xt_memtype src_memtype = xt_gpu_get_memtype(src);
   enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
 
+  void *src_;
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
     size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
-    const void *orig_src = src;
-    src = xt_gpu_malloc(pack_size, dst_memtype);
-    xt_gpu_memcpy((void*)src, orig_src, pack_size, dst_memtype, src_memtype);
-  }
+    src_ = xt_gpu_malloc(pack_size, dst_memtype);
+    xt_gpu_memcpy(src_, src, pack_size, dst_memtype, src_memtype);
+  } else
+    src_ = (void *)src;
 
   XT_GPU_INSTR_POP; // xt_ddt_unpack:initialise
 
   xt_ddt_unpack_internal(
-    xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, dst_memtype);
+    xt_ddt_from_mpi_ddt(mpi_ddt), src_, dst, dst_memtype);
 
   XT_GPU_INSTR_PUSH(xt_ddt_unpack:finalise);
 
   // if the source and destination are in different memory types
-  if (src_memtype != dst_memtype) xt_gpu_free((void*)src, dst_memtype);
+  if (src_memtype != dst_memtype) xt_gpu_free(src_, dst_memtype);
 
   XT_GPU_INSTR_POP; // xt_ddt_unpack:finalise
   XT_GPU_INSTR_POP; // xt_ddt_unpack
