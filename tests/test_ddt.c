@@ -120,6 +120,7 @@ int main(int argc, char **argv) {
 #else
 #define Xt_complex_value(real,imag) (real + imag*I)
 #endif
+  if (MPI_C_LONG_DOUBLE_COMPLEX != MPI_DATATYPE_NULL)
   { // elemental long double complex datatype
     MPI_Datatype mpi_ddt = MPI_C_LONG_DOUBLE_COMPLEX;
     static const long double _Complex in_data[] = { Xt_complex_value(1337.0L, -1337.0L) };
@@ -155,6 +156,7 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR MPI_DOUBLE_INT");
   }
 
+  if (MPI_LONG_DOUBLE_INT != MPI_DATATYPE_NULL)
   { // elemental long double + int datatype
     MPI_Datatype mpi_ddt = MPI_LONG_DOUBLE_INT;
     static const struct {
@@ -267,6 +269,7 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR CONT(4, MPI_DOUBLE_INT)");
   }
 
+  if (MPI_LONG_DOUBLE_INT != MPI_DATATYPE_NULL)
   { // MPI_Type_contiguous(4, MPI_LONG_DOUBLE_INT)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 4};
@@ -336,6 +339,7 @@ int main(int argc, char **argv) {
       PUT_ERR("ERROR VECTOR(1, 1, 16, FLOAT)");
   }
 
+  if (MPI_LONG_DOUBLE != MPI_DATATYPE_NULL)
   { // MPI_Type_vector(3, 1, 16, MPI_LONG_DOUBLE)
     MPI_Datatype mpi_ddt;
     enum {COUNT = 3, BLOCKLENGTH = 1, STRIDE = 16};
