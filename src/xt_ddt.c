@@ -374,7 +374,7 @@ static struct xt_ddt_tree_elem *xt_ddt_tree_elem_hindexed_new(
   for (int i = 0; i < count; ++i) {
     MPI_Aint block_displacement = displacements[i];
     for (int j = 0; j < blocklengths[i]; ++j, ++idx) {
-      displs[idx] = block_displacement + (MPI_Aint)(j * base_extent);
+      displs[idx] = block_displacement + (MPI_Aint)j * base_extent;
     }
   }
 
@@ -1018,11 +1018,12 @@ static int compare_kernels(const void * a, const void * b) {
   struct xt_un_pack_kernels const * k_a = (struct xt_un_pack_kernels const *)a;
   struct xt_un_pack_kernels const * k_b = (struct xt_un_pack_kernels const *)b;
 
-  int ret = (k_a->base_pack_size < k_b->base_pack_size) -
-            (k_a->base_pack_size > k_b->base_pack_size);
-  if (ret) return ret;
-  else return (k_a->element_size < k_b->element_size) -
-              (k_a->element_size > k_b->element_size);
+  int kcmp = (k_a->base_pack_size < k_b->base_pack_size)
+    - (k_a->base_pack_size > k_b->base_pack_size);
+  if (!kcmp)
+    kcmp = (k_a->element_size < k_b->element_size)
+      - (k_a->element_size > k_b->element_size);
+  return kcmp;
 }
 
 static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
