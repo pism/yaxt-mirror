@@ -79,6 +79,9 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checkdoc/mpich_zero_size_contiguous.txt \
 	config/checkpatch/mpich_zero_size_contiguous.patch \
 	config/checksrc/mpich_zero_size_contiguous.c \
+	config/checkdoc/mpich_4.0.x_ddt_transfer.txt \
+	config/checkpatch/mpich_4.0.x_ddt_transfer.patch \
+	config/checksrc/mpich_4.0.x_ddt_transfer.c \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \
