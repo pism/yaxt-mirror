@@ -716,10 +716,10 @@ static struct xt_ddt_tree_elem *
     }
     case MPI_COMBINER_HINDEXED:{
 
-      int *array_of_ints =
-        xmalloc((size_t)num_ints * sizeof(*array_of_ints));
       MPI_Aint *array_of_adds =
-        xmalloc((size_t)num_adds * sizeof(*array_of_adds));
+        xmalloc((size_t)num_adds * sizeof(*array_of_adds)
+                + (size_t)num_ints * sizeof(int));
+      int *array_of_ints = (void *)(array_of_adds + num_adds);
 
       xt_mpi_call(
         MPI_Type_get_contents(
@@ -732,7 +732,6 @@ static struct xt_ddt_tree_elem *
           array_of_adds, oldtype[0]);
 
       free(array_of_adds);
-      free(array_of_ints);
 
       break;
     }
@@ -778,12 +777,12 @@ static struct xt_ddt_tree_elem *
 #endif
     case MPI_COMBINER_STRUCT:{
 
-      int *array_of_ints =
-        xmalloc((size_t)num_ints * sizeof(*array_of_ints));
       MPI_Aint *array_of_adds =
-        xmalloc((size_t)num_adds * sizeof(*array_of_adds));
-      MPI_Datatype *array_of_dtypes =
-        xmalloc((size_t)num_dtypes * sizeof(*array_of_dtypes));
+        xmalloc((size_t)num_adds * sizeof(*array_of_adds)
+                + (size_t)num_dtypes * sizeof(MPI_Datatype)
+                + (size_t)num_ints * sizeof(int));
+      MPI_Datatype *array_of_dtypes = (void *)(array_of_adds + num_adds);
+      int *array_of_ints = (void *)(array_of_dtypes + num_dtypes);
 
       xt_mpi_call(
         MPI_Type_get_contents(
@@ -795,9 +794,7 @@ static struct xt_ddt_tree_elem *
           extent, array_of_ints[0], array_of_ints + 1,
           array_of_adds, array_of_dtypes);
 
-      free(array_of_dtypes);
       free(array_of_adds);
-      free(array_of_ints);
 
       break;
     }
