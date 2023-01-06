@@ -147,6 +147,8 @@ libyaxt_c_la_SOURCES =						\
 	core/core.h						\
 	core/ppm_xfuncs.h					\
 	core/symprefix.h					\
+	core/cksum.c						\
+	core/cksum.h						\
 	core/ppm_visibility.h					\
 	core/xmalloc.c						\
 	core/xstdio.c						\

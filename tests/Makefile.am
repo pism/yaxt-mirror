@@ -121,7 +121,7 @@ endif
 
 
 libtestutil_la_SOURCES = tests.c \
-	cksum.c cksum.h \
+	../src/core/cksum.h \
 	ctest_common.c ctest_common.h \
 	test_idxlist_utils.c \
 	test_xmap_common.c test_xmap_common.h \
@@ -140,6 +140,8 @@ libtestutil_f_la_SOURCES = ftest_common.f90 \
 
 libtestutil_f_la_LDFLAGS = -static
 libtestutil_la_LDFLAGS = -static
+libtestutil_la_LIBADD = ../src/core/cksum.lo
+
 # overrides to make regular compilations also use libtool
 # static because the libtool libraries in this directory are meant to
 # be statically linked and there is no use for the PIC object
