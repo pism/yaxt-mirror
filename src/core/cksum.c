@@ -112,7 +112,7 @@ static const uint32_t crctab[] = {
 
 
 uint32_t
-memcrc(const unsigned char *b, size_t n)
+SymPrefix(memcrc)(const unsigned char *b, size_t n)
 {
 /*  Input arguments:
  *  const char*   b == byte sequence to checksum
@@ -122,7 +122,7 @@ memcrc(const unsigned char *b, size_t n)
 
   uint32_t s = 0;
 
-  memcrc_r(&s, b, n);
+  SymPrefix(memcrc_r)(&s, b, n);
 
   /* Extend with the length of the string. */
   while (n != 0) {
@@ -136,7 +136,7 @@ memcrc(const unsigned char *b, size_t n)
 }
 
 void
-memcrc_r(uint32_t *state, const unsigned char *block, size_t block_len)
+SymPrefix(memcrc_r)(uint32_t *state, const unsigned char *block, size_t block_len)
 {
 /*  Input arguments:
  *  const char*   b == byte sequence to checksum
@@ -182,7 +182,7 @@ memcrc_r(uint32_t *state, const unsigned char *block, size_t block_len)
  *  @param elem_size size of each element in bytes
  */
 void
-memcrc_r_eswap(uint32_t *state, const unsigned char *elems, size_t num_elems,
+SymPrefix(memcrc_r_eswap)(uint32_t *state, const unsigned char *elems, size_t num_elems,
                size_t elem_size)
 {
 #ifdef WORDS_BIGENDIAN
@@ -191,7 +191,7 @@ memcrc_r_eswap(uint32_t *state, const unsigned char *elems, size_t num_elems,
   switch (elem_size)
   {
   case 1:
-    memcrc_r(state, elems, num_elems * elem_size);
+    SymPrefix(memcrc_r)(state, elems, num_elems * elem_size);
     return;
   case 2:
     SWAP_CSUM(16,2,1);
@@ -208,13 +208,13 @@ memcrc_r_eswap(uint32_t *state, const unsigned char *elems, size_t num_elems,
   }
   *state = s;
 #else
-  memcrc_r(state, elems, num_elems * elem_size);
+  SymPrefix(memcrc_r)(state, elems, num_elems * elem_size);
 #endif
 }
 
 
 uint32_t
-memcrc_finish(uint32_t *state, off_t total_size)
+SymPrefix(memcrc_finish)(uint32_t *state, off_t total_size)
 {
   register uint32_t c, s = *state;
   register uint64_t n = (uint64_t)total_size;

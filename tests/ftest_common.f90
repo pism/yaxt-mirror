@@ -158,7 +158,7 @@ MODULE ftest_common
   END INTERFACE random_fill
 
   INTERFACE crc32
-    FUNCTION memcrc(a, n) BIND(c, name="memcrc") RESULT(crcval)
+    FUNCTION memcrc(a, n) BIND(c, name="Xt_memcrc") RESULT(crcval)
       IMPORT :: c_ptr, c_size_t, c_int32_t
       TYPE(c_ptr), VALUE, INTENT(in) :: a
       INTEGER(c_size_t), VALUE, INTENT(in) :: n
