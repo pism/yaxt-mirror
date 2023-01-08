@@ -67,6 +67,8 @@
   XT_TOKEN_PASTE2(XT_MPI_STRP_PRS_PREFIX,gen_fallback_type)
 #define XT_MPI_STRP_PRS_ENTRY \
   XT_TOKEN_PASTE3(parse_,XT_MPI_STRP_PRS_PREFIX,stripe)
+#define XT_MPI_STRP_PRS_ENTRY_LIBINTERNAL \
+  XT_TOKEN_PASTE3(xt_mpi_parse_,XT_MPI_STRP_PRS_PREFIX,stripe)
 #define XT_MPI_STRP_PRS_DRIVER \
   XT_TOKEN_PASTE3(xt_mpi_generate_datatype_,XT_MPI_STRP_PRS_PREFIX,stripe)
 
@@ -282,6 +284,21 @@ XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
                                                      dt), params->comm);
   }
   free(d);
+}
+
+static MPI_Datatype
+XT_MPI_STRP_PRS_ENTRY(
+  const XT_MPI_OFFSET_EXT *v,
+  size_t vlen,
+  struct Xt_mpi_strp_prs_params *params);
+
+MPI_Datatype
+XT_MPI_STRP_PRS_ENTRY_LIBINTERNAL(
+  size_t vlen,
+  const XT_MPI_OFFSET_EXT v[vlen],
+  struct Xt_mpi_strp_prs_params *params)
+{
+  return XT_MPI_STRP_PRS_ENTRY(v, vlen, params);
 }
 
 static MPI_Datatype

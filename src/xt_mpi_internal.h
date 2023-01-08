@@ -74,6 +74,29 @@ PPM_DSO_INTERNAL size_t
 xt_disp2ext(size_t disp_len, const int *disp,
             struct Xt_offset_ext *restrict v);
 
+/**
+ * Groups parameters commonly used in parsing of a stripe description
+ * into an MPI datatype to cut down on the number of parameters.
+ */
+struct Xt_mpi_strp_prs_params {
+  MPI_Aint old_type_extent;
+  MPI_Datatype old_type;
+  MPI_Comm comm;
+};
+
+PPM_DSO_INTERNAL MPI_Datatype
+xt_mpi_parse_stripe(
+  size_t vlen,
+  const struct Xt_offset_ext v[vlen],
+  struct Xt_mpi_strp_prs_params *params);
+
+PPM_DSO_INTERNAL MPI_Datatype
+xt_mpi_parse_astripe(
+  size_t vlen,
+  const struct Xt_aoffset_ext v[vlen],
+  struct Xt_mpi_strp_prs_params *params);
+
+
 
 PPM_DSO_INTERNAL void
 xt_mpi_init(void);

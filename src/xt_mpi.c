@@ -428,12 +428,6 @@ xt_disp2ext(size_t disp_len, const int *disp,
   return i;
 }
 
-struct Xt_mpi_strp_prs_params {
-  MPI_Aint old_type_extent;
-  MPI_Datatype old_type;
-  MPI_Comm comm;
-};
-
 #define XT_MPI_STRP_PRS_PREFIX
 #define XT_MPI_STRP_PRS_UNITSTRIDE 1
 #define XT_MPI_STRP_PRS_AOFS_TYPE int
