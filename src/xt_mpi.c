@@ -497,12 +497,9 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
     j += (size_t)(bl > 0);
   }
   struct Xt_mpi_strp_prs_params params;
-  MPI_Aint old_type_lb;
-  xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                  &params.old_type_extent), comm);
-  params.old_type = old_type;
-  params.comm = comm;
+  xt_init_mpi_strp_prs_params(&params, old_type, comm);
   MPI_Datatype dt = parse_stripe(v, count_, &params);
+  xt_destroy_mpi_strp_prs_params(&params);
   free(v);
   return dt;
 }
@@ -517,12 +514,9 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
   struct Xt_offset_ext *v = xmalloc(sizeof(*v) * vlen);
   xt_disp2ext((size_t)disp_len, disp, v);
   struct Xt_mpi_strp_prs_params params;
-  MPI_Aint old_type_lb;
-  xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                  &params.old_type_extent), comm);
-  params.old_type = old_type;
-  params.comm = comm;
+  xt_init_mpi_strp_prs_params(&params, old_type, comm);
   MPI_Datatype dt = parse_stripe(v, vlen, &params);
+  xt_destroy_mpi_strp_prs_params(&params);
   free(v);
   return dt;
 }

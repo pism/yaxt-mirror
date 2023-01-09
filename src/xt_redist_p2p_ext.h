@@ -65,7 +65,7 @@ XT_GENERATE_EXT_DATATYPE(int num_transfer_pos_ext,
                       int num_ext, const XT_EXT_TYPE extents[],
                       const int psum_ext_size[],
                       void **work_buf, size_t *work_buf_size,
-                      MPI_Datatype base_datatype, MPI_Comm comm)
+                      struct Xt_mpi_strp_prs_params *params)
 {
   if (num_transfer_pos_ext > 0)
   {
@@ -135,9 +135,9 @@ XT_GENERATE_EXT_DATATYPE(int num_transfer_pos_ext,
         goto more_stripes;
       /* only advance current_pos_ext after it has been mapped completely */
     } while (++i < num_transfer_pos_ext);
+
     MPI_Datatype type
-      = XT_MPI_GENERATE_DATATYPE(dt_stripes, (int)num_dt_stripes,
-                                 base_datatype, comm);
+      = XT_MPI_PARSE_STRIPE(num_dt_stripes, dt_stripes, params);
     *work_buf = dt_stripes;
     *work_buf_size = size_dt_stripes * sizeof (*dt_stripes);
     return type;
@@ -150,9 +150,8 @@ static void
 XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
                        int num_ext,
                        const XT_EXT_TYPE extents[],
-                       MPI_Datatype base_datatype,
                        struct Xt_redist_msg *msgs,
-                       MPI_Comm comm)
+                       struct Xt_mpi_strp_prs_params *params)
 {
   if (num_msgs > 0) {
     /* partial sums of ext sizes */
@@ -181,7 +180,7 @@ XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
                                    curr_transfer_pos_ext,
                                    num_ext, extents, psum_ext_size,
                                    &buf, &buf_size,
-                                   base_datatype, comm);
+                                   params);
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
@@ -226,14 +225,17 @@ XT_REDIST_P2P_EXT_CUSTOM_NEW(Xt_xmap xmap,
   struct Xt_redist_msg *msgs = xmalloc(nmsg * sizeof (*msgs)),
     *send_msgs = msgs, *recv_msgs = msgs + nsend;
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
+  struct Xt_mpi_strp_prs_params params;
+  xt_init_mpi_strp_prs_params(&params, datatype, comm);
   XT_GENERATE_EXT_MSG_INFOS(nrecv, dst_iter, num_dst_ext, dst_extents,
-                            datatype, recv_msgs, comm);
+                            recv_msgs, &params);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
   XT_GENERATE_EXT_MSG_INFOS(nsend, src_iter, num_src_ext, src_extents,
-                            datatype, send_msgs, comm);
+                            send_msgs, &params);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
+  xt_destroy_mpi_strp_prs_params(&params);
 
   struct Xt_config_ config_ = *config;
   config_.flags |= exch_no_dt_dup;

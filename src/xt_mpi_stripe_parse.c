@@ -400,11 +400,7 @@ XT_MPI_STRP_PRS_DRIVER(const XT_MPI_OFFSET_EXT *v,
   } else
     v_comp = (XT_MPI_OFFSET_EXT *)v;
   struct Xt_mpi_strp_prs_params params;
-  MPI_Aint old_type_lb;
-  xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                  &params.old_type_extent), comm);
-  params.old_type = old_type;
-  params.comm = comm;
+  xt_init_mpi_strp_prs_params(&params, old_type, comm);
   MPI_Datatype dt = XT_MPI_STRP_PRS_ENTRY(v_comp, count_, &params);
   if ((size_t)count != count_)
     free(v_comp);

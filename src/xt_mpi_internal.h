@@ -53,6 +53,7 @@
 #include <stdbool.h>
 #include <mpi.h>
 
+#include "xt/xt_mpi.h"
 #include "core/ppm_visibility.h"
 
 /** \example test_mpi_smartdedup.c
@@ -83,6 +84,25 @@ struct Xt_mpi_strp_prs_params {
   MPI_Datatype old_type;
   MPI_Comm comm;
 };
+
+static inline void
+xt_init_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params,
+                            MPI_Datatype old_type,
+                            MPI_Comm comm)
+{
+  MPI_Aint old_type_lb;
+  xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
+                                  &params->old_type_extent), comm);
+  params->old_type = old_type;
+  params->comm = comm;
+}
+
+static inline void
+xt_destroy_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params)
+{
+  params->old_type = MPI_DATATYPE_NULL;
+  params->comm = MPI_COMM_NULL;
+}
 
 PPM_DSO_INTERNAL MPI_Datatype
 xt_mpi_parse_stripe(

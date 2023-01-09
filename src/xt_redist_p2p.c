@@ -196,9 +196,10 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
     xt_disp2ext((size_t)num_transfer_pos, transfer_pos, v_);
   }
 
-  MPI_Datatype type
-    = xt_mpi_generate_datatype_stripe(v_, (int)vlen, base_datatype, comm);
-
+  struct Xt_mpi_strp_prs_params params;
+  xt_init_mpi_strp_prs_params(&params, base_datatype, comm);
+  MPI_Datatype type = xt_mpi_parse_stripe(vlen, v_, &params);
+  xt_destroy_mpi_strp_prs_params(&params);
   return type;
 }
 
@@ -307,26 +308,26 @@ pos2disp2(int pos, int num_ext,
 
 #define XT_EXT_TYPE struct Xt_offset_ext
 #define XT_EXT_TAG ext
-#define XT_MPI_GENERATE_DATATYPE xt_mpi_generate_datatype_stripe
+#define XT_MPI_PARSE_STRIPE xt_mpi_parse_stripe
 #define XT_EXT_STRIDE_MASK isign_mask_current_pos_ext_size
 #define XT_EXT_STRIDE_MASK_PREP
 #include "xt_redist_p2p_ext.h"
 #undef XT_EXT_TYPE
 #undef XT_EXT_TAG
-#undef XT_MPI_GENERATE_DATATYPE
+#undef XT_MPI_PARSE_STRIPE
 #undef XT_EXT_STRIDE_MASK
 #undef XT_EXT_STRIDE_MASK_PREP
 
 #define XT_EXT_TYPE struct Xt_aoffset_ext
 #define XT_EXT_TAG aext
-#define XT_MPI_GENERATE_DATATYPE xt_mpi_generate_datatype_astripe
+#define XT_MPI_PARSE_STRIPE xt_mpi_parse_astripe
 #define XT_EXT_STRIDE_MASK asign_mask_current_pos_ext_size
 #define XT_EXT_STRIDE_MASK_PREP MPI_Aint asign_mask_current_pos_ext_size \
   = asign_mask(current_pos_ext.size)
 #include "xt_redist_p2p_ext.h"
 #undef XT_EXT_TYPE
 #undef XT_EXT_TAG
-#undef XT_MPI_GENERATE_DATATYPE
+#undef XT_MPI_PARSE_STRIPE
 #undef XT_EXT_STRIDE_MASK
 #undef XT_EXT_STRIDE_MASK_PREP
 
