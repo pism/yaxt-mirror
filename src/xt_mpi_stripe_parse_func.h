@@ -1,5 +1,5 @@
 /**
- * @file xt_mpi_stripe_parse.c
+ * @file xt_mpi_stripe_parse_func.h
  *
  * @copyright Copyright  (C)  2022 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>

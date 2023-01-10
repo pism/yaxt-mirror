@@ -110,6 +110,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_idxvec_internal.h					\
 	xt_mpi_internal.h					\
 	xt_mpi.c						\
+	xt_mpi_stripe_parse_func.h				\
 	xt_redist_internal.h					\
 	xt_redist.c						\
 	xt_redist_msg.c						\
@@ -230,8 +231,7 @@ EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4	\
 	m4-templates/int-prologue-i4.m4				\
 	m4-templates/int-prologue-i8.m4				\
 	m4-templates/real-prologue-dp.m4			\
-	m4-templates/real-prologue-sp.m4			\
-	xt_mpi_stripe_parse.c
+	m4-templates/real-prologue-sp.m4
 
 f03_redist_module_template=`i=m4-templates/xt_redist_template_module.f90.m4 ; \
 	if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; `

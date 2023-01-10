@@ -435,7 +435,7 @@ xt_disp2ext(size_t disp_len, const int *disp,
 #define XT_MPI_STRP_PRS_BLOCK_VEC_CREATE MPI_Type_vector
 #define XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE MPI_Type_create_indexed_block
 #define XT_MPI_STRP_PRS_INDEXED_CREATE MPI_Type_indexed
-#include "xt_mpi_stripe_parse.c"
+#include "xt_mpi_stripe_parse_func.h"
 #undef XT_MPI_STRP_PRS_PREFIX
 #undef XT_MPI_STRP_PRS_UNITSTRIDE
 #undef XT_MPI_STRP_PRS_AOFS_TYPE
@@ -475,7 +475,7 @@ XtMPI_Type_create_hindexed_block(int count, int blocklength,
 #define XT_MPI_STRP_PRS_BLOCK_VEC_CREATE MPI_Type_create_hvector
 #define XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE MPI_Type_create_hindexed_block
 #define XT_MPI_STRP_PRS_INDEXED_CREATE MPI_Type_create_hindexed
-#include "xt_mpi_stripe_parse.c"
+#include "xt_mpi_stripe_parse_func.h"
 
 
 static MPI_Datatype
