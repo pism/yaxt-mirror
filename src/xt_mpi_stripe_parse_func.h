@@ -104,9 +104,8 @@ XT_MPI_STRP_PRS_MATCH_BLOCK_VEC
   XT_MPI_STRP_PRS_AOFS_TYPE disp_ = n == vlen ? 0 : v[pstart].start;
   *disp = XT_MPI_STRP_PRS_DISP_ADJUST(disp_);
 
-  xt_mpi_call(
-    XT_MPI_STRP_PRS_BLOCK_VEC_CREATE((int)n, bl, vstride, params->old_type, dt),
-    params->comm);
+  *dt = XT_MPI_STRP_PRS_BLOCK_VEC_CREATE(
+    params->ddt_list, (int)n, bl, vstride, params->old_type, params->comm);
 
   XT_MPI_STRP_PRS_AOFS_TYPE start = v[pstart].start - disp_;
 
@@ -117,7 +116,7 @@ XT_MPI_STRP_PRS_MATCH_BLOCK_VEC
                   1, &(int){1},
                   &(MPI_Aint){XT_MPI_STRP_PRS_DISP_ADJUST(start)}, dt1, dt),
                 params->comm);
-    xt_mpi_call(MPI_Type_free(&dt1), params->comm);
+    Xt_mpi_ddt_cache_entry_release(params->ddt_list, &dt1, params->comm);
   }
   return n != 0;
 }
@@ -159,11 +158,11 @@ XT_MPI_STRP_PRS_MATCH_INDEXED(
   }
 
   if (hom_bl) {
-    xt_mpi_call(XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE(
-                  (int)n, bl0, d, params->old_type, dt), params->comm);
+    *dt = XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE(
+      params->ddt_list, (int)n, bl0, d, params->old_type, params->comm);
   } else {
-    xt_mpi_call(XT_MPI_STRP_PRS_INDEXED_CREATE(
-                  (int)n, bl, d, params->old_type, dt), params->comm);
+    *dt = XT_MPI_STRP_PRS_INDEXED_CREATE(
+      params->ddt_list, (int)n, bl, d, params->old_type, params->comm);
   }
 
   free(d);
@@ -190,8 +189,8 @@ XT_MPI_STRP_PRS_MATCH_SIMPLE_VEC(
   XT_MPI_STRP_PRS_AOFS_TYPE disp_ = vlen > 1 ? v[p].start : 0;
   *disp = XT_MPI_STRP_PRS_DISP_ADJUST(disp_);
 
-  xt_mpi_call(XT_MPI_STRP_PRS_BLOCK_VEC_CREATE(
-                nstrides, 1, stride, params->old_type, dt), params->comm);
+  *dt = XT_MPI_STRP_PRS_BLOCK_VEC_CREATE(
+    params->ddt_list, nstrides, 1, stride, params->old_type, params->comm);
 
   XT_MPI_STRP_PRS_AOFS_TYPE start = v[p].start - disp_;
   if (start) {
@@ -202,7 +201,7 @@ XT_MPI_STRP_PRS_MATCH_SIMPLE_VEC(
                   1, &(int){1},
                   &(MPI_Aint){XT_MPI_STRP_PRS_DISP_ADJUST(start)}, dt1, dt),
                 params->comm);
-    xt_mpi_call(MPI_Type_free(&dt1), params->comm);
+    Xt_mpi_ddt_cache_entry_release(params->ddt_list, &dt1, params->comm);
   }
   return nstrides != 0;
 }
@@ -223,11 +222,11 @@ XT_MPI_STRP_PRS_MATCH_CONTIGUOUS(
   XT_MPI_STRP_PRS_AOFS_TYPE d = v[p].start - disp_;
 
   if (!d)
-    xt_mpi_call(MPI_Type_contiguous(v[p].size, params->old_type, dt),
-                params->comm);
+    *dt = Xt_mpi_ddt_cache_acquire_contiguous(
+      params->ddt_list, v[p].size, params->old_type, params->comm);
   else
-    xt_mpi_call(XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE(
-                  1, v[p].size, &d, params->old_type, dt), params->comm);
+    *dt = XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE(
+      params->ddt_list, 1, v[p].size, &d, params->old_type, params->comm);
 
   *pstart_ = p+1;
   return true;
@@ -280,8 +279,8 @@ XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
   if (n==1 && d[0] == 0) {
     *dt = params->old_type;
   } else {
-    xt_mpi_call(XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE(n, 1, d, params->old_type,
-                                                     dt), params->comm);
+    *dt = XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE(
+      params->ddt_list, n, 1, d, params->old_type, params->comm);
   }
   free(d);
 }
@@ -368,13 +367,13 @@ XT_MPI_STRP_PRS_ENTRY(
       ? (void *)(wdt + wlen) : xmalloc(wlen * sizeof (*wblocklength));
     for(size_t i=0; i<wlen; i++)
       wblocklength[i] = 1;
-    xt_mpi_call(MPI_Type_create_struct((int)wlen, wblocklength, wdisp,
-                                       wdt, &result_dt), params->comm);
+    result_dt = Xt_mpi_ddt_cache_acquire_struct(
+      params->ddt_list, (int)wlen, wblocklength, wdisp, wdt, params->comm);
     if (wlen * sizeof (int) > (vlen - wlen) * sizeof (*wdt))
       free(wblocklength);
     for (size_t i = 0; i < wlen; i++)
       if (wdt[i] != old_type)
-        xt_mpi_call(MPI_Type_free(wdt+i), params->comm);
+        Xt_mpi_ddt_cache_entry_release(params->ddt_list, wdt+i, params->comm);
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), params->comm);
   free(wdisp);

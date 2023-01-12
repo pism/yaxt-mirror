@@ -80,6 +80,7 @@ xt_disp2ext(size_t disp_len, const int *disp,
  * into an MPI datatype to cut down on the number of parameters.
  */
 struct Xt_mpi_strp_prs_params {
+  struct Xt_mpiddt_list *ddt_list;
   MPI_Aint old_type_extent;
   MPI_Datatype old_type;
   MPI_Comm comm;
@@ -95,6 +96,7 @@ xt_init_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params,
                                   &params->old_type_extent), comm);
   params->old_type = old_type;
   params->comm = comm;
+  params->ddt_list = NULL;
 }
 
 static inline void
