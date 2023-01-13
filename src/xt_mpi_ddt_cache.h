@@ -184,9 +184,28 @@ Xt_mpi_ddt_cache_acquire_struct(
   int count, int blocklength[count], MPI_Aint disp[count],
   MPI_Datatype oldtype[count], MPI_Comm comm);
 
+
+/**
+ * reduce reference counter for MPI datatype in cache
+ * @param[in,out] ddt_list cache of already created derived datatypes
+ * @param[in] dt derived datatype to mark as used one instance less
+ * @param[in] comm communicator to use for coordination and error reporting
+ */
 PPM_DSO_INTERNAL void
 Xt_mpi_ddt_cache_entry_release(struct Xt_mpiddt_list *ddt_list,
                                MPI_Datatype *dt, MPI_Comm comm);
+
+/**
+ * Remove ddt cache data structure
+ *
+ * This function will also call MPI_Type_free for all datatypes in
+ * cache that have 0 reference count
+ * @param[in,out] ddt_list cache of already created derived datatypes
+ * @param[in] comm communicator to use for coordination and error reporting
+  */
+PPM_DSO_INTERNAL void
+Xt_mpi_ddt_cache_free(struct Xt_mpiddt_list *ddt_list,
+                      MPI_Comm comm);
 
 
 #endif

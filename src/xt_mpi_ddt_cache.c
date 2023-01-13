@@ -683,6 +683,25 @@ Xt_mpi_ddt_cache_entry_release(struct Xt_mpiddt_list *ddt_list,
   xt_mpi_call(MPI_Type_free(dt), comm);
 }
 
+void
+Xt_mpi_ddt_cache_free(struct Xt_mpiddt_list *ddt_list,
+                      MPI_Comm comm)
+{
+  if (ddt_list) ; else return;
+  struct Xt_mpiddt_list_entry *restrict entries = ddt_list->entries;
+  size_t num_entries = ddt_list->num_entries;
+  for (size_t i = 0; i < num_entries; ++i)
+    if (!entries[i].use_count)
+      xt_mpi_call(MPI_Type_free(&entries[i].cached_dt), comm);
+  free(entries);
+  free(ddt_list->struct_dt);
+  ddt_list->struct_dt = NULL;
+  ddt_list->entries = NULL;
+  ddt_list->num_entries = 0;
+  ddt_list->size_entries = 0;
+}
+
+
 /*
  * Local Variables:
  * c-basic-offset: 2
