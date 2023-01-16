@@ -174,9 +174,9 @@ xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
 
 static MPI_Datatype
 generate_datatype(const int *transfer_pos, int num_transfer_pos,
-                  const int *offsets, MPI_Datatype base_datatype,
+                  const int *offsets,
                   size_t *vsize, struct Xt_offset_ext **v,
-                  MPI_Comm comm)
+                  struct Xt_mpi_strp_prs_params *params)
 {
   struct Xt_offset_ext *v_ = *v;
   size_t vlen;
@@ -196,10 +196,7 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
     xt_disp2ext((size_t)num_transfer_pos, transfer_pos, v_);
   }
 
-  struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, base_datatype, comm);
-  MPI_Datatype type = xt_mpi_parse_stripe(vlen, v_, &params);
-  xt_destroy_mpi_strp_prs_params(&params);
+  MPI_Datatype type = xt_mpi_parse_stripe(vlen, v_, params);
   return type;
 }
 
@@ -212,7 +209,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
     size_t vsize = 0;
     struct Xt_offset_ext *v = NULL;
     struct Xt_redist_msg *restrict curr_msg = msgs;
-
+    struct Xt_mpi_strp_prs_params params;
+    xt_init_mpi_strp_prs_params(&params, base_datatype, comm);
     do {
 
       const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
@@ -220,12 +218,13 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
 
       curr_msg->datatype
         = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                            offsets, base_datatype, &vsize, &v, comm);
+                            offsets, &vsize, &v, &params);
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
     } while (xt_xmap_iterator_next(iter));
     free(v);
+    xt_destroy_mpi_strp_prs_params(&params);
   }
 }
 
