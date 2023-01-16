@@ -79,10 +79,18 @@ void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
 
   unsigned char *restrict msgs_store = (unsigned char *)msgs;
   for (size_t i = 0; i < n; ++i) {
-    MPI_Datatype *dt
-      = &(((struct Xt_redist_msg *)(void *)(msgs_store + i * ofs_stride))->datatype);
-    if (*dt != MPI_DATATYPE_NULL)
-      xt_mpi_call(MPI_Type_free(dt), comm);
+    MPI_Datatype *pdt
+      = &(((struct Xt_redist_msg *)(void *)(msgs_store + i * ofs_stride))->datatype),
+      dt = *pdt;
+    if (dt != MPI_DATATYPE_NULL) {
+      xt_mpi_call(MPI_Type_free(pdt), comm);
+      for (size_t j = i + 1; j < n; ++j) {
+        MPI_Datatype *pdt_j
+          = &(((struct Xt_redist_msg *)(void *)(msgs_store + j * ofs_stride))->datatype);
+        if (*pdt_j == dt)
+          *pdt_j = MPI_DATATYPE_NULL;
+      }
+    }
   }
 }
 
