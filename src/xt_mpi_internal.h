@@ -54,6 +54,7 @@
 #include <mpi.h>
 
 #include "xt/xt_mpi.h"
+#include "xt_mpi_ddt_cache.h"
 #include "core/ppm_visibility.h"
 
 /** \example test_mpi_smartdedup.c
@@ -80,7 +81,7 @@ xt_disp2ext(size_t disp_len, const int *disp,
  * into an MPI datatype to cut down on the number of parameters.
  */
 struct Xt_mpi_strp_prs_params {
-  struct Xt_mpiddt_list *ddt_list;
+  struct Xt_mpiddt_list ddt_list;
   MPI_Aint old_type_extent;
   MPI_Datatype old_type;
   MPI_Comm comm;
@@ -96,12 +97,13 @@ xt_init_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params,
                                   &params->old_type_extent), comm);
   params->old_type = old_type;
   params->comm = comm;
-  params->ddt_list = NULL;
+  params->ddt_list = (struct Xt_mpiddt_list){NULL,NULL,0,0};
 }
 
 static inline void
 xt_destroy_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params)
 {
+  Xt_mpi_ddt_cache_free(&params->ddt_list, params->comm);
   params->old_type = MPI_DATATYPE_NULL;
   params->comm = MPI_COMM_NULL;
 }
