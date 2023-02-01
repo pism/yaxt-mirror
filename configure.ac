@@ -278,6 +278,7 @@ AC_CACHE_CHECK([whether __builtin_complex is available],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([@%:@include <complex.h>],[   long double _Complex c =  __builtin_complex(1.0L, -2.5L)])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_complex],[yes])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_complex],[no])])])
+ACX_CHECK_ASM_BSR
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly
 dnl ######################################################################
