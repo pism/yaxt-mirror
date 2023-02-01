@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         [acx_cv_mpi_send_takes_const_void=no])
       AC_LANG_POP([C])])
     AS_IF([test x"$acx_cv_mpi_send_takes_const_void" = xyes],[$1],
-     [m4_ifval([$2],[$2],
+     [m4_default([$2],
         [AC_MSG_FAILURE([MPI_Send does not accept const void * buf arguments])])])
   ])
 dnl
