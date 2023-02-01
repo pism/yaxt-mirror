@@ -342,6 +342,20 @@ AC_DEFINE_UNQUOTED([CAST_MPI_SEND_BUF(buf)],[$CAST_MPI_SEND_BUF],
   [Macro to cast arguments to MPI_Send-like functions (if necessary)])
 AC_DEFINE_UNQUOTED([XT_MPI_SEND_BUF_CONST],[$XT_MPI_SEND_BUF_CONST],
     [Defined to const, iff buf argument to MPI_Send-like functions can be const])
+dnl
+AC_ARG_ENABLE([mpi-profiling],
+  [AS_HELP_STRING([--enable-mpi-profiling],
+     [add some profiling functions for MPI calls @<:@default: off@:>@])],
+  [],[enable_mpi_profiling=no])
+AS_IF([test x"$enable_mpi_profiling" != xno],
+  [ACX_MPI_TYPE_CREATE_CONST_ARRAY_ARGS([XT_MPI2_CONST=const],
+    [XT_MPI2_CONST= ])])
+AM_CONDITIONAL([ENABLE_MPI_PROFILING],
+  [test x"$enable_mpi_profiling" != xno])
+AC_DEFINE_UNQUOTED([XT_MPI2_CONST],[$XT_MPI2_CONST],
+  [Defined to const, iff MPI 2.x type creation functions take const dnl
+array arguments])
+dnl
 TJ_FIND_INTEGRAL_TYPE([MPI_Aint],[xt_mpi_aint],[@%:@include <mpi.h>])
 xt_mpi_aint_kind=c_[]AS_TR_SH([$xt_mpi_aint])
 XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS

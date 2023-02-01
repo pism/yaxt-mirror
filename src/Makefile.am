@@ -228,6 +228,12 @@ if XT_ADD_MPI_WORKAROUND
 libyaxt_c_la_LIBADD += mpi-workarounds/libmpi_workaround.la
 endif
 
+libyaxt_profile_la_SOURCES = mpi-profile/xt-ddt-profile.c
+
+if ENABLE_MPI_PROFILING
+lib_LTLIBRARIES += libyaxt-profile.la
+endif
+
 EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4	\
 	m4-templates/f03-redist-gen.m4				\
 	m4-templates/int-prologue-i2.m4				\
@@ -358,7 +364,8 @@ distclean-local: mostlyclean-compile distclean-generic
 	-rm -f xtinclude_Makefile.inc
 	-rm -rf '$(DEPDIR)' 'core/$(DEPDIR)'
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
-	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc; rmdir core pkgconfig mpi-workarounds; fi
+	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc; \
+	  rmdir core pkgconfig mpi-workarounds mpi-profile; fi
 
 install-exec-local:
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)/pkgconfig"
