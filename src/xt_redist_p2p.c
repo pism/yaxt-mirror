@@ -202,15 +202,13 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
 
 static void
 generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
-                   MPI_Datatype base_datatype, struct Xt_redist_msg *msgs,
-                   MPI_Comm comm) {
+                   struct Xt_redist_msg *msgs,
+                   struct Xt_mpi_strp_prs_params *params) {
 
   if (num_msgs > 0) {
     size_t vsize = 0;
     struct Xt_offset_ext *v = NULL;
     struct Xt_redist_msg *restrict curr_msg = msgs;
-    struct Xt_mpi_strp_prs_params params;
-    xt_init_mpi_strp_prs_params(&params, base_datatype, comm);
     do {
 
       const int *curr_transfer_pos = xt_xmap_iterator_get_transfer_pos(iter);
@@ -218,13 +216,12 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
 
       curr_msg->datatype
         = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                            offsets, &vsize, &v, &params);
+                            offsets, &vsize, &v, params);
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
     } while (xt_xmap_iterator_next(iter));
     free(v);
-    xt_destroy_mpi_strp_prs_params(&params);
   }
 }
 
@@ -252,15 +249,16 @@ xt_redist_p2p_off_custom_new(Xt_xmap xmap, const int *src_offsets,
   MPI_Comm comm
     = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
+  struct Xt_mpi_strp_prs_params params;
+  xt_init_mpi_strp_prs_params(&params, datatype, comm);
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
-  generate_msg_infos(nrecv, dst_iter, dst_offsets, datatype, recv_msgs,
-                     comm);
+  generate_msg_infos(nrecv, dst_iter, dst_offsets, recv_msgs, &params);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
-  generate_msg_infos(nsend, src_iter, src_offsets, datatype, send_msgs,
-                     comm);
+  generate_msg_infos(nsend, src_iter, src_offsets, send_msgs, &params);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
+  xt_destroy_mpi_strp_prs_params(&params);
 
   struct Xt_config_ config_ = *config;
   config_.flags |= exch_no_dt_dup;
