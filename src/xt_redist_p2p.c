@@ -347,7 +347,7 @@ aux_gen_simple_block_offsets(int block_offsets[], const int block_sizes[],
 static MPI_Datatype
 generate_block_datatype(const int *transfer_pos, int num_transfer_pos,
                         const int *block_offsets, const int *block_sizes,
-                        MPI_Datatype base_datatype, MPI_Comm comm) {
+                        struct Xt_mpi_strp_prs_params *params) {
 
   assert(block_sizes && block_offsets);
 
@@ -361,8 +361,7 @@ generate_block_datatype(const int *transfer_pos, int num_transfer_pos,
   }
 
   MPI_Datatype type
-    = xt_mpi_generate_datatype_block(bdispl_vec, blen_vec,
-                                     num_transfer_pos, base_datatype, comm);
+    = xt_mpi_ddt_block_gen(num_transfer_pos, bdispl_vec, blen_vec, params);
 
   free(bdispl_vec);
 
@@ -374,8 +373,8 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter,
                          const int *block_offsets,
                          const int *block_sizes, int **aux_offsets,
                          size_t num_blocks,
-                         MPI_Datatype base_datatype,
-                         struct Xt_redist_msg *msgs, MPI_Comm comm) {
+                         struct Xt_mpi_strp_prs_params *params,
+                         struct Xt_redist_msg *msgs) {
 
   if (num_msgs > 0) {
 
@@ -394,8 +393,7 @@ generate_block_msg_infos(int num_msgs, Xt_xmap_iter iter,
       int curr_num_transfer_pos = xt_xmap_iterator_get_num_transfer_pos(iter);
       msgs[ofs].datatype
         = generate_block_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                                  block_offsets_, block_sizes, base_datatype,
-                                  comm);
+                                  block_offsets_, block_sizes, params);
       msgs[ofs].rank = xt_xmap_iterator_get_rank(iter);
 
       ofs++;
@@ -456,9 +454,11 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
   if (dst_block_num < max_dst_pos)
     die("xt_redist_p2p_blocks_off_new: dst_block_num too small");
 #endif
+  struct Xt_mpi_strp_prs_params params;
+  xt_init_mpi_strp_prs_params(&params, datatype, comm);
   generate_block_msg_infos(nrecv, dst_iter, dst_block_offsets, dst_block_sizes,
                            &aux_offsets, (size_t)dst_block_num,
-                           datatype, msgs, comm);
+                           &params, msgs);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   // src part:
@@ -469,7 +469,8 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
 #endif
   generate_block_msg_infos(nsend, src_iter, src_block_offsets, src_block_sizes,
                            &aux_offsets, (size_t)src_block_num,
-                           datatype, msgs+nrecv, comm);
+                           &params, msgs+nrecv);
+  xt_destroy_mpi_strp_prs_params(&params);
   free(aux_offsets);
 
   if (src_iter) xt_xmap_iterator_delete(src_iter);
