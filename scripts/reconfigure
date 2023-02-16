@@ -9,7 +9,7 @@
 # Author: Thomas Jahns <jahns@dkrz.de>
 # Keywords: autotools autogen autoconf libtool automake
 # Maintainer: Thomas Jahns <jahns@dkrz.de>
-# URL: https://www.dkrz.de/redmine/projects/scales-ppm
+# URL: https://swprojects.dkrz.de/redmine/projects/scales-ppm
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are  permitted provided that the following conditions are
@@ -98,7 +98,7 @@ for patch in "${patches[@]}"; do
   patch -p1 <$patch
 done
 autoreconf -i
-LC_ALL=C find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
+find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
   -e 's/[	 ][	 ]*$//' \{\} +
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
 
@@ -125,7 +125,7 @@ fi
 #
 # Local Variables:
 # mode: sh
-# license-project-url: "https://www.dkrz.de/redmine/projects/scales-ppm"
+# license-project-url: "https://swprojects.dkrz.de/redmine/projects/scales-ppm"
 # license-default: "bsd"
 # End:
 #
