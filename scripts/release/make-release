@@ -50,6 +50,10 @@ errMsg()
          "${BASH_SOURCE[-2]}" "${BASH_LINENO[-2]}" >&2
 }
 trap errMsg ERR
+
+# this should guarantee reproducible results from automake runs
+export PERL_HASH_SEED=0
+
 # check that generated files and scripts are in place
 if [[ -r configure && -r scripts/release/make-release-commit ]]; then
   # 1. import common script settings

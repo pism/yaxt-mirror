@@ -40,6 +40,9 @@
 #
 set -e
 
+# this should guarantee reproducible results from automake runs
+export PERL_HASH_SEED=0
+
 case $(uname -s) in
   Darwin)
     libtoolize=glibtoolize
