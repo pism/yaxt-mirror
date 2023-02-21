@@ -53,6 +53,7 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	util/mpi_launch_poe \
 	util/mpi_launch_bgrunjob \
 	util/icomp15/ld \
+	util/nagdynlib/ld \
 	config/checksrc/intelmpi_datatype.c \
 	config/checkdoc/intelmpi_datatype.txt \
 	config/checksrc/openmpi_struct_dt.c \
