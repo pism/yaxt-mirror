@@ -142,7 +142,7 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     ofs += recv_size;
   }
 
-  xt_gpu_free(recv_buffer, src_data_memtype);
+  xt_gpu_free(recv_buffer, dst_data_memtype);
   xt_gpu_free(send_buffer, src_data_memtype);
   if (num_tx > AUTO_ALLOC_SIZE) {
     free(ddts);
