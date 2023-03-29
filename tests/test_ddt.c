@@ -1042,7 +1042,7 @@ static int check_xt_ddt_off(
 
   if (xt_ddt_get_pack_size(mpi_ddt) != ref_pack_size) return 1;
 
-  void *pack_data = xmalloc(ref_pack_size);
+  unsigned char *pack_data = xmalloc(ref_pack_size);
   unsigned char *out_data = xmalloc(in_data_size);
   unsigned char *ref_out_data = xmalloc(in_data_size);
   memset(ref_out_data, padding_byte_value, in_data_size);
@@ -1061,9 +1061,8 @@ static int check_xt_ddt_off(
 
   int err_flag = 0;
 
-PragmaACC(data copyin(in_data[0:in_data_size]) \
-               create(pack_data[0:ref_pack_size], \
-                      out_data[0:in_data_size]))
+PragmaACC(data copyin(in_data[:in_data_size]) \
+          create(pack_data[:ref_pack_size], out_data[:in_data_size]))
   {
 #ifdef _OPENACC
     for (int data_on_gpu = 0; data_on_gpu < 2; ++data_on_gpu) {
@@ -1072,25 +1071,24 @@ PragmaACC(data copyin(in_data[0:in_data_size]) \
 
         // initialise out data (also on device, if necessary)
         memset(out_data, padding_byte_value, in_data_size);
-PragmaACC(update device(out_data[0:in_data_size]) if (data_on_gpu))
+PragmaACC(update device(out_data[:in_data_size]) if (data_on_gpu))
 
         // use device pointers of in_data and out_data, if they
         // are on the device
 #if defined _OPENACC && _OPENACC >= 201711
 PragmaACC(host_data use_device(in_data, out_data) if(data_on_gpu))
-#elif defined _OPENACC
-        void *in_tmp = in_data, *out_tmp = out_data;
-        unsigned char *in_data = data_on_gpu ? acc_deviceptr(in_tmp) : in_tmp,
-          *out_data = buffer_on_gpu ? acc_deviceptr(out_tmp) : out_tmp;
 #endif
         {
-
+#if defined _OPENACC && _OPENACC < 201711
+          void *in_tmp = in_data, *out_tmp = out_data;
+          unsigned char *in_data = data_on_gpu ? acc_deviceptr(in_tmp) : in_tmp,
+            *out_data = data_on_gpu ? acc_deviceptr(out_tmp) : out_tmp;
+          void *tmp = pack_data;
+          void *pack_data = buffer_on_gpu ? acc_deviceptr(tmp) : tmp;
+#endif
           // use device pointer of pack_data, if it is on the device
 #if defined _OPENACC && _OPENACC >= 201711
 PragmaACC(host_data use_device(pack_data) if (buffer_on_gpu))
-#elif defined _OPENACC
-  void *tmp = pack_data;
-  void *pack_data = buffer_on_gpu ? acc_deviceptr(tmp) : tmp;
 #endif
           {
             // pack in_data
@@ -1105,7 +1103,7 @@ PragmaACC(host_data use_device(pack_data) if (buffer_on_gpu))
         }
 
         // copy data from device to host, if necessary
-PragmaACC(update self(out_data[0:in_data_size]) if (data_on_gpu))
+PragmaACC(update self(out_data[:in_data_size]) if (data_on_gpu))
 
         // compare out buffers
         err_flag |= memcmp(out_data, ref_out_data, in_data_size);
