@@ -96,35 +96,32 @@ s/^ *//;s/ *$//'`])
    dnl 2.b. establish Open MPI build CFLAGS if possible
    AC_ARG_VAR([OMPI_BUILD_CFLAGS],[C compiler flags matching used Open MPI])
    AS_IF([test x"${OMPI_BUILD_CFLAGS+set}" != xset],
-     [AC_CACHE_CHECK([Open MPI C build flags],[acx_cv_ompi_build_cflags],
-        [# Extract the first word of "$CC", so it can be a program name with args.
-         set dummy $CC; ac_word=$[2]
-         AS_CASE([$ac_word],
-           [/*mpicc],
-           [AS_IF([expr "`$ac_word --showme:version`" : '.* Open MPI '"$acx_ompi_version" >/dev/null],
-              [acx_ompi_path_candidates=`echo "$ac_word" | sed -e 's@/@<:@^/@:>@*mpicc$][@@'`])],
-           [*mpicc],
-           [acx_ompi_path_candidates=`which "$ac_word" 2>/dev/null | sed -e 's@/@<:@^/@:>@*mpicc$][@@'`],
-           [acx_ompi_path_candidates=`echo " $CPPFLAGS $CFLAGS " \
+     [# Extract the first word of "$CC", so it can be a program name with args.
+      set dummy $CC; ac_word=$[2]
+      AS_CASE([$ac_word],
+        [/*mpicc],
+        [AS_IF([expr "`$ac_word --showme:version`" : '.* Open MPI '"$acx_ompi_version" >/dev/null],
+        [acx_ompi_path_candidates=`echo "$ac_word" | sed -e 's@/@<:@^/@:>@*mpicc$][@@'`])],
+        [*mpicc],
+        [acx_ompi_path_candidates=`which "$ac_word" 2>/dev/null | sed -e 's@/@<:@^/@:>@*mpicc$][@@'`],
+        [acx_ompi_path_candidates=`echo " $CPPFLAGS $CFLAGS " \
  | sed -e 's/ -I \(@<:@^ 	@:>@*\)/ -I\1/g
 s/ \(@<:@^- 	@:>@\|-@<:@^I 	@:>@\)@<:@^ 	@:>@*//g
-s/ -I/ /g
-s/^ *//;s/ *$//'`])
-         # from the path candidates derived above, try to find ompi_info
-         AS_FOR([bindir],[acx_temp],[$acx_ompi_path_candidates],
-           [AS_IF([test -x "bindir/ompi_info"],
-              [acx_cv_ompi_build_cflags="bindir/ompi_info" ; break],
-              [test -x "bindir/../bin/ompi_info"],
-              [acx_temp=`echo "bindir" | sed -e 's@/@<:@^/@:>@*$][@@'`
-               AS_IF([test -x "$acx_temp/bin/ompi_info"],
-                 [acx_cv_ompi_build_cflags="$acx_temp/bin/ompi_info"; break])])])
-         AS_IF([test x"${acx_cv_ompi_build_cflags+set}" = xset && expr "`$acx_cv_ompi_build_cflags --version | head -n 1`" : 'Open MPI v'"$acx_ompi_version" >/dev/null],
-          [acx_cv_ompi_build_cflags=`$acx_cv_ompi_build_cflags -c | sed -n -e '/^ *Build CFLAGS:/s/^ *Build CFLAGS: *//p'`])])
-      AS_IF([test x"${acx_cv_ompi_build_cflags+set}" = xset],
-        [OMPI_BUILD_CFLAGS=$acx_cv_ompi_build_cflags],
-        [is_affected_ompi=false ; break])],
-     [AC_MSG_CHECKING([Open MPI C build flags])
-      AC_MSG_RESULT([$OMPI_BUILD_CFLAGS])])
+s/ -I/:/g
+s/^@<:@: 	@:>@*//;s/ *$//'`])
+      # from the path candidates derived above, try to find ompi_info
+      acx_ompi_path_candidates=`echo "$acx_ompi_path_candidates" | sed -e 's@\(@<:@^:@:>@*\)@\1:\1/../bin@g'`
+      AC_MSG_CHECKING([for ompi_info])
+      AC_PATH_PROGS_FEATURE_CHECK([OMPI_INFO],[ompi_info],
+        [AS_IF([expr "`$ac_path_OMPI_INFO --version | head -n 1`" : 'Open MPI v'"$acx_ompi_version" >/dev/null],
+           [ac_cv_path_OMPI_INFO=$ac_path_OMPI_INFO ac_path_OMPI_INFO_found=:])],
+        [AC_MSG_RESULT([cannot find ompi_info matching this Open MPI version])
+         is_affected_ompi=false ; break],
+        ["${acx_ompi_path_candidates+$acx_ompi_path_candidates:}$PATH"])
+      AC_MSG_RESULT([$ac_cv_path_OMPI_INFO])
+      OMPI_BUILD_CFLAGS=`$ac_cv_path_OMPI_INFO -c | sed -n -e '/^ *Build CFLAGS:/s/^ *Build CFLAGS: *//p'`])
+   AC_MSG_CHECKING([Open MPI C build flags])
+   AC_MSG_RESULT([$OMPI_BUILD_CFLAGS])
    dnl 2.c. make sure header matches what compiler uses
    CPPFLAGS="$OMPI_MCA_C_INCLUDE $CPPFLAGS"
    CFLAGS=$OMPI_BUILD_CFLAGS
