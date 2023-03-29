@@ -49,6 +49,9 @@ libmpi_workaround_la_SOURCES =
 libmpi_workaround_la_LIBADD = $(LIBOBJS) $(xt_mpi_workaround_LIBS) $(MPI_C_LIB)
 endif
 
+distclean-local:
+	-rm -rf '$(DEPDIR)'
+
 #
 # Local Variables:
 # coding: utf-8
