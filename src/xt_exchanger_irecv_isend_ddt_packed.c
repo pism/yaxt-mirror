@@ -188,7 +188,7 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
 //! \todo merge all packing kernels into single kernel call -> less overhead,
 //!       but not overlapping of packing and sending
     xt_ddt_pack_internal(
-      send_ddt, (void*)src_data, buffers[nrecv + i], src_data_memtype);
+      send_ddt, src_data, buffers[nrecv + i], src_data_memtype);
     xt_mpi_call(MPI_Isend(buffers[nrecv + i], (int)buffer_size, MPI_BYTE,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
