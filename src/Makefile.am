@@ -235,14 +235,6 @@ f03_redist_module_template=`i=m4-templates/xt_redist_template_module.f90.m4 ; \
 	if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; `
 update_orig=true
 
-BUILT_SOURCES = \
-	xt_redist_int_i2.f90					\
-	xt_redist_int_i4.f90					\
-	xt_redist_int_i8.f90					\
-	xt_redist_logical.f90					\
-	xt_redist_real_sp.f90					\
-	xt_redist_real_dp.f90
-
 xt_redist_real_sp.f90: \
 	m4-templates/xt_redist_template_module.f90.m4 \
 	m4-templates/f03-redist-gen.m4
@@ -251,10 +243,10 @@ xt_redist_real_sp.f90: \
 		-Dprologue='{real-prologue-sp.m4}' \
 		-Dtypetag=sp -Dtypedecl='REAL(sp)' \
 		$< >"$@.tmp"
-	cp "$@.tmp" "$@"
 	if $(update_orig) ; then \
 		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; fi
+		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
+		cp "$@.tmp" "$@" ; fi
 	-rm -f "$@.tmp"
 
 xt_redist_real_dp.f90: \
@@ -265,10 +257,10 @@ xt_redist_real_dp.f90: \
 		-Dprologue='{real-prologue-dp.m4}' \
 		-Dtypetag=dp -Dtypedecl='REAL(dp)' \
 		$< >"$@.tmp"
-	cp "$@.tmp" "$@"
 	if $(update_orig) ; then \
 		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; fi
+		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
+		cp "$@.tmp" "$@" ; fi
 	-rm -f "$@.tmp"
 
 xt_redist_logical.f90: \
@@ -278,10 +270,10 @@ xt_redist_logical.f90: \
 		-Dfname=$@ -Dmodname=xt_redist_logical \
 		-Dtypetag=l -Dtypedecl='LOGICAL' \
 		$< >"$@.tmp"
-	cp "$@.tmp" "$@"
 	if $(update_orig) ; then \
 		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; fi
+		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
+		cp "$@.tmp" "$@" ; fi
 	-rm -f "$@.tmp"
 
 xt_redist_int_i4.f90: \
@@ -292,10 +284,10 @@ xt_redist_int_i4.f90: \
 		-Dprologue='{int-prologue-i4.m4}' \
 		-Dtypetag=i4 -Dtypedecl='INTEGER(i4)' \
 		$< >"$@.tmp"
-	cp "$@.tmp" "$@"
 	if $(update_orig) ; then \
 		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; fi
+		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
+		cp "$@.tmp" "$@" ; fi
 	-rm -f "$@.tmp"
 
 xt_redist_int_i2.f90: \
@@ -306,10 +298,10 @@ xt_redist_int_i2.f90: \
 		-Dprologue='{int-prologue-i2.m4}' \
 		-Dtypetag=i2 -Dtypedecl='INTEGER(i2)' \
 		$< >"$@.tmp"
-	cp "$@.tmp" "$@"
 	if $(update_orig) ; then \
 		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; fi
+		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
+		cp "$@.tmp" "$@" ; fi
 	-rm -f "$@.tmp"
 
 xt_redist_int_i8.f90: \
@@ -320,10 +312,10 @@ xt_redist_int_i8.f90: \
 		-Dprologue='{int-prologue-i8.m4}' \
 		-Dtypetag=i8 -Dtypedecl='INTEGER(i8)' \
 		$< >"$@.tmp"
-	cp "$@.tmp" "$@"
 	if $(update_orig) ; then \
 		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; fi
+		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
+		cp "$@.tmp" "$@" ; fi
 	-rm -f "$@.tmp"
 
 
