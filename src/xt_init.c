@@ -63,7 +63,7 @@
 
 INSTR_DEF(instr,"YAXT_lifetime")
 
-int xt_lib_state __attribute__((aligned(16),common));
+int xt_lib_state __attribute__((aligned(FC_ALIGN_C_INT),common));
 
 
 void
