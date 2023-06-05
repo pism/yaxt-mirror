@@ -1,4 +1,4 @@
-[global_ignore]
+[ignore_global]
 ^config/checksrc/
 ^config/workarounds/
 ^include/cfortran\.h$
@@ -14,4 +14,10 @@
 [ignore_config_h_problem]
 ^src/xt/[^/]*.h$
 ^src/xt_quicksort_base.h$
+^src/mpi-workarounds/[^/]*_wrap.c$
 
+[ignore_license_doc_header]
+^src/mpi-workarounds/[^/]*_wrap.c$
+
+[ignore_local_variable_footer]
+^src/mpi-workarounds/[^/]*_wrap.c$

@@ -97,8 +97,9 @@ if [[ -d "$TESTDIR" ]]; then
                               -o testsuite testsuite.at)
 fi
 "${HOOKDIR}/checklicense"
-git ls-files -z | perl "$HOOKDIR/find-problem-sources" -0 \
-                       --no-edit-mode
+git ls-files -z \
+  | perl "$HOOKDIR/find-problem-sources" -0 \
+                       --no-edit-mode -
 
 # check for whitespace errors
 exec git diff-index --check --cached $against --
