@@ -1,5 +1,5 @@
 /**
- * @file xt_redist_p2p_ext.c
+ * @file xt_redist_p2p_ext.h
  *
  * @copyright Copyright  (C)  2022 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>

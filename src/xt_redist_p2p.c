@@ -310,7 +310,7 @@ pos2disp2(int pos, int num_ext,
 #define XT_MPI_GENERATE_DATATYPE xt_mpi_generate_datatype_stripe
 #define XT_EXT_STRIDE_MASK isign_mask_current_pos_ext_size
 #define XT_EXT_STRIDE_MASK_PREP
-#include "xt_redist_p2p_ext.c"
+#include "xt_redist_p2p_ext.h"
 #undef XT_EXT_TYPE
 #undef XT_EXT_TAG
 #undef XT_MPI_GENERATE_DATATYPE
@@ -323,7 +323,7 @@ pos2disp2(int pos, int num_ext,
 #define XT_EXT_STRIDE_MASK asign_mask_current_pos_ext_size
 #define XT_EXT_STRIDE_MASK_PREP MPI_Aint asign_mask_current_pos_ext_size \
   = asign_mask(current_pos_ext.size)
-#include "xt_redist_p2p_ext.c"
+#include "xt_redist_p2p_ext.h"
 #undef XT_EXT_TYPE
 #undef XT_EXT_TAG
 #undef XT_MPI_GENERATE_DATATYPE

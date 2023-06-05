@@ -116,6 +116,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_redist_collection.c					\
 	xt_redist_collection_static.c				\
 	xt_redist_p2p.c						\
+	xt_redist_p2p_ext.h					\
 	xt_redist_repeat.c					\
 	xt_redist_single_array_base.c				\
 	xt/xt_redist_single_array_base.h			\
@@ -228,7 +229,6 @@ EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4	\
 	m4-templates/int-prologue-i8.m4				\
 	m4-templates/real-prologue-dp.m4			\
 	m4-templates/real-prologue-sp.m4			\
-	xt_redist_p2p_ext.c					\
 	xt_mpi_stripe_parse.c
 
 f03_redist_module_template=`i=m4-templates/xt_redist_template_module.f90.m4 ; \
