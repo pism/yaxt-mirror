@@ -56,10 +56,10 @@
 #include "xt_mpi_internal.h"
 #include "xt_mpi_ddt_cache.h"
 
-//! COMPACT_DT enables the anlysis of displacements in order to give a
+//! COMPACT_DT enables the analysis of displacements in order to give a
 //! more compact description to the datatype generators of MPI. For strong
 //! enough MPI implementations this not required. Then you can undefine
-//! COMPACT_DT and save some prcessing time within yaxt without losing communication
+//! COMPACT_DT and save some processing time within yaxt without losing communication
 //! performance.
 #define COMPACT_DT
 
