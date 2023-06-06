@@ -54,6 +54,7 @@
 
 #include "xt/xt_mpi.h"
 #include "xt_mpi_ddt_cache.h"
+#include "xt_arithmetic_util.h"
 #include "core/cksum.h"
 #include "core/ppm_xfuncs.h"
 
@@ -510,72 +511,6 @@ Xt_mpi_ddt_cache_acquire_hindexed(
   }
   return dt;
 }
-
-#ifdef HAVE_ASM_BSR
-static inline size_t
-next_2_pow(size_t v)
-{
-  enum {
-    size_t_bits = sizeof (size_t) * CHAR_BIT,
-  };
-  size_t r;
-  if (v <= 1) {
-    r = 1;
-  } else {
-    size_t ms1bpos;
-#if SIZEOF_LONG == 8
-    __asm__ ("bsrq %1, %0" : "=r" (ms1bpos) : "r" (v-1));
-#elif SIZEOF_LONG == 4
-    __asm__ ("bsrl %1, %0" : "=r" (ms1bpos) : "r" (v-1));
-#else
-#error "unexpeted size of size_t!"
-#endif
-    r = (size_t)1 << (ms1bpos+1);
-  }
-  assert(r >= v);
-  return r;
-}
-#elif HAVE_DECL___BUILTIN_CLZL
-#define clzl(v) (__builtin_clzl(v))
-#elif HAVE_DECL___LZCNT && SIZEOF_LONG == SIZEOF_INT
-#define clzl(v) ((int)(__lzcnt(v)))
-#elif HAVE_DECL___LZCNT64 && SIZEOF_LONG == 8 && CHAR_BIT == 8
-#define clzl(v) ((int)(__lzcnt64(v)))
-#else
-static inline size_t
-next_2_pow(size_t v)
-{
-  v--;
-  v |= v >> 1;
-  v |= v >> 2;
-  v |= v >> 4;
-  v |= v >> 8;
-  v |= v >> 16;
-#if SIZEOF_SIZE_T * CHAR_BIT == 64
-  v |= v >> 32;
-#endif
-  v++;
-}
-#endif
-#ifdef clzl
-static inline size_t
-next_2_pow(size_t v)
-{
-  enum {
-    size_t_bits = sizeof (size_t) * CHAR_BIT,
-  };
-  size_t r;
-  if (v == 0) {
-    r = 1;
-  } else {
-    r = clzl(v-1);
-    r = (size_t)1 << (size_t_bits - r);
-  }
-  assert(r >= v);
-  return r;
-}
-
-#endif
 
 
 MPI_Datatype
