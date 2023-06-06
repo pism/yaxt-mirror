@@ -110,6 +110,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_idxvec_internal.h					\
 	xt_mpi_internal.h					\
 	xt_mpi.c						\
+	xt_mpi_ddt_gen.c					\
 	xt_mpi_stripe_parse_func.h				\
 	xt_redist_internal.h					\
 	xt_redist.c						\

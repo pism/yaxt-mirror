@@ -116,8 +116,6 @@ xt_mpi_parse_astripe(
   const struct Xt_aoffset_ext v[vlen],
   struct Xt_mpi_strp_prs_params *params);
 
-
-
 PPM_DSO_INTERNAL void
 xt_mpi_init(void);
 PPM_DSO_INTERNAL void
