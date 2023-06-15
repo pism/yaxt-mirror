@@ -54,7 +54,9 @@ for ((i=0; i < 2; ++i)); do
   if ((i == 0)); then
     args+=(--enable-maintainer-mode)
   fi
-  "$SRC_DIR"/configure "${args[@]}"
+  "$SRC_DIR"/configure "${args[@]}" \
+    || { status=$? ; gzip -c config.log \
+        >"$SRC_DIR/$log_dir/make-distcheck-config.log.gz" ; exit $status ; }
   mf_version=$(sed -n -e '/^PACKAGE_VERSION = /{
 s/^PACKAGE_VERSION =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
 }' Makefile)
