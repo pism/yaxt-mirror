@@ -59,6 +59,7 @@
 #include "xt/xt_sort.h"
 #include "core/ppm_xfuncs.h"
 #include "xt_redist_internal.h"
+#include "xt_mpi_ddt_cache.h"
 
 Xt_redist xt_redist_copy(Xt_redist redist) {
 
@@ -223,6 +224,7 @@ xt_create_compound_datatype(size_t count,
                             const MPI_Aint displacements[count],
                             const MPI_Datatype datatypes[count],
                             const int block_lengths[count],
+                            struct Xt_mpiddt_list *ddt_list,
                             MPI_Comm comm)
 {
   size_t num_datatypes = 0;
@@ -265,15 +267,14 @@ xt_create_compound_datatype(size_t count,
   }
   MPI_Datatype datatype;
   if (num_datatypes > 1)
-    xt_mpi_call(MPI_Type_create_struct((int)num_datatypes, block_lengths_,
-                                       displacements_, datatypes_, &datatype),
-                comm);
+    datatype = Xt_mpi_ddt_cache_acquire_struct(
+      ddt_list, (int)num_datatypes, block_lengths_,
+      displacements_, datatypes_, comm);
   else if (displacements_[0] == 0)
     xt_mpi_call(MPI_Type_dup(datatypes_[0], &datatype), comm);
   else
-    xt_mpi_call(MPI_Type_create_hindexed(1, (int [1]){1}, displacements_,
-                                         datatypes_[0], &datatype), comm);
-
+    datatype = Xt_mpi_ddt_cache_acquire_hindexed(
+      ddt_list, 1, (int [1]){1}, displacements_, datatypes_[0], comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   if (num_datatypes != count && num_datatypes > max_auto_dt)

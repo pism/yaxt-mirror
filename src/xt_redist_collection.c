@@ -313,6 +313,7 @@ create_all_dt_for_dir(
   const MPI_Datatype *component_dt,
   const MPI_Aint displacements[num_redists],
   struct Xt_redist_msg redist_msgs[num_messages],
+  struct Xt_mpiddt_list *ddt_list,
   MPI_Comm comm)
 {
   int block_lengths[num_redists];
@@ -323,7 +324,7 @@ create_all_dt_for_dir(
     redist_msgs[i].datatype
       = xt_create_compound_datatype(num_redists, displacements,
                                     component_dt + i * num_redists,
-                                    block_lengths, comm);
+                                    block_lengths, ddt_list, comm);
     redist_msgs[i].rank = ranks[i];
   }
 }
@@ -372,15 +373,17 @@ create_exchanger(struct Xt_redist_collection_ *redist_coll,
   unsigned nmsg_send = redist_coll->nmsg[SEND],
     nmsg_recv = redist_coll->nmsg[RECV];
   const MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
+  struct Xt_mpiddt_list ddt_list = Xt_mpiddt_empty_list;
   MPI_Comm comm = redist_coll->comm;
   create_all_dt_for_dir(nmsg_send, num_redists,
                         redist_coll->msg_ranks, all_component_dt,
-                        displacements[SEND], msgs, comm);
+                        displacements[SEND], msgs, &ddt_list, comm);
   create_all_dt_for_dir(nmsg_recv, num_redists,
                         redist_coll->msg_ranks+nmsg_send,
                         all_component_dt + nmsg_send * num_redists,
                         displacements[RECV],
-                        msgs + nmsg_send, comm);
+                        msgs + nmsg_send, &ddt_list, comm);
+  Xt_mpi_ddt_cache_free(&ddt_list, comm);
   Xt_exchanger_new exchanger_new
     = xt_config_get_exchange_new_by_comm(&redist_coll->config, comm);
   return exchanger_new((int)nmsg_send, (int)nmsg_recv,

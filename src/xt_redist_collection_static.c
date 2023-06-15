@@ -73,6 +73,7 @@ generate_msg_infos(size_t nmsg, size_t num_redists,
                    const Xt_redist redists[num_redists],
                    const size_t num_ranks[num_redists],
                    const int *restrict ranks[num_redists],
+                   struct Xt_mpiddt_list *ddt_list,
                    MPI_Comm comm,
                    enum xt_msg_direction direction)
 {
@@ -99,7 +100,7 @@ generate_msg_infos(size_t nmsg, size_t num_redists,
       msgs[i].rank = min_rank;
       msgs[i].datatype
         = xt_create_compound_datatype(num_redists, displacements, datatypes,
-                                      block_lengths, comm);
+                                      block_lengths, ddt_list, comm);
       for (size_t j = 0; j < num_redists; ++j) {
         rank_pos[j]
           += (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank);
@@ -143,12 +144,13 @@ xt_redist_collection_static_custom_new(
                                       redists, num_ranks[i], ranks[i]);
   size_t nmsg_sum = nmsg[SEND] + nmsg[RECV];
   struct Xt_redist_msg *msgs = xmalloc(sizeof (*msgs) * nmsg_sum);
+  struct Xt_mpiddt_list ddt_list = Xt_mpiddt_empty_list;
   for (size_t i = 0; i < 2; ++i) {
     size_t ofs = i == 0 ? 0 : nmsg[SEND];
     const MPI_Aint *disp = i == 0 ? src_displacements : dst_displacements;
     generate_msg_infos(nmsg[i], num_redists_, msgs+ofs, disp, redists,
                        num_ranks[i], (const int *restrict (*))ranks[i],
-                       new_comm, (enum xt_msg_direction)i);
+                       &ddt_list, new_comm, (enum xt_msg_direction)i);
     free(ranks[i][0]);
   }
 
@@ -159,7 +161,7 @@ xt_redist_collection_static_custom_new(
     xt_redist_single_array_base_custom_new(
       (int)nmsg[SEND], (int)nmsg[RECV], msgs, msgs+nmsg[SEND], new_comm,
       &config_);
-
+  Xt_mpi_ddt_cache_free(&ddt_list, new_comm);
   free(msgs);
   xt_mpi_comm_smart_dedup(&new_comm, tag_offset);
   return redist_collection;

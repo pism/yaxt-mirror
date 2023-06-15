@@ -61,6 +61,7 @@
 #include "core/ppm_visibility.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_request.h"
+#include "xt_mpi_ddt_cache.h"
 
 enum xt_msg_direction {SEND, RECV};
 
@@ -152,6 +153,7 @@ xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
  * @param[in] displacements byte displacement of each block
  * @param[in] datatypes     type of elements in each block
  * @param[in] block_lengths number of elements in each block
+ * @param[in,out] ddt_list  pointer to optional cache of datatypes to re-use
  * @param[in] comm          communicator
  * @return new MPI derived datatype
  */
@@ -160,6 +162,7 @@ xt_create_compound_datatype(size_t count,
                             const MPI_Aint displacements[count],
                             const MPI_Datatype datatypes[count],
                             const int block_lengths[count],
+                            struct Xt_mpiddt_list *ddt_list,
                             MPI_Comm comm);
 
 /**
