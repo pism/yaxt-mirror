@@ -131,6 +131,11 @@ for ((i=0 ; i < ${#lalibs[@]}; ++i)) ; do
   lib=${lalib%_la}
   libpath=${lalibdirs[$i]}
   libname="${libpath#./}/${lib}.la"
+  if ! grep '^'"${lalib}"'_LDFLAGS *= *-version-info' \
+       "${libpath}/Makefile.am" > /dev/null ; then
+    echo "cannot find -version-info for ${libname}, skipping." >&2
+    continue
+  fi
   yesno_ask \
     "Was there any change/removal/addition to/of an exported $libname interface?" \
     interfaceChangedRemovedAdded
