@@ -221,7 +221,6 @@ next_2_pow(size_t v)
 #endif
     r = (size_t)1 << (ms1bpos+1);
   }
-  assert(r >= v);
   return r;
 }
 #elif HAVE_DECL___BUILTIN_CLZL
@@ -260,7 +259,6 @@ next_2_pow(size_t v)
     r = clzl(v-1);
     r = (size_t)1 << (size_t_bits - r);
   }
-  assert(r >= v);
   return r;
 }
 
