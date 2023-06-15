@@ -83,6 +83,13 @@ AC_DEFUN([ACX_OMPI_DT_WORKAROUND],
 s/ \(@<:@^- 	@:>@\|-@<:@^I 	@:>@\)@<:@^ 	@:>@*//g
 s/ -I/ /g
 s/^ *//;s/ *$//'`])
+         AS_CASE([$ac_word],
+           [*mpicc],
+           [acx_ompi_path_candidates="$acx_ompi_path_candidates "`$ac_word --showme:compile \
+ | sed -e 's/ -I \(@<:@^ 	@:>@*\)/ -I\1/g
+s/ \(@<:@^- 	@:>@\|-@<:@^I 	@:>@\)@<:@^ 	@:>@*//g
+s/ -I/ /g
+s/^ *//;s/ *$//'`])
          AS_FOR([incdir],[acx_temp],[$acx_ompi_path_candidates],
            [AS_IF([test -r "incdir/mpi.h" -a -d "incdir/openmpi/opal"],
               [acx_cv_ompi_mca_c_include="-I]incdir[/openmpi" ; break],
