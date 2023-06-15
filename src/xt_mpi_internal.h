@@ -97,7 +97,7 @@ xt_init_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params,
                                   &params->old_type_extent), comm);
   params->old_type = old_type;
   params->comm = comm;
-  params->ddt_list = (struct Xt_mpiddt_list){NULL,NULL,0,0};
+  params->ddt_list = Xt_mpiddt_empty_list;
 }
 
 static inline void

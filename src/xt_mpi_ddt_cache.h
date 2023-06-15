@@ -63,6 +63,7 @@ struct Xt_mpiddt_list {
   size_t num_entries, size_entries;
 };
 
+#define Xt_mpiddt_empty_list ((struct Xt_mpiddt_list){NULL,NULL,0,0})
 /**
  * lookup MPI contiguous datatype in cache or create if not yet present
  * @param[in,out] ddt_list cache of already created derived datatypes
