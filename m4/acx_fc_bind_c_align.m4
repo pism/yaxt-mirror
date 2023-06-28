@@ -67,9 +67,9 @@ AC_DEFUN([ACX_FC_BIND_C_ALIGN],
            [acx_temp=`"$ac_pwd"/libtool --mode=clean --silent \
               ls conftest.lo 2>/dev/null | grep '\.'"$OBJEXT"'$' | xargs $NM \
               | sed -n 'h
-/ C acx_align_test_variable$/s/^0*\(@<:@0-9a-f@:>@*\) C .*/0x\1/p
+/ C _\{0,1\}acx_align_test_variable$/s/^0*\(@<:@0-9a-f@:>@*\) C .*/0x\1/p
 g
-/ C acx_align_test_variable$/q'`
+/ C _\{0,1\}acx_align_test_variable$/q'`
             AS_CASE([$acx_temp],
               [0x],[# in ipo configurations, alignment will be reported as 0
 ],
