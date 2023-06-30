@@ -8,16 +8,17 @@
 ^doc/makef90depends/example/
 
 [ignore_fc_defs_problem]
-^src/solver/[^/]*_multi.f90$
+^src/solver/[^/]*_multi\.f90$
 ^src/core/ppm_ncdf_dump_wrappers.f90$
 
 [ignore_config_h_problem]
-^src/xt/[^/]*.h$
-^src/xt_quicksort_base.h$
-^src/mpi-workarounds/[^/]*_wrap.c$
+^src/xt/[^/]*\.h$
+^src/xt_quicksort_base\.h$
+^src/mpi-workarounds/[^/]*_wrap\.c$
+^scripts/git-hooks/bre2pcre\.c$
 
 [ignore_license_doc_header]
-^src/mpi-workarounds/[^/]*_wrap.c$
+^src/mpi-workarounds/[^/]*_wrap\.c$
 
 [ignore_local_variable_footer]
-^src/mpi-workarounds/[^/]*_wrap.c$
+^src/mpi-workarounds/[^/]*_wrap\.c$

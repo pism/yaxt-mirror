@@ -35,7 +35,6 @@ Makefile.in
 /include/fc_feature_defs.inc
 /include/stamp-h1
 /libtool
-/perf/Makefile
 /perf/perf_idxsection_get_positions_of_indices_run
 /perf/perf_sparse_array_gather_run
 /src/pkgconfig/yaxt.pc
@@ -180,6 +179,9 @@ Makefile
 
 # Dist stage files:
 /yaxt-*.tar.gz
+/scripts/git-hooks/bre2pcre
+!/scripts/git-hooks/Makefile
+!/scripts/release/Makefile
 
 # MacOS files:
 *.dSYM

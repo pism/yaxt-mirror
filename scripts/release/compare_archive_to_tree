@@ -73,9 +73,12 @@ my %ignore_archive_missing = map { $_ => undef } (
   'scripts/release/release-as',
   'scripts/release/undo-release',
   'scripts/release/check-gitignore',
+  'scripts/git-hooks/Makefile',
+  'scripts/git-hooks/bre2pcre.c',
   'scripts/git-hooks/find-problem-sources',
   'scripts/git-hooks/checklicense',
   'scripts/git-hooks/checklicense.exclusions',
+  'scripts/git-hooks/checklicense.exclusions.pcre',
   'scripts/git-hooks/pre-commit',
   'scripts/git-hooks/non-problems.txt',
  );
