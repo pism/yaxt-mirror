@@ -84,9 +84,9 @@ s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
       ;;
   esac
 done
-if [[ -x "$(command -v repack)" ]]; then
-  # creates xz and bzip2 versions of archive
-  repack --keep "$package-$version.tar.gz"
+if command -v xz >/dev/null ; then
+  gzip -dc "$package-$version.tar.gz" \
+    | xz > "$package-$version.tar.xz"
 fi
 archives=("$package-$version.tar."*)
 date=$(date '+%Y-%m-%d')
