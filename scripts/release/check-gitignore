@@ -62,24 +62,25 @@ fi
 repo=$PWD
 cd "${tmpsrc}"
 if command -v rsync >/dev/null ; then
-  opts="-aHS"
+  typeset -a opts
+  opts=('--copy-unsafe-links' "-aHS")
   rsync_options=$(rsync --help)
   case $rsync_options in
     (*\ -A,\ --acls\ *)
-      opts+=A
+      opts+=(-A)
       ;;
   esac
   case $rsync_options in
     (*\ -X,\ --xattrs\ *)
-      opts+=X
+      opts+=(-X)
       ;;
   esac
   case $rsync_options in
     (*\ -E,\ --extended-attributes\ *)
-      opts+=E
+      opts+=(-E)
       ;;
   esac
-  rsync ${opts} "${repo}"/. .
+  rsync "${opts[@]}" "$repo"/. .
 else
   cp -a "${repo}"/. .
 fi
