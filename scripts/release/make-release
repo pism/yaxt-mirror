@@ -88,8 +88,16 @@ if [[ -r configure && -r scripts/release/make-release-commit ]]; then
     archive_msg=${archive_msg#Find archives in }
     scripts/release/check-gitignore
     IFS=" " read -r -a archives <<< "${archive_msg}"
-    TAR=${TAR-tar}
-    scripts/release/compare_archive_to_tree --gnutar="$TAR" \
+    if [[ ${TAR+xset} != xset ]]; then
+      for tar in gnutar gtar ; do
+        if tarpath=$(command -v $tar) \
+            && "$tarpath" --version | grep '^tar (GNU tar) ' >/dev/null; then
+          TAR=$tarpath
+        fi
+      done
+    fi
+    unset tarpath
+    scripts/release/compare_archive_to_tree --gnutar="${TAR-tar}" \
        "${archives[0]}" "release-$version"
   else
     echo "warning: release script missing." >&2
