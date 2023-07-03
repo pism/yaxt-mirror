@@ -95,7 +95,7 @@ if command -v rsync >/dev/null ; then
       opts+=E
       ;;
   esac
-  rsync ${opts} --copy-unsafe-links "$repo"/. .
+  rsync ${opts} "$repo"/. .
 else
   cp -a "$repo"/. .
 fi
