@@ -28,6 +28,20 @@
 set -e
 # shellcheck source=get-package-and-version.shinc
 . scripts/release/get-package-and-version.shinc
+
+errMsg()
+{
+  typeset cmd=$BASH_COMMAND pfx
+  typeset -i ofs=0 vpos src_lev=${#BASH_SOURCE[@]}
+  while [[ "${cmd:$ofs}" =~ \$\{([a-zA-Z_][a-zA-Z_0-9]*)\} ]]; do
+    pfx=${cmd:ofs}; vpos=${vpos%%\$*}; ofs=$((ofs+${#vpos}))
+    cmd=${cmd/\$\{${BASH_REMATCH[1]}\}/${!BASH_REMATCH[1]}}
+  done
+  printf "error: failed to run command\n%s\nat %s, line %d!\n" "$cmd" \
+         "${BASH_SOURCE[$src_lev-2]}" "${BASH_LINENO[$src_lev-2]}" >&2
+}
+trap errMsg ERR
+
 if (( ${DEBUG:-0} )); then
   set -x
   MAKE_DEBUG_ARGS=(--debug 'SHELL=bash -x')
@@ -72,7 +86,10 @@ s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
     exit 1
   fi
   ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j
-  ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j check
+  ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j check \
+    || { gzip -c test/testsuite.log \
+              >"$SRC_DIR/$log_dir/make-distcheck-testsuite.log.gz" ; \
+         exit 1; }
   case $i in
     0)
       ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
