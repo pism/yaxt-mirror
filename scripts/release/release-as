@@ -80,7 +80,7 @@ if [[ -w configure.ac && -r configure.ac && \
   exec ${script_dir}/make-release
 else
   echo 'error: insufficient permissions for configure.ac or' \
-       '${script_dir}/make-release!' >&2
+       "${script_dir}/make-release!" >&2
   exit 1
 fi
 #
