@@ -37,7 +37,7 @@ errMsg()
     pfx=${cmd:ofs}; vpos=${vpos%%\$*}; ofs=$((ofs+${#vpos}))
     cmd=${cmd/\$\{${BASH_REMATCH[1]}\}/${!BASH_REMATCH[1]}}
   done
-  printf "error: failed to run command\n%s\nat %s, line %d!\n" "$cmd" \
+  printf 'error: failed to run command\n%s\nat %s, line %d!\n' "$cmd" \
          "${BASH_SOURCE[$src_lev-2]}" "${BASH_LINENO[$src_lev-2]}" >&2
 }
 trap errMsg ERR
@@ -64,7 +64,7 @@ fi
 SRC_DIR=$PWD
 cd "${BUILD_DIR}"
 for ((i=0; i < 2; ++i)); do
-  args=(--prefix="${BUILD_DIR}-install")
+  args=("--prefix=${BUILD_DIR}-install")
   if ((i == 0)); then
     args+=(--enable-maintainer-mode)
   fi
@@ -78,7 +78,7 @@ s/^PACKAGE_VERSION =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
     MAKE=$(sed -n -e '/^MAKE = /{
 s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
 }' Makefile)
-    [[ -n "${MAKE}" ]] || MAKE=make
+    [[ -n "${MAKE}" ]] || MAKE='make'
   fi
   if [[ "$mf_version" != "$version" ]]; then
     echo "error: versions from Makefile ($mf_version) and configure.ac" \
