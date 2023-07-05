@@ -113,7 +113,7 @@ if [[ -z "${MAKE+set}" ]]; then
   MAKE=$(sed -n -e '/^MAKE = /{
 s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
 }' Makefile)
-  [[ -n "${MAKE}" ]] || MAKE=make
+  [[ -n "${MAKE}" ]] || MAKE='make'
 fi
 echo "  ${MAKE}"
 ${MAKE} -j >&6 2>&6
