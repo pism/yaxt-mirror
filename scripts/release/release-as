@@ -42,6 +42,12 @@
 set -e
 new_version=$1
 script_dir=scripts/release
+if command -v shellcheck >/dev/null; then
+  ${MAKE-make} -C scripts/release shellcheck
+  ${MAKE-make} -C scripts/git-hooks shellcheck
+else
+  printf "%s\n" 'warning: cannot find shellcheck'
+fi
 # check the whole kit is there
 if [[ -w configure.ac && -r configure.ac && \
         -x "${script_dir}/make-release" ]]; then
