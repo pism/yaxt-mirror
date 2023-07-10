@@ -68,6 +68,7 @@ else
   exit 1
 fi
 
+autoreconf -i --force
 $libtoolize --force --copy
 #todo: escape / in $libtoolize
 libtoolversion=$($libtoolize --version \
