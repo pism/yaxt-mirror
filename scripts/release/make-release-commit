@@ -118,7 +118,7 @@ lalibs=()
 while read -r libline ; do
   echo "inspecting $libline" >&2
   libpath=${libline%%/Makefile.am:*}
-  las=${libline##${libpath}/Makefile.am:}
+  las=${libline##"${libpath}"/Makefile.am:}
   for la in ${las} ; do
     lalibdirs+=("${libpath}")
     lalibs+=("${la/.la/_la}")

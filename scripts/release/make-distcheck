@@ -48,7 +48,7 @@ if (( ${DEBUG:-0} )); then
 else
   MAKE_DEBUG_ARGS=()
 fi
-if [[ x${TMPDIR+set} = x ]]; then
+if [[ ${TMPDIR+set} = '' ]]; then
   if [[ -d /dev/shm && -w /dev/shm ]]; then
     TMPDIR=/dev/shm
   else
