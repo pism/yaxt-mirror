@@ -43,6 +43,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 set -e
+# trap functions are incorrectly diagnosed by shellcheck as unreachable
+# shellcheck disable=SC2317
 errMsg()
 {
   typeset cmd=$BASH_COMMAND pfx
@@ -58,7 +60,7 @@ trap errMsg ERR
 
 # shellcheck source=get-package-and-version.shinc
 . scripts/release/get-package-and-version.shinc
-if [[ x${TMPDIR+set} = x ]]; then
+if [[ ${TMPDIR+set} = '' ]]; then
   if [[ -d "$XDG_RUNTIME_DIR" && -w "$XDG_RUNTIME_DIR" ]]; then
     TMPDIR=$XDG_RUNTIME_DIR
   elif [[ -d /dev/shm && -w /dev/shm ]]; then
@@ -99,7 +101,7 @@ if command -v rsync >/dev/null ; then
 else
   cp -a "$repo"/. .
 fi
-bash -x $reconfCmd >&6 2>&6
+bash -x "$reconfCmd" >&6 2>&6
 set +e
 git update-index -q --ignore-submodules --refresh
 set -e
