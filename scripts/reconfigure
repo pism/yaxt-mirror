@@ -46,7 +46,7 @@ export PERL_HASH_SEED=0
 case $(uname -s) in
   Darwin)
     libtoolize=glibtoolize
-    if [[ -z "${SED+set}" ]] && command -v gsed >/dev/null 2>&1; then
+    if [[ -z "${SED+set}" ]] && command -v gsed >/dev/null; then
       SED=gsed
     fi
     ;;
