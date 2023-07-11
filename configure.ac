@@ -79,13 +79,22 @@ dnl Only substitute MAKE in Makefiles if actually needed
 AC_PROG_MAKE_SET
 AM_SUBST_NOTMAKE([MAKE])
 dnl Require an ISO C99 compliant C compiler
-m4_pushdef([_AC_PROG_CC_C89],
-  [_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])
-m4_pushdef([_AM_PROG_CC_C_O],m4_bpatsubst(m4_dquote(m4_defn([_AM_PROG_CC_C_O])),
-  [rm -f\(.* conftest\*.*\)], [rm -rf\1]))dnl
+m4_pushdef(m4_case(m4_version_compare(AC_AUTOCONF_VERSION,[2.70]),
+     [-1],[[_AC_PROG_CC_C89]],
+     [0],[[_AC_PROG_CC_C11]],
+     [1],[[_AC_PROG_CC_STDC_EDITION]]),
+  [rm -rf conftest.dSYM # needed when configured on MacOS with CFLAGS='-g'
+   m4_case(m4_cmp(m4_version_compare(AC_AUTOCONF_VERSION,[2.71]),[-1]),
+     [0],[_AC_PROG_CC_C99(,[AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])],
+     [1],[ac_prog_cc_stdc=no
+_AC_PROG_CC_STDC_EDITION_TRY([99])
+AS_IF([test "x$ac_prog_cc_stdc" != xc99],
+  [AC_MSG_FAILURE([CC=$CC is not an ISO C99 compiler])])])])dnl
 AC_PROG_CC([mpicc mpiicc mpxlc_r mpixlc_r gcc cc])
-m4_popdef([_AM_PROG_CC_C_O])
-m4_popdef([_AC_PROG_CC_C89])
+m4_popdef(m4_case(m4_version_compare(AC_AUTOCONF_VERSION,[2.70]),
+  [-1],[[_AC_PROG_CC_C89]],
+  [0],[[_AC_PROG_CC_C11]],
+  [1],[[_AC_PROG_CC_STDC_EDITION]]))dnl
 
 AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads libraries and header files.])
    LIBS="$PTHREAD_LIBS $LIBS"
