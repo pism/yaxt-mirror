@@ -80,7 +80,7 @@ if command -v rsync >/dev/null ; then
       opts+=(-E)
       ;;
   esac
-  rsync "${opts[@]}" "$repo"/. .
+  rsync "${opts[@]}" "${repo}"/. .
 else
   cp -a "${repo}"/. .
 fi
