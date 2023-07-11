@@ -29,17 +29,6 @@ set -e
 # shellcheck source=get-package-and-version.shinc
 . scripts/release/get-package-and-version.shinc
 
-errMsg()
-{
-  typeset cmd=$BASH_COMMAND pfx
-  typeset -i ofs=0 vpos src_lev=${#BASH_SOURCE[@]}
-  while [[ "${cmd:$ofs}" =~ \$\{([a-zA-Z_][a-zA-Z_0-9]*)\} ]]; do
-    pfx=${cmd:ofs}; vpos=${pfx%%\$*}; ofs=$((ofs+${#vpos}))
-    cmd=${cmd/\$\{${BASH_REMATCH[1]}\}/${!BASH_REMATCH[1]}}
-  done
-  printf 'error: failed to run command\n%s\nat %s, line %d!\n' "$cmd" \
-         "${BASH_SOURCE[$src_lev-2]}" "${BASH_LINENO[$src_lev-2]}" >&2
-}
 trap errMsg ERR
 
 if (( ${DEBUG:-0} )); then
