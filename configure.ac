@@ -303,7 +303,6 @@ dnl ######################################################################
 dnl Checks for header files.
 dnl ######################################################################
 dnl
-AC_HEADER_STDC
 while : ; do[]m4_pushdef([cuda_includes],[AC_INCLUDES_DEFAULT
 @%:@include <cuda.h>])m4_pushdef([no_cuda],[AC_MSG_NOTICE([$1, not building CUDA component])
 acx_cuda_version=0 ; break])
@@ -718,7 +717,7 @@ AC_ARG_VAR([BUILD_FC],
 AC_CONFIG_COMMANDS_PRE([AS_IF([test x"$BUILD_FC" != x],
   [FC=$BUILD_FC])])
 
-AC_CONFIG_HEADER([include/config.h])
+AC_CONFIG_HEADERS([include/config.h])
 AC_SUBST([XT_FC_FEATURE_DEFS])
 AM_SUBST_NOTMAKE([XT_FC_FEATURE_DEFS])
 AC_CONFIG_FILES([include/fc_feature_defs.inc])
