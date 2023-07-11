@@ -61,13 +61,13 @@ if [[ ${TMPDIR+set} = '' ]]; then
 fi
 tmpsrc=$(mktemp -d "${TMPDIR-/tmp}/tmp.XXXXXXXXXX")
 log=$(mktemp "${TMPDIR-/tmp}/tmp.XXXXXXXXXX")
-exec 6>"$log"
-echo "creating temporary source directory in $tmpsrc"
+exec 6>"${log}"
+echo "creating temporary source directory in ${tmpsrc}"
 if (( ${DEBUG:-0} == 0)) && [[ -z "${KEEP_BUILDDIR-}" ]] ; then
-  trap 'rm -rf "$tmpsrc" "$log"' EXIT
+  trap 'rm -rf "${tmpsrc}" "${log}"' EXIT
 fi
 repo=$PWD
-cd "$tmpsrc"
+cd "${tmpsrc}"
 if command -v rsync >/dev/null ; then
   opts="-aHS"
   rsync_options=$(rsync --help)
@@ -86,11 +86,11 @@ if command -v rsync >/dev/null ; then
       opts+=E
       ;;
   esac
-  rsync ${opts} "$repo"/. .
+  rsync ${opts} "${repo}"/. .
 else
-  cp -a "$repo"/. .
+  cp -a "${repo}"/. .
 fi
-bash -x "$reconfCmd" >&6 2>&6
+bash -x "${reconfCmd}" >&6 2>&6
 set +e
 git update-index -q --ignore-submodules --refresh
 set -e
@@ -117,7 +117,7 @@ if git diff-index --exit-code HEAD -- >&6 ; then
 else
   echo "error: untracked/modified files found!" >&2
   git status >&6 2>&6
-  ${PAGER-less} "$log"
+  ${PAGER-less} "${log}"
   trap '' EXIT
   exit 1
 fi

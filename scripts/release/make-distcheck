@@ -48,7 +48,7 @@ if [[ ${TMPDIR+set} = '' ]]; then
 fi
 BUILD_DIR=$(mktemp -d "${TMPDIR}/${package}-distcheck.XXXXXX")
 if (( ${DEBUG:-0} == 0)) && [[ -z "${KEEP_BUILDDIR-}" ]] ; then
-  trap 'chmod -R u+w "$BUILD_DIR" ; rm -rf "$BUILD_DIR"' EXIT
+  trap 'chmod -R u+w "${BUILD_DIR}" ; rm -rf "${BUILD_DIR}"' EXIT
 fi
 SRC_DIR=$PWD
 cd "${BUILD_DIR}"
@@ -57,9 +57,9 @@ for ((i=0; i < 2; ++i)); do
   if ((i == 0)); then
     args+=(--enable-maintainer-mode)
   fi
-  "$SRC_DIR"/configure "${args[@]}" \
+  "${SRC_DIR}"/configure "${args[@]}" \
     || { status=$? ; gzip -c config.log \
-        >"$SRC_DIR/$log_dir/make-distcheck-config.log.gz" ; exit $status ; }
+        >"${SRC_DIR}/${log_dir}/make-distcheck-config.log.gz" ; exit $status ; }
   mf_version=$(sed -n -e '/^PACKAGE_VERSION = /{
 s/^PACKAGE_VERSION =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
 }' Makefile)
@@ -77,7 +77,7 @@ s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
   ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j
   ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j check \
     || { gzip -c test/testsuite.log \
-              >"$SRC_DIR/$log_dir/make-distcheck-testsuite.log.gz" ; \
+              >"${SRC_DIR}/${log_dir}/make-distcheck-testsuite.log.gz" ; \
          exit 1; }
   case $i in
     0)
@@ -91,29 +91,29 @@ s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
   esac
 done
 if command -v xz >/dev/null ; then
-  gzip -dc "$package-$version.tar.gz" \
-    | xz > "$package-$version.tar.xz"
+  gzip -dc "${package}-${version}.tar.gz" \
+    | xz > "${package}-${version}.tar.xz"
 fi
 archives=("$package-$version.tar."*)
 date=$(date '+%Y-%m-%d')
 unset gz_archive xz_archive
 if [[ -r "$package-$version.tar.gz" ]]; then
   archive="$package-$version.tar.gz"
-  size=$(stat --format '%s' "$archive" 2>/dev/null || stat -f '%z' "$archive")
+  size=$(stat --format '%s' "${archive}" 2>/dev/null || stat -f '%z' "${archive}")
   gz_archive="attachment:${archive} ($size bytes)|"
 else
   gz_archive="|"
 fi
 if [[ -r "$package-$version.tar.xz" ]]; then
   archive="$package-$version.tar.xz"
-  size=$(stat --format '%s' "$archive" 2>/dev/null || stat -f '%z' "$archive")
+  size=$(stat --format '%s' "${archive}" 2>/dev/null || stat -f '%z' "${archive}")
   xz_archive="attachment:${archive} ($size bytes)|"
 else
   xz_archive="|"
 fi
-echo "|$date|$version|${gz_archive}${xz_archive}"
+echo "|${date}|${version}|${gz_archive}${xz_archive}"
 cp "${archives[@]}" /tmp
-echo 'Find archives in' /tmp/"$package-$version.tar."*
+echo 'Find archives in' /tmp/"${package}-${version}.tar."*
 #
 # Local Variables:
 # mode: sh
