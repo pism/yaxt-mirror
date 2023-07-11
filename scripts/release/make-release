@@ -105,8 +105,9 @@ if [[ -r configure && -r scripts/release/make-release-commit ]]; then
     exit 1
   fi
 else
-  echo "cannot find configure and/or scripts/release/make-release-commit." >&2
-  echo "Are you in the correct and autoreconf'ed directory?" >&2
+  printf "%s\n" \
+    "cannot find configure and/or scripts/release/make-release-commit." \
+    "Are you in the correct and autoreconf'ed directory?" >&2
   exit 1
 fi
 #
