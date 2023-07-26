@@ -75,6 +75,7 @@
 #include "xt_xmap_dist_dir_common.h"
 #include "xt_config_internal.h"
 #include "instr.h"
+#include "xt/xt_sort.h"
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -145,8 +146,19 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
                                       Xt_idxlist idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
                                       void **send_buffer_,
-                                      MPI_Comm comm, int comm_size)
-{
+                                      MPI_Comm comm, int comm_size) {
+
+  int num_indices = xt_idxlist_get_num_indices(idxlist);
+  Xt_int * indices = xmalloc((size_t)num_indices * sizeof(*indices));
+  xt_idxlist_get_indices(idxlist, indices);
+  xt_sort_index(indices, num_indices, NULL, 0);
+  struct Xt_stripe * stripes;
+  int num_stripes;
+  xt_convert_indices_to_stripes(indices, num_indices, &stripes, &num_stripes);
+  Xt_idxlist idxlist_sorted = xt_idxstripes_new(stripes, num_stripes);
+  free(stripes);
+  free(indices);
+
   size_t num_msg = 0;
   Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
   Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
@@ -185,7 +197,7 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
         = xt_xmap_dist_dir_get_bucket(bucket_params,
                                       &stripes, &stripes_array_size, (int)i);
       if (bucket) {
-        Xt_idxlist isect2send = xt_idxlist_get_intersection(idxlist, bucket);
+        Xt_idxlist isect2send = xt_idxlist_get_intersection(idxlist_sorted, bucket);
         xt_idxlist_delete(bucket);
         if (xt_idxlist_get_num_indices(isect2send) > 0) {
           sends[num_msg].list = isect2send;
@@ -222,6 +234,9 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
     free(sends);
   } else
     memset(send_size, 0, (size_t)comm_size * sizeof (*send_size));
+
+  xt_idxlist_delete(idxlist_sorted);
+
   return num_msg;
 }
 
