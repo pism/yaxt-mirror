@@ -71,6 +71,8 @@ void xt_mergesort_idxpos(idxpos_type *v, size_t n);
   */
 void xt_mergesort_index (Xt_int * a, int n, int * idx, int reset_index);
 
+void xt_mergesort_permutation(Xt_int *val, size_t n, int *pos);
+
 #endif  /* XT_MERGESORT_H */
 
 /*

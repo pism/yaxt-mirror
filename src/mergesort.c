@@ -234,6 +234,11 @@ void xt_mergesort_index(Xt_int *val, int n, int *pos, int reset_pos) {
   free(v);
 }
 
+void xt_mergesort_permutation(Xt_int *val, size_t n, int *pos) {
+
+  xt_mergesort_index(val, n, pos, 0);
+}
+
 
 /*
  * Local Variables:
