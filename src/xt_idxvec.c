@@ -67,7 +67,6 @@
 #include "core/core.h"
 #include "xt_stripe_util.h"
 #include "xt/xt_sort.h"
-#include "xt/quicksort.h"
 #include "instr.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -265,7 +264,7 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   int *sorted_vec_positions
     = idxvec->sorted_vec_positions
     = xmalloc((size_t)idxvec->parent.num_indices *
-              sizeof(*(idxvec->sorted_vec_positions)));
+              sizeof(*sorted_vec_positions));
 
   /* stripe_minmax[0][i] is the minimal index in stripe i at first,
    * later of sorted stripe i, stripe_minmax[1][i] is the
@@ -282,8 +281,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   }
 
   xt_assign_id_map_int(num_stripes, sorted_stripe_min_pos, 0);
-  xt_quicksort_xt_int_permutation(stripe_minmax[0], num_stripes,
-                                  sorted_stripe_min_pos);
+  xt_sort_xt_int_permutation(stripe_minmax[0], num_stripes,
+                             sorted_stripe_min_pos);
 
   int *restrict sorted_pos_prefix_sum = sorted_stripe_min_pos + num_stripes,
     *restrict orig_pos_prefix_sum
@@ -353,9 +352,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                 sorted_pos_prefix_sum[i+j]);
 
     if (do_overlap)
-      xt_quicksort_xt_int_permutation(sorted_vector_assign + offset,
-                                      sel_size,
-                                      sorted_vec_positions + offset);
+      xt_sort_xt_int_permutation(sorted_vector_assign + offset,
+                                 sel_size, sorted_vec_positions + offset);
 
     offset += sel_size;
     i += num_selection;
@@ -456,7 +454,7 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 static const Xt_int *
 get_sorted_vector(Xt_idxvec idxvec) {
 
-  if (idxvec->sorted_vector != NULL)
+  if (idxvec->sorted_vector)
     return idxvec->sorted_vector;
 
   size_t num_indices = (size_t)idxvec->parent.num_indices;
@@ -483,12 +481,10 @@ get_sorted_vector(Xt_idxvec idxvec) {
   memcpy(sorted_vector, vector, svec_size);
 
   xt_assign_id_map_int(num_indices, idxvec->sorted_vec_positions, 0);
-  xt_quicksort_xt_int_permutation(sorted_vector, num_indices,
-                                  idxvec->sorted_vec_positions);
+  xt_sort_xt_int_permutation(sorted_vector, num_indices,
+                             idxvec->sorted_vec_positions);
 
-  idxvec->sorted_vector = sorted_vector;
-
-  return sorted_vector;
+  return idxvec->sorted_vector = sorted_vector;
 }
 
 Xt_idxlist
@@ -723,8 +719,7 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     sorted_selection_pos
       = (void *)((unsigned char *)tmp_idx + pos_ofs);
     xt_assign_id_map_int(num_selection, sorted_selection_pos, 0);
-    xt_quicksort_xt_int_permutation(tmp_idx, num_selection,
-                                    sorted_selection_pos);
+    xt_sort_xt_int_permutation(tmp_idx, num_selection, sorted_selection_pos);
     sorted_selection = tmp_idx;
   }
 
