@@ -97,7 +97,7 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums, 2,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
 
-  *stripify = global_sums[1] > 0;
+  *stripify = 0;
   return (Xt_int)(MAX(((global_sums[0] + (unsigned)comm_size - 1)
                       / (unsigned)comm_size), 1) * (unsigned)comm_size);
 }

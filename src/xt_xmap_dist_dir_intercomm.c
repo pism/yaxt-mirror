@@ -119,7 +119,7 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
   }
   xt_mpi_call(MPI_Bcast(global_sums[1], 2, MPI_UNSIGNED_LONG_LONG,
                         0, intra_comm), intra_comm);
-  *stripify = (global_sums[0][1] > 0 || global_sums[1][1] > 0);
+  *stripify = 0;
   interval_size[0]
     = (Xt_int)(((global_sums[0][0] + (unsigned)comm_size - 1)
                 / (unsigned)comm_size) * (unsigned)comm_size);
