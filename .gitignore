@@ -83,6 +83,7 @@ Makefile.in
 Makefile
 
 # Build stage files:
+*.L
 *.i
 *.la
 *.lo
