@@ -247,7 +247,13 @@ xt_config_defaults_init(void)
   config_env = getenv("XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE");
   if (config_env) {
     char *endptr;
-    long v = strtol(config_env, &endptr, 0);
+    long v;
+    errno = 0;
+    if (!strcmp(config_env, "INT_MAX")) {
+      v = INT_MAX;
+      endptr = (char *)config_env + 7;
+    } else
+      v = strtol(config_env, &endptr, 0);
     if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
         || (errno != 0 && v == 0)) {
       perror("failed to parse value of "
