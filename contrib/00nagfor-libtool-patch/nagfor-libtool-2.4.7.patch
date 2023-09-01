@@ -89,8 +89,8 @@
 +	    || ! test -d "$dir" ; then
 +	    func_fatal_error '-Wl,-rpath must be followed by -Wl-escaped directory'
 +	  fi
-+	  func_quote_for_eval "$1"
-+	  func_append libtool_args " $func_quote_for_eval_result"
++	  func_quote eval "$1"
++	  func_append libtool_args " $func_quote_result"
 +	  shift
 +	  func_add2xrpath "$dir"
 +	  continue
