@@ -107,7 +107,7 @@ int
 xt_exchanger_id_by_name(const char *name);
 
 /**
- * query size at which index lists of vector type will be converted
+ * query size above which index lists of vector type will be converted
  *
  * For many operations it makes sense to first compress large index
  * vectors to stripes before continuing further computations.
@@ -119,7 +119,7 @@ int
 xt_config_get_idxvec_autoconvert_size(Xt_config config);
 
 /**
- * set size at which index lists of vector type will be converted
+ * set size above which index lists of vector type will be converted
  *
  * For many operations it makes sense to first compress large index
  * vectors to stripes before continuing further computations. This

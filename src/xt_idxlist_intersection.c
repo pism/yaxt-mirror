@@ -122,8 +122,8 @@ xt_default_isect(Xt_idxlist idxlist_src,
      return xt_idxempty_new();
 
    Xt_idxlist intersection;
-   if (num_indices_src < config->idxv_cnv_size
-       && num_indices_dst < config->idxv_cnv_size) {
+   if (num_indices_src <= config->idxv_cnv_size
+       && num_indices_dst <= config->idxv_cnv_size) {
      Xt_int *indices_src
        = xmalloc(((size_t)num_indices_src + (size_t)num_indices_dst)
                  * sizeof (indices_src[0])),

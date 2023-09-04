@@ -90,8 +90,8 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
 
   unsigned num_indices_src = (unsigned)xt_idxlist_get_num_indices(src);
   local_vals[0] = num_indices_src;
-  local_vals[1] = (num_indices_src >= (unsigned)config->idxv_cnv_size)
-    || (xt_idxlist_get_num_indices(dst) >= config->idxv_cnv_size);
+  local_vals[1] = (num_indices_src > (unsigned)config->idxv_cnv_size)
+    || (xt_idxlist_get_num_indices(dst) > config->idxv_cnv_size);
 
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums, 2,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
