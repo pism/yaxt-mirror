@@ -73,9 +73,12 @@ AC_DEFUN([ACX_USE_LIBTOOL_CONFIGURATION],
   [dnl before switching on libtool, identify compilers that prevent us from
    dnl certain build configurations
    ACX_LT_PROBLEMS
+   m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
+     [m4_pushdef([acx_lt_sed],[sed])],
+     [m4_pushdef([acx_lt_sed],[SED])])
 dnl add some monkey patching for older libtool versions that don't handle
 dnl newer PGI or NAG configurations particularly well
-   m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.6]),1),-1,
+   m4_if(m4_cmp(m4_version_compare(LT_PACKAGE_VERSION,[2.4.7]),1),-1,
      [m4_pushdef([_LT_COMPILER_PIC],m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),[;;
 	\*Portland\\ ],[;; @%:@(
 	*NAG\\ Fortran\\ Compiler*)
@@ -83,9 +86,9 @@ dnl newer PGI or NAG configurations particularly well
 	  _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-PIC'
 	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
-	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),[sed 5q`],[sed -n 1,5p`]))dnl
+	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,5p`]))dnl
       m4_pushdef([_LT_LANG_CXX_CONFIG],m4_bpatsubst(m4_dquote(m4_defn([_LT_LANG_CXX_CONFIG])),
-        [sed 5q`],[sed -n 1,5p`]))dnl
+        acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,5p`]))dnl
       m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn(
@@ -102,7 +105,7 @@ dnl newer PGI or NAG configurations particularly well
 ],[\&	*NAG\\ Fortran\\ Compiler*\1
 	  tmp_sharedflag='-Wl,-shared'
 	  tmp_compiler_flags='`echo " \$compiler_flags " | sed -E -e '"'"': start'"'"' -e '"'"'s/ -W@<:@cl@:>@,-no-pie@<:@@<:@:blank:@:>@@:>@/ /g;t start'"'"' -e '"'"'s/^ //;s/ $//'"'"'`' ;;
-])),[sed 5q`],[sed -n 1,5p`]))dnl
+])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,5p`]))dnl
       m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],[AS_UNSET([output_verbose_link_cmd])]
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
           m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
