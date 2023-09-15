@@ -62,7 +62,7 @@ enum xt_init_states {
 #define __attribute__(att)
 #endif
 
-extern int xt_lib_state  __attribute__((aligned(16),common));
+extern int xt_lib_state  __attribute__((aligned(FC_ALIGN_C_INT),common));
 
 #endif
 
