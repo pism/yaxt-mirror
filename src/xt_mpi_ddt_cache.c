@@ -56,6 +56,7 @@
 #include "xt_mpi_ddt_cache.h"
 #include "xt_arithmetic_util.h"
 #include "core/cksum.h"
+#include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
 #if ! HAVE_DECL___BUILTIN_CLZL       \
@@ -636,6 +637,27 @@ Xt_mpi_ddt_cache_free(struct Xt_mpiddt_list *ddt_list,
   ddt_list->size_entries = 0;
 }
 
+void
+Xt_mpi_ddt_cache_check_retention(struct Xt_mpiddt_list *ddt_list,
+                                 size_t nmsg,
+                                 struct Xt_redist_msg msgs[nmsg])
+{
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  for (size_t i = 0, n = ddt_list->num_entries; i < n; ++i)
+    if (ddt_list->entries[i].use_count) {
+      MPI_Datatype cached_dt = ddt_list->entries[i].cached_dt;
+      for (size_t j = 0; j < nmsg; ++j)
+        if (msgs[j].datatype == cached_dt)
+          goto use_count_is_fine;
+      char buf[256];
+      sprintf(buf, "%d: cache inconsistency: In-use marked datatype "
+              "encountered that is not in any mesage!\n", world_rank);
+      Xt_abort(Xt_default_comm, buf, "xt_mpi_ddt_cache.c", __LINE__);
+    use_count_is_fine:
+      ;
+    }
+}
 
 /*
  * Local Variables:
