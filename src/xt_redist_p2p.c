@@ -66,6 +66,8 @@
 
 #include "xt_arithmetic_util.h"
 
+#include "xt_mpi_ddt_cache.h"
+
 /* the following two functions fullfil the same purpose as
  * xt_disp2ext and xt_disp2ext_count but work with an indirection  */
 static size_t
@@ -258,6 +260,7 @@ xt_redist_p2p_off_custom_new(Xt_xmap xmap, const int *src_offsets,
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
   generate_msg_infos(nsend, src_iter, src_offsets, send_msgs, &params);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
+  Xt_mpi_ddt_cache_check_retention(&params.ddt_list, nmsg, msgs);
   xt_destroy_mpi_strp_prs_params(&params);
 
   struct Xt_config_ config_ = *config;
