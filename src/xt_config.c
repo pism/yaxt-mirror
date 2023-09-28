@@ -232,6 +232,64 @@ xt_config_set_redist_mthread_mode(Xt_config config, int mode)
     | ((int32_t)mode << xt_mthread_mode_bit_ofs);
 }
 
+/**
+ * \page defaults Customizable defaults
+ *
+ * \tableofcontents
+ *
+ * \section default_exchanger Exchanger choice
+ *
+ * The internal exchanger class handles the message passing part of the
+ * redist.
+ *
+ * The default exchanger, mix_irecv_isend, is suited for MPI
+ * implementations with strong support for derived MPI datatypes and
+ * efficient handling of nonblocking point-to-point communication.
+ *
+ * By setting the environment variable XT_CONFIG_DEFAULT_EXCHANGE_METHOD,
+ * one of the other available exchangers can be selected:
+ * <ul>
+ *
+ * <li> irecv_send uses non-blocking receives but then uses blocking
+ * sends. This may be beneficial for platforms that can elide some
+ * preparations for non-blocking transfers in this case but is
+ * expected to have downsides as soon as actual network latencies
+ * become relevant.
+ *
+ * <li> irecv_isend differs from the default in that it doesn't bother
+ * to mix initiating sends and receives. Rather, all receives are
+ * initiated before any send is initiated.
+ *
+ * <li> irecv_isend_packed Separates the network transfer from the
+ * iteration of the MPI datatype by creating an MPI_PACKED buffer
+ * filled via MPI_Pack internally.
+ *
+ * <li> irecv_isend_ddt_packed Builds on irecv_isend_packed but uses
+ * OpenACC kernels instead of MPI_Pack. This usually results in
+ * significant performance gains on GPUs.
+ *
+ * <li> mix_irecv_isend
+ *
+ * <li> neigh_alltoall Available when a robust implementation of MPI 3
+ * neighbor collectives is provided. Uses MPI_Neighbor_alltoallw
+ * instead of point-to-point communication. This may benefit from
+ * pre-created data paths but creates additional MPI communicators
+ * which may be too costly in highly dynamic use cases.
+ *
+ * </ul>
+ *
+ * \section default_autoconvert Automatic conversions of index vectors
+ * to stripes
+ *
+ * When constructing an Xmap via xt_xmap_dist_dir_new or
+ * xt_xmap_all2all_new, index lists passed in as xt_idxvec will be
+ * automatically converted to xt_idxstripes if the size is above a
+ * limit which defaults to 128 indices.
+ *
+ * The XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE
+ * \section XT_CONFIG_DEFAULT_MULTI_THREAD_MODE
+ * 
+ */
 void
 xt_config_defaults_init(void)
 {
