@@ -56,7 +56,7 @@ PROGRAM test_redist_p2p_f
        xt_config, xt_config_delete
   ! pgfortran is in most versions well incapable of handling multiply extended
   ! generic interfaces
-#ifdef __PGI
+#ifdef __NVCOMPILER
   USE xt_redist_logical, ONLY: xt_redist_s_exchange
 #endif
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
@@ -99,7 +99,7 @@ CONTAINS
          &     5_xi,  4_xi,  5_xi,  4_xi,  3_xi, &
          &    13_xi,  2_xi,  1_xi /)
     INTEGER :: i
-#ifndef __PGI
+#ifndef __NVCOMPILER
     DOUBLE PRECISION, PARAMETER :: src_data(src_num_indices) = &
          (/ (DBLE(i), i=0,src_num_indices-1) /)
 #else
@@ -117,7 +117,7 @@ CONTAINS
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist_dp, redist_copy, redist_l
 
-#ifdef __PGI
+#ifdef __NVCOMPILER
     DO i = 1, src_num_indices
       src_data(i) = DBLE(i - 1)
     END DO
@@ -182,7 +182,7 @@ CONTAINS
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist, redist_copy
-#ifndef __PGI
+#ifndef __NVCOMPILER
     DOUBLE PRECISION, PARAMETER :: src_data(src_num) = &
          (/ (DBLE(i), i=0,src_num-1) /)
 #else
@@ -195,7 +195,7 @@ CONTAINS
          &   0.0d0,  2.0d0,  0.0d0,  2.0d0, 13.0d0, &
          &   4.0d0,  6.0d0,  7.0d0 /)
 
-#ifdef __PGI
+#ifdef __NVCOMPILER
     DO i = 1, src_num
       src_data(i) = DBLE(i - 1)
     END DO

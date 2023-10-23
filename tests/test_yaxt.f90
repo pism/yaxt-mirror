@@ -60,7 +60,7 @@ PROGRAM test_yaxt
 
   ! PGI compilers up to at least version 15 do not handle generic
   ! interfaces correctly
-#if defined __PGI
+#if defined __NVCOMPILER
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange

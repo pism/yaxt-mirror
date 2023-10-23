@@ -673,7 +673,7 @@ generate_dir_transfer_pos_ext_dst(
   }
   /* since cover is a struct, at least pgcc 11-13 cannot compile this with a
    * compound literal or initialize r directly */
-#if defined __PGI && __PGIC__ <= 13
+#if defined __NVCOMPILER && __NVCOMPILER_MAJOR__ <= 13
   struct ted_result r;
   r.cover = cover;
   r.resCount = new_num_intersections;

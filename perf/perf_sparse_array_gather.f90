@@ -57,7 +57,7 @@ PROGRAM perf_sparse_array_gather
   USE iso_c_binding, ONLY: c_int
   USE mpi
   ! older PGI compilers do not handle generic interface correctly
-#if defined __PGI && ( __PGIC__ == 15 || __PGIC__ == 14 )
+#if defined __NVCOMPILER && ( __NVCOMPILER_MAJOR__ == 15 || __NVCOMPILER_MAJOR__ == 14 )
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
 #endif

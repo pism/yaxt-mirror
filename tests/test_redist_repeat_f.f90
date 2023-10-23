@@ -55,7 +55,7 @@ PROGRAM test_redist_repeat
        xt_redist_repeat_new, xt_redist_delete, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
        xt_request, xt_config, xt_config_delete
-#if defined __PGI && ( __PGIC__ == 15 || __PGIC__ == 14 )
+#if defined __NVCOMPILER && ( __NVCOMPILER_MAJOR__ == 15 || __NVCOMPILER_MAJOR__ == 14 )
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
@@ -147,7 +147,7 @@ CONTAINS
     CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
   END SUBROUTINE test_repeated_redist_ds1
 
-#ifdef __PGI
+#ifdef __NVCOMPILER
 #  define NO_2D_PARAM
 #elif defined(_CRAYFTN)
 #  if _RELEASE_MAJOR < 8 || (_RELEASE_MAJOR == 8 && _RELEASE_MINOR < 7)
@@ -351,7 +351,7 @@ CONTAINS
     INTEGER, PARAMETER :: src_pos(npt) = (/ (i, i=1,npt) /), &
          dst_pos(npt) = (/ (2*i, i = 0, npt-1) /)
     DOUBLE PRECISION :: src_data(npt), dst_data(npt)
-#if __INTEL_COMPILER >= 1600 && __INTEL_COMPILER <= 1602 || defined __PGI
+#if __INTEL_COMPILER >= 1600 && __INTEL_COMPILER <= 1602 || defined __NVCOMPILER
     DOUBLE PRECISION :: ref_dst_data(npt)
 #else
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(npt) &
@@ -370,7 +370,7 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
 
     ! init data
-#if __INTEL_COMPILER >= 1600 && __INTEL_COMPILER <= 1602 || defined __PGI
+#if __INTEL_COMPILER >= 1600 && __INTEL_COMPILER <= 1602 || defined __NVCOMPILER
     DO j = 2, 0, -1
       DO i = 1, 3
         ref_dst_data(i + (2-j)*3) = DBLE(((2-j)*3+i+101)*((ABS(j)+j)/ABS(j+1)) &

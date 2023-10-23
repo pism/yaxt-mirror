@@ -55,12 +55,12 @@ MODULE redist_collection_displace
        Xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_request, xt_redist_a_exchange, xt_config
   ! older PGI compilers do not handle generic interface correctly
-#if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ < 12 || (__NVCOMPILER_MAJOR__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   ! and when taking the slice address and the optimizer is on,
   ! some other random failure occurs even with very recent compiler versions
-#if defined __PGI && (__PGIC__ <= 20 || __PGIC__ == 21 && __PGIC_MINOR__ <= 5)
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ <= 20 || __NVCOMPILER_MAJOR__ == 21 && __PGIC_MINOR__ <= 5)
 #undef HAVE_FC_C_LOC_OF_SLICE
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, &

@@ -114,7 +114,7 @@ CONTAINS
     INTEGER, PARAMETER :: num_elem = 10
     INTEGER, PARAMETER :: displ(num_elem) &
          = (/ (i, i = num_elem - 1, 0, -1) /)
-#ifndef __PGI
+#ifndef __NVCOMPILER
     DOUBLE PRECISION, PARAMETER :: src_data(num_elem) &
          = (/ (DBLE(i), i = 1, num_elem) /)
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(num_elem) &
@@ -123,7 +123,7 @@ CONTAINS
     DOUBLE PRECISION :: src_data(num_elem), ref_dst_data(num_elem)
 #endif
 
-#ifdef __PGI
+#ifdef __NVCOMPILER
     DO i = 1, num_elem
       src_data(i) = DBLE(i)
       ref_dst_data(i) = DBLE(num_elem - i + 1)

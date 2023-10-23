@@ -259,14 +259,14 @@ CONTAINS
     TYPE(xt_com_pos), INTENT(in) :: com_pos(:)
     INTEGER :: i
     INTEGER :: total_num_pos
-#if defined __PGI && __PGIC__  > 15 && __PGIC__ <= 20
+#if defined __NVCOMPILER && __NVCOMPILER_MAJOR__  > 15 && __NVCOMPILER_MAJOR__ <= 20
     INTEGER, POINTER :: pos(:)
 #endif
     total_num_pos = 0
 #ifdef HAVE_FC_IS_CONTIGUOUS
     IF (KIND(com_pos(i)%transfer_pos) == c_int) THEN
       DO i = 1, num_msg
-#if defined __PGI && __PGIC__  > 15 && __PGIC__ <= 20
+#if defined __NVCOMPILER && __NVCOMPILER_MAJOR__  > 15 && __NVCOMPILER_MAJOR__ <= 20
         pos => com_pos(i)%transfer_pos
         IF (.NOT. IS_CONTIGUOUS(pos)) THEN
 #else
@@ -296,7 +296,7 @@ CONTAINS
     INTEGER(c_int), TARGET, INTENT(inout) :: pos_buffer(size_pos_buf)
     INTEGER, INTENT(inout) :: pos_buffer_offset
     INTEGER :: i, j, num_pos
-#if defined __PGI && __PGIC__  > 15 && __PGIC__ <= 20
+#if defined __NVCOMPILER && __NVCOMPILER_MAJOR__  > 15 && __NVCOMPILER_MAJOR__ <= 20
     INTEGER, POINTER :: pos(:)
 #endif
     ALLOCATE(com_pos_c(num_msg))
@@ -304,7 +304,7 @@ CONTAINS
     DO i = 1, num_msg
       num_pos = SIZE(com_pos(i)%transfer_pos)
 #ifdef HAVE_FC_IS_CONTIGUOUS
-#  if defined __PGI && __PGIC__ > 15 && __PGIC__ <= 20
+#  if defined __NVCOMPILER && __NVCOMPILER_MAJOR__ > 15 && __NVCOMPILER_MAJOR__ <= 20
       pos => com_pos(i)%transfer_pos
       IF (KIND(1) == c_int .AND. IS_CONTIGUOUS(pos)) THEN
 #  else

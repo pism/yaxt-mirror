@@ -59,7 +59,7 @@ PROGRAM test_redist_repeat_parallel
        xt_idxlist_get_indices, xt_int_mpidt, &
        xt_request, xt_redist_a_exchange, xt_config, xt_config_delete
     ! older PGI compilers do not handle generic interface correctly
-#if defined __PGI
+#if defined __NVCOMPILER
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange

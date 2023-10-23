@@ -54,7 +54,7 @@ PROGRAM test_ut
   USE ftest_common, ONLY: finish_mpi, icmp, id_map, factorize, regular_deco, &
        test_abort
   USE test_redist_common, ONLY: xt_redist_s_exchange
-#ifdef __PGI
+#ifdef __NVCOMPILER
   ! PGI up to at least 15.4 has a bug that prevents proper import of
   ! multiply extended generics. This is a separate bug from the one exhibited
   ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)

@@ -1224,7 +1224,7 @@ CONTAINS
     REAL(c_double) :: rand_nums(block_len), sc
     n = SIZE(a)
     nb = n/block_len
-#if defined __PGI && __PGIC__ <= 21
+#if defined __NVCOMPILER && __NVCOMPILER_MAJOR__ <= 21
     scale_val &
          = IAND(HUGE(a), NOT(ISHFT(1_i8, BIT_SIZE(1_i8) &
          &                               - DIGITS(0.0_c_double))  - 1 ) )

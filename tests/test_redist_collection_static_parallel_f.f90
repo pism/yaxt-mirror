@@ -62,7 +62,7 @@ PROGRAM test_redist_collection_static_parallel
        redist_exchanger_option
   USE iso_c_binding, ONLY: c_loc, c_ptr
   ! older PGI compilers do not handle generic interface correctly
-#if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ < 12 || (__NVCOMPILER_MAJOR__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   IMPLICIT NONE

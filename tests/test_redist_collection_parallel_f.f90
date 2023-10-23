@@ -59,7 +59,7 @@ PROGRAM test_redist_collection_parallel
        xt_idxlist_get_indices, xt_int_mpidt, &
        xt_request, xt_redist_a_exchange, xt_config, xt_config_delete
   ! older PGI compilers do not handle generic interface correctly
-#if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ < 12 || (__NVCOMPILER_MAJOR__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: check_wait_request, redist_exchanger_option

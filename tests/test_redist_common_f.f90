@@ -60,7 +60,7 @@ MODULE test_redist_common
        xt_redist_get_num_recv_msg, xt_redist_get_num_send_msg, &
        xi => xt_int_kind, xt_config, xt_config_new, &
        xt_config_set_exchange_method, xt_exchanger_id_by_name
-#ifdef __PGI
+#ifdef __NVCOMPILER
   ! PGI up to at least 15.4 has a bug that prevents proper import of
   ! multiply extended generics. This is a separate bug from the one exhibited
   ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
