@@ -183,7 +183,7 @@ static void xt_request_msgs_ebuf_wait(Xt_request request) {
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overread"
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
@@ -191,7 +191,7 @@ static void xt_request_msgs_ebuf_wait(Xt_request request) {
   xt_mpi_call(MPI_Waitall(request_msgs_ebuf->n_requests,
                           request_msgs_ebuf->requests, MPI_STATUSES_IGNORE),
               request_msgs_ebuf->comm);
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
 #pragma GCC diagnostic pop
 #endif
   finish_requests(request_msgs_ebuf);
@@ -294,14 +294,14 @@ xt_request_msgs_ebuf_wait_omp(Xt_request request)
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overread"
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
     xt_mpi_call(MPI_Waitall(nreq_, request_msgs->requests+start_req,
                             MPI_STATUSES_IGNORE), request_msgs->comm);
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
 #pragma GCC diagnostic pop
 #endif
 #pragma omp barrier
