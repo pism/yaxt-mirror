@@ -419,7 +419,7 @@ xt_mpi_test_some(int *restrict num_req,
   int done_count;
   size_t num_req_ = (size_t)*num_req;
 
-#if __GNUC__ == 11 || __GNUC__ == 12
+#if __GNUC__ >= 11 && __GNUC__ <= 13
   /* GCC 11 has no means to specify that the special value pointer
    * MPI_STATUSES_IGNORE does not need to point to something of size > 0 */
 #pragma GCC diagnostic push
@@ -428,7 +428,7 @@ xt_mpi_test_some(int *restrict num_req,
 #endif
   xt_mpi_call(MPI_Testsome(*num_req, req, &done_count, ops_completed,
                            MPI_STATUSES_IGNORE), comm);
-#if __GNUC__ == 11 || __GNUC__ == 12
+#if __GNUC__ >= 11 && __GNUC__ <= 13
 #pragma GCC diagnostic pop
 #endif
 
@@ -466,7 +466,7 @@ xt_mpi_test_some_mt(int *restrict num_req,
 
   for (size_t i = start_req; i < start_req + nreq_; ++i)
     ops_completed[i] = -1;
-#if __GNUC__ == 11 || __GNUC__ == 12
+#if __GNUC__ >= 11 && __GNUC__ <= 13
   /* GCC 11 has no means to specify that the special value pointer
    * MPI_STATUSES_IGNORE does not need to point to something of size > 0 */
 #pragma GCC diagnostic push
@@ -475,7 +475,7 @@ xt_mpi_test_some_mt(int *restrict num_req,
 #endif
   xt_mpi_call(MPI_Testsome((int)nreq_, req+start_req, &done_count,
                            ops_completed+start_req, MPI_STATUSES_IGNORE), comm);
-#if __GNUC__ == 11 || __GNUC__ == 12
+#if __GNUC__ >= 11 && __GNUC__ <= 13
 #pragma GCC diagnostic pop
 #endif
   if (done_count == MPI_UNDEFINED)

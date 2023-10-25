@@ -158,7 +158,7 @@ static void xt_request_msgs_wait(Xt_request request) {
 
   Xt_request_msgs request_msgs = (Xt_request_msgs)request;
 
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
   /* GCC 11 has no means to specify that the special value pointer
    * MPI_STATUSES_IGNORE does not need to point to something of size > 0 */
 #pragma GCC diagnostic push
@@ -167,7 +167,7 @@ static void xt_request_msgs_wait(Xt_request request) {
 #endif
   xt_mpi_call(MPI_Waitall(request_msgs->n, request_msgs->requests,
                           MPI_STATUSES_IGNORE), request_msgs->comm);
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
 #pragma GCC diagnostic pop
 #endif
 
@@ -196,7 +196,7 @@ xt_request_msgs_wait_omp(Xt_request request)
   {
     Xt_request_msgs request_msgs = (Xt_request_msgs)request;
 
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
   /* GCC 11 has no means to specify that the special value pointer
    * MPI_STATUSES_IGNORE does not need to point to something of size > 0 */
 #pragma GCC diagnostic push
@@ -210,7 +210,7 @@ xt_request_msgs_wait_omp(Xt_request request)
       nreq_ = (nreq * (tid+1)) / num_threads - start_req;
     xt_mpi_call(MPI_Waitall(nreq_, request_msgs->requests+start_req,
                             MPI_STATUSES_IGNORE), request_msgs->comm);
-#if (__GNUC__ == 11 || __GNUC__ == 12) && defined MPICH
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
 #pragma GCC diagnostic pop
 #endif
   }
