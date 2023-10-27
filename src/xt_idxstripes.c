@@ -884,6 +884,48 @@ xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     return idxstripes_compute_intersection(idxstripes_src, idxstripes_dst);
 }
 
+static inline bool
+stripe_contains_index(struct Xt_stripe stripe, Xt_int idx)
+{
+  Xt_int start = stripe.start, stride = stripe.stride;
+  if (idx >= start && stride > 0) {
+    return idx < start + stride * stripe.nstrides
+      && (idx - start) % stride == 0;
+  } else if (idx <= start && stride < 0) {
+    return idx > start + stride * stripe.nstrides
+      && (start - idx) % stride == 0;
+  } else {
+    return idx == start;
+  }
+}
+
+PPM_DSO_INTERNAL Xt_idxlist
+xt_idxstripes_get_idxvec_intersection(Xt_idxlist idxlist_src,
+                                      Xt_idxlist idxlist_dst,
+                                      Xt_config XT_UNUSED(config))
+{
+  Xt_idxstripes idxstripes_src = (Xt_idxstripes)idxlist_src;
+  const struct Xt_stripe *stripes_src = idxstripes_src->stripes;
+  assert(idxlist_dst->vtable->idxlist_pack_code == VECTOR
+         && idxlist_src->vtable == &idxstripes_vtable);
+  const Xt_int *indices = xt_idxlist_get_indices_const(idxlist_dst);
+  size_t ndst = (size_t)idxlist_dst->num_indices;
+  Xt_int *found_indices = malloc(ndst * sizeof (Xt_int));
+  size_t nsrc_stripes = (size_t)idxstripes_src->num_stripes,
+    num_found_indices = 0;
+  for (size_t i = 0; i < ndst; ++i) {
+    Xt_int dst_idx = indices[i];
+    for (size_t j = 0; j < nsrc_stripes; ++j)
+      if (stripe_contains_index(stripes_src[j], dst_idx)) {
+        found_indices[num_found_indices++] = dst_idx;
+        break;
+      }
+  }
+  Xt_idxlist isect_vec = xt_idxvec_new(found_indices, (int)num_found_indices);
+  free(found_indices);
+  return isect_vec;
+}
+
 static Xt_idxlist
 idxstripes_copy(Xt_idxlist idxlist) {
 

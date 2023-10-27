@@ -67,6 +67,11 @@ PPM_DSO_INTERNAL Xt_idxlist
 xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
                                Xt_config config);
 
+PPM_DSO_INTERNAL Xt_idxlist
+xt_idxstripes_get_idxvec_intersection(Xt_idxlist idxlist_src,
+                                      Xt_idxlist idxvec_dst,
+                                      Xt_config config);
+
 /**
  * Generates an index list that is built up of stripes of indices.
  * Does not copy the stripes.
