@@ -160,6 +160,33 @@ struct Xt_idxvec_ {
    */
 };
 
+struct Xt_vec_alloc
+{
+  struct Xt_idxvec_ *idxvec;
+  Xt_int *vector;
+};
+
+static struct Xt_vec_alloc
+alloc_idxvec_no_init(int num_indices)
+{
+  size_t vector_size = (size_t)num_indices * sizeof (Xt_int),
+    header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
+                   /sizeof (Xt_int)) * sizeof (Xt_int);
+  struct Xt_idxvec_ *idxvec_obj = xmalloc(header_size + vector_size);
+  Xt_int *vector_assign
+    = (Xt_int *)(void *)((unsigned char *)idxvec_obj + header_size);
+  idxvec_obj->vector = vector_assign;
+  return (struct Xt_vec_alloc) { idxvec_obj, vector_assign };
+}
+
+static struct Xt_vec_alloc
+alloc_idxvec(int num_indices)
+{
+  struct Xt_vec_alloc vec_alloc = alloc_idxvec_no_init(num_indices);
+  Xt_idxlist_init(&vec_alloc.idxvec->parent, &idxvec_vtable, num_indices);
+  return vec_alloc;
+}
+
 
 Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   INSTR_DEF(t_idxvec_new,"xt_idxvec_new")
@@ -174,20 +201,13 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
     die("number of indices passed to xt_idxvec_new must not be negative!");
 
   INSTR_START(t_idxvec_new);
-  size_t vector_size = (size_t)num_indices * sizeof (idxvec[0]),
-    header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
-                   /sizeof (Xt_int)) * sizeof (Xt_int);
-  struct Xt_idxvec_ *restrict idxvec_obj = xmalloc(header_size + vector_size);
-  Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
-
-  Xt_int *vector_assign = (Xt_int *)(void *)((unsigned char *)idxvec_obj + header_size);
-  idxvec_obj->vector = vector_assign;
-  memcpy(vector_assign, idxvec, vector_size);
-  idxvec_obj->sorted_vector = NULL;
-  idxvec_obj->sorted_vec_positions = NULL;
+  struct Xt_vec_alloc vec_alloc = alloc_idxvec(num_indices);
+  memcpy(vec_alloc.vector, idxvec, (size_t)num_indices * sizeof (Xt_int));
+  vec_alloc.idxvec->sorted_vector = NULL;
+  vec_alloc.idxvec->sorted_vec_positions = NULL;
 
   INSTR_STOP(t_idxvec_new);
-  return (void *)idxvec_obj;
+  return (void *)vec_alloc.idxvec;
 }
 
 Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
@@ -365,23 +385,14 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
 
   Xt_idxlist idxlist;
   if (num_indices > 0) {
-    size_t vector_size = (size_t)num_indices * sizeof (Xt_int),
-      header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
-                     /sizeof (Xt_int)) * sizeof (Xt_int);
-    Xt_idxvec idxvec_obj = xmalloc(header_size + vector_size);
-    Xt_int *restrict indices
-      = (Xt_int *)(void *)((unsigned char *)idxvec_obj + header_size);
-    idxvec_obj->vector = indices;
-
+    struct Xt_vec_alloc vec_alloc = alloc_idxvec((int)num_indices);
+    Xt_int *restrict indices = vec_alloc.vector;
     size_t k = (size_t)-1;
     for (int i = 0; i < num_stripes; ++i)
       for (int j = 0; j < stripes[i].nstrides; ++j)
         indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
-
-    Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, (int)num_indices);
-
-    generate_sorted_vector_from_stripes(stripes, num_stripes, idxvec_obj);
-    idxlist = (Xt_idxlist)idxvec_obj;
+    generate_sorted_vector_from_stripes(stripes, num_stripes, vec_alloc.idxvec);
+    idxlist = (Xt_idxlist)vec_alloc.idxvec;
   } else
     idxlist = xt_idxempty_new();
   return idxlist;
@@ -430,27 +441,20 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                          &num_indices, 1, MPI_INT, comm), comm);
 
-  size_t vector_size = (size_t)num_indices * sizeof (Xt_int),
-    header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
-                   /sizeof (Xt_int)) * sizeof (Xt_int);
-  Xt_idxvec idxvec = xmalloc(header_size + vector_size);
-  Xt_idxlist_init(&idxvec->parent, &idxvec_vtable, num_indices);
-
-  Xt_int *vector_assign = (Xt_int *)(void *)((unsigned char *)idxvec + header_size);
-  idxvec->vector = vector_assign;
-  if (num_indices != 0) {
+  Xt_idxlist idxvec = NULL;
+  if (num_indices > 0) {
+    struct Xt_vec_alloc vec_alloc = alloc_idxvec(num_indices);
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           vector_assign, num_indices,
+                           vec_alloc.vector, num_indices,
                            Xt_int_dt, comm), comm);
+    vec_alloc.idxvec->sorted_vector = NULL;
+    vec_alloc.idxvec->sorted_vec_positions = NULL;
+    idxvec = (Xt_idxlist)vec_alloc.idxvec;
   } else {
-    fputs("warning: implementation generated empty vector!\n", stderr);
-    idxvec->vector = NULL;
+    Xt_abort(comm, "error: implementation generated empty vector!\n",
+             filename, __LINE__);
   }
-
-  idxvec->sorted_vector = NULL;
-  idxvec->sorted_vec_positions = NULL;
-
-  return (Xt_idxlist)idxvec;
+  return idxvec;
 }
 
 static const Xt_int *
@@ -506,16 +510,9 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     num_indices_src = (size_t)idxvec_src->parent.num_indices,
     num_indices_dst = (size_t)idxvec_dst->parent.num_indices;
 
-  size_t vector_size = num_indices_dst * sizeof (idxvec_dst->vector[0]),
-    header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
-                   /sizeof (Xt_int)) * sizeof (Xt_int);
-
-  Xt_idxvec inter_vector = xmalloc(header_size + vector_size);
-
-  Xt_int *vector_assign
-    = (Xt_int *)(void *)((unsigned char *)inter_vector + header_size);
-  inter_vector->vector = vector_assign;
-
+  struct Xt_vec_alloc vec_alloc = alloc_idxvec_no_init((int)num_indices_dst);
+  Xt_idxvec inter_vector = vec_alloc.idxvec;
+  Xt_int *vector_assign = vec_alloc.vector;
 
   // get sorted indices of source and destination
   const Xt_int *restrict sorted_src_vector = get_sorted_vector(idxvec_src),
@@ -534,7 +531,9 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
   }
 
   if (num_indices_inter) {
-    vector_size = (size_t)num_indices_inter * sizeof (idxvec_dst->vector[0]);
+    size_t vector_size = num_indices_inter * sizeof (idxvec_dst->vector[0]),
+      header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
+                     /sizeof (Xt_int)) * sizeof (Xt_int);
     inter_vector = xrealloc(inter_vector, header_size + vector_size);
     inter_vector->vector
       = (Xt_int *)(void *)((unsigned char *)inter_vector + header_size);
