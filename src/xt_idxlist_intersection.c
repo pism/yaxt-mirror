@@ -69,6 +69,9 @@ typedef Xt_idxlist (*intersection_get)(Xt_idxlist idxlist_src,
 
 #define empty_isect ((intersection_get)(void (*)(void))xt_idxempty_new)
 
+/* table of intersection function to use, entry is chosen
+ * by type of source index list and type of destination index list
+ */
 static const intersection_get
 intersection_get_matrix[num_idxlist_classes][num_idxlist_classes] = {
   { empty_isect, empty_isect, empty_isect, empty_isect, empty_isect },
