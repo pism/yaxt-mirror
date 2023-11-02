@@ -405,6 +405,9 @@ given MPI implementation, but some tests might fail])],
 because configure option --without-regard-for-quality is active])])])
 AC_CONFIG_LIBOBJ_DIR([src/mpi-workarounds])
 xt_disable_nb_a2a=no
+m4_pushdef([AC_LANG(Fortran)],m4_bpatsubst(m4_dquote(m4_defn([AC_LANG(Fortran)])),
+  [\(ac_link='.*\)\$LIBS],[\1$XT_LIBS4FC]))
+XT_LIBS4FC="$LIBS $MPI_FC_LIB"
 ACX_MPI_DEFECTS(,,
   [ACX_MPI_DEFECTS_DOCUMENT([${acx_subtestname}])
    AS_CASE(["$acx_subtestname"],
@@ -472,6 +475,7 @@ Consider getting a better MPI/batch scheduler.])
         [defined to 1 if this MPI does not support zero-size datatypes])
       mpi_defect_fail_action],
      [mpi_defect_fail_action])])
+m4_popdef([AC_LANG(Fortran)])dnl
 m4_popdef([_AC_RUN_LOG_LIMIT])m4_popdef([_AC_LINK_IFELSE])dnl
 rm -f conftest.err conftest.error_exit.txt
 AC_SUBST([xt_mpi_workaround_LIBS])
