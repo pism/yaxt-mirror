@@ -81,12 +81,15 @@ q
      AC_COMPUTE_INT([MPI_SUBVERSION], [MPI_SUBVERSION],
        [@%:@include <mpi.h>],
        [AC_MSG_ERROR([cannot determine MPI sub-version!])])])
+  while : ; do
   AS_IF([test x${acx_mpi_expected_version+set} = x \
     || $PERL -e "use strict; use warnings; exit(!(v${MPI_VERSION}.${MPI_SUBVERSION} ${acx_mpi_expected_version}))"],
     [AS_CASE([$acx_suffix],
        [c],
        [cat confdefs.h "$[]1" >conftest."$acx_suffix"],
-       [f90|F90],[cat "$[]1" >conftest."$acx_suffix"
+       [f90|F90],[AS_IF([test x"$FC" = xno],
+          [acx_mpi_defects_result=skipped ; acx_mpi_defects_fail=no ; break])
+        cat "$[]1" >conftest."$acx_suffix"
         _AC_LANG_SET(,[Fortran])],
        [AC_MSG_FAILURE([Unexpected language in MPI check: ${acx_subtestname}.${acx_suffix}])])
      AC_LINK_IFELSE(,
@@ -102,6 +105,8 @@ q
      AS_CASE([$acx_suffix],
        [f90|F90],[_AC_LANG_SET(,[C])])],
     [acx_mpi_defects_result=skipped ; acx_mpi_defects_fail=no])
+    break
+  done
   AC_MSG_RESULT([$acx_mpi_defects_result])
   AS_IF([test x"$acx_mpi_defects_fail" != xyes],
     [return 0],
