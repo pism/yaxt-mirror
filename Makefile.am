@@ -83,6 +83,8 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	config/checkdoc/mpich_4.0.x_ddt_transfer.txt \
 	config/checkpatch/mpich_4.0.x_ddt_transfer.patch \
 	config/checksrc/mpich_4.0.x_ddt_transfer.c \
+	config/checkdoc/mpi_fortran_startup.txt \
+	config/checksrc/mpi_fortran_startup.f90 \
 	contrib/00nagfor-libtool-patch/README.txt \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \
