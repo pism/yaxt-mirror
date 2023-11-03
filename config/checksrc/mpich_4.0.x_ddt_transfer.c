@@ -105,8 +105,15 @@ int main(int argc, char **argv)
       MPI_Isend(
         send_buffer, EXCH_COUNT, ddt, i, 0, MPI_COMM_WORLD,
         requests[1] + i);
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
     MPI_Waitall(2 * RANK_COUNT, requests[0], MPI_STATUSES_IGNORE);
-
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
+#pragma GCC diagnostic pop
+#endif
     free(recv_buffer);
     free(send_buffer);
     MPI_Type_free(&ddt);

@@ -170,8 +170,15 @@ void do_test(MPI_Datatype * sends, int ref_recv_data[recv_data_count]) {
 
   MPI_Irecv(recv_data, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &request);
   MPI_Send(send_data, 1, send_dt, 0, 0, MPI_COMM_WORLD);
-
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
   MPI_Waitall(1, &request, MPI_STATUSES_IGNORE);
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
+#pragma GCC diagnostic pop
+#endif
 
   MPI_Type_free(&send_dt);
 
