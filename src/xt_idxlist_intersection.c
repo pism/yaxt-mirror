@@ -76,7 +76,7 @@ static const intersection_get
 intersection_get_matrix[num_idxlist_classes][num_idxlist_classes] = {
   { empty_isect, empty_isect, empty_isect, empty_isect, empty_isect },
   { empty_isect, xt_idxvec_get_intersection, xt_default_isect, xt_default_isect,
-    xt_default_isect },
+    xt_idxvec_get_idxstripes_intersection },
   { empty_isect, xt_default_isect, /* xt_idxlist_collection_get_intersection, */
     xt_default_isect, xt_default_isect, xt_default_isect },
   { empty_isect, xt_idxsection_get_intersection_with_other_idxlist,

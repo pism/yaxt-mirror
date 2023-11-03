@@ -61,6 +61,12 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
 PPM_DSO_INTERNAL Xt_idxlist
 xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices);
 
+PPM_DSO_INTERNAL Xt_idxlist
+xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
+                                      Xt_idxlist idxlist_dst,
+                                      Xt_config config);
+
+
 #endif
 
 /*

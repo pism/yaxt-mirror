@@ -96,6 +96,12 @@ xt_can_merge_pos_ext(struct Xt_pos_ext a, struct Xt_pos_ext b)
           & ((abs(b.size) == 1) | (isign(a.size) == isign(b.size))));
 }
 
+PPM_DSO_INTERNAL const struct Xt_stripe *
+xt_idxstripes_get_index_stripes_const(Xt_idxlist idxlist);
+
+PPM_DSO_INTERNAL size_t
+xt_idxstripes_get_num_index_stripes(Xt_idxlist idxlist);
+
 #endif
 
 /*
