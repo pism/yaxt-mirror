@@ -51,7 +51,7 @@ AC_DEFUN([_ACX_LT_FORT_FLAGS_MANGLE],
      [AS_VAR_PUSHDEF([acx_FC],[F77])dnl
       AS_VAR_PUSHDEF([acx_FCFLAGS],[FFLAGS])dnl
       AS_VAR_PUSHDEF([acx_LDFLAGS],[F77LDFLAGS])])
-   acx_temp=`$acx_FC -V 2>&1 | sed -n 1,5p`
+   acx_temp=`$acx_FC -V 2>&1 | sed -n 1,15p`
 dnl fix problems from NAG compiler
    AS_CASE(["$acx_temp"],
      [*NAG\ Fortran\ Compiler\ Release*],
@@ -86,9 +86,9 @@ dnl newer PGI or NAG configurations particularly well
 	  _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-PIC'
 	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
-	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,5p`]))dnl
+	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`]))dnl
       m4_pushdef([_LT_LANG_CXX_CONFIG],m4_bpatsubst(m4_dquote(m4_defn([_LT_LANG_CXX_CONFIG])),
-        acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,5p`]))dnl
+        acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`]))dnl
       m4_pushdef([_LT_LINKER_SHLIBS],m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn(
@@ -105,7 +105,7 @@ dnl newer PGI or NAG configurations particularly well
 ],[\&	*NAG\\ Fortran\\ Compiler*\1
 	  tmp_sharedflag='-Wl,-shared'
 	  tmp_compiler_flags='`echo " \$compiler_flags " | sed -E -e '"'"': start'"'"' -e '"'"'s/ -W@<:@cl@:>@,-no-pie@<:@@<:@:blank:@:>@@:>@/ /g;t start'"'"' -e '"'"'s/^ //;s/ $//'"'"'`' ;;
-])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,5p`]))dnl
+])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`]))dnl
       m4_pushdef([_LT_SYS_HIDDEN_LIBDEPS],[AS_UNSET([output_verbose_link_cmd])]
         m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(
           m4_defn([_LT_SYS_HIDDEN_LIBDEPS])),[test x-\([LR]\) = "\$p"],
