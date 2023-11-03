@@ -437,6 +437,10 @@ ACX_MPI_DEFECTS(,,
          XT_WORKAROUND_MPI_CPPFLAGS="-I$ac_pwd/$acx_yaksa_add_workaround ${XT_WORKAROUND_MPI_CPPFLAGS-$CPPFLAGS}"],
         [AC_MSG_WARN([Cannot apply MPICH YAKSA datatype bug work-around.])
          mpi_defect_fail_action])],
+     [mpi_fortran_startup],
+     [AC_MSG_WARN([known problem detected, attempting work-around!])
+      ACX_LIBXML2_WORKAROUND(,[mpi_fortran_startup.f90],
+        [AC_LIBOBJ([xt_xmlXPathInit])])],
      [mpich_unweighted_topo_comm_dup],
      [AC_MSG_WARN([known MPICH 3.0-3.4.2 problem detected, activating work-around!])
       AC_DEFINE([NEED_MPICH_UNWEIGHTED_COMM_DUP_WORKAROUND],,
