@@ -61,6 +61,7 @@
 #include "xt/xt_idxvec.h"
 #include "xt_idxvec_internal.h"
 #include "xt/xt_idxstripes.h"
+#include "xt_idxstripes_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
 #include "core/ppm_xfuncs.h"
@@ -138,6 +139,8 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .get_bounding_box            = NULL,
   .idxlist_pack_code           = VECTOR,
 };
+
+static const char filename[] = "xt_idxvec.c";
 
 typedef struct Xt_idxvec_ *Xt_idxvec;
 
@@ -541,6 +544,90 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
   return (Xt_idxlist)inter_vector;
 }
 
+PPM_DSO_INTERNAL Xt_idxlist
+xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
+                                      Xt_idxlist idxlist_dst,
+                                      Xt_config XT_UNUSED(config))
+{
+  /* destination is index stripes, source index vector */
+  const struct Xt_stripe *stripes_dst
+    = xt_idxstripes_get_index_stripes_const(idxlist_dst);
+  assert(idxlist_dst->vtable->idxlist_pack_code == STRIPES
+         && idxlist_src->vtable == &idxvec_vtable);
+  Xt_idxvec vec_src = (Xt_idxvec)idxlist_src;
+  const Xt_int *src_sorted = get_sorted_vector(vec_src);
+  Xt_int src_min = idxvec_get_min_index(idxlist_src),
+    src_max = idxvec_get_max_index(idxlist_src);
+  size_t nsrc = (size_t)idxlist_src->num_indices,
+    ndst = (size_t)idxlist_dst->num_indices;
+  /** @todo:
+   * 1. better estimate of matched indices,
+   * 2. use stride sign to choose search loop
+   */
+  struct Xt_vec_alloc vec_alloc = alloc_idxvec_no_init((int)ndst);
+  Xt_int *found_indices = vec_alloc.vector;
+  size_t ndst_stripes = xt_idxstripes_get_num_index_stripes(idxlist_dst),
+    num_indices_inter = 0, last_match_pos = 0;
+  for (size_t i = 0; i < ndst_stripes; ++i) {
+    size_t nstrides = (size_t)stripes_dst[i].nstrides;
+    Xt_int start = stripes_dst[i].start,
+      stride = stripes_dst[i].stride,
+      end = (Xt_int)(start + (int)(nstrides-1) * stride);
+    if (stride < 0) {
+      Xt_int temp = start;
+      start = end;
+      end = temp;
+      stride = (Xt_int)-stride;
+    }
+    if (start > src_max || end < src_min)
+      continue;
+    size_t adj_first = start >= src_min
+      ? (size_t)0 : (size_t)((src_min - start)/stride);
+    if (end > src_max) {
+      size_t adj_nstrides = (size_t)((end - src_max)/stride);
+      nstrides -= adj_nstrides;
+    }
+    for (size_t k = adj_first; k < nstrides; ++k) {
+      Xt_int dst_idx = (Xt_int)(start + stride * (Xt_int)k),
+        last_match = src_sorted[last_match_pos];
+      size_t j = last_match_pos;
+      if (last_match > dst_idx) {
+        while (--j != SIZE_MAX && dst_idx < src_sorted[j])
+          ;
+      } else if (last_match < dst_idx) {
+        while (++j < nsrc && dst_idx > src_sorted[j])
+          ;
+      } else /* last_match == dst_idx */ {
+        found_indices[num_indices_inter++] = dst_idx;
+        continue;
+      }
+      if (j < nsrc && dst_idx == src_sorted[j]) {
+        found_indices[num_indices_inter++] = dst_idx;
+        last_match_pos = j;
+      }
+    }
+  }
+  if (num_indices_inter) {
+    if (num_indices_inter != ndst) {
+      size_t vector_size = num_indices_inter * sizeof (found_indices[0]),
+        header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
+                       /sizeof (Xt_int)) * sizeof (Xt_int);
+      vec_alloc.idxvec = xrealloc(vec_alloc.idxvec, header_size + vector_size);
+      vec_alloc.idxvec->vector = vec_alloc.vector
+        = (Xt_int *)(void *)((unsigned char *)vec_alloc.idxvec + header_size);
+    }
+  } else {
+    free(vec_alloc.idxvec);
+    return xt_idxempty_new();
+  }
+  xt_quicksort_xt_int(vec_alloc.vector, num_indices_inter);
+  Xt_idxlist_init(&vec_alloc.idxvec->parent, &idxvec_vtable, (int)num_indices_inter);
+  vec_alloc.idxvec->sorted_vector = vec_alloc.idxvec->vector;
+  vec_alloc.idxvec->sorted_vec_positions = NULL;
+  return (Xt_idxlist)vec_alloc.idxvec;
+}
+
+
 static Xt_idxlist
 idxvec_copy(Xt_idxlist idxlist) {
 
@@ -656,10 +743,16 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   while (lb > 0 && sorted_vector[lb-1] == index) --lb;
 
   // go forward until offset condition is satisfied:
-  while (lb < num_indices - 1 &&  // boundary condition
-         idxvec_obj->sorted_vec_positions[lb] < offset && // ignore postions left of offset
-         sorted_vector[lb] == index) ++lb;  // check if index is valid
-
+  const int *sorted_vec_positions = idxvec_obj->sorted_vec_positions;
+  if (sorted_vec_positions) {
+    while (lb < num_indices - 1            // boundary condition
+           && sorted_vec_positions[lb] < offset // ignore postions left of offset
+           && sorted_vector[lb] == index) ++lb;  // check if index is valid
+  } else {
+    while (lb < num_indices - 1            // boundary condition
+           && (int)lb < offset // ignore postions left of offset
+           && sorted_vector[lb] == index) ++lb;  // check if index is valid
+  }
   // check if position is invalid:
   if (lb >= num_indices || sorted_vector[lb] != index)
     return 1; // failure
@@ -779,7 +872,8 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
 
     // result:
     // update positions and prepare next search:
-    positions[selection_pos] = sorted_body_pos[match_pos];
+    positions[selection_pos]
+      = sorted_body_pos ? sorted_body_pos[match_pos] : (int)match_pos;
     ub_guess_ofs = match_pos - search_start;
     search_start = match_pos + post_match_step;
   }

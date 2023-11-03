@@ -999,6 +999,22 @@ idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
   INSTR_STOP(instr);
 }
 
+const struct Xt_stripe *
+xt_idxstripes_get_index_stripes_const(Xt_idxlist idxlist)
+{
+  assert(idxlist->vtable == &idxstripes_vtable);
+  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  return idxstripes->stripes;
+}
+
+size_t
+xt_idxstripes_get_num_index_stripes(Xt_idxlist idxlist)
+{
+  assert(idxlist->vtable == &idxstripes_vtable);
+  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  return (size_t)idxstripes->num_stripes;
+}
+
 static int
 idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
                                  Xt_int * index) {
