@@ -254,14 +254,9 @@ decode_stripe(struct Xt_stripe stripe, Xt_int *sorted_vector,
 static void
 generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                     int num_stripes_,
-                                    Xt_idxvec idxvec) {
-
-  if (num_stripes_ <= 0) {
-    idxvec->sorted_vector = NULL;
-    idxvec->sorted_vec_positions = NULL;
-    return;
-  }
-
+                                    Xt_idxvec idxvec)
+{
+  assert(num_stripes_ > 0);
   size_t num_stripes = (size_t)num_stripes_;
   Xt_int *restrict sorted_vector_assign
     = xmalloc((size_t)idxvec->parent.num_indices
