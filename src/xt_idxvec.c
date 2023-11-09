@@ -395,10 +395,11 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
 
 static void idxvec_delete(Xt_idxlist obj) {
 
-  if (((Xt_idxvec)obj)->sorted_vector != ((Xt_idxvec)obj)->vector)
-    free((void *)(((Xt_idxvec)obj)->sorted_vector));
-   free(((Xt_idxvec)obj)->sorted_vec_positions);
-   free(obj);
+  Xt_idxvec vec_obj = (Xt_idxvec)obj;
+  if (vec_obj->sorted_vector != vec_obj->vector)
+    free((void *)(vec_obj->sorted_vector));
+  free(vec_obj->sorted_vec_positions);
+  free(obj);
 }
 
 static size_t idxvec_get_pack_size(Xt_idxlist obj, MPI_Comm comm) {
