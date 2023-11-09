@@ -101,6 +101,18 @@ void xt_quicksort_index(Xt_int *restrict v_idx, int n, int *restrict v_pos,
 #undef SORT_TYPE_CMP_LE
 #undef SORT_TYPE_CMP_EQ
 #define SORT_TYPE Xt_int
+#define SORT_TYPE_SUFFIX xt_int
+#define SORT_TYPE_CMP_LT(a,b,...) ((a) < (b))
+#define SORT_TYPE_CMP_LE(a,b,...) ((a) <= (b))
+#define SORT_TYPE_CMP_EQ(a,b,...) ((a) == (b))
+#include "xt_quicksort_base.h"
+
+#undef SORT_TYPE
+#undef SORT_TYPE_SUFFIX
+#undef SORT_TYPE_CMP_LT
+#undef SORT_TYPE_CMP_LE
+#undef SORT_TYPE_CMP_EQ
+#define SORT_TYPE Xt_int
 #define SORT_TYPE_SUFFIX xt_int_permutation
 #define SORT_TYPE_CMP_LT(u,v,i,j) \
   ((u) < (v) || ((u) == (v) && permutation[(i)] < permutation[(j)]))
