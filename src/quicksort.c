@@ -90,9 +90,9 @@ void xt_quicksort_index(Xt_int *restrict v_idx, int n, int *restrict v_pos,
 #undef SORT_TYPE_CMP_EQ
 #define SORT_TYPE int
 #define SORT_TYPE_SUFFIX int
-#define SORT_TYPE_CMP_LT(a,b,...) (a < b)
-#define SORT_TYPE_CMP_LE(a,b,...) (a <= b)
-#define SORT_TYPE_CMP_EQ(a,b,...) (a == b)
+#define SORT_TYPE_CMP_LT(a,b,...) ((a) < (b))
+#define SORT_TYPE_CMP_LE(a,b,...) ((a) <= (b))
+#define SORT_TYPE_CMP_EQ(a,b,...) ((a) == (b))
 #include "xt_quicksort_base.h"
 
 #undef SORT_TYPE
@@ -102,9 +102,12 @@ void xt_quicksort_index(Xt_int *restrict v_idx, int n, int *restrict v_pos,
 #undef SORT_TYPE_CMP_EQ
 #define SORT_TYPE Xt_int
 #define SORT_TYPE_SUFFIX xt_int_permutation
-#define SORT_TYPE_CMP_LT(u,v,i,j) ((u) < (v) || (u == v && permutation[(i)] < permutation[(j)]))
-#define SORT_TYPE_CMP_LE(u,v,i,j) ((u) < (v) || (u == v && permutation[(i)] <= permutation[(j)]))
-#define SORT_TYPE_CMP_EQ(u,v,i,j) ((u) == (v) && permutation[(i)] == permutation[(j)])
+#define SORT_TYPE_CMP_LT(u,v,i,j) \
+  ((u) < (v) || ((u) == (v) && permutation[(i)] < permutation[(j)]))
+#define SORT_TYPE_CMP_LE(u,v,i,j) \
+  ((u) < (v) || ((u) == (v) && permutation[(i)] <= permutation[(j)]))
+#define SORT_TYPE_CMP_EQ(u,v,i,j) \
+  ((u) == (v) && permutation[(i)] == permutation[(j)])
 #define XT_SORT_EXTRA_ARGS_DECL , int *restrict permutation
 #define XT_SORT_EXTRA_ARGS_PASS , permutation
 #define XT_SORT_EXTRA_ARGS_ADVANCE(adv) permutation += (adv)
