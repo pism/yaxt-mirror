@@ -64,6 +64,13 @@ void xt_quicksort_int(int a[], size_t n);
 
 /** quicksort changing structured values
   *
+  * @param[in,out]  a            array of ints to be sorted
+  * @param[in]      n            length of data
+ **/
+void xt_quicksort_xt_int(Xt_int a[], size_t n);
+
+/** quicksort changing structured values
+  *
   * @param[in,out]  v            array to be sorted
   * @param[in]      n            length of data
  **/
