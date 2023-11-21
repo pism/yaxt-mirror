@@ -104,6 +104,11 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	contrib/07ltmain-early-xcompile-patch/ltmain-early-xcompile-libtool-2.4.6.patch \
 	contrib/08ltmain-parallel-printf-patch/ltmain-parallel-printf-libtool-2.4.2.patch \
 	contrib/08ltmain-parallel-printf-patch/ltmain-parallel-printf-libtool-2.4.6.patch \
+	contrib/09debian-no-overlink-patch/README.txt \
+	contrib/09debian-no-overlink-patch/deplib_binary-libtool-2.4.2.patch \
+	contrib/09debian-no-overlink-patch/deplib_binary.patch \
+	contrib/09debian-no-overlink-patch/link_all_deplibs-libtool-2.4.2.patch \
+	contrib/09debian-no-overlink-patch/link_all_deplibs.patch \
 	doc/Makefile \
 	doc/Doxyfile.in doc/README.build doc/cfortran.doc \
 	doc/cfortran.html doc/cfortran.txt doc/styleguide.txt \
