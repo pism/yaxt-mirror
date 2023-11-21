@@ -92,8 +92,8 @@ case "$libtoolversion" in
       contrib/02nagfor53-shared-patch/nagfor53-shared.patch \
       contrib/03ltmain-ld-groups-patch/ltmain-ld-groups-libtool-2.4.2.patch \
       contrib/04ltmain-xlinker-patch/ltmain-xlinker-patch.patch \
-      contrib/05macos-nagfor-patch/macos-nagfor.patch \
-      contrib/06ltmain_nag_pthread-patch/ltmain_nag_pthread.patch \
+      contrib/05macos-nagfor-patch/macos-nagfor-libtool-2.4.2.patch \
+      contrib/06ltmain_nag_pthread-patch/ltmain_nag_pthread-libtool-2.4.2.patch \
       contrib/08ltmain-parallel-printf-patch/ltmain-parallel-printf-libtool-2.4.2.patch)
     ;;
 esac
