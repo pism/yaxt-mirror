@@ -6,7 +6,7 @@
  	  tmp_inherited_linker_flags=`$ECHO "$inherited_linker_flags" | $SED 's/-framework \([^ $]*\)/\1.ltframework/g'`
 +
 +	  # Additionally convert " -pthread" to " -Wl,-pthread" for nagfor
-+	  if test yes = $with_nagfor ; then
++	  if test yes = "$with_nagfor" ; then
 +	    tmp_inherited_linker_flags=`$ECHO " $tmp_inherited_linker_flags " | $SED 's/ -pthread[[:blank:]]/ -Wl,-pthread /g'`
 +	  fi
 +
@@ -27,7 +27,7 @@
 +      # better not to revert the changes, otherwise, uncomment the following
 +      # lines.
 +
-+      if test yes = $with_nagfor ; then
++      if test yes = "$with_nagfor" ; then
 +        new_inherited_linker_flags=`$ECHO " $new_inherited_linker_flags " | $SED 's/ -Wl,-pthread / -pthread /g;s/^ *//;s/ *$//'`
 +      fi
 +
