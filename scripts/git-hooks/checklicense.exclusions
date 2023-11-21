@@ -28,6 +28,7 @@
 ^contrib/06ltmain_nag_pthread-patch/.*\.patch$
 ^contrib/07ltmain-early-xcompile-patch/.*\.patch$
 ^contrib/08ltmain-parallel-printf-patch/.*\.patch$
+^contrib/09debian-no-overlink-patch/.*\.patch$
 ^contrib/libtool-patch-gen\.sh$
 ^contrib/.*/README\.txt$
 ^contrib/.*/README$
