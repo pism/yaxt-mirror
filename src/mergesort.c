@@ -50,190 +50,140 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "xt/quicksort.h"
 #include "xt/mergesort.h"
+#include "xt/xt_sort.h"
+#include "core/ppm_xfuncs.h"
 
-static void insertionsort_idxpos(idxpos_type *w, size_t n);
-static void insertionsort_index(Xt_int *val, int n, int *pos, int reset_pos);
+#define SORT_TYPE idxpos_type
+#define SORT_TYPE_SUFFIX idxpos
+#define SORT_TYPE_CMP_LT(a,b,...) ((a).idx < (b).idx || ((a).idx == (b).idx && (a).pos < (b).pos))
+#define SORT_TYPE_CMP_LE(a,b,...) ((a).idx < (b).idx || ((a).idx == (b).idx && (a).pos <= (b).pos))
+#define SORT_TYPE_CMP_EQ(a,b,...) ((a).idx == (b).idx && (a).pos == (b).pos)
+#include "xt_mergesort_base.h"
 
 
-static void insertionsort_idxpos(idxpos_type *w, size_t n) {
+void
+xt_mergesort_xt_int_permutation(Xt_int *a, size_t n, int *restrict permutation);
 
-  size_t i, j;
-  for(i = 1; i < n; i++) {
 
-    idxpos_type tw = w[i];
+void xt_mergesort_index(Xt_int *restrict v_idx, int n,
+                        int *restrict v_pos, int reset_pos) {
 
-    for(j = i;  j > 0 && w[j-1].idx > tw.idx; j--) {
-      w[j] = w[j-1];
-    }
-    w[j] = tw;
-  }
+  /*  Initialization */
+  int *v_pos_orig = v_pos;
+
+  if (!v_pos) v_pos = xmalloc((size_t)n  * sizeof(v_pos[0]));
+
+  if (v_pos != v_pos_orig || reset_pos)
+    xt_assign_id_map_int((size_t)n, v_pos, 0);
+
+  xt_mergesort_xt_int_permutation(v_idx, (size_t)n, v_pos);
+  if (v_pos != v_pos_orig) free(v_pos);
 }
 
-static void insertionsort_index(Xt_int *val, int n, int *pos, int reset_pos) {
+#undef SORT_TYPE
+#undef SORT_TYPE_SUFFIX
+#undef SORT_TYPE_CMP_LT
+#undef SORT_TYPE_CMP_LE
+#undef SORT_TYPE_CMP_EQ
+#define SORT_TYPE int
+#define SORT_TYPE_SUFFIX int
+#define SORT_TYPE_CMP_LT(a,b,...) ((a) < (b))
+#define SORT_TYPE_CMP_LE(a,b,...) ((a) <= (b))
+#define SORT_TYPE_CMP_EQ(a,b,...) ((a) == (b))
+#include "xt_mergesort_base.h"
 
-  int i, j;
+#undef SORT_TYPE
+#undef SORT_TYPE_SUFFIX
+#undef SORT_TYPE_CMP_LT
+#undef SORT_TYPE_CMP_LE
+#undef SORT_TYPE_CMP_EQ
+#define SORT_TYPE Xt_int
+#define SORT_TYPE_SUFFIX xt_int
+#define SORT_TYPE_CMP_LT(a,b,...) ((a) < (b))
+#define SORT_TYPE_CMP_LE(a,b,...) ((a) <= (b))
+#define SORT_TYPE_CMP_EQ(a,b,...) ((a) == (b))
+#include "xt_mergesort_base.h"
 
-  if (pos != NULL) {
-
-    if (reset_pos) {
-      for(i = 0; i < n; i++) {
-        pos[i]=i;
-      }
-    }
-
-    for(i = 1; i < n; i++) {
-
-      Xt_int tv = val[i];
-      int tp = pos[i];
-
-      for(j = i;  j > 0 && val[j-1] > tv; j--) {
-        val[j] = val[j-1];
-        pos[j] = pos[j-1];
-      }
-
-      val[j] = tv;
-      pos[j] = tp;
-    }
-
-  } else {
-
-    for(i = 1; i < n; i++) {
-
-      Xt_int tv = val[i];
-
-      for(j = i;  j > 0 && val[j-1] > tv; j--) {
-        val[j] = val[j-1];
-      }
-
-      val[j] = tv;
-    }
-
-  }
-
-}
-
-static inline void
-my_merge_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, size_t lb1, size_t ub1, size_t lb2, size_t ub2) {
-
-  size_t p  = lb1;
-  size_t i1 = lb1;
-  size_t i2 = lb2;
-
-  while(i1<=ub1 && i2<=ub2) {
-    if (v[i1].idx <= v[i2].idx) {
-      w[p]=v[i1];
-      i1++;
-    } else {
-      w[p]=v[i2];
-      i2++;
-    }
-    p++;
-  }
-  while(i1<=ub1) {
-    w[p]=v[i1];
-    i1++;
-    p++;
-  }
-  while(i2<=ub2) {
-    w[p]=v[i2];
-    i2++;
-    p++;
-  }
-}
-
-static void
-my_mergesort_idxpos(idxpos_type * restrict v, idxpos_type * restrict w, size_t lb, size_t ub)
+#undef SORT_TYPE
+#undef SORT_TYPE_SUFFIX
+#undef SORT_TYPE_CMP_LT
+#undef SORT_TYPE_CMP_LE
+#undef SORT_TYPE_CMP_EQ
+#define SORT_TYPE Xt_int
+#define SORT_TYPE_SUFFIX xt_int_permutation
+#define SORT_TYPE_CMP_LT(u,v,i,j) \
+  ((u) < (v) || ((u) == (v) && permutation_v[(i)] < permutation_v[(j)]))
+#define SORT_TYPE_CMP_LE(u,v,i,j) \
+  ((u) < (v) || ((u) == (v) && permutation_v[(i)] <= permutation_v[(j)]))
+#define SORT_TYPE_CMP_EQ(u,v,i,j) \
+  ((u) == (v) && permutation_v[(i)] == permutation_v[(j)])
+#define XT_SORT_EXTRA_ARGS_DECL , int *restrict permutation
+#define XT_SORT_EXTRA_ARGS_PASS , permutation
+#define XT_SORT_EXTRA_ARGS_INNER_DECL , int *restrict permutation_v, int *restrict permutation_w
+#define XT_SORT_EXTRA_ARGS_INNER_PASS(a,b) , TOKEN_PASTE(permutation,a), \
+    TOKEN_PASTE(permutation,b)
+#define XT_SORT_EXTRA_ALLOC_SIZE (sizeof(*permutation) * (n+1))
+static inline void *
+roundPtr(void *p, size_t mult)
 {
-
-  size_t n = ub - lb + 1;
-  if (n<2) return;
-
-  if (n<9) {
-    insertionsort_idxpos(&v[lb],n);
-    return;
-  }
-
-  size_t m   = n/4;
-
-  // 4-way subsort:
-  size_t lb1 = lb;
-  size_t ub1 = lb1 + m - 1;
-
-  size_t lb2 = ub1+1;
-  size_t ub2 = lb2 + m - 1;
-
-  size_t lb3 = ub2+1;
-  size_t ub3 = lb3 + m - 1;
-
-  size_t lb4 = ub3+1;
-  size_t ub4 = ub;
-
-  my_mergesort_idxpos(v, w, lb1, ub1);
-  my_mergesort_idxpos(v, w, lb2, ub2);
-  my_mergesort_idxpos(v, w, lb3, ub3);
-  my_mergesort_idxpos(v, w, lb4, ub4);
-
-  // 2 x 2-way merge v -> w
-  my_merge_idxpos(v, w, lb1, ub1, lb2, ub2);
-  my_merge_idxpos(v, w, lb3, ub3, lb4, ub4);
-  // final merge: w -> v
-  my_merge_idxpos(w, v, lb1, ub2, lb3, ub4);
-
+  uintptr_t ip = (uintptr_t)p;
+  return (void *)(((ip + mult - 1) / mult) * mult);
 }
 
-void xt_mergesort_idxpos(idxpos_type * restrict v, size_t n)
-{
+#define XT_SORT_EXTRA_ALLOC_DECL int *permutation_v = permutation, \
+    *permutation_w = roundPtr(XT_SORT_EXTRA_ALLOC, sizeof (int))
+#define XT_SORT_EXTRA_ARGS_SWAP(i,j) do {                               \
+    size_t i_ = (size_t)(i), j_ = (size_t)(j);                          \
+    int tp = permutation_v[i_];                                         \
+    permutation_v[i_] = permutation_v[j_];                              \
+    permutation_v[j_] = tp;                                             \
+    (void)permutation_w;                                                \
+  } while (0)
+#define XT_SORT_ASSIGN(a, p, b, q) do {         \
+    (a)[(p)] = (b)[(q)];                        \
+    TOKEN_PASTE(permutation,a)[(p)] = TOKEN_PASTE(permutation,b)[(q)]; \
+  } while (0)
+#include "xt_mergesort_base.h"
 
-  idxpos_type *w = malloc(n * sizeof(w[0]));
-  my_mergesort_idxpos(v, w, 0, n-1);
-  free(w);
-
-}
-
-void xt_mergesort_index(Xt_int *val, int n, int *pos, int reset_pos) {
-
-  // insertion sort for few elements:
-  if (n<9) {
-    insertionsort_index(val,n,pos,reset_pos);
-    return;
-  }
-
-  idxpos_type *v;
-  idxpos_type *w;
-
-  v = malloc((size_t)n * sizeof(v[0]));
-  w = malloc((size_t)n * sizeof(w[0]));
-
-  if (reset_pos || pos == NULL) {
-    for(int i=0; i<n; i++) {
-      v[i].idx = val[i];
-      v[i].pos = i;
-    }
-  } else {
-    for(int i=0; i<n; i++) {
-      v[i].idx = val[i];
-      v[i].pos = pos[i];
-    }
-  }
-
-  my_mergesort_idxpos(v,w, 0, (size_t)n-1);
-  if (pos) {
-    for(int i=0; i<n; i++) {
-      val[i] = v[i].idx;
-      pos[i] = v[i].pos;
-    }
-  } else {
-    for(int i=0; i<n; i++) {
-      val[i] = v[i].idx;
-    }
-  }
-
-  free(w);
-  free(v);
-}
-
+#undef SORT_TYPE
+#undef SORT_TYPE_SUFFIX
+#undef SORT_TYPE_CMP_LT
+#undef SORT_TYPE_CMP_LE
+#undef SORT_TYPE_CMP_EQ
+#undef XT_SORT_EXTRA_ARGS_DECL
+#undef XT_SORT_EXTRA_ARGS_PASS
+#undef XT_SORT_EXTRA_ARGS_INNER_DECL
+#undef XT_SORT_EXTRA_ARGS_INNER_PASS
+#undef XT_SORT_EXTRA_ARGS_SWAP
+#undef XT_SORT_EXTRA_ALLOC_SIZE
+#undef XT_SORT_EXTRA_ALLOC_DECL
+#undef XT_SORT_ASSIGN
+#define SORT_TYPE int
+#define SORT_TYPE_SUFFIX int_permutation
+#define SORT_TYPE_CMP_LT(u,v,i,j) ((u) < (v) || (u == v && permutation_v[(i)] < permutation_v[(j)]))
+#define SORT_TYPE_CMP_LE(u,v,i,j) ((u) < (v) || (u == v && permutation_v[(i)] <= permutation_v[(j)]))
+#define SORT_TYPE_CMP_EQ(u,v,i,j) ((u) == (v) && permutation_v[(i)] == permutation_v[(j)])
+#define XT_SORT_EXTRA_ARGS_DECL , int *restrict permutation
+#define XT_SORT_EXTRA_ARGS_PASS , permutation
+#define XT_SORT_EXTRA_ARGS_INNER_DECL , int *restrict permutation_v, int *restrict permutation_w
+#define XT_SORT_EXTRA_ARGS_INNER_PASS(a,b) , TOKEN_PASTE(permutation,a), \
+    TOKEN_PASTE(permutation,b)
+#define XT_SORT_EXTRA_ALLOC_SIZE (sizeof(*permutation) * (n+1))
+#define XT_SORT_EXTRA_ALLOC_DECL int *permutation_v = permutation, \
+    *permutation_w = XT_SORT_EXTRA_ALLOC
+#define XT_SORT_EXTRA_ARGS_SWAP(i,j) do {                               \
+    size_t i_ = (size_t)(i), j_ = (size_t)(j);                          \
+    int tp = permutation_v[i_];                                         \
+    permutation_v[i_] = permutation_v[j_];                              \
+    permutation_v[j_] = tp;                                             \
+    (void)permutation_w;                                                \
+  } while (0)
+#define XT_SORT_ASSIGN(a, p, b, q) do {         \
+    (a)[(p)] = (b)[(q)];                        \
+    TOKEN_PASTE(permutation,a)[(p)] = TOKEN_PASTE(permutation,b)[(q)]; \
+  } while (0)
+#include "xt_mergesort_base.h"
 
 /*
  * Local Variables:
