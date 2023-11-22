@@ -151,6 +151,11 @@ void xt_sort_idxpos_f2c(idxpos_type *a, size_t n)
   xt_sort_idxpos(a, n);
 }
 
+void xt_sort_xt_int_permutation_f2c(Xt_int *a, size_t n, int *permutation)
+{
+  xt_sort_xt_int_permutation(a, n, permutation);
+}
+
 void xt_sort_int_permutation_f2c(int *a, size_t n, int *permutation)
 {
   xt_sort_int_permutation(a, n, permutation);

@@ -539,6 +539,12 @@ m4_define([vartype_setq],[$1][_MPIDT=$4
      AS_IF([test x"$][$1][_FC_KIND" = x"$3"],
        [XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define $1][_FC_KIND_IN_ISO_C_BINDING"])
+dnl get numeric Fortran kind of Xt_int for preprocessor tests
+     AC_LANG_PUSH([Fortran])
+     ACX_FORTRAN_CHECK_INTEGER_EXPRESSION(,[$][$1][_FC_KIND],
+       [use iso_c_binding], 1, 10, 1, [XT_FC_][$1][_NUMERIC_KIND],
+       [AC_MSG_FAILURE([Cannot determine numeric Fortran kind of $1])])
+     AC_LANG_POP([Fortran])
      fi
      $1][_MAX=$5
      $1][_MIN=$6
@@ -570,6 +576,13 @@ for mpi_int2test in MPI_INTEGER2 MPI_INTEGER4 MPI_INTEGER8; do
     [AC_MSG_RESULT([no])
      ASX_VAR_UNSET([HAVE_FC_$mpi_int2test])])
 done
+dnl
+dnl get numeric Fortran kind of c_int for preprocessor tests
+ACX_FORTRAN_CHECK_INTEGER_EXPRESSION(,[c_int],
+       [use iso_c_binding], 1, 10, 1, [XT_FC_C_INT_NUMERIC_KIND],
+       [AC_MSG_FAILURE([Cannot determine numeric Fortran kind of c_int.])])
+   XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define XT_FC_C_INT_NUMERIC_KIND $XT_FC_C_INT_NUMERIC_KIND"
 FCFLAGS=$saved_FCFLAGS
 AC_LANG_POP([Fortran])
 fi
@@ -612,6 +625,7 @@ m4_foreach([substtype],[[XT_INT]],
      substtype[_FC_MPIDT=MPI_DATATYPE_NULL])
    XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define substtype[]_FC_KIND $substtype[]_FC_KIND
+@%:@define XT_FC_[]substtype[]_NUMERIC_KIND $XT_FC_[]substtype[]_NUMERIC_KIND
 @%:@define substtype[]_FC_MPIDT $substtype[]_FC_MPIDT"
    eval "XT_FC_FEATURE_DEFS=\"\$XT_FC_FEATURE_DEFS
 @%:@define SIZEOF_[]substtype[] \$ac_cv_sizeof_]AS_TR_SH([$substtype])[\""

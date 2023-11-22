@@ -75,6 +75,16 @@ MODULE xt_sort
   PUBLIC :: xt_sort_index
 
   INTERFACE xt_sort_permutation
+#if XT_FC_XT_INT_FC_NUMERIC_KIND != XT_FC_C_INT_FC_NUMERIC_KIND
+    SUBROUTINE xt_sort_xt_int_permutation_f2c(a, n, permutation) &
+          BIND(c, name='xt_sort_xt_int_permutation_f2c')
+      IMPORT :: c_int, c_size_t, xt_int_kind
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      INTEGER(xt_int_kind), INTENT(inout) :: a(n)
+      INTEGER(c_int), INTENT(inout) :: permutation(n)
+    END SUBROUTINE xt_sort_xt_int_permutation_f2c
+    MODULE PROCEDURE xt_sort_xt_int_permutation
+#endif
     SUBROUTINE xt_sort_int_permutation_f2c(a, n, permutation) &
           BIND(c, name='xt_sort_int_permutation_f2c')
       IMPORT :: c_int, c_size_t
@@ -84,6 +94,18 @@ MODULE xt_sort
     MODULE PROCEDURE xt_sort_int_permutation
   END INTERFACE xt_sort_permutation
   PUBLIC :: xt_sort_permutation
+
+  INTERFACE xt_sort_xt_int_permutation
+    SUBROUTINE xt_sort_xt_int_permutation_f2c(a, n, permutation) &
+          BIND(c, name='xt_sort_xt_int_permutation_f2c')
+      IMPORT :: c_int, c_size_t, xt_int_kind
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      INTEGER(xt_int_kind), INTENT(inout) :: a(n)
+      INTEGER(c_int), INTENT(inout) :: permutation(n)
+    END SUBROUTINE xt_sort_xt_int_permutation_f2c
+    MODULE PROCEDURE xt_sort_xt_int_permutation
+  END INTERFACE xt_sort_xt_int_permutation
+  PUBLIC :: xt_sort_xt_int_permutation
 
   TYPE, BIND(c), PUBLIC :: xt_idxpos
     INTEGER(xt_int_kind) :: idx
@@ -141,6 +163,17 @@ CONTAINS
     a_size = SIZE(a)
     IF (a_size > 1) CALL xt_sort_idxpos_f2c(a, INT(a_size, c_size_t))
   END SUBROUTINE xt_sort_idxpos_a
+
+  SUBROUTINE xt_sort_xt_int_permutation(a, permutation)
+    INTEGER(c_int), INTENT(inout) :: a(:), permutation(:)
+    INTEGER(c_size_t) :: a_size
+#ifdef HAVE_SIZE_KIND_ARGUMENT
+    a_size = SIZE(a, kind=c_size_t)
+#else
+    a_size = INT(SIZE(a), kind=c_size_t)
+#endif
+    IF (a_size > 1) CALL xt_sort_int_permutation_f2c(a, a_size, permutation)
+  END SUBROUTINE xt_sort_xt_int_permutation
 
   SUBROUTINE xt_sort_int_permutation(a, permutation)
     INTEGER(c_int), INTENT(inout) :: a(:), permutation(:)
