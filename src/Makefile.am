@@ -160,6 +160,7 @@ libyaxt_c_la_SOURCES =						\
 	ensure_array_size.h					\
 	xt_quicksort_base.h					\
 	quicksort.c						\
+	xt_mergesort_base.h					\
 	mergesort.c						\
 	instr.h							\
 	xt_sort.c						\
