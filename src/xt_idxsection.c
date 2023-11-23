@@ -432,7 +432,7 @@ unsorted:
   temp_dst_idx = xmalloc(num_dst_idx * sizeof(*temp_dst_idx));
   memcpy(temp_dst_idx, dst_idx, num_dst_idx * sizeof(*temp_dst_idx));
 
-  xt_mergesort_index(temp_dst_idx, (int)num_dst_idx, NULL, 0);
+  xt_mergesort_xt_int(temp_dst_idx, num_dst_idx);
   sorted_dst_idx = temp_dst_idx;
 get_pos:;
   int *pos = xmalloc(num_dst_idx * sizeof(*pos));
