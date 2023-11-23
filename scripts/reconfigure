@@ -108,6 +108,8 @@ for patch in "${patches[@]}"; do
   patch -p1 <$patch
 done
 autoreconf -i
+# fix timestamps of the header templates
+${AUTOHEADER-autoheader} --force
 find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
   -e 's/[	 ][	 ]*$//' \{\} +
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
