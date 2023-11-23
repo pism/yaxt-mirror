@@ -116,9 +116,9 @@ int main(void) {
 
   test1(xt_quicksort_index);
   test1(xt_mergesort_index);
-  test1(xt_sort_index);
 
-  test2(xt_sort_int);
+  test2(xt_quicksort_int);
+  test2(xt_mergesort_int);
 
   return TEST_EXIT_CODE;
 }
