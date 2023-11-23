@@ -57,6 +57,9 @@ if [[ -z "${libtoolize:-}" ]]; then
   esac
 fi
 
+# make sure autoreconf calls the same libtoolize:
+export LIBTOOLIZE=${libtoolize}
+
 SED=${SED-sed}
 if sed_version=$($SED --version 2>/dev/null) && [[ $sed_version = *GNU\ sed* ]]; then
   sed_inplace_options=('-i')
