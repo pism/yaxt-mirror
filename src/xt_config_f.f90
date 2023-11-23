@@ -88,9 +88,14 @@ MODULE xt_config_f
        xt_config_set_idxvec_autoconvert_size
   PUBLIC :: xt_config_get_redist_mthread_mode, &
        xt_config_set_redist_mthread_mode
+  PUBLIC :: xt_config_get_sort_algorithm_id, &
+       xt_config_set_sort_algorithm_by_id
   INTEGER, PUBLIC, PARAMETER :: &
        XT_MT_NONE = 0, &
        XT_MT_OPENMP = 1
+  INTEGER, PUBLIC, PARAMETER :: &
+       XT_QUICKSORT = 0, &
+       XT_MERGESORT = 1
 
   CHARACTER(len=*), PARAMETER :: filename = 'xt_config_f.f90'
 
@@ -239,6 +244,39 @@ CONTAINS
     mt_mode_c = INT(mt_mode, c_int)
     CALL xt_config_set_redist_mthread_mode_c(config%cptr, mt_mode_c)
   END SUBROUTINE xt_config_set_redist_mthread_mode
+
+  FUNCTION xt_config_get_sort_algorithm_id(config) RESULT(sort_algo)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: sort_algo
+    INTERFACE
+      FUNCTION xt_config_get_sort_algorithm_id_c(config) RESULT(sort_algo) &
+           BIND(c, name='xt_config_get_sort_algorithm_id')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int) :: sort_algo
+      END FUNCTION xt_config_get_sort_algorithm_id_c
+    END INTERFACE
+    sort_algo = INT(xt_config_get_sort_algorithm_id_c(config%cptr))
+  END FUNCTION xt_config_get_sort_algorithm_id
+
+  SUBROUTINE xt_config_set_sort_algorithm_by_id(config, sort_algo)
+    TYPE(xt_config), INTENT(inout) :: config
+    INTEGER, INTENT(in) :: sort_algo
+    INTEGER(c_int) :: sort_algo_c
+    INTERFACE
+      SUBROUTINE xt_config_set_sort_algorithm_by_id_c(config, sort_algo) &
+           BIND(c, name='xt_config_set_sort_algorithm_by_id')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int), VALUE :: sort_algo
+      END SUBROUTINE xt_config_set_sort_algorithm_by_id_c
+    END INTERFACE
+    IF (sort_algo > HUGE(1_c_int) .OR. sort_algo < 0) &
+      CALL xt_abort("invalid algorithm selection", filename, __LINE__)
+
+    sort_algo_c = INT(sort_algo, c_int)
+    CALL xt_config_set_sort_algorithm_by_id_c(config%cptr, sort_algo_c)
+  END SUBROUTINE xt_config_set_sort_algorithm_by_id
 
 END MODULE xt_config_f
 !

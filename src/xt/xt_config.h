@@ -158,6 +158,32 @@ xt_config_get_redist_mthread_mode(Xt_config config);
 void
 xt_config_set_redist_mthread_mode(Xt_config config, int mode);
 
+enum Xt_sort_algorithm {
+  /** use default, in-place algorithm */
+  XT_QUICKSORT,
+  /** use merge sort with allocation to trade space for better
+   * worst-case behaviour */
+  XT_MERGESORT,
+};
+
+/**
+ * query sorting algorithm suite
+ *
+ * @param[in] config   configuration object to query
+ * @return a value matching one of the enum Xt_sort_algorithm members above
+ */
+int
+xt_config_get_sort_algorithm_id(Xt_config config);
+
+/**
+ * set sorting algorithm suite
+ *
+ * @param[in,out] config  configuration object to modify
+ * @param[in]     algo    one of the enum Xt_sort_algorithm members above
+ */
+void
+xt_config_set_sort_algorithm_by_id(Xt_config config, int algo);
+
 
 #endif
 
