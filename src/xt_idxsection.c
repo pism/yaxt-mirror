@@ -1224,8 +1224,8 @@ unsorted_selection:
          num_selection * sizeof(*temp_selection_idx));
 
   xt_assign_id_map_int(num_selection, selection_pos, 0);
-  xt_quicksort_xt_int_permutation(temp_selection_idx, num_selection,
-                                  selection_pos);
+  xt_sort_xt_int_permutation(temp_selection_idx, num_selection,
+                             selection_pos);
   sorted_selection_idx = temp_selection_idx;
 sorted_selection:
 
