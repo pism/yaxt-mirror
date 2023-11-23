@@ -167,6 +167,9 @@ test_exchanger_parallel_LDADD =  libtestutil.la \
 	../src/xt_gpu.lo \
 	../src/xt_ddt.lo \
 	../src/xt_config.lo \
+	../src/quicksort.lo \
+	../src/mergesort.lo \
+	../src/xt_sort.lo \
 	../src/xt_exchanger_irecv_isend.lo \
 	../src/xt_exchanger_irecv_send.lo \
 	../src/xt_exchanger_irecv_isend_packed.lo \

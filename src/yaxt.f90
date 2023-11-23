@@ -66,6 +66,8 @@ MODULE yaxt
        xt_config_set_idxvec_autoconvert_size, &
        xt_config_get_redist_mthread_mode, &
        xt_config_set_redist_mthread_mode, &
+       xt_config_get_sort_algorithm_id, &
+       xt_config_set_sort_algorithm_by_id, &
        xt_exchanger_irecv_isend_ddt_packed
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
        xt_sort_permutation, xt_assign_id_map

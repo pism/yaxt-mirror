@@ -55,6 +55,7 @@
 #include "core/ppm_visibility.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_config.h"
+#include "xt/sort_common.h"
 #include "xt_exchanger.h"
 
 enum xt_config_flags {
@@ -63,12 +64,25 @@ enum xt_config_flags {
   xt_mthread_mode_mask = (1 << xt_mthread_mode_bit_ofs),
 };
 
+struct Xt_sort_algo_funcptr
+{
+  void (*sort_int)(int *a, size_t n);
+  void (*sort_index)(Xt_int *restrict a, int n, int *restrict idx,
+                     int reset_index);
+  void (*sort_idxpos)(idxpos_type *v, size_t n);
+  void (*sort_xt_int_permutation)(Xt_int a[], size_t n, int permutation[]);
+  void (*sort_int_permutation)(int a[], size_t n, int permutation[]);
+};
+
 
 struct Xt_config_ {
   /**
    * constructor to use when creating the exchanger of a redist
    */
   Xt_exchanger_new exchanger_new;
+  /**
+   * function pointers to implement sort algorithms */
+  const struct Xt_sort_algo_funcptr *sort_funcs;
   /**
    * pointer to exchanger team share data
    */

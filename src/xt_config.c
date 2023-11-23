@@ -64,15 +64,10 @@
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
 #include "xt_idxlist_internal.h"
+#include "xt/quicksort.h"
+#include "xt/mergesort.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
-
-struct Xt_config_ xt_default_config = {
-  .exchanger_new = xt_exchanger_mix_isend_irecv_new,
-  .exchanger_team_share = NULL,
-  .idxv_cnv_size = CHEAP_VECTOR_SIZE,
-  .flags = 0,
-};
 
 Xt_config xt_config_new(void)
 {
@@ -161,6 +156,87 @@ xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm)
   (void)comm;
 #endif
   return exchanger_new;
+}
+
+static const struct {
+  char name[16];
+  struct Xt_sort_algo_funcptr func;
+} sort_algo_table[] = {
+  { .name = "quicksort",
+    .func = {
+      .sort_int = xt_quicksort_int,
+      .sort_index = xt_quicksort_index,
+      .sort_idxpos = xt_quicksort_idxpos,
+      .sort_xt_int_permutation = xt_quicksort_xt_int_permutation,
+      .sort_int_permutation = xt_quicksort_int_permutation
+    },
+  },
+  { .name = "mergesort",
+    .func = {
+      .sort_int = xt_mergesort_int,
+      .sort_index = xt_mergesort_index,
+      .sort_idxpos = xt_mergesort_idxpos,
+      .sort_xt_int_permutation = xt_mergesort_xt_int_permutation,
+      .sort_int_permutation = xt_mergesort_int_permutation
+    },
+  },
+};
+
+enum {
+  num_sort_algo = sizeof (sort_algo_table) / sizeof (sort_algo_table[0]),
+};
+
+struct Xt_config_ xt_default_config = {
+  .exchanger_new = xt_exchanger_mix_isend_irecv_new,
+  .exchanger_team_share = NULL,
+  .idxv_cnv_size = CHEAP_VECTOR_SIZE,
+  .sort_funcs = &sort_algo_table[XT_QUICKSORT].func,
+  .flags = 0,
+};
+
+
+int
+xt_sort_algo_id_by_name(const char *name)
+{
+  for (size_t i = 0; i < num_sort_algo; ++i)
+    if (!strcmp(name, sort_algo_table[i].name))
+      return (int)i;
+  return -1;
+}
+
+static inline size_t
+sort_algo_by_table(const struct Xt_sort_algo_funcptr *sort_funcs)
+{
+  for (size_t i = 0; i < num_sort_algo; ++i)
+    if (&sort_algo_table[i].func == sort_funcs)
+      return i;
+  return SIZE_MAX;
+}
+
+int xt_config_get_sort_algorithm_id(Xt_config config)
+{
+  const struct Xt_sort_algo_funcptr *sort_funcs = config->sort_funcs;
+  size_t eentry = sort_algo_by_table(sort_funcs);
+  if (eentry != SIZE_MAX)
+    return (int)eentry;
+  static const char fmt[]
+    = "error: unexpected exchanger function (%p)!";
+  char buf[sizeof (fmt) + 3*sizeof(void *)];
+  sprintf(buf, fmt, (void *)sort_funcs);
+  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
+}
+
+void xt_config_set_sort_algorithm_by_id(Xt_config config, int algo)
+{
+  if (algo >= 0 && algo < num_sort_algo) {
+    config->sort_funcs = &sort_algo_table[algo].func;
+    return;
+  }
+  static const char fmt[]
+    = "error: user-requested exchanger code (%d) does not exist!";
+  char buf[sizeof (fmt) + 3*sizeof(int)];
+  sprintf(buf, fmt, algo);
+  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
 }
 
 void xt_config_set_exchange_method(Xt_config config, int method)
@@ -370,6 +446,43 @@ xt_config_defaults_init(void)
     xt_config_set_redist_mthread_mode(&xt_default_config, (int)v);
   }
 dont_set_mt_mode:;
+
+  config_env = getenv("XT_CONFIG_DEFAULT_SORT_ALGORITHM");
+  if (config_env) {
+    char *endptr;
+    long v = strtol(config_env, &endptr, 0);
+    if (endptr != config_env) {
+      if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+          || (errno != 0 && v == 0)) {
+        perror("failed to parse value of "
+               "XT_CONFIG_DEFAULT_SORT_ALGORITHM environment variable");
+        goto dont_set_sort_algorithm;
+      } else if (v < 0 || v > XT_MERGESORT) {
+        fprintf(stderr, "numeric value of XT_CONFIG_DEFAULT_SORT_ALGORITHM"
+                " environment variable (%ld) out of range [0,%d]\n",
+                v, XT_MERGESORT);
+        goto dont_set_mt_mode;
+      } else if (*endptr) {
+        fprintf(stderr, "trailing text '%s' found after numeric value (%*s) in "
+                "XT_CONFIG_DEFAULT_SORT_ALGORITHM environment variable\n",
+                endptr, (int)(endptr-config_env), config_env);
+        goto dont_set_mt_mode;
+      }
+    } else {
+      if (!strcasecmp(config_env, "QUICKSORT")) {
+        v = XT_QUICKSORT;
+      } else if (!strcasecmp(config_env, "MERGESORT")) {
+        v = XT_MERGESORT;
+      } else {
+        fputs("unexpected value of XT_CONFIG_DEFAULT_SORT_ALGORITHM"
+              " environment variable, unrecognized text or numeral\n",
+              stderr);
+        goto dont_set_sort_algorithm;
+      }
+    }
+    xt_config_set_sort_algorithm_by_id(&xt_default_config, (int)v);
+  }
+dont_set_sort_algorithm:;
 }
 
 /*
