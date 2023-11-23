@@ -62,6 +62,16 @@ MODULE xt_sort
   END INTERFACE xt_sort_int
   PUBLIC :: xt_sort_int
 
+  INTERFACE xt_sort_xt_int
+    SUBROUTINE xt_sort_xt_int_f2c(a, n) BIND(c, name='xt_sort_xt_int_f2c')
+      IMPORT :: xt_int_kind, c_size_t
+      INTEGER(c_size_t), VALUE, INTENT(in) :: n
+      INTEGER(xt_int_kind), INTENT(inout) :: a(n)
+    END SUBROUTINE xt_sort_xt_int_f2c
+    MODULE PROCEDURE xt_sort_xt_int_a
+  END INTERFACE xt_sort_xt_int
+  PUBLIC :: xt_sort_xt_int
+
   INTERFACE xt_sort_index
     SUBROUTINE xt_sort_index_f2c(a, n, positions, reset_positions) &
           BIND(c, name='xt_sort_index_f2c')
@@ -143,6 +153,13 @@ CONTAINS
     a_size = SIZE(a)
     IF (a_size > 1) CALL xt_sort_int_f2c(a, INT(a_size, c_size_t))
   END SUBROUTINE xt_sort_int_a
+
+  SUBROUTINE xt_sort_xt_int_a(a)
+    INTEGER(xt_int_kind), INTENT(inout) :: a(:)
+    INTEGER :: a_size
+    a_size = SIZE(a)
+    IF (a_size > 1) CALL xt_sort_xt_int_f2c(a, INT(a_size, c_size_t))
+  END SUBROUTINE xt_sort_xt_int_a
 
   SUBROUTINE xt_sort_index_a_a_l(a, positions, reset_positions)
     INTEGER(xt_int_kind), INTENT(inout) :: a(:)

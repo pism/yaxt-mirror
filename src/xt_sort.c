@@ -52,6 +52,8 @@
 
 void (*xt_sort_int)(int *a, size_t n)
   = xt_mergesort_int;
+void (*xt_sort_xt_int)(Xt_int *a, size_t n)
+  = xt_mergesort_xt_int;
 void (*xt_sort_index)(Xt_int *restrict a, int n, int *restrict idx,
                       int reset_index)
 = xt_mergesort_index;
