@@ -165,6 +165,7 @@ static const struct {
   { .name = "quicksort",
     .func = {
       .sort_int = xt_quicksort_int,
+      .sort_xt_int = xt_quicksort_xt_int,
       .sort_index = xt_quicksort_index,
       .sort_idxpos = xt_quicksort_idxpos,
       .sort_xt_int_permutation = xt_quicksort_xt_int_permutation,
@@ -174,6 +175,7 @@ static const struct {
   { .name = "mergesort",
     .func = {
       .sort_int = xt_mergesort_int,
+      .sort_xt_int = xt_mergesort_xt_int,
       .sort_index = xt_mergesort_index,
       .sort_idxpos = xt_mergesort_idxpos,
       .sort_xt_int_permutation = xt_mergesort_xt_int_permutation,

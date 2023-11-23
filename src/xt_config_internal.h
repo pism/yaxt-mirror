@@ -67,6 +67,7 @@ enum xt_config_flags {
 struct Xt_sort_algo_funcptr
 {
   void (*sort_int)(int *a, size_t n);
+  void (*sort_xt_int)(Xt_int *a, size_t n);
   void (*sort_index)(Xt_int *restrict a, int n, int *restrict idx,
                      int reset_index);
   void (*sort_idxpos)(idxpos_type *v, size_t n);

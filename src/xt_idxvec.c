@@ -620,7 +620,7 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
     free(vec_alloc.idxvec);
     return xt_idxempty_new();
   }
-  xt_quicksort_xt_int(vec_alloc.vector, num_indices_inter);
+  xt_sort_xt_int(vec_alloc.vector, num_indices_inter);
   Xt_idxlist_init(&vec_alloc.idxvec->parent, &idxvec_vtable, (int)num_indices_inter);
   vec_alloc.idxvec->sorted_vector = vec_alloc.idxvec->vector;
   vec_alloc.idxvec->sorted_vec_positions = NULL;
