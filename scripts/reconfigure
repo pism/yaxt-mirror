@@ -43,22 +43,21 @@ set -e
 # this should guarantee reproducible results from automake runs
 export PERL_HASH_SEED=0
 
-if [[ -z "${libtoolize:-}" ]]; then
+if [[ -z "${LIBTOOLIZE:-}" ]]; then
   case $(uname -s) in
     Darwin)
-      libtoolize=glibtoolize
+      LIBTOOLIZE=glibtoolize
       if [[ -z "${SED+set}" ]] && command -v gsed >/dev/null; then
         SED=gsed
       fi
       ;;
     *)
-      libtoolize=libtoolize
+      LIBTOOLIZE=libtoolize
       ;;
   esac
+  # make sure autoreconf calls the same libtoolize:
+  export LIBTOOLIZE
 fi
-
-# make sure autoreconf calls the same libtoolize:
-export LIBTOOLIZE=${libtoolize}
 
 SED=${SED-sed}
 if sed_version=$($SED --version 2>/dev/null) && [[ $sed_version = *GNU\ sed* ]]; then
@@ -74,9 +73,9 @@ else
 fi
 
 autoreconf -i --force
-$libtoolize --force --copy
-libtoolversion=$($libtoolize --version \
-                      | ${SED} -e 's/^'"${libtoolize##*/}"' \(([^)]*) \)\{0,1\}\([0-9.]*\)/\2/;q')
+$LIBTOOLIZE --force --copy
+libtoolversion=$($LIBTOOLIZE --version \
+                      | ${SED} -e 's/^'"${LIBTOOLIZE##*/}"' \(([^)]*) \)\{0,1\}\([0-9.]*\)/\2/;q')
 declare -a patches
 case "$libtoolversion" in
   (2.4.6|2.4.7)
