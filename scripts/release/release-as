@@ -51,6 +51,24 @@ if [[ -w configure.ac && -r configure.ac && \
     echo 'error: modified files found!' >&2
     exit 1
   fi
+  source "${script_dir}/get-package-and-version.shinc"
+  if [[ ${tmpsrcdir+set} = '' ]]; then
+    if [[ -d /dev/shm && -w /dev/shm ]]; then
+      tmpsrcdir=/dev/shm
+    else
+      tmpsrcdir=/tmp
+    fi
+    origsrcdir=$PWD
+    tmpsrcdir=$(mktemp -d "${tmpsrcdir}/${package}-src-$(id -un)-XXXXXX")
+    if (( ${DEBUG:-0} == 0)) && [[ -z "${KEEP_BUILDDIR-}" ]] ; then
+      trap 'cp -rp "$tmpsrcdir"/*-release-logs "$origsrcdir"; rm -rf "$tmpsrcdir"' EXIT
+    fi
+  fi
+  if [[ -z "$commit_to_release" ]]; then
+    commit_to_release=$(git rev-parse --abbrev-ref HEAD)
+  fi
+  git clone -b "$commit_to_release" . "$tmpsrcdir"
+  pushd "$tmpsrcdir"
   # shellcheck source=setup-sed.shinc
   . "${script_dir}/setup-sed.shinc"
   # 1. insert new version
@@ -77,7 +95,9 @@ if [[ -w configure.ac && -r configure.ac && \
     exit 1
   fi
   # now that the tree is prepared, perform everything we need for the release
-  exec ${script_dir}/make-release
+  ${script_dir}/make-release
+  git push origin "v${new_version}" "release-${new_version}"
+  popd
 else
   echo 'error: insufficient permissions for configure.ac or' \
        '${script_dir}/make-release!' >&2
