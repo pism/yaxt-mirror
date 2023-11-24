@@ -76,7 +76,7 @@ s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
   fi
   ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j
   ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j check \
-    || { gzip -c test/testsuite.log \
+    || { gzip -c tests/test-suite.log \
               >"${SRC_DIR}/${log_dir}/make-distcheck-testsuite.log.gz" ; \
          exit 1; }
   case $i in
