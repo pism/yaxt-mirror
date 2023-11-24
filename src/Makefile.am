@@ -61,6 +61,7 @@ libyaxt_c_la_SOURCES =						\
 	xt/sort_common.h					\
 	xt/mergesort.h						\
 	xt/quicksort.h						\
+	xt/qsort.h						\
 	xt/xt_sort.h						\
 	xt_sort_internal.h					\
 	xt/xt_idxlist.h						\
@@ -160,6 +161,7 @@ libyaxt_c_la_SOURCES =						\
 	ensure_array_size.h					\
 	xt_quicksort_base.h					\
 	quicksort.c						\
+	qsort.c							\
 	mergesort.c						\
 	instr.h							\
 	xt_sort.c						\

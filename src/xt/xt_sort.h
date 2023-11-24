@@ -54,6 +54,7 @@
 #include <stdlib.h>
 
 #include "xt/quicksort.h"
+#include "xt/qsort.h"
 #include "xt/mergesort.h"
 
 /** \example test_sort.c
