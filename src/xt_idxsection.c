@@ -61,13 +61,12 @@
 #include "xt/xt_idxsection.h"
 #include "xt_idxsection_internal.h"
 #include "xt/xt_mpi.h"
-#include "xt/mergesort.h"
 #include "xt/xt_sort.h"
-#include "xt/quicksort.h"
 #include "xt_idxlist_unpack.h"
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 #include "instr.h"
+#include "xt_config_internal.h"
 
 static void
 idxsection_delete(Xt_idxlist data);
@@ -404,7 +403,7 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
 Xt_idxlist
 xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
                                                   Xt_idxlist dst_idxlist,
-                                                  Xt_config XT_UNUSED(config))
+                                                  Xt_config config)
 {
   // intersection between an idxsection and a general idxlist:
   //
@@ -432,7 +431,7 @@ unsorted:
   temp_dst_idx = xmalloc(num_dst_idx * sizeof(*temp_dst_idx));
   memcpy(temp_dst_idx, dst_idx, num_dst_idx * sizeof(*temp_dst_idx));
 
-  xt_mergesort_xt_int(temp_dst_idx, num_dst_idx);
+  config->sort_funcs->sort_xt_int(temp_dst_idx, num_dst_idx);
   sorted_dst_idx = temp_dst_idx;
 get_pos:;
   int *pos = xmalloc(num_dst_idx * sizeof(*pos));
@@ -895,7 +894,7 @@ unsorted:
       v[i].idx = selection_idx[i];
       v[i].pos = (int)i;
     }
-    xt_mergesort_idxpos(v, num_selection);
+  xt_default_config.sort_funcs->sort_idxpos(v, num_selection);
     Xt_int last_jx = (Xt_int)(v[0].idx - 1); // any index that does not equal v[0].idx will do
     for (size_t i = 0; i < num_selection; i++) {
       int j = v[i].pos;
@@ -952,8 +951,8 @@ unsorted:
   selection_pos = xmalloc(num_selection * sizeof(*selection_pos));
 
   xt_assign_id_map_int(num_selection, selection_pos, 0);
-  xt_quicksort_xt_int_permutation(temp_selection_idx, num_selection,
-                                  selection_pos);
+  xt_default_config.sort_funcs->sort_xt_int_permutation(
+    temp_selection_idx, num_selection, selection_pos);
   sorted_selection_idx = temp_selection_idx;
 
 sorted: ;
@@ -1224,8 +1223,8 @@ unsorted_selection:
          num_selection * sizeof(*temp_selection_idx));
 
   xt_assign_id_map_int(num_selection, selection_pos, 0);
-  xt_sort_xt_int_permutation(temp_selection_idx, num_selection,
-                             selection_pos);
+  xt_default_config.sort_funcs->sort_xt_int_permutation(
+    temp_selection_idx, num_selection, selection_pos);
   sorted_selection_idx = temp_selection_idx;
 sorted_selection:
 

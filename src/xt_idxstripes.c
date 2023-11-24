@@ -65,13 +65,13 @@
 #include "xt_idxstripes_internal.h"
 #include "xt_stripe_util.h"
 #include "xt/xt_mpi.h"
-#include "xt/xt_sort.h"
 #include "xt_idxlist_unpack.h"
 #include "xt_cover.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
 #include "instr.h"
+#include "xt_config_internal.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -1311,7 +1311,7 @@ find_candidates(struct Xt_stripe query,
       }
       assert(j == num_candidates);
     }
-    xt_sort_int(candidates->vec, num_candidates);
+    xt_default_config.sort_funcs->sort_int(candidates->vec, num_candidates);
   } else
     candidates->num = 0;
 }

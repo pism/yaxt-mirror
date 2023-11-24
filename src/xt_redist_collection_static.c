@@ -141,7 +141,7 @@ xt_redist_collection_static_custom_new(
   /* get lists of ranks to send/receive message to/from */
   for (size_t i = 0; i < 2; ++i)
     nmsg[i] = xt_redist_agg_msg_count(num_redists_, (enum xt_msg_direction)i,
-                                      redists, num_ranks[i], ranks[i]);
+                                      redists, num_ranks[i], ranks[i], config);
   size_t nmsg_sum = nmsg[SEND] + nmsg[RECV];
   struct Xt_redist_msg *msgs = xmalloc(sizeof (*msgs) * nmsg_sum);
   struct Xt_mpiddt_list ddt_list = Xt_mpiddt_empty_list;

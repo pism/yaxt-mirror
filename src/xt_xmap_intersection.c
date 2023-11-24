@@ -67,7 +67,7 @@
 #include "xt_xmap_intersection_common.h"
 #include "ensure_array_size.h"
 #include "xt_arithmetic_util.h"
-#include "xt/quicksort.h"
+#include "xt_config_internal.h"
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -102,7 +102,8 @@ static void         xmap_intersection_iterator_delete(Xt_xmap_iter iter);
 static int          xmap_intersection_get_max_src_pos(Xt_xmap xmap);
 static int          xmap_intersection_get_max_dst_pos(Xt_xmap xmap);
 static Xt_xmap
-xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type);
+xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type,
+                          Xt_config config);
 static Xt_xmap
 xmap_intersection_update_positions(Xt_xmap xmap,
                                    const int * src_positions,
@@ -833,7 +834,7 @@ setup_buffer(int comm_size, int n, const struct exchange_data *msgs)
 
 static void reorder_transfer_pos(
   int n_out, int n_in, struct exchange_data * out_msg,
-  struct exchange_data * in_msg, MPI_Comm comm) {
+  struct exchange_data * in_msg, MPI_Comm comm, Xt_config config) {
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
@@ -842,6 +843,7 @@ static void reorder_transfer_pos(
     out = setup_buffer(comm_size, n_out, out_msg),
     in = setup_buffer(comm_size, n_in, in_msg);
 
+  void (*sort_int)(int a[], size_t n) = config->sort_funcs->sort_int;
   for (int i = 0; i < n_out; ++i) {
     const struct exchange_data * curr_msg = out_msg + i;
     int count = curr_msg->num_transfer_pos;
@@ -850,7 +852,7 @@ static void reorder_transfer_pos(
       memcpy(out.buffer + out.displs[curr_msg->rank],
              curr_msg->transfer_pos, (size_t)count * sizeof(*out.buffer));
       // sort local out transfer_pos
-      xt_quicksort_int(curr_msg->transfer_pos, (size_t)count);
+      sort_int(curr_msg->transfer_pos, (size_t)count);
     }
   }
 
@@ -859,13 +861,15 @@ static void reorder_transfer_pos(
                             in.buffer, in.counts, in.displs, MPI_INT,
                             comm), comm);
 
+  void (*sort_int_permutation)(int a[], size_t n, int permutation[])
+    = config->sort_funcs->sort_int_permutation;
   for (int i = 0; i < n_in; ++i) {
     const struct exchange_data * curr_msg = in_msg + i;
     int count = curr_msg->num_transfer_pos;
     if (count > 0)
       // reorder local receive transfer_pos (curr_msg->transfer_pos) based
       // on remote out transfer_pos (in_buffer + in_displs[curr_msg->rank])
-      xt_quicksort_int_permutation(
+      sort_int_permutation(
         in.buffer + in.displs[curr_msg->rank], (size_t)count,
         curr_msg->transfer_pos);
   }
@@ -886,13 +890,14 @@ static void reorder_transfer_pos(
 }
 
 static Xt_xmap
-xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
+xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type,
+                          Xt_config config) {
 
   Xt_xmap_intersection xmap_intersection_new =
     xmi(xmap_intersection_copy(xmap));
 
-  int n_out = xmap_intersection_new->n_out;
-  int n_in = xmap_intersection_new->n_in;
+  int n_out = xmap_intersection_new->n_out,
+    n_in = xmap_intersection_new->n_in;
   struct exchange_data *in_msg = xmap_intersection_new->msg,
     *out_msg = in_msg+n_in;
   MPI_Comm comm = xmap_intersection_new->comm;
@@ -901,10 +906,10 @@ xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
     case (XT_REORDER_NONE):
       break;
     case (XT_REORDER_SEND_UP):
-      reorder_transfer_pos(n_out, n_in, out_msg, in_msg, comm);
+      reorder_transfer_pos(n_out, n_in, out_msg, in_msg, comm, config);
       break;
     case (XT_REORDER_RECV_UP):
-      reorder_transfer_pos(n_in, n_out, in_msg, out_msg, comm);
+      reorder_transfer_pos(n_in, n_out, in_msg, out_msg, comm, config);
       break;
     default:
       Xt_abort(comm, "ERROR(xmap_intersection_reorder):invalid reorder type",

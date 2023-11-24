@@ -275,10 +275,10 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   unsigned num_redists_ = (unsigned)num_redists;
   size_t num_ranks[2][num_redists_];
   int *restrict ranks[2][num_redists_];
-  unsigned nmsg_send = xt_redist_agg_msg_count(num_redists_, SEND, redists,
-                                               num_ranks[SEND], ranks[SEND]),
-    nmsg_recv = xt_redist_agg_msg_count(num_redists_, RECV, redists,
-                                        num_ranks[RECV], ranks[RECV]);
+  unsigned nmsg_send = xt_redist_agg_msg_count(
+      num_redists_, SEND, redists, num_ranks[SEND], ranks[SEND], config),
+    nmsg_recv = xt_redist_agg_msg_count(
+      num_redists_, RECV, redists, num_ranks[RECV], ranks[RECV], config);
   int tag_offset;
   MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
   Xt_redist_collection redist_coll

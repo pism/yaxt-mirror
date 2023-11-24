@@ -52,6 +52,7 @@
 #endif
 
 #include "xt/xt_core.h"
+#include "xt/xt_config.h"
 
 /** \example test_xmap_common.c
  */
@@ -251,6 +252,19 @@ enum xt_reorder_type {
  *         exchange map.
  */
 Xt_xmap xt_xmap_reorder(Xt_xmap xmap, enum xt_reorder_type type);
+
+/**
+ * reorder positions
+ * @param[in] xmap exchange map
+ * @param[in] type reorder pattern to be used
+ * @param[in] config configuration object for custom settings
+ * @return copy of input xmap with reordered positions
+ * @remark This routine is collective for all processes associated with the
+ *         exchange map.
+ */
+Xt_xmap
+xt_xmap_reorder_custom(Xt_xmap xmap, enum xt_reorder_type type,
+                       Xt_config config);
 
 /**
  * updates positions of indices

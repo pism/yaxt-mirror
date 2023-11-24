@@ -68,6 +68,7 @@
 #include "core/core.h"
 #include "xt_stripe_util.h"
 #include "xt/xt_sort.h"
+#include "xt_config_internal.h"
 #include "instr.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -256,7 +257,8 @@ decode_stripe(struct Xt_stripe stripe, Xt_int *sorted_vector,
 static void
 generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                     int num_stripes_,
-                                    Xt_idxvec idxvec)
+                                    Xt_idxvec idxvec,
+                                    Xt_config config)
 {
   assert(num_stripes_ > 0);
   size_t num_stripes = (size_t)num_stripes_;
@@ -284,8 +286,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   }
 
   xt_assign_id_map_int(num_stripes, sorted_stripe_min_pos, 0);
-  xt_sort_xt_int_permutation(stripe_minmax[0], num_stripes,
-                             sorted_stripe_min_pos);
+  config->sort_funcs->sort_xt_int_permutation(stripe_minmax[0], num_stripes,
+                                              sorted_stripe_min_pos);
 
   int *restrict sorted_pos_prefix_sum = sorted_stripe_min_pos + num_stripes,
     *restrict orig_pos_prefix_sum
@@ -342,6 +344,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   size_t offset = 0;
 
   size_t i = 0;
+  void (*sort_xt_int_permutation)(Xt_int a[], size_t n, int permutation[])
+    = config->sort_funcs->sort_xt_int_permutation;
   while (i < num_stripes) {
 
     bool do_overlap = overlap_count[i] > 0;
@@ -355,8 +359,8 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                 sorted_pos_prefix_sum[i+j]);
 
     if (do_overlap)
-      xt_sort_xt_int_permutation(sorted_vector_assign + offset,
-                                 sel_size, sorted_vec_positions + offset);
+      sort_xt_int_permutation(sorted_vector_assign + offset,
+                              sel_size, sorted_vec_positions + offset);
 
     offset += sel_size;
     i += num_selection;
@@ -387,7 +391,8 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
     for (int i = 0; i < num_stripes; ++i)
       for (int j = 0; j < stripes[i].nstrides; ++j)
         indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
-    generate_sorted_vector_from_stripes(stripes, num_stripes, vec_alloc.idxvec);
+    generate_sorted_vector_from_stripes(stripes, num_stripes, vec_alloc.idxvec,
+                                        &xt_default_config);
     idxlist = (Xt_idxlist)vec_alloc.idxvec;
   } else
     idxlist = xt_idxempty_new();
@@ -484,8 +489,8 @@ get_sorted_vector(Xt_idxvec idxvec) {
   memcpy(sorted_vector, vector, svec_size);
 
   xt_assign_id_map_int(num_indices, idxvec->sorted_vec_positions, 0);
-  xt_sort_xt_int_permutation(sorted_vector, num_indices,
-                             idxvec->sorted_vec_positions);
+  xt_default_config.sort_funcs->sort_xt_int_permutation(
+    sorted_vector, num_indices, idxvec->sorted_vec_positions);
 
   return idxvec->sorted_vector = sorted_vector;
 }
@@ -547,7 +552,7 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
 PPM_DSO_INTERNAL Xt_idxlist
 xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
                                       Xt_idxlist idxlist_dst,
-                                      Xt_config XT_UNUSED(config))
+                                      Xt_config config)
 {
   /* destination is index stripes, source index vector */
   const struct Xt_stripe *stripes_dst
@@ -620,7 +625,7 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
     free(vec_alloc.idxvec);
     return xt_idxempty_new();
   }
-  xt_sort_xt_int(vec_alloc.vector, num_indices_inter);
+  config->sort_funcs->sort_xt_int(vec_alloc.vector, num_indices_inter);
   Xt_idxlist_init(&vec_alloc.idxvec->parent, &idxvec_vtable, (int)num_indices_inter);
   vec_alloc.idxvec->sorted_vector = vec_alloc.idxvec->vector;
   vec_alloc.idxvec->sorted_vec_positions = NULL;
@@ -812,7 +817,8 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
     sorted_selection_pos
       = (void *)((unsigned char *)tmp_idx + pos_ofs);
     xt_assign_id_map_int(num_selection, sorted_selection_pos, 0);
-    xt_sort_xt_int_permutation(tmp_idx, num_selection, sorted_selection_pos);
+    xt_default_config.sort_funcs->sort_xt_int_permutation(
+      tmp_idx, num_selection, sorted_selection_pos);
     sorted_selection = tmp_idx;
   }
 
