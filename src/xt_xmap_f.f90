@@ -50,7 +50,7 @@ MODULE xt_xmap_abstract
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
        c_associated, c_f_pointer, c_loc
   USE xt_core, ONLY: xt_abort, xt_mpi_fint_kind, xt_pos_ext, i2, i4, i8
-  USE xt_config_f, ONLY: xt_config
+  USE xt_config_f, ONLY: xt_config, xt_config_f2c
   USE xt_idxlist_abstract, ONLY: xt_idxlist
   IMPLICIT NONE
   PRIVATE
@@ -58,7 +58,8 @@ MODULE xt_xmap_abstract
   PUBLIC :: xt_xmap_copy, xt_xmap_delete, xt_xmap_get_num_destinations, &
        xt_xmap_get_num_sources, xt_xmap_get_destination_ranks, &
        xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
-       xt_xmap_get_source_ranks, xt_xmap_reorder, xt_reorder_type_kind, &
+       xt_xmap_get_source_ranks, xt_xmap_reorder, xt_xmap_reorder_custom, &
+       xt_reorder_type_kind, &
        xt_reorder_none, xt_reorder_send_up, xt_reorder_recv_up, &
        xt_xmap_update_positions, xt_xmap_spread
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
@@ -463,6 +464,49 @@ CONTAINS
 #  undef xt_reorder_type_kind
 #endif
   END FUNCTION xt_xmap_reorder
+
+  FUNCTION xt_xmap_reorder_custom(xmap, reorder_type, config) &
+       RESULT(xmap_reorder)
+    IMPLICIT NONE
+    TYPE(xt_xmap), INTENT(in) :: xmap
+    INTEGER(xt_reorder_type_kind), INTENT(in) :: reorder_type
+    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_xmap) :: xmap_reorder
+    ! fixme: evil hack because gfortran with all warnings enabled throws a
+    ! hissy fit for dummy arguments of type integer(xt_reorder_kind)
+    ! of bind(c) routines, but the value of xt_reorder_kind always
+    ! matches c_int for that compiler anyway
+#ifdef __GNUC__
+    LOGICAL, PARAMETER :: static_assert_xt_reorder_type_kind &
+         = xt_reorder_type_kind == c_int
+    INTEGER, PARAMETER :: assert_check &
+         = 1 / MERGE(1, 0, static_assert_xt_reorder_type_kind)
+#  define xt_reorder_type_kind c_int
+#endif
+    INTERFACE
+      FUNCTION xt_xmap_reorder_custom_c(xmap, reorder_type, config) &
+           BIND(C, name='xt_xmap_reorder_custom') RESULT(xmap_reorder_ptr)
+        IMPORT:: xt_reorder_type_kind, c_ptr
+        TYPE(c_ptr), VALUE, INTENT(in) :: xmap, config
+        INTEGER(xt_reorder_type_kind), VALUE, INTENT(in) :: reorder_type
+        TYPE(c_ptr) :: xmap_reorder_ptr
+      END FUNCTION xt_xmap_reorder_custom_c
+    END INTERFACE
+#ifdef __GNUC__
+#  define UNUSED(x) IF (SIZE( (/(x)/) ) < 0) CONTINUE
+    UNUSED(assert_check)
+#endif
+
+    IF (reorder_type < 0_xt_reorder_type_kind .OR. &
+         reorder_type > HUGE(1_c_int)) &
+         CALL xt_abort("invalid reorder type", filename, __LINE__)
+    xmap_reorder%cptr = xt_xmap_reorder_custom_c(xmap%cptr, reorder_type, &
+         xt_config_f2c(config))
+  ! fixme: undo effect of above hack
+#ifdef __GNUC__
+#  undef xt_reorder_type_kind
+#endif
+  END FUNCTION xt_xmap_reorder_custom
 
   FUNCTION xt_xmap_update_positions(xmap, src_positions, dst_positions) &
       RESULT(xmap_updated)

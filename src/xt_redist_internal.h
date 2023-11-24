@@ -61,6 +61,7 @@
 #include "core/ppm_visibility.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_request.h"
+#include "xt/xt_config.h"
 #include "xt_mpi_ddt_cache.h"
 
 enum xt_msg_direction {SEND, RECV};
@@ -183,7 +184,8 @@ PPM_DSO_INTERNAL unsigned
 xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
                         const Xt_redist redists[num_redists],
                         size_t num_ranks[num_redists],
-                        int *restrict ranks[num_redists]);
+                        int *restrict ranks[num_redists],
+                        Xt_config config);
 
 #endif
 /*

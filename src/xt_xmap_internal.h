@@ -83,7 +83,7 @@ struct Xt_xmap_vtable {
   void (*delete)(Xt_xmap);
   int (*get_max_src_pos)(Xt_xmap);
   int (*get_max_dst_pos)(Xt_xmap);
-  Xt_xmap (*reorder)(Xt_xmap xmap, enum xt_reorder_type type);
+  Xt_xmap (*reorder)(Xt_xmap xmap, enum xt_reorder_type type, Xt_config config);
   Xt_xmap (*update_pos)(Xt_xmap xmap,
                         const int * src_positions, const int * dst_positions);
   Xt_xmap (*spread)(Xt_xmap xmap, int num_repetitions,

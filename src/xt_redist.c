@@ -56,10 +56,10 @@
 #include "xt/xt_redist.h"
 #include "xt/xt_mpi.h"
 #include "xt/xt_request.h"
-#include "xt/xt_sort.h"
 #include "core/ppm_xfuncs.h"
 #include "xt_redist_internal.h"
 #include "xt_mpi_ddt_cache.h"
+#include "xt_config_internal.h"
 
 Xt_redist xt_redist_copy(Xt_redist redist) {
 
@@ -186,7 +186,8 @@ unsigned
 xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
                         const Xt_redist redists[num_redists],
                         size_t num_ranks[num_redists],
-                        int *restrict ranks[num_redists])
+                        int *restrict ranks[num_redists],
+                        Xt_config config)
 {
   bool ranks_left = false;
   /* get lists of ranks to send/receive message to/from */
@@ -199,6 +200,7 @@ xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
   }
   if (num_ranks_total) {
     int *ranks_buf = xmalloc(num_ranks_total * sizeof (*ranks_buf));
+    void (*sort_int)(int a[], size_t n) = config->sort_funcs->sort_int;
     size_t ofs = 0;
     for (size_t j = 0; j < num_redists; ++j) {
       ranks[j] = ranks_buf + ofs;
@@ -206,7 +208,7 @@ xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
         = (size_t)xt_redist_get_msg_ranks(redists[j], direction, ranks + j);
       ranks_left |= (nranks > 0);
       /* sort list */
-      xt_sort_int(ranks[j], nranks);
+      sort_int(ranks[j], nranks);
       ofs += nranks;
     }
   } else

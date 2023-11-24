@@ -69,7 +69,7 @@
 #include "xt_arithmetic_util.h"
 #include "ensure_array_size.h"
 #include "xt_cover.h"
-#include "xt/quicksort.h"
+#include "xt_config_internal.h"
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -93,7 +93,8 @@ static void xmap_intersection_ext_delete(Xt_xmap xmap);
 static int xmap_intersection_ext_get_max_src_pos(Xt_xmap xmap);
 static int xmap_intersection_ext_get_max_dst_pos(Xt_xmap xmap);
 static Xt_xmap
-xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type);
+xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type,
+                              Xt_config config);
 static Xt_xmap
 xmap_intersection_ext_update_positions(Xt_xmap xmap,
                                        const int * src_positions,
@@ -1099,7 +1100,7 @@ static struct Xt_pos_ext * exchange_transfer_pos_ext(
 }
 
 static void
-sort_transfer_pos_ext(int n, struct exchange_ext *msg) {
+sort_transfer_pos_ext(int n, struct exchange_ext *msg, Xt_config config) {
 
   int buffer_size = 0;
   for (int i = 0; i < n; ++i)
@@ -1126,7 +1127,7 @@ sort_transfer_pos_ext(int n, struct exchange_ext *msg) {
     }
 
     // sort the positions array
-    xt_quicksort_int(transfer_pos, num_transfer_pos);
+    config->sort_funcs->sort_int(transfer_pos, num_transfer_pos);
 
     // convert the positions array to position extents array
     size_t num_transfer_pos_ext = count_pos_ext(num_transfer_pos, transfer_pos);
@@ -1150,7 +1151,8 @@ sort_transfer_pos_ext(int n, struct exchange_ext *msg) {
 static void
 sort_transfer_pos_ext_permutation(int n,
                                   struct exchange_ext *msg,
-                                  struct exchange_ext *permutation_msg) {
+                                  struct exchange_ext *permutation_msg,
+                                  Xt_config config) {
 
   size_t buffer_size = 0;
   for (int i = 0; i < n; ++i) {
@@ -1184,7 +1186,8 @@ sort_transfer_pos_ext_permutation(int n,
       permutation_msg[i].transfer_pos_ext, num_transfer_pos, permutation);
 
     // sort the positions array
-    xt_quicksort_int_permutation(transfer_pos, num_transfer_pos, permutation);
+    config->sort_funcs->sort_int_permutation(
+      transfer_pos, num_transfer_pos, permutation);
 
     // convert the permutation array to position extents array
     size_t num_transfer_pos_ext = count_pos_ext(num_transfer_pos, permutation);
@@ -1208,7 +1211,8 @@ sort_transfer_pos_ext_permutation(int n,
 
 static void reorder_transfer_pos_ext(
   int n_out, int n_in, struct exchange_ext * out_msg,
-  struct exchange_ext * in_msg, int tag_offset, MPI_Comm comm) {
+  struct exchange_ext * in_msg, int tag_offset, MPI_Comm comm,
+  Xt_config config) {
 
   int comm_size;
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
@@ -1228,19 +1232,20 @@ static void reorder_transfer_pos_ext(
       n_out, out_msg, n_in, in_msg, remote_out_msg, tag_offset, comm);
 
   // sort the transfer positions in all out messages
-  sort_transfer_pos_ext(n_out, out_msg);
+  sort_transfer_pos_ext(n_out, out_msg, config);
 
   // sort the transfer positions in all in messages based on the remote out
   // messages
-  sort_transfer_pos_ext_permutation(n_in, remote_out_msg, in_msg);
+  sort_transfer_pos_ext_permutation(n_in, remote_out_msg, in_msg, config);
 
   free(transfer_pos_ext_buffer);
   free(remote_out_msg);
 }
 
 static Xt_xmap
-xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
-
+xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type,
+                              Xt_config config)
+{
   Xt_xmap_intersection_ext xmap_intersection_ext_new =
     xmie(xmap_intersection_ext_copy(xmap));
 
@@ -1255,10 +1260,12 @@ xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
     case (XT_REORDER_NONE):
       break;
     case (XT_REORDER_SEND_UP):
-      reorder_transfer_pos_ext(n_out, n_in, out_msg, in_msg, tag_offset, comm);
+      reorder_transfer_pos_ext(n_out, n_in, out_msg, in_msg, tag_offset,
+                               comm, config);
       break;
     case (XT_REORDER_RECV_UP):
-      reorder_transfer_pos_ext(n_in, n_out, in_msg, out_msg, tag_offset, comm);
+      reorder_transfer_pos_ext(n_in, n_out, in_msg, out_msg, tag_offset,
+                               comm, config);
       break;
     default:
       Xt_abort(comm, "ERROR(xmap_intersection_ext_reorder):invalid reorder "

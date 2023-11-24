@@ -98,7 +98,8 @@ MODULE yaxt
        xt_xmap_iterator_get_transfer_pos, &
        xt_xmap_iterator_get_num_transfer_pos, xt_xmap_iterator_delete, &
        xt_xmap_iterator_get_transfer_pos_ext, &
-       xt_xmap_iterator_get_num_transfer_pos_ext, xt_xmap_reorder, &
+       xt_xmap_iterator_get_num_transfer_pos_ext, &
+       xt_xmap_reorder, xt_xmap_reorder_custom, &
        xt_reorder_type_kind, XT_REORDER_NONE, XT_REORDER_SEND_UP, &
        XT_REORDER_RECV_UP, xt_xmap_update_positions, xt_xmap_spread
   USE xt_xmap_rename, ONLY: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
@@ -161,7 +162,8 @@ MODULE yaxt
        xt_xmap_get_max_src_pos, xt_xmap_get_max_dst_pos, &
        xt_xmap_intersection_new, xt_xmap_intersection_ext_new, &
        xt_xmap_intersection_pos_new, &
-       xt_xmap_reorder, xt_reorder_type_kind, &
+       xt_xmap_reorder, xt_xmap_reorder_custom, &
+       xt_reorder_type_kind, &
        XT_REORDER_NONE, XT_REORDER_SEND_UP, XT_REORDER_RECV_UP, &
        xt_xmap_update_positions, xt_xmap_spread, &
        xt_com_list, xt_com_pos, &

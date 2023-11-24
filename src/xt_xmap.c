@@ -51,6 +51,7 @@
 
 #include "xt/xt_xmap.h"
 #include "xt_xmap_internal.h"
+#include "xt_config_internal.h"
 
 MPI_Comm xt_xmap_get_communicator(Xt_xmap xmap) {
 
@@ -140,7 +141,14 @@ int xt_xmap_get_max_dst_pos(Xt_xmap xmap) {
 }
 
 Xt_xmap xt_xmap_reorder(Xt_xmap xmap, enum xt_reorder_type type) {
-  return xmap->vtable->reorder(xmap, type);
+  return xmap->vtable->reorder(xmap, type, &xt_default_config);
+}
+
+Xt_xmap
+xt_xmap_reorder_custom(Xt_xmap xmap, enum xt_reorder_type type,
+                       Xt_config config)
+{
+  return xmap->vtable->reorder(xmap, type, config);
 }
 
 Xt_xmap xt_xmap_update_positions(
