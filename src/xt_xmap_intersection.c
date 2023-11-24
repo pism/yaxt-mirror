@@ -873,16 +873,20 @@ static void reorder_transfer_pos(
   free(out.counts);
   free(in.counts);
 
-  free(out_msg->transfer_pos_ext_cache);
-  free(in_msg->transfer_pos_ext_cache);
-  out_msg->transfer_pos_ext_cache = NULL;
-  in_msg->transfer_pos_ext_cache = NULL;
-  out_msg->num_transfer_pos_ext =
-    (int)count_pos_ext(
-      (size_t)out_msg->num_transfer_pos, out_msg->transfer_pos);
-  in_msg->num_transfer_pos_ext =
-    (int)count_pos_ext(
-      (size_t)in_msg->num_transfer_pos, in_msg->transfer_pos);
+  if (n_out) {
+    free(out_msg->transfer_pos_ext_cache);
+    out_msg->transfer_pos_ext_cache = NULL;
+    out_msg->num_transfer_pos_ext =
+      (int)count_pos_ext(
+        (size_t)out_msg->num_transfer_pos, out_msg->transfer_pos);
+  }
+  if (n_in) {
+    free(in_msg->transfer_pos_ext_cache);
+    in_msg->transfer_pos_ext_cache = NULL;
+    in_msg->num_transfer_pos_ext =
+      (int)count_pos_ext(
+        (size_t)in_msg->num_transfer_pos, in_msg->transfer_pos);
+  }
 }
 
 static Xt_xmap
