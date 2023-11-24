@@ -135,6 +135,47 @@ errMsg()
 $restore_extglob
 unset restore_extglob
 
+setupMakeDebugging()
+{
+  if (( ${DEBUG:-0} )); then
+    set -x
+    MAKE_DEBUG_ARGS=(--debug 'SHELL=bash -x')
+  else
+    MAKE_DEBUG_ARGS=()
+  fi
+}
+
+addOverrides()
+{
+  local mpirun_version=$(mpirun --version)
+  case $mpirun_version in
+    ('mpirun (Open MPI)'*)
+      if [[ "$mpirun_version" =~ ^mpirun\ \(Open\ MPI\)\ ([0-9]+\.[0-9.]+) ]]; then
+        mpirun_version=${BASH_REMATCH[1]}
+        if printf '%s\n' "5.0" "${mpirun_version}" | sort -C -V ; then
+          MAKE_DEBUG_ARGS+=('PRRTE_MCA_rmaps_default_mapping_policy=:oversubscribe')
+        elif printf '%s\n' "1.8.0" "${mpirun_version}" | sort -C -V ; then
+          MAKE_DEBUG_ARGS+=('OMPI_MCA_rmaps_base_oversubscribe=true')
+        fi
+      fi
+      ;;
+  esac
+}
+
+setTMPDIR()
+{
+  if [[ ${TMPDIR+set} = '' ]]; then
+    if [[ -d "$XDG_RUNTIME_DIR" && -w "$XDG_RUNTIME_DIR" ]]; then
+      TMPDIR=$XDG_RUNTIME_DIR
+    elif [[ -d /dev/shm && -w /dev/shm ]]; then
+      TMPDIR=/dev/shm
+    else
+      TMPDIR=/tmp
+    fi
+    export TMPDIR
+  fi
+}
+
 #
 # Local Variables:
 # coding: utf-8
