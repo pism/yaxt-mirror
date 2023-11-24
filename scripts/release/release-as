@@ -57,6 +57,19 @@ if [[ -w configure.ac && -r configure.ac && \
     echo 'error: modified files found!' >&2
     exit 1
   fi
+  if [[ ${tmpsrcdir+set} = '' ]]; then
+    if [[ -d /dev/shm && -w /dev/shm ]]; then
+      tmpsrcdir=/dev/shm
+    else
+      tmpsrcdir=/tmp
+    fi
+    tmpsrcdir=$(mktemp -d "${tmpsrcdir}/yaxt-src-$(id -un)-XXXXXX")
+  fi
+  if [[ -z "$commit_to_release" ]]; then
+    commit_to_release=$(git rev-parse --abbrev-ref HEAD)
+  fi
+  git clone -b "$commit_to_release" . "$tmpsrcdir"
+  pushd "$tmpsrcdir"
   # shellcheck source=setup-sed.shinc
   . "${script_dir}/setup-sed.shinc"
   # 1. insert new version
@@ -83,7 +96,9 @@ if [[ -w configure.ac && -r configure.ac && \
     exit 1
   fi
   # now that the tree is prepared, perform everything we need for the release
-  exec ${script_dir}/make-release
+  ${script_dir}/make-release
+  git push origin "v${new_version}" "release-${new_version}"
+  popd
 else
   echo 'error: insufficient permissions for configure.ac or' \
        "${script_dir}/make-release!" >&2
