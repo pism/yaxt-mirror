@@ -70,7 +70,6 @@ else
   exit 1
 fi
 
-autoreconf -i --force
 $libtoolize --force --copy
 autoreconf -i --force
 libtoolversion=$($libtoolize --version \
