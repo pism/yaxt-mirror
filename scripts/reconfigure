@@ -70,8 +70,8 @@ else
   exit 1
 fi
 
-autoreconf -i --force
 $libtoolize --force --copy
+autoreconf -i --force
 libtoolversion=$($libtoolize --version \
                       | ${SED} -e 's/^'"${libtoolize##*/}"' \(([^)]*) \)\{0,1\}\([0-9.]*\)/\2/;q')
 declare -a patches
