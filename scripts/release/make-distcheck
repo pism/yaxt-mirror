@@ -57,6 +57,19 @@ for ((i=0; i < 2; ++i)); do
   if ((i == 0)); then
     args+=(--enable-maintainer-mode)
   fi
+  mpirun_version=$(mpirun --version)
+  case $mpirun_version in
+    ('mpirun (Open MPI)'*)
+      if [[ "$mpirun_version" =~ ^mpirun\ \(Open\ MPI\)\ ([0-9]+\.[0-9.]+) ]]; then
+        mpirun_version=${BASH_REMATCH[1]}
+        if printf '%s\n' "5.0" "${mpirun_version}" | sort -C -V ; then
+          MAKE_DEBUG_ARGS+=('PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe')
+        elif printf '%s\n' "1.8.0" "${mpirun_version}" | sort -C -V ; then
+          MAKE_DEBUG_ARGS+=('OMPI_MCA_rmaps_base_oversubscribe=true')
+        fi
+      fi
+      ;;
+  esac
   "${SRC_DIR}"/configure "${args[@]}" \
     || { status=$? ; gzip -c config.log \
         >"${SRC_DIR}/${log_dir}/make-distcheck-config.log.gz" ; exit $status ; }
