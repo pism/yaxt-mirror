@@ -87,6 +87,7 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	contrib/00nagfor-libtool-patch/nagfor-libtool.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.2.patch \
 	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.6.patch \
+	contrib/00nagfor-libtool-patch/nagfor-libtool-2.4.7.patch \
 	contrib/01aix-deplib-rpath-patch/README \
 	contrib/01aix-deplib-rpath-patch/aix-deplib-libtool.patch \
 	contrib/02nagfor53-shared-patch/README.txt \
