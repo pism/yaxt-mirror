@@ -831,6 +831,17 @@ setup_buffer(int comm_size, int n, const struct exchange_data *msgs)
   return (struct a2abuf){ .buffer=buffer, .counts=counts, .displs=displs };
 }
 
+static void free_msgs(struct exchange_data * msg, int n) {
+
+  for (int i = 0; i < n; ++i) {
+    free(msg[i].transfer_pos_ext_cache);
+    msg[i].transfer_pos_ext_cache = NULL;
+    msg[i].num_transfer_pos_ext =
+      (int)count_pos_ext(
+        (size_t)msg[i].num_transfer_pos, msg[i].transfer_pos);
+  }
+}
+
 static void reorder_transfer_pos(
   int n_out, int n_in, struct exchange_data * out_msg,
   struct exchange_data * in_msg, MPI_Comm comm) {
@@ -873,20 +884,8 @@ static void reorder_transfer_pos(
   free(out.counts);
   free(in.counts);
 
-  if (n_out) {
-    free(out_msg->transfer_pos_ext_cache);
-    out_msg->transfer_pos_ext_cache = NULL;
-    out_msg->num_transfer_pos_ext =
-      (int)count_pos_ext(
-        (size_t)out_msg->num_transfer_pos, out_msg->transfer_pos);
-  }
-  if (n_in) {
-    free(in_msg->transfer_pos_ext_cache);
-    in_msg->transfer_pos_ext_cache = NULL;
-    in_msg->num_transfer_pos_ext =
-      (int)count_pos_ext(
-        (size_t)in_msg->num_transfer_pos, in_msg->transfer_pos);
-  }
+  free_msgs(out_msg, n_out);
+  free_msgs(in_msg, n_in);
 }
 
 static Xt_xmap
