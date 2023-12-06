@@ -102,8 +102,6 @@ do{                                                     \
 static CUresult (*func_cuGetErrorString)(CUresult error, const char** pStr);
 static CUresult (*func_cuPointerGetAttribute)
   (void* data, CUpointer_attribute attribute, CUdeviceptr ptr);
-/* static CUresult (*func_cuMemAlloc)(CUdeviceptr* dptr, size_t bytesize); */
-/* static CUresult (*func_cuMemFree)(CUdeviceptr dptr); */
 static CUresult (*func_cuMemcpyDtoD)(
   CUdeviceptr dstDevice, CUdeviceptr srcDevice, size_t ByteCount);
 static CUresult (*func_cuMemcpyHtoD)(
@@ -125,10 +123,6 @@ static void * xt_cuda_malloc(
       return xmalloc(alloc_size);
     case (XT_MEMTYPE_DEVICE): {
       return (void*)acc_malloc(MAX(alloc_size,1));
-      /* CUdeviceptr dptr; */
-      /* // cuMemAlloc fails for (alloc_size == 0) */
-      /* CU_ERROR_CHECK(func_cuMemAlloc(&dptr, MAX(alloc_size,1))); */
-      /* return (void*)dptr; */
     }
   }
 }
@@ -147,7 +141,6 @@ static void xt_cuda_free(void * ptr, enum xt_memtype memtype) {
       break;
     case (XT_MEMTYPE_DEVICE): 
       acc_free(ptr);
-      /* CU_ERROR_CHECK(func_cuMemFree((CUdeviceptr)ptr)); */
       break;
   }
 }
@@ -254,8 +247,6 @@ static int load_cuda_library(void) {
     // load required CUDA library functions
     DLSYM(cuGetErrorString);
     DLSYM(cuPointerGetAttribute);
-    /* DLSYM(cuMemAlloc); */
-    /* DLSYM(cuMemFree); */
     DLSYM(cuMemcpyDtoD);
     DLSYM(cuMemcpyHtoD);
     DLSYM(cuMemcpyDtoH);
