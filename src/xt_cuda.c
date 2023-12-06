@@ -54,7 +54,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ <= 22 || \
+            __NVCOMPILER_MAJOR__ == 23 && __NVCOMPILER_MINOR__ <= 9)
 #include <openacc.h>
+#endif
 
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
@@ -122,7 +125,16 @@ static void * xt_cuda_malloc(
     case (XT_MEMTYPE_HOST):
       return xmalloc(alloc_size);
     case (XT_MEMTYPE_DEVICE): {
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ <= 22 || \
+            __NVCOMPILER_MAJOR__ == 23 && __NVCOMPILER_MINOR__ <= 9)
       return (void*)acc_malloc(MAX(alloc_size,1));
+#else
+      Xt_abort(
+          Xt_default_comm,
+          "ERROR(xt_cuda_malloc): missing OpenACC memory management support",
+          filename, __LINE__);
+      return NULL;
+#endif
     }
   }
 }
@@ -140,7 +152,15 @@ static void xt_cuda_free(void * ptr, enum xt_memtype memtype) {
       free(ptr);
       break;
     case (XT_MEMTYPE_DEVICE): 
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ <= 22 || \
+            __NVCOMPILER_MAJOR__ == 23 && __NVCOMPILER_MINOR__ <= 9)
       acc_free(ptr);
+#else
+      Xt_abort(
+          Xt_default_comm,
+          "ERROR(xt_cuda_free): missing OpenACC memory management support",
+          filename, __LINE__);
+#endif
       break;
   }
 }
