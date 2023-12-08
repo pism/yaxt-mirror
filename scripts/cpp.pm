@@ -1,4 +1,4 @@
-# cpp.pm.in --- routines to emulate C preprocessor
+# cpp.pm --- routines to emulate C preprocessor
 #
 # Copyright  (C)  2012  Thomas Jahns <jahns@dkrz.de>
 #
