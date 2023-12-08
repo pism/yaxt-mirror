@@ -236,17 +236,12 @@ setup_dims(Xt_int start, int num_dimensions,
   // depends on global size and sign of local and global size
   Xt_int local_start_index = start;
   for (int i = num_dimensions - 1; i >= 0; --i) {
-    Xt_int abs_global_stride_i = XT_INT_ABS(dims[i].global_stride);
-    if (global_size[i] > 0)
-      local_start_index
-        = (Xt_int)(local_start_index
-                   + (abs_global_stride_i
-                      * local_start[i]));
-    else
-      local_start_index
-        = (Xt_int)(local_start_index
-                   - (abs_global_stride_i
-                      * (global_size[i] + local_start[i] + 1)));
+    Xt_int abs_global_stride_i = XT_INT_ABS(dims[i].global_stride),
+      adj_gstride = abs_global_stride_i * Xt_isign(global_size[i]),
+      start_ofs = global_size[i] > 0 ? 0 : global_size[i] + 1;
+    local_start_index
+      = (Xt_int)(local_start_index
+                 + (adj_gstride * (start_ofs + local_start[i])));
     if (local_size[i] < 0)
       local_start_index
         = (Xt_int)(local_start_index
