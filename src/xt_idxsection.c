@@ -207,29 +207,26 @@ xt_idxsection_finalize(void)
  */
 static Xt_int
 setup_dims(Xt_int start, int num_dimensions,
-           const Xt_int global_size[num_dimensions],
-           const int local_size[num_dimensions],
-           const Xt_int local_start[num_dimensions],
            struct dim_desc dims[num_dimensions])
 {
   dims[num_dimensions - 1].global_stride =
-    (Xt_int)(Xt_isign(global_size[num_dimensions - 1]) *
-             isign(local_size[num_dimensions - 1]));
+    (Xt_int)(Xt_isign(dims[num_dimensions - 1].global_size) *
+             isign(dims[num_dimensions - 1].local_size));
   dims[num_dimensions - 1].local_stride = 1;
 
   // compute local and global stride
   // (local stride is always positive, global stride can be negative)
   for (int i = num_dimensions - 2; i >= 0; --i) {
     dims[i].global_stride
-      = (Xt_int)(dims[i+1].global_stride * global_size[i + 1]
+      = (Xt_int)(dims[i+1].global_stride * dims[i+1].global_size
                  * Xt_isign((Xt_int)(dims[i+1].global_stride
-                                     * global_size[i + 1]))
-                 * Xt_isign((Xt_int)(global_size[i]
-                                     * (Xt_int)isign(local_size[i]))));
+                                     * dims[i+1].global_size))
+                 * Xt_isign((Xt_int)(dims[i].global_size
+                                     * (Xt_int)isign(dims[i].local_size))));
     dims[i].local_stride
-      = (Xt_int)(dims[i + 1].local_stride * local_size[i + 1]
-                 * Xt_isign((Xt_int)(dims[i + 1].local_stride
-                                     * (Xt_int)local_size[i + 1])));
+      = (Xt_int)(dims[i+1].local_stride * dims[i+1].local_size
+                 * Xt_isign((Xt_int)(dims[i+1].local_stride
+                                     * (Xt_int)dims[i+1].local_size)));
   }
 
   // compute the local start index
@@ -237,17 +234,17 @@ setup_dims(Xt_int start, int num_dimensions,
   Xt_int local_start_index = start;
   for (int i = num_dimensions - 1; i >= 0; --i) {
     Xt_int abs_global_stride_i = XT_INT_ABS(dims[i].global_stride),
-      adj_gstride = abs_global_stride_i * Xt_isign(global_size[i]),
-      start_ofs = global_size[i] > 0 ? 0 : global_size[i] + 1;
+      adj_gstride = abs_global_stride_i * Xt_isign(dims[i].global_size),
+      start_ofs = dims[i].global_size > 0 ? 0 : dims[i].global_size + 1;
     local_start_index
       = (Xt_int)(local_start_index
-                 + (adj_gstride * (start_ofs + local_start[i])));
-    if (local_size[i] < 0)
+                 + (adj_gstride * (start_ofs + dims[i].local_start)));
+    if (dims[i].local_size < 0)
       local_start_index
         = (Xt_int)(local_start_index
                    - (abs_global_stride_i
-                      * (local_size[i] + 1)
-                      * Xt_isign(global_size[i])));
+                      * (dims[i].local_size + 1)
+                      * Xt_isign(dims[i].global_size)));
   }
   return local_start_index;
 }
