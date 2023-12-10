@@ -196,7 +196,7 @@ xt_idxstripes_finalize(void)
 typedef struct Xt_idxstripes_ *Xt_idxstripes;
 
 struct Xt_stripes_sort {
-  struct Xt_stripe_minmax range; /* minimal and maximal position of stripe */
+  struct Xt_minmax range;        /* minimal and maximal position of stripe */
   int position;                  /* position of stripe this range
                                   * corresponds to (permutation
                                   * obtained from sorting) */
@@ -240,7 +240,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   struct Xt_stripes_sort *restrict stripes_sort = idxstripes->stripes_sort;
   Xt_int min, max;
   {
-    struct Xt_stripe_minmax stripe_range = xt_stripe2minmax(stripes[0]);
+    struct Xt_minmax stripe_range = xt_stripe2minmax(stripes[0]);
     stripes_sort[0].range = stripe_range;
     stripes_sort[0].position = 0;
     min = stripe_range.min;
@@ -251,7 +251,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   int sign_err = stripes[0].nstrides;
   int have_zero_stride = stripes[0].stride == 0;
   for (size_t i = 1; i < num_stripes; ++i) {
-    struct Xt_stripe_minmax stripe_range = xt_stripe2minmax(stripes[i]);
+    struct Xt_minmax stripe_range = xt_stripe2minmax(stripes[i]);
     stripes_sort[i].range = stripe_range;
     stripes_sort[i].position = (int)i;
     min = MIN(stripe_range.min, min);
@@ -1249,7 +1249,7 @@ find_candidates(struct Xt_stripe query,
                 const struct Xt_stripes_lookup *restrict db,
                 struct int_vec *candidates)
 {
-  struct Xt_stripe_minmax query_minmax = xt_stripe2minmax(query);
+  struct Xt_minmax query_minmax = xt_stripe2minmax(query);
   size_t num_db_stripes = db->num_stripes;
   const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;
   size_t start_pos
@@ -1475,7 +1475,7 @@ idxstripes_get_pos_exts_of_index_stripe(
   int *restrict candidates)
 {
   size_t unmatched = 0;
-  struct Xt_stripe_minmax query_minmax = xt_stripe2minmax(query);
+  struct Xt_minmax query_minmax = xt_stripe2minmax(query);
   const struct Xt_stripe *restrict db_stripes = db->stripes;
   const int *restrict db_stripes_nstrides_psum = db->stripes_nstrides_psum;
   const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;

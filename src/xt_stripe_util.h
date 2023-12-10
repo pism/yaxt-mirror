@@ -58,11 +58,15 @@
 #include "core/ppm_visibility.h"
 #include "xt_arithmetic_util.h"
 
-struct Xt_stripe_minmax {
+/**
+ * represents an index range by its minimum and maximum
+ */
+struct Xt_minmax
+{
   Xt_int min, max;
 };
 
-static inline struct Xt_stripe_minmax
+static inline struct Xt_minmax
 xt_stripe2minmax(struct Xt_stripe stripe)
 {
   Xt_int min = stripe.start, max = min;
@@ -72,13 +76,13 @@ xt_stripe2minmax(struct Xt_stripe stripe)
   stride = (Xt_int)((Xt_int)(nstrides - 1) * stride);
   min = (Xt_int)(min + (Xt_int)(mask & stride));
   max = (Xt_int)(max + (Xt_int)((Xt_int)~mask & stride));
-  return (struct Xt_stripe_minmax){ .min = min, .max = max};
+  return (struct Xt_minmax){ .min = min, .max = max};
 }
 
 
 static inline int
 xt_stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
-  struct Xt_stripe_minmax mma = xt_stripe2minmax(a),
+  struct Xt_minmax mma = xt_stripe2minmax(a),
     mmb = xt_stripe2minmax(b);
   return (mma.max >= mmb.min) & (mma.min <= mmb.max);
 }
