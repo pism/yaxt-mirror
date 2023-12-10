@@ -252,6 +252,17 @@ setup_dims(Xt_int start, int num_dimensions,
   return local_start_index;
 }
 
+static int
+get_num_indices_from_local_sizes(int num_dimensions, const int local_size[num_dimensions])
+{
+  long long size = 1;
+
+  for (int i = 0; i < num_dimensions; ++i)
+    size *= abs(local_size[i]);
+  assert(size <= INT_MAX);
+
+  return (int)size;
+}
 
 Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
                              const Xt_int global_size[num_dimensions],
@@ -264,8 +275,8 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
   assert(xt_initialized());
 
   Xt_idxsection idxsection = NULL;
-  int num_indices;
-  if (num_dimensions > 0) {
+  int num_indices = get_num_indices_from_local_sizes(num_dimensions, local_size);
+  if (num_indices > 0) {
     idxsection = xmalloc(sizeof (*idxsection)
                          + (size_t)num_dimensions *
                          sizeof (idxsection->dims[0]));
@@ -280,12 +291,7 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
       idxsection->dims[i].local_size  = local_size[i];
       idxsection->dims[i].local_start = local_start[i];
     }
-    num_indices = idxsection_get_num_indices(idxsection);
   } else {
-    num_indices = 0;
-  }
-  if (num_indices == 0) {
-    free(idxsection);
     return xt_idxempty_new();
   }
   Xt_idxlist_init(&idxsection->parent, &idxsection_vtable, num_indices);
