@@ -67,6 +67,7 @@
 #include "core/core.h"
 #include "instr.h"
 #include "xt_config_internal.h"
+#include "xt_stripe_util.h"
 
 static void
 idxsection_delete(Xt_idxlist data);
@@ -202,10 +203,35 @@ xt_idxsection_finalize(void)
   xt_mpi_call(MPI_Type_free(&dim_desc_dt), Xt_default_comm);
 }
 
+static struct Xt_minmax
+get_section_minmax(int num_dimensions,
+                   Xt_int local_start_index,
+                   const struct dim_desc dims[num_dimensions])
+{
+  // due the possibility of negative local and global sizes, the minimum and
+  // maximum can be in any corner of the n-dimensional section
+  Xt_int max = local_start_index, min = local_start_index;
+  for (int i = 0; i < num_dimensions; ++i) {
+    // if either local and global size are negative
+    if ((dims[i].global_size < 0) ^ (dims[i].local_size < 0))
+      min = (Xt_int)(min + (Xt_int)(dims[i].global_stride *
+                                    (Xt_int)(abs(dims[i].local_size) - 1)));
+    else // if local and global size are both positive or negative
+      max = (Xt_int)(max + (Xt_int)(dims[i].global_stride *
+                                    (Xt_int)(abs(dims[i].local_size) - 1)));
+  }
+  return (struct Xt_minmax){ .min = min, .max = max };
+}
+
+
+struct start_min_max {
+  Xt_int start, min, max;
+};
+
 /**
- * @return local start index
+ * @return local start index, minimum and maximum index
  */
-static Xt_int
+static struct start_min_max
 setup_dims(Xt_int start, int num_dimensions,
            struct dim_desc dims[num_dimensions])
 {
@@ -246,7 +272,9 @@ setup_dims(Xt_int start, int num_dimensions,
                       * (dims[i].local_size + 1)
                       * Xt_isign(dims[i].global_size)));
   }
-  return local_start_index;
+  struct Xt_minmax mm = get_section_minmax(num_dimensions, local_start_index, dims);
+  return (struct start_min_max){ .start = local_start_index,
+                                 .max = mm.max, .min = mm.min };
 }
 
 static int
@@ -292,28 +320,11 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
     return xt_idxempty_new();
   }
   Xt_idxlist_init(&idxsection->parent, &idxsection_vtable, num_indices);
-  idxsection->local_start_index
-    = setup_dims(start, num_dimensions, global_size, local_size, local_start,
-                 idxsection->dims);
-
-  // due the possibility of negative local and global sizes, the minimum and
-  // maximum can be in any corner of the n-dimensional section
-  idxsection->min_index_cache = idxsection->local_start_index;
-  idxsection->max_index_cache = idxsection->local_start_index;
-  for (int i = 0; i < num_dimensions; ++i) {
-
-    // if either local and global size are negative
-    if ((global_size[i] < 0) ^ (local_size[i] < 0))
-      idxsection->min_index_cache
-        = (Xt_int)(idxsection->min_index_cache
-                   + (Xt_int)(idxsection->dims[i].global_stride *
-                              (Xt_int)(abs(local_size[i]) - 1)));
-    else // if local and global size are both positive or negative
-      idxsection->max_index_cache
-        = (Xt_int)(idxsection->max_index_cache
-                   + (Xt_int)(idxsection->dims[i].global_stride *
-                              (Xt_int)(abs(local_size[i]) - 1)));
-  }
+  struct start_min_max smm =
+    setup_dims(start, num_dimensions, idxsection->dims);
+  idxsection->local_start_index = smm.start;
+  idxsection->min_index_cache = smm.min;
+  idxsection->max_index_cache = smm.max;
 
   INSTR_STOP(instr);
 
