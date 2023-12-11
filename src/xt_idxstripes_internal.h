@@ -74,13 +74,31 @@ xt_idxstripes_get_idxvec_intersection(Xt_idxlist idxlist_src,
 
 /**
  * Generates an index list that is built up of stripes of indices.
- * Does not copy the stripes.
+ * Does not copy the stripes. Ownership of the stripes remains with
+ * the caller and the underlying object must not be free'd before
+ * calling the destructor for the returned index list object.
  *
  * @param[in] stripes     array defining the stripes
  * @param[in] num_stripes number of stripes
+ * @return index list composed of the stripes passed in
  */
 PPM_DSO_INTERNAL Xt_idxlist
-xt_idxstripes_prealloc_new(struct Xt_stripe const * stripes, int num_stripes);
+xt_idxstripes_prealloc_new(const struct Xt_stripe *stripes, int num_stripes);
+
+/**
+ * Generates an index list that is built up of stripes of indices.
+ * Copies and sorts the stripes and their contained indices, i.e. the
+ * indices in the resulting list are sorted by value.
+ *
+ * @param[in] num_stripes number of stripes
+ * @param[in] stripes     array defining the stripes
+ * @return index list composed of the stripes passed in
+ */
+PPM_DSO_INTERNAL Xt_idxlist
+xt_idxstripes_sort_new(size_t num_stripes,
+                       const struct Xt_stripe stripes[],
+                       Xt_config config);
+
 
 /**
  * can b be merged into a, i.e. do a and b form a continuous range?

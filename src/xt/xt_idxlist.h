@@ -187,6 +187,25 @@ xt_idxlist_get_intersection_custom(Xt_idxlist idxlist_src,
 Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist);
 
 /**
+ * generates a sorted copy of a given index list
+ *
+ * @param[in] idxlist index list that is to be copied
+ * @return            copy of the given index list with all indices
+ *                    sorted from lowest to highest
+ */
+Xt_idxlist xt_idxlist_sorted_copy(Xt_idxlist idxlist);
+
+/**
+ * generates a sorted copy of a given index list
+ *
+ * @param[in] idxlist index list that is to be copied
+ * @param[in] config  custom configuration parameters
+ * @return            copy of the given index list with all indices
+ *                    sorted from lowest to highest
+ */
+Xt_idxlist xt_idxlist_sorted_copy_custom(Xt_idxlist idxlist, Xt_config config);
+
+/**
  * returns the number of indices stored in the given index list
  *
  * @param[in] idxlist index list for which the number of indices is required

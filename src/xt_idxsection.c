@@ -82,6 +82,9 @@ idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
 static Xt_idxlist
 idxsection_copy(Xt_idxlist idxlist);
 
+static Xt_idxlist
+idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config);
+
 static void
 idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 
@@ -120,6 +123,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .get_pack_size                = idxsection_get_pack_size,
               .pack                         = idxsection_pack,
               .copy                         = idxsection_copy,
+              .sorted_copy		    = idxsection_sorted_copy,
               .get_indices                  = idxsection_get_indices,
               .get_indices_const            = idxsection_get_indices_const,
               .get_index_stripes            = idxsection_get_index_stripes,
@@ -260,8 +264,8 @@ setup_dims(Xt_int start, int num_dimensions,
   Xt_int local_start_index = start;
   for (int i = num_dimensions - 1; i >= 0; --i) {
     Xt_int abs_global_stride_i = XT_INT_ABS(dims[i].global_stride),
-      adj_gstride = abs_global_stride_i * Xt_isign(dims[i].global_size),
-      start_ofs = dims[i].global_size > 0 ? 0 : dims[i].global_size + 1;
+      adj_gstride = (Xt_int)(abs_global_stride_i * Xt_isign(dims[i].global_size)),
+      start_ofs = (Xt_int)(dims[i].global_size > 0 ? 0 : dims[i].global_size + 1);
     local_start_index
       = (Xt_int)(local_start_index
                  + (adj_gstride * (start_ofs + dims[i].local_start)));
@@ -586,6 +590,41 @@ idxsection_copy(Xt_idxlist idxlist) {
   return (Xt_idxlist)idxsection;
 }
 
+static Xt_idxlist
+idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
+
+  (void)config;
+  Xt_idxsection src = (Xt_idxsection)idxlist;
+
+  size_t num_dimensions = (size_t)src->ndim;
+
+  Xt_idxsection idxsection = xmalloc(
+    sizeof (*idxsection) + num_dimensions * sizeof (idxsection->dims[0]));
+  *idxsection = *src;
+  idxsection->index_array_cache  = NULL;
+
+  const struct dim_desc *restrict dd_src = src->dims;
+  struct dim_desc *restrict dd_dst = idxsection->dims;
+  for (size_t i = 0; i < num_dimensions; ++i) {
+    Xt_int gsize = dd_src[i].global_size,
+      abs_gsize = XT_INT_ABS(gsize);
+    int lsize = dd_src[i].local_size,
+      abs_lsize = abs(lsize);
+    dd_dst[i].global_size = abs_gsize;
+    dd_dst[i].local_size = abs_lsize;
+    dd_dst[i].local_start = gsize >= 0
+      ? dd_src[i].local_start
+      : (Xt_int)(abs_gsize - abs_lsize - dd_src[i].local_start);
+  }
+
+  struct start_min_max smm =
+    setup_dims(src->global_start_index, (int)num_dimensions, idxsection->dims);
+  idxsection->local_start_index = smm.start;
+  assert(idxsection->min_index_cache == smm.min);
+  assert(idxsection->max_index_cache == smm.max);
+  return (Xt_idxlist)idxsection;
+}
+
 static int
 idxsection_get_num_indices(Xt_idxsection section) {
 
@@ -905,7 +944,7 @@ unsorted:
       v[i].idx = selection_idx[i];
       v[i].pos = (int)i;
     }
-  xt_default_config.sort_funcs->sort_idxpos(v, num_selection);
+    xt_default_config.sort_funcs->sort_idxpos(v, num_selection);
     Xt_int last_jx = (Xt_int)(v[0].idx - 1); // any index that does not equal v[0].idx will do
     for (size_t i = 0; i < num_selection; i++) {
       int j = v[i].pos;
