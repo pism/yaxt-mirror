@@ -574,16 +574,14 @@ idxsection_copy(Xt_idxlist idxlist) {
 
   Xt_idxsection src = (Xt_idxsection)idxlist;
 
-  int num_dimensions = src->ndim;
+  size_t num_dimensions = (size_t)src->ndim;
 
-  Xt_idxsection idxsection = xmalloc(sizeof (*idxsection)
-                                     + (size_t)num_dimensions
-                                     * sizeof (idxsection->dims[0]));
+  Xt_idxsection idxsection = xmalloc(
+    sizeof (*idxsection) + num_dimensions * sizeof (idxsection->dims[0]));
   *idxsection = *src;
   idxsection->index_array_cache  = NULL;
 
-  memcpy(idxsection->dims, src->dims, (size_t)num_dimensions *
-                                      sizeof (src->dims[0]));
+  memcpy(idxsection->dims, src->dims, num_dimensions * sizeof (src->dims[0]));
 
   return (Xt_idxlist)idxsection;
 }
