@@ -86,6 +86,9 @@ idxvec_pack(Xt_idxlist data, void *buffer, int buffer_size,
 static Xt_idxlist
 idxvec_copy(Xt_idxlist idxlist);
 
+static Xt_idxlist
+idxvec_sorted_copy(Xt_idxlist idxlist, Xt_config config);
+
 static void
 idxvec_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 
@@ -126,6 +129,7 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .get_pack_size               = idxvec_get_pack_size,
   .pack                        = idxvec_pack,
   .copy                        = idxvec_copy,
+  .sorted_copy			= idxvec_sorted_copy,
   .get_indices                 = idxvec_get_indices,
   .get_indices_const           = idxvec_get_indices_const,
   .get_index_stripes           = idxvec_get_index_stripes,
@@ -160,6 +164,7 @@ struct Xt_idxvec_ {
     we have the following relations:
     sorted_vector[i-1] <= sorted_vector[i],
     vector[sorted_vec_positions[i]] = sorted_vector[i]
+    iff sorted_vector != vector
    */
 };
 
@@ -460,15 +465,21 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 }
 
 static const Xt_int *
+get_sorted_vector(Xt_idxvec idxvec, Xt_config config);
+
+PPM_DSO_INTERNAL const Xt_int *
+xt_idxvec_get_sorted_vector(Xt_idxlist idxvec, Xt_config config)
+{
+  return get_sorted_vector((Xt_idxvec)idxvec, config);
+}
+
+static const Xt_int *
 get_sorted_vector(Xt_idxvec idxvec, Xt_config config) {
 
   if (idxvec->sorted_vector)
     return idxvec->sorted_vector;
 
   size_t num_indices = (size_t)idxvec->parent.num_indices;
-  idxvec->sorted_vec_positions = xmalloc((size_t)num_indices *
-                                         sizeof(*(idxvec->sorted_vec_positions)));
-
 
   const Xt_int *restrict vector = idxvec->vector;
   bool sorted = true;
@@ -478,13 +489,16 @@ get_sorted_vector(Xt_idxvec idxvec, Xt_config config) {
 
   /* we are done if vector is already sorted */
   if (sorted) {
-    // gen id-map:
-    for (size_t i = 0; i < num_indices; ++i)
-      idxvec->sorted_vec_positions[i] = (int)i;
+    idxvec->sorted_vec_positions = NULL;
     return idxvec->sorted_vector = vector;
   }
+  if (config->flags & xt_force_nosort)
+    return NULL;
+
   size_t svec_size = num_indices * sizeof(Xt_int);
   Xt_int *sorted_vector = xmalloc(svec_size);
+  idxvec->sorted_vec_positions = xmalloc((size_t)num_indices *
+                                         sizeof(*(idxvec->sorted_vec_positions)));
 
   memcpy(sorted_vector, vector, svec_size);
 
@@ -539,15 +553,13 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     inter_vector = xrealloc(inter_vector, header_size + vector_size);
     inter_vector->vector
       = (Xt_int *)(void *)((unsigned char *)inter_vector + header_size);
+    Xt_idxlist_init(&inter_vector->parent, &idxvec_vtable, (int)num_indices_inter);
+    inter_vector->sorted_vector = inter_vector->vector;
+    inter_vector->sorted_vec_positions = NULL;
   } else {
     free(inter_vector);
-    return xt_idxempty_new();
+    inter_vector = (Xt_idxvec)xt_idxempty_new();
   }
-
-  Xt_idxlist_init(&inter_vector->parent, &idxvec_vtable, (int)num_indices_inter);
-  inter_vector->sorted_vector = NULL;
-  inter_vector->sorted_vec_positions = NULL;
-
   return (Xt_idxlist)inter_vector;
 }
 
@@ -643,6 +655,14 @@ idxvec_copy(Xt_idxlist idxlist) {
    return xt_idxvec_new(idxvec_obj->vector, idxvec_obj->parent.num_indices);
 }
 
+static Xt_idxlist
+idxvec_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
+
+   Xt_idxvec idxvec = (Xt_idxvec)idxlist;
+   const Xt_int *sorted_vector = get_sorted_vector(idxvec, config);
+   return xt_idxvec_new(sorted_vector, idxvec->parent.num_indices);
+}
+
 static void
 idxvec_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
@@ -666,9 +686,9 @@ idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
 
   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
 
-  xt_convert_indices_to_stripes(idxvec_obj->vector,
-                                idxvec_obj->parent.num_indices,
-                                stripes, num_stripes);
+  xt_convert_indices_to_stripes_keep_buf(idxvec_obj->vector,
+                                         idxvec_obj->parent.num_indices,
+                                         stripes, num_stripes);
 }
 
 static int
@@ -766,7 +786,7 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
     return 1; // failure
 
   // result:
-  *position = idxvec_obj->sorted_vec_positions[lb];
+  *position = sorted_vec_positions ? sorted_vec_positions[lb] : (int)lb;
   return 0;
 }
 

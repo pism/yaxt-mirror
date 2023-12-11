@@ -59,9 +59,13 @@
 #include "xt_exchanger.h"
 
 enum xt_config_flags {
-  exch_no_dt_dup = (1 << 0),
+  exch_no_dt_dup = 1 << 0,
   xt_mthread_mode_bit_ofs = 1,
-  xt_mthread_mode_mask = (1 << xt_mthread_mode_bit_ofs),
+  xt_mthread_mode_num_bits = 1,
+  xt_mthread_mode_mask = 1 << xt_mthread_mode_bit_ofs,
+  xt_force_nosort_bit_ofs = xt_mthread_mode_bit_ofs + xt_mthread_mode_num_bits,
+  /* if set, rather return unsorted data than incur costly data duplication */
+  xt_force_nosort = 1 << xt_force_nosort_bit_ofs,
 };
 
 struct Xt_sort_algo_funcptr

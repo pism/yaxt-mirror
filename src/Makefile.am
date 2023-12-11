@@ -97,6 +97,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_idxlist_internal.h					\
 	xt_idxlist.c						\
 	xt_idxlist_intersection.c				\
+	xt_heapsort_base.h					\
 	xt_idxlist_collection.c					\
 	xt_idxlist_collection_internal.h			\
 	xt_idxlist_unpack.h					\

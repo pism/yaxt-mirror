@@ -66,6 +66,9 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
                                       Xt_idxlist idxlist_dst,
                                       Xt_config config);
 
+PPM_DSO_INTERNAL const Xt_int *
+xt_idxvec_get_sorted_vector(Xt_idxlist idxvec, Xt_config config);
+
 
 #endif
 
