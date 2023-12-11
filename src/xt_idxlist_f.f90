@@ -50,6 +50,7 @@ MODULE xt_idxlist_abstract
   USE xt_core, ONLY: xt_int_kind, xt_mpi_fint_kind, xt_stripe, &
        xt_bounds, xt_abort, i2, i4, i8, &
        xt_pos_ext, OPERATOR(==)
+  USE xt_config_f, ONLY: xt_config, xt_config_f2c
   USE iso_c_binding, ONLY: c_ptr, c_int, c_f_pointer, c_null_ptr, &
        c_associated, c_loc
   IMPLICIT NONE
@@ -103,6 +104,7 @@ MODULE xt_idxlist_abstract
   PUBLIC :: xt_idxlist_delete, xt_idxlist_get_pack_size, &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_is_null, &
        xt_idxlist_pack_f, xt_idxlist_unpack_f, xt_idxlist_copy, &
+       xt_idxlist_sorted_copy, xt_idxlist_sorted_copy_custom, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &
@@ -200,6 +202,11 @@ MODULE xt_idxlist_abstract
     MODULE PROCEDURE gpe_is_i4_a_i4_p1d_l
     MODULE PROCEDURE gpe_is_a_p1d_l
   END INTERFACE xt_idxlist_get_pos_exts_of_index_stripes
+
+  INTERFACE xt_idxlist_sorted_copy
+    MODULE PROCEDURE xt_idxlist_sorted_copy
+    MODULE PROCEDURE xt_idxlist_sorted_copy_custom
+  END INTERFACE xt_idxlist_sorted_copy
 
   CHARACTER(len=*), PARAMETER :: filename = 'xt_idxlist_f.f90'
 CONTAINS
@@ -532,6 +539,44 @@ CONTAINS
     copy = xt_idxlist_c2f(xt_idxlist_copy_c(idxlist%cptr))
 
   END FUNCTION xt_idxlist_copy
+
+  FUNCTION xt_idxlist_sorted_copy(idxlist) RESULT(copy)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    TYPE(xt_idxlist) :: copy
+
+    INTERFACE
+      FUNCTION xt_idxlist_sorted_copy_c(idxlist) &
+           BIND(c, name='xt_idxlist_sorted_copy') &
+           RESULT(copy)
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(IN) :: idxlist
+        TYPE(c_ptr) :: copy
+      END FUNCTION xt_idxlist_sorted_copy_c
+    END INTERFACE
+
+    copy = xt_idxlist_c2f(xt_idxlist_sorted_copy_c(idxlist%cptr))
+
+  END FUNCTION xt_idxlist_sorted_copy
+
+  FUNCTION xt_idxlist_sorted_copy_custom(idxlist, config) RESULT(copy)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_idxlist) :: copy
+
+    INTERFACE
+      FUNCTION xt_idxlist_sorted_copy_custom_c(idxlist, config) &
+           BIND(c, name='xt_idxlist_sorted_copy_custom') &
+           RESULT(copy)
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE, INTENT(IN) :: idxlist, config
+        TYPE(c_ptr) :: copy
+      END FUNCTION xt_idxlist_sorted_copy_custom_c
+    END INTERFACE
+
+    copy = xt_idxlist_c2f(xt_idxlist_sorted_copy_custom_c(idxlist%cptr, &
+         xt_config_f2c(config)))
+
+  END FUNCTION xt_idxlist_sorted_copy_custom
 
   FUNCTION xt_idxlist_c2f(idxlist) RESULT(p)
     TYPE(c_ptr), INTENT(in) :: idxlist

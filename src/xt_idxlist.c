@@ -66,6 +66,7 @@
 #include "xt/xt_idxstripes.h"
 #include "xt_idxstripes_internal.h"
 #include "xt/xt_mpi.h"
+#include "xt_config_internal.h"
 #include "xt_idxlist_unpack.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
@@ -93,6 +94,16 @@ void xt_idxlist_pack(Xt_idxlist idxlist, void *buffer,
 Xt_idxlist xt_idxlist_copy(Xt_idxlist idxlist) {
 
    return idxlist->vtable->copy(idxlist);
+}
+
+Xt_idxlist xt_idxlist_sorted_copy(Xt_idxlist idxlist)
+{
+  return idxlist->vtable->sorted_copy(idxlist, &xt_default_config);
+}
+
+Xt_idxlist xt_idxlist_sorted_copy_custom(Xt_idxlist idxlist, Xt_config config)
+{
+  return idxlist->vtable->sorted_copy(idxlist, config);
 }
 
 int xt_idxlist_get_num_indices(Xt_idxlist idxlist) {

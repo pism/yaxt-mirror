@@ -121,7 +121,34 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     for(int i=0; i<ref_num_indices; i++)
       mismatch |= (ref_indices[i] != indices_const[i]);
     if (mismatch)
-      PUT_ERR("check_idxlist: ref_indices[i] != indices_const[i]\n");
+      PUT_ERR("check_idxlist: index reference mismatch\n");
+  }
+
+  {
+    Xt_idxlist sorted_idxlist_copy = xt_idxlist_sorted_copy(idxlist);
+    Xt_int *sorted_ref_indices;
+    bool is_sorted = true;
+    size_t indices_mem_size = ref_num_indices_ * sizeof (*sorted_ref_indices);
+    for (size_t i = 1; i < ref_num_indices_; ++i)
+      is_sorted &= (ref_indices[i-1] <= ref_indices[i]);
+    if (is_sorted)
+      sorted_ref_indices = (Xt_int *)(void *)ref_indices;
+    else {
+      sorted_ref_indices
+        = xmalloc(indices_mem_size);
+      memcpy(sorted_ref_indices, ref_indices, indices_mem_size);
+      xt_mergesort_xt_int(sorted_ref_indices, ref_num_indices_);
+    }
+    Xt_int sorted_indices[ref_num_indices_];
+    xt_idxlist_get_indices(sorted_idxlist_copy, sorted_indices);
+    bool mismatch = false;
+    for(int i=0; i<ref_num_indices; i++)
+      mismatch |= (sorted_ref_indices[i] != sorted_indices[i]);
+    if (mismatch)
+      PUT_ERR("check_idxlist: incorrect index sorting detected!\n");
+    if (sorted_ref_indices != ref_indices)
+      free(sorted_ref_indices);
+    xt_idxlist_delete(sorted_idxlist_copy);
   }
 
   {

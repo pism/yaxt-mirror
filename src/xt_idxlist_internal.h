@@ -63,6 +63,7 @@ struct xt_idxlist_vtable {
    size_t (*get_pack_size)(Xt_idxlist, MPI_Comm);
    void (*pack)(Xt_idxlist, void*, int, int*, MPI_Comm);
    Xt_idxlist (*copy)(Xt_idxlist);
+  Xt_idxlist (*sorted_copy)(Xt_idxlist, Xt_config);
    void (*get_indices)(Xt_idxlist, Xt_int *indices);
    Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, int *);

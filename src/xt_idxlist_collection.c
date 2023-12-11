@@ -60,12 +60,18 @@
 #include "xt/xt_idxlist_collection.h"
 #include "xt_idxlist_collection_internal.h"
 #include "xt/xt_idxempty.h"
+#include "xt/xt_config.h"
+#include "xt_config_internal.h"
+#include "xt_idxvec_internal.h"
+#include "xt_idxstripes_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt_idxlist_unpack.h"
 #include "xt_stripe_util.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "ensure_array_size.h"
+
+static const char filename[] = "xt_idxlist_collection.c";
 
 static void
 idxlist_collection_delete(Xt_idxlist data);
@@ -79,6 +85,9 @@ idxlist_collection_pack(Xt_idxlist data, void *buffer, int buffer_size,
 
 static Xt_idxlist
 idxlist_collection_copy(Xt_idxlist idxlist);
+
+static Xt_idxlist
+idxlist_collection_sorted_copy(Xt_idxlist idxlist, Xt_config config);
 
 static void
 idxlist_collection_get_indices(Xt_idxlist idxlist, Xt_int *indices);
@@ -114,6 +123,7 @@ static const struct xt_idxlist_vtable idxlist_collection_vtable = {
   .get_pack_size               = idxlist_collection_get_pack_size,
   .pack                        = idxlist_collection_pack,
   .copy                        = idxlist_collection_copy,
+  .sorted_copy			= idxlist_collection_sorted_copy,
   .get_indices                 = idxlist_collection_get_indices,
   .get_indices_const           = idxlist_collection_get_indices_const,
   .get_index_stripes           = idxlist_collection_get_index_stripes,
@@ -274,6 +284,177 @@ idxlist_collection_copy(Xt_idxlist idxlist) {
 
    return xt_idxlist_collection_new(collectionlist->idxlists,
                                     collectionlist->num_idxlists);
+}
+
+struct range_list_sort
+{
+  Xt_int min, max;
+  int pos;
+};
+
+static int
+range_list_cmp(const void *a, const void *b)
+{
+  const struct range_list_sort *ra = a, *rb = b;
+  int ret;
+  if (ra->min != rb->min) {
+    ret = (ra->min > rb->min) - (ra->min < rb->min);
+  } else {
+    ret = (ra->max > rb->max) - (ra->max < rb->max);
+  }
+  return ret;
+}
+
+struct Xt_stripes {
+  int num_stripes;
+  struct Xt_stripe *stripes;
+};
+
+static Xt_idxlist
+coll_get_sorted_stripes(Xt_idxlist_collection collectionlist,
+                        struct range_list_sort *list_sorter,
+                        Xt_config config)
+{
+  /* accumulate stripes into this buffer */
+  struct Xt_stripe *stripes_accum = NULL;
+  size_t stripes_accum_array_size = 0;
+  size_t num_accum_stripes;
+  const Xt_idxlist *unsorted_idxlists = collectionlist->idxlists;
+  {
+    int num_accum_stripes_;
+    xt_idxlist_get_index_stripes(unsorted_idxlists[list_sorter[0].pos], &stripes_accum,
+                                 &num_accum_stripes_);
+    num_accum_stripes = (size_t)num_accum_stripes_;
+  }
+  size_t num_idxlists = (size_t)collectionlist->num_idxlists;
+  struct Xt_stripe *stripe_buf = NULL; int stripe_buf_size = 0;
+  /* obtain stripes, locally mostly sorted if reasonably available */
+  for (size_t i = 1; i < num_idxlists; ++i) {
+    Xt_idxlist component_list, unsorted_list
+      = unsorted_idxlists[list_sorter[i].pos];
+    Xt_int *sorted_indices = NULL;
+    switch (unsorted_list->vtable->idxlist_pack_code) {
+    case EMPTY:                 /* xt_idxempty should not usually be part
+                                 * of a collection, but better safe
+                                 * than sorry, I guess */
+      Xt_abort(Xt_default_comm, "internal error", filename, __LINE__);
+      /* these are either too expensive or pointless to sort, just
+       * use their ranges as is */
+    case COLLECTION:
+    case STRIPES:
+      component_list = unsorted_list;
+      break;
+    case VECTOR:
+      {
+        struct Xt_config_ derived_config = *config;
+        derived_config.flags |= xt_force_nosort;
+        size_t num_indices = (size_t)unsorted_list->num_indices;
+        const Xt_int *indices
+          = xt_idxvec_get_sorted_vector(unsorted_list, &derived_config);
+        if (!indices) {
+          const Xt_int *vector
+            = xt_idxlist_get_indices_const(unsorted_list);
+           indices = sorted_indices
+             = xmalloc(num_indices * sizeof (*sorted_indices));
+           for (size_t j = 0; j < num_indices; ++j)
+             sorted_indices[j] = vector[j];
+          config->sort_funcs->sort_xt_int(sorted_indices, num_indices);
+        }
+        component_list
+          = xt_idxvec_prealloc_new(indices, (int)num_indices);
+      }
+      break;
+    default:
+      component_list
+        = xt_idxlist_sorted_copy_custom(unsorted_list, config);
+    }
+    xt_idxlist_get_index_stripes_keep_buf(component_list,
+                                          &stripe_buf, &stripe_buf_size);
+    if (component_list != unsorted_list) {
+      xt_idxlist_delete(component_list);
+      free(sorted_indices);
+    }
+    ENSURE_ARRAY_SIZE(stripes_accum, stripes_accum_array_size,
+                      num_accum_stripes + (size_t)stripe_buf_size);
+
+    num_accum_stripes
+      += xt_stripes_merge_copy((size_t)stripe_buf_size,
+                               stripes_accum + num_accum_stripes,
+                               stripe_buf,
+                               num_accum_stripes > 0);
+
+  }
+  /* sort/shuffle the entirety of stripes */
+  free(stripe_buf);
+  Xt_idxlist sorted_copy
+    = xt_idxstripes_sort_new((size_t)num_accum_stripes, stripes_accum, config);
+  free(stripes_accum);
+  return sorted_copy;
+}
+
+
+static Xt_idxlist
+idxlist_collection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
+
+   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
+   size_t num_idxlists = (size_t)collectionlist->num_idxlists;
+   Xt_int prev_max = XT_INT_MIN;
+   Xt_idxlist *idxlists = collectionlist->idxlists;
+   struct range_list_sort *list_sorter;
+   Xt_idxlist_collection sorted_collection
+     = xmalloc(sizeof (*sorted_collection)
+               + num_idxlists * sizeof(sorted_collection->idxlists[0])
+               + num_idxlists * sizeof (struct range_list_sort));
+   sorted_collection->num_idxlists = (int)num_idxlists;
+   sorted_collection->index_array_cache = NULL;
+   list_sorter
+     = (struct range_list_sort *)(sorted_collection->idxlists+num_idxlists);
+   Xt_idxlist result;
+   bool component_overlap = false;
+   for (size_t i = 0; i < num_idxlists; ++i) {
+     Xt_int min = list_sorter[i].min = xt_idxlist_get_min_index(idxlists[i]);
+     component_overlap |= (min < prev_max);
+     prev_max = list_sorter[i].max = xt_idxlist_get_max_index(idxlists[i]);
+     list_sorter[i].pos = (int)i;
+   }
+   if (component_overlap) {
+     /* individual lists not sorted or even overlapping each other */
+     /* 1. sort the lists according to minimal element */
+     qsort(list_sorter, num_idxlists, sizeof (*list_sorter),
+           range_list_cmp);
+     /* 2. re-check overlap after sorting */
+     prev_max = XT_INT_MIN;
+     component_overlap = false;
+     for (size_t i = 0; i < num_idxlists; ++i) {
+       Xt_int min = list_sorter[i].min;
+       component_overlap |= (min < prev_max);
+       prev_max = list_sorter[i].max;
+     }
+   }
+   if (!component_overlap) {
+     /* the component lists are in a sequence either naturally or
+      * after sorting without problematic overlaps, a concatenation of
+      * their sorted copies is all that's needed. */
+     Xt_idxlist *sorted_lists = sorted_collection->idxlists;
+     for (size_t i = 0; i < num_idxlists; ++i)
+       sorted_lists[i]
+         /* list_sorter[i].pos will be an identity map if the lists
+          * were already sorted */
+         = xt_idxlist_sorted_copy_custom(idxlists[list_sorter[i].pos],
+                                         config);
+     sorted_collection
+       = xrealloc(sorted_collection, sizeof (*sorted_collection)
+                  + num_idxlists * sizeof(sorted_collection->idxlists[0]));
+     Xt_idxlist_init(&sorted_collection->parent, &idxlist_collection_vtable,
+                     collectionlist->parent.num_indices);
+     result = (Xt_idxlist)sorted_collection;
+   } else {
+     /* components overlap in a way that cannot be resolved by sorting
+      * only the lists, need to create stripes and sort those */
+     result = coll_get_sorted_stripes(collectionlist, list_sorter, config);
+     free(sorted_collection);
+   }
+   return result;
 }
 
 static void
