@@ -403,24 +403,10 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                          section->dims, ndim, dim_desc_dt, comm),comm);
 
-  // due to the possibility of negative local and global sizes, the minimum and
-  // maximum can be in any corner of the n-dimensional section
-  section->min_index_cache = section->local_start_index;
-  section->max_index_cache = section->local_start_index;
-  for (int i = 0; i < ndim; ++i) {
-
-    // if either local or global size is negative
-    if ((section->dims[i].global_size < 0) ^ (section->dims[i].local_size < 0))
-      section->min_index_cache =
-        (Xt_int)(section->min_index_cache + section->dims[i].global_stride
-                 * (abs(section->dims[i].local_size) - 1));
-    else // if local and global size are both positive or negative
-      section->max_index_cache
-        = (Xt_int)(section->max_index_cache
-                   + (Xt_int)(section->dims[i].global_stride
-                              * (Xt_int)(abs(section->dims[i].local_size)
-                                         - 1)));
-  }
+  struct Xt_minmax mm = get_section_minmax(
+    ndim, section->local_start_index, section->dims);
+  section->min_index_cache = mm.min;
+  section->max_index_cache = mm.max;
   int num_indices = idxsection_get_num_indices(section);
   Xt_idxlist_init(&section->parent, &idxsection_vtable, num_indices);
   INSTR_STOP(instr);
