@@ -80,8 +80,8 @@ void xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
   INSTR_START(instr);
 
   struct Xt_stripe *restrict temp_stripes = *stripes;
-  size_t temp_stripes_array_size = 0;
-  size_t num_temp_stripes = (size_t)*num_stripes * sizeof (*temp_stripes);
+  size_t temp_stripes_array_size = (size_t)*num_stripes;
+  size_t num_temp_stripes = 0;
 
   if (num_indices > 0) {
     size_t i = 0;
