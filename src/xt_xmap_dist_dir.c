@@ -74,6 +74,10 @@
 #include "xt_xmap_dist_dir_common.h"
 #include "xt/xt_sort.h"
 
+
+
+static const char filename[] = "xt_xmap_dist_dir.c";
+
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
 #if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
@@ -324,7 +328,7 @@ recv_and_unpack_intersection(struct dist_dir *dist_dir, int recv_size,
 
   if (total_recv_size != recv_size)
     Xt_abort(comm, "ERROR: recv_intersections received wrong number of bytes",
-             __FILE__, __LINE__);
+             filename, __LINE__);
   dist_dir->num_entries = recv_count;
 }
 
@@ -568,7 +572,7 @@ recv_and_unpack_dist_dir_result(struct dist_dir *dist_dir, int recv_size,
 
   if (0 != recv_size)
     Xt_abort(comm, "ERROR: recv_and_unpack_dist_dir_result"
-             " received wrong number of bytes", __FILE__, __LINE__);
+             " received wrong number of bytes", filename, __LINE__);
 
   dist_dir->num_entries = num_entries;
 

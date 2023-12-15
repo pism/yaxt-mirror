@@ -67,6 +67,10 @@
 #include "xt_exchanger.h"
 #include "xt_config_internal.h"
 
+
+
+static const char filename[] = "xt_redist_collection.c";
+
 enum { DEFFAULT_DATATYPE_CACHE_SIZE=16 };
 
 static void
@@ -270,7 +274,7 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
              "xt_redist_collection_custom_new", __LINE__);
   if (cache_size >= -1) ; else
     Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
-             __FILE__, __LINE__);
+             filename, __LINE__);
 #endif
   unsigned num_redists_ = (unsigned)num_redists;
   size_t num_ranks[2][num_redists_];
@@ -453,7 +457,7 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
 
   if (num_arrays != (int)redist_coll->num_redists)
     Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
-             "redist_collection_s_exchange", __FILE__, __LINE__);
+             "redist_collection_s_exchange", filename, __LINE__);
 
 
   Xt_exchanger exchanger = get_exchanger(redist_coll,
@@ -476,7 +480,7 @@ redist_collection_a_exchange(Xt_redist redist, int num_arrays,
 
   if (num_arrays != (int)redist_coll->num_redists)
     Xt_abort(redist_coll->comm, "ERROR: wrong number of arrays in "
-             "redist_collection_a_exchange", __FILE__, __LINE__);
+             "redist_collection_a_exchange", filename, __LINE__);
 
 
   Xt_exchanger exchanger = get_exchanger(redist_coll,
@@ -604,7 +608,7 @@ redist_collection_get_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank),
 
   Xt_abort(redist_coll->comm, "ERROR: datatype retrieval is not"
            " supported for this xt_redist type (Xt_redist_collection)",
-           __FILE__, __LINE__);
+           filename, __LINE__);
 
   return MPI_DATATYPE_NULL;
 }
@@ -619,7 +623,7 @@ redist_collection_s_exchange1(Xt_redist redist,
     redist_collection_s_exchange(redist, 1, &src_data, &dst_data);
   else
     Xt_abort(redist_coll->comm, "ERROR: s_exchange1 is not implemented for"
-             " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
+             " this xt_redist type (Xt_redist_collection)", filename, __LINE__);
 }
 
 static void
@@ -633,7 +637,7 @@ redist_collection_a_exchange1(Xt_redist redist,
     redist_collection_a_exchange(redist, 1, &src_data, &dst_data, request);
   else
     Xt_abort(redist_coll->comm, "ERROR: a_exchange1 is not implemented for"
-             " this xt_redist type (Xt_redist_collection)", __FILE__, __LINE__);
+             " this xt_redist type (Xt_redist_collection)", filename, __LINE__);
 }
 
 static int

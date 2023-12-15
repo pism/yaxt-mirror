@@ -54,6 +54,10 @@
 #include "core/ppm_visibility.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+
+
+static const char filename[] = "yaxt_f2c.c";
+
 #if defined __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreserved-id-macro"
@@ -198,7 +202,7 @@ MPI_Fint xt_idxlist_get_pack_size_f2c(struct xt_idxlist_f *idxlist,
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   size_t size = xt_idxlist_get_pack_size(idxlist->cptr, comm_c);
   if (size > XT_MPI_FINT_MAX)
-    Xt_abort(comm_c, "pack size too large", __FILE__, __LINE__);
+    Xt_abort(comm_c, "pack size too large", filename, __LINE__);
   return (MPI_Fint)size;
 }
 
@@ -438,7 +442,7 @@ xt_redist_collection_static_new_f(Xt_redist *redists, MPI_Fint num_redists,
 #endif
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   if (num_redists < 1)
-    Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
+    Xt_abort(comm_c, "bad case: (num_redists < 1)", filename, __LINE__);
 
   return xt_redist_collection_static_new(
     redists, (int)num_redists, src_displacements, dst_displacements, comm_c);
@@ -455,7 +459,7 @@ xt_redist_collection_static_custom_new_f(
 #endif
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   if (num_redists < 1)
-    Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
+    Xt_abort(comm_c, "bad case: (num_redists < 1)", filename, __LINE__);
 
   return xt_redist_collection_static_custom_new(
     redists, (int)num_redists, src_displacements, dst_displacements,
@@ -472,7 +476,7 @@ xt_redist_collection_new_f(Xt_redist *redists, MPI_Fint num_redists,
 #endif
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   if (num_redists < 1)
-    Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
+    Xt_abort(comm_c, "bad case: (num_redists < 1)", filename, __LINE__);
   return xt_redist_collection_new(redists, (int)num_redists,
                                   (int)cache_size, comm_c);
 }
@@ -488,7 +492,7 @@ xt_redist_collection_custom_new_f(Xt_redist *redists, MPI_Fint num_redists,
 #endif
   MPI_Comm comm_c = MPI_Comm_f2c(comm_f);
   if (num_redists < 1)
-    Xt_abort(comm_c, "bad case: (num_redists < 1)", __FILE__, __LINE__);
+    Xt_abort(comm_c, "bad case: (num_redists < 1)", filename, __LINE__);
   return xt_redist_collection_custom_new(redists, (int)num_redists,
                                          (int)cache_size, comm_c, config->cptr);
 }

@@ -65,6 +65,9 @@
 #include "xt_ddt.h"
 #include "xt_ddt_internal.h"
 
+static const char filename[] = "xt_ddt.c";
+
+
 /* attribute handle for attaching xt_ddt objects to MPI datatypes */
 static int xt_ddt_internal_keyval = MPI_KEYVAL_INVALID;
 
@@ -628,7 +631,7 @@ static struct xt_ddt_tree_elem *
       Xt_abort(
         Xt_default_comm,
         "ERROR(mpi_ddt_2_xt_ddt_tree): unsupported combiner type",
-        __FILE__, __LINE__);
+        filename, __LINE__);
       return NULL;
     }
 
@@ -885,7 +888,7 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     err_msg, sizeof(err_msg),
     "ERROR(mpi_ddt_to_data_idx): unsupported datatype size (%d Byte)",
     (int)true_extent);
-  Xt_abort(Xt_default_comm, err_msg, __FILE__, __LINE__);
+  Xt_abort(Xt_default_comm, err_msg, filename, __LINE__);
   return SIZE_MAX;
 }
 

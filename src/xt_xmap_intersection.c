@@ -69,6 +69,10 @@
 #include "xt_arithmetic_util.h"
 #include "xt_config_internal.h"
 
+
+
+static const char filename[] = "xt_xmap_intersection.c";
+
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
 #if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
@@ -634,7 +638,7 @@ xt_xmap_intersection_new(int num_src_intersections,
     free(found_index_mask);
     free(index_positions);
     xmap_intersection_delete((Xt_xmap)xmap);
-    print_miss_msg(dst_idxlist, first_missing_pos, comm, __FILE__, __LINE__);
+    print_miss_msg(dst_idxlist, first_missing_pos, comm, filename, __LINE__);
   }
 
   int n_in = xmap->n_in, n_out = xmap->n_out;
@@ -917,7 +921,7 @@ xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type,
       break;
     default:
       Xt_abort(comm, "ERROR(xmap_intersection_reorder):invalid reorder type",
-               __FILE__, __LINE__);
+               filename, __LINE__);
   };
 
   return (Xt_xmap)xmap_intersection_new;
