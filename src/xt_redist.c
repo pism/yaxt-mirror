@@ -61,6 +61,10 @@
 #include "xt_mpi_ddt_cache.h"
 #include "xt_config_internal.h"
 
+
+
+static const char filename[] = "xt_redist.c";
+
 Xt_redist xt_redist_copy(Xt_redist redist) {
 
   return redist->vtable->copy(redist);
@@ -142,14 +146,14 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
 
     if (redists[i] == NULL)
       Xt_abort(comm, "ERROR: invalid redist; cannot build "
-               "redistribution collection\n", __FILE__, __LINE__);
+               "redistribution collection\n", filename, __LINE__);
 
     xt_mpi_call(MPI_Comm_compare(xt_redist_get_MPI_Comm(redists[i]),
                                  comm, &result), comm);
 
     if ((result != MPI_IDENT) && (result != MPI_CONGRUENT))
       Xt_abort(comm, "ERROR: MPI communicators do not match; cannot build "
-               "redistribution collection\n", __FILE__, __LINE__);
+               "redistribution collection\n", filename, __LINE__);
   }
 }
 

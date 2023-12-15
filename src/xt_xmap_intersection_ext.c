@@ -71,6 +71,10 @@
 #include "xt_cover.h"
 #include "xt_config_internal.h"
 
+
+
+static const char filename[] = "xt_xmap_intersection_ext.c";
+
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
 #if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
@@ -441,12 +445,12 @@ generate_transfer_ext(struct Xt_xmap_intersection_ext_ *xmap,
     struct Xt_pos_ext_vec cover = tedr.cover;
     if (!xt_idxlist_pos_ext_is_full_cover(dst_idxlist, cover)) {
       if (xt_idxlist_get_num_indices(dst_idxlist) == 0)
-        Xt_abort(comm, "ERROR: ups...this should not have happend...", __FILE__,
+        Xt_abort(comm, "ERROR: ups...this should not have happend...", filename,
                  __LINE__);
       int first_missing_pos
         = ((cover.num_pos_ext > 0) && (cover.pos_ext[0].start == 0))
         ? cover.pos_ext[0].start + cover.pos_ext[0].size : 0;
-      print_miss_msg(dst_idxlist, first_missing_pos, comm, __FILE__, __LINE__);
+      print_miss_msg(dst_idxlist, first_missing_pos, comm, filename, __LINE__);
     }
     xt_cover_finish(&cover);
     xmap->n_in = tedr.resCount;
@@ -1269,7 +1273,7 @@ xmap_intersection_ext_reorder(Xt_xmap xmap, enum xt_reorder_type type,
       break;
     default:
       Xt_abort(comm, "ERROR(xmap_intersection_ext_reorder):invalid reorder "
-               "type", __FILE__, __LINE__);
+               "type", filename, __LINE__);
   };
 
   return (Xt_xmap)xmap_intersection_ext_new;

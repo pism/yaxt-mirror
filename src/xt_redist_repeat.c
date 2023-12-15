@@ -64,6 +64,10 @@
 #include "xt_redist_internal.h"
 #include "xt_config_internal.h"
 
+
+
+static const char filename[] = "xt_redist_repeat.c";
+
 static void
 generate_msg_infos(struct Xt_redist_msg *restrict msgs,
                    MPI_Aint extent, const int *displacements, Xt_redist redist,
@@ -120,7 +124,7 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
 
   if (num_repetitions < 1)
     Xt_abort(comm, "ERROR: invalid number of repetitions (Xt_redist_repeat)\n",
-             __FILE__, __LINE__);
+             filename, __LINE__);
 
   int nmsg[2];
   for (int i = 0; i < 2; ++i)
