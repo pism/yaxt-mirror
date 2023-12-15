@@ -57,6 +57,10 @@
 #include "xt/xt_idxstripes.h"
 #include "xt_idxlist_unpack.h"
 
+
+
+static const char filename[] = "xt_idxlist_unpack.c";
+
 typedef Xt_idxlist (*idxlist_unpack)(void*,int,int*,MPI_Comm);
 
 static const idxlist_unpack unpack[] = {
@@ -80,7 +84,7 @@ Xt_idxlist xt_idxlist_unpack(void *buffer, int buffer_size,
   if (type >= 0 && (unsigned)type < xt_num_unpack_routines)
     return unpack[type](buffer, buffer_size, position, comm);
   Xt_abort(comm, "xt_idxlist_unpack: unknown index list type",
-           __FILE__, __LINE__);
+           filename, __LINE__);
 
   return NULL;
 }

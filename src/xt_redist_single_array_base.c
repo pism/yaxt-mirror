@@ -64,6 +64,10 @@
 #include "xt_exchanger.h"
 #include "xt_config_internal.h"
 
+
+
+static const char filename[] = "xt_redist_single_array_base.c";
+
 static Xt_redist
 redist_sab_copy(Xt_redist redist);
 
@@ -207,7 +211,7 @@ redist_sab_s_exchange(Xt_redist redist, int num_arrays,
   else
     Xt_abort(redist_rep->comm, "ERROR: multi-array s_exchange is not"
              " implemented for this xt_redist type "
-             "(Xt_redist_single_array_base)", __FILE__, __LINE__);
+             "(Xt_redist_single_array_base)", filename, __LINE__);
 }
 
 static void
@@ -221,7 +225,7 @@ redist_sab_a_exchange(Xt_redist redist, int num_arrays,
   else
     Xt_abort(redist_rep->comm, "ERROR: multi-array a_exchange is not"
              " implemented for this xt_redist type "
-             "(Xt_redist_single_array_base)", __FILE__, __LINE__);
+             "(Xt_redist_single_array_base)", filename, __LINE__);
 }
 
 static void

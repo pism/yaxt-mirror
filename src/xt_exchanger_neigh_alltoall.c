@@ -65,6 +65,8 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_neigh_alltoall.h"
 
+static const char filename[] = "xt_exchanger_neigh_alltoall.c";
+
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 
 static Xt_exchanger
@@ -196,7 +198,7 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
   if (flag)
     Xt_abort(comm, "ERROR(xt_exchanger_neigh_alltoall_new): "
              "inter-communicator's are not defined for virtual topologies",
-             __FILE__, __LINE__);
+             filename, __LINE__);
 
   assert((nsend >= 0) & (nrecv >= 0));
   Xt_exchanger_neigh_alltoall exchanger

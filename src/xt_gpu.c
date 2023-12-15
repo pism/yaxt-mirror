@@ -52,6 +52,10 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "xt_gpu.h"
+
+
+static const char filename[] = "xt_gpu.c";
+
 #ifdef HAVE_CUDA
 #  include "xt_cuda.h"
 #endif
@@ -89,7 +93,7 @@ void xt_gpu_init() {
       Xt_abort(                                              \
         Xt_default_comm,                                     \
         "ERROR(" STR(__func__) "): unsupported memory type", \
-        __FILE__, __LINE__);                                 \
+        filename, __LINE__);                                 \
     }                                                        \
   } while (0);
 

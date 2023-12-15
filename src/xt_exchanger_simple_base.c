@@ -60,6 +60,8 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_simple_base.h"
 
+static const char filename[] = "xt_exchanger_simple_base.c";
+
 static Xt_exchanger
 xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
                               MPI_Comm newComm, int new_tag_offset);
@@ -163,7 +165,7 @@ xt_exchanger_simple_base_new(
 
   if (s_func == 0)
     Xt_abort(comm, "ERROR(xt_exchanger_simple_base_new): invalid synchronous "
-             "exchange function pointer", __FILE__, __LINE__);
+             "exchange function pointer", filename, __LINE__);
 
   assert((nsend >= 0) & (nrecv >= 0));
   size_t nmsg = (size_t)nsend + (size_t)nrecv;
@@ -277,7 +279,7 @@ static void xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
   if (exchanger_sb->a_func == NULL)
     Xt_abort(exchanger_sb->comm, "ERROR(xt_exchanger_simple_base_a_exchange): "
              "asynchronous exchange function not defined for current exchanger",
-             __FILE__, __LINE__);
+             filename, __LINE__);
 
   int nsend = exchanger_sb->nmsg[SEND];
   exchanger_sb->a_func(src_data, dst_data, nsend,
