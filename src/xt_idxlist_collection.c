@@ -147,20 +147,29 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
   assert(xt_initialized());
 
   Xt_idxlist result;
-  if (num_idxlists > 1)
+  size_t num_non_empty_idxlists = 0, first_non_empty_idxlist = (size_t)-1;
+  for (int i = 0; i < num_idxlists; ++i) {
+    int num_indices_of_list = idxlists[i]->num_indices;
+    if (first_non_empty_idxlist == (size_t)-1 && num_indices_of_list > 0)
+      first_non_empty_idxlist = (size_t)i;
+    num_non_empty_idxlists += idxlists[i]->num_indices > 0;
+  }
+  if (num_non_empty_idxlists  > 1)
   {
     Xt_idxlist_collection collectionlist
       = xmalloc(sizeof (*collectionlist)
-                + (size_t)num_idxlists * sizeof (collectionlist->idxlists[0]));
+                + num_non_empty_idxlists
+                * sizeof (collectionlist->idxlists[0]));
 
-    collectionlist->num_idxlists = num_idxlists;
+    collectionlist->num_idxlists = (int)num_non_empty_idxlists;
     collectionlist->index_array_cache = NULL;
 
     long long num_indices = 0;
-    for (int i = 0; i < num_idxlists; ++i)
-    {
-      collectionlist->idxlists[i] = xt_idxlist_copy(idxlists[i]);
-      num_indices += idxlists[i]->num_indices;
+    for (int i = 0, j = 0; i < num_idxlists; ++i) {
+      int num_indices_of_list = idxlists[i]->num_indices;
+      if (num_indices_of_list > 0)
+        collectionlist->idxlists[j++] = xt_idxlist_copy(idxlists[i]);
+      num_indices += num_indices_of_list;
     }
 
     assert(num_indices <= INT_MAX);
@@ -169,8 +178,8 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
 
     result = (Xt_idxlist)collectionlist;
   }
-  else if (num_idxlists == 1)
-    result = xt_idxlist_copy(idxlists[0]);
+  else if (num_non_empty_idxlists == 1)
+    result = xt_idxlist_copy(idxlists[first_non_empty_idxlist]);
   else /* num_idxlists == 0 */
     result = xt_idxempty_new();
   return result;
