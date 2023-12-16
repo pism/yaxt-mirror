@@ -228,14 +228,14 @@ get_section_minmax(int num_dimensions,
 }
 
 
-struct start_min_max {
+struct section_aggregate {
   Xt_int start, min, max;
 };
 
 /**
  * @return local start index, minimum and maximum index
  */
-static struct start_min_max
+static struct section_aggregate
 setup_dims(Xt_int start, int num_dimensions,
            struct dim_desc dims[num_dimensions])
 {
@@ -277,7 +277,7 @@ setup_dims(Xt_int start, int num_dimensions,
                       * Xt_isign(dims[i].global_size)));
   }
   struct Xt_minmax mm = get_section_minmax(num_dimensions, local_start_index, dims);
-  return (struct start_min_max){ .start = local_start_index,
+  return (struct section_aggregate){ .start = local_start_index,
                                  .max = mm.max, .min = mm.min };
 }
 
@@ -324,11 +324,11 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
     return xt_idxempty_new();
   }
   Xt_idxlist_init(&idxsection->parent, &idxsection_vtable, num_indices);
-  struct start_min_max smm =
+  struct section_aggregate sa =
     setup_dims(start, num_dimensions, idxsection->dims);
-  idxsection->local_start_index = smm.start;
-  idxsection->min_index_cache = smm.min;
-  idxsection->max_index_cache = smm.max;
+  idxsection->local_start_index = sa.start;
+  idxsection->min_index_cache = sa.min;
+  idxsection->max_index_cache = sa.max;
 
   INSTR_STOP(instr);
 
@@ -402,11 +402,11 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                          section->dims, ndim, dim_desc_dt, comm),comm);
 
-  struct start_min_max smm = setup_dims(
+  struct section_aggregate sa = setup_dims(
     section->global_start_index, ndim, section->dims);
-  section->local_start_index = smm.start;
-  section->min_index_cache = smm.min;
-  section->max_index_cache = smm.max;
+  section->local_start_index = sa.start;
+  section->min_index_cache = sa.min;
+  section->max_index_cache = sa.max;
   int num_indices = idxsection_get_num_indices(section);
   Xt_idxlist_init(&section->parent, &idxsection_vtable, num_indices);
   INSTR_STOP(instr);
@@ -613,11 +613,11 @@ idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
       : (Xt_int)(abs_gsize - abs_lsize - dd_src[i].local_start);
   }
 
-  struct start_min_max smm =
-    setup_dims(src->global_start_index, (int)num_dimensions, idxsection->dims);
-  idxsection->local_start_index = smm.start;
-  assert(idxsection->min_index_cache == smm.min);
-  assert(idxsection->max_index_cache == smm.max);
+  struct section_aggregate sa = setup_dims(
+    src->global_start_index, (int)num_dimensions, idxsection->dims);
+  idxsection->local_start_index = sa.start;
+  assert(idxsection->min_index_cache == sa.min
+         && idxsection->max_index_cache == sa.max);
   return (Xt_idxlist)idxsection;
 }
 
