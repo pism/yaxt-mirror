@@ -142,7 +142,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
 /* descriptor for per-dimension extent and stride */
 struct dim_desc
 {
-  Xt_int global_size, global_stride, local_start, local_stride;
+  Xt_int global_size, local_start, global_stride, local_stride;
   int local_size;
 };
 
@@ -185,7 +185,7 @@ xt_idxsection_initialize(void)
   MPI_Get_address(&dim_desc.local_size, &local_size_address);
 
   enum { num_dt_components = 2 };
-  int block_lengths[num_dt_components] = { 4, 1 };
+  int block_lengths[num_dt_components] = { 2, 1 };
   MPI_Aint displacements[num_dt_components]
     = {0, local_size_address - base_address };
   MPI_Datatype types[num_dt_components]
@@ -354,7 +354,7 @@ idxsection_get_pack_size(Xt_idxlist data, MPI_Comm comm) {
   int size_header, size_dim_descs, size_xt_int;
 
   xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_header), comm);
-  xt_mpi_call(MPI_Pack_size(2, Xt_int_dt, comm, &size_xt_int), comm);
+  xt_mpi_call(MPI_Pack_size(1, Xt_int_dt, comm, &size_xt_int), comm);
   xt_mpi_call(MPI_Pack_size(section->ndim, dim_desc_dt,
                             comm, &size_dim_descs), comm);
 
@@ -372,11 +372,9 @@ idxsection_pack(Xt_idxlist data, void *buffer, int buffer_size,
   assert(data);
   Xt_idxsection section = (Xt_idxsection)data;
   int header[2] = { SECTION, section->ndim };
-  Xt_int starts[2]
-    = { section->global_start_index, section->local_start_index };
   xt_mpi_call(MPI_Pack(header, 2, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
-  xt_mpi_call(MPI_Pack(starts, 2, Xt_int_dt, buffer,
+  xt_mpi_call(MPI_Pack(&section->global_start_index, 1, Xt_int_dt, buffer,
                        buffer_size, position, comm), comm);
   xt_mpi_call(MPI_Pack(section->dims, section->ndim, dim_desc_dt,
                        buffer, buffer_size, position, comm), comm);
@@ -397,9 +395,6 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                          &section->global_start_index, 1, Xt_int_dt, comm),
               comm);
-  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         &section->local_start_index, 1, Xt_int_dt, comm),
-              comm);
   assert(ndim > 0);
   section->index_array_cache = NULL;
   section->ndim = ndim;
@@ -407,10 +402,11 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                          section->dims, ndim, dim_desc_dt, comm),comm);
 
-  struct Xt_minmax mm = get_section_minmax(
-    ndim, section->local_start_index, section->dims);
-  section->min_index_cache = mm.min;
-  section->max_index_cache = mm.max;
+  struct start_min_max smm = setup_dims(
+    section->global_start_index, ndim, section->dims);
+  section->local_start_index = smm.start;
+  section->min_index_cache = smm.min;
+  section->max_index_cache = smm.max;
   int num_indices = idxsection_get_num_indices(section);
   Xt_idxlist_init(&section->parent, &idxsection_vtable, num_indices);
   INSTR_STOP(instr);
