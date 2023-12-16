@@ -119,7 +119,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   {
     bool mismatch = false;
     for(int i=0; i<ref_num_indices; i++)
-      mismatch |= (ref_indices[i] != indices_const[i]);
+      mismatch |= (ref_indices[i] != indices_const[i])
+        | (ref_indices[i] != indices[i]);
     if (mismatch)
       PUT_ERR("check_idxlist: index reference mismatch\n");
   }
