@@ -168,14 +168,8 @@ struct Xt_idxvec_ {
    */
 };
 
-struct Xt_vec_alloc
-{
-  struct Xt_idxvec_ *idxvec;
-  Xt_int *vector;
-};
-
 static struct Xt_vec_alloc
-alloc_idxvec_no_init(int num_indices)
+idxvec_alloc_no_init(int num_indices)
 {
   size_t vector_size = (size_t)num_indices * sizeof (Xt_int),
     header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
@@ -188,9 +182,18 @@ alloc_idxvec_no_init(int num_indices)
 }
 
 static struct Xt_vec_alloc
-alloc_idxvec(int num_indices)
+idxvec_alloc(int num_indices);
+
+struct Xt_vec_alloc
+xt_idxvec_alloc(int num_indices)
 {
-  struct Xt_vec_alloc vec_alloc = alloc_idxvec_no_init(num_indices);
+  return idxvec_alloc(num_indices);
+}
+
+static struct Xt_vec_alloc
+idxvec_alloc(int num_indices)
+{
+  struct Xt_vec_alloc vec_alloc = idxvec_alloc_no_init(num_indices);
   Xt_idxlist_init(&vec_alloc.idxvec->parent, &idxvec_vtable, num_indices);
   return vec_alloc;
 }
@@ -209,13 +212,31 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
     die("number of indices passed to xt_idxvec_new must not be negative!");
 
   INSTR_START(t_idxvec_new);
-  struct Xt_vec_alloc vec_alloc = alloc_idxvec(num_indices);
+  struct Xt_vec_alloc vec_alloc = idxvec_alloc(num_indices);
   memcpy(vec_alloc.vector, idxvec, (size_t)num_indices * sizeof (Xt_int));
   vec_alloc.idxvec->sorted_vector = NULL;
   vec_alloc.idxvec->sorted_vec_positions = NULL;
 
   INSTR_STOP(t_idxvec_new);
   return (void *)vec_alloc.idxvec;
+}
+
+Xt_idxlist
+xt_idxvec_congeal(struct Xt_vec_alloc vec_alloc)
+{
+  assert(vec_alloc.idxvec->vector == vec_alloc.vector);
+  Xt_idxlist idxlist;
+  Xt_idxvec idxvec = vec_alloc.idxvec;
+  size_t num_indices = (size_t)idxvec->parent.num_indices;
+  if (num_indices) {
+    idxvec->sorted_vector = NULL;
+    idxvec->sorted_vec_positions = NULL;
+    idxlist = &vec_alloc.idxvec->parent;
+  } else {
+    free(idxvec);
+    idxlist = xt_idxempty_new();
+  }
+  return idxlist;
 }
 
 Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
@@ -229,9 +250,8 @@ Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
   struct Xt_idxvec_ *restrict idxvec_obj = xmalloc(sizeof (*idxvec_obj));
   Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
   idxvec_obj->vector = idxvec;
-  idxvec_obj->sorted_vector = NULL;
-  idxvec_obj->sorted_vec_positions = NULL;
-  return (void *)idxvec_obj;
+  return xt_idxvec_congeal((struct Xt_vec_alloc){
+      .idxvec = idxvec_obj, .vector = (void *)idxvec });
 }
 
 static size_t
@@ -390,7 +410,7 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
 
   Xt_idxlist idxlist;
   if (num_indices > 0) {
-    struct Xt_vec_alloc vec_alloc = alloc_idxvec((int)num_indices);
+    struct Xt_vec_alloc vec_alloc = idxvec_alloc((int)num_indices);
     Xt_int *restrict indices = vec_alloc.vector;
     size_t k = (size_t)-1;
     for (int i = 0; i < num_stripes; ++i)
@@ -450,7 +470,7 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
 
   Xt_idxlist idxvec = NULL;
   if (num_indices > 0) {
-    struct Xt_vec_alloc vec_alloc = alloc_idxvec(num_indices);
+    struct Xt_vec_alloc vec_alloc = idxvec_alloc(num_indices);
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                            vec_alloc.vector, num_indices,
                            Xt_int_dt, comm), comm);
@@ -524,7 +544,7 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     num_indices_src = (size_t)idxvec_src->parent.num_indices,
     num_indices_dst = (size_t)idxvec_dst->parent.num_indices;
 
-  struct Xt_vec_alloc vec_alloc = alloc_idxvec_no_init((int)num_indices_dst);
+  struct Xt_vec_alloc vec_alloc = idxvec_alloc_no_init((int)num_indices_dst);
   Xt_idxvec inter_vector = vec_alloc.idxvec;
   Xt_int *vector_assign = vec_alloc.vector;
 
@@ -583,7 +603,7 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
    * 1. better estimate of matched indices,
    * 2. use stride sign to choose search loop
    */
-  struct Xt_vec_alloc vec_alloc = alloc_idxvec_no_init((int)ndst);
+  struct Xt_vec_alloc vec_alloc = idxvec_alloc_no_init((int)ndst);
   Xt_int *found_indices = vec_alloc.vector;
   size_t ndst_stripes = xt_idxstripes_get_num_index_stripes(idxlist_dst),
     num_indices_inter = 0, last_match_pos = 0;
