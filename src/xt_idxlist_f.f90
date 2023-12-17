@@ -104,6 +104,7 @@ MODULE xt_idxlist_abstract
   PUBLIC :: xt_idxlist_delete, xt_idxlist_get_pack_size, &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_is_null, &
        xt_idxlist_pack_f, xt_idxlist_unpack_f, xt_idxlist_copy, &
+       xt_idxlist_get_sorting, &
        xt_idxlist_sorted_copy, xt_idxlist_sorted_copy_custom, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
@@ -539,6 +540,23 @@ CONTAINS
     copy = xt_idxlist_c2f(xt_idxlist_copy_c(idxlist%cptr))
 
   END FUNCTION xt_idxlist_copy
+
+  FUNCTION xt_idxlist_get_sorting(idxlist) RESULT(sorting)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER :: sorting
+
+    INTERFACE
+      FUNCTION xt_idxlist_get_sorting_c(idxlist) &
+           BIND(c, name='xt_idxlist_get_sorting') RESULT(sorting)
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(IN) :: idxlist
+        INTEGER(c_int) :: sorting
+      END FUNCTION xt_idxlist_get_sorting_c
+    END INTERFACE
+
+    sorting = INT(xt_idxlist_get_sorting_c(idxlist%cptr))
+
+  END FUNCTION xt_idxlist_get_sorting
 
   FUNCTION xt_idxlist_sorted_copy(idxlist) RESULT(copy)
     TYPE(xt_idxlist), INTENT(in) :: idxlist

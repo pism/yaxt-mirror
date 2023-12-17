@@ -118,9 +118,22 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   const Xt_int *indices_const = xt_idxlist_get_indices_const(idxlist);
   {
     bool mismatch = false;
-    for(int i=0; i<ref_num_indices; i++)
+    int sorting = xt_idxlist_get_sorting(idxlist);
+    size_t ntrans_dn = 0, ntrans_up = 0;
+    for (size_t i = 1; i < ref_num_indices_; ++i) {
+      ntrans_dn += indices[i] < indices[i-1];
+      ntrans_up += indices[i] > indices[i-1];
       mismatch |= (ref_indices[i] != indices_const[i])
         | (ref_indices[i] != indices[i]);
+    }
+    if (ntrans_up && !ntrans_dn && sorting != 1)
+      PUT_ERR("incorrect ascending sorting returned!\n");
+    if (!ntrans_up && ntrans_dn && sorting != -1)
+      PUT_ERR("incorrect descending sorting returned!\n");
+    if (num_indices && !ntrans_up && !ntrans_dn && sorting != 3)
+      PUT_ERR("incorrect sorting returned!\n");
+    else if (!num_indices && sorting != 2)
+      PUT_ERR("incorrect sorting returned!\n");
     if (mismatch)
       PUT_ERR("check_idxlist: index reference mismatch\n");
   }

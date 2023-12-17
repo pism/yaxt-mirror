@@ -112,6 +112,26 @@ xt_stripes_merge_copy(size_t num_stripes,
                       const struct Xt_stripe *stripes_src,
                       bool lookback);
 
+enum {
+  sort_dsc,                     /* sorted descending */
+  sort_uns,                     /* unsorted */
+  sort_asc,                     /* sorted ascending */
+  sort_idt,                     /* all values identical */
+  sort_mask = 3,
+};
+
+#define XT_SORT_FLAGS(ntrans_up, ntrans_dn)                             \
+  (unsigned)((!(ntrans_dn) && !(ntrans_up)) ? sort_idt          \
+             : ((!(ntrans_dn)) ? sort_asc                           \
+                : ((!(ntrans_up)) ? sort_dsc : sort_uns)))
+
+struct Xt_stripe_summary {
+  long long num_indices;
+  unsigned flags;
+};
+
+PPM_DSO_INTERNAL struct Xt_stripe_summary
+xt_summarize_stripes(size_t num_stripes, const struct Xt_stripe stripes[num_stripes]);
 
 #endif
 
