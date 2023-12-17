@@ -128,6 +128,9 @@ idxempty_get_min_index(Xt_idxlist idxlist);
 static Xt_int
 idxempty_get_max_index(Xt_idxlist idxlist);
 
+static int
+idxempty_get_sorting(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxempty_vtable = {
   .delete                       = idxempty_delete,
   .get_pack_size                = idxempty_get_pack_size,
@@ -146,6 +149,7 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
   .get_positions_of_indices_off = idxempty_get_positions_of_indices_off,
   .get_min_index                = idxempty_get_min_index,
   .get_max_index                = idxempty_get_max_index,
+  .get_sorting                  = idxempty_get_sorting,
   .get_bounding_box             = NULL,
   .idxlist_pack_code            = EMPTY,
 };
@@ -326,6 +330,12 @@ idxempty_get_max_index(Xt_idxlist XT_UNUSED(idxlist)) {
 #ifndef __clang__
   return -1;
 #endif
+}
+
+static int
+idxempty_get_sorting(Xt_idxlist XT_UNUSED(idxlist))
+{
+  return 2;
 }
 
 /*

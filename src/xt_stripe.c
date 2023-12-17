@@ -159,6 +159,36 @@ xt_stripes_merge_copy(size_t num_stripes,
   return num_stripes - (skip - 1);
 }
 
+struct Xt_stripe_summary
+xt_summarize_stripes(size_t num_stripes, const struct Xt_stripe stripes[num_stripes])
+{
+  int ntrans_up=0, ntrans_dn=0;
+  long long num_indices = 0;
+  if (num_stripes > 0) {
+    Xt_int prev_end;
+    {
+      int nstrides = stripes[0].nstrides;
+      Xt_int stride = stripes[0].stride;
+      prev_end = (Xt_int)(stripes[0].start
+                          + stride * (nstrides-1));
+      ntrans_up += ((nstrides - 1) & ~((stride > 0)-1));
+      ntrans_dn += ((nstrides - 1) & ~((stride < 0)-1));
+      num_indices += nstrides;
+    }
+    for (size_t i = 1; i < num_stripes; ++i) {
+      int nstrides = stripes[i].nstrides;
+      Xt_int start = stripes[i].start, stride = stripes[i].stride;
+      num_indices += nstrides;
+      ntrans_up += (start > prev_end) + ((nstrides - 1) & ~((stride > 0)-1));
+      ntrans_dn += (start < prev_end) + ((nstrides - 1) & ~((stride < 0)-1));
+      prev_end = (Xt_int)(start + stride * (nstrides-1));
+    }
+  }
+  return (struct Xt_stripe_summary){
+    .num_indices = num_indices,
+    .flags = XT_SORT_FLAGS(ntrans_up, ntrans_dn),
+  };
+}
 
 
 /*

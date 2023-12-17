@@ -124,6 +124,9 @@ idxvec_get_min_index(Xt_idxlist idxlist);
 static Xt_int
 idxvec_get_max_index(Xt_idxlist idxlist);
 
+static int
+idxvec_get_sorting(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxvec_vtable = {
   .delete                      = idxvec_delete,
   .get_pack_size               = idxvec_get_pack_size,
@@ -141,11 +144,13 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .get_positions_of_indices_off = NULL,
   .get_min_index               = idxvec_get_min_index,
   .get_max_index               = idxvec_get_max_index,
+  .get_sorting                 = idxvec_get_sorting,
   .get_bounding_box            = NULL,
   .idxlist_pack_code           = VECTOR,
 };
 
 static const char filename[] = "xt_idxvec.c";
+
 
 typedef struct Xt_idxvec_ *Xt_idxvec;
 
@@ -153,7 +158,7 @@ typedef struct Xt_idxvec_ *Xt_idxvec;
 struct Xt_idxvec_ {
 
   struct Xt_idxlist_ parent;
-
+  unsigned flags;
   const Xt_int *vector;
 
   // internal array used to optimise access to vector data
@@ -198,7 +203,6 @@ idxvec_alloc(int num_indices)
   return vec_alloc;
 }
 
-
 Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   INSTR_DEF(t_idxvec_new,"xt_idxvec_new")
   // ensure that yaxt is initialized
@@ -213,12 +217,42 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
 
   INSTR_START(t_idxvec_new);
   struct Xt_vec_alloc vec_alloc = idxvec_alloc(num_indices);
-  memcpy(vec_alloc.vector, idxvec, (size_t)num_indices * sizeof (Xt_int));
-  vec_alloc.idxvec->sorted_vector = NULL;
+  Xt_int *restrict vector = vec_alloc.vector;
+  vector[0] = idxvec[0];
+  int ntrans_up=0, ntrans_dn=0;
+  for (size_t i = 1; i < (size_t)num_indices; ++i) {
+    vector[i] = idxvec[i];
+    ntrans_up += idxvec[i-1] < idxvec[i];
+    ntrans_dn += idxvec[i-1] > idxvec[i];
+  }
+  if (ntrans_dn == 0)
+    vec_alloc.idxvec->sorted_vector = vector;
+  else
+    vec_alloc.idxvec->sorted_vector = NULL;
   vec_alloc.idxvec->sorted_vec_positions = NULL;
-
+  vec_alloc.idxvec->flags = XT_SORT_FLAGS(ntrans_up, ntrans_dn);
   INSTR_STOP(t_idxvec_new);
   return (void *)vec_alloc.idxvec;
+}
+
+static unsigned
+get_sort_flags(size_t num_indices, const Xt_int vector[num_indices])
+{
+  int ntrans_up=0, ntrans_dn=0;
+  for (size_t i = 1; i < num_indices; ++i) {
+    ntrans_up += vector[i-1] < vector[i];
+    ntrans_dn += vector[i-1] > vector[i];
+  }
+  unsigned flags = XT_SORT_FLAGS(ntrans_up, ntrans_dn);
+  /* icc 12 and 13 miscompile the above when it's a leaf function */
+#if defined __ICC && defined __OPTIMIZE__      \
+  && ( __INTEL_COMPILER_BUILD_DATE == 20110811 \
+       || __INTEL_COMPILER == 1300 )
+  if (num_indices == -1)
+    fprintf(stderr, "ntrans_up=%d, ntrans_dn=%d, flags=%u\n",
+            ntrans_up, ntrans_dn, flags);
+#endif
+  return flags;
 }
 
 void
@@ -226,7 +260,12 @@ xt_idxvec_congeal(struct Xt_vec_alloc vec_alloc)
 {
   assert(vec_alloc.idxvec->vector == vec_alloc.vector);
   Xt_idxvec idxvec = vec_alloc.idxvec;
-  idxvec->sorted_vector = NULL;
+  size_t num_indices = (size_t)idxvec->parent.num_indices;
+  unsigned flags = get_sort_flags(num_indices, vec_alloc.vector);
+  idxvec->flags = flags;
+  idxvec->sorted_vector = ((flags & sort_mask) == sort_asc
+                           || (flags & sort_mask) == sort_idt)
+    ? vec_alloc.vector : NULL;
   idxvec->sorted_vec_positions = NULL;
 }
 
@@ -392,11 +431,9 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
                            int num_stripes) {
   // ensure that yaxt is initialized
   assert(xt_initialized());
-
-  long long num_indices = 0;
-
-  for (int i = 0; i < num_stripes; ++i)
-    num_indices += stripes[i].nstrides;
+  size_t num_stripes_ = (size_t)(num_stripes > 0 ? num_stripes : 0);
+  struct Xt_stripe_summary summa = xt_summarize_stripes(num_stripes_, stripes);
+  long long num_indices = summa.num_indices;
   assert((sizeof (long long) > sizeof (int)) & (num_indices <= INT_MAX)
          & (num_indices >= 0));
 
@@ -408,6 +445,7 @@ xt_idxvec_from_stripes_new(const struct Xt_stripe stripes[],
     for (int i = 0; i < num_stripes; ++i)
       for (int j = 0; j < stripes[i].nstrides; ++j)
         indices[++k] = (Xt_int)(stripes[i].start + j * stripes[i].stride);
+    vec_alloc.idxvec->flags = summa.flags;
     generate_sorted_vector_from_stripes(stripes, num_stripes, vec_alloc.idxvec,
                                         &xt_default_config);
     idxlist = (Xt_idxlist)vec_alloc.idxvec;
@@ -425,12 +463,17 @@ static void idxvec_delete(Xt_idxlist obj) {
   free(obj);
 }
 
+enum {
+  pack_header_size = 3,
+  unpack_header_size = pack_header_size-1,
+};
+
 static size_t idxvec_get_pack_size(Xt_idxlist obj, MPI_Comm comm) {
 
   Xt_idxvec idxvec = (Xt_idxvec)obj;
   int size_xt_idx, size_header;
 
-  xt_mpi_call(MPI_Pack_size(2, MPI_INT, comm, &size_header), comm);
+  xt_mpi_call(MPI_Pack_size(pack_header_size, MPI_INT, comm, &size_header), comm);
   xt_mpi_call(MPI_Pack_size(idxvec->parent.num_indices, Xt_int_dt, comm,
                             &size_xt_idx), comm);
 
@@ -442,8 +485,8 @@ void idxvec_pack(Xt_idxlist obj, void *buffer, int buffer_size,
 
   assert(obj);
   Xt_idxvec idxvec = (Xt_idxvec)obj;
-  int header[2] = { VECTOR, idxvec->parent.num_indices };
-  xt_mpi_call(MPI_Pack(header, 2, MPI_INT, buffer,
+  int header[pack_header_size] = { VECTOR, idxvec->parent.num_indices, (int)idxvec->flags };
+  xt_mpi_call(MPI_Pack(header, pack_header_size, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
   if (idxvec->parent.num_indices != 0)
     xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(idxvec->vector),
@@ -456,18 +499,25 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
   int num_indices;
-
-  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                         &num_indices, 1, MPI_INT, comm), comm);
-
+  unsigned flags;
+  {
+    int header[unpack_header_size];
+    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                           &header, unpack_header_size, MPI_INT, comm), comm);
+    num_indices = header[0];
+    flags = (unsigned)header[1];
+  }
   Xt_idxlist idxvec = NULL;
   if (num_indices > 0) {
     struct Xt_vec_alloc vec_alloc = idxvec_alloc(num_indices);
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                            vec_alloc.vector, num_indices,
                            Xt_int_dt, comm), comm);
-    vec_alloc.idxvec->sorted_vector = NULL;
+    vec_alloc.idxvec->sorted_vector
+      = ((flags & sort_mask) == sort_asc || (flags & sort_mask) == sort_idt)
+      ? vec_alloc.vector : NULL;
     vec_alloc.idxvec->sorted_vec_positions = NULL;
+    vec_alloc.idxvec->flags = flags;
     idxvec = (Xt_idxlist)vec_alloc.idxvec;
   } else {
     Xt_abort(comm, "error: implementation generated empty vector!\n",
@@ -486,21 +536,17 @@ xt_idxvec_get_sorted_vector(Xt_idxlist idxvec, Xt_config config)
 }
 
 static const Xt_int *
-get_sorted_vector(Xt_idxvec idxvec, Xt_config config) {
-
+get_sorted_vector(Xt_idxvec idxvec, Xt_config config)
+{
   if (idxvec->sorted_vector)
     return idxvec->sorted_vector;
 
   size_t num_indices = (size_t)idxvec->parent.num_indices;
 
   const Xt_int *restrict vector = idxvec->vector;
-  bool sorted = true;
-  // check if we are already sorted:
-  for (size_t i = 1; i < num_indices; ++i)
-    sorted &= (vector[i-1] <= vector[i]);
-
-  /* we are done if vector is already sorted */
-  if (sorted) {
+  if ((idxvec->flags & sort_mask) == sort_asc
+      || (idxvec->flags & sort_mask) == sort_idt) {
+    /* we are done if vector is already sorted */
     idxvec->sorted_vec_positions = NULL;
     return idxvec->sorted_vector = vector;
   }
@@ -513,7 +559,7 @@ get_sorted_vector(Xt_idxvec idxvec, Xt_config config) {
                                          sizeof(*(idxvec->sorted_vec_positions)));
 
   memcpy(sorted_vector, vector, svec_size);
-
+/* todo: accelerate for case when vector is sorted but descending */
   xt_assign_id_map_int(num_indices, idxvec->sorted_vec_positions, 0);
   config->sort_funcs->sort_xt_int_permutation(
     sorted_vector, num_indices, idxvec->sorted_vec_positions);
@@ -568,6 +614,7 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     Xt_idxlist_init(&inter_vector->parent, &idxvec_vtable, (int)num_indices_inter);
     inter_vector->sorted_vector = inter_vector->vector;
     inter_vector->sorted_vec_positions = NULL;
+    inter_vector->flags = sort_asc;
   } else {
     free(inter_vector);
     inter_vector = (Xt_idxvec)xt_idxempty_new();
@@ -655,6 +702,7 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
   Xt_idxlist_init(&vec_alloc.idxvec->parent, &idxvec_vtable, (int)num_indices_inter);
   vec_alloc.idxvec->sorted_vector = vec_alloc.idxvec->vector;
   vec_alloc.idxvec->sorted_vec_positions = NULL;
+  vec_alloc.idxvec->flags = sort_asc;
   return (Xt_idxlist)vec_alloc.idxvec;
 }
 
@@ -960,6 +1008,13 @@ idxvec_get_max_index(Xt_idxlist idxlist) {
   const Xt_int *sorted_vector
     = get_sorted_vector(idxvec_obj, &xt_default_config);
   return sorted_vector[idxvec_obj->parent.num_indices-1];
+}
+
+static int
+idxvec_get_sorting(Xt_idxlist idxlist)
+{
+  unsigned flags = ((Xt_idxvec)idxlist)->flags;
+  return (int)(flags & sort_mask)-((flags & sort_mask) < 3);
 }
 
 /*
