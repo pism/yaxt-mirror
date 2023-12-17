@@ -58,6 +58,18 @@ PPM_DSO_INTERNAL Xt_idxlist
 xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
                            Xt_config config);
 
+struct Xt_vec_alloc
+{
+  struct Xt_idxvec_ *idxvec;
+  Xt_int *vector;
+};
+
+PPM_DSO_INTERNAL struct Xt_vec_alloc
+xt_idxvec_alloc(int num_indices);
+
+PPM_DSO_INTERNAL void
+xt_idxvec_congeal(struct Xt_vec_alloc vec_alloc);
+
 PPM_DSO_INTERNAL Xt_idxlist
 xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices);
 
