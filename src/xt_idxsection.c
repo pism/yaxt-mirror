@@ -119,6 +119,9 @@ idxsection_get_min_index(Xt_idxlist idxlist);
 static Xt_int
 idxsection_get_max_index(Xt_idxlist idxlist);
 
+static int
+idxsection_get_sorting(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxsection_vtable = {
               .delete                       = idxsection_delete,
               .get_pack_size                = idxsection_get_pack_size,
@@ -136,6 +139,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .get_positions_of_indices_off = NULL,
               .get_min_index                = idxsection_get_min_index,
               .get_max_index                = idxsection_get_max_index,
+              .get_sorting                  = idxsection_get_sorting,
               .get_bounding_box             = NULL,
               .idxlist_pack_code            = SECTION,
 };
@@ -164,6 +168,7 @@ struct Xt_idxsection_ {
   Xt_int min_index_cache;
   Xt_int max_index_cache;
   int ndim;
+  unsigned flags;
   struct dim_desc dims[];
 };
 
@@ -231,6 +236,7 @@ get_section_minmax(size_t num_dimensions,
 
 struct section_aggregate {
   Xt_int start, min, max;
+  unsigned flags;
 };
 
 /**
@@ -240,6 +246,14 @@ static struct section_aggregate
 setup_dims(Xt_int start, size_t num_dimensions,
            struct dim_desc dims[num_dimensions])
 {
+  int asc_dim = 0, dsc_dim = 0;
+  for (size_t i = 0; i < num_dimensions; ++i) {
+    /* are indices enumerated in reverse order along this dimension? */
+    int goes_rev_order = (dims[i].global_size < 0) ^ (dims[i].local_size < 0);
+    asc_dim += !goes_rev_order;
+    dsc_dim += goes_rev_order;
+  }
+  unsigned flags = XT_SORT_FLAGS(asc_dim, dsc_dim);
   dims[num_dimensions - 1].global_stride =
     (Xt_int)(Xt_isign(dims[num_dimensions - 1].global_size) *
              isign(dims[num_dimensions - 1].local_size));
@@ -279,7 +293,8 @@ setup_dims(Xt_int start, size_t num_dimensions,
   }
   struct Xt_minmax mm = get_section_minmax(num_dimensions, local_start_index, dims);
   return (struct section_aggregate){ .start = local_start_index,
-                                 .max = mm.max, .min = mm.min };
+                                     .max = mm.max, .min = mm.min,
+                                     .flags = flags };
 }
 
 static int
@@ -330,7 +345,7 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
   idxsection->local_start_index = sa.start;
   idxsection->min_index_cache = sa.min;
   idxsection->max_index_cache = sa.max;
-
+  idxsection->flags = sa.flags;
   INSTR_STOP(instr);
 
   return (Xt_idxlist)idxsection;
@@ -408,6 +423,7 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
   section->local_start_index = sa.start;
   section->min_index_cache = sa.min;
   section->max_index_cache = sa.max;
+  section->flags = sa.flags;
   int num_indices = idxsection_get_num_indices(section);
   Xt_idxlist_init(&section->parent, &idxsection_vtable, num_indices);
   INSTR_STOP(instr);
@@ -623,6 +639,7 @@ idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
   struct section_aggregate sa = setup_dims(
     src->global_start_index, num_dimensions, idxsection->dims);
   idxsection->local_start_index = sa.start;
+  idxsection->flags = sa.flags;
   assert(idxsection->min_index_cache == sa.min
          && idxsection->max_index_cache == sa.max);
   return (Xt_idxlist)idxsection;
@@ -1405,6 +1422,13 @@ idxsection_get_max_index(Xt_idxlist idxlist) {
 
   Xt_idxsection section = (Xt_idxsection)idxlist;
   return section->max_index_cache;
+}
+
+static int
+idxsection_get_sorting(Xt_idxlist idxlist)
+{
+  unsigned sort_flags = (((Xt_idxsection)idxlist)->flags) & sort_mask;
+  return (int)sort_flags-(sort_flags < 3);
 }
 
 /*

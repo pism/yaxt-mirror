@@ -332,6 +332,11 @@ Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist) {
   return idxlist->vtable->get_max_index(idxlist);
 }
 
+int xt_idxlist_get_sorting(Xt_idxlist idxlist)
+{
+  return idxlist->vtable->get_sorting(idxlist);
+}
+
 static void
 get_position_in_ndim_space(Xt_int idx, unsigned ndim,
                            Xt_int global_stride[ndim],

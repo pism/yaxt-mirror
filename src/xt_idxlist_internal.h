@@ -81,6 +81,7 @@ struct xt_idxlist_vtable {
                                       int *, int *);
    Xt_int (*get_min_index)(Xt_idxlist);
    Xt_int (*get_max_index)(Xt_idxlist);
+  int (*get_sorting)(Xt_idxlist);
    void (*get_bounding_box)(Xt_idxlist idxlist, unsigned ndim,
                             const Xt_int global_size[ndim],
                             Xt_int global_start_index,

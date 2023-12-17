@@ -395,6 +395,20 @@ Xt_int xt_idxlist_get_min_index(Xt_idxlist idxlist);
 Xt_int xt_idxlist_get_max_index(Xt_idxlist idxlist);
 
 /**
+ * Inquires if the indices in a list follow some order.
+ *
+ * @param[in] idxlist index list to query for sort
+ * @return            1 iff sorted in ascending order
+ *                    0 iff unsorted and no other value applies
+ *                   -1 iff sorted in descending order
+ *                    2 iff the index list is empty
+ *                    3 iff the list contains 1 index or more and
+ *                          all values are identical
+ */
+int xt_idxlist_get_sorting(Xt_idxlist idxlist);
+
+
+/**
  * computes an n-dimensional bounding box around the given index list
  * @param[in]  idxlist            index list
  * @param[in]  ndim               number of dimension of the bounding box

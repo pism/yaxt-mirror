@@ -132,6 +132,9 @@ idxstripes_get_min_index(Xt_idxlist idxlist);
 static Xt_int
 idxstripes_get_max_index(Xt_idxlist idxlist);
 
+static int
+idxstripes_get_sorting(Xt_idxlist idxlist);
+
 static const struct xt_idxlist_vtable idxstripes_vtable = {
   .delete                       = idxstripes_delete,
   .get_pack_size                = idxstripes_get_pack_size,
@@ -150,6 +153,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .get_positions_of_indices_off = NULL,
   .get_min_index                = idxstripes_get_min_index,
   .get_max_index                = idxstripes_get_max_index,
+  .get_sorting			= idxstripes_get_sorting,
   .get_bounding_box             = NULL,
   .idxlist_pack_code            = STRIPES,
 };
@@ -210,7 +214,10 @@ struct Xt_stripes_sort {
 };
 
 enum {
-  stripes_do_overlap_bit = 0,
+  /* todo: exploit newly introduced sorting information to speed up
+   * index position lookups */
+  stripes_sort_bit = 0,
+  stripes_do_overlap_bit = 2,
   stripes_some_have_zero_stride_bit,
 
   stripes_do_overlap_mask = 1 << stripes_do_overlap_bit,
@@ -224,7 +231,7 @@ struct Xt_idxstripes_ {
   struct Xt_stripe *stripes;
   Xt_int min_index, max_index;
   int num_stripes;
-  int flags;
+  unsigned flags;
 
   Xt_int *index_array_cache;
   struct Xt_stripes_sort stripes_sort[];
@@ -243,8 +250,17 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
 {
   const struct Xt_stripe *restrict stripes = idxstripes->stripes;
   struct Xt_stripes_sort *restrict stripes_sort = idxstripes->stripes_sort;
-  Xt_int min, max;
+  int ntrans_up=0, ntrans_dn=0;
+  Xt_int min, max, prev_end;
+  long long num_indices;
   {
+    int nstrides = stripes[0].nstrides;
+    Xt_int stride = stripes[0].stride;
+    prev_end = (Xt_int)(stripes[0].start
+                        + stride * (nstrides-1));
+    ntrans_up += ((nstrides - 1) & ~((stride > 0)-1));
+    ntrans_dn += ((nstrides - 1) & ~((stride < 0)-1));
+    num_indices = (long long)nstrides;
     struct Xt_minmax stripe_range = xt_stripe2minmax(stripes[0]);
     stripes_sort[0].range = stripe_range;
     stripes_sort[0].position = 0;
@@ -252,18 +268,22 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
     max = stripe_range.max;
   }
   size_t num_stripes = (size_t)idxstripes->num_stripes;
-  long long num_indices = (long long)stripes[0].nstrides;
   int sign_err = stripes[0].nstrides;
-  int have_zero_stride = stripes[0].stride == 0;
+  unsigned have_zero_stride = stripes[0].stride == 0;
   for (size_t i = 1; i < num_stripes; ++i) {
     struct Xt_minmax stripe_range = xt_stripe2minmax(stripes[i]);
+    int nstrides = stripes[i].nstrides;
+    Xt_int start = stripes[i].start, stride = stripes[i].stride;
     stripes_sort[i].range = stripe_range;
     stripes_sort[i].position = (int)i;
     min = MIN(stripe_range.min, min);
     max = MAX(stripe_range.max, max);
-    num_indices += (long long)stripes[i].nstrides;
-    sign_err |= stripes[i].nstrides;
-    have_zero_stride |= stripes[i].stride == 0;
+    num_indices += (long long)nstrides;
+    sign_err |= nstrides;
+    have_zero_stride |= stride == 0;
+    ntrans_up += (start > prev_end) + ((nstrides - 1) & ~((stride > 0)-1));
+    ntrans_dn += (start < prev_end) + ((nstrides - 1) & ~((stride < 0)-1));
+    prev_end = (Xt_int)(start + stride * (nstrides-1));
   }
   /* test sign bit */
   if (sign_err < 0) {
@@ -277,14 +297,15 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
     assert(num_indices <= INT_MAX);
     qsort(stripes_sort, num_stripes, sizeof (*stripes_sort), compare_xtstripes);
     stripes_sort[stripes_sort[0].position].inv_position = 0;
-    int stripes_do_overlap = 0;
+    unsigned stripes_do_overlap = 0;
     for (size_t i = 1; i < num_stripes; ++i) {
       stripes_do_overlap
         |= stripes_sort[i - 1].range.max >= stripes_sort[i].range.min;
       stripes_sort[stripes_sort[i].position].inv_position = (int)i;
     }
 
-    idxstripes->flags = stripes_do_overlap << stripes_do_overlap_bit
+    idxstripes->flags = XT_SORT_FLAGS(ntrans_up, ntrans_dn) << stripes_sort_bit
+      | stripes_do_overlap << stripes_do_overlap_bit
       | have_zero_stride << stripes_some_have_zero_stride_bit;
     idxstripes->min_index = min;
     idxstripes->max_index = max;
@@ -1829,6 +1850,14 @@ idxstripes_get_max_index(Xt_idxlist idxlist) {
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
   return idxstripes->max_index;
 }
+
+static int
+idxstripes_get_sorting(Xt_idxlist idxlist)
+{
+  unsigned sort_flags = (((Xt_idxstripes)idxlist)->flags >> stripes_sort_bit) & sort_mask;
+  return (int)sort_flags-(sort_flags < 3);
+}
+
 
 /* unfortunately, Cray cc 8.[56].x miscompile the following function,
  * hence optimizations must be disabled. Feel free to dig deeper into
