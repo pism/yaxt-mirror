@@ -61,6 +61,7 @@
 #include "xt_idxlist_internal.h"
 #include "xt/xt_idxempty.h"
 #include "xt/xt_idxvec.h"
+#include "xt_idxvec_internal.h"
 #include "xt/xt_idxstripes.h"
 #include "xt_idxstripes_internal.h"
 #include "xt_stripe_util.h"
@@ -914,20 +915,35 @@ xt_idxstripes_get_idxvec_intersection(Xt_idxlist idxlist_src,
          && idxlist_src->vtable == &idxstripes_vtable);
   const Xt_int *indices = xt_idxlist_get_indices_const(idxlist_dst);
   size_t ndst = (size_t)idxlist_dst->num_indices;
-  Xt_int *found_indices = malloc(ndst * sizeof (Xt_int));
   size_t nsrc_stripes = (size_t)idxstripes_src->num_stripes,
     num_found_indices = 0;
+  enum {
+    size_t_bits = sizeof (size_t) * CHAR_BIT,
+  };
+  size_t *found
+    = xcalloc(((ndst + size_t_bits - 1)/ size_t_bits),
+              sizeof (size_t));
   for (size_t i = 0; i < ndst; ++i) {
     Xt_int dst_idx = indices[i];
     for (size_t j = 0; j < nsrc_stripes; ++j)
       if (stripe_contains_index(stripes_src[j], dst_idx)) {
-        found_indices[num_found_indices++] = dst_idx;
+        num_found_indices++;
+        found[i/size_t_bits] |= (size_t)1 << (i%size_t_bits);
         break;
       }
   }
-  Xt_idxlist isect_vec = xt_idxvec_new(found_indices, (int)num_found_indices);
-  free(found_indices);
-  return isect_vec;
+  struct Xt_vec_alloc vec_alloc = xt_idxvec_alloc((int)num_found_indices);
+  Xt_int *restrict found_indices = vec_alloc.vector;
+  for (size_t i = 0, inter_ofs = 0; i < ndst; ++i) {
+    size_t fofs = i / size_t_bits;
+    if (found[fofs]&((size_t)1 << (i%size_t_bits))) {
+      found_indices[inter_ofs] = indices[i];
+      ++inter_ofs;
+    };
+  }
+  free(found);
+  xt_idxvec_congeal(vec_alloc);
+  return (Xt_idxlist)vec_alloc.idxvec;
 }
 
 static Xt_idxlist
