@@ -68,6 +68,7 @@
 #include "instr.h"
 #include "xt_config_internal.h"
 #include "xt_stripe_util.h"
+#include "xt_idxvec_internal.h"
 
 static void
 idxsection_delete(Xt_idxlist data);
@@ -453,16 +454,14 @@ get_pos:;
     single_match_only);
   size_t num_inter_idx = num_dst_idx - num_unmatched;
   Xt_idxlist result;
-  if (num_inter_idx != 0) {
-    Xt_int *intersection = xmalloc(num_inter_idx * sizeof(*intersection));
+  if (num_inter_idx) {
+    struct Xt_vec_alloc vec_alloc = xt_idxvec_alloc((int)num_inter_idx);
+    Xt_int *inter_vec = vec_alloc.vector;
 
-    for(size_t i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++) {
-      intersection[j] = sorted_dst_idx[i];
-      j += (pos[i] >= 0);
-    }
-
-    result = xt_idxvec_new(intersection, (int)num_inter_idx);
-    free(intersection);
+    for(size_t i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++)
+      if (pos[i] >= 0)
+        inter_vec[j++] = sorted_dst_idx[i];
+    result = xt_idxvec_congeal(vec_alloc);
   } else {
     result = xt_idxempty_new();
   }
@@ -472,7 +471,6 @@ get_pos:;
 
   INSTR_STOP(instr);
   return result;
-  // return xt_idxvec_pinned_new(intersection, num_inter_idx);
 }
 
 Xt_idxlist
