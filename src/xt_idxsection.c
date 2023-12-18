@@ -728,12 +728,12 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
 
   Xt_idxsection section = (Xt_idxsection)idxlist;
 
-  int ndim = section->ndim;
+  size_t num_dimensions = (size_t)section->ndim;
   struct dim_desc *restrict dims = section->dims;
 
-  size_t nstripes = dims[ndim-1].local_size != 0;
+  size_t nstripes = dims[num_dimensions-1].local_size != 0;
 
-  for (int i = 0; i < ndim-1; ++i)
+  for (size_t i = 0; i < num_dimensions-1; ++i)
     nstripes *= (size_t)abs(dims[i].local_size);
 
   if (nstripes == 0) {
@@ -750,26 +750,26 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
   enum { curr_local_position_auto_size=16 };
   Xt_int curr_local_position_auto[curr_local_position_auto_size];
   Xt_int *restrict curr_local_position;
-  if (ndim-2 <= curr_local_position_auto_size) {
+  if (num_dimensions <= curr_local_position_auto_size+2) {
     curr_local_position = curr_local_position_auto;
-    for (int i = 0; i < ndim-1; ++i)
+    for (size_t i = 0; i < num_dimensions-1; ++i)
       curr_local_position[i] = 0;
   } else
     curr_local_position
-      = xcalloc((size_t)(ndim-2), sizeof(*curr_local_position));
+      = xcalloc(num_dimensions-2, sizeof(*curr_local_position));
 
   for (size_t i = 0; i < nstripes; ++i) {
 
     p[i].start  = section->local_start_index;
-    p[i].nstrides = abs(dims[ndim-1].local_size);
+    p[i].nstrides = abs(dims[num_dimensions-1].local_size);
     p[i].stride = 1;
 
-    for (int j = 0; j < ndim - 1; ++j)
+    for (size_t j = 0; j < num_dimensions - 1; ++j)
       p[i].start = (Xt_int)(p[i].start
                             + curr_local_position[j]
                             * dims[j].global_stride);
 
-    for (int j = ndim - 2; j >= 0; --j)
+    for (size_t j = num_dimensions - 2; j != (size_t)-1; --j)
       if (curr_local_position[j] < abs(dims[j].local_size) - 1) {
         curr_local_position[j]++;
         break;
@@ -792,26 +792,25 @@ idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
 
   if (position < 0) return 1;
 
-  Xt_int temp_index;
+  size_t num_dimensions = (size_t)section->ndim;
+  Xt_int temp_index = section->local_start_index;
 
-  temp_index = section->local_start_index;
-
-  int dim;
   Xt_int curr_local_position;
   long long pos = (long long)position;
+  const struct dim_desc *dims = section->dims;
 
-  for (dim = 0; dim < section->ndim; ++dim) {
+  for (size_t dim = 0; dim < num_dimensions; ++dim) {
 
-    curr_local_position = (Xt_int)(pos / (long long)section->dims[dim].local_stride);
+    curr_local_position = (Xt_int)(pos / (long long)dims[dim].local_stride);
 
-    if (curr_local_position >= abs(section->dims[dim].local_size))
+    if (curr_local_position >= abs(dims[dim].local_size))
       return 1;
 
     temp_index = (Xt_int)(temp_index
                           + curr_local_position
-                          * section->dims[dim].global_stride);
-    /* FIXME: assert(section->dims[dim].local_stride is in [-INT_MAX,INT_MAX]) */
-    pos %= (long long)section->dims[dim].local_stride;
+                          * dims[dim].global_stride);
+    /* FIXME: assert(dims[dim].local_stride is in [-INT_MAX,INT_MAX]) */
+    pos %= (long long)dims[dim].local_stride;
   }
 
   *index = temp_index;
