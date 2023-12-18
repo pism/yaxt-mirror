@@ -481,8 +481,8 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src,
 
   // both lists are index section:
 
-  Xt_idxsection idxsection_src = (Xt_idxsection)idxlist_src,
-    idxsection_dst = (Xt_idxsection)idxlist_dst;
+  const struct Xt_idxsection_ *idxsection_src = (Xt_idxsection)idxlist_src,
+    *idxsection_dst = (Xt_idxsection)idxlist_dst;
 
   if (idxsection_src->ndim != idxsection_dst->ndim ||
       idxsection_src->global_start_index != idxsection_dst->global_start_index)
@@ -497,15 +497,19 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src,
       return xt_idxsection_get_intersection_with_other_idxlist(
         idxlist_src, idxlist_dst, config);
 
-  Xt_int *local_start, *global_size;
-  int *local_size;
-
   INSTR_START(instr);
 
+  Xt_idxsection idxsection_intersection
+    = xmalloc(sizeof (*idxsection_intersection)
+              + num_dimensions * sizeof (idxsection_intersection->dims[0]));
+  idxsection_intersection->global_start_index
+    = idxsection_src->global_start_index;
+  idxsection_intersection->ndim = (int)num_dimensions;
+
   // dimension information for the intersection
-  local_start = xmalloc(num_dimensions * sizeof(*local_start));
-  local_size = xmalloc(num_dimensions * sizeof(*local_size));
-  global_size = xmalloc(num_dimensions * sizeof(*global_size));
+  struct dim_desc *restrict intersection_dims = idxsection_intersection->dims;
+  const struct dim_desc *src_dims = idxsection_src->dims,
+    *dst_dims = idxsection_dst->dims;
 
   // indices in an intersection have to be sorted in ascending order. therefore,
   // local and global sizes of the intersection have to be positive
@@ -516,54 +520,60 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src,
 
     // the start value is the minmum position in the current dimension (with positive
     // size)
-    // in case the global size of src or dst is negative the start value has be be
+    // in case the global size of src or dst is negative the start value has to be
     // adjusted accordingly
 
-    if (idxsection_src->dims[i].global_size >= 0)
-      src_start = idxsection_src->dims[i].local_start;
+    if (src_dims[i].global_size >= 0)
+      src_start = src_dims[i].local_start;
     else
-      src_start = (Xt_int)(-idxsection_src->dims[i].global_size
-                           - abs(idxsection_src->dims[i].local_size)
-                           - idxsection_src->dims[i].local_start);
+      src_start = (Xt_int)(-src_dims[i].global_size
+                           - abs(src_dims[i].local_size)
+                           - src_dims[i].local_start);
 
-    if (idxsection_dst->dims[i].global_size >= 0)
-      dst_start = idxsection_dst->dims[i].local_start;
+    if (dst_dims[i].global_size >= 0)
+      dst_start = dst_dims[i].local_start;
     else
-      dst_start = (Xt_int)(-idxsection_dst->dims[i].global_size
-                           - abs(idxsection_dst->dims[i].local_size)
-                           - idxsection_dst->dims[i].local_start);
+      dst_start = (Xt_int)(-dst_dims[i].global_size
+                           - abs(dst_dims[i].local_size)
+                           - dst_dims[i].local_start);
 
     src_end = (Xt_int)(src_start
-                       + (Xt_int)abs(idxsection_src->dims[i].local_size));
+                       + (Xt_int)abs(src_dims[i].local_size));
     dst_end = (Xt_int)(dst_start
-                       + (Xt_int)abs(idxsection_dst->dims[i].local_size));
+                       + (Xt_int)abs(dst_dims[i].local_size));
 
-    local_start[i] = (src_start > dst_start)?src_start:dst_start;
+    intersection_dims[i].local_start = (src_start > dst_start)?src_start:dst_start;
     local_end = (src_end > dst_end)?dst_end:src_end;
 
-    if (local_end <= local_start[i]) {
-      free(global_size);
-      free(local_size);
-      free(local_start);
-      INSTR_STOP(instr);
-      return xt_idxempty_new();
-    }
+    if (local_end <= intersection_dims[i].local_start)
+      goto isect_empty;
 
-    local_size[i] = (int)(local_end - local_start[i]);
-    global_size[i] = XT_INT_ABS(idxsection_src->dims[i].global_size);
+    intersection_dims[i].local_size
+      = (int)(local_end - intersection_dims[i].local_start);
+    intersection_dims[i].global_size
+      = XT_INT_ABS(src_dims[i].global_size);
   }
 
-  Xt_idxlist intersection
-    = xt_idxsection_new(idxsection_src->global_start_index,
-                        (int)num_dimensions, global_size,
-                        local_size, local_start);
-
-  free(global_size);
-  free(local_size);
-  free(local_start);
-
+  {
+    idxsection_intersection->index_array_cache = NULL;
+    int num_indices = idxsection_get_num_indices(idxsection_intersection);
+    Xt_idxlist_init(&idxsection_intersection->parent,
+                    &idxsection_vtable, num_indices);
+    struct section_aggregate sa =
+      setup_dims(idxsection_intersection->global_start_index,
+                 num_dimensions, idxsection_intersection->dims);
+    idxsection_intersection->local_start_index = sa.start;
+    idxsection_intersection->min_index_cache = sa.min;
+    idxsection_intersection->max_index_cache = sa.max;
+    idxsection_intersection->flags = sa.flags;
+    goto ret_idxlist;
+  }
+isect_empty:;
+  free(idxsection_intersection);
+  idxsection_intersection = (Xt_idxsection)xt_idxempty_new();
+ret_idxlist:;
   INSTR_STOP(instr);
-  return intersection;
+  return (Xt_idxlist)idxsection_intersection;
 }
 
 static Xt_idxlist
