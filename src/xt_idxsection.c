@@ -209,14 +209,14 @@ xt_idxsection_finalize(void)
 }
 
 static struct Xt_minmax
-get_section_minmax(int num_dimensions,
+get_section_minmax(size_t num_dimensions,
                    Xt_int local_start_index,
                    const struct dim_desc dims[num_dimensions])
 {
   // due the possibility of negative local and global sizes, the minimum and
   // maximum can be in any corner of the n-dimensional section
   Xt_int max = local_start_index, min = local_start_index;
-  for (int i = 0; i < num_dimensions; ++i) {
+  for (size_t i = 0; i < num_dimensions; ++i) {
     // if either local and global size are negative
     if ((dims[i].global_size < 0) ^ (dims[i].local_size < 0))
       min = (Xt_int)(min + (Xt_int)(dims[i].global_stride *
@@ -237,7 +237,7 @@ struct section_aggregate {
  * @return local start index, minimum and maximum index
  */
 static struct section_aggregate
-setup_dims(Xt_int start, int num_dimensions,
+setup_dims(Xt_int start, size_t num_dimensions,
            struct dim_desc dims[num_dimensions])
 {
   dims[num_dimensions - 1].global_stride =
@@ -247,7 +247,7 @@ setup_dims(Xt_int start, int num_dimensions,
 
   // compute local and global stride
   // (local stride is always positive, global stride can be negative)
-  for (int i = num_dimensions - 2; i >= 0; --i) {
+  for (size_t i = num_dimensions - 2; i != (size_t)-1; --i) {
     dims[i].global_stride
       = (Xt_int)(dims[i+1].global_stride * dims[i+1].global_size
                  * Xt_isign((Xt_int)(dims[i+1].global_stride
@@ -263,7 +263,7 @@ setup_dims(Xt_int start, int num_dimensions,
   // compute the local start index
   // depends on global size and sign of local and global size
   Xt_int local_start_index = start;
-  for (int i = num_dimensions - 1; i >= 0; --i) {
+  for (size_t i = num_dimensions - 1; i != (size_t)-1; --i) {
     Xt_int abs_global_stride_i = XT_INT_ABS(dims[i].global_stride),
       adj_gstride = (Xt_int)(abs_global_stride_i * Xt_isign(dims[i].global_size)),
       start_ofs = (Xt_int)(dims[i].global_size > 0 ? 0 : dims[i].global_size + 1);
@@ -283,11 +283,11 @@ setup_dims(Xt_int start, int num_dimensions,
 }
 
 static int
-get_num_indices_from_local_sizes(int num_dimensions, const int local_size[num_dimensions])
+get_num_indices_from_local_sizes(size_t num_dimensions, const int local_size[num_dimensions])
 {
   long long size = 1;
 
-  for (int i = 0; i < num_dimensions; ++i)
+  for (size_t i = 0; i < num_dimensions; ++i)
     size *= abs(local_size[i]);
   assert(size <= INT_MAX);
 
@@ -305,18 +305,18 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
   assert(xt_initialized());
 
   Xt_idxsection idxsection = NULL;
-  int num_indices = get_num_indices_from_local_sizes(num_dimensions, local_size);
+  size_t num_dimensions_ = (size_t)num_dimensions;
+  int num_indices = get_num_indices_from_local_sizes(num_dimensions_, local_size);
   if (num_indices > 0) {
     idxsection = xmalloc(sizeof (*idxsection)
-                         + (size_t)num_dimensions *
-                         sizeof (idxsection->dims[0]));
+                         + num_dimensions_ * sizeof (idxsection->dims[0]));
 
     idxsection->global_start_index = start;
     idxsection->ndim               = num_dimensions;
 
     idxsection->index_array_cache  = NULL;
 
-    for (int i = 0; i < num_dimensions; ++i) {
+    for (size_t i = 0; i < num_dimensions_; ++i) {
       idxsection->dims[i].global_size = global_size[i];
       idxsection->dims[i].local_size  = local_size[i];
       idxsection->dims[i].local_start = local_start[i];
@@ -326,7 +326,7 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
   }
   Xt_idxlist_init(&idxsection->parent, &idxsection_vtable, num_indices);
   struct section_aggregate sa =
-    setup_dims(start, num_dimensions, idxsection->dims);
+    setup_dims(start, num_dimensions_, idxsection->dims);
   idxsection->local_start_index = sa.start;
   idxsection->min_index_cache = sa.min;
   idxsection->max_index_cache = sa.max;
@@ -404,7 +404,7 @@ Xt_idxlist xt_idxsection_unpack(void *buffer, int buffer_size, int *position,
                          section->dims, ndim, dim_desc_dt, comm),comm);
 
   struct section_aggregate sa = setup_dims(
-    section->global_start_index, ndim, section->dims);
+    section->global_start_index, (size_t)ndim, section->dims);
   section->local_start_index = sa.start;
   section->min_index_cache = sa.min;
   section->max_index_cache = sa.max;
@@ -489,11 +489,10 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src,
       idxsection_src->global_start_index != idxsection_dst->global_start_index)
     return xt_default_isect(idxlist_src, idxlist_dst, config);
 
-  int i;
-
+  size_t num_dimensions = (size_t)idxsection_src->ndim;
   // the size of first global dimension is irrelevant,
   // the others have to be identically
-  for (i = 1; i < idxsection_src->ndim; ++i)
+  for (size_t i = 1; i < num_dimensions; ++i)
     if (XT_INT_ABS(idxsection_src->dims[i].global_size)
         != XT_INT_ABS(idxsection_dst->dims[i].global_size))
       return xt_idxsection_get_intersection_with_other_idxlist(
@@ -505,14 +504,14 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src,
   INSTR_START(instr);
 
   // dimension information for the intersection
-  local_start = xmalloc((size_t)idxsection_src->ndim * sizeof(*local_start));
-  local_size = xmalloc((size_t)idxsection_src->ndim * sizeof(*local_size));
-  global_size = xmalloc((size_t)idxsection_src->ndim * sizeof(*global_size));
+  local_start = xmalloc(num_dimensions * sizeof(*local_start));
+  local_size = xmalloc(num_dimensions * sizeof(*local_size));
+  global_size = xmalloc(num_dimensions * sizeof(*global_size));
 
   // indices in an intersection have to be sorted in ascending order. therefore,
   // local and global sizes of the intersection have to be positive
 
-  for (i = 0; i < idxsection_src->ndim; ++i) {
+  for (size_t i = 0; i < num_dimensions; ++i) {
 
     Xt_int src_start, src_end, dst_start, dst_end, local_end;
 
@@ -557,7 +556,7 @@ xt_idxsection_get_intersection(Xt_idxlist idxlist_src,
 
   Xt_idxlist intersection
     = xt_idxsection_new(idxsection_src->global_start_index,
-                        idxsection_src->ndim, global_size,
+                        (int)num_dimensions, global_size,
                         local_size, local_start);
 
   free(global_size);
@@ -613,7 +612,7 @@ idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
   }
 
   struct section_aggregate sa = setup_dims(
-    src->global_start_index, (int)num_dimensions, idxsection->dims);
+    src->global_start_index, num_dimensions, idxsection->dims);
   idxsection->local_start_index = sa.start;
   assert(idxsection->min_index_cache == sa.min
          && idxsection->max_index_cache == sa.max);
@@ -623,10 +622,9 @@ idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
 static int
 idxsection_get_num_indices(Xt_idxsection section) {
 
-  int i;
   long long size = 1;
-
-  for (i = 0; i < section->ndim; ++i)
+  size_t num_dimensions = (size_t)section->ndim;
+  for (size_t i = 0; i < num_dimensions; ++i)
     size *= abs(section->dims[i].local_size);
   assert(size <= INT_MAX);
 
@@ -635,13 +633,14 @@ idxsection_get_num_indices(Xt_idxsection section) {
 
 
 static int
-idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
-                           int ndim, struct dim_desc dims[ndim])
+idxsection_get_indices_any(
+  Xt_int start_index, Xt_int *indices,
+  size_t num_dimensions, struct dim_desc dims[num_dimensions])
 {
 
   int abs_local_size = abs(dims[0].local_size);
 
-  if (ndim == 1)
+  if (num_dimensions == 1)
   {
     if (dims[0].global_stride > 0)
       for (int i = 0; i < abs_local_size; ++i)
@@ -654,7 +653,7 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
   else
   {
     int indices_written = 0, overflow = 0;
-    assert(ndim > 1);
+    assert(num_dimensions > 1);
     for (int dim_ofs = 0; dim_ofs < abs_local_size; ++dim_ofs)
     {
       int indices_written_temp
@@ -662,7 +661,7 @@ idxsection_get_indices_any(Xt_int start_index, Xt_int *indices,
           (Xt_int)(start_index
                    + dim_ofs * dims[0].global_stride),
           indices + indices_written,
-          ndim - 1, dims + 1);
+          num_dimensions - 1, dims + 1);
       overflow |= (indices_written_temp > INT_MAX - indices_written);
       indices_written += indices_written_temp;
     }
@@ -678,7 +677,7 @@ idxsection_create_index_array_cache(Xt_idxsection section)
   Xt_int *indices = section->index_array_cache
     = xmalloc(num_indices * sizeof(*(section->index_array_cache)));
   idxsection_get_indices_any(section->local_start_index, indices,
-                             section->ndim, section->dims);
+                             (size_t)section->ndim, section->dims);
 }
 
 
@@ -829,40 +828,40 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   // normalise index (global start of indices at 0)
   index = (Xt_int)(index - section->global_start_index);
 
-  int i;
   int temp_position = 0;
-
-  for (i = 0; i < section->ndim; ++i) {
+  size_t num_dimensions = (size_t)section->ndim;
+  const struct dim_desc *dims = section->dims;
+  for (size_t i = 0; i < num_dimensions; ++i) {
 
     Xt_int abs_global_stride
-      = XT_INT_ABS(section->dims[i].global_stride);
+      = XT_INT_ABS(dims[i].global_stride);
 
     Xt_int curr_global_position
       = (Xt_int)(index / abs_global_stride);
 
     // in case the global size is negative, we have to adjust the global position,
     // because the ordering of indices in this dimension is inverted
-    if (section->dims[i].global_size < 0)
+    if (dims[i].global_size < 0)
       curr_global_position
-        = (Xt_int)(-section->dims[i].global_size - curr_global_position - 1);
+        = (Xt_int)(-dims[i].global_size - curr_global_position - 1);
 
     index = (Xt_int)(index % abs_global_stride);
 
-    if (curr_global_position < section->dims[i].local_start)
+    if (curr_global_position < dims[i].local_start)
       goto fun_exit;
 
     Xt_int curr_local_position
-      = (Xt_int)(curr_global_position - section->dims[i].local_start);
+      = (Xt_int)(curr_global_position - dims[i].local_start);
 
+    int abs_local_size = abs(dims[i].local_size);
     // same adjustment for local position as for the global one before
-    if (section->dims[i].local_size < 0)
-      curr_local_position
-        = (Xt_int)(-section->dims[i].local_size - curr_local_position - 1);
+    if (dims[i].local_size < 0)
+      curr_local_position = (Xt_int)(abs_local_size - curr_local_position - 1);
 
-    if (curr_local_position >= abs(section->dims[i].local_size))
+    if (curr_local_position >= abs_local_size)
       goto fun_exit;
 
-    temp_position += (int)(curr_local_position * section->dims[i].local_stride);
+    temp_position += (int)(curr_local_position * dims[i].local_stride);
   }
 
   *position = temp_position;
