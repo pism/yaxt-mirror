@@ -162,6 +162,8 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
+  /* todo: find collections in idxlists and prevent hierarchical
+   * copy, flatten list instead  */
   Xt_idxlist result;
   size_t num_non_empty_idxlists = 0, first_non_empty_idxlist = (size_t)-1;
   for (int i = 0; i < num_idxlists; ++i) {

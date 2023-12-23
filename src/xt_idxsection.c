@@ -451,7 +451,7 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
 
   Xt_int const * sorted_dst_idx;
   Xt_int * temp_dst_idx = NULL;
-
+  /* todo: use xt_idxlist_get_sorting instead */
   for (size_t i = 1; i < num_dst_idx; ++i)
     if (dst_idx[i] < dst_idx[i-1])
       goto unsorted;
