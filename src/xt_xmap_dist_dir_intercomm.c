@@ -146,18 +146,14 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
                                       Xt_idxlist idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
                                       void **send_buffer_,
-                                      MPI_Comm comm, int comm_size) {
-
-  int num_indices = xt_idxlist_get_num_indices(idxlist);
-  Xt_int * indices = xmalloc((size_t)num_indices * sizeof(*indices));
-  xt_idxlist_get_indices(idxlist, indices);
-  xt_sort_index(indices, num_indices, NULL, 0);
-  struct Xt_stripe * stripes;
-  int num_stripes;
-  xt_convert_indices_to_stripes(indices, num_indices, &stripes, &num_stripes);
-  Xt_idxlist idxlist_sorted = xt_idxstripes_new(stripes, num_stripes);
-  free(stripes);
-  free(indices);
+                                      MPI_Comm comm, int comm_size,
+                                      Xt_config config)
+{
+  int nosort_forced = XT_CONFIG_GET_FORCE_NOSORT(config);
+  Xt_idxlist idxlist_sorted
+    = nosort_forced || xt_idxlist_get_sorting(idxlist) == 1
+    ? idxlist
+    : xt_idxlist_sorted_copy_custom(idxlist, config);
 
   size_t num_msg = 0;
   Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
@@ -235,7 +231,8 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
   } else
     memset(send_size, 0, (size_t)comm_size * sizeof (*send_size));
 
-  xt_idxlist_delete(idxlist_sorted);
+  if (idxlist_sorted != idxlist)
+    xt_idxlist_delete(idxlist_sorted);
 
   return num_msg;
 }
@@ -294,7 +291,7 @@ create_intersections(struct Xt_xmdd_txstat tx_stat[2],
                      int recv_size[][SEND_SIZE_ASIZE],
                      void **send_buffer, int send_size[][SEND_SIZE_ASIZE],
                      Xt_idxlist idxlist, Xt_int interval_size,
-                     MPI_Comm comm, int comm_size)
+                     MPI_Comm comm, int comm_size, Xt_config config)
 {
   struct bucket_params bucket_params
     = get_bucket_params(idxlist, interval_size, comm_size);
@@ -303,7 +300,7 @@ create_intersections(struct Xt_xmdd_txstat tx_stat[2],
   size_t num_msg =
 #endif
     compute_and_pack_bucket_intersections(
-      &bucket_params, idxlist, send_size, send_buffer, comm, comm_size);
+      &bucket_params, idxlist, send_size, send_buffer, comm, comm_size, config);
   xt_mpi_call(MPI_Alltoall(send_size, SEND_SIZE_ASIZE, MPI_INT,
                            recv_size, SEND_SIZE_ASIZE, MPI_INT, comm), comm);
   compress_sizes(recv_size, comm_size, tx_stat + 0, NULL);
@@ -401,10 +398,10 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
   struct Xt_xmdd_txstat tx_stat_local[2], tx_stat_remote[2];
   create_intersections(tx_stat_local, recv_size_local, &send_buffer_local,
                        send_size_local, src_idxlist, interval_size[0],
-                       intra_comm, comm_size);
+                       intra_comm, comm_size, config);
   create_intersections(tx_stat_remote, recv_size_remote, &send_buffer_remote,
                        send_size_remote, dst_idxlist, interval_size[1],
-                       inter_comm, remote_size);
+                       inter_comm, remote_size, config);
 
   size_t num_req = tx_stat_local[0].num_msg + tx_stat_remote[0].num_msg
     + tx_stat_local[1].num_msg + tx_stat_remote[1].num_msg;
