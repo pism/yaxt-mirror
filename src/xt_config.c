@@ -193,7 +193,7 @@ struct Xt_config_ xt_default_config = {
   .exchanger_team_share = NULL,
   .idxv_cnv_size = CHEAP_VECTOR_SIZE,
   .sort_funcs = &sort_algo_table[XT_QUICKSORT].func,
-  .flags = 0,
+  .flags = 0U,
 };
 
 
@@ -286,7 +286,8 @@ xt_config_set_idxvec_autoconvert_size(Xt_config config, int cnvsize)
 int
 xt_config_get_redist_mthread_mode(Xt_config config)
 {
-  return (config->flags & (int32_t)xt_mthread_mode_mask) >> xt_mthread_mode_bit_ofs;
+  return (int)((config->flags & (uint32_t)xt_mthread_mode_mask)
+               >> xt_mthread_mode_bit_ofs);
 }
 
 void
@@ -306,8 +307,8 @@ xt_config_set_redist_mthread_mode(Xt_config config, int mode)
              "        but MPI is not running in thread-safe mode.\n", "xt_config.c", __LINE__);
   }
 #endif
-  config->flags = (config->flags & ~(int32_t)xt_mthread_mode_mask)
-    | ((int32_t)mode << xt_mthread_mode_bit_ofs);
+  config->flags = (config->flags & ~(uint32_t)xt_mthread_mode_mask)
+    | ((uint32_t)mode << xt_mthread_mode_bit_ofs);
 }
 
 /**
