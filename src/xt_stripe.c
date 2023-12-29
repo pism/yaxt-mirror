@@ -48,6 +48,7 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -71,6 +72,36 @@ void xt_convert_indices_to_stripes(const Xt_int *restrict indices,
                                          stripes, num_stripes);
 }
 
+size_t
+xt_indices_count_stripes(size_t num_indices,
+                         const Xt_int indices[num_indices])
+{
+  size_t num_temp_stripes = 0;
+  if (num_indices > 0) {
+    size_t i = 0;
+
+    while(i < (size_t)num_indices) {
+      ++num_temp_stripes;
+
+      size_t j = 1;
+      Xt_int stride = 1, stripe_base_index = indices[i];
+      if (i + j < (size_t)num_indices) {
+        stride = (Xt_int)(indices[i + 1] - stripe_base_index);
+        do {
+          ++j;
+        } while ((i + j) < (size_t)num_indices
+                 && stripe_base_index + (Xt_int)j * stride == indices[i + j]);
+      }
+      j-= ((i + j + 1 < (size_t)num_indices)
+           && ((indices[i + j - 1] == indices[i + j] - 1)
+               & (indices[i + j] == indices[i + j + 1] - 1)));
+      i += j;
+    }
+  }
+  return num_temp_stripes;
+}
+
+
 void xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
                                             int num_indices,
                                             struct Xt_stripe **stripes,
@@ -79,18 +110,15 @@ void xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
   INSTR_DEF(instr,"xt_idxstripes_convert_to_stripes")
   INSTR_START(instr);
 
-  struct Xt_stripe *restrict temp_stripes = *stripes;
-  size_t temp_stripes_array_size = (size_t)*num_stripes;
-  size_t num_temp_stripes = 0;
-
+  size_t num_indices_ = (size_t)(num_indices > 0 ? num_indices : 0);
+  size_t num_temp_stripes = 0,
+    num_stripes_alloc = xt_indices_count_stripes(num_indices_, indices);
+  struct Xt_stripe *restrict temp_stripes
+    = *stripes = xrealloc(*stripes, num_stripes_alloc * sizeof(**stripes));
   if (num_indices > 0) {
     size_t i = 0;
 
     while(i < (size_t)num_indices) {
-      ++num_temp_stripes;
-
-      ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size, num_temp_stripes);
-
       size_t j = 1;
 
       Xt_int stride = 1;
@@ -105,15 +133,14 @@ void xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
            && ((indices[i + j - 1] == indices[i + j] - 1)
                & (indices[i + j] == indices[i + j + 1] - 1)));
 
-      temp_stripes[num_temp_stripes-1].start  = indices[i];
-      temp_stripes[num_temp_stripes-1].stride = stride;
-      temp_stripes[num_temp_stripes-1].nstrides = (int)j;
-
-      i = i + j;
+      temp_stripes[num_temp_stripes++]
+        = (struct Xt_stripe){ .start = indices[i], .stride = stride,
+                              .nstrides = (int)j };
+      i += j;
     }
   }
 
-  *stripes = xrealloc(temp_stripes, num_temp_stripes * sizeof(*temp_stripes));
+  assert(num_temp_stripes == num_stripes_alloc);
   *num_stripes = (int)num_temp_stripes;
   INSTR_STOP(instr);
 }
