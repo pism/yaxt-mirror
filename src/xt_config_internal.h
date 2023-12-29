@@ -121,6 +121,12 @@ xt_sort_algo_id_by_name(const char *name);
 PPM_DSO_INTERNAL Xt_exchanger_new
 xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm);
 
+#define XT_CONFIG_GET_FORCE_NOSORT(config) \
+  (((config)->flags & xt_force_nosort) != UINT32_C(0))
+#define XT_CONFIG_SET_FORCE_NOSORT(config) \
+  do { (config)->flags |= (uint32_t)xt_force_nosort; } while (0)
+#define XT_CONFIG_UNSET_FORCE_NOSORT(config) \
+  do { (config)->flags &= ~(uint32_t)xt_force_nosort; } while (0)
 /*
  * Local Variables:
  * c-basic-offset: 2

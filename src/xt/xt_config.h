@@ -184,6 +184,32 @@ xt_config_get_sort_algorithm_id(Xt_config config);
 void
 xt_config_set_sort_algorithm_by_id(Xt_config config, int algo);
 
+/**
+ * Set memory conservation parameter.
+ *
+ * @param[in]   config configuration object to modify
+ * @param       memconserve switch on methods of memory saving
+ *              currently supported values: 0 and 1
+ *
+ * When set to 1, operations parameterized by config will
+ * aggressively try to trade memory savings for higher computational
+ * cost.
+ *
+ * Currently, by not sorting index lists used in xmap construction.
+ *
+ * When set to 0, use default trade-offs for space vs. time complexity.
+ *
+ */
+void
+xt_config_set_mem_saving(Xt_config config, int memconserve);
+
+/**
+ * Get memory conservation parameter.
+ * @param[in]   config configuration object to query
+ */
+int
+xt_config_get_mem_saving(Xt_config config);
+
 
 #endif
 
