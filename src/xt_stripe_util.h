@@ -87,6 +87,14 @@ xt_stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
   return (mma.max >= mmb.min) & (mma.min <= mmb.max);
 }
 
+/**
+ * Establish number of stripes needed to represent vector of indices.
+ */
+PPM_DSO_INTERNAL size_t
+xt_indices_count_stripes(size_t num_indices,
+                         const Xt_int indices[num_indices]);
+
+
 PPM_DSO_INTERNAL void
 xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
                                        int num_indices,
