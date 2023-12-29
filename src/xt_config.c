@@ -296,15 +296,18 @@ xt_config_set_redist_mthread_mode(Xt_config config, int mode)
   assert(mode >= XT_MT_NONE && mode <= XT_MT_OPENMP);
 #ifndef _OPENMP
   if (mode == XT_MT_OPENMP)
-    Xt_abort(Xt_default_comm, "error: automatic opening of OpenMP parallel regions requested,"
+    Xt_abort(Xt_default_comm,
+             "error: automatic opening of OpenMP parallel regions requested,"
              " but OpenMP is not configured.\n", "xt_config.c", __LINE__);
 #else
   if (mode == XT_MT_OPENMP) {
     int thread_support_provided = MPI_THREAD_SINGLE;
     xt_mpi_call(MPI_Query_thread(&thread_support_provided), Xt_default_comm);
     if (thread_support_provided != MPI_THREAD_MULTIPLE)
-      Xt_abort(Xt_default_comm, "error: automatic opening of OpenMP parallel regions requested,\n"
-             "        but MPI is not running in thread-safe mode.\n", "xt_config.c", __LINE__);
+      Xt_abort(Xt_default_comm,
+               "error: automatic opening of OpenMP parallel regions requested,"
+               "\n       but MPI is not running in thread-safe mode.\n",
+               "xt_config.c", __LINE__);
   }
 #endif
   config->flags = (config->flags & ~(uint32_t)xt_mthread_mode_mask)
