@@ -550,7 +550,7 @@ get_sorted_vector(Xt_idxvec idxvec, Xt_config config)
     idxvec->sorted_vec_positions = NULL;
     return idxvec->sorted_vector = vector;
   }
-  if (config->flags & xt_force_nosort)
+  if (XT_CONFIG_GET_FORCE_NOSORT(config))
     return NULL;
 
   size_t svec_size = num_indices * sizeof(Xt_int);
@@ -586,11 +586,13 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
   Xt_idxvec inter_vector = vec_alloc.idxvec;
   Xt_int *vector_assign = vec_alloc.vector;
 
+  struct Xt_config_ sort_config = *config;
+  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
   // get sorted indices of source and destination
   const Xt_int *restrict sorted_src_vector
-    = get_sorted_vector(idxvec_src, config),
+    = get_sorted_vector(idxvec_src, &sort_config),
                *restrict sorted_dst_vector
-    = get_sorted_vector(idxvec_dst, config);
+    = get_sorted_vector(idxvec_dst, &sort_config);
 
   // compute the intersection
   for (size_t i = 0, j = 0; i < num_indices_dst; ++i) {
@@ -633,7 +635,9 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
   assert(idxlist_dst->vtable->idxlist_pack_code == STRIPES
          && idxlist_src->vtable == &idxvec_vtable);
   Xt_idxvec vec_src = (Xt_idxvec)idxlist_src;
-  const Xt_int *src_sorted = get_sorted_vector(vec_src, config);
+  struct Xt_config_ sort_config = *config;
+  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
+  const Xt_int *src_sorted = get_sorted_vector(vec_src, &sort_config);
   Xt_int src_min = idxvec_get_min_index(idxlist_src),
     src_max = idxvec_get_max_index(idxlist_src);
   size_t nsrc = (size_t)idxlist_src->num_indices,
@@ -719,7 +723,10 @@ static Xt_idxlist
 idxvec_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
 
    Xt_idxvec idxvec = (Xt_idxvec)idxlist;
-   const Xt_int *sorted_vector = get_sorted_vector(idxvec, config);
+  struct Xt_config_ sort_config = *config;
+  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
+  const Xt_int *sorted_vector = get_sorted_vector(idxvec, &sort_config);
+  /* fixme: use congeal */
    return xt_idxvec_new(sorted_vector, idxvec->parent.num_indices);
 }
 
@@ -804,8 +811,11 @@ idxvec_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   if ((offset < 0) || ((size_t)offset >= num_indices))
     return 1;
 
+  struct Xt_config_ sort_config = xt_default_config;
+  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
+
   const Xt_int *sorted_vector
-    = get_sorted_vector(idxvec_obj, &xt_default_config);
+    = get_sorted_vector(idxvec_obj, &sort_config);
 
   if ((index < sorted_vector[0]) ||
       (index > sorted_vector[num_indices-1]))
@@ -910,8 +920,10 @@ idxvec_get_positions_of_indices(Xt_idxlist body_idxlist,
    *  on the source side we don't
    */
   Xt_idxvec body_idxvec = (Xt_idxvec)body_idxlist;
+  struct Xt_config_ sort_config = xt_default_config;
+  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
   const Xt_int *sorted_body
-    = get_sorted_vector(body_idxvec, &xt_default_config);
+    = get_sorted_vector(body_idxvec, &sort_config);
   const int *sorted_body_pos = body_idxvec->sorted_vec_positions;
   size_t search_end = (size_t)body_idxvec->parent.num_indices - 1;
   size_t num_unmatched = 0;
@@ -992,8 +1004,10 @@ idxvec_get_min_index(Xt_idxlist idxlist) {
   if (!idxvec_obj->parent.num_indices)
     die("idxvec_get_min_index: empty index vector");
 #endif
-
-  return get_sorted_vector(idxvec_obj, &xt_default_config)[0];
+  struct Xt_config_ sort_config = xt_default_config;
+  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
+  /* fixme: find min and max in different way if nosort is active*/
+  return get_sorted_vector(idxvec_obj, &sort_config)[0];
 }
 
 static Xt_int
@@ -1005,8 +1019,11 @@ idxvec_get_max_index(Xt_idxlist idxlist) {
   if (!idxvec_obj->parent.num_indices)
     die("idxvec_get_max_index: empty index vector");
 #endif
+  /* fixme: find min and max in different way if nosort is active*/
+  struct Xt_config_ sort_config = xt_default_config;
+  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
   const Xt_int *sorted_vector
-    = get_sorted_vector(idxvec_obj, &xt_default_config);
+    = get_sorted_vector(idxvec_obj, &sort_config);
   return sorted_vector[idxvec_obj->parent.num_indices-1];
 }
 
