@@ -241,6 +241,24 @@ void xt_config_set_sort_algorithm_by_id(Xt_config config, int algo)
   Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
 }
 
+void
+xt_config_set_mem_saving(Xt_config config, int memconserve)
+{
+  if (memconserve)
+    XT_CONFIG_SET_FORCE_NOSORT(config);
+  else
+    XT_CONFIG_UNSET_FORCE_NOSORT(config);
+}
+
+int
+xt_config_get_mem_saving(Xt_config config)
+{
+  return XT_CONFIG_GET_FORCE_NOSORT(config);
+}
+
+
+
+
 void xt_config_set_exchange_method(Xt_config config, int method)
 {
   static const char fmt[]

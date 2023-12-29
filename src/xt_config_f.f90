@@ -90,6 +90,7 @@ MODULE xt_config_f
        xt_config_set_redist_mthread_mode
   PUBLIC :: xt_config_get_sort_algorithm_id, &
        xt_config_set_sort_algorithm_by_id
+  PUBLIC :: xt_config_set_mem_saving, xt_config_get_mem_saving
   INTEGER, PUBLIC, PARAMETER :: &
        XT_MT_NONE = 0, &
        XT_MT_OPENMP = 1
@@ -277,6 +278,57 @@ CONTAINS
     sort_algo_c = INT(sort_algo, c_int)
     CALL xt_config_set_sort_algorithm_by_id_c(config%cptr, sort_algo_c)
   END SUBROUTINE xt_config_set_sort_algorithm_by_id
+
+  !>
+  !! Set memory conservation PARAMETER.
+  !!
+  !! @param[in]   config configuration object to modify
+  !! @param       memconserve switch on methods of memory saving
+  !!              currently supported values: 0 and 1
+  !!
+  !! When set to 1, operations parameterized by config will
+  !! aggressively try to trade memory savings for higher computational
+  !! cost.
+  !!
+  !! Currently, by not sorting index lists used in xmap construction.
+  !!
+  !! When set to 0, use default trade-offs for space vs. time complexity.
+  !!
+  SUBROUTINE xt_config_set_mem_saving(config, memconserve)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER, INTENT(in) :: memconserve
+    INTERFACE
+      SUBROUTINE xt_config_set_mem_saving_c(config, memconserve) &
+           BIND(c, name="xt_config_set_mem_saving")
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int), VALUE :: memconserve
+      END SUBROUTINE xt_config_set_mem_saving_c
+    END INTERFACE
+    INTEGER(c_int) :: memconserve_c
+    memconserve_c = INT(memconserve, c_int)
+    CALL xt_config_set_mem_saving_c(config%cptr, memconserve_c)
+  END SUBROUTINE xt_config_set_mem_saving
+
+  !> Get memory conservation parameter.
+  !! @param[in]   config configuration object to query
+  !! @return memory conservation parameter as described
+  !! at \a xt_config_set_mem_saving
+  FUNCTION xt_config_get_mem_saving(config) RESULT(memconserve)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: memconserve
+    INTERFACE
+      FUNCTION xt_config_get_mem_saving_c(config) &
+           BIND(c, name="xt_config_get_mem_saving") RESULT(memconserve)
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int) :: memconserve
+      END FUNCTION xt_config_get_mem_saving_c
+    END INTERFACE
+    INTEGER(c_int) :: memconserve_c
+    memconserve_c = xt_config_get_mem_saving_c(config%cptr)
+    memconserve = INT(memconserve_c)
+  END FUNCTION xt_config_get_mem_saving
 
 END MODULE xt_config_f
 !
