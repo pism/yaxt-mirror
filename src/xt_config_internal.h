@@ -99,7 +99,7 @@ struct Xt_config_ {
   int idxv_cnv_size;
   /**
    * binary combination of xt_config_flags */
-  int32_t flags;
+  uint32_t flags;
 };
 
 extern struct Xt_config_ xt_default_config;
