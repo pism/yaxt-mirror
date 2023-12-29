@@ -172,29 +172,18 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
                                       Xt_idxlist dst_idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
                                       void **send_buffer_,
-                                      MPI_Comm comm, int comm_size) {
-
-  int num_src_indices = xt_idxlist_get_num_indices(src_idxlist);
-  Xt_int * src_indices = xmalloc((size_t)num_src_indices * sizeof(*src_indices));
-  xt_idxlist_get_indices(src_idxlist, src_indices);
-  xt_sort_index(src_indices, num_src_indices, NULL, 0);
-  struct Xt_stripe * src_stripes;
-  int num_src_stripes;
-  xt_convert_indices_to_stripes(src_indices, num_src_indices, &src_stripes, &num_src_stripes);
-  Xt_idxlist src_idxlist_sorted = xt_idxstripes_new(src_stripes, num_src_stripes);
-  free(src_stripes);
-  free(src_indices);
-
-  int num_dst_indices = xt_idxlist_get_num_indices(dst_idxlist);
-  Xt_int * dst_indices = xmalloc((size_t)num_dst_indices * sizeof(*dst_indices));
-  xt_idxlist_get_indices(dst_idxlist, dst_indices);
-  xt_sort_index(dst_indices, num_dst_indices, NULL, 0);
-  struct Xt_stripe * dst_stripes;
-  int num_dst_stripes;
-  xt_convert_indices_to_stripes(dst_indices, num_dst_indices, &dst_stripes, &num_dst_stripes);
-  Xt_idxlist dst_idxlist_sorted = xt_idxstripes_new(dst_stripes, num_dst_stripes);
-  free(dst_stripes);
-  free(dst_indices);
+                                      MPI_Comm comm, int comm_size,
+                                      Xt_config config)
+{
+  int nosort_forced = XT_CONFIG_GET_FORCE_NOSORT(config);
+  Xt_idxlist src_idxlist_sorted
+    = nosort_forced || xt_idxlist_get_sorting(src_idxlist) == 1
+    ? src_idxlist
+    : xt_idxlist_sorted_copy_custom(src_idxlist, config);
+  Xt_idxlist dst_idxlist_sorted
+    = nosort_forced || xt_idxlist_get_sorting(dst_idxlist) == 1
+    ? dst_idxlist
+    : xt_idxlist_sorted_copy_custom(dst_idxlist, config);
 
   int num_msg = 0;
   Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
@@ -293,8 +282,10 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
   } else
     memset(send_size, 0, (size_t)comm_size * sizeof (*send_size));
 
-  xt_idxlist_delete(dst_idxlist_sorted);
-  xt_idxlist_delete(src_idxlist_sorted);
+  if (dst_idxlist_sorted != dst_idxlist)
+    xt_idxlist_delete(dst_idxlist_sorted);
+  if (src_idxlist_sorted != src_idxlist)
+    xt_idxlist_delete(src_idxlist_sorted);
 
   return num_msg;
 }
@@ -509,7 +500,8 @@ static void generate_distributed_directories(struct dist_dir **src_dist_dir,
     = compute_and_pack_bucket_intersections(&bucket_params,
                                             src_idxlist, dst_idxlist,
                                             send_size, &send_buffer,
-                                            comm, comm_size);
+                                            comm, comm_size,
+                                            config);
 
   int recv_size[SEND_SIZE_ASIZE]; // for src and dst
 
