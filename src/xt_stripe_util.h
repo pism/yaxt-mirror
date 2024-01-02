@@ -94,7 +94,18 @@ PPM_DSO_INTERNAL size_t
 xt_indices_count_stripes(size_t num_indices,
                          const Xt_int indices[num_indices]);
 
+/**
+ * Writes stripes to buffer that must be of sufficient size.
+ */
+PPM_DSO_INTERNAL size_t
+xt_convert_indices_to_stripes_buf(size_t num_indices,
+                                  const Xt_int *restrict indices,
+                                  size_t num_stripes_alloc,
+                                  struct Xt_stripe *stripes);
 
+/**
+ * Re-use pre-existing heap buffer and resize as necessary.
+ */
 PPM_DSO_INTERNAL void
 xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
                                        int num_indices,
