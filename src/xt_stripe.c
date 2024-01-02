@@ -111,38 +111,50 @@ void xt_convert_indices_to_stripes_keep_buf(const Xt_int *restrict indices,
   INSTR_START(instr);
 
   size_t num_indices_ = (size_t)(num_indices > 0 ? num_indices : 0);
-  size_t num_temp_stripes = 0,
-    num_stripes_alloc = xt_indices_count_stripes(num_indices_, indices);
+  size_t num_stripes_alloc = xt_indices_count_stripes(num_indices_, indices);
   struct Xt_stripe *restrict temp_stripes
     = *stripes = xrealloc(*stripes, num_stripes_alloc * sizeof(**stripes));
+  size_t num_stripes_
+    = xt_convert_indices_to_stripes_buf(num_indices_, indices,
+                                        num_stripes_alloc, temp_stripes);
+  *num_stripes = (int)num_stripes_;
+  INSTR_STOP(instr);
+}
+
+size_t
+xt_convert_indices_to_stripes_buf(size_t num_indices,
+                                  const Xt_int *restrict indices,
+                                  size_t num_stripes_alloc,
+                                  struct Xt_stripe *stripes)
+{
+  size_t num_stripes = 0;
   if (num_indices > 0) {
     size_t i = 0;
 
-    while(i < (size_t)num_indices) {
+    while(i < num_indices) {
       size_t j = 1;
 
       Xt_int stride = 1;
-      if (i + j < (size_t)num_indices) {
+      if (i + j < num_indices) {
         stride = (Xt_int)(indices[i + 1] - indices[i]);
         do {
           ++j;
-        } while ((i + j) < (size_t)num_indices
+        } while ((i + j) < num_indices
                  && indices[i] + (Xt_int)j * stride == indices[i + j]);
       }
-      j-= ((i + j + 1 < (size_t)num_indices)
+      j-= ((i + j + 1 < num_indices)
            && ((indices[i + j - 1] == indices[i + j] - 1)
                & (indices[i + j] == indices[i + j + 1] - 1)));
 
-      temp_stripes[num_temp_stripes++]
+      stripes[num_stripes++]
         = (struct Xt_stripe){ .start = indices[i], .stride = stride,
                               .nstrides = (int)j };
       i += j;
     }
   }
 
-  assert(num_temp_stripes == num_stripes_alloc);
-  *num_stripes = (int)num_temp_stripes;
-  INSTR_STOP(instr);
+  assert(num_stripes <= num_stripes_alloc);
+  return num_stripes;
 }
 
 size_t
