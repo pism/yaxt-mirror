@@ -246,6 +246,17 @@ static int compare_xtstripes(const void * a_, const void * b_)
 
 static Xt_idxlist
 idxstripes_aggregate(Xt_idxstripes idxstripes,
+                     const char *caller);
+
+Xt_idxlist
+xt_idxstripes_congeal(struct Xt_stripes_alloc stripes_alloc)
+{
+  return idxstripes_aggregate(stripes_alloc.idxstripes, __func__);
+}
+
+
+static Xt_idxlist
+idxstripes_aggregate(Xt_idxstripes idxstripes,
                      const char *caller)
 {
   const struct Xt_stripe *restrict stripes = idxstripes->stripes;
@@ -318,6 +329,35 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   }
 }
 
+static struct Xt_stripes_alloc
+idxstripes_alloc(size_t num_stripes);
+
+struct Xt_stripes_alloc
+xt_idxstripes_alloc(size_t num_stripes)
+{
+  return idxstripes_alloc(num_stripes);
+}
+
+static struct Xt_stripes_alloc
+idxstripes_alloc(size_t num_stripes)
+{
+  size_t header_size = ((sizeof (struct Xt_idxstripes_)
+                         + (sizeof (struct Xt_stripes_sort)
+                            * (size_t)num_stripes)
+                         + sizeof (struct Xt_stripe) - 1)
+                        / sizeof (struct Xt_stripe))
+    * sizeof (struct Xt_stripe),
+    body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
+  Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
+  struct Xt_stripe *stripes_assign
+    = (struct Xt_stripe *)(void *)((unsigned char *)idxstripes + header_size);
+  assert(num_stripes <= INT_MAX);
+  idxstripes->num_stripes = (int)num_stripes;
+  idxstripes->stripes = stripes_assign;
+  return (struct Xt_stripes_alloc){ .idxstripes = idxstripes,
+                                    .stripes = stripes_assign };
+}
+
 
 Xt_idxlist
 xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
@@ -329,25 +369,13 @@ xt_idxstripes_new(struct Xt_stripe const * stripes, int num_stripes) {
   Xt_idxlist result;
 
   if (num_stripes > 0) {
-    size_t header_size = ((sizeof (struct Xt_idxstripes_)
-                           + (sizeof (struct Xt_stripes_sort)
-                              * (size_t)num_stripes)
-                           + sizeof (struct Xt_stripe) - 1)
-                          / sizeof (struct Xt_stripe))
-      * sizeof (struct Xt_stripe),
-      body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
-    Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
-    {
-      struct Xt_stripe *stripes_assign
-        = (struct Xt_stripe *)(void *)((unsigned char *)idxstripes
-                                       + header_size);
-      idxstripes->stripes = stripes_assign;
-      idxstripes->num_stripes
+    struct Xt_stripes_alloc stripes_alloc
+      = idxstripes_alloc((size_t)num_stripes);
+    stripes_alloc.idxstripes->num_stripes
         = (int)xt_stripes_merge_copy((size_t)num_stripes,
-                                     stripes_assign,
+                                     stripes_alloc.stripes,
                                      stripes, false);
-    }
-    result = idxstripes_aggregate(idxstripes, __func__);
+    result = idxstripes_aggregate(stripes_alloc.idxstripes, __func__);
   } else
     result = xt_idxempty_new();
   INSTR_STOP(instr);
