@@ -85,6 +85,19 @@ xt_idxstripes_get_idxvec_intersection(Xt_idxlist idxlist_src,
 PPM_DSO_INTERNAL Xt_idxlist
 xt_idxstripes_prealloc_new(const struct Xt_stripe *stripes, int num_stripes);
 
+
+struct Xt_stripes_alloc
+{
+  struct Xt_idxstripes_ *idxstripes;
+  struct Xt_stripe *stripes;
+};
+
+PPM_DSO_INTERNAL struct Xt_stripes_alloc
+xt_idxstripes_alloc(size_t num_stripes);
+
+PPM_DSO_INTERNAL Xt_idxlist
+xt_idxstripes_congeal(struct Xt_stripes_alloc stripes_alloc);
+
 /**
  * Generates an index list that is built up of stripes of indices.
  * Copies and sorts the stripes and their contained indices, i.e. the
