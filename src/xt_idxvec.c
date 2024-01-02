@@ -722,12 +722,25 @@ idxvec_copy(Xt_idxlist idxlist) {
 static Xt_idxlist
 idxvec_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
 
-   Xt_idxvec idxvec = (Xt_idxvec)idxlist;
+  Xt_idxvec idxvec = (Xt_idxvec)idxlist;
   struct Xt_config_ sort_config = *config;
   XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
   const Xt_int *sorted_vector = get_sorted_vector(idxvec, &sort_config);
-  /* fixme: use congeal */
-   return xt_idxvec_new(sorted_vector, idxvec->parent.num_indices);
+  if (idxlist->num_indices > config->idxv_cnv_size) {
+    size_t num_indices = (size_t)idxvec->parent.num_indices,
+      num_stripes_alloc
+      = xt_indices_count_stripes(num_indices, sorted_vector);
+    struct Xt_stripes_alloc stripes_alloc
+      = xt_idxstripes_alloc(num_stripes_alloc);
+    size_t num_stripes
+      = xt_convert_indices_to_stripes_buf(
+        num_indices, sorted_vector, num_stripes_alloc, stripes_alloc.stripes);
+    assert(num_stripes == num_stripes_alloc);
+    return xt_idxstripes_congeal(stripes_alloc);
+  } else {
+    /* fixme: use congeal */
+    return xt_idxvec_new(sorted_vector, idxvec->parent.num_indices);
+  }
 }
 
 static void
