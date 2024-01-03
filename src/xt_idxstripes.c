@@ -1790,7 +1790,7 @@ tail_search:
     = { .start = pos_ext2add_s, .end = pos_ext2add_e };
   /* does overlap exist? */
   size_t overlap_pos =
-    xt_cover_insert_or_overlap(cover, query_range, true, 0);
+    xt_cover_insert_or_overlap(cover, query_range, 0);
   if (overlap_pos == SIZE_MAX) {
     /* remaining extent does not overlap any existing one */
     append_ext(pos_ext2add, result);

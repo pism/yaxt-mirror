@@ -77,17 +77,16 @@ xt_cover_finish(struct Xt_pos_ext_vec *restrict cover);
  *              portions of index list
  * @param query range of positions to query if any in [query.start,query.end] is
  *              already in cover
- * @param forward direction to search the cover
- * @param search_start_pos should be 0, if \a forward == true
- * or cover->num_pos_ext, if \a forward == false to search all of
+ * @param search_start_pos should be 0 to search all of
  * cover, choose value to start search at if part of cover is known to
  * be non-matching
  * @return index of first position extent in cover that overlaps or is
- * adjacent to \a query
+ * following \a query or SIZE_MAX if the last range is non-adjacent
+ * and precedes the query
  */
 PPM_DSO_INTERNAL size_t
 xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
-                struct Xt_pos_range query, bool forward,
+                struct Xt_pos_range query,
                 size_t search_start_pos);
 
 /**
@@ -105,9 +104,6 @@ xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
  *              portions of index list
  * @param range describes a contiguous interval of positions to search
  *              for and insert if not found
- * @param forward direction in which to search \a cover,
- *              i.e. incrementing from search_start_pos if true and
- *              decrementing if false
  * @param search_start_pos should be 0, if \a forward == true
  * or cover->num_pos_ext, if \a forward == false to search all of
  * cover, choose value to start search at if part of cover is known to
@@ -117,7 +113,7 @@ xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
  */
 PPM_DSO_INTERNAL size_t
 xt_cover_insert_or_overlap(struct Xt_pos_ext_vec *restrict cover,
-                           struct Xt_pos_range range, bool forward,
+                           struct Xt_pos_range range,
                            size_t search_start_pos);
 
 /**
