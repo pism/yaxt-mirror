@@ -603,7 +603,7 @@ generate_dir_transfer_pos_ext_dst(
           .start = isect_pos_ext.start,
           .end = isect_pos_ext.start + isect_pos_ext.size - 1 };
         insert_pos
-          = xt_cover_insert_or_overlap(&cover, query, true, search_start_pos);
+          = xt_cover_insert_or_overlap(&cover, query, search_start_pos);
         if (insert_pos == SIZE_MAX)
           goto next_isect_pos_ext;
         struct Xt_pos_ext_overlap overlap_desc

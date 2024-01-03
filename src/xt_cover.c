@@ -91,29 +91,33 @@ xt_idxlist_pos_ext_is_full_cover(Xt_idxlist idxlist,
   return continuations_hold;
 }
 
+static size_t
+xt_cover_search_(struct Xt_pos_ext_vec *restrict cover,
+                 struct Xt_pos_range query,
+                 size_t search_start_pos);
+
 size_t
 xt_cover_search(struct Xt_pos_ext_vec *restrict cover,
-                struct Xt_pos_range query, bool forward,
+                struct Xt_pos_range query,
                 size_t search_start_pos)
+{
+  return xt_cover_search_(cover, query, search_start_pos);
+}
+
+static size_t
+xt_cover_search_(struct Xt_pos_ext_vec *restrict cover,
+                 struct Xt_pos_range query,
+                 size_t search_start_pos)
 {
   size_t i, num_pos_ext = cover->num_pos_ext;
   struct Xt_pos_ext *restrict covered_pos_ext = cover->pos_ext;
   if (num_pos_ext)
   {
     i = search_start_pos;
-    if (forward) {
-      while ((query.start >= (covered_pos_ext[i].start
-                              + covered_pos_ext[i].size))
-             & (i < num_pos_ext - 1))
-        ++i;
-    } else {
-      while ((i > 0)
-             & (query.end < covered_pos_ext[i - 1].start - 1))
-        --i;
-      if ((i == 0)
-          & (query.start > covered_pos_ext[0].start + covered_pos_ext[0].size))
-        i = 1;
-    }
+    while ((query.start >= (covered_pos_ext[i].start
+                            + covered_pos_ext[i].size))
+           & (i < num_pos_ext - 1))
+      ++i;
     if ((i >= num_pos_ext - 1)
         & (query.start >= (covered_pos_ext[num_pos_ext - 1].start
                            + covered_pos_ext[num_pos_ext - 1].size)))
@@ -146,10 +150,10 @@ xt_cover_range_append(struct Xt_pos_ext_vec *restrict cover,
 
 size_t
 xt_cover_insert_or_overlap(struct Xt_pos_ext_vec *restrict cover,
-                           struct Xt_pos_range range, bool forward,
+                           struct Xt_pos_range range,
                            size_t search_start_pos)
 {
-  size_t insert_pos = xt_cover_search(cover, range, forward, search_start_pos);
+  size_t insert_pos = xt_cover_search_(cover, range, search_start_pos);
   struct Xt_pos_ext *restrict cover_pos_ext = cover->pos_ext;
   if (insert_pos != SIZE_MAX) {
     if ((range.start < (cover_pos_ext[insert_pos].start
@@ -162,7 +166,7 @@ xt_cover_insert_or_overlap(struct Xt_pos_ext_vec *restrict cover,
     else if (range.end + 1 < cover_pos_ext[insert_pos].start)
     {
       /* range precedes cover->pos_ext[insert_pos] with a hole
-       * but might be a seemless extension of
+       * but might be a seamless extension of
        * cover->pos_ext[insert_pos-1] */
       if (insert_pos > 0
           && (cover_pos_ext[insert_pos - 1].start
