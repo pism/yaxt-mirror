@@ -109,23 +109,32 @@ xt_cover_search_(struct Xt_pos_ext_vec *restrict cover,
                  struct Xt_pos_range query,
                  size_t search_start_pos)
 {
-  size_t i, num_pos_ext = cover->num_pos_ext;
+  size_t num_pos_ext = cover->num_pos_ext;
   struct Xt_pos_ext *restrict covered_pos_ext = cover->pos_ext;
-  if (num_pos_ext)
-  {
-    i = search_start_pos;
-    while ((query.start >= (covered_pos_ext[i].start
-                            + covered_pos_ext[i].size))
-           & (i < num_pos_ext - 1))
-      ++i;
-    if ((i >= num_pos_ext - 1)
-        & (query.start >= (covered_pos_ext[num_pos_ext - 1].start
-                           + covered_pos_ext[num_pos_ext - 1].size)))
-      i = SIZE_MAX;
+  size_t lb = search_start_pos, ub = num_pos_ext;
+  size_t result = SIZE_MAX;
+  while (lb < ub) {
+    size_t guess = lb+(ub-lb)/2;
+    if (query.start >= (covered_pos_ext[guess].start
+                        + covered_pos_ext[guess].size))
+      lb = guess+1;
+    else if (query.end < covered_pos_ext[guess].start) {
+      if (guess == 0
+          || query.start >= (covered_pos_ext[guess-1].start
+                             + covered_pos_ext[guess-1].size)) {
+        result = guess;
+        break;
+      } else
+        ub = guess;
+    } else {
+      while (guess && query.start < (covered_pos_ext[guess-1].start
+                                     + covered_pos_ext[guess-1].size))
+        --guess;
+      result = guess;
+      break;
+    }
   }
-  else
-    i = SIZE_MAX;
-  return i;
+  return result;
 }
 
 void
