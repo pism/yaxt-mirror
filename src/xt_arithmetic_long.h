@@ -98,7 +98,7 @@ xllo(Xt_long x)
 }
 
 
-/* is a represntable as Xt_int? */
+/* can a be represented as Xt_int? */
 static inline bool
 xl_is_in_xt_int_range(Xt_long a)
 {
