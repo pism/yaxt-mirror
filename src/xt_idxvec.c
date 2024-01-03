@@ -670,23 +670,22 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
       nstrides -= adj_nstrides;
     }
     for (size_t k = adj_first; k < nstrides; ++k) {
-      Xt_int dst_idx = (Xt_int)(start + stride * (Xt_int)k),
-        last_match = src_sorted[last_match_pos];
-      size_t j = last_match_pos;
-      if (last_match > dst_idx) {
-        while (--j != SIZE_MAX && dst_idx < src_sorted[j])
-          ;
-      } else if (last_match < dst_idx) {
-        while (++j < nsrc && dst_idx > src_sorted[j])
-          ;
-      } else /* last_match == dst_idx */ {
-        found_indices[num_indices_inter++] = dst_idx;
-        continue;
-      }
-      if (j < nsrc && dst_idx == src_sorted[j]) {
-        found_indices[num_indices_inter++] = dst_idx;
-        last_match_pos = j;
-      }
+      Xt_int dst_idx = (Xt_int)(start + stride * (Xt_int)k);
+      size_t lb = 0, ub = nsrc,
+        guess = last_match_pos;
+      do {
+        Xt_int src_val = src_sorted[guess];
+        if (src_val < dst_idx)
+          lb = guess+1;
+        else if (src_val > dst_idx)
+          ub = guess;
+        else {                  /* src_val == dst_idx */
+          found_indices[num_indices_inter++] = dst_idx;
+          last_match_pos = guess;
+          break;
+        }
+        guess = lb + (ub-lb)/2;
+      } while (lb < ub);
     }
   }
   if (num_indices_inter) {
