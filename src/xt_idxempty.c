@@ -85,6 +85,9 @@ idxempty_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 static Xt_int const*
 idxempty_get_indices_const(Xt_idxlist idxlist);
 
+static int
+idxempty_get_num_index_stripes(Xt_idxlist idxlist);
+
 static void
 idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                            int * num_stripes);
@@ -139,6 +142,7 @@ static const struct xt_idxlist_vtable idxempty_vtable = {
   .sorted_copy                  = idxempty_sorted_copy,
   .get_indices                  = idxempty_get_indices,
   .get_indices_const            = idxempty_get_indices_const,
+  .get_num_index_stripes	= idxempty_get_num_index_stripes,
   .get_index_stripes            = idxempty_get_index_stripes,
   .get_index_at_position        = idxempty_get_index_at_position,
   .get_indices_at_positions     = idxempty_get_indices_at_positions,
@@ -231,6 +235,12 @@ idxempty_get_indices_const(Xt_idxlist XT_UNUSED(idxlist)) {
   return NULL;
 }
 
+static int
+idxempty_get_num_index_stripes(Xt_idxlist idxlist)
+{
+  (void)idxlist;
+  return 0;
+}
 
 static void
 idxempty_get_index_stripes(Xt_idxlist XT_UNUSED(idxlist),

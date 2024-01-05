@@ -92,6 +92,9 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 static const Xt_int *
 idxsection_get_indices_const(Xt_idxlist idxlist);
 
+static int
+idxsection_get_num_index_stripes(Xt_idxlist idxlist);
+
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              int * num_stripes);
@@ -130,6 +133,7 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
               .sorted_copy		    = idxsection_sorted_copy,
               .get_indices                  = idxsection_get_indices,
               .get_indices_const            = idxsection_get_indices_const,
+  .get_num_index_stripes		= idxsection_get_num_index_stripes,
               .get_index_stripes            = idxsection_get_index_stripes,
               .get_index_at_position        = idxsection_get_index_at_position,
               .get_indices_at_positions     = NULL,
@@ -735,6 +739,17 @@ idxsection_get_indices_const(Xt_idxlist idxlist) {
   return idxsection->index_array_cache;
 }
 
+static int
+idxsection_get_num_index_stripes(Xt_idxlist idxlist)
+{
+  Xt_idxsection section = (Xt_idxsection)idxlist;
+  size_t num_dimensions = (size_t)section->ndim;
+  struct dim_desc *restrict dims = section->dims;
+  size_t nstripes = dims[num_dimensions-1].local_size != 0;
+  for (size_t i = 0; i < num_dimensions-1; ++i)
+    nstripes *= (size_t)abs(dims[i].local_size);
+  return (int)nstripes;
+}
 
 static void
 idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,

@@ -126,6 +126,12 @@ const Xt_int *xt_idxlist_get_indices_const(Xt_idxlist idxlist) {
 }
 
 
+int xt_idxlist_get_num_index_stripes(Xt_idxlist idxlist)
+{
+  return idxlist->vtable->get_num_index_stripes(idxlist);
+}
+
+
 void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   int * num_stripes) {

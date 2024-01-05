@@ -108,7 +108,9 @@ MODULE xt_idxlist_abstract
        xt_idxlist_sorted_copy, xt_idxlist_sorted_copy_custom, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
-       xt_idxlist_get_positions_of_indices, xt_idxlist_get_index_stripes, &
+       xt_idxlist_get_positions_of_indices, &
+       xt_idxlist_get_num_index_stripes, &
+       xt_idxlist_get_index_stripes, &
        xt_idxlist_get_num_indices, &
        xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
        xt_idxlist_get_bounding_box, xt_idxlist_get_intersection, &
@@ -449,6 +451,28 @@ CONTAINS
       END IF
     END DO
   END FUNCTION xt_idxlist_get_positions_of_indices
+
+  FUNCTION xt_idxlist_get_num_index_stripes(idxlist) &
+       RESULT(num_stripes)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER :: num_stripes
+
+    INTERFACE
+      FUNCTION xt_idxlist_get_num_index_stripes_c(idxlist) &
+           BIND(c, name='xt_idxlist_get_num_index_stripes') RESULT(num_stripes)
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+        INTEGER(c_int) :: num_stripes
+      END FUNCTION xt_idxlist_get_num_index_stripes_c
+    END INTERFACE
+
+    INTEGER(c_int) :: num_stripes_c
+
+    num_stripes_c = xt_idxlist_get_num_index_stripes_c(idxlist%cptr)
+    IF (num_stripes_c > HUGE(num_stripes)) &
+         CALL xt_abort("number of stripes too large", filename, __LINE__)
+    num_stripes = INT(num_stripes_c)
+  END FUNCTION xt_idxlist_get_num_index_stripes
 
   SUBROUTINE xt_idxlist_get_index_stripes(idxlist, stripes)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
