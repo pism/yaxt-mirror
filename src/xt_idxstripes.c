@@ -99,6 +99,9 @@ idxstripes_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 static const Xt_int *
 idxstripes_get_indices_const(Xt_idxlist idxlist);
 
+static int
+idxstripes_get_num_index_stripes(Xt_idxlist idxlist);
+
 static void
 idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                              int * num_stripes);
@@ -143,6 +146,7 @@ static const struct xt_idxlist_vtable idxstripes_vtable = {
   .sorted_copy			= idxstripes_sorted_copy,
   .get_indices                  = idxstripes_get_indices,
   .get_indices_const            = idxstripes_get_indices_const,
+  .get_num_index_stripes	= idxstripes_get_num_index_stripes,
   .get_index_stripes            = idxstripes_get_index_stripes,
   .get_index_at_position        = idxstripes_get_index_at_position,
   .get_indices_at_positions     = idxstripes_get_indices_at_positions,
@@ -1210,6 +1214,13 @@ xt_idxstripes_get_index_stripes_const(Xt_idxlist idxlist)
   assert(idxlist->vtable == &idxstripes_vtable);
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
   return idxstripes->stripes;
+}
+
+static int
+idxstripes_get_num_index_stripes(Xt_idxlist idxlist)
+{
+  Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  return idxstripes->num_stripes;
 }
 
 size_t

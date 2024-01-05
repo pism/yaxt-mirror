@@ -95,6 +95,9 @@ idxvec_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 static Xt_int const*
 idxvec_get_indices_const(Xt_idxlist idxlist);
 
+static int
+idxvec_get_num_index_stripes(Xt_idxlist idxlist);
+
 static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
                          int * num_stripes);
@@ -135,6 +138,7 @@ static const struct xt_idxlist_vtable idxvec_vtable = {
   .sorted_copy			= idxvec_sorted_copy,
   .get_indices                 = idxvec_get_indices,
   .get_indices_const           = idxvec_get_indices_const,
+  .get_num_index_stripes	= idxvec_get_num_index_stripes,
   .get_index_stripes           = idxvec_get_index_stripes,
   .get_index_at_position       = idxvec_get_index_at_position,
   .get_indices_at_positions    = idxvec_get_indices_at_positions,
@@ -765,6 +769,16 @@ idxvec_get_indices_const(Xt_idxlist idxlist) {
   return idxvec->vector;
 }
 
+
+static int
+idxvec_get_num_index_stripes(Xt_idxlist idxlist)
+{
+  Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
+  size_t num_stripes = xt_indices_count_stripes(
+    (size_t)idxvec_obj->parent.num_indices, idxvec_obj->vector);
+  assert(num_stripes <= INT_MAX);
+  return (int)num_stripes;
+}
 
 static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,

@@ -231,8 +231,18 @@ void xt_idxlist_get_indices(Xt_idxlist idxlist, Xt_int *indices);
 const Xt_int *xt_idxlist_get_indices_const(Xt_idxlist idxlist);
 
 /**
+ * returns the number of stripes needed to represent the indices
+ * stored in an index list
+ *
+ * @param[in]  idxlist     index list for which to query the number of
+ *                         stripes
+ * @return num_stripes number of stripes in array "stripes"
+ */
+int xt_idxlist_get_num_index_stripes(Xt_idxlist idxlist);
+
+/**
  * returns the indices stored in an index list
- * the indices are returned in form of stripes (with stride 1)
+ * the indices are returned in form of stripes
  *
  * @param[in]  idxlist     index list for which the indices are to be returned
  * @param[out] stripes     array containing the stripes (user is responsible

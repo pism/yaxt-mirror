@@ -66,6 +66,7 @@ struct xt_idxlist_vtable {
   Xt_idxlist (*sorted_copy)(Xt_idxlist, Xt_config);
    void (*get_indices)(Xt_idxlist, Xt_int *indices);
    Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
+  int (*get_num_index_stripes)(Xt_idxlist);
    void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, int *);
    int (*get_index_at_position)(Xt_idxlist, int, Xt_int *);
    int (*get_indices_at_positions)(Xt_idxlist idxlist, const int *positions,
