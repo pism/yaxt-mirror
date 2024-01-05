@@ -752,10 +752,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
   for (size_t i = 0; i < num_dimensions-1; ++i)
     nstripes *= (size_t)abs(dims[i].local_size);
 
-  if (nstripes == 0) {
-    *num_stripes = (int)nstripes;
-    return;
-  }
+  assert(nstripes != 0);
 
   INSTR_START(instr);
 
