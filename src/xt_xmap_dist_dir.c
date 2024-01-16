@@ -225,7 +225,8 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
         = xt_xmap_dist_dir_get_bucket(bucket_params,
                                       &stripes, &stripes_array_size, (int)i);
       if (bucket) {
-        Xt_idxlist send4src = xt_idxlist_get_intersection(src_idxlist_sorted, bucket);
+        Xt_idxlist send4src = xt_idxlist_get_intersection_custom(
+          src_idxlist_sorted, bucket, config);
         if (xt_idxlist_get_num_indices(send4src) > 0) {
           sends_src[num_src_msg].list = send4src;
           sends_src[num_src_msg].rank = (int)i;
@@ -238,7 +239,8 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
           xt_idxlist_delete(send4src);
         }
 
-        Xt_idxlist send4dst = xt_idxlist_get_intersection(bucket, dst_idxlist_sorted);
+        Xt_idxlist send4dst = xt_idxlist_get_intersection_custom(
+          bucket, dst_idxlist_sorted, config);
         xt_idxlist_delete(bucket);
         if (xt_idxlist_get_num_indices(send4dst) > 0) {
           sends_dst[num_dst_msg].list = send4dst;
