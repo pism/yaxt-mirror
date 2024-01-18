@@ -1,7 +1,7 @@
 /**
  * @file xt_xmap_dist_dir_common.h
  *
- * @brief Uitlity functions for creation of distributed directories.
+ * @brief Utility functions for creation of distributed directories.
  *
  * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
