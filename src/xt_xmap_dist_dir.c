@@ -70,6 +70,7 @@
 #include "xt/xt_xmap_intersection.h"
 #include "xt_config_internal.h"
 #include "xt_idxlist_internal.h"
+#include "xt_idxlist_unpack.h"
 #include "instr.h"
 #include "xt_xmap_dist_dir_common.h"
 #include "xt/xt_sort.h"
@@ -86,6 +87,22 @@ static const char filename[] = "xt_xmap_dist_dir.c";
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
+static inline bool
+is_list_stripe_conversion_profitable(Xt_idxlist idxlist, Xt_config config)
+{
+  bool do_convert = false;
+  int pack_code = idxlist->vtable->idxlist_pack_code;
+  if (pack_code == VECTOR || pack_code == COLLECTION) {
+    int num_indices = xt_idxlist_get_num_indices(idxlist),
+      num_stripes = xt_idxlist_get_num_index_stripes(idxlist);
+    do_convert = num_indices > config->idxv_cnv_size
+      && ((size_t)num_indices * sizeof (Xt_int)
+          > (size_t)num_stripes * sizeof (struct Xt_stripe));
+  }
+  return do_convert;
+}
+
+
 static inline Xt_int
 get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
                                   bool *stripify, MPI_Comm comm, int comm_size,
@@ -95,8 +112,8 @@ get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
 
   unsigned num_indices_src = (unsigned)xt_idxlist_get_num_indices(src);
   local_vals[0] = num_indices_src;
-  local_vals[1] = (num_indices_src > (unsigned)config->idxv_cnv_size)
-    || (xt_idxlist_get_num_indices(dst) > config->idxv_cnv_size);
+  local_vals[1] = is_list_stripe_conversion_profitable(src, config)
+    || is_list_stripe_conversion_profitable(dst, config);
 
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums, 2,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
