@@ -141,6 +141,8 @@ libyaxt_c_la_SOURCES =						\
 	xt_xmap_dist_dir.c					\
 	xt_xmap_dist_dir_common.h				\
 	xt_xmap_dist_dir_common.c				\
+	xt_xmap_dist_dir_bucket_gen_cycl_stripe.h		\
+	xt_xmap_dist_dir_bucket_gen_cycl_stripe.c		\
 	xt/xt_xmap_dist_dir_intercomm.h				\
 	xt_xmap_dist_dir_intercomm.c				\
 	xt_xmap_intersection.c					\
@@ -148,6 +150,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_xmap_intersection_ext.c				\
 	xt_init_internal.h					\
 	xt_init.c						\
+	xt/xt_xmap_dist_dir_bucket_gen.h			\
 	core/core.c						\
 	core/core.h						\
 	core/ppm_xfuncs.h					\

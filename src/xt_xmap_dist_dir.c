@@ -69,8 +69,6 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_xmap_intersection.h"
 #include "xt_config_internal.h"
-#include "xt_idxlist_internal.h"
-#include "xt_idxlist_unpack.h"
 #include "instr.h"
 #include "xt_xmap_dist_dir_common.h"
 #include "xt/xt_sort.h"
@@ -86,85 +84,6 @@ static const char filename[] = "xt_xmap_dist_dir.c";
 #pragma GCC diagnostic ignored "-Wstringop-overread"
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
-
-static inline bool
-is_list_stripe_conversion_profitable(Xt_idxlist idxlist, Xt_config config)
-{
-  bool do_convert = false;
-  int pack_code = idxlist->vtable->idxlist_pack_code;
-  if (pack_code == VECTOR || pack_code == COLLECTION) {
-    int num_indices = xt_idxlist_get_num_indices(idxlist),
-      num_stripes = xt_idxlist_get_num_index_stripes(idxlist);
-    do_convert = num_indices > config->idxv_cnv_size
-      && ((size_t)num_indices * sizeof (Xt_int)
-          > (size_t)num_stripes * sizeof (struct Xt_stripe));
-  }
-  return do_convert;
-}
-
-
-static inline Xt_int
-get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
-                                  bool *stripify, MPI_Comm comm, int comm_size,
-                                  Xt_config config)
-{
-  unsigned long long local_vals[2], global_sums[2];
-
-  unsigned num_indices_src = (unsigned)xt_idxlist_get_num_indices(src);
-  local_vals[0] = num_indices_src;
-  local_vals[1] = is_list_stripe_conversion_profitable(src, config)
-    || is_list_stripe_conversion_profitable(dst, config);
-
-  xt_mpi_call(MPI_Allreduce(local_vals, global_sums, 2,
-                            MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
-
-  *stripify = global_sums[1] > 0;
-  return (Xt_int)(MAX(((global_sums[0] + (unsigned)comm_size - 1)
-                      / (unsigned)comm_size), 1) * (unsigned)comm_size);
-}
-
-static inline Xt_int get_min_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
-
-  int num_a = xt_idxlist_get_num_indices(a),
-    num_b = xt_idxlist_get_num_indices(b);
-  Xt_int min_index_a = num_a ? xt_idxlist_get_min_index(a) : XT_INT_MAX,
-    min_index_b = num_b ? xt_idxlist_get_min_index(b) : XT_INT_MAX,
-    min_index = (Xt_int)MIN(min_index_a, min_index_b);
-  return min_index;
-}
-
-static inline Xt_int get_max_idxlist_index(Xt_idxlist a, Xt_idxlist b) {
-
-  int num_a = xt_idxlist_get_num_indices(a),
-    num_b = xt_idxlist_get_num_indices(b);
-  Xt_int max_index_a = num_a ? xt_idxlist_get_max_index(a) : XT_INT_MIN,
-    max_index_b = num_b ? xt_idxlist_get_max_index(b) : XT_INT_MIN,
-    max_index = MAX(max_index_a, max_index_b);
-  return max_index;
-}
-
-static struct bucket_params
-get_bucket_params(Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                  bool *stripify, MPI_Comm comm, int comm_size,
-                  Xt_config config)
-{
-  /* global_interval is a multiple of comm_size and has a size of at least
-     comm_size */
-  Xt_int global_interval
-    = get_dist_dir_global_interval_size(src_idxlist, dst_idxlist, stripify,
-                                        comm, comm_size, config);
-  Xt_int local_interval = (Xt_int)(global_interval / comm_size);
-  Xt_int local_index_range_lbound
-    = get_min_idxlist_index(src_idxlist, dst_idxlist);
-  Xt_int local_index_range_ubound
-    = get_max_idxlist_index(src_idxlist, dst_idxlist);
-  return (struct bucket_params){
-    .global_interval = global_interval,
-    .local_interval = local_interval,
-    .local_index_range_lbound = local_index_range_lbound,
-    .local_index_range_ubound = local_index_range_ubound,
-  };
-}
 
 enum {
   SEND_SIZE_SRC = 0,
@@ -183,15 +102,28 @@ rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE])
   send_size[rank][SEND_NUM_DST] = 0;
 }
 
-static int
-compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
-                                      Xt_idxlist src_idxlist,
+
+struct capbi_result {
+  int num_msg, stripify;
+};
+
+static struct capbi_result
+compute_and_pack_bucket_intersections(Xt_idxlist src_idxlist,
                                       Xt_idxlist dst_idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
                                       void **send_buffer_,
-                                      MPI_Comm comm, int comm_size,
+                                      MPI_Comm comm, int tag_offset,
+                                      int comm_size,
                                       Xt_config config)
 {
+  size_t bgd_size = config->xmdd_bucket_gen->gen_state_size;
+  bgd_size = (bgd_size + sizeof (void *) - 1)/sizeof (void *) * sizeof (void *);
+  void *bgd[bgd_size];
+  int stripify =
+    config->xmdd_bucket_gen->init(
+      &bgd, src_idxlist, dst_idxlist, comm, tag_offset,
+      MPI_COMM_NULL, INT_MIN, config);
+
   int nosort_forced = XT_CONFIG_GET_FORCE_NOSORT(config);
   Xt_idxlist src_idxlist_sorted
     = nosort_forced || xt_idxlist_get_sorting(src_idxlist) == 1
@@ -203,83 +135,58 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
     : xt_idxlist_sorted_copy_custom(dst_idxlist, config);
 
   int num_msg = 0;
-  Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
-  Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
-  if (local_index_range_lbound <= local_index_range_ubound) {
+  size_t max_num_intersect
+    = (size_t)config->xmdd_bucket_gen->get_intersect_max_num(
+      &bgd, Xt_dist_dir_bucket_gen_type_sendrecv);
+  size_t send_size_filled = (size_t)-1;
+  if (max_num_intersect) {
     size_t send_buffer_size = 0;
-    struct Xt_stripe *stripes = NULL;
-    size_t stripes_array_size = 0;
-    Xt_int global_interval = bucket_params->global_interval;
-    Xt_int local_interval = bucket_params->local_interval;
-    size_t first_overlapping_bucket = 0;
-    /* is it impossible for early buckets to overlap our lists? */
-    if (local_index_range_lbound >= 0
-        && (local_index_range_ubound < global_interval)) {
-      first_overlapping_bucket
-        = (size_t)(local_index_range_lbound / local_interval);
-      for (size_t i = 0; i < first_overlapping_bucket; ++i)
-        rank_no_send(i, send_size);
-    }
-    /* is it impossible for later ranks to overlap our lists? */
-    size_t start_of_non_overlapping_bucket_suffix
-      = (size_t)(((long long)local_index_range_ubound + local_interval - 1)
-                 / local_interval) + 1;
-    if (local_index_range_lbound < 0
-        || start_of_non_overlapping_bucket_suffix > (size_t)comm_size)
-      start_of_non_overlapping_bucket_suffix = (size_t)comm_size;
-    size_t max_num_intersect
-      = start_of_non_overlapping_bucket_suffix - first_overlapping_bucket;
-    struct {
-      Xt_idxlist list;
-      int rank;
-    } *restrict sends_dst
+    struct Xt_com_list *restrict sends_dst
       = xmalloc(2 * max_num_intersect * sizeof(*sends_dst)),
       *restrict sends_src = sends_dst + max_num_intersect;
-    size_t i = first_overlapping_bucket;
     size_t num_src_msg = 0, num_dst_msg = 0;
-    for (; i < (size_t)start_of_non_overlapping_bucket_suffix; ++i) {
-      Xt_idxlist bucket
-        = xt_xmap_dist_dir_get_bucket(bucket_params,
-                                      &stripes, &stripes_array_size, (int)i);
-      if (bucket) {
-        Xt_idxlist send4src = xt_idxlist_get_intersection_custom(
-          src_idxlist_sorted, bucket, config);
-        if (xt_idxlist_get_num_indices(send4src) > 0) {
-          sends_src[num_src_msg].list = send4src;
-          sends_src[num_src_msg].rank = (int)i;
-          send_buffer_size += xt_idxlist_get_pack_size(send4src, comm);
-          send_size[i][SEND_NUM_SRC] = 1;
-          ++num_src_msg;
-        } else {
-          send_size[i][SEND_SIZE_SRC] = 0;
-          send_size[i][SEND_NUM_SRC] = 0;
-          xt_idxlist_delete(send4src);
-        }
+    struct Xt_com_list bucket;
+    while ((bucket = config->xmdd_bucket_gen->next(
+              &bgd, Xt_dist_dir_bucket_gen_type_sendrecv)).list) {
+      size_t rank;
+      for (rank = send_size_filled + 1; rank < (size_t)bucket.rank; ++rank)
+        rank_no_send(rank, send_size);
+      Xt_idxlist send4src = xt_idxlist_get_intersection_custom(
+        src_idxlist_sorted, bucket.list, config);
+      if (xt_idxlist_get_num_indices(send4src) > 0) {
+        sends_src[num_src_msg].list = send4src;
+        sends_src[num_src_msg].rank = (int)rank;
+        send_buffer_size += xt_idxlist_get_pack_size(send4src, comm);
+        send_size[rank][SEND_NUM_SRC] = 1;
+        ++num_src_msg;
+      } else {
+        send_size[rank][SEND_SIZE_SRC] = 0;
+        send_size[rank][SEND_NUM_SRC] = 0;
+        xt_idxlist_delete(send4src);
+      }
 
-        Xt_idxlist send4dst = xt_idxlist_get_intersection_custom(
-          bucket, dst_idxlist_sorted, config);
-        xt_idxlist_delete(bucket);
-        if (xt_idxlist_get_num_indices(send4dst) > 0) {
-          sends_dst[num_dst_msg].list = send4dst;
-          sends_dst[num_dst_msg].rank = (int)i;
-          send_buffer_size += xt_idxlist_get_pack_size(send4dst, comm);
-          send_size[i][SEND_NUM_DST] = 1;
-          ++num_dst_msg;
-        } else {
-          send_size[i][SEND_SIZE_DST] = 0;
-          send_size[i][SEND_NUM_DST] = 0;
-          xt_idxlist_delete(send4dst);
-        }
-      } else
-        rank_no_send(i, send_size);
+      Xt_idxlist send4dst = xt_idxlist_get_intersection_custom(
+        bucket.list, dst_idxlist_sorted, config);
+      if (xt_idxlist_get_num_indices(send4dst) > 0) {
+        sends_dst[num_dst_msg].list = send4dst;
+        sends_dst[num_dst_msg].rank = (int)rank;
+        send_buffer_size += xt_idxlist_get_pack_size(send4dst, comm);
+        send_size[rank][SEND_NUM_DST] = 1;
+        ++num_dst_msg;
+      } else {
+        send_size[rank][SEND_SIZE_DST] = 0;
+        send_size[rank][SEND_NUM_DST] = 0;
+        xt_idxlist_delete(send4dst);
+      }
+      send_size_filled = rank;
     }
-    for (; i < (size_t)comm_size; ++i)
-      rank_no_send(i, send_size);
-
+    XT_CONFIG_BUCKET_DESTROY(config, &bgd);
+    for (size_t rank = send_size_filled+1; rank < (size_t)comm_size; ++rank)
+      rank_no_send(rank, send_size);
     unsigned char *send_buffer
-      = *send_buffer_ = xrealloc(stripes, send_buffer_size);
+      = *send_buffer_ = xmalloc(send_buffer_size);
     size_t ofs = 0;
-    for (i = 0; i < num_src_msg; ++i) {
+    for (size_t i = 0; i < num_src_msg; ++i) {
       int position = 0;
       xt_idxlist_pack(sends_src[i].list, send_buffer+ofs,
                       (int)(send_buffer_size-ofs), &position, comm);
@@ -288,7 +195,7 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
       xt_idxlist_delete(sends_src[i].list);
     }
 
-    for (i = 0; i < num_dst_msg; ++i) {
+    for (size_t i = 0; i < num_dst_msg; ++i) {
       int position = 0;
       xt_idxlist_pack(sends_dst[i].list, send_buffer+ofs,
                       (int)(send_buffer_size-ofs), &position, comm);
@@ -298,15 +205,17 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
     }
     free(sends_dst);
     num_msg = (int)(num_src_msg + num_dst_msg);
-  } else
+  } else {
+    XT_CONFIG_BUCKET_DESTROY(config, &bgd);
     memset(send_size, 0, (size_t)comm_size * sizeof (*send_size));
+  }
 
   if (dst_idxlist_sorted != dst_idxlist)
     xt_idxlist_delete(dst_idxlist_sorted);
   if (src_idxlist_sorted != src_idxlist)
     xt_idxlist_delete(src_idxlist_sorted);
 
-  return num_msg;
+  return (struct capbi_result){ .stripify = stripify, .num_msg = num_msg };
 }
 
 static void
@@ -512,23 +421,17 @@ generate_distributed_directories(Xt_idxlist src_idxlist,
                                  Xt_idxlist dst_idxlist,
                                  int tag_offset,
                                  MPI_Comm comm, int comm_size,
-                                 Xt_config config)
-{
-  bool stripify;
-  struct bucket_params bucket_params
-    = get_bucket_params(src_idxlist, dst_idxlist, &stripify, comm, comm_size,
-                        config);
+                                 Xt_config config) {
 
   void *send_buffer = NULL;
 
   int (*send_size)[SEND_SIZE_ASIZE]
     = xmalloc((size_t)comm_size * sizeof(*send_size));
 
-  int num_msg
-    = compute_and_pack_bucket_intersections(&bucket_params,
-                                            src_idxlist, dst_idxlist,
+  struct capbi_result nms
+    = compute_and_pack_bucket_intersections(src_idxlist, dst_idxlist,
                                             send_size, &send_buffer,
-                                            comm, comm_size,
+                                            comm, tag_offset, comm_size,
                                             config);
 
   int recv_size[SEND_SIZE_ASIZE]; // for src and dst
@@ -537,7 +440,7 @@ generate_distributed_directories(Xt_idxlist src_idxlist,
   xt_xmap_dist_dir_reduce_scatter_sizes(SEND_SIZE_ASIZE, recv_size, send_size, comm);
 
   MPI_Request *dir_init_send_requests
-    = xmalloc((size_t)num_msg * sizeof(*dir_init_send_requests));
+    = xmalloc((size_t)nms.num_msg * sizeof(*dir_init_send_requests));
   send_intersections(send_buffer, (const int (*)[SEND_SIZE_ASIZE])send_size,
                      dir_init_send_requests, tag_offset, comm, comm_size);
 
@@ -547,13 +450,13 @@ generate_distributed_directories(Xt_idxlist src_idxlist,
     = recv_and_unpack_intersections(recv_size, tag_offset, comm);
 
   // wait for the sends to be completed
-  xt_mpi_call(MPI_Waitall(num_msg, dir_init_send_requests,
+  xt_mpi_call(MPI_Waitall(nms.num_msg, dir_init_send_requests,
                           MPI_STATUSES_IGNORE), comm);
   free(dir_init_send_requests);
   free(send_buffer);
   return (struct dd_result){ .dist_dirs.dst = dist_dirs.dst,
                              .dist_dirs.src = dist_dirs.src,
-                             .stripify = stripify };
+                             .stripify = nms.stripify };
 }
 
 static void
