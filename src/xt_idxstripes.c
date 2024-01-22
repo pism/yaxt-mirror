@@ -523,25 +523,53 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
   return result;
 }
 
+#define XT_IDXSTRIPES_POS_EXT_MAP_COUNT
+#include "xt_idxstripes_pos_ext_map.h"
+#undef XT_IDXSTRIPES_POS_EXT_MAP_COUNT
+#include "xt_idxstripes_pos_ext_map.h"
+
 static Xt_idxlist
 compute_intersection_fallback(Xt_idxstripes idxstripes_src,
-                              Xt_idxstripes idxstripes_dst) {
+                              Xt_idxstripes idxstripes_dst,
+                              Xt_config config)
+{
   INSTR_DEF(instr,"compute_intersection_fallback")
   INSTR_START(instr);
+  Xt_idxlist intersection;
+  int num_ext;
+  struct Xt_pos_ext *pos_exts;
 
-  Xt_idxlist idxvec_from_stripes_src
-    = xt_idxvec_from_stripes_new(idxstripes_src->stripes,
-                                 idxstripes_src->num_stripes);
-  Xt_idxlist idxvec_from_stripes_dst
-    = xt_idxvec_from_stripes_new(idxstripes_dst->stripes,
-                                 idxstripes_dst->num_stripes);
-
-  Xt_idxlist intersection
-    = xt_idxlist_get_intersection(idxvec_from_stripes_src,
-                                  idxvec_from_stripes_dst);
-
-  xt_idxlist_delete(idxvec_from_stripes_src);
-  xt_idxlist_delete(idxvec_from_stripes_dst);
+  int num_unmatched =
+    idxstripes_get_pos_exts_of_index_stripes(
+      &idxstripes_src->parent,
+      idxstripes_dst->num_stripes,
+      idxstripes_dst->stripes,
+      &num_ext, &pos_exts, false);
+  (void)num_unmatched;
+  if (num_ext > 0) {
+    /* 1. count index stripes correponding to pos_exts */
+    size_t num_result_stripes
+      = get_mapped_stripes_count((size_t)num_ext, pos_exts, idxstripes_src);
+    /* 2. allocate result idxstripes */
+    struct Xt_stripes_alloc intersection_alloc
+      = idxstripes_alloc(num_result_stripes);
+    /* 3. compute result idxstripes */
+    map_ext2stripes((size_t)num_ext, pos_exts, idxstripes_src,
+                    intersection_alloc.stripes);
+    /* 4. congeal */
+    Xt_idxlist intersection_unsorted
+      = idxstripes_aggregate(intersection_alloc.idxstripes, __func__);
+    if (XT_CONFIG_GET_FORCE_NOSORT(config)
+        || idxstripes_get_sorting(intersection_unsorted) == 1) {
+      intersection = intersection_unsorted;
+    } else {
+      intersection = idxstripes_sorted_copy(intersection_unsorted, config);
+      xt_idxlist_delete(intersection_unsorted);
+    }
+    free(pos_exts);
+  } else {
+    intersection = xt_idxempty_new();
+  }
   INSTR_STOP(instr);
   return intersection;
 }
@@ -929,7 +957,7 @@ idxstripes_compute_intersection(Xt_idxstripes idxstripes_src,
 
 Xt_idxlist
 xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
-                               Xt_config XT_UNUSED(config))
+                               Xt_config config)
 {
   // both lists are index stripes:
   Xt_idxstripes idxstripes_src = (Xt_idxstripes)idxlist_src,
@@ -937,7 +965,8 @@ xt_idxstripes_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
 
   if ((idxstripes_src->flags | idxstripes_dst->flags)
       & stripes_do_overlap_mask) {
-    return compute_intersection_fallback(idxstripes_src, idxstripes_dst);
+    return compute_intersection_fallback(idxstripes_src, idxstripes_dst,
+                                         config);
   } else
     return idxstripes_compute_intersection(idxstripes_src, idxstripes_dst);
 }
