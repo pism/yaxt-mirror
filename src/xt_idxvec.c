@@ -641,14 +641,30 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
                                       Xt_config config)
 {
   /* destination is index stripes, source index vector */
-  const struct Xt_stripe *stripes_dst
-    = xt_idxstripes_get_index_stripes_const(idxlist_dst);
   assert(idxlist_dst->vtable->idxlist_pack_code == STRIPES
          && idxlist_src->vtable == &idxvec_vtable);
   Xt_idxvec vec_src = (Xt_idxvec)idxlist_src;
-  struct Xt_config_ sort_config = *config;
-  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
-  const Xt_int *src_sorted = get_sorted_vector(vec_src, &sort_config);
+  if (XT_CONFIG_GET_FORCE_NOSORT(config)) {
+    size_t num_stripes = xt_indices_count_stripes(
+      (size_t)vec_src->parent.num_indices,
+      vec_src->vector);
+    struct Xt_stripes_alloc stripes_alloc
+      = xt_idxstripes_alloc(num_stripes);
+    xt_convert_indices_to_stripes_buf(
+      (size_t)vec_src->parent.num_indices,
+      vec_src->vector,
+      num_stripes,
+      stripes_alloc.stripes);
+    Xt_idxlist idxstripes_src =
+      xt_idxstripes_congeal(stripes_alloc);
+    Xt_idxlist intersection
+      = xt_idxstripes_get_intersection(idxstripes_src, idxlist_dst, config);
+    xt_idxlist_delete(idxstripes_src);
+    return intersection;
+  }
+  const struct Xt_stripe *stripes_dst
+    = xt_idxstripes_get_index_stripes_const(idxlist_dst);
+  const Xt_int *src_sorted = get_sorted_vector(vec_src, config);
   Xt_int src_min = idxvec_get_min_index(idxlist_src),
     src_max = idxvec_get_max_index(idxlist_src);
   size_t nsrc = (size_t)idxlist_src->num_indices,
