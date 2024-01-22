@@ -72,17 +72,6 @@ xt_xmdd_free_dist_dir(struct dist_dir *dist_dir);
 PPM_DSO_INTERNAL int
 xt_com_list_rank_cmp(const void *a_, const void *b_);
 
-struct bucket_params {
-  Xt_int global_interval, local_interval,
-    local_index_range_lbound, local_index_range_ubound;
-};
-
-PPM_DSO_INTERNAL Xt_idxlist
-xt_xmap_dist_dir_get_bucket(const struct bucket_params *bucket_params,
-                            struct Xt_stripe **stripes_,
-                            size_t *stripes_array_size,
-                            int dist_dir_rank);
-
 struct Xt_xmdd_txstat {
   size_t bytes, num_msg;
 };

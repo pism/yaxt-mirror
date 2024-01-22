@@ -77,57 +77,6 @@
 #include "instr.h"
 #include "xt/xt_sort.h"
 
-/* unfortunately GCC 11 cannot handle the literal constants used for
- * MPI_STATUSES_IGNORE by MPICH */
-#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overread"
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-
-static inline void
-get_dist_dir_global_interval_size(Xt_idxlist src, Xt_idxlist dst,
-                                  bool *stripify, Xt_int interval_size[2],
-                                  MPI_Comm intra_comm, MPI_Comm inter_comm,
-                                  int comm_size, int remote_size,
-                                  int comm_rank, int tag_offset_inter,
-                                  Xt_config config)
-{
-  /* global_sums[0] and [1] refer to the local and remote group of
-   * intercommunicator inter_comm */
-  unsigned long long local_vals[2], global_sums[2][2];
-
-  unsigned num_indices_src = (unsigned)xt_idxlist_get_num_indices(src);
-  local_vals[0] = num_indices_src;
-  local_vals[1] = (num_indices_src > (unsigned)config->idxv_cnv_size)
-    || (xt_idxlist_get_num_indices(dst) > config->idxv_cnv_size);
-
-  xt_mpi_call(MPI_Allreduce(local_vals, global_sums[0], 2,
-                            MPI_UNSIGNED_LONG_LONG, MPI_SUM, intra_comm),
-              intra_comm);
-  /* instead of sendrecv one might use hand-programmed multi-casts
-   * sending to each rank in a range from the remote group and
-   * receiving from the first rank in that group,
-   * the better choice probably depends on the asymmetry of the group
-   * sizes, i.e. use bcast from a very small to a very large group
-   * and few sends from a large to a small group */
-  if (comm_rank == 0) {
-    int tag = tag_offset_inter + xt_mpi_tag_xmap_dist_dir_src_send;
-    xt_mpi_call(MPI_Sendrecv(global_sums[0], 2, MPI_UNSIGNED_LONG_LONG, 0, tag,
-                             global_sums[1], 2, MPI_UNSIGNED_LONG_LONG, 0, tag,
-                             inter_comm, MPI_STATUS_IGNORE), inter_comm);
-  }
-  xt_mpi_call(MPI_Bcast(global_sums[1], 2, MPI_UNSIGNED_LONG_LONG,
-                        0, intra_comm), intra_comm);
-  *stripify = (global_sums[0][1] > 0 || global_sums[1][1] > 0);
-  interval_size[0]
-    = (Xt_int)(((global_sums[0][0] + (unsigned)comm_size - 1)
-                / (unsigned)comm_size) * (unsigned)comm_size);
-  interval_size[1]
-    = (Xt_int)(((global_sums[1][0] + (unsigned)remote_size - 1)
-                / (unsigned)remote_size) * (unsigned)remote_size);
-}
-
 enum {
   SEND_SIZE = 0,
   SEND_NUM = 1,
@@ -142,7 +91,8 @@ rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE])
 }
 
 static size_t
-compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
+compute_and_pack_bucket_intersections(void *bucket_gen_state,
+                                      int bucket_type,
                                       Xt_idxlist idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
                                       void **send_buffer_,
@@ -156,69 +106,44 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
     : xt_idxlist_sorted_copy_custom(idxlist, config);
 
   size_t num_msg = 0;
-  Xt_int local_index_range_lbound = bucket_params->local_index_range_lbound;
-  Xt_int local_index_range_ubound = bucket_params->local_index_range_ubound;
-  if (local_index_range_lbound <= local_index_range_ubound) {
+  size_t send_size_filled = (size_t)-1;
+  size_t max_num_intersect
+    = (size_t)config->xmdd_bucket_gen->get_intersect_max_num(
+      bucket_gen_state, bucket_type);
+  if (max_num_intersect) {
     size_t send_buffer_size = 0;
-    struct Xt_stripe *stripes = NULL;
-    size_t stripes_array_size = 0;
-    Xt_int global_interval = bucket_params->global_interval;
-    Xt_int local_interval = bucket_params->local_interval;
-    size_t first_overlapping_bucket = 0;
-    /* is it impossible for early buckets to overlap our lists? */
-    if (local_index_range_lbound >= 0
-        && (local_index_range_ubound < global_interval)) {
-      first_overlapping_bucket
-        = (size_t)(local_index_range_lbound / local_interval);
-      for (size_t i = 0; i < first_overlapping_bucket; ++i)
-        rank_no_send(i, send_size);
-    }
-    /* is it impossible for later ranks to overlap our lists? */
-    size_t start_of_non_overlapping_bucket_suffix
-      = (size_t)(((long long)local_index_range_ubound + local_interval - 1)
-                 / local_interval) + 1;
-    if (local_index_range_lbound < 0
-        || start_of_non_overlapping_bucket_suffix > (size_t)comm_size)
-      start_of_non_overlapping_bucket_suffix = (size_t)comm_size;
-    size_t max_num_intersect
-      = start_of_non_overlapping_bucket_suffix - first_overlapping_bucket;
-    struct {
-      Xt_idxlist list;
-      int rank;
-    } *restrict sends
+    struct Xt_com_list *restrict sends
       = xmalloc(max_num_intersect * sizeof(*sends));
-    size_t i = first_overlapping_bucket;
-    for (; i < (size_t)start_of_non_overlapping_bucket_suffix; ++i) {
-      Xt_idxlist bucket
-        = xt_xmap_dist_dir_get_bucket(bucket_params,
-                                      &stripes, &stripes_array_size, (int)i);
-      if (bucket) {
-        Xt_idxlist isect2send = xt_idxlist_get_intersection(idxlist_sorted, bucket);
-        xt_idxlist_delete(bucket);
-        if (xt_idxlist_get_num_indices(isect2send) > 0) {
-          sends[num_msg].list = isect2send;
-          sends[num_msg].rank = (int)i;
-          send_buffer_size += xt_idxlist_get_pack_size(isect2send, comm);
-          /* send_size[i][SEND_SIZE] is set below after the actual
-           * pack, because MPI_Pack_size only gives an upper bound,
-           * not the actually needed size */
-          send_size[i][SEND_NUM] = 1;
-          ++num_msg;
-        } else {
-          rank_no_send(i, send_size);
-          xt_idxlist_delete(isect2send);
-        }
-      } else
-        rank_no_send(i, send_size);
+    struct Xt_com_list bucket;
+    while ((bucket = config->xmdd_bucket_gen->next(
+              bucket_gen_state, bucket_type)).list) {
+      size_t rank;
+      for (rank = send_size_filled + 1; rank < (size_t)bucket.rank; ++rank)
+        rank_no_send(rank, send_size);
 
+      Xt_idxlist isect2send
+        = xt_idxlist_get_intersection(idxlist_sorted, bucket.list);
+      if (xt_idxlist_get_num_indices(isect2send) > 0) {
+        sends[num_msg].list = isect2send;
+        sends[num_msg].rank = (int)rank;
+        send_buffer_size += xt_idxlist_get_pack_size(isect2send, comm);
+        /* send_size[rank][SEND_SIZE] is set below after the actual
+         * pack, because MPI_Pack_size only gives an upper bound,
+         * not the actually needed size */
+        send_size[rank][SEND_NUM] = 1;
+        ++num_msg;
+      } else {
+        rank_no_send(rank, send_size);
+        xt_idxlist_delete(isect2send);
+      }
     }
-    for (; i < (size_t)comm_size; ++i)
-      rank_no_send(i, send_size);
+    for (size_t rank = send_size_filled+1; rank < (size_t)comm_size; ++rank)
+      rank_no_send(rank, send_size);
 
     unsigned char *send_buffer
-      = *send_buffer_ = xrealloc(stripes, send_buffer_size);
+      = *send_buffer_ = xmalloc(send_buffer_size);
     size_t ofs = 0;
-    for (i = 0; i < num_msg; ++i) {
+    for (size_t i = 0; i < num_msg; ++i) {
       int position = 0;
       xt_idxlist_pack(sends[i].list, send_buffer + ofs,
                       (int)(send_buffer_size-ofs), &position, comm);
@@ -237,37 +162,6 @@ compute_and_pack_bucket_intersections(struct bucket_params *bucket_params,
   return num_msg;
 }
 
-static inline Xt_int
-get_min_idxlist_index(Xt_idxlist l)
-{
-  int num_idx = xt_idxlist_get_num_indices(l);
-  Xt_int min_index = num_idx ? xt_idxlist_get_min_index(l) : XT_INT_MAX;
-  return min_index;
-}
-
-static inline Xt_int
-get_max_idxlist_index(Xt_idxlist l)
-{
-  int num_idx = xt_idxlist_get_num_indices(l);
-  Xt_int max_index = num_idx ? xt_idxlist_get_max_index(l) : XT_INT_MIN;
-  return max_index;
-}
-
-static struct bucket_params
-get_bucket_params(Xt_idxlist idxlist,
-                  Xt_int global_interval, int comm_size)
-{
-  /* guard vs. comm_size being larger than number of indices */
-  Xt_int local_interval = MAX((Xt_int)1, (Xt_int)(global_interval / comm_size));
-  Xt_int local_index_range_lbound = get_min_idxlist_index(idxlist);
-  Xt_int local_index_range_ubound = get_max_idxlist_index(idxlist);
-  return (struct bucket_params){
-    .global_interval = global_interval,
-    .local_interval = local_interval,
-    .local_index_range_lbound = local_index_range_lbound,
-    .local_index_range_ubound = local_index_range_ubound,
-  };
-}
 
 static void
 compress_sizes(int (*restrict sizes)[SEND_SIZE_ASIZE], int comm_size,
@@ -287,20 +181,21 @@ compress_sizes(int (*restrict sizes)[SEND_SIZE_ASIZE], int comm_size,
 }
 
 static void
-create_intersections(struct Xt_xmdd_txstat tx_stat[2],
+create_intersections(void *bucket_gen_state,
+                     int bucket_type,
+                     struct Xt_xmdd_txstat tx_stat[2],
                      int recv_size[][SEND_SIZE_ASIZE],
                      void **send_buffer, int send_size[][SEND_SIZE_ASIZE],
-                     Xt_idxlist idxlist, Xt_int interval_size,
+                     Xt_idxlist idxlist,
                      MPI_Comm comm, int comm_size, Xt_config config)
 {
-  struct bucket_params bucket_params
-    = get_bucket_params(idxlist, interval_size, comm_size);
   *send_buffer = NULL;
 #ifndef NDEBUG
   size_t num_msg =
 #endif
     compute_and_pack_bucket_intersections(
-      &bucket_params, idxlist, send_size, send_buffer, comm, comm_size, config);
+      bucket_gen_state, bucket_type, idxlist,
+      send_size, send_buffer, comm, comm_size, config);
   xt_mpi_call(MPI_Alltoall(send_size, SEND_SIZE_ASIZE, MPI_INT,
                            recv_size, SEND_SIZE_ASIZE, MPI_INT, comm), comm);
   compress_sizes(recv_size, comm_size, tx_stat + 0, NULL);
@@ -369,25 +264,33 @@ unpack_dist_dir(struct Xt_xmdd_txstat tx_stat,
   }
 }
 
+/* unfortunately GCC 11 cannot handle the literal constants used for
+ * MPI_STATUSES_IGNORE by MPICH */
+#if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 static void
 generate_distributed_directories(struct dist_dir **src_dist_dir,
                                  struct dist_dir **dst_dist_dir,
-                                 bool *stripify,
+                                 bool *stripify_,
                                  Xt_idxlist src_idxlist,
                                  Xt_idxlist dst_idxlist,
                                  int tag_offset_inter, int tag_offset_intra,
                                  MPI_Comm inter_comm, MPI_Comm intra_comm,
                                  int remote_size, int comm_size,
-                                 int comm_rank, Xt_config config) {
+                                 Xt_config config) {
 
-  /* interval_size[0] and interval_size[1] are the global interval
-   * size for the local and remote group */
-  Xt_int interval_size[2];
-  get_dist_dir_global_interval_size(src_idxlist, dst_idxlist,
-                                    stripify, interval_size,
-                                    intra_comm, inter_comm,
-                                    comm_size, remote_size,
-                                    comm_rank, tag_offset_inter, config);
+  size_t bgd_size = config->xmdd_bucket_gen->gen_state_size;
+  bgd_size = (bgd_size + sizeof (void *) - 1)/sizeof (void *) * sizeof (void *);
+  void *bgd[bgd_size];
+  int stripify =
+    config->xmdd_bucket_gen->init(
+      &bgd, src_idxlist, dst_idxlist, intra_comm, tag_offset_intra,
+      inter_comm, tag_offset_inter, config);
+  *stripify_ = stripify;
   void *send_buffer_local, *send_buffer_remote;
   int (*send_size_local)[SEND_SIZE_ASIZE]
     = xmalloc(((size_t)comm_size + (size_t)remote_size)
@@ -396,13 +299,15 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
     (*recv_size_local)[SEND_SIZE_ASIZE] = send_size_remote + remote_size,
     (*recv_size_remote)[SEND_SIZE_ASIZE] = recv_size_local + comm_size;
   struct Xt_xmdd_txstat tx_stat_local[2], tx_stat_remote[2];
-  create_intersections(tx_stat_local, recv_size_local, &send_buffer_local,
-                       send_size_local, src_idxlist, interval_size[0],
+  create_intersections(bgd, Xt_dist_dir_bucket_gen_type_send,
+                       tx_stat_local, recv_size_local, &send_buffer_local,
+                       send_size_local, src_idxlist,
                        intra_comm, comm_size, config);
-  create_intersections(tx_stat_remote, recv_size_remote, &send_buffer_remote,
-                       send_size_remote, dst_idxlist, interval_size[1],
+  create_intersections(bgd, Xt_dist_dir_bucket_gen_type_recv,
+                       tx_stat_remote, recv_size_remote, &send_buffer_remote,
+                       send_size_remote, dst_idxlist,
                        inter_comm, remote_size, config);
-
+  XT_CONFIG_BUCKET_DESTROY(config, &bgd);
   size_t num_req = tx_stat_local[0].num_msg + tx_stat_remote[0].num_msg
     + tx_stat_local[1].num_msg + tx_stat_remote[1].num_msg;
   MPI_Request *dir_init_requests
@@ -551,9 +456,8 @@ exchange_idxlists(struct dist_dir **src_intersections,
                   MPI_Comm inter_comm, MPI_Comm intra_comm,
                   Xt_config config) {
 
-  int comm_size, remote_size, comm_rank;
+  int comm_size, remote_size;
   xt_mpi_call(MPI_Comm_size(inter_comm, &comm_size), inter_comm);
-  xt_mpi_call(MPI_Comm_rank(inter_comm, &comm_rank), inter_comm);
   xt_mpi_call(MPI_Comm_remote_size(inter_comm, &remote_size), inter_comm);
 
   struct dist_dir *src_dist_dir, *dst_dist_dir;
@@ -563,7 +467,7 @@ exchange_idxlists(struct dist_dir **src_intersections,
                                    tag_offset_inter, tag_offset_intra,
                                    inter_comm, intra_comm,
                                    remote_size, comm_size,
-                                   comm_rank, config);
+                                   config);
 
 
   int (*send_size_local)[SEND_SIZE_ASIZE]

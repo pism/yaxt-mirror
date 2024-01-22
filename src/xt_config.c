@@ -66,6 +66,8 @@
 #include "xt_idxlist_internal.h"
 #include "xt/quicksort.h"
 #include "xt/mergesort.h"
+#include "xt/xt_xmap_dist_dir_bucket_gen.h"
+#include "xt_xmap_dist_dir_bucket_gen_cycl_stripe.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
@@ -193,6 +195,7 @@ struct Xt_config_ xt_default_config = {
   .exchanger_team_share = NULL,
   .idxv_cnv_size = CHEAP_VECTOR_SIZE,
   .sort_funcs = &sort_algo_table[XT_QUICKSORT].func,
+  .xmdd_bucket_gen = &Xt_xmdd_cycl_stripe_bucket_gen_desc,
   .flags = 0U,
 };
 

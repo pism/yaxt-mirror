@@ -56,6 +56,7 @@
 #include "xt/xt_redist.h"
 #include "xt/xt_config.h"
 #include "xt/sort_common.h"
+#include "xt/xt_xmap_dist_dir_bucket_gen.h"
 #include "xt_exchanger.h"
 
 enum xt_config_flags {
@@ -88,6 +89,9 @@ struct Xt_config_ {
   /**
    * function pointers to implement sort algorithms */
   const struct Xt_sort_algo_funcptr *sort_funcs;
+  /**
+   * description of bucket generator */
+  const struct Xt_xmdd_bucket_gen_desc *xmdd_bucket_gen;
   /**
    * pointer to exchanger team share data
    */
@@ -127,6 +131,11 @@ xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm);
   do { (config)->flags |= (uint32_t)xt_force_nosort; } while (0)
 #define XT_CONFIG_UNSET_FORCE_NOSORT(config) \
   do { (config)->flags &= ~(uint32_t)xt_force_nosort; } while (0)
+
+#define XT_CONFIG_BUCKET_DESTROY(config, bucket_gen_state)         \
+  do { if ((config)->xmdd_bucket_gen->destroy)                  \
+      (config)->xmdd_bucket_gen->destroy((bucket_gen_state));   \
+  } while (0)
 /*
  * Local Variables:
  * c-basic-offset: 2

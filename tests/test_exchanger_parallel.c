@@ -68,6 +68,7 @@
 #include "../src/xt_mpi_internal.h"
 #include "../src/xt_config_internal.h"
 #include "core/ppm_xfuncs.h"
+#include "xt/xt_xmap_dist_dir_bucket_gen.h"
 
 #include "ctest_common.h"
 #include "test_redist_common.h"
@@ -95,6 +96,10 @@ static void
 test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
 
 static int test_freq = 3;
+
+const struct Xt_xmdd_bucket_gen_desc Xt_xmdd_cycl_stripe_bucket_gen_desc = {
+  .destroy = (void (*)(void *))0,
+};
 
 int main(int argc, char **argv)
 {
