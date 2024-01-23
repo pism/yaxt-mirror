@@ -90,27 +90,34 @@ rank_no_send(size_t rank, int (*restrict send_size)[SEND_SIZE_ASIZE])
   send_size[rank][SEND_NUM] = 0;
 }
 
-static size_t
+struct mmsg_buf
+{
+  size_t num_msg;
+  void *buffer;
+};
+
+
+static struct mmsg_buf
 compute_and_pack_bucket_intersections(void *bucket_gen_state,
                                       int bucket_type,
                                       Xt_idxlist idxlist,
                                       int (*send_size)[SEND_SIZE_ASIZE],
-                                      void **send_buffer_,
                                       MPI_Comm comm, int comm_size,
                                       Xt_config config)
 {
   int nosort_forced = XT_CONFIG_GET_FORCE_NOSORT(config);
-  Xt_idxlist idxlist_sorted
-    = nosort_forced || xt_idxlist_get_sorting(idxlist) == 1
-    ? idxlist
-    : xt_idxlist_sorted_copy_custom(idxlist, config);
-
-  size_t num_msg = 0;
   size_t send_size_filled = (size_t)-1;
   size_t max_num_intersect
     = (size_t)config->xmdd_bucket_gen->get_intersect_max_num(
       bucket_gen_state, bucket_type);
+  struct mmsg_buf result = { 0, 0 };
   if (max_num_intersect) {
+    Xt_idxlist idxlist_sorted
+      = nosort_forced || xt_idxlist_get_sorting(idxlist) == 1
+      ? idxlist
+      : xt_idxlist_sorted_copy_custom(idxlist, config);
+
+    size_t num_msg = 0;
     size_t send_buffer_size = 0;
     struct Xt_com_list *restrict sends
       = xmalloc(max_num_intersect * sizeof(*sends));
@@ -137,11 +144,12 @@ compute_and_pack_bucket_intersections(void *bucket_gen_state,
         xt_idxlist_delete(isect2send);
       }
     }
+    if (idxlist_sorted != idxlist)
+      xt_idxlist_delete(idxlist_sorted);
     for (size_t rank = send_size_filled+1; rank < (size_t)comm_size; ++rank)
       rank_no_send(rank, send_size);
 
-    unsigned char *send_buffer
-      = *send_buffer_ = xmalloc(send_buffer_size);
+    unsigned char *send_buffer = xmalloc(send_buffer_size);
     size_t ofs = 0;
     for (size_t i = 0; i < num_msg; ++i) {
       int position = 0;
@@ -153,13 +161,15 @@ compute_and_pack_bucket_intersections(void *bucket_gen_state,
     }
 
     free(sends);
-  } else
+    result.num_msg = num_msg;
+    result.buffer = send_buffer;
+  } else {
     memset(send_size, 0, (size_t)comm_size * sizeof (*send_size));
+    result.num_msg = 0;
+    result.buffer = NULL;
+  }
 
-  if (idxlist_sorted != idxlist)
-    xt_idxlist_delete(idxlist_sorted);
-
-  return num_msg;
+  return result;
 }
 
 
@@ -180,27 +190,25 @@ compress_sizes(int (*restrict sizes)[SEND_SIZE_ASIZE], int comm_size,
   *tx_stat = (struct Xt_xmdd_txstat){ .bytes = size_sum, .num_msg = tx_num };
 }
 
-static void
+static void *
 create_intersections(void *bucket_gen_state,
                      int bucket_type,
                      struct Xt_xmdd_txstat tx_stat[2],
                      int recv_size[][SEND_SIZE_ASIZE],
-                     void **send_buffer, int send_size[][SEND_SIZE_ASIZE],
+                     int send_size[][SEND_SIZE_ASIZE],
                      Xt_idxlist idxlist,
                      MPI_Comm comm, int comm_size, Xt_config config)
 {
-  *send_buffer = NULL;
-#ifndef NDEBUG
-  size_t num_msg =
-#endif
-    compute_and_pack_bucket_intersections(
+  struct mmsg_buf ddr
+    = compute_and_pack_bucket_intersections(
       bucket_gen_state, bucket_type, idxlist,
-      send_size, send_buffer, comm, comm_size, config);
+      send_size, comm, comm_size, config);
   xt_mpi_call(MPI_Alltoall(send_size, SEND_SIZE_ASIZE, MPI_INT,
                            recv_size, SEND_SIZE_ASIZE, MPI_INT, comm), comm);
   compress_sizes(recv_size, comm_size, tx_stat + 0, NULL);
   compress_sizes(send_size, comm_size, tx_stat + 1, NULL);
-  assert(num_msg == tx_stat[1].num_msg);
+  assert(ddr.num_msg == tx_stat[1].num_msg);
+  return ddr.buffer;
 }
 
 typedef int (*tx_fp)(void *, int, MPI_Datatype, int, int,
@@ -242,27 +250,35 @@ isend_intersections(size_t num_msg,
 }
 
 
-static void
+static struct dist_dir *
 unpack_dist_dir(struct Xt_xmdd_txstat tx_stat,
                 const int (*sizes)[SEND_SIZE_ASIZE],
                 void *buffer,
-                struct dist_dir **dist_dir,
                 MPI_Comm comm)
 {
   size_t num_msg = tx_stat.num_msg, buf_size = tx_stat.bytes;
-  struct dist_dir *restrict dist_dir_
-    = *dist_dir = xmalloc(sizeof (*dist_dir_)
-                          + sizeof (*dist_dir_->entries) * num_msg);
-  dist_dir_->num_entries = (int)num_msg;
+  struct dist_dir *restrict dist_dir
+    = xmalloc(sizeof (*dist_dir) + sizeof (*dist_dir->entries) * num_msg);
+  dist_dir->num_entries = (int)num_msg;
   int position = 0;
   for (size_t i = 0; i < num_msg; ++i)
   {
     int rank = sizes[i][SEND_NUM];
-    dist_dir_->entries[i].rank = rank;
-    dist_dir_->entries[i].list
+    dist_dir->entries[i].rank = rank;
+    dist_dir->entries[i].list
       = xt_idxlist_unpack(buffer, (int)buf_size, &position, comm);
   }
+  return dist_dir;
 }
+
+struct dist_dir_pair {
+  struct dist_dir *src, *dst;
+};
+
+struct dd_result {
+  struct dist_dir_pair dist_dirs;
+  int stripify;
+};
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -272,11 +288,8 @@ unpack_dist_dir(struct Xt_xmdd_txstat tx_stat,
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
-static void
-generate_distributed_directories(struct dist_dir **src_dist_dir,
-                                 struct dist_dir **dst_dist_dir,
-                                 bool *stripify_,
-                                 Xt_idxlist src_idxlist,
+static struct dd_result
+generate_distributed_directories(Xt_idxlist src_idxlist,
                                  Xt_idxlist dst_idxlist,
                                  int tag_offset_inter, int tag_offset_intra,
                                  MPI_Comm inter_comm, MPI_Comm intra_comm,
@@ -286,12 +299,11 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
   size_t bgd_size = config->xmdd_bucket_gen->gen_state_size;
   bgd_size = (bgd_size + sizeof (void *) - 1)/sizeof (void *) * sizeof (void *);
   void *bgd[bgd_size];
-  int stripify =
-    config->xmdd_bucket_gen->init(
+  struct dd_result results;
+  results.stripify
+    = config->xmdd_bucket_gen->init(
       &bgd, src_idxlist, dst_idxlist, intra_comm, tag_offset_intra,
       inter_comm, tag_offset_inter, config);
-  *stripify_ = stripify;
-  void *send_buffer_local, *send_buffer_remote;
   int (*send_size_local)[SEND_SIZE_ASIZE]
     = xmalloc(((size_t)comm_size + (size_t)remote_size)
               * 2 * sizeof(*send_size_local)),
@@ -299,14 +311,16 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
     (*recv_size_local)[SEND_SIZE_ASIZE] = send_size_remote + remote_size,
     (*recv_size_remote)[SEND_SIZE_ASIZE] = recv_size_local + comm_size;
   struct Xt_xmdd_txstat tx_stat_local[2], tx_stat_remote[2];
-  create_intersections(bgd, Xt_dist_dir_bucket_gen_type_send,
-                       tx_stat_local, recv_size_local, &send_buffer_local,
-                       send_size_local, src_idxlist,
-                       intra_comm, comm_size, config);
-  create_intersections(bgd, Xt_dist_dir_bucket_gen_type_recv,
-                       tx_stat_remote, recv_size_remote, &send_buffer_remote,
-                       send_size_remote, dst_idxlist,
-                       inter_comm, remote_size, config);
+  void *send_buffer_local
+    = create_intersections(bgd, Xt_dist_dir_bucket_gen_type_send,
+                           tx_stat_local, recv_size_local,
+                           send_size_local, src_idxlist,
+                           intra_comm, comm_size, config);
+  void *send_buffer_remote
+    = create_intersections(bgd, Xt_dist_dir_bucket_gen_type_recv,
+                           tx_stat_remote, recv_size_remote,
+                           send_size_remote, dst_idxlist,
+                           inter_comm, remote_size, config);
   XT_CONFIG_BUCKET_DESTROY(config, &bgd);
   size_t num_req = tx_stat_local[0].num_msg + tx_stat_remote[0].num_msg
     + tx_stat_local[1].num_msg + tx_stat_remote[1].num_msg;
@@ -342,14 +356,17 @@ generate_distributed_directories(struct dist_dir **src_dist_dir,
                           MPI_STATUSES_IGNORE), inter_comm);
   free(send_buffer_local);
   free(send_buffer_remote);
-  unpack_dist_dir(tx_stat_local[0],
-                  (const int (*)[SEND_SIZE_ASIZE])recv_size_local,
-                  recv_buffer_local, src_dist_dir, intra_comm);
-  unpack_dist_dir(tx_stat_remote[0],
-                  (const int (*)[SEND_SIZE_ASIZE])recv_size_remote,
-                  recv_buffer_remote, dst_dist_dir, inter_comm);
+  results.dist_dirs.src
+    = unpack_dist_dir(tx_stat_local[0],
+                    (const int (*)[SEND_SIZE_ASIZE])recv_size_local,
+                    recv_buffer_local, intra_comm);
+  results.dist_dirs.dst
+    = unpack_dist_dir(tx_stat_remote[0],
+                      (const int (*)[SEND_SIZE_ASIZE])recv_size_remote,
+                      recv_buffer_remote, inter_comm);
   free(send_size_local);
   free(dir_init_requests);
+  return results;
 }
 
 
@@ -381,12 +398,11 @@ send_size_from_intersections(size_t num_intersections,
   return total_send_size;
 }
 
-
-static size_t
+static struct mmsg_buf
 pack_dist_dirs(size_t num_intersections,
                struct isect *restrict src_dst_intersections,
                int (*send_size)[SEND_SIZE_ASIZE],
-               void **send_buffer_, enum xt_xmdd_direction target,
+               enum xt_xmdd_direction target,
                bool isect_idxlist_delete, MPI_Comm comm, int comm_size) {
 
   size_t total_send_size
@@ -395,8 +411,7 @@ pack_dist_dirs(size_t num_intersections,
                                    target,
                                    comm, comm_size, send_size);
 
-  unsigned char *send_buffer = (*send_buffer_)
-    = xmalloc(total_send_size);
+  unsigned char *send_buffer = xmalloc(total_send_size);
   qsort(src_dst_intersections, num_intersections,
         sizeof (src_dst_intersections[0]),
         target == xt_xmdd_direction_src
@@ -408,12 +423,12 @@ pack_dist_dirs(size_t num_intersections,
       isect_idxlist_delete,
       SEND_SIZE_ASIZE, SEND_SIZE, send_size,
       send_buffer, total_send_size, &ofs, comm);
-  return num_requests;
+  return (struct mmsg_buf){ .num_msg = num_requests,
+                              .buffer = send_buffer };
 }
 
-static void
+static struct dist_dir *
 unpack_dist_dir_results(struct Xt_xmdd_txstat tx_stat,
-                        struct dist_dir **dist_dir,
                         void *restrict recv_buffer,
                         int *restrict entry_counts,
                         MPI_Comm comm)
@@ -424,10 +439,11 @@ unpack_dist_dir_results(struct Xt_xmdd_txstat tx_stat,
   size_t num_entries_sent = 0;
   for (size_t i = 0; i < num_msg; ++i)
     num_entries_sent += (size_t)entry_counts[i];
-  *dist_dir = xmalloc(sizeof (struct dist_dir)
-                      + (sizeof (struct Xt_com_list) * num_entries_sent));
-  (*dist_dir)->num_entries = (int)num_entries_sent;
-  struct Xt_com_list *restrict entries = (*dist_dir)->entries;
+  struct dist_dir *dist_dir
+    = xmalloc(sizeof (struct dist_dir)
+              + (sizeof (struct Xt_com_list) * num_entries_sent));
+  dist_dir->num_entries = (int)num_entries_sent;
+  struct Xt_com_list *restrict entries = dist_dir->entries;
   size_t num_entries = 0;
   for (size_t i = 0; i < num_msg; ++i) {
     size_t num_entries_from_rank = (size_t)entry_counts[i];
@@ -442,15 +458,13 @@ unpack_dist_dir_results(struct Xt_xmdd_txstat tx_stat,
   }
   assert(num_entries == num_entries_sent);
   qsort(entries, num_entries_sent, sizeof(*entries), xt_com_list_rank_cmp);
-  xt_xmap_dist_dir_same_rank_merge(dist_dir);
+  xt_xmap_dist_dir_same_rank_merge(&dist_dir);
+  return dist_dir;
 }
 
 
-static void
-exchange_idxlists(struct dist_dir **src_intersections,
-                  struct dist_dir **dst_intersections,
-                  bool *stripify,
-                  Xt_idxlist src_idxlist,
+static struct dd_result
+exchange_idxlists(Xt_idxlist src_idxlist,
                   Xt_idxlist dst_idxlist,
                   int tag_offset_inter, int tag_offset_intra,
                   MPI_Comm inter_comm, MPI_Comm intra_comm,
@@ -460,14 +474,12 @@ exchange_idxlists(struct dist_dir **src_intersections,
   xt_mpi_call(MPI_Comm_size(inter_comm, &comm_size), inter_comm);
   xt_mpi_call(MPI_Comm_remote_size(inter_comm, &remote_size), inter_comm);
 
-  struct dist_dir *src_dist_dir, *dst_dist_dir;
-
-  generate_distributed_directories(&src_dist_dir, &dst_dist_dir, stripify,
-                                   src_idxlist, dst_idxlist,
-                                   tag_offset_inter, tag_offset_intra,
-                                   inter_comm, intra_comm,
-                                   remote_size, comm_size,
-                                   config);
+  struct dd_result bucket_isects
+    = generate_distributed_directories(src_idxlist, dst_idxlist,
+                                       tag_offset_inter, tag_offset_intra,
+                                       inter_comm, intra_comm,
+                                       remote_size, comm_size,
+                                       config);
 
 
   int (*send_size_local)[SEND_SIZE_ASIZE]
@@ -481,19 +493,18 @@ exchange_idxlists(struct dist_dir **src_intersections,
    * directories... */
   struct isect *src_dst_intersections;
   size_t num_intersections
-    = xt_xmap_dist_dir_match_src_dst(src_dist_dir, dst_dist_dir,
+    = xt_xmap_dist_dir_match_src_dst(bucket_isects.dist_dirs.src,
+                                     bucket_isects.dist_dirs.dst,
                                      &src_dst_intersections);
-  xt_xmdd_free_dist_dir(src_dist_dir);
-  xt_xmdd_free_dist_dir(dst_dist_dir);
+  xt_xmdd_free_dist_dir(bucket_isects.dist_dirs.src);
+  xt_xmdd_free_dist_dir(bucket_isects.dist_dirs.dst);
   /* ... and pack the results into a sendable format */
-  void *send_buffer_local, *send_buffer_remote;
-  size_t num_send_requests_local
-    = pack_dist_dirs(num_intersections, src_dst_intersections,
-                     send_size_local, &send_buffer_local,
-                     xt_xmdd_direction_src, false, intra_comm, comm_size),
-    num_send_requests_remote
-    = pack_dist_dirs(num_intersections, src_dst_intersections,
-                     send_size_remote, &send_buffer_remote,
+  struct mmsg_buf dd_local, dd_remote;
+  dd_local
+    = pack_dist_dirs(num_intersections, src_dst_intersections, send_size_local,
+                     xt_xmdd_direction_src, false, intra_comm, comm_size);
+  dd_remote
+    = pack_dist_dirs(num_intersections, src_dst_intersections, send_size_remote,
                      xt_xmdd_direction_dst, true, inter_comm, remote_size);
   free(src_dst_intersections);
 
@@ -515,10 +526,10 @@ exchange_idxlists(struct dist_dir **src_intersections,
   compress_sizes(send_size_remote, remote_size, tx_stat_remote+1, NULL);
   compress_sizes(recv_size_remote, remote_size, tx_stat_remote+0,
                  isect_counts_recv_remote);
-  assert(tx_stat_local[1].num_msg == num_send_requests_local
-         && tx_stat_remote[1].num_msg == num_send_requests_remote);
+  assert(tx_stat_local[1].num_msg == dd_local.num_msg
+         && tx_stat_remote[1].num_msg == dd_remote.num_msg);
   size_t num_requests
-    = num_send_requests_local + num_send_requests_remote
+    = dd_local.num_msg + dd_remote.num_msg
     + tx_stat_local[0].num_msg + tx_stat_remote[0].num_msg;
   assert(num_requests <= INT_MAX);
   MPI_Request *requests
@@ -538,25 +549,30 @@ exchange_idxlists(struct dist_dir **src_intersections,
   req_ofs += tx_stat_remote[0].num_msg;
   isend_intersections(tx_stat_local[1].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])send_size_local,
-                      send_buffer_local, requests+req_ofs, tag_intra,
+                      dd_local.buffer, requests+req_ofs, tag_intra,
                       intra_comm);
   req_ofs += tx_stat_local[1].num_msg;
   isend_intersections(tx_stat_remote[1].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])send_size_remote,
-                      send_buffer_remote, requests+req_ofs, tag_inter,
+                      dd_remote.buffer, requests+req_ofs, tag_inter,
                       inter_comm);
   xt_mpi_call(MPI_Waitall((int)num_requests, requests, MPI_STATUSES_IGNORE),
               inter_comm);
-  free(send_buffer_local);
-  free(send_buffer_remote);
+  free(dd_local.buffer);
+  free(dd_remote.buffer);
   free(send_size_local);
 
-  unpack_dist_dir_results(tx_stat_local[0], src_intersections, recv_buf_local,
-                          isect_counts_recv_local, intra_comm);
-  unpack_dist_dir_results(tx_stat_remote[0], dst_intersections, recv_buf_remote,
-                          isect_counts_recv_remote, inter_comm);
+  struct dd_result results;
+  results.stripify = bucket_isects.stripify;
+  results.dist_dirs.src
+    = unpack_dist_dir_results(tx_stat_local[0], recv_buf_local,
+                              isect_counts_recv_local, intra_comm);
+  results.dist_dirs.dst
+    = unpack_dist_dir_results(tx_stat_remote[0], recv_buf_remote,
+                              isect_counts_recv_remote, inter_comm);
   free(requests);
   free(isect_counts_recv_local);
+  return results;
 }
 
 
@@ -578,13 +594,10 @@ xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
   MPI_Comm inter_comm = xt_mpi_comm_smart_dup(inter_comm_, &tag_offset_inter),
     intra_comm = xt_mpi_comm_smart_dup(intra_comm_, &tag_offset_intra);
 
-  struct dist_dir *src_intersections, *dst_intersections;
-
-  bool stripify;
-  exchange_idxlists(&src_intersections, &dst_intersections, &stripify,
-                    src_idxlist, dst_idxlist,
-                    tag_offset_inter, tag_offset_intra,
-                    inter_comm, intra_comm, config);
+  struct dd_result results
+    = exchange_idxlists(src_idxlist, dst_idxlist,
+                        tag_offset_inter, tag_offset_intra,
+                        inter_comm, intra_comm, config);
 
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,
@@ -592,18 +605,20 @@ xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
                       const struct Xt_com_list *dst_com,
                       Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                       MPI_Comm comm)
-    = stripify ? xt_xmap_intersection_ext_new : xt_xmap_intersection_new;
+    = results.stripify ? xt_xmap_intersection_ext_new : xt_xmap_intersection_new;
 
   Xt_xmap xmap
-    = xmap_new(src_intersections->num_entries, src_intersections->entries,
-               dst_intersections->num_entries, dst_intersections->entries,
+    = xmap_new(results.dist_dirs.src->num_entries,
+               results.dist_dirs.src->entries,
+               results.dist_dirs.dst->num_entries,
+               results.dist_dirs.dst->entries,
                src_idxlist, dst_idxlist, inter_comm);
 
   xt_mpi_comm_smart_dedup(&inter_comm, tag_offset_inter);
   xt_mpi_comm_smart_dedup(&intra_comm, tag_offset_intra);
 
-  xt_xmdd_free_dist_dir(src_intersections);
-  xt_xmdd_free_dist_dir(dst_intersections);
+  xt_xmdd_free_dist_dir(results.dist_dirs.src);
+  xt_xmdd_free_dist_dir(results.dist_dirs.dst);
   INSTR_STOP(this_instr);
   return xmap;
 }
