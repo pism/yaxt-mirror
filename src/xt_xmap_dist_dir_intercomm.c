@@ -370,12 +370,12 @@ send_size_from_intersections(size_t num_intersections,
 
   for (size_t i = 0; i < num_intersections; ++i)
   {
-    int msg_size = rank_pack_size
-      + (int)xt_idxlist_get_pack_size(src_dst_intersections[i].idxlist, comm);
+    size_t msg_size = (size_t)rank_pack_size
+      + xt_idxlist_get_pack_size(src_dst_intersections[i].idxlist, comm);
     size_t target_rank = (size_t)src_dst_intersections[i].rank[target];
     /* send_size_target[target_rank][SEND_SIZE] += msg_size; */
     ++(send_size_target[target_rank][SEND_NUM]);
-    total_send_size += (size_t)msg_size;
+    total_send_size += msg_size;
   }
   assert(total_send_size <= INT_MAX);
   return total_send_size;
@@ -396,7 +396,7 @@ pack_dist_dirs(size_t num_intersections,
                                    comm, comm_size, send_size);
 
   unsigned char *send_buffer = (*send_buffer_)
-    = xmalloc((size_t)total_send_size);
+    = xmalloc(total_send_size);
   qsort(src_dst_intersections, num_intersections,
         sizeof (src_dst_intersections[0]),
         target == xt_xmdd_direction_src
