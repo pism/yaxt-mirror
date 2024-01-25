@@ -64,7 +64,8 @@
 #include "xt_idxstripes_internal.h"
 #include "xt_config_internal.h"
 
-void xt_xmdd_free_dist_dir(struct dist_dir *dist_dir) {
+static void
+xt_xmdd_free_dist_dir(struct dist_dir *dist_dir) {
   size_t num_entries
     = dist_dir->num_entries > 0
     ? (size_t)dist_dir->num_entries : (size_t)0;
@@ -73,6 +74,12 @@ void xt_xmdd_free_dist_dir(struct dist_dir *dist_dir) {
     xt_idxlist_delete(entries[i].list);
   free(dist_dir);
 }
+
+void xt_xmdd_free_dist_dirs(struct dist_dir_pair dist_dirs) {
+  xt_xmdd_free_dist_dir(dist_dirs.src);
+  xt_xmdd_free_dist_dir(dist_dirs.dst);
+}
+
 
 struct Xt_xmdd_txstat
 xt_xmap_dist_dir_send_intersections(

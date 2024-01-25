@@ -66,8 +66,12 @@ struct dist_dir {
   struct Xt_com_list entries[];
 };
 
+struct dist_dir_pair {
+  struct dist_dir *src, *dst;
+};
+
 PPM_DSO_INTERNAL void
-xt_xmdd_free_dist_dir(struct dist_dir *dist_dir);
+xt_xmdd_free_dist_dirs(struct dist_dir_pair dist_dirs);
 
 PPM_DSO_INTERNAL int
 xt_com_list_rank_cmp(const void *a_, const void *b_);

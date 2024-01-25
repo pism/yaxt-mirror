@@ -271,10 +271,6 @@ static void send_intersections(void *send_buffer,
                                       send_size);
 }
 
-struct dist_dir_pair {
-  struct dist_dir *src, *dst;
-};
-
 static struct dist_dir_pair
 recv_and_unpack_intersections(int recv_size[SEND_SIZE_ASIZE],
                               int tag_offset, MPI_Comm comm) {
@@ -592,8 +588,7 @@ exchange_idxlists(Xt_idxlist src_idxlist,
   size_t num_intersections
     = xt_xmap_dist_dir_match_src_dst(dds.dist_dirs.src, dds.dist_dirs.dst,
                                      &src_dst_intersections);
-  xt_xmdd_free_dist_dir(dds.dist_dirs.src);
-  xt_xmdd_free_dist_dir(dds.dist_dirs.dst);
+  xt_xmdd_free_dist_dirs(dds.dist_dirs);
   /* ... and pack the results into a sendable format */
   int num_send_indices_requests
     = pack_src_dst_dist_dirs(num_intersections, src_dst_intersections,
@@ -662,8 +657,7 @@ xt_xmap_dist_dir_intracomm_custom_new(
 
   xt_mpi_comm_smart_dedup(&newcomm, tag_offset);
 
-  xt_xmdd_free_dist_dir(ddr.dist_dirs.src);
-  xt_xmdd_free_dist_dir(ddr.dist_dirs.dst);
+  xt_xmdd_free_dist_dirs(ddr.dist_dirs);
   INSTR_STOP(this_instr);
   return xmap;
 }
