@@ -271,10 +271,6 @@ unpack_dist_dir(struct Xt_xmdd_txstat tx_stat,
   return dist_dir;
 }
 
-struct dist_dir_pair {
-  struct dist_dir *src, *dst;
-};
-
 struct dd_result {
   struct dist_dir_pair dist_dirs;
   int stripify;
@@ -496,8 +492,7 @@ exchange_idxlists(Xt_idxlist src_idxlist,
     = xt_xmap_dist_dir_match_src_dst(bucket_isects.dist_dirs.src,
                                      bucket_isects.dist_dirs.dst,
                                      &src_dst_intersections);
-  xt_xmdd_free_dist_dir(bucket_isects.dist_dirs.src);
-  xt_xmdd_free_dist_dir(bucket_isects.dist_dirs.dst);
+  xt_xmdd_free_dist_dirs(bucket_isects.dist_dirs);
   /* ... and pack the results into a sendable format */
   struct mmsg_buf dd_local, dd_remote;
   dd_local
@@ -617,8 +612,7 @@ xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
   xt_mpi_comm_smart_dedup(&inter_comm, tag_offset_inter);
   xt_mpi_comm_smart_dedup(&intra_comm, tag_offset_intra);
 
-  xt_xmdd_free_dist_dir(results.dist_dirs.src);
-  xt_xmdd_free_dist_dir(results.dist_dirs.dst);
+  xt_xmdd_free_dist_dirs(results.dist_dirs);
   INSTR_STOP(this_instr);
   return xmap;
 }
