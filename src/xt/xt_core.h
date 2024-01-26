@@ -147,6 +147,14 @@ xt_initialized(void);
 int
 xt_finalized(void);
 
+/**
+ * association of rank with an index list
+ */
+struct Xt_com_list {
+  Xt_idxlist list;
+  int rank;
+};
+
 
 #endif
 

@@ -56,11 +56,6 @@
 /** \example test_xmap_intersection_parallel.c
  */
 
-struct Xt_com_list {
-  Xt_idxlist list;
-  int rank;
-};
-
 struct Xt_com_pos {
   // list of relative positions in memory to send or receive
   int * transfer_pos;
