@@ -80,7 +80,7 @@ use File::Temp ();
 use Getopt::Long ();
 use IPC::Open2 ();
 use Pod::Usage;
-use Storable qw(freeze thaw store retrieve);
+use Storable qw(freeze thaw store retrieve dclone);
 use cpp;
 
 sub hashMerge(\%\%);
@@ -88,6 +88,7 @@ sub debugDefault();
 sub setup();
 sub buildNameSubst(\@);
 sub parseSource($$;$);
+sub searchIncludes($$$\@);
 
 my ($debug, $verbose, $dumpCppKeys) = (debugDefault(), 0, undef);
 my (@includeDirs, %defines, @ignoredSysIncludes, %ignoredModules);
@@ -128,7 +129,6 @@ MakeDependsf90mod({ 'includePaths' => \@includeDirs,
                     'defines' => \%defines,
                     'depNameSubst' => \@depNameSubst,
                     'stripObjDirname' => $stripObjDirname,
-                    'ignoredSysIncludes' => \@ignoredSysIncludes,
                     'ignoredModules' => \%ignoredModules,
                     'dumpCppKeys' => $dumpCppKeys,
                     'writePreprocessed' => $writePreprocessed,
@@ -146,7 +146,7 @@ sub uniq {
 sub MakeDependsf90mod {
    my (%moduleProvide, %incs, %sys_incs, %prg_incs, %moduleUse,
        $objfile, @incDirs, @moduleDirs,
-       @ignoredSysIncludes, $ignoredModules, $globalDefines, $dumpCppKeys);
+       $ignoredModules, $globalDefines, $dumpCppKeys);
    my %cppKeys;
    my $optArgs = {};
    my ($stripObjDirname, $writePreprocessed, $preprocNameSubst) = (0, 0);
@@ -158,8 +158,6 @@ sub MakeDependsf90mod {
 #      print STDERR Data::Dumper->Dump([\@depNameSubst], ['depNameSubst']);
       $stripObjDirname = $optArgs->{'stripObjDirname'}
           if (exists($optArgs->{'stripObjDirname'}));
-      @ignoredSysIncludes = @{$optArgs->{'ignoredSysIncludes'}}
-          if (exists($optArgs->{'ignoredSysIncludes'}));
       $ignoredModules = exists($optArgs->{'ignoredModules'})
           ? $optArgs->{'ignoredModules'} : {};
       $globalDefines = $optArgs->{'defines'}
@@ -246,54 +244,10 @@ sub MakeDependsf90mod {
       foreach my $srcfile (@srcs)
       {
          my $objfile = transformFilename($optArgs, $srcfile);
-         {
-            print(STDERR $srcfile, ':', "\n",
-                  Data::Dumper->Dump([$sys_incs{$srcfile}, $prg_incs{$srcfile}],
-                                     ['system includes', 'program includes']))
-                if ($debug > 1);
-            my @locatedIncludes;
-            foreach my $incs ($sys_incs{$srcfile}, $prg_incs{$srcfile})
-            {
-               @$incs = grep { my $include = $_ ;
-                               !grep { $_ eq $include }
-                                   @ignoredSysIncludes }
-                   @$incs;
-            }
-            @locatedIncludes =
-                map { findRelFile($_, @incDirs) }
-                    @{$sys_incs{$srcfile}};
-            my ($srcvol, $srcdir, undef) = File::Spec->splitpath($srcfile);
-            my @dirparts = File::Spec->splitdir($srcdir);
-            my @srcSearch;
-            @srcSearch = File::Spec->curdir();
-            if (@dirparts)
-            {
-               $srcdir = File::Spec->catdir(@dirparts[0..$#dirparts-1]);
-               unshift(@srcSearch, File::Spec->catpath($srcvol, $srcdir,
-                                                 $dirparts[$#dirparts]));
-            }
-            push(@locatedIncludes,
-                 map { findRelFile($_, @srcSearch, @incDirs) }
-                 @{$prg_incs{$srcfile}});
-            print(STDERR $srcfile, ':', "\n",
-                  Data::Dumper->Dump([$sys_incs{$srcfile}, $prg_incs{$srcfile},
-                                      \@locatedIncludes],
-                                     ['system includes', 'program includes',
-                                      'located'])) if ($debug > 1);
-            if (grep { !defined($_) } @locatedIncludes) {
-               for(my $i = 0; $i < @{$sys_incs{$srcfile}}; ++$i) {
-                  warn $srcfile, ': include file ', $sys_incs{$srcfile}[$i],
-                      " not found\n" if (!defined($locatedIncludes[$i]));
-               }
-               for(my $i = 0; $i < @{$prg_incs{$srcfile}}; ++$i) {
-                  my $incloc = $locatedIncludes[$i + @{$sys_incs{$srcfile}}];
-                  warn $srcfile, ': include file ', $prg_incs{$srcfile}[$i],
-                      " not found\n"
-                   if (!defined($incloc));
-               }
-            }
-            $incs{$srcfile} = [ grep { defined($_) } @locatedIncludes ];
-         }
+         $incs{$srcfile} = [ searchIncludes($srcfile,
+                                            $sys_incs{$srcfile},
+                                            $prg_incs{$srcfile},
+                                            @incDirs) ];
          # filter self-referential module use
          @{$moduleUse{$srcfile}} =
              grep { !(exists($moduleProvide{$_}) and
@@ -562,6 +516,58 @@ sub searchModuleFile
    }
    return %moduleProvide;
 }
+
+sub searchIncludes($$$\@)
+{
+   local $_;
+   my ($srcfile, $sys_incs, $prg_incs, $incDirs) = @_;
+   print(STDERR $srcfile, ':', "\n",
+         Data::Dumper->Dump([$sys_incs, $prg_incs],
+                            ['system includes', 'program includes']))
+       if ($debug > 1);
+   my @locatedIncludes;
+   foreach my $incs ($sys_incs, $prg_incs)
+   {
+      @$incs = grep { my $include = $_ ;
+                      !grep { $_ eq $include }
+                                   @ignoredSysIncludes }
+          @$incs;
+   }
+   @locatedIncludes =
+       map { findRelFile($_, @$incDirs) }
+       @$sys_incs;
+   my ($srcvol, $srcdir, undef) = File::Spec->splitpath($srcfile);
+   my @dirparts = File::Spec->splitdir($srcdir);
+   my @srcSearch = File::Spec->curdir();
+   if (@dirparts)
+   {
+      $srcdir = File::Spec->catdir(@dirparts[0..$#dirparts-1]);
+      unshift(@srcSearch, File::Spec->catpath($srcvol, $srcdir,
+                                              $dirparts[$#dirparts]));
+   }
+   push(@locatedIncludes,
+        map { findRelFile($_, @srcSearch, @$incDirs) }
+        @$prg_incs);
+   print(STDERR $srcfile, ':', "\n",
+         Data::Dumper->Dump([$sys_incs, $prg_incs,
+                             \@locatedIncludes],
+                            ['system includes', 'program includes',
+                             'located'])) if ($debug > 1);
+   if (grep { !defined($_) } @locatedIncludes) {
+      for(my $i = 0; $i < @{$sys_incs}; ++$i) {
+         warn $srcfile, ': include file ', $sys_incs->[$i],
+             " not found\n" if (!defined($locatedIncludes[$i]));
+      }
+      for(my $i = 0; $i < @{$prg_incs}; ++$i) {
+         my $incloc = $locatedIncludes[$i + @$sys_incs];
+         warn $srcfile, ': include file ', $prg_incs->[$i],
+             " not found\n"
+             if (!defined($incloc));
+      }
+   }
+   grep { defined($_) } @locatedIncludes;
+}
+
 
 sub hashMerge(\%\%)
 {
