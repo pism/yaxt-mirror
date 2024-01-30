@@ -452,12 +452,12 @@ sub parseSource($$;$)
          } elsif (m{^\s*module\s+([^\s!]+)}i and lc($1) ne 'procedure') {
             my $moduleName = lc($1);
             pushUnique(\@moduleProvide, $moduleName);
-         } elsif (/^\s*#*include\s+"(.+)?"/i) {
+         } elsif (/^\s*#*include\s+"(.+)?"/) {
             pushUnique(\@prg_incs, $1);
             print(STDERR 'Unsupported preprocessor include "', $1,
                   '" found while writing preprocessor output!')
                 if (defined($preprocOut));
-         } elsif (/^\s*#*include\s+<(.+)?>/i) {
+         } elsif (/^\s*#*include\s+<(.+)?>/) {
             pushUnique(\@sys_incs, $1);
             print(STDERR 'Unsupported preprocessor include "', $1,
                   '" found while writing preprocessor output!')
