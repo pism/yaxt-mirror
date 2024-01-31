@@ -309,7 +309,9 @@ sub parseSource($$$;$)
    my ($fh, $sys_incs, $prg_incs, @moduleUse, @moduleProvide);
    $sys_incs = [];
    $prg_incs = [];
+   print(STDERR 'Opening ', $srcfile, "\n") if $debug > 2;
    open($fh, $srcfile) or die('Cannot open ', $srcfile, ': ', $!);
+   print(STDERR 'Parsing ', $srcfile, "\n") if $debug > 1;
    my @predicateLevels = ({'ignored' => 0});
    my $ignored = 0;
    my @cppKeys;
@@ -625,7 +627,7 @@ sub findRelFile($@)
       my $qualPath = File::Spec->catfile($path, $file);
       return $qualPath if (-e $qualPath);
       print STDERR 'Requested include ', $file, ' not found in ',
-          $qualPath, "\n" if $debug > 2;
+          $qualPath, "\n" if $debug > 3;
    }
    return undef;
 }
