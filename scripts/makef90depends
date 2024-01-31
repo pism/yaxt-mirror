@@ -305,7 +305,9 @@ sub MakeDependsf90mod {
 sub parseSource($$;$)
 {
    my ($srcfile, $globalDefines, $preprocOutFh) = @_;
-   my ($fh, @sys_incs, @prg_incs, @moduleUse, @moduleProvide);
+   my ($fh, $sys_incs, $prg_incs, @moduleUse, @moduleProvide);
+   $sys_incs = [];
+   $prg_incs = [];
    open($fh, $srcfile) or die('Cannot open ', $srcfile, ': ', $!);
    my %localDefines = %$globalDefines;
    my @predicateLevels = ({'ignored' => 0});
@@ -453,17 +455,17 @@ sub parseSource($$;$)
             my $moduleName = lc($1);
             pushUnique(\@moduleProvide, $moduleName);
          } elsif (/^\s*#*include\s+"(.+)?"/) {
-            pushUnique(\@prg_incs, $1);
+            pushUnique($prg_incs, $1);
             print(STDERR 'Unsupported preprocessor include "', $1,
                   '" found while writing preprocessor output!')
                 if (defined($preprocOutFh));
          } elsif (/^\s*#*include\s+<(.+)?>/) {
-            pushUnique(\@sys_incs, $1);
+            pushUnique($sys_incs, $1);
             print(STDERR 'Unsupported preprocessor include "', $1,
                   '" found while writing preprocessor output!')
                 if (defined($preprocOutFh));
          } elsif (/^\s*include\s+(["'])(.+)?\1/i) {
-            pushUnique(\@sys_incs, $2);
+            pushUnique($sys_incs, $2);
          } elsif (/^\s*use\s+([^\s,!]+)/i) {
             print(STDERR 'Found use association: ', $1, "\n")
                 if ($debug);
@@ -478,8 +480,8 @@ sub parseSource($$;$)
        if @predicateLevels > 2;
    my $timestamp = (stat($fh))[9];
    close($fh) or die('Failed to close handle for '.$srcfile);
-   return ( 'sys_incs' => \@sys_incs,
-            'prg_incs' => \@prg_incs,
+   return ( 'sys_incs' => $sys_incs,
+            'prg_incs' => $prg_incs,
             'moduleUse' => \@moduleUse,
             'moduleProvide' => \@moduleProvide,
             'cppKeys' => \@cppKeys,
