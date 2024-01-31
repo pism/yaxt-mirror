@@ -304,7 +304,7 @@ sub MakeDependsf90mod {
 
 sub parseSource($$;$)
 {
-   my ($srcfile, $globalDefines, $preprocOut) = @_;
+   my ($srcfile, $globalDefines, $preprocOutFh) = @_;
    my ($fh, @sys_incs, @prg_incs, @moduleUse, @moduleProvide);
    open($fh, $srcfile) or die('Cannot open ', $srcfile, ': ', $!);
    my %localDefines = %$globalDefines;
@@ -456,12 +456,12 @@ sub parseSource($$;$)
             pushUnique(\@prg_incs, $1);
             print(STDERR 'Unsupported preprocessor include "', $1,
                   '" found while writing preprocessor output!')
-                if (defined($preprocOut));
+                if (defined($preprocOutFh));
          } elsif (/^\s*#*include\s+<(.+)?>/) {
             pushUnique(\@sys_incs, $1);
             print(STDERR 'Unsupported preprocessor include "', $1,
                   '" found while writing preprocessor output!')
-                if (defined($preprocOut));
+                if (defined($preprocOutFh));
          } elsif (/^\s*include\s+(["'])(.+)?\1/i) {
             pushUnique(\@sys_incs, $2);
          } elsif (/^\s*use\s+([^\s,!]+)/i) {
@@ -470,8 +470,8 @@ sub parseSource($$;$)
             pushUnique(\@moduleUse, lc($1));
          }
       }
-      print $preprocOut $_
-          if (defined($preprocOut) and !$ignored and !m{^\s*\#});
+      print $preprocOutFh $_
+          if (defined($preprocOutFh) and !$ignored and !m{^\s*\#});
    }
    die('Missing #endif for conditional at line ', $predicateLevels[-1]{'line'},
        ' of ', $srcfile, "\n")
