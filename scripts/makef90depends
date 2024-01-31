@@ -87,7 +87,7 @@ sub hashMerge(\%\%);
 sub debugDefault();
 sub setup();
 sub buildNameSubst(\@);
-sub parseSource($$;$);
+sub parseSource($$$;$);
 sub searchIncludes($$$\@);
 
 my ($debug, $verbose, $dumpCppKeys) = (debugDefault(), 0, undef);
@@ -200,7 +200,7 @@ sub MakeDependsf90mod {
                 or die('cannot open (partial) preprocessing output');
          }
          my %parse_res = parseSource($srcfile, dclone($globalDefines),
-                                     $preprocOutFh);
+                                     \@incDirs, $preprocOutFh);
          $parseCache{'source:'.$srcfile} = \%parse_res;
 
          $sys_incs{$srcfile} = $parse_res{'sys_incs'};
@@ -303,7 +303,7 @@ sub MakeDependsf90mod {
    }
 }
 
-sub parseSource($$;$)
+sub parseSource($$$;$)
 {
    my ($srcfile, $defines, $incDirs, $preprocOutFh) = @_;
    my ($fh, $sys_incs, $prg_incs, @moduleUse, @moduleProvide);
@@ -454,14 +454,16 @@ sub parseSource($$;$)
          } elsif (m{^\s*module\s+([^\s!]+)}i and lc($1) ne 'procedure') {
             my $moduleName = lc($1);
             pushUnique(\@moduleProvide, $moduleName);
-         } elsif (/^\s*#*include\s+"(.+)?"/) {
-            pushUnique($prg_incs, $1);
-            print(STDERR 'Unsupported preprocessor include "', $1,
-                  '" found while writing preprocessor output!')
-                if (defined($preprocOutFh));
-         } elsif (/^\s*#*include\s+<(.+)?>/) {
-            pushUnique($sys_incs, $1);
-            print(STDERR 'Unsupported preprocessor include "', $1,
+         } elsif (/^\s*#*include\s+(?:(")(.+)?"|(<)(.+)?>)/) {
+            pushUnique($1 eq '"' ? ($prg_incs, $2)
+                       : ($sys_incs, $2));
+            my ($incfile) = searchIncludes($srcfile,
+                                           [$1 eq '<' ? $2 : () ],
+                                           [$1 eq '"' ? $2 : () ],
+                                           @$incDirs);
+            parseSource($incfile, $defines, $incDirs, $preprocOutFh);
+            print(STDERR 'Unsupported preprocessor include "',
+                  defined $1 ? $1 : $2,
                   '" found while writing preprocessor output!')
                 if (defined($preprocOutFh));
          } elsif (/^\s*include\s+(["'])(.+)?\1/i) {
