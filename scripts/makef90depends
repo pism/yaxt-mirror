@@ -199,7 +199,8 @@ sub MakeDependsf90mod {
             open($preprocOutFh, '>', $preprocOutFn)
                 or die('cannot open (partial) preprocessing output');
          }
-         my %parse_res = parseSource($srcfile, $globalDefines, $preprocOutFh);
+         my %parse_res = parseSource($srcfile, dclone($globalDefines),
+                                     $preprocOutFh);
          $parseCache{'source:'.$srcfile} = \%parse_res;
 
          $sys_incs{$srcfile} = $parse_res{'sys_incs'};
@@ -304,12 +305,11 @@ sub MakeDependsf90mod {
 
 sub parseSource($$;$)
 {
-   my ($srcfile, $globalDefines, $preprocOutFh) = @_;
+   my ($srcfile, $defines, $incDirs, $preprocOutFh) = @_;
    my ($fh, $sys_incs, $prg_incs, @moduleUse, @moduleProvide);
    $sys_incs = [];
    $prg_incs = [];
    open($fh, $srcfile) or die('Cannot open ', $srcfile, ': ', $!);
-   my %localDefines = %$globalDefines;
    my @predicateLevels = ({'ignored' => 0});
    my $ignored = 0;
    my @cppKeys;
@@ -369,7 +369,7 @@ sub parseSource($$;$)
             my $predValue
                 = eval {
                    cpp::evaluatePreProcExpression($predicate,
-                                                  \%localDefines,
+                                                  $defines,
                                                   \@localCppKeys,
                                                   !$objDepOut);
                 };
@@ -394,7 +394,7 @@ sub parseSource($$;$)
                my $predValue
                    = eval {
                       cpp::evaluatePreProcExpression($predicate,
-                                                     \%localDefines,
+                                                     $defines,
                                                      \@localCppKeys,
                                                      !$objDepOut);
                    };
@@ -415,9 +415,9 @@ sub parseSource($$;$)
                die('Malformed predicate: ', $clause, ' ', $predicate)
                    if (not cpp::validPreProcSym($predicate));
                if ($objDepOut) {
-                  cpp::insertDefinitionOnDemand(\%localDefines, $predicate)
-                      if (!exists($localDefines{$predicate}));
-                  $predValue = defined($localDefines{$predicate})?1:0;
+                  cpp::insertDefinitionOnDemand($defines, $predicate)
+                      if (!exists($defines->{$predicate}));
+                  $predValue = defined($defines->{$predicate})?1:0;
                }
                $predValue = !$predValue if ($clause eq 'ifndef');
                print(STDERR Data::Dumper->Dump([\$predValue],
@@ -437,17 +437,17 @@ sub parseSource($$;$)
          if (m{$cpp::definition_match}x) {
             my ($preProcSym, $args, $definition)
                 = ($1, $2, $3);
-            $localDefines{$preProcSym}
+            $defines->{$preProcSym}
                 = cpp::parseDefinition($args, $definition, $srcfile, $lineno);
             print(STDERR 'Intern\'ed definition ',
                   $preProcSym, (not defined($args))?():('(', $args, ')'),
                   ' => ', $definition, "\n") if $debug;
-            print(STDERR Data::Dumper->Dump([$localDefines{$preProcSym}],
+            print(STDERR Data::Dumper->Dump([$defines->{$preProcSym}],
                                             ['definition parse']))
                 if ($debug > 1);
          } elsif (m{^\s*#+(?:undef)\s+([A-Za-z_]\w*)\s*(..*)?$}) {
             my ($preProcSym, $trail) = ($1, $2);
-            $localDefines{$preProcSym} = undef;
+            $defines->{$preProcSym} = undef;
             warn('Trailing garbage on undef line ',
                  $lineno, ' of ', $srcfile, ': ', $trail)
                 if defined($trail);
