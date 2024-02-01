@@ -383,7 +383,8 @@ uninstall-local:
 	-rmdir "$(DESTDIR)$(libdir)/pkgconfig"
 
 if with_fortran
-./$(DEPDIR)/FC.deps: $(libyaxt_la_SOURCES) Makefile
+./$(DEPDIR)/FC.deps: $(libyaxt_la_SOURCES) Makefile \
+	$(top_srcdir)/scripts/makef90depends
 	@unique=`for i in $(SOURCES); do \
 	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | grep '\.f90$$' ` ; \
@@ -402,9 +403,9 @@ if with_fortran
 	  --obj-suf='.lo' -- \
 	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
 	  >./$(DEPDIR)/FC.deps.temp && \
-	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
+	{ cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
 	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps \
-	  && touch ./$(DEPDIR)/FC.deps
+	  && touch ./$(DEPDIR)/FC.deps ; }
 
 @am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
 endif

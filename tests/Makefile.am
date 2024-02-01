@@ -362,7 +362,8 @@ AUTOMAKE_OPTIONS = color-tests
 EXTRA_DIST = core
 
 if with_fortran
-./$(DEPDIR)/FC.deps: $(SOURCES) Makefile
+./$(DEPDIR)/FC.deps: $(SOURCES) Makefile \
+	$(top_srcdir)/scripts/makef90depends
 	@unique=`for i in $(SOURCES); do \
 	  if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | grep '\.f90$$' ` ; \
@@ -385,8 +386,9 @@ if with_fortran
 	  --obj-transform-name='\.f90$$=.$(OBJEXT)' -- \
 	  $(AM_FCFLAGS) $(FCFLAGS) $(FPPFLAGS) -- $$unique \
 	  >./$(DEPDIR)/FC.deps.temp && \
-	cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
-	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps
+	{ cmp ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps >/dev/null 2>&1 \
+	  || ln -f ./$(DEPDIR)/FC.deps.temp ./$(DEPDIR)/FC.deps \
+	  && touch ./$(DEPDIR)/FC.deps ; }
 
 @am__include@ @am__quote@./$(DEPDIR)/FC.deps@am__quote@ # am--include-marker
 endif
