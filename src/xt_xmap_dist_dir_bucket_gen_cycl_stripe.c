@@ -67,6 +67,7 @@
 #include "xt_mpi_internal.h"
 #include "xt_arithmetic_util.h"
 #include "ensure_array_size.h"
+#include "xt_xmap_dist_dir_bucket_gen_internal.h"
 
 static int
 xt_xmdd_bucket_gen_cycl_stripe_init(
@@ -86,8 +87,10 @@ xt_xmdd_bucket_gen_cycl_stripe_destroy(void *gen_state);
 static int
 xt_xmdd_bucket_gen_cycl_stripe_get_intersect_max_num(void *gen_state, int type);
 
-const struct Xt_xmdd_bucket_gen_desc Xt_xmdd_cycl_stripe_bucket_gen_desc
-= { .init = xt_xmdd_bucket_gen_cycl_stripe_init,
+const struct Xt_xmdd_bucket_gen_ Xt_xmdd_cycl_stripe_bucket_gen_desc
+= { .init
+    = (Xt_xmdd_bucket_gen_init_state_internal)
+    (void (*)(void))xt_xmdd_bucket_gen_cycl_stripe_init,
     .destroy = xt_xmdd_bucket_gen_cycl_stripe_destroy,
     .get_intersect_max_num = xt_xmdd_bucket_gen_cycl_stripe_get_intersect_max_num,
     .next = xt_xmdd_cycl_stripe_get_next_bucket,

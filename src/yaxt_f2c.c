@@ -55,6 +55,8 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
+#include "xt/xt_xmap_dist_dir_bucket_gen2.h"
+#include "xt_xmap_dist_dir_bucket_gen_internal.h"
 
 static const char filename[] = "yaxt_f2c.c";
 
@@ -110,6 +112,11 @@ struct xt_redist_msg_f {
 struct xt_request_f {
   Xt_request cptr;
 };
+
+struct xt_xmdd_bucket_gen_f {
+  Xt_xmdd_bucket_gen cptr;
+};
+
 
 /* These functions are meant to be called from Fortran and don't need
  * an interface declaration in a C header  */
@@ -195,6 +202,10 @@ Xt_xmap xt_xmap_f2c(struct xt_xmap_f *p)
   return p->cptr;
 }
 
+Xt_xmdd_bucket_gen xt_xmdd_bucket_gen_f2c(struct xt_xmdd_bucket_gen_f *p)
+{
+  return p->cptr;
+}
 
 MPI_Fint xt_idxlist_get_pack_size_f2c(struct xt_idxlist_f *idxlist,
                                       MPI_Fint comm_f)
@@ -616,6 +627,56 @@ xt_redist_msg_contiguous(const struct xt_redist_msg_f *p_msgs_a,
   return (p_msgs_a + 1 == p_msgs_b);
 }
 #endif
+
+static int
+f2c_xmdd_bucket_gen_init_state(
+  void *gen_state,
+  Xt_idxlist src_idxlist,
+  Xt_idxlist dst_idxlist,
+  MPI_Comm intra_comm, int tag_offset_intra,
+  MPI_Comm inter_comm, int tag_offset_inter,
+  Xt_config config,
+  const struct Xt_xmdd_bucket_gen_ *bgd)
+{
+  MPI_Fint intra_comm_f = MPI_Comm_c2f(intra_comm),
+    inter_comm_f = MPI_Comm_c2f(inter_comm);
+  return bgd->init_f(gen_state, src_idxlist, dst_idxlist,
+                     intra_comm_f, tag_offset_intra,
+                     inter_comm_f, tag_offset_inter, config);
+}
+
+
+static void
+xt_xmdd_bucket_gen_define_interface_f2c(
+  Xt_xmdd_bucket_gen gen,
+  Xt_xmdd_bucket_gen_init_state_f init,
+  Xt_xmdd_bucket_gen_destroy_state destroy,
+  Xt_xmdd_bucket_gen_get_intersect_max_num get_intersect_max_num,
+  Xt_xmdd_bucket_gen_next next,
+  long gen_state_size)
+{
+  gen->init_f = init;
+  gen->init = f2c_xmdd_bucket_gen_init_state;
+  gen->destroy = destroy;
+  gen->get_intersect_max_num = get_intersect_max_num;
+  gen->next = next;
+  assert(gen_state_size >= 0);
+  gen->gen_state_size = (size_t)gen_state_size;
+}
+
+#undef ROUTINE_2
+#define ROUTINE_2 (Xt_xmdd_bucket_gen_init_state_f)(void (*)(void))
+#undef ROUTINE_3
+#define ROUTINE_3 (Xt_xmdd_bucket_gen_destroy_state)(void (*)(void))
+#undef ROUTINE_4
+#define ROUTINE_4 (Xt_xmdd_bucket_gen_get_intersect_max_num)(void (*)(void))
+#undef ROUTINE_5
+#define ROUTINE_5 (Xt_xmdd_bucket_gen_next)(void (*)(void))
+
+FCALLSCSUB6(xt_xmdd_bucket_gen_define_interface_f2c,
+            XT_XMDD_BUCKET_GEN_DEFINE_INTERFACE_F,
+            xt_xmdd_bucket_gen_define_interface_f,
+            PVOID, ROUTINE, ROUTINE, ROUTINE, ROUTINE, LONG)
 
 void
 xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {

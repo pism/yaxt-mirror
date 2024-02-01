@@ -52,60 +52,26 @@
 #include <config.h>
 #endif
 
+#include <stddef.h>
+
 #include <mpi.h>
 
-#include "xt/xt_core.h"
-#include "xt/xt_config.h"
-#include "xt/xt_idxlist.h"
-
-enum Xt_dist_dir_bucket_gen_types {
-  Xt_dist_dir_bucket_gen_type_send = 1,
-  Xt_dist_dir_bucket_gen_type_recv = 2,
-  Xt_dist_dir_bucket_gen_type_sendrecv = 3,
-};
-
-
-typedef int (*Xt_xmdd_bucket_gen_init_state)(
-  void *gen_state,
-  Xt_idxlist src_idxlist,
-  Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
-  Xt_config config);
-
-typedef void (*Xt_xmdd_bucket_gen_destroy_state)(void *gen_state);
-
-typedef int (*Xt_xmdd_bucket_gen_get_intersect_max_num)(
-  void *gen_state, int type);
-
-typedef struct Xt_com_list (*Xt_xmdd_bucket_gen_next)(
-  void *gen_state, int type);
+/**
+ * Objects of type Xt_xmdd_bucket_gen are more of a class than an
+ * object in that the corresponding init function must be called on a
+ * run-time state area to initialize bucket generation for a specific
+ * communicator.
+ */
+typedef struct Xt_xmdd_bucket_gen_ *Xt_xmdd_bucket_gen;
 
 /**
- * Interface of bucket generator
- * Essentially, the generator needs to be able to enumerate all
- * buckets used to form intersections. This means the generator only
- * needs to produce buckets that actually can intersect and can skip
- * buckets that won't intersect the requested type of list.
+ * Creates new, user-definable, bucket generator object
+ * @return incomplete bucket generator interface object
  */
-struct Xt_xmdd_bucket_gen_desc {
-  /** The init function sets up the generator state. */
-  Xt_xmdd_bucket_gen_init_state init;
-  /** The destroy function clean up the generator state. Can be zero
-   * if no cleaning is needed. */
-  Xt_xmdd_bucket_gen_destroy_state destroy;
-  Xt_xmdd_bucket_gen_get_intersect_max_num get_intersect_max_num;
-  /** The next function returns the next bucket and corresponding rank
-   * (ranks can be skipped when the intersection will be empty
-   * anyway).
-   * Any previously returned buckets become invalid. */
-  Xt_xmdd_bucket_gen_next next;
-  /** gen_state_size is the size of the generator state
-   *
-   * The distributed directory will provide memory aligned to
-   * pointer variables of this size. */
-  size_t gen_state_size;
-};
+Xt_xmdd_bucket_gen xt_xmdd_bucket_gen_new(void);
+
+void
+xt_xmdd_bucket_gen_delete(Xt_xmdd_bucket_gen gen);
 
 #endif // XT_XMAP_DIST_DIR_BUCKET_GEN_H
 
