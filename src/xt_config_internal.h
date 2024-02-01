@@ -91,7 +91,7 @@ struct Xt_config_ {
   const struct Xt_sort_algo_funcptr *sort_funcs;
   /**
    * description of bucket generator */
-  const struct Xt_xmdd_bucket_gen_desc *xmdd_bucket_gen;
+  const struct Xt_xmdd_bucket_gen_ *xmdd_bucket_gen;
   /**
    * pointer to exchanger team share data
    */

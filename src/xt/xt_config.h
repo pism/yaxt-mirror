@@ -53,6 +53,8 @@
 #include <config.h>
 #endif
 
+#include "xt/xt_xmap_dist_dir_bucket_gen.h"
+
 typedef struct Xt_config_ *Xt_config;
 
 /**
@@ -187,7 +189,7 @@ xt_config_set_sort_algorithm_by_id(Xt_config config, int algo);
 /**
  * Set memory conservation parameter.
  *
- * @param[in]   config configuration object to modify
+ * @param[in,out]   config configuration object to modify
  * @param       memconserve switch on methods of memory saving
  *              currently supported values: 0 and 1
  *
@@ -209,6 +211,21 @@ xt_config_set_mem_saving(Xt_config config, int memconserve);
  */
 int
 xt_config_get_mem_saving(Xt_config config);
+
+/**
+ * Query configured bucket generator
+ */
+Xt_xmdd_bucket_gen
+xt_config_get_xmdd_bucket_gen(Xt_config config);
+
+/**
+ * Change generator for buckets in distributed directory
+ * The default is a generator that tiles the range of indices of all
+ * index lists involved in xmap creation in 1D fashion with stripes.
+ */
+void
+xt_config_set_xmdd_bucket_gen(Xt_config config,
+                              Xt_xmdd_bucket_gen bucket_gen_iface);
 
 
 #endif

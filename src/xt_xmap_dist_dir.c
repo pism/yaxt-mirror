@@ -72,6 +72,7 @@
 #include "instr.h"
 #include "xt_xmap_dist_dir_common.h"
 #include "xt/xt_sort.h"
+#include "xt_xmap_dist_dir_bucket_gen_internal.h"
 
 
 
@@ -122,7 +123,7 @@ compute_and_pack_bucket_intersections(Xt_idxlist src_idxlist,
   int stripify =
     config->xmdd_bucket_gen->init(
       &bgd, src_idxlist, dst_idxlist, comm, tag_offset,
-      MPI_COMM_NULL, INT_MIN, config);
+      MPI_COMM_NULL, INT_MIN, config, config->xmdd_bucket_gen);
 
   int nosort_forced = XT_CONFIG_GET_FORCE_NOSORT(config);
   Xt_idxlist src_idxlist_sorted

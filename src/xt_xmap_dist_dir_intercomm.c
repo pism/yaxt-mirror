@@ -76,6 +76,7 @@
 #include "xt_config_internal.h"
 #include "instr.h"
 #include "xt/xt_sort.h"
+#include "xt_xmap_dist_dir_bucket_gen_internal.h"
 
 enum {
   SEND_SIZE = 0,
@@ -299,7 +300,7 @@ generate_distributed_directories(Xt_idxlist src_idxlist,
   results.stripify
     = config->xmdd_bucket_gen->init(
       &bgd, src_idxlist, dst_idxlist, intra_comm, tag_offset_intra,
-      inter_comm, tag_offset_inter, config);
+      inter_comm, tag_offset_inter, config, config->xmdd_bucket_gen);
   int (*send_size_local)[SEND_SIZE_ASIZE]
     = xmalloc(((size_t)comm_size + (size_t)remote_size)
               * 2 * sizeof(*send_size_local)),

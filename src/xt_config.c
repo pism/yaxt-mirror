@@ -68,6 +68,7 @@
 #include "xt/mergesort.h"
 #include "xt/xt_xmap_dist_dir_bucket_gen.h"
 #include "xt_xmap_dist_dir_bucket_gen_cycl_stripe.h"
+#include "xt_xmap_dist_dir_bucket_gen_internal.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
@@ -80,6 +81,8 @@ Xt_config xt_config_new(void)
 
 void xt_config_delete(Xt_config config)
 {
+  if (config->xmdd_bucket_gen != &Xt_xmdd_cycl_stripe_bucket_gen_desc)
+    free((void *)config->xmdd_bucket_gen);
   free(config);
 }
 
@@ -257,6 +260,26 @@ int
 xt_config_get_mem_saving(Xt_config config)
 {
   return XT_CONFIG_GET_FORCE_NOSORT(config);
+}
+
+
+Xt_xmdd_bucket_gen
+xt_config_get_xmdd_bucket_gen(Xt_config config)
+{
+  return (Xt_xmdd_bucket_gen)config->xmdd_bucket_gen;
+}
+
+void
+xt_config_set_xmdd_bucket_gen(Xt_config config,
+                              Xt_xmdd_bucket_gen bucket_gen_iface)
+{
+  if (bucket_gen_iface == &Xt_xmdd_cycl_stripe_bucket_gen_desc)
+    config->xmdd_bucket_gen = bucket_gen_iface;
+  else {
+    Xt_xmdd_bucket_gen gen = xmalloc(sizeof (*bucket_gen_iface));
+    config->xmdd_bucket_gen = gen;
+    *gen = *bucket_gen_iface;
+  }
 }
 
 

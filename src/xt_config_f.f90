@@ -50,6 +50,8 @@ MODULE xt_config_f
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_ptr, c_null_ptr, c_int, &
        c_char, c_null_char
   USE xt_core, ONLY: xt_abort
+  USE xt_xmap_dist_dir_bucket_gen, ONLY: xt_xmdd_bucket_gen, &
+       xt_xmdd_bucket_gen_c2f, xt_xmdd_bucket_gen_f2c
   IMPLICIT NONE
   PRIVATE
   ! note: this type must not be extended to contain any other
@@ -90,13 +92,17 @@ MODULE xt_config_f
        xt_config_set_redist_mthread_mode
   PUBLIC :: xt_config_get_sort_algorithm_id, &
        xt_config_set_sort_algorithm_by_id
-  PUBLIC :: xt_config_set_mem_saving, xt_config_get_mem_saving
+  PUBLIC :: xt_config_set_mem_saving, &
+       xt_config_get_mem_saving
   INTEGER, PUBLIC, PARAMETER :: &
        XT_MT_NONE = 0, &
        XT_MT_OPENMP = 1
   INTEGER, PUBLIC, PARAMETER :: &
        XT_QUICKSORT = 0, &
        XT_MERGESORT = 1
+
+  PUBLIC :: xt_config_get_xmdd_bucket_gen, &
+       xt_config_set_xmdd_bucket_gen
 
   CHARACTER(len=*), PARAMETER :: filename = 'xt_config_f.f90'
 
@@ -329,6 +335,41 @@ CONTAINS
     memconserve_c = xt_config_get_mem_saving_c(config%cptr)
     memconserve = INT(memconserve_c)
   END FUNCTION xt_config_get_mem_saving
+
+  !>
+  !! Query configured bucket generator
+  FUNCTION xt_config_get_xmdd_bucket_gen(config) RESULT(gen)
+    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_xmdd_bucket_gen) :: gen
+    INTERFACE
+      FUNCTION xt_config_get_xmdd_bucket_gen_c(config) &
+           BIND(c, name='xt_config_get_xmdd_bucket_gen') RESULT(gen)
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE :: config
+        TYPE(c_ptr) :: gen
+      END FUNCTION xt_config_get_xmdd_bucket_gen_c
+    END INTERFACE
+    TYPE(c_ptr) :: gen_c
+    gen_c = xt_config_get_xmdd_bucket_gen_c(config%cptr)
+    gen = xt_xmdd_bucket_gen_c2f(gen_c)
+  END FUNCTION xt_config_get_xmdd_bucket_gen
+
+  !> Change generator for buckets in distributed directory
+  !! The default is a generator that tiles the range of indices of all
+  !! index lists involved in xmap creation in 1D fashion with stripes.
+  SUBROUTINE xt_config_set_xmdd_bucket_gen(config, gen)
+    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_xmdd_bucket_gen), INTENT(in) :: gen
+    INTERFACE
+      SUBROUTINE xt_config_set_xmdd_bucket_gen_c(config, gen) &
+           BIND(c, name='xt_config_set_xmdd_bucket_gen')
+        IMPORT :: c_ptr
+        TYPE(c_ptr), VALUE :: config, gen
+      END SUBROUTINE xt_config_set_xmdd_bucket_gen_c
+    END INTERFACE
+    CALL xt_config_set_xmdd_bucket_gen_c(config%cptr, &
+         xt_xmdd_bucket_gen_f2c(gen))
+  END SUBROUTINE xt_config_set_xmdd_bucket_gen
 
 END MODULE xt_config_f
 !

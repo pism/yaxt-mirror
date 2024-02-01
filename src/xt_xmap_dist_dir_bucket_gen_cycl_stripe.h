@@ -78,7 +78,7 @@ struct Xt_xmdd_bucket_gen_cycl_stripe_state {
 /**
  * This is the default implementation
  */
-extern const struct Xt_xmdd_bucket_gen_desc Xt_xmdd_cycl_stripe_bucket_gen_desc;
+extern const struct Xt_xmdd_bucket_gen_ Xt_xmdd_cycl_stripe_bucket_gen_desc;
 
 #endif
 
