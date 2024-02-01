@@ -1220,7 +1220,7 @@ CONTAINS
     ! double precision real and gfortran warns about that. For that
     ! reason the below expression limits scale_val to those 1-bits
     ! which can be represented in a double precision constant
-#if ! defined __PGI || __PGIC__ > 23
+#if ! defined __PGI || __PGIC__ > 24
     INTEGER(i8), PARAMETER :: scale_val &
          = IAND(HUGE(a), NOT(ISHFT(1_i8, BIT_SIZE(1_i8) &
          &                               - DIGITS(0.0_c_double))  - 1 ) )
@@ -1230,7 +1230,7 @@ CONTAINS
     REAL(c_double) :: rand_nums(block_len), sc
     n = SIZE(a)
     nb = n/block_len
-#if defined __PGI && __PGIC__ <= 23
+#if defined __PGI && __PGIC__ <= 24
     scale_val &
          = IAND(HUGE(a), NOT(ISHFT(1_i8, BIT_SIZE(1_i8) &
          &                               - DIGITS(0.0_c_double))  - 1 ) )
