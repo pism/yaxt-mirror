@@ -86,6 +86,7 @@ xt_xmap_self_test_main(int *argc, char ***argv,
     test_xmap2(new_xmap, comms[i]);
   }
 
+  MPI_Comm_free(&comms[1]);
   xt_finalize();
   MPI_Finalize();
 
