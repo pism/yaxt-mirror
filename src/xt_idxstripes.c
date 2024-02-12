@@ -1333,33 +1333,45 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   INSTR_START(instr);
 
   int retval = 1;
+  if (offset < 0) offset = 0;
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
+  const struct Xt_stripes_sort *restrict stripes_sort
+    = idxstripes->stripes_sort;
   const struct Xt_stripe *restrict stripes = idxstripes->stripes;
-  size_t num_stripes = (size_t)idxstripes->num_stripes, i = 0;
-  Xt_int position_offset = 0;
+  if (offset < idxlist->num_indices) {
+    size_t num_stripes = (size_t)idxstripes->num_stripes, i;
+    size_t position_offset = 0;
 
-  while (i < num_stripes && position_offset + stripes[i].nstrides <= offset)
-    position_offset = (Xt_int)(position_offset + stripes[i++].nstrides);
+    for (i = 0;
+         position_offset + (size_t)stripes[i].nstrides <= (size_t)offset;
+         ++i)
+      position_offset += (size_t)stripes[i].nstrides;
 
-  for (; i < num_stripes;
-       position_offset = (Xt_int)(position_offset + stripes[i++].nstrides)) {
+    for (; i < num_stripes;
+         position_offset += (size_t)stripes[i].nstrides, ++i) {
 
-    if ((stripes[i].stride > 0 && index < stripes[i].start)
-        || (stripes[i].stride < 0 && index > stripes[i].start))
-      continue;
+      size_t inv_pos = (size_t)stripes_sort[i].inv_position;
+      struct Xt_minmax range = stripes_sort[inv_pos].range;
 
-    Xt_int rel_start = (Xt_int)(index - stripes[i].start);
+      if (index > range.max || index < range.min)
+        continue;
 
-    if (rel_start % stripes[i].stride) continue;
-
-    if (rel_start / stripes[i].stride >= stripes[i].nstrides)
-      continue;
-
-    *position = (int)(rel_start/stripes[i].stride + position_offset);
-
-    retval = 0;
-    goto fun_exit;
+      int rel_start;
+      Xt_int stride = stripes[i].stride;
+      if (index != stripes[i].start) {
+        Xt_int index_offset = (Xt_int)(index - stripes[i].start);
+        if (index_offset % stride)
+          continue;
+        rel_start = (int)(index_offset/stripes[i].stride);
+      } else if (stride != 0)
+        rel_start = 0;
+      else
+        rel_start = (int)(MAX((size_t)offset, position_offset) - position_offset);
+      *position = (int)((size_t)rel_start + position_offset);
+      retval = 0;
+      goto fun_exit;
+    }
   }
 
   *position = -1;
