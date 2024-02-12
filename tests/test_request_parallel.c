@@ -115,6 +115,8 @@ int main(int argc, char **argv) {
         mismatch |= (recv_buf[(size_t)i * msg_size + j] != i);
     if (mismatch)
       PUT_ERR("recv_buf[i * msg_size + j] != i\n");
+    free(send_buf);
+    free(recv_buf);
   }
 
   { // each process receives and sends data from/to every other process with
