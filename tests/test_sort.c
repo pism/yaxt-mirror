@@ -48,6 +48,7 @@
 #endif
 
 #include <assert.h>
+#include <stdbool.h>
 
 //#define VERBOSE
 
