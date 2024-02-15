@@ -72,6 +72,8 @@
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
 
+static const char filename[] = "xt_config.c";
+
 Xt_config xt_config_new(void)
 {
   Xt_config config = xmalloc(sizeof(*config));
@@ -143,7 +145,7 @@ int xt_config_get_exchange_method(Xt_config config)
     = "error: unexpected exchanger function (%p)!";
   char buf[sizeof (fmt) + 3*sizeof(void *)];
   sprintf(buf, fmt, (void *)exchanger_new);
-  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
+  Xt_abort(Xt_default_comm, buf, filename, __LINE__);
 }
 
 Xt_exchanger_new
@@ -231,7 +233,7 @@ int xt_config_get_sort_algorithm_id(Xt_config config)
     = "error: unexpected exchanger function (%p)!";
   char buf[sizeof (fmt) + 3*sizeof(void *)];
   sprintf(buf, fmt, (void *)sort_funcs);
-  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
+  Xt_abort(Xt_default_comm, buf, filename, __LINE__);
 }
 
 void xt_config_set_sort_algorithm_by_id(Xt_config config, int algo)
@@ -244,7 +246,7 @@ void xt_config_set_sort_algorithm_by_id(Xt_config config, int algo)
     = "error: user-requested exchanger code (%d) does not exist!";
   char buf[sizeof (fmt) + 3*sizeof(int)];
   sprintf(buf, fmt, algo);
-  Xt_abort(Xt_default_comm, buf, "xt_config.c", __LINE__);
+  Xt_abort(Xt_default_comm, buf, filename, __LINE__);
 }
 
 void
@@ -312,7 +314,7 @@ void xt_config_set_exchange_method(Xt_config config, int method)
     }
   sprintf(buf, fmt, method);
 abort:
-  Xt_abort(Xt_default_comm, msg, "xt_config.c", __LINE__);
+  Xt_abort(Xt_default_comm, msg, filename, __LINE__);
 }
 
 int xt_config_get_idxvec_autoconvert_size(Xt_config config)
@@ -342,7 +344,7 @@ xt_config_set_redist_mthread_mode(Xt_config config, int mode)
   if (mode == XT_MT_OPENMP)
     Xt_abort(Xt_default_comm,
              "error: automatic opening of OpenMP parallel regions requested,"
-             " but OpenMP is not configured.\n", "xt_config.c", __LINE__);
+             " but OpenMP is not configured.\n", filename, __LINE__);
 #else
   if (mode == XT_MT_OPENMP) {
     int thread_support_provided = MPI_THREAD_SINGLE;
@@ -351,7 +353,7 @@ xt_config_set_redist_mthread_mode(Xt_config config, int mode)
       Xt_abort(Xt_default_comm,
                "error: automatic opening of OpenMP parallel regions requested,"
                "\n       but MPI is not running in thread-safe mode.\n",
-               "xt_config.c", __LINE__);
+               filename, __LINE__);
   }
 #endif
   config->flags = (config->flags & ~(uint32_t)xt_mthread_mode_mask)
