@@ -595,13 +595,16 @@ xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
                         tag_offset_inter, tag_offset_intra,
                         inter_comm, intra_comm, config);
 
+  int stripify = XT_CONFIG_GET_DIST_DIR_STRIPING(config);
+  if (stripify == 2)
+    stripify = results.stripify;
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,
                       int num_dst_intersections,
                       const struct Xt_com_list *dst_com,
                       Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                       MPI_Comm comm)
-    = results.stripify ? xt_xmap_intersection_ext_new : xt_xmap_intersection_new;
+    = stripify ? xt_xmap_intersection_ext_new : xt_xmap_intersection_new;
 
   Xt_xmap xmap
     = xmap_new(results.dist_dirs.src->num_entries,
