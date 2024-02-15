@@ -71,6 +71,7 @@
 #include "xt_config_internal.h"
 #include "instr.h"
 
+#define MAX(a,b) (((a)>=(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
 static void
@@ -163,6 +164,7 @@ struct Xt_idxvec_ {
 
   struct Xt_idxlist_ parent;
   unsigned flags;
+  Xt_int max, min;
   const Xt_int *vector;
 
   // internal array used to optimise access to vector data
@@ -224,11 +226,17 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   Xt_int *restrict vector = vec_alloc.vector;
   vector[0] = idxvec[0];
   int ntrans_up=0, ntrans_dn=0;
+  Xt_int maxv = idxvec[0], minv = idxvec[0];
   for (size_t i = 1; i < (size_t)num_indices; ++i) {
-    vector[i] = idxvec[i];
-    ntrans_up += idxvec[i-1] < idxvec[i];
-    ntrans_dn += idxvec[i-1] > idxvec[i];
+    Xt_int v = idxvec[i];
+    vector[i] = v;
+    ntrans_up += idxvec[i-1] < v;
+    ntrans_dn += idxvec[i-1] > v;
+    maxv = MAX(v, maxv);
+    minv = MIN(v, minv);
   }
+  vec_alloc.idxvec->max = maxv;
+  vec_alloc.idxvec->min = minv;
   if (ntrans_dn == 0)
     vec_alloc.idxvec->sorted_vector = vector;
   else
@@ -239,13 +247,23 @@ Xt_idxlist xt_idxvec_new(const Xt_int *idxvec, int num_indices) {
   return (void *)vec_alloc.idxvec;
 }
 
-static unsigned
+struct flags_min_max
+{
+  unsigned flags;
+  Xt_int max, min;
+};
+
+static struct flags_min_max
 get_sort_flags(size_t num_indices, const Xt_int vector[num_indices])
 {
   int ntrans_up=0, ntrans_dn=0;
+  Xt_int maxv = vector[0], minv = vector[0];
   for (size_t i = 1; i < num_indices; ++i) {
-    ntrans_up += vector[i-1] < vector[i];
-    ntrans_dn += vector[i-1] > vector[i];
+    Xt_int v = vector[i];
+    ntrans_up += vector[i-1] < v;
+    ntrans_dn += vector[i-1] > v;
+    maxv = MAX(v, maxv);
+    minv = MIN(v, minv);
   }
   unsigned flags = XT_SORT_FLAGS(ntrans_up, ntrans_dn);
   /* icc 12 and 13 miscompile the above when it's a leaf function */
@@ -256,7 +274,7 @@ get_sort_flags(size_t num_indices, const Xt_int vector[num_indices])
     fprintf(stderr, "ntrans_up=%d, ntrans_dn=%d, flags=%u\n",
             ntrans_up, ntrans_dn, flags);
 #endif
-  return flags;
+  return (struct flags_min_max){ .flags = flags, .min = minv, .max = maxv };
 }
 
 Xt_idxlist
@@ -267,7 +285,10 @@ xt_idxvec_congeal(struct Xt_vec_alloc vec_alloc)
   Xt_idxvec idxvec = vec_alloc.idxvec;
   size_t num_indices = (size_t)idxvec->parent.num_indices;
   if (num_indices) {
-    unsigned flags = get_sort_flags(num_indices, vec_alloc.vector);
+    struct flags_min_max fmm = get_sort_flags(num_indices, vec_alloc.vector);
+    unsigned flags = fmm.flags;
+    idxvec->min = fmm.min;
+    idxvec->max = fmm.max;
     idxvec->flags = flags;
     idxvec->sorted_vector = ((flags & sort_mask) == sort_asc
                              || (flags & sort_mask) == sort_idt)
@@ -319,8 +340,6 @@ decode_stripe(struct Xt_stripe stripe, Xt_int *sorted_vector,
   return (size_t)stripe.nstrides;
 }
 
-#define MAX(a,b) ((a) >= (b) ? (a) : (b))
-
 static void
 generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
                                     int num_stripes_,
@@ -346,11 +365,15 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
   int *restrict sorted_stripe_min_pos
     = xmalloc(num_stripes * 3 * sizeof(*sorted_stripe_min_pos));
 
+  Xt_int min = XT_INT_MAX;
   for(size_t i = 0; i < num_stripes; ++i) {
     Xt_int ofs = (Xt_int)(stripes[i].stride * (stripes[i].nstrides - 1)),
       mask = Xt_isign_mask(ofs);
-    stripe_minmax[0][i] = (Xt_int)(stripes[i].start + (ofs & mask));
+    Xt_int stripe_min = (Xt_int)(stripes[i].start + (ofs & mask));
+    stripe_minmax[0][i] = stripe_min;
+    min = MIN(min, stripe_min);
   }
+  idxvec->min = min;
 
   xt_assign_id_map_int(num_stripes, sorted_stripe_min_pos, 0);
   config->sort_funcs->sort_xt_int_permutation(stripe_minmax[0], num_stripes,
@@ -366,14 +389,18 @@ generate_sorted_vector_from_stripes(const struct Xt_stripe stripes[],
     accum += stripes[i].nstrides;
   }
 
+  Xt_int max = XT_INT_MIN;
   for (size_t i = 0; i < num_stripes; ++i) {
     int sorted_pos = sorted_stripe_min_pos[i];
     sorted_pos_prefix_sum[i] = orig_pos_prefix_sum[sorted_pos];
     Xt_int ofs = (Xt_int)(stripes[sorted_pos].stride
                           * (stripes[sorted_pos].nstrides - 1)),
       mask = Xt_isign_mask(ofs);
-    stripe_minmax[1][i] = (Xt_int)(stripes[sorted_pos].start + (ofs & ~mask));
+    Xt_int stripe_max = (Xt_int)(stripes[sorted_pos].start + (ofs & ~mask));
+    stripe_minmax[1][i] = stripe_max;
+    max = MAX(max, stripe_max);
   }
+  idxvec->max = max;
 
   free(orig_pos_prefix_sum);
 
@@ -475,7 +502,7 @@ static void idxvec_delete(Xt_idxlist obj) {
 }
 
 enum {
-  pack_header_size = 3,
+  pack_header_size = 2,
   unpack_header_size = pack_header_size-1,
 };
 
@@ -496,7 +523,7 @@ void idxvec_pack(Xt_idxlist obj, void *buffer, int buffer_size,
 
   assert(obj);
   Xt_idxvec idxvec = (Xt_idxvec)obj;
-  int header[pack_header_size] = { VECTOR, idxvec->parent.num_indices, (int)idxvec->flags };
+  int header[pack_header_size] = { VECTOR, idxvec->parent.num_indices };
   xt_mpi_call(MPI_Pack(header, pack_header_size, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
   if (idxvec->parent.num_indices != 0)
@@ -510,25 +537,24 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
                             MPI_Comm comm) {
 
   int num_indices;
-  unsigned flags;
-  {
-    int header[unpack_header_size];
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           &header, unpack_header_size, MPI_INT, comm), comm);
-    num_indices = header[0];
-    flags = (unsigned)header[1];
-  }
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         &num_indices, 1, MPI_INT, comm), comm);
   Xt_idxlist idxvec = NULL;
   if (num_indices > 0) {
     struct Xt_vec_alloc vec_alloc = idxvec_alloc(num_indices);
     xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                            vec_alloc.vector, num_indices,
                            Xt_int_dt, comm), comm);
+    struct flags_min_max fmm
+      = get_sort_flags((size_t)num_indices, vec_alloc.vector);
+    unsigned flags = fmm.flags;
     vec_alloc.idxvec->sorted_vector
       = ((flags & sort_mask) == sort_asc || (flags & sort_mask) == sort_idt)
       ? vec_alloc.vector : NULL;
     vec_alloc.idxvec->sorted_vec_positions = NULL;
     vec_alloc.idxvec->flags = flags;
+    vec_alloc.idxvec->max = fmm.max;
+    vec_alloc.idxvec->min = fmm.min;
     idxvec = (Xt_idxlist)vec_alloc.idxvec;
   } else {
     Xt_abort(comm, "error: implementation generated empty vector!\n",
@@ -628,6 +654,8 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     inter_vector->sorted_vector = inter_vector->vector;
     inter_vector->sorted_vec_positions = NULL;
     inter_vector->flags = sort_asc;
+    inter_vector->min = inter_vector->vector[0];
+    inter_vector->max = inter_vector->vector[num_indices_inter-1];
   } else {
     free(inter_vector);
     inter_vector = (Xt_idxvec)xt_idxempty_new();
@@ -1048,15 +1076,7 @@ static Xt_int
 idxvec_get_min_index(Xt_idxlist idxlist) {
 
   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
-
-#ifndef NDEBUG
-  if (!idxvec_obj->parent.num_indices)
-    die("idxvec_get_min_index: empty index vector");
-#endif
-  struct Xt_config_ sort_config = xt_default_config;
-  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
-  /* fixme: find min and max in different way if nosort is active*/
-  return get_sorted_vector(idxvec_obj, &sort_config)[0];
+  return idxvec_obj->min;
 }
 
 static Xt_int
@@ -1064,16 +1084,7 @@ idxvec_get_max_index(Xt_idxlist idxlist) {
 
   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
 
-#ifndef NDEBUG
-  if (!idxvec_obj->parent.num_indices)
-    die("idxvec_get_max_index: empty index vector");
-#endif
-  /* fixme: find min and max in different way if nosort is active*/
-  struct Xt_config_ sort_config = xt_default_config;
-  XT_CONFIG_UNSET_FORCE_NOSORT(&sort_config);
-  const Xt_int *sorted_vector
-    = get_sorted_vector(idxvec_obj, &sort_config);
-  return sorted_vector[idxvec_obj->parent.num_indices-1];
+  return idxvec_obj->max;
 }
 
 static int
