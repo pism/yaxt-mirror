@@ -201,7 +201,7 @@ struct Xt_config_ xt_default_config = {
   .idxv_cnv_size = CHEAP_VECTOR_SIZE,
   .sort_funcs = &sort_algo_table[XT_QUICKSORT].func,
   .xmdd_bucket_gen = &Xt_xmdd_cycl_stripe_bucket_gen_desc,
-  .flags = 0U,
+  .flags = 2U << xt_force_dist_dir_striping_bit_ofs,
 };
 
 
@@ -358,6 +358,22 @@ xt_config_set_redist_mthread_mode(Xt_config config, int mode)
 #endif
   config->flags = (config->flags & ~(uint32_t)xt_mthread_mode_mask)
     | ((uint32_t)mode << xt_mthread_mode_bit_ofs);
+}
+
+void
+xt_config_set_dist_dir_stripe_alignment(Xt_config config, int use_stripe_alignment)
+{
+  if (use_stripe_alignment < 0 || use_stripe_alignment > 2)
+    Xt_abort(Xt_default_comm,
+             "error: invalid value passed to "
+             "xt_config_set_dist_dir_stripe_alignment.\n", filename, __LINE__);
+  XT_CONFIG_SET_DIST_DIR_STRIPING(config, use_stripe_alignment);
+}
+
+int
+xt_config_get_dist_dir_stripe_alignment(Xt_config config)
+{
+  return XT_CONFIG_GET_DIST_DIR_STRIPING(config);
 }
 
 /**
@@ -535,6 +551,37 @@ dont_set_mt_mode:;
     xt_config_set_sort_algorithm_by_id(&xt_default_config, (int)v);
   }
 dont_set_sort_algorithm:;
+
+  config_env = getenv("XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT");
+  if (config_env) {
+    char *endptr;
+    long v;
+    errno = 0;
+    if (!strcmp(config_env, "auto")) {
+      v = 2;
+      endptr = (char *)config_env + 4;
+    } else if (!strcmp(config_env, "one_by_one")) {
+      v = 0;
+      endptr = (char *)config_env + 10;
+    } else if (!strcmp(config_env, "always")) {
+      v = 1;
+      endptr = (char *)config_env + 6;
+    } else
+      v = strtol(config_env, &endptr, 0);
+    if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+        || (errno != 0 && v == 0)) {
+      perror("failed to parse value of "
+             "XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT environment variable");
+    } else if (endptr == config_env) {
+      fputs("malformed value of XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT\n"
+            " environment variable, no digits or symbolic constant found\n",
+            stderr);
+    } else if (v < 0 || v > 2) {
+      fprintf(stderr, "value of XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT"
+              " environment variable (%ld) out of range [0,2]\n", v);
+    } else
+      xt_config_set_dist_dir_stripe_alignment(&xt_default_config, (int)v);
+  }
 }
 
 /*

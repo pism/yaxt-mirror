@@ -641,15 +641,19 @@ xt_xmap_dist_dir_intracomm_custom_new(
   struct dd_result ddr
     = exchange_idxlists(src_idxlist, dst_idxlist, tag_offset, newcomm, config);
 
+  int stripify = XT_CONFIG_GET_DIST_DIR_STRIPING(config);
+  if (stripify == 2)
+    stripify = ddr.stripify;
   Xt_xmap (*xmap_new)(int num_src_intersections,
                       const struct Xt_com_list *src_com,
                       int num_dst_intersections,
                       const struct Xt_com_list *dst_com,
                       Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
                       MPI_Comm comm)
-    = ddr.stripify
+    = stripify
     ? xt_xmap_intersection_ext_new
     : xt_xmap_intersection_new;
+
 
   Xt_xmap xmap
     = xmap_new(ddr.dist_dirs.src->num_entries, ddr.dist_dirs.src->entries,

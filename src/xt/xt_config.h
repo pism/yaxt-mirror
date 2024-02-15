@@ -227,6 +227,36 @@ void
 xt_config_set_xmdd_bucket_gen(Xt_config config,
                               Xt_xmdd_bucket_gen bucket_gen_iface);
 
+/**
+ * Set distributed directory stripe alignment parameter.
+ *
+ * @param[in,out]   config configuration object to modify
+ * @param           use_stripe_alignment
+ *                        0: detect element positions one by one,
+ *                        1: align full stripes to form position extents
+ *                        2: automatically choose element of stripe alignment
+ *
+ * When set to 1, the computations in the distributed directory-based
+ * constructor can be much more expensive if stripes are very short.
+ * When set to 0, use very simple algorithm that positions each
+ * element individually but will use memory proportional to the local
+ * index list sizes.
+ *
+ * By default the distributed directory switches automatically to
+ * stripe alignment if it appears profitable, which might be untrue if
+ * the number of resulting stripes/extents is rather high.
+ *
+ */
+void
+xt_config_set_dist_dir_stripe_alignment(Xt_config config, int use_stripe_alignment);
+
+/**
+ * Get distributed directory stripe alignment parameter.
+ * @param[in]   config configuration object to query
+ */
+int
+xt_config_get_dist_dir_stripe_alignment(Xt_config config);
+
 
 #endif
 
