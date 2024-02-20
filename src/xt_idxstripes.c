@@ -1502,6 +1502,7 @@ bsearch_stripes_sort(size_t n,
   return a[right].range.min <= min_key ? right : n;
 }
 
+
 static void
 find_candidates(struct Xt_stripe query,
                 const struct Xt_stripes_lookup *restrict db,
@@ -1542,11 +1543,22 @@ find_candidates(struct Xt_stripe query,
     {
       num_candidates = 0;
       size_t min_candidate = start_pos;
+      const struct Xt_stripe *stripes = db->stripes;
+      Xt_int query_start = query.start, query_stride = XT_INT_ABS(query.stride);
+#ifdef XT_USE_FAST_DIVISIBLE_TEST
+      struct xt_fast_div_coeff stride_div_test_coeff;
+      stride_div_test_coeff = get_fast_div_coeff((Xt_uint)query_stride);
+#endif
       for (size_t i = end_pos - 1; i != SIZE_MAX; --i)
       {
         size_t predicate
           = ((db_stripes_sort[i].range.min <= query_minmax.max)
              & (db_stripes_sort[i].range.max >= query_minmax.min));
+        size_t pos = (size_t)db_stripes_sort[i].position;
+        predicate
+          &= (XT_INT_ABS(stripes[pos].stride) != query_stride
+              || is_divisible(query_stride, stride_div_test_coeff,
+                              (Xt_int)(query_start - stripes[pos].start)));
         num_candidates += predicate;
         size_t predicate_mask = predicate - 1;
         min_candidate = (min_candidate & predicate_mask)
@@ -1563,9 +1575,16 @@ find_candidates(struct Xt_stripe query,
       int *restrict candidates_vec = candidates->vec;
       size_t j = 0;
       for (size_t i = min_candidate; i < end_pos; ++i) {
-        candidates_vec[j] = db_stripes_sort[i].position;
-        j += ((size_t)(db_stripes_sort[i].range.min <= query_minmax.max)
-              & (size_t)(db_stripes_sort[i].range.max >= query_minmax.min));
+        size_t predicate
+          = ((db_stripes_sort[i].range.min <= query_minmax.max)
+             & (db_stripes_sort[i].range.max >= query_minmax.min));
+        size_t pos = (size_t)db_stripes_sort[i].position;
+        predicate
+          &= (XT_INT_ABS(stripes[pos].stride) != query_stride
+              || is_divisible(query_stride, stride_div_test_coeff,
+                              (Xt_int)(query_start - stripes[pos].start)));
+        candidates_vec[j] = (int)pos;
+        j += predicate;
       }
       assert(j == num_candidates);
     }

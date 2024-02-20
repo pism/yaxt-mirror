@@ -50,6 +50,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <limits.h>
 
 #if HAVE_DECL___LZCNT || HAVE_DECL___LZCNT64 || HAVE_DECL___LZCNT16
@@ -200,6 +201,21 @@ xinlz(Xt_uint v)
 }
 #endif
 
+/* return number of trailing zeroes in an Xt_uint */
+#ifdef XT_INT_CTZ
+#define xintz(v) XT_INT_CTZ(v)
+#else
+static inline int
+xintz(Xt_uint v)
+{
+  Xt_uint lc = (Xt_uint)((v ^ (v - 1)) >> 1);
+  enum {
+    xt_int_bits = sizeof (Xt_int) * CHAR_BIT,
+  };
+  return lc ? xt_int_bits - xinlz(lc) : 0;
+}
+#endif
+
 #ifdef HAVE_ASM_BSR
 static inline size_t
 next_2_pow(size_t v)
@@ -264,6 +280,122 @@ next_2_pow(size_t v)
 
 #endif
 
+// For signed integers, a similar method follows.
+//
+// Given c > 1 and odd, compute m such that (c * m) mod 2^n == 1
+// Then if c divides x (x%c ==0), the quotient is given by q = x/c == x*m mod 2^n
+//
+// x can range from ⎡-2^(n-1)/c⎤ * c, ... -c, 0, c, ...  ⎣(2^(n-1) - 1)/c⎦ * c
+// Thus, x*m mod 2^n is ⎡-2^(n-1)/c⎤, ... -2, -1, 0, 1, 2, ... ⎣(2^(n-1) - 1)/c⎦
+//
+// So, x is a multiple of c if and only if:
+// ⎡-2^(n-1)/c⎤ <= x*m mod 2^n <= ⎣(2^(n-1) - 1)/c⎦
+//
+// Since c > 1 and odd, this can be simplified by
+// ⎡-2^(n-1)/c⎤ == ⎡(-2^(n-1) + 1)/c⎤ == -⎣(2^(n-1) - 1)/c⎦
+//
+// -⎣(2^(n-1) - 1)/c⎦ <= x*m mod 2^n <= ⎣(2^(n-1) - 1)/c⎦
+//
+// To extend this to even integers, consider c = d0 * 2^k where d0 is odd.
+// We can test whether x is divisible by both d0 and 2^k.
+//
+// Let m be such that (d0 * m) mod 2^n == 1.
+// Let q = x*m mod 2^n. Then c divides x if:
+//
+// -⎣(2^(n-1) - 1)/d0⎦ <= q <= ⎣(2^(n-1) - 1)/d0⎦ and q ends in at least k 0-bits
+//
+// To transform this to a single comparison, we use the following theorem (ZRS in Hacker's Delight).
+//
+// For a >= 0 the following conditions are equivalent:
+// 1) -a <= x <= a and x ends in at least k 0-bits
+// 2) RotRight(x+a', k) <= ⎣2a'/2^k⎦
+//
+// Where a' = a & -2^k (a with its right k bits set to zero)
+//
+// To see that 1 & 2 are equivalent, note that -a <= x <= a is equivalent to
+// -a' <= x <= a' if and only if x ends in at least k 0-bits.  Adding -a' to each side gives,
+// 0 <= x + a' <= 2a' and x + a' ends in at least k 0-bits if and only if x does since a' has
+// k 0-bits by definition.  We can use theorem ZRU above with x -> x + a' and a -> 2a' giving 1) == 2).
+//
+// Let m be such that (d0 * m) mod 2^n == 1.
+// Let q = x*m mod 2^n.
+// Let a' = ⎣(2^(n-1) - 1)/d0⎦ & -2^k
+//
+// Then the divisibility test is:
+//
+// RotRight(q+a', k) <= ⎣2a'/2^k⎦
+//
+// Note that the calculation is performed using unsigned integers.
+// Since a' can have n-1 bits, 2a' may have n bits and there is no
+// risk of overflow.
+
+#if (defined __ICC && defined __OPTIMIZE__)     \
+  || (defined __GNUC__ && defined __OPTIMIZE__) \
+  || (defined __PGI) \
+  || defined XT_USE_FAST_DIVISIBLE_TEST
+#undef XT_USE_FAST_DIVISIBLE_TEST
+#define XT_USE_FAST_DIVISIBLE_TEST
+
+struct xt_fast_div_coeff {
+  Xt_uint bs;  // trailingZeros(c)
+  Xt_uint minv; // minv * (c>>bs) mod 2^n == 1 multiplicative inverse of
+                // odd portion modulo 2^n
+  Xt_uint a;    // ⎣(2^(n-1) - 1)/ (c>>bs)⎦ & -(1<<bs) additive constant
+  Xt_uint max;  // ⎣(2 a) / (1<<bs)⎦ max value to for divisibility
+};
+
+static inline struct xt_fast_div_coeff
+get_fast_div_coeff(Xt_uint d)
+{
+  assert(d > 0);
+  // the initial values work for d == 1
+  struct xt_fast_div_coeff coeff = { .bs = 0, .minv = 0, .a = 0, .max = 0 };
+  if (d > 1) {
+    int bs = xintz(d);
+    Xt_uint d0 = (Xt_uint)(d >> bs); // the odd portion of the divisor
+
+    Xt_uint mask = (Xt_uint)(~(Xt_uint)0);
+
+    // Calculate the multiplicative inverse via Newton's method.
+    // Quadratic convergence doubles the number of correct bits per iteration.
+    Xt_uint m = d0;            // initial guess correct to 3-bits d0*d0 mod 8 == 1
+    m = (Xt_uint)(m * (2 - m*d0)); // 6-bits
+    m = (Xt_uint)(m * (2 - m*d0)); // 12-bits
+    m = (Xt_uint)(m * (2 - m*d0)); // 24-bits
+#if SIZEOF_XT_INT * CHAR_BIT > 24
+    m = (Xt_uint)(m * (2 - m*d0)); // 48-bits
+#if SIZEOF_XT_INT * CHAR_BIT > 48
+    m = (Xt_uint)(m * (2 - m*d0)); // 96-bits >= 64-bits
+#endif
+#endif
+    Xt_uint a = (Xt_uint)(((mask >> 1) / d0) & (Xt_uint)(-(1 << bs)));
+    Xt_uint max = (Xt_uint)((2 * a) >> bs);
+
+    coeff.bs = (Xt_uint)bs;
+    coeff.minv = m;
+    coeff.a = a;
+    coeff.max = max;
+  }
+  return coeff;
+}
+
+static inline int
+fast_divisible(struct xt_fast_div_coeff coeff, Xt_int i)
+{
+  enum {
+    xt_int_bits = sizeof (Xt_int) * CHAR_BIT,
+  };
+  Xt_uint k = coeff.bs;
+  Xt_uint mul = (Xt_uint)((Xt_uint)i * coeff.minv + coeff.a);
+  Xt_uint rot = (Xt_uint)((mul >> k)
+                          | (mul<<((xt_int_bits-k)&(xt_int_bits-1))));
+  return rot <= coeff.max;
+}
+
+#define is_divisible(divisor, coeff, dividend) fast_divisible(coeff, dividend)
+#else
+#define is_divisible(divisor, coeff, dividend) (divisor==0 || (dividend)%(divisor)==0)
+#endif
 
 #endif
 
