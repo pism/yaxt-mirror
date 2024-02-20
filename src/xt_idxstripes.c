@@ -1453,12 +1453,13 @@ create_stripes_lookup(struct Xt_stripes_lookup *restrict db,
   size_t num_db_stripes = (size_t)idxstripes->num_stripes;
   /* using num_db_stripes + 1 ensures re-aligning is always possible */
   int *restrict db_stripes_nstrides_psum
-    = xmalloc((num_db_stripes + 1)
-              * sizeof (db->stripes_nstrides_psum[0]));
-  db_stripes_nstrides_psum[0] = 0;
+    = xmalloc((num_db_stripes + 1)*sizeof (int));
+  int accum = db_stripes_nstrides_psum[0] = 0;
   for (size_t j = 0; j < num_db_stripes; ++j) {
     db_stripes_nstrides_psum[j + 1]
       = db_stripes_nstrides_psum[j] + stripes[j].nstrides;
+    accum += stripes[j].nstrides;
+    db_stripes_nstrides_psum[j + 1] = accum;
   }
   db->stripes_sort = idxstripes->stripes_sort;
   db->num_stripes = num_db_stripes;
