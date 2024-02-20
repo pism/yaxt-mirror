@@ -457,6 +457,29 @@ xt_idxlist_get_uid(Xt_idxlist idxlist)
   return idxlist->uid;
 }
 
+bool
+xt_idxlist_is_stripe_conversion_profitable_(Xt_idxlist idxlist,
+                                            Xt_config config)
+{
+  bool do_convert = false;
+  int pack_code = idxlist->vtable->idxlist_pack_code;
+  if (pack_code == VECTOR || pack_code == COLLECTION) {
+    int num_indices = xt_idxlist_get_num_indices(idxlist),
+      num_stripes = xt_idxlist_get_num_index_stripes(idxlist);
+    do_convert = num_indices > config->idxv_cnv_size
+      && ((size_t)num_indices * sizeof (Xt_int)
+          > (size_t)num_stripes * sizeof (struct Xt_stripe));
+  }
+  return do_convert;
+}
+
+int
+xt_idxlist_is_stripe_conversion_profitable(Xt_idxlist idxlist, Xt_config config)
+{
+  return xt_idxlist_is_stripe_conversion_profitable_(idxlist, config);
+}
+
+
 /*
  * Local Variables:
  * c-basic-offset: 2

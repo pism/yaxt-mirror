@@ -444,6 +444,18 @@ void xt_idxlist_get_bounding_box(Xt_idxlist idxlist, unsigned ndim,
  */
 Xt_uid xt_idxlist_get_uid(Xt_idxlist idxlist);
 
+/**
+ * Heuristic to tell if stripe conversion is profitable for an index
+ * list.
+ *
+ * @param[in] idxlist index list to query for conversion potential
+ * @param[in] config custom configuration parameters
+ * @return non-zero if conversion is assumed profitable, 0 if not
+ */
+int
+xt_idxlist_is_stripe_conversion_profitable(Xt_idxlist idxlist, Xt_config config);
+
+
 #endif // XT_IDXLIST_H
 
 /*

@@ -51,6 +51,8 @@
 #include <config.h>
 #endif
 
+#include <stdbool.h>
+
 #include "core/ppm_visibility.h"
 #include "xt/xt_config.h"
 #include "xt/xt_core.h"
@@ -125,6 +127,10 @@ xt_default_isect(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
 enum {
   CHEAP_VECTOR_SIZE = 128,
 };
+
+PPM_DSO_INTERNAL bool
+xt_idxlist_is_stripe_conversion_profitable_(Xt_idxlist idxlist,
+                                            Xt_config config);
 
 #endif
 /*

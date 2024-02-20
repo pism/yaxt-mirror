@@ -98,21 +98,6 @@ const struct Xt_xmdd_bucket_gen_ Xt_xmdd_cycl_stripe_bucket_gen_desc
 };
 
 
-static inline bool
-is_list_stripe_conversion_profitable(Xt_idxlist idxlist, Xt_config config)
-{
-  bool do_convert = false;
-  int pack_code = idxlist->vtable->idxlist_pack_code;
-  if (pack_code == VECTOR || pack_code == COLLECTION) {
-    int num_indices = xt_idxlist_get_num_indices(idxlist),
-      num_stripes = xt_idxlist_get_num_index_stripes(idxlist);
-    do_convert = num_indices > config->idxv_cnv_size
-      && ((size_t)num_indices * sizeof (Xt_int)
-          > (size_t)num_stripes * sizeof (struct Xt_stripe));
-  }
-  return do_convert;
-}
-
 static inline Xt_int
 get_intracomm_dist_dir_global_interval_size(
   Xt_idxlist src, Xt_idxlist dst,
@@ -123,8 +108,8 @@ get_intracomm_dist_dir_global_interval_size(
 
   unsigned num_indices_src = (unsigned)xt_idxlist_get_num_indices(src);
   local_vals[0] = num_indices_src;
-  local_vals[1] = is_list_stripe_conversion_profitable(src, config)
-    || is_list_stripe_conversion_profitable(dst, config);
+  local_vals[1] = xt_idxlist_is_stripe_conversion_profitable_(src, config)
+    || xt_idxlist_is_stripe_conversion_profitable_(dst, config);
 
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums, 2,
                             MPI_UNSIGNED_LONG_LONG, MPI_SUM, comm), comm);
