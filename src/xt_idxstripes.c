@@ -1442,6 +1442,7 @@ struct Xt_stripes_lookup {
   const struct Xt_stripe *stripes;
   const struct Xt_stripes_sort *stripes_sort;
   int *stripes_nstrides_psum;
+  size_t *stripe_candidate_bitmask;
   bool stripes_do_overlap;
 };
 
@@ -1451,20 +1452,30 @@ create_stripes_lookup(struct Xt_stripes_lookup *restrict db,
   const struct Xt_stripe *restrict stripes;
   db->stripes = stripes = idxstripes->stripes;
   size_t num_db_stripes = (size_t)idxstripes->num_stripes;
+  bool stripes_do_overlap = idxstripes->flags & stripes_do_overlap_mask;
+  enum {
+    size_t_bits = sizeof (size_t) * CHAR_BIT,
+  };
+  size_t overlap_handling = stripes_do_overlap
+    ? ((num_db_stripes + size_t_bits - 1)/size_t_bits+1) * sizeof (size_t) : 0,
+    align_adjust = !stripes_do_overlap ? (num_db_stripes + 1) * sizeof (int):
+    ((num_db_stripes + 1)*sizeof (int)+sizeof (size_t)-1)
+    / sizeof (size_t) * sizeof (size_t);
   /* using num_db_stripes + 1 ensures re-aligning is always possible */
   int *restrict db_stripes_nstrides_psum
-    = xmalloc((num_db_stripes + 1)*sizeof (int));
+    = xmalloc(align_adjust + overlap_handling);
+  if (stripes_do_overlap)
+    db->stripe_candidate_bitmask
+      = (void *)((unsigned char *)db_stripes_nstrides_psum+align_adjust);
   int accum = db_stripes_nstrides_psum[0] = 0;
   for (size_t j = 0; j < num_db_stripes; ++j) {
-    db_stripes_nstrides_psum[j + 1]
-      = db_stripes_nstrides_psum[j] + stripes[j].nstrides;
     accum += stripes[j].nstrides;
     db_stripes_nstrides_psum[j + 1] = accum;
   }
   db->stripes_sort = idxstripes->stripes_sort;
   db->num_stripes = num_db_stripes;
   db->stripes_nstrides_psum = db_stripes_nstrides_psum;
-  db->stripes_do_overlap = idxstripes->flags & stripes_do_overlap_mask;
+  db->stripes_do_overlap = stripes_do_overlap;
 }
 
 static inline void
@@ -1549,7 +1560,55 @@ find_candidates(struct Xt_stripe query,
       struct xt_fast_div_coeff stride_div_test_coeff;
       stride_div_test_coeff = get_fast_div_coeff((Xt_uint)query_stride);
 #endif
-      for (size_t i = end_pos - 1; i != SIZE_MAX; --i)
+      size_t *bm_store = db->stripe_candidate_bitmask;
+      size_t i = end_pos - 1;
+      enum {
+        size_t_bits = sizeof (size_t) * CHAR_BIT,
+      };
+      size_t pred_accum = 0;
+      if (i >= size_t_bits) {
+        if ((i+1) % size_t_bits) {
+          for (; (i+1) % size_t_bits; --i)
+          {
+            size_t predicate
+              = ((db_stripes_sort[i].range.min <= query_minmax.max)
+                 & (db_stripes_sort[i].range.max >= query_minmax.min));
+            size_t pos = (size_t)db_stripes_sort[i].position;
+            predicate
+              &= (XT_INT_ABS(stripes[pos].stride) != query_stride
+                  || is_divisible(query_stride, stride_div_test_coeff,
+                                  (Xt_int)(query_start - stripes[pos].start)));
+            num_candidates += predicate;
+            size_t predicate_mask = predicate - 1;
+            min_candidate = (min_candidate & predicate_mask)
+              | (i & ~predicate_mask);
+            pred_accum = (pred_accum << 1) | predicate;
+          }
+          bm_store[(i+1)/size_t_bits] = pred_accum;
+          pred_accum = 0;
+        }
+        assert(i % size_t_bits == size_t_bits - 1);
+        for (; i >= size_t_bits;) {
+          for (size_t j = 0; j < size_t_bits; ++j, --i) {
+            size_t predicate
+              = ((db_stripes_sort[i].range.min <= query_minmax.max)
+                 & (db_stripes_sort[i].range.max >= query_minmax.min));
+            size_t pos = (size_t)db_stripes_sort[i].position;
+            predicate
+              &= (XT_INT_ABS(stripes[pos].stride) != query_stride
+                  || is_divisible(query_stride, stride_div_test_coeff,
+                                  (Xt_int)(query_start - stripes[pos].start)));
+            num_candidates += predicate;
+            size_t predicate_mask = predicate - 1;
+            min_candidate = (min_candidate & predicate_mask)
+              | (i & ~predicate_mask);
+            pred_accum = (pred_accum << 1) | predicate;
+          }
+          bm_store[(i+1)/size_t_bits] = pred_accum;
+          pred_accum = 0;
+        }
+      }
+      for (; i != SIZE_MAX; --i)
       {
         size_t predicate
           = ((db_stripes_sort[i].range.min <= query_minmax.max)
@@ -1563,7 +1622,9 @@ find_candidates(struct Xt_stripe query,
         size_t predicate_mask = predicate - 1;
         min_candidate = (min_candidate & predicate_mask)
           | (i & ~predicate_mask);
+        pred_accum = (pred_accum << 1) | predicate;
       }
+      bm_store[0] = pred_accum;
       if (candidates->size < num_candidates + 1)
       {
         candidates->vec = xrealloc(candidates->vec,
@@ -1573,18 +1634,20 @@ find_candidates(struct Xt_stripe query,
       }
       candidates->num = num_candidates;
       int *restrict candidates_vec = candidates->vec;
-      size_t j = 0;
-      for (size_t i = min_candidate; i < end_pos; ++i) {
-        size_t predicate
-          = ((db_stripes_sort[i].range.min <= query_minmax.max)
-             & (db_stripes_sort[i].range.max >= query_minmax.min));
-        size_t pos = (size_t)db_stripes_sort[i].position;
-        predicate
-          &= (XT_INT_ABS(stripes[pos].stride) != query_stride
-              || is_divisible(query_stride, stride_div_test_coeff,
-                              (Xt_int)(query_start - stripes[pos].start)));
-        candidates_vec[j] = (int)pos;
-        j += predicate;
+      size_t j = 0,
+        next_bm_mult = (min_candidate + size_t_bits - 1)/size_t_bits*size_t_bits,
+        predicates = (bm_store[min_candidate/size_t_bits]
+                      >> (min_candidate % size_t_bits));
+      for (i = min_candidate; i < end_pos; next_bm_mult+=size_t_bits) {
+        size_t ulim = MIN(end_pos, next_bm_mult);
+        for (; i < ulim; ++i) {
+          size_t predicate = predicates&1;
+          predicates >>= 1;
+          if (predicate)
+            candidates_vec[j] = db_stripes_sort[i].position;
+          j += predicate;
+        }
+        predicates = bm_store[i/size_t_bits];
       }
       assert(j == num_candidates);
     }
