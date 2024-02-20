@@ -254,6 +254,16 @@ AC_CACHE_CHECK([whether __builtin_clzll is declared],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  int nlz = __builtin_clzll(56ULL)])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[yes])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_clzll],[no])])])
+AC_CACHE_CHECK([whether __builtin_ctz is declared],
+  [acx_cv_have_decl___builtin_ctz],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  int nlz = __builtin_ctz(56U)])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_ctz],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_ctz],[no])])])
+AC_CACHE_CHECK([whether __builtin_ctzll is declared],
+  [acx_cv_have_decl___builtin_ctzll],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  int nlz = __builtin_ctzll(56ULL)])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_ctzll],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_ctzll],[no])])])
 dnl
 AC_CACHE_CHECK([whether __lzcnt16 is available],
   [acx_cv_have_decl___lzcnt16],
@@ -532,7 +542,7 @@ char b[($XT_INT)((-($XT_INT)-0.5)+1.5)]]])],,
 dnl expand setting of variables to describe variable type
 dnl vartype_setq(TYPE_NAME, TYPE_C_TYPE, FC_KIND, TYPE_MPI_DT,
 dnl              TYPE_VAL_MAX, TYPE_VAL_MIN,
-dnl              TYPE_C_PRINTF_FMT, TYPE_C_ABS, TYPE_C_CLZ)
+dnl              TYPE_C_PRINTF_FMT, TYPE_C_ABS, TYPE_C_CLZ, TYPE_C_CTZ)
 m4_define([vartype_setq],[$1][_MPIDT=$4
      AC_CHECK_SIZEOF([$2])
      $1][_FC_KIND=$3
@@ -559,7 +569,14 @@ dnl get numeric Fortran kind of Xt_int for preprocessor tests
             [m4_substr(clz_func,[17])],
             ["`expr "x]clz_func[" : 'x.\{17\}\(.*\)'`"])[@{:@@{:@m4_if([$2],
             [short], [@{:@unsigned short@:}@])v@:}@@:}@@:}@"])
-])])dnl
+])
+     m4_foreach([ctz_func],[$10],
+       [AS_VAR_IF(ctz_func,[yes],
+          [$1][_ctz="@{:@]AS_LITERAL_WORD_IF([ctz_func],
+            [m4_substr(ctz_func,[17])],
+            ["`expr "x]ctz_func[" : 'x.\{17\}\(.*\)'`"])[@{:@@{:@m4_if([$2],
+            [short], [@{:@unsigned short@:}@])v@:}@@:}@@:}@"])])
+])dnl
 
 dnl
 dnl test if MPI_INTEGER[248] are available
@@ -596,7 +613,8 @@ m4_foreach([substtype],[[XT_INT]],
      [vartype_setq(substtype,[int],[c_int],[MPI_INT],
                    [INT_MAX],["(-INT_MAX)"],["\"d\""],['(abs((v)))'],
                    [[acx_cv_have_decl___builtin_clz],
-                    [acx_cv_have_decl___lzcnt]])],
+                    [acx_cv_have_decl___lzcnt]],
+                   [[acx_cv_have_decl___builtin_ctz]])],
      [long],
      [AS_IF([test $ac_cv_sizeof_long -eq $ac_cv_sizeof_long_long],
         [acx_nvidia_intrinsic_presence=acx_cv_have_decl___lzcnt64],
@@ -605,13 +623,15 @@ m4_foreach([substtype],[[XT_INT]],
       vartype_setq(substtype,[long],[c_long],[MPI_LONG],
                    [LONG_MAX],["(-LONG_MAX)"],["\"ld\""],['(labs((v)))'],
                    [[acx_cv_have_decl___builtin_clzl],
-                    [$acx_nvidia_intrinsic_presence]])],
+                    [$acx_nvidia_intrinsic_presence]],
+                   [[acx_cv_have_decl___builtin_ctzl]])],
      [short],
      [vartype_setq(substtype,[short],[c_short],[MPI_SHORT],
                    [SHRT_MAX],["(-SHRT_MAX)"],["\"hd\""],
                    ['((short)abs((v)))'],
                    [[acx_cv_have_decl___builtin_clz],
-                    [acx_cv_have_decl___lzcnt16]])
+                    [acx_cv_have_decl___lzcnt16]],
+                   [[acx_cv_have_decl___builtin_ctz]])
       AS_IF([test x"$acx_cv_have_decl___builtin_clz" = xyes \
              && test $ac_cv_sizeof_int != $ac_cv_sizeof_short],
         [AS_IF([expr $ac_cv_sizeof_int = $ac_cv_sizeof_short \* 2 >/dev/null],
@@ -621,7 +641,8 @@ m4_foreach([substtype],[[XT_INT]],
      [vartype_setq(substtype,[long long],[c_long_long],[MPI_LONG_LONG],
                    [LLONG_MAX],["(-LLONG_MAX)"],["\"lld\""],['(llabs((v)))'],
                    [[acx_cv_have_decl___builtin_clzll],
-                    [acx_cv_have_decl___lzcnt64]])],
+                    [acx_cv_have_decl___lzcnt64]],
+                   [[acx_cv_have_decl___builtin_ctzll]])],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    AS_IF([eval eval test x\\\"\\\${HAVE_FC_MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[+set}\\\" = xset],
      [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],
@@ -645,6 +666,9 @@ m4_foreach([substtype],[[XT_INT]],
    AS_IF([test -n "$]substtype[_clz"],
      [AC_DEFINE_UNQUOTED(substtype[_CLZ(v)],[$]substtype[_clz],
        [return number of leading zero-bits in v])])
+   AS_IF([test -n "$]substtype[_ctz"],
+     [AC_DEFINE_UNQUOTED(substtype[_CTZ(v)],[$]substtype[_ctz],
+       [return number of trailing zero-bits in v])])
   ])
 
 AS_CASE([$XT_INT],
