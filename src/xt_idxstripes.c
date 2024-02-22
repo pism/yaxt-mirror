@@ -119,7 +119,8 @@ idxstripes_get_pos_exts_of_index_stripes(
   Xt_idxlist idxlist,
   int num_stripes, const struct Xt_stripe stripes[num_stripes],
   int *num_ext, struct Xt_pos_ext **pos_ext,
-  int single_match_only);
+  int single_match_only,
+  Xt_config config);
 
 static int
 idxstripes_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
@@ -544,7 +545,8 @@ compute_intersection_fallback(Xt_idxstripes idxstripes_src,
       &idxstripes_src->parent,
       idxstripes_dst->num_stripes,
       idxstripes_dst->stripes,
-      &num_ext, &pos_exts, false);
+      &num_ext, &pos_exts, false,
+      config);
   (void)num_unmatched;
   if (num_ext > 0) {
     /* 1. count index stripes correponding to pos_exts */
@@ -1517,7 +1519,8 @@ bsearch_stripes_sort(size_t n,
 static void
 find_candidates(struct Xt_stripe query,
                 const struct Xt_stripes_lookup *restrict db,
-                struct int_vec *candidates)
+                struct int_vec *candidates,
+                Xt_config config)
 {
   struct Xt_minmax query_minmax = xt_stripe2minmax(query);
   size_t num_db_stripes = db->num_stripes;
@@ -1651,7 +1654,7 @@ find_candidates(struct Xt_stripe query,
       }
       assert(j == num_candidates);
     }
-    xt_default_config.sort_funcs->sort_int(candidates->vec, num_candidates);
+    config->sort_funcs->sort_int(candidates->vec, num_candidates);
   } else
     candidates->num = 0;
 }
@@ -1703,7 +1706,8 @@ idxstripes_get_pos_exts_of_index_stripes(
   const struct Xt_stripe stripes[num_stripes],
   int *num_ext,
   struct Xt_pos_ext **pos_exts,
-  int single_match_only)
+  int single_match_only,
+  Xt_config config)
 {
   size_t unmatched = 0;
   struct Xt_pos_ext_vec result;
@@ -1733,7 +1737,7 @@ idxstripes_get_pos_exts_of_index_stripes(
         ? query.nstrides : 1;
       query.stride = (Xt_int)((query.stride != 0 && query.nstrides != 1)
                               ? query.stride : (Xt_int)1);
-      find_candidates(query, &stripes_db, &candidates);
+      find_candidates(query, &stripes_db, &candidates, config);
       do {
         unmatched += idxstripes_get_pos_exts_of_index_stripe(
           query, &stripes_db, &result, &cover, single_match_only != 0,

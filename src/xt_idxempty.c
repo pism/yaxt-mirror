@@ -118,7 +118,8 @@ idxempty_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
                                        const struct Xt_stripe *stripes,
                                        int *num_ext,
                                        struct Xt_pos_ext **pos_ext,
-                                       int single_match_only);
+                                       int single_match_only,
+                                       Xt_config config);
 
 static int
 idxempty_get_positions_of_indices_off(Xt_idxlist idxlist, Xt_int const * indices,
@@ -303,7 +304,8 @@ idxempty_get_pos_exts_of_index_stripes(Xt_idxlist XT_UNUSED(idxlist),
                                        const struct Xt_stripe *stripes,
                                        int *num_ext,
                                        struct Xt_pos_ext **pos_ext,
-                                       int XT_UNUSED(single_match_only))
+                                       int XT_UNUSED(single_match_only),
+                                       Xt_config XT_UNUSED(config))
 {
   *num_ext = 0;
   *pos_ext = NULL;

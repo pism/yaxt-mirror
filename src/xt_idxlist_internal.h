@@ -78,7 +78,8 @@ struct xt_idxlist_vtable {
                                       size_t, int *, int);
    int (*get_pos_exts_of_index_stripes)(Xt_idxlist, int,
                                         const struct Xt_stripe *,
-                                        int *, struct Xt_pos_ext **, int);
+                                        int *, struct Xt_pos_ext **, int,
+                                        Xt_config);
    int (*get_position_of_index_off)(Xt_idxlist, Xt_int, int *, int);
    int (*get_positions_of_indices_off)(Xt_idxlist, Xt_int const *, int,
                                       int *, int *);
@@ -131,6 +132,16 @@ enum {
 PPM_DSO_INTERNAL bool
 xt_idxlist_is_stripe_conversion_profitable_(Xt_idxlist idxlist,
                                             Xt_config config);
+
+PPM_DSO_INTERNAL int
+xt_idxlist_get_pos_exts_of_index_stripes_custom(
+  Xt_idxlist idxlist,
+  int num_stripes,
+  const struct Xt_stripe stripes[num_stripes],
+  int *num_ext,
+  struct Xt_pos_ext **pos_ext,
+  int single_match_only,
+  Xt_config config);
 
 #endif
 /*

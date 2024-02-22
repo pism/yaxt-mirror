@@ -265,10 +265,25 @@ xt_idxlist_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
                                          struct Xt_pos_ext **pos_ext,
                                          int single_match_only)
 {
+  return xt_idxlist_get_pos_exts_of_index_stripes_custom(
+    idxlist, num_stripes, stripes, num_ext, pos_ext, single_match_only,
+    &xt_default_config);
+}
+
+int
+xt_idxlist_get_pos_exts_of_index_stripes_custom(
+  Xt_idxlist idxlist,
+  int num_stripes,
+  const struct Xt_stripe stripes[num_stripes],
+  int *num_ext,
+  struct Xt_pos_ext **pos_ext,
+  int single_match_only,
+  Xt_config config)
+{
   if (idxlist->vtable->get_pos_exts_of_index_stripes)
     return idxlist->vtable->get_pos_exts_of_index_stripes(
       idxlist,
-      num_stripes, stripes, num_ext, pos_ext, single_match_only);
+      num_stripes, stripes, num_ext, pos_ext, single_match_only, config);
   else {
     int num_tmp_stripes;
     struct Xt_stripe *tmp_stripes;
@@ -278,7 +293,7 @@ xt_idxlist_get_pos_exts_of_index_stripes(Xt_idxlist idxlist,
     int retval =
       idxlist_stripes->vtable->get_pos_exts_of_index_stripes(
         idxlist_stripes,
-        num_stripes, stripes, num_ext, pos_ext, single_match_only);
+        num_stripes, stripes, num_ext, pos_ext, single_match_only, config);
     xt_idxlist_delete(idxlist_stripes);
     free(tmp_stripes);
     return retval;
