@@ -492,7 +492,7 @@ exchange_idxlists(Xt_idxlist src_idxlist,
   size_t num_intersections
     = xt_xmap_dist_dir_match_src_dst(bucket_isects.dist_dirs.src,
                                      bucket_isects.dist_dirs.dst,
-                                     &src_dst_intersections);
+                                     &src_dst_intersections, config);
   xt_xmdd_free_dist_dirs(bucket_isects.dist_dirs);
   /* ... and pack the results into a sendable format */
   struct mmsg_buf dd_local, dd_remote;

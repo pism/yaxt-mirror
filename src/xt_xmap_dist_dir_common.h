@@ -123,7 +123,8 @@ xt_xmdd_cmp_isect_dst_rank(const void *a_, const void *b_);
 PPM_DSO_INTERNAL size_t
 xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
                                const struct dist_dir *dst_dist_dir,
-                               struct isect **src_dst_intersections);
+                               struct isect **src_dst_intersections,
+                               Xt_config config);
 
 PPM_DSO_INTERNAL size_t
 xt_xmap_dist_dir_pack_intersections(

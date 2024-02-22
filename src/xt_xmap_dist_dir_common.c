@@ -109,7 +109,8 @@ xt_xmap_dist_dir_send_intersections(
 size_t
 xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
                                const struct dist_dir *dst_dist_dir,
-                               struct isect **src_dst_intersections)
+                               struct isect **src_dst_intersections,
+                               Xt_config config)
 {
   struct isect *src_dst_intersections_ = *src_dst_intersections
     = xmalloc((size_t)src_dist_dir->num_entries
@@ -124,7 +125,8 @@ xt_xmap_dist_dir_match_src_dst(const struct dist_dir *src_dist_dir,
     for (size_t j = 0; j < num_entries_dst; ++j)
     {
       Xt_idxlist intersection
-        = xt_idxlist_get_intersection(entries_src[i].list, entries_dst[j].list);
+        = xt_idxlist_get_intersection_custom(
+          entries_src[i].list, entries_dst[j].list, config);
       if (xt_idxlist_get_num_indices(intersection) > 0) {
         src_dst_intersections_[isect_fill]
           = (struct isect){
