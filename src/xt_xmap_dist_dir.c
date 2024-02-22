@@ -588,7 +588,7 @@ exchange_idxlists(Xt_idxlist src_idxlist,
   struct isect *src_dst_intersections;
   size_t num_intersections
     = xt_xmap_dist_dir_match_src_dst(dds.dist_dirs.src, dds.dist_dirs.dst,
-                                     &src_dst_intersections);
+                                     &src_dst_intersections, config);
   xt_xmdd_free_dist_dirs(dds.dist_dirs);
   /* ... and pack the results into a sendable format */
   int num_send_indices_requests
