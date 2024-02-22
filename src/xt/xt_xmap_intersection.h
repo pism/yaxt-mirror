@@ -92,13 +92,41 @@ xt_xmap_intersection_new(int num_src_intersections,
 
 /**
  * constructor for an exchange map \n
+ * this operation is collective over all processes in comm \n
+ * it uses the provided intersection information to generate the exchange map
+ *
+ * @param[in] num_src_intersections number of source intersections
+ * @param[in] src_com               array containing the source intersections
+ *                                  with the other processes and their rank
+ * @param[in] num_dst_intersections number of destination intersections
+ * @param[in] dst_com               array containing the destination
+ *                                  intersections with the other
+ *                                  processes and their rank
+ * @param[in] src_idxlist           source index list
+ * @param[in] dst_idxlist           destination index list
+ * @param[in] comm                  MPI communicator that contains all processes
+ *                                  that part in the exchange
+ */
+Xt_xmap
+xt_xmap_intersection_custom_new(
+  int num_src_intersections,
+  const struct Xt_com_list src_com[num_src_intersections],
+  int num_dst_intersections,
+  const struct Xt_com_list dst_com[num_dst_intersections],
+  Xt_idxlist src_idxlist,
+  Xt_idxlist dst_idxlist,
+  MPI_Comm comm,
+  Xt_config config);
+
+/**
+ * constructor for an exchange map \n
  * This operation is collective over all processes in comm \n
  * it uses the provided intersection information to generate the
  * exchange map.
  * Internally this function uses ranges to represent index list
  * positions and is therefore conserving space for somewhat
  * contiguous index lists. Depending on the size and shape of
- * intersections this can impact performance drastically..
+ * intersections this can impact performance drastically.
  *
  * @param[in] num_src_intersections number of source intersections
  * @param[in] src_com               array containing the source intersections
@@ -120,6 +148,38 @@ xt_xmap_intersection_ext_new(
   const struct Xt_com_list dst_com[num_dst_intersections],
   Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
   MPI_Comm comm);
+
+/**
+ * constructor for an exchange map \n
+ * This operation is collective over all processes in comm \n
+ * it uses the provided intersection information to generate the
+ * exchange map.
+ * Internally this function uses ranges to represent index list
+ * positions and is therefore conserving space for somewhat
+ * contiguous index lists. Depending on the size and shape of
+ * intersections this can impact performance drastically.
+ *
+ * @param[in] num_src_intersections number of source intersections
+ * @param[in] src_com               array containing the source intersections
+ *                                  with the other processes and their rank
+ * @param[in] num_dst_intersections number of destination intersections
+ * @param[in] dst_com               array containing the destination
+ *                                  intersections with the other
+ *                                  processes and their rank
+ * @param[in] src_idxlist           source index list
+ * @param[in] dst_idxlist           destination index list
+ * @param[in] comm                  MPI communicator that contains all processes
+ *                                  that part in the exchange
+ * @param[in] config                custom parameter object
+ */
+Xt_xmap
+xt_xmap_intersection_ext_custom_new(
+  int num_src_intersections,
+  const struct Xt_com_list src_com[num_src_intersections],
+  int num_dst_intersections,
+  const struct Xt_com_list dst_com[num_dst_intersections],
+  Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+  MPI_Comm comm, Xt_config config);
 
 /**
  * constructor for an exchange map \n

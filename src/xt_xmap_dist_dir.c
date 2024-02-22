@@ -649,16 +649,16 @@ xt_xmap_dist_dir_intracomm_custom_new(
                       int num_dst_intersections,
                       const struct Xt_com_list *dst_com,
                       Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                      MPI_Comm comm)
+                      MPI_Comm comm, Xt_config config)
     = stripify
-    ? xt_xmap_intersection_ext_new
-    : xt_xmap_intersection_new;
+    ? xt_xmap_intersection_ext_custom_new
+    : xt_xmap_intersection_custom_new;
 
 
   Xt_xmap xmap
     = xmap_new(ddr.dist_dirs.src->num_entries, ddr.dist_dirs.src->entries,
                ddr.dist_dirs.dst->num_entries, ddr.dist_dirs.dst->entries,
-               src_idxlist, dst_idxlist, newcomm);
+               src_idxlist, dst_idxlist, newcomm, config);
 
   xt_mpi_comm_smart_dedup(&newcomm, tag_offset);
 

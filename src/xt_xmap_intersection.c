@@ -598,8 +598,24 @@ xt_xmap_intersection_new(int num_src_intersections,
                          const struct Xt_com_list
                          dst_com[num_dst_intersections],
                          Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
-                         MPI_Comm comm) {
+                         MPI_Comm comm)
+{
+  return xt_xmap_intersection_custom_new(
+    num_src_intersections, src_com,
+    num_dst_intersections, dst_com,
+    src_idxlist, dst_idxlist, comm, &xt_default_config);
+}
 
+Xt_xmap
+xt_xmap_intersection_custom_new(
+  int num_src_intersections,
+  const struct Xt_com_list src_com[num_src_intersections],
+  int num_dst_intersections,
+  const struct Xt_com_list dst_com[num_dst_intersections],
+  Xt_idxlist src_idxlist, Xt_idxlist dst_idxlist,
+  MPI_Comm comm,
+  Xt_config XT_UNUSED(config))
+{
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
