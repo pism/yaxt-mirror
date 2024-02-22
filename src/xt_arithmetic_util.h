@@ -258,7 +258,7 @@ next_2_pow(size_t v)
 #if SIZEOF_SIZE_T * CHAR_BIT == 64
   v |= v >> 32;
 #endif
-  v++;
+  return v+1;
 }
 #endif
 #ifdef clzl
