@@ -1488,7 +1488,10 @@ destroy_stripes_lookup(struct Xt_stripes_lookup *restrict db) {
 struct int_vec
 {
   size_t size, num;
-  int *vec;
+  union {
+    int *vec;
+    int e1;
+  } p;
 };
 
 static inline size_t
@@ -1542,14 +1545,20 @@ find_candidates(struct Xt_stripe query,
              && (db_stripes_sort[start_pos - 1].range.max >= query_minmax.min))
         --start_pos;
       num_candidates = end_pos - start_pos;
+      if (candidates->size == 0 && num_candidates == 1) {
+        candidates->p.e1 = db_stripes_sort[start_pos].position;
+        candidates->num = 1;
+        return;
+      }
       if (candidates->size < num_candidates) {
-        candidates->vec = xrealloc(candidates->vec,
-                                   num_candidates
-                                   * sizeof (candidates->vec[0]));
+        int *prevp = (candidates->size == 0) ? NULL : candidates->p.vec;
+        candidates->p.vec = xrealloc(prevp,
+                                     num_candidates
+                                     * sizeof (candidates->p.vec[0]));
         candidates->size = num_candidates;
       }
       candidates->num = num_candidates;
-      int *restrict candidates_vec = candidates->vec;
+      int *restrict candidates_vec = candidates->p.vec;
       for (size_t i = 0; i < num_candidates; ++i)
         candidates_vec[i] = db_stripes_sort[start_pos + i].position;
     }
@@ -1628,15 +1637,20 @@ find_candidates(struct Xt_stripe query,
         pred_accum = (pred_accum << 1) | predicate;
       }
       bm_store[0] = pred_accum;
-      if (candidates->size < num_candidates + 1)
-      {
-        candidates->vec = xrealloc(candidates->vec,
-                                   (num_candidates + 1)
-                                   * sizeof (candidates[0]));
+      if (candidates->size == 0 && num_candidates == 1) {
+        candidates->p.e1 = db_stripes_sort[min_candidate].position;
+        candidates->num = num_candidates;
+        return;
+      }
+      if (candidates->size < num_candidates+1) {
+        int *prevp = (candidates->size == 0) ? NULL : candidates->p.vec;
+        candidates->p.vec = xrealloc(prevp,
+                                     (num_candidates + 1)
+                                     * sizeof (candidates->p.vec[0]));
         candidates->size = num_candidates + 1;
       }
       candidates->num = num_candidates;
-      int *restrict candidates_vec = candidates->vec;
+      int *restrict candidates_vec = candidates->p.vec;
       size_t j = 0,
         next_bm_mult = (min_candidate + size_t_bits - 1)/size_t_bits*size_t_bits,
         predicates = (bm_store[min_candidate/size_t_bits]
@@ -1654,7 +1668,7 @@ find_candidates(struct Xt_stripe query,
       }
       assert(j == num_candidates);
     }
-    config->sort_funcs->sort_int(candidates->vec, num_candidates);
+    config->sort_funcs->sort_int(candidates->p.vec, num_candidates);
   } else
     candidates->num = 0;
 }
@@ -1729,7 +1743,7 @@ idxstripes_get_pos_exts_of_index_stripes(
     xt_cover_start(&cover, result.size_pos_ext);
     struct Xt_stripes_lookup stripes_db;
     create_stripes_lookup(&stripes_db, idxstripes);
-    struct int_vec candidates = { .size = 0, .vec = NULL };
+    struct int_vec candidates = { .size = 0, .p.vec = NULL };
     for (size_t i = 0; i < (size_t)num_stripes; ++i) {
       struct Xt_stripe query = stripes[i];
       int j = query.nstrides;
@@ -1741,10 +1755,12 @@ idxstripes_get_pos_exts_of_index_stripes(
       do {
         unmatched += idxstripes_get_pos_exts_of_index_stripe(
           query, &stripes_db, &result, &cover, single_match_only != 0,
-          candidates.num, candidates.vec);
+          candidates.num, candidates.size != 0
+          ? candidates.p.vec : &candidates.p.e1);
       } while ((stripes[i].stride == 0) & (--j > 0));
     }
-    free(candidates.vec);
+    if (candidates.size)
+      free(candidates.p.vec);
     --(result.pos_ext);
     memmove(result.pos_ext, result.pos_ext + 1,
             sizeof (*result.pos_ext) * result.num_pos_ext);
