@@ -664,6 +664,25 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
 }
 
 PPM_DSO_INTERNAL Xt_idxlist
+xt_idxvec_get_idxstripes(Xt_idxlist idxlist)
+{
+  assert(idxlist->vtable == &idxvec_vtable);
+  Xt_idxvec idxvec = (Xt_idxvec)idxlist;
+  size_t num_stripes = xt_indices_count_stripes(
+    (size_t)idxvec->parent.num_indices,
+    idxvec->vector);
+  struct Xt_stripes_alloc stripes_alloc
+    = xt_idxstripes_alloc(num_stripes);
+  xt_convert_indices_to_stripes_buf(
+    (size_t)idxvec->parent.num_indices,
+    idxvec->vector,
+    num_stripes,
+    stripes_alloc.stripes);
+  return xt_idxstripes_congeal(stripes_alloc);
+}
+
+
+PPM_DSO_INTERNAL Xt_idxlist
 xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
                                       Xt_idxlist idxlist_dst,
                                       Xt_config config)
@@ -673,18 +692,7 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
          && idxlist_src->vtable == &idxvec_vtable);
   Xt_idxvec vec_src = (Xt_idxvec)idxlist_src;
   if (XT_CONFIG_GET_FORCE_NOSORT(config)) {
-    size_t num_stripes = xt_indices_count_stripes(
-      (size_t)vec_src->parent.num_indices,
-      vec_src->vector);
-    struct Xt_stripes_alloc stripes_alloc
-      = xt_idxstripes_alloc(num_stripes);
-    xt_convert_indices_to_stripes_buf(
-      (size_t)vec_src->parent.num_indices,
-      vec_src->vector,
-      num_stripes,
-      stripes_alloc.stripes);
-    Xt_idxlist idxstripes_src =
-      xt_idxstripes_congeal(stripes_alloc);
+    Xt_idxlist idxstripes_src = xt_idxvec_get_idxstripes(idxlist_src);
     Xt_idxlist intersection
       = xt_idxstripes_get_intersection(idxstripes_src, idxlist_dst, config);
     xt_idxlist_delete(idxstripes_src);
