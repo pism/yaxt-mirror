@@ -58,7 +58,9 @@
 
 #include "xt/xt_idxlist.h"
 #include "xt_idxlist_internal.h"
+#include "xt_idxlist_unpack.h"
 #include "xt/xt_idxvec.h"
+#include "xt_idxvec_internal.h"
 #include "xt/xt_xmap.h"
 #include "xt_xmap_internal.h"
 #include "xt/xt_mpi.h"
@@ -371,6 +373,16 @@ xt_xmap_intersection_ext_custom_new(
 
   xmap->comm = comm = xt_mpi_comm_smart_dup(comm, &xmap->tag_offset);
 
+  Xt_idxlist src_idxlist_orig = NULL, dst_idxlist_orig = NULL;
+  if (src_idxlist->vtable->idxlist_pack_code == VECTOR) {
+    src_idxlist_orig = src_idxlist;
+    src_idxlist = xt_idxvec_get_idxstripes(src_idxlist_orig);
+  }
+  if (dst_idxlist->vtable->idxlist_pack_code == VECTOR) {
+    dst_idxlist_orig = dst_idxlist;
+    dst_idxlist = xt_idxvec_get_idxstripes(dst_idxlist_orig);
+  }
+
   // generate exchange lists
   generate_transfer_ext(xmap,
                         num_src_intersections, src_com,
@@ -385,6 +397,10 @@ xt_xmap_intersection_ext_custom_new(
 
   xmap->max_dst_pos = xt_idxlist_get_num_indices(dst_idxlist) - 1;
 
+  if (src_idxlist_orig)
+    xt_idxlist_delete(src_idxlist);
+  if (dst_idxlist_orig)
+    xt_idxlist_delete(dst_idxlist);
   return (Xt_xmap)xmap;
 }
 
