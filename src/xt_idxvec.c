@@ -794,8 +794,10 @@ idxvec_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
       = xt_indices_count_stripes(num_indices, sorted_vector);
     struct Xt_stripes_alloc stripes_alloc
       = xt_idxstripes_alloc(num_stripes_alloc);
-    size_t num_stripes
-      = xt_convert_indices_to_stripes_buf(
+#ifndef NDEBUG
+    size_t num_stripes =
+#endif
+      xt_convert_indices_to_stripes_buf(
         num_indices, sorted_vector, num_stripes_alloc, stripes_alloc.stripes);
     assert(num_stripes == num_stripes_alloc);
     return xt_idxstripes_congeal(stripes_alloc);

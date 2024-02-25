@@ -127,6 +127,7 @@ xt_convert_indices_to_stripes_buf(size_t num_indices,
                                   size_t num_stripes_alloc,
                                   struct Xt_stripe *stripes)
 {
+  (void)num_stripes_alloc;
   size_t num_stripes = 0;
   if (num_indices > 0) {
     size_t i = 0;
