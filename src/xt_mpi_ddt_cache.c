@@ -606,7 +606,10 @@ Xt_mpi_ddt_cache_entry_release(struct Xt_mpiddt_list *ddt_list,
     MPI_Datatype dt_ = *dt;
     for (size_t i = 0; i < num_entries; ++i)
       if (entries[i].cached_dt == dt_) {
-        int new_use_count = --entries[i].use_count;
+#ifndef NDEBUG
+        int new_use_count =
+#endif
+          --entries[i].use_count;
         assert(new_use_count >= 0);
         /**
          * @todo: implement heuristic to free datatypes going unused

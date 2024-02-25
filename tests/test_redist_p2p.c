@@ -241,6 +241,7 @@ static void
 check_offset_extents_redist(Xt_redist redist, size_t src_num, size_t dst_num,
                             MPI_Comm comm)
 {
+  (void)src_num;
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
                                    comm))

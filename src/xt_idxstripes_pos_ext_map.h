@@ -61,8 +61,7 @@ get_mapped_stripes(size_t num_ext,
 #endif
 )
 {
-  size_t num_result_stripes = 0,
-    num_stripes_src = (size_t)idxstripes_src->num_stripes;
+  size_t num_result_stripes = 0;
   size_t stripes_src_ofs = 0, pos = 0;
   struct Xt_stripe result_stripe = {
     .start = XT_INT_MIN, .stride = -1, .nstrides = 0 };
@@ -82,7 +81,7 @@ get_mapped_stripes(size_t num_ext,
         ++stripes_src_ofs;
       }
     }
-    assert(stripes_src_ofs < num_stripes_src);
+    assert(stripes_src_ofs < (size_t)idxstripes_src->num_stripes);
     /* add overlap with current stripe to result set */
     if (size > 0) {
     build_incr_overlap:;
