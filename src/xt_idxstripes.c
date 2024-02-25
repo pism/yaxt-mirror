@@ -1508,11 +1508,11 @@ bsearch_stripes_sort(size_t n,
     /*NOTE: *intentionally* truncate for odd sum */
     size_t m = (left + right + 1) / 2;
     if (a[m].range.min > min_key)
-      right = m - 1;   /* a[m].range.min <= min_key < a[right].range.min
-                    * or min_key not in a */
+      right = m - 1;   /* a[left].range.min <= min_key < a[m].range.min
+                        * or min_key not in a */
     else
-      left = m;/* a[left].range.min <= min_key <= a[m].range.min
-                    * or min_key not in a */
+      left = m;/* a[m].range.min <= min_key <= a[right].range.min
+                * or min_key not in a */
   }
   /* assert(left == right) */
   return a[right].range.min <= min_key ? right : n;
