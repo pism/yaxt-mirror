@@ -1655,6 +1655,10 @@ find_candidates(struct Xt_stripe query,
         next_bm_mult = (min_candidate + size_t_bits - 1)/size_t_bits*size_t_bits,
         predicates = (bm_store[min_candidate/size_t_bits]
                       >> (min_candidate % size_t_bits));
+      if (num_candidates == 1) {
+        end_pos = min_candidate+1;
+        assert(predicates&1);
+      }
       for (i = min_candidate; i < end_pos; next_bm_mult+=size_t_bits) {
         size_t ulim = MIN(end_pos, next_bm_mult);
         for (; i < ulim; ++i) {
