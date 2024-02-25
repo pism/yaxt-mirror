@@ -1756,12 +1756,14 @@ idxstripes_get_pos_exts_of_index_stripes(
       query.stride = (Xt_int)((query.stride != 0 && query.nstrides != 1)
                               ? query.stride : (Xt_int)1);
       find_candidates(query, &stripes_db, &candidates, config);
-      do {
-        unmatched += idxstripes_get_pos_exts_of_index_stripe(
-          query, &stripes_db, &result, &cover, single_match_only != 0,
-          candidates.num, candidates.size != 0
-          ? candidates.p.vec : &candidates.p.e1);
-      } while ((stripes[i].stride == 0) & (--j > 0));
+      if (candidates.num) {
+        do {
+          unmatched += idxstripes_get_pos_exts_of_index_stripe(
+            query, &stripes_db, &result, &cover, single_match_only != 0,
+            candidates.num, candidates.size != 0
+            ? candidates.p.vec : &candidates.p.e1);
+        } while ((stripes[i].stride == 0) & (--j > 0));
+      }
     }
     if (candidates.size)
       free(candidates.p.vec);
