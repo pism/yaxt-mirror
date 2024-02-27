@@ -79,6 +79,12 @@ xt_stripe2minmax(struct Xt_stripe stripe)
   return (struct Xt_minmax){ .min = min, .max = max};
 }
 
+static inline int
+xt_stripes_eq(struct Xt_stripe a, struct Xt_stripe b) {
+  return a.stride == b.stride
+    && a.start == b.start
+    && a.nstrides == b.nstrides;
+}
 
 static inline int
 xt_stripes_overlap(struct Xt_stripe a, struct Xt_stripe b) {
