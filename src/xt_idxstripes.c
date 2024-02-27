@@ -1523,12 +1523,29 @@ static void
 find_candidates(struct Xt_stripe query,
                 const struct Xt_stripes_lookup *restrict db,
                 struct int_vec *candidates,
+                bool single_match_only,
                 Xt_config config)
 {
   struct Xt_minmax query_minmax = xt_stripe2minmax(query);
   size_t num_db_stripes = db->num_stripes;
   const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;
-  size_t start_pos
+  size_t start_pos;
+  /* find trivial match first if sensible */
+  if (db->stripes_do_overlap && !single_match_only) {
+    start_pos
+      = bsearch_stripes_sort(num_db_stripes, db_stripes_sort, query_minmax.min);
+    if (start_pos != num_db_stripes
+        && xt_stripes_eq(db->stripes[db_stripes_sort[start_pos].position],
+                         query)) {
+      candidates->num = 1;
+      if (candidates->size == 0)
+        candidates->p.e1 = db_stripes_sort[start_pos].position;
+      else
+        candidates->p.vec[0] = db_stripes_sort[start_pos].position;
+      return;
+    }
+  }
+  start_pos
     = bsearch_stripes_sort(num_db_stripes, db_stripes_sort, query_minmax.max);
   if (start_pos != num_db_stripes) {
     assert(db_stripes_sort[start_pos].range.min <= query_minmax.max);
@@ -1755,7 +1772,8 @@ idxstripes_get_pos_exts_of_index_stripes(
         ? query.nstrides : 1;
       query.stride = (Xt_int)((query.stride != 0 && query.nstrides != 1)
                               ? query.stride : (Xt_int)1);
-      find_candidates(query, &stripes_db, &candidates, config);
+      find_candidates(query, &stripes_db, &candidates,
+                      single_match_only, config);
       if (candidates.num) {
         do {
           unmatched += idxstripes_get_pos_exts_of_index_stripe(
