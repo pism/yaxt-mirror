@@ -615,40 +615,47 @@ idxsection_copy(Xt_idxlist idxlist) {
   return (Xt_idxlist)idxsection;
 }
 
-static Xt_idxlist
-idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
+static void
+idxsection_init_sorted_copy(Xt_idxsection orig, Xt_idxsection copy)
+{
+  size_t num_dimensions = (size_t)orig->ndim;
 
-  (void)config;
-  Xt_idxsection src = (Xt_idxsection)idxlist;
+  *copy = *orig;
+  copy->index_array_cache  = NULL;
 
-  size_t num_dimensions = (size_t)src->ndim;
-
-  Xt_idxsection idxsection = xmalloc(
-    sizeof (*idxsection) + num_dimensions * sizeof (idxsection->dims[0]));
-  *idxsection = *src;
-  idxsection->index_array_cache  = NULL;
-
-  const struct dim_desc *restrict dd_src = src->dims;
-  struct dim_desc *restrict dd_dst = idxsection->dims;
+  const struct dim_desc *restrict dd_orig = orig->dims;
+  struct dim_desc *restrict dd_dst = copy->dims;
   for (size_t i = 0; i < num_dimensions; ++i) {
-    Xt_int gsize = dd_src[i].global_size,
+    Xt_int gsize = dd_orig[i].global_size,
       abs_gsize = XT_INT_ABS(gsize);
-    int lsize = dd_src[i].local_size,
+    int lsize = dd_orig[i].local_size,
       abs_lsize = abs(lsize);
     dd_dst[i].global_size = abs_gsize;
     dd_dst[i].local_size = abs_lsize;
     dd_dst[i].local_start = gsize >= 0
-      ? dd_src[i].local_start
-      : (Xt_int)(abs_gsize - abs_lsize - dd_src[i].local_start);
+      ? dd_orig[i].local_start
+      : (Xt_int)(abs_gsize - abs_lsize - dd_orig[i].local_start);
   }
 
   struct section_aggregate sa = setup_dims(
-    src->global_start_index, num_dimensions, idxsection->dims);
-  idxsection->local_start_index = sa.start;
-  idxsection->flags = sa.flags;
-  assert(idxsection->min_index_cache == sa.min
-         && idxsection->max_index_cache == sa.max);
-  return (Xt_idxlist)idxsection;
+    orig->global_start_index, num_dimensions, copy->dims);
+  copy->local_start_index = sa.start;
+  copy->flags = sa.flags;
+  assert(copy->min_index_cache == sa.min
+         && copy->max_index_cache == sa.max);
+}
+
+
+static Xt_idxlist
+idxsection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
+
+  (void)config;
+  size_t num_dimensions = (size_t)((Xt_idxsection)idxlist)->ndim;
+  Xt_idxsection sorted_idxsection = xmalloc(
+    sizeof (*sorted_idxsection)
+    + num_dimensions * sizeof (sorted_idxsection->dims[0]));
+  idxsection_init_sorted_copy((Xt_idxsection)idxlist, sorted_idxsection);
+  return (Xt_idxlist)sorted_idxsection;
 }
 
 static int
