@@ -558,6 +558,44 @@ int main(int argc, char **argv) {
     xt_idxlist_delete(idxsection);
   }
 
+  {
+    // check idxsection_get_idxstripes_intersection
+
+    Xt_int start = 0;
+    enum { num_dimensions = 2 };
+    static const Xt_int global_size[num_dimensions] = {4,4};
+    static const int local_size [num_dimensions] = {2,2};
+    static const Xt_int local_start[num_dimensions] = {0,2};
+
+    Xt_idxlist idxsection
+      = xt_idxsection_new(start, num_dimensions, global_size,
+                          local_size, local_start);
+
+    // we have indices = {2,3,6,7}
+    static const struct Xt_stripe stripes[]
+      = { { .start = 2, .stride = -1, .nstrides = 2 },
+          { .start = 5, .stride = 2, .nstrides = 2 },
+          { .start = 6, .stride = 1, .nstrides = 2 },
+          { .start = 7, .stride = -1, .nstrides = 2 },
+          { .start = 8, .stride = 1, .nstrides = 1 },
+    };
+    enum { num_stripes = sizeof(stripes) / sizeof(stripes[0]) };
+
+    Xt_idxlist sel_idxlist = xt_idxstripes_new(stripes, num_stripes);
+
+    Xt_idxlist inter_idxlist
+      = xt_idxlist_get_intersection(idxsection, sel_idxlist);
+
+    static const Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
+    enum { num_ref_inter_idx = sizeof(ref_inter_idx) / sizeof(*ref_inter_idx) };
+
+    check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
+
+    xt_idxlist_delete(inter_idxlist);
+    xt_idxlist_delete(sel_idxlist);
+    xt_idxlist_delete(idxsection);
+  }
+
   { // test 2D section with negative global size
     // iterate through all sign combinations of -/+ for local and global
     // and for x and y, giving 2^2^2 combinations

@@ -69,6 +69,7 @@
 #include "xt_config_internal.h"
 #include "xt_stripe_util.h"
 #include "xt_idxvec_internal.h"
+#include "xt_idxstripes_internal.h"
 
 static void
 idxsection_delete(Xt_idxlist data);
@@ -494,6 +495,45 @@ get_pos:;
   INSTR_STOP(instr);
   return result;
 }
+
+static void
+idxsection_init_sorted_copy(Xt_idxsection orig, Xt_idxsection copy);
+
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+
+Xt_idxlist
+xt_idxsection_get_idxstripes_intersection(Xt_idxlist src_idxlist,
+                                          Xt_idxlist dst_idxlist,
+                                          Xt_config config)
+{
+  INSTR_DEF(instr,"idxsection_get_idxstripes_intersection")
+  INSTR_START(instr);
+  (void)config;
+  assert(dst_idxlist->vtable->idxlist_pack_code == STRIPES);
+  Xt_idxsection idxsection = (Xt_idxsection)src_idxlist;
+  Xt_idxlist idxstripes_list = dst_idxlist;
+#include "xt_idxsection_stripe_intersection.h"
+  INSTR_STOP(instr);
+  return result;
+}
+
+Xt_idxlist
+xt_idxsection_get_idxstripes_r_intersection(Xt_idxlist src_idxlist,
+                                            Xt_idxlist dst_idxlist,
+                                            Xt_config config)
+{
+  INSTR_DEF(instr,"idxsection_get_idxstripes_r_intersection")
+  INSTR_START(instr);
+  (void)config;
+  assert(src_idxlist->vtable->idxlist_pack_code == STRIPES);
+  Xt_idxsection idxsection = (Xt_idxsection)dst_idxlist;
+  Xt_idxlist idxstripes_list = src_idxlist;
+#include "xt_idxsection_stripe_intersection.h"
+  INSTR_STOP(instr);
+  return result;
+}
+
+#undef MAX
 
 Xt_idxlist
 xt_idxsection_get_intersection(Xt_idxlist idxlist_src,

@@ -82,7 +82,7 @@ intersection_get_matrix[num_idxlist_classes][num_idxlist_classes] = {
   { empty_isect, xt_idxsection_get_intersection_with_other_idxlist,
     xt_idxsection_get_intersection_with_other_idxlist,
     xt_idxsection_get_intersection,
-    xt_idxsection_get_intersection_with_other_idxlist },
+    xt_idxsection_get_idxstripes_intersection },
   { empty_isect, xt_idxstripes_get_idxvec_intersection, xt_default_isect, xt_default_isect,
     xt_idxstripes_get_intersection },
 };
