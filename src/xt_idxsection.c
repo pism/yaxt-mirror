@@ -323,12 +323,13 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
-  Xt_idxsection idxsection = NULL;
   size_t num_dimensions_ = (size_t)num_dimensions;
   int num_indices = get_num_indices_from_local_sizes(num_dimensions_, local_size);
+  Xt_idxlist result;
   if (num_indices > 0) {
-    idxsection = xmalloc(sizeof (*idxsection)
-                         + num_dimensions_ * sizeof (idxsection->dims[0]));
+    Xt_idxsection idxsection
+      = xmalloc(sizeof (*idxsection)
+                + num_dimensions_ * sizeof (idxsection->dims[0]));
 
     idxsection->global_start_index = start;
     idxsection->ndim               = num_dimensions;
@@ -340,19 +341,20 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
       idxsection->dims[i].local_size  = local_size[i];
       idxsection->dims[i].local_start = local_start[i];
     }
+    Xt_idxlist_init(&idxsection->parent, &idxsection_vtable, num_indices);
+    struct section_aggregate sa =
+      setup_dims(start, num_dimensions_, idxsection->dims);
+    idxsection->local_start_index = sa.start;
+    idxsection->min_index_cache = sa.min;
+    idxsection->max_index_cache = sa.max;
+    idxsection->flags = sa.flags;
+    result = &idxsection->parent;
   } else {
-    return xt_idxempty_new();
+    result = xt_idxempty_new();
   }
-  Xt_idxlist_init(&idxsection->parent, &idxsection_vtable, num_indices);
-  struct section_aggregate sa =
-    setup_dims(start, num_dimensions_, idxsection->dims);
-  idxsection->local_start_index = sa.start;
-  idxsection->min_index_cache = sa.min;
-  idxsection->max_index_cache = sa.max;
-  idxsection->flags = sa.flags;
   INSTR_STOP(instr);
 
-  return (Xt_idxlist)idxsection;
+  return result;
 }
 
 static void
