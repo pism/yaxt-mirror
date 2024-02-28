@@ -105,6 +105,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_idxmod.c						\
 	xt_idxsection_internal.h				\
 	xt_idxsection.c						\
+	xt_idxsection_stripe_intersection.h			\
 	xt_idxstripes_internal.h				\
 	xt_idxstripes_pos_ext_map.h				\
 	xt_idxstripes.c						\
