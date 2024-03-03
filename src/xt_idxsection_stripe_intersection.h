@@ -65,6 +65,15 @@ struct Xt_idxsection_ *sssp
 idxsection_init_sorted_copy(idxsection, sssp);
 struct dim_desc *dims = sssp->dims;
 #endif
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+enum {
+  size_t_bits = sizeof (size_t) * CHAR_BIT,
+};
+size_t num_indices_in_section
+  = (size_t)idxsection->parent.num_indices,
+  *pos_used_bm = xcalloc((num_indices_in_section+size_t_bits-1)/size_t_bits,
+                         sizeof (size_t));
+#endif
 size_t num_result_stripes_total = 0;
 {
   /* start with non-appendable terminator */
@@ -79,6 +88,9 @@ size_t num_result_stripes_total = 0;
       Xt_int insert_index = (Xt_int)(query.start + query.stride * j),
         running_index = insert_index;
       bool out_of_bounds = false;
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+      int local_pos = 0;
+#endif
       for (size_t i = 0; i < num_dimensions; ++i) {
         Xt_int abs_global_stride = dims[i].global_stride;
         Xt_int curr_global_position
@@ -86,7 +98,15 @@ size_t num_result_stripes_total = 0;
         running_index = (Xt_int)(running_index % abs_global_stride);
         out_of_bounds |= (curr_global_position < dims[i].local_start)
           | (curr_global_position >= dims[i].local_start + dims[i].local_size);
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+        int curr_local_pos = (int)(curr_global_position - dims[i].local_start);
+        local_pos += curr_local_pos * (int)dims[i].local_stride;
+#endif
       }
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+      out_of_bounds = out_of_bounds ||
+        (pos_used_bm[local_pos/size_t_bits] >> (local_pos % size_t_bits))&1;
+#endif
       if (!out_of_bounds) {
         if (insert_index == index_continuation || buf_nstrides == 1) {
           /* already existing stripe can be continued */
@@ -100,6 +120,10 @@ size_t num_result_stripes_total = 0;
           ++num_result_stripes;
         }
         index_continuation = (Xt_int)(insert_index + buf_stride);
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+        pos_used_bm[local_pos/size_t_bits]
+          |= ((size_t)1 << (local_pos % size_t_bits));
+#endif
       }
     }
     num_result_stripes_total += num_result_stripes;
@@ -107,6 +131,10 @@ size_t num_result_stripes_total = 0;
 }
 Xt_idxlist result;
 if (num_result_stripes_total) {
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+  memset(pos_used_bm, 0, (num_indices_in_section+size_t_bits-1)/size_t_bits *
+         sizeof (size_t));
+#endif
   struct Xt_stripes_alloc result_alloc
     = xt_idxstripes_alloc(num_result_stripes_total);
   struct Xt_stripe *restrict result_stripes = result_alloc.stripes;
@@ -120,6 +148,9 @@ if (num_result_stripes_total) {
       Xt_int insert_index = (Xt_int)(query.start + query.stride * j),
         running_index = insert_index;
       bool out_of_bounds = false;
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+      int local_pos = 0;
+#endif
       for (size_t i = 0; i < num_dimensions; ++i) {
         Xt_int abs_global_stride = dims[i].global_stride;
         Xt_int curr_global_position
@@ -127,7 +158,15 @@ if (num_result_stripes_total) {
         running_index = (Xt_int)(running_index % abs_global_stride);
         out_of_bounds |= (curr_global_position < dims[i].local_start)
           | (curr_global_position >= dims[i].local_start + dims[i].local_size);
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+        int curr_local_pos = (int)(curr_global_position - dims[i].local_start);
+        local_pos += curr_local_pos * (int)dims[i].local_stride;
+#endif
       }
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+      out_of_bounds = out_of_bounds ||
+        (pos_used_bm[local_pos/size_t_bits] >> (local_pos % size_t_bits))&1;
+#endif
       if (!out_of_bounds) {
         if (insert_index == index_continuation || buf_nstrides == 1) {
           /* already existing stripe can be expanded */
@@ -143,6 +182,10 @@ if (num_result_stripes_total) {
           result_stripes[++num_result_stripes].start = insert_index;
         }
         index_continuation = (Xt_int)(insert_index + buf_stride);
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+        pos_used_bm[local_pos/size_t_bits]
+          |= ((size_t)1 << (local_pos % size_t_bits));
+#endif
       }
     }
   }
@@ -162,7 +205,9 @@ if (num_result_stripes_total) {
 #ifdef __PGI
 free(sssp);
 #endif
-
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+free(pos_used_bm);
+#endif
 /*
  * Local Variables:
  * c-basic-offset: 2
