@@ -72,6 +72,11 @@ xt_idxsection_get_idxstripes_intersection(Xt_idxlist src_idxsection,
                                           Xt_idxlist dst_idxlist,
                                           Xt_config config);
 
+PPM_DSO_INTERNAL Xt_idxlist
+xt_idxsection_get_idxstripes_r_intersection(Xt_idxlist src_idxlist,
+                                            Xt_idxlist dst_idxlist,
+                                            Xt_config config);
+
 #endif
 
 /*

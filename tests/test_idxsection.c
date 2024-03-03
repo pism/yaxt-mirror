@@ -591,6 +591,15 @@ int main(int argc, char **argv) {
 
     check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
 
+    Xt_idxlist inter_idxlist_r
+      = xt_idxlist_get_intersection(sel_idxlist, idxsection);
+
+    static const Xt_int ref_inter_idx_r[] = {2,6,7};
+    enum { num_ref_inter_idx_r = sizeof(ref_inter_idx_r) / sizeof(*ref_inter_idx_r) };
+
+    check_idxlist(inter_idxlist_r, ref_inter_idx_r, num_ref_inter_idx_r);
+
+    xt_idxlist_delete(inter_idxlist_r);
     xt_idxlist_delete(inter_idxlist);
     xt_idxlist_delete(sel_idxlist);
     xt_idxlist_delete(idxsection);

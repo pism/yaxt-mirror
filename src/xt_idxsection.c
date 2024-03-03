@@ -528,7 +528,9 @@ xt_idxsection_get_idxstripes_r_intersection(Xt_idxlist src_idxlist,
   assert(src_idxlist->vtable->idxlist_pack_code == STRIPES);
   Xt_idxsection idxsection = (Xt_idxsection)dst_idxlist;
   Xt_idxlist idxstripes_list = src_idxlist;
+#define XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
 #include "xt_idxsection_stripe_intersection.h"
+#undef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
   INSTR_STOP(instr);
   return result;
 }
