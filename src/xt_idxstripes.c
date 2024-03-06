@@ -103,8 +103,9 @@ static int
 idxstripes_get_num_index_stripes(Xt_idxlist idxlist);
 
 static void
-idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             int * num_stripes);
+idxstripes_get_index_stripes(Xt_idxlist idxlist,
+                             struct Xt_stripe *restrict stripes,
+                             size_t num_stripes_alloc);
 
 static int
 idxstripes_get_index_at_position(Xt_idxlist idxlist, int position,
@@ -1205,37 +1206,19 @@ idxstripes_get_indices_const(Xt_idxlist idxlist) {
 }
 
 static void
-idxstripes_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             int * num_stripes) {
-
+idxstripes_get_index_stripes(Xt_idxlist idxlist,
+                             struct Xt_stripe *restrict stripes,
+                             size_t num_stripes_alloc)
+{
+#ifdef NDEBUG
+  (void)num_stripes_alloc;
+#endif
   INSTR_DEF(instr,"idxstripes_get_index_stripes")
   INSTR_START(instr);
-
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
-  const struct Xt_stripe *restrict stripes_ = idxstripes->stripes;
-
-  size_t num_temp_stripes, num_stripes_ = (size_t)idxstripes->num_stripes;
-
-  num_temp_stripes = num_stripes_;
-  for (size_t i = 0; i < num_stripes_; ++i)
-    if (stripes_[i].stride != 1)
-      num_temp_stripes += (size_t)stripes_[i].nstrides - 1U;
-  struct Xt_stripe *restrict temp_stripes = *stripes
-    = xrealloc(*stripes, num_temp_stripes * sizeof(*temp_stripes));
-  *num_stripes = (int)num_temp_stripes;
-  num_temp_stripes = 0;
-  for (size_t i = 0; i < num_stripes_; ++i)
-    if (stripes_[i].stride == 1)
-      temp_stripes[num_temp_stripes++] = stripes_[i];
-    else
-      for (size_t j = 0; j < (size_t)stripes_[i].nstrides; ++j) {
-        temp_stripes[num_temp_stripes].start
-          = (Xt_int)(stripes_[i].start + (Xt_int)j * stripes_[i].stride);
-        temp_stripes[num_temp_stripes].nstrides = 1;
-        temp_stripes[num_temp_stripes].stride = 1;
-        ++num_temp_stripes;
-      }
-
+  assert((size_t)idxstripes->num_stripes <= num_stripes_alloc);
+  memcpy(stripes, idxstripes->stripes,
+         (size_t)idxstripes->num_stripes * sizeof (stripes[0]));
   INSTR_STOP(instr);
 }
 

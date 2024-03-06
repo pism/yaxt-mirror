@@ -101,8 +101,8 @@ idxlist_collection_get_num_index_stripes(Xt_idxlist idxlist);
 
 static void
 idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
-                                     struct Xt_stripe ** stripes,
-                                     int * num_stripes);
+                                     struct Xt_stripe *restrict stripes,
+                                     size_t num_stripes_alloc);
 
 static int
 idxlist_collection_get_index_at_position(Xt_idxlist idxlist, int position,
@@ -380,7 +380,7 @@ coll_get_sorted_stripes(Xt_idxlist_collection collectionlist,
     num_accum_stripes = (size_t)num_accum_stripes_;
   }
   size_t num_idxlists = (size_t)collectionlist->num_idxlists;
-  struct Xt_stripe *stripe_buf = NULL; int stripe_buf_size = 0;
+  struct Xt_stripe *stripe_buf = NULL; size_t stripe_buf_size = 0;
   /* obtain stripes, locally mostly sorted if reasonably available */
   for (size_t i = 1; i < num_idxlists; ++i) {
     Xt_idxlist component_list, unsorted_list
@@ -421,8 +421,14 @@ coll_get_sorted_stripes(Xt_idxlist_collection collectionlist,
       component_list
         = xt_idxlist_sorted_copy_custom(unsorted_list, config);
     }
+    size_t num_stripes
+      = (size_t)(xt_idxlist_get_num_index_stripes(component_list));
+    if (num_stripes > stripe_buf_size) {
+      stripe_buf = xrealloc(stripe_buf, num_stripes * sizeof (stripe_buf[0]));
+      stripe_buf_size = num_stripes;
+    }
     xt_idxlist_get_index_stripes_keep_buf(component_list,
-                                          &stripe_buf, &stripe_buf_size);
+                                          stripe_buf, stripe_buf_size);
     if (component_list != unsorted_list) {
       xt_idxlist_delete(component_list);
       free(sorted_indices);
@@ -549,53 +555,32 @@ idxlist_collection_get_num_index_stripes(Xt_idxlist idxlist)
   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
   int num_lists = collectionlist->num_idxlists;
   size_t num_stripes = 0;
-  for (int i = 1; i < num_lists; ++i)
-    num_stripes += (size_t)xt_idxlist_get_num_index_stripes(collectionlist->idxlists[i]);
+  for (int i = 0; i < num_lists; ++i)
+    num_stripes
+      += (size_t)xt_idxlist_get_num_index_stripes(collectionlist->idxlists[i]);
   assert(num_stripes <= INT_MAX);
   return (int)num_stripes;
 }
 
 static void
 idxlist_collection_get_index_stripes(Xt_idxlist idxlist,
-                                     struct Xt_stripe ** stripes,
-                                     int * num_stripes) {
+                                     struct Xt_stripe *restrict stripes,
+                                     size_t num_stripes_alloc) {
 
   Xt_idxlist_collection collectionlist = (Xt_idxlist_collection)idxlist;
 
-  struct Xt_stripe * temp_stripes = NULL;
-  size_t temp_stripes_array_size = 0;
-  int num_temp_stripes = 0;
+  size_t num_stripes = 0;
 
-  xt_idxlist_get_index_stripes(collectionlist->idxlists[0], &temp_stripes,
-                               &num_temp_stripes);
-  temp_stripes_array_size = (size_t)num_temp_stripes;
-
-  struct Xt_stripe * curr_stripes = NULL;
-  int curr_num_stripes = 0, num_lists = collectionlist->num_idxlists;
-  for (int i = 1; i < num_lists; ++i) {
-
-
-    xt_idxlist_get_index_stripes_keep_buf(collectionlist->idxlists[i],
-                                          &curr_stripes,
-                                          &curr_num_stripes);
-
-    ENSURE_ARRAY_SIZE(temp_stripes, temp_stripes_array_size,
-                      num_temp_stripes + curr_num_stripes);
-
-    curr_num_stripes
-      = (int)xt_stripes_merge_copy((size_t)curr_num_stripes,
-                                   temp_stripes + num_temp_stripes,
-                                   curr_stripes,
-                                   num_temp_stripes > 0);
-
-    num_temp_stripes += curr_num_stripes;
+  size_t num_lists = (size_t)(collectionlist->num_idxlists);
+  Xt_idxlist *idxlists = collectionlist->idxlists;
+  for (size_t i = 0; i < num_lists; ++i) {
+    size_t num_stripes_of_list
+      = (size_t)(xt_idxlist_get_num_index_stripes(idxlists[i]));
+    assert(num_stripes_alloc - num_stripes >= num_stripes_of_list);
+    xt_idxlist_get_index_stripes_keep_buf(idxlists[i], stripes + num_stripes,
+                                          num_stripes_alloc - num_stripes);
+    num_stripes += num_stripes_of_list;
   }
-
-  free(curr_stripes);
-
-  *stripes = xrealloc(temp_stripes,
-                      (size_t)num_temp_stripes * sizeof(*temp_stripes));
-  *num_stripes = num_temp_stripes;
 }
 
 static int
