@@ -87,58 +87,33 @@ size_t num_result_stripes_total = 0;
   int buf_nstrides = 0;
   Xt_int buf_stride = -1;
   Xt_int index_continuation = XT_INT_MIN-1;
-  for (size_t k = 0; k < num_stripes; ++k) {
-    struct Xt_stripe query = stripes[k];
-    size_t num_result_stripes = 0;
-    for (int j = 0; j < query.nstrides; ++j) {
-      Xt_int insert_index = (Xt_int)(query.start + query.stride * j),
-        running_index = insert_index;
-      bool out_of_bounds = false;
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-      int local_pos = 0;
-#endif
-      for (size_t i = 0; i < num_dimensions; ++i) {
-        Xt_int abs_global_stride = dims[i].global_stride;
-        Xt_int curr_global_position
-          = (Xt_int)(running_index / abs_global_stride);
-        running_index = (Xt_int)(running_index % abs_global_stride);
-        out_of_bounds |= (curr_global_position < dims[i].local_start)
-          | (curr_global_position >= dims[i].local_start + dims[i].local_size);
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-        int curr_local_pos = (int)(curr_global_position - dims[i].local_start);
-        local_pos += curr_local_pos * (int)dims[i].local_stride;
-#endif
-      }
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-      out_of_bounds = out_of_bounds ||
-        (pos_used_bm[local_pos/size_t_bits] >> (local_pos % size_t_bits))&1;
-#endif
-      if (!out_of_bounds) {
-        any_match = true;
-        if (insert_index == index_continuation || buf_nstrides == 1) {
-          /* already existing stripe can be continued */
-          ++buf_nstrides;
-          if (insert_index != index_continuation)
-            buf_stride = (Xt_int)(insert_index - accum_start);
-        } else {
-          buf_stride = 1;
-          buf_nstrides = 1;
-          accum_start = insert_index;
-          ++num_result_stripes;
-        }
-        index_continuation = (Xt_int)(insert_index + buf_stride);
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-        pos_used_bm[local_pos/size_t_bits]
-          |= ((size_t)1 << (local_pos % size_t_bits));
-#endif
-      }
-    }
-    num_result_stripes_total += num_result_stripes;
-    isect_mask |= (size_t)any_match << (k % size_t_bits);
-    if ((k+1) % size_t_bits == 0) {
-      isect_stripes_bm[k/size_t_bits] = isect_mask;
-      isect_mask = 0;
-    }
+  size_t isect_mask = 0;
+  switch (num_dimensions) {
+  case 1:
+#define NUM_DIMENSIONS 1
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  case 2:
+#define NUM_DIMENSIONS 2
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  case 3:
+#define NUM_DIMENSIONS 3
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  case 4:
+#define NUM_DIMENSIONS 4
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  default:
+#define NUM_DIMENSIONS num_dimensions
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
   }
   if (num_stripes % size_t_bits)
     isect_stripes_bm[num_stripes/size_t_bits] = isect_mask;
