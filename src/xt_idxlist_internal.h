@@ -69,7 +69,7 @@ struct xt_idxlist_vtable {
    void (*get_indices)(Xt_idxlist, Xt_int *indices);
    Xt_int const * (*get_indices_const)(Xt_idxlist idxlist);
   int (*get_num_index_stripes)(Xt_idxlist);
-   void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe **, int *);
+  void (*get_index_stripes)(Xt_idxlist, struct Xt_stripe *restrict, size_t);
    int (*get_index_at_position)(Xt_idxlist, int, Xt_int *);
    int (*get_indices_at_positions)(Xt_idxlist idxlist, const int *positions,
                                    int num, Xt_int *index, Xt_int undef_idx);
@@ -95,8 +95,8 @@ struct xt_idxlist_vtable {
 
 PPM_DSO_INTERNAL void
 xt_idxlist_get_index_stripes_keep_buf(Xt_idxlist idxlist,
-                                      struct Xt_stripe ** stripes,
-                                      int * num_stripes);
+                                      struct Xt_stripe *restrict stripes,
+                                      size_t num_stripes_alloc);
 
 struct Xt_idxlist_ {
   const struct xt_idxlist_vtable *vtable;

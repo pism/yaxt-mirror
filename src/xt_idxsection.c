@@ -97,8 +97,9 @@ static int
 idxsection_get_num_index_stripes(Xt_idxlist idxlist);
 
 static void
-idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                             int * num_stripes);
+idxsection_get_index_stripes(Xt_idxlist idxlist,
+                             struct Xt_stripe *restrict stripes,
+                             size_t num_stripes_alloc);
 
 static int
 idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
@@ -803,9 +804,13 @@ idxsection_get_num_index_stripes(Xt_idxlist idxlist)
 }
 
 static void
-idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
-                             int * num_stripes) {
-
+idxsection_get_index_stripes(Xt_idxlist idxlist,
+                             struct Xt_stripe *restrict stripes,
+                             size_t num_stripes_alloc)
+{
+#ifdef NDEBUG
+  (void)num_stripes_alloc;
+#endif
   INSTR_DEF(instr,"idxsection_get_index_stripes.part")
 
   Xt_idxsection section = (Xt_idxsection)idxlist;
@@ -822,10 +827,6 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
 
   INSTR_START(instr);
 
-  struct Xt_stripe *restrict p = *stripes;
-  if ((size_t)*num_stripes < nstripes)
-    p = xrealloc(p, nstripes * sizeof(**stripes));
-
   enum { curr_local_position_auto_size=16 };
   Xt_int curr_local_position_auto[curr_local_position_auto_size];
   Xt_int *restrict curr_local_position;
@@ -839,14 +840,14 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
 
   for (size_t i = 0; i < nstripes; ++i) {
 
-    p[i].start  = section->local_start_index;
-    p[i].nstrides = abs(dims[num_dimensions-1].local_size);
-    p[i].stride = 1;
+    stripes[i].start  = section->local_start_index;
+    stripes[i].nstrides = abs(dims[num_dimensions-1].local_size);
+    stripes[i].stride = 1;
 
     for (size_t j = 0; j < num_dimensions - 1; ++j)
-      p[i].start = (Xt_int)(p[i].start
-                            + curr_local_position[j]
-                            * dims[j].global_stride);
+      stripes[i].start = (Xt_int)(stripes[i].start
+                                  + curr_local_position[j]
+                                  * dims[j].global_stride);
 
     for (size_t j = num_dimensions - 2; j != (size_t)-1; --j)
       if (curr_local_position[j] < abs(dims[j].local_size) - 1) {
@@ -855,8 +856,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe **stripes,
       } else
         curr_local_position[j] = 0;
   }
-  *stripes = p;
-  *num_stripes = (int)nstripes;
+  assert(num_stripes_alloc >= nstripes);
   if (curr_local_position != curr_local_position_auto)
     free(curr_local_position);
 

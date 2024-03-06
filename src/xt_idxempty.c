@@ -89,8 +89,8 @@ static int
 idxempty_get_num_index_stripes(Xt_idxlist idxlist);
 
 static void
-idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                           int * num_stripes);
+idxempty_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe *stripes,
+                           size_t num_stripes_alloc);
 
 static int
 idxempty_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
@@ -245,10 +245,10 @@ idxempty_get_num_index_stripes(Xt_idxlist idxlist)
 
 static void
 idxempty_get_index_stripes(Xt_idxlist XT_UNUSED(idxlist),
-                           struct Xt_stripe **stripes,
-                           int * num_stripes) {
+                           struct Xt_stripe *stripes,
+                           size_t num_stripes_alloc) {
   (void)stripes;
-  *num_stripes = 0;
+  (void)num_stripes_alloc;
 }
 
 static int

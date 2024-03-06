@@ -136,33 +136,34 @@ void xt_idxlist_get_index_stripes(Xt_idxlist idxlist,
                                   struct Xt_stripe ** stripes,
                                   int * num_stripes) {
 
-  *stripes = NULL;
-  *num_stripes = 0;
-  xt_idxlist_get_index_stripes_keep_buf(idxlist, stripes, num_stripes);
+  size_t num_stripes_
+    = (size_t)(*num_stripes = xt_idxlist_get_num_index_stripes(idxlist));
+  struct Xt_stripe *stripes_ = *stripes = num_stripes_
+    ? xmalloc(num_stripes_ * sizeof (stripes_[0])) : NULL;
+  xt_idxlist_get_index_stripes_keep_buf(idxlist, stripes_, num_stripes_);
 }
 
-void xt_idxlist_get_index_stripes_keep_buf(Xt_idxlist idxlist,
-                                           struct Xt_stripe ** stripes,
-                                           int * num_stripes) {
-
+void
+xt_idxlist_get_index_stripes_keep_buf(Xt_idxlist idxlist,
+                                      struct Xt_stripe *stripes,
+                                      size_t num_stripes_alloc)
+{
   INSTR_DEF(instr_fallback,"xt_idxlist_get_index_stripes.fallback")
 
-  if (idxlist->vtable->get_index_stripes != NULL) {
-    idxlist->vtable->get_index_stripes(idxlist, stripes, num_stripes);
+  if (idxlist->vtable->get_index_stripes) {
+    idxlist->vtable->get_index_stripes(idxlist, stripes, num_stripes_alloc);
 
   } else { // fall-back solution
 
     INSTR_START(instr_fallback);
 
-    int num_indices = xt_idxlist_get_num_indices(idxlist);
+    size_t num_indices = (size_t)(xt_idxlist_get_num_indices(idxlist));
 
-    Xt_int *indices = xmalloc((size_t)num_indices * sizeof (indices[0]));
+    Xt_int *indices = xmalloc(num_indices * sizeof (indices[0]));
 
     xt_idxlist_get_indices(idxlist, indices);
-
-    xt_convert_indices_to_stripes_keep_buf(indices, num_indices,
-                                           stripes, num_stripes);
-
+    xt_convert_indices_to_stripes_buf(num_indices, indices,
+                                      num_stripes_alloc, stripes);
     free(indices);
 
     INSTR_STOP(instr_fallback);

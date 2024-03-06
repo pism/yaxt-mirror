@@ -100,8 +100,8 @@ static int
 idxvec_get_num_index_stripes(Xt_idxlist idxlist);
 
 static void
-idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                         int * num_stripes);
+idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe *stripes,
+                         size_t num_stripes_alloc);
 
 static int
 idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index);
@@ -835,14 +835,13 @@ idxvec_get_num_index_stripes(Xt_idxlist idxlist)
 }
 
 static void
-idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe ** stripes,
-                         int * num_stripes) {
+idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe *stripes,
+                         size_t num_stripes_alloc) {
 
   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
-
-  xt_convert_indices_to_stripes_keep_buf(idxvec_obj->vector,
-                                         idxvec_obj->parent.num_indices,
-                                         stripes, num_stripes);
+  xt_convert_indices_to_stripes_buf((size_t)idxvec_obj->parent.num_indices,
+                                    idxvec_obj->vector,
+                                    num_stripes_alloc, stripes);
 }
 
 static int
