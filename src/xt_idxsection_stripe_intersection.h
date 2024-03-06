@@ -65,14 +65,20 @@ struct Xt_idxsection_ *sssp
 idxsection_init_sorted_copy(idxsection, sssp);
 struct dim_desc *dims = sssp->dims;
 #endif
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
 enum {
   size_t_bits = sizeof (size_t) * CHAR_BIT,
 };
+#ifndef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+size_t *restrict isect_stripes_bm
+  = xcalloc((num_stripes+size_t_bits-1)/size_t_bits, sizeof (size_t));
+#else
 size_t num_indices_in_section
   = (size_t)idxsection->parent.num_indices,
-  *pos_used_bm = xcalloc((num_indices_in_section+size_t_bits-1)/size_t_bits,
-                         sizeof (size_t));
+  section_bm_size = (num_indices_in_section+size_t_bits-1)/size_t_bits,
+  *restrict pos_used_bm = xcalloc(section_bm_size
+                         + (num_stripes+size_t_bits-1)/size_t_bits,
+                         sizeof (size_t)),
+  *restrict isect_stripes_bm = pos_used_bm + section_bm_size;
 #endif
 size_t num_result_stripes_total = 0;
 {
@@ -108,6 +114,7 @@ size_t num_result_stripes_total = 0;
         (pos_used_bm[local_pos/size_t_bits] >> (local_pos % size_t_bits))&1;
 #endif
       if (!out_of_bounds) {
+        any_match = true;
         if (insert_index == index_continuation || buf_nstrides == 1) {
           /* already existing stripe can be continued */
           ++buf_nstrides;
@@ -127,7 +134,14 @@ size_t num_result_stripes_total = 0;
       }
     }
     num_result_stripes_total += num_result_stripes;
+    isect_mask |= (size_t)any_match << (k % size_t_bits);
+    if ((k+1) % size_t_bits == 0) {
+      isect_stripes_bm[k/size_t_bits] = isect_mask;
+      isect_mask = 0;
+    }
   }
+  if (num_stripes % size_t_bits)
+    isect_stripes_bm[num_stripes/size_t_bits] = isect_mask;
 }
 Xt_idxlist result;
 if (num_result_stripes_total) {
@@ -143,6 +157,8 @@ if (num_result_stripes_total) {
   int buf_nstrides = 0;
   Xt_int buf_stride = -1;
   for (size_t k = 0; k < num_stripes; ++k) {
+    if (isect_stripes_bm[k/size_t_bits] & ((size_t)1 << (k % size_t_bits)))
+      ; else continue;
     struct Xt_stripe query = stripes[k];
     for (int j = 0; j < query.nstrides; ++j) {
       Xt_int insert_index = (Xt_int)(query.start + query.stride * j),
@@ -207,6 +223,8 @@ free(sssp);
 #endif
 #ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
 free(pos_used_bm);
+#else
+free(isect_stripes_bm);
 #endif
 /*
  * Local Variables:
