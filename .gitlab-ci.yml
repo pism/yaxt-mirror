@@ -33,7 +33,7 @@ stages:
   before_script:
     - *load_basic_modules
   tags:
-    - levante, xen
+    - levante-fake, hpc, dkrz
 
 .init_build_gcc_11_2_0:
   extends: .init_build
