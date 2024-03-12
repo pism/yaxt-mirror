@@ -49,9 +49,15 @@
  */
 
   for (size_t k = 0; k < num_stripes; ++k) {
+#ifndef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
+    if (isect_stripes_bm[k/size_t_bits] & ((size_t)1 << (k % size_t_bits)))
+      ; else continue;
+#endif
     struct Xt_stripe query = stripes[k];
+#ifdef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
     size_t num_result_stripes = 0;
     bool any_match = false;
+#endif
     for (int j = 0; j < query.nstrides; ++j) {
       Xt_int insert_index = (Xt_int)(query.start + query.stride * j),
         running_index = insert_index;
@@ -76,17 +82,26 @@
         (pos_used_bm[local_pos/size_t_bits] >> (local_pos % size_t_bits))&1;
 #endif
       if (!out_of_bounds) {
+#ifdef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
         any_match = true;
+#endif
         if (insert_index == index_continuation || buf_nstrides == 1) {
-          /* already existing stripe can be continued */
+          /* already existing stripe can be expanded */
           ++buf_nstrides;
           if (insert_index != index_continuation)
             buf_stride = (Xt_int)(insert_index - accum_start);
         } else {
+#ifndef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
+          result_stripes[num_result_stripes].nstrides = buf_nstrides;
+          result_stripes[num_result_stripes].stride = buf_stride;
+#endif
           buf_stride = 1;
           buf_nstrides = 1;
-          accum_start = insert_index;
           ++num_result_stripes;
+#ifndef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
+          result_stripes[num_result_stripes].start =
+#endif
+          accum_start = insert_index;
         }
         index_continuation = (Xt_int)(insert_index + buf_stride);
 #ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
@@ -95,12 +110,14 @@
 #endif
       }
     }
+#ifdef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
     num_result_stripes_total += num_result_stripes;
     isect_mask |= (size_t)any_match << (k % size_t_bits);
     if ((k+1) % size_t_bits == 0) {
       isect_stripes_bm[k/size_t_bits] = isect_mask;
       isect_mask = 0;
     }
+#endif
   }
 
 /*
