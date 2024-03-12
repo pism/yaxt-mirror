@@ -82,6 +82,7 @@ size_t num_indices_in_section
 #endif
 size_t num_result_stripes_total = 0;
 {
+#define XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
   /* start with non-appendable terminator */
   Xt_int accum_start = XT_INT_MIN;
   int buf_nstrides = 0;
@@ -117,6 +118,7 @@ size_t num_result_stripes_total = 0;
   }
   if (num_stripes % size_t_bits)
     isect_stripes_bm[num_stripes/size_t_bits] = isect_mask;
+#undef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
 }
 Xt_idxlist result;
 if (num_result_stripes_total) {
@@ -128,57 +130,35 @@ if (num_result_stripes_total) {
     = xt_idxstripes_alloc(num_result_stripes_total);
   struct Xt_stripe *restrict result_stripes = result_alloc.stripes;
   size_t num_result_stripes = (size_t)-1;
-  Xt_int index_continuation = XT_INT_MIN-1;
+  Xt_int index_continuation = XT_INT_MIN-1, accum_start = XT_INT_MIN;
   int buf_nstrides = 0;
   Xt_int buf_stride = -1;
-  for (size_t k = 0; k < num_stripes; ++k) {
-    if (isect_stripes_bm[k/size_t_bits] & ((size_t)1 << (k % size_t_bits)))
-      ; else continue;
-    struct Xt_stripe query = stripes[k];
-    for (int j = 0; j < query.nstrides; ++j) {
-      Xt_int insert_index = (Xt_int)(query.start + query.stride * j),
-        running_index = insert_index;
-      bool out_of_bounds = false;
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-      int local_pos = 0;
-#endif
-      for (size_t i = 0; i < num_dimensions; ++i) {
-        Xt_int abs_global_stride = dims[i].global_stride;
-        Xt_int curr_global_position
-          = (Xt_int)(running_index / abs_global_stride);
-        running_index = (Xt_int)(running_index % abs_global_stride);
-        out_of_bounds |= (curr_global_position < dims[i].local_start)
-          | (curr_global_position >= dims[i].local_start + dims[i].local_size);
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-        int curr_local_pos = (int)(curr_global_position - dims[i].local_start);
-        local_pos += curr_local_pos * (int)dims[i].local_stride;
-#endif
-      }
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-      out_of_bounds = out_of_bounds ||
-        (pos_used_bm[local_pos/size_t_bits] >> (local_pos % size_t_bits))&1;
-#endif
-      if (!out_of_bounds) {
-        if (insert_index == index_continuation || buf_nstrides == 1) {
-          /* already existing stripe can be expanded */
-          ++buf_nstrides;
-          if (insert_index != index_continuation)
-            buf_stride = (Xt_int)(insert_index
-                                  - result_stripes[num_result_stripes].start);
-        } else {
-          result_stripes[num_result_stripes].nstrides = buf_nstrides;
-          result_stripes[num_result_stripes].stride = buf_stride;
-          buf_stride = 1;
-          buf_nstrides = 1;
-          result_stripes[++num_result_stripes].start = insert_index;
-        }
-        index_continuation = (Xt_int)(insert_index + buf_stride);
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-        pos_used_bm[local_pos/size_t_bits]
-          |= ((size_t)1 << (local_pos % size_t_bits));
-#endif
-      }
-    }
+  switch (num_dimensions) {
+  case 1:
+#define NUM_DIMENSIONS 1
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  case 2:
+#define NUM_DIMENSIONS 2
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  case 3:
+#define NUM_DIMENSIONS 3
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  case 4:
+#define NUM_DIMENSIONS 4
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
+  default:
+#define NUM_DIMENSIONS num_dimensions
+#include "xt_idxsection_stripe_iterate.h"
+#undef NUM_DIMENSIONS
+    break;
   }
   result_stripes[num_result_stripes].stride = buf_stride;
   result_stripes[num_result_stripes].nstrides = buf_nstrides;
