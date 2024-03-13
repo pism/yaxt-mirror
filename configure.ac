@@ -542,7 +542,8 @@ char b[($XT_INT)((-($XT_INT)-0.5)+1.5)]]])],,
 dnl expand setting of variables to describe variable type
 dnl vartype_setq(TYPE_NAME, TYPE_C_TYPE, FC_KIND, TYPE_MPI_DT,
 dnl              TYPE_VAL_MAX, TYPE_VAL_MIN,
-dnl              TYPE_C_PRINTF_FMT, TYPE_C_ABS, TYPE_C_CLZ, TYPE_C_CTZ)
+dnl              TYPE_C_PRINTF_FMT, TYPE_C_ABS, TYPE_C_CLZ, TYPE_C_CTZ,
+dnl              TYPE_C_DIV_T, TYPE_C_DIV)
 m4_define([vartype_setq],[$1][_MPIDT=$4
      AC_CHECK_SIZEOF([$2])
      $1][_FC_KIND=$3
@@ -576,6 +577,8 @@ dnl get numeric Fortran kind of Xt_int for preprocessor tests
             [m4_substr(ctz_func,[17])],
             ["`expr "x]ctz_func[" : 'x.\{17\}\(.*\)'`"])[@{:@@{:@m4_if([$2],
             [short], [@{:@unsigned short@:}@])v@:}@@:}@@:}@"])])
+     $1][_DIV_T=$11
+     $1][_DIV=$12
 ])dnl
 
 dnl
@@ -614,7 +617,8 @@ m4_foreach([substtype],[[XT_INT]],
                    [INT_MAX],["(-INT_MAX)"],["\"d\""],['(abs((v)))'],
                    [[acx_cv_have_decl___builtin_clz],
                     [acx_cv_have_decl___lzcnt]],
-                   [[acx_cv_have_decl___builtin_ctz]])],
+                   [[acx_cv_have_decl___builtin_ctz]],
+                   [div_t],[div])],
      [long],
      [AS_IF([test $ac_cv_sizeof_long -eq $ac_cv_sizeof_long_long],
         [acx_nvidia_intrinsic_presence=acx_cv_have_decl___lzcnt64],
@@ -624,14 +628,16 @@ m4_foreach([substtype],[[XT_INT]],
                    [LONG_MAX],["(-LONG_MAX)"],["\"ld\""],['(labs((v)))'],
                    [[acx_cv_have_decl___builtin_clzl],
                     [$acx_nvidia_intrinsic_presence]],
-                   [[acx_cv_have_decl___builtin_ctzl]])],
+                   [[acx_cv_have_decl___builtin_ctzl]],
+                   [ldiv_t],[ldiv])],
      [short],
      [vartype_setq(substtype,[short],[c_short],[MPI_SHORT],
                    [SHRT_MAX],["(-SHRT_MAX)"],["\"hd\""],
                    ['((short)abs((v)))'],
                    [[acx_cv_have_decl___builtin_clz],
                     [acx_cv_have_decl___lzcnt16]],
-                   [[acx_cv_have_decl___builtin_ctz]])
+                   [[acx_cv_have_decl___builtin_ctz]],
+                   [div_t],[div])
       AS_IF([test x"$acx_cv_have_decl___builtin_clz" = xyes \
              && test $ac_cv_sizeof_int != $ac_cv_sizeof_short],
         [AS_IF([expr $ac_cv_sizeof_int = $ac_cv_sizeof_short \* 2 >/dev/null],
@@ -642,7 +648,8 @@ m4_foreach([substtype],[[XT_INT]],
                    [LLONG_MAX],["(-LLONG_MAX)"],["\"lld\""],['(llabs((v)))'],
                    [[acx_cv_have_decl___builtin_clzll],
                     [acx_cv_have_decl___lzcnt64]],
-                   [[acx_cv_have_decl___builtin_ctzll]])],
+                   [[acx_cv_have_decl___builtin_ctzll]],
+                   [lldiv_t],[lldiv])],
      [AC_MSG_ERROR([Invalid type selected for substtype])])
    AS_IF([eval eval test x\\\"\\\${HAVE_FC_MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[+set}\\\" = xset],
      [eval substtype[]_FC_MPIDT=\"MPI_INTEGER[]\$ac_cv_sizeof_]AS_TR_SH([$substtype])[\"],
@@ -669,6 +676,10 @@ m4_foreach([substtype],[[XT_INT]],
    AS_IF([test -n "$]substtype[_ctz"],
      [AC_DEFINE_UNQUOTED(substtype[_CTZ(v)],[$]substtype[_ctz],
        [return number of trailing zero-bits in v])])
+   AC_DEFINE_UNQUOTED(substtype[_DIV(n, d)],[$]substtype[_DIV((n), (d))],
+     [return quotient and remainder of n/d])
+   AC_DEFINE_UNQUOTED(substtype[_DIV_T],[$]substtype[_DIV_T],
+     [return type of $]substtype[_DIV])
   ])
 
 AS_CASE([$XT_INT],

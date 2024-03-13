@@ -53,6 +53,7 @@
 
 #include "xt/xt_core.h"
 
+#define XT_USE_FAST_DIVISIBLE_TEST
 #include <../src/xt_arithmetic_long.h>
 
 static void
@@ -64,11 +65,15 @@ test_xiimul(void);
 static void
 test_xlimul(void);
 
+static void
+test_fast_divide(void);
+
 int main(void)
 {
   test_xlabs();
   test_xiimul();
   test_xlimul();
+  test_fast_divide();
   return TEST_EXIT_CODE;
 }
 
@@ -162,6 +167,44 @@ test_xlimul(void)
     }
   }
 }
+
+static void
+test_fast_divide(void)
+{
+  struct tstV {
+    Xt_int num, den, q, r;
+  };
+  static const struct tstV tst[] = {
+    { 66, 7, 9, 3 },
+    { -66, -7, 9, 3 },
+    { 777, 1, 777, 0 },
+    { 134, 17, 7, 15 },
+  };
+  size_t num_tests = sizeof (tst) / sizeof (tst[0]);
+  for (size_t i = 0; i < num_tests; ++i) {
+    Xt_int d = tst[i].den;
+    struct xt_fast_div_coeff c = get_fast_div_coeff((Xt_uint)XT_INT_ABS(d));
+#ifdef XT_LONG
+    struct Xt_muldiv m = xt_get_mulinv(d);
+#endif
+    {
+      bool is_div = fast_divisible(c, d);
+      if (!is_div)
+        PUT_ERR("error: dividing self gives incorrect result!");
+    }
+    for (Xt_int x = (Xt_int)(d - 1000); x <= (Xt_int)(d + 1000); ++x) {
+      bool is_div = fast_divisible(c, x);
+      if (is_div != (x % d == 0))
+        PUT_ERR("error: unexpected result from divisibility test!");
+      XT_INT_DIV_T q = Xt_div(x, m, d);
+      if (q.rem != x % d)
+        PUT_ERR("error: unexpected remainder result from divison!");
+      if (q.quot != x / d)
+        PUT_ERR("error: unexpected quotient result from divison!");
+    }
+  }
+}
+
 
 /*
  * Local Variables:
