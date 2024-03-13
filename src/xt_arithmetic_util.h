@@ -59,6 +59,10 @@
 
 #include "xt/xt_core.h"
 
+enum {
+  xt_int_bits = sizeof (Xt_int) * CHAR_BIT,
+};
+
 /* simple operations on Xt_int */
 /**
  * @return -1 if x < 0, 1 otherwise
@@ -209,9 +213,6 @@ static inline int
 xintz(Xt_uint v)
 {
   Xt_uint lc = (Xt_uint)((v ^ (v - 1)) >> 1);
-  enum {
-    xt_int_bits = sizeof (Xt_int) * CHAR_BIT,
-  };
   return lc ? xt_int_bits - xinlz(lc) : 0;
 }
 #endif
@@ -382,9 +383,6 @@ get_fast_div_coeff(Xt_uint d)
 static inline int
 fast_divisible(struct xt_fast_div_coeff coeff, Xt_int i)
 {
-  enum {
-    xt_int_bits = sizeof (Xt_int) * CHAR_BIT,
-  };
   Xt_uint k = coeff.bs;
   Xt_uint mul = (Xt_uint)((Xt_uint)i * coeff.minv + coeff.a);
   Xt_uint rot = (Xt_uint)((mul >> k)

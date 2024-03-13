@@ -55,9 +55,6 @@
 #include "xt/xt_core.h"
 #include "xt_arithmetic_util.h"
 
-enum {
-  xt_int_bits = sizeof (Xt_int) * CHAR_BIT,
-};
 /* since the computation of the next overlap of two stripes might
  * overflow Xt_int (and indeed need 3*xt_int_bits to represent), what
  * follows is an implementation of double- and triple-length integer
