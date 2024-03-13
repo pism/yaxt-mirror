@@ -189,6 +189,80 @@ xllcmp_eq(Xt_long a, Xt_long b)
   return a == b;
 }
 
+// Computes the magic number for signed division.
+// Adapted from Henry S. Warren, Hacker's Delight, 2nd ed., 10-1
+struct Xt_muldiv {
+  Xt_int den;    // denominator
+  Xt_int M;      // Magic number
+  int s;         // and shift amount.
+};
+
+static inline struct Xt_muldiv
+xt_get_mulinv(Xt_int d)
+{
+  // Must have 2 <= d <= 2**(xt_int_bits-1)-1
+  // or   -2**(xt_int_bits-1) <= d <= -2.
+  Xt_uint delta;
+  const Xt_uint msbs = (Xt_uint)1 << (xt_int_bits-1);     // most-significant
+                                                          // bit set
+                                                          // => 2**(xt_int_bits-1)
+
+  Xt_uint ad = (Xt_uint)(XT_INT_ABS(d));
+  Xt_uint t = (Xt_uint)(msbs + ((Xt_uint)d >> (xt_int_bits - 1)));
+  Xt_uint anc = (Xt_uint)(t - 1 - t%ad);     // Absolute value of nc.
+  Xt_int p = xt_int_bits - 1;                 // Init. p.
+  Xt_uint q1 = msbs/anc;         // Init. q1 = 2**p/|nc|.
+  Xt_uint r1 = (Xt_uint)(msbs - q1*anc);    // Init. r1 = rem(2**p, |nc|).
+  Xt_uint q2 = msbs/ad;          // Init. q2 = 2**p/|d|.
+  Xt_uint r2 = (Xt_uint)(msbs - q2*ad);     // Init. r2 = rem(2**p, |d|).
+  do {
+    ++p;
+    q1 = (Xt_uint)(2*q1);           // Update q1 = 2**p/|nc|.
+    r1 = (Xt_uint)(2*r1);           // Update r1 = rem(2**p, |nc|).
+    if (r1 >= anc) {     // (Must be an unsigned comparison here).
+      ++q1;
+      r1 = (Xt_uint)(r1 - anc);
+    }
+    q2 = (Xt_uint)(2*q2);           // Update q2 = 2**p/|d|.
+    r2 = (Xt_uint)(2*r2);           // Update r2 = rem(2**p, |d|).
+    if (r2 >= ad) {      // (Must be an unsigned comparison here).
+      ++q2;
+      r2 = (Xt_uint)(r2 - ad);
+    }
+    delta = (Xt_uint)(ad - r2);
+  } while (q1 < delta || (q1 == delta && r1 == 0));
+
+  struct Xt_muldiv mag
+    = { .M = (Xt_int)((Xt_int)(q2 + 1) * (d < 0 ? -1 : 1)), // Magic number,
+        .den = d,                                           // denominator, and
+        .s = (int)(p - xt_int_bits) };              // shift amount to return.
+  return mag;
+}
+
+struct Xt_divt {
+  Xt_int quot, rem;
+};
+
+static inline XT_INT_DIV_T
+fast_division(Xt_int num, struct Xt_muldiv id)
+{
+  Xt_int M = id.M; // Magic num, see xt_get_mulinv
+  Xt_int snum
+    = (Xt_int)(id.den == 1 || (id.den > 0 && M < 0)
+               ? num : id.den < 0 && M > 0 ? -num : 0); // sign-adjusted numerator
+  Xt_int q
+    = (Xt_int)((Xt_long)M * num >> xt_int_bits); //q = floor(M*n/2**32).
+  q = (Xt_int)(q + snum);                        //q = floor(M*n/2**32) +/- n.
+  q = (Xt_int)(q >> id.s);                       //q = floor(q/4).
+  Xt_int t
+    = (Xt_int)((Xt_uint)q >> (xt_int_bits-1)); //Add 1 to q if
+  q = (Xt_int)(q + t);                                   //q is negative (n is positive).
+  t = (Xt_int)(q * id.den);           // Compute remainder from
+  Xt_int r = (Xt_int)(num - t);         // r = n - q*(-7).
+  return (XT_INT_DIV_T){ .quot = q, .rem = r };
+}
+
+#define Xt_div(num, muldiv, den) fast_division(num, muldiv)
 
 #else
 /* stores in one-complement form */
@@ -801,6 +875,7 @@ xttcmp_eq(Xt_tword a, Xt_tword b)
   return (a.hi == b.hi) & (a.mid == b.mid) & (a.lo == b.lo);
 }
 
+#define Xt_div(num, muldiv, den) XT_INT_DIV((num), (den))
 
 #endif
 
