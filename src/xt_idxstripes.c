@@ -1904,8 +1904,11 @@ idxstripes_get_pos_exts_of_index_stripe(
         continue;
       }
     }
-    else
-    {
+    else if ((stride != 0)
+             & (stride == db_stripe.stride)
+             & ((query.start - db_stripe.start) % stride != 0)) {
+      /* skip stripe that cannnot match at any position */
+    } else {
       /* Handle complex overlap */
       struct unmatched_tail search_result =
         idxstripes_complex_get_pos_exts_of_index_stripe(
