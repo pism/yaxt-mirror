@@ -66,10 +66,10 @@
       int local_pos = 0;
 #endif
       for (size_t i = 0; i < NUM_DIMENSIONS; ++i) {
-        Xt_int abs_global_stride = dims[i].global_stride;
-        Xt_int curr_global_position
-          = (Xt_int)(running_index / abs_global_stride);
-        running_index = (Xt_int)(running_index % abs_global_stride);
+        XT_INT_DIV_T pos = Xt_div(running_index, dim_div[i],
+                                  dims[i].global_stride);
+        Xt_int curr_global_position = (Xt_int)pos.quot;
+        running_index = (Xt_int)pos.rem;
         out_of_bounds |= (curr_global_position < dims[i].local_start)
           | (curr_global_position >= dims[i].local_start + dims[i].local_size);
 #ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
