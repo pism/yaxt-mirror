@@ -52,6 +52,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stddef.h>
 
 #if HAVE_DECL___LZCNT || HAVE_DECL___LZCNT64 || HAVE_DECL___LZCNT16
 #  include <intrin.h>
