@@ -1583,8 +1583,7 @@ find_candidates(struct Xt_stripe query,
           for (; (i+1) % size_t_bits; --i)
           {
             size_t predicate
-              = ((db_stripes_sort[i].range.min <= query_minmax.max)
-                 & (db_stripes_sort[i].range.max >= query_minmax.min));
+              = db_stripes_sort[i].range.max >= query_minmax.min;
             size_t pos = (size_t)db_stripes_sort[i].position;
             predicate
               &= (XT_INT_ABS(stripes[pos].stride) != query_stride
@@ -1603,8 +1602,7 @@ find_candidates(struct Xt_stripe query,
         for (; i >= size_t_bits;) {
           for (size_t j = 0; j < size_t_bits; ++j, --i) {
             size_t predicate
-              = ((db_stripes_sort[i].range.min <= query_minmax.max)
-                 & (db_stripes_sort[i].range.max >= query_minmax.min));
+              = db_stripes_sort[i].range.max >= query_minmax.min;
             size_t pos = (size_t)db_stripes_sort[i].position;
             predicate
               &= (XT_INT_ABS(stripes[pos].stride) != query_stride
@@ -1623,8 +1621,7 @@ find_candidates(struct Xt_stripe query,
       for (; i != SIZE_MAX; --i)
       {
         size_t predicate
-          = ((db_stripes_sort[i].range.min <= query_minmax.max)
-             & (db_stripes_sort[i].range.max >= query_minmax.min));
+          = db_stripes_sort[i].range.max >= query_minmax.min;
         size_t pos = (size_t)db_stripes_sort[i].position;
         predicate
           &= (XT_INT_ABS(stripes[pos].stride) != query_stride
