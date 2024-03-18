@@ -506,28 +506,14 @@ Xt_idxlist xt_idxstripes_unpack(void *buffer, int buffer_size, int *position,
                          &num_stripes, 1, MPI_INT, comm), comm);
 
   Xt_idxlist result;
-  if (num_stripes) {
-    size_t header_size = ((sizeof (struct Xt_idxstripes_)
-                           + ((size_t)num_stripes
-                              * sizeof (struct Xt_stripes_sort))
-                           + sizeof (struct Xt_stripe) - 1)
-                          / sizeof (struct Xt_stripe))
-      * sizeof (struct Xt_stripe),
-      body_size = sizeof (struct Xt_stripe) * (size_t)num_stripes;
-    Xt_idxstripes idxstripes = xmalloc(header_size + body_size);
-    idxstripes->num_stripes = num_stripes;
-    {
-      struct Xt_stripe *stripes_assign
-        = (struct Xt_stripe *)(void *)((unsigned char *)idxstripes
-                                       + header_size);
-      idxstripes->stripes = stripes_assign;
-      xt_mpi_call(MPI_Unpack(buffer, buffer_size, position, stripes_assign,
-                             num_stripes, stripe_dt, comm),comm);
-    }
-    result = idxstripes_aggregate(idxstripes, __func__);
-  } else
-    result = xt_idxempty_new();
+  assert(num_stripes);
+  struct Xt_stripes_alloc stripes_alloc =
+    idxstripes_alloc((size_t)num_stripes);
 
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         stripes_alloc.stripes,
+                         num_stripes, stripe_dt, comm),comm);
+  result = idxstripes_aggregate(stripes_alloc.idxstripes, __func__);
   INSTR_STOP(instr);
   return result;
 }
