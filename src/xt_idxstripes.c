@@ -243,12 +243,19 @@ struct Xt_idxstripes_ {
   struct Xt_stripes_sort stripes_sort[];
 };
 
-static int compare_xtstripes(const void * a_, const void * b_)
-{
-  const struct Xt_stripes_sort *restrict a = a_, *restrict b = b_;
-  return ((a->range.min > b->range.min) -
-          (a->range.min < b->range.min));
-}
+#define SORT_TYPE struct Xt_stripes_sort
+#define SORT_TYPE_SUFFIX stripes_sort
+#define XT_SORTFUNC_DECL static
+#define SORT_TYPE_CMP_LT(a,b,...) ((a).range.min < (b).range.min)
+#define SORT_TYPE_CMP_LE(a,b,...) ((a).range.min <= (b).range.min)
+#define SORT_TYPE_CMP_EQ(a,b,...) ((a).range.min == (b).range.min)
+#include "xt_mergesort_base.h"
+#undef SORT_TYPE
+#undef SORT_TYPE_SUFFIX
+#undef SORT_TYPE_CMP_LT
+#undef SORT_TYPE_CMP_LE
+#undef SORT_TYPE_CMP_EQ
+#undef XT_SORTFUNC_DECL
 
 static Xt_idxlist
 idxstripes_aggregate(Xt_idxstripes idxstripes,
@@ -312,7 +319,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   }
   if (num_indices > 0) {
     assert(num_indices <= INT_MAX);
-    qsort(stripes_sort, num_stripes, sizeof (*stripes_sort), compare_xtstripes);
+    xt_mergesort_stripes_sort(stripes_sort, num_stripes);
     stripes_sort[stripes_sort[0].position].inv_position = 0;
     unsigned stripes_do_overlap = 0;
     for (size_t i = 1; i < num_stripes; ++i) {
