@@ -270,15 +270,11 @@ setup_dims(Xt_int start, size_t num_dimensions,
   // (local stride is always positive, global stride can be negative)
   for (size_t i = num_dimensions - 2; i != (size_t)-1; --i) {
     dims[i].global_stride
-      = (Xt_int)(dims[i+1].global_stride * dims[i+1].global_size
-                 * Xt_isign((Xt_int)(dims[i+1].global_stride
-                                     * dims[i+1].global_size))
+      = (Xt_int)(XT_INT_ABS(dims[i+1].global_stride * dims[i+1].global_size)
                  * Xt_isign((Xt_int)(dims[i].global_size
                                      * (Xt_int)isign(dims[i].local_size))));
     dims[i].local_stride
-      = (Xt_int)(dims[i+1].local_stride * dims[i+1].local_size
-                 * Xt_isign((Xt_int)(dims[i+1].local_stride
-                                     * (Xt_int)dims[i+1].local_size)));
+      = XT_INT_ABS(dims[i+1].local_stride * dims[i+1].local_size);
   }
 
   // compute the local start index
