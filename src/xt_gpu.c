@@ -59,6 +59,9 @@ static const char filename[] = "xt_gpu.c";
 #ifdef HAVE_CUDA
 #  include "xt_cuda.h"
 #endif
+#ifdef _OPENACC
+#  include "openacc.h"
+#endif
 
 static void * default_malloc(size_t alloc_size, enum xt_memtype memtype);
 static void default_free(void * ptr, enum xt_memtype memtype);
@@ -78,11 +81,58 @@ static struct xt_gpu_vtable vtable = {
   .Instr_pop   = default_instr_pop,
 };
 
+#ifdef HAVE_CUDA
+static const struct xt_gpu_vtable *cuda_vtable;
+#endif
+
+#ifdef _OPENACC
+  /* better move to its own file? */
+static void *xt_acc_malloc(
+  size_t alloc_size, enum xt_memtype memtype) {
+
+  switch (memtype) {
+    default:
+      Xt_abort(
+        Xt_default_comm,
+        "ERROR(xt_cuda_malloc): unsupported memory type",
+        filename, __LINE__);
+      return NULL;
+    case (XT_MEMTYPE_HOST):
+      return xmalloc(alloc_size);
+    case (XT_MEMTYPE_DEVICE):
+      return acc_malloc(alloc_size + (alloc_size == 0));
+  }
+}
+
+static void xt_acc_free(void *ptr, enum xt_memtype memtype) {
+
+  switch (memtype) {
+    default:
+      Xt_abort(
+        Xt_default_comm,
+        "ERROR(xt_cuda_free): unsupported memory type",
+        filename, __LINE__);
+      break;
+    case (XT_MEMTYPE_HOST):
+      free(ptr);
+      break;
+    case (XT_MEMTYPE_DEVICE):
+      acc_free(ptr);
+      break;
+  }
+}
+#endif
+
 void xt_gpu_init() {
 
 #ifdef HAVE_CUDA
-  struct xt_gpu_vtable const * cuda_vtable = xt_cuda_init();
+  cuda_vtable = xt_cuda_init();
   if (cuda_vtable != NULL) vtable = *cuda_vtable;
+#endif
+#ifdef _OPENACC
+  /* better make this configurable? */
+  vtable.Malloc = xt_acc_malloc;
+  vtable.Free = xt_acc_free;
 #endif
 }
 
