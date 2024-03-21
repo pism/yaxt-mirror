@@ -1429,7 +1429,7 @@ struct Xt_stripes_lookup {
   const struct Xt_stripes_sort *stripes_sort;
   int *stripes_nstrides_psum;
   size_t *stripe_candidate_bitmask;
-  bool stripes_do_overlap;
+  bool stripes_do_overlap, stripes_do_intersect;
 };
 
 static inline void
@@ -1438,7 +1438,8 @@ create_stripes_lookup(struct Xt_stripes_lookup *restrict db,
   const struct Xt_stripe *restrict stripes;
   db->stripes = stripes = idxstripes->stripes;
   size_t num_db_stripes = (size_t)idxstripes->num_stripes;
-  bool stripes_do_overlap = idxstripes->flags & stripes_do_overlap_mask;
+  bool stripes_do_overlap = idxstripes->flags & stripes_do_overlap_mask,
+    stripes_do_intersect = idxstripes->flags & stripes_intersect_mask;
   enum {
     size_t_bits = sizeof (size_t) * CHAR_BIT,
   };
@@ -1462,6 +1463,7 @@ create_stripes_lookup(struct Xt_stripes_lookup *restrict db,
   db->num_stripes = num_db_stripes;
   db->stripes_nstrides_psum = db_stripes_nstrides_psum;
   db->stripes_do_overlap = stripes_do_overlap;
+  db->stripes_do_intersect = stripes_do_intersect;
 }
 
 static inline void
@@ -1508,25 +1510,39 @@ find_candidates(struct Xt_stripe query,
                 const struct Xt_stripes_lookup *restrict db,
                 struct int_vec *candidates,
                 bool single_match_only,
+                struct Xt_pos_ext_vec *restrict cover,
                 Xt_config config)
 {
+  (void)cover;
   struct Xt_minmax query_minmax = xt_stripe2minmax(query);
   size_t num_db_stripes = db->num_stripes;
   const struct Xt_stripes_sort *restrict db_stripes_sort = db->stripes_sort;
   size_t start_pos;
   /* find trivial match first if sensible */
-  if (db->stripes_do_overlap && !single_match_only) {
-    start_pos
-      = bsearch_stripes_sort(num_db_stripes, db_stripes_sort, query_minmax.min);
-    if (start_pos != num_db_stripes
-        && xt_stripes_eq(db->stripes[db_stripes_sort[start_pos].position],
-                         query)) {
-      candidates->num = 1;
-      if (candidates->size == 0)
-        candidates->p.e1 = db_stripes_sort[start_pos].position;
-      else
-        candidates->p.vec[0] = db_stripes_sort[start_pos].position;
-      return;
+  if (db->stripes_do_overlap) {
+    if ((start_pos
+         = bsearch_stripes_sort(num_db_stripes, db_stripes_sort,
+                                query_minmax.min))
+        != num_db_stripes) {
+      int stripes_start_pos = db_stripes_sort[start_pos].position;
+      if (xt_stripes_eq(db->stripes[stripes_start_pos],
+                         query)
+          && (!single_match_only
+              || (!db->stripes_do_intersect
+                  && xt_cover_search(
+                    cover,
+                    (struct Xt_pos_range){
+                      .start = db->stripes_nstrides_psum[stripes_start_pos],
+                      .end = db->stripes_nstrides_psum[stripes_start_pos]
+                      + query.nstrides -1 }, 0) == SIZE_MAX
+                ))) {
+        candidates->num = 1;
+        if (candidates->size == 0)
+          candidates->p.e1 = stripes_start_pos;
+        else
+          candidates->p.vec[0] = stripes_start_pos;
+        return;
+      }
     }
   }
   start_pos
@@ -1754,7 +1770,7 @@ idxstripes_get_pos_exts_of_index_stripes(
       query.stride = (Xt_int)((query.stride != 0 && query.nstrides != 1)
                               ? query.stride : (Xt_int)1);
       find_candidates(query, &stripes_db, &candidates,
-                      single_match_only, config);
+                      single_match_only, &cover, config);
       if (candidates.num) {
         do {
           unmatched += idxstripes_get_pos_exts_of_index_stripe(
