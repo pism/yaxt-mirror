@@ -225,9 +225,11 @@ enum {
   stripes_sort_bit = 0,
   stripes_do_overlap_bit = 2,
   stripes_some_have_zero_stride_bit,
+  stripes_intersect_bit,
 
   stripes_do_overlap_mask = 1 << stripes_do_overlap_bit,
   stripes_some_have_zero_stride_mask = 1 << stripes_some_have_zero_stride_bit,
+  stripes_intersect_mask = 1 << stripes_intersect_bit,
 };
 
 struct Xt_idxstripes_ {
@@ -293,7 +295,8 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
   }
   size_t num_stripes = (size_t)idxstripes->num_stripes;
   int sign_err = stripes[0].nstrides;
-  unsigned have_zero_stride = stripes[0].stride == 0;
+  unsigned have_zero_stride = stripes[0].stride == 0,
+    stripes_intersect = have_zero_stride & (stripes[0].nstrides > 1);
   for (size_t i = 1; i < num_stripes; ++i) {
     struct Xt_minmax stripe_range = xt_stripe2minmax(stripes[i]);
     int nstrides = stripes[i].nstrides;
@@ -305,6 +308,7 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
     num_indices += (long long)nstrides;
     sign_err |= nstrides;
     have_zero_stride |= stride == 0;
+    stripes_intersect |= (stride == 0 && nstrides > 1);
     ntrans_up += (start > prev_end) + ((nstrides - 1) & ~((stride > 0)-1));
     ntrans_dn += (start < prev_end) + ((nstrides - 1) & ~((stride < 0)-1));
     prev_end = (Xt_int)(start + stride * (nstrides-1));
@@ -327,10 +331,14 @@ idxstripes_aggregate(Xt_idxstripes idxstripes,
         |= stripes_sort[i - 1].range.max >= stripes_sort[i].range.min;
       stripes_sort[stripes_sort[i].position].inv_position = (int)i;
     }
-
+    stripes_intersect = stripes_intersect
+      || (stripes_do_overlap
+          && xt_stripes_detect_duplicate(
+            num_stripes, stripes, (struct Xt_minmax){ .min=min, .max=max }));
     idxstripes->flags = XT_SORT_FLAGS(ntrans_up, ntrans_dn) << stripes_sort_bit
       | stripes_do_overlap << stripes_do_overlap_bit
-      | have_zero_stride << stripes_some_have_zero_stride_bit;
+      | have_zero_stride << stripes_some_have_zero_stride_bit
+      | stripes_intersect << stripes_intersect_bit;
     idxstripes->min_index = min;
     idxstripes->max_index = max;
     idxstripes->index_array_cache = NULL;
