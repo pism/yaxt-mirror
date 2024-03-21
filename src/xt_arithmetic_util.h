@@ -282,6 +282,13 @@ next_2_pow(size_t v)
 
 #endif
 
+static inline Xt_int
+Xt_doz(Xt_int a, Xt_int b)
+{
+  return (Xt_int)((a - b) & -(a >= b));
+}
+
+
 // For signed integers, a similar method follows.
 //
 // Given c > 1 and odd, compute m such that (c * m) mod 2^n == 1

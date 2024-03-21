@@ -51,6 +51,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "xt/xt_core.h"
 #include "xt/xt_stripe.h"
@@ -230,6 +231,76 @@ xt_summarize_stripes(size_t num_stripes, const struct Xt_stripe stripes[num_stri
   };
 }
 
+#define MIN(X, Y)  ((X) < (Y) ? (X) : (Y))
+
+bool
+xt_stripes_detect_duplicate(size_t num_stripes,
+                            const struct Xt_stripe stripes[num_stripes],
+                            struct Xt_minmax index_range)
+{
+  bool contains_duplicate = false;
+  if (num_stripes) {
+    Xt_int ofs = index_range.min;
+    enum {
+      block_max = 1 << 24,
+      size_t_bits = sizeof (size_t) * CHAR_BIT,
+    };
+    size_t bm_size = ((size_t)MIN(block_max, index_range.max - ofs + 1)
+                      + size_t_bits - 1 ) / size_t_bits;
+    size_t *occupancy_bm = xcalloc(bm_size, sizeof (size_t));
+    size_t dup = 0;
+    do {
+      Xt_int current_range_size
+        = (Xt_int)MIN(block_max, index_range.max - ofs + 1);
+      struct Xt_minmax blk_range = (struct Xt_minmax){
+        ofs, (Xt_int)(ofs + current_range_size - 1)
+      };
+      for (size_t i = 0; i < num_stripes; ++i) {
+        struct Xt_stripe stripe_i = stripes[i];
+        if (stripe_i.stride < 0) {
+          stripe_i.start = (Xt_int)(stripe_i.start
+                                    + stripe_i.stride * (stripe_i.nstrides-1));
+          stripe_i.stride = XT_INT_ABS(stripe_i.stride);
+        } else if (stripe_i.stride == 0) {
+          if (stripe_i.nstrides > 1) {
+            free(occupancy_bm);
+            return true;
+          }
+          stripe_i.stride = 1;
+        }
+        struct Xt_minmax stripe_range = (struct Xt_minmax){
+          stripe_i.start, (Xt_int)(stripe_i.start
+                                    + stripe_i.stride * (stripe_i.nstrides-1))
+        };
+        if (stripe_range.max >= blk_range.min
+            && stripe_range.min <= blk_range.max)
+        {
+          Xt_int fstep
+            = (Xt_int)((Xt_doz(ofs, stripe_i.start) + stripe_i.stride - 1)
+                       / stripe_i.stride);
+          for (Xt_int index
+                 = (Xt_int)(stripe_i.start + fstep * stripe_i.stride);
+               index <= blk_range.max && fstep < stripe_i.nstrides;
+               ++fstep, index = (Xt_int)(index + stripe_i.stride))
+          {
+            size_t mask = (size_t)1 << ((size_t)(index - ofs)%size_t_bits),
+              mask_ofs = (size_t)(index - ofs)/size_t_bits;
+            dup |= mask & occupancy_bm[mask_ofs];
+            occupancy_bm[mask_ofs] |= mask;
+          }
+        }
+      }
+      Xt_uint remaining = (Xt_uint)((Xt_uint)index_range.max - (Xt_uint)ofs);
+      if (dup || remaining >= (Xt_uint)block_max)
+        break;
+      ofs = (Xt_int)(ofs + block_max);
+      memset(occupancy_bm, 0, bm_size * sizeof (size_t));
+    } while (true);
+    free(occupancy_bm);
+    contains_duplicate = dup;
+  }
+  return contains_duplicate;
+}
 
 /*
  * Local Variables:

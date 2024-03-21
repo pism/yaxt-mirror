@@ -156,7 +156,14 @@ struct Xt_stripe_summary {
 };
 
 PPM_DSO_INTERNAL struct Xt_stripe_summary
-xt_summarize_stripes(size_t num_stripes, const struct Xt_stripe stripes[num_stripes]);
+xt_summarize_stripes(size_t num_stripes,
+                     const struct Xt_stripe stripes[num_stripes]);
+
+PPM_DSO_INTERNAL bool
+xt_stripes_detect_duplicate(size_t num_stripes,
+                            const struct Xt_stripe stripes[num_stripes],
+                            struct Xt_minmax index_range);
+
 
 #endif
 
