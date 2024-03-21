@@ -219,7 +219,17 @@ struct Xt_stripes_sort {
                                   * indexed with unsorted index */
 };
 
-enum {
+/** structure of flags:
+ *
+ * * bits 0-1 bits encode sorting
+ *
+ * * bit 2 is set iff any stripes overlap each other, i.e.
+ *   xt_stripes_overlap(stripes[i], stripes[j]) is true for some stripes
+ *   i and j which does not necessarily imply they also share indices
+ * * bit 3 is set iff at least one stripe has stride 0
+ * * bit 4 is set iff any index is part of the stripes more than once
+ */
+enum idxstripes_flag_bits {
   /* todo: exploit newly introduced sorting information to speed up
    * index position lookups */
   stripes_sort_bit = 0,
