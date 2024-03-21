@@ -139,7 +139,7 @@ static void xt_cuda_free(void * ptr, enum xt_memtype memtype) {
         Xt_default_comm,
         "ERROR(xt_cuda_free): unsupported memory type",
         filename, __LINE__);
-      break;;
+      break;
     case (XT_MEMTYPE_HOST):
       free(ptr);
       break;

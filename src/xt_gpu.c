@@ -95,7 +95,7 @@ void xt_gpu_init() {
         "ERROR(" STR(__func__) "): unsupported memory type", \
         filename, __LINE__);                                 \
     }                                                        \
-  } while (0);
+  } while (0)
 
 static void * default_malloc(size_t alloc_size, enum xt_memtype memtype) {
 
