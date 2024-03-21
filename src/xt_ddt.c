@@ -1299,7 +1299,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    const uint32_t *src_32 = (const void *)((const unsigned char *)src + displs[i]);
+    const uint32_t *src_32 = add_rhs_byte_displ(uint32_t, src, displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 3; ++j) dst_[i][j] = src_32[j];
   }
@@ -1329,7 +1329,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    const uint64_t *src_64 = (const void *)((const unsigned char *)src + displs[i]);
+    const uint64_t *src_64 = add_rhs_byte_displ(uint64_t, src, displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 2; ++j) dst_[i][j] = src_64[j];
   }
@@ -1346,7 +1346,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    const uint32_t *src_32 = (const void *)((const unsigned char *)src + displs[i]);
+    const uint32_t *src_32 = add_rhs_byte_displ(uint32_t, src, displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 5; ++j) dst_[i][j] = src_32[j];
   }
@@ -1362,7 +1362,7 @@ XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i) {
-    const uint64_t *src_64 = (const void *)((const unsigned char *)src + displs[i]);
+    const uint64_t *src_64 = add_rhs_byte_displ(uint64_t, src, displs[i]);
 XtPragmaACC(loop independent)
     for (int j = 0; j < 4; ++j) dst[i][j] = src_64[j];
   }
