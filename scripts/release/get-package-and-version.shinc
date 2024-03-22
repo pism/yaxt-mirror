@@ -153,9 +153,9 @@ addOverrides()
       if [[ "$mpirun_version" =~ ^mpirun\ \(Open\ MPI\)\ ([0-9]+\.[0-9.]+) ]]; then
         mpirun_version=${BASH_REMATCH[1]}
         if printf '%s\n' "5.0" "${mpirun_version}" | sort -C -V ; then
-          MAKE_DEBUG_ARGS+=('PRRTE_MCA_rmaps_default_mapping_policy=:oversubscribe')
+          export PRRTE_MCA_rmaps_default_mapping_policy=:oversubscribe
         elif printf '%s\n' "1.8.0" "${mpirun_version}" | sort -C -V ; then
-          MAKE_DEBUG_ARGS+=('OMPI_MCA_rmaps_base_oversubscribe=true')
+          export OMPI_MCA_rmaps_base_oversubscribe=true
         fi
       fi
       ;;
