@@ -213,7 +213,10 @@ git add -f "${config_files[@]}"
 git commit -n -m 'Add autotools files of release.'
 git checkout "$prevBranch"
 $reconfCmd >"$log_dir/post-release-commit-reconf.log" 2>&1
-
+git update-index -q --really-refresh
+if ! git diff-index --exit-code HEAD -- >/dev/null ; then
+  git commit -a -m 'Update files affected by release.'
+fi
 #
 # Local Variables:
 # mode: sh
