@@ -207,7 +207,8 @@ done
 config_files+=(m4/lt* m4/libtool.m4 include/config.h.in configure
                aclocal.m4)
 if [[ -r "${script_dir}/extra_release_dist_files" ]]; then
-  mapfile -t -O ${#config_files[@]} config_files <"${script_dir}/extra_release_dist_files"
+  mapfile -t -O ${#config_files[@]} config_files \
+          <"${script_dir}/extra_release_dist_files"
 fi
 git add -f "${config_files[@]}"
 git commit -n -m 'Add autotools files of release.'
