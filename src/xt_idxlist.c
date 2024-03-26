@@ -286,17 +286,19 @@ xt_idxlist_get_pos_exts_of_index_stripes_custom(
       idxlist,
       num_stripes, stripes, num_ext, pos_ext, single_match_only, config);
   else {
-    int num_tmp_stripes;
-    struct Xt_stripe *tmp_stripes;
-    xt_idxlist_get_index_stripes(idxlist, &tmp_stripes, &num_tmp_stripes);
+    int num_tmp_stripes
+      = idxlist->vtable->get_num_index_stripes(idxlist);
+    struct Xt_stripes_alloc stripes_alloc
+      = xt_idxstripes_alloc((size_t)num_tmp_stripes);
+    xt_idxlist_get_index_stripes_keep_buf(
+      idxlist, stripes_alloc.stripes, (size_t)num_tmp_stripes);
     Xt_idxlist idxlist_stripes
-      = xt_idxstripes_prealloc_new(tmp_stripes, num_tmp_stripes);
+      = xt_idxstripes_congeal(stripes_alloc);
     int retval =
       idxlist_stripes->vtable->get_pos_exts_of_index_stripes(
         idxlist_stripes,
         num_stripes, stripes, num_ext, pos_ext, single_match_only, config);
     xt_idxlist_delete(idxlist_stripes);
-    free(tmp_stripes);
     return retval;
   }
 }
