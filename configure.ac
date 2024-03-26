@@ -785,6 +785,7 @@ AC_CONFIG_FILES([include/fc_feature_defs.inc])
 AC_CONFIG_FILES([						\
 	perf/perf_idxsection_get_positions_of_indices_run	\
 	perf/perf_sparse_array_gather_run			\
+	perf/perf_xmap_create_run				\
 	tests/test_exchanger_parallel_run			\
 	tests/test_redist_p2p_parallel_run			\
 	tests/test_redist_collection_parallel_run		\
