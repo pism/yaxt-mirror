@@ -122,10 +122,10 @@ int main(void) {
         }
       }
     }
-    for (int num_dimension = 3; num_dimension < 6; num_dimension += 2)
-      { // test index enumeration without cached indices
+    for (int num_dimension = 3; num_dimension < 6; num_dimension += 2) {
+      // test index enumeration without cached indices
 
-      Xt_int local_start[] = {0,0,0,0,0};
+      static const Xt_int local_start[] = {0,0,0,0,0};
       Xt_int *idxDump = NULL;
       size_t idxDumpSize = 0;
       num_samples = 52;
