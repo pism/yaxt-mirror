@@ -452,7 +452,6 @@ xt_idxsection_get_intersection_with_other_idxlist(Xt_idxlist src_idxsection,
   size_t num_dst_idx = (size_t)(xt_idxlist_get_num_indices(dst_idxlist));
 
   Xt_int const* dst_idx = xt_idxlist_get_indices_const(dst_idxlist);
-  int single_match_only = 0;
 
   Xt_int const * sorted_dst_idx;
   Xt_int * temp_dst_idx = NULL;
@@ -471,8 +470,7 @@ unsorted:
 get_pos:;
   int *pos = xmalloc(num_dst_idx * sizeof(*pos));
   size_t num_unmatched = idxsection_get_positions_of_indices(
-    src_idxsection, sorted_dst_idx, num_dst_idx, pos,
-    single_match_only);
+    src_idxsection, sorted_dst_idx, num_dst_idx, pos, false);
   size_t num_inter_idx = num_dst_idx - num_unmatched;
   Xt_idxlist result;
   if (num_inter_idx) {
