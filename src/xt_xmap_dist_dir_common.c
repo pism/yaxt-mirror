@@ -225,8 +225,6 @@ xt_xmap_dist_dir_same_rank_merge(struct dist_dir **dist_dir_results) {
   size_t num_isect_agg = 0;
 
   size_t i = 0, num_shards = (size_t)(*dist_dir_results)->num_entries;
-  struct Xt_stripe *restrict stripes = NULL;
-  size_t num_stripes_alloc = 0;
   while (i < num_shards) {
     int rank = entries[i].rank;
     size_t j = i;
@@ -238,10 +236,8 @@ xt_xmap_dist_dir_same_rank_merge(struct dist_dir **dist_dir_results) {
         += (size_t)(xt_idxlist_get_num_index_stripes(entries[j].list));
       ++j;
     } while (j < num_shards && entries[j].rank == rank);
-    if (num_stripes > num_stripes_alloc) {
-      stripes = xrealloc(stripes, num_stripes * sizeof (stripes[0]));
-      num_stripes_alloc = num_stripes;
-    }
+    struct Xt_stripes_alloc stripes_alloc = xt_idxstripes_alloc(num_stripes);
+    struct Xt_stripe *restrict stripes = stripes_alloc.stripes;
     size_t stripe_ofs = 0;
     for (; i < j; ++i) {
       size_t num_stripes_of_intersection
@@ -253,11 +249,10 @@ xt_xmap_dist_dir_same_rank_merge(struct dist_dir **dist_dir_results) {
       stripe_ofs += num_stripes_of_intersection;
     }
     qsort(stripes, num_stripes, sizeof (*stripes), stripe_cmp);
-    entries[num_isect_agg].list = xt_idxstripes_new(stripes, (int)num_stripes);
+    entries[num_isect_agg].list = xt_idxstripes_congeal(stripes_alloc);
     entries[num_isect_agg].rank = rank;
     ++num_isect_agg;
   }
-  free(stripes);
   (*dist_dir_results)->num_entries = (int)num_isect_agg;
   *dist_dir_results = xrealloc(*dist_dir_results, sizeof (struct dist_dir)
                                + (size_t)num_isect_agg
