@@ -832,7 +832,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist,
   enum { curr_local_position_auto_size=16 };
   Xt_int curr_local_position_auto[curr_local_position_auto_size];
   Xt_int *restrict curr_local_position;
-  if (num_dimensions <= curr_local_position_auto_size+2) {
+  if (num_dimensions-1 <= curr_local_position_auto_size) {
     curr_local_position = curr_local_position_auto;
     for (size_t i = 0; i < num_dimensions-1; ++i)
       curr_local_position[i] = 0;
