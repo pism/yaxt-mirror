@@ -1164,14 +1164,38 @@ xt_idxstripes_sort_new(size_t num_src_stripes,
 }
 
 static Xt_idxlist
+idxstripes_order_invert(Xt_idxlist idxlist)
+{
+  Xt_idxstripes src = (Xt_idxstripes)idxlist;
+  size_t num_stripes = (size_t)src->num_stripes;
+  struct Xt_stripes_alloc stripes_alloc
+    = idxstripes_alloc(num_stripes);
+  struct Xt_stripe *restrict inverted_stripes = stripes_alloc.stripes;
+  const struct Xt_stripe *src_stripes = src->stripes;
+  for (size_t i = 0; i < num_stripes; ++i) {
+    Xt_int src_start = src_stripes[num_stripes-1-i].start,
+      src_stride = src_stripes[num_stripes-1-i].stride;
+    int nstrides = src_stripes[num_stripes-1-i].nstrides;
+    inverted_stripes[i] = (struct Xt_stripe){
+      .start = (Xt_int)(src_start + src_stride * (nstrides-1)),
+      .stride = (Xt_int)-src_stride,
+      .nstrides = nstrides,
+    };
+  }
+  return idxstripes_aggregate(stripes_alloc.idxstripes, __func__);
+}
+
+static Xt_idxlist
 idxstripes_sorted_copy(Xt_idxlist idxlist, Xt_config config)
 {
   Xt_idxstripes src = (Xt_idxstripes)idxlist;
-  unsigned sort_flags = (src->flags >> stripes_sort_bit) & sort_mask;
+  int sort_flags = (int)((src->flags >> stripes_sort_bit) & sort_mask);
   sort_flags -= sort_flags < 3;
   Xt_idxlist sorted_idxlist;
   if (sort_flags == 1)
     sorted_idxlist = idxstripes_copy(idxlist);
+  else if (sort_flags == -1)
+    sorted_idxlist = idxstripes_order_invert(idxlist);
   else
     sorted_idxlist = xt_idxstripes_sort_new((size_t)src->num_stripes,
                                             src->stripes, config);
