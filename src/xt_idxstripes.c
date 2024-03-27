@@ -1167,10 +1167,15 @@ static Xt_idxlist
 idxstripes_sorted_copy(Xt_idxlist idxlist, Xt_config config)
 {
   Xt_idxstripes src = (Xt_idxstripes)idxlist;
-  /* fixme: determine if stripes is sorted already and return plain
-   * copy in that case */
-  return xt_idxstripes_sort_new((size_t)src->num_stripes,
-                                src->stripes, config);
+  unsigned sort_flags = (src->flags >> stripes_sort_bit) & sort_mask;
+  sort_flags -= sort_flags < 3;
+  Xt_idxlist sorted_idxlist;
+  if (sort_flags == 1)
+    sorted_idxlist = idxstripes_copy(idxlist);
+  else
+    sorted_idxlist = xt_idxstripes_sort_new((size_t)src->num_stripes,
+                                            src->stripes, config);
+  return sorted_idxlist;
 }
 
 static void
