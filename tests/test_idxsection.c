@@ -364,11 +364,10 @@ int main(int argc, char **argv) {
 
     // check intersection
     static const Xt_int ref_indices[2] = {20,26};
-    static const struct Xt_stripe ref_stripes[2]
-      = {{.start = 20, .stride = 1, .nstrides = 1},
-         {.start = 26, .stride = 1, .nstrides = 1}};
+    static const struct Xt_stripe ref_stripes[1]
+      = {{.start = 20, .stride = 6, .nstrides = 2}};
 
-    do_tests(intersection, ref_indices, 2, ref_stripes, 2);
+    do_tests(intersection, ref_indices, 2, ref_stripes, 1);
 
     xt_idxlist_delete(intersection);
     xt_idxlist_delete(idxsection_a);

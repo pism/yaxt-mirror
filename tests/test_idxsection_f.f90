@@ -268,8 +268,7 @@ CONTAINS
          local_start_a(n) = 1_xi, local_start_b(n) = (/ 3_xi, 2_xi /), &
          ref_indices(2) = (/ 20_xi, 26_xi /)
     INTEGER, PARAMETER :: local_size_a(n) = (/ 4, 2 /), local_size_b(n) = 3
-    TYPE(xt_stripe), PARAMETER :: ref_stripes(2) = (/ xt_stripe(20, 1, 1), &
-         xt_stripe(26, 1, 1) /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(20, 6, 2) /)
     CALL test_intersection(&
          start, global_size_a, local_size_a, local_start_a, &
          start, global_size_b, local_size_b, local_start_b, &

@@ -782,15 +782,25 @@ idxsection_get_indices_const(Xt_idxlist idxlist) {
   return idxsection->index_array_cache;
 }
 
+static size_t
+idxsection_get_num_index_stripes_(Xt_idxsection section)
+{
+  size_t num_dimensions = (size_t)section->ndim;
+  struct dim_desc *restrict dims = section->dims;
+  size_t i = num_dimensions-1;
+  while (i != SIZE_MAX && dims[i].local_size == 1)
+    --i;
+  size_t nstripes = 1;
+  for (--i; i != SIZE_MAX; --i)
+    nstripes *= (size_t)abs(dims[i].local_size);
+  return nstripes;
+}
+
 static int
 idxsection_get_num_index_stripes(Xt_idxlist idxlist)
 {
-  Xt_idxsection section = (Xt_idxsection)idxlist;
-  size_t num_dimensions = (size_t)section->ndim;
-  struct dim_desc *restrict dims = section->dims;
-  size_t nstripes = dims[num_dimensions-1].local_size != 0;
-  for (size_t i = 0; i < num_dimensions-1; ++i)
-    nstripes *= (size_t)abs(dims[i].local_size);
+  size_t nstripes
+    = idxsection_get_num_index_stripes_((Xt_idxsection)idxlist);
   return (int)nstripes;
 }
 
@@ -807,12 +817,13 @@ idxsection_get_index_stripes(Xt_idxlist idxlist,
   Xt_idxsection section = (Xt_idxsection)idxlist;
 
   size_t num_dimensions = (size_t)section->ndim;
-  struct dim_desc *restrict dims = section->dims;
+  const struct dim_desc *restrict dims = section->dims;
+  /* find last dimension that has local_size > 1 */
+  size_t ln1dim = num_dimensions-1;
+  while (ln1dim != SIZE_MAX && dims[ln1dim].local_size == 1)
+    --ln1dim;
 
-  size_t nstripes = dims[num_dimensions-1].local_size != 0;
-
-  for (size_t i = 0; i < num_dimensions-1; ++i)
-    nstripes *= (size_t)abs(dims[i].local_size);
+  size_t nstripes = idxsection_get_num_index_stripes_(section);
 
   assert(nstripes != 0);
 
@@ -827,13 +838,13 @@ idxsection_get_index_stripes(Xt_idxlist idxlist,
       curr_local_position[i] = 0;
   } else
     curr_local_position
-      = xcalloc(num_dimensions-2, sizeof(*curr_local_position));
+      = xcalloc(num_dimensions-1, sizeof(*curr_local_position));
 
   for (size_t i = 0; i < nstripes; ++i) {
 
     stripes[i].start  = section->local_start_index;
-    stripes[i].nstrides = abs(dims[num_dimensions-1].local_size);
-    stripes[i].stride = 1;
+    stripes[i].nstrides = abs(dims[ln1dim].local_size);
+    stripes[i].stride = dims[ln1dim].global_stride;
 
     for (size_t j = 0; j < num_dimensions - 1; ++j)
       stripes[i].start = (Xt_int)(stripes[i].start
