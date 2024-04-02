@@ -495,6 +495,24 @@ get_pos:;
 static void
 idxsection_init_sorted_copy(Xt_idxsection orig, Xt_idxsection copy);
 
+#undef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+#define NUM_DIMENSIONS 1
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS 2
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS 3
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS 4
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS num_dimensions
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+
+
 Xt_idxlist
 xt_idxsection_get_idxstripes_intersection(Xt_idxlist src_idxlist,
                                           Xt_idxlist dst_idxlist,
@@ -505,11 +523,54 @@ xt_idxsection_get_idxstripes_intersection(Xt_idxlist src_idxlist,
   (void)config;
   assert(dst_idxlist->vtable->idxlist_pack_code == STRIPES);
   Xt_idxsection idxsection = (Xt_idxsection)src_idxlist;
-  Xt_idxlist idxstripes_list = dst_idxlist;
-#include "xt_idxsection_stripe_intersection.h"
+  Xt_idxlist result;
+  switch (idxsection->ndim) {
+  case 1:
+    result
+      = xt_idxsection_get_idxstripes_intersection_1(
+        (Xt_idxsection)src_idxlist, dst_idxlist, config);
+    break;
+  case 2:
+    result
+      = xt_idxsection_get_idxstripes_intersection_2(
+        (Xt_idxsection)src_idxlist, dst_idxlist, config);
+    break;
+  case 3:
+    result
+      = xt_idxsection_get_idxstripes_intersection_3(
+        (Xt_idxsection)src_idxlist, dst_idxlist, config);
+    break;
+  case 4:
+    result
+      = xt_idxsection_get_idxstripes_intersection_4(
+        (Xt_idxsection)src_idxlist, dst_idxlist, config);
+    break;
+  default:
+    result
+      = xt_idxsection_get_idxstripes_intersection_(
+        (Xt_idxsection)src_idxlist, dst_idxlist, config);
+  }
   INSTR_STOP(instr);
   return result;
 }
+
+#define XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+#define NUM_DIMENSIONS 1
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS 2
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS 3
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS 4
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#define NUM_DIMENSIONS num_dimensions
+#include "xt_idxsection_stripe_intersection.h"
+#undef NUM_DIMENSIONS
+#undef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
 
 Xt_idxlist
 xt_idxsection_get_idxstripes_r_intersection(Xt_idxlist src_idxlist,
@@ -521,10 +582,33 @@ xt_idxsection_get_idxstripes_r_intersection(Xt_idxlist src_idxlist,
   (void)config;
   assert(src_idxlist->vtable->idxlist_pack_code == STRIPES);
   Xt_idxsection idxsection = (Xt_idxsection)dst_idxlist;
-  Xt_idxlist idxstripes_list = src_idxlist;
-#define XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-#include "xt_idxsection_stripe_intersection.h"
-#undef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+  Xt_idxlist result;
+  switch (idxsection->ndim) {
+  case 1:
+    result
+      = xt_idxsection_get_idxstripes_intersection_sm_1(
+        (Xt_idxsection)dst_idxlist, src_idxlist, config);
+    break;
+  case 2:
+    result
+      = xt_idxsection_get_idxstripes_intersection_sm_2(
+        (Xt_idxsection)dst_idxlist, src_idxlist, config);
+    break;
+  case 3:
+    result
+      = xt_idxsection_get_idxstripes_intersection_sm_3(
+        (Xt_idxsection)dst_idxlist, src_idxlist, config);
+    break;
+  case 4:
+    result
+      = xt_idxsection_get_idxstripes_intersection_sm_4(
+        (Xt_idxsection)dst_idxlist, src_idxlist, config);
+    break;
+  default:
+    result
+      = xt_idxsection_get_idxstripes_intersection_sm_(
+        (Xt_idxsection)dst_idxlist, src_idxlist, config);
+  }
   INSTR_STOP(instr);
   return result;
 }
