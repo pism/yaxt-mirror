@@ -1374,18 +1374,18 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
   INSTR_START(instr);
 
   int retval = 1;
-  if (offset < 0) offset = 0;
+  size_t offset_ = (offset < 0) ? (size_t)0 : (size_t)offset;
 
   Xt_idxstripes idxstripes = (Xt_idxstripes)idxlist;
   const struct Xt_stripes_sort *restrict stripes_sort
     = idxstripes->stripes_sort;
   const struct Xt_stripe *restrict stripes = idxstripes->stripes;
-  if (offset < idxlist->num_indices) {
+  if (offset_ < (size_t)idxlist->num_indices) {
     size_t num_stripes = (size_t)idxstripes->num_stripes, i;
     size_t position_offset = 0;
 
     for (i = 0;
-         position_offset + (size_t)stripes[i].nstrides <= (size_t)offset;
+         position_offset + (size_t)stripes[i].nstrides <= offset_;
          ++i)
       position_offset += (size_t)stripes[i].nstrides;
 
@@ -1408,7 +1408,7 @@ idxstripes_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
       } else if (stride != 0)
         rel_start = 0;
       else
-        rel_start = (int)(MAX((size_t)offset, position_offset) - position_offset);
+        rel_start = (int)(MAX(offset_, position_offset) - position_offset);
       *position = (int)((size_t)rel_start + position_offset);
       retval = 0;
       goto fun_exit;
