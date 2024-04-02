@@ -475,7 +475,7 @@ get_pos:;
   Xt_idxlist result;
   if (num_inter_idx) {
     struct Xt_vec_alloc vec_alloc = xt_idxvec_alloc((int)num_inter_idx);
-    Xt_int *inter_vec = vec_alloc.vector;
+    Xt_int *restrict inter_vec = vec_alloc.vector;
 
     for(size_t i = 0, j = 0; i < num_dst_idx && j < num_inter_idx; i++)
       if (pos[i] >= 0)
