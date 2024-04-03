@@ -46,7 +46,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #define XT_TOKEN_PASTE2_(a,b) a##b
-#if NUM_DIMENSIONS
+#ifdef NUM_DIMENSIONS
 #  ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
 #    define xt_idxsection_get_idxstripes_intersection__(ndims)       \
   XT_TOKEN_PASTE2_(xt_idxsection_get_idxstripes_intersection_sm_, ndims)
@@ -54,8 +54,8 @@
 #    define xt_idxsection_get_idxstripes_intersection__(ndims)       \
   XT_TOKEN_PASTE2_(xt_idxsection_get_idxstripes_intersection_, ndims)
 #  endif
+#  define NUM_DIMENSIONS_ NUM_DIMENSIONS
 #else
-#  define Xt_idxsection_(ndims) Xt_idxsection_
 #  ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
 #    define xt_idxsection_get_idxstripes_intersection__(ndims)  \
   xt_idxsection_get_idxstripes_intersection_sm_
@@ -63,6 +63,7 @@
 #    define xt_idxsection_get_idxstripes_intersection__(ndims)    \
   xt_idxsection_get_idxstripes_intersection_
 #  endif
+#  define NUM_DIMENSIONS_ num_dimensions
 #endif
 static Xt_idxlist
 xt_idxsection_get_idxstripes_intersection__(NUM_DIMENSIONS)
@@ -74,7 +75,7 @@ xt_idxsection_get_idxstripes_intersection__(NUM_DIMENSIONS)
 
   const struct Xt_stripe *stripes
     = xt_idxstripes_get_index_stripes_const(idxstripes_list);
-#if NUM_DIMENSIONS
+#ifdef NUM_DIMENSIONS
 #define Xt_idxsection__(ndims) XT_TOKEN_PASTE2_(Xt_idxsection_,ndims)
   struct Xt_idxsection__(NUM_DIMENSIONS) {
 
@@ -97,7 +98,7 @@ xt_idxsection_get_idxstripes_intersection__(NUM_DIMENSIONS)
   size_t num_dimensions = (size_t)idxsection->ndim;
   Xt_idxsection sssp
     = xmalloc(sizeof (struct Xt_idxsection_)
-              + sizeof (struct dim_desc) * NUM_DIMENSIONS);
+              + sizeof (struct dim_desc) * num_dimensions);
   idxsection_init_sorted_copy(idxsection, sssp);
   struct dim_desc *dims = sssp->dims;
 #endif
@@ -117,8 +118,8 @@ size_t num_indices_in_section
   *restrict isect_stripes_bm = pos_used_bm + section_bm_size;
 #endif
 #ifdef XT_LONG
-struct Xt_muldiv dim_div[NUM_DIMENSIONS];
-for (size_t i = 0; i < NUM_DIMENSIONS; ++i)
+struct Xt_muldiv dim_div[NUM_DIMENSIONS_];
+for (size_t i = 0; i < NUM_DIMENSIONS_; ++i)
   dim_div[i] = xt_get_mulinv(dims[i].global_stride);
 #endif
 size_t num_result_stripes_total = 0;
@@ -162,7 +163,8 @@ if (num_result_stripes_total) {
   }
 } else
   result = xt_idxempty_new();
-#if !NUM_DIMENSIONS
+#undef NUM_DIMENSIONS_
+#ifndef NUM_DIMENSIONS
 free(sssp);
 #endif
 #ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
@@ -173,12 +175,10 @@ free(isect_stripes_bm);
   return result;
 }
 #undef xt_idxsection_get_idxstripes_intersection__
-#if NUM_DIMENSIONS
+#ifdef NUM_DIMENSIONS
 #undef Xt_idxsection__
 #endif
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-#undef xt_idxsection_get_idxstripes_intersection_
-#endif
+#undef XT_TOKEN_PASTE2_
 /*
  * Local Variables:
  * c-basic-offset: 2

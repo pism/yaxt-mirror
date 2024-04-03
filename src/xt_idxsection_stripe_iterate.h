@@ -65,7 +65,7 @@
 #ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
       int local_pos = 0;
 #endif
-      for (size_t i = 0; i < NUM_DIMENSIONS; ++i) {
+      for (size_t i = 0; i < NUM_DIMENSIONS_; ++i) {
         XT_INT_DIV_T pos = Xt_div(running_index, dim_div[i],
                                   dims[i].global_stride);
         Xt_int curr_global_position = (Xt_int)pos.quot;

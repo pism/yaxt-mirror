@@ -508,7 +508,6 @@ idxsection_init_sorted_copy(Xt_idxsection orig, Xt_idxsection copy);
 #define NUM_DIMENSIONS 4
 #include "xt_idxsection_stripe_intersection.h"
 #undef NUM_DIMENSIONS
-#define NUM_DIMENSIONS num_dimensions
 #include "xt_idxsection_stripe_intersection.h"
 #undef NUM_DIMENSIONS
 
@@ -567,9 +566,7 @@ xt_idxsection_get_idxstripes_intersection(Xt_idxlist src_idxlist,
 #define NUM_DIMENSIONS 4
 #include "xt_idxsection_stripe_intersection.h"
 #undef NUM_DIMENSIONS
-#define NUM_DIMENSIONS num_dimensions
 #include "xt_idxsection_stripe_intersection.h"
-#undef NUM_DIMENSIONS
 #undef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
 
 Xt_idxlist
