@@ -236,7 +236,9 @@ enum idxstripes_flag_bits {
   stripes_do_overlap_bit = 2,
   stripes_some_have_zero_stride_bit,
   stripes_intersect_bit,
+};
 
+enum idxstripes_flag_mask {
   stripes_do_overlap_mask = 1 << stripes_do_overlap_bit,
   stripes_some_have_zero_stride_mask = 1 << stripes_some_have_zero_stride_bit,
   stripes_intersect_mask = 1 << stripes_intersect_bit,
