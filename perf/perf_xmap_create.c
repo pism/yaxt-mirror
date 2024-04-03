@@ -58,11 +58,6 @@
 static void
 parse_options(int argc, const char *argv[], Xt_config config);
 
-static long num_columns = 1240000;
-static long nlev = 50;
-
-static bool is_src;
-static int comm_world_size, comm_world_rank, local_size;
 enum {
   INDEX_GEN_COL_MAJOR,
   INDEX_GEN_ROW_MAJOR,
@@ -74,12 +69,25 @@ enum {
   INDEX_GEN_IDXSECTION,
 };
 
-static int index_generation_sequence = INDEX_GEN_COL_MAJOR,
-  index_generation_method = INDEX_GEN_IDXVEC,
-  bucket_generation_sequence = -1,
-  bucket_generation_method = -1;
+static struct {
+  Xt_xmdd_bucket_gen bg;
+  long num_columns;
+  long nlev;
+  int comm_world_size, comm_world_rank, local_size;
+  int index_generation_sequence,
+    index_generation_method,
+    bucket_generation_sequence,
+    bucket_generation_method;
+  bool is_src;
+} run_config = {
+  .bg = NULL,
+  .num_columns = 1240000, .nlev = 50,
+  .index_generation_sequence = INDEX_GEN_COL_MAJOR,
+  .index_generation_method = INDEX_GEN_IDXVEC,
+  .bucket_generation_sequence = -1,
+  .bucket_generation_method = -1,
+};
 
-Xt_xmdd_bucket_gen bg = NULL;
 
 static Xt_idxlist
 generate_3d_list(int local_rank, int local_size, void **buf, size_t *buf_size,
@@ -89,8 +97,8 @@ int main(int argc, const char *argv[]) {
 
   MPI_Init(NULL, NULL);
   xt_initialize(MPI_COMM_WORLD);
-  MPI_Comm_rank(MPI_COMM_WORLD, &comm_world_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &comm_world_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &run_config.comm_world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &run_config.comm_world_size);
 
   Xt_config conf = xt_config_new();
 
@@ -99,8 +107,8 @@ int main(int argc, const char *argv[]) {
   void *buf = NULL;
   size_t buf_size = 0;
   Xt_idxlist idxlist_3d = generate_3d_list(
-    comm_world_rank % local_size, local_size, &buf, &buf_size,
-    index_generation_method, index_generation_sequence),
+    run_config.comm_world_rank % run_config.local_size, run_config.local_size, &buf, &buf_size,
+    run_config.index_generation_method, run_config.index_generation_sequence),
     idxlist_empty = xt_idxempty_new();
   free(buf);
 
@@ -108,8 +116,8 @@ int main(int argc, const char *argv[]) {
 
   Xt_xmap xmap =
     xt_xmap_dist_dir_custom_new(
-      is_src?idxlist_3d:idxlist_empty,
-      is_src?idxlist_empty:idxlist_3d,
+      run_config.is_src?idxlist_3d:idxlist_empty,
+      run_config.is_src?idxlist_empty:idxlist_3d,
       MPI_COMM_WORLD, conf);
 
   double dt = MPI_Wtime() - tic;
@@ -126,13 +134,13 @@ int main(int argc, const char *argv[]) {
   MPI_Reduce(&dt, &max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Reduce(&dt, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (comm_world_rank == 0)
+  if (run_config.comm_world_rank == 0)
     fprintf(stderr, "min %e max %e avg %e\n", min, max,
-            sum / (double)comm_world_size);
+            sum / (double)run_config.comm_world_size);
 
   xt_config_delete(conf);
-  if (bg)
-    xt_xmdd_bucket_gen_delete(bg);
+  if (run_config.bg)
+    xt_xmdd_bucket_gen_delete(run_config.bg);
 
   xt_finalize();
   MPI_Finalize();
@@ -153,13 +161,14 @@ rank_of_column(Xt_int column, int num_ranks, Xt_int num_columns)
 }
 
 static Xt_idxlist
-generate_3d_list(int local_rank, int local_size, void **buf, size_t *buf_size,
+generate_3d_list(int local_rank, int local_size_, void **buf, size_t *buf_size,
                  int index_generation_method, int index_generation_sequence)
 {
-  Xt_int start_idx = start_of_rank(local_rank, local_size, (Xt_int)num_columns);
+  Xt_int start_idx = start_of_rank(local_rank, local_size_,
+                                   (Xt_int)run_config.num_columns);
 
-  Xt_int next_start_idx = start_of_rank(local_rank+1, local_size,
-                                        (Xt_int)num_columns);
+  Xt_int next_start_idx = start_of_rank(local_rank+1, local_size_,
+                                        (Xt_int)run_config.num_columns);
 
   Xt_int local_num_columns = (Xt_int)(next_start_idx - start_idx);
 
@@ -167,28 +176,28 @@ generate_3d_list(int local_rank, int local_size, void **buf, size_t *buf_size,
   if (index_generation_method == INDEX_GEN_IDXVEC) {
     Xt_int *idx3D = *buf;
     size_t needed_buf_size
-      = (size_t)(local_num_columns * nlev) * sizeof(Xt_int);
+      = (size_t)(local_num_columns * run_config.nlev) * sizeof(Xt_int);
     if (*buf_size < needed_buf_size) {
       *buf_size = needed_buf_size;
       *buf = idx3D = realloc(idx3D, needed_buf_size);
     };
 
     if (index_generation_sequence == INDEX_GEN_ROW_MAJOR) {
-      for (Xt_int lev = 0, j = 0; lev < nlev; ++lev)
+      for (Xt_int lev = 0, j = 0; lev < run_config.nlev; ++lev)
         for (Xt_int idx = 0; idx < local_num_columns; ++idx, ++j)
-          idx3D[j] = (Xt_int)(start_idx + idx + lev * num_columns);
+          idx3D[j] = (Xt_int)(start_idx + idx + lev * run_config.num_columns);
     }
     else if (index_generation_sequence == INDEX_GEN_COL_MAJOR) {
       for (Xt_int idx = 0, j = 0; idx < local_num_columns; ++idx)
-        for (Xt_int lev = 0; lev < nlev; ++lev, ++j)
-          idx3D[j] = (Xt_int)(start_idx + idx + lev * num_columns);
+        for (Xt_int lev = 0; lev < run_config.nlev; ++lev, ++j)
+          idx3D[j] = (Xt_int)(start_idx + idx + lev * run_config.num_columns);
     }
     idxlist_3d
-      = xt_idxvec_new(idx3D, (int)(nlev * local_num_columns));
+      = xt_idxvec_new(idx3D, (int)(run_config.nlev * local_num_columns));
   } else if (index_generation_method == INDEX_GEN_IDXSTRIPES) {
     size_t num_stripes
       = index_generation_sequence == INDEX_GEN_ROW_MAJOR
-      ? (size_t)nlev
+      ? (size_t)run_config.nlev
       : (size_t)local_num_columns;
     struct Xt_stripe *idx3D = *buf;
     size_t needed_buf_size = num_stripes * sizeof(*idx3D);
@@ -198,9 +207,9 @@ generate_3d_list(int local_rank, int local_size, void **buf, size_t *buf_size,
     }
 
     if (index_generation_sequence == INDEX_GEN_ROW_MAJOR) {
-      for (Xt_int lev = 0; lev < nlev; ++lev)
+      for (Xt_int lev = 0; lev < run_config.nlev; ++lev)
         idx3D[lev] = (struct Xt_stripe){
-          .start = (Xt_int)(start_idx + lev * num_columns),
+          .start = (Xt_int)(start_idx + lev * run_config.num_columns),
           .stride = 1,
           .nstrides = (int)local_num_columns
         };
@@ -209,8 +218,8 @@ generate_3d_list(int local_rank, int local_size, void **buf, size_t *buf_size,
       for (Xt_int idx = 0; idx < local_num_columns; ++idx)
         idx3D[idx] = (struct Xt_stripe){
           .start = (Xt_int)(start_idx + idx),
-          .stride = (Xt_int)num_columns,
-          .nstrides = (int)nlev
+          .stride = (Xt_int)run_config.num_columns,
+          .nstrides = (int)run_config.nlev
         };
     }
     idxlist_3d
@@ -219,8 +228,8 @@ generate_3d_list(int local_rank, int local_size, void **buf, size_t *buf_size,
     if (index_generation_sequence == INDEX_GEN_ROW_MAJOR)
       idxlist_3d = xt_idxsection_new(
         0, 2,
-        (Xt_int []){  (Xt_int)nlev, (Xt_int)num_columns },
-        (int []){  (int)nlev, (int)local_num_columns },
+        (Xt_int []){  (Xt_int)run_config.nlev, (Xt_int)run_config.num_columns },
+        (int []){  (int)run_config.nlev, (int)local_num_columns },
         (Xt_int []){  (Xt_int)0, start_idx });
     else {
       abort();
@@ -268,29 +277,29 @@ set_custom_bucket_gen(Xt_config config);
 static void
 set_list_gen_methods(int *generation_sequence,
                      int *generation_method,
-                     const char *optarg)
+                     const char *arg)
 {
   size_t cur_parm_ofs = 0;
-  /* split optarg into comma-separated parts */
-  while (optarg[cur_parm_ofs]) {
-    size_t cur_parm_len = strcspn(optarg+cur_parm_ofs, ",");
-    if (!strncmp(optarg+cur_parm_ofs, "col-major", cur_parm_len))
+  /* split arg into comma-separated parts */
+  while (arg[cur_parm_ofs]) {
+    size_t cur_parm_len = strcspn(arg+cur_parm_ofs, ",");
+    if (!strncmp(arg+cur_parm_ofs, "col-major", cur_parm_len))
       *generation_sequence=INDEX_GEN_COL_MAJOR;
-    else if (!strncmp(optarg+cur_parm_ofs, "row-major", cur_parm_len))
+    else if (!strncmp(arg+cur_parm_ofs, "row-major", cur_parm_len))
       *generation_sequence=INDEX_GEN_ROW_MAJOR;
-    else if (!strncmp(optarg+cur_parm_ofs, "idxvec", cur_parm_len))
+    else if (!strncmp(arg+cur_parm_ofs, "idxvec", cur_parm_len))
       *generation_method=INDEX_GEN_IDXVEC;
-    else if (!strncmp(optarg+cur_parm_ofs, "idxstripes", cur_parm_len))
+    else if (!strncmp(arg+cur_parm_ofs, "idxstripes", cur_parm_len))
       *generation_method=INDEX_GEN_IDXSTRIPES;
-    else if (!strncmp(optarg+cur_parm_ofs, "idxsection", cur_parm_len))
+    else if (!strncmp(arg+cur_parm_ofs, "idxsection", cur_parm_len))
       *generation_method=INDEX_GEN_IDXSECTION;
     else {
       fprintf(stderr, "error: unknown index generation method name: %s\n",
-              optarg);
+              arg);
       exit(1);
     }
     cur_parm_ofs += cur_parm_len
-      + (optarg[cur_parm_ofs+cur_parm_len] == ',');
+      + (arg[cur_parm_ofs+cur_parm_len] == ',');
   }
 }
 
@@ -312,7 +321,7 @@ parse_options(int argc, const char *argv[], Xt_config config)
     { 0, 0, 0, 0 },
   };
   long *opt_var[]
-    = { [1] = &num_columns, [2] = &nlev, [3] = &nlev, };
+    = { [1] = &run_config.num_columns, [2] = &run_config.nlev, [3] = &run_config.nlev, };
   while (1) {
     int option_index = 0;
     int c = getopt_long(argc, (char * const*)argv, "",
@@ -325,8 +334,8 @@ parse_options(int argc, const char *argv[], Xt_config config)
     case 0:
       switch (option_index) {
       case 0:
-        set_list_gen_methods(&index_generation_sequence,
-                             &index_generation_method,
+        set_list_gen_methods(&run_config.index_generation_sequence,
+                             &run_config.index_generation_method,
                              optarg);
         break;
       case 1:
@@ -354,8 +363,8 @@ parse_options(int argc, const char *argv[], Xt_config config)
       case 7:
         set_custom_bucket_gen(config);
         if (optarg)
-          set_list_gen_methods(&bucket_generation_sequence,
-                               &bucket_generation_method,
+          set_list_gen_methods(&run_config.bucket_generation_sequence,
+                               &run_config.bucket_generation_method,
                                optarg);
 
         break;
@@ -378,14 +387,15 @@ parse_options(int argc, const char *argv[], Xt_config config)
   if (optind < argc) {
     size_hamocc = (int)s2long(argv[optind], "hamocc_size", "");
   } else {
-    size_hamocc = comm_world_size/2;
+    size_hamocc = run_config.comm_world_size/2;
   }
-  is_src = comm_world_rank < (comm_world_size - size_hamocc);
-  local_size = is_src ? comm_world_size - size_hamocc : size_hamocc;
-  if (bucket_generation_sequence == -1)
-    bucket_generation_sequence = index_generation_sequence;
-  if (bucket_generation_method == -1)
-    bucket_generation_method = index_generation_sequence;
+  run_config.is_src = run_config.comm_world_rank < (run_config.comm_world_size - size_hamocc);
+  run_config.local_size = run_config.is_src
+    ? run_config.comm_world_size - size_hamocc : size_hamocc;
+  if (run_config.bucket_generation_sequence == -1)
+    run_config.bucket_generation_sequence = run_config.index_generation_sequence;
+  if (run_config.bucket_generation_method == -1)
+    run_config.bucket_generation_method = run_config.index_generation_sequence;
 }
 
 struct custom_bucket_gen_state
@@ -417,15 +427,15 @@ static struct Xt_com_list custom_bucket_gen_next(
 static void
 set_custom_bucket_gen(Xt_config config)
 {
-  bg = xt_xmdd_bucket_gen_new();
+  run_config.bg = xt_xmdd_bucket_gen_new();
   xt_xmdd_bucket_gen_define_interface(
-    bg,
+    run_config.bg,
     custom_bucket_gen_init_state,
     custom_bucket_gen_destroy_state,
     custom_bucket_gen_get_intersect_max_num,
     custom_bucket_gen_next,
     sizeof (struct custom_bucket_gen_state));
-  xt_config_set_xmdd_bucket_gen(config, bg);
+  xt_config_set_xmdd_bucket_gen(config, run_config.bg);
 }
 
 static int
@@ -444,7 +454,7 @@ custom_bucket_gen_init_state(
   gen_state->stripe_buf_size = 0;
   gen_state->stripe_buf = NULL;
   gen_state->prev_list = NULL;
-  int p = index_generation_method == INDEX_GEN_IDXSTRIPES
+  int p = run_config.index_generation_method == INDEX_GEN_IDXSTRIPES
     || xt_idxlist_is_stripe_conversion_profitable(src_idxlist, config)
     || xt_idxlist_is_stripe_conversion_profitable(dst_idxlist, config);
   (void)tag_offset_intra;
@@ -458,21 +468,21 @@ custom_bucket_gen_init_state(
   if (num_indices_src) {
     Xt_int start_src = xt_idxlist_get_min_index(src_idxlist),
       end_src = (Xt_int)(xt_idxlist_get_max_index(src_idxlist)
-                         - (nlev-1) * num_columns);
+                         - (run_config.nlev-1) * run_config.num_columns);
     if (start_src < first_column) first_column = start_src;
     if (end_src > last_column) last_column = end_src;
   }
   if (num_indices_dst) {
     Xt_int start_dst = xt_idxlist_get_min_index(dst_idxlist),
       end_dst = (Xt_int)(xt_idxlist_get_max_index(dst_idxlist)
-                         - (nlev-1) * num_columns);
+                         - (run_config.nlev-1) * run_config.num_columns);
     if (start_dst < first_column) first_column = start_dst;
     if (end_dst > last_column) last_column = end_dst;
   }
   int start_rank = rank_of_column(first_column, gen_state->intra_comm_size,
-                                  (Xt_int)num_columns),
+                                  (Xt_int)run_config.num_columns),
     end_rank = rank_of_column(last_column, gen_state->intra_comm_size,
-                              (Xt_int)num_columns);
+                              (Xt_int)run_config.num_columns);
   gen_state->prev_rank_generated = start_rank-1;
   gen_state->last_rank_generated = end_rank;
   return p;
@@ -509,8 +519,8 @@ static struct Xt_com_list custom_bucket_gen_next(
     bucket = generate_3d_list(next_rank, gen_state->intra_comm_size,
                               &gen_state->stripe_buf,
                               &gen_state->stripe_buf_size,
-                              bucket_generation_method,
-                              bucket_generation_sequence);
+                              run_config.bucket_generation_method,
+                              run_config.bucket_generation_sequence);
   (void)type;
   gen_state->prev_list = bucket;
   return (struct Xt_com_list){ .list = bucket, .rank = next_rank };
