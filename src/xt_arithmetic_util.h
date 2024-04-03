@@ -338,10 +338,10 @@ Xt_doz(Xt_int a, Xt_int b)
 // Since a' can have n-1 bits, 2a' may have n bits and there is no
 // risk of overflow.
 
-#if (defined __ICC && defined __OPTIMIZE__)     \
+#if defined XT_USE_FAST_DIVISIBLE_TEST \
+  || (defined __ICC && defined __OPTIMIZE__)    \
   || (defined __GNUC__ && defined __OPTIMIZE__) \
-  || (defined __PGI) \
-  || defined XT_USE_FAST_DIVISIBLE_TEST
+  || (defined __PGI)
 #undef XT_USE_FAST_DIVISIBLE_TEST
 #define XT_USE_FAST_DIVISIBLE_TEST
 
