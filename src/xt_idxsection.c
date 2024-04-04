@@ -198,14 +198,15 @@ xt_idxsection_initialize(void)
   MPI_Get_address(&dim_desc.local_size, &local_size_address);
 
   enum { num_dt_components = 2 };
-  int block_lengths[num_dt_components] = { 2, 1 };
+  static const int block_lengths[num_dt_components] = { 2, 1 };
   MPI_Aint displacements[num_dt_components]
     = {0, local_size_address - base_address };
-  MPI_Datatype types[num_dt_components]
-    = { Xt_int_dt, MPI_INT },
-    dim_desc_dt_unaligned;
+  static const MPI_Datatype types[num_dt_components]
+    = { Xt_int_dt, MPI_INT };
+  MPI_Datatype dim_desc_dt_unaligned;
   xt_mpi_call(MPI_Type_create_struct(num_dt_components,
-                                     block_lengths, displacements, types,
+                                     (int *)block_lengths, displacements,
+                                     (MPI_Datatype *)types,
                                      &dim_desc_dt_unaligned), Xt_default_comm);
   xt_mpi_call(MPI_Type_create_resized(dim_desc_dt_unaligned, 0,
                                       (MPI_Aint)sizeof(dim_desc),
