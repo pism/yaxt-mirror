@@ -158,9 +158,9 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
       src = src_idxlist_local;
       dst = dst_idxlist_local;
     }
-    large_list_seen
-      |= (xt_idxlist_get_num_indices(src) > config->idxv_cnv_size)
-      | (xt_idxlist_get_num_indices(dst) > config->idxv_cnv_size);
+    large_list_seen = large_list_seen
+      || (xt_idxlist_get_num_indices(src) > config->idxv_cnv_size)
+      || (xt_idxlist_get_num_indices(dst) > config->idxv_cnv_size);
     Xt_idxlist intersect
       = xt_idxlist_get_intersection_custom(src, dst_idxlist_local, config);
     if (xt_idxlist_get_num_indices(intersect) > 0) {
