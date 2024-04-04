@@ -261,8 +261,6 @@ int main(int argc, char **argv) {
     int src_block_sizes[nwin];
     int dst_block_offsets[nwin];
     int dst_block_sizes[nwin];
-    int a_vol_size = 0; // state a volume of my proc
-    int b_vol_size = 0; // state b volume of my proc
     // we only need local size but simply oversize here
     int a_voldata[gvol_size];
     int b_voldata[gvol_size]; // ..
@@ -286,7 +284,6 @@ int main(int argc, char **argv) {
           int p = ig2col_off[ia] + j;
           a_voldata[qa] = gvoldata[p];
         }
-        a_vol_size += src_block_sizes[i];
       }
     }
 
@@ -304,7 +301,6 @@ int main(int argc, char **argv) {
           b_voldata_ref[qb] = gvoldata[p];
           qb++;
         }
-        b_vol_size += dst_block_sizes[i];
       }
     }
 
