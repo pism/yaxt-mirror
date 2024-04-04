@@ -123,7 +123,7 @@ static void xt_acc_free(void *ptr, enum xt_memtype memtype) {
 }
 #endif
 
-void xt_gpu_init() {
+void xt_gpu_init(void) {
 
 #ifdef HAVE_CUDA
   cuda_vtable = xt_cuda_init();
@@ -202,7 +202,7 @@ int xt_gpu_instr_push(char const * name) {
   return vtable.Instr_push(name);
 }
 
-int xt_gpu_instr_pop() {
+int xt_gpu_instr_pop(void) {
   return vtable.Instr_pop();
 }
 
