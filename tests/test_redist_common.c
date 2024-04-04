@@ -138,7 +138,7 @@ check_redist_(Xt_redist redist,
       const double *dst_cmp = dst_buf_base;
       const long *ref_dst_cmp = ref_dst_data;
       for (size_t i = 0; i < dst_num_elems; ++i)
-        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+        compare_failed |= (dst_cmp[i] != (double)ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_SHORT) {
       const double *dst_cmp = dst_buf_base;
       const short *ref_dst_cmp = ref_dst_data;
@@ -148,7 +148,7 @@ check_redist_(Xt_redist redist,
       const double *dst_cmp = dst_buf_base;
       const long long *ref_dst_cmp = ref_dst_data;
       for (size_t i = 0; i < dst_num_elems; ++i)
-        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+        compare_failed |= (dst_cmp[i] != (double)ref_dst_cmp[i]);
     } else if (dst_data_dt == MPI_DOUBLE
                && ref_dst_data_dt == MPI_DATATYPE_NULL) {
       const double *dst_cmp = dst_buf_base;
