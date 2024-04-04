@@ -278,7 +278,6 @@ redist_exchanger_option(int *argc, char ***argv)
           return NULL;
         }
       }
-    case '?':
       break;
     }
   return config;
