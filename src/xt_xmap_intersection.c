@@ -938,7 +938,7 @@ xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type,
     default:
       Xt_abort(comm, "ERROR(xmap_intersection_reorder):invalid reorder type",
                filename, __LINE__);
-  };
+  }
 
   return (Xt_xmap)xmap_intersection_new;
 }

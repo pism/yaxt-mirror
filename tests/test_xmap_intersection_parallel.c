@@ -453,7 +453,7 @@ int main(int argc, char **argv)
           break;
         default:
           break;
-      };
+      }
 
       test_xmap(xmap_reorder, 1, &send_messages, 1, &recv_messages);
 

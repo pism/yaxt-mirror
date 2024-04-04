@@ -836,7 +836,7 @@ static struct xt_ddt_tree_elem *
       elem = xt_ddt_tree_elem_resized_new(extent, oldtype[0]);
       break;
     }
-  };
+  }
 
   if ((combiner != MPI_COMBINER_NAMED) && (free_mpi_ddt))
     xt_mpi_call(MPI_Type_free(&mpi_ddt), Xt_default_comm);
@@ -934,7 +934,7 @@ static void xt_ddt_tree_elem_get_data_sizes(
           sub_elems[i], prev_dtype, prev_data_idx, data);
       break;
     }
-  };
+  }
 }
 
 static void xt_ddt_tree_get_data_sizes(
@@ -999,7 +999,7 @@ static void xt_ddt_tree_elem_to_data(
           prev_dtype, prev_data_idx);
       break;
     }
-  };
+  }
 }
 
 static void xt_ddt_tree_to_data(

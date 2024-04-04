@@ -1026,7 +1026,7 @@ xt_idxstripes_get_idxvec_intersection(Xt_idxlist idxlist_src,
       if (found[fofs]&((size_t)1 << (i%size_t_bits))) {
         found_indices[inter_ofs] = indices[i];
         ++inter_ofs;
-      };
+      }
     }
     intersection = xt_idxvec_congeal(vec_alloc);
   } else

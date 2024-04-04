@@ -180,7 +180,7 @@ generate_3d_list(int local_rank, int local_size_, void **buf, size_t *buf_size,
     if (*buf_size < needed_buf_size) {
       *buf_size = needed_buf_size;
       *buf = idx3D = realloc(idx3D, needed_buf_size);
-    };
+    }
 
     if (index_generation_sequence == INDEX_GEN_ROW_MAJOR) {
       for (Xt_int lev = 0, j = 0; lev < run_config.nlev; ++lev)
