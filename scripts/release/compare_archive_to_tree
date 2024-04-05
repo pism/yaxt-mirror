@@ -79,6 +79,7 @@ my %ignore_archive_missing = map { $_ => undef } (
   'scripts/git-hooks/checklicense',
   'scripts/git-hooks/checklicense.exclusions',
   'scripts/git-hooks/checklicense.exclusions.pcre',
+  'scripts/git-hooks/install-standard-git-hooks',
   'scripts/git-hooks/pre-commit',
   'scripts/git-hooks/non-problems.txt',
  );

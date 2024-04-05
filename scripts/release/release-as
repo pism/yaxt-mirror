@@ -75,6 +75,8 @@ if [[ -w configure.ac && -r configure.ac && \
   fi
   git clone -b "$commit_to_release" . "$tmpsrcdir"
   pushd "$tmpsrcdir"
+  # reinstate git hooks
+  scripts/git-hooks/install-standard-git-hooks
   # shellcheck source=setup-sed.shinc
   . "${script_dir}/setup-sed.shinc"
   # 1. insert new version
