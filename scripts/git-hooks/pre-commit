@@ -102,7 +102,7 @@ git ls-files -z \
                        --no-edit-mode -
 
 # check for whitespace errors
-exec git diff-index --check --cached $against --
+exec git diff-index --check --cached $against -- '!:contrib/*patch/*.patch'
 
 #
 # Local Variables:
