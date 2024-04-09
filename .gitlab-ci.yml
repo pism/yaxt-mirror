@@ -71,8 +71,9 @@ gen_cov_data:
     - >
       ./configure
       CC=mpicc FC=mpifort
-      FCFLAGS="-O0 -g -cpp -fprofile-arcs -ftest-coverage"
-      CFLAGS="-O0 -g -Wall -fprofile-arcs -ftest-coverage"
+      FCFLAGS="-pipe -O0 -g -cpp -fprofile-arcs -ftest-coverage"
+      CFLAGS="-pipe -O0 -g -fprofile-arcs -ftest-coverage"
+      BUILD_CFLAGS='-Wall'
       MPI_LAUNCH="`which mpirun` --oversubscribe"
     - make -j8 check
   artifacts:
@@ -97,10 +98,14 @@ run_test_gcc_11_2_0:
     - >
       ./configure
       CC=mpicc FC=mpifort
-      FCFLAGS="-O0 -g -cpp"
-      CFLAGS="-O0 -g -Wall"
+      FCFLAGS="-pipe -O2 -g -march=native"
+      BUILD_FCFLAGS="-Wall -Wextra -Werror"
+      CFLAGS="-pipe -O2 -g -march=native"
+      BUILD_CFLAGS="-Wall -Wextra -Werror"
       --disable-silent-rules
       MPI_LAUNCH="`which mpirun` --oversubscribe"
+      || { status=$? ; gzip config.log ; exit $status ; }
+    - gzip config.log
 # build yaxt and unit tests without running tests
     - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
 # run tests
@@ -108,6 +113,8 @@ run_test_gcc_11_2_0:
   artifacts:
     paths:
       - make.err
+      - config.log.gz
+    when: always
     expire_in: 5min
 
 gen_doxy_html:
