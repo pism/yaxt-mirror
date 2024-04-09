@@ -41,7 +41,7 @@ dnl ACX_LIBXML2_WORKAROUND([TEST-SOURCE-DIR=config/checksrc],
 dnl                 [LIST-OF-WORK-AROUND-TESTS],
 dnl                 [ACTION-IF-WORKAROUND-SUCCEEDS],
 dnl                 [ACTION-IF-WORKAROUND-FAILED=AC_MSG_FAILURE],
-dnl                 [WORKAROUND-FILE=src/mpi-workarounds/xt_xmlXPathInit.c])
+dnl                 [WORKAROUND-DIR=src/mpi-workarounds])
 dnl
 dnl Assumes CC and CFLAGS are setup for MPI.
 dnl Then builds files needed for work-around in addition to test programs
@@ -56,14 +56,14 @@ AC_DEFUN([ACX_LIBXML2_WORKAROUND],
    acx_saved_CPPFLAGS=$CPPFLAGS
    acx_is_affected_libxml2=:
    dnl 2. copy workaround source into place for configure logic
-   acx_temp="m4_default([$5],[src/mpi-workarounds/])"
+   acx_workaround_dir="$srcdir/m4_default([$5],[src/mpi-workarounds])/"
    for acx_workaround in xt_xmlXPathInit xt_xmlInitParser \
      xt_xmlInitParser.c_def
    do
      AS_IF([test "$acx_workaround" = xt_xmlInitParser.c_def],
        [acx_workaround=xt_xmlInitParser
         CPPFLAGS="$CPPFLAGS -DXT_LIBXML_INCLUDE_SUBDIR"])
-     cp "$srcdir/$acx_temp/${acx_workaround}.c" conftest.c
+     cp "$acx_workaround_dir/${acx_workaround}.c" conftest.c
      dnl 3. build fixed xt_xmlXPathInit.c
      AC_COMPILE_IFELSE(,
        [ACX_MV_OBJ([conftest],[xt_workaround])],

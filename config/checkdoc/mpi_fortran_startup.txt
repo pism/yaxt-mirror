@@ -8,3 +8,7 @@ the case:
    by zero (which is UB) being executed in xmlXPathInit.
    This then causes issues with builds that have floating point
    run-time checks enabled, like the ifort -fpe0 option.
+
+2. In some installations, -Wl,-commons,use_dylibs is erroneously
+   deactivated but required for properly functioning Fortran
+   references to symbols like MPI_IN_PLACE.
