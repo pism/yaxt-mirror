@@ -41,6 +41,25 @@ stages:
     - *load_basic_modules
     - module load gcc/11.2.0-gcc-11.2.0 openmpi/4.1.2-gcc-11.2.0
 
+.init_build_intel_2021_5_0:
+  extends: .init_build
+  before_script:
+    - *load_basic_modules
+    - module load intel-oneapi-compilers/2022.0.1-gcc-11.2.0 openmpi/4.1.2-intel-2021.5.0
+
+.init_build_oneapi_2023_2_1:
+  extends: .init_build
+  before_script:
+    - *load_basic_modules
+    - module load intel-oneapi-compilers/2023.2.1-gcc-11.2.0 intel-oneapi-mpi/2021.5.0-intel-2021.5.0
+
+.init_build_nag_7_1:
+  extends: .init_build
+  before_script:
+    - *load_basic_modules
+    - module load nag/7.1-gcc-11.2.0 openmpi/4.1.2-nag-7.1
+    - export NAG_KUSARI_FILE="/etc/nag-license"
+
 .install_gcovr: &install_gcovr
   - mkdir $CI_PROJECT_DIR/install_dir
   - python3 -m venv $CI_PROJECT_DIR/install_dir/python-venv/gcovr
@@ -67,7 +86,7 @@ gen_cov_data:
   script:
     - export OMPI_MCA_btl_sm_use_knem=0
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
-    - autoreconf -i
+    - scripts/reconfigure
     - >
       ./configure
       CC=mpicc FC=mpifort
@@ -94,7 +113,7 @@ run_test_gcc_11_2_0:
   script:
     - export OMPI_MCA_btl_sm_use_knem=0
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
-    - autoreconf -i
+    - scripts/reconfigure
     - >
       ./configure
       CC=mpicc FC=mpifort
@@ -117,6 +136,91 @@ run_test_gcc_11_2_0:
         printf "%s\n" "Failure: Untracked files found" "${untracked_files[@]}"
         exit 1
       }
+  artifacts:
+    paths:
+      - make.err
+      - config.log.gz
+    when: always
+    expire_in: 5min
+
+run_test_intel_2021_5_0:
+  stage: tests
+  extends: .init_build_intel_2021_5_0
+  script:
+    - export OMPI_MCA_btl_sm_use_knem=0
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - scripts/reconfigure
+    - >
+      ./configure
+      CC=mpicc FC=mpifort
+      FCFLAGS="-O2 -march=core-avx2 -g"
+      CFLAGS="-O2 -march=core-avx2 -g"
+      BUILD_FCFLAGS="-Wall"
+      --disable-silent-rules
+      MPI_LAUNCH="`which mpirun` --oversubscribe"
+      || { status=$? ; gzip config.log ; exit $status ; }
+    - gzip config.log
+# build yaxt and unit tests without running tests
+    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+# run tests
+    - make check
+  artifacts:
+    paths:
+      - make.err
+      - config.log.gz
+    when: always
+    expire_in: 5min
+
+run_test_oneapi_2023_2_1:
+  stage: tests
+  extends: .init_build_oneapi_2023_2_1
+  script:
+    - export I_MPI_F90=ifx I_MPI_CC=icx
+    - scripts/reconfigure
+    - >
+      ./configure
+      CC=mpiicc FC=mpiifort
+      FCFLAGS="-O2 -march=core-avx2 -g"
+      CFLAGS="-O2 -march=core-avx2 -g -fno-math-errno"
+      BUILD_FCFLAGS="-Wall"
+      LDFLAGS="-g -shared-intel"
+      --disable-silent-rules
+      --disable-static
+      MPI_LAUNCH="`which mpirun`"
+      || { status=$? ; gzip config.log ; exit $status ; }
+    - gzip config.log
+# build yaxt and unit tests without running tests
+    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+# run tests
+    - make check
+  artifacts:
+    paths:
+      - make.err
+      - config.log.gz
+    when: always
+    expire_in: 5min
+
+run_test_nag_7_1:
+  stage: tests
+  extends: .init_build_nag_7_1
+  script:
+    - export OMPI_MCA_btl_sm_use_knem=0
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - scripts/reconfigure
+    - >
+      ./configure
+      FCFLAGS="-C=alias -C=array -C=bits -C=dangling -C=do -C=intovf -C=present -C=pointer -C=recursion -gline -nan -g -fpp -colour=warn:yellow -wmismatch=mpi_pack,mpi_unpack,mpi_bcast,mpi_send,mpi_recv,mpi_allreduce,mpi_isend,mpi_irecv,mpi_allgather,mpi_allgatherv,mpi_gather,mpi_gatherv,mpi_sendrecv,mpi_type_get_extent,xt_slice_c_loc -w=uda -w=alloctr -w=uep -w=x77 -f2008 -Wc,-pipe"
+      CFLAGS="-O0 -g -pipe"
+      BUILD_CFLAGS="-Wall -Werror"
+      CC=mpicc FC=mpif90
+      MPI_LAUNCH="`which mpirun` --oversubscribe"
+      --disable-silent-rules
+      || { status=$? ; gzip config.log ; exit $status ; }
+    - gzip config.log
+# build yaxt and unit tests without running tests
+    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+# run tests
+    - make check
   artifacts:
     paths:
       - make.err
