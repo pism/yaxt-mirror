@@ -57,6 +57,7 @@
 #include <mpi.h>
 
 #include "xt/xt_idxlist.h"
+#include "xt_idxlist_internal.h"
 #include "xt/xt_idxlist_collection.h"
 #include "xt/xt_idxvec.h"
 #include "xt/xt_idxstripes.h"

@@ -121,6 +121,8 @@ PPM_DSO_INTERNAL Xt_idxlist
 xt_default_isect(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
                  Xt_config config);
 
+#define xt_idxlist_get_num_indices(idxlist) ((idxlist)->num_indices)
+
 /*
  * for index lists this large, stripe representation generally gives
  * better performance for internal computations

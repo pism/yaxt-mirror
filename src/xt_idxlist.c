@@ -106,7 +106,7 @@ Xt_idxlist xt_idxlist_sorted_copy_custom(Xt_idxlist idxlist, Xt_config config)
   return idxlist->vtable->sorted_copy(idxlist, config);
 }
 
-int xt_idxlist_get_num_indices(Xt_idxlist idxlist) {
+int (xt_idxlist_get_num_indices)(Xt_idxlist idxlist) {
    return idxlist->num_indices;
 }
 
