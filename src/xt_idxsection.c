@@ -828,7 +828,7 @@ idxsection_get_indices_any(
 static void
 idxsection_create_index_array_cache(Xt_idxsection section)
 {
-  size_t num_indices = (size_t)section->parent.num_indices;
+  size_t num_indices = (size_t)xt_idxlist_get_num_indices(&section->parent);
   Xt_int *indices = section->index_array_cache
     = xmalloc(num_indices * sizeof(*(section->index_array_cache)));
   idxsection_get_indices_any(section->local_start_index, indices,
@@ -842,7 +842,8 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
   INSTR_START(instr);
   Xt_idxsection section = (Xt_idxsection)idxlist;
 
-  int num_indices = idxlist->num_indices;
+  int num_indices
+    = xt_idxlist_get_num_indices(idxlist);
 
   if (num_indices > 0) {
     // if the indices are already computed

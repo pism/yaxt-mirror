@@ -110,7 +110,7 @@ size_t *restrict isect_stripes_bm
   = xcalloc((num_stripes+size_t_bits-1)/size_t_bits, sizeof (size_t));
 #else
 size_t num_indices_in_section
-  = (size_t)idxsection->parent.num_indices,
+  = (size_t)xt_idxlist_get_num_indices(&idxsection->parent),
   section_bm_size = (num_indices_in_section+size_t_bits-1)/size_t_bits,
   *restrict pos_used_bm = xcalloc(section_bm_size
                          + (num_stripes+size_t_bits-1)/size_t_bits,

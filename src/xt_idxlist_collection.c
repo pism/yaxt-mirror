@@ -171,14 +171,15 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
   Xt_idxlist result;
   size_t num_non_empty_idxlists = 0, first_non_empty_idxlist = (size_t)-1;
   for (int i = 0; i < num_idxlists; ++i) {
-    int num_indices_of_list = idxlists[i]->num_indices;
+    int num_indices_of_list = xt_idxlist_get_num_indices(idxlists[i]);
     if (first_non_empty_idxlist == (size_t)-1 && num_indices_of_list > 0)
       first_non_empty_idxlist = (size_t)i;
     num_non_empty_idxlists += idxlists[i]->num_indices > 0;
   }
   if (num_non_empty_idxlists  > 1)
   {
-    long long num_indices = idxlists[first_non_empty_idxlist]->num_indices;
+    long long num_indices
+      = xt_idxlist_get_num_indices(idxlists[first_non_empty_idxlist]);
     Xt_int min = xt_idxlist_get_min_index(idxlists[first_non_empty_idxlist]),
       max = xt_idxlist_get_max_index(idxlists[first_non_empty_idxlist]),
       prev_max = max;
@@ -193,7 +194,7 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
       break;
     }
     for (int i = (int)first_non_empty_idxlist+1; i < num_idxlists; ++i) {
-      int num_indices_of_list = idxlists[i]->num_indices;
+      int num_indices_of_list = xt_idxlist_get_num_indices(idxlists[i]);
       if (num_indices_of_list > 0) {
         Xt_int tmp_min, tmp_max;
         if ((tmp_min = xt_idxlist_get_min_index(idxlists[i])) < min)
@@ -226,7 +227,7 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
       collectionlist->index_array_cache = NULL;
 
       for (int i = 0, j = 0; i < num_idxlists; ++i) {
-        int num_indices_of_list = idxlists[i]->num_indices;
+        int num_indices_of_list = xt_idxlist_get_num_indices(idxlists[i]);
         if (num_indices_of_list > 0)
           collectionlist->idxlists[j++] = xt_idxlist_copy(idxlists[i]);
       }
@@ -313,7 +314,7 @@ xt_idxlist_collection_unpack(void *buffer, int buffer_size, int *position,
   for (int i = 0; i < num_lists; ++i) {
     collectionlist->idxlists[i] = xt_idxlist_unpack(buffer, buffer_size,
                                                     position, comm);
-    num_indices += collectionlist->idxlists[i]->num_indices;
+    num_indices += xt_idxlist_get_num_indices(collectionlist->idxlists[i]);
   }
 
   assert(num_indices <= INT_MAX);
@@ -401,7 +402,8 @@ coll_get_sorted_stripes(Xt_idxlist_collection collectionlist,
       {
         struct Xt_config_ derived_config = *config;
         derived_config.flags |= xt_force_nosort;
-        size_t num_indices = (size_t)unsorted_list->num_indices;
+        size_t num_indices
+          = (size_t)xt_idxlist_get_num_indices(unsorted_list);
         const Xt_int *indices
           = xt_idxvec_get_sorted_vector(unsorted_list, &derived_config);
         if (!indices) {
@@ -505,7 +507,7 @@ idxlist_collection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
        = xrealloc(sorted_collection, sizeof (*sorted_collection)
                   + num_idxlists * sizeof(sorted_collection->idxlists[0]));
      Xt_idxlist_init(&sorted_collection->parent, &idxlist_collection_vtable,
-                     collectionlist->parent.num_indices);
+                     xt_idxlist_get_num_indices(idxlist));
      result = (Xt_idxlist)sorted_collection;
    } else {
      /* components overlap in a way that cannot be resolved by sorting
@@ -537,7 +539,7 @@ idxlist_collection_get_indices_const(Xt_idxlist idxlist) {
 
   if (collection->index_array_cache) return collection->index_array_cache;
 
-  unsigned num_indices = (unsigned)idxlist->num_indices;
+  unsigned num_indices = (unsigned)xt_idxlist_get_num_indices(idxlist);
 
   Xt_int *tmp_index_array
     = xmalloc(num_indices * sizeof (collection->index_array_cache[0]));
