@@ -507,11 +507,10 @@ enum {
 
 static size_t idxvec_get_pack_size(Xt_idxlist obj, MPI_Comm comm) {
 
-  Xt_idxvec idxvec = (Xt_idxvec)obj;
   int size_xt_idx, size_header;
 
   xt_mpi_call(MPI_Pack_size(pack_header_size, MPI_INT, comm, &size_header), comm);
-  xt_mpi_call(MPI_Pack_size(idxvec->parent.num_indices, Xt_int_dt, comm,
+  xt_mpi_call(MPI_Pack_size(obj->num_indices, Xt_int_dt, comm,
                             &size_xt_idx), comm);
 
   return (size_t)size_xt_idx + (size_t)size_header;
@@ -776,9 +775,7 @@ xt_idxvec_get_idxstripes_intersection(Xt_idxlist idxlist_src,
 static Xt_idxlist
 idxvec_copy(Xt_idxlist idxlist) {
 
-   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
-
-   return xt_idxvec_new(idxvec_obj->vector,
+   return xt_idxvec_new(((Xt_idxvec)idxlist)->vector,
                         xt_idxlist_get_num_indices(idxlist));
 }
 
@@ -804,16 +801,14 @@ idxvec_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
     return xt_idxstripes_congeal(stripes_alloc);
   } else {
     /* fixme: use congeal */
-    return xt_idxvec_new(sorted_vector, idxvec->parent.num_indices);
+    return xt_idxvec_new(sorted_vector, (int)num_indices);
   }
 }
 
 static void
 idxvec_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
 
-   Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
-
-   memcpy(indices, idxvec_obj->vector,
+   memcpy(indices, ((Xt_idxvec)idxlist)->vector,
           (size_t)xt_idxlist_get_num_indices(idxlist) * sizeof(*indices));
 }
 
@@ -828,10 +823,9 @@ idxvec_get_indices_const(Xt_idxlist idxlist) {
 static int
 idxvec_get_num_index_stripes(Xt_idxlist idxlist)
 {
-  Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
   size_t num_stripes = xt_indices_count_stripes(
     (size_t)xt_idxlist_get_num_indices(idxlist),
-    idxvec_obj->vector);
+    ((Xt_idxvec)idxlist)->vector);
   assert(num_stripes <= INT_MAX);
   return (int)num_stripes;
 }
@@ -840,21 +834,18 @@ static void
 idxvec_get_index_stripes(Xt_idxlist idxlist, struct Xt_stripe *stripes,
                          size_t num_stripes_alloc) {
 
-  Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
   xt_convert_indices_to_stripes_buf(
     (size_t)xt_idxlist_get_num_indices(idxlist),
-    idxvec_obj->vector, num_stripes_alloc, stripes);
+    ((Xt_idxvec)idxlist)->vector, num_stripes_alloc, stripes);
 }
 
 static int
 idxvec_get_index_at_position(Xt_idxlist idxlist, int position, Xt_int * index) {
 
-  Xt_idxvec idxvec_obj = (Xt_idxvec)idxlist;
-
   if (position < 0 || position >= xt_idxlist_get_num_indices(idxlist))
     return 1;
 
-  *index = idxvec_obj->vector[position];
+  *index = ((Xt_idxvec)idxlist)->vector[position];
 
   return 0;
 }
