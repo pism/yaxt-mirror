@@ -271,8 +271,10 @@ get_sort_flags(size_t num_indices, const Xt_int vector[num_indices])
   && ( __INTEL_COMPILER_BUILD_DATE == 20110811 \
        || __INTEL_COMPILER == 1300 )
   if (num_indices == -1)
-    fprintf(stderr, "ntrans_up=%d, ntrans_dn=%d, flags=%u\n",
-            ntrans_up, ntrans_dn, flags);
+    fprintf(stderr, "%s: ntrans_up=%d, ntrans_dn=%d, flags=%u\n",
+            filename, ntrans_up, ntrans_dn, flags);
+#else
+  (void)filename;
 #endif
   return (struct flags_min_max){ .flags = flags, .min = minv, .max = maxv };
 }
@@ -519,16 +521,15 @@ static size_t idxvec_get_pack_size(Xt_idxlist obj, MPI_Comm comm) {
 void idxvec_pack(Xt_idxlist obj, void *buffer, int buffer_size,
                  int *position, MPI_Comm comm) {
 
-  assert(obj);
+  assert(obj && xt_idxlist_get_num_indices(obj) > 0);
   Xt_idxvec idxvec = (Xt_idxvec)obj;
-  int header[pack_header_size] = { VECTOR, idxvec->parent.num_indices };
+  int header[pack_header_size] = { VECTOR, xt_idxlist_get_num_indices(obj) };
   xt_mpi_call(MPI_Pack(header, pack_header_size, MPI_INT, buffer,
                        buffer_size, position, comm), comm);
-  if (idxvec->parent.num_indices != 0)
-    xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(idxvec->vector),
-                         idxvec->parent.num_indices,
-                         Xt_int_dt, buffer,
-                         buffer_size, position, comm), comm);
+  xt_mpi_call(MPI_Pack(CAST_MPI_SEND_BUF(idxvec->vector),
+                       xt_idxlist_get_num_indices(obj),
+                       Xt_int_dt, buffer,
+                       buffer_size, position, comm), comm);
 }
 
 Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
@@ -537,27 +538,23 @@ Xt_idxlist xt_idxvec_unpack(void *buffer, int buffer_size, int *position,
   int num_indices;
   xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
                          &num_indices, 1, MPI_INT, comm), comm);
+  assert(num_indices > 0);
   Xt_idxlist idxvec = NULL;
-  if (num_indices > 0) {
-    struct Xt_vec_alloc vec_alloc = idxvec_alloc(num_indices);
-    xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
-                           vec_alloc.vector, num_indices,
-                           Xt_int_dt, comm), comm);
-    struct flags_min_max fmm
-      = get_sort_flags((size_t)num_indices, vec_alloc.vector);
-    unsigned flags = fmm.flags;
-    vec_alloc.idxvec->sorted_vector
-      = ((flags & sort_mask) == sort_asc || (flags & sort_mask) == sort_idt)
-      ? vec_alloc.vector : NULL;
-    vec_alloc.idxvec->sorted_vec_positions = NULL;
-    vec_alloc.idxvec->flags = flags;
-    vec_alloc.idxvec->max = fmm.max;
-    vec_alloc.idxvec->min = fmm.min;
-    idxvec = (Xt_idxlist)vec_alloc.idxvec;
-  } else {
-    Xt_abort(comm, "error: implementation generated empty vector!\n",
-             filename, __LINE__);
-  }
+  struct Xt_vec_alloc vec_alloc = idxvec_alloc(num_indices);
+  xt_mpi_call(MPI_Unpack(buffer, buffer_size, position,
+                         vec_alloc.vector, num_indices,
+                         Xt_int_dt, comm), comm);
+  struct flags_min_max fmm
+    = get_sort_flags((size_t)num_indices, vec_alloc.vector);
+  unsigned flags = fmm.flags;
+  vec_alloc.idxvec->sorted_vector
+    = ((flags & sort_mask) == sort_asc || (flags & sort_mask) == sort_idt)
+    ? vec_alloc.vector : NULL;
+  vec_alloc.idxvec->sorted_vec_positions = NULL;
+  vec_alloc.idxvec->flags = flags;
+  vec_alloc.idxvec->max = fmm.max;
+  vec_alloc.idxvec->min = fmm.min;
+  idxvec = (Xt_idxlist)vec_alloc.idxvec;
   return idxvec;
 }
 
