@@ -845,14 +845,12 @@ idxsection_get_indices(Xt_idxlist idxlist, Xt_int *indices) {
   int num_indices
     = xt_idxlist_get_num_indices(idxlist);
 
-  if (num_indices > 0) {
-    // if the indices are already computed
-    if (section->index_array_cache != NULL);
-    else
-      idxsection_create_index_array_cache(section);
-    memcpy(indices, section->index_array_cache,
-           (size_t)num_indices * sizeof(*indices));
-  }
+  // if the indices are already computed
+  if (section->index_array_cache != NULL);
+  else
+    idxsection_create_index_array_cache(section);
+  memcpy(indices, section->index_array_cache,
+         (size_t)num_indices * sizeof(*indices));
   INSTR_STOP(instr);
 }
 
