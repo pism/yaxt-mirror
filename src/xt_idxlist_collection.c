@@ -174,7 +174,10 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
     int num_indices_of_list = xt_idxlist_get_num_indices(idxlists[i]);
     if (first_non_empty_idxlist == (size_t)-1 && num_indices_of_list > 0)
       first_non_empty_idxlist = (size_t)i;
-    num_non_empty_idxlists += idxlists[i]->num_indices > 0;
+    num_non_empty_idxlists +=
+      (idxlists[i]->vtable == &idxlist_collection_vtable)
+      ? (size_t)((Xt_idxlist_collection)idxlists[i])->num_idxlists
+      : (size_t)(num_indices_of_list > 0);
   }
   if (num_non_empty_idxlists  > 1)
   {
@@ -226,9 +229,18 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
       collectionlist->num_idxlists = (int)num_non_empty_idxlists;
       collectionlist->index_array_cache = NULL;
 
-      for (int i = 0, j = 0; i < num_idxlists; ++i) {
-        int num_indices_of_list = xt_idxlist_get_num_indices(idxlists[i]);
-        if (num_indices_of_list > 0)
+      for (size_t i = first_non_empty_idxlist, j = 0;
+           i < (size_t)num_idxlists; ++i) {
+        if (idxlists[i]->vtable == &idxlist_collection_vtable) {
+          Xt_idxlist_collection comp_collection
+            = (Xt_idxlist_collection)idxlists[i];
+          size_t num_comp_idxlists
+            = (size_t)comp_collection->num_idxlists;
+          Xt_idxlist *comp_lists = comp_collection->idxlists;
+          for (size_t k = 0; k < num_comp_idxlists; ++k)
+            collectionlist->idxlists[j+k] = xt_idxlist_copy(comp_lists[k]);
+          j += num_comp_idxlists;
+        } else if (xt_idxlist_get_num_indices(idxlists[i]) > 0)
           collectionlist->idxlists[j++] = xt_idxlist_copy(idxlists[i]);
       }
       Xt_idxlist_init(&collectionlist->parent, &idxlist_collection_vtable,
