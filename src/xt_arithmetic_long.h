@@ -233,9 +233,9 @@ xt_get_mulinv(Xt_int d)
   } while (q1 < delta || (q1 == delta && r1 == 0));
 
   struct Xt_muldiv mag
-    = { .M = (Xt_int)((Xt_int)(q2 + 1) * (d < 0 ? -1 : 1)), // Magic number,
-        .den = d,                                           // denominator, and
-        .s = (int)(p - xt_int_bits) };              // shift amount to return.
+    = { .M = (Xt_int)(d < 1 ? -(Xt_int)(q2 + 1) : (Xt_int)(q2 + 1)),
+        .den = d,
+        .s = (int)(p - xt_int_bits) };
   return mag;
 }
 
@@ -250,10 +250,8 @@ fast_division(Xt_int num, struct Xt_muldiv id)
     = (Xt_int)((Xt_long)M * num >> xt_int_bits); //q = floor(M*n/2**32).
   q = (Xt_int)(q + snum);                        //q = floor(M*n/2**32) +/- n.
   q = (Xt_int)(q >> id.s);                       //q = floor(q/4).
-  Xt_int t
-    = (Xt_int)((Xt_uint)q >> (xt_int_bits-1)); //Add 1 to q if
-  q = (Xt_int)(q + t);                                   //q is negative (n is positive).
-  t = (Xt_int)(q * id.den);           // Compute remainder from
+  q = (Xt_int)(q + (q < 0));                                   //q is negative (n is positive).
+  Xt_int t = (Xt_int)(q * id.den);           // Compute remainder from
   Xt_int r = (Xt_int)(num - t);         // r = n - q*(-7).
   return (XT_INT_DIV_T){ .quot = q, .rem = r };
 }

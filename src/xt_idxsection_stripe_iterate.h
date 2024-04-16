@@ -66,7 +66,7 @@
       int local_pos = 0;
 #endif
       for (size_t i = 0; i < NUM_DIMENSIONS_; ++i) {
-        XT_INT_DIV_T pos = Xt_div(running_index, dim_div[i],
+        XT_INT_DIV_T pos = Xt_div(running_index, dims[i].agsmd,
                                   dims[i].global_stride);
         Xt_int curr_global_position = (Xt_int)pos.quot;
         running_index = (Xt_int)pos.rem;

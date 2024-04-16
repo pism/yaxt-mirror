@@ -155,6 +155,10 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
 struct dim_desc
 {
   Xt_int global_size, local_start, global_stride, local_stride;
+#ifdef XT_LONG
+  struct Xt_muldiv agsmd;        /* multiplicative inverse stored for
+                                  * fast division by absolute global stride */
+#endif
   int local_size;
 };
 
@@ -265,6 +269,10 @@ setup_dims(Xt_int start, size_t num_dimensions,
   dims[num_dimensions - 1].global_stride =
     (Xt_int)(Xt_isign(dims[num_dimensions - 1].global_size) *
              isign(dims[num_dimensions - 1].local_size));
+#ifdef XT_LONG
+  dims[num_dimensions - 1].agsmd
+    = xt_get_mulinv(XT_INT_ABS(dims[num_dimensions - 1].global_stride));
+#endif
   dims[num_dimensions - 1].local_stride = 1;
 
   // compute local and global stride
@@ -276,6 +284,10 @@ setup_dims(Xt_int start, size_t num_dimensions,
                                      * (Xt_int)isign(dims[i].local_size))));
     dims[i].local_stride
       = XT_INT_ABS(dims[i+1].local_stride * dims[i+1].local_size);
+#ifdef XT_LONG
+    dims[i].agsmd
+      = xt_get_mulinv(XT_INT_ABS(dims[i].global_stride));
+#endif
   }
 
   // compute the local start index
@@ -1005,11 +1017,9 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
   const struct dim_desc *dims = section->dims;
   for (size_t i = 0; i < num_dimensions; ++i) {
 
-    Xt_int abs_global_stride
-      = XT_INT_ABS(dims[i].global_stride);
-
-    Xt_int curr_global_position
-      = (Xt_int)(index / abs_global_stride);
+    XT_INT_DIV_T qr = Xt_div(index, dims[i].agsmd,
+                             XT_INT_ABS(dims[i].global_stride));
+    Xt_int curr_global_position = qr.quot;
 
     // in case the global size is negative, we have to adjust the global position,
     // because the ordering of indices in this dimension is inverted
@@ -1017,7 +1027,7 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
       curr_global_position
         = (Xt_int)(-dims[i].global_size - curr_global_position - 1);
 
-    index = (Xt_int)(index % abs_global_stride);
+    index = qr.rem;
 
     if (curr_global_position < dims[i].local_start)
       goto fun_exit;
@@ -1359,8 +1369,10 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       Xt_int curr_global_position, curr_local_position;
 
       // compute global position of the smallest index that has not yet been processed
-      curr_global_position = (Xt_int)((indices[num_processed] - index_offset) /
-                                      abs_global_stride);
+      XT_INT_DIV_T qr
+        = Xt_div((Xt_int)(indices[num_processed] - index_offset),
+                 dims[0].agsmd, abs_global_stride);
+      curr_global_position = qr.quot;
 
       // if the position is outside of the range of the current dimension
       if (curr_global_position >= tmp_local_start + abs_local_size)

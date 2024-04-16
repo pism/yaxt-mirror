@@ -117,11 +117,6 @@ size_t num_indices_in_section
                          sizeof (size_t)),
   *restrict isect_stripes_bm = pos_used_bm + section_bm_size;
 #endif
-#ifdef XT_LONG
-struct Xt_muldiv dim_div[NUM_DIMENSIONS_];
-for (size_t i = 0; i < NUM_DIMENSIONS_; ++i)
-  dim_div[i] = xt_get_mulinv(dims[i].global_stride);
-#endif
 size_t num_result_stripes_total = 0;
 {
 #define XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
