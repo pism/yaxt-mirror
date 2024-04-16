@@ -1289,21 +1289,17 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
   int abs_local_size = abs(dims[0].local_size);
   Xt_int abs_global_stride = XT_INT_ABS(dims[0].global_stride);
   Xt_int abs_local_stride = XT_INT_ABS(dims[0].local_stride);
+  Xt_int local_start = dims[0].local_start;
+  // we want to work on ascending indices in the lowest dimension -> have to
+  // adjust in case of negative global size
+  if (dims[0].global_size < 0)
+    local_start = (Xt_int)(abs_global_size - local_start - abs_local_size);
 
   if (ndim == 1)
   {
 
-    Xt_int curr_position;
-
-    Xt_int tmp_local_start = dims[0].local_start;
-
-    // we want to work on ascending indices in the lowest dimension -> have to
-    // adjust in case of negative global size
-    if (dims[0].global_size < 0)
-      tmp_local_start = (Xt_int)(-dims[0].global_size - tmp_local_start -
-                                 abs_local_size);
-
-    Xt_int min_index = (Xt_int)(index_offset + tmp_local_start * abs_global_stride);
+    Xt_int min_index
+      = (Xt_int)(index_offset + local_start * abs_global_stride);
 
     // set all indices that are smaller than the minimum to "not found"
     while ((num_processed < num_indices)
@@ -1315,6 +1311,7 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
 
       // for as long as we are in the range local section of the current
       // global dimension
+      Xt_int curr_position;
       while ((num_processed < num_indices) &&
              ((curr_position = (Xt_int)(indices[num_processed] - min_index)) <
              abs_local_size)) {
@@ -1326,6 +1323,7 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
 
       // for as long as we are in the range local section of the current
       // global dimension
+      Xt_int curr_position;
       while ((num_processed < num_indices) &&
              ((curr_position = (Xt_int)(indices[num_processed] - min_index)) <
              abs_local_size)) {
@@ -1344,16 +1342,9 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
 
     assert(ndim > 1);
 
-    Xt_int tmp_local_start = dims[0].local_start;
-
-    // we want to work on ascending indices in the lowest dimension -> have to
-    // adjust in case of negative global size
-    if (dims[0].global_size < 0)
-      tmp_local_start = (Xt_int)(-dims[0].global_size - tmp_local_start -
-                                 abs_local_size);
 
     Xt_int min_index
-      = (Xt_int)(index_offset + tmp_local_start * abs_global_stride);
+      = (Xt_int)(index_offset + local_start * abs_global_stride);
 
     // set all indices that are smaller than the minimum to "not found"
     while ((num_processed < num_indices)
@@ -1371,7 +1362,7 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
 
       // if the position is outside of the range of the current dimension
       Xt_int abs_local_position
-        = (Xt_int)(curr_global_position - tmp_local_start);
+        = (Xt_int)(curr_global_position - local_start);
       if (abs_local_position >= abs_local_size)
         break;
 
