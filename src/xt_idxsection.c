@@ -294,18 +294,17 @@ setup_dims(Xt_int start, size_t num_dimensions,
   // depends on global size and sign of local and global size
   Xt_int local_start_index = start;
   for (size_t i = num_dimensions - 1; i != (size_t)-1; --i) {
-    Xt_int abs_global_stride_i = XT_INT_ABS(dims[i].global_stride),
-      adj_gstride = (Xt_int)(abs_global_stride_i * Xt_isign(dims[i].global_size)),
-      start_ofs = (Xt_int)(dims[i].global_size > 0 ? 0 : dims[i].global_size + 1);
+    Xt_int adj_gstride
+      = (Xt_int)(dims[i].global_stride * isign(dims[i].local_size)),
+      start_ofs
+      = (Xt_int)(dims[i].global_size > 0 ? 0 : dims[i].global_size + 1);
     local_start_index
       = (Xt_int)(local_start_index
                  + (adj_gstride * (start_ofs + dims[i].local_start)));
     if (dims[i].local_size < 0)
       local_start_index
         = (Xt_int)(local_start_index
-                   - (abs_global_stride_i
-                      * (dims[i].local_size + 1)
-                      * Xt_isign(dims[i].global_size)));
+                   + (dims[i].global_stride * (dims[i].local_size + 1)));
   }
   struct Xt_minmax mm = get_section_minmax(num_dimensions, local_start_index, dims);
   return (struct section_aggregate){ .start = local_start_index,
