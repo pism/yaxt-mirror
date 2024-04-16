@@ -239,10 +239,6 @@ xt_get_mulinv(Xt_int d)
   return mag;
 }
 
-struct Xt_divt {
-  Xt_int quot, rem;
-};
-
 static inline XT_INT_DIV_T
 fast_division(Xt_int num, struct Xt_muldiv id)
 {
