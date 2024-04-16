@@ -204,8 +204,9 @@ create_intersections(void *bucket_gen_state,
     = compute_and_pack_bucket_intersections(
       bucket_gen_state, bucket_type, idxlist,
       send_size, comm, comm_size, config);
-  xt_mpi_call(MPI_Alltoall(send_size, SEND_SIZE_ASIZE, MPI_INT,
-                           recv_size, SEND_SIZE_ASIZE, MPI_INT, comm), comm);
+  xt_mpi_call(MPI_Alltoall((int *)send_size, SEND_SIZE_ASIZE, MPI_INT,
+                           (int *)recv_size, SEND_SIZE_ASIZE, MPI_INT, comm),
+              comm);
   compress_sizes(recv_size, comm_size, tx_stat + 0, NULL);
   compress_sizes(send_size, comm_size, tx_stat + 1, NULL);
   assert(ddr.num_msg == tx_stat[1].num_msg);
@@ -505,11 +506,11 @@ exchange_idxlists(Xt_idxlist src_idxlist,
   free(src_dst_intersections);
 
   // get the data size the local process will receive from other processes
-  xt_mpi_call(MPI_Alltoall(send_size_local, SEND_SIZE_ASIZE, MPI_INT,
-                           recv_size_local, SEND_SIZE_ASIZE, MPI_INT,
+  xt_mpi_call(MPI_Alltoall((int *)send_size_local, SEND_SIZE_ASIZE, MPI_INT,
+                           (int *)recv_size_local, SEND_SIZE_ASIZE, MPI_INT,
                            intra_comm), intra_comm);
-  xt_mpi_call(MPI_Alltoall(send_size_remote, SEND_SIZE_ASIZE, MPI_INT,
-                           recv_size_remote, SEND_SIZE_ASIZE, MPI_INT,
+  xt_mpi_call(MPI_Alltoall((int *)send_size_remote, SEND_SIZE_ASIZE, MPI_INT,
+                           (int *)recv_size_remote, SEND_SIZE_ASIZE, MPI_INT,
                            inter_comm), inter_comm);
 
   struct Xt_xmdd_txstat tx_stat_local[2], tx_stat_remote[2];
