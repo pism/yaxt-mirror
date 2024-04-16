@@ -1288,7 +1288,6 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
   Xt_int abs_global_size = XT_INT_ABS(dims[0].global_size);
   int abs_local_size = abs(dims[0].local_size);
   Xt_int abs_global_stride = XT_INT_ABS(dims[0].global_stride);
-  Xt_int abs_local_stride = XT_INT_ABS(dims[0].local_stride);
   Xt_int local_start = dims[0].local_start;
   // we want to work on ascending indices in the lowest dimension -> have to
   // adjust in case of negative global size
@@ -1374,10 +1373,10 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
         : (int)abs_local_position;
       Xt_int curr_index_offset
         = (Xt_int)(index_offset + curr_global_position * abs_global_stride);
-      /* curr_local_position * abs_local_stride <= INT_MAX
+      /* curr_local_position * dims[0].local_stride <= INT_MAX
        * because abs_local_position < abs_local_size and total mesh
        * size is less than INT_MAX */
-      int position_offset_ = (int)(curr_local_position * abs_local_stride);
+      int position_offset_ = curr_local_position * dims[0].local_stride;
 
       num_processed += idxsection_get_positions_of_indices_recursive(
         curr_index_offset, position_offset_, indices + num_processed,
