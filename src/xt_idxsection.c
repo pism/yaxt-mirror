@@ -235,7 +235,7 @@ get_section_minmax(size_t num_dimensions,
   Xt_int max = local_start_index, min = local_start_index;
   for (size_t i = 0; i < num_dimensions; ++i) {
     // if either local and global size are negative
-    if ((dims[i].global_size < 0) ^ (dims[i].local_size < 0))
+    if (dims[i].global_stride < 0)
       min = (Xt_int)(min + (Xt_int)(dims[i].global_stride *
                                     (Xt_int)(abs(dims[i].local_size) - 1)));
     else // if local and global size are both positive or negative
@@ -1311,7 +1311,7 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       positions[num_processed++] = -1;
 
     // if either the local or the global dimension is negative
-    if ((dims[0].global_stride < 0) ^ (dims[0].local_stride < 0)) {
+    if (dims[0].global_stride < 0) {
 
       // for as long as we are in the range local section of the current
       // global dimension
@@ -1376,7 +1376,7 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
         break;
 
       int curr_local_position
-        = ((dims[0].global_size < 0) ^ (dims[0].local_size < 0))
+        = dims[0].global_stride < 0
         // if either the local or the global dimension is negative
         ? (int)(abs_local_size - abs_local_position - 1)
         // if the local and global dimension are both negative or positive
