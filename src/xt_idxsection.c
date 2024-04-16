@@ -973,7 +973,8 @@ idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
 
   for (size_t dim = 0; dim < num_dimensions; ++dim) {
 
-    int curr_local_position = position / dims[dim].local_stride;
+    div_t qr = div(position, dims[dim].local_stride);
+    int curr_local_position = qr.quot;
 
     if (curr_local_position >= abs(dims[dim].local_size))
       return 1;
@@ -981,7 +982,7 @@ idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
     temp_index = (Xt_int)(temp_index
                           + curr_local_position
                           * dims[dim].global_stride);
-    position %= dims[dim].local_stride;
+    position = qr.rem;
   }
 
   *index = temp_index;
