@@ -154,12 +154,12 @@ static const struct xt_idxlist_vtable idxsection_vtable = {
 /* descriptor for per-dimension extent and stride */
 struct dim_desc
 {
-  Xt_int global_size, local_start, global_stride, local_stride;
+  Xt_int global_size, local_start, global_stride;
 #ifdef XT_LONG
   struct Xt_muldiv agsmd;        /* multiplicative inverse stored for
                                   * fast division by absolute global stride */
 #endif
-  int local_size;
+  int local_size, local_stride;
 };
 
 static MPI_Datatype dim_desc_dt;
@@ -283,7 +283,7 @@ setup_dims(Xt_int start, size_t num_dimensions,
                  * Xt_isign((Xt_int)(dims[i].global_size
                                      * (Xt_int)isign(dims[i].local_size))));
     dims[i].local_stride
-      = XT_INT_ABS(dims[i+1].local_stride * dims[i+1].local_size);
+      = abs(dims[i+1].local_stride * dims[i+1].local_size);
 #ifdef XT_LONG
     dims[i].agsmd
       = xt_get_mulinv(XT_INT_ABS(dims[i].global_stride));
@@ -970,13 +970,11 @@ idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
   size_t num_dimensions = (size_t)section->ndim;
   Xt_int temp_index = section->local_start_index;
 
-  Xt_int curr_local_position;
-  long long pos = (long long)position;
   const struct dim_desc *dims = section->dims;
 
   for (size_t dim = 0; dim < num_dimensions; ++dim) {
 
-    curr_local_position = (Xt_int)(pos / (long long)dims[dim].local_stride);
+    int curr_local_position = position / dims[dim].local_stride;
 
     if (curr_local_position >= abs(dims[dim].local_size))
       return 1;
@@ -984,8 +982,7 @@ idxsection_get_index_at_position(Xt_idxlist idxlist, int position,
     temp_index = (Xt_int)(temp_index
                           + curr_local_position
                           * dims[dim].global_stride);
-    /* FIXME: assert(dims[dim].local_stride is in [-INT_MAX,INT_MAX]) */
-    pos %= (long long)dims[dim].local_stride;
+    position %= dims[dim].local_stride;
   }
 
   *index = temp_index;
@@ -1019,7 +1016,7 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
 
     XT_INT_DIV_T qr = Xt_div(index, dims[i].agsmd,
                              XT_INT_ABS(dims[i].global_stride));
-    Xt_int curr_global_position = qr.quot;
+    Xt_int curr_global_position = (Xt_int)qr.quot;
 
     // in case the global size is negative, we have to adjust the global position,
     // because the ordering of indices in this dimension is inverted
@@ -1027,7 +1024,7 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
       curr_global_position
         = (Xt_int)(-dims[i].global_size - curr_global_position - 1);
 
-    index = qr.rem;
+    index = (Xt_int)qr.rem;
 
     if (curr_global_position < dims[i].local_start)
       goto fun_exit;
@@ -1043,7 +1040,7 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
     if (curr_local_position >= abs_local_size)
       goto fun_exit;
 
-    temp_position += (int)(curr_local_position * dims[i].local_stride);
+    temp_position += (int)curr_local_position * dims[i].local_stride;
   }
 
   *position = temp_position;
@@ -1366,30 +1363,29 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
     // while there are indices that have not yet been processed
     while (num_processed < num_indices) {
 
-      Xt_int curr_global_position, curr_local_position;
-
       // compute global position of the smallest index that has not yet been processed
       XT_INT_DIV_T qr
         = Xt_div((Xt_int)(indices[num_processed] - index_offset),
                  dims[0].agsmd, abs_global_stride);
-      curr_global_position = qr.quot;
+      Xt_int curr_global_position = (Xt_int)qr.quot;
 
       // if the position is outside of the range of the current dimension
-      if (curr_global_position >= tmp_local_start + abs_local_size)
+      Xt_int abs_local_position
+        = (Xt_int)(curr_global_position - tmp_local_start);
+      if (abs_local_position >= abs_local_size)
         break;
 
-      // if either the local or the global dimension is negative
-      if ((dims[0].global_size < 0) ^ (dims[0].local_size < 0))
-
-        curr_local_position = (Xt_int)(abs_local_size - curr_global_position
-                                       + tmp_local_start - 1);
-      else // if the local and global dimension are both negative or positive
-        curr_local_position = (Xt_int)(curr_global_position - tmp_local_start);
-
+      int curr_local_position
+        = ((dims[0].global_size < 0) ^ (dims[0].local_size < 0))
+        // if either the local or the global dimension is negative
+        ? (int)(abs_local_size - abs_local_position - 1)
+        // if the local and global dimension are both negative or positive
+        : (int)abs_local_position;
       Xt_int curr_index_offset
         = (Xt_int)(index_offset + curr_global_position * abs_global_stride);
-      /* FIXME: no guarantee curr_local_position * abs_local_stride
-       * <= INT_MAX */
+      /* curr_local_position * abs_local_stride <= INT_MAX
+       * because abs_local_position < abs_local_size and total mesh
+       * size is less than INT_MAX */
       int position_offset_ = (int)(curr_local_position * abs_local_stride);
 
       num_processed += idxsection_get_positions_of_indices_recursive(
