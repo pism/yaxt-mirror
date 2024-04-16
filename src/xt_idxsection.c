@@ -324,7 +324,8 @@ Xt_idxlist xt_idxsection_new(Xt_int start, int num_dimensions,
   assert(xt_initialized());
 
   size_t num_dimensions_ = (size_t)num_dimensions;
-  int num_indices = get_num_indices_from_local_sizes(num_dimensions_, local_size);
+  int num_indices
+    = get_num_indices_from_local_sizes(num_dimensions_, local_size);
   Xt_idxlist result;
   if (num_indices > 0) {
     Xt_idxsection idxsection
