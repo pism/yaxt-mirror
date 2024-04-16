@@ -588,7 +588,7 @@ get_sorted_vector(Xt_idxvec idxvec, Xt_config config)
 
   size_t svec_size = num_indices * sizeof(Xt_int);
   Xt_int *sorted_vector = xmalloc(svec_size);
-  idxvec->sorted_vec_positions = xmalloc((size_t)num_indices *
+  idxvec->sorted_vec_positions = xmalloc(num_indices *
                                          sizeof(*(idxvec->sorted_vec_positions)));
 
   memcpy(sorted_vector, vector, svec_size);
