@@ -1533,15 +1533,11 @@ idxsection_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
 
   int temp_position;
   // we make use of the uniqueness of the index-to-position relation:
-  if (idxsection_get_position_of_index(idxlist, index, &temp_position))
-    return 1;
-
-  if (temp_position < offset)
-    return 1;
-
+  if (idxsection_get_position_of_index(idxlist, index, &temp_position)
+      || temp_position < offset)
+    temp_position = -1;
   *position = temp_position;
-
-  return 0;
+  return temp_position == -1;
 }
 
 static Xt_int
