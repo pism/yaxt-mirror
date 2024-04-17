@@ -1493,48 +1493,36 @@ idxsection_get_positions_of_indices(Xt_idxlist body_idxlist,
 
   INSTR_DEF(instr,"idxsection_get_positions_of_indices")
   Xt_idxsection section = (Xt_idxsection)body_idxlist;
-  size_t retval = 0;
+  size_t retval = 0, num_section_indices;
 
 
   INSTR_START(instr);
 
   // if any dimension of the body index list is negative we have to use the
   // v3 version, because the other version cannot handle negative sizes
-  for (int i = 0; i < section->ndim; ++i)
-    if ((section->dims[i].local_size < 0) || (section->dims[i].global_size < 0)) {
-      retval = idxsection_get_positions_of_indices_v3(body_idxlist, selection_idx,
-                                                      num_selection, positions,
-                                                      single_match_only);
-      goto fun_exit;
-    }
-
-  {
-    size_t num_section_indices
-      = (size_t)(xt_idxlist_get_num_indices(body_idxlist));
-
+  if ((section->flags & sort_mask) != sort_asc)
+    retval = idxsection_get_positions_of_indices_v3(body_idxlist, selection_idx,
+                                                    num_selection, positions,
+                                                    single_match_only);
     /*
      * if the indices are already cached or (if the caching would not
      * consume too much memory and the number of selection indices are
      * sufficient to justify the use of cached indices)
      */
-    if ((section->index_array_cache != NULL) ||
-        (((size_t)num_section_indices * sizeof(Xt_int)
-          <= (size_t)128 * 1024U * 1024U)
-         && (num_section_indices <= 1000 * num_selection))) {
-      retval = idxsection_get_positions_of_indices_v2(body_idxlist, selection_idx,
-                                                      num_selection, positions,
-                                                      single_match_only);
-      goto fun_exit;
-    }
-    else {
-      retval = idxsection_get_positions_of_indices_v1(body_idxlist, selection_idx,
-                                                      num_selection, positions,
-                                                      single_match_only);
-      goto fun_exit;
-    }
-  }
+  else if ((section->index_array_cache != NULL) ||
+           (((num_section_indices
+              = (size_t)xt_idxlist_get_num_indices(body_idxlist))
+             * sizeof(Xt_int)
+             <= (size_t)128 * 1024U * 1024U)
+            && (num_section_indices <= 1000 * num_selection)))
+    retval = idxsection_get_positions_of_indices_v2(body_idxlist, selection_idx,
+                                                    num_selection, positions,
+                                                    single_match_only);
+  else
+    retval = idxsection_get_positions_of_indices_v1(body_idxlist, selection_idx,
+                                                    num_selection, positions,
+                                                    single_match_only);
 
- fun_exit: ;
   INSTR_STOP(instr);
   return retval;
 }
