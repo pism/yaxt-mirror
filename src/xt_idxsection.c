@@ -1377,7 +1377,7 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       /* curr_local_position * dims[0].local_stride <= INT_MAX
        * because abs_local_position < abs_local_size and total mesh
        * size is less than INT_MAX */
-      int position_offset_ = curr_local_position * dims[0].local_stride;
+      int position_offset_ = position_offset + curr_local_position * dims[0].local_stride;
 
       num_processed += idxsection_get_positions_of_indices_recursive(
         curr_index_offset, position_offset_, indices + num_processed,
