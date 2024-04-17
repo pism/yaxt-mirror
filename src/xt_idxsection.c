@@ -1295,16 +1295,16 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
   if (dims[0].global_size < 0)
     local_start = (Xt_int)(abs_global_size - local_start - abs_local_size);
 
+  Xt_int min_index
+    = (Xt_int)(index_offset + local_start * abs_global_stride);
+
+  // set all indices that are smaller than the minimum to "not found"
+  while ((num_processed < num_indices)
+         && (indices[num_processed] < min_index))
+    positions[num_processed++] = -1;
+
   if (ndim == 1)
   {
-
-    Xt_int min_index
-      = (Xt_int)(index_offset + local_start * abs_global_stride);
-
-    // set all indices that are smaller than the minimum to "not found"
-    while ((num_processed < num_indices)
-           && (indices[num_processed] < min_index))
-      positions[num_processed++] = -1;
 
     // if either the local or the global dimension is negative
     if (dims[0].global_stride < 0) {
@@ -1341,15 +1341,6 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
   } else {
 
     assert(ndim > 1);
-
-
-    Xt_int min_index
-      = (Xt_int)(index_offset + local_start * abs_global_stride);
-
-    // set all indices that are smaller than the minimum to "not found"
-    while ((num_processed < num_indices)
-           && (indices[num_processed] < min_index))
-      positions[num_processed++] = -1;
 
     // while there are indices that have not yet been processed
     while (num_processed < num_indices) {
