@@ -1468,7 +1468,7 @@ sorted_selection:
   if (sorted_selection_idx != selection_idx) {
 
     for (size_t i = 0; i < num_selection; ++i)
-      positions[i] = sorted_positions[selection_pos[i]];
+      positions[selection_pos[i]] = sorted_positions[i];
 
     free(sorted_positions);
     free(temp_selection_idx);
