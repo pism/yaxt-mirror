@@ -480,14 +480,14 @@ int main(int argc, char **argv) {
     for (int i=0; i<num_selection; i++)
       mismatch |= (positions[i] != ref_positions[i]);
     if (mismatch)
-      PUT_ERR("xt_idxlist_get_positions_of_indices did not return correct"
+      PUT_ERR("xt_idxlist_get_positions_of_indices returned incorrect"
               " position\n");
 
     for (int i=0; i<num_selection; i++) {
       int p;
       xt_idxlist_get_position_of_index(idxsection, selection[i], &p);
       if (p != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_position_of_index did not return correct"
+        PUT_ERR("xt_idxlist_get_position_of_index returned incorrect"
                 " position\n");
     }
 
@@ -517,11 +517,13 @@ int main(int argc, char **argv) {
 
     if (xt_idxlist_get_positions_of_indices(idxsection, selection,
                                             num_selection, positions, 1) != 6)
-      PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
+      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
+              " num_unmatched\n");
 
     for (int i=0; i<num_selection; i++) {
       if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_positions_of_indices did not return correct position\n");
+        PUT_ERR("xt_idxlist_get_positions_of_indices returned incorrect"
+                "position\n");
     }
 
     xt_idxlist_delete(idxsection);
@@ -550,11 +552,13 @@ int main(int argc, char **argv) {
 
     if (xt_idxlist_get_positions_of_indices(idxsection, selection,
                                             num_selection, positions, 1) != 6)
-      PUT_ERR("xt_idxlist_get_position_of_indices did not return correct num_unmatched\n");
+      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
+              " num_unmatched\n");
 
     for (int i=0; i<num_selection; i++) {
       if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_positions_of_indices did not return correct position\n");
+        PUT_ERR("xt_idxlist_get_positions_of_indices returned"
+                " incorrect position\n");
     }
 
     xt_idxlist_delete(idxsection);
