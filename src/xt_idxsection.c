@@ -926,13 +926,13 @@ idxsection_get_index_stripes(Xt_idxlist idxlist,
   enum { curr_local_position_auto_size=16 };
   Xt_int curr_local_position_auto[curr_local_position_auto_size];
   Xt_int *restrict curr_local_position;
-  if (num_dimensions-1 <= curr_local_position_auto_size) {
+  if (ln1dim <= curr_local_position_auto_size) {
     curr_local_position = curr_local_position_auto;
-    for (size_t i = 0; i < num_dimensions-1; ++i)
+    for (size_t i = 0; i < ln1dim; ++i)
       curr_local_position[i] = 0;
   } else
     curr_local_position
-      = xcalloc(num_dimensions-1, sizeof(*curr_local_position));
+      = xcalloc(ln1dim, sizeof(*curr_local_position));
 
   for (size_t i = 0; i < nstripes; ++i) {
 
@@ -940,12 +940,12 @@ idxsection_get_index_stripes(Xt_idxlist idxlist,
     stripes[i].nstrides = abs(dims[ln1dim].local_size);
     stripes[i].stride = dims[ln1dim].global_stride;
 
-    for (size_t j = 0; j < num_dimensions - 1; ++j)
+    for (size_t j = 0; j < ln1dim; ++j)
       stripes[i].start = (Xt_int)(stripes[i].start
                                   + curr_local_position[j]
                                   * dims[j].global_stride);
 
-    for (size_t j = num_dimensions - 2; j != (size_t)-1; --j)
+    for (size_t j = ln1dim-1; j != (size_t)-1; --j)
       if (curr_local_position[j] < abs(dims[j].local_size) - 1) {
         curr_local_position[j]++;
         break;
