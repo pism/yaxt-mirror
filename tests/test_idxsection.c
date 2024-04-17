@@ -781,10 +781,16 @@ int main(int argc, char **argv) {
         Xt_idxlist idxvec_a = xt_idxvec_new(indices[i], 12),
           idxvec_b = xt_idxvec_new(indices[j], 12);
 
+        // also test with stripes now that those use specific
+        // intersection routine
+        Xt_idxlist idxstripes_b = xt_idxstripes_from_idxlist_new(idxvec_b);
+
         // testing
 
         Xt_idxlist idxsection_intersection
           = xt_idxlist_get_intersection(idxsection_a, idxsection_b),
+          idxsection_intersection_stripes
+          = xt_idxlist_get_intersection(idxsection_a, idxstripes_b),
           idxsection_intersection_other
           = xt_idxlist_get_intersection(idxsection_a, idxvec_b),
           idxvec_intersection = xt_idxlist_get_intersection(idxvec_a, idxvec_b);
@@ -792,19 +798,23 @@ int main(int argc, char **argv) {
         check_idxlist(idxsection_intersection,
                       xt_idxlist_get_indices_const(idxvec_intersection),
                       xt_idxlist_get_num_indices(idxvec_intersection));
+        check_idxlist(idxsection_intersection_stripes,
+                      xt_idxlist_get_indices_const(idxvec_intersection),
+                      xt_idxlist_get_num_indices(idxvec_intersection));
         check_idxlist(idxsection_intersection_other,
                       xt_idxlist_get_indices_const(idxvec_intersection),
                       xt_idxlist_get_num_indices(idxvec_intersection));
 
         // clean up
-
-        xt_idxlist_delete(idxsection_a);
-        xt_idxlist_delete(idxsection_b);
-        xt_idxlist_delete(idxvec_a);
-        xt_idxlist_delete(idxvec_b);
-        xt_idxlist_delete(idxsection_intersection);
-        xt_idxlist_delete(idxsection_intersection_other);
         xt_idxlist_delete(idxvec_intersection);
+        xt_idxlist_delete(idxsection_intersection_other);
+        xt_idxlist_delete(idxsection_intersection_stripes);
+        xt_idxlist_delete(idxsection_intersection);
+        xt_idxlist_delete(idxstripes_b);
+        xt_idxlist_delete(idxvec_b);
+        xt_idxlist_delete(idxvec_a);
+        xt_idxlist_delete(idxsection_b);
+        xt_idxlist_delete(idxsection_a);
       }
     }
   }
