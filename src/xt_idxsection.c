@@ -884,7 +884,7 @@ idxsection_get_num_index_stripes_(Xt_idxsection section)
   while (i != SIZE_MAX && dims[i].local_size == 1)
     --i;
   size_t nstripes = 1;
-  for (--i; i != SIZE_MAX; --i)
+  for (i -= (i != SIZE_MAX); i != SIZE_MAX; --i)
     nstripes *= (size_t)abs(dims[i].local_size);
   return nstripes;
 }
@@ -915,6 +915,7 @@ idxsection_get_index_stripes(Xt_idxlist idxlist,
   size_t ln1dim = num_dimensions-1;
   while (ln1dim != SIZE_MAX && dims[ln1dim].local_size == 1)
     --ln1dim;
+  ln1dim += ln1dim == SIZE_MAX;
 
   size_t nstripes = idxsection_get_num_index_stripes_(section);
 
