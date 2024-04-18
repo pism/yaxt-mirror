@@ -48,6 +48,7 @@
  * acx_mpirun_num_tasks=1
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
 
@@ -63,10 +64,35 @@ int main(int argc, char **argv) {
   double inbuf[1];
   double outbuf[1];
 
+  int pack_size;
+  MPI_Pack_size(1, cont_zero_ddt, MPI_COMM_WORLD, &pack_size);
+
+  void *pack_buf = malloc(pack_size);
+  if (!pack_buf) {
+    fprintf(stderr, "error: failed to allocate buffer of size %d!\n",
+            pack_size);
+    exit(1);
+  }
+
   int position = 0;
+  inbuf[0] = 3.1415;
+  outbuf[0] = 23;
+
+  MPI_Pack(
+    inbuf, 1, cont_zero_ddt, pack_buf, pack_size, &position,
+    MPI_COMM_WORLD);
+  position = 0;
   MPI_Unpack(
-    inbuf, 1, &position, outbuf, 1,
+    pack_buf, 1, &position, outbuf, 1,
     cont_zero_ddt, MPI_COMM_WORLD);
+  /* this test usually fails in one of the above two functions with a
+   * segfault or internal error but just to make sure outbuf wasn't
+   * modified inspect its contents here */
+  if (outbuf[0] < 23 || outbuf[0] > 23) {
+    fputs("Unexpected modification of output buffer!\n", stderr);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+  free(pack_buf);
 
   MPI_Type_free(&cont_zero_ddt);
 
