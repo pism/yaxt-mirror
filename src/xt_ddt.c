@@ -896,8 +896,6 @@ static void xt_ddt_tree_elem_get_data_sizes(
   struct xt_ddt_tree_elem *elem, MPI_Datatype *prev_dtype,
   size_t *prev_data_idx, struct xt_ddt_data *data) {
 
-  if (elem == NULL) return;
-
   void *dtype_data = after_displs(elem);
   size_t displ_count = elem->displ_count;
   switch (elem->type) {
@@ -919,9 +917,10 @@ static void xt_ddt_tree_elem_get_data_sizes(
       struct xt_ddt_tree_elem *sub_elem
         = *(struct xt_ddt_tree_elem **)dtype_data;
 
-      for (size_t i = 0; i < displ_count; ++i)
-        xt_ddt_tree_elem_get_data_sizes(
-          sub_elem, prev_dtype, prev_data_idx, data);
+      if (sub_elem)
+        for (size_t i = 0; i < displ_count; ++i)
+          xt_ddt_tree_elem_get_data_sizes(
+            sub_elem, prev_dtype, prev_data_idx, data);
       break;
     }
     case (MULTI_SUB): {
@@ -930,8 +929,9 @@ static void xt_ddt_tree_elem_get_data_sizes(
         = (struct xt_ddt_tree_elem **)dtype_data;
 
       for (size_t i = 0; i < displ_count; ++i)
-        xt_ddt_tree_elem_get_data_sizes(
-          sub_elems[i], prev_dtype, prev_data_idx, data);
+        if (sub_elem[i])
+          xt_ddt_tree_elem_get_data_sizes(
+            sub_elems[i], prev_dtype, prev_data_idx, data);
       break;
     }
   }
@@ -951,8 +951,6 @@ static void xt_ddt_tree_get_data_sizes(
 static void xt_ddt_tree_elem_to_data(
   struct xt_ddt_tree_elem *elem, struct xt_ddt_data *data, MPI_Aint displ,
   MPI_Datatype *prev_dtype, size_t *prev_data_idx) {
-
-  if (elem == NULL) return;
 
   size_t elem_displ_count = elem->displ_count;
   MPI_Aint *elem_displs = elem->displs;
@@ -982,10 +980,11 @@ static void xt_ddt_tree_elem_to_data(
       struct xt_ddt_tree_elem *sub_elem
         = *(struct xt_ddt_tree_elem **)dtype_data;
 
-      for (size_t i = 0; i < elem_displ_count; ++i)
-        xt_ddt_tree_elem_to_data(
-          sub_elem, data, displ + elem_displs[i],
-          prev_dtype, prev_data_idx);
+      if (sub_elem)
+        for (size_t i = 0; i < elem_displ_count; ++i)
+          xt_ddt_tree_elem_to_data(
+            sub_elem, data, displ + elem_displs[i],
+            prev_dtype, prev_data_idx);
       break;
     }
     case (MULTI_SUB): {
@@ -994,9 +993,10 @@ static void xt_ddt_tree_elem_to_data(
         = (struct xt_ddt_tree_elem **)dtype_data;
 
       for (size_t i = 0; i < elem_displ_count; ++i)
-        xt_ddt_tree_elem_to_data(
-          sub_elems[i], data, displ + elem_displs[i],
-          prev_dtype, prev_data_idx);
+        if (sub_elems[i])
+          xt_ddt_tree_elem_to_data(
+            sub_elems[i], data, displ + elem_displs[i],
+            prev_dtype, prev_data_idx);
       break;
     }
   }
