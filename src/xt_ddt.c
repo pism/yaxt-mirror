@@ -1189,6 +1189,7 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
       Xt_default_comm);
   }
 
+  Xt_ddt ddt;
   // get xt_ddt from MPI datatype, if available
   void *attr;
   int flag;
@@ -1197,17 +1198,19 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
       mpi_ddt, xt_ddt_internal_keyval, &attr, &flag), Xt_default_comm);
 
   // if the MPI datatype had already a xt_ddt attached to itself
-  if (flag) {XT_GPU_INSTR_POP; return (Xt_ddt)attr;}
+  if (flag) {
+    ddt = attr;
+  } else {
+    // generate a xt_ddt from the MPI datatype
+    ddt = xt_ddt_new(mpi_ddt);
 
-  // generate a xt_ddt from the MPI datatype
-  Xt_ddt ddt = xt_ddt_new(mpi_ddt);
-
-  // attach this xt_ddt to the MPI datatype for later use
-  xt_mpi_call(
-    MPI_Type_set_attr(
-      mpi_ddt, xt_ddt_internal_keyval, ddt), Xt_default_comm);
-
-  XT_GPU_INSTR_POP; return ddt;
+    // attach this xt_ddt to the MPI datatype for later use
+    xt_mpi_call(
+      MPI_Type_set_attr(
+        mpi_ddt, xt_ddt_internal_keyval, ddt), Xt_default_comm);
+  }
+  XT_GPU_INSTR_POP;
+  return ddt;
 }
 
 size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt) {
