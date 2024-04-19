@@ -195,6 +195,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_gpu.c						\
 	xt_ddt.h						\
 	xt_ddt_internal.h					\
+	xt_ddt_create.c						\
 	xt_ddt.c
 
 if USE_NB_A2A
