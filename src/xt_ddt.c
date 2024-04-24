@@ -119,6 +119,9 @@ static void xt_ddt_pack_16(
 static void xt_ddt_pack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
   uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
 static void xt_ddt_pack_96(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
   uint32_t *restrict dst, enum xt_memtype memtype);
@@ -143,6 +146,9 @@ static void xt_ddt_unpack_16(
   uint16_t *restrict dst, enum xt_memtype memtype);
 static void xt_ddt_unpack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[2],
   uint32_t *restrict dst, enum xt_memtype memtype);
 static void xt_ddt_unpack_96(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[3],
@@ -181,6 +187,10 @@ static struct xt_un_pack_kernels {
    .element_size = 4,
    .pack = (kernel_func)xt_ddt_pack_32,
    .unpack = (kernel_func)xt_ddt_unpack_32},
+  {.base_pack_size = 4,
+   .element_size = 8,
+   .pack = (kernel_func)xt_ddt_pack_32_2,
+   .unpack = (kernel_func)xt_ddt_unpack_32_2},
   {.base_pack_size = 8,
    .element_size = 8,
    .pack = (kernel_func)xt_ddt_pack_64,
@@ -203,6 +213,8 @@ static struct xt_un_pack_kernels {
    .unpack = (kernel_func)xt_ddt_unpack_256},
 };
 enum {NUM_VALID_KERNELS = sizeof(valid_kernels)/sizeof(valid_kernels[0])};
+
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
 
 static inline void *after_displs(struct xt_ddt_tree_elem *elem)
 {
@@ -876,6 +888,15 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     MPI_Type_get_true_extent(mpi_ddt, &true_lb, &true_extent),
     Xt_default_comm);
 
+  size_t base_pack_size;
+  if (mpi_ddt == MPI_FLOAT_INT)
+    base_pack_size = MAX(sizeof(float), sizeof(int));
+  else
+    base_pack_size = (size_t)true_extent;
+  for (size_t i = 0; i < NUM_VALID_KERNELS; ++i)
+    if (valid_kernels[i].element_size == (size_t)true_extent
+        && valid_kernels[i].base_pack_size == base_pack_size)
+      return i;
   for (size_t i = 0; i < NUM_VALID_KERNELS; ++i)
     if (valid_kernels[i].element_size == (size_t)true_extent)
       return i;
@@ -1285,6 +1306,23 @@ XtPragmaACC(
     dst[i] = *add_rhs_byte_displ(uint32_t, src, + displs[i]);
 }
 
+static void xt_ddt_pack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t (*restrict dst_)[2] = (uint32_t(*)[2])dst;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst_, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    const uint32_t *src_32 = add_rhs_byte_displ(uint32_t, src, displs[i]);
+XtPragmaACC(loop independent)
+    for (int j = 0; j < 2; ++j) dst_[i][j] = src_32[j];
+  }
+}
+
 static void xt_ddt_pack_96(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
   uint32_t *restrict dst, enum xt_memtype memtype) {
@@ -1473,6 +1511,22 @@ XtPragmaACC(
   for (size_t i = 0; i < count; ++i) {
     uint32_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
     dst_[0] = src[i];
+  }
+}
+
+static void xt_ddt_unpack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[2],
+  uint32_t *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    uint32_t *dst_32 = (void *)((unsigned char *)dst + displs[i]);
+    dst_32[0] = src[i][0];
+    dst_32[1] = src[i][1];
   }
 }
 
