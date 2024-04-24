@@ -89,7 +89,7 @@ struct xt_ddt_kernels {
   xt_ddt_kernel_func unpack;
 };
 
-enum { NUM_VALID_KERNELS = 8 };
+enum { NUM_VALID_KERNELS = 9 };
 PPM_DSO_INTERNAL extern struct xt_ddt_kernels
 xt_ddt_valid_kernels[NUM_VALID_KERNELS];
 

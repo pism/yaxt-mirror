@@ -77,6 +77,9 @@ static void xt_ddt_pack_16(
 static void xt_ddt_pack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
   uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_pack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
 static void xt_ddt_pack_96(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
   uint32_t *restrict dst, enum xt_memtype memtype);
@@ -101,6 +104,9 @@ static void xt_ddt_unpack_16(
   uint16_t *restrict dst, enum xt_memtype memtype);
 static void xt_ddt_unpack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype);
+static void xt_ddt_unpack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[2],
   uint32_t *restrict dst, enum xt_memtype memtype);
 static void xt_ddt_unpack_96(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[3],
@@ -131,6 +137,10 @@ struct xt_ddt_kernels xt_ddt_valid_kernels[] = {
    .element_size = 4,
    .pack = (xt_ddt_kernel_func)xt_ddt_pack_32,
    .unpack = (xt_ddt_kernel_func)xt_ddt_unpack_32},
+  {.base_pack_size = 4,
+   .element_size = 8,
+   .pack = (xt_ddt_kernel_func)xt_ddt_pack_32_2,
+   .unpack = (xt_ddt_kernel_func)xt_ddt_unpack_32_2},
   {.base_pack_size = 8,
    .element_size = 8,
    .pack = (xt_ddt_kernel_func)xt_ddt_pack_64,
@@ -229,6 +239,23 @@ XtPragmaACC(
   if (memtype != XT_MEMTYPE_HOST))
   for (size_t i = 0; i < count; ++i)
     dst[i] = *add_rhs_byte_displ(uint32_t, src, + displs[i]);
+}
+
+static void xt_ddt_pack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
+  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t (*restrict dst_)[2] = (uint32_t(*)[2])dst;
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst_, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    const uint32_t *src_32 = add_rhs_byte_displ(uint32_t, src, displs[i]);
+XtPragmaACC(loop independent)
+    for (int j = 0; j < 2; ++j) dst_[i][j] = src_32[j];
+  }
 }
 
 static void xt_ddt_pack_96(
@@ -419,6 +446,22 @@ XtPragmaACC(
   for (size_t i = 0; i < count; ++i) {
     uint32_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
     dst_[0] = src[i];
+  }
+}
+
+static void xt_ddt_unpack_32_2(
+  size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[2],
+  uint32_t *restrict dst, enum xt_memtype memtype) {
+#ifndef _OPENACC
+  (void)memtype;
+#endif
+XtPragmaACC(
+  parallel loop independent deviceptr(src, dst, displs)
+  if (memtype != XT_MEMTYPE_HOST))
+  for (size_t i = 0; i < count; ++i) {
+    uint32_t *dst_32 = (void *)((unsigned char *)dst + displs[i]);
+    dst_32[0] = src[i][0];
+    dst_32[1] = src[i][1];
   }
 }
 

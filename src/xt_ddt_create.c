@@ -75,6 +75,8 @@ struct xt_ddt_tree_elem {
   // struct xt_ddt_tree_elem *sub_elems[]; when type == SINGLE_SUB or MULTI_SUB
 };
 
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+
 static inline void *after_displs(struct xt_ddt_tree_elem *elem)
 {
   return elem->displs + elem->displ_count;
@@ -747,6 +749,15 @@ static inline size_t mpi_ddt_to_data_idx(MPI_Datatype mpi_ddt) {
     MPI_Type_get_true_extent(mpi_ddt, &true_lb, &true_extent),
     Xt_default_comm);
 
+  size_t base_pack_size;
+  if (mpi_ddt == MPI_FLOAT_INT)
+    base_pack_size = MAX(sizeof(float), sizeof(int));
+  else
+    base_pack_size = (size_t)true_extent;
+  for (size_t i = 0; i < NUM_VALID_KERNELS; ++i)
+    if (xt_ddt_valid_kernels[i].element_size == (size_t)true_extent
+        && xt_ddt_valid_kernels[i].base_pack_size == base_pack_size)
+      return i;
   for (size_t i = 0; i < NUM_VALID_KERNELS; ++i)
     if (xt_ddt_valid_kernels[i].element_size == (size_t)true_extent)
       return i;
