@@ -1049,14 +1049,20 @@ static int check_xt_ddt_off(
 
   // generate reference data
   {
+    /* can't use ref_pack_size for MPI buffer because implementations
+     * are free to do whatever */
+    int pack_size_for_mpi;
+    MPI_Pack_size(1, mpi_ddt, MPI_COMM_WORLD, &pack_size_for_mpi);
+    void *pack_buf = xmalloc((size_t)pack_size_for_mpi);
     int position = 0;
     MPI_Pack(
       CAST_MPI_SEND_BUF(in_data + in_data_offset),
-      1, mpi_ddt, pack_data, (int)ref_pack_size, &position, MPI_COMM_WORLD);
+      1, mpi_ddt, pack_buf, pack_size_for_mpi, &position, MPI_COMM_WORLD);
     position = 0;
     MPI_Unpack(
-      pack_data, (int)ref_pack_size, &position,
+      pack_buf, pack_size_for_mpi, &position,
       ref_out_data + in_data_offset, 1, mpi_ddt, MPI_COMM_WORLD);
+    free(pack_buf);
   }
 
   int err_flag = 0;
