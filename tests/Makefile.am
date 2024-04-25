@@ -72,8 +72,11 @@ check_PROGRAMS = 						\
 	test_xmap_intersection_parallel				\
 	test_initialized_finalized				\
 	test_sort						\
-	test_uid						\
-	test_ddt
+	test_uid
+
+if ENABLE_XT_DDT_EXCHANGER
+check_PROGRAMS += test_ddt
+endif
 
 check_LTLIBRARIES = libtestutil.la
 
@@ -142,6 +145,8 @@ libtestutil_f_la_LDFLAGS = -static
 libtestutil_la_LDFLAGS = -static
 libtestutil_la_LIBADD = ../src/core/cksum.lo
 
+AM_CPPFLAGS = -I../inst_headers -I$(top_srcdir)/include $(MPI_C_INCLUDE)
+
 # overrides to make regular compilations also use libtool
 # static because the libtool libraries in this directory are meant to
 # be statically linked and there is no use for the PIC object
@@ -162,11 +167,10 @@ FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 
 test_arithmetic_long_SOURCES = test_arithmetic_long.c
 test_arithmetic_long_LDADD = libtestutil.la
+
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
 test_exchanger_parallel_LDADD =  libtestutil.la \
 	../src/xt_gpu.lo \
-	../src/xt_ddt.lo \
-	../src/xt_ddt_create.lo \
 	../src/xt_config.lo \
 	../src/quicksort.lo \
 	../src/mergesort.lo \
@@ -174,9 +178,17 @@ test_exchanger_parallel_LDADD =  libtestutil.la \
 	../src/xt_exchanger_irecv_isend.lo \
 	../src/xt_exchanger_irecv_send.lo \
 	../src/xt_exchanger_irecv_isend_packed.lo \
-	../src/xt_exchanger_irecv_isend_ddt_packed.lo \
 	../src/xt_exchanger_mix_isend_irecv.lo \
 	../src/xt_exchanger_simple_base.lo
+if ENABLE_XT_DDT_EXCHANGER
+test_exchanger_parallel_LDADD += \
+	../src/xt_ddt.lo \
+	../src/xt_ddt_create.lo \
+	../src/xt_request_msgs_ddt_packed.lo \
+	../src/xt_exchanger_irecv_isend_ddt_packed.lo
+AM_CPPFLAGS += -DXT_ENABLE_DDT_EXCHANGER
+endif
+
 if USE_NB_A2A
 test_exchanger_parallel_LDADD += ../src/xt_exchanger_neigh_alltoall.lo
 endif
@@ -188,7 +200,6 @@ test_exchanger_parallel_LDADD += ../src/xt_exchanger.lo \
 	../src/xt_request_msgs.lo \
 	../src/xt_request_msgs_ebuf.lo \
 	../src/xt_request_msgs_packed.lo \
-	../src/xt_request_msgs_ddt_packed.lo \
 	../src/xt_request.lo \
 	../src/xt_mpi.lo \
 	../src/core/xmalloc.lo \
@@ -309,7 +320,6 @@ test_ddt_LDADD += ../src/xt_cuda.lo
 endif
 test_ddt_LDADD += ../src/xt_mpi.lo \
 	../src/core/xmalloc.lo ../src/core/core.lo $(MPI_C_LIB)
-AM_CPPFLAGS = -I../inst_headers -I$(top_srcdir)/include $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
 	$(FPP_INCOPT)../include $(MPI_FC_MOD)
 AM_LDFLAGS = -L../src

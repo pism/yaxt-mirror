@@ -82,7 +82,9 @@ xt_initialize(MPI_Comm default_comm)
   setenv("SCT_CALLSTATS", "0", 0);
   INSTR_START(instr);
 #endif
+#ifdef XT_ENABLE_DDT_EXCHANGER
   xt_gpu_init();
+#endif
   xt_lib_state = xt_lib_initialized;
 }
 

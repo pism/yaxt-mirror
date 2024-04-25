@@ -132,7 +132,6 @@ libyaxt_c_la_SOURCES =						\
 	xt_request_msgs.c					\
 	xt_request_msgs_ebuf.c					\
 	xt_request_msgs_packed.c				\
-	xt_request_msgs_ddt_packed.c				\
 	xt_request_internal.h					\
 	xt_request_msgs_internal.h				\
 	xt_request_msgs_ebuf_internal.h				\
@@ -186,17 +185,23 @@ libyaxt_c_la_SOURCES =						\
 	xt_exchanger_irecv_isend.h				\
 	xt_exchanger_irecv_isend_packed.c			\
 	xt_exchanger_irecv_isend_packed.h			\
-	xt_exchanger_irecv_isend_ddt_packed.c			\
-	xt_exchanger_irecv_isend_ddt_packed.h			\
 	xt_exchanger_neigh_alltoall.h				\
 	xt_exchanger_mix_isend_irecv.c				\
-	xt_exchanger_mix_isend_irecv.h				\
+	xt_exchanger_mix_isend_irecv.h
+
+if ENABLE_XT_DDT_EXCHANGER
+libyaxt_c_la_SOURCES +=						\
+	xt_exchanger_irecv_isend_ddt_packed.c			\
+	xt_exchanger_irecv_isend_ddt_packed.h			\
+	xt_request_msgs_ddt_packed.c				\
 	xt_gpu.h						\
 	xt_gpu.c						\
 	xt_ddt.h						\
 	xt_ddt_internal.h					\
 	xt_ddt_create.c						\
 	xt_ddt.c
+AM_CPPFLAGS += -DXT_ENABLE_DDT_EXCHANGER
+endif
 
 if USE_NB_A2A
 libyaxt_c_la_SOURCES +=						\

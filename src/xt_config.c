@@ -100,7 +100,12 @@ static const struct {
   { "irecv_isend_packed",
     xt_exchanger_irecv_isend_packed_new, xt_exchanger_irecv_isend_packed },
   { "irecv_isend_ddt_packed",
-    xt_exchanger_irecv_isend_ddt_packed_new, xt_exchanger_irecv_isend_ddt_packed },
+#ifdef XT_ENABLE_DDT_EXCHANGER
+    xt_exchanger_irecv_isend_ddt_packed_new,
+#else
+    (Xt_exchanger_new)0,
+#endif
+    xt_exchanger_irecv_isend_ddt_packed },
   { "mix_irecv_isend",
     xt_exchanger_mix_isend_irecv_new, xt_exchanger_mix_isend_irecv },
   { "neigh_alltoall",

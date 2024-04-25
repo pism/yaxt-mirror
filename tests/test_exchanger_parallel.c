@@ -161,7 +161,9 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
     [xt_exchanger_irecv_send] = xt_exchanger_irecv_send_new,
     [xt_exchanger_irecv_isend] = xt_exchanger_irecv_isend_new,
     [xt_exchanger_irecv_isend_packed] = xt_exchanger_irecv_isend_packed_new,
+#ifdef XT_ENABLE_DDT_EXCHANGER
     [xt_exchanger_irecv_isend_ddt_packed] = xt_exchanger_irecv_isend_ddt_packed_new,
+#endif
     [xt_exchanger_mix_isend_irecv] = xt_exchanger_mix_isend_irecv_new,
 #ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
     [xt_exchanger_neigh_alltoall] = xt_exchanger_neigh_alltoall_new,
@@ -191,6 +193,13 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
         {
           fputs("xt_exchanger_neigh_alltoall_new requires MPI version 3.0 or "
                 "higher\n", stderr);
+          continue;
+        }
+#endif
+#ifndef XT_ENABLE_DDT_EXCHANGER
+        else if (exchanger_new_id == xt_exchanger_irecv_isend_ddt_packed)
+        {
+          fputs("xt_exchanger_irecv_isend_ddt_packed disabled.\n", stderr);
           continue;
         }
 #endif

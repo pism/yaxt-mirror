@@ -765,7 +765,14 @@ AC_ARG_WITH([perf-programs],
   [with_perf_programs=yes])
 AM_CONDITIONAL([with_perf_programs],
   [test x$with_perf_programs = xyes])
-
+dnl
+AC_ARG_ENABLE([xt-ddt-exchanger],
+  [AS_HELP_STRING([--disable-xt-ddt-exchanger],
+     [disable custom packing exchanger intended for GPUs @<:@default: enabled@:>@])],
+  [],[enable_xt_ddt_exchanger=yes])
+AM_CONDITIONAL([ENABLE_XT_DDT_EXCHANGER],
+  [test x"$enable_xt_ddt_exchanger" != xno])
+dnl
 m4_foreach([flags_var],[[CFLAGS],[FCFLAGS],[LDFLAGS]],
   [AC_ARG_VAR([BUILD_]flags_var,
     [append to ]flags_var[ during build but not in configure phase])

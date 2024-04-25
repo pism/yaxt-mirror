@@ -68,9 +68,12 @@ xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new)
     vtab = &xt_exchanger_mix_isend_irecv_vtable;
   else if (exchanger_new == xt_exchanger_irecv_isend_new
            || exchanger_new == xt_exchanger_irecv_isend_packed_new
-           || exchanger_new == xt_exchanger_irecv_isend_ddt_packed_new
            || exchanger_new == xt_exchanger_irecv_send_new)
     vtab = &xt_exchanger_simple_base_vtable;
+#if XT_ENABLE_DDT_EXCHANGER
+  else if (exchanger_new == xt_exchanger_irecv_isend_ddt_packed_new)
+    vtab = &xt_exchanger_simple_base_vtable;
+#endif
 #if XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
   else if (exchanger_new == xt_exchanger_neigh_alltoall_new)
     vtab = &xt_exchanger_neigh_alltoall_vtable;
