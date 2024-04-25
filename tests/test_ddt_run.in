@@ -52,5 +52,6 @@ export LIBC_FATAL_STDERR_
 #
 # Local Variables:
 # mode: sh
+# coding: utf-8
 # End:
 #
