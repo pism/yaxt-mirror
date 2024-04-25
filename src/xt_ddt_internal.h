@@ -56,6 +56,43 @@
 
 #include "core/ppm_visibility.h"
 
+struct xt_ddt_data {
+  size_t kernel_idx;   // index into the list of available pack/unpack kernels
+  size_t displ_count;  // number of elements in displs
+  ssize_t *displs[XT_MEMTYPE_COUNT];
+                       // displacements in byte of elements (int does not work)
+                       // (if required this array has to be available
+                       //  in GPU memory)
+};
+
+struct Xt_ddt_ {
+
+  int ref_count;
+
+  size_t pack_size;
+
+  int displs_available[XT_MEMTYPE_COUNT]; // determines in which memory type
+                                          // the displacements are available
+
+  // if exchange data is on GPU, one kernel per data entry is launched
+  size_t count; // number of elements in data
+  struct xt_ddt_data data[];
+};
+
+typedef void (*xt_ddt_kernel_func)
+  (size_t, ssize_t*, const void*, void*, enum xt_memtype);
+
+struct xt_ddt_kernels {
+  size_t base_pack_size;
+  size_t element_size;
+  xt_ddt_kernel_func pack;
+  xt_ddt_kernel_func unpack;
+};
+
+enum { NUM_VALID_KERNELS = 8 };
+PPM_DSO_INTERNAL extern struct xt_ddt_kernels
+xt_ddt_valid_kernels[NUM_VALID_KERNELS];
+
 /**
  * Returns a xt_ddt object for the provided MPI datatype.
  * The routine will first check whether there is already a xt_ddt for this
