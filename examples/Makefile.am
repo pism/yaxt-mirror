@@ -70,14 +70,23 @@ row2col_SOURCES = row2col.c
 
 XT_FC_LDADD = ../src/libyaxt.la ../src/libyaxt_c.la $(MPI_FC_LIB)
 
+if FC_MOD_UPPERCASE
+YAXT_MOD_NAME = YAXT
+else
+YAXT_MOD_NAME = yaxt
+endif
+YAXT_MOD_DIR = ../inst_headers/f90
+
 row2col_f_SOURCES = row2col_f.f90
 row2col_f_LDADD = $(XT_FC_LDADD)
+row2col_f.lo: $(YAXT_MOD_DIR)/$(YAXT_MOD_NAME).$(FCMODEXT)
 
 tr_gp2fs_SOURCES = tr_gp2fs.c
 tr_gp2fs_LDADD = $(LDADD) -lm
 
 unstruct_halo_exchange_f_SOURCES = unstruct_halo_exchange_f.f90
 unstruct_halo_exchange_f_LDADD = $(XT_FC_LDADD)
+unstruct_halo_exchange_f.lo: $(YAXT_MOD_DIR)/$(YAXT_MOD_NAME).$(FCMODEXT)
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
