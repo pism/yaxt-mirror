@@ -110,6 +110,8 @@ run_test_gcc_11_2_0:
     - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
 # run tests
     - make check
+# check git untracked files(needed by ICON)
+    - git ls-files --other --exclude-standard
   artifacts:
     paths:
       - make.err
