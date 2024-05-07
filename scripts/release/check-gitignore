@@ -66,12 +66,12 @@ if command -v rsync >/dev/null ; then
   opts=("-aHS")
   rsync_options=$(rsync --help)
   case $rsync_options in
-    (*\ -A,\ --acls\ *)
+    (*\ -A,\ --acls\ *|*--acls,\ -A\ *)
       opts+=(-A)
       ;;
   esac
   case $rsync_options in
-    (*\ -X,\ --xattrs\ *)
+    (*\ -X,\ --xattrs\ *|*--xattrs,\ -X\ *)
       opts+=(-X)
       ;;
   esac
