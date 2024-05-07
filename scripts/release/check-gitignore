@@ -63,7 +63,7 @@ repo=$PWD
 cd "${tmpsrc}"
 if command -v rsync >/dev/null ; then
   typeset -a opts
-  opts=("-aHS")
+  opts=('--copy-unsafe-links' "-aHS")
   rsync_options=$(rsync --help)
   case $rsync_options in
     (*\ -A,\ --acls\ *|*--acls,\ -A\ *)
