@@ -111,11 +111,10 @@ run_test_gcc_11_2_0:
 # run tests
     - make check
 # check git untracked files(any git untracked files would cause failure in ICON buildbot test)
-    - untracked_files=$(git ls-files --other --exclude-standard --exclude=config.log.gz --exclude=make.err)
+    - mapfile -t untracked_files < <( $(git ls-files --other --exclude-standard --exclude=config.log.gz --exclude=make.err) )
     - |
-      test ! -n "$untracked_files" || {
-        echo "Failure: Untracked files found"
-        echo "$untracked_files"
+      [[ ${#untracked_files[@]} -eq 0 ]] || {
+        printf "%s\n" "Failure: Untracked files found" "${untracked_files[@]}"
         exit 1
       }
   artifacts:
