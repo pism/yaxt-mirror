@@ -89,7 +89,6 @@ set +e
 git update-index -q --ignore-submodules --refresh
 set -e
 git status --short | sed -n -e '/^??/{' -e 's/^?? //;p;}' | xargs rm -rf
-set -e
 echo "performing in-place build"
 echo "  configure"
 ./configure CFLAGS='-O2 -pipe' FCFLAGS='-O2 -pipe' \
@@ -105,7 +104,14 @@ ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j >&6 2>&6
 echo "  make check"
 ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j8 check >&6 2>&6
 git update-index -q --really-refresh
-if git diff-index --exit-code HEAD -- >&6 ; then
+set -o pipefail
+if { git diff-index --exit-code HEAD -- >&6 && \
+  logsize1=$(stat --format '%s' "${log}" 2>/dev/null \
+             || stat -f '%z' "${log}") && \
+  git ls-files --other --directory --exclude-standard >&6 && \
+  logsize2=$(stat --format '%s' "${log}" 2>/dev/null \
+             || stat -f '%z' "${log}") && \
+  [[ $logsize1 = $logsize2 ]] ; } ; then
   echo 'success: no unexpected files were created/modified.' >&2
   exit 0
 else
