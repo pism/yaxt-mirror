@@ -46,3 +46,7 @@ dnl
   INTEGER, PARAMETER :: rs = 37
   INTEGER, PARAMETER :: sp = SELECTED_REAL_KIND(ps,rs)
   PUBLIC :: sp
+dnl
+dnl Local Variables:
+dnl coding: utf-8
+dnl End:

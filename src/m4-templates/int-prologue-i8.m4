@@ -45,3 +45,7 @@ dnl
   INTEGER, PARAMETER :: pi8 =  14
   INTEGER, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
   PUBLIC :: i8
+dnl
+dnl Local Variables:
+dnl coding: utf-8
+dnl End:

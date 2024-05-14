@@ -45,3 +45,7 @@ dnl
   INTEGER, PARAMETER :: pi2 =  4
   INTEGER, PARAMETER :: i2 = SELECTED_INT_KIND(pi2)
   PUBLIC :: i2
+dnl
+dnl Local Variables:
+dnl coding: utf-8
+dnl End:
