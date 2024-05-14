@@ -109,6 +109,7 @@ MODULE xt_idxlist_abstract
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_positions_of_indices, &
+       xt_idxlist_get_min_index, xt_idxlist_get_max_index, &
        xt_idxlist_get_num_index_stripes, &
        xt_idxlist_get_index_stripes, &
        xt_idxlist_get_num_indices, &
@@ -473,6 +474,40 @@ CONTAINS
          CALL xt_abort("number of stripes too large", filename, __LINE__)
     num_stripes = INT(num_stripes_c)
   END FUNCTION xt_idxlist_get_num_index_stripes
+
+  FUNCTION xt_idxlist_get_min_index(idxlist) &
+       RESULT(min_index)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind) :: min_index
+
+    INTERFACE
+      FUNCTION xt_idxlist_get_min_index_c(idxlist) &
+           BIND(c, name='xt_idxlist_get_min_index') RESULT(min_index)
+        IMPORT :: c_ptr, xt_int_kind
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+        INTEGER(xt_int_kind) :: min_index
+      END FUNCTION xt_idxlist_get_min_index_c
+    END INTERFACE
+
+    min_index = xt_idxlist_get_min_index_c(idxlist%cptr)
+  END FUNCTION xt_idxlist_get_min_index
+
+  FUNCTION xt_idxlist_get_max_index(idxlist) &
+       RESULT(max_index)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    INTEGER(xt_int_kind) :: max_index
+
+    INTERFACE
+      FUNCTION xt_idxlist_get_max_index_c(idxlist) &
+           BIND(c, name='xt_idxlist_get_max_index') RESULT(max_index)
+        IMPORT :: c_ptr, xt_int_kind
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
+        INTEGER(xt_int_kind) :: max_index
+      END FUNCTION xt_idxlist_get_max_index_c
+    END INTERFACE
+
+    max_index = xt_idxlist_get_max_index_c(idxlist%cptr)
+  END FUNCTION xt_idxlist_get_max_index
 
   SUBROUTINE xt_idxlist_get_index_stripes(idxlist, stripes)
     TYPE(xt_idxlist), INTENT(in) :: idxlist

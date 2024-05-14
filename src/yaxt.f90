@@ -86,6 +86,7 @@ MODULE yaxt
        xt_idxlist_get_num_index_stripes, xt_idxlist_get_index_stripes, &
        xt_idxlist_get_bounding_box, xt_idxlist_get_intersection, &
        xt_idxlist_get_num_indices, xt_is_null, &
+       xt_idxlist_get_min_index, xt_idxlist_get_max_index, &
        xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
        xt_idxlist_get_pos_exts_of_index_stripes
   USE xt_idxvec, ONLY: xt_idxvec_from_stripes_new, xt_idxvec_new
@@ -156,6 +157,7 @@ MODULE yaxt
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_idxlist_get_num_indices, &
+       xt_idxlist_get_min_index, xt_idxlist_get_max_index, &
        xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
        xt_idxlist_get_num_index_stripes, xt_idxlist_get_index_stripes, &
        xt_idxlist_get_bounding_box, &
