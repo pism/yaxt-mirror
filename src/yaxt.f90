@@ -88,7 +88,8 @@ MODULE yaxt
        xt_idxlist_get_num_indices, xt_is_null, &
        xt_idxlist_get_min_index, xt_idxlist_get_max_index, &
        xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
-       xt_idxlist_get_pos_exts_of_index_stripes
+       xt_idxlist_get_pos_exts_of_index_stripes, &
+       xt_idxlist_is_stripe_conversion_profitable
   USE xt_idxvec, ONLY: xt_idxvec_from_stripes_new, xt_idxvec_new
   USE xt_idxstripes, ONLY: xt_idxstripes_new, xt_idxstripes_from_idxlist_new
   USE xt_idxsection, ONLY: xt_idxsection_new, xt_idxfsection_new
@@ -162,7 +163,8 @@ MODULE yaxt
        xt_idxlist_get_num_index_stripes, xt_idxlist_get_index_stripes, &
        xt_idxlist_get_bounding_box, &
        xt_idxlist_get_pos_exts_of_index_stripes, &
-       xt_idxvec_new, xt_idxvec_from_stripes_new, &
+       xt_idxlist_is_stripe_conversion_profitable
+  PUBLIC :: xt_idxvec_new, xt_idxvec_from_stripes_new, &
        xt_idxstripes_new, xt_idxstripes_from_idxlist_new, &
        xt_idxlist_collection_new, xt_idxsection_new, xt_idxfsection_new, &
        xt_idxmod_new, xt_xmap, xt_xmap_c2f, xt_xmap_f2c, xt_xmap_copy, &

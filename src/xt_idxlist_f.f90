@@ -115,7 +115,8 @@ MODULE xt_idxlist_abstract
        xt_idxlist_get_num_indices, &
        xt_idxlist_get_indices, xt_idxlist_get_indices_const, &
        xt_idxlist_get_bounding_box, xt_idxlist_get_intersection, &
-       xt_idxlist_get_pos_exts_of_index_stripes
+       xt_idxlist_get_pos_exts_of_index_stripes, &
+       xt_idxlist_is_stripe_conversion_profitable
   INTERFACE
 
     FUNCTION xt_idxlist_get_num_indices_c(idxlist) RESULT(num_indices) &
@@ -776,6 +777,24 @@ CONTAINS
       indices => dummy(1:0)
     END IF
   END FUNCTION xt_idxlist_get_indices_const
+
+  FUNCTION xt_idxlist_is_stripe_conversion_profitable(idxlist, config) &
+       RESULT(profit)
+    TYPE(xt_idxlist), INTENT(in) :: idxlist
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: profit
+    INTERFACE
+      FUNCTION is_stripe_conversion_profitable_c(idxlist, config) &
+           RESULT(profit) &
+           BIND(c, name="xt_idxlist_is_stripe_conversion_profitable")
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist, config
+        INTEGER(c_int) :: profit
+      END FUNCTION is_stripe_conversion_profitable_c
+    END INTERFACE
+    profit = INT(is_stripe_conversion_profitable_c(idxlist%cptr, &
+         xt_config_f2c(config)))
+  END FUNCTION xt_idxlist_is_stripe_conversion_profitable
 
   FUNCTION gpe_is_i4_a_i4_p1d_l(idxlist, &
        num_stripes, stripes, num_ext, pos_ext, single_match_only) &
