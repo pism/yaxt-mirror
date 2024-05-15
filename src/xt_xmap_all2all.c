@@ -188,7 +188,10 @@ static void exchange_idxlists(struct Xt_com_list **src_intersections,
     }
   }
 
-  *stripify = large_list_seen;
+  int stripify_ = XT_CONFIG_GET_XMAP_STRIPING(config);
+  if (stripify_ == 2)
+    stripify_ = large_list_seen;
+  *stripify = stripify_;
 
   free(recv_buffer);
   free(pack_sizes);

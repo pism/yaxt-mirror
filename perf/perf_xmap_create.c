@@ -378,7 +378,7 @@ parse_options(int argc, const char *argv[], Xt_config config)
       case 10:
         align = 1;
       set_dd_stripe_align:
-        xt_config_set_dist_dir_stripe_alignment(config, (int)align);
+        xt_config_set_xmap_stripe_align(config, (int)align);
         break;
       }
     }

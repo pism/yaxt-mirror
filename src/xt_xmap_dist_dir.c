@@ -642,7 +642,7 @@ xt_xmap_dist_dir_intracomm_custom_new(
   struct dd_result ddr
     = exchange_idxlists(src_idxlist, dst_idxlist, tag_offset, newcomm, config);
 
-  int stripify = XT_CONFIG_GET_DIST_DIR_STRIPING(config);
+  int stripify = XT_CONFIG_GET_XMAP_STRIPING(config);
   if (stripify == 2)
     stripify = ddr.stripify;
   Xt_xmap (*xmap_new)(int num_src_intersections,

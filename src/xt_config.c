@@ -206,7 +206,7 @@ struct Xt_config_ xt_default_config = {
   .idxv_cnv_size = CHEAP_VECTOR_SIZE,
   .sort_funcs = &sort_algo_table[XT_QUICKSORT].func,
   .xmdd_bucket_gen = &Xt_xmdd_cycl_stripe_bucket_gen_desc,
-  .flags = 2U << xt_force_dist_dir_striping_bit_ofs,
+  .flags = 2U << xt_force_xmap_striping_bit_ofs,
 };
 
 
@@ -366,19 +366,37 @@ xt_config_set_redist_mthread_mode(Xt_config config, int mode)
 }
 
 void
+xt_config_set_dist_dir_stripe_alignment(Xt_config config, int use_stripe_alignment);
+
+void
 xt_config_set_dist_dir_stripe_alignment(Xt_config config, int use_stripe_alignment)
 {
-  if (use_stripe_alignment < 0 || use_stripe_alignment > 2)
-    Xt_abort(Xt_default_comm,
-             "error: invalid value passed to "
-             "xt_config_set_dist_dir_stripe_alignment.\n", filename, __LINE__);
-  XT_CONFIG_SET_DIST_DIR_STRIPING(config, use_stripe_alignment);
+  xt_config_set_xmap_stripe_align(config, use_stripe_alignment);
 }
+
+int
+xt_config_get_dist_dir_stripe_alignment(Xt_config config);
 
 int
 xt_config_get_dist_dir_stripe_alignment(Xt_config config)
 {
-  return XT_CONFIG_GET_DIST_DIR_STRIPING(config);
+  return XT_CONFIG_GET_XMAP_STRIPING(config);
+}
+
+void
+xt_config_set_xmap_stripe_align(Xt_config config, int use_stripe_align)
+{
+  if (use_stripe_align < 0 || use_stripe_align > 2)
+    Xt_abort(Xt_default_comm,
+             "error: invalid value passed to "
+             "xt_config_set_xmap_stripe_align.\n", filename, __LINE__);
+  XT_CONFIG_SET_XMAP_STRIPING(config, use_stripe_align);
+}
+
+int
+xt_config_get_xmap_stripe_align(Xt_config config)
+{
+  return XT_CONFIG_GET_XMAP_STRIPING(config);
 }
 
 /**
@@ -556,8 +574,10 @@ dont_set_mt_mode:;
     xt_config_set_sort_algorithm_by_id(&xt_default_config, (int)v);
   }
 dont_set_sort_algorithm:;
-
-  config_env = getenv("XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT");
+  const char *evn = "XT_CONFIG_DEFAULT_XMAP_STRIPE_ALIGN";
+  config_env = getenv(evn);
+  if (!config_env)
+    config_env = getenv((evn = "XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT"));
   if (config_env) {
     char *endptr;
     long v;
@@ -575,17 +595,15 @@ dont_set_sort_algorithm:;
       v = strtol(config_env, &endptr, 0);
     if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
         || (errno != 0 && v == 0)) {
-      perror("failed to parse value of "
-             "XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT environment variable");
+      fprintf(stderr, "warning: failed to parse value of "
+              "environment variable %s: %s", evn, strerror(errno));
     } else if (endptr == config_env) {
-      fputs("malformed value of XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT\n"
-            " environment variable, no digits or symbolic constant found\n",
-            stderr);
+      fprintf(stderr, "warning: malformed value of environment variable "
+              "%s, no digits or symbolic constant found\n", evn);
     } else if (v < 0 || v > 2) {
-      fprintf(stderr, "value of XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT"
-              " environment variable (%ld) out of range [0,2]\n", v);
+      fprintf(stderr, "value of environment variable %s (%ld) out of range [0,2]\n", evn, v);
     } else
-      xt_config_set_dist_dir_stripe_alignment(&xt_default_config, (int)v);
+      xt_config_set_xmap_stripe_align(&xt_default_config, (int)v);
   }
 }
 
