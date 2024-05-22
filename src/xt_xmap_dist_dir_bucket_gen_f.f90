@@ -47,7 +47,7 @@
 !
 #include "fc_feature_defs.inc"
 MODULE xt_xmap_dist_dir_bucket_gen
-  USE iso_c_binding, ONLY: c_ptr, c_null_ptr
+  USE iso_c_binding, ONLY: c_ptr, c_null_ptr, c_associated
   IMPLICIT NONE
   PRIVATE
 
@@ -72,6 +72,12 @@ MODULE xt_xmap_dist_dir_bucket_gen
 
   PUBLIC :: xt_xmdd_bucket_gen_new, xt_xmdd_bucket_gen_delete
   PUBLIC :: xt_xmdd_bucket_gen_c2f, xt_xmdd_bucket_gen_f2c
+
+  INTERFACE xt_is_null
+    MODULE PROCEDURE xt_xmdd_bucket_gen_is_null
+  END INTERFACE xt_is_null
+  PUBLIC :: xt_is_null
+
 CONTAINS
 
   FUNCTION xt_xmdd_bucket_gen_new() RESULT(gen)
@@ -105,6 +111,12 @@ CONTAINS
     TYPE(xt_xmdd_bucket_gen) :: p
     p%cptr = gen
   END FUNCTION xt_xmdd_bucket_gen_c2f
+
+  FUNCTION xt_xmdd_bucket_gen_is_null(bucket_gen) RESULT(p)
+    TYPE(xt_xmdd_bucket_gen), INTENT(in) :: bucket_gen
+    LOGICAL :: p
+    p = .NOT. C_ASSOCIATED(bucket_gen%cptr)
+  END FUNCTION xt_xmdd_bucket_gen_is_null
 
 END MODULE xt_xmap_dist_dir_bucket_gen
 !
