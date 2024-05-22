@@ -36,14 +36,9 @@ dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
-dnl ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([ACTION-IF-ACCEPTS-CONST-VOID-P],
-dnl   [ACTION-IF-NOT-ACCEPTS-CONST-VOID-P])
-dnl
-AC_DEFUN([ACX_MPI_SEND_CONST_VOID_P_BUF_ARG],
-  [AC_CACHE_CHECK([whether MPI_Send accepts const void * as first argument],
-     [acx_cv_mpi_send_takes_const_void],
-     [AC_LANG_PUSH([C])
-      AC_LANG_CONFTEST([AC_LANG_SOURCE([@%:@include <stdlib.h>
+dnl _ACX_MPI_ARGCHECK_TEST([prototype-to-check])
+m4_define([_ACX_MPI_ARGCHECK_TEST],
+  [AC_LANG_CONFTEST([AC_LANG_SOURCE([@%:@include <stdlib.h>
 @%:@include <mpi.h>
 
 @%:@define xmpi(ret)           \\
@@ -52,8 +47,7 @@ AC_DEFUN([ACX_MPI_SEND_CONST_VOID_P_BUF_ARG],
       exit(EXIT_FAILURE);   \\
   } while (0)
 
-extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype,
-                    int dest, int tag, MPI_Comm comm);
+$1
 
 int main(int argc, char **argv)
 {
@@ -68,7 +62,18 @@ int main(int argc, char **argv)
   xmpi(MPI_Finalize());
   return EXIT_SUCCESS;
 }
-])])
+])])])
+dnl
+dnl
+dnl ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([ACTION-IF-ACCEPTS-CONST-VOID-P],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-VOID-P])
+dnl
+AC_DEFUN([ACX_MPI_SEND_CONST_VOID_P_BUF_ARG],
+  [AC_CACHE_CHECK([whether MPI_Send accepts const void * as first argument],
+     [acx_cv_mpi_send_takes_const_void],
+     [AC_LANG_PUSH([C])
+      _ACX_MPI_ARGCHECK_TEST([extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype,
+                    int dest, int tag, MPI_Comm comm);])
       AC_COMPILE_IFELSE(,
         [# compilation worked without error,
          # inspect if removing const errors out or creates extra warnings next
@@ -84,6 +89,34 @@ int main(int argc, char **argv)
     AS_IF([test x"$acx_cv_mpi_send_takes_const_void" = xyes],[$1],
      [m4_default([$2],
         [AC_MSG_FAILURE([MPI_Send does not accept const void * buf arguments])])])
+  ])
+dnl
+dnl
+dnl ACX_MPI_GET_ADDRESS_CONST_VOID_P_LOCATION_ARG(
+dnl   [ACTION-IF-ACCEPTS-CONST-VOID-P],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-VOID-P])
+dnl
+AC_DEFUN([ACX_MPI_GET_ADDRESS_CONST_VOID_P_LOCATION_ARG],
+  [AC_CACHE_CHECK(
+     [whether MPI_Get_address accepts const void * as first argument],
+     [acx_cv_mpi_get_address_takes_const_void],
+     [AC_LANG_PUSH([C])
+      _ACX_MPI_ARGCHECK_TEST([extern int MPI_Get_address(const void *location, MPI_Aint *address);])
+      AC_COMPILE_IFELSE(,
+        [# compilation worked without error,
+         # inspect if removing const errors out or creates extra warnings next
+         acx_temp=`cat conftest.err | wc -l`
+         sed 's/const //' conftest.c >conftest.er1 ; mv conftest.er1 conftest.c
+         AC_COMPILE_IFELSE(,
+           [AS_IF([test "$acx_temp" -lt `cat conftest.err | wc -l`],
+              [acx_cv_mpi_get_address_takes_const_void=yes],
+              [acx_cv_mpi_get_address_takes_const_void=no])],
+           [acx_cv_mpi_get_address_takes_const_void=yes])],
+        [acx_cv_mpi_get_address_takes_const_void=no])
+      AC_LANG_POP([C])])
+    AS_IF([test x"$acx_cv_mpi_get_address_takes_const_void" = xyes],[$1],
+     [m4_default([$2],
+        [AC_MSG_FAILURE([MPI_Get_address does not accept const void * location arguments])])])
   ])
 dnl
 dnl Local Variables:

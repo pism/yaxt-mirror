@@ -168,7 +168,7 @@ static MPI_Datatype stripe_dt;
 
 #if __GNUC__ >= 11
 __attribute__ ((access (none, 1)))
-int MPI_Get_address(XT_MPI_SEND_BUF_CONST void *location, MPI_Aint *address);
+int MPI_Get_address(XT_MPI_GET_ADDRESS_LOCATION_CONST void *location, MPI_Aint *address);
 #endif
 
 void

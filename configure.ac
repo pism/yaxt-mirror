@@ -362,7 +362,19 @@ ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([CAST_MPI_SEND_BUF="(buf)"
 AC_DEFINE_UNQUOTED([CAST_MPI_SEND_BUF(buf)],[$CAST_MPI_SEND_BUF],
   [Macro to cast arguments to MPI_Send-like functions (if necessary)])
 AC_DEFINE_UNQUOTED([XT_MPI_SEND_BUF_CONST],[$XT_MPI_SEND_BUF_CONST],
-    [Defined to const, iff buf argument to MPI_Send-like functions can be const])
+  [Defined to const, iff buf argument to MPI_Send-like functions can be const])
+dnl
+ACX_MPI_GET_ADDRESS_CONST_VOID_P_LOCATION_ARG(
+  [XT_CAST_MPI_GET_ADDRESS_LOCATION="(location)"
+   XT_MPI_GET_ADDRESS_LOCATION_CONST=const],
+  [XT_CAST_MPI_GET_ADDRESS_LOCATION="((void *)(location))"
+   XT_MPI_GET_ADDRESS_LOCATION_CONST=]
+  )
+AC_DEFINE_UNQUOTED([XT_CAST_MPI_GET_ADDRESS_LOCATION(location)],
+  [$XT_CAST_MPI_GET_ADDRESS_LOCATION],
+  [Macro to cast first argument to MPI_Get_address (if necessary)])
+AC_DEFINE_UNQUOTED([XT_MPI_GET_ADDRESS_LOCATION_CONST],[$XT_MPI_GET_ADDRESS_LOCATION_CONST],
+  [Defined to const, iff location argument to MPI_Get_address can be const])
 dnl
 AC_ARG_ENABLE([mpi-profiling],
   [AS_HELP_STRING([--enable-mpi-profiling],

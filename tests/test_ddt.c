@@ -749,10 +749,11 @@ int main(int argc, char **argv) {
     enum {COUNT = 3};
     static const int array_of_blocklengths[COUNT] = {3, 1, 2};
     MPI_Aint base_address, i_address, f_address, d_address;
-    MPI_Get_address((void *)in_data, &base_address);
-    MPI_Get_address((void *)in_data[0].i, &i_address);
-    MPI_Get_address((void *)&in_data[0].f, &f_address);
-    MPI_Get_address((void *)in_data[0].d, &d_address);
+    MPI_Get_address(XT_CAST_MPI_GET_ADDRESS_LOCATION(in_data), &base_address);
+    MPI_Get_address(XT_CAST_MPI_GET_ADDRESS_LOCATION(in_data[0].i), &i_address);
+    MPI_Get_address(XT_CAST_MPI_GET_ADDRESS_LOCATION(&in_data[0].f),
+                    &f_address);
+    MPI_Get_address(XT_CAST_MPI_GET_ADDRESS_LOCATION(in_data[0].d), &d_address);
     MPI_Aint array_of_displacements[COUNT] =
       {(MPI_Aint)(i_address - base_address),
        (MPI_Aint)(f_address - base_address),
