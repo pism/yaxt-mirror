@@ -303,7 +303,7 @@ CONTAINS
   !! When set to 0, use default trade-offs for space vs. time complexity.
   !!
   SUBROUTINE xt_config_set_mem_saving(config, memconserve)
-    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_config), INTENT(inout) :: config
     INTEGER, INTENT(in) :: memconserve
     INTERFACE
       SUBROUTINE xt_config_set_mem_saving_c(config, memconserve) &
@@ -360,7 +360,7 @@ CONTAINS
   !! The default is a generator that tiles the range of indices of all
   !! index lists involved in xmap creation in 1D fashion with stripes.
   SUBROUTINE xt_config_set_xmdd_bucket_gen(config, gen)
-    TYPE(xt_config), INTENT(in) :: config
+    TYPE(xt_config), INTENT(inout) :: config
     TYPE(xt_xmdd_bucket_gen), INTENT(in) :: gen
     INTERFACE
       SUBROUTINE xt_config_set_xmdd_bucket_gen_c(config, gen) &

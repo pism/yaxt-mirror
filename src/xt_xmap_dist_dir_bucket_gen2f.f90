@@ -75,7 +75,7 @@ MODULE xt_xmap_dist_dir_bucket_gen2
          get_intersect_max_num, next, gen_state_size)
       IMPORT :: xt_xmdd_bucket_gen, xt_config, xt_idxlist, c_int, c_ptr, &
            c_size_t, xt_mpi_fint_kind, xt_com_list
-      TYPE(xt_xmdd_bucket_gen), INTENT(in) :: gen
+      TYPE(xt_xmdd_bucket_gen), INTENT(inout) :: gen
       INTERFACE
         !  The init function sets up the generator state.
         FUNCTION init(gen_state, src_idxlist, &
