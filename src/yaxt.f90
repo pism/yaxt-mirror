@@ -150,8 +150,8 @@ MODULE yaxt
   PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, &
        xt_initialized, xt_finalized, &
        xt_set_abort_handler, xt_restore_default_abort_hndl, &
-       xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, xt_pos_ext, &
-       xt_idxlist, xt_idxlist_delete,  &
+       xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, xt_pos_ext
+  PUBLIC :: xt_idxlist, xt_idxlist_delete,  &
        xt_idxlist_c2f, xt_idxlist_f2c, xt_idxlist_copy, &
        xt_idxlist_get_sorting, &
        xt_idxlist_sorted_copy, xt_idxlist_sorted_copy_custom, &
