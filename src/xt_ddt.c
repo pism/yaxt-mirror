@@ -570,7 +570,7 @@ void xt_ddt_unpack_internal(
     size_t displ_count = ddt->data[i].displ_count;
     kernel->unpack(
       displ_count, ddt->data[i].displs[memtype],
-      (unsigned char *)src + src_offset, dst, memtype);
+      add_rhs_byte_displ(void, src, src_offset), dst, memtype);
 
     src_offset += displ_count * kernel->element_size;
   }
@@ -585,14 +585,16 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
   enum xt_memtype src_memtype = xt_gpu_get_memtype(src);
   enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
 
-  void *src_;
+  void *src__ = NULL;
+  const void *src_;
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
     size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
-    src_ = xt_gpu_malloc(pack_size, dst_memtype);
-    xt_gpu_memcpy(src_, src, pack_size, dst_memtype, src_memtype);
+    src__ = xt_gpu_malloc(pack_size, dst_memtype);
+    xt_gpu_memcpy(src__, src, pack_size, dst_memtype, src_memtype);
+    src_ = src__;
   } else
-    src_ = (void *)src;
+    src_ = src;
 
   XT_GPU_INSTR_POP; // xt_ddt_unpack:initialise
 
@@ -602,7 +604,7 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
   XT_GPU_INSTR_PUSH(xt_ddt_unpack:finalise);
 
   // if the source and destination are in different memory types
-  if (src_memtype != dst_memtype) xt_gpu_free(src_, dst_memtype);
+  if (src_memtype != dst_memtype) xt_gpu_free(src__, dst_memtype);
 
   XT_GPU_INSTR_POP; // xt_ddt_unpack:finalise
   XT_GPU_INSTR_POP; // xt_ddt_unpack
