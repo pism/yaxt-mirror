@@ -85,17 +85,17 @@ MODULE xt_xmap_dist_dir_bucket_gen2
           INTEGER(c_int) :: stripify
           TYPE(c_ptr), VALUE :: gen_state
           TYPE(xt_idxlist), VALUE, INTENT(in) :: src_idxlist,dst_idxlist
-          INTEGER(xt_mpi_fint_kind), INTENT(in) :: intra_comm, inter_comm
-          INTEGER(xt_mpi_fint_kind), INTENT(in) :: tag_offset_intra, &
+          INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: intra_comm, inter_comm
+          INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: tag_offset_intra, &
                tag_offset_inter
-          TYPE(xt_config), VALUE :: config
+          TYPE(xt_config), VALUE, INTENT(in) :: config
         END FUNCTION init
 
         !  The destroy function clean up the generator state. Can be zero
         !  if no cleaning is needed.
         SUBROUTINE destroy(gen_state) BIND(c)
           IMPORT :: c_ptr
-          TYPE(c_ptr), VALUE :: gen_state
+          TYPE(c_ptr), VALUE, INTENT(in) :: gen_state
         END SUBROUTINE destroy
 
         FUNCTION get_intersect_max_num(gen_state, &

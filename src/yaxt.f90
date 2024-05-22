@@ -70,6 +70,8 @@ MODULE yaxt
        xt_config_set_sort_algorithm_by_id, &
        xt_config_set_mem_saving, &
        xt_config_get_mem_saving, &
+       xt_config_set_xmdd_bucket_gen, &
+       xt_config_get_xmdd_bucket_gen, &
        xt_config_get_xmap_stripe_align, &
        xt_config_set_xmap_stripe_align, &
        xt_exchanger_irecv_isend_ddt_packed
@@ -113,6 +115,17 @@ MODULE yaxt
        XT_REORDER_RECV_UP, xt_xmap_update_positions, xt_xmap_spread
   USE xt_xmap_rename, ONLY: xt_xmap_all2all_new, xt_xmap_dist_dir_new, &
        xt_xmap_dist_dir_intercomm_new
+  USE xt_xmap_dist_dir_bucket_gen, ONLY: xt_xmdd_bucket_gen, &
+       xt_xmdd_bucket_gen_new, xt_xmdd_bucket_gen_delete, &
+       xt_xmdd_bucket_gen_c2f, xt_xmdd_bucket_gen_f2c, &
+       xt_is_null
+#ifdef XT_HAVE_FC_HLF_STRUCT_RETURN
+  USE xt_xmap_dist_dir_bucket_gen2, ONLY: &
+       xt_xmdd_bucket_gen_define_interface, &
+       xt_dist_dir_bucket_gen_type_send, &
+       xt_dist_dir_bucket_gen_type_recv, &
+       xt_dist_dir_bucket_gen_type_sendrecv
+#endif
   USE xt_xmap_intersection, ONLY: xt_xmap_intersection_new, &
        xt_xmap_intersection_ext_new, xt_com_list, &
        xt_xmap_intersection_pos_new, xt_com_pos
@@ -206,6 +219,16 @@ MODULE yaxt
   PUBLIC :: xt_mpi_fint_kind, &
        xt_mpi_comm_mark_exclusive
 
+  PUBLIC :: xt_xmdd_bucket_gen
+  PUBLIC :: xt_xmdd_bucket_gen_new, xt_xmdd_bucket_gen_delete
+  PUBLIC :: xt_xmdd_bucket_gen_c2f, xt_xmdd_bucket_gen_f2c
+#ifdef XT_HAVE_FC_HLF_STRUCT_RETURN
+  PUBLIC :: xt_xmdd_bucket_gen_define_interface, &
+       xt_dist_dir_bucket_gen_type_send, &
+       xt_dist_dir_bucket_gen_type_recv, &
+       xt_dist_dir_bucket_gen_type_sendrecv
+#endif
+
   PUBLIC :: xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &
        xt_assign_id_map
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
@@ -227,6 +250,8 @@ MODULE yaxt
        xt_config_set_sort_algorithm_by_id, &
        xt_config_set_mem_saving, &
        xt_config_get_mem_saving, &
+       xt_config_set_xmdd_bucket_gen, &
+       xt_config_get_xmdd_bucket_gen, &
        xt_config_get_xmap_stripe_align, &
        xt_config_set_xmap_stripe_align, &
        xt_exchanger_irecv_isend_ddt_packed

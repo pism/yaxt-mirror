@@ -227,7 +227,6 @@ libyaxt_la_SOURCES =						\
 	xt_idxsection_f.f90					\
 	xt_xmap_f.f90						\
 	xt_xmap_dist_dir_bucket_gen_f.f90			\
-	xt_xmap_dist_dir_bucket_gen2f.f90			\
 	xt_redist_f.f90						\
 	xt_redist_int_i2.f90					\
 	xt_redist_int_i4.f90					\
@@ -245,6 +244,11 @@ libyaxt_c_la_LDFLAGS = -version-info 11:1:10
 
 if XT_ADD_MPI_WORKAROUND
 libyaxt_c_la_LIBADD += mpi-workarounds/libmpi_workaround.la
+endif
+
+if xt_fc_hlf_struct_return
+libyaxt_la_SOURCES +=						\
+	xt_xmap_dist_dir_bucket_gen2f.f90
 endif
 
 libyaxt_profile_la_SOURCES = mpi-profile/xt-ddt-profile.c

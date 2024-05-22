@@ -152,6 +152,9 @@ ACX_SL_FC_MOD_SUFFIX(,
 AC_LANG_PUSH([Fortran])
 ACX_SL_FC_CHECK_MOD_PATH_FLAG
 AC_LANG_POP([Fortran])
+ACX_FC_STRUCT_RETURN_HLF([Xt_fc_hlf_struct_return=:],
+  [Xt_fc_hlf_struct_return=false
+   AC_MSG_WARN([Disabling Fortran interface for bucket generator])])
 ACX_FC_VOLATILE([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_VOLATILE"])
 ACX_FC_HAVE_SIZE_KIND_ARGUMENT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
@@ -187,6 +190,8 @@ ACX_FC_INTEGER_EXP_IS_PRECISE(
 @%:@define HAVE_FC_PRECISE_INTEGER_EXPONENTIATION"])
 ACX_FC_BIND_C_ALIGN([INTEGER(C_INT)],[FC_ALIGN_C_INT],,,
   [USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT],[16])
+else
+Xt_fc_hlf_struct_return=false
 fi
 AC_DEFINE_UNQUOTED([FC_ALIGN_C_INT],[${FC_ALIGN_C_INT-16}],
   [Alignment for INTEGER(C_INT) used by Fortran compiler.])
@@ -197,6 +202,11 @@ AH_TEMPLATE([HAVE_FC_IS_CONTIGUOUS],
 AH_TEMPLATE([HAVE_FC_C_LOC_OF_SLICE],
   [Defined to 1 iff Fortran compiler supports C_LOC of an array slice])dnl
 dnl Check whether char is unsigned by default
+AM_CONDITIONAL([xt_fc_hlf_struct_return],
+  [$Xt_fc_hlf_struct_return])
+AS_IF([$Xt_fc_hlf_struct_return],
+  [XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define XT_HAVE_FC_HLF_STRUCT_RETURN"])
 AC_C_CHAR_UNSIGNED
 AS_IF([test x$ac_cv_c_char_unsigned = xyes],
   [C_CHAR_IS_UNSIGNED=1],
