@@ -104,6 +104,8 @@ MODULE xt_config_f
   PUBLIC :: xt_config_get_xmdd_bucket_gen, &
        xt_config_set_xmdd_bucket_gen
 
+  PUBLIC :: xt_config_get_xmap_stripe_align, &
+       xt_config_set_xmap_stripe_align
   CHARACTER(len=*), PARAMETER :: filename = 'xt_config_f.f90'
 
 CONTAINS
@@ -370,6 +372,36 @@ CONTAINS
     CALL xt_config_set_xmdd_bucket_gen_c(config%cptr, &
          xt_xmdd_bucket_gen_f2c(gen))
   END SUBROUTINE xt_config_set_xmdd_bucket_gen
+
+  SUBROUTINE xt_config_set_xmap_stripe_align(config, preference)
+    TYPE(xt_config), INTENT(inout) :: config
+    INTEGER, INTENT(in) :: preference
+    INTEGER(c_int) :: preference_c
+    INTERFACE
+      SUBROUTINE xt_config_set_xmap_stripe_align_c(config, preference) &
+           BIND(c, name='xt_config_set_xmap_stripe_align')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int), VALUE :: preference
+      END SUBROUTINE xt_config_set_xmap_stripe_align_c
+    END INTERFACE
+    preference_c = INT(preference, c_int)
+    CALL xt_config_set_xmap_stripe_align_c(config%cptr, preference_c)
+  END SUBROUTINE xt_config_set_xmap_stripe_align
+
+  FUNCTION xt_config_get_xmap_stripe_align(config) RESULT(preference)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: preference
+    INTERFACE
+      FUNCTION xt_config_get_xmap_stripe_align_c(config) RESULT(preference) &
+           BIND(c, name='xt_config_get_xmap_stripe_align')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int) :: preference
+      END FUNCTION xt_config_get_xmap_stripe_align_c
+    END INTERFACE
+    preference = INT(xt_config_get_xmap_stripe_align_c(config%cptr))
+  END FUNCTION xt_config_get_xmap_stripe_align
 
 END MODULE xt_config_f
 !
