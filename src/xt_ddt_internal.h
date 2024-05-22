@@ -67,15 +67,15 @@ struct xt_ddt_data {
 
 struct Xt_ddt_ {
 
+  size_t pack_size;
+  size_t count; // number of elements in data
   int ref_count;
 
-  size_t pack_size;
 
   int displs_available[XT_MEMTYPE_COUNT]; // determines in which memory type
                                           // the displacements are available
 
   // if exchange data is on GPU, one kernel per data entry is launched
-  size_t count; // number of elements in data
   struct xt_ddt_data data[];
 };
 
