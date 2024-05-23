@@ -47,7 +47,12 @@ EXTRA_PROGRAMS = 						\
 if with_fortran
 EXTRA_PROGRAMS += 						\
 	perf_sparse_array_gather
+if xt_fc_hlf_struct_return
+EXTRA_PROGRAMS += 						\
+	perf_xmap_create_f
 endif
+endif
+
 
 noinst_PROGRAMS =
 if with_perf_programs
@@ -63,6 +68,11 @@ perf_sparse_array_gather_LDADD = ../src/libyaxt.la ../src/libyaxt_c.la \
 	$(MPI_FC_LIB)
 
 perf_xmap_create_SOURCES = perf_xmap_create.c
+
+perf_xmap_create_f_SOURCES = perf_xmap_create_f.f90
+perf_xmap_create_f_LDADD = ../src/libyaxt.la ../src/libyaxt_c.la \
+	$(MPI_FC_LIB)
+perf_xmap_create_f.$(OBJEXT): perf_xmap_create_f.f90 ../src/libyaxt.la
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)
 AM_FCFLAGS = $(FC_MOD_FLAG)../inst_headers/f90 \
@@ -80,7 +90,7 @@ FCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(FC) -static $(AM_FCFLAGS) $(FCFLAGS)
 
 clean-local:
-	-rm -f *.i
+	-rm -f *.$(FCMODEXT) i.*.L *.i *.dbg
 	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the
