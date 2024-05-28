@@ -61,21 +61,27 @@
 
 struct Xt_xmdd_bucket_gen;
 
+struct Xt_xmdd_bucket_gen_comms_f {
+  MPI_Fint intra_comm, inter_comm,
+    tag_offset_intra, tag_offset_inter;
+};
+
 typedef int (*Xt_xmdd_bucket_gen_init_state_internal)(
   void *gen_state,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
-  Xt_config config, const struct Xt_xmdd_bucket_gen_ *gen);
+  Xt_config config,
+  const struct Xt_xmdd_bucket_gen_comms *comms,
+  void *init_params,
+  const struct Xt_xmdd_bucket_gen_ *gen);
 
 typedef int (*Xt_xmdd_bucket_gen_init_state_f)(
   void *gen_state,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Fint intra_comm, MPI_Fint tag_offset_intra,
-  MPI_Fint inter_comm, MPI_Fint tag_offset_inter,
-  Xt_config config);
+  Xt_config config,
+  struct Xt_xmdd_bucket_gen_comms_f *comms,
+  void *init_params);
 
 struct Xt_xmdd_bucket_gen_ {
   /** The init function sets up the generator state. */
@@ -95,6 +101,7 @@ struct Xt_xmdd_bucket_gen_ {
    * pointer variables of this size. */
   size_t gen_state_size;
   Xt_xmdd_bucket_gen_init_state_f init_f;
+  void *init_params;
 };
 
 /**

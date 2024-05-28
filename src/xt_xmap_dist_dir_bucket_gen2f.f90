@@ -61,6 +61,10 @@ MODULE xt_xmap_dist_dir_bucket_gen2
        xt_dist_dir_bucket_gen_type_recv = 2, &
        xt_dist_dir_bucket_gen_type_sendrecv = 3
 
+  TYPE, BIND(c), PUBLIC :: xt_xmdd_bucket_gen_comms
+    INTEGER(xt_mpi_fint_kind) :: intra_comm, inter_comm, &
+         tag_offset_intra, tag_offset_inter
+  END TYPE xt_xmdd_bucket_gen_comms
 
   ! Interface of bucket generator
   !
@@ -72,23 +76,23 @@ MODULE xt_xmap_dist_dir_bucket_gen2
   PUBLIC :: xt_xmdd_bucket_gen_define_interface
   INTERFACE xt_xmdd_bucket_gen_define_interface
     SUBROUTINE xt_xmdd_bucket_gen_define_interface_f(gen, init, destroy, &
-         get_intersect_max_num, next, gen_state_size)
-      IMPORT :: xt_xmdd_bucket_gen, xt_config, xt_idxlist, c_int, c_ptr, &
-           c_size_t, xt_mpi_fint_kind, xt_com_list
+         get_intersect_max_num, next, gen_state_size, init_params)
+      IMPORT :: xt_xmdd_bucket_gen, xt_config, xt_idxlist, c_int, &
+           c_ptr, c_size_t, xt_mpi_fint_kind, xt_com_list, &
+           xt_xmdd_bucket_gen_comms
       TYPE(xt_xmdd_bucket_gen), INTENT(inout) :: gen
       INTERFACE
         !  The init function sets up the generator state.
         FUNCTION init(gen_state, src_idxlist, &
-             dst_idxlist, intra_comm, tag_offset_intra, &
-             inter_comm, tag_offset_inter, config) BIND(c) RESULT(stripify)
-          IMPORT :: c_int, c_ptr, xt_idxlist, xt_mpi_fint_kind, xt_config
+             dst_idxlist, config, comms, init_params) BIND(c) RESULT(stripify)
+          IMPORT :: c_int, c_ptr, xt_idxlist, xt_config, &
+               xt_xmdd_bucket_gen_comms
           INTEGER(c_int) :: stripify
           TYPE(c_ptr), VALUE :: gen_state
           TYPE(xt_idxlist), VALUE, INTENT(in) :: src_idxlist,dst_idxlist
-          INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: intra_comm, inter_comm
-          INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: tag_offset_intra, &
-               tag_offset_inter
           TYPE(xt_config), VALUE, INTENT(in) :: config
+          TYPE(xt_xmdd_bucket_gen_comms), intent(in) :: comms
+          TYPE(c_ptr), VALUE, INTENT(in) :: init_params
         END FUNCTION init
 
         !  The destroy function clean up the generator state. Can be zero
@@ -134,7 +138,8 @@ MODULE xt_xmap_dist_dir_bucket_gen2
       !
       ! The distributed directory will provide memory aligned to
       ! TYPE(c_ptr) variables of this size.
-      INTEGER(c_size_t), VALUE :: gen_state_size
+      INTEGER(c_size_t) :: gen_state_size
+      TYPE(c_ptr), VALUE :: init_params
     END SUBROUTINE xt_xmdd_bucket_gen_define_interface_f
   END INTERFACE xt_xmdd_bucket_gen_define_interface
 END MODULE xt_xmap_dist_dir_bucket_gen2

@@ -122,6 +122,7 @@ MODULE yaxt
 #ifdef XT_HAVE_FC_HLF_STRUCT_RETURN
   USE xt_xmap_dist_dir_bucket_gen2, ONLY: &
        xt_xmdd_bucket_gen_define_interface, &
+       xt_xmdd_bucket_gen_comms, &
        xt_dist_dir_bucket_gen_type_send, &
        xt_dist_dir_bucket_gen_type_recv, &
        xt_dist_dir_bucket_gen_type_sendrecv
@@ -224,6 +225,7 @@ MODULE yaxt
   PUBLIC :: xt_xmdd_bucket_gen_c2f, xt_xmdd_bucket_gen_f2c
 #ifdef XT_HAVE_FC_HLF_STRUCT_RETURN
   PUBLIC :: xt_xmdd_bucket_gen_define_interface, &
+       xt_xmdd_bucket_gen_comms, &
        xt_dist_dir_bucket_gen_type_send, &
        xt_dist_dir_bucket_gen_type_recv, &
        xt_dist_dir_bucket_gen_type_sendrecv

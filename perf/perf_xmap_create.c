@@ -400,7 +400,7 @@ parse_options(int argc, const char *argv[], Xt_config config)
 
 struct custom_bucket_gen_state
 {
-  MPI_Comm intra_comm, inter_comm;
+  struct Xt_xmdd_bucket_gen_comms comms;
   int prev_rank_generated, last_rank_generated, intra_comm_size;
   size_t stripe_buf_size;
   void *stripe_buf;
@@ -412,9 +412,9 @@ custom_bucket_gen_init_state(
   void *gen_state,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
-  Xt_config config);
+  Xt_config config,
+  const struct Xt_xmdd_bucket_gen_comms *comms,
+  void *init_params);
 
 static void custom_bucket_gen_destroy_state(void *gen_state);
 
@@ -434,7 +434,8 @@ set_custom_bucket_gen(Xt_config config)
     custom_bucket_gen_destroy_state,
     custom_bucket_gen_get_intersect_max_num,
     custom_bucket_gen_next,
-    sizeof (struct custom_bucket_gen_state));
+    sizeof (struct custom_bucket_gen_state),
+    NULL);
   xt_config_set_xmdd_bucket_gen(config, run_config.bg);
 }
 
@@ -443,24 +444,22 @@ custom_bucket_gen_init_state(
   void *gen_state_,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
-  Xt_config config)
+  Xt_config config,
+  const struct Xt_xmdd_bucket_gen_comms *comms,
+  void *init_params)
 {
+  (void)init_params;
   struct custom_bucket_gen_state *gen_state = gen_state_;
-  gen_state->intra_comm = intra_comm;
-  gen_state->inter_comm = inter_comm;
-  MPI_Comm_size(intra_comm, &gen_state->intra_comm_size);
+  memcpy(&gen_state->comms, comms, sizeof (gen_state->comms));
+  MPI_Comm_size(comms->intra_comm, &gen_state->intra_comm_size);
   gen_state->stripe_buf_size = 0;
   gen_state->stripe_buf = NULL;
   gen_state->prev_list = NULL;
   int p = run_config.index_generation_method == INDEX_GEN_IDXSTRIPES
     || xt_idxlist_is_stripe_conversion_profitable(src_idxlist, config)
     || xt_idxlist_is_stripe_conversion_profitable(dst_idxlist, config);
-  (void)tag_offset_intra;
-  (void)tag_offset_inter;
-  (void)inter_comm;
-  MPI_Allreduce(MPI_IN_PLACE, &p, 1, MPI_INT, MPI_LOR, intra_comm);
+  MPI_Allreduce(MPI_IN_PLACE, &p, 1, MPI_INT, MPI_LOR,
+                comms->intra_comm);
   /* establish local ranges */
   int num_indices_src = xt_idxlist_get_num_indices(src_idxlist),
     num_indices_dst = xt_idxlist_get_num_indices(dst_idxlist);

@@ -71,12 +71,12 @@
 
 static int
 xt_xmdd_bucket_gen_cycl_stripe_init(
-  void *gen_state,
+  void *gen_state_,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
-  Xt_config config);
+  Xt_config config,
+  struct Xt_xmdd_bucket_gen_comms *comms,
+  void *init_params);
 
 static struct Xt_com_list
 xt_xmdd_cycl_stripe_get_next_bucket(void *gen_state_, int type);
@@ -193,9 +193,8 @@ static inline void
 get_intercomm_dist_dir_global_interval_size(
   Xt_idxlist src, Xt_idxlist dst,
   bool *stripify, Xt_int interval_size[2],
-  MPI_Comm intra_comm, MPI_Comm inter_comm,
+  struct Xt_xmdd_bucket_gen_comms *comms,
   int comm_size, int remote_size,
-  int tag_offset_inter,
   Xt_config config)
 {
   /* global_sums[0] and [1] refer to the local and remote group of
@@ -208,8 +207,9 @@ get_intercomm_dist_dir_global_interval_size(
     || (xt_idxlist_get_num_indices(dst) > config->idxv_cnv_size);
 
   xt_mpi_call(MPI_Allreduce(local_vals, global_sums[0], 2,
-                            MPI_UNSIGNED_LONG_LONG, MPI_SUM, intra_comm),
-              intra_comm);
+                            MPI_UNSIGNED_LONG_LONG, MPI_SUM,
+                            comms->intra_comm),
+              comms->intra_comm);
   /* instead of sendrecv one might use hand-programmed multi-casts
    * sending to each rank in a range from the remote group and
    * receiving from the first rank in that group,
@@ -217,15 +217,17 @@ get_intercomm_dist_dir_global_interval_size(
    * sizes, i.e. use bcast from a very small to a very large group
    * and few sends from a large to a small group */
   int comm_rank;
-  xt_mpi_call(MPI_Comm_rank(inter_comm, &comm_rank), inter_comm);
+  xt_mpi_call(MPI_Comm_rank(comms->inter_comm, &comm_rank),
+              comms->inter_comm);
   if (comm_rank == 0) {
-    int tag = tag_offset_inter + xt_mpi_tag_xmap_dist_dir_src_send;
+    int tag = comms->tag_offset_inter + xt_mpi_tag_xmap_dist_dir_src_send;
     xt_mpi_call(MPI_Sendrecv(global_sums[0], 2, MPI_UNSIGNED_LONG_LONG, 0, tag,
                              global_sums[1], 2, MPI_UNSIGNED_LONG_LONG, 0, tag,
-                             inter_comm, MPI_STATUS_IGNORE), inter_comm);
+                             comms->inter_comm, MPI_STATUS_IGNORE),
+                comms->inter_comm);
   }
   xt_mpi_call(MPI_Bcast(global_sums[1], 2, MPI_UNSIGNED_LONG_LONG,
-                        0, intra_comm), intra_comm);
+                        0, comms->intra_comm), comms->intra_comm);
   *stripify = (global_sums[0][1] > 0 || global_sums[1][1] > 0);
   interval_size[0]
     = (Xt_int)(((global_sums[0][0] + (unsigned)comm_size - 1)
@@ -289,35 +291,34 @@ xt_xmdd_bucket_gen_cycl_stripe_init(
   void *gen_state_,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
-  Xt_config config)
+  Xt_config config,
+  struct Xt_xmdd_bucket_gen_comms *comms,
+  void *init_params)
 {
-  (void)tag_offset_intra;
+  (void)init_params;
   struct Xt_xmdd_bucket_gen_cycl_stripe_state *gen_state = gen_state_;
   bool stripify = false;
   int comm_size;
-  xt_mpi_call(MPI_Comm_size(intra_comm, &comm_size), intra_comm);
-  if (inter_comm == MPI_COMM_NULL) {
+  xt_mpi_call(MPI_Comm_size(comms->intra_comm, &comm_size), comms->intra_comm);
+  if (comms->inter_comm == MPI_COMM_NULL) {
     /* global_interval is a multiple of comm_size and has a size of at least
        comm_size */
     Xt_int global_interval_size
       = get_intracomm_dist_dir_global_interval_size(
         src_idxlist, dst_idxlist,
-        &stripify, intra_comm, comm_size, config);
+        &stripify, comms->intra_comm, comm_size, config);
     gen_state->dst
       = get_intracomm_bucket_params(global_interval_size,
                                     src_idxlist, dst_idxlist, comm_size);
   } else {
     Xt_int global_interval_size[2];
     int remote_size;
-    xt_mpi_call(MPI_Comm_remote_size(inter_comm, &remote_size), inter_comm);
+    xt_mpi_call(MPI_Comm_remote_size(comms->inter_comm, &remote_size),
+                comms->inter_comm);
     get_intercomm_dist_dir_global_interval_size(
       src_idxlist, dst_idxlist,
       &stripify, global_interval_size,
-      intra_comm, inter_comm,
-      comm_size, remote_size,
-      tag_offset_inter, config);
+      comms, comm_size, remote_size, config);
     gen_state->src
       = get_intercomm_bucket_params(src_idxlist, global_interval_size[0],
                                     comm_size);

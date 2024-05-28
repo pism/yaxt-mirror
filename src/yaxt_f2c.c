@@ -633,35 +633,38 @@ f2c_xmdd_bucket_gen_init_state(
   void *gen_state,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
   Xt_config config,
+  const struct Xt_xmdd_bucket_gen_comms *comms,
+  void *init_params,
   const struct Xt_xmdd_bucket_gen_ *bgd)
 {
-  MPI_Fint intra_comm_f = MPI_Comm_c2f(intra_comm),
-    inter_comm_f = MPI_Comm_c2f(inter_comm);
-  return bgd->init_f(gen_state, src_idxlist, dst_idxlist,
-                     intra_comm_f, tag_offset_intra,
-                     inter_comm_f, tag_offset_inter, config);
+  struct Xt_xmdd_bucket_gen_comms_f comms_f = {
+    .intra_comm = MPI_Comm_c2f(comms->intra_comm),
+    .inter_comm = MPI_Comm_c2f(comms->inter_comm),
+    .tag_offset_intra = comms->tag_offset_intra,
+    .tag_offset_inter = comms->tag_offset_inter
+  };
+  return bgd->init_f(gen_state, src_idxlist, dst_idxlist, config,
+                     &comms_f, init_params);
 }
 
 
 static void
 xt_xmdd_bucket_gen_define_interface_f2c(
-  Xt_xmdd_bucket_gen gen,
+  Xt_xmdd_bucket_gen *gen,
   Xt_xmdd_bucket_gen_init_state_f init,
   Xt_xmdd_bucket_gen_destroy_state destroy,
   Xt_xmdd_bucket_gen_get_intersect_max_num get_intersect_max_num,
   Xt_xmdd_bucket_gen_next next,
-  long gen_state_size)
+  long gen_state_size,
+  void *init_params)
 {
-  gen->init_f = init;
-  gen->init = f2c_xmdd_bucket_gen_init_state;
-  gen->destroy = destroy;
-  gen->get_intersect_max_num = get_intersect_max_num;
-  gen->next = next;
   assert(gen_state_size >= 0);
-  gen->gen_state_size = (size_t)gen_state_size;
+  xt_xmdd_bucket_gen_define_interface(
+    *gen, (Xt_xmdd_bucket_gen_init_state)(void (*)(void))
+    f2c_xmdd_bucket_gen_init_state, destroy, get_intersect_max_num, next,
+    (size_t)gen_state_size, init_params);
+  (*gen)->init_f = init;
 }
 
 #undef ROUTINE_2
@@ -673,10 +676,10 @@ xt_xmdd_bucket_gen_define_interface_f2c(
 #undef ROUTINE_5
 #define ROUTINE_5 (Xt_xmdd_bucket_gen_next)(void (*)(void))
 
-FCALLSCSUB6(xt_xmdd_bucket_gen_define_interface_f2c,
+FCALLSCSUB7(xt_xmdd_bucket_gen_define_interface_f2c,
             XT_XMDD_BUCKET_GEN_DEFINE_INTERFACE_F,
             xt_xmdd_bucket_gen_define_interface_f,
-            PVOID, ROUTINE, ROUTINE, ROUTINE, ROUTINE, LONG)
+            PVOID, ROUTINE, ROUTINE, ROUTINE, ROUTINE, LONG, PVOID)
 
 void
 xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {

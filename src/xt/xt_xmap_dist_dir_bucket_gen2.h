@@ -66,13 +66,18 @@ enum Xt_dist_dir_bucket_gen_types {
   Xt_dist_dir_bucket_gen_type_sendrecv = 3,
 };
 
+struct Xt_xmdd_bucket_gen_comms {
+  MPI_Comm intra_comm, inter_comm;
+  int tag_offset_intra, tag_offset_inter;
+};
+
 typedef int (*Xt_xmdd_bucket_gen_init_state)(
   void *gen_state,
   Xt_idxlist src_idxlist,
   Xt_idxlist dst_idxlist,
-  MPI_Comm intra_comm, int tag_offset_intra,
-  MPI_Comm inter_comm, int tag_offset_inter,
-  Xt_config config);
+  Xt_config config,
+  const struct Xt_xmdd_bucket_gen_comms *comms,
+  void *init_params);
 
 typedef void (*Xt_xmdd_bucket_gen_destroy_state)(void *gen_state);
 
@@ -111,7 +116,8 @@ xt_xmdd_bucket_gen_define_interface(
   Xt_xmdd_bucket_gen_destroy_state destroy,
   Xt_xmdd_bucket_gen_get_intersect_max_num get_intersect_max_num,
   Xt_xmdd_bucket_gen_next next,
-  size_t gen_state_size);
+  size_t gen_state_size,
+  void *init_params);
 
 #endif // XT_XMAP_DIST_DIR_BUCKET_GEN_H
 

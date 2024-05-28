@@ -123,8 +123,12 @@ compute_and_pack_bucket_intersections(Xt_idxlist src_idxlist,
   void *bgd[bgd_size];
   int stripify =
     config->xmdd_bucket_gen->init(
-      &bgd, src_idxlist, dst_idxlist, comm, tag_offset,
-      MPI_COMM_NULL, INT_MIN, config, config->xmdd_bucket_gen);
+      &bgd, src_idxlist, dst_idxlist, config,
+      &(struct Xt_xmdd_bucket_gen_comms){
+        .intra_comm = comm, .tag_offset_intra = tag_offset,
+        .inter_comm = MPI_COMM_NULL, .tag_offset_inter = INT_MIN },
+      config->xmdd_bucket_gen->init_params,
+      config->xmdd_bucket_gen);
 
   int nosort_forced = XT_CONFIG_GET_FORCE_NOSORT(config);
   Xt_idxlist src_idxlist_sorted

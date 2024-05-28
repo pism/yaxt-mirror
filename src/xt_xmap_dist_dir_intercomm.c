@@ -287,12 +287,12 @@ struct dd_result {
 #endif
 
 static struct dd_result
-generate_distributed_directories(Xt_idxlist src_idxlist,
-                                 Xt_idxlist dst_idxlist,
-                                 int tag_offset_inter, int tag_offset_intra,
-                                 MPI_Comm inter_comm, MPI_Comm intra_comm,
-                                 int remote_size, int comm_size,
-                                 Xt_config config) {
+generate_distributed_directories(
+  Xt_idxlist src_idxlist,
+  Xt_idxlist dst_idxlist,
+  const struct Xt_xmdd_bucket_gen_comms *comms,
+  int remote_size, int comm_size,
+  Xt_config config) {
 
   size_t bgd_size = config->xmdd_bucket_gen->gen_state_size;
   bgd_size = (bgd_size + sizeof (void *) - 1)/sizeof (void *) * sizeof (void *);
@@ -300,8 +300,8 @@ generate_distributed_directories(Xt_idxlist src_idxlist,
   struct dd_result results;
   results.stripify
     = config->xmdd_bucket_gen->init(
-      &bgd, src_idxlist, dst_idxlist, intra_comm, tag_offset_intra,
-      inter_comm, tag_offset_inter, config, config->xmdd_bucket_gen);
+      &bgd, src_idxlist, dst_idxlist, config, comms, NULL,
+      config->xmdd_bucket_gen);
   int (*send_size_local)[SEND_SIZE_ASIZE]
     = xmalloc(((size_t)comm_size + (size_t)remote_size)
               * 2 * sizeof(*send_size_local)),
@@ -313,12 +313,12 @@ generate_distributed_directories(Xt_idxlist src_idxlist,
     = create_intersections(bgd, Xt_dist_dir_bucket_gen_type_send,
                            tx_stat_local, recv_size_local,
                            send_size_local, src_idxlist,
-                           intra_comm, comm_size, config);
+                           comms->intra_comm, comm_size, config);
   void *send_buffer_remote
     = create_intersections(bgd, Xt_dist_dir_bucket_gen_type_recv,
                            tx_stat_remote, recv_size_remote,
                            send_size_remote, dst_idxlist,
-                           inter_comm, remote_size, config);
+                           comms->inter_comm, remote_size, config);
   XT_CONFIG_BUCKET_DESTROY(config, &bgd);
   size_t num_req = tx_stat_local[0].num_msg + tx_stat_remote[0].num_msg
     + tx_stat_local[1].num_msg + tx_stat_remote[1].num_msg;
@@ -328,40 +328,42 @@ generate_distributed_directories(Xt_idxlist src_idxlist,
   void *recv_buffer_local = dir_init_requests + num_req,
     *recv_buffer_remote = ((unsigned char *)recv_buffer_local
                            + tx_stat_local[0].bytes);
-  int tag_intra = tag_offset_intra + xt_mpi_tag_xmap_dist_dir_src_send;
+  int tag_intra = comms->tag_offset_intra
+    + xt_mpi_tag_xmap_dist_dir_src_send;
   size_t req_ofs = tx_stat_local[0].num_msg;
   irecv_intersections(tx_stat_local[0].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])recv_size_local,
                       recv_buffer_local, dir_init_requests,
-                      tag_intra, intra_comm);
-  int tag_inter = tag_offset_inter + xt_mpi_tag_xmap_dist_dir_src_send;
+                      tag_intra, comms->intra_comm);
+  int tag_inter = comms->tag_offset_inter
+    + xt_mpi_tag_xmap_dist_dir_src_send;
   irecv_intersections(tx_stat_remote[0].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])recv_size_remote,
                       recv_buffer_remote, dir_init_requests + req_ofs,
-                      tag_inter, inter_comm);
+                      tag_inter, comms->inter_comm);
   req_ofs += tx_stat_remote[0].num_msg;
   isend_intersections(tx_stat_local[1].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])send_size_local,
                       send_buffer_local, dir_init_requests + req_ofs,
-                      tag_intra, intra_comm);
+                      tag_intra, comms->intra_comm);
   req_ofs += tx_stat_local[1].num_msg;
   isend_intersections(tx_stat_remote[1].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])send_size_remote,
                       send_buffer_remote, dir_init_requests + req_ofs,
-                      tag_inter, inter_comm);
+                      tag_inter, comms->inter_comm);
   // wait for data transfers to complete
   xt_mpi_call(MPI_Waitall((int)num_req, dir_init_requests,
-                          MPI_STATUSES_IGNORE), inter_comm);
+                          MPI_STATUSES_IGNORE), comms->inter_comm);
   free(send_buffer_local);
   free(send_buffer_remote);
   results.dist_dirs.src
     = unpack_dist_dir(tx_stat_local[0],
                     (const int (*)[SEND_SIZE_ASIZE])recv_size_local,
-                    recv_buffer_local, intra_comm);
+                    recv_buffer_local, comms->intra_comm);
   results.dist_dirs.dst
     = unpack_dist_dir(tx_stat_remote[0],
                       (const int (*)[SEND_SIZE_ASIZE])recv_size_remote,
-                      recv_buffer_remote, inter_comm);
+                      recv_buffer_remote, comms->inter_comm);
   free(send_size_local);
   free(dir_init_requests);
   return results;
@@ -464,18 +466,17 @@ unpack_dist_dir_results(struct Xt_xmdd_txstat tx_stat,
 static struct dd_result
 exchange_idxlists(Xt_idxlist src_idxlist,
                   Xt_idxlist dst_idxlist,
-                  int tag_offset_inter, int tag_offset_intra,
-                  MPI_Comm inter_comm, MPI_Comm intra_comm,
+                  const struct Xt_xmdd_bucket_gen_comms *comms,
                   Xt_config config) {
 
   int comm_size, remote_size;
-  xt_mpi_call(MPI_Comm_size(inter_comm, &comm_size), inter_comm);
-  xt_mpi_call(MPI_Comm_remote_size(inter_comm, &remote_size), inter_comm);
+  xt_mpi_call(MPI_Comm_size(comms->inter_comm, &comm_size),
+              comms->inter_comm);
+  xt_mpi_call(MPI_Comm_remote_size(comms->inter_comm, &remote_size),
+              comms->inter_comm);
 
   struct dd_result bucket_isects
-    = generate_distributed_directories(src_idxlist, dst_idxlist,
-                                       tag_offset_inter, tag_offset_intra,
-                                       inter_comm, intra_comm,
+    = generate_distributed_directories(src_idxlist, dst_idxlist, comms,
                                        remote_size, comm_size,
                                        config);
 
@@ -499,19 +500,21 @@ exchange_idxlists(Xt_idxlist src_idxlist,
   struct mmsg_buf dd_local, dd_remote;
   dd_local
     = pack_dist_dirs(num_intersections, src_dst_intersections, send_size_local,
-                     xt_xmdd_direction_src, false, intra_comm, comm_size);
+                     xt_xmdd_direction_src, false, comms->intra_comm,
+                     comm_size);
   dd_remote
     = pack_dist_dirs(num_intersections, src_dst_intersections, send_size_remote,
-                     xt_xmdd_direction_dst, true, inter_comm, remote_size);
+                     xt_xmdd_direction_dst, true, comms->inter_comm,
+                     remote_size);
   free(src_dst_intersections);
 
   // get the data size the local process will receive from other processes
   xt_mpi_call(MPI_Alltoall((int *)send_size_local, SEND_SIZE_ASIZE, MPI_INT,
                            (int *)recv_size_local, SEND_SIZE_ASIZE, MPI_INT,
-                           intra_comm), intra_comm);
+                           comms->intra_comm), comms->intra_comm);
   xt_mpi_call(MPI_Alltoall((int *)send_size_remote, SEND_SIZE_ASIZE, MPI_INT,
                            (int *)recv_size_remote, SEND_SIZE_ASIZE, MPI_INT,
-                           inter_comm), inter_comm);
+                           comms->inter_comm), comms->inter_comm);
 
   struct Xt_xmdd_txstat tx_stat_local[2], tx_stat_remote[2];
   int *isect_counts_recv_local
@@ -535,26 +538,27 @@ exchange_idxlists(Xt_idxlist src_idxlist,
   void *recv_buf_local = requests + num_requests,
     *recv_buf_remote = (unsigned char *)recv_buf_local + tx_stat_local[0].bytes;
   size_t req_ofs = tx_stat_local[0].num_msg;
-  int tag_intra = tag_offset_intra + xt_mpi_tag_xmap_dist_dir_src_send;
+  int tag_intra = comms->tag_offset_intra + xt_mpi_tag_xmap_dist_dir_src_send;
   irecv_intersections(tx_stat_local[0].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])recv_size_local,
-                      recv_buf_local, requests, tag_intra, intra_comm);
-  int tag_inter = tag_offset_inter + xt_mpi_tag_xmap_dist_dir_src_send;
+                      recv_buf_local, requests, tag_intra, comms->intra_comm);
+  int tag_inter = comms->tag_offset_inter + xt_mpi_tag_xmap_dist_dir_src_send;
   irecv_intersections(tx_stat_remote[0].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])recv_size_remote,
-                      recv_buf_remote, requests+req_ofs, tag_inter, inter_comm);
+                      recv_buf_remote, requests+req_ofs, tag_inter,
+                      comms->inter_comm);
   req_ofs += tx_stat_remote[0].num_msg;
   isend_intersections(tx_stat_local[1].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])send_size_local,
                       dd_local.buffer, requests+req_ofs, tag_intra,
-                      intra_comm);
+                      comms->intra_comm);
   req_ofs += tx_stat_local[1].num_msg;
   isend_intersections(tx_stat_remote[1].num_msg,
                       (const int (*)[SEND_SIZE_ASIZE])send_size_remote,
                       dd_remote.buffer, requests+req_ofs, tag_inter,
-                      inter_comm);
+                      comms->inter_comm);
   xt_mpi_call(MPI_Waitall((int)num_requests, requests, MPI_STATUSES_IGNORE),
-              inter_comm);
+              comms->inter_comm);
   free(dd_local.buffer);
   free(dd_remote.buffer);
   free(send_size_local);
@@ -563,10 +567,10 @@ exchange_idxlists(Xt_idxlist src_idxlist,
   results.stripify = bucket_isects.stripify;
   results.dist_dirs.src
     = unpack_dist_dir_results(tx_stat_local[0], recv_buf_local,
-                              isect_counts_recv_local, intra_comm);
+                              isect_counts_recv_local, comms->intra_comm);
   results.dist_dirs.dst
     = unpack_dist_dir_results(tx_stat_remote[0], recv_buf_remote,
-                              isect_counts_recv_remote, inter_comm);
+                              isect_counts_recv_remote, comms->inter_comm);
   free(requests);
   free(isect_counts_recv_local);
   return results;
@@ -591,10 +595,15 @@ xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
   MPI_Comm inter_comm = xt_mpi_comm_smart_dup(inter_comm_, &tag_offset_inter),
     intra_comm = xt_mpi_comm_smart_dup(intra_comm_, &tag_offset_intra);
 
+  struct Xt_xmdd_bucket_gen_comms comms = {
+    .intra_comm = intra_comm,
+    .inter_comm = inter_comm,
+    .tag_offset_intra = tag_offset_intra,
+    .tag_offset_inter = tag_offset_inter
+  };
   struct dd_result results
     = exchange_idxlists(src_idxlist, dst_idxlist,
-                        tag_offset_inter, tag_offset_intra,
-                        inter_comm, intra_comm, config);
+                        &comms, config);
 
   int stripify = XT_CONFIG_GET_XMAP_STRIPING(config);
   if (stripify == 2)

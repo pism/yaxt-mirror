@@ -74,7 +74,8 @@ xt_xmdd_bucket_gen_define_interface(
   Xt_xmdd_bucket_gen_destroy_state destroy,
   Xt_xmdd_bucket_gen_get_intersect_max_num get_intersect_max_num,
   Xt_xmdd_bucket_gen_next next,
-  size_t gen_state_size)
+  size_t gen_state_size,
+  void *init_params)
 {
   gen->init_f = (Xt_xmdd_bucket_gen_init_state_f)0;
   gen->init = (Xt_xmdd_bucket_gen_init_state_internal)(void (*)(void))init;
@@ -82,6 +83,7 @@ xt_xmdd_bucket_gen_define_interface(
   gen->get_intersect_max_num = get_intersect_max_num;
   gen->next = next;
   gen->gen_state_size = gen_state_size;
+  gen->init_params = init_params;
 }
 
 

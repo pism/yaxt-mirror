@@ -53,7 +53,8 @@ MODULE perf_xmap_create_config
        xt_is_null, xt_xmdd_bucket_gen_new, &
        xt_config_set_xmdd_bucket_gen, xt_config_set_sort_algorithm_by_id, &
        xt_config_set_mem_saving, xt_config_set_xmap_stripe_align, &
-       xt_xmdd_bucket_gen_define_interface
+       xt_xmdd_bucket_gen_define_interface, &
+       xt_xmdd_bucket_gen_comms
   ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_idxlist_abstract, ONLY: xt_is_null
@@ -94,7 +95,7 @@ MODULE perf_xmap_create_config
   PUBLIC :: generate_3d_list
 
   TYPE, BIND(c) :: custom_bucket_gen_state
-    INTEGER(xt_mpi_fint_kind) :: intra_comm, inter_comm
+    TYPE(xt_xmdd_bucket_gen_comms) :: comms
     INTEGER(xt_mpi_fint_kind) :: prev_rank_generated, &
          last_rank_generated, intra_comm_size
     TYPE(Xt_idxlist) :: prev_list
@@ -376,39 +377,15 @@ CONTAINS
          &              / INT(num_columns, c_long_long))
   END FUNCTION rank_of_column
 
-  SUBROUTINE set_custom_bucket_gen(config)
-    TYPE(xt_config), INTENT(inout) :: config
-    TYPE(custom_bucket_gen_state) :: dummy(2)
-    INTEGER(mpi_address_kind) :: addr(2)
-    INTEGER(c_size_t) :: sizeof_cbgs
-    INTEGER :: ierror, i
-    DO i = 1, 2
-      CALL mpi_get_address(dummy(i), addr(i), ierror)
-    END DO
-    sizeof_cbgs = INT(addr(2) - addr(1), c_size_t)
-    run_config%bg = xt_xmdd_bucket_gen_new()
-    CALL xt_xmdd_bucket_gen_define_interface( &
-         run_config%bg, &
-         custom_bucket_gen_init_state, &
-         custom_bucket_gen_destroy_state, &
-         custom_bucket_gen_get_intersect_max_num, &
-         custom_bucket_gen_next, &
-         sizeof_cbgs)
-    CALL xt_config_set_xmdd_bucket_gen(config, run_config%bg)
-  END SUBROUTINE set_custom_bucket_gen
-
-
   FUNCTION custom_bucket_gen_init_state(gen_state_, src_idxlist, &
-       dst_idxlist, intra_comm, tag_offset_intra, &
-       inter_comm, tag_offset_inter, config) BIND(c) RESULT(stripify)
+       dst_idxlist, config, comms, init_params) BIND(c) RESULT(stripify)
 
     INTEGER(c_int) :: stripify
     TYPE(c_ptr), VALUE :: gen_state_
     TYPE(xt_idxlist), VALUE, INTENT(in) :: src_idxlist, dst_idxlist
-    INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: intra_comm, inter_comm
-    INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: tag_offset_intra, &
-         tag_offset_inter
     TYPE(xt_config), VALUE, INTENT(in) :: config
+    TYPE(xt_xmdd_bucket_gen_comms), INTENT(in) :: comms
+    TYPE(c_ptr), VALUE, INTENT(in) :: init_params
     TYPE(xt_idxlist) :: init_prev_list
 
     TYPE(custom_bucket_gen_state), POINTER :: gen_state
@@ -418,12 +395,10 @@ CONTAINS
     INTEGER(xi) :: first_column, last_column, start_src, end_src, &
          start_dst, end_dst
 
-    XT_UNUSED(tag_offset_intra)
-    XT_UNUSED(tag_offset_inter)
+    XT_UNUSED(init_params)
     CALL C_F_POINTER(gen_state_, gen_state)
-    gen_state%intra_comm = intra_comm
-    gen_state%inter_comm = inter_comm
-    CALL MPI_Comm_size(intra_comm, gen_state%intra_comm_size, ierror)
+    gen_state%comms = comms
+    CALL MPI_Comm_size(comms%intra_comm, gen_state%intra_comm_size, ierror)
     gen_state%prev_list = init_prev_list
     IF (run_config%index_generation_method == INDEX_GEN_IDXSTRIPES) THEN
       p = .TRUE.
@@ -437,7 +412,7 @@ CONTAINS
       p = .FALSE.
     END IF
     CALL mpi_allreduce(mpi_in_place, p, 1, mpi_logical, MPI_LOR, &
-         intra_comm, ierror)
+         comms%intra_comm, ierror)
     stripify = MERGE(1_c_int, 0_c_int, p)
     ! establish local ranges
     num_indices_src = xt_idxlist_get_num_indices(src_idxlist)
@@ -512,6 +487,28 @@ CONTAINS
     END IF
     gen_state%prev_list = bucket%list
   END FUNCTION custom_bucket_gen_next
+
+  SUBROUTINE set_custom_bucket_gen(config)
+    TYPE(xt_config), INTENT(inout) :: config
+    TYPE(custom_bucket_gen_state) :: dummy(2)
+    INTEGER(mpi_address_kind) :: addr(2)
+    INTEGER(c_size_t) :: sizeof_cbgs
+    INTEGER :: ierror, i
+    DO i = 1, 2
+      CALL mpi_get_address(dummy(i), addr(i), ierror)
+    END DO
+    sizeof_cbgs = INT(addr(2) - addr(1), c_size_t)
+    run_config%bg = xt_xmdd_bucket_gen_new()
+    CALL xt_xmdd_bucket_gen_define_interface( &
+         run_config%bg, &
+         custom_bucket_gen_init_state, &
+         custom_bucket_gen_destroy_state, &
+         custom_bucket_gen_get_intersect_max_num, &
+         custom_bucket_gen_next, &
+         sizeof_cbgs, c_null_ptr)
+    CALL xt_config_set_xmdd_bucket_gen(config, run_config%bg)
+  END SUBROUTINE set_custom_bucket_gen
+
 
 END MODULE perf_xmap_create_config
 
