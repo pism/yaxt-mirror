@@ -571,36 +571,38 @@ dont_set_mt_mode:;
     xt_config_set_sort_algorithm_by_id(&xt_default_config, (int)v);
   }
 dont_set_sort_algorithm:;
-  const char *evn = "XT_CONFIG_DEFAULT_XMAP_STRIPE_ALIGN";
-  config_env = getenv(evn);
-  if (!config_env)
-    config_env = getenv((evn = "XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT"));
-  if (config_env) {
-    char *endptr;
-    long v;
-    errno = 0;
-    if (!strcmp(config_env, "auto")) {
-      v = 2;
-      endptr = (char *)config_env + 4;
-    } else if (!strcmp(config_env, "one_by_one")) {
-      v = 0;
-      endptr = (char *)config_env + 10;
-    } else if (!strcmp(config_env, "always")) {
-      v = 1;
-      endptr = (char *)config_env + 6;
-    } else
-      v = strtol(config_env, &endptr, 0);
-    if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
-        || (errno != 0 && v == 0)) {
-      fprintf(stderr, "warning: failed to parse value of "
-              "environment variable %s: %s", evn, strerror(errno));
-    } else if (endptr == config_env) {
-      fprintf(stderr, "warning: malformed value of environment variable "
-              "%s, no digits or symbolic constant found\n", evn);
-    } else if (v < 0 || v > 2) {
-      fprintf(stderr, "value of environment variable %s (%ld) out of range [0,2]\n", evn, v);
-    } else
-      xt_config_set_xmap_stripe_align(&xt_default_config, (int)v);
+  {
+    const char *evn = "XT_CONFIG_DEFAULT_XMAP_STRIPE_ALIGN";
+    config_env = getenv(evn);
+    if (!config_env)
+      config_env = getenv((evn = "XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT"));
+    if (config_env) {
+      char *endptr;
+      long v;
+      errno = 0;
+      if (!strcmp(config_env, "auto")) {
+        v = 2;
+        endptr = (char *)config_env + 4;
+      } else if (!strcmp(config_env, "one_by_one")) {
+        v = 0;
+        endptr = (char *)config_env + 10;
+      } else if (!strcmp(config_env, "always")) {
+        v = 1;
+        endptr = (char *)config_env + 6;
+      } else
+        v = strtol(config_env, &endptr, 0);
+      if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+          || (errno != 0 && v == 0)) {
+        fprintf(stderr, "warning: failed to parse value of "
+                "environment variable %s: %s", evn, strerror(errno));
+      } else if (endptr == config_env) {
+        fprintf(stderr, "warning: malformed value of environment variable "
+                "%s, no digits or symbolic constant found\n", evn);
+      } else if (v < 0 || v > 2) {
+        fprintf(stderr, "value of environment variable %s (%ld) out of range [0,2]\n", evn, v);
+      } else
+        xt_config_set_xmap_stripe_align(&xt_default_config, (int)v);
+    }
   }
 }
 
