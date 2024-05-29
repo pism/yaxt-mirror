@@ -549,12 +549,12 @@ dont_set_mt_mode:;
         fprintf(stderr, "numeric value of XT_CONFIG_DEFAULT_SORT_ALGORITHM"
                 " environment variable (%ld) out of range [0,%d]\n",
                 v, XT_MERGESORT);
-        goto dont_set_mt_mode;
+        goto dont_set_sort_algorithm;
       } else if (*endptr) {
         fprintf(stderr, "trailing text '%s' found after numeric value (%*s) in "
                 "XT_CONFIG_DEFAULT_SORT_ALGORITHM environment variable\n",
                 endptr, (int)(endptr-config_env), config_env);
-        goto dont_set_mt_mode;
+        goto dont_set_sort_algorithm;
       }
     } else {
       if (!strcasecmp(config_env, "QUICKSORT")) {
