@@ -1,7 +1,7 @@
-dnl acx_mpi_send_args.m4 --- check whether MPI_Send-like functions take
-dnl                          const void * instead of void * arguments
+dnl acx_mpi_const_args.m4 --- check whether some MPI functions take
+dnl                           const-qualified arguments
 dnl
-dnl Copyright  (C)  2014  Thomas Jahns <jahns@dkrz.de>
+dnl Copyright  (C)  2023  Thomas Jahns <jahns@dkrz.de>
 dnl
 dnl Keywords: configure configure.ac autoconf MPI mpirun mpiexec
 dnl Author: Thomas Jahns <jahns@dkrz.de>
