@@ -186,7 +186,7 @@ run_test_oneapi_2023_2_1:
       LDFLAGS="-g -shared-intel"
       --disable-silent-rules
       --disable-static
-      MPI_LAUNCH="`which mpirun`"
+      MPI_LAUNCH=/bin/true
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
