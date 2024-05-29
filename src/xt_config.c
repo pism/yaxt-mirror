@@ -254,6 +254,10 @@ void xt_config_set_sort_algorithm_by_id(Xt_config config, int algo)
   Xt_abort(Xt_default_comm, buf, filename, __LINE__);
 }
 
+enum {
+  XT_MAX_MEM_SAVING = 1,
+};
+
 void
 xt_config_set_mem_saving(Xt_config config, int memconserve)
 {
@@ -602,6 +606,37 @@ dont_set_sort_algorithm:;
         fprintf(stderr, "value of environment variable %s (%ld) out of range [0,2]\n", evn, v);
       } else
         xt_config_set_xmap_stripe_align(&xt_default_config, (int)v);
+    }
+  }
+
+  {
+    static const char evn[] = "XT_CONFIG_DEFAULT_MEM_SAVING";
+    config_env = getenv(evn);
+    if (config_env) {
+      char *endptr;
+      long v;
+      if (!strcasecmp(config_env, "FORCE_NOSORT")) {
+        v = 1;
+        endptr = (char *)config_env + 12;
+      } else
+        v = strtol(config_env, &endptr, 0);
+      if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+          || (errno != 0 && v == 0)) {
+        perror("failed to parse value of "
+               "XT_CONFIG_DEFAULT_MEM_SAVING environment variable");
+      } else if (endptr == config_env) {
+        fprintf(stderr, "warning: malformed value of environment variable "
+                "%s, no digits or symbolic constant found\n", evn);
+      } else if (v < 0 || v > XT_MAX_MEM_SAVING) {
+        fprintf(stderr, "numeric value of XT_CONFIG_DEFAULT_MEM_SAVING"
+                " environment variable (%ld) out of range [0,%d]\n",
+                v, XT_MAX_MEM_SAVING);
+      } else if (*endptr) {
+        fprintf(stderr, "trailing text '%s' found after value (%*s) in "
+                "%s environment variable\n",
+                endptr, (int)(endptr-config_env), evn, config_env);
+      } else
+        xt_config_set_mem_saving(&xt_default_config, (int)v);
     }
   }
 }
