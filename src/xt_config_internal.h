@@ -134,6 +134,10 @@ xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm);
   do { (config)->flags |= (uint32_t)xt_force_nosort; } while (0)
 #define XT_CONFIG_UNSET_FORCE_NOSORT(config) \
   do { (config)->flags &= ~(uint32_t)xt_force_nosort; } while (0)
+#define XT_CONFIG_SET_FORCE_NOSORT_BIT(config, val)                     \
+  do { (config)->flags = ((config)->flags &                             \
+                          ~(uint32_t)xt_force_nosort)                   \
+      | ((uint32_t)(val != 0) << xt_force_nosort_bit_ofs); } while (0)
 
 #define XT_CONFIG_GET_XMAP_STRIPING(config) \
   (((config)->flags >> xt_force_xmap_striping_bit_ofs) & 3U)

@@ -257,10 +257,7 @@ void xt_config_set_sort_algorithm_by_id(Xt_config config, int algo)
 void
 xt_config_set_mem_saving(Xt_config config, int memconserve)
 {
-  if (memconserve)
-    XT_CONFIG_SET_FORCE_NOSORT(config);
-  else
-    XT_CONFIG_UNSET_FORCE_NOSORT(config);
+  XT_CONFIG_SET_FORCE_NOSORT_BIT(config, memconserve);
 }
 
 int
