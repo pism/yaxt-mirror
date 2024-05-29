@@ -581,8 +581,8 @@ exchange_idxlists(Xt_idxlist src_idxlist,
 Xt_xmap
 xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
                                       Xt_idxlist dst_idxlist,
-                                      MPI_Comm inter_comm_,
-                                      MPI_Comm intra_comm_,
+                                      MPI_Comm inter_comm,
+                                      MPI_Comm intra_comm,
                                       Xt_config config)
 {
   INSTR_DEF(this_instr,"xt_xmap_dist_dir_intercomm_new")
@@ -591,16 +591,11 @@ xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
   // ensure that yaxt is initialized
   assert(xt_initialized());
 
-  int tag_offset_inter, tag_offset_intra;
-  MPI_Comm inter_comm = xt_mpi_comm_smart_dup(inter_comm_, &tag_offset_inter),
-    intra_comm = xt_mpi_comm_smart_dup(intra_comm_, &tag_offset_intra);
-
-  struct Xt_xmdd_bucket_gen_comms comms = {
-    .intra_comm = intra_comm,
-    .inter_comm = inter_comm,
-    .tag_offset_intra = tag_offset_intra,
-    .tag_offset_inter = tag_offset_inter
-  };
+  struct Xt_xmdd_bucket_gen_comms comms;
+  comms.intra_comm = xt_mpi_comm_smart_dup(intra_comm,
+                                           &comms.tag_offset_intra);
+  comms.inter_comm = xt_mpi_comm_smart_dup(inter_comm,
+                                           &comms.tag_offset_inter);
   struct dd_result results
     = exchange_idxlists(src_idxlist, dst_idxlist,
                         &comms, config);
@@ -621,10 +616,10 @@ xt_xmap_dist_dir_intercomm_custom_new(Xt_idxlist src_idxlist,
                results.dist_dirs.src->entries,
                results.dist_dirs.dst->num_entries,
                results.dist_dirs.dst->entries,
-               src_idxlist, dst_idxlist, inter_comm);
+               src_idxlist, dst_idxlist, comms.inter_comm);
 
-  xt_mpi_comm_smart_dedup(&inter_comm, tag_offset_inter);
-  xt_mpi_comm_smart_dedup(&intra_comm, tag_offset_intra);
+  xt_mpi_comm_smart_dedup(&comms.inter_comm, comms.tag_offset_inter);
+  xt_mpi_comm_smart_dedup(&comms.intra_comm, comms.tag_offset_intra);
 
   xt_xmdd_free_dist_dirs(results.dist_dirs);
   INSTR_STOP(this_instr);
