@@ -132,7 +132,8 @@ fi
 AM_CONDITIONAL([with_fortran], [test_with_fortran])
 
 AC_PROG_MKDIR_P
-AX_WITH_PERL([/bin/false], $PATH:$prefix/bin:/usr/bin:/usr/local/bin)
+AX_WITH_PROG([PERL],[perl],[/bin/false],
+  [$PATH:$prefix/bin:/usr/bin:/usr/local/bin])
 AX_PROG_PERL_VERSION([5.0005],[],
         AC_MSG_ERROR([Perl (version>=5.0005) is required]))
 AC_CHECK_PROGS([M4],[m4 gm4 gnum4],[false],,)
