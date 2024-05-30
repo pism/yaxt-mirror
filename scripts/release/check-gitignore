@@ -111,7 +111,7 @@ if { git diff-index --exit-code HEAD -- >&6 && \
   git ls-files --other --directory --exclude-standard >&6 && \
   logsize2=$(stat --format '%s' "${log}" 2>/dev/null \
              || stat -f '%z' "${log}") && \
-  [[ $logsize1 = $logsize2 ]] ; } ; then
+  [[ "$logsize1" = "$logsize2" ]] ; } ; then
   echo 'success: no unexpected files were created/modified.' >&2
   exit 0
 else
