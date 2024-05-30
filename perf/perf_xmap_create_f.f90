@@ -62,13 +62,6 @@ MODULE perf_xmap_create_config
   USE mpi
   IMPLICIT NONE
   PRIVATE
-  INTERFACE
-    SUBROUTINE posix_exit(status) BIND(c, name='exit')
-      IMPORT :: c_int
-      INTEGER(c_int), VALUE, INTENT(in) :: status
-    END SUBROUTINE posix_exit
-  END INTERFACE
-  PUBLIC :: posix_exit
   INTEGER, PARAMETER :: pi8 =  14
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
   INTEGER, PUBLIC, PARAMETER :: &
@@ -77,7 +70,6 @@ MODULE perf_xmap_create_config
        INDEX_GEN_IDXVEC = 2, &
        INDEX_GEN_IDXSTRIPES = 3, &
        INDEX_GEN_IDXSECTION = 4
-
   TYPE config_settings
     TYPE(xt_xmdd_bucket_gen) :: bg
     INTEGER(xi) :: num_columns
@@ -88,11 +80,16 @@ MODULE perf_xmap_create_config
          bucket_generation_sequence, &
          bucket_generation_method
     LOGICAL :: is_src
+#ifdef HAVE_FC_ALLOCATABLE_CHARACTER
+    CHARACTER(:), ALLOCATABLE :: fname_pat_src, fname_pat_dst
+#else
+    CHARACTER(len=1024) :: fname_pat_src, fname_pat_dst
+#endif
   END TYPE config_settings
   TYPE(config_settings), SAVE :: run_config
   PUBLIC :: run_config, config_settings
-  PUBLIC :: parse_options
   PUBLIC :: generate_3d_list
+  PUBLIC :: set_custom_bucket_gen
 
   TYPE, BIND(c) :: custom_bucket_gen_state
     TYPE(xt_xmdd_bucket_gen_comms) :: comms
@@ -102,185 +99,6 @@ MODULE perf_xmap_create_config
   END TYPE custom_bucket_gen_state
 
 CONTAINS
-  SUBROUTINE set_list_gen_methods(generation_sequence, generation_method, arg)
-    INTEGER, INTENT(inout) :: generation_sequence, generation_method
-    CHARACTER(len=*), INTENT(in) :: arg
-
-    INTEGER :: cur_parm_ofs, cur_parm_len, cur_parm_end
-
-    cur_parm_ofs = 1
-    ! split arg into comma-separated parts
-    DO WHILE (cur_parm_ofs <= LEN(arg))
-      cur_parm_len = SCAN(arg(cur_parm_ofs:), ",")
-      IF (cur_parm_len /= 0) THEN
-        cur_parm_end = cur_parm_ofs+cur_parm_len-2
-      ELSE
-        cur_parm_end = LEN(arg)
-        cur_parm_len = cur_parm_end - cur_parm_ofs + 1
-      END IF
-      SELECT CASE (arg(cur_parm_ofs:cur_parm_end))
-      CASE ("col-major")
-        generation_sequence = INDEX_GEN_COL_MAJOR
-      CASE ("row-major")
-        generation_sequence = INDEX_GEN_ROW_MAJOR
-      CASE ("idxvec")
-        generation_method = INDEX_GEN_IDXVEC
-      CASE ("idxstripes")
-        generation_method = INDEX_GEN_IDXSTRIPES
-      CASE ("idxsection")
-        generation_method = INDEX_GEN_IDXSECTION
-      CASE default
-        WRITE (0, '(2a)') "error: unknown index generation method name: ", &
-             arg(cur_parm_ofs:cur_parm_end)
-        CALL posix_exit(1)
-      END SELECT
-      cur_parm_ofs = cur_parm_end &
-           + MERGE(2, 1, cur_parm_end /= LEN(arg))
-    END DO
-  END SUBROUTINE set_list_gen_methods
-
-  SUBROUTINE parse_options(run_config, config)
-    TYPE(config_settings), INTENT(inout) :: run_config
-    TYPE(xt_config), INTENT(inout) :: config
-
-    INTERFACE
-      FUNCTION xt_sort_algo_id_by_name(name) BIND(c) RESULT(rc)
-        IMPORT :: c_int, c_char
-        INTEGER(c_int) :: rc
-        CHARACTER(kind=c_char, len=1), INTENT(in) :: name(*)
-      END FUNCTION xt_sort_algo_id_by_name
-    END INTERFACE
-    INTEGER :: i, j, num_cmd_args, arg_len, eq_pos, opt_name_end, &
-         algo, ialign, size_hamocc, ierror, optarg_len
-    LOGICAL :: next_is_optarg
-    INTEGER, PARAMETER :: max_opt_arg_len = 80
-    CHARACTER(max_opt_arg_len) :: opt, optarg
-    CHARACTER(kind=c_char, len=1) :: optarg_c(max_opt_arg_len+1)
-
-    num_cmd_args = COMMAND_ARGUMENT_COUNT()
-    i = 1
-    DO WHILE (i <= num_cmd_args)
-      CALL GET_COMMAND_ARGUMENT(i, opt, arg_len, status=ierror)
-      IF (ierror /= 0) THEN
-        WRITE (0, '(2(a, i0))') 'error handling command-line argument ', i, &
-             ', status=', ierror
-        CALL posix_exit(1)
-      END IF
-      IF (opt(1:2) == '--') THEN
-        eq_pos = INDEX(opt, '=')
-        IF (eq_pos /= 0) THEN
-          opt_name_end = eq_pos-1
-        ELSE
-          opt_name_end = arg_len
-        END IF
-        IF (eq_pos /= 0) THEN
-          optarg = opt(eq_pos+1:)
-          optarg_len = arg_len-eq_pos
-        ELSE IF (i < num_cmd_args) THEN
-          CALL GET_COMMAND_ARGUMENT(i+1, optarg, optarg_len)
-        END IF
-        SELECT CASE (opt(3:opt_name_end))
-        CASE ("index-generation")
-          CALL set_list_gen_methods(run_config%index_generation_sequence, &
-               run_config%index_generation_method, optarg(:optarg_len))
-          next_is_optarg = eq_pos == 0
-        CASE ("num-columns")
-          READ (optarg, *) run_config%num_columns
-          next_is_optarg = eq_pos == 0
-        CASE ("nlev", "num-levels")
-          READ (optarg, *) run_config%nlev
-          next_is_optarg = eq_pos == 0
-        CASE ("sort-algorithm")
-          DO j = 1, optarg_len
-            optarg_c(j) = optarg(j:j)
-          END DO
-          optarg_c(optarg_len+1) = c_null_char
-          algo = xt_sort_algo_id_by_name(optarg_c)
-          IF (algo == -1) THEN
-            WRITE (0, '(2a)') "error: invalid sort algorithm name: ", &
-                 optarg
-            CALL posix_exit(1)
-          END IF
-          CALL xt_config_set_sort_algorithm_by_id(config, algo)
-          next_is_optarg = eq_pos == 0
-        CASE ("enable-mem-saving", "disable-mem-saving")
-          IF (eq_pos /= 0) THEN
-            WRITE (0, '(4a)') &
-                 "error: invalid argument to ", TRIM(opt), ": ", &
-                 optarg
-            CALL posix_exit(1)
-          END IF
-          next_is_optarg = .FALSE.
-          CALL xt_config_set_mem_saving(config, MERGE(1, 0, arg_len == 19))
-        CASE ("enable-custom-bucket-generator")
-          CALL set_custom_bucket_gen(config)
-          IF (eq_pos /= 0) THEN
-            CALL set_list_gen_methods(run_config%bucket_generation_sequence, &
-                 run_config%bucket_generation_method, optarg)
-          END IF
-          next_is_optarg = .FALSE.
-        CASE ("stripe-alignment-mode", &
-             "disable-stripe-alignment", "enable-stripe-alignment")
-          IF (opt(3:8) == 'stripe') THEN
-            IF (eq_pos == 0 .AND. i == num_cmd_args) THEN
-              WRITE (0, '(2a)') "error: option --stripe-alignment-mode ", &
-                   "requires an argument"
-              CALL posix_exit(1)
-            END IF
-            READ (optarg, *) ialign
-            next_is_optarg = eq_pos == 0
-          ELSE
-            IF (eq_pos /= 0) THEN
-              WRITE (0, '(4a)') &
-                   "error: invalid argument to ", TRIM(opt),": ", &
-                   optarg
-              CALL posix_exit(1)
-            END IF
-            ialign = MERGE(1, 0, opt(3:4) == "en")
-            next_is_optarg = .FALSE.
-          END IF
-          CALL xt_config_set_xmap_stripe_align(config, ialign)
-        CASE DEFAULT
-          WRITE (0, '(2a)') 'unrecognized command line argument: ', &
-               optarg(1:arg_len)
-          CALL posix_exit(1)
-          STOP
-        END SELECT
-        i = i + MERGE(2, 1, next_is_optarg)
-      ELSE
-        EXIT
-      END IF
-    END DO
-    IF (i <= num_cmd_args) THEN
-      IF (i == num_cmd_args) THEN
-        READ(opt, *, iostat=ierror) size_hamocc
-        IF (ierror /= 0) THEN
-          WRITE (0, '(3a, i0)') 'error reading group size ', TRIM(opt), &
-               ', iostat=', ierror
-          CALL posix_exit(1)
-        END IF
-      ELSE
-        WRITE (0, '(a)') 'too many command line arguments:', opt(1:arg_len)
-        DO i = i+1, num_cmd_args
-          CALL GET_COMMAND_ARGUMENT(i, opt, arg_len)
-          WRITE (0, '(a)') opt(1:arg_len)
-        END DO
-      END IF
-    ELSE
-      size_hamocc = run_config%comm_world_size / 2
-    END IF
-    run_config%is_src = run_config%comm_world_rank &
-         < (run_config%comm_world_size - size_hamocc)
-    run_config%local_size = MERGE(run_config%comm_world_size - size_hamocc,  &
-         size_hamocc, run_config%is_src)
-    IF (run_config%bucket_generation_sequence == -1) &
-         run_config%bucket_generation_sequence &
-         = run_config%index_generation_sequence
-    IF (run_config%bucket_generation_method == -1) &
-         run_config%bucket_generation_method &
-         = run_config%index_generation_sequence
-
-  END SUBROUTINE parse_options
 
   FUNCTION start_of_rank(rank, num_ranks, num_columns) RESULT(start_idx)
     INTEGER, INTENT(in) :: rank, num_ranks
@@ -509,21 +327,312 @@ CONTAINS
     CALL xt_config_set_xmdd_bucket_gen(config, run_config%bg)
   END SUBROUTINE set_custom_bucket_gen
 
-
 END MODULE perf_xmap_create_config
 
+MODULE perf_xmap_create_init
+  USE yaxt
+  USE mpi
+  USE iso_c_binding, ONLY: c_int, c_char, c_null_char
+  USE perf_xmap_create_config, ONLY: config_settings, set_custom_bucket_gen, &
+       index_gen_col_major, index_gen_row_major, index_gen_idxvec, &
+       index_gen_idxstripes, index_gen_idxsection
+  IMPLICIT NONE
+  PRIVATE
+  INTERFACE
+    SUBROUTINE posix_exit(status) BIND(c, name='exit')
+      IMPORT :: c_int
+      INTEGER(c_int), VALUE, INTENT(in) :: status
+    END SUBROUTINE posix_exit
+  END INTERFACE
+  PUBLIC :: parse_options
+  PUBLIC :: read_idxlist
+CONTAINS
+  SUBROUTINE set_list_gen_methods(generation_sequence, generation_method, &
+       arg)
+    INTEGER, INTENT(inout) :: generation_sequence, generation_method
+    CHARACTER(len=*), INTENT(in) :: arg
+
+    INTEGER :: cur_parm_ofs, cur_parm_len, cur_parm_end
+
+    cur_parm_ofs = 1
+    ! split arg into comma-separated parts
+    DO WHILE (cur_parm_ofs <= LEN(arg))
+      cur_parm_len = SCAN(arg(cur_parm_ofs:), ",")
+      IF (cur_parm_len /= 0) THEN
+        cur_parm_end = cur_parm_ofs+cur_parm_len-2
+      ELSE
+        cur_parm_end = LEN(arg)
+        cur_parm_len = cur_parm_end - cur_parm_ofs + 1
+      END IF
+      SELECT CASE (arg(cur_parm_ofs:cur_parm_end))
+      CASE ("col-major")
+        generation_sequence = INDEX_GEN_COL_MAJOR
+      CASE ("row-major")
+        generation_sequence = INDEX_GEN_ROW_MAJOR
+      CASE ("idxvec")
+        generation_method = INDEX_GEN_IDXVEC
+      CASE ("idxstripes")
+        generation_method = INDEX_GEN_IDXSTRIPES
+      CASE ("idxsection")
+        generation_method = INDEX_GEN_IDXSECTION
+      CASE default
+        WRITE (0, '(2a)') "error: unknown index generation method name: ", &
+             arg(cur_parm_ofs:cur_parm_end)
+        CALL posix_exit(1)
+      END SELECT
+      cur_parm_ofs = cur_parm_end &
+           + MERGE(2, 1, cur_parm_end /= LEN(arg))
+    END DO
+  END SUBROUTINE set_list_gen_methods
+
+  SUBROUTINE parse_options(run_config, config)
+    TYPE(config_settings), INTENT(inout) :: run_config
+    TYPE(xt_config), INTENT(inout) :: config
+
+    INTERFACE
+      FUNCTION xt_sort_algo_id_by_name(name) BIND(c) RESULT(rc)
+        IMPORT :: c_int, c_char
+        INTEGER(c_int) :: rc
+        CHARACTER(kind=c_char, len=1), INTENT(in) :: name(*)
+      END FUNCTION xt_sort_algo_id_by_name
+    END INTERFACE
+    INTEGER :: i, j, num_cmd_args, arg_len, eq_pos, opt_name_end, &
+         algo, ialign, size_hamocc, ierror, optarg_len
+    LOGICAL :: next_is_optarg, contradiction
+    INTEGER, PARAMETER :: max_opt_arg_len = 256
+    CHARACTER(max_opt_arg_len) :: opt, optarg
+    CHARACTER(kind=c_char, len=1) :: optarg_c(max_opt_arg_len+1)
+
+    num_cmd_args = COMMAND_ARGUMENT_COUNT()
+    i = 1
+    DO WHILE (i <= num_cmd_args)
+      CALL GET_COMMAND_ARGUMENT(i, opt, arg_len, status=ierror)
+      IF (ierror /= 0) THEN
+        IF (arg_len > LEN(opt)) THEN
+          WRITE (0, '(a,i0,a)') 'error: command-line argument (number ', &
+               i, ') too long!'
+        ELSE
+          WRITE (0, '(2(a, i0))') 'error handling command-line argument ', i, &
+               ', status=', ierror
+        END IF
+        CALL posix_exit(1)
+      END IF
+      IF (opt(1:2) == '--') THEN
+        eq_pos = INDEX(opt, '=')
+        IF (eq_pos /= 0) THEN
+          opt_name_end = eq_pos-1
+        ELSE
+          opt_name_end = arg_len
+        END IF
+        IF (eq_pos /= 0) THEN
+          optarg = opt(eq_pos+1:)
+          optarg_len = arg_len-eq_pos
+        ELSE IF (i < num_cmd_args) THEN
+          CALL GET_COMMAND_ARGUMENT(i+1, optarg, optarg_len)
+        ELSE
+          optarg_len = 0
+        END IF
+        SELECT CASE (opt(3:opt_name_end))
+        CASE ("index-generation")
+          CALL set_list_gen_methods(run_config%index_generation_sequence, &
+               run_config%index_generation_method, optarg(:optarg_len))
+          next_is_optarg = eq_pos == 0
+        CASE ("index-src-file-pat")
+          IF (optarg_len == 0) THEN
+            WRITE (0, '(a)') "error: invalid source list file pattern!"
+            FLUSH(0)
+            CALL posix_exit(1)
+          END IF
+#ifdef HAVE_FC_ALLOCATABLE_CHARACTER
+          ALLOCATE(CHARACTER(optarg_len) :: run_config%fname_pat_src)
+#endif
+          run_config%fname_pat_src(:) = optarg(1:optarg_len)
+          next_is_optarg = eq_pos == 0
+        CASE ("index-dst-file-pat")
+          IF (optarg_len == 0) THEN
+            WRITE (0, '(a)') "error: invalid destination list file pattern!"
+            FLUSH(0)
+            CALL posix_exit(1)
+          END IF
+#ifdef HAVE_FC_ALLOCATABLE_CHARACTER
+          ALLOCATE(CHARACTER(optarg_len) :: run_config%fname_pat_dst)
+#endif
+          run_config%fname_pat_dst(:) = optarg(1:optarg_len)
+          next_is_optarg = eq_pos == 0
+        CASE ("num-columns")
+          READ (optarg, *) run_config%num_columns
+          next_is_optarg = eq_pos == 0
+        CASE ("nlev", "num-levels")
+          READ (optarg, *) run_config%nlev
+          next_is_optarg = eq_pos == 0
+        CASE ("sort-algorithm")
+          DO j = 1, optarg_len
+            optarg_c(j) = optarg(j:j)
+          END DO
+          optarg_c(optarg_len+1) = c_null_char
+          algo = xt_sort_algo_id_by_name(optarg_c)
+          IF (algo == -1) THEN
+            WRITE (0, '(2a)') "error: invalid sort algorithm name: ", &
+                 optarg
+            FLUSH(0)
+            CALL posix_exit(1)
+          END IF
+          CALL xt_config_set_sort_algorithm_by_id(config, algo)
+          next_is_optarg = eq_pos == 0
+        CASE ("enable-mem-saving", "disable-mem-saving")
+          IF (eq_pos /= 0) THEN
+            WRITE (0, '(4a)') &
+                 "error: invalid argument to ", TRIM(opt), ": ", &
+                 optarg
+            FLUSH(0)
+            CALL posix_exit(1)
+          END IF
+          next_is_optarg = .FALSE.
+          CALL xt_config_set_mem_saving(config, MERGE(1, 0, arg_len == 19))
+        CASE ("enable-custom-bucket-generator")
+          CALL set_custom_bucket_gen(config)
+          IF (eq_pos /= 0) THEN
+            CALL set_list_gen_methods(run_config%bucket_generation_sequence, &
+                 run_config%bucket_generation_method, optarg)
+          END IF
+          next_is_optarg = .FALSE.
+        CASE ("stripe-alignment-mode", &
+             "disable-stripe-alignment", "enable-stripe-alignment")
+          IF (opt(3:8) == 'stripe') THEN
+            IF (eq_pos == 0 .AND. i == num_cmd_args) THEN
+              WRITE (0, '(2a)') "error: option --stripe-alignment-mode ", &
+                   "requires an argument"
+              FLUSH(0)
+              CALL posix_exit(1)
+            END IF
+            READ (optarg, *) ialign
+            next_is_optarg = eq_pos == 0
+          ELSE
+            IF (eq_pos /= 0) THEN
+              WRITE (0, '(4a)') &
+                   "error: invalid argument to ", TRIM(opt),": ", &
+                   optarg
+              FLUSH(0)
+              CALL posix_exit(1)
+            END IF
+            ialign = MERGE(1, 0, opt(3:4) == "en")
+            next_is_optarg = .FALSE.
+          END IF
+          CALL xt_config_set_xmap_stripe_align(config, ialign)
+        CASE DEFAULT
+          WRITE (0, '(2a)') 'unrecognized command line argument: ', &
+               optarg(1:arg_len)
+          FLUSH(0)
+          CALL posix_exit(1)
+          STOP
+        END SELECT
+        i = i + MERGE(2, 1, next_is_optarg)
+      ELSE
+        EXIT
+      END IF
+    END DO
+    IF (i <= num_cmd_args) THEN
+      IF (i == num_cmd_args) THEN
+        READ(opt, *, iostat=ierror) size_hamocc
+        IF (ierror /= 0) THEN
+          WRITE (0, '(3a, i0)') 'error reading group size ', TRIM(opt), &
+               ', iostat=', ierror
+          FLUSH(0)
+          CALL posix_exit(1)
+        END IF
+      ELSE
+        WRITE (0, '(a)') 'too many command line arguments:', opt(1:arg_len)
+        DO i = i+1, num_cmd_args
+          CALL GET_COMMAND_ARGUMENT(i, opt, arg_len)
+          WRITE (0, '(a)') opt(1:arg_len)
+        END DO
+        CALL posix_exit(1)
+      END IF
+    ELSE
+      size_hamocc = run_config%comm_world_size / 2
+    END IF
+    run_config%is_src = run_config%comm_world_rank &
+         < (run_config%comm_world_size - size_hamocc)
+    run_config%local_size = MERGE(run_config%comm_world_size - size_hamocc,  &
+         size_hamocc, run_config%is_src)
+    IF (run_config%bucket_generation_sequence == -1) &
+         run_config%bucket_generation_sequence &
+         = run_config%index_generation_sequence
+    IF (run_config%bucket_generation_method == -1) &
+         run_config%bucket_generation_method &
+         = run_config%index_generation_sequence
+
+#ifdef HAVE_FC_ALLOCATABLE_CHARACTER
+    contradiction = ALLOCATED(run_config%fname_pat_src) &
+         .NEQV. ALLOCATED(run_config%fname_pat_dst)
+#else
+    contradiction = run_config%fname_pat_src == '' &
+         .NEQV. run_config%fname_pat_dst == ''
+#endif
+    IF (contradiction) THEN
+      WRITE (0, '(3a)') "error: ", &
+           "option --index-src-file-pat must be used together", &
+           " with --index-dst-file-pat"
+      CALL posix_exit(1)
+    END IF
+  END SUBROUTINE parse_options
+
+  FUNCTION read_idxlist(idxgen_method, name_pat, subst_mpi_rank)
+    INTEGER, INTENT(in) :: idxgen_method, subst_mpi_rank
+    CHARACTER(len=*), INTENT(in) :: name_pat
+    CHARACTER(len=LEN(name_pat)+5) :: fname
+    TYPE(xt_idxlist) :: read_idxlist
+    INTEGER :: ofs, num_indices, num_idx_per_line, i, last, &
+         num_lines
+    INTEGER :: ierror
+    INTEGER, PARAMETER :: input_unit = 10
+    INTEGER(xt_int_kind), ALLOCATABLE :: indices(:)
+    IF (subst_mpi_rank < 0) THEN
+      read_idxlist = xt_idxempty_new()
+      RETURN
+    END IF
+    ofs = INDEX(name_pat, "%{rank}")
+    IF (ofs == 0) THEN
+      fname = name_pat
+    ELSE
+      WRITE (fname, "(a,i0,a)") name_pat(1:ofs-1), &
+           subst_mpi_rank, name_pat(ofs+7:)
+    END IF
+    OPEN(unit=input_unit, file=fname, action="read", status="old")
+    SELECT CASE (idxgen_method)
+    CASE (index_gen_idxvec)
+      READ(input_unit, *) num_indices, num_idx_per_line
+      ALLOCATE(indices(num_indices))
+      num_lines = (num_indices+num_idx_per_line-1)/num_idx_per_line
+      DO i = 1, num_lines
+        ofs = (i - 1) * num_idx_per_line
+        last = MERGE(ofs + num_idx_per_line, num_indices, i < num_lines)
+        READ(input_unit, *) indices(ofs + 1:last)
+      END DO
+      read_idxlist = xt_idxvec_new(indices)
+    CASE default
+      WRITE (0, '(a)') 'unsupported index list method selected for reading!'
+      CALL mpi_abort(mpi_comm_world, 1, ierror)
+    END SELECT
+    CLOSE(input_unit)
+  END FUNCTION read_idxlist
+
+END MODULE perf_xmap_create_init
 
 PROGRAM perf_xmap_create
   USE mpi
   USE yaxt, xi => xt_int_kind
   USE iso_c_binding
   USE perf_xmap_create_config
+  USE perf_xmap_create_init
   IMPLICIT NONE
   TYPE(xt_config) :: conf
-  TYPE(xt_idxlist) :: idxlist_3d, idxlist_empty
+  TYPE(xt_idxlist) :: idxlist_3d, idxlist_empty, &
+       idxlist_src, idxlist_dst
   TYPE(xt_xmap) :: xmap, reo
   DOUBLE PRECISION :: tic, dt, min, max, sum
 
+  LOGICAL :: use_synthetic_indices
   INTEGER :: ierror
 
   IF (HUGE(1_xi) >= 1240000) THEN
@@ -537,27 +646,44 @@ PROGRAM perf_xmap_create
   run_config%index_generation_method = INDEX_GEN_IDXVEC
   run_config%bucket_generation_sequence = -1
   run_config%bucket_generation_method = -1
+#ifndef HAVE_FC_ALLOCATABLE_CHARACTER
+  run_config%fname_pat_src = ''
+  run_config%fname_pat_dst = ''
+#endif
+
   CALL mpi_init(ierror)
   CALL xt_initialize(mpi_comm_world)
-  CALL mpi_Comm_rank(mpi_comm_world, run_config%comm_world_rank, ierror)
+  CALL mpi_comm_rank(mpi_comm_world, run_config%comm_world_rank, ierror)
   CALL mpi_comm_size(mpi_comm_world, run_config%comm_world_size, ierror)
 
   conf = xt_config_new()
 
   CALL parse_options(run_config, conf)
 
-  idxlist_3d = generate_3d_list(&
-       MOD(run_config%comm_world_rank, run_config%local_size), &
-       run_config%local_size, run_config%index_generation_method, &
-       run_config%index_generation_sequence)
-  idxlist_empty = xt_idxempty_new()
+#ifdef HAVE_FC_ALLOCATABLE_CHARACTER
+  use_synthetic_indices = .NOT. ALLOCATED(run_config%fname_pat_src)
+#else
+  use_synthetic_indices = run_config%fname_pat_src == ''
+#endif
+  IF (use_synthetic_indices) THEN
+    idxlist_3d = generate_3d_list(&
+         MOD(run_config%comm_world_rank, run_config%local_size), &
+         run_config%local_size, run_config%index_generation_method, &
+         run_config%index_generation_sequence)
+    idxlist_empty = xt_idxempty_new()
+    idxlist_src = MERGE(idxlist_3d, idxlist_empty, run_config%is_src)
+    idxlist_dst = MERGE(idxlist_empty, idxlist_3d, run_config%is_src)
+  ELSE
+    idxlist_src = read_idxlist(run_config%index_generation_method, &
+         run_config%fname_pat_src, run_config%comm_world_rank)
+    idxlist_dst = read_idxlist(run_config%index_generation_method, &
+         run_config%fname_pat_dst, run_config%comm_world_rank)
+  END IF
 
   tic = mpi_wtime()
 
   xmap = xt_xmap_dist_dir_custom_new(&
-      MERGE(idxlist_3d, idxlist_empty, run_config%is_src), &
-      MERGE(idxlist_empty, idxlist_3d, run_config%is_src), &
-      mpi_comm_world, conf)
+       idxlist_src, idxlist_dst, mpi_comm_world, conf)
 
   dt = mpi_wtime() - tic
 
@@ -565,8 +691,8 @@ PROGRAM perf_xmap_create
 
   CALL xt_xmap_delete(reo)
   CALL xt_xmap_delete(xmap)
-  CALL xt_idxlist_delete(idxlist_empty)
-  CALL xt_idxlist_delete(idxlist_3d)
+  CALL xt_idxlist_delete(idxlist_src)
+  CALL xt_idxlist_delete(idxlist_dst)
 
   CALL mpi_reduce(dt, min, 1, mpi_double_precision, &
        mpi_min, 0, mpi_comm_world, ierror)
