@@ -56,6 +56,7 @@
 #endif
 
 #include <fenv.h>
+#pragma STDC FENV_ACCESS ON
 
 static void __attribute__((constructor))
 xt_init_xml_parser_nofpe(void) {
