@@ -404,6 +404,12 @@ xt_config_get_xmap_stripe_align(Xt_config config)
  * \page defaults Customizable defaults
  *
  * \tableofcontents
+ * YAXT relies on some defaults that usually provide an adequate
+ * compromise of space and time efficiency. In cases when these fail
+ * to provide, one can either override the global default with an
+ * environment variable or use a custom constructor method that takes
+ * an extra argument of type \ref Xt_config for exactly the place where
+ * the usual default fails.
  *
  * \section default_exchanger Exchanger choice
  *
@@ -449,14 +455,69 @@ xt_config_get_xmap_stripe_align(Xt_config config)
  * \section default_autoconvert Automatic conversions of index vectors
  * to stripes
  *
- * When constructing an Xmap via xt_xmap_dist_dir_new or
- * xt_xmap_all2all_new, index lists passed in as xt_idxvec will be
- * automatically converted to xt_idxstripes if the size is above a
+ * When constructing an Xmap via \ref xt_xmap_dist_dir_new or
+ * \ref xt_xmap_all2all_new, index lists passed in as \ref xt_idxvec will be
+ * automatically converted to \ref xt_idxstripes if the size is above a
  * limit which defaults to 128 indices.
  *
- * The XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE
- * \section XT_CONFIG_DEFAULT_MULTI_THREAD_MODE
- * 
+ * The XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE environment variable
+ * can be used to override this value.
+ *
+ * \section mthread_mode Internal multi-threading
+ *
+ * For an MPI that supports multiple threads calling into it (see
+ * MPI_Init_thread and MPI_THREAD_MULTIPLE), it can be more efficient
+ * to use all multiple send and/or receive operations in parallel.
+ *
+ * Set the XT_CONFIG_DEFAULT_MULTI_THREAD_MODE environment variable to
+ * "XT_MT_OPENMP" to enable this globally.
+ * This is currently equivalent to adding an \ref Xt_config parameter which had
+ * \ref xt_config_set_redist_mthread_mode with parameter \ref XT_MT_OPENMP
+ * called on it.
+ *
+ * \section sort_algorithm Sort algorithm choice
+ *
+ * The default sort algorithm in YAXT is currenlty quicksort because
+ * it does not normally need more than @f$O(\log N)@f$ memory. It is used
+ * to speed up the computation of index list intersections when the
+ * inputs are index vectors. Since almost sorted inputs lead to
+ * exaggerated run-time resuls, it can be beneficial to use the
+ * Mergesort algorithm on such index lists. Call \ref
+ * xt_config_set_sort_algorithm_by_id on an object of class \ref Xt_config
+ * and use it in calls to xmap constructors to change the sort algorithm.
+ *
+ * By setting the environment variable
+ * XT_CONFIG_DEFAULT_SORT_ALGORITHM to "mergesort" (case-insensitive)
+ * this can be made the global default.
+ *
+ * \section stripe_align Stripe alignment
+ *
+ * When computing the positions corresponding to an intersection
+ * during the construction of an Xmap, the usual strategy for index
+ * lists above a certain size (the limit described at \ref
+ * default_autoconvert ) is to map multiple positions at the same time
+ * by describing them as position extents (\ref Xt_pos_ext).
+ *
+ * In case only very few or even only one adjacent positions are ever
+ * mapped together this is very inefficient. In such situations the
+ * alternative strategy of mapping each index individually is faster.
+ * Mapping individually can be set with \ref
+ * xt_config_set_xmap_stripe_align and an object of type
+ * Xt_config. Also this can be requested globally be setting the
+ * environment variable
+ * XT_CONFIG_DEFAULT_XMAP_STRIPE_ALIGN to "one_by_one" or the value 0.
+ * The default is "auto" or 2 and stripe alignment can be enforced
+ * with the values "always" or 1.
+ *
+ * \section mem_saving Memory saving optimizations
+ *
+ * In some situations, the default to use extra data structures to
+ * speed up e.g. searching can be counter-productive. In those cases
+ * the default can be changed to prefer expensive but
+ * memory-conserving algorithms.
+ *
+ * This can be changed globally by setting the environment variable
+ * XT_CONFIG_DEFAULT_MEM_SAVING to 1.
  */
 void
 xt_config_defaults_init(void)

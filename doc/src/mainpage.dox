@@ -11,6 +11,9 @@
 
   Abstract\n
 
-  \ref concept
-  \ref yaxt_multi_threading
+  \li \ref concept
+  \li \ref idxlists
+  \li \ref xmaps
+  \li \ref defaults
+  \li \ref yaxt_multi_threading
  */
