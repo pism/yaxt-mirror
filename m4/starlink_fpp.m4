@@ -393,8 +393,8 @@ m4_define([_ACX_FPP_COMPILE_IFELSE],
 AC_DEFUN([ACX_SL_PROG_FC_FPP_FEATURES],
   [AS_VAR_PUSHDEF([acx_sl_fpp_ok], [acx_sl_cv_]_AC_LANG_ABBREV[_$2_ok])dnl
    m4_pushdef([AC_MSG_RESULT],m4_bpatsubst(m4_dquote(m4_bpatsubst(m4_dquote(m4_defn([AC_MSG_RESULT])),
-[_AS_ECHO_LOG],[ac_res=`expr "$][1" : '\\(@<:@^|@:>@\\)'` ; _AS_ECHO_LOG])),
-     [$][1],[$ac_res]))
+   [$][1],[$ac_res])),
+[_AS_ECHO_LOG],[ac_res=`expr "$][1" : '\\(@<:@^|@:>@*\\)'` ; _AS_ECHO_LOG]))
    AC_CACHE_CHECK([if ]m4_case([$2],[direct],[compilation with $FC],
         [indirect],[preprocessing with $FPP],
         [m4_fatal([$0: only direct or indirect method supported: ']$2['])]) dnl
