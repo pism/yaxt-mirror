@@ -42,7 +42,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 SUBDIRS = . src inst_headers tests examples perf
-DIST_SUBDIRS = src inst_headers tests examples perf .
+DIST_SUBDIRS = inst_headers src tests examples perf .
 
 ACLOCAL_AMFLAGS=-I m4
 
