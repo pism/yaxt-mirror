@@ -76,11 +76,11 @@ redist_sab_delete(Xt_redist redist);
 
 static void
 redist_sab_s_exchange(Xt_redist redist, int num_arrays,
-                      const void **src_data, void **dst_data);
+                      const void *const *src_data, void *const *dst_data);
 
 static void
 redist_sab_a_exchange(Xt_redist redist, int num_arrays,
-                      const void **src_data, void **dst_data,
+                      const void *const *src_data, void *const *dst_data,
                       Xt_request *request);
 
 static void
@@ -203,7 +203,7 @@ redist_sab_delete(Xt_redist redist) {
 
 static void
 redist_sab_s_exchange(Xt_redist redist, int num_arrays,
-                      const void **src_data, void **dst_data)
+                      const void *const *src_data, void *const *dst_data)
 {
   Xt_redist_sab redist_rep = xrsab(redist);
   if (num_arrays == 1)
@@ -216,7 +216,7 @@ redist_sab_s_exchange(Xt_redist redist, int num_arrays,
 
 static void
 redist_sab_a_exchange(Xt_redist redist, int num_arrays,
-                      const void **src_data, void **dst_data,
+                      const void *const *src_data, void *const *dst_data,
                       Xt_request *request)
 {
   Xt_redist_sab redist_rep = xrsab(redist);

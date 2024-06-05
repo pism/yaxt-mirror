@@ -70,8 +70,9 @@ struct xt_redist_vtable {
 
   Xt_redist (*copy)(Xt_redist);
   void (*delete)(Xt_redist);
-  void (*s_exchange)(Xt_redist, int, const void **, void **);
-  void (*a_exchange)(Xt_redist, int, const void **, void **, Xt_request *);
+  void (*s_exchange)(Xt_redist, int, const void *const *, void *const *);
+  void (*a_exchange)(Xt_redist, int, const void *const *, void *const *,
+                     Xt_request *);
   void (*s_exchange1)(Xt_redist, const void *, void *);
   void (*a_exchange1)(Xt_redist, const void *, void *, Xt_request *);
   MPI_Datatype (*get_msg_MPI_Datatype)(Xt_redist, int, enum xt_msg_direction,

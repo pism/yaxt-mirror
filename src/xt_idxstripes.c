@@ -189,10 +189,16 @@ xt_idxstripes_initialize(void)
     = { Xt_int_dt, MPI_INT };
   MPI_Datatype stripe_dt_unaligned;
 
+#ifdef XT_MPI_TYPE_CREATE_STRUCT_CONST_ARRAY_ARGS
+  xt_mpi_call(MPI_Type_create_struct(num_stripe_dt_elems,
+                                     block_lengths, displacements, types,
+                                     &stripe_dt_unaligned), Xt_default_comm);
+#else
   xt_mpi_call(MPI_Type_create_struct(num_stripe_dt_elems,
                                      (int *)block_lengths, displacements,
                                      (MPI_Datatype *)types,
                                      &stripe_dt_unaligned), Xt_default_comm);
+#endif
   xt_mpi_call(MPI_Type_create_resized(stripe_dt_unaligned, 0,
                                       (MPI_Aint)sizeof(stripe),
                                       &stripe_dt), Xt_default_comm);
@@ -447,7 +453,7 @@ xt_idxstripes_prealloc_new(const struct Xt_stripe *stripes, int num_stripes)
     Xt_idxstripes idxstripes = xmalloc(header_size);
     idxstripes->num_stripes = num_stripes;
     /* this assignment is safe because no methods modify the pointee */
-    idxstripes->stripes = (struct Xt_stripe *)stripes;
+    idxstripes->stripes = (struct Xt_stripe *)(intptr_t)stripes;
     result = idxstripes_aggregate(idxstripes, __func__);
   } else
     result = xt_idxempty_new();

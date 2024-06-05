@@ -97,7 +97,7 @@ xt_exchanger_s_exchange(Xt_exchanger exchanger, const void * src_data,
                         void * dst_data);
 
 /**
- * Executes a asynchronous data exchange.
+ * Executes an asynchronous data exchange.
  * @param[in]  exchanger exchanger object
  * @param[in]  src_data  source data
  * @param[out] dst_data  destination data

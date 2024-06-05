@@ -42,6 +42,7 @@
 #  include <config.h>
 #endif
 #include <stdio.h>
+#include <stdint.h>
 
 #define FCALLSC_QUALIFIER PPM_DSO_INTERNAL
 
@@ -193,7 +194,8 @@ SymPrefix(abort_handler_wrapper)(MPI_Comm comm, const char msg[],
   MPI_Fint comm_f = comm;
 #endif
   /* cfortran.h does not understand const char * */
-  char *msg_arg = (char *)msg, *source_arg = (char *)source;
+  char *msg_arg = (char *)(intptr_t)msg,
+    *source_arg = (char *)(intptr_t)source;
 #undef CPPPROTOCLSFSUB14
 #define CPPPROTOCLSFSUB14(UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)
   CCALLSFSUB4(*SymPrefix(fortran_abort_fp),,PVOID,STRING,STRING,INT,

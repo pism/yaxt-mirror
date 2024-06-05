@@ -72,9 +72,9 @@ enum {
 
 void
 check_redist_(Xt_redist redist, int sync_mode,
-              int num_redists, const void *src[num_redists],
+              int num_redists, const void *const src[num_redists],
               size_t dst_num_elems,
-              void *dst[num_redists],
+              void *const dst[num_redists],
               void *dst_buf_base,
               prepare_dst dst_prep,
               const void *dst_prep_info,
@@ -147,19 +147,21 @@ test_redist_single_array_base_(int nsend, const struct Xt_redist_msg *send_msgs,
                                  __FILE__, __LINE__)
 
 void
-wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],
-                void *dst_data_p[]);
+wrap_a_exchange(Xt_redist redist, int num_data_p,
+                const void *const src_data_p[],
+                void *const dst_data_p[]);
 
 typedef void
-(*exchange_func_ptr)(Xt_redist redist, int num_data_p, const void *src_data_p[],
-                     void *dst_data_p[]);
+(*exchange_func_ptr)(Xt_redist redist, int num_data_p,
+                     const void *const src_data_p[],
+                     void *const dst_data_p[]);
 
 void
 wrap_a_exchange1(Xt_redist redist, const void *src_data_p, void *dst_data_p);
 
 typedef void
 (*exchange1_func_ptr)(Xt_redist redist, const void *src_data_p,
-                     void *dst_data_p);
+                      void *dst_data_p);
 
 void
 check_wait_request_(Xt_request *request, const char *file, int line);

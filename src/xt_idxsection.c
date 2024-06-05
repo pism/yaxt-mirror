@@ -208,10 +208,16 @@ xt_idxsection_initialize(void)
   static const MPI_Datatype types[num_dt_components]
     = { Xt_int_dt, MPI_INT };
   MPI_Datatype dim_desc_dt_unaligned;
+#ifdef XT_MPI_TYPE_CREATE_STRUCT_CONST_ARRAY_ARGS
+  xt_mpi_call(MPI_Type_create_struct(num_dt_components,
+                                     block_lengths, displacements, types,
+                                     &dim_desc_dt_unaligned), Xt_default_comm);
+#else
   xt_mpi_call(MPI_Type_create_struct(num_dt_components,
                                      (int *)block_lengths, displacements,
                                      (MPI_Datatype *)types,
                                      &dim_desc_dt_unaligned), Xt_default_comm);
+#endif
   xt_mpi_call(MPI_Type_create_resized(dim_desc_dt_unaligned, 0,
                                       (MPI_Aint)sizeof(dim_desc),
                                       &dim_desc_dt), Xt_default_comm);

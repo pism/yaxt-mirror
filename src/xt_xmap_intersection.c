@@ -680,20 +680,16 @@ static int xmap_intersection_get_max_dst_pos(Xt_xmap xmap) {
 
 typedef int (*Xt_pos_copy)(size_t num_pos,
                            int *pos, const int *orig_pos,
-                           void *state);
+                           const void *state);
 
 static int
 pos_copy_verbatim(size_t num_pos,
-                  int *pos, const int *orig_pos, void *state)
+                  int *pos, const int *orig_pos, const void *state)
 {
   (void)state;
   memcpy(pos, orig_pos, sizeof (*pos) * num_pos);
   return -1;
 }
-
-typedef void (*Xt_pos_ncopy)(size_t num_pos, int *pos, const int *orig_pos,
-                             void *state, int num_repetitions,
-                             const int displacements[num_repetitions]);
 
 static void
 xmap_intersection_msg_copy(size_t nmsg,
@@ -701,7 +697,7 @@ xmap_intersection_msg_copy(size_t nmsg,
                            int *nmsg_copy,
                            struct exchange_data *restrict msg_copy,
                            int *max_pos_, int num_repetitions,
-                           Xt_pos_copy pos_copy, void *pos_copy_state) {
+                           Xt_pos_copy pos_copy, const void *pos_copy_state) {
   *nmsg_copy = (int)nmsg;
   int max_pos = 0;
   for (size_t i = 0; i < nmsg; ++i) {
@@ -732,8 +728,8 @@ xmap_intersection_msg_copy(size_t nmsg,
 static Xt_xmap
 xmap_intersection_copy_(Xt_xmap xmap,
                         int num_repetitions,
-                        Xt_pos_copy pos_copy_in, void *pci_state,
-                        Xt_pos_copy pos_copy_out, void *pco_state)
+                        Xt_pos_copy pos_copy_in, const void *pci_state,
+                        Xt_pos_copy pos_copy_out, const void *pco_state)
 {
   Xt_xmap_intersection xmap_intersection = xmi(xmap), xmap_intersection_new;
   size_t n_in = (size_t)xmap_intersection->n_in,
@@ -946,7 +942,8 @@ xmap_intersection_reorder(Xt_xmap xmap, enum xt_reorder_type type,
 
 static int
 subst_positions(size_t num_pos,
-                int *restrict pos, const int *restrict orig_pos, void *new_pos_)
+                int *restrict pos, const int *restrict orig_pos,
+                const void *new_pos_)
 {
   const int *restrict new_pos = new_pos_;
   int max_pos = 0;
@@ -965,8 +962,8 @@ xmap_intersection_update_positions(Xt_xmap xmap,
                                    const int *dst_positions) {
 
   return xmap_intersection_copy_(xmap, 1,
-                                 subst_positions, (void *)dst_positions,
-                                 subst_positions, (void *)src_positions);
+                                 subst_positions, dst_positions,
+                                 subst_positions, src_positions);
 }
 
 struct spread_state
@@ -977,9 +974,9 @@ struct spread_state
 
 static int
 pos_copy_spread(size_t num_pos, int *restrict pos,
-                const int *restrict orig_pos, void *state)
+                const int *restrict orig_pos, const void *state)
 {
-  struct spread_state *sp = state;
+  const struct spread_state *sp = state;
   int num_repetitions = sp->num_repetitions;
   const int *restrict displacements = sp->displacements;
   num_pos = num_pos / (size_t)num_repetitions;

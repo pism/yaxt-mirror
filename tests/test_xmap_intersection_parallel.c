@@ -435,21 +435,23 @@ int main(int argc, char **argv)
 
       Xt_xmap xmap_reorder = xt_xmap_reorder(xmap, curr_reorder_type);
 
+      int send_msg_pos[count] = {0,2,4,5,3,1};
       struct test_message send_messages =
-        {.pos = (int[]){0,2,4,5,3,1}, .num_pos = 6};
+        {.pos = send_msg_pos, .num_pos = 6};
       send_messages.rank = (my_rank + 1) % comm_size;
+      int recv_msg_pos[count] = {5,4,3,2,1,0};
       struct test_message recv_messages =
-        {.pos = (int[]){5,4,3,2,1,0}, .num_pos = 6};
+        {.pos = recv_msg_pos, .num_pos = 6};
       recv_messages.rank = (comm_size + my_rank - 1) % comm_size;
 
       switch((int)curr_reorder_type) {
         case(XT_REORDER_SEND_UP):
           xt_quicksort_int_permutation(
-            (int*)send_messages.pos, (size_t)count, (int*)recv_messages.pos);
+            send_msg_pos, (size_t)count, recv_msg_pos);
           break;
         case(XT_REORDER_RECV_UP):
           xt_quicksort_int_permutation(
-            (int*)recv_messages.pos, (size_t)count, (int*)send_messages.pos);
+            recv_msg_pos, (size_t)count, send_msg_pos);
           break;
         default:
           break;

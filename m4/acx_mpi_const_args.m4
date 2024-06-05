@@ -63,33 +63,44 @@ int main(int argc, char **argv)
   return EXIT_SUCCESS;
 }
 ])])])
+dnl _ACX_CHECK_MPI_CONST_COMPILE([CACHE_VAR_TO_SET])
+m4_define([_ACX_CHECK_MPI_CONST_COMPILE],
+  [AC_COMPILE_IFELSE(,
+     [# compilation worked without error,
+      # inspect if removing const errors out or creates extra warnings next
+      acx_temp=`cat conftest.err | wc -l`
+      sed 's/const //' conftest.c >conftest.er1 ; mv conftest.er1 conftest.c
+      AC_COMPILE_IFELSE(,
+        [AS_IF([test "$acx_temp" -lt `cat conftest.err | wc -l`],
+           [$1=yes],
+           [$1=no])],
+        [$1=yes])],
+     [$1=no])])
 dnl
+dnl _ACX_CHECK_MPI_CONST_ARGS([FUNCNAME],[TEST_DECL],[CACHE_VAR_TO_SET],
+dnl                           [CHECK_DESCRIPTION],
+dnl                           [ACTION-IF-ACCEPTS-CONST],
+dnl                           [ACTION-IF-NOT-ACCEPTS-CONST])
+m4_define([_ACX_CHECK_MPI_CONST_ARGS],
+  [AC_CACHE_CHECK([whether $1 accepts $4],
+     [$3],
+     [AC_LANG_PUSH([C])
+      _ACX_MPI_ARGCHECK_TEST([$2])
+      _ACX_CHECK_MPI_CONST_COMPILE([$3])
+      AC_LANG_POP([C])])
+    AS_IF([test x"$$3" = xyes],[$5],
+     [m4_default([$6],
+        [AC_MSG_FAILURE([$1 does not accept $4])])])])
 dnl
 dnl ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([ACTION-IF-ACCEPTS-CONST-VOID-P],
 dnl   [ACTION-IF-NOT-ACCEPTS-CONST-VOID-P])
 dnl
 AC_DEFUN([ACX_MPI_SEND_CONST_VOID_P_BUF_ARG],
-  [AC_CACHE_CHECK([whether MPI_Send accepts const void * as first argument],
-     [acx_cv_mpi_send_takes_const_void],
-     [AC_LANG_PUSH([C])
-      _ACX_MPI_ARGCHECK_TEST([extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype,
-                    int dest, int tag, MPI_Comm comm);])
-      AC_COMPILE_IFELSE(,
-        [# compilation worked without error,
-         # inspect if removing const errors out or creates extra warnings next
-         acx_temp=`cat conftest.err | wc -l`
-         sed 's/const //' conftest.c >conftest.er1 ; mv conftest.er1 conftest.c
-         AC_COMPILE_IFELSE(,
-           [AS_IF([test "$acx_temp" -lt `cat conftest.err | wc -l`],
-              [acx_cv_mpi_send_takes_const_void=yes],
-              [acx_cv_mpi_send_takes_const_void=no])],
-           [acx_cv_mpi_send_takes_const_void=yes])],
-        [acx_cv_mpi_send_takes_const_void=no])
-      AC_LANG_POP([C])])
-    AS_IF([test x"$acx_cv_mpi_send_takes_const_void" = xyes],[$1],
-     [m4_default([$2],
-        [AC_MSG_FAILURE([MPI_Send does not accept const void * buf arguments])])])
-  ])
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Send],
+    [extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype,
+                    int dest, int tag, MPI_Comm comm);],
+    [acx_cv_mpi_send_takes_const_void],
+    [const void * as first argument], [$1], [$2])])
 dnl
 dnl
 dnl ACX_MPI_GET_ADDRESS_CONST_VOID_P_LOCATION_ARG(
@@ -97,27 +108,83 @@ dnl   [ACTION-IF-ACCEPTS-CONST-VOID-P],
 dnl   [ACTION-IF-NOT-ACCEPTS-CONST-VOID-P])
 dnl
 AC_DEFUN([ACX_MPI_GET_ADDRESS_CONST_VOID_P_LOCATION_ARG],
-  [AC_CACHE_CHECK(
-     [whether MPI_Get_address accepts const void * as first argument],
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Get_address],
+     [extern int MPI_Get_address(const void *location, MPI_Aint *address);],
      [acx_cv_mpi_get_address_takes_const_void],
-     [AC_LANG_PUSH([C])
-      _ACX_MPI_ARGCHECK_TEST([extern int MPI_Get_address(const void *location, MPI_Aint *address);])
-      AC_COMPILE_IFELSE(,
-        [# compilation worked without error,
-         # inspect if removing const errors out or creates extra warnings next
-         acx_temp=`cat conftest.err | wc -l`
-         sed 's/const //' conftest.c >conftest.er1 ; mv conftest.er1 conftest.c
-         AC_COMPILE_IFELSE(,
-           [AS_IF([test "$acx_temp" -lt `cat conftest.err | wc -l`],
-              [acx_cv_mpi_get_address_takes_const_void=yes],
-              [acx_cv_mpi_get_address_takes_const_void=no])],
-           [acx_cv_mpi_get_address_takes_const_void=yes])],
-        [acx_cv_mpi_get_address_takes_const_void=no])
-      AC_LANG_POP([C])])
-    AS_IF([test x"$acx_cv_mpi_get_address_takes_const_void" = xyes],[$1],
-     [m4_default([$2],
-        [AC_MSG_FAILURE([MPI_Get_address does not accept const void * location arguments])])])
-  ])
+     [const void * as first argument], [$1], [$2])])
+dnl
+dnl
+dnl ACX_MPI_TYPE_CREATE_STRUCT_CONST_ARRAY_ARGS(
+dnl   [ACTION-IF-ACCEPTS-CONST-ARRAYS],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-ARRAYS])
+dnl
+AC_DEFUN([ACX_MPI_TYPE_CREATE_STRUCT_CONST_ARRAY_ARGS],
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Type_create_struct],
+     [extern int MPI_Type_create_struct(int count, const int array_of_blocklengths@<:@@:>@,
+            const MPI_Aint array_of_displacements@<:@@:>@, const MPI_Datatype array_of_types@<:@@:>@,
+            MPI_Datatype *newtype);],
+     [acx_cv_mpi_type_create_struct_takes_const_arrays],
+     [const array arguments], [$1], [$2])])
+dnl
+dnl ACX_MPI_TYPE_CREATE_HINDEXED_BLOCK_CONST_DISP(
+dnl   [ACTION-IF-ACCEPTS-CONST-DISPLACEMENTS],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-DISPLACEMENTS])
+dnl
+AC_DEFUN([ACX_MPI_TYPE_CREATE_HINDEXED_BLOCK_CONST_DISP],
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Type_create_hindexed_block],
+     [extern int MPI_Type_create_hindexed_block(int count, int blocklength,
+            const MPI_Aint array_of_displacements@<:@@:>@, MPI_Datatype oldtype,
+            MPI_Datatype *newtype);],
+     [acx_cv_mpi_type_create_hindexed_block_takes_const_disp],
+     [const-qualified displacements], [$1], [$2])])
+dnl
+dnl ACX_MPI_TYPE_CREATE_INDEXED_BLOCK_CONST_DISP(
+dnl   [ACTION-IF-ACCEPTS-CONST-DISPLACEMENTS],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-DISPLACEMENTS])
+dnl
+AC_DEFUN([ACX_MPI_TYPE_CREATE_INDEXED_BLOCK_CONST_DISP],
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Type_create_indexed_block],
+     [extern int MPI_Type_create_indexed_block(int count, int blocklength,
+            const int array_of_displacements@<:@@:>@, MPI_Datatype oldtype,
+            MPI_Datatype *newtype);],
+     [acx_cv_mpi_type_create_indexed_block_takes_const_disp],
+     [const-qualified displacements], [$1], [$2])])
+dnl
+dnl ACX_MPI_TYPE_INDEXED_CONST_ARRAY_ARGS(
+dnl   [ACTION-IF-ACCEPTS-CONST-ARRAY-ARGS],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-ARRAY-ARGS])
+dnl
+AC_DEFUN([ACX_MPI_TYPE_INDEXED_CONST_ARRAY_ARGS],
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Type_indexed],
+     [extern int MPI_Type_indexed(int count, const int array_of_blocklengths@<:@@:>@,
+            const int array_of_displacements@<:@@:>@, MPI_Datatype oldtype,
+            MPI_Datatype *newtype);],
+     [acx_cv_mpi_type_indexed_takes_const_arrays],
+     [const array arguments], [$1], [$2])])
+dnl
+dnl ACX_MPI_TYPE_CREATE_HINDEXED_CONST_ARRAY_ARGS(
+dnl   [ACTION-IF-ACCEPTS-CONST-ARRAY-ARGS],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-ARRAY-ARGS])
+dnl
+AC_DEFUN([ACX_MPI_TYPE_CREATE_HINDEXED_CONST_ARRAY_ARGS],
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Type_create_hindexed],
+     [extern int MPI_Type_create_hindexed(int count, const int array_of_blocklengths@<:@@:>@,
+            const MPI_Aint array_of_displacements@<:@@:>@, MPI_Datatype oldtype,
+            MPI_Datatype *newtype);],
+     [acx_cv_mpi_type_create_hindexed_takes_const_arrays],
+     [const array arguments], [$1], [$2])])
+dnl
+dnl ACX_MPI_TYPE_CREATE_SUBARRAY_CONST_ARRAY_ARGS(
+dnl   [ACTION-IF-ACCEPTS-CONST-ARRAY-ARGS],
+dnl   [ACTION-IF-NOT-ACCEPTS-CONST-ARRAY-ARGS])
+dnl
+AC_DEFUN([ACX_MPI_TYPE_CREATE_SUBARRAY_CONST_ARRAY_ARGS],
+  [_ACX_CHECK_MPI_CONST_ARGS([MPI_Type_create_subarray],
+     [extern int MPI_Type_create_subarray(int ndims, const int array_of_sizes@<:@@:>@,
+            const int array_of_subsizes@<:@@:>@, const int array_of_starts@<:@@:>@,
+            int order, MPI_Datatype oldtype, MPI_Datatype *newtype);],
+     [acx_cv_mpi_type_create_subarray_takes_const_arrays],
+     [const array arguments], [$1], [$2])])
 dnl
 dnl Local Variables:
 dnl mode: autoconf

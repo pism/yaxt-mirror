@@ -389,20 +389,23 @@ XT_MPI_STRP_PRS_DRIVER(const XT_MPI_OFFSET_EXT *v,
   for (int i=0; i<count; ++i)
     count_ += (size_t)(v[i].size > 0);
   if (count_ < 1) return MPI_DATATYPE_NULL;
-  XT_MPI_OFFSET_EXT *v_comp;
+  const XT_MPI_OFFSET_EXT *v_comp;
+  XT_MPI_OFFSET_EXT *v_comp_;
   if ((size_t)count != count_) {
-    v_comp = xmalloc(count_ * sizeof (*v_comp));
+    v_comp = v_comp_ = xmalloc(count_ * sizeof (*v_comp));
     for (size_t i=0, j=0; i<(size_t)count; ++i) {
-      v_comp[j] = v[i];
+      v_comp_[j] = v[i];
       j+= v[i].size > 0;
     }
-  } else
-    v_comp = (XT_MPI_OFFSET_EXT *)v;
+  } else {
+    v_comp_ = NULL;
+    v_comp = v;
+  }
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, old_type, comm);
   MPI_Datatype dt = XT_MPI_STRP_PRS_ENTRY(v_comp, count_, &params);
   if ((size_t)count != count_)
-    free(v_comp);
+    free(v_comp_);
   return dt;
 }
 

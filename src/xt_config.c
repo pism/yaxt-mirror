@@ -50,6 +50,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <mpi.h>
@@ -84,7 +85,7 @@ Xt_config xt_config_new(void)
 void xt_config_delete(Xt_config config)
 {
   if (config->xmdd_bucket_gen != &Xt_xmdd_cycl_stripe_bucket_gen_desc)
-    free((void *)config->xmdd_bucket_gen);
+    free((void *)(intptr_t)config->xmdd_bucket_gen);
   free(config);
 }
 
@@ -237,7 +238,7 @@ int xt_config_get_sort_algorithm_id(Xt_config config)
   static const char fmt[]
     = "error: unexpected exchanger function (%p)!";
   char buf[sizeof (fmt) + 3*sizeof(void *)];
-  sprintf(buf, fmt, (void *)sort_funcs);
+  sprintf(buf, fmt, (const void *)sort_funcs);
   Xt_abort(Xt_default_comm, buf, filename, __LINE__);
 }
 
@@ -274,7 +275,7 @@ xt_config_get_mem_saving(Xt_config config)
 Xt_xmdd_bucket_gen
 xt_config_get_xmdd_bucket_gen(Xt_config config)
 {
-  return (Xt_xmdd_bucket_gen)config->xmdd_bucket_gen;
+  return (Xt_xmdd_bucket_gen)(intptr_t)config->xmdd_bucket_gen;
 }
 
 void
@@ -533,14 +534,17 @@ xt_config_defaults_init(void)
   }
   config_env = getenv("XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE");
   if (config_env) {
-    char *endptr;
+    const char *endptr;
     long v;
     errno = 0;
     if (!strcmp(config_env, "INT_MAX")) {
       v = INT_MAX;
-      endptr = (char *)config_env + 7;
-    } else
-      v = strtol(config_env, &endptr, 0);
+      endptr = config_env + 7;
+    } else {
+      char *endptr_;
+      v = strtol(config_env, &endptr_, 0);
+      endptr = endptr_;
+    }
     if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
         || (errno != 0 && v == 0)) {
       perror("failed to parse value of "
@@ -642,20 +646,23 @@ dont_set_sort_algorithm:;
     if (!config_env)
       config_env = getenv((evn = "XT_CONFIG_DEFAULT_DIST_DIR_STRIPE_ALIGNMENT"));
     if (config_env) {
-      char *endptr;
+      const char *endptr;
       long v;
       errno = 0;
       if (!strcmp(config_env, "auto")) {
         v = 2;
-        endptr = (char *)config_env + 4;
+        endptr = config_env + 4;
       } else if (!strcmp(config_env, "one_by_one")) {
         v = 0;
-        endptr = (char *)config_env + 10;
+        endptr = config_env + 10;
       } else if (!strcmp(config_env, "always")) {
         v = 1;
-        endptr = (char *)config_env + 6;
-      } else
-        v = strtol(config_env, &endptr, 0);
+        endptr = config_env + 6;
+      } else {
+        char *endptr_;
+        v = strtol(config_env, &endptr_, 0);
+        endptr = endptr_;
+      }
       if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
           || (errno != 0 && v == 0)) {
         fprintf(stderr, "warning: failed to parse value of "
@@ -674,13 +681,16 @@ dont_set_sort_algorithm:;
     static const char evn[] = "XT_CONFIG_DEFAULT_MEM_SAVING";
     config_env = getenv(evn);
     if (config_env) {
-      char *endptr;
+      const char *endptr;
       long v;
       if (!strcasecmp(config_env, "FORCE_NOSORT")) {
         v = 1;
-        endptr = (char *)config_env + 12;
-      } else
-        v = strtol(config_env, &endptr, 0);
+        endptr = config_env + 12;
+      } else {
+        char *endptr_;
+        v = strtol(config_env, &endptr_, 0);
+        endptr = endptr_;
+      }
       if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
           || (errno != 0 && v == 0)) {
         perror("failed to parse value of "

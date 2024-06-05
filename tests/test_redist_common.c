@@ -99,8 +99,8 @@ void
 check_redist_(Xt_redist redist,
               int sync_mode,
               int num_redists,
-              const void *src[num_redists],
-              size_t dst_num_elems, void *dst[num_redists],
+              const void *const src[num_redists],
+              size_t dst_num_elems, void *const dst[num_redists],
               void *dst_buf_base,
               prepare_dst dst_prep,
               const void *dst_prep_info,
@@ -243,8 +243,9 @@ check_wait_request_(Xt_request *request, const char *file, int line)
 }
 
 void
-wrap_a_exchange(Xt_redist redist, int num_data_p, const void *src_data_p[],
-                void *dst_data_p[])
+wrap_a_exchange(Xt_redist redist, int num_data_p,
+                const void *const src_data_p[],
+                void *const dst_data_p[])
 {
   Xt_request request;
   xt_redist_a_exchange(redist, num_data_p, src_data_p, dst_data_p, &request);

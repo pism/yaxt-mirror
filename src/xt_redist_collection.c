@@ -81,11 +81,13 @@ redist_collection_copy(Xt_redist redist);
 
 static void
 redist_collection_s_exchange(Xt_redist redist, int num_src_arrays,
-                             const void **src_data, void **dst_data);
+                             const void *const *src_data,
+                             void *const *dst_data);
 
 static void
 redist_collection_a_exchange(Xt_redist redist, int num_src_arrays,
-                             const void **src_data, void **dst_data,
+                             const void *const *src_data,
+                             void *const *dst_data,
                              Xt_request *request);
 
 static void
@@ -451,8 +453,9 @@ xrc(void *redist)
 
 static void
 redist_collection_s_exchange(Xt_redist redist, int num_arrays,
-                             const void **src_data, void **dst_data) {
-
+                             const void *const *src_data,
+                             void *const *dst_data)
+{
   Xt_redist_collection redist_coll = xrc(redist);
 
   if (num_arrays != (int)redist_coll->num_redists)
@@ -473,7 +476,7 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
 
 static void
 redist_collection_a_exchange(Xt_redist redist, int num_arrays,
-                             const void **src_data, void **dst_data,
+                             const void *const *src_data, void *const *dst_data,
                              Xt_request *request) {
 
   Xt_redist_collection redist_coll = xrc(redist);

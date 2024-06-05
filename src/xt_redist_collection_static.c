@@ -149,7 +149,8 @@ xt_redist_collection_static_custom_new(
     size_t ofs = i == 0 ? 0 : nmsg[SEND];
     const MPI_Aint *disp = i == 0 ? src_displacements : dst_displacements;
     generate_msg_infos(nmsg[i], num_redists_, msgs+ofs, disp, redists,
-                       num_ranks[i], (const int *restrict (*))ranks[i],
+                       num_ranks[i],
+                       (const int *restrict (*))(intptr_t)ranks[i],
                        &ddt_list, new_comm, (enum xt_msg_direction)i);
     free(ranks[i][0]);
   }

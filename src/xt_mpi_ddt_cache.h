@@ -122,7 +122,7 @@ Xt_mpi_ddt_cache_acquire_hvector(
 PPM_DSO_INTERNAL MPI_Datatype
 Xt_mpi_ddt_cache_acquire_indexed_block(
   struct Xt_mpiddt_list *ddt_list,
-  int count, int blocklength, int disp[count], MPI_Datatype oldtype,
+  int count, int blocklength, const int disp[count], MPI_Datatype oldtype,
   MPI_Comm comm);
 
 /**
@@ -137,7 +137,7 @@ Xt_mpi_ddt_cache_acquire_indexed_block(
 PPM_DSO_INTERNAL MPI_Datatype
 Xt_mpi_ddt_cache_acquire_hindexed_block(
   struct Xt_mpiddt_list *ddt_list,
-  int count, int blocklength, MPI_Aint disp[count], MPI_Datatype oldtype,
+  int count, int blocklength, const MPI_Aint disp[count], MPI_Datatype oldtype,
   MPI_Comm comm);
 
 /**
@@ -152,8 +152,8 @@ Xt_mpi_ddt_cache_acquire_hindexed_block(
 PPM_DSO_INTERNAL MPI_Datatype
 Xt_mpi_ddt_cache_acquire_indexed(
   struct Xt_mpiddt_list *ddt_list,
-  int count, int blocklength[count], int disp[count], MPI_Datatype oldtype,
-  MPI_Comm comm);
+  int count, const int blocklength[count], const int disp[count],
+  MPI_Datatype oldtype, MPI_Comm comm);
 
 /**
  * lookup MPI hindexed datatype in cache or create if not yet present
@@ -167,8 +167,8 @@ Xt_mpi_ddt_cache_acquire_indexed(
 PPM_DSO_INTERNAL MPI_Datatype
 Xt_mpi_ddt_cache_acquire_hindexed(
   struct Xt_mpiddt_list *ddt_list,
-  int count, int blocklength[count], MPI_Aint disp[count], MPI_Datatype oldtype,
-  MPI_Comm comm);
+  int count, const int blocklength[count], const MPI_Aint disp[count],
+  MPI_Datatype oldtype, MPI_Comm comm);
 
 /**
  * lookup MPI struct datatype in cache or create if not yet present
@@ -182,8 +182,8 @@ Xt_mpi_ddt_cache_acquire_hindexed(
 PPM_DSO_INTERNAL MPI_Datatype
 Xt_mpi_ddt_cache_acquire_struct(
   struct Xt_mpiddt_list *ddt_list,
-  int count, int blocklength[count], MPI_Aint disp[count],
-  MPI_Datatype oldtype[count], MPI_Comm comm);
+  int count, const int blocklength[count], const MPI_Aint disp[count],
+  const MPI_Datatype oldtype[count], MPI_Comm comm);
 
 
 /**

@@ -146,7 +146,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     for (size_t i = 1; i < ref_num_indices_; ++i)
       is_sorted &= (ref_indices[i-1] <= ref_indices[i]);
     if (is_sorted)
-      sorted_ref_indices = (Xt_int *)(void *)ref_indices;
+      sorted_ref_indices = (Xt_int *)(intptr_t)ref_indices;
     else {
       sorted_ref_indices
         = xmalloc(indices_mem_size);

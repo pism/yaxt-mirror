@@ -224,10 +224,11 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
 
     static const void *const src_data_p[num_slice]
       = { src_data[0], src_data[1], src_data[2]};
-    void *dst_data_p[num_slice] = { dst_data[0], dst_data[1], dst_data[2] };
+    void *const dst_data_p[num_slice]
+      = { dst_data[0], dst_data[1], dst_data[2] };
 
     check_redist_coll(redist_coll, sync_mode_test_all,
-                      num_slice, (const void **)src_data_p,
+                      num_slice, src_data_p,
                       num_slice * dst_slice_len, dst_data_p, dst_data[0],
                       fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
                       MPI_DOUBLE);
@@ -241,10 +242,11 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
     double dst_data[num_slice][dst_slice_len];
     static const void *const src_data_p[num_slice]
       = {src_data[1],src_data[0],src_data[2]};
-    void *dst_data_p[num_slice] = { dst_data[1], dst_data[0], dst_data[2] };
+    void *const dst_data_p[num_slice]
+      = { dst_data[1], dst_data[0], dst_data[2] };
 
     check_redist_coll(redist_coll, sync_mode_test_all,
-                      num_slice, (const void **)src_data_p,
+                      num_slice, src_data_p,
                       num_slice * dst_slice_len, dst_data_p, dst_data[0],
                       fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
                       MPI_DOUBLE);
@@ -259,9 +261,10 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
     double dst_data[num_slice][3];
     static const void *const src_data_p[num_slice]
       = { src_data[0], src_data[1], src_data[2] };
-    void *dst_data_p[num_slice] = { dst_data[0], dst_data[1], dst_data[2] };
+    void *const dst_data_p[num_slice]
+      = { dst_data[0], dst_data[1], dst_data[2] };
     check_redist_coll(redist_coll, sync_mode_test_all,
-                      num_slice, (const void **)src_data_p,
+                      num_slice, src_data_p,
                       num_slice * dst_slice_len, dst_data_p, dst_data[0],
                       fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
                       MPI_DOUBLE);

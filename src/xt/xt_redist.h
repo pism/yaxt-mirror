@@ -103,7 +103,8 @@ void xt_redist_delete(Xt_redist redist);
  *   \ref correct_addresses
  */
 void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
-                          const void **src_data, void **dst_data);
+                          const void *const src_data[],
+                          void *const dst_data[]);
 
 /**
  * asynchronous redistribution of data
@@ -123,7 +124,8 @@ void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
  *   \ref correct_addresses
  */
 void xt_redist_a_exchange(Xt_redist redist, int num_arrays,
-                          const void **src_data, void **dst_data,
+                          const void *const src_data[],
+                          void *const dst_data[],
                           Xt_request *request);
 
 /**

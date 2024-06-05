@@ -60,6 +60,7 @@
 #include "tests.h"
 #include "ctest_common.h"
 #include "test_redist_common.h"
+#include "../src/xt_mpi_ddt_wrap.h"
 
 int main(int argc, char **argv) {
 
@@ -96,8 +97,8 @@ int main(int argc, char **argv) {
     static const int recv_displs[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
     enum { nelem = sizeof(recv_displs) / sizeof(recv_displs[0]) };
     xt_mpi_call(MPI_Type_contiguous(nelem, MPI_FLOAT, &send_type), comm);
-    xt_mpi_call(MPI_Type_create_indexed_block(
-                  nelem, 1, (int *)recv_displs, MPI_FLOAT, &recv_type), comm);
+    Xt_Type_create_indexed_block(
+      nelem, 1, recv_displs, MPI_FLOAT, &recv_type, comm);
     xt_mpi_call(MPI_Type_commit(&send_type), comm);
     xt_mpi_call(MPI_Type_commit(&recv_type), comm);
 

@@ -49,6 +49,7 @@
 
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "core/core.h"
@@ -76,13 +77,13 @@ void xt_redist_delete(Xt_redist redist) {
 }
 
 void xt_redist_s_exchange(Xt_redist redist, int num_arrays,
-                          const void **src_data, void **dst_data) {
+                          const void *const src_data[], void *const dst_data[]) {
 
   redist->vtable->s_exchange(redist, num_arrays, src_data, dst_data);
 }
 
 void xt_redist_a_exchange(Xt_redist redist, int num_arrays,
-                          const void **src_data, void **dst_data,
+                          const void *const *src_data, void *const *dst_data,
                           Xt_request *request) {
 
   redist->vtable->a_exchange(redist, num_arrays, src_data, dst_data, request);
@@ -220,7 +221,8 @@ xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
       ranks[j] = NULL;
   /* count number of different ranks to send/receive message to/from */
   size_t num_messages = ranks_left
-    ? xt_ranks_uniq_count(num_redists, num_ranks, (const int *const *)ranks)
+    ? xt_ranks_uniq_count(num_redists, num_ranks,
+                          (const int *const *)(intptr_t)ranks)
     : 0;
   return (unsigned)num_messages;
 }
@@ -239,7 +241,7 @@ xt_create_compound_datatype(size_t count,
   for (size_t i = 0; i < count; ++i)
     num_datatypes += (datatypes[i] != MPI_DATATYPE_NULL);
   MPI_Datatype *datatypes_, dt_auto[max_auto_dt];
-  MPI_Aint *displacements_, disp_auto[max_auto_dt];
+  MPI_Aint *displacements_ = NULL, disp_auto[max_auto_dt];
   int *block_lengths_, bl_auto[max_auto_dt];
 
   if (num_datatypes != count) {
@@ -266,21 +268,20 @@ xt_create_compound_datatype(size_t count,
         ++num_datatypes;
       }
     }
-  } else {
-    datatypes_ = (MPI_Datatype *)datatypes;
-    displacements_ = (MPI_Aint *)displacements;
-    block_lengths_ = (int *)block_lengths;
+    datatypes = datatypes_;
+    displacements = displacements_;
+    block_lengths = block_lengths_;
   }
   MPI_Datatype datatype;
   if (num_datatypes > 1)
     datatype = Xt_mpi_ddt_cache_acquire_struct(
-      ddt_list, (int)num_datatypes, block_lengths_,
-      displacements_, datatypes_, comm);
-  else if (displacements_[0] == 0)
-    xt_mpi_call(MPI_Type_dup(datatypes_[0], &datatype), comm);
+      ddt_list, (int)num_datatypes, block_lengths,
+      displacements, datatypes, comm);
+  else if (displacements[0] == 0)
+    xt_mpi_call(MPI_Type_dup(datatypes[0], &datatype), comm);
   else
     datatype = Xt_mpi_ddt_cache_acquire_hindexed(
-      ddt_list, 1, (int [1]){1}, displacements_, datatypes_[0], comm);
+      ddt_list, 1, (int [1]){1}, displacements, datatypes[0], comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   if (num_datatypes != count && num_datatypes > max_auto_dt)

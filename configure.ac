@@ -399,6 +399,8 @@ fi
 
 saved_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MPI_C_INCLUDE"
+AC_COMPUTE_INT([MPI_VERSION], [MPI_VERSION], [@%:@include <mpi.h>],
+  [AC_MSG_ERROR([cannot determine MPI version!])])
 TJ_FIND_INTEGRAL_TYPE([MPI_Fint],[MPI_FINT],[@%:@include <mpi.h>])
 ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([CAST_MPI_SEND_BUF="(buf)"
    XT_MPI_SEND_BUF_CONST=const],
@@ -413,13 +415,44 @@ ACX_MPI_GET_ADDRESS_CONST_VOID_P_LOCATION_ARG(
   [XT_CAST_MPI_GET_ADDRESS_LOCATION="(location)"
    XT_MPI_GET_ADDRESS_LOCATION_CONST=const],
   [XT_CAST_MPI_GET_ADDRESS_LOCATION="((void *)(location))"
-   XT_MPI_GET_ADDRESS_LOCATION_CONST=]
-  )
+   XT_MPI_GET_ADDRESS_LOCATION_CONST=])
 AC_DEFINE_UNQUOTED([XT_CAST_MPI_GET_ADDRESS_LOCATION(location)],
   [$XT_CAST_MPI_GET_ADDRESS_LOCATION],
   [Macro to cast first argument to MPI_Get_address (if necessary)])
 AC_DEFINE_UNQUOTED([XT_MPI_GET_ADDRESS_LOCATION_CONST],[$XT_MPI_GET_ADDRESS_LOCATION_CONST],
   [Defined to const, iff location argument to MPI_Get_address can be const])
+dnl
+ACX_MPI_TYPE_CREATE_STRUCT_CONST_ARRAY_ARGS(
+  [AC_DEFINE([XT_MPI_TYPE_CREATE_STRUCT_CONST_ARRAY_ARGS],[1],
+     [defined to 1, iff MPI_Type_create_struct array parameters are declared as const.])],
+  [:])
+dnl
+AH_TEMPLATE([XT_MPI_TYPE_CREATE_HINDEXED_BLOCK_CONST_DISP],
+  [defined to 1, iff MPI_Type_create_hindexed_block disp parameter is declared as const.])
+AS_IF([test $MPI_VERSION -lt 2],
+  [AC_DEFINE([XT_MPI_TYPE_CREATE_HINDEXED_BLOCK_CONST_DISP],[1])],
+  [ACX_MPI_TYPE_CREATE_HINDEXED_BLOCK_CONST_DISP(
+    [AC_DEFINE([XT_MPI_TYPE_CREATE_HINDEXED_BLOCK_CONST_DISP],[1])],[:])])
+dnl
+ACX_MPI_TYPE_CREATE_INDEXED_BLOCK_CONST_DISP(
+  [AC_DEFINE([XT_MPI_TYPE_CREATE_INDEXED_BLOCK_CONST_DISP],[1],
+     [defined to 1, iff MPI_Type_create_indexed_block disp parameter is declared as const.])],
+  [:])
+dnl
+ACX_MPI_TYPE_INDEXED_CONST_ARRAY_ARGS(
+  [AC_DEFINE([XT_MPI_TYPE_INDEXED_CONST_ARRAY_ARGS],[1],
+     [defined to 1, iff MPI_Type_indexed array parameters are declared as const.])],
+  [:])
+dnl
+ACX_MPI_TYPE_CREATE_HINDEXED_CONST_ARRAY_ARGS(
+  [AC_DEFINE([XT_MPI_TYPE_CREATE_HINDEXED_CONST_ARRAY_ARGS],[1],
+     [defined to 1, iff MPI_Type_create_hindexed array parameters are declared as const.])],
+  [:])
+dnl
+ACX_MPI_TYPE_CREATE_SUBARRAY_CONST_ARRAY_ARGS(
+  [AC_DEFINE([XT_MPI_TYPE_CREATE_SUBARRAY_CONST_ARRAY_ARGS],[1],
+     [defined to 1, iff MPI_Type_create_subarray array parameters are declared as const.])],
+  [:])
 dnl
 AC_ARG_ENABLE([mpi-profiling],
   [AS_HELP_STRING([--enable-mpi-profiling],
@@ -441,8 +474,6 @@ XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 AC_CHECK_SIZEOF([MPI_Datatype],,[@%:@include <mpi.h>])
 AS_IF([test $ac_cv_sizeof_MPI_Datatype -eq 0],
   [AC_MSG_FAILURE([Could not detect size of MPI_Datatype!])])
-AC_COMPUTE_INT([MPI_VERSION], [MPI_VERSION], [@%:@include <mpi.h>],
-  [AC_MSG_ERROR([cannot determine MPI version!])])
 CFLAGS=$saved_CFLAGS
 AS_CASE(["$MPI_FINT"],
   [int],[XT_MPI_FINT_MAX=INT_MAX XT_MPI_FINT_FC_KIND=c_int],

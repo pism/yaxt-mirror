@@ -50,6 +50,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -316,7 +317,7 @@ Xt_idxlist xt_idxvec_prealloc_new(const Xt_int *idxvec, int num_indices)
   Xt_idxlist_init(&idxvec_obj->parent, &idxvec_vtable, num_indices);
   idxvec_obj->vector = idxvec;
   return xt_idxvec_congeal((struct Xt_vec_alloc){
-      .idxvec = idxvec_obj, .vector = (void *)idxvec });
+      .idxvec = idxvec_obj, .vector = (void *)(intptr_t)idxvec });
 }
 
 static size_t
@@ -497,7 +498,7 @@ static void idxvec_delete(Xt_idxlist obj) {
 
   Xt_idxvec vec_obj = (Xt_idxvec)obj;
   if (vec_obj->sorted_vector != vec_obj->vector)
-    free((void *)(vec_obj->sorted_vector));
+    free((void *)(intptr_t)vec_obj->sorted_vector);
   free(vec_obj->sorted_vec_positions);
   free(obj);
 }

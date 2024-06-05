@@ -293,7 +293,8 @@ redist_msgs_to_req(size_t nmsg,
     typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
                        int tag, MPI_Comm comm, MPI_Request *request);
     ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
-    void *data = MSG_DIR(msgs[i]) == SEND ? (void *)src_data : dst_data;
+    void *data = MSG_DIR(msgs[i]) == SEND
+      ? (void *)(intptr_t)src_data : dst_data;
     xt_mpi_call(op(data, 1, msgs[i].datatype, msgs[i].rank & INT_MAX,
                    tag_offset + xt_mpi_tag_exchange_msg,
                    comm, requests+i), comm);
