@@ -41,9 +41,12 @@
 #
 
 EXTRA_PROGRAMS = 						\
-	perf_idxsection_get_positions_of_indices		\
-	perf_xmap_create
+	perf_idxsection_get_positions_of_indices
 
+if have_getopt_long
+EXTRA_PROGRAMS += 						\
+	perf_xmap_create
+endif
 if with_fortran
 EXTRA_PROGRAMS += 						\
 	perf_sparse_array_gather
@@ -52,7 +55,6 @@ EXTRA_PROGRAMS += 						\
 	perf_xmap_create_f
 endif
 endif
-
 
 noinst_PROGRAMS =
 if with_perf_programs
@@ -68,10 +70,11 @@ perf_sparse_array_gather_LDADD = ../src/libyaxt.la ../src/libyaxt_c.la \
 	$(MPI_FC_LIB)
 
 perf_xmap_create_SOURCES = perf_xmap_create.c
+perf_xmap_create_LDADD = $(LDADD) $(GETOPT_LONG_LIBS)
 
 perf_xmap_create_f_SOURCES = perf_xmap_create_f.f90
 perf_xmap_create_f_LDADD = ../src/libyaxt.la ../src/libyaxt_c.la \
-	$(MPI_FC_LIB)
+	$(MPI_FC_LIB) $(GETOPT_LONG_LIBS)
 perf_xmap_create_f.$(OBJEXT): perf_xmap_create_f.f90 ../src/libyaxt.la
 
 AM_CFLAGS = -I../inst_headers $(MPI_C_INCLUDE)

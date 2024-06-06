@@ -327,6 +327,39 @@ dnl ######################################################################
 dnl Checks for header files.
 dnl ######################################################################
 dnl
+dnl ######################################################################
+dnl Checks for function availability.
+dnl ######################################################################
+dnl
+dnl
+# Older FreeBSD has a gnugetopt library for getopt_long,
+# also we need the header
+AS_VAR_SET_IF([GETOPT_LONG_LIBS],,
+  [AC_CHECK_HEADER([getopt.h],
+     [ACX_OPTION_SEARCH_LIBS_MULTI([getopt_long], [gnugetopt],
+        [AS_CASE([${acx_cv_option_search_getopt_long_c}],
+           [none\ required],[GETOPT_LONG_LIBS=''],
+           [AS_VAR_SET([GETOPT_LONG_LIBS],
+              ["${acx_cv_option_search_getopt_long_c}"])])],,,,
+        [@%:@include <stdlib.h>
+@%:@include <getopt.h>],
+        [
+  int argc = 1;
+  char *argv@<:@@:>@ = { "conftest", "--help", NULL };
+  struct option lopts@<:@@:>@ =
+   { { "--help", 0, NULL, 'h' },
+     { 0, 0, 0, 0 } };
+  int option_index = 0;
+  int rc = getopt_long(argc, argv, "h", lopts, &option_index);
+  return rc == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
+])])])
+AM_CONDITIONAL([have_getopt_long],
+  [${GETOPT_LONG_LIBS+:} false])
+AC_SUBST([GETOPT_LONG_LIBS])
+
+dnl AS_IF([${ac_cv_search_getopt_long+:} false],
+dnl  [AC_DEFINE([HAVE_GETOPT_LONG],[1],[getopt_long is available])])
+dnl
 while : ; do[]m4_pushdef([cuda_includes],[AC_INCLUDES_DEFAULT
 @%:@include <cuda.h>])m4_pushdef([no_cuda],[AC_MSG_NOTICE([$1, not building CUDA component])
 acx_cuda_version=0 ; break])

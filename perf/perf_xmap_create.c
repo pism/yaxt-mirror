@@ -324,7 +324,7 @@ parse_options(int argc, const char *argv[], Xt_config config)
     = { [1] = &run_config.num_columns, [2] = &run_config.nlev, [3] = &run_config.nlev, };
   while (1) {
     int option_index = 0;
-    int c = getopt_long(argc, (char * const*)argv, "",
+    int c = getopt_long(argc, (char * const*)(intptr_t)argv, "",
                         longopts, &option_index);
     if (c == -1)
       break;
