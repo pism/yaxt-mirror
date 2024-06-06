@@ -140,6 +140,7 @@ run_test_gcc_11_2_0:
     paths:
       - make.err
       - config.log.gz
+      - tests/test-suite.log
     when: always
     expire_in: 5min
 
@@ -168,6 +169,7 @@ run_test_intel_2021_5_0:
     paths:
       - make.err
       - config.log.gz
+      - tests/test-suite.log
     when: always
     expire_in: 5min
 
@@ -190,9 +192,11 @@ run_test_oneapi_2023_2_1:
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
-    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+#    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+    - make -j8 2> >(tee make.err)
 # run tests
-    - make check
+# TJ: deactivated checks because of problems in startup in the container
+#    - make check
   artifacts:
     paths:
       - make.err
@@ -225,6 +229,7 @@ run_test_nag_7_1:
     paths:
       - make.err
       - config.log.gz
+      - tests/test-suite.log
     when: always
     expire_in: 5min
 
