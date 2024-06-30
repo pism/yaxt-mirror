@@ -943,8 +943,7 @@ int main(int argc, char **argv) {
           MPI_Datatype dup_mpi_int;
           MPI_Type_dup(MPI_INT, &dup_mpi_int);
           enum {COUNT = minimal_cont_count};
-          xt_mpi_call(MPI_Type_contiguous(COUNT, dup_mpi_int, &i_mpi_ddt),
-                      MPI_COMM_WORLD);
+          MPI_Type_contiguous(COUNT, dup_mpi_int, &i_mpi_ddt);
           MPI_Type_free(&dup_mpi_int);
         }
 
