@@ -46,7 +46,7 @@ dnl Basic autotools settings.
 dnl ######################################################################
 AC_PREREQ([2.64])
 dnl Update the corresponding entry in doc/Doxyfile when changing this
-AC_INIT([yaxt],[0.11.1],[hanke@dkrz.de],,
+AC_INIT([yaxt],[0.11.2],[hanke@dkrz.de],,
   [http://www.dkrz.de/redmine/projects/yaxt])
 AC_CONFIG_SRCDIR([src/xt_idxlist.c])
 AC_CONFIG_AUX_DIR([config])
