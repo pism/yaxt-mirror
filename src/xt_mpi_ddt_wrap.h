@@ -70,13 +70,19 @@ XtMPI_Type_create_hindexed_block(int count, int blocklength,
                                  MPI_Datatype oldtype, MPI_Datatype *newtype)
 {
   size_t count_ = count > 0 ? (size_t)count : 0;
-  int *restrict blocklengths = xmalloc(count_ * sizeof (*blocklengths));
+  enum { bl_auto_max = 32 };
+  int blocklengths_auto[bl_auto_max];
+  int *restrict blocklengths
+    = count_ > bl_auto_max
+    ? xmalloc(count_ * sizeof (*blocklengths))
+    : blocklengths_auto;
   for (size_t i = 0; i < count_; ++i)
     blocklengths[i] = blocklength;
   int rc = MPI_Type_create_hindexed(count, blocklengths,
                                     CAST_MPI_SEND_BUF(array_of_displacements),
                                     oldtype, newtype);
-  free(blocklengths);
+  if (count_ > bl_auto_max)
+    free(blocklengths);
   return rc;
 }
 
