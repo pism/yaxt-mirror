@@ -26,6 +26,7 @@ stages:
 
 .load_basic_modules: &load_basic_modules
   - . /sw/etc/profile.levante
+  - export LANG=en_US.UTF-8
   - module purge
   - module load git python3
 
