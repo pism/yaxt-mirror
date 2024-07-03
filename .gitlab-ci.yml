@@ -156,7 +156,8 @@ run_test_intel_2021_5_0:
       CC=mpicc FC=mpifort
       FCFLAGS="-O2 -march=core-avx2 -g"
       CFLAGS="-O2 -march=core-avx2 -g"
-      BUILD_FCFLAGS="-Wall"
+      BUILD_FCFLAGS="-diag-enable=all"
+      BUILD_CFLAGS="-diag-enable=all"
       --disable-silent-rules
       MPI_LAUNCH="`which mpirun` --oversubscribe"
       || { status=$? ; gzip config.log ; exit $status ; }
@@ -184,7 +185,8 @@ run_test_oneapi_2023_2_1:
       CC=mpiicc FC=mpiifort
       FCFLAGS="-O2 -march=core-avx2 -g"
       CFLAGS="-O2 -march=core-avx2 -g -fno-math-errno"
-      BUILD_FCFLAGS="-Wall"
+      BUILD_FCFLAGS="-diag-enable=all"
+      BUILD_CFLAGS="-diag-enable=all"
       LDFLAGS="-g -shared-intel"
       --disable-silent-rules
       --disable-static
