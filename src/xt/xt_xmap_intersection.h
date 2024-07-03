@@ -106,6 +106,7 @@ xt_xmap_intersection_new(int num_src_intersections,
  * @param[in] dst_idxlist           destination index list
  * @param[in] comm                  MPI communicator that contains all processes
  *                                  that part in the exchange
+ * @param[in] config                custom configuration parameters
  */
 Xt_xmap
 xt_xmap_intersection_custom_new(

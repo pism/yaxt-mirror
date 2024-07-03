@@ -105,6 +105,7 @@ xt_idxstripes_congeal(struct Xt_stripes_alloc stripes_alloc);
  *
  * @param[in] num_stripes number of stripes
  * @param[in] stripes     array defining the stripes
+ * @param[in] config      custom configuration parameters
  * @return index list composed of the stripes passed in
  */
 PPM_DSO_INTERNAL Xt_idxlist

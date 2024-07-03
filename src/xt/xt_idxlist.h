@@ -92,7 +92,7 @@ void xt_idxlist_delete(Xt_idxlist idxlist);
  *                    packed index list
  *
  * @remark You need to provide the same buffer for all related calls of
- *         xt_idxlist_get_pack_size , \ref xt_idxlist_pack and
+ *         \ref xt_idxlist_get_pack_size , \ref xt_idxlist_pack and
  *         \ref xt_idxlist_unpack
  *
  * @see xt_idxlist_pack
@@ -118,7 +118,7 @@ size_t xt_idxlist_get_pack_size(Xt_idxlist idxlist, MPI_Comm comm);
  *         index list. You can determine the required size using
  *         \ref xt_idxlist_get_pack_size .
  * @remark You need to provide the same buffer for all related calls of
- *         \ref xt_idxlist_get_pack_size , xt_idxlist_pack and \ref xt_idxlist_unpack
+ *         \ref xt_idxlist_get_pack_size , \ref xt_idxlist_pack and \ref xt_idxlist_unpack
  *
  * @see xt_idxlist_get_pack_size
  * @see xt_idxlist_unpack

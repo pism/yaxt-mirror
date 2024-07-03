@@ -61,6 +61,10 @@
  * in this function
  * @param ebuf points to memory of extra_buf_size chars, aligned like
  * a data pointer
+ * @param data passes on the paramter of the same name to
+ * @ref xt_request_msgs_ebuf_new
+ *
+ * @param comm MPI communicator to use for error reporting
  */
 typedef void (*Xt_fill_ebuf_requests)(Xt_request requests_msgs,
                                       MPI_Request *requests,

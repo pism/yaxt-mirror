@@ -176,6 +176,7 @@ xt_create_compound_datatype(size_t count,
  * @param[in]  redists     redistribution objects
  * @param[out] num_ranks   number of incoming/outgoing messages per redist
  * @param[out] ranks       ranks of communicator partners for each redist
+ * @param[in]  config      custom configuration parameters
  * @return Number of processes that receive data from/send data to the
  *         local process.
  * @remark the user needs to ensure that rank arrays are big enough to hold all

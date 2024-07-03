@@ -108,6 +108,10 @@ typedef struct Xt_com_list (*Xt_xmdd_bucket_gen_next)(
  * be empty anyway).  Any previously returned buckets become invalid.
  * @param[in] get_intersect_max_num This function returns, for a given
  * state the maximal number of buckets that will be generated
+ *
+ * @param gen_state_size number of bytes to allocate for each generator state
+ * @param init_params global parameters passed to each invocation of
+ * the \a init function
  */
 void
 xt_xmdd_bucket_gen_define_interface(

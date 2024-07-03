@@ -177,6 +177,8 @@ SymPrefix(memcrc_r)(uint32_t *state, const unsigned char *block, size_t block_le
 /**
  *  Does endian-swapping prior to checksumming in case platform is big-endian
  *
+ *  @param state contains the check accumulator, should be initialized
+ *  to a defined value like 0
  *  @param elems points to first first element with alignment elem_size
  *  @param num_elems number of elements to process
  *  @param elem_size size of each element in bytes
