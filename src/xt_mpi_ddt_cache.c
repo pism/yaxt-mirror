@@ -54,12 +54,12 @@
 #include <mpi.h>
 
 #include "xt/xt_mpi.h"
-#include "xt_mpi_ddt_cache.h"
-#include "xt_mpi_ddt_wrap.h"
 #include "xt_arithmetic_util.h"
 #include "core/cksum.h"
 #include "core/core.h"
 #include "core/ppm_xfuncs.h"
+#include "xt_mpi_ddt_wrap.h"
+#include "xt_mpi_ddt_cache.h"
 
 #if ! HAVE_DECL___BUILTIN_CLZL       \
   && (HAVE_DECL___LZCNT && SIZEOF_LONG == SIZEOF_INT               \
@@ -313,27 +313,6 @@ Xt_mpi_ddt_cache_acquire_indexed_block(
   }
   return dt;
 }
-
-#if MPI_VERSION < 3
-static inline int
-XtMPI_Type_create_hindexed_block(int count, int blocklength,
-                                 const MPI_Aint array_of_displacements[],
-                                 MPI_Datatype oldtype, MPI_Datatype *newtype)
-{
-  size_t count_ = count > 0 ? (size_t)count : 0;
-  int *restrict blocklengths = xmalloc(count_ * sizeof (*blocklengths));
-  for (size_t i = 0; i < count_; ++i)
-    blocklengths[i] = blocklength;
-  int rc = MPI_Type_create_hindexed(count, blocklengths,
-                                    CAST_MPI_SEND_BUF(array_of_displacements),
-                                    oldtype, newtype);
-  free(blocklengths);
-  return rc;
-}
-
-#define MPI_Type_create_hindexed_block XtMPI_Type_create_hindexed_block
-enum { MPI_COMBINER_HINDEXED_BLOCK=128 };
-#endif
 
 MPI_Datatype
 Xt_mpi_ddt_cache_acquire_hindexed_block(
