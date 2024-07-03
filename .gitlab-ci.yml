@@ -245,8 +245,7 @@ gen_doxy_html:
       when: always
     - when: never
   script:
-  - make -C doc
-  - doxygen doc/Doxyfile 2> >(tee doxy.err)
+  - make -C doc 2> >(tee doxy.err)
   artifacts:
     expire_in: 5min
     paths:
