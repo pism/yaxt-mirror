@@ -47,11 +47,12 @@ nodist_include_HEADERS = yaxt.h
 SUBDIRS = . f90
 DIST_SUBDIRS = f90 .
 
-../src/xtinclude_Makefile.inc:
-	(cd ../src ; if test -r Makefile ; then \
-	  $(MAKE) xtinclude_Makefile.inc ; fi)
+libyaxt_c_srcdir = ../src
+$(libyaxt_c_srcdir)/xtinclude_Makefile.inc:
+	cd $(libyaxt_c_srcdir) ; if test -r Makefile ; then \
+	  exec $(MAKE) xtinclude_Makefile.inc ; fi
 
-@am__include@ @am__quote@../src/xtinclude_Makefile.inc@am__quote@ # am--include-marker
+@am__include@ @am__quote@$(libyaxt_c_srcdir)/xtinclude_Makefile.inc@am__quote@ # am--include-marker
 
 yaxt.h: Makefile $(xtinclude_HEADERS)
 	$(AM_V_GEN)( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
@@ -65,19 +66,19 @@ yaxt.h: Makefile $(xtinclude_HEADERS)
 xt/.dir_stamp:
 	$(AM_V_GEN)$(MKDIR_P) xt && touch xt/.dir_stamp
 
-$(xtinclude_HEADERS): ../src/$@ ../include/config.h \
+$(xtinclude_HEADERS): ../include/config.h \
 	$(top_srcdir)/scripts/header2installheader.pl xt/.dir_stamp
-	$(AM_V_GEN) headerbasedir=`test -f '../src/$@' || echo '$(srcdir)/'` ; \
+	$(AM_V_GEN) headerbasedir=`test -f '$(libyaxt_c_srcdir)/$@' || echo '$(srcdir)/'` ; \
 	  $(PERL) -I$(top_srcdir)/scripts \
 	  $(top_srcdir)/scripts/header2installheader.pl \
 	  --config-header=../include/config.h \
-	  --srcdir=$$headerbasedir../src \
+	  --srcdir=$$headerbasedir$(libyaxt_c_srcdir) \
 	  --c-sizeof-int=$(C_SIZEOF_INT) \
 	  --c-sizeof-long=$(C_SIZEOF_LONG) \
 	  --c-sizeof-long-long=$(C_SIZEOF_LONG_LONG) \
 	  --c-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
 	  --dstdir=. \
-	  $$headerbasedir../src/$@
+	  $$headerbasedir$(libyaxt_c_srcdir)/$@
 
 clean-local:
 	rm -rf xt yaxt.h

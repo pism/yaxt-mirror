@@ -84,7 +84,7 @@ foreach my $headerFn (@ARGV)
       ' should start with ', $srcBaseDir)
       if (substr($headerFn, 0, $srcBaseDirStrLen) ne $srcBaseDir);
   my ($instHeaderFn) = catfile($dstBaseDir,
-                               substr($headerFn, $srcBaseDirStrLen));
+                               substr($headerFn, $srcBaseDirStrLen+1));
   my (undef, $instHeaderDir, undef) = splitpath($instHeaderFn);
   mkpath($instHeaderDir)
       unless (-d $instHeaderDir);
@@ -95,8 +95,7 @@ foreach my $headerFn (@ARGV)
   my $symprefixsubst = 0;
   open($headerFh, '<', $headerFn)
       or die('Cannot read header file: ', $headerFn, "\n");
-  unlink($instHeaderFn) if (-e $instHeaderFn);
-  open($instHeaderFh, '>', $instHeaderFn)
+  open($instHeaderFh, '+<', $instHeaderFn)
       or die('Cannot open output file for writing: ', $instHeaderFn, "\n");
 
   my @predicateLevels = ({'ignored' => 0, 'expand' => 0});
@@ -133,10 +132,8 @@ foreach my $headerFn (@ARGV)
               'Replacing #ifdef HAVE_CONFIG_H/#include "config.h"/#endif',
               ' structure at', "\n  ", $headerFn, ', line ', $lineno, "\n")
             if ($debug > 1);
-        # print(STDERR join(', ', @headerLineNo), "\n");
         splice(@headerContents, $line, 3, @configHInsert);
         splice(@headerLineNo, $line, 3, (($lineno) x @configHInsert));
-        # print(STDERR join(', ', @headerLineNo), "\n");
         redo;
       }
       print(STDERR 'line ', $lineno, "\n") if ($debug > 2);
@@ -343,7 +340,29 @@ foreach my $headerFn (@ARGV)
   die('Unbalanced #if at line ', $predicateLevels[-1]{'line'},
       ' of ', $headerFn, "\n")
       if @predicateLevels > 2;
-  print($instHeaderFh @headerContents);
+  my (@oldHeaderContents) = (<$instHeaderFh>);
+  unless (join('',@oldHeaderContents) eq join('', @headerContents)) {
+    if ($debug and @oldHeaderContents) {
+      no warnings 'once';
+      local *STDTOUT;
+      open(STDOUT, '>&', STDERR);
+      if (open(my $diffFh, '|-', 'diff', '-u', $instHeaderFn, '-')) {
+        print($diffFh @headerContents)
+            or print (STDERR 'warning: problem writing to diff: ', $!, "\n");
+        if (!close($diffFh) and $! != 0) {
+          print (STDERR 'warning: problem running diff: ', $!, "\n");
+        }
+      } else {
+        print (STDERR 'warning: could not launch diff: ', $!, "\n");
+      }
+      close(STDOUT);
+    }
+    truncate($instHeaderFh, 0)
+        or die('cannot truncate ', $instHeaderFn, ": $!\n");
+    seek($instHeaderFh, 0, 0)
+        or die('failed to position output position: ', $!, "\n");
+    print($instHeaderFh @headerContents);
+  }
   close($headerFh) && close($instHeaderFh)
       or die;
 }

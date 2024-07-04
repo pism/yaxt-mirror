@@ -883,6 +883,22 @@ AC_CONFIG_HEADERS([include/config.h])
 AC_SUBST([XT_FC_FEATURE_DEFS])
 AM_SUBST_NOTMAKE([XT_FC_FEATURE_DEFS])
 AC_CONFIG_FILES([include/fc_feature_defs.inc])
+m4_pushdef([_AC_OUTPUT_FILE],
+  m4_bpatsubst(m4_dquote(m4_defn([_AC_OUTPUT_FILE])),
+    [  case \$ac_file in
+  -. cat "\$ac_tmp/out" && rm -f "\$ac_tmp/out";;
+  \*. rm -f "\$ac_file" && mv "\$ac_tmp/out" "\$ac_file";;
+  esac],[  case $ac_file in
+  -\) cat "$ac_tmp/out" && rm -f "$ac_tmp/out";;
+  include/fc_feature_defs.inc\)
+    if diff "$ac_file" "$ac_tmp/out" >/dev/null 2>&1; then
+      echo "$ac_file is unchanged"
+    else
+      rm -f "$ac_file"; mv "$ac_tmp/out" "$ac_file"
+    fi
+    ;;
+  *\) rm -f "$ac_file" && mv "$ac_tmp/out" "$ac_file";;
+  esac]))
 
 AC_CONFIG_FILES([						\
 	perf/perf_idxsection_get_positions_of_indices_run	\
@@ -931,7 +947,8 @@ AC_CONFIG_FILES([						\
 	examples/tr_gp2fs_run					\
 	examples/unstruct_halo_exchange_run			\
 	util/serialrun],[chmod a+x "$ac_file"])
-AC_CONFIG_FILES([Makefile src/Makefile src/mpi-workarounds/Makefile tests/Makefile examples/Makefile \
+AC_CONFIG_FILES([Makefile src/Makefile src/mpi-workarounds/Makefile \
+  tests/Makefile examples/Makefile \
   inst_headers/Makefile inst_headers/f90/Makefile \
   src/pkgconfig/yaxt.pc src/pkgconfig/yaxt_c.pc perf/Makefile])
 # edit out the am--include-marker that's required for automake 1.16
