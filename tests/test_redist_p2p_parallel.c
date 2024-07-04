@@ -59,6 +59,34 @@
 #include "ctest_common.h"
 #include "test_redist_common.h"
 
+static void
+generate_block(int *restrict voldata, int *restrict block_sizes,
+               int *restrict block_offsets, const int gvoldata[],
+               const int ig2col_off[], const int gdepth[],
+               const Xt_int ivec[], int nwin)
+{
+  int qa=0;
+  if (nwin > 0) {
+    int bsize, ofs_accum;
+    {
+      Xt_int ia = ivec[0];
+      ofs_accum = block_offsets[0] = 0;
+      bsize = block_sizes[0] = gdepth[ia];
+      int ofs = ig2col_off[ia];
+      for (int j = 0; j < bsize; ++j, ++qa)
+        voldata[qa] = gvoldata[ofs + j];
+    }
+    for (int i = 1; i < nwin; i++) {
+      Xt_int ia = ivec[i];
+      block_offsets[i] = (ofs_accum+=bsize);
+      bsize = block_sizes[i] = gdepth[ia];
+      int ofs = ig2col_off[ia];
+      for (int j = 0; j < bsize; ++j, ++qa)
+        voldata[qa] = gvoldata[ofs + j];
+    }
+  }
+}
+
 
 int main(int argc, char **argv) {
 
@@ -249,10 +277,9 @@ int main(int argc, char **argv) {
     // generate global volume data
     int gvoldata[gvol_size];
     for (int i = 0; i < ngdom; i++) {
-      for (int j = 0; j <  gdepth[i]; j++) {
-        int p = ig2col_off[i] + j;
-        gvoldata[p] = i*100 + j;
-      }
+      int ofs = ig2col_off[i];
+      for (int j = 0; j <  gdepth[i]; j++)
+        gvoldata[ofs + j] = i*100 + j;
     }
 
     // generate blocks
@@ -271,38 +298,10 @@ int main(int argc, char **argv) {
       b_voldata_ref[i] = -1;
     }
 
-    {
-      int qa=0;
-      for (int i = 0; i < nwin; i++) {
-        Xt_int ia = iveca[i];
-        if (i==0)
-          src_block_offsets[i] = 0;
-        else
-          src_block_offsets[i] = src_block_offsets[i-1]+src_block_sizes[i-1];
-        src_block_sizes[i]   = gdepth[ia];
-        for (int j = 0; j < gdepth[ia]; j++, qa++) {
-          int p = ig2col_off[ia] + j;
-          a_voldata[qa] = gvoldata[p];
-        }
-      }
-    }
-
-    {
-      int qb=0;
-      for (int i = 0; i < nwin; i++) {
-        Xt_int ib = ivecb[i];
-        if (i==0)
-          dst_block_offsets[i] = 0;
-        else
-          dst_block_offsets[i] = dst_block_offsets[i-1]+dst_block_sizes[i-1];
-        dst_block_sizes[i]   = gdepth[ib];
-        for (int j = 0; j < gdepth[ib]; j++) {
-          int p = ig2col_off[ib] + j;
-          b_voldata_ref[qb] = gvoldata[p];
-          qb++;
-        }
-      }
-    }
+    generate_block(a_voldata, src_block_sizes, src_block_offsets,
+                   gvoldata, ig2col_off, gdepth, iveca, nwin);
+    generate_block(b_voldata_ref, dst_block_sizes, dst_block_offsets,
+                   gvoldata, ig2col_off, gdepth, ivecb, nwin);
 
     // redist with blocks:
     Xt_redist block_redist = xt_redist_p2p_blocks_off_custom_new(
