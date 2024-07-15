@@ -42,6 +42,7 @@ use warnings;
 
 use File::Path qw(mkpath);
 use File::Spec::Functions qw(catfile splitpath);
+use File::Temp qw(tempfile);
 use Getopt::Long ();
 use cpp ();
 use Storable qw(dclone);
@@ -51,13 +52,14 @@ sub substituteTokens($\@\%);
 sub setup();
 sub internConfigH();
 sub applyInstDef();
+sub hpp_transform($\@);
 
 
-my ($debug, $verbose,
+my ($debug, $verbose, $write_hpp_header,
     $srcBaseDir, $dstBaseDir,
     $parseCacheDB,
     $configHFn, %configHDefs, @configHInsert)
-    = (exists($ENV{'DEBUG'})?int($ENV{'DEBUG'}):0, 0,
+    = (exists($ENV{'DEBUG'})?int($ENV{'DEBUG'}):0, 0, 0,
        '', '');
 
 our $headerLine;
@@ -85,6 +87,9 @@ foreach my $headerFn (@ARGV)
       if (substr($headerFn, 0, $srcBaseDirStrLen) ne $srcBaseDir);
   my ($instHeaderFn) = catfile($dstBaseDir,
                                substr($headerFn, $srcBaseDirStrLen+1));
+  if ($write_hpp_header and substr($instHeaderFn, -4) eq '.hpp') {
+    $headerFn = substr($headerFn, 0, -2);
+  }
   my (undef, $instHeaderDir, undef) = splitpath($instHeaderFn);
   mkpath($instHeaderDir)
       unless (-d $instHeaderDir);
@@ -95,9 +100,13 @@ foreach my $headerFn (@ARGV)
   my $symprefixsubst = 0;
   open($headerFh, '<', $headerFn)
       or die('Cannot read header file: ', $headerFn, "\n");
-  open($instHeaderFh, '+<', $instHeaderFn)
-      or die('Cannot open output file for writing: ', $instHeaderFn, "\n");
-
+  if (-e $instHeaderFn) {
+    open($instHeaderFh, '+<', $instHeaderFn)
+        or die('Cannot open output file for writing: ', $instHeaderFn, "\n");
+  } else {
+    open($instHeaderFh, '+>', $instHeaderFn)
+        or die('Cannot open output file for writing: ', $instHeaderFn, "\n");
+  }
   my @predicateLevels = ({'ignored' => 0, 'expand' => 0});
   my $ignored = 0;
   my (@headerContents) = (<$headerFh>);
@@ -110,7 +119,7 @@ foreach my $headerFn (@ARGV)
     my $thisLineIgnored = $ignored;
     $headerLine = cpp::transliterateTrigraphs($headerLine);
     if ($headerLine
-        =~ m{^\s*\#\s*(if|ifdef|ifndef|endif|else|elif)\b\s*(.*?)\s*$}x)
+        =~ m{^\s*\#\s*(if|ifdef|ifndef|endif|else|elif)\b\s*(.*?)\s*$}xo)
     {
       # FIXME: handle multi-line conditionals
       my ($clause, $predicate) = ($1, $2);
@@ -126,8 +135,8 @@ foreach my $headerFn (@ARGV)
             if (!defined($headerContents[$line+2])
                 or !defined($headerContents[$line+1])
                 or !$headerContents[$line+1]
-                =~ m{^\#\s*include\s+(?:<|")config.h(?:"|>)}x
-                or !$headerContents[$line+2] =~ m{^\#\s*endif}x);
+                =~ m{^\#\s*include\s+(?:<|")config.h(?:"|>)}xo
+                or !$headerContents[$line+2] =~ m{^\#\s*endif}xo);
         print(STDERR
               'Replacing #ifdef HAVE_CONFIG_H/#include "config.h"/#endif',
               ' structure at', "\n  ", $headerFn, ', line ', $lineno, "\n")
@@ -195,7 +204,7 @@ foreach my $headerFn (@ARGV)
           $thisLineIgnored = 0;
           $predicateLevels[-1]{'predValueAny'} = 1;
           $headerLine
-              =~ s{^\s*\#\s*(elif)\b\s*(.*?)\s*$}{\#else}x;
+              =~ s{^\s*\#\s*(elif)\b\s*(.*?)\s*$}{\#else}xo;
         }
         elsif (defined($predicateLevels[-1]{'predValueAny'})
                && !$predicateLevels[-1]{'predValueAny'}
@@ -289,7 +298,7 @@ foreach my $headerFn (@ARGV)
       print(STDERR ($ignored?'Ignoring':'Evaluating'), ' upcoming text.',
             "\n") if $debug > 1;
     } elsif (!$ignored) {
-      if ($headerLine =~ m{^\s*#+(?:undef)\s+([A-Za-z_]\w*)\s*(..*)?$}) {
+      if ($headerLine =~ m{^\s*#+(?:undef)\s+([A-Za-z_]\w*)\s*(..*)?$}o) {
         my ($preProcSym, $trail) = ($1, $2);
         die ($headerFn, ', line ', $lineno, ":\n",
              '#undef of config.h macro!', "\n")
@@ -299,12 +308,12 @@ foreach my $headerFn (@ARGV)
             if defined($trail);
       }
       # handle expansion of SymPrefix/SYMPREFIX/symprefix macros
-      elsif ($headerLine =~ m{\#\s*include\s*[<"](?:core/)?symprefix.h[>"]}x)
+      elsif ($headerLine =~ m{\#\s*include\s*[<"](?:core/)?symprefix.h[>"]}xo)
       {
         $thisLineIgnored = 1;
         $symprefixsubst = 1;
       }
-      elsif ($headerLine =~ m{\#\s*include\s*([<"]).*?(?<=[^\\])\1}x)
+      elsif ($headerLine =~ m{\#\s*include\s*([<"]).*?(?<=[^\\])\1}xo)
       {
         # keep other include directives unchanged
       }
@@ -340,6 +349,9 @@ foreach my $headerFn (@ARGV)
   die('Unbalanced #if at line ', $predicateLevels[-1]{'line'},
       ' of ', $headerFn, "\n")
       if @predicateLevels > 2;
+  if ($write_hpp_header) {
+    hpp_transform($headerFn, @headerContents);
+  }
   my (@oldHeaderContents) = (<$instHeaderFh>);
   unless (join('',@oldHeaderContents) eq join('', @headerContents)) {
     if ($debug and @oldHeaderContents) {
@@ -376,7 +388,7 @@ sub internConfigH()
       or die('configuration header cannot be read', "\n");
   while (my $line = <$configHFh>)
   {
-    if ($line =~ m{^/\*\s+\#\s*undef\s+(\w+)\s+\*/$}x)
+    if ($line =~ m{^/\*\s+\#\s*undef\s+(\w+)\s+\*/$}xo)
     {
       $configHDefs{$1} = undef;
     }
@@ -392,7 +404,7 @@ sub internConfigH()
       $configHDefs{$preProcSym} = cpp::parseDefinition($args, $definition,
                                                        $configHFn, $lineno);
     }
-    elsif ($line =~ m{^\#\s*(?:if|ifdef|ifndef)\s+}x)
+    elsif ($line =~ m{^\#\s*(?:if|ifdef|ifndef)\s+}xo)
     {
       # line is start of conditional block, copy it verbatim
       my @condBlock = ($line);
@@ -400,11 +412,11 @@ sub internConfigH()
       while ($line = <$configHFh>)
       {
         push(@condBlock, $line);
-        if ($line =~ m{^\#\s*endif}x)
+        if ($line =~ m{^\#\s*endif}xo)
         {
           last if (!--$currentCondLevel);
         }
-        elsif ($line =~ m{^\#\s*(?:if|ifdef|ifndef)\s+}x)
+        elsif ($line =~ m{^\#\s*(?:if|ifdef|ifndef)\s+}xo)
         {
           ++$currentCondLevel;
         }
@@ -514,6 +526,140 @@ sub substituteTokens($\@\%)
   return $headerLine;
 }
 
+# and now for something completely different: find function
+# declarations that contain C99 VLA pointers and fix them for C++
+# which insists that C89/C90 is the only C there is.  Let's not think
+# too hard how C++ could just support something C's had for 25 years
+# now (and is a widespread extension already in the early 90ies).
+sub hpp_transform($\@)
+{
+  my ($headerFn, $headerContents, $numLines, $insert_start, $insert_end, $fundecl_seen, $restrict_seen)
+      = ($_[0], $_[1], scalar(@{$_[1]}), -1, -1, 0, 0);
+  my (undef, undef, $headerBaseFn) = File::Spec->splitpath($headerFn);
+  print STDERR $headerBaseFn, "\n" if ($debug > 2);
+  my $fname_stanza_re = qr([@\\]file\s+${headerBaseFn});
+  for (my $i = 0;
+       $i < $numLines;
+       ++$i)
+  {
+    my ($line) = ($headerContents->[$i]);
+    if ($line =~ m{^typedef\b}o) {
+      # handle typedef block
+      print STDERR 'typedef', "\n" if ($debug > 1);
+    } elsif ($line =~ m{^\#\s*include\s*\<xt/.*\.h\>}xo) {
+      print STDERR 'internal include', "\n" if ($debug > 1);
+      print(STDERR $line, $+[0], "\n") if ($debug > 2);
+      substr($headerContents->[$i], $+[0]-1, 0) = 'pp';
+    } elsif (index($line, '/*') != -1) {
+      print STDERR 'comment', $i, "\n" if ($debug > 1);
+      # begin of comment, scan to end of comment
+      while ($line !~ m{\*/}o) {
+        $line = $headerContents->[++$i];
+        if ($line =~ m{$fname_stanza_re}) {
+          print STDERR 'doxygen filename stanza', "\n" if ($debug > 1);
+          substr($headerContents->[$i], $+[0], 0) = 'pp';
+        }
+      }
+      print STDERR 'endcomment', $i, "\n" if ($debug > 1);
+      print STDERR Data::Dumper->Dump([\$line], [qw(line)])
+          if ($debug > 2);
+    } elsif ($line =~ m{^([a-zA-Z_][0-9a-zA-Z_]*\s+)
+                        *(?:[a-zA-Z_][0-9a-zA-Z_]*)(?=\()}gxo)
+    {
+      $fundecl_seen = 1;
+      print STDERR 'fundecl ', $line,
+          ' at line ', $i, "\n" if ($debug > 3);
+      # start of function declaration found, identify
+      # range up to its end
+      my $preceding_context = 0;
+      while ($i > $preceding_context
+             and index($headerContents->[$i - $preceding_context - 1], ';') == -1
+             and index($headerContents->[$i - $preceding_context - 1], '*/') == -1)
+      {
+        ++$preceding_context;
+      }
+      # identify function declarations with C99 array arguments and mangle
+      my ($fn_start, $fn_end) = ($i-$preceding_context);
+      if ($insert_start == -1) {
+        $insert_start = $fn_start;
+      }
+      while ($i < @$headerContents
+             and index($headerContents->[$i], ';') == -1) { ++$i; }
+      $insert_end = $fn_end = $i;
+      $line = join('', @{$headerContents}[$fn_start..$fn_end]);
+      $line =~ m{^(?:[a-zA-Z_][0-9a-zA-Z_]*\s+)*([a-zA-Z_][0-9a-zA-Z_]*)(?=\()}gmo;
+      print STDERR 'fundecl ', $1,
+          ($debug > 2 ? (' at lines ', $fn_start+1, ' to ', $fn_end) : ()),
+          "\n" if ($debug > 1);
+      my @params;
+      while ($line =~ m{\G([(,]\s*+([^]()[,]+
+                            (?:\[[a-z_A-Z0-9]*\]|\(\)|(?1)\))*)
+                          \s*(?=[),]))}gxo) {
+        print STDERR "match: '", $&, "'\n" if ($debug > 2);
+        push(@params, [ $-[2], $+[2], $2]);
+      }
+      print STDERR Data::Dumper->Dump([\$line, \@params], [qw(line params)])
+          if ($debug > 2);
+      for (my $i = 0;
+           $i < @params;
+           ++$i) {
+        $params[$i][1] = $params[$i][1] - $params[$i][0];
+      }
+      my ($vla_re, $vla_dim_name_re, $needs_hpp_replacement) = (undef, 0);
+      foreach my $param (@params) {
+        if ((' '.$param->[2].' ') =~ m{\brestrict\b}o) {
+          $restrict_seen = 1;
+          print(STDERR 'restrict seen in param "', $param->[2], "\"\n")
+              if ($debug > 1);
+        }
+        if ($param->[2] ne 'void'
+            and $param->[2] =~ m{^(?:[A-Za-z_][A-Za-z0-9_]*
+                                 \s+)+([A-Za-z_][A-Za-z0-9_]*)$}xo) {
+          $param->[3] = $1;
+          if (defined($vla_dim_name_re)) {
+            $vla_dim_name_re = qr{$vla_dim_name_re|$1};
+          } else {
+            $vla_dim_name_re = qr{$1};
+          }
+          $vla_re = qr{\s+\**([A-Za-z_][A-Za-z0-9_]*)
+                       (?:\[\])*\[($vla_dim_name_re)(?:\[.*\])*\]}x;
+        } elsif (defined($vla_re)
+                 and index($param->[2], '[') != -1
+                 and $param->[2] =~ m{$vla_re}x) {
+          $param->[4] = join('', substr($param->[2], 0, $-[1]),
+                             '*', $1);
+          $needs_hpp_replacement = 1;
+        }
+      }
+      if ($needs_hpp_replacement) {
+        my $ofs = 0;
+        foreach my $param (@params) {
+          if (defined($param->[4])) {
+            my $ofs_adj = length($param->[4]) - $param->[1];
+            substr($line, $param->[0]+$ofs, $param->[1]) = $param->[4];
+            $ofs += $ofs_adj;
+          }
+        }
+      }
+      print STDERR Data::Dumper->Dump([\$line, \@params], [qw(line params)])
+          if ($debug > 2);
+      splice(@$headerContents, $fn_start, $fn_end - $fn_start + 1,
+             split(/^/m, $line));
+    }
+  }
+  if ($fundecl_seen) {
+    my @extra_hdr_contents;
+    @extra_hdr_contents = ('#ifndef restrict', '#define restrict', '#endif')
+        if ($restrict_seen);
+    push(@extra_hdr_contents, 'extern "C" {');
+    splice(@$headerContents, $insert_end+1, 0, '};' . "\n");
+    splice(@$headerContents, $insert_start, 0,
+           map({ $_ . "\n" }
+               @extra_hdr_contents));
+  }
+}
+
+
 {
 
   # choose default appropriate for LP64
@@ -576,6 +722,8 @@ sub substituteTokens($\@\%)
                                     => \&set_c_char_sign,
                                     'c-char-is-unsigned'
                                     => \&set_c_char_sign,
+                                    'write-hpp-header!'
+                                    => \$write_hpp_header
                                    );
     if($help or $usage)
     {
@@ -591,11 +739,11 @@ sub substituteTokens($\@\%)
    sub set_cast_mode($)
    {
      my $mode = $_[1];
-     if ($mode =~ m{^lp64$}ix)
+     if ($mode =~ m{^lp64$}ixo)
      {
        ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 8, 8);
      }
-     elsif ($mode =~ m{^ilp32$}ix)
+     elsif ($mode =~ m{^ilp32$}ixo)
      {
        ($c_sizeof_int, $c_sizeof_long, $c_sizeof_long_long) = (4, 4, 8);
      }
@@ -613,7 +761,7 @@ sub substituteTokens($\@\%)
      my ($opt_name, $opt_val) = @_;
      if ($opt_name eq 'inst-def')
      {
-       my ($macro, $definition) = ($opt_val =~ m{([^=]*)(?:=(.*))?});
+       my ($macro, $definition) = ($opt_val =~ m{([^=]*)(?:=(.*))?}o);
        if (defined($macro))
        {
          $definition = '' unless (defined($definition));
@@ -627,7 +775,7 @@ sub substituteTokens($\@\%)
      elsif ($opt_name eq 'inst-undef')
      {
        die('Unexpected installation define ', $opt_val, "\n")
-           if ($opt_val =~ /=/);
+           if (index($opt_val, '=') != -1);
        $extraInstUndefs{$opt_val} = undef;
      }
    }
@@ -647,11 +795,11 @@ sub substituteTokens($\@\%)
    sub set_c_char_sign($$)
    {
       my $mode = $_[0];
-      if ($mode =~ m{c-char-is-unsigned})
+      if ($mode eq 'c-char-is-unsigned')
       {
          $c_char_is_unsigned = 1;
       }
-      elsif ($mode =~ m{c-char-is-signed})
+      elsif ($mode eq 'c-char-is-signed')
       {
          $c_char_is_unsigned = 0;
       }

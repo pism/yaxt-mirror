@@ -53,10 +53,10 @@
 
 #include <mpi.h>
 
-#include "xt/xt_core.h"
-#include "xt/xt_xmap.h"
-#include "xt/xt_redist.h"
-#include "xt/xt_config.h"
+#include <xt/xt_core.h>
+#include <xt/xt_xmap.h>
+#include <xt/xt_redist.h>
+#include <xt/xt_config.h>
 
 /** \example test_redist_p2p.c
  */

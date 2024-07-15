@@ -48,7 +48,7 @@
 
 #include <mpi.h>
 
-#include "xt/xt_request.h"
+#include <xt/xt_request.h>
 
 /**
  * constructor for message request handle

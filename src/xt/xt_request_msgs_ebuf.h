@@ -50,8 +50,8 @@
 
 #include <mpi.h>
 
-#include "xt/xt_request.h"
-#include "xt/xt_config.h"
+#include <xt/xt_request.h>
+#include <xt/xt_config.h>
 
 /**
  * function called after the xt_request_msgs_ebuf object has been

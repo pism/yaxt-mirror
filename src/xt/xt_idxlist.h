@@ -52,9 +52,9 @@
 #endif
 
 #include <stdlib.h>
-#include "xt/xt_config.h"
-#include "xt/xt_core.h"
-#include "xt/xt_stripe.h"
+#include <xt/xt_config.h>
+#include <xt/xt_core.h>
+#include <xt/xt_stripe.h>
 
 /** \example test_idxlist_utils.c
  */

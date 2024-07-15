@@ -51,7 +51,7 @@
 #include <config.h>
 #endif
 
-#include "xt/xt_core.h"
+#include <xt/xt_core.h>
 
 /** \example test_xmap_all2all.c
  */

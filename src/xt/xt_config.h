@@ -53,7 +53,7 @@
 #include <config.h>
 #endif
 
-#include "xt/xt_xmap_dist_dir_bucket_gen.h"
+#include <xt/xt_xmap_dist_dir_bucket_gen.h>
 
 typedef struct Xt_config_ *Xt_config;
 

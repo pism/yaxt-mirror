@@ -52,8 +52,8 @@
 #include <config.h>
 #endif
 
-#include "xt/xt_core.h"
-#include "xt/xt_idxlist.h"
+#include <xt/xt_core.h>
+#include <xt/xt_idxlist.h>
 
 /** \example test_idxempty.c
  */

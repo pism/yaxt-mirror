@@ -53,7 +53,7 @@
 
 #include <stdlib.h>
 
-#include "sort_common.h"
+#include <xt/sort_common.h>
 
 /** mergesort changing structured values
   *

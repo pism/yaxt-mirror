@@ -53,9 +53,9 @@
 
 #include <mpi.h>
 
-#include "xt/xt_config.h"
-#include "xt/xt_xmap.h"
-#include "xt/xt_redist.h"
+#include <xt/xt_config.h>
+#include <xt/xt_xmap.h>
+#include <xt/xt_redist.h>
 
 /** \example test_redist_single_array_base.c
  *  */

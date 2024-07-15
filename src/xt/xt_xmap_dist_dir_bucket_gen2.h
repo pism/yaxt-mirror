@@ -56,9 +56,9 @@
 
 #include <mpi.h>
 
-#include "xt/xt_xmap_dist_dir_bucket_gen.h"
-#include "xt/xt_idxlist.h"
-#include "xt/xt_config.h"
+#include <xt/xt_xmap_dist_dir_bucket_gen.h>
+#include <xt/xt_idxlist.h>
+#include <xt/xt_config.h>
 
 enum Xt_dist_dir_bucket_gen_types {
   Xt_dist_dir_bucket_gen_type_send = 1,

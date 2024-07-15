@@ -42,7 +42,8 @@
 
 xtincludedir = $(includedir)/xt
 
-nodist_include_HEADERS = yaxt.h
+nodist_include_HEADERS = yaxt.h yaxt.hpp
+nodist_xtinclude_HEADERS =  $(xtinclude_HEADERS)
 
 SUBDIRS = . f90
 DIST_SUBDIRS = f90 .
@@ -54,10 +55,19 @@ $(libyaxt_c_srcdir)/xtinclude_Makefile.inc:
 
 @am__include@ @am__quote@$(libyaxt_c_srcdir)/xtinclude_Makefile.inc@am__quote@ # am--include-marker
 
-yaxt.h: Makefile $(xtinclude_HEADERS)
+yaxt.h: Makefile $(libyaxt_c_srcdir)/xtinclude_Makefile.inc
 	$(AM_V_GEN)( echo '/* license */' ; echo '#ifndef YAXT_H' ; echo '#define YAXT_H' ; \
-	for header in $(xtinclude_HEADERS) ; \
-	  do echo "#include <$$header>" ; done ; \
+	printf '%s\n' $(xtinclude_HEADERS) \
+	| sed -n -e '/\.h$$/s@.*@#include <&>@p' ; \
+	echo '#endif' \
+	) >$@.$$$$.tmp ; \
+	if test ! -f $@ || ! cmp $@ $@.$$$$.tmp >/dev/null ; then \
+	mv $@.$$$$.tmp $@ ; else rm $@.$$$$.tmp ; fi
+
+yaxt.hpp: Makefile $(libyaxt_c_srcdir)/xtinclude_Makefile.inc
+	$(AM_V_GEN)( echo '/* license */' ; echo '#ifndef YAXT_HPP' ; echo '#define YAXT_HPP' ; \
+	printf '%s\n' $(xtinclude_HEADERS) \
+	| sed -n -e '/\.hpp$$/s@.*@#include <&>@p' ; \
 	echo '#endif' \
 	) >$@.$$$$.tmp ; \
 	if test ! -f $@ || ! cmp $@ $@.$$$$.tmp >/dev/null ; then \
@@ -77,16 +87,18 @@ $(xtinclude_HEADERS): ../include/config.h \
 	  --c-sizeof-long=$(C_SIZEOF_LONG) \
 	  --c-sizeof-long-long=$(C_SIZEOF_LONG_LONG) \
 	  --c-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
+	  `expr "$@" : '.*\.hpp$$' >/dev/null && echo --write-hpp-header` \
 	  --dstdir=. \
 	  $$headerbasedir$(libyaxt_c_srcdir)/$@
 
+all-local: $(xtinclude_HEADERS)
 clean-local:
-	rm -rf xt yaxt.h
+	rm -rf xt yaxt.h yaxt.hpp
 
 distclean-local:
 	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir f90
 
-install-data-local: yaxt.h $(xtinclude_HEADERS)
+install-data-local: yaxt.h yaxt.hpp $(xtinclude_HEADERS)
 	@echo " $(MKDIR_P) '$(DESTDIR)$(xtincludedir)'"; \
           $(MKDIR_P) "$(DESTDIR)$(xtincludedir)" || exit 1; \
 	for p in $(xtinclude_HEADERS); do \

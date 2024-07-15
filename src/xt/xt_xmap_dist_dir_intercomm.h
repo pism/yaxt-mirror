@@ -52,8 +52,8 @@
 #include <config.h>
 #endif
 
-#include "xt/xt_config.h"
-#include "xt/xt_core.h"
+#include <xt/xt_config.h>
+#include <xt/xt_core.h>
 
  /** \example test_xmap_dist_dir_intercomm_parallel.c
  */

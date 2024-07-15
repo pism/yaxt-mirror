@@ -53,7 +53,7 @@
 
 #include <stdlib.h>
 
-#include "xt/sort_common.h"
+#include <xt/sort_common.h>
 
 /** quicksort changing structured values
   *

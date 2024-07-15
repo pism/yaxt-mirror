@@ -51,8 +51,8 @@
 #include <config.h>
 #endif
 
-#include "xt/xt_config.h"
-#include "xt/xt_redist.h"
+#include <xt/xt_config.h>
+#include <xt/xt_redist.h>
 
 /** \example test_redist_collection_static.c
  */

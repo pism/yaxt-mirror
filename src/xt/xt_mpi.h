@@ -57,7 +57,7 @@
 
 #include <mpi.h>
 
-#include "xt/xt_core.h"
+#include <xt/xt_core.h>
 
 /** \example test_mpi_generate_datatype.c
  */

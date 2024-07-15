@@ -57,8 +57,8 @@
 
 #include <mpi.h>
 
-#include "xt/xt_core.h"
-#include "xt/xt_request.h"
+#include <xt/xt_core.h>
+#include <xt/xt_request.h>
 
 struct Xt_redist_msg {
 

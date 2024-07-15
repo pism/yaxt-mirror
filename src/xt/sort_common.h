@@ -50,7 +50,7 @@
 #include <config.h>
 #endif
 
-#include "xt/xt_core.h"
+#include <xt/xt_core.h>
 
 typedef struct idxpos_struct {
   Xt_int idx;

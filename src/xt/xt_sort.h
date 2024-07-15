@@ -53,8 +53,8 @@
 
 #include <stdlib.h>
 
-#include "xt/quicksort.h"
-#include "xt/mergesort.h"
+#include <xt/quicksort.h>
+#include <xt/mergesort.h>
 
 /** \example test_sort.c
  */
