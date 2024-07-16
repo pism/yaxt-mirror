@@ -48,7 +48,7 @@
  	continue
  	;;
  
-@@ -5801,18 +5807,58 @@
+@@ -5801,18 +5807,61 @@
  	;;
  
        -Wl,*)
@@ -113,7 +113,7 @@
  	func_stripname ' ' '' "$arg"
  	arg=$func_stripname_result
  	;;
-@@ -9515,6 +9562,10 @@
+@@ -8023,6 +8072,10 @@
  	  *) func_append new_libs " $deplib" ;;
  	  esac
  	  ;;
@@ -124,7 +124,7 @@
  	*) func_append new_libs " $deplib" ;;
  	esac
        done
-@@ -10247,6 +10298,10 @@
+@@ -8754,6 +8807,10 @@
  	  *) func_append new_libs " $deplib" ;;
  	  esac
  	  ;;
