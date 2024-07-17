@@ -1,4 +1,3 @@
-
 #
 # doc/Makefile --- Makefile for yaxt
 #
@@ -42,12 +41,20 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+DOXYGEN = doxygen
+
 html/index.html: ../configure.ac Doxyfile.in
 	cd .. && ./scripts/generate_doc.pl configure.ac \
 		doc/Doxyfile.in doc/Doxyfile && \
-		doxygen doc/Doxyfile
+		$(DOXYGEN) doc/Doxyfile
 
 
 clean:
 	rm -rf html/
 
+#
+# Local Variables:
+# coding: utf-8
+# show-trailing-whitespace: t
+# End:
+#
