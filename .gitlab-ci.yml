@@ -246,14 +246,16 @@ gen_doxy_html:
       when: always
     - when: never
   script:
-  - make -C doc 2> >(tee doxy.err)
+  - module load texlive/live2021-gcc-11.2.0
+  - PATH="$PATH:/sw/spack-levante/mambaforge-4.13.0-1-Linux-x86_64-budobm/pkgs/graphviz-5.0.1-h5abf519_0/bin"
+  - make -C doc DOXYGEN=/sw/spack-levante/doxygen-1.9.2-upexqu/bin/doxygen 2> >(tee doxy.err)
   artifacts:
     expire_in: 5min
     paths:
     - doc/html
     - doxy.err
   tags:
-  - doxygen
+  - levante-fake, hpc, dkrz
 
 gen_cov_rep_html:
   stage: documentation
