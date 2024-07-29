@@ -17,7 +17,14 @@ This README is divided into the following topics of increasing specificity.
 
 To initialize the autotools, execute
 
+$ scripts/reconfigure
+
+or try
+
+$ libtoolize
 $ autoreconf -i
+
+(but on macOS glibtoolize might be needed instead of libtoolize).
 
 This is not required if you have obtained a regular, packaged source
 distribution of yaxt, but only in case you have directly accessed the
