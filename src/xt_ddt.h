@@ -70,7 +70,7 @@ typedef struct Xt_ddt_ *Xt_ddt;
  * @returns required packing buffer size
  */
 PPM_DSO_INTERNAL size_t
-xt_ddt_get_pack_size(MPI_Datatype mpi_ddt);
+xt_ddt_get_pack_size(size_t count, MPI_Datatype mpi_ddt);
 
 /**
  * packs the data from the source buffer into destination buffer, based on
@@ -80,7 +80,7 @@ xt_ddt_get_pack_size(MPI_Datatype mpi_ddt);
  * @param[out] dst     destination buffer
  */
 PPM_DSO_INTERNAL void
-xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst);
+xt_ddt_pack(const void *src, size_t count, MPI_Datatype mpi_ddt, void *dst);
 
 /**
  * unpacks the data from the source buffer into destination buffer, based on
@@ -90,7 +90,7 @@ xt_ddt_pack(MPI_Datatype mpi_ddt, void const * src, void * dst);
  * @param[out] dst     destination buffer
  */
 PPM_DSO_INTERNAL void
-xt_ddt_unpack(MPI_Datatype mpi_ddt, void const * src, void * dst);
+xt_ddt_unpack(const void *src, size_t count, MPI_Datatype mpi_ddt, void * dst);
 
 #endif // XT_DDT_H
 

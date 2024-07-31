@@ -251,7 +251,7 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 
     // setup
 
-    struct Xt_redist_msg *send_msgs = NULL;
+    struct Xt_msg_param *send_msgs = NULL;
     int nsend = 0;
     int nrecv = my_rank != i;
 
@@ -259,15 +259,17 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
       nsend = comm_size - 1;
       send_msgs = xmalloc((size_t)nsend * sizeof (*send_msgs));
       for (size_t j = 0; j < (size_t)i; ++j)
-        send_msgs[j] = (struct Xt_redist_msg){.rank=(int)j,
-                                              .datatype=MPI_INT};
+        send_msgs[j] = (struct Xt_msg_param){.rank=(int)j,
+                                             .datatype=MPI_INT,
+                                             .displacement=0};
       for (size_t j = (size_t)i; j < (size_t)nsend; ++j)
-        send_msgs[j] = (struct Xt_redist_msg){.rank=(1+(int)j)%comm_size,
-                                              .datatype=MPI_INT};
+        send_msgs[j] = (struct Xt_msg_param){.rank=(1+(int)j)%comm_size,
+                                             .datatype=MPI_INT,
+                                             .displacement=0};
     }
-    struct Xt_redist_msg recv_msgs[2] =
-      {{.rank=-1, .datatype=MPI_DATATYPE_NULL},
-       {.rank=i, .datatype=MPI_INT}};
+    struct Xt_msg_param recv_msgs[2] =
+      {{.rank=-1, .datatype=MPI_DATATYPE_NULL, .displacement=0 },
+       {.rank=i, .datatype=MPI_INT, .displacement=0}};
 
     Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
                                            send_msgs,
@@ -284,15 +286,13 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
       if (async) {
         Xt_request request;
         int flag;
-        xt_exchanger_a_exchange(exchanger, (void*)(src_data),
-                                (void*)(dst_data), &request);
+        xt_exchanger_a_exchange(exchanger, src_data, dst_data, 1, &request);
         xt_request_test(&request, &flag);
         xt_request_wait(&request);
         xt_request_test(&request, &flag);
         if (!flag) PUT_ERR("invalid flag result\n");
       } else {
-        xt_exchanger_s_exchange(exchanger, (void*)(src_data),
-                                (void*)(dst_data));
+        xt_exchanger_s_exchange(exchanger, src_data, dst_data, 1);
       }
 
       if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
@@ -328,18 +328,20 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
     size_t nrecv = 0;
 
 
-    struct Xt_redist_msg send_msgs[1] = {{.rank=i, .datatype=MPI_INT}};
-    struct Xt_redist_msg *recv_msgs = NULL;
+    struct Xt_msg_param send_msgs[1]
+      = {{ .rank=i, .datatype=MPI_INT, .displacement=0}};
+    struct Xt_msg_param *recv_msgs = NULL;
     if (my_rank == i) {
       nrecv = (size_t)comm_size - 1;
       recv_msgs = xmalloc(nrecv * sizeof (*recv_msgs) * 2);
       for (size_t j = 0; j < nrecv; ++j) {
         recv_msgs[j].rank = (i + (int)j + 1)%comm_size;
         recv_msgs[j].datatype = dt_by_ofs[j];
-
+        recv_msgs[j].displacement = 0;
         recv_msgs[j + nrecv].rank
           = (comm_size - (int)j - 1 + i)%comm_size;
         recv_msgs[j + nrecv].datatype = dt_by_ofs[j];
+        recv_msgs[j + nrecv].displacement = 0;
       }
     }
 
@@ -362,13 +364,14 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
           Xt_request request;
           int flag;
           xt_exchanger_a_exchange(exchanger[j], src_data,
-                                  dst_data + j * nrecv, &request);
+                                  dst_data + j * nrecv, 1, &request);
           xt_request_test(&request, &flag);
           xt_request_wait(&request);
           xt_request_test(&request, &flag);
           if (!flag) PUT_ERR("invalid flag result\n");
         } else {
-          xt_exchanger_s_exchange(exchanger[j], src_data, dst_data + j * nrecv);
+          xt_exchanger_s_exchange(exchanger[j], src_data,
+                                  dst_data + j*nrecv, 1);
         }
       }
 
@@ -402,10 +405,12 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
   int nsend = comm_size - 1;
   int nrecv = comm_size - 1;
 
-  struct Xt_redist_msg *send_msgs = xmalloc((size_t)nsend * sizeof (*send_msgs));
-  for (size_t j = 0; j < (size_t)nsend; ++j)
+  struct Xt_msg_param *send_msgs = xmalloc((size_t)nsend * sizeof (*send_msgs));
+  for (size_t j = 0; j < (size_t)nsend; ++j) {
     send_msgs[j].datatype = MPI_INT;
-  struct Xt_redist_msg *recv_msgs
+    send_msgs[j].displacement = 0;
+  }
+  struct Xt_msg_param *recv_msgs
     = xmalloc((size_t)nrecv * sizeof (*recv_msgs));
   int *dst_data = xmalloc((size_t)comm_size * sizeof (*dst_data));
   MPI_Datatype *dt_by_ofs = xmalloc((size_t)comm_size * sizeof (*dt_by_ofs));
@@ -422,13 +427,15 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
     for (size_t j = 0; j < (size_t)nsend; ++j) {
       int ofs = my_rank + 1 + (int)i + (int)j;
       send_msgs[j].rank = (ofs + (ofs >= comm_size + my_rank))%comm_size;
+      send_msgs[j].displacement = 0;
     }
     for (size_t j = 0; j < comm_size_ - 1; j += incr) {
       for (size_t k = 0; k < (size_t)nrecv; ++k) {
         int ofs = ((int)i + (int)j + (int)k)%(comm_size - 1);
         ofs += ofs >= my_rank;
         recv_msgs[k].rank = ofs;
-        recv_msgs[k].datatype = dt_by_ofs[ofs];
+        recv_msgs[k].datatype = dt_by_ofs[ofs]; // replace by MPI_INT
+        recv_msgs[k].displacement = 0; // replace by sizeof (int) * ofs
       }
       Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
                                              send_msgs,
@@ -444,14 +451,14 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
         if (async) {
           Xt_request request;
           int flag;
-          xt_exchanger_a_exchange(exchanger, (void*)src_data, (void*)dst_data,
-                                  &request);
+          xt_exchanger_a_exchange(exchanger, src_data, dst_data,
+                                  1, &request);
           xt_request_test(&request, &flag);
           xt_request_wait(&request);
           xt_request_test(&request, &flag);
           if (!flag) PUT_ERR("invalid flag result\n");
         } else {
-          xt_exchanger_s_exchange(exchanger, (void*)src_data, (void*)dst_data);
+          xt_exchanger_s_exchange(exchanger, src_data, dst_data, 1);
         }
 
         bool mismatch = false;
@@ -486,10 +493,12 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 
     // setup
     enum { nsend = 1, nrecv = 1 };
-    struct Xt_redist_msg send_msgs[nsend]
-      = {{.rank=(my_rank + i)%comm_size, .datatype=MPI_INT}};
-    struct Xt_redist_msg recv_msgs[nrecv]
-      = {{.rank=(my_rank + comm_size - i)%comm_size, .datatype=MPI_INT}};
+    struct Xt_msg_param send_msgs[nsend]
+      = {{.rank=(my_rank + i)%comm_size, .datatype=MPI_INT,
+            .displacement = 0}};
+    struct Xt_msg_param recv_msgs[nrecv]
+      = {{.rank=(my_rank + comm_size - i)%comm_size, .datatype=MPI_INT,
+            .displacement=0}};
 
     Xt_exchanger exchanger = exchanger_new(nsend, nrecv, send_msgs,
                                            recv_msgs, comm, 0, config);
@@ -503,13 +512,13 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
       if (async) {
         Xt_request request;
         int flag;
-        xt_exchanger_a_exchange(exchanger, src_data, dst_data, &request);
+        xt_exchanger_a_exchange(exchanger, src_data, dst_data, 1, &request);
         xt_request_test(&request, &flag);
         xt_request_wait(&request);
         xt_request_test(&request, &flag);
         if (!flag) PUT_ERR("invalid flag result\n");
       } else {
-        xt_exchanger_s_exchange(exchanger, src_data, dst_data);
+        xt_exchanger_s_exchange(exchanger, src_data, dst_data, 1);
       }
 
       if (dst_data[0] != (my_rank + comm_size - i)%comm_size)
@@ -557,21 +566,20 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config 
   int nsend = remote_size;
   int nrecv = remote_size;
 
-  struct Xt_redist_msg * send_msgs =
+  struct Xt_msg_param *send_msgs =
     xmalloc((size_t)nsend * sizeof (*send_msgs));
   for (int i = 0; i < nsend; ++i) {
     send_msgs[i].rank = i;
     send_msgs[i].datatype = MPI_INT;
+    send_msgs[i].displacement = 0;
   }
 
-  struct Xt_redist_msg * recv_msgs =
+  struct Xt_msg_param *recv_msgs =
     xmalloc((size_t)nrecv * sizeof (*recv_msgs));
   for (int i = 0; i < nrecv; ++i) {
     recv_msgs[i].rank = i;
     recv_msgs[i].datatype = MPI_INT;
-    MPI_Type_indexed(
-      1, (int[]){1}, (int[]){i}, MPI_INT, &(recv_msgs[i].datatype));
-    MPI_Type_commit(&(recv_msgs[i].datatype));
+    recv_msgs[i].displacement = (MPI_Aint)sizeof (int) * i;
   }
 
   int *dst_data = xmalloc((size_t)nrecv * sizeof (*dst_data));
@@ -590,14 +598,14 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config 
     if (async) {
       Xt_request request;
       int flag;
-      xt_exchanger_a_exchange(exchanger, (void*)src_data, (void*)dst_data,
-                              &request);
+      xt_exchanger_a_exchange(exchanger, src_data, dst_data,
+                              1, &request);
       xt_request_test(&request, &flag);
       xt_request_wait(&request);
       xt_request_test(&request, &flag);
       if (!flag) PUT_ERR("invalid flag result\n");
     } else {
-      xt_exchanger_s_exchange(exchanger, (void*)src_data, (void*)dst_data);
+      xt_exchanger_s_exchange(exchanger, src_data, dst_data, 1);
     }
 
     int dst_data_offset = (my_rank >= splitRank)?0:splitRank;
@@ -610,8 +618,6 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config 
 
   // cleanup
   xt_exchanger_delete(exchanger);
-
-  for (int i = 0; i < nrecv; ++i) MPI_Type_free(&(recv_msgs[i].datatype));
 
   free(dst_data);
   free(recv_msgs);

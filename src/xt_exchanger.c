@@ -69,16 +69,18 @@ void xt_exchanger_delete(Xt_exchanger exchanger) {
   exchanger->vtable->delete(exchanger);
 }
 
-void xt_exchanger_s_exchange(Xt_exchanger exchanger, const void *src_data, void *dst_data) {
-
-  exchanger->vtable->s_exchange(exchanger, src_data, dst_data);
+void
+xt_exchanger_s_exchange(Xt_exchanger exchanger,
+                        const void *src_data, void *dst_data, int count)
+{
+  exchanger->vtable->s_exchange(exchanger, src_data, dst_data, count);
 }
 
 void xt_exchanger_a_exchange(Xt_exchanger exchanger,
                              const void *src_data, void *dst_data,
-                             Xt_request *request) {
+                             int count, Xt_request *request) {
 
-  exchanger->vtable->a_exchange(exchanger, src_data, dst_data, request);
+  exchanger->vtable->a_exchange(exchanger, src_data, dst_data, count, request);
 }
 
 int
@@ -96,9 +98,39 @@ xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger, int rank,
 }
 
 Xt_exchanger_omp_share
-xt_exchanger_create_omp_share(Xt_exchanger exchanger)
+xt_exchanger_create_omp_share(Xt_exchanger exchanger, int max_count)
 {
-  return exchanger->vtable->create_omp_share(exchanger);
+  return exchanger->vtable->create_omp_share(exchanger, max_count);
+}
+
+void
+xt_msg_params_copy(size_t n,
+                   const struct Xt_msg_param *restrict src,
+                   struct Xt_msg_param *restrict dst,
+                   MPI_Comm comm, bool dt_dup) {
+  for (size_t i = 0; i < n; ++i) {
+    dst[i].rank = src[i].rank;
+    dst[i].displacement = src[i].displacement;
+    if (dt_dup)
+      xt_mpi_call(MPI_Type_dup(src[i].datatype, &dst[i].datatype), comm);
+    else
+      dst[i].datatype = src[i].datatype;
+  }
+}
+
+void
+xt_msg_params_destruct(size_t n, struct Xt_msg_param *msgs,
+                       MPI_Comm comm) {
+
+  for (size_t i = 0; i < n; ++i) {
+    MPI_Datatype dt = msgs[i].datatype;
+    if (dt != MPI_DATATYPE_NULL) {
+      xt_mpi_call(MPI_Type_free(&msgs[i].datatype), comm);
+      for (size_t j = i + 1; j < n; ++j)
+        if (msgs[j].datatype == dt)
+          msgs[j].datatype = MPI_DATATYPE_NULL;
+    }
+  }
 }
 
 

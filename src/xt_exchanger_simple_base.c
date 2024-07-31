@@ -56,7 +56,6 @@
 #include "xt/xt_mpi.h"
 #include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
-#include "xt_redist_internal.h"
 #include "xt_exchanger.h"
 #include "xt_exchanger_simple_base.h"
 
@@ -66,13 +65,14 @@ static Xt_exchanger
 xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
                               MPI_Comm newComm, int new_tag_offset);
 static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger);
-static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
-                                                const void * src_data,
-                                                void * dst_data);
-static void xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
-                                                const void * src_data,
-                                                void * dst_data,
-                                                Xt_request *request);
+static void
+xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
+                                    const void *src_data,
+                                    void *dst_data, int count);
+static void
+xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
+                                    const void *src_data, void *dst_data,
+                                    int count, Xt_request *request);
 static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
@@ -85,7 +85,7 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           bool do_dup);
 
 static Xt_exchanger_omp_share
-xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger);
+xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger, int max_count);
 
 const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .copy = xt_exchanger_simple_base_copy,
@@ -110,7 +110,7 @@ struct Xt_exchanger_simple_base_ {
   xt_simple_s_exchange_func s_func;
   xt_simple_a_exchange_func a_func;
   xt_simple_create_omp_share_func create_omp_share_func;
-  struct Xt_redist_msg msgs[];
+  struct Xt_msg_param msgs[];
 };
 
 static Xt_exchanger_simple_base
@@ -131,8 +131,8 @@ adjusted_rank(int r, int comm_rank, int comm_size)
 }
 
 #define XT_SORTFUNC_DECL static
-#define SORT_TYPE struct Xt_redist_msg
-#define SORT_TYPE_SUFFIX redist_msg
+#define SORT_TYPE struct Xt_msg_param
+#define SORT_TYPE_SUFFIX msg_param
 #define SORT_TYPE_CMP_LT(u,v,i,j)                       \
   (adjusted_rank((u).rank, comm_rank, comm_size)        \
    < adjusted_rank((v).rank, comm_rank, comm_size))
@@ -150,8 +150,8 @@ adjusted_rank(int r, int comm_rank, int comm_size)
 Xt_exchanger
 xt_exchanger_simple_base_new(
   int nsend, int nrecv,
-  const struct Xt_redist_msg *send_msgs,
-  const struct Xt_redist_msg *recv_msgs,
+  const struct Xt_msg_param *send_msgs,
+  const struct Xt_msg_param *recv_msgs,
   MPI_Comm comm, int tag_offset,
   xt_simple_s_exchange_func s_func,
   xt_simple_a_exchange_func a_func,
@@ -176,13 +176,10 @@ xt_exchanger_simple_base_new(
   exchanger->nmsg[SEND] = nsend;
   exchanger->nmsg[RECV] = nrecv;
   bool dt_dup = !(config->flags & exch_no_dt_dup);
-  xt_redist_msgs_strided_copy((size_t)nsend, send_msgs, sizeof (send_msgs[0]),
-                              exchanger->msgs, sizeof (exchanger->msgs[0]),
-                              comm, dt_dup);
-  xt_redist_msgs_strided_copy((size_t)nrecv, recv_msgs, sizeof (recv_msgs[0]),
-                              exchanger->msgs + nsend,
-                              sizeof (exchanger->msgs[0]),
-                              comm, dt_dup);
+  xt_msg_params_copy((size_t)nsend, send_msgs, exchanger->msgs,
+                    comm, dt_dup);
+  xt_msg_params_copy((size_t)nrecv, recv_msgs, exchanger->msgs + nsend,
+                     comm, dt_dup);
   exchanger->s_func = s_func;
   exchanger->a_func = a_func;
   exchanger->create_omp_share_func = create_omp_share_func;
@@ -206,10 +203,10 @@ xt_exchanger_simple_base_new(
      * 2. sort: 6, 9, 11, 12, 15
      * 3. subtrace comm_size again -> final order: 6, 9, 1, 2, 5
      */
-    xt_quicksort_redist_msg(exchanger->msgs, (size_t)nsend,
-                            comm_rank, comm_size);
-    xt_quicksort_redist_msg(exchanger->msgs + (size_t)nsend, (size_t)nrecv,
-                            comm_rank, comm_size);
+    xt_quicksort_msg_param(exchanger->msgs, (size_t)nsend,
+                           comm_rank, comm_size);
+    xt_quicksort_msg_param(exchanger->msgs + (size_t)nsend, (size_t)nrecv,
+                           comm_rank, comm_size);
   }
 
   return (Xt_exchanger)exchanger;
@@ -231,11 +228,9 @@ xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
   exchanger_copy->s_func = exchanger_sb->s_func;
   exchanger_copy->a_func = exchanger_sb->a_func;
   exchanger_copy->create_omp_share_func = exchanger_sb->create_omp_share_func;
-  struct Xt_redist_msg *restrict new_msgs = exchanger_copy->msgs,
+  struct Xt_msg_param *restrict new_msgs = exchanger_copy->msgs,
     *restrict orig_msgs = exchanger_sb->msgs;
-  xt_redist_msgs_strided_copy(nmsg, orig_msgs, sizeof (*orig_msgs),
-                              new_msgs, sizeof (*new_msgs),
-                              new_comm, true);
+  xt_msg_params_copy(nmsg, orig_msgs, new_msgs, new_comm, true);
   exchanger_copy->comm = new_comm;
   exchanger_copy->tag_offset = new_tag_offset;
   return (Xt_exchanger)exchanger_copy;
@@ -248,31 +243,31 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
     (Xt_exchanger_simple_base)exchanger;
 
   size_t nmsg = (size_t)exchanger_sb->nmsg[SEND] + (size_t)exchanger_sb->nmsg[RECV];
-  struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs;
-  xt_redist_msgs_strided_destruct(nmsg, msgs, exchanger_sb->comm,
-                                  sizeof (msgs[0]));
+  struct Xt_msg_param *restrict msgs = exchanger_sb->msgs;
+  xt_msg_params_destruct(nmsg, msgs, exchanger_sb->comm);
   free(exchanger_sb);
 }
 
-static void xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
-                                                const void * src_data,
-                                                void * dst_data) {
-
+static void
+xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
+                                    const void *src_data, void *dst_data,
+                                    int count)
+{
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
 
   int nsend = exchanger_sb->nmsg[SEND];
   exchanger_sb->s_func(src_data, dst_data, nsend,
-                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
+                       exchanger_sb->nmsg[RECV], count, exchanger_sb->msgs,
                        exchanger_sb->msgs + (size_t)nsend,
                        exchanger_sb->tag_offset, exchanger_sb->comm);
 }
 
-static void xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
-                                                const void * src_data,
-                                                void * dst_data,
-                                                Xt_request *request) {
-
+static void
+xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
+                                    const void *src_data, void *dst_data,
+                                    int count, Xt_request *request)
+{
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
 
@@ -283,7 +278,7 @@ static void xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
 
   int nsend = exchanger_sb->nmsg[SEND];
   exchanger_sb->a_func(src_data, dst_data, nsend,
-                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
+                       exchanger_sb->nmsg[RECV], count, exchanger_sb->msgs,
                        exchanger_sb->msgs + (size_t)nsend,
                        exchanger_sb->tag_offset, exchanger_sb->comm, request);
 }
@@ -299,7 +294,7 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
   size_t nsend = (size_t)exchanger_sb->nmsg[SEND],
     nmsg = (size_t)exchanger_sb->nmsg[direction],
     ofs = direction == SEND ? 0 : nsend;
-  struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs + ofs;
+  struct Xt_msg_param *restrict msgs = exchanger_sb->msgs + ofs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i)
     if (msgs[i].rank == rank) {
@@ -320,7 +315,7 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
 {
   Xt_exchanger_simple_base exchanger_sb = (Xt_exchanger_simple_base)exchanger;
   size_t nmsg = (size_t)exchanger_sb->nmsg[direction];
-  struct Xt_redist_msg *restrict msgs = exchanger_sb->msgs
+  struct Xt_msg_param *restrict msgs = exchanger_sb->msgs
     + (direction == RECV ? (size_t)exchanger_sb->nmsg[SEND] : 0);
   int *restrict ranks_ = *ranks;
   if (!ranks_)
@@ -331,13 +326,13 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
 }
 
 static Xt_exchanger_omp_share
-xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger)
+xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger, int max_count)
 {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
   int nsend = exchanger_sb->nmsg[SEND];
   return exchanger_sb->create_omp_share_func(
-    nsend, exchanger_sb->nmsg[RECV],
+    nsend, exchanger_sb->nmsg[RECV], max_count,
     exchanger_sb->msgs, exchanger_sb->msgs + nsend, exchanger_sb->comm);
 }
 

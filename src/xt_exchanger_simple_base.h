@@ -56,18 +56,18 @@
 #include "xt_exchanger.h"
 
 typedef void (*xt_simple_s_exchange_func)(
-  const void *src_data, void *dst_data, int nsend, int nrecv,
-  const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
+  const void *src_data, void *dst_data, int nsend, int nrecv, int count,
+  const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   int tag_offset, MPI_Comm comm);
 
 typedef void (*xt_simple_a_exchange_func)(
-  const void *src_data, void *dst_data, int nsend, int nrecv,
-  const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
+  const void *src_data, void *dst_data, int nsend, int nrecv, int count,
+  const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   int tag_offset, MPI_Comm comm, Xt_request *request);
 
 typedef Xt_exchanger_omp_share (*xt_simple_create_omp_share_func)(
-  int nsend, int nrecv,
-  const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
+  int nsend, int nrecv, int max_count,
+  const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   MPI_Comm comm);
 
 /**
@@ -91,8 +91,8 @@ typedef Xt_exchanger_omp_share (*xt_simple_create_omp_share_func)(
 PPM_DSO_INTERNAL Xt_exchanger
 xt_exchanger_simple_base_new(
   int nsend, int nrecv,
-  const struct Xt_redist_msg *send_msgs,
-  const struct Xt_redist_msg *recv_msgs,
+  const struct Xt_msg_param *send_msgs,
+  const struct Xt_msg_param *recv_msgs,
   MPI_Comm comm, int tag_offset,
   xt_simple_s_exchange_func s_func,
   xt_simple_a_exchange_func a_func,
