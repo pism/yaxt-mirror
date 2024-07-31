@@ -998,7 +998,7 @@ int main(int argc, char **argv) {
     MPI_Type_free(&struct_mpi_ddt);
 
     // force generation of ddt data
-    if (xt_ddt_get_pack_size(mpi_ddt) == 0) PUT_ERR("");
+    if (xt_ddt_get_pack_size((size_t)1, mpi_ddt) == 0) PUT_ERR("");
     MPI_Datatype mpi_ddt_cpy;
     MPI_Type_dup(mpi_ddt, &mpi_ddt_cpy);
 
@@ -1042,7 +1042,7 @@ static int check_xt_ddt_off(
   if (combiner != MPI_COMBINER_NAMED)
     MPI_Type_commit(&mpi_ddt);
 
-  if (xt_ddt_get_pack_size(mpi_ddt) != ref_pack_size) return 1;
+  if (xt_ddt_get_pack_size(1, mpi_ddt) != ref_pack_size) return 1;
 
   unsigned char *pack_data = xmalloc(ref_pack_size);
   unsigned char *out_data = xmalloc(in_data_size);
@@ -1101,12 +1101,11 @@ PragmaACC(host_data use_device(pack_data) if (buffer_on_gpu))
           {
             // pack in_data
             xt_ddt_pack(
-              mpi_ddt, in_data + in_data_offset,
-              pack_data);
+              in_data + in_data_offset, 1, mpi_ddt, pack_data);
 
             // unpack data
             xt_ddt_unpack(
-              mpi_ddt, pack_data, out_data + in_data_offset);
+              pack_data, 1, mpi_ddt, out_data + in_data_offset);
           }
         }
 

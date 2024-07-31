@@ -80,7 +80,8 @@ struct Xt_ddt_ {
 };
 
 typedef void (*xt_ddt_kernel_func)
-  (size_t, ssize_t*, const void*, void*, enum xt_memtype);
+  (size_t, ssize_t*, const void*, void*, size_t repeat_count,
+   MPI_Aint extent, enum xt_memtype);
 
 struct xt_ddt_kernels {
   size_t base_pack_size;
@@ -130,29 +131,35 @@ xt_ddt_inc_ref_count(Xt_ddt ddt);
  * @returns required packing buffer size
  */
 PPM_DSO_INTERNAL size_t
-xt_ddt_get_pack_size_internal(Xt_ddt ddt);
+xt_ddt_get_pack_size_internal(size_t count, Xt_ddt ddt);
 
 /**
  * packs the data from the source buffer into destination buffer
- * @param[in]  ddt     xt_ddt object
  * @param[in]  src     source buffer
+ * @param[in]  count   number of copies to pack
+ * @param[in]  ddt     xt_ddt object
  * @param[out] dst     destination buffer
+ * @param[in]  extent  relative placement when count > 1
  * @param[in]  memtype type of source and destination memory
  * @remark both src and dst have to point to the same type of memory
  */
 PPM_DSO_INTERNAL void xt_ddt_pack_internal(
-  Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype);
+  const void *src, size_t count, Xt_ddt ddt, void *dst,
+  MPI_Aint extent, enum xt_memtype memtype);
 
 /**
  * unpacks the data from the source buffer into destination buffer
- * @param[in]  ddt     xt_ddt object
  * @param[in]  src     source buffer
+ * @param[in]  count   number of copies to unpack
+ * @param[in]  ddt     xt_ddt object
  * @param[out] dst     destination buffer
+ * @param[in]  extent  relative placement when count > 1
  * @param[in]  memtype type of source and destination memory
  * @remark both src and dst have to point to the same type of memory
  */
 PPM_DSO_INTERNAL void xt_ddt_unpack_internal(
-  Xt_ddt ddt, void const * src, void * dst, enum xt_memtype memtype);
+  const void *src, size_t count, Xt_ddt ddt, void *dst,
+  MPI_Aint extent, enum xt_memtype memtype);
 
 #endif // XT_DDT_INTERNAL_H
 

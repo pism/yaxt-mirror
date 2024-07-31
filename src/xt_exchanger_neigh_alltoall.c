@@ -57,7 +57,6 @@
 #include "xt_config_internal.h"
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
-#include "xt_redist_internal.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_idxlist.h"
 #include "xt/xt_request.h"
@@ -73,13 +72,14 @@ static Xt_exchanger
 xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
                                  MPI_Comm newComm, int new_tag_offset);
 static void xt_exchanger_neigh_alltoall_delete(Xt_exchanger exchanger);
-static void xt_exchanger_neigh_alltoall_s_exchange(Xt_exchanger exchanger,
-                                                   const void * src_data,
-                                                   void * dst_data);
-static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
-                                                   const void * src_data,
-                                                   void * dst_data,
-                                                   Xt_request *request);
+static void
+xt_exchanger_neigh_alltoall_s_exchange(Xt_exchanger exchanger,
+                                       const void *src_data,
+                                       void *dst_data, int count);
+static void
+xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
+                                       const void *src_data, void *dst_data,
+                                       int count, Xt_request *request);
 static int
 xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
                                           enum xt_msg_direction direction,
@@ -163,7 +163,7 @@ xt_exchanger_neigh_alltoall_alloc(size_t nsend, size_t nrecv,
 }
 
 static void copy_dt(size_t n,
-                    const struct Xt_redist_msg *restrict msgs,
+                    const struct Xt_msg_param *restrict msgs,
                     MPI_Datatype *restrict datatypes,
                     MPI_Comm comm, bool dt_dup) {
 
@@ -175,7 +175,7 @@ static void copy_dt(size_t n,
 }
 
 static void copy_ranks(size_t n,
-                       const struct Xt_redist_msg *restrict msgs,
+                       const struct Xt_msg_param *restrict msgs,
                        int *restrict ranks)
 {
   for (size_t i = 0; i < n; ++i)
@@ -184,8 +184,8 @@ static void copy_ranks(size_t n,
 
 Xt_exchanger
 xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
-                                const struct Xt_redist_msg *send_msgs,
-                                const struct Xt_redist_msg *recv_msgs,
+                                const struct Xt_msg_param *send_msgs,
+                                const struct Xt_msg_param *recv_msgs,
                                 MPI_Comm comm, int tag_offset, Xt_config config)
 {
   /** note: tag_offset + xt_mpi_tag_exchange_msg must not
@@ -220,9 +220,13 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
     team_share->displs = xmalloc(max_msgs * sizeof(*team_share->displs));
     copy_ranks((size_t)nsend, send_msgs, team_share->ranks);
     copy_ranks((size_t)nrecv, recv_msgs, team_share->ranks+nsend);
-    for (size_t i = 0; i < max_msgs; ++i) {
+    for (size_t i = 0; i < (size_t)nsend; ++i) {
       team_share->one_counts[i] = 1;
-      team_share->displs[i] = 0;
+      team_share->displs[i] = send_msgs[i].displacement;
+    }
+    for (size_t i = (size_t)nsend; i < max_msgs; ++i) {
+      team_share->one_counts[i] = 1;
+      team_share->displs[i] = recv_msgs[i-(size_t)nsend].displacement;
     }
     enum { no_reorder = 0 }; // no reordering of ranks in new comm
 #if __GNUC__ >= 11 && __GNUC__ <= 13
@@ -273,7 +277,7 @@ xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
          nmsg * sizeof(*team_share_copy->ranks));
   for (size_t i = 0; i < max_msgs; ++i) {
     team_share_copy->one_counts[i] = 1;
-    team_share_copy->displs[i] = 0;
+    team_share_copy->displs[i] = team_share->displs[i];
   }
 #ifndef NEED_MPICH_UNWEIGHTED_COMM_DUP_WORKAROUND
   xt_mpi_call(MPI_Comm_dup(team_share->nb_comm, &team_share_copy->nb_comm),
@@ -323,28 +327,40 @@ static void xt_exchanger_neigh_alltoall_delete(Xt_exchanger exchanger) {
   free(exchanger_na);
 }
 
-static void xt_exchanger_neigh_alltoall_s_exchange(Xt_exchanger exchanger,
-                                                   const void * src_data,
-                                                   void * dst_data) {
+static void
+xt_exchanger_neigh_alltoall_s_exchange(Xt_exchanger exchanger,
+                                       const void *src_data, void *dst_data,
+                                       int count) {
 
   Xt_exchanger_neigh_alltoall exchanger_na =
     (Xt_exchanger_neigh_alltoall)exchanger;
   struct xt_exchanger_neigh_alltoall_team_share
     *team_share = exchanger_na->team_share;
 
+  size_t nsend = (size_t)team_share->nmsg[SEND],
+    nrecv = (size_t)team_share->nmsg[RECV];
+  int *counts;
+  if (count != 1) {
+    size_t max_msgs = MAX(nsend, nrecv);
+    counts = xmalloc(sizeof (int) * max_msgs);
+    for (size_t i = 0; i < max_msgs; ++i)
+      counts[i] = count;
+  } else
+    counts = team_share->one_counts;
   xt_mpi_call(
-    MPI_Neighbor_alltoallw(src_data, team_share->one_counts,
+    MPI_Neighbor_alltoallw(src_data, counts,
                            team_share->displs, exchanger_na->datatypes,
-                           dst_data, team_share->one_counts,
+                           dst_data, counts,
                            team_share->displs, exchanger_na->datatypes +
-                           (size_t)team_share->nmsg[SEND],
-                           team_share->nb_comm),
+                           nsend, team_share->nb_comm),
     team_share->nb_comm);
+  if (count != 1) free(counts);
 }
 
 static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
                                                    const void * src_data,
-                                                   void * dst_data,
+                                                   void *dst_data,
+                                                   int count,
                                                    Xt_request *request) {
 
   Xt_exchanger_neigh_alltoall exchanger_na =
@@ -352,6 +368,8 @@ static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
   struct xt_exchanger_neigh_alltoall_team_share
     *team_share = exchanger_na->team_share;
 
+  size_t nsend = (size_t)team_share->nmsg[SEND],
+    nrecv = (size_t)team_share->nmsg[RECV];
 #if defined OMPI_MAJOR_VERSION && OMPI_MAJOR_VERSION == 4 \
   && OMPI_MINOR_VERSION == 0 && OMPI_RELEASE_VERSION == 2
   /* ugly work-around: Open MPI retains pointers to arguments
@@ -366,29 +384,55 @@ static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
     MPI_Comm comm;
     MPI_Request requests[];
   };
-  size_t nmsg = (size_t)team_share->nmsg[SEND] + (size_t)team_share->nmsg[RECV],
+  size_t count_size, max_msgs;
+  int *counts;
+  if (count != 1) {
+    max_msgs = MAX(nsend, nrecv);
+    count_size = sizeof (int) * max_msgs;
+    counts = NULL;
+  } else {
+    max_msgs = 0;
+    count_size = 0;
+    counts = team_share->one_counts;
+  }
+
+  size_t nmsg = nsend+nrecv,
     header_size = sizeof (struct Xt_request_msgs_),
-    body_size = sizeof (MPI_Datatype) * nmsg + sizeof (int) * nmsg,
-    dt_size = nmsg * sizeof (MPI_Datatype);
+    dt_size = nmsg * sizeof (MPI_Datatype),
+    body_size = dt_size + sizeof (int) * nmsg;
   body_size = (body_size + sizeof (MPI_Datatype) - 1)
     / sizeof (MPI_Datatype) * sizeof (MPI_Datatype);
   struct Xt_request_msgs_ *request_
     = xrealloc(xt_request_msgs_new(1, (MPI_Request[]){ MPI_REQUEST_NULL},
                                    team_share->nb_comm),
-               header_size + body_size + dt_size);
+               header_size + body_size + dt_size + count_size);
   *request = (Xt_request)request_;
   MPI_Datatype *dt_copy
     = (MPI_Datatype *)(void *)((unsigned char *)request_ + header_size + body_size);
   memcpy(dt_copy, exchanger_na->datatypes, dt_size);
+  if (count_size) {
+    counts = (int *)(dt_copy + nmsg);
+    for (size_t i = 0; i < max_msgs; ++i)
+      counts[i] = count;
+  }
   xt_mpi_call(
-    MPI_Ineighbor_alltoallw(src_data, team_share->one_counts,
+    MPI_Ineighbor_alltoallw(src_data, counts,
                             team_share->displs, dt_copy,
-                            dst_data, team_share->one_counts,
+                            dst_data, counts,
                             team_share->displs, dt_copy +
-                            (size_t)team_share->nmsg[SEND],
+                            nsend,
                             team_share->nb_comm, request_->requests),
     team_share->nb_comm);
 #else
+  int *counts;
+  if (count != 1) {
+    size_t max_msgs = MAX(nsend, nrecv);
+    counts = xmalloc(sizeof (int) * max_msgs);
+    for (size_t i = 0; i < max_msgs; ++i)
+      counts[i] = count;
+  } else
+    counts = team_share->one_counts;
+
   MPI_Request tmp_request;
   xt_mpi_call(
     MPI_Ineighbor_alltoallw(src_data, team_share->one_counts,

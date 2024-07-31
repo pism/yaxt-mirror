@@ -53,7 +53,6 @@
 #include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
 #include "xt_exchanger.h"
-#include "xt_redist_internal.h"
 
 /**
  * constructor for an exchanger using synchronous send and asynchronous recv.
@@ -71,8 +70,8 @@
  */
 PPM_DSO_INTERNAL Xt_exchanger
 xt_exchanger_irecv_send_new(int nsend, int nrecv,
-                            const struct Xt_redist_msg *send_msgs,
-                            const struct Xt_redist_msg *recv_msgs,
+                            const struct Xt_msg_param *send_msgs,
+                            const struct Xt_msg_param *recv_msgs,
                             MPI_Comm comm, int tag_offset,
                             Xt_config config);
 

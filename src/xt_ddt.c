@@ -70,59 +70,77 @@
 
 static void xt_ddt_pack_8(
   size_t count, ssize_t *restrict displs, const uint8_t *restrict src,
-  uint8_t *restrict dst, enum xt_memtype memtype);
+  uint8_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_16(
   size_t count, ssize_t *restrict displs, const uint16_t *restrict src,
-  uint16_t *restrict dst, enum xt_memtype memtype);
+  uint16_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_32_2(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_96(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_64(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t *restrict dst, enum xt_memtype memtype);
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_128(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t *restrict dst, enum xt_memtype memtype);
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_160(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_pack_256(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t (*restrict dst)[4], enum xt_memtype memtype);
+  uint64_t (*restrict dst)[4], size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 
 static void xt_ddt_unpack_8(
   size_t count, ssize_t *restrict displs, const uint8_t *restrict src,
-  uint8_t *restrict dst, enum xt_memtype memtype);
+  uint8_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_16(
   size_t count, ssize_t *restrict displs, const uint16_t *restrict src,
-  uint16_t *restrict dst, enum xt_memtype memtype);
+  uint16_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_32_2(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[2],
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_96(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[3],
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_64(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t *restrict dst, enum xt_memtype memtype);
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_128(
   size_t count, ssize_t *restrict displs, const uint64_t (*restrict src)[2],
-  uint64_t *restrict dst, enum xt_memtype memtype);
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_160(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[5],
-  uint32_t *restrict dst, enum xt_memtype memtype);
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 static void xt_ddt_unpack_256(
   size_t count, ssize_t *restrict displs, const uint64_t (*restrict src)[4],
-  uint64_t *restrict dst, enum xt_memtype memtype);
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype);
 
 struct xt_ddt_kernels xt_ddt_valid_kernels[] = {
   {.base_pack_size = 1,
@@ -163,14 +181,13 @@ struct xt_ddt_kernels xt_ddt_valid_kernels[] = {
    .unpack = (xt_ddt_kernel_func)xt_ddt_unpack_256},
 };
 
-size_t xt_ddt_get_pack_size_internal(Xt_ddt ddt) {
-
-  return (ddt == NULL)?0:(ddt->pack_size);
+size_t xt_ddt_get_pack_size_internal(size_t count, Xt_ddt ddt) {
+  return (ddt == NULL)?0: count * ddt->pack_size;
 }
 
-size_t xt_ddt_get_pack_size(MPI_Datatype mpi_ddt) {
+size_t xt_ddt_get_pack_size(size_t count, MPI_Datatype mpi_ddt) {
 
-  return xt_ddt_get_pack_size_internal(xt_ddt_from_mpi_ddt(mpi_ddt));
+  return xt_ddt_get_pack_size_internal(count, xt_ddt_from_mpi_ddt(mpi_ddt));
 }
 
 static void xt_ddt_copy_displs(Xt_ddt ddt, enum xt_memtype memtype) {
@@ -204,46 +221,53 @@ static void xt_ddt_copy_displs(Xt_ddt ddt, enum xt_memtype memtype) {
 
 static void xt_ddt_pack_8(
   size_t count, ssize_t *restrict displs, const uint8_t *restrict src,
-  uint8_t *restrict dst, enum xt_memtype memtype) {
+  uint8_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i)
-    dst[i] = *add_rhs_byte_displ(uint8_t, src, displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i)
+      dst[j*count+i] = *add_rhs_byte_displ(uint8_t, src, (MPI_Aint)j*extent + displs[i]);
 }
 
 static void xt_ddt_pack_16(
   size_t count, ssize_t *restrict displs, const uint16_t *restrict src,
-  uint16_t *restrict dst, enum xt_memtype memtype) {
+  uint16_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i)
-    dst[i] = *add_rhs_byte_displ(uint16_t, src, + displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i)
+      dst[j*count+i] = *add_rhs_byte_displ(uint16_t, src, (MPI_Aint)j*extent + displs[i]);
 }
 
 static void xt_ddt_pack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i)
-    dst[i] = *add_rhs_byte_displ(uint32_t, src, + displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i)
+      dst[j*count+i] = *add_rhs_byte_displ(uint32_t, src, (MPI_Aint)j*extent + displs[i]);
 }
 
 static void xt_ddt_pack_32_2(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
   uint32_t (*restrict dst_)[2] = (uint32_t(*)[2])dst;
 #ifndef _OPENACC
   (void)memtype;
@@ -251,16 +275,19 @@ static void xt_ddt_pack_32_2(
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    const uint32_t *src_32 = add_rhs_byte_displ(uint32_t, src, displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      const uint32_t *src_32
+        = add_rhs_byte_displ(uint32_t, src, (MPI_Aint)j*extent + displs[i]);
 XtPragmaACC(loop independent)
-    for (int j = 0; j < 2; ++j) dst_[i][j] = src_32[j];
-  }
+      for (int k = 0; k < 2; ++k) dst_[j*count+i][k] = src_32[k];
+    }
 }
 
 static void xt_ddt_pack_96(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
   uint32_t (*restrict dst_)[3] = (uint32_t(*)[3])dst;
 #ifndef _OPENACC
   (void)memtype;
@@ -268,29 +295,34 @@ static void xt_ddt_pack_96(
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    const uint32_t *src_32 = add_rhs_byte_displ(uint32_t, src, displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      const uint32_t *src_32
+        = add_rhs_byte_displ(uint32_t, src, (MPI_Aint)j*extent + displs[i]);
 XtPragmaACC(loop independent)
-    for (int j = 0; j < 3; ++j) dst_[i][j] = src_32[j];
-  }
+      for (int k = 0; k < 3; ++k) dst_[j*count+i][k] = src_32[k];
+    }
 }
 
 static void xt_ddt_pack_64(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t *restrict dst, enum xt_memtype memtype) {
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i)
-    dst[i] = *add_rhs_byte_displ(uint64_t, src, displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i)
+      dst[j*count+i] = *add_rhs_byte_displ(uint64_t, src, (MPI_Aint)j*extent + displs[i]);
 }
 
 static void xt_ddt_pack_128(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t *restrict dst, enum xt_memtype memtype) {
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
   uint64_t (*restrict dst_)[2] = (uint64_t(*)[2])dst;
 #ifndef _OPENACC
   (void)memtype;
@@ -298,16 +330,19 @@ static void xt_ddt_pack_128(
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    const uint64_t *src_64 = add_rhs_byte_displ(uint64_t, src, displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      const uint64_t *src_64
+        = add_rhs_byte_displ(uint64_t, src, (MPI_Aint)j*extent + displs[i]);
 XtPragmaACC(loop independent)
-    for (int j = 0; j < 2; ++j) dst_[i][j] = src_64[j];
-  }
+      for (int k = 0; k < 2; ++k) dst_[j*count+i][k] = src_64[k];
+    }
 }
 
 static void xt_ddt_pack_160(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
   uint32_t (*restrict dst_)[5] = (uint32_t(*)[5])dst;
 #ifndef _OPENACC
   (void)memtype;
@@ -315,32 +350,38 @@ static void xt_ddt_pack_160(
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst_, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    const uint32_t *src_32 = add_rhs_byte_displ(uint32_t, src, displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      const uint32_t *src_32
+        = add_rhs_byte_displ(uint32_t, src, (MPI_Aint)j*extent + displs[i]);
 XtPragmaACC(loop independent)
-    for (int j = 0; j < 5; ++j) dst_[i][j] = src_32[j];
-  }
+      for (int k = 0; k < 5; ++k) dst_[j*count+i][k] = src_32[k];
+    }
 }
 
 static void xt_ddt_pack_256(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t (*restrict dst)[4], enum xt_memtype memtype) {
+  uint64_t (*restrict dst)[4], size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    const uint64_t *src_64 = add_rhs_byte_displ(uint64_t, src, displs[i]);
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      const uint64_t *src_64
+        = add_rhs_byte_displ(uint64_t, src, (MPI_Aint)j*extent + displs[i]);
 XtPragmaACC(loop independent)
-    for (int j = 0; j < 4; ++j) dst[i][j] = src_64[j];
-  }
+      for (int k = 0; k < 4; ++k) dst[j*count+i][k] = src_64[k];
+    }
 }
 
 void xt_ddt_pack_internal(
-  Xt_ddt ddt, const void *src, void *dst, enum xt_memtype memtype) {
-
+  const void *src, size_t repeat_count,
+  Xt_ddt ddt, void *dst, MPI_Aint extent, enum xt_memtype memtype)
+{
   XT_GPU_INSTR_PUSH(xt_ddt_pack_internal);
 
   size_t dst_offset = 0;
@@ -348,30 +389,33 @@ void xt_ddt_pack_internal(
   // if the displacements are not avaible in the required memory type
   if (!ddt->displs_available[memtype]) xt_ddt_copy_displs(ddt, memtype);
 
-  size_t count = ddt->count;
+  size_t ddt_kernel_count = ddt->count;
 
   // for all sections with the same elemental datatype extent
-  for (size_t i = 0; i < count; ++i) {
+  for (size_t i = 0; i < ddt_kernel_count; ++i) {
 
     struct xt_ddt_kernels * kernel =
       &xt_ddt_valid_kernels[ddt->data[i].kernel_idx];
     size_t displ_count = ddt->data[i].displ_count;
     kernel->pack(
       displ_count, ddt->data[i].displs[memtype], src,
-      (unsigned char *)dst + dst_offset, memtype);
+      (unsigned char *)dst + dst_offset, repeat_count, extent, memtype);
 
     dst_offset += displ_count * kernel->element_size;
   }
   XT_GPU_INSTR_POP;
 }
 
-void xt_ddt_pack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
-
+void
+xt_ddt_pack(const void *src, size_t count, MPI_Datatype mpi_ddt, void *dst)
+{
   XT_GPU_INSTR_PUSH(xt_ddt_pack);
   XT_GPU_INSTR_PUSH(xt_ddt_pack:initialise);
 
   enum xt_memtype src_memtype = xt_gpu_get_memtype(src);
   enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
+
+  Xt_ddt xt_ddt = xt_ddt_from_mpi_ddt(mpi_ddt);
 
   size_t pack_size;
   void *orig_dst;
@@ -383,15 +427,16 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
 
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
-    pack_size = xt_ddt_get_pack_size(mpi_ddt);
+    pack_size = xt_ddt_get_pack_size_internal(count, xt_ddt);
     orig_dst = dst;
     dst = xt_gpu_malloc(pack_size, src_memtype);
   }
 
   XT_GPU_INSTR_POP; //xt_ddt_pack:initialise
 
-  xt_ddt_pack_internal(
-    xt_ddt_from_mpi_ddt(mpi_ddt), src, dst, src_memtype);
+  MPI_Aint extent, lb;
+  xt_mpi_call(MPI_Type_get_extent(mpi_ddt, &lb, &extent), Xt_default_comm);
+  xt_ddt_pack_internal(src, count, xt_ddt, dst, extent, src_memtype);
 
   XT_GPU_INSTR_PUSH(xt_ddt_pack:finalise);
 
@@ -407,151 +452,178 @@ void xt_ddt_pack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
 
 static void xt_ddt_unpack_8(
   size_t count, ssize_t *restrict displs, const uint8_t *restrict src,
-  uint8_t *restrict dst, enum xt_memtype memtype) {
+  uint8_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i)
-    dst[displs[i]] = src[i];
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i)
+      dst[(MPI_Aint)j*extent+displs[i]] = src[j*count+i];
 }
 
 
 static void xt_ddt_unpack_16(
   size_t count, ssize_t *restrict displs, const uint16_t *restrict src,
-  uint16_t *restrict dst, enum xt_memtype memtype) {
+  uint16_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint16_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
-    dst_[0] = src[i];
-  }
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint16_t *dst_
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_[0] = src[j*count+i];
+    }
 }
 
 static void xt_ddt_unpack_32(
   size_t count, ssize_t *restrict displs, const uint32_t *restrict src,
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint32_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
-    dst_[0] = src[i];
-  }
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint32_t *dst_
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_[0] = src[j*count+i];
+    }
 }
 
 static void xt_ddt_unpack_32_2(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[2],
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint32_t *dst_32 = (void *)((unsigned char *)dst + displs[i]);
-    dst_32[0] = src[i][0];
-    dst_32[1] = src[i][1];
-  }
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint32_t *dst_32
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_32[0] = src[j*count+i][0];
+      dst_32[1] = src[j*count+i][1];
+    }
 }
 
 static void xt_ddt_unpack_96(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[3],
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint32_t *dst_32 = (void *)((unsigned char *)dst + displs[i]);
-    dst_32[0] = src[i][0];
-    dst_32[1] = src[i][1];
-    dst_32[2] = src[i][2];
-  }
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint32_t *dst_32
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_32[0] = src[j*count+i][0];
+      dst_32[1] = src[j*count+i][1];
+      dst_32[2] = src[j*count+i][2];
+    }
 }
 
 static void xt_ddt_unpack_64(
   size_t count, ssize_t *restrict displs, const uint64_t *restrict src,
-  uint64_t *restrict dst, enum xt_memtype memtype) {
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint64_t *dst_ = (void *)((unsigned char *)dst + displs[i]);
-    dst_[0] = src[i];
-  }
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint64_t *dst_
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_[0] = src[j*count+i];
+    }
 }
 
 static void xt_ddt_unpack_128(
   size_t count, ssize_t *restrict displs, const uint64_t (*restrict src)[2],
-  uint64_t *restrict dst, enum xt_memtype memtype) {
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint64_t *dst_64 = (void *)((unsigned char *)dst + displs[i]);
-    dst_64[0] = src[i][0];
-    dst_64[1] = src[i][1];
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint64_t *dst_64
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_64[0] = src[j*count+i][0];
+      dst_64[1] = src[j*count+i][1];
   }
 }
 
 static void xt_ddt_unpack_160(
   size_t count, ssize_t *restrict displs, const uint32_t (*restrict src)[5],
-  uint32_t *restrict dst, enum xt_memtype memtype) {
+  uint32_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint32_t *dst_32 = (void *)((unsigned char *)dst + displs[i]);
-    dst_32[0] = src[i][0];
-    dst_32[1] = src[i][1];
-    dst_32[2] = src[i][2];
-    dst_32[3] = src[i][3];
-    dst_32[4] = src[i][4];
-  }
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint32_t *dst_32
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_32[0] = src[j*count+i][0];
+      dst_32[1] = src[j*count+i][1];
+      dst_32[2] = src[j*count+i][2];
+      dst_32[3] = src[j*count+i][3];
+      dst_32[4] = src[j*count+i][4];
+    }
 }
 
 static void xt_ddt_unpack_256(
   size_t count, ssize_t *restrict displs, const uint64_t (*restrict src)[4],
-  uint64_t *restrict dst, enum xt_memtype memtype) {
+  uint64_t *restrict dst, size_t repeat_count, MPI_Aint extent,
+  enum xt_memtype memtype) {
 #ifndef _OPENACC
   (void)memtype;
 #endif
 XtPragmaACC(
   parallel loop independent deviceptr(src, dst, displs)
   if (memtype != XT_MEMTYPE_HOST))
-  for (size_t i = 0; i < count; ++i) {
-    uint64_t *dst_64 = (void *)((unsigned char *)dst + displs[i]);
-    dst_64[0] = src[i][0];
-    dst_64[1] = src[i][1];
-    dst_64[2] = src[i][2];
-    dst_64[3] = src[i][3];
-  }
+  for (size_t j = 0; j < repeat_count; ++j)
+    for (size_t i = 0; i < count; ++i) {
+      uint64_t *dst_64
+        = (void *)((unsigned char *)dst + (MPI_Aint)j*extent + displs[i]);
+      dst_64[0] = src[j*count+i][0];
+      dst_64[1] = src[j*count+i][1];
+      dst_64[2] = src[j*count+i][2];
+      dst_64[3] = src[j*count+i][3];
+    }
 }
 
 void xt_ddt_unpack_internal(
-  Xt_ddt ddt, const void *src, void *dst, enum xt_memtype memtype) {
+  const void *src, size_t count, Xt_ddt ddt, void *dst,
+  MPI_Aint extent, enum xt_memtype memtype) {
 
   XT_GPU_INSTR_PUSH(xt_ddt_unpack_internal);
 
@@ -560,24 +632,25 @@ void xt_ddt_unpack_internal(
   // if the displacements are not avaible in the required memory type
   if (!ddt->displs_available[memtype]) xt_ddt_copy_displs(ddt, memtype);
 
-  size_t count = ddt->count;
+  size_t ddt_kernel_count = ddt->count;
 
   // for all sections with the same elemental datatype extent
-  for (size_t i = 0; i < count; ++i) {
+  for (size_t i = 0; i < ddt_kernel_count; ++i) {
 
     struct xt_ddt_kernels * kernel =
       &xt_ddt_valid_kernels[ddt->data[i].kernel_idx];
     size_t displ_count = ddt->data[i].displ_count;
     kernel->unpack(
       displ_count, ddt->data[i].displs[memtype],
-      add_rhs_byte_displ(void, src, src_offset), dst, memtype);
+      add_rhs_byte_displ(void, src, src_offset), dst, count, extent, memtype);
 
     src_offset += displ_count * kernel->element_size;
   }
   XT_GPU_INSTR_POP;
 }
 
-void xt_ddt_unpack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
+void xt_ddt_unpack(
+  const void *src, size_t count, MPI_Datatype mpi_ddt, void *dst) {
 
   XT_GPU_INSTR_PUSH(xt_ddt_unpack);
   XT_GPU_INSTR_PUSH(xt_ddt_unpack:initialise);
@@ -585,11 +658,12 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
   enum xt_memtype src_memtype = xt_gpu_get_memtype(src);
   enum xt_memtype dst_memtype = xt_gpu_get_memtype(dst);
 
+  Xt_ddt xt_ddt = xt_ddt_from_mpi_ddt(mpi_ddt);
   void *src__ = NULL;
   const void *src_;
   // if the source and destination are in different memory types
   if (src_memtype != dst_memtype) {
-    size_t pack_size = xt_ddt_get_pack_size(mpi_ddt);
+    size_t pack_size = xt_ddt_get_pack_size_internal(count, xt_ddt);
     src__ = xt_gpu_malloc(pack_size, dst_memtype);
     xt_gpu_memcpy(src__, src, pack_size, dst_memtype, src_memtype);
     src_ = src__;
@@ -598,8 +672,11 @@ void xt_ddt_unpack(MPI_Datatype mpi_ddt, const void *src, void *dst) {
 
   XT_GPU_INSTR_POP; // xt_ddt_unpack:initialise
 
-  xt_ddt_unpack_internal(
-    xt_ddt_from_mpi_ddt(mpi_ddt), src_, dst, dst_memtype);
+  {
+    MPI_Aint extent, lb;
+    xt_mpi_call(MPI_Type_get_extent(mpi_ddt, &lb, &extent), Xt_default_comm);
+    xt_ddt_unpack_internal(src_, count, xt_ddt, dst, extent, dst_memtype);
+  }
 
   XT_GPU_INSTR_PUSH(xt_ddt_unpack:finalise);
 
