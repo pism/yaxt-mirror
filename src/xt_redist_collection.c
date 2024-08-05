@@ -333,6 +333,7 @@ create_all_dt_for_dir(
                                     block_lengths, ddt_list, comm);
     msgs[i].rank = ranks[i];
     msgs[i].displacement = 0;
+    msgs[i].count = 1;
   }
 }
 
@@ -467,7 +468,7 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
                                          (const void *const (*))dst_data,
                                          redist_coll->num_redists);
 
-  xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0], 1);
+  xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0]);
 
   if (redist_coll->cache_size == 0)
     xt_exchanger_delete(exchanger);
@@ -490,7 +491,7 @@ redist_collection_a_exchange(Xt_redist redist, int num_arrays,
                                          (const void *const (*))dst_data,
                                          redist_coll->num_redists);
 
-  xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0], 1, request);
+  xt_exchanger_a_exchange(exchanger, src_data[0], dst_data[0], request);
 
   if (redist_coll->cache_size == 0)
     xt_exchanger_delete(exchanger);

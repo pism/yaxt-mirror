@@ -71,7 +71,7 @@
 
 static void
 xt_exchanger_irecv_send_s_exchange_(const void *src_data, void *dst_data,
-                                    int nsend, int nrecv, int count,
+                                    int nsend, int nrecv,
                                     const struct Xt_msg_param *send_msgs,
                                     const struct Xt_msg_param *recv_msgs,
                                     int tag_offset, MPI_Comm comm,
@@ -79,14 +79,14 @@ xt_exchanger_irecv_send_s_exchange_(const void *src_data, void *dst_data,
 {
   for (int i = 0; i < nrecv; ++i) {
     void *dst_data_ = (unsigned char *)dst_data + recv_msgs[i].displacement;
-    xt_mpi_call(MPI_Irecv(dst_data_, count, recv_msgs[i].datatype,
+    xt_mpi_call(MPI_Irecv(dst_data_, recv_msgs[i].count, recv_msgs[i].datatype,
                           recv_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           recv_request+i), comm);
   }
   for (int i = 0; i < nsend; ++i) {
     void *src_data_ = (unsigned char *)src_data + send_msgs[i].displacement;
-    xt_mpi_call(MPI_Send(CAST_MPI_SEND_BUF(src_data_), count,
+    xt_mpi_call(MPI_Send(CAST_MPI_SEND_BUF(src_data_), send_msgs[i].count,
                          send_msgs[i].datatype,
                          send_msgs[i].rank,
                          tag_offset + xt_mpi_tag_exchange_msg, comm),
@@ -98,7 +98,7 @@ xt_exchanger_irecv_send_s_exchange_(const void *src_data, void *dst_data,
 
 static void
 xt_exchanger_irecv_send_s_exchange(const void *src_data, void *dst_data,
-                                   int nsend, int nrecv, int count,
+                                   int nsend, int nrecv,
                                    const struct Xt_msg_param *send_msgs,
                                    const struct Xt_msg_param *recv_msgs,
                                    int tag_offset, MPI_Comm comm) {
@@ -107,7 +107,7 @@ xt_exchanger_irecv_send_s_exchange(const void *src_data, void *dst_data,
     = xmalloc((size_t)nrecv * sizeof (*recv_request));
 
   xt_exchanger_irecv_send_s_exchange_(src_data, dst_data,
-                                      nsend, nrecv, count,
+                                      nsend, nrecv,
                                       send_msgs, recv_msgs,
                                       tag_offset, comm,
                                       recv_request);
@@ -118,7 +118,7 @@ xt_exchanger_irecv_send_s_exchange(const void *src_data, void *dst_data,
 #ifdef _OPENMP
 static void
 xt_exchanger_irecv_send_s_exchange_mt(const void *src_data, void *dst_data,
-                                      int nsend, int nrecv, int count,
+                                      int nsend, int nrecv,
                                       const struct Xt_msg_param *send_msgs,
                                       const struct Xt_msg_param *recv_msgs,
                                       int tag_offset, MPI_Comm comm,
@@ -134,7 +134,7 @@ xt_exchanger_irecv_send_s_exchange_mt(const void *src_data, void *dst_data,
     nrecv_ = (nrecv * (tid+1)) / num_threads - start_recv;
   xt_exchanger_irecv_send_s_exchange_(src_data,
                                       dst_data,
-                                      nsend_, nrecv_, count,
+                                      nsend_, nrecv_,
                                       send_msgs+start_send,
                                       recv_msgs+start_recv,
                                       tag_offset, comm,
@@ -143,7 +143,7 @@ xt_exchanger_irecv_send_s_exchange_mt(const void *src_data, void *dst_data,
 
 static void
 xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
-                                       int nsend, int nrecv, int count,
+                                       int nsend, int nrecv,
                                        const struct Xt_msg_param *send_msgs,
                                        const struct Xt_msg_param *recv_msgs,
                                        int tag_offset, MPI_Comm comm) {
@@ -154,7 +154,7 @@ xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
     = (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm, &conf);
 #pragma omp parallel
   xt_exchanger_irecv_send_s_exchange_mt(src_data, dst_data,
-                                        nsend, nrecv, count,
+                                        nsend, nrecv,
                                         send_msgs, recv_msgs,
                                         tag_offset, comm,
                                         shared_req);
