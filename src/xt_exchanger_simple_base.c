@@ -68,11 +68,11 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger);
 static void
 xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
                                     const void *src_data,
-                                    void *dst_data, int count);
+                                    void *dst_data);
 static void
 xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
                                     const void *src_data, void *dst_data,
-                                    int count, Xt_request *request);
+                                    Xt_request *request);
 static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
@@ -250,15 +250,14 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
 
 static void
 xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
-                                    const void *src_data, void *dst_data,
-                                    int count)
+                                    const void *src_data, void *dst_data)
 {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
 
   int nsend = exchanger_sb->nmsg[SEND];
   exchanger_sb->s_func(src_data, dst_data, nsend,
-                       exchanger_sb->nmsg[RECV], count, exchanger_sb->msgs,
+                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
                        exchanger_sb->msgs + (size_t)nsend,
                        exchanger_sb->tag_offset, exchanger_sb->comm);
 }
@@ -266,7 +265,7 @@ xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
 static void
 xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
                                     const void *src_data, void *dst_data,
-                                    int count, Xt_request *request)
+                                    Xt_request *request)
 {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
@@ -278,7 +277,7 @@ xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
 
   int nsend = exchanger_sb->nmsg[SEND];
   exchanger_sb->a_func(src_data, dst_data, nsend,
-                       exchanger_sb->nmsg[RECV], count, exchanger_sb->msgs,
+                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
                        exchanger_sb->msgs + (size_t)nsend,
                        exchanger_sb->tag_offset, exchanger_sb->comm, request);
 }

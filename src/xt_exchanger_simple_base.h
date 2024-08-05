@@ -56,12 +56,12 @@
 #include "xt_exchanger.h"
 
 typedef void (*xt_simple_s_exchange_func)(
-  const void *src_data, void *dst_data, int nsend, int nrecv, int count,
+  const void *src_data, void *dst_data, int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   int tag_offset, MPI_Comm comm);
 
 typedef void (*xt_simple_a_exchange_func)(
-  const void *src_data, void *dst_data, int nsend, int nrecv, int count,
+  const void *src_data, void *dst_data, int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   int tag_offset, MPI_Comm comm, Xt_request *request);
 

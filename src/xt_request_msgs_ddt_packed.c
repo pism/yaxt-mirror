@@ -63,10 +63,11 @@
 #include "xt_request_msgs_ebuf_internal.h"
 
 struct Xt_request_msgs_ddt_packed {
-  int n_packed, n_tmp_buffers, count;
+  int n_packed, n_tmp_buffers;
   void *dst_data;
   Xt_ddt *ddts;
   MPI_Aint *packed_extents;
+  int *pack_counts;
   enum xt_memtype packed_memtype;
   enum xt_memtype tmp_memtype;
   void *buffers[];
@@ -80,20 +81,21 @@ xt_request_msgs_packed_ddt_finalize(Xt_request request, void *ebuf)
   struct Xt_request_msgs_ddt_packed *request_msgs_ddt_packed = ebuf;
   int n_packed = request_msgs_ddt_packed->n_packed,
     n_tmp_buffers = request_msgs_ddt_packed->n_tmp_buffers;
-  size_t count = (size_t)request_msgs_ddt_packed->count;
+  int *counts = request_msgs_ddt_packed->pack_counts;
   void **buffers = request_msgs_ddt_packed->buffers;
   Xt_ddt *ddts = request_msgs_ddt_packed->ddts;
   unsigned char *dst_data = request_msgs_ddt_packed->dst_data;
   MPI_Aint *extents = request_msgs_ddt_packed->packed_extents;
   enum xt_memtype pmemtype = request_msgs_ddt_packed->packed_memtype;
   for (int i = 0; i < n_packed; ++i) {
-    xt_ddt_unpack_internal(buffers[i], count, ddts[i],
+    xt_ddt_unpack_internal(buffers[i], (size_t)counts[i], ddts[i],
                            dst_data + extents[i+n_packed], extents[i], pmemtype);
     xt_gpu_free(buffers[i], pmemtype);
     xt_ddt_delete(ddts[i]);
   }
   for (int i = n_packed; i < n_packed + n_tmp_buffers; ++i)
     xt_gpu_free(buffers[i], request_msgs_ddt_packed->tmp_memtype);
+  free(counts);
   free(extents);
   free(ddts);
 }
@@ -104,9 +106,9 @@ xt_request_msgs_ddt_packed_new(int n_requests,
                                const MPI_Request requests[n_requests],
                                MPI_Comm comm, int n_packed,
                                int n_tmp_buffers,
-                               int count,
                                Xt_ddt packed_ddts[n_packed],
                                MPI_Aint packed_extents[n_packed],
+                               int pack_counts[n_packed],
                                void *packed_data[n_packed],
                                void *tmp_buffers[n_tmp_buffers],
                                void *dst_data,
@@ -130,7 +132,6 @@ xt_request_msgs_ddt_packed_new(int n_requests,
     = xt_request_msgs_ebuf_get_extra_buf(request);
   ebuf->n_packed = n_packed;
   ebuf->n_tmp_buffers = n_tmp_buffers;
-  ebuf->count = count;
   Xt_ddt *ddts = ebuf->ddts = xmalloc((size_t)n_packed * sizeof(*ddts));
   for (int i = 0; i < n_packed; ++i) {
     ddts[i] = packed_ddts[i];
@@ -146,6 +147,10 @@ xt_request_msgs_ddt_packed_new(int n_requests,
     = xmalloc(2 * (size_t)n_packed * sizeof (*ebuf_packed_extents));
   memcpy(ebuf_packed_extents, packed_extents,
          2 * (size_t)n_packed * sizeof (*ebuf_packed_extents));
+  int *ebuf_pack_counts = ebuf->pack_counts
+    = xmalloc((size_t)n_packed * sizeof (*ebuf_pack_counts));
+  memcpy(ebuf_pack_counts, pack_counts,
+         (size_t)n_packed * sizeof (*ebuf_pack_counts));
   ebuf->dst_data = dst_data;
   xt_request_msgs_ebuf_set_finalizer(request,
                                      xt_request_msgs_packed_ddt_finalize);

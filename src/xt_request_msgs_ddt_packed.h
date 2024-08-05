@@ -60,9 +60,11 @@
  * @param[in] comm           MPI communicator
  * @param[in] n_packed       number of entries in datatypes and packed_data
  * @param[in] n_tmp_buffers  number of entries in tmp_buffers
- * @param[in] count          number of datatype repetitions
- *                           used in the MPI calls
  * @param[in] pack_ddts    array of Xt_ddt's to be used for unpacking
+ * @param[in] pack_extents   extent of each MPI datatype corresponding
+ *                           to pack_ddts
+ * @param[in] pack_counts    number of datatype repetitions
+ *                           used
  * @param[in] packed_data    array of buffers containing packed data
  * @param[in] tmp_buffers    array of buffers that need to be freed after the
  *                           completion of exchange
@@ -83,9 +85,9 @@ xt_request_msgs_ddt_packed_new(int n_requests,
                                const MPI_Request requests[n_requests],
                                MPI_Comm comm, int n_packed,
                                int n_tmp_buffers,
-                               int count,
                                Xt_ddt pack_ddts[n_packed],
-                               MPI_Aint packed_extents[n_packed],
+                               MPI_Aint pack_extents[n_packed],
+                               int pack_counts[n_packed],
                                void *packed_data[n_packed],
                                void *tmp_buffers[n_tmp_buffers],
                                void *unpacked_data,

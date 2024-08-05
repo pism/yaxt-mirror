@@ -71,16 +71,16 @@ void xt_exchanger_delete(Xt_exchanger exchanger) {
 
 void
 xt_exchanger_s_exchange(Xt_exchanger exchanger,
-                        const void *src_data, void *dst_data, int count)
+                        const void *src_data, void *dst_data)
 {
-  exchanger->vtable->s_exchange(exchanger, src_data, dst_data, count);
+  exchanger->vtable->s_exchange(exchanger, src_data, dst_data);
 }
 
 void xt_exchanger_a_exchange(Xt_exchanger exchanger,
                              const void *src_data, void *dst_data,
-                             int count, Xt_request *request) {
+                             Xt_request *request) {
 
-  exchanger->vtable->a_exchange(exchanger, src_data, dst_data, count, request);
+  exchanger->vtable->a_exchange(exchanger, src_data, dst_data, request);
 }
 
 int
@@ -111,6 +111,7 @@ xt_msg_params_copy(size_t n,
   for (size_t i = 0; i < n; ++i) {
     dst[i].rank = src[i].rank;
     dst[i].displacement = src[i].displacement;
+    dst[i].count = src[i].count;
     if (dt_dup)
       xt_mpi_call(MPI_Type_dup(src[i].datatype, &dst[i].datatype), comm);
     else

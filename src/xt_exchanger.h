@@ -71,8 +71,8 @@ typedef struct Xt_exchanger_ *Xt_exchanger;
 struct xt_exchanger_vtable {
   Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
   void (*delete)(Xt_exchanger);
-  void (*s_exchange)(Xt_exchanger, const void *, void *, int count);
-  void (*a_exchange)(Xt_exchanger, const void *, void *, int count,
+  void (*s_exchange)(Xt_exchanger, const void *, void *);
+  void (*a_exchange)(Xt_exchanger, const void *, void *,
                      Xt_request *request);
   int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction,
@@ -92,24 +92,22 @@ struct Xt_exchanger_ {
  * @param[in]  exchanger exchanger object
  * @param[in]  src_data  source data
  * @param[out] dst_data  destination data
- * @param[in]  count     number of objects to transfer
  */
 PPM_DSO_INTERNAL void
 xt_exchanger_s_exchange(Xt_exchanger exchanger, const void *src_data,
-                        void *dst_data, int count);
+                        void *dst_data);
 
 /**
  * Executes an asynchronous data exchange.
  * @param[in]  exchanger exchanger object
  * @param[in]  src_data  source data
  * @param[out] dst_data  destination data
- * @param[in]  count     number of objects to transfer
  * @param[out] request   pointer that will reference request object
  *                       created for duration of exchange
  */
 PPM_DSO_INTERNAL void
 xt_exchanger_a_exchange(Xt_exchanger exchanger,
-                        const void *src_data, void *dst_data, int count,
+                        const void *src_data, void *dst_data,
                         Xt_request *request);
 
 /**
@@ -162,7 +160,7 @@ xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
 struct Xt_msg_param {
   MPI_Aint displacement;
   MPI_Datatype datatype;
-  int rank;
+  int rank, count;
 };
 
 typedef Xt_exchanger

@@ -78,22 +78,22 @@ static void xt_exchanger_mix_isend_irecv_delete(Xt_exchanger exchanger);
 static void
 xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                         const void *src_data,
-                                        void *dst_data, int count);
+                                        void *dst_data);
 #ifdef _OPENMP
 static void
 xt_exchanger_mix_isend_irecv_s_exchange_omp(Xt_exchanger exchanger,
                                             const void *src_data,
-                                            void *dst_data, int count);
+                                            void *dst_data);
 #endif
 static void
 xt_exchanger_mix_isend_irecv_a_exchange(
   Xt_exchanger exchanger, const void * src_data, void * dst_data,
-  int count, Xt_request *request);
+  Xt_request *request);
 #ifdef _OPENMP
 static void
 xt_exchanger_mix_isend_irecv_a_exchange_omp(
   Xt_exchanger exchanger, const void * src_data, void * dst_data,
-  int count, Xt_request *request);
+  Xt_request *request);
 #endif
 static Xt_exchanger_omp_share
 xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger, int max_count);
@@ -276,7 +276,7 @@ static inline void
 redist_msgs_to_req(size_t nmsg,
                    const struct Xt_msg_param *restrict msgs,
                    const void *src_data, void *dst_data,
-                   int count, MPI_Request *requests,
+                   MPI_Request *requests,
                    MPI_Comm comm, int tag_offset)
 {
   for (size_t i = 0; i < nmsg; ++i) {
@@ -285,7 +285,7 @@ redist_msgs_to_req(size_t nmsg,
     ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
     unsigned char *data = MSG_DIR(msgs[i]) == SEND
       ? (void *)(intptr_t)src_data : dst_data;
-    xt_mpi_call(op(data + msgs[i].displacement, count, msgs[i].datatype,
+    xt_mpi_call(op(data + msgs[i].displacement, msgs[i].count, msgs[i].datatype,
                    msgs[i].rank & INT_MAX, tag_offset + xt_mpi_tag_exchange_msg,
                    comm, requests+i), comm);
   }
@@ -295,20 +295,19 @@ redist_msgs_to_req(size_t nmsg,
 static void
 xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
                                         const void * src_data,
-                                        void *dst_data,
-                                        int count)
+                                        void *dst_data)
 {
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
 
   if (exchanger_msr->n > 0) {
-    size_t nmsg = (size_t)exchanger_msr->n * (size_t)count;
+    size_t nmsg = (size_t)exchanger_msr->n;
     MPI_Request req_buf[max_on_stack_req];
     MPI_Request *requests
       = nmsg <= max_on_stack_req
       ? req_buf : xmalloc(nmsg * sizeof (*requests));
-    redist_msgs_to_req((size_t)exchanger_msr->n, exchanger_msr->msgs,
-                       src_data, dst_data, count, requests,
+    redist_msgs_to_req((size_t)nmsg, exchanger_msr->msgs,
+                       src_data, dst_data, requests,
                        exchanger_msr->comm, exchanger_msr->tag_offset);
     xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE),
                 exchanger_msr->comm);
@@ -319,7 +318,7 @@ xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
 
 static void xt_exchanger_mix_isend_irecv_a_exchange(
   Xt_exchanger exchanger, const void *src_data, void *dst_data,
-  int count, Xt_request *request) {
+  Xt_request *request) {
 
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
@@ -333,7 +332,7 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
     MPI_Request *requests_
       = xt_request_msgs_get_req_ptr(requests);
     redist_msgs_to_req(nmsg, exchanger_msr->msgs,
-                       src_data, dst_data, count, requests_,
+                       src_data, dst_data, requests_,
                        exchanger_msr->comm, exchanger_msr->tag_offset);
     *request = requests;
   } else
@@ -345,7 +344,6 @@ static void
 xt_exchanger_mix_isend_irecv_a_exchange_mt(Xt_exchanger exchanger,
                                            const void * src_data,
                                            void * dst_data,
-                                           int count,
                                            Xt_exchanger_omp_share shared_req)
 {
   MPI_Request *requests
@@ -358,7 +356,7 @@ xt_exchanger_mix_isend_irecv_a_exchange_mt(Xt_exchanger exchanger,
     start = (nmsg * tid) / num_threads,
     nmsg_ = (nmsg * (tid+1)) / num_threads - start;
   redist_msgs_to_req(nmsg_, exchanger_msr->msgs+start,
-                     src_data, dst_data, count, requests+start,
+                     src_data, dst_data, requests+start,
                      exchanger_msr->comm, exchanger_msr->tag_offset);
 }
 
@@ -366,14 +364,13 @@ static void
 xt_exchanger_mix_isend_irecv_a_exchange_omp(Xt_exchanger exchanger,
                                             const void *src_data,
                                             void *dst_data,
-                                            int count,
                                             Xt_request *request)
 {
   Xt_exchanger_omp_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger, count);
+    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger, -1);
 #pragma omp parallel
   xt_exchanger_mix_isend_irecv_a_exchange_mt(exchanger, src_data, dst_data,
-                                             count, shared_req);
+                                             shared_req);
   *request = (Xt_request)shared_req;
 }
 
@@ -381,7 +378,6 @@ static void
 xt_exchanger_mix_isend_irecv_s_exchange_mt(Xt_exchanger exchanger,
                                            const void *src_data,
                                            void *dst_data,
-                                           int count,
                                            Xt_exchanger_omp_share shared_req)
 {
   MPI_Request *requests
@@ -394,7 +390,7 @@ xt_exchanger_mix_isend_irecv_s_exchange_mt(Xt_exchanger exchanger,
     start = (nmsg * tid) / num_threads,
     nmsg_ = (nmsg * (tid+1)) / num_threads - start;
   redist_msgs_to_req(nmsg_, exchanger_msr->msgs+start,
-                     src_data, dst_data, count, requests+start,
+                     src_data, dst_data, requests+start,
                      exchanger_msr->comm, exchanger_msr->tag_offset);
   xt_mpi_call(MPI_Waitall((int)nmsg_, requests+start,
                           MPI_STATUSES_IGNORE), exchanger_msr->comm);
@@ -403,14 +399,13 @@ xt_exchanger_mix_isend_irecv_s_exchange_mt(Xt_exchanger exchanger,
 static void
 xt_exchanger_mix_isend_irecv_s_exchange_omp(Xt_exchanger exchanger,
                                             const void *src_data,
-                                            void *dst_data,
-                                            int count)
+                                            void *dst_data)
 {
   Xt_exchanger_omp_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger, count);
+    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger, -1);
 #pragma omp parallel
   xt_exchanger_mix_isend_irecv_s_exchange_mt(exchanger, src_data, dst_data,
-                                             count, shared_req);
+                                             shared_req);
   free(shared_req);
 }
 #endif

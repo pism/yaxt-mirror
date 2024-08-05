@@ -162,11 +162,13 @@ Xt_redist xt_redist_single_array_base_custom_new(
     for (size_t i = 0; i < (size_t)nrecv; ++i) {
       exch_msgs[i].datatype = recv_msgs[i].datatype;
       exch_msgs[i].displacement = 0;
+      exch_msgs[i].count = 1;
       exch_msgs[i].rank = recv_msgs[i].rank;
     }
     for (size_t i = 0; i < (size_t)nsend; ++i) {
       exch_msgs[(size_t)nrecv+i].datatype = send_msgs[i].datatype;
       exch_msgs[(size_t)nrecv+i].displacement = 0;
+      exch_msgs[(size_t)nrecv+i].count = 1;
       exch_msgs[(size_t)nrecv+i].rank = send_msgs[i].rank;
     }
     redist->exchanger
@@ -247,7 +249,7 @@ redist_sab_s_exchange1(Xt_redist redist, const void *src_data, void *dst_data) {
 
   Xt_redist_sab redist_sab = xrsab(redist);
 
-  xt_exchanger_s_exchange(redist_sab->exchanger, src_data, dst_data, 1);
+  xt_exchanger_s_exchange(redist_sab->exchanger, src_data, dst_data);
 }
 
 static void
@@ -256,7 +258,7 @@ redist_sab_a_exchange1(Xt_redist redist, const void *src_data, void *dst_data,
 
   Xt_redist_sab redist_sab = xrsab(redist);
 
-  xt_exchanger_a_exchange(redist_sab->exchanger, src_data, dst_data, 1, request);
+  xt_exchanger_a_exchange(redist_sab->exchanger, src_data, dst_data, request);
 }
 
 static int redist_sab_get_num_msg(Xt_redist redist,
