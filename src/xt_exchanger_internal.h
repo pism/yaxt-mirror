@@ -56,12 +56,16 @@
 
 #include "xt/xt_core.h"
 #include "xt/xt_request.h"
+#include "xt_exchanger.h"
 #include "xt_redist_internal.h"
 #include "core/ppm_visibility.h"
 
 
 /** \example test_exchanger_parallel.c
  */
+
+typedef struct Xt_exchanger_omp_share_ *Xt_exchanger_omp_share;
+
 
 struct xt_exchanger_vtable {
   Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
@@ -128,7 +132,6 @@ xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new);
 /* team shares refer to expensive data that can be shared among
  * multiple instances of exchangers that are of the same class and
  * derived from the same xmap or communication matrix */
-
 enum { team_share_align = sizeof (void *) };
 
 /**
