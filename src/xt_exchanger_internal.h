@@ -1,8 +1,8 @@
 /**
- * @file xt_exchanger.h
- * @brief exchanging of data based on information provided by redist's
+ * @file xt_exchanger_internal.h
+ * @brief internal functions for data exchangers
  *
- * @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+ * @copyright Copyright  (C)  2024 Jörg Behrens <behrens@dkrz.de>
  *                                 Moritz Hanke <hanke@dkrz.de>
  *                                 Thomas Jahns <jahns@dkrz.de>
  *
@@ -44,8 +44,8 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef XT_EXCHANGER_H
-#define XT_EXCHANGER_H
+#ifndef XT_EXCHANGER_INTERNAL_H
+#define XT_EXCHANGER_INTERNAL_H
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -54,7 +54,6 @@
 #include <stdbool.h>
 #include <mpi.h>
 
-#include "xt/xt_config.h"
 #include "xt/xt_core.h"
 #include "xt/xt_request.h"
 #include "xt_redist_internal.h"
@@ -64,16 +63,11 @@
 /** \example test_exchanger_parallel.c
  */
 
-typedef struct Xt_exchanger_omp_share_ *Xt_exchanger_omp_share;
-
-typedef struct Xt_exchanger_ *Xt_exchanger;
-
 struct xt_exchanger_vtable {
   Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
   void (*delete)(Xt_exchanger);
   void (*s_exchange)(Xt_exchanger, const void *, void *);
-  void (*a_exchange)(Xt_exchanger, const void *, void *,
-                     Xt_request *request);
+  void (*a_exchange)(Xt_exchanger, const void *, void *, Xt_request *request);
   int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction,
                                    bool);
@@ -81,49 +75,12 @@ struct xt_exchanger_vtable {
   void (*team_share_destroy)(void *share);
   size_t team_share_size;
   Xt_exchanger_omp_share (*create_omp_share)(Xt_exchanger, int);
+  Xt_exchanger_iter get_iterator(Xt_exchanger exchanger, Xt_config config);
 };
 
 struct Xt_exchanger_ {
   struct xt_exchanger_vtable * vtable;
 };
-
-/**
- * Executes a synchronous data exchange.
- * @param[in]  exchanger exchanger object
- * @param[in]  src_data  source data
- * @param[out] dst_data  destination data
- */
-PPM_DSO_INTERNAL void
-xt_exchanger_s_exchange(Xt_exchanger exchanger, const void *src_data,
-                        void *dst_data);
-
-/**
- * Executes an asynchronous data exchange.
- * @param[in]  exchanger exchanger object
- * @param[in]  src_data  source data
- * @param[out] dst_data  destination data
- * @param[out] request   pointer that will reference request object
- *                       created for duration of exchange
- */
-PPM_DSO_INTERNAL void
-xt_exchanger_a_exchange(Xt_exchanger exchanger,
-                        const void *src_data, void *dst_data,
-                        Xt_request *request);
-
-/**
- * Copies an exchange object.
- * @param[in] orig           exchanger object to be copied
- * @param[in] new_comm       communicator to be used by the new exchanger
- * @param[in] new_tag_offset new tag_offset
- */
-PPM_DSO_INTERNAL Xt_exchanger
-xt_exchanger_copy(Xt_exchanger orig, MPI_Comm new_comm, int new_tag_offset);
-
-/**
- * Destructor for an exchanger.
- */
-PPM_DSO_INTERNAL void
-xt_exchanger_delete(Xt_exchanger);
 
 /**
  * gets a copy of the MPI_Datatype used for a specificed message
@@ -157,18 +114,6 @@ xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
                            int *restrict *ranks);
 
-struct Xt_msg_param {
-  MPI_Aint displacement;
-  MPI_Datatype datatype;
-  int rank, count;
-};
-
-typedef Xt_exchanger
-(*Xt_exchanger_new)(int nsend, int nrecv,
-                    const struct Xt_msg_param *send_msgs,
-                    const struct Xt_msg_param *recv_msgs,
-                    MPI_Comm comm, int tag_offset,
-                    Xt_config config);
 
 /**
  * Given an exchanger constructor, query the vtable pointer
@@ -279,7 +224,8 @@ xt_msg_params_destruct(size_t n, struct Xt_msg_param *msgs,
                        MPI_Comm comm);
 
 
-#endif // XT_EXCHANGER_H
+
+#endif // XT_EXCHANGER_INTERNAL_H
 /*
  * Local Variables:
  * c-basic-offset: 2
