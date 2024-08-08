@@ -62,6 +62,7 @@
 #include "core/ppm_xfuncs.h"
 #include "core/core.h"
 #include "xt_exchanger.h"
+#include "xt_exchanger_internal.h"
 #include "xt_config_internal.h"
 
 
