@@ -57,6 +57,7 @@
 #include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_exchanger.h"
+#include "xt_exchanger_internal.h"
 #include "xt_exchanger_simple_base.h"
 
 static const char filename[] = "xt_exchanger_simple_base.c";
