@@ -61,6 +61,7 @@
 #include "xt_request_msgs_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_exchanger.h"
+#include "xt_exchanger_internal.h"
 #include "xt_exchanger_mix_isend_irecv.h"
 
 /* unfortunately GCC 11 to 13 cannot handle the literal constants used for

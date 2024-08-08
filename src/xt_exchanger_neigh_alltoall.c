@@ -64,6 +64,7 @@
 #include "xt_request_msgs_internal.h"
 #include "xt_request_msgs_ebuf_internal.h"
 #include "xt_exchanger.h"
+#include "xt_exchanger_internal.h"
 #include "xt_exchanger_neigh_alltoall.h"
 
 static const char filename[] = "xt_exchanger_neigh_alltoall.c";
