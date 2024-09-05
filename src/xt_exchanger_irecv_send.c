@@ -86,7 +86,8 @@ xt_exchanger_irecv_send_s_exchange_(const void *src_data, void *dst_data,
                           recv_request+i), comm);
   }
   for (int i = 0; i < nsend; ++i) {
-    void *src_data_ = (unsigned char *)src_data + send_msgs[i].displacement;
+    const void *src_data_
+      = (const unsigned char *)src_data + send_msgs[i].displacement;
     xt_mpi_call(MPI_Send(CAST_MPI_SEND_BUF(src_data_), send_msgs[i].count,
                          send_msgs[i].datatype,
                          send_msgs[i].rank,

@@ -69,8 +69,6 @@
 
 static const char filename[] = "xt_exchanger_neigh_alltoall.c";
 
-#define MAX(a,b) ((a) >= (b) ? (a) : (b))
-
 static Xt_exchanger
 xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
                                  MPI_Comm newComm, int new_tag_offset);

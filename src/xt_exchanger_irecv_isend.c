@@ -88,7 +88,7 @@ redist_msgs_to_req(const void *src_data, void *dst_data,
 
   for (int i = 0; i < nsend; ++i)
     xt_mpi_call(MPI_Isend(
-                  CAST_MPI_SEND_BUF((unsigned char *)src_data
+                  CAST_MPI_SEND_BUF((const unsigned char *)src_data
                                     + send_msgs[i].displacement),
                   send_msgs[i].count, send_msgs[i].datatype, send_msgs[i].rank,
                   tag_offset + xt_mpi_tag_exchange_msg, comm,
