@@ -313,6 +313,16 @@ AC_CACHE_CHECK([whether __builtin_complex is available],
      [AS_VAR_SET([acx_cv_have_decl___builtin_complex],[yes])],
      [AS_VAR_SET([acx_cv_have_decl___builtin_complex],[no])])])
 ACX_CHECK_ASM_BSR
+AC_CACHE_CHECK([whether __builtin_unreachable is declared],
+  [acx_cv_have_decl___builtin_unreachable],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM(,[  int v;
+  scanf("%d", &v);
+  if (v < 0) __builtin_unreachable()])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_unreachable],[yes])],
+     [AS_VAR_SET([acx_cv_have_decl___builtin_unreachable],[no])])])
+AC_DEFINE_UNQUOTED([HAVE_DECL___BUILTIN_UNREACHABLE],
+  [`test "$acx_cv_have_decl___builtin_unreachable" = yes ; expr 1 - $?`],
+  [GCC style __builtin_unreachable is available])
 dnl ######################################################################
 dnl Test whether cfortran.h works correctly
 dnl ######################################################################

@@ -729,6 +729,10 @@ static void xt_ddt_tree_elem_delete(struct xt_ddt_tree_elem *elem) {
   case MULTI_SUB:
     num_sub_elem = elem->displ_count;
     break;
+#  if HAVE_DECL___BUILTIN_UNREACHABLE && !__clang__
+  default:
+    __builtin_unreachable();
+#  endif
   }
   struct xt_ddt_tree_elem **sub_elems
     = (struct xt_ddt_tree_elem **)(elem->displs + elem->displ_count);
@@ -813,6 +817,10 @@ static void xt_ddt_tree_elem_get_data_sizes(
             sub_elems[i], prev_dtype, prev_data_idx, data);
       break;
     }
+#  if HAVE_DECL___BUILTIN_UNREACHABLE && !__clang__
+  default:
+    __builtin_unreachable();
+#  endif
   }
 }
 
@@ -878,6 +886,10 @@ static void xt_ddt_tree_elem_to_data(
             prev_dtype, prev_data_idx);
       break;
     }
+#  if HAVE_DECL___BUILTIN_UNREACHABLE && !__clang__
+  default:
+    __builtin_unreachable();
+#  endif
   }
 }
 

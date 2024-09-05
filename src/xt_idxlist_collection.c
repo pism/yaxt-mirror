@@ -195,6 +195,12 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
     case -1:
       ++nsort_dsc;
       break;
+    case 0:
+      break;
+#  if HAVE_DECL___BUILTIN_UNREACHABLE
+    default:
+      __builtin_unreachable();
+#  endif
     }
     for (int i = (int)first_non_empty_idxlist+1; i < num_idxlists; ++i) {
       int num_indices_of_list = xt_idxlist_get_num_indices(idxlists[i]);
@@ -215,6 +221,12 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
         case -1:
           ++nsort_dsc;
           break;
+        case 0:
+          break;
+#  if HAVE_DECL___BUILTIN_UNREACHABLE
+        default:
+          __builtin_unreachable();
+#  endif
         }
         num_indices += num_indices_of_list;
       }
