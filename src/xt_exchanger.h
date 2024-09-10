@@ -98,6 +98,22 @@ xt_exchanger_a_exchange(Xt_exchanger exchanger,
 PPM_DSO_INTERNAL Xt_exchanger
 xt_exchanger_copy(Xt_exchanger orig, MPI_Comm new_comm, int new_tag_offset);
 
+struct Xt_msg_param {
+  MPI_Aint displacement;
+  MPI_Datatype datatype;
+  int rank, count;
+};
+
+/**
+ * Constructor function for an exchanger, obtainable from an
+ * \ref Xt_config configuration object */
+typedef Xt_exchanger
+(*Xt_exchanger_new)(int nsend, int nrecv,
+                    const struct Xt_msg_param *send_msgs,
+                    const struct Xt_msg_param *recv_msgs,
+                    MPI_Comm comm, int tag_offset,
+                    Xt_config config);
+
 /**
  * Destructor for an exchanger.
  */
@@ -105,18 +121,89 @@ PPM_DSO_INTERNAL void
 xt_exchanger_delete(Xt_exchanger);
 
 
-struct Xt_msg_param {
-  MPI_Aint displacement;
-  MPI_Datatype datatype;
-  int rank, count;
-};
+typedef struct Xt_exchanger_iter_ *Xt_exchanger_iter;
 
-typedef Xt_exchanger
-(*Xt_exchanger_new)(int nsend, int nrecv,
-                    const struct Xt_msg_param *send_msgs,
-                    const struct Xt_msg_param *recv_msgs,
-                    MPI_Comm comm, int tag_offset,
-                    Xt_config config);
+/**
+ * gets an iterator for all messages of an
+ * exchange operation either originating at or terminating at the
+ * local rank
+ *
+ * @param[in] exchanger message exchanger object
+ * @return         iterator for all local messages\n
+ *                 is NULL if there are no local messages
+ */
+Xt_exchanger_iter
+xt_exchanger_get_iterator(Xt_exchanger exchanger, Xt_config config);
+
+/**
+ * discards an exchanger iterator and frees associated memory
+ *
+ * @param[in,out] iter exchanger iterator to delete
+ */
+void
+xt_exchanger_iter_delete(Xt_exchanger_iter iter);
+
+/**
+ * sets an exchanger iterator to the next item
+ *
+ * @param[in,out] iter exchanger iterator
+ * @return             returns 0 if there was no further item
+ */
+int
+xt_exchanger_iter_next(Xt_exchanger_iter iter);
+
+/**
+ * gets a copy of the MPI_Datatype used for the currently selected message
+ * @param[in] iter      exchanger iterator object
+ * @return copy (via MPI_Type_dup) of datatype in use for the current
+ * message or MPI_DATATYPE_NULL if xt_exchanger_iter_next has already
+ * returned 0 for this iterator
+ */
+MPI_Datatype
+xt_exchanger_iter_get_MPI_Datatype(Xt_exchanger_iter iter);
+
+/**
+ * gets remote rank for the currently selected exchanger message
+ * @param[in] iter      exchanger iterator object
+ * @return rank that is source or destination (depending on direction)
+ *         for the current message or -1 if xt_exchanger_iter_next has already
+ *         returned 0 for this iterator
+ */
+int
+xt_exchanger_iter_get_rank(Xt_exchanger_iter iter);
+
+/**
+ * gets element count for the currently selected exchanger message
+ * @param[in] iter      exchanger iterator object
+ * @return number of instances of datatype forming the data part of
+ * the message or -1 if xt_exchanger_iter_next has already
+ * returned 0 for this iterator
+ */
+int
+xt_exchanger_iter_get_count(Xt_exchanger_iter iter);
+
+/**
+ * query direction for the currently selected exchanger message
+ * @param[in] iter      exchanger iterator object
+ * @return 0 if this rank is the source,
+ *         1 if it's the destination
+ *        -1 if the iterator has already been advanced
+ *              past the last message
+ */
+int
+xt_exchanger_iter_get_direction(Xt_exchanger_iter iter);
+
+/**
+ * gets byte offset for the currently selected exchanger message
+ * @param[in] iter      exchanger iterator object
+ * @return byte displacement at which the transfer will be initiated
+ *          or -1 if xt_exchanger_iter_next has already
+ *          returned 0 for this iterator (but which can also be a
+ *          valid displacement in some cases)
+ */
+MPI_Aint
+xt_exchanger_iter_get_displacement(Xt_exchanger_iter iter);
+
 
 
 #endif // XT_EXCHANGER_H
