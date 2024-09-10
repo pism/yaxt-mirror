@@ -79,11 +79,25 @@ struct xt_exchanger_vtable {
   void (*team_share_destroy)(void *share);
   size_t team_share_size;
   Xt_exchanger_omp_share (*create_omp_share)(Xt_exchanger, int);
-  Xt_exchanger_iter get_iterator(Xt_exchanger exchanger, Xt_config config);
+  Xt_exchanger_iter (*get_iterator)(Xt_exchanger exchanger, Xt_config config);
 };
 
 struct Xt_exchanger_ {
-  struct xt_exchanger_vtable * vtable;
+  const struct xt_exchanger_vtable * vtable;
+};
+
+struct xt_exchanger_iter_vtable {
+  int (*next)(Xt_exchanger_iter);
+  MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger_iter iter);
+  int (*get_rank)(Xt_exchanger_iter iter);
+  int (*get_count)(Xt_exchanger_iter iter);
+  int (*get_direction)(Xt_exchanger_iter iter);
+  MPI_Aint (*get_displacement)(Xt_exchanger_iter iter);
+  void (*delete)(Xt_exchanger_iter);
+};
+
+struct Xt_exchanger_iter_ {
+  const struct xt_exchanger_iter_vtable *vtable;
 };
 
 /**

@@ -88,6 +88,9 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
 static Xt_exchanger_omp_share
 xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger, int max_count);
 
+static Xt_exchanger_iter
+xt_exchanger_simple_base_get_iterator(Xt_exchanger exchanger, Xt_config config);
+
 const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .copy = xt_exchanger_simple_base_copy,
   .delete = xt_exchanger_simple_base_delete,
@@ -96,6 +99,7 @@ const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .get_msg_ranks = xt_exchanger_simple_base_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_simple_base_get_MPI_Datatype,
   .create_omp_share = xt_exchanger_simple_base_create_omp_share,
+  .get_iterator = xt_exchanger_simple_base_get_iterator,
 };
 
 typedef struct Xt_exchanger_simple_base_ * Xt_exchanger_simple_base;
@@ -334,6 +338,140 @@ xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger, int max_count)
   return exchanger_sb->create_omp_share_func(
     nsend, exchanger_sb->nmsg[RECV], max_count,
     exchanger_sb->msgs, exchanger_sb->msgs + nsend, exchanger_sb->comm);
+}
+
+typedef struct Xt_exchanger_simple_base_iter_ *Xt_exchanger_simple_base_iter;
+
+struct Xt_exchanger_simple_base_iter_ {
+  const struct xt_exchanger_iter_vtable *vtable;
+  Xt_exchanger_simple_base exchanger;
+  unsigned msg_ofs;
+  uint32_t config_flags;
+};
+
+static int
+xt_exchanger_simple_base_iter_next(Xt_exchanger_iter iter);
+static MPI_Datatype
+xt_exchanger_simple_base_iter_get_MPI_Datatype(Xt_exchanger_iter iter);
+static int
+xt_exchanger_simple_base_iter_get_rank(Xt_exchanger_iter iter);
+static int
+xt_exchanger_simple_base_iter_get_count(Xt_exchanger_iter iter);
+static int
+xt_exchanger_simple_base_iter_get_direction(Xt_exchanger_iter iter);
+static MPI_Aint
+xt_exchanger_simple_base_iter_get_displacement(Xt_exchanger_iter iter);
+static void
+xt_exchanger_simple_base_iter_delete(Xt_exchanger_iter iter);
+
+static const struct xt_exchanger_iter_vtable
+xt_exchanger_simple_base_iterator_vtable = {
+  .next = xt_exchanger_simple_base_iter_next,
+  .get_MPI_Datatype = xt_exchanger_simple_base_iter_get_MPI_Datatype,
+  .get_rank = xt_exchanger_simple_base_iter_get_rank,
+  .get_count = xt_exchanger_simple_base_iter_get_count,
+  .get_direction = xt_exchanger_simple_base_iter_get_direction,
+  .get_displacement = xt_exchanger_simple_base_iter_get_displacement,
+  .delete = xt_exchanger_simple_base_iter_delete,
+};
+
+
+static Xt_exchanger_iter
+xt_exchanger_simple_base_get_iterator(Xt_exchanger exchanger, Xt_config config)
+{
+  Xt_exchanger_simple_base exchanger_sb = (Xt_exchanger_simple_base)exchanger;
+  Xt_exchanger_simple_base_iter iter_sb = xmalloc(sizeof (*iter_sb));
+  iter_sb->vtable = &xt_exchanger_simple_base_iterator_vtable;
+  iter_sb->exchanger = exchanger_sb;
+  iter_sb->msg_ofs = 0;
+  iter_sb->config_flags = config->flags;
+  return (Xt_exchanger_iter)iter_sb;
+}
+
+
+static int
+xt_exchanger_simple_base_iter_next(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_simple_base_iter iter_sb = (Xt_exchanger_simple_base_iter)iter;
+  unsigned msg_ofs = iter_sb->msg_ofs,
+    nmsg = (unsigned)iter_sb->exchanger->nmsg[0]
+    + (unsigned)iter_sb->exchanger->nmsg[1];
+  if (msg_ofs+1 <= nmsg) {
+    iter_sb->msg_ofs = ++msg_ofs;
+    return msg_ofs < nmsg;
+  } else
+    return 0;
+}
+
+static MPI_Datatype
+xt_exchanger_simple_base_iter_get_MPI_Datatype(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_simple_base_iter iter_sb = (Xt_exchanger_simple_base_iter)iter;
+  const struct Xt_msg_param *msgs = iter_sb->exchanger->msgs;
+  unsigned msg_ofs = iter_sb->msg_ofs,
+    nmsg = (unsigned)iter_sb->exchanger->nmsg[0]
+    + (unsigned)iter_sb->exchanger->nmsg[1];
+  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
+  if (msg_ofs < nmsg) {
+    if (iter_sb->config_flags & exch_no_dt_dup)
+      datatype_copy = msgs[msg_ofs].datatype;
+    else
+      xt_mpi_call(MPI_Type_dup(msgs[msg_ofs].datatype, &datatype_copy),
+                  iter_sb->exchanger->comm);
+  }
+  return datatype_copy;
+}
+
+static int
+xt_exchanger_simple_base_iter_get_rank(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_simple_base_iter iter_sb = (Xt_exchanger_simple_base_iter)iter;
+  const struct Xt_msg_param *msgs = iter_sb->exchanger->msgs;
+  unsigned msg_ofs = iter_sb->msg_ofs,
+    nmsg = (unsigned)iter_sb->exchanger->nmsg[0]
+    + (unsigned)iter_sb->exchanger->nmsg[1];
+  return msg_ofs < nmsg ? msgs[msg_ofs].rank : -1;
+}
+
+static int
+xt_exchanger_simple_base_iter_get_count(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_simple_base_iter iter_sb = (Xt_exchanger_simple_base_iter)iter;
+  const struct Xt_msg_param *msgs = iter_sb->exchanger->msgs;
+  unsigned msg_ofs = iter_sb->msg_ofs,
+    nmsg = (unsigned)iter_sb->exchanger->nmsg[0]
+    + (unsigned)iter_sb->exchanger->nmsg[1];
+  return msg_ofs < nmsg ? msgs[msg_ofs].count : -1;
+}
+
+static int
+xt_exchanger_simple_base_iter_get_direction(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_simple_base_iter iter_sb = (Xt_exchanger_simple_base_iter)iter;
+  unsigned msg_ofs = iter_sb->msg_ofs,
+    nmsg = (unsigned)iter_sb->exchanger->nmsg[0]
+    + (unsigned)iter_sb->exchanger->nmsg[1];
+  if (msg_ofs < nmsg)
+    return msg_ofs >= (unsigned)iter_sb->exchanger->nmsg[0];
+  else
+    return -1;
+}
+
+static MPI_Aint
+xt_exchanger_simple_base_iter_get_displacement(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_simple_base_iter iter_sb = (Xt_exchanger_simple_base_iter)iter;
+  const struct Xt_msg_param *msgs = iter_sb->exchanger->msgs;
+  unsigned msg_ofs = iter_sb->msg_ofs,
+    nmsg = (unsigned)iter_sb->exchanger->nmsg[0]
+    + (unsigned)iter_sb->exchanger->nmsg[1];
+  return msg_ofs < nmsg ? msgs[msg_ofs].displacement : -1;
+}
+
+static void
+xt_exchanger_simple_base_iter_delete(Xt_exchanger_iter iter)
+{
+  free(iter);
 }
 
 /*

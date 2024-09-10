@@ -135,6 +135,54 @@ xt_msg_params_destruct(size_t n, struct Xt_msg_param *msgs,
   }
 }
 
+Xt_exchanger_iter
+xt_exchanger_get_iterator(Xt_exchanger exchanger, Xt_config config)
+{
+  return exchanger->vtable->get_iterator(exchanger, config);
+}
+
+void
+xt_exchanger_iter_delete(Xt_exchanger_iter iter)
+{
+  iter->vtable->delete(iter);
+}
+
+int
+xt_exchanger_iter_next(Xt_exchanger_iter iter)
+{
+  return iter->vtable->next(iter);
+}
+
+MPI_Datatype
+xt_exchanger_iter_get_MPI_Datatype(Xt_exchanger_iter iter)
+{
+  return iter->vtable->get_MPI_Datatype(iter);
+}
+
+int
+xt_exchanger_iter_get_rank(Xt_exchanger_iter iter)
+{
+  return iter->vtable->get_rank(iter);
+}
+
+int
+xt_exchanger_iter_get_count(Xt_exchanger_iter iter)
+{
+  return iter->vtable->get_count(iter);
+}
+
+int
+xt_exchanger_iter_get_direction(Xt_exchanger_iter iter)
+{
+  return iter->vtable->get_direction(iter);
+}
+
+MPI_Aint
+xt_exchanger_iter_get_displacement(Xt_exchanger_iter iter)
+{
+  return iter->vtable->get_displacement(iter);
+}
+
 
 /*
  * Local Variables:

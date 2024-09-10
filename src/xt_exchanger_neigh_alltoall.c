@@ -92,6 +92,9 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
                                              enum xt_msg_direction direction,
                                              bool do_dup);
 
+static Xt_exchanger_iter
+xt_exchanger_na2a_get_iterator(Xt_exchanger exchanger, Xt_config config);
+
 struct xt_exchanger_neigh_alltoall_team_share
 {
   int *ranks;
@@ -125,6 +128,7 @@ const struct xt_exchanger_vtable xt_exchanger_neigh_alltoall_vtable = {
   .team_share_default_init
   = xt_exchanger_neigh_alltoall_team_share_default_init,
   .team_share_destroy = xt_exchanger_neigh_alltoall_team_share_destroy,
+  .get_iterator = xt_exchanger_na2a_get_iterator,
 };
 
 typedef struct Xt_exchanger_neigh_alltoall_ * Xt_exchanger_neigh_alltoall;
@@ -446,6 +450,145 @@ xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
     ranks_ = *ranks = xmalloc(nmsg * sizeof(**ranks));
   memcpy(ranks_, team_share->ranks + ofs, nmsg * sizeof(**ranks));
   return (int)nmsg;
+}
+
+typedef struct Xt_exchanger_na2a_iter_ *Xt_exchanger_na2a_iter;
+
+struct Xt_exchanger_na2a_iter_ {
+  const struct xt_exchanger_iter_vtable *vtable;
+  Xt_exchanger_neigh_alltoall exchanger;
+  unsigned msg_ofs;
+  uint32_t config_flags;
+};
+
+static int
+xt_exchanger_na2a_iter_next(Xt_exchanger_iter);
+static void
+xt_exchanger_na2a_iter_delete(Xt_exchanger_iter);
+static MPI_Datatype
+xt_exchanger_na2a_iter_get_MPI_Datatype(Xt_exchanger_iter iter);
+static int
+xt_exchanger_na2a_iter_get_rank(Xt_exchanger_iter iter);
+static int
+xt_exchanger_na2a_iter_get_count(Xt_exchanger_iter iter);
+static int
+xt_exchanger_na2a_iter_get_direction(Xt_exchanger_iter iter);
+static MPI_Aint
+xt_exchanger_na2a_iter_get_displacement(Xt_exchanger_iter iter);
+
+static const struct xt_exchanger_iter_vtable
+xt_exchanger_na2a_iterator_vtable = {
+  .next = xt_exchanger_na2a_iter_next,
+  .get_MPI_Datatype = xt_exchanger_na2a_iter_get_MPI_Datatype,
+  .get_rank = xt_exchanger_na2a_iter_get_rank,
+  .get_count = xt_exchanger_na2a_iter_get_count,
+  .get_direction = xt_exchanger_na2a_iter_get_direction,
+  .get_displacement = xt_exchanger_na2a_iter_get_displacement,
+  .delete = xt_exchanger_na2a_iter_delete,
+};
+
+
+static Xt_exchanger_iter
+xt_exchanger_na2a_get_iterator(Xt_exchanger exchanger, Xt_config config)
+{
+  Xt_exchanger_neigh_alltoall exchanger_na2a
+    = (Xt_exchanger_neigh_alltoall)exchanger;
+  Xt_exchanger_na2a_iter iter_na2a = xmalloc(sizeof (*iter_na2a));
+  iter_na2a->vtable = &xt_exchanger_na2a_iterator_vtable;
+  iter_na2a->exchanger = exchanger_na2a;
+  iter_na2a->msg_ofs = 0;
+  iter_na2a->config_flags = config->flags;
+  return (Xt_exchanger_iter)iter_na2a;
+}
+
+static void
+xt_exchanger_na2a_iter_delete(Xt_exchanger_iter iter)
+{
+  free(iter);
+}
+
+static int
+xt_exchanger_na2a_iter_next(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_na2a_iter iter_na2a = (Xt_exchanger_na2a_iter)iter;
+  Xt_exchanger_neigh_alltoall exchanger_na2a = iter_na2a->exchanger;
+  unsigned msg_ofs = iter_na2a->msg_ofs,
+    nmsg = (unsigned)exchanger_na2a->team_share->nmsg[0]
+    + (unsigned)exchanger_na2a->team_share->nmsg[1];
+  if (msg_ofs+1 <= nmsg) {
+    iter_na2a->msg_ofs = ++msg_ofs;
+    return msg_ofs < nmsg;
+  } else
+    return 0;
+}
+
+static MPI_Datatype
+xt_exchanger_na2a_iter_get_MPI_Datatype(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_na2a_iter iter_na2a = (Xt_exchanger_na2a_iter)iter;
+  Xt_exchanger_neigh_alltoall exchanger_na2a = iter_na2a->exchanger;
+  unsigned msg_ofs = iter_na2a->msg_ofs,
+    nmsg = (unsigned)exchanger_na2a->team_share->nmsg[0]
+    + (unsigned)exchanger_na2a->team_share->nmsg[1];
+  MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
+  if (msg_ofs < nmsg) {
+    if (iter_na2a->config_flags & exch_no_dt_dup)
+      datatype_copy = exchanger_na2a->datatypes[msg_ofs];
+    else
+      xt_mpi_call(MPI_Type_dup(exchanger_na2a->datatypes[msg_ofs],
+                               &datatype_copy),
+                  exchanger_na2a->team_share->nb_comm);
+  }
+  return datatype_copy;
+}
+
+static int
+xt_exchanger_na2a_iter_get_rank(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_na2a_iter iter_na2a = (Xt_exchanger_na2a_iter)iter;
+  struct xt_exchanger_neigh_alltoall_team_share *team_share
+    = iter_na2a->exchanger->team_share;
+  unsigned msg_ofs = iter_na2a->msg_ofs,
+    nmsg = (unsigned)team_share->nmsg[0]
+    + (unsigned)team_share->nmsg[1];
+  return msg_ofs < nmsg ? team_share->ranks[msg_ofs] : -1;
+}
+
+static int
+xt_exchanger_na2a_iter_get_count(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_na2a_iter iter_na2a = (Xt_exchanger_na2a_iter)iter;
+  Xt_exchanger_neigh_alltoall exchanger_na2a = iter_na2a->exchanger;
+  unsigned msg_ofs = iter_na2a->msg_ofs,
+    nmsg = (unsigned)exchanger_na2a->team_share->nmsg[0]
+    + (unsigned)exchanger_na2a->team_share->nmsg[1];
+  return msg_ofs < nmsg ? exchanger_na2a->counts[msg_ofs] : -1;
+}
+
+static int
+xt_exchanger_na2a_iter_get_direction(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_na2a_iter iter_na2a = (Xt_exchanger_na2a_iter)iter;
+  struct xt_exchanger_neigh_alltoall_team_share *team_share
+    = iter_na2a->exchanger->team_share;
+  unsigned msg_ofs = iter_na2a->msg_ofs,
+    nmsg = (unsigned)team_share->nmsg[0]
+    + (unsigned)team_share->nmsg[1];
+  if (msg_ofs < nmsg)
+    return msg_ofs >= (unsigned)team_share->nmsg[0];
+  else
+    return -1;
+}
+
+static MPI_Aint
+xt_exchanger_na2a_iter_get_displacement(Xt_exchanger_iter iter)
+{
+  Xt_exchanger_na2a_iter iter_na2a = (Xt_exchanger_na2a_iter)iter;
+  Xt_exchanger_neigh_alltoall exchanger_na2a = iter_na2a->exchanger;
+  unsigned msg_ofs = iter_na2a->msg_ofs,
+    nmsg = (unsigned)exchanger_na2a->team_share->nmsg[0]
+    + (unsigned)exchanger_na2a->team_share->nmsg[1];
+  return msg_ofs < nmsg ? exchanger_na2a->displs[msg_ofs] : -1;
 }
 
 /*
