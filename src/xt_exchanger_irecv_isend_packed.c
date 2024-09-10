@@ -165,7 +165,8 @@ xt_exchanger_irecv_isend_packed_s_exchange(
     requests = requests_auto;
     buf_ofs = buf_ofs_auto;
   } else {
-    requests = xmalloc((num_tx+(num_tx&1)) * sizeof (*requests) + (num_tx+1) * sizeof (*buf_ofs));
+    requests = xmalloc((num_tx+(num_tx&1)) * sizeof (*requests)
+                       + (num_tx+1) * sizeof (*buf_ofs));
     buf_ofs = (void *)(requests + (num_tx+(num_tx&1)));
   }
 
