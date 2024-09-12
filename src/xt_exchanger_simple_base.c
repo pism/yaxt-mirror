@@ -79,6 +79,10 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
                                        int *restrict *ranks);
 
+static int
+xt_exchanger_simple_base_get_num_msg(Xt_exchanger exchanger,
+                                     int direction);
+
 static MPI_Datatype
 xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           int rank,
@@ -96,6 +100,7 @@ const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .delete = xt_exchanger_simple_base_delete,
   .s_exchange = xt_exchanger_simple_base_s_exchange,
   .a_exchange = xt_exchanger_simple_base_a_exchange,
+  .get_num_msg = xt_exchanger_simple_base_get_num_msg,
   .get_msg_ranks = xt_exchanger_simple_base_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_simple_base_get_MPI_Datatype,
   .create_omp_share = xt_exchanger_simple_base_create_omp_share,
@@ -297,7 +302,7 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
     (Xt_exchanger_simple_base)exchanger;
   size_t nsend = (size_t)exchanger_sb->nmsg[SEND],
     nmsg = (size_t)exchanger_sb->nmsg[direction],
-    ofs = direction == SEND ? 0 : nsend;
+    ofs = direction == xt_direction_send ? 0 : nsend;
   struct Xt_msg_param *restrict msgs = exchanger_sb->msgs + ofs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i)
@@ -313,6 +318,29 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
 }
 
 static int
+xt_exchanger_simple_base_get_num_msg(Xt_exchanger exchanger,
+                                     int direction)
+{
+  Xt_exchanger_simple_base exchanger_sb = (Xt_exchanger_simple_base)exchanger;
+  int nmsg;
+  assert(direction >= 0 && direction <= 2);
+  switch (direction) {
+  case xt_direction_send:
+  case xt_direction_recv:
+    nmsg = exchanger_sb->nmsg[direction];
+    break;
+  case 2:
+    nmsg = exchanger_sb->nmsg[0] + exchanger_sb->nmsg[1];
+    break;
+#  if HAVE_DECL___BUILTIN_UNREACHABLE
+  default:
+    __builtin_unreachable();
+#  endif
+  }
+  return nmsg;
+}
+
+static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
                                        int *restrict *ranks)
@@ -320,7 +348,7 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
   Xt_exchanger_simple_base exchanger_sb = (Xt_exchanger_simple_base)exchanger;
   size_t nmsg = (size_t)exchanger_sb->nmsg[direction];
   struct Xt_msg_param *restrict msgs = exchanger_sb->msgs
-    + (direction == RECV ? (size_t)exchanger_sb->nmsg[SEND] : 0);
+    + (direction == xt_direction_recv ? (size_t)exchanger_sb->nmsg[SEND] : 0);
   int *restrict ranks_ = *ranks;
   if (!ranks_)
     ranks_ = *ranks = xmalloc(nmsg * sizeof (*ranks_));

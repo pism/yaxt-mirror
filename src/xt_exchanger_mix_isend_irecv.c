@@ -100,6 +100,9 @@ static Xt_exchanger_omp_share
 xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger, int max_count);
 
 static int
+xt_exchanger_mix_isend_irecv_get_num_msg(Xt_exchanger exchanger,
+                                         int direction);
+static int
 xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
                                            enum xt_msg_direction direction,
                                            int *restrict *ranks);
@@ -119,6 +122,7 @@ xt_exchanger_mix_isend_irecv_vtable = {
   .delete = xt_exchanger_mix_isend_irecv_delete,
   .s_exchange = xt_exchanger_mix_isend_irecv_s_exchange,
   .a_exchange = xt_exchanger_mix_isend_irecv_a_exchange,
+  .get_num_msg = xt_exchanger_mix_isend_irecv_get_num_msg,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
   .create_omp_share = xt_exchanger_mix_isend_irecv_create_omp_share,
@@ -430,6 +434,30 @@ xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger, int max_co
 }
 
 static int
+xt_exchanger_mix_isend_irecv_get_num_msg(Xt_exchanger exchanger,
+                                         int direction)
+{
+  Xt_exchanger_mix_isend_irecv exchanger_msr =
+    (Xt_exchanger_mix_isend_irecv)exchanger;
+  size_t nmsg = 0, nmsg_all = (size_t)exchanger_msr->n;
+  assert(direction >= 0 && direction <= 2);
+  switch (direction) {
+  case xt_direction_send:
+  case xt_direction_recv:
+    {
+      const struct Xt_msg_param *restrict msgs = exchanger_msr->msgs;
+      for (size_t i = 0; i < nmsg_all; ++i)
+        nmsg += MSG_DIR(msgs[i]) == direction;
+    }
+    break;
+  case 2:
+    nmsg = nmsg_all;
+    break;
+  }
+  return (int)nmsg;
+}
+
+static int
 xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
                                            enum xt_msg_direction direction,
                                            int *restrict *ranks)
@@ -460,7 +488,7 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
   size_t nmsg = (size_t)exchanger_msr->n;
   struct Xt_msg_param *restrict msgs = exchanger_msr->msgs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
-  if (direction == RECV) rank |= ~INT_MAX;
+  if (direction == xt_direction_recv) rank |= ~INT_MAX;
   for (size_t i = 0; i < nmsg; ++i)
     if (msgs[i].rank == rank) {
       if (do_dup)
