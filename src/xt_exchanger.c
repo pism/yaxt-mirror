@@ -85,6 +85,13 @@ void xt_exchanger_a_exchange(Xt_exchanger exchanger,
 }
 
 int
+xt_exchanger_get_num_msg(Xt_exchanger exchanger,
+                         int direction)
+{
+  return exchanger->vtable->get_num_msg(exchanger, direction);
+}
+
+int
 xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
                            int *restrict *ranks)

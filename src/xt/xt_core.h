@@ -86,6 +86,11 @@ typedef struct Xt_xmap_ *Xt_xmap;
 typedef struct Xt_redist_ *Xt_redist;
 
 /**
+ * Used in calls that are specific for the direction of messages
+ */
+enum xt_msg_direction { xt_direction_send, xt_direction_recv };
+
+/**
  * represents \a size number of positions starting at \a start, where
  * the positions are assumed to decrease if \a size < 0 and increase otherwise.
  * Meaning the range of positions starting with

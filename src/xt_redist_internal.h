@@ -64,7 +64,7 @@
 #include "xt/xt_config.h"
 #include "xt_mpi_ddt_cache.h"
 
-enum xt_msg_direction {SEND, RECV};
+enum { SEND = xt_direction_send, RECV = xt_direction_recv };
 
 struct xt_redist_vtable {
 

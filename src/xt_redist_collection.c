@@ -283,9 +283,11 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   size_t num_ranks[2][num_redists_];
   int *restrict ranks[2][num_redists_];
   unsigned nmsg_send = xt_redist_agg_msg_count(
-      num_redists_, SEND, redists, num_ranks[SEND], ranks[SEND], config),
+      num_redists_, xt_direction_send, redists,
+      num_ranks[SEND], ranks[SEND], config),
     nmsg_recv = xt_redist_agg_msg_count(
-      num_redists_, RECV, redists, num_ranks[RECV], ranks[RECV], config);
+      num_redists_, xt_direction_recv, redists,
+      num_ranks[RECV], ranks[RECV], config);
   int tag_offset;
   MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
   Xt_redist_collection redist_coll
@@ -302,11 +304,12 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
   align_component_dt(num_redists_, nmsg_send, redists,
                      ranks[SEND], num_ranks[SEND], redist_coll->msg_ranks,
-                     all_component_dt, SEND);
+                     all_component_dt, xt_direction_send);
   align_component_dt(num_redists_, nmsg_recv, redists,
                      ranks[RECV], num_ranks[RECV],
                      redist_coll->msg_ranks+nmsg_send,
-                     all_component_dt + nmsg_send * num_redists_, RECV);
+                     all_component_dt + nmsg_send * num_redists_,
+                     xt_direction_recv);
   init_cache(&redist_coll->cache, redist_coll->cache_size, num_redists_);
 
   return (Xt_redist)redist_coll;

@@ -82,6 +82,9 @@ xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
                                        const void *src_data, void *dst_data,
                                        Xt_request *request);
 static int
+xt_exchanger_neigh_alltoall_get_num_msg(Xt_exchanger exchanger,
+                                        int direction);
+static int
 xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
                                           enum xt_msg_direction direction,
                                           int *restrict *ranks);
@@ -122,6 +125,7 @@ const struct xt_exchanger_vtable xt_exchanger_neigh_alltoall_vtable = {
   .delete = xt_exchanger_neigh_alltoall_delete,
   .s_exchange = xt_exchanger_neigh_alltoall_s_exchange,
   .a_exchange = xt_exchanger_neigh_alltoall_a_exchange,
+  .get_num_msg = xt_exchanger_neigh_alltoall_get_num_msg,
   .get_msg_ranks = xt_exchanger_neigh_alltoall_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_neigh_alltoall_get_MPI_Datatype,
   .team_share_size = sizeof (struct xt_exchanger_neigh_alltoall_team_share),
@@ -417,7 +421,7 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
     *team_share = exchanger_na->team_share;
   size_t nsend = (size_t)team_share->nmsg[SEND],
     nmsg = (size_t)team_share->nmsg[direction],
-    ofs = direction == SEND ? 0 : nsend;
+    ofs = direction == xt_direction_send ? 0 : nsend;
   int *restrict ranks = team_share->ranks + ofs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i) {
@@ -434,6 +438,30 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
 }
 
 static int
+xt_exchanger_neigh_alltoall_get_num_msg(Xt_exchanger exchanger,
+                                        int direction)
+{
+  struct xt_exchanger_neigh_alltoall_team_share
+    *team_share = ((Xt_exchanger_neigh_alltoall)exchanger)->team_share;
+    int nmsg;
+  assert(direction >= 0 && direction <= 2);
+  switch (direction) {
+  case xt_direction_send:
+  case xt_direction_recv:
+    nmsg = team_share->nmsg[direction];
+    break;
+  case 2:
+    nmsg = team_share->nmsg[0] + team_share->nmsg[1];
+    break;
+#  if HAVE_DECL___BUILTIN_UNREACHABLE
+  default:
+    __builtin_unreachable();
+#  endif
+  }
+  return nmsg;
+}
+
+static int
 xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
                                           enum xt_msg_direction direction,
                                           int *restrict *ranks)
@@ -444,7 +472,7 @@ xt_exchanger_neigh_alltoall_get_msg_ranks(Xt_exchanger exchanger,
     *team_share = exchanger_na->team_share;
   size_t nsend = (size_t)team_share->nmsg[SEND],
     nmsg = (size_t)team_share->nmsg[direction],
-    ofs = direction == SEND ? 0 : nsend;
+    ofs = direction == xt_direction_send ? 0 : nsend;
   int *ranks_ = *ranks;
   if (!ranks_)
     ranks_ = *ranks = xmalloc(nmsg * sizeof(**ranks));

@@ -78,6 +78,8 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: xt_stripe2s_len &
        = LEN(xt_stripe_tag) + 2 + 4 + 3 * xt_int_dec_len
 
+  INTEGER, PUBLIC, PARAMETER :: xt_direction_send = 0, xt_direction_recv = 1
+
   TYPE, BIND(C), PUBLIC :: xt_stripe
     INTEGER(xt_int_kind) :: start
     INTEGER(xt_int_kind) :: stride

@@ -120,6 +120,17 @@ typedef Xt_exchanger
 PPM_DSO_INTERNAL void
 xt_exchanger_delete(Xt_exchanger);
 
+/**
+ * Query number of ranks that this rank sends messages to
+ * (direction==xt_direction_send) or receives from
+ * (direction==xt_direction_recv) when using this exchanger.
+ * @param[in] exchanger exchanger object to query
+ * @return number of destination ranks
+ */
+int
+xt_exchanger_get_num_msg(Xt_exchanger exchanger,
+                         int direction);
+
 
 typedef struct Xt_exchanger_iter_ *Xt_exchanger_iter;
 

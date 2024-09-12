@@ -133,10 +133,10 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
   struct Xt_redist_msg *msgs = xmalloc(sizeof (*msgs) * num_messages);
 
   generate_msg_infos(msgs, src_extent, src_displacements,
-                     redist, num_repetitions, comm, SEND);
+                     redist, num_repetitions, comm, xt_direction_send);
 
   generate_msg_infos(msgs+nmsg[0], dst_extent, dst_displacements,
-                     redist, num_repetitions, comm, RECV);
+                     redist, num_repetitions, comm, xt_direction_recv);
 
   struct Xt_config_ config_ = *config;
   config_.flags |= exch_no_dt_dup;
