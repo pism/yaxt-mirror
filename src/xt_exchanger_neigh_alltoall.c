@@ -117,7 +117,8 @@ static void xt_exchanger_neigh_alltoall_team_share_destroy(void *share)
   struct xt_exchanger_neigh_alltoall_team_share *team_share = share;
   if (team_share->nb_comm != MPI_COMM_NULL)
     xt_mpi_call(MPI_Comm_free(&team_share->nb_comm), Xt_default_comm);
-  free(team_share->ranks);
+  if ((void *)team_share->ranks != (void *)(team_share+1))
+    free(team_share->ranks);
 }
 
 const struct xt_exchanger_vtable xt_exchanger_neigh_alltoall_vtable = {
@@ -154,22 +155,30 @@ xt_exchanger_neigh_alltoall_alloc(size_t nsend, size_t nrecv,
 {
   size_t nmsg = nsend + nrecv;
   bool need_team_share_alloc = exchanger_team_share == NULL;
+  size_t ranks_buf_size = sizeof (int) * (nmsg+(nmsg&1));
   Xt_exchanger_neigh_alltoall exchanger
     = xmalloc(sizeof(*exchanger)
-              + (need_team_share_alloc ? sizeof (*exchanger->team_share) : 0)
+              + (need_team_share_alloc
+                 ? sizeof (*exchanger->team_share) + ranks_buf_size : 0)
               + sizeof (MPI_Aint) * nmsg
               + nmsg * sizeof(*exchanger->datatypes)
-              + sizeof (int) * nmsg);
+              + sizeof (int) * nmsg * ((unsigned)need_team_share_alloc + 1U));
   exchanger->displs
-    = (void *)(exchanger->team_share_ + need_team_share_alloc);
+    = (void *)(
+      (unsigned char *)(exchanger->team_share_ + need_team_share_alloc)
+      + (need_team_share_alloc ? ranks_buf_size : 0));
   exchanger->datatypes = (void *)(exchanger->displs + nmsg);
   exchanger->counts = (void *)(exchanger->datatypes + nmsg);
   exchanger->vtable = &xt_exchanger_neigh_alltoall_vtable;
   if (need_team_share_alloc) {
-    exchanger->team_share = exchanger->team_share_;
     xt_exchanger_neigh_alltoall_team_share_default_init(exchanger->team_share_);
-  } else
+    exchanger->team_share = exchanger->team_share_;
+    exchanger->team_share->ranks = (void *)(exchanger->team_share_ + 1);
+  } else {
     exchanger->team_share = exchanger_team_share;
+    if (!exchanger->team_share->ranks)
+      exchanger->team_share->ranks = xmalloc(nmsg * sizeof(int));
+  }
   return exchanger;
 }
 
@@ -240,11 +249,12 @@ xt_exchanger_neigh_alltoall_new(int nsend, int nrecv,
   copy_counts((size_t)nrecv, recv_msgs, exchanger->counts + nsend);
   struct xt_exchanger_neigh_alltoall_team_share *team_share
     = exchanger->team_share;
+  size_t nmsg = (size_t)nsend + (size_t)nrecv;
+  if (!team_share->ranks)
+    team_share->ranks = xmalloc(nmsg * sizeof(*team_share->ranks));
   if (team_share->nb_comm == MPI_COMM_NULL) {
-    size_t nmsg = (size_t)nsend + (size_t)nrecv;
     team_share->nmsg[RECV] = nrecv;
     team_share->nmsg[SEND] = nsend;
-    team_share->ranks = xmalloc(nmsg * sizeof(*team_share->ranks));
     copy_ranks((size_t)nsend, send_msgs, team_share->ranks);
     copy_ranks((size_t)nrecv, recv_msgs, team_share->ranks+nsend);
     enum { no_reorder = 0 }; // no reordering of ranks in new comm
@@ -290,7 +300,6 @@ xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
          sizeof (int) * nmsg);
   team_share_copy->nmsg[SEND] = (int)nsend;
   team_share_copy->nmsg[RECV] = (int)nrecv;
-  team_share_copy->ranks = xmalloc(nmsg * sizeof(*team_share_copy->ranks));
   memcpy(team_share_copy->ranks, team_share->ranks,
          nmsg * sizeof(*team_share_copy->ranks));
 #ifndef NEED_MPICH_UNWEIGHTED_COMM_DUP_WORKAROUND
