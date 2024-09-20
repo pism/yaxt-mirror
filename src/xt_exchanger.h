@@ -72,7 +72,7 @@ typedef struct Xt_exchanger_ *Xt_exchanger;
  * @param[in]  src_data  source data
  * @param[out] dst_data  destination data
  */
-PPM_DSO_INTERNAL void
+void
 xt_exchanger_s_exchange(Xt_exchanger exchanger, const void *src_data,
                         void *dst_data);
 
@@ -84,7 +84,7 @@ xt_exchanger_s_exchange(Xt_exchanger exchanger, const void *src_data,
  * @param[out] request   pointer that will reference request object
  *                       created for duration of exchange
  */
-PPM_DSO_INTERNAL void
+void
 xt_exchanger_a_exchange(Xt_exchanger exchanger,
                         const void *src_data, void *dst_data,
                         Xt_request *request);
@@ -95,7 +95,7 @@ xt_exchanger_a_exchange(Xt_exchanger exchanger,
  * @param[in] new_comm       communicator to be used by the new exchanger
  * @param[in] new_tag_offset new tag_offset
  */
-PPM_DSO_INTERNAL Xt_exchanger
+Xt_exchanger
 xt_exchanger_copy(Xt_exchanger orig, MPI_Comm new_comm, int new_tag_offset);
 
 struct Xt_msg_param {
@@ -122,7 +122,7 @@ xt_exchanger_new(int nsend, int nrecv,
 /**
  * Destructor for an exchanger.
  */
-PPM_DSO_INTERNAL void
+void
 xt_exchanger_delete(Xt_exchanger);
 
 /**

@@ -57,19 +57,8 @@
 
 #include <mpi.h>
 
+#include "yaxt.h"
 #include "../src/xt_exchanger.h"
-#include "../src/xt_exchanger_irecv_send.h"
-#include "../src/xt_exchanger_irecv_isend.h"
-#include "../src/xt_exchanger_mix_isend_irecv.h"
-#include "../src/xt_exchanger_irecv_isend_packed.h"
-#include "../src/xt_exchanger_irecv_isend_ddt_packed.h"
-#include "../src/xt_exchanger_neigh_alltoall.h"
-#include "../src/xt_redist_internal.h"
-#include "../src/xt_mpi_internal.h"
-#include "../src/xt_config_internal.h"
-#include "../src/xt_xmap_dist_dir_bucket_gen_internal.h"
-#include "core/ppm_xfuncs.h"
-#include "xt/xt_xmap_dist_dir_bucket_gen.h"
 
 #include "ctest_common.h"
 #include "test_redist_common.h"
@@ -98,18 +87,13 @@ test_intercomm_all2all(MPI_Comm comm, Xt_config config);
 
 static int test_freq = 3;
 
-const struct Xt_xmdd_bucket_gen_ Xt_xmdd_cycl_stripe_bucket_gen_desc = {
-  .destroy = (void (*)(void *))0,
-};
-
 int main(int argc, char **argv)
 {
 
   MPI_Comm comm = MPI_COMM_WORLD;
   test_init_mpi(&argc, &argv, comm);
 
-  xt_mpi_init();
-  xt_config_defaults_init();
+  xt_initialize(comm);
 
   int *exchanger_code = parse_options(&argc, &argv);
   Xt_config config = xt_config_new();
@@ -148,7 +132,7 @@ int main(int argc, char **argv)
   xt_config_delete(config);
   free(exchanger_code);
 
-  xt_mpi_finalize();
+  xt_finalize();
 
   MPI_Finalize();
 
@@ -498,12 +482,10 @@ test_rr(MPI_Comm comm, Xt_config config)
 static void
 test_intercomm_all2all(MPI_Comm comm, Xt_config config)
 {
-#ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
   // inter-communicator's are not defined for virtual topologies, which are
   // used by xt_exchanger_neigh_alltoall_new
   if (xt_config_get_exchange_method(config)
       == xt_exchanger_neigh_alltoall) return;
-#endif
 
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);

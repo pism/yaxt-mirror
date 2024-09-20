@@ -169,41 +169,10 @@ test_arithmetic_long_SOURCES = test_arithmetic_long.c
 test_arithmetic_long_LDADD = libtestutil.la
 
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
-test_exchanger_parallel_LDADD =  libtestutil.la \
-	../src/xt_gpu.lo \
-	../src/xt_config.lo \
-	../src/quicksort.lo \
-	../src/mergesort.lo \
-	../src/xt_sort.lo \
-	../src/xt_exchanger_irecv_isend.lo \
-	../src/xt_exchanger_irecv_send.lo \
-	../src/xt_exchanger_irecv_isend_packed.lo \
-	../src/xt_exchanger_mix_isend_irecv.lo \
-	../src/xt_exchanger_simple_base.lo
 if ENABLE_XT_DDT_EXCHANGER
-test_exchanger_parallel_LDADD += \
-	../src/xt_ddt.lo \
-	../src/xt_ddt_create.lo \
-	../src/xt_request_msgs_ddt_packed.lo \
-	../src/xt_exchanger_irecv_isend_ddt_packed.lo
 AM_CPPFLAGS += -DXT_ENABLE_DDT_EXCHANGER
 endif
 
-if USE_NB_A2A
-test_exchanger_parallel_LDADD += ../src/xt_exchanger_neigh_alltoall.lo
-endif
-if HAVE_CUDA
-test_exchanger_parallel_LDADD += ../src/xt_cuda.lo
-endif
-test_exchanger_parallel_LDADD += ../src/xt_exchanger.lo \
-	../src/xt_redist_msg.lo \
-	../src/xt_request_msgs.lo \
-	../src/xt_request_msgs_ebuf.lo \
-	../src/xt_request_msgs_packed.lo \
-	../src/xt_request.lo \
-	../src/xt_mpi.lo \
-	../src/core/xmalloc.lo \
-	../src/core/core.lo $(MPI_C_LIB)
 
 @ifGNUmake@../src/%.lo: ../src/%.c
 @ifGNUmake@	$(MAKE) -C ../src $(patsubst ../src/%, %, $@)
