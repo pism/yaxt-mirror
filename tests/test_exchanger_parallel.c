@@ -224,6 +224,24 @@ static int *parse_options(int *argc, char ***argv)
 }
 
 static void
+data_exchange(Xt_exchanger exchanger,
+              const void *src_data, void *dst_data, bool async)
+{
+  if (async) {
+    Xt_request request;
+    int flag;
+    xt_exchanger_a_exchange(exchanger, src_data, dst_data, &request);
+    xt_request_test(&request, &flag);
+    xt_request_wait(&request);
+    xt_request_test(&request, &flag);
+    if (!flag) PUT_ERR("invalid flag result\n");
+  } else {
+    xt_exchanger_s_exchange(exchanger, src_data, dst_data);
+  }
+}
+
+
+static void
 test_bcast(MPI_Comm comm, Xt_config config)
 {
   int my_rank, comm_size;
@@ -271,17 +289,7 @@ test_bcast(MPI_Comm comm, Xt_config config)
       int src_data[1] = { my_rank == i ? 4711 : -1 };
       int dst_data[1] = { my_rank == i ? 4711 : -1 };
 
-      if (async) {
-        Xt_request request;
-        int flag;
-        xt_exchanger_a_exchange(exchanger, src_data, dst_data, &request);
-        xt_request_test(&request, &flag);
-        xt_request_wait(&request);
-        xt_request_test(&request, &flag);
-        if (!flag) PUT_ERR("invalid flag result\n");
-      } else {
-        xt_exchanger_s_exchange(exchanger, src_data, dst_data);
-      }
+      data_exchange(exchanger, src_data, dst_data, async);
 
       if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
     }
@@ -352,21 +360,9 @@ test_gather(MPI_Comm comm, Xt_config config)
       for (size_t j = 0; j < 2 * nrecv; ++j)
         dst_data[j] = -1;
 
-      for (size_t j = 0; j < num_exchanges; ++j) {
-        if (async) {
-          Xt_request request;
-          int flag;
-          xt_exchanger_a_exchange(exchanger[j], src_data,
-                                  dst_data + j * nrecv, &request);
-          xt_request_test(&request, &flag);
-          xt_request_wait(&request);
-          xt_request_test(&request, &flag);
-          if (!flag) PUT_ERR("invalid flag result\n");
-        } else {
-          xt_exchanger_s_exchange(exchanger[j], src_data,
-                                  dst_data + j*nrecv);
-        }
-      }
+      for (size_t j = 0; j < num_exchanges; ++j)
+        data_exchange(exchanger[j], src_data, dst_data + j * nrecv,
+                      async);
 
       bool mismatch = false;
       for (size_t j = 0; j < nrecv; ++j)
@@ -446,17 +442,7 @@ test_all2all(MPI_Comm comm, Xt_config config)
         for (size_t k = 0; k < comm_size_; ++k)
           dst_data[k] = my_rank;
 
-        if (async) {
-          Xt_request request;
-          int flag;
-          xt_exchanger_a_exchange(exchanger, src_data, dst_data, &request);
-          xt_request_test(&request, &flag);
-          xt_request_wait(&request);
-          xt_request_test(&request, &flag);
-          if (!flag) PUT_ERR("invalid flag result\n");
-        } else {
-          xt_exchanger_s_exchange(exchanger, src_data, dst_data);
-        }
+        data_exchange(exchanger, src_data, dst_data, async);
 
         bool mismatch = false;
         for (int k = 0; k < comm_size; ++k)
@@ -509,17 +495,7 @@ test_rr(MPI_Comm comm, Xt_config config)
       int src_data[1] = {my_rank};
       int dst_data[1] = {-1};
 
-      if (async) {
-        Xt_request request;
-        int flag;
-        xt_exchanger_a_exchange(exchanger, src_data, dst_data, &request);
-        xt_request_test(&request, &flag);
-        xt_request_wait(&request);
-        xt_request_test(&request, &flag);
-        if (!flag) PUT_ERR("invalid flag result\n");
-      } else {
-        xt_exchanger_s_exchange(exchanger, src_data, dst_data);
-      }
+      data_exchange(exchanger, src_data, dst_data, async);
 
       if (dst_data[0] != (my_rank + comm_size - i)%comm_size)
         PUT_ERR("invalid data\n");
@@ -602,17 +578,7 @@ test_intercomm_all2all(MPI_Comm comm, Xt_config config)
     int src_data[1] = {my_rank};
     for (int i = 0; i < nrecv; ++i) dst_data[i] = -1;
 
-    if (async) {
-      Xt_request request;
-      int flag;
-      xt_exchanger_a_exchange(exchanger, src_data, dst_data, &request);
-      xt_request_test(&request, &flag);
-      xt_request_wait(&request);
-      xt_request_test(&request, &flag);
-      if (!flag) PUT_ERR("invalid flag result\n");
-    } else {
-      xt_exchanger_s_exchange(exchanger, src_data, dst_data);
-    }
+    data_exchange(exchanger, src_data, dst_data, async);
 
     int dst_data_offset = (my_rank >= splitRank)?0:splitRank;
     bool mismatch = false;
