@@ -44,6 +44,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef XT_CONFIG_INTERNAL_H
+#define XT_CONFIG_INTERNAL_H
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -151,6 +154,8 @@ xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm);
   do { if ((config)->xmdd_bucket_gen->destroy)                  \
       (config)->xmdd_bucket_gen->destroy((bucket_gen_state));   \
   } while (0)
+
+#endif  /* XT_CONFIG_INTERNAL_H */
 /*
  * Local Variables:
  * c-basic-offset: 2
