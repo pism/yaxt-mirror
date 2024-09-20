@@ -83,18 +83,18 @@ struct test_message {
   int num_pos; // number of positions
 };
 
-static Xt_exchanger_new *parse_options(int *argc, char ***argv);
+static int *parse_options(int *argc, char ***argv);
 
 static void
-test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
+test_bcast(MPI_Comm comm, Xt_config config);
 static void
-test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
+test_gather(MPI_Comm comm, Xt_config config);
 static void
-test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
+test_all2all(MPI_Comm comm, Xt_config config);
 static void
-test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
+test_rr(MPI_Comm comm, Xt_config config);
 static void
-test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config);
+test_intercomm_all2all(MPI_Comm comm, Xt_config config);
 
 static int test_freq = 3;
 
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
   xt_mpi_init();
   xt_config_defaults_init();
 
-  Xt_exchanger_new *exchangers_new = parse_options(&argc, &argv);
+  int *exchanger_code = parse_options(&argc, &argv);
   Xt_config config = xt_config_new();
   int mt_configs_2_test[] = {
     XT_MT_NONE,
@@ -131,22 +131,22 @@ int main(int argc, char **argv)
       continue;
 #endif
     xt_config_set_redist_mthread_mode(config, mt_configs_2_test[m]);
-    for (size_t i = 0; exchangers_new[i] != (Xt_exchanger_new)0; ++i) {
-      Xt_exchanger_new exchanger_new = exchangers_new[i];
+    for (size_t i = 0; exchanger_code[i] != -1; ++i) {
 
-      test_bcast(comm, exchanger_new, config);
+      xt_config_set_exchange_method(config, exchanger_code[i]);
+      test_bcast(comm, config);
 
-      test_gather(comm, exchanger_new, config);
+      test_gather(comm, config);
 
-      test_all2all(comm, exchanger_new, config);
+      test_all2all(comm, config);
 
-      test_rr(comm, exchanger_new, config);
+      test_rr(comm, config);
 
-      test_intercomm_all2all(comm, exchanger_new, config);
+      test_intercomm_all2all(comm, config);
     }
   }
   xt_config_delete(config);
-  free(exchangers_new);
+  free(exchanger_code);
 
   xt_mpi_finalize();
 
@@ -155,26 +155,11 @@ int main(int argc, char **argv)
   return TEST_EXIT_CODE;
 }
 
-static Xt_exchanger_new *parse_options(int *argc, char ***argv)
+static int *parse_options(int *argc, char ***argv)
 {
-  static Xt_exchanger_new exchanger_table[] = {
-    [xt_exchanger_irecv_send] = xt_exchanger_irecv_send_new,
-    [xt_exchanger_irecv_isend] = xt_exchanger_irecv_isend_new,
-    [xt_exchanger_irecv_isend_packed] = xt_exchanger_irecv_isend_packed_new,
-#ifdef XT_ENABLE_DDT_EXCHANGER
-    [xt_exchanger_irecv_isend_ddt_packed] = xt_exchanger_irecv_isend_ddt_packed_new,
-#endif
-    [xt_exchanger_mix_isend_irecv] = xt_exchanger_mix_isend_irecv_new,
-#ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
-    [xt_exchanger_neigh_alltoall] = xt_exchanger_neigh_alltoall_new,
-#endif
-  };
-  enum {
-    num_exchanger = sizeof (exchanger_table) / sizeof (exchanger_table[0]),
-  };
-  Xt_exchanger_new *exchangers_new = xmalloc(2 * sizeof (*exchangers_new));
-  exchangers_new[0] = xt_exchanger_mix_isend_irecv_new;
-  exchangers_new[1] = (Xt_exchanger_new)0;
+  int *exchangers_new = xmalloc(2 * sizeof (*exchangers_new));
+  exchangers_new[0] = xt_exchanger_mix_isend_irecv;
+  exchangers_new[1] = -1;
   size_t cur_ex = 0;
   int opt;
   while ((opt = getopt(*argc, *argv, "m:s:")) != -1) {
@@ -203,11 +188,11 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
           continue;
         }
 #endif
-        exchangers_new[cur_ex] = exchanger_table[exchanger_new_id];
+        exchangers_new[cur_ex] = exchanger_new_id;
         ++cur_ex;
         exchangers_new = xrealloc(exchangers_new,
                                   sizeof (*exchangers_new) * (cur_ex + 1));
-        exchangers_new[cur_ex] = (Xt_exchanger_new)0;
+        exchangers_new[cur_ex] = -1;
       }
       break;
     case 's':
@@ -239,14 +224,18 @@ static Xt_exchanger_new *parse_options(int *argc, char ***argv)
 }
 
 static void
-test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
+test_bcast(MPI_Comm comm, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(config, comm);
 
   // bcast pattern
   int incr = comm_size/test_freq + (comm_size < test_freq);
+  int test_async = (xt_config_get_exchange_method(config)
+                    != xt_exchanger_irecv_send);
   for (int i = 0; i < comm_size; i += incr) {
 
     // setup
@@ -277,7 +266,6 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
                                            comm, 0, config);
 
     // test
-    int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
     for (int async = 0; async < 1 + test_async; ++async) {
 
       int src_data[1] = { my_rank == i ? 4711 : -1 };
@@ -305,7 +293,7 @@ test_bcast(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 }
 
 static void
-test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
+test_gather(MPI_Comm comm, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -321,6 +309,10 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
   }
   int *dst_data = xmalloc(((size_t)comm_size - 1) * sizeof (*dst_data) * 2);
   int incr = comm_size/test_freq + (comm_size < test_freq);
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(config, comm);
+  int test_async = (xt_config_get_exchange_method(config)
+                    != xt_exchanger_irecv_send);
   for (int i = 0; i < comm_size; i += incr) {
 
     // setup
@@ -355,7 +347,6 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
                                    config);
 
     // test
-    int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
     for (int async = 0; async < 1 + test_async; ++async) {
       int src_data[1] = {(my_rank+comm_size-i)%comm_size};
       for (size_t j = 0; j < 2 * nrecv; ++j)
@@ -397,7 +388,7 @@ test_gather(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 }
 
 static void
-test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
+test_all2all(MPI_Comm comm, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
@@ -426,6 +417,10 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
       dt_by_ofs[i] = MPI_DATATYPE_NULL;
   size_t comm_size_ = (size_t)comm_size,
     incr = (size_t)(comm_size/test_freq + (comm_size < test_freq));
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(config, comm);
+  int test_async = (xt_config_get_exchange_method(config)
+                    != xt_exchanger_irecv_send);
   for (size_t i = 0; i < comm_size_ - 1; i += incr) {
     for (size_t j = 0; j < (size_t)nsend; ++j) {
       int ofs = my_rank + 1 + (int)i + (int)j;
@@ -446,7 +441,6 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
                                              recv_msgs,
                                              comm, 0, config);
       // test
-      int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
       for (int async = 0; async < 1 + test_async; ++async) {
         int src_data[1] = {my_rank};
         for (size_t k = 0; k < comm_size_; ++k)
@@ -485,13 +479,17 @@ test_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 }
 
 static void
-test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
+test_rr(MPI_Comm comm, Xt_config config)
 {
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   // round robin pattern
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(config, comm);
   int incr = comm_size/test_freq + (comm_size < test_freq);
+  int test_async = (xt_config_get_exchange_method(config)
+                    != xt_exchanger_irecv_send);
   for (int i = 1; i < comm_size; i += incr) {
 
     // setup
@@ -507,7 +505,6 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
                                            recv_msgs, comm, 0, config);
 
     // test
-    int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
     for (int async = 0; async < 1 + test_async; ++async) {
       int src_data[1] = {my_rank};
       int dst_data[1] = {-1};
@@ -534,12 +531,13 @@ test_rr(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
 }
 
 static void
-test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config config)
+test_intercomm_all2all(MPI_Comm comm, Xt_config config)
 {
 #ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
   // inter-communicator's are not defined for virtual topologies, which are
   // used by xt_exchanger_neigh_alltoall_new
-  if (exchanger_new == xt_exchanger_neigh_alltoall_new) return;
+  if (xt_config_get_exchange_method(config)
+      == xt_exchanger_neigh_alltoall) return;
 #endif
 
   int my_rank, comm_size;
@@ -563,6 +561,9 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config 
   xt_mpi_call(MPI_Comm_rank(inter_comm, &intra_rank), comm);
   xt_mpi_call(MPI_Comm_size(inter_comm, &local_size), comm);
   xt_mpi_call(MPI_Comm_remote_size(inter_comm, &remote_size), comm);
+
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(config, inter_comm);
 
   // all-to-all pattern
   // setup
@@ -594,7 +595,8 @@ test_intercomm_all2all(MPI_Comm comm, Xt_exchanger_new exchanger_new, Xt_config 
                                          recv_msgs,
                                          inter_comm, 0, config);
   // test
-  int test_async = (exchanger_new != xt_exchanger_irecv_send_new);
+  int test_async = (xt_config_get_exchange_method(config)
+                    != xt_exchanger_irecv_send);
   for (int async = 0; async < 1 + test_async; ++async) {
 
     int src_data[1] = {my_rank};
