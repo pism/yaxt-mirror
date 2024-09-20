@@ -247,8 +247,6 @@ test_bcast(MPI_Comm comm, Xt_config config)
   int my_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
-  Xt_exchanger_new exchanger_new
-    = xt_config_get_exchange_new_by_comm(config, comm);
 
   // bcast pattern
   int incr = comm_size/test_freq + (comm_size < test_freq);
@@ -278,10 +276,10 @@ test_bcast(MPI_Comm comm, Xt_config config)
       {{.rank=-1, .datatype=MPI_DATATYPE_NULL, .displacement=0, .count=1 },
        {.rank=i, .datatype=MPI_INT, .displacement=0, .count=1}};
 
-    Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
-                                           send_msgs,
-                                           recv_msgs + (my_rank != i),
-                                           comm, 0, config);
+    Xt_exchanger exchanger = xt_exchanger_new(nsend, nrecv,
+                                              send_msgs,
+                                              recv_msgs + (my_rank != i),
+                                              comm, 0, config);
 
     // test
     for (int async = 0; async < 1 + test_async; ++async) {
@@ -317,8 +315,6 @@ test_gather(MPI_Comm comm, Xt_config config)
   }
   int *dst_data = xmalloc(((size_t)comm_size - 1) * sizeof (*dst_data) * 2);
   int incr = comm_size/test_freq + (comm_size < test_freq);
-  Xt_exchanger_new exchanger_new
-    = xt_config_get_exchange_new_by_comm(config, comm);
   int test_async = (xt_config_get_exchange_method(config)
                     != xt_exchanger_irecv_send);
   for (int i = 0; i < comm_size; i += incr) {
@@ -350,9 +346,8 @@ test_gather(MPI_Comm comm, Xt_config config)
     enum { exchange_fwd, exchange_rev, num_exchanges };
     Xt_exchanger exchanger[num_exchanges];
     for (size_t j = 0; j < num_exchanges; ++j)
-      exchanger[j] = exchanger_new(nsend, (int)nrecv,
-                                   send_msgs, recv_msgs + j * nrecv, comm, 0,
-                                   config);
+      exchanger[j] = xt_exchanger_new(nsend, (int)nrecv, send_msgs,
+                                      recv_msgs + j * nrecv, comm, 0, config);
 
     // test
     for (int async = 0; async < 1 + test_async; ++async) {
@@ -413,8 +408,6 @@ test_all2all(MPI_Comm comm, Xt_config config)
       dt_by_ofs[i] = MPI_DATATYPE_NULL;
   size_t comm_size_ = (size_t)comm_size,
     incr = (size_t)(comm_size/test_freq + (comm_size < test_freq));
-  Xt_exchanger_new exchanger_new
-    = xt_config_get_exchange_new_by_comm(config, comm);
   int test_async = (xt_config_get_exchange_method(config)
                     != xt_exchanger_irecv_send);
   for (size_t i = 0; i < comm_size_ - 1; i += incr) {
@@ -432,10 +425,8 @@ test_all2all(MPI_Comm comm, Xt_config config)
         recv_msgs[k].displacement = 0; // replace by sizeof (int) * ofs
         recv_msgs[k].count = 1;
       }
-      Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
-                                             send_msgs,
-                                             recv_msgs,
-                                             comm, 0, config);
+      Xt_exchanger exchanger
+        = xt_exchanger_new(nsend, nrecv, send_msgs, recv_msgs, comm, 0, config);
       // test
       for (int async = 0; async < 1 + test_async; ++async) {
         int src_data[1] = {my_rank};
@@ -471,8 +462,6 @@ test_rr(MPI_Comm comm, Xt_config config)
   xt_mpi_call(MPI_Comm_rank(comm, &my_rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
   // round robin pattern
-  Xt_exchanger_new exchanger_new
-    = xt_config_get_exchange_new_by_comm(config, comm);
   int incr = comm_size/test_freq + (comm_size < test_freq);
   int test_async = (xt_config_get_exchange_method(config)
                     != xt_exchanger_irecv_send);
@@ -487,8 +476,8 @@ test_rr(MPI_Comm comm, Xt_config config)
       = {{.rank=(my_rank + comm_size - i)%comm_size, .datatype=MPI_INT,
             .displacement=0, .count=1}};
 
-    Xt_exchanger exchanger = exchanger_new(nsend, nrecv, send_msgs,
-                                           recv_msgs, comm, 0, config);
+    Xt_exchanger exchanger
+      = xt_exchanger_new(nsend, nrecv, send_msgs, recv_msgs, comm, 0, config);
 
     // test
     for (int async = 0; async < 1 + test_async; ++async) {
@@ -538,9 +527,6 @@ test_intercomm_all2all(MPI_Comm comm, Xt_config config)
   xt_mpi_call(MPI_Comm_size(inter_comm, &local_size), comm);
   xt_mpi_call(MPI_Comm_remote_size(inter_comm, &remote_size), comm);
 
-  Xt_exchanger_new exchanger_new
-    = xt_config_get_exchange_new_by_comm(config, inter_comm);
-
   // all-to-all pattern
   // setup
   int nsend = remote_size;
@@ -566,10 +552,9 @@ test_intercomm_all2all(MPI_Comm comm, Xt_config config)
 
   int *dst_data = xmalloc((size_t)nrecv * sizeof (*dst_data));
 
-  Xt_exchanger exchanger = exchanger_new(nsend, nrecv,
-                                         send_msgs,
-                                         recv_msgs,
-                                         inter_comm, 0, config);
+  Xt_exchanger exchanger
+    = xt_exchanger_new(nsend, nrecv, send_msgs, recv_msgs,
+                       inter_comm, 0, config);
   // test
   int test_async = (xt_config_get_exchange_method(config)
                     != xt_exchanger_irecv_send);

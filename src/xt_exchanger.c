@@ -60,6 +60,22 @@
 #include "xt_exchanger_internal.h"
 
 Xt_exchanger
+xt_exchanger_new(int nsend, int nrecv,
+                 const struct Xt_msg_param *send_msgs,
+                 const struct Xt_msg_param *recv_msgs,
+                 MPI_Comm comm, int tag_offset,
+                 Xt_config config)
+{
+  Xt_exchanger_new exchanger_new
+    = xt_config_get_exchange_new_by_comm(config, comm);
+  Xt_exchanger exchanger = exchanger_new(nsend, nrecv, send_msgs, recv_msgs,
+                                         comm, tag_offset, config);
+  return exchanger;
+}
+
+
+
+Xt_exchanger
 xt_exchanger_copy(Xt_exchanger exchanger, MPI_Comm new_comm, int new_tag_offset)
 {
   return exchanger->vtable->copy(exchanger, new_comm, new_tag_offset);
