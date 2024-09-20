@@ -222,6 +222,7 @@ libyaxt_la_SOURCES =						\
 	xt_mpi_f.f90						\
 	xt_core_f.f90						\
 	xt_config_f.f90						\
+	xt_exchanger_f.f90					\
 	xt_sort_f.f90						\
 	xt_idxlist_f.f90					\
 	xt_idxvec_f.f90						\

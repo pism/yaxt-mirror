@@ -85,6 +85,7 @@ static const char filename[] = "yaxt_f2c.c";
 #include "xt/xt_redist_single_array_base.h"
 #include "xt/xt_redist_collection_static.h"
 #include "xt/xt_redist_collection.h"
+#include "xt_exchanger.h"
 #include "xt/xt_sort.h"
 
 #include "xt_config_internal.h"
@@ -95,6 +96,14 @@ struct xt_idxlist_f {
 
 struct xt_xmap_f {
    Xt_xmap cptr;
+};
+
+struct xt_exchanger_f {
+   Xt_exchanger cptr;
+};
+
+struct xt_exchanger_iter_f {
+   Xt_exchanger_iter cptr;
 };
 
 struct xt_config_f {
@@ -201,6 +210,67 @@ Xt_xmap xt_xmap_f2c(struct xt_xmap_f *p)
 {
   return p->cptr;
 }
+
+Xt_exchanger xt_exchanger_f2c(struct xt_exchanger_f *p)
+{
+  return p->cptr;
+}
+
+Xt_exchanger_iter xt_exchanger_iter_f2c(struct xt_exchanger_iter_f *p)
+{
+  return p->cptr;
+}
+
+struct Xt_msg_param_f {
+  MPI_Aint displacement;
+  MPI_Fint datatype, rank, count;
+};
+
+static inline void
+msgs_f2c_copy(size_t nmsg,
+              struct Xt_msg_param *dst,
+              const struct Xt_msg_param_f *src)
+{
+  for (size_t i = 0; i < nmsg; ++i)
+    dst[i] = (struct Xt_msg_param){
+      .displacement = src[i].displacement,
+      .datatype = MPI_Type_f2c(src[i].datatype),
+      .rank = src[i].rank,
+      .count = src[i].count
+    };
+}
+
+
+Xt_exchanger
+xt_exchanger_new_f2c(int nsend, int nrecv,
+                     const struct Xt_msg_param_f *send_msgs,
+                     const struct Xt_msg_param_f *recv_msgs,
+                     MPI_Fint comm_f, MPI_Fint tag_offset,
+                     Xt_config config)
+{
+  size_t nsend_ = nsend > 0 ? (size_t)nsend : (size_t)0,
+    nrecv_ = nrecv > 0 ? (size_t)nrecv : (size_t)0,
+    nmsg = nsend_ + nrecv_;
+  enum { num_msgs_auto = 32 };
+  struct Xt_msg_param msgs_auto[num_msgs_auto];
+  struct Xt_msg_param *msgs = nmsg <= num_msgs_auto ? msgs_auto
+    : xmalloc(nmsg * sizeof (*msgs));
+  msgs_f2c_copy(nsend_, msgs, send_msgs);
+  msgs_f2c_copy(nrecv_, msgs+nsend_, recv_msgs);
+  Xt_exchanger exch = config->exchanger_new(nsend, nrecv, msgs, msgs+nsend_,
+                                            MPI_Comm_f2c(comm_f), tag_offset,
+                                            config);
+  if (nmsg > num_msgs_auto)
+    free(msgs);
+  return exch;
+}
+
+MPI_Fint
+xt_exchanger_iter_get_MPI_datatype_f2c(const struct xt_exchanger_iter_f *p)
+{
+  return MPI_Type_c2f(xt_exchanger_iter_get_MPI_Datatype(p->cptr));
+}
+
 
 Xt_xmdd_bucket_gen xt_xmdd_bucket_gen_f2c(struct xt_xmdd_bucket_gen_f *p)
 {
