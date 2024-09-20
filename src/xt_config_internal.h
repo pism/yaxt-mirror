@@ -86,6 +86,16 @@ struct Xt_sort_algo_funcptr
   void (*sort_int_permutation)(int a[], size_t n, int permutation[]);
 };
 
+/**
+ * Constructor function for an exchanger, obtainable from an
+ * \ref Xt_config configuration object */
+typedef Xt_exchanger
+(*Xt_exchanger_new)(int nsend, int nrecv,
+                    const struct Xt_msg_param *send_msgs,
+                    const struct Xt_msg_param *recv_msgs,
+                    MPI_Comm comm, int tag_offset,
+                    Xt_config config);
+
 
 struct Xt_config_ {
   /**

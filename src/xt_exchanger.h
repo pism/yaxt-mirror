@@ -105,14 +105,19 @@ struct Xt_msg_param {
 };
 
 /**
- * Constructor function for an exchanger, obtainable from an
- * \ref Xt_config configuration object */
-typedef Xt_exchanger
-(*Xt_exchanger_new)(int nsend, int nrecv,
-                    const struct Xt_msg_param *send_msgs,
-                    const struct Xt_msg_param *recv_msgs,
-                    MPI_Comm comm, int tag_offset,
-                    Xt_config config);
+ * Create exchanger object.
+ *
+ * @param config configuration object
+ * @param comm communicator for which the exchanger is meant to work
+ * @returns exchanger object of configured type, or a fallback if the
+ * configured constructor does not apply to \a comm.
+ */
+Xt_exchanger
+xt_exchanger_new(int nsend, int nrecv,
+                 const struct Xt_msg_param *send_msgs,
+                 const struct Xt_msg_param *recv_msgs,
+                 MPI_Comm comm, int tag_offset,
+                 Xt_config config);
 
 /**
  * Destructor for an exchanger.
