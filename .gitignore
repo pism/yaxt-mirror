@@ -120,6 +120,7 @@ Makefile
 /tests/test_arithmetic_long
 /tests/test_ddt
 /tests/test_exchanger_parallel
+/tests/test_exchanger_parallel_f
 /tests/test_handles
 /tests/test_idxempty
 /tests/test_idxempty_f

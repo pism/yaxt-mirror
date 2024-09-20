@@ -83,6 +83,7 @@ check_LTLIBRARIES = libtestutil.la
 if with_fortran
 check_PROGRAMS += 						\
 	test_misc_f						\
+	test_exchanger_parallel_f				\
 	test_idxempty_f						\
 	test_idxvec_f						\
 	test_idxlist_collection_f				\
@@ -169,6 +170,8 @@ test_arithmetic_long_SOURCES = test_arithmetic_long.c
 test_arithmetic_long_LDADD = libtestutil.la
 
 test_exchanger_parallel_SOURCES = test_exchanger_parallel.c tests.h
+test_exchanger_parallel_f_SOURCES = test_exchanger_parallel_f.f90
+test_exchanger_parallel_f_LDADD = $(XT_FC_LDADD)
 if ENABLE_XT_DDT_EXCHANGER
 AM_CPPFLAGS += -DXT_ENABLE_DDT_EXCHANGER
 endif
