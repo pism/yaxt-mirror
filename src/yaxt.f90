@@ -67,6 +67,7 @@ MODULE yaxt
        xt_config_set_idxvec_autoconvert_size, &
        xt_config_get_redist_mthread_mode, &
        xt_config_set_redist_mthread_mode, &
+       xt_mt_none, xt_mt_openmp, &
        xt_config_get_sort_algorithm_id, &
        xt_config_set_sort_algorithm_by_id, &
        xt_config_set_mem_saving, &
@@ -250,6 +251,7 @@ MODULE yaxt
        xt_config_set_idxvec_autoconvert_size, &
        xt_config_get_redist_mthread_mode, &
        xt_config_set_redist_mthread_mode, &
+       xt_mt_none, xt_mt_openmp, &
        xt_config_get_sort_algorithm_id, &
        xt_config_set_sort_algorithm_by_id, &
        xt_config_set_mem_saving, &
