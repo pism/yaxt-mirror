@@ -95,11 +95,11 @@ MODULE xt_config_f
   PUBLIC :: xt_config_set_mem_saving, &
        xt_config_get_mem_saving
   INTEGER, PUBLIC, PARAMETER :: &
-       XT_MT_NONE = 0, &
-       XT_MT_OPENMP = 1
+       xt_mt_none = 0, &
+       xt_mt_openmp = 1
   INTEGER, PUBLIC, PARAMETER :: &
-       XT_QUICKSORT = 0, &
-       XT_MERGESORT = 1
+       xt_quicksort = 0, &
+       xt_mergesort = 1
 
   PUBLIC :: xt_config_get_xmdd_bucket_gen, &
        xt_config_set_xmdd_bucket_gen
