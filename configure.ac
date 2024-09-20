@@ -608,7 +608,10 @@ AC_SUBST([XT_WORKAROUND_MPI_CPPFLAGS])
 AM_CONDITIONAL([USE_NB_A2A],[test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno])
 AS_IF([test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno],
   [AC_DEFINE([XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL],[1],
-     [defined if MPI_Neighbor_alltoall functions are actually working])])
+     [defined if MPI_Neighbor_alltoall functions are actually working])
+   XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+! defined if MPI_Neighbor_alltoall functions are actually working
+@%:@define XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL 1"])
 AM_CONDITIONAL([XT_ADD_MPI_WORKAROUND], [test -n "$LIBOBJS"])
 AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset \
          -o x${acx_yaksa_add_workaround+set} = xset],
@@ -865,6 +868,10 @@ AC_ARG_ENABLE([xt-ddt-exchanger],
   [],[enable_xt_ddt_exchanger=yes])
 AM_CONDITIONAL([ENABLE_XT_DDT_EXCHANGER],
   [test x"$enable_xt_ddt_exchanger" != xno])
+AS_IF([test x"$enable_xt_ddt_exchanger" != xyes],
+  [XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+! defined when ddt exchanger is available
+@%:@define XT_ENABLE_DDT_EXCHANGER 1"])
 dnl
 m4_foreach([flags_var],[[CFLAGS],[FCFLAGS],[LDFLAGS]],
   [AC_ARG_VAR([BUILD_]flags_var,
