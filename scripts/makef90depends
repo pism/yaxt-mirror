@@ -310,7 +310,7 @@ sub parseSource($$$;$)
    $sys_incs = [];
    $prg_incs = [];
    print(STDERR 'Opening ', $srcfile, "\n") if $debug > 2;
-   open($fh, $srcfile) or die('Cannot open ', $srcfile, ': ', $!);
+   open($fh, '<', $srcfile) or die('Cannot open ', $srcfile, ': ', $!);
    print(STDERR 'Parsing ', $srcfile, "\n") if $debug > 1;
    my @predicateLevels = ({'ignored' => 0});
    my $ignored = 0;
@@ -457,15 +457,16 @@ sub parseSource($$$;$)
             my $moduleName = lc($1);
             pushUnique(\@moduleProvide, $moduleName);
          } elsif (/^\s*#*include\s+(?:(")(.+)?"|(<)(.+)?>)/) {
-            pushUnique($1 eq '"' ? ($prg_incs, $2)
-                       : ($sys_incs, $2));
+            my ($sigil, $headerSpec) = defined($1) ? ($1, $2) : ($3, $4);
+            pushUnique($sigil eq '"' ? ($prg_incs, $headerSpec)
+                       : ($sys_incs, $headerSpec));
             my ($incfile) = searchIncludes($srcfile,
-                                           [$1 eq '<' ? $2 : () ],
-                                           [$1 eq '"' ? $2 : () ],
+                                           [$sigil eq '<' ? $headerSpec : () ],
+                                           [$sigil eq '"' ? $headerSpec : () ],
                                            @$incDirs);
             parseSource($incfile, $defines, $incDirs, $preprocOutFh);
             print(STDERR 'Unsupported preprocessor include "',
-                  defined $1 ? $1 : $2,
+                  $headerSpec,
                   '" found while writing preprocessor output!')
                 if (defined($preprocOutFh));
          } elsif (/^\s*include\s+(["'])(.+)?\1/i) {
