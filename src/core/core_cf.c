@@ -42,7 +42,6 @@
 #  include <config.h>
 #endif
 #include <stdio.h>
-#include <stdint.h>
 
 #define FCALLSC_QUALIFIER PPM_DSO_INTERNAL
 
@@ -82,12 +81,12 @@ FCALLSCSUB1(SymPrefix(set_default_comm_f), SYMPREFIX(SET_DEFAULT_COMM),
 
 static void
 abort_f(MPI_Fint *comm_f, const char *msg,
-                   const char *source, int line)
+        const char *source, int line)
   __attribute__((noreturn));
 
 static void
 abort_f(MPI_Fint *comm_f, const char *msg,
-                   const char *source, int line)
+        const char *source, int line)
 {
   MPI_Comm comm_c = MPI_COMM_NULL;
 #if defined(USE_MPI)
@@ -109,6 +108,17 @@ FCALLSCSUB4(abort_f, SYMPREFIX(ABORT), symprefix(abort),
             PVOID, STRING, STRING, INT)
 #undef CFattributes
 #define CFattributes
+
+static void
+pure_abort_f(MPI_Fint *ierror, MPI_Fint *comm_f, const char *msg,
+             const char *source, int line)
+{
+  *ierror = -1;
+  abort_f(comm_f, msg, source, line);
+}
+
+FCALLSCSUB5(pure_abort_f, SYMPREFIX(ABORT_PURE), symprefix(abort_pure),
+            PVOID, PVOID, STRING, STRING, INT)
 
 static void
 SymPrefix(abort_handler_wrapper)(MPI_Comm comm, const char msg[],
@@ -194,8 +204,7 @@ SymPrefix(abort_handler_wrapper)(MPI_Comm comm, const char msg[],
   MPI_Fint comm_f = comm;
 #endif
   /* cfortran.h does not understand const char * */
-  char *msg_arg = (char *)(intptr_t)msg,
-    *source_arg = (char *)(intptr_t)source;
+  char *msg_arg = (char *)msg, *source_arg = (char *)source;
 #undef CPPPROTOCLSFSUB14
 #define CPPPROTOCLSFSUB14(UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)
   CCALLSFSUB4(*SymPrefix(fortran_abort_fp),,PVOID,STRING,STRING,INT,
