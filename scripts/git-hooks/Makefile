@@ -37,19 +37,10 @@
 #
 #
 
-all: checklicense.exclusions.pcre shellcheck
+all: shellcheck
 
 shellcheck:
 	for f in * ; do \
            if { head -n 1 "$$f" | grep -E -q '^#! *(/bin/bash|/bin/sh|/usr/bin/env bash)$$' ; } ; then \
 		shellcheck -x "$$f" ; \
 	   fi ; done
-
-CC = gcc
-CFLAGS = -O2 -march=native -Wall -Wextra
-
-bre2pcre: bre2pcre.c
-	$(CC) $(CFLAGS) -o $@ $^ $$(pcre2-config --cflags --libs8)
-
-checklicense.exclusions.pcre: checklicense.exclusions bre2pcre.c
-	$(MAKE) bre2pcre && ./bre2pcre <$^ >$@

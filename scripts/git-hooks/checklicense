@@ -45,35 +45,10 @@
 #
 #
 REPOTOP=$(git rev-parse --show-toplevel)
-if echo '0' | grep -q -z '' 2>/dev/null ; then
-  # grep accepts -z option, no need to do anything
-  :
-elif echo '0' | ggrep -q -z '' 2>/dev/null ; then
-  # rely on GNU grep if available by another name,
-  # e.g. on macOS with brew or ports
-  alias grep=ggrep
-elif command -v perl >/dev/null \
-   && { [[ "${REPOTOP}/scripts/git-hooks/checklicense.exclusions" \
-           -ot "${REPOTOP}/scripts/git-hooks/checklicense.exclusions.pcre" \
-        ]] || ${MAKE-make} -C "${REPOTOP}/scripts/git-hooks" \
-                           checklicense.exclusions.pcre ; }; then
-  # BREs could be translated to Perl, use that
-  grep()
-  {
-    perl -w -e 'use strict;
-my ($excl, $exclfh) = substr($ARGV[2], 7) . '"'"'.pcre'"'"';
-open($exclfh, '"'<'"', $excl) or die;
-my @exclpat = map { chomp ; qr{$_} } <$exclfh>;
-$/ = "\0";
-while (my $line = <STDIN>) {
-  next if (grep { substr($line, 0, -1) =~ $_ } @exclpat);
-  print($line);
-}' -- "$@"
-  }
-fi
 license_missing=$( \
-  git ls-files -z \
-  | grep -z -v --file="${REPOTOP}/scripts/git-hooks/checklicense.exclusions" \
+  sed -e '/^[^/]/s/^/:!:/;/^\//s/^\//:!\/:/' \
+     "${REPOTOP}/scripts/git-hooks/checklicense.exclusions" \
+  | xargs git ls-files -z . \
   | xargs -0 "$(command -v grep)" -L 'Copyright\|@copyright')
 if [ -n "$license_missing" ]; then
   echo "Files missing a license statement: $license_missing"
