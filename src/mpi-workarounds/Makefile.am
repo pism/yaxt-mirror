@@ -49,7 +49,7 @@ libmpi_workaround_la_SOURCES =
 libmpi_workaround_la_LIBADD = $(LIBOBJS) $(xt_mpi_workaround_LIBS) $(MPI_C_LIB)
 endif
 
-EXTRA_DIST = xt_xmlInitParser.c
+EXTRA_DIST = xt_xmlInitParser.c xt_xmlXPathInit.c
 
 distclean-local:
 	-rm -rf '$(DEPDIR)'

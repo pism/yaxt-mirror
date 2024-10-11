@@ -54,12 +54,12 @@ AC_DEFUN([ACX_LIBXML2_WORKAROUND],
    dnl so far
    acx_saved_LIBS=$LIBS
    acx_saved_CPPFLAGS=$CPPFLAGS
-   acx_is_affected_libxml2=:
    dnl 2. copy workaround source into place for configure logic
    acx_workaround_dir="$srcdir/m4_default([$5],[src/mpi-workarounds])/"
    for acx_workaround in xt_xmlXPathInit xt_xmlInitParser \
      xt_xmlInitParser.c_def
    do
+     acx_is_affected_libxml2=:
      AS_IF([test "$acx_workaround" = xt_xmlInitParser.c_def],
        [acx_workaround=xt_xmlInitParser
         CPPFLAGS="$CPPFLAGS -DXT_LIBXML_INCLUDE_SUBDIR"])
@@ -73,6 +73,8 @@ AC_DEFUN([ACX_LIBXML2_WORKAROUND],
      LIBS="xt_workaround.$ac_objext -lxml2 $LIBS"
      acx_libxml2_check_dir=`echo "acx_mpi_check_src_" | sed 's@/@<:@^/@:>@*$[]@@'`
      ACX_MPI_DEFECTS([$acx_libxml2_check_dir],, [acx_is_affected_libxml2=false], [$2])
+     AS_IF([$acx_is_affected_libxml2],
+       [break])
      rm -f xt_workaround.*
    done
    LIBS=$acx_saved_LIBS

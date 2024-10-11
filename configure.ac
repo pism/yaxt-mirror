@@ -561,7 +561,9 @@ ACX_MPI_DEFECTS(,,
      [workaround_successful=false
       AC_MSG_WARN([known problem detected, attempting work-around!])
       ACX_LIBXML2_WORKAROUND(,[mpi_fortran_startup.f90],
-        [AC_LIBOBJ([xt_xmlXPathInit])
+        [AS_CASE([$acx_workaround],
+           [xt_xmlXPathInit],[AC_LIBOBJ([xt_xmlXPathInit])],
+           [xt_xmlInitParser],[AC_LIBOBJ([xt_xmlInitParser])])
          workaround_successful=:],
         [AC_MSG_NOTICE(
            [Could not apply libxml2 SIGFPE bug work-around.])])
@@ -602,9 +604,7 @@ AM_CONDITIONAL([USE_NB_A2A],[test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2
 AS_IF([test $MPI_VERSION -ge 3 && test x"$xt_disable_nb_a2a" = xno],
   [AC_DEFINE([XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL],[1],
      [defined if MPI_Neighbor_alltoall functions are actually working])])
-AM_CONDITIONAL([XT_ADD_MPI_WORKAROUND],
-  [test x${acx_opal_datatype_add_workaround+set} = xset \
-     -o x${acx_yaksa_add_workaround+set} = xset])
+AM_CONDITIONAL([XT_ADD_MPI_WORKAROUND], [test -n "$LIBOBJS"])
 AS_IF([test x${acx_opal_datatype_add_workaround+set} = xset \
          -o x${acx_yaksa_add_workaround+set} = xset],
   [AC_DEFINE_UNQUOTED([XT_WORKAROUND_MPI_SYMBIND],
