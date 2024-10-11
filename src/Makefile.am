@@ -383,7 +383,7 @@ PKG_CFG_FILES += pkgconfig/yaxt.pc
 endif
 distclean-local: mostlyclean-compile distclean-generic
 	-rm -f xtinclude_Makefile.inc
-	-rm -rf '$(DEPDIR)' 'core/$(DEPDIR)' 'mpi-profile/$(DEPDIR)'
+	-rm -rf '$(DEPDIR)' *'/$(DEPDIR)'
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
 	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc; \
 	  rmdir core pkgconfig mpi-workarounds mpi-profile; fi
