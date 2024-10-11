@@ -1,19 +1,24 @@
 --- a/config/ltmain.sh
 +++ b/config/ltmain.sh
-@@ -6490,6 +6490,12 @@ func_mode_link ()
+@@ -6490,6 +6490,17 @@ func_mode_link ()
  	# Convert "-framework foo" to "foo.ltframework"
  	if test -n "$inherited_linker_flags"; then
  	  tmp_inherited_linker_flags=`$ECHO "$inherited_linker_flags" | $SED 's/-framework \([^ $]*\)/\1.ltframework/g'`
 +
 +	  # Additionally convert " -pthread" to " -Wl,-pthread" for nagfor
-+	  if test yes = "$with_nagfor" ; then
-+	    tmp_inherited_linker_flags=`$ECHO " $tmp_inherited_linker_flags " | $SED 's/ -pthread[[:blank:]]/ -Wl,-pthread /g'`
-+	  fi
++	  case $compiler_lineage in #(
++           NAG)
++	      tmp_inherited_linker_flags=`$ECHO " $tmp_inherited_linker_flags " | $SED 's/ -pthread[[:blank:]]/ -Wl,-pthread /g'`
++	      ;; #(
++	    PGI)
++	      tmp_inherited_linker_flags=`$ECHO " $tmp_inherited_linker_flags " | $SED 's/ -pthread[[:blank:]]//g'`
++	      ;;
++	  esac
 +
  	  for tmp_inherited_linker_flag in $tmp_inherited_linker_flags; do
  	    case " $new_inherited_linker_flags " in
  	      *" $tmp_inherited_linker_flag "*) ;;
-@@ -8084,6 +8090,20 @@ EOF
+@@ -8084,6 +8090,22 @@ EOF
  	  ;;
        esac
  
@@ -27,9 +32,11 @@
 +      # better not to revert the changes, otherwise, uncomment the following
 +      # lines.
 +
-+      if test yes = "$with_nagfor" ; then
-+        new_inherited_linker_flags=`$ECHO " $new_inherited_linker_flags " | $SED 's/ -Wl,-pthread / -pthread /g;s/^ *//;s/ *$//'`
-+      fi
++      case $compiler_lineage in #(
++	NAG)
++	  new_inherited_linker_flags=`$ECHO " $new_inherited_linker_flags " | $SED 's/ -Wl,-pthread / -pthread /g;s/^ *//;s/ *$//'`
++	  ;;
++      esac
 +
        # move library search paths that coincide with paths to not yet
        # installed libraries to the beginning of the library search list

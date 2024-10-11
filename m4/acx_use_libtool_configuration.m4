@@ -125,14 +125,22 @@ dnl newer PGI or NAG configurations particularly well
      [m4_pushdef(acx_ltconfig,m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(m4_defn(acx_ltconfig)),[_LT_TAG_COMPILER
 ],
-       [\&  _LT_TAGDECL([with_nagfor], [acx_is_nagfor], [0], [Is the compiler the NAG Fortran compiler?])])),
+       [\&  _LT_TAGDECL([compiler_lineage], [acx_compiler_lineage], [0], [For inherited options, we need to know how to deal with those when using a library built with compiler X in compiler Y.])])),
        [_LT_CONFIG],
-       [AC_MSG_CHECKING([whether this is the NAG Fortran compiler])
-    $CC -V 2>&1 | grep '^NAG Fortran Compiler Release' >/dev/null 2>&1
-    _lt_result=$?
-    AS_IF([test $_lt_result -eq 0],[_lt_result=yes],[_lt_result=no])
+       [AC_MSG_CHECKING([for the compiler family])
+    case `$CC -V 2>&1 | sed -n '1,20p'` in #(
+    *NAG\\ Fortran\\ Compiler\\ Release*\)
+      _lt_result=NAG
+      ;; #(
+    *PGI\\ Compilers\\ and\\ Tools*|*Portland\\ *\)
+      _lt_result=PGI
+      ;;
+    *\)
+      _lt_result=other
+      ;;
+    esac
     AC_MSG_RESULT([$_lt_result])
-    _LT_TAGVAR([acx_is_nagfor], $][1)=$_lt_result
+    _LT_TAGVAR([acx_compiler_lineage], $][1)=$_lt_result
     \&]))])dnl
    LT_INIT([$1])
    m4_popdef([_LT_LANG_F77_CONFIG])dnl
@@ -164,7 +172,8 @@ dnl only causes overhead and potential problems.
      [AC_LANG_CASE([Fortran],[m4_pushdef([acx_flags_var],[FCFLAGS])m4_pushdef([acx_lt_tag],[FC])],
         [Fortran 77],[m4_pushdef([acx_flags_var],[FFLAGS])m4_pushdef([acx_lt_tag],[F77])],
         [C],[m4_pushdef([acx_flags_var],[CFLAGS])m4_pushdef([acx_lt_tag],[])])dnl
-      AS_IF([test x"$_LT_TAGVAR([acx_is_nagfor],m4_defn([acx_lt_tag]))" = xyes],
+      AS_CASE([$_LT_TAGVAR([acx_compiler_lineage],m4_defn([acx_lt_tag]))],
+	[NAG],
         [AS_CASE([" $acx_flags_var $LDFLAGS "],
            [*\ -B*\ *],
            [extrasub="${extrasub+$extrasub$as_nl}/^\# skip internal symbols for stubs created by xlf/i \\\\${as_nl}\# ignore symbols nagfor injects into our shared objects\\\\${as_nl}/"'^${exp_sym_prefix}'"${acx_symprfx}"'(__NAGf90_|f90_)/b'

@@ -94,13 +94,13 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	contrib/02nagfor53-shared-patch/README.txt \
 	contrib/02nagfor53-shared-patch/nagfor53-shared.patch \
 	contrib/03ltmain-ld-groups-patch/README \
-	contrib/03ltmain-ld-groups-patch/ltmain-ld-groups-libtool-2.4.6.patch \
 	contrib/03ltmain-ld-groups-patch/ltmain-ld-groups-libtool-2.4.2.patch \
+	contrib/03ltmain-ld-groups-patch/ltmain-ld-groups-libtool-2.4.6.patch \
 	contrib/04ltmain-xlinker-patch/README \
 	contrib/04ltmain-xlinker-patch/ltmain-xlinker-patch.patch \
 	contrib/05macos-nagfor-patch/macos-nagfor-libtool-2.4.2.patch \
-	contrib/05macos-nagfor-patch/macos-nagfor.patch \
-	contrib/06ltmain_nag_pthread-patch/ltmain_nag_pthread.patch \
+	contrib/05macos-nagfor-patch/macos-nagfor-libtool-2.4.6.patch \
+	contrib/06ltmain_nag_pthread-patch/ltmain_nag_pthread-libtool-2.4.6.patch \
 	contrib/06ltmain_nag_pthread-patch/ltmain_nag_pthread-libtool-2.4.2.patch \
 	contrib/07ltmain-early-xcompile-patch/README \
 	contrib/07ltmain-early-xcompile-patch/ltmain-early-xcompile-libtool-2.4.6.patch \

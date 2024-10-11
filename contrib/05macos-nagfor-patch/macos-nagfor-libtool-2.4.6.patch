@@ -6,8 +6,8 @@
            # On Darwin other compilers
 -          case $CC in
 -              nagfor*)
-+          case $with_nagfor in
-+              yes)
++          case $compiler_lineage in
++              NAG)
                    verstring="$wl-compatibility_version $wl$minor_current $wl-current_version $wl$minor_current.$revision"
                    ;;
                *)
