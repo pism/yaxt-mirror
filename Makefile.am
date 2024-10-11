@@ -111,6 +111,9 @@ EXTRA_DIST = util/sunf95preproc-wrapper \
 	contrib/09debian-no-overlink-patch/deplib_binary.patch \
 	contrib/09debian-no-overlink-patch/link_all_deplibs-libtool-2.4.2.patch \
 	contrib/09debian-no-overlink-patch/link_all_deplibs.patch \
+	contrib/10ltmain-ld-positional-wl-patch/README \
+	contrib/10ltmain-ld-positional-wl-patch/ltmain-ld-positional-wl-libtool-2.4.2.patch \
+	contrib/10ltmain-ld-positional-wl-patch/ltmain-ld-positional-wl-libtool-2.4.6.patch \
 	doc/Makefile \
 	doc/Doxyfile.in doc/README.build doc/cfortran.doc \
 	doc/cfortran.html doc/cfortran.txt doc/styleguide.txt \
