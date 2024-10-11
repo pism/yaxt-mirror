@@ -44,6 +44,7 @@ Makefile.in
 /tests/test_exchanger_parallel_run
 /tests/test_exported_symbols
 /tests/test_handles_run
+/tests/test_hpp
 /tests/test_idxempty_run
 /tests/test_idxlist_collection_run
 /tests/test_idxmod_run
@@ -100,6 +101,7 @@ Makefile
 /examples/unstruct_halo_exchange_f
 /inst_headers/xt
 /inst_headers/yaxt.h
+/inst_headers/yaxt.hpp
 /perf/perf_idxsection_get_positions_of_indices
 /perf/perf_sparse_array_gather
 /perf/perf_xmap_create
