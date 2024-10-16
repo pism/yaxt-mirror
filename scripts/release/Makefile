@@ -39,6 +39,7 @@
 
 
 shellcheck:
+	set -e ; \
 	for f in * ; do \
            if { head -n 1 "$$f" | grep -E -q '^#! *(/bin/bash|/bin/sh|/usr/bin/env bash)$$' ; } ; then \
 		shellcheck -x "$$f" ; \
