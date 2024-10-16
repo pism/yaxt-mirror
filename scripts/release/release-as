@@ -74,6 +74,9 @@ if [[ -w configure.ac && -r configure.ac && \
     commit_to_release=$(git rev-parse --abbrev-ref HEAD)
   fi
   git clone -b "$commit_to_release" . "$tmpsrcdir"
+  if [[ -f "${reconfCmd}" && ! -x "${tmpsrcdir}/${reconfCmd}" ]]; then
+    cp -p "${reconfCmd}" "${tmpsrcdir}/${reconfCmd}"
+  fi
   pushd "$tmpsrcdir"
   # reinstate git hooks
   scripts/git-hooks/install-standard-git-hooks
