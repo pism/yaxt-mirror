@@ -44,7 +44,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # meant to be included in shell scripts
-package=$(autoconf '--trace=AC_INIT:$1#$2')
+package=$(${AUTOCONF-autoconf} -f '--trace=AC_INIT:$1#$2')
 version=${package#*#}
 package=${package%#*}
 hostname=${hostname-$(hostname)}
