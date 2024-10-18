@@ -106,8 +106,11 @@ abort_f(MPI_Fint *comm_f, const char *msg,
 #define CFattributes __attribute__((noreturn))
 FCALLSCSUB4(abort_f, SYMPREFIX(ABORT), symprefix(abort),
             PVOID, STRING, STRING, INT)
-#undef CFattributes
-#define CFattributes
+
+static void
+pure_abort_f(MPI_Fint *ierror, MPI_Fint *comm_f, const char *msg,
+             const char *source, int line)
+  __attribute__((noreturn));
 
 static void
 pure_abort_f(MPI_Fint *ierror, MPI_Fint *comm_f, const char *msg,
@@ -119,6 +122,9 @@ pure_abort_f(MPI_Fint *ierror, MPI_Fint *comm_f, const char *msg,
 
 FCALLSCSUB5(pure_abort_f, SYMPREFIX(ABORT_PURE), symprefix(abort_pure),
             PVOID, PVOID, STRING, STRING, INT)
+
+#undef CFattributes
+#define CFattributes
 
 static void
 SymPrefix(abort_handler_wrapper)(MPI_Comm comm, const char msg[],
@@ -204,7 +210,7 @@ SymPrefix(abort_handler_wrapper)(MPI_Comm comm, const char msg[],
   MPI_Fint comm_f = comm;
 #endif
   /* cfortran.h does not understand const char * */
-  char *msg_arg = (char *)msg, *source_arg = (char *)source;
+  char *msg_arg = (char *)(void *)msg, *source_arg = (char *)(void *)source;
 #undef CPPPROTOCLSFSUB14
 #define CPPPROTOCLSFSUB14(UN,LN,T1,T2,T3,T4,T5,T6,T7,T8,T9,TA,TB,TC,TD,TE)
   CCALLSFSUB4(*SymPrefix(fortran_abort_fp),,PVOID,STRING,STRING,INT,
