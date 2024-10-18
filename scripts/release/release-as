@@ -86,7 +86,8 @@ if [[ -w configure.ac && -r configure.ac && \
   ${SED} "${sed_inplace_options[@]}" \
     -e '/^AC_INIT(/s/AC_INIT(\([^,]*\),[^,]*,/AC_INIT(\1,['"${new_version}],/" \
     configure.ac
-  # 2. import common script settings
+  # 2. re-import common script settings
+  unset log_dir
   # shellcheck source=get-package-and-version.shinc
   source "${script_dir}/get-package-and-version.shinc"
   test -d "${log_dir}"
