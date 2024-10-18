@@ -202,7 +202,7 @@ CONTAINS
     buf_size = SUM(result_spacing) + SUM(result_sizes)
     ALLOCATE(buf(buf_size))
     DO iexch = 1, 2
-      buf = -1_xt_int_kind
+      buf(:) = -1_xt_int_kind
       ofs = result_spacing(1)
       results_1 => buf(ofs+1:ofs+result_sizes(1))
       ofs = ofs + result_sizes(1) + result_spacing(2)
@@ -217,7 +217,7 @@ CONTAINS
 
       CALL check_4redist_results(results_1, results_2, results_3, results_4, &
            index_vector_a, index_vector_b, iexch)
-      buf = -1_xt_int_kind
+      buf(:) = -1_xt_int_kind
       ! shift addresses around
       IF (rank == 0) THEN
         ofs = SUM(result_spacing(1:2)) + SUM(result_sizes(1:2))
