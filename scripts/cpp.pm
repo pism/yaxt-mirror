@@ -432,8 +432,14 @@ BEGIN {
       my $p = '';
       while (<$preprocOutputFh>)
       {
-         $p .= $_;
-         $preprocOutput .= $_ if (rindex($_, '#', 0) && $_ ne "\n");
+        $p .= $_;
+        # adjust for flang-new weirdness: insertion of gratuituous 6
+        # spaces by its preprocessor stage but since anything goes in
+        # Fortran preprocessing with cpp, let it slide
+        $_ = substr($_, 6) if (substr($_, 0, 6) eq '      ');
+        # skip #line markers and such as well as empty lines inserted by
+        # some preprocs
+        $preprocOutput .= $_ if (rindex($_, '#', 0) && $_ ne "\n");
       }
       while (chomp($preprocOutput))
       {
