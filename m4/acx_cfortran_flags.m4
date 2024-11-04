@@ -90,7 +90,7 @@ AC_DEFUN([_ACX_FIND_CFORTRAN_DEF],
            [AS_VAR_SET([acx_cf_flag],[-DNAGf90Fortran])],
            [*GNU\ Fortran*g77*],
            [AS_VAR_SET([acx_cf_flag],[-Dg77Fortran])],
-           [*GNU\ Fortran*],
+           [*GNU\ Fortran*|flang*version*],
            [dnl assume gfortran
 dnl check if compiling with f2c bindings or with default bindings
             AS_CASE([" $acx_FCFLAGS "],
