@@ -49,7 +49,7 @@ AC_DEFUN([ACX_PROG_FC_CHECK_FPP],dnl
       for i in none -cpp -fpp -qsuffix=cpp=f90 -eT -eZ -Mpreprocess -x\ f95-cpp-input ; do
 	AS_IF([test "x$i" != xnone],
 	  []acx_flags_var[="$]acx_flags_var[ ${i}"])
-	AC_COMPILE_IFELSE([_ACX_SL_LANG_PROGRAM_FPP_ONLY],
+	AC_COMPILE_IFELSE([_ACX_SL_LANG_PROGRAM_FPP_ONLY([INTEGER :: line = __LINE__])],
 	  [AS_VAR_SET([fpp_flag],[$i]) ; break])
 	]acx_flags_var[=$]acx_flags_var[_save
       done

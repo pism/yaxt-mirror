@@ -120,6 +120,7 @@ AC_DEFUN([_ACX_SL_LANG_PROGRAM_FPP_ONLY],
          [AC_LANG_PROGRAM(,[@%:@define OK
 @%:@ifdef OK
       REAL A
+m4_ifvaln([$1],[      $1])dnl
 @%:@else
       syntax error
 @%:@endif])])#_ACX_SL_LANG_PROGRAM_FPP_ONLY
