@@ -108,7 +108,7 @@ gen_cov_data:
       FCFLAGS="-pipe -O0 -g -cpp -fprofile-arcs -ftest-coverage"
       CFLAGS="-pipe -O0 -g -fprofile-arcs -ftest-coverage"
       BUILD_CFLAGS='-Wall'
-      MPI_LAUNCH="`which mpirun` --oversubscribe"
+      MPI_LAUNCH="$(command -v mpirun) --oversubscribe"
     - make -j4 check
   artifacts:
     paths:
@@ -137,7 +137,7 @@ run_test_gcc_11_2_0:
       CFLAGS="-pipe -O2 -g -march=native"
       BUILD_CFLAGS="-Wall -Wextra -Werror"
       --disable-silent-rules
-      MPI_LAUNCH="`which mpirun` --oversubscribe"
+      MPI_LAUNCH="$(command -v mpirun) --oversubscribe"
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
@@ -174,7 +174,7 @@ run_test_intel_2021_5_0:
       BUILD_FCFLAGS="-diag-enable=all"
       BUILD_CFLAGS="-diag-enable=all"
       --disable-silent-rules
-      MPI_LAUNCH="`which mpirun` --oversubscribe"
+      MPI_LAUNCH="$(command -v mpirun) --oversubscribe"
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
@@ -233,7 +233,7 @@ run_test_nag_7_1:
       CFLAGS="-O0 -g -pipe"
       BUILD_CFLAGS="-Wall -Werror"
       CC=mpicc FC=mpif90
-      MPI_LAUNCH="`which mpirun` --oversubscribe"
+      MPI_LAUNCH="$(command -v mpirun) --oversubscribe"
       --disable-silent-rules
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
