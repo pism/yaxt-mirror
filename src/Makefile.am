@@ -360,7 +360,7 @@ xtinclude_Makefile.inc: Makefile
 all-local: xtinclude_Makefile.inc
 
 clean-local:
-	-rm -f *.$(FCMODEXT) i.*.L *.i *.dbg
+	-rm -f *.$(FCMODEXT) i.*.L *.i *.dbg *.tmp
 
 
 # When an out-of-source build takes place, the recipe of the rule expects that
