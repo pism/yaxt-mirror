@@ -82,14 +82,28 @@ dnl newer PGI or NAG configurations particularly well
      [m4_pushdef([_LT_COMPILER_PIC],
        m4_bpatsubst(m4_dquote(
        m4_bpatsubst(m4_dquote(
-       m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),[;;
+       m4_bpatsubst(m4_dquote(
+       m4_bpatsubst(m4_dquote(m4_defn([_LT_COMPILER_PIC])),
+         [;;
 	\*Portland\\ ],[;; @%:@(
 	*NAG\\ Fortran\\ Compiler*)
 	  _LT_TAGVAR(lt_prog_compiler_wl, $][1)='-Wl,-Wl,,'
 	  _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-PIC'
 	  _LT_TAGVAR(lt_prog_compiler_static, $][1)='-Bstatic'
 	  ;;
-	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`])),[pgcpp\*],[pgcpp* | pgc++* ]))dnl
+	*PGI\\ Compilers\\ and\\ Tools*|*NVIDIA\\ Compilers\\ and\\ Tools*|*Port][land\\ ])),
+         acx_lt_sed[ 5q`],acx_lt_sed[ -n 1,15p`])),
+         [\*Portland\\ [^;]*;;],[\& @%:@(
+	*)
+          case `$CC --version 2>&1 | $SED -n 1,15p` in @%:@(
+            *flang*version*)
+	      _LT_TAGVAR(lt_prog_compiler_wl, $][1)='-Wl,'
+	      _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-fPIC'
+	      _LT_TAGVAR(lt_prog_compiler_static, $][1)='-static'
+	      ;;
+          esac
+          ;;])),
+         [pgcpp\*],[pgcpp* | pgc++* ]))dnl
       m4_pushdef([_LT_LANG_CXX_CONFIG],
         m4_bpatsubst(m4_dquote(
         m4_bpatsubst(m4_dquote(
