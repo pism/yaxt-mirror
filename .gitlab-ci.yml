@@ -24,6 +24,10 @@ stages:
   - documentation
   - publish
 
+include:
+  - project: 'anw_dienste/ci-templates'
+    file: '.slurm-ci.yml'
+
 .load_basic_modules: &load_basic_modules
   - . /sw/etc/profile.levante
   - export LANG=en_US.UTF-8
@@ -31,10 +35,21 @@ stages:
   - module load git python3
 
 .init_build:
+  extends:
+    - .default
+  variables:
+    PARTITION: shared
+    TASK_COUNT: 32
+    TIME_LIMIT: "15:00"
+    ACCOUNT: k20200
+    SCHEDULER_PARAMETERS: >-
+      --account=$ACCOUNT
+      --partition=$PARTITION
+      --ntasks=$TASK_COUNT
+      --time=$TIME_LIMIT
+    MAKEFLAGS: --jobs=${TASK_COUNT}
   before_script:
     - *load_basic_modules
-  tags:
-    - levante-fake, hpc, dkrz
 
 .init_build_gcc_11_2_0:
   extends: .init_build
@@ -59,7 +74,6 @@ stages:
   before_script:
     - *load_basic_modules
     - module load nag/7.1-gcc-11.2.0 openmpi/4.1.2-nag-7.1
-    - export NAG_KUSARI_FILE="/etc/nag-license"
 
 .install_gcovr: &install_gcovr
   - mkdir $CI_PROJECT_DIR/install_dir
@@ -95,7 +109,7 @@ gen_cov_data:
       CFLAGS="-pipe -O0 -g -fprofile-arcs -ftest-coverage"
       BUILD_CFLAGS='-Wall'
       MPI_LAUNCH="`which mpirun` --oversubscribe"
-    - make -j8 check
+    - make -j4 check
   artifacts:
     paths:
       - ./*.gcno
@@ -127,9 +141,9 @@ run_test_gcc_11_2_0:
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
-    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+    - make 2> >(tee make.err)
 # run tests
-    - make check
+    - make -j4 check
 # check git untracked files(any git untracked files would cause failure in ICON buildbot test)
     - mapfile -t untracked_files < <( $(git ls-files --other --exclude-standard --exclude=config.log.gz --exclude=make.err) )
     - |
@@ -164,9 +178,9 @@ run_test_intel_2021_5_0:
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
-    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+    - make 2> >(tee make.err)
 # run tests
-    - make check
+    - make -j4 check
   artifacts:
     paths:
       - make.err
@@ -191,19 +205,18 @@ run_test_oneapi_2023_2_1:
       LDFLAGS="-g -shared-intel"
       --disable-silent-rules
       --disable-static
-      MPI_LAUNCH=/bin/true
+      MPI_LAUNCH="$(command -v mpirun)"
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
-#    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
-    - make -j8 2> >(tee make.err)
+    - make 2> >(tee make.err)
 # run tests
-# TJ: deactivated checks because of problems in startup in the container
-#    - make check
+    - make -j4 check
   artifacts:
     paths:
       - make.err
       - config.log.gz
+      - tests/test-suite.log
     when: always
     expire_in: 5min
 
@@ -225,7 +238,7 @@ run_test_nag_7_1:
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
-    - make -j8 check TESTS= XFAIL_TESTS= 2> >(tee make.err)
+    - make 2> >(tee make.err)
 # run tests
     - make check
   artifacts:
