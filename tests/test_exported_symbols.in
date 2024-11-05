@@ -95,6 +95,12 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 /^${exp_sym_prefix}__gcov_*/b
 # skip symbols introduced by gcc -fprofile-arcs -ftest-coverage
 /^${exp_sym_prefix}mangle_path*/b
+# flang uses _QM prefix
+/^${exp_sym_prefix}${acx_symprfx}_QM([Yy][Aa]){0,1}[Xx][Tt].{0,1}/b
+# flang adds weak symbols for intrinsics
+/^${exp_sym_prefix}${acx_symprfx}_QM__fortran_builtinsE[._0-9a-z]*$/b
+# flang also injects some symbols prefixed by _QQ
+/^${exp_sym_prefix}${acx_symprfx}_QQcl[0-9A-Za-z]*$/b
 p
 }")
   if [ -n "$badsyms" ]; then
