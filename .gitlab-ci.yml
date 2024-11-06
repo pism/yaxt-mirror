@@ -33,6 +33,7 @@ include:
   - export LANG=en_US.UTF-8
   - module purge
   - module load git python3
+  - unset C_INCLUDE_PATH CPLUS_INCLUDE_PATH INCLUDE
 
 .init_build:
   extends:
