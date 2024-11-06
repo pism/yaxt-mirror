@@ -91,7 +91,7 @@ include:
     - ci_CC=mpiicc
     - ci_CFLAGS='-O2 -march=core-avx2 -g -fno-math-errno'
     - ci_BUILD_CFLAGS='-diag-enable=all'
-    - ci_LDFLAGS="-g -shared-intel"
+    - ci_configure_args=(LDFLAGS="-g -shared-intel")
     - ci_MPI_LAUNCH=$(command -v mpirun)
 
 .init_build_nag_7_1:
@@ -120,6 +120,22 @@ include:
     - ci_CC=mpicc
     - ci_FC=mpif90
 
+.init_build_nvhpc_22_5:
+  extends: .init_build
+  before_script:
+    - *load_basic_modules
+    - module load gcc/11.2.0-gcc-11.2.0 nvhpc/22.5-gcc-11.2.0 openmpi/.4.1.4-nvhpc-22.5
+    - SW_ROOT='/sw/spack-levante'
+    - CUDA_ROOT="${SW_ROOT}/nvhpc-22.5-v4oky3/Linux_x86_64/22.5/cuda"
+    - export OMPI_MCA_btl_sm_use_knem=0
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - ci_FC=mpifort
+    - ci_FCFLAGS="-O2 -g -I${CUDA_ROOT}/include -acc=gpu -gpu=cc80,nordc -Minfo -mp"
+    - ci_CC=mpicc
+    - ci_CFLAGS="-O2 -g -I${CUDA_ROOT}/include -acc=gpu -gpu=cc80,nordc -Minfo -mp"
+    - ci_configure_args=(--with-idxtype=long --disable-static)
+    - ci_configure_args+=(LDFLAGS='-acc=gpu -gpu=cc80,nordc -mp')
+
 .basic_build:
   script:
     - scripts/reconfigure
@@ -133,7 +149,7 @@ include:
       ${ci_BUILD_CFLAGS+BUILD_CFLAGS="${ci_BUILD_CFLAGS}"}
       --disable-silent-rules
       MPI_LAUNCH="${ci_MPI_LAUNCH-$(command -v mpirun) --oversubscribe}"
-      ${ci_LDFLAGS+LDFLAGS="$ci_LDFLAGS"}
+      "${ci_configure_args[@]}"
       || { status=$? ; gzip config.log ; exit $status ; }
     - gzip config.log
 # build yaxt and unit tests without running tests
@@ -231,6 +247,12 @@ run_test_nag_7_2:
   stage: tests
   extends:
     - .init_build_nag_7_2
+    - .basic_build
+
+run_test_nvhpc_22_5:
+  stage: tests
+  extends:
+    - .init_build_nvhpc_22_5
     - .basic_build
 
 gen_doxy_html:
