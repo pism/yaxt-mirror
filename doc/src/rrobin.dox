@@ -46,7 +46,7 @@
   There are many ways to define, which elements are locally available (source) and which
   are required (destination). We could define them with an array of indices using an index
   vector (\ref xt_idxvec.h), or we could define a block of elements we want to have using
-  index stripes (\ref xt_idxstripes.h). Using stripes we have to name the local start index,
+  index stripes (\ref idxstripe). Using stripes we have to name the local start index,
   how many elements we want to have, an the stride between the elements. Here we need for
   the source an index stripe containing 5 elements with a stride of 1, beginnig at 0 for
   rank 0, at 1*len for rank 1 etc.

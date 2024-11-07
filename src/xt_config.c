@@ -457,8 +457,9 @@ xt_config_get_xmap_stripe_align(Xt_config config)
  * to stripes
  *
  * When constructing an Xmap via \ref xt_xmap_dist_dir_new or
- * \ref xt_xmap_all2all_new, index lists passed in as \ref xt_idxvec will be
- * automatically converted to \ref xt_idxstripes if the size is above a
+ * \ref xt_xmap_all2all_new, index lists passed in as \ref idxvec
+ * "index vector" will be automatically converted to
+ * \ref idxstripe "index stripes" if the size is above a
  * limit which defaults to 128 indices.
  *
  * The XT_CONFIG_DEFAULT_IDXVEC_AUTOCONVERT_SIZE environment variable

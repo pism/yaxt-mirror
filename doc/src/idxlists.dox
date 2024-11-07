@@ -7,7 +7,7 @@
   \section idxlist_intro Introduction
 
   Index lists are just lists that contain a number of indices. Identical indices can
-  occur multiple times in an index list. They have no notion 2D or 3D decompostions.
+  occur multiple times in an index list. They have no notion of 2D or 3D decompostions.
 
   However, you are still able to describe any type of decompostion using such an
   index list. The most general index list type is the index vector. The yaxt library
@@ -24,8 +24,8 @@
 
   The index vector takes an array of indices as input and generates an index list from
   that. It is most efficient for random decompostions. Since it stores a copy of the
-  input array within the index list, it is not recommand to be used for index list that
-  can be described more compact with other index list types.
+  input array within the index list, it is not recommended to be used for index lists that
+  can be described more succinctly with other index list types.
 
   \image html decomp_idxvec.png "index vector decomposition example"
 
@@ -51,7 +51,7 @@
   \until ;
 
   A very common decomposition is the partioning into n-dimensional blocks. For this
-  decomposition type the index section is recommanded. Some advanced features of index
+  decomposition type the index section is recommended. Some advanced features of index
   sections are described in \ref idxsection_docu.
 
   \image html decomp_idxsection.png "index section decomposition example"
