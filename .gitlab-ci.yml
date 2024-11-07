@@ -381,7 +381,8 @@ check_warning_doxy:
       when: always
     - when: never
   needs:
-    - gen_doxy_html
+    - job: gen_doxy_html
+      artifacts: true
 
 pages:
   stage: publish
