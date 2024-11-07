@@ -279,6 +279,21 @@ run_test_nvhpc_24_7:
     - .basic_build
 
 gen_doxy_html:
+  extends:
+    - .default
+  variables:
+    PARTITION: shared
+    TASK_COUNT: 2
+    TIME_LIMIT: "5:00"
+    ACCOUNT: k20200
+    SCHEDULER_PARAMETERS: >-
+      --account=$ACCOUNT
+      --partition=$PARTITION
+      --ntasks=$TASK_COUNT
+      --time=$TIME_LIMIT
+    MAKEFLAGS: --jobs=${TASK_COUNT}
+  before_script:
+    - *load_basic_modules
   stage: documentation
   needs:
     - job: gen_cov_data
@@ -288,16 +303,17 @@ gen_doxy_html:
       when: always
     - when: never
   script:
+  - module purge
   - module load texlive/live2021-gcc-11.2.0
-  - PATH="$PATH:/sw/spack-levante/mambaforge-4.13.0-1-Linux-x86_64-budobm/pkgs/graphviz-5.0.1-h5abf519_0/bin"
-  - make -C doc DOXYGEN=/sw/spack-levante/doxygen-1.9.2-upexqu/bin/doxygen 2> >(tee doxy.err)
+  - PATH="$PATH:/sw/spack-levante/mambaforge-22.9.0-2-Linux-x86_64-kptncg/pkgs/graphviz-6.0.2-h99bc08f_0/bin"
+  - make -C doc DOXYGEN=/home/k/k202069/opt/doxygen-1.12.0-x64-linux/bin/doxygen 2> >(tee doxy.err)
   artifacts:
     expire_in: 5min
     paths:
     - doc/html
     - doxy.err
   tags:
-  - levante-fake, hpc, dkrz
+  - levante, hpc, dkrz
 
 gen_cov_rep_html:
   stage: documentation
@@ -351,7 +367,8 @@ check_warning_gcc_11_2_0:
   variables:
     OUTPUT_FILE: make.err
   needs:
-    - run_test_gcc_11_2_0
+    - job: run_test_gcc_11_2_0
+      artifacts: true
 
 check_warning_doxy:
   stage: documentation
