@@ -137,6 +137,22 @@ include:
     - ci_configure_args=(--with-idxtype=long --disable-static)
     - ci_configure_args+=(LDFLAGS='-acc=gpu -gpu=cc80,nordc -mp')
 
+.init_build_nvhpc_24_7:
+  extends: .init_build
+  before_script:
+    - *load_basic_modules
+    - module load gcc/11.2.0-gcc-11.2.0 nvhpc/24.7-gcc-11.2.0 openmpi/4.1.5-nvhpc-24.7
+    - SW_ROOT='/sw/spack-levante'
+    - CUDA_ROOT=$(command -v nvc) ; CUDA_ROOT="${CUDA_ROOT%compilers/bin/nvc}cuda"
+    - export OMPI_MCA_btl_sm_use_knem=0
+    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
+    - ci_FC=mpifort
+    - ci_FCFLAGS="-O2 -g -I${CUDA_ROOT}/include -acc=gpu -gpu=cc80,nordc -Minfo -mp"
+    - ci_CC=mpicc
+    - ci_CFLAGS="-O2 -g -I${CUDA_ROOT}/include -acc=gpu -gpu=cc80,nordc -Minfo -mp"
+    - ci_configure_args=(--with-idxtype=long --disable-static)
+    - ci_configure_args+=(LDFLAGS='-acc=gpu -gpu=cc80,nordc -mp')
+
 .basic_build:
   script:
     - scripts/reconfigure
@@ -254,6 +270,12 @@ run_test_nvhpc_22_5:
   stage: tests
   extends:
     - .init_build_nvhpc_22_5
+    - .basic_build
+
+run_test_nvhpc_24_7:
+  stage: tests
+  extends:
+    - .init_build_nvhpc_24_7
     - .basic_build
 
 gen_doxy_html:
