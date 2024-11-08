@@ -48,7 +48,7 @@
 #endif
 
 #include "xt_exchanger.h"
-
+#include "xt_exchanger_internal.h"
 
 
 size_t
