@@ -407,7 +407,9 @@ if with_fortran
 endif
 
 clean-local:
-	-rm -f *.$(FCMODEXT) *.i *.dbg
+	-rm -f *.$(FCMODEXT) *.i ??????????.dbg \
+	  `printf "%s\n" $(SOURCES) \
+	  | sed -n -e 's/\.c$$/.L/p' -e 's/\.f90$$/.L/p'`
 	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the

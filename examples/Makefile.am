@@ -102,7 +102,10 @@ FCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(FC) -static $(AM_FCFLAGS) $(FCFLAGS)
 
 clean-local:
-	-rm -f *.i *.dbg
+	-rm -f *.i ??????????.dbg \
+		`printf "%s\n" $(SOURCES) \
+		| $(SED) -n -e 's/\(.*\/\)\{0,1\}\(.*\)\.c$$/\2.L/p' \
+		-e 's/\(.*\/\)\{0,1\}\(.*\)\.f90$$/\2.L/p'`
 	-rm -rf *.dSYM
 
 # When an out-of-source build takes place, the 'distclean' recipe of the

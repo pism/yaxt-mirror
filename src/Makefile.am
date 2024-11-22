@@ -360,7 +360,10 @@ xtinclude_Makefile.inc: Makefile
 all-local: xtinclude_Makefile.inc
 
 clean-local:
-	-rm -f *.$(FCMODEXT) i.*.L *.i *.dbg *.tmp
+	-rm -f *.$(FCMODEXT) i.*.L *.i *.dbg *.tmp \
+		`printf "%s\n" $(SOURCES) \
+		| $(SED) -n -e 's/\(.*\/\)\{0,1\}\(.*\)\.c$$/\2.L/p' \
+		-e 's/\(.*\/\)\{0,1\}\(.*\)\.f90$$/\2.L/p'`
 
 
 # When an out-of-source build takes place, the recipe of the rule expects that
