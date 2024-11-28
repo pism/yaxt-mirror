@@ -236,7 +236,7 @@ int xt_config_get_sort_algorithm_id(Xt_config config)
   if (eentry != SIZE_MAX)
     return (int)eentry;
   static const char fmt[]
-    = "error: unexpected exchanger function (%p)!";
+    = "error: unexpected sort algorithm (%p)!";
   char buf[sizeof (fmt) + 3*sizeof(void *)];
   sprintf(buf, fmt, (const void *)sort_funcs);
   Xt_abort(Xt_default_comm, buf, filename, __LINE__);
@@ -249,7 +249,7 @@ void xt_config_set_sort_algorithm_by_id(Xt_config config, int algo)
     return;
   }
   static const char fmt[]
-    = "error: user-requested exchanger code (%d) does not exist!";
+    = "error: user-requested sort algorithm code (%d) does not exist!";
   char buf[sizeof (fmt) + 3*sizeof(int)];
   sprintf(buf, fmt, algo);
   Xt_abort(Xt_default_comm, buf, filename, __LINE__);
