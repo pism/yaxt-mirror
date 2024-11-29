@@ -232,8 +232,8 @@ xt_config_set_xmdd_bucket_gen(Xt_config config,
  *
  * @param[in,out]   config configuration object to modify
  * @param           use_stripe_align
- *                        0: detect element positions one by one,
- *                        1: align full stripes to form position extents
+ *                        0: detect element positions one by one,\n
+ *                        1: align full stripes to form position extents,\n
  *                        2: automatically choose element of stripe alignment
  *
  * When set to 1, the computations in the xmap
