@@ -258,6 +258,42 @@ int
 xt_config_get_xmap_stripe_align(Xt_config config);
 
 
+enum Xt_exch_send_comm_mode {
+  /** use default, standard send mode */
+  xt_exch_send_standard,
+  /** use buffered send */
+  xt_exch_send_buffered,
+  /** use synchronous send */
+  xt_exch_send_synchronous,
+  /** number of available send modes (has to be last entry) */
+  xt_exch_send_comm_mode_count,
+};
+
+/**
+ * Set exchanger send communication mode parameter.
+ *
+ * @param[in,out] config configuration object to modify
+ * @param[in]     exch_send_comm_mode
+ *                        0: standard send,\n
+ *                        1: buffered send,\n
+ *                        2: synchronous send
+ *
+ * The send communication mode is a recommendation for the
+ * exchanger. Not every exchanger will support all modes and may fall
+ * back to its default.
+ */
+void
+xt_config_set_exchange_send_comm_mode(Xt_config config,
+                                      int exch_send_comm_mode);
+
+/**
+ * Get send communication mode parameter.
+ * @param[in] config configuration object to query
+ */
+int
+xt_config_get_exchange_send_comm_mode(Xt_config config);
+
+
 #endif
 
 /*

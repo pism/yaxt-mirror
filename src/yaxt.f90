@@ -76,6 +76,11 @@ MODULE yaxt
        xt_config_get_xmdd_bucket_gen, &
        xt_config_get_xmap_stripe_align, &
        xt_config_set_xmap_stripe_align, &
+       xt_exch_send_standard, &
+       xt_exch_send_buffered, &
+       xt_exch_send_synchronous, &
+       xt_config_set_exchange_send_comm_mode, &
+       xt_config_get_exchange_send_comm_mode, &
        xt_exchanger_irecv_isend_ddt_packed
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
        xt_sort_permutation, xt_assign_id_map
@@ -260,6 +265,11 @@ MODULE yaxt
        xt_config_get_xmdd_bucket_gen, &
        xt_config_get_xmap_stripe_align, &
        xt_config_set_xmap_stripe_align, &
+       xt_exch_send_standard, &
+       xt_exch_send_buffered, &
+       xt_exch_send_synchronous, &
+       xt_config_set_exchange_send_comm_mode, &
+       xt_config_get_exchange_send_comm_mode, &
        xt_exchanger_irecv_isend_ddt_packed
 
   PUBLIC :: xt_redist_p2p_new, xt_redist_p2p_custom_new
