@@ -536,6 +536,16 @@ xt_config_get_exchange_send_type(Xt_config config)
  *
  * This can be changed globally by setting the environment variable
  * XT_CONFIG_DEFAULT_MEM_SAVING to 1.
+ *
+ * \section send_type Exchanger send type
+ *
+ * MPI supports multiple send types. By default the standard send method is
+ * used. This is currently equivalent to adding an \ref Xt_config parameter
+ * which had \ref xt_config_set_exchange_send_type with parameter
+ * \ref XT_EXCH_SEND_STANDARD called on it.
+ *
+ * Alternative types are the ready and synchronous send methods (see
+ * MPI documentation for more information).
  */
 void
 xt_config_defaults_init(void)
