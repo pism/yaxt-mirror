@@ -538,6 +538,18 @@ xt_config_get_exchange_send_comm_mode(Xt_config config)
  *
  * This can be changed globally by setting the environment variable
  * XT_CONFIG_DEFAULT_MEM_SAVING to 1.
+ *
+ * \section send_mode Exchanger send communication mode
+ *
+ * MPI supports multiple communication modes for sending messages. By
+ * default the standard communication mode, which may block but is not
+ * required to, is used. This is currently equivalent to adding an
+ * \ref Xt_config parameter which had \ref
+ * xt_config_set_exchange_send_comm_mode with parameter \ref
+ * xt_exch_send_standard called on it.
+ *
+ * Alternative types are the buffered and synchronous send modes
+ * (see MPI documentation for more information).
  */
 void
 xt_config_defaults_init(void)
