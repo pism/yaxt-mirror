@@ -401,6 +401,24 @@ xt_config_get_xmap_stripe_align(Xt_config config)
   return XT_CONFIG_GET_XMAP_STRIPING(config);
 }
 
+void
+xt_config_set_exchange_send_comm_mode(Xt_config config,
+                                      int exch_send_comm_mode)
+{
+  if (exch_send_comm_mode < 0
+      || exch_send_comm_mode >= xt_exch_send_comm_mode_count)
+    Xt_abort(Xt_default_comm,
+             "error: invalid value passed to "
+             "xt_config_set_exchange_send_comm_mode.\n", filename, __LINE__);
+  XT_CONFIG_SET_EXCH_SEND_COMM_MODE(config, exch_send_comm_mode);
+}
+
+int
+xt_config_get_exchange_send_comm_mode(Xt_config config)
+{
+  return (int)(XT_CONFIG_GET_EXCH_SEND_COMM_MODE(config));
+}
+
 /**
  * \page defaults Customizable defaults
  *

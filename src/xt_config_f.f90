@@ -101,6 +101,12 @@ MODULE xt_config_f
        xt_quicksort = 0, &
        xt_mergesort = 1
 
+  INTEGER, PUBLIC, PARAMETER :: &
+       xt_exch_send_standard = 0, &
+       xt_exch_send_buffered = 1, &
+       xt_exch_send_synchronous = 2
+  PUBLIC :: xt_config_set_exchange_send_comm_mode, &
+       xt_config_get_exchange_send_comm_mode
   PUBLIC :: xt_config_get_xmdd_bucket_gen, &
        xt_config_set_xmdd_bucket_gen
 
@@ -402,6 +408,40 @@ CONTAINS
     END INTERFACE
     preference = INT(xt_config_get_xmap_stripe_align_c(config%cptr))
   END FUNCTION xt_config_get_xmap_stripe_align
+
+  SUBROUTINE xt_config_set_exchange_send_comm_mode(config, &
+       exch_send_comm_mode)
+    TYPE(xt_config), INTENT(inout) :: config
+    INTEGER, INTENT(in) :: exch_send_comm_mode
+    INTEGER(c_int) :: exch_send_comm_mode_c
+    INTERFACE
+      SUBROUTINE xt_config_set_exchange_send_comm_mode_c(config, &
+           exch_send_comm_mode) &
+           BIND(c, name='xt_config_set_exchange_send_comm_mode')
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int), VALUE :: exch_send_comm_mode
+      END SUBROUTINE xt_config_set_exchange_send_comm_mode_c
+    END INTERFACE
+    exch_send_comm_mode_c = INT(exch_send_comm_mode, c_int)
+    CALL xt_config_set_exchange_send_comm_mode_c(config%cptr, &
+         exch_send_comm_mode_c)
+  END SUBROUTINE xt_config_set_exchange_send_comm_mode
+
+  FUNCTION xt_config_get_exchange_send_comm_mode(config) RESULT(send_mode)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: send_mode
+    INTERFACE
+      FUNCTION xt_config_get_exchange_send_comm_mode_c(config) &
+           RESULT(send_mode) &
+           BIND(c, name='xt_config_get_exchange_send_comm_mode')
+        IMPORT :: c_int, c_ptr
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int) :: send_mode
+      END FUNCTION xt_config_get_exchange_send_comm_mode_c
+    END INTERFACE
+    send_mode = INT(xt_config_get_exchange_send_comm_mode_c(config%cptr))
+  END FUNCTION xt_config_get_exchange_send_comm_mode
 
 END MODULE xt_config_f
 !
