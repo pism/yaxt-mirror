@@ -242,7 +242,33 @@ PPM_DSO_INTERNAL void
 xt_msg_params_destruct(size_t n, struct Xt_msg_param *msgs,
                        MPI_Comm comm);
 
+typedef int (*xt_a_send_func_ptr)
+  (void *buf, int count, MPI_Datatype datatype, int dest,
+   int tag, MPI_Comm comm, MPI_Request *request);
 
+typedef int (*xt_send_func_ptr)
+  (void *buf, int count, MPI_Datatype datatype, int dest,
+   int tag, MPI_Comm comm);
+
+/**
+ * Gets pointer to a non-blocking MPI send routine matching provided the
+ * exchange send type.
+ *
+ * @param[in] exch_send_type exchange send type
+ * @returns Pointer to non-blocking MPI send routine
+ */
+PPM_DSO_INTERNAL xt_a_send_func_ptr
+xt_get_a_send_op(enum Xt_exch_send_type exch_send_type);
+
+/**
+ * Gets pointer to a blocking MPI send routine matching provided the
+ * exchange send type.
+ *
+ * @param[in] exch_send_type exchange send type
+ * @returns Pointer to blocking MPI send routine
+ */
+PPM_DSO_INTERNAL xt_send_func_ptr
+xt_get_send_op(enum Xt_exch_send_type exch_send_type);
 
 #endif // XT_EXCHANGER_INTERNAL_H
 /*

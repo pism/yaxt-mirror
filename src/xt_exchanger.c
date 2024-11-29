@@ -58,6 +58,9 @@
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
 #include "xt_exchanger_internal.h"
+#include "core/core.h"
+
+static const char filename[] = "xt_exchanger.c";
 
 Xt_exchanger
 xt_exchanger_new(int nsend, int nrecv,
@@ -206,6 +209,57 @@ xt_exchanger_iter_get_displacement(Xt_exchanger_iter iter)
   return iter->vtable->get_displacement(iter);
 }
 
+xt_a_send_func_ptr
+xt_get_a_send_op(enum Xt_exch_send_type exch_send_type) {
+
+  if (exch_send_type < 0 || exch_send_type >= XT_EXCH_SEND_TYPE_COUNT)
+    Xt_abort(Xt_default_comm,
+             "error: invalid value passed to "
+             "xt_get_a_send_op.\n", filename, __LINE__);
+
+  xt_a_send_func_ptr func_ptr;
+
+  switch (exch_send_type) {
+    default:
+    case (XT_EXCH_SEND_STANDARD):
+      func_ptr = (xt_a_send_func_ptr)MPI_Isend;
+      break;
+    case (XT_EXCH_SEND_READY):
+      func_ptr = (xt_a_send_func_ptr)MPI_Irsend;
+      break;
+    case (XT_EXCH_SEND_SYNCHRONOUS):
+      func_ptr = (xt_a_send_func_ptr)MPI_Issend;
+      break;
+  }
+
+  return func_ptr;
+}
+
+xt_send_func_ptr
+xt_get_send_op(enum Xt_exch_send_type exch_send_type) {
+
+  if (exch_send_type < 0 || exch_send_type >= XT_EXCH_SEND_TYPE_COUNT)
+    Xt_abort(Xt_default_comm,
+             "error: invalid value passed to "
+             "xt_get_send_op.\n", filename, __LINE__);
+
+  xt_send_func_ptr func_ptr;
+
+  switch (exch_send_type) {
+    default:
+    case (XT_EXCH_SEND_STANDARD):
+      func_ptr = (xt_send_func_ptr)MPI_Send;
+      break;
+    case (XT_EXCH_SEND_READY):
+      func_ptr = (xt_send_func_ptr)MPI_Rsend;
+      break;
+    case (XT_EXCH_SEND_SYNCHRONOUS):
+      func_ptr = (xt_send_func_ptr)MPI_Ssend;
+      break;
+  }
+
+  return func_ptr;
+}
 
 /*
  * Local Variables:

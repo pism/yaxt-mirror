@@ -291,7 +291,6 @@ xt_config_set_exchange_send_type(Xt_config config, int exch_send_type);
 int
 xt_config_get_exchange_send_type(Xt_config config);
 
-
 #endif
 
 /*
