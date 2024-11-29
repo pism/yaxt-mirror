@@ -153,6 +153,7 @@ struct Xt_exchanger_mix_isend_irecv_ {
 
   int n, tag_offset;
   MPI_Comm comm;
+  enum Xt_exch_send_type send_type;
   struct Xt_msg_param msgs[];
 };
 
@@ -166,6 +167,7 @@ xt_exchanger_mix_isend_irecv_alloc(size_t nmsg,
     body_size = sizeof (struct Xt_msg_param) * nmsg;
   exchanger = xmalloc(header_size + body_size);
   exchanger->n = (int)nmsg;
+  exchanger->send_type = XT_CONFIG_GET_EXCH_SEND_TYPE(config);
 #ifdef _OPENMP
   int mthread_mode = xt_config_get_redist_mthread_mode(config);
   if (mthread_mode == XT_MT_OPENMP)
@@ -220,6 +222,7 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
     = xt_exchanger_mix_isend_irecv_alloc(nmsg, config);
   exchanger->comm = comm;
   exchanger->tag_offset = tag_offset;
+  exchanger->send_type = XT_CONFIG_GET_EXCH_SEND_TYPE(config);
   struct Xt_msg_param *restrict msgs = exchanger->msgs;
   bool dt_dup = !(config->flags & exch_no_dt_dup);
   xt_msg_params_copy((size_t)nsend, send_msgs, msgs, comm, dt_dup);
@@ -264,6 +267,7 @@ xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
     = xt_exchanger_mix_isend_irecv_alloc(nmsg, &xt_default_config);
   exchanger_copy->comm = new_comm;
   exchanger_copy->tag_offset = new_tag_offset;
+  exchanger_copy->send_type = exchanger_msr->send_type;
   exchanger_copy->vtable = exchanger_msr->vtable;
   xt_msg_params_copy(nmsg, exchanger_msr->msgs,
                      exchanger_copy->msgs, new_comm, true);
@@ -287,12 +291,14 @@ redist_msgs_to_req(size_t nmsg,
                    const struct Xt_msg_param *restrict msgs,
                    const void *src_data, void *dst_data,
                    MPI_Request *requests,
-                   MPI_Comm comm, int tag_offset)
+                   MPI_Comm comm, int tag_offset,
+                   enum Xt_exch_send_type send_type)
 {
+  xt_a_send_func_ptr a_send = xt_get_a_send_op(send_type);
   for (size_t i = 0; i < nmsg; ++i) {
     typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
                        int tag, MPI_Comm comm, MPI_Request *request);
-    ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)MPI_Isend : (ifp)MPI_Irecv;
+    ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)a_send : (ifp)MPI_Irecv;
     unsigned char *data = MSG_DIR(msgs[i]) == SEND
       ? (void *)(intptr_t)src_data : dst_data;
     xt_mpi_call(op(data + msgs[i].displacement, msgs[i].count, msgs[i].datatype,
@@ -318,7 +324,8 @@ xt_exchanger_mix_isend_irecv_s_exchange(Xt_exchanger exchanger,
       ? req_buf : xmalloc(nmsg * sizeof (*requests));
     redist_msgs_to_req((size_t)nmsg, exchanger_msr->msgs,
                        src_data, dst_data, requests,
-                       exchanger_msr->comm, exchanger_msr->tag_offset);
+                       exchanger_msr->comm, exchanger_msr->tag_offset,
+                       exchanger_msr->send_type);
     xt_mpi_call(MPI_Waitall((int)nmsg, requests, MPI_STATUSES_IGNORE),
                 exchanger_msr->comm);
     if (requests != req_buf)
@@ -343,7 +350,8 @@ static void xt_exchanger_mix_isend_irecv_a_exchange(
       = xt_request_msgs_get_req_ptr(requests);
     redist_msgs_to_req(nmsg, exchanger_msr->msgs,
                        src_data, dst_data, requests_,
-                       exchanger_msr->comm, exchanger_msr->tag_offset);
+                       exchanger_msr->comm, exchanger_msr->tag_offset,
+                       exchanger_msr->send_type);
     *request = requests;
   } else
     *request = XT_REQUEST_NULL;
@@ -367,7 +375,8 @@ xt_exchanger_mix_isend_irecv_a_exchange_mt(Xt_exchanger exchanger,
     nmsg_ = (nmsg * (tid+1)) / num_threads - start;
   redist_msgs_to_req(nmsg_, exchanger_msr->msgs+start,
                      src_data, dst_data, requests+start,
-                     exchanger_msr->comm, exchanger_msr->tag_offset);
+                     exchanger_msr->comm, exchanger_msr->tag_offset,
+                     exchanger_msr->send_type);
 }
 
 static void
@@ -401,7 +410,8 @@ xt_exchanger_mix_isend_irecv_s_exchange_mt(Xt_exchanger exchanger,
     nmsg_ = (nmsg * (tid+1)) / num_threads - start;
   redist_msgs_to_req(nmsg_, exchanger_msr->msgs+start,
                      src_data, dst_data, requests+start,
-                     exchanger_msr->comm, exchanger_msr->tag_offset);
+                     exchanger_msr->comm, exchanger_msr->tag_offset,
+                     exchanger_msr->send_type);
   xt_mpi_call(MPI_Waitall((int)nmsg_, requests+start,
                           MPI_STATUSES_IGNORE), exchanger_msr->comm);
 }
