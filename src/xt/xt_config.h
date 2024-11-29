@@ -84,7 +84,7 @@ enum Xt_exchangers {
 /**
  * set exchanger to use when the \a config object is passed to constructors
  * @param[in,out] config configuration object to modify
- * @param method an entry from enum Xt_exchangers to signify the
+ * @param[in] method an entry from enum Xt_exchangers to signify the
  * desired exchanger for data transfers
  */
 void xt_config_set_exchange_method(Xt_config config, int method);
@@ -232,8 +232,8 @@ xt_config_set_xmdd_bucket_gen(Xt_config config,
  *
  * @param[in,out]   config configuration object to modify
  * @param           use_stripe_align
- *                        0: detect element positions one by one,
- *                        1: align full stripes to form position extents
+ *                        0: detect element positions one by one,\n
+ *                        1: align full stripes to form position extents,\n
  *                        2: automatically choose element of stripe alignment
  *
  * When set to 1, the computations in the xmap
