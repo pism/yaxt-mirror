@@ -258,6 +258,40 @@ int
 xt_config_get_xmap_stripe_align(Xt_config config);
 
 
+enum Xt_exch_send_type {
+  /** use default, standard send type */
+  XT_EXCH_SEND_STANDARD,
+  /** use read send */
+  XT_EXCH_SEND_READY,
+  /** use synchronous send */
+  XT_EXCH_SEND_SYNCHRONOUS,
+  /** number of available send types (has to be last entry */
+  XT_EXCH_SEND_TYPE_COUNT,
+};
+
+/**
+ * Set exchanger send type parameter.
+ *
+ * @param[in,out] config configuration object to modify
+ * @param[in]     exch_send_type
+ *                        0: standard send,\n
+ *                        1: ready send,\n
+ *                        2: synchronous send
+ *
+ * The send type is a recommendation for the exchanger. Not every exchanger
+ * will support all send types and may fall back to its default.
+ */
+void
+xt_config_set_exchange_send_type(Xt_config config, int exch_send_type);
+
+/**
+ * Get send type parameter.
+ * @param[in] config configuration object to query
+ */
+int
+xt_config_get_exchange_send_type(Xt_config config);
+
+
 #endif
 
 /*
