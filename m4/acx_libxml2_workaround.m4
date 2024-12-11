@@ -67,7 +67,8 @@ AC_DEFUN([ACX_LIBXML2_WORKAROUND],
      dnl 3. build fixed xt_xmlXPathInit.c
      AC_COMPILE_IFELSE(,
        [ACX_MV_OBJ([conftest],[xt_workaround])],
-       [rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+       [acx_is_affected_libxml2=false
+        rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         continue])
      dnl 4. verify listed tests now succeed
      LIBS="xt_workaround.$ac_objext -lxml2 $LIBS"
