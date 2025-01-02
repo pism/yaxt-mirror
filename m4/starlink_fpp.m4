@@ -304,7 +304,7 @@ AC_DEFUN([_ACX_SL_PROG_FPP],
            "$FC -F -fpp -o - -Wp,-w,-P" \
            "$ac_fpp"/util/sunf95preproc-wrapper \
            "$ac_fpp"/util/crayftnpreproc-wrapper \
-           "$FC -F" "$FC -F -fpp" "$FC -E" "$FC -E -cpp" \
+           "$FC -F" "$FC -F -fpp" "$FC -E -cpp" "$FC -E" \
            "$FC $FCFLAGS -F" "$FC $FCFLAGS -E" "$FC $FCFLAGS -E" \
            "$FC $FCFLAGS -E -cpp" "$FC $FCFLAGS -x f95-cpp-input -E -P"],
            [_ACX_SL_TEST_FPP([$ac_fpp],[$acx_sl_fpp_srcext],
@@ -365,13 +365,16 @@ fi
 # with preprocessor flags
 m4_define([_ACX_FPP_COMPILE_IFELSE],
   [m4_if([$2],[direct],
-     [cp conftest.$acx_sl_fpp_srcext conftest.${ac_ext}.tmp
-      FCFLAGS="$FPPFLAGS $1 $ac_save_FCFLAGS"],
+     [FCFLAGS="$FPPFLAGS $1 $ac_save_FCFLAGS"
+      cp conftest.$acx_sl_fpp_srcext conftest.${ac_ext}.tmp
+      ac_status=$?],
      [_AC_RUN_LOG([$FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext \
         >conftest.${ac_ext}.tmp],
         [echo Running preprocessor $FPP $FPPFLAGS m4_ifval([$1],[$1 ])conftest.$acx_sl_fpp_srcext])])
-   mv conftest.${ac_ext}.tmp conftest.${ac_ext}
-   AC_COMPILE_IFELSE(,[$3],[$4])])
+   AS_IF([test $ac_status = 0],
+     [mv conftest.${ac_ext}.tmp conftest.${ac_ext}
+      AC_COMPILE_IFELSE(,[$3],[$4])],
+     [$4])])
 
 # ACX_SL_PROG_FC_FPP_FEATURES(FEATURES,METHOD,[SUFFIX],
 #  [ACTION-IF-SUCCESS],[ACTION-IF-FAILURE])

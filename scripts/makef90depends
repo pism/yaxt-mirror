@@ -464,7 +464,8 @@ sub parseSource($$$;$)
                                            [$sigil eq '<' ? $headerSpec : () ],
                                            [$sigil eq '"' ? $headerSpec : () ],
                                            @$incDirs);
-            parseSource($incfile, $defines, $incDirs, $preprocOutFh);
+            parseSource($incfile, $defines, $incDirs, $preprocOutFh)
+                if (defined($incfile));
             print(STDERR 'Unsupported preprocessor include "',
                   $headerSpec,
                   '" found while writing preprocessor output!')
@@ -709,6 +710,29 @@ sub buildNameSubst(\@)
    }
 }
 
+sub createTmpDir()
+{
+   my $tmpdir = (defined($ENV{'XDG_RUNTIME_DIR'})
+                 && -w $ENV{'XDG_RUNTIME_DIR'})
+       ? $ENV{'XDG_RUNTIME_DIR'}
+       : File::Spec->catfile(File::Spec->tmpdir(), $>);
+   if (mkdir($tmpdir, 0700))
+   {
+      if ($!{EEXIST})
+      {
+         my (undef,undef,$mode,undef,$uid) = stat($tmpdir);
+         return $tmpdir
+             if ($uid == $>
+                 and ($mode & 0222) == 0200);
+      }
+   }
+   else
+   {
+      return $tmpdir;
+   }
+   return '';
+}
+
 
 {
    # choose defaults for LP64
@@ -742,6 +766,7 @@ sub buildNameSubst(\@)
           map { ($_, undef) }
               qw(_LMFILES_ __LMFILES__
                  _LMFILES__modshare
+                 _
                  ALLINEA_LICENCE_DIR ALLINEA_NO_TREESERVER_KILL_TARGET
                  ALTERNATE_EDITOR COLORTERM
                  DBUS_SESSION_BUS_ADDRESS DEBUG DESKTOP_SESSION DISPLAY
@@ -783,7 +808,7 @@ sub buildNameSubst(\@)
                  SSH_TTY TERM TEST_LOGS TESTS TESTSUITEFLAGS
                  TMPDIR TMUX TMUX_PANE
                  USERNAME
-                 VBOX_CROGL_FORCE_SUPPORTED
+                 V VBOX_CROGL_FORCE_SUPPORTED
                  VGL_COMPRESS VGL_DISPLAY VGL_ISACTIVE VGL_WM VNCDESKTOP VISUAL
                  WINDOWID WINDOWPATH
                  WINDOW_MANAGER XAUTHORITY
@@ -958,6 +983,7 @@ sub buildNameSubst(\@)
       # tie cache of parsed files to database if available
       if (defined($parseCacheDB))
       {
+         my $parseCacheEmpty = ! -e $parseCacheDB || -z $parseCacheDB;
          @AnyDBM_File::ISA = qw(DB_File GDBM_File);
          eval {
             no warnings 'all';
@@ -1032,14 +1058,17 @@ sub buildNameSubst(\@)
                          if ($optArgs_serialized ne $savedOptArgs_serialized);
                   }
                };
-               if (defined ($ENVdiff)) {
+               if (defined ($ENVdiff) && !$parseCacheEmpty) {
                   my $ENVdiffFP;
                   if ($debug) {
                      print(STDERR $ENVdiff, "\n");
                   }
-                  if (open($ENVdiffFP, '>>',
-                           File::Spec->catfile(File::Spec->tmpdir(),
-                                               'makef90depends-envdiff.txt'))) {
+                  my $tmpdir = createTmpDir();
+                  if ($tmpdir
+                      && open($ENVdiffFP, '>>',
+                              File::Spec->catfile($tmpdir,
+                                                  'makef90depends-envdiff.txt')
+                             )) {
                      print($ENVdiffFP $ENVdiff, "\n");
                   }
                }

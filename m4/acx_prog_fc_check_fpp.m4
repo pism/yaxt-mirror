@@ -62,7 +62,7 @@ AC_DEFUN([ACX_PROG_FC_CHECK_FPP],dnl
 Please consult your compiler documentation for a flag to make $FC
 preprocess files with .$ac_ext suffix and add it to ]acx_flags_var[.
 Also please consider reporting the flag/compiler combination to Thomas Jahns <jahns@dkrz.de>])])])])
-   FC_FPP_FLAG=AS_VAR_GET([fpp_flag])
+   AS_VAR_COPY([FC_FPP_FLAG],[fpp_flag])
    m4_popdef([acx_flags_var])dnl
    AC_SUBST([FC_FPP_FLAG])
    AS_VAR_POPDEF([fpp_flag])dnl
