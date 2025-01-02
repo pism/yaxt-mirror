@@ -156,8 +156,6 @@ AC_LANG_POP([Fortran])
 ACX_FC_STRUCT_RETURN_HLF([Xt_fc_hlf_struct_return=:],
   [Xt_fc_hlf_struct_return=false
    AC_MSG_WARN([Disabling Fortran interface for bucket generator])])
-ACX_FC_VOLATILE([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
-@%:@define HAVE_VOLATILE"])
 ACX_FC_HAVE_SIZE_KIND_ARGUMENT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_SIZE_KIND_ARGUMENT"])
 AC_FC_DUMMY_MAIN(,[:])
