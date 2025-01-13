@@ -67,7 +67,7 @@ typedef void (*xt_simple_a_exchange_func)(
   int tag_offset, MPI_Comm comm, Xt_request *request);
 
 typedef Xt_exchanger_omp_share (*xt_simple_create_omp_share_func)(
-  int nsend, int nrecv, int max_count,
+  int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   MPI_Comm comm);
 

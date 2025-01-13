@@ -97,7 +97,7 @@ xt_exchanger_mix_isend_irecv_a_exchange_omp(
   Xt_request *request);
 #endif
 static Xt_exchanger_omp_share
-xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger, int max_count);
+xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger);
 
 static int
 xt_exchanger_mix_isend_irecv_get_num_msg(Xt_exchanger exchanger,
@@ -377,7 +377,7 @@ xt_exchanger_mix_isend_irecv_a_exchange_omp(Xt_exchanger exchanger,
                                             Xt_request *request)
 {
   Xt_exchanger_omp_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger, -1);
+    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger);
 #pragma omp parallel
   xt_exchanger_mix_isend_irecv_a_exchange_mt(exchanger, src_data, dst_data,
                                              shared_req);
@@ -412,7 +412,7 @@ xt_exchanger_mix_isend_irecv_s_exchange_omp(Xt_exchanger exchanger,
                                             void *dst_data)
 {
   Xt_exchanger_omp_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger, -1);
+    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger);
 #pragma omp parallel
   xt_exchanger_mix_isend_irecv_s_exchange_mt(exchanger, src_data, dst_data,
                                              shared_req);
@@ -421,9 +421,8 @@ xt_exchanger_mix_isend_irecv_s_exchange_omp(Xt_exchanger exchanger,
 #endif
 
 static Xt_exchanger_omp_share
-xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger, int max_count)
+xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger)
 {
-  (void)max_count;
   struct Xt_config_ conf = xt_default_config;
   xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
   Xt_exchanger_mix_isend_irecv exchanger_msr =

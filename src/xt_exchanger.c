@@ -122,9 +122,9 @@ xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger, int rank,
 }
 
 Xt_exchanger_omp_share
-xt_exchanger_create_omp_share(Xt_exchanger exchanger, int max_count)
+xt_exchanger_create_omp_share(Xt_exchanger exchanger)
 {
-  return exchanger->vtable->create_omp_share(exchanger, max_count);
+  return exchanger->vtable->create_omp_share(exchanger);
 }
 
 void
