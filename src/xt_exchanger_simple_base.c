@@ -90,7 +90,7 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           bool do_dup);
 
 static Xt_exchanger_omp_share
-xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger, int max_count);
+xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger);
 
 static Xt_exchanger_iter
 xt_exchanger_simple_base_get_iterator(Xt_exchanger exchanger, Xt_config config);
@@ -358,13 +358,13 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
 }
 
 static Xt_exchanger_omp_share
-xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger, int max_count)
+xt_exchanger_simple_base_create_omp_share(Xt_exchanger exchanger)
 {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
   int nsend = exchanger_sb->nmsg[SEND];
   return exchanger_sb->create_omp_share_func(
-    nsend, exchanger_sb->nmsg[RECV], max_count,
+    nsend, exchanger_sb->nmsg[RECV],
     exchanger_sb->msgs, exchanger_sb->msgs + nsend, exchanger_sb->comm);
 }
 

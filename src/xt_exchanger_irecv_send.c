@@ -169,7 +169,7 @@ xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
 
 static Xt_exchanger_omp_share
 xt_exchanger_irecv_send_create_omp_share(
-  int nsend, int nrecv, int max_count,
+  int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs,
   const struct Xt_msg_param *recv_msgs,
   MPI_Comm comm)
@@ -177,7 +177,6 @@ xt_exchanger_irecv_send_create_omp_share(
   (void)nsend;
   (void)send_msgs;
   (void)recv_msgs;
-  (void)max_count;
   struct Xt_config_ conf = xt_default_config;
   xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
   return (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm, &conf);

@@ -97,7 +97,7 @@ get_buffer_offsets(size_t *restrict buf_ofs,
 }
 
 static size_t
-get_buffer_size(int nsend, int nrecv, int max_count,
+get_buffer_size(int nsend, int nrecv,
                 const struct Xt_msg_param *send_msgs,
                 const struct Xt_msg_param *recv_msgs,
                 MPI_Comm comm)
@@ -105,15 +105,13 @@ get_buffer_size(int nsend, int nrecv, int max_count,
   int buf_size;
   size_t accum = 0;
   for (int i = 0; i < nrecv; ++i) {
-    int count = (max_count == -1) ? recv_msgs[i].count : max_count;
-    xt_mpi_call(MPI_Pack_size(count, recv_msgs[i].datatype, comm, &buf_size),
-                comm);
+    xt_mpi_call(MPI_Pack_size(recv_msgs[i].count, recv_msgs[i].datatype,
+                              comm, &buf_size), comm);
     accum += (size_t)buf_size;
   }
   for (int i = 0; i < nsend; ++i) {
-    int count = (max_count == -1) ? send_msgs[i].count : max_count;
-    xt_mpi_call(MPI_Pack_size(count, send_msgs[i].datatype, comm,
-                              &buf_size), comm);
+    xt_mpi_call(MPI_Pack_size(send_msgs[i].count, send_msgs[i].datatype,
+                              comm, &buf_size), comm);
     accum += (size_t)buf_size;
   }
 
@@ -547,13 +545,13 @@ xt_exchanger_irecv_isend_packed_a_exchange_omp(
 
 static Xt_exchanger_omp_share
 xt_exchanger_irecv_isend_packed_create_omp_share(
-  int nsend, int nrecv, int max_count,
+  int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs,
   const struct Xt_msg_param *recv_msgs,
   MPI_Comm comm)
 {
   size_t buf_size
-    = get_buffer_size(nsend, nrecv, max_count, send_msgs, recv_msgs, comm);
+    = get_buffer_size(nsend, nrecv, send_msgs, recv_msgs, comm);
   size_t inventory_size = get_inventory_size((size_t)nrecv);
   struct Xt_config_ conf = xt_default_config;
   xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
