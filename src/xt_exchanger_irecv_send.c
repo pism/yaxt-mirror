@@ -124,7 +124,7 @@ xt_exchanger_irecv_send_s_exchange_mt(const void *src_data, void *dst_data,
                                       const struct Xt_msg_param *send_msgs,
                                       const struct Xt_msg_param *recv_msgs,
                                       int tag_offset, MPI_Comm comm,
-                                      Xt_exchanger_omp_share shared_req)
+                                      Xt_exchanger_thread_share shared_req)
 {
   MPI_Request *recv_request
     = xt_request_msgs_get_req_ptr((Xt_request)shared_req);
@@ -152,8 +152,8 @@ xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
 
   struct Xt_config_ conf = xt_default_config;
   xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
-  Xt_exchanger_omp_share shared_req
-    = (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm, &conf);
+  Xt_exchanger_thread_share shared_req
+    = (Xt_exchanger_thread_share)xt_request_msgs_alloc(nrecv, comm, &conf);
 #pragma omp parallel
   xt_exchanger_irecv_send_s_exchange_mt(src_data, dst_data,
                                         nsend, nrecv,
@@ -167,19 +167,17 @@ xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
 #endif
 
 
-static Xt_exchanger_omp_share
-xt_exchanger_irecv_send_create_omp_share(
+static Xt_exchanger_thread_share
+xt_exchanger_irecv_send_create_thread_share(
   int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs,
   const struct Xt_msg_param *recv_msgs,
-  MPI_Comm comm)
+  MPI_Comm comm, Xt_config config)
 {
   (void)nsend;
   (void)send_msgs;
   (void)recv_msgs;
-  struct Xt_config_ conf = xt_default_config;
-  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
-  return (Xt_exchanger_omp_share)xt_request_msgs_alloc(nrecv, comm, &conf);
+  return (Xt_exchanger_thread_share)xt_request_msgs_alloc(nrecv, comm, config);
 }
 
 
@@ -207,7 +205,7 @@ xt_exchanger_irecv_send_new(int nsend, int nrecv,
     nsend, nrecv, send_msgs, recv_msgs,
     comm, tag_offset,
     s_exch_by_mthread_mode[mthread_mode], 0,
-    xt_exchanger_irecv_send_create_omp_share, config);
+    xt_exchanger_irecv_send_create_thread_share, config);
 }
 
 /*

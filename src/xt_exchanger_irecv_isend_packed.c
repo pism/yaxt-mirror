@@ -543,22 +543,20 @@ xt_exchanger_irecv_isend_packed_a_exchange_omp(
 }
 #endif
 
-static Xt_exchanger_omp_share
-xt_exchanger_irecv_isend_packed_create_omp_share(
+static Xt_exchanger_thread_share
+xt_exchanger_irecv_isend_packed_create_thread_share(
   int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs,
   const struct Xt_msg_param *recv_msgs,
-  MPI_Comm comm)
+  MPI_Comm comm, Xt_config config)
 {
   size_t buf_size
     = get_buffer_size(nsend, nrecv, send_msgs, recv_msgs, comm);
   size_t inventory_size = get_inventory_size((size_t)nrecv);
-  struct Xt_config_ conf = xt_default_config;
-  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
   Xt_request shared_req
     = xt_request_msgs_ebuf_alloc(nsend+nrecv, comm,
-                                 inventory_size + buf_size, &conf);
-  return (Xt_exchanger_omp_share)shared_req;
+                                 inventory_size + buf_size, config);
+  return (Xt_exchanger_thread_share)shared_req;
 }
 
 
@@ -597,7 +595,7 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
     comm, tag_offset,
     s_exch_by_mthread_mode[mthread_mode],
     a_exch_by_mthread_mode[mthread_mode],
-    xt_exchanger_irecv_isend_packed_create_omp_share,
+    xt_exchanger_irecv_isend_packed_create_thread_share,
     config);
 }
 
