@@ -66,10 +66,10 @@ typedef void (*xt_simple_a_exchange_func)(
   const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   int tag_offset, MPI_Comm comm, Xt_request *request);
 
-typedef Xt_exchanger_omp_share (*xt_simple_create_omp_share_func)(
+typedef Xt_exchanger_thread_share (*xt_simple_create_thread_share_func)(
   int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
-  MPI_Comm comm);
+  MPI_Comm comm, Xt_config config);
 
 /**
  * constructor for an exchanger using asynchronous send and recv
@@ -82,7 +82,7 @@ typedef Xt_exchanger_omp_share (*xt_simple_create_omp_share_func)(
  * @param[in] tag_offset tag
  * @param[in] s_func     function pointer used for synchronous exchanges
  * @param[in] a_func     function pointer used for asynchronous exchanges
- * @param[in] create_omp_share_func function pointer used to create
+ * @param[in] create_thread_share_func function pointer used to create
  * shared state for multi-threaded calls
  * @param[in] config     optional customization parameters
  * @remark tag_offset + xt_mpi_tag_exchange_msg must not
@@ -97,7 +97,7 @@ xt_exchanger_simple_base_new(
   MPI_Comm comm, int tag_offset,
   xt_simple_s_exchange_func s_func,
   xt_simple_a_exchange_func a_func,
-  xt_simple_create_omp_share_func create_omp_share_func,
+  xt_simple_create_thread_share_func create_thread_share_func,
   Xt_config config);
 
 PPM_DSO_INTERNAL extern const struct xt_exchanger_vtable

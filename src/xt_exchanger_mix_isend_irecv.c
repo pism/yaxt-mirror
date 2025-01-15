@@ -96,8 +96,9 @@ xt_exchanger_mix_isend_irecv_a_exchange_omp(
   Xt_exchanger exchanger, const void * src_data, void * dst_data,
   Xt_request *request);
 #endif
-static Xt_exchanger_omp_share
-xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger);
+static Xt_exchanger_thread_share
+xt_exchanger_mix_isend_irecv_create_thread_share(Xt_exchanger exchanger,
+                                                 Xt_config config);
 
 static int
 xt_exchanger_mix_isend_irecv_get_num_msg(Xt_exchanger exchanger,
@@ -125,7 +126,7 @@ xt_exchanger_mix_isend_irecv_vtable = {
   .get_num_msg = xt_exchanger_mix_isend_irecv_get_num_msg,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
-  .create_omp_share = xt_exchanger_mix_isend_irecv_create_omp_share,
+  .create_thread_share = xt_exchanger_mix_isend_irecv_create_thread_share,
   .get_iterator = xt_exchanger_mix_isend_irecv_get_iterator,
 }
 #ifdef _OPENMP
@@ -137,7 +138,7 @@ xt_exchanger_mix_isend_irecv_auto_omp_vtable = {
   .a_exchange = xt_exchanger_mix_isend_irecv_a_exchange_omp,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
-  .create_omp_share = xt_exchanger_mix_isend_irecv_create_omp_share,
+  .create_thread_share = xt_exchanger_mix_isend_irecv_create_thread_share,
   .get_iterator = xt_exchanger_mix_isend_irecv_get_iterator,
 }
 #endif
@@ -354,7 +355,7 @@ static void
 xt_exchanger_mix_isend_irecv_a_exchange_mt(Xt_exchanger exchanger,
                                            const void * src_data,
                                            void * dst_data,
-                                           Xt_exchanger_omp_share shared_req)
+                                           Xt_exchanger_thread_share shared_req)
 {
   MPI_Request *requests
     = xt_request_msgs_get_req_ptr((Xt_request)shared_req);
@@ -376,8 +377,10 @@ xt_exchanger_mix_isend_irecv_a_exchange_omp(Xt_exchanger exchanger,
                                             void *dst_data,
                                             Xt_request *request)
 {
-  Xt_exchanger_omp_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger);
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
+  Xt_exchanger_thread_share shared_req
+    = xt_exchanger_mix_isend_irecv_create_thread_share(exchanger, &conf);
 #pragma omp parallel
   xt_exchanger_mix_isend_irecv_a_exchange_mt(exchanger, src_data, dst_data,
                                              shared_req);
@@ -388,7 +391,7 @@ static void
 xt_exchanger_mix_isend_irecv_s_exchange_mt(Xt_exchanger exchanger,
                                            const void *src_data,
                                            void *dst_data,
-                                           Xt_exchanger_omp_share shared_req)
+                                           Xt_exchanger_thread_share shared_req)
 {
   MPI_Request *requests
     = xt_request_msgs_get_req_ptr((Xt_request)shared_req);
@@ -411,8 +414,10 @@ xt_exchanger_mix_isend_irecv_s_exchange_omp(Xt_exchanger exchanger,
                                             const void *src_data,
                                             void *dst_data)
 {
-  Xt_exchanger_omp_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_omp_share(exchanger);
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
+  Xt_exchanger_thread_share shared_req
+    = xt_exchanger_mix_isend_irecv_create_thread_share(exchanger, &conf);
 #pragma omp parallel
   xt_exchanger_mix_isend_irecv_s_exchange_mt(exchanger, src_data, dst_data,
                                              shared_req);
@@ -420,16 +425,15 @@ xt_exchanger_mix_isend_irecv_s_exchange_omp(Xt_exchanger exchanger,
 }
 #endif
 
-static Xt_exchanger_omp_share
-xt_exchanger_mix_isend_irecv_create_omp_share(Xt_exchanger exchanger)
+static Xt_exchanger_thread_share
+xt_exchanger_mix_isend_irecv_create_thread_share(Xt_exchanger exchanger,
+                                                 Xt_config config)
 {
-  struct Xt_config_ conf = xt_default_config;
-  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
-  return (Xt_exchanger_omp_share)xt_request_msgs_alloc(exchanger_msr->n,
-                                                       exchanger_msr->comm,
-                                                       &conf);
+  return (Xt_exchanger_thread_share)xt_request_msgs_alloc(exchanger_msr->n,
+                                                          exchanger_msr->comm,
+                                                          config);
 }
 
 static int
