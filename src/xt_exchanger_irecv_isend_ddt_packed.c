@@ -170,7 +170,8 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
                                                Xt_request *request) {
 
   XT_GPU_INSTR_PUSH(xt_exchanger_irecv_isend_ddt_packed_a_exchange);
-
+  /* todo: manually inline xt_request_msgs_ddt_packed_new to save
+   * redundant allocations */
   MPI_Request * tmp_requests =
     xmalloc((size_t)(nrecv + nsend) * sizeof (*tmp_requests));
   void ** buffers =
