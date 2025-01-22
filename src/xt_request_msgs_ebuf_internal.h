@@ -78,6 +78,14 @@ xt_request_msgs_ebuf_alloc(int n_requests,
 PPM_DSO_INTERNAL MPI_Request *
 xt_request_msgs_ebuf_get_req_ptr(Xt_request request);
 
+/**
+ * @param[out] request xt_request_msgs_ebuf object
+ * @param auto_free if set to 0, deactivate automatic free call when
+ * all requests are finished (i.e. after wait or when test returns true)
+ */
+PPM_DSO_INTERNAL void
+xt_request_msgs_ebuf_set_auto_free(Xt_request request, int auto_free);
+
 PPM_DSO_INTERNAL void
 xt_request_msgs_ebuf_set_finalizer(Xt_request request,
                                    Xt_request_msgs_ebuf_finalizer finalize);
