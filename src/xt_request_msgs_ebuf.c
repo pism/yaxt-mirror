@@ -93,7 +93,7 @@ typedef struct Xt_request_msgs_ebuf_ * Xt_request_msgs_ebuf;
 struct Xt_request_msgs_ebuf_ {
   const struct Xt_request_vtable *vtable;
   MPI_Comm comm;
-  int n_requests;
+  int n_requests, auto_free;
   void (*finalizer)(Xt_request, void *);
   size_t extra_buf_ofs;
   MPI_Request requests[];
@@ -126,6 +126,7 @@ xt_request_msgs_ebuf_alloc(int n_requests,
   request->vtable = &request_msgs_ebuf_vtable;
   request->comm = comm;
   request->n_requests = n_requests;
+  request->auto_free = 1;
   request->finalizer = no_finalizer;
   request->extra_buf_ofs = ofs;
   return (Xt_request)request;
@@ -174,7 +175,8 @@ finish_requests(Xt_request_msgs_ebuf request_msgs_ebuf)
   if (request_msgs_ebuf->finalizer != no_finalizer)
     request_msgs_ebuf->finalizer((Xt_request)request_msgs_ebuf,
                                    extra_buf(request_msgs_ebuf));
-  free(request_msgs_ebuf);
+  if (request_msgs_ebuf->auto_free)
+    free(request_msgs_ebuf);
 }
 
 static void xt_request_msgs_ebuf_wait(Xt_request request) {
@@ -227,6 +229,19 @@ xt_request_msgs_ebuf_get_req_ptr(Xt_request request)
   return request_msgs_ebuf->requests;
 }
 
+void
+xt_request_msgs_ebuf_set_auto_free(Xt_request request, int auto_free)
+{
+  Xt_request_msgs_ebuf request_msgs_ebuf = (Xt_request_msgs_ebuf)request;
+#ifndef _OPENMP
+  assert(request->vtable == &request_msgs_ebuf_vtable);
+#else
+  assert(request->vtable == &request_msgs_ebuf_vtable
+         || request->vtable == &request_msgs_ebuf_auto_omp_vtable);
+#endif
+  request_msgs_ebuf->auto_free = auto_free;
+}
+
 MPI_Comm
 xt_request_msgs_ebuf_get_comm(Xt_request request)
 {
@@ -277,7 +292,8 @@ finish_requests_mt(Xt_request_msgs_ebuf request_msgs_ebuf)
                                    extra_buf(request_msgs_ebuf));
 #pragma omp barrier
 #pragma omp master
-  free(request_msgs_ebuf);
+  if (request_msgs_ebuf->auto_free)
+    free(request_msgs_ebuf);
 }
 
 static void

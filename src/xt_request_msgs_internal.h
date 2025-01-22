@@ -75,6 +75,14 @@ xt_request_msgs_alloc(int n, MPI_Comm comm, Xt_config config);
 PPM_DSO_INTERNAL MPI_Request *
 xt_request_msgs_get_req_ptr(Xt_request request);
 
+/**
+ * @param[out] request xt_request_msgs object
+ * @param auto_free if set to 0, deactivate automatic free call when
+ * all requests are finished (i.e. after wait or when test returns true)
+ */
+PPM_DSO_INTERNAL void
+xt_request_msgs_set_auto_free(Xt_request request, int auto_free);
+
 #endif
 
 /*

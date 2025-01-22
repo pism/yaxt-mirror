@@ -91,7 +91,7 @@ typedef struct Xt_request_msgs_ *Xt_request_msgs;
 struct Xt_request_msgs_ {
 
   const struct Xt_request_vtable *vtable;
-  int n;
+  int n, auto_free;
   MPI_Comm comm;
   MPI_Request requests[];
 };
@@ -112,6 +112,7 @@ xt_request_msgs_alloc(int n, MPI_Comm comm, Xt_config config)
 #endif
     request->vtable = &request_msgs_vtable;
   request->n = n;
+  request->auto_free = 1;
   request->comm = comm;
   return (Xt_request)request;
 }
@@ -153,6 +154,13 @@ xt_request_msgs_get_req_ptr(Xt_request request)
   return request_msgs->requests;
 }
 
+void
+xt_request_msgs_set_auto_free(Xt_request request, int auto_free)
+{
+  Xt_request_msgs request_msgs = (Xt_request_msgs)request;
+  request_msgs->auto_free = auto_free;
+}
+
 
 static void xt_request_msgs_wait(Xt_request request) {
 
@@ -170,8 +178,8 @@ static void xt_request_msgs_wait(Xt_request request) {
 #if __GNUC__ >= 11 && __GNUC__ <= 13 && defined MPICH
 #pragma GCC diagnostic pop
 #endif
-
-  free(request_msgs);
+  if (request_msgs->auto_free)
+    free(request_msgs);
 }
 
 static int xt_request_msgs_test(Xt_request request) {
@@ -183,7 +191,7 @@ static int xt_request_msgs_test(Xt_request request) {
   int flag = xt_mpi_test_some(&(request_msgs->n), request_msgs->requests,
                               ops_completed_buffer, request_msgs->comm);
 
-  if (flag) free(request_msgs);
+  if (flag && request_msgs->auto_free) free(request_msgs);
 
   return flag;
 }
@@ -215,7 +223,8 @@ xt_request_msgs_wait_omp(Xt_request request)
 #endif
   }
 
-  free(request);
+  if (((Xt_request_msgs)request)->auto_free)
+    free(request);
 }
 
 static int
@@ -231,7 +240,7 @@ xt_request_msgs_test_omp(Xt_request request) {
     flag &= xt_mpi_test_some_mt(&request_msgs->n, request_msgs->requests,
                                 ops_completed_buffer, request_msgs->comm);
   }
-  if (flag) free(request);
+  if (flag && ((Xt_request_msgs)request)->auto_free) free(request);
 
   return flag;
 }
