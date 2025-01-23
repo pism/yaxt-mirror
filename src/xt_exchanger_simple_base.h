@@ -71,6 +71,9 @@ typedef Xt_exchanger_thread_share (*xt_simple_create_thread_share_func)(
   const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
   MPI_Comm comm, Xt_config config);
 
+typedef void (*xt_simple_destroy_thread_share_func)(
+  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share);
+
 /**
  * constructor for an exchanger using asynchronous send and recv
  * @param[in] nsend      number of send messages
@@ -98,6 +101,7 @@ xt_exchanger_simple_base_new(
   xt_simple_s_exchange_func s_func,
   xt_simple_a_exchange_func a_func,
   xt_simple_create_thread_share_func create_thread_share_func,
+  xt_simple_destroy_thread_share_func destroy_thread_share_func,
   Xt_config config);
 
 PPM_DSO_INTERNAL extern const struct xt_exchanger_vtable

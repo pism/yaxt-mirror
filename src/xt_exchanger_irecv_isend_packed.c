@@ -559,6 +559,14 @@ xt_exchanger_irecv_isend_packed_create_thread_share(
   return (Xt_exchanger_thread_share)shared_req;
 }
 
+static void
+xt_exchanger_irecv_isend_packed_destroy_thread_share(
+  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share)
+{
+  (void)exchanger;
+  /* assert that thread_share contains no in-flight requests */
+  free(thread_share);
+}
 
 Xt_exchanger
 xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
@@ -596,6 +604,7 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
     s_exch_by_mthread_mode[mthread_mode],
     a_exch_by_mthread_mode[mthread_mode],
     xt_exchanger_irecv_isend_packed_create_thread_share,
+    xt_exchanger_irecv_isend_packed_destroy_thread_share,
     config);
 }
 

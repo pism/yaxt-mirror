@@ -81,6 +81,7 @@ struct xt_exchanger_vtable {
   void (*team_share_destroy)(void *share);
   size_t team_share_size;
   Xt_exchanger_thread_share (*create_thread_share)(Xt_exchanger, Xt_config);
+  void (*destroy_thread_share)(Xt_exchanger, Xt_exchanger_thread_share);
   Xt_exchanger_iter (*get_iterator)(Xt_exchanger exchanger, Xt_config config);
 };
 
@@ -229,6 +230,17 @@ xt_exchanger_new_team_share_destroy(Xt_exchanger_new exchanger_new,
  */
 PPM_DSO_INTERNAL Xt_exchanger_thread_share
 xt_exchanger_create_thread_share(Xt_exchanger exchanger, Xt_config config);
+
+/**
+ * Given an exchanger, destroy an object holding shared data for
+ * multi-threaded invocation.
+ *
+ * @param[in] exchanger exchanger to prepare the shared data for.
+ * @param[in] config custom configuration parameters
+ */
+PPM_DSO_INTERNAL void
+xt_exchanger_destroy_thread_share(Xt_exchanger exchanger,
+                                  Xt_exchanger_thread_share thread_share);
 
 
 PPM_DSO_INTERNAL void

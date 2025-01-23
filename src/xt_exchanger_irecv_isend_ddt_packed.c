@@ -253,6 +253,7 @@ xt_exchanger_irecv_isend_ddt_packed_new(int nsend, int nrecv,
                                  xt_exchanger_irecv_isend_ddt_packed_s_exchange,
                                  xt_exchanger_irecv_isend_ddt_packed_a_exchange,
                                  (xt_simple_create_thread_share_func)0,
+                                 (xt_simple_destroy_thread_share_func)0,
                                  config);
 }
 

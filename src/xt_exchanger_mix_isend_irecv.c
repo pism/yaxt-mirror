@@ -100,6 +100,10 @@ static Xt_exchanger_thread_share
 xt_exchanger_mix_isend_irecv_create_thread_share(Xt_exchanger exchanger,
                                                  Xt_config config);
 
+static void
+xt_exchanger_mix_isend_irecv_destroy_thread_share(
+  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share);
+
 static int
 xt_exchanger_mix_isend_irecv_get_num_msg(Xt_exchanger exchanger,
                                          int direction);
@@ -127,6 +131,7 @@ xt_exchanger_mix_isend_irecv_vtable = {
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
   .create_thread_share = xt_exchanger_mix_isend_irecv_create_thread_share,
+  .destroy_thread_share = xt_exchanger_mix_isend_irecv_destroy_thread_share,
   .get_iterator = xt_exchanger_mix_isend_irecv_get_iterator,
 }
 #ifdef _OPENMP
@@ -136,9 +141,11 @@ xt_exchanger_mix_isend_irecv_auto_omp_vtable = {
   .delete = xt_exchanger_mix_isend_irecv_delete,
   .s_exchange = xt_exchanger_mix_isend_irecv_s_exchange_omp,
   .a_exchange = xt_exchanger_mix_isend_irecv_a_exchange_omp,
+  .get_num_msg = xt_exchanger_mix_isend_irecv_get_num_msg,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
   .create_thread_share = xt_exchanger_mix_isend_irecv_create_thread_share,
+  .destroy_thread_share = xt_exchanger_mix_isend_irecv_destroy_thread_share,
   .get_iterator = xt_exchanger_mix_isend_irecv_get_iterator,
 }
 #endif
@@ -434,6 +441,15 @@ xt_exchanger_mix_isend_irecv_create_thread_share(Xt_exchanger exchanger,
   return (Xt_exchanger_thread_share)xt_request_msgs_alloc(exchanger_msr->n,
                                                           exchanger_msr->comm,
                                                           config);
+}
+
+static void
+xt_exchanger_mix_isend_irecv_destroy_thread_share(
+  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share)
+{
+  (void)exchanger;
+  /* assert that thread_share contains no in-flight requests */
+  free(thread_share);
 }
 
 static int
