@@ -59,6 +59,7 @@
 #include "xt_exchanger_irecv_isend_packed.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_irecv_isend.h"
+#include "xt_exchanger_irecv_isend_internal.h"
 #include "xt_exchanger_irecv_send.h"
 
 const struct xt_exchanger_vtable *
@@ -67,8 +68,9 @@ xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new)
   const struct xt_exchanger_vtable *vtab = NULL;
   if (exchanger_new == xt_exchanger_mix_isend_irecv_new)
     vtab = &xt_exchanger_mix_isend_irecv_vtable;
-  else if (exchanger_new == xt_exchanger_irecv_isend_new
-           || exchanger_new == xt_exchanger_irecv_isend_packed_new
+  else if (exchanger_new == xt_exchanger_irecv_isend_new)
+    vtab = xt_exchanger_irecv_isend_vtable;
+  else if (exchanger_new == xt_exchanger_irecv_isend_packed_new
            || exchanger_new == xt_exchanger_irecv_send_new)
     vtab = &xt_exchanger_simple_base_vtable;
 #if XT_ENABLE_DDT_EXCHANGER

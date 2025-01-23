@@ -249,7 +249,10 @@ xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
   exchanger_copy->nmsg[RECV] = nrecv;
   exchanger_copy->s_func = exchanger_sb->s_func;
   exchanger_copy->a_func = exchanger_sb->a_func;
-  exchanger_copy->create_thread_share_func = exchanger_sb->create_thread_share_func;
+  exchanger_copy->create_thread_share_func
+    = exchanger_sb->create_thread_share_func;
+  exchanger_copy->destroy_thread_share_func
+    = exchanger_sb->destroy_thread_share_func;
   struct Xt_msg_param *restrict new_msgs = exchanger_copy->msgs,
     *restrict orig_msgs = exchanger_sb->msgs;
   xt_msg_params_copy(nmsg, orig_msgs, new_msgs, new_comm, true);
@@ -264,7 +267,8 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
   Xt_exchanger_simple_base exchanger_sb =
     (Xt_exchanger_simple_base)exchanger;
 
-  size_t nmsg = (size_t)exchanger_sb->nmsg[SEND] + (size_t)exchanger_sb->nmsg[RECV];
+  size_t nmsg = (size_t)exchanger_sb->nmsg[SEND]
+    + (size_t)exchanger_sb->nmsg[RECV];
   struct Xt_msg_param *restrict msgs = exchanger_sb->msgs;
   xt_msg_params_destruct(nmsg, msgs, exchanger_sb->comm);
   free(exchanger_sb);
