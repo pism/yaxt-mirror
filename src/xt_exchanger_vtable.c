@@ -52,7 +52,7 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_internal.h"
 #include "xt_exchanger_mix_isend_irecv.h"
-#include "xt_exchanger_simple_base.h"
+#include "xt_exchanger_simple_base_internal.h"
 #ifdef XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
 #  include "xt_exchanger_neigh_alltoall.h"
 #endif
