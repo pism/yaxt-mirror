@@ -57,6 +57,7 @@
 #include "xt_idxsection_internal.h"
 #include "xt_idxempty_internal.h"
 #include "xt_exchanger.h"
+#include "xt_exchanger_irecv_isend_internal.h"
 #include "xt_mpi_internal.h"
 #include "instr.h"
 #include "xt_gpu.h"
@@ -72,6 +73,7 @@ xt_initialize(MPI_Comm default_comm)
   Xt_set_default_comm(default_comm);
   xt_mpi_init();
   xt_config_defaults_init();
+  xt_exchanger_irecv_isend_init();
   xt_idxempty_init();
   xt_idxstripes_initialize();
   xt_idxsection_initialize();
