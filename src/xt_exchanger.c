@@ -124,7 +124,17 @@ xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger, int rank,
 Xt_exchanger_thread_share
 xt_exchanger_create_thread_share(Xt_exchanger exchanger, Xt_config config)
 {
-  return exchanger->vtable->create_thread_share(exchanger, config);
+  if (exchanger->vtable->create_thread_share)
+    return exchanger->vtable->create_thread_share(exchanger, config);
+  else
+    return NULL;
+}
+
+void
+xt_exchanger_destroy_thread_share(Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share)
+{
+  if (exchanger->vtable->destroy_thread_share)
+    exchanger->vtable->destroy_thread_share(exchanger, thread_share);
 }
 
 void
