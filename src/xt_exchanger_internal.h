@@ -67,12 +67,14 @@
 
 typedef struct Xt_exchanger_thread_share_ *Xt_exchanger_thread_share;
 
+typedef void (*xt_exchanger_a_exchange_func)(
+  Xt_exchanger, const void *, void *, Xt_request *request);
 
 struct xt_exchanger_vtable {
   Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
   void (*delete)(Xt_exchanger);
   void (*s_exchange)(Xt_exchanger, const void *, void *);
-  void (*a_exchange)(Xt_exchanger, const void *, void *, Xt_request *request);
+  xt_exchanger_a_exchange_func a_exchange;
   int (*get_num_msg)(Xt_exchanger exchanger, int direction);
   int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction,
