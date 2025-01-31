@@ -54,7 +54,6 @@
 #include "xt/xt_core.h"
 #include "xt/xt_config.h"
 #include "xt_exchanger.h"
-#include "xt_redist_internal.h"
 
 /**
  * Constructor for an exchanger using asynchronous send and recv, the data is

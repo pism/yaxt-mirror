@@ -198,6 +198,7 @@ if ENABLE_XT_DDT_EXCHANGER
 libyaxt_c_la_SOURCES +=						\
 	xt_exchanger_irecv_isend_ddt_packed.c			\
 	xt_exchanger_irecv_isend_ddt_packed.h			\
+	xt_exchanger_irecv_isend_ddt_packed_internal.h		\
 	xt_request_msgs_ddt_packed.c				\
 	xt_gpu.h						\
 	xt_gpu.c						\

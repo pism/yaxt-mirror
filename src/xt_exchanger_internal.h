@@ -69,6 +69,10 @@ typedef struct Xt_exchanger_thread_share_ *Xt_exchanger_thread_share;
 
 typedef void (*xt_exchanger_a_exchange_func)(
   Xt_exchanger, const void *, void *, Xt_request *request);
+typedef Xt_exchanger_thread_share (*xt_exchanger_create_thread_share_func)(
+  Xt_exchanger, Xt_config);
+typedef void (*xt_exchanger_destroy_thread_share_func)(
+  Xt_exchanger, Xt_exchanger_thread_share);
 
 struct xt_exchanger_vtable {
   Xt_exchanger (*copy)(Xt_exchanger, MPI_Comm, int);
@@ -82,8 +86,8 @@ struct xt_exchanger_vtable {
   void (*team_share_default_init)(void *share);
   void (*team_share_destroy)(void *share);
   size_t team_share_size;
-  Xt_exchanger_thread_share (*create_thread_share)(Xt_exchanger, Xt_config);
-  void (*destroy_thread_share)(Xt_exchanger, Xt_exchanger_thread_share);
+  xt_exchanger_create_thread_share_func create_thread_share;
+  xt_exchanger_destroy_thread_share_func destroy_thread_share;
   Xt_exchanger_iter (*get_iterator)(Xt_exchanger exchanger, Xt_config config);
 };
 

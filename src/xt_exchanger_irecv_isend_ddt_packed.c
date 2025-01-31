@@ -53,7 +53,9 @@
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
+#include "xt_exchanger_irecv_isend_ddt_packed_internal.h"
 #include "xt_exchanger_simple_base.h"
+#include "xt_exchanger_simple_base_internal.h"
 #include "xt_exchanger_internal.h"
 #include "xt_ddt_internal.h"
 
@@ -65,15 +67,45 @@
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
+enum {
+  nvtab = 1,
+};
+
+struct xt_exchanger_vtable
+xt_exchanger_irecv_isend_ddt_packed_vtable[nvtab];
+
 static void
 xt_exchanger_irecv_isend_ddt_packed_s_exchange(
-  const void *src_data, void *dst_data,
-  int nsend, int nrecv,
-  const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
-  int tag_offset, MPI_Comm comm) {
+  Xt_exchanger exchanger,
+  const void *src_data, void *dst_data);
 
+static void
+xt_exchanger_irecv_isend_ddt_packed_a_exchange(
+  Xt_exchanger exchangr,
+  const void *src_data,
+  void *dst_data,
+  Xt_request *request);
+
+void
+xt_exchanger_irecv_isend_ddt_packed_init(void)
+{
+  xt_exchanger_irecv_isend_ddt_packed_vtable[0]
+    = xt_exchanger_simple_base_vtable;
+  xt_exchanger_irecv_isend_ddt_packed_vtable[0].s_exchange
+    = xt_exchanger_irecv_isend_ddt_packed_s_exchange;
+  xt_exchanger_irecv_isend_ddt_packed_vtable[0].a_exchange
+    = xt_exchanger_irecv_isend_ddt_packed_a_exchange;
+}
+
+static void
+xt_exchanger_irecv_isend_ddt_packed_s_exchange(
+  Xt_exchanger exchanger,
+  const void *src_data, void *dst_data)
+{
   XT_GPU_INSTR_PUSH(xt_exchanger_irecv_isend_ddt_packed_s_exchange);
-
+  Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
+  int nsend = base->nmsg[xt_direction_send],
+    nrecv = base->nmsg[xt_direction_recv];
   enum { AUTO_ALLOC_SIZE = 32, };
   MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
   size_t *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
@@ -92,6 +124,8 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
 
   size_t recv_buffer_size = 0;
   size_t send_buffer_size = 0;
+  const struct Xt_msg_param *send_msgs = base->msgs,
+    *recv_msgs = base->msgs + nsend;
   for (int i = 0; i < nrecv; ++i)
     recv_buffer_size +=
       ((buffer_sizes[i] =
@@ -115,10 +149,10 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
   size_t ofs = 0;
   for (int i = 0; i < nrecv; ++i) {
     int recv_size = (int)buffer_sizes[i];
-    xt_mpi_call(MPI_Irecv(recv_buffer + ofs, recv_size, MPI_BYTE,
-                          recv_msgs[i].rank,
-                          tag_offset + xt_mpi_tag_exchange_msg, comm,
-                          requests+i), comm);
+    xt_mpi_call(MPI_Irecv(
+                  recv_buffer + ofs, recv_size, MPI_BYTE, recv_msgs[i].rank,
+                  base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
+                  requests+i), base->comm);
     ofs += (size_t)recv_size;
   }
 
@@ -126,24 +160,24 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
   for (int i = 0; i < nsend; ++i) {
     size_t send_size = buffer_sizes[nrecv+i];
     MPI_Aint extent, lb;
-    xt_mpi_call(MPI_Type_get_extent(send_msgs[i].datatype, &lb, &extent), comm);
+    xt_mpi_call(MPI_Type_get_extent(send_msgs[i].datatype, &lb, &extent), base->comm);
     xt_ddt_pack_internal(
       CAST_MPI_SEND_BUF(src_data), (size_t)send_msgs[i].count, ddts[nrecv+i],
       send_buffer + ofs, extent, src_data_memtype);
     xt_mpi_call(MPI_Isend(send_buffer + ofs, (int)send_size, MPI_BYTE,
                           send_msgs[i].rank,
-                          tag_offset + xt_mpi_tag_exchange_msg, comm,
-                          requests+nrecv+i), comm);
+                          base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
+                          requests+nrecv+i), base->comm);
     ofs += send_size;
   }
 
-  xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
+  xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), base->comm);
 
   ofs = 0;
   for (int i = 0; i < nrecv; ++i) {
     size_t recv_size = buffer_sizes[i];
     MPI_Aint extent, lb;
-    xt_mpi_call(MPI_Type_get_extent(recv_msgs[i].datatype, &lb, &extent), comm);
+    xt_mpi_call(MPI_Type_get_extent(recv_msgs[i].datatype, &lb, &extent), base->comm);
     xt_ddt_unpack_internal(
       recv_buffer + ofs, (size_t)recv_msgs[i].count, ddts[i],
       (unsigned char *)dst_data + recv_msgs[i].displacement,
@@ -162,14 +196,16 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
 }
 
 static void
-xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_data,
-                                               int nsend, int nrecv,
-                                               const struct Xt_msg_param *send_msgs,
-                                               const struct Xt_msg_param *recv_msgs,
-                                               int tag_offset, MPI_Comm comm,
-                                               Xt_request *request) {
-
+xt_exchanger_irecv_isend_ddt_packed_a_exchange(
+  Xt_exchanger exchanger,
+  const void *src_data,
+  void *dst_data,
+  Xt_request *request)
+{
   XT_GPU_INSTR_PUSH(xt_exchanger_irecv_isend_ddt_packed_a_exchange);
+  Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
+  int nsend = base->nmsg[xt_direction_send],
+    nrecv = base->nmsg[xt_direction_recv];
   /* todo: manually inline xt_request_msgs_ddt_packed_new to save
    * redundant allocations */
   MPI_Request * tmp_requests =
@@ -183,18 +219,21 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
   enum xt_memtype src_data_memtype = xt_gpu_get_memtype(src_data);
   enum xt_memtype dst_data_memtype = xt_gpu_get_memtype(dst_data);
 
-  Xt_ddt * recv_ddts = xmalloc((size_t)nrecv * sizeof(*recv_ddts));
+  Xt_ddt *recv_ddts = xmalloc((size_t)nrecv * sizeof(*recv_ddts));
+  const struct Xt_msg_param *recv_msgs = base->msgs + nsend;
   for (int i = 0; i < nrecv; ++i) {
     recv_ddts[i] = xt_ddt_from_mpi_ddt(recv_msgs[i].datatype);
     size_t buffer_size
       = xt_ddt_get_pack_size_internal((size_t)recv_msgs[i].count, recv_ddts[i]);
     buffers[i] = xt_gpu_malloc(buffer_size, dst_data_memtype);
-    xt_mpi_call(MPI_Irecv(buffers[i], (int)buffer_size, MPI_BYTE,
-                          recv_msgs[i].rank,
-                          tag_offset + xt_mpi_tag_exchange_msg, comm,
-                          tmp_requests+i), comm);
+    xt_mpi_call(MPI_Irecv(
+                  buffers[i], (int)buffer_size, MPI_BYTE,
+                  recv_msgs[i].rank,
+                  base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
+                  tmp_requests+i), base->comm);
   }
 
+  const struct Xt_msg_param *send_msgs = base->msgs;
   for (int i = 0; i < nsend; ++i) {
     Xt_ddt send_ddt = xt_ddt_from_mpi_ddt(send_msgs[i].datatype);
     size_t buffer_size
@@ -203,25 +242,27 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(const void *src_data, void *dst_d
 //! \todo merge all packing kernels into single kernel call -> less overhead,
 //!       but not overlapping of packing and sending
     MPI_Aint extent, lb;
-    xt_mpi_call(MPI_Type_get_extent(send_msgs[i].datatype, &lb, &extent), comm);
+    xt_mpi_call(MPI_Type_get_extent(send_msgs[i].datatype, &lb, &extent), base->comm);
     xt_ddt_pack_internal(
       src_data, (size_t)send_msgs[i].count, send_ddt, buffers[nrecv + i],
       extent, src_data_memtype);
-    xt_mpi_call(MPI_Isend(buffers[nrecv + i], (int)buffer_size, MPI_BYTE,
-                          send_msgs[i].rank,
-                          tag_offset + xt_mpi_tag_exchange_msg, comm,
-                          tmp_requests+nrecv+i), comm);
+    xt_mpi_call(MPI_Isend(
+                  buffers[nrecv + i], (int)buffer_size, MPI_BYTE,
+                  send_msgs[i].rank,
+                  base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
+                  tmp_requests+nrecv+i), base->comm);
   }
   for (int i = 0; i < nrecv; ++i) {
     MPI_Aint lb;
-    xt_mpi_call(MPI_Type_get_extent(recv_msgs[i].datatype, &lb, recv_extents+i), comm);
+    xt_mpi_call(MPI_Type_get_extent(recv_msgs[i].datatype, &lb, recv_extents+i),
+                base->comm);
     recv_displacements[i] = recv_msgs[i].displacement;
     recv_counts[i] = recv_msgs[i].count;
   }
 
   Xt_request requests =
     xt_request_msgs_ddt_packed_new(
-      nrecv + nsend, tmp_requests, comm, nrecv, nsend,
+      nrecv + nsend, tmp_requests, base->comm, nrecv, nsend,
       recv_ddts, recv_extents, recv_counts, buffers, buffers + nrecv, dst_data,
       src_data_memtype, dst_data_memtype);
 
@@ -247,14 +288,19 @@ xt_exchanger_irecv_isend_ddt_packed_new(int nsend, int nrecv,
    *        be used on @a comm by any other part of the program during the
    *        lifetime of the created exchanger object
    */
-  return
-    xt_exchanger_simple_base_new(nsend, nrecv, send_msgs, recv_msgs,
-                                 comm, tag_offset,
-                                 xt_exchanger_irecv_isend_ddt_packed_s_exchange,
-                                 xt_exchanger_irecv_isend_ddt_packed_a_exchange,
-                                 (xt_simple_create_thread_share_func)0,
-                                 (xt_simple_destroy_thread_share_func)0,
-                                 config);
+  Xt_exchanger_simple_base exchanger =
+    xt_exchanger_simple_base_alloc((size_t)nsend+(size_t)nrecv, 0);
+  xt_exchanger_simple_base_init(
+    exchanger, nsend, nrecv, send_msgs, recv_msgs,
+    comm, tag_offset,
+    (xt_simple_s_exchange_func)0,
+    (xt_simple_a_exchange_func)0,
+    (xt_simple_create_thread_share_func)0,
+    (xt_simple_destroy_thread_share_func)0,
+    config);
+  exchanger->vtable
+    = xt_exchanger_irecv_isend_ddt_packed_vtable;
+  return (Xt_exchanger)exchanger;
 }
 
 /*
