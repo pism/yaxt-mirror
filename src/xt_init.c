@@ -59,6 +59,7 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_irecv_isend_internal.h"
 #include "xt_exchanger_irecv_send_internal.h"
+#include "xt_exchanger_irecv_isend_ddt_packed_internal.h"
 #include "xt_mpi_internal.h"
 #include "instr.h"
 #include "xt_gpu.h"
@@ -88,6 +89,7 @@ xt_initialize(MPI_Comm default_comm)
 #endif
 #ifdef XT_ENABLE_DDT_EXCHANGER
   xt_gpu_init();
+  xt_exchanger_irecv_isend_ddt_packed_init();
 #endif
   xt_lib_state = xt_lib_initialized;
 }
