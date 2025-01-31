@@ -184,6 +184,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_exchanger_simple_base_internal.h			\
 	xt_exchanger_irecv_send.c				\
 	xt_exchanger_irecv_send.h				\
+	xt_exchanger_irecv_send_internal.h			\
 	xt_exchanger_irecv_isend.c				\
 	xt_exchanger_irecv_isend.h				\
 	xt_exchanger_irecv_isend_internal.h			\

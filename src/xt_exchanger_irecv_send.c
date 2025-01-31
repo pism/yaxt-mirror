@@ -60,7 +60,67 @@
 #include "xt_mpi_internal.h"
 #include "xt_request_msgs_internal.h"
 #include "xt_exchanger_irecv_send.h"
+#include "xt_exchanger_irecv_send_internal.h"
 #include "xt_exchanger_simple_base.h"
+#include "xt_exchanger_simple_base_internal.h"
+
+enum {
+#ifdef _OPENMP
+  nvtab = 2,
+#else
+  nvtab = 1,
+#endif
+};
+
+struct xt_exchanger_vtable
+xt_exchanger_irecv_send_vtable[nvtab];
+
+static void
+xt_exchanger_irecv_send_s_exchange(
+  Xt_exchanger exchanger,
+  const void *src_data, void *dst_data);
+
+#ifdef _OPENMP
+static void
+xt_exchanger_irecv_send_s_exchange_omp(
+  Xt_exchanger exchanger, const void *src_data, void *dst_data);
+#endif
+
+static Xt_exchanger_thread_share
+xt_exchanger_irecv_send_create_thread_share(
+  Xt_exchanger exchanger, Xt_config config);
+
+static void
+xt_exchanger_irecv_send_destroy_thread_share(
+  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share);
+
+void
+xt_exchanger_irecv_send_init(void)
+{
+#ifdef _OPENMP
+  xt_exchanger_irecv_send_vtable[1] =
+#endif
+  xt_exchanger_irecv_send_vtable[0]
+    = xt_exchanger_simple_base_vtable;
+  xt_exchanger_irecv_send_vtable[0].s_exchange
+    = xt_exchanger_irecv_send_s_exchange;
+  xt_exchanger_irecv_send_vtable[0].a_exchange
+    = (xt_exchanger_a_exchange_func)0;
+  xt_exchanger_irecv_send_vtable[0].create_thread_share
+    = xt_exchanger_irecv_send_create_thread_share;
+  xt_exchanger_irecv_send_vtable[0].destroy_thread_share
+    = xt_exchanger_irecv_send_destroy_thread_share;
+#ifdef _OPENMP
+  xt_exchanger_irecv_send_vtable[1].s_exchange
+    = xt_exchanger_irecv_send_s_exchange_omp;
+  xt_exchanger_irecv_send_vtable[1].a_exchange
+    = (xt_exchanger_a_exchange_func)0;
+  xt_exchanger_irecv_send_vtable[1].create_thread_share
+    = xt_exchanger_irecv_send_create_thread_share;
+  xt_exchanger_irecv_send_vtable[1].destroy_thread_share
+    = xt_exchanger_irecv_send_destroy_thread_share;
+#endif
+}
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -71,7 +131,7 @@
 #endif
 
 static void
-xt_exchanger_irecv_send_s_exchange_(const void *src_data, void *dst_data,
+xt_exchanger_irecv_send_s_exchange__(const void *src_data, void *dst_data,
                                     int nsend, int nrecv,
                                     const struct Xt_msg_param *send_msgs,
                                     const struct Xt_msg_param *recv_msgs,
@@ -99,22 +159,41 @@ xt_exchanger_irecv_send_s_exchange_(const void *src_data, void *dst_data,
 
 
 static void
-xt_exchanger_irecv_send_s_exchange(const void *src_data, void *dst_data,
-                                   int nsend, int nrecv,
-                                   const struct Xt_msg_param *send_msgs,
-                                   const struct Xt_msg_param *recv_msgs,
-                                   int tag_offset, MPI_Comm comm) {
+xt_exchanger_irecv_send_s_exchange_(const void *src_data, void *dst_data,
+                                    int nsend, int nrecv,
+                                    const struct Xt_msg_param *send_msgs,
+                                    const struct Xt_msg_param *recv_msgs,
+                                    int tag_offset, MPI_Comm comm) {
 
   MPI_Request *recv_request
     = xmalloc((size_t)nrecv * sizeof (*recv_request));
 
-  xt_exchanger_irecv_send_s_exchange_(src_data, dst_data,
+  xt_exchanger_irecv_send_s_exchange__(src_data, dst_data,
                                       nsend, nrecv,
                                       send_msgs, recv_msgs,
                                       tag_offset, comm,
                                       recv_request);
 
   free(recv_request);
+}
+
+static void
+xt_exchanger_irecv_send_s_exchange(
+  Xt_exchanger exchanger, const void *src_data, void *dst_data)
+{
+  Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
+  int nsend = base->nmsg[xt_direction_send],
+    nrecv = base->nmsg[xt_direction_recv];
+  MPI_Request *requests
+    = xmalloc((size_t)nrecv * sizeof (*requests));
+
+  xt_exchanger_irecv_send_s_exchange__(src_data, dst_data,
+                                       nsend, nrecv,
+                                       base->msgs, base->msgs+nsend,
+                                       base->tag_offset, base->comm,
+                                       requests);
+
+  free(requests);
 }
 
 #ifdef _OPENMP
@@ -134,17 +213,17 @@ xt_exchanger_irecv_send_s_exchange_mt(const void *src_data, void *dst_data,
     nsend_ = (nsend * (tid+1)) / num_threads - start_send,
     start_recv = (nrecv * tid) / num_threads,
     nrecv_ = (nrecv * (tid+1)) / num_threads - start_recv;
-  xt_exchanger_irecv_send_s_exchange_(src_data,
-                                      dst_data,
-                                      nsend_, nrecv_,
-                                      send_msgs+start_send,
-                                      recv_msgs+start_recv,
-                                      tag_offset, comm,
-                                      recv_request+start_recv);
+  xt_exchanger_irecv_send_s_exchange__(src_data,
+                                       dst_data,
+                                       nsend_, nrecv_,
+                                       send_msgs+start_send,
+                                       recv_msgs+start_recv,
+                                       tag_offset, comm,
+                                       recv_request+start_recv);
 }
 
 static void
-xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
+xt_exchanger_irecv_send_s_exchange_omp_(const void *src_data, void *dst_data,
                                        int nsend, int nrecv,
                                        const struct Xt_msg_param *send_msgs,
                                        const struct Xt_msg_param *recv_msgs,
@@ -163,12 +242,34 @@ xt_exchanger_irecv_send_s_exchange_omp(const void *src_data, void *dst_data,
   free(shared_req);
 }
 
+static void
+xt_exchanger_irecv_send_s_exchange_omp(
+  Xt_exchanger exchanger, const void *src_data, void *dst_data)
+{
+
+  struct Xt_config_ conf = xt_default_config;
+  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
+  Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
+  int nsend = base->nmsg[xt_direction_send],
+    nrecv = base->nmsg[xt_direction_recv];
+  Xt_exchanger_thread_share shared_req
+    = (Xt_exchanger_thread_share)xt_request_msgs_alloc(
+      nrecv, base->comm, &conf);
+#pragma omp parallel
+  xt_exchanger_irecv_send_s_exchange_mt(src_data, dst_data,
+                                        nsend, nrecv,
+                                        base->msgs, base->msgs+nsend,
+                                        base->tag_offset, base->comm,
+                                        shared_req);
+  free(shared_req);
+}
+
 
 #endif
 
 
 static Xt_exchanger_thread_share
-xt_exchanger_irecv_send_create_thread_share(
+xt_exchanger_irecv_send_create_thread_share_(
   int nsend, int nrecv,
   const struct Xt_msg_param *send_msgs,
   const struct Xt_msg_param *recv_msgs,
@@ -178,6 +279,17 @@ xt_exchanger_irecv_send_create_thread_share(
   (void)send_msgs;
   (void)recv_msgs;
   return (Xt_exchanger_thread_share)xt_request_msgs_alloc(nrecv, comm, config);
+}
+
+static Xt_exchanger_thread_share
+xt_exchanger_irecv_send_create_thread_share(
+  Xt_exchanger exchanger, Xt_config config)
+{
+  Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
+  Xt_request req = xt_request_msgs_alloc(
+    base->nmsg[xt_direction_recv], base->comm, config);
+  xt_request_msgs_set_auto_free(req, 0);
+  return (Xt_exchanger_thread_share)req;
 }
 
 static void
@@ -201,20 +313,24 @@ xt_exchanger_irecv_send_new(int nsend, int nrecv,
    */
   static const xt_simple_s_exchange_func
     s_exch_by_mthread_mode[] = {
-    xt_exchanger_irecv_send_s_exchange,
+    xt_exchanger_irecv_send_s_exchange_,
 #ifdef _OPENMP
-    xt_exchanger_irecv_send_s_exchange_omp,
+    xt_exchanger_irecv_send_s_exchange_omp_,
 #else
     (xt_simple_s_exchange_func)0,
 #endif
   };
+  Xt_exchanger_simple_base exchanger =
+    xt_exchanger_simple_base_alloc((size_t)nsend+(size_t)nrecv, 0);
   int mthread_mode = xt_config_get_redist_mthread_mode(config);
-  return xt_exchanger_simple_base_new(
-    nsend, nrecv, send_msgs, recv_msgs,
+  xt_exchanger_simple_base_init(
+    exchanger, nsend, nrecv, send_msgs, recv_msgs,
     comm, tag_offset,
     s_exch_by_mthread_mode[mthread_mode], 0,
-    xt_exchanger_irecv_send_create_thread_share,
+    xt_exchanger_irecv_send_create_thread_share_,
     xt_exchanger_irecv_send_destroy_thread_share, config);
+  exchanger->vtable = xt_exchanger_irecv_send_vtable+mthread_mode;
+  return (Xt_exchanger)exchanger;
 }
 
 /*

@@ -96,8 +96,12 @@ xt_exchanger_s_exchange(Xt_exchanger exchanger,
 void xt_exchanger_a_exchange(Xt_exchanger exchanger,
                              const void *src_data, void *dst_data,
                              Xt_request *request) {
-
-  exchanger->vtable->a_exchange(exchanger, src_data, dst_data, request);
+  if (exchanger->vtable->a_exchange)
+    exchanger->vtable->a_exchange(exchanger, src_data, dst_data, request);
+  else {
+    exchanger->vtable->s_exchange(exchanger, src_data, dst_data);
+    *request = XT_REQUEST_NULL;
+  }
 }
 
 int
