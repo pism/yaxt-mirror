@@ -201,38 +201,6 @@ xt_exchanger_simple_base_init(
   }
 }
 
-Xt_exchanger
-xt_exchanger_simple_base_new(
-  int nsend, int nrecv,
-  const struct Xt_msg_param send_msgs[nsend],
-  const struct Xt_msg_param recv_msgs[nrecv],
-  MPI_Comm comm, int tag_offset,
-  xt_simple_s_exchange_func s_func,
-  xt_simple_a_exchange_func a_func,
-  xt_simple_create_thread_share_func create_thread_share_func,
-  xt_simple_destroy_thread_share_func destroy_thread_share_func,
-  Xt_config config)
-{
-  /** note: tag_offset + xt_mpi_tag_exchange_msg must not
-   *        be used on @a comm by any other part of the program during the
-   *        lifetime of the created exchanger object
-   */
-
-  if (s_func == 0)
-    Xt_abort(comm, "ERROR(xt_exchanger_simple_base_new): invalid synchronous "
-             "exchange function pointer", filename, __LINE__);
-
-  assert((nsend >= 0) & (nrecv >= 0));
-  size_t nmsg = (size_t)nsend + (size_t)nrecv;
-  Xt_exchanger_simple_base exchanger
-    = xt_exchanger_simple_base_alloc(nmsg, 0);
-  xt_exchanger_simple_base_init(
-    exchanger, nsend, nrecv, send_msgs, recv_msgs, comm, tag_offset,
-    s_func, a_func, create_thread_share_func, destroy_thread_share_func,
-    config);
-  return (Xt_exchanger)exchanger;
-}
-
 static Xt_exchanger
 xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
                               MPI_Comm new_comm, int new_tag_offset)
