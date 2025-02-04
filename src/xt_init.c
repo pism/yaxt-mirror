@@ -58,6 +58,7 @@
 #include "xt_idxempty_internal.h"
 #include "xt_exchanger.h"
 #include "xt_exchanger_irecv_isend_internal.h"
+#include "xt_exchanger_irecv_isend_packed_internal.h"
 #include "xt_exchanger_irecv_send_internal.h"
 #include "xt_exchanger_irecv_isend_ddt_packed_internal.h"
 #include "xt_mpi_internal.h"
@@ -77,6 +78,7 @@ xt_initialize(MPI_Comm default_comm)
   xt_config_defaults_init();
   xt_exchanger_irecv_isend_init();
   xt_exchanger_irecv_send_init();
+  xt_exchanger_irecv_isend_packed_init();
   xt_idxempty_init();
   xt_idxstripes_initialize();
   xt_idxsection_initialize();
