@@ -54,6 +54,7 @@
 #include "xt/xt_core.h"
 #include "xt/xt_config.h"
 #include "xt_exchanger.h"
+#include "xt_exchanger_internal.h"
 
 PPM_DSO_INTERNAL extern struct xt_exchanger_vtable
 xt_exchanger_irecv_isend_ddt_packed_vtable[];

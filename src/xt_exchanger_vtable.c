@@ -57,6 +57,7 @@
 #  include "xt_exchanger_neigh_alltoall.h"
 #endif
 #include "xt_exchanger_irecv_isend_packed.h"
+#include "xt_exchanger_irecv_isend_packed_internal.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #if XT_ENABLE_DDT_EXCHANGER
 #  include "xt_exchanger_irecv_isend_ddt_packed_internal.h"
@@ -77,10 +78,10 @@ xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new)
   else if (exchanger_new == xt_exchanger_irecv_send_new)
     vtab = xt_exchanger_irecv_send_vtable;
   else if (exchanger_new == xt_exchanger_irecv_isend_packed_new)
-    vtab = &xt_exchanger_simple_base_vtable;
+    vtab = xt_exchanger_irecv_isend_packed_vtable;
 #if XT_ENABLE_DDT_EXCHANGER
   else if (exchanger_new == xt_exchanger_irecv_isend_ddt_packed_new)
-    vtab = &xt_exchanger_irecv_isend_ddt_pack_vtable;
+    vtab = xt_exchanger_irecv_isend_ddt_packed_vtable;
 #endif
 #if XT_CAN_USE_MPI_NEIGHBOR_ALLTOALL
   else if (exchanger_new == xt_exchanger_neigh_alltoall_new)
