@@ -74,37 +74,6 @@ typedef Xt_exchanger_thread_share (*xt_simple_create_thread_share_func)(
 typedef void (*xt_simple_destroy_thread_share_func)(
   Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share);
 
-/**
- * constructor for an exchanger using asynchronous send and recv
- * @param[in] nsend      number of send messages
- * @param[in] nrecv      number of receive messages
- * @param[in] send_msgs  array with send messages
- * @param[in] recv_msgs  array with receive messages
- * @param[in] comm       MPI communicator that is to be used for the
- *                       communication
- * @param[in] tag_offset tag
- * @param[in] s_func     function pointer used for synchronous exchanges
- * @param[in] a_func     function pointer used for asynchronous exchanges
- * @param[in] create_thread_share_func function pointer used to create
- * shared state for multi-threaded calls
- * @param[in] config     optional customization parameters
- * @remark tag_offset + xt_mpi_tag_exchange_msg must not
- *         be used on @a comm by any other part of the program during the
- *         lifetime of the created exchanger object
- */
-PPM_DSO_INTERNAL Xt_exchanger
-xt_exchanger_simple_base_new(
-  int nsend, int nrecv,
-  const struct Xt_msg_param send_msgs[nsend],
-  const struct Xt_msg_param recv_msgs[nrecv],
-  MPI_Comm comm, int tag_offset,
-  xt_simple_s_exchange_func s_func,
-  xt_simple_a_exchange_func a_func,
-  xt_simple_create_thread_share_func create_thread_share_func,
-  xt_simple_destroy_thread_share_func destroy_thread_share_func,
-  Xt_config config);
-
-
 #endif // XT_EXCHANGER_SIMPLE_BASE_H
 
 /*
