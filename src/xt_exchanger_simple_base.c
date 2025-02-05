@@ -61,20 +61,14 @@
 #include "xt_exchanger_simple_base.h"
 #include "xt_exchanger_simple_base_internal.h"
 
-static const char filename[] = "xt_exchanger_simple_base.c";
+// static const char filename[] = "xt_exchanger_simple_base.c";
 
 static Xt_exchanger
 xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
                               MPI_Comm newComm, int new_tag_offset);
+
 static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger);
-static void
-xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
-                                    const void *src_data,
-                                    void *dst_data);
-static void
-xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
-                                    const void *src_data, void *dst_data,
-                                    Xt_request *request);
+
 static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
@@ -90,27 +84,19 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           enum xt_msg_direction direction,
                                           bool do_dup);
 
-static Xt_exchanger_thread_share
-xt_exchanger_simple_base_create_thread_share(Xt_exchanger exchanger,
-                                             Xt_config config);
-
-static void
-xt_exchanger_simple_base_destroy_thread_share(
-  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share);
-
 static Xt_exchanger_iter
 xt_exchanger_simple_base_get_iterator(Xt_exchanger exchanger, Xt_config config);
 
 const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .copy = xt_exchanger_simple_base_copy,
   .delete = xt_exchanger_simple_base_delete,
-  .s_exchange = xt_exchanger_simple_base_s_exchange,
-  .a_exchange = xt_exchanger_simple_base_a_exchange,
+  .s_exchange = (xt_exchanger_s_exchange_func)0,
+  .a_exchange = (xt_exchanger_a_exchange_func)0,
   .get_num_msg = xt_exchanger_simple_base_get_num_msg,
   .get_msg_ranks = xt_exchanger_simple_base_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_simple_base_get_MPI_Datatype,
-  .create_thread_share = xt_exchanger_simple_base_create_thread_share,
-  .destroy_thread_share = xt_exchanger_simple_base_destroy_thread_share,
+  .create_thread_share = (xt_exchanger_create_thread_share_func)0,
+  .destroy_thread_share = (xt_exchanger_destroy_thread_share_func)0,
   .get_iterator = xt_exchanger_simple_base_get_iterator,
 };
 
@@ -155,10 +141,6 @@ xt_exchanger_simple_base_init(
   const struct Xt_msg_param send_msgs[nsend],
   const struct Xt_msg_param recv_msgs[nrecv],
   MPI_Comm comm, int tag_offset,
-  xt_simple_s_exchange_func s_func,
-  xt_simple_a_exchange_func a_func,
-  xt_simple_create_thread_share_func create_thread_share_func,
-  xt_simple_destroy_thread_share_func destroy_thread_share_func,
   Xt_config config)
 {
   exchanger->comm = comm;
@@ -170,11 +152,6 @@ xt_exchanger_simple_base_init(
                     comm, dt_dup);
   xt_msg_params_copy((size_t)nrecv, recv_msgs, exchanger->msgs + nsend,
                      comm, dt_dup);
-  exchanger->s_func = s_func;
-  exchanger->a_func = a_func;
-  exchanger->create_thread_share_func = create_thread_share_func;
-  exchanger->destroy_thread_share_func = destroy_thread_share_func;
-
   {
     int comm_size, comm_rank, is_inter;
     xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
@@ -215,12 +192,6 @@ xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
   exchanger_copy->vtable = exchanger_sb->vtable;
   exchanger_copy->nmsg[SEND] = nsend;
   exchanger_copy->nmsg[RECV] = nrecv;
-  exchanger_copy->s_func = exchanger_sb->s_func;
-  exchanger_copy->a_func = exchanger_sb->a_func;
-  exchanger_copy->create_thread_share_func
-    = exchanger_sb->create_thread_share_func;
-  exchanger_copy->destroy_thread_share_func
-    = exchanger_sb->destroy_thread_share_func;
   struct Xt_msg_param *restrict new_msgs = exchanger_copy->msgs,
     *restrict orig_msgs = exchanger_sb->msgs;
   xt_msg_params_copy(nmsg, orig_msgs, new_msgs, new_comm, true);
@@ -240,40 +211,6 @@ static void xt_exchanger_simple_base_delete(Xt_exchanger exchanger) {
   struct Xt_msg_param *restrict msgs = exchanger_sb->msgs;
   xt_msg_params_destruct(nmsg, msgs, exchanger_sb->comm);
   free(exchanger_sb);
-}
-
-static void
-xt_exchanger_simple_base_s_exchange(Xt_exchanger exchanger,
-                                    const void *src_data, void *dst_data)
-{
-  Xt_exchanger_simple_base exchanger_sb =
-    (Xt_exchanger_simple_base)exchanger;
-
-  int nsend = exchanger_sb->nmsg[SEND];
-  exchanger_sb->s_func(src_data, dst_data, nsend,
-                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
-                       exchanger_sb->msgs + (size_t)nsend,
-                       exchanger_sb->tag_offset, exchanger_sb->comm);
-}
-
-static void
-xt_exchanger_simple_base_a_exchange(Xt_exchanger exchanger,
-                                    const void *src_data, void *dst_data,
-                                    Xt_request *request)
-{
-  Xt_exchanger_simple_base exchanger_sb =
-    (Xt_exchanger_simple_base)exchanger;
-
-  if (exchanger_sb->a_func == NULL)
-    Xt_abort(exchanger_sb->comm, "ERROR(xt_exchanger_simple_base_a_exchange): "
-             "asynchronous exchange function not defined for current exchanger",
-             filename, __LINE__);
-
-  int nsend = exchanger_sb->nmsg[SEND];
-  exchanger_sb->a_func(src_data, dst_data, nsend,
-                       exchanger_sb->nmsg[RECV], exchanger_sb->msgs,
-                       exchanger_sb->msgs + (size_t)nsend,
-                       exchanger_sb->tag_offset, exchanger_sb->comm, request);
 }
 
 static MPI_Datatype
@@ -340,34 +277,6 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
     ranks_[i] = msgs[i].rank;
   return (int)nmsg;
 }
-
-static Xt_exchanger_thread_share
-xt_exchanger_simple_base_create_thread_share(Xt_exchanger exchanger,
-                                             Xt_config config)
-{
-  Xt_exchanger_simple_base exchanger_sb =
-    (Xt_exchanger_simple_base)exchanger;
-  int nsend = exchanger_sb->nmsg[SEND];
-  if (exchanger_sb->create_thread_share_func)
-    return exchanger_sb->create_thread_share_func(
-      nsend, exchanger_sb->nmsg[RECV],
-      exchanger_sb->msgs, exchanger_sb->msgs + nsend,
-      exchanger_sb->comm, config);
-  else
-    return NULL;
-}
-
-static void
-xt_exchanger_simple_base_destroy_thread_share(
-  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share)
-{
-  Xt_exchanger_simple_base exchanger_sb =
-    (Xt_exchanger_simple_base)exchanger;
-  /* assert that thread_share contains no in-flight requests */
-  if (exchanger_sb->destroy_thread_share_func)
-    exchanger_sb->destroy_thread_share_func(exchanger, thread_share);
-}
-
 
 typedef struct Xt_exchanger_simple_base_iter_ *Xt_exchanger_simple_base_iter;
 

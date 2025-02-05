@@ -56,23 +56,6 @@
 #include "xt_exchanger.h"
 #include "xt_exchanger_internal.h"
 
-typedef void (*xt_simple_s_exchange_func)(
-  const void *src_data, void *dst_data, int nsend, int nrecv,
-  const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
-  int tag_offset, MPI_Comm comm);
-
-typedef void (*xt_simple_a_exchange_func)(
-  const void *src_data, void *dst_data, int nsend, int nrecv,
-  const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
-  int tag_offset, MPI_Comm comm, Xt_request *request);
-
-typedef Xt_exchanger_thread_share (*xt_simple_create_thread_share_func)(
-  int nsend, int nrecv,
-  const struct Xt_msg_param *send_msgs, const struct Xt_msg_param *recv_msgs,
-  MPI_Comm comm, Xt_config config);
-
-typedef void (*xt_simple_destroy_thread_share_func)(
-  Xt_exchanger exchanger, Xt_exchanger_thread_share thread_share);
 
 #endif // XT_EXCHANGER_SIMPLE_BASE_H
 
