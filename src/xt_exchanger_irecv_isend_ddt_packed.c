@@ -124,8 +124,9 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
 
   size_t recv_buffer_size = 0;
   size_t send_buffer_size = 0;
-  const struct Xt_msg_param *send_msgs = base->msgs,
-    *recv_msgs = base->msgs + nsend;
+  const struct Xt_msg_param *send_msgs
+    = xt_exchanger_simple_base_get_send_msg(base),
+    *recv_msgs = xt_exchanger_simple_base_get_recv_msg(base);
   for (int i = 0; i < nrecv; ++i)
     recv_buffer_size +=
       ((buffer_sizes[i] =
@@ -220,7 +221,8 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(
   enum xt_memtype dst_data_memtype = xt_gpu_get_memtype(dst_data);
 
   Xt_ddt *recv_ddts = xmalloc((size_t)nrecv * sizeof(*recv_ddts));
-  const struct Xt_msg_param *recv_msgs = base->msgs + nsend;
+  const struct Xt_msg_param *recv_msgs
+    = xt_exchanger_simple_base_get_recv_msg(base);
   for (int i = 0; i < nrecv; ++i) {
     recv_ddts[i] = xt_ddt_from_mpi_ddt(recv_msgs[i].datatype);
     size_t buffer_size
@@ -233,7 +235,8 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(
                   tmp_requests+i), base->comm);
   }
 
-  const struct Xt_msg_param *send_msgs = base->msgs;
+  const struct Xt_msg_param *send_msgs
+    = xt_exchanger_simple_base_get_send_msg(base);
   for (int i = 0; i < nsend; ++i) {
     Xt_ddt send_ddt = xt_ddt_from_mpi_ddt(send_msgs[i].datatype);
     size_t buffer_size

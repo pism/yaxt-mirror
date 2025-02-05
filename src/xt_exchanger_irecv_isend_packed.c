@@ -250,8 +250,9 @@ xt_exchanger_irecv_isend_packed_s_exchange(
                        + (num_tx+1) * sizeof (*buf_ofs));
     buf_ofs = (void *)(requests + (num_tx+(num_tx&1)));
   }
-  const struct Xt_msg_param *send_msgs = base->msgs,
-    *recv_msgs = base->msgs + nsend;
+  const struct Xt_msg_param *send_msgs
+    = xt_exchanger_simple_base_get_send_msg(base),
+    *recv_msgs = xt_exchanger_simple_base_get_recv_msg(base);
 
   size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
                                           send_msgs, recv_msgs, base->comm);
@@ -302,8 +303,9 @@ xt_exchanger_irecv_isend_packed_s_exchange_omp(
     buf_ofs = (size_t *)(requests + (num_tx+(num_tx&1)));
   }
 
-  const struct Xt_msg_param *send_msgs = base->msgs,
-    *recv_msgs = base->msgs + nsend;
+  const struct Xt_msg_param *send_msgs
+    = xt_exchanger_simple_base_get_send_msg(base),
+    *recv_msgs = xt_exchanger_simple_base_get_recv_msg(base);
 
   size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
                                           send_msgs, recv_msgs, base->comm);
@@ -477,8 +479,9 @@ xt_exchanger_irecv_isend_packed_a_exchange(
   else
     buf_ofs = xmalloc((num_tx+1) * sizeof (*buf_ofs));
 
-  const struct Xt_msg_param *send_msgs = base->msgs,
-    *recv_msgs = base->msgs + nsend;
+  const struct Xt_msg_param *send_msgs
+    = xt_exchanger_simple_base_get_send_msg(base),
+    *recv_msgs = xt_exchanger_simple_base_get_recv_msg(base);
   size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
                                           send_msgs, recv_msgs, base->comm);
   size_t inventory_size = get_inventory_size((size_t)nrecv);
@@ -572,8 +575,9 @@ xt_exchanger_irecv_isend_packed_a_exchange_omp(
   else
     buf_ofs = xmalloc((num_tx+1) * sizeof (*buf_ofs));
 
-  const struct Xt_msg_param *send_msgs = base->msgs,
-    *recv_msgs = base->msgs + nsend;
+  const struct Xt_msg_param *send_msgs
+    = xt_exchanger_simple_base_get_send_msg(base),
+    *recv_msgs = xt_exchanger_simple_base_get_recv_msg(base);
   size_t buffer_size = get_buffer_offsets(
     buf_ofs, nsend, nrecv, send_msgs, recv_msgs, base->comm);
   size_t inventory_size = get_inventory_size((size_t)nrecv);
@@ -646,8 +650,9 @@ xt_exchanger_irecv_isend_packed_create_thread_share(
   Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
   int nsend = base->nmsg[xt_direction_send],
     nrecv = base->nmsg[xt_direction_recv];
-  const struct Xt_msg_param *send_msgs = base->msgs,
-    *recv_msgs = base->msgs + nsend;
+  const struct Xt_msg_param *send_msgs
+    = xt_exchanger_simple_base_get_send_msg(base),
+    *recv_msgs = xt_exchanger_simple_base_get_recv_msg(base);
   size_t buf_size
     = get_buffer_size(nsend, nrecv, send_msgs, recv_msgs, base->comm);
   size_t inventory_size = get_inventory_size((size_t)nrecv);
