@@ -682,12 +682,7 @@ xt_exchanger_irecv_isend_packed_new(int nsend, int nrecv,
   xt_exchanger_simple_base_init(
     exchanger,
     nsend, nrecv, send_msgs, recv_msgs,
-    comm, tag_offset,
-    (xt_simple_s_exchange_func)0,
-    (xt_simple_a_exchange_func)0,
-    (xt_simple_create_thread_share_func)0,
-    (xt_simple_destroy_thread_share_func)0,
-    config);
+    comm, tag_offset, config);
   int mthread_mode = xt_config_get_redist_mthread_mode(config);
   exchanger->vtable
     = xt_exchanger_irecv_isend_packed_vtable + mthread_mode;
