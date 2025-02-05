@@ -87,6 +87,12 @@ struct Xt_exchanger_simple_base_ {
   struct Xt_msg_param msgs[];
 };
 
+PPM_DSO_INTERNAL const struct Xt_msg_param *
+xt_exchanger_simple_base_get_send_msg(Xt_exchanger_simple_base exchanger);
+
+PPM_DSO_INTERNAL const struct Xt_msg_param *
+xt_exchanger_simple_base_get_recv_msg(Xt_exchanger_simple_base exchanger);
+
 #endif // XT_EXCHANGER_SIMPLE_BASE_INTERNAL_H
 
 /*

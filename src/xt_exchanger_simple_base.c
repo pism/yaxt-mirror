@@ -134,6 +134,19 @@ adjusted_rank(int r, int comm_rank, int comm_size)
 
 #include "xt_quicksort_base.h"
 
+const struct Xt_msg_param *
+xt_exchanger_simple_base_get_send_msg(Xt_exchanger_simple_base exchanger)
+{
+  return exchanger->msgs;
+}
+
+
+const struct Xt_msg_param *
+xt_exchanger_simple_base_get_recv_msg(Xt_exchanger_simple_base exchanger)
+{
+  return exchanger->msgs + exchanger->nmsg[SEND];
+}
+
 void
 xt_exchanger_simple_base_init(
   Xt_exchanger_simple_base exchanger,
@@ -148,9 +161,11 @@ xt_exchanger_simple_base_init(
   exchanger->nmsg[SEND] = nsend;
   exchanger->nmsg[RECV] = nrecv;
   bool dt_dup = !(config->flags & exch_no_dt_dup);
-  xt_msg_params_copy((size_t)nsend, send_msgs, exchanger->msgs,
-                    comm, dt_dup);
-  xt_msg_params_copy((size_t)nrecv, recv_msgs, exchanger->msgs + nsend,
+  xt_msg_params_copy((size_t)nsend, send_msgs,
+                     xt_exchanger_simple_base_get_send_msg(exchanger),
+                     comm, dt_dup);
+  xt_msg_params_copy((size_t)nrecv, recv_msgs,
+                     xt_exchanger_simple_base_get_recv_msg(exchanger),
                      comm, dt_dup);
   {
     int comm_size, comm_rank, is_inter;
@@ -171,10 +186,10 @@ xt_exchanger_simple_base_init(
      * 2. sort: 6, 9, 11, 12, 15
      * 3. subtrace comm_size again -> final order: 6, 9, 1, 2, 5
      */
-    xt_quicksort_msg_param(exchanger->msgs, (size_t)nsend,
-                           comm_rank, comm_size);
-    xt_quicksort_msg_param(exchanger->msgs + (size_t)nsend, (size_t)nrecv,
-                           comm_rank, comm_size);
+    xt_quicksort_msg_param(xt_exchanger_simple_base_get_send_msg(exchanger),
+                           (size_t)nsend, comm_rank, comm_size);
+    xt_quicksort_msg_param(xt_exchanger_simple_base_get_recv_msg(exchanger),
+                           (size_t)nrecv, comm_rank, comm_size);
   }
 }
 

@@ -167,11 +167,11 @@ xt_exchanger_irecv_send_s_exchange(
   MPI_Request *requests
     = xmalloc((size_t)nrecv * sizeof (*requests));
 
-  xt_exchanger_irecv_send_s_exchange__(src_data, dst_data,
-                                       nsend, nrecv,
-                                       base->msgs, base->msgs+nsend,
-                                       base->tag_offset, base->comm,
-                                       requests);
+  xt_exchanger_irecv_send_s_exchange__(
+    src_data, dst_data, nsend, nrecv,
+    xt_exchanger_simple_base_get_send_msg(base),
+    xt_exchanger_simple_base_get_recv_msg(base),
+    base->tag_offset, base->comm, requests);
 
   free(requests);
 }
@@ -216,11 +216,11 @@ xt_exchanger_irecv_send_s_exchange_omp(
     = (Xt_exchanger_thread_share)xt_request_msgs_alloc(
       nrecv, base->comm, &conf);
 #pragma omp parallel
-  xt_exchanger_irecv_send_s_exchange_mt(src_data, dst_data,
-                                        nsend, nrecv,
-                                        base->msgs, base->msgs+nsend,
-                                        base->tag_offset, base->comm,
-                                        shared_req);
+  xt_exchanger_irecv_send_s_exchange_mt(
+    src_data, dst_data, nsend, nrecv,
+    xt_exchanger_simple_base_get_send_msg(base),
+    xt_exchanger_simple_base_get_recv_msg(base),
+    base->tag_offset, base->comm, shared_req);
   free(shared_req);
 }
 
