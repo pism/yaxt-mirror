@@ -61,6 +61,14 @@
 #include "xt_exchanger_simple_base.h"
 #include "xt_exchanger_simple_base_internal.h"
 
+#undef xt_exchanger_simple_base_get_send_msg
+#define xt_exchanger_simple_base_get_send_msg(exchanger) \
+  ((struct Xt_msg_param *)(exchanger->msgs))
+#undef xt_exchanger_simple_base_get_recv_msg
+#define xt_exchanger_simple_base_get_recv_msg(exchanger) \
+  ((struct Xt_msg_param *)((exchanger)->msgs + (exchanger)->nmsg[SEND]))
+
+
 // static const char filename[] = "xt_exchanger_simple_base.c";
 
 static Xt_exchanger
@@ -135,14 +143,14 @@ adjusted_rank(int r, int comm_rank, int comm_size)
 #include "xt_quicksort_base.h"
 
 const struct Xt_msg_param *
-xt_exchanger_simple_base_get_send_msg(Xt_exchanger_simple_base exchanger)
+(xt_exchanger_simple_base_get_send_msg)(Xt_exchanger_simple_base exchanger)
 {
   return exchanger->msgs;
 }
 
 
 const struct Xt_msg_param *
-xt_exchanger_simple_base_get_recv_msg(Xt_exchanger_simple_base exchanger)
+(xt_exchanger_simple_base_get_recv_msg)(Xt_exchanger_simple_base exchanger)
 {
   return exchanger->msgs + exchanger->nmsg[SEND];
 }
