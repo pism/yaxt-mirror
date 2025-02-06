@@ -81,7 +81,6 @@ xt_exchanger_simple_base_vtable;
 struct Xt_exchanger_simple_base_ {
   const struct xt_exchanger_vtable *vtable;
   int nmsg[2];
-  int config_flags;
   int tag_offset;
   MPI_Comm comm;
   struct Xt_msg_param msgs[];
@@ -92,6 +91,13 @@ xt_exchanger_simple_base_get_send_msg(Xt_exchanger_simple_base exchanger);
 
 PPM_DSO_INTERNAL const struct Xt_msg_param *
 xt_exchanger_simple_base_get_recv_msg(Xt_exchanger_simple_base exchanger);
+
+#define xt_exchanger_simple_base_get_send_msg(exchanger) \
+  ((const struct Xt_msg_param *)(exchanger->msgs))
+
+#define xt_exchanger_simple_base_get_recv_msg(exchanger) \
+  ((const struct Xt_msg_param *)((exchanger)->msgs + (exchanger)->nmsg[SEND]))
+
 
 #endif // XT_EXCHANGER_SIMPLE_BASE_INTERNAL_H
 
