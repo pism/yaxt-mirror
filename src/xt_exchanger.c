@@ -220,6 +220,18 @@ xt_exchanger_iter_get_displacement(Xt_exchanger_iter iter)
   return iter->vtable->get_displacement(iter);
 }
 
+const Xt_code_ptr xt_send_func_tab[2][xt_exch_send_comm_mode_count] = {
+  {
+    [xt_exch_send_standard] = (Xt_code_ptr)MPI_Isend,
+    [xt_exch_send_buffered] = (Xt_code_ptr)MPI_Ibsend,
+    [xt_exch_send_synchronous] = (Xt_code_ptr)MPI_Issend,
+  },
+  {
+    [xt_exch_send_standard] = (Xt_code_ptr)MPI_Send,
+    [xt_exch_send_buffered] = (Xt_code_ptr)MPI_Bsend,
+    [xt_exch_send_synchronous] = (Xt_code_ptr)MPI_Ssend,
+  }
+};
 
 /*
  * Local Variables:
