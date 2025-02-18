@@ -169,7 +169,6 @@ static Xt_exchanger_mix_isend_irecv
 xt_exchanger_mix_isend_irecv_alloc(size_t nmsg,
                                    Xt_config config)
 {
-  (void)config;
   Xt_exchanger_mix_isend_irecv exchanger;
   size_t header_size = sizeof (*exchanger),
     body_size = sizeof (struct Xt_msg_param) * nmsg;
@@ -230,7 +229,6 @@ xt_exchanger_mix_isend_irecv_new(int nsend, int nrecv,
     = xt_exchanger_mix_isend_irecv_alloc(nmsg, config);
   exchanger->comm = comm;
   exchanger->tag_offset = tag_offset;
-  exchanger->send_mode = XT_CONFIG_GET_EXCH_SEND_COMM_MODE(config);
   struct Xt_msg_param *restrict msgs = exchanger->msgs;
   bool dt_dup = !(config->flags & exch_no_dt_dup);
   xt_msg_params_copy((size_t)nsend, send_msgs, msgs, comm, dt_dup);
@@ -270,12 +268,13 @@ xt_exchanger_mix_isend_irecv_copy(Xt_exchanger exchanger,
   Xt_exchanger_mix_isend_irecv exchanger_msr =
     (Xt_exchanger_mix_isend_irecv)exchanger;
   size_t nmsg = (size_t)exchanger_msr->n;
+  struct Xt_config_ config = xt_default_config;
+  XT_CONFIG_SET_EXCH_SEND_COMM_MODE(&config, exchanger_msr->send_mode);
   /* fixme: needs to use custom config */
   Xt_exchanger_mix_isend_irecv exchanger_copy
-    = xt_exchanger_mix_isend_irecv_alloc(nmsg, &xt_default_config);
+    = xt_exchanger_mix_isend_irecv_alloc(nmsg, &config);
   exchanger_copy->comm = new_comm;
   exchanger_copy->tag_offset = new_tag_offset;
-  exchanger_copy->send_mode = exchanger_msr->send_mode;
   exchanger_copy->vtable = exchanger_msr->vtable;
   xt_msg_params_copy(nmsg, exchanger_msr->msgs,
                      exchanger_copy->msgs, new_comm, true);
