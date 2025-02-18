@@ -261,7 +261,18 @@ PPM_DSO_INTERNAL void
 xt_msg_params_destruct(size_t n, struct Xt_msg_param *msgs,
                        MPI_Comm comm);
 
+typedef int (*Xt_a_send_func_ptr)
+  (void *buf, int count, MPI_Datatype datatype, int dest,
+   int tag, MPI_Comm comm, MPI_Request *request);
 
+typedef int (*Xt_send_func_ptr)
+  (void *buf, int count, MPI_Datatype datatype, int dest,
+   int tag, MPI_Comm comm);
+
+typedef void (*Xt_code_ptr)(void);
+
+PPM_DSO_INTERNAL extern const Xt_code_ptr
+xt_send_func_tab[2][xt_exch_send_comm_mode_count];
 
 #endif // XT_EXCHANGER_INTERNAL_H
 /*
