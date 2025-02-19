@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 
   int *exchanger_code = parse_options(&argc, &argv);
   Xt_config config = xt_config_new();
-  int mt_configs_2_test[] = {
+  static const int mt_configs_2_test[] = {
     XT_MT_NONE,
 #ifdef _OPENMP
     XT_MT_OPENMP,
