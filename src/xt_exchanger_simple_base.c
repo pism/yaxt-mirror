@@ -168,6 +168,7 @@ xt_exchanger_simple_base_init(
   exchanger->tag_offset = tag_offset;
   exchanger->nmsg[SEND] = nsend;
   exchanger->nmsg[RECV] = nrecv;
+  exchanger->config_flags = config->flags;
   bool dt_dup = !(config->flags & exch_no_dt_dup);
   xt_msg_params_copy((size_t)nsend, send_msgs,
                      xt_exchanger_simple_base_get_send_msg(exchanger),
@@ -215,6 +216,7 @@ xt_exchanger_simple_base_copy(Xt_exchanger exchanger,
   exchanger_copy->vtable = exchanger_sb->vtable;
   exchanger_copy->nmsg[SEND] = nsend;
   exchanger_copy->nmsg[RECV] = nrecv;
+  exchanger_copy->config_flags = exchanger_sb->config_flags;
   struct Xt_msg_param *restrict new_msgs = exchanger_copy->msgs,
     *restrict orig_msgs = exchanger_sb->msgs;
   xt_msg_params_copy(nmsg, orig_msgs, new_msgs, new_comm, true);
