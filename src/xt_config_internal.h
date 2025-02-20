@@ -169,10 +169,13 @@ xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm);
    (((flags) >> xt_exch_send_comm_mode_bit_ofs) & 3U))
 #define XT_CONFIG_GET_EXCH_SEND_COMM_MODE(config)               \
   (XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE((config)->flags))
+#define XT_CONFIG_FLAGS_SET_EXCH_SEND_COMM_MODE(flags, v)           \
+      ((flags) & ~(uint32_t)xt_exch_send_comm_mode_mask)  \
+      | (uint32_t)(((v)&3) << xt_exch_send_comm_mode_bit_ofs)
 #define XT_CONFIG_SET_EXCH_SEND_COMM_MODE(config, v)                \
-  do { (config)->flags                                         \
-      = ((config)->flags & ~(uint32_t)xt_exch_send_comm_mode_mask)  \
-      | (uint32_t)(((v)&3) << xt_exch_send_comm_mode_bit_ofs); }    \
+  do { Xt_config c = (config);                                          \
+    c->flags                                                            \
+      = XT_CONFIG_FLAGS_SET_EXCH_SEND_COMM_MODE(c->flags, (v)); }       \
   while (0)
 
 #define XT_CONFIG_BUCKET_DESTROY(config, bucket_gen_state)      \
