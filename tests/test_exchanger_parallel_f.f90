@@ -46,7 +46,7 @@
 #include "fc_feature_defs.inc"
 #define FP_EQ(a, b) (ABS((a)-(b)) < EPSILON((a)))
 PROGRAM test_exchanger_parallel
-  USE iso_c_binding, ONLY: c_ptr, c_loc
+  USE iso_c_binding, ONLY: c_ptr, c_loc, c_int
   USE mpi
   USE yaxt
   USE xt_exchanger_abstract
@@ -70,21 +70,35 @@ PROGRAM test_exchanger_parallel
 #ifdef _OPENMP
     , XT_MT_OPENMP &
 #endif
-   /)
+    /)
+  INTEGER, PARAMETER :: num_send_modes = 3
+  INTEGER, PARAMETER :: send_comm_modes_2_test(num_send_modes) = (/ &
+       xt_exch_send_standard, &
+       xt_exch_send_buffered, &
+       xt_exch_send_synchronous /)
   INTEGER :: comm
-  INTEGER :: m, i
+  INTEGER :: m, i, sm
 #ifdef _OPENMP
-  INTEGER :: thread_support_provided, ierror
+  INTEGER :: thread_support_provided
 #endif
   INTEGER, ALLOCATABLE :: exchanger_code(:)
+  INTEGER :: comm_size, buf_size, buf_size_, ierror
+  INTEGER(c_int), ALLOCATABLE :: buf(:)
+  TYPE(c_ptr) :: bufp
 
-  comm = MPI_COMM_WORLD;
+  comm = MPI_COMM_WORLD
 
   CALL init_mpi
   CALL xt_initialize(comm)
 
   CALL parse_options(exchanger_code, test_freq)
   config = xt_config_new()
+  ! todo: replace computation with query of exchanger
+  CALL mpi_comm_size(comm, comm_size, ierror)
+  buf_size = (4 + mpi_bsend_overhead) * comm_size
+  ALLOCATE(buf((buf_size+3)/4))
+  CALL mpi_buffer_attach(buf, buf_size, ierror)
+
   DO m = 1, num_mt_modes
 #ifdef _OPENMP
     CALL mpi_query_thread(thread_support_provided, ierror)
@@ -92,22 +106,27 @@ PROGRAM test_exchanger_parallel
          .AND. thread_support_provided /= MPI_THREAD_MULTIPLE) CYCLE
 #endif
     CALL xt_config_set_redist_mthread_mode(config, mt_configs_2_test(m))
-    DO i = 1, SIZE(exchanger_code)
-      CALL xt_config_set_exchange_method(config, exchanger_code(i))
+    DO sm = 1, num_send_modes
+      CALL xt_config_set_exchange_send_comm_mode(config, &
+           send_comm_modes_2_test(sm))
+      DO i = 1, SIZE(exchanger_code)
+        CALL xt_config_set_exchange_method(config, exchanger_code(i))
 
-      CALL test_bcast(comm, config);
+        CALL test_bcast(comm, config)
 
-      CALL test_gather(comm, config);
+        CALL test_gather(comm, config)
 
-      CALL test_all2all(comm, config);
+        CALL test_all2all(comm, config)
 
-      CALL test_rr(comm, config);
+        CALL test_rr(comm, config)
 
-      CALL test_intercomm_all2all(comm, config);
+        CALL test_intercomm_all2all(comm, config)
+      END DO
     END DO
   END DO
+  CALL mpi_buffer_detach(bufp, buf_size_, ierror)
   CALL xt_config_delete(config)
-  DEALLOCATE(exchanger_code)
+  DEALLOCATE(exchanger_code, buf)
 
   CALL xt_finalize
   CALL finish_mpi

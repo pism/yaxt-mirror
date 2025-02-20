@@ -103,9 +103,22 @@ int main(int argc, char **argv)
     XT_MT_OPENMP,
 #endif
   };
+  static const int send_comm_modes_2_test[] = {
+    xt_exch_send_standard,
+    xt_exch_send_buffered,
+    xt_exch_send_synchronous,
+  };
   enum {
     num_mt_modes = sizeof (mt_configs_2_test) / sizeof (mt_configs_2_test[0]),
+    num_send_modes = (sizeof (send_comm_modes_2_test)
+                      / sizeof (send_comm_modes_2_test[0])),
   };
+  int comm_size;
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  size_t buf_size = (sizeof (int) + (size_t)MPI_BSEND_OVERHEAD)
+    * (size_t)comm_size;
+  void *buf = xmalloc(buf_size);
+  xt_mpi_call(MPI_Buffer_attach(buf, (int)buf_size), comm);
   for (size_t m = 0; m < num_mt_modes; ++m) {
 #ifdef _OPENMP
     int thread_support_provided;
@@ -115,20 +128,29 @@ int main(int argc, char **argv)
       continue;
 #endif
     xt_config_set_redist_mthread_mode(config, mt_configs_2_test[m]);
-    for (size_t i = 0; exchanger_code[i] != -1; ++i) {
+    for (size_t n = 0; n < num_send_modes; ++n) {
+      xt_config_set_exchange_send_comm_mode(config, send_comm_modes_2_test[n]);
+      for (size_t i = 0; exchanger_code[i] != -1; ++i) {
+        xt_config_set_exchange_method(config, exchanger_code[i]);
+        test_bcast(comm, config);
 
-      xt_config_set_exchange_method(config, exchanger_code[i]);
-      test_bcast(comm, config);
+        test_gather(comm, config);
 
-      test_gather(comm, config);
+        test_all2all(comm, config);
 
-      test_all2all(comm, config);
+        test_rr(comm, config);
 
-      test_rr(comm, config);
-
-      test_intercomm_all2all(comm, config);
+        test_intercomm_all2all(comm, config);
+      }
     }
   }
+  {
+    int buf_size_;
+    void *buf_;
+    xt_mpi_call(MPI_Buffer_detach(&buf_, &buf_size_), comm);
+    assert(buf == buf_ && buf_size_ >= 0 && (size_t)buf_size_ == buf_size);
+  }
+  free(buf);
   xt_config_delete(config);
   free(exchanger_code);
 
