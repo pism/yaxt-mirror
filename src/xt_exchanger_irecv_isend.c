@@ -147,22 +147,28 @@ xt_exchanger_irecv_isend_init(void)
 #endif
 
 static void
-redist_msgs_to_req(const void *src_data, void *dst_data,
-                   int nsend, int nrecv,
-                   const struct Xt_msg_param *send_msgs,
-                   const struct Xt_msg_param *recv_msgs,
-                   int tag_offset, MPI_Comm comm,
-                   MPI_Request *requests)
+msgs_to_reqs(const void *src_data, void *dst_data,
+             int nsend, int nrecv,
+             const struct Xt_msg_param *send_msgs,
+             const struct Xt_msg_param *recv_msgs,
+             Xt_exchanger_simple_base base,
+             MPI_Request *requests)
 {
+  int tag_offset = base->tag_offset;
+  MPI_Comm comm = base->comm;
   for (int i = 0; i < nrecv; ++i)
     xt_mpi_call(MPI_Irecv(
                   (unsigned char *)dst_data + recv_msgs[i].displacement,
                   recv_msgs[i].count, recv_msgs[i].datatype, recv_msgs[i].rank,
                   tag_offset + xt_mpi_tag_exchange_msg, comm,
                   requests+i), comm);
-
+  typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
+                     int dest, int tag, MPI_Comm comm, MPI_Request *request);
+  int send_mode
+    = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
+  ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
   for (int i = 0; i < nsend; ++i)
-    xt_mpi_call(MPI_Isend(
+    xt_mpi_call(a_send(
                   CAST_MPI_SEND_BUF((const unsigned char *)src_data
                                     + send_msgs[i].displacement),
                   send_msgs[i].count, send_msgs[i].datatype, send_msgs[i].rank,
@@ -180,10 +186,10 @@ xt_exchanger_irecv_isend_s_exchange(
   MPI_Request *requests
     = xmalloc((size_t)(nrecv + nsend) * sizeof (*requests));
 
-  redist_msgs_to_req(src_data, dst_data, nsend, nrecv,
-                     xt_exchanger_simple_base_get_send_msg(base),
-                     xt_exchanger_simple_base_get_recv_msg(base),
-                     base->tag_offset, base->comm, requests);
+  msgs_to_reqs(src_data, dst_data, nsend, nrecv,
+               xt_exchanger_simple_base_get_send_msg(base),
+               xt_exchanger_simple_base_get_recv_msg(base),
+               base, requests);
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE),
               base->comm);
   free(requests);
@@ -195,7 +201,7 @@ xt_exchanger_irecv_isend_a_exchange_mt(const void *src_data, void *dst_data,
                                        int nsend, int nrecv,
                                        const struct Xt_msg_param *send_msgs,
                                        const struct Xt_msg_param *recv_msgs,
-                                       int tag_offset, MPI_Comm comm,
+                                       Xt_exchanger_simple_base base,
                                        Xt_exchanger_thread_share shared_req) {
   MPI_Request *requests
     = xt_request_msgs_get_req_ptr((Xt_request)shared_req);
@@ -206,9 +212,9 @@ xt_exchanger_irecv_isend_a_exchange_mt(const void *src_data, void *dst_data,
     start_recv = (nrecv * tid) / num_threads,
     nrecv_ = (nrecv * (tid+1)) / num_threads - start_recv;
 
-  redist_msgs_to_req(src_data, dst_data, nsend_, nrecv_,
-                     send_msgs+start_send, recv_msgs+start_recv, tag_offset,
-                     comm, requests+start_recv+start_send);
+  msgs_to_reqs(src_data, dst_data, nsend_, nrecv_,
+               send_msgs+start_send, recv_msgs+start_recv,
+               base, requests+start_recv+start_send);
 }
 
 static void
@@ -216,17 +222,14 @@ xt_exchanger_irecv_isend_s_exchange_mt(const void *src_data, void *dst_data,
                                        int nsend, int nrecv,
                                        const struct Xt_msg_param *send_msgs,
                                        const struct Xt_msg_param *recv_msgs,
-                                       int tag_offset, MPI_Comm comm,
+                                       Xt_exchanger_simple_base base,
                                        Xt_exchanger_thread_share shared_req)
 {
   int num_threads = omp_get_num_threads(),
     tid = omp_get_thread_num();
-  xt_exchanger_irecv_isend_a_exchange_mt(src_data, dst_data,
-                                         nsend, nrecv,
-                                         send_msgs,
-                                         recv_msgs,
-                                         tag_offset, comm,
-                                         shared_req);
+  xt_exchanger_irecv_isend_a_exchange_mt(
+    src_data, dst_data, nsend, nrecv,
+    send_msgs, recv_msgs, base, shared_req);
   MPI_Request *requests
     = xt_request_msgs_get_req_ptr((Xt_request)shared_req);
   int start_send = (nsend * tid) / num_threads,
@@ -236,7 +239,7 @@ xt_exchanger_irecv_isend_s_exchange_mt(const void *src_data, void *dst_data,
     start_req = start_send+start_recv,
     nreq_ = nrecv_+nsend_;
   xt_mpi_call(MPI_Waitall(nreq_, requests+start_req,
-                          MPI_STATUSES_IGNORE), comm);
+                          MPI_STATUSES_IGNORE), base->comm);
 }
 
 static void
@@ -254,7 +257,7 @@ xt_exchanger_irecv_isend_s_exchange_omp(
     src_data, dst_data, nsend, nrecv,
     xt_exchanger_simple_base_get_send_msg(base),
     xt_exchanger_simple_base_get_recv_msg(base),
-    base->tag_offset, base->comm, shared_req);
+    base, shared_req);
   free(shared_req);
 }
 
@@ -276,10 +279,10 @@ xt_exchanger_irecv_isend_a_exchange(
 
   MPI_Request *requests
     = xt_request_msgs_get_req_ptr(requests_);
-  redist_msgs_to_req(src_data, dst_data, nsend, nrecv,
-                     xt_exchanger_simple_base_get_send_msg(base),
-                     xt_exchanger_simple_base_get_recv_msg(base),
-                     base->tag_offset, base->comm, requests);
+  msgs_to_reqs(src_data, dst_data, nsend, nrecv,
+               xt_exchanger_simple_base_get_send_msg(base),
+               xt_exchanger_simple_base_get_recv_msg(base),
+               base, requests);
 }
 
 #ifdef _OPENMP
@@ -301,7 +304,7 @@ xt_exchanger_irecv_isend_a_exchange_omp(Xt_exchanger exchanger,
     src_data, dst_data, nsend, nrecv,
     xt_exchanger_simple_base_get_send_msg(base),
     xt_exchanger_simple_base_get_recv_msg(base),
-    base->tag_offset, base->comm, shared_req);
+    base, shared_req);
 }
 #endif
 
