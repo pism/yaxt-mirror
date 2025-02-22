@@ -157,6 +157,11 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     ofs += (size_t)recv_size;
   }
 
+  typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
+                     int dest, int tag, MPI_Comm comm, MPI_Request *request);
+  int send_mode
+    = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
+  ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
   ofs = 0;
   for (int i = 0; i < nsend; ++i) {
     size_t send_size = buffer_sizes[nrecv+i];
@@ -165,10 +170,10 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     xt_ddt_pack_internal(
       CAST_MPI_SEND_BUF(src_data), (size_t)send_msgs[i].count, ddts[nrecv+i],
       send_buffer + ofs, extent, src_data_memtype);
-    xt_mpi_call(MPI_Isend(send_buffer + ofs, (int)send_size, MPI_BYTE,
-                          send_msgs[i].rank,
-                          base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
-                          requests+nrecv+i), base->comm);
+    xt_mpi_call(a_send(send_buffer + ofs, (int)send_size, MPI_BYTE,
+                       send_msgs[i].rank,
+                       base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
+                       requests+nrecv+i), base->comm);
     ofs += send_size;
   }
 
@@ -235,6 +240,11 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(
                   tmp_requests+i), base->comm);
   }
 
+  typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
+                     int dest, int tag, MPI_Comm comm, MPI_Request *request);
+  int send_mode
+    = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
+  ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
   const struct Xt_msg_param *send_msgs
     = xt_exchanger_simple_base_get_send_msg(base);
   for (int i = 0; i < nsend; ++i) {
@@ -249,7 +259,7 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(
     xt_ddt_pack_internal(
       src_data, (size_t)send_msgs[i].count, send_ddt, buffers[nrecv + i],
       extent, src_data_memtype);
-    xt_mpi_call(MPI_Isend(
+    xt_mpi_call(a_send(
                   buffers[nrecv + i], (int)buffer_size, MPI_BYTE,
                   send_msgs[i].rank,
                   base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
