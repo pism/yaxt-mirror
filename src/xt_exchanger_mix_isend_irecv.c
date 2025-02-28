@@ -302,7 +302,11 @@ msgs_to_reqs(size_t nmsg,
 {
   typedef int (*ifp)(void *buf, int count, MPI_Datatype datatype, int dest,
                      int tag, MPI_Comm comm, MPI_Request *request);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   ifp a_send = (ifp)xt_send_func_tab[0][exchanger->send_mode];
+#else
+#  define a_send MPI_Isend
+#endif
   for (size_t i = 0; i < nmsg; ++i) {
     ifp op = MSG_DIR(msgs[i]) == SEND ? (ifp)a_send : (ifp)MPI_Irecv;
     unsigned char *data = MSG_DIR(msgs[i]) == SEND
@@ -312,6 +316,9 @@ msgs_to_reqs(size_t nmsg,
                    exchanger->tag_offset + xt_mpi_tag_exchange_msg,
                    exchanger->comm, requests+i), exchanger->comm);
   }
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+#  undef a_send
+#endif
 }
 
 

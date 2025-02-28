@@ -157,11 +157,15 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     ofs += (size_t)recv_size;
   }
 
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
                      int dest, int tag, MPI_Comm comm, MPI_Request *request);
   int send_mode
     = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
   ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
+#else
+#  define a_send MPI_Isend
+#endif
   ofs = 0;
   for (int i = 0; i < nsend; ++i) {
     size_t send_size = buffer_sizes[nrecv+i];
@@ -176,6 +180,9 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
                        requests+nrecv+i), base->comm);
     ofs += send_size;
   }
+#if ! XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+#  undef a_send
+#endif
 
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), base->comm);
 
@@ -240,11 +247,15 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(
                   tmp_requests+i), base->comm);
   }
 
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
                      int dest, int tag, MPI_Comm comm, MPI_Request *request);
   int send_mode
     = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
   ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
+#else
+#  define a_send MPI_Isend
+#endif
   const struct Xt_msg_param *send_msgs
     = xt_exchanger_simple_base_get_send_msg(base);
   for (int i = 0; i < nsend; ++i) {
@@ -265,6 +276,9 @@ xt_exchanger_irecv_isend_ddt_packed_a_exchange(
                   base->tag_offset + xt_mpi_tag_exchange_msg, base->comm,
                   tmp_requests+nrecv+i), base->comm);
   }
+#if ! XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+#  undef a_send
+#endif
   for (int i = 0; i < nrecv; ++i) {
     MPI_Aint lb;
     xt_mpi_call(MPI_Type_get_extent(recv_msgs[i].datatype, &lb, recv_extents+i),

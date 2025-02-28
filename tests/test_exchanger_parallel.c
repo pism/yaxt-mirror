@@ -128,8 +128,10 @@ int main(int argc, char **argv)
       continue;
 #endif
     xt_config_set_redist_mthread_mode(config, mt_configs_2_test[m]);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
     for (size_t n = 0; n < num_send_modes; ++n) {
       xt_config_set_exchange_send_comm_mode(config, send_comm_modes_2_test[n]);
+#endif
       for (size_t i = 0; exchanger_code[i] != -1; ++i) {
         xt_config_set_exchange_method(config, exchanger_code[i]);
         test_bcast(comm, config);
@@ -142,7 +144,9 @@ int main(int argc, char **argv)
 
         test_intercomm_all2all(comm, config);
       }
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
     }
+#endif
   }
   {
     int buf_size_;

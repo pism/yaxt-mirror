@@ -213,11 +213,15 @@ start_packed_transfer(unsigned char *buffer,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+i), comm);
   }
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
                      int dest, int tag, MPI_Comm comm, MPI_Request *request);
   int send_mode
     = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
   ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
+#else
+#  define a_send MPI_Isend
+#endif
   for (int i = 0; i < nsend; ++i) {
     int position = 0;
     int buf_size = (int)(buf_ofs[send_start+i+1] - buf_ofs[send_start+i]);
@@ -232,6 +236,9 @@ start_packed_transfer(unsigned char *buffer,
                        tag_offset + xt_mpi_tag_exchange_msg, comm,
                        requests+nrecv+i), comm);
   }
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+#  undef a_send
+#endif
 }
 
 enum { AUTO_ALLOC_SIZE = 32, };

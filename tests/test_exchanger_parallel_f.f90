@@ -71,11 +71,18 @@ PROGRAM test_exchanger_parallel
     , XT_MT_OPENMP &
 #endif
     /)
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   INTEGER, PARAMETER :: num_send_modes = 3
+#else
+  INTEGER, PARAMETER :: num_send_modes = 1
+#endif
   INTEGER, PARAMETER :: send_comm_modes_2_test(num_send_modes) = (/ &
-       xt_exch_send_standard, &
-       xt_exch_send_buffered, &
-       xt_exch_send_synchronous /)
+       xt_exch_send_standard &
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+       , xt_exch_send_buffered, &
+       xt_exch_send_synchronous &
+#endif
+       /)
   INTEGER :: comm
   INTEGER :: m, i, sm
 #ifdef _OPENMP
