@@ -410,6 +410,19 @@ xt_config_set_exchange_send_comm_mode(Xt_config config,
     Xt_abort(Xt_default_comm,
              "error: invalid value passed to "
              "xt_config_set_exchange_send_comm_mode.\n", filename, __LINE__);
+#if ! XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+#define XT_MAP_ENTRY(entry) [entry] = #entry,
+  if (exch_send_comm_mode > xt_exch_send_standard) {
+    static const char xt_send_mode_msg_map[][25]
+      = { XT_MAP_ENTRY(xt_exch_send_standard)
+      XT_MAP_ENTRY(xt_exch_send_buffered)
+      XT_MAP_ENTRY(xt_exch_send_synchronous)
+    };
+    fprintf(stderr, "warning: not using requested exchanger %s,\n"
+            "because it's disabled in compile-time configuration\n",
+            xt_send_mode_msg_map[exch_send_comm_mode]);
+  } else
+#endif
   XT_CONFIG_SET_EXCH_SEND_COMM_MODE(config, exch_send_comm_mode);
 }
 

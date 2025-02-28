@@ -873,6 +873,21 @@ AS_IF([test x"$enable_xt_ddt_exchanger" != xyes],
 ! defined when ddt exchanger is available
 @%:@define XT_ENABLE_DDT_EXCHANGER 1"])
 dnl
+AC_ARG_ENABLE([alternative-exchanger-send-modes],
+  [AS_HELP_STRING([--disable-alternative-exchanger-send-modes],
+     [disable buffered and synchronous mode for exchangers @<:@default: enabled@:>@])],
+  [AS_CASE(["$enable_alternative_exchanger_send_modes"],
+    [yes|no],,
+    [AC_MSG_FAILURE(unexpected value '$enable_alternative_exchanger_send_modes' provided for option --(en|dis)able-alternative-exchanger-send-modes)])],
+  [enable_alternative_exchanger_send_modes=yes])
+acx_temp=`expr \( "$enable_alternative_exchanger_send_modes" : yes \) = 3`
+XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+! set to 1 when alternative exchanger send modes are available, 0 if not
+@%:@define XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES $acx_temp"
+AC_DEFINE_UNQUOTED([XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES],
+  [$acx_temp],
+  [Enable optional send modes for exchangers that support them.])
+dnl
 m4_foreach([flags_var],[[CFLAGS],[FCFLAGS],[LDFLAGS]],
   [AC_ARG_VAR([BUILD_]flags_var,
     [append to ]flags_var[ during build but not in configure phase])

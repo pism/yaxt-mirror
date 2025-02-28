@@ -162,11 +162,15 @@ msgs_to_reqs(const void *src_data, void *dst_data,
                   recv_msgs[i].count, recv_msgs[i].datatype, recv_msgs[i].rank,
                   tag_offset + xt_mpi_tag_exchange_msg, comm,
                   requests+i), comm);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
                      int dest, int tag, MPI_Comm comm, MPI_Request *request);
   int send_mode
     = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
   ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
+#else
+#  define a_send MPI_Isend
+#endif
   for (int i = 0; i < nsend; ++i)
     xt_mpi_call(a_send(
                   CAST_MPI_SEND_BUF((const unsigned char *)src_data
@@ -174,6 +178,9 @@ msgs_to_reqs(const void *src_data, void *dst_data,
                   send_msgs[i].count, send_msgs[i].datatype, send_msgs[i].rank,
                   tag_offset + xt_mpi_tag_exchange_msg, comm,
                   requests+nrecv+i), comm);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+#  undef a_send
+#endif
 }
 
 static void
