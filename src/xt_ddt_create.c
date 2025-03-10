@@ -57,6 +57,7 @@
 #include "xt/xt_mpi.h"
 
 #include "xt_ddt_internal.h"
+#include "instr.h"
 
 static const char filename[] = "xt_ddt_create.c";
 
@@ -906,7 +907,14 @@ static int compare_kernels(const void * a, const void * b) {
 }
 
 static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
+  INSTR_DEF(instr_sort, "xt_ddt_sort_kernels");
+  INSTR_DEF(instr_parse, "xt_ddt_parse_mpi_ddt");
+  INSTR_DEF(instr_displs, "xt_ddt_compute_displs");
+  INSTR_DEF(instr_pack_size, "xt_ddt_compute_pack_size");
+  INSTR_DEF(instr_rest, "xt_ddt_rest");
+  INSTR_DEF(instr_tree_to_data, "xt_ddt_tree_to_data");
 
+  INSTR_START(instr_sort);
   static bool sort_kernels = true;
   if (sort_kernels) {
     assert(NUM_VALID_KERNELS
@@ -918,8 +926,10 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
           compare_kernels);
     sort_kernels = false;
   }
+  INSTR_STOP(instr_sort);
 
 
+  INSTR_START(instr_parse);
   // parse the MPI datatype
   struct xt_ddt_tree_elem *tree = mpi_ddt_2_xt_ddt_tree(mpi_ddt, 0);
 
@@ -929,10 +939,14 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
     data[i].displ_count = 0;
     for (int j = 0; j < XT_MEMTYPE_COUNT; ++j) data[i].displs[j] = NULL;
   }
+  INSTR_STOP(instr_parse);
 
+  INSTR_START(instr_displs);
   // determine the number of displacements for each elemental data size
   xt_ddt_tree_get_data_sizes(tree, data);
+  INSTR_STOP(instr_displs);
 
+  INSTR_START(instr_pack_size);
   // compute the total number of elemental data
   size_t total_displs_size = 0;
   size_t data_count = 0;
@@ -945,7 +959,9 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
       ++data_count;
     }
   }
+  INSTR_STOP(instr_pack_size);
 
+  INSTR_START(instr_rest);
   Xt_ddt ddt = xmalloc(1 * sizeof(*ddt) + data_count * sizeof(ddt->data[0]));
   ddt->ref_count = 1;
   ddt->count = data_count;
@@ -966,7 +982,9 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
     }
 
     // determine all displacements
+    INSTR_START(instr_tree_to_data);
     xt_ddt_tree_to_data(tree, data);
+    INSTR_STOP(instr_tree_to_data);
 
     for (int i = 0, j = 0; i < NUM_VALID_KERNELS; ++i)
       if (data[i].displ_count > 0)
@@ -975,6 +993,7 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
 
   // free internal representation of MPI datatype
   xt_ddt_tree_delete(tree);
+  INSTR_STOP(instr_rest);
 
   return ddt;
 }
@@ -1050,8 +1069,12 @@ static int xt_ddt_cleanup_internal_keyval_delete(
 
 Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
 
+  INSTR_DEF(xt_ddt_create_keyval, "xt_ddt_create_keyval");
+  INSTR_DEF(xt_ddt_get_attr, "xt_ddt_get_attr");
+  INSTR_DEF(xt_ddt_create, "xt_ddt_create");
   XT_GPU_INSTR_PUSH(xt_ddt_from_mpi_ddt);
 
+  INSTR_START(xt_ddt_create_keyval);
   // if xt_ddt_internal_keyval has not yet been created
   if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID) {
 
@@ -1077,7 +1100,9 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
         MPI_COMM_SELF, xt_ddt_cleanup_internal_keyval, NULL),
       Xt_default_comm);
   }
+  INSTR_STOP(xt_ddt_create_keyval);
 
+  INSTR_START(xt_ddt_get_attr);
   Xt_ddt ddt;
   // get xt_ddt from MPI datatype, if available
   void *attr;
@@ -1085,7 +1110,9 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
   xt_mpi_call(
     MPI_Type_get_attr(
       mpi_ddt, xt_ddt_internal_keyval, &attr, &flag), Xt_default_comm);
+  INSTR_STOP(xt_ddt_get_attr);
 
+  INSTR_START(xt_ddt_create);
   // if the MPI datatype had already a xt_ddt attached to itself
   if (flag) {
     ddt = attr;
@@ -1098,6 +1125,7 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
       MPI_Type_set_attr(
         mpi_ddt, xt_ddt_internal_keyval, ddt), Xt_default_comm);
   }
+  INSTR_STOP(xt_ddt_create);
   XT_GPU_INSTR_POP;
   return ddt;
 }

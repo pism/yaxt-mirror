@@ -53,7 +53,7 @@ MODULE yaxt
   !
   USE xt_core, ONLY: i4, xt_int_kind, xt_int_mpidt, &
        xt_abort, xt_initialize, xt_get_default_comm, xt_stripe, xt_bounds, &
-       char, xt_finalize, xt_initialized, xt_finalized, xt_slice_c_loc, &
+       char, xt_finalize, xt_report, xt_initialized, xt_finalized, xt_slice_c_loc, &
        xt_pos_ext, OPERATOR(/=), OPERATOR(==), &
        xt_set_abort_handler => set_abort_handler, xt_restore_default_abort_hndl
   USE xt_config_f, ONLY: xt_config, xt_config_new, xt_config_delete, &
@@ -161,7 +161,7 @@ MODULE yaxt
 
   PRIVATE
 
-  PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, &
+  PUBLIC :: xt_initialize, xt_finalize, xt_report, xt_abort, xt_get_default_comm, &
        xt_initialized, xt_finalized, &
        xt_set_abort_handler, xt_restore_default_abort_hndl, &
        xt_int_kind, xt_int_mpidt, xt_stripe, xt_bounds, xt_pos_ext

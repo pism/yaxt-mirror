@@ -55,6 +55,7 @@
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_simple_base.h"
 #include "xt_ddt_internal.h"
+#include "instr.h"
 
 /* unfortunately GCC 11 cannot handle the literal constants used for
  * MPI_STATUSES_IGNORE by MPICH */
@@ -64,15 +65,39 @@
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
+#ifdef _OPENACC
+#include <openacc.h>
+#define STR(s) #s
+#define xt_Pragma(args) _Pragma(args)
+#define XtPragmaACC(args) xt_Pragma(STR(acc args))
+#else
+#define XtPragmaACC(args)
+#endif
+
+#define HAVE_MPI_WAITSOME
+//#define HAVE_ACC_ASYNC
 static void
 xt_exchanger_irecv_isend_ddt_packed_s_exchange(
   const void *src_data, void *dst_data,
   int nsend, int nrecv,
   const struct Xt_redist_msg *send_msgs, const struct Xt_redist_msg *recv_msgs,
   int tag_offset, MPI_Comm comm) {
+  INSTR_DEF(instr_pack, "xt_ddt_pack");
+  INSTR_DEF(instr_unpack, "xt_ddt_unpack");
+  INSTR_DEF(instr_waitall, "xt_waitall");
+  INSTR_DEF(instr_waitsome, "xt_waitsome");
+  INSTR_DEF(instr_ddt_comm, "xt_ddt_comm");
+  INSTR_DEF(instr_comm_prep, "xt_comm_prep");
+  INSTR_DEF(instr_ddt_meta, "xt_ddt_meta");
+  INSTR_DEF(instr_ddt_recvbuffer_size, "xt_ddt_recvbuffer_size");
+  INSTR_DEF(instr_ddt_sendbuffer_size, "xt_ddt_sendbuffer_size");
+  INSTR_DEF(instr_ddt_buffer_alloc, "xt_ddt_buffer_alloc");
 
+  INSTR_START(instr_ddt_comm);
+  INSTR_START(instr_comm_prep);
   XT_GPU_INSTR_PUSH(xt_exchanger_irecv_isend_ddt_packed_s_exchange);
 
+  INSTR_START(instr_ddt_meta);
   enum { AUTO_ALLOC_SIZE = 32, };
   MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
   size_t *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
@@ -88,43 +113,96 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     buffer_sizes = xmalloc(num_tx * sizeof (*buffer_sizes));
     ddts = xmalloc(num_tx * sizeof(*ddts));
   }
+  INSTR_STOP(instr_ddt_meta);
 
   size_t recv_buffer_size = 0;
   size_t send_buffer_size = 0;
-  for (int i = 0; i < nrecv; ++i)
-    recv_buffer_size +=
-      ((buffer_sizes[i] =
-          xt_ddt_get_pack_size_internal(
-            ((ddts[i] = xt_ddt_from_mpi_ddt(recv_msgs[i].datatype))))));
-  for (int i = 0; i < nsend; ++i)
-    send_buffer_size +=
-      ((buffer_sizes[nrecv+i] =
-          xt_ddt_get_pack_size_internal(
-            ((ddts[nrecv+i] = xt_ddt_from_mpi_ddt(send_msgs[i].datatype))))));
+  INSTR_START(instr_ddt_recvbuffer_size);
+  // for (int i = 0; i < nrecv; ++i)
+  //   recv_buffer_size +=
+  //     ((buffer_sizes[i] =
+  //         xt_ddt_get_pack_size_internal(
+  //           ((ddts[i] = xt_ddt_from_mpi_ddt(recv_msgs[i].datatype))))));
+  for (int i = 0; i < nrecv; ++i) {
+   ddts[i] = xt_ddt_from_mpi_ddt(recv_msgs[i].datatype);
+   buffer_sizes[i] = xt_ddt_get_pack_size_internal(ddts[i]);
+   recv_buffer_size += buffer_sizes[i];
+  }
+  INSTR_STOP(instr_ddt_recvbuffer_size);
+  INSTR_START(instr_ddt_sendbuffer_size);
+  // for (int i = 0; i < nsend; ++i)
+  //   send_buffer_size +=
+  //     ((buffer_sizes[nrecv+i] =
+  //         xt_ddt_get_pack_size_internal(
+  //           ((ddts[nrecv+i] = xt_ddt_from_mpi_ddt(send_msgs[i].datatype))))));
+  for (int i = 0; i < nsend; ++i) {
+    ddts[nrecv+i] = xt_ddt_from_mpi_ddt(send_msgs[i].datatype);
+    buffer_sizes[nrecv+i] = xt_ddt_get_pack_size_internal(ddts[nrecv+i]);
+    send_buffer_size += buffer_sizes[nrecv+i];
+  }
+  INSTR_STOP(instr_ddt_sendbuffer_size);
 
+  INSTR_START(instr_ddt_buffer_alloc);
   enum xt_memtype src_data_memtype = xt_gpu_get_memtype(src_data);
   enum xt_memtype dst_data_memtype = xt_gpu_get_memtype(dst_data);
   unsigned char * send_buffer =
     xt_gpu_malloc(send_buffer_size, src_data_memtype);
   unsigned char * recv_buffer =
     xt_gpu_malloc(recv_buffer_size, dst_data_memtype);
+  INSTR_STOP(instr_comm_prep);
+  INSTR_STOP(instr_ddt_buffer_alloc);
 
   size_t ofs = 0;
+#ifdef HAVE_MPI_WAITSOME
+  size_t ofs_recv[nrecv];
+#endif
+#ifdef HAVE_ACC_ASYNC
+XtPragmaACC(
+    wait(1))
+#endif
   for (int i = 0; i < nrecv; ++i) {
     int recv_size = (int)buffer_sizes[i];
     xt_mpi_call(MPI_Irecv(recv_buffer + ofs, recv_size, MPI_BYTE,
                           recv_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
                           requests+i), comm);
+#ifdef HAVE_MPI_WAITSOME
+    ofs_recv[i] = ofs;
+#endif
     ofs += (size_t)recv_size;
   }
 
+#ifdef HAVE_ACC_ASYNC
   ofs = 0;
+  INSTR_START(instr_pack);
   for (int i = 0; i < nsend; ++i) {
     size_t send_size = buffer_sizes[nrecv+i];
     xt_ddt_pack_internal(
       ddts[nrecv+i], CAST_MPI_SEND_BUF(src_data), send_buffer + ofs,
       src_data_memtype);
+    ofs += send_size;
+  }
+XtPragmaACC(
+  wait(1))
+  INSTR_STOP(instr_pack);
+  ofs = 0;
+  for (int i = 0; i < nsend; ++i) {
+    size_t send_size = buffer_sizes[nrecv+i];
+    xt_mpi_call(MPI_Isend(send_buffer + ofs, (int)send_size, MPI_BYTE,
+                          send_msgs[i].rank,
+                          tag_offset + xt_mpi_tag_exchange_msg, comm,
+                          requests+nrecv+i), comm);
+    ofs += send_size;
+  }
+#else
+  ofs = 0;
+  for (int i = 0; i < nsend; ++i) {
+    INSTR_START(instr_pack);
+    size_t send_size = buffer_sizes[nrecv+i];
+    xt_ddt_pack_internal(
+      ddts[nrecv+i], CAST_MPI_SEND_BUF(src_data), send_buffer + ofs,
+      src_data_memtype);
+    INSTR_STOP(instr_pack);
     xt_mpi_call(MPI_Isend(send_buffer + ofs, (int)send_size, MPI_BYTE,
                           send_msgs[i].rank,
                           tag_offset + xt_mpi_tag_exchange_msg, comm,
@@ -132,15 +210,46 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     ofs += send_size;
   }
 
+#endif
+
+#ifdef HAVE_MPI_WAITSOME
+  int nidx = 0;
+  int idx[num_tx];
+  int ndone = 0;
+  int ntot = nrecv + nsend;
+  while (ndone < ntot) {
+    INSTR_START(instr_waitsome);
+    xt_mpi_call(MPI_Waitsome(ntot, requests, &nidx, idx, MPI_STATUSES_IGNORE), comm);
+    INSTR_STOP(instr_waitsome);
+    for (int i = 0; i < nidx; ++i) {
+      if (idx[i] < nrecv) {
+        INSTR_START(instr_unpack);
+        xt_ddt_unpack_internal(
+          ddts[idx[i]], recv_buffer + ofs_recv[idx[i]], dst_data, dst_data_memtype);
+        INSTR_STOP(instr_unpack);
+      }
+    }
+    ndone = ndone + nidx;
+  }
+#ifdef HAVE_ACC_ASYNC
+XtPragmaACC(
+  wait(1))
+#endif
+#else
+  INSTR_START(instr_waitall);
   xt_mpi_call(MPI_Waitall(nrecv + nsend, requests, MPI_STATUSES_IGNORE), comm);
+  INSTR_STOP(instr_waitall);
 
   ofs = 0;
+  INSTR_START(instr_unpack);
   for (int i = 0; i < nrecv; ++i) {
     size_t recv_size = buffer_sizes[i];
     xt_ddt_unpack_internal(
       ddts[i], recv_buffer + ofs, dst_data, dst_data_memtype);
     ofs += recv_size;
   }
+  INSTR_STOP(instr_unpack);
+#endif
 
   xt_gpu_free(recv_buffer, dst_data_memtype);
   xt_gpu_free(send_buffer, src_data_memtype);
@@ -150,6 +259,7 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
     free(requests);
   }
   XT_GPU_INSTR_POP; // xt_exchanger_irecv_isend_ddt_packed_s_exchange
+  INSTR_STOP(instr_ddt_comm);
 }
 
 static void

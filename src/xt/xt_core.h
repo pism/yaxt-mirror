@@ -135,6 +135,9 @@ xt_initialize(MPI_Comm default_comm);
 void
 xt_finalize(void);
 
+void
+xt_report(void);
+
 /**
  * @return 1 if xt_initialize has been called, zero otherwise
  */

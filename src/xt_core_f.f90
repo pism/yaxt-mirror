@@ -61,7 +61,7 @@ MODULE xt_core
   INTEGER, PUBLIC, PARAMETER :: i2 = SELECTED_INT_KIND(pi2)
   INTEGER, PUBLIC, PARAMETER :: i4 = SELECTED_INT_KIND(pi4)
   INTEGER, PUBLIC, PARAMETER :: i8 = SELECTED_INT_KIND(pi8)
-  PUBLIC :: xt_initialize, xt_finalize, xt_abort, xt_get_default_comm, char
+  PUBLIC :: xt_initialize, xt_finalize, xt_report, xt_abort, xt_get_default_comm, char
   PUBLIC :: xt_initialized, xt_finalized
   PUBLIC :: xt_slice_c_loc
   PUBLIC :: OPERATOR(==), OPERATOR(/=)
@@ -112,6 +112,9 @@ MODULE xt_core
 
     SUBROUTINE xt_finalize() BIND(C, name='xt_finalize')
     END SUBROUTINE xt_finalize
+
+    SUBROUTINE xt_report() BIND(C, name='xt_report')
+    END SUBROUTINE xt_report
 
     SUBROUTINE xt_restore_default_abort_hndl
     END SUBROUTINE xt_restore_default_abort_hndl

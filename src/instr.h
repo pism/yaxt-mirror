@@ -49,6 +49,7 @@
 #include <config.h>
 #endif
 
+//#define INSTR_WITH_SCT
 #ifdef INSTR_WITH_SCT
 
 #include "sct.h"

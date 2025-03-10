@@ -66,6 +66,7 @@
 #include "xt_redist_internal.h"
 #include "xt_exchanger.h"
 #include "xt_config_internal.h"
+#include "instr.h"
 
 
 
@@ -456,6 +457,8 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
                              const void *const *src_data,
                              void *const *dst_data)
 {
+  INSTR_DEF(instr_exchanger_prep, "xt_exchanger_prep");
+  INSTR_START(instr_exchanger_prep);
   Xt_redist_collection redist_coll = xrc(redist);
 
   if (num_arrays != (int)redist_coll->num_redists)
@@ -467,6 +470,7 @@ redist_collection_s_exchange(Xt_redist redist, int num_arrays,
                                          src_data,
                                          (const void *const (*))dst_data,
                                          redist_coll->num_redists);
+  INSTR_STOP(instr_exchanger_prep);
 
   xt_exchanger_s_exchange(exchanger, src_data[0], dst_data[0]);
 

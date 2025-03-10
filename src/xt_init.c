@@ -77,8 +77,9 @@ xt_initialize(MPI_Comm default_comm)
   xt_idxsection_initialize();
   xt_idxlist_intersection_init();
 #ifdef INSTR_WITH_SCT
-  sct_init(32, "YAXT", Xt_default_comm);
-  setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
+  sct_init(128, "YAXT", Xt_default_comm);
+  //setenv("SCT_PROC_CHOICE", "SCT_REDUCE_ALL", 0);
+  setenv("SCT_PROC_CHOICE", "SCT_SELECT_ALL", 0);
   setenv("SCT_CALLSTATS", "0", 0);
   INSTR_START(instr);
 #endif
@@ -97,13 +98,23 @@ xt_finalize(void)
     xt_idxstripes_finalize();
     xt_idxempty_finalize();
     xt_mpi_finalize();
+// #ifdef INSTR_WITH_SCT
+//     INSTR_STOP(instr);
+//     INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
+//     INSTR_FINALIZE();
+// #endif
+    xt_report();
+    xt_lib_state = xt_lib_finalized;
+  }
+}
+
+void xt_report(void)
+{
 #ifdef INSTR_WITH_SCT
     INSTR_STOP(instr);
     INSTR_REPORT(SCT_GETENV, SCT_GETENV, SCT_GETENV);
     INSTR_FINALIZE();
 #endif
-    xt_lib_state = xt_lib_finalized;
-  }
 }
 
 int
