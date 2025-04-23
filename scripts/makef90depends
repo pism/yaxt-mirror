@@ -777,8 +777,9 @@ sub createTmpDir()
                  GJS_DEBUG_OUTPUT GJS_DEBUG_TOPICS
                  GNOME_DESKTOP_SESSION_ID GNOME_KEYRING_PID
                  GNOME_KEYRING_CONTROL GNOME_KEYRING_SOCKET
+                 GNOME_TERMINAL_SCREEN GNOME_TERMINAL_SERVICE
                  GNUSTEP_USER_ROOT GPG_AGENT_INFO
-                 GTK_RC_FILES GTK_MODULES
+                 GTK_RC_FILES GTK_MODULES GTK_IM_MODULE
                  HISTCONTROL HISTFILESIZE HISTSIZE
                  ICAROOT INDEXSTYLE
                  JOURNAL_STREAM
@@ -789,11 +790,13 @@ sub createTmpDir()
                  MANPATH MANPATH_modshare MFLAGS
                  MODULEPATH MODULEPATH_modshare MODULE_VERSION
                  MODULE_VERSION_STACK
+                 MOTD_SHOWN
                  MUTT_XTITLES
                  OLDPWD
                  PAGER PATH_modshare PROFILEREAD PROMAGIC_USEGLX
                  QT_ACCESSIBILITY QT_LINUX_ACCESSIBILITY_ALWAYS_ON
                  QT_QPA_PLATFORMTHEME
+                 QTWEBENGINE_DICTIONARIES_PATH
                  RSYNC_RSH
                  SCHROOT_ALIAS_NAME
                  SCHROOT_CHROOT_NAME
@@ -804,8 +807,10 @@ sub createTmpDir()
                  SESSION_MANAGER
                  SHLVL SLURM_JOBID SLURM_JOB_ID SLURM_JOB_NODELIST
                  SLURM_NODELIST
-                 SSH_AGENT_PID SSH_AUTH_SOCK SSH_CLIENT SSH_CONNECTION
-                 SSH_TTY TERM TEST_LOGS TESTS TESTSUITEFLAGS
+                 SSH_AGENT_PID SSH_AGENT_LAUNCHER
+                 SSH_AUTH_SOCK SSH_CLIENT SSH_CONNECTION
+                 SSH_TTY SYSTEMD_EXEC_PID
+                 TERM TEST_LOGS TESTS TESTSUITEFLAGS
                  TMPDIR TMUX TMUX_PANE
                  USERNAME
                  V VBOX_CROGL_FORCE_SUPPORTED
@@ -816,6 +821,7 @@ sub createTmpDir()
                  XDG_RUNTIME_DIR XDG_SEAT XDG_SESSION_DESKTOP XDG_SESSION_ID
                  XDG_SESSION_COOKIE XDG_SESSION_TYPE XDG_VTNR
                  XKL_XMODMAP_DISABLE
+                 XMODIFIERS
                  am__remaking_logs);
       $ENVdigest = join("\0",
                         (map { "$_=$ENV{$_}" }
