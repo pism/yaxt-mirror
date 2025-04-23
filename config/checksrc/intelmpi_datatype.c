@@ -153,7 +153,7 @@ int main(void) {
     MPI_Type_indexed(count, lenghts, displs, datatype_vector, &datatype_1lev);
 
     // create a datatype for receiving all levels at once (each level is
-    // VECTOR_SIZE * NIDX elements appart)
+    // VECTOR_SIZE * NIDX elements apart)
     MPI_Aint lb, extent, dummy;
     MPI_Type_get_extent(datatype_1lev, &lb, &dummy);
     MPI_Type_get_extent(MPI_DOUBLE, &dummy, &extent);
