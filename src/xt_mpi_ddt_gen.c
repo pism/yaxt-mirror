@@ -53,6 +53,7 @@
 #include <mpi.h>
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
+#include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_mpi_ddt_cache.h"
 
@@ -354,7 +355,7 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        MPI_Comm comm)
 {
   struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, old_type, comm);
+  xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
   MPI_Datatype dt = xt_mpi_ddt_block_gen(count, disp, blocklengths, &params);
   xt_destroy_mpi_strp_prs_params(&params);
   return dt;
@@ -392,7 +393,7 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
   struct Xt_offset_ext *v = xmalloc(sizeof(*v) * vlen);
   xt_disp2ext((size_t)disp_len, disp, v);
   struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, old_type, comm);
+  xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
   MPI_Datatype dt = parse_stripe(v, vlen, &params);
   xt_destroy_mpi_strp_prs_params(&params);
   free(v);

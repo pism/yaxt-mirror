@@ -226,7 +226,7 @@ XT_REDIST_P2P_EXT_CUSTOM_NEW(Xt_xmap xmap,
     *send_msgs = msgs, *recv_msgs = msgs + nsend;
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
   struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, datatype, comm);
+  xt_init_mpi_strp_prs_params(&params, datatype, config, comm);
   XT_GENERATE_EXT_MSG_INFOS(nrecv, dst_iter, num_dst_ext, dst_extents,
                             recv_msgs, &params);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
