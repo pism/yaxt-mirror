@@ -53,6 +53,7 @@
 #include <stdbool.h>
 #include <mpi.h>
 
+#include "xt/xt_config.h"
 #include "xt/xt_mpi.h"
 #include "xt_mpi_ddt_cache.h"
 #include "core/ppm_visibility.h"
@@ -90,7 +91,7 @@ struct Xt_mpi_strp_prs_params {
 static inline void
 xt_init_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params,
                             MPI_Datatype old_type,
-                            MPI_Comm comm)
+                            Xt_config config, MPI_Comm comm)
 {
   MPI_Aint old_type_lb;
   xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
@@ -98,6 +99,8 @@ xt_init_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params,
   params->old_type = old_type;
   params->comm = comm;
   params->ddt_list = Xt_mpiddt_empty_list;
+  /* handle request to not cache here */
+  (void)config;
 }
 
 static inline void

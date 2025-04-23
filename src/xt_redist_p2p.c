@@ -252,7 +252,7 @@ xt_redist_p2p_off_custom_new(Xt_xmap xmap, const int *src_offsets,
     = xt_mpi_comm_smart_dup(xt_xmap_get_communicator(xmap), &tag_offset);
 
   struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, datatype, comm);
+  xt_init_mpi_strp_prs_params(&params, datatype, config, comm);
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
   generate_msg_infos(nrecv, dst_iter, dst_offsets, recv_msgs, &params);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
@@ -458,7 +458,7 @@ xt_redist_p2p_blocks_off_custom_new(Xt_xmap xmap,
     die("xt_redist_p2p_blocks_off_new: dst_block_num too small");
 #endif
   struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, datatype, comm);
+  xt_init_mpi_strp_prs_params(&params, datatype, config, comm);
   generate_block_msg_infos(nrecv, dst_iter, dst_block_offsets, dst_block_sizes,
                            &aux_offsets, (size_t)dst_block_num,
                            &params, msgs);
