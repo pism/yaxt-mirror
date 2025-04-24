@@ -432,6 +432,20 @@ xt_config_get_exchange_send_comm_mode(Xt_config config)
   return (int)(XT_CONFIG_GET_EXCH_SEND_COMM_MODE(config));
 }
 
+void
+xt_config_set_ddt_cache_limit(Xt_config config, int limit)
+{
+  config->ddt_cache_limit = limit;
+}
+
+
+int
+(xt_config_get_ddt_cache_limit)(Xt_config config)
+{
+  return config->ddt_cache_limit;
+}
+
+
 /**
  * \page defaults Customizable defaults
  *

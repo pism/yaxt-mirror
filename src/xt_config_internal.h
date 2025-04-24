@@ -122,6 +122,10 @@ struct Xt_config_ {
    */
   int idxv_cnv_size;
   /**
+   * Limit cache creation for MPI derived data types to this size
+   */
+  int ddt_cache_limit;
+  /**
    * binary combination of xt_config_flags */
   uint32_t flags;
 };
@@ -182,6 +186,8 @@ xt_config_get_exchange_new_by_comm(Xt_config config, MPI_Comm comm);
   do { if ((config)->xmdd_bucket_gen->destroy)                  \
       (config)->xmdd_bucket_gen->destroy((bucket_gen_state));   \
   } while (0)
+
+#define xt_config_get_ddt_cache_limit(config) ((config)->ddt_cache_limit)
 
 #endif  /* XT_CONFIG_INTERNAL_H */
 /*

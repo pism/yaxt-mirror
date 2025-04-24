@@ -293,6 +293,42 @@ xt_config_set_exchange_send_comm_mode(Xt_config config,
 int
 xt_config_get_exchange_send_comm_mode(Xt_config config);
 
+enum {
+  Xt_config_ddt_cache_none = 0,
+  Xt_config_ddt_cache_unlimited = -1,
+  Xt_config_ddt_cache_no_parse = -2,
+  Xt_config_ddt_cache_no_match = -3,
+  Xt_config_ddt_no_cache_no_parse = -4,
+};
+
+/**
+ * Accepts the maximum number of MPI derived datatypes to keep in
+ * cache during e.g. xt_redist_p2p_custom_new.
+ *
+ * Currently, Xt_config_ddt_cache_unlimited is the default.
+ *
+ * @param[in,out] config configuration object to modify
+ * @param[in]     limit  maximal number of data types to keep or
+ *                   @li Xt_config_ddt_cache_none disable caching but
+ *                          use parsing to generate compact,
+ *                          hierarchical datatypes
+ *                   @li Xt_config_ddt_cache_unlimited attempt to
+ *                          provide boundless caching
+ *                   @li Xt_config_ddt_cache_no_parse prevent use of
+ *                          complex datatype generation, also disables caching
+ */
+void
+xt_config_set_ddt_cache_limit(Xt_config config, int limit);
+
+/**
+ * Returns currently active cachnig limit for MPI derived datatype
+ * generation.
+ *
+ * Refer to \ref xt_config_set_ddt_cache_limit for the meaning of
+ * possible values.
+ */
+int
+xt_config_get_ddt_cache_limit(Xt_config config);
 
 #endif
 

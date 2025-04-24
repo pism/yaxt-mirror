@@ -112,6 +112,16 @@ MODULE xt_config_f
 
   PUBLIC :: xt_config_get_xmap_stripe_align, &
        xt_config_set_xmap_stripe_align
+
+  PUBLIC :: xt_config_get_ddt_cache_limit, &
+       xt_config_set_ddt_cache_limit
+  INTEGER, PUBLIC, PARAMETER :: &
+       xt_config_ddt_cache_none = 0, &
+       xt_config_ddt_cache_unlimited = -1, &
+       xt_config_ddt_cache_no_parse = -2, &
+       xt_config_ddt_cache_no_match = -3, &
+       xt_config_ddt_no_cache_no_parse = -4
+
   CHARACTER(len=*), PARAMETER :: filename = 'xt_config_f.f90'
 
 CONTAINS
@@ -442,6 +452,40 @@ CONTAINS
     END INTERFACE
     send_mode = INT(xt_config_get_exchange_send_comm_mode_c(config%cptr))
   END FUNCTION xt_config_get_exchange_send_comm_mode
+
+  SUBROUTINE xt_config_set_ddt_cache_limit(config, limit)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER, INTENT(in) :: limit
+    INTEGER(c_int) :: limit_c
+    INTERFACE
+      SUBROUTINE xt_config_set_ddt_cache_limit_c(config, limit) &
+           BIND(c, name='xt_config_set_ddt_cache_limit')
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int), VALUE :: limit
+      END SUBROUTINE xt_config_set_ddt_cache_limit_c
+    END INTERFACE
+
+    limit_c = INT(limit, c_int)
+    CALL xt_config_set_ddt_cache_limit_c(config%cptr, limit_c)
+  END SUBROUTINE xt_config_set_ddt_cache_limit
+
+  FUNCTION xt_config_get_ddt_cache_limit(config) RESULT(limit)
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER :: limit
+    INTEGER(c_int) :: limit_c
+    INTERFACE
+      FUNCTION xt_config_get_ddt_cache_limit_c(config) &
+           BIND(c, name='xt_config_get_ddt_cache_limit') RESULT(limit)
+        IMPORT :: c_ptr, c_int
+        TYPE(c_ptr), VALUE :: config
+        INTEGER(c_int) :: limit
+      END FUNCTION xt_config_get_ddt_cache_limit_c
+    END INTERFACE
+
+    limit_c = xt_config_get_ddt_cache_limit_c(config%cptr)
+    limit = INT(limit_c)
+  END FUNCTION xt_config_get_ddt_cache_limit
 
 END MODULE xt_config_f
 !

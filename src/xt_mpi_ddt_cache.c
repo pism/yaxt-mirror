@@ -114,18 +114,42 @@ struct Xt_mpiddt_list_entry {
   int combiner, use_count;
 };
 
+void
+Xt_mpi_ddt_cache_apply_size_limit(struct Xt_mpiddt_list *ddt_list,
+                                  Xt_config config)
+{
+  int limit = xt_config_get_ddt_cache_limit(config);
+  if (limit >= 0)
+    ddt_list->size_limit = (size_t)limit;
+  else if (limit == Xt_config_ddt_cache_unlimited)
+    ddt_list->size_limit = SIZE_MAX;
+  else if (limit == Xt_config_ddt_cache_no_parse
+           || limit == Xt_config_ddt_cache_no_match)
+    ddt_list->size_limit = (size_t)limit;
+}
+
+
 static struct Xt_mpiddt_list_entry *
 grow_ddt_list(struct Xt_mpiddt_list *ddt_list)
 {
-  size_t size_entries = ddt_list->size_entries;
-  ddt_list->size_entries = size_entries = size_entries ? size_entries * 2 : 8;
-  return ddt_list->entries
-    = xrealloc(ddt_list->entries, size_entries * sizeof (*ddt_list->entries));
+  size_t size_entries = ddt_list->size_entries,
+    size_limit = ddt_list->size_limit;
+  if (size_entries < size_limit) {
+    size_entries = size_entries ? size_entries * 2 : 8;
+    if (size_entries > size_limit)
+      size_entries = size_limit;
+    ddt_list->size_entries = size_entries;
+    return ddt_list->entries
+      = xrealloc(ddt_list->entries, size_entries * sizeof (*ddt_list->entries));
+  } else
+    return NULL;
 }
 
 #define GROW_DDT_LIST(ddt_list)                                 \
   do {                                                          \
-    if (ddt_list->num_entries == ddt_list->size_entries)        \
+    if (!ddt_list->size_limit)                                  \
+      entries = NULL;                                           \
+    else if (ddt_list->num_entries == ddt_list->size_entries)   \
       entries = grow_ddt_list(ddt_list);                        \
   } while (0)
 
@@ -160,17 +184,19 @@ Xt_mpi_ddt_cache_acquire_contiguous(
           goto dt_is_set;
         }
       }
-    GROW_DDT_LIST(ddt_list);
     xt_mpi_call(MPI_Type_contiguous(count, oldtype, &dt), comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.contiguous = (struct Xt_mpi_contiguous_arg_desc){
-        .count = count, .oldtype = oldtype,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_CONTIGUOUS,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.contiguous = (struct Xt_mpi_contiguous_arg_desc){
+          .count = count, .oldtype = oldtype,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_CONTIGUOUS,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   } else {
     xt_mpi_call(MPI_Type_contiguous(count, oldtype, &dt), comm);
   }
@@ -198,19 +224,21 @@ Xt_mpi_ddt_cache_acquire_vector(
           goto dt_is_set;
         }
       }
-    GROW_DDT_LIST(ddt_list);
     xt_mpi_call(MPI_Type_vector(count, blocklength, stride, oldtype, &dt),
                 comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.vector = (struct Xt_mpi_vector_arg_desc){
-        .count = count, .blocklength = blocklength,
-        .stride = stride, .oldtype = oldtype,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_VECTOR,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.vector = (struct Xt_mpi_vector_arg_desc){
+          .count = count, .blocklength = blocklength,
+          .stride = stride, .oldtype = oldtype,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_VECTOR,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   } else {
     xt_mpi_call(MPI_Type_vector(count, blocklength, stride, oldtype, &dt),
                 comm);
@@ -239,19 +267,21 @@ Xt_mpi_ddt_cache_acquire_hvector(
           goto dt_is_set;
         }
       }
-    GROW_DDT_LIST(ddt_list);
     xt_mpi_call(MPI_Type_create_hvector(count, blocklength, stride,
                                         oldtype, &dt), comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.hvector = (struct Xt_mpi_hvector_arg_desc){
-        .count = count, .blocklength = blocklength,
-        .stride = stride, .oldtype = oldtype,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_HVECTOR,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.hvector = (struct Xt_mpi_hvector_arg_desc){
+          .count = count, .blocklength = blocklength,
+          .stride = stride, .oldtype = oldtype,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_HVECTOR,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   } else {
     xt_mpi_call(MPI_Type_create_hvector(count, blocklength, stride,
                                         oldtype, &dt), comm);
@@ -292,19 +322,21 @@ Xt_mpi_ddt_cache_acquire_indexed_block(
           goto dt_is_set;
         }
       }
-    GROW_DDT_LIST(ddt_list);
     Xt_Type_create_indexed_block(count, blocklength,
                                  disp, oldtype, &dt, comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.indexed_block = (struct Xt_mpi_indexed_block_arg_desc){
-        .count = count, .blocklength = blocklength,
-        .disp_hash = disp_hash, .oldtype = oldtype,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_INDEXED_BLOCK,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.indexed_block = (struct Xt_mpi_indexed_block_arg_desc){
+          .count = count, .blocklength = blocklength,
+          .disp_hash = disp_hash, .oldtype = oldtype,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_INDEXED_BLOCK,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   dt_is_set:
     free(disp_cmp);
   } else {
@@ -356,19 +388,21 @@ Xt_mpi_ddt_cache_acquire_hindexed_block(
           goto dt_is_set;
         }
       }
-    GROW_DDT_LIST(ddt_list);
     Xt_Type_create_hindexed_block(count, blocklength,
                                   disp, oldtype, &dt, comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.indexed_block = (struct Xt_mpi_indexed_block_arg_desc){
-        .count = count, .blocklength = blocklength,
-        .disp_hash = disp_hash, .oldtype = oldtype,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_HINDEXED_BLOCK,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.indexed_block = (struct Xt_mpi_indexed_block_arg_desc){
+          .count = count, .blocklength = blocklength,
+          .disp_hash = disp_hash, .oldtype = oldtype,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_HINDEXED_BLOCK,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   dt_is_set:
     free(disp_cmp);
   } else {
@@ -413,19 +447,21 @@ Xt_mpi_ddt_cache_acquire_indexed(
           goto dt_is_set;
         }
       }
-    GROW_DDT_LIST(ddt_list);
     Xt_Type_indexed(count, blocklength,
                     disp, oldtype, &dt, comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.indexed = (struct Xt_mpi_indexed_arg_desc){
-        .count = count, .blocklength_hash = blocklength_hash,
-        .disp_hash = disp_hash, .oldtype = oldtype,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_INDEXED,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.indexed = (struct Xt_mpi_indexed_arg_desc){
+          .count = count, .blocklength_hash = blocklength_hash,
+          .disp_hash = disp_hash, .oldtype = oldtype,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_INDEXED,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   dt_is_set:
     free(acmp);
   } else {
@@ -471,19 +507,21 @@ Xt_mpi_ddt_cache_acquire_hindexed(
           goto dt_is_set;
         }
       }
-    GROW_DDT_LIST(ddt_list);
     Xt_Type_create_hindexed(count, blocklength,
                             disp, oldtype, &dt, comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.indexed = (struct Xt_mpi_indexed_arg_desc){
-        .count = count, .blocklength_hash = blocklength_hash,
-        .disp_hash = disp_hash, .oldtype = oldtype,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_HINDEXED,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.indexed = (struct Xt_mpi_indexed_arg_desc){
+          .count = count, .blocklength_hash = blocklength_hash,
+          .disp_hash = disp_hash, .oldtype = oldtype,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_HINDEXED,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   dt_is_set:
     free(disp_cmp);
   } else {
@@ -545,28 +583,30 @@ Xt_mpi_ddt_cache_acquire_struct(
         }
         oldtype_cmp += args->count;
       }
-    GROW_DDT_LIST(ddt_list);
-    size_t struct_dt_size = (size_t)(oldtype_cmp - ddt_list->struct_dt),
-      struct_dt_size_p2 = next_2_pow(struct_dt_size),
-      struct_dt_needed = struct_dt_size + count_ + (oldtype_cmp == ddt_list->struct_dt);
-    if (struct_dt_needed > struct_dt_size_p2) {
-      ddt_list->struct_dt
-        = xrealloc(ddt_list->struct_dt,
-                   next_2_pow(struct_dt_needed) * sizeof (*oldtype_cmp));
-      oldtype_cmp = ddt_list->struct_dt + struct_dt_size;
-    }
-    memcpy(oldtype_cmp, oldtype, oldtype_size);
     Xt_Type_create_struct(count, blocklength, disp, oldtype, &dt, comm);
-    entries[num_entries] = (struct Xt_mpiddt_list_entry){
-      .args.struct_dt = (struct Xt_mpi_struct_arg_desc){
-        .count = count, .blocklength_hash = blocklength_hash,
-        .disp_hash = disp_hash, .oldtype_hash = oldtype_hash,
-      },
-      .cached_dt = dt,
-      .use_count = 1,
-      .combiner = MPI_COMBINER_STRUCT,
-    };
-    ddt_list->num_entries = num_entries + 1;
+    GROW_DDT_LIST(ddt_list);
+    if (entries) {
+      size_t struct_dt_size = (size_t)(oldtype_cmp - ddt_list->struct_dt),
+        struct_dt_size_p2 = next_2_pow(struct_dt_size),
+        struct_dt_needed = struct_dt_size + count_ + (oldtype_cmp == ddt_list->struct_dt);
+      if (struct_dt_needed > struct_dt_size_p2) {
+        ddt_list->struct_dt
+          = xrealloc(ddt_list->struct_dt,
+                     next_2_pow(struct_dt_needed) * sizeof (*oldtype_cmp));
+        oldtype_cmp = ddt_list->struct_dt + struct_dt_size;
+      }
+      memcpy(oldtype_cmp, oldtype, oldtype_size);
+      entries[num_entries] = (struct Xt_mpiddt_list_entry){
+        .args.struct_dt = (struct Xt_mpi_struct_arg_desc){
+          .count = count, .blocklength_hash = blocklength_hash,
+          .disp_hash = disp_hash, .oldtype_hash = oldtype_hash,
+        },
+        .cached_dt = dt,
+        .use_count = 1,
+        .combiner = MPI_COMBINER_STRUCT,
+      };
+      ddt_list->num_entries = num_entries + 1;
+    }
   dt_is_set:
     free(disp_cmp);
   } else {
@@ -617,6 +657,7 @@ Xt_mpi_ddt_cache_free(struct Xt_mpiddt_list *ddt_list,
   ddt_list->entries = NULL;
   ddt_list->num_entries = 0;
   ddt_list->size_entries = 0;
+  ddt_list->size_limit = SIZE_MAX;
 }
 
 void
