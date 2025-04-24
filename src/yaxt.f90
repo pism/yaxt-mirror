@@ -81,7 +81,11 @@ MODULE yaxt
        xt_exch_send_synchronous, &
        xt_config_set_exchange_send_comm_mode, &
        xt_config_get_exchange_send_comm_mode, &
-       xt_exchanger_irecv_isend_ddt_packed
+       xt_exchanger_irecv_isend_ddt_packed, &
+       xt_config_get_ddt_cache_limit, xt_config_set_ddt_cache_limit, &
+       xt_config_ddt_cache_none, xt_config_ddt_cache_unlimited, &
+       xt_config_ddt_cache_no_parse, xt_config_ddt_cache_no_match, &
+       xt_config_ddt_no_cache_no_parse
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
        xt_sort_permutation, xt_assign_id_map
   USE xt_idxlist_abstract, ONLY: &
@@ -270,7 +274,12 @@ MODULE yaxt
        xt_exch_send_synchronous, &
        xt_config_set_exchange_send_comm_mode, &
        xt_config_get_exchange_send_comm_mode, &
-       xt_exchanger_irecv_isend_ddt_packed
+       xt_exchanger_irecv_isend_ddt_packed, &
+       xt_config_get_ddt_cache_limit, xt_config_set_ddt_cache_limit, &
+       xt_config_ddt_cache_none, xt_config_ddt_cache_unlimited, &
+       xt_config_ddt_cache_no_parse, xt_config_ddt_cache_no_match, &
+       xt_config_ddt_no_cache_no_parse
+
 
   PUBLIC :: xt_redist_p2p_new, xt_redist_p2p_custom_new
   PUBLIC :: xt_redist_p2p_off_new, xt_redist_p2p_off_custom_new

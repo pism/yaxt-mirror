@@ -50,8 +50,10 @@
 #include <config.h>
 #endif
 
+#include <limits.h>
 #include <mpi.h>
 
+#include "xt/xt_config.h"
 #include "core/ppm_visibility.h"
 
 struct Xt_mpiddt_list_entry;
@@ -60,10 +62,15 @@ struct Xt_mpiddt_list {
   struct Xt_mpiddt_list_entry *entries;
   MPI_Datatype *struct_dt;      /* points to concatenation of arrays of the datatypes
                                  * used for each struct */
-  size_t num_entries, size_entries;
+  size_t num_entries, size_entries, size_limit;
 };
 
-#define Xt_mpiddt_empty_list ((struct Xt_mpiddt_list){NULL,NULL,0,0})
+#define Xt_mpiddt_empty_list ((struct Xt_mpiddt_list){NULL,NULL,0,0,SIZE_MAX})
+
+PPM_DSO_INTERNAL void
+Xt_mpi_ddt_cache_apply_size_limit(struct Xt_mpiddt_list *ddt_list,
+                                  Xt_config config);
+
 /**
  * lookup MPI contiguous datatype in cache or create if not yet present
  * @param[in,out] ddt_list cache of already created derived datatypes
