@@ -316,6 +316,7 @@ enum {
  *                          provide boundless caching
  *                   @li Xt_config_ddt_cache_no_parse prevent use of
  *                          complex datatype generation, also disables caching
+ * @see config_ddt_cache
  */
 void
 xt_config_set_ddt_cache_limit(Xt_config config, int limit);

@@ -577,6 +577,31 @@ int
  *
  * Alternative types are the buffered and synchronous send modes
  * (see MPI documentation for more information).
+ *
+ * @section config_ddt_cache MPI derived data type caching
+ *
+ * By default the redist constructors try to minize the memory use of
+ * MPI datatypes by aggressively re-using datatypes used for previous
+ * communication partners and analyzing sub-patterns. This works
+ * better for highly regular data access patterns and a sparse
+ * communication matrix and tends to introduce unnecessary time
+ * overhead for irregular data distributions and imbalanced message
+ * passing patterns.
+ *
+ * It's possible to limit this caching or even completely turn it off
+ * via the XT_CONFIG_MPI_DDT_CACHE_LIMIT environment variable. The
+ * environment variable can take the following values:
+ * @li Xt_config_ddt_cache_none or 0: prevent caching but still
+ * attempt to detect structure in the data access
+ * @li any positive integral number: limit cache size to this value
+ * @li Xt_config_ddt_cache_unlimited or -1: maximize re-use at
+ * potentially high lookup costs,
+ * @li Xt_config_ddt_cache_no_parse or -2: do not attempt detection of
+ * patterns but use caching
+ * @li Xt_config_ddt_cache_no_match or -3: neither attempt pattern
+ * detection nor non-trivial matching
+ * @li Xt_config_ddt_no_cache_no_parse or -4: do not attempt detection of
+ * patterns and don't use caching.
  */
 void
 xt_config_defaults_init(void)
@@ -766,6 +791,57 @@ dont_set_sort_algorithm:;
                 endptr, (int)(endptr-config_env), evn, config_env);
       } else
         xt_config_set_mem_saving(&xt_default_config, (int)v);
+    }
+  }
+
+  {
+    static const char evn[] = "XT_CONFIG_MPI_DDT_CACHE_LIMIT";
+    config_env = getenv(evn);
+    if (config_env) {
+      const char *endptr;
+      long v;
+      errno = 0;
+      static const struct
+      {
+        const char name[32];
+        int val;
+      } opt_arg_map[] = {
+        { "Xt_config_ddt_cache_none",
+          Xt_config_ddt_cache_none },
+        { "Xt_config_ddt_cache_unlimited",
+          Xt_config_ddt_cache_unlimited },
+        { "Xt_config_ddt_cache_no_parse",
+          Xt_config_ddt_cache_no_parse },
+        { "Xt_config_ddt_cache_no_match",
+          Xt_config_ddt_cache_no_match },
+        { "Xt_config_ddt_no_cache_no_parse",
+          Xt_config_ddt_no_cache_no_parse },
+      };
+
+      for (size_t i = 0; i < sizeof (opt_arg_map) / sizeof (opt_arg_map[0]); ++i) {
+        if (!strcasecmp(config_env, opt_arg_map[i].name)) {
+          v = opt_arg_map[i].val;
+          goto ddt_cache_val_found;
+        }
+      }
+      {
+        char *endptr_;
+        v = strtol(config_env, &endptr_, 0);
+        endptr = endptr_;
+      }
+      if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
+          || (errno != 0 && v == 0)) {
+        fprintf(stderr, "warning: failed to parse value of "
+                "environment variable %s: %s", evn, strerror(errno));
+      } else if (endptr == config_env) {
+        fprintf(stderr, "warning: malformed value of environment variable "
+                "%s, no digits or symbolic constant found\n", evn);
+      } else if (v < -4) {
+        fprintf(stderr, "value of environment variable %s (%ld)"
+                " out of range [-4,%d]\n", evn, v, INT_MAX);
+      } else
+      ddt_cache_val_found:
+        xt_config_set_ddt_cache_limit(&xt_default_config, (int)v);
     }
   }
 }
