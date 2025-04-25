@@ -165,6 +165,9 @@ ACX_FC_LOGICAL_INTEROP([HAVE_FC_LOGICAL_INTEROP=yes ;dnl
 @%:@define HAVE_FC_LOGICAL_INTEROP"])
 ACX_FC_LOGICAL_C_BOOL([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_LOGICAL_C_BOOL"])
+ACX_FC_MIL_STD_1753_INIT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_MIL_STD_1753_INIT"],
+  [AC_MSG_WARN([$FC does not support Fortran 90 binary intrinsics in initialization expressions!])])
 dnl
 dnl check if the compiler supports pointer bounds remapping
 ACX_FC_POINTER_BOUNDS_REMAP([HAVE_POINTER_REMAP=yes],[HAVE_POINTER_REMAP=no])

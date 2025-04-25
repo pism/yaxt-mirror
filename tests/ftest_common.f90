@@ -1216,27 +1216,24 @@ CONTAINS
     INTEGER(i8), ALLOCATABLE :: a(:)
     INTEGER :: n, nb, i, j
     INTEGER, PARAMETER :: block_len=8
+    REAL(c_double) :: rand_nums(block_len)
     ! the least signifant digits of huge(a) do not fit into an ieee754
     ! double precision real and gfortran warns about that. For that
     ! reason the below expression limits scale_val to those 1-bits
     ! which can be represented in a double precision constant
-#if ! defined __PGI || __PGIC__ > 24
+#ifdef HAVE_FC_MIL_STD_1753_INIT
     INTEGER(i8), PARAMETER :: scale_val &
          = IAND(HUGE(a), NOT(ISHFT(1_i8, BIT_SIZE(1_i8) &
-         &                               - DIGITS(0.0_c_double))  - 1 ) )
+         &                               - DIGITS(0.0_c_double))  - 1_i8 ) )
+    REAL(c_double) :: sc
+    sc = REAL(scale_val, c_double)
 #else
-    INTEGER(i8) :: scale_val
+    REAL(c_double), PARAMETER :: sc &
+         = REAL(RADIX(sc), c_double) ** (BIT_SIZE(1_i8) - 1) - 1.0_c_double
 #endif
-    REAL(c_double) :: rand_nums(block_len), sc
     n = SIZE(a)
     nb = n/block_len
-#if defined __PGI && __PGIC__ <= 24
-    scale_val &
-         = IAND(HUGE(a), NOT(ISHFT(1_i8, BIT_SIZE(1_i8) &
-         &                               - DIGITS(0.0_c_double))  - 1 ) )
-#endif
 
-    sc = REAL(scale_val, c_double)
     DO j = 1, nb
       CALL RANDOM_NUMBER(rand_nums)
       DO i = 1, block_len
