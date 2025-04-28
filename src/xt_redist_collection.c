@@ -387,7 +387,8 @@ create_exchanger(struct Xt_redist_collection_ *redist_coll,
   struct Xt_msg_param *restrict msgs = xmalloc(nmsg * sizeof (*msgs));
 
   const MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
-  struct Xt_mpiddt_list ddt_list = Xt_mpiddt_empty_list;
+  struct Xt_mpiddt_list ddt_list;
+  Xt_mpi_ddt_cache_init(&ddt_list, &redist_coll->config);
   MPI_Comm comm = redist_coll->comm;
   create_all_dt_for_dir(nmsg_send, num_redists,
                         redist_coll->msg_ranks, all_component_dt,

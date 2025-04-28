@@ -98,8 +98,7 @@ xt_init_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params,
                                   &params->old_type_extent), comm);
   params->old_type = old_type;
   params->comm = comm;
-  params->ddt_list = Xt_mpiddt_empty_list;
-  /* handle request to not cache here */
+  Xt_mpi_ddt_cache_init(&params->ddt_list, config);
   (void)config;
 }
 

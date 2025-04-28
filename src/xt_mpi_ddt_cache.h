@@ -71,6 +71,12 @@ PPM_DSO_INTERNAL void
 Xt_mpi_ddt_cache_apply_size_limit(struct Xt_mpiddt_list *ddt_list,
                                   Xt_config config);
 
+PPM_DSO_INTERNAL void
+Xt_mpi_ddt_cache_init(struct Xt_mpiddt_list *ddt_list,
+                      Xt_config config);
+
+
+
 /**
  * lookup MPI contiguous datatype in cache or create if not yet present
  * @param[in,out] ddt_list cache of already created derived datatypes

@@ -128,6 +128,14 @@ Xt_mpi_ddt_cache_apply_size_limit(struct Xt_mpiddt_list *ddt_list,
     ddt_list->size_limit = (size_t)limit;
 }
 
+PPM_DSO_INTERNAL void
+Xt_mpi_ddt_cache_init(struct Xt_mpiddt_list *ddt_list,
+                      Xt_config config)
+{
+  *ddt_list = Xt_mpiddt_empty_list;
+  Xt_mpi_ddt_cache_apply_size_limit(ddt_list, config);
+}
+
 
 static struct Xt_mpiddt_list_entry *
 grow_ddt_list(struct Xt_mpiddt_list *ddt_list)
