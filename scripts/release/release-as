@@ -74,10 +74,18 @@ if [[ -w configure.ac && -r configure.ac && \
   fi
   if [[ -z "$commit_to_release" ]]; then
     commit_to_release=$(git rev-parse --abbrev-ref HEAD)
+  else
+    tmptag=$(mktemp)
+    git tag -m "Temporary tag" "${tmptag##*/}" "$commit_to_release"
+    commit_to_release=${tmptag##*/}
   fi
   git clone -b "$commit_to_release" . "$tmpsrcdir"
   if [[ -f "${reconfCmd}" && ! -x "${tmpsrcdir}/${reconfCmd}" ]]; then
     cp -p "${reconfCmd}" "${tmpsrcdir}/${reconfCmd}"
+  fi
+  if [[ -n "$tmptag" ]]; then
+    git tag -d "${tmptag##*/}"
+    rm "$tmptag"
   fi
   pushd "$tmpsrcdir"
   # reinstate git hooks
