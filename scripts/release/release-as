@@ -52,10 +52,12 @@ fi
 if [[ -w configure.ac && -r configure.ac && \
         -x "${script_dir}/make-release" ]]; then
   # 0. check no uncomitted modifications are in tree
-  git update-index -q --really-refresh
-  if ! git diff-index --exit-code HEAD -- >&2 ; then
-    echo 'error: modified files found!' >&2
-    exit 1
+  if [[ -z "$commit_to_release" ]]; then
+    git update-index -q --really-refresh
+    if ! git diff-index --exit-code HEAD -- >&2 ; then
+      echo 'error: modified files found!' >&2
+      exit 1
+    fi
   fi
   source "${script_dir}/get-package-and-version.shinc"
   if [[ ${tmpsrcdir+set} = '' ]]; then
