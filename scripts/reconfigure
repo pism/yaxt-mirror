@@ -123,8 +123,12 @@ elif command -v curl >/dev/null ; then
 fi
 
 "${DL_CMD[@]}" config/config.guess \
+  'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' \
+  || "${DL_CMD[@]}" config/config.guess \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
 "${DL_CMD[@]}" config/config.sub \
+  'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD' \
+  || "${DL_CMD[@]}" config/config.sub \
      'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 
 if [ -x scripts/recreate-testsuite.sh ]; then
