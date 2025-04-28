@@ -144,7 +144,8 @@ xt_redist_collection_static_custom_new(
                                       redists, num_ranks[i], ranks[i], config);
   size_t nmsg_sum = nmsg[SEND] + nmsg[RECV];
   struct Xt_redist_msg *msgs = xmalloc(sizeof (*msgs) * nmsg_sum);
-  struct Xt_mpiddt_list ddt_list = Xt_mpiddt_empty_list;
+  struct Xt_mpiddt_list ddt_list;
+  Xt_mpi_ddt_cache_init(&ddt_list, config);
   for (size_t i = 0; i < 2; ++i) {
     size_t ofs = i == 0 ? 0 : nmsg[SEND];
     const MPI_Aint *disp = i == 0 ? src_displacements : dst_displacements;
