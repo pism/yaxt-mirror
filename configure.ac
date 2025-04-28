@@ -168,16 +168,6 @@ ACX_FC_LOGICAL_C_BOOL([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 ACX_FC_MIL_STD_1753_INIT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_MIL_STD_1753_INIT"],
   [AC_MSG_WARN([$FC does not support Fortran 90 binary intrinsics in initialization expressions!])])
-dnl
-dnl check if the compiler supports pointer bounds remapping
-ACX_FC_POINTER_BOUNDS_REMAP([HAVE_POINTER_REMAP=yes],[HAVE_POINTER_REMAP=no])
-AS_VAR_IF([HAVE_POINTER_REMAP],[yes],
-  [ACX_FC_POINTER_HUGE_BOUNDS_REMAP(,
-  [AC_MSG_NOTICE([Disabling native low-bounds mapping, $FC has a known defective implementation.])
-   HAVE_POINTER_REMAP=no])])
-AS_IF([test $HAVE_POINTER_REMAP = yes],
-  [XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
-@%:@define HAVE_FC_PTR_BOUND_REMAP"])
 dnl Do we need helper functions for contiguous arrays?
 ACX_FC_HAVE_IS_CONTIGUOUS([HAVE_FC_IS_CONTIGUOUS=yes
   XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS

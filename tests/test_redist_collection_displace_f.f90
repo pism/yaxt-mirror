@@ -58,15 +58,9 @@ MODULE redist_collection_displace
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
-  ! and when taking the slice address and the optimizer is on,
-  ! some other random failure occurs even with very recent compiler versions
-#if defined __PGI && (__PGIC__ <= 23 || __PGIC__ == 24 && __PGIC_MINOR__ <= 9)
-#undef HAVE_FC_C_LOC_OF_SLICE
-#endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, &
        check_wait_request
-  USE iso_c_binding, ONLY: c_ptr
-#include "xt_slice_c_loc.inc"
+  USE iso_c_binding, ONLY: c_ptr, c_loc
   IMPLICIT NONE
   PRIVATE
   INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
@@ -112,84 +106,78 @@ CONTAINS
     CALL xt_redist_delete(redist_coll_copy)
   END SUBROUTINE test_displacement_variations
 
-#ifndef HAVE_FC_PTR_BOUND_REMAP
-  SUBROUTINE ptr_bind(p, ub, a)
-    DOUBLE PRECISION, POINTER :: p(:,:)
-    INTEGER, INTENT(in) :: ub(2)
-    DOUBLE PRECISION, TARGET :: a(ub(1), ub(2))
-    p => a
-  END SUBROUTINE ptr_bind
-#endif
-
   SUBROUTINE run_displacement_check(redist_coll)
     TYPE(xt_redist), INTENT(in) :: redist_coll
     INTEGER :: i, j, k
     DOUBLE PRECISION, TARGET :: &
          src(src_slice_len * (num_slice+1) + cache_size + cache_overrun), &
          dst(dst_slice_len * (num_slice+1) + cache_size + cache_overrun)
-    DOUBLE PRECISION, POINTER :: src_data(:, :), dst_data(:, :)
-    DOUBLE PRECISION, POINTER :: src_data_(:), dst_data_(:)
     TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
     DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len, num_slice) = &
          RESHAPE((/ ((DBLE(i + j * src_slice_len), &
          &            i = 1, src_slice_len, dst_step), &
          &           j = 0, num_slice - 1) /), &
          &       (/ dst_slice_len, num_slice /))
-    TYPE(xt_request) :: request
-    INTEGER :: iexch
 
-#ifdef HAVE_FC_PTR_BOUND_REMAP
-    src_data(1:src_slice_len, 1:num_slice) => src(1:src_slice_len*num_slice)
-#else
-    CALL ptr_bind(src_data, (/ src_slice_len, num_slice /), src)
-#endif
-    DO j = 1, num_slice
-      DO i = 1, src_slice_len
-        src_data(i, j) = DBLE(i + (j - 1) * src_slice_len)
-      END DO
-    END DO
-
-    src_data_ => src(src_slice_len*num_slice+1:)
-
-#ifdef HAVE_FC_PTR_BOUND_REMAP
-    dst_data(1:dst_slice_len, 1:num_slice) => dst(1:dst_slice_len*num_slice)
-#else
-    CALL ptr_bind(dst_data, (/ dst_slice_len, num_slice /), dst)
-#endif
-
-    dst_data_ => dst(dst_slice_len*num_slice+1:)
+    CALL init_displacement_check_src(src)
 
     DO i = 1, num_slice - 1
-      XT_SLICE_C_LOC(src_data(:, i), src_data_p(i))
-      XT_SLICE_C_LOC(dst_data(:, i), dst_data_p(i))
+      src_data_p(i) = C_LOC(src((i-1)*src_slice_len+1))
+      dst_data_p(i) = C_LOC(dst((i-1)*dst_slice_len+1))
     END DO
 
     ! test exchange
     DO k = 1, cache_size + cache_overrun
-      src_data_(k:k+src_slice_len-1) = src_data(:,num_slice)
-
-
-      XT_SLICE_C_LOC(src_data_(k:k+src_slice_len-1), src_data_p(3))
-      XT_SLICE_C_LOC(dst_data_(k:k+dst_slice_len-1), dst_data_p(3))
-
-      DO iexch = 1, 2
-        dst = -1.0d0
-        IF (iexch == 1) THEN
-          CALL xt_redist_s_exchange(redist_coll, num_slice, src_data_p, &
-               dst_data_p)
-        ELSE
-          CALL xt_redist_a_exchange(redist_coll, num_slice, src_data_p, &
-               dst_data_p, request)
-          CALL check_wait_request(request, filename, __LINE__)
-        ENDIF
-        IF (cmp_arrays(ref_dst_data(:, 1:num_slice-1), &
-             &         dst_data(:, 1:num_slice-1)) &
-             .OR. cmp_arrays(ref_dst_data(:,num_slice), &
-             &               dst_data_(k:k+dst_slice_len-1))) &
-           CALL test_abort(err_msg(iexch), filename, __LINE__)
-      ENDDO
+      src(src_slice_len*num_slice+k:src_slice_len*(num_slice+1)+k-1) &
+           = src(src_slice_len*(num_slice-1)+1:src_slice_len*num_slice)
+      CALL run_displacement_check_exchange(redist_coll, src, dst, &
+           src(src_slice_len*num_slice+k), &
+           dst(dst_slice_len*num_slice+k), &
+           src_data_p, dst_data_p, ref_dst_data)
     END DO
   END SUBROUTINE run_displacement_check
+
+  SUBROUTINE init_displacement_check_src(src)
+    DOUBLE PRECISION, INTENT(out) :: src(src_slice_len, num_slice)
+    INTEGER :: i, j
+    DO j = 1, num_slice
+      DO i = 1, src_slice_len
+        src(i, j) = DBLE(i + (j - 1) * src_slice_len)
+      END DO
+    END DO
+  END SUBROUTINE init_displacement_check_src
+
+  SUBROUTINE run_displacement_check_exchange(redist_coll, &
+       src1, dst1, src2, dst2, src_data_p, dst_data_p, ref_dst_data)
+    TYPE(xt_redist), INTENT(in) :: redist_coll
+    DOUBLE PRECISION, TARGET, INTENT(in) :: src1(src_slice_len, num_slice-1), &
+         src2(src_slice_len)
+    DOUBLE PRECISION, TARGET, INTENT(inout) :: &
+         dst1(dst_slice_len, num_slice-1), dst2(dst_slice_len)
+    DOUBLE PRECISION, INTENT(in) :: ref_dst_data(dst_slice_len, num_slice)
+    TYPE(c_ptr), INTENT(inout) :: src_data_p(num_slice), dst_data_p(num_slice)
+    TYPE(xt_request) :: request
+    INTEGER :: iexch
+
+    src_data_p(3) = C_LOC(src2)
+    dst_data_p(3) = C_LOC(dst2)
+
+    DO iexch = 1, 2
+      dst1 = -1.0d0
+      dst2 = -1.0d0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist_coll, num_slice, src_data_p, &
+             dst_data_p)
+      ELSE
+        CALL xt_redist_a_exchange(redist_coll, num_slice, src_data_p, &
+             dst_data_p, request)
+        CALL check_wait_request(request, filename, __LINE__)
+      ENDIF
+      IF (cmp_arrays(ref_dst_data(:, 1:num_slice-1), dst1) &
+           .OR. cmp_arrays(ref_dst_data(:,num_slice), dst2)) &
+           CALL test_abort(err_msg(iexch), filename, __LINE__)
+    ENDDO
+  END SUBROUTINE run_displacement_check_exchange
 
 END MODULE redist_collection_displace
 !
