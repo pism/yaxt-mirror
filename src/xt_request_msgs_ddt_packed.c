@@ -139,10 +139,11 @@ xt_request_msgs_ddt_packed_new(int n_requests,
   }
   ebuf->packed_memtype = packed_memtype;
   ebuf->tmp_memtype = tmp_memtype;
-  memcpy(ebuf->buffers, packed_data,
-         (size_t)n_packed * sizeof(*ebuf->buffers));
-  memcpy(ebuf->buffers + n_packed, tmp_buffers,
-         (size_t)n_tmp_buffers * sizeof(*ebuf->buffers));
+  void **buffers = ebuf->buffers;
+  memcpy(buffers, packed_data,
+         (size_t)n_packed * sizeof(*buffers));
+  memcpy(buffers + n_packed, tmp_buffers,
+         (size_t)n_tmp_buffers * sizeof(*buffers));
   MPI_Aint *ebuf_packed_extents = ebuf->packed_extents
     = xmalloc(2 * (size_t)n_packed * sizeof (*ebuf_packed_extents));
   memcpy(ebuf_packed_extents, packed_extents,
