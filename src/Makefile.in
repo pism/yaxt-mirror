@@ -733,9 +733,9 @@ libyaxt_la_SOURCES = xt_idxlist_collection_f.f90 \
 	xt_redist_logical.f90 xt_request_f.f90 yaxt.f90 \
 	$(am__append_8)
 libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)
-libyaxt_la_LDFLAGS = -version-info 12:1:11
+libyaxt_la_LDFLAGS = -version-info 12:2:11
 libyaxt_c_la_LIBADD = $(MPI_C_LIB) $(am__append_7)
-libyaxt_c_la_LDFLAGS = -version-info 11:3:10
+libyaxt_c_la_LDFLAGS = -version-info 11:4:10
 libyaxt_profile_la_SOURCES = mpi-profile/xt-ddt-profile.c
 EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4	\
 	m4-templates/f03-redist-gen.m4				\
