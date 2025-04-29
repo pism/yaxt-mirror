@@ -179,7 +179,7 @@ Xt_mpi_ddt_cache_acquire_contiguous(
   MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     struct Xt_mpiddt_list_entry *restrict entries = ddt_list->entries;
     size_t num_entries = ddt_list->num_entries;
     for (size_t i = 0; i < num_entries; ++i)
@@ -219,7 +219,7 @@ Xt_mpi_ddt_cache_acquire_vector(
   MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     struct Xt_mpiddt_list_entry *restrict entries = ddt_list->entries;
     size_t num_entries = ddt_list->num_entries;
     for (size_t i = 0; i < num_entries; ++i)
@@ -262,7 +262,7 @@ Xt_mpi_ddt_cache_acquire_hvector(
   MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     struct Xt_mpiddt_list_entry *restrict entries = ddt_list->entries;
     size_t num_entries = ddt_list->num_entries;
     for (size_t i = 0; i < num_entries; ++i)
@@ -305,7 +305,7 @@ Xt_mpi_ddt_cache_acquire_indexed_block(
   MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     size_t disp_size = (count > 0 ? (size_t)count : (size_t)0) * sizeof (*disp);
     uint32_t disp_hash = Xt_memcrc((const void *)disp, disp_size);
     struct Xt_mpiddt_list_entry *restrict entries = ddt_list->entries;
@@ -361,7 +361,7 @@ Xt_mpi_ddt_cache_acquire_hindexed_block(
   MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     size_t count_ = count > 0 ? (size_t)count : (size_t)0,
       disp_size = count_ * sizeof (*disp);
     uint32_t disp_hash = Xt_memcrc((const void *)disp, disp_size);
@@ -428,7 +428,7 @@ Xt_mpi_ddt_cache_acquire_indexed(
   MPI_Datatype oldtype, MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     size_t asize = (count > 0 ? (size_t)count : (size_t)0) * sizeof (int);
     uint32_t disp_hash = Xt_memcrc((const void *)disp, asize),
       blocklength_hash = Xt_memcrc((const void *)blocklength, asize);
@@ -485,7 +485,7 @@ Xt_mpi_ddt_cache_acquire_hindexed(
   MPI_Datatype oldtype, MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     size_t count_ = count > 0 ? (size_t)count : (size_t)0,
       disp_size = count_ * sizeof (*disp),
       blocklength_size = count_ * sizeof (*blocklength);
@@ -548,7 +548,7 @@ Xt_mpi_ddt_cache_acquire_struct(
   const MPI_Datatype oldtype[count], MPI_Comm comm)
 {
   MPI_Datatype dt;
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     size_t count_ = (count > 0 ? (size_t)count : (size_t)0),
       disp_size = count_ * sizeof (disp[0]),
       blocklength_size = count_ * sizeof (blocklength[0]),
@@ -627,7 +627,7 @@ void
 Xt_mpi_ddt_cache_entry_release(struct Xt_mpiddt_list *ddt_list,
                                MPI_Datatype *dt, MPI_Comm comm)
 {
-  if (ddt_list) {
+  if (ddt_list && ddt_list->size_limit) {
     struct Xt_mpiddt_list_entry *restrict entries = ddt_list->entries;
     size_t num_entries = ddt_list->num_entries;
     MPI_Datatype dt_ = *dt;
@@ -653,7 +653,7 @@ void
 Xt_mpi_ddt_cache_free(struct Xt_mpiddt_list *ddt_list,
                       MPI_Comm comm)
 {
-  if (ddt_list) ; else return;
+  if (ddt_list && ddt_list->size_limit) ; else return;
   struct Xt_mpiddt_list_entry *restrict entries = ddt_list->entries;
   size_t num_entries = ddt_list->num_entries;
   for (size_t i = 0; i < num_entries; ++i)
