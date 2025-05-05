@@ -57,14 +57,7 @@
 #include "xt_mpi_internal.h"
 #include "xt_mpi_ddt_cache.h"
 
-//! COMPACT_DT enables the analysis of displacements in order to give a
-//! more compact description to the datatype generators of MPI. For strong
-//! enough MPI implementations this not required. Then you can undefine
-//! COMPACT_DT and save some processing time within yaxt without losing communication
-//! performance.
-#define COMPACT_DT
 
-#ifndef COMPACT_DT
 static MPI_Datatype copy_mpi_datatype(MPI_Datatype old_type, MPI_Comm comm) {
 
   MPI_Datatype datatype;
@@ -193,9 +186,7 @@ static inline int check_for_indexed_block_type(const int *blocklengths,
 
   return 1;
 }
-#endif
 
-#ifdef COMPACT_DT
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type,
@@ -204,18 +195,25 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
 static MPI_Datatype
 xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
                                  MPI_Datatype old_type, MPI_Comm comm);
-#endif
 
 MPI_Datatype
 xt_mpi_generate_datatype_block(const int *displacements,
                                const int *blocklengths,
                                int count, MPI_Datatype old_type,
                                MPI_Comm comm) {
+  return xt_mpi_generate_datatype_block_custom(
+    displacements, blocklengths, count, old_type, comm, &xt_default_config);
+}
 
-#ifdef COMPACT_DT
-  return xt_mpi_generate_compact_datatype_block(displacements, blocklengths,
-                                                count, old_type, comm);
-#else
+MPI_Datatype
+xt_mpi_generate_datatype_block_custom(const int *displacements,
+                                      const int *blocklengths,
+                                      int count, MPI_Datatype old_type,
+                                      MPI_Comm comm, Xt_config config) {
+
+  if (config->ddt_cache_limit >= -1)
+    return xt_mpi_generate_compact_datatype_block(displacements, blocklengths,
+                                                  count, old_type, comm);
   MPI_Datatype datatype;
 
   if (count == 0)
@@ -239,21 +237,27 @@ xt_mpi_generate_datatype_block(const int *displacements,
                                         old_type, comm);
 
   return datatype;
-#endif
 }
 
 MPI_Datatype
 xt_mpi_generate_datatype(int const * displacements, int count,
                          MPI_Datatype old_type, MPI_Comm comm)
 {
+  return xt_mpi_generate_datatype_custom(displacements, count, old_type,
+                                         comm, &xt_default_config);
+}
+
+MPI_Datatype
+xt_mpi_generate_datatype_custom(int const * displacements, int count,
+                                MPI_Datatype old_type, MPI_Comm comm,
+                                Xt_config config)
+{
   if (count <= 0)
     return MPI_DATATYPE_NULL;
-
-#ifdef COMPACT_DT
-  return xt_mpi_generate_compact_datatype(displacements, count, old_type, comm);
-#else
+  if (config->ddt_cache_limit >= -1)
+    return xt_mpi_generate_compact_datatype(displacements, count, old_type, comm);
   int * blocklengths = xmalloc((size_t)count * sizeof(*blocklengths));
-  int new_count = 0;
+  size_t new_count = 0;
   {
     int i = 0;
     do {
@@ -268,16 +272,16 @@ xt_mpi_generate_datatype(int const * displacements, int count,
   int * tmp_displ = NULL;
   const int *displ;
 
-  if (new_count != count) {
+  if (new_count != (size_t)count) {
 
-    tmp_displ = xmalloc((size_t)new_count * sizeof(*tmp_displ));
+    tmp_displ = xmalloc(new_count * sizeof(*tmp_displ));
 
-    int offset = 0;
+    size_t offset = 0;
 
-    for (int i = 0; i < new_count; ++i) {
+    for (size_t i = 0; i < new_count; ++i) {
 
       tmp_displ[i] = displacements[offset];
-      offset += blocklengths[i];
+      offset += (size_t)blocklengths[i];
     }
 
     displ = tmp_displ;
@@ -286,15 +290,14 @@ xt_mpi_generate_datatype(int const * displacements, int count,
 
   MPI_Datatype datatype;
 
-  datatype = xt_mpi_generate_datatype_block(displ, blocklengths, new_count,
-                                            old_type, comm);
+  datatype = xt_mpi_generate_datatype_block_custom(
+    displ, blocklengths, (int)new_count, old_type, comm, config);
 
   free(blocklengths);
 
   free(tmp_displ);
 
   return datatype;
-#endif
 }
 
 #define XT_MPI_STRP_PRS_PREFIX
