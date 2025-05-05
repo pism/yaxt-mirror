@@ -160,18 +160,13 @@ static inline int
 check_for_vector_type(const int *displacements, const int *blocklengths,
                       int count) {
 
-  int blocklength = blocklengths[0];
+  int blocklength = blocklengths[0],
+    stride = displacements[1] - displacements[0];
 
   for (int i = 1; i < count; ++i)
-    if (blocklengths[i] != blocklength)
+    if ((blocklengths[i] != blocklength)
+        | (displacements[i] - displacements[i-1] != stride))
       return 0;
-
-  int stride = displacements[1] - displacements[0];
-
-  for (int i = 1; i + 1 < count; ++i)
-    if (displacements[i+1] - displacements[i] != stride)
-      return 0;
-
   return 1;
 }
 
