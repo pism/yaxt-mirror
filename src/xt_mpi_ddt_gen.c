@@ -367,17 +367,27 @@ xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
   for (int i=0; i<count; ++i)
     count_ += (size_t)(blocklengths[i] > 0);
   if (count_ < 1) return MPI_DATATYPE_NULL;
-  struct Xt_offset_ext *restrict v = xmalloc(sizeof(*v) * count_);
-  size_t j=0;
-  for (size_t i=0; i<(size_t)count; ++i) {
-    v[j].start = disp[i];
-    v[j].stride = 1;
-    int bl = blocklengths[i];
-    v[j].size = bl;
-    j += (size_t)(bl > 0);
+  int *restrict v_disp, *restrict v_size, *restrict v_stride;
+  v_stride = xmalloc(sizeof(int) * count_ * ((int)count_ != count ? 3 : 1));
+  if ((int)count_ != count) {
+    v_size = v_stride + count_;
+    v_disp = v_size + count_;
+    size_t j=0;
+    for (size_t i=0; i<(size_t)count; ++i) {
+      v_disp[j] = disp[i];
+      v_stride[j] = 1;
+      int bl = blocklengths[i];
+      v_size[j] = bl;
+      j += (size_t)(bl > 0);
+    }
+  } else {
+    v_disp = (int *)disp;
+    v_size = (int *)blocklengths;
+    for (size_t i = 0; i < count_; ++i)
+      v_stride[i] = 1;
   }
-  MPI_Datatype dt = parse_stripe(v, count_, params);
-  free(v);
+  MPI_Datatype dt = parse_stripe(v_disp, v_size, v_stride, count_, params);
+  free(v_stride);
   return dt;
 }
 
@@ -388,13 +398,14 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
   size_t vlen = xt_disp2ext_count((size_t)disp_len, disp);
-  struct Xt_offset_ext *v = xmalloc(sizeof(*v) * vlen);
-  xt_disp2ext((size_t)disp_len, disp, v);
+  int *v_disp = xmalloc(vlen * 3U * sizeof (int)),
+    *v_size = v_disp + vlen, *v_stride = v_size + vlen;
+  xt_disp2ext((size_t)disp_len, disp, v_disp, v_size, v_stride);
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
-  MPI_Datatype dt = parse_stripe(v, vlen, &params);
+  MPI_Datatype dt = parse_stripe(v_disp, v_size, v_stride, vlen, &params);
   xt_destroy_mpi_strp_prs_params(&params);
-  free(v);
+  free(v_disp);
   return dt;
 }
 

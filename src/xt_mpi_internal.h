@@ -75,7 +75,7 @@ xt_disp2ext_count(size_t disp_len, const int *disp);
 
 PPM_DSO_INTERNAL size_t
 xt_disp2ext(size_t disp_len, const int *disp,
-            struct Xt_offset_ext *restrict v);
+            int *restrict v_disp, int *restrict v_size, int *restrict v_stride);
 
 /**
  * Groups parameters commonly used in parsing of a stripe description
@@ -113,13 +113,17 @@ xt_destroy_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params)
 PPM_DSO_INTERNAL MPI_Datatype
 xt_mpi_parse_stripe(
   size_t vlen,
-  const struct Xt_offset_ext v[vlen],
+  const int v_disp[vlen],
+  const int v_size[vlen],
+  const int v_stride[vlen],
   struct Xt_mpi_strp_prs_params *params);
 
 PPM_DSO_INTERNAL MPI_Datatype
 xt_mpi_parse_astripe(
   size_t vlen,
-  const struct Xt_aoffset_ext v[vlen],
+  const MPI_Aint v_disp[vlen],
+  const int v_size[vlen],
+  const MPI_Aint v_stride[vlen],
   struct Xt_mpi_strp_prs_params *params);
 
 PPM_DSO_INTERNAL MPI_Datatype

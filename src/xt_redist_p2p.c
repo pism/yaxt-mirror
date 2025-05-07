@@ -47,9 +47,10 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
+#include <string.h>
 
 #include <mpi.h>
 
@@ -113,7 +114,7 @@ xt_mdisp2ext_count(size_t disp_len, const int *disp, const int *pos)
 
 static size_t
 xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
-             struct Xt_offset_ext *restrict v)
+             int *restrict v_disp, int *restrict v_size, int *restrict v_stride)
 {
   if (disp_len<1) return 0;
 
@@ -131,17 +132,18 @@ xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
       cur_size++;
     } else if (cur_size > 2 || (cur_size == 2 && cur_stride == 1) ) {
       // we accept small contiguous vectors (nstrides==2, stride==1)
-      v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
-                                     .size = cur_size };
+      v_disp[i] = cur_start;
+      v_stride[i] = cur_stride;
+      v_size[i] = cur_size;
       i++;
       cur_start = new_disp;
       cur_stride = 1;
       cur_size = 1;
     } else { // cur_size == 2, next offset doesn't match current stride
       // break up trivial vec:
-      v[i].start = cur_start;
-      v[i].size = 1;
-      v[i].stride = 1;
+      v_disp[i] = cur_start;
+      v_size[i] = 1;
+      v_stride[i] = 1;
       i++;
       cur_start += cur_stride;
       cur_size = 2;
@@ -151,54 +153,71 @@ xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
   }
   // tail cases:
   if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
-    v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
-                                   .size = cur_size };
+    v_disp[i] = cur_start;
+    v_size[i] = cur_size;
+    v_stride[i] = cur_stride;
     i++;
   } else if (cur_size == 2) {
-    v[i].start = cur_start;
-    v[i].size = 1;
-    v[i].stride = 1;
+    v_disp[i] = cur_start;
+    v_size[i] = 1;
+    v_stride[i] = 1;
     i++;
-    v[i].start = cur_start + cur_stride;
-    v[i].size = 1;
-    v[i].stride = 1;
+    v_disp[i] = cur_start + cur_stride;
+    v_size[i] = 1;
+    v_stride[i] = 1;
     i++;
   } else { // cur_size == 1
-    v[i].start = cur_start;
-    v[i].size = 1;
-    v[i].stride = 1;
+    v_disp[i] = cur_start;
+    v_size[i] = 1;
+    v_stride[i] = 1;
     i++;
   }
 
   return i;
 }
 
+static void
+xt_dt_stripe_bufs_ext_grow(
+  size_t *work_buf_size,
+  void **work_buf,
+  int **dt_stripes_disp,
+  int **restrict dt_stripes_size,
+  int **restrict dt_stripes_stride,
+  size_t num_current_elems,
+  size_t needed_elems);
+
+static inline size_t
+xt_dt_stripe_alloc_size_ext(size_t needed_elems);
+
 
 static MPI_Datatype
 generate_datatype(const int *transfer_pos, int num_transfer_pos,
                   const int *offsets,
-                  size_t *vsize, struct Xt_offset_ext **v,
+                  size_t *work_buf_size, void **work_buf,
                   struct Xt_mpi_strp_prs_params *params)
 {
-  struct Xt_offset_ext *v_ = *v;
-  size_t vlen;
-  if (offsets != NULL) {
-    vlen = xt_mdisp2ext_count((size_t)num_transfer_pos, offsets, transfer_pos);
-    if (vlen > *vsize) {
-      *v = v_ = xrealloc(v_, sizeof(*v_) * vlen);
-      *vsize = vlen;
-    }
-    xt_mdisp2ext((size_t)num_transfer_pos, offsets, transfer_pos, v_);
+  int *v_disp = *work_buf, *v_size = *work_buf, *v_stride = *work_buf;
+  size_t vlen = offsets != NULL
+    ? xt_mdisp2ext_count((size_t)num_transfer_pos, offsets, transfer_pos)
+    : xt_disp2ext_count((size_t)num_transfer_pos, transfer_pos);
+  if (xt_dt_stripe_alloc_size_ext(vlen) > *work_buf_size) {
+    xt_dt_stripe_bufs_ext_grow(
+      work_buf_size, work_buf, &v_disp, &v_size, &v_stride,
+      0, vlen);
   } else {
-    vlen = xt_disp2ext_count((size_t)num_transfer_pos, transfer_pos);
-    if (vlen > *vsize) {
-      *v = v_ = xrealloc(v_, sizeof(*v_) * vlen);
-      *vsize = vlen;
-    }
-    xt_disp2ext((size_t)num_transfer_pos, transfer_pos, v_);
+    v_disp = *work_buf;
+    v_stride = v_disp + vlen;
+    v_size = v_stride + vlen;
   }
+  if (offsets != NULL)
+    xt_mdisp2ext((size_t)num_transfer_pos, offsets, transfer_pos,
+                 v_disp, v_size, v_stride);
+  else
+    xt_disp2ext((size_t)num_transfer_pos, transfer_pos,
+                v_disp, v_size, v_stride);
 
-  MPI_Datatype type = xt_mpi_parse_stripe(vlen, v_, params);
+  MPI_Datatype type = xt_mpi_parse_stripe(
+    vlen, v_disp, v_size, v_stride, params);
   return type;
 }
 
@@ -208,8 +227,8 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
                    struct Xt_mpi_strp_prs_params *params) {
 
   if (num_msgs > 0) {
-    size_t vsize = 0;
-    struct Xt_offset_ext *v = NULL;
+    size_t work_buf_size = 0;
+    void *work_buf = NULL;
     struct Xt_redist_msg *restrict curr_msg = msgs;
     do {
 
@@ -218,12 +237,12 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
 
       curr_msg->datatype
         = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                            offsets, &vsize, &v, params);
+                            offsets, &work_buf_size, &work_buf, params);
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
     } while (xt_xmap_iterator_next(iter));
-    free(v);
+    free(work_buf);
   }
 }
 
@@ -306,18 +325,21 @@ pos2disp2(int pos, int num_ext,
   return j;
 }
 
+#define XT_OFS_TYPE int
 #define XT_EXT_TYPE struct Xt_offset_ext
 #define XT_EXT_TAG ext
 #define XT_MPI_PARSE_STRIPE xt_mpi_parse_stripe
 #define XT_EXT_STRIDE_MASK isign_mask_current_pos_ext_size
 #define XT_EXT_STRIDE_MASK_PREP
 #include "xt_redist_p2p_ext.h"
+#undef XT_OFS_TYPE
 #undef XT_EXT_TYPE
 #undef XT_EXT_TAG
 #undef XT_MPI_PARSE_STRIPE
 #undef XT_EXT_STRIDE_MASK
 #undef XT_EXT_STRIDE_MASK_PREP
 
+#define XT_OFS_TYPE MPI_Aint
 #define XT_EXT_TYPE struct Xt_aoffset_ext
 #define XT_EXT_TAG aext
 #define XT_MPI_PARSE_STRIPE xt_mpi_parse_astripe
@@ -325,6 +347,7 @@ pos2disp2(int pos, int num_ext,
 #define XT_EXT_STRIDE_MASK_PREP MPI_Aint asign_mask_current_pos_ext_size \
   = asign_mask(current_pos_ext.size)
 #include "xt_redist_p2p_ext.h"
+#undef XT_OFS_TYPE
 #undef XT_EXT_TYPE
 #undef XT_EXT_TAG
 #undef XT_MPI_PARSE_STRIPE
