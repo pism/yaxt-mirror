@@ -131,7 +131,7 @@ xt_disp2ext_count(size_t disp_len, const int *disp)
 
 size_t
 xt_disp2ext(size_t disp_len, const int *disp,
-            struct Xt_offset_ext *restrict v)
+            int *restrict v_disp, int *restrict v_size, int *restrict v_stride)
 {
   if (disp_len<1) return 0;
 
@@ -149,17 +149,18 @@ xt_disp2ext(size_t disp_len, const int *disp,
       cur_size++;
     } else if (cur_size > 2 || (cur_size == 2 && cur_stride == 1) ) {
       // we accept small contiguous vectors (nstrides==2, stride==1)
-      v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
-                                     .size = cur_size };
+      v_disp[i] = cur_start;
+      v_stride[i] = cur_stride;
+      v_size[i] = cur_size;
       i++;
       cur_start = new_disp;
       cur_stride = 1;
       cur_size = 1;
     } else { // cur_size == 2, next offset doesn't match current stride
       // break up trivial vec:
-      v[i].start = cur_start;
-      v[i].size = 1;
-      v[i].stride = 1;
+      v_disp[i] = cur_start;
+      v_size[i] = 1;
+      v_stride[i] = 1;
       i++;
       cur_start += cur_stride;
       cur_size = 2;
@@ -169,22 +170,23 @@ xt_disp2ext(size_t disp_len, const int *disp,
   }
   // tail cases:
   if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
-    v[i] = (struct Xt_offset_ext){ .start = cur_start, .stride = cur_stride,
-                                   .size = cur_size };
+    v_disp[i] = cur_start;
+    v_size[i] = cur_size;
+    v_stride[i] = cur_stride;
     i++;
   } else if (cur_size == 2) {
-    v[i].start = cur_start;
-    v[i].size = 1;
-    v[i].stride = 1;
+    v_disp[i] = cur_start;
+    v_size[i] = 1;
+    v_stride[i] = 1;
     i++;
-    v[i].start = cur_start + cur_stride;
-    v[i].size = 1;
-    v[i].stride = 1;
+    v_disp[i] = cur_start + cur_stride;
+    v_size[i] = 1;
+    v_stride[i] = 1;
     i++;
   } else { // cur_size == 1
-    v[i].start = cur_start;
-    v[i].size = 1;
-    v[i].stride = 1;
+    v_disp[i] = cur_start;
+    v_size[i] = 1;
+    v_stride[i] = 1;
     i++;
   }
 

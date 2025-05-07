@@ -76,38 +76,41 @@
  * @return true if matched, false if not matched
  */
 static bool
-XT_MPI_STRP_PRS_MATCH_BLOCK_VEC
-  (size_t *pstart_,
-   const XT_MPI_OFFSET_EXT *v,
-   size_t vlen,
-   MPI_Aint *disp, MPI_Datatype *dt,
-   struct Xt_mpi_strp_prs_params *params) {
+XT_MPI_STRP_PRS_MATCH_BLOCK_VEC(
+  size_t *pstart_,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
+  const int *v_size,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_stride,
+  size_t vlen,
+  MPI_Aint *disp, MPI_Datatype *dt,
+  struct Xt_mpi_strp_prs_params *params)
+{
   // using at least 3 vectors
   size_t p = *pstart_, pstart = p;
-  if (p+2 >= vlen || v[p].stride != XT_MPI_STRP_PRS_UNITSTRIDE
-      || v[p+1].stride != XT_MPI_STRP_PRS_UNITSTRIDE ) return false;
-  int bl = v[p].size;
+  if (p+2 >= vlen || v_stride[p] != XT_MPI_STRP_PRS_UNITSTRIDE
+      || v_stride[p+1] != XT_MPI_STRP_PRS_UNITSTRIDE ) return false;
+  int bl = v_size[p];
   assert(bl > 0);
-  if (v[p+1].size != bl) return false;
+  if (v_size[p+1] != bl) return false;
 
-  XT_MPI_STRP_PRS_AOFS_TYPE vstride = v[p+1].start - v[p].start;
+  XT_MPI_STRP_PRS_AOFS_TYPE vstride = v_disp[p+1] - v_disp[p];
 
   p += 2;
-  while( p < vlen && v[p].stride == XT_MPI_STRP_PRS_UNITSTRIDE
-         && v[p].size == bl && v[p].start - v[p-1].start == vstride ) {
+  while( p < vlen && v_stride[p] == XT_MPI_STRP_PRS_UNITSTRIDE
+         && v_size[p] == bl && v_disp[p] - v_disp[p-1] == vstride ) {
     p++;
   }
   size_t n = p - pstart;
   if (n<3) return false;
   *pstart_ = p;
 
-  XT_MPI_STRP_PRS_AOFS_TYPE disp_ = n == vlen ? 0 : v[pstart].start;
+  XT_MPI_STRP_PRS_AOFS_TYPE disp_ = n == vlen ? 0 : v_disp[pstart];
   *disp = XT_MPI_STRP_PRS_DISP_ADJUST(disp_);
 
   *dt = XT_MPI_STRP_PRS_BLOCK_VEC_CREATE(
     &params->ddt_list, (int)n, bl, vstride, params->old_type, params->comm);
 
-  XT_MPI_STRP_PRS_AOFS_TYPE start = v[pstart].start - disp_;
+  XT_MPI_STRP_PRS_AOFS_TYPE start = v_disp[pstart] - disp_;
 
   if (start) {
     MPI_Datatype dt1 = *dt;
@@ -124,36 +127,38 @@ XT_MPI_STRP_PRS_MATCH_BLOCK_VEC
 static bool
 XT_MPI_STRP_PRS_MATCH_INDEXED(
   size_t *pstart_,
-  const XT_MPI_OFFSET_EXT *v,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
+  const int *v_size,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_stride,
   size_t vlen,
   MPI_Aint *disp, MPI_Datatype *dt,
   struct Xt_mpi_strp_prs_params *params) {
   // we only accept non-trivial matches
   size_t p = *pstart_, pstart = p;
-  if (p >= vlen || v[p].stride != XT_MPI_STRP_PRS_UNITSTRIDE || v[p].size < 2)
+  if (p >= vlen || v_stride[p] != XT_MPI_STRP_PRS_UNITSTRIDE || v_size[p] < 2)
     return false;
 
   do
     ++p;
-  while (p < vlen && v[p].stride == XT_MPI_STRP_PRS_UNITSTRIDE);
+  while (p < vlen && v_stride[p] == XT_MPI_STRP_PRS_UNITSTRIDE);
 
   size_t n = p - pstart;
 
   if (n < 2) return false;
   *pstart_ = p;
 
-  XT_MPI_STRP_PRS_AOFS_TYPE start = n == vlen ? 0 : v[pstart].start;
+  XT_MPI_STRP_PRS_AOFS_TYPE start = n == vlen ? 0 : v_disp[pstart];
   *disp = XT_MPI_STRP_PRS_DISP_ADJUST(start);
   XT_MPI_STRP_PRS_AOFS_TYPE *restrict d
     = xmalloc(n * sizeof (int) + n * sizeof (*d));
   int *restrict bl = (int * restrict)(d + n);
   bool hom_bl = true;
-  d[0] = v[pstart].start - start;
-  int bl0 = bl[0] = v[pstart].size;
+  d[0] = v_disp[pstart] - start;
+  int bl0 = bl[0] = v_size[pstart];
   for (size_t i = 1; i < n; i++) {
     size_t iv = pstart + i;
-    d[i] = v[iv].start - start;
-    bl[i] = v[iv].size;
+    d[i] = v_disp[iv] - start;
+    bl[i] = v_size[iv];
     hom_bl &= (bl[i] == bl0);
   }
 
@@ -172,7 +177,9 @@ XT_MPI_STRP_PRS_MATCH_INDEXED(
 static bool
 XT_MPI_STRP_PRS_MATCH_SIMPLE_VEC(
   size_t *pstart_,
-  const XT_MPI_OFFSET_EXT *v,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
+  const int *v_size,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_stride,
   size_t vlen,
   MPI_Aint *disp, MPI_Datatype *dt,
   struct Xt_mpi_strp_prs_params *params) {
@@ -180,19 +187,19 @@ XT_MPI_STRP_PRS_MATCH_SIMPLE_VEC(
   // using only one vector from v
   size_t p = *pstart_;
   if (p >= vlen) return false;
-  int nstrides = v[p].size;
-  XT_MPI_STRP_PRS_AOFS_TYPE stride = v[p].stride;
+  int nstrides = v_size[p];
+  XT_MPI_STRP_PRS_AOFS_TYPE stride = v_stride[p];
   if (nstrides < 2 || stride == XT_MPI_STRP_PRS_UNITSTRIDE ) return false;
 
   *pstart_ = p + 1;
 
-  XT_MPI_STRP_PRS_AOFS_TYPE disp_ = vlen > 1 ? v[p].start : 0;
+  XT_MPI_STRP_PRS_AOFS_TYPE disp_ = vlen > 1 ? v_disp[p] : 0;
   *disp = XT_MPI_STRP_PRS_DISP_ADJUST(disp_);
 
   *dt = XT_MPI_STRP_PRS_BLOCK_VEC_CREATE(
     &params->ddt_list, nstrides, 1, stride, params->old_type, params->comm);
 
-  XT_MPI_STRP_PRS_AOFS_TYPE start = v[p].start - disp_;
+  XT_MPI_STRP_PRS_AOFS_TYPE start = v_disp[p] - disp_;
   if (start) {
     MPI_Datatype dt1 = *dt;
 
@@ -209,24 +216,26 @@ XT_MPI_STRP_PRS_MATCH_SIMPLE_VEC(
 static bool
 XT_MPI_STRP_PRS_MATCH_CONTIGUOUS(
   size_t *pstart_,
-  const XT_MPI_OFFSET_EXT *v,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
+  const int *v_size,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_stride,
   size_t vlen,
   MPI_Aint *restrict disp, MPI_Datatype *dt,
   struct Xt_mpi_strp_prs_params *params) {
   size_t p = *pstart_;
-  if (p >= vlen || v[p].stride != XT_MPI_STRP_PRS_UNITSTRIDE || v[p].size < 2)
+  if (p >= vlen || v_stride[p] != XT_MPI_STRP_PRS_UNITSTRIDE || v_size[p] < 2)
     return false;
 
-  XT_MPI_STRP_PRS_AOFS_TYPE disp_ = vlen > 1 ? v[p].start : 0;
+  XT_MPI_STRP_PRS_AOFS_TYPE disp_ = vlen > 1 ? v_disp[p] : 0;
   *disp = XT_MPI_STRP_PRS_DISP_ADJUST(disp_);
-  XT_MPI_STRP_PRS_AOFS_TYPE d = v[p].start - disp_;
+  XT_MPI_STRP_PRS_AOFS_TYPE d = v_disp[p] - disp_;
 
   if (!d)
     *dt = Xt_mpi_ddt_cache_acquire_contiguous(
-      &params->ddt_list, v[p].size, params->old_type, params->comm);
+      &params->ddt_list, v_size[p], params->old_type, params->comm);
   else
     *dt = XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE(
-      &params->ddt_list, 1, v[p].size, &d, params->old_type, params->comm);
+      &params->ddt_list, 1, v_size[p], &d, params->old_type, params->comm);
 
   *pstart_ = p+1;
   return true;
@@ -235,7 +244,9 @@ XT_MPI_STRP_PRS_MATCH_CONTIGUOUS(
 static void
 XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
   size_t set_start, size_t set_end,
-  const XT_MPI_OFFSET_EXT *v,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
+  const int *v_size,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_stride,
   size_t vlen,
   MPI_Aint *disp,
   MPI_Datatype *dt, struct Xt_mpi_strp_prs_params *params) {
@@ -245,7 +256,7 @@ XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
 
   int n = 0;
   for (size_t i=ia; i < ib; i++)
-    n += v[i].size;
+    n += v_size[i];
 
   /* todo: given the guarantees for v that fceb584 introduced,
    * this check should never fire */
@@ -253,7 +264,7 @@ XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
 
   // generate absolute datatype if ia == 0 && ib == vlen,
   // else generate relative datatype that gets embedded by the caller
-  XT_MPI_STRP_PRS_AOFS_TYPE start = (ia == 0 && ib == vlen) ? 0 : v[ia].start;
+  XT_MPI_STRP_PRS_AOFS_TYPE start = (ia == 0 && ib == vlen) ? 0 : v_disp[ia];
 
   *disp = XT_MPI_STRP_PRS_DISP_ADJUST(start);
 
@@ -266,11 +277,11 @@ XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
 
   for (size_t i=ia; i < ib; i++) {
 #ifndef NDEBUG
-    found_np |= v[i].size <= 0;
+    found_np |= v_size[i] <= 0;
 #endif
-    size_t v_i_size = (size_t)(v[i].size > 0 ? v[i].size : 0);
+    size_t v_i_size = (size_t)(v_size[i] > 0 ? v_size[i] : 0);
     for (size_t k=0; k < v_i_size; k++) {
-      d[p] = v[i].start + (XT_MPI_STRP_PRS_AOFS_TYPE)k * v[i].stride - start;
+      d[p] = v_disp[i] + (XT_MPI_STRP_PRS_AOFS_TYPE)k * v_stride[i] - start;
       p++;
     }
   }
@@ -287,22 +298,28 @@ XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
 
 static MPI_Datatype
 XT_MPI_STRP_PRS_ENTRY(
-  const XT_MPI_OFFSET_EXT *v,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
+  const int *v_size,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_stride,
   size_t vlen,
   struct Xt_mpi_strp_prs_params *params);
 
 MPI_Datatype
 XT_MPI_STRP_PRS_ENTRY_LIBINTERNAL(
   size_t vlen,
-  const XT_MPI_OFFSET_EXT v[vlen],
+  const XT_MPI_STRP_PRS_AOFS_TYPE v_disp[vlen],
+  const int v_size[vlen],
+  const XT_MPI_STRP_PRS_AOFS_TYPE v_stride[vlen],
   struct Xt_mpi_strp_prs_params *params)
 {
-  return XT_MPI_STRP_PRS_ENTRY(v, vlen, params);
+  return XT_MPI_STRP_PRS_ENTRY(v_disp, v_size, v_stride, vlen, params);
 }
 
 static MPI_Datatype
 XT_MPI_STRP_PRS_ENTRY(
-  const XT_MPI_OFFSET_EXT *v,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
+  const int *v_size,
+  const XT_MPI_STRP_PRS_AOFS_TYPE *v_stride,
   size_t vlen,
   struct Xt_mpi_strp_prs_params *params)
 {
@@ -322,22 +339,22 @@ XT_MPI_STRP_PRS_ENTRY(
      * to wdt[m+1] and wdisp[m+1] or wdt[m] and wdisp[m] respectively */
     size_t mm = m + (set_start < set_end);
     if ((XT_MPI_STRP_PRS_MATCH_BLOCK_VEC(
-           &p, v, vlen,
+           &p, v_disp, v_size, v_stride, vlen,
            wdisp+mm, wdt+mm, params))
         || (XT_MPI_STRP_PRS_MATCH_INDEXED(
-              &p, v, vlen,
+              &p, v_disp, v_size, v_stride, vlen,
               wdisp+mm, wdt+mm, params))
         || (XT_MPI_STRP_PRS_MATCH_SIMPLE_VEC(
-              &p, v, vlen,
+              &p, v_disp, v_size, v_stride, vlen,
               wdisp+mm, wdt+mm, params))
         || (XT_MPI_STRP_PRS_MATCH_CONTIGUOUS(
-              &p, v, vlen,
+              &p, v_disp, v_size, v_stride, vlen,
               wdisp+mm, wdt+mm, params)) ) {
       /* in case a match is found, generate fallback datatype for
        * non-matching, preceding extents */
       if (set_start < set_end) {
         XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
-          set_start, set_end, v, vlen,
+          set_start, set_end, v_disp, v_size, v_stride, vlen,
           wdisp+m, wdt+m, params);
         m++;
       }
@@ -350,7 +367,7 @@ XT_MPI_STRP_PRS_ENTRY(
   }
   if (set_start <  set_end) {
     XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
-      set_start, set_end, v, vlen,
+      set_start, set_end, v_disp, v_size, v_stride, vlen,
       wdisp+m, wdt+m, params);
     m++;
   }
@@ -389,23 +406,27 @@ XT_MPI_STRP_PRS_DRIVER(const XT_MPI_OFFSET_EXT *v,
   for (int i=0; i<count; ++i)
     count_ += (size_t)(v[i].size > 0);
   if (count_ < 1) return MPI_DATATYPE_NULL;
-  const XT_MPI_OFFSET_EXT *v_comp;
-  XT_MPI_OFFSET_EXT *v_comp_;
-  if ((size_t)count != count_) {
-    v_comp = v_comp_ = xmalloc(count_ * sizeof (*v_comp));
+  XT_MPI_STRP_PRS_AOFS_TYPE *restrict v_disp
+    = xmalloc(2 * count_ * sizeof (*v_disp) + count_ * sizeof (int)),
+    *restrict v_stride = v_disp+count_;
+  int *restrict v_size = (int *)(v_stride + count_);
+  if (count_) {
     for (size_t i=0, j=0; i<(size_t)count; ++i) {
-      v_comp_[j] = v[i];
-      j+= v[i].size > 0;
+      v_disp[j] = v[i].start;
+      v_stride[j] = v[i].stride;
+      v_size[j] = v[i].size;
+      j += v[i].size > 0;
     }
   } else {
-    v_comp_ = NULL;
-    v_comp = v;
+    v_disp = v_stride = NULL;
+    v_size = NULL;
   }
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
-  MPI_Datatype dt = XT_MPI_STRP_PRS_ENTRY(v_comp, count_, &params);
-  if ((size_t)count != count_)
-    free(v_comp_);
+  MPI_Datatype dt = XT_MPI_STRP_PRS_ENTRY(v_disp, v_size, v_stride, count_,
+                                          &params);
+  if (count_)
+    free(v_disp);
   return dt;
 }
 

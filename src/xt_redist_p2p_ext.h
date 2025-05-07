@@ -58,30 +58,81 @@
   TOKEN_PASTE3(xt_redist_p2p_,XT_EXT_TAG,_new)
 #define XT_REDIST_P2P_EXT_CUSTOM_NEW \
   TOKEN_PASTE3(xt_redist_p2p_,XT_EXT_TAG,_custom_new)
+#define XT_DT_STRIPE_BUFS_GROW \
+  TOKEN_PASTE3(xt_dt_stripe_bufs_,XT_EXT_TAG,_grow)
+#define XT_DT_STRIPE_ALLOC_SIZE \
+  TOKEN_PASTE2(xt_dt_stripe_alloc_size_,XT_EXT_TAG)
+
+static inline size_t
+XT_DT_STRIPE_ALLOC_SIZE(size_t needed_elems)
+{
+  size_t needed_size = needed_elems * sizeof (XT_OFS_TYPE) * 2
+    + needed_elems * sizeof (int);
+  return needed_size;
+}
+
+static void
+XT_DT_STRIPE_BUFS_GROW(
+  size_t *work_buf_size,
+  void **work_buf,
+  XT_OFS_TYPE **dt_stripes_disp,
+  int **restrict dt_stripes_size,
+  XT_OFS_TYPE **restrict dt_stripes_stride,
+  size_t num_current_elems,
+  size_t needed_elems)
+{
+  size_t needed_size = XT_DT_STRIPE_ALLOC_SIZE(needed_elems);
+  unsigned char *work_buf_ = *work_buf;
+  assert(!num_current_elems || *dt_stripes_disp == *work_buf);
+  size_t old_stride_ofs = (size_t)((unsigned char *)*dt_stripes_stride
+                                   - work_buf_),
+    old_size_ofs = (size_t)((unsigned char *)*dt_stripes_size
+                    - work_buf_);
+  *dt_stripes_disp = *work_buf = work_buf_ = xrealloc(work_buf_, needed_size);
+  *work_buf_size = needed_size;
+  *dt_stripes_stride = *dt_stripes_disp + needed_elems;
+  *dt_stripes_size = (void *)(*dt_stripes_stride + needed_elems);
+  if (num_current_elems) {
+    int *dt_stripes_size_
+      = (void *)(work_buf_ + 2*needed_elems*sizeof (XT_OFS_TYPE));
+    memmove(dt_stripes_size_, work_buf_ + old_size_ofs,
+            sizeof (XT_OFS_TYPE) * num_current_elems);
+    XT_OFS_TYPE *dt_stripes_stride_
+      = (XT_OFS_TYPE *)(void *)work_buf_ + needed_elems;
+    memmove(dt_stripes_stride_, work_buf_ + old_stride_ofs,
+            sizeof (*dt_stripes_stride_) * num_current_elems);
+  }
+}
 
 static MPI_Datatype
-XT_GENERATE_EXT_DATATYPE(int num_transfer_pos_ext,
-                      const struct Xt_pos_ext transfer_pos_ext[],
-                      int num_ext, const XT_EXT_TYPE extents[],
-                      const int psum_ext_size[],
-                      void **work_buf, size_t *work_buf_size,
-                      struct Xt_mpi_strp_prs_params *params)
+XT_GENERATE_EXT_DATATYPE(
+  int num_transfer_pos_ext,
+  const struct Xt_pos_ext transfer_pos_ext[],
+  int num_ext, const XT_EXT_TYPE extents[],
+  const int psum_ext_size[],
+  void **work_buf, size_t *work_buf_size,
+  struct Xt_mpi_strp_prs_params *params)
 {
   if (num_transfer_pos_ext > 0)
   {
-    XT_EXT_TYPE *dt_stripes;
+    XT_OFS_TYPE *dt_stripes_disp, *dt_stripes_stride;
+    int *dt_stripes_size;
     size_t size_dt_stripes, num_dt_stripes = 0;
     enum
     {
       dt_stripes_init_size = 8,
-      dt_stripes_init_alloc = dt_stripes_init_size * sizeof (*dt_stripes),
     };
-    if (*work_buf_size < dt_stripes_init_alloc) {
-      dt_stripes = xrealloc(*work_buf, dt_stripes_init_alloc);
+    if (*work_buf_size < XT_DT_STRIPE_ALLOC_SIZE(dt_stripes_init_size)) {
+      XT_DT_STRIPE_BUFS_GROW(
+        work_buf_size, work_buf,
+        &dt_stripes_disp, &dt_stripes_size, &dt_stripes_stride,
+        0, dt_stripes_init_size);
       size_dt_stripes = dt_stripes_init_size;
     } else {
-      dt_stripes = *work_buf;
-      size_dt_stripes = *work_buf_size / sizeof (*dt_stripes);
+      size_dt_stripes = *work_buf_size / (sizeof (XT_OFS_TYPE) * 2 + sizeof (int));
+      dt_stripes_disp = *work_buf;
+      dt_stripes_stride = dt_stripes_disp + size_dt_stripes;
+      dt_stripes_size = (void *)(dt_stripes_stride + size_dt_stripes);
     }
     int i = 0,
       search_start_ext
@@ -92,20 +143,20 @@ XT_GENERATE_EXT_DATATYPE(int num_transfer_pos_ext,
       struct Xt_pos_ext current_pos_ext = transfer_pos_ext[i];
       if (num_dt_stripes >= size_dt_stripes) {
       more_stripes:
-        size_dt_stripes *= 2;
-        dt_stripes = xrealloc(dt_stripes,
-                              size_dt_stripes * sizeof (*dt_stripes));
+        XT_DT_STRIPE_BUFS_GROW(
+          work_buf_size, work_buf,
+          &dt_stripes_disp, &dt_stripes_size, &dt_stripes_stride,
+          num_dt_stripes, size_dt_stripes *= 2);
       }
       do {
         /* find extent containing start position of current range */
         search_start_ext = pos2disp2(current_pos_ext.start,
                                      num_ext, psum_ext_size,
                                      search_start_ext);
-        XT_EXT_TYPE base_ext = extents[search_start_ext],
-          derived_ext;
+        XT_EXT_TYPE base_ext = extents[search_start_ext];
         int pos_remaining = current_pos_ext.start
           - psum_ext_size[search_start_ext];
-        derived_ext.start
+        dt_stripes_disp[num_dt_stripes]
           = base_ext.start + pos_remaining * base_ext.stride;
         int isign_mask_current_pos_ext_size = isign_mask(current_pos_ext.size);
         XT_EXT_STRIDE_MASK_PREP;
@@ -114,19 +165,20 @@ XT_GENERATE_EXT_DATATYPE(int num_transfer_pos_ext,
          * if (current_pos_ext.size < 0)
          * or follow current_pos_ext.start
          * if (current_pos_ext.size > 0) */
-        derived_ext.size = imin(abs(current_pos_ext.size),
-                                (~isign_mask_current_pos_ext_size
-                                 & (base_ext.size - pos_remaining))
-                                | (isign_mask_current_pos_ext_size
-                                   & (pos_remaining + 1)));
-        derived_ext.stride
+        int derived_ext_size
+          = dt_stripes_size[num_dt_stripes]
+          = imin(abs(current_pos_ext.size),
+                 (~isign_mask_current_pos_ext_size
+                  & (base_ext.size - pos_remaining))
+                 | (isign_mask_current_pos_ext_size & (pos_remaining + 1)));
+        dt_stripes_stride[num_dt_stripes]
           = (~XT_EXT_STRIDE_MASK & base_ext.stride)
           | (XT_EXT_STRIDE_MASK & -base_ext.stride);
-        dt_stripes[num_dt_stripes++] = derived_ext;
+        ++num_dt_stripes;
         current_pos_ext.size
-          += (~isign_mask_current_pos_ext_size & -derived_ext.size)
-          | (isign_mask_current_pos_ext_size & derived_ext.size);
-        current_pos_ext.start += derived_ext.size;
+          += (~isign_mask_current_pos_ext_size & -derived_ext_size)
+          | (isign_mask_current_pos_ext_size & derived_ext_size);
+        current_pos_ext.start += derived_ext_size;
       } while ((abs(current_pos_ext.size) > 0)
                & (num_dt_stripes < size_dt_stripes));
       /* current_pos_ext hasn't been mapped completely, get more
@@ -137,9 +189,9 @@ XT_GENERATE_EXT_DATATYPE(int num_transfer_pos_ext,
     } while (++i < num_transfer_pos_ext);
 
     MPI_Datatype type
-      = XT_MPI_PARSE_STRIPE(num_dt_stripes, dt_stripes, params);
-    *work_buf = dt_stripes;
-    *work_buf_size = size_dt_stripes * sizeof (*dt_stripes);
+      = XT_MPI_PARSE_STRIPE(
+        num_dt_stripes, dt_stripes_disp, dt_stripes_size,
+        dt_stripes_stride, params);
     return type;
   }
   else
