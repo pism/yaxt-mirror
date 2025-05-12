@@ -78,6 +78,37 @@ xt_disp2ext(size_t disp_len, const int *disp,
             int *restrict v_disp, int *restrict v_size, int *restrict v_stride);
 
 /**
+ * Return number of (displacement,length) pairs needed to represent
+ * sequence of uniform size displacements as sequence of varying
+ * length blocks.
+ *
+ * @param disp_len length of array of displacements
+ * @param[in] disp array of displacements
+ * @return number of displacement/block length pairs needed to
+ * represent the array of displacements */
+PPM_DSO_INTERNAL size_t
+xt_disp2blk_count(size_t disp_len, const int *disp);
+
+/**
+ * Convert array of uniform size displacements to arrays of
+ * displacements and block lengths.
+ *
+ * @param disp_len length of array of displacements
+ * @param[in] disp array of displacements
+ * @param[out] blk_disp array of displacements of contiguous block identified
+ *                      in disp, must be able to hold as many entries
+ *                      as returned by @ref xt_disp2blk_count
+ * @param[out] blk_len array of block lengths identified
+ *                      in disp, must be able to hold as many entries
+ *                      as returned by @ref xt_disp2blk_count
+ * @return number of displacement/block length pairs needed to
+ * represent the array of displacements
+ */
+PPM_DSO_INTERNAL size_t
+xt_disp2blk(size_t disp_len, const int *disp,
+            int *restrict blk_disp, int *restrict blk_len);
+
+/**
  * Groups parameters commonly used in parsing of a stripe description
  * into an MPI datatype to cut down on the number of parameters.
  */

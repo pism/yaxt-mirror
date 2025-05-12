@@ -87,6 +87,37 @@ void xt_mpi_error(int error_code, MPI_Comm comm) {
   MPI_Abort(comm, error_code);
 }
 
+size_t
+xt_disp2blk_count(size_t disp_len, const int *disp)
+{
+  size_t count = 0, i = 0;
+  do {
+    size_t j = 1;
+    while (i + j < disp_len && disp[i] + (int)j == disp[i + j])
+      ++j;
+    ++count;
+    i += j;
+  } while (i < disp_len);
+  return count;
+}
+
+size_t
+xt_disp2blk(size_t disp_len, const int *disp,
+            int *restrict blk_disp, int *restrict blk_len)
+{
+  size_t new_count = 0;
+  size_t i = 0;
+  while (i < disp_len) {
+    size_t j = 1;
+    while (i + j < disp_len && disp[i] + (int)j == disp[i + j])
+      ++j;
+    blk_disp[new_count] = disp[i];
+    blk_len[new_count++] = (int)j;
+    i += j;
+  }
+  return new_count;
+}
+
 
 size_t
 xt_disp2ext_count(size_t disp_len, const int *disp)

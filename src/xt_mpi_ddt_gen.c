@@ -251,46 +251,25 @@ xt_mpi_generate_datatype_custom(int const * displacements, int count,
     return MPI_DATATYPE_NULL;
   if (config->ddt_cache_limit >= -1)
     return xt_mpi_generate_compact_datatype(displacements, count, old_type, comm);
-  int * blocklengths = xmalloc((size_t)count * sizeof(*blocklengths));
-  size_t new_count = 0;
-  {
-    int i = 0;
-    do {
-      int j = 1;
-      while (i + j < count && displacements[i] + j == displacements[i + j])
-        ++j;
-      blocklengths[new_count++] = j;
-      i += j;
-    } while (i < count);
-  }
-
-  int * tmp_displ = NULL;
+  size_t num_blk = xt_disp2blk_count((size_t)count, displacements);
+  int *restrict blocklengths = xmalloc((size_t)num_blk * sizeof(*blocklengths)
+                                       * (size_t)(1 + (num_blk != (size_t)count)));
   const int *displ;
-
-  if (new_count != (size_t)count) {
-
-    tmp_displ = xmalloc(new_count * sizeof(*tmp_displ));
-
-    size_t offset = 0;
-
-    for (size_t i = 0; i < new_count; ++i) {
-
-      tmp_displ[i] = displacements[offset];
-      offset += (size_t)blocklengths[i];
-    }
-
-    displ = tmp_displ;
-  } else
+  if (num_blk != (size_t)count) {
+    xt_disp2blk((size_t)count, displacements,
+                blocklengths + num_blk, blocklengths);
+    displ = blocklengths + num_blk;
+  } else {
+    for (size_t i = 0; i < num_blk; ++i)
+      blocklengths[i] = 1;
     displ = displacements;
-
+  }
   MPI_Datatype datatype;
 
   datatype = xt_mpi_generate_datatype_block_custom(
-    displ, blocklengths, (int)new_count, old_type, comm, config);
+    displ, blocklengths, (int)num_blk, old_type, comm, config);
 
   free(blocklengths);
-
-  free(tmp_displ);
 
   return datatype;
 }
