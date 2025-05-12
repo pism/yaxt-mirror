@@ -152,27 +152,19 @@ xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
     last_disp = new_disp;
   }
   // tail cases:
-  if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
-    v_disp[i] = cur_start;
+  v_disp[i] = cur_start;
+  if (cur_size != 2 || cur_stride == 1) {
     v_size[i] = cur_size;
     v_stride[i] = cur_stride;
-    i++;
-  } else if (cur_size == 2) {
-    v_disp[i] = cur_start;
+  } else {
     v_size[i] = 1;
     v_stride[i] = 1;
     i++;
     v_disp[i] = cur_start + cur_stride;
     v_size[i] = 1;
     v_stride[i] = 1;
-    i++;
-  } else { // cur_size == 1
-    v_disp[i] = cur_start;
-    v_size[i] = 1;
-    v_stride[i] = 1;
-    i++;
   }
-
+  i++;
   return i;
 }
 

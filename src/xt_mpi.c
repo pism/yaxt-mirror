@@ -149,7 +149,7 @@ xt_disp2ext_count(size_t disp_len, const int *disp)
     last_disp = new_disp;
   }
   // tail cases:
-  i += 1 + (cur_size == 2 && cur_stride != 1);
+  i += 1U + (cur_size == 2 && cur_stride != 1);
 
   return i;
 }
@@ -195,17 +195,14 @@ xt_disp2ext(size_t disp_len, const int *disp,
   }
   // tail cases:
   v_disp[i] = cur_start;
-  if (cur_size > 2 || (cur_size == 2 && cur_stride == 1)) {
+  if (cur_size != 2 || cur_stride == 1) {
     v_size[i] = cur_size;
     v_stride[i] = cur_stride;
-  } else if (cur_size == 2) {
+  } else {
     v_size[i] = 1;
     v_stride[i] = 1;
     i++;
     v_disp[i] = cur_start + cur_stride;
-    v_size[i] = 1;
-    v_stride[i] = 1;
-  } else { // cur_size == 1
     v_size[i] = 1;
     v_stride[i] = 1;
   }
