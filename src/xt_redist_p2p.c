@@ -168,6 +168,40 @@ xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
   return i;
 }
 
+static size_t
+xt_mdisp2blk_count(size_t disp_len, const int *disp, const int *pos)
+{
+  size_t count = 0, i = 0;
+  while (i < disp_len) {
+    size_t j = 1;
+    int blk_strt_pos = pos[disp[i]];
+    while (i + j < disp_len && blk_strt_pos + (int)j == pos[disp[i + j]])
+      ++j;
+    ++count;
+    i += j;
+  } while (i < disp_len);
+  return count;
+}
+
+static size_t
+xt_mdisp2blk(size_t disp_len, const int *disp, const int *pos,
+             int *restrict blk_disp, int *restrict blk_len)
+{
+  size_t new_count = 0;
+  size_t i = 0;
+  while (i < disp_len) {
+    size_t j = 1;
+    int blk_strt_pos = pos[disp[i]];
+    while (i + j < disp_len && blk_strt_pos + (int)j == pos[disp[i + j]])
+      ++j;
+    blk_disp[new_count] = blk_strt_pos;
+    blk_len[new_count++] = (int)j;
+    i += j;
+  }
+  return new_count;
+}
+
+
 static void
 xt_dt_stripe_bufs_ext_grow(
   size_t *work_buf_size,
@@ -186,37 +220,69 @@ static MPI_Datatype
 generate_datatype(const int *transfer_pos, int num_transfer_pos,
                   const int *offsets,
                   size_t *work_buf_size, void **work_buf,
-                  struct Xt_mpi_strp_prs_params *params)
+                  struct Xt_mpi_strp_prs_params *params,
+                  Xt_config config)
 {
-  int *v_disp = *work_buf, *v_size = *work_buf, *v_stride = *work_buf;
-  size_t vlen = offsets != NULL
-    ? xt_mdisp2ext_count((size_t)num_transfer_pos, offsets, transfer_pos)
-    : xt_disp2ext_count((size_t)num_transfer_pos, transfer_pos);
-  if (xt_dt_stripe_alloc_size_ext(vlen) > *work_buf_size) {
-    xt_dt_stripe_bufs_ext_grow(
-      work_buf_size, work_buf, &v_disp, &v_size, &v_stride,
-      0, vlen);
+  MPI_Datatype dt;
+  size_t num_transfer_pos_ = num_transfer_pos >= 0 ? (size_t)num_transfer_pos : 0;
+  if (config->ddt_cache_limit >= -1) {
+    int *v_disp = *work_buf, *v_size = *work_buf, *v_stride = *work_buf;
+    size_t vlen = offsets != NULL
+      ? xt_mdisp2ext_count(num_transfer_pos_, offsets, transfer_pos)
+      : xt_disp2ext_count(num_transfer_pos_, transfer_pos);
+    if (xt_dt_stripe_alloc_size_ext(vlen) > *work_buf_size) {
+      xt_dt_stripe_bufs_ext_grow(
+        work_buf_size, work_buf, &v_disp, &v_size, &v_stride,
+        0, vlen);
+    } else {
+      v_disp = *work_buf;
+      v_stride = v_disp + vlen;
+      v_size = v_stride + vlen;
+    }
+    if (offsets != NULL)
+      xt_mdisp2ext(num_transfer_pos_, offsets, transfer_pos,
+                   v_disp, v_size, v_stride);
+    else
+      xt_disp2ext(num_transfer_pos_, transfer_pos,
+                  v_disp, v_size, v_stride);
+    dt = xt_mpi_parse_stripe(vlen, v_disp, v_size, v_stride, params);
   } else {
-    v_disp = *work_buf;
-    v_stride = v_disp + vlen;
-    v_size = v_stride + vlen;
+    size_t num_blk = offsets != NULL
+      ? xt_mdisp2blk_count(num_transfer_pos_, transfer_pos, offsets)
+      : xt_disp2blk_count(num_transfer_pos_, transfer_pos);
+    int *restrict blocklengths = *work_buf;
+    size_t needed_buf_size = num_blk * sizeof(*blocklengths)
+      * (1U + ((num_blk != num_transfer_pos_) || offsets != NULL));
+    if (needed_buf_size > *work_buf_size) {
+      *work_buf = blocklengths = xrealloc(blocklengths, needed_buf_size);
+      *work_buf_size = needed_buf_size;
+    }
+    const int *displ;
+    if (num_blk != num_transfer_pos_ || offsets != NULL) {
+      if (offsets != NULL)
+        xt_mdisp2blk(num_transfer_pos_, transfer_pos, offsets,
+                     blocklengths + num_blk, blocklengths);
+      else
+        xt_disp2blk(num_transfer_pos_, transfer_pos,
+                    blocklengths + num_blk, blocklengths);
+      displ = blocklengths + num_blk;
+    } else {
+      for (size_t i = 0; i < num_blk; ++i)
+        blocklengths[i] = 1;
+      displ = transfer_pos;
+    }
+    dt = xt_mpi_generate_datatype_block_custom(
+      displ, blocklengths, (int)num_blk, params->old_type,
+      params->comm, config);
   }
-  if (offsets != NULL)
-    xt_mdisp2ext((size_t)num_transfer_pos, offsets, transfer_pos,
-                 v_disp, v_size, v_stride);
-  else
-    xt_disp2ext((size_t)num_transfer_pos, transfer_pos,
-                v_disp, v_size, v_stride);
-
-  MPI_Datatype type = xt_mpi_parse_stripe(
-    vlen, v_disp, v_size, v_stride, params);
-  return type;
+  return dt;
 }
 
 static void
 generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
                    struct Xt_redist_msg *msgs,
-                   struct Xt_mpi_strp_prs_params *params) {
+                   struct Xt_mpi_strp_prs_params *params,
+                   Xt_config config) {
 
   if (num_msgs > 0) {
     size_t work_buf_size = 0;
@@ -229,7 +295,7 @@ generate_msg_infos(int num_msgs, Xt_xmap_iter iter, const int *offsets,
 
       curr_msg->datatype
         = generate_datatype(curr_transfer_pos, curr_num_transfer_pos,
-                            offsets, &work_buf_size, &work_buf, params);
+                            offsets, &work_buf_size, &work_buf, params, config);
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
@@ -265,11 +331,11 @@ xt_redist_p2p_off_custom_new(Xt_xmap xmap, const int *src_offsets,
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, datatype, config, comm);
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
-  generate_msg_infos(nrecv, dst_iter, dst_offsets, recv_msgs, &params);
+  generate_msg_infos(nrecv, dst_iter, dst_offsets, recv_msgs, &params, config);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
-  generate_msg_infos(nsend, src_iter, src_offsets, send_msgs, &params);
+  generate_msg_infos(nsend, src_iter, src_offsets, send_msgs, &params, config);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
   Xt_mpi_ddt_cache_check_retention(&params.ddt_list, nmsg, msgs);
   xt_destroy_mpi_strp_prs_params(&params);
