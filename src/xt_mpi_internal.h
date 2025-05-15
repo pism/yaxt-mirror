@@ -167,6 +167,11 @@ xt_mpi_generate_datatype_custom(int const * displacements, int count,
                                 MPI_Datatype old_type, MPI_Comm comm,
                                 Xt_config config);
 
+PPM_DSO_INTERNAL MPI_Datatype
+xt_mpi_generate_datatype_match(
+  int const * displacements, int count,
+  MPI_Datatype old_type, MPI_Comm comm);
+
 PPM_DSO_INTERNAL void
 xt_mpi_init(void);
 PPM_DSO_INTERNAL void
