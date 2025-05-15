@@ -104,6 +104,10 @@ XT_DT_STRIPE_BUFS_GROW(
   }
 }
 
+/**
+ * @param num_transfer_pos_ext number of extents describing transfer,
+ *                             must be greater than zero
+ */
 static MPI_Datatype
 XT_GENERATE_EXT_DATATYPE(
   int num_transfer_pos_ext,
@@ -113,27 +117,25 @@ XT_GENERATE_EXT_DATATYPE(
   void **work_buf, size_t *work_buf_size,
   struct Xt_mpi_strp_prs_params *params)
 {
-  if (num_transfer_pos_ext > 0)
+  XT_OFS_TYPE *dt_stripes_disp, *dt_stripes_stride;
+  int *dt_stripes_size;
+  size_t size_dt_stripes, num_dt_stripes = 0;
+  enum {
+    dt_stripes_init_size = 8,
+  };
+  if (*work_buf_size < XT_DT_STRIPE_ALLOC_SIZE(dt_stripes_init_size)) {
+    XT_DT_STRIPE_BUFS_GROW(
+      work_buf_size, work_buf,
+      &dt_stripes_disp, &dt_stripes_size, &dt_stripes_stride,
+      0, dt_stripes_init_size);
+    size_dt_stripes = dt_stripes_init_size;
+  } else {
+    size_dt_stripes = *work_buf_size / (sizeof (XT_OFS_TYPE) * 2 + sizeof (int));
+    dt_stripes_disp = *work_buf;
+    dt_stripes_stride = dt_stripes_disp + size_dt_stripes;
+    dt_stripes_size = (void *)(dt_stripes_stride + size_dt_stripes);
+  }
   {
-    XT_OFS_TYPE *dt_stripes_disp, *dt_stripes_stride;
-    int *dt_stripes_size;
-    size_t size_dt_stripes, num_dt_stripes = 0;
-    enum
-    {
-      dt_stripes_init_size = 8,
-    };
-    if (*work_buf_size < XT_DT_STRIPE_ALLOC_SIZE(dt_stripes_init_size)) {
-      XT_DT_STRIPE_BUFS_GROW(
-        work_buf_size, work_buf,
-        &dt_stripes_disp, &dt_stripes_size, &dt_stripes_stride,
-        0, dt_stripes_init_size);
-      size_dt_stripes = dt_stripes_init_size;
-    } else {
-      size_dt_stripes = *work_buf_size / (sizeof (XT_OFS_TYPE) * 2 + sizeof (int));
-      dt_stripes_disp = *work_buf;
-      dt_stripes_stride = dt_stripes_disp + size_dt_stripes;
-      dt_stripes_size = (void *)(dt_stripes_stride + size_dt_stripes);
-    }
     int i = 0,
       search_start_ext
       = pos2disp(transfer_pos_ext[0].start,
@@ -187,15 +189,13 @@ XT_GENERATE_EXT_DATATYPE(
         goto more_stripes;
       /* only advance current_pos_ext after it has been mapped completely */
     } while (++i < num_transfer_pos_ext);
-
-    MPI_Datatype type
-      = XT_MPI_PARSE_STRIPE(
-        num_dt_stripes, dt_stripes_disp, dt_stripes_size,
-        dt_stripes_stride, params);
-    return type;
   }
-  else
-    return MPI_DATATYPE_NULL;
+
+  MPI_Datatype type
+    = XT_MPI_PARSE_STRIPE(
+      num_dt_stripes, dt_stripes_disp, dt_stripes_size,
+      dt_stripes_stride, params);
+  return type;
 }
 
 static void
@@ -228,11 +228,13 @@ XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
         = xt_xmap_iterator_get_num_transfer_pos_ext(iter);
 
       curr_msg->datatype
-        = XT_GENERATE_EXT_DATATYPE(curr_num_transfer_pos_ext,
+        = curr_num_transfer_pos_ext > 0
+        ? XT_GENERATE_EXT_DATATYPE(curr_num_transfer_pos_ext,
                                    curr_transfer_pos_ext,
                                    num_ext, extents, psum_ext_size,
                                    &buf, &buf_size,
-                                   params);
+                                   params)
+        : MPI_DATATYPE_NULL;
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
