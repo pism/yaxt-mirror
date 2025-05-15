@@ -325,6 +325,9 @@ XtMPI_Type_create_hindexed_block(int count, int blocklength,
 #define XT_MPI_STRP_PRS_INDEXED_CREATE Xt_mpi_ddt_cache_acquire_hindexed
 #include "xt_mpi_stripe_parse_func.h"
 
+static MPI_Datatype
+xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
+                     struct Xt_mpi_strp_prs_params *params);
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
@@ -338,7 +341,7 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
   return dt;
 }
 
-MPI_Datatype
+static MPI_Datatype
 xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
                      struct Xt_mpi_strp_prs_params *params)
 {

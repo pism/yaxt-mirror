@@ -158,10 +158,6 @@ xt_mpi_parse_astripe(
   struct Xt_mpi_strp_prs_params *params);
 
 PPM_DSO_INTERNAL MPI_Datatype
-xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
-                     struct Xt_mpi_strp_prs_params *params);
-
-PPM_DSO_INTERNAL MPI_Datatype
 xt_mpi_generate_datatype_block_custom(const int *displacements,
                                       const int *blocklengths,
                                       int count, MPI_Datatype old_type,
