@@ -446,7 +446,7 @@ CONTAINS
 #ifdef HAVE_FC_ALLOCATABLE_CHARACTER
           ALLOCATE(CHARACTER(optarg_len) :: run_config%fname_pat_src)
 #endif
-          run_config%fname_pat_src(:) = optarg(1:optarg_len)
+          run_config%fname_pat_src(1:optarg_len) = optarg(1:optarg_len)
           next_is_optarg = eq_pos == 0
         CASE ("index-dst-file-pat")
           IF (optarg_len == 0) THEN
