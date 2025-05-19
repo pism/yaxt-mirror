@@ -170,10 +170,8 @@ xt_mpi_generate_datatype_custom(int const * displacements, int count,
       blocklengths[i] = 1;
     displ = displacements;
   }
-  MPI_Datatype datatype;
-
-  datatype = xt_mpi_generate_datatype_block_custom(
-    displ, blocklengths, (int)num_blk, old_type, comm, config);
+  MPI_Datatype datatype = xt_mpi_generate_datatype_block_match_i(
+    displ, blocklengths, (int)num_blk, old_type, comm);
 
   free(blocklengths);
 

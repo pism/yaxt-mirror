@@ -224,7 +224,8 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
                   Xt_config config)
 {
   MPI_Datatype dt;
-  size_t num_transfer_pos_ = num_transfer_pos >= 0 ? (size_t)num_transfer_pos : 0;
+  size_t num_transfer_pos_
+    = num_transfer_pos >= 0 ? (size_t)num_transfer_pos : 0;
   if (config->ddt_cache_limit >= -1) {
     int *v_disp = *work_buf, *v_size = *work_buf, *v_stride = *work_buf;
     size_t vlen = offsets != NULL
@@ -271,9 +272,9 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
         blocklengths[i] = 1;
       displ = transfer_pos;
     }
-    dt = xt_mpi_generate_datatype_block_custom(
+    dt = xt_mpi_generate_datatype_block_match_i(
       displ, blocklengths, (int)num_blk, params->old_type,
-      params->comm, config);
+      params->comm);
   }
   return dt;
 }
@@ -455,9 +456,9 @@ generate_block_datatype(const int *transfer_pos, int num_transfer_pos,
     dt = xt_mpi_parse_stripe(
       (size_t)num_transfer_pos, bdispl_vec, blen_vec, stride_vec, params);
   } else
-    dt = xt_mpi_generate_datatype_block_custom(
+    dt = xt_mpi_generate_datatype_block_match_i(
       bdispl_vec, blen_vec, num_transfer_pos,
-      params->old_type, params->comm, config);
+      params->old_type, params->comm);
 
   free(bdispl_vec);
 
