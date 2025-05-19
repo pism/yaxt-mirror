@@ -390,6 +390,8 @@ pos2disp2(int pos, int num_ext,
 #define XT_MPI_PARSE_STRIPE xt_mpi_parse_stripe
 #define XT_EXT_STRIDE_MASK isign_mask_current_pos_ext_size
 #define XT_EXT_STRIDE_MASK_PREP
+#define XT_MPI_GENERATE_DATATYPE_BLOCK_MATCH \
+  xt_mpi_generate_datatype_block_match_i
 #include "xt_redist_p2p_ext.h"
 #undef XT_OFS_TYPE
 #undef XT_EXT_TYPE
@@ -397,6 +399,7 @@ pos2disp2(int pos, int num_ext,
 #undef XT_MPI_PARSE_STRIPE
 #undef XT_EXT_STRIDE_MASK
 #undef XT_EXT_STRIDE_MASK_PREP
+#undef XT_MPI_GENERATE_DATATYPE_BLOCK_MATCH
 
 #define XT_OFS_TYPE MPI_Aint
 #define XT_EXT_TYPE struct Xt_aoffset_ext
@@ -405,6 +408,8 @@ pos2disp2(int pos, int num_ext,
 #define XT_EXT_STRIDE_MASK asign_mask_current_pos_ext_size
 #define XT_EXT_STRIDE_MASK_PREP MPI_Aint asign_mask_current_pos_ext_size \
   = asign_mask(current_pos_ext.size)
+#define XT_MPI_GENERATE_DATATYPE_BLOCK_MATCH \
+  xt_mpi_generate_datatype_block_match_a
 #include "xt_redist_p2p_ext.h"
 #undef XT_OFS_TYPE
 #undef XT_EXT_TYPE
@@ -412,6 +417,7 @@ pos2disp2(int pos, int num_ext,
 #undef XT_MPI_PARSE_STRIPE
 #undef XT_EXT_STRIDE_MASK
 #undef XT_EXT_STRIDE_MASK_PREP
+#undef XT_MPI_GENERATE_DATATYPE_BLOCK_MATCH
 
 
 /* ====================================================================== */

@@ -115,7 +115,8 @@ XT_GENERATE_EXT_DATATYPE(
   int num_ext, const XT_EXT_TYPE extents[],
   const int psum_ext_size[],
   void **work_buf, size_t *work_buf_size,
-  struct Xt_mpi_strp_prs_params *params)
+  struct Xt_mpi_strp_prs_params *params,
+  Xt_config config)
 {
   XT_OFS_TYPE *dt_stripes_disp, *dt_stripes_stride;
   int *dt_stripes_size;
@@ -191,19 +192,56 @@ XT_GENERATE_EXT_DATATYPE(
     } while (++i < num_transfer_pos_ext);
   }
 
-  MPI_Datatype type
-    = XT_MPI_PARSE_STRIPE(
+  MPI_Datatype dt;
+  if (config->ddt_cache_limit >= -1)
+    dt = XT_MPI_PARSE_STRIPE(
       num_dt_stripes, dt_stripes_disp, dt_stripes_size,
       dt_stripes_stride, params);
-  return type;
+  else {
+    size_t strided_expansion = 0;
+    for (size_t j = 0; j < num_dt_stripes; ++j)
+      if (dt_stripes_stride[j] != 1)
+        strided_expansion += (size_t)dt_stripes_size[j]-1;
+    size_t num_dt_blk = num_dt_stripes+strided_expansion;
+    if (strided_expansion) {
+      if (num_dt_blk > size_dt_stripes)
+        XT_DT_STRIPE_BUFS_GROW(
+          work_buf_size, work_buf,
+          &dt_stripes_disp, &dt_stripes_size, &dt_stripes_stride,
+          num_dt_stripes, size_dt_stripes *= 2);
+      for (size_t j = num_dt_blk, i = num_dt_stripes; j > 0;) {
+        --j;
+        --i;
+        if (dt_stripes_stride[i] == 1) {
+          dt_stripes_disp[j] = dt_stripes_disp[i];
+          dt_stripes_size[j] = dt_stripes_size[i];
+        } else {
+          size_t stripe_size = (size_t)dt_stripes_size[i];
+          XT_OFS_TYPE stripe_base_disp = dt_stripes_disp[i],
+            stripe_stride = dt_stripes_stride[i];
+          for (size_t k = 0; k < stripe_size; ++k) {
+            dt_stripes_disp[j-k] = stripe_base_disp
+              + (XT_OFS_TYPE)(stripe_size - k - 1) * stripe_stride;
+            dt_stripes_size[j-k] = 1;
+          }
+          j -= stripe_size - 1;
+        }
+      }
+    }
+    dt = XT_MPI_GENERATE_DATATYPE_BLOCK_MATCH(
+      dt_stripes_disp, dt_stripes_size, (int)num_dt_blk,
+      params->old_type, params->comm);
+  }
+  return dt;
 }
 
 static void
 XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
-                       int num_ext,
-                       const XT_EXT_TYPE extents[],
-                       struct Xt_redist_msg *msgs,
-                       struct Xt_mpi_strp_prs_params *params)
+                          int num_ext,
+                          const XT_EXT_TYPE extents[],
+                          struct Xt_redist_msg *msgs,
+                          struct Xt_mpi_strp_prs_params *params,
+                          Xt_config config)
 {
   if (num_msgs > 0) {
     /* partial sums of ext sizes */
@@ -233,7 +271,7 @@ XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
                                    curr_transfer_pos_ext,
                                    num_ext, extents, psum_ext_size,
                                    &buf, &buf_size,
-                                   params)
+                                   params, config)
         : MPI_DATATYPE_NULL;
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
@@ -282,12 +320,12 @@ XT_REDIST_P2P_EXT_CUSTOM_NEW(Xt_xmap xmap,
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, datatype, config, comm);
   XT_GENERATE_EXT_MSG_INFOS(nrecv, dst_iter, num_dst_ext, dst_extents,
-                            recv_msgs, &params);
+                            recv_msgs, &params, config);
   if (dst_iter) xt_xmap_iterator_delete(dst_iter);
 
   Xt_xmap_iter src_iter = xt_xmap_get_out_iterator(xmap);
   XT_GENERATE_EXT_MSG_INFOS(nsend, src_iter, num_src_ext, src_extents,
-                            send_msgs, &params);
+                            send_msgs, &params, config);
   if (src_iter) xt_xmap_iterator_delete(src_iter);
   xt_destroy_mpi_strp_prs_params(&params);
 
