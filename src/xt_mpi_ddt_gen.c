@@ -57,7 +57,56 @@
 #include "xt_mpi_internal.h"
 #include "xt_mpi_ddt_cache.h"
 
+#define XT_MPI_DDT_GEN_MATCH_SUFFIX _i
+#define XT_MPI_DDT_GEN_MATCH_AOFS_TYPE int
+#define XT_MPI_TYPE_CREATE_INDEXED_BLOCK MPI_Type_create_indexed_block
+#define XT_MPI_TYPE_CREATE_VECTOR MPI_Type_vector
+#define XT_MPI_DDT_GEN_MATCH_COMPUTE_VECTOR_DISPLACEMENT
+#define XT_MPI_TYPE_INDEXED MPI_Type_indexed
 #include <xt_mpi_ddt_gen_match.h>
+#undef XT_MPI_DDT_GEN_MATCH_AOFS_TYPE
+#undef XT_MPI_DDT_GEN_MATCH_SUFFIX
+#undef XT_MPI_TYPE_CREATE_INDEXED_BLOCK
+#undef XT_MPI_TYPE_CREATE_VECTOR
+#undef XT_MPI_DDT_GEN_MATCH_COMPUTE_VECTOR_DISPLACEMENT
+#undef XT_MPI_TYPE_INDEXED
+
+#if MPI_VERSION < 3
+static inline int
+XtMPI_Type_create_hindexed_block(int count, int blocklength,
+                                 const MPI_Aint array_of_displacements[],
+                                 MPI_Datatype oldtype, MPI_Datatype *newtype)
+{
+  size_t count_ = count > 0 ? (size_t)count : 0;
+  MPI_Datatype *restrict oldtypes = xmalloc(count_ * sizeof (*oldtypes)
+                                   + count_ * sizeof (int));
+  int *restrict blocklengths = (int *)(oldtypes + count_);
+  for (size_t i = 0; i < count_; ++i) {
+    blocklengths[i] = blocklength;
+    oldtypes[i] = oldtype;
+  }
+  int rc = MPI_Type_create_struct(count, blocklengths,
+                                  CAST_MPI_SEND_BUF(array_of_displacements),
+                                  oldtypes, newtype);
+  free(oldtypes);
+  return rc;
+}
+
+#define MPI_Type_create_hindexed_block XtMPI_Type_create_hindexed_block
+#endif
+
+#define XT_MPI_DDT_GEN_MATCH_SUFFIX _a
+#define XT_MPI_DDT_GEN_MATCH_AOFS_TYPE MPI_Aint
+#define XT_MPI_TYPE_CREATE_INDEXED_BLOCK MPI_Type_create_hindexed_block
+#define XT_MPI_TYPE_CREATE_VECTOR MPI_Type_create_hvector
+#define XT_MPI_TYPE_INDEXED MPI_Type_create_hindexed
+#include <xt_mpi_ddt_gen_match.h>
+#undef XT_MPI_DDT_GEN_MATCH_AOFS_TYPE
+#undef XT_MPI_DDT_GEN_MATCH_SUFFIX
+#undef XT_MPI_TYPE_CREATE_INDEXED_BLOCK
+#undef XT_MPI_TYPE_CREATE_VECTOR
+#undef XT_MPI_DDT_GEN_MATCH_COMPUTE_VECTOR_DISPLACEMENT
+#undef XT_MPI_TYPE_INDEXED
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
@@ -87,8 +136,8 @@ xt_mpi_generate_datatype_block_custom(const int *displacements,
     return xt_mpi_generate_compact_datatype_block(displacements, blocklengths,
                                                   count, old_type, comm);
   else
-    return xt_mpi_generate_datatype_match_custom(displacements, blocklengths,
-                                                 count, old_type, comm);
+    return xt_mpi_generate_datatype_block_match_i(displacements, blocklengths,
+                                                  count, old_type, comm);
 }
 
 MPI_Datatype
@@ -148,29 +197,6 @@ xt_mpi_generate_datatype_custom(int const * displacements, int count,
 #undef XT_MPI_STRP_PRS_INDEXED_BLOCK_CREATE
 #undef XT_MPI_STRP_PRS_INDEXED_CREATE
 
-#if MPI_VERSION < 3
-static inline int
-XtMPI_Type_create_hindexed_block(int count, int blocklength,
-                                 const MPI_Aint array_of_displacements[],
-                                 MPI_Datatype oldtype, MPI_Datatype *newtype)
-{
-  size_t count_ = count > 0 ? (size_t)count : 0;
-  MPI_Datatype *restrict oldtypes = xmalloc(count_ * sizeof (*oldtypes)
-                                   + count_ * sizeof (int));
-  int *restrict blocklengths = (int *)(oldtypes + count_);
-  for (size_t i = 0; i < count_; ++i) {
-    blocklengths[i] = blocklength;
-    oldtypes[i] = oldtype;
-  }
-  int rc = MPI_Type_create_struct(count, blocklengths,
-                                  CAST_MPI_SEND_BUF(array_of_displacements),
-                                  oldtypes, newtype);
-  free(oldtypes);
-  return rc;
-}
-
-#define MPI_Type_create_hindexed_block XtMPI_Type_create_hindexed_block
-#endif
 
 #define XT_MPI_STRP_PRS_PREFIX a
 #define XT_MPI_STRP_PRS_UNITSTRIDE params->old_type_extent
