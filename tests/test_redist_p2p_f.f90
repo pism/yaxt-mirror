@@ -53,7 +53,7 @@ PROGRAM test_redist_p2p_f
        xt_redist_s_exchange, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
        xt_xmap_all2all_new, xt_xmap_delete, &
-       xt_config, xt_config_delete
+       xt_config, xt_config_delete, xt_config_set_ddt_cache_limit
   ! pgfortran is in most versions well incapable of handling multiply extended
   ! generic interfaces
 #ifdef __PGI
@@ -66,6 +66,7 @@ PROGRAM test_redist_p2p_f
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_p2p_f.f90'
   TYPE(xt_config) :: config
+  INTEGER, PARAMETER :: ddt_gen_lim(4) = (/ -1, 0, 16, -2 /)
 
   CALL init_mpi
 
@@ -97,7 +98,7 @@ CONTAINS
          & (/  5_xi,  4_xi,  3_xi, 96_xi,  1_xi, &
          &     5_xi,  4_xi,  5_xi,  4_xi,  3_xi, &
          &    13_xi,  2_xi,  1_xi /)
-    INTEGER :: i
+    INTEGER :: i, ddt_gen_test
 #ifndef __PGI
     DOUBLE PRECISION, PARAMETER :: src_data(src_num_indices) = &
          (/ (DBLE(i), i=0,src_num_indices-1) /)
@@ -129,36 +130,40 @@ CONTAINS
     ! xmap
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
-    ! redist_p2p
-    redist_dp = xt_redist_p2p_new(xmap, mpi_double_precision, config)
-
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_dp), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_Comm", filename, __LINE__)
-
-    ! test exchange
-    CALL check_redist(redist_dp, src_data, dst_data, ref_dst_data)
-
-    ! repeat for logicals
+    ! fill in data for logicals
     src_l = NINT(MOD(src_data, 2.0d0)) == 1
-    dst_l = .FALSE.
     ref_dst_l = NINT(MOD(ref_dst_data, 2.0d0)) == 1
-    redist_l = xt_redist_p2p_new(xmap, mpi_logical, config)
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_l), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_Comm", filename, __LINE__)
-    CALL xt_redist_s_exchange(redist_l, src_l, dst_l)
-    IF (ANY(dst_l .NEQV. ref_dst_l)) &
-         CALL test_abort("error in xt_redist_s_exchange for 1D logical array", &
-         filename, __LINE__)
-    redist_copy = xt_redist_copy(redist_dp)
-    CALL xt_redist_delete(redist_dp)
-    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
+
+    DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
+      CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))
+      dst_l = .FALSE.
+      ! redist_p2p
+      redist_dp = xt_redist_p2p_new(xmap, mpi_double_precision, config)
+
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_dp), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_mpi_Comm", filename, __LINE__)
+
+      ! test exchange
+      CALL check_redist(redist_dp, src_data, dst_data, ref_dst_data)
+
+      redist_l = xt_redist_p2p_new(xmap, mpi_logical, config)
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist_l), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_mpi_Comm", filename, __LINE__)
+      CALL xt_redist_s_exchange(redist_l, src_l, dst_l)
+      CALL xt_redist_delete(redist_l)
+      IF (ANY(dst_l .NEQV. ref_dst_l)) &
+           CALL test_abort("error in xt_redist_s_exchange for 1D logical array", &
+           filename, __LINE__)
+      redist_copy = xt_redist_copy(redist_dp)
+      CALL xt_redist_delete(redist_dp)
+      CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
+      CALL xt_redist_delete(redist_copy)
+    END DO
 
     ! clean up
-    CALL xt_redist_delete(redist_copy)
-    CALL xt_redist_delete(redist_l)
     CALL xt_xmap_delete(xmap)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
@@ -175,7 +180,7 @@ CONTAINS
          (/  5_xi,  4_xi,  3_xi, 96_xi,  1_xi, &
          &   5_xi,  4_xi,  5_xi,  4_xi,  3_xi, &
          &  13_xi,  2_xi,  1_xi /)
-    INTEGER :: i
+    INTEGER :: i, ddt_gen_test
     INTEGER, PARAMETER :: src_pos(src_num) = (/ (i, i = 0, src_num - 1) /), &
          dst_pos(dst_num) = (/ ( dst_num - i, i = 1, dst_num ) /)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
@@ -205,29 +210,33 @@ CONTAINS
     dst_idxlist = xt_idxvec_new(dst_index_list, dst_num)
 
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
-
-    ! redist_p2p with offsets
-    redist = xt_redist_p2p_off_custom_new(xmap, src_pos, dst_pos, &
-         mpi_double_precision, config)
-
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_MPI_Comm", filename, __LINE__)
-
-    ! test exchange
-    CALL check_redist(redist, src_data, dst_data, ref_dst_data(dst_num:1:-1))
-
-    redist_copy = xt_redist_copy(redist)
-    CALL xt_redist_delete(redist)
-    CALL check_redist(redist_copy, src_data, dst_data, &
-         ref_dst_data(dst_num:1:-1))
-
-    ! clean up
-    CALL xt_redist_delete(redist_copy)
-    CALL xt_xmap_delete(xmap)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
+
+    DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
+      CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))
+      dst_data = -1.0d0
+      ! redist_p2p with offsets
+      redist = xt_redist_p2p_off_custom_new(xmap, src_pos, dst_pos, &
+           mpi_double_precision, config)
+
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_MPI_Comm",filename,__LINE__)
+
+      ! test exchange
+      CALL check_redist(redist, src_data, dst_data, ref_dst_data(dst_num:1:-1))
+
+      redist_copy = xt_redist_copy(redist)
+      CALL xt_redist_delete(redist)
+      CALL check_redist(redist_copy, src_data, dst_data, &
+           ref_dst_data(dst_num:1:-1))
+      CALL xt_redist_delete(redist_copy)
+    END DO
+
+    ! clean up
+    CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_with_offsets
 
   SUBROUTINE test_offset_extents
@@ -241,6 +250,7 @@ CONTAINS
          (/  5_xi,  4_xi,  3_xi, 96_xi,  1_xi, &
          &   5_xi,  4_xi,  5_xi,  4_xi,  3_xi, &
          &  13_xi, 2_xi, 1_xi /)
+    INTEGER :: ddt_gen_test
 #ifdef __G95__
     INTEGER :: i
     INTEGER(xt_int_kind), PARAMETER :: src_data(src_num) &
@@ -267,26 +277,29 @@ CONTAINS
 
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
 
-    ! redist_p2p with extents of offsets
-    redist = xt_redist_p2p_ext_new(xmap, src_pos, dst_pos, xt_int_mpidt, config)
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_MPI_Comm(redist), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_MPI_Comm", &
-         filename, __LINE__)
-
-    ! test exchange
-    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
-
-    redist_copy = xt_redist_copy(redist)
-    CALL xt_redist_delete(redist)
-    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
-
-    ! clean up
-    CALL xt_redist_delete(redist_copy)
-    CALL xt_xmap_delete(xmap)
     CALL xt_idxlist_delete(src_idxlist)
     CALL xt_idxlist_delete(dst_idxlist)
+
+    DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
+      CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))
+      ! redist_p2p with extents of offsets
+      redist = xt_redist_p2p_ext_new(xmap, src_pos, dst_pos, xt_int_mpidt, config)
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_MPI_Comm(redist), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_MPI_Comm", &
+           filename, __LINE__)
+
+      ! test exchange
+      CALL check_redist(redist, src_data, dst_data, ref_dst_data)
+
+      redist_copy = xt_redist_copy(redist)
+      CALL xt_redist_delete(redist)
+      CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
+      CALL xt_redist_delete(redist_copy)
+    END DO
+    ! clean up
+    CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_offset_extents
 
 END PROGRAM test_redist_p2p_f

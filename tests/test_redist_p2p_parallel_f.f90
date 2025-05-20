@@ -54,7 +54,7 @@ PROGRAM test_redist_p2p_parallel
        xt_redist, xt_redist_p2p_new, xt_redist_get_mpi_comm, &
        xt_redist_delete, &
        xt_redist_p2p_blocks_off_custom_new, xt_redist_p2p_blocks_custom_new, &
-       xt_config, xt_config_delete
+       xt_config, xt_config_delete, xt_config_set_ddt_cache_limit
   USE test_idxlist_utils, ONLY: test_err_count
   USE test_redist_common, ONLY: communicators_are_congruent, &
        check_redist, redist_exchanger_option
@@ -62,6 +62,7 @@ PROGRAM test_redist_p2p_parallel
 
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_p2p_parallel_f.f90'
   TYPE(xt_config) :: config
+  INTEGER, PARAMETER :: ddt_gen_lim(4) = (/ -1, 0, 16, -2 /)
   INTEGER :: comm_rank, comm_size, ierror
 
   CALL init_mpi
@@ -97,7 +98,7 @@ CONTAINS
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redist
     DOUBLE PRECISION :: src_data(data_size), dst_data(data_size)
-    INTEGER :: i
+    INTEGER :: i, ddt_gen_test
 
     ! source index list
     DO i = 1, src_num_indices
@@ -113,25 +114,31 @@ CONTAINS
     dst_idxlist = xt_idxvec_new(dst_index_list)
     ! xmap
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
-    ! redist_p2p
-    redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
-
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+    CALL xt_idxlist_delete(src_idxlist)
+    CALL xt_idxlist_delete(dst_idxlist)
 
     DO i = 1, src_num_indices
       src_data(i) = DBLE(comm_rank * data_size + i - 1)
     END DO
 
-    CALL check_redist(redist, src_data, dst_data, dst_index_list)
+    DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
+      CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))
+
+      ! redist_p2p
+      redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
+
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+
+
+      CALL check_redist(redist, src_data, dst_data, dst_index_list)
+      CALL xt_redist_delete(redist)
+    END DO
 
     ! clean up
-    CALL xt_redist_delete(redist)
     CALL xt_xmap_delete(xmap)
-    CALL xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
   END SUBROUTINE simple_test
 
   ! test nonuniform numbers of send and receive partners
@@ -142,7 +149,7 @@ CONTAINS
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist
-    INTEGER :: i, src_num_indices, dst_num_indices
+    INTEGER :: i, src_num_indices, dst_num_indices, ddt_gen_test
 
     ALLOCATE(src_index_list(comm_size), dst_index_list(comm_size), &
          src_data(comm_size), dst_data(comm_size), ref_dst_data(comm_size))
@@ -163,16 +170,10 @@ CONTAINS
 
     ! xmap
     xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, mpi_comm_world)
+    CALL xt_idxlist_delete(src_idxlist)
+    CALL xt_idxlist_delete(dst_idxlist)
 
-    ! redist_p2p
-    redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
-
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
-
-    ! test exchange
+    ! prepare invariant test-data
     IF (comm_rank == 0) THEN
       DO i = 1, comm_size
         src_data(i) = DBLE(i - 1)
@@ -180,23 +181,33 @@ CONTAINS
     ELSE
       src_data(:) = -2.0d0
     END IF
-
     DO i = 1, comm_size
       ref_dst_data(i) = DBLE(i-1)
     END DO
-    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
+
+    DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
+      CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))
+      ! redist_p2p
+      redist = xt_redist_p2p_new(xmap, mpi_double_precision, config)
+
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+
+      ! test exchange
+      CALL check_redist(redist, src_data, dst_data, ref_dst_data)
+      CALL xt_redist_delete(redist)
+    END DO
 
     ! clean up
-    CALL xt_redist_delete(redist)
     CALL xt_xmap_delete(xmap)
-    CALL xt_idxlist_delete(src_idxlist)
-    CALL xt_idxlist_delete(dst_idxlist)
   END SUBROUTINE nonuniform_test
 
   ! test redist with blocks
   SUBROUTINE block_redist_test
     ! gvol_size: volume of deep ocean
-    INTEGER :: ngdom, gvol_size, i, nwin, ig0, ig, j, p, qa, qb
+    INTEGER :: ngdom, gvol_size, i, nwin, ig0, j, p, ddt_gen_test
     ! gdepth: ocean depth of an one dim. ocean
     INTEGER, ALLOCATABLE :: gdoma(:), gdomb(:), gsurfdata(:), &
          gdepth(:), ig2col_off(:), b_surfdata_ref(:), gvoldata(:), &
@@ -205,7 +216,6 @@ CONTAINS
     INTEGER, ALLOCATABLE :: a_surfdata(:), b_surfdata(:), &
          a_voldata(:), b_voldata(:)
     INTEGER(xi), ALLOCATABLE :: iveca(:), ivecb(:)
-    INTEGER :: ia, ib, blk_ofs_accum, gdepth_i
     TYPE(Xt_idxlist) :: idxlist_a, idxlist_b
     TYPE(xt_xmap) :: xmap
     TYPE(Xt_redist) :: redist, block_redist, block_redist2
@@ -238,34 +248,22 @@ CONTAINS
     ! local index
     ALLOCATE(iveca(nwin), ivecb(nwin))
     DO i = 1, nwin
-      ig = ig0 + i
-      iveca(i) = INT(gdoma(ig), xi)
-      ivecb(i) = INT(gdomb(ig), xi)
+      iveca(i) = INT(gdoma(ig0+i), xi)
+      ivecb(i) = INT(gdomb(ig0+i), xi)
     END DO
 
     idxlist_a = xt_idxvec_new(iveca, nwin)
     idxlist_b = xt_idxvec_new(ivecb, nwin)
 
     xmap = xt_xmap_all2all_new(idxlist_a, idxlist_b, mpi_comm_world)
-
-    ! simple redist
-    redist = xt_redist_p2p_new(xmap, mpi_integer, config)
-
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+    CALL xt_idxlist_delete(idxlist_a)
+    CALL xt_idxlist_delete(idxlist_b)
 
     ALLOCATE(a_surfdata(nwin), b_surfdata(nwin), b_surfdata_ref(nwin))
     DO i = 1, nwin
       a_surfdata(i) = gsurfdata(iveca(i) + 1)
-      b_surfdata(i) = -1
       b_surfdata_ref(i) = gsurfdata(ivecb(i) + 1)
     END DO
-
-    CALL check_redist(redist, a_surfdata, b_surfdata, b_surfdata_ref)
-    CALL xt_redist_delete(redist)
-
     ! generate global volume data
     ALLOCATE(gvoldata(gvol_size))
     DO i = 1, ngdom
@@ -281,68 +279,77 @@ CONTAINS
     ! we only need local size but simply oversize here
     ALLOCATE(a_voldata(gvol_size), b_voldata(gvol_size), &
          b_voldata_ref(gvol_size))
-    a_voldata(:) = -1
     b_voldata_ref(:) = -1
 
-    qa = 0
-    blk_ofs_accum = 0
-    DO i = 1, nwin
-      ia = INT(iveca(i)) + 1
-      gdepth_i = gdepth(ia)
-      src_block_offsets(i) = blk_ofs_accum
-      blk_ofs_accum = blk_ofs_accum + gdepth_i
-      src_block_sizes(i) = gdepth_i
-      p = ig2col_off(ia)
-      DO j = 1, gdepth_i
-        a_voldata(qa + j) = gvoldata(p + j)
-      END DO
-      qa = qa + gdepth_i
+    CALL generate_block(a_voldata, src_block_sizes, src_block_offsets, &
+         gvoldata, ig2col_off, gdepth, iveca, nwin)
+    CALL generate_block(b_voldata_ref, dst_block_sizes, dst_block_offsets, &
+         gvoldata, ig2col_off, gdepth, ivecb, nwin)
+
+    DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
+      CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))
+      ! simple redist
+      redist = xt_redist_p2p_new(xmap, mpi_integer, config)
+
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+
+      CALL check_redist(redist, a_surfdata, b_surfdata, b_surfdata_ref)
+      CALL xt_redist_delete(redist)
+
+
+      ! redist with blocks
+      block_redist = xt_redist_p2p_blocks_off_custom_new(xmap, &
+           src_block_offsets, src_block_sizes, nwin, &
+           dst_block_offsets, dst_block_sizes, nwin, mpi_integer, config)
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist), &
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+
+      CALL check_redist(block_redist, a_voldata, b_voldata, b_voldata_ref)
+      CALL xt_redist_delete(block_redist)
+
+      ! redist with blocks but without explicit offsets:
+      block_redist2 = xt_redist_p2p_blocks_custom_new(xmap, &
+           src_block_sizes, nwin, dst_block_sizes, nwin, mpi_integer, config)
+      ! test communicator of redist
+      IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist2),&
+           mpi_comm_world)) &
+           CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
+
+      CALL check_redist(block_redist2, a_voldata, b_voldata, b_voldata_ref)
+      CALL xt_redist_delete(block_redist2)
     END DO
-
-    qb = 0
-    blk_ofs_accum = 0
-    DO i = 1, nwin
-      ib = INT(ivecb(i)) + 1
-      gdepth_i = gdepth(ib)
-      dst_block_offsets(i) = blk_ofs_accum
-      blk_ofs_accum = blk_ofs_accum + gdepth_i
-      dst_block_sizes(i) = gdepth_i
-      p = ig2col_off(ib)
-      DO j = 1, gdepth_i
-        b_voldata_ref(qb + j) = gvoldata(p + j)
-      END DO
-      qb = qb + gdepth_i
-    END DO
-
-    ! redist with blocks
-    block_redist = xt_redist_p2p_blocks_off_custom_new(xmap, &
-         src_block_offsets, src_block_sizes, nwin, &
-         dst_block_offsets, dst_block_sizes, nwin, mpi_integer, config)
-    ! test communicator of redist
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist), &
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
-
-    CALL check_redist(block_redist, a_voldata, b_voldata, b_voldata_ref)
-
-    ! redist with blocks but without explicit offsets:
-    block_redist2 = xt_redist_p2p_blocks_custom_new(xmap, &
-         src_block_sizes, nwin, dst_block_sizes, nwin, mpi_integer, config)
-    ! test communicator of redist
-
-    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(block_redist2),&
-         mpi_comm_world)) &
-         CALL test_abort("error in xt_redist_get_mpi_comm", filename, __LINE__)
-
-    CALL check_redist(block_redist2, a_voldata, b_voldata, b_voldata_ref)
 
     ! cleanup
-    CALL xt_redist_delete(block_redist2)
-    CALL xt_redist_delete(block_redist)
     CALL xt_xmap_delete(xmap)
-    CALL xt_idxlist_delete(idxlist_a)
-    CALL xt_idxlist_delete(idxlist_b)
   END SUBROUTINE block_redist_test
+
+  SUBROUTINE generate_block(voldata, block_sizes, block_offsets, &
+    gvoldata, ig2col_off, gdepth, ivec, nwin)
+    INTEGER, INTENT(out) :: voldata(*), block_sizes(*), block_offsets(*)
+    INTEGER, INTENT(in) :: gvoldata(*), ig2col_off(*), gdepth(*), nwin
+    INTEGER(xi), INTENT(in) :: ivec(*)
+
+    INTEGER :: p, q, ia, bsize, ofs_accum, i, j, gdepth_i
+    q = 0
+    ofs_accum = 0
+    DO i = 1, nwin
+      ia = INT(ivec(i)) + 1
+      gdepth_i = gdepth(ia)
+      block_offsets(i) = ofs_accum
+      ofs_accum = ofs_accum + gdepth_i
+      block_sizes(i) = gdepth_i
+      p = ig2col_off(ia)
+      DO j = 1, gdepth_i
+        voldata(q + j) = gvoldata(p + j)
+      END DO
+      q = q + gdepth_i
+    END DO
+  END SUBROUTINE generate_block
 
 END PROGRAM test_redist_p2p_parallel
 !

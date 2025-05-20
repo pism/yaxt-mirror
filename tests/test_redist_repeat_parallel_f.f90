@@ -57,7 +57,8 @@ PROGRAM test_redist_repeat_parallel
        xt_redist, xt_redist_p2p_new, xt_redist_repeat_new, &
        xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt, &
-       xt_request, xt_redist_a_exchange, xt_config, xt_config_delete
+       xt_request, xt_redist_a_exchange, xt_config, xt_config_delete, &
+       xt_config_set_ddt_cache_limit
     ! older PGI compilers do not handle generic interface correctly
 #if defined __PGI
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
@@ -70,6 +71,7 @@ PROGRAM test_redist_repeat_parallel
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_repeat_parallel_f.f90'
   CHARACTER(len=*), PARAMETER :: err_msg(2) = &
        (/ "error on xt_redist_s_exchange", "error on xt_redist_a_exchange" /)
+  INTEGER, PARAMETER :: ddt_gen_lim(4) = (/ -1, 0, 16, -2 /)
   TYPE(xt_config) :: config
   INTEGER :: comm_size, ierror
   CALL init_mpi
@@ -162,7 +164,7 @@ CONTAINS
     INTEGER(xt_int_kind) :: index_vector_a(dim1), &
                             index_vector_b(dim1)
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist_repeat, redist_repeat_2, redist_p2p
+    TYPE(xt_redist) :: redist_repeat(2), redist_p2p
     INTEGER, PARAMETER :: dim2a = 9, rpt_cnt = 4
     INTEGER(xt_int_kind) :: results_1(dim1,rpt_cnt), &
                             results_2(dim1,dim2a), dim1_xi
@@ -182,7 +184,7 @@ CONTAINS
          &     .TRUE.,  .TRUE., .FALSE. /)
     INTEGER :: i, j, ierror
     TYPE(xt_request) :: request1, request2
-    INTEGER :: iexch
+    INTEGER :: iexch, ddt_gen_test
     INTEGER :: comm_rank, comm_size
 
     CALL mpi_comm_rank(comm, comm_rank, ierror)
@@ -202,19 +204,9 @@ CONTAINS
     CALL xt_idxlist_delete(indices_a)
     CALL xt_idxlist_delete(indices_b)
 
-    redist_p2p = xt_redist_p2p_new(xmap, xt_int_mpidt)
-    CALL xt_xmap_delete(xmap)
-
     CALL mpi_get_address(input_data(1,1), base_address, ierror)
     CALL mpi_get_address(input_data(1,2), temp_address, ierror)
     extent = temp_address - base_address
-
-    redist_repeat = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         rpt_cnt, displacements(:, 1), config)
-    redist_repeat_2 = xt_redist_repeat_new(redist_p2p, extent, extent, &
-         rpt_cnt, displacements(:, 2), config)
-
-    CALL xt_redist_delete(redist_p2p)
 
     dim1_xi = INT(dim1, xi)
     DO j = 1, dim2a
@@ -239,32 +231,44 @@ CONTAINS
       END IF
     END DO
 
-    DO iexch = 1, 2
-      results_1 = -1
-      results_2 = -1
+    DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
+      CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))
 
-      IF (iexch == 1) THEN
-        CALL xt_redist_s_exchange(redist_repeat, input_data, results_1)
-        CALL xt_redist_s_exchange(redist_repeat_2, input_data, results_2)
-      ELSE
-        CALL xt_redist_a_exchange(redist_repeat, input_data, results_1, &
-             request1)
-        CALL xt_redist_a_exchange(redist_repeat_2, input_data, results_2, &
-             request2)
-        CALL check_wait_request(request1, filename, __LINE__)
-        CALL check_wait_request(request2, filename, __LINE__)
-      ENDIF
+      redist_p2p = xt_redist_p2p_new(xmap, xt_int_mpidt)
 
-      ! check results
-      IF (ANY(results_1 /= ref_results_1)) &
-           CALL test_abort(err_msg(iexch), filename, __LINE__)
-      IF (ANY(results_2 /= ref_results_2)) &
-           CALL test_abort(err_msg(iexch), filename, __LINE__)
-    ENDDO
-    ! clean up
+      DO i = 1, 2
+        redist_repeat(i) = xt_redist_repeat_new(redist_p2p, extent, extent, &
+             rpt_cnt, displacements(:, i), config)
+      END DO
+      CALL xt_redist_delete(redist_p2p)
 
-    CALL xt_redist_delete(redist_repeat)
-    CALL xt_redist_delete(redist_repeat_2)
+      DO iexch = 1, 2
+        results_1 = -1
+        results_2 = -1
+
+        IF (iexch == 1) THEN
+          CALL xt_redist_s_exchange(redist_repeat(1), input_data, results_1)
+          CALL xt_redist_s_exchange(redist_repeat(2), input_data, results_2)
+        ELSE
+          CALL xt_redist_a_exchange(redist_repeat(1), input_data, results_1, &
+               request1)
+          CALL xt_redist_a_exchange(redist_repeat(2), input_data, results_2, &
+               request2)
+          CALL check_wait_request(request1, filename, __LINE__)
+          CALL check_wait_request(request2, filename, __LINE__)
+        ENDIF
+
+        ! check results
+        IF (ANY(results_1 /= ref_results_1)) &
+             CALL test_abort(err_msg(iexch), filename, __LINE__)
+        IF (ANY(results_2 /= ref_results_2)) &
+             CALL test_abort(err_msg(iexch), filename, __LINE__)
+      ENDDO
+
+      ! clean up
+      CALL xt_redist_delete(redist_repeat)
+    END DO
+    CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_4redist
 
 END PROGRAM test_redist_repeat_parallel
