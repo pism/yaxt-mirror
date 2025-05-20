@@ -61,6 +61,10 @@
 
 int main(int argc, char **argv) {
 
+  static const int ddt_gen_lim[] = {
+    -1, 0, 16, -2 };
+  enum { num_ddt_test = sizeof (ddt_gen_lim) / sizeof (ddt_gen_lim[0]), };
+
   int rank, size;
 
   test_init_mpi(&argc, &argv, MPI_COMM_WORLD);
@@ -72,9 +76,8 @@ int main(int argc, char **argv) {
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
 
   if (size > 1) {
-
-    { // redist test with one redist and 4 levels
-
+    // redist test with one redist and 4 levels
+    {
       Xt_idxlist indices_a, indices_b;
 
       {
@@ -116,10 +119,6 @@ int main(int argc, char **argv) {
       xt_idxlist_delete(indices_a);
       xt_idxlist_delete(indices_b);
 
-      Xt_redist redist_p2p = xt_redist_p2p_new(xmap, Xt_int_dt);
-
-      xt_xmap_delete(xmap);
-
       enum { dim1a = 9, rpt_cnt = 4 };
       size_t dim0 = 2*(size_t)size*(size_t)size;
       Xt_int input[dim1a][dim0];
@@ -129,65 +128,72 @@ int main(int argc, char **argv) {
       for (int j = 0; j < dim1a; ++j)
         for (size_t i = 0; i < dim0; ++i)
           input[j][i] = (Xt_int)(index_vector_a[i] + j * 2*(Xt_int)dim0);
-
       static const int displacements[2][rpt_cnt] = { {0,1,2,3}, {1,2,4,8} };
       MPI_Aint extent = (MPI_Aint)(dim0 * sizeof(Xt_int));
 
-      Xt_redist redist_repeat[2];
-      for (size_t i = 0; i < 2; ++i)
-        redist_repeat[i] = xt_redist_repeat_custom_new(
-          redist_p2p, extent, extent, rpt_cnt, displacements[i], config);
+      for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
+        xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
 
-      // test communicator of redist_repeat
+        Xt_redist redist_p2p = xt_redist_p2p_custom_new(xmap, Xt_int_dt, config);
 
-      for (size_t i = 0; i < 2; ++i)
-        if (!communicators_are_congruent(xt_redist_get_MPI_Comm(
-                                           redist_repeat[i]), MPI_COMM_WORLD))
-          PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+        Xt_redist redist_repeat[2];
+        for (size_t i = 0; i < 2; ++i)
+          redist_repeat[i] = xt_redist_repeat_custom_new(
+            redist_p2p, extent, extent, rpt_cnt, displacements[i], config);
 
-      xt_redist_delete(redist_p2p);
+        // test communicator of redist_repeat
 
-      for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
+        for (size_t i = 0; i < 2; ++i)
+          if (!communicators_are_congruent(xt_redist_get_MPI_Comm(
+                                             redist_repeat[i]), MPI_COMM_WORLD))
+            PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-        for (int j = 0; j < rpt_cnt; ++j)
-          for (size_t i = 0; i < dim0; ++i)
-            result[j][i] = -1;
-        for (int j = 0; j < dim1a; ++j)
-          for (size_t i = 0; i < dim0; ++i)
-            result_2[j][i] = -1;
+        xt_redist_delete(redist_p2p);
 
-        if (sync_mode == 0) {
-          xt_redist_s_exchange1(redist_repeat[0], input, result);
-          xt_redist_s_exchange1(redist_repeat[1], input, result_2);
-        } else {
-          Xt_request request[2];
-          xt_redist_a_exchange1(redist_repeat[0], input, result, request+0);
-          xt_redist_a_exchange1(redist_repeat[1], input, result_2, request+1);
-          xt_request_wait(request+0);
-          xt_request_wait(request+1);
+        for (int sync_mode = 0; sync_mode < 2; ++sync_mode) {
+
+          for (int j = 0; j < rpt_cnt; ++j)
+            for (size_t i = 0; i < dim0; ++i)
+              result[j][i] = -1;
+          for (int j = 0; j < dim1a; ++j)
+            for (size_t i = 0; i < dim0; ++i)
+              result_2[j][i] = -1;
+
+          if (sync_mode == 0) {
+            xt_redist_s_exchange1(redist_repeat[0], input, result);
+            xt_redist_s_exchange1(redist_repeat[1], input, result_2);
+          } else {
+            Xt_request request[2];
+            xt_redist_a_exchange1(redist_repeat[0], input, result, request+0);
+            xt_redist_a_exchange1(redist_repeat[1], input, result_2, request+1);
+            xt_request_wait(request+0);
+            xt_request_wait(request+1);
+          }
+
+          // check results
+
+          bool mismatch = false;
+          for (int j = 0; j < rpt_cnt; ++j)
+            for (size_t i = 0; i < dim0; ++i)
+              mismatch |= (result[j][i] != index_vector_b[i] + j * 2*(int)dim0);
+          if (mismatch)
+            PUT_ERR("ERROR: in first xt_redist_s_exchange1\n");
+
+          mismatch = false;
+          for (int j = 1; j <= 8; j<<=1)
+            for (size_t i = 0; i < dim0; ++i)
+              mismatch |= (result_2[j][i] != index_vector_b[i] + j * 2*(int)dim0);
+          if (mismatch)
+            PUT_ERR("ERROR: in second xt_redist_s_exchange1\n");
         }
 
-        // check results
-
-        bool mismatch = false;
-        for (int j = 0; j < rpt_cnt; ++j)
-          for (size_t i = 0; i < dim0; ++i)
-            mismatch |= (result[j][i] != index_vector_b[i] + j * 2*(int)dim0);
-        if (mismatch)
-          PUT_ERR("ERROR: in first xt_redist_s_exchange1\n");
-
-        mismatch = false;
-        for (int j = 1; j <= 8; j<<=1)
-          for (size_t i = 0; i < dim0; ++i)
-            mismatch |= (result_2[j][i] != index_vector_b[i] + j * 2*(int)dim0);
-        if (mismatch)
-          PUT_ERR("ERROR: in second xt_redist_s_exchange1\n");
+        // clean up
+        for (size_t i = 0; i < 2; ++i)
+          xt_redist_delete(redist_repeat[i]);
       }
-
-      // clean up
-      for (size_t i = 0; i < 2; ++i)
-        xt_redist_delete(redist_repeat[i]);
+      xt_xmap_delete(xmap);
     }
+
   }
 
   xt_config_delete(config);

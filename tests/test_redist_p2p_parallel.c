@@ -99,6 +99,10 @@ int main(int argc, char **argv) {
   xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &rank), MPI_COMM_WORLD);
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &size), MPI_COMM_WORLD);
 
+  static const int ddt_gen_lim[] = {
+    -1, 0, 16, -2 };
+  enum { num_ddt_test = sizeof (ddt_gen_lim) / sizeof (ddt_gen_lim[0]), };
+
   {
     enum { dataSize = 10 };
     // source index list
@@ -119,34 +123,35 @@ int main(int argc, char **argv) {
     Xt_idxlist dst_idxlist = xt_idxvec_new(dst_index_list, dst_num_indices);
 
     // xmap
-    Xt_xmap xmap;
+    Xt_xmap xmap
+      = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_idxlist);
 
-    xmap = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-
-    // redist_p2p
-    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
-
-    // test communicator of redist
-
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-    // test synchronous and asynchronous exchange
     double src_data[dataSize];
     double dst_data[dataSize];
-
     for (int i = 0; i < src_num_indices; ++i)
       src_data[i] = (double)(rank * dataSize + i);
 
-    check_redist(redist, src_data, dataSize, dst_data, fill_array_double, NULL,
-                 dst_index_list, MPI_DOUBLE, XT_INT_MPIDT);
+    for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
+      xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
 
+      // redist_p2p
+      Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
+
+      // test communicator of redist
+
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
+        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+      // test synchronous and asynchronous exchange
+      check_redist(redist, src_data, dataSize, dst_data, fill_array_double, NULL,
+                   dst_index_list, MPI_DOUBLE, XT_INT_MPIDT);
+      xt_redist_delete(redist);
+    }
     // clean up
-    xt_redist_delete(redist);
     xt_xmap_delete(xmap);
-    xt_idxlist_delete(src_idxlist);
-    xt_idxlist_delete(dst_idxlist);
   }
 
   // test nonuniform numbers of send and receive partners
@@ -172,17 +177,9 @@ int main(int argc, char **argv) {
     // xmap
     Xt_xmap xmap
       = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_idxlist);
 
-    // redist_p2p
-    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
-
-    // test communicator of redist
-
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-    // test exchange
     double src_data[size];
     double dst_data[size];
     if (rank == 0)
@@ -192,14 +189,24 @@ int main(int argc, char **argv) {
       for (int i = 0; i < size; ++i)
         src_data[i] = -2.0;
 
-    check_redist(redist, src_data, (size_t)size, dst_data,
-                 fill_array_double, NULL, NULL, MPI_DOUBLE, MPI_DATATYPE_NULL);
+    for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
+      xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
+      // redist_p2p
+      Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
 
-    // clean up
-    xt_redist_delete(redist);
+      // test communicator of redist
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
+        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+      // test exchange
+      check_redist(redist, src_data, (size_t)size, dst_data,
+                   fill_array_double, NULL, NULL, MPI_DOUBLE, MPI_DATATYPE_NULL);
+
+      // clean up
+      xt_redist_delete(redist);
+    }
     xt_xmap_delete(xmap);
-    xt_idxlist_delete(src_idxlist);
-    xt_idxlist_delete(dst_idxlist);
   }
 
   // test redist with blocks:
@@ -251,16 +258,10 @@ int main(int argc, char **argv) {
     Xt_idxlist idxlist_b = xt_idxvec_new(ivecb, nwin);
 
     Xt_xmap xmap = xt_xmap_all2all_new(idxlist_a, idxlist_b, MPI_COMM_WORLD);
+    xt_idxlist_delete(idxlist_a);
+    xt_idxlist_delete(idxlist_b);
 
-    // simple redist:
-    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_INT, config);
-
-    // test communicator of redist
-
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
+    // generate surface test data
     int a_surfdata[nwin];
     int b_surfdata[nwin];
     int b_surfdata_ref[nwin];
@@ -268,11 +269,6 @@ int main(int argc, char **argv) {
       a_surfdata[i] = gsurfdata[iveca[i]];
       b_surfdata_ref[i] = gsurfdata[ivecb[i]];
     }
-
-    check_redist(redist, a_surfdata, (size_t)nwin, b_surfdata,
-                 fill_array_int, NULL, b_surfdata_ref, MPI_INT, MPI_INT);
-
-    xt_redist_delete(redist);
 
     // generate global volume data
     int gvoldata[gvol_size];
@@ -283,7 +279,6 @@ int main(int argc, char **argv) {
     }
 
     // generate blocks
-
     int src_block_offsets[nwin];
     int src_block_sizes[nwin];
     int dst_block_offsets[nwin];
@@ -298,43 +293,57 @@ int main(int argc, char **argv) {
       b_voldata_ref[i] = -1;
     }
 
+
     generate_block(a_voldata, src_block_sizes, src_block_offsets,
                    gvoldata, ig2col_off, gdepth, iveca, nwin);
     generate_block(b_voldata_ref, dst_block_sizes, dst_block_offsets,
                    gvoldata, ig2col_off, gdepth, ivecb, nwin);
 
-    // redist with blocks:
-    Xt_redist block_redist = xt_redist_p2p_blocks_off_custom_new(
-      xmap, src_block_offsets, src_block_sizes, nwin,
-      dst_block_offsets, dst_block_sizes, nwin,
-      MPI_INT, config);
-    // test communicator of redist
+    for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
+      xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
 
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(block_redist),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+      // simple redist:
+      Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_INT, config);
 
-    check_redist(block_redist, a_voldata, (size_t)gvol_size, b_voldata,
-                 fill_array_int, NULL, b_voldata_ref, MPI_INT, MPI_INT);
+      // test communicator of redist
 
-    // redist with blocks but without explicit offsets:
-    Xt_redist block_redist2 = xt_redist_p2p_blocks_custom_new(
-      xmap, src_block_sizes, nwin, dst_block_sizes, nwin, MPI_INT, config);
-    // test communicator of redist
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
+        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(block_redist2),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+      check_redist(redist, a_surfdata, (size_t)nwin, b_surfdata,
+                   fill_array_int, NULL, b_surfdata_ref, MPI_INT, MPI_INT);
 
+      xt_redist_delete(redist);
 
-    check_redist(block_redist2, a_voldata, (size_t)gvol_size, b_voldata,
-                 fill_array_int, NULL, b_voldata_ref, MPI_INT, MPI_INT);
+      // redist with blocks:
+      Xt_redist block_redist = xt_redist_p2p_blocks_off_custom_new(
+        xmap, src_block_offsets, src_block_sizes, nwin,
+        dst_block_offsets, dst_block_sizes, nwin,
+        MPI_INT, config);
+      // test communicator of redist
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(block_redist),
+                                       MPI_COMM_WORLD))
+        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-    xt_redist_delete(block_redist);
-    xt_redist_delete(block_redist2);
+      check_redist(block_redist, a_voldata, (size_t)gvol_size, b_voldata,
+                   fill_array_int, NULL, b_voldata_ref, MPI_INT, MPI_INT);
+      xt_redist_delete(block_redist);
+
+      // redist with blocks but without explicit offsets:
+      Xt_redist block_redist2 = xt_redist_p2p_blocks_custom_new(
+        xmap, src_block_sizes, nwin, dst_block_sizes, nwin, MPI_INT, config);
+      // test communicator of redist
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(block_redist2),
+                                       MPI_COMM_WORLD))
+        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+      check_redist(block_redist2, a_voldata, (size_t)gvol_size, b_voldata,
+                   fill_array_int, NULL, b_voldata_ref, MPI_INT, MPI_INT);
+
+      xt_redist_delete(block_redist2);
+    }
     xt_xmap_delete(xmap);
-    xt_idxlist_delete(idxlist_a);
-    xt_idxlist_delete(idxlist_b);
 
     // end of test
   }

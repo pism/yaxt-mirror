@@ -63,6 +63,10 @@
 static void
 check_offset_extents(MPI_Comm comm, Xt_config config);
 
+static const int ddt_gen_lim[] = {
+  -1, 0, 16, -2 };
+enum { num_ddt_test = sizeof (ddt_gen_lim) / sizeof (ddt_gen_lim[0]), };
+
 int main(int argc, char **argv) {
 
   test_init_mpi(&argc, &argv, MPI_COMM_WORLD);
@@ -87,33 +91,36 @@ int main(int argc, char **argv) {
     // xmap
     Xt_xmap xmap
       = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
-
-    // redist_p2p
-    Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
-
-    // test communicator of redist
-
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
-
-    // test exchange
-    static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
-    static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
-    enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
-    double dst_data[dst_num];
-    check_redist(redist, src_data, num_ref_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-    Xt_redist redist_copy = xt_redist_copy(redist);
-    xt_redist_delete(redist);
-    check_redist(redist_copy, src_data, num_ref_values, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-    // clean up
-
-    xt_redist_delete(redist_copy);
-    xt_xmap_delete(xmap);
     xt_idxlist_delete(src_idxlist);
     xt_idxlist_delete(dst_idxlist);
+
+    for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
+      xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
+      // redist_p2p
+      Xt_redist redist = xt_redist_p2p_custom_new(xmap, MPI_DOUBLE, config);
+
+      // test communicator of redist
+
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
+        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+      // test exchange
+      static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+      static const double ref_dst_data[] = {0,2,13,9,7,0,2,0,2,13,4,6,7};
+      enum { num_ref_values = sizeof(ref_dst_data) / sizeof(ref_dst_data[0]) };
+      double dst_data[dst_num];
+      check_redist(redist, src_data, num_ref_values, dst_data,
+                   fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+      Xt_redist redist_copy = xt_redist_copy(redist);
+      xt_redist_delete(redist);
+      check_redist(redist_copy, src_data, num_ref_values, dst_data,
+                   fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+      // clean up
+
+      xt_redist_delete(redist_copy);
+    }
+    xt_xmap_delete(xmap);
   }
 
   // check offsets
@@ -133,6 +140,8 @@ int main(int argc, char **argv) {
     // xmap
     Xt_xmap xmap
       = xt_xmap_all2all_new(src_idxlist, dst_idxlist, MPI_COMM_WORLD);
+    xt_idxlist_delete(src_idxlist);
+    xt_idxlist_delete(dst_idxlist);
 
     // redist_p2p with offsets
 
@@ -144,33 +153,32 @@ int main(int argc, char **argv) {
     for (int i = 0; i < dst_num; i++)
       dst_pos[i] = dst_num-1-i;
 
-    Xt_redist redist = xt_redist_p2p_off_custom_new(
-      xmap, src_pos, dst_pos, MPI_DOUBLE, config);
+    for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
+      xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
+      Xt_redist redist = xt_redist_p2p_off_custom_new(
+        xmap, src_pos, dst_pos, MPI_DOUBLE, config);
 
-    // test communicator of redist
+      // test communicator of redist
 
-    if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
-                                     MPI_COMM_WORLD))
-      PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+      if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                       MPI_COMM_WORLD))
+        PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-    // test exchange
-
-    static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
-    assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
-    static const double ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
-    double dst_data[dst_num];
-    check_redist(redist, src_data, dst_num, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
-    Xt_redist redist_copy = xt_redist_copy(redist);
-    xt_redist_delete(redist);
-    check_redist(redist_copy, src_data, dst_num, dst_data,
-                 fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+      // test exchange
+      static const double src_data[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+      assert(sizeof(src_data)/sizeof(src_data[0]) == src_num);
+      static const double ref_dst_data[] = {7,6,4,13,2,0,2,0,7,9,13,2,0};
+      double dst_data[dst_num];
+      check_redist(redist, src_data, dst_num, dst_data,
+                   fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+      Xt_redist redist_copy = xt_redist_copy(redist);
+      xt_redist_delete(redist);
+      check_redist(redist_copy, src_data, dst_num, dst_data,
+                   fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+      xt_redist_delete(redist_copy);
+    }
     // clean up
-
-    xt_redist_delete(redist_copy);
     xt_xmap_delete(xmap);
-    xt_idxlist_delete(src_idxlist);
-    xt_idxlist_delete(dst_idxlist);
   }
 
   check_offset_extents(MPI_COMM_WORLD, config);
@@ -204,12 +212,15 @@ check_offset_extents(MPI_Comm comm, Xt_config config)
   // xmap
   Xt_xmap xmap
     = xt_xmap_all2all_new(src_idxlist, dst_idxlist, comm);
+  xt_idxlist_delete(src_idxlist);
+  xt_idxlist_delete(dst_idxlist);
 
   // redist_p2p with extents of offsets
-  {
+  for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
     static const struct Xt_offset_ext
       src_pos[1] = { { .start = 0, .size = src_num, .stride =  1 } },
       dst_pos[1] = { { .start = dst_num - 1, .size = dst_num, .stride = -1 } };
+    xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
 
     Xt_redist redist = xt_redist_p2p_ext_custom_new(
       xmap, sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
@@ -217,12 +228,13 @@ check_offset_extents(MPI_Comm comm, Xt_config config)
 
     check_offset_extents_redist(redist, src_num, dst_num, comm);
   }
-  {
+  for (size_t ddt_gen_test = 0; ddt_gen_test < num_ddt_test; ++ddt_gen_test) {
     static const struct Xt_aoffset_ext
       src_pos[1] = { { .start = (MPI_Aint)0,
                        .size = src_num, .stride =  (MPI_Aint)sizeof (long) } },
       dst_pos[1] = { { .start = (MPI_Aint)((dst_num - 1)*sizeof (long)),
                        .size = dst_num, .stride = -(MPI_Aint)(sizeof (long)) }};
+    xt_config_set_ddt_cache_limit(config, ddt_gen_lim[ddt_gen_test]);
 
     Xt_redist redist = xt_redist_p2p_aext_custom_new(
       xmap, sizeof (src_pos)/sizeof (src_pos[0]), src_pos,
@@ -233,8 +245,6 @@ check_offset_extents(MPI_Comm comm, Xt_config config)
 
   // clean up
   xt_xmap_delete(xmap);
-  xt_idxlist_delete(src_idxlist);
-  xt_idxlist_delete(dst_idxlist);
 }
 
 static void
