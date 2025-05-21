@@ -67,19 +67,12 @@ generate_block(int *restrict voldata, int *restrict block_sizes,
 {
   int qa=0;
   if (nwin > 0) {
-    int bsize, ofs_accum;
-    {
-      Xt_int ia = ivec[0];
-      ofs_accum = block_offsets[0] = 0;
-      bsize = block_sizes[0] = gdepth[ia];
-      int ofs = ig2col_off[ia];
-      for (int j = 0; j < bsize; ++j, ++qa)
-        voldata[qa] = gvoldata[ofs + j];
-    }
-    for (int i = 1; i < nwin; i++) {
+    int ofs_accum = 0;
+    for (int i = 0; i < nwin; i++) {
       Xt_int ia = ivec[i];
-      block_offsets[i] = (ofs_accum+=bsize);
-      bsize = block_sizes[i] = gdepth[ia];
+      block_offsets[i] = ofs_accum;
+      int bsize = block_sizes[i] = gdepth[ia];
+      ofs_accum += bsize;
       int ofs = ig2col_off[ia];
       for (int j = 0; j < bsize; ++j, ++qa)
         voldata[qa] = gvoldata[ofs + j];
