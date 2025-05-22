@@ -542,7 +542,7 @@ CONTAINS
     INTEGER, PARAMETER :: nrecv = 1, nsend = 1
     TYPE(xt_msg_param) :: send_msgs(nsend), recv_msgs(nrecv)
     TYPE(xt_exchanger) :: exchanger
-    DOUBLE PRECISION, TARGET :: src_data, dst_data
+    DOUBLE PRECISION, TARGET :: src_data(1), dst_data(1)
     TYPE(c_ptr) :: src_data_p, dst_data_p
     INTEGER :: my_rank, comm_size, ierror
     INTEGER :: incr, i, exchange_method, &
@@ -552,7 +552,7 @@ CONTAINS
     CALL mpi_comm_size(comm, comm_size, ierror)
     exchange_method = xt_config_get_exchange_method(config)
 
-    src_data = DBLE(my_rank)
+    src_data(1) = DBLE(my_rank)
     src_data_p = C_LOC(src_data)
 #if defined __GNUC__ && ( __GNUC__ >= 5 && ( __GNUC__ <= 7 \
     || __GNUC__ == 8 && __GNUC_MINOR__ < 4 ) \
@@ -580,11 +580,11 @@ CONTAINS
       test_async_ubound &
            = MERGE(1, 2, exchange_method == xt_exchanger_irecv_send)
       DO test_async = 1, test_async_ubound
-        dst_data = DBLE(-1)
+        dst_data(1) = DBLE(-1)
 
         CALL data_exchange(exchanger, src_data_p, &
              dst_data_p, test_async > 1)
-        IF (FP_EQ(dst_data, DBLE(MOD(my_rank + comm_size - i, comm_size)))) THEN
+        IF (FP_EQ(dst_data(1), DBLE(MOD(my_rank + comm_size - i, comm_size)))) THEN
           CONTINUE
         ELSE
           CALL test_abort("invalid data", filename, __LINE__)
