@@ -221,13 +221,13 @@ xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
       v_size[j] = bl;
       j += (size_t)(bl > 0);
     }
+    disp = v_disp;
+    blocklengths = v_size;
   } else {
-    v_disp = (int *)disp;
-    v_size = (int *)blocklengths;
     for (size_t i = 0; i < count_; ++i)
       v_stride[i] = 1;
   }
-  MPI_Datatype dt = parse_stripe(v_disp, v_size, v_stride, count_, params);
+  MPI_Datatype dt = parse_stripe(disp, blocklengths, v_stride, count_, params);
   free(v_stride);
   return dt;
 }
