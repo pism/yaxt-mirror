@@ -155,7 +155,7 @@ xt_exchanger_irecv_send_s_exchange__(const void *src_data, void *dst_data,
 #if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
                      int dest, int tag, MPI_Comm comm);
-  int send_mode
+  enum Xt_exch_send_comm_mode send_mode
     = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
   ifp send_op = (ifp)xt_send_func_tab[1][send_mode];
 #else

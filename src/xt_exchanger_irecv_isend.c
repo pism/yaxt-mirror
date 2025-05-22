@@ -165,7 +165,7 @@ msgs_to_reqs(const void *src_data, void *dst_data,
 #if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
   typedef int (*ifp)(const void *buf, int count, MPI_Datatype datatype,
                      int dest, int tag, MPI_Comm comm, MPI_Request *request);
-  int send_mode
+  enum Xt_exch_send_comm_mode send_mode
     = XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(base->config_flags);
   ifp a_send = (ifp)xt_send_func_tab[0][send_mode];
 #else
