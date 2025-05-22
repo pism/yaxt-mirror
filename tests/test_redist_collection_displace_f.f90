@@ -46,6 +46,7 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 #include "fc_feature_defs.inc"
+#define XT_UNUSED(x) IF (SIZE( (/(x)/) ) < 0) CONTINUE
 MODULE redist_collection_displace
   USE mpi
   USE ftest_common, ONLY: test_abort, cmp_arrays
@@ -159,6 +160,7 @@ CONTAINS
     TYPE(xt_request) :: request
     INTEGER :: iexch
 
+    XT_UNUSED(src1)
     src_data_p(3) = C_LOC(src2)
     dst_data_p(3) = C_LOC(dst2)
 
