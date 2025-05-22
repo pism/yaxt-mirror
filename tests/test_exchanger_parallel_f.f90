@@ -165,6 +165,9 @@ CONTAINS
     LOGICAL :: selected_exchanger(num_exchanger)
     INTEGER :: j, i, num_cmd_args, arg_len, opt_len, &
          exchanger_new_id, freq, ierror, num_sel_exch
+#ifndef XT_ENABLE_DDT_EXCHANGER
+    INTEGER :: my_world_rank
+#endif
     INTEGER, PARAMETER :: max_opt_arg_len = 80
     CHARACTER(max_opt_arg_len) :: optarg, opt
 
@@ -209,8 +212,11 @@ CONTAINS
 #endif
 #ifndef XT_ENABLE_DDT_EXCHANGER
           ELSE IF (exchanger_new_id == xt_exchanger_irecv_isend_ddt_packed) THEN
-            WRITE (0, '(a)') &
-                 "notice: xt_exchanger_irecv_isend_ddt_packed disabled."
+            CALL mpi_comm_rank(mpi_comm_world, my_world_rank, ierror)
+            IF (my_world_rank == 0) THEN
+              WRITE (0, '(a)') &
+                   "notice: xt_exchanger_irecv_isend_ddt_packed disabled."
+            END IF
             i = i + 2
             CYCLE
 #endif
