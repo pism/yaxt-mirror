@@ -334,20 +334,20 @@ CONTAINS
     INTEGER, INTENT(in) :: gvoldata(*), ig2col_off(*), gdepth(*), nwin
     INTEGER(xi), INTENT(in) :: ivec(*)
 
-    INTEGER :: p, q, ia, bsize, ofs_accum, i, j, gdepth_i
+    INTEGER :: p, q, ia, bsize, ofs_accum, i, j
     q = 0
     ofs_accum = 0
     DO i = 1, nwin
       ia = INT(ivec(i)) + 1
-      gdepth_i = gdepth(ia)
+      bsize = gdepth(ia)
       block_offsets(i) = ofs_accum
-      ofs_accum = ofs_accum + gdepth_i
-      block_sizes(i) = gdepth_i
+      ofs_accum = ofs_accum + bsize
+      block_sizes(i) = bsize
       p = ig2col_off(ia)
-      DO j = 1, gdepth_i
+      DO j = 1, bsize
         voldata(q + j) = gvoldata(p + j)
       END DO
-      q = q + gdepth_i
+      q = q + bsize
     END DO
   END SUBROUTINE generate_block
 
