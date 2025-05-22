@@ -117,9 +117,9 @@ find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
 
 if command -v wget >/dev/null ; then
-  DL_CMD=(wget -o /dev/null -O)
+  DL_CMD=(wget -nv -o /dev/null -O)
 elif command -v curl >/dev/null ; then
-  DL_CMD=(curl -s -o)
+  DL_CMD=(curl -s -S -o)
 fi
 
 "${DL_CMD[@]}" config/config.guess \
