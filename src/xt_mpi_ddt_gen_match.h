@@ -72,8 +72,8 @@ XT_GEN_MPI_DATATYPE_SIMPLE(XT_MPI_DDT_GEN_MATCH_AOFS_TYPE displacement,
 {
   MPI_Datatype datatype;
 
-  xt_mpi_call(XT_MPI_TYPE_CREATE_INDEXED_BLOCK(1, 1, &displacement, old_type,
-                                               &datatype), comm);
+  XT_MPI_TYPE_CREATE_INDEXED_BLOCK(1, 1, &displacement, old_type,
+                                   &datatype, comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   return datatype;
@@ -89,9 +89,9 @@ XT_GEN_MPI_DATATYPE_CONTIGUOUS(XT_MPI_DDT_GEN_MATCH_AOFS_TYPE displacement,
     xt_mpi_call(MPI_Type_contiguous(blocklength, old_type, &datatype),
                 comm);
   else
-    xt_mpi_call(XT_MPI_TYPE_CREATE_INDEXED_BLOCK(1, blocklength,
-                                                  &displacement, old_type,
-                                                  &datatype), comm);
+    XT_MPI_TYPE_CREATE_INDEXED_BLOCK(1, blocklength,
+                                     &displacement, old_type,
+                                     &datatype, comm);
 
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
   return datatype;
@@ -120,9 +120,8 @@ XT_GEN_MPI_DATATYPE_VECTOR(int count, int blocklength,
 #else
     MPI_Aint displacement = offset;
 #endif
-    xt_mpi_call(MPI_Type_create_hindexed(1, &hindexed_blocklength,
-                                         &displacement, datatype, &datatype_),
-                comm);
+    Xt_Type_create_hindexed(1, &hindexed_blocklength,
+                            &displacement, datatype, &datatype_, comm);
     xt_mpi_call(MPI_Type_free(&datatype), comm);
     datatype = datatype_;
   }
@@ -137,9 +136,9 @@ XT_GEN_MPI_DATATYPE_INDEXED_BLOCK(
   int blocklength, int count, MPI_Datatype old_type, MPI_Comm comm)
 {
   MPI_Datatype datatype;
-  xt_mpi_call(XT_MPI_TYPE_CREATE_INDEXED_BLOCK(count, blocklength,
-                                               (void *)displacements,
-                                               old_type, &datatype), comm);
+  XT_MPI_TYPE_CREATE_INDEXED_BLOCK(count, blocklength,
+                                   displacements,
+                                   old_type, &datatype, comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
   return datatype;
 }
@@ -151,9 +150,9 @@ XT_GEN_MPI_DATATYPE_INDEXED(
   int count, MPI_Datatype old_type, MPI_Comm comm)
 {
   MPI_Datatype datatype;
-  xt_mpi_call(XT_MPI_TYPE_INDEXED(count, (int *)blocklengths,
-                                  (void*)displacements,
-                                  old_type, &datatype), comm);
+  XT_MPI_TYPE_INDEXED(count, blocklengths,
+                      displacements,
+                      old_type, &datatype, comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
   return datatype;
 }
