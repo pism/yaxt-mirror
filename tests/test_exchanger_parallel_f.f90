@@ -547,6 +547,10 @@ CONTAINS
     INTEGER :: my_rank, comm_size, ierror
     INTEGER :: incr, i, exchange_method, &
          test_async, test_async_ubound
+#if defined __INTEL_COMPILER && (__INTEL_COMPILER_BUILD_DATE == 20110811 \
+        || __INTEL_COMPILER < 1400)
+    INTEGER(mpi_address_kind) :: addr_dummy
+#endif
 
     CALL mpi_comm_rank(comm, my_rank, ierror)
     CALL mpi_comm_size(comm, comm_size, ierror)
@@ -584,6 +588,13 @@ CONTAINS
 
         CALL data_exchange(exchanger, src_data_p, &
              dst_data_p, test_async > 1)
+#if defined __INTEL_COMPILER && (__INTEL_COMPILER_BUILD_DATE == 20110811 \
+        || __INTEL_COMPILER < 1400)
+        ! the following call is only needed to make the optimizer
+        ! in old Intel compilers less optimistic in their (mistaken)
+        ! ability to predict changes to dst_data
+        CALL mpi_get_address(dst_data, addr_dummy, ierror)
+#endif
         IF (FP_EQ(dst_data(1), DBLE(MOD(my_rank + comm_size - i, comm_size)))) THEN
           CONTINUE
         ELSE
