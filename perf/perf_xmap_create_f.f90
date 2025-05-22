@@ -447,6 +447,11 @@ CONTAINS
           ALLOCATE(CHARACTER(optarg_len) :: run_config%fname_pat_src)
 #endif
           run_config%fname_pat_src(1:optarg_len) = optarg(1:optarg_len)
+#ifndef HAVE_FC_ALLOCATABLE_CHARACTER
+          IF (optarg_len < LEN(run_config%fname_pat_src)) THEN
+            run_config%fname_pat_src(optarg_len+1:) = ''
+          END IF
+#endif
           next_is_optarg = eq_pos == 0
         CASE ("index-dst-file-pat")
           IF (optarg_len == 0) THEN
@@ -457,7 +462,12 @@ CONTAINS
 #ifdef HAVE_FC_ALLOCATABLE_CHARACTER
           ALLOCATE(CHARACTER(optarg_len) :: run_config%fname_pat_dst)
 #endif
-          run_config%fname_pat_dst(:) = optarg(1:optarg_len)
+          run_config%fname_pat_dst(1:optarg_len) = optarg(1:optarg_len)
+#ifndef HAVE_FC_ALLOCATABLE_CHARACTER
+          IF (optarg_len < LEN(run_config%fname_pat_src)) THEN
+            run_config%fname_pat_src(optarg_len+1:) = ''
+          END IF
+#endif
           next_is_optarg = eq_pos == 0
         CASE ("num-columns")
           READ (optarg, *) run_config%num_columns
