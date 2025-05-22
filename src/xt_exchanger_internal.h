@@ -243,8 +243,8 @@ xt_exchanger_create_thread_share(Xt_exchanger exchanger, Xt_config config);
  * Given an exchanger, destroy an object holding shared data for
  * multi-threaded invocation.
  *
- * @param[in] exchanger exchanger to prepare the shared data for.
- * @param[in] config custom configuration parameters
+ * @param[in] exchanger exchanger the shared data belongs to
+ * @param[in,out] thread_share shared state object to destroy
  */
 PPM_DSO_INTERNAL void
 xt_exchanger_destroy_thread_share(Xt_exchanger exchanger,
