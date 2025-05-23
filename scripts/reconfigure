@@ -116,10 +116,14 @@ find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
   -e 's/[	 ][	 ]*$//' \{\} +
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
 
-if command -v wget >/dev/null ; then
-  DL_CMD=(wget -nv -o /dev/null -O)
-elif command -v curl >/dev/null ; then
-  DL_CMD=(curl -s -S -o)
+if [[ x${DL_CMD+set} = x ]]; then
+  if command -v wget >/dev/null ; then
+    DL_CMD=(wget -nv -o /dev/null -O)
+  elif command -v curl >/dev/null ; then
+    DL_CMD=(curl -s -S -o)
+  fi
+else
+  DL_CMD=($DL_CMD)
 fi
 
 "${DL_CMD[@]}" config/config.guess \
