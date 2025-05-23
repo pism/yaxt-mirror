@@ -155,7 +155,7 @@ include:
 
 .basic_build:
   script:
-    - scripts/reconfigure
+    - DL_CMD=":" scripts/reconfigure
     - >
       ./configure
       ${ci_CC+CC="${ci_CC}"}
