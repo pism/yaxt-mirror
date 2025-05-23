@@ -71,19 +71,16 @@ XT_GEN_MPI_DATATYPE_SIMPLE(XT_MPI_DDT_GEN_MATCH_AOFS_TYPE displacement,
                            MPI_Datatype old_type, MPI_Comm comm)
 {
   MPI_Datatype datatype;
-
   XT_MPI_TYPE_CREATE_INDEXED_BLOCK(1, 1, &displacement, old_type,
                                    &datatype, comm);
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
   return datatype;
 }
 
 static MPI_Datatype
 XT_GEN_MPI_DATATYPE_CONTIGUOUS(XT_MPI_DDT_GEN_MATCH_AOFS_TYPE displacement,
                                int blocklength,
-                               MPI_Datatype old_type, MPI_Comm comm) {
-
+                               MPI_Datatype old_type, MPI_Comm comm)
+{
   MPI_Datatype datatype;
   if (displacement == 0)
     xt_mpi_call(MPI_Type_contiguous(blocklength, old_type, &datatype),
@@ -93,7 +90,6 @@ XT_GEN_MPI_DATATYPE_CONTIGUOUS(XT_MPI_DDT_GEN_MATCH_AOFS_TYPE displacement,
                                      &displacement, old_type,
                                      &datatype, comm);
 
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
   return datatype;
 }
 
@@ -101,8 +97,8 @@ static MPI_Datatype
 XT_GEN_MPI_DATATYPE_VECTOR(int count, int blocklength,
                            XT_MPI_DDT_GEN_MATCH_AOFS_TYPE stride,
                            XT_MPI_DDT_GEN_MATCH_AOFS_TYPE offset,
-                           MPI_Datatype old_type, MPI_Comm comm) {
-
+                           MPI_Datatype old_type, MPI_Comm comm)
+{
   MPI_Datatype datatype;
   xt_mpi_call(XT_MPI_TYPE_CREATE_VECTOR(count, blocklength, stride, old_type,
                                         &datatype), comm);
@@ -125,8 +121,6 @@ XT_GEN_MPI_DATATYPE_VECTOR(int count, int blocklength,
     xt_mpi_call(MPI_Type_free(&datatype), comm);
     datatype = datatype_;
   }
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
   return datatype;
 }
 
@@ -139,7 +133,6 @@ XT_GEN_MPI_DATATYPE_INDEXED_BLOCK(
   XT_MPI_TYPE_CREATE_INDEXED_BLOCK(count, blocklength,
                                    displacements,
                                    old_type, &datatype, comm);
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
   return datatype;
 }
 
@@ -153,7 +146,6 @@ XT_GEN_MPI_DATATYPE_INDEXED(
   XT_MPI_TYPE_INDEXED(count, blocklengths,
                       displacements,
                       old_type, &datatype, comm);
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
   return datatype;
 }
 
@@ -209,9 +201,9 @@ XT_MPI_GENERATE_DATATYPE_BLOCK(
   MPI_Datatype datatype;
 
   if (count == 0)
-    datatype = MPI_DATATYPE_NULL;
+    return MPI_DATATYPE_NULL;
   else if (count == 1 && blocklengths[0] == 1 && displacements[0] == 0)
-    datatype = copy_mpi_datatype(old_type, comm);
+    return copy_mpi_datatype(old_type, comm);
   else if (count == 1 && blocklengths[0] == 1)
     datatype = XT_GEN_MPI_DATATYPE_SIMPLE(displacements[0], old_type, comm);
   else if (count == 1)
@@ -227,7 +219,7 @@ XT_MPI_GENERATE_DATATYPE_BLOCK(
   else
     datatype = XT_GEN_MPI_DATATYPE_INDEXED(displacements, blocklengths, count,
                                            old_type, comm);
-
+  xt_mpi_call(MPI_Type_commit(&datatype), comm);
   return datatype;
 }
 
