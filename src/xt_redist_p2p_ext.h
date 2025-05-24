@@ -107,6 +107,29 @@ XT_DT_STRIPE_BUFS_GROW(
 /**
  * @param num_transfer_pos_ext number of extents describing transfer,
  *                             must be greater than zero
+ * @param[in] transfer_pos_ext extents of positions in the index list
+ *                             passed into the constructor
+ * @param num_ext              number of extents
+ * @param[in] extents          address or element offset into local
+ *                             array, each element of transfer_pos_ext
+ *                             is translated by looking up its
+ *                             position in this array
+ * @param psum_ext_size        array of partial sums of the size
+ *                             element of extents,
+ *                             i.e. psum_ext_size[i] =
+ *                             @f$\sum^j_{[0,i-1]}@f$ extents[j].size
+ *                             with @f$i \in [0,num_ext]@f$
+ * @param[in,out] work_buf     pointer to pointer to pre-allocated
+ *                             buffer to hold the temporarily
+ *                             generated displacement, blocksize and
+ *                             stride arrays, will be reallocated if
+ *                             needed
+ * @param[in,out] work_buf_size pointer to size (in char) of
+ *                             **work_buf
+ * @param[in] params           struct holding parameters used in MPI
+ *                             datatype generation
+ * @param[in] config           custom configuration parameters, used
+ *                             to select datatype generation method
  */
 static MPI_Datatype
 XT_GENERATE_EXT_DATATYPE(

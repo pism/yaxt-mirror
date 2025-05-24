@@ -66,6 +66,7 @@ typedef struct Xt_ddt_ *Xt_ddt;
 
 /**
  * gets the buffer size required to pack the data in mpi_ddt
+ * @param     count number of elements of type mpi_ddt to pack
  * @param[in] mpi_ddt MPI Datatype
  * @returns required packing buffer size
  */
@@ -75,6 +76,7 @@ xt_ddt_get_pack_size(size_t count, MPI_Datatype mpi_ddt);
 /**
  * packs the data from the source buffer into destination buffer, based on
  * the data layout described by MPI datatype
+ * @param      count number of elements of type mpi_ddt to pack
  * @param[in]  mpi_ddt MPI datatype
  * @param[in]  src     source buffer
  * @param[out] dst     destination buffer
@@ -85,6 +87,7 @@ xt_ddt_pack(const void *src, size_t count, MPI_Datatype mpi_ddt, void *dst);
 /**
  * unpacks the data from the source buffer into destination buffer, based on
  * the data layout described by MPI datatype
+ * @param      count number of elements of type mpi_ddt to pack
  * @param[in]  mpi_ddt MPI datatype
  * @param[in]  src     source buffer
  * @param[out] dst     destination buffer

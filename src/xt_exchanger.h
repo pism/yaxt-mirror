@@ -107,8 +107,16 @@ struct Xt_msg_param {
 /**
  * Create exchanger object.
  *
- * @param config configuration object
- * @param comm communicator for which the exchanger is meant to work
+ * @param nsend number of messages to be sent
+ * @param nrecv number of messages to be received
+ * @param[in] send_msgs array of descriptions of messages to be sent
+ * @param[in] recv_msgs array of descriptions of messages to be
+ * received
+ * @param comm communicator for which the exchanger is meant to work,
+ * i.e. the ranks in send_msgs and recv_msgs are only meaningful in
+ * respect to this communicator
+ * @param tag_offset offset to use to compute message tags
+ * @param[in] config configuration object
  * @returns exchanger object of configured type, or a fallback if the
  * configured constructor does not apply to \a comm.
  */
@@ -129,6 +137,9 @@ xt_exchanger_delete(Xt_exchanger);
  * Query number of ranks that this rank sends messages to
  * (direction==xt_direction_send) or receives from
  * (direction==xt_direction_recv) when using this exchanger.
+ * @param direction xt_direction_send to query the number of messages
+ * sent in each call to xt_exchanger_[as]_exchange, and
+ * xt_direction_recv for received ones
  * @param[in] exchanger exchanger object to query
  * @return number of destination ranks
  */
@@ -145,6 +156,7 @@ typedef struct Xt_exchanger_iter_ *Xt_exchanger_iter;
  * local rank
  *
  * @param[in] exchanger message exchanger object
+ * @param[in] config custom configuration object
  * @return         iterator for all local messages\n
  *                 is NULL if there are no local messages
  */
