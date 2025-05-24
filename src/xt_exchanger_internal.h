@@ -62,9 +62,6 @@
 #include "core/ppm_visibility.h"
 
 
-/** \example test_exchanger_parallel.c
- */
-
 typedef struct Xt_exchanger_thread_share_ *Xt_exchanger_thread_share;
 
 typedef void (*xt_exchanger_s_exchange_func)(

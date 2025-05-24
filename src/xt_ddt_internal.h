@@ -118,7 +118,7 @@ xt_ddt_delete(Xt_ddt ddt);
 
 /**
  * increases the internal reference counter for the given xt_ddt object
- * @param[in] ddt xt_ddt object
+ * @param[in,out] ddt xt_ddt object
  * @remark for each reference of a xt_ddt object
  *         \ref xt_ddt_delete has to be called
  */
@@ -127,6 +127,7 @@ xt_ddt_inc_ref_count(Xt_ddt ddt);
 
 /**
  * gets the buffer size required to pack the data in ddt
+ * @param     count number of elements of type mpi_ddt to pack
  * @param[in] ddt xt_ddt object
  * @returns required packing buffer size
  */
