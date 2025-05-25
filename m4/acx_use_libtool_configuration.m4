@@ -101,6 +101,11 @@ dnl newer PGI or NAG configurations particularly well
 	      _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-fPIC'
 	      _LT_TAGVAR(lt_prog_compiler_static, $][1)='-static'
 	      ;;
+            *NEC\\ Corporation*)
+	      _LT_TAGVAR(lt_prog_compiler_wl, $][1)='-Wl,'
+	      _LT_TAGVAR(lt_prog_compiler_pic, $][1)='-fpic'
+	      _LT_TAGVAR(lt_prog_compiler_static, $][1)='-static'
+	      ;;
           esac
           ;;])),
          [pgcpp\*],[pgcpp* | pgc++* ]))dnl
