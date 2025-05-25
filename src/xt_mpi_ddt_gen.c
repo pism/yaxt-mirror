@@ -91,6 +91,12 @@ xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type,
                                        MPI_Comm comm);
 
+static MPI_Datatype
+xt_mpi_generate_datatype_block_custom(const int *displacements,
+                                      const int *blocklengths,
+                                      int count, MPI_Datatype old_type,
+                                      MPI_Comm comm, Xt_config config);
+
 MPI_Datatype
 xt_mpi_generate_datatype_block(const int *displacements,
                                const int *blocklengths,
@@ -100,7 +106,7 @@ xt_mpi_generate_datatype_block(const int *displacements,
     displacements, blocklengths, count, old_type, comm, &xt_default_config);
 }
 
-MPI_Datatype
+static MPI_Datatype
 xt_mpi_generate_datatype_block_custom(const int *displacements,
                                       const int *blocklengths,
                                       int count, MPI_Datatype old_type,
@@ -113,6 +119,11 @@ xt_mpi_generate_datatype_block_custom(const int *displacements,
     return xt_mpi_generate_datatype_block_match_i(displacements, blocklengths,
                                                   count, old_type, comm);
 }
+
+static MPI_Datatype
+xt_mpi_generate_datatype_custom(int const * displacements, int count,
+                                MPI_Datatype old_type, MPI_Comm comm,
+                                Xt_config config);
 
 MPI_Datatype
 xt_mpi_generate_datatype(int const * displacements, int count,
