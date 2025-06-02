@@ -89,7 +89,7 @@
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type,
-                                       MPI_Comm comm);
+                                       MPI_Comm comm, Xt_config config);
 
 static MPI_Datatype
 xt_mpi_generate_datatype_block_custom(const int *displacements,
@@ -114,7 +114,7 @@ xt_mpi_generate_datatype_block_custom(const int *displacements,
 
   if (config->ddt_cache_limit >= -1)
     return xt_mpi_generate_compact_datatype_block(displacements, blocklengths,
-                                                  count, old_type, comm);
+                                                  count, old_type, comm, config);
   else
     return xt_mpi_generate_datatype_block_match_i(displacements, blocklengths,
                                                   count, old_type, comm);
@@ -135,7 +135,8 @@ xt_mpi_generate_datatype(int const * displacements, int count,
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
-                                 MPI_Datatype old_type, MPI_Comm comm);
+                                 MPI_Datatype old_type, MPI_Comm comm,
+                                 Xt_config config);
 
 MPI_Datatype
 xt_mpi_generate_datatype_custom(int const * displacements, int count,
@@ -145,7 +146,8 @@ xt_mpi_generate_datatype_custom(int const * displacements, int count,
   if (count <= 0)
     return MPI_DATATYPE_NULL;
   if (config->ddt_cache_limit >= -1)
-    return xt_mpi_generate_compact_datatype(displacements, count, old_type, comm);
+    return xt_mpi_generate_compact_datatype(displacements, count, old_type,
+                                            comm, config);
   size_t num_blk = xt_disp2blk_count((size_t)count, displacements);
   int *restrict blocklengths = xmalloc((size_t)num_blk * sizeof(*blocklengths)
                                        * (size_t)(1 + (num_blk != (size_t)count)));
@@ -202,10 +204,10 @@ xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type,
-                                       MPI_Comm comm)
+                                       MPI_Comm comm, Xt_config config)
 {
   struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
+  xt_init_mpi_strp_prs_params(&params, old_type, config, comm);
   MPI_Datatype dt = xt_mpi_ddt_block_gen(count, disp, blocklengths, &params);
   xt_destroy_mpi_strp_prs_params(&params);
   return dt;
@@ -245,7 +247,8 @@ xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
 
 MPI_Datatype
 xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
-                                 MPI_Datatype old_type, MPI_Comm comm)
+                                 MPI_Datatype old_type, MPI_Comm comm,
+                                 Xt_config config)
 {
   if (disp_len < 1) return MPI_DATATYPE_NULL;
 
@@ -254,7 +257,7 @@ xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
     *v_size = v_disp + vlen, *v_stride = v_size + vlen;
   xt_disp2ext((size_t)disp_len, disp, v_disp, v_size, v_stride);
   struct Xt_mpi_strp_prs_params params;
-  xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
+  xt_init_mpi_strp_prs_params(&params, old_type, config, comm);
   MPI_Datatype dt = parse_stripe(v_disp, v_size, v_stride, vlen, &params);
   xt_destroy_mpi_strp_prs_params(&params);
   free(v_disp);
