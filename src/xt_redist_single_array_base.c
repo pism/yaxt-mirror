@@ -55,6 +55,7 @@
 #include "xt/xt_mpi.h"
 #include "xt_mpi_internal.h"
 #include "xt/xt_redist_single_array_base.h"
+#include <xt_redist_single_array_base_internal.h>
 #include "xt_redist_internal.h"
 #include "xt/xt_xmap.h"
 #include "xt/xt_idxlist.h"
@@ -152,32 +153,45 @@ Xt_redist xt_redist_single_array_base_custom_new(
 {
   // ensure that yaxt is initialized
   assert(nsend >= 0 && nrecv >=0 && xt_initialized());
+  size_t nmsg = (size_t)nrecv + (size_t)nsend;
+  struct Xt_msg_param *exch_msgs = xmalloc(nmsg * sizeof (*exch_msgs));
+  for (size_t i = 0; i < (size_t)nrecv; ++i) {
+    exch_msgs[i].datatype = recv_msgs[i].datatype;
+    exch_msgs[i].displacement = 0;
+    exch_msgs[i].count = 1;
+    exch_msgs[i].rank = recv_msgs[i].rank;
+  }
+  for (size_t i = 0; i < (size_t)nsend; ++i) {
+    exch_msgs[(size_t)nrecv+i].datatype = send_msgs[i].datatype;
+    exch_msgs[(size_t)nrecv+i].displacement = 0;
+    exch_msgs[(size_t)nrecv+i].count = 1;
+    exch_msgs[(size_t)nrecv+i].rank = send_msgs[i].rank;
+  }
+  Xt_redist redist
+    = xt_redist_single_array_base_ofs_custom_new(
+      nsend, nrecv, exch_msgs+nrecv, exch_msgs,
+      comm, config);
+  free(exch_msgs);
+  return redist;
+}
+
+Xt_redist
+xt_redist_single_array_base_ofs_custom_new(
+  int nsend, int nrecv,
+  const struct Xt_msg_param *send_msgs,
+  const struct Xt_msg_param *recv_msgs,
+  MPI_Comm comm, Xt_config config)
+{
+  // ensure that yaxt is initialized
+  assert(nsend >= 0 && nrecv >=0 && xt_initialized());
 
   Xt_redist_sab redist = xmalloc(sizeof (*redist));
   redist->comm = xt_mpi_comm_smart_dup(comm, &redist->tag_offset);
   Xt_exchanger_new exchanger_new
     = xt_config_get_exchange_new_by_comm(config, redist->comm);
-  {
-    size_t nmsg = (size_t)nrecv + (size_t)nsend;
-    struct Xt_msg_param *exch_msgs = xmalloc(nmsg * sizeof (*exch_msgs));
-    for (size_t i = 0; i < (size_t)nrecv; ++i) {
-      exch_msgs[i].datatype = recv_msgs[i].datatype;
-      exch_msgs[i].displacement = 0;
-      exch_msgs[i].count = 1;
-      exch_msgs[i].rank = recv_msgs[i].rank;
-    }
-    for (size_t i = 0; i < (size_t)nsend; ++i) {
-      exch_msgs[(size_t)nrecv+i].datatype = send_msgs[i].datatype;
-      exch_msgs[(size_t)nrecv+i].displacement = 0;
-      exch_msgs[(size_t)nrecv+i].count = 1;
-      exch_msgs[(size_t)nrecv+i].rank = send_msgs[i].rank;
-    }
-    redist->exchanger
-      = exchanger_new(nsend, nrecv, exch_msgs+nrecv, exch_msgs,
+  redist->exchanger
+      = exchanger_new(nsend, nrecv, send_msgs, recv_msgs,
                       redist->comm, redist->tag_offset, config);
-    free(exch_msgs);
-  }
-
   redist->vtable = &redist_sab_vtable;
   redist->nmsg[SEND] = nsend;
   redist->nmsg[RECV] = nrecv;
