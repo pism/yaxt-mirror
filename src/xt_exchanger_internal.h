@@ -82,6 +82,8 @@ struct xt_exchanger_vtable {
   int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction,
                                    bool);
+  MPI_Aint (*get_displacement)(Xt_exchanger, int, enum xt_msg_direction);
+  int (*get_count)(Xt_exchanger, int, enum xt_msg_direction);
   void (*team_share_default_init)(void *share);
   void (*team_share_destroy)(void *share);
   size_t team_share_size;
@@ -123,6 +125,34 @@ PPM_DSO_INTERNAL MPI_Datatype
 xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger,
                               int rank, enum xt_msg_direction direction,
                               bool do_dup);
+
+/**
+ * gets the displacement used as offset for a specificed message
+ * @param[in] exchanger exchanger object
+ * @param[in] rank      MPI rank
+ * @param[in] direction specific whether the datatype of an incoming or outgoing
+ *                      message is requested
+ * @return displacement for the specificed message
+ * @remark returns -1 if there is no message matching the
+ *         specificed configuration
+ */
+PPM_DSO_INTERNAL MPI_Aint
+xt_exchanger_get_displacement(Xt_exchanger exchanger,
+                              int rank, enum xt_msg_direction direction);
+
+/**
+ * gets item count used for a specificed message
+ * @param[in] exchanger exchanger object
+ * @param[in] rank      MPI rank
+ * @param[in] direction specific whether the datatype of an incoming or outgoing
+ *                      message is requested
+ * @return element count for the specificed message
+ * @remark returns -1 if there is no message matching the
+ *         specificed configuration
+ */
+PPM_DSO_INTERNAL int
+xt_exchanger_get_count(Xt_exchanger exchanger,
+                       int rank, enum xt_msg_direction direction);
 
 /**
  * Gets the ranks of all processes that receive data from/send data to the local

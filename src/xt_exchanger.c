@@ -125,6 +125,20 @@ xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger, int rank,
   return exchanger->vtable->get_MPI_Datatype(exchanger, rank, direction, do_dup);
 }
 
+MPI_Aint
+xt_exchanger_get_displacement(Xt_exchanger exchanger,
+                              int rank, enum xt_msg_direction direction)
+{
+  return exchanger->vtable->get_displacement(exchanger, rank, direction);
+}
+
+int
+xt_exchanger_get_count(Xt_exchanger exchanger,
+                       int rank, enum xt_msg_direction direction)
+{
+  return exchanger->vtable->get_count(exchanger, rank, direction);
+}
+
 Xt_exchanger_thread_share
 xt_exchanger_create_thread_share(Xt_exchanger exchanger, Xt_config config)
 {

@@ -95,6 +95,16 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
                                              enum xt_msg_direction direction,
                                              bool do_dup);
 
+static MPI_Aint
+xt_exchanger_neigh_alltoall_get_displacement(Xt_exchanger exchanger,
+                                             int rank,
+                                             enum xt_msg_direction direction);
+
+static int
+xt_exchanger_neigh_alltoall_get_count(Xt_exchanger exchanger,
+                                      int rank,
+                                      enum xt_msg_direction direction);
+
 static Xt_exchanger_iter
 xt_exchanger_na2a_get_iterator(Xt_exchanger exchanger, Xt_config config);
 
@@ -129,6 +139,8 @@ const struct xt_exchanger_vtable xt_exchanger_neigh_alltoall_vtable = {
   .get_num_msg = xt_exchanger_neigh_alltoall_get_num_msg,
   .get_msg_ranks = xt_exchanger_neigh_alltoall_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_neigh_alltoall_get_MPI_Datatype,
+  .get_displacement = xt_exchanger_neigh_alltoall_get_displacement,
+  .get_count = xt_exchanger_neigh_alltoall_get_count,
   .team_share_size = sizeof (struct xt_exchanger_neigh_alltoall_team_share),
   .team_share_default_init
   = xt_exchanger_neigh_alltoall_team_share_default_init,
@@ -445,6 +457,55 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
   }
   return datatype_copy;
 }
+
+static MPI_Aint
+xt_exchanger_neigh_alltoall_get_displacement(Xt_exchanger exchanger,
+                                             int rank,
+                                             enum xt_msg_direction direction)
+{
+  Xt_exchanger_neigh_alltoall exchanger_na =
+    (Xt_exchanger_neigh_alltoall)exchanger;
+  struct xt_exchanger_neigh_alltoall_team_share
+    *team_share = exchanger_na->team_share;
+  size_t nsend = (size_t)team_share->nmsg[SEND],
+    nmsg = (size_t)team_share->nmsg[direction],
+    ofs = direction == xt_direction_send ? 0 : nsend;
+  int *restrict ranks = team_share->ranks + ofs;
+  MPI_Aint displacement = -1;
+  for (size_t i = 0; i < nmsg; ++i) {
+    if (ranks[i] == rank) {
+      displacement = exchanger_na->displs[i+ofs];
+      break;
+    }
+  }
+  return displacement;
+}
+
+
+static int
+xt_exchanger_neigh_alltoall_get_count(Xt_exchanger exchanger,
+                                      int rank,
+                                      enum xt_msg_direction direction)
+{
+  Xt_exchanger_neigh_alltoall exchanger_na =
+    (Xt_exchanger_neigh_alltoall)exchanger;
+  struct xt_exchanger_neigh_alltoall_team_share
+    *team_share = exchanger_na->team_share;
+  size_t nsend = (size_t)team_share->nmsg[SEND],
+    nmsg = (size_t)team_share->nmsg[direction],
+    ofs = direction == xt_direction_send ? 0 : nsend;
+  int *restrict ranks = team_share->ranks + ofs;
+  int count = -1;
+  for (size_t i = 0; i < nmsg; ++i) {
+    if (ranks[i] == rank) {
+      count = exchanger_na->counts[i+ofs];
+      break;
+    }
+  }
+  return count;
+}
+
+
 
 static int
 xt_exchanger_neigh_alltoall_get_num_msg(Xt_exchanger exchanger,

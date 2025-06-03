@@ -118,6 +118,16 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
                                               enum xt_msg_direction direction,
                                               bool do_dup);
 
+static MPI_Aint
+xt_exchanger_mix_isend_irecv_get_displacement(Xt_exchanger exchanger,
+                                              int rank,
+                                              enum xt_msg_direction direction);
+
+static int
+xt_exchanger_mix_isend_irecv_get_count(Xt_exchanger exchanger,
+                                       int rank,
+                                       enum xt_msg_direction direction);
+
 static Xt_exchanger_iter
 xt_exchanger_mix_isend_irecv_get_iterator(Xt_exchanger exchanger, Xt_config config);
 
@@ -130,6 +140,8 @@ xt_exchanger_mix_isend_irecv_vtable = {
   .get_num_msg = xt_exchanger_mix_isend_irecv_get_num_msg,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
+  .get_displacement = xt_exchanger_mix_isend_irecv_get_displacement,
+  .get_count = xt_exchanger_mix_isend_irecv_get_count,
   .create_thread_share = xt_exchanger_mix_isend_irecv_create_thread_share,
   .destroy_thread_share = xt_exchanger_mix_isend_irecv_destroy_thread_share,
   .get_iterator = xt_exchanger_mix_isend_irecv_get_iterator,
@@ -144,6 +156,8 @@ xt_exchanger_mix_isend_irecv_auto_omp_vtable = {
   .get_num_msg = xt_exchanger_mix_isend_irecv_get_num_msg,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
+  .get_displacement = xt_exchanger_mix_isend_irecv_get_displacement,
+  .get_count = xt_exchanger_mix_isend_irecv_get_count,
   .create_thread_share = xt_exchanger_mix_isend_irecv_create_thread_share,
   .destroy_thread_share = xt_exchanger_mix_isend_irecv_destroy_thread_share,
   .get_iterator = xt_exchanger_mix_isend_irecv_get_iterator,
@@ -530,6 +544,44 @@ xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
       break;
     }
   return datatype_copy;
+}
+
+static MPI_Aint
+xt_exchanger_mix_isend_irecv_get_displacement(Xt_exchanger exchanger,
+                                              int rank,
+                                              enum xt_msg_direction direction)
+{
+  Xt_exchanger_mix_isend_irecv exchanger_msr =
+    (Xt_exchanger_mix_isend_irecv)exchanger;
+  size_t nmsg = (size_t)exchanger_msr->n;
+  struct Xt_msg_param *restrict msgs = exchanger_msr->msgs;
+  MPI_Aint displacement = -1;
+  if (direction == xt_direction_recv) rank |= ~INT_MAX;
+  for (size_t i = 0; i < nmsg; ++i)
+    if (msgs[i].rank == rank) {
+      displacement = msgs[i].displacement;
+      break;
+    }
+  return displacement;
+}
+
+static int
+xt_exchanger_mix_isend_irecv_get_count(Xt_exchanger exchanger,
+                                       int rank,
+                                       enum xt_msg_direction direction)
+{
+  Xt_exchanger_mix_isend_irecv exchanger_msr =
+    (Xt_exchanger_mix_isend_irecv)exchanger;
+  size_t nmsg = (size_t)exchanger_msr->n;
+  struct Xt_msg_param *restrict msgs = exchanger_msr->msgs;
+  int count = -1;
+  if (direction == xt_direction_recv) rank |= ~INT_MAX;
+  for (size_t i = 0; i < nmsg; ++i)
+    if (msgs[i].rank == rank) {
+      count = msgs[i].count;
+      break;
+    }
+  return count;
 }
 
 typedef struct Xt_exchanger_msr_iter_ *Xt_exchanger_msr_iter;
