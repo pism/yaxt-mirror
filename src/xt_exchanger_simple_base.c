@@ -92,6 +92,16 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
                                           enum xt_msg_direction direction,
                                           bool do_dup);
 
+static MPI_Aint
+xt_exchanger_simple_base_get_displacement(Xt_exchanger exchanger,
+                                          int rank,
+                                          enum xt_msg_direction direction);
+
+static int
+xt_exchanger_simple_base_get_count(Xt_exchanger exchanger,
+                                   int rank,
+                                   enum xt_msg_direction direction);
+
 static Xt_exchanger_iter
 xt_exchanger_simple_base_get_iterator(Xt_exchanger exchanger, Xt_config config);
 
@@ -103,6 +113,8 @@ const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .get_num_msg = xt_exchanger_simple_base_get_num_msg,
   .get_msg_ranks = xt_exchanger_simple_base_get_msg_ranks,
   .get_MPI_Datatype = xt_exchanger_simple_base_get_MPI_Datatype,
+  .get_displacement = xt_exchanger_simple_base_get_displacement,
+  .get_count = xt_exchanger_simple_base_get_count,
   .create_thread_share = (xt_exchanger_create_thread_share_func)0,
   .destroy_thread_share = (xt_exchanger_destroy_thread_share_func)0,
   .get_iterator = xt_exchanger_simple_base_get_iterator,
@@ -262,6 +274,48 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
     }
   return datatype_copy;
 }
+
+static MPI_Aint
+xt_exchanger_simple_base_get_displacement(Xt_exchanger exchanger,
+                                          int rank,
+                                          enum xt_msg_direction direction)
+{
+  Xt_exchanger_simple_base exchanger_sb =
+    (Xt_exchanger_simple_base)exchanger;
+  size_t nsend = (size_t)exchanger_sb->nmsg[SEND],
+    nmsg = (size_t)exchanger_sb->nmsg[direction],
+    ofs = direction == xt_direction_send ? 0 : nsend;
+  struct Xt_msg_param *restrict msgs = exchanger_sb->msgs + ofs;
+  MPI_Aint displacement = -1;
+  for (size_t i = 0; i < nmsg; ++i)
+    if (msgs[i].rank == rank) {
+      displacement = msgs[i].displacement;
+      break;
+    }
+  return displacement;
+}
+
+static int
+xt_exchanger_simple_base_get_count(Xt_exchanger exchanger,
+                                   int rank,
+                                   enum xt_msg_direction direction)
+{
+  Xt_exchanger_simple_base exchanger_sb =
+    (Xt_exchanger_simple_base)exchanger;
+  size_t nsend = (size_t)exchanger_sb->nmsg[SEND],
+    nmsg = (size_t)exchanger_sb->nmsg[direction],
+    ofs = direction == xt_direction_send ? 0 : nsend;
+  struct Xt_msg_param *restrict msgs = exchanger_sb->msgs + ofs;
+  int count = -1;
+  for (size_t i = 0; i < nmsg; ++i)
+    if (msgs[i].rank == rank) {
+      count = msgs[i].count;
+      break;
+    }
+  return count;
+}
+
+
 
 static int
 xt_exchanger_simple_base_get_num_msg(Xt_exchanger exchanger,
