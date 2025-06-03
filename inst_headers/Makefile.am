@@ -43,7 +43,7 @@
 xtincludedir = $(includedir)/xt
 
 nodist_include_HEADERS = yaxt.h yaxt.hpp
-nodist_xtinclude_HEADERS =  $(xtinclude_HEADERS)
+nodist_xtinclude_HEADERS =  $(xtinclude_HEADERS) xt/xt_exchanger.h
 
 SUBDIRS = . f90
 DIST_SUBDIRS = f90 .
@@ -94,6 +94,23 @@ $(xtinclude_HEADERS_stamp): ../include/config.h \
 	  --dstdir=. \
 	  $$headerbasedir$(libyaxt_c_srcdir)/$(@:.stamp=) && touch $@
 
+xt/xt_exchanger.h.stamp: ../include/config.h \
+	$(top_srcdir)/scripts/header2installheader.pl xt/.dir_stamp
+	$(AM_V_GEN) srcfile=`echo "$(@:.stamp=)" | cut -c 4-` \
+	  headerbasedir=`test -f '$(libyaxt_c_srcdir)/$$srcfile' || echo '$(srcdir)/'` ; \
+	  $(PERL) -I$(top_srcdir)/scripts \
+	  $(top_srcdir)/scripts/header2installheader.pl \
+	  --config-header=../include/config.h \
+	  --srcdir=$$headerbasedir$(libyaxt_c_srcdir) \
+	  --c-sizeof-int=$(C_SIZEOF_INT) \
+	  --c-sizeof-long=$(C_SIZEOF_LONG) \
+	  --c-sizeof-long-long=$(C_SIZEOF_LONG_LONG) \
+	  --c-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
+	  `expr "$@" : '.*\.hpp.stamp$$' >/dev/null && echo --write-hpp-header` \
+	  --dstdir=xt \
+	  "$$headerbasedir$(libyaxt_c_srcdir)/$$srcfile"
+
+xt/xt_exchanger.h: xt/xt_exchanger.h.stamp
 $(xtinclude_HEADERS) xt/xt_exchanger.h:
 	@test -e "$@" || { rm -f "$@.stamp" ; $(MAKE) "$@.stamp" ; }
 
