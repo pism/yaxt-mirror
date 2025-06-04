@@ -59,39 +59,42 @@
 #include "xt_mpi_internal.h"
 #include "xt_mpi_ddt_wrap.h"
 #include "xt/xt_redist_repeat.h"
-#include "xt/xt_redist_single_array_base.h"
+#include <xt_redist_single_array_base_internal.h>
 #include "ensure_array_size.h"
 #include "xt/xt_redist.h"
 #include "xt_redist_internal.h"
 #include "xt_config_internal.h"
+#include "xt_exchanger_internal.h"
 
 
 
 static const char filename[] = "xt_redist_repeat.c";
 
 static void
-generate_msg_infos(struct Xt_redist_msg *restrict msgs,
-                   MPI_Aint extent, const int *displacements,
-                   Xt_redist redist,
+generate_msg_infos(struct Xt_msg_param *restrict send_msgs,
+                   struct Xt_msg_param *restrict recv_msgs,
+                   Xt_exchanger_iter exch_iter,
                    int num_repetitions,
-                   MPI_Aint *restrict hdisp,
-                   MPI_Comm comm,
-                   enum xt_msg_direction direction)
+                   const MPI_Aint (*hdisp)[num_repetitions],
+                   MPI_Comm comm)
 {
-  int *restrict ranks = NULL;
-  size_t num_ranks
-    = (size_t)xt_redist_get_msg_ranks(redist, direction, &ranks);
-  for (size_t j = 0; j < (size_t)num_repetitions; ++j)
-    hdisp[j] = (MPI_Aint)displacements[j] * extent;
-  for (size_t i = 0; i < num_ranks; ++i) {
+  size_t send_msg_idx = 0, recv_msg_idx = 0;
+  do {
     MPI_Datatype datatype
-      = xt_redist_get_MPI_Datatype(redist, ranks[i], direction, false);
-    msgs[i].rank = ranks[i];
-    Xt_Type_create_hindexed_block(num_repetitions, 1, hdisp,
-                                  datatype, &msgs[i].datatype, comm);
-    xt_mpi_call(MPI_Type_commit(&msgs[i].datatype), comm);
-  }
-  free(ranks);
+      = xt_exchanger_iter_get_MPI_Datatype(exch_iter);
+    int direction
+      = xt_exchanger_iter_get_direction(exch_iter);
+    struct Xt_msg_param *msg = direction == xt_direction_send
+      ? send_msgs + send_msg_idx++ : recv_msgs + recv_msg_idx++;
+    msg->displacement = xt_exchanger_iter_get_displacement(exch_iter);
+    int count = xt_exchanger_iter_get_count(exch_iter);
+    msg->rank = xt_exchanger_iter_get_rank(exch_iter);
+    msg->count = 1;
+    Xt_Type_create_hindexed_block(num_repetitions, count,
+                                  hdisp[direction],
+                                  datatype, &msg->datatype, comm);
+    xt_mpi_call(MPI_Type_commit(&msg->datatype), comm);
+  } while (xt_exchanger_iter_next(exch_iter));
 }
 
 Xt_redist
@@ -128,9 +131,9 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
     nmsg[i] = redist->vtable->get_num_msg(redist, (enum xt_msg_direction)i);
   size_t num_messages = (size_t)nmsg[SEND] + (size_t)nmsg[RECV];
   enum { auto_limit = 32 };
-  MPI_Aint hdisp_auto[auto_limit],
-    *hdisp = hdisp_auto;
-  struct Xt_redist_msg msgs_auto[auto_limit],
+  MPI_Aint hdisp_auto[2][auto_limit],
+    (*restrict hdisp)[num_repetitions] = hdisp_auto;
+  struct Xt_msg_param msgs_auto[auto_limit],
     *msgs = msgs_auto;
   void *buf = NULL;
   if (num_repetitions > auto_limit
@@ -139,7 +142,7 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
       = (num_messages > auto_limit ? num_messages * sizeof (*msgs) : (size_t)0),
       hdisp_alloc_size
       = (num_repetitions > auto_limit
-         ? (size_t)num_repetitions * sizeof (*hdisp)
+         ? (size_t)num_repetitions * sizeof (MPI_Aint) * 2
          : (size_t)0),
       alloc_size = msgs_alloc_size + hdisp_alloc_size;
     buf = xmalloc(alloc_size);
@@ -149,16 +152,21 @@ xt_redist_repeat_asym_custom_new(Xt_redist redist, MPI_Aint src_extent,
       msgs = (void *)((unsigned char *)buf + hdisp_alloc_size);
   }
 
-  generate_msg_infos(msgs, src_extent, src_displacements, redist,
-                     num_repetitions, hdisp, comm, xt_direction_send);
-
-  generate_msg_infos(msgs+nmsg[0], dst_extent, dst_displacements, redist,
-                     num_repetitions, hdisp, comm, xt_direction_recv);
-
+  Xt_exchanger exchanger = xt_redist_get_exchanger(redist);
+  for (size_t j = 0; j < (size_t)num_repetitions; ++j)
+    hdisp[xt_direction_send][j] = (MPI_Aint)src_displacements[j] * src_extent;
+  for (size_t j = 0; j < (size_t)num_repetitions; ++j)
+    hdisp[xt_direction_recv][j] = (MPI_Aint)dst_displacements[j] * dst_extent;
   struct Xt_config_ config_ = *config;
   config_.flags |= exch_no_dt_dup;
+  Xt_exchanger_iter exch_iter
+    = xt_exchanger_get_iterator(exchanger, &config_);
+  generate_msg_infos(msgs, msgs+nmsg[0], exch_iter,
+                     num_repetitions,
+                     (const MPI_Aint (*)[(size_t)num_repetitions])hdisp, comm);
+  xt_exchanger_iter_delete(exch_iter);
 
-  Xt_redist result = xt_redist_single_array_base_custom_new(
+  Xt_redist result = xt_redist_single_array_base_ofs_custom_new(
     nmsg[SEND], nmsg[RECV], msgs, msgs+nmsg[SEND], comm, &config_);
   if (num_repetitions > auto_limit
       || num_messages > auto_limit)
