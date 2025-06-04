@@ -100,6 +100,9 @@ redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
                             enum xt_msg_direction direction,
                             bool do_dup);
 
+static Xt_exchanger
+redist_sab_get_exchanger(Xt_redist redist);
+
 static int
 redist_sab_get_msg_ranks(Xt_redist redist,
                          enum xt_msg_direction direction,
@@ -117,6 +120,7 @@ static const struct xt_redist_vtable redist_sab_vtable = {
   .a_exchange1           = redist_sab_a_exchange1,
   .get_num_msg           = redist_sab_get_num_msg,
   .get_msg_MPI_Datatype  = redist_sab_get_MPI_Datatype,
+  .get_exchanger         = redist_sab_get_exchanger,
   .get_msg_ranks         = redist_sab_get_msg_ranks,
   .get_MPI_Comm          = redist_sab_get_MPI_Comm
 };
@@ -289,6 +293,12 @@ redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
 {
   return xt_exchanger_get_MPI_Datatype(xrsab(redist)->exchanger, rank,
                                        direction, do_dup);
+}
+
+static Xt_exchanger
+redist_sab_get_exchanger(Xt_redist redist)
+{
+  return xrsab(redist)->exchanger;
 }
 
 static int

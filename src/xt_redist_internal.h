@@ -59,10 +59,10 @@
 #include <mpi.h>
 
 #include "core/ppm_visibility.h"
+#include "xt_exchanger.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_request.h"
 #include "xt/xt_config.h"
-#include "xt_mpi_ddt_cache.h"
 
 enum { SEND = xt_direction_send, RECV = xt_direction_recv };
 
@@ -77,6 +77,7 @@ struct xt_redist_vtable {
   void (*a_exchange1)(Xt_redist, const void *, void *, Xt_request *);
   MPI_Datatype (*get_msg_MPI_Datatype)(Xt_redist, int, enum xt_msg_direction,
                                        bool need_dup);
+  Xt_exchanger (*get_exchanger)(Xt_redist);
   int (*get_num_msg)(Xt_redist, enum xt_msg_direction);
   int (*get_msg_ranks)(Xt_redist, enum xt_msg_direction, int *restrict *);
   MPI_Comm (*get_MPI_Comm)(Xt_redist);
@@ -143,12 +144,36 @@ xt_redist_get_msg_ranks(Xt_redist redist, enum xt_msg_direction direction,
  * @param[in] do_dup    if true only return MPI_Datatype_dup of
  *                      internally stored datatype
  * @return Datatype for the specified message. The return value is
- *         MPI_DATATYPE_NULL, if no data for the specified message.
+ *         MPI_DATATYPE_NULL, if no message matches the specified rank
+ *         and direction.
  */
 PPM_DSO_INTERNAL MPI_Datatype
 xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
                            enum xt_msg_direction direction, bool do_dup);
 
+/**
+ * Gets exchanger if such can be retrieved.
+ * @param[in] redist    redistribution object
+ * @return exchanger object handle or NULL if unavailable
+ */
+PPM_DSO_INTERNAL Xt_exchanger
+xt_redist_get_exchanger(Xt_redist redist);
+
+/**
+ * Gets the displacement used as offset in send/receive of specified message.
+ * @param[in] redist    redistribution object
+ * @param[in] rank      MPI rank of the communicator partner
+ * @param[in] direction specifices whether the datatype for an outgoing or
+ *                      incoming message is requested
+ * @return displacement for the specified message. The return value is
+ *         MPI_BOTTOM, if no message matches the specified rank
+ *         and direction.
+ */
+PPM_DSO_INTERNAL MPI_Aint
+xt_redist_get_displacement(Xt_redist redist, int rank,
+                           enum xt_msg_direction direction);
+
+struct Xt_mpiddt_list;
 /**
  * Generates a new MPI derived datatype from a number of MPI derived datatypes.
  * @param[in] count         number of datatypes

@@ -124,6 +124,7 @@ static const struct xt_redist_vtable redist_collection_vtable = {
   .a_exchange1           = redist_collection_a_exchange1,
   .get_num_msg           = redist_collection_get_num_msg,
   .get_msg_MPI_Datatype  = redist_collection_get_MPI_Datatype,
+  .get_exchanger         = 0,
   .get_msg_ranks         = redist_collection_get_msg_ranks,
   .get_MPI_Comm          = redist_collection_get_MPI_Comm
 };

@@ -129,6 +129,12 @@ MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
   return redist->vtable->get_msg_MPI_Datatype(redist, rank, direction, do_dup);
 }
 
+Xt_exchanger xt_redist_get_exchanger(Xt_redist redist)
+{
+  return redist->vtable->get_exchanger ?
+    redist->vtable->get_exchanger(redist) : NULL;
+}
+
 MPI_Comm xt_redist_get_MPI_Comm(Xt_redist redist) {
 
   return redist->vtable->get_MPI_Comm(redist);
