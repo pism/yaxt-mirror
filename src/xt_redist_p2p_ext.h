@@ -131,7 +131,7 @@ XT_DT_STRIPE_BUFS_GROW(
  * @param[in] config           custom configuration parameters, used
  *                             to select datatype generation method
  */
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 XT_GENERATE_EXT_DATATYPE(
   int num_transfer_pos_ext,
   const struct Xt_pos_ext transfer_pos_ext[],
@@ -215,7 +215,7 @@ XT_GENERATE_EXT_DATATYPE(
     } while (++i < num_transfer_pos_ext);
   }
 
-  MPI_Datatype dt;
+  struct Xt_mpi_dt_ofs dt;
   if (config->ddt_cache_limit >= -1)
     dt = XT_MPI_PARSE_STRIPE(
       num_dt_stripes, dt_stripes_disp, dt_stripes_size,
@@ -262,7 +262,7 @@ static void
 XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
                           int num_ext,
                           const XT_EXT_TYPE extents[],
-                          struct Xt_redist_msg *msgs,
+                          struct Xt_msg_param *msgs,
                           struct Xt_mpi_strp_prs_params *params,
                           Xt_config config)
 {
@@ -280,7 +280,7 @@ XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
     void *buf = NULL;
     size_t buf_size = 0;
 
-    struct Xt_redist_msg *curr_msg = msgs;
+    struct Xt_msg_param *curr_msg = msgs;
     do {
 
       const struct Xt_pos_ext *curr_transfer_pos_ext
@@ -288,14 +288,18 @@ XT_GENERATE_EXT_MSG_INFOS(int num_msgs, Xt_xmap_iter iter,
       int curr_num_transfer_pos_ext
         = xt_xmap_iterator_get_num_transfer_pos_ext(iter);
 
-      curr_msg->datatype
+      struct Xt_mpi_dt_ofs dt_ofs
         = curr_num_transfer_pos_ext > 0
         ? XT_GENERATE_EXT_DATATYPE(curr_num_transfer_pos_ext,
                                    curr_transfer_pos_ext,
                                    num_ext, extents, psum_ext_size,
                                    &buf, &buf_size,
                                    params, config)
-        : MPI_DATATYPE_NULL;
+        : (struct Xt_mpi_dt_ofs){ .dt = MPI_DATATYPE_NULL,
+                                  .displacement = 0 };
+      curr_msg->datatype = dt_ofs.dt;
+      curr_msg->displacement = dt_ofs.displacement;
+      curr_msg->count = 1;
       curr_msg->rank = xt_xmap_iterator_get_rank(iter);
 
       curr_msg++;
@@ -337,7 +341,7 @@ XT_REDIST_P2P_EXT_CUSTOM_NEW(Xt_xmap xmap,
   int nrecv = xt_xmap_get_num_sources(xmap),
     nsend = xt_xmap_get_num_destinations(xmap);
   size_t nmsg = (size_t)nrecv + (size_t)nsend;
-  struct Xt_redist_msg *msgs = xmalloc(nmsg * sizeof (*msgs)),
+  struct Xt_msg_param *msgs = xmalloc(nmsg * sizeof (*msgs)),
     *send_msgs = msgs, *recv_msgs = msgs + nsend;
   Xt_xmap_iter dst_iter = xt_xmap_get_in_iterator(xmap);
   struct Xt_mpi_strp_prs_params params;
@@ -355,7 +359,7 @@ XT_REDIST_P2P_EXT_CUSTOM_NEW(Xt_xmap xmap,
   struct Xt_config_ config_ = *config;
   config_.flags |= exch_no_dt_dup;
 
-  Xt_redist result = xt_redist_single_array_base_custom_new(
+  Xt_redist result = xt_redist_single_array_base_ofs_custom_new(
     nsend, nrecv, send_msgs, recv_msgs, comm, &config_);
 
   free(msgs);

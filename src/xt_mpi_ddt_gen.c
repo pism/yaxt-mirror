@@ -86,12 +86,12 @@
 #undef XT_MPI_DDT_GEN_MATCH_COMPUTE_VECTOR_DISPLACEMENT
 #undef XT_MPI_TYPE_INDEXED
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type,
                                        MPI_Comm comm, Xt_config config);
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 xt_mpi_generate_datatype_block_custom(const int *displacements,
                                       const int *blocklengths,
                                       int count, MPI_Datatype old_type,
@@ -102,11 +102,19 @@ xt_mpi_generate_datatype_block(const int *displacements,
                                const int *blocklengths,
                                int count, MPI_Datatype old_type,
                                MPI_Comm comm) {
-  return xt_mpi_generate_datatype_block_custom(
+  struct Xt_mpi_dt_ofs dt_ofs = xt_mpi_generate_datatype_block_custom(
     displacements, blocklengths, count, old_type, comm, &xt_default_config);
+  if (dt_ofs.displacement != 0) {
+    MPI_Datatype datatype = dt_ofs.dt;
+    Xt_Type_create_hindexed(1, (int [1]){ 1 },
+                            &dt_ofs.displacement, datatype, &dt_ofs.dt, comm);
+    xt_mpi_call(MPI_Type_free(&datatype), comm);
+    xt_mpi_call(MPI_Type_commit(&dt_ofs.dt), comm);
+  }
+  return dt_ofs.dt;
 }
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 xt_mpi_generate_datatype_block_custom(const int *displacements,
                                       const int *blocklengths,
                                       int count, MPI_Datatype old_type,
@@ -120,7 +128,7 @@ xt_mpi_generate_datatype_block_custom(const int *displacements,
                                                   count, old_type, comm);
 }
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 xt_mpi_generate_datatype_custom(int const * displacements, int count,
                                 MPI_Datatype old_type, MPI_Comm comm,
                                 Xt_config config);
@@ -129,22 +137,31 @@ MPI_Datatype
 xt_mpi_generate_datatype(int const * displacements, int count,
                          MPI_Datatype old_type, MPI_Comm comm)
 {
-  return xt_mpi_generate_datatype_custom(displacements, count, old_type,
-                                         comm, &xt_default_config);
+  if (count <= 0)
+    return MPI_DATATYPE_NULL;
+  struct Xt_mpi_dt_ofs dt_ofs
+    = xt_mpi_generate_datatype_custom(displacements, count, old_type,
+                                      comm, &xt_default_config);
+  if (dt_ofs.displacement != 0) {
+    MPI_Datatype datatype = dt_ofs.dt;
+    Xt_Type_create_hindexed(1, (int [1]){ 1 },
+                            &dt_ofs.displacement, datatype, &dt_ofs.dt, comm);
+    xt_mpi_call(MPI_Type_free(&datatype), comm);
+    xt_mpi_call(MPI_Type_commit(&dt_ofs.dt), comm);
+  }
+  return dt_ofs.dt;
 }
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 xt_mpi_generate_compact_datatype(int const *disp, int disp_len,
                                  MPI_Datatype old_type, MPI_Comm comm,
                                  Xt_config config);
 
-MPI_Datatype
+struct Xt_mpi_dt_ofs
 xt_mpi_generate_datatype_custom(int const * displacements, int count,
                                 MPI_Datatype old_type, MPI_Comm comm,
                                 Xt_config config)
 {
-  if (count <= 0)
-    return MPI_DATATYPE_NULL;
   if (config->ddt_cache_limit >= -1)
     return xt_mpi_generate_compact_datatype(displacements, count, old_type,
                                             comm, config);
@@ -161,12 +178,12 @@ xt_mpi_generate_datatype_custom(int const * displacements, int count,
       blocklengths[i] = 1;
     displ = displacements;
   }
-  MPI_Datatype datatype = xt_mpi_generate_datatype_block_match_i(
+  struct Xt_mpi_dt_ofs dt_ofs = xt_mpi_generate_datatype_block_match_i(
     displ, blocklengths, (int)num_blk, old_type, comm);
 
   free(blocklengths);
 
-  return datatype;
+  return dt_ofs;
 }
 
 #define XT_MPI_STRP_PRS_PREFIX
@@ -197,37 +214,39 @@ xt_mpi_generate_datatype_custom(int const * displacements, int count,
 #define XT_MPI_STRP_PRS_INDEXED_CREATE Xt_mpi_ddt_cache_acquire_hindexed
 #include "xt_mpi_stripe_parse_func.h"
 
-static MPI_Datatype
-xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
+static struct Xt_mpi_dt_ofs
+xt_mpi_ddt_block_gen(size_t count, const int *disp, const int *blocklengths,
                      struct Xt_mpi_strp_prs_params *params);
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
                                        int count, MPI_Datatype old_type,
                                        MPI_Comm comm, Xt_config config)
 {
+  if (count < 1)
+    return (struct Xt_mpi_dt_ofs){ .dt = MPI_DATATYPE_NULL, .displacement = 0 };
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, old_type, config, comm);
-  MPI_Datatype dt = xt_mpi_ddt_block_gen(count, disp, blocklengths, &params);
+  struct Xt_mpi_dt_ofs dt_ofs
+    = xt_mpi_ddt_block_gen((size_t)count, disp, blocklengths, &params);
   xt_destroy_mpi_strp_prs_params(&params);
-  return dt;
+  return dt_ofs;
 }
 
-static MPI_Datatype
-xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
+static struct Xt_mpi_dt_ofs
+xt_mpi_ddt_block_gen(size_t count, const int *disp, const int *blocklengths,
                      struct Xt_mpi_strp_prs_params *params)
 {
   size_t count_ = (size_t)0;
-  for (int i=0; i<count; ++i)
+  for (size_t i=0; i < count; ++i)
     count_ += (size_t)(blocklengths[i] > 0);
-  if (count_ < 1) return MPI_DATATYPE_NULL;
   int *restrict v_disp, *restrict v_size, *restrict v_stride;
-  v_stride = xmalloc(sizeof(int) * count_ * ((int)count_ != count ? 3 : 1));
-  if ((int)count_ != count) {
+  v_stride = xmalloc(sizeof(int) * count_ * (count_ != count ? 3 : 1));
+  if (count_ != count) {
     v_size = v_stride + count_;
     v_disp = v_size + count_;
     size_t j=0;
-    for (size_t i=0; i<(size_t)count; ++i) {
+    for (size_t i=0; i < count; ++i) {
       v_disp[j] = disp[i];
       v_stride[j] = 1;
       int bl = blocklengths[i];
@@ -240,28 +259,31 @@ xt_mpi_ddt_block_gen(int count, const int *disp, const int *blocklengths,
     for (size_t i = 0; i < count_; ++i)
       v_stride[i] = 1;
   }
-  MPI_Datatype dt = parse_stripe(disp, blocklengths, v_stride, count_, params);
+  struct Xt_mpi_dt_ofs dt_ofs
+    = parse_stripe(disp, blocklengths, v_stride, count_, params);
   free(v_stride);
-  return dt;
+  return dt_ofs;
 }
 
-MPI_Datatype
+struct Xt_mpi_dt_ofs
 xt_mpi_generate_compact_datatype(const int *disp, int disp_len,
                                  MPI_Datatype old_type, MPI_Comm comm,
                                  Xt_config config)
 {
-  if (disp_len < 1) return MPI_DATATYPE_NULL;
-
+  if (disp_len < 1)
+    return (struct Xt_mpi_dt_ofs){ .dt = MPI_DATATYPE_NULL,
+                                   .displacement = 0 };
   size_t vlen = xt_disp2ext_count((size_t)disp_len, disp);
   int *v_disp = xmalloc(vlen * 3U * sizeof (int)),
     *v_size = v_disp + vlen, *v_stride = v_size + vlen;
   xt_disp2ext((size_t)disp_len, disp, v_disp, v_size, v_stride);
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, old_type, config, comm);
-  MPI_Datatype dt = parse_stripe(v_disp, v_size, v_stride, vlen, &params);
+  struct Xt_mpi_dt_ofs dt_ofs
+    = parse_stripe(v_disp, v_size, v_stride, vlen, &params);
   xt_destroy_mpi_strp_prs_params(&params);
   free(v_disp);
-  return dt;
+  return dt_ofs;
 }
 
 

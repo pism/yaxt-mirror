@@ -296,7 +296,7 @@ XT_MPI_STRP_PRS_GEN_FALLBACK_TYPE(
   free(d);
 }
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 XT_MPI_STRP_PRS_ENTRY(
   const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
   const int *v_size,
@@ -304,7 +304,7 @@ XT_MPI_STRP_PRS_ENTRY(
   size_t vlen,
   struct Xt_mpi_strp_prs_params *params);
 
-MPI_Datatype
+struct Xt_mpi_dt_ofs
 XT_MPI_STRP_PRS_ENTRY_LIBINTERNAL(
   size_t vlen,
   const XT_MPI_STRP_PRS_AOFS_TYPE v_disp[vlen],
@@ -315,7 +315,7 @@ XT_MPI_STRP_PRS_ENTRY_LIBINTERNAL(
   return XT_MPI_STRP_PRS_ENTRY(v_disp, v_size, v_stride, vlen, params);
 }
 
-static MPI_Datatype
+static struct Xt_mpi_dt_ofs
 XT_MPI_STRP_PRS_ENTRY(
   const XT_MPI_STRP_PRS_AOFS_TYPE *v_disp,
   const int *v_size,
@@ -394,7 +394,7 @@ XT_MPI_STRP_PRS_ENTRY(
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), params->comm);
   free(wdisp);
-  return result_dt;
+  return (struct Xt_mpi_dt_ofs){ .dt = result_dt, .displacement = 0 };
 }
 
 MPI_Datatype
@@ -423,11 +423,18 @@ XT_MPI_STRP_PRS_DRIVER(const XT_MPI_OFFSET_EXT *v,
   }
   struct Xt_mpi_strp_prs_params params;
   xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
-  MPI_Datatype dt = XT_MPI_STRP_PRS_ENTRY(v_disp, v_size, v_stride, count_,
-                                          &params);
+  struct Xt_mpi_dt_ofs dt_ofs
+    = XT_MPI_STRP_PRS_ENTRY(v_disp, v_size, v_stride, count_, &params);
+  if (dt_ofs.displacement != 0) {
+    MPI_Datatype datatype = dt_ofs.dt;
+    Xt_Type_create_hindexed(1, (int [1]){ 1 },
+                            &dt_ofs.displacement, datatype, &dt_ofs.dt, comm);
+    xt_mpi_call(MPI_Type_free(&datatype), comm);
+    xt_mpi_call(MPI_Type_commit(&dt_ofs.dt), comm);
+  }
   if (count_)
     free(v_disp);
-  return dt;
+  return dt_ofs.dt;
 }
 
 

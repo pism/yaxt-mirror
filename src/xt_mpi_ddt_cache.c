@@ -671,7 +671,7 @@ Xt_mpi_ddt_cache_free(struct Xt_mpiddt_list *ddt_list,
 void
 Xt_mpi_ddt_cache_check_retention(struct Xt_mpiddt_list *ddt_list,
                                  size_t nmsg,
-                                 struct Xt_redist_msg msgs[nmsg])
+                                 struct Xt_msg_param msgs[nmsg])
 {
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
