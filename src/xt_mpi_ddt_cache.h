@@ -221,12 +221,12 @@ PPM_DSO_INTERNAL void
 Xt_mpi_ddt_cache_free(struct Xt_mpiddt_list *ddt_list,
                       MPI_Comm comm);
 
-#include "xt/xt_redist.h"
+#include "xt_exchanger.h"
 
 PPM_DSO_INTERNAL void
 Xt_mpi_ddt_cache_check_retention(struct Xt_mpiddt_list *ddt_list,
                                  size_t nmsg,
-                                 struct Xt_redist_msg msgs[nmsg]);
+                                 struct Xt_msg_param msgs[nmsg]);
 
 
 #endif

@@ -141,7 +141,13 @@ xt_destroy_mpi_strp_prs_params(struct Xt_mpi_strp_prs_params *params)
   params->comm = MPI_COMM_NULL;
 }
 
-PPM_DSO_INTERNAL MPI_Datatype
+struct Xt_mpi_dt_ofs
+{
+  MPI_Aint displacement;
+  MPI_Datatype dt;
+};
+
+PPM_DSO_INTERNAL struct Xt_mpi_dt_ofs
 xt_mpi_parse_stripe(
   size_t vlen,
   const int v_disp[vlen],
@@ -149,7 +155,7 @@ xt_mpi_parse_stripe(
   const int v_stride[vlen],
   struct Xt_mpi_strp_prs_params *params);
 
-PPM_DSO_INTERNAL MPI_Datatype
+PPM_DSO_INTERNAL struct Xt_mpi_dt_ofs
 xt_mpi_parse_astripe(
   size_t vlen,
   const MPI_Aint v_disp[vlen],
@@ -157,14 +163,14 @@ xt_mpi_parse_astripe(
   const MPI_Aint v_stride[vlen],
   struct Xt_mpi_strp_prs_params *params);
 
-PPM_DSO_INTERNAL MPI_Datatype
+PPM_DSO_INTERNAL struct Xt_mpi_dt_ofs
 xt_mpi_generate_datatype_block_match_i(
   const int *displacements,
   const int *blocklengths,
   int count,
   MPI_Datatype old_type, MPI_Comm comm);
 
-PPM_DSO_INTERNAL MPI_Datatype
+PPM_DSO_INTERNAL struct Xt_mpi_dt_ofs
 xt_mpi_generate_datatype_block_match_a(
   const MPI_Aint *displacements,
   const int *blocklengths,
