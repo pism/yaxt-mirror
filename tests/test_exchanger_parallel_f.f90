@@ -46,7 +46,7 @@
 #include "fc_feature_defs.inc"
 #define FP_EQ(a, b) (ABS((a)-(b)) < EPSILON((a)))
 PROGRAM test_exchanger_parallel
-  USE iso_c_binding, ONLY: c_ptr, c_loc, c_int
+  USE iso_c_binding, ONLY: c_ptr, c_loc, c_int, c_null_ptr
   USE mpi
   USE yaxt
   USE xt_exchanger_abstract
@@ -405,17 +405,18 @@ CONTAINS
 
       DO j = 1, num_exchanges
         exchanger(j) = xt_exchanger_new(nsend, nrecv, send_msgs, &
-             recv_msgs(1, j), comm, 0, config)
+             recv_msgs(1:nrecv, j), comm, 0, config)
       END DO
 
       ! run test
       test_async_ubound &
            = MERGE(1, 2, exchange_method == xt_exchanger_irecv_send)
+      dst_data_p = c_null_ptr
       DO test_async = 1, test_async_ubound
         src_data(1) = REAL(MOD(my_rank+comm_size-i, comm_size))
         dst_data = -1.0
         DO j = 1, num_exchanges
-          dst_data_p = C_LOC(dst_data(1, j))
+          IF (nrecv > 0) dst_data_p = C_LOC(dst_data(1, j))
           CALL data_exchange(exchanger(j), src_data_p, &
                dst_data_p, test_async > 1)
         END DO
