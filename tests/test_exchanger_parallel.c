@@ -90,10 +90,9 @@ static int test_freq = 3;
 int main(int argc, char **argv)
 {
 
-  MPI_Comm comm = MPI_COMM_WORLD;
-  test_init_mpi(&argc, &argv, comm);
+  test_init_mpi(&argc, &argv, MPI_COMM_WORLD);
 
-  xt_initialize(comm);
+  xt_initialize(MPI_COMM_WORLD);
 
   int *exchanger_code = parse_options(&argc, &argv);
   Xt_config config = xt_config_new();
@@ -113,45 +112,55 @@ int main(int argc, char **argv)
     num_send_modes = (sizeof (send_comm_modes_2_test)
                       / sizeof (send_comm_modes_2_test[0])),
   };
-  int comm_size;
-  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+  int world_size, world_rank;
+  xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &world_size), MPI_COMM_WORLD);
+  xt_mpi_call(MPI_Comm_rank(MPI_COMM_WORLD, &world_rank), MPI_COMM_WORLD);
   size_t buf_size = (sizeof (int) + (size_t)MPI_BSEND_OVERHEAD)
-    * (size_t)comm_size;
+    * (size_t)world_size;
   void *buf = xmalloc(buf_size);
-  xt_mpi_call(MPI_Buffer_attach(buf, (int)buf_size), comm);
-  for (size_t m = 0; m < num_mt_modes; ++m) {
+  xt_mpi_call(MPI_Buffer_attach(buf, (int)buf_size), MPI_COMM_WORLD);
+  for (int split_rank = 0, world_size_2 = world_size/2;
+       split_rank <= world_size_2; ++split_rank) {
+    MPI_Comm comm = MPI_COMM_WORLD;
+    if (split_rank > 0)
+      xt_mpi_call(MPI_Comm_split(MPI_COMM_WORLD, world_rank < split_rank,
+                                 world_rank, &comm), MPI_COMM_WORLD);
+    for (size_t m = 0; m < num_mt_modes; ++m) {
 #ifdef _OPENMP
-    int thread_support_provided;
-    xt_mpi_call(MPI_Query_thread(&thread_support_provided), comm);
-    if (mt_configs_2_test[m] == XT_MT_OPENMP
-        && thread_support_provided != MPI_THREAD_MULTIPLE)
-      continue;
+      int thread_support_provided;
+      xt_mpi_call(MPI_Query_thread(&thread_support_provided), comm);
+      if (mt_configs_2_test[m] == XT_MT_OPENMP
+          && thread_support_provided != MPI_THREAD_MULTIPLE)
+        continue;
 #endif
-    xt_config_set_redist_mthread_mode(config, mt_configs_2_test[m]);
+      xt_config_set_redist_mthread_mode(config, mt_configs_2_test[m]);
 #if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
-    for (size_t n = 0; n < num_send_modes; ++n) {
-      xt_config_set_exchange_send_comm_mode(config, send_comm_modes_2_test[n]);
+      for (size_t n = 0; n < num_send_modes; ++n) {
+        xt_config_set_exchange_send_comm_mode(config, send_comm_modes_2_test[n]);
 #endif
-      for (size_t i = 0; exchanger_code[i] != -1; ++i) {
-        xt_config_set_exchange_method(config, exchanger_code[i]);
-        test_bcast(comm, config);
+        for (size_t i = 0; exchanger_code[i] != -1; ++i) {
+          xt_config_set_exchange_method(config, exchanger_code[i]);
+          test_bcast(comm, config);
 
-        test_gather(comm, config);
+          test_gather(comm, config);
 
-        test_all2all(comm, config);
+          test_all2all(comm, config);
 
-        test_rr(comm, config);
+          test_rr(comm, config);
 
-        test_intercomm_all2all(comm, config);
+          test_intercomm_all2all(comm, config);
+        }
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
       }
-#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
-    }
 #endif
+    }
+    if (split_rank > 0)
+      MPI_Comm_free(&comm);
   }
   {
     int buf_size_;
     void *buf_;
-    xt_mpi_call(MPI_Buffer_detach(&buf_, &buf_size_), comm);
+    xt_mpi_call(MPI_Buffer_detach(&buf_, &buf_size_), MPI_COMM_WORLD);
     assert(buf == buf_ && buf_size_ >= 0 && (size_t)buf_size_ == buf_size);
   }
   free(buf);

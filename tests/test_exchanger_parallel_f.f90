@@ -84,52 +84,61 @@ PROGRAM test_exchanger_parallel
 #endif
        /)
   INTEGER :: comm
-  INTEGER :: m, i, sm
+  INTEGER :: m, i, sm, split_rank, world_size_2
 #ifdef _OPENMP
   INTEGER :: thread_support_provided
 #endif
   INTEGER, ALLOCATABLE :: exchanger_code(:)
-  INTEGER :: comm_size, buf_size, buf_size_, ierror
+  INTEGER :: world_size, world_rank, buf_size, buf_size_, ierror
   INTEGER(c_int), ALLOCATABLE :: buf(:)
   TYPE(c_ptr) :: bufp
 
-  comm = MPI_COMM_WORLD
+  comm = mpi_comm_world
 
   CALL init_mpi
-  CALL xt_initialize(comm)
+  CALL xt_initialize(mpi_comm_world)
 
   CALL parse_options(exchanger_code, test_freq)
   config = xt_config_new()
   ! todo: replace computation with query of exchanger
-  CALL mpi_comm_size(comm, comm_size, ierror)
-  buf_size = (4 + mpi_bsend_overhead) * comm_size
+  CALL mpi_comm_size(comm, world_size, ierror)
+  CALL mpi_comm_rank(comm, world_rank, ierror)
+  buf_size = (4 + mpi_bsend_overhead) * world_size
   ALLOCATE(buf((buf_size+3)/4))
   CALL mpi_buffer_attach(buf, buf_size, ierror)
-
-  DO m = 1, num_mt_modes
+  world_size_2 = world_size/2
+  DO split_rank = 0, world_size_2
+    comm = mpi_comm_world
+    IF (split_rank > 0) &
+         CALL mpi_comm_split(mpi_comm_world, &
+         MERGE(1, 0, world_rank < split_rank), world_rank, comm, ierror)
+    DO m = 1, num_mt_modes
 #ifdef _OPENMP
-    CALL mpi_query_thread(thread_support_provided, ierror)
-    IF (mt_configs_2_test(m) == XT_MT_OPENMP &
-         .AND. thread_support_provided /= MPI_THREAD_MULTIPLE) CYCLE
+      CALL mpi_query_thread(thread_support_provided, ierror)
+      IF (mt_configs_2_test(m) == XT_MT_OPENMP &
+           .AND. thread_support_provided /= MPI_THREAD_MULTIPLE) CYCLE
 #endif
-    CALL xt_config_set_redist_mthread_mode(config, mt_configs_2_test(m))
-    DO sm = 1, num_send_modes
-      CALL xt_config_set_exchange_send_comm_mode(config, &
-           send_comm_modes_2_test(sm))
-      DO i = 1, SIZE(exchanger_code)
-        CALL xt_config_set_exchange_method(config, exchanger_code(i))
+      CALL xt_config_set_redist_mthread_mode(config, mt_configs_2_test(m))
+      DO sm = 1, num_send_modes
+        CALL xt_config_set_exchange_send_comm_mode(config, &
+             send_comm_modes_2_test(sm))
+        DO i = 1, SIZE(exchanger_code)
+          CALL xt_config_set_exchange_method(config, exchanger_code(i))
 
-        CALL test_bcast(comm, config)
+          CALL test_bcast(comm, config)
 
-        CALL test_gather(comm, config)
+          CALL test_gather(comm, config)
 
-        CALL test_all2all(comm, config)
+          CALL test_all2all(comm, config)
 
-        CALL test_rr(comm, config)
+          CALL test_rr(comm, config)
 
-        CALL test_intercomm_all2all(comm, config)
+          CALL test_intercomm_all2all(comm, config)
+        END DO
       END DO
     END DO
+    IF (split_rank > 0) &
+         CALL mpi_comm_free(comm, ierror)
   END DO
   CALL mpi_buffer_detach(bufp, buf_size_, ierror)
   CALL xt_config_delete(config)
