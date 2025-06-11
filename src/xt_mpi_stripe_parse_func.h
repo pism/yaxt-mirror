@@ -373,8 +373,9 @@ XT_MPI_STRP_PRS_ENTRY(
   }
   size_t wlen = m;
   MPI_Datatype result_dt, old_type = params->old_type;
+  MPI_Aint disp0;
   if (wlen == 1 ) {
-    assert(wdisp[0] == 0);
+    disp0 = wdisp[0];
     if (wdt[0] == old_type)
       xt_mpi_call(MPI_Type_dup(old_type, wdt), params->comm);
     result_dt = wdt[0];
@@ -382,8 +383,11 @@ XT_MPI_STRP_PRS_ENTRY(
     int *restrict wblocklength
       = wlen * sizeof (int) <= (vlen - wlen) * sizeof (*wdt)
       ? (void *)(wdt + wlen) : xmalloc(wlen * sizeof (*wblocklength));
-    for(size_t i=0; i<wlen; i++)
+    disp0 = wdisp[0];
+    for(size_t i=0; i<wlen; i++) {
+      wdisp[i] -= disp0;
       wblocklength[i] = 1;
+    }
     result_dt = Xt_mpi_ddt_cache_acquire_struct(
       &params->ddt_list, (int)wlen, wblocklength, wdisp, wdt, params->comm);
     if (wlen * sizeof (int) > (vlen - wlen) * sizeof (*wdt))
@@ -394,7 +398,7 @@ XT_MPI_STRP_PRS_ENTRY(
   }
   xt_mpi_call(MPI_Type_commit(&result_dt), params->comm);
   free(wdisp);
-  return (struct Xt_mpi_dt_ofs){ .dt = result_dt, .displacement = 0 };
+  return (struct Xt_mpi_dt_ofs){ .dt = result_dt, .displacement = disp0 };
 }
 
 MPI_Datatype
