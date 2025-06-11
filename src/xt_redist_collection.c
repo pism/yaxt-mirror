@@ -148,7 +148,8 @@ struct Xt_redist_collection_ {
   unsigned num_redists, cache_size;
 
   unsigned nmsg[2];
-  int *msg_ranks;
+  int *msg_ranks, *blocklengths;
+  MPI_Aint *disp_ofs;
 
   struct Xt_config_ config;
   MPI_Comm comm;
@@ -158,11 +159,13 @@ struct Xt_redist_collection_ {
 };
 
 static void align_component_dt(unsigned num_redists, unsigned nmsgs,
-                               const Xt_redist *redists,
+                               const Xt_exchanger *exchangers,
                                int *restrict in_ranks[num_redists],
                                const size_t num_ranks[num_redists],
-                               int *out_ranks,
-                               MPI_Datatype *component_dt,
+                               int *restrict out_ranks,
+                               MPI_Datatype *restrict component_dt,
+                               MPI_Aint *restrict disp_ofs,
+                               int *restrict blocklengths,
                                enum xt_msg_direction direction)
 {
   size_t rank_pos[num_redists];
@@ -177,11 +180,17 @@ static void align_component_dt(unsigned num_redists, unsigned nmsgs,
           min_rank = in_ranks[j][rank_pos[j]];
 
       for (size_t j = 0; j < num_redists; ++j)
-        component_dt[i * num_redists + j] =
-          (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] == min_rank)
-          ? xt_redist_get_MPI_Datatype(redists[j], min_rank, direction, true)
-          : MPI_DATATYPE_NULL;
-
+        if (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] == min_rank) {
+          component_dt[i * num_redists + j]
+            = xt_exchanger_get_MPI_Datatype(exchangers[j], min_rank, direction, true);
+          disp_ofs[i * num_redists + j]
+            = xt_exchanger_get_displacement(exchangers[j], min_rank, direction);
+          blocklengths[i * num_redists + j]
+            = xt_exchanger_get_count(exchangers[j], min_rank, direction);
+        } else {
+          component_dt[i * num_redists + j] = MPI_DATATYPE_NULL;
+          disp_ofs[i * num_redists + j] = 0;
+        }
       out_ranks[i] = min_rank;
       for (size_t j = 0; j < num_redists; ++j)
         rank_pos[j]
@@ -231,9 +240,12 @@ alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv,
   size_t nmsg = nmsg_recv + nmsg_send,
     header_size = sizeof (struct Xt_redist_collection_),
     all_component_dt_size = sizeof (MPI_Datatype) * num_redists * nmsg,
-    ranks_size = nmsg * sizeof (int),
+    disp_ofs_size = sizeof (MPI_Aint) * num_redists * nmsg,
+    ranks_size = sizeof (int) * nmsg,
+    blocklengths_size = sizeof (int) * num_redists * nmsg,
     team_data_size,
-    own_size = header_size + all_component_dt_size + ranks_size;
+    own_size = header_size + disp_ofs_size + all_component_dt_size
+    + ranks_size + blocklengths_size;
   Xt_exchanger_new exchanger_new = (Xt_exchanger_new)0;
   if (!config->exchanger_team_share) {
     exchanger_new
@@ -253,6 +265,10 @@ alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv,
   redist_coll->nmsg[RECV] = (unsigned)nmsg_recv;
   redist_coll->msg_ranks
     = (int *)(redist_coll->all_component_dt + nmsg * num_redists);
+  redist_coll->disp_ofs
+    = (void *)(intptr_t)(redist_coll->msg_ranks + nmsg);
+  redist_coll->blocklengths
+    = (void *)(intptr_t)(redist_coll->disp_ofs + nmsg * num_redists);
   redist_coll->config = *config;
   /* all mpi datatypes are created for the exclusive use by the
    * underlying exchanger, no need for dup'ing them */
@@ -303,13 +319,19 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   xt_redist_check_comms(redists, num_redists, comm);
 
   MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
-  align_component_dt(num_redists_, nmsg_send, redists,
+  Xt_exchanger exchangers[num_redists_];
+  for (size_t j = 0; j < num_redists_; ++j)
+    exchangers[j] = xt_redist_get_exchanger(redists[j]);
+  align_component_dt(num_redists_, nmsg_send, exchangers,
                      ranks[SEND], num_ranks[SEND], redist_coll->msg_ranks,
-                     all_component_dt, xt_direction_send);
-  align_component_dt(num_redists_, nmsg_recv, redists,
+                     all_component_dt, redist_coll->disp_ofs,
+                     redist_coll->blocklengths, xt_direction_send);
+  align_component_dt(num_redists_, nmsg_recv, exchangers,
                      ranks[RECV], num_ranks[RECV],
                      redist_coll->msg_ranks+nmsg_send,
                      all_component_dt + nmsg_send * num_redists_,
+                     redist_coll->disp_ofs + nmsg_send * num_redists_,
+                     redist_coll->blocklengths + nmsg_send * num_redists_,
                      xt_direction_recv);
   init_cache(&redist_coll->cache, redist_coll->cache_size, num_redists_);
 
@@ -321,21 +343,23 @@ static void
 create_all_dt_for_dir(
   unsigned num_messages, size_t num_redists,
   const int ranks[num_messages],
-  const MPI_Datatype *component_dt,
-  const MPI_Aint displacements[num_redists],
+  const MPI_Datatype component_dt[num_messages][num_redists],
+  MPI_Aint *restrict displacements,
+  const MPI_Aint disp_ofs[num_messages][num_redists],
+  const int blocklengths[num_messages][num_redists],
   struct Xt_msg_param msgs[num_messages],
   struct Xt_mpiddt_list *ddt_list,
   MPI_Comm comm)
 {
-  int block_lengths[num_redists];
-
-  for (size_t i = 0; i < num_redists; ++i)
-    block_lengths[i] = 1;
   for (size_t i = 0; i < num_messages; ++i) {
+    for (size_t j = 0; j < num_redists; ++j)
+      displacements[j] += disp_ofs[i][j];
     msgs[i].datatype
       = xt_create_compound_datatype(num_redists, displacements,
-                                    component_dt + i * num_redists,
-                                    block_lengths, ddt_list, comm);
+                                    component_dt[i],
+                                    blocklengths[i], ddt_list, comm);
+    for (size_t j = 0; j < num_redists; ++j)
+      displacements[j] -= disp_ofs[i][j];
     msgs[i].rank = ranks[i];
     msgs[i].displacement = 0;
     msgs[i].count = 1;
@@ -387,18 +411,39 @@ create_exchanger(struct Xt_redist_collection_ *redist_coll,
   size_t nmsg = (size_t)nmsg_send + nmsg_recv;
   struct Xt_msg_param *restrict msgs = xmalloc(nmsg * sizeof (*msgs));
 
-  const MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
+  const MPI_Datatype (*all_component_dt)[num_redists]
+    = (void *)redist_coll->all_component_dt;
+  const MPI_Aint (*disp_ofs)[num_redists]
+    = (void *)redist_coll->disp_ofs;
+  const int (*blocklengths)[num_redists]
+    = (void *)redist_coll->blocklengths;
   struct Xt_mpiddt_list ddt_list;
   Xt_mpi_ddt_cache_init(&ddt_list, &redist_coll->config);
   MPI_Comm comm = redist_coll->comm;
   create_all_dt_for_dir(nmsg_send, num_redists,
                         redist_coll->msg_ranks, all_component_dt,
-                        displacements[SEND], msgs, &ddt_list, comm);
+                        displacements[SEND], disp_ofs, blocklengths,
+                        msgs, &ddt_list, comm);
+  /* the table view needs to be adjusted by this to switch to the
+     receive direction */
+  /* unfortunately, older Intel compilers flunk the offset computation */
+#if defined __ICC && ( __INTEL_COMPILER_BUILD_DATE == 20110811   \
+                       || __INTEL_COMPILER == 1300) \
+  || defined __PGI && __PGIC__ <= 15
+  all_component_dt = (void *)(redist_coll->all_component_dt
+                              + num_redists * nmsg_send);
+  disp_ofs = (void *)(redist_coll->disp_ofs + num_redists * nmsg_send);
+  blocklengths = (void *)(redist_coll->blocklengths
+                          + num_redists * nmsg_send);
+#else
+  all_component_dt += nmsg_send;
+  disp_ofs += nmsg_send;
+  blocklengths += nmsg_send;
+#endif
   create_all_dt_for_dir(nmsg_recv, num_redists,
                         redist_coll->msg_ranks+nmsg_send,
-                        all_component_dt + nmsg_send * num_redists,
-                        displacements[RECV],
-                        msgs + nmsg_send, &ddt_list, comm);
+                        all_component_dt, displacements[RECV], disp_ofs,
+                        blocklengths, msgs + nmsg_send, &ddt_list, comm);
   Xt_mpi_ddt_cache_free(&ddt_list, comm);
   Xt_exchanger_new exchanger_new
     = xt_config_get_exchange_new_by_comm(&redist_coll->config, comm);
@@ -536,7 +581,8 @@ redist_collection_copy(Xt_redist redist)
   void *team_share = config.exchanger_team_share;
   if ((unsigned char *)team_share > (unsigned char *)redist_coll
       && (unsigned char *)team_share <
-      (unsigned char *)(redist_coll->msg_ranks + nmsg) + team_share_align)
+      (unsigned char *)(redist_coll->blocklengths
+                        + nmsg * redist_coll->num_redists) + team_share_align)
     config.exchanger_team_share = NULL;
   return redist_collection_custom_copy(redist, &config);
 }
@@ -559,6 +605,10 @@ redist_collection_custom_copy(Xt_redist redist, Xt_config config)
 
   memcpy(redist_copy->msg_ranks, redist_coll->msg_ranks,
          sizeof (*redist_copy->msg_ranks) * nmsg);
+  memcpy(redist_copy->blocklengths, redist_coll->blocklengths,
+         sizeof (*redist_copy->blocklengths) * nmsg * num_redists);
+  memcpy(redist_copy->disp_ofs, redist_coll->disp_ofs,
+         sizeof (*redist_copy->disp_ofs) * nmsg * num_redists);
   copy_component_dt(num_redists * nmsg,
                     redist_coll->all_component_dt,
                     redist_copy->all_component_dt, copy_comm);
@@ -591,7 +641,8 @@ redist_collection_delete(Xt_redist redist) {
   void *team_share = redist_coll->config.exchanger_team_share;
   if ((unsigned char *)team_share > (unsigned char *)redist_coll
       && (unsigned char *)team_share
-      < (unsigned char *)(redist_coll->msg_ranks + nmsg) + team_share_align) {
+      < ((unsigned char *)(redist_coll->blocklengths + nmsg * num_redists)
+         + team_share_align)) {
     Xt_exchanger_new exchanger_new
       = xt_config_get_exchange_new_by_comm(&redist_coll->config,
                                            redist_coll->comm);
