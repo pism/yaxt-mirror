@@ -354,14 +354,15 @@ create_all_dt_for_dir(
   for (size_t i = 0; i < num_messages; ++i) {
     for (size_t j = 0; j < num_redists; ++j)
       displacements[j] += disp_ofs[i][j];
-    msgs[i].datatype
+    struct Xt_mpi_dt_ofs dt_ofs
       = xt_create_compound_datatype(num_redists, displacements,
                                     component_dt[i],
                                     blocklengths[i], ddt_list, comm);
+    msgs[i].datatype = dt_ofs.dt;
     for (size_t j = 0; j < num_redists; ++j)
       displacements[j] -= disp_ofs[i][j];
     msgs[i].rank = ranks[i];
-    msgs[i].displacement = 0;
+    msgs[i].displacement = dt_ofs.displacement;
     msgs[i].count = 1;
   }
 }
