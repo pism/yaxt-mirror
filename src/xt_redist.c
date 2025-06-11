@@ -235,7 +235,7 @@ xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
   return (unsigned)num_messages;
 }
 
-MPI_Datatype
+struct Xt_mpi_dt_ofs
 xt_create_compound_datatype(size_t count,
                             const MPI_Aint displacements[count],
                             const MPI_Datatype datatypes[count],
@@ -249,10 +249,11 @@ xt_create_compound_datatype(size_t count,
   for (size_t i = 0; i < count; ++i)
     num_datatypes += (datatypes[i] != MPI_DATATYPE_NULL);
   MPI_Datatype *datatypes_, dt_auto[max_auto_dt];
-  MPI_Aint *displacements_ = NULL, disp_auto[max_auto_dt];
+  MPI_Aint *displacements_ = NULL, disp_auto[max_auto_dt],
+    displacement0;
   int *block_lengths_, bl_auto[max_auto_dt];
 
-  if (num_datatypes != count) {
+  if (num_datatypes != count || displacements[0] != 0) {
     if (num_datatypes > max_auto_dt) {
       size_t buf_size = num_datatypes * sizeof(*datatypes_)
         + num_datatypes * sizeof(*displacements_)
@@ -266,7 +267,7 @@ xt_create_compound_datatype(size_t count,
       block_lengths_ = bl_auto;
     }
     num_datatypes = 0;
-
+    displacements_[0] = 0;
     for (size_t i = 0; i < count; ++i) {
       if (datatypes[i] != MPI_DATATYPE_NULL) {
 
@@ -279,23 +280,25 @@ xt_create_compound_datatype(size_t count,
     datatypes = datatypes_;
     displacements = displacements_;
     block_lengths = block_lengths_;
-  }
+    if ((displacement0 = displacements_[0]) != 0)
+      for (size_t i = 0; i < num_datatypes; ++i)
+        displacements_[i] -= displacement0;
+  } else
+    displacement0 = 0;
   MPI_Datatype datatype;
   if (num_datatypes > 1)
     datatype = Xt_mpi_ddt_cache_acquire_struct(
       ddt_list, (int)num_datatypes, block_lengths,
       displacements, datatypes, comm);
-  else if (displacements[0] == 0)
-    xt_mpi_call(MPI_Type_dup(datatypes[0], &datatype), comm);
   else
-    datatype = Xt_mpi_ddt_cache_acquire_hindexed(
-      ddt_list, 1, (int [1]){1}, displacements, datatypes[0], comm);
+    xt_mpi_call(MPI_Type_dup(datatypes[0], &datatype), comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);
 
   if (num_datatypes != count && num_datatypes > max_auto_dt)
     free(displacements_);
 
-  return datatype;
+  return (struct Xt_mpi_dt_ofs){ .dt = datatype,
+                                 .displacement = displacement0 };
 }
 
 /*

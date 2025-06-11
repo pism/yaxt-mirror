@@ -60,6 +60,7 @@
 
 #include "core/ppm_visibility.h"
 #include "xt_exchanger.h"
+#include "xt_mpi_internal.h"
 #include "xt/xt_redist.h"
 #include "xt/xt_request.h"
 #include "xt/xt_config.h"
@@ -178,13 +179,14 @@ struct Xt_mpiddt_list;
  * Generates a new MPI derived datatype from a number of MPI derived datatypes.
  * @param[in] count         number of datatypes
  * @param[in] displacements byte displacement of each block
- * @param[in] datatypes     type of elements in each block
+ * @param[in] datatypes     type of elements in each block, entries
+ * can be set to MPI_DATATYPE_NULL to signify zero-size components
  * @param[in] block_lengths number of elements in each block
  * @param[in,out] ddt_list  pointer to optional cache of datatypes to re-use
  * @param[in] comm          communicator
- * @return new MPI derived datatype
+ * @return new MPI derived datatype and displacement
  */
-PPM_DSO_INTERNAL MPI_Datatype
+PPM_DSO_INTERNAL struct Xt_mpi_dt_ofs
 xt_create_compound_datatype(size_t count,
                             const MPI_Aint displacements[count],
                             const MPI_Datatype datatypes[count],

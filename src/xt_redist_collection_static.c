@@ -104,11 +104,12 @@ generate_msg_infos(size_t nmsg, size_t num_redists,
           datatypes[j] = MPI_DATATYPE_NULL;
       }
       msgs[i].rank = min_rank;
-      msgs[i].datatype
+      struct Xt_mpi_dt_ofs dt_ofs
         = xt_create_compound_datatype(num_redists, disp_buf, datatypes,
                                       block_lengths, ddt_list, comm);
+      msgs[i].datatype = dt_ofs.dt;
       msgs[i].count = 1;
-      msgs[i].displacement = 0;
+      msgs[i].displacement = dt_ofs.displacement;
       for (size_t j = 0; j < num_redists; ++j) {
         rank_pos[j]
           += (rank_pos[j] < num_ranks[j] && ranks[j][rank_pos[j]] == min_rank);
