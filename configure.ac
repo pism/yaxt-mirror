@@ -403,9 +403,12 @@ CFLAGS="$CFLAGS $MPI_C_INCLUDE"
 AC_COMPUTE_INT([MPI_VERSION], [MPI_VERSION], [@%:@include <mpi.h>],
   [AC_MSG_ERROR([cannot determine MPI version!])])
 TJ_FIND_INTEGRAL_TYPE([MPI_Fint],[MPI_FINT],[@%:@include <mpi.h>])
-ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([CAST_MPI_SEND_BUF="(buf)"
+AC_ARG_VAR([CAST_MPI_SEND_BUF],
+  [set to, possibly empty, macro definition to massage first argument to
+MPI_Send/MPI_Isend to avoid compiler warnings])dnl
+ACX_MPI_SEND_CONST_VOID_P_BUF_ARG([CAST_MPI_SEND_BUF=${CAST_MPI_SEND_BUF-"(buf)"}
    XT_MPI_SEND_BUF_CONST=const],
-  [CAST_MPI_SEND_BUF="((void *)(buf))"
+  [CAST_MPI_SEND_BUF=${CAST_MPI_SEND_BUF-"((void *)(buf))"}
    XT_MPI_SEND_BUF_CONST=])
 AC_DEFINE_UNQUOTED([CAST_MPI_SEND_BUF(buf)],[$CAST_MPI_SEND_BUF],
   [Macro to cast arguments to MPI_Send-like functions (if necessary)])
