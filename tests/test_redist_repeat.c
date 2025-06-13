@@ -107,14 +107,14 @@ int main(int argc, char **argv) {
   {
     // test with one redist used three times (two exchanges)
     // set up data
-    enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
+    enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2,
+           num_repetitions = 3 };
     Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
     xt_xmap_delete(xmap);
 
     // generate redist_repeatection
 
-    enum { num_repetitions = 3 };
     static const double src_data[num_repetitions][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[num_repetitions][dst_slice_len];
@@ -151,14 +151,14 @@ int main(int argc, char **argv) {
   {
     // test with one redist used three times with asymmetric displacements
     // set up data
-    enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
+    enum { src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2,
+           num_repetitions = 3 };
     Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
     Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
     xt_xmap_delete(xmap);
 
     // generate redist_repetition
 
-    enum { num_repetitions = 3 };
     static const double src_data[num_repetitions][src_slice_len]
       = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
     double dst_data[num_repetitions][dst_slice_len];

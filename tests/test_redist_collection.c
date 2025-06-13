@@ -275,8 +275,15 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
   xt_redist_delete(redist_coll);
 }
 
-enum { num_redists = 3 };
-enum { nvalues = 5, nselect = nvalues/2+(nvalues&1) };
+enum {
+  num_redists = 3,
+  nvalues = 5,
+  nselect = nvalues/2+(nvalues&1),
+  cache_size = 16,
+  cache_overrun = 2,
+  num_src_elems = nvalues + cache_size + cache_overrun,
+  num_dst_elems = num_redists * nselect + cache_size + cache_overrun,
+};
 
 static void
 run_displacement_check(Xt_redist redist_coll, int sync)
@@ -284,12 +291,7 @@ run_displacement_check(Xt_redist redist_coll, int sync)
   static const double src_data[num_redists][nvalues]
     = {{1,2,3,4,5},{6,7,8,9,10},{11,12,13,14,15}};
 
-  enum { cache_size = 16, cache_overrun = 2 };
-
-  double src_data_[nvalues + cache_size + cache_overrun];
-  enum {
-    num_dst_elems = num_redists * nselect + cache_size + cache_overrun
-  };
+  double src_data_[num_src_elems];
   double dst_data[num_dst_elems];
 
   const void *src_data_p[num_redists] = {src_data[0],src_data[1],NULL};
