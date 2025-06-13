@@ -143,7 +143,8 @@ int main(int argc, char **argv) {
       xt_redist_delete(redist);
 
       // test exchange
-      check_redist(redist_repeat, src_data, num_repetitions * dst_slice_len,
+      check_redist(redist_repeat, src_data,
+                   (size_t)num_repetitions * (size_t)dst_slice_len,
                    dst_data, fill_array_double, NULL, ref_dst_data,
                    MPI_DOUBLE, MPI_DOUBLE);
 
@@ -189,7 +190,8 @@ int main(int argc, char **argv) {
       xt_redist_delete(redist);
 
       // test exchange
-      check_redist(redist_repeat, src_data, num_repetitions * dst_slice_len,
+      check_redist(redist_repeat, src_data,
+                   (size_t)num_repetitions * (size_t)dst_slice_len,
                    dst_data, fill_array_double, NULL, ref_dst_data,
                    MPI_DOUBLE, MPI_DOUBLE);
 
@@ -228,7 +230,8 @@ int main(int argc, char **argv) {
       xt_redist_delete(redist);
 
       // test exchange
-      check_redist(redist_repeat, src_data, rep_dim_size * dst_slice_len,
+      check_redist(redist_repeat, src_data,
+                   (size_t)rep_dim_size * (size_t)dst_slice_len,
                    dst_data, fill_array_double, NULL, ref_dst_data,
                    MPI_DOUBLE, MPI_DOUBLE);
 
