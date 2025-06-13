@@ -65,7 +65,7 @@ MODULE redist_collection_displace
   IMPLICIT NONE
   PRIVATE
   INTEGER, PARAMETER :: cache_size = 16, cache_overrun = 2
-  INTEGER, PARAMETER :: num_slice = 3, dst_step = 2
+  INTEGER, PARAMETER :: dst_step = 2
   INTEGER, PARAMETER :: src_slice_len = 5
   INTEGER, PARAMETER :: dst_slice_len &
        = (src_slice_len + dst_step - 1)/dst_step
@@ -78,11 +78,11 @@ CONTAINS
   ! test with one redist used three times (with different input
   ! data displacements until the cache is full)
   ! set up data
-  SUBROUTINE test_displacement_variations(comm, config)
-    INTEGER, INTENT(in) :: comm
+  SUBROUTINE test_displacement_variations(comm, config, num_redists)
+    INTEGER, INTENT(in) :: comm, num_redists
     TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redists(num_slice), redist_coll, &
+    TYPE(xt_redist) :: redist, redists(num_redists), redist_coll, &
          redist_coll_copy
 
     xmap = build_odd_selection_xmap(src_slice_len, comm)
@@ -93,53 +93,62 @@ CONTAINS
     ! generate redist_collection
     redists = redist
 
-    redist_coll = xt_redist_collection_new(redists, num_slice, &
+    redist_coll = xt_redist_collection_new(redists, num_redists, &
          cache_size, comm, config)
 
     CALL xt_redist_delete(redist)
 
-    CALL run_displacement_check(redist_coll)
+    CALL run_displacement_check(redist_coll, num_redists)
     redist_coll_copy = xt_redist_copy(redist_coll)
-    CALL run_displacement_check(redist_coll_copy)
+    CALL run_displacement_check(redist_coll_copy, num_redists)
 
     ! clean up
     CALL xt_redist_delete(redist_coll)
     CALL xt_redist_delete(redist_coll_copy)
   END SUBROUTINE test_displacement_variations
 
-  SUBROUTINE run_displacement_check(redist_coll)
+  SUBROUTINE run_displacement_check(redist_coll, num_slice)
     TYPE(xt_redist), INTENT(in) :: redist_coll
+    INTEGER, INTENT(in) :: num_slice
     INTEGER :: i, j, k
-    DOUBLE PRECISION, TARGET :: &
-         src(src_slice_len * (num_slice+1) + cache_size + cache_overrun), &
-         dst(dst_slice_len * (num_slice+1) + cache_size + cache_overrun)
+    DOUBLE PRECISION, ALLOCATABLE, TARGET :: src(:), dst(:)
+#ifndef __G95__
     TYPE(c_ptr) :: src_data_p(num_slice), dst_data_p(num_slice)
-    DOUBLE PRECISION, PARAMETER :: ref_dst_data(dst_slice_len, num_slice) = &
-         RESHAPE((/ ((DBLE(i + j * src_slice_len), &
-         &            i = 1, src_slice_len, dst_step), &
-         &           j = 0, num_slice - 1) /), &
-         &       (/ dst_slice_len, num_slice /))
+#else
+    TYPE(c_ptr) :: src_data_p(512), dst_data_p(512)
+#endif
+    DOUBLE PRECISION, ALLOCATABLE :: ref_dst_data(:,:)
 
-    CALL init_displacement_check_src(src)
+    ALLOCATE(src(src_slice_len * (num_slice+1) + cache_size + cache_overrun), &
+         dst(dst_slice_len * (num_slice+1) + cache_size + cache_overrun), &
+         ref_dst_data(dst_slice_len, num_slice))
+    CALL init_displacement_check_src(src, num_slice, src_data_p)
+    DO j = 1, num_slice
+      DO i = 1, dst_slice_len
+        ref_dst_data(i, j) = DBLE((i-1)*dst_step + (j-1) * src_slice_len + 1)
+      END DO
+    END DO
 
-    DO i = 1, num_slice - 1
-      src_data_p(i) = C_LOC(src((i-1)*src_slice_len+1))
-      dst_data_p(i) = C_LOC(dst((i-1)*dst_slice_len+1))
+    DO j = 1, num_slice - 1
+      src_data_p(j) = C_LOC(src((j-1)*src_slice_len+1))
+      dst_data_p(j) = C_LOC(dst((j-1)*dst_slice_len+1))
     END DO
 
     ! test exchange
     DO k = 1, cache_size + cache_overrun
       src(src_slice_len*num_slice+k:src_slice_len*(num_slice+1)+k-1) &
            = src(src_slice_len*(num_slice-1)+1:src_slice_len*num_slice)
-      CALL run_displacement_check_exchange(redist_coll, src, dst, &
-           src(src_slice_len*num_slice+k), &
+      CALL run_displacement_check_exchange(redist_coll, num_slice, &
+           src, dst, src(src_slice_len*num_slice+k), &
            dst(dst_slice_len*num_slice+k), &
            src_data_p, dst_data_p, ref_dst_data)
     END DO
   END SUBROUTINE run_displacement_check
 
-  SUBROUTINE init_displacement_check_src(src)
-    DOUBLE PRECISION, INTENT(out) :: src(src_slice_len, num_slice)
+  SUBROUTINE init_displacement_check_src(src, num_slice, src_data_p)
+    INTEGER, INTENT(in) :: num_slice
+    DOUBLE PRECISION, TARGET, INTENT(out) :: src(src_slice_len, num_slice)
+    TYPE(c_ptr), INTENT(out) :: src_data_p(num_slice)
     INTEGER :: i, j
     DO j = 1, num_slice
       DO i = 1, src_slice_len
@@ -148,9 +157,10 @@ CONTAINS
     END DO
   END SUBROUTINE init_displacement_check_src
 
-  SUBROUTINE run_displacement_check_exchange(redist_coll, &
+  SUBROUTINE run_displacement_check_exchange(redist_coll, num_slice, &
        src1, dst1, src2, dst2, src_data_p, dst_data_p, ref_dst_data)
     TYPE(xt_redist), INTENT(in) :: redist_coll
+    INTEGER, INTENT(in) :: num_slice
     DOUBLE PRECISION, TARGET, INTENT(in) :: src1(src_slice_len, num_slice-1), &
          src2(src_slice_len)
     DOUBLE PRECISION, TARGET, INTENT(inout) :: &
@@ -161,8 +171,8 @@ CONTAINS
     INTEGER :: iexch
 
     XT_UNUSED(src1)
-    src_data_p(3) = C_LOC(src2)
-    dst_data_p(3) = C_LOC(dst2)
+    src_data_p(num_slice) = C_LOC(src2)
+    dst_data_p(num_slice) = C_LOC(dst2)
 
     DO iexch = 1, 2
       dst1 = -1.0d0

@@ -87,7 +87,8 @@ PROGRAM test_redist_collection
   CALL test_empty_redist(mpi_comm_world, config)
   CALL test_repeated_redist(mpi_comm_world, config, -1)
   CALL test_repeated_redist(mpi_comm_world, config, 0)
-  CALL test_displacement_variations(mpi_comm_world, config)
+  CALL test_displacement_variations(mpi_comm_world, config, 3)
+  CALL test_displacement_variations(mpi_comm_world, config, 40)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
