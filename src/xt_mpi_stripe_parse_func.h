@@ -376,7 +376,7 @@ XT_MPI_STRP_PRS_ENTRY(
   MPI_Aint disp0;
   if (wlen == 1 ) {
     disp0 = wdisp[0];
-    if (wdt[0] == old_type)
+    if (wdt[0] == old_type && !xt_mpi_ddt_is_named(old_type))
       xt_mpi_call(MPI_Type_dup(old_type, wdt), params->comm);
     result_dt = wdt[0];
   } else {

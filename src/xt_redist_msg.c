@@ -67,10 +67,11 @@ xt_redist_msgs_strided_copy(size_t n,
     struct Xt_redist_msg *dst_msg
       = (struct Xt_redist_msg *)(void *)(dst_store + i * dst_stride);
     dst_msg->rank = src_msg->rank;
-    if (dt_dup)
-      xt_mpi_call(MPI_Type_dup(src_msg->datatype, &(dst_msg->datatype)), comm);
+    MPI_Datatype dt = src_msg->datatype;
+    if (dt_dup && !xt_mpi_ddt_is_named(dt))
+      xt_mpi_call(MPI_Type_dup(dt, &(dst_msg->datatype)), comm);
     else
-      dst_msg->datatype = src_msg->datatype;
+      dst_msg->datatype = dt;
   }
 }
 
@@ -83,7 +84,8 @@ void xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
       = &(((struct Xt_redist_msg *)(void *)(msgs_store + i * ofs_stride))->datatype),
       dt = *pdt;
     if (dt != MPI_DATATYPE_NULL) {
-      xt_mpi_call(MPI_Type_free(pdt), comm);
+      if (!xt_mpi_ddt_is_named(dt))
+        xt_mpi_call(MPI_Type_free(pdt), comm);
       for (size_t j = i + 1; j < n; ++j) {
         MPI_Datatype *pdt_j
           = &(((struct Xt_redist_msg *)(void *)(msgs_store + j * ofs_stride))->datatype);

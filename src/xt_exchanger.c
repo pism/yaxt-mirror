@@ -164,7 +164,7 @@ xt_msg_params_copy(size_t n,
     dst[i].rank = src[i].rank;
     dst[i].displacement = src[i].displacement;
     dst[i].count = src[i].count;
-    if (dt_dup)
+    if (dt_dup && !xt_mpi_ddt_is_named(src[i].datatype))
       xt_mpi_call(MPI_Type_dup(src[i].datatype, &dst[i].datatype), comm);
     else
       dst[i].datatype = src[i].datatype;
@@ -178,7 +178,10 @@ xt_msg_params_destruct(size_t n, struct Xt_msg_param *msgs,
   for (size_t i = 0; i < n; ++i) {
     MPI_Datatype dt = msgs[i].datatype;
     if (dt != MPI_DATATYPE_NULL) {
-      xt_mpi_call(MPI_Type_free(&msgs[i].datatype), comm);
+      if (!xt_mpi_ddt_is_named(dt))
+        xt_mpi_call(MPI_Type_free(&msgs[i].datatype), comm);
+      else
+        msgs[i].datatype = MPI_DATATYPE_NULL;
       for (size_t j = i + 1; j < n; ++j)
         if (msgs[j].datatype == dt)
           msgs[j].datatype = MPI_DATATYPE_NULL;

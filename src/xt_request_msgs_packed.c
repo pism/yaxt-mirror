@@ -86,7 +86,8 @@ xt_request_msgs_packed_finalize(Xt_request request, void *ebuf)
   for (int i = 0; i < n_packed + n_tmp_buffers; ++i)
     free(request_msgs_packed->buffers[i]);
   for (int i = 0; i < n_packed; ++i)
-    xt_mpi_call(MPI_Type_free(request_msgs_packed->datatypes+i), comm);
+    if (!xt_mpi_ddt_is_named(request_msgs_packed->datatypes[i]))
+      xt_mpi_call(MPI_Type_free(request_msgs_packed->datatypes+i), comm);
   free(request_msgs_packed->datatypes);
 }
 
@@ -116,8 +117,13 @@ Xt_request xt_request_msgs_packed_new(int n_requests,
   ebuf->n_packed = n_packed;
   ebuf->n_tmp_buffers = n_tmp_buffers;
   ebuf->datatypes = xmalloc((size_t)n_packed * sizeof(*ebuf->datatypes));
-  for (int i = 0; i < n_packed; ++i)
-    xt_mpi_call(MPI_Type_dup(datatypes[i], ebuf->datatypes + i), comm);
+  for (int i = 0; i < n_packed; ++i) {
+    MPI_Datatype dt = datatypes[i];
+    if (!xt_mpi_ddt_is_named(dt))
+      xt_mpi_call(MPI_Type_dup(dt, ebuf->datatypes + i), comm);
+    else
+      ebuf->datatypes[i] = dt;
+  }
   memcpy(ebuf->buffers, packed_data,
          (size_t)n_packed * sizeof(*ebuf->buffers));
   memcpy(ebuf->buffers + n_packed, tmp_buffers,

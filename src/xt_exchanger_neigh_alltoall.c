@@ -200,7 +200,7 @@ static void copy_dt(size_t n,
                     MPI_Comm comm, bool dt_dup) {
 
   for (size_t i = 0; i < n; ++i)
-    if (dt_dup)
+    if (dt_dup && !xt_mpi_ddt_is_named(msgs[i].datatype))
       xt_mpi_call(MPI_Type_dup(msgs[i].datatype, datatypes + i), comm);
     else
       datatypes[i] = msgs[i].datatype;
@@ -336,9 +336,8 @@ xt_exchanger_neigh_alltoall_copy(Xt_exchanger exchanger,
 #pragma GCC diagnostic pop
 #endif
 #endif
-  for (size_t i = 0; i < nmsg; ++i)
-    xt_mpi_call(MPI_Type_dup(exchanger_na->datatypes[i],
-                             exchanger_copy->datatypes + i), new_comm);
+  xt_mpi_ddt_dup_unless_named(nmsg, exchanger_na->datatypes,
+                              exchanger_copy->datatypes);
 
   return (Xt_exchanger)exchanger_copy;
 }
@@ -352,10 +351,7 @@ static void xt_exchanger_neigh_alltoall_delete(Xt_exchanger exchanger) {
 
   size_t nmsg = (size_t)team_share_na->nmsg[SEND]
     + (size_t)team_share_na->nmsg[RECV];
-
-  for (size_t i = 0; i < nmsg; ++i)
-    xt_mpi_call(MPI_Type_free(exchanger_na->datatypes + i),
-                team_share_na->nb_comm);
+  xt_mpi_ddt_free_unless_named(nmsg, exchanger_na->datatypes);
   if (exchanger_na->team_share == exchanger_na->team_share_)
     xt_exchanger_neigh_alltoall_team_share_destroy(exchanger_na->team_share_);
   free(exchanger_na);
@@ -446,12 +442,12 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
   int *restrict ranks = team_share->ranks + ofs;
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i) {
+    MPI_Datatype dt = exchanger_na->datatypes[i+ofs];
     if (ranks[i] == rank) {
-      if (do_dup)
-        xt_mpi_call(MPI_Type_dup(exchanger_na->datatypes[i+ofs],
-                                 &datatype_copy), team_share->nb_comm);
+      if (do_dup && xt_mpi_ddt_is_named(dt))
+        xt_mpi_call(MPI_Type_dup(dt, &datatype_copy), team_share->nb_comm);
       else
-        datatype_copy = exchanger_na->datatypes[i+ofs];
+        datatype_copy = dt;
       break;
     }
   }
@@ -630,11 +626,12 @@ xt_exchanger_na2a_iter_get_MPI_Datatype(Xt_exchanger_iter iter)
     + (unsigned)exchanger_na2a->team_share->nmsg[1];
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   if (msg_ofs < nmsg) {
-    if (iter_na2a->config_flags & exch_no_dt_dup)
-      datatype_copy = exchanger_na2a->datatypes[msg_ofs];
+    MPI_Datatype dt = exchanger_na2a->datatypes[msg_ofs];
+    if (iter_na2a->config_flags & exch_no_dt_dup
+        || xt_mpi_ddt_is_named(dt))
+      datatype_copy = dt;
     else
-      xt_mpi_call(MPI_Type_dup(exchanger_na2a->datatypes[msg_ofs],
-                               &datatype_copy),
+      xt_mpi_call(MPI_Type_dup(dt, &datatype_copy),
                   exchanger_na2a->team_share->nb_comm);
   }
   return datatype_copy;

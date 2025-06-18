@@ -188,6 +188,28 @@ xt_mpi_comm_smart_dup(MPI_Comm comm, int *tag_offset);
 PPM_DSO_INTERNAL void
 xt_mpi_comm_smart_dedup(MPI_Comm *comm, int tag_offset);
 
+PPM_DSO_INTERNAL bool
+xt_mpi_ddt_is_named(MPI_Datatype mpi_ddt);
+
+PPM_DSO_INTERNAL void
+xt_mpi_ddt_dup_unless_named(size_t count,
+                            const MPI_Datatype mpi_ddt[count],
+                            MPI_Datatype mpi_ddt_copy[count]);
+
+PPM_DSO_INTERNAL void
+xt_mpi_ddt_dup_unless_named_strided(size_t count,
+                                    const MPI_Datatype *mpi_ddt,
+                                    size_t in_stride,
+                                    MPI_Datatype *mpi_ddt_copy,
+                                    size_t out_stride);
+
+PPM_DSO_INTERNAL void
+xt_mpi_ddt_free_unless_named(size_t count, MPI_Datatype mpi_ddt[count]);
+
+PPM_DSO_INTERNAL void
+xt_mpi_ddt_free_unless_named_strided(size_t count, MPI_Datatype *mpi_ddt, size_t stride);
+
+
 /**
  * Given an array of MPI requests, call MPI_Test_some and
  *

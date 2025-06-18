@@ -973,7 +973,13 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
   }
 
   Xt_ddt ddt = xmalloc(1 * sizeof(*ddt) + data_count * sizeof(ddt->data[0]));
-  ddt->ref_count = 1;
+  {
+    int num_ints, num_adds, num_dtypes, combiner;
+    xt_mpi_call(
+      MPI_Type_get_envelope(
+        mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner), Xt_default_comm);
+    ddt->ref_count = combiner != MPI_COMBINER_NAMED ? 1 : xt_named_ref_count;
+  }
   ddt->count = data_count;
   ddt->pack_size = pack_size;
   for (int i = 0; i < XT_MEMTYPE_COUNT; ++i) ddt->displs_available[i] = 0;
@@ -1007,12 +1013,14 @@ static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
 
 void xt_ddt_inc_ref_count(Xt_ddt ddt) {
 
-  ddt->ref_count++;
+  if (ddt->ref_count != xt_named_ref_count)
+    ddt->ref_count++;
 }
 
 void xt_ddt_delete(Xt_ddt ddt) {
 
-  if (ddt == NULL) return;
+  if (ddt == NULL
+    || ddt->ref_count == xt_named_ref_count) return;
 
   ddt->ref_count--;
 

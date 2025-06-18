@@ -108,9 +108,11 @@ xt_mpi_generate_datatype_block(const int *displacements,
     MPI_Datatype datatype = dt_ofs.dt;
     Xt_Type_create_hindexed(1, (int [1]){ 1 },
                             &dt_ofs.displacement, datatype, &dt_ofs.dt, comm);
-    xt_mpi_call(MPI_Type_free(&datatype), comm);
+    if (!xt_mpi_ddt_is_named(datatype))
+      xt_mpi_call(MPI_Type_free(&datatype), comm);
     xt_mpi_call(MPI_Type_commit(&dt_ofs.dt), comm);
-  }
+  } else if (dt_ofs.dt != MPI_DATATYPE_NULL && xt_mpi_ddt_is_named(dt_ofs.dt))
+    xt_mpi_call(MPI_Type_dup(dt_ofs.dt, &dt_ofs.dt), comm);
   return dt_ofs.dt;
 }
 
@@ -146,9 +148,11 @@ xt_mpi_generate_datatype(int const * displacements, int count,
     MPI_Datatype datatype = dt_ofs.dt;
     Xt_Type_create_hindexed(1, (int [1]){ 1 },
                             &dt_ofs.displacement, datatype, &dt_ofs.dt, comm);
-    xt_mpi_call(MPI_Type_free(&datatype), comm);
+    if (!xt_mpi_ddt_is_named(datatype))
+      xt_mpi_call(MPI_Type_free(&datatype), comm);
     xt_mpi_call(MPI_Type_commit(&dt_ofs.dt), comm);
-  }
+  } else if (dt_ofs.dt != MPI_DATATYPE_NULL && xt_mpi_ddt_is_named(dt_ofs.dt))
+    xt_mpi_call(MPI_Type_dup(dt_ofs.dt, &dt_ofs.dt), comm);
   return dt_ofs.dt;
 }
 
