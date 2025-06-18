@@ -65,6 +65,11 @@ struct xt_ddt_data {
                        //  in GPU memory)
 };
 
+enum {
+  xt_named_ref_count = -1,      /* special value designating a ddt is
+                                 * attached to an MPI named data type */
+};
+
 struct Xt_ddt_ {
 
   size_t pack_size;

@@ -470,8 +470,7 @@ finalize_packed_a_exchange(Xt_request request, void *buf)
                            &position, dst_data+displacements[i],
                            count[i], datatypes[i], comm), comm);
   }
-  for (int i = 0; i < nrecv; ++i)
-    xt_mpi_call(MPI_Type_free(datatypes+i), comm);
+  xt_mpi_ddt_free_unless_named((size_t)nrecv, datatypes);
 }
 
 static void
@@ -534,8 +533,9 @@ xt_exchanger_irecv_isend_packed_a_exchange(
     counts[i] = recv_msgs[i].count;
   }
   MPI_Datatype *datatypes = get_inventory_datatypes(header);
-  for (int i = 0; i < nrecv; ++i)
-    xt_mpi_call(MPI_Type_dup(recv_msgs[i].datatype, datatypes+i), base->comm);
+  xt_mpi_ddt_dup_unless_named_strided(
+    (size_t)nrecv, &recv_msgs[0].datatype, sizeof (*recv_msgs),
+    datatypes, sizeof (*datatypes));
   *request = requests;
 
   if (num_tx > AUTO_ALLOC_SIZE)
@@ -564,8 +564,8 @@ finalize_packed_a_exchange_mt(Xt_request request, void *buf)
                            &position, dst_data + displacements[i],
                            count[i], datatypes[i], comm), comm);
   }
-  for (int i = start_recv; i < end_recv; ++i)
-    xt_mpi_call(MPI_Type_free(datatypes+i), comm);
+  xt_mpi_ddt_free_unless_named(
+    (size_t)(end_recv-start_recv), datatypes+start_recv);
 }
 
 static void

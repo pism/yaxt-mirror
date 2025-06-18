@@ -432,6 +432,82 @@ xt_mpi_comm_mark_exclusive(MPI_Comm comm) {
 }
 
 bool
+xt_mpi_ddt_is_named(MPI_Datatype mpi_ddt)
+{
+  // get parameters for decoding of MPI datatype
+  int num_ints, num_adds, num_dtypes, combiner;
+  xt_mpi_call(
+    MPI_Type_get_envelope(
+      mpi_ddt, &num_ints, &num_adds, &num_dtypes, &combiner), Xt_default_comm);
+  return combiner == MPI_COMBINER_NAMED;
+}
+
+void
+xt_mpi_ddt_dup_unless_named(size_t count,
+                            const MPI_Datatype mpi_ddt[count],
+                            MPI_Datatype mpi_ddt_copy[count])
+{
+  xt_mpi_ddt_dup_unless_named_strided(
+    count, mpi_ddt, sizeof (MPI_Datatype), mpi_ddt_copy,
+    sizeof (MPI_Datatype));
+}
+
+void
+xt_mpi_ddt_dup_unless_named_strided(size_t count,
+                                    const MPI_Datatype *mpi_ddt,
+                                    size_t in_stride,
+                                    MPI_Datatype *mpi_ddt_copy,
+                                    size_t out_stride)
+{
+  // get parameters for decoding of MPI datatype
+  int num_ints, num_adds, num_dtypes, combiner;
+  for (size_t i = 0; i < count; ++i) {
+    MPI_Datatype in_dt
+      = *(const MPI_Datatype *)(const void *)(
+        (const unsigned char *)mpi_ddt + i * in_stride);
+    xt_mpi_call(
+      MPI_Type_get_envelope(
+        in_dt, &num_ints, &num_adds, &num_dtypes, &combiner),
+      Xt_default_comm);
+    MPI_Datatype *out_dt
+      = (MPI_Datatype *)(void *)(
+        (unsigned char *)mpi_ddt_copy + i * out_stride);
+    if (combiner != MPI_COMBINER_NAMED)
+      xt_mpi_call(MPI_Type_dup(in_dt, out_dt), Xt_default_comm);
+    else
+      *out_dt = in_dt;
+  }
+}
+
+void
+xt_mpi_ddt_free_unless_named(size_t count, MPI_Datatype mpi_ddt[count])
+{
+  xt_mpi_ddt_free_unless_named_strided(count, mpi_ddt, sizeof (MPI_Datatype));
+}
+
+void
+xt_mpi_ddt_free_unless_named_strided(size_t count, MPI_Datatype *mpi_ddt, size_t stride)
+{
+  // get parameters for decoding of MPI datatype
+  int num_ints, num_adds, num_dtypes, combiner;
+  for (size_t i = 0; i < count; ++i) {
+    MPI_Datatype *pdt
+      = (MPI_Datatype *)(void *)((unsigned char *)mpi_ddt + stride * i);
+    if (*pdt == MPI_DATATYPE_NULL)
+      continue;
+    xt_mpi_call(
+      MPI_Type_get_envelope(
+        *pdt, &num_ints, &num_adds, &num_dtypes, &combiner),
+      Xt_default_comm);
+    if (combiner != MPI_COMBINER_NAMED)
+      xt_mpi_call(MPI_Type_free(pdt), Xt_default_comm);
+    else
+      *pdt = MPI_DATATYPE_NULL;
+  }
+}
+
+
+bool
 xt_mpi_test_some(int *restrict num_req,
                  MPI_Request *restrict req,
                  int *restrict ops_completed, MPI_Comm comm)

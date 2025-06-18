@@ -290,6 +290,8 @@ xt_create_compound_datatype(size_t count,
     datatype = Xt_mpi_ddt_cache_acquire_struct(
       ddt_list, (int)num_datatypes, block_lengths,
       displacements, datatypes, comm);
+  else if (xt_mpi_ddt_is_named(datatypes[0]))
+    datatype = datatypes[0];
   else
     xt_mpi_call(MPI_Type_dup(datatypes[0], &datatype), comm);
   xt_mpi_call(MPI_Type_commit(&datatype), comm);

@@ -85,16 +85,6 @@ check_for_indexed_block_type(const int *blocklengths, int count) {
   return 1;
 }
 
-static MPI_Datatype
-copy_mpi_datatype(MPI_Datatype old_type, MPI_Comm comm) {
-
-  MPI_Datatype datatype;
-
-  xt_mpi_call(MPI_Type_dup(old_type, &datatype), comm);
-
-  return datatype;
-}
-
 static inline MPI_Aint
 get_hdisp(MPI_Datatype datatype, int displacement, MPI_Comm comm)
 {
@@ -126,16 +116,18 @@ XT_MPI_GENERATE_DATATYPE_BLOCK(
   if (count == 0)
     return (struct Xt_mpi_dt_ofs){ .dt = MPI_DATATYPE_NULL,
                                    .displacement = 0 };
-  else if (count == 1 && blocklengths[0] == 1 && displacements[0] == 0)
-    dt_ofs.dt = copy_mpi_datatype(old_type, comm);
-  else if (count == 1 && blocklengths[0] == 1)
-  {
+  else if (count == 1 && blocklengths[0] == 1) {
+    if (displacements[0] != 0) {
 #ifdef XT_MPI_DDT_GEN_MATCH_COMPUTE_VECTOR_DISPLACEMENT
-    dt_ofs.displacement = get_hdisp(old_type, displacements[0], comm);
+      dt_ofs.displacement = get_hdisp(old_type, displacements[0], comm);
 #else
-    dt_ofs.displacement = displacements[0];
+      dt_ofs.displacement = displacements[0];
 #endif
-    dt_ofs.dt = copy_mpi_datatype(old_type, comm);
+    }
+    if (xt_mpi_ddt_is_named(old_type))
+      dt_ofs.dt = old_type;
+    else
+      xt_mpi_call(MPI_Type_dup(old_type, &dt_ofs.dt), comm);
   }
   else if (count == 1) {
 #ifdef XT_MPI_DDT_GEN_MATCH_COMPUTE_VECTOR_DISPLACEMENT

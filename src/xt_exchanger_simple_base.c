@@ -265,11 +265,11 @@ xt_exchanger_simple_base_get_MPI_Datatype(Xt_exchanger exchanger,
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   for (size_t i = 0; i < nmsg; ++i)
     if (msgs[i].rank == rank) {
-      if (do_dup)
-        xt_mpi_call(MPI_Type_dup(msgs[i].datatype, &datatype_copy),
-                    exchanger_sb->comm);
+      MPI_Datatype dt = msgs[i].datatype;
+      if (do_dup && !xt_mpi_ddt_is_named(dt))
+        xt_mpi_call(MPI_Type_dup(dt, &datatype_copy), exchanger_sb->comm);
       else
-        datatype_copy = msgs[i].datatype;
+        datatype_copy = dt;
       break;
     }
   return datatype_copy;
@@ -430,11 +430,12 @@ xt_exchanger_simple_base_iter_get_MPI_Datatype(Xt_exchanger_iter iter)
     + (unsigned)iter_sb->exchanger->nmsg[1];
   MPI_Datatype datatype_copy = MPI_DATATYPE_NULL;
   if (msg_ofs < nmsg) {
-    if (iter_sb->config_flags & exch_no_dt_dup)
-      datatype_copy = msgs[msg_ofs].datatype;
+    MPI_Datatype dt = msgs[msg_ofs].datatype;
+    if (iter_sb->config_flags & exch_no_dt_dup
+      || xt_mpi_ddt_is_named(dt))
+      datatype_copy = dt;
     else
-      xt_mpi_call(MPI_Type_dup(msgs[msg_ofs].datatype, &datatype_copy),
-                  iter_sb->exchanger->comm);
+      xt_mpi_call(MPI_Type_dup(dt, &datatype_copy), iter_sb->exchanger->comm);
   }
   return datatype_copy;
 }

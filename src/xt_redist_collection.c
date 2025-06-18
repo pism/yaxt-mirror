@@ -559,7 +559,7 @@ copy_component_dt(size_t num_component_dt,
   for (size_t i = 0; i < num_component_dt; ++i)
   {
     MPI_Datatype orig_dt = component_dt_orig[i];
-    if (orig_dt != MPI_DATATYPE_NULL)
+    if (orig_dt != MPI_DATATYPE_NULL && !xt_mpi_ddt_is_named(orig_dt))
       xt_mpi_call(MPI_Type_dup(orig_dt, component_dt_copy + i), comm);
     else
       component_dt_copy[i] = orig_dt;
@@ -623,7 +623,8 @@ static void
 free_component_dt(size_t num_dt, MPI_Datatype *all_component_dt, MPI_Comm comm)
 {
   for (size_t i = 0; i < num_dt; ++i)
-    if (all_component_dt[i] != MPI_DATATYPE_NULL)
+    if (all_component_dt[i] != MPI_DATATYPE_NULL
+        && !xt_mpi_ddt_is_named(all_component_dt[i]))
       xt_mpi_call(MPI_Type_free(all_component_dt + i), comm);
 }
 
