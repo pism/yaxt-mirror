@@ -55,6 +55,9 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+#ifdef HAVE_BACKTRACE
+#  include <execinfo.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef WITHOUT_FORTRAN
@@ -115,6 +118,45 @@ SymPrefix(set_default_comm)(MPI_Comm comm)
 void
 SymPrefix(abort_default)(MPI_Comm comm, const char *msg, const char *source, int line)
 {
+#ifdef HAVE_BACKTRACE
+  enum { trace_buf_size = 128 };
+  void *trace_buf[trace_buf_size];
+  backtrace_size_t trace_size = backtrace(trace_buf, trace_buf_size);
+  char **messages = backtrace_symbols(trace_buf, trace_size);
+#ifdef USE_MPI
+  char rank_pfx_buf[sizeof (int) * 3+2];
+  const char *rank_pfx;
+#if defined (__xlC__) && defined (_AIX)
+#pragma omp critical
+#endif
+  if (SymPrefix(mpi_calls_are_allowed)()) {
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    snprintf(rank_pfx_buf, sizeof (rank_pfx_buf), "%d", world_rank);
+    rank_pfx = rank_pfx_buf;
+  } else {
+    static const char rank_vars[][24]
+      = { { "MPI_LOCALRANKID" } , { "PMI_RANK" }, { 0 } };
+    enum {
+      nrank_vars = sizeof (rank_vars) / sizeof (rank_vars[0]) - 1,
+    };
+    for (size_t i = 0; i < nrank_vars; ++i) {
+      if ((rank_pfx = getenv(rank_vars[i])))
+        goto found_rank;
+    }
+    rank_pfx = "unknown";
+  found_rank:;
+  }
+#else
+  static const char rank_pfx[] = "0";
+#endif
+  if (messages) {
+    fprintf(stderr, "backtrace:\n");
+    for (backtrace_size_t i = 0; i < trace_size; ++i)
+      fprintf(stderr, "%s: [%zu] %s\n", rank_pfx, (size_t)i, messages[i]);
+    free(messages);
+  }
+#endif
   fprintf(stderr, "Fatal error in %s, line %d: %s\n", source, line, msg);
 #ifdef USE_MPI
 #if defined (__xlC__) && defined (_AIX)

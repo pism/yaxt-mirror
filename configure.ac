@@ -102,6 +102,7 @@ AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads librari
    CFLAGS="$CFLAGS${PTHREAD_CFLAGS+ $PTHREAD_CFLAGS}"
    CC="$PTHREAD_CC"])
 ACX_TLS_XLC_RETRY
+AX_EXECINFO
 if test "X$FC" != Xno ; then
 m4_pushdef([_AC_F95_FC],[mpifort mpiifort mpxlf_r mpxlf95_r mpxlf_r mpixlf95_r mpif90 mpif77 ]m4_dquote(m4_defn(
   [_AC_F95_FC])))dnl
