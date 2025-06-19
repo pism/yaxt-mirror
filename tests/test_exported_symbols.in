@@ -87,6 +87,8 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 /^[0-9a-fA-F]*[ 	][ 	]*[DB][ 	]_([Yy][Aa]){0,1}[Xx][Tt]_/b
 # NVHPC compiler 24.x and later adds this
 /^[0-9a-fA-F]*[ 	][ 	]*B[ 	]__(PGI|NV)_CUDA_LOC/b
+# omp critical adds a common block for PGI compiler
+/^[0-9a-fA-F]*[ 	][ 	]*B[ 	]__cs_unspc/b
 # skip $-symbols that the Cray compiler puts in
 /^${exp_sym_prefix}.*\\\$.*/b
 # skip internal symbols for stubs created by xlf

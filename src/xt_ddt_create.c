@@ -48,6 +48,9 @@
 #endif
 
 #include <assert.h>
+#ifdef HAVE_PTHREAD
+#  include <pthread.h>
+#endif
 #include <stdbool.h>
 #include <string.h>
 #include <mpi.h>
@@ -917,19 +920,30 @@ static int compare_kernels(const void * a, const void * b) {
   return kcmp;
 }
 
+static void
+xt_ddt_sort_kernels(void)
+{
+  assert(NUM_VALID_KERNELS
+         == sizeof(xt_ddt_valid_kernels)/sizeof(xt_ddt_valid_kernels[0]));
+  // sort the supported kernels by their base_pack_size (this
+  // avoids alignment issues when packing)
+  qsort(xt_ddt_valid_kernels, NUM_VALID_KERNELS, sizeof(*xt_ddt_valid_kernels),
+        compare_kernels);
+}
+
 static Xt_ddt xt_ddt_new(MPI_Datatype mpi_ddt) {
 
-  static bool sort_kernels = true;
-  if (sort_kernels) {
-    assert(NUM_VALID_KERNELS
-           == sizeof(xt_ddt_valid_kernels)/sizeof(xt_ddt_valid_kernels[0]));
-
-    // sort the supported kernels by their base_pack_size (this
-    // avoids alignment issues when packing)
-    qsort(xt_ddt_valid_kernels, NUM_VALID_KERNELS, sizeof(*xt_ddt_valid_kernels),
-          compare_kernels);
-    sort_kernels = false;
+#ifdef HAVE_PTHREAD
+  static pthread_once_t sk_once_control = PTHREAD_ONCE_INIT;
+  pthread_once(&sk_once_control, xt_ddt_sort_kernels);
+#else
+  static bool kernels_sorted = false;
+#pragma omp critical
+  if (!kernels_sorted) {
+    xt_ddt_sort_kernels();
+    kernels_sorted = true;
   }
+#endif
 
 
   // parse the MPI datatype
@@ -1060,35 +1074,48 @@ static int xt_ddt_cleanup_internal_keyval_delete(
   return MPI_SUCCESS;
 }
 
+static void
+xt_ddt_create_keyval_once(void)
+{
+  assert(xt_ddt_internal_keyval == MPI_KEYVAL_INVALID);
+
+  // create keyval that will store xt_ddt's in MPI_Datatype's
+  xt_mpi_call(
+    MPI_Type_create_keyval(
+      // MPI_TYPE_NULL_COPY_FN,
+      xt_ddt_internal_keyval_copy,
+      xt_ddt_internal_keyval_delete,
+      &xt_ddt_internal_keyval, NULL),
+    Xt_default_comm);
+
+  // register a callback in MPI_Finalize (via an attribute to MPI_COMM_SELF)
+  // to clean up xt_ddt_internal_keyval
+  xt_mpi_call(
+    MPI_Comm_create_keyval(
+      MPI_COMM_NULL_COPY_FN,
+      xt_ddt_cleanup_internal_keyval_delete,
+      &xt_ddt_cleanup_internal_keyval, NULL),
+    Xt_default_comm);
+  xt_mpi_call(
+    MPI_Comm_set_attr(
+      MPI_COMM_SELF, xt_ddt_cleanup_internal_keyval, NULL),
+    Xt_default_comm);
+}
+
+
 Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
 
   XT_GPU_INSTR_PUSH(xt_ddt_from_mpi_ddt);
 
   // if xt_ddt_internal_keyval has not yet been created
-  if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID) {
-
-    // create keyval that will store xt_ddt's in MPI_Datatype's
-    xt_mpi_call(
-      MPI_Type_create_keyval(
-        // MPI_TYPE_NULL_COPY_FN,
-        xt_ddt_internal_keyval_copy,
-        xt_ddt_internal_keyval_delete,
-        &xt_ddt_internal_keyval, NULL),
-      Xt_default_comm);
-
-    // register a callback in MPI_Finalize (via an attribute to MPI_COMM_SELF)
-    // to clean up xt_ddt_internal_keyval
-    xt_mpi_call(
-      MPI_Comm_create_keyval(
-        MPI_COMM_NULL_COPY_FN,
-        xt_ddt_cleanup_internal_keyval_delete,
-        &xt_ddt_cleanup_internal_keyval, NULL),
-      Xt_default_comm);
-    xt_mpi_call(
-      MPI_Comm_set_attr(
-        MPI_COMM_SELF, xt_ddt_cleanup_internal_keyval, NULL),
-      Xt_default_comm);
-  }
+#ifdef HAVE_PTHREAD
+  static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+  pthread_once(&once_control, xt_ddt_create_keyval_once);
+#else
+#pragma omp critical
+  if (xt_ddt_internal_keyval == MPI_KEYVAL_INVALID)
+    xt_ddt_create_keyval_once();
+#endif
 
   Xt_ddt ddt;
   // get xt_ddt from MPI datatype, if available
@@ -1104,11 +1131,28 @@ Xt_ddt xt_ddt_from_mpi_ddt(MPI_Datatype mpi_ddt) {
   } else {
     // generate a xt_ddt from the MPI datatype
     ddt = xt_ddt_new(mpi_ddt);
+#ifdef HAVE_PTHREAD
+    static pthread_mutex_t ddt_attr_lock = PTHREAD_MUTEX_INITIALIZER;
 
-    // attach this xt_ddt to the MPI datatype for later use
+    pthread_mutex_lock(&ddt_attr_lock);
     xt_mpi_call(
-      MPI_Type_set_attr(
-        mpi_ddt, xt_ddt_internal_keyval, ddt), Xt_default_comm);
+      MPI_Type_get_attr(
+        mpi_ddt, xt_ddt_internal_keyval, &attr, &flag), Xt_default_comm);
+    if (flag) {
+      // another thread already created the ddt, use that and destroy
+      // our own
+      xt_ddt_delete(ddt);
+      ddt = attr;
+    } else {
+#endif
+      // attach this xt_ddt to the MPI datatype for later use
+      xt_mpi_call(
+        MPI_Type_set_attr(
+          mpi_ddt, xt_ddt_internal_keyval, ddt), Xt_default_comm);
+#ifdef HAVE_PTHREAD
+    }
+    pthread_mutex_unlock(&ddt_attr_lock);
+#endif
   }
   XT_GPU_INSTR_POP;
   return ddt;
