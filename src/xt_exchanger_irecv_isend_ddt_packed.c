@@ -109,7 +109,7 @@ xt_exchanger_irecv_isend_ddt_packed_s_exchange(
   enum { AUTO_ALLOC_SIZE = 32, };
   MPI_Request *requests, requests_auto[AUTO_ALLOC_SIZE];
   size_t *buffer_sizes, buffer_sizes_auto[AUTO_ALLOC_SIZE];
-  Xt_ddt *ddts, ddts_auto[AUTO_ALLOC_SIZE];
+  Xt_ddt *restrict ddts, ddts_auto[AUTO_ALLOC_SIZE];
 
   size_t num_tx = (size_t)nrecv + (size_t)nsend;
   if (num_tx <= AUTO_ALLOC_SIZE) {
