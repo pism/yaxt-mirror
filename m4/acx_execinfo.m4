@@ -42,7 +42,8 @@ AC_DEFUN([AX_EXECINFO],
 	   AS_IF([test "${ax_cv_proto_backtrace_type}" = none],
 	     [ax_cv_proto_backtrace_type= ; break])
 	   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-#include <execinfo.h>
+@%:@include <stddef.h>
+@%:@include <execinfo.h>
 extern
 ${ax_cv_proto_backtrace_type} backtrace(void **addrlist, ${ax_cv_proto_backtrace_type} len);
 char **backtrace_symbols(void *const *buffer, ${ax_cv_proto_backtrace_type} size);
