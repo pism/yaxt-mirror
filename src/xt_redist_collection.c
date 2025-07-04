@@ -279,6 +279,8 @@ alloc_redist_coll(size_t num_redists, size_t nmsg_send, size_t nmsg_recv,
     xt_exchanger_new_team_share_default_init(
       exchanger_new, redist_coll->config.exchanger_team_share);
   }
+  redist_coll->comm
+    = xt_mpi_comm_smart_dup(comm, &redist_coll->tag_offset);
   return redist_coll;
 }
 
@@ -305,16 +307,12 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
     nmsg_recv = xt_redist_agg_msg_count(
       num_redists_, xt_direction_recv, redists,
       num_ranks[RECV], ranks[RECV], config);
-  int tag_offset;
-  MPI_Comm new_comm = xt_mpi_comm_smart_dup(comm, &tag_offset);
   Xt_redist_collection redist_coll
-    = alloc_redist_coll(num_redists_, nmsg_send, nmsg_recv, config, new_comm);
+    = alloc_redist_coll(num_redists_, nmsg_send, nmsg_recv, config, comm);
   redist_coll->cache_size
     = (cache_size == -1)
     ?((unsigned)DEFFAULT_DATATYPE_CACHE_SIZE):(unsigned)cache_size;
 
-  redist_coll->comm = new_comm;
-  redist_coll->tag_offset = tag_offset;
 
   xt_redist_check_comms(redists, num_redists, comm);
 
@@ -596,14 +594,9 @@ redist_collection_custom_copy(Xt_redist redist, Xt_config config)
     nmsg_send = redist_coll->nmsg[SEND],
     nmsg_recv = redist_coll->nmsg[RECV];
   size_t nmsg = (size_t)nmsg_recv + nmsg_send;
-  int tag_offset;
-  MPI_Comm copy_comm
-    = xt_mpi_comm_smart_dup(redist_coll->comm, &tag_offset);
   Xt_redist_collection redist_copy
-    = alloc_redist_coll(num_redists, nmsg_send, nmsg_recv, config, copy_comm);
-  redist_copy->comm = copy_comm;
-  redist_copy->tag_offset = tag_offset;
-
+    = alloc_redist_coll(num_redists, nmsg_send, nmsg_recv, config,
+                        redist_coll->comm);
   memcpy(redist_copy->msg_ranks, redist_coll->msg_ranks,
          sizeof (*redist_copy->msg_ranks) * nmsg);
   memcpy(redist_copy->blocklengths, redist_coll->blocklengths,
@@ -612,7 +605,7 @@ redist_collection_custom_copy(Xt_redist redist, Xt_config config)
          sizeof (*redist_copy->disp_ofs) * nmsg * num_redists);
   copy_component_dt(num_redists * nmsg,
                     redist_coll->all_component_dt,
-                    redist_copy->all_component_dt, copy_comm);
+                    redist_copy->all_component_dt, redist_copy->comm);
   unsigned cache_size = redist_coll->cache_size;
   redist_copy->cache_size = cache_size;
   init_cache(&redist_copy->cache, cache_size, num_redists);
