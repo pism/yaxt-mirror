@@ -587,11 +587,16 @@ xt_exchanger_na2a_get_iterator(Xt_exchanger exchanger, Xt_config config)
 {
   Xt_exchanger_neigh_alltoall exchanger_na2a
     = (Xt_exchanger_neigh_alltoall)exchanger;
-  Xt_exchanger_na2a_iter iter_na2a = xmalloc(sizeof (*iter_na2a));
-  iter_na2a->vtable = &xt_exchanger_na2a_iterator_vtable;
-  iter_na2a->exchanger = exchanger_na2a;
-  iter_na2a->msg_ofs = 0;
-  iter_na2a->config_flags = config->flags;
+  Xt_exchanger_na2a_iter iter_na2a;
+  if (exchanger_na2a->team_share->nmsg[0]
+      + exchanger_na2a->team_share->nmsg[1]) {
+    iter_na2a = xmalloc(sizeof (*iter_na2a));
+    iter_na2a->vtable = &xt_exchanger_na2a_iterator_vtable;
+    iter_na2a->exchanger = exchanger_na2a;
+    iter_na2a->msg_ofs = 0;
+    iter_na2a->config_flags = config->flags;
+  } else
+    iter_na2a = NULL;
   return (Xt_exchanger_iter)iter_na2a;
 }
 

@@ -397,11 +397,15 @@ static Xt_exchanger_iter
 xt_exchanger_simple_base_get_iterator(Xt_exchanger exchanger, Xt_config config)
 {
   Xt_exchanger_simple_base exchanger_sb = (Xt_exchanger_simple_base)exchanger;
-  Xt_exchanger_simple_base_iter iter_sb = xmalloc(sizeof (*iter_sb));
-  iter_sb->vtable = &xt_exchanger_simple_base_iterator_vtable;
-  iter_sb->exchanger = exchanger_sb;
-  iter_sb->msg_ofs = 0;
-  iter_sb->config_flags = config->flags;
+  Xt_exchanger_simple_base_iter iter_sb;
+  if (exchanger_sb->nmsg[0] + exchanger_sb->nmsg[1]) {
+    iter_sb = xmalloc(sizeof (*iter_sb));
+    iter_sb->vtable = &xt_exchanger_simple_base_iterator_vtable;
+    iter_sb->exchanger = exchanger_sb;
+    iter_sb->msg_ofs = 0;
+    iter_sb->config_flags = config->flags;
+  } else
+    iter_sb = NULL;
   return (Xt_exchanger_iter)iter_sb;
 }
 
