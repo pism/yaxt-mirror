@@ -168,7 +168,7 @@ xt_redist_check_comms(Xt_redist *redists, int num_redists, MPI_Comm comm) {
 
 static size_t
 xt_ranks_uniq_count(size_t num_rank_sets,
-                    const size_t *restrict num_ranks,
+                    const unsigned *restrict num_ranks,
                     const int *const ranks[num_rank_sets])
 {
   size_t rank_pos[num_rank_sets];
@@ -198,7 +198,7 @@ xt_ranks_uniq_count(size_t num_rank_sets,
 unsigned
 xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
                         const Xt_redist redists[num_redists],
-                        size_t num_ranks[num_redists],
+                        unsigned num_ranks[num_redists],
                         int *restrict ranks[num_redists],
                         Xt_config config)
 {
@@ -208,7 +208,7 @@ xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
   for (size_t j = 0; j < num_redists; ++j) {
     size_t redist_num_ranks
       = (size_t)(redists[j]->vtable->get_num_msg(redists[j], direction));
-    num_ranks[j] = redist_num_ranks;
+    num_ranks[j] = (unsigned)redist_num_ranks;
     num_ranks_total += redist_num_ranks;
   }
   if (num_ranks_total) {
