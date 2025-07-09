@@ -626,11 +626,15 @@ xt_exchanger_mix_isend_irecv_get_iterator(Xt_exchanger exchanger,
 {
   Xt_exchanger_mix_isend_irecv exchanger_msr
     = (Xt_exchanger_mix_isend_irecv)exchanger;
-  Xt_exchanger_msr_iter iter_msr = xmalloc(sizeof (*iter_msr));
-  iter_msr->vtable = &xt_exchanger_mix_isend_irecv_iterator_vtable;
-  iter_msr->exchanger = exchanger_msr;
-  iter_msr->msg_ofs = 0;
-  iter_msr->config_flags = config->flags;
+  Xt_exchanger_msr_iter iter_msr;
+  if (exchanger_msr->n) {
+    iter_msr = xmalloc(sizeof (*iter_msr));
+    iter_msr->vtable = &xt_exchanger_mix_isend_irecv_iterator_vtable;
+    iter_msr->exchanger = exchanger_msr;
+    iter_msr->msg_ofs = 0;
+    iter_msr->config_flags = config->flags;
+  } else
+    iter_msr = NULL;
   return (Xt_exchanger_iter)iter_msr;
 }
 
