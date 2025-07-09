@@ -72,7 +72,7 @@ generate_msg_infos(size_t nmsg, size_t num_redists,
                    struct Xt_msg_param *msgs,
                    const MPI_Aint displacements[num_redists],
                    const Xt_exchanger exchangers[num_redists],
-                   const size_t num_ranks[num_redists],
+                   const unsigned num_ranks[num_redists],
                    const int *restrict ranks[num_redists],
                    struct Xt_mpiddt_list *ddt_list,
                    MPI_Comm comm,
@@ -145,7 +145,7 @@ xt_redist_collection_static_custom_new(
 
   size_t num_redists_ = num_redists >= 0 ? (size_t)num_redists : 0;
   int *restrict ranks[2][num_redists_];
-  size_t num_ranks[2][num_redists_];
+  unsigned num_ranks[2][num_redists_];
   size_t nmsg[2];
   /* get lists of ranks to send/receive message to/from */
   for (size_t i = 0; i < 2; ++i)

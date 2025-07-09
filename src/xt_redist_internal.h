@@ -212,7 +212,7 @@ xt_create_compound_datatype(size_t count,
 PPM_DSO_INTERNAL unsigned
 xt_redist_agg_msg_count(size_t num_redists, enum xt_msg_direction direction,
                         const Xt_redist redists[num_redists],
-                        size_t num_ranks[num_redists],
+                        unsigned num_ranks[num_redists],
                         int *restrict ranks[num_redists],
                         Xt_config config);
 

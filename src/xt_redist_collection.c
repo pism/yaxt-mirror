@@ -165,7 +165,7 @@ static void align_component_dt(
   const struct Xt_msg_param *const msg_param[num_redists],
   const unsigned num_redist_components[num_redists],
   int *restrict in_ranks[num_redists],
-  const size_t num_ranks[num_redists],
+  const unsigned num_ranks[num_redists],
   int *restrict out_ranks,
   MPI_Datatype *restrict component_dt,
   MPI_Aint *restrict disp_ofs,
@@ -300,23 +300,21 @@ alloc_redist_coll(size_t num_components, size_t nmsg_send, size_t nmsg_recv,
 }
 
 
-static size_t
-get_component_count(size_t num_redists,
-                    const size_t num_ranks[num_redists],
-                    const unsigned num_redist_components[num_redists])
-{
-  size_t num_components_total = 0;
 #if defined __ICC && (__INTEL_COMPILER_BUILD_DATE == 20110811   \
                        || __INTEL_COMPILER == 1300)
-  size_t prods[num_redists];
-  for (size_t j = 0; j < num_redists; ++j)
-    prods[j] = num_ranks[j] * num_redist_components[j];
-  for (size_t j = num_redists; j > 0; --j)
-    num_components_total += prods[j-1];
+PPM_DSO_INTERNAL
 #else
-  for (size_t j = 0; j < num_redists; ++j)
-    num_components_total += num_ranks[j] * num_redist_components[j];
+static
 #endif
+size_t
+xt_redist_collection_get_component_count(
+  size_t num_redists,
+  const unsigned num_ranks[num_redists],
+  const unsigned num_redist_components[num_redists])
+{
+  size_t num_components_total = 0;
+  for (size_t j = 0; j < num_redists; ++j)
+    num_components_total += (size_t)num_ranks[j] * num_redist_components[j];
   return num_components_total;
 }
 
@@ -375,17 +373,17 @@ static void
 setup_component_msg_params(
   size_t num_redists,
   const Xt_redist *redists,
-  const size_t num_ranks[2][num_redists],
+  const unsigned num_ranks[2][num_redists],
   const unsigned num_redist_components[num_redists],
   struct Xt_msg_param *msg_param[2][num_redists],
   MPI_Comm comm, Xt_config config)
 {
   size_t num_send_components_total
-    = get_component_count(num_redists, num_ranks[xt_direction_send],
-                          num_redist_components),
+    = xt_redist_collection_get_component_count(
+      num_redists, num_ranks[xt_direction_send], num_redist_components),
     num_recv_components_total
-    = get_component_count(num_redists, num_ranks[xt_direction_recv],
-                          num_redist_components);
+    = xt_redist_collection_get_component_count(
+      num_redists, num_ranks[xt_direction_recv], num_redist_components);
   struct Xt_msg_param *mp_buf = xmalloc(
     (num_send_components_total + num_recv_components_total)
     * sizeof (*mp_buf));
@@ -452,7 +450,7 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
              filename, __LINE__);
 #endif
   unsigned num_redists_ = (unsigned)num_redists;
-  size_t num_ranks[2][num_redists_];
+  unsigned num_ranks[2][num_redists_];
   int *restrict ranks[2][num_redists_];
   unsigned num_redist_components[num_redists_];
   unsigned nmsg_send = xt_redist_agg_msg_count(
