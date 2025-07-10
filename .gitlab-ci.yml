@@ -9,6 +9,29 @@ workflow:
       when: always
     - when: never
 
+variables:
+  PARTITION:
+    value: "shared"
+    description: "Slurm partition to submit job in."
+  TASK_COUNT:
+    value: "32"
+    description: "How many CPUs to request for Slurm job."
+  TIME_LIMIT:
+    value: "15:00"
+    description: "Wall time limit specification for Slurm job."
+  ACCOUNT:
+    value: "k20200"
+    description: "Slurm account to use for billing the job."
+  SCHEDULER_PARAMETERS: >-
+    --account=$ACCOUNT
+    --partition=$PARTITION
+    --ntasks=$TASK_COUNT
+    --time=$TIME_LIMIT
+  MAKEFLAGS:
+    value: "--jobs=${TASK_COUNT}"
+    expand: true
+    description: "Extra flags to pass to make."
+
 # coverage:
 #   - generates the coverage report data
 # tests:
@@ -40,17 +63,6 @@ include:
 .init_build:
   extends:
     - .default
-  variables:
-    PARTITION: shared
-    TASK_COUNT: 32
-    TIME_LIMIT: "15:00"
-    ACCOUNT: k20200
-    SCHEDULER_PARAMETERS: >-
-      --account=$ACCOUNT
-      --partition=$PARTITION
-      --ntasks=$TASK_COUNT
-      --time=$TIME_LIMIT
-    MAKEFLAGS: --jobs=${TASK_COUNT}
   before_script:
     - *load_basic_modules
 
