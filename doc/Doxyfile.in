@@ -38,7 +38,7 @@ PROJECT_NAME           = "Yet Another eXchange Tool"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = DO_NOT_EDIT_HERE
+PROJECT_NUMBER         = @PACKAGE_VERSION@
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -2077,7 +2077,7 @@ EXTERNAL_PAGES         = YES
 # interpreter (i.e. the result of 'which perl').
 # The default file (with absolute path) is: /usr/bin/perl.
 
-PERL_PATH              = /usr/bin/perl
+PERL_PATH              = @PERL@
 
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool

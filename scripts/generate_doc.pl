@@ -46,6 +46,14 @@
 use strict;
 use warnings;
 
+use Config ();
+my $perl_path = $Config::Config{'perlpath'};
+if ($^O ne 'VMS') {
+    $perl_path .= $Config::Config{'_exe'}
+    unless $perl_path =~ m{$Config::Config{_exe}$}i;
+}
+
+
 # find package version in AC_INIT macro of configure.ac
 sub match_version_from_ac_init {
   my $file = shift || die "sub match_version_from_ac_init: missing argument";
@@ -55,7 +63,8 @@ sub match_version_from_ac_init {
     if ($line =~ /^\s*AC_INIT/) {
       $line =~ s/\s+//g;
       if ($line =~ /^AC_INIT\(\[yaxt\],\[([\d\.\w]+)\]/) {
-        return $1;
+          close($fh);
+          return $1;
       }
     }
   }
@@ -63,17 +72,20 @@ sub match_version_from_ac_init {
   return undef;
 }
 
-sub create_doxyfile {
-  my ($version, $in, $out) = @_;
+sub create_doxyfile(\%$$) {
+  my ($replacements, $in, $out) = @_;
   die "sub create_doxyfile: missing argument"
-    unless defined($version) and defined($in) and defined($out);
+    unless defined($replacements) and defined($in) and defined($out);
   my ($fh_in, $fh_out);
   open($fh_in, '<', $in) || die "Cannot open $in.";
   open($fh_out, '>', $out) || die "Cannot open $out.";
   my $match = 0;
   while(my $line = <$fh_in>) {
-    if ($line =~ /^(\s*PROJECT_NUMBER\s*=\s*)/) {
-      $line = "PROJECT_NUMBER = $version\n";
+    while ($line =~ m/@\w+@/g) {
+      if (exists($replacements->{$&})) {
+        substr($line, $-[0], $+[0]-$-[0]) = $replacements->{$&};
+        pos($line) = $-[0]+length($replacements->{$&});
+      }
       $match++;
     }
     print $fh_out $line;
@@ -89,9 +101,12 @@ die "$0 usage: your_configure.ac Doxygen_template outputfile\n"
   unless defined($conf) and defined($doxy_in) and defined($doxy_out);
 
 
-my $version = match_version_from_ac_init($conf);
-die "Cannot find yaxt version in $conf." unless defined $version;
+my %replacements = (
+    '@PACKAGE_VERSION@' => (match_version_from_ac_init($conf)
+                            or die "Cannot find yaxt version in $conf."),
+    '@PERL@' => $perl_path,
+    );
 
-create_doxyfile($version, $doxy_in, $doxy_out) || die "Found no match in $doxy_in\n";
+create_doxyfile(%replacements, $doxy_in, $doxy_out) || die "Found no match in $doxy_in\n";
 
 
