@@ -130,7 +130,6 @@ CONTAINS
     END DO
 
     DO j = 1, num_slice - 1
-      src_data_p(j) = C_LOC(src((j-1)*src_slice_len+1))
       dst_data_p(j) = C_LOC(dst((j-1)*dst_slice_len+1))
     END DO
 
@@ -154,6 +153,9 @@ CONTAINS
       DO i = 1, src_slice_len
         src(i, j) = DBLE(i + (j - 1) * src_slice_len)
       END DO
+    END DO
+    DO j = 1, num_slice - 1
+      src_data_p(j) = C_LOC(src(1, j))
     END DO
   END SUBROUTINE init_displacement_check_src
 
