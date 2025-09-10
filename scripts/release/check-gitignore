@@ -57,7 +57,26 @@ log=$(mktemp "${TMPDIR-/tmp}/tmp.XXXXXXXXXX")
 exec 6>"${log}"
 echo "creating temporary source directory in ${tmpsrc}"
 if (( ${DEBUG:-0} == 0)) && [[ -z "${KEEP_BUILDDIR-}" ]] ; then
-  trap 'rm -rf "${tmpsrc}" "${log}"' EXIT
+# shellcheck disable=SC2317
+# Don't warn about unreachable commands in this function (shellcheck
+# currently does not detect it's called in a trap)
+exit_actions()
+{
+  if [[ -r config.log ]]; then
+    printf '%s\n' \
+      '==========================================================' \
+      'contents of config.log:' \
+      '==========================================================' >&6
+    cat config.log >&6
+    printf '%s\n' \
+      '==========================================================' \
+      'end of config.log:' \
+      '==========================================================' >&6
+  fi
+  echo "detailed log in ${log}" >&2
+  rm -rf "${tmpsrc}"
+}
+  trap 'exit_actions' EXIT
 fi
 repo=$PWD
 cd "${tmpsrc}"
@@ -93,7 +112,7 @@ echo "performing in-place build"
 echo "  configure"
 ./configure CFLAGS='-O2 -pipe' FCFLAGS='-O2 -pipe' \
             --enable-maintainer-mode >&6 2>&6
-if [[ -z "${MAKE+set}" ]]; then
+if [[ -z "${MAKE-}" ]]; then
   MAKE=$(sed -n -e '/^MAKE = /{
 s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
 }' Makefile)
