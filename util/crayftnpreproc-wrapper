@@ -110,6 +110,10 @@ done
 # switch to temp directory to no pollute working directory
 cd "$temporaries"
 
+# link all directories in original directory to handle relative
+# inclusion paths
+find -L "$callDir" -mindepth 1 -maxdepth 1 -type d -exec ln -s -t . \{\} +
+
 # find compiler if not set
 if [ "${FC+set}" != set ]; then
 	for F90C in ftn '' ; do

@@ -79,7 +79,7 @@ libtoolversion=$($LIBTOOLIZE --version \
 declare -a patches
 case "$libtoolversion" in
   (2.4.6|2.4.7)
-    patches=(contrib/00nagfor-libtool-patch/nagfor-libtool-${libtoolversion}.patch \
+    patches=("contrib/00nagfor-libtool-patch/nagfor-libtool-${libtoolversion}.patch" \
       contrib/01aix-deplib-rpath-patch/aix-deplib-libtool.patch \
       contrib/03ltmain-ld-groups-patch/ltmain-ld-groups-libtool-2.4.6.patch \
       contrib/04ltmain-xlinker-patch/ltmain-xlinker-patch.patch \
@@ -107,33 +107,69 @@ case "$libtoolversion" in
 esac
 for patch in "${patches[@]}"; do
   echo "applying $patch" >&2
-  patch -p1 <$patch
+  patch -p1 <"$patch"
 done
 autoreconf -i
 # fix timestamps of the header templates
 ${AUTOHEADER-autoheader} --force
+# shellcheck disable=SC2086
 find . -name Makefile.in -exec $SED "${sed_inplace_options[@]}" \
   -e 's/[	 ][	 ]*$//' \{\} +
 \rm -f config/ltmain.sh.orig m4/libtool.m4.orig
 
-if [[ x${DL_CMD+set} = x ]]; then
+if [[ -z "${DL_CMD-}" ]]; then
   if command -v wget >/dev/null ; then
     DL_CMD=(wget -nv -o /dev/null -O)
   elif command -v curl >/dev/null ; then
     DL_CMD=(curl -s -S -o)
   fi
 else
-  DL_CMD=($DL_CMD)
+  # shellcheck disable=SC2128
+  read -r -a DL_CMD <<< "${DL_CMD}"
 fi
 
-"${DL_CMD[@]}" config/config.guess \
-  'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' \
-  || "${DL_CMD[@]}" config/config.guess \
-     'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-"${DL_CMD[@]}" config/config.sub \
-  'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD' \
-  || "${DL_CMD[@]}" config/config.sub \
-     'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+cnf_age_tolerance=$((24*3600*31))
+cnf_cache_dir=${cnf_cache_dir-"${HOME}/.config/autotools/cache"}
+[[ -d "${cnf_cache_dir}" ]] || mkdir -p "${cnf_cache_dir}"
+cnf_files=(config/config.guess config/config.sub)
+cnf_urls=('https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD' \
+  'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD')
+
+cnf_get_timestamp()
+{
+  if [[ -f "$2" ]] && timestamp=$(grep '^timestamp=' "$2" 2>/dev/null); then
+    timestamp=${timestamp#timestamp=\'}
+    timestamp=${timestamp%\'}
+  else
+    timestamp='1970-01-01'
+  fi
+  timestamp=$(date +%s -u -d "${timestamp}")
+  typeset -g "$1=$timestamp"
+}
+
+now=$(date -u '+%s')
+for ((i=0 ; i < ${#cnf_files[@]} ; ++i)); do
+  cnf_file=${cnf_files[i]}
+  cnf_cache_file="$cnf_cache_dir/${cnf_file#*/}"
+  timestamp_autotools=0
+  cnf_get_timestamp timestamp_autotools "$cnf_file"
+  #  timestamp_cache=0
+  #  cnf_get_timestamp timestamp_cache "$cnf_cache_file"
+  if [[ -f "$cnf_cache_file" ]]; then
+    cnf_cache_retrieve_time=$(date -r "$cnf_cache_file" -u +'%s')
+  else
+    cnf_cache_retrieve_time=0
+  fi
+  if (( cnf_cache_retrieve_time + cnf_age_tolerance >= now )); then
+    if (( cnf_cache_retrieve_time > timestamp_autotools )); then
+      cp -p "$cnf_cache_file" "$cnf_file"
+    fi
+  else
+    "${DL_CMD[@]}" "${cnf_file}" "${cnf_urls[i]}" \
+      || "${DL_CMD[@]}" "${cnf_file}" "${cnf_urls[i]}"
+    cp "$cnf_file" "$cnf_cache_file"
+  fi
+done
 
 if [ -x scripts/recreate-testsuite.sh ]; then
   scripts/recreate-testsuite.sh

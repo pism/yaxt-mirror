@@ -103,7 +103,7 @@ my ($writePreprocessed, @preprocNameSubst) = (0);
 # * system and program includes referenced
 # * modules referenced and provided
 # * also stores digested environment and options from last run
-#   if persistentParseCache == 1
+#   if persistentParseCache > 0
 my (%parseCache, $parseCacheDB);
 my $persistentParseCache = 0;
 
@@ -454,7 +454,11 @@ sub parseSource($$$;$)
                  $lineno, ' of ', $srcfile, ': ', $trail)
                 if defined($trail);
          } elsif (m{^\s*module\s+([^\s!]+)}i and lc($1) ne 'procedure') {
-            my $moduleName = lc($1);
+            my $moduleName = lc((defined($defines->{$1})
+                                 && @{$defines->{$1}{'parameters'}} == 0)
+                                ? $defines->{$1}{'definition'}[0][0] : $1);
+            print STDERR 'Found provider of module ', $moduleName, "\n"
+                if ($debug > 1);
             pushUnique(\@moduleProvide, $moduleName);
          } elsif (/^\s*#*include\s+(?:(")(.+)?"|(<)(.+)?>)/) {
             my ($sigil, $headerSpec) = defined($1) ? ($1, $2) : ($3, $4);
@@ -464,18 +468,30 @@ sub parseSource($$$;$)
                                            [$sigil eq '<' ? $headerSpec : () ],
                                            [$sigil eq '"' ? $headerSpec : () ],
                                            @$incDirs);
-            parseSource($incfile, $defines, $incDirs, $preprocOutFh)
-                if (defined($incfile));
+            if (defined($incfile)) {
+               my %sub_parse_res
+                   = parseSource($incfile, $defines, $incDirs, $preprocOutFh);
+               pushUnique($sys_incs, @{$sub_parse_res{'sys_incs'}});
+               pushUnique($prg_incs, @{$sub_parse_res{'prg_incs'}});
+               pushUnique(\@moduleUse, @{$sub_parse_res{'moduleUse'}});
+               pushUnique(\@moduleProvide, @{$sub_parse_res{'moduleProvide'}});
+               push(@cppKeys, @{$sub_parse_res{'cppKeys'}});
+            }
             print(STDERR 'Unsupported preprocessor include "',
                   $headerSpec,
                   '" found while writing preprocessor output!')
                 if (defined($preprocOutFh));
          } elsif (/^\s*include\s+(["'])(.+)?\1/i) {
             pushUnique($sys_incs, $2);
+            # fixme: evaluate module use associations and module
+            # provides
          } elsif (/^\s*use\s+([^\s,!]+)/i) {
-            print(STDERR 'Found use association: ', $1, "\n")
+            my $moduleName = lc((defined($defines->{$1})
+                                 && @{$defines->{$1}{'parameters'}} == 0)
+                                ? $defines->{$1}{'definition'}[0][0] : $1);
+            print(STDERR 'Found use association: ', $moduleName, "\n")
                 if ($debug);
-            pushUnique(\@moduleUse, lc($1));
+            pushUnique(\@moduleUse, lc($moduleName));
          }
       }
       print $preprocOutFh $_
@@ -918,7 +934,8 @@ sub createTmpDir()
                {
                   if ($1 eq '-D' || $1 eq $fcdefopt)
                   {
-                     $defines{$2}=defined($3)?$3:'';
+                     $defines{$2} = { 'definition' => [ [ defined($3)?$3:'' ] ],
+                                      'parameters' => [] };
                   }
                   elsif (($1 eq '-U' || $1 eq $fcundefopt) && !defined($3))
                   {
