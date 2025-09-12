@@ -231,14 +231,52 @@ static int
 xt_request_msgs_test_omp(Xt_request request) {
 
   bool flag = true;
-#pragma omp parallel reduction(&: flag)
+  size_t num_threads = (size_t)omp_get_max_threads();
+  /* cache_line_size_scale_factor * sizeof (int)
+   * should equal the cache-line size and
+   * cache_line_size_scale_factor >= 2 must be true */
+  enum { cache_line_size_scale_factor = 16 };
+  int ops_comp_count[num_threads][cache_line_size_scale_factor];
+#pragma omp parallel
   {
     Xt_request_msgs request_msgs = (Xt_request_msgs)request;
-    size_t n = (size_t)request_msgs->n;
-    int *ops_completed_buffer = (int *)(request_msgs->requests + n);
-
-    flag &= xt_mpi_test_some_mt(&request_msgs->n, request_msgs->requests,
-                                ops_completed_buffer, request_msgs->comm);
+    size_t num_req = (size_t)request_msgs->n,
+      tid = (size_t)omp_get_thread_num(),
+      start_req = (num_req * tid) / num_threads,
+      nreq = (num_req * (tid+1)) / num_threads - start_req;
+    MPI_Request reqs_copy[num_req],
+      *restrict reqs_orig = request_msgs->requests;
+    int *restrict ops_completed_buffer
+      = (int *)(reqs_orig + num_req) + start_req;
+    for (size_t i = 0; i < nreq; ++i)
+      reqs_copy[i] = reqs_orig[start_req+i];
+    struct test_some_partial_result test_res
+      = xt_mpi_test_some_mt((int)nreq, reqs_copy,
+                            ops_completed_buffer, request_msgs->comm);
+    size_t done_count = (size_t)test_res.num_req_completed;
+    ops_comp_count[tid][0] = test_res.num_req_completed;
+    ops_comp_count[tid][1] = (int)nreq;
+    for (size_t i = 0; i < done_count; ++i)
+      ops_completed_buffer[i] += (int)start_req;
+#pragma omp barrier
+    size_t accum = 0;
+    for (size_t i = 0; i < tid; ++i)
+      accum += (size_t)ops_comp_count[i][0];
+    size_t req_ofs = start_req - accum;
+    for (size_t i = tid; i < num_threads; ++i)
+      accum += (size_t)ops_comp_count[i][0];
+    if (accum != num_req) {
+      for (size_t i = 0, j = 0; i < nreq; ++i) {
+        if (reqs_copy[i] != MPI_REQUEST_NULL)
+          reqs_orig[req_ofs+j] = reqs_copy[i];
+        j += reqs_copy[i] != MPI_REQUEST_NULL;
+      }
+    }
+#pragma omp master
+    {
+      flag = accum == num_req;
+      request_msgs->n -= (int)accum;
+    }
   }
   if (flag && ((Xt_request_msgs)request)->auto_free) free(request);
 
