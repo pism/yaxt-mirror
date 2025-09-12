@@ -110,3 +110,8 @@ my %replacements = (
 create_doxyfile(%replacements, $doxy_in, $doxy_out) || die "Found no match in $doxy_in\n";
 
 
+#
+# Local variables:
+# coding: utf-8
+# End:
+#
