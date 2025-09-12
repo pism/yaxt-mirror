@@ -76,9 +76,12 @@ yaxt.hpp: Makefile $(libyaxt_c_srcdir)/xtinclude_Makefile.inc
 xt/.dir_stamp:
 	$(AM_V_GEN)$(MKDIR_P) xt && touch xt/.dir_stamp
 
-$(xtinclude_HEADERS): ../include/config.h \
+xtinclude_HEADERS_h_stamp = $(xtinclude_HEADERS:.h=.h.stamp)
+xtinclude_HEADERS_stamp = $(xtinclude_HEADERS_h_stamp:.hpp=.hpp.stamp)
+
+$(xtinclude_HEADERS_stamp): ../include/config.h \
 	$(top_srcdir)/scripts/header2installheader.pl xt/.dir_stamp
-	$(AM_V_GEN) headerbasedir=`test -f '$(libyaxt_c_srcdir)/$@' || echo '$(srcdir)/'` ; \
+	$(AM_V_GEN) headerbasedir=`test -f '$(libyaxt_c_srcdir)/$(@:.stamp= )' || echo '$(srcdir)/'` ; \
 	  $(PERL) -I$(top_srcdir)/scripts \
 	  $(top_srcdir)/scripts/header2installheader.pl \
 	  --config-header=../include/config.h \
@@ -87,11 +90,15 @@ $(xtinclude_HEADERS): ../include/config.h \
 	  --c-sizeof-long=$(C_SIZEOF_LONG) \
 	  --c-sizeof-long-long=$(C_SIZEOF_LONG_LONG) \
 	  --c-char-is-`test $(C_CHAR_IS_UNSIGNED) = 0 || echo un`signed \
-	  `expr "$@" : '.*\.hpp$$' >/dev/null && echo --write-hpp-header` \
+	  `expr "$@" : '.*\.hpp.stamp$$' >/dev/null && echo --write-hpp-header` \
 	  --dstdir=. \
-	  $$headerbasedir$(libyaxt_c_srcdir)/$@
+	  $$headerbasedir$(libyaxt_c_srcdir)/$(@:.stamp=) && touch $@
 
-all-local: $(xtinclude_HEADERS)
+$(xtinclude_HEADERS) xt/xt_exchanger.h:
+	@test -e "$@" || { rm -f "$@.stamp" ; $(MAKE) "$@.stamp" ; }
+
+all-local: $(xtinclude_HEADERS_stamp)
+
 clean-local:
 	rm -rf xt yaxt.h yaxt.hpp
 

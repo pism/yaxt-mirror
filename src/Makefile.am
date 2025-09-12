@@ -355,7 +355,7 @@ xt_redist_int_i8.f90: \
 
 
 xtinclude_Makefile.inc: Makefile
-	$(AM_V_GEN)$(PERL) -e 'my @argv = (grep(m{^xt/.*\.h$$}, @ARGV)); my @lens = map length, @argv; my $$maxlen = (sort { $$a <=> $$b } @lens)[-1]; print "xtinclude_HEADERS =", "\t" x (($$maxlen+7)/8-1), "\\\n"; foreach (@argv[0..@argv-2]) { print "\t$$_", "\t" x (($$maxlen+7)/8 - length($$_)/8 + (length($$_)%8 != 0)), "\\\n", "\t$${_}pp", "\t" x (($$maxlen+7)/8 - (length($$_) + 2)/8 + ((length($$_) + 2)%8 != 0)), "\\\n"; } print "\t$$argv[-1]pp", "\t" x (($$maxlen+7)/8 - (length($$argv[-1]) + 2)/8 + ((length($$argv[-1]) + 2)%8 != 0)), "\\\n", "\t$$argv[-1]\n"; print("\n", map { ("$$_: \$$(libyaxt_c_srcdir)/$$_\n", "$${_}pp: \$$(libyaxt_c_srcdir)/$$_\n") } @argv);' $(libyaxt_c_la_SOURCES) >$@.tmp && { cmp "$@.tmp" "$@" >/dev/null && rm -f "$@.tmp" || mv "$@.tmp" "$@" ; }
+	$(AM_V_GEN)$(PERL) -e 'my @argv = (grep(m{^xt/.*\.h$$}, @ARGV)); my @lens = map length, @argv; my $$maxlen = (sort { $$a <=> $$b } @lens)[-1]; print "xtinclude_HEADERS =", "\t" x (($$maxlen+7)/8-1), "\\\n"; foreach (@argv[0..@argv-2]) { print "\t$$_", "\t" x (($$maxlen+7)/8 - length($$_)/8 + (length($$_)%8 != 0)), "\\\n", "\t$${_}pp", "\t" x (($$maxlen+7)/8 - (length($$_) + 2)/8 + ((length($$_) + 2)%8 != 0)), "\\\n"; } print "\t$$argv[-1]pp", "\t" x (($$maxlen+7)/8 - (length($$argv[-1]) + 2)/8 + ((length($$argv[-1]) + 2)%8 != 0)), "\\\n", "\t$$argv[-1]\n"; print("\n", map { ("$$_: $${_}.stamp\n$${_}.stamp: \$$(libyaxt_c_srcdir)/$$_\n", "$${_}pp: $${_}pp.stamp\n$${_}pp.stamp: \$$(libyaxt_c_srcdir)/$$_\n") } @argv);' $(libyaxt_c_la_SOURCES) >$@.tmp && { cmp "$@.tmp" "$@" >/dev/null && rm -f "$@.tmp" || mv "$@.tmp" "$@" ; }
 
 all-local: xtinclude_Makefile.inc
 
