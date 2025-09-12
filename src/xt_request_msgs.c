@@ -99,6 +99,8 @@ struct Xt_request_msgs_ {
 Xt_request
 xt_request_msgs_alloc(int n, MPI_Comm comm, Xt_config config)
 {
+  if (!n)
+    return XT_REQUEST_NULL;
   Xt_request_msgs request
     = xmalloc(sizeof(*request) + (size_t)n * sizeof(MPI_Request) +
               (size_t)n * sizeof(int));
@@ -144,6 +146,8 @@ xt_request_msgs_custom_new(int n,
 MPI_Request *
 xt_request_msgs_get_req_ptr(Xt_request request)
 {
+  if (request == XT_REQUEST_NULL)
+    return NULL;
   Xt_request_msgs request_msgs = (Xt_request_msgs)request;
 #ifdef _OPENMP
   assert(request->vtable == &request_msgs_vtable
@@ -197,10 +201,19 @@ static int xt_request_msgs_test(Xt_request request) {
 }
 
 #ifdef _OPENMP
+static size_t
+xt_request_msgs_get_num_omp_threads(Xt_request request)
+{
+  size_t num_threads = (size_t)omp_get_max_threads();
+  size_t num_req = (size_t)(((Xt_request_msgs)request)->n);
+  return num_req >= num_threads ? num_threads : num_req;
+}
+
 static void
 xt_request_msgs_wait_omp(Xt_request request)
 {
-#pragma omp parallel
+  size_t num_threads_limit = xt_request_msgs_get_num_omp_threads(request);
+#pragma omp parallel num_threads(num_threads_limit)
   {
     Xt_request_msgs request_msgs = (Xt_request_msgs)request;
 
@@ -227,17 +240,18 @@ xt_request_msgs_wait_omp(Xt_request request)
     free(request);
 }
 
+
 static int
 xt_request_msgs_test_omp(Xt_request request) {
 
   bool flag = true;
-  size_t num_threads = (size_t)omp_get_max_threads();
+  size_t num_threads = xt_request_msgs_get_num_omp_threads(request);
   /* cache_line_size_scale_factor * sizeof (int)
    * should equal the cache-line size and
    * cache_line_size_scale_factor >= 2 must be true */
   enum { cache_line_size_scale_factor = 16 };
   int ops_comp_count[num_threads][cache_line_size_scale_factor];
-#pragma omp parallel
+#pragma omp parallel num_threads(num_threads) firstprivate(num_threads)
   {
     Xt_request_msgs request_msgs = (Xt_request_msgs)request;
     size_t num_req = (size_t)request_msgs->n,
@@ -271,12 +285,11 @@ xt_request_msgs_test_omp(Xt_request request) {
           reqs_orig[req_ofs+j] = reqs_copy[i];
         j += reqs_copy[i] != MPI_REQUEST_NULL;
       }
-    }
 #pragma omp master
-    {
-      flag = accum == num_req;
       request_msgs->n -= (int)accum;
     }
+#pragma omp master
+    flag = accum == num_req;
   }
   if (flag && ((Xt_request_msgs)request)->auto_free) free(request);
 

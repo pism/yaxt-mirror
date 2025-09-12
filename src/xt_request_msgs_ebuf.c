@@ -160,12 +160,17 @@ xt_request_msgs_ebuf_custom_new(int n_requests,
                                 Xt_config config)
 {
   assert(n_requests >= 0);
-  Xt_request_msgs_ebuf request
-    = (Xt_request_msgs_ebuf)xt_request_msgs_ebuf_alloc(
-      n_requests, comm, extra_buf_size, config);
-  xt_request_msgs_ebuf_set_finalizer((Xt_request)request, finalize);
-  init((Xt_request)request, request->requests, extra_buf(request),
-       data, comm);
+  Xt_request request;
+  if (n_requests > 0) {
+    Xt_request_msgs_ebuf request_me
+      = (Xt_request_msgs_ebuf)xt_request_msgs_ebuf_alloc(
+        n_requests, comm, extra_buf_size, config);
+    request = (Xt_request)request_me;
+    xt_request_msgs_ebuf_set_finalizer(request, finalize);
+    init(request, request_me->requests, extra_buf(request_me),
+         data, comm);
+  } else
+    request = XT_REQUEST_NULL;
   return (Xt_request)request;
 }
 
@@ -296,10 +301,20 @@ finish_requests_mt(Xt_request_msgs_ebuf request_msgs_ebuf)
     free(request_msgs_ebuf);
 }
 
+static size_t
+xt_request_msgs_ebuf_get_num_omp_threads(Xt_request request)
+{
+  size_t num_threads= (size_t)omp_get_max_threads();
+  size_t num_req = (size_t)(((Xt_request_msgs_ebuf)request)->n_requests);
+  return num_req >= num_threads ? num_threads : num_req;
+}
+
+
 static void
 xt_request_msgs_ebuf_wait_omp(Xt_request request)
 {
-#pragma omp parallel
+  size_t num_threads_limit = xt_request_msgs_ebuf_get_num_omp_threads(request);
+#pragma omp parallel num_threads(num_threads_limit)
   {
     Xt_request_msgs_ebuf request_msgs = (Xt_request_msgs_ebuf)request;
     int num_threads = omp_get_num_threads(),
@@ -329,17 +344,18 @@ static int
 xt_request_msgs_ebuf_test_omp(Xt_request request)
 {
   bool flag = true;
-  size_t num_threads = (size_t)omp_get_max_threads();
+  size_t num_threads_limit = xt_request_msgs_ebuf_get_num_omp_threads(request);
   /* cache_line_size_scale_factor * sizeof (int)
    * should equal the cache-line size and
    * cache_line_size_scale_factor >= 2 must be true */
   enum { cache_line_size_scale_factor = 16 };
-  int ops_comp_count[num_threads][cache_line_size_scale_factor];
-#pragma omp parallel
+  int ops_comp_count[num_threads_limit][cache_line_size_scale_factor];
+#pragma omp parallel num_threads(num_threads_limit)
   {
     Xt_request_msgs_ebuf request_msgs = (Xt_request_msgs_ebuf)request;
 
-    size_t tid = (size_t)omp_get_thread_num(),
+    size_t num_threads = (size_t)omp_get_num_threads(),
+      tid = (size_t)omp_get_thread_num(),
       num_req = (size_t)request_msgs->n_requests,
       start_req = (num_req * tid) / num_threads;
     int nreq = (int)((num_req * (tid+1)) / num_threads - start_req);
@@ -373,12 +389,11 @@ xt_request_msgs_ebuf_test_omp(Xt_request request)
           reqs_orig[req_ofs+j] = reqs_copy[i];
         j += reqs_copy[i] != MPI_REQUEST_NULL;
       }
+#pragma omp master
+      request_msgs->n_requests -= (int)accum;
     }
 #pragma omp master
-    {
-      request_msgs->n_requests -= (int)accum;
-      flag = accum == num_req;
-    }
+    flag = accum == num_req;
   }
 
   return flag;
