@@ -547,20 +547,14 @@ xt_mpi_test_some(int *restrict num_req,
 }
 
 #ifdef _OPENMP
-bool
-xt_mpi_test_some_mt(int *restrict num_req,
+struct test_some_partial_result
+xt_mpi_test_some_mt(int num_req,
                     MPI_Request *restrict req,
                     int *restrict ops_completed, MPI_Comm comm)
 {
   int done_count;
-  size_t num_req_ = (size_t)*num_req;
 
-  size_t num_threads = (size_t)omp_get_num_threads(),
-    tid = (size_t)omp_get_thread_num();
-  size_t start_req = (num_req_ * tid) / num_threads,
-    nreq_ = (num_req_ * (tid+1)) / num_threads - start_req;
-
-  for (size_t i = start_req; i < start_req + nreq_; ++i)
+  for (size_t i = 0; i < (size_t)num_req; ++i)
     ops_completed[i] = -1;
 #if __GNUC__ >= 11 && __GNUC__ <= 13
   /* GCC 11 has no means to specify that the special value pointer
@@ -569,29 +563,14 @@ xt_mpi_test_some_mt(int *restrict num_req,
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #pragma GCC diagnostic ignored "-Wstringop-overread"
 #endif
-  xt_mpi_call(MPI_Testsome((int)nreq_, req+start_req, &done_count,
-                           ops_completed+start_req, MPI_STATUSES_IGNORE), comm);
+  xt_mpi_call(MPI_Testsome(num_req, req, &done_count,
+                           ops_completed, MPI_STATUSES_IGNORE), comm);
 #if __GNUC__ >= 11 && __GNUC__ <= 13
 #pragma GCC diagnostic pop
 #endif
   if (done_count == MPI_UNDEFINED)
     done_count = 0;
-#pragma omp barrier
-#pragma omp atomic
-  *num_req -= done_count;
-#pragma omp barrier
-  done_count = (int)num_req_ - *num_req;
-#pragma omp single
-  {
-    if (num_req_ > (size_t)done_count) {
-      for (size_t i = 0, j = 0; i < num_req_; ++i)
-        if (req[i] != MPI_REQUEST_NULL)
-          req[j++] = req[i];
-    }
-    *num_req = (int)num_req_ - done_count;
-  }
-  num_req_ -= (size_t)done_count;
-  return num_req_ == 0;
+  return (struct test_some_partial_result){ .num_req_completed = done_count };
 }
 #endif
 
