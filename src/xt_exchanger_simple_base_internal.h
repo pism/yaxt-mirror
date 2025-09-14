@@ -51,6 +51,9 @@
 #endif
 
 #include <mpi.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include "core/ppm_visibility.h"
 #include "xt/xt_core.h"
@@ -92,6 +95,19 @@ xt_exchanger_simple_base_get_send_msg(Xt_exchanger_simple_base exchanger);
 
 PPM_DSO_INTERNAL const struct Xt_msg_param *
 xt_exchanger_simple_base_get_recv_msg(Xt_exchanger_simple_base exchanger);
+
+#ifdef _OPENMP
+static inline size_t
+xt_exchanger_simple_base_get_num_omp_threads(Xt_exchanger exchanger)
+{
+  size_t num_threads = (size_t)omp_get_max_threads();
+  Xt_exchanger_simple_base exchanger_sb =
+    (Xt_exchanger_simple_base)exchanger;
+  size_t num_msg = (size_t)exchanger_sb->nmsg[0]
+    + (size_t)exchanger_sb->nmsg[1];
+  return num_msg >= num_threads ? num_threads : num_msg;
+}
+#endif
 
 #define xt_exchanger_simple_base_get_send_msg(exchanger) \
   ((const struct Xt_msg_param *)(exchanger->msgs))

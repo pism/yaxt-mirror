@@ -404,20 +404,33 @@ xt_exchanger_mix_isend_irecv_a_exchange_mt(Xt_exchanger exchanger,
                exchanger_msr);
 }
 
+static size_t
+xt_exchanger_mix_isend_irecv_get_num_omp_threads(Xt_exchanger exchanger)
+{
+  size_t num_threads = (size_t)omp_get_max_threads();
+  size_t num_msg = (size_t)(((Xt_exchanger_mix_isend_irecv)exchanger)->n);
+  return num_msg >= num_threads ? num_threads : num_msg;
+}
+
 static void
 xt_exchanger_mix_isend_irecv_a_exchange_omp(Xt_exchanger exchanger,
                                             const void *src_data,
                                             void *dst_data,
                                             Xt_request *request)
 {
-  struct Xt_config_ conf = xt_default_config;
-  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
-  Xt_exchanger_thread_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_thread_share(exchanger, &conf);
-#pragma omp parallel
-  xt_exchanger_mix_isend_irecv_a_exchange_mt(exchanger, src_data, dst_data,
-                                             shared_req);
-  *request = (Xt_request)shared_req;
+  size_t num_threads_limit
+    = xt_exchanger_mix_isend_irecv_get_num_omp_threads(exchanger);
+  if (num_threads_limit) {
+    struct Xt_config_ conf = xt_default_config;
+    xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
+    Xt_exchanger_thread_share shared_req
+      = xt_exchanger_mix_isend_irecv_create_thread_share(exchanger, &conf);
+#pragma omp parallel num_threads(num_threads_limit)
+    xt_exchanger_mix_isend_irecv_a_exchange_mt(exchanger, src_data, dst_data,
+                                               shared_req);
+    *request = (Xt_request)shared_req;
+  } else
+    *request = XT_REQUEST_NULL;
 }
 
 static void
@@ -447,14 +460,18 @@ xt_exchanger_mix_isend_irecv_s_exchange_omp(Xt_exchanger exchanger,
                                             const void *src_data,
                                             void *dst_data)
 {
-  struct Xt_config_ conf = xt_default_config;
-  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
-  Xt_exchanger_thread_share shared_req
-    = xt_exchanger_mix_isend_irecv_create_thread_share(exchanger, &conf);
-#pragma omp parallel
-  xt_exchanger_mix_isend_irecv_s_exchange_mt(exchanger, src_data, dst_data,
-                                             shared_req);
-  free(shared_req);
+  size_t num_threads_limit
+    = xt_exchanger_mix_isend_irecv_get_num_omp_threads(exchanger);
+  if (num_threads_limit) {
+    struct Xt_config_ conf = xt_default_config;
+    xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
+    Xt_exchanger_thread_share shared_req
+      = xt_exchanger_mix_isend_irecv_create_thread_share(exchanger, &conf);
+#pragma omp parallel num_threads(num_threads_limit)
+    xt_exchanger_mix_isend_irecv_s_exchange_mt(exchanger, src_data, dst_data,
+                                               shared_req);
+    free(shared_req);
+  }
 }
 #endif
 
