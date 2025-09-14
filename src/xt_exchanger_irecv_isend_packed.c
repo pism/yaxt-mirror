@@ -299,6 +299,9 @@ xt_exchanger_irecv_isend_packed_s_exchange_omp(
   Xt_exchanger exchanger,
   const void *src_data, void *dst_data)
 {
+  size_t num_threads_limit
+    = xt_exchanger_simple_base_get_num_omp_threads(exchanger);
+  if (num_threads_limit) ; else return;
   Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
   int nsend = base->nmsg[xt_direction_send],
     nrecv = base->nmsg[xt_direction_recv];
@@ -323,8 +326,7 @@ xt_exchanger_irecv_isend_packed_s_exchange_omp(
   size_t buffer_size = get_buffer_offsets(buf_ofs, nsend, nrecv,
                                           send_msgs, recv_msgs, base->comm);
   unsigned char *buffer = xmalloc(buffer_size);
-
-#pragma omp parallel
+#pragma omp parallel num_threads(num_threads_limit)
   {
     int num_threads = omp_get_num_threads(),
       tid = omp_get_thread_num();
@@ -575,13 +577,22 @@ xt_exchanger_irecv_isend_packed_a_exchange_omp(
   void *dst_data,
   Xt_request *request)
 {
+  size_t num_threads_limit
+    = xt_exchanger_simple_base_get_num_omp_threads(exchanger);
+  if (num_threads_limit) ; else {
+    *request = XT_REQUEST_NULL;
+    return;
+  }
   Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
   int nsend = base->nmsg[xt_direction_send],
     nrecv = base->nmsg[xt_direction_recv];
   size_t *buf_ofs, buf_ofs_auto[AUTO_ALLOC_SIZE+1];
 
   size_t num_tx = (size_t)nrecv + (size_t)nsend;
-  if (num_tx <= AUTO_ALLOC_SIZE)
+  if (num_tx == 0) {
+    *request = XT_REQUEST_NULL;
+    return;
+  } else if (num_tx <= AUTO_ALLOC_SIZE)
     buf_ofs = buf_ofs_auto;
   else
     buf_ofs = xmalloc((num_tx+1) * sizeof (*buf_ofs));
@@ -599,7 +610,8 @@ xt_exchanger_irecv_isend_packed_a_exchange_omp(
                                  inventory_size + buffer_size, &conf);
   xt_request_msgs_ebuf_set_finalizer(
     requests, finalize_packed_a_exchange_mt);
-#pragma omp parallel firstprivate(requests, inventory_size, nrecv)
+#pragma omp parallel firstprivate(requests, inventory_size, nrecv) \
+  num_threads(num_threads_limit)
   {
     MPI_Request *prequests
       = xt_request_msgs_ebuf_get_req_ptr(requests);

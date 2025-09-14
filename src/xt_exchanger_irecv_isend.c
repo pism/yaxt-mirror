@@ -253,19 +253,23 @@ static void
 xt_exchanger_irecv_isend_s_exchange_omp(
   Xt_exchanger exchanger, const void *src_data, void *dst_data)
 {
-  Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
-  int nsend = base->nmsg[xt_direction_send],
-    nrecv = base->nmsg[xt_direction_recv];
-  Xt_exchanger_thread_share shared_req
-    = (Xt_exchanger_thread_share)xt_request_msgs_alloc(nsend+nrecv, base->comm,
-                                                       &xt_default_config);
-#pragma omp parallel
-  xt_exchanger_irecv_isend_s_exchange_mt(
-    src_data, dst_data, nsend, nrecv,
-    xt_exchanger_simple_base_get_send_msg(base),
-    xt_exchanger_simple_base_get_recv_msg(base),
-    base, shared_req);
-  free(shared_req);
+  size_t num_threads_limit
+    = xt_exchanger_simple_base_get_num_omp_threads(exchanger);
+  if (num_threads_limit) {
+    Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
+    int nsend = base->nmsg[xt_direction_send],
+      nrecv = base->nmsg[xt_direction_recv];
+    Xt_exchanger_thread_share shared_req
+      = (Xt_exchanger_thread_share)xt_request_msgs_alloc(nsend+nrecv, base->comm,
+                                                         &xt_default_config);
+#pragma omp parallel num_threads(num_threads_limit)
+    xt_exchanger_irecv_isend_s_exchange_mt(
+      src_data, dst_data, nsend, nrecv,
+      xt_exchanger_simple_base_get_send_msg(base),
+      xt_exchanger_simple_base_get_recv_msg(base),
+      base, shared_req);
+    free(shared_req);
+  }
 }
 
 #endif
@@ -298,20 +302,25 @@ xt_exchanger_irecv_isend_a_exchange_omp(Xt_exchanger exchanger,
                                         const void *src_data, void *dst_data,
                                         Xt_request *request) {
 
-  struct Xt_config_ conf = xt_default_config;
-  xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
-  Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
-  int nsend = base->nmsg[xt_direction_send],
-    nrecv = base->nmsg[xt_direction_recv];
-  Xt_exchanger_thread_share shared_req
-    = (Xt_exchanger_thread_share)(
-      *request = xt_request_msgs_alloc(nrecv + nsend, base->comm, &conf));
-#pragma omp parallel
-  xt_exchanger_irecv_isend_a_exchange_mt(
-    src_data, dst_data, nsend, nrecv,
-    xt_exchanger_simple_base_get_send_msg(base),
-    xt_exchanger_simple_base_get_recv_msg(base),
-    base, shared_req);
+  size_t num_threads_limit
+    = xt_exchanger_simple_base_get_num_omp_threads(exchanger);
+  if (num_threads_limit) {
+    struct Xt_config_ conf = xt_default_config;
+    xt_config_set_redist_mthread_mode(&conf, XT_MT_OPENMP);
+    Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
+    int nsend = base->nmsg[xt_direction_send],
+      nrecv = base->nmsg[xt_direction_recv];
+    Xt_exchanger_thread_share shared_req
+      = (Xt_exchanger_thread_share)(
+        *request = xt_request_msgs_alloc(nrecv + nsend, base->comm, &conf));
+#pragma omp parallel num_threads(num_threads_limit)
+    xt_exchanger_irecv_isend_a_exchange_mt(
+      src_data, dst_data, nsend, nrecv,
+      xt_exchanger_simple_base_get_send_msg(base),
+      xt_exchanger_simple_base_get_recv_msg(base),
+      base, shared_req);
+  } else
+    *request = XT_REQUEST_NULL;
 }
 #endif
 
