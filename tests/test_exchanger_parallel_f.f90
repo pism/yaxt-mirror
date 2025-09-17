@@ -89,6 +89,7 @@ PROGRAM test_exchanger_parallel
   INTEGER :: thread_support_provided
 #endif
   INTEGER, ALLOCATABLE :: exchanger_code(:)
+  INTEGER, ALLOCATABLE :: split_comm(:)
   INTEGER :: world_size, world_rank, buf_size, buf_size_, ierror
   INTEGER(c_int), ALLOCATABLE :: buf(:)
   TYPE(c_ptr) :: bufp
@@ -107,17 +108,21 @@ PROGRAM test_exchanger_parallel
   ALLOCATE(buf((buf_size+3)/4))
   CALL mpi_buffer_attach(buf, buf_size, ierror)
   world_size_2 = world_size/2
-  DO split_rank = 0, world_size_2
-    comm = mpi_comm_world
-    IF (split_rank > 0) &
-         CALL mpi_comm_split(mpi_comm_world, &
-         MERGE(1, 0, world_rank < split_rank), world_rank, comm, ierror)
-    DO m = 1, num_mt_modes
+  ALLOCATE(split_comm(0:world_size_2))
+  split_comm(0) = mpi_comm_world
+  DO split_rank = 1, world_size_2
+    CALL mpi_comm_split(mpi_comm_world, &
+         MERGE(1, 0, world_rank < split_rank), world_rank, &
+         split_comm(split_rank), ierror)
+  END DO
+  DO m = 1, num_mt_modes
 #ifdef _OPENMP
-      CALL mpi_query_thread(thread_support_provided, ierror)
-      IF (mt_configs_2_test(m) == XT_MT_OPENMP &
-           .AND. thread_support_provided /= MPI_THREAD_MULTIPLE) CYCLE
+    CALL mpi_query_thread(thread_support_provided, ierror)
+    IF (mt_configs_2_test(m) == XT_MT_OPENMP &
+         .AND. thread_support_provided /= MPI_THREAD_MULTIPLE) CYCLE
 #endif
+    DO split_rank = 0, world_size_2
+      comm = split_comm(split_rank)
       CALL xt_config_set_redist_mthread_mode(config, mt_configs_2_test(m))
       DO sm = 1, num_send_modes
         CALL xt_config_set_exchange_send_comm_mode(config, &
@@ -137,12 +142,14 @@ PROGRAM test_exchanger_parallel
         END DO
       END DO
     END DO
-    IF (split_rank > 0) &
-         CALL mpi_comm_free(comm, ierror)
   END DO
+  DO split_rank = 1, world_size_2
+    CALL mpi_comm_free(split_comm(split_rank), ierror)
+  END DO
+
   CALL mpi_buffer_detach(bufp, buf_size_, ierror)
   CALL xt_config_delete(config)
-  DEALLOCATE(exchanger_code, buf)
+  DEALLOCATE(exchanger_code, buf, split_comm)
 
   CALL xt_finalize
   CALL finish_mpi
