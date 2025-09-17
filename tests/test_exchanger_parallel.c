@@ -118,13 +118,18 @@ int main(int argc, char **argv)
   size_t buf_size = (sizeof (int) + (size_t)MPI_BSEND_OVERHEAD)
     * (size_t)world_size;
   void *buf = xmalloc(buf_size);
+  MPI_Comm *split_comm
+    = xmalloc(sizeof(*split_comm) * (size_t)(world_size/2 + 1));
+  split_comm[0] = MPI_COMM_WORLD;
+  for (int split_rank = 1, world_size_2 = world_size/2;
+       split_rank <= world_size_2; ++split_rank)
+    xt_mpi_call(MPI_Comm_split(MPI_COMM_WORLD, world_rank < split_rank,
+                               world_rank, split_comm+split_rank),
+                MPI_COMM_WORLD);
   xt_mpi_call(MPI_Buffer_attach(buf, (int)buf_size), MPI_COMM_WORLD);
   for (int split_rank = 0, world_size_2 = world_size/2;
        split_rank <= world_size_2; ++split_rank) {
-    MPI_Comm comm = MPI_COMM_WORLD;
-    if (split_rank > 0)
-      xt_mpi_call(MPI_Comm_split(MPI_COMM_WORLD, world_rank < split_rank,
-                                 world_rank, &comm), MPI_COMM_WORLD);
+    MPI_Comm comm = split_comm[split_rank];
     for (size_t m = 0; m < num_mt_modes; ++m) {
 #ifdef _OPENMP
       int thread_support_provided;
@@ -154,9 +159,11 @@ int main(int argc, char **argv)
       }
 #endif
     }
-    if (split_rank > 0)
-      MPI_Comm_free(&comm);
   }
+  for (int split_rank = 1, world_size_2 = world_size/2;
+       split_rank <= world_size_2; ++split_rank)
+    xt_mpi_call(MPI_Comm_free(split_comm+split_rank), MPI_COMM_WORLD);
+  free(split_comm);
   {
     int buf_size_;
     void *buf_;
