@@ -109,6 +109,9 @@ Makefile
 /src/mpich_workaround.c
 /src/ompi_workaround.c
 /src/xtinclude_Makefile.inc
+# files that might be left behind by a broken/interupted build
+/src/xtinclude_Makefile.inc.tmp
+/src/xt_redist_*.f90.tmp
 
 # Documentation stage files:
 /doc/Doxyfile
