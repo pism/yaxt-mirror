@@ -348,9 +348,15 @@ xt_request_msgs_ebuf_test_omp(Xt_request request)
   /* cache_line_size_scale_factor * sizeof (int)
    * should equal the cache-line size and
    * cache_line_size_scale_factor >= 2 must be true */
-  enum { cache_line_size_scale_factor = 16 };
-  int ops_comp_count[num_threads_limit][cache_line_size_scale_factor];
-#pragma omp parallel num_threads(num_threads_limit)
+  enum { cache_line_size_scale_factor = 16, auto_limit = 32 };
+  int ops_comp_count_auto[auto_limit][cache_line_size_scale_factor],
+    (*ops_comp_count)[cache_line_size_scale_factor];
+  if (num_threads_limit <= auto_limit)
+    ops_comp_count = ops_comp_count_auto;
+  else
+    ops_comp_count = xmalloc(sizeof (int) * num_threads_limit
+                             * cache_line_size_scale_factor);
+#pragma omp parallel num_threads(num_threads_limit) firstprivate(ops_comp_count)
   {
     Xt_request_msgs_ebuf request_msgs = (Xt_request_msgs_ebuf)request;
 
@@ -395,7 +401,8 @@ xt_request_msgs_ebuf_test_omp(Xt_request request)
 #pragma omp master
     flag = accum == num_req;
   }
-
+  if (num_threads_limit > auto_limit)
+    free(ops_comp_count);
   return flag;
 }
 #endif
