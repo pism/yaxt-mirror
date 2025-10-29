@@ -78,11 +78,14 @@ SymPrefix(xmalloc)(size_t size, const char *source, int line)
 void *
 SymPrefix(xrealloc)(void *ptr, size_t size, const char *source, int line)
 {
-  void *p = realloc(ptr, size);
-  if (p || !size)
-    ;
-  else
-    SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
+  void *p;
+  if (size) {
+    if (!(p = realloc(ptr, size)))
+      SymPrefix(abort)(SymPrefix(default_comm), strerror(errno), source, line);
+  } else {
+    free(ptr);
+    p = NULL;
+  }
   return p;
 }
 
