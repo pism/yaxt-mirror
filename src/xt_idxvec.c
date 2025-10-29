@@ -617,7 +617,6 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     num_indices_dst = (size_t)xt_idxlist_get_num_indices(idxlist_dst);
 
   struct Xt_vec_alloc vec_alloc = idxvec_alloc_no_init((int)num_indices_dst);
-  Xt_idxvec inter_vector = vec_alloc.idxvec;
   Xt_int *vector_assign = vec_alloc.vector;
 
   struct Xt_config_ sort_config = *config;
@@ -640,11 +639,13 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
       break;
   }
 
+  Xt_idxlist intersection;
   if (num_indices_inter) {
     size_t vector_size = num_indices_inter * sizeof (idxvec_dst->vector[0]),
       header_size = ((sizeof (struct Xt_idxvec_) + sizeof (Xt_int) - 1)
                      /sizeof (Xt_int)) * sizeof (Xt_int);
-    inter_vector = xrealloc(inter_vector, header_size + vector_size);
+    Xt_idxvec inter_vector
+      = xrealloc(vec_alloc.idxvec, header_size + vector_size);
     inter_vector->vector
       = (Xt_int *)(void *)((unsigned char *)inter_vector + header_size);
     Xt_idxlist_init(&inter_vector->parent, &idxvec_vtable, (int)num_indices_inter);
@@ -653,11 +654,12 @@ xt_idxvec_get_intersection(Xt_idxlist idxlist_src, Xt_idxlist idxlist_dst,
     inter_vector->flags = sort_asc;
     inter_vector->min = inter_vector->vector[0];
     inter_vector->max = inter_vector->vector[num_indices_inter-1];
+    intersection = &inter_vector->parent;
   } else {
-    free(inter_vector);
-    inter_vector = (Xt_idxvec)xt_idxempty_new();
+    free(vec_alloc.idxvec);
+    intersection = xt_idxempty_new();
   }
-  return (Xt_idxlist)inter_vector;
+  return intersection;
 }
 
 PPM_DSO_INTERNAL Xt_idxlist
