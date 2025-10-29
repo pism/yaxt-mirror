@@ -483,10 +483,14 @@ xt_exchanger_irecv_isend_packed_a_exchange(
   Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
   int nsend = base->nmsg[xt_direction_send],
     nrecv = base->nmsg[xt_direction_recv];
+  size_t num_tx = (size_t)nrecv + (size_t)nsend;
+  if (num_tx) ; else {
+    *request = XT_REQUEST_NULL;
+    return;
+  }
 
   size_t *buf_ofs, buf_ofs_auto[AUTO_ALLOC_SIZE+1];
 
-  size_t num_tx = (size_t)nrecv + (size_t)nsend;
   if (num_tx <= AUTO_ALLOC_SIZE)
     buf_ofs = buf_ofs_auto;
   else
@@ -672,6 +676,9 @@ xt_exchanger_irecv_isend_packed_create_thread_share(
   Xt_exchanger_simple_base base = (Xt_exchanger_simple_base)exchanger;
   int nsend = base->nmsg[xt_direction_send],
     nrecv = base->nmsg[xt_direction_recv];
+  if (nsend+nrecv) ; else {
+    return (Xt_exchanger_thread_share)XT_REQUEST_NULL;
+  }
   const struct Xt_msg_param *send_msgs
     = xt_exchanger_simple_base_get_send_msg(base),
     *recv_msgs = xt_exchanger_simple_base_get_recv_msg(base);
