@@ -348,32 +348,40 @@ xt_request_msgs_ebuf_test_omp(Xt_request request)
   /* cache_line_size_scale_factor * sizeof (int)
    * should equal the cache-line size and
    * cache_line_size_scale_factor >= 2 must be true */
-  enum { cache_line_size_scale_factor = 16 };
-  int ops_comp_count[num_threads_limit][cache_line_size_scale_factor];
-#pragma omp parallel num_threads(num_threads_limit)
+  enum { cache_line_size_scale_factor = 16, auto_limit = 32 };
+  int ops_comp_count_auto[auto_limit][cache_line_size_scale_factor],
+    (*ops_comp_count)[cache_line_size_scale_factor];
+  if (num_threads_limit <= auto_limit)
+    ops_comp_count = ops_comp_count_auto;
+  else
+    ops_comp_count = xmalloc(sizeof (int) * num_threads_limit
+                             * cache_line_size_scale_factor);
+#pragma omp parallel num_threads(num_threads_limit) firstprivate(ops_comp_count)
   {
     Xt_request_msgs_ebuf request_msgs = (Xt_request_msgs_ebuf)request;
 
     size_t num_threads = (size_t)omp_get_num_threads(),
       tid = (size_t)omp_get_thread_num(),
       num_req = (size_t)request_msgs->n_requests,
-      start_req = (num_req * tid) / num_threads;
-    int nreq = (int)((num_req * (tid+1)) / num_threads - start_req);
-
-    MPI_Request reqs_copy[nreq],
+      start_req = (num_req * tid) / num_threads,
+      nreq = (num_req * (tid+1)) / num_threads - start_req;
+    MPI_Request *reqs_copy, reqs_copy_[auto_limit],
       *restrict reqs_orig = request_msgs->requests;
+    reqs_copy = nreq <= auto_limit
+      ? reqs_copy_
+      : xmalloc(sizeof (*reqs_copy) * nreq);
     int *ops_completed_buffer
       = (int *)(reqs_orig + num_req) + start_req;
-    for (size_t i = 0; i < (size_t)nreq; ++i)
+    for (size_t i = 0; i < nreq; ++i)
       reqs_copy[i] = reqs_orig[start_req+i];
     struct test_some_partial_result test_res
-      = xt_mpi_test_some_mt(nreq, reqs_copy,
+      = xt_mpi_test_some_mt((int)nreq, reqs_copy,
                             ops_completed_buffer, request_msgs->comm);
     size_t done_count = (size_t)test_res.num_req_completed;
     for (size_t i = 0; i < done_count; ++i)
       ops_completed_buffer[i] += (int)start_req;
     ops_comp_count[tid][0] = test_res.num_req_completed;
-    ops_comp_count[tid][1] = nreq;
+    ops_comp_count[tid][1] = (int)nreq;
 #pragma omp barrier
     size_t accum = 0;
     for (size_t i = 0; i < tid; ++i)
@@ -384,7 +392,7 @@ xt_request_msgs_ebuf_test_omp(Xt_request request)
     if (accum == num_req)
       finish_requests_mt(request_msgs);
     else {
-      for (size_t i = 0, j = 0; i < (size_t)nreq; ++i) {
+      for (size_t i = 0, j = 0; i < nreq; ++i) {
         if (reqs_copy[i] != MPI_REQUEST_NULL)
           reqs_orig[req_ofs+j] = reqs_copy[i];
         j += reqs_copy[i] != MPI_REQUEST_NULL;
@@ -392,10 +400,13 @@ xt_request_msgs_ebuf_test_omp(Xt_request request)
 #pragma omp master
       request_msgs->n_requests -= (int)accum;
     }
+    if (nreq <= auto_limit) ; else
+      free(reqs_copy);
 #pragma omp master
     flag = accum == num_req;
   }
-
+  if (num_threads_limit > auto_limit)
+    free(ops_comp_count);
   return flag;
 }
 #endif
