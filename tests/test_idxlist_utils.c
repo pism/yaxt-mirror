@@ -110,8 +110,11 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   if (num_indices != ref_num_indices)
     PUT_ERR("wrong number of indices in idxlist\n");
 
-  size_t ref_num_indices_ = (size_t)(ref_num_indices > 0 ? ref_num_indices : 1);
-  Xt_int indices[ref_num_indices_];
+  size_t ref_num_indices_ = (size_t)(ref_num_indices > 0 ? ref_num_indices : 0),
+    num_indices_ = (size_t)(num_indices > 0 ? num_indices : 0),
+    i_a_size = (ref_num_indices_ > num_indices_ ? ref_num_indices_ : num_indices_);
+  i_a_size += i_a_size == 0;
+  Xt_int indices[i_a_size];
   Xt_int index;
 
   xt_idxlist_get_indices(idxlist, indices);
@@ -166,7 +169,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   }
 
   {
-    int ref_positions[2][ref_num_indices_];
+    int ref_positions[2][i_a_size];
     {
 
       int position;
