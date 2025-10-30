@@ -737,6 +737,30 @@ int main(int argc, char **argv) {
     }
   }
 
+  {
+    // test intersection of idxsection with non-zero offset and
+    // stripes
+    enum { irank = 4, num_ref_indices=160, bias=1};
+    static const Xt_int gsz[irank] = { 1, 1, 16, 19 };
+    static const int lsz[irank] = { 1, 1, 16, 10 };
+    static const Xt_int lst[irank] = { 0, 0, 0, 0 };
+    Xt_int ref_inter_idx[num_ref_indices];
+
+    for (Xt_int j = 0; j < lsz[2]; ++j)
+      for (Xt_int i = 0; i < lsz[3]; ++i)
+        ref_inter_idx[i+j*lsz[3]] = (Xt_int)(i + bias + j*19);
+
+    Xt_idxlist section = xt_idxsection_new(bias, irank, gsz, lsz, lst),
+      stripes = xt_idxstripes_new((struct Xt_stripe[1]){ { 0, 1, 304 } }, 1);
+
+    Xt_idxlist intersect
+      = xt_idxlist_get_intersection(section, stripes);
+    xt_idxlist_delete(stripes);
+    xt_idxlist_delete(section);
+    check_idxlist(intersect, ref_inter_idx, num_ref_indices);
+    xt_idxlist_delete(intersect);
+  }
+
   { // test intersection of 2D section with negative global size
 
     for (int i = 0; i < 16; ++i) {

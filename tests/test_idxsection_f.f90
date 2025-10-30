@@ -51,7 +51,7 @@ PROGRAM test_idxsection
        xt_idxlist_copy, xt_idxlist_get_index_stripes, xt_idxlist_delete, &
        xt_idxlist_get_intersection, xt_idxlist_get_positions_of_indices, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_indices_const, &
-       xt_idxlist_get_bounding_box, &
+       xt_idxlist_get_bounding_box, xt_idxfsection_new, xt_idxstripes_new, &
        xt_idxsection_new, xt_idxvec_new, OPERATOR(/=), OPERATOR(==)
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, check_stripes, &
@@ -76,6 +76,7 @@ PROGRAM test_idxsection
   CALL test_get_positions1
   CALL test_get_positions2
   CALL test_other_intersection
+  CALL test_stripe_intersection
   CALL test_signed_sizes1
   CALL test_signed_sizes2
   CALL test_signed_size_positions
@@ -382,6 +383,31 @@ CONTAINS
     CALL check_idxlist(inter_idxlist, ref_inter_idx)
     CALL xt_idxlist_delete(inter_idxlist)
   END SUBROUTINE test_other_intersection
+
+  SUBROUTINE test_stripe_intersection
+    INTEGER, PARAMETER :: irank = 4
+    INTEGER(xt_int_kind), PARAMETER :: gsz(irank) &
+         = (/ 19_xi, 16_xi, 1_xi, 1_xi /)
+    INTEGER, PARAMETER :: lsz(irank) &
+         = (/ 10, 16, 1, 1 /)
+    INTEGER(xt_int_kind) :: i, j
+    INTEGER(xt_int_kind), PARAMETER :: lst(irank) &
+         = (/  1_xi,  1_xi, 1_xi, 1_xi /), &
+         ref_inter_idx(160) = &
+         (/ ((i + j*19_xi, &
+         &        i=1_xi,10_xi), j=0_xi,15_xi) /)
+    TYPE(xt_idxlist) :: section, stripes
+    TYPE(xt_idxlist) :: intersect
+
+    section = xt_idxfsection_new(1_xi, gsz, lsz, lst)
+    stripes = xt_idxstripes_new((/ xt_stripe(0_xi, 1_xi, 304) /))
+    intersect = xt_idxlist_get_intersection(section, stripes)
+    CALL xt_idxlist_delete(stripes)
+    CALL xt_idxlist_delete(section)
+    CALL check_idxlist(intersect, ref_inter_idx)
+    CALL xt_idxlist_delete(intersect)
+
+  END SUBROUTINE test_stripe_intersection
 
   ! test 2D section with arbitrary size signs
   SUBROUTINE test_signed_sizes1
