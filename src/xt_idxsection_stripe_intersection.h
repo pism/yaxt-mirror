@@ -102,70 +102,70 @@ xt_idxsection_get_idxstripes_intersection__(NUM_DIMENSIONS)
   idxsection_init_sorted_copy(idxsection, sssp);
   struct dim_desc *dims = sssp->dims;
 #endif
-enum {
-  size_t_bits = sizeof (size_t) * CHAR_BIT,
-};
+  enum {
+    size_t_bits = sizeof (size_t) * CHAR_BIT,
+  };
 #ifndef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-size_t *restrict isect_stripes_bm
-  = xcalloc((num_stripes+size_t_bits-1)/size_t_bits, sizeof (size_t));
+  size_t *restrict isect_stripes_bm
+    = xcalloc((num_stripes+size_t_bits-1)/size_t_bits, sizeof (size_t));
 #else
-size_t num_indices_in_section
-  = (size_t)xt_idxlist_get_num_indices(&idxsection->parent),
-  section_bm_size = (num_indices_in_section+size_t_bits-1)/size_t_bits,
-  *restrict pos_used_bm = xcalloc(section_bm_size
-                         + (num_stripes+size_t_bits-1)/size_t_bits,
-                         sizeof (size_t)),
-  *restrict isect_stripes_bm = pos_used_bm + section_bm_size;
+  size_t num_indices_in_section
+    = (size_t)xt_idxlist_get_num_indices(&idxsection->parent),
+    section_bm_size = (num_indices_in_section+size_t_bits-1)/size_t_bits,
+    *restrict pos_used_bm = xcalloc(section_bm_size
+                                    + (num_stripes+size_t_bits-1)/size_t_bits,
+                                    sizeof (size_t)),
+    *restrict isect_stripes_bm = pos_used_bm + section_bm_size;
 #endif
-size_t num_result_stripes_total = 0;
-{
+  size_t num_result_stripes_total = 0;
+  {
 #define XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
-  /* start with non-appendable terminator */
-  Xt_int accum_start = XT_INT_MIN;
-  int buf_nstrides = 0;
-  Xt_int buf_stride = -1;
-  Xt_int index_continuation = XT_INT_MIN-1;
-  size_t isect_mask = 0;
+    /* start with non-appendable terminator */
+    Xt_int accum_start = XT_INT_MIN;
+    int buf_nstrides = 0;
+    Xt_int buf_stride = -1;
+    Xt_int index_continuation = XT_INT_MIN-1;
+    size_t isect_mask = 0;
 #include "xt_idxsection_stripe_iterate.h"
-  if (num_stripes % size_t_bits)
-    isect_stripes_bm[num_stripes/size_t_bits] = isect_mask;
+    if (num_stripes % size_t_bits)
+      isect_stripes_bm[num_stripes/size_t_bits] = isect_mask;
 #undef XT_IDXSECTION_STRIPES_ISECT_CREATE_STRIPE_MASK
-}
-Xt_idxlist result;
-if (num_result_stripes_total) {
-#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-  memset(pos_used_bm, 0, (num_indices_in_section+size_t_bits-1)/size_t_bits *
-         sizeof (size_t));
-#endif
-  struct Xt_stripes_alloc result_alloc
-    = xt_idxstripes_alloc(num_result_stripes_total);
-  struct Xt_stripe *restrict result_stripes = result_alloc.stripes;
-  size_t num_result_stripes = (size_t)-1;
-  Xt_int index_continuation = XT_INT_MIN-1, accum_start = XT_INT_MIN;
-  int buf_nstrides = 0;
-  Xt_int buf_stride = -1;
-#include "xt_idxsection_stripe_iterate.h"
-  result_stripes[num_result_stripes].stride = buf_stride;
-  result_stripes[num_result_stripes].nstrides = buf_nstrides;
-  assert(num_result_stripes_total == num_result_stripes+1);
-  Xt_idxlist initial_result = xt_idxstripes_congeal(result_alloc);
-  if (XT_CONFIG_GET_FORCE_NOSORT(config)
-      || xt_idxlist_get_sorting(initial_result) == 1)
-    result = initial_result;
-  else {
-    result = xt_idxlist_sorted_copy(initial_result);
-    xt_idxlist_delete(initial_result);
   }
-} else
-  result = xt_idxempty_new();
+  Xt_idxlist result;
+  if (num_result_stripes_total) {
+#ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
+    memset(pos_used_bm, 0, (num_indices_in_section+size_t_bits-1)/size_t_bits *
+           sizeof (size_t));
+#endif
+    struct Xt_stripes_alloc result_alloc
+      = xt_idxstripes_alloc(num_result_stripes_total);
+    struct Xt_stripe *restrict result_stripes = result_alloc.stripes;
+    size_t num_result_stripes = (size_t)-1;
+    Xt_int index_continuation = XT_INT_MIN-1, accum_start = XT_INT_MIN;
+    int buf_nstrides = 0;
+    Xt_int buf_stride = -1;
+#include "xt_idxsection_stripe_iterate.h"
+    result_stripes[num_result_stripes].stride = buf_stride;
+    result_stripes[num_result_stripes].nstrides = buf_nstrides;
+    assert(num_result_stripes_total == num_result_stripes+1);
+    Xt_idxlist initial_result = xt_idxstripes_congeal(result_alloc);
+    if (XT_CONFIG_GET_FORCE_NOSORT(config)
+        || xt_idxlist_get_sorting(initial_result) == 1)
+      result = initial_result;
+    else {
+      result = xt_idxlist_sorted_copy(initial_result);
+      xt_idxlist_delete(initial_result);
+    }
+  } else
+    result = xt_idxempty_new();
 #undef NUM_DIMENSIONS_
 #ifndef NUM_DIMENSIONS
-free(sssp);
+  free(sssp);
 #endif
 #ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
-free(pos_used_bm);
+  free(pos_used_bm);
 #else
-free(isect_stripes_bm);
+  free(isect_stripes_bm);
 #endif
   return result;
 }
