@@ -120,7 +120,8 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
   xt_idxlist_get_indices(idxlist, indices);
   const Xt_int *indices_const = xt_idxlist_get_indices_const(idxlist);
   {
-    bool mismatch = false;
+    bool mismatch = ref_num_indices > 0
+      ? ref_indices[0] != indices_const[0] : false;
     int sorting = xt_idxlist_get_sorting(idxlist);
     size_t ntrans_dn = 0, ntrans_up = 0;
     for (size_t i = 1; i < ref_num_indices_; ++i) {
