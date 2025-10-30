@@ -60,7 +60,7 @@
 #endif
     for (int j = 0; j < query.nstrides; ++j) {
       Xt_int insert_index = (Xt_int)(query.start + query.stride * j),
-        running_index = insert_index;
+        running_index = (Xt_int)(insert_index - idxsection->global_start_index);
       bool out_of_bounds = false;
 #ifdef XT_IDXSECTION_STRIPES_ISECT_SINGLE_MATCH_ONLY
       int local_pos = 0;
