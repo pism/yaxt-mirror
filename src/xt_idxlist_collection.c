@@ -433,10 +433,10 @@ coll_get_sorted_stripes(Xt_idxlist_collection collectionlist,
         if (!indices) {
           const Xt_int *vector
             = xt_idxlist_get_indices_const(unsorted_list);
-           indices = sorted_indices
-             = xmalloc(num_indices * sizeof (*sorted_indices));
-           for (size_t j = 0; j < num_indices; ++j)
-             sorted_indices[j] = vector[j];
+          indices = sorted_indices
+            = xmalloc(num_indices * sizeof (*sorted_indices));
+          for (size_t j = 0; j < num_indices; ++j)
+            sorted_indices[j] = vector[j];
           config->sort_funcs->sort_xt_int(sorted_indices, num_indices);
         }
         component_list
