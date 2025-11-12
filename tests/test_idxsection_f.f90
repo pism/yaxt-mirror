@@ -396,10 +396,15 @@ CONTAINS
          ref_inter_idx(160) = &
          (/ ((i + j*19_xi, &
          &        i=1_xi,10_xi), j=0_xi,15_xi) /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(lsz(2)) &
+         = (/ (xt_stripe((j*19_xi)+1, 1, lsz(1)), j=0_xi,15_xi) /)
     TYPE(xt_idxlist) :: section, stripes
     TYPE(xt_idxlist) :: intersect
+    TYPE(xt_stripe), ALLOCATABLE :: sec_stripes(:)
 
     section = xt_idxfsection_new(1_xi, gsz, lsz, lst)
+    CALL xt_idxlist_get_index_stripes(section, sec_stripes)
+    CALL check_stripes(sec_stripes, ref_stripes)
     stripes = xt_idxstripes_new((/ xt_stripe(0_xi, 1_xi, 304) /))
     intersect = xt_idxlist_get_intersection(section, stripes)
     CALL xt_idxlist_delete(stripes)
