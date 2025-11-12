@@ -463,7 +463,7 @@ coll_get_sorted_stripes(Xt_idxlist_collection collectionlist,
                       num_accum_stripes + (size_t)stripe_buf_size);
 
     num_accum_stripes
-      += xt_stripes_merge_copy((size_t)stripe_buf_size,
+      += xt_stripes_merge_copy(num_stripes,
                                stripes_accum + num_accum_stripes,
                                stripe_buf,
                                num_accum_stripes > 0);
