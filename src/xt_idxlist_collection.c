@@ -485,14 +485,13 @@ idxlist_collection_sorted_copy(Xt_idxlist idxlist, Xt_config config) {
    size_t num_idxlists = (size_t)collectionlist->num_idxlists;
    Xt_int prev_max = XT_INT_MIN;
    Xt_idxlist *idxlists = collectionlist->idxlists;
-   struct range_list_sort *list_sorter;
    Xt_idxlist_collection sorted_collection
      = xmalloc(sizeof (*sorted_collection)
                + num_idxlists * sizeof(sorted_collection->idxlists[0])
                + num_idxlists * sizeof (struct range_list_sort));
    sorted_collection->num_idxlists = (int)num_idxlists;
    sorted_collection->index_array_cache = NULL;
-   list_sorter
+   struct range_list_sort *list_sorter
      = (struct range_list_sort *)(sorted_collection->idxlists+num_idxlists);
    Xt_idxlist result;
    bool component_overlap = false;
