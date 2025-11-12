@@ -942,14 +942,15 @@ idxsection_get_index_stripes(Xt_idxlist idxlist,
 
   for (size_t i = 0; i < nstripes; ++i) {
 
-    stripes[i].start  = section->local_start_index;
+    Xt_int start  = section->local_start_index;
     stripes[i].nstrides = abs(dims[ln1dim].local_size);
     stripes[i].stride = dims[ln1dim].global_stride;
 
     for (size_t j = 0; j < ln1dim; ++j)
-      stripes[i].start = (Xt_int)(stripes[i].start
-                                  + curr_local_position[j]
-                                  * dims[j].global_stride);
+      start = (Xt_int)(start
+                       + curr_local_position[j] * dims[j].global_stride);
+
+    stripes[i].start = start;
 
     for (size_t j = ln1dim-1; j != (size_t)-1; --j)
       if (curr_local_position[j] < abs(dims[j].local_size) - 1) {
