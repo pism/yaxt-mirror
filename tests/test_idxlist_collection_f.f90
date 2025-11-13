@@ -51,10 +51,12 @@ PROGRAM test_idxlist_collection_f
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, &
        idxlist_pack_unpack_copy, check_idxlist_copy
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, &
-       xt_idxlist, xt_idxvec_new, &
+       xt_idxlist, xt_idxvec_new, xt_idxfsection_new, &
        xt_idxlist_collection_new, xt_idxlist_delete, xt_stripe, &
        xt_idxlist_get_intersection, xt_idxsection_new, xt_idxstripes_new, &
        xt_bounds, xt_idxempty_new, xt_idxlist_get_bounding_box, OPERATOR(/=)
+  USE xt_sort, ONLY: xt_sort_xt_int
+  USE iso_c_binding, ONLY: c_size_t
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_idxlist_collection_f.f90'
   CALL init_mpi
@@ -66,6 +68,7 @@ PROGRAM test_idxlist_collection_f
   CALL test_idxlist_collection_heterogeneous
   CALL test_bounding_box1
   CALL test_bounding_box2
+  call test_idxfsections
 
   CALL xt_finalize
   IF (test_err_count() /= 0) &
@@ -247,6 +250,98 @@ CONTAINS
     IF (ANY(bounds /= bounds_ref)) &
          CALL test_abort("ERROR: unexpected boundaries", filename, __LINE__)
   END SUBROUTINE test_bounding_box2
+
+  SUBROUTINE test_idxfsections()
+
+    INTEGER, PARAMETER :: irank = 4, &
+         num_regions=5
+    INTEGER, PARAMETER :: xi = xt_int_kind
+    !
+    INTEGER :: iseg
+    !
+    INTEGER(xt_int_kind), PARAMETER :: gsz(irank) &
+         =  (/ 132_xi, 122_xi, 1_xi, 1_xi /),     &
+         global_index_start = 1_xi
+    INTEGER, PARAMETER :: lsz(irank, num_regions) &
+         = RESHAPE((/  8, 15, 1, 1, &  ! core region
+         &            14,  3, 1, 1, &  ! 1st halo
+         &            14,  3, 1, 1, &  ! 2nd halo
+         &             3, 15, 1, 1, &  ! 3rd halo
+         &             3, 15, 1, 1 /), &  ! 4th halo
+         &          (/ irank, num_regions /))
+    INTEGER(xt_int_kind) :: lst(irank, num_regions) &
+         = RESHAPE((/ 43_xi, 47_xi, 1_xi, 1_xi, &
+         &            40_xi, 44_xi, 1_xi, 1_xi, &
+         &            40_xi, 62_xi, 1_xi, 1_xi, &
+         &            51_xi, 47_xi, 1_xi, 1_xi, &
+         &            40_xi, 47_xi, 1_xi, 1_xi /), &
+         &         (/ irank, num_regions /))
+    !
+    TYPE(xt_idxlist) :: component_idxlists(num_regions)
+    !
+    TYPE(xt_idxlist) :: collection_idxlist, global_section, intersection
+    !
+    INTEGER(kind=xi), DIMENSION(:), ALLOCATABLE :: indices
+    INTEGER :: i1, i2, i3, i4, num_indices, idx_ofs
+    INTEGER(kind=xi) :: dim_ofs2, dim_ofs3, dim_ofs4, &
+         idx_stride2, idx_stride3, idx_stride4
+
+    num_indices = SUM(PRODUCT(lsz, dim=1))
+    ALLOCATE(indices(num_indices))
+    idx_ofs = 0
+    segments: DO iseg = 1, num_regions
+      component_idxlists(iseg) = xt_idxfsection_new( &
+           global_index_start     &    ! start index
+           , gsz(:) &    ! global size
+           , lsz(:, iseg) &    ! local size
+           , lst(:, iseg) &    ! local start
+           )
+      idx_stride4 = gsz(1) * gsz(2) * gsz(3)
+      idx_stride3 = gsz(1) * gsz(2)
+      idx_stride2 = gsz(1)
+      DO i4 = 1, lsz(4, iseg)
+        dim_ofs4 = (lst(4, iseg)+i4-2) * idx_stride4
+        DO i3 = 1, lsz(3, iseg)
+          dim_ofs3 = (lst(3, iseg)+i3-2) * idx_stride3 + dim_ofs4
+          DO i2 = 1, lsz(2, iseg)
+            dim_ofs2 = (lst(2, iseg)+i2-2) * idx_stride2 + dim_ofs3
+            DO i1 = 1, lsz(1, iseg)
+              indices(idx_ofs+i1) = lst(1, iseg) + i1 - 2 &
+                   + global_index_start + dim_ofs2
+            END DO
+            idx_ofs = idx_ofs + lsz(1, iseg)
+          END DO
+        END DO
+      END DO
+    END DO segments
+
+    ! COLLECTION
+    collection_idxlist = xt_idxlist_collection_new(component_idxlists(:))
+
+    CALL check_idxlist(collection_idxlist, indices)
+
+    ! GLOBAL FIELD
+    global_section = xt_idxfsection_new( &
+         1_xi     &    ! start index
+         , gsz(:) &    ! global size
+         , INT(gsz(:)) &    ! local size
+         , (/ 1_xi, 1_xi, 1_xi, 1_xi /) &    ! local start
+         )
+
+    intersection &
+         = xt_idxlist_get_intersection(global_section, collection_idxlist)
+#ifdef HAVE_SIZE_KIND_ARGUMEN
+    CALL xt_sort_xt_int(indices, SIZE(indices, kind=c_size_t))
+#else
+    CALL xt_sort_xt_int(indices, INT(SIZE(indices), c_size_t))
+#endif
+    CALL check_idxlist(intersection, indices)
+    CALL xt_idxlist_delete(intersection)
+    CALL xt_idxlist_delete(global_section)
+    CALL xt_idxlist_delete(collection_idxlist)
+    CALL xt_idxlist_delete(component_idxlists)
+
+  END SUBROUTINE test_idxfsections
 
 END PROGRAM test_idxlist_collection_f
 !

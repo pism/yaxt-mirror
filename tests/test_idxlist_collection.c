@@ -61,6 +61,9 @@
 #include "test_idxlist_utils.h"
 #include "core/ppm_xfuncs.h"
 
+static void
+test_idxsections(void);
+
 int main(int argc, char **argv) {
 
   test_init_mpi(&argc, &argv, MPI_COMM_WORLD);
@@ -311,10 +314,97 @@ int main(int argc, char **argv) {
     xt_idxlist_delete(collectionlist);
   }
 
+  test_idxsections();
+
   xt_finalize();
   xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 
   return TEST_EXIT_CODE;
+}
+
+static void
+test_idxsections(void)
+{
+  enum { irank = 4, num_regions=5, global_index_start=-1 };
+
+  /* global size */
+  static const Xt_int gsz[irank]
+    = { 1, 1, 122, 132 };
+  static const int gsz_i[irank]
+    = { 1, 1, 122, 132 };
+  /* slice size */
+  static const int lsz[num_regions][irank]
+    = { { 1, 1, 15,  8 }, // core region
+        { 1, 1,  3, 14 }, // 1st halo
+        { 1, 1,  3, 14 }, // 2nd halo
+        { 1, 1, 15,  3 }, // 3rd halo
+        { 1, 1, 15,  3 } }; // 4th halo
+
+  /* slice start coordinate */
+  static const Xt_int lst[num_regions][irank]
+    = { { 0, 0, 46, 42 },
+        { 0, 0, 43, 39 },
+        { 0, 0, 61, 39 },
+        { 0, 0, 46, 50 },
+        { 0, 0, 46, 39 } };
+
+  Xt_idxlist component_idxlists[num_regions];
+
+  size_t num_indices = 0;
+  for (size_t i = 0; i < num_regions; ++i) {
+    size_t product = 1;
+    for (size_t j = 0; j < irank; ++j)
+      product *= (size_t)lsz[i][j];
+    num_indices += product;
+  }
+  assert(num_indices < INT_MAX);
+  Xt_int *restrict indices = xmalloc(sizeof (*indices) * num_indices);
+
+  size_t idx_ofs = 0;
+
+  /* sub-slices or regions */
+  for (size_t i = 0; i < num_regions; ++i) {
+    component_idxlists[i] = xt_idxsection_new(
+      global_index_start, irank, gsz, lsz[i], lst[i]);
+
+    Xt_int idx_stride4 = (Xt_int)(gsz[3] * gsz[2] * gsz[0]),
+      idx_stride3 = (Xt_int)(gsz[3] * gsz[2]),
+      idx_stride2 = gsz[3];
+    for (size_t i4 = 0; i4 < (size_t)lsz[i][0]; ++i4) {
+      Xt_int dim_ofs4 = (Xt_int)((lst[i][0]+(Xt_int)i4) * idx_stride4);
+      for (size_t i3 = 0; i3 < (size_t)lsz[i][1]; ++i3) {
+        Xt_int dim_ofs3
+          = (Xt_int)((lst[i][1]+(Xt_int)i3) * idx_stride3 + dim_ofs4);
+        for (size_t i2 = 0; i2 < (size_t)lsz[i][2]; ++i2) {
+          Xt_int dim_ofs2
+            = (Xt_int)((lst[i][2]+(Xt_int)i2) * idx_stride2 + dim_ofs3);
+          for (size_t i1 = 0; i1 < (size_t)lsz[i][3]; ++i1)
+            indices[idx_ofs+i1] = (Xt_int)
+              (lst[i][3] + (Xt_int)i1 + global_index_start + dim_ofs2);
+          idx_ofs += (size_t)lsz[i][3];
+        }
+      }
+    }
+  }
+
+  Xt_idxlist collection_idxlist
+    = xt_idxlist_collection_new(component_idxlists, num_regions);
+  check_idxlist(collection_idxlist, indices, (int)num_indices);
+
+  // global view
+  Xt_idxlist global_section = xt_idxsection_new(
+    global_index_start, irank, gsz, gsz_i, (Xt_int [irank]){ 0, 0, 0, 0 });
+
+  Xt_idxlist intersection
+    = xt_idxlist_get_intersection(global_section, collection_idxlist);
+  xt_sort_xt_int(indices, num_indices);
+  check_idxlist(intersection, indices, (int)num_indices);
+  xt_idxlist_delete(intersection);
+  xt_idxlist_delete(global_section);
+  xt_idxlist_delete(collection_idxlist);
+  for (size_t i = 0; i < num_regions; ++i)
+    xt_idxlist_delete(component_idxlists[i]);
+  free(indices);
 }
 
 /*
