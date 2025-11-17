@@ -1086,28 +1086,68 @@ stripe_min_cmp_lt(const struct Xt_stripe a, const struct Xt_stripe b,
 #define XT_SORTFUNC_DECL static
 #include "xt_heapsort_base.h"
 
+static inline Xt_int
+partial_stripe_minidx(struct Xt_stripe stripe, int pfx_removed)
+{
+  Xt_int minidx
+    = (Xt_int)(stripe.start + stripe.stride
+               * (stripe.stride >= 0 ? pfx_removed
+                  : stripe.nstrides - 1 - pfx_removed));
+  return minidx;
+}
 
-static Xt_int
+
+static struct Xt_stripe
 retrieve_min(size_t num_src_stripes,
              const struct Xt_stripe *src_stripes,
-             int *src_permutation,
-             int *pfx_removed)
+             int *restrict src_permutation,
+             int *restrict pfx_removed)
 {
+  /* must not pull more indices from current stripe than those
+   * preceding the next stripe */
+  Xt_int maxidx;
+  if (num_src_stripes > 2) {
+    size_t min_left_pos = (size_t)src_permutation[1],
+      min_right_pos = (size_t)src_permutation[2];
+    Xt_int minidx_left
+      = pfx_removed[min_left_pos] < src_stripes[min_left_pos].nstrides
+      ? partial_stripe_minidx(src_stripes[min_left_pos],
+                              pfx_removed[min_left_pos])
+      : XT_INT_MAX,
+      minidx_right
+      = pfx_removed[min_right_pos] < src_stripes[min_right_pos].nstrides
+      ? partial_stripe_minidx(src_stripes[min_right_pos],
+                              pfx_removed[min_right_pos])
+      : XT_INT_MAX;
+    maxidx = minidx_left < minidx_right ? minidx_left : minidx_right;
+  } else if (num_src_stripes == 2) {
+    size_t min_left_pos = (size_t)src_permutation[1];
+    maxidx = pfx_removed[min_left_pos] < src_stripes[min_left_pos].nstrides
+      ? partial_stripe_minidx(src_stripes[min_left_pos],
+                              pfx_removed[min_left_pos])
+      : XT_INT_MAX;
+  } else                        /* num_src_stripes == 0 */
+    maxidx = XT_INT_MAX;
+  /* stripe holding minimal index */
   size_t min_stripe_pos = (size_t)src_permutation[0];
-  struct Xt_stripe minstripe = src_stripes[min_stripe_pos];
-  Xt_int minidx;
-  if (minstripe.stride >= 0) {
-    minidx = (Xt_int)(minstripe.start
-                      + minstripe.stride * pfx_removed[min_stripe_pos]);
-  } else {                      /* minstripe.stride < 0 */
-    minidx = (Xt_int)(minstripe.start
-                      + (minstripe.nstrides - 1 - pfx_removed[min_stripe_pos])
-                      * minstripe.stride);
-  }
-  ++pfx_removed[min_stripe_pos];
+  int rem_strides
+    = src_stripes[min_stripe_pos].nstrides - pfx_removed[min_stripe_pos];
+  Xt_int minidx
+    = partial_stripe_minidx(src_stripes[min_stripe_pos],
+                            pfx_removed[min_stripe_pos]),
+    min_stride = XT_INT_ABS(src_stripes[min_stripe_pos].stride),
+    stripe_last_idx = (Xt_int)(minidx + (rem_strides - 1) * min_stride);
+  struct Xt_stripe minstripe;
+  minstripe.start = minidx;
+  minstripe.stride = min_stride;
+  int pfx_len = stripe_last_idx > maxidx
+    ? (int)((maxidx-minidx)/min_stride) + 1
+    : rem_strides;
+  minstripe.nstrides = pfx_len;
+  pfx_removed[min_stripe_pos] += pfx_len;
   xt_heapify_stripe_by_min(src_permutation, num_src_stripes,
                            0, pfx_removed, src_stripes);
-  return minidx;
+  return minstripe;
 }
 
 Xt_idxlist
@@ -1133,34 +1173,32 @@ xt_idxstripes_sort_new(size_t num_src_stripes,
     = xmalloc(sizeof (*dst_stripes) * num_src_stripes);
   size_t num_dst_stripes = 0, size_dst_stripes = num_src_stripes;
   {
-    Xt_int minidx = retrieve_min(num_src_stripes, src_stripes,
-                                 src_permutation, pfx_removed);
-    dst_stripes[0] = (struct Xt_stripe){ .start = minidx, .stride = 1,
-                                         .nstrides = 1 };
+    dst_stripes[0] = retrieve_min(num_src_stripes, src_stripes,
+                                  src_permutation, pfx_removed);
     num_dst_stripes = 1;
-    --indices_left;
+    indices_left -= (size_t)dst_stripes[0].nstrides;
   }
-  for (; indices_left != 0; --indices_left) {
+  for (; indices_left != 0;) {
     /* get lowest index */
-    Xt_int minidx = retrieve_min(num_src_stripes, src_stripes,
-                                 src_permutation, pfx_removed);
+    struct Xt_stripe minstripe = retrieve_min(num_src_stripes, src_stripes,
+                                              src_permutation, pfx_removed);
     /* insert lowest index into destination */
     size_t i = num_dst_stripes - 1;
-    if (dst_stripes[i].nstrides == 1) {
-      dst_stripes[i].stride = (Xt_int)(minidx - dst_stripes[i].start);
+    if (minstripe.nstrides == 1 && dst_stripes[i].nstrides == 1) {
+      dst_stripes[i].stride = (Xt_int)(minstripe.start - dst_stripes[i].start);
       dst_stripes[i].nstrides = 2;
-    } else if (minidx
+    } else if (minstripe.start
                == (Xt_int)(
                  dst_stripes[i].start
-                 + dst_stripes[i].stride * dst_stripes[i].nstrides)) {
-      ++dst_stripes[i].nstrides;
+                 + dst_stripes[i].stride * dst_stripes[i].nstrides)
+               && minstripe.stride == dst_stripes[i].stride) {
+      dst_stripes[i].nstrides += minstripe.nstrides;
     } else {
       ENSURE_ARRAY_SIZE(dst_stripes, size_dst_stripes, num_dst_stripes+1);
-      dst_stripes[num_dst_stripes] = (struct Xt_stripe){ .start = minidx,
-                                                         .stride = 1,
-                                                         .nstrides = 1 };
+      dst_stripes[num_dst_stripes] = minstripe;
       ++num_dst_stripes;
     }
+    indices_left -= (size_t)minstripe.nstrides;
   }
   /* \todo: optimize to create destination in-place */
   Xt_idxlist copy = xt_idxstripes_new(dst_stripes, (int)num_dst_stripes);
