@@ -72,7 +72,7 @@
 /* the following two functions fullfil the same purpose as
  * xt_disp2ext and xt_disp2ext_count but work with an indirection  */
 static size_t
-xt_mdisp2ext_count(size_t num_pos, const int *disp, const int *pos)
+xt_mdisp2ext_count(size_t num_pos, const int *pos, const int *disp)
 {
   if (!num_pos) return 0;
   size_t i = 0;
@@ -113,7 +113,7 @@ xt_mdisp2ext_count(size_t num_pos, const int *disp, const int *pos)
 }
 
 static size_t
-xt_mdisp2ext(size_t num_pos, const int *disp, const int *pos,
+xt_mdisp2ext(size_t num_pos, const int *pos, const int *disp,
              int *restrict v_disp, int *restrict v_size, int *restrict v_stride)
 {
   if (num_pos<1) return 0;
@@ -169,13 +169,13 @@ xt_mdisp2ext(size_t num_pos, const int *disp, const int *pos,
 }
 
 static size_t
-xt_mdisp2blk_count(size_t num_pos, const int *disp, const int *pos)
+xt_mdisp2blk_count(size_t num_pos, const int *pos, const int *disp)
 {
   size_t count = 0, i = 0;
   while (i < num_pos) {
     size_t j = 1;
-    int blk_strt_pos = pos[disp[i]];
-    while (i + j < num_pos && blk_strt_pos + (int)j == pos[disp[i + j]])
+    int blk_strt_pos = disp[pos[i]];
+    while (i + j < num_pos && blk_strt_pos + (int)j == disp[pos[i + j]])
       ++j;
     ++count;
     i += j;
@@ -184,15 +184,15 @@ xt_mdisp2blk_count(size_t num_pos, const int *disp, const int *pos)
 }
 
 static size_t
-xt_mdisp2blk(size_t num_pos, const int *disp, const int *pos,
+xt_mdisp2blk(size_t num_pos, const int *pos, const int *disp,
              int *restrict blk_disp, int *restrict blk_len)
 {
   size_t new_count = 0;
   size_t i = 0;
   while (i < num_pos) {
     size_t j = 1;
-    int blk_strt_pos = pos[disp[i]];
-    while (i + j < num_pos && blk_strt_pos + (int)j == pos[disp[i + j]])
+    int blk_strt_pos = disp[pos[i]];
+    while (i + j < num_pos && blk_strt_pos + (int)j == disp[pos[i + j]])
       ++j;
     blk_disp[new_count] = blk_strt_pos;
     blk_len[new_count++] = (int)j;
@@ -229,7 +229,7 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
   if (config->ddt_cache_limit >= -1) {
     int *v_disp = *work_buf, *v_size = *work_buf, *v_stride = *work_buf;
     size_t vlen = offsets != NULL
-      ? xt_mdisp2ext_count(num_transfer_pos_, offsets, transfer_pos)
+      ? xt_mdisp2ext_count(num_transfer_pos_, transfer_pos, offsets)
       : xt_disp2ext_count(num_transfer_pos_, transfer_pos);
     if (xt_dt_stripe_alloc_size_ext(vlen) > *work_buf_size) {
       xt_dt_stripe_bufs_ext_grow(
@@ -241,7 +241,7 @@ generate_datatype(const int *transfer_pos, int num_transfer_pos,
       v_size = v_stride + vlen;
     }
     if (offsets != NULL)
-      xt_mdisp2ext(num_transfer_pos_, offsets, transfer_pos,
+      xt_mdisp2ext(num_transfer_pos_, transfer_pos, offsets,
                    v_disp, v_size, v_stride);
     else
       xt_disp2ext(num_transfer_pos_, transfer_pos,
