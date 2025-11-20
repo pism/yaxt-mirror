@@ -72,13 +72,13 @@
 /* the following two functions fullfil the same purpose as
  * xt_disp2ext and xt_disp2ext_count but work with an indirection  */
 static size_t
-xt_mdisp2ext_count(size_t disp_len, const int *disp, const int *pos)
+xt_mdisp2ext_count(size_t num_pos, const int *disp, const int *pos)
 {
-  if (!disp_len) return 0;
+  if (!num_pos) return 0;
   size_t i = 0;
   int cur_stride = 1, cur_size = 1;
   int last_disp = disp[pos[0]];
-  for (size_t p = 1; p < disp_len; ++p) {
+  for (size_t p = 1; p < num_pos; ++p) {
     int new_disp = disp[pos[p]];
     int new_stride = new_disp - last_disp;
     if (cur_size == 1) {
@@ -113,15 +113,15 @@ xt_mdisp2ext_count(size_t disp_len, const int *disp, const int *pos)
 }
 
 static size_t
-xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
+xt_mdisp2ext(size_t num_pos, const int *disp, const int *pos,
              int *restrict v_disp, int *restrict v_size, int *restrict v_stride)
 {
-  if (disp_len<1) return 0;
+  if (num_pos<1) return 0;
 
   int cur_start = disp[pos[0]], cur_stride = 1, cur_size = 1;
   int last_disp = cur_start;
   size_t i = 0;
-  for (size_t p = 1; p < disp_len; ++p) {
+  for (size_t p = 1; p < num_pos; ++p) {
     int new_disp = disp[pos[p]];
     int new_stride = new_disp - last_disp;
     if (cur_size == 1) {
@@ -169,30 +169,30 @@ xt_mdisp2ext(size_t disp_len, const int *disp, const int *pos,
 }
 
 static size_t
-xt_mdisp2blk_count(size_t disp_len, const int *disp, const int *pos)
+xt_mdisp2blk_count(size_t num_pos, const int *disp, const int *pos)
 {
   size_t count = 0, i = 0;
-  while (i < disp_len) {
+  while (i < num_pos) {
     size_t j = 1;
     int blk_strt_pos = pos[disp[i]];
-    while (i + j < disp_len && blk_strt_pos + (int)j == pos[disp[i + j]])
+    while (i + j < num_pos && blk_strt_pos + (int)j == pos[disp[i + j]])
       ++j;
     ++count;
     i += j;
-  } while (i < disp_len);
+  } while (i < num_pos);
   return count;
 }
 
 static size_t
-xt_mdisp2blk(size_t disp_len, const int *disp, const int *pos,
+xt_mdisp2blk(size_t num_pos, const int *disp, const int *pos,
              int *restrict blk_disp, int *restrict blk_len)
 {
   size_t new_count = 0;
   size_t i = 0;
-  while (i < disp_len) {
+  while (i < num_pos) {
     size_t j = 1;
     int blk_strt_pos = pos[disp[i]];
-    while (i + j < disp_len && blk_strt_pos + (int)j == pos[disp[i + j]])
+    while (i + j < num_pos && blk_strt_pos + (int)j == pos[disp[i + j]])
       ++j;
     blk_disp[new_count] = blk_strt_pos;
     blk_len[new_count++] = (int)j;
