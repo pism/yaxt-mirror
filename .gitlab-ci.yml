@@ -394,7 +394,7 @@ pages:
       when: always
     - when: never
   script:
-  - tar --directory=public -xf doc/html.tar.xz
+  - mkdir public ; tar -C public --strip-components=1 -xjf doc/html.tar.xz
   - mv coverage/ public/coverage
   - mv coverage_tests public/coverage_tests
   artifacts:
