@@ -747,8 +747,7 @@ CONTAINS
        RESULT(res)
     IMPLICIT NONE
     TYPE(xt_xmap), INTENT(in) :: xmap
-    INTEGER, INTENT(in) :: src_offsets(*)
-    INTEGER, INTENT(in) :: dst_offsets(*)
+    INTEGER, INTENT(in) :: src_offsets(*), dst_offsets(*)
     INTEGER, INTENT(in) :: datatype
     TYPE(xt_redist) :: res
     INTERFACE
