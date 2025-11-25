@@ -54,6 +54,7 @@
 #include "xt_redist_internal.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_simple_base.h"
+#include "xt_exchanger_internal.h"
 #include "xt_ddt_internal.h"
 
 /* unfortunately GCC 11 cannot handle the literal constants used for

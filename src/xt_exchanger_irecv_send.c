@@ -55,6 +55,7 @@
 #include "core/ppm_xfuncs.h"
 #include "xt/xt_mpi.h"
 #include "xt_exchanger.h"
+#include "xt_exchanger_internal.h"
 #include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_request_msgs_internal.h"

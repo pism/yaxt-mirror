@@ -59,6 +59,7 @@
 #include "xt_config_internal.h"
 #include "xt_mpi_internal.h"
 #include "xt_redist_internal.h"
+#include "xt_exchanger_internal.h"
 #include "xt_exchanger_irecv_isend_packed.h"
 #include "xt_exchanger_simple_base.h"
 

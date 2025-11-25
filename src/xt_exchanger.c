@@ -57,6 +57,7 @@
 #include "xt_exchanger_irecv_isend_packed.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
+#include "xt_exchanger_internal.h"
 
 Xt_exchanger
 xt_exchanger_copy(Xt_exchanger exchanger, MPI_Comm new_comm, int new_tag_offset)
