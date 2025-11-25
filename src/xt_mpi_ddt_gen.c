@@ -57,130 +57,7 @@
 #include "xt_mpi_internal.h"
 #include "xt_mpi_ddt_cache.h"
 
-
-static MPI_Datatype copy_mpi_datatype(MPI_Datatype old_type, MPI_Comm comm) {
-
-  MPI_Datatype datatype;
-
-  xt_mpi_call(MPI_Type_dup(old_type, &datatype), comm);
-
-  return datatype;
-}
-
-static MPI_Datatype
-gen_mpi_datatype_simple(int displacement, MPI_Datatype old_type, MPI_Comm comm)
-{
-  MPI_Datatype datatype;
-
-  xt_mpi_call(MPI_Type_create_indexed_block(1, 1, &displacement, old_type,
-                                                &datatype), comm);
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
-  return datatype;
-}
-
-static MPI_Datatype
-gen_mpi_datatype_contiguous(int displacement, int blocklength,
-                            MPI_Datatype old_type, MPI_Comm comm) {
-
-  MPI_Datatype datatype;
-
-  if (displacement == 0)
-    xt_mpi_call(MPI_Type_contiguous(blocklength, old_type, &datatype),
-                    comm);
-  else
-    xt_mpi_call(MPI_Type_create_indexed_block(1, blocklength,
-                                                  &displacement, old_type,
-                                                  &datatype), comm);
-
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
-  return datatype;
-
-}
-
-static MPI_Datatype
-gen_mpi_datatype_vector(int count, int blocklength, int stride,
-                        int offset, MPI_Datatype old_type, MPI_Comm comm) {
-
-  MPI_Datatype datatype;
-
-  xt_mpi_call(MPI_Type_vector(count, blocklength, stride, old_type,
-                              &datatype), comm);
-  if (offset != 0) {
-
-    MPI_Datatype datatype_;
-    int hindexed_blocklength = 1;
-    MPI_Aint old_type_size, old_type_lb;
-
-    xt_mpi_call(MPI_Type_get_extent(old_type, &old_type_lb,
-                                    &old_type_size), comm);
-
-    MPI_Aint displacement = offset * old_type_size;
-
-    xt_mpi_call(MPI_Type_create_hindexed(1, &hindexed_blocklength,
-                                         &displacement, datatype, &datatype_),
-                comm);
-    xt_mpi_call(MPI_Type_free(&datatype), comm);
-    datatype = datatype_;
-  }
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
-  return datatype;
-}
-
-static MPI_Datatype
-gen_mpi_datatype_indexed_block(int const * displacements, int blocklength,
-                               int count, MPI_Datatype old_type, MPI_Comm comm)
-{
-  MPI_Datatype datatype;
-
-  xt_mpi_call(MPI_Type_create_indexed_block(count, blocklength,
-                                                (void *)displacements,
-                                                old_type, &datatype), comm);
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
-  return datatype;
-}
-
-static MPI_Datatype
-gen_mpi_datatype_indexed(const int *displacements, const int *blocklengths,
-                         int count, MPI_Datatype old_type, MPI_Comm comm) {
-
-  MPI_Datatype datatype;
-
-  xt_mpi_call(MPI_Type_indexed(count, (int*)blocklengths, (void*)displacements,
-                                   old_type, &datatype), comm);
-  xt_mpi_call(MPI_Type_commit(&datatype), comm);
-
-  return datatype;
-}
-
-static inline int
-check_for_vector_type(const int *displacements, const int *blocklengths,
-                      int count) {
-
-  int blocklength = blocklengths[0],
-    stride = displacements[1] - displacements[0];
-
-  for (int i = 1; i < count; ++i)
-    if ((blocklengths[i] != blocklength)
-        | (displacements[i] - displacements[i-1] != stride))
-      return 0;
-  return 1;
-}
-
-static inline int check_for_indexed_block_type(const int *blocklengths,
-                                               int count) {
-
-  int blocklength = blocklengths[0];
-
-  for (int i = 1; i < count; ++i)
-    if (blocklengths[i] != blocklength)
-      return 0;
-
-  return 1;
-}
+#include <xt_mpi_ddt_gen_match.h>
 
 static MPI_Datatype
 xt_mpi_generate_compact_datatype_block(const int *disp, const int *blocklengths,
@@ -209,29 +86,9 @@ xt_mpi_generate_datatype_block_custom(const int *displacements,
   if (config->ddt_cache_limit >= -1)
     return xt_mpi_generate_compact_datatype_block(displacements, blocklengths,
                                                   count, old_type, comm);
-  MPI_Datatype datatype;
-
-  if (count == 0)
-    datatype = MPI_DATATYPE_NULL;
-  else if (count == 1 && blocklengths[0] == 1 && displacements[0] == 0)
-    datatype = copy_mpi_datatype(old_type, comm);
-  else if (count == 1 && blocklengths[0] == 1)
-    datatype = gen_mpi_datatype_simple(displacements[0], old_type, comm);
-  else if (count == 1)
-    datatype = gen_mpi_datatype_contiguous(displacements[0], blocklengths[0],
-                                           old_type, comm);
-  else if (check_for_vector_type(displacements, blocklengths, count))
-    datatype = gen_mpi_datatype_vector(count, blocklengths[0],
-                                       displacements[1] - displacements[0],
-                                       displacements[0], old_type, comm);
-  else if (check_for_indexed_block_type(blocklengths, count))
-    datatype = gen_mpi_datatype_indexed_block(displacements, blocklengths[0],
-                                              count, old_type, comm);
   else
-    datatype = gen_mpi_datatype_indexed(displacements, blocklengths, count,
-                                        old_type, comm);
-
-  return datatype;
+    return xt_mpi_generate_datatype_match_custom(displacements, blocklengths,
+                                                 count, old_type, comm);
 }
 
 MPI_Datatype

@@ -115,6 +115,7 @@ libyaxt_c_la_SOURCES =						\
 	xt_mpi_internal.h					\
 	xt_mpi.c						\
 	xt_mpi_ddt_gen.c					\
+	xt_mpi_ddt_gen_match.h					\
 	xt_mpi_stripe_parse_func.h				\
 	xt_mpi_ddt_cache.c					\
 	xt_mpi_ddt_cache.h					\
