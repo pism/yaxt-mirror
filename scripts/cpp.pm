@@ -252,10 +252,10 @@ sub parsePreProcExpression
          die('EOL in defined predicate') if ($i + $symreflen > @tokens);
          die('Invalid preprocessor symbol ', $tokens[$i + $symoffset])
              unless(isSymbol($tokens[$i + $symoffset]));
-         insertDefinitionOnDemand($defines, $tokens[$i + $symoffset])
-             if (!exists($defines->{$tokens[$i + $symoffset]}));
+         my $token_def
+             = insertDefinitionOnDemand($defines, $tokens[$i + $symoffset]);
          splice(@tokens, $i, 1 + $symreflen,
-                (defined($defines->{$tokens[$i + $symoffset]})?'1L':'0L'));
+                (defined($token_def)?'1L':'0L'));
          next;
       }
       elsif (validPreProcSym($token))
@@ -481,12 +481,12 @@ BEGIN {
          my $definition = preprocResult($token);
          if (defined($definition))
          {
-           $defines->{$token} = $defines->{$token}
+           return $defines->{$token}
                = parseDefinition(undef, $definition, '', '');
          }
          else
          {
-           $defines->{$token} = $defines->{$token} = undef;
+           return $defines->{$token} = undef;
          }
       }
    }
