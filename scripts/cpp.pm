@@ -940,7 +940,7 @@ BEGIN {
       {
          $result = !$result;
       }
-      return ('constant', 'int', $result);
+      return ('constant', 'int', 0+$result);
    };
 
    sub equality_expression
