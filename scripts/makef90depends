@@ -934,8 +934,7 @@ sub createTmpDir()
                {
                   if ($1 eq '-D' || $1 eq $fcdefopt)
                   {
-                     $defines{$2} = { 'definition' => [ [ defined($3)?$3:'' ] ],
-                                      'parameters' => [] };
+                     $defines{$2} = defined($3)?$3:'';
                   }
                   elsif (($1 eq '-U' || $1 eq $fcundefopt) && !defined($3))
                   {
