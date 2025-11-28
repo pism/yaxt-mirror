@@ -990,14 +990,19 @@ sub createTmpDir()
       {
          my ($name, $definition, $macroArgs)
              = ($names[$i], $defines{$names[$i]});
-         next if !defined($definition);
-         if ($name =~ m{([^(]*)
-                        (\(\s*[A-Za-z_]\w*(?:\s*,[A-Za-z_]\w*)*\s*\))}x)
+         if (defined($definition))
          {
-            ($name, $macroArgs) = ($1, $2);
+            if ($name =~ m{([^(]*)
+                           (\(\s*[A-Za-z_]\w*(?:\s*,[A-Za-z_]\w*)*\s*\))}x)
+            {
+               ($name, $macroArgs) = ($1, $2);
+            }
          }
-         die('Malformed define ', $name, $macroArgs?('(', $macroArgs, ')'):'',
-             '=', $definition, "\n") if ($name !~ m{^[A-Za-z_]\w+$});
+         die('Malformed define ', $name,
+             $macroArgs?('(', $macroArgs, ')'):'',
+             (defined($definition)?('=', $definition):()),
+             "\n") if ($name !~ m{^[A-Za-z_]\w+$});
+         next if !defined($definition);
          delete($defines{$names[$i]});
          $defines{$name} = cpp::parseDefinition($macroArgs, $definition,
                                                 undef,$name);
