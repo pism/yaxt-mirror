@@ -81,9 +81,27 @@ typedef int (*Xt_xmdd_bucket_gen_init_state)(
 
 typedef void (*Xt_xmdd_bucket_gen_destroy_state)(void *gen_state);
 
+/**
+ * @param type one of the values from enum
+ * Xt_dist_dir_bucket_gen_types for a distributed directory
+ * constructed on an intra-communicator, this will be always
+ * Xt_dist_dir_bucket_gen_type_sendrecv, on an inter-communicator,
+ * Xt_dist_dir_bucket_gen_type_send and
+ * Xt_dist_dir_bucket_gen_type_recv will be used in succession because
+ * the buckets differ for the local and remote group
+ */
 typedef int (*Xt_xmdd_bucket_gen_get_intersect_max_num)(
   void *gen_state, int type);
 
+/**
+ * @param type one of the values from enum
+ * Xt_dist_dir_bucket_gen_types for a distributed directory
+ * constructed on an intra-communicator, this will be always
+ * Xt_dist_dir_bucket_gen_type_sendrecv, on an inter-communicator,
+ * Xt_dist_dir_bucket_gen_type_send and
+ * Xt_dist_dir_bucket_gen_type_recv will be used in succession because
+ * the buckets differ for the local and remote group
+ */
 typedef struct Xt_com_list (*Xt_xmdd_bucket_gen_next)(
   void *gen_state, int type);
 
