@@ -103,6 +103,15 @@ AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads librari
    CC="$PTHREAD_CC"])
 ACX_TLS_XLC_RETRY
 AX_EXECINFO
+AC_CACHE_CHECK([for availability of C11 static_assert],
+  [acx_cv_have_c11_static_assert],
+  [AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM([static_assert(sizeof (int) == sizeof (int), "int size mismatch");],
+        [@%:@include <assert.h>])],
+     [acx_cv_have_c11_static_assert=yes],
+     [acx_cv_have_c11_static_assert=no])])
+AS_VAR_IF([acx_cv_have_c11_static_assert],[yes],
+  [AC_DEFINE([HAVE_C11_STATIC_ASSERT],[1],[static_assert is declared by assert.h])])
 if test "X$FC" != Xno ; then
 m4_pushdef([_AC_F95_FC],[mpifort mpiifort mpxlf_r mpxlf95_r mpxlf_r mpixlf95_r mpif90 mpif77 ]m4_dquote(m4_defn(
   [_AC_F95_FC])))dnl
