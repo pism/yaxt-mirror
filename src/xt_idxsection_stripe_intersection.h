@@ -92,6 +92,7 @@ xt_idxsection_get_idxstripes_intersection__(NUM_DIMENSIONS)
     struct dim_desc dims[NUM_DIMENSIONS];
   };
   struct Xt_idxsection__(NUM_DIMENSIONS) h;
+  static_assert(sizeof (h) == sizeof (struct Xt_idxsection_) + sizeof (struct dim_desc) * NUM_DIMENSIONS, "struct layout mismatch");
   idxsection_init_sorted_copy(idxsection, (Xt_idxsection)&h);
   struct dim_desc *restrict dims = h.dims;
 #else

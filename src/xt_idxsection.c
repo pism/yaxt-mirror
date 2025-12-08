@@ -53,6 +53,22 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef HAVE_C11_STATIC_ASSERT
+#ifdef static_assert
+#undef static_assert
+#endif
+#ifdef __GNUC__
+#define STATIC_ASSERT_HELPER(expr, msg) \
+  (!!sizeof (struct { unsigned int STATIC_ASSERTION__##__LINE__: (expr) ? 1 : -1; }))
+#define static_assert(expr, msg)                                        \
+  extern int (*assert_function__(void)) [STATIC_ASSERT_HELPER(expr, msg)]
+#else
+#define static_assert(expr, msg)                        \
+  extern char STATIC_ASSERTION__##__LINE__[1];               \
+  extern char STATIC_ASSERTION__##__LINE__[(expr)?1:2]
+#endif /* #ifdef __GNUC__ */
+#endif
+
 #include "xt_arithmetic_util.h"
 #include "xt_arithmetic_long.h"
 #include "xt/xt_idxlist.h"
