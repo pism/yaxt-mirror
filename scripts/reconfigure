@@ -121,7 +121,7 @@ if [[ -z "${DL_CMD-}" ]]; then
   if command -v wget >/dev/null ; then
     DL_CMD=(wget -nv -o /dev/null -O)
   elif command -v curl >/dev/null ; then
-    DL_CMD=(curl -s -S -o)
+    DL_CMD=(curl --location -s -S -o)
   fi
 else
   # shellcheck disable=SC2128
