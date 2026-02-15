@@ -96,11 +96,22 @@ m4_popdef(m4_case(m4_version_compare(AC_AUTOCONF_VERSION,[2.70]),
   [0],[[_AC_PROG_CC_C11]],
   [1],[[_AC_PROG_CC_STDC_EDITION]]))dnl
 
-AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,[Define if you have POSIX threads libraries and header files.])
-   LIBS="$PTHREAD_LIBS $LIBS"
-   test -n "$PTHREAD_CFLAGS" || ASX_VAR_UNSET([PTHREAD_CFLAGS])
-   CFLAGS="$CFLAGS${PTHREAD_CFLAGS+ $PTHREAD_CFLAGS}"
-   CC="$PTHREAD_CC"])
+AC_ARG_ENABLE([pthreads],
+  [AS_HELP_STRING([--disable-pthreads],
+     [disable data race protections via pthreads, even when available, ]dnl
+[warning: disabling this places the burden of preventing concurrent ]dnl
+[creation of YAXT objects on all callers @<:@default: auto@:>@])],
+  [],[enable_pthreads=auto])
+AS_VAR_IF([enable_pthreads],[no],
+  [AC_MSG_NOTICE([suppressing check for pthreads, caller must ensure thread safety!])],
+  [AX_PTHREAD([AC_DEFINE([HAVE_PTHREAD],1,
+     [Define if you have POSIX threads libraries and header files.])
+     LIBS="$PTHREAD_LIBS $LIBS"
+     test -n "$PTHREAD_CFLAGS" || ASX_VAR_UNSET([PTHREAD_CFLAGS])
+     CFLAGS="$CFLAGS${PTHREAD_CFLAGS+ $PTHREAD_CFLAGS}"
+     CC="$PTHREAD_CC"],
+     [AS_VAR_IF([enable_pthreads],[yes],
+       [AC_MSG_FAILURE([pthreads unavailable but must be present (--enable-pthreads=yes)])])])])
 ACX_TLS_XLC_RETRY
 AX_EXECINFO
 if test "X$FC" != Xno ; then
