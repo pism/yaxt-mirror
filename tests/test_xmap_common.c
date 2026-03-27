@@ -47,14 +47,18 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include <mpi.h>
 
 #include <yaxt.h>
 
 #define VERBOSE
+#include "core/ppm_xfuncs.h"
 #include "tests.h"
 #include "ctest_common.h"
 #include "test_xmap_common.h"
+#include "test_xmap_bucket_tiler.h"
 
 static void
 test_xmap1(xmap_constructor new_xmap,
@@ -62,30 +66,78 @@ test_xmap1(xmap_constructor new_xmap,
 static void
 test_xmap2(xmap_constructor new_xmap, MPI_Comm comm);
 
-static int my_rank;
+
+static int world_rank;
+static Xt_config custom_bucket_config;
+
+
+enum {
+  xmap_test2_dom_ofs = 100,
+};
+
+static custom_xmap_constructor new_custom_bucket_xmap;
+static Xt_config custom_bucket_config;
+
+static Xt_xmap
+new_custom_bucket_xmap_wrapper(Xt_idxlist src_idxlist,
+                               Xt_idxlist dst_idxlist,
+                               MPI_Comm comm)
+{
+  return new_custom_bucket_xmap(src_idxlist, dst_idxlist,
+                                comm, custom_bucket_config);
+}
 
 int
 xt_xmap_self_test_main(int *argc, char ***argv,
-                       xmap_constructor new_xmap)
+                       xmap_constructor new_xmap,
+                       custom_xmap_constructor new_custom_xmap)
 {
   test_init_mpi(argc, argv, MPI_COMM_WORLD);
 
-  xt_initialize(MPI_COMM_WORLD);
-
-  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-
   MPI_Comm comms[2];
   comms[0] = MPI_COMM_WORLD;
-  MPI_Comm_dup(MPI_COMM_WORLD, &comms[1]);
+
+  xt_initialize(comms[0]);
+
+  MPI_Comm_rank(comms[0], &world_rank);
+  int world_size;
+  MPI_Comm_size(comms[0], &world_size);
+
+  MPI_Comm_dup(comms[0], &comms[1]);
   xt_mpi_comm_mark_exclusive(comms[1]);
+
+  /* setup custom bucket for xt_xmap_dist_dir_new */
+  if (new_xmap == xt_xmap_dist_dir_new) {
+    new_custom_bucket_xmap = new_custom_xmap;
+    custom_bucket_config = tile_bucket_config_new(
+      1, (const Xt_int []){ 7 },
+      (const int []){ world_size });
+  }
 
   for (size_t i = 0; i < 2; ++i) {
     static const int lsizes[2] = { 7, 1023 };
-    for (size_t j = 0; j < 2; ++j)
+    for (size_t j = 0; j < 2; ++j) {
       test_xmap1(new_xmap, lsizes[j], comms[i]);
+      /* also test with custom bucket for distributed directory */
+      if (new_xmap == xt_xmap_dist_dir_new) {
+        tile_bucket_config_set_global_dims(custom_bucket_config,
+                                           (Xt_int [1]){ (Xt_int)lsizes[j] });
+        test_xmap1(new_custom_bucket_xmap_wrapper,
+                   lsizes[j], comms[i]);
+      }
+    }
     test_xmap2(new_xmap, comms[i]);
+    if (new_xmap == xt_xmap_dist_dir_new) {
+      tile_bucket_config_set_global_dims(
+        custom_bucket_config,
+        (Xt_int [1]){ (Xt_int)(100 * (Xt_int)world_size) });
+      test_xmap2(new_custom_bucket_xmap_wrapper,
+                 comms[i]);
+    }
   }
 
+  if (new_xmap == xt_xmap_dist_dir_new)
+    tile_bucket_config_delete(custom_bucket_config);
   MPI_Comm_free(&comms[1]);
   xt_finalize();
   MPI_Finalize();
@@ -106,11 +158,11 @@ assert_xmap_is_to_self(Xt_xmap xmap)
   int rank;
 
   xt_xmap_get_destination_ranks(xmap, &rank);
-  if (rank != my_rank)
+  if (rank != world_rank)
     PUT_ERR("error in xt_xmap_get_destination_ranks\n");
 
   xt_xmap_get_source_ranks(xmap, &rank);
-  if (rank != my_rank)
+  if (rank != world_rank)
     PUT_ERR("error in xt_xmap_get_source_ranks\n");
 }
 
@@ -142,7 +194,8 @@ test_self_xmap_construct_idxstripes(
 void
 test_self_xmap_construct(Xt_idxlist src_idxlist,
                          Xt_idxlist dst_idxlist,
-                         xmap_constructor new_xmap, MPI_Comm comm)
+                         xmap_constructor new_xmap,
+                         MPI_Comm comm)
 {
   // test of exchange map
   Xt_xmap xmap = new_xmap(src_idxlist, dst_idxlist, comm);
@@ -158,7 +211,7 @@ test_self_xmap_construct(Xt_idxlist src_idxlist,
 
 static inline void shift_idx(Xt_int idx[], int num, int offset)  {
   for (int i=0; i<num; i++) {
-    idx[i] = (Xt_int)(idx[i] + my_rank * offset);
+    idx[i] = (Xt_int)(idx[i] + world_rank * offset);
   }
 }
 
@@ -169,7 +222,7 @@ test_xmap1(xmap_constructor new_xmap,
   struct Xt_stripe src_stripe, dst_stripe;
   // source index list
   src_stripe.nstrides = lsize;
-  src_stripe.start = (Xt_int)(1 + (Xt_int)my_rank * (Xt_int)lsize);
+  src_stripe.start = (Xt_int)(1 + (Xt_int)world_rank * (Xt_int)lsize);
   src_stripe.stride = 1;
 
   // destination index list
@@ -187,12 +240,12 @@ test_xmap2(xmap_constructor new_xmap, MPI_Comm comm)
   // source index list
   Xt_int src_indices[] = {5,67,4,5,13,9,2,1,0,96,13,12,1,3};
   enum { num_src_indices = sizeof(src_indices) / sizeof(src_indices[0]) };
-  shift_idx(src_indices, num_src_indices, 100);
+  shift_idx(src_indices, num_src_indices, xmap_test2_dom_ofs);
 
   // destination index list
   Xt_int dst_indices[] = {5,4,3,96,1,5,4,5,4,3,13,2,1};
   enum { num_dst_indices = sizeof(dst_indices) / sizeof(dst_indices[0]) };
-  shift_idx(dst_indices, num_dst_indices, 100);
+  shift_idx(dst_indices, num_dst_indices, xmap_test2_dom_ofs);
 
   test_self_xmap_construct_idxvec(src_indices, num_src_indices,
                                   dst_indices, num_dst_indices,

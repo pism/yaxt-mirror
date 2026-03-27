@@ -55,7 +55,8 @@
 
 int main(int argc, char **argv)
 {
-  return xt_xmap_self_test_main(&argc, &argv, xt_xmap_all2all_new);
+  return xt_xmap_self_test_main(
+    &argc, &argv, xt_xmap_all2all_new, xt_xmap_all2all_custom_new);
 }
 
 /*

@@ -129,6 +129,7 @@ libtestutil_la_SOURCES = tests.c \
 	ctest_common.c ctest_common.h \
 	test_idxlist_utils.c \
 	test_xmap_common.c test_xmap_common.h \
+	test_xmap_bucket_tiler.c test_xmap_bucket_tiler.h \
 	test_xmap_common_parallel.c \
 	test_xmap_common_intercomm_parallel.c \
 	test_redist_single_array_base_common.c \

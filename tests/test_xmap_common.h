@@ -58,6 +58,9 @@
 typedef Xt_xmap (*xmap_constructor)(Xt_idxlist src_idxlist,
                                     Xt_idxlist dst_idxlist,
                                     MPI_Comm comm);
+typedef Xt_xmap (*custom_xmap_constructor)(Xt_idxlist src_idxlist,
+                                           Xt_idxlist dst_idxlist,
+                                           MPI_Comm comm, Xt_config config);
 
 enum test_idxlist_size {
   SMALL,
@@ -66,7 +69,8 @@ enum test_idxlist_size {
 
 int
 xt_xmap_self_test_main(int *argc, char ***argv,
-                       xmap_constructor xmap_constructor);
+                       xmap_constructor new_xmap,
+                       custom_xmap_constructor new_custom_xmap);
 
 /* note: calls xt_idxlist_delete for src_idxlist and dst_idxlist */
 void
