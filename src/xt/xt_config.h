@@ -214,6 +214,9 @@ xt_config_get_mem_saving(Xt_config config);
 
 /**
  * Query configured bucket generator
+ *
+ * @param[in] config  configuration object to query
+ * @return handle of bucket generator object
  */
 Xt_xmdd_bucket_gen
 xt_config_get_xmdd_bucket_gen(Xt_config config);

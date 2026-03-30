@@ -71,6 +71,11 @@ struct Xt_xmdd_bucket_gen_comms {
   int tag_offset_intra, tag_offset_inter;
 };
 
+/**
+ * Initialize bucket generator state.
+ * @return 0 if index lists should be used as-is, non-zero if
+ * conversion to stripes appears profitable.
+ */
 typedef int (*Xt_xmdd_bucket_gen_init_state)(
   void *gen_state,
   Xt_idxlist src_idxlist,
@@ -130,6 +135,8 @@ typedef struct Xt_com_list (*Xt_xmdd_bucket_gen_next)(
  * @param gen_state_size number of bytes to allocate for each generator state
  * @param init_params global parameters passed to each invocation of
  * the \a init function
+ * @note it remains the responsibility of the caller to dispose of
+ * resources held by init_params
  */
 void
 xt_xmdd_bucket_gen_define_interface(
@@ -140,6 +147,49 @@ xt_xmdd_bucket_gen_define_interface(
   Xt_xmdd_bucket_gen_next next,
   size_t gen_state_size,
   void *init_params);
+
+/**
+ * Inquire state-independent initialization parameters of bucket
+ * generator.
+ * @param gen bucket generator to inquire for
+ * @return pointer to initialization parameters previously defined via
+ * \a xt_xmddd_bucket_gen_define_interface
+ */
+void *
+xt_xmdd_bucket_gen_get_init_params(Xt_xmdd_bucket_gen gen);
+
+/**
+ * Change state-independent initialization parameters of bucket
+ * generator.
+ * @param gen bucket generator to update state parameters for
+ * @note previously set initial parameters will not be
+ * destroyed automatically
+ */
+void
+xt_xmdd_bucket_gen_set_init_params(Xt_xmdd_bucket_gen gen,
+                                   void *init_params);
+
+/**
+ * Inquire initialization function of bucket generator.
+ *
+ * @param gen bucket generator to inquire for
+ * @return pointer to initialization function previously defined via
+ * \a xt_xmddd_bucket_gen_define_interface
+ */
+Xt_xmdd_bucket_gen_init_state
+xt_xmdd_bucket_gen_get_init(Xt_xmdd_bucket_gen gen);
+
+/**
+ * Change state initialization function of bucket generator.
+ *
+ * @param gen bucket generator to update state initializer for
+ * @param init pointer of initialization function
+ * @note previously set initial parameters will not be
+ * destroyed automatically
+ */
+void
+xt_xmdd_bucket_gen_set_init(Xt_xmdd_bucket_gen gen,
+                            Xt_xmdd_bucket_gen_init_state init);
 
 #endif // XT_XMAP_DIST_DIR_BUCKET_GEN_H
 

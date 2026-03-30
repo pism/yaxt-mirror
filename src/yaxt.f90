@@ -136,7 +136,9 @@ MODULE yaxt
        xt_xmdd_bucket_gen_comms, &
        xt_dist_dir_bucket_gen_type_send, &
        xt_dist_dir_bucket_gen_type_recv, &
-       xt_dist_dir_bucket_gen_type_sendrecv
+       xt_dist_dir_bucket_gen_type_sendrecv, &
+       xt_xmdd_bucket_gen_get_init_params, &
+       xt_xmdd_bucket_gen_set_init_params
 #endif
   USE xt_xmap_intersection, ONLY: xt_xmap_intersection_new, &
        xt_xmap_intersection_ext_new, xt_com_list, &
@@ -240,7 +242,9 @@ MODULE yaxt
        xt_xmdd_bucket_gen_comms, &
        xt_dist_dir_bucket_gen_type_send, &
        xt_dist_dir_bucket_gen_type_recv, &
-       xt_dist_dir_bucket_gen_type_sendrecv
+       xt_dist_dir_bucket_gen_type_sendrecv, &
+       xt_xmdd_bucket_gen_get_init_params, &
+       xt_xmdd_bucket_gen_set_init_params
 #endif
 
   PUBLIC :: xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &

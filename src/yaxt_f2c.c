@@ -727,13 +727,13 @@ xt_xmdd_bucket_gen_define_interface_f2c(
   Xt_xmdd_bucket_gen_get_intersect_max_num get_intersect_max_num,
   Xt_xmdd_bucket_gen_next next,
   long gen_state_size,
-  void *init_params)
+  void **init_params)
 {
   assert(gen_state_size >= 0);
   xt_xmdd_bucket_gen_define_interface(
     *gen, (Xt_xmdd_bucket_gen_init_state)(void (*)(void))
     f2c_xmdd_bucket_gen_init_state, destroy, get_intersect_max_num, next,
-    (size_t)gen_state_size, init_params);
+    (size_t)gen_state_size, *init_params);
   (*gen)->init_f = init;
 }
 
@@ -750,6 +750,38 @@ FCALLSCSUB7(xt_xmdd_bucket_gen_define_interface_f2c,
             XT_XMDD_BUCKET_GEN_DEFINE_INTERFACE_F,
             xt_xmdd_bucket_gen_define_interface_f,
             PVOID, ROUTINE, ROUTINE, ROUTINE, ROUTINE, LONG, PVOID)
+
+void
+xt_xmdd_bucket_gen_def_if_f2c(
+  Xt_xmdd_bucket_gen gen,
+  Xt_xmdd_bucket_gen_init_state_f init,
+  Xt_xmdd_bucket_gen_destroy_state destroy,
+  Xt_xmdd_bucket_gen_get_intersect_max_num get_intersect_max_num,
+  Xt_xmdd_bucket_gen_next next,
+  size_t gen_state_size,
+  void *init_params)
+{
+  xt_xmdd_bucket_gen_define_interface(
+    gen, (Xt_xmdd_bucket_gen_init_state)(void (*)(void))
+    f2c_xmdd_bucket_gen_init_state, destroy, get_intersect_max_num, next,
+    gen_state_size, init_params);
+  gen->init_f = init;
+}
+
+static void
+xt_xmdd_bucket_gen_set_init_f2c(Xt_xmdd_bucket_gen *gen,
+                                Xt_xmdd_bucket_gen_init_state_f init)
+{
+  (*gen)->init_f = init;
+  xt_xmdd_bucket_gen_set_init(
+    *gen, (Xt_xmdd_bucket_gen_init_state)(void (*)(void))
+    f2c_xmdd_bucket_gen_init_state);
+}
+
+FCALLSCSUB2(xt_xmdd_bucket_gen_set_init_f2c,
+            XT_XMDD_BUCKET_GEN_SET_INIT_F,
+            xt_xmdd_bucket_gen_set_init_f,
+            PVOID, ROUTINE)
 
 void
 xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {

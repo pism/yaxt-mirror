@@ -86,6 +86,32 @@ xt_xmdd_bucket_gen_define_interface(
   gen->init_params = init_params;
 }
 
+void *
+xt_xmdd_bucket_gen_get_init_params(Xt_xmdd_bucket_gen gen)
+{
+  return gen->init_params;
+}
+
+void
+xt_xmdd_bucket_gen_set_init_params(Xt_xmdd_bucket_gen gen,
+                                   void *init_params)
+{
+  gen->init_params = init_params;
+}
+
+Xt_xmdd_bucket_gen_init_state
+xt_xmdd_bucket_gen_get_init(Xt_xmdd_bucket_gen gen)
+{
+  return (Xt_xmdd_bucket_gen_init_state)(void (*)(void))gen->init;
+}
+
+
+void
+xt_xmdd_bucket_gen_set_init(Xt_xmdd_bucket_gen gen,
+                            Xt_xmdd_bucket_gen_init_state init)
+{
+  gen->init = (Xt_xmdd_bucket_gen_init_state_internal)(void (*)(void))init;
+}
 
 
 
