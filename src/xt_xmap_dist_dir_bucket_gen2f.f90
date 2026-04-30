@@ -277,7 +277,7 @@ CONTAINS
 
     INTERFACE
       FUNCTION xt_xmdd_bucket_gen_get_init_c(gen) &
-           BIND(c, name='xt_xmdd_bucket_gen_get_init') RESULT(ini_ptr)
+           BIND(c, name='Xt_xmdd_bucket_gen_get_init_f2c') RESULT(ini_ptr)
         IMPORT :: c_funptr, c_ptr
         TYPE(c_ptr), VALUE, INTENT(in) :: gen
         TYPE(c_funptr) :: ini_ptr

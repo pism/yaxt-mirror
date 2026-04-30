@@ -783,6 +783,12 @@ FCALLSCSUB2(xt_xmdd_bucket_gen_set_init_f2c,
             xt_xmdd_bucket_gen_set_init_f,
             PVOID, ROUTINE)
 
+PPM_DSO_INTERNAL Xt_xmdd_bucket_gen_init_state_f
+Xt_xmdd_bucket_gen_get_init_f2c(Xt_xmdd_bucket_gen gen)
+{
+  return gen->init_f;
+}
+
 static void
 xt_xmddbg_set_ext_init_params_f2c(
   Xt_xmdd_bucket_gen *gen,

@@ -171,26 +171,14 @@ tile_bucket_config_new(int ndims,
     bucket_gen_1d_tile_next,
     sizeof (struct bucket_gen_1d_tile_state),
     bucket_params);
+  xt_xmdd_bucket_gen_set_extended_init_params(
+    bucket_gen, sizeof (struct bucket_gen_1d_tile_param),
+    (Xt_xmdd_bucket_gen_iparm_destroy)0,
+    (Xt_xmdd_bucket_gen_iparm_copy)0);
   xt_config_set_xmdd_bucket_gen(custom_bucket_config,
                                 bucket_gen);
   xt_xmdd_bucket_gen_delete(bucket_gen);
   return custom_bucket_config;
-}
-
-void
-tile_bucket_config_delete(Xt_config custom_bucket_config)
-{
-  Xt_xmdd_bucket_gen bucket_gen
-    = xt_config_get_xmdd_bucket_gen(custom_bucket_config);
-#ifndef NDEBUG
-  Xt_xmdd_bucket_gen_init_state ini_func
-    = xt_xmdd_bucket_gen_get_init(bucket_gen);
-#endif
-  assert(ini_func == bucket_gen_1d_tile_init);
-  struct bucket_gen_1d_tile_param *init_params
-    = xt_xmdd_bucket_gen_get_init_params(bucket_gen);
-  free(init_params);
-  xt_config_delete(custom_bucket_config);
 }
 
 void

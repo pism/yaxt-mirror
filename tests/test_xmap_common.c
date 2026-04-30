@@ -137,7 +137,7 @@ xt_xmap_self_test_main(int *argc, char ***argv,
   }
 
   if (new_xmap == xt_xmap_dist_dir_new)
-    tile_bucket_config_delete(custom_bucket_config);
+    xt_config_delete(custom_bucket_config);
   MPI_Comm_free(&comms[1]);
   xt_finalize();
   MPI_Finalize();

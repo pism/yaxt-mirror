@@ -59,9 +59,6 @@ tile_bucket_config_new(int ndims,
                        const int num_part[ndims]);
 
 void
-tile_bucket_config_delete(Xt_config custom_bucket_config);
-
-void
 tile_bucket_config_set_global_dims(Xt_config custom_bucket_config,
                                    const Xt_int global_dims[]);
 
