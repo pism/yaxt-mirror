@@ -50,6 +50,7 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "xt/xt_xmap_dist_dir_bucket_gen.h"
 #include "xt_xmap_dist_dir_bucket_gen_internal.h"
@@ -64,6 +65,11 @@ xt_xmdd_bucket_gen_new(void)
 void
 xt_xmdd_bucket_gen_delete(Xt_xmdd_bucket_gen gen)
 {
+  if (gen->init_params_destroy)
+    gen->init_params_destroy(gen->init_params,
+                             gen->init_params_size);
+  if (gen->init_params_size)
+    free(gen->init_params);
   free(gen);
 }
 
@@ -113,7 +119,17 @@ xt_xmdd_bucket_gen_set_init(Xt_xmdd_bucket_gen gen,
   gen->init = (Xt_xmdd_bucket_gen_init_state_internal)(void (*)(void))init;
 }
 
-
+void
+xt_xmdd_bucket_gen_set_extended_init_params(
+  Xt_xmdd_bucket_gen gen,
+  size_t iparm_size,
+  Xt_xmdd_bucket_gen_iparm_destroy destroy,
+  Xt_xmdd_bucket_gen_iparm_copy cpy)
+{
+  gen->init_params_size = iparm_size;
+  gen->init_params_destroy = destroy;
+  gen->init_params_copy = cpy ? cpy : (Xt_xmdd_bucket_gen_iparm_copy)(void (*)(void))memcpy;
+}
 
 /*
  * Local Variables:

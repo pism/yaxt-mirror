@@ -783,6 +783,28 @@ FCALLSCSUB2(xt_xmdd_bucket_gen_set_init_f2c,
             xt_xmdd_bucket_gen_set_init_f,
             PVOID, ROUTINE)
 
+static void
+xt_xmddbg_set_ext_init_params_f2c(
+  Xt_xmdd_bucket_gen *gen,
+  size_t *iparm_size,
+  Xt_xmdd_bucket_gen_iparm_destroy destroy,
+  Xt_xmdd_bucket_gen_iparm_copy cpy)
+{
+  xt_xmdd_bucket_gen_set_extended_init_params(*gen, *iparm_size,
+                                              destroy, cpy);
+}
+
+#undef ROUTINE_3
+#define ROUTINE_3 (Xt_xmdd_bucket_gen_iparm_destroy)(void (*)(void))
+#undef ROUTINE_4
+#define ROUTINE_4 (Xt_xmdd_bucket_gen_iparm_copy)(void (*)(void))
+
+FCALLSCSUB4(xt_xmddbg_set_ext_init_params_f2c,
+            XT_XMDDBG_SET_EXT_INIT_PARAMS_F,
+            xt_xmddbg_set_ext_init_params_f,
+            PVOID, PVOID, ROUTINE, ROUTINE)
+
+
 void
 xt_mpi_comm_mark_exclusive_f2c(MPI_Fint *comm) {
   xt_mpi_comm_mark_exclusive(MPI_Comm_f2c(*comm));

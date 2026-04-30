@@ -191,6 +191,24 @@ void
 xt_xmdd_bucket_gen_set_init(Xt_xmdd_bucket_gen gen,
                             Xt_xmdd_bucket_gen_init_state init);
 
+
+
+typedef void (*Xt_xmdd_bucket_gen_iparm_destroy)(
+  void *init_params, size_t init_params_size);
+
+typedef void (*Xt_xmdd_bucket_gen_iparm_copy)(
+  void *restrict dest_init_params,
+  const void *restrict src_init_params,
+  size_t init_params_size);
+
+void
+xt_xmdd_bucket_gen_set_extended_init_params(
+  Xt_xmdd_bucket_gen gen,
+  size_t iparm_size,
+  Xt_xmdd_bucket_gen_iparm_destroy destroy,
+  Xt_xmdd_bucket_gen_iparm_copy cpy);
+
+
 #endif // XT_XMAP_DIST_DIR_BUCKET_GEN_H
 
 /*

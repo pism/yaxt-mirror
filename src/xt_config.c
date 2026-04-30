@@ -85,7 +85,7 @@ Xt_config xt_config_new(void)
 void xt_config_delete(Xt_config config)
 {
   if (config->xmdd_bucket_gen != &Xt_xmdd_cycl_stripe_bucket_gen_desc)
-    free((void *)(intptr_t)config->xmdd_bucket_gen);
+    xt_xmdd_bucket_gen_delete((void *)(intptr_t)config->xmdd_bucket_gen);
   free(config);
 }
 
@@ -288,6 +288,12 @@ xt_config_set_xmdd_bucket_gen(Xt_config config,
     Xt_xmdd_bucket_gen gen = xmalloc(sizeof (*bucket_gen_iface));
     config->xmdd_bucket_gen = gen;
     *gen = *bucket_gen_iface;
+    if (gen->init_params_size) {
+      gen->init_params = malloc(gen->init_params_size);
+      bucket_gen_iface->init_params_copy(gen->init_params,
+                                         bucket_gen_iface->init_params,
+                                         gen->init_params_size);
+    }
   }
 }
 

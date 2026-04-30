@@ -99,9 +99,11 @@ struct Xt_xmdd_bucket_gen_ {
    *
    * The distributed directory will provide memory aligned to
    * pointer variables of this size. */
-  size_t gen_state_size;
+  Xt_xmdd_bucket_gen_iparm_destroy init_params_destroy;
+  Xt_xmdd_bucket_gen_iparm_copy init_params_copy;
   Xt_xmdd_bucket_gen_init_state_f init_f;
   void *init_params;
+  size_t gen_state_size, init_params_size;
 };
 
 /**

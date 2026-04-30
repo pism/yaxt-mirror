@@ -177,6 +177,29 @@ MODULE xt_xmap_dist_dir_bucket_gen2
   PUBLIC :: xt_xmdd_bucket_gen_get_init_params, &
        xt_xmdd_bucket_gen_set_init_params
 
+  INTERFACE xt_xmdd_bucket_gen_set_extended_init_params
+    SUBROUTINE xt_xmddbg_set_ext_init_params_f(gen, &
+         iparm_size, destroy, cpy)
+      IMPORT :: xt_xmdd_bucket_gen, c_ptr, c_size_t
+      TYPE(xt_xmdd_bucket_gen), INTENT(inout) :: gen
+      INTEGER(c_size_t), INTENT(in) :: iparm_size
+      INTERFACE
+        SUBROUTINE destroy(init_params, init_params_size)
+          IMPORT :: c_ptr, c_size_t
+          TYPE(c_ptr), VALUE, INTENT(in) :: init_params
+          INTEGER(c_size_t), VALUE, INTENT(in) :: init_params_size
+        END SUBROUTINE destroy
+        SUBROUTINE cpy(dest_init_params, src_init_params, init_params_size)
+          IMPORT :: c_ptr, c_size_t
+          TYPE(c_ptr), VALUE, INTENT(in) :: dest_init_params, src_init_params
+          INTEGER(c_size_t), VALUE, INTENT(in) :: init_params_size
+        END SUBROUTINE cpy
+      END INTERFACE
+      OPTIONAL :: destroy, cpy
+    END SUBROUTINE xt_xmddbg_set_ext_init_params_f
+  END INTERFACE xt_xmdd_bucket_gen_set_extended_init_params
+  PUBLIC :: xt_xmdd_bucket_gen_set_extended_init_params
+
   INTERFACE xt_xmdd_bucket_gen_set_init
     SUBROUTINE xt_xmdd_bucket_gen_set_init_f(gen, init)
       IMPORT :: xt_xmdd_bucket_gen, xt_xmdd_bucket_gen_comms
