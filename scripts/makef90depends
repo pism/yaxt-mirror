@@ -976,7 +976,7 @@ sub createTmpDir()
       # no preproc options?
       elsif (grep(/^--$/, @ARGV) == 1)
       {
-         if (!$ARGV[0] eq '--')
+         if ($ARGV[0] ne '--')
          {
             # give up if option parsing mysteriously failed
             die('internal error: double dash must be first in ARGV by now!');
