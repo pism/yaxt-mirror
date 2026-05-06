@@ -179,7 +179,8 @@ test_exchanger_parallel_LDADD =  libtestutil.la \
 	../src/xt_exchanger_irecv_send.lo \
 	../src/xt_exchanger_irecv_isend_packed.lo \
 	../src/xt_exchanger_mix_isend_irecv.lo \
-	../src/xt_exchanger_simple_base.lo
+	../src/xt_exchanger_simple_base.lo \
+	../src/xt_exchanger_rma_get.lo
 if ENABLE_XT_DDT_EXCHANGER
 test_exchanger_parallel_LDADD += \
 	../src/xt_ddt.lo \

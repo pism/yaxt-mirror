@@ -64,6 +64,7 @@
 #include "xt_exchanger_irecv_isend_packed.h"
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_neigh_alltoall.h"
+#include "xt_exchanger_rma_get.h"
 #include "xt_idxlist_internal.h"
 #include "xt/quicksort.h"
 #include "xt/mergesort.h"
@@ -116,6 +117,8 @@ static const struct {
     (Xt_exchanger_new)0,
 #endif
     xt_exchanger_neigh_alltoall },
+  { "rma_get",
+    xt_exchanger_rma_get_new, xt_exchanger_rma_get },
 };
 
 enum {

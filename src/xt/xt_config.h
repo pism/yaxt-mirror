@@ -79,6 +79,7 @@ enum Xt_exchangers {
   xt_exchanger_mix_isend_irecv,
   xt_exchanger_neigh_alltoall,
   xt_exchanger_irecv_isend_ddt_packed,
+  xt_exchanger_rma_get,
 };
 
 /**

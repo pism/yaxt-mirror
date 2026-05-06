@@ -59,6 +59,7 @@
 #include "xt_exchanger_irecv_isend_ddt_packed.h"
 #include "xt_exchanger_irecv_isend.h"
 #include "xt_exchanger_irecv_send.h"
+#include "xt_exchanger_rma_get.h"
 
 const struct xt_exchanger_vtable *
 xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new)
@@ -78,6 +79,8 @@ xt_exchanger_new_get_vtable(Xt_exchanger_new exchanger_new)
   else if (exchanger_new == xt_exchanger_neigh_alltoall_new)
     vtab = &xt_exchanger_neigh_alltoall_vtable;
 #endif
+  else if (exchanger_new == xt_exchanger_rma_get_new)
+    vtab = &xt_exchanger_rma_get_vtable;
   else
     Xt_abort(Xt_default_comm, "unexpected exchanger constructor",
              "xt_exchanger_vtable.c", __LINE__);
