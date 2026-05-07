@@ -149,6 +149,7 @@ xt_exchanger_rma_get_create_omp_share(Xt_exchanger exchanger);
 
 static void xt_request_rma_get_wait(Xt_request request);
 static int  xt_request_rma_get_test(Xt_request request);
+static void xt_request_rma_get_finish(Xt_request_rma_get r);
 
 static void xt_request_rma_get_access_epoch(Xt_request_rma_get r){
 
@@ -203,6 +204,26 @@ const struct xt_exchanger_vtable xt_exchanger_rma_get_vtable = {
 };
 
 
+/* Unpack received data from staging buffer and free request resources. */
+static void
+xt_request_rma_get_finish(Xt_request_rma_get r)
+{
+  Xt_exchanger_rma_get e = r->exchanger;
+
+  for (int i = 0; i < e->nrecv; i++) {
+    int position = 0;
+    xt_mpi_call(MPI_Unpack((char *)r->staging_buf + e->recv_staging_displs[i],
+                           e->recv_win_sizes[i], &position,
+                           r->dst_data,
+                           1, e->msgs[e->nsend + i].datatype,
+                           e->comm),
+                e->comm);
+  }
+
+  free(r->staging_buf);
+  free(r);
+}
+
 static void
 xt_request_rma_get_wait(Xt_request request)
 {
@@ -221,19 +242,7 @@ xt_request_rma_get_wait(Xt_request request)
   xt_mpi_call(MPI_Win_wait(e->win), e->comm);
   e->exposure_epoch_open = false;
 
-  for (int i = 0; i < e->nrecv; i++) {
-    int position = 0;
-    xt_mpi_call(MPI_Unpack((char *)r->staging_buf + e->recv_staging_displs[i],
-                           e->recv_win_sizes[i], &position,
-                           r->dst_data,
-                           1, e->msgs[e->nsend + i].datatype,
-                           e->comm),
-                e->comm);
-  }
-
-  free(r->staging_buf);
-
-  free(r);
+  xt_request_rma_get_finish(r);
 }
 
 static int
@@ -261,22 +270,9 @@ xt_request_rma_get_test(Xt_request request)
   if (!flag)
     return 0;
 
-  /* Exposure epoch closed — clear flag, unpack and finish */
-  r->exchanger->exposure_epoch_open = false;
+  e->exposure_epoch_open = false;
 
-  for (int i = 0; i < e->nrecv; i++) {
-    int position = 0;
-    xt_mpi_call(MPI_Unpack((char *)r->staging_buf + e->recv_staging_displs[i],
-                           e->recv_win_sizes[i], &position,
-                           r->dst_data,
-                           1, e->msgs[e->nsend + i].datatype,
-                           e->comm),
-                e->comm);
-  }
-
-  free(r->staging_buf);
-
-  free(r);
+  xt_request_rma_get_finish(r);
   return 1;
 }
 
