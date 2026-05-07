@@ -83,6 +83,7 @@ struct Xt_exchanger_rma_get_ {
   MPI_Group post_group;    /* group of send partners (who GET from us) */
   MPI_Group start_group;   /* group of recv partners (who we GET from) */
   bool exposure_epoch_open; /* true between MPI_Win_post and MPI_Win_wait */
+  int ready_tag;            /* tag for point-to-point readiness messages */
   /*
    * send_win_displs[i]     = byte displacement in our window for send partner i.
    * recv_win_displs[i]     = byte displacement in recv partner i's window where
@@ -116,7 +117,9 @@ struct Xt_request_rma_get_ {
   int *recv_sizes;         /* size in bytes of each recv partner's packed data */
   int *recv_displs;        /* byte offset in staging_buf for each recv partner */
   Xt_exchanger_rma_get exchanger; /* back-pointer to clear exposure_epoch_open */
-  MPI_Request all_post_barrier;
+  int n_ready_reqs;           /* nsend + nrecv readiness notifications */
+  MPI_Request *ready_reqs;    /* array of readiness notification requests */
+  bool access_epoch_started;  /* true once Win_start has been called */
 };
 
 typedef struct Xt_request_rma_get_ *Xt_request_rma_get;
@@ -154,8 +157,10 @@ static int  xt_request_rma_get_test(Xt_request request);
 static void xt_request_rma_get_access_epoch(Xt_request_rma_get r){
 
   Xt_exchanger_rma_get e = r->exchanger;
-   /* --- Step 3: Open our access epoch on the send partners' windows --- */
-  xt_mpi_call(MPI_Win_start(e->start_group, 0, e->win), e->comm);
+   /* --- Step 3: Open our access epoch on the send partners' windows ---
+      We can use MPI_MODE_NOCHECK because we did it manually
+    */
+  xt_mpi_call(MPI_Win_start(e->start_group, MPI_MODE_NOCHECK, e->win), e->comm);
 
   /* --- Step 4: Allocate staging buffer and issue MPI_Get for each recv partner --- */
   void *staging_buf =
@@ -212,10 +217,13 @@ xt_request_rma_get_wait(Xt_request request)
 {
   Xt_request_rma_get r = (Xt_request_rma_get)request;
 
-  if(r->all_post_barrier != MPI_REQUEST_NULL){
-    xt_mpi_call(MPI_Wait(&(r->all_post_barrier), MPI_STATUSES_IGNORE), r->comm);
-    r->all_post_barrier = MPI_REQUEST_NULL;
+  if (!r->access_epoch_started) {
+    if (r->n_ready_reqs > 0)
+      xt_mpi_call(MPI_Waitall(r->n_ready_reqs, r->ready_reqs,
+                               MPI_STATUSES_IGNORE), r->comm);
+    free(r->ready_reqs);
     xt_request_rma_get_access_epoch(r);
+    r->access_epoch_started = true;
   }
 
   xt_mpi_call(MPI_Win_wait(r->win), r->comm);
@@ -230,14 +238,18 @@ xt_request_rma_get_test(Xt_request request)
   Xt_request_rma_get r = (Xt_request_rma_get)request;
   Xt_exchanger_rma_get e = r->exchanger;
 
-  if(r->all_post_barrier != MPI_REQUEST_NULL){
+  if (!r->access_epoch_started) {
     int flag = 0;
-    xt_mpi_call(MPI_Test(&(r->all_post_barrier), &flag, MPI_STATUSES_IGNORE), r->comm);
+    if (r->n_ready_reqs > 0)
+      xt_mpi_call(MPI_Testall(r->n_ready_reqs, r->ready_reqs, &flag,
+                               MPI_STATUSES_IGNORE), r->comm);
+    else
+      flag = 1;
     if (!flag)
       return 0;
-    r->all_post_barrier = MPI_REQUEST_NULL;
-
+    free(r->ready_reqs);
     xt_request_rma_get_access_epoch(r);
+    r->access_epoch_started = true;
   }
 
   int flag = 0;
@@ -395,7 +407,7 @@ xt_exchanger_rma_get_new(int nsend, int nrecv,
               exchanger->comm);
 
   exchanger->exposure_epoch_open = false;
-
+  exchanger->ready_tag = tag;
   return (Xt_exchanger)exchanger;
 }
 
@@ -471,7 +483,8 @@ xt_exchanger_rma_get_a_exchange(Xt_exchanger exchanger,
              "while previous exchange is still pending (wait not called)",
              filename, __LINE__);
 
-  xt_mpi_call(MPI_Win_post(e->post_group, 0, e->win), e->comm);
+  // Use MPI_MODE_NOCHECK, because we do manual (a)synchronization
+  xt_mpi_call(MPI_Win_post(e->post_group, MPI_MODE_NOCHECK, e->win), e->comm);
   e->exposure_epoch_open = true;
   /* --- Step 6: Build and return the async request --- */
   Xt_request_rma_get req = xmalloc(sizeof(*req));
@@ -483,7 +496,33 @@ xt_exchanger_rma_get_a_exchange(Xt_exchanger exchanger,
   req->recv_sizes  = e->recv_win_sizes;
   req->recv_displs = e->recv_staging_displs;
   req->exchanger   = e;
-  xt_mpi_call(MPI_Ibarrier(e->comm, &req->all_post_barrier), e->comm);
+
+  /* Point-to-point readiness notifications: each partner confirms its
+   * window is posted before we open our access epoch. */
+  int n_ready = e->nsend + e->nrecv;
+  MPI_Request *ready_reqs =
+    xmalloc((size_t)(n_ready > 0 ? n_ready : 1) * sizeof(*ready_reqs));
+
+  /* Receive readiness from each recv partner (they notify us when their
+   * window is posted so we can safely MPI_Win_start). */
+  for (int i = 0; i < e->nrecv; i++) {
+    xt_mpi_call(MPI_Irecv(NULL, 0, MPI_BYTE,
+                          e->msgs[e->nsend + i].rank, e->ready_tag,
+                          e->comm, &ready_reqs[i]),
+                e->comm);
+  }
+
+  /* Notify each send partner that our window is posted and ready. */
+  for (int i = 0; i < e->nsend; i++) {
+    xt_mpi_call(MPI_Isend(NULL, 0, MPI_BYTE,
+                          e->msgs[i].rank, e->ready_tag,
+                          e->comm, &ready_reqs[e->nrecv + i]),
+                e->comm);
+  }
+
+  req->n_ready_reqs = n_ready;
+  req->ready_reqs = ready_reqs;
+  req->access_epoch_started = false;
 
   *request = (Xt_request)req;
 }
