@@ -51,7 +51,8 @@ MODULE xt_core
 #ifdef XT_INT_FC_KIND_IN_ISO_C_BINDING
   USE, INTRINSIC :: iso_c_binding, ONLY: XT_INT_FC_KIND
 #endif
-  USE xt_mpi, ONLY: XT_INT_FC_MPIDT, xt_mpi_fint_kind
+  USE xt_mpi, ONLY: xt_mpi_fint_kind
+  USE mpi
   IMPLICIT NONE
   PRIVATE
   INTEGER, PUBLIC, PARAMETER :: xt_int_kind   = XT_INT_FC_KIND
