@@ -119,7 +119,7 @@ compute_and_pack_bucket_intersections(Xt_idxlist src_idxlist,
                                       Xt_config config)
 {
   size_t bgd_size = config->xmdd_bucket_gen->gen_state_size;
-  bgd_size = (bgd_size + sizeof (void *) - 1)/sizeof (void *) * sizeof (void *);
+  bgd_size = (bgd_size + sizeof (void *) - 1)/sizeof (void *);
   void *bgd[bgd_size];
   int stripify =
     config->xmdd_bucket_gen->init(
