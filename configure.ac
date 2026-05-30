@@ -168,6 +168,12 @@ AC_LANG_POP([Fortran])
 ACX_FC_STRUCT_RETURN_HLF([Xt_fc_hlf_struct_return=:],
   [Xt_fc_hlf_struct_return=false
    AC_MSG_WARN([Disabling Fortran interface for bucket generator])])
+AS_IF([$Xt_fc_hlf_struct_return],
+  [ACX_FC_C_2FLD_STRUCT_RETURN(,
+     [Xt_fc_hlf_struct_return=false
+      AC_MSG_WARN([Disabling Fortran interface for bucket generator])],
+     [AC_DEFINE([NEED_FC_PAIR_STRUCT_WORKAROUND],[1])
+      AC_MSG_WARN([Building Fortran interface for bucket generator with extra work-around])])])
 ACX_FC_ABSTRACT_INTERFACE([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_ABSTRACT_INTERFACE"],
   [AC_MSG_WARN([Disabling procedure queries in Fortran interface for bucket generator])])
@@ -211,6 +217,8 @@ AH_TEMPLATE([HAVE_FC_IS_CONTIGUOUS],
   [Defined to 1 iff Fortran compiler supports IS_CONTIGUOUS query])dnl
 AH_TEMPLATE([HAVE_FC_C_LOC_OF_SLICE],
   [Defined to 1 iff Fortran compiler supports C_LOC of an array slice])dnl
+AH_TEMPLATE([NEED_FC_PAIR_STRUCT_WORKAROUND],
+  [Defined in case Fortran compiler requires work-around to pass pair structs.])dnl
 dnl Check whether char is unsigned by default
 AM_CONDITIONAL([xt_fc_hlf_struct_return],
   [$Xt_fc_hlf_struct_return])

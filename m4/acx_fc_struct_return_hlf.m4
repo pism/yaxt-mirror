@@ -60,25 +60,39 @@ AC_DEFUN([ACX_FC_STRUCT_RETURN_HLF],
      [acx_cv_fc_struct_return_hlf],
      [AC_LANG_PUSH([Fortran])
       AC_COMPILE_IFELSE(
-[      MODULE conftest_module
+[      MODULE conftest_module_a
+      IMPLICIT NONE
       TYPE apple
+        INTEGER :: apricot
       END TYPE
+      CONTAINS
+      FUNCTION cherry() RESULT(banana)
+      TYPE(apple) :: banana
+      banana%apricot = 1
+      END FUNCTION cherry
+      END MODULE conftest_module_a
+      MODULE conftest_module_b
+      USE conftest_module_a
+      IMPLICIT NONE
       INTERFACE
         SUBROUTINE b(c, d)
-        IMPORT
+          IMPORT :: apple
           INTERFACE
             FUNCTION c() RESULT(banana)
-              IMPORT apple
+              IMPORT :: apple
               TYPE(apple) :: banana
             END FUNCTION c
           END INTERFACE
           INTEGER, VALUE :: d
         END SUBROUTINE b
       END INTERFACE
-      END MODULE conftest_module
+      END MODULE conftest_module_b
 ],
         [AC_COMPILE_IFELSE([      PROGRAM conftest
-      USE conftest_module
+      USE conftest_module_a
+      USE conftest_module_b
+      IMPLICIT NONE
+      CALL b(cherry, 2)
       END PROGRAM conftest],
         [acx_cv_fc_struct_return_hlf=yes],
         [acx_cv_fc_struct_return_hlf=no])],
