@@ -40,7 +40,7 @@ dnl
 dnl helper function to emit Fortran test code
 AC_DEFUN([_ACX_CHECK_CFORTRAN_FC],
   [AC_LANG_PUSH([Fortran])
-         AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+   AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 [      MODULE conftest_data
       IMPLICIT NONE
       PRIVATE
@@ -132,7 +132,7 @@ dnl therefore we try to delete everything:
 dnl helper function to emit Fortran 77 test code
 AC_DEFUN([_ACX_CHECK_CFORTRAN_F77],
   [AC_LANG_PUSH([Fortran 77])
-         AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+   AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 [      REAL FUNCTION CFTSTF(v)
       REAL RI
       COMMON /CFTSTD/ RI
