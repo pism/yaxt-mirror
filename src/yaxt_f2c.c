@@ -718,6 +718,15 @@ f2c_xmdd_bucket_gen_init_state(
                      &comms_f, init_params);
 }
 
+#ifdef NEED_FC_PAIR_STRUCT_WORKAROUND
+static struct Xt_com_list
+f2c_xmdd_bucket_gen_next(void *gen_state, int type, const struct Xt_xmdd_bucket_gen_ *bgd)
+{
+  struct Xt_com_list res;
+  bgd->next_f(&res, gen_state, type);
+  return res;
+}
+#endif
 
 static void
 xt_xmdd_bucket_gen_define_interface_f2c(
@@ -735,6 +744,10 @@ xt_xmdd_bucket_gen_define_interface_f2c(
     f2c_xmdd_bucket_gen_init_state, destroy, get_intersect_max_num, next,
     (size_t)gen_state_size, *init_params);
   (*gen)->init_f = init;
+#ifdef NEED_FC_PAIR_STRUCT_WORKAROUND
+  (*gen)->next = (Xt_xmdd_bucket_gen_next)f2c_xmdd_bucket_gen_next;
+  (*gen)->next_f = (Xt_xmdd_bucket_gen_next_f)next;
+#endif
 }
 
 #undef ROUTINE_2
@@ -766,6 +779,10 @@ xt_xmdd_bucket_gen_def_if_f2c(
     f2c_xmdd_bucket_gen_init_state, destroy, get_intersect_max_num, next,
     gen_state_size, init_params);
   gen->init_f = init;
+#ifdef NEED_FC_PAIR_STRUCT_WORKAROUND
+  gen->next = (Xt_xmdd_bucket_gen_next)f2c_xmdd_bucket_gen_next;
+  gen->next_f = (Xt_xmdd_bucket_gen_next_f)next;
+#endif
 }
 
 static void

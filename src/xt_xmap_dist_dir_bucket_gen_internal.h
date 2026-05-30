@@ -83,6 +83,11 @@ typedef int (*Xt_xmdd_bucket_gen_init_state_f)(
   struct Xt_xmdd_bucket_gen_comms_f *comms,
   void *init_params);
 
+#ifdef NEED_FC_PAIR_STRUCT_WORKAROUND
+typedef void (*Xt_xmdd_bucket_gen_next_f)(struct Xt_com_list *comm_list,
+                                          void *gen_state, int type);
+#endif
+
 struct Xt_xmdd_bucket_gen_ {
   /** The init function sets up the generator state. */
   Xt_xmdd_bucket_gen_init_state_internal init;
@@ -95,6 +100,11 @@ struct Xt_xmdd_bucket_gen_ {
    * anyway).
    * Any previously returned buckets become invalid. */
   Xt_xmdd_bucket_gen_next next;
+#ifdef NEED_FC_PAIR_STRUCT_WORKAROUND
+  /* Only needed in case the Fortran compiler cannot handle returning
+   * pair structs */
+  Xt_xmdd_bucket_gen_next_f next_f;
+#endif
   /** gen_state_size is the size of the generator state
    *
    * The distributed directory will provide memory aligned to

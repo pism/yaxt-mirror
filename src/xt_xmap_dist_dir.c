@@ -152,8 +152,15 @@ compute_and_pack_bucket_intersections(Xt_idxlist src_idxlist,
       *restrict sends_src = sends_dst + max_num_intersect;
     size_t num_src_msg = 0, num_dst_msg = 0;
     struct Xt_com_list bucket;
-    while ((bucket = config->xmdd_bucket_gen->next(
-              &bgd, Xt_dist_dir_bucket_gen_type_sendrecv)).list) {
+#ifdef NEED_FC_PAIR_STRUCT_WORKAROUND
+    typedef struct Xt_com_list (*xmdd_bucket_gen_next)(void *gen_state, int type, const struct Xt_xmdd_bucket_gen_ *bgd);
+#define next(bgd_param, type_param) ((xmdd_bucket_gen_next)next)(bgd_param, type_param, config->xmdd_bucket_gen)
+#endif
+    Xt_xmdd_bucket_gen_next next = config->xmdd_bucket_gen->next;
+    while ((bucket = next(&bgd, Xt_dist_dir_bucket_gen_type_sendrecv)).list) {
+#ifdef NEED_FC_PAIR_STRUCT_WORKAROUND
+#  undef next
+#endif
       size_t rank;
       for (rank = send_size_filled + 1; rank < (size_t)bucket.rank; ++rank)
         rank_no_send(rank, send_size);
