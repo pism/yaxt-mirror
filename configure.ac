@@ -180,6 +180,18 @@ ACX_FC_ABSTRACT_INTERFACE([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 ACX_FC_C_FUNLOC([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_C_FUNLOC"],
   [AC_MSG_WARN([Disabling procedure queries in Fortran interface for bucket generator])])
+ACX_GFORTRAN_SIZEOF([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define FC_C_SIZEOF(arg) SIZEOF(arg)
+@%:@define HAVE_GFORTRAN_SIZEOF"],[:])
+ACX_FC_C_SIZEOF(
+  [AS_IF([test x"$acx_cv_fc_sizeof" = xno],
+     [XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define FC_C_SIZEOF(arg) C_SIZEOF(arg)"])
+   XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_C_SIZEOF"],[:])
+AS_IF([test x"$acx_cv_fc_sizeof" = xno && test x"$acx_cv_fc_c_sizeof" = xno],
+  [AC_MSG_WARN([Emulating C char size queries in Fortran tests])])
+dnl
 ACX_FC_HAVE_SIZE_KIND_ARGUMENT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_SIZE_KIND_ARGUMENT"])
 AC_FC_DUMMY_MAIN(,[:])

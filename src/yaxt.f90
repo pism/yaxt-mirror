@@ -133,12 +133,24 @@ MODULE yaxt
 #ifdef XT_HAVE_FC_HLF_STRUCT_RETURN
   USE xt_xmap_dist_dir_bucket_gen2, ONLY: &
        xt_xmdd_bucket_gen_define_interface, &
+       xt_xmdd_bucket_gen_define_interface_f, &
        xt_xmdd_bucket_gen_comms, &
        xt_dist_dir_bucket_gen_type_send, &
        xt_dist_dir_bucket_gen_type_recv, &
        xt_dist_dir_bucket_gen_type_sendrecv, &
        xt_xmdd_bucket_gen_get_init_params, &
-       xt_xmdd_bucket_gen_set_init_params
+       xt_xmdd_bucket_gen_set_init_params, &
+       xt_xmdd_bucket_gen_set_init, &
+       xt_xmdd_bucket_gen_set_extended_init_params
+#  if defined HAVE_FC_C_FUNLOC && defined HAVE_FC_ABSTRACT_INTERFACE
+  USE xt_xmap_dist_dir_bucket_gen2, ONLY: xt_xmdd_bucket_gen_get_init
+#  endif
+#  ifdef HAVE_FC_C_FUNLOC
+  USE xt_xmap_dist_dir_bucket_gen2, ONLY: xt_xmdd_bucket_gen_def_if_f2c
+#  endif
+#  ifdef HAVE_FC_ABSTRACT_INTERFACE
+  USE xt_xmap_dist_dir_bucket_gen2, ONLY: xt_xmdd_bucket_gen_init_state
+#  endif
 #endif
   USE xt_xmap_intersection, ONLY: xt_xmap_intersection_new, &
        xt_xmap_intersection_ext_new, xt_com_list, &
@@ -244,7 +256,19 @@ MODULE yaxt
        xt_dist_dir_bucket_gen_type_recv, &
        xt_dist_dir_bucket_gen_type_sendrecv, &
        xt_xmdd_bucket_gen_get_init_params, &
-       xt_xmdd_bucket_gen_set_init_params
+       xt_xmdd_bucket_gen_set_init_params, &
+       xt_xmdd_bucket_gen_set_init, &
+       xt_xmdd_bucket_gen_set_extended_init_params
+  PUBLIC :: xt_xmdd_bucket_gen_define_interface_f
+#  if defined HAVE_FC_C_FUNLOC && defined HAVE_FC_ABSTRACT_INTERFACE
+  PUBLIC :: xt_xmdd_bucket_gen_get_init
+#  endif
+#  ifdef HAVE_FC_C_FUNLOC
+  PUBLIC :: xt_xmdd_bucket_gen_def_if_f2c
+#  endif
+#  ifdef HAVE_FC_ABSTRACT_INTERFACE
+  PUBLIC :: xt_xmdd_bucket_gen_init_state
+#  endif
 #endif
 
   PUBLIC :: xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &

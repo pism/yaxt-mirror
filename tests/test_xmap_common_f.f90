@@ -62,7 +62,12 @@ MODULE test_xmap_common
        xt_xmap, xt_xmap_copy, xt_xmap_delete, &
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
-       xt_mpi_comm_mark_exclusive
+       xt_mpi_comm_mark_exclusive, xt_config, xt_config_delete, &
+       xt_xmap_dist_dir_custom_new
+#if defined HAVE_FC_ABSTRACT_INTERFACE
+  USE test_xmap_bucket_tiler, ONLY: tile_bucket_config_new, &
+       tile_bucket_config_set_global_dims
+#endif
   IMPLICIT NONE
   PRIVATE
   INTEGER :: my_rank
@@ -73,8 +78,12 @@ MODULE test_xmap_common
     MODULE PROCEDURE test_self_xmap_construct_stripes
   END INTERFACE test_self_xmap_construct
   CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_common_f.f90'
+#if defined HAVE_FC_ABSTRACT_INTERFACE
+  PROCEDURE(xt_xmap_dist_dir_custom_new), POINTER :: xmap_custom_new_ptr
+  TYPE(xt_config) :: custom_bucket_config
+#endif
 CONTAINS
-  SUBROUTINE xmap_self_test_main(xmap_new)
+  SUBROUTINE xmap_self_test_main(xmap_new, xmap_custom_new)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
         YAXT_IMPORT xt_idxlist, xt_xmap
@@ -84,14 +93,27 @@ CONTAINS
         INTEGER, INTENT(in) :: comm
         TYPE(xt_xmap) :: res
       END FUNCTION xmap_new
+      FUNCTION xmap_custom_new(src_idxlist, dst_idxlist, comm, config) &
+           RESULT(res)
+        YAXT_IMPORT xt_idxlist, xt_xmap, xt_config
+        IMPLICIT NONE
+        TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+        TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+        INTEGER, INTENT(in) :: comm
+        TYPE(xt_config), INTENT(in) :: config
+        TYPE(xt_xmap) :: res
+      END FUNCTION xmap_custom_new
     END INTERFACE
-    INTEGER :: ierror, i, j
+    INTEGER :: ierror, i, j, world_size
     INTEGER :: comms(2)
     INTEGER(xi), PARAMETER :: lsize(2) = (/ 7_xi, 1023_xi /)
 
     CALL init_mpi
     CALL xt_initialize(mpi_comm_world)
     CALL mpi_comm_rank(mpi_comm_world, my_rank, ierror)
+    IF (ierror /= mpi_success) &
+         CALL test_abort("MPI error!", filename, __LINE__)
+    CALL mpi_comm_size(mpi_comm_world, world_size, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("MPI error!", filename, __LINE__)
 
@@ -101,14 +123,42 @@ CONTAINS
          CALL test_abort("MPI error!", filename, __LINE__)
     CALL xt_mpi_comm_mark_exclusive(comms(2))
 
+#if defined HAVE_FC_ABSTRACT_INTERFACE
+    xmap_custom_new_ptr => xmap_custom_new
+    IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
+      custom_bucket_config = tile_bucket_config_new(&
+           1, (/ 8_xi /), (/ world_size /))
+    END IF
+#endif
+
     DO i = 1, SIZE(comms)
       DO j = 1, 2
         CALL test_xmap1a(xmap_new, lsize(j), comms(i))
         CALL test_xmap1b(xmap_new, lsize(j), comms(i))
+#if defined HAVE_FC_ABSTRACT_INTERFACE
+        IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
+          CALL tile_bucket_config_set_global_dims(custom_bucket_config, &
+               (/ lsize(j)+1_xi /))
+          CALL test_xmap1a(new_custom_bucket_xmap_wrapper, lsize(j), comms(i))
+          CALL test_xmap1b(new_custom_bucket_xmap_wrapper, lsize(j), comms(i))
+        END IF
+#endif
       END DO
+#if defined HAVE_FC_ABSTRACT_INTERFACE
+        IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
+          CALL tile_bucket_config_set_global_dims(custom_bucket_config, &
+               (/ 100_xi * INT(world_size, xi) /))
+          CALL test_xmap2(new_custom_bucket_xmap_wrapper, comms(i))
+        END IF
+#endif
       CALL test_xmap2(xmap_new, comms(i))
     END DO
 
+#if defined HAVE_FC_ABSTRACT_INTERFACE
+    IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
+      CALL xt_config_delete(custom_bucket_config)
+    END IF
+#endif
     CALL mpi_comm_free(comms(2), ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort("MPI error!", filename, __LINE__)
@@ -118,6 +168,17 @@ CONTAINS
     CALL xt_finalize
     CALL finish_mpi
   END SUBROUTINE xmap_self_test_main
+
+#if defined HAVE_FC_ABSTRACT_INTERFACE
+  FUNCTION new_custom_bucket_xmap_wrapper(src_idxlist, dst_idxlist, comm) RESULT(res)
+    TYPE(xt_idxlist), INTENT(in) :: src_idxlist
+    TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_xmap) :: res
+    res = xmap_custom_new_ptr(src_idxlist, dst_idxlist, comm, &
+         custom_bucket_config)
+  END FUNCTION new_custom_bucket_xmap_wrapper
+#endif
 
   SUBROUTINE shift_idx(idx, offset)
     INTEGER(xi), INTENT(inout) :: idx(:)

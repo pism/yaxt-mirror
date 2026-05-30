@@ -174,17 +174,20 @@ MODULE xt_xmap_dist_dir_bucket_gen2
     END SUBROUTINE xt_xmdd_bucket_gen_def_if_f2c
 #endif
   END INTERFACE xt_xmdd_bucket_gen_define_interface
+  PUBLIC :: xt_xmdd_bucket_gen_define_interface_f
+  PUBLIC :: xt_xmdd_bucket_gen_def_if_f2c
+
   PUBLIC :: xt_xmdd_bucket_gen_get_init_params, &
        xt_xmdd_bucket_gen_set_init_params
 
   INTERFACE xt_xmdd_bucket_gen_set_extended_init_params
     SUBROUTINE xt_xmddbg_set_ext_init_params_f(gen, &
-         iparm_size, destroy, cpy)
+         init_params_size, destroy, cpy)
       IMPORT :: xt_xmdd_bucket_gen, c_ptr, c_size_t
       TYPE(xt_xmdd_bucket_gen), INTENT(inout) :: gen
-      INTEGER(c_size_t), INTENT(in) :: iparm_size
+      INTEGER(c_size_t), INTENT(in) :: init_params_size
       INTERFACE
-        SUBROUTINE destroy(init_params, init_params_size)
+        SUBROUTINE destroy(init_params, init_params_size_)
           IMPORT :: c_ptr, c_size_t
           TYPE(c_ptr), VALUE :: init_params
           INTEGER(c_size_t), VALUE :: init_params_size_
@@ -258,11 +261,11 @@ CONTAINS
     TYPE(xt_xmdd_bucket_gen), INTENT(in) :: gen
     TYPE(c_ptr), INTENT(in) :: init_params
     INTERFACE
-      SUBROUTINE xt_xmdd_bg_set_init_params_c(gen, init_params) &
+      SUBROUTINE xt_xmdd_bg_set_init_params_c(gen, init_params_) &
            BIND(c, name='xt_xmdd_bucket_gen_set_init_params')
         IMPORT :: c_ptr
         TYPE(c_ptr), VALUE, INTENT(in) :: gen
-        TYPE(c_ptr), VALUE, INTENT(in) :: init_params
+        TYPE(c_ptr), VALUE, INTENT(in) :: init_params_
       END SUBROUTINE xt_xmdd_bg_set_init_params_c
     END INTERFACE
     CALL xt_xmdd_bg_set_init_params_c(xt_xmdd_bucket_gen_f2c(gen), &

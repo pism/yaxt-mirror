@@ -45,10 +45,10 @@
 !
 #include "fc_feature_defs.inc"
 PROGRAM test_xmap_all2all
-  USE xt_xmap_abstract, ONLY: xt_xmap_all2all_new
+  USE xt_xmap_abstract, ONLY: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
   USE test_xmap_common, ONLY: xmap_self_test_main
   IMPLICIT NONE
-  CALL xmap_self_test_main(xt_xmap_all2all_new)
+  CALL xmap_self_test_main(xt_xmap_all2all_new, xt_xmap_all2all_custom_new)
 END PROGRAM test_xmap_all2all
 !
 ! Local Variables:

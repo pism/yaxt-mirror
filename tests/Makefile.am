@@ -135,6 +135,7 @@ libtestutil_la_SOURCES = tests.c \
 	test_redist_single_array_base_common.c \
 	test_redist_common.h test_redist_common.c
 
+
 libtestutil_f_la_SOURCES = ftest_common.f90 \
 	ftest_common_c.c ftest_common.h \
 	test_idxlist_utils_f.f90 \
@@ -142,6 +143,11 @@ libtestutil_f_la_SOURCES = ftest_common.f90 \
 	test_xmap_common_parallel_f.f90 \
 	test_xmap_common_intercomm_parallel_f.f90 \
 	test_redist_common_f.f90
+
+if xt_fc_hlf_struct_return
+libtestutil_f_la_SOURCES +=					\
+	test_xmap_bucket_tiler_f.f90
+endif
 
 libtestutil_f_la_LDFLAGS = -static
 libtestutil_la_LDFLAGS = -static
