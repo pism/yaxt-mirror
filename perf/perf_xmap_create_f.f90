@@ -200,10 +200,10 @@ CONTAINS
 
     INTEGER(c_int) :: stripify
     TYPE(c_ptr), VALUE :: gen_state_
-    TYPE(xt_idxlist), VALUE, INTENT(in) :: src_idxlist, dst_idxlist
-    TYPE(xt_config), VALUE, INTENT(in) :: config
+    TYPE(xt_idxlist), VALUE :: src_idxlist, dst_idxlist
+    TYPE(xt_config), VALUE :: config
     TYPE(xt_xmdd_bucket_gen_comms), INTENT(in) :: comms
-    TYPE(c_ptr), VALUE, INTENT(in) :: init_params
+    TYPE(c_ptr), VALUE :: init_params
     TYPE(xt_idxlist) :: init_prev_list
 
     TYPE(custom_bucket_gen_state), POINTER :: gen_state
@@ -261,7 +261,7 @@ CONTAINS
 
 
   SUBROUTINE custom_bucket_gen_destroy_state(gen_state_) BIND(c)
-    TYPE(c_ptr), VALUE, INTENT(in) :: gen_state_
+    TYPE(c_ptr), VALUE :: gen_state_
     TYPE(custom_bucket_gen_state), POINTER :: gen_state
 
     CALL C_F_POINTER(gen_state_, gen_state)

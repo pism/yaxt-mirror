@@ -82,10 +82,10 @@ MODULE xt_xmap_dist_dir_bucket_gen2
            xt_xmdd_bucket_gen_comms
       INTEGER(c_int) :: stripify
       TYPE(c_ptr), VALUE :: gen_state
-      TYPE(xt_idxlist), VALUE, INTENT(in) :: src_idxlist,dst_idxlist
-      TYPE(xt_config), VALUE, INTENT(in) :: config
+      TYPE(xt_idxlist), VALUE :: src_idxlist, dst_idxlist
+      TYPE(xt_config), VALUE :: config
       TYPE(xt_xmdd_bucket_gen_comms), INTENT(in) :: comms
-      TYPE(c_ptr), VALUE, INTENT(in) :: init_params
+      TYPE(c_ptr), VALUE :: init_params
     END FUNCTION xt_xmdd_bucket_gen_init_state
   END INTERFACE
   PUBLIC :: xt_xmdd_bucket_gen_init_state
@@ -121,17 +121,17 @@ MODULE xt_xmap_dist_dir_bucket_gen2
                xt_xmdd_bucket_gen_comms
           INTEGER(c_int) :: stripify
           TYPE(c_ptr), VALUE :: gen_state
-          TYPE(xt_idxlist), VALUE, INTENT(in) :: src_idxlist,dst_idxlist
-          TYPE(xt_config), VALUE, INTENT(in) :: config
-          TYPE(xt_xmdd_bucket_gen_comms), intent(in) :: comms
-          TYPE(c_ptr), VALUE, INTENT(in) :: init_params
+          TYPE(xt_idxlist), VALUE :: src_idxlist, dst_idxlist
+          TYPE(xt_config), VALUE :: config
+          TYPE(xt_xmdd_bucket_gen_comms), INTENT(in) :: comms
+          TYPE(c_ptr), VALUE :: init_params
         END FUNCTION init
 #endif
         !  The destroy function clean up the generator state. Can be zero
         !  if no cleaning is needed.
         SUBROUTINE destroy(gen_state) BIND(c)
           IMPORT :: c_ptr
-          TYPE(c_ptr), VALUE, INTENT(in) :: gen_state
+          TYPE(c_ptr), VALUE :: gen_state
         END SUBROUTINE destroy
 
         FUNCTION get_intersect_max_num(gen_state, &
@@ -170,7 +170,7 @@ MODULE xt_xmap_dist_dir_bucket_gen2
       TYPE(c_ptr), VALUE :: gen
       TYPE(c_funptr), VALUE :: init, destroy, get_intersect_max_num, next
       INTEGER(c_size_t), VALUE :: gen_state_size
-      TYPE(c_ptr), INTENT(in) :: init_params
+      TYPE(c_ptr), VALUE :: init_params
     END SUBROUTINE xt_xmdd_bucket_gen_def_if_f2c
 #endif
   END INTERFACE xt_xmdd_bucket_gen_define_interface
@@ -186,13 +186,13 @@ MODULE xt_xmap_dist_dir_bucket_gen2
       INTERFACE
         SUBROUTINE destroy(init_params, init_params_size)
           IMPORT :: c_ptr, c_size_t
-          TYPE(c_ptr), VALUE, INTENT(in) :: init_params
-          INTEGER(c_size_t), VALUE, INTENT(in) :: init_params_size
+          TYPE(c_ptr), VALUE :: init_params
+          INTEGER(c_size_t), VALUE :: init_params_size_
         END SUBROUTINE destroy
         SUBROUTINE cpy(dest_init_params, src_init_params, init_params_size)
           IMPORT :: c_ptr, c_size_t
-          TYPE(c_ptr), VALUE, INTENT(in) :: dest_init_params, src_init_params
-          INTEGER(c_size_t), VALUE, INTENT(in) :: init_params_size
+          TYPE(c_ptr), VALUE :: dest_init_params, src_init_params
+          INTEGER(c_size_t), VALUE :: init_params_size
         END SUBROUTINE cpy
       END INTERFACE
       OPTIONAL :: destroy, cpy
@@ -219,10 +219,10 @@ MODULE xt_xmap_dist_dir_bucket_gen2
                xt_xmdd_bucket_gen_comms
           INTEGER(c_int) :: stripify
           TYPE(c_ptr), VALUE :: gen_state
-          TYPE(xt_idxlist), VALUE, INTENT(in) :: src_idxlist,dst_idxlist
-          TYPE(xt_config), VALUE, INTENT(in) :: config
+          TYPE(xt_idxlist), VALUE :: src_idxlist, dst_idxlist
+          TYPE(xt_config), VALUE :: config
           TYPE(xt_xmdd_bucket_gen_comms), INTENT(in) :: comms
-          TYPE(c_ptr), VALUE, INTENT(in) :: init_params
+          TYPE(c_ptr), VALUE :: init_params
         END FUNCTION init
       END INTERFACE
 #endif
