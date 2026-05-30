@@ -46,6 +46,11 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 #include "fc_feature_defs.inc"
+#if __INTEL_COMPILER == 1500 && __INTEL_COMPILER_UPDATE == 2
+#define YAXT_IMPORT USE yaxt, ONLY:
+#else
+#define YAXT_IMPORT IMPORT ::
+#endif
 MODULE test_xmap_common
   USE iso_c_binding, ONLY: c_int
   USE mpi
@@ -72,7 +77,7 @@ CONTAINS
   SUBROUTINE xmap_self_test_main(xmap_new)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
+        YAXT_IMPORT xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
@@ -148,7 +153,7 @@ CONTAINS
     TYPE(xt_stripe), INTENT(in) :: src_stripes(:), dst_stripes(:)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
+        YAXT_IMPORT xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
@@ -168,7 +173,7 @@ CONTAINS
     INTEGER(xi), INTENT(in) :: src_indices(:), dst_indices(:)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
+        YAXT_IMPORT xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
@@ -188,7 +193,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(inout) :: src_idxlist, dst_idxlist
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
+        YAXT_IMPORT xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
@@ -215,7 +220,7 @@ CONTAINS
   SUBROUTINE test_xmap1a(xmap_new, lsize, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
+        YAXT_IMPORT xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
@@ -243,7 +248,7 @@ CONTAINS
   SUBROUTINE test_xmap1b(xmap_new, lsize, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
+        YAXT_IMPORT xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
@@ -266,7 +271,7 @@ CONTAINS
   SUBROUTINE test_xmap2(xmap_new, comm)
     INTERFACE
       FUNCTION xmap_new(src_idxlist, dst_idxlist, comm) RESULT(res)
-        IMPORT :: xt_idxlist, xt_xmap
+        YAXT_IMPORT xt_idxlist, xt_xmap
         IMPLICIT NONE
         TYPE(xt_idxlist), INTENT(in) :: src_idxlist
         TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
