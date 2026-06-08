@@ -122,14 +122,6 @@ clean-local:
 distclean-local:
 	-test "$(abs_builddir)" = "$(abs_srcdir)" || rmdir f90
 
-install-data-local: yaxt.h yaxt.hpp $(xtinclude_HEADERS)
-	@echo " $(MKDIR_P) '$(DESTDIR)$(xtincludedir)'"; \
-          $(MKDIR_P) "$(DESTDIR)$(xtincludedir)" || exit 1; \
-	for p in $(xtinclude_HEADERS); do \
-          echo " $(INSTALL_HEADER) $$p '$(DESTDIR)$(xtincludedir)'"; \
-          $(INSTALL_HEADER) $$p "$(DESTDIR)$(xtincludedir)" || exit $$?; \
-        done
-
 uninstall-local:
 	rm -rf "$(DESTDIR)$(xtincludedir)"
 
