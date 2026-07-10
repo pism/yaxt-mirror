@@ -144,6 +144,9 @@ CONTAINS
     INTEGER :: i, ierror, size_a, size_b, size_all
     INTEGER(xt_int_kind), POINTER :: results_1(:), &
          results_2(:), results_3(:), results_4(:)
+#if defined __NVCOMPILER && __NVCOMPILER_MAJOR__ == 26
+    TYPE(c_ptr) :: results_c(4), index_vector_a_c, index_vector_b_c
+#endif
 
     size_a = 2 * comm_size**2
     size_b = 2 * comm_size**2
@@ -180,17 +183,40 @@ CONTAINS
       CALL xt_xmap_delete(xmaps(i))
     END DO
 
+#if !defined __NVCOMPILER || __NVCOMPILER_MAJOR__ != 26
     CALL mpi_get_address(index_vector_a, src_displacements(1), ierror)
     CALL mpi_get_address(index_vector_b, src_displacements(2), ierror)
     CALL mpi_get_address(index_vector_a, src_displacements(3), ierror)
     CALL mpi_get_address(index_vector_b, src_displacements(4), ierror)
+#else
+    ! when using nvfortran 26.1, the displacements obtained from
+    ! mpi_get_address are all the same value, meaning that for some reason,
+    ! the array arguments to mpi_get_address are incorrectly passed
+    index_vector_a_c = C_LOC(index_vector_a)
+    index_vector_b_c = C_LOC(index_vector_b)
+    src_displacements(1) = TRANSFER(index_vector_a_c, 1_mpi_address_kind)
+    src_displacements(2) = TRANSFER(index_vector_b_c, 1_mpi_address_kind)
+    src_displacements(3) = src_displacements(1)
+    src_displacements(4) = src_displacements(2)
+#endif
 
     src_displacements = src_displacements - src_displacements(1)
 
+#if !defined __NVCOMPILER || __NVCOMPILER_MAJOR__ != 26
     CALL mpi_get_address(results_1, dst_displacements(1), ierror)
     CALL mpi_get_address(results_2, dst_displacements(2), ierror)
     CALL mpi_get_address(results_3, dst_displacements(3), ierror)
     CALL mpi_get_address(results_4, dst_displacements(4), ierror)
+#else
+    ! work-around for defect in nvfortran 26
+    results_c(1) = C_LOC(results_1)
+    results_c(2) = C_LOC(results_2)
+    results_c(3) = C_LOC(results_3)
+    results_c(4) = C_LOC(results_4)
+    DO i = 1, num_tx
+      dst_displacements(i) = TRANSFER(results_c(i), 1_mpi_address_kind)
+    END DO
+#endif
 
     dst_displacements = dst_displacements - dst_displacements(1)
 
