@@ -50,7 +50,34 @@ lt_cv_nm_interface="@lt_cv_nm_interface@"
 abs_builddir="@abs_builddir@"
 abs_top_builddir="@abs_top_builddir@"
 acx_symprfx="@acx_symprfx@"
+srcdir="@srcdir@"
 if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
+  if [ x"$srcdir" = 'x.' ]; then
+    libsrcdir=
+  else
+    libsrcdir=`echo ${srcdir} | sed -e 's@/tests$@/src@'`
+  fi
+  unset nv26libpat
+  for modname in yaxt_f90 xt_exchanger_f_f90 xt_redist_f_f90 \
+    xt_request_f_f90 xt_redist_int_i2_f90 \
+    xt_redist_int_i4_f90 xt_redist_int_i8_f90 \
+    xt_redist_logical_f90 xt_redist_real_dp_f90 \
+    xt_redist_real_sp_f90 \
+    xt_ddt_c
+  do
+    case $modname in
+      *_c)
+        sfx='_[0-9a-f]{1,4}\.[0-9a-f]{1,4}'
+        ;;
+      *)
+        sfx='_[0-9a-f]{1,4}'
+        ;;
+    esac
+    modname=`echo "${libsrcdir}/${modname}" | sed -e 'y/.\//__/'`
+    modnamesymlen=`expr "${modname}" : '.*'`
+    nv26libpat="${nv26libpat+$nv26libpat
+}/^[0-9a-fA-F]*[ 	][ 	]*[RD][ 	]_${modnamesymlen}${modname}${sfx}/b"
+  done
   exp_sym_prefix='[0-9a-fA-F]*[ 	][ 	]*[TDBGRSVW][ 	]'
   badsyms=$("$abs_top_builddir"/libtool --mode=clean --silent \
     ls "$abs_top_builddir"/src/*.la 2>/dev/null \
@@ -87,8 +114,11 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 /^[0-9a-fA-F]*[ 	][ 	]*[DB][ 	]_([Yy][Aa]){0,1}[Xx][Tt]_/b
 # NVHPC compiler 24.x and later adds this
 /^[0-9a-fA-F]*[ 	][ 	]*B[ 	]__(PGI|NV)_CUDA_LOC/b
-# nvfortran 26.1 adds a symbol derived from the file name to each .o
-/^[0-9a-fA-F]*[ 	][ 	]*[RD][ 	]_[0-9][0-9]*.*[0-9a-f]{1,4}/b
+# nvfortran 26.1 adds a symbol derived from the file name to some .o files
+# I am not yet sure, when it adds the symbol and when it does not and
+# how the trailing digits are computed. Also, I do not know what those
+# symbols would be used for.
+$nv26libpat
 # omp critical adds a common block for PGI compiler
 /^[0-9a-fA-F]*[ 	][ 	]*B[ 	]__cs_unspc/b
 # skip $-symbols that the Cray compiler puts in
