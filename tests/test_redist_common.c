@@ -95,6 +95,9 @@ int communicators_are_congruent(MPI_Comm comm1, MPI_Comm comm2) {
   return ((result == MPI_IDENT) || (result == MPI_CONGRUENT));
 }
 
+static void
+check_redist_datatypes(Xt_redist redist);
+
 void
 check_redist_(Xt_redist redist,
               int sync_mode,
@@ -119,6 +122,8 @@ check_redist_(Xt_redist redist,
   size_t dst_size = dst_num_elems * dt_extent;
   int start_txmode = sync_mode == sync_mode_test_a ? 1 : 0,
     end_txmode = sync_mode == sync_mode_test_s ? 1 : 2;
+  if (num_redists == 1)
+    check_redist_datatypes(redist);
   for (int txmode = start_txmode; txmode < end_txmode; ++txmode) {
     dst_prep(dst_buf_base, dst_prep_info, dst_num_elems);
     if (txmode == 0) {
@@ -161,6 +166,59 @@ check_redist_(Xt_redist redist,
               file, line);
   }
 }
+
+static void
+check_redist_datatypes_dir(Xt_redist redist, enum xt_msg_direction dir,
+                           MPI_Comm comm);
+
+static void
+check_redist_datatypes(Xt_redist redist)
+{
+  MPI_Comm comm = xt_redist_get_MPI_Comm(redist);
+  check_redist_datatypes_dir(redist, xt_direction_send, comm);
+  check_redist_datatypes_dir(redist, xt_direction_recv, comm);
+}
+
+static void
+check_redist_datatypes_dir(Xt_redist redist, enum xt_msg_direction dir,
+                           MPI_Comm comm)
+{
+  MPI_Datatype (*get_redist_dt)(Xt_redist redist, int rank)
+    = (dir == xt_direction_send)
+    ? xt_redist_get_send_MPI_Datatype
+    : xt_redist_get_recv_MPI_Datatype;
+  int comm_size;
+  MPI_Comm_size(comm, &comm_size);
+  int non_null = 0;
+  for (int i = 0; i < comm_size; ++i) {
+    MPI_Datatype dt = get_redist_dt(redist, i);
+    non_null += dt != MPI_DATATYPE_NULL;
+    if (dt != MPI_DATATYPE_NULL)
+      MPI_Type_free(&dt);
+  }
+  int (*get_redist_num_msg)(Xt_redist redist)
+    = (dir == xt_direction_send)
+    ? xt_redist_get_num_send_msg
+    : xt_redist_get_num_recv_msg;
+  int num_msg = get_redist_num_msg(redist);
+  if (num_msg < 0 || num_msg > comm_size) {
+#ifdef VERBOSE
+    static const char msg_label[2][27]
+      = { "xt_redist_get_num_send_msg",
+          "xt_redist_get_num_recv_msg" };
+    PUT_ERR("erroneous result from %s\n", msg_label[dir]);
+#endif
+  }
+  if (non_null != num_msg) {
+#ifdef VERBOSE
+    static const char msg_label[2][67]
+      = { "xt_redist_get_send_MPI_Datatype and/or xt_redist_get_num_send_msg",
+          "xt_redist_get_recv_MPI_Datatype and/or xt_redist_get_num_recv_msg" };
+#endif
+    PUT_ERR("erroneous result from %s\n", msg_label[dir]);
+  }
+}
+
 
 void
 fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems)
