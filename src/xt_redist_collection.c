@@ -808,17 +808,37 @@ static int redist_collection_get_num_msg(Xt_redist redist,
 }
 
 static MPI_Datatype
-redist_collection_get_MPI_Datatype(Xt_redist redist, int XT_UNUSED(rank),
-                                   enum xt_msg_direction XT_UNUSED(direction),
-                                   bool XT_UNUSED(do_dup))
+redist_collection_get_MPI_Datatype(Xt_redist redist, int rank,
+                                   enum xt_msg_direction direction,
+                                   bool do_dup)
 {
   Xt_redist_collection redist_coll = xrc(redist);
 
-  Xt_abort(redist_coll->comm, "ERROR: datatype retrieval is not"
-           " supported for this xt_redist type (Xt_redist_collection)",
-           filename, __LINE__);
-
-  return MPI_DATATYPE_NULL;
+  MPI_Datatype dt = MPI_DATATYPE_NULL;
+  if (redist_coll->num_components > 1)
+    Xt_abort(redist_coll->comm, "ERROR: datatype retrieval is not"
+             " supported for this xt_redist type (Xt_redist_collection)",
+             filename, __LINE__);
+  else {
+    size_t adj = direction == xt_direction_recv
+      ? redist_coll->nmsg[xt_direction_send] : 0;
+    const int *msg_ranks = redist_coll->msg_ranks + adj;
+    const MPI_Datatype *all_dt = redist_coll->all_component_dt + adj;
+    for (size_t i = 0, num_msg = redist_coll->nmsg[direction]; i < num_msg; ++i)
+    {
+      if (msg_ranks[i] < rank)
+        goto ret;
+      else if (msg_ranks[i] == rank) {
+        dt = all_dt[i];
+        goto check_dup;
+      }
+    }
+  check_dup:
+    if (do_dup)
+      xt_mpi_call(MPI_Type_dup(dt, &dt), redist_coll->comm);
+  }
+ret:
+  return dt;
 }
 
 static void
