@@ -294,22 +294,25 @@ redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
   Xt_redist_sab redist_sab = xrsab(redist);
   MPI_Datatype dt = xt_exchanger_get_MPI_Datatype(redist_sab->exchanger,
                                                   rank, direction, false);
-  MPI_Aint disp = xt_exchanger_get_displacement(redist_sab->exchanger,
-                                                rank, direction);
-  int count = xt_exchanger_get_count(redist_sab->exchanger,
-                                     rank, direction);
-  MPI_Datatype dtw;
-  if (!do_dup && disp == 0 && count == 1)
-    return dt;
-  else if (disp == 0 && count == 1)
-    xt_mpi_call(MPI_Type_dup(dt, &dtw), redist_sab->comm);
-  else if (disp == 0)
-    xt_mpi_call(MPI_Type_contiguous(count, dt, &dtw), redist_sab->comm);
-  else
-    xt_mpi_call(MPI_Type_create_hindexed(
-                  1, (int [1]){ count }, (MPI_Aint [1]){ disp }, dt, &dtw),
-                redist_sab->comm);
-  return dtw;
+  if (dt != MPI_DATATYPE_NULL) {
+    MPI_Aint disp = xt_exchanger_get_displacement(redist_sab->exchanger,
+                                                  rank, direction);
+    int count = xt_exchanger_get_count(redist_sab->exchanger,
+                                       rank, direction);
+    MPI_Datatype dtw;
+    if (!do_dup && disp == 0 && count == 1)
+      dtw = dt;
+    else if (disp == 0 && count == 1)
+      xt_mpi_call(MPI_Type_dup(dt, &dtw), redist_sab->comm);
+    else if (disp == 0)
+      xt_mpi_call(MPI_Type_contiguous(count, dt, &dtw), redist_sab->comm);
+    else
+      xt_mpi_call(MPI_Type_create_hindexed(
+                    1, (int [1]){ count }, (MPI_Aint [1]){ disp }, dt, &dtw),
+                  redist_sab->comm);
+    dt = dtw;
+  }
+  return dt;
 }
 
 static Xt_exchanger
