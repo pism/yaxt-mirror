@@ -37,7 +37,9 @@ To adapt yaxt to your MPI system, yaxt needs to be given two to four pieces of
 information
 
   a) how to invoke the C compiler and compile and link C programs
+     (mpicc will be tried automatically)
   b) how to invoke the Fortran compiler and compile and link Fortran programs
+     (mpifort and mpif90 will be tried automatically)
   c) how to run compiled MPI programs (mpirun and mpiexec will be
      tried automatically)
   d) how to produce C code for C<->Fortran interoperability, see cfortran.doc
@@ -94,7 +96,9 @@ Yaxt requires the following software environment to function
 
 The following system setups are regularly being tested:
 
-4.1 Debian GNU/Linux Squeeze 6 x86_64 with OpenMPI 1.4.3
+4.1 Debian GNU/Linux 
+    (this worked identically on Squeeze 6 x86_64 with OpenMPI 1.4.3 to
+     Debian 12 with OpenMPI 4.1.4 so far)
 
 The following packages need to be installed:
 
@@ -245,4 +249,14 @@ For make check:
 # @ queue
 
 make check
+
+4.6 NVHPC 26.x
+
+nvfortran 26.x runs into a defect when using the generic interface
+exposed by the custom xmap dist dir bucket generation (new in release
+0.12.0).  While work to automatically detect this defect during
+configure is still on-going, one needs to suppress, one needs to
+supply the following as an extra configure argument:
+
+acx_cv_fc_abstract_interface=no
 
