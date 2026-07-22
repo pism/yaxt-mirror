@@ -137,6 +137,7 @@ typedef struct Xt_com_list (*Xt_xmdd_bucket_gen_next)(
  * the \a init function
  * @note it remains the responsibility of the caller to dispose of
  * resources held by init_params
+ * @see xt_xmdd_bucket_gen_set_extended_init_params
  */
 void
 xt_xmdd_bucket_gen_define_interface(
@@ -162,6 +163,8 @@ xt_xmdd_bucket_gen_get_init_params(Xt_xmdd_bucket_gen gen);
  * Change state-independent initialization parameters of bucket
  * generator.
  * @param gen bucket generator to update state parameters for
+ * @param init_params global parameters passed to each invocation of
+ * the \a init function
  * @note previously set initial parameters will not be
  * destroyed automatically
  */
@@ -201,10 +204,27 @@ typedef void (*Xt_xmdd_bucket_gen_iparm_copy)(
   const void *restrict src_init_params,
   size_t init_params_size);
 
+/**
+ * Add handling of init_params resources to bucket generator.
+ *
+ * By supplying the following additional information, responsibility
+ * for the object backing init_params can be delegated to the
+ * bucket generator.
+ *
+ * @param gen bucket generator to enable resource handling for
+ * @param init_params_size If non-zero, ownership of the object pointed to
+ * by init_params passes to the bucket generator object it's assigned
+ * to. The init_params must be dynamically allocated with malloc,
+ * because when xt_xmdd_bucket_gen_delete is called, free will be
+ * called for init_params.
+ * @param destroy When destroy is non-zero, it will be called
+ * during xt_xmdd_bucket_gen_delete (before free).
+ * @param cpy Override for memcpy of init_params.
+ */
 void
 xt_xmdd_bucket_gen_set_extended_init_params(
   Xt_xmdd_bucket_gen gen,
-  size_t iparm_size,
+  size_t init_params_size,
   Xt_xmdd_bucket_gen_iparm_destroy destroy,
   Xt_xmdd_bucket_gen_iparm_copy cpy);
 
