@@ -128,7 +128,9 @@ xt_xmdd_bucket_gen_set_extended_init_params(
 {
   gen->init_params_size = iparm_size;
   gen->init_params_destroy = destroy;
-  gen->init_params_copy = cpy ? cpy : (Xt_xmdd_bucket_gen_iparm_copy)(void (*)(void))memcpy;
+  gen->init_params_copy = cpy
+    ? cpy
+    : (Xt_xmdd_bucket_gen_iparm_copy)(void (*)(void))memcpy;
 }
 
 /*
