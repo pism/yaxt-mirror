@@ -290,10 +290,10 @@ xt_config_set_xmdd_bucket_gen(Xt_config config,
     *gen = *bucket_gen_iface;
     if (gen->init_params_size) {
       gen->init_params = malloc(gen->init_params_size);
-      bucket_gen_iface->init_params_copy(gen->init_params,
-                                         bucket_gen_iface->init_params,
-                                         gen->init_params_size);
     }
+    bucket_gen_iface->init_params_copy(gen->init_params,
+                                       bucket_gen_iface->init_params,
+                                       gen->init_params_size);
   }
 }
 
