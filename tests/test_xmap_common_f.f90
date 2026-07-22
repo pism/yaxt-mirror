@@ -67,6 +67,8 @@ MODULE test_xmap_common
 #if defined HAVE_FC_ABSTRACT_INTERFACE
   USE test_xmap_bucket_tiler, ONLY: tile_bucket_config_new, &
        tile_bucket_config_set_global_dims
+  USE yaxt, ONLY: xt_config_get_xmdd_bucket_gen, xt_is_null, &
+       xt_xmdd_bucket_gen
 #endif
   IMPLICIT NONE
   PRIVATE
@@ -81,6 +83,7 @@ MODULE test_xmap_common
 #if defined HAVE_FC_ABSTRACT_INTERFACE
   PROCEDURE(xt_xmap_dist_dir_custom_new), POINTER :: xmap_custom_new_ptr
   TYPE(xt_config) :: custom_bucket_config
+  TYPE(xt_xmdd_bucket_gen) :: tile_bucket_gen
 #endif
 CONTAINS
   SUBROUTINE xmap_self_test_main(xmap_new, xmap_custom_new)
@@ -128,6 +131,15 @@ CONTAINS
     IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
       custom_bucket_config = tile_bucket_config_new(&
            1, (/ 8_xi /), (/ world_size /))
+      IF (.NOT. xt_is_null(tile_bucket_gen)) THEN
+        CALL test_abort("failed default initialization of xt_xmdd_bucket_gen", &
+             filename, __LINE__)
+      END IF
+      tile_bucket_gen = xt_config_get_xmdd_bucket_gen(custom_bucket_config)
+      IF (xt_is_null(tile_bucket_gen)) THEN
+        CALL test_abort("failed xt_config_get_xmdd_bucket_gen", &
+             filename, __LINE__)
+      END IF
     END IF
 #endif
 
