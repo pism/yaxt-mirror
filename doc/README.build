@@ -96,7 +96,7 @@ Yaxt requires the following software environment to function
 
 The following system setups are regularly being tested:
 
-4.1 Debian GNU/Linux 
+4.1 Debian GNU/Linux
     (this worked identically on Squeeze 6 x86_64 with OpenMPI 1.4.3 to
      Debian 12 with OpenMPI 4.1.4 so far)
 
