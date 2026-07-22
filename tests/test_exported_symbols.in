@@ -53,9 +53,9 @@ acx_symprfx="@acx_symprfx@"
 srcdir="@srcdir@"
 if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
   if [ x"$srcdir" = 'x.' ]; then
-    libsrcdir=
+    libsrcpfx=
   else
-    libsrcdir=`echo ${srcdir} | sed -e 's@/tests$@/src@'`
+    libsrcpfx=`echo "${srcdir}/" | sed -e 's@/tests/$@/src/@'`
   fi
   unset nv26libpat
   for modname in yaxt_f90 xt_exchanger_f_f90 xt_redist_f_f90 \
@@ -73,7 +73,7 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
         sfx='_[0-9a-f]{1,4}'
         ;;
     esac
-    modname=`echo "${libsrcdir}/${modname}" | sed -e 'y/.\//__/'`
+    modname=`echo "${libsrcpfx}${modname}" | sed -e 'y/.\//__/'`
     modnamesymlen=`expr "${modname}" : '.*'`
     nv26libpat="${nv26libpat+$nv26libpat
 }/^[0-9a-fA-F]*[ 	][ 	]*[RD][ 	]_${modnamesymlen}${modname}${sfx}/b"
