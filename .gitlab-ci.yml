@@ -317,7 +317,7 @@ gen_doxy_html:
   script:
   - module purge
   - module load texlive/live2021-gcc-11.2.0
-  - PATH="$PATH:/sw/spack-levante/mambaforge-22.9.0-2-Linux-x86_64-kptncg/pkgs/graphviz-6.0.2-h99bc08f_0/bin:/sw/spack-levante/mambaforge-4.13.0-1-Linux-x86_64-budobm/pkgs/ghostscript-9.54.0-h27087fc_2/bin"
+  - PATH="$PATH:/sw/spack-levante/mambaforge-23.1.0-1-Linux-x86_64-4jdbc6/pkgs/graphviz-6.0.2-h99bc08f_0/bin:/sw/spack-levante/mambaforge-4.13.0-1-Linux-x86_64-budobm/pkgs/ghostscript-9.54.0-h27087fc_2/bin"
   - ln -s "$(mktemp -d)" doc/html
   - make -C doc DOXYGEN=/sw/spack-levante/doxygen-1.14.0-wsghcq/bin/doxygen 2> >(tee doxy.err)
   - tar --transform='s@^doc/html/.@html@' -cjf doc/html.tar.xz doc/html/.
