@@ -70,6 +70,7 @@ MODULE yaxt
        xt_mt_none, xt_mt_openmp, &
        xt_config_get_sort_algorithm_id, &
        xt_config_set_sort_algorithm_by_id, &
+       xt_quicksort, xt_mergesort, &
        xt_config_set_mem_saving, &
        xt_config_get_mem_saving, &
        xt_config_set_xmdd_bucket_gen, &
@@ -87,7 +88,7 @@ MODULE yaxt
        xt_config_ddt_cache_no_parse, xt_config_ddt_cache_no_match, &
        xt_config_ddt_no_cache_no_parse
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
-       xt_sort_permutation, xt_assign_id_map
+       xt_sort_permutation, xt_assign_id_map, xt_sort_xt_int
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
@@ -272,7 +273,7 @@ MODULE yaxt
 #endif
 
   PUBLIC :: xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &
-       xt_assign_id_map
+       xt_assign_id_map, xt_sort_xt_int
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
   PUBLIC :: xt_xmap_dist_dir_new, xt_xmap_dist_dir_custom_new
   PUBLIC :: xt_xmap_dist_dir_intercomm_new, &
@@ -291,6 +292,7 @@ MODULE yaxt
        xt_mt_none, xt_mt_openmp, &
        xt_config_get_sort_algorithm_id, &
        xt_config_set_sort_algorithm_by_id, &
+       xt_quicksort, xt_mergesort, &
        xt_config_set_mem_saving, &
        xt_config_get_mem_saving, &
        xt_config_set_xmdd_bucket_gen, &
