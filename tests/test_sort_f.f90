@@ -47,11 +47,11 @@
 !
 #include "fc_feature_defs.inc"
 PROGRAM test_sort
-  USE iso_c_binding, ONLY: c_int, c_double, c_int32_t
+  USE iso_c_binding, ONLY: c_int, c_double, c_int32_t, c_char, c_null_char
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
-       xt_sort_index, xt_sort_int, xt_sort_permutation, &
-       xi => xt_int_kind
+       xt_sort_index, xt_sort_int, xt_sort_xt_int, xt_sort_permutation, &
+       xi => xt_int_kind, xt_quicksort, xt_mergesort
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
        random_fill, crc32, permute
   IMPLICIT NONE
@@ -59,11 +59,35 @@ PROGRAM test_sort
   CHARACTER(len=*), PARAMETER :: filename = 'test_sort_f.f90'
   CALL init_mpi
   CALL xt_initialize(mpi_comm_world)
+  CALL test_sort_lookup()
   CALL test_int_sort()
   CALL test_xt_int_sort()
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
+  ! not strictly a black box test, but we want to test all the name lookups
+  ! without messing with the environment
+  SUBROUTINE test_sort_lookup()
+    INTERFACE
+      FUNCTION xt_sort_algo_id_by_name(name) BIND(c) RESULT(rc)
+        IMPORT :: c_int, c_char
+        INTEGER(c_int) :: rc
+        CHARACTER(kind=c_char, len=1), INTENT(in) :: name(*)
+      END FUNCTION xt_sort_algo_id_by_name
+    END INTERFACE
+    INTEGER :: qs_algo_id, ms_algo_id, no_algo_id
+    CHARACTER(len=*), PARAMETER :: qs_name = "quicksort" // c_null_char, &
+         ms_name = "mergesort" // c_null_char, &
+         no_name = "nosuchsort" // c_null_char
+    qs_algo_id = xt_sort_algo_id_by_name(qs_name)
+    ms_algo_id = xt_sort_algo_id_by_name(ms_name)
+    no_algo_id = xt_sort_algo_id_by_name(no_name)
+    IF (qs_algo_id /= xt_quicksort &
+         .OR. ms_algo_id /= xt_mergesort &
+         .OR. no_algo_id /= -1) &
+         CALL test_abort("sort algorithm name lookup failed!", &
+         filename, __LINE__)
+  END SUBROUTINE test_sort_lookup
   SUBROUTINE test_int_sort()
     INTEGER(c_int), ALLOCATABLE :: a(:), permutation(:)
     REAL(c_double) :: rnd
@@ -121,6 +145,12 @@ CONTAINS
     crc_after = crc32(b)
     IF (crc_after /= crc_before) &
          CALL test_abort("error in data reconstruction!", filename, __LINE__)
+    CALL xt_sort_xt_int(b)
+    err_found = .FALSE.
+    DO i = 2, n
+      err_found = err_found .OR. b(i-1) > b(i)
+    END DO
+    IF (err_found) CALL test_abort("discontinuity found!", filename, __LINE__)
   END SUBROUTINE test_xt_int_sort
 
 END PROGRAM test_sort
