@@ -91,14 +91,19 @@ PROGRAM test_exchanger_parallel
   INTEGER, ALLOCATABLE :: exchanger_code(:)
   INTEGER, ALLOCATABLE :: split_comm(:)
   INTEGER :: world_size, world_rank, buf_size, buf_size_, ierror
+  INTEGER :: no_exch_id
   INTEGER(c_int), ALLOCATABLE :: buf(:)
   TYPE(c_ptr) :: bufp
 
   comm = mpi_comm_world
 
   CALL init_mpi
-  CALL xt_initialize(mpi_comm_world)
+  CALL xt_initialize(comm)
 
+  ! check that non-existent exchanger results in expected return
+  no_exch_id = xt_exchanger_id_by_name("non-existant fantasy exchanger")
+  IF (no_exch_id /= -1) &
+       CALL test_abort("invalid exchanger", filename, __LINE__)
   CALL parse_options(exchanger_code, test_freq)
   config = xt_config_new()
   ! todo: replace computation with query of exchanger

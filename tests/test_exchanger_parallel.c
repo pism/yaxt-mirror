@@ -94,6 +94,12 @@ int main(int argc, char **argv)
 
   xt_initialize(MPI_COMM_WORLD);
 
+  // check that non-existent exchanger results in -1
+  {
+    int no_exch_id = xt_exchanger_id_by_name("non-existant fantasy exchanger");
+    if (no_exch_id != -1)
+      PUT_ERR("invalid exchanger");
+  }
   int *exchanger_code = parse_options(&argc, &argv);
   Xt_config config = xt_config_new();
   static const int mt_configs_2_test[] = {
