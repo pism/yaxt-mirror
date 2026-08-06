@@ -51,7 +51,7 @@ PROGRAM test_redist_repeat
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_xmap, xt_xmap_delete, &
-       xt_redist, xt_redist_p2p_new, xt_redist_p2p_off_new, &
+       xt_redist, xt_redist_p2p_new, &
        xt_redist_p2p_off_custom_new, &
        xt_redist_repeat_new, xt_redist_delete, &
        xt_redist_s_exchange, xt_redist_a_exchange, &
