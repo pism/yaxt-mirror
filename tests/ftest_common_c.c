@@ -52,6 +52,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <mpi.h>
 
 #if defined HAVE_ALLOCA_H && HAVE_ALLOCA_H
 #  include <alloca.h>
@@ -78,6 +79,9 @@ void *alloca (size_t);
 #endif
 
 #include "ftest_common.h"
+
+#include <core/core.h>
+#include <xt/xt_mpi.h>
 
 #ifdef INT64_T_IS_LONG_LONG
 // #define INT64 LONGLONG */
@@ -151,6 +155,13 @@ pure_Print(const char *s)
 
 FCALLSCFUN1(INT, pure_Print, PURE_PRINT, pure_print, STRING)
 
+MPI_Aint
+xt_c_ptr_2_mpi_addr(void *p)
+{
+  MPI_Aint addr;
+  xt_mpi_call(MPI_Get_address(p, &addr), Xt_default_comm);
+  return addr;
+}
 
 /*
  * Local Variables:

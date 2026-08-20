@@ -182,6 +182,19 @@ MODULE ftest_common
     MODULE PROCEDURE permute_i8
   END INTERFACE permute
 
+  INTERFACE get_address
+    MODULE PROCEDURE get_addr_sp
+    MODULE PROCEDURE get_addr_sp_1d
+  END INTERFACE get_address
+  INTERFACE
+    FUNCTION xt_c_ptr_2_mpi_addr(p) BIND(c, name='xt_c_ptr_2_mpi_addr') &
+         RESULT(addr)
+      USE xt_mpi, ONLY: mpi_address_kind
+      IMPORT :: c_ptr
+      TYPE(c_ptr), VALUE :: p
+      INTEGER(mpi_address_kind) :: addr
+    END FUNCTION xt_c_ptr_2_mpi_addr
+  END INTERFACE
   REAL(dp) :: sync_dt_sum = 0.0_dp
   LOGICAL, PARAMETER :: debug = .FALSE.
   LOGICAL :: verbose = .FALSE.
@@ -193,6 +206,7 @@ MODULE ftest_common
   PUBLIC :: cmp_arrays, crc32
   PUBLIC :: random_fill, permute
   PUBLIC :: run_randomized_tests, init_fortran_random
+  PUBLIC :: get_address
   CHARACTER(len=*), PARAMETER :: filename = 'ftest_common.f90'
 CONTAINS
 
@@ -1377,6 +1391,23 @@ CONTAINS
       END DO
     END DO
   END SUBROUTINE permute_i8
+
+  FUNCTION get_addr_sp(v) RESULT(addr)
+    REAL(c_float), TARGET :: v
+    INTEGER(mpi_address_kind) :: addr
+    TYPE(c_ptr) :: p
+    p = C_LOC(v)
+    addr = xt_c_ptr_2_mpi_addr(p)
+  END FUNCTION get_addr_sp
+
+  FUNCTION get_addr_sp_1d(v) RESULT(addr)
+    REAL(c_float), TARGET :: v(*)
+    INTEGER(mpi_address_kind) :: addr
+    TYPE(c_ptr) :: p
+    p = C_LOC(v(1))
+    addr = xt_c_ptr_2_mpi_addr(p)
+  END FUNCTION get_addr_sp_1d
+
 
 END MODULE ftest_common
 !

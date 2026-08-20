@@ -53,6 +53,8 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+#include <mpi.h>
+
 bool
 cmp_dbl_arrays(int asize, const double *a, const double *b);
 
@@ -64,6 +66,9 @@ cmp_int32_arrays(int asize, const int32_t *a, const int32_t *b);
 
 bool
 cmp_int64_arrays(int asize, const int64_t *a, const int64_t *b);
+
+MPI_Aint
+xt_c_ptr_2_mpi_addr(void *p);
 
 #endif
 /*
