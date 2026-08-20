@@ -65,6 +65,7 @@ MODULE test_redist_common
   ! multiply extended generics. This is a separate bug from the one exhibited
   ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
+  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
@@ -86,6 +87,7 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_dp_i4
     MODULE PROCEDURE check_redist_dp_i8
     MODULE PROCEDURE check_redist_dp_2d
+    MODULE PROCEDURE check_redist_sp_2d
     MODULE PROCEDURE check_redist_xi
     MODULE PROCEDURE check_redist_i2
     MODULE PROCEDURE check_redist_i4
@@ -99,6 +101,7 @@ MODULE test_redist_common
   INTERFACE wrap_a_exchange
     MODULE PROCEDURE wrap_a_exchange_dp
     MODULE PROCEDURE wrap_a_exchange_dp2d
+    MODULE PROCEDURE wrap_a_exchange_sp2d
     MODULE PROCEDURE wrap_a_exchange_i2
     MODULE PROCEDURE wrap_a_exchange_i4
     MODULE PROCEDURE wrap_a_exchange_i8
@@ -234,6 +237,20 @@ CONTAINS
     CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_dp_as
 
+
+  SUBROUTINE wrap_a_exchange_sp_as(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    REAL, TARGET, INTENT(in) :: src(*)
+    REAL, TARGET, INTENT(inout) :: dst(*)
+    TYPE(xt_request) :: request
+
+    REQ_DEFAULT_INIT_FIXUP(request)
+    CALL assert_request_is_null(request, filename, __LINE__)
+    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
+    CALL check_wait_request(request, filename, __LINE__)
+    CALL check_test_request(request, filename, __LINE__)
+  END SUBROUTINE wrap_a_exchange_sp_as
+
   SUBROUTINE wrap_a_exchange_dp2d(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, TARGET, INTENT(in) :: src(:,:)
@@ -252,6 +269,25 @@ CONTAINS
     END IF
     CALL wrap_a_exchange_dp_as(redist, src_p, dst_p)
   END SUBROUTINE wrap_a_exchange_dp2d
+
+  SUBROUTINE wrap_a_exchange_sp2d(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    REAL, TARGET, INTENT(in) :: src(:,:)
+    REAL, TARGET, INTENT(inout) :: dst(:,:)
+    REAL, TARGET :: dummy(1,1)
+    REAL, POINTER :: src_p(:,:), dst_p(:,:)
+    IF (SIZE(src) > 0) THEN
+      src_p => src
+    ELSE
+      src_p => dummy
+    END IF
+    IF (SIZE(dst) > 0) THEN
+      dst_p => dst
+    ELSE
+      dst_p => dummy
+    END IF
+    CALL wrap_a_exchange_sp_as(redist, src_p, dst_p)
+  END SUBROUTINE wrap_a_exchange_sp2d
 
   SUBROUTINE wrap_a_exchange_i2(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
@@ -464,6 +500,29 @@ CONTAINS
            filename, __LINE__)
     ENDDO
   END SUBROUTINE check_redist_dp_2d
+
+  SUBROUTINE check_redist_sp_2d(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    REAL, INTENT(in) :: src(:,:), ref_dst(:,:)
+    REAL, INTENT(inout) :: dst(:,:)
+    INTEGER :: dst_size, ref_dst_size, iexch
+
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size /= ref_dst_size) &
+         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+    DO iexch = 1, 2
+      dst = -1.0
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL wrap_a_exchange(redist, src, dst)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort(check_redist_err_msg(iexch), &
+           filename, __LINE__)
+    ENDDO
+  END SUBROUTINE check_redist_sp_2d
 
   SUBROUTINE check_redist_xi(redist, src_size, src, dst_size, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
