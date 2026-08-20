@@ -71,8 +71,16 @@
 #include <intrin.h>
 #endif
 
+static const char filename[] = "xt_mpi.c";
+
+#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)) \
+  || (defined __clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-noreturn"
+#endif
 //taken from http://beige.ucs.indiana.edu/I590/node85.html
-void xt_mpi_error(int error_code, MPI_Comm comm) {
+void xt_mpi_error(int error_code, MPI_Comm comm)
+{
   int rank;
   MPI_Comm_rank(comm, &rank);
 
@@ -84,8 +92,12 @@ void xt_mpi_error(int error_code, MPI_Comm comm) {
   fprintf(stderr, "%3d: %s\n", rank, error_string);
   MPI_Error_string(error_code, error_string, &length_of_error_string);
   fprintf(stderr, "%3d: %s\n", rank, error_string);
-  MPI_Abort(comm, error_code);
+  Xt_abort(comm, "error: failed MPI call", filename, __LINE__);
 }
+#if (defined __GNUC__ && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5)) \
+  || (defined __clang__)
+#pragma GCC diagnostic pop
+#endif
 
 size_t
 xt_disp2blk_count(size_t disp_len, const int *disp)
