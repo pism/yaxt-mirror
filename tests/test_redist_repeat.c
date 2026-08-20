@@ -58,6 +58,9 @@
 #include "ctest_common.h"
 #include "test_redist_common.h"
 
+static void
+test_many_repeat(MPI_Comm comm);
+
 
 int main(int argc, char **argv) {
 
@@ -306,12 +309,59 @@ int main(int argc, char **argv) {
     xt_xmap_delete(xmap);
   }
 
+  test_many_repeat(comm);
+
   xt_config_delete(config);
   xt_finalize();
   MPI_Finalize();
 
   return TEST_EXIT_CODE;
 }
+
+/* the nrep setting here should be larger than what
+ * xt_redist_repeat_asym_custom_new uses for its auto_limit setting to
+ * ensure coverage of the dynamic memory management there
+ */
+static void
+test_many_repeat(MPI_Comm comm)
+{
+  // test of redist_repeat generated with large repeat count
+  enum { npt = 6, nrep = 33 };
+  Xt_xmap xmap = build_odd_selection_xmap(npt, comm);
+  double src_data[nrep][npt], dst_data[nrep][npt/2];
+  // init data
+  for (int j = 0; j < nrep; ++j)
+    for(int i = 0; i<npt; i++)
+      src_data[j][i] = j*100+i+1;
+  // generate reference destination data: 1, 3, 5, 101, 103, 105, 201, 203, ...
+  double ref_dst_data[nrep][npt/2];
+  for (int j = 0; j < nrep; ++j)
+    for(int i = 0; i<npt/2; i++)
+      ref_dst_data[j][i] = j*100+i*2+1;
+  static const MPI_Aint src_extent = (MPI_Aint)(npt * sizeof (double)),
+    dst_extent = (MPI_Aint)(npt/2 * sizeof (double));
+  int displacements[nrep];
+  for (int j = 0; j < nrep; ++j)
+    displacements[j] = j;
+  Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+  // generate redist_repeat
+  Xt_redist redist_repeat = xt_redist_repeat_new(
+    redist, src_extent, dst_extent, nrep, displacements);
+
+  // test communicator of redist
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_repeat),
+                                   comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+  // test exchange
+  check_redist(redist_repeat, src_data, npt/2*nrep, dst_data,
+               fill_array_double, NULL, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
+
+  // clean up
+  xt_redist_delete(redist);
+  xt_redist_delete(redist_repeat);
+  xt_xmap_delete(xmap);
+}
+
 
 /*
  * Local Variables:

@@ -48,7 +48,8 @@
 #include "fc_feature_defs.inc"
 PROGRAM test_redist_repeat
   USE mpi
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays, &
+       get_address
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_xmap, xt_xmap_delete, &
        xt_redist, xt_redist_p2p_new, &
@@ -80,6 +81,7 @@ PROGRAM test_redist_repeat
   CALL test_repeated_redist_with_gap(mpi_comm_world, config)
   CALL test_repeated_overlapping_redist(mpi_comm_world, config)
   CALL test_repeated_redist_asym(mpi_comm_world, config)
+  CALL test_many_repeat(mpi_comm_world)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
@@ -433,6 +435,57 @@ CONTAINS
     END DO
     CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_repeated_overlapping_redist
+
+  ! the nrep setting here should be larger than what
+  ! xt_redist_repeat_asym_custom_new uses for its auto_limit setting to
+  ! ensure coverage of the dynamic memory management there
+  SUBROUTINE test_many_repeat(comm)
+    INTEGER, INTENT(in) :: comm
+    ! test of redist_repeat generated with large repeat count
+    INTEGER, PARAMETER :: npt = 6, nrep = 33
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redist, redist_repeat
+    INTEGER(mpi_address_kind) :: base, src_extent, dst_extent
+    INTEGER :: i, j
+    REAL :: src_data(npt,nrep), dst_data(npt/2, nrep), &
+         ref_dst_data(npt/2, nrep)
+    INTEGER ::  displacements(nrep)
+
+    xmap = build_odd_selection_xmap(npt, comm)
+    ! init data
+    DO j = 1, nrep
+      DO i = 1, npt
+        src_data(i,j) = REAL((j-1)*100+i)
+      END DO
+    END DO
+    ! generate reference destination data: 1, 3, 5, 101, 103, 105, 201, 203, ...
+    DO j = 1, nrep
+      DO i = 1, npt/2
+        ref_dst_data(i,j) = REAL((j-1)*100+i*2-1)
+      END DO
+    END DO
+    base = get_address(src_data(1,1))
+    src_extent = get_address(src_data(1,2)) - base
+    base = get_address(dst_data(1,1))
+    dst_extent = get_address(dst_data(1,2)) - base
+    DO j = 1, nrep
+      displacements(j) = j-1
+    END DO
+    redist = xt_redist_p2p_new(xmap, mpi_real)
+    CALL xt_xmap_delete(xmap)
+    ! generate redist_repeat
+    redist_repeat = xt_redist_repeat_new(redist, src_extent, dst_extent, &
+         nrep, displacements)
+    CALL xt_redist_delete(redist)
+
+    ! test exchange
+    dst_data = -1.0
+    CALL check_redist(redist_repeat, src_data, dst_data, ref_dst_data)
+
+    ! clean up
+    CALL xt_redist_delete(redist_repeat)
+
+  END SUBROUTINE test_many_repeat
 
 END PROGRAM test_redist_repeat
 !
