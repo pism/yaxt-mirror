@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: yaxt
 Description: Distributed memory data (re-)distribution library.
-URL: https://dkrz-sw.gitlab-pages.dkrz.de/yaxt/
+URL: @PACKAGE_URL@
 Version: @VERSION@
 Requires:
 Libs: -L@libdir@ -lyaxt_c
