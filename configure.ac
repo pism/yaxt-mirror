@@ -1052,8 +1052,9 @@ AC_CONFIG_FILES([						\
 	util/serialrun],[chmod a+x "$ac_file"])
 AC_CONFIG_FILES([Makefile src/Makefile src/mpi-workarounds/Makefile \
   tests/Makefile examples/Makefile \
-  inst_headers/Makefile inst_headers/f90/Makefile \
-  src/pkgconfig/yaxt.pc src/pkgconfig/yaxt_c.pc perf/Makefile])
+  inst_headers/Makefile inst_headers/f90/Makefile perf/Makefile \
+  src/pkgconfig/yaxt.pc src/pkgconfig/yaxt_c.pc \
+  src/pkgconfig/yaxt-uninstalled.pc src/pkgconfig/yaxt_c-uninstalled.pc])
 # edit out the am--include-marker that's required for automake 1.16
 # and later on older automake versions
 AS_VERSION_COMPARE([$am__api_version],[1.16],[extrasub="${extrasub+$extrasub$as_nl}s/\# am--include-marker\$//"

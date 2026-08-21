@@ -372,7 +372,9 @@ distclean-local: mostlyclean-compile distclean-generic
 	-rm -f xtinclude_Makefile.inc
 	-rm -rf '$(DEPDIR)' *'/$(DEPDIR)'
 	-if test "$(abs_builddir)" != "$(abs_srcdir)" ; then \
-	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc; \
+	  rm -f pkgconfig/yaxt.pc pkgconfig/yaxt_c.pc \
+		pkgconfig/yaxt-uninstalled.pc \
+		pkgconfig/yaxt_c-uninstalled.pc ; \
 	  rmdir core pkgconfig mpi-workarounds mpi-profile; fi
 
 install-exec-local:

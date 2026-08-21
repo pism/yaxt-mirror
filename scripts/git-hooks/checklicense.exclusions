@@ -5,7 +5,9 @@
 /src/m4.deps
 /src/mpi-workarounds/*_wrap.c
 /src/pkgconfig/yaxt.pc.in
+/src/pkgconfig/yaxt-uninstalled.pc.in
 /src/pkgconfig/yaxt_c.pc.in
+/src/pkgconfig/yaxt_c-uninstalled.pc.in
 /src/xt_slice_c_loc.inc
 /include/cfortran.h
 /AUTHORS
