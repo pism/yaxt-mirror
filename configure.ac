@@ -156,6 +156,7 @@ AC_SUBST([lt_cv_nm_interface])
 acx_symprfx=`expr "$lt_cv_sys_global_symbol_pipe" : '.* prfx=\^\(@<:@_@:>@\{0,1\}\)@S|@'` \
   || acx_symprfx=`expr "$lt_cv_sys_global_symbol_pipe" : '.*\\\\1 \(@<:@_@:>@\{0,1\}\)\\\\2'`
 AC_SUBST([acx_symprfx])
+AC_SUBST([lt_cv_objdir])
 dnl ######################################################################
 dnl Properties of the compiler
 dnl ######################################################################

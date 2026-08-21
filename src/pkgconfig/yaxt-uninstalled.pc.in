@@ -1,5 +1,6 @@
 abs_top_builddir=@abs_top_builddir@
-libdir=${abs_top_builddir}/src/.libs
+objdir=@lt_cv_objdir@
+libdir=${abs_top_builddir}/src/${objdir}
 includedir=${abs_top_builddir}/inst_headers/f90
 
 Name: yaxt
