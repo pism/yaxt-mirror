@@ -38,7 +38,9 @@ Makefile.in
 /perf/perf_idxsection_get_positions_of_indices_run
 /perf/perf_sparse_array_gather_run
 /perf/perf_xmap_create_run
+/src/pkgconfig/yaxt-uninstalled.pc
 /src/pkgconfig/yaxt.pc
+/src/pkgconfig/yaxt_c-uninstalled.pc
 /src/pkgconfig/yaxt_c.pc
 /tests/test_ddt_run
 /tests/test_exchanger_parallel_run

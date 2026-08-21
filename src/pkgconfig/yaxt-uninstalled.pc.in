@@ -1,0 +1,11 @@
+abs_top_builddir=@abs_top_builddir@
+libdir=${abs_top_builddir}/src/.libs
+includedir=${abs_top_builddir}/inst_headers/f90
+
+Name: yaxt
+Description: Distributed memory data (re-)distribution library.
+URL: @PACKAGE_URL@
+Version: @VERSION@
+Requires:
+Libs: -L${libdir} -lyaxt -lyaxt_c
+Cflags: @FC_MOD_FLAG@${includedir}
