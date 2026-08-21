@@ -8,5 +8,5 @@ Description: Distributed memory data (re-)distribution library.
 URL: @PACKAGE_URL@
 Version: @VERSION@
 Requires:
-Libs: -L@libdir@ -lyaxt -lyaxt_c
-Cflags: @FC_MOD_FLAG@@includedir@
+Libs: -L${libdir} -lyaxt -lyaxt_c
+Cflags: @FC_MOD_FLAG@${includedir}
