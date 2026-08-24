@@ -522,6 +522,35 @@ test_rr(MPI_Comm comm, Xt_config config)
         PUT_ERR("invalid data\n");
     }
 
+    // test queries
+    if (i == 1) {
+      Xt_exchanger_iter msg_iter
+        = xt_exchanger_get_iterator(exchanger, config);
+      if (msg_iter)
+        do {
+          MPI_Datatype dt
+            = xt_exchanger_iter_get_MPI_Datatype(msg_iter);
+          if (dt != MPI_INT)
+            PUT_ERR("unexpected datatype\n");
+          int msg_rank
+            = xt_exchanger_iter_get_rank(msg_iter);
+          int msg_count
+            = xt_exchanger_iter_get_count(msg_iter);
+          if (msg_count != 1)
+            PUT_ERR("unexpected count\n");
+          int direction
+            = xt_exchanger_iter_get_direction(msg_iter);
+          if (direction != 0 && direction != 1)
+            PUT_ERR("unexpected direction\n");
+          if ((direction == 0 && msg_rank != (my_rank + i)%comm_size)
+              || (direction == 1
+                  && msg_rank != (my_rank + comm_size - i)%comm_size))
+            PUT_ERR("unexpected communication\n");
+        } while (xt_exchanger_iter_next(msg_iter));
+      if (xt_exchanger_iter_get_direction(msg_iter) != -1)
+        PUT_ERR("unexpected direction\n");
+      xt_exchanger_iter_delete(msg_iter);
+    }
     // cleanup
     xt_exchanger_delete(exchanger);
   }

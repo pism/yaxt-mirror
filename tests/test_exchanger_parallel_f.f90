@@ -45,6 +45,11 @@
 !
 #include "fc_feature_defs.inc"
 #define FP_EQ(a, b) (ABS((a)-(b)) < EPSILON((a)))
+#ifdef VERBOSE
+#define PUT_ERR(msg) WRITE (0, '(a)') msg ; err_count__ = err_count__ + 1
+#else
+#define PUT_ERR(msg) err_count__ = err_count__ + 1
+#endif
 PROGRAM test_exchanger_parallel
   USE iso_c_binding, ONLY: c_ptr, c_loc, c_int, c_null_ptr
   USE mpi
@@ -564,11 +569,13 @@ CONTAINS
     INTEGER, PARAMETER :: nrecv = 1, nsend = 1
     TYPE(xt_msg_param) :: send_msgs(nsend), recv_msgs(nrecv)
     TYPE(xt_exchanger) :: exchanger
+    TYPE(xt_exchanger_iter) :: msg_iter
     DOUBLE PRECISION, TARGET :: src_data(1), dst_data(1)
     TYPE(c_ptr) :: src_data_p, dst_data_p
     INTEGER :: my_rank, comm_size, ierror
     INTEGER :: incr, i, exchange_method, &
          test_async, test_async_ubound
+    INTEGER :: iter_dt, msg_rank, msg_count, direction
 #if defined __INTEL_COMPILER && (__INTEL_COMPILER_BUILD_DATE == 20110811 \
         || __INTEL_COMPILER < 1400)
     INTEGER(mpi_address_kind) :: addr_dummy
@@ -623,6 +630,40 @@ CONTAINS
           CALL test_abort("invalid data", filename, __LINE__)
         END IF
       END DO
+
+      ! test queries
+      IF (i == 1) THEN
+        msg_iter = xt_exchanger_get_iterator(exchanger, config)
+        IF (.NOT. xt_is_null(msg_iter)) THEN
+          DO
+            iter_dt = xt_exchanger_iter_get_MPI_Datatype(msg_iter)
+            IF (iter_dt /= mpi_double_precision) THEN
+              PUT_ERR("unexpected datatype")
+            END IF
+            msg_rank = xt_exchanger_iter_get_rank(msg_iter)
+            msg_count = xt_exchanger_iter_get_count(msg_iter)
+            IF (msg_count /= 1) THEN
+              PUT_ERR("unexpected count")
+            END IF
+            direction = xt_exchanger_iter_get_direction(msg_iter)
+            IF (direction /= 0 .AND. direction /= 1) THEN
+              PUT_ERR("unexpected direction")
+            END IF
+            IF ((direction == 0 .AND. msg_rank /= MOD(my_rank + i, comm_size)) &
+                 .OR. (direction == 1 &
+                 .AND. msg_rank /= MOD(my_rank + comm_size - i, comm_size))) &
+                 THEN
+              PUT_ERR("unexpected communication")
+            END IF
+            IF (.NOT. xt_exchanger_iter_next(msg_iter)) EXIT
+          END DO
+        END IF
+        IF (xt_exchanger_iter_get_direction(msg_iter) /= -1) THEN
+          PUT_ERR("unexpected direction")
+        END IF
+        CALL xt_exchanger_iter_delete(msg_iter)
+      END IF
+
       ! cleanup
       CALL xt_exchanger_delete(exchanger)
     END DO
