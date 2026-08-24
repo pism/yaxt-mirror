@@ -92,6 +92,9 @@ int main(int argc, char **argv) {
     // create an index vector
     Xt_idxlist idxvector = xt_idxvec_new(index_vector, num_indices);
 
+    // make sure sorting info is generated correctly
+    if (xt_idxlist_get_sorting(idxvector) != 1)
+      PUT_ERR("incorrect sorting reported");
     // test the generated index vector
     check_idxlist(idxvector, index_vector, num_indices);
 
@@ -104,7 +107,7 @@ int main(int argc, char **argv) {
     Xt_idxlist intersection
       = xt_idxlist_get_intersection(idxvector, idxvector_copy);
 
-    // check the computed intersection (should be identically to the original
+    // check the computed intersection (should be identical to the original
     // index vector)
     check_idxlist(intersection, index_vector, num_indices);
 
@@ -181,6 +184,10 @@ int main(int argc, char **argv) {
 
     // create an index vector
     Xt_idxlist idxvector = xt_idxvec_new(index_vector, index_num);
+
+    // make sure sorting info is generated correctly
+    if (xt_idxlist_get_sorting(idxvector) != 0)
+      PUT_ERR("incorrect sorting reported");
 
     // get positions:
     int intersection_pos[intersection_num];

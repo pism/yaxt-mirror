@@ -45,17 +45,24 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 #include "fc_feature_defs.inc"
+#ifdef VERBOSE
+#define PUT_ERR(msg) WRITE (0, '(a)') msg ; err_count__ = err_count__ + 1
+#else
+#define PUT_ERR(msg) err_count__ = err_count__ + 1
+#endif
 PROGRAM test_idxvec
+  USE xt_core, ONLY: i2, i4, i8
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, xt_idxvec_new, &
        xt_idxvec_from_stripes_new, &
        xt_int_kind, xt_stripe, xt_idxlist_get_intersection, &
        xt_idxlist_get_index_stripes, xt_idxlist_delete, &
        xt_idxlist_get_positions_of_indices, &
+       xt_idxlist_get_sorting, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_bounds, xt_idxlist_get_bounding_box, xt_idxlist_copy
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, err_count__
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, check_stripes, &
        check_offsets, idxlist_pack_unpack_copy
   IMPLICIT NONE
@@ -100,6 +107,11 @@ CONTAINS
     TYPE(xt_idxlist) :: idxvector, idxvector_copy, intersection
     TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(1, 1, 7) /)
     CALL setup_idxvec(idxvector, index_vector)
+
+    ! make sure sorting info is generated correctly
+    IF (xt_idxlist_get_sorting(idxvector) /= 1) THEN
+      PUT_ERR("incorrect sorting reported")
+    END IF
 
     idxvector_copy = idxlist_pack_unpack_copy(idxvector)
 
@@ -151,6 +163,11 @@ CONTAINS
     TYPE(xt_idxlist) :: idxvector
     INTEGER :: notfound
     CALL setup_idxvec(idxvector, index_vector)
+    ! make sure sorting info is generated correctly
+    IF (xt_idxlist_get_sorting(idxvector) /= 0) THEN
+      PUT_ERR("incorrect sorting reported")
+    END IF
+
     notfound = xt_idxlist_get_positions_of_indices(idxvector, &
          intersection_vector, intersection_pos, single_match_only)
     IF (notfound /= 0) &
