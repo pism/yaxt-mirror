@@ -322,6 +322,9 @@ test_bcast(MPI_Comm comm, Xt_config config)
       data_exchange(exchanger, src_data, dst_data, async);
 
       if (dst_data[0] != 4711) PUT_ERR("invalid data\n");
+      Xt_exchanger copy = xt_exchanger_copy(exchanger, comm, 16);
+      xt_exchanger_delete(exchanger);
+      exchanger = copy;
     }
 
     // cleanup

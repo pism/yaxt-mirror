@@ -305,7 +305,7 @@ CONTAINS
 
     TYPE(xt_msg_param), ALLOCATABLE :: send_msgs(:)
     TYPE(xt_msg_param) :: recv_msgs(1)
-    TYPE(xt_exchanger) :: exchanger
+    TYPE(xt_exchanger) :: exchanger, exchanger_copy
     TYPE(c_ptr) :: src_data_p, dst_data_p
     INTEGER, TARGET :: src_data(1), dst_data(1)
     INTEGER :: my_rank, comm_size, ierror
@@ -366,6 +366,9 @@ CONTAINS
                dst_data_p, test_async > 1)
         IF (dst_data(1) /= 4711) &
              CALL test_abort("invalid data", filename, __LINE__)
+        exchanger_copy = xt_exchanger_copy(exchanger, comm, 0)
+        CALL xt_exchanger_delete(exchanger)
+        exchanger = exchanger_copy
       END DO
 
       ! cleanup
