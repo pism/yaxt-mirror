@@ -276,18 +276,20 @@ CONTAINS
     CALL xt_exchanger_a_exchange_c(exchanger%cptr, src_data, dst_data, request)
   END SUBROUTINE xt_exchanger_a_exchange
 
-  FUNCTION xt_exchanger_get_iterator(exchanger) RESULT(iter)
+  FUNCTION xt_exchanger_get_iterator(exchanger, config) RESULT(iter)
     TYPE(xt_exchanger), INTENT(in) :: exchanger
+    TYPE(xt_config), INTENT(in) :: config
     TYPE(xt_exchanger_iter) :: iter
     INTERFACE
-      FUNCTION xt_exchanger_get_iterator_c(exchanger) RESULT(cptr) &
+      FUNCTION xt_exchanger_get_iterator_c(exchanger, config) RESULT(cptr) &
            BIND(c, name='xt_exchanger_get_iterator')
         IMPORT :: c_ptr
-        TYPE(c_ptr), VALUE, INTENT(in) :: exchanger
+        TYPE(c_ptr), VALUE, INTENT(in) :: exchanger, config
         TYPE(c_ptr) :: cptr
       END FUNCTION xt_exchanger_get_iterator_c
     END INTERFACE
-    iter%cptr = xt_exchanger_get_iterator_c(exchanger%cptr)
+    iter%cptr = xt_exchanger_get_iterator_c(exchanger%cptr, &
+         xt_config_f2c(config))
   END FUNCTION xt_exchanger_get_iterator
 
   FUNCTION xt_exchanger_iter_c2f(iter) RESULT(p)
