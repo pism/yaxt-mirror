@@ -383,7 +383,7 @@ struct inventory_header
  * Note: the base address of packed_data_buf equals the header start
  * address + buf_ofs[0].
  */
-
+#define DISP_ADJ(ofs, size) ((size) - (ofs - 1) % (size) - 1)
 static inline size_t
 get_inventory_size(size_t nrecv)
 {
@@ -391,11 +391,7 @@ get_inventory_size(size_t nrecv)
     = sizeof (struct inventory_header)
     + sizeof (size_t) * (nrecv+1)
     + sizeof (MPI_Datatype) * nrecv;
-  {
-    size_t adj = inventory_size % sizeof (MPI_Aint);
-    if (adj)
-      inventory_size += sizeof (MPI_Aint) - adj;
-  }
+  inventory_size += DISP_ADJ(inventory_size, sizeof (MPI_Aint));
   inventory_size += sizeof (MPI_Aint) * nrecv
     + sizeof (int) * nrecv;
   return inventory_size;
@@ -422,9 +418,7 @@ get_inventory_displacements_(struct inventory_header *header,
   size_t ofs = sizeof (struct inventory_header)
     + sizeof (size_t) * (nrecv+1)
     + sizeof (MPI_Datatype) * nrecv;
-  size_t adj = ofs % sizeof (MPI_Aint);
-  if (adj)
-    ofs += sizeof (MPI_Aint) - adj;
+  ofs += DISP_ADJ(ofs, sizeof (MPI_Aint));
   return (void *)((unsigned char *)header + ofs);
 }
 
