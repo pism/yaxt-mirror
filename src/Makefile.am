@@ -275,93 +275,55 @@ EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4	\
 	m4-templates/real-prologue-dp.m4			\
 	m4-templates/real-prologue-sp.m4
 
-f03_redist_module_template=`i=m4-templates/xt_redist_template_module.f90.m4 ; \
-	if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; `
 update_orig=true
 
-xt_redist_real_sp.f90: \
+xt_redist_generic_ext_src = xt_redist_real_sp.f90 \
+	xt_redist_real_dp.f90 \
+	xt_redist_logical.f90 \
+	xt_redist_int_i2.f90 \
+	xt_redist_int_i4.f90 \
+	xt_redist_int_i8.f90
+
+$(xt_redist_generic_ext_src):
+	@$(AM_V_GEN)test -e "$(srcdir)/$@" || { rm -f "$@.stamp" ; \
+		touch "$(srcdir)/$@" && $(MAKE) "$@.stamp" \
+		|| rm "$(srcdir)/$@" ; }
+
+xt_redist_generic_ext_stamps = $(xt_redist_generic_ext_src:.f90=.f90.stamp)
+
+$(xt_redist_generic_ext_stamps): \
 	m4-templates/xt_redist_template_module.f90.m4 \
 	m4-templates/f03-redist-gen.m4
+	set -e ; \
+	tgt_f90=`expr "X$@" : "X\(.*\.f90\)\.stamp"` ; \
+	type_name=`expr "X$@" : "Xxt_redist_\(.*\)\.f90\.stamp"` ; \
+	if expr X"$$type_name" : 'X.*_' >/dev/null ; then \
+	  type_kind=`expr "X$$type_name" : 'X.*_\(.*\)'` ; \
+	  type_name=`expr "X$$type_name" : "X\(.*\)_"` ; \
+	else \
+	  type_kind=x ; unset type_kind ; \
+	fi ; \
+	type_prologue=$${type_name}-prologue$${type_kind+-$$type_kind} ; \
+	if test -f "$(srcdir)/m4-templates/$${type_prologue}.m4" ; then \
+	  extraargs="-Dprologue={$${type_prologue}.m4}" ; \
+	else \
+	  extraargs= ; \
+	fi ; \
+	type_name_uc=`echo "$${type_name}" | LC_ALL=C tr '[a-z]' '[A-Z]'` ; \
+	test "$$type_name_uc" != 'INT' || type_name_uc=INTEGER ; \
 	$(M4) -I$(srcdir)/m4-templates -I$(top_srcdir)/m4 \
-		-Dfname=$@ -Dmodname=xt_redist_real_sp \
-		-Dprologue='{real-prologue-sp.m4}' \
-		-Dtypetag=sp -Dtypedecl='REAL(sp)' \
-		$< >"$@.tmp"
+		-Dfname=$${tgt_f90} \
+		-Dmodname=xt_redist_$${type_name}$${type_kind+_$${type_kind}} \
+		$$extraargs \
+		-Dtypetag=$${type_kind-l} \
+		-Dtypedecl="$${type_name_uc}$${type_kind+($${type_kind})}" \
+		$< >"$${tgt_f90}.tmp" ; \
 	if $(update_orig) ; then \
-		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
-		cp "$@.tmp" "$@" ; fi
-	-rm -f "$@.tmp"
-
-xt_redist_real_dp.f90: \
-	m4-templates/xt_redist_template_module.f90.m4 \
-	m4-templates/f03-redist-gen.m4
-	$(M4) -I$(srcdir)/m4-templates -I$(top_srcdir)/m4 \
-		-Dfname=$@ -Dmodname=xt_redist_real_dp \
-		-Dprologue='{real-prologue-dp.m4}' \
-		-Dtypetag=dp -Dtypedecl='REAL(dp)' \
-		$< >"$@.tmp"
-	if $(update_orig) ; then \
-		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
-		cp "$@.tmp" "$@" ; fi
-	-rm -f "$@.tmp"
-
-xt_redist_logical.f90: \
-	m4-templates/xt_redist_template_module.f90.m4 \
-	m4-templates/f03-redist-gen.m4
-	$(M4) -I$(srcdir)/m4-templates -I$(top_srcdir)/m4 \
-		-Dfname=$@ -Dmodname=xt_redist_logical \
-		-Dtypetag=l -Dtypedecl='LOGICAL' \
-		$< >"$@.tmp"
-	if $(update_orig) ; then \
-		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
-		cp "$@.tmp" "$@" ; fi
-	-rm -f "$@.tmp"
-
-xt_redist_int_i4.f90: \
-	m4-templates/xt_redist_template_module.f90.m4 \
-	m4-templates/f03-redist-gen.m4
-	$(M4) -I$(srcdir)/m4-templates -I$(top_srcdir)/m4 \
-		-Dfname=$@ -Dmodname=xt_redist_int_i4 \
-		-Dprologue='{int-prologue-i4.m4}' \
-		-Dtypetag=i4 -Dtypedecl='INTEGER(i4)' \
-		$< >"$@.tmp"
-	if $(update_orig) ; then \
-		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
-		cp "$@.tmp" "$@" ; fi
-	-rm -f "$@.tmp"
-
-xt_redist_int_i2.f90: \
-	m4-templates/xt_redist_template_module.f90.m4 \
-	m4-templates/f03-redist-gen.m4
-	$(M4) -I$(srcdir)/m4-templates -I$(top_srcdir)/m4 \
-		-Dfname=$@ -Dmodname=xt_redist_int_i2 \
-		-Dprologue='{int-prologue-i2.m4}' \
-		-Dtypetag=i2 -Dtypedecl='INTEGER(i2)' \
-		$< >"$@.tmp"
-	if $(update_orig) ; then \
-		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
-		cp "$@.tmp" "$@" ; fi
-	-rm -f "$@.tmp"
-
-xt_redist_int_i8.f90: \
-	m4-templates/xt_redist_template_module.f90.m4 \
-	m4-templates/f03-redist-gen.m4
-	$(M4) -I$(srcdir)/m4-templates -I$(top_srcdir)/m4 \
-		-Dfname=$@ -Dmodname=xt_redist_int_i8 \
-		-Dprologue='{int-prologue-i8.m4}' \
-		-Dtypetag=i8 -Dtypedecl='INTEGER(i8)' \
-		$< >"$@.tmp"
-	if $(update_orig) ; then \
-		cmp "$@.tmp" "$(srcdir)/$@" >/dev/null 2>&1 \
-		|| mv "$@.tmp" "$(srcdir)/$@" ; else \
-		cp "$@.tmp" "$@" ; fi
-	-rm -f "$@.tmp"
-
+		cmp "$${tgt_f90}.tmp" "$(srcdir)/$${tgt_f90}" >/dev/null 2>&1 \
+		|| mv "$${tgt_f90}.tmp" "$(srcdir)/$${tgt_f90}" ; else \
+		cp "$${tgt_f90}.tmp" "$${tgt_f90}" ; fi \
+	&& touch "$@"
+	-rm -f "$${tgt_f90}.tmp"
 
 xtinclude_Makefile.inc: Makefile
 	$(AM_V_GEN)$(PERL) -e 'my @argv = (grep(m{^xt/.*\.h$$}, @ARGV)); my @lens = map length, @argv; my $$maxlen = (sort { $$a <=> $$b } @lens)[-1]; print "xtinclude_HEADERS =", "\t" x (($$maxlen+7)/8-1), "\\\n"; foreach (@argv[0..@argv-2]) { print "\t$$_", "\t" x (($$maxlen+7)/8 - length($$_)/8 + (length($$_)%8 != 0)), "\\\n", "\t$${_}pp", "\t" x (($$maxlen+7)/8 - (length($$_) + 2)/8 + ((length($$_) + 2)%8 != 0)), "\\\n"; } print "\t$$argv[-1]pp", "\t" x (($$maxlen+7)/8 - (length($$argv[-1]) + 2)/8 + ((length($$argv[-1]) + 2)%8 != 0)), "\\\n", "\t$$argv[-1]\n"; print("\n", map { ("$$_: $${_}.stamp\n$${_}.stamp: \$$(libyaxt_c_srcdir)/$$_\n", "$${_}pp: $${_}pp.stamp\n$${_}pp.stamp: \$$(libyaxt_c_srcdir)/$$_\n") } @argv);' $(libyaxt_c_la_SOURCES) >$@.tmp && { cmp "$@.tmp" "$@" >/dev/null 2>&1 && rm -f "$@.tmp" || mv "$@.tmp" "$@" ; }
