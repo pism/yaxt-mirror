@@ -199,6 +199,8 @@ MODULE ftest_common
   LOGICAL, PARAMETER :: debug = .FALSE.
   LOGICAL :: verbose = .FALSE.
 
+  INTEGER(c_int), PUBLIC, BIND(C, name='err_count__') :: err_count__
+
   PUBLIC :: init_mpi, finish_mpi
   PUBLIC :: timer, treset, tstart, tstop, treport, mysync
   PUBLIC :: id_map, icbrt, icmp, factorize, regular_deco
@@ -227,6 +229,8 @@ CONTAINS
   SUBROUTINE finish_mpi
     CHARACTER(len=*), PARAMETER :: context = 'finish_mpi: '
     INTEGER :: ierror
+    IF (err_count__ /= 0) &
+      CALL test_abort(context//'encountered test errors!', filename, __LINE__)
     CALL MPI_FINALIZE(ierror)
     IF (ierror /= MPI_SUCCESS) CALL test_abort(context//'MPI_FINALIZE failed', &
          filename, &
