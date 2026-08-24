@@ -125,6 +125,16 @@ MODULE xt_exchanger_abstract
 
   END INTERFACE
 
+  INTERFACE
+    FUNCTION xt_exchanger_copy(exchanger, comm, tag_offset) &
+         BIND(c, name='xt_exchanger_copy_f2c') RESULT(exchanger_copy)
+      IMPORT :: xt_exchanger, xt_mpi_fint_kind
+      TYPE(xt_exchanger), INTENT(in) :: exchanger
+      INTEGER(xt_mpi_fint_kind), VALUE, INTENT(in) :: comm, tag_offset
+      TYPE(xt_exchanger) :: exchanger_copy
+    END FUNCTION xt_exchanger_copy
+  END INTERFACE
+
   INTERFACE xt_exchanger_delete
     MODULE PROCEDURE xt_exchanger_delete_1
     MODULE PROCEDURE xt_exchanger_delete_a1d
@@ -164,21 +174,6 @@ CONTAINS
     TYPE(xt_exchanger) :: p
     p%cptr = exchanger
   END FUNCTION xt_exchanger_c2f
-
-  FUNCTION xt_exchanger_copy(exchanger) RESULT(exchanger_copy)
-    TYPE(xt_exchanger), INTENT(in) :: exchanger
-    TYPE(xt_exchanger) :: exchanger_copy
-    INTERFACE
-      FUNCTION xt_exchanger_copy_c(exchanger) &
-           BIND(C, name='xt_exchanger_copy') RESULT(res_ptr)
-        IMPORT :: xt_exchanger, c_ptr
-        IMPLICIT NONE
-        TYPE(c_ptr), VALUE, INTENT(in) :: exchanger
-        TYPE(c_ptr) :: res_ptr
-      END FUNCTION xt_exchanger_copy_c
-    END INTERFACE
-    exchanger_copy%cptr = xt_exchanger_copy_c(exchanger%cptr)
-  END FUNCTION xt_exchanger_copy
 
   SUBROUTINE xt_exchanger_delete_1(exchanger)
     TYPE(xt_exchanger), INTENT(inout) :: exchanger

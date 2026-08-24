@@ -265,6 +265,29 @@ xt_exchanger_new_f2c(int nsend, int nrecv,
   return exch;
 }
 
+#ifndef NEED_FC_STRUCT_RET_FROM_C_WORKAROUND
+struct xt_exchanger_f
+#else
+void
+#endif
+xt_exchanger_copy_f2c(
+#ifdef NEED_FC_STRUCT_RET_FROM_C_WORKAROUND
+  struct xt_exchanger_f *retval_p,
+#endif
+  struct xt_exchanger_f *exchanger,
+                      MPI_Fint comm_f, MPI_Fint tag_offset)
+{
+  Xt_exchanger retval
+    = xt_exchanger_copy(exchanger->cptr,
+                        MPI_Comm_f2c(comm_f), (int)tag_offset);
+#ifndef NEED_FC_STRUCT_RET_FROM_C_WORKAROUND
+  return (struct xt_exchanger_f){
+    .cptr = retval };
+#else
+  retval_p->cptr = retval;
+#endif
+}
+
 MPI_Fint
 xt_exchanger_iter_get_MPI_datatype_f2c(const struct xt_exchanger_iter_f *p)
 {

@@ -165,6 +165,10 @@ ACX_SL_FC_MOD_SUFFIX(,
 AC_LANG_PUSH([Fortran])
 ACX_SL_FC_CHECK_MOD_PATH_FLAG
 AC_LANG_POP([Fortran])
+ACX_FC_C_STRUCT_RETURN_FROM_C(,
+  [AC_MSG_ERROR([$FC cannot return struct from C to Fortran])],
+  [AC_DEFINE([NEED_FC_STRUCT_RET_FROM_C_WORKAROUND],[1],
+    [C struct return interop via hidden first argument])])
 ACX_FC_STRUCT_RETURN_HLF([Xt_fc_hlf_struct_return=:],
   [Xt_fc_hlf_struct_return=false
    AC_MSG_WARN([Disabling Fortran interface for bucket generator])])
