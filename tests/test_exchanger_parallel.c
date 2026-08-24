@@ -526,7 +526,13 @@ test_rr(MPI_Comm comm, Xt_config config)
     if (i == 1) {
       Xt_exchanger_iter msg_iter
         = xt_exchanger_get_iterator(exchanger, config);
-      if (msg_iter)
+      if ((int)(nsend != xt_exchanger_get_num_msg(exchanger, xt_direction_send))
+          | (nrecv != xt_exchanger_get_num_msg(exchanger, xt_direction_recv))
+          | (nsend + nrecv
+             != xt_exchanger_get_num_msg(exchanger, 2)))
+        PUT_ERR("unexpected message counts\n");
+      int nmsg[3] = { 0, 0, 0 };
+      if (msg_iter) {
         do {
           MPI_Datatype dt
             = xt_exchanger_iter_get_MPI_Datatype(msg_iter);
@@ -540,16 +546,24 @@ test_rr(MPI_Comm comm, Xt_config config)
             PUT_ERR("unexpected count\n");
           int direction
             = xt_exchanger_iter_get_direction(msg_iter);
-          if (direction != 0 && direction != 1)
-            PUT_ERR("unexpected direction\n");
+          if (direction != 0 && direction != 1) {
+            PUT_ERR("unexpected direction %d\n", direction);
+            direction = 2;
+          }
+          nmsg[direction]++;
           if ((direction == 0 && msg_rank != (my_rank + i)%comm_size)
               || (direction == 1
                   && msg_rank != (my_rank + comm_size - i)%comm_size))
             PUT_ERR("unexpected communication\n");
         } while (xt_exchanger_iter_next(msg_iter));
-      if (xt_exchanger_iter_get_direction(msg_iter) != -1)
-        PUT_ERR("unexpected direction\n");
-      xt_exchanger_iter_delete(msg_iter);
+        if (xt_exchanger_iter_get_direction(msg_iter) != -1)
+          PUT_ERR("unexpected direction\n");
+        xt_exchanger_iter_delete(msg_iter);
+      }
+      if (nmsg[xt_direction_recv] != nrecv)
+        PUT_ERR("unexpected number of recv messages");
+      if (nmsg[xt_direction_send] != nsend)
+        PUT_ERR("unexpected number of send messages");
     }
     // cleanup
     xt_exchanger_delete(exchanger);

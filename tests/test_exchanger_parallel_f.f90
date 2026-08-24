@@ -353,6 +353,9 @@ CONTAINS
       exchanger = xt_exchanger_new(nsend, nrecv, send_msgs, &
            recv_msgs, comm, 0, config)
 
+      IF (xt_is_null(exchanger)) THEN
+        PUT_ERR("unexpected NULL result")
+      END IF
       ! run the test
       test_async_ubound &
            = MERGE(1, 2, exchange_method == xt_exchanger_irecv_send)
@@ -573,9 +576,9 @@ CONTAINS
     DOUBLE PRECISION, TARGET :: src_data(1), dst_data(1)
     TYPE(c_ptr) :: src_data_p, dst_data_p
     INTEGER :: my_rank, comm_size, ierror
-    INTEGER :: incr, i, exchange_method, &
+    INTEGER :: incr, i, j, exchange_method, &
          test_async, test_async_ubound
-    INTEGER :: iter_dt, msg_rank, msg_count, direction
+    INTEGER :: iter_dt, msg_rank, msg_count, direction, nmsg_ref(0:2), nmsg(0:2)
 #if defined __INTEL_COMPILER && (__INTEL_COMPILER_BUILD_DATE == 20110811 \
         || __INTEL_COMPILER < 1400)
     INTEGER(mpi_address_kind) :: addr_dummy
@@ -635,6 +638,15 @@ CONTAINS
       IF (i == 1) THEN
         msg_iter = xt_exchanger_get_iterator(exchanger, config)
         IF (.NOT. xt_is_null(msg_iter)) THEN
+          nmsg_ref(xt_direction_send) = nsend
+          nmsg_ref(xt_direction_recv) = nrecv
+          nmsg_ref(2) = nsend + nrecv
+          DO j = 0,2
+            nmsg(j) = xt_exchanger_get_num_msg(exchanger, j)
+          END DO
+          IF (ANY(nmsg /= nmsg_ref)) THEN
+            PUT_ERR("unexpected message counts")
+          END IF
           DO
             iter_dt = xt_exchanger_iter_get_MPI_Datatype(msg_iter)
             IF (iter_dt /= mpi_double_precision) THEN
@@ -657,11 +669,11 @@ CONTAINS
             END IF
             IF (.NOT. xt_exchanger_iter_next(msg_iter)) EXIT
           END DO
+          IF (xt_exchanger_iter_get_direction(msg_iter) /= -1) THEN
+            PUT_ERR("unexpected direction")
+          END IF
+          CALL xt_exchanger_iter_delete(msg_iter)
         END IF
-        IF (xt_exchanger_iter_get_direction(msg_iter) /= -1) THEN
-          PUT_ERR("unexpected direction")
-        END IF
-        CALL xt_exchanger_iter_delete(msg_iter)
       END IF
 
       ! cleanup
