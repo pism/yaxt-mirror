@@ -319,8 +319,13 @@ CONTAINS
   SUBROUTINE test_get_indices_at_positions(indices, undef_idx, pos)
     INTEGER(xt_int_kind), INTENT(in) :: indices(:), undef_idx
     INTEGER, INTENT(in) :: pos(:)
-    INTEGER(xt_int_kind) :: ref_sel_idx(SIZE(pos)), sel_idx(SIZE(pos))
+    INTEGER(xt_int_kind) :: ref_sel_idx(SIZE(pos)), sel_idx(SIZE(pos)), &
+         sel_idx_alt(SIZE(pos))
     INTEGER :: i, num_pos, undef_count, ref_undef_count
+    INTEGER :: undef_count_alt
+    INTEGER(i2) :: num_pos_i2
+    INTEGER(i4) :: num_pos_i4
+    INTEGER(i8) :: num_pos_i8
     TYPE(xt_idxlist) :: idxvec
     CHARACTER(80) :: msg
     num_pos = SIZE(pos)
@@ -339,9 +344,36 @@ CONTAINS
       CALL test_abort("test_idxvec_f.f90: (undef_count /= ref_undef_count)", &
            filename, __LINE__)
     END IF
+    IF (num_pos < HUGE(1_i2)) THEN
+      num_pos_i2 = INT(num_pos, i2)
+      undef_count_alt = xt_idxlist_get_indices_at_positions(idxvec, pos, &
+           num_pos_i2, sel_idx_alt, undef_idx)
+      IF (undef_count_alt /= undef_count_alt &
+           .OR. ANY(sel_idx /= sel_idx_alt)) THEN
+        CALL test_abort('mismatch', filename, __LINE__)
+      END IF
+    END IF
+    IF (num_pos < HUGE(1_i4)) THEN
+      num_pos_i4 = INT(num_pos, i4)
+      undef_count_alt = xt_idxlist_get_indices_at_positions(idxvec, pos, &
+           num_pos_i4, sel_idx_alt, undef_idx)
+      IF (undef_count_alt /= undef_count_alt &
+           .OR. ANY(sel_idx /= sel_idx_alt)) THEN
+        CALL test_abort('mismatch', filename, __LINE__)
+      END IF
+    END IF
+    IF (num_pos < HUGE(1_i8)) THEN
+      num_pos_i8 = INT(num_pos, i8)
+      undef_count_alt = xt_idxlist_get_indices_at_positions(idxvec, pos, &
+           num_pos_i8, sel_idx_alt, undef_idx)
+      IF (undef_count_alt /= undef_count_alt &
+           .OR. ANY(sel_idx /= sel_idx_alt)) THEN
+        CALL test_abort('mismatch', filename, __LINE__)
+      END IF
+    END IF
     DO i = 1, num_pos
       IF (sel_idx(i) /= ref_sel_idx(i)) THEN
-        WRITE (msg, '(2(a,i0),a)') "test_idxvec_f.f90: (sel_idx(", i, &
+        WRITE (msg, '(a,2(a,i0),a)') filename, ": (sel_idx(", i, &
              ") /= ref_sel_idx(", i, "))"
         CALL test_abort(msg, filename, __LINE__)
       END IF
