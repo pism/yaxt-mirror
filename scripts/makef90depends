@@ -176,6 +176,10 @@ sub MakeDependsf90mod {
    # Associate each module with the name of the file that contains it
    #
    foreach my $srcfile (@srcs) {
+      if (! -e $srcfile) {
+         print STDERR 'Missing source file: ', $srcfile, "\n";
+         exit 1;
+      }
       my (@modulesOfSrcFile, @srcfileCppKeys);
       if (exists($parseCache{'source:'.$srcfile})
           and $parseCache{'source:'.$srcfile}{'timestamp'}
