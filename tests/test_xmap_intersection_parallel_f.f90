@@ -77,7 +77,9 @@ PROGRAM test_xmap_intersection_parallel
     INTEGER, POINTER :: pos(:)   ! positions to be sent/received
   END TYPE test_message
 
-  INTEGER, PARAMETER :: xmi_type_base = 0, xmi_type_ext = 1
+  INTEGER, PARAMETER :: xmi_type_base = 0, xmi_type_ext = 1, &
+       xmi_type_base_explicit_shape = 2, &
+       xmi_type_ext_explicit_shape = 3
   INTEGER :: xmi_type
 
   INTEGER :: ierror
@@ -452,7 +454,8 @@ CONTAINS
   SUBROUTINE update_positions_and_spread_test
 
     INTEGER(xt_int_kind), PARAMETER :: indices(12) &
-         = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 8_xi, 9_xi, 10_xi, 11_xi /)
+         = (/ 0_xi, 1_xi, 2_xi, 3_xi,  4_xi,  5_xi, &
+         &    6_xi, 7_xi, 8_xi, 9_xi, 10_xi, 11_xi /)
     TYPE(xt_com_list) ::  src_com(1), dst_com(1)
     TYPE(xt_idxlist) :: src_idxlist, dst_idxlist
     TYPE(xt_xmap) :: xmap, xmap_single_level_blocked, xmap_multi_level_blocked
@@ -658,6 +661,12 @@ CONTAINS
           xmi_type = xmi_type_base
         ELSE IF (optarg(1:arg_len) == "xt_xmap_intersection_ext_new") THEN
           xmi_type = xmi_type_ext
+        ELSE IF (optarg(1:arg_len) &
+             == "xt_xmap_intersection_new(explicit shape)") THEN
+          xmi_type = xmi_type_base_explicit_shape
+        ELSE IF (optarg(1:arg_len) &
+             == "xt_xmap_intersection_ext_new(explicit shape)") THEN
+          xmi_type = xmi_type_ext_explicit_shape
         ELSE
           WRITE (0, *) 'arg to -m: ', optarg(1:arg_len)
           CALL test_abort('incorrect argument to command-line option -m', &
@@ -680,12 +689,25 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: src_idxlist, dst_idxlist
     INTEGER, INTENT(in) :: comm
     TYPE(xt_xmap) :: xmap
+    INTEGER :: size_src_com, size_dst_com
     SELECT CASE(xmi_type)
     CASE(xmi_type_base)
       xmap = xt_xmap_intersection_new(src_com, dst_com, &
            src_idxlist, dst_idxlist, comm)
     CASE(xmi_type_ext)
       xmap = xt_xmap_intersection_ext_new(src_com, dst_com, &
+           src_idxlist, dst_idxlist, comm)
+    CASE(xmi_type_base_explicit_shape)
+      size_src_com = SIZE(src_com)
+      size_dst_com = SIZE(dst_com)
+      xmap = xt_xmap_intersection_new(size_src_com, src_com, &
+           size_dst_com, dst_com, &
+           src_idxlist, dst_idxlist, comm)
+    CASE(xmi_type_ext_explicit_shape)
+      size_src_com = SIZE(src_com)
+      size_dst_com = SIZE(dst_com)
+      xmap = xt_xmap_intersection_ext_new(size_src_com, src_com, &
+           size_dst_com, dst_com, &
            src_idxlist, dst_idxlist, comm)
     END SELECT
   END FUNCTION xmi_new

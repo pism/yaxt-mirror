@@ -56,6 +56,12 @@ export LIBC_FATAL_STDERR_
 @with_fortran_TRUE@@abs_top_builddir@/libtool --mode=execute \
 @with_fortran_TRUE@  @MPI_LAUNCH@ -n 3 @abs_builddir@/test_xmap_intersection_parallel_f \
 @with_fortran_TRUE@  -m xt_xmap_intersection_ext_new
+@with_fortran_TRUE@@abs_top_builddir@/libtool --mode=execute \
+@with_fortran_TRUE@  @MPI_LAUNCH@ -n 3 @abs_builddir@/test_xmap_intersection_parallel_f \
+@with_fortran_TRUE@  -m 'xt_xmap_intersection_new(explicit shape)'
+@with_fortran_TRUE@@abs_top_builddir@/libtool --mode=execute \
+@with_fortran_TRUE@  @MPI_LAUNCH@ -n 3 @abs_builddir@/test_xmap_intersection_parallel_f \
+@with_fortran_TRUE@  -m 'xt_xmap_intersection_ext_new(explicit shape)'
 #
 # Local Variables:
 # mode: sh
