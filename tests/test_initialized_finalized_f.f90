@@ -51,8 +51,9 @@ PROGRAM test_initialized_finalized_f
   USE mpi
   USE test_idxlist_utils, ONLY: test_err_count
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
-       xt_initialized, xt_finalized
+       xt_initialized, xt_finalized, xt_get_default_comm
   IMPLICIT NONE
+  INTEGER :: comm_def, comm
   CHARACTER(len=*), PARAMETER :: filename = 'test_initialized_finalized_f.f90'
 
   CALL init_mpi
@@ -60,10 +61,16 @@ PROGRAM test_initialized_finalized_f
   IF (xt_initialized() .OR. xt_finalized()) &
        CALL test_abort("ERROR: unexpected library state", filename, __LINE__)
 
-  CALL xt_initialize(mpi_comm_world)
+  comm = mpi_comm_world
+  CALL xt_initialize(comm)
 
   IF (.NOT. xt_initialized() .OR. xt_finalized()) &
        CALL test_abort("ERROR: unexpected library state", filename, __LINE__)
+
+  comm_def = xt_get_default_comm()
+  IF (comm_def /= comm) &
+       CALL test_abort("ERROR: unexpected library default communicator", &
+       filename, __LINE__)
 
   CALL xt_finalize
 
