@@ -356,7 +356,8 @@ int xt_idxlist_get_pos_exts_of_index_stripes(
  * @param[in]  idxlist  index list in which the given index is to be searched
  * @param[in]  index    index that is to be searched
  * @param[out] position position of the first occurrence of index in idxlist
- *                      with a position >= offset
+ *                      with a position >= offset, or -1 if no such position
+ *                      could be found
  * @param[in]  offset   offset in the index list from which on the search
  *                      is to be conducted
  * @return              0 if index was found\n
