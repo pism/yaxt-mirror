@@ -46,6 +46,9 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 #include "fc_feature_defs.inc"
+#if defined __INTEL_COMPILER && __INTEL_COMPILER_BUILD_DATE == 20110811 || __PGIC__ == 11
+#define XT_MODPROC_RENAME_NEEDED
+#endif
 MODULE xt_sort
   USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int, c_size_t
   USE xt_core, ONLY: xt_abort, xt_int_kind
@@ -84,8 +87,7 @@ MODULE xt_sort
   END INTERFACE xt_sort_index
   PUBLIC :: xt_sort_index
 
-  INTERFACE xt_sort_permutation
-#if XT_FC_XT_INT_FC_NUMERIC_KIND != XT_FC_C_INT_FC_NUMERIC_KIND
+  INTERFACE
     SUBROUTINE xt_sort_xt_int_permutation_f2c(a, n, permutation) &
           BIND(c, name='xt_sort_xt_int_permutation_f2c')
       IMPORT :: c_int, c_size_t, xt_int_kind
@@ -93,29 +95,40 @@ MODULE xt_sort
       INTEGER(xt_int_kind), INTENT(inout) :: a(n)
       INTEGER(c_int), INTENT(inout) :: permutation(n)
     END SUBROUTINE xt_sort_xt_int_permutation_f2c
+  END INTERFACE
+
+  INTERFACE xt_sort_xt_int_permutation
+#ifdef HAVE_FC_PROCEDURE_DECL
+    PROCEDURE xt_sort_xt_int_permutation_f2c
+#endif
+#ifdef XT_MODPROC_RENAME_NEEDED
+    MODULE PROCEDURE xt_sort_xt_int_permutation_renamed
+#else
     MODULE PROCEDURE xt_sort_xt_int_permutation
 #endif
-    SUBROUTINE xt_sort_int_permutation_f2c(a, n, permutation) &
+  END INTERFACE xt_sort_xt_int_permutation
+  PUBLIC :: xt_sort_xt_int_permutation
+
+  INTERFACE xt_sort_permutation
+   SUBROUTINE xt_sort_int_permutation_f2c(a, n, permutation) &
           BIND(c, name='xt_sort_int_permutation_f2c')
       IMPORT :: c_int, c_size_t
       INTEGER(c_size_t), VALUE, INTENT(in) :: n
       INTEGER(c_int), INTENT(inout) :: a(n), permutation(n)
     END SUBROUTINE xt_sort_int_permutation_f2c
     MODULE PROCEDURE xt_sort_int_permutation
+#if defined HAVE_FC_PROCEDURE_DECL \
+    && XT_FC_XT_INT_NUMERIC_KIND != XT_FC_C_INT_NUMERIC_KIND
+    PROCEDURE xt_sort_xt_int_permutation_f2c
+#  ifdef XT_MODPROC_RENAME_NEEDED
+    MODULE PROCEDURE xt_sort_xt_int_permutation_renamed
+#  else
+    MODULE PROCEDURE xt_sort_xt_int_permutation
+#  endif
+#endif
   END INTERFACE xt_sort_permutation
   PUBLIC :: xt_sort_permutation
 
-  INTERFACE xt_sort_xt_int_permutation
-    SUBROUTINE xt_sort_xt_int_permutation_f2c(a, n, permutation) &
-          BIND(c, name='xt_sort_xt_int_permutation_f2c')
-      IMPORT :: c_int, c_size_t, xt_int_kind
-      INTEGER(c_size_t), VALUE, INTENT(in) :: n
-      INTEGER(xt_int_kind), INTENT(inout) :: a(n)
-      INTEGER(c_int), INTENT(inout) :: permutation(n)
-    END SUBROUTINE xt_sort_xt_int_permutation_f2c
-    MODULE PROCEDURE xt_sort_xt_int_permutation
-  END INTERFACE xt_sort_xt_int_permutation
-  PUBLIC :: xt_sort_xt_int_permutation
 
   TYPE, BIND(c), PUBLIC :: xt_idxpos
     INTEGER(xt_int_kind) :: idx
@@ -181,15 +194,19 @@ CONTAINS
     IF (a_size > 1) CALL xt_sort_idxpos_f2c(a, INT(a_size, c_size_t))
   END SUBROUTINE xt_sort_idxpos_a
 
+#ifdef XT_MODPROC_RENAME_NEEDED
+#define xt_sort_xt_int_permutation xt_sort_xt_int_permutation_renamed
+#endif
   SUBROUTINE xt_sort_xt_int_permutation(a, permutation)
-    INTEGER(c_int), INTENT(inout) :: a(:), permutation(:)
+    INTEGER(xt_int_kind), INTENT(inout) :: a(:)
+    INTEGER(c_int), INTENT(inout) :: permutation(:)
     INTEGER(c_size_t) :: a_size
 #ifdef HAVE_SIZE_KIND_ARGUMENT
     a_size = SIZE(a, kind=c_size_t)
 #else
     a_size = INT(SIZE(a), kind=c_size_t)
 #endif
-    IF (a_size > 1) CALL xt_sort_int_permutation_f2c(a, a_size, permutation)
+    IF (a_size > 1) CALL xt_sort_xt_int_permutation_f2c(a, a_size, permutation)
   END SUBROUTINE xt_sort_xt_int_permutation
 
   SUBROUTINE xt_sort_int_permutation(a, permutation)

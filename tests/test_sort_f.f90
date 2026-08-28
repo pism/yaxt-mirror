@@ -50,8 +50,10 @@ PROGRAM test_sort
   USE iso_c_binding, ONLY: c_int, c_double, c_int32_t, c_char, c_null_char
   USE mpi
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
-       xt_sort_index, xt_sort_int, xt_sort_xt_int, xt_sort_permutation, &
-       xi => xt_int_kind, xt_quicksort, xt_mergesort
+       xt_sort_index, xt_sort_int, xt_sort_xt_int, &
+       xt_sort_xt_int_permutation, xt_sort_permutation, &
+       xi => xt_int_kind, xt_quicksort, xt_mergesort, &
+       xt_idxpos, xt_sort_idxpos
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
        random_fill, crc32, permute
   IMPLICIT NONE
@@ -62,6 +64,7 @@ PROGRAM test_sort
   CALL test_sort_lookup()
   CALL test_int_sort()
   CALL test_xt_int_sort()
+  CALL test_idxpos_sort()
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
@@ -88,6 +91,7 @@ CONTAINS
          CALL test_abort("sort algorithm name lookup failed!", &
          filename, __LINE__)
   END SUBROUTINE test_sort_lookup
+
   SUBROUTINE test_int_sort()
     INTEGER(c_int), ALLOCATABLE :: a(:), permutation(:)
     REAL(c_double) :: rnd
@@ -95,7 +99,7 @@ CONTAINS
     INTEGER(c_int32_t) :: crc_before, crc_after
     LOGICAL :: err_found
     CALL RANDOM_NUMBER(rnd)
-    n = NINT(rnd * range_size)
+    n = NINT(rnd * REAL(range_size, c_double))
     ALLOCATE(a(n), permutation(n))
     CALL random_fill(a)
     CALL xt_sort_int(a)
@@ -128,7 +132,7 @@ CONTAINS
     INTEGER(c_int32_t) :: crc_before, crc_after
     LOGICAL :: err_found
     CALL RANDOM_NUMBER(rnd)
-    n = NINT(rnd * range_size)
+    n = NINT(rnd * REAL(range_size, c_double))
     ALLOCATE(b(n), permutation(n))
     CALL random_fill(b)
     crc_before = crc32(b)
@@ -152,6 +156,54 @@ CONTAINS
     END DO
     IF (err_found) CALL test_abort("discontinuity found!", filename, __LINE__)
   END SUBROUTINE test_xt_int_sort
+
+  SUBROUTINE test_idxpos_sort()
+    TYPE(xt_idxpos), ALLOCATABLE :: a(:)
+    INTEGER(c_int), ALLOCATABLE :: permutation(:)
+    INTEGER(xi), ALLOCATABLE :: b(:)
+    REAL(c_double) :: rnd
+    INTEGER :: n, i
+    INTEGER(c_int32_t) :: crc_before, crc_after, crc_sorted, crc_sorted_ref
+    LOGICAL :: err_found
+    CALL RANDOM_NUMBER(rnd)
+    n = NINT(rnd * REAL(range_size, c_double))
+    ALLOCATE(b(n), a(n), permutation(n))
+    CALL random_fill(b)
+    crc_before = crc32(b)
+    DO i = 1, n
+      a(i)%idx = b(i)
+      a(i)%pos = i
+    END DO
+    CALL xt_sort_idxpos(a)
+    err_found = .FALSE.
+    IF (n > 0) THEN
+      b(1) = a(1)%idx
+    END IF
+    DO i = 2, n
+      b(i) = a(i)%idx
+      err_found = err_found .OR. a(i-1)%idx > a(i)%idx
+    END DO
+    IF (err_found) CALL test_abort("discontinuity found!", filename, __LINE__)
+    crc_sorted_ref = crc32(b)
+    DO i = 1, n
+      permutation(i) = a(i)%pos
+    END DO
+    CALL permute(b, permutation)
+    crc_after = crc32(b)
+    IF (crc_after /= crc_before) &
+         CALL test_abort("error in data reconstruction!", filename, __LINE__)
+    DO i = 1, n
+      permutation(i) = i
+    END DO
+    CALL xt_sort_xt_int_permutation(b, permutation)
+    DO i = 2, n
+      err_found = err_found .OR. b(i-1) > b(i)
+    END DO
+    IF (err_found) CALL test_abort("discontinuity found!", filename, __LINE__)
+    crc_sorted = crc32(b)
+    IF (crc_sorted /= crc_sorted_ref) &
+         CALL test_abort("sort divergence found!", filename, __LINE__)
+  END SUBROUTINE test_idxpos_sort
 
 END PROGRAM test_sort
 !

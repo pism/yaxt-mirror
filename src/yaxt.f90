@@ -88,7 +88,8 @@ MODULE yaxt
        xt_config_ddt_cache_no_parse, xt_config_ddt_cache_no_match, &
        xt_config_ddt_no_cache_no_parse
   USE xt_sort, ONLY: xt_sort_int, xt_sort_index, xt_sort_idxpos, &
-       xt_sort_permutation, xt_assign_id_map, xt_sort_xt_int
+       xt_sort_permutation, xt_assign_id_map, xt_sort_xt_int, &
+       xt_idxpos, xt_sort_xt_int_permutation
   USE xt_idxlist_abstract, ONLY: &
        xt_idxlist_f2c, xt_idxlist_c2f, xt_idxlist, &
        xt_idxlist_delete, xt_idxlist_get_pack_size, &
@@ -273,7 +274,7 @@ MODULE yaxt
 #endif
 
   PUBLIC :: xt_sort_int, xt_sort_index, xt_sort_idxpos, xt_sort_permutation, &
-       xt_assign_id_map, xt_sort_xt_int
+       xt_assign_id_map, xt_sort_xt_int, xt_idxpos, xt_sort_xt_int_permutation
   PUBLIC :: xt_xmap_all2all_new, xt_xmap_all2all_custom_new
   PUBLIC :: xt_xmap_dist_dir_new, xt_xmap_dist_dir_custom_new
   PUBLIC :: xt_xmap_dist_dir_intercomm_new, &

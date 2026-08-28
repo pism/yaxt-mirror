@@ -178,6 +178,9 @@ AS_IF([$Xt_fc_hlf_struct_return],
       AC_MSG_WARN([Disabling Fortran interface for bucket generator])],
      [AC_DEFINE([NEED_FC_PAIR_STRUCT_WORKAROUND],[1])
       AC_MSG_WARN([Building Fortran interface for bucket generator with extra work-around])])])
+ACX_FC_PROCEDURE_DECL([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_PROCEDURE_DECL"],
+  [AC_MSG_WARN([Disabling indirect procedures in Fortran generic interfaces])])
 ACX_FC_ABSTRACT_INTERFACE([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_ABSTRACT_INTERFACE"],
   [AC_MSG_WARN([Disabling procedure queries in Fortran interface for bucket generator])])
