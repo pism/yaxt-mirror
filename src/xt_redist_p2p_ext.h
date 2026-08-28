@@ -231,7 +231,7 @@ XT_GENERATE_EXT_DATATYPE(
         XT_DT_STRIPE_BUFS_GROW(
           work_buf_size, work_buf,
           &dt_stripes_disp, &dt_stripes_size, &dt_stripes_stride,
-          num_dt_stripes, size_dt_stripes *= 2);
+          num_dt_stripes, num_dt_blk);
       for (size_t j = num_dt_blk, i = num_dt_stripes; j > 0;) {
         --j;
         --i;

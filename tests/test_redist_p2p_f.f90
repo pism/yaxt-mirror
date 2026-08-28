@@ -46,14 +46,16 @@
 #include "fc_feature_defs.inc"
 PROGRAM test_redist_p2p_f
   USE mpi
-  USE yaxt, ONLY: xt_int_kind, xt_xmap, xt_idxlist, xt_redist, xt_offset_ext, &
+  USE yaxt, ONLY: xt_int_kind, xt_xmap, xt_idxlist, xt_stripe, &
+       xt_redist, xt_offset_ext, &
        xi => xt_int_kind, xt_int_mpidt, xt_initialize, xt_finalize, &
-       xt_idxvec_new, xt_idxlist_delete, &
+       xt_idxvec_new, xt_idxstripes_new, xt_idxlist_delete, &
        xt_redist_p2p_new, xt_redist_p2p_off_custom_new, xt_redist_p2p_ext_new, &
        xt_redist_s_exchange, &
        xt_redist_copy, xt_redist_delete,  xt_redist_get_mpi_comm, &
        xt_xmap_all2all_new, xt_xmap_delete, &
-       xt_config, xt_config_delete, xt_config_set_ddt_cache_limit
+       xt_config, xt_config_delete, xt_config_set_ddt_cache_limit, &
+       xt_config_ddt_cache_no_parse
   ! pgfortran is in most versions well incapable of handling multiply extended
   ! generic interfaces
 #ifdef __PGI
@@ -78,6 +80,7 @@ PROGRAM test_redist_p2p_f
   CALL test_without_offsets
   CALL test_with_offsets
   CALL test_offset_extents
+  CALL test_strided_extents(mpi_comm_world)
 
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
@@ -302,6 +305,26 @@ CONTAINS
     CALL xt_xmap_delete(xmap)
   END SUBROUTINE test_offset_extents
 
+  SUBROUTINE test_strided_extents(comm)
+    INTEGER, INTENT(in) :: comm
+    ! source/destination index lists
+    INTEGER, PARAMETER :: num_idx = 100
+    TYPE(xt_idxlist) :: idxlist
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redist, redist_copy
+    TYPE(xt_offset_ext), PARAMETER :: &
+         src_pos(1) = (/ xt_offset_ext(0, num_idx, 2) /), &
+         dst_pos(1) = (/ xt_offset_ext(num_idx - 1, num_idx, -2) /)
+    TYPE(xt_stripe), PARAMETER :: &
+         indices(1) = (/ xt_stripe(0_xi, 2_xi, num_idx) /)
+    idxlist = xt_idxstripes_new(indices)
+    xmap = xt_xmap_all2all_new(idxlist, idxlist, comm)
+    CALL xt_idxlist_delete(idxlist)
+    CALL xt_config_set_ddt_cache_limit(config, xt_config_ddt_cache_no_parse)
+    redist = xt_redist_p2p_ext_new(xmap, src_pos, dst_pos, xt_int_mpidt, config)
+    CALL xt_redist_delete(redist)
+    CALL xt_xmap_delete(xmap)
+  END SUBROUTINE test_strided_extents
 END PROGRAM test_redist_p2p_f
 !
 ! Local Variables:

@@ -63,6 +63,9 @@
 static void
 check_offset_extents(MPI_Comm comm, Xt_config config);
 
+static void
+test_strided_extents(MPI_Comm comm, Xt_config config);
+
 static const int ddt_gen_lim[] = {
   -1, 0, 16, -2 };
 enum { num_ddt_test = sizeof (ddt_gen_lim) / sizeof (ddt_gen_lim[0]), };
@@ -243,6 +246,8 @@ check_offset_extents(MPI_Comm comm, Xt_config config)
     check_offset_extents_redist(redist, src_num, dst_num, comm);
   }
 
+  test_strided_extents(MPI_COMM_WORLD, config);
+
   // clean up
   xt_xmap_delete(xmap);
 }
@@ -270,6 +275,31 @@ check_offset_extents_redist(Xt_redist redist, size_t src_num, size_t dst_num,
   check_redist(redist_copy, src_data, dst_num, dst_data,
                fill_array_long, NULL, ref_dst_data, MPI_LONG, MPI_LONG);
   xt_redist_delete(redist_copy);
+}
+
+static void
+test_strided_extents(MPI_Comm comm, Xt_config config)
+{
+  // source/destination index lists
+  enum {
+    num_idx = 100,
+  };
+  static const struct Xt_offset_ext
+    src_pos[] = { { 0, num_idx, 2 } },
+    dst_pos[] = { { num_idx - 1, num_idx, -2 } };
+  static const struct Xt_stripe indices[] = { { 0, 2, num_idx } };
+  Xt_idxlist idxlist
+    = xt_idxstripes_new(indices, sizeof (src_pos) / sizeof (src_pos[0]));
+  Xt_xmap xmap = xt_xmap_all2all_new(idxlist, idxlist, comm);
+  xt_idxlist_delete(idxlist);
+  int prev_lim = xt_config_get_ddt_cache_limit(config);
+  xt_config_set_ddt_cache_limit(config, Xt_config_ddt_cache_no_parse);
+  Xt_redist redist
+    = xt_redist_p2p_ext_custom_new(xmap, 1, src_pos, 1, dst_pos,
+                                   XT_INT_MPIDT, config);
+  xt_redist_delete(redist);
+  xt_xmap_delete(xmap);
+  xt_config_set_ddt_cache_limit(config, prev_lim);
 }
 
 
