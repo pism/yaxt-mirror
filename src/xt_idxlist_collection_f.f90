@@ -47,7 +47,7 @@
 !
 #include "fc_feature_defs.inc"
 MODULE xt_idxlist_collection
-  USE xt_core, ONLY: xt_abort, xt_get_default_comm
+  USE xt_core, ONLY: xt_abort, xt_get_default_comm, i2, i4, i8
   USE xt_idxlist_abstract, ONLY: xt_idxlist, xt_idxlist_c2f
   USE iso_c_binding, ONLY: c_int, c_ptr
   IMPLICIT NONE
@@ -64,6 +64,9 @@ MODULE xt_idxlist_collection
   END INTERFACE
 
   INTERFACE xt_idxlist_collection_new
+    MODULE PROCEDURE xt_idxlist_collection_new_a1d_i2
+    MODULE PROCEDURE xt_idxlist_collection_new_a1d_i4
+    MODULE PROCEDURE xt_idxlist_collection_new_a1d_i8
     MODULE PROCEDURE xt_idxlist_collection_new_a1d
     MODULE PROCEDURE xt_idxlist_collection_new_a2d
   END INTERFACE xt_idxlist_collection_new
@@ -95,6 +98,45 @@ CONTAINS
     num_idxlists_c = INT(SIZE(idxlists), c_int)
     res = xt_idxlist_c2f(xt_idxlist_collection_new_c(idxlists, num_idxlists_c))
   END FUNCTION xt_idxlist_collection_new_a2d
+
+  FUNCTION xt_idxlist_collection_new_a1d_i2(idxlists, num_idxlists) RESULT(res)
+    INTEGER(i2), INTENT(in) :: num_idxlists
+    TYPE(xt_idxlist), INTENT(in) :: idxlists(num_idxlists)
+    TYPE(xt_idxlist) :: res
+    INTEGER(c_int) :: num_idxlists_c
+
+    IF (num_idxlists > HUGE(1_c_int)) &
+         CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
+         filename, __LINE__)
+    num_idxlists_c = INT(num_idxlists, c_int)
+    res = xt_idxlist_c2f(xt_idxlist_collection_new_c(idxlists, num_idxlists_c))
+  END FUNCTION xt_idxlist_collection_new_a1d_i2
+
+  FUNCTION xt_idxlist_collection_new_a1d_i4(idxlists, num_idxlists) RESULT(res)
+    INTEGER(i4), INTENT(in) :: num_idxlists
+    TYPE(xt_idxlist), INTENT(in) :: idxlists(num_idxlists)
+    TYPE(xt_idxlist) :: res
+    INTEGER(c_int) :: num_idxlists_c
+
+    IF (num_idxlists > HUGE(1_c_int)) &
+         CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
+         filename, __LINE__)
+    num_idxlists_c = INT(num_idxlists, c_int)
+    res = xt_idxlist_c2f(xt_idxlist_collection_new_c(idxlists, num_idxlists_c))
+  END FUNCTION xt_idxlist_collection_new_a1d_i4
+
+  FUNCTION xt_idxlist_collection_new_a1d_i8(idxlists, num_idxlists) RESULT(res)
+    INTEGER(i8), INTENT(in) :: num_idxlists
+    TYPE(xt_idxlist), INTENT(in) :: idxlists(num_idxlists)
+    TYPE(xt_idxlist) :: res
+    INTEGER(c_int) :: num_idxlists_c
+
+    IF (num_idxlists > HUGE(1_c_int)) &
+         CALL xt_abort(xt_get_default_comm(), "idxlists array too large", &
+         filename, __LINE__)
+    num_idxlists_c = INT(num_idxlists, c_int)
+    res = xt_idxlist_c2f(xt_idxlist_collection_new_c(idxlists, num_idxlists_c))
+  END FUNCTION xt_idxlist_collection_new_a1d_i8
 
 END MODULE xt_idxlist_collection
 !

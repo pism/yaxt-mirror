@@ -50,6 +50,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <mpi.h>
 #include <yaxt.h>
@@ -60,6 +61,9 @@
 #include "ctest_common.h"
 #include "test_idxlist_utils.h"
 #include "core/ppm_xfuncs.h"
+
+static void
+test_coll_of_coll(Xt_idxlist collectionlist);
 
 static void
 test_idxsections(void);
@@ -92,6 +96,14 @@ int main(int argc, char **argv) {
 
     // test generated collection list
     check_idxlist(collectionlist, index_list[0], (int)(num_lists*num_indices));
+    int pos = -2, rc
+      = xt_idxlist_get_position_of_index_off(collectionlist, 8, &pos, 5);
+    if (rc != 1 || pos != -1)
+      PUT_ERR("invalid return for index not to be found");
+
+    rc = xt_idxlist_get_position_of_index_off(collectionlist, 1, &pos, num_indices*2);
+    if (rc != 1 || pos != -1)
+      PUT_ERR("invalid return for index not to be found");
 
     static const struct Xt_stripe ref_stripes[num_ref_stripes]
       = {{.start = 1, .stride = 1, .nstrides = 7},
@@ -311,6 +323,8 @@ int main(int argc, char **argv) {
     if (mismatch)
       PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
+    test_coll_of_coll(collectionlist);
+
     xt_idxlist_delete(collectionlist);
   }
 
@@ -405,6 +419,49 @@ test_idxsections(void)
   for (size_t i = 0; i < num_regions; ++i)
     xt_idxlist_delete(component_idxlists[i]);
   free(indices);
+}
+
+static void
+test_coll_of_coll(Xt_idxlist collectionlist)
+{
+  enum {
+    num_vec = 2,
+    num_lists = 3,
+    num_indices = 3,
+  };
+  static const Xt_int indices[num_vec][num_indices]
+    = { { 0, 2, 1 }, { 9, 8, 7 } };
+
+  Xt_idxlist idxvecs[num_vec], idxlists[num_lists];
+
+  // create another pair of index vectors
+  for (size_t i = 0; i < num_vec; ++i)
+    idxvecs[i] = xt_idxvec_new(indices[i], num_indices);
+
+  // generate a collection index list
+  idxlists[0] = xt_idxlist_collection_new(idxvecs, num_vec);
+  idxlists[1] = xt_idxempty_new();
+  idxlists[2] = collectionlist;
+
+  // generate a collection index list containing another collection
+  Xt_idxlist coll_of_coll = xt_idxlist_collection_new(idxlists, num_lists);
+
+  for (size_t i = 0; i < num_vec; ++i) {
+    Xt_idxlist intersection
+      = xt_idxlist_get_intersection(coll_of_coll, idxvecs[i]);
+    Xt_int ref_idx[num_indices];
+    memcpy(ref_idx, indices[i], sizeof (indices[i]));
+    xt_sort_xt_int(ref_idx, num_indices);
+    check_idxlist(intersection, ref_idx, num_indices);
+    xt_idxlist_delete(intersection);
+  }
+
+  for (size_t i = 0; i < num_vec; ++i)
+    xt_idxlist_delete(idxvecs[i]);
+
+  xt_idxlist_delete(idxlists[0]);
+  xt_idxlist_delete(idxlists[1]);
+  xt_idxlist_delete(coll_of_coll);
 }
 
 /*

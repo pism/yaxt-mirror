@@ -246,6 +246,7 @@ CONTAINS
 
     bounds = xt_idxlist_get_bounding_box(collectionlist, global_size, &
          global_start_index)
+    CALL test_coll_of_coll(collectionlist)
     CALL xt_idxlist_delete(collectionlist)
     IF (ANY(bounds /= bounds_ref)) &
          CALL test_abort("ERROR: unexpected boundaries", filename, __LINE__)
@@ -342,6 +343,40 @@ CONTAINS
     CALL xt_idxlist_delete(component_idxlists)
 
   END SUBROUTINE test_idxfsections
+
+  SUBROUTINE test_coll_of_coll(collectionlist)
+    TYPE(xt_idxlist), INTENT(in) :: collectionlist
+    INTEGER, PARAMETER :: num_vec = 2, num_lists = 3, num_indices = 3
+    INTEGER(xt_int_kind), PARAMETER :: indices(num_indices, num_vec) &
+         = RESHAPE((/ 0, 2, 1, 9, 8, 7 /), (/ num_indices, num_vec /))
+    INTEGER(xt_int_kind) :: ref_idx(num_indices)
+    TYPE(xt_idxlist) :: idxvecs(num_vec), idxlists(num_lists), &
+         coll_of_coll, intersection
+    INTEGER :: i
+
+    ! create another pair of index vectors
+    DO i = 1, num_vec
+      idxvecs(i) = xt_idxvec_new(indices(:, i), num_indices)
+    END DO
+    ! generate a collection index list
+    idxlists(1) = xt_idxlist_collection_new(idxvecs, num_vec)
+    idxlists(2) = xt_idxempty_new()
+    idxlists(3) = collectionlist
+
+    ! generate a collection index list containing another collection
+    coll_of_coll = xt_idxlist_collection_new(idxlists, num_lists)
+
+    DO i = 1, num_vec
+      intersection = xt_idxlist_get_intersection(coll_of_coll, idxvecs(i))
+      ref_idx = indices(:, i)
+      CALL xt_sort_xt_int(ref_idx)
+      CALL check_idxlist(intersection, ref_idx)
+      CALL xt_idxlist_delete(intersection)
+    END DO
+    CALL xt_idxlist_delete(idxvecs)
+    CALL xt_idxlist_delete(idxlists(1:2))
+    CALL xt_idxlist_delete(coll_of_coll)
+  END SUBROUTINE test_coll_of_coll
 
 END PROGRAM test_idxlist_collection_f
 !
