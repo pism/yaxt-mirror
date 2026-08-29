@@ -884,7 +884,7 @@ redist_collection_get_msg_ranks(Xt_redist redist,
     int *ranks_ = *ranks;
     if (!ranks_)
       ranks_ = *ranks = xmalloc(nmsg_direction * sizeof (*ranks_));
-    memcpy(ranks_, ranks_orig, nmsg_direction * sizeof (*ranks));
+    memcpy(ranks_, ranks_orig, nmsg_direction * sizeof (*ranks_));
   }
   return (int)nmsg_direction;
 }

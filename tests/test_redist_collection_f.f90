@@ -47,6 +47,213 @@
 !
 
 #include "fc_feature_defs.inc"
+#ifdef VERBOSE
+#define PUT_ERR(msg) WRITE (0, '(a)') msg ; err_count__ = err_count__ + 1
+#else
+#define PUT_ERR(msg) err_count__ = err_count__ + 1
+#endif
+#define XT_UNUSED(x) IF (SIZE( (/(x)/) ) < 0) CONTINUE
+#if ! defined __PGI || ( __PGIC__ >= 11 )
+#  define WITH_COLL_OF_COLL_TEST
+#endif
+#ifdef WITH_COLL_OF_COLL_TEST
+MODULE test_coll_of_coll
+  USE, INTRINSIC :: iso_c_binding, ONLY: c_int, c_size_t, c_ptr, c_loc, &
+       c_funptr, c_funloc, c_char, c_null_char, c_null_ptr, c_f_pointer
+  USE mpi
+  USE yaxt, ONLY: xt_mpi_fint_kind, xt_config, xt_redist, xt_xmap, &
+       xt_redist_p2p_new, xt_xmap_delete, xt_redist_collection_new, &
+       xt_redist_copy, xt_redist_delete, xt_redist_get_MPI_Comm
+  USE ftest_common, ONLY: err_count__
+  USE test_redist_common, ONLY: build_odd_selection_xmap, &
+       sync_mode_test_all, communicators_are_congruent
+#include "xt_slice_c_loc.inc"
+  IMPLICIT NONE
+  PRIVATE
+  INTEGER, PARAMETER :: nvalues = 5, nselect = (nvalues+1)/2
+  PUBLIC :: test_collection_of_collection
+  TYPE :: src_databuf
+    REAL :: data_real(nvalues)
+    INTEGER(xt_mpi_fint_kind) :: data_int(nvalues)
+  END TYPE src_databuf
+  TYPE :: src_databuf_displaced
+    REAL :: data_real(nvalues+1)
+    INTEGER(xt_mpi_fint_kind) :: data_int(nvalues)
+  END TYPE src_databuf_displaced
+  TYPE :: dst_databuf
+    REAL :: data_real(nselect)
+    INTEGER(xt_mpi_fint_kind) :: data_int(nselect)
+  END TYPE dst_databuf
+  INTEGER, PARAMETER :: num_redist_coll = 2, num_redist_p2p = 2
+
+  INTERFACE
+    SUBROUTINE check_redist_(redist, sync_mode, num_redists, &
+         src, dst_num_elems, dst, dst_prep, dst_prep_info, &
+         ref_dst_data, dst_data_dt, ref_dst_data_dt, &
+         file, line) BIND(c, name='check_redist_f2c')
+      IMPORT :: c_ptr, c_int, c_size_t, c_funptr, &
+           xt_mpi_fint_kind, c_char, xt_redist
+      TYPE(xt_redist), INTENT(inout) :: redist
+      INTEGER(c_int), VALUE :: sync_mode, num_redists
+      TYPE(c_ptr), INTENT(in) :: src(num_redists)
+      INTEGER(c_size_t), INTENT(in) :: dst_num_elems(num_redists)
+      TYPE(c_ptr), INTENT(in) :: dst(num_redists)
+      TYPE(c_funptr), INTENT(in) :: dst_prep(num_redists)
+      TYPE(c_ptr), VALUE, INTENT(in) :: dst_prep_info
+      TYPE(c_ptr), INTENT(in) ::  ref_dst_data(num_redists)
+      INTEGER(xt_mpi_fint_kind), INTENT(in) :: dst_data_dt(num_redists), &
+           ref_dst_data_dt(num_redists)
+      CHARACTER(kind=c_char) :: file(*)
+      INTEGER(c_int), VALUE :: line
+    END SUBROUTINE check_redist_
+  END INTERFACE
+
+
+  CHARACTER(len=*), PARAMETER :: filename = 'test_redist_collection_f.f90'
+CONTAINS
+  SUBROUTINE fill_array_real(dst, dst_prep_info, dst_num_elems) &
+    BIND(c, name='trc_fill_array_real')
+    INTEGER(c_size_t), VALUE :: dst_num_elems
+    TYPE(c_ptr), VALUE :: dst, dst_prep_info
+    REAL, POINTER :: dst_(:)
+
+    INTEGER :: i, n
+
+    XT_UNUSED(dst_prep_info)
+    n = INT(dst_num_elems)
+    CALL c_f_POINTER(dst, dst_, (/ n /))
+    DO i = 1, n
+      dst_(i) = -1.0
+    END DO
+  END SUBROUTINE fill_array_real
+
+  SUBROUTINE fill_array_int(dst, dst_prep_info, dst_num_elems) &
+       BIND(c, name='trc_fill_array_int')
+    INTEGER(c_size_t), VALUE :: dst_num_elems
+    TYPE(c_ptr), VALUE :: dst, dst_prep_info
+    INTEGER(xt_mpi_fint_kind), POINTER :: dst_(:)
+
+    INTEGER :: i, n
+
+    XT_UNUSED(dst_prep_info)
+    n = INT(dst_num_elems)
+    CALL C_F_POINTER(dst, dst_, (/ n /))
+    DO i = 1, n
+      dst_(i) = -1
+    END DO
+  END SUBROUTINE fill_array_int
+
+  SUBROUTINE check_redist_coll2(redist_coll2, src_data, dst_data, &
+       ref_dst_data)
+    TYPE(xt_redist), INTENT(inout) :: redist_coll2
+    TYPE(src_databuf), TARGET, INTENT(in) :: src_data
+    TYPE(dst_databuf), TARGET, INTENT(out) :: dst_data(num_redist_coll)
+    TYPE(dst_databuf), TARGET, INTENT(in) :: ref_dst_data
+    TYPE(c_ptr) :: src_data_p(num_redist_p2p, num_redist_coll), &
+         dst_data_p(num_redist_p2p, num_redist_coll), &
+         ref_dst_data_p(num_redist_p2p, num_redist_coll)
+    INTEGER(c_size_t) :: dst_num_elem(num_redist_p2p, num_redist_coll)
+    TYPE(c_funptr) :: prep(num_redist_p2p, num_redist_coll)
+    INTEGER(xt_mpi_fint_kind) :: dt(num_redist_p2p, num_redist_coll)
+    CHARACTER(kind=c_char) :: filename_c(LEN(filename)+1)
+    TYPE(src_databuf_displaced), TARGET :: src_data_disp
+    type(xt_redist) :: redist_coll2_copy
+    INTEGER :: i
+
+    DO i = 1, num_redist_coll
+      XT_SLICE_C_LOC(src_data%data_real, src_data_p(1, i))
+      XT_SLICE_C_LOC(src_data%data_int, src_data_p(2, i))
+      XT_SLICE_C_LOC(dst_data(i)%data_real, dst_data_p(1, i))
+      XT_SLICE_C_LOC(dst_data(i)%data_int, dst_data_p(2, i))
+      XT_SLICE_C_LOC(ref_dst_data%data_real, ref_dst_data_p(1, i))
+      XT_SLICE_C_LOC(ref_dst_data%data_int, ref_dst_data_p(2, i))
+      dt(1, i) = mpi_real
+      dt(2, i) = mpi_integer
+      prep(1, i) = C_FUNLOC(fill_array_real)
+      prep(2, i) = C_FUNLOC(fill_array_int)
+    END DO
+    dst_num_elem = INT(nselect, c_size_t)
+    DO i = 1, LEN(filename)
+      filename_c(i) = filename(i:i)
+    END DO
+    filename_c(LEN(filename)+1) = c_null_char
+    CALL check_redist_(redist_coll2, sync_mode_test_all, &
+         num_redist_p2p*num_redist_coll, &
+         src_data_p, dst_num_elem, dst_data_p, prep, c_null_ptr, &
+         ref_dst_data_p, dt, dt, filename_c, __LINE__)
+    DO i = 1, SIZE(src_data%data_real)
+      src_data_disp%data_real(i) = src_data%data_real(i)
+      src_data_disp%data_int(i) = src_data%data_int(i)
+    END DO
+    src_data_disp%data_real(SIZE(src_data_disp%data_real)) = -2.0
+    ! check the same with the same data at different relative offset
+    DO i = 1, num_redist_coll
+      XT_SLICE_C_LOC(src_data_disp%data_real, src_data_p(1, i))
+      XT_SLICE_C_LOC(src_data_disp%data_int, src_data_p(2, i))
+    END DO
+    CALL check_redist_(redist_coll2, sync_mode_test_all, &
+         num_redist_p2p*num_redist_coll, &
+         src_data_p, dst_num_elem, dst_data_p, prep, c_null_ptr, &
+         ref_dst_data_p, dt, dt, filename_c, __LINE__)
+    redist_coll2_copy = xt_redist_copy(redist_coll2)
+    CALL check_redist_(redist_coll2, sync_mode_test_all, &
+         num_redist_p2p*num_redist_coll, &
+         src_data_p, dst_num_elem, dst_data_p, prep, c_null_ptr, &
+         ref_dst_data_p, dt, dt, filename_c, __LINE__)
+    CALL xt_redist_delete(redist_coll2_copy)
+  END SUBROUTINE check_redist_coll2
+
+  SUBROUTINE test_collection_of_collection(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+    ! general test WITH one redist
+    ! set up data
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redists(num_redist_p2p), redist_coll(num_redist_coll), &
+         redist_coll_coll
+    TYPE(src_databuf), PARAMETER :: src_data &
+         = src_databuf( (/ 1.0,2.0,3.0,4.0,5.0 /), (/ 1,2,3,4,5 /) )
+    TYPE(dst_databuf) :: dst_data(num_redist_coll)
+    TYPE(dst_databuf), PARAMETER :: ref_dst_data &
+         = dst_databuf( (/ 1.0,3.0,5.0 /), (/ 1,3,5 /) )
+    INTEGER :: i
+
+    xmap = build_odd_selection_xmap(nvalues, comm)
+
+    redists(1) = xt_redist_p2p_new(xmap, MPI_REAL)
+    redists(2) = xt_redist_p2p_new(xmap, MPI_INTEGER)
+
+    CALL xt_xmap_delete(xmap)
+
+    ! generate redist_collection
+    redist_coll(1) &
+         = xt_redist_collection_new(redists, -1, comm)
+    DO i = 2, num_redist_coll
+      redist_coll(i) = redist_coll(1)
+    END DO
+    CALL xt_redist_delete(redists)
+
+    redist_coll_coll &
+         = xt_redist_collection_new(redist_coll, 2, comm, config)
+
+    ! test communicator of redist
+    IF (.NOT. communicators_are_congruent(&
+         xt_redist_get_MPI_Comm(redist_coll_coll), comm)) THEN
+      PUT_ERR("error in xt_redist_get_MPI_Comm")
+    END IF
+
+    CALL xt_redist_delete(redist_coll(1));
+
+    ! test exchange
+    CALL check_redist_coll2(redist_coll_coll, src_data, dst_data, &
+         ref_dst_data)
+
+    ! clean up
+    CALL xt_redist_delete(redist_coll_coll)
+
+  END SUBROUTINE test_collection_of_collection
+END MODULE test_coll_of_coll
+#endif
 PROGRAM test_redist_collection
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
@@ -68,9 +275,13 @@ PROGRAM test_redist_collection
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
-       check_wait_request, redist_exchanger_option
+       check_wait_request, redist_exchanger_option, &
+       communicators_are_congruent
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
+#ifdef WITH_COLL_OF_COLL_TEST
+  USE test_coll_of_coll, ONLY: test_collection_of_collection
+#endif
 #include "xt_slice_c_loc.inc"
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_collection_f.f90'
@@ -89,7 +300,9 @@ PROGRAM test_redist_collection
   CALL test_repeated_redist(mpi_comm_world, config, 0)
   CALL test_displacement_variations(mpi_comm_world, config, 3)
   CALL test_displacement_variations(mpi_comm_world, config, 40)
-
+#ifdef WITH_COLL_OF_COLL_TEST
+  CALL test_collection_of_collection(mpi_comm_world, config)
+#endif
   IF (test_err_count() /= 0) &
        CALL test_abort("non-zero error count!", filename, __LINE__)
   CALL xt_config_delete(config)
@@ -277,8 +490,9 @@ CONTAINS
     INTEGER, PARAMETER :: num_slice = 3
     INTEGER, PARAMETER :: src_slice_len = 5
     INTEGER :: i
-    DOUBLE PRECISION, PARAMETER :: src_data(5, num_slice) = RESHAPE((/&
-         (DBLE(i), i = 1, 15)/), (/ 5, num_slice /))
+    DOUBLE PRECISION, PARAMETER :: src_data(src_slice_len, num_slice) &
+         = RESHAPE((/ (DBLE(i), i = 1, 15)/), &
+         &         (/ src_slice_len, num_slice /))
     TYPE(xt_xmap) :: xmap
     TYPE(xt_redist) :: redists(num_slice), redist_coll, redist_coll_copy
     INTEGER, PARAMETER :: permutation(3, 3) &

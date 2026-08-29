@@ -187,6 +187,33 @@ ACX_FC_ABSTRACT_INTERFACE([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 ACX_FC_C_FUNLOC([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_C_FUNLOC"],
   [AC_MSG_WARN([Disabling procedure queries in Fortran interface for bucket generator])])
+dnl
+AC_LANG_PUSH([Fortran])
+while : ; do
+AS_IF([test x${XT_FC_REAL_DEFAULT_KIND+set} = xset \
+   && expr "$XT_FC_REAL_DEFAULT_KIND" : 'c_\(float\|double\|long_double\)$' >/dev/null],
+  [break],
+  [expr "$XT_FC_REAL_DEFAULT_KIND" : '@<:@1-9@:>@@<:@0-9@:>@*$' >/dev/null],,
+  [ACX_FORTRAN_CHECK_INTEGER_EXPRESSION(,[KIND(1.0)],,[1],[32],[1],
+    [XT_FC_REAL_DEFAULT_KIND],
+    [AC_MSG_WARN([Cannot determine $FC default kind real value!])])])
+AS_FOR([acx_fc_kind_macro],[acx_fc_kind],[c_float c_double c_long_double],
+  [AS_VAR_PUSHDEF([XT_FC_REAL_KIND],[XT_FC_REAL_]AS_TR_CPP(acx_fc_kind_macro)[_KIND])
+   ACX_FORTRAN_CHECK_INTEGER_EXPRESSION(,[acx_fc_kind_macro],[USE, INTRINSIC :: iso_c_binding, ONLY: acx_fc_kind_macro],[1],[32],[1],
+     [XT_FC_REAL_KIND],
+     [AC_MSG_WARN([Cannot determine $FC acx_fc_kind_macro kind real value!])
+      continue])
+   AS_VAR_IF([XT_FC_REAL_KIND], [$XT_FC_REAL_DEFAULT_KIND],
+     [AS_VAR_SET([XT_FC_REAL_DEFAULT_KIND],acx_fc_kind_macro)])
+   AS_VAR_POPDEF([XT_FC_REAL_KIND])
+   AS_CASE([$XT_FC_REAL_DEFAULT_KIND],[c_float|c_double|c_long_double],
+     [break])])
+break
+done
+AC_LANG_POP([Fortran])
+XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define XT_FC_REAL_DEFAULT_KIND $XT_FC_REAL_DEFAULT_KIND"
+dnl
 ACX_GFORTRAN_SIZEOF([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define FC_C_SIZEOF(arg) SIZEOF(arg)
 @%:@define HAVE_GFORTRAN_SIZEOF"],[:])

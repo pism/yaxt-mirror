@@ -121,6 +121,9 @@ MODULE test_redist_common
   PUBLIC :: redist_exchanger_option
   PUBLIC :: xt_redist_s_exchange
 
+  INTEGER, PUBLIC, PARAMETER :: sync_mode_test_all = 0, &
+       sync_mode_test_a = 1, sync_mode_test_s = 2
+
   CHARACTER(len=*), PARAMETER :: filename = 'test_redist_common_f.f90'
 
   CHARACTER(len=29), PARAMETER :: check_redist_err_msg(2) = (/ &

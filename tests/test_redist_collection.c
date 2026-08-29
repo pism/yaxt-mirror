@@ -70,6 +70,9 @@ static void
 test_displacement_variations(MPI_Comm comm, Xt_config config,
                              size_t num_redists);
 
+static void
+test_collection_of_collection(MPI_Comm comm, Xt_config config);
+
 
 int main(int argc, char **argv) {
 
@@ -95,6 +98,8 @@ int main(int argc, char **argv) {
 
   test_displacement_variations(MPI_COMM_WORLD, config, 3);
   test_displacement_variations(MPI_COMM_WORLD, config, 40);
+
+  test_collection_of_collection(MPI_COMM_WORLD, config);
 
   xt_config_delete(config);
   xt_finalize();
@@ -410,6 +415,91 @@ test_displacement_variations(MPI_Comm comm, Xt_config config,
   xt_redist_delete(redist_coll_copy);
   xt_redist_delete(redist_coll);
 }
+
+
+static void
+test_collection_of_collection(MPI_Comm comm, Xt_config config)
+{
+  // general test with one redist
+  // set up data
+  enum {
+    num_redist_coll = 2,
+    num_p2p_redist = 2,
+  };
+  Xt_xmap xmap = build_odd_selection_xmap(nvalues, comm);
+
+  Xt_redist redists[num_p2p_redist];
+  redists[0]
+    = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+  redists[1]
+    = xt_redist_p2p_new(xmap, MPI_INT);
+
+  xt_xmap_delete(xmap);
+
+  // generate redist_collection
+  Xt_redist redist_coll[num_redist_coll];
+  redist_coll[0]
+    = xt_redist_collection_custom_new(redists, 2, -1, comm, config);
+  for (size_t i = 1; i < num_redist_coll; ++i)
+    redist_coll[i] = redist_coll[0];
+
+  xt_redist_delete(redists[0]);
+  xt_redist_delete(redists[1]);
+
+  Xt_redist redist_coll_coll
+    = xt_redist_collection_custom_new(redist_coll, 2, -1, comm, config);
+
+  // test communicator of redist
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll_coll), comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+  xt_redist_delete(redist_coll[0]);
+
+  // test exchange
+  static const struct src_databuf {
+    double data_dbl[nvalues];
+    int data_int[nvalues];
+  } src_data = { .data_dbl = {1,2,3,4,5}, .data_int = {1,2,3,4,5} };
+  struct dst_databuf {
+    double data_dbl[nselect];
+    int data_int[nselect];
+  } dst_data[num_redist_coll];
+  static const struct dst_databuf ref_dst_data
+    = { {1,3,5}, {1,3,5} };
+  const void *const src_data_p[num_redist_coll*num_p2p_redist]
+    = { src_data.data_dbl, src_data.data_int,
+        src_data.data_dbl, src_data.data_int };
+  static const size_t dst_num_elem[num_redist_coll*num_p2p_redist]
+    = { nselect, nselect, nselect, nselect };
+  void *const dst_data_p[num_redist_coll*num_p2p_redist]
+    = { dst_data[0].data_dbl, dst_data[0].data_int,
+        dst_data[1].data_dbl, dst_data[1].data_int };
+  static const prepare_dst prep[num_redist_coll*num_p2p_redist]
+    = { fill_array_double, fill_array_int,
+        fill_array_double, fill_array_int };
+  const void *ref_dst_data_p[num_redist_coll*num_p2p_redist]
+    = { ref_dst_data.data_dbl, ref_dst_data.data_int,
+        ref_dst_data.data_dbl, ref_dst_data.data_int };
+  MPI_Datatype dt[num_redist_coll*num_p2p_redist]
+    = { MPI_DOUBLE, MPI_INT, MPI_DOUBLE, MPI_INT };
+  check_redist_coll(redist_coll_coll, sync_mode_test_all,
+                    num_redist_coll * num_p2p_redist,
+                    src_data_p, dst_num_elem,
+                    dst_data_p, prep, NULL,
+                    ref_dst_data_p, dt, dt);
+
+  Xt_redist redist_coll_coll_copy = xt_redist_copy(redist_coll_coll);
+
+  check_redist_coll(redist_coll_coll_copy, sync_mode_test_all,
+                    num_redist_coll * num_p2p_redist,
+                    src_data_p, dst_num_elem,
+                    dst_data_p, prep, NULL,
+                    ref_dst_data_p, dt, dt);
+  // clean up
+  xt_redist_delete(redist_coll_coll_copy);
+  xt_redist_delete(redist_coll_coll);
+}
+
 
 /*
  * Local Variables:

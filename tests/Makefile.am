@@ -142,6 +142,7 @@ libtestutil_f_la_SOURCES = ftest_common.f90 \
 	test_xmap_common_f.f90 \
 	test_xmap_common_parallel_f.f90 \
 	test_xmap_common_intercomm_parallel_f.f90 \
+	test_redist_common_f2c.c \
 	test_redist_common_f.f90
 
 if xt_fc_hlf_struct_return

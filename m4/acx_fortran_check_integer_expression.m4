@@ -42,9 +42,9 @@ dnl  produce source that fails to compile if TEST_EXPRESSION equals
 dnl  VALUE_TO_CHECK_FOR_EQUALITY
 dnl
 m4_define([_ACX_LANG_CHECK_INTEGER_EXPRESSION_SOURCE(Fortran)],
-[AC_LANG_SOURCE([      module conftest]m4_ifval([$4],[
-      $4
-])[      contains
+[AC_LANG_SOURCE([      module conftest]m4_dquote(m4_ifval([$4],[
+      $4]))
+[      contains
       integer function callee(a)
       integer a(:)
       integer i
@@ -88,7 +88,7 @@ dnl _ACX_FORTRAN_CHECK_INTEGER_EXPRESSION_RUN(
 dnl             [DECL],[TEST_EXPRESSION],[EXTRA-DECL],
 dnl             [VAR-TO-SET-IF-FOUND], [ACTION-IF-NOT-FOUND])
 m4_define([_ACX_FORTRAN_CHECK_INTEGER_EXPRESSION_RUN],dnl
-  [AC_RUN_IFELSE([AC_LANG_PROGRAM(m4_ifval([$3],[      $3]),
+  [AC_RUN_IFELSE([AC_LANG_PROGRAM(m4_ifval([$3],m4_dquote([      $3])),
 [      $1
       open(10,file="conftestval")
       write(10,*)$2
@@ -100,7 +100,7 @@ m4_define([_ACX_FORTRAN_CHECK_INTEGER_EXPRESSION_RUN],dnl
 dnl
 dnl ACX_FORTRAN_CHECK_INTEGER_EXPRESSION(
 dnl             [DECL],[TEST_EXPRESSION],[EXTRA-DECL],
-dnl             [LOW-BOUND],[HIGH-BOUND],[INCREMENT]
+dnl             [LOW-BOUND],[HIGH-BOUND],[INCREMENT],
 dnl             [VAR-TO-SET-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AC_DEFUN([ACX_FORTRAN_CHECK_INTEGER_EXPRESSION],
   [AS_IF([test x"$cross_compiling" = xyes],
