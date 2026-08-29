@@ -81,17 +81,17 @@ test_redist_single_array_base_(int nsend, const struct Xt_redist_msg *send_msgs,
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
     PUT_ERR("error in xt_redist_get_MPI_Comm\n");
 
-  check_redist_(redist, sync_mode_test_all, 1, &src_data, num_dst, &dst_data,
-                dst_data, dst_prep, dst_prep_info, ref_dst_data,
-                dst_data_dt, ref_dst_data_dt, file, line);
+  check_redist_(redist, sync_mode_test_all, 1, &src_data, &num_dst, &dst_data,
+                &dst_prep, dst_prep_info, &ref_dst_data,
+                &dst_data_dt, &ref_dst_data_dt, file, line);
   {
     Xt_redist redist_copy = xt_redist_copy(redist);
     xt_redist_delete(redist);
     redist = redist_copy;
   }
-  check_redist_(redist, sync_mode_test_all, 1, &src_data, num_dst, &dst_data,
-                dst_data, dst_prep, dst_prep_info, ref_dst_data,
-                dst_data_dt, ref_dst_data_dt, file, line);
+  check_redist_(redist, sync_mode_test_all, 1, &src_data, &num_dst, &dst_data,
+                &dst_prep, dst_prep_info, &ref_dst_data,
+                &dst_data_dt, &ref_dst_data_dt, file, line);
   xt_redist_delete(redist);
 }
 

@@ -73,13 +73,13 @@ enum {
 void
 check_redist_(Xt_redist redist, int sync_mode,
               int num_redists, const void *const src[num_redists],
-              size_t dst_num_elems,
+              const size_t dst_num_elems[num_redists],
               void *const dst[num_redists],
-              void *dst_buf_base,
-              prepare_dst dst_prep,
+              const prepare_dst dst_prep[num_redists],
               const void *dst_prep_info,
-              const void *ref_dst_data,
-              MPI_Datatype dst_data_dt, MPI_Datatype ref_dst_data_dt,
+              const void *const ref_dst_data[num_redists],
+              const MPI_Datatype *dst_data_dt,
+              const MPI_Datatype *ref_dst_data_dt,
               const char *file, int line);
 
 #define check_redist(redist, src, dst_size, dst, dst_prep, dst_prep_info, \
@@ -87,20 +87,25 @@ check_redist_(Xt_redist redist, int sync_mode,
   do {                                                                  \
     void *dst_[1] = { dst };                                            \
     const void *src_[1] = { src };                                      \
-    check_redist_(redist, sync_mode_test_all, 1, src_, dst_size, dst_,  \
-                  dst, dst_prep, dst_prep_info,                         \
-                  ref_dst_data, dst_data_dt, ref_dst_data_dt,           \
+    check_redist_(redist, sync_mode_test_all, 1, src_,                  \
+                  (size_t []){ dst_size }, dst_,                        \
+                  (prepare_dst []){ dst_prep }, dst_prep_info,          \
+                  (const void * []){ ref_dst_data },                    \
+                  (MPI_Datatype []){ dst_data_dt },                     \
+                  (MPI_Datatype []){ ref_dst_data_dt },                 \
                   __FILE__, __LINE__);                                  \
   } while (0)
 
 #define check_redist_coll(redist, sync_mode, num_redists, src,          \
                           dst_size, dst,                                \
-                          dst_buf_base, dst_prep, dst_prep_info,        \
+                          dst_prep, dst_prep_info,                      \
                           ref_dst_data, dst_data_dt, ref_dst_data_dt)   \
   check_redist_(redist, sync_mode, num_redists, src, dst_size, dst,     \
-                dst_buf_base, dst_prep, dst_prep_info,                  \
+                dst_prep, dst_prep_info,                                \
                 ref_dst_data, dst_data_dt, ref_dst_data_dt,             \
                 __FILE__, __LINE__)
+
+
 void
 fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems);
 void

@@ -103,64 +103,72 @@ check_redist_(Xt_redist redist,
               int sync_mode,
               int num_redists,
               const void *const src[num_redists],
-              size_t dst_num_elems, void *const dst[num_redists],
-              void *dst_buf_base,
-              prepare_dst dst_prep,
+              const size_t dst_num_elems[num_redists],
+              void *const dst[num_redists],
+              const prepare_dst dst_prep[num_redists],
               const void *dst_prep_info,
-              const void *ref_dst_data,
-              MPI_Datatype dst_data_dt,
-              MPI_Datatype ref_dst_data_dt,
+              const void *const ref_dst_data[num_redists],
+              const MPI_Datatype *dst_data_dt,
+              const MPI_Datatype *ref_dst_data_dt,
               const char *file, int line)
 {
   MPI_Comm comm = xt_redist_get_MPI_Comm(redist);
-  size_t dt_extent;
-  {
-    MPI_Aint dt_lb, dt_extent_;
-    xt_mpi_call(MPI_Type_get_extent(dst_data_dt, &dt_lb, &dt_extent_), comm);
-    dt_extent = (size_t)dt_extent_;
-  }
-  size_t dst_size = dst_num_elems * dt_extent;
   int start_txmode = sync_mode == sync_mode_test_a ? 1 : 0,
     end_txmode = sync_mode == sync_mode_test_s ? 1 : 2;
   if (num_redists == 1)
     check_redist_datatypes(redist);
   for (int txmode = start_txmode; txmode < end_txmode; ++txmode) {
-    dst_prep(dst_buf_base, dst_prep_info, dst_num_elems);
+    for (int j = 0; j < num_redists; ++j)
+      dst_prep[j](dst[j], dst_prep_info, dst_num_elems[j]);
     if (txmode == 0) {
       xt_redist_s_exchange(redist, num_redists, src, dst);
     } else {
       wrap_a_exchange(redist, num_redists, src, dst);
     }
     bool compare_failed = false;
-    if (dst_data_dt == ref_dst_data_dt) {
-      compare_failed = memcmp(dst_buf_base, ref_dst_data, dst_size);
-    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_INT) {
-      const double *dst_cmp = dst_buf_base;
-      const int *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_num_elems; ++i)
-        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
-    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG) {
-      const double *dst_cmp = dst_buf_base;
-      const long *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_num_elems; ++i)
-        compare_failed |= (dst_cmp[i] != (double)ref_dst_cmp[i]);
-    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_SHORT) {
-      const double *dst_cmp = dst_buf_base;
-      const short *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_num_elems; ++i)
-        compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
-    } else if (dst_data_dt == MPI_DOUBLE && ref_dst_data_dt == MPI_LONG_LONG) {
-      const double *dst_cmp = dst_buf_base;
-      const long long *ref_dst_cmp = ref_dst_data;
-      for (size_t i = 0; i < dst_num_elems; ++i)
-        compare_failed |= (dst_cmp[i] != (double)ref_dst_cmp[i]);
-    } else if (dst_data_dt == MPI_DOUBLE
-               && ref_dst_data_dt == MPI_DATATYPE_NULL) {
-      const double *dst_cmp = dst_buf_base;
-      for (size_t i = 0; i < dst_num_elems; ++i)
-        compare_failed |= (dst_cmp[i] != (double)i);
-    } else
-      Xt_abort(comm, "internal error: unhandled test case!", file, line);
+    for (int j = 0; j < num_redists; ++j) {
+      size_t dst_num_elems_ = dst_num_elems[j];
+      if (dst_data_dt[j] == ref_dst_data_dt[j]) {
+        size_t dst_size;
+        {
+          MPI_Aint dt_lb, dt_extent;
+          xt_mpi_call(MPI_Type_get_extent(dst_data_dt[j],
+                                          &dt_lb, &dt_extent), comm);
+          dst_size = dst_num_elems_ * (size_t)dt_extent;
+        }
+        compare_failed = memcmp(dst[j], ref_dst_data[j], dst_size);
+      } else if (dst_data_dt[j] == MPI_DOUBLE
+                 && ref_dst_data_dt[j] == MPI_INT) {
+        const double *dst_cmp = dst[j];
+        const int *ref_dst_cmp = ref_dst_data[j];
+        for (size_t i = 0; i < dst_num_elems_; ++i)
+          compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+      } else if (dst_data_dt[j] == MPI_DOUBLE
+                 && ref_dst_data_dt[j] == MPI_LONG) {
+        const double *dst_cmp = dst[j];
+        const long *ref_dst_cmp = ref_dst_data[j];
+        for (size_t i = 0; i < dst_num_elems_; ++i)
+          compare_failed |= (dst_cmp[i] != (double)ref_dst_cmp[i]);
+      } else if (dst_data_dt[j] == MPI_DOUBLE
+                 && ref_dst_data_dt[j] == MPI_SHORT) {
+        const double *dst_cmp = dst[j];
+        const short *ref_dst_cmp = ref_dst_data[j];
+        for (size_t i = 0; i < dst_num_elems_; ++i)
+          compare_failed |= (dst_cmp[i] != ref_dst_cmp[i]);
+      } else if (dst_data_dt[j] == MPI_DOUBLE
+                 && ref_dst_data_dt[j] == MPI_LONG_LONG) {
+        const double *dst_cmp = dst[j];
+        const long long *ref_dst_cmp = ref_dst_data[j];
+        for (size_t i = 0; i < dst_num_elems_; ++i)
+          compare_failed |= (dst_cmp[i] != (double)ref_dst_cmp[i]);
+      } else if (dst_data_dt[j] == MPI_DOUBLE
+                 && ref_dst_data_dt[j] == MPI_DATATYPE_NULL) {
+        const double *dst_cmp = dst[j];
+        for (size_t i = 0; i < dst_num_elems_; ++i)
+          compare_failed |= (dst_cmp[i] != (double)i);
+      } else
+        Xt_abort(comm, "internal error: unhandled test case!", file, line);
+    }
     if (compare_failed)
       PUT_ERR("error in xt_redist_s/a_exchange, called from %s, line %d\n",
               file, line);

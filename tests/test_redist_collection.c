@@ -200,7 +200,8 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
          src_slice_len = 5, dst_slice_len = (src_slice_len+1)/2 };
   Xt_xmap xmap = build_odd_selection_xmap(src_slice_len, comm);
 
-  Xt_redist redist = xt_redist_p2p_new(xmap, MPI_DOUBLE);
+  MPI_Datatype dt[3] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
+  Xt_redist redist = xt_redist_p2p_new(xmap, dt[0]);
 
   xt_xmap_delete(xmap);
 
@@ -216,6 +217,11 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
 
   xt_redist_delete(redist);
 
+  static const size_t dst_num_elem[num_slice]
+    = { dst_slice_len, dst_slice_len, dst_slice_len };
+  static const prepare_dst prep[num_slice]
+    = { fill_array_double, fill_array_double, fill_array_double };
+
   // test exchange
   {
     static const double src_data[num_slice][src_slice_len]
@@ -228,12 +234,12 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
       = { src_data[0], src_data[1], src_data[2]};
     void *const dst_data_p[num_slice]
       = { dst_data[0], dst_data[1], dst_data[2] };
-
+    const void *const ref_dst_data_p[num_slice]
+      = { ref_dst_data[0], ref_dst_data[1], ref_dst_data[2] };
     check_redist_coll(redist_coll, sync_mode_test_all,
                       num_slice, src_data_p,
-                      num_slice * dst_slice_len, dst_data_p, dst_data[0],
-                      fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
-                      MPI_DOUBLE);
+                      dst_num_elem, dst_data_p,
+                      prep, NULL, ref_dst_data_p, dt, dt);
   }
   // test exchange with changed displacements
   {
@@ -246,12 +252,13 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
       = {src_data[1],src_data[0],src_data[2]};
     void *const dst_data_p[num_slice]
       = { dst_data[1], dst_data[0], dst_data[2] };
+    const void *const ref_dst_data_p[num_slice]
+      = { ref_dst_data[0], ref_dst_data[1], ref_dst_data[2] };
 
     check_redist_coll(redist_coll, sync_mode_test_all,
                       num_slice, src_data_p,
-                      num_slice * dst_slice_len, dst_data_p, dst_data[0],
-                      fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
-                      MPI_DOUBLE);
+                      dst_num_elem, dst_data_p,
+                      prep, NULL, ref_dst_data_p, dt, dt);
   }
 
   // test exchange with original displacements
@@ -265,11 +272,13 @@ test_repeated_redist(MPI_Comm comm, Xt_config config, int cache_size)
       = { src_data[0], src_data[1], src_data[2] };
     void *const dst_data_p[num_slice]
       = { dst_data[0], dst_data[1], dst_data[2] };
+    const void *const ref_dst_data_p[num_slice]
+      = { ref_dst_data[0], ref_dst_data[1], ref_dst_data[2] };
+
     check_redist_coll(redist_coll, sync_mode_test_all,
                       num_slice, src_data_p,
-                      num_slice * dst_slice_len, dst_data_p, dst_data[0],
-                      fill_array_double, NULL, ref_dst_data, MPI_DOUBLE,
-                      MPI_DOUBLE);
+                      dst_num_elem, dst_data_p,
+                      prep, NULL, ref_dst_data_p, dt, dt);
   }
 
   // clean up
@@ -296,6 +305,9 @@ run_displacement_check(Xt_redist redist_coll, int sync,
     for (size_t i = 0; i < nvalues; ++i)
       src_data[j][i] = (double)(1 + j * nvalues + i);
 
+  MPI_Datatype dt[num_redists];
+  for (size_t j = 0; j < num_redists; ++j)
+    dt[j] = MPI_DOUBLE;
   double src_data_[num_src_elems];
 
   double *dst_data
@@ -310,9 +322,12 @@ run_displacement_check(Xt_redist redist_coll, int sync,
 
   double *ref_dst_data
     = xmalloc(num_dst_elems * sizeof (*ref_dst_data));
-  for (size_t j = 0; j < num_redists-1; ++j)
+  const void *ref_dst_data_p[num_redists];
+  for (size_t j = 0; j < num_redists-1; ++j) {
+    ref_dst_data_p[j] = ref_dst_data + j*nselect;
     for (size_t i = 0; i < nselect; ++i)
       ref_dst_data[j*nselect + i] = src_data[j][i*2];
+  }
 
   for (size_t k = 0; k < cache_size + cache_overrun; ++k) {
 
@@ -323,6 +338,7 @@ run_displacement_check(Xt_redist redist_coll, int sync,
 
     src_data_p[num_redists-1] = src_data_ + k;
     dst_data_p[num_redists-1] = dst_data + nselect*(num_redists-1) + k;
+    ref_dst_data_p[num_redists-1] = ref_dst_data + nselect*(num_redists-1) + k;
 
     /* put every second value from src_data[3] into ref_dst_data
      * starting at (num_redists-1)*nselect + k, i.e. with offset k
@@ -334,11 +350,17 @@ run_displacement_check(Xt_redist redist_coll, int sync,
         = src_data[num_redists-1][i*2];
     for (size_t i = num_redists*nselect + k; i < num_dst_elems; ++i)
       ref_dst_data[i] = -1;
+    size_t num_dst_elems_by_redist[num_redists];
+    prepare_dst prep[num_redists];
+    for (size_t i = 0; i < num_redists; ++i) {
+      num_dst_elems_by_redist[i] = nselect;
+      prep[i] = fill_array_double;
+    }
     check_redist_coll(redist_coll,
                       sync ? sync_mode_test_s : sync_mode_test_a,
-                      (int)num_redists, src_data_p, num_dst_elems, dst_data_p,
-                      dst_data, fill_array_double, NULL, ref_dst_data,
-                      MPI_DOUBLE, MPI_DOUBLE);
+                      (int)num_redists, src_data_p, num_dst_elems_by_redist,
+                      dst_data_p,
+                      prep, NULL, ref_dst_data_p, dt, dt);
   }
   free(ref_dst_data);
   free(dst_data);

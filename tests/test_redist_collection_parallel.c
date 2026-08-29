@@ -343,17 +343,21 @@ test_rr_redist(MPI_Comm comm, Xt_config config)
   Xt_int results_[2][elems_per_rank];
   void *results[2] = {results_[0], results_[1]};
   const void *input[2] = {src_indices_, src_indices_};
+  size_t num_dst_elems[] = { elems_per_rank, elems_per_rank };
+  static const prepare_dst prep[2] = { fill_array_xt_int, fill_array_xt_int };
+  const void *ref_dst_data[2] = { dst_indices_[0], dst_indices_[1] };
+  MPI_Datatype dt[2] = { Xt_int_dt, Xt_int_dt };
   check_redist_coll(redist, sync_mode_test_all,
-                    2, input, 2 * elems_per_rank, results,
-                    results_, fill_array_xt_int, NULL,
-                    dst_indices_, Xt_int_dt, Xt_int_dt);
+                    2, input, num_dst_elems, results,
+                    prep, NULL,
+                    ref_dst_data, dt, dt);
 
   Xt_redist redist_copy = xt_redist_copy(redist);
   xt_redist_delete(redist);
   check_redist_coll(redist_copy, sync_mode_test_all,
-                    2, input, 2 * elems_per_rank, results,
-                    results_, fill_array_xt_int, NULL,
-                    dst_indices_, Xt_int_dt, Xt_int_dt);
+                    2, input, num_dst_elems,
+                    results, prep, NULL,
+                    ref_dst_data, dt, dt);
 
   // clean up
   xt_redist_delete(redist_copy);
