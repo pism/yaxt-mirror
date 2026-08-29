@@ -96,7 +96,7 @@ XT_DT_STRIPE_BUFS_GROW(
     int *dt_stripes_size_
       = (void *)(work_buf_ + 2*needed_elems*sizeof (XT_OFS_TYPE));
     memmove(dt_stripes_size_, work_buf_ + old_size_ofs,
-            sizeof (XT_OFS_TYPE) * num_current_elems);
+            sizeof (*dt_stripes_size_) * num_current_elems);
     XT_OFS_TYPE *dt_stripes_stride_
       = (XT_OFS_TYPE *)(void *)work_buf_ + needed_elems;
     memmove(dt_stripes_stride_, work_buf_ + old_stride_ofs,
