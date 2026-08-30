@@ -447,7 +447,7 @@ test_collection_of_collection(MPI_Comm comm, Xt_config config)
   xt_redist_delete(redists[1]);
 
   Xt_redist redist_coll_coll
-    = xt_redist_collection_custom_new(redist_coll, 2, -1, comm, config);
+    = xt_redist_collection_custom_new(redist_coll, 2, 2, comm, config);
 
   // test communicator of redist
   if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist_coll_coll), comm))
@@ -485,6 +485,21 @@ test_collection_of_collection(MPI_Comm comm, Xt_config config)
   check_redist_coll(redist_coll_coll, sync_mode_test_all,
                     num_redist_coll * num_p2p_redist,
                     src_data_p, dst_num_elem,
+                    dst_data_p, prep, NULL,
+                    ref_dst_data_p, dt, dt);
+
+  /* check the same with the same data at different relative offset */
+  static const struct src_databuf_displaced {
+    double data_dbl[nvalues+1];
+    int data_int[nvalues];
+  } src_data_displaced = { .data_dbl = {1,2,3,4,5,-2},
+                           .data_int = {1,2,3,4,5} };
+  const void *const src_data_displaced_p[num_redist_coll*num_p2p_redist]
+    = { src_data_displaced.data_dbl, src_data_displaced.data_int,
+        src_data_displaced.data_dbl, src_data_displaced.data_int };
+  check_redist_coll(redist_coll_coll, sync_mode_test_all,
+                    num_redist_coll * num_p2p_redist,
+                    src_data_displaced_p, dst_num_elem,
                     dst_data_p, prep, NULL,
                     ref_dst_data_p, dt, dt);
 

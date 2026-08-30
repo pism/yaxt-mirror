@@ -132,7 +132,7 @@ static const struct xt_redist_vtable redist_collection_vtable = {
 struct exchanger_cache
 {
   size_t token;
-  /* array structure: [cache_size][2][num_redists] */
+  /* array structure: [cache_size][2][num_components] */
   MPI_Aint *displacements;
   Xt_exchanger * exchangers;
 };
@@ -490,7 +490,7 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
                      redist_coll->disp_ofs + nmsg_send * num_components,
                      redist_coll->blocklengths + nmsg_send * num_components);
   free(msg_param[0][0]);
-  init_cache(&redist_coll->cache, redist_coll->cache_size, num_redists_);
+  init_cache(&redist_coll->cache, redist_coll->cache_size, num_components);
 
   return (Xt_redist)redist_coll;
 }
