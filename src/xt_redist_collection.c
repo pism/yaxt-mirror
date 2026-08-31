@@ -219,13 +219,13 @@ static void align_component_dt(
  * which becomes 0 later on through use */
 static inline void
 init_cache(struct exchanger_cache *cache, size_t cache_size,
-           unsigned num_redists)
+           size_t num_components)
 {
   cache->exchangers = xcalloc(cache_size, sizeof(*(cache->exchangers)));
-  size_t num_displ = cache_size * num_redists;
+  size_t num_displ = cache_size * num_components;
   MPI_Aint *restrict q = cache->displacements
     = xmalloc(2 * num_displ * sizeof (*q));
-  for (size_t i = 0; i < 2 * num_displ; i += num_redists)
+  for (size_t i = 0; i < 2 * num_displ; i += num_components)
     q[i] = (MPI_Aint)-1;
   cache->token = 0;
 }
