@@ -311,7 +311,7 @@ CONTAINS
     INTEGER, PARAMETER :: num_idx = 100
     TYPE(xt_idxlist) :: idxlist
     TYPE(xt_xmap) :: xmap
-    TYPE(xt_redist) :: redist, redist_copy
+    TYPE(xt_redist) :: redist
     TYPE(xt_offset_ext), PARAMETER :: &
          src_pos(1) = (/ xt_offset_ext(0, num_idx, 2) /), &
          dst_pos(1) = (/ xt_offset_ext(num_idx - 1, num_idx, -2) /)
