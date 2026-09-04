@@ -558,6 +558,10 @@ test_rr(MPI_Comm comm, Xt_config config)
               || (direction == 1
                   && msg_rank != (my_rank + comm_size - i)%comm_size))
             PUT_ERR("unexpected communication\n");
+          MPI_Aint displacement
+            = xt_exchanger_iter_get_displacement(msg_iter);
+          if (displacement)
+            PUT_ERR("unexpected offset");
         } while (xt_exchanger_iter_next(msg_iter));
         if (xt_exchanger_iter_get_direction(msg_iter) != -1)
           PUT_ERR("unexpected direction\n");
