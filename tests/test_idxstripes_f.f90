@@ -45,9 +45,14 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 #include "fc_feature_defs.inc"
+#ifdef VERBOSE
+#define PUT_ERR(msg) WRITE (0, '(a)') msg ; err_count__ = err_count__ + 1
+#else
+#define PUT_ERR(msg) err_count__ = err_count__ + 1
+#endif
 PROGRAM test_idxstripes_f
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
-       run_randomized_tests, init_fortran_random
+       run_randomized_tests, init_fortran_random, err_count__
   USE mpi
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, &
        idxlist_pack_unpack_copy
@@ -55,7 +60,8 @@ PROGRAM test_idxstripes_f
        xt_stripe, xt_idxlist, xt_idxlist_delete, xt_idxstripes_new, &
        xt_idxvec_from_stripes_new, xt_int_kind, xt_idxlist_copy, &
        xt_idxvec_from_stripes_new, &
-       xt_idxlist_get_index_stripes, xt_idxlist_get_intersection, &
+       xt_idxlist_get_index_stripes, xt_idxlist_get_num_index_stripes, &
+       xt_idxlist_get_intersection, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_bounding_box, OPERATOR(/=), &
        xt_idxlist_get_pos_exts_of_index_stripes, &
@@ -256,6 +262,7 @@ CONTAINS
          stripes_b(1) = (/ xt_stripe(1, 1, 8) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 1_xi, 2_xi, 3_xi, 6_xi, 7_xi, 8_xi /)
+    CALL check_stripe_gen(SIZE(stripes_a), stripes_a)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection1
 
@@ -265,6 +272,7 @@ CONTAINS
          stripes_b(2) = (/ xt_stripe(1, 1, 7), xt_stripe(9, 1, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(9) &
          = (/ 1_xi, 2_xi, 3_xi, 6_xi, 7_xi, 9_xi, 11_xi, 12_xi, 13_xi /)
+    CALL check_stripe_gen(SIZE(stripes_a), stripes_a)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection2
 
@@ -319,6 +327,7 @@ CONTAINS
          xt_stripe(19, 1, 1), xt_stripe(20, 1, 2), xt_stripe(30, 1, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 5_xi, 6_xi, 8_xi, 9_xi, 20_xi, 21_xi /)
+    CALL check_stripe_gen(SIZE(stripes_a), stripes_a)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection8
 
@@ -469,6 +478,7 @@ CONTAINS
     TYPE(xt_idxlist) :: idxlist
 
     idxlist = xt_idxvec_new(index_vector, num_indices)
+    CALL check_stripe_gen(SIZE(stripes), stripes)
     CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
     CALL xt_idxlist_delete(idxlist)
   END SUBROUTINE test_idxlist_stripes_pos_ext1
@@ -1165,6 +1175,60 @@ CONTAINS
     CALL check_pos_ext(stripes, search_stripes, ref_pos_ext, .TRUE., &
          num_ref_unmatched, "search dec stripe over jumbled stripes")
   END SUBROUTINE check_pos_ext8
+
+  SUBROUTINE expand_stripes(stripes, indices)
+    TYPE(xt_stripe) :: stripes(:)
+    INTEGER(xt_int_kind), ALLOCATABLE, INTENT(out) :: indices(:)
+    INTEGER :: num_indices, num_stripes, i, j, ofs, num_idx
+
+    num_stripes = SIZE(stripes)
+    num_indices = SUM(MERGE(stripes%nstrides, 0, stripes%nstrides >= 0))
+    ALLOCATE(indices(num_indices))
+    ofs = 0
+    DO i = 1, num_stripes
+      num_idx = MERGE(stripes(i)%nstrides, 0, stripes(i)%nstrides >= 0)
+      DO j = 1, num_idx
+        indices(ofs+j) = stripes(i)%start + stripes(i)%stride * (j-1)
+      END DO
+      ofs = ofs + num_idx
+    END DO
+    IF (ofs /= num_indices) THEN
+      PUT_ERR("unexpected internal test error")
+    END IF
+  END SUBROUTINE expand_stripes
+
+  SUBROUTINE check_stripe_gen(num_stripes, in_stripes)
+    INTEGER, INTENT(in) :: num_stripes
+    TYPE(xt_stripe), INTENT(in) :: in_stripes(num_stripes)
+
+    TYPE(xt_idxlist) :: stripes_list
+    TYPE(xt_stripe), ALLOCATABLE :: stripe_ret(:)
+    INTEGER(xt_int_kind), ALLOCATABLE :: expanded_in_stripes(:), expanded_list_stripes(:)
+    INTEGER :: num_stripes_from_list
+    LOGICAL :: stripes_are_different
+
+    stripes_list = xt_idxstripes_new(in_stripes, num_stripes)
+    num_stripes_from_list = xt_idxlist_get_num_index_stripes(stripes_list)
+
+    CALL xt_idxlist_get_index_stripes(stripes_list, stripe_ret)
+    IF (num_stripes_from_list /= SIZE(stripe_ret)) &
+         PUT_ERR("unexpected number of stripes")
+    stripes_are_different = num_stripes_from_list /= num_stripes
+    IF (.NOT. stripes_are_different) stripes_are_different = ANY(in_stripes /= stripe_ret)
+    IF (stripes_are_different) THEN
+      CALL expand_stripes(in_stripes, expanded_in_stripes)
+      CALL expand_stripes(stripe_ret, expanded_list_stripes)
+      IF (SIZE(expanded_in_stripes) == SIZE(expanded_list_stripes)) THEN
+        IF (ANY(expanded_in_stripes /= expanded_list_stripes)) THEN
+          PUT_ERR("inequal indices")
+        END IF
+      ELSE
+        PUT_ERR("unexpected number of indices")
+      END IF
+      DEALLOCATE(expanded_in_stripes, expanded_list_stripes)
+    END IF
+    CALL xt_idxlist_delete(stripes_list)
+  END SUBROUTINE check_stripe_gen
 
 END PROGRAM test_idxstripes_f
 !

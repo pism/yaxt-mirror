@@ -52,6 +52,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/time.h>
 
@@ -113,6 +114,10 @@ check_bb(int num_stripes, const struct Xt_stripe *stripes,
          Xt_int global_start_index);
 
 static void
+check_stripe_gen(size_t num_stripes,
+                 const struct Xt_stripe *in_stripes);
+
+static void
 check_pos_ext(size_t num_stripes, const struct Xt_stripe stripes[num_stripes],
               size_t num_search_stripes,
               const struct Xt_stripe search_stripes[num_search_stripes],
@@ -151,6 +156,8 @@ int main(int argc, char **argv) {
       stripes_b[num_stripes_b] = {{.start = 1, .stride = 1, .nstrides = 8}};
     static const Xt_int ref_indices[num_ref_indices] = {1,2,3, 6,7,8};
 
+    check_stripe_gen(num_stripes_a, stripes_a);
+
     stripe_test_intersection(num_stripes_a, stripes_a,
                              num_stripes_b, stripes_b,
                              num_ref_indices, ref_indices);
@@ -171,6 +178,7 @@ int main(int argc, char **argv) {
     static const Xt_int ref_indices[num_ref_indices]
       = {1,2,3, 6,7, 9, 11,12,13};
 
+    check_stripe_gen(num_stripes_a, stripes_a);
     stripe_test_intersection(num_stripes_a, stripes_a,
                              num_stripes_b, stripes_b,
                              num_ref_indices, ref_indices);
@@ -288,6 +296,7 @@ int main(int argc, char **argv) {
                                    {.start = 30, .stride = 1, .nstrides = 2}};
     static const Xt_int ref_indices[6] = {5,6,8,9,20,21};
 
+    check_stripe_gen(num_stripes_a, stripes_a);
     stripe_test_intersection(num_stripes_a, stripes_a,
                              num_stripes_b, stripes_b,
                              num_ref_indices, ref_indices);
@@ -624,6 +633,7 @@ int main(int argc, char **argv) {
     };
     enum { num_stripes = sizeof(stripes) / sizeof(stripes[0]) };
 
+    check_stripe_gen(num_stripes, stripes);
     check_idxlist_stripes_pos_ext(idxlist, (size_t)num_stripes, stripes);
 
     xt_idxlist_delete(idxlist);
@@ -1738,6 +1748,86 @@ check_bb(int num_stripes, const struct Xt_stripe *stripes,
 
   xt_idxlist_delete(idxstripes);
 }
+
+static int
+cmp_stripes(size_t num_stripes,
+            const struct Xt_stripe *a,
+            const struct Xt_stripe *b)
+{
+  int neq = 0;
+  for (size_t i = 0; i < num_stripes; ++i)
+    neq |= (int)(a[i].start != b[i].start)
+      | (int)(a[i].stride != b[i].stride)
+      | (int)(a[i].nstrides != b[i].nstrides);
+  return neq;
+}
+
+struct idx_array {
+  size_t num_idx;
+  Xt_int idx[];
+};
+
+static struct idx_array *
+expand_indices(size_t num_stripes,
+               const struct Xt_stripe *stripes)
+{
+  size_t num_idx = 0;
+  for (size_t i = 0; i < num_stripes; ++i)
+    num_idx += (size_t)(stripes[i].nstrides > 0
+                        ? stripes[i].nstrides : 0);
+  Xt_int *restrict expanded_indices;
+  struct idx_array *rv
+    = xmalloc(sizeof (struct idx_array)
+              + sizeof (*expanded_indices) * num_idx);
+  expanded_indices = rv->idx;
+  rv->num_idx = num_idx;
+  for (size_t i = 0, ofs = 0; i < num_stripes; ++i) {
+    size_t stripe_len
+      = (size_t)(stripes[i].nstrides > 0 ? stripes[i].nstrides : 0);
+    assert(stripe_len < num_idx && ofs <= num_idx - stripe_len);
+    for (size_t j = 0; j < stripe_len; ++j)
+      expanded_indices[ofs+j] = (Xt_int)(stripes[i].start
+                                         + stripes[i].stride * (Xt_int)j);
+    ofs += stripe_len;
+  }
+  return rv;
+}
+
+static void
+check_stripe_gen(size_t num_stripes,
+                 const struct Xt_stripe *in_stripes)
+{
+  assert(num_stripes <= INT_MAX);
+  Xt_idxlist stripes_list = xt_idxstripes_new(in_stripes, (int)num_stripes);
+  int num_stripes_from_list_, num_stripes_from_list
+    = xt_idxlist_get_num_index_stripes(stripes_list);
+  struct Xt_stripe *stripe_ret = NULL;
+  xt_idxlist_get_index_stripes(stripes_list, &stripe_ret,
+                               &num_stripes_from_list_);
+  if (num_stripes_from_list_ != num_stripes_from_list)
+    PUT_ERR("unexpected number of stripes\n");
+  if ((size_t)num_stripes_from_list_ != num_stripes
+      || cmp_stripes(num_stripes, in_stripes, stripe_ret)) {
+    struct idx_array *expanded_in_stripes
+      = expand_indices(num_stripes, in_stripes),
+      *expanded_list_stripes
+      = expand_indices((size_t)num_stripes_from_list, stripe_ret);
+    if (expanded_in_stripes->num_idx
+        == expanded_list_stripes->num_idx) {
+      if (memcmp(expanded_in_stripes->idx,
+                 expanded_list_stripes->idx,
+                 expanded_in_stripes->num_idx * sizeof (Xt_int)))
+        PUT_ERR("inequal indices\n");
+    } else
+      PUT_ERR("unexpected number of indices\n");
+    free(expanded_in_stripes);
+    free(expanded_list_stripes);
+  }
+  free(stripe_ret);
+  xt_idxlist_delete(stripes_list);
+}
+
+
 
 static void
 check_pos_ext(size_t num_stripes, const struct Xt_stripe stripes[num_stripes],
