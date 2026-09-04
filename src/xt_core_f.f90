@@ -143,10 +143,12 @@ MODULE xt_core
 
   INTERFACE OPERATOR(==)
     MODULE PROCEDURE xt_pos_ext_eq
+    MODULE PROCEDURE xt_stripe_eq
   END INTERFACE OPERATOR(==)
 
   INTERFACE OPERATOR(/=)
     MODULE PROCEDURE xt_pos_ext_ne
+    MODULE PROCEDURE xt_stripe_ne
   END INTERFACE OPERATOR(/=)
 
   EXTERNAL :: xt_slice_c_loc
@@ -209,6 +211,22 @@ CONTAINS
     p = a%start /= b%start .OR. (a%size /= b%size &
          .AND. .NOT. (ABS(a%size) == 1 .AND. ABS(a%size) == ABS(b%size)))
   END FUNCTION xt_pos_ext_ne
+
+  ELEMENTAL FUNCTION xt_stripe_eq(a, b) RESULT(p)
+    TYPE(xt_stripe), INTENT(in) :: a, b
+    LOGICAL :: p
+    p = a%start == b%start &
+         .AND. (a%nstrides == 1 .AND. b%nstrides == 1 &
+         &      .OR. a%stride == b%stride .AND. a%nstrides == b%nstrides)
+  END FUNCTION xt_stripe_eq
+
+  ELEMENTAL FUNCTION xt_stripe_ne(a, b) RESULT(p)
+    TYPE(xt_stripe), INTENT(in) :: a, b
+    LOGICAL :: p
+    p = a%start /= b%start &
+         .OR. a%nstrides /= b%nstrides &
+         .OR. (a%nstrides /= 1 .AND. a%stride /= b%stride)
+  END FUNCTION xt_stripe_ne
 
   !> set routine f to use as abort function which is called on xt_abort
   SUBROUTINE set_abort_handler(f)
