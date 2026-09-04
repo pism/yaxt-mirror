@@ -46,10 +46,12 @@
 !
 #include "fc_feature_defs.inc"
 MODULE test_idxlist_utils
+  USE mpi
   USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_c2f, xt_idxlist_f2c, &
-       xt_stripe
+       xt_stripe, xt_idxlist_get_pack_size, &
+       xt_idxlist_pack, xt_idxlist_unpack
   USE ftest_common, ONLY: test_abort
-  USE iso_c_binding, ONLY: c_ptr, c_int, c_size_t
+  USE iso_c_binding, ONLY: c_ptr, c_int, c_size_t, c_int8_t
   IMPLICIT NONE
   PRIVATE
   INTERFACE
@@ -140,19 +142,38 @@ CONTAINS
   FUNCTION idxlist_pack_unpack_copy(idxlist) RESULT(idxlist_copy)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     TYPE(xt_idxlist) :: idxlist_copy
+    INTEGER :: buffer_size, world_rank, ierror
+    INTEGER(c_int8_t), ALLOCATABLE :: recv_buffer(:), send_buffer(:)
+    INTEGER :: position
 
-    INTERFACE
-      FUNCTION idxlist_pack_unpack_copy_c(idxlist) RESULT(idxlist_copy) &
-           BIND(c, name='idxlist_pack_unpack_copy')
-        IMPORT :: c_ptr
-        TYPE(c_ptr), VALUE, INTENT(in) :: idxlist
-        TYPE(c_ptr) :: idxlist_copy
-      END FUNCTION idxlist_pack_unpack_copy_c
-    END INTERFACE
+    buffer_size &
+         = xt_idxlist_get_pack_size(idxlist, mpi_comm_world)
 
-    idxlist_copy &
-         = xt_idxlist_c2f(idxlist_pack_unpack_copy_c(xt_idxlist_f2c(idxlist)))
+    ! allocate send buffers
+    ALLOCATE(send_buffer(buffer_size), recv_buffer(buffer_size))
 
+    ! pack the index list
+    position = 0
+
+    CALL xt_idxlist_pack(idxlist, send_buffer, buffer_size, position, &
+         mpi_comm_world)
+    IF (position > buffer_size) &
+         CALL test_abort("invalid buffer position", filename, __LINE__)
+
+    ! send the buffer
+    CALL mpi_comm_rank(mpi_comm_world, world_rank, ierror)
+
+    CALL mpi_sendrecv(send_buffer, buffer_size, mpi_packed, world_rank, 0, &
+         &            recv_buffer, buffer_size, mpi_packed, world_rank, 0, &
+         &            mpi_comm_world, mpi_status_ignore, ierror)
+    DEALLOCATE(send_buffer)
+    ! unpack the buffer
+    position = 0
+    CALL xt_idxlist_unpack(idxlist_copy, recv_buffer, buffer_size, position, &
+         &                 mpi_comm_world)
+    IF (.NOT. position <= buffer_size) &
+         CALL test_abort('unexpected position!', filename, __LINE__)
+    DEALLOCATE(recv_buffer)
   END FUNCTION idxlist_pack_unpack_copy
 
   SUBROUTINE check_idxlist_copy(idxlist, idxlist_copy, ref_indices, ref_stripes)
