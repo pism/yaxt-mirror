@@ -157,7 +157,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
       memcpy(sorted_ref_indices, ref_indices, indices_mem_size);
       xt_mergesort_xt_int(sorted_ref_indices, ref_num_indices_);
     }
-    Xt_int sorted_indices[ref_num_indices_];
+    Xt_int sorted_indices[ref_num_indices_>0?ref_num_indices_:1];
     xt_idxlist_get_indices(sorted_idxlist_copy, sorted_indices);
     bool mismatch = false;
     for(int i=0; i<ref_num_indices; i++)
@@ -209,7 +209,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     }
 
     {
-      int positions[ref_num_indices_];
+      int positions[ref_num_indices_>0?ref_num_indices_:1];
 
       if (xt_idxlist_get_positions_of_indices(idxlist, ref_indices,
                                               ref_num_indices, positions, 1))
@@ -223,7 +223,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     }
 
     {
-      int positions[ref_num_indices_];
+      int positions[ref_num_indices_>0?ref_num_indices_:1];
 
       if (xt_idxlist_get_positions_of_indices(idxlist, ref_indices,
                                               ref_num_indices, positions, 0))
@@ -237,13 +237,13 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
     }
 
     {
-      Xt_int reverse_ref_indices[ref_num_indices_];
+      Xt_int reverse_ref_indices[ref_num_indices_>0?ref_num_indices_:1];
 
       for (int i = 0; i < ref_num_indices; ++i)
         reverse_ref_indices[i] = ref_indices[ref_num_indices - i - 1];
 
       {
-        int  positions[ref_num_indices_];
+        int  positions[ref_num_indices_>0?ref_num_indices_:1];
 
         ref_get_positions_of_indices(indices, num_indices, reverse_ref_indices,
                                      ref_num_indices, ref_positions[0], 0);
@@ -260,7 +260,7 @@ void check_idxlist(Xt_idxlist idxlist, Xt_int const * ref_indices,
       }
 
       {
-        int positions[ref_num_indices_];
+        int positions[ref_num_indices_>0?ref_num_indices_:1];
 
         if (xt_idxlist_get_positions_of_indices(idxlist, reverse_ref_indices,
                                                 ref_num_indices, positions, 0))
