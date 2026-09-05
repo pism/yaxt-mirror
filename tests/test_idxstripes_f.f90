@@ -61,6 +61,7 @@ PROGRAM test_idxstripes_f
        xt_idxvec_from_stripes_new, xt_int_kind, xt_idxlist_copy, &
        xt_idxvec_from_stripes_new, &
        xt_idxlist_get_index_stripes, xt_idxlist_get_num_index_stripes, &
+       xt_idxlist_get_max_index, xt_idxlist_get_min_index, &
        xt_idxlist_get_intersection, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_bounding_box, OPERATOR(/=), &
@@ -478,6 +479,10 @@ CONTAINS
     TYPE(xt_idxlist) :: idxlist
 
     idxlist = xt_idxvec_new(index_vector, num_indices)
+    IF (MINVAL(index_vector) /= xt_idxlist_get_min_index(idxlist) &
+         .OR. MAXVAL(index_vector) /= xt_idxlist_get_max_index(idxlist)) THEN
+      PUT_ERR("index min/max query error")
+    END IF
     CALL check_stripe_gen(SIZE(stripes), stripes)
     CALL check_idxlist_stripes_pos_ext(idxlist, stripes)
     CALL xt_idxlist_delete(idxlist)
