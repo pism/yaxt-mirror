@@ -46,6 +46,7 @@
 #include "fc_feature_defs.inc"
 PROGRAM test_idxsection
   USE mpi
+  USE xt_core, ONLY: i2, i4, i8
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_idxlist, &
        xt_int_kind, xt_bounds, xt_stripe, &
        xt_idxlist_copy, xt_idxlist_get_index_stripes, xt_idxlist_delete, &
@@ -104,7 +105,8 @@ CONTAINS
     TYPE(xt_idxlist) :: idxsection
 
     ! create index section
-    idxsection = xt_idxsection_new(start, global_size, local_size, local_start)
+    idxsection = xt_idxsection_new(start, INT(num_dimensions, i2), &
+         global_size, local_size, local_start)
 
     ! testing
     CALL do_tests(idxsection, ref_indices, ref_stripes)
@@ -150,7 +152,8 @@ CONTAINS
     TYPE(xt_idxlist) :: idxsection
 
     ! create index section
-    idxsection = xt_idxsection_new(start, global_size, local_size, local_start)
+    idxsection = xt_idxsection_new(start, INT(num_dimensions, i4), &
+         global_size, local_size, local_start)
 
     ! testing
     CALL do_tests(idxsection, ref_indices, ref_stripes)
@@ -187,7 +190,8 @@ CONTAINS
     TYPE(xt_idxlist) :: idxsection
 
     ! create index section
-    idxsection = xt_idxsection_new(start, global_size, local_size, local_start)
+    idxsection = xt_idxsection_new(start, INT(num_dimensions, i8), &
+         global_size, local_size, local_start)
 
     ! testing
     CALL do_tests(idxsection, ref_indices, ref_stripes)
