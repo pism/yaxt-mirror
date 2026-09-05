@@ -372,7 +372,7 @@ xt_exchanger_neigh_alltoall_s_exchange(Xt_exchanger exchanger,
     MPI_Neighbor_alltoallw(src_data, count,
                            exchanger_na->displs, exchanger_na->datatypes,
                            dst_data, count+nsend,
-                           exchanger_na->displs, exchanger_na->datatypes +
+                           exchanger_na->displs+nsend, exchanger_na->datatypes +
                            nsend, team_share->nb_comm),
     team_share->nb_comm);
 }
@@ -421,7 +421,7 @@ static void xt_exchanger_neigh_alltoall_a_exchange(Xt_exchanger exchanger,
 #endif
   xt_mpi_call(
     MPI_Ineighbor_alltoallw(src_data, counts, displs, dt,
-                            dst_data, counts+nsend, displs, dt+nsend,
+                            dst_data, counts+nsend, displs+nsend, dt+nsend,
                             team_share->nb_comm, request_mpi),
     team_share->nb_comm);
 }
