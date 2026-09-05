@@ -504,15 +504,22 @@ xt_mpi_ddt_free_unless_named_strided(size_t count, MPI_Datatype *mpi_ddt, size_t
   int num_ints, num_adds, num_dtypes, combiner;
   for (size_t i = 0; i < count; ++i) {
     MPI_Datatype *pdt
-      = (MPI_Datatype *)(void *)((unsigned char *)mpi_ddt + stride * i);
-    if (*pdt == MPI_DATATYPE_NULL)
+      = (MPI_Datatype *)(void *)((unsigned char *)mpi_ddt + stride * i), dt = *pdt;
+    if (dt == MPI_DATATYPE_NULL)
       continue;
     xt_mpi_call(
       MPI_Type_get_envelope(
         *pdt, &num_ints, &num_adds, &num_dtypes, &combiner),
       Xt_default_comm);
-    if (combiner != MPI_COMBINER_NAMED)
+    if (combiner != MPI_COMBINER_NAMED) {
       xt_mpi_call(MPI_Type_free(pdt), Xt_default_comm);
+      for (size_t j = i+1; j < count; ++j) {
+        MPI_Datatype *pdt_j =
+          (MPI_Datatype *)(void *)((unsigned char *)mpi_ddt + stride * j), dt_j = *pdt_j;
+        if (dt_j == dt)
+          *pdt_j = MPI_DATATYPE_NULL;
+      }
+    }
     else
       *pdt = MPI_DATATYPE_NULL;
   }
