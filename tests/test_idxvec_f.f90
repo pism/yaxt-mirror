@@ -57,8 +57,9 @@ PROGRAM test_idxvec
        xt_idxvec_from_stripes_new, &
        xt_int_kind, xt_stripe, xt_idxlist_get_intersection, &
        xt_idxlist_get_index_stripes, xt_idxlist_delete, &
+       xt_idxlist_get_indices, xt_sort_xt_int, &
        xt_idxlist_get_positions_of_indices, &
-       xt_idxlist_get_sorting, &
+       xt_idxlist_get_sorting, xt_idxlist_sorted_copy, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_position_of_index_off, &
        xt_bounds, xt_idxlist_get_bounding_box, xt_idxlist_copy
@@ -104,7 +105,8 @@ PROGRAM test_idxvec
   CALL finish_mpi
 CONTAINS
   SUBROUTINE test_idxvec_pack_unpack
-    TYPE(xt_idxlist) :: idxvector, idxvector_copy, intersection
+    TYPE(xt_idxlist) :: idxvector, idxvector_copy, intersection, &
+         sorted_idxvector_copy
     TYPE(xt_stripe), PARAMETER :: ref_stripes(1) = (/ xt_stripe(1, 1, 7) /)
     CALL setup_idxvec(idxvector, index_vector)
 
@@ -117,6 +119,8 @@ CONTAINS
 
     CALL check_idxlist(idxvector_copy, index_vector)
 
+    sorted_idxvector_copy = xt_idxlist_sorted_copy(idxvector)
+    CALL check_idxlist(sorted_idxvector_copy, index_vector)
     intersection = xt_idxlist_get_intersection(idxvector, idxvector_copy)
 
     CALL check_idxlist(intersection, index_vector)
@@ -126,6 +130,7 @@ CONTAINS
     CALL xt_idxlist_delete(idxvector)
     CALL xt_idxlist_delete(idxvector_copy)
     CALL xt_idxlist_delete(intersection)
+    CALL xt_idxlist_delete(sorted_idxvector_copy)
 
   END SUBROUTINE test_idxvec_pack_unpack
 
@@ -147,6 +152,8 @@ CONTAINS
   END SUBROUTINE test_repeated_equal_indices
 
   SUBROUTINE test_positions
+    ! also tests xt_idxlist_sorted_copy and xt_idxlist_get_indices_3d
+    INTEGER(xt_int_kind) :: indices_3d(2,2,5)
     LOGICAL, PARAMETER :: single_match_only = .TRUE.
     INTEGER(xt_int_kind), PARAMETER :: index_vector(20) &
          = (/ 10_xi, 15_xi, 14_xi, 13_xi, 12_xi, &
@@ -157,10 +164,11 @@ CONTAINS
          = (/ 12_xi, 12_xi, 13_xi, 13_xi, 14_xi, &
          &    15_xi, 15_xi, 20_xi, 21_xi, 23_xi, &
          &    28_xi, 29_xi, 31_xi /)
+    INTEGER(xt_int_kind) :: sorted_index_vector(SIZE(index_vector))
     INTEGER :: intersection_pos(SIZE(intersection_vector))
     INTEGER, PARAMETER :: ref_intersection_pos(SIZE(intersection_vector)) &
          = (/ 4, 8, 3, 9, 2, 1, 5, 13, 14, 10, 18, 19, 15 /)
-    TYPE(xt_idxlist) :: idxvector
+    TYPE(xt_idxlist) :: idxvector, sorted_idxvector_copy
     INTEGER :: notfound
     CALL setup_idxvec(idxvector, index_vector)
     ! make sure sorting info is generated correctly
@@ -173,14 +181,23 @@ CONTAINS
     IF (notfound /= 0) &
          CALL test_abort('expected indices not found!', filename, __LINE__)
     CALL check_offsets(intersection_pos, ref_intersection_pos)
+    sorted_idxvector_copy = xt_idxlist_sorted_copy(idxvector)
+    CALL xt_idxlist_get_indices(sorted_idxvector_copy, indices_3d)
+    sorted_index_vector = index_vector
+    CALL xt_sort_xt_int(sorted_index_vector)
+    IF (cmp_xt_int_1d(SIZE(index_vector), sorted_index_vector, &
+         indices_3d)) THEN
+      PUT_ERR("unexpected discontinuity!")
+    END IF
     CALL xt_idxlist_delete(idxvector)
+    CALL xt_idxlist_delete(sorted_idxvector_copy)
   END SUBROUTINE test_positions
 
   SUBROUTINE test_intersection(index_vector_a, index_vector_b, &
        ref_intersection_indices)
     INTEGER(xt_int_kind), INTENT(in) :: index_vector_a(:), index_vector_b(:), &
          ref_intersection_indices(:)
-    ! note: instead of declaring this as the move intuitive idxvector(2),
+    ! note: instead of declaring this as the more intuitive idxvector(2),
     ! two distinct variables are used to remain compatible with NAG 5.2
     TYPE(xt_idxlist) :: idxvector1, idxvector2, intersection
     CALL setup_idxvec(idxvector1, index_vector_a)
@@ -532,6 +549,12 @@ CONTAINS
 
   END SUBROUTINE compare_stripes
 
+  FUNCTION cmp_xt_int_1d(asize, a, b) RESULT(differ)
+    LOGICAL :: differ
+    INTEGER, INTENT(in) :: asize
+    INTEGER(xt_int_kind), INTENT(in) :: a(asize), b(asize)
+    differ = ANY(a /= b)
+  END FUNCTION cmp_xt_int_1d
 END PROGRAM test_idxvec
 !
 ! Local Variables:
