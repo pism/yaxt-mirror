@@ -53,7 +53,7 @@ PROGRAM test_sort
        xt_sort_index, xt_sort_int, xt_sort_xt_int, &
        xt_sort_xt_int_permutation, xt_sort_permutation, &
        xi => xt_int_kind, xt_quicksort, xt_mergesort, &
-       xt_idxpos, xt_sort_idxpos
+       xt_idxpos, xt_sort_idxpos, xt_assign_id_map
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, &
        random_fill, crc32, permute
   IMPLICIT NONE
@@ -109,9 +109,7 @@ CONTAINS
     END DO
     IF (err_found) CALL test_abort("discontinuity found!", filename, __LINE__)
     CALL random_fill(a)
-    DO i = 1, n
-      permutation(i) = i
-    END DO
+    CALL xt_assign_id_map(permutation, 1_c_int)
     crc_before = crc32(a)
     CALL xt_sort_permutation(a, permutation)
     DO i = 2, n
@@ -136,9 +134,7 @@ CONTAINS
     ALLOCATE(b(n), permutation(n))
     CALL random_fill(b)
     crc_before = crc32(b)
-    DO i = 1, n
-      permutation(i) = i
-    END DO
+    CALL xt_assign_id_map(permutation, 1_c_int)
     CALL xt_sort_index(b, permutation, reset_positions=.FALSE.)
     err_found = .FALSE.
     DO i = 2, n
@@ -192,12 +188,12 @@ CONTAINS
     crc_after = crc32(b)
     IF (crc_after /= crc_before) &
          CALL test_abort("error in data reconstruction!", filename, __LINE__)
-    DO i = 1, n
-      permutation(i) = i
-    END DO
+    CALL xt_assign_id_map(permutation)
     CALL xt_sort_xt_int_permutation(b, permutation)
+    err_found = permutation(1)+1 /= a(1)%pos
     DO i = 2, n
-      err_found = err_found .OR. b(i-1) > b(i)
+      err_found = err_found .OR. b(i-1) > b(i) &
+           .OR. permutation(i)+1 /= a(i)%pos
     END DO
     IF (err_found) CALL test_abort("discontinuity found!", filename, __LINE__)
     crc_sorted = crc32(b)
