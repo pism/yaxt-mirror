@@ -617,7 +617,7 @@ test_get_indices_at_positions(int num_indices, const Xt_int *indices,
   Xt_idxlist idxvec = xt_idxvec_new(indices, num_indices);
   int ref_undef_count = 0;
   num_pos = num_pos < 0 ? 0 : num_pos;
-  Xt_int ref_sel_idx[num_pos];
+  Xt_int ref_sel_idx[num_pos>0?num_pos:1];
   for (size_t i = 0; i < (size_t)num_pos; i++) {
     int p = pos[i];
     if (xt_idxlist_get_index_at_position(idxvec, p, &ref_sel_idx[i]) != 0) {
