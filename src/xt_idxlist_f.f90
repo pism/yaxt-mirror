@@ -209,7 +209,11 @@ MODULE xt_idxlist_abstract
   END INTERFACE xt_idxlist_get_pos_exts_of_index_stripes
 
   INTERFACE xt_idxlist_sorted_copy
+#if defined __INTEL_COMPILER && __INTEL_COMPILER_BUILD_DATE == 20110811
+    MODULE PROCEDURE xt_idxlist_sorted_copy_renamed
+#else
     MODULE PROCEDURE xt_idxlist_sorted_copy
+#endif
     MODULE PROCEDURE xt_idxlist_sorted_copy_custom
   END INTERFACE xt_idxlist_sorted_copy
 
@@ -618,6 +622,9 @@ CONTAINS
 
   END FUNCTION xt_idxlist_get_sorting
 
+#if defined __INTEL_COMPILER && __INTEL_COMPILER_BUILD_DATE == 20110811
+#define xt_idxlist_sorted_copy xt_idxlist_sorted_copy_renamed
+#endif
   FUNCTION xt_idxlist_sorted_copy(idxlist) RESULT(copy)
     TYPE(xt_idxlist), INTENT(in) :: idxlist
     TYPE(xt_idxlist) :: copy
