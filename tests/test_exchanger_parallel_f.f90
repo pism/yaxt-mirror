@@ -482,10 +482,10 @@ CONTAINS
 
     TYPE(xt_msg_param), ALLOCATABLE :: send_msgs(:), recv_msgs(:)
     TYPE(xt_exchanger) :: exchanger
-    INTEGER, ALLOCATABLE :: dt_by_ofs(:)
     DOUBLE PRECISION, ALLOCATABLE, TARGET :: dst_data(:)
     DOUBLE PRECISION, TARGET :: src_data
     TYPE(c_ptr) :: src_data_p, dst_data_p
+    INTEGER(mpi_address_kind) :: extent_of_dbl, lb
     INTEGER :: my_rank, comm_size, ierror
     INTEGER :: incr, i, j, k, nsend, nrecv, exchange_method, &
          test_async, test_async_ubound, ofs
@@ -510,17 +510,7 @@ CONTAINS
       send_msgs(j)%displacement = 0_mpi_address_kind
       send_msgs(j)%count = 1
     END DO
-    ALLOCATE(dt_by_ofs(0:comm_size-1))
-    dt_by_ofs(0) = MERGE(mpi_double_precision, mpi_datatype_null, my_rank /= 0)
-    DO i = 1, comm_size-1
-      IF (i /= my_rank) THEN
-        CALL mpi_type_indexed(1, (/ 1 /), (/ i /), mpi_double_precision, &
-             dt_by_ofs(i), ierror)
-        CALL MPI_Type_commit(dt_by_ofs(i), ierror)
-      ELSE
-        dt_by_ofs(i) = MPI_DATATYPE_NULL
-      END IF
-    END DO
+    CALL mpi_type_get_extent(mpi_double_precision, lb, extent_of_dbl, ierror)
     incr = comm_size/test_freq + MERGE(1, 0, comm_size < test_freq)
     DO i = 0, comm_size - 2, incr
       DO j = 1, nsend
@@ -533,8 +523,9 @@ CONTAINS
           ofs = MOD(i + j + k-1, comm_size - 1)
           ofs = ofs + MERGE(1, 0, ofs >= my_rank)
           recv_msgs(k)%rank = ofs
-          recv_msgs(k)%datatype = dt_by_ofs(ofs) ! replace by mpi_double_precision
-          recv_msgs(k)%displacement = 0 ! replace by sizeof (double precision) * ofs
+          recv_msgs(k)%datatype = mpi_double_precision
+          recv_msgs(k)%displacement &
+               = extent_of_dbl * INT(ofs, mpi_address_kind)
           recv_msgs(k)%count = 1
         END DO
         exchanger = xt_exchanger_new(nsend, nrecv, send_msgs, &
@@ -561,11 +552,7 @@ CONTAINS
         CALL xt_exchanger_delete(exchanger)
       END DO
     END DO
-    DO i = 1, comm_size-1
-      IF (i /= my_rank) &
-           CALL mpi_type_free(dt_by_ofs(i), ierror)
-    END DO
-    DEALLOCATE(dt_by_ofs, dst_data, recv_msgs, send_msgs)
+    DEALLOCATE(dst_data, recv_msgs, send_msgs)
   END SUBROUTINE test_all2all
 
   SUBROUTINE test_rr(comm, config)
@@ -739,7 +726,7 @@ CONTAINS
     DO i = 1, nsend
       send_msgs(i)%rank = i-1
       send_msgs(i)%datatype = mpi_double_precision
-      send_msgs(i)%displacement = 0
+      send_msgs(i)%displacement = 0_mpi_address_kind
       send_msgs(i)%count = 1
     END DO
 
@@ -747,7 +734,7 @@ CONTAINS
     DO i = 1, nrecv
       recv_msgs(i)%rank = i-1
       recv_msgs(i)%datatype = mpi_double_precision
-      recv_msgs(i)%displacement = ofs * (i-1)
+      recv_msgs(i)%displacement = ofs * INT(i-1, mpi_address_kind)
       recv_msgs(i)%count = 1
     END DO
 
