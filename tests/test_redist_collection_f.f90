@@ -258,6 +258,7 @@ PROGRAM test_redist_collection
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, cmp_arrays
   USE test_idxlist_utils, ONLY: test_err_count
+  USE xt_core, ONLY: i2
   USE yaxt, ONLY: xt_initialize, xt_finalize, &
        xt_xmap, xt_xmap_delete, xt_xmap_all2all_new, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
@@ -469,9 +470,9 @@ CONTAINS
     DO iexch = 1, 2
       dst_data = -1.0d0
       IF (iexch == 1) THEN
-        CALL xt_redist_s_exchange(redist_coll, 3, src_data_p, dst_data_p)
+        CALL xt_redist_s_exchange(redist_coll, 3_i2, src_data_p, dst_data_p)
       ELSE
-        CALL xt_redist_a_exchange(redist_coll, 3, src_data_p, dst_data_p, &
+        CALL xt_redist_a_exchange(redist_coll, 3_i2, src_data_p, dst_data_p, &
              request)
         CALL check_wait_request(request, filename, __LINE__)
       ENDIF

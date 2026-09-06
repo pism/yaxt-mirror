@@ -50,6 +50,7 @@ PROGRAM test_redist_collection_parallel
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, icbrt
   USE test_idxlist_utils, ONLY: test_err_count
+  USE xt_core, ONLY: i8
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
        xt_idxlist, xt_idxlist_delete, xt_stripe, xt_idxvec_new, &
        xt_idxsection_new, xt_idxlist_collection_new, xt_idxstripes_new, &
@@ -256,9 +257,9 @@ CONTAINS
     input(3) = C_LOC(index_vector_a)
     input(4) = C_LOC(index_vector_b)
     IF (iexch == 1) THEN
-      CALL xt_redist_s_exchange(redist, 4, input, results)
+      CALL xt_redist_s_exchange(redist, 4_i8, input, results)
     ELSE
-      CALL xt_redist_a_exchange(redist, 4, input, results, request)
+      CALL xt_redist_a_exchange(redist, 4_i8, input, results, request)
       CALL check_wait_request(request, filename, __LINE__)
     ENDIF
   END SUBROUTINE do_4redist
