@@ -103,7 +103,9 @@ int main(void) {
                               * (size_t)src_array_size[1] * sizeof(*src_array));
   double * tgt_array = malloc((size_t)tgt_array_size[0]
                               * (size_t)tgt_array_size[1] * sizeof(*tgt_array));
-
+  if (!src_array || !tgt_array) {
+    MPI_Abort(MPI_COMM_WORLD, 1); abort();
+  }
   for (Xt_int i = 0; i < src_array_size[0] * src_array_size[1]; ++i)
     src_array[i] = (double)rank;
   for (Xt_int i = 0; i < tgt_array_size[0] * tgt_array_size[1]; ++i)
