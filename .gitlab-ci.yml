@@ -250,11 +250,17 @@ gen_cov_data:
     - >
       ./configure
       CC=mpicc FC=mpifort
-      FCFLAGS="-pipe -O0 -g -cpp -fprofile-arcs -ftest-coverage"
-      CFLAGS="-pipe -O0 -g -fprofile-arcs -ftest-coverage"
-      BUILD_CFLAGS='-Wall'
+      FCFLAGS="-pipe -O0 -g -fopenmp"
+      CFLAGS="-pipe -O0 -g -fopenmp"
+      LDFLAGS="-g -fopenmp"
+      BUILD_CFLAGS='-fprofile-arcs -ftest-coverage -Wall'
+      BUILD_FCFLAGS='-fprofile-arcs -ftest-coverage -Wall'
+      BUILD_LDFLAGS='-fprofile-arcs -ftest-coverage -Wall'
       MPI_LAUNCH="$(command -v mpirun) --oversubscribe"
     - make -j4 check
+    - make -j4 XT_CONFIG_DEFAULT_MULTI_THREAD_MODE=XT_MT_OPENMP check
+    - make -j4 XT_CONFIG_DEFAULT_EXCHANGE_METHOD=irecv_isend check
+    - make -j8 XT_CONFIG_DEFAULT_EXCHANGE_METHOD=neigh_alltoall check
   artifacts:
     paths:
       - ./*.gcno
