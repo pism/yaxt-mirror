@@ -90,14 +90,16 @@ int main(int argc, char **argv) {
     check_idxlist(intersection, NULL, 0);
 
     // check the conversion to stripes
+    {
+      struct Xt_stripe *stripes;
+      int num_stripes;
 
-    struct Xt_stripe *stripes;
-    int num_stripes;
+      xt_idxlist_get_index_stripes(idxempty, &stripes, &num_stripes);
 
-    xt_idxlist_get_index_stripes(idxempty, &stripes, &num_stripes);
-
-    if (stripes != NULL || num_stripes != 0)
-      PUT_ERR("ERROR: xt_idxlist_get_index_stripes\n");
+      if (stripes != NULL || num_stripes != 0)
+        PUT_ERR("ERROR: xt_idxlist_get_index_stripes\n");
+      free(stripes);
+    }
 
     // check the computation of a bounding box
 
@@ -116,10 +118,51 @@ int main(int argc, char **argv) {
       if (bounds[i].size != 0)
         PUT_ERR("ERROR: xt_idxlist_get_bounding_box\n");
 
+    // check that position and index queries return the expected
+    // (missing) values
+    {
+      Xt_int idx = (Xt_int)0xdead;
+      int pos, rc;
+      if ((rc = xt_idxlist_get_index_at_position(idxempty, 0, &idx)) != 1
+          || idx != (Xt_int)0xdead)
+        PUT_ERR("retrieved index position from empty list, rc=%d, idx=%lld!\n",
+                rc, (long long)idx);
+      int pos_vec[] = { -1, 0, 2 };
+      enum {
+        num_pos = sizeof (pos_vec) / sizeof (pos_vec[0]),
+        undef_val = -5,
+      };
+      Xt_int idx_vec[num_pos];
+      for (size_t i = 0; i < num_pos; ++i)
+        idx_vec[i] = 7;
+      if ((rc = xt_idxlist_get_indices_at_positions(
+             idxempty, pos_vec, num_pos, idx_vec, undef_val)) != num_pos)
+        PUT_ERR("retrieved index position from empty list, rc=%d!\n", rc);
+      for (size_t i = 0; i < num_pos; ++i)
+        if (idx_vec[i] != undef_val)
+          PUT_ERR("incorrectly initialized index at"
+                  " position %zu from empty list to %lld!\n",
+                  i, (long long)idx_vec[i]);
+      pos = 0xbeef;
+      if ((rc = xt_idxlist_get_position_of_index(idxempty, 0, &pos)) != 1
+          || pos != -1)
+        PUT_ERR("incorrect position query result: rc=%d, pos=%d\n", rc, pos);
+      for (size_t i = 0; i < num_pos; ++i) {
+        idx_vec[i] = (Xt_int)(i^(size_t)0xbad);
+        pos_vec[i] = -((int)(i+1)^0xdead);
+      }
+      if ((rc = xt_idxlist_get_positions_of_indices(
+             idxempty, idx_vec, num_pos, pos_vec, 0)) != num_pos)
+        PUT_ERR("empty index list does not reject all indices, rc=%d\n",
+                rc);
+      for (size_t i = 0; i < num_pos; ++i)
+        if (idx_vec[i] != (Xt_int)(i^(size_t)0xbad)
+            || pos_vec[i] != -((int)(i+1)^0xdead))
+          PUT_ERR("encountered unexpected result at idx_vec[%zu]=%lld,"
+                  " pos_vec[%zu]=%d\n", i, (long long)idx_vec[i],
+                  i, pos_vec[i]);
+    }
     // clean up
-
-    free(stripes);
-
     xt_idxlist_delete(idxempty);
     xt_idxlist_delete(idxempty_copy);
     xt_idxlist_delete(intersection);

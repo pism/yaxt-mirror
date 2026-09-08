@@ -284,8 +284,8 @@ idxempty_get_position_of_index_off(Xt_idxlist XT_UNUSED(idxlist),
 static int
 idxempty_get_position_of_index(Xt_idxlist XT_UNUSED(idxlist),
                                Xt_int XT_UNUSED(index),
-                               int *XT_UNUSED(position)) {
-
+                               int *position) {
+  *position = -1;
   return 1;
 }
 
