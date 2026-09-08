@@ -56,6 +56,7 @@ PROGRAM test_idxlist_collection_f
        xt_idxlist_get_intersection, xt_idxsection_new, xt_idxstripes_new, &
        xt_bounds, xt_idxempty_new, xt_idxlist_get_bounding_box, OPERATOR(/=)
   USE xt_sort, ONLY: xt_sort_xt_int
+  USE xt_core, ONLY: i2
   USE iso_c_binding, ONLY: c_size_t
   IMPLICIT NONE
   CHARACTER(len=*), PARAMETER :: filename = 'test_idxlist_collection_f.f90'
@@ -142,11 +143,11 @@ CONTAINS
          ref_idxvec
     INTEGER :: i
 
-    DO i = 1, 3
+    DO i = 1, num_lists
       idxlists(i) = xt_idxvec_new(index_list(:, i), num_indices)
     END DO
-    collectionlist = xt_idxlist_collection_new(idxlists)
-    DO i = 1, 3
+    collectionlist = xt_idxlist_collection_new(idxlists, INT(num_lists, i2))
+    DO i = 1, num_lists
       CALL xt_idxlist_delete(idxlists(i))
     END DO
     CALL check_idxlist(collectionlist, &
