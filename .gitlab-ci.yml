@@ -249,6 +249,7 @@ gen_cov_data:
     - scripts/reconfigure
     - >
       ./configure
+      --disable-static
       CC=mpicc FC=mpifort
       FCFLAGS="-pipe -O0 -g -fopenmp"
       CFLAGS="-pipe -O0 -g -fopenmp"
@@ -369,7 +370,7 @@ gen_cov_rep_html:
     - when: never
   script:
     - *install_gcovr
-    - mkdir coverage
+    - mkdir coverage coverage_tests
     - cd src
     - >
       gcovr
@@ -378,14 +379,13 @@ gen_cov_rep_html:
       --print-summary
       -o ../coverage/index.html
       --root ..
-      --object-directory .
+      --object-directory .libs
       -e ../examples
       -e ../tests
       -e ../include
       -e ../perf
-    - cd ..
-    - mkdir coverage_tests
-    - cd tests
+      .
+    - cd ../tests
     - >
       gcovr
       --html-details
@@ -397,6 +397,7 @@ gen_cov_rep_html:
       -e ../src
       -e ../include
       -e ../perf
+      .
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
