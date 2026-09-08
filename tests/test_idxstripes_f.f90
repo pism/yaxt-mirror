@@ -64,7 +64,7 @@ PROGRAM test_idxstripes_f
        xt_idxlist_get_max_index, xt_idxlist_get_min_index, &
        xt_idxlist_get_intersection, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
-       xt_idxlist_get_bounding_box, OPERATOR(/=), &
+       xt_idxlist_get_bounding_box, OPERATOR(/=), OPERATOR(==), &
        xt_idxlist_get_pos_exts_of_index_stripes, &
        xt_idxlist_get_num_indices, xt_idxvec_new, &
        xt_idxstripes_from_idxlist_new
@@ -1219,12 +1219,13 @@ CONTAINS
     IF (num_stripes_from_list /= SIZE(stripe_ret)) &
          PUT_ERR("unexpected number of stripes")
     stripes_are_different = num_stripes_from_list /= num_stripes
-    IF (.NOT. stripes_are_different) stripes_are_different = ANY(in_stripes /= stripe_ret)
+    IF (.NOT. stripes_are_different) &
+         stripes_are_different = ANY(in_stripes /= stripe_ret)
     IF (stripes_are_different) THEN
       CALL expand_stripes(in_stripes, expanded_in_stripes)
       CALL expand_stripes(stripe_ret, expanded_list_stripes)
       IF (SIZE(expanded_in_stripes) == SIZE(expanded_list_stripes)) THEN
-        IF (ANY(expanded_in_stripes /= expanded_list_stripes)) THEN
+        IF (.NOT. ALL(expanded_in_stripes == expanded_list_stripes)) THEN
           PUT_ERR("inequal indices")
         END IF
       ELSE
