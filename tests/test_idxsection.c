@@ -863,27 +863,51 @@ int main(int argc, char **argv) {
     check_idxlist(idxsection, ref_indices, 6);
 
     // check get_positions_of_indices
-
-    static const Xt_int indices[34]
+    enum {
+      num_idxpos_q = 34,
+    };
+    static const Xt_int indices[num_idxpos_q]
       = {-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,16,17,18,19,
          20,20,21,22,23,24,25,26,27,28,29,30};
-    static const int ref_positions[34]
+    static const int ref_positions[num_idxpos_q]
       = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,2,1,-1,0,-1,-1,-1,
          5,-1,4,3,-1,-1,-1,-1,-1,-1,-1,-1};
-    int positions[34];
+    int positions[num_idxpos_q];
 
-    if (xt_idxlist_get_positions_of_indices(idxsection, indices, 34,
+    if (xt_idxlist_get_positions_of_indices(idxsection, indices, num_idxpos_q,
                                             positions, 1) != 28)
       PUT_ERR("error in xt_idxlist_get_positions_of_indices"
               " (wrong number of unmatched indices)\n");
 
-    bool mismatch = false;
-    for (int i = 0; i < 34; ++i)
-      mismatch |= (ref_positions[i] != positions[i]);
-    if (mismatch)
-      PUT_ERR("error in xt_idxlist_get_positions_of_indices"
-              " (wrong position)\n");
+    {
+      bool mismatch = false;
+      for (int i = 0; i < num_idxpos_q; ++i)
+        mismatch |= (ref_positions[i] != positions[i]);
+      if (mismatch)
+        PUT_ERR("error in xt_idxlist_get_positions_of_indices"
+                " (wrong position)\n");
+    }
+    {
+      // replace not-found positions with other out-of-range values
+      Xt_int answer_ref[num_idxpos_q];
+      for (size_t i = 0; i < num_idxpos_q; ++i)
+        if (positions[i] == -1) {
+          positions[i] = 6+(int)i;
+          answer_ref[i] = -2;
+        } else
+          answer_ref[i] = indices[i];
 
+      Xt_int answer_idx[num_idxpos_q];
+      xt_idxlist_get_indices_at_positions(idxsection, positions,
+                                          num_idxpos_q, answer_idx,
+                                          -2);
+      bool mismatch = false;
+      for (int i = 0; i < num_idxpos_q; ++i)
+        mismatch |= (answer_idx[i] != answer_ref[i]);
+      if (mismatch)
+        PUT_ERR("error in xt_idxlist_get_indices_at_positions"
+                " (wrong index)\n");
+    }
     // clean up
 
     xt_idxlist_delete(idxsection);
