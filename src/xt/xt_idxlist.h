@@ -349,6 +349,8 @@ int xt_idxlist_get_pos_exts_of_index_stripes(
   int single_match_only);
 
 
+/* deprecation notice: this functionality will be removed in an upcoming
+ * release */
 /**
  * gets the position of the first occurrence of the given index
  * following the given offset in the stored index list idxlist
@@ -366,6 +368,8 @@ int xt_idxlist_get_pos_exts_of_index_stripes(
 int xt_idxlist_get_position_of_index_off(Xt_idxlist idxlist, Xt_int index,
                                          int * position, int offset);
 
+/* deprecation notice: this functionality will be removed in an upcoming
+ * release */
 /**
  * gets the positions of the first occurrence of the given indices
  * following the given offsets in the stored index list
