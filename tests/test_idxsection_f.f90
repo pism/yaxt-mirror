@@ -76,6 +76,8 @@ PROGRAM test_idxsection
   CALL test_2d_2
   CALL test_get_positions1
   CALL test_get_positions2
+  CALL test_get_positions3
+  CALL test_get_positions4
   CALL test_other_intersection
   CALL test_stripe_intersection
   CALL test_signed_sizes1
@@ -306,6 +308,44 @@ CONTAINS
     CALL xt_idxlist_delete(idxsection)
   END SUBROUTINE test_2d_2
 
+  SUBROUTINE test_get_positions_common(ndim, start, global_size, &
+       local_size, local_start, num_selection, selection, &
+       single_match_only, ref_positions)
+    INTEGER, INTENT(in) :: ndim, num_selection
+    INTEGER(xt_int_kind), INTENT(in) :: start, &
+         global_size(ndim), local_start(ndim)
+    INTEGER, INTENT(in) :: local_size(ndim)
+    INTEGER(xt_int_kind), INTENT(in) :: selection(num_selection)
+    LOGICAL, INTENT(in) :: single_match_only
+    INTEGER, INTENT(in) :: ref_positions(num_selection)
+    INTEGER :: positions(num_selection), p, num_missing, i
+    TYPE(xt_idxlist) :: idxsection
+    LOGICAL :: notfound
+    idxsection = xt_idxsection_new(start, ndim, global_size, local_size, &
+         local_start)
+    num_missing = xt_idxlist_get_positions_of_indices(idxsection, selection, &
+         positions, single_match_only)
+    IF (num_missing /= COUNT(ref_positions == -1)) &
+         CALL test_abort("xt_idxlist_get_positions_of_indices &
+         &returned incorrect num_unmatched", &
+         filename, __LINE__)
+    IF (ANY(positions /= ref_positions)) &
+         CALL test_abort("xt_idxlist_get_positions_of_indices &
+         &returned incorrect position", &
+         filename, __LINE__)
+    IF (.NOT. single_match_only) THEN
+      DO i = 1, num_selection
+        notfound = xt_idxlist_get_position_of_index(idxsection, selection(i), p)
+        IF (p /= ref_positions(i) &
+             .OR. (notfound .NEQV. ref_positions(i) == -1)) &
+             CALL test_abort("xt_idxlist_get_position_of_index &
+             &returned incorrect position", &
+             filename, __LINE__)
+      END DO
+    END IF
+    CALL xt_idxlist_delete(idxsection)
+  END SUBROUTINE test_get_positions_common
+
   SUBROUTINE test_get_positions1
     INTEGER, PARAMETER :: n = 2, num_selection = 6
     INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
@@ -315,21 +355,10 @@ CONTAINS
          = (/ 1_xi, 2_xi, 5_xi, 6_xi, 7_xi, 8_xi /)
     INTEGER, PARAMETER :: ref_positions(num_selection) &
          = (/ 1*0 - 1, 2*0 + 0, 5*0 - 1, 6*0 + 2, 7*0 + 3, 8*0 - 1 /)
-    INTEGER :: positions(num_selection), num_found
-    TYPE(xt_idxlist) :: idxsection
-    idxsection = xt_idxsection_new(start, n, global_size, local_size, &
-         local_start)
-    num_found = xt_idxlist_get_positions_of_indices(idxsection, selection, &
-         positions, .FALSE.)
-    IF (num_found /= 3) &
-         CALL test_abort("xt_idxlist_get_positions_of_indices &
-         &returned incorrect num_unmatched", &
-         filename, __LINE__)
-    IF (ANY(positions /= ref_positions)) &
-         CALL test_abort("xt_idxlist_get_positions_of_indices &
-         &returned incorrect position", &
-         filename, __LINE__)
-    CALL xt_idxlist_delete(idxsection)
+
+    CALL test_get_positions_common(n, start, global_size, &
+         local_size, local_start, num_selection, selection, &
+         .FALSE., ref_positions)
   END SUBROUTINE test_get_positions1
 
   SUBROUTINE test_get_positions2
@@ -342,31 +371,43 @@ CONTAINS
     INTEGER, PARAMETER :: ref_positions(num_selection) &
          = (/ 2*0 + 0, 1*0 - 1, 5*0 - 1, 7*0 + 3, 6*0 + 2, 7*0 + 3, 7*0 + 3, &
          &    6*0 + 2, 8*0 - 1 /)
-    INTEGER :: positions(num_selection), num_found, i, p
-    LOGICAL :: notfound
-    TYPE(xt_idxlist) :: idxsection
-    idxsection = xt_idxsection_new(start, n, global_size, local_size, &
-         local_start)
-    num_found = xt_idxlist_get_positions_of_indices(idxsection, selection, &
-         positions, .FALSE.)
-    IF (num_found /= 3) &
-         CALL test_abort("xt_idxlist_get_position_of_indices &
-         &returned incorrect num_unmatched", &
-         filename, __LINE__)
-    IF (ANY(positions /= ref_positions)) &
-         CALL test_abort("xt_idxlist_get_position_of_indices &
-         &returned incorrect position", &
-         filename, __LINE__)
-    DO i = 1, num_selection
-      notfound = xt_idxlist_get_position_of_index(idxsection, selection(i), p)
-      IF (p /= ref_positions(i) &
-           .OR. (notfound .AND. ref_positions(i) /= -1)) &
-           CALL test_abort("xt_idxlist_get_position_of_index &
-           &returned incorrect position", &
-           filename, __LINE__)
-    END DO
-    CALL xt_idxlist_delete(idxsection)
+
+    CALL test_get_positions_common(n, start, global_size, &
+         local_size, local_start, num_selection, selection, &
+         .FALSE., ref_positions)
   END SUBROUTINE test_get_positions2
+
+  SUBROUTINE test_get_positions3
+    INTEGER, PARAMETER :: n = 2, num_selection = 9
+    INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
+         global_size(n) = 4_xi, local_start(n) = (/ 0_xi, 2_xi /)
+    INTEGER, PARAMETER :: local_size(n) = 2
+    INTEGER(xt_int_kind), PARAMETER :: selection(num_selection) &
+         = (/ 2_xi, 1_xi, 5_xi, 7_xi, 6_xi, 7_xi, 7_xi, 6_xi, 8_xi /)
+    INTEGER, PARAMETER :: ref_positions(num_selection) &
+         = (/ 2*0 + 0, 1*0 - 1, 5*0 - 1, 7*0 + 3, 6*0 + 2, 7*0 - 1, 7*0 - 1, &
+         &    6*0 - 1, 8*0 - 1 /)
+
+    CALL test_get_positions_common(n, start, global_size, &
+         local_size, local_start, num_selection, selection, &
+         .TRUE., ref_positions)
+  END SUBROUTINE test_get_positions3
+
+  SUBROUTINE test_get_positions4
+    INTEGER, PARAMETER :: n = 2, num_selection = 9
+    INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
+         global_size(n) = 4_xi, local_start(n) = (/ 0_xi, 2_xi /)
+    INTEGER, PARAMETER :: local_size(n) = (/ 2, -2 /)
+    INTEGER(xt_int_kind), PARAMETER :: selection(num_selection) &
+         = (/ 2_xi, 1_xi, 5_xi, 7_xi, 6_xi, 7_xi, 7_xi, 6_xi, 8_xi /)
+    INTEGER, PARAMETER :: ref_positions(num_selection) &
+         = (/ 2*0 + 1, 1*0 - 1, 5*0 - 1, 7*0 + 2, 6*0 + 3, 7*0 - 1, 7*0 - 1, &
+         &    6*0 - 1, 8*0 - 1 /)
+
+    CALL test_get_positions_common(n, start, global_size, &
+         local_size, local_start, num_selection, selection, &
+         .TRUE., ref_positions)
+  END SUBROUTINE test_get_positions4
 
   SUBROUTINE test_other_intersection
     INTEGER, PARAMETER :: n = 2, num_sel_idx = 9

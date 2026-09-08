@@ -73,6 +73,8 @@ static void
 test_get_positions2(void);
 static void
 test_get_positions3(void);
+static void
+test_get_positions4(void);
 
 int main(int argc, char **argv) {
 
@@ -424,41 +426,7 @@ int main(int argc, char **argv) {
   test_get_positions1();
   test_get_positions2();
   test_get_positions3();
-
-  {
-    // check get_positions_of_indices with single_match_only = 1
-    // for mesh with one dimension enumerated in descending fashion
-    Xt_int start = 0;
-    enum { num_dimensions = 2 };
-    static const Xt_int global_size[num_dimensions] = {4,4};
-    static const int local_size [num_dimensions] = {2,-2};
-    static const Xt_int local_start[num_dimensions] = {0,2};
-
-    Xt_idxlist idxsection
-      = xt_idxsection_new(start, num_dimensions, global_size,
-                          local_size, local_start);
-
-    // we have indices = {3,2,7,6}
-    static const Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    enum { num_selection = sizeof(selection) / sizeof(*selection) };
-
-    int positions[num_selection];
-    static const int ref_positions[]
-      = {2*0+1, 1*0-1, 5*0-1, 7*0+2, 6*0+3, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
-
-    if (xt_idxlist_get_positions_of_indices(idxsection, selection,
-                                            num_selection, positions, 1) != 6)
-      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
-              " num_unmatched\n");
-
-    for (int i=0; i<num_selection; i++) {
-      if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_positions_of_indices returned"
-                " incorrect position\n");
-    }
-
-    xt_idxlist_delete(idxsection);
-  }
+  test_get_positions4();
 
   {
     // check idxsection_get_intersection_with_other_idxlist
@@ -1110,6 +1078,29 @@ test_get_positions3(void)
   enum { num_selection = sizeof(selection) / sizeof(*selection) };
   static const int ref_positions[]
     = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
+
+  test_get_positions_common(num_dimensions, start, global_size,
+                            local_size, local_start, 1, num_selection,
+                            selection, ref_positions);
+}
+
+static void
+test_get_positions4(void)
+{
+  // check get_positions_of_indices with single_match_only = 1
+  // for mesh with one dimension enumerated in descending fashion
+  Xt_int start = 0;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[num_dimensions] = {4,4};
+  static const int local_size [num_dimensions] = {2,-2};
+  static const Xt_int local_start[num_dimensions] = {0,2};
+
+  // we have indices = {3,2,7,6}
+  static const Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
+  enum { num_selection = sizeof(selection) / sizeof(*selection) };
+
+  static const int ref_positions[]
+    = {2*0+1, 1*0-1, 5*0-1, 7*0+2, 6*0+3, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
 
   test_get_positions_common(num_dimensions, start, global_size,
                             local_size, local_start, 1, num_selection,
