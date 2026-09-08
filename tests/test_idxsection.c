@@ -67,6 +67,13 @@ static void
 do_tests(Xt_idxlist idxlist, const Xt_int *ref_indices, int num_indices,
          const struct Xt_stripe *ref_stripes, int ref_num_stripes);
 
+static void
+test_get_positions1(void);
+static void
+test_get_positions2(void);
+static void
+test_get_positions3(void);
+
 int main(int argc, char **argv) {
 
   test_init_mpi(&argc, &argv, MPI_COMM_WORLD);
@@ -414,120 +421,9 @@ int main(int argc, char **argv) {
     xt_idxlist_delete(idxsection);
   }
 
-  {
-    // check get_positions_of_indices
-
-    Xt_int start = 0;
-    enum { num_dimensions = 2 };
-    static const Xt_int global_size[num_dimensions] = {4,4};
-    static const int local_size [num_dimensions] = {2,2};
-    static const Xt_int local_start[num_dimensions] = {0,2};
-
-    Xt_idxlist idxsection
-      = xt_idxsection_new(start, num_dimensions, global_size,
-                          local_size, local_start);
-
-    // we have indices = {2,3,6,7}
-    static const Xt_int selection[] = {1,2,5,6,7,8};
-    enum { num_selection = sizeof(selection) / sizeof(*selection) };
-
-    int positions[num_selection];
-    static const int ref_positions[]
-      = {1*0-1, 2*0+0, 5*0-1, 6*0+2, 7*0+3, 8*0-1};
-
-    if (xt_idxlist_get_positions_of_indices(idxsection, selection,
-                                            num_selection, positions, 0) != 3)
-      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
-              " num_unmatched\n");
-
-    bool mismatch = false;
-    for (int i=0; i<num_selection; i++)
-      mismatch |= (positions[i] != ref_positions[i]);
-    if (mismatch)
-      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
-              " position\n");
-
-    xt_idxlist_delete(idxsection);
-  }
-
-  {
-    // check get_positions_of_indices with single_match_only = 0
-
-    Xt_int start = 0;
-    enum { num_dimensions = 2 };
-    static const Xt_int global_size[num_dimensions] = {4,4};
-    static const int local_size[num_dimensions] = {2,2};
-    static const Xt_int local_start[num_dimensions] = {0,2};
-
-    Xt_idxlist idxsection
-      = xt_idxsection_new(start, num_dimensions, global_size,
-                          local_size, local_start);
-
-    // we have indices = {2,3,6,7}
-    static const Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    enum { num_selection = sizeof(selection) / sizeof(*selection) };
-
-    int positions[num_selection];
-    static const int ref_positions[]
-      = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0+3, 7*0+3, 6*0+2, 8*0-1};
-
-    if (xt_idxlist_get_positions_of_indices(idxsection, selection,
-                                            num_selection, positions, 0) != 3)
-      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
-              " num_unmatched\n");
-
-    bool mismatch = false;
-    for (int i=0; i<num_selection; i++)
-      mismatch |= (positions[i] != ref_positions[i]);
-    if (mismatch)
-      PUT_ERR("xt_idxlist_get_positions_of_indices returned incorrect"
-              " position\n");
-
-    for (int i=0; i<num_selection; i++) {
-      int p;
-      xt_idxlist_get_position_of_index(idxsection, selection[i], &p);
-      if (p != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_position_of_index returned incorrect"
-                " position\n");
-    }
-
-    xt_idxlist_delete(idxsection);
-  }
-
-  {
-    // check get_positions_of_indices with single_match_only = 1
-
-    Xt_int start = 0;
-    enum { num_dimensions = 2 };
-    static const Xt_int global_size[num_dimensions] = {4,4};
-    static const int local_size [num_dimensions] = {2,2};
-    static const Xt_int local_start[num_dimensions] = {0,2};
-
-    Xt_idxlist idxsection
-      = xt_idxsection_new(start, num_dimensions, global_size,
-                          local_size, local_start);
-
-    // we have indices = {2,3,6,7}
-    static const Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
-    enum { num_selection = sizeof(selection) / sizeof(*selection) };
-
-    int positions[num_selection];
-    static const int ref_positions[]
-      = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
-
-    if (xt_idxlist_get_positions_of_indices(idxsection, selection,
-                                            num_selection, positions, 1) != 6)
-      PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
-              " num_unmatched\n");
-
-    for (int i=0; i<num_selection; i++) {
-      if (positions[i] != ref_positions[i])
-        PUT_ERR("xt_idxlist_get_positions_of_indices returned incorrect"
-                "position\n");
-    }
-
-    xt_idxlist_delete(idxsection);
-  }
+  test_get_positions1();
+  test_get_positions2();
+  test_get_positions3();
 
   {
     // check get_positions_of_indices with single_match_only = 1
@@ -1110,6 +1006,116 @@ do_tests(Xt_idxlist idxlist, const Xt_int *ref_indices, int num_indices,
     xt_idxlist_delete(idxlist_copy);
   }
 }
+
+static void
+test_get_positions_common(
+  int num_dimensions,
+  Xt_int start,
+  const Xt_int global_size[num_dimensions],
+  const int local_size[num_dimensions],
+  const Xt_int local_start[num_dimensions],
+  bool single_match_only,
+  int num_selection,
+  const Xt_int selection[num_selection],
+  const int ref_positions[num_selection])
+{
+  Xt_idxlist idxsection
+    = xt_idxsection_new(start, num_dimensions, global_size,
+                        local_size, local_start);
+
+  int positions[num_selection];
+  int count_missing_pos_ref = 0;
+  for (int i = 0; i < num_selection; ++i)
+    count_missing_pos_ref += ref_positions[i] == -1;
+  if (xt_idxlist_get_positions_of_indices(
+        idxsection, selection,
+        num_selection, positions, single_match_only) != count_missing_pos_ref)
+    PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
+            " num_unmatched\n");
+
+  bool mismatch = false;
+  for (int i=0; i<num_selection; i++)
+    mismatch |= (positions[i] != ref_positions[i]);
+  if (mismatch)
+    PUT_ERR("xt_idxlist_get_positions_of_indices returned incorrect"
+            " position\n");
+
+  if (!single_match_only)
+    for (int i=0; i<num_selection; i++) {
+      int p;
+      xt_idxlist_get_position_of_index(idxsection, selection[i], &p);
+      if (p != ref_positions[i])
+        PUT_ERR("xt_idxlist_get_position_of_index returned incorrect"
+                " position\n");
+    }
+
+  xt_idxlist_delete(idxsection);
+}
+
+
+static void
+test_get_positions1(void)
+{
+  // check get_positions_of_indices
+  Xt_int start = 0;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[num_dimensions] = {4,4};
+  static const int local_size [num_dimensions] = {2,2};
+  static const Xt_int local_start[num_dimensions] = {0,2};
+  // we have indices = {2,3,6,7}
+  static const Xt_int selection[] = {1,2,5,6,7,8};
+  enum { num_selection = sizeof(selection) / sizeof(*selection) };
+
+  static const int ref_positions[]
+    = {1*0-1, 2*0+0, 5*0-1, 6*0+2, 7*0+3, 8*0-1};
+
+  test_get_positions_common(num_dimensions, start, global_size,
+                            local_size, local_start, 0, num_selection,
+                            selection, ref_positions);
+}
+
+static void
+test_get_positions2(void)
+{
+  // check get_positions_of_indices with single_match_only = 0
+  static const Xt_int start = 0;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[num_dimensions] = {4,4};
+  static const int local_size[num_dimensions] = {2,2};
+  static const Xt_int local_start[num_dimensions] = {0,2};
+  // we have indices = {2,3,6,7}
+  static const Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
+  enum { num_selection = sizeof(selection) / sizeof(*selection) };
+
+  static const int ref_positions[]
+    = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0+3, 7*0+3, 6*0+2, 8*0-1};
+
+  test_get_positions_common(num_dimensions, start, global_size,
+                            local_size, local_start, 0, num_selection,
+                            selection, ref_positions);
+}
+
+static void
+test_get_positions3(void)
+{
+  // check get_positions_of_indices with single_match_only = 1
+  static const Xt_int start = 0;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[num_dimensions] = {4,4};
+  static const int local_size [num_dimensions] = {2,2};
+  static const Xt_int local_start[num_dimensions] = {0,2};
+
+  // we have indices = {2,3,6,7}
+  static const Xt_int selection[] = {2,1,5,7,6,7,7,6,8};
+  enum { num_selection = sizeof(selection) / sizeof(*selection) };
+  static const int ref_positions[]
+    = {2*0+0, 1*0-1, 5*0-1, 7*0+3, 6*0+2, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
+
+  test_get_positions_common(num_dimensions, start, global_size,
+                            local_size, local_start, 1, num_selection,
+                            selection, ref_positions);
+}
+
 
 /*
  * Local Variables:
