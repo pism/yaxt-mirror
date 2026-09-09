@@ -149,7 +149,7 @@ test_clp_check(void)
              [acx_cv_fc_c_2fld_struct_return=failed],
              [AC_MSG_NOTICE([Skipping run test for 2-field-struct return in cross-compilation mode,])
 	      AC_MSG_NOTICE([2-field-struct-return link-test succeeded for $FC.])
-              acx_cv_cfortran_works=yes])
+              acx_cv_fc_c_2fld_struct_return=yes])
             AC_LANG_POP([Fortran])])
          AS_CASE(["$CFLAGS:$acx_cv_fc_c_2fld_struct_return"],
            [*\ -DNEED_FC_PAIR_STRUCT_WORKAROUND:*|*:yes],[break])
