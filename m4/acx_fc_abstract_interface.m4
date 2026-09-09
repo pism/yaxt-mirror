@@ -79,6 +79,7 @@ AC_DEFUN([ACX_FC_ABSTRACT_INTERFACE],
       TYPE, BIND(C) :: eggplant
         TYPE(c_ptr) :: avocado
       END TYPE eggplant
+      PUBLIC
       END MODULE conftest_module_a
       MODULE conftest_module_b
       USE conftest_module_a, ONLY: eggplant
