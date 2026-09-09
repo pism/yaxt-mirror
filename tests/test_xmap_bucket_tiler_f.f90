@@ -92,6 +92,8 @@ MODULE test_xmap_bucket_tiler
     TYPE(xt_idxlist) :: prev_tile
   END TYPE bucket_gen_1d_tile_state
   CHARACTER(*), PARAMETER :: filename = "test_xmap_bucket_tiler_f.f90"
+
+  PUBLIC
 CONTAINS
     ! determine which MPI rank owns sub-section a particular coordinate falls into
   ! note: assumes row-major distribution of ranks
