@@ -377,7 +377,7 @@ gen_cov_rep_html:
       --exclude-unreachable-branches
       --print-summary
       -o ../coverage/index.html
-      --root ..
+      --root .
       --object-directory .libs
       -e ../examples
       -e ../tests
@@ -390,7 +390,7 @@ gen_cov_rep_html:
       --html-details
       --exclude-unreachable-branches
       -o ../coverage_tests/index.html
-      --root ..
+      --root .
       --object-directory .
       -e ../examples
       -e ../src
