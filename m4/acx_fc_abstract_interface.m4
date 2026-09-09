@@ -145,6 +145,39 @@ AC_DEFUN([ACX_FC_ABSTRACT_INTERFACE],
         orange = x <= 1.0 .AND. x >= 1.0
       END FUNCTION orange
       END MODULE conftest_module_c
+      MODULE conftest_module_n
+      IMPLICIT NONE
+      ABSTRACT INTERFACE
+        FUNCTION apricot(kiwi) RESULT(rhubarp)
+          INTEGER :: rhubarp
+          INTEGER, INTENT(in) :: kiwi
+        END FUNCTION apricot
+      END INTERFACE
+      INTERFACE
+        SUBROUTINE durian(init, destroy)
+          IMPORT :: apricot
+          PROCEDURE(apricot) :: init
+          INTERFACE
+            SUBROUTINE destroy(kiwi)
+              INTEGER, INTENT(in) :: kiwi
+            END SUBROUTINE destroy
+          END INTERFACE
+        END SUBROUTINE durian
+      END INTERFACE
+      PROCEDURE(apricot), POINTER :: papaya => NULL()
+      CONTAINS
+      FUNCTION mango(kiwi) RESULT(rhubarp)
+      INTEGER :: rhubarp
+      INTEGER, INTENT(in) :: kiwi
+      rhubarp = 0
+      END FUNCTION mango
+      SUBROUTINE coconut(kiwi)
+        INTEGER, INTENT(in) :: kiwi
+      END SUBROUTINE coconut
+      SUBROUTINE tomato()
+        CALL durian(mango, coconut)
+      END SUBROUTINE tomato
+      END MODULE conftest_module_n
 #ifdef __INTEL_COMPILER
       MODULE conftest_module_i
         IMPLICIT NONE
