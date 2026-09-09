@@ -181,7 +181,6 @@ include:
     - ci_CC=mpicc
     - ci_CFLAGS="-O2 -g -I${CUDA_ROOT}/include -acc=gpu -gpu=cc80,nordc -Minfo -mp"
     - ci_configure_args=(--with-idxtype=long --disable-static)
-    - ci_configure_args+=(acx_cv_fc_abstract_interface=no)
     - ci_configure_args+=(LDFLAGS='-acc=gpu -gpu=cc80,nordc -mp')
 
 .basic_build:
