@@ -242,7 +242,11 @@ xt_stripes_detect_duplicate(size_t num_stripes,
   if (num_stripes) {
     Xt_int ofs = index_range.min;
     enum {
+#if XT_INT_MAX >= INT_MAX
       block_max = 1 << 24,
+#else
+      block_max = XT_INT_MAX/2 + (XT_INT_MAX&1),
+#endif
       size_t_bits = sizeof (size_t) * CHAR_BIT,
     };
     size_t bm_size = ((size_t)MIN(block_max, index_range.max - ofs + 1)
