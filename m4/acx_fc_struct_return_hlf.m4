@@ -65,6 +65,7 @@ AC_DEFUN([ACX_FC_STRUCT_RETURN_HLF],
       TYPE apple
         INTEGER :: apricot
       END TYPE
+      PUBLIC
       CONTAINS
       FUNCTION cherry() RESULT(banana)
       TYPE(apple) :: banana
