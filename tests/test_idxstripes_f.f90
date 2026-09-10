@@ -68,6 +68,7 @@ PROGRAM test_idxstripes_f
        xt_idxlist_get_pos_exts_of_index_stripes, &
        xt_idxlist_get_num_indices, xt_idxvec_new, &
        xt_idxstripes_from_idxlist_new
+  USE xt_core, ONLY: i2
   USE iso_c_binding, ONLY: c_int
   IMPLICIT NONE
   INTEGER, PARAMETER :: xi = xt_int_kind
@@ -999,7 +1000,7 @@ CONTAINS
       temp_idxlist = xt_idxvec_from_stripes_new(stripes, num_stripes)
     ELSE
       num_stripes = 0
-      temp_idxlist = xt_idxvec_from_stripes_new(dummy, num_stripes)
+      temp_idxlist = xt_idxvec_from_stripes_new(dummy, 0_i2)
     END IF
     CALL check_idxlist(temp_idxlist, ref_indices)
 
