@@ -64,7 +64,7 @@ MODULE test_xmap_common
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_mpi_comm_mark_exclusive, xt_config, xt_config_delete, &
        xt_xmap_dist_dir_custom_new
-#if defined HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN
   USE test_xmap_bucket_tiler, ONLY: tile_bucket_config_new, &
        tile_bucket_config_set_global_dims
   USE yaxt, ONLY: xt_config_get_xmdd_bucket_gen, xt_is_null, &
