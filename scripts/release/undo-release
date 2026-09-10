@@ -46,10 +46,10 @@
 #
 set -eu
 version_to_undo=$1
-commit_of_tag=$(git log '--format=%H' -1 "v$version_to_undo")
+commit_of_tag=$(git show-ref -s --tags "v$version_to_undo")
 git tag -d "v$version_to_undo"
 git branch -D "release-${version_to_undo}"
-HEAD=$(git log --format=%H -1)
+HEAD=$(git show-ref -s HEAD)
 if [[ "$HEAD" == "$commit_of_tag" ]]; then
   echo "Resetting to commit before version bump of ${commit_of_tag}." >&2
   git reset --hard HEAD^
