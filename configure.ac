@@ -235,9 +235,13 @@ ACX_FC_LOGICAL_INTEROP([HAVE_FC_LOGICAL_INTEROP=yes ;dnl
 @%:@define HAVE_FC_LOGICAL_INTEROP"])
 ACX_FC_LOGICAL_C_BOOL([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_LOGICAL_C_BOOL"])
+dnl check which of F2003 init expressions are supported
 ACX_FC_MIL_STD_1753_INIT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
 @%:@define HAVE_FC_MIL_STD_1753_INIT"],
   [AC_MSG_WARN([$FC does not support Fortran 90 binary intrinsics in initialization expressions!])])
+ACX_FC_MERGE_INIT([XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
+@%:@define HAVE_FC_MERGE_INIT"],
+  [AC_MSG_WARN([$FC does not support Fortran 90 merge intrinsics in initialization expressions!])])
 dnl Do we need helper functions for contiguous arrays?
 ACX_FC_HAVE_IS_CONTIGUOUS([HAVE_FC_IS_CONTIGUOUS=yes
   XT_FC_FEATURE_DEFS="$XT_FC_FEATURE_DEFS
