@@ -75,6 +75,18 @@ static void
 test_get_positions3(void);
 static void
 test_get_positions4(void);
+static void
+test_other_intersection(void);
+static void
+test_stripe_intersection(void);
+static void
+test_sec4d_stripe_intersection(void);
+static void
+test_signed_sizes1(void);
+static void
+test_signed_sizes2(void);
+static void
+test_signed_size_intersections(void);
 
 int main(int argc, char **argv) {
 
@@ -428,284 +440,15 @@ int main(int argc, char **argv) {
   test_get_positions3();
   test_get_positions4();
 
-  {
-    // check idxsection_get_intersection_with_other_idxlist
+  test_other_intersection();
+  test_stripe_intersection();
+  test_sec4d_stripe_intersection();
 
-    Xt_int start = 0;
-    enum { num_dimensions = 2 };
-    static const Xt_int global_size[num_dimensions] = {4,4};
-    static const int local_size [num_dimensions] = {2,2};
-    static const Xt_int local_start[num_dimensions] = {0,2};
+  test_signed_sizes1();
+  test_signed_sizes2();
 
-    Xt_idxlist idxsection
-      = xt_idxsection_new(start, num_dimensions, global_size,
-                          local_size, local_start);
+  test_signed_size_intersections();
 
-    // we have indices = {2,3,6,7}
-    static const Xt_int sel_idx[] = {2,1,5,7,6,7,7,6,8};
-    enum { num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx) };
-
-    Xt_idxlist sel_idxlist = xt_idxvec_new(sel_idx, num_sel_idx);
-
-    Xt_idxlist inter_idxlist
-      = xt_idxlist_get_intersection(idxsection, sel_idxlist);
-
-    static const Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
-    enum { num_ref_inter_idx = sizeof(ref_inter_idx) / sizeof(*ref_inter_idx) };
-
-    check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
-
-    xt_idxlist_delete(inter_idxlist);
-    xt_idxlist_delete(sel_idxlist);
-    xt_idxlist_delete(idxsection);
-  }
-
-  {
-    // check idxsection_get_idxstripes_intersection
-
-    Xt_int start = 0;
-    enum { num_dimensions = 2 };
-    static const Xt_int global_size[num_dimensions] = {4,4};
-    static const int local_size [num_dimensions] = {2,2};
-    static const Xt_int local_start[num_dimensions] = {0,2};
-
-    Xt_idxlist idxsection
-      = xt_idxsection_new(start, num_dimensions, global_size,
-                          local_size, local_start);
-
-    // we have indices = {2,3,6,7}
-    static const struct Xt_stripe stripes[]
-      = { { .start = 2, .stride = -1, .nstrides = 2 },
-          { .start = 5, .stride = 2, .nstrides = 2 },
-          { .start = 6, .stride = 1, .nstrides = 2 },
-          { .start = 7, .stride = -1, .nstrides = 2 },
-          { .start = 8, .stride = 1, .nstrides = 1 },
-    };
-    enum { num_stripes = sizeof(stripes) / sizeof(stripes[0]) };
-
-    Xt_idxlist sel_idxlist = xt_idxstripes_new(stripes, num_stripes);
-
-    Xt_idxlist inter_idxlist
-      = xt_idxlist_get_intersection(idxsection, sel_idxlist);
-
-    static const Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
-    enum { num_ref_inter_idx = sizeof(ref_inter_idx) / sizeof(*ref_inter_idx) };
-
-    check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
-
-    Xt_idxlist inter_idxlist_r
-      = xt_idxlist_get_intersection(sel_idxlist, idxsection);
-
-    static const Xt_int ref_inter_idx_r[] = {2,6,7};
-    enum { num_ref_inter_idx_r = sizeof(ref_inter_idx_r) / sizeof(*ref_inter_idx_r) };
-
-    check_idxlist(inter_idxlist_r, ref_inter_idx_r, num_ref_inter_idx_r);
-
-    xt_idxlist_delete(inter_idxlist_r);
-    xt_idxlist_delete(inter_idxlist);
-    xt_idxlist_delete(sel_idxlist);
-    xt_idxlist_delete(idxsection);
-  }
-
-  { // test 2D section with negative global size
-    // iterate through all sign combinations of -/+ for local and global
-    // and for x and y, giving 2^2^2 combinations
-    for (int i = 0; i < 16; ++i) {
-
-
-      Xt_int start = 0;
-      enum { num_dimensions = 2 };
-      static const Xt_int global_size[4][num_dimensions]
-        = {{7,10},{7,-10},{-7,10},{-7,-10}};
-      static const int local_size[4][num_dimensions]
-        = {{3,4},{3,-4},{-3,4},{-3,-4}};
-      static const Xt_int local_start[num_dimensions] = {1,2};
-
-      // create index section
-
-      Xt_idxlist idxsection
-        = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
-                            local_size[i & 3], local_start);
-
-      // testing
-
-      static const Xt_int ref_indices[16][12] =
-        {{12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
-         {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
-         {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
-         {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
-         {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
-         {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37},
-         {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
-         {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
-         {52, 53, 54, 55, 42, 43, 44, 45, 32, 33, 34, 35},
-         {55, 54, 53, 52, 45, 44, 43, 42, 35, 34, 33, 32},
-         {32, 33, 34, 35, 42, 43, 44, 45, 52, 53, 54, 55},
-         {35, 34, 33, 32, 45, 44, 43, 42, 55, 54, 53, 52},
-         {57, 56, 55, 54, 47, 46, 45, 44, 37, 36, 35, 34},
-         {54, 55, 56, 57, 44, 45, 46, 47, 34, 35, 36, 37},
-         {37, 36, 35, 34, 47, 46, 45, 44, 57, 56, 55, 54},
-         {34, 35, 36, 37, 44, 45, 46, 47, 54, 55, 56, 57}};
-
-      check_idxlist(idxsection, ref_indices[i], 12);
-
-      // clean up
-
-      xt_idxlist_delete(idxsection);
-    }
-  }
-
-  { // test 2D section with negative global size
-
-    for (int i = 0; i < 16; ++i) {
-
-      Xt_int start = 0;
-      enum { num_dimensions = 2 };
-      static const Xt_int global_size[4][num_dimensions]
-        = {{5,6},{5,-6},{-5,6},{-5,-6}};
-      static const int local_size [4][num_dimensions]
-        = {{2,3},{2,-3},{-2,3},{-2,-3}};
-      static const Xt_int local_start[num_dimensions] = {1,2};
-
-      // create index section
-
-      Xt_idxlist idxsection
-        = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
-                            local_size[i & 3], local_start);
-
-      // testing
-
-      static const Xt_int ref_indices[16][6] =
-        {{8,9,10,14,15,16},
-         {10,9,8,16,15,14},
-         {14,15,16,8,9,10},
-         {16,15,14,10,9,8},
-         {9,8,7,15,14,13},
-         {7,8,9,13,14,15},
-         {15,14,13,9,8,7},
-         {13,14,15,7,8,9},
-         {20,21,22,14,15,16},
-         {22,21,20,16,15,14},
-         {14,15,16,20,21,22},
-         {16,15,14,22,21,20},
-         {21,20,19,15,14,13},
-         {19,20,21,13,14,15},
-         {15,14,13,21,20,19},
-         {13,14,15,19,20,21}};
-
-      check_idxlist(idxsection, ref_indices[i], 6);
-
-      // clean up
-
-      xt_idxlist_delete(idxsection);
-    }
-  }
-
-  {
-    // test intersection of idxsection with non-zero offset and
-    // stripes
-    enum { irank = 4, num_ref_indices=160, bias=1};
-    static const Xt_int gsz[irank] = { 1, 1, 16, 19 };
-    static const int lsz[irank] = { 1, 1, 16, 10 };
-    static const Xt_int lst[irank] = { 0, 0, 0, 0 };
-    Xt_int ref_inter_idx[num_ref_indices];
-
-    for (Xt_int j = 0; j < lsz[2]; ++j)
-      for (Xt_int i = 0; i < lsz[3]; ++i)
-        ref_inter_idx[i+j*lsz[3]] = (Xt_int)(i + bias + j*19);
-
-    Xt_idxlist section = xt_idxsection_new(bias, irank, gsz, lsz, lst),
-      stripes = xt_idxstripes_new((struct Xt_stripe[1]){ { 0, 1, 304 } }, 1);
-
-    Xt_idxlist intersect
-      = xt_idxlist_get_intersection(section, stripes);
-    xt_idxlist_delete(stripes);
-    xt_idxlist_delete(section);
-    check_idxlist(intersect, ref_inter_idx, num_ref_indices);
-    xt_idxlist_delete(intersect);
-  }
-
-  { // test intersection of 2D section with negative global size
-
-    for (int i = 0; i < 16; ++i) {
-      for (int j = 0; j < 16; ++j) {
-
-        Xt_int start = 0;
-        enum { num_dimensions = 2 };
-        static const Xt_int global_size[4][num_dimensions]
-          = {{5,10},{5,-10},{-5,10},{-5,-10}};
-        static const int local_size [4][num_dimensions]
-          = {{3,4},{3,-4},{-3,4},{-3,-4}};
-        static const Xt_int local_start[num_dimensions] = {1,2};
-
-        static const Xt_int indices[16][12] =
-          {{12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
-           {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
-           {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
-           {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
-           {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
-           {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37},
-           {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
-           {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
-           {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
-           {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
-           {12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
-           {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
-           {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
-           {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
-           {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
-           {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37}};
-
-        // create index section
-        Xt_idxlist idxsection_a
-          = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
-                              local_size[i & 3], local_start),
-          idxsection_b
-          = xt_idxsection_new(start, num_dimensions, global_size[j >> 2],
-                              local_size[j & 3], local_start);
-
-        // create reference index vectors
-
-        Xt_idxlist idxvec_a = xt_idxvec_new(indices[i], 12),
-          idxvec_b = xt_idxvec_new(indices[j], 12);
-
-        // also test with stripes now that those use specific
-        // intersection routine
-        Xt_idxlist idxstripes_b = xt_idxstripes_from_idxlist_new(idxvec_b);
-
-        // testing
-
-        Xt_idxlist idxsection_intersection
-          = xt_idxlist_get_intersection(idxsection_a, idxsection_b),
-          idxsection_intersection_stripes
-          = xt_idxlist_get_intersection(idxsection_a, idxstripes_b),
-          idxsection_intersection_other
-          = xt_idxlist_get_intersection(idxsection_a, idxvec_b),
-          idxvec_intersection = xt_idxlist_get_intersection(idxvec_a, idxvec_b);
-
-        check_idxlist(idxsection_intersection,
-                      xt_idxlist_get_indices_const(idxvec_intersection),
-                      xt_idxlist_get_num_indices(idxvec_intersection));
-        check_idxlist(idxsection_intersection_stripes,
-                      xt_idxlist_get_indices_const(idxvec_intersection),
-                      xt_idxlist_get_num_indices(idxvec_intersection));
-        check_idxlist(idxsection_intersection_other,
-                      xt_idxlist_get_indices_const(idxvec_intersection),
-                      xt_idxlist_get_num_indices(idxvec_intersection));
-
-        // clean up
-        xt_idxlist_delete(idxvec_intersection);
-        xt_idxlist_delete(idxsection_intersection_other);
-        xt_idxlist_delete(idxsection_intersection_stripes);
-        xt_idxlist_delete(idxsection_intersection);
-        xt_idxlist_delete(idxstripes_b);
-        xt_idxlist_delete(idxvec_b);
-        xt_idxlist_delete(idxvec_a);
-        xt_idxlist_delete(idxsection_b);
-        xt_idxlist_delete(idxsection_a);
-      }
-    }
-  }
 
   { // test 2D section with negative global size
 
@@ -1105,6 +848,295 @@ test_get_positions4(void)
   test_get_positions_common(num_dimensions, start, global_size,
                             local_size, local_start, 1, num_selection,
                             selection, ref_positions);
+}
+
+
+static void
+test_other_intersection(void)
+{
+  // check idxsection_get_intersection_with_other_idxlist
+  Xt_int start = 0;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[num_dimensions] = {4,4};
+  static const int local_size [num_dimensions] = {2,2};
+  static const Xt_int local_start[num_dimensions] = {0,2};
+
+  Xt_idxlist idxsection
+    = xt_idxsection_new(start, num_dimensions, global_size,
+                        local_size, local_start);
+
+  // we have indices = {2,3,6,7}
+  static const Xt_int sel_idx[] = {2,1,5,7,6,7,7,6,8};
+  enum { num_sel_idx = sizeof(sel_idx) / sizeof(*sel_idx) };
+
+  Xt_idxlist sel_idxlist = xt_idxvec_new(sel_idx, num_sel_idx);
+
+  Xt_idxlist inter_idxlist
+    = xt_idxlist_get_intersection(idxsection, sel_idxlist);
+
+  static const Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
+  enum { num_ref_inter_idx = sizeof(ref_inter_idx) / sizeof(*ref_inter_idx) };
+
+  xt_idxlist_delete(sel_idxlist);
+  xt_idxlist_delete(idxsection);
+  check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
+  xt_idxlist_delete(inter_idxlist);
+}
+
+static void
+test_stripe_intersection(void)
+{
+  // check idxsection_get_idxstripes_intersection
+  Xt_int start = 0;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[num_dimensions] = {4,4};
+  static const int local_size [num_dimensions] = {2,2};
+  static const Xt_int local_start[num_dimensions] = {0,2};
+
+  Xt_idxlist idxsection
+    = xt_idxsection_new(start, num_dimensions, global_size,
+                        local_size, local_start);
+
+  // we have indices = {2,1,5,7,6,7,7,6,8}
+  static const struct Xt_stripe stripes[]
+    = { { .start = 2, .stride = -1, .nstrides = 2 },
+        { .start = 5, .stride = 2, .nstrides = 2 },
+        { .start = 6, .stride = 1, .nstrides = 2 },
+        { .start = 7, .stride = -1, .nstrides = 2 },
+        { .start = 8, .stride = 1, .nstrides = 1 },
+  };
+  enum { num_stripes = sizeof(stripes) / sizeof(stripes[0]) };
+
+  Xt_idxlist sel_idxlist = xt_idxstripes_new(stripes, num_stripes);
+
+  Xt_idxlist inter_idxlist
+    = xt_idxlist_get_intersection(idxsection, sel_idxlist);
+
+  static const Xt_int ref_inter_idx[] = {2,6,6,7,7,7};
+  enum { num_ref_inter_idx = sizeof(ref_inter_idx) / sizeof(*ref_inter_idx) };
+
+  check_idxlist(inter_idxlist, ref_inter_idx, num_ref_inter_idx);
+  xt_idxlist_delete(inter_idxlist);
+
+  Xt_idxlist inter_idxlist_r
+    = xt_idxlist_get_intersection(sel_idxlist, idxsection);
+  xt_idxlist_delete(sel_idxlist);
+  xt_idxlist_delete(idxsection);
+
+  static const Xt_int ref_inter_idx_r[] = {2,6,7};
+  enum { num_ref_inter_idx_r = sizeof(ref_inter_idx_r) / sizeof(*ref_inter_idx_r) };
+
+  check_idxlist(inter_idxlist_r, ref_inter_idx_r, num_ref_inter_idx_r);
+
+  xt_idxlist_delete(inter_idxlist_r);
+}
+
+static void
+test_sec4d_stripe_intersection(void)
+{
+  // test intersection of idxsection with non-zero offset and
+  // stripes
+  enum { irank = 4, num_ref_indices=160, bias=1};
+  static const Xt_int gsz[irank] = { 1, 1, 16, 19 };
+  static const int lsz[irank] = { 1, 1, 16, 10 };
+  static const Xt_int lst[irank] = { 0, 0, 0, 0 };
+  Xt_int ref_inter_idx[num_ref_indices];
+
+  for (Xt_int j = 0; j < lsz[2]; ++j)
+    for (Xt_int i = 0; i < lsz[3]; ++i)
+      ref_inter_idx[i+j*lsz[3]] = (Xt_int)(i + bias + j*19);
+
+  Xt_idxlist section = xt_idxsection_new(bias, irank, gsz, lsz, lst),
+    stripes = xt_idxstripes_new((struct Xt_stripe[1]){ { 0, 1, 304 } }, 1);
+
+  Xt_idxlist intersect
+    = xt_idxlist_get_intersection(section, stripes);
+  xt_idxlist_delete(stripes);
+  xt_idxlist_delete(section);
+  check_idxlist(intersect, ref_inter_idx, num_ref_indices);
+  xt_idxlist_delete(intersect);
+}
+
+
+static void
+test_signed_sizes1(void)
+{
+  // test 2D section with negative global size
+  // iterate through all sign combinations of -/+ for local and global
+  // and for x and y, giving 2^2^2 combinations
+  for (int i = 0; i < 16; ++i) {
+
+    Xt_int start = 0;
+    enum { num_dimensions = 2 };
+    static const Xt_int global_size[4][num_dimensions]
+      = {{7,10},{7,-10},{-7,10},{-7,-10}};
+    static const int local_size[4][num_dimensions]
+      = {{3,4},{3,-4},{-3,4},{-3,-4}};
+    static const Xt_int local_start[num_dimensions] = {1,2};
+
+    // create index section
+
+    Xt_idxlist idxsection
+      = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
+                          local_size[i & 3], local_start);
+
+    // testing
+
+    static const Xt_int ref_indices[16][12] =
+      {{12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
+       {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
+       {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
+       {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
+       {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
+       {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37},
+       {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
+       {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
+       {52, 53, 54, 55, 42, 43, 44, 45, 32, 33, 34, 35},
+       {55, 54, 53, 52, 45, 44, 43, 42, 35, 34, 33, 32},
+       {32, 33, 34, 35, 42, 43, 44, 45, 52, 53, 54, 55},
+       {35, 34, 33, 32, 45, 44, 43, 42, 55, 54, 53, 52},
+       {57, 56, 55, 54, 47, 46, 45, 44, 37, 36, 35, 34},
+       {54, 55, 56, 57, 44, 45, 46, 47, 34, 35, 36, 37},
+       {37, 36, 35, 34, 47, 46, 45, 44, 57, 56, 55, 54},
+       {34, 35, 36, 37, 44, 45, 46, 47, 54, 55, 56, 57}};
+
+    check_idxlist(idxsection, ref_indices[i], 12);
+
+    // clean up
+
+    xt_idxlist_delete(idxsection);
+  }
+}
+
+static void
+test_signed_sizes2(void)
+{
+  // test 2D section with negative global size
+  for (int i = 0; i < 16; ++i) {
+
+    Xt_int start = 0;
+    enum { num_dimensions = 2 };
+    static const Xt_int global_size[4][num_dimensions]
+      = {{5,6},{5,-6},{-5,6},{-5,-6}};
+    static const int local_size [4][num_dimensions]
+      = {{2,3},{2,-3},{-2,3},{-2,-3}};
+    static const Xt_int local_start[num_dimensions] = {1,2};
+
+    // create index section
+
+    Xt_idxlist idxsection
+      = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
+                          local_size[i & 3], local_start);
+
+    // testing
+
+    static const Xt_int ref_indices[16][6] =
+      {{8,9,10,14,15,16},
+       {10,9,8,16,15,14},
+       {14,15,16,8,9,10},
+       {16,15,14,10,9,8},
+       {9,8,7,15,14,13},
+       {7,8,9,13,14,15},
+       {15,14,13,9,8,7},
+       {13,14,15,7,8,9},
+       {20,21,22,14,15,16},
+       {22,21,20,16,15,14},
+       {14,15,16,20,21,22},
+       {16,15,14,22,21,20},
+       {21,20,19,15,14,13},
+       {19,20,21,13,14,15},
+       {15,14,13,21,20,19},
+       {13,14,15,19,20,21}};
+
+    check_idxlist(idxsection, ref_indices[i], 6);
+
+    // clean up
+    xt_idxlist_delete(idxsection);
+  }
+}
+
+static void
+test_signed_size_intersections(void)
+{
+  // test intersection of 2D section with negative global size
+  for (int i = 0; i < 16; ++i) {
+    for (int j = 0; j < 16; ++j) {
+
+      Xt_int start = 0;
+      enum { num_dimensions = 2 };
+      static const Xt_int global_size[4][num_dimensions]
+        = {{5,10},{5,-10},{-5,10},{-5,-10}};
+      static const int local_size [4][num_dimensions]
+        = {{3,4},{3,-4},{-3,4},{-3,-4}};
+      static const Xt_int local_start[num_dimensions] = {1,2};
+
+      static const Xt_int indices[16][12] =
+        {{12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
+         {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
+         {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
+         {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
+         {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
+         {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37},
+         {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
+         {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
+         {32, 33, 34, 35, 22, 23, 24, 25, 12, 13, 14, 15},
+         {35, 34, 33, 32, 25, 24, 23, 22, 15, 14, 13, 12},
+         {12, 13, 14, 15, 22, 23, 24, 25, 32, 33, 34, 35},
+         {15, 14, 13, 12, 25, 24, 23, 22, 35, 34, 33, 32},
+         {37, 36, 35, 34, 27, 26, 25, 24, 17, 16, 15, 14},
+         {34, 35, 36, 37, 24, 25, 26, 27, 14, 15, 16, 17},
+         {17, 16, 15, 14, 27, 26, 25, 24, 37, 36, 35, 34},
+         {14, 15, 16, 17, 24, 25, 26, 27, 34, 35, 36, 37}};
+
+      // create index section
+      Xt_idxlist idxsection_a
+        = xt_idxsection_new(start, num_dimensions, global_size[i >> 2],
+                            local_size[i & 3], local_start),
+        idxsection_b
+        = xt_idxsection_new(start, num_dimensions, global_size[j >> 2],
+                            local_size[j & 3], local_start);
+
+      // create reference index vectors
+
+      Xt_idxlist idxvec_a = xt_idxvec_new(indices[i], 12),
+        idxvec_b = xt_idxvec_new(indices[j], 12);
+
+      // also test with stripes now that those use specific
+      // intersection routine
+      Xt_idxlist idxstripes_b = xt_idxstripes_from_idxlist_new(idxvec_b);
+
+      // testing
+
+      Xt_idxlist idxsection_intersection
+        = xt_idxlist_get_intersection(idxsection_a, idxsection_b),
+        idxsection_intersection_stripes
+        = xt_idxlist_get_intersection(idxsection_a, idxstripes_b),
+        idxsection_intersection_other
+        = xt_idxlist_get_intersection(idxsection_a, idxvec_b),
+        idxvec_intersection = xt_idxlist_get_intersection(idxvec_a, idxvec_b);
+
+      check_idxlist(idxsection_intersection,
+                    xt_idxlist_get_indices_const(idxvec_intersection),
+                    xt_idxlist_get_num_indices(idxvec_intersection));
+      check_idxlist(idxsection_intersection_stripes,
+                    xt_idxlist_get_indices_const(idxvec_intersection),
+                    xt_idxlist_get_num_indices(idxvec_intersection));
+      check_idxlist(idxsection_intersection_other,
+                    xt_idxlist_get_indices_const(idxvec_intersection),
+                    xt_idxlist_get_num_indices(idxvec_intersection));
+
+      // clean up
+      xt_idxlist_delete(idxvec_intersection);
+      xt_idxlist_delete(idxsection_intersection_other);
+      xt_idxlist_delete(idxsection_intersection_stripes);
+      xt_idxlist_delete(idxsection_intersection);
+      xt_idxlist_delete(idxstripes_b);
+      xt_idxlist_delete(idxvec_b);
+      xt_idxlist_delete(idxvec_a);
+      xt_idxlist_delete(idxsection_b);
+      xt_idxlist_delete(idxsection_a);
+    }
+  }
 }
 
 
