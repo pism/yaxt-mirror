@@ -570,7 +570,7 @@ CONTAINS
          test_async, test_async_ubound
     INTEGER :: iter_dt, msg_rank, msg_count, direction, nmsg_ref(0:2), nmsg(0:2)
 #if defined __INTEL_COMPILER && (__INTEL_COMPILER_BUILD_DATE == 20110811 \
-        || __INTEL_COMPILER < 1400)
+        || __INTEL_COMPILER <= 1400)
     INTEGER(mpi_address_kind) :: addr_dummy
 #endif
 
@@ -611,7 +611,7 @@ CONTAINS
         CALL data_exchange(exchanger, src_data_p, &
              dst_data_p, test_async > 1)
 #if defined __INTEL_COMPILER && (__INTEL_COMPILER_BUILD_DATE == 20110811 \
-        || __INTEL_COMPILER < 1400)
+        || __INTEL_COMPILER <= 1400)
         ! the following call is only needed to make the optimizer
         ! in old Intel compilers less optimistic in their (mistaken)
         ! ability to predict changes to dst_data
