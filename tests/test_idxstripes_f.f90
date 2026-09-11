@@ -478,10 +478,13 @@ CONTAINS
          xt_stripe(3865, 53,  1), xt_stripe(3918,  1,  3), &
          xt_stripe(3923,  1,  4), xt_stripe(3930,  1,  6) /)
     TYPE(xt_idxlist) :: idxlist
+    INTEGER(xt_int_kind) :: min_idx, max_idx
 
     idxlist = xt_idxvec_new(index_vector, num_indices)
-    IF (MINVAL(index_vector) /= xt_idxlist_get_min_index(idxlist) &
-         .OR. MAXVAL(index_vector) /= xt_idxlist_get_max_index(idxlist)) THEN
+    min_idx = xt_idxlist_get_min_index(idxlist)
+    max_idx = xt_idxlist_get_max_index(idxlist)
+    IF (MINVAL(index_vector) /= min_idx &
+         .OR. MAXVAL(index_vector) /= max_idx) THEN
       PUT_ERR("index min/max query error")
     END IF
     CALL check_stripe_gen(SIZE(stripes), stripes)
