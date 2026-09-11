@@ -44,6 +44,11 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 #include "fc_feature_defs.inc"
+#ifdef VERBOSE
+#define PUT_ERR(msg) WRITE (0, '(a)') msg ; err_count__ = err_count__ + 1
+#else
+#define PUT_ERR(msg) err_count__ = err_count__ + 1
+#endif
 PROGRAM test_idxsection
   USE mpi
   USE xt_core, ONLY: i2, i4, i8
@@ -52,9 +57,10 @@ PROGRAM test_idxsection
        xt_idxlist_copy, xt_idxlist_get_index_stripes, xt_idxlist_delete, &
        xt_idxlist_get_intersection, xt_idxlist_get_positions_of_indices, &
        xt_idxlist_get_position_of_index, xt_idxlist_get_indices_const, &
+       xt_idxlist_get_indices_at_positions, &
        xt_idxlist_get_bounding_box, xt_idxfsection_new, xt_idxstripes_new, &
        xt_idxsection_new, xt_idxvec_new, OPERATOR(/=), OPERATOR(==)
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, err_count__
   USE test_idxlist_utils, ONLY: check_idxlist, test_err_count, check_stripes, &
        idxlist_pack_unpack_copy
   IMPLICIT NONE
@@ -80,6 +86,7 @@ PROGRAM test_idxsection
   CALL test_get_positions4
   CALL test_other_intersection
   CALL test_stripe_intersection
+  CALL test_sec4d_stripe_intersection
   CALL test_signed_sizes1
   CALL test_signed_sizes2
   CALL test_signed_size_positions
@@ -421,7 +428,7 @@ CONTAINS
 
     idxsection = xt_idxsection_new(start, n, global_size, local_size, &
          local_start)
-    sel_idxlist = xt_idxvec_new(sel_idx)
+    sel_idxlist = xt_idxvec_new(sel_idx, INT(num_sel_idx, i2))
     inter_idxlist = xt_idxlist_get_intersection(idxsection, sel_idxlist)
     CALL xt_idxlist_delete(sel_idxlist)
     CALL xt_idxlist_delete(idxsection)
@@ -430,6 +437,35 @@ CONTAINS
   END SUBROUTINE test_other_intersection
 
   SUBROUTINE test_stripe_intersection
+    INTEGER, PARAMETER :: n = 2, num_sel_stripes = 5
+    INTEGER(xt_int_kind), PARAMETER :: start=0_xi, &
+         global_size(n) = 4_xi, local_start(n) = (/ 0_xi, 2_xi /), &
+         ref_inter_idx(6) = (/ 2_xi, 6_xi, 6_xi, 7_xi, 7_xi, 7_xi /), &
+         ref_inter_idx_r(3) = (/ 2_xi, 6_xi, 7_xi /)
+    INTEGER, PARAMETER :: local_size(n) = 2
+    TYPE(xt_stripe), PARAMETER :: sel_stripes(num_sel_stripes) &
+         = (/ xt_stripe(2_xi, -1_xi, 2), &
+         &    xt_stripe(5_xi,  2_xi, 2), &
+         &    xt_stripe(6_xi,  1_xi, 2), &
+         &    xt_stripe(7_xi, -1_xi, 2), &
+         &    xt_stripe(8_xi,  1_xi, 1) /)
+    TYPE(xt_idxlist) :: idxsection, sel_idxlist, inter_idxlist, &
+         inter_idxlist_r
+
+    idxsection = xt_idxsection_new(start, n, global_size, local_size, &
+         local_start)
+    sel_idxlist = xt_idxstripes_new(sel_stripes, INT(SIZE(sel_stripes), i8))
+    inter_idxlist = xt_idxlist_get_intersection(idxsection, sel_idxlist)
+    inter_idxlist_r = xt_idxlist_get_intersection(sel_idxlist, idxsection)
+    CALL xt_idxlist_delete(sel_idxlist)
+    CALL xt_idxlist_delete(idxsection)
+    CALL check_idxlist(inter_idxlist, ref_inter_idx)
+    CALL check_idxlist(inter_idxlist_r, ref_inter_idx_r)
+    CALL xt_idxlist_delete(inter_idxlist_r)
+    CALL xt_idxlist_delete(inter_idxlist)
+  END SUBROUTINE test_stripe_intersection
+
+  SUBROUTINE test_sec4d_stripe_intersection
     INTEGER, PARAMETER :: irank = 4
     INTEGER(xt_int_kind), PARAMETER :: gsz(irank) &
          = (/ 19_xi, 16_xi, 1_xi, 1_xi /)
@@ -457,7 +493,7 @@ CONTAINS
     CALL check_idxlist(intersect, ref_inter_idx)
     CALL xt_idxlist_delete(intersect)
 
-  END SUBROUTINE test_stripe_intersection
+  END SUBROUTINE test_sec4d_stripe_intersection
 
   ! test 2D section with arbitrary size signs
   SUBROUTINE test_signed_sizes1
@@ -652,8 +688,15 @@ CONTAINS
   SUBROUTINE test_signed_size_positions
     TYPE(xt_idxlist) :: idxsection
     INTEGER, PARAMETER :: n = 2, num_pos = 34
-    INTEGER :: positions(num_pos)
+    INTEGER :: positions(num_pos), i, num_subst
+    INTEGER(xt_int_kind) :: answer_idx(num_pos)
 
+    INTEGER(xt_int_kind), PARAMETER :: missing_val = -2
+    INTEGER, PARAMETER :: ref_positions(num_pos) = &
+         (/ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         &  -1, -1, -1, -1, -1,  2,  1, -1,  0, -1, &
+         &  -1, -1,  5, -1,  4,  3, -1, -1, -1, -1, &
+         &  -1, -1, -1, -1 /)
     INTEGER(xt_int_kind), PARAMETER :: start = 0, &
          global_size(n) = (/ -5_xi, 6_xi /), &
          local_start(n) = (/ 1_xi, 2_xi /), &
@@ -666,12 +709,14 @@ CONTAINS
          &  18_xi, 19_xi, 20_xi, 20_xi, 21_xi, &
          &  22_xi, 23_xi, 24_xi, 25_xi, 26_xi, &
          &  27_xi, 28_xi, 29_xi, 30_xi /)
+#ifdef HAVE_FC_MERGE_INIT
+    INTEGER(xt_int_kind), PARAMETER :: &
+         answer_ref(num_pos) &
+         = MERGE(missing_val, indices, ref_positions == -1)
+#else
+    INTEGER(xt_int_kind) :: answer_ref(num_pos)
+#endif
     INTEGER, PARAMETER :: local_size(n) = (/ -2, -3 /)
-    INTEGER, PARAMETER :: ref_positions(num_pos) = &
-         (/ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         &  -1, -1, -1, -1, -1,  2,  1, -1,  0, -1, &
-         &  -1, -1,  5, -1,  4,  3, -1, -1, -1, -1, &
-         &  -1, -1, -1, -1 /)
 
     ! create index section
     idxsection = xt_idxsection_new(start, n, global_size, &
@@ -681,16 +726,33 @@ CONTAINS
     CALL check_idxlist(idxsection, ref_indices)
 
     ! check get_positions_of_indices
-    if (xt_idxlist_get_positions_of_indices(idxsection, indices, positions, &
+    IF (xt_idxlist_get_positions_of_indices(idxsection, indices, positions, &
          .TRUE.) /= 28) &
          CALL test_abort("error in xt_idxlist_get_positions_of_indices &
          &(wrong number of unmatched indices)", &
          filename, __LINE__)
 
     IF (ANY(ref_positions /= positions)) &
-         call test_abort("error in xt_idxlist_get_positions_of_indices &
+         CALL test_abort("error in xt_idxlist_get_positions_of_indices &
          &(wrong position)", &
          filename, __LINE__)
+
+    DO i = 1, num_pos
+      IF (positions(i) == -1) positions(i) = 6+i
+    END DO
+    num_subst = xt_idxlist_get_indices_at_positions(idxsection, positions, &
+         num_pos, answer_idx, missing_val)
+
+#ifndef HAVE_FC_MERGE_INIT
+    DO i = 1, num_pos
+      answer_ref(i) = MERGE(missing_val, indices(i), ref_positions(i) == -1)
+    END DO
+#endif
+
+    IF (num_subst /= COUNT(answer_ref == missing_val) &
+         .OR. ANY(answer_idx /= answer_ref)) THEN
+      PUT_ERR("error in xt_idxlist_get_indices_at_positions (wrong index)")
+    END IF
 
     ! clean up
     CALL xt_idxlist_delete(idxsection)
