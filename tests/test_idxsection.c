@@ -450,76 +450,6 @@ int main(int argc, char **argv) {
   test_signed_size_intersections();
 
 
-  { // test 2D section with negative global size
-
-    Xt_int start = 0;
-    enum { num_dimensions = 2 };
-    static const Xt_int global_size[num_dimensions] = {-5,6};
-    static const int local_size [num_dimensions] = {-2,-3};
-    static const Xt_int local_start[num_dimensions] = {1,2};
-
-    // create index section
-    Xt_idxlist idxsection
-      = xt_idxsection_new(start, num_dimensions, global_size,
-                          local_size, local_start);
-
-    // testing
-
-    static const Xt_int ref_indices[6] = {16,15,14,22,21,20};
-
-    check_idxlist(idxsection, ref_indices, 6);
-
-    // check get_positions_of_indices
-    enum {
-      num_idxpos_q = 34,
-    };
-    static const Xt_int indices[num_idxpos_q]
-      = {-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,16,17,18,19,
-         20,20,21,22,23,24,25,26,27,28,29,30};
-    static const int ref_positions[num_idxpos_q]
-      = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,2,1,-1,0,-1,-1,-1,
-         5,-1,4,3,-1,-1,-1,-1,-1,-1,-1,-1};
-    int positions[num_idxpos_q];
-
-    if (xt_idxlist_get_positions_of_indices(idxsection, indices, num_idxpos_q,
-                                            positions, 1) != 28)
-      PUT_ERR("error in xt_idxlist_get_positions_of_indices"
-              " (wrong number of unmatched indices)\n");
-
-    {
-      bool mismatch = false;
-      for (int i = 0; i < num_idxpos_q; ++i)
-        mismatch |= (ref_positions[i] != positions[i]);
-      if (mismatch)
-        PUT_ERR("error in xt_idxlist_get_positions_of_indices"
-                " (wrong position)\n");
-    }
-    {
-      // replace not-found positions with other out-of-range values
-      Xt_int answer_ref[num_idxpos_q];
-      for (size_t i = 0; i < num_idxpos_q; ++i)
-        if (positions[i] == -1) {
-          positions[i] = 6+(int)i;
-          answer_ref[i] = -2;
-        } else
-          answer_ref[i] = indices[i];
-
-      Xt_int answer_idx[num_idxpos_q];
-      xt_idxlist_get_indices_at_positions(idxsection, positions,
-                                          num_idxpos_q, answer_idx,
-                                          -2);
-      bool mismatch = false;
-      for (int i = 0; i < num_idxpos_q; ++i)
-        mismatch |= (answer_idx[i] != answer_ref[i]);
-      if (mismatch)
-        PUT_ERR("error in xt_idxlist_get_indices_at_positions"
-                " (wrong index)\n");
-    }
-    // clean up
-
-    xt_idxlist_delete(idxsection);
-  }
-
   { // test 2D section with stride in x
 
     Xt_idxlist idxsection;
@@ -1137,6 +1067,78 @@ test_signed_size_intersections(void)
       xt_idxlist_delete(idxsection_a);
     }
   }
+}
+
+static void
+test_signed_size_positions(void)
+{
+  // test 2D section with negative global size
+  Xt_int start = 0;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[num_dimensions] = {-5,6};
+  static const int local_size [num_dimensions] = {-2,-3};
+  static const Xt_int local_start[num_dimensions] = {1,2};
+
+  // create index section
+  Xt_idxlist idxsection
+    = xt_idxsection_new(start, num_dimensions, global_size,
+                        local_size, local_start);
+
+  // testing
+
+  static const Xt_int ref_indices[6] = {16,15,14,22,21,20};
+
+  check_idxlist(idxsection, ref_indices, 6);
+
+  // check get_positions_of_indices
+  enum {
+    num_idxpos_q = 34,
+  };
+  static const Xt_int indices[num_idxpos_q]
+    = {-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,14,16,17,18,19,
+       20,20,21,22,23,24,25,26,27,28,29,30};
+  static const int ref_positions[num_idxpos_q]
+    = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,2,1,-1,0,-1,-1,-1,
+       5,-1,4,3,-1,-1,-1,-1,-1,-1,-1,-1};
+  int positions[num_idxpos_q];
+
+  if (xt_idxlist_get_positions_of_indices(idxsection, indices, num_idxpos_q,
+                                          positions, 1) != 28)
+    PUT_ERR("error in xt_idxlist_get_positions_of_indices"
+            " (wrong number of unmatched indices)\n");
+
+  {
+    bool mismatch = false;
+    for (int i = 0; i < num_idxpos_q; ++i)
+      mismatch |= (ref_positions[i] != positions[i]);
+    if (mismatch)
+      PUT_ERR("error in xt_idxlist_get_positions_of_indices"
+              " (wrong position)\n");
+  }
+  {
+    // replace not-found positions with other out-of-range values
+    Xt_int answer_ref[num_idxpos_q];
+    for (size_t i = 0; i < num_idxpos_q; ++i)
+      if (positions[i] == -1) {
+        positions[i] = 6+(int)i;
+        answer_ref[i] = -2;
+      } else
+        answer_ref[i] = indices[i];
+
+    Xt_int answer_idx[num_idxpos_q];
+    xt_idxlist_get_indices_at_positions(idxsection, positions,
+                                        num_idxpos_q, answer_idx,
+                                        -2);
+    bool mismatch = false;
+    for (int i = 0; i < num_idxpos_q; ++i)
+      mismatch |= (answer_idx[i] != answer_ref[i]);
+    if (mismatch)
+      PUT_ERR("error in xt_idxlist_get_indices_at_positions"
+              " (wrong index)\n");
+  }
+  // clean up
+
+  xt_idxlist_delete(idxsection);
 }
 
 
