@@ -72,7 +72,8 @@ PROGRAM test_idxsection
 
   CALL test_1d_section
   CALL test_2d_section
-  CALL test_3d_section
+  CALL test_3d_section1
+  CALL test_3d_section2
   CALL test_4d_section
   CALL test_2d_simple
   CALL test_1d_intersection1
@@ -146,7 +147,7 @@ CONTAINS
     CALL xt_idxlist_delete(idxsection)
   END SUBROUTINE test_2d_section
 
-  SUBROUTINE test_3d_section
+  SUBROUTINE test_3d_section1
     INTEGER(xt_int_kind), PARAMETER :: start = 0_xi
     INTEGER, PARAMETER :: num_dimensions = 3
     INTEGER(xt_int_kind), PARAMETER :: global_size(num_dimensions) = 4_xi, &
@@ -169,7 +170,34 @@ CONTAINS
 
     ! clean up
     CALL xt_idxlist_delete(idxsection)
-  END SUBROUTINE test_3d_section
+  END SUBROUTINE test_3d_section1
+
+  SUBROUTINE test_3d_section2
+    INTEGER(xt_int_kind), PARAMETER :: start = 0_xi
+    INTEGER, PARAMETER :: num_dimensions = 3
+    INTEGER(xt_int_kind), PARAMETER :: &
+         global_size(num_dimensions) = (/ 3_xi, 4_xi, 5_xi /), &
+         local_start(num_dimensions) = (/ 1_xi, 1_xi, 1_xi /), &
+         ref_indices(12) = (/ 26_xi, 27_xi, 28_xi, &
+         &                    31_xi, 32_xi, 33_xi, &
+         &                    46_xi, 47_xi, 48_xi, &
+         &                    51_xi, 52_xi, 53_xi /)
+    INTEGER, PARAMETER :: local_size(num_dimensions) = (/ 2, 2, 3 /)
+    TYPE(xt_stripe), PARAMETER :: ref_stripes(4) = (/ &
+         xt_stripe(26, 1, 3), xt_stripe(31, 1, 3), &
+         xt_stripe(46, 1, 3), xt_stripe(51, 1, 3) /)
+    TYPE(xt_idxlist) :: idxsection
+
+    ! create index section
+    idxsection = xt_idxsection_new(start, INT(num_dimensions, i4), &
+         global_size, local_size, local_start)
+
+    ! testing
+    CALL do_tests(idxsection, ref_indices, ref_stripes)
+
+    ! clean up
+    CALL xt_idxlist_delete(idxsection)
+  END SUBROUTINE test_3d_section2
 
   SUBROUTINE test_4d_section
     INTEGER(xt_int_kind), PARAMETER :: start = 0_xi
