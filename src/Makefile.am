@@ -122,7 +122,6 @@ libyaxt_c_la_SOURCES =						\
 	xt_mpi_ddt_wrap.h					\
 	xt_redist_internal.h					\
 	xt_redist.c						\
-	xt_redist_msg.c						\
 	xt_redist_collection.c					\
 	xt_redist_collection_static.c				\
 	xt_redist_p2p.c						\

@@ -88,25 +88,6 @@ struct Xt_redist_ {
   const struct xt_redist_vtable *vtable;
 };
 
-PPM_DSO_INTERNAL void
-xt_redist_msgs_strided_copy(size_t n,
-                            const struct Xt_redist_msg *restrict src,
-                            size_t src_stride,
-                            struct Xt_redist_msg *restrict dst,
-                            size_t dst_stride,
-                            MPI_Comm comm, bool dt_dup);
-
-PPM_DSO_INTERNAL void
-xt_redist_msgs_strided_destruct(size_t n, struct Xt_redist_msg *msgs,
-                                MPI_Comm comm, size_t ofs_stride);
-
-static inline void
-xt_redist_msgs_free(size_t n, struct Xt_redist_msg *msgs, MPI_Comm comm)
-{
-  xt_redist_msgs_strided_destruct(n, msgs, comm, sizeof (*msgs));
-  free(msgs);
-}
-
 /**
  * Checks whether a number of redists are based on the same communicator. This
  * is a requirement in case these redists are to be combined into a redist
