@@ -132,9 +132,8 @@ CONTAINS
 
     TYPE(bucket_gen_1d_tile_state), POINTER :: gen_state
     TYPE(bucket_gen_1d_tile_param), POINTER :: init_params
-    INTEGER :: ierror, start_rank, end_rank
+    INTEGER :: ierror
     INTEGER(c_int) :: convert_to_stripes
-    INTEGER :: num_indices_src, num_indices_dst, deco3, deco4
 
 #if defined __PGI && __PGIC__ >= 22 && __PGIC__ <= 24
     TYPE(xt_idxlist) :: src_idxlist_, dst_idxlist_

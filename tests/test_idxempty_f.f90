@@ -134,13 +134,12 @@ CONTAINS
   ! check that position and index queries return the expected
   ! (missing) values
   SUBROUTINE check_idxpos_queries
-    INTEGER, PARAMETER :: num_pos = 3, undef_pat = 57005
+    INTEGER, PARAMETER :: num_pos = 3, undef_pos = 48879
     INTEGER(xt_int_kind) :: idx(num_pos)
     INTEGER(xt_int_kind), PARAMETER :: undef_idx = -5, &
          undef_idx2 = 2989
     INTEGER :: position(num_pos), rc, i
     LOGICAL :: found
-    INTEGER, PARAMETER :: undef_pos = 48879
 
     idx(1) = undef_idx
     found = .NOT. xt_idxlist_get_index_at_position(idxempty, 0, idx(1))
