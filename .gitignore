@@ -90,6 +90,8 @@ Makefile
 *.lo
 *.mod
 *.o
+*.gcda
+*.gcno
 .dirstamp
 .libs
 /examples/idxlist_examples
