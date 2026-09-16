@@ -191,7 +191,7 @@ include:
       ${ci_CC+CC="${ci_CC}"}
       ${ci_FC+FC="${ci_FC}"}
       ${ci_FCFLAGS+FCFLAGS="${ci_FCFLAGS}"}
-      ${BUILD_FCFLAGS+BUILD_FCFLAGS="${ci_BUILD_FCFLAGS}"}
+      ${ci_BUILD_FCFLAGS+BUILD_FCFLAGS="${ci_BUILD_FCFLAGS}"}
       ${ci_CFLAGS+CFLAGS="${ci_CFLAGS}"}
       ${ci_BUILD_CFLAGS+BUILD_CFLAGS="${ci_BUILD_CFLAGS}"}
       --disable-silent-rules
@@ -241,36 +241,31 @@ include:
 gen_cov_data:
   stage: coverage
   dependencies: []
-  extends: .init_build_gcc_11_2_0
+  extends:
+    - .init_build_gcc_11_2_0
+    - .basic_build
+  before_script:
+    - !reference [.init_build_gcc_11_2_0, before_script]
+    - ci_FCFLAGS='-pipe -O0 -g -fopenmp -march=native'
+    - ci_CFLAGS='-pipe -O0 -g -fopenmp -march=native'
+    - ci_BUILD_CFLAGS='-fprofile-arcs -ftest-coverage -Wall'
+    - ci_BUILD_FCFLAGS='-fprofile-arcs -ftest-coverage -Wall'
+    - ci_configure_args=(BUILD_LDFLAGS='-fprofile-arcs -ftest-coverage -Wall')
+    - ci_configure_args+=(--disable-static)
+    - ci_configure_args+=(LDFLAGS='-g -fopenmp')
   script:
-    - export OMPI_MCA_btl_sm_use_knem=0
-    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
-    - scripts/reconfigure
-    - >
-      ./configure
-      --disable-static
-      CC=mpicc FC=mpifort
-      FCFLAGS="-pipe -O0 -g -fopenmp"
-      CFLAGS="-pipe -O0 -g -fopenmp"
-      LDFLAGS="-g -fopenmp"
-      BUILD_CFLAGS='-fprofile-arcs -ftest-coverage -Wall'
-      BUILD_FCFLAGS='-fprofile-arcs -ftest-coverage -Wall'
-      BUILD_LDFLAGS='-fprofile-arcs -ftest-coverage -Wall'
-      MPI_LAUNCH="$(command -v mpirun) --oversubscribe"
-    - make -j4 check
+    - !reference [.basic_build, script]
     - make -j4 XT_CONFIG_DEFAULT_MULTI_THREAD_MODE=XT_MT_OPENMP check
     - make -j4 XT_CONFIG_DEFAULT_EXCHANGE_METHOD=irecv_isend check
     - make -j8 XT_CONFIG_DEFAULT_EXCHANGE_METHOD=neigh_alltoall check
   artifacts:
     paths:
-      - ./*.gcno
-      - ./*/*.gcno
-      - ./*/*/*.gcno
-      - ./*/*/*/*.gcno
-      - ./*.gcda
-      - ./*/*.gcda
-      - ./*/*/*.gcda
-      - ./*/*/*/*.gcda
+      - make.err
+      - config.log.gz
+      - tests/test-suite.log
+      - ./**/*.gcno
+      - ./**/*.gcda
+    when: always
     expire_in: 5min
 
 run_test_gcc_11_2_0:
