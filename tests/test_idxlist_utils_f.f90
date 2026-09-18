@@ -47,7 +47,7 @@
 #include "fc_feature_defs.inc"
 MODULE test_idxlist_utils
   USE mpi
-  USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_c2f, xt_idxlist_f2c, &
+  USE yaxt, ONLY: xt_int_kind, xt_idxlist, xt_idxlist_f2c, &
        xt_stripe, xt_idxlist_get_pack_size, &
        xt_idxlist_pack, xt_idxlist_unpack
   USE ftest_common, ONLY: test_abort
