@@ -199,6 +199,7 @@ MODULE ftest_common
   LOGICAL, PARAMETER :: debug = .FALSE.
   LOGICAL :: verbose = .FALSE.
 
+!DEC$ ATTRIBUTES EXTERN :: err_count__
   INTEGER(c_int), PUBLIC, BIND(C, name='err_count__') :: err_count__
 
   PUBLIC :: init_mpi, finish_mpi
