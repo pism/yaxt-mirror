@@ -1361,8 +1361,10 @@ idxsection_get_positions_of_indices_recursive(Xt_int index_offset,
       // if the position is outside of the range of the current dimension
       Xt_int abs_local_position
         = (Xt_int)(curr_global_position - local_start);
-      if (abs_local_position >= abs_local_size)
+      if (abs_local_position >= abs_local_size) {
+        positions[num_processed++] = -1;
         break;
+      }
 
       int curr_local_position
         = dims[0].global_stride < 0

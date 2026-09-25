@@ -85,6 +85,7 @@ PROGRAM test_idxsection
   CALL test_get_positions2
   CALL test_get_positions3
   CALL test_get_positions4
+  CALL test_get_positions5
   CALL test_other_intersection
   CALL test_stripe_intersection
   CALL test_sec4d_stripe_intersection
@@ -443,6 +444,22 @@ CONTAINS
          local_size, local_start, num_selection, selection, &
          .TRUE., ref_positions)
   END SUBROUTINE test_get_positions4
+
+  SUBROUTINE test_get_positions5
+    INTEGER, PARAMETER :: n = 3, num_selection = 2
+    INTEGER(xt_int_kind), PARAMETER :: start=3_xi, &
+         global_size(n) = (/ -3_xi, 5_xi, -1_xi /), &
+         local_start(n) = (/ 0_xi, 1_xi, 0_xi /)
+    INTEGER, PARAMETER :: local_size(n) = (/ -3, -3, 1 /)
+    INTEGER(xt_int_kind), PARAMETER :: selection(num_selection) &
+         = (/ 12_xi, 264_xi /)
+    INTEGER, PARAMETER :: ref_positions(num_selection) &
+         = (/ 12*0 - 1, 264*0 - 1 /)
+
+    CALL test_get_positions_common(n, start, global_size, &
+         local_size, local_start, num_selection, selection, &
+         .TRUE., ref_positions)
+  END SUBROUTINE test_get_positions5
 
   SUBROUTINE test_other_intersection
     INTEGER, PARAMETER :: n = 2, num_sel_idx = 9

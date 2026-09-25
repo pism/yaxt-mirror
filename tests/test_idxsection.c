@@ -99,6 +99,8 @@ test_get_positions3(void);
 static void
 test_get_positions4(void);
 static void
+test_get_positions5(void);
+static void
 test_other_intersection(void);
 static void
 test_stripe_intersection(void);
@@ -145,6 +147,7 @@ int main(int argc, char **argv) {
   test_get_positions2();
   test_get_positions3();
   test_get_positions4();
+  test_get_positions5();
 
   test_other_intersection();
   test_stripe_intersection();
@@ -673,6 +676,31 @@ test_get_positions4(void)
 
   static const int ref_positions[]
     = {2*0+1, 1*0-1, 5*0-1, 7*0+2, 6*0+3, 7*0-1, 7*0-1, 6*0-1, 8*0-1};
+
+  test_get_positions_common(num_dimensions, start, global_size,
+                            local_size, local_start, 1, num_selection,
+                            selection, ref_positions);
+}
+
+static void
+test_get_positions5(void)
+{
+  // check get_positions_of_indices with single_match_only = 1
+  // for mesh with dimension enumerated in alternating fashion
+  // to create an unsorted case
+  // then lookup positions outside the valid ranges
+  Xt_int start = 3;
+  enum { num_dimensions = 3 };
+  static const Xt_int global_size[num_dimensions] = {-3,5,-1};
+  static const int local_size [num_dimensions] = {-3,-3,1};
+  static const Xt_int local_start[num_dimensions] = {0,1,0};
+
+  // we have indices = {...}
+  static const Xt_int selection[] = { 12, 264 };
+  enum { num_selection = sizeof(selection) / sizeof(*selection) };
+
+  static const int ref_positions[]
+    = {12*0-1, 264*0-1};
 
   test_get_positions_common(num_dimensions, start, global_size,
                             local_size, local_start, 1, num_selection,
