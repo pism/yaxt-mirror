@@ -51,8 +51,7 @@ MODULE perf_xmap_create_config
        xt_idxlist_is_stripe_conversion_profitable, &
        xt_idxsection_new, xt_idxstripes_new, xt_idxvec_new, &
        xt_is_null, xt_xmdd_bucket_gen_new, &
-       xt_config_set_xmdd_bucket_gen, xt_config_set_sort_algorithm_by_id, &
-       xt_config_set_mem_saving, xt_config_set_xmap_stripe_align, &
+       xt_config_set_xmdd_bucket_gen, &
        xt_xmdd_bucket_gen_define_interface, &
        xt_xmdd_bucket_gen_comms
   ! older PGI compilers do not handle generic interface correctly
