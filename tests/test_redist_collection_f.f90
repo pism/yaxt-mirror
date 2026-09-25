@@ -58,7 +58,7 @@
 #endif
 #ifdef WITH_COLL_OF_COLL_TEST
 MODULE test_coll_of_coll
-  USE, INTRINSIC :: iso_c_binding, ONLY: c_int, c_size_t, c_ptr, c_loc, &
+  USE, INTRINSIC :: iso_c_binding, ONLY: c_int, c_size_t, c_ptr, &
        c_funptr, c_funloc, c_char, c_null_char, c_null_ptr, c_f_pointer
   USE mpi
   USE yaxt, ONLY: xt_mpi_fint_kind, xt_config, xt_redist, xt_xmap, &
