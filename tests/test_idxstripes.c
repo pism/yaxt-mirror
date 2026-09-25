@@ -84,6 +84,8 @@ static void
 stripe_test_general5(void);
 static void
 stripe_test_general6(void);
+static void
+stripe_test_mapping1(void);
 
 static void
 stripe_test_intersection(int num_stripes_a, const struct Xt_stripe *stripes_a,
@@ -143,6 +145,8 @@ int main(int argc, char **argv) {
   stripe_test_general5();
 
   stripe_test_general6();
+
+  stripe_test_mapping1();
 
   { // intersection test
     enum {
@@ -1603,6 +1607,57 @@ stripe_test_general6(void)
     = {{.start = 179, .stride = -2, .nstrides = 0}};
   stripe_test_general(num_stripes, stripes, num_ref_indices, NULL);
 }
+
+static void
+stripe_test_mapping1(void)
+{
+  static const struct Xt_stripe s = {5,1,6}; /* 5..10 */
+  enum {
+    num_list_stripes = 3,
+    num_ref_pos = 8,
+  };
+  static const struct Xt_stripe q[num_list_stripes]
+    = {{16,-3,6},{6,1,7},{9,3,5}}; /* 16, 13, 10, 7, 4, 1,
+                                      6, 7, 8, 9, 10, 11, 12,
+                                      9, 12, 15, 18, 21 */
+  static const int ref_pos[num_ref_pos] = { 5, 2, 1, 2, 3, 4, 5, 4 };
+  Xt_idxlist idxstripes = xt_idxstripes_new(&s, 1);
+  struct Xt_pos_ext *pos_ext = NULL; int num_pos_ext;
+  int num_unmatched
+    = xt_idxlist_get_pos_exts_of_index_stripes(
+      idxstripes, 3, q, &num_pos_ext, &pos_ext, 0);
+  size_t num_pos = 0;
+  for (int i = 0; i < num_pos_ext; ++i)
+    num_pos += (size_t)(abs(pos_ext[i].size));
+  int num_query_pos = 0;
+  for (size_t i = 0; i < num_list_stripes; ++i)
+    num_query_pos += q[i].nstrides;
+  if ((int)num_pos + num_unmatched != num_query_pos)
+    PUT_ERR("incomplete result: num_pos=%d + num_unmatched=%d"
+            " != num_query_pos=%d\n",
+            num_pos, num_unmatched, num_query_pos);
+  int *expanded_pos = xmalloc(num_pos * sizeof (*expanded_pos));
+  size_t ofs = 0;
+  for (int i = 0; i < num_pos_ext; ++i) {
+    int pos = pos_ext[i].start,
+      pe_size = pos_ext[i].size,
+      step = pe_size >= 0 ? 1 : -1,
+      pe_abs_size = abs(pe_size);
+    for (int j = 0; j < pe_abs_size; ++j, pos += step)
+      expanded_pos[ofs+(size_t)j] = pos;
+    ofs += (size_t)pe_abs_size;
+  }
+  bool mismatch = num_pos != num_ref_pos;
+  if (!mismatch)
+    for (size_t i = 0; i < num_ref_pos; ++i)
+      mismatch |= (ref_pos[i] != expanded_pos[i]);
+  if (mismatch)
+    PUT_ERR("xt_idxlist_get_pos_exts_of_index_stripes mismatch\n");
+  free(pos_ext);
+  free(expanded_pos);
+  xt_idxlist_delete(idxstripes);
+}
+
 
 static void
 stripe_test_intersection(int num_stripes_a, const struct Xt_stripe *stripes_a,

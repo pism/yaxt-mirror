@@ -124,8 +124,9 @@ static inline bool
 xt_can_merge_pos_ext(struct Xt_pos_ext a, struct Xt_pos_ext b)
 {
   return (((b.start == a.start + a.size)
-           | ((abs(a.size) == 1) & (b.start == a.start - a.size)))
-          & ((abs(b.size) == 1) | (isign(a.size) == isign(b.size))));
+           & ((abs(b.size) == 1) | (isign(a.size) == isign(b.size))))
+          | ((abs(a.size) == 1) & (a.start == b.start - isign(b.size)))
+          | ((abs(a.size) == 1) & (abs(b.size) == 1) & (abs(a.start-b.start) == 1)));
 }
 
 PPM_DSO_INTERNAL const struct Xt_stripe *

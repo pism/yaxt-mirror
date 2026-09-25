@@ -83,6 +83,7 @@ PROGRAM test_idxstripes_f
   CALL stripe_test_general4
   CALL stripe_test_general5
   CALL stripe_test_general6
+  CALL stripe_test_mapping1
   CALL test_intersection0
   CALL test_intersection1
   CALL test_intersection2
@@ -230,7 +231,54 @@ CONTAINS
     CALL stripe_test_general(stripes, ref_indices(1:0))
   END SUBROUTINE stripe_test_general6
 
-  SUBROUTINE test_intersection(stripes_a, stripes_b, ref_indices_a, ref_indices_b)
+  SUBROUTINE stripe_test_mapping1
+    TYPE(xt_stripe), PARAMETER :: s(1) = (/ xt_stripe(5,1,6) /) ! 5..10
+    INTEGER, PARAMETER :: num_list_stripes = 3, num_ref_pos = 8
+    TYPE(xt_stripe), PARAMETER :: q(num_list_stripes) &
+         = (/ xt_stripe(16,-3,6), & ! 16, 13, 10, 7, 4, 1,
+              xt_stripe(6,1,7), & ! 6, 7, 8, 9, 10, 11, 12,
+              xt_stripe(9,3,5) /) ! 9, 12, 15, 18, 21
+    INTEGER, PARAMETER :: ref_pos(num_ref_pos) = (/ 5, 2, 1, 2, 3, 4, 5, 4 /)
+    TYPE(xt_idxlist) :: idxstripes
+    TYPE(xt_pos_ext), ALLOCATABLE :: pos_ext(:)
+    INTEGER, ALLOCATABLE :: expanded_pos(:)
+    INTEGER :: num_pos_ext, i, j, num_unmatched, num_query_pos, num_pos, &
+         ofs, pos, pe_size, step, pe_abs_size
+    LOGICAL :: mismatch
+    idxstripes = xt_idxstripes_new(s)
+    num_unmatched &
+         = xt_idxlist_get_pos_exts_of_index_stripes(&
+         idxstripes, q, pos_ext, .FALSE.)
+    num_pos = SUM(ABS(pos_ext(:)%size))
+    num_query_pos = SUM(q%nstrides)
+    IF (num_pos + num_unmatched /= num_query_pos) THEN
+      PUT_ERR("incomplete result!")
+    END IF
+    ALLOCATE(expanded_pos(num_pos))
+    num_pos_ext = SIZE(pos_ext)
+    ofs = 0
+    DO i = 1, num_pos_ext
+      pos = pos_ext(i)%start
+      pe_size = pos_ext(i)%size
+      step = MERGE(1, -1, pe_size >= 0)
+      pe_abs_size = ABS(pe_size)
+      DO j = 1, pe_abs_size
+        expanded_pos(ofs+j) = pos
+        pos = pos + step
+      END DO
+      ofs = ofs + pe_abs_size
+    END DO
+    mismatch = num_pos /= num_ref_pos
+    IF (.NOT. mismatch) mismatch = ANY(ref_pos /= expanded_pos)
+    IF (mismatch) THEN
+      PUT_ERR("xt_idxlist_get_pos_exts_of_index_stripes mismatch")
+    END IF
+    DEALLOCATE(pos_ext, expanded_pos)
+    CALL xt_idxlist_delete(idxstripes);
+  END SUBROUTINE stripe_test_mapping1
+
+  SUBROUTINE test_intersection(stripes_a, stripes_b, &
+       ref_indices_a, ref_indices_b)
     TYPE(xt_stripe), INTENT(in) :: stripes_a(:), stripes_b(:)
     INTEGER(xt_int_kind), INTENT(in) :: ref_indices_a(:)
     INTEGER(xt_int_kind), OPTIONAL, INTENT(in) :: ref_indices_b(:)
@@ -1214,7 +1262,7 @@ CONTAINS
     DO i = 1, num_stripes
       num_idx = MERGE(stripes(i)%nstrides, 0, stripes(i)%nstrides >= 0)
       DO j = 1, num_idx
-        indices(ofs+j) = stripes(i)%start + stripes(i)%stride * (j-1)
+        indices(ofs+j) = stripes(i)%start + stripes(i)%stride * INT(j-1, xi)
       END DO
       ofs = ofs + num_idx
     END DO
