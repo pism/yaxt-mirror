@@ -49,7 +49,7 @@
 MODULE xt_exchanger_abstract
   USE iso_c_binding, ONLY: c_int, c_ptr, c_null_ptr, &
        c_associated
-  USE xt_core, ONLY: xt_mpi_fint_kind, xt_pos_ext, i2, i4, i8
+  USE xt_core, ONLY: xt_mpi_fint_kind
   USE xt_mpi, ONLY: mpi_address_kind
   USE xt_config_f, ONLY: xt_config, xt_config_f2c
   USE xt_requests, ONLY: xt_request
