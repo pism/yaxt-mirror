@@ -573,7 +573,7 @@ test_get_positions_common(
   if (xt_idxlist_get_positions_of_indices(
         idxsection, selection,
         num_selection, positions, single_match_only) != count_missing_pos_ref)
-    PUT_ERR("xt_idxlist_get_position_of_indices returned incorrect"
+    PUT_ERR("xt_idxlist_get_positions_of_indices returned incorrect"
             " num_unmatched\n");
 
   bool mismatch = false;
