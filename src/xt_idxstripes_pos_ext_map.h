@@ -134,12 +134,12 @@ get_mapped_stripes(size_t num_ext,
     build_decr_overlap:;
       struct Xt_stripe overlapping_stripe = src_stripes[stripes_src_ofs];
       size_t remaining_nstrides
-        = start_pos - pos;
+        = start_pos - pos + 1;
       int intersection_size = MIN((int)remaining_nstrides, abs(size));
       Xt_int intersection_stride = (Xt_int)-overlapping_stripe.stride,
         intersection_stripe_start = (Xt_int)(
           overlapping_stripe.start +
-          (Xt_int)remaining_nstrides * (-intersection_stride));
+          (Xt_int)(remaining_nstrides-1) * (-intersection_stride));
       if ((intersection_stride == result_stripe.stride
            || intersection_size == 1)
           && intersection_stripe_start == result_stripe_next) {

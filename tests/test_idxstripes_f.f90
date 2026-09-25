@@ -99,6 +99,7 @@ PROGRAM test_idxstripes_f
   CALL test_intersection13
   CALL test_intersection14
   CALL test_intersection15
+  CALL test_intersection16
   CALL test_intersection_stripe2vec
   CALL test_idxlist_stripes_pos_ext1
   CALL test_idxlist_stripes_pos_ext2
@@ -402,6 +403,22 @@ CONTAINS
 
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection15
+
+  SUBROUTINE test_intersection16
+    ! test case where the intersection position mapping ends up with
+    ! a negative size extent
+    INTEGER, PARAMETER :: num_stripes_a = 2, &
+      num_stripes_b = 2, &
+      num_ref_indices = 2
+    TYPE(xt_stripe), PARAMETER :: &
+         stripes_a(num_stripes_a) = (/ xt_stripe(0, 1, 2), &
+         &                             xt_stripe(59, 1, 1) /), &
+         stripes_b(num_stripes_b) = (/ xt_stripe(43, -42, 2), &
+         &                             xt_stripe(0, 35, 2) /)
+    INTEGER(xt_int_kind) :: ref_indices(num_ref_indices) = (/ 0_xi, 1_xi /)
+
+    CALL test_intersection(stripes_a, stripes_b, ref_indices)
+  END SUBROUTINE test_intersection16
 
   SUBROUTINE test_intersection_stripe2vec
     INTEGER, PARAMETER :: num_stripes = 3

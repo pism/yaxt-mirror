@@ -438,6 +438,26 @@ int main(int argc, char **argv) {
                              num_ref_indices, ref_indices);
   }
 
+  {
+    /* test case where the intersection position mapping ends up with
+     * a negative size extent */
+    enum {
+      num_stripes_a = 2,
+      num_stripes_b = 2,
+      num_ref_indices = 2,
+    };
+    static const struct Xt_stripe stripes_a[num_stripes_a]
+      = {{.start = 0, .stride = 1, .nstrides = 2},
+         {.start = 59, .stride = 1, .nstrides = 1}},
+      stripes_b[num_stripes_b] = {{.start = 43, .stride = -42, .nstrides = 2},
+                                  {.start = 0, .stride = 35, .nstrides = 2 }};
+    static const Xt_int ref_indices[num_ref_indices] = {0, 1 };
+
+    stripe_test_intersection(num_stripes_a, stripes_a,
+                             num_stripes_b, stripes_b,
+                             num_ref_indices, ref_indices);
+  }
+
 #if 328669 <= XT_INT_MAX
   {
     /* test case where overlap equals start of one and end of other
