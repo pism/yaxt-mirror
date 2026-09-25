@@ -86,6 +86,7 @@ PROGRAM test_idxsection
   CALL test_get_positions3
   CALL test_get_positions4
   CALL test_get_positions5
+  CALL test_get_positions6
   CALL test_other_intersection
   CALL test_stripe_intersection
   CALL test_sec4d_stripe_intersection
@@ -460,6 +461,22 @@ CONTAINS
          local_size, local_start, num_selection, selection, &
          .TRUE., ref_positions)
   END SUBROUTINE test_get_positions5
+
+  SUBROUTINE test_get_positions6
+    INTEGER, PARAMETER :: n = 2, num_selection = 1
+    INTEGER(xt_int_kind), PARAMETER :: start=3_xi, &
+         global_size(n) = (/ 3_xi, -3_xi /), local_start(n) = 0_xi
+    INTEGER, PARAMETER :: local_size(n) = (/ -3, -2 /)
+    ! index 6 should not be found but due to an off-by-one-error once was
+    INTEGER(xt_int_kind), PARAMETER :: selection(num_selection) = (/ 6_xi /)
+    ! the above mesh represents indices: 10 11 7 8 4 5
+    INTEGER, PARAMETER :: ref_positions(num_selection) &
+         = (/ 1*0 - 1 /)
+
+    CALL test_get_positions_common(n, start, global_size, &
+         local_size, local_start, num_selection, selection, &
+         .TRUE., ref_positions)
+  END SUBROUTINE test_get_positions6
 
   SUBROUTINE test_other_intersection
     INTEGER, PARAMETER :: n = 2, num_sel_idx = 9

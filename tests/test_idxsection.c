@@ -101,6 +101,8 @@ test_get_positions4(void);
 static void
 test_get_positions5(void);
 static void
+test_get_positions6(void);
+static void
 test_other_intersection(void);
 static void
 test_stripe_intersection(void);
@@ -148,6 +150,7 @@ int main(int argc, char **argv) {
   test_get_positions3();
   test_get_positions4();
   test_get_positions5();
+  test_get_positions6();
 
   test_other_intersection();
   test_stripe_intersection();
@@ -704,6 +707,22 @@ test_get_positions5(void)
 
   test_get_positions_common(num_dimensions, start, global_size,
                             local_size, local_start, 1, num_selection,
+                            selection, ref_positions);
+}
+
+static void
+test_get_positions6(void)
+{
+  Xt_int start = 3;
+  enum { num_dimensions = 2 };
+  static const Xt_int global_size[2] = {3,-3};
+  static const Xt_int local_start[2] = {0,0};
+  static const int local_size[2] = {-3,-2};
+  /* the above mesh represents indices: 10 11 7 8 4 5 */
+  static const Xt_int selection[] = { 6 };
+  static const int ref_positions[] = { -1 };
+  test_get_positions_common(num_dimensions, start, global_size,
+                            local_size, local_start, 1, 1,
                             selection, ref_positions);
 }
 

@@ -1041,12 +1041,12 @@ idxsection_get_position_of_index(Xt_idxlist idxlist, Xt_int index,
       = (int)(curr_global_position - dims[i].local_start);
 
     int abs_local_size = abs(dims[i].local_size);
+    if (curr_local_position >= abs_local_size)
+      goto fun_exit;
     // same adjustment for local position as for the global one before
     if (dims[i].local_size < 0)
       curr_local_position = abs_local_size - curr_local_position - 1;
 
-    if (curr_local_position >= abs_local_size)
-      goto fun_exit;
 
     temp_position += (int)curr_local_position * dims[i].local_stride;
   }
