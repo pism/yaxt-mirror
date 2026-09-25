@@ -63,13 +63,13 @@ MODULE test_xmap_common
        xt_xmap_get_num_destinations, xt_xmap_get_num_sources, &
        xt_xmap_get_destination_ranks, xt_xmap_get_source_ranks, &
        xt_mpi_comm_mark_exclusive, xt_config
-#if defined XT_HAVE_FC_HLF_STRUCT_RETURN
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
   USE test_xmap_bucket_tiler, ONLY: tile_bucket_config_new, &
        tile_bucket_config_set_global_dims
   USE yaxt, ONLY: xt_config_get_xmdd_bucket_gen, xt_is_null, &
        xt_xmdd_bucket_gen
 #endif
-#ifdef HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
   USE yaxt, ONLY: xt_config_delete, xt_xmap_dist_dir_custom_new
 #endif
   IMPLICIT NONE
@@ -82,7 +82,7 @@ MODULE test_xmap_common
     MODULE PROCEDURE test_self_xmap_construct_stripes
   END INTERFACE test_self_xmap_construct
   CHARACTER(len=*), PARAMETER :: filename = 'test_xmap_common_f.f90'
-#if defined HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
   PROCEDURE(xt_xmap_dist_dir_custom_new), POINTER :: xmap_custom_new_ptr
   TYPE(xt_config) :: custom_bucket_config
   TYPE(xt_xmdd_bucket_gen) :: tile_bucket_gen
@@ -128,7 +128,7 @@ CONTAINS
          CALL test_abort("MPI error!", filename, __LINE__)
     CALL xt_mpi_comm_mark_exclusive(comms(2))
 
-#if defined HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
     xmap_custom_new_ptr => xmap_custom_new
     IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
       custom_bucket_config = tile_bucket_config_new(&
@@ -149,7 +149,7 @@ CONTAINS
       DO j = 1, 2
         CALL test_xmap1a(xmap_new, lsize(j), comms(i))
         CALL test_xmap1b(xmap_new, lsize(j), comms(i))
-#if defined HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
         IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
           CALL tile_bucket_config_set_global_dims(custom_bucket_config, &
                (/ lsize(j)+1_xi /))
@@ -158,7 +158,7 @@ CONTAINS
         END IF
 #endif
       END DO
-#if defined HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
         IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
           CALL tile_bucket_config_set_global_dims(custom_bucket_config, &
                (/ 100_xi * INT(world_size, xi) /))
@@ -168,7 +168,7 @@ CONTAINS
       CALL test_xmap2(xmap_new, comms(i))
     END DO
 
-#if defined HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
     IF (ASSOCIATED(xmap_custom_new_ptr, xt_xmap_dist_dir_custom_new)) THEN
       CALL xt_config_delete(custom_bucket_config)
     END IF
@@ -183,7 +183,7 @@ CONTAINS
     CALL finish_mpi
   END SUBROUTINE xmap_self_test_main
 
-#if defined HAVE_FC_ABSTRACT_INTERFACE
+#if defined XT_HAVE_FC_HLF_STRUCT_RETURN && defined HAVE_FC_ABSTRACT_INTERFACE
   FUNCTION new_custom_bucket_xmap_wrapper(src_idxlist, dst_idxlist, comm) RESULT(res)
     TYPE(xt_idxlist), INTENT(in) :: src_idxlist
     TYPE(xt_idxlist), INTENT(in) :: dst_idxlist
