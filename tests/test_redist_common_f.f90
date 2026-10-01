@@ -48,6 +48,7 @@
 #include "fc_feature_defs.inc"
 MODULE test_redist_common
   USE xt_core, ONLY: i2, i4, i8
+  USE xt_redist_real_sp, ONLY: sp
   USE, INTRINSIC :: iso_c_binding, ONLY: c_ptr, c_loc
 #include "xt_slice_c_loc.inc"
   USE mpi
@@ -66,6 +67,7 @@ MODULE test_redist_common
   ! in 12.7 and older (see test_xmap_intersection_parallel_f.f90 for that)
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange
+  USE xt_redist_complex_sp, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i4, ONLY: xt_redist_s_exchange
   USE xt_redist_int_i8, ONLY: xt_redist_s_exchange
@@ -88,6 +90,7 @@ MODULE test_redist_common
     MODULE PROCEDURE check_redist_dp_i8
     MODULE PROCEDURE check_redist_dp_2d
     MODULE PROCEDURE check_redist_sp_2d
+    MODULE PROCEDURE check_redist_cmplx_sp
     MODULE PROCEDURE check_redist_xi
     MODULE PROCEDURE check_redist_i2
     MODULE PROCEDURE check_redist_i4
@@ -102,6 +105,7 @@ MODULE test_redist_common
     MODULE PROCEDURE wrap_a_exchange_dp
     MODULE PROCEDURE wrap_a_exchange_dp2d
     MODULE PROCEDURE wrap_a_exchange_sp2d
+    MODULE PROCEDURE wrap_a_exchange_cmplx
     MODULE PROCEDURE wrap_a_exchange_i2
     MODULE PROCEDURE wrap_a_exchange_i4
     MODULE PROCEDURE wrap_a_exchange_i8
@@ -254,6 +258,19 @@ CONTAINS
     CALL check_test_request(request, filename, __LINE__)
   END SUBROUTINE wrap_a_exchange_sp_as
 
+  SUBROUTINE wrap_a_exchange_cmplx_as(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    COMPLEX, TARGET, INTENT(in) :: src(*)
+    COMPLEX, TARGET, INTENT(inout) :: dst(*)
+    TYPE(xt_request) :: request
+
+    REQ_DEFAULT_INIT_FIXUP(request)
+    CALL assert_request_is_null(request, filename, __LINE__)
+    CALL xt_redist_a_exchange1(redist, C_LOC(src), C_LOC(dst), request)
+    CALL check_wait_request(request, filename, __LINE__)
+    CALL check_test_request(request, filename, __LINE__)
+  END SUBROUTINE wrap_a_exchange_cmplx_as
+
   SUBROUTINE wrap_a_exchange_dp2d(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, TARGET, INTENT(in) :: src(:,:)
@@ -291,6 +308,25 @@ CONTAINS
     END IF
     CALL wrap_a_exchange_sp_as(redist, src_p, dst_p)
   END SUBROUTINE wrap_a_exchange_sp2d
+
+  SUBROUTINE wrap_a_exchange_cmplx(redist, src, dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    COMPLEX, TARGET, INTENT(in) :: src(:)
+    COMPLEX, TARGET, INTENT(inout) :: dst(:)
+    COMPLEX, TARGET :: dummy(1)
+    COMPLEX, POINTER :: src_p(:), dst_p(:)
+    IF (SIZE(src) > 0) THEN
+      src_p => src
+    ELSE
+      src_p => dummy
+    END IF
+    IF (SIZE(dst) > 0) THEN
+      dst_p => dst
+    ELSE
+      dst_p => dummy
+    END IF
+    CALL wrap_a_exchange_cmplx_as(redist, src_p, dst_p)
+  END SUBROUTINE wrap_a_exchange_cmplx
 
   SUBROUTINE wrap_a_exchange_i2(redist, src, dst)
     TYPE(xt_redist), INTENT(in) :: redist
@@ -399,7 +435,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -412,6 +448,29 @@ CONTAINS
     ENDDO
   END SUBROUTINE check_redist_dp
 
+  SUBROUTINE check_redist_cmplx_sp(redist, src, dst, ref_dst)
+    TYPE(xt_redist), INTENT(in) :: redist
+    COMPLEX(sp), TARGET, INTENT(in) :: src(:)
+    COMPLEX(sp), INTENT(in) :: ref_dst(:)
+    COMPLEX(sp), TARGET, INTENT(inout) :: dst(:)
+    INTEGER :: dst_size, ref_dst_size, iexch
+
+    dst_size = SIZE(dst)
+    ref_dst_size = SIZE(ref_dst)
+    IF (dst_size /= ref_dst_size) &
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
+    DO iexch = 1, 2
+      dst = CMPLX(-1.0, -1.0)
+      IF (iexch == 1) THEN
+        CALL xt_redist_s_exchange(redist, src, dst)
+      ELSE
+        CALL wrap_a_exchange(redist, src, dst)
+      ENDIF
+      IF (cmp_arrays(dst, ref_dst)) &
+           CALL test_abort(check_redist_err_msg(iexch), filename, __LINE__)
+    ENDDO
+  END SUBROUTINE check_redist_cmplx_sp
+
   SUBROUTINE check_redist_dp_i2(redist, src, dst, ref_dst)
     TYPE(xt_redist), INTENT(in) :: redist
     DOUBLE PRECISION, INTENT(in) :: src(:)
@@ -422,7 +481,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -445,7 +504,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -468,7 +527,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -490,7 +549,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0d0
       IF (iexch == 1) THEN
@@ -513,7 +572,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1.0
       IF (iexch == 1) THEN
@@ -545,7 +604,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1_i2
       IF (iexch == 1) THEN
@@ -567,7 +626,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1_i4
       IF (iexch == 1) THEN
@@ -589,7 +648,7 @@ CONTAINS
     dst_size = SIZE(dst)
     ref_dst_size = SIZE(ref_dst)
     IF (dst_size /= ref_dst_size) &
-         CALL test_abort("error: ref_dst larger than dst", filename, __LINE__)
+      CALL test_abort("error: ref_dst does not match dst", filename, __LINE__)
     DO iexch = 1, 2
       dst = -1_i8
       IF (iexch == 1) THEN
