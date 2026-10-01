@@ -163,7 +163,8 @@ MODULE yaxt
        xt_redist_p2p_off_new, xt_redist_p2p_off_custom_new, &
        xt_redist_p2p_blocks_new, xt_redist_p2p_blocks_custom_new, &
        xt_redist_p2p_blocks_off_new, xt_redist_p2p_blocks_off_custom_new, &
-       xt_redist_collection_static_new, xt_redist_collection_new, &
+       xt_redist_collection_static_custom_new, xt_redist_collection_new, &
+       xt_redist_collection_static_new, xt_redist_collection_custom_new, &
        xt_redist_repeat_new, xt_is_null, xt_redist_get_mpi_comm, &
        xt_offset_ext, xt_redist_p2p_ext_new, xt_redist_msg, &
        xt_aoffset_ext, xt_redist_p2p_aext_new, &
@@ -238,9 +239,9 @@ MODULE yaxt
        xt_redist_get_mpi_comm, &
        xt_redist_get_recv_mpi_datatype, xt_redist_get_send_mpi_datatype, &
        xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg, &
-       xt_idxempty_new, xt_redist_collection_static_new, &
-       xt_redist_collection_new, xt_slice_c_loc, &
-       xt_is_null, &
+       xt_redist_collection_static_custom_new, xt_redist_collection_new, &
+       xt_redist_collection_static_new, xt_redist_collection_custom_new, &
+       xt_idxempty_new, xt_slice_c_loc, xt_is_null, &
        OPERATOR(==), OPERATOR(/=), char, &
        xt_request, xt_request_null, &
        xt_request_wait, xt_request_test, xt_redist_a_exchange1, &
