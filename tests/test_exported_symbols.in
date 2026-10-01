@@ -62,7 +62,8 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
     xt_request_f_f90 xt_redist_int_i2_f90 \
     xt_redist_int_i4_f90 xt_redist_int_i8_f90 \
     xt_redist_logical_f90 xt_redist_real_dp_f90 \
-    xt_redist_real_sp_f90 \
+    xt_redist_real_sp_f90 xt_redist_complex_dp_f90 \
+    xt_redist_complex_sp_f90 \
     xt_ddt_c
   do
     case $modname in

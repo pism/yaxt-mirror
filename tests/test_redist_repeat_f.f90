@@ -58,8 +58,14 @@ PROGRAM test_redist_repeat
        xt_redist_s_exchange, xt_redist_a_exchange, &
        xt_request, xt_config, xt_config_delete, &
        xt_config_set_ddt_cache_limit
-#if defined __PGI && ( __PGIC__ == 15 || __PGIC__ == 14 )
-  USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+#if defined __PGI && ( __PGIC__ <= 15 )
+  ! USE xt_redist_complex_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  ! USE xt_redist_complex_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  ! USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  ! USE xt_redist_int_i4, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  ! USE xt_redist_int_i8, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  ! USE xt_redist_logical, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  ! USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &

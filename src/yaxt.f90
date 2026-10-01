@@ -2,7 +2,7 @@
 !! @file yaxt.f90
 !! @brief Fortran interface to yaxt implementation
 !!
-!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2026 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!
@@ -180,6 +180,8 @@ MODULE yaxt
   USE xt_redist_logical, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_redist_real_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_complex_sp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
+  USE xt_redist_complex_dp, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
   USE xt_requests, ONLY: xt_request, xt_request_wait, xt_request_test, &
        xt_is_null, xt_request_null
   USE xt_mpi, ONLY: xt_mpi_comm_mark_exclusive, xt_mpi_fint_kind

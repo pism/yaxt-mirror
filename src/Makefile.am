@@ -240,6 +240,8 @@ libyaxt_la_SOURCES =						\
 	xt_redist_int_i2.f90					\
 	xt_redist_int_i4.f90					\
 	xt_redist_int_i8.f90					\
+	xt_redist_complex_sp.f90				\
+	xt_redist_complex_dp.f90				\
 	xt_redist_real_sp.f90					\
 	xt_redist_real_dp.f90					\
 	xt_redist_logical.f90					\
@@ -271,6 +273,8 @@ EXTRA_DIST = m4-templates/xt_redist_template_module.f90.m4	\
 	m4-templates/int-prologue-i2.m4				\
 	m4-templates/int-prologue-i4.m4				\
 	m4-templates/int-prologue-i8.m4				\
+	m4-templates/complex-prologue-sp.m4			\
+	m4-templates/complex-prologue-dp.m4			\
 	m4-templates/real-prologue-dp.m4			\
 	m4-templates/real-prologue-sp.m4
 
@@ -279,6 +283,8 @@ update_orig=true
 xt_redist_generic_ext_src = xt_redist_real_sp.f90 \
 	xt_redist_real_dp.f90 \
 	xt_redist_logical.f90 \
+	xt_redist_complex_sp.f90 \
+	xt_redist_complex_dp.f90 \
 	xt_redist_int_i2.f90 \
 	xt_redist_int_i4.f90 \
 	xt_redist_int_i8.f90
@@ -323,6 +329,14 @@ $(xt_redist_generic_ext_stamps): \
 		cp "$${tgt_f90}.tmp" "$${tgt_f90}" ; fi \
 	&& touch "$@"
 	-rm -f "$${tgt_f90}.tmp"
+
+xt_redist_real_sp.f90.stamp: m4-templates/real-prologue-sp.m4
+xt_redist_real_dp.f90.stamp: m4-templates/real-prologue-dp.m4
+xt_redist_complex_sp.f90.stamp: m4-templates/complex-prologue-sp.m4
+xt_redist_complex_dp.f90.stamp: m4-templates/complex-prologue-dp.m4
+xt_redist_int_i2.f90.stamp: m4-templates/int-prologue-i2.m4
+xt_redist_int_i4.f90.stamp: m4-templates/int-prologue-i4.m4
+xt_redist_int_i8.f90.stamp: m4-templates/int-prologue-i8.m4
 
 xtinclude_Makefile.inc: Makefile
 	$(AM_V_GEN)$(PERL) -e 'my @argv = (grep(m{^xt/.*\.h$$}, @ARGV)); my @lens = map length, @argv; my $$maxlen = (sort { $$a <=> $$b } @lens)[-1]; print "xtinclude_HEADERS =", "\t" x (($$maxlen+7)/8-1), "\\\n"; foreach (@argv[0..@argv-2]) { print "\t$$_", "\t" x (($$maxlen+7)/8 - length($$_)/8 + (length($$_)%8 != 0)), "\\\n", "\t$${_}pp", "\t" x (($$maxlen+7)/8 - (length($$_) + 2)/8 + ((length($$_) + 2)%8 != 0)), "\\\n"; } print "\t$$argv[-1]pp", "\t" x (($$maxlen+7)/8 - (length($$argv[-1]) + 2)/8 + ((length($$argv[-1]) + 2)%8 != 0)), "\\\n", "\t$$argv[-1]\n"; print("\n", map { ("$$_: $${_}.stamp\n$${_}.stamp: \$$(libyaxt_c_srcdir)/$$_\n", "$${_}pp: $${_}pp.stamp\n$${_}pp.stamp: \$$(libyaxt_c_srcdir)/$$_\n") } @argv);' $(libyaxt_c_la_SOURCES) >$@.tmp && { cmp "$@.tmp" "$@" >/dev/null 2>&1 && rm -f "$@.tmp" || mv "$@.tmp" "$@" ; }

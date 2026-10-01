@@ -4,7 +4,7 @@ include({f03-redist-gen.m4})dnl
 !! @file fname
 !! @brief convenience wrappers of xt_redist exchanges for Fortran data
 !!
-!! @copyright Copyright  (C)  2016 Jörg Behrens <behrens@dkrz.de>
+!! @copyright Copyright  (C)  2026 Jörg Behrens <behrens@dkrz.de>
 !!                                 Moritz Hanke <hanke@dkrz.de>
 !!                                 Thomas Jahns <jahns@dkrz.de>
 !!
