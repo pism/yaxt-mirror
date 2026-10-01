@@ -1270,7 +1270,8 @@ CONTAINS
 #ifdef HAVE_FC_MIL_STD_1753_INIT
     INTEGER(i8), PARAMETER :: scale_val &
          = IAND(HUGE(a), NOT(ISHFT(1_i8, BIT_SIZE(1_i8) &
-         &                               - DIGITS(0.0_c_double))  - 1_i8 ) )
+         &                               - INT(DIGITS(0.0_c_double), i8)) &
+         &                   - 1_i8 ) )
     REAL(c_double) :: sc
     sc = REAL(scale_val, c_double)
 #else
