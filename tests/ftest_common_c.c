@@ -117,6 +117,16 @@ FCALLSCFUN3(INT, Cmp_sp_arrays, CMP_SP_ARRAYS, cmp_sp_arrays,
             INT, FLOATV, FLOATV)
 
 static bool
+Cmp_cmplx_sp_arrays(int asize, const float _Complex *a, const float _Complex *b)
+{
+  assert(asize >= 0);
+  return memcmp(a, b, (size_t)asize * sizeof(*a)) != 0;
+}
+
+FCALLSCFUN3(INT, Cmp_cmplx_sp_arrays, CMP_CMPLX_SP_ARRAYS, cmp_cmplx_sp_arrays,
+            INT, PVOID, PVOID)
+
+static bool
 Cmp_int16_arrays(int asize, const int16_t *a, const int16_t *b)
 {
   assert(asize >= 0);

@@ -48,6 +48,7 @@ MODULE ftest_common
 #include "xt_slice_c_loc.inc"
   USE mpi
   USE xt_core, ONLY: i2, i4, i8
+  USE xt_redist_real_sp, ONLY: sp
   USE iso_c_binding, ONLY: c_int, c_double, c_float, &
        c_int16_t, c_int32_t, c_int64_t, c_size_t, c_loc, c_ptr
   IMPLICIT NONE
@@ -111,6 +112,14 @@ MODULE ftest_common
     END FUNCTION cmp_sp_arrays
 #define cmp_sp_arrays(asize,a,b) (Cmp_sp_arrays(asize,a,b) /= 0)
 
+    PURE FUNCTION cmp_cmplx_sp_arrays(asize, a, b)
+      IMPORT :: sp
+      INTEGER :: cmp_cmplx_sp_arrays
+      INTEGER, INTENT(in) :: asize
+      COMPLEX(sp), INTENT(in) :: a(asize), b(asize)
+    END FUNCTION cmp_cmplx_sp_arrays
+#define cmp_cmplx_sp_arrays(asize,a,b) (Cmp_cmplx_sp_arrays(asize,a,b) /= 0)
+
     PURE FUNCTION cmp_int16_arrays(asize, a, b)
       IMPORT :: c_int16_t
       INTEGER :: cmp_int16_arrays
@@ -152,6 +161,7 @@ MODULE ftest_common
     MODULE PROCEDURE cmp_i4_arrays_a3d_a3d
     MODULE PROCEDURE cmp_i4_i8_arrays_a3d_a3d
     MODULE PROCEDURE cmp_i8_arrays_a3d_a3d
+    MODULE PROCEDURE cmp_cmplx_sp_arrays_a1d_a1d
   END INTERFACE cmp_arrays
 
   INTERFACE id_map
@@ -688,6 +698,24 @@ CONTAINS
       differ = .FALSE.
     END IF
   END FUNCTION cmp_dbl_arrays_a1d_a1d
+
+  PURE FUNCTION cmp_cmplx_sp_arrays_a1d_a1d(a, b) RESULT(differ)
+    COMPLEX(sp), INTENT(in) :: a(:), b(:)
+    LOGICAL :: differ
+    INTEGER :: asize, bsize
+    INTEGER(c_int) :: asize_c
+
+    asize = SIZE(a)
+    bsize = SIZE(b)
+    IF (asize /= bsize) THEN
+      differ = 0 /= pure_print('warning: comparing arrays of different size')
+    ELSE IF (asize > 0) THEN
+      asize_c = INT(asize, c_int)
+      differ = cmp_cmplx_sp_arrays(asize_c, a, b)
+    ELSE
+      differ = .FALSE.
+    END IF
+  END FUNCTION cmp_cmplx_sp_arrays_a1d_a1d
 
   PURE FUNCTION cmp_dbl_arrays_a2d_a2d(a, b) RESULT(differ)
     DOUBLE PRECISION, INTENT(in) :: a(:,:), b(:,:)
