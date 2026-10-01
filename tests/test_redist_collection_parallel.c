@@ -73,6 +73,9 @@ test_4redist(MPI_Comm comm, Xt_config config);
 static void
 test_rr_redist(MPI_Comm comm, Xt_config config);
 
+static void
+test_het_rank_combination(MPI_Comm comm, Xt_config config);
+
 int main(int argc, char **argv) {
 
   test_init_mpi(&argc, &argv, MPI_COMM_WORLD);
@@ -86,6 +89,8 @@ int main(int argc, char **argv) {
     test_4redist(MPI_COMM_WORLD, config);
 
     test_rr_redist(MPI_COMM_WORLD, config);
+
+    test_het_rank_combination(MPI_COMM_WORLD, config);
   }
 
   xt_config_delete(config);
@@ -298,14 +303,14 @@ check_4redist_result(int comm_size, void *results[4],
     PUT_ERR("error on xt_redist_s_exchange\n");
 }
 
-enum { elems_per_rank = 5, };
-
 static void
 test_rr_redist(MPI_Comm comm, Xt_config config)
 {
   int comm_rank, comm_size;
   xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
   xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  enum { elems_per_rank = 5, };
 
   // redist test with two redists that do a round robin exchange in
   // different directions
@@ -356,6 +361,87 @@ test_rr_redist(MPI_Comm comm, Xt_config config)
   xt_redist_delete(redist);
   check_redist_coll(redist_copy, sync_mode_test_all,
                     2, input, num_dst_elems,
+                    results, prep, NULL,
+                    ref_dst_data, dt, dt);
+
+  // clean up
+  xt_redist_delete(redist_copy);
+}
+
+
+
+/**
+ *  test aggregation of redist collections that are themselves
+ *  composed of redists which address different ranks.
+ */
+static void
+test_het_rank_combination(MPI_Comm comm, Xt_config config)
+{
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  // redist test with two redists that do a round robin exchange in
+  // different directions
+  enum { elems_per_rank = 2, num_p2p_redists = 2,
+         num_coll_redists = 1,
+         num_redist_components = num_p2p_redists * num_coll_redists };
+
+  Xt_int src_indices_[elems_per_rank], dst_indices_[2][1];
+
+  for (Xt_int i = 0; i < elems_per_rank; ++i)
+    src_indices_[i] = (Xt_int)(comm_rank * elems_per_rank + i);
+  dst_indices_[0][0] = src_indices_[1];
+  Xt_int temp = (Xt_int)(comm_rank * elems_per_rank - elems_per_rank);
+  dst_indices_[1][0]
+    = (Xt_int)((temp < 0)?(comm_size * elems_per_rank - elems_per_rank):temp);
+
+  Xt_idxlist src_indices = xt_idxvec_new(src_indices_, elems_per_rank);
+  Xt_redist redists[num_p2p_redists];
+  for (size_t i = 0; i < num_p2p_redists; ++i) {
+    Xt_idxlist dst_indices = xt_idxvec_new(dst_indices_[i], 1);
+    Xt_xmap xmap = xt_xmap_all2all_new(src_indices, dst_indices, comm);
+    xt_idxlist_delete(dst_indices);
+    redists[i] = xt_redist_p2p_new(xmap, MPI_LONG);
+    xt_xmap_delete(xmap);
+  }
+  xt_idxlist_delete(src_indices);
+  Xt_redist redist = xt_redist_collection_custom_new(
+    redists, num_p2p_redists, -1, comm, config);
+  Xt_redist redist_coll_of_coll = xt_redist_collection_custom_new(
+    &redist, 1, -1, comm, config);
+
+  // test communicator of redist
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist), comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+  for (size_t i = 0; i < num_p2p_redists; ++i)
+    xt_redist_delete(redists[i]);
+  xt_redist_delete(redist);
+
+  long src_data[elems_per_rank];
+  for (size_t i = 0; i < elems_per_rank; ++i)
+    src_data[i] = (long)comm_rank * elems_per_rank + (long)i;
+  long results_[num_redist_components][1];
+  void *results[num_redist_components] = { results_[0], results_[1] };
+  const void *input[num_redist_components] = { src_data, src_data };
+  static const size_t num_dst_elems[] = { 1, 1 };
+  static const prepare_dst prep[num_redist_components]
+    = { fill_array_long, fill_array_long };
+  long ref_dst_data_[num_redist_components]
+    = { (long)dst_indices_[0][0], (long)dst_indices_[1][0] };
+  const void *ref_dst_data[num_redist_components
+    ] = { ref_dst_data_, ref_dst_data_+1 };
+  MPI_Datatype dt[num_redist_components] = { MPI_LONG, MPI_LONG };
+  check_redist_coll(redist_coll_of_coll, sync_mode_test_all,
+                    num_redist_components, input, num_dst_elems, results,
+                    prep, NULL,
+                    ref_dst_data, dt, dt);
+
+  Xt_redist redist_copy = xt_redist_copy(redist_coll_of_coll);
+  xt_redist_delete(redist_coll_of_coll);
+  check_redist_coll(redist_copy, sync_mode_test_all,
+                    num_redist_components, input, num_dst_elems,
                     results, prep, NULL,
                     ref_dst_data, dt, dt);
 

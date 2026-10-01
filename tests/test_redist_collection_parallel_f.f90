@@ -46,6 +46,178 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 #include "fc_feature_defs.inc"
+#ifdef VERBOSE
+#define PUT_ERR(msg) WRITE (0, '(a)') msg ; err_count__ = err_count__ + 1
+#else
+#define PUT_ERR(msg) err_count__ = err_count__ + 1
+#endif
+#define XT_UNUSED(x) IF (SIZE( (/(x)/) ) < 0) CONTINUE
+#if ! defined __PGI || ( __PGIC__ >= 11 )
+#  define WITH_COLL_OF_COLL_TEST
+#endif
+#ifdef WITH_COLL_OF_COLL_TEST
+MODULE test_coll_of_coll_par
+  USE, INTRINSIC :: iso_c_binding, ONLY: c_int, c_size_t, c_ptr, &
+       c_funptr, c_funloc, c_char, c_null_char, c_null_ptr, c_f_pointer
+  USE mpi
+  USE yaxt, ONLY: xt_mpi_fint_kind, xt_config, xt_redist, xt_xmap, &
+       xt_idxlist, xt_idxvec_new, xt_idxlist_delete, xt_int_kind, &
+       xt_xmap_dist_dir_new, &
+       xt_redist_p2p_new, xt_xmap_delete, xt_redist_collection_custom_new, &
+       xt_redist_copy, xt_redist_delete, xt_redist_get_MPI_Comm
+  USE ftest_common, ONLY: err_count__
+  USE test_redist_common, ONLY: &
+       sync_mode_test_all, communicators_are_congruent
+#include "xt_slice_c_loc.inc"
+  IMPLICIT NONE
+  PRIVATE
+  INTEGER, PARAMETER :: nvalues = 5, nselect = (nvalues+1)/2
+  PUBLIC :: test_het_rank_combination
+
+  INTERFACE
+    SUBROUTINE check_redist_(redist, sync_mode, num_redists, &
+         src, dst_num_elems, dst, dst_prep, dst_prep_info, &
+         ref_dst_data, dst_data_dt, ref_dst_data_dt, &
+         file, line) BIND(c, name='check_redist_f2c')
+      IMPORT :: c_ptr, c_int, c_size_t, c_funptr, &
+           xt_mpi_fint_kind, c_char, xt_redist
+      TYPE(xt_redist), INTENT(inout) :: redist
+      INTEGER(c_int), VALUE :: sync_mode, num_redists
+      TYPE(c_ptr), INTENT(in) :: src(num_redists)
+      INTEGER(c_size_t), INTENT(in) :: dst_num_elems(num_redists)
+      TYPE(c_ptr), INTENT(in) :: dst(num_redists)
+      TYPE(c_funptr), INTENT(in) :: dst_prep(num_redists)
+      TYPE(c_ptr), VALUE, INTENT(in) :: dst_prep_info
+      TYPE(c_ptr), INTENT(in) ::  ref_dst_data(num_redists)
+      INTEGER(xt_mpi_fint_kind), INTENT(in) :: dst_data_dt(num_redists), &
+           ref_dst_data_dt(num_redists)
+      CHARACTER(kind=c_char) :: file(*)
+      INTEGER(c_int), VALUE :: line
+    END SUBROUTINE check_redist_
+  END INTERFACE
+
+
+  CHARACTER(len=*), PARAMETER :: &
+       filename = 'test_redist_collection_parallel_f.f90'
+CONTAINS
+  SUBROUTINE fill_array_dcmplx(dst, dst_prep_info, dst_num_elems) &
+    BIND(c, name='trc_fill_array_real')
+    INTEGER(c_size_t), VALUE :: dst_num_elems
+    TYPE(c_ptr), VALUE :: dst, dst_prep_info
+    DOUBLE COMPLEX, POINTER :: dst_(:)
+
+    INTEGER :: i, n
+
+    XT_UNUSED(dst_prep_info)
+    n = INT(dst_num_elems)
+    CALL C_F_POINTER(dst, dst_, (/ n /))
+    DO i = 1, n
+      dst_(i) = (-1.0d0, -1.0d0)
+    END DO
+  END SUBROUTINE fill_array_dcmplx
+
+  !
+  !  test aggregation of redist collections that are themselves
+  !  composed of redists which address different ranks.
+  !
+  SUBROUTINE test_het_rank_combination(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER, PARAMETER :: elems_per_rank = 2, num_p2p_redists = 2, &
+         num_coll_redists = 1
+    INTEGER, PARAMETER :: &
+         num_redist_components = num_p2p_redists * num_coll_redists
+    TYPE(xt_idxlist) :: src_indices, dst_indices
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redists(num_p2p_redists), redist, redist_coll_of_coll, &
+         redist_copy
+    DOUBLE COMPLEX, TARGET :: src_data(elems_per_rank), &
+         results_(1, num_redist_components), &
+         ref_dst_data_(num_redist_components)
+    TYPE(c_ptr) :: results(num_redist_components), &
+         input(num_redist_components), &
+         ref_dst_data(num_redist_components)
+    TYPE(c_funptr) :: prep(num_p2p_redists, num_coll_redists)
+    INTEGER(xt_int_kind) :: src_indices_(elems_per_rank), dst_indices_(1,2), &
+         temp
+    INTEGER :: dt(num_redist_components)
+    INTEGER(c_size_t), PARAMETER :: &
+         num_dst_elems(num_redist_components) = 1_c_size_t
+    INTEGER :: comm_rank, comm_size, ierror, i
+    CHARACTER(kind=c_char) :: filename_c(LEN(filename)+1)
+
+    DO i = 1, LEN(filename)
+      filename_c(i) = filename(i:i)
+    END DO
+    filename_c(LEN(filename)+1) = c_null_char
+
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    CALL mpi_comm_size(comm, comm_size, ierror)
+
+    ! redist test with two redists that do a round robin exchange in
+    ! different directions
+
+
+    DO i = 1, elems_per_rank
+      src_indices_(i) = INT(comm_rank * elems_per_rank + i - 1, xt_int_kind)
+    END DO
+    dst_indices_(1,1) = src_indices_(2)
+    temp = INT(comm_rank * elems_per_rank - elems_per_rank, xt_int_kind)
+    dst_indices_(1,2) &
+         = MERGE(INT(temp + comm_size * elems_per_rank, xt_int_kind), &
+         &       temp, temp < 0)
+
+    src_indices = xt_idxvec_new(src_indices_)
+    DO i = 1, 2
+      dst_indices = xt_idxvec_new(dst_indices_(1:1, i:i))
+      xmap = xt_xmap_dist_dir_new(src_indices, dst_indices, comm)
+      CALL xt_idxlist_delete(dst_indices)
+      redists(i) = xt_redist_p2p_new(xmap, mpi_double_complex)
+      CALL xt_xmap_delete(xmap)
+    END DO
+    CALL xt_idxlist_delete(src_indices)
+    redist = xt_redist_collection_custom_new(redists, -1, comm, config)
+    redist_coll_of_coll &
+         = xt_redist_collection_custom_new((/redist/), -1, comm, config)
+
+    ! test communicator of redist
+    IF (.NOT. communicators_are_congruent(xt_redist_get_MPI_Comm(redist), &
+         &                                comm)) THEN
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n")
+    END IF
+
+    CALL xt_redist_delete(redists)
+    CALL xt_redist_delete(redist)
+
+    DO i = 1, elems_per_rank
+      src_data(i) = CMPLX(comm_rank * elems_per_rank, i-1, KIND(1.0d0))
+    END DO
+    ref_dst_data_(1) = CMPLX(dst_indices_(1,1), 0.0d0, KIND(1.0d0))
+    ref_dst_data_(2) = CMPLX(dst_indices_(1,2), 0.0d0, KIND(1.0d0))
+    DO i = 1, num_redist_components
+      XT_SLICE_C_LOC(results_(:, i), results(i))
+      XT_SLICE_C_LOC(src_data, input(i))
+      prep(i,1) = C_FUNLOC(fill_array_dcmplx)
+      XT_SLICE_C_LOC(ref_dst_data_(i), ref_dst_data(i))
+      dt(i) = mpi_double_complex
+    END DO
+
+    CALL check_redist_(redist_coll_of_coll, sync_mode_test_all, &
+         num_redist_components, input, INT(num_dst_elems, c_size_t), results, &
+         prep, c_null_ptr, ref_dst_data, dt, dt, filename_c, __LINE__)
+
+    redist_copy = xt_redist_copy(redist_coll_of_coll)
+    CALL xt_redist_delete(redist_coll_of_coll)
+    CALL check_redist_(redist_copy, sync_mode_test_all, &
+         num_redist_components, input, INT(num_dst_elems, c_size_t), &
+         results, prep, c_null_ptr, ref_dst_data, dt, dt, filename_c, __LINE__)
+    ! clean up
+    CALL xt_redist_delete(redist_copy)
+  END SUBROUTINE test_het_rank_combination
+
+END MODULE test_coll_of_coll_par
+#endif
+
 PROGRAM test_redist_collection_parallel
   USE mpi
   USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, icbrt
@@ -64,6 +236,9 @@ PROGRAM test_redist_collection_parallel
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: check_wait_request, redist_exchanger_option
+#ifdef WITH_COLL_OF_COLL_TEST
+  USE test_coll_of_coll_par, ONLY: test_het_rank_combination
+#endif
   USE iso_c_binding, ONLY: c_loc, c_ptr
 #include "xt_slice_c_loc.inc"
   IMPLICIT NONE
@@ -85,6 +260,9 @@ PROGRAM test_redist_collection_parallel
   IF (ierror /= MPI_SUCCESS) &
        CALL test_abort('mpi_comm_size failed', filename, __LINE__)
 
+#ifdef WITH_COLL_OF_COLL_TEST
+  CALL test_het_rank_combination(mpi_comm_world, config)
+#endif
   IF (world_size > 1) THEN
     CALL test_4redist(mpi_comm_world, config)
     CALL test_rr_exchange(mpi_comm_world, config)

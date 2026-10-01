@@ -159,60 +159,52 @@ struct Xt_redist_collection_ {
 };
 
 static void align_component_dt(
-  unsigned num_redists,
   size_t num_components,
   unsigned nmsgs,
-  const struct Xt_msg_param *const msg_param[num_redists],
-  const unsigned num_redist_components[num_redists],
-  int *restrict in_ranks[num_redists],
-  const unsigned num_ranks[num_redists],
+  const struct Xt_msg_param *const msg_param[num_components],
+  int *restrict in_ranks[num_components],
+  const unsigned num_ranks[num_components],
   int *restrict out_ranks,
   MPI_Datatype *restrict component_dt,
   MPI_Aint *restrict disp_ofs,
   int *restrict blocklengths)
 {
-  size_t rank_pos[num_redists];
-  for (size_t j = 0; j < num_redists; ++j)
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  size_t rank_pos[num_components];
+  for (size_t j = 0; j < num_components; ++j)
     rank_pos[j] = 0;
   if (nmsgs) {
     /* find ranks and corresponding component datatypes */
     for (size_t i = 0; i < nmsgs; ++i) {
       int min_rank = INT_MAX;
-      for (size_t j = 0; j < num_redists; ++j)
+      for (size_t j = 0; j < num_components; ++j)
         if (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] < min_rank)
           min_rank = in_ranks[j][rank_pos[j]];
 
-      for (size_t j = 0, component_offset = 0;
-           j < num_redists;
-           component_offset += num_redist_components[j], ++j) {
-        size_t num_redist_components_j = num_redist_components[j];
+      for (size_t j = 0; j < num_components; ++j) {
         if (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] == min_rank) {
-          size_t msg_pos = rank_pos[j] * num_redist_components_j;
-          for (size_t k = 0; k < num_redist_components_j; ++k) {
-            component_dt[i * num_components + component_offset + k]
-              = msg_param[j][msg_pos + k].datatype;
-            disp_ofs[i * num_components + component_offset + k]
-              = msg_param[j][msg_pos + k].displacement;
-            blocklengths[i * num_components + component_offset + k]
-              = msg_param[j][msg_pos + k].count;
-            assert(msg_param[j][msg_pos + k].rank == min_rank);
-          }
+          size_t msg_pos = rank_pos[j];
+          component_dt[i * num_components + j]
+            = msg_param[j][msg_pos].datatype;
+          disp_ofs[i * num_components + j]
+            = msg_param[j][msg_pos].displacement;
+          blocklengths[i * num_components + j]
+            = msg_param[j][msg_pos].count;
+          assert(msg_param[j][msg_pos].rank == min_rank);
         } else {
-          for (size_t k = 0; k < num_redist_components_j; ++k) {
-            component_dt[i * num_components + component_offset + k]
-              = MPI_DATATYPE_NULL;
-            disp_ofs[i * num_components + component_offset + k] = 0;
-            blocklengths[i * num_components + component_offset + k] = 0;
-          }
+          component_dt[i * num_components + j]
+            = MPI_DATATYPE_NULL;
+          disp_ofs[i * num_components + j] = 0;
+          blocklengths[i * num_components + j] = 0;
         }
       }
       out_ranks[i] = min_rank;
-      for (size_t j = 0; j < num_redists; ++j)
+      for (size_t j = 0; j < num_components; ++j)
         rank_pos[j]
           += (rank_pos[j] < num_ranks[j] && in_ranks[j][rank_pos[j]] == min_rank);
     }
   }
-  free(in_ranks[0]);
 }
 
 /* not yet used cache entries are marked with -1 as first displacement,
@@ -249,15 +241,15 @@ Xt_redist xt_redist_collection_new(Xt_redist *redists, int num_redists,
 }
 
 static Xt_redist_collection
-alloc_redist_coll(size_t num_components, size_t nmsg_send, size_t nmsg_recv,
+alloc_redist_coll(size_t num_components, unsigned nmsg[2],
                   Xt_config config, MPI_Comm comm)
 {
-  size_t nmsg = nmsg_recv + nmsg_send,
+  size_t nmsg_ = nmsg[xt_direction_recv] + nmsg[xt_direction_send],
     header_size = sizeof (struct Xt_redist_collection_),
-    all_component_dt_size = sizeof (MPI_Datatype) * num_components * nmsg,
-    disp_ofs_size = sizeof (MPI_Aint) * num_components * nmsg,
-    ranks_size = sizeof (int) * nmsg,
-    blocklengths_size = sizeof (int) * num_components * nmsg,
+    all_component_dt_size = sizeof (MPI_Datatype) * num_components * nmsg_,
+    disp_ofs_size = sizeof (MPI_Aint) * num_components * nmsg_,
+    ranks_size = sizeof (int) * nmsg_,
+    blocklengths_size = sizeof (int) * num_components * nmsg_,
     team_data_size,
     own_size = header_size + disp_ofs_size + all_component_dt_size
     + ranks_size + blocklengths_size;
@@ -276,14 +268,14 @@ alloc_redist_coll(size_t num_components, size_t nmsg_send, size_t nmsg_recv,
     = xmalloc(own_size + team_data_size);
   redist_coll->vtable = &redist_collection_vtable;
   redist_coll->num_components = (unsigned)num_components;
-  redist_coll->nmsg[SEND] = (unsigned)nmsg_send;
-  redist_coll->nmsg[RECV] = (unsigned)nmsg_recv;
+  for (size_t direction = 0; direction < 2; ++direction)
+    redist_coll->nmsg[direction] = nmsg[direction];
   redist_coll->msg_ranks
-    = (int *)(redist_coll->all_component_dt + nmsg * num_components);
+    = (int *)(redist_coll->all_component_dt + nmsg_ * num_components);
   redist_coll->disp_ofs
-    = (void *)(intptr_t)(redist_coll->msg_ranks + nmsg);
+    = (void *)(intptr_t)(redist_coll->msg_ranks + nmsg_);
   redist_coll->blocklengths
-    = (void *)(intptr_t)(redist_coll->disp_ofs + nmsg * num_components);
+    = (void *)(intptr_t)(redist_coll->disp_ofs + nmsg_ * num_components);
   redist_coll->config = *config;
   /* all mpi datatypes are created for the exclusive use by the
    * underlying exchanger, no need for dup'ing them */
@@ -307,7 +299,7 @@ PPM_DSO_INTERNAL
 static
 #endif
 size_t
-xt_redist_collection_get_component_count(
+xt_redist_collection_get_msg_ubound(
   size_t num_redists,
   const unsigned num_ranks[num_redists],
   const unsigned num_redist_components[num_redists])
@@ -332,12 +324,15 @@ xrc(void *redist)
 #define SORT_TYPE_CMP_EQ(u,v,i,j) ((u).rank == (v).rank)
 #include "xt_mergesort_base.h"
 
-static void
+static size_t
 xrc_component_copy(
-  struct Xt_msg_param *restrict msg_param[2],
-  size_t msg_idx[2],
+  struct Xt_msg_param **restrict p_msg_param,
+  struct Xt_msg_param *restrict msg_param,
   const Xt_redist redist,
   size_t num_redist_components,
+  unsigned *restrict num_ranks,
+  int *restrict *restrict ranks,
+  int *restrict new_rank_buf,
   enum xt_msg_direction direction,
   MPI_Comm comm
   )
@@ -345,67 +340,106 @@ xrc_component_copy(
   /* source component_redist => src_cr */
   Xt_redist_collection src_cr = xrc(redist);
   unsigned num_src_msgs = src_cr->nmsg[direction];
-  struct Xt_msg_param *restrict p_msg_param = msg_param[direction];
-  size_t out_idx = msg_idx[direction];
+  size_t out_idx = 0;
   size_t adj = direction == xt_direction_recv
     ? src_cr->nmsg[xt_direction_send] : 0;
   const int *msg_ranks = src_cr->msg_ranks + adj;
   const int *blocklengths = src_cr->blocklengths + adj * num_redist_components;
   const MPI_Aint *disp_ofs = src_cr->disp_ofs + adj * num_redist_components;
   const MPI_Datatype *dt = src_cr->all_component_dt + adj * num_redist_components;
-  for (size_t i = 0; i < num_src_msgs; ++i) {
-    for (size_t j = 0; j < num_redist_components; ++j, ++out_idx) {
+  for (size_t j = 0; j < num_redist_components; ++j) {
+    p_msg_param[j] = msg_param + out_idx;
+    ranks[j] = new_rank_buf + out_idx;
+    for (size_t i = 0; i < num_src_msgs; ++i) {
       MPI_Datatype dt_ij = dt[i * num_redist_components + j];
-      if (!xt_mpi_ddt_is_named(dt_ij))
-        xt_mpi_call(MPI_Type_dup(dt_ij, &dt_ij), comm);
-      p_msg_param[out_idx] = (struct Xt_msg_param){
-        .rank = msg_ranks[i],
-        .datatype = dt_ij,
-        .displacement = disp_ofs[i * num_redist_components + j],
-        .count = blocklengths[i * num_redist_components + j],
-      };
+      if (dt_ij != MPI_DATATYPE_NULL) {
+        if (!xt_mpi_ddt_is_named(dt_ij))
+          xt_mpi_call(MPI_Type_dup(dt_ij, &dt_ij), comm);
+        new_rank_buf[out_idx] = msg_ranks[i];
+        msg_param[out_idx] = (struct Xt_msg_param){
+          .rank = msg_ranks[i],
+          .datatype = dt_ij,
+          .displacement = disp_ofs[i * num_redist_components + j],
+          .count = blocklengths[i * num_redist_components + j],
+        };
+        ++out_idx;
+      }
     }
+    num_ranks[j]
+      = (unsigned)(out_idx - (size_t)(ranks[j] - new_rank_buf));
   }
-  msg_idx[direction] = out_idx;
+  return out_idx;
 }
 
 static void
 setup_component_msg_params(
   size_t num_redists,
+  size_t num_components,
   const Xt_redist *redists,
-  const unsigned num_ranks[2][num_redists],
+  unsigned num_ranks[2][num_components],
+  int *restrict ranks[2][num_components],
   const unsigned num_redist_components[num_redists],
-  struct Xt_msg_param *msg_param[2][num_redists],
+  struct Xt_msg_param *msg_param[2][num_components],
   MPI_Comm comm, Xt_config config)
 {
-  size_t num_send_components_total
-    = xt_redist_collection_get_component_count(
-      num_redists, num_ranks[xt_direction_send], num_redist_components),
-    num_recv_components_total
-    = xt_redist_collection_get_component_count(
-      num_redists, num_ranks[xt_direction_recv], num_redist_components);
+  size_t init_ofs = num_components - num_redists,
+    num_send_msgs_ubound
+    = xt_redist_collection_get_msg_ubound(
+      num_redists, num_ranks[xt_direction_send]+init_ofs,
+      num_redist_components),
+    num_recv_msgs_ubound
+    = xt_redist_collection_get_msg_ubound(
+      num_redists, num_ranks[xt_direction_recv]+init_ofs,
+      num_redist_components),
+    num_msgs_ubound = num_send_msgs_ubound + num_recv_msgs_ubound;
   struct Xt_msg_param *mp_buf = xmalloc(
-    (num_send_components_total + num_recv_components_total)
-    * sizeof (*mp_buf));
-  struct Xt_msg_param *restrict p_msg_param[2]
+    (num_send_msgs_ubound + num_recv_msgs_ubound)
+    * (sizeof (*mp_buf) + sizeof (int)));
+  int *new_rank_buf[2]
+    = { (void *)(uintptr_t)(mp_buf + num_msgs_ubound),
+        (int *)(uintptr_t)(mp_buf + num_msgs_ubound) + num_send_msgs_ubound },
+    *old_rank_buf[2] = { ranks[0][init_ofs], ranks[1][init_ofs] };
+  struct Xt_msg_param *p_msg_param[2]
     = { [xt_direction_send] = mp_buf,
-        [xt_direction_recv] = mp_buf + num_send_components_total };
+        [xt_direction_recv] = mp_buf + num_send_msgs_ubound };
   size_t msg_idx[2] = { 0, 0 };
-  size_t old_msg_idx[2];
+  size_t component_ofs[2] = { 0, 0 };
   for (size_t j = 0; j < num_redists; ++j) {
-    for (size_t direction = 0; direction < 2; ++direction) {
-      old_msg_idx[direction] = msg_idx[direction];
-      msg_param[direction][j]
-        = p_msg_param[direction]+msg_idx[direction];
-    }
+    size_t old_msg_idx[2] = { msg_idx[0], msg_idx[1] };
     if (redists[j]->vtable == &redist_collection_vtable) {
-      xrc_component_copy(p_msg_param, msg_idx, redists[j],
-                         num_redist_components[j],
-                         xt_direction_send, comm);
-      xrc_component_copy(p_msg_param, msg_idx, redists[j],
-                         num_redist_components[j],
-                         xt_direction_recv, comm);
+      for (size_t direction = 0; direction < 2; ++direction) {
+        msg_idx[direction] +=
+          xrc_component_copy(
+            msg_param[direction] + component_ofs[direction],
+            p_msg_param[direction] + msg_idx[direction],
+            redists[j],
+            num_redist_components[j],
+            num_ranks[direction]+component_ofs[direction],
+            ranks[direction]+component_ofs[direction],
+            new_rank_buf[direction]+msg_idx[direction],
+            (enum xt_msg_direction)direction, comm);
+        component_ofs[direction] += num_redist_components[j];
+      }
+      assert(msg_idx[xt_direction_send] - old_msg_idx[xt_direction_send]
+             <= num_ranks[xt_direction_send][j] * num_redist_components[j]
+             && msg_idx[xt_direction_recv] - old_msg_idx[xt_direction_recv]
+             <= num_ranks[xt_direction_recv][j] * num_redist_components[j]);
     } else {
+      for (size_t direction = 0; direction < 2; ++direction) {
+        size_t dir_comp_ofs = component_ofs[direction];
+        msg_param[direction][dir_comp_ofs]
+          = p_msg_param[direction]+msg_idx[direction];
+//        if (dir_comp_ofs != init_ofs+j) {
+          size_t nmsg_component_dir
+            = num_ranks[direction][dir_comp_ofs]
+            = num_ranks[direction][init_ofs+j];
+          memcpy(new_rank_buf[direction]
+                 + msg_idx[direction],
+                 ranks[direction][init_ofs+j],
+                 nmsg_component_dir * sizeof (*new_rank_buf[0]));
+          ranks[direction][dir_comp_ofs] = new_rank_buf[direction]+msg_idx[direction];
+//        }
+      }
       Xt_exchanger exchanger = xt_redist_get_exchanger(redists[j]);
       Xt_exchanger_iter exch_iter
         = xt_exchanger_get_iterator(exchanger, config);
@@ -422,17 +456,22 @@ setup_component_msg_params(
           exch_iter = NULL;
         }
       }
+      for (size_t direction = 0; direction < 2; ++direction) {
+        xt_mergesort_msg_param_by_rank(p_msg_param[direction]
+                                       + old_msg_idx[direction],
+                                       msg_idx[direction]
+                                       - old_msg_idx[direction]);
+        ++component_ofs[direction];
+      }
+      assert(num_redist_components[j] == 1
+             && msg_idx[xt_direction_send] - old_msg_idx[xt_direction_send]
+             == num_ranks[xt_direction_send][j]
+             && msg_idx[xt_direction_recv] - old_msg_idx[xt_direction_recv]
+             == num_ranks[xt_direction_recv][j]);
     }
-    assert(msg_idx[xt_direction_send] - old_msg_idx[xt_direction_send]
-           == num_ranks[xt_direction_send][j] * num_redist_components[j]
-           && msg_idx[xt_direction_recv] - old_msg_idx[xt_direction_recv]
-           == num_ranks[xt_direction_recv][j] * num_redist_components[j]);
-    for (size_t direction = 0; direction < 2; ++direction)
-      xt_mergesort_msg_param_by_rank(p_msg_param[direction]
-                                     + old_msg_idx[direction],
-                                     msg_idx[direction]
-                                     - old_msg_idx[direction]);
   }
+  free(old_rank_buf[0]);
+  free(old_rank_buf[1]);
 }
 
 Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
@@ -450,26 +489,30 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
              filename, __LINE__);
 #endif
   unsigned num_redists_ = (unsigned)num_redists;
-  unsigned num_ranks[2][num_redists_];
-  int *restrict ranks[2][num_redists_];
-  unsigned num_redist_components[num_redists_];
-  unsigned nmsg_send = xt_redist_agg_msg_count(
-      num_redists_, xt_direction_send, redists,
-      num_ranks[SEND], ranks[SEND], config),
-    nmsg_recv = xt_redist_agg_msg_count(
-      num_redists_, xt_direction_recv, redists,
-      num_ranks[RECV], ranks[RECV], config);
   size_t num_components = 0;
+  unsigned num_redist_components[num_redists_];
   for (size_t i = 0; i < num_redists_; ++i)
     num_components +=
       num_redist_components[i] =
       (redists[i]->vtable == &redist_collection_vtable)
       ? ((Xt_redist_collection)redists[i])->num_components : 1;
-  struct Xt_msg_param *msg_param[2][num_redists_];
-  setup_component_msg_params(num_redists_, redists, (void *)num_ranks,
+  unsigned nmsg[2];
+  unsigned num_ranks[2][num_components];
+  int *restrict ranks[2][num_components];
+  struct Xt_msg_param *msg_param[2][num_components];
+  {
+    /* put initial entries of num_ranks into back of array */
+    size_t init_ofs = num_components-num_redists_;
+    for (size_t direction = 0; direction < 2; ++direction)
+      nmsg[direction] = xt_redist_agg_msg_count(
+        num_redists_, (enum xt_msg_direction)direction, redists,
+        num_ranks[direction]+init_ofs, ranks[direction]+init_ofs, config);
+  }
+  setup_component_msg_params(num_redists_, num_components, redists,
+                             num_ranks, ranks,
                              num_redist_components, msg_param, comm, config);
   Xt_redist_collection redist_coll
-    = alloc_redist_coll(num_components, nmsg_send, nmsg_recv, config, comm);
+    = alloc_redist_coll(num_components, nmsg, config, comm);
   redist_coll->cache_size
     = (cache_size == -1)
     ?((unsigned)DEFFAULT_DATATYPE_CACHE_SIZE):(unsigned)cache_size;
@@ -477,18 +520,21 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
   xt_redist_check_comms(redists, num_redists, comm);
 
   MPI_Datatype *all_component_dt = redist_coll->all_component_dt;
-  align_component_dt(num_redists_, num_components, nmsg_send,
-                     (void *)msg_param[xt_direction_send], num_redist_components,
+  align_component_dt(num_components, nmsg[xt_direction_send],
+                     (void *)msg_param[xt_direction_send],
                      ranks[SEND], num_ranks[SEND], redist_coll->msg_ranks,
                      all_component_dt, redist_coll->disp_ofs,
                      redist_coll->blocklengths);
-  align_component_dt(num_redists_, num_components, nmsg_recv,
-                     (void *)msg_param[xt_direction_recv], num_redist_components,
-                     ranks[xt_direction_recv], num_ranks[xt_direction_recv],
-                     redist_coll->msg_ranks+nmsg_send,
-                     all_component_dt + nmsg_send * num_components,
-                     redist_coll->disp_ofs + nmsg_send * num_components,
-                     redist_coll->blocklengths + nmsg_send * num_components);
+  {
+    size_t msg_ofs = nmsg[xt_direction_send];
+    align_component_dt(num_components, nmsg[xt_direction_recv],
+                       (void *)msg_param[xt_direction_recv],
+                       ranks[xt_direction_recv], num_ranks[xt_direction_recv],
+                       redist_coll->msg_ranks+msg_ofs,
+                       all_component_dt + msg_ofs * num_components,
+                       redist_coll->disp_ofs + msg_ofs * num_components,
+                       redist_coll->blocklengths + msg_ofs * num_components);
+  }
   free(msg_param[0][0]);
   init_cache(&redist_coll->cache, redist_coll->cache_size, num_components);
 
@@ -748,7 +794,7 @@ redist_collection_custom_copy(Xt_redist redist, Xt_config config)
     nmsg_recv = redist_coll->nmsg[RECV];
   size_t nmsg = (size_t)nmsg_recv + nmsg_send;
   Xt_redist_collection redist_copy
-    = alloc_redist_coll(num_components, nmsg_send, nmsg_recv, config,
+    = alloc_redist_coll(num_components, redist_coll->nmsg, config,
                         redist_coll->comm);
   memcpy(redist_copy->msg_ranks, redist_coll->msg_ranks,
          sizeof (*redist_copy->msg_ranks) * nmsg);
