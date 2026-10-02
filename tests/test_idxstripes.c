@@ -484,6 +484,29 @@ int main(int argc, char **argv) {
 #endif
 
   {
+    // intersection test where second stripe has stride 0, check that
+    // index is in result accordingly many times
+    enum {
+      num_stripes_a = 1,
+      num_stripes_b = 1,
+      num_ref_indices_ab = 2,
+      num_ref_indices_ba = 1,
+    };
+    static const struct Xt_stripe stripes_a[num_stripes_a]
+      = {{.start = 7, .stride = 1, .nstrides = 3}},
+      stripes_b[num_stripes_b] = {{.start = 7, .stride = 0, .nstrides = 2}};
+    static const Xt_int ref_indices_ab[num_ref_indices_ab] = {7,7},
+      ref_indices_ba[num_ref_indices_ba] = { 7 };
+
+    stripe_test_asymmetric_intersection(
+      num_stripes_a, stripes_a,
+      num_stripes_b, stripes_b,
+      num_ref_indices_ab, ref_indices_ab,
+      num_ref_indices_ba, ref_indices_ba);
+  }
+
+
+  {
     // generate idxvec from stripes
     static const struct Xt_stripe stripes[]
       = {{.start = 4, .stride = 1, .nstrides = 1},

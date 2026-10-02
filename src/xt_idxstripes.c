@@ -852,11 +852,11 @@ get_stripe_intersection(struct Xt_stripe stripe_a,
 #endif
   }
   intersection.stride
-    = (Xt_int)(Xt_isign(bsa.stride) * XT_INT_ABS(bsi.stride));
+    = (Xt_int)((Xt_isign(bsa.stride) * XT_INT_ABS(bsi.stride))
+               & ~stride_zero_mask_b);
   intersection.nstrides
-    = (abs(nstrides) & strides_mask
-       & ~((int)stride_zero_mask_a & (int)stride_zero_mask_b))
-    | (stripe_b.nstrides & (int)stride_zero_mask_a & (int)stride_zero_mask_b);
+    = (abs(nstrides) & strides_mask & ~(int)stride_zero_mask_b)
+    | (stripe_b.nstrides & (int)stride_zero_mask_b);
   INSTR_STOP(instr);
   return intersection;
 }

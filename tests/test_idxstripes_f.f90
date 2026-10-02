@@ -101,6 +101,7 @@ PROGRAM test_idxstripes_f
   CALL test_intersection14
   CALL test_intersection15
   CALL test_intersection16
+  CALL test_intersection17
   CALL test_intersection_stripe2vec
   CALL test_idxlist_stripes_pos_ext1
   CALL test_idxlist_stripes_pos_ext2
@@ -463,10 +464,28 @@ CONTAINS
          &                             xt_stripe(59, 1, 1) /), &
          stripes_b(num_stripes_b) = (/ xt_stripe(43, -42, 2), &
          &                             xt_stripe(0, 35, 2) /)
-    INTEGER(xt_int_kind) :: ref_indices(num_ref_indices) = (/ 0_xi, 1_xi /)
+    INTEGER(xt_int_kind), PARAMETER :: &
+         ref_indices(num_ref_indices) = (/ 0_xi, 1_xi /)
 
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection16
+
+  SUBROUTINE test_intersection17
+    ! intersection test where second stripe has stride 0, check that
+    ! index is in result accordingly many times
+    INTEGER, PARAMETER :: num_stripes_a = 1, &
+      num_stripes_b = 1, &
+      num_ref_indices_ab = 2, &
+      num_ref_indices_ba = 1
+    TYPE(xt_stripe), PARAMETER :: &
+         stripes_a(num_stripes_a) = (/ xt_stripe(7, 1, 3) /), &
+         stripes_b(num_stripes_b) = (/ xt_stripe(7, 0, 2) /)
+    INTEGER(xt_int_kind), PARAMETER :: &
+         ref_indices_ab(num_ref_indices_ab) = (/ 7_xi, 7_xi /), &
+         ref_indices_ba(num_ref_indices_ba) = (/ 7_xi /)
+
+    CALL test_intersection(stripes_a, stripes_b, ref_indices_ab, ref_indices_ba)
+  END SUBROUTINE test_intersection17
 
   SUBROUTINE test_intersection_stripe2vec
     INTEGER, PARAMETER :: num_stripes = 3
