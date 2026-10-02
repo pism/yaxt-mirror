@@ -123,10 +123,12 @@ xt_idxstripes_sort_new(size_t num_stripes,
 static inline bool
 xt_can_merge_pos_ext(struct Xt_pos_ext a, struct Xt_pos_ext b)
 {
-  return (((int)(b.start == a.start + a.size)
-           & ((abs(b.size) == 1) | (isign(a.size) == isign(b.size))))
-          | ((abs(a.size) == 1) & (a.start == b.start - isign(b.size)))
-          | ((abs(a.size) == 1) & (abs(b.size) == 1) & (abs(a.start-b.start) == 1)));
+  return (((int)((unsigned)b.start == (unsigned)a.start + (unsigned)a.size)
+           & ((b.size == 1) | (b.size == -1) | ((a.size < 0) == (b.size < 0))))
+          | (((a.size == 1) | (a.size == -1)) & (a.start == b.start - isign(b.size)))
+          | (((a.size == 1) | (a.size == -1))
+             & ((b.size == 1) | (b.size == -1))
+             & (abs((int)((unsigned)a.start-(Xt_uint)b.start) == 1))));
 }
 
 PPM_DSO_INTERNAL const struct Xt_stripe *
