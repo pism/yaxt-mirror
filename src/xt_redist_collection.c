@@ -872,7 +872,7 @@ redist_collection_get_MPI_Datatype(Xt_redist redist, int rank,
     const MPI_Datatype *all_dt = redist_coll->all_component_dt + adj;
     for (size_t i = 0, num_msg = redist_coll->nmsg[direction]; i < num_msg; ++i)
     {
-      if (msg_ranks[i] < rank)
+      if (msg_ranks[i] > rank)
         goto ret;
       else if (msg_ranks[i] == rank) {
         dt = all_dt[i];
@@ -880,7 +880,7 @@ redist_collection_get_MPI_Datatype(Xt_redist redist, int rank,
       }
     }
   check_dup:
-    if (do_dup)
+    if (dt != MPI_DATATYPE_NULL && do_dup)
       xt_mpi_call(MPI_Type_dup(dt, &dt), redist_coll->comm);
   }
 ret:

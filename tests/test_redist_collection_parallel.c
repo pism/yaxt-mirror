@@ -68,6 +68,9 @@ enum {
 };
 
 static void
+test_1redist(MPI_Comm comm, Xt_config config);
+
+static void
 test_4redist(MPI_Comm comm, Xt_config config);
 
 static void
@@ -86,6 +89,7 @@ int main(int argc, char **argv) {
   xt_mpi_call(MPI_Comm_size(MPI_COMM_WORLD, &comm_size), MPI_COMM_WORLD);
 
   if (comm_size > 1) {
+    test_1redist(MPI_COMM_WORLD, config);
     test_4redist(MPI_COMM_WORLD, config);
 
     test_rr_redist(MPI_COMM_WORLD, config);
@@ -99,6 +103,100 @@ int main(int argc, char **argv) {
 
   return TEST_EXIT_CODE;
 }
+
+/* mostly test that a redist composed of a single redist behaves like
+ * a copy of that redist
+ */
+static void
+test_1redist(MPI_Comm comm, Xt_config config)
+{
+  int comm_rank, comm_size;
+  xt_mpi_call(MPI_Comm_rank(comm, &comm_rank), comm);
+  xt_mpi_call(MPI_Comm_size(comm, &comm_size), comm);
+
+  Xt_int local_idx = (Xt_int)comm_rank,
+    next_rank_indices[2]
+    = { (Xt_int)((comm_rank + 1)%comm_size),
+        (Xt_int)((comm_rank + 2)%comm_size) };
+
+  Xt_idxlist indices_local = xt_idxvec_new(&local_idx, 1),
+    indices_req = xt_idxvec_new(next_rank_indices, 2);
+  Xt_xmap xmap
+    = xt_xmap_dist_dir_new(indices_local, indices_req, comm);
+
+  xt_idxlist_delete(indices_local);
+  xt_idxlist_delete(indices_req);
+
+  enum { num_redists = 1 };
+  Xt_redist redists[num_redists] = { xt_redist_p2p_new(xmap, MPI_FLOAT) };
+
+  xt_xmap_delete(xmap);
+  Xt_redist redist = xt_redist_collection_custom_new(redists, num_redists, -1,
+                                                     comm, config);
+
+  if (!communicators_are_congruent(xt_redist_get_MPI_Comm(redist),
+                                   comm))
+    PUT_ERR("error in xt_redist_get_MPI_Comm\n");
+
+  xt_redist_delete(redists[0]);
+
+  float src_data[1] = { (float)comm_rank },
+    dst_data[2], ref_dst_data[2] = { (float)((comm_rank + 1)%comm_size),
+                                     (float)((comm_rank + 2)%comm_size) };
+
+  check_redist(redist, src_data, 2, dst_data, fill_array_float, NULL,
+               ref_dst_data, MPI_FLOAT, MPI_FLOAT);
+
+  // check that data is only exchanged with neighbouring rank
+  int next_rank = (comm_rank + 1)%comm_size,
+    next_next_rank =  (comm_rank + 2)%comm_size,
+    prev_rank = comm_rank - 1 + (comm_rank == 0 ? comm_size : 0),
+    prev_prev_rank = comm_rank - 2 + (comm_rank <= 1 ? comm_size : 0);
+  MPI_Datatype dt_result[3][2] = { {
+      xt_redist_get_send_MPI_Datatype(redist, prev_rank),
+      xt_redist_get_recv_MPI_Datatype(redist, prev_rank)
+    }, {
+      xt_redist_get_send_MPI_Datatype(redist, next_rank),
+      xt_redist_get_recv_MPI_Datatype(redist, next_rank)
+    }, {
+      xt_redist_get_send_MPI_Datatype(redist, next_next_rank),
+      xt_redist_get_recv_MPI_Datatype(redist, next_next_rank)
+    }
+  };
+  if (dt_result[0][xt_direction_send] == MPI_DATATYPE_NULL)
+    PUT_ERR("%d: unexpected send datatype to %d\n", comm_rank, prev_rank);
+
+  if (dt_result[0][xt_direction_recv] != MPI_DATATYPE_NULL
+      && next_rank != prev_rank && next_next_rank != prev_rank)
+    PUT_ERR("%d: unexpected recv datatype from %d\n", comm_rank, prev_rank);
+
+  if (dt_result[1][xt_direction_send] != MPI_DATATYPE_NULL
+      && next_rank != prev_rank && next_rank != prev_prev_rank)
+    PUT_ERR("%d: unexpected send datatype to %d\n", comm_rank, next_rank);
+
+  if (dt_result[1][xt_direction_recv] == MPI_DATATYPE_NULL)
+    PUT_ERR("%d: unexpected recv datatype from %d\n", comm_rank, next_rank);
+
+  if (dt_result[2][xt_direction_send] != MPI_DATATYPE_NULL
+      && next_next_rank != prev_rank && next_next_rank != prev_prev_rank)
+    PUT_ERR("%d: unexpected send datatype to %d\n", comm_rank, next_next_rank);
+
+  if (dt_result[2][xt_direction_recv] == MPI_DATATYPE_NULL)
+    PUT_ERR("%d: unexpected recv datatype from %d\n", comm_rank, next_next_rank);
+
+  for (size_t j = 0; j < 3; ++j)
+    for (size_t i = 0; i < 2; ++i)
+      if (dt_result[j][i] != MPI_DATATYPE_NULL)
+        MPI_Type_free(dt_result[j]+i);
+
+  Xt_redist redist_copy = xt_redist_copy(redist);
+  xt_redist_delete(redist);
+  check_redist(redist_copy, src_data, 2, dst_data, fill_array_float, NULL,
+               ref_dst_data, MPI_FLOAT, MPI_FLOAT);
+
+  xt_redist_delete(redist_copy);
+}
+
 
 enum { num_redists = 4 };
 

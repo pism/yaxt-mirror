@@ -220,13 +220,16 @@ END MODULE test_coll_of_coll_par
 
 PROGRAM test_redist_collection_parallel
   USE mpi
-  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, icbrt
+  USE ftest_common, ONLY: init_mpi, finish_mpi, test_abort, icbrt, err_count__
   USE test_idxlist_utils, ONLY: test_err_count
   USE xt_core, ONLY: i8
+  USE xt_redist_real_sp, ONLY: sp
   USE yaxt, ONLY: xt_initialize, xt_finalize, xt_int_kind, xi => xt_int_kind, &
        xt_idxlist, xt_idxlist_delete, xt_stripe, xt_idxvec_new, &
        xt_idxsection_new, xt_idxlist_collection_new, xt_idxstripes_new, &
-       xt_xmap, xt_xmap_all2all_new, xt_xmap_delete, &
+       xt_xmap, xt_xmap_all2all_new, xt_xmap_dist_dir_new, xt_xmap_delete, &
+       xt_redist_get_mpi_comm, xt_redist_get_recv_mpi_datatype, &
+       xt_redist_get_send_mpi_datatype, &
        xt_redist, xt_redist_p2p_new, xt_redist_collection_new, &
        xt_redist_copy, xt_redist_delete, xt_redist_s_exchange, &
        xt_idxlist_get_indices, xt_int_mpidt, &
@@ -235,7 +238,8 @@ PROGRAM test_redist_collection_parallel
 #if defined __PGI && (__PGIC__ < 12 || (__PGIC__ ==  12 && __PGIC_MINOR__ <= 10))
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
-  USE test_redist_common, ONLY: check_wait_request, redist_exchanger_option
+  USE test_redist_common, ONLY: check_wait_request, redist_exchanger_option, &
+       check_redist, communicators_are_congruent
 #ifdef WITH_COLL_OF_COLL_TEST
   USE test_coll_of_coll_par, ONLY: test_het_rank_combination
 #endif
@@ -264,6 +268,7 @@ PROGRAM test_redist_collection_parallel
   CALL test_het_rank_combination(mpi_comm_world, config)
 #endif
   IF (world_size > 1) THEN
+    CALL test_1redist(mpi_comm_world, config)
     CALL test_4redist(mpi_comm_world, config)
     CALL test_rr_exchange(mpi_comm_world, config)
   END IF
@@ -274,6 +279,100 @@ PROGRAM test_redist_collection_parallel
   CALL xt_finalize
   CALL finish_mpi
 CONTAINS
+  ! mostly test that a redist composed of a single redist behaves like
+  ! a copy of that redist
+  !
+  SUBROUTINE test_1redist(comm, config)
+    INTEGER, INTENT(in) :: comm
+    TYPE(xt_config), INTENT(in) :: config
+    INTEGER, PARAMETER :: num_redists = 1
+    TYPE(xt_idxlist) :: indices_local, indices_req
+    TYPE(xt_xmap) :: xmap
+    TYPE(xt_redist) :: redists(num_redists), redist, redist_copy
+    INTEGER(xt_int_kind) :: local_idx(1), next_rank_indices(2)
+    COMPLEX(sp) :: src_data(1), dst_data(2), ref_dst_data(2)
+    INTEGER :: i, j, comm_rank, comm_size, ierror, &
+         dt_result(2,-2:2), nb_rank(-2:2)
+    LOGICAL :: expected_xfer(2, -2:2) = RESHAPE(&
+         (/ .TRUE., .FALSE., &
+         &  .TRUE., .FALSE., &
+         & .FALSE., .FALSE., &
+         &  .FALSE., .TRUE., &
+         &  .FALSE., .TRUE. /), &
+         (/ 2, 5 /))
+
+    CALL mpi_comm_rank(comm, comm_rank, ierror)
+    CALL mpi_comm_size(comm, comm_size, ierror)
+
+    local_idx = INT(comm_rank, xt_int_kind)
+    DO i = 1, 2
+      next_rank_indices(i) = INT(MOD(comm_rank + i, comm_size), xt_int_kind)
+    END DO
+
+    indices_local = xt_idxvec_new(local_idx)
+    indices_req = xt_idxvec_new(next_rank_indices)
+    xmap = xt_xmap_dist_dir_new(indices_local, indices_req, comm, config)
+
+    CALL xt_idxlist_delete(indices_local)
+    CALL xt_idxlist_delete(indices_req)
+
+    redists(1) = xt_redist_p2p_new(xmap, mpi_complex)
+
+    CALL xt_xmap_delete(xmap)
+    redist = xt_redist_collection_new(redists, -1, comm, config)
+
+    IF (.NOT. communicators_are_congruent(xt_redist_get_mpi_comm(redist), &
+         &                                comm)) THEN
+      PUT_ERR("error in xt_redist_get_MPI_Comm\n")
+    END IF
+
+
+    src_data(1) = CMPLX(comm_rank, MOD(comm_rank, 2), sp)
+    DO i = 1, 2
+      ref_dst_data(i) = CMPLX(MOD(comm_rank + i, comm_size), &
+           &                  MOD(MOD(comm_rank + i, comm_size), 2), sp)
+    END DO
+    CALL check_redist(redists(1), src_data, dst_data, ref_dst_data)
+    CALL xt_redist_delete(redists(1))
+    CALL check_redist(redist, src_data, dst_data, ref_dst_data)
+
+    ! check that data is only exchanged with neighbouring rank
+    nb_rank(-2) = comm_rank - 2 + MERGE(comm_size, 0, comm_rank <= 1)
+    nb_rank(-1) = comm_rank - 1 + MERGE(comm_size, 0, comm_rank == 0)
+    nb_rank(0) = comm_rank
+    nb_rank(1) = MOD(comm_rank + 1, comm_size)
+    nb_rank(2) = MOD(comm_rank + 2, comm_size)
+    DO j = -2, 2
+      dt_result(1,j) = xt_redist_get_send_MPI_Datatype(redist, nb_rank(j))
+      dt_result(2,j) = xt_redist_get_recv_MPI_Datatype(redist, nb_rank(j))
+    END DO
+    DO j = -2, 2
+      DO i = 1, 2
+        IF (dt_result(i, j) == mpi_datatype_null .AND. expected_xfer(i, j)) THEN
+          PUT_ERR("unexpected missing transfer")
+        ELSE IF (dt_result(i, j) /= mpi_datatype_null &
+             .AND. .NOT. expected_xfer(i, j)) THEN
+          ! type is not null but no transfer is expected
+          ! find if same rank has a transfer because of another neighbour
+          ! relationship
+          IF (.NOT. ANY(expected_xfer(i, :) .AND. nb_rank(j) == nb_rank)) &
+               THEN
+            WRITE (0, *) expected_xfer(i, :) .AND. nb_rank(j) == nb_rank
+            PUT_ERR("unexpected transfer")
+          END IF
+        END IF
+        IF (dt_result(i, j) /= mpi_datatype_null) &
+             CALL mpi_type_free(dt_result(i, j), ierror)
+      END DO
+    END DO
+
+
+    redist_copy = xt_redist_copy(redist)
+    CALL xt_redist_delete(redist)
+    CALL check_redist(redist_copy, src_data, dst_data, ref_dst_data)
+    CALL xt_redist_delete(redist_copy)
+  END SUBROUTINE test_1redist
+
   SUBROUTINE build_idxlists(indices_a, indices_b, indices_all)
     TYPE(xt_idxlist), INTENT(out) :: indices_a, indices_b, indices_all
 
