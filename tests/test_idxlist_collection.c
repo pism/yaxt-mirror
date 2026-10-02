@@ -94,6 +94,10 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < num_lists; ++i)
       xt_idxlist_delete(idxlists[i]);
 
+    int sorting = xt_idxlist_get_sorting(collectionlist);
+    if (sorting != 0)
+      PUT_ERR("unexpected sorting");
+
     // test generated collection list
     check_idxlist(collectionlist, index_list[0], (int)(num_lists*num_indices));
     int pos = -2, rc
@@ -111,7 +115,7 @@ int main(int argc, char **argv) {
     Xt_idxlist collectionlist_copy
       = idxlist_pack_unpack_copy(collectionlist);
     check_idxlist_copy(collectionlist, collectionlist_copy,
-                       2 * (size_t)num_indices, index_list[0],
+                       num_lists * (size_t)num_indices, index_list[0],
                        (size_t)num_ref_stripes, ref_stripes);
     xt_idxlist_delete(collectionlist_copy);
     xt_idxlist_delete(collectionlist);
@@ -135,20 +139,20 @@ int main(int argc, char **argv) {
       idxlists[i] = xt_idxvec_new(index_list[i], num_indices);
 
     // generate a collection index list
-    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, 2);
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, num_lists);
 
     for (size_t i = 0; i < num_lists; ++i)
       xt_idxlist_delete(idxlists[i]);
 
     // test generated collection list
-    check_idxlist(collectionlist, &index_list[0][0], 2 * num_indices);
+    check_idxlist(collectionlist, &index_list[0][0], num_lists * num_indices);
 
     // copy the index list
     Xt_idxlist collectionlist_copy = xt_idxlist_copy(collectionlist);
 
     // check copy of collection list
     check_idxlist(collectionlist_copy, &(index_list[0][0]),
-                  2 * num_indices);
+                  num_lists * num_indices);
 
     // check the conversion to stripes
 
@@ -168,6 +172,181 @@ int main(int argc, char **argv) {
 
     xt_idxlist_delete(collectionlist);
     xt_idxlist_delete(collectionlist_copy);
+  }
+
+  { // test ascending sorting of heterogenous collection index lists
+
+    enum {
+      num_lists = 2,
+      num_vec_indices = 8,
+      num_sec_indices = 8,
+      num_ref_stripes = 3,
+    };
+
+    Xt_idxlist idxlists[num_lists];
+    {
+      static const Xt_int index_vec[num_vec_indices]
+        = {0,1,2,3,4,5,6,7};
+      idxlists[0] = xt_idxvec_new(index_vec, num_vec_indices);
+    }
+    {
+      enum { num_dimensions = 2, };
+      static const Xt_int gsz[num_dimensions] = { 5, 5 },
+        lst[num_dimensions] = { 0, 0 };
+      static const int lsz[num_dimensions] = { 2, 4 };
+      idxlists[1] = xt_idxsection_new(num_vec_indices, num_dimensions,
+                                      gsz, lsz, lst);
+    }
+
+    // generate a collection index list
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, num_lists);
+
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
+
+    static const Xt_int ref_indices[]
+      = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16 };
+    // test generated collection list
+    check_idxlist(collectionlist, ref_indices,
+                  num_vec_indices + num_sec_indices);
+
+    int sorting = xt_idxlist_get_sorting(collectionlist);
+    if (sorting != 1)
+      PUT_ERR("unexpected sorting");
+
+    // check the conversion to stripes
+    struct Xt_stripe *stripes;
+    int num_stripes;
+
+    xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
+
+    static const struct Xt_stripe ref_stripes[num_ref_stripes]
+      = {{.start = 0, .stride = 1, .nstrides = 8},
+         {.start = 8, .stride = 1, .nstrides = 4},
+         {.start = 13, .stride = 1, .nstrides = 4}};
+
+    check_stripes(stripes, num_stripes, ref_stripes, num_ref_stripes);
+
+    // clean up
+    free(stripes);
+
+    xt_idxlist_delete(collectionlist);
+  }
+
+  { // test sorting of heterogenous collection index lists
+
+    enum {
+      num_lists = 2,
+      num_vec_indices = 8,
+      num_sec_indices = 8,
+      num_ref_stripes = 3,
+    };
+
+    Xt_idxlist idxlists[num_lists];
+    {
+      static const Xt_int index_vec[num_vec_indices]
+        = { 8, 7, 6, 5, 4, 3, 2, 1 };
+      idxlists[0] = xt_idxvec_new(index_vec, num_vec_indices);
+    }
+    {
+      enum { num_dimensions = 2, };
+      static const Xt_int gsz[num_dimensions] = { 5, 5 },
+        lst[num_dimensions] = { 3, 0 };
+      static const int lsz[num_dimensions] = { -2, -4 };
+      idxlists[1] = xt_idxsection_new(-5*5, num_dimensions,
+                                      gsz, lsz, lst);
+    }
+
+    // generate a collection index list
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, num_lists);
+
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
+
+    static const Xt_int ref_indices[]
+      = { 8, 7, 6, 5, 4, 3, 2, 1, -2, -3, -4, -5, -7, -8, -9, -10 };
+
+    // test generated collection list
+    check_idxlist(collectionlist, ref_indices,
+                  num_vec_indices + num_sec_indices);
+
+    int sorting = xt_idxlist_get_sorting(collectionlist);
+    if (sorting != -1)
+      PUT_ERR("unexpected sorting");
+
+    // check the conversion to stripes
+    struct Xt_stripe *stripes;
+    int num_stripes;
+
+    xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
+
+    static const struct Xt_stripe ref_stripes[num_ref_stripes]
+      = {{.start = 8, .stride = -1, .nstrides = 8},
+         {.start = -2, .stride = -1, .nstrides = 4},
+         {.start = -7, .stride = -1, .nstrides = 4}};
+
+    check_stripes(stripes, num_stripes, ref_stripes, num_ref_stripes);
+
+    // clean up
+    free(stripes);
+
+    xt_idxlist_delete(collectionlist);
+  }
+
+  { // test descending sorting of heterogenous collection index lists
+
+    enum {
+      num_lists = 2,
+      num_vec_indices = 3,
+      num_strp_indices = 5,
+      num_ref_stripes = 1,
+    };
+
+    Xt_idxlist idxlists[num_lists];
+    {
+      static const Xt_int index_vec[num_vec_indices]
+        = { 9, 9, 9 };
+      idxlists[0] = xt_idxvec_new(index_vec, num_vec_indices);
+    }
+    {
+      enum { num_stripes = 1, };
+      static const struct Xt_stripe stripes[num_ref_stripes]
+      = {{.start = 9, .stride = 0, .nstrides = num_strp_indices}};
+      idxlists[1] = xt_idxstripes_new(stripes, num_stripes);
+    }
+
+    // generate a collection index list
+    Xt_idxlist collectionlist = xt_idxlist_collection_new(idxlists, num_lists);
+
+    for (size_t i = 0; i < num_lists; ++i)
+      xt_idxlist_delete(idxlists[i]);
+
+    static const Xt_int ref_indices[]
+      = { 9, 9, 9, 9, 9, 9, 9, 9 };
+
+    // test generated collection list
+    check_idxlist(collectionlist, ref_indices,
+                  num_vec_indices + num_strp_indices);
+
+    int sorting = xt_idxlist_get_sorting(collectionlist);
+    if (sorting != 3)
+      PUT_ERR("unexpected sorting");
+
+    // check the conversion to stripes
+    struct Xt_stripe *stripes;
+    int num_stripes;
+
+    xt_idxlist_get_index_stripes(collectionlist, &stripes, &num_stripes);
+
+    static const struct Xt_stripe ref_stripes[num_ref_stripes]
+      = {{.start = 9, .stride = 0, .nstrides = 8}};
+
+    check_stripes(stripes, num_stripes, ref_stripes, num_ref_stripes);
+
+    // clean up
+    free(stripes);
+
+    xt_idxlist_delete(collectionlist);
   }
 
   { // test computing intersection of index list collections
@@ -263,6 +442,11 @@ int main(int argc, char **argv) {
 
     for (size_t i = 0; i < num_lists; ++i)
       xt_idxlist_delete(idxlists[i]);
+
+    int sorting = xt_idxlist_get_sorting(collectionlist);
+    if (sorting != 2)
+      PUT_ERR("unexpected sorting");
+
 
     enum { ndim = 3 };
     Xt_int global_size_bb[ndim];

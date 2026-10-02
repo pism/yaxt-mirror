@@ -189,13 +189,19 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
     unsigned ntrans_dn = 0, ntrans_up = 0,
       nsort_asc = 0, nsort_dsc = 0;
     switch (xt_idxlist_get_sorting(idxlists[first_non_empty_idxlist])) {
+    case 0:
+      ++nsort_dsc;
+      /* intentional fall through -fallthrough */
+#if (defined(__clang__) && __clang_major__ >= 12) || (defined __GNUC__ && __GNUC__ >= 7) && !defined __INTEL_COMPILER
+    __attribute__((fallthrough));
+#endif
     case 1:
       ++nsort_asc;
       break;
     case -1:
       ++nsort_dsc;
       break;
-    case 0:
+    case 3:
       break;
 #  if HAVE_DECL___BUILTIN_UNREACHABLE
     default:
@@ -215,13 +221,19 @@ xt_idxlist_collection_new(Xt_idxlist *idxlists, int num_idxlists) {
         prev_max = tmp_max;
         int sort = xt_idxlist_get_sorting(idxlists[i]);
         switch (sort) {
+        case 0:
+          ++nsort_dsc;
+          /* intentional fall through -fallthrough */
+#if (defined(__clang__) && __clang_major__ >= 12) || (defined __GNUC__ && __GNUC__ >= 7) && !defined __INTEL_COMPILER
+    __attribute__((fallthrough));
+#endif
         case 1:
           ++nsort_asc;
           break;
         case -1:
           ++nsort_dsc;
           break;
-        case 0:
+        case 3:
           break;
 #  if HAVE_DECL___BUILTIN_UNREACHABLE
         default:
