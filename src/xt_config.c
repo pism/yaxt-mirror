@@ -586,19 +586,22 @@ int
  *
  * @section config_ddt_cache MPI derived data type caching
  *
- * By default the redist constructors try to minize the memory use of
+ * The redist constructors can try to minize the memory use of
  * MPI datatypes by aggressively re-using datatypes used for previous
  * communication partners and analyzing sub-patterns. This works
  * better for highly regular data access patterns and a sparse
  * communication matrix and tends to introduce unnecessary time
  * overhead for irregular data distributions and imbalanced message
  * passing patterns.
+ * Since the prerequisite regularity cannot be assumed in general,
+ * the caching feature is turned off be default since
+ * YAXT 0.12.
  *
  * It's possible to limit this caching or even completely turn it off
  * via the XT_CONFIG_MPI_DDT_CACHE_LIMIT environment variable. The
  * environment variable can take the following values:
  * @li Xt_config_ddt_cache_none or 0: prevent caching but still
- * attempt to detect structure in the data access
+ * attempt to detect structure in the data access (default)
  * @li any positive integral number: limit cache size to this value
  * @li Xt_config_ddt_cache_unlimited or -1: maximize re-use at
  * potentially high lookup costs,

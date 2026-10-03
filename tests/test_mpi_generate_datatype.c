@@ -538,6 +538,25 @@ int main(int argc, char **argv) {
 
   }
 
+  {
+    // test xt_mpi_generate_datatype_stripe
+    enum { num_ext = 4, };
+    static const struct Xt_offset_ext ofs_ext[num_ext]
+      = {{0,4,1},{10,3,2},{20,2,1},{30,5,3}};
+    MPI_Datatype datatype
+      = xt_mpi_generate_datatype_stripe(ofs_ext, num_ext,
+                                        MPI_INT, MPI_COMM_WORLD);
+    int sum_of_counts = 0, size_query;
+    for (size_t i = 0; i < num_ext; ++i)
+      sum_of_counts += ofs_ext[i].size;
+
+    MPI_Type_size(datatype, &size_query);
+    if (size_query != sum_of_counts * (int)(sizeof (int)))
+      PUT_ERR("unexpected MPI datatype size\n");
+
+    MPI_Type_free(&datatype);
+  }
+
   xt_finalize();
   xt_mpi_call(MPI_Finalize(), MPI_COMM_WORLD);
 

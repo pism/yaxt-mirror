@@ -429,6 +429,7 @@ XT_MPI_STRP_PRS_DRIVER(const XT_MPI_OFFSET_EXT *v,
   xt_init_mpi_strp_prs_params(&params, old_type, &xt_default_config, comm);
   struct Xt_mpi_dt_ofs dt_ofs
     = XT_MPI_STRP_PRS_ENTRY(v_disp, v_size, v_stride, count_, &params);
+  xt_destroy_mpi_strp_prs_params(&params);
   if (dt_ofs.displacement != 0) {
     MPI_Datatype datatype = dt_ofs.dt;
     Xt_Type_create_hindexed(1, (int [1]){ 1 },

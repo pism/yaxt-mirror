@@ -258,6 +258,7 @@ gen_cov_data:
     - make -j4 XT_CONFIG_DEFAULT_MULTI_THREAD_MODE=XT_MT_OPENMP check
     - make -j4 XT_CONFIG_DEFAULT_EXCHANGE_METHOD=irecv_isend check
     - make -j8 XT_CONFIG_DEFAULT_EXCHANGE_METHOD=neigh_alltoall check
+    - make -j8 XT_CONFIG_MPI_DDT_CACHE_LIMIT=-1 check
   artifacts:
     paths:
       - make.err
