@@ -1632,30 +1632,26 @@ stripe_test_general6(void)
 }
 
 static void
-stripe_test_mapping1(void)
+stripe_test_mapping_generic(
+  int num_list_stripes,
+  const struct Xt_stripe list_stripes[num_list_stripes],
+  int num_query_stripes,
+  const struct Xt_stripe query_stripes[num_query_stripes],
+  int num_ref_pos,
+  const int ref_pos[num_ref_pos])
 {
-  static const struct Xt_stripe s = {5,1,6}; /* 5..10 */
-  enum {
-    num_list_stripes = 3,
-    num_ref_pos = 8,
-  };
-  static const struct Xt_stripe q[num_list_stripes]
-    = {{16,-3,6},{6,1,7},{9,3,5}}; /* 16, 13, 10, 7, 4, 1,
-                                      6, 7, 8, 9, 10, 11, 12,
-                                      9, 12, 15, 18, 21 */
-  static const int ref_pos[num_ref_pos] = { 5, 2, 1, 2, 3, 4, 5, 4 };
-  Xt_idxlist idxstripes = xt_idxstripes_new(&s, 1);
+  Xt_idxlist idxstripes = xt_idxstripes_new(list_stripes, num_list_stripes);
   struct Xt_pos_ext *pos_ext = NULL; int num_pos_ext;
   int num_unmatched
     = xt_idxlist_get_pos_exts_of_index_stripes(
-      idxstripes, 3, q, &num_pos_ext, &pos_ext, 0);
-  size_t num_pos = 0;
+      idxstripes, num_query_stripes, query_stripes, &num_pos_ext, &pos_ext, 0);
+  int num_pos = 0;
   for (int i = 0; i < num_pos_ext; ++i)
-    num_pos += (size_t)(abs(pos_ext[i].size));
+    num_pos += abs(pos_ext[i].size);
   int num_query_pos = 0;
-  for (size_t i = 0; i < num_list_stripes; ++i)
-    num_query_pos += q[i].nstrides;
-  if ((int)num_pos + num_unmatched != num_query_pos)
+  for (int i = 0; i < num_query_stripes; ++i)
+    num_query_pos += query_stripes[i].nstrides;
+  if (num_pos + num_unmatched != num_query_pos)
     PUT_ERR("incomplete result: num_pos=%d + num_unmatched=%d"
             " != num_query_pos=%d\n",
             num_pos, num_unmatched, num_query_pos);
@@ -1672,13 +1668,40 @@ stripe_test_mapping1(void)
   }
   bool mismatch = num_pos != num_ref_pos;
   if (!mismatch)
-    for (size_t i = 0; i < num_ref_pos; ++i)
+    for (size_t i = 0; i < (size_t)num_ref_pos; ++i)
       mismatch |= (ref_pos[i] != expanded_pos[i]);
   if (mismatch)
     PUT_ERR("xt_idxlist_get_pos_exts_of_index_stripes mismatch\n");
   free(pos_ext);
   free(expanded_pos);
   xt_idxlist_delete(idxstripes);
+}
+
+
+static void
+stripe_test_mapping1(void)
+{
+  static const struct Xt_stripe s = {5,1,6}; /* 5..10 */
+  enum {
+    num_query_stripes = 3,
+    num_ref_pos = 8,
+  };
+  static const struct Xt_stripe q[num_query_stripes]
+    = {{16,-3,6},{6,1,7},{9,3,5}}; /* 16, 13, 10, 7, 4, 1,
+                                      6, 7, 8, 9, 10, 11, 12,
+                                      9, 12, 15, 18, 21 */
+  static const int ref_pos[num_ref_pos] = { 5, 2, 1, 2, 3, 4, 5, 4 };
+  /* with missing positions:
+     enum {num_ref_pos = 18,};
+  static const int ref_pos[num_ref_pos] = {
+    16*0 -1, 13*0 -1, 10*0 +5,  7*0 +2,  4*0 -1,
+    1*0  -1,  6*0 +1,  7*0 +2,  8*0 +3,  9*0 +4,
+    10*0 +5, 11*0 -1, 12*0 -1,  9*0 +4, 12*0 -1,
+    15*0 -1, 18*0 -1, 21*0 -1
+  }
+  */
+  stripe_test_mapping_generic(1, &s, num_query_stripes, q,
+                              num_ref_pos, ref_pos);
 }
 
 

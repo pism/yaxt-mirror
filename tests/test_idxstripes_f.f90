@@ -232,21 +232,20 @@ CONTAINS
     CALL stripe_test_general(stripes, ref_indices(1:0))
   END SUBROUTINE stripe_test_general6
 
-  SUBROUTINE stripe_test_mapping1
-    TYPE(xt_stripe), PARAMETER :: s(1) = (/ xt_stripe(5,1,6) /) ! 5..10
-    INTEGER, PARAMETER :: num_list_stripes = 3, num_ref_pos = 8
-    TYPE(xt_stripe), PARAMETER :: q(num_list_stripes) &
-         = (/ xt_stripe(16,-3,6), & ! 16, 13, 10, 7, 4, 1,
-              xt_stripe(6,1,7), & ! 6, 7, 8, 9, 10, 11, 12,
-              xt_stripe(9,3,5) /) ! 9, 12, 15, 18, 21
-    INTEGER, PARAMETER :: ref_pos(num_ref_pos) = (/ 5, 2, 1, 2, 3, 4, 5, 4 /)
+  SUBROUTINE stripe_test_mapping_generic(num_list_stripes, list_stripes,
+    num_query_stripes, query_stripes, num_ref_pos, ref_pos)
+    INTEGER, INTENT(in) :: num_list_stripes, num_query_stripes, num_ref_pos
+    TYPE(xt_stripe), INTENT(in) :: list_stripes(num_list_stripes), &
+         query_stripes(num_query_stripes)
+    INTEGER, INTENT(in) :: ref_pos(num_ref_pos)
     TYPE(xt_idxlist) :: idxstripes
     TYPE(xt_pos_ext), ALLOCATABLE :: pos_ext(:)
     INTEGER, ALLOCATABLE :: expanded_pos(:)
     INTEGER :: num_pos_ext, i, j, num_unmatched, num_query_pos, num_pos, &
          ofs, pos, pe_size, step, pe_abs_size
     LOGICAL :: mismatch
-    idxstripes = xt_idxstripes_new(s)
+
+    idxstripes = xt_idxstripes_new(list_stripes)
     num_unmatched &
          = xt_idxlist_get_pos_exts_of_index_stripes(&
          idxstripes, q, pos_ext, .FALSE.)
@@ -276,6 +275,16 @@ CONTAINS
     END IF
     DEALLOCATE(pos_ext, expanded_pos)
     CALL xt_idxlist_delete(idxstripes);
+  END SUBROUTINE stripe_test_mapping_generic
+
+  SUBROUTINE stripe_test_mapping1
+    TYPE(xt_stripe), PARAMETER :: s(1) = (/ xt_stripe(5,1,6) /) ! 5..10
+    INTEGER, PARAMETER :: num_list_stripes = 3, num_ref_pos = 8
+    TYPE(xt_stripe), PARAMETER :: q(num_list_stripes) &
+         = (/ xt_stripe(16,-3,6), & ! 16, 13, 10, 7, 4, 1,
+              xt_stripe(6,1,7), & ! 6, 7, 8, 9, 10, 11, 12,
+              xt_stripe(9,3,5) /) ! 9, 12, 15, 18, 21
+    INTEGER, PARAMETER :: ref_pos(num_ref_pos) = (/ 5, 2, 1, 2, 3, 4, 5, 4 /)
   END SUBROUTINE stripe_test_mapping1
 
   SUBROUTINE test_intersection(stripes_a, stripes_b, &
