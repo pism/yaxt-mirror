@@ -92,6 +92,8 @@ static void
 stripe_test_mapping1(void);
 static void
 stripe_test_mapping2(void);
+static void
+stripe_test_mapping3(void);
 
 static void
 stripe_test_intersection(int num_stripes_a, const struct Xt_stripe *stripes_a,
@@ -155,6 +157,8 @@ int main(int argc, char **argv) {
   stripe_test_mapping1();
 
   stripe_test_mapping2();
+
+  stripe_test_mapping3();
 
   { // intersection test
     enum {
@@ -1646,7 +1650,8 @@ stripe_test_mapping_generic(
   int num_query_stripes,
   const struct Xt_stripe query_stripes[num_query_stripes],
   int num_ref_pos,
-  const int ref_pos[num_ref_pos])
+  const int ref_pos[num_ref_pos],
+  int single_match_only)
 {
   Xt_idxlist idxstripes = xt_idxstripes_new(list_stripes, num_list_stripes);
   struct Xt_pos_ext *pos_ext = NULL; int num_pos_ext;
@@ -1655,7 +1660,8 @@ stripe_test_mapping_generic(
     expected_unmatched += (ref_pos[i] == -1);
   int num_unmatched
     = xt_idxlist_get_pos_exts_of_index_stripes(
-      idxstripes, num_query_stripes, query_stripes, &num_pos_ext, &pos_ext, 0);
+      idxstripes, num_query_stripes, query_stripes, &num_pos_ext, &pos_ext,
+      single_match_only);
   int num_pos = 0;
   for (int i = 0; i < num_pos_ext; ++i)
     num_pos += abs(pos_ext[i].size);
@@ -1685,20 +1691,17 @@ stripe_test_mapping_generic(
         expanded_pos[ofs] = pos_ext[j].start + i;
     }
     assert(ofs == (size_t)num_ref_pos + (size_t)num_pos);
-    int num_undef
-      = xt_idxlist_get_indices_at_positions(
-        idxstripes, expanded_pos + num_ref_pos, num_pos,
-        indices_at_matched_pos, XT_INT_MIN);
+    int num_undef = xt_idxlist_get_indices_at_positions(
+      idxstripes, expanded_pos + num_ref_pos, num_pos,
+      indices_at_matched_pos, XT_INT_MIN);
     if (num_undef != 0)
       Xt_abort(MPI_COMM_WORLD, "failed index query!\n", filename, __LINE__);
-    assert(num_undef == 0);
     /* 2. map indices back to positions in query stripes */
     Xt_idxlist query_list
       = xt_idxstripes_new(query_stripes, num_query_stripes);
-    int num_no_pos
-      = xt_idxlist_get_positions_of_indices(
-        query_list, indices_at_matched_pos, num_pos,
-        expanded_pos+num_ref_pos+num_pos, 0);
+    int num_no_pos = xt_idxlist_get_positions_of_indices(
+      query_list, indices_at_matched_pos, num_pos,
+      expanded_pos+ofs, single_match_only);
     if (num_no_pos != 0)
       Xt_abort(MPI_COMM_WORLD, "failed back-mapping of indices!\n",
                filename, __LINE__);
@@ -1755,7 +1758,7 @@ stripe_test_mapping1(void)
   }
   */
   stripe_test_mapping_generic(1, &s, num_query_stripes, q,
-                              num_ref_pos, ref_pos);
+                              num_ref_pos, ref_pos, 0);
 }
 
 
@@ -1788,7 +1791,51 @@ stripe_test_mapping2(void)
         28*0 +0, 30*0 +1 };
   stripe_test_mapping_generic(num_list_stripes, s,
                               num_query_stripes, q,
-                              num_ref_pos, ref_pos);
+                              num_ref_pos, ref_pos, 0);
+}
+
+static void
+stripe_test_mapping3(void)
+{
+  /* positions:
+   *      0    1    2    3    4    5    6    7    8
+   * index values:
+   * a=   0, 100, 101, 102, 103, 100, 101, 102, 103
+   * b=   0, 1<<24 + a[1..] */
+  enum {
+    num_list_stripes = 3,
+    num_query_stripes = 2,
+    num_ref_pos = 8,
+    /* unfortunately, this test is far from a black-box test in that
+     * block_ofs needs to match the blocking factor used in
+     * xt_stripes_detect_duplicate */
+#if XT_INT_MAX >= INT_MAX
+    block_ofs = 1 << 24,
+#else
+    block_ofs = XT_INT_MAX/2 + (XT_INT_MAX&1),
+#endif
+  };
+  Xt_int idx_ofs[2] = { 100,
+                        100+block_ofs
+  };
+  enum {
+    num_test_variations = sizeof (idx_ofs) / sizeof (idx_ofs[0]),
+  };
+  for (size_t test_variant = 0; test_variant < num_test_variations;
+       ++test_variant)
+  {
+    struct Xt_stripe list_stripes[num_list_stripes] = {
+      { 0, 1, 1},
+      { idx_ofs[test_variant], 1, 4 },
+      { idx_ofs[test_variant], 1, 4 }
+    };
+    const struct Xt_stripe *query_stripes = list_stripes+1;
+    static const int ref_pos[num_ref_pos]
+      = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    stripe_test_mapping_generic(num_list_stripes, list_stripes,
+                                num_query_stripes, query_stripes,
+                                num_ref_pos, ref_pos, 1);
+  }
 }
 
 

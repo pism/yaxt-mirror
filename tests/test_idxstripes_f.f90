@@ -86,6 +86,7 @@ PROGRAM test_idxstripes_f
   CALL stripe_test_general6
   CALL stripe_test_mapping1
   CALL stripe_test_mapping2
+  CALL stripe_test_mapping3
   CALL test_intersection0
   CALL test_intersection1
   CALL test_intersection2
@@ -235,8 +236,9 @@ CONTAINS
   END SUBROUTINE stripe_test_general6
 
   SUBROUTINE stripe_test_mapping_generic(num_list_stripes, list_stripes, &
-       num_query_stripes, query_stripes, num_ref_pos, ref_pos)
+       num_query_stripes, query_stripes, num_ref_pos, ref_pos, single_match_only)
     INTEGER, INTENT(in) :: num_list_stripes, num_query_stripes, num_ref_pos
+    LOGICAL, INTENT(in) :: single_match_only
     TYPE(xt_stripe), INTENT(in) :: list_stripes(num_list_stripes), &
          query_stripes(num_query_stripes)
     INTEGER, INTENT(in) :: ref_pos(num_ref_pos)
@@ -253,7 +255,7 @@ CONTAINS
     expected_unmatched = COUNT(ref_pos(:) == -1)
     num_unmatched &
          = xt_idxlist_get_pos_exts_of_index_stripes(&
-         idxstripes, query_stripes, pos_ext, .FALSE.)
+         idxstripes, query_stripes, pos_ext, single_match_only)
     num_pos = SUM(ABS(pos_ext(:)%size))
     num_query_pos = SUM(query_stripes%nstrides)
     IF (num_ref_pos < num_query_pos) &
@@ -291,7 +293,7 @@ CONTAINS
       query_list = xt_idxstripes_new(query_stripes)
       num_no_pos = xt_idxlist_get_positions_of_indices(&
            query_list, indices_at_matched_pos, &
-           expanded_pos(ofs+1:ofs+num_pos), .FALSE.);
+           expanded_pos(ofs+1:ofs+num_pos), single_match_only);
       IF (num_no_pos /= 0) THEN
         CALL test_abort("failed back-mapping of indices!", filename, __LINE__)
       END IF
@@ -335,7 +337,7 @@ CONTAINS
               xt_stripe(9,3,5) /) ! 9, 12, 15, 18, 21
     INTEGER, PARAMETER :: ref_pos(num_ref_pos) = (/ 5, 2, 1, 2, 3, 4, 5, 4 /)
     CALL stripe_test_mapping_generic(num_list_stripes, list_stripes, &
-         num_query_stripes, query_stripes, num_ref_pos, ref_pos)
+         num_query_stripes, query_stripes, num_ref_pos, ref_pos, .FALSE.)
   END SUBROUTINE stripe_test_mapping1
 
 
@@ -364,8 +366,47 @@ CONTAINS
          &    18*0 -1, 20*0 -1, 22*0 -1, 24*0 -1, 26*0 -1, &
          &    28*0 +0, 30*0 +1 /)
     CALL stripe_test_mapping_generic(num_list_stripes, list_stripes, &
-         num_query_stripes, query_stripes, num_ref_pos, ref_pos)
+         num_query_stripes, query_stripes, num_ref_pos, ref_pos, .FALSE.)
   END SUBROUTINE stripe_test_mapping2
+
+  SUBROUTINE stripe_test_mapping3
+    ! positions:
+    !      0    1    2    3    4    5    6    7    8
+    ! index values:
+    ! a=   0, 100, 101, 102, 103, 100, 101, 102, 103
+    ! b=   0, 1<<24 + a[1..] !/
+    INTEGER, PARAMETER :: num_list_stripes = 3, &
+         num_query_stripes = 2, &
+         num_ref_pos = 8, &
+         num_test_variations = 2
+    ! unfortunately, this test is far from a black-box test in that
+    ! block_ofs needs to match the blocking factor used in
+    ! xt_stripes_detect_duplicate
+#ifdef HAVE_FC_MERGE_INIT
+    INTEGER(xi), PARAMETER :: block_ofs = &
+         ISHFT(1_xi, MERGE(24_xi, BIT_SIZE(1_xi)-2_xi, BIT_SIZE(1_xi)>=30_xi))
+#else
+    INTEGER(xi), PARAMETER :: block_ofs &
+         = 2**((1_xi - (1_xi - SIGN(1_xi, BIT_SIZE(1_xi) - 29_xi)) / 2_xi) * 24_xi &
+         &     + (1_xi - SIGN(1_xi, BIT_SIZE(1_xi) - 29_xi)) / 2_xi &
+         &       * BIT_SIZE(1_xi)-2_xi)
+#endif
+    INTEGER(xi), PARAMETER :: &
+         idx_ofs(num_test_variations) = (/ 100_xi, 100_xi+block_ofs /)
+    TYPE(xt_stripe) :: list_stripes(num_list_stripes)
+    INTEGER, PARAMETER :: ref_pos(num_ref_pos) &
+         = (/ 1, 2, 3, 4, 5, 6, 7, 8 /)
+    INTEGER :: test_variant
+
+    DO test_variant = 1, num_test_variations
+      list_stripes(1) = xt_stripe(0, 1, 1)
+      list_stripes(2) = xt_stripe(idx_ofs(test_variant), 1, 4)
+      list_stripes(3) = xt_stripe(idx_ofs(test_variant), 1, 4)
+      CALL stripe_test_mapping_generic(num_list_stripes, list_stripes, &
+           num_query_stripes, list_stripes(2:), &
+           num_ref_pos, ref_pos, .TRUE.)
+    END DO
+  END SUBROUTINE stripe_test_mapping3
 
   SUBROUTINE test_intersection(stripes_a, stripes_b, &
        ref_indices_a, ref_indices_b)

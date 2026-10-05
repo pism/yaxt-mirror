@@ -295,7 +295,7 @@ xt_stripes_detect_duplicate(size_t num_stripes,
         }
       }
       Xt_uint remaining = (Xt_uint)((Xt_uint)index_range.max - (Xt_uint)ofs);
-      if (dup || remaining >= (Xt_uint)block_max)
+      if (dup || remaining < (Xt_uint)block_max)
         break;
       ofs = (Xt_int)(ofs + block_max);
       memset(occupancy_bm, 0, bm_size * sizeof (size_t));
