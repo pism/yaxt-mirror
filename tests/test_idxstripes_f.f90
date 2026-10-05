@@ -64,6 +64,7 @@ PROGRAM test_idxstripes_f
        xt_idxlist_get_max_index, xt_idxlist_get_min_index, &
        xt_idxlist_get_intersection, &
        xt_idxlist_get_index_at_position, xt_idxlist_get_indices_at_positions, &
+       xt_idxlist_get_positions_of_indices, &
        xt_idxlist_get_bounding_box, OPERATOR(/=), OPERATOR(==), &
        xt_idxlist_get_pos_exts_of_index_stripes, &
        xt_idxlist_get_num_indices, xt_idxvec_new, &
@@ -84,6 +85,7 @@ PROGRAM test_idxstripes_f
   CALL stripe_test_general5
   CALL stripe_test_general6
   CALL stripe_test_mapping1
+  CALL stripe_test_mapping2
   CALL test_intersection0
   CALL test_intersection1
   CALL test_intersection2
@@ -232,44 +234,89 @@ CONTAINS
     CALL stripe_test_general(stripes, ref_indices(1:0))
   END SUBROUTINE stripe_test_general6
 
-  SUBROUTINE stripe_test_mapping_generic(num_list_stripes, list_stripes,
-    num_query_stripes, query_stripes, num_ref_pos, ref_pos)
+  SUBROUTINE stripe_test_mapping_generic(num_list_stripes, list_stripes, &
+       num_query_stripes, query_stripes, num_ref_pos, ref_pos)
     INTEGER, INTENT(in) :: num_list_stripes, num_query_stripes, num_ref_pos
     TYPE(xt_stripe), INTENT(in) :: list_stripes(num_list_stripes), &
          query_stripes(num_query_stripes)
     INTEGER, INTENT(in) :: ref_pos(num_ref_pos)
-    TYPE(xt_idxlist) :: idxstripes
+    TYPE(xt_idxlist) :: idxstripes, query_list
     TYPE(xt_pos_ext), ALLOCATABLE :: pos_ext(:)
     INTEGER, ALLOCATABLE :: expanded_pos(:)
+    INTEGER(xt_int_kind), ALLOCATABLE :: indices_at_matched_pos(:)
     INTEGER :: num_pos_ext, i, j, num_unmatched, num_query_pos, num_pos, &
-         ofs, pos, pe_size, step, pe_abs_size
+         ofs, pos, pe_size, step, pe_abs_size, expected_unmatched, &
+         pos_ext_j_size, num_undef, num_no_pos
     LOGICAL :: mismatch
 
     idxstripes = xt_idxstripes_new(list_stripes)
+    expected_unmatched = COUNT(ref_pos(:) == -1)
     num_unmatched &
          = xt_idxlist_get_pos_exts_of_index_stripes(&
-         idxstripes, q, pos_ext, .FALSE.)
+         idxstripes, query_stripes, pos_ext, .FALSE.)
     num_pos = SUM(ABS(pos_ext(:)%size))
-    num_query_pos = SUM(q%nstrides)
-    IF (num_pos + num_unmatched /= num_query_pos) THEN
+    num_query_pos = SUM(query_stripes%nstrides)
+    IF (num_ref_pos < num_query_pos) &
+         expected_unmatched = expected_unmatched &
+         + num_query_pos - num_ref_pos
+    IF (num_pos + num_unmatched /= num_query_pos &
+         .OR. expected_unmatched /= num_unmatched) THEN
       PUT_ERR("incomplete result!")
     END IF
-    ALLOCATE(expanded_pos(num_pos))
+    ALLOCATE(expanded_pos(num_ref_pos &
+         + MERGE(2*num_pos, 0, expected_unmatched>0 .AND. num_ref_pos /= num_pos)))
     num_pos_ext = SIZE(pos_ext)
-    ofs = 0
-    DO i = 1, num_pos_ext
-      pos = pos_ext(i)%start
-      pe_size = pos_ext(i)%size
-      step = MERGE(1, -1, pe_size >= 0)
-      pe_abs_size = ABS(pe_size)
-      DO j = 1, pe_abs_size
-        expanded_pos(ofs+j) = pos
-        pos = pos + step
+    IF (expected_unmatched > 0 .AND. num_ref_pos /= num_pos) THEN
+      ! because position extents do not explicitly contain unmatched
+      ! positions, those must be reconstructed laborously here
+      ! 1. transform matched positions into indices
+      ! 1.a. go from pos_ext to positions
+      ofs = num_ref_pos
+      DO j = 1, num_pos_ext
+        pos_ext_j_size = pos_ext(j)%size
+        DO i = 1, pos_ext_j_size
+          ofs = ofs + 1
+          expanded_pos(ofs) = pos_ext(j)%start + i - 1
+        END DO
       END DO
-      ofs = ofs + pe_abs_size
-    END DO
-    mismatch = num_pos /= num_ref_pos
-    IF (.NOT. mismatch) mismatch = ANY(ref_pos /= expanded_pos)
+      IF (ofs /= num_ref_pos + num_pos) &
+           CALL test_abort("unexpected progress", filename, __LINE__)
+      ALLOCATE(indices_at_matched_pos(num_pos))
+      num_undef = xt_idxlist_get_indices_at_positions(&
+        idxstripes, expanded_pos(num_ref_pos+1:num_ref_pos+num_pos), &
+        indices_at_matched_pos, -HUGE(1_xt_int_kind))
+      IF (num_undef /= 0) &
+           CALL test_abort("failed index query!", filename, __LINE__)
+      ! 2. map indices back to positions in query stripes
+      query_list = xt_idxstripes_new(query_stripes)
+      num_no_pos = xt_idxlist_get_positions_of_indices(&
+           query_list, indices_at_matched_pos, &
+           expanded_pos(ofs+1:ofs+num_pos), .FALSE.);
+      IF (num_no_pos /= 0) THEN
+        CALL test_abort("failed back-mapping of indices!", filename, __LINE__)
+      END IF
+      expanded_pos(1:num_ref_pos) = -1
+      DO i = 1, num_pos
+        expanded_pos(expanded_pos(ofs+i)+1) = expanded_pos(num_ref_pos+i)
+      END DO
+      CALL xt_idxlist_delete(query_list)
+    ELSE
+      ofs = 0
+      DO i = 1, num_pos_ext
+        pos = pos_ext(i)%start
+        pe_size = pos_ext(i)%size
+        step = MERGE(1, -1, pe_size >= 0)
+        pe_abs_size = ABS(pe_size)
+        DO j = 1, pe_abs_size
+          expanded_pos(ofs+j) = pos
+          pos = pos + step
+        END DO
+        ofs = ofs + pe_abs_size
+      END DO
+    END IF
+    mismatch = num_pos + num_unmatched /= num_ref_pos + expected_unmatched &
+         .AND. num_pos + num_unmatched /= num_ref_pos
+    IF (.NOT. mismatch) mismatch = ANY(ref_pos /= expanded_pos(1:num_ref_pos))
     IF (mismatch) THEN
       PUT_ERR("xt_idxlist_get_pos_exts_of_index_stripes mismatch")
     END IF
@@ -278,14 +325,47 @@ CONTAINS
   END SUBROUTINE stripe_test_mapping_generic
 
   SUBROUTINE stripe_test_mapping1
-    TYPE(xt_stripe), PARAMETER :: s(1) = (/ xt_stripe(5,1,6) /) ! 5..10
-    INTEGER, PARAMETER :: num_list_stripes = 3, num_ref_pos = 8
-    TYPE(xt_stripe), PARAMETER :: q(num_list_stripes) &
+    INTEGER, PARAMETER :: num_list_stripes=1, num_query_stripes = 3, &
+         num_ref_pos = 8
+    TYPE(xt_stripe), PARAMETER :: &
+         list_stripes(num_list_stripes) = (/ xt_stripe(5,1,6) /) ! 5..10
+    TYPE(xt_stripe), PARAMETER :: query_stripes(num_query_stripes) &
          = (/ xt_stripe(16,-3,6), & ! 16, 13, 10, 7, 4, 1,
               xt_stripe(6,1,7), & ! 6, 7, 8, 9, 10, 11, 12,
               xt_stripe(9,3,5) /) ! 9, 12, 15, 18, 21
     INTEGER, PARAMETER :: ref_pos(num_ref_pos) = (/ 5, 2, 1, 2, 3, 4, 5, 4 /)
+    CALL stripe_test_mapping_generic(num_list_stripes, list_stripes, &
+         num_query_stripes, query_stripes, num_ref_pos, ref_pos)
   END SUBROUTINE stripe_test_mapping1
+
+
+  SUBROUTINE stripe_test_mapping2
+    ! positions:
+    !   0   1   2   3   4   5   6   7
+    ! index values:
+    !  28, 30, 32, 34, 36, 38, 54, 37 */
+    INTEGER, PARAMETER :: num_list_stripes = 2, num_query_stripes = 5, &
+         num_ref_pos = 22
+
+    TYPE(xt_stripe), PARAMETER :: list_stripes(num_list_stripes) &
+         = (/ xt_stripe(28, 2, 6), xt_stripe(54 , -17, 2) /), &
+         query_stripes(num_query_stripes) &
+         = (/ xt_stripe(49, 1, 6), xt_stripe(63, -3, 1), xt_stripe(79, 2, 1), &
+         &    xt_stripe(59, -2, 7), xt_stripe(18, 2, 7) /)
+    ! 49, 50, 51, 52, 53, 54,
+    ! 63,
+    ! 79,
+    ! 59, 57, 55, 53, 51, 49, 47,
+    ! 18, 20, 22, 24, 26, 28, 30,
+    INTEGER, PARAMETER :: ref_pos(num_ref_pos) &
+         = (/ 49*0 -1, 50*0 -1, 51*0 -1, 52*0 -1, 53*0 -1, &
+         &    54*0 +6, 63*0 -1, 79*0 -1, 59*0 -1, 57*0 -1, &
+         &    55*0 -1, 53*0 -1, 51*0 -1, 49*0 -1, 47*0 -1, &
+         &    18*0 -1, 20*0 -1, 22*0 -1, 24*0 -1, 26*0 -1, &
+         &    28*0 +0, 30*0 +1 /)
+    CALL stripe_test_mapping_generic(num_list_stripes, list_stripes, &
+         num_query_stripes, query_stripes, num_ref_pos, ref_pos)
+  END SUBROUTINE stripe_test_mapping2
 
   SUBROUTINE test_intersection(stripes_a, stripes_b, &
        ref_indices_a, ref_indices_b)

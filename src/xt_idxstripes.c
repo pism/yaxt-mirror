@@ -1848,7 +1848,8 @@ idxstripes_get_pos_exts_of_index_stripes(
             candidates.num, candidates.size != 0
             ? candidates.p.vec : &candidates.p.e1);
         } while ((stripes[i].stride == 0) & (--j > 0));
-      }
+      } else
+        unmatched += (size_t)j;
     }
     if (candidates.size)
       free(candidates.p.vec);

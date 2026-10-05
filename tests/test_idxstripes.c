@@ -60,10 +60,14 @@
 
 #include <yaxt.h>
 
+#include "core/core.h"
 #include "core/ppm_xfuncs.h"
 #include "tests.h"
 #include "ctest_common.h"
 #include "test_idxlist_utils.h"
+
+
+static const char filename[] = "test_idxstripes.c";
 
 static void
 do_tests(Xt_idxlist idxlist, const Xt_int *ref_indices, int num_indices);
@@ -86,6 +90,8 @@ static void
 stripe_test_general6(void);
 static void
 stripe_test_mapping1(void);
+static void
+stripe_test_mapping2(void);
 
 static void
 stripe_test_intersection(int num_stripes_a, const struct Xt_stripe *stripes_a,
@@ -147,6 +153,8 @@ int main(int argc, char **argv) {
   stripe_test_general6();
 
   stripe_test_mapping1();
+
+  stripe_test_mapping2();
 
   { // intersection test
     enum {
@@ -1642,6 +1650,9 @@ stripe_test_mapping_generic(
 {
   Xt_idxlist idxstripes = xt_idxstripes_new(list_stripes, num_list_stripes);
   struct Xt_pos_ext *pos_ext = NULL; int num_pos_ext;
+  int expected_unmatched = 0;
+  for (int i = 0; i < num_ref_pos; ++i)
+    expected_unmatched += (ref_pos[i] == -1);
   int num_unmatched
     = xt_idxlist_get_pos_exts_of_index_stripes(
       idxstripes, num_query_stripes, query_stripes, &num_pos_ext, &pos_ext, 0);
@@ -1651,22 +1662,65 @@ stripe_test_mapping_generic(
   int num_query_pos = 0;
   for (int i = 0; i < num_query_stripes; ++i)
     num_query_pos += query_stripes[i].nstrides;
-  if (num_pos + num_unmatched != num_query_pos)
+  if (num_ref_pos < num_query_pos)
+    expected_unmatched += num_query_pos - num_ref_pos;
+  if (num_pos + num_unmatched != num_query_pos
+      || expected_unmatched != num_unmatched)
     PUT_ERR("incomplete result: num_pos=%d + num_unmatched=%d"
             " != num_query_pos=%d\n",
             num_pos, num_unmatched, num_query_pos);
-  int *expanded_pos = xmalloc(num_pos * sizeof (*expanded_pos));
-  size_t ofs = 0;
-  for (int i = 0; i < num_pos_ext; ++i) {
-    int pos = pos_ext[i].start,
-      pe_size = pos_ext[i].size,
-      step = pe_size >= 0 ? 1 : -1,
-      pe_abs_size = abs(pe_size);
-    for (int j = 0; j < pe_abs_size; ++j, pos += step)
-      expanded_pos[ofs+(size_t)j] = pos;
-    ofs += (size_t)pe_abs_size;
+  int *expanded_pos = xmalloc(((size_t)(2*(expected_unmatched>0)*num_pos)
+                               + (size_t)num_ref_pos)
+                              * sizeof (*expanded_pos));
+  if (expected_unmatched && num_ref_pos != num_pos) {
+    /* because position extents do not explicitly contain unmatched
+     * positions, those must be reconstructed laborously here */
+    /* 1. transform matched positions into indices */
+    /* 1.a. go from pos_ext to positions */
+    Xt_int indices_at_matched_pos[num_pos];
+    size_t ofs = (size_t)num_ref_pos;
+    for (int j = 0; j < num_pos_ext; ++j) {
+      int pos_ext_j_size = pos_ext[j].size;
+      for (int i = 0; i < pos_ext_j_size; ++i, ++ofs)
+        expanded_pos[ofs] = pos_ext[j].start + i;
+    }
+    assert(ofs == (size_t)num_ref_pos + (size_t)num_pos);
+    int num_undef
+      = xt_idxlist_get_indices_at_positions(
+        idxstripes, expanded_pos + num_ref_pos, num_pos,
+        indices_at_matched_pos, XT_INT_MIN);
+    if (num_undef != 0)
+      Xt_abort(MPI_COMM_WORLD, "failed index query!\n", filename, __LINE__);
+    assert(num_undef == 0);
+    /* 2. map indices back to positions in query stripes */
+    Xt_idxlist query_list
+      = xt_idxstripes_new(query_stripes, num_query_stripes);
+    int num_no_pos
+      = xt_idxlist_get_positions_of_indices(
+        query_list, indices_at_matched_pos, num_pos,
+        expanded_pos+num_ref_pos+num_pos, 0);
+    if (num_no_pos != 0)
+      Xt_abort(MPI_COMM_WORLD, "failed back-mapping of indices!\n",
+               filename, __LINE__);
+    for (int i = 0; i < num_ref_pos; ++i)
+      expanded_pos[i] = -1;
+    for (int i = 0, out_ofs = num_ref_pos + num_pos; i < num_pos; ++i)
+      expanded_pos[expanded_pos[out_ofs+i]] = expanded_pos[num_ref_pos+i];
+    xt_idxlist_delete(query_list);
+  } else {
+    size_t ofs = 0;
+    for (int i = 0; i < num_pos_ext; ++i) {
+      int pos = pos_ext[i].start,
+        pe_size = pos_ext[i].size,
+        step = pe_size >= 0 ? 1 : -1,
+        pe_abs_size = abs(pe_size);
+      for (int j = 0; j < pe_abs_size; ++j, pos += step)
+        expanded_pos[ofs+(size_t)j] = pos;
+      ofs += (size_t)pe_abs_size;
+    }
   }
-  bool mismatch = num_pos != num_ref_pos;
+  bool mismatch = num_pos + num_unmatched != num_ref_pos + expected_unmatched
+    && num_pos + num_unmatched != num_ref_pos;
   if (!mismatch)
     for (size_t i = 0; i < (size_t)num_ref_pos; ++i)
       mismatch |= (ref_pos[i] != expanded_pos[i]);
@@ -1701,6 +1755,39 @@ stripe_test_mapping1(void)
   }
   */
   stripe_test_mapping_generic(1, &s, num_query_stripes, q,
+                              num_ref_pos, ref_pos);
+}
+
+
+static void
+stripe_test_mapping2(void)
+{
+  /* positions:
+   *   0   1   2   3   4   5   6   7
+   * index values:
+   *  28, 30, 32, 34, 36, 38, 54, 37 */
+  enum {
+    num_list_stripes = 2,
+    num_query_stripes = 5,
+    num_ref_pos = 22,
+  };
+  static const struct Xt_stripe s[] = {{ 28, 2, 6}, { 54 , -17, 2 }};
+  static const struct Xt_stripe q[num_query_stripes]
+    = { {49, 1, 6}, {63, -3, 1}, {79, 2, 1}, {59, -2, 7}, {18, 2, 7} };
+  /* 49, 50, 51, 52, 53, 54,
+     63,
+     79,
+     59, 57, 55, 53, 51, 49, 47,
+     18, 20, 22, 24, 26, 28, 30,
+     */
+  static const int ref_pos[num_ref_pos]
+    = { 49*0 -1, 50*0 -1, 51*0 -1, 52*0 -1, 53*0 -1,
+        54*0 +6, 63*0 -1, 79*0 -1, 59*0 -1, 57*0 -1,
+        55*0 -1, 53*0 -1, 51*0 -1, 49*0 -1, 47*0 -1,
+        18*0 -1, 20*0 -1, 22*0 -1, 24*0 -1, 26*0 -1,
+        28*0 +0, 30*0 +1 };
+  stripe_test_mapping_generic(num_list_stripes, s,
+                              num_query_stripes, q,
                               num_ref_pos, ref_pos);
 }
 
