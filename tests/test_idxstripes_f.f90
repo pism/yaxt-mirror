@@ -183,8 +183,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general
 
   SUBROUTINE stripe_test_general1
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
-         xt_stripe(10, 1, 5), xt_stripe(20, 1, 5) /);
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0_xi, 1_xi, 5), &
+         xt_stripe(10_xi, 1_xi, 5), xt_stripe(20_xi, 1_xi, 5) /);
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 0_xi,  1_xi,  2_xi,  3_xi,  4_xi, &
          &   10_xi, 11_xi, 12_xi, 13_xi, 14_xi, &
@@ -193,8 +193,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general1
 
   SUBROUTINE stripe_test_general2
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
-         xt_stripe(10, 2, 5), xt_stripe(20, 3, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0_xi, 1_xi, 5), &
+         xt_stripe(10_xi, 2_xi, 5), xt_stripe(20_xi, 3_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(15) &
          = (/ 0_xi,  1_xi,  2_xi,  3_xi,  4_xi, &
          &   10_xi, 12_xi, 14_xi, 16_xi, 18_xi, &
@@ -203,8 +203,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general2
 
   SUBROUTINE stripe_test_general3
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 6, 5), &
-         xt_stripe(1, 3, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0_xi, 6_xi, 5), &
+         xt_stripe(1_xi, 3_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, 6_xi, 12_xi, 18_xi, 24_xi, &
          &    1_xi, 4_xi,  7_xi, 10_xi, 13_xi /)
@@ -212,8 +212,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general3
 
   SUBROUTINE stripe_test_general4
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, -1, 5), &
-         xt_stripe(1, 1, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0_xi, -1_xi, 5), &
+         xt_stripe(1_xi, 1_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, -1_xi, -2_xi, -3_xi, -4_xi, &
          &    1_xi,  2_xi,  3_xi,  4_xi,  5_xi /)
@@ -221,8 +221,8 @@ CONTAINS
   END SUBROUTINE stripe_test_general4
 
   SUBROUTINE stripe_test_general5
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(9, -2, 5), &
-         xt_stripe(0, 2, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(9_xi, -2_xi, 5), &
+         xt_stripe(0_xi, 2_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 9_xi,  7_xi,  5_xi,  3_xi,  1_xi, &
          &    0_xi,  2_xi,  4_xi,  6_xi,  8_xi /)
@@ -230,7 +230,7 @@ CONTAINS
   END SUBROUTINE stripe_test_general5
 
   SUBROUTINE stripe_test_general6
-    TYPE(xt_stripe), PARAMETER :: stripes(1) = (/ xt_stripe(179, -2, 0) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(1) = (/ xt_stripe(179_xi, -2_xi, 0) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ 0_xi /)
     CALL stripe_test_general(stripes, ref_indices(1:0))
   END SUBROUTINE stripe_test_general6
@@ -330,11 +330,11 @@ CONTAINS
     INTEGER, PARAMETER :: num_list_stripes=1, num_query_stripes = 3, &
          num_ref_pos = 8
     TYPE(xt_stripe), PARAMETER :: &
-         list_stripes(num_list_stripes) = (/ xt_stripe(5,1,6) /) ! 5..10
+         list_stripes(num_list_stripes) = (/ xt_stripe(5_xi,1_xi,6) /) ! 5..10
     TYPE(xt_stripe), PARAMETER :: query_stripes(num_query_stripes) &
-         = (/ xt_stripe(16,-3,6), & ! 16, 13, 10, 7, 4, 1,
-              xt_stripe(6,1,7), & ! 6, 7, 8, 9, 10, 11, 12,
-              xt_stripe(9,3,5) /) ! 9, 12, 15, 18, 21
+         = (/ xt_stripe(16_xi,-3_xi,6), & ! 16, 13, 10, 7, 4, 1,
+              xt_stripe(6_xi,1_xi,7), & ! 6, 7, 8, 9, 10, 11, 12,
+              xt_stripe(9_xi,3_xi,5) /) ! 9, 12, 15, 18, 21
     INTEGER, PARAMETER :: ref_pos(num_ref_pos) = (/ 5, 2, 1, 2, 3, 4, 5, 4 /)
     CALL stripe_test_mapping_generic(num_list_stripes, list_stripes, &
          num_query_stripes, query_stripes, num_ref_pos, ref_pos, .FALSE.)
@@ -350,10 +350,10 @@ CONTAINS
          num_ref_pos = 22
 
     TYPE(xt_stripe), PARAMETER :: list_stripes(num_list_stripes) &
-         = (/ xt_stripe(28, 2, 6), xt_stripe(54 , -17, 2) /), &
+         = (/ xt_stripe(28_xi, 2_xi, 6), xt_stripe(54_xi, -17_xi, 2) /), &
          query_stripes(num_query_stripes) &
-         = (/ xt_stripe(49, 1, 6), xt_stripe(63, -3, 1), xt_stripe(79, 2, 1), &
-         &    xt_stripe(59, -2, 7), xt_stripe(18, 2, 7) /)
+         = (/ xt_stripe(49_xi, 1_xi, 6), xt_stripe(63_xi, -3_xi, 1), xt_stripe(79_xi, 2_xi, 1), &
+         &    xt_stripe(59_xi, -2_xi, 7), xt_stripe(18_xi, 2_xi, 7) /)
     ! 49, 50, 51, 52, 53, 54,
     ! 63,
     ! 79,
@@ -399,9 +399,9 @@ CONTAINS
     INTEGER :: test_variant
 
     DO test_variant = 1, num_test_variations
-      list_stripes(1) = xt_stripe(0, 1, 1)
-      list_stripes(2) = xt_stripe(idx_ofs(test_variant), 1, 4)
-      list_stripes(3) = xt_stripe(idx_ofs(test_variant), 1, 4)
+      list_stripes(1) = xt_stripe(0_xi, 1_xi, 1)
+      list_stripes(2) = xt_stripe(idx_ofs(test_variant), 1_xi, 4)
+      list_stripes(3) = xt_stripe(idx_ofs(test_variant), 1_xi, 4)
       CALL stripe_test_mapping_generic(num_list_stripes, list_stripes, &
            num_query_stripes, list_stripes(2:), &
            num_ref_pos, ref_pos, .TRUE.)
@@ -432,16 +432,16 @@ CONTAINS
   END SUBROUTINE test_intersection
 
   SUBROUTINE test_intersection0
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 0, 0) /), &
-         stripes_b(1) = (/ xt_stripe(1, 1, 8) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0_xi, 0_xi, 0) /), &
+         stripes_b(1) = (/ xt_stripe(1_xi, 1_xi, 8) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ 0_xi /)
     CALL test_intersection(stripes_a(1:0), stripes_b, ref_indices(1:0))
   END SUBROUTINE test_intersection0
 
   SUBROUTINE test_intersection1
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 1, 4), &
-         xt_stripe(6, 1, 4) /), &
-         stripes_b(1) = (/ xt_stripe(1, 1, 8) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0_xi, 1_xi, 4), &
+         xt_stripe(6_xi, 1_xi, 4) /), &
+         stripes_b(1) = (/ xt_stripe(1_xi, 1_xi, 8) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 1_xi, 2_xi, 3_xi, 6_xi, 7_xi, 8_xi /)
     CALL check_stripe_gen(SIZE(stripes_a), stripes_a)
@@ -449,9 +449,9 @@ CONTAINS
   END SUBROUTINE test_intersection1
 
   SUBROUTINE test_intersection2
-    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 1, 4), &
-         xt_stripe(6, 1, 4), xt_stripe(11, 1, 4) /), &
-         stripes_b(2) = (/ xt_stripe(1, 1, 7), xt_stripe(9, 1, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0_xi, 1_xi, 4), &
+         xt_stripe(6_xi, 1_xi, 4), xt_stripe(11_xi, 1_xi, 4) /), &
+         stripes_b(2) = (/ xt_stripe(1_xi, 1_xi, 7), xt_stripe(9_xi, 1_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(9) &
          = (/ 1_xi, 2_xi, 3_xi, 6_xi, 7_xi, 9_xi, 11_xi, 12_xi, 13_xi /)
     CALL check_stripe_gen(SIZE(stripes_a), stripes_a)
@@ -459,54 +459,54 @@ CONTAINS
   END SUBROUTINE test_intersection2
 
   SUBROUTINE test_intersection3
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 1, 3), &
-         xt_stripe(8, 1, 3) /), &
-         stripes_b(2) = (/ xt_stripe(3, 1, 5), xt_stripe(11, 1, 3) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0_xi, 1_xi, 3), &
+         xt_stripe(8_xi, 1_xi, 3) /), &
+         stripes_b(2) = (/ xt_stripe(3_xi, 1_xi, 5), xt_stripe(11_xi, 1_xi, 3) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ -1_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices(1:0))
   END SUBROUTINE test_intersection3
 
   SUBROUTINE test_intersection4
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 1, 10) /), &
-         stripes_b(2) = (/ xt_stripe(0, 2, 5), xt_stripe(9, -2, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0_xi, 1_xi, 10) /), &
+         stripes_b(2) = (/ xt_stripe(0_xi, 2_xi, 5), xt_stripe(9_xi, -2_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 8_xi, 9_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection4
 
   SUBROUTINE test_intersection5
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 3, 5), &
-         xt_stripe(1, 7, 5) /), &
-         stripes_b(2) = (/ xt_stripe(0, 2, 7), xt_stripe(24, -1, 10) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0_xi, 3_xi, 5), &
+         xt_stripe(1_xi, 7_xi, 5) /), &
+         stripes_b(2) = (/ xt_stripe(0_xi, 2_xi, 7), xt_stripe(24_xi, -1_xi, 10) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 0_xi, 6_xi, 8_xi, 12_xi, 15_xi, 22_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection5
 
   SUBROUTINE test_intersection6
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 1, 10) /), &
-         stripes_b(2) = (/ xt_stripe(5, 1, 5), xt_stripe(4, -1, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0_xi, 1_xi, 10) /), &
+         stripes_b(2) = (/ xt_stripe(5_xi, 1_xi, 5), xt_stripe(4_xi, -1_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
          = (/ 0_xi, 1_xi, 2_xi, 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 8_xi, 9_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection6
 
   SUBROUTINE test_intersection7
-    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0, 1, 10) , &
-            xt_stripe(20, 1, 5) /), &
-         stripes_b(2) = (/ xt_stripe(3, 1, 5), xt_stripe(17, 1, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(2) = (/ xt_stripe(0_xi, 1_xi, 10) , &
+            xt_stripe(20_xi, 1_xi, 5) /), &
+         stripes_b(2) = (/ xt_stripe(3_xi, 1_xi, 5), xt_stripe(17_xi, 1_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(7) &
          = (/ 3_xi, 4_xi, 5_xi, 6_xi, 7_xi, 20_xi, 21_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection7
 
   SUBROUTINE test_intersection8
-    TYPE(xt_stripe), PARAMETER :: stripes_a(10) = (/ xt_stripe(0, 1, 2), &
-         xt_stripe(3, 1, 2), xt_stripe(5, 1, 2), xt_stripe(8, 1, 2), &
-         xt_stripe(10, 1, 2), xt_stripe(14, 1, 2), xt_stripe(17, 1, 2), &
-         xt_stripe(20, 1, 2), xt_stripe(23, 1, 2), xt_stripe(25, 1, 2) /), &
-         stripes_b(5) = (/ xt_stripe(5, 1, 3), xt_stripe(8, 1, 2), &
-         xt_stripe(19, 1, 1), xt_stripe(20, 1, 2), xt_stripe(30, 1, 2) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(10) = (/ xt_stripe(0_xi, 1_xi, 2), &
+         xt_stripe(3_xi, 1_xi, 2), xt_stripe(5_xi, 1_xi, 2), xt_stripe(8_xi, 1_xi, 2), &
+         xt_stripe(10_xi, 1_xi, 2), xt_stripe(14_xi, 1_xi, 2), xt_stripe(17_xi, 1_xi, 2), &
+         xt_stripe(20_xi, 1_xi, 2), xt_stripe(23_xi, 1_xi, 2), xt_stripe(25_xi, 1_xi, 2) /), &
+         stripes_b(5) = (/ xt_stripe(5_xi, 1_xi, 3), xt_stripe(8_xi, 1_xi, 2), &
+         xt_stripe(19_xi, 1_xi, 1), xt_stripe(20_xi, 1_xi, 2), xt_stripe(30_xi, 1_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(6) &
          = (/ 5_xi, 6_xi, 8_xi, 9_xi, 20_xi, 21_xi /)
     CALL check_stripe_gen(SIZE(stripes_a), stripes_a)
@@ -514,9 +514,9 @@ CONTAINS
   END SUBROUTINE test_intersection8
 
   SUBROUTINE test_intersection9
-    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0, 1, 5), &
-         xt_stripe(1, 1, 5), xt_stripe(2, 1, 5) /), &
-         stripes_b(1) = (/ xt_stripe(-2, 1, 10) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(3) = (/ xt_stripe(0_xi, 1_xi, 5), &
+         xt_stripe(1_xi, 1_xi, 5), xt_stripe(2_xi, 1_xi, 5) /), &
+         stripes_b(1) = (/ xt_stripe(-2_xi, 1_xi, 10) /)
 #ifndef __G95__
     INTEGER(xi) :: i
     INTEGER(xt_int_kind), PARAMETER :: ref_indices_a(7) &
@@ -532,15 +532,15 @@ CONTAINS
   END SUBROUTINE test_intersection9
 
   SUBROUTINE test_intersection10
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 2, 5) /), &
-         stripes_b(1) = (/ xt_stripe(1, 2, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0_xi, 2_xi, 5) /), &
+         stripes_b(1) = (/ xt_stripe(1_xi, 2_xi, 5) /)
     INTEGER(xt_int_kind), PARAMETER :: dummy(1) = (/ -1_xi /)
     CALL test_intersection(stripes_a, stripes_b, dummy(1:0))
   END SUBROUTINE test_intersection10
 
   SUBROUTINE test_intersection11
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0, 5, 20) /), &
-         stripes_b(1) = (/ xt_stripe(1, 7, 15) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(0_xi, 5_xi, 20) /), &
+         stripes_b(1) = (/ xt_stripe(1_xi, 7_xi, 15) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(3) = (/ 15_xi, 50_xi, 85_xi /)
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
   END SUBROUTINE test_intersection11
@@ -548,8 +548,8 @@ CONTAINS
   ! both ranges overlap in range but have no
   ! indices in common because of stride
   SUBROUTINE test_intersection12
-    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(34, 29, 12) /), &
-         stripes_b(1) = (/ xt_stripe(36, 7, 2) /)
+    TYPE(xt_stripe), PARAMETER :: stripes_a(1) = (/ xt_stripe(34_xi, 29_xi, 12) /), &
+         stripes_b(1) = (/ xt_stripe(36_xi, 7_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: dummy(1) = (/ -1_xi /)
 
     CALL test_intersection(stripes_a, stripes_b, dummy(1:0))
@@ -558,8 +558,8 @@ CONTAINS
   ! same as test_intersection12 but with negative stride
   SUBROUTINE test_intersection13
     TYPE(xt_stripe), PARAMETER :: &
-         stripes_a(1) = (/ xt_stripe(353, -29, 12) /), &
-         stripes_b(1) = (/ xt_stripe(36, 7, 2) /)
+         stripes_a(1) = (/ xt_stripe(353_xi, -29_xi, 12) /), &
+         stripes_b(1) = (/ xt_stripe(36_xi, 7_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: dummy(1) = (/ -1_xi /)
 
     CALL test_intersection(stripes_a, stripes_b, dummy(1:0))
@@ -567,8 +567,8 @@ CONTAINS
 
   SUBROUTINE test_intersection14
     TYPE(xt_stripe), PARAMETER :: &
-         stripes_a(1) = (/ xt_stripe(95, -29, 2) /), &
-         stripes_b(1) = (/ xt_stripe(81, 14, 2) /)
+         stripes_a(1) = (/ xt_stripe(95_xi, -29_xi, 2) /), &
+         stripes_b(1) = (/ xt_stripe(81_xi, 14_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ 95_xi /)
 
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
@@ -576,8 +576,8 @@ CONTAINS
 
   SUBROUTINE test_intersection15
     TYPE(xt_stripe), PARAMETER :: &
-         stripes_a(1) = (/ xt_stripe(546, 14, 2) /), &
-         stripes_b(1) = (/ xt_stripe(354, 206, 2) /)
+         stripes_a(1) = (/ xt_stripe(546_xi, 14_xi, 2) /), &
+         stripes_b(1) = (/ xt_stripe(354_xi, 206_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(1) = (/ 560_xi /)
 
     CALL test_intersection(stripes_a, stripes_b, ref_indices)
@@ -590,10 +590,10 @@ CONTAINS
       num_stripes_b = 2, &
       num_ref_indices = 2
     TYPE(xt_stripe), PARAMETER :: &
-         stripes_a(num_stripes_a) = (/ xt_stripe(0, 1, 2), &
-         &                             xt_stripe(59, 1, 1) /), &
-         stripes_b(num_stripes_b) = (/ xt_stripe(43, -42, 2), &
-         &                             xt_stripe(0, 35, 2) /)
+         stripes_a(num_stripes_a) = (/ xt_stripe(0_xi, 1_xi, 2), &
+         &                             xt_stripe(59_xi, 1_xi, 1) /), &
+         stripes_b(num_stripes_b) = (/ xt_stripe(43_xi, -42_xi, 2), &
+         &                             xt_stripe(0_xi, 35_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: &
          ref_indices(num_ref_indices) = (/ 0_xi, 1_xi /)
 
@@ -608,8 +608,8 @@ CONTAINS
       num_ref_indices_ab = 2, &
       num_ref_indices_ba = 1
     TYPE(xt_stripe), PARAMETER :: &
-         stripes_a(num_stripes_a) = (/ xt_stripe(7, 1, 3) /), &
-         stripes_b(num_stripes_b) = (/ xt_stripe(7, 0, 2) /)
+         stripes_a(num_stripes_a) = (/ xt_stripe(7_xi, 1_xi, 3) /), &
+         stripes_b(num_stripes_b) = (/ xt_stripe(7_xi, 0_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: &
          ref_indices_ab(num_ref_indices_ab) = (/ 7_xi, 7_xi /), &
          ref_indices_ba(num_ref_indices_ba) = (/ 7_xi /)
@@ -620,7 +620,7 @@ CONTAINS
   SUBROUTINE test_intersection_stripe2vec
     INTEGER, PARAMETER :: num_stripes = 3
     TYPE(xt_stripe), PARAMETER :: stripes(num_stripes) &
-         = (/ xt_stripe(4, 1, 1), xt_stripe(5, 1, 1), xt_stripe(10, -10, 2) /)
+         = (/ xt_stripe(4_xi, 1_xi, 1), xt_stripe(5_xi, 1_xi, 1), xt_stripe(10, -10, 2) /)
     TYPE(xt_idxlist) :: idxvec_a, idxvec_b, intersection
     INTEGER(xt_int_kind), PARAMETER :: index_vector(1) = (/ 5_xi /)
     INTEGER(xt_int_kind) :: intersection_idx
@@ -678,19 +678,19 @@ CONTAINS
          3761_xi, 3765_xi, 3865_xi, 3918_xi, 3923_xi, 3935_xi /)
     INTEGER, PARAMETER :: num_stripes = 26
     TYPE(xt_stripe), PARAMETER :: stripes(num_stripes) = (/ &
-         xt_stripe(3326, 14,  2), xt_stripe(3341, 33,  1), &
-         xt_stripe(3374,  1, 25), xt_stripe(3400,  1,  5), &
-         xt_stripe(3407,  1,  8), xt_stripe(3418,  2,  1), &
-         xt_stripe(3420,  1,  8), xt_stripe(3440,  1, 12), &
-         xt_stripe(3457,  1, 27), xt_stripe(3515,  4,  1), &
-         xt_stripe(3519,  1,  3), xt_stripe(3525,  1,  6), &
-         xt_stripe(3582,  8,  1), xt_stripe(3590,  1,  8), &
-         xt_stripe(3606,  1, 26), xt_stripe(3642,  2,  2), &
-         xt_stripe(3684,  1, 55), xt_stripe(3741,  1,  3), &
-         xt_stripe(3747,  1,  4), xt_stripe(3753,  1,  2), &
-         xt_stripe(3759,  1,  3), xt_stripe(3765,  1,  3), &
-         xt_stripe(3865, 53,  1), xt_stripe(3918,  1,  3), &
-         xt_stripe(3923,  1,  4), xt_stripe(3930,  1,  6) /)
+         xt_stripe(3326_xi, 14_xi,  2), xt_stripe(3341_xi, 33_xi,  1), &
+         xt_stripe(3374_xi,  1_xi, 25), xt_stripe(3400_xi,  1_xi,  5), &
+         xt_stripe(3407_xi,  1_xi,  8), xt_stripe(3418_xi,  2_xi,  1), &
+         xt_stripe(3420_xi,  1_xi,  8), xt_stripe(3440_xi,  1_xi, 12), &
+         xt_stripe(3457_xi,  1_xi, 27), xt_stripe(3515_xi,  4_xi,  1), &
+         xt_stripe(3519_xi,  1_xi,  3), xt_stripe(3525_xi,  1_xi,  6), &
+         xt_stripe(3582_xi,  8_xi,  1), xt_stripe(3590_xi,  1_xi,  8), &
+         xt_stripe(3606_xi,  1_xi, 26), xt_stripe(3642_xi,  2_xi,  2), &
+         xt_stripe(3684_xi,  1_xi, 55), xt_stripe(3741_xi,  1_xi,  3), &
+         xt_stripe(3747_xi,  1_xi,  4), xt_stripe(3753_xi,  1_xi,  2), &
+         xt_stripe(3759_xi,  1_xi,  3), xt_stripe(3765_xi,  1_xi,  3), &
+         xt_stripe(3865_xi, 53_xi,  1), xt_stripe(3918_xi,  1_xi,  3), &
+         xt_stripe(3923_xi,  1_xi,  4), xt_stripe(3930_xi,  1_xi,  6) /)
     TYPE(xt_idxlist) :: idxlist
     INTEGER(xt_int_kind) :: min_idx, max_idx
 
@@ -740,10 +740,10 @@ CONTAINS
          & 2146_xi, 2297_xi, 2302_xi, 2304_xi, 2307_xi /)
     INTEGER, PARAMETER :: num_stripes = 8
     TYPE(xt_stripe), PARAMETER :: stripes(num_stripes) = (/ &
-      xt_stripe(670, 1,  9), xt_stripe(682, 1, 12), &
-      xt_stripe(695, 8,  1), xt_stripe(703, 1,  5), &
-      xt_stripe(894, 1, 10), xt_stripe(906, 1,  4), &
-      xt_stripe(913, 1,  3), xt_stripe(921, 1,  7) /)
+      xt_stripe(670_xi, 1_xi,  9), xt_stripe(682_xi, 1_xi, 12), &
+      xt_stripe(695_xi, 8_xi,  1), xt_stripe(703_xi, 1_xi,  5), &
+      xt_stripe(894_xi, 1_xi, 10), xt_stripe(906_xi, 1_xi,  4), &
+      xt_stripe(913_xi, 1_xi,  3), xt_stripe(921_xi, 1_xi,  7) /)
     TYPE(xt_idxlist) :: idxlist
 
     idxlist = xt_idxvec_new(index_vector)
@@ -899,69 +899,69 @@ CONTAINS
       7450_xi, 7477_xi, 7485_xi, 7486_xi, 7624_xi, 7645_xi, 7650_xi, 7662_xi /)
     INTEGER, PARAMETER :: num_stripes = 187
     TYPE(xt_stripe), PARAMETER :: stripes(num_stripes) = (/ &
-      xt_stripe(173, 408, 2), xt_stripe(973, 392, 3), xt_stripe(1985, 4, 2), &
-      xt_stripe(2044, 4, 2), xt_stripe(2049, 3, 1), xt_stripe(2052, 1, 9), &
-      xt_stripe(2062, 131, 2), xt_stripe(2198, 1, 2), xt_stripe(2203, 1, 5), &
-      xt_stripe(2211, 1, 2), xt_stripe(2263, 4, 1), xt_stripe(2267, 1, 3), &
-      xt_stripe(2277, 1, 5), xt_stripe(2283, 1, 2), xt_stripe(2287, 1, 2), &
-      xt_stripe(2293, 2, 2), xt_stripe(2298, 1, 2), xt_stripe(2305, 1, 8), &
-      xt_stripe(2316, 1, 2), xt_stripe(2322, 10, 1), xt_stripe(2332, 1, 3), &
-      xt_stripe(2377, 4, 2), xt_stripe(2436, 4, 2), xt_stripe(2441, 3, 1), &
-      xt_stripe(2444, 1, 9), xt_stripe(2454, 131, 2), xt_stripe(2590, 1, 2), &
-      xt_stripe(2595, 1, 5), xt_stripe(2603, 1, 2), xt_stripe(2655, 4, 1), &
-      xt_stripe(2659, 1, 3), xt_stripe(2669, 1, 5), xt_stripe(2675, 1, 2), &
-      xt_stripe(2679, 1, 2), xt_stripe(2685, 2, 2), xt_stripe(2690, 1, 2), &
-      xt_stripe(2697, 1, 8), xt_stripe(2708, 1, 2), xt_stripe(2714, 10, 1), &
-      xt_stripe(2724, 1, 3), xt_stripe(2769, 4, 2), xt_stripe(2828, 4, 2), &
-      xt_stripe(2833, 3, 1), xt_stripe(2836, 1, 9), xt_stripe(2846, 131, 2), &
-      xt_stripe(2982, 1, 2), xt_stripe(2987, 1, 5), xt_stripe(2995, 1, 2), &
-      xt_stripe(3047, 4, 1), xt_stripe(3051, 1, 3), xt_stripe(3061, 1, 5), &
-      xt_stripe(3067, 1, 2), xt_stripe(3071, 1, 2), xt_stripe(3077, 2, 2), &
-      xt_stripe(3082, 1, 2), xt_stripe(3089, 1, 8), xt_stripe(3100, 1, 2), &
-      xt_stripe(3106, 10, 1), xt_stripe(3116, 1, 3), xt_stripe(3161, 4, 2), &
-      xt_stripe(3220, 4, 2), xt_stripe(3225, 3, 1), xt_stripe(3228, 1, 9), &
-      xt_stripe(3238, 131, 2), xt_stripe(3374, 1, 2), xt_stripe(3379, 1, 5), &
-      xt_stripe(3387, 1, 2), xt_stripe(3439, 4, 1), xt_stripe(3443, 1, 3), &
-      xt_stripe(3453, 1, 5), xt_stripe(3459, 1, 2), xt_stripe(3463, 1, 2), &
-      xt_stripe(3469, 2, 2), xt_stripe(3474, 1, 2), xt_stripe(3481, 1, 8), &
-      xt_stripe(3492, 1, 2), xt_stripe(3498, 10, 1), xt_stripe(3508, 1, 3), &
-      xt_stripe(3553, 4, 2), xt_stripe(3612, 4, 2), xt_stripe(3617, 3, 1), &
-      xt_stripe(3620, 1, 9), xt_stripe(3630, 131, 2), xt_stripe(3766, 1, 2), &
-      xt_stripe(3771, 1, 5), xt_stripe(3779, 1, 2), xt_stripe(3831, 4, 1), &
-      xt_stripe(3835, 1, 3), xt_stripe(3845, 1, 5), xt_stripe(3851, 1, 2), &
-      xt_stripe(3855, 1, 2), xt_stripe(3861, 2, 2), xt_stripe(3866, 1, 2), &
-      xt_stripe(3873, 1, 8), xt_stripe(3884, 1, 2), xt_stripe(3890, 10, 1), &
-      xt_stripe(3900, 1, 3), xt_stripe(3945, 3, 2), xt_stripe(3979, 5, 2), &
-      xt_stripe(3985, 6, 1), xt_stripe(3991, 1, 3), xt_stripe(3995, 2, 1), &
-      xt_stripe(3997, 1, 6), xt_stripe(4031, 2, 2), xt_stripe(4036, 1, 2), &
-      xt_stripe(4047, 3, 1), xt_stripe(4050, 1, 6), xt_stripe(4057, 1, 2), &
-      xt_stripe(4084, 1, 2), xt_stripe(4090, 1, 4), xt_stripe(4102, 2, 4), &
-      xt_stripe(4109, 3, 1), xt_stripe(4112, 1, 4), xt_stripe(4188, 4, 2), &
-      xt_stripe(4193, 6, 1), xt_stripe(4199, 1, 3), xt_stripe(4321, 3, 2), &
-      xt_stripe(4355, 5, 2), xt_stripe(4361, 6, 1), xt_stripe(4367, 1, 3), &
-      xt_stripe(4371, 2, 1), xt_stripe(4373, 1, 6), xt_stripe(4407, 2, 2), &
-      xt_stripe(4412, 1, 2), xt_stripe(4423, 3, 1), xt_stripe(4426, 1, 6), &
-      xt_stripe(4433, 1, 2), xt_stripe(4460, 1, 2), xt_stripe(4466, 1, 4), &
-      xt_stripe(4478, 2, 4), xt_stripe(4485, 3, 1), xt_stripe(4488, 1, 4), &
-      xt_stripe(4564, 4, 2), xt_stripe(4569, 6, 1), xt_stripe(4575, 1, 3), &
-      xt_stripe(4697, 3, 2), xt_stripe(4731, 5, 2), xt_stripe(4737, 6, 1), &
-      xt_stripe(4743, 1, 3), xt_stripe(4747, 2, 1), xt_stripe(4749, 1, 6), &
-      xt_stripe(4783, 2, 2), xt_stripe(4788, 1, 2), xt_stripe(4799, 3, 1), &
-      xt_stripe(4802, 1, 6), xt_stripe(4809, 1, 2), xt_stripe(4836, 1, 2), &
-      xt_stripe(4842, 1, 4), xt_stripe(4854, 2, 4), xt_stripe(4861, 3, 1), &
-      xt_stripe(4864, 1, 4), xt_stripe(4945, 6, 1), xt_stripe(4951, 1, 3), &
-      xt_stripe(5107, 5, 2), xt_stripe(5113, 6, 1), xt_stripe(5119, 1, 3), &
-      xt_stripe(5123, 2, 1), xt_stripe(5125, 1, 6), xt_stripe(5159, 2, 2), &
-      xt_stripe(5164, 1, 2), xt_stripe(5175, 3, 1), xt_stripe(5178, 1, 6), &
-      xt_stripe(5185, 1, 2), xt_stripe(5212, 1, 2), xt_stripe(5218, 1, 4), &
-      xt_stripe(5230, 2, 4), xt_stripe(5237, 3, 1), xt_stripe(5240, 1, 4), &
-      xt_stripe(5321, 6, 1), xt_stripe(5327, 1, 3), xt_stripe(5483, 5, 2), &
-      xt_stripe(5489, 6, 1), xt_stripe(5495, 1, 3), xt_stripe(5499, 2, 1), &
-      xt_stripe(5501, 1, 6), xt_stripe(5535, 2, 2), xt_stripe(5540, 1, 2), &
-      xt_stripe(5551, 3, 1), xt_stripe(5554, 1, 6), xt_stripe(5561, 1, 2), &
-      xt_stripe(5588, 1, 2), xt_stripe(5594, 1, 4), xt_stripe(5606, 2, 4), &
-      xt_stripe(5613, 3, 1), xt_stripe(5616, 1, 4), xt_stripe(5697, 6, 1), &
-      xt_stripe(5703, 1, 3) /)
+      xt_stripe(173_xi, 408_xi, 2), xt_stripe(973_xi, 392_xi, 3), xt_stripe(1985_xi, 4_xi, 2), &
+      xt_stripe(2044_xi, 4_xi, 2), xt_stripe(2049_xi, 3_xi, 1), xt_stripe(2052_xi, 1_xi, 9), &
+      xt_stripe(2062_xi, 131_xi, 2), xt_stripe(2198_xi, 1_xi, 2), xt_stripe(2203_xi, 1_xi, 5), &
+      xt_stripe(2211_xi, 1_xi, 2), xt_stripe(2263_xi, 4_xi, 1), xt_stripe(2267_xi, 1_xi, 3), &
+      xt_stripe(2277_xi, 1_xi, 5), xt_stripe(2283_xi, 1_xi, 2), xt_stripe(2287_xi, 1_xi, 2), &
+      xt_stripe(2293_xi, 2_xi, 2), xt_stripe(2298_xi, 1_xi, 2), xt_stripe(2305_xi, 1_xi, 8), &
+      xt_stripe(2316_xi, 1_xi, 2), xt_stripe(2322_xi, 10_xi, 1), xt_stripe(2332_xi, 1_xi, 3), &
+      xt_stripe(2377_xi, 4_xi, 2), xt_stripe(2436_xi, 4_xi, 2), xt_stripe(2441_xi, 3_xi, 1), &
+      xt_stripe(2444_xi, 1_xi, 9), xt_stripe(2454_xi, 131_xi, 2), xt_stripe(2590_xi, 1_xi, 2), &
+      xt_stripe(2595_xi, 1_xi, 5), xt_stripe(2603_xi, 1_xi, 2), xt_stripe(2655_xi, 4_xi, 1), &
+      xt_stripe(2659_xi, 1_xi, 3), xt_stripe(2669_xi, 1_xi, 5), xt_stripe(2675_xi, 1_xi, 2), &
+      xt_stripe(2679_xi, 1_xi, 2), xt_stripe(2685_xi, 2_xi, 2), xt_stripe(2690_xi, 1_xi, 2), &
+      xt_stripe(2697_xi, 1_xi, 8), xt_stripe(2708_xi, 1_xi, 2), xt_stripe(2714_xi, 10_xi, 1), &
+      xt_stripe(2724_xi, 1_xi, 3), xt_stripe(2769_xi, 4_xi, 2), xt_stripe(2828_xi, 4_xi, 2), &
+      xt_stripe(2833_xi, 3_xi, 1), xt_stripe(2836_xi, 1_xi, 9), xt_stripe(2846_xi, 131_xi, 2), &
+      xt_stripe(2982_xi, 1_xi, 2), xt_stripe(2987_xi, 1_xi, 5), xt_stripe(2995_xi, 1_xi, 2), &
+      xt_stripe(3047_xi, 4_xi, 1), xt_stripe(3051_xi, 1_xi, 3), xt_stripe(3061_xi, 1_xi, 5), &
+      xt_stripe(3067_xi, 1_xi, 2), xt_stripe(3071_xi, 1_xi, 2), xt_stripe(3077_xi, 2_xi, 2), &
+      xt_stripe(3082_xi, 1_xi, 2), xt_stripe(3089_xi, 1_xi, 8), xt_stripe(3100_xi, 1_xi, 2), &
+      xt_stripe(3106_xi, 10_xi, 1), xt_stripe(3116_xi, 1_xi, 3), xt_stripe(3161_xi, 4_xi, 2), &
+      xt_stripe(3220_xi, 4_xi, 2), xt_stripe(3225_xi, 3_xi, 1), xt_stripe(3228_xi, 1_xi, 9), &
+      xt_stripe(3238_xi, 131_xi, 2), xt_stripe(3374_xi, 1_xi, 2), xt_stripe(3379_xi, 1_xi, 5), &
+      xt_stripe(3387_xi, 1_xi, 2), xt_stripe(3439_xi, 4_xi, 1), xt_stripe(3443_xi, 1_xi, 3), &
+      xt_stripe(3453_xi, 1_xi, 5), xt_stripe(3459_xi, 1_xi, 2), xt_stripe(3463_xi, 1_xi, 2), &
+      xt_stripe(3469_xi, 2_xi, 2), xt_stripe(3474_xi, 1_xi, 2), xt_stripe(3481_xi, 1_xi, 8), &
+      xt_stripe(3492_xi, 1_xi, 2), xt_stripe(3498_xi, 10_xi, 1), xt_stripe(3508_xi, 1_xi, 3), &
+      xt_stripe(3553_xi, 4_xi, 2), xt_stripe(3612_xi, 4_xi, 2), xt_stripe(3617_xi, 3_xi, 1), &
+      xt_stripe(3620_xi, 1_xi, 9), xt_stripe(3630_xi, 131_xi, 2), xt_stripe(3766_xi, 1_xi, 2), &
+      xt_stripe(3771_xi, 1_xi, 5), xt_stripe(3779_xi, 1_xi, 2), xt_stripe(3831_xi, 4_xi, 1), &
+      xt_stripe(3835_xi, 1_xi, 3), xt_stripe(3845_xi, 1_xi, 5), xt_stripe(3851_xi, 1_xi, 2), &
+      xt_stripe(3855_xi, 1_xi, 2), xt_stripe(3861_xi, 2_xi, 2), xt_stripe(3866_xi, 1_xi, 2), &
+      xt_stripe(3873_xi, 1_xi, 8), xt_stripe(3884_xi, 1_xi, 2), xt_stripe(3890_xi, 10_xi, 1), &
+      xt_stripe(3900_xi, 1_xi, 3), xt_stripe(3945_xi, 3_xi, 2), xt_stripe(3979_xi, 5_xi, 2), &
+      xt_stripe(3985_xi, 6_xi, 1), xt_stripe(3991_xi, 1_xi, 3), xt_stripe(3995_xi, 2_xi, 1), &
+      xt_stripe(3997_xi, 1_xi, 6), xt_stripe(4031_xi, 2_xi, 2), xt_stripe(4036_xi, 1_xi, 2), &
+      xt_stripe(4047_xi, 3_xi, 1), xt_stripe(4050_xi, 1_xi, 6), xt_stripe(4057_xi, 1_xi, 2), &
+      xt_stripe(4084_xi, 1_xi, 2), xt_stripe(4090_xi, 1_xi, 4), xt_stripe(4102_xi, 2_xi, 4), &
+      xt_stripe(4109_xi, 3_xi, 1), xt_stripe(4112_xi, 1_xi, 4), xt_stripe(4188_xi, 4_xi, 2), &
+      xt_stripe(4193_xi, 6_xi, 1), xt_stripe(4199_xi, 1_xi, 3), xt_stripe(4321_xi, 3_xi, 2), &
+      xt_stripe(4355_xi, 5_xi, 2), xt_stripe(4361_xi, 6_xi, 1), xt_stripe(4367_xi, 1_xi, 3), &
+      xt_stripe(4371_xi, 2_xi, 1), xt_stripe(4373_xi, 1_xi, 6), xt_stripe(4407_xi, 2_xi, 2), &
+      xt_stripe(4412_xi, 1_xi, 2), xt_stripe(4423_xi, 3_xi, 1), xt_stripe(4426_xi, 1_xi, 6), &
+      xt_stripe(4433_xi, 1_xi, 2), xt_stripe(4460_xi, 1_xi, 2), xt_stripe(4466_xi, 1_xi, 4), &
+      xt_stripe(4478_xi, 2_xi, 4), xt_stripe(4485_xi, 3_xi, 1), xt_stripe(4488_xi, 1_xi, 4), &
+      xt_stripe(4564_xi, 4_xi, 2), xt_stripe(4569_xi, 6_xi, 1), xt_stripe(4575_xi, 1_xi, 3), &
+      xt_stripe(4697_xi, 3_xi, 2), xt_stripe(4731_xi, 5_xi, 2), xt_stripe(4737_xi, 6_xi, 1), &
+      xt_stripe(4743_xi, 1_xi, 3), xt_stripe(4747_xi, 2_xi, 1), xt_stripe(4749_xi, 1_xi, 6), &
+      xt_stripe(4783_xi, 2_xi, 2), xt_stripe(4788_xi, 1_xi, 2), xt_stripe(4799_xi, 3_xi, 1), &
+      xt_stripe(4802_xi, 1_xi, 6), xt_stripe(4809_xi, 1_xi, 2), xt_stripe(4836_xi, 1_xi, 2), &
+      xt_stripe(4842_xi, 1_xi, 4), xt_stripe(4854_xi, 2_xi, 4), xt_stripe(4861_xi, 3_xi, 1), &
+      xt_stripe(4864_xi, 1_xi, 4), xt_stripe(4945_xi, 6_xi, 1), xt_stripe(4951_xi, 1_xi, 3), &
+      xt_stripe(5107_xi, 5_xi, 2), xt_stripe(5113_xi, 6_xi, 1), xt_stripe(5119_xi, 1_xi, 3), &
+      xt_stripe(5123_xi, 2_xi, 1), xt_stripe(5125_xi, 1_xi, 6), xt_stripe(5159_xi, 2_xi, 2), &
+      xt_stripe(5164_xi, 1_xi, 2), xt_stripe(5175_xi, 3_xi, 1), xt_stripe(5178_xi, 1_xi, 6), &
+      xt_stripe(5185_xi, 1_xi, 2), xt_stripe(5212_xi, 1_xi, 2), xt_stripe(5218_xi, 1_xi, 4), &
+      xt_stripe(5230_xi, 2_xi, 4), xt_stripe(5237_xi, 3_xi, 1), xt_stripe(5240_xi, 1_xi, 4), &
+      xt_stripe(5321_xi, 6_xi, 1), xt_stripe(5327_xi, 1_xi, 3), xt_stripe(5483_xi, 5_xi, 2), &
+      xt_stripe(5489_xi, 6_xi, 1), xt_stripe(5495_xi, 1_xi, 3), xt_stripe(5499_xi, 2_xi, 1), &
+      xt_stripe(5501_xi, 1_xi, 6), xt_stripe(5535_xi, 2_xi, 2), xt_stripe(5540_xi, 1_xi, 2), &
+      xt_stripe(5551_xi, 3_xi, 1), xt_stripe(5554_xi, 1_xi, 6), xt_stripe(5561_xi, 1_xi, 2), &
+      xt_stripe(5588_xi, 1_xi, 2), xt_stripe(5594_xi, 1_xi, 4), xt_stripe(5606_xi, 2_xi, 4), &
+      xt_stripe(5613_xi, 3_xi, 1), xt_stripe(5616_xi, 1_xi, 4), xt_stripe(5697_xi, 6_xi, 1), &
+      xt_stripe(5703_xi, 1_xi, 3) /)
     TYPE(xt_idxlist) :: idxlist
 
     idxlist = xt_idxvec_new(index_vector)
@@ -1113,8 +1113,8 @@ CONTAINS
   END SUBROUTINE test_get_pos
 
   SUBROUTINE test_get_pos1
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
-         xt_stripe(10, 1, 5), xt_stripe(20, -1, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0_xi, 1_xi, 5), &
+         xt_stripe(10_xi, 1_xi, 5), xt_stripe(20_xi, -1_xi, 5) /)
     INTEGER, PARAMETER :: pos(13) = &
          (/   0,   2,   7,   9,  11, &
          &  100,  11, 200,   9, 300, &
@@ -1123,8 +1123,8 @@ CONTAINS
   END SUBROUTINE test_get_pos1
 
   SUBROUTINE test_get_pos2
-    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0, 1, 3), &
-         xt_stripe(10, 1, 2), xt_stripe(20, -1, 6), xt_stripe(30, -1, 7) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0_xi, 1_xi, 3), &
+         xt_stripe(10_xi, 1_xi, 2), xt_stripe(20_xi, -1_xi, 6), xt_stripe(30_xi, -1_xi, 7) /)
     INTEGER, PARAMETER :: pos(19) = &
          (/   -1,    0,    1,    2,    3,    4,   23,    5,    6,    7, &
          &     8,    9,   10,   11,   12,    0,    2,  100, 2000 /)
@@ -1132,8 +1132,8 @@ CONTAINS
   END SUBROUTINE test_get_pos2
 
   SUBROUTINE test_get_pos3
-    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0, 1, 3), &
-         xt_stripe(10, 1, 2), xt_stripe(20, -1, 6), xt_stripe(30, -1, 7) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(4) = (/ xt_stripe(0_xi, 1_xi, 3), &
+         xt_stripe(10_xi, 1_xi, 2), xt_stripe(20_xi, -1_xi, 6), xt_stripe(30_xi, -1_xi, 7) /)
     INTEGER, PARAMETER :: pos(13) = &
          (/    4,    7,    2,    5,    9,    0,   10,    6,   11,    8, &
          &    12,    1,    3 /)
@@ -1141,16 +1141,16 @@ CONTAINS
   END SUBROUTINE test_get_pos3
 
   SUBROUTINE test_get_pos4
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0, 1, 5), &
-         xt_stripe(10, 1, 5), xt_stripe(20, -1, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(0_xi, 1_xi, 5), &
+         xt_stripe(10_xi, 1_xi, 5), xt_stripe(20_xi, -1_xi, 5) /)
     INTEGER, PARAMETER :: pos(7) = &
          (/  -10,  200,  700,   90,   90,   18,  141 /)
     CALL test_get_pos(stripes, pos)
   END SUBROUTINE test_get_pos4
 
   SUBROUTINE test_stripe_overlap
-    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0, 1, 5), &
-         xt_stripe(1, 1, 5) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(2) = (/ xt_stripe(0_xi, 1_xi, 5), &
+         xt_stripe(1_xi, 1_xi, 5) /)
 #ifndef __G95__
     INTEGER(xi) :: i, j
     INTEGER(xt_int_kind), PARAMETER :: ref_indices(10) &
@@ -1184,20 +1184,20 @@ CONTAINS
   END SUBROUTINE test_stripe_bb
 
   SUBROUTINE test_stripe_bb1
-    TYPE(xt_stripe), PARAMETER :: stripes(1) = (/ xt_stripe(-1, -1, -1) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(1) = (/ xt_stripe(-1_xi, -1_xi, -1) /)
     INTEGER(xt_int_kind), PARAMETER :: global_size(3) = 4_xi, &
          global_start_index = 0
-    TYPE(xt_bounds), PARAMETER :: bounds_ref(3) = xt_bounds(0, 0)
+    TYPE(xt_bounds), PARAMETER :: bounds_ref(3) = xt_bounds(0_xi, 0_xi)
     CALL test_stripe_bb(stripes(1:0), global_size, global_start_index, bounds_ref)
   END SUBROUTINE test_stripe_bb1
 
   SUBROUTINE test_stripe_bb2
-    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(47, -12, 2), &
-         xt_stripe(32, 12, 2), xt_stripe(36, 12, 2) /)
+    TYPE(xt_stripe), PARAMETER :: stripes(3) = (/ xt_stripe(47_xi, -12_xi, 2), &
+         xt_stripe(32_xi, 12_xi, 2), xt_stripe(36_xi, 12_xi, 2) /)
     INTEGER(xt_int_kind), PARAMETER :: global_size(3) = (/ 5_xi, 4_xi, 3_xi /), &
          global_start_index = 1
-    TYPE(xt_bounds), PARAMETER :: bounds_ref(3) = (/ xt_bounds(2, 2), &
-         xt_bounds(2, 2), xt_bounds(1, 2) /)
+    TYPE(xt_bounds), PARAMETER :: bounds_ref(3) = (/ xt_bounds(2_xi, 2_xi), &
+         xt_bounds(2_xi, 2_xi), xt_bounds(1_xi, 2_xi) /)
     CALL test_stripe_bb(stripes, global_size, global_start_index, bounds_ref)
   END SUBROUTINE test_stripe_bb2
 
@@ -1206,7 +1206,7 @@ CONTAINS
     INTEGER(xt_int_kind), INTENT(in) :: ref_indices(:)
 
     TYPE(xt_stripe), ALLOCATABLE :: stripes(:)
-    TYPE(xt_stripe), PARAMETER :: dummy(1) = (/ xt_stripe(0,0,0) /)
+    TYPE(xt_stripe), PARAMETER :: dummy(1) = (/ xt_stripe(0_xi,0_xi,0) /)
     INTEGER :: num_stripes
     TYPE(xt_idxlist) :: temp_idxlist, idxlist_copy
 
