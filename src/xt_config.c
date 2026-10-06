@@ -657,6 +657,7 @@ xt_config_defaults_init(void)
   config_env = getenv("XT_CONFIG_DEFAULT_MULTI_THREAD_MODE");
   if (config_env) {
     char *endptr;
+    errno = 0;
     long v = strtol(config_env, &endptr, 0);
     if (endptr != config_env) {
       if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
@@ -701,6 +702,7 @@ dont_set_mt_mode:;
   config_env = getenv("XT_CONFIG_DEFAULT_SORT_ALGORITHM");
   if (config_env) {
     char *endptr;
+    errno = 0;
     long v = strtol(config_env, &endptr, 0);
     if (endptr != config_env) {
       if ((errno == ERANGE && (v == LONG_MAX || v == LONG_MIN))
@@ -777,6 +779,7 @@ dont_set_sort_algorithm:;
     if (config_env) {
       const char *endptr;
       long v;
+      errno = 0;
       if (!strcasecmp(config_env, "FORCE_NOSORT")) {
         v = 1;
         endptr = config_env + 12;
@@ -847,7 +850,7 @@ dont_set_sort_algorithm:;
       } else if (endptr == config_env) {
         fprintf(stderr, "warning: malformed value of environment variable "
                 "%s, no digits or symbolic constant found\n", evn);
-      } else if (v < -4) {
+      } else if (v < -4 || v > INT_MAX) {
         fprintf(stderr, "value of environment variable %s (%ld)"
                 " out of range [-4,%d]\n", evn, v, INT_MAX);
       } else
