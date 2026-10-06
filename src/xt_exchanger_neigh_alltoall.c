@@ -444,7 +444,7 @@ xt_exchanger_neigh_alltoall_get_MPI_Datatype(Xt_exchanger exchanger,
   for (size_t i = 0; i < nmsg; ++i) {
     MPI_Datatype dt = exchanger_na->datatypes[i+ofs];
     if (ranks[i] == rank) {
-      if (do_dup && xt_mpi_ddt_is_named(dt))
+      if (do_dup && !xt_mpi_ddt_is_named(dt))
         xt_mpi_call(MPI_Type_dup(dt, &datatype_copy), team_share->nb_comm);
       else
         datatype_copy = dt;

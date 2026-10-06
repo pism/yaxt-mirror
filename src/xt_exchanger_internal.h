@@ -111,7 +111,8 @@ struct Xt_exchanger_iter_ {
 };
 
 /**
- * gets a copy of the MPI_Datatype used for a specificed message
+ * gets a copy of the MPI_Datatype used for a specificed message (or
+ * the datatype itself in case it's a named one)
  * @param[in] exchanger exchanger object
  * @param[in] rank      MPI rank
  * @param[in] direction specific whether the datatype of an incoming or outgoing
