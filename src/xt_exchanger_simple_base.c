@@ -81,6 +81,10 @@ static int
 xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
                                        enum xt_msg_direction direction,
                                        int *restrict *ranks);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+xt_exchanger_simple_base_get_comm_send_mode(Xt_exchanger exchanger);
+#endif
 
 static int
 xt_exchanger_simple_base_get_num_msg(Xt_exchanger exchanger,
@@ -112,6 +116,9 @@ const struct xt_exchanger_vtable xt_exchanger_simple_base_vtable = {
   .a_exchange = (xt_exchanger_a_exchange_func)0,
   .get_num_msg = xt_exchanger_simple_base_get_num_msg,
   .get_msg_ranks = xt_exchanger_simple_base_get_msg_ranks,
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  .get_comm_send_mode = xt_exchanger_simple_base_get_comm_send_mode,
+#endif
   .get_MPI_Datatype = xt_exchanger_simple_base_get_MPI_Datatype,
   .get_displacement = xt_exchanger_simple_base_get_displacement,
   .get_count = xt_exchanger_simple_base_get_count,
@@ -356,6 +363,15 @@ xt_exchanger_simple_base_get_msg_ranks(Xt_exchanger exchanger,
     ranks_[i] = msgs[i].rank;
   return (int)nmsg;
 }
+
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+xt_exchanger_simple_base_get_comm_send_mode(Xt_exchanger exchanger)
+{
+  return (int)XT_CONFIG_FLAGS_GET_EXCH_SEND_COMM_MODE(
+    ((Xt_exchanger_simple_base)exchanger)->config_flags);
+}
+#endif
 
 typedef struct Xt_exchanger_simple_base_iter_ *Xt_exchanger_simple_base_iter;
 

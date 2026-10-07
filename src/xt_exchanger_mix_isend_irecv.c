@@ -111,6 +111,10 @@ static int
 xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
                                            enum xt_msg_direction direction,
                                            int *restrict *ranks);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+xt_exchanger_mix_isend_irecv_get_comm_send_mode(Xt_exchanger exchanger);
+#endif
 
 static MPI_Datatype
 xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,
@@ -139,6 +143,9 @@ xt_exchanger_mix_isend_irecv_vtable = {
   .a_exchange = xt_exchanger_mix_isend_irecv_a_exchange,
   .get_num_msg = xt_exchanger_mix_isend_irecv_get_num_msg,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  .get_comm_send_mode = xt_exchanger_mix_isend_irecv_get_comm_send_mode,
+#endif
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
   .get_displacement = xt_exchanger_mix_isend_irecv_get_displacement,
   .get_count = xt_exchanger_mix_isend_irecv_get_count,
@@ -155,6 +162,9 @@ xt_exchanger_mix_isend_irecv_auto_omp_vtable = {
   .a_exchange = xt_exchanger_mix_isend_irecv_a_exchange_omp,
   .get_num_msg = xt_exchanger_mix_isend_irecv_get_num_msg,
   .get_msg_ranks = xt_exchanger_mix_isend_irecv_get_msg_ranks,
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  .get_comm_send_mode = xt_exchanger_mix_isend_irecv_get_comm_send_mode,
+#endif
   .get_MPI_Datatype = xt_exchanger_mix_isend_irecv_get_MPI_Datatype,
   .get_displacement = xt_exchanger_mix_isend_irecv_get_displacement,
   .get_count = xt_exchanger_mix_isend_irecv_get_count,
@@ -538,6 +548,15 @@ xt_exchanger_mix_isend_irecv_get_msg_ranks(Xt_exchanger exchanger,
       ranks_[++j] = msgs[i].rank & INT_MAX;
   return (int)nmsg;
 }
+
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+xt_exchanger_mix_isend_irecv_get_comm_send_mode(Xt_exchanger exchanger)
+{
+  return (int)((Xt_exchanger_mix_isend_irecv)exchanger)->send_mode;
+}
+#endif
+
 
 static MPI_Datatype
 xt_exchanger_mix_isend_irecv_get_MPI_Datatype(Xt_exchanger exchanger,

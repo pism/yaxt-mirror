@@ -119,6 +119,20 @@ xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
   return exchanger->vtable->get_msg_ranks(exchanger, direction, ranks);
 }
 
+int
+xt_exchanger_get_comm_send_mode(Xt_exchanger exchanger)
+{
+  int mode = xt_exch_send_standard;
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  if (exchanger->vtable->get_comm_send_mode)
+    mode = exchanger->vtable->get_comm_send_mode(exchanger);
+#else
+  (void)exchanger;
+#endif
+  return mode;
+}
+
+
 MPI_Datatype
 xt_exchanger_get_MPI_Datatype(Xt_exchanger exchanger, int rank,
                               enum xt_msg_direction direction, bool do_dup) {

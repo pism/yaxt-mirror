@@ -80,6 +80,9 @@ struct xt_exchanger_vtable {
   xt_exchanger_a_exchange_func a_exchange;
   int (*get_num_msg)(Xt_exchanger exchanger, int direction);
   int (*get_msg_ranks)(Xt_exchanger, enum xt_msg_direction, int *restrict *);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  int (*get_comm_send_mode)(Xt_exchanger);
+#endif
   MPI_Datatype (*get_MPI_Datatype)(Xt_exchanger, int, enum xt_msg_direction,
                                    bool);
   MPI_Aint (*get_displacement)(Xt_exchanger, int, enum xt_msg_direction);
@@ -170,6 +173,16 @@ PPM_DSO_INTERNAL int
 xt_exchanger_get_msg_ranks(Xt_exchanger exchanger,
                            enum xt_msg_direction direction,
                            int *restrict *ranks);
+
+/**
+ * Query send mode semantics employed by the exchanger.
+ * @param[in]  exchanger exchanger object
+ * @return send mode
+ * @remark the user needs to ensure that array ranks is big enough to hold all
+ *         ranks
+ */
+PPM_DSO_INTERNAL int
+xt_exchanger_get_comm_send_mode(Xt_exchanger exchanger);
 
 
 /**
