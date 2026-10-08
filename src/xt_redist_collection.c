@@ -147,6 +147,11 @@ struct exchanger_cache
 
 typedef struct Xt_redist_collection_ *Xt_redist_collection;
 
+/* array layout for blocklengths, disp_ofs and all_component_dt:
+   [num_directions==2][nmsg[direction]][num_components]
+   note that because nmsg is different for the two directions, these
+   are more like two separate 2-dimensional arrays following each other
+ */
 struct Xt_redist_collection_ {
 
   const struct xt_redist_vtable *vtable;
