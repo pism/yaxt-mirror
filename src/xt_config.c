@@ -286,7 +286,7 @@ xt_config_set_xmdd_bucket_gen(Xt_config config,
     config->xmdd_bucket_gen = bucket_gen_iface;
   else {
     if (config->xmdd_bucket_gen != &Xt_xmdd_cycl_stripe_bucket_gen_desc)
-      xt_xmdd_bucket_gen_delete(config->xmdd_bucket_gen);
+      xt_xmdd_bucket_gen_delete((void *)(uintptr_t)config->xmdd_bucket_gen);
     Xt_xmdd_bucket_gen gen = xmalloc(sizeof (*bucket_gen_iface));
     config->xmdd_bucket_gen = gen;
     *gen = *bucket_gen_iface;
