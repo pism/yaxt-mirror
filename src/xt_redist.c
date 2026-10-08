@@ -129,6 +129,20 @@ MPI_Datatype xt_redist_get_MPI_Datatype(Xt_redist redist, int rank,
   return redist->vtable->get_msg_MPI_Datatype(redist, rank, direction, do_dup);
 }
 
+int
+xt_redist_get_bsend_buf_size(Xt_redist redist)
+{
+  int buf_size = 0;
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  if (redist->vtable->get_bsend_buf_size)
+    buf_size = redist->vtable->get_bsend_buf_size(redist);
+#else
+  (void)redist;
+#endif
+  return buf_size;
+}
+
+
 Xt_exchanger xt_redist_get_exchanger(Xt_redist redist)
 {
   return redist->vtable->get_exchanger ?

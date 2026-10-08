@@ -174,6 +174,14 @@ MODULE xt_redist_base
       INTEGER(c_int) :: num_recv_msg
     END FUNCTION xt_redist_get_num_recv_msg_c
 
+     FUNCTION xt_redist_get_bsend_buf_size_c(redist) RESULT(bsend_buf_size) &
+         BIND(c, name='xt_redist_get_bsend_buf_size')
+      IMPORT :: c_ptr, c_int
+      IMPLICIT NONE
+      TYPE(c_ptr), VALUE, INTENT(in) :: redist
+      INTEGER(c_int) :: bsend_buf_size
+    END FUNCTION xt_redist_get_bsend_buf_size_c
+
     FUNCTION xt_redist_get_recv_mpi_datatype(redist, rank) &
          BIND(c, name='xt_redist_get_recv_MPI_Datatype_c2f') RESULT(dt)
       IMPORT :: xt_redist, xt_mpi_fint_kind
@@ -475,6 +483,7 @@ MODULE xt_redist_base
        xt_redist_a_exchange1, xt_redist_a_exchange, &
        xt_redist_single_array_base_new, xt_redist_single_array_base_custom_new,&
        xt_redist_get_send_mpi_datatype, xt_redist_get_recv_mpi_datatype, &
+       xt_redist_get_bsend_buf_size, &
        xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg
   PUBLIC :: xt_redist_p2p_new, xt_redist_p2p_custom_new
   PUBLIC :: xt_redist_p2p_off_new, xt_redist_p2p_off_custom_new
@@ -543,6 +552,16 @@ CONTAINS
          CALL xt_abort("num_recv_msg out of bounds", filename, __LINE__)
     num_recv_msg = INT(n)
   END FUNCTION xt_redist_get_num_recv_msg
+
+  FUNCTION xt_redist_get_bsend_buf_size(redist) RESULT(bsend_buf_size)
+    TYPE(xt_redist), INTENT(in) :: redist
+    INTEGER :: bsend_buf_size
+    INTEGER(c_int) :: n
+    n = xt_redist_get_bsend_buf_size_c(redist%cptr)
+    IF (n > HUGE(bsend_buf_size) .OR. n < -HUGE(bsend_buf_size)) &
+         CALL xt_abort("bsend_buf_size out of bounds", filename, __LINE__)
+    bsend_buf_size = INT(n)
+  END FUNCTION xt_redist_get_bsend_buf_size
 
   SUBROUTINE xt_redist_s_exchange1(redist, src_data_cptr, dst_data_cptr)
     TYPE(xt_redist), INTENT(in) :: redist

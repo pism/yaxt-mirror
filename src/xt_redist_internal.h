@@ -81,6 +81,9 @@ struct xt_redist_vtable {
   Xt_exchanger (*get_exchanger)(Xt_redist);
   int (*get_num_msg)(Xt_redist, enum xt_msg_direction);
   int (*get_msg_ranks)(Xt_redist, enum xt_msg_direction, int *restrict *);
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  int (*get_bsend_buf_size)(Xt_redist);
+#endif
   MPI_Comm (*get_MPI_Comm)(Xt_redist);
 };
 

@@ -172,6 +172,7 @@ MODULE yaxt
        xt_redist_single_array_base_new, &
        xt_redist_single_array_base_custom_new, &
        xt_redist_get_recv_mpi_datatype, xt_redist_get_send_mpi_datatype, &
+       xt_redist_get_bsend_buf_size, &
        xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg
   USE xt_redist_rename, ONLY: xt_redist_p2p_new
   USE xt_redist_int_i2, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
@@ -240,6 +241,7 @@ MODULE yaxt
        xt_redist_s_exchange1, xt_redist_s_exchange, &
        xt_redist_get_mpi_comm, &
        xt_redist_get_recv_mpi_datatype, xt_redist_get_send_mpi_datatype, &
+       xt_redist_get_bsend_buf_size, &
        xt_redist_get_num_send_msg, xt_redist_get_num_recv_msg, &
        xt_redist_collection_static_custom_new, xt_redist_collection_new, &
        xt_redist_collection_static_new, xt_redist_collection_custom_new, &

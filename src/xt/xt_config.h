@@ -284,6 +284,10 @@ enum Xt_exch_send_comm_mode {
  * The send communication mode is a recommendation for the
  * exchanger. Not every exchanger will support all modes and may fall
  * back to its default.
+ *
+ * @note In case buffered send is selected, each redist to be executed
+ * can be queried for its required buffer size with the
+ * @a xt_redist_get_bsend_buf_size method.
  */
 void
 xt_config_set_exchange_send_comm_mode(Xt_config config,

@@ -108,6 +108,11 @@ redist_sab_get_msg_ranks(Xt_redist redist,
                          enum xt_msg_direction direction,
                          int *restrict *ranks);
 
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+redist_sab_get_bsend_buf_size(Xt_redist redist);
+#endif
+
 static MPI_Comm
 redist_sab_get_MPI_Comm(Xt_redist redist);
 
@@ -122,6 +127,9 @@ static const struct xt_redist_vtable redist_sab_vtable = {
   .get_msg_MPI_Datatype  = redist_sab_get_MPI_Datatype,
   .get_exchanger         = redist_sab_get_exchanger,
   .get_msg_ranks         = redist_sab_get_msg_ranks,
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  .get_bsend_buf_size    = redist_sab_get_bsend_buf_size,
+#endif
   .get_MPI_Comm          = redist_sab_get_MPI_Comm
 };
 
@@ -314,6 +322,42 @@ redist_sab_get_MPI_Datatype(Xt_redist redist, int rank,
   }
   return dt;
 }
+
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+redist_sab_get_bsend_buf_size(Xt_redist redist)
+{
+  Xt_exchanger exchanger = xrsab(redist)->exchanger;
+  Xt_exchanger_iter exch_iter;
+  int send_mode = xt_exchanger_get_comm_send_mode(exchanger);
+  unsigned buf_size = 0;
+  struct Xt_config_ config = xt_default_config;
+  config.flags |= exch_no_dt_dup;
+  if (send_mode == xt_exch_send_buffered
+      && exchanger->vtable->get_comm_send_mode
+      && (exch_iter = xt_exchanger_get_iterator(exchanger, &config))) {
+    MPI_Comm comm = xrsab(redist)->comm;
+    bool overflow = false;
+    do {
+      int direction
+        = xt_exchanger_iter_get_direction(exch_iter);
+      if (direction != xt_direction_send) continue;
+      MPI_Datatype datatype
+        = xt_exchanger_iter_get_MPI_Datatype(exch_iter);
+      int count = xt_exchanger_iter_get_count(exch_iter);
+      int msg_size;
+      xt_mpi_call(MPI_Pack_size(count, datatype, comm, &msg_size), comm);
+      buf_size += (unsigned)msg_size + (unsigned)MPI_BSEND_OVERHEAD;
+      overflow |= (buf_size > INT_MAX);
+    } while (xt_exchanger_iter_next(exch_iter));
+    if (overflow)
+      Xt_abort(comm,
+               "internal error: overflow in buffer size computation",
+               filename, __LINE__);
+  }
+  return (int)buf_size;
+}
+#endif
 
 static Xt_exchanger
 redist_sab_get_exchanger(Xt_redist redist)

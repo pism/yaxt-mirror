@@ -197,6 +197,27 @@ MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank);
  */
 MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 
+
+/**
+ * query buffer size needed for the transfers of this redist
+ * This will only be non-zero when it was configured with
+ * xt_exch_send_buffered.
+ *
+ * @param[in] redist redistribution structure
+ * @return sum of MPI_Pack_size for all send operations in the redist
+ * (including the necessary MPI_BSEND_OVERHEAD) in a single invocation
+ * of @a xt_redist_s_exchange or @a xt_redist_a_exchange
+ *
+ * @note The amount returned by this function is only indicative of
+ * the buffer space needed for a single execution of
+ * @a xt_redist_s_exchange or @a xt_redist_a_exchange with a particular
+ * redist. How the buffer attached with MPI_Buf_attach is sized,
+ * depends on the synchronization and other buffering sends used
+ * beside the scope of a single redist exchange operation.
+ */
+int
+xt_redist_get_bsend_buf_size(Xt_redist redist);
+
 /**
  * returns a MPI communicator, which the redistribution is based on
  * @param[in] redist redistribution structure

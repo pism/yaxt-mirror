@@ -112,6 +112,11 @@ redist_collection_get_msg_ranks(Xt_redist redist,
                                 enum xt_msg_direction direction,
                                 int *restrict *ranks);
 
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+redist_collection_get_bsend_buf_size(Xt_redist redist);
+#endif
+
 static MPI_Comm
 redist_collection_get_MPI_Comm(Xt_redist redist);
 
@@ -126,6 +131,9 @@ static const struct xt_redist_vtable redist_collection_vtable = {
   .get_msg_MPI_Datatype  = redist_collection_get_MPI_Datatype,
   .get_exchanger         = 0,
   .get_msg_ranks         = redist_collection_get_msg_ranks,
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+  .get_bsend_buf_size    = redist_collection_get_bsend_buf_size,
+#endif
   .get_MPI_Comm          = redist_collection_get_MPI_Comm
 };
 
@@ -935,6 +943,41 @@ redist_collection_get_msg_ranks(Xt_redist redist,
   return (int)nmsg_direction;
 }
 
+#if XT_ENABLE_ALTERNATIVE_EXCHANGER_SEND_MODES
+static int
+redist_collection_get_bsend_buf_size(Xt_redist redist)
+{
+  Xt_redist_collection redist_coll = xrc(redist);
+  MPI_Comm comm = redist_coll->comm;
+  unsigned num_components = redist_coll->num_components,
+    nmsg_send = redist_coll->nmsg[xt_direction_send],
+    buf_size = 0;
+  if (xt_config_get_exchange_send_comm_mode(&redist_coll->config)
+      == xt_exch_send_buffered
+      && xt_exchanger_new_get_vtable(
+        xt_config_get_exchange_new_by_comm(&redist_coll->config,
+                                           comm))->get_comm_send_mode) {
+    int (*bl)[num_components]
+      = (int (*)[num_components])redist_coll->blocklengths;
+    MPI_Datatype (*dt)[num_components]
+      = (MPI_Datatype (*)[num_components])redist_coll->all_component_dt;
+    bool overflow = false;
+    for (size_t i = 0; i < nmsg_send; ++i)
+      for (size_t j = 0; j < num_components; ++j)
+        if (dt[i][j] != MPI_DATATYPE_NULL) {
+          int msg_size;
+          xt_mpi_call(MPI_Pack_size(bl[i][j], dt[i][j], comm, &msg_size), comm);
+          buf_size += (unsigned)msg_size + (unsigned)MPI_BSEND_OVERHEAD;
+          overflow |= (buf_size > INT_MAX);
+        }
+    if (overflow)
+      Xt_abort(comm,
+               "internal error: overflow in buffer size computation",
+               filename, __LINE__);
+  }
+  return (int)buf_size;
+}
+#endif
 
 static MPI_Comm
 redist_collection_get_MPI_Comm(Xt_redist redist) {
