@@ -174,23 +174,16 @@ test_empty_redist(MPI_Comm comm, Xt_config config)
   xt_redist_delete(redist);
 
   // test exchange
-  static const double src_data[1] = {-1};
-  double dst_data[1] = {-2};
-
-  xt_redist_s_exchange1(redist_coll, src_data, dst_data);
-
+  static const double src_data[1] = {0};
+  double dst_data[1];
   static const double ref_dst_data[1] = {-2};
+  check_redist(redist_coll, src_data, 1, dst_data, fill_array_double,
+               &(double){-2}, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
-  if (ref_dst_data[0] != dst_data[0])
-    PUT_ERR("error in xt_redist_s_exchange\n");
 
   Xt_redist redist_coll_copy = xt_redist_copy(redist_coll);
-  dst_data[0] = -2;
-
-  xt_redist_s_exchange1(redist_coll_copy, src_data, dst_data);
-
-  if (ref_dst_data[0] != dst_data[0])
-    PUT_ERR("error in xt_redist_s_exchange\n");
+  check_redist(redist_coll_copy, src_data, 1, dst_data, fill_array_double,
+               &(double){-2}, ref_dst_data, MPI_DOUBLE, MPI_DOUBLE);
 
   // clean up
   xt_redist_delete(redist_coll_copy);

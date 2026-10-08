@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
     Xt_request request = xt_request_msgs_new(n, requests, comm);
 
-    check_wait_request(&request);
+    check_wait_request(NULL, &request);
   }
 
   { // each process receives and sends data from/to every other process
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
     Xt_request request = xt_request_msgs_new(n, requests, comm);
 
-    check_wait_request(&request);
+    check_wait_request(NULL, &request);
 
     bool mismatch = false;
     for (int i = 0; i < size; ++i)
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
       xt_request_msgs_packed_new(2, requests, comm, 1, 1, unpack_datatype,
                                  &recv_bufp, &send_bufp, &neigh_rank);
 
-    check_wait_request(&request);
+    check_wait_request(NULL, &request);
 
     if (neigh_rank != (rank - 1 + size)%size)
       PUT_ERR("neigh_rank != (rank - 1 + size)%size after xt_request_wait\n");

@@ -231,10 +231,10 @@ check_redist_datatypes_dir(Xt_redist redist, enum xt_msg_direction dir,
 void
 fill_array_double(void *dst, const void *dst_prep_info, size_t dst_num_elems)
 {
-  (void)dst_prep_info;
   double *restrict a = dst;
+  double fill_value = dst_prep_info ? *(const double *)dst_prep_info : -1.0;
   for (size_t i = 0; i < dst_num_elems; ++i)
-    a[i] = -1;
+    a[i] = fill_value;
 }
 
 void
@@ -293,15 +293,20 @@ fill_array_xt_int(void *dst, const void *dst_prep_info, size_t dst_num_elems)
 
 
 void
-check_wait_request_(Xt_request *request, const char *file, int line)
+check_wait_request_(Xt_redist redist,
+                    Xt_request *request, const char *file, int line)
 {
 #ifndef VERBOSE
   (void)file;
   (void)line;
 #endif
-  if (*request == XT_REQUEST_NULL)
-    PUT_ERR("request ==  XT_REQUEST_NULL before xt_request_wait: %s, line %d\n",
-            file, line);
+  if (*request == XT_REQUEST_NULL) {
+    int nmsg_send = redist ? xt_redist_get_num_send_msg(redist) : 1,
+      nmsg_recv = redist ? xt_redist_get_num_recv_msg(redist) : 1;
+    if (nmsg_send + nmsg_recv != 0)
+      PUT_ERR("request ==  XT_REQUEST_NULL before xt_request_wait: %s, line %d\n",
+              file, line);
+  }
   xt_request_wait(request);
   if (*request != XT_REQUEST_NULL)
     PUT_ERR("request !=  XT_REQUEST_NULL after xt_request_wait: %s, line %d\n",
@@ -315,7 +320,7 @@ wrap_a_exchange(Xt_redist redist, int num_data_p,
 {
   Xt_request request;
   xt_redist_a_exchange(redist, num_data_p, src_data_p, dst_data_p, &request);
-  check_wait_request(&request);
+  check_wait_request(redist, &request);
 }
 
 void
@@ -323,7 +328,7 @@ wrap_a_exchange1(Xt_redist redist, const void *src_data_p, void *dst_data_p)
 {
   Xt_request request;
   xt_redist_a_exchange1(redist, src_data_p, dst_data_p, &request);
-  check_wait_request(&request);
+  check_wait_request(redist, &request);
 }
 
 Xt_config

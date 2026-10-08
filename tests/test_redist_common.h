@@ -169,10 +169,11 @@ typedef void
                       void *dst_data_p);
 
 void
-check_wait_request_(Xt_request *request, const char *file, int line);
+check_wait_request_(Xt_redist redist,
+                    Xt_request *request, const char *file, int line);
 
-#define check_wait_request(request) \
-  check_wait_request_(request, __FILE__, __LINE__)
+#define check_wait_request(redist, request)              \
+  check_wait_request_(redist, request, __FILE__, __LINE__)
 
 Xt_config
 redist_exchanger_option(int *argc, char ***argv);
