@@ -496,7 +496,7 @@ Xt_redist xt_redist_collection_custom_new(Xt_redist *redists, int num_redists,
 #ifndef NDEBUG
   if (num_redists > 0) ; else
     Xt_abort(comm, "ERROR: invalid number of redists passed",
-             "xt_redist_collection_custom_new", __LINE__);
+             filename, __LINE__);
   if (cache_size >= -1) ; else
     Xt_abort(comm, "ERROR: invalid cache size in xt_redist_collection_new",
              filename, __LINE__);
