@@ -331,7 +331,7 @@ redist_exchanger_option(int *argc, char ***argv)
 {
   Xt_config config = xt_config_new();
   int opt;
-  while ((opt = getopt(*argc, *argv, "m:")) != -1)
+  while ((opt = getopt(*argc, *argv, "m:s:")) != -1)
     switch (opt) {
     case 'm':
       {
@@ -341,13 +341,44 @@ redist_exchanger_option(int *argc, char ***argv)
         else {
           fprintf(stderr, "error: unexpected command-line argument for "
                   "option -m: %s\n", optarg);
-          xt_config_delete(config);
-          return NULL;
+          goto error_handling;
         }
+      }
+      break;
+    case 'c':
+      {
+        static const struct {
+          enum Xt_exch_send_comm_mode comm_mode;
+          char comm_mode_name[28];
+        } comm_modes[xt_exch_send_comm_mode_count] = {
+          {
+            .comm_mode = xt_exch_send_standard,
+            .comm_mode_name = "xt_exch_send_standard"
+          }, {
+            .comm_mode = xt_exch_send_buffered,
+            .comm_mode_name = "xt_exch_send_buffered"
+          }, {
+            .comm_mode = xt_exch_send_synchronous,
+            .comm_mode_name = "xt_exch_send_synchronous"
+          }
+        };
+        for (int i = 0; i < xt_exch_send_comm_mode_count; ++i)
+          if (!strcmp(optarg, comm_modes[i].comm_mode_name)) {
+            xt_config_set_exchange_send_comm_mode(config,
+                                                  (int)comm_modes[i].comm_mode);
+            goto found_mode;
+          }
+        fprintf(stderr, "error: unexpected command-line argument for "
+                "option -c: %s\n", optarg);
+        goto error_handling;
+      found_mode:;
       }
       break;
     }
   return config;
+error_handling:
+  xt_config_delete(config);
+  return NULL;
 }
 
 
