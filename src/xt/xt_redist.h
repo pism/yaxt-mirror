@@ -179,9 +179,9 @@ int xt_redist_get_num_recv_msg(Xt_redist redist);
  *
  * @param[in] redist redistribution structure
  * @param[in] rank   MPI rank
- * \return MPI_Datatype for the data of the send operation with the given rank
+ * @return MPI_Datatype for the data of the send operation with the given rank
  *
- * \remarks returns MPI_DATATYPE_NULL if there is no send operation with the given rank
+ * @remarks returns MPI_DATATYPE_NULL if there is no send operation with the given rank
  */
 MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank);
 
@@ -191,9 +191,9 @@ MPI_Datatype xt_redist_get_send_MPI_Datatype(Xt_redist redist, int rank);
  *
  * @param[in] redist redistribution structure
  * @param[in] rank   MPI rank
- * \return MPI_Datatype for the data of the recv operation with the given rank
+ * @return MPI_Datatype for the data of the recv operation with the given rank
  *
- * \remarks returns MPI_DATATYPE_NULL if there is no recv operation with the given rank
+ * @remarks returns MPI_DATATYPE_NULL if there is no recv operation with the given rank
  */
 MPI_Datatype xt_redist_get_recv_MPI_Datatype(Xt_redist redist, int rank);
 
