@@ -70,7 +70,10 @@ s/^MAKE =[ 	]*\(.*[^ ]\) *$/\1/; p ; q
          exit 1; }
   case $i in
     0)
-      ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck
+      ${MAKE} "${MAKE_DEBUG_ARGS[@]}" -j8 distcheck \
+        || { gzip -c tests/test-suite.log \
+              >"${SRC_DIR}/${log_dir}/make-distcheck-testsuite.log.gz" ; \
+             exit 1; }
       ${MAKE} "${MAKE_DEBUG_ARGS[@]}" distclean
       ls -lR
       ;;
