@@ -53,6 +53,9 @@ MODULE xt_core
 #endif
   USE xt_mpi, ONLY: xt_mpi_fint_kind
   USE mpi
+#ifdef XT_FORTRAN_USE_EXTERN_VAR_DECL
+  USE xt_ext_var, only: xt_lib_state
+#endif
   IMPLICIT NONE
   PRIVATE
   INTEGER, PUBLIC, PARAMETER :: xt_int_kind   = XT_INT_FC_KIND
@@ -160,7 +163,9 @@ MODULE xt_core
          xt_lib_initialized, &
          xt_lib_finalized
   END ENUM
+#ifndef XT_FORTRAN_USE_EXTERN_VAR_DECL
   INTEGER(c_int), PUBLIC, BIND(c, name='xt_lib_state') :: xt_lib_state
+#endif
 
 CONTAINS
 

@@ -248,6 +248,8 @@ libyaxt_la_SOURCES =						\
 	xt_request_f.f90					\
 	yaxt.f90
 
+EXTRA_libyaxt_la_SOURCES = xt_ext_var.f90
+
 libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)
 libyaxt_la_LDFLAGS = -version-info 14:0:13
 libyaxt_c_la_LIBADD = $(MPI_C_LIB)
