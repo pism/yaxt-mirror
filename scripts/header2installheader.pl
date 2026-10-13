@@ -134,9 +134,9 @@ foreach my $headerFn (@ARGV)
             ', line ', $lineno, "\n")
             if (!defined($headerContents[$line+2])
                 or !defined($headerContents[$line+1])
-                or !$headerContents[$line+1]
-                =~ m{^\#\s*include\s+(?:<|")config.h(?:"|>)}xo
-                or !$headerContents[$line+2] =~ m{^\#\s*endif}xo);
+                or $headerContents[$line+1]
+                !~ m{^\#\s*include\s+(?:<|")config.h(?:"|>)}xo
+                or $headerContents[$line+2] !~ m{^\#\s*endif}xo);
         print(STDERR
               'Replacing #ifdef HAVE_CONFIG_H/#include "config.h"/#endif',
               ' structure at', "\n  ", $headerFn, ', line ', $lineno, "\n")
