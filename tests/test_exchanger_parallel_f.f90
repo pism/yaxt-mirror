@@ -430,7 +430,7 @@ CONTAINS
           recv_msgs(j, 2)%rank &
                = MOD(comm_size - j + i, comm_size)
           recv_msgs(j, 2)%datatype = dt_by_ofs(j)
-          recv_msgs(j, 2)%displacement = 0
+          recv_msgs(j, 2)%displacement = 0_mpi_address_kind
           recv_msgs(j, 2)%count=1
         END DO
       END IF

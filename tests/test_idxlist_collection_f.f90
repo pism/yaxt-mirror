@@ -284,9 +284,9 @@ CONTAINS
     TYPE(xt_idxlist) :: collection_idxlist, global_section, intersection
     !
     INTEGER(kind=xi), DIMENSION(:), ALLOCATABLE :: indices
-    INTEGER :: i1, i2, i3, i4, num_indices, idx_ofs
+    INTEGER :: num_indices, idx_ofs, i1
     INTEGER(kind=xi) :: dim_ofs2, dim_ofs3, dim_ofs4, &
-         idx_stride2, idx_stride3, idx_stride4
+         idx_stride2, idx_stride3, idx_stride4, i2, i3, i4
 
     num_indices = SUM(PRODUCT(lsz, dim=1))
     ALLOCATE(indices(num_indices))
@@ -301,14 +301,14 @@ CONTAINS
       idx_stride4 = gsz(1) * gsz(2) * gsz(3)
       idx_stride3 = gsz(1) * gsz(2)
       idx_stride2 = gsz(1)
-      DO i4 = 1, lsz(4, iseg)
-        dim_ofs4 = (lst(4, iseg)+i4-2) * idx_stride4
-        DO i3 = 1, lsz(3, iseg)
-          dim_ofs3 = (lst(3, iseg)+i3-2) * idx_stride3 + dim_ofs4
-          DO i2 = 1, lsz(2, iseg)
-            dim_ofs2 = (lst(2, iseg)+i2-2) * idx_stride2 + dim_ofs3
+      DO i4 = 1_xi, INT(lsz(4, iseg), xi)
+        dim_ofs4 = (lst(4, iseg)+i4-2_xi) * idx_stride4
+        DO i3 = 1_xi, INT(lsz(3, iseg), xi)
+          dim_ofs3 = (lst(3, iseg)+i3-2_xi) * idx_stride3 + dim_ofs4
+          DO i2 = 1, INT(lsz(2, iseg), xi)
+            dim_ofs2 = (lst(2, iseg)+i2-2_xi) * idx_stride2 + dim_ofs3
             DO i1 = 1, lsz(1, iseg)
-              indices(idx_ofs+i1) = lst(1, iseg) + i1 - 2 &
+              indices(idx_ofs+i1) = lst(1, iseg) + INT(i1, xi) - 2_xi &
                    + global_index_start + dim_ofs2
             END DO
             idx_ofs = idx_ofs + lsz(1, iseg)
@@ -347,7 +347,8 @@ CONTAINS
 
   SUBROUTINE test_coll_of_coll(collectionlist)
     TYPE(xt_idxlist), INTENT(in) :: collectionlist
-    INTEGER, PARAMETER :: num_vec = 2, num_lists = 3, num_indices = 3
+    INTEGER, PARAMETER :: num_vec = 2, num_lists = 3, num_indices = 3, &
+         xi = xt_int_kind
     INTEGER(xt_int_kind), PARAMETER :: indices(num_indices, num_vec) &
          = RESHAPE((/ 0_xi, 2_xi, 1_xi, 9_xi, 8_xi, 7_xi /), (/ num_indices, num_vec /))
     INTEGER(xt_int_kind) :: ref_idx(num_indices)

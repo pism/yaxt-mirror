@@ -1327,7 +1327,11 @@ CONTAINS
     TYPE(c_ptr) :: p
     INTEGER(c_size_t) :: n
     XT_SLICE_C_LOC(a, p)
-    n = SIZE(a) * 2_c_size_t
+#ifdef HAVE_SIZE_KIND_ARGUMENT
+    n = SIZE(a, kind=c_size_t) * 2_c_size_t
+#else
+    n = INT(SIZE(a), c_size_t) * 2_c_size_t
+#endif
     crcval = memcrc(p, n)
   END FUNCTION memcrc_i2
 
@@ -1337,7 +1341,11 @@ CONTAINS
     TYPE(c_ptr) :: p
     INTEGER(c_size_t) :: n
     XT_SLICE_C_LOC(a, p)
-    n = SIZE(a) * 4_c_size_t
+#ifdef HAVE_SIZE_KIND_ARGUMENT
+    n = SIZE(a, kind=c_size_t) * 4_c_size_t
+#else
+    n = INT(SIZE(a), c_size_t) * 4_c_size_t
+#endif
     crcval = memcrc(p, n)
   END FUNCTION memcrc_i4
 
@@ -1347,7 +1355,11 @@ CONTAINS
     TYPE(c_ptr) :: p
     INTEGER(c_size_t) :: n
     XT_SLICE_C_LOC(a, p)
-    n = SIZE(a) * 8_c_size_t
+#ifdef HAVE_SIZE_KIND_ARGUMENT
+    n = SIZE(a, kind=c_size_t) * 8_c_size_t
+#else
+    n = INT(SIZE(a), c_size_t) * 8_c_size_t
+#endif
     crcval = memcrc(p, n)
   END FUNCTION memcrc_i8
 

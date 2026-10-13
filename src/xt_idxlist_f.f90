@@ -326,7 +326,7 @@ CONTAINS
     INTEGER :: num_subst
     INTEGER(c_int) :: num_pos_c
 
-    IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
+    IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0_i4) &
          CALL xt_abort("invalid number of positions", filename, __LINE__)
 
     num_pos_c = INT(num_pos, c_int)
@@ -345,7 +345,7 @@ CONTAINS
     INTEGER :: num_subst
     INTEGER(c_int) :: num_pos_c
 
-    IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0) &
+    IF (num_pos > HUGE(1_c_int) .OR. num_pos < 0_i8) &
          CALL xt_abort("invalid number of positions", filename, __LINE__)
 
     num_pos_c = INT(num_pos, c_int)

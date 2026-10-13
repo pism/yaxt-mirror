@@ -90,7 +90,7 @@ CONTAINS
 
     ! destination index list
     dst_stripe(1)%nstrides = INT(num_idx, c_int)
-    dst_stripe(1)%start = src_stripe(1)%start + src_stripe(1)%nstrides
+    dst_stripe(1)%start = INT(src_stripe(1)%start + src_stripe(1)%nstrides, xi)
     dst_stripe(1)%stride = -1_xi
     ! note: this should fail because dst/src indices don't match
     CALL test_self_xmap_construct(src_stripe, dst_stripe,&

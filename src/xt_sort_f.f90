@@ -206,7 +206,8 @@ CONTAINS
 #else
     a_size = INT(SIZE(a), kind=c_size_t)
 #endif
-    IF (a_size > 1) CALL xt_sort_xt_int_permutation_f2c(a, a_size, permutation)
+    IF (a_size > 1_c_size_t) &
+         CALL xt_sort_xt_int_permutation_f2c(a, a_size, permutation)
   END SUBROUTINE xt_sort_xt_int_permutation
 
   SUBROUTINE xt_sort_int_permutation(a, permutation)
@@ -217,7 +218,8 @@ CONTAINS
 #else
     a_size = INT(SIZE(a), kind=c_size_t)
 #endif
-    IF (a_size > 1) CALL xt_sort_int_permutation_f2c(a, a_size, permutation)
+    IF (a_size > 1_c_size_t) &
+         CALL xt_sort_int_permutation_f2c(a, a_size, permutation)
   END SUBROUTINE xt_sort_int_permutation
 
   SUBROUTINE xt_assign_id_map_a(a)
@@ -229,7 +231,7 @@ CONTAINS
 #else
     n = INT(SIZE(a), kind=c_size_t)
 #endif
-    IF (n >= 1) THEN
+    IF (n >= 1_c_size_t) THEN
       ofs = 0_c_int
       CALL xt_assign_id_map_int(n, a, ofs)
     END IF
@@ -244,7 +246,7 @@ CONTAINS
 #else
     n = INT(SIZE(a), kind=c_size_t)
 #endif
-    IF (n >= 1) THEN
+    IF (n >= 1_c_size_t) THEN
       CALL xt_assign_id_map_int(n, a, ofs)
     END IF
   END SUBROUTINE xt_assign_id_map_ai

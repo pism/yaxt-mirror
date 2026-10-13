@@ -226,12 +226,13 @@ CONTAINS
         rank_idx = rank_idx / gen_state%deco(i)
         lst(i) &
              = INT((INT(gen_state%global_sizes(i), c_long_long) &
-             &         * rank_mod)/gen_state%deco(i)+1, &
-             &     xi)
+             &      * INT(rank_mod, c_long_long)) &
+             &     / INT(gen_state%deco(i), c_long_long) + 1_c_long_long, xi)
         lsz(i) &
              = INT(INT((INT(gen_state%global_sizes(i), c_long_long) &
-             &         * (rank_mod+1))/gen_state%deco(i), &
-             &         xi) - (lst(i)-1))
+             &         * INT(rank_mod+1, c_long_long)) &
+             &         / INT(gen_state%deco(i), c_long_long), xi) &
+             &     - (lst(i)-1_xi))
         all_lsz_non_zero = all_lsz_non_zero .AND. lsz(i) > 0
       END DO
       IF (all_lsz_non_zero) THEN

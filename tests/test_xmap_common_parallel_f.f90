@@ -190,7 +190,7 @@ CONTAINS
     num_indices_per_rank_xi = INT(num_indices_per_rank, xi)
     ! setup
     ALLOCATE(src_index_list(num_indices_per_rank))
-    DO i = 1_xi, num_indices_per_rank
+    DO i = 1_xi, num_indices_per_rank_xi
       src_index_list(i) = comm_rank_xi * num_indices_per_rank_xi + i - 1_xi
     END DO
     src_idxlist = xt_idxvec_new(src_index_list)
