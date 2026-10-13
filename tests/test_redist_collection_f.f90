@@ -276,8 +276,7 @@ PROGRAM test_redist_collection
   USE xt_redist_base, ONLY: xt_redist_s_exchange, xt_redist_a_exchange
 #endif
   USE test_redist_common, ONLY: build_odd_selection_xmap, check_redist, &
-       check_wait_request, redist_exchanger_option, &
-       communicators_are_congruent
+       check_wait_request, redist_exchanger_option
   USE iso_c_binding, ONLY: c_loc, c_ptr
   USE redist_collection_displace, ONLY: test_displacement_variations
 #ifdef WITH_COLL_OF_COLL_TEST
