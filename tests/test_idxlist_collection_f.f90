@@ -332,7 +332,7 @@ CONTAINS
 
     intersection &
          = xt_idxlist_get_intersection(global_section, collection_idxlist)
-#ifdef HAVE_SIZE_KIND_ARGUMEN
+#ifdef HAVE_SIZE_KIND_ARGUMENT
     CALL xt_sort_xt_int(indices, SIZE(indices, kind=c_size_t))
 #else
     CALL xt_sort_xt_int(indices, INT(SIZE(indices), c_size_t))
