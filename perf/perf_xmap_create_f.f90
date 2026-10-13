@@ -534,6 +534,9 @@ CONTAINS
           FLUSH(0)
           CALL posix_exit(1)
           STOP
+          ! the following is only to prevent warnings from compilers
+          ! not realizing this cannot be reached
+          next_is_optarg = .FALSE.
         END SELECT
         i = i + MERGE(2, 1, next_is_optarg)
       ELSE
