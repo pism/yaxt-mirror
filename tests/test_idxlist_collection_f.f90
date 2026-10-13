@@ -349,7 +349,7 @@ CONTAINS
     TYPE(xt_idxlist), INTENT(in) :: collectionlist
     INTEGER, PARAMETER :: num_vec = 2, num_lists = 3, num_indices = 3
     INTEGER(xt_int_kind), PARAMETER :: indices(num_indices, num_vec) &
-         = RESHAPE((/ 0, 2, 1, 9, 8, 7 /), (/ num_indices, num_vec /))
+         = RESHAPE((/ 0_xi, 2_xi, 1_xi, 9_xi, 8_xi, 7_xi /), (/ num_indices, num_vec /))
     INTEGER(xt_int_kind) :: ref_idx(num_indices)
     TYPE(xt_idxlist) :: idxvecs(num_vec), idxlists(num_lists), &
          coll_of_coll, intersection
