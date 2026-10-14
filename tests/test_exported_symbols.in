@@ -120,6 +120,8 @@ if [ x"$lt_cv_nm_interface" = x"BSD nm" ]; then
 # how the trailing digits are computed. Also, I do not know what those
 # symbols would be used for.
 $nv26libpat
+# nvfortran 26.9 has a new twist: symbols that look like hashes
+/^[0-9a-fA-F]*[ 	][ 	]*D[ 	]_[0-9a-f]{16}(\.[0-9]*){0,1}$/b
 # omp critical adds a common block for PGI compiler
 /^[0-9a-fA-F]*[ 	][ 	]*B[ 	]__cs_unspc/b
 # skip $-symbols that the Cray compiler puts in
