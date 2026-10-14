@@ -251,9 +251,9 @@ libyaxt_la_SOURCES =						\
 EXTRA_libyaxt_la_SOURCES = xt_ext_var.f90
 
 libyaxt_la_LIBADD = libyaxt_c.la $(MPI_FC_LIB)
-libyaxt_la_LDFLAGS = -version-info 14:0:13
+libyaxt_la_LDFLAGS = -version-info 14:1:13
 libyaxt_c_la_LIBADD = $(MPI_C_LIB)
-libyaxt_c_la_LDFLAGS = -version-info 13:0:12
+libyaxt_c_la_LDFLAGS = -version-info 13:1:12
 
 if XT_ADD_MPI_WORKAROUND
 libyaxt_c_la_LIBADD += mpi-workarounds/libmpi_workaround.la
