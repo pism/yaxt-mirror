@@ -120,14 +120,16 @@ CONTAINS
     CALL mpi_get_address(src_data(2), temp_address, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort('mpi_get_address failed', filename, __LINE__)
-    src_extent = (temp_address - base_address) * src_slice_len
+    src_extent = (temp_address - base_address) &
+         * INT(src_slice_len, mpi_address_kind)
     CALL mpi_get_address(dst_data(1), base_address, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort('mpi_get_address failed', filename, __LINE__)
     CALL mpi_get_address(dst_data(2), temp_address, ierror)
     IF (ierror /= mpi_success) &
          CALL test_abort('mpi_get_address failed', filename, __LINE__)
-    dst_extent = (temp_address - base_address) * dst_slice_len
+    dst_extent = (temp_address - base_address) &
+         * INT(dst_slice_len, mpi_address_kind)
 
     DO ddt_gen_test = 1, SIZE(ddt_gen_lim)
       CALL xt_config_set_ddt_cache_limit(config, ddt_gen_lim(ddt_gen_test))

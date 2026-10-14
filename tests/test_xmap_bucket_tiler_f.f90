@@ -107,7 +107,8 @@ CONTAINS
     DO i = 1, max_arank
       rank_of_coord = rank_of_coord + &
            INT((INT(coord(i)-1, c_long_long) &
-           &              * INT(deco(i), c_long_long) + deco(i)-1) &
+           &    * INT(deco(i), c_long_long) &
+           &    + INT(deco(i)-1, c_long_long)) &
            &              / INT(gsz(i), c_long_long)) * prod
       prod = prod * deco(i)
     END DO
