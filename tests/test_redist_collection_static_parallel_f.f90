@@ -144,7 +144,11 @@ CONTAINS
     INTEGER :: i, ierror, size_a, size_b, size_all
     INTEGER(xt_int_kind), POINTER :: results_1(:), &
          results_2(:), results_3(:), results_4(:)
-#if defined __NVCOMPILER && __NVCOMPILER_MAJOR__ == 26
+#if defined __NVCOMPILER && (__NVCOMPILER_MAJOR__ == 26 && __NVCOMPILER_MINOR__ <= 9 || __NVCOMPILER_MAJOR__ == 25 && __NVCOMPILER_MINOR__ >= 11)
+#warning "The version of nvfortran used is known to pass array slice pointers incorrectly to mpi_get_address"
+#define NVFORTRAN_MPI_GET_ADDRESS_FAIL
+#endif
+#ifdef NVFORTRAN_MPI_GET_ADDRESS_FAIL
     TYPE(c_ptr) :: results_c(4), index_vector_a_c, index_vector_b_c
 #endif
 
@@ -183,13 +187,13 @@ CONTAINS
       CALL xt_xmap_delete(xmaps(i))
     END DO
 
-#if !defined __NVCOMPILER || __NVCOMPILER_MAJOR__ != 26
+#ifndef NVFORTRAN_MPI_GET_ADDRESS_FAIL
     CALL mpi_get_address(index_vector_a, src_displacements(1), ierror)
     CALL mpi_get_address(index_vector_b, src_displacements(2), ierror)
     CALL mpi_get_address(index_vector_a, src_displacements(3), ierror)
     CALL mpi_get_address(index_vector_b, src_displacements(4), ierror)
 #else
-    ! when using nvfortran 26.1, the displacements obtained from
+    ! when using nvfortran 25.11 to (at least) 26.9, the displacements obtained from
     ! mpi_get_address are all the same value, meaning that for some reason,
     ! the array arguments to mpi_get_address are incorrectly passed
     index_vector_a_c = C_LOC(index_vector_a)
@@ -202,7 +206,7 @@ CONTAINS
 
     src_displacements = src_displacements - src_displacements(1)
 
-#if !defined __NVCOMPILER || __NVCOMPILER_MAJOR__ != 26
+#ifndef NVFORTRAN_MPI_GET_ADDRESS_FAIL
     CALL mpi_get_address(results_1, dst_displacements(1), ierror)
     CALL mpi_get_address(results_2, dst_displacements(2), ierror)
     CALL mpi_get_address(results_3, dst_displacements(3), ierror)
