@@ -127,6 +127,7 @@ int main(int argc, char **argv) {
           || idx != (Xt_int)0xdead)
         PUT_ERR("retrieved index position from empty list, rc=%d, idx=%lld!\n",
                 rc, (long long)idx);
+      (void)rc;
       int pos_vec[] = { -1, 0, 2 };
       enum {
         num_pos = sizeof (pos_vec) / sizeof (pos_vec[0]),
