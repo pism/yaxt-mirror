@@ -75,7 +75,9 @@ g
 ],
               [0x*],
               [AS_VAR_SET([acx_cv_fc_bind_c_align],[$acx_temp])])])
-         AC_LANG_POP([Fortran])])])
+         AC_LANG_POP([Fortran])
+         rm -f CONFTEST_ALIGN.*
+        ])])
    AS_VAR_SET_IF([acx_cv_fc_bind_c_align],
      [m4_ifval([$3],[$3
 ])dnl

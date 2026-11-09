@@ -104,7 +104,8 @@ dnl in the directory with the object file, therefore we try to delete everything
    AS_IF([expr "$ac_compile" : '.*/libtool --mode=compile' >/dev/null],
      [AS_IF([test -n "$objdir"],
         [rm -f "$objdir"/conftest_module* "$objdir"/CONFTEST_MODULE*])])
-   AC_LANG_POP([Fortran])])
+   AC_LANG_POP([Fortran])
+   rm -f CONFTEST_MODULE_A.*])
 dnl
    AS_IF([test x"$acx_cv_fc_struct_return_hlf" = xyes],
      [$1],

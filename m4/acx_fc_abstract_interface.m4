@@ -197,7 +197,8 @@ AC_DEFUN([ACX_FC_ABSTRACT_INTERFACE],
 ],
            [acx_cv_fc_abstract_interface=yes])])
    FCFLAGS=$FCFLAGS_save
-   AC_LANG_POP([Fortran])])
+   AC_LANG_POP([Fortran])
+   rm -f CONFTEST_MODULE_?.*])
 dnl
    AS_IF([test x"$acx_cv_fc_abstract_interface" = xyes],
      [$1],

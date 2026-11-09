@@ -142,6 +142,7 @@ test_clp_ret(struct ptr_cnt *rv_out, int idx, int ofs)
            [AC_MSG_NOTICE([Skipping run test for struct return in cross-compilation mode,])
             AC_MSG_NOTICE([struct-return link-test succeeded for $FC.])
             acx_cv_fc_c_struct_return_from_c=yes])
+         rm -f CONFTEST_B.*
          AC_LANG_POP([Fortran])])
       AS_CASE(["$CFLAGS:$acx_cv_fc_c_struct_return_from_c"],
         [*\ -DNEED_FC_STRUCT_RET_FROM_C_WORKAROUND:*|*:yes],[break])
@@ -280,6 +281,7 @@ test_clp_check(void)
          CFLAGS=$save_CFLAGS
          LIBS=$save_LIBS
          AC_LANG_POP([C])])
+      rm -f CONFTEST_MODULE_C.*
       AC_LANG_POP([Fortran])])
 dnl
    AS_CASE([$acx_cv_fc_c_struct_return_from_fortran],

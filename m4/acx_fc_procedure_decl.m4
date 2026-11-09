@@ -80,7 +80,8 @@ AC_DEFUN([ACX_FC_PROCEDURE_DECL],
 ],
         [acx_cv_fc_procedure_decl=yes])
       FCFLAGS=$FCFLAGS_save
-      AC_LANG_POP([Fortran])])
+      AC_LANG_POP([Fortran])
+      rm -f CONFTEST_MODULE_A.*])
 dnl
    AS_IF([test x"$acx_cv_fc_procedure_decl" = xyes],
      [$1],
