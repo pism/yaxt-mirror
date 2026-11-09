@@ -62,16 +62,72 @@ AC_DEFUN([ACX_FC_INTEGER_EXP_IS_PRECISE],
         END IF
       END DO
 ])])
-      AC_LINK_IFELSE(,
-        [AC_RUN_IFELSE(,
+      AC_RUN_IFELSE(,
+        [acx_cv_fc_integer_exp_is_precise=yes],
+        [acx_cv_fc_integer_exp_is_precise=no],
+        [AC_LINK_IFELSE(,
           [acx_cv_fc_integer_exp_is_precise=yes],
-          [acx_cv_fc_integer_exp_is_precise=no],
-          [acx_cv_fc_integer_exp_is_precise=yes])],
-        [acx_cv_fc_integer_exp_is_precise=no])])
+          [acx_cv_fc_integer_exp_is_precise=no])])])
    m4_ifval([$1$2],
      [AS_IF([test $acx_cv_fc_integer_exp_is_precise = yes],
         [$1],[$2])])
    AC_LANG_POP([Fortran])])
+dnl
+AC_DEFUN([ACX_FC_INTEGER_MULT_LOOP],
+  [AC_REQUIRE([AC_PROG_FC])dnl
+   AC_CACHE_CHECK([whether $FC evaluates multiplication in a loop correctly],
+     [acx_cv_fc_integer_loop_mult],
+     [AC_LANG_PUSH([Fortran])
+      AC_LANG_CONFTEST([      PROGRAM CONFTEST
+      USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT
+      INTEGER, PARAMETER :: i8 =  SELECTED_INT_KIND(14)
+      INTEGER(i8), PARAMETER :: llim = 2094085_i8, ulim=2097151_i8
+      INTEGER(i8) :: i
+      INTERFACE
+        SUBROUTINE POSIX_EXIT(STATUS) BIND(C, NAME='exit')
+          IMPORT :: C_INT
+          INTEGER(C_INT), VALUE :: STATUS
+        END SUBROUTINE POSIX_EXIT
+        FUNCTION ref_ipow_i8(v, p) RESULT(ref_ipow)
+          IMPORT :: i8
+          INTEGER(i8), INTENT(IN) :: v
+          INTEGER, INTENT(in) :: p
+          INTEGER(i8) :: ref_ipow
+        END FUNCTION ref_ipow_i8
+      END INTERFACE
+      DO i = -ulim, ulim
+        IF (i * i * i /= ref_ipow_i8(i, 3)) THEN
+          WRITE (0, '(a)') 'incorrect cube operation detected!'
+          WRITE (0, '(3(a,i0))') 'i = ', i, ', i**3 = ', i * i * i, &
+               ', ref_ipow(i,3) = ', ref_ipow_i8(i, 3)
+          CALL posix_exit(1_c_int)
+        END IF
+      END DO
+      END PROGRAM conftest
+
+      FUNCTION ref_ipow_i8(v, p) RESULT(ref_ipow)
+      INTEGER, PARAMETER :: i8 =  SELECTED_INT_KIND(14)
+      INTEGER(i8), INTENT(IN) :: v
+      INTEGER, INTENT(IN) :: p
+      INTEGER(i8) :: ref_ipow
+      INTEGER :: i
+      ref_ipow = v
+      DO i = 2, p
+        ref_ipow = ref_ipow * v
+      END DO
+      END FUNCTION ref_ipow_i8
+])
+      AC_RUN_IFELSE(,
+        [acx_cv_fc_integer_loop_mult=yes],
+        [acx_cv_fc_integer_loop_mult=no],
+        [AC_LINK_IFELSE(,
+           [acx_cv_fc_integer_loop_mult=yes])],
+           [acx_cv_fc_integer_loop_mult=no])])
+   m4_ifval([$1$2],
+     [AS_IF([test $acx_cv_fc_integer_loop_mult = yes],
+        [$1],[$2])])
+   AC_LANG_POP([Fortran])])
+
 dnl
 dnl Local Variables:
 dnl mode: autoconf
