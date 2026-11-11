@@ -136,15 +136,39 @@ CONTAINS
     INTEGER(i8), PARAMETER :: ulim = 2097151_i8
     INTEGER(i8) :: i, cubed, cbrt
     CHARACTER(len=132) :: msg
+#ifdef HAVE_FC_INTEGER_LOOP_MULT_DEFECT
+    ! everything from here to #endif would not be needed if it wasn't for
+    ! the fantastic handling of 64bit constants by the Cray Fortran compiler
+    !
+    ! holds i * 3 + 3
+    INTEGER(i8) :: i3p3, next_cubed
+    ! Work around a CCE 17.0+ compiler bug in 64-bit integer
+    ! arithmetic/loop optimization. Without this directive,
+    ! the computed cubes are incorrect at optimization levels > scalar0.
+    ! Even with the hand-rolled strength reduction.
+!DIR$ OPTIMIZE (-h scalar0,vector0)
+    i3p3 = -3*ulim+3
+    next_cubed = -(ulim**3)
+#endif
     DO i = -ulim, ulim, 1_i8
-      ! need to spell that out explcitely for crayftn 8.5.5 at least
-#ifndef HAVE_FC_PRECISE_INTEGER_EXPONENTIATION
-      cubed = i * i * i
+#ifdef HAVE_FC_INTEGER_LOOP_MULT_DEFECT
+      ! since the compiler doesn't cut it, let's do the transformation
+      ! for strength reduction ourselves
+      cubed = next_cubed
+      next_cubed = cubed + i3p3*i + 1
+      i3p3 = i3p3 + 3
 #else
+      ! need to spell that out explcitely for crayftn 8.5.5 at least
+#  ifndef HAVE_FC_PRECISE_INTEGER_EXPONENTIATION
+      cubed = i * i * i
+#  else
       cubed = i**3
+#  endif
 #endif
       cbrt = icbrt(cubed)
-      IF (cbrt /= i) THEN
+      IF (cbrt == i) THEN
+        CYCLE
+      ELSE
         WRITE (msg, '(4(a,i0))') &
              "integer cube root computation failed for ", i, &
              "**3 = ", cubed, ", but icbrt(", cubed, ") = ", cbrt
